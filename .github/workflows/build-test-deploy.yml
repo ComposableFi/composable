@@ -119,8 +119,9 @@ jobs:
           name: composable-community
       - run: |
           nix --version
-          nix show-config 
+          nix show-config
           nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
+
   cargo-fmt-check:
     name: "Cargo fmt check"
     runs-on: ubuntu-latest
@@ -137,9 +138,8 @@ jobs:
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   check-nix-long:
+    name: "Check nix long"
     runs-on: ubuntu-latest
-    needs:
-      - check-nix
     concurrency:
       group: ${{ github.workflow }}-check-nix-long-${{ github.ref }}
       cancel-in-progress: true
@@ -147,20 +147,10 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+      - uses: "./.github/templates/watch-exec"
         with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          name: composable-community
-      - run: |
-          chmod +x ./.github/workflows/check-nix-long.sh
-          source ./.github/workflows/check-nix-long.sh
+          command: chmod +x ./.github/workflows/check-nix-long.sh && source ./.github/workflows/check-nix-long.sh
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   taplo-cli-check:
     name: "Taplo cli check"
@@ -619,6 +609,7 @@ jobs:
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   cache-devnet-all-dev-local:
+    name: "Cache devnet all dev local"
     strategy:
       matrix:
         runtime: [devnet-dali-complete, devnet-picasso-complete, devnet-dali, devnet-centauri]      
@@ -900,6 +891,8 @@ jobs:
         - test-running-of-pallet-benchmarks
         - local-integration-tests
         - unit-tests
+        - check-devnet
+        - check-nix-long
         # TODO (vim): Decrease lead time until after release 3
         #- cargo-udeps-check
         - nixfmt-check
@@ -921,8 +914,6 @@ jobs:
   check-devnet:
       needs:
         - cache-devnet-all-dev-local
-      continue-on-error: true
-      if: github.event_name == 'pull_request' && contains(github.event.pull_request.title, '#flaky')
       runs-on: ubuntu-latest
       concurrency:
         group: $${github.workflow }}-check-devnet-${{ github.ref }}
@@ -964,7 +955,7 @@ jobs:
           else
             nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --dry-run --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
           fi
-   
+
         env:
           NIXOPS_STATE_URL: "gs://composable-state"
           NIXOPS_STATE: "deployment.nixops"
