@@ -88,3 +88,8 @@ The following command removes the `/nix` directory.
 $ sudo rm -rf /nix 
 ```
 
+## flake 'github:ComposableFi/composable' does not provide attribute 'packages.x86_64-linux.PACKAGE-NAME', 'legacyPackages.x86_64-linux.PACKAGE-NAME' or 'runtime-tests-persistent'
+
+You are probably referencing a package that we do not support, or you are trying to run a package that is not supported by the system that you are currently using.
+
+Use `nix flake show` in order to see an exhaustive list of all packages we provide. In this tree, you can see which packages are available for each systems.
