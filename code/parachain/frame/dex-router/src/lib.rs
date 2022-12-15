@@ -32,10 +32,7 @@ pub mod pallet {
 	use composable_support::math::safe::SafeArithmetic;
 	use composable_traits::{
 		defi::CurrencyPair,
-		dex::{
-			Amm, AssetAmount, DexRoute, DexRouter, RedeemableAssets,
-			RemoveLiquiditySimulationResult, SwapResult,
-		},
+		dex::{Amm, AssetAmount, DexRoute, DexRouter, RedeemableAssets, SwapResult},
 	};
 	use core::fmt::Debug;
 	use frame_support::{pallet_prelude::*, transactional, PalletId};
@@ -442,7 +439,7 @@ pub mod pallet {
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-		) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError> {
+		) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
 				[pool_id] => T::Pablo::simulate_remove_liquidity(who, pool_id, lp_amount),
@@ -581,7 +578,7 @@ pub mod pallet {
 			assets: BTreeMap<Self::AssetId, Self::Balance>,
 			min_mint_amount: Self::Balance,
 			keep_alive: bool,
-		) -> Result<(), DispatchError> {
+		) -> Result<Self::Balance, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
 				[pool_id] =>
@@ -596,7 +593,7 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
 			min_receive: BTreeMap<Self::AssetId, Self::Balance>,
-		) -> Result<(), DispatchError> {
+		) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
 				[pool_id] => T::Pablo::remove_liquidity(who, pool_id, lp_amount, min_receive),

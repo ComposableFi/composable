@@ -87,7 +87,7 @@ pub trait Amm {
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
-	) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError>
+	) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
 
@@ -121,7 +121,7 @@ pub trait Amm {
 		assets: BTreeMap<Self::AssetId, Self::Balance>,
 		min_mint_amount: Self::Balance,
 		keep_alive: bool,
-	) -> Result<(), DispatchError>;
+	) -> Result<Self::Balance, DispatchError>;
 
 	/// Withdraw coins from the pool.
 	/// Withdrawal amount are based on current deposit ratios.
@@ -132,7 +132,7 @@ pub trait Amm {
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
 		min_receive: BTreeMap<Self::AssetId, Self::Balance>,
-	) -> Result<(), DispatchError>;
+	) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError>;
 
 	/// Perform an exchange effectively trading the in_asset against the min_receive one.
 	fn do_swap(
@@ -326,16 +326,6 @@ pub struct PriceAggregate<PoolId, AssetId, Balance> {
 #[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct RedeemableAssets<AssetId, Balance>
-where
-	AssetId: Ord,
-{
-	pub assets: BTreeMap<AssetId, Balance>,
-}
-
-/// RemoveLiquiditySimulationResult for given amount of lp tokens.
-#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct RemoveLiquiditySimulationResult<AssetId, Balance>
 where
 	AssetId: Ord,
 {
