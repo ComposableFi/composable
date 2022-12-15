@@ -1547,7 +1547,15 @@ impl_runtime_apis! {
 			lp_amount: SafeRpcWrapper<Balance>,
 			min_expected_amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
 		) -> BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
-			<Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0)
+			<Pablo as Amm>::simulate_remove_liquidity(
+				&who.0,
+				pool_id.0,
+				lp_amount.0,
+				min_expected_amounts
+					.iter()
+					.map(|(k, v)| (k.0, v.0))
+					.collect()
+				)
 				.map(|simulation_result| {
 					simulation_result
 						.into_iter()
