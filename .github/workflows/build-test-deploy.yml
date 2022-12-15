@@ -797,6 +797,44 @@ jobs:
           command: nix -- build .#subwasm-get-dali-metadata
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+  package-picasso-metadata:
+    needs: common-deps
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-picasso-metadata-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#subwasm-get-picasso-metadata
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
+  package-composable-metadata:
+    needs: common-deps
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-composable-metadata-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#subwasm-get-composable-metadata
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
   composable-sandbox-container-publish:
     needs:
       - effects-gate
@@ -918,6 +956,9 @@ jobs:
         - docs-check
         - hadolint-check
         - frontend-check
+        - package-dali-metadata
+        - package-picasso-metadata
+        - package-composable-metadata
       steps:
         - run: echo "Goblins allow your work to see the light"
 
