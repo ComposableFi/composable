@@ -516,6 +516,7 @@ pub mod pallet {
 	impl<T: Config> Lending for Pallet<T> {
 		type VaultId = T::VaultId;
 		type MarketId = MarketId;
+		type MarketConfig = MarketConfigOf<T>;
 		type BlockNumber = T::BlockNumber;
 		type LiquidationStrategyId = <T as Config>::LiquidationStrategyId;
 		type Oracle = T::Oracle;
@@ -548,6 +549,10 @@ pub mod pallet {
 			Self::do_update_market(manager, market_id, input.clone().try_into_validated()?)?;
 			Self::deposit_event(Event::<T>::MarketUpdated { market_id, input });
 			Ok(())
+		}
+
+		fn get_market_state(market_id: &Self::MarketId) -> Result<(&Self::MarketId, Self::MarketConfig), DispatchError> {
+			Self::get_market(&market_id)
 		}
 
 		fn account_id(market_id: &Self::MarketId) -> Self::AccountId {

@@ -191,6 +191,7 @@ impl<T> TotalDebtWithInterest<T> {
 pub trait Lending: DeFiEngine {
 	type VaultId;
 	type MarketId;
+	type MarketConfig;
 	type BlockNumber;
 	/// id of dispatch used to liquidate collateral in case of undercollateralized asset
 	type LiquidationStrategyId;
@@ -247,6 +248,10 @@ pub trait Lending: DeFiEngine {
 		market_id: Self::MarketId,
 		input: UpdateInput<Self::LiquidationStrategyId, Self::BlockNumber>,
 	) -> Result<(), DispatchError>;
+
+	fn get_market_state(
+		market_id: &Self::MarketId,
+	) -> Result<(&Self::MarketId, Self::MarketConfig), DispatchError>;
 
 	/// [`AccountId`][Self::AccountId] of the market instance
 	fn account_id(market_id: &Self::MarketId) -> Self::AccountId;
