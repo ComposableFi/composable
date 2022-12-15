@@ -37,11 +37,7 @@
           rnix-lsp
           nodePackages.typescript
           nodePackages.typescript-language-server
-<<<<<<< HEAD
           git
-=======
-             git
->>>>>>> terraform draft
           git-lfs
         ]);
       });
