@@ -158,7 +158,7 @@ jobs:
           installCommand: |
             nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
-            nix profile install github:cachix/cachix/3abb69595aa30b774b821efade3cb34da302440e
+            nix-env -iA nixpkgs.cachix
           name: composable-community
       - run: |
           chmod +x ./.github/workflows/check-nix-long.sh
