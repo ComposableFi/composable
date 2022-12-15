@@ -119,7 +119,7 @@ jobs:
           name: composable-community
       - run: |
           nix --version
-          nix show-config                
+          nix show-config 
           nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
   cargo-fmt-check:
     name: "Cargo fmt check"
@@ -138,8 +138,6 @@ jobs:
 
   check-nix-long:
     runs-on: ubuntu-latest
-    continue-on-error: true
-    if: github.event_name == 'pull_request' && contains(github.event.pull_request.title, '#flaky')
     needs:
       - check-nix
     concurrency:
@@ -920,16 +918,15 @@ jobs:
       steps:
         - run: echo "Goblins allow your work to see the light"
 
-  deploy-devnet:
-      name: "Devnet(Rococo Local Dali Dev) Deploy"
-      if: github.event_name == 'push' && github.ref_name == 'main'
+  check-devnet:
       needs:
-        - effects-gate
+        - cache-devnet-all-dev-local
+      continue-on-error: true
+      if: github.event_name == 'pull_request' && contains(github.event.pull_request.title, '#flaky')
       runs-on: ubuntu-latest
-      # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization
       concurrency:
-        group: nix-deploy-devnet
-        cancel-in-progress: false
+        group: $${github.workflow }}-check-devnet-${{ github.ref }}
+        cancel-in-progress: true
       steps:
       - uses: actions/checkout@v3
         with:
@@ -946,7 +943,7 @@ jobs:
           installCommand: |
             nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
-            nix-env -iA nixpkgs.cachix nixpkgs.jq
+            nix profile install github:cachix/cachix/3abb69595aa30b774b821efade3cb34da302440e nixpkgs#jq
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{  env.CACHIX_COMPOSABLE }}
 
@@ -963,10 +960,11 @@ jobs:
           if gsutil -q stat $NIXOPS_STATE_URL/$NIXOPS_STATE;
           then
             gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
+            nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --dry-run --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
           else
-            nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
+            nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --dry-run --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
           fi
-          nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
+   
         env:
           NIXOPS_STATE_URL: "gs://composable-state"
           NIXOPS_STATE: "deployment.nixops"
@@ -974,13 +972,6 @@ jobs:
           GCP_DEVNET_SERVICE_ACCOUNT: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT }}
           GCP_DEVNET_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT_KEY }}
 
-      - name: Save NixOps State
-        if: always()
-        run: |
-          gsutil cp $NIXOPS_STATE $NIXOPS_STATE_URL/
-        env:
-          NIXOPS_STATE_URL: gs://composable-state
-          NIXOPS_STATE: "deployment.nixops"
 
   frontend-firebase-preview-deploy:
     name: "Firebase Preview channel PR deployment"
