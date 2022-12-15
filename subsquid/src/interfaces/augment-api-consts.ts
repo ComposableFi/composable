@@ -9,7 +9,7 @@ import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
 import type { Bytes, Option, Text, U8aFixed, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
 import type { AccountId32, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
-import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
+import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, PalletCosmwasmInstrumentCostRules, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
 
@@ -300,6 +300,29 @@ declare module '@polkadot/api-base/types/consts' {
     };
     fnft: {
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    ibc: {
+      /**
+       * Expected block time in milliseconds
+       **/
+      expectedBlockTime: u64 & AugmentedConst<ApiType>;
+      /**
+       * Minimum connection delay period in seconds for ibc connections that can be created or
+       * accepted. Ensure that this is non-zero in production as it's a critical vulnerability.
+       **/
+      minimumConnectionDelay: u64 & AugmentedConst<ApiType>;
+      /**
+       * The native asset id, this will use the `NativeCurrency` for all operations.
+       **/
+      nativeAssetId: u128 & AugmentedConst<ApiType>;
+      /**
+       * Amount to be reserved for client and connection creation
+       **/
+      spamProtectionDeposit: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

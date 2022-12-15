@@ -1,7 +1,8 @@
 import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, Index as Index_, OneToMany as OneToMany_} from "typeorm"
 import * as marshal from "./marshal"
+import {PabloPoolType} from "./_pabloPoolType"
 import {PabloPoolAsset} from "./pabloPoolAsset.model"
-import {PabloTransaction} from "./pabloTransaction.model"
+import {PabloTransaction, fromJsonPabloTransaction} from "./_pabloTransaction"
 
 @Entity_()
 export class PabloPool {
@@ -24,6 +25,9 @@ export class PabloPool {
     @Index_()
     @Column_("text", {nullable: false})
     owner!: string
+
+    @Column_("varchar", {length: 24, nullable: false})
+    poolType!: PabloPoolType
 
     @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
     lpIssued!: bigint
@@ -54,6 +58,6 @@ export class PabloPool {
     @OneToMany_(() => PabloPoolAsset, e => e.pool)
     poolAssets!: PabloPoolAsset[]
 
-    @OneToMany_(() => PabloTransaction, e => e.pool)
-    transactions!: PabloTransaction[]
+    @Column_("jsonb", {transformer: {to: obj => obj == null ? undefined : obj.map((val: any) => val.toJSON()), from: obj => obj == null ? undefined : marshal.fromList(obj, val => fromJsonPabloTransaction(val))}, nullable: true})
+    transactions!: (PabloTransaction)[] | undefined | null
 }

@@ -5,12 +5,17 @@ type Account @entity {
     eventId: String!
 }
 
+enum PabloPoolType {
+    DualAssetConstantProduct
+}
+
 type PabloPool @entity {
     "Pool ID"
     id: ID!
     "ID of the last event that was used to derive this entity data"
     eventId: ID!
     owner: String! @index
+    poolType: PabloPoolType!
     lpIssued: BigInt!
     transactionCount: Int!
     totalLiquidity: BigInt!
@@ -166,17 +171,46 @@ type HistoricalVolume @entity {
     assetId: String!
 }
 
-type PabloTransaction @entity {
+union PabloTransaction = PabloTransactionCreatePool | PabloTransactionAddLiquidity | PabloTransactionRemoveLiquidity | PabloTransactionSwap
+
+type PabloTransactionSwap {
     id: ID!
-    event: Event! @unique @index
+    event: Event!
     pool: PabloPool!
     baseAssetId: String!
     baseAssetAmount: BigInt!
     quoteAssetId: String!
     quoteAssetAmount: BigInt!
-    spotPrice: String!
-    "Optional: Only certain transaction types have fees charged by Pablo. Does NOT include the collected extrinsic execution fee."
+    spotPrice: BigInt!
+    "Does NOT include the collected extrinsic execution fee."
     fee: String!
+}
+
+type PabloTransactionAddLiquidity {
+    id: ID!
+    event: Event!
+    pool: PabloPool!
+    liquidityChanges: [PabloLiquidityChange!]
+}
+
+type PabloTransactionRemoveLiquidity {
+    id: ID!
+    event: Event!
+    pool: PabloPool!
+    liquidityChanges: [PabloLiquidityChange!]
+}
+
+type PabloTransactionCreatePool {
+    id: ID!
+    event: Event!
+    pool: PabloPool!
+    poolType: PabloPoolType!
+}
+
+type PabloLiquidityChange {
+    id: ID!
+    assetId: String!
+    amount: BigInt!
 }
 
 type CurrentLockedValue

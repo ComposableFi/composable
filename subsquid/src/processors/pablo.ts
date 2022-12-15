@@ -1,4 +1,15 @@
-import { PabloPool, PabloPoolAsset, EventType, LockedSource } from "subsquid/model";
+import {
+  EventType,
+  LockedSource,
+  PabloLiquidityChange,
+  PabloPool,
+  PabloPoolAsset,
+  PabloPoolType,
+  PabloTransactionCreatePool,
+  PabloTransactionAddLiquidity,
+  PabloTransactionRemoveLiquidity,
+  PabloTransactionSwap
+} from "subsquid/model";
 import { Store } from "@subsquid/typeorm-store";
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import {
@@ -18,6 +29,7 @@ import {
   storeHistoricalLockedValue,
   storeHistoricalVolume
 } from "../dbHelper";
+import { randomUUID } from "crypto";
 
 /**
  * Creates asset fpr Pablo pool
@@ -130,6 +142,8 @@ export async function processPoolCreatedEvent(ctx: EventHandlerContext<Store, { 
     id: poolId.toString(),
     eventId: ctx.event.id,
     owner,
+    // Note: when we add more pool types, we can get this from the chain - api.query.pablo.pool(poolId)
+    poolType: PabloPoolType.DualAssetConstantProduct,
     lpIssued: BigInt(0),
     transactionCount: 0,
     totalLiquidity: BigInt(0),
@@ -149,7 +163,14 @@ export async function processPoolCreatedEvent(ctx: EventHandlerContext<Store, { 
     await ctx.store.save(asset);
   }
 
-  // TODO: Create and store Pablo Transaction
+  // Create and save transaction
+  const pabloTransaction = new PabloTransactionCreatePool({
+    event: ctx.event.id,
+    pool: poolId.toString(),
+    poolType: PabloPoolType.DualAssetConstantProduct
+  });
+
+  await ctx.store.save(pabloTransaction);
 
   // TODO: add activity? Maybe not because of Sudo?
 
@@ -195,12 +216,27 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
       asset.totalLiquidity += amount;
       asset.timestamp = new Date(ctx.block.timestamp);
       asset.blockNumber = BigInt(ctx.block.height);
-      // Save asset
       await ctx.store.save(asset);
     }
   }
 
-  // TODO: Create and store Pablo Transaction
+  const liquidityChanges = assetAmounts.map(
+    ([assetId, amount]) =>
+      new PabloLiquidityChange({
+        id: randomUUID(),
+        assetId: assetId.toString(),
+        amount
+      })
+  );
+
+  const pabloTransaction = new PabloTransactionAddLiquidity({
+    id: randomUUID(),
+    event: ctx.event.id,
+    pool: poolId.toString(),
+    liquidityChanges
+  });
+
+  await ctx.store.save(pabloTransaction);
 
   await ctx.store.save(pool);
 
@@ -259,7 +295,23 @@ export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Stor
     }
   }
 
-  // TODO: Create and store Pablo Transaction
+  const liquidityChanges = assetAmounts.map(
+    ([assetId, amount]) =>
+      new PabloLiquidityChange({
+        id: randomUUID(),
+        assetId: assetId.toString(),
+        amount
+      })
+  );
+
+  const pabloTransaction = new PabloTransactionRemoveLiquidity({
+    id: randomUUID(),
+    event: ctx.event.id,
+    pool: poolId.toString(),
+    liquidityChanges
+  });
+
+  await ctx.store.save(pabloTransaction);
 
   await ctx.store.save(pool);
 
@@ -283,7 +335,7 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
   const who = encodeAccount(swappedEvent.who);
   const { poolId, fee, baseAsset: baseAssetId, baseAmount, quoteAsset: quoteAssetId, quoteAmount } = swappedEvent;
   const feesLeavingPool = fee.fee - fee.lpFee;
-  const spotPrice = quoteAmount / baseAmount; // TODO: check
+  const spotPriceBase = quoteAmount / baseAmount;
 
   // Get the latest pool
   const pool = await getLatestPoolByPoolId(ctx.store, poolId);
@@ -291,6 +343,12 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
   if (!pool) {
     console.error("Pool not found");
     return;
+  }
+
+  const { poolType } = pool;
+
+  if (poolType !== PabloPoolType.DualAssetConstantProduct) {
+    throw new Error("Only DualAssetConstantProduct pools are supported now.");
   }
 
   // Create and save account and event
@@ -305,35 +363,50 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
   pool.blockNumber = BigInt(ctx.block.height);
   pool.transactionCount += 1;
   pool.totalVolume += quoteAmount; // TODO: check if this is correct in the case of reversed, if exists
-  pool.totalLiquidity -= calculateFeeInQuoteAsset(spotPrice, quoteAssetId, fee.assetId, feesLeavingPool);
+  pool.totalLiquidity -= calculateFeeInQuoteAsset(spotPriceBase, quoteAssetId, fee.assetId, feesLeavingPool);
 
-  const quoteAssetFee = calculateFeeInQuoteAsset(spotPrice, quoteAssetId, fee.assetId, fee.fee);
+  const quoteAssetFee = calculateFeeInQuoteAsset(spotPriceBase, quoteAssetId, fee.assetId, fee.fee);
   pool.totalFees += quoteAssetFee;
 
   const baseAsset = pool.poolAssets.find(({ id }) => id === baseAssetId.toString());
-
-  if (baseAsset) {
-    baseAsset.timestamp = new Date(ctx.block.timestamp);
-    baseAsset.blockNumber = BigInt(ctx.block.height);
-    baseAsset.totalVolume += baseAmount; // TODO: check
-    baseAsset.totalLiquidity -= baseAmount; // TODO: check
-    baseAsset.totalLiquidity -= feesLeavingPool; // TODO: check
-
-    await ctx.store.save(baseAsset);
-  }
-
   const quoteAsset = pool.poolAssets.find(({ id }) => id === quoteAssetId.toString());
 
-  if (quoteAsset) {
-    quoteAsset.timestamp = new Date(ctx.block.timestamp);
-    quoteAsset.blockNumber = BigInt(ctx.block.height);
-    quoteAsset.totalVolume += quoteAmount; // TODO: check
-    quoteAsset.totalLiquidity += quoteAmount; // TODO: check
-
-    await ctx.store.save(quoteAsset);
+  if (!baseAsset) {
+    throw new Error(`Base asset ${baseAssetId} not found`);
   }
 
-  // TODO: Create and store Pablo Transaction
+  if (!quoteAsset) {
+    throw new Error(`Base asset ${quoteAssetId} not found`);
+  }
+
+  baseAsset.timestamp = new Date(ctx.block.timestamp);
+  baseAsset.blockNumber = BigInt(ctx.block.height);
+  baseAsset.totalVolume += baseAmount;
+  baseAsset.totalLiquidity -= baseAmount;
+  baseAsset.totalLiquidity -= feesLeavingPool;
+
+  await ctx.store.save(baseAsset);
+
+  quoteAsset.timestamp = new Date(ctx.block.timestamp);
+  quoteAsset.blockNumber = BigInt(ctx.block.height);
+  quoteAsset.totalVolume += quoteAmount;
+  quoteAsset.totalLiquidity += quoteAmount;
+
+  await ctx.store.save(quoteAsset);
+
+  const pabloTransaction = new PabloTransactionSwap({
+    id: randomUUID(),
+    event: ctx.event.id,
+    pool: poolId.toString(),
+    baseAssetId: baseAssetId.toString(),
+    baseAssetAmount: baseAmount,
+    quoteAssetId: quoteAssetId.toString(),
+    quoteAssetAmount: quoteAmount,
+    spotPrice: spotPriceBase,
+    fee: quoteAssetFee.toString()
+  });
+
+  await ctx.store.save(pabloTransaction);
 
   // TODO: reverse swap??
 

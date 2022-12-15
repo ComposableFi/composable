@@ -292,6 +292,10 @@ declare module '@polkadot/api-base/types/errors' {
       NotInitialized: AugmentedError<ApiType>;
       RewardsNotFunded: AugmentedError<ApiType>;
       /**
+       * Returned by `delete` if the provided expected reward mismatches the actual reward.
+       **/
+      UnexpectedRewardAmount: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
@@ -515,6 +519,154 @@ declare module '@polkadot/api-base/types/errors' {
        * Not found
        **/
       NoneError: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    ibc: {
+      /**
+       * Failed to derive channel escrow address
+       **/
+      ChannelEscrowAddress: AugmentedError<ApiType>;
+      /**
+       * Error opening channel
+       **/
+      ChannelInitError: AugmentedError<ApiType>;
+      /**
+       * Channel not found
+       **/
+      ChannelNotFound: AugmentedError<ApiType>;
+      /**
+       * Error Freezing client
+       **/
+      ClientFreezeFailed: AugmentedError<ApiType>;
+      /**
+       * Client state not found
+       **/
+      ClientStateNotFound: AugmentedError<ApiType>;
+      /**
+       * Client update time and height not found
+       **/
+      ClientUpdateNotFound: AugmentedError<ApiType>;
+      /**
+       * Connection not found
+       **/
+      ConnectionNotFound: AugmentedError<ApiType>;
+      /**
+       * Client consensus state not found for height
+       **/
+      ConsensusStateNotFound: AugmentedError<ApiType>;
+      /**
+       * Error decoding some type
+       **/
+      DecodingError: AugmentedError<ApiType>;
+      /**
+       * Error encoding some type
+       **/
+      EncodingError: AugmentedError<ApiType>;
+      /**
+       * Unable to get client revision number
+       **/
+      FailedToGetRevisionNumber: AugmentedError<ApiType>;
+      /**
+       * Invalid amount
+       **/
+      InvalidAmount: AugmentedError<ApiType>;
+      /**
+       * Invalid asset id
+       **/
+      InvalidAssetId: AugmentedError<ApiType>;
+      /**
+       * Invalid channel id
+       **/
+      InvalidChannelId: AugmentedError<ApiType>;
+      /**
+       * Invalid Ibc denom
+       **/
+      InvalidIbcDenom: AugmentedError<ApiType>;
+      /**
+       * Invalid message for extrinsic
+       **/
+      InvalidMessageType: AugmentedError<ApiType>;
+      /**
+       * Invalid params passed
+       **/
+      InvalidParams: AugmentedError<ApiType>;
+      /**
+       * Invalid port id
+       **/
+      InvalidPortId: AugmentedError<ApiType>;
+      /**
+       * Invalid route
+       **/
+      InvalidRoute: AugmentedError<ApiType>;
+      /**
+       * Invalid timestamp
+       **/
+      InvalidTimestamp: AugmentedError<ApiType>;
+      /**
+       * Other forms of errors
+       **/
+      Other: AugmentedError<ApiType>;
+      /**
+       * Packet Acknowledgment wasn't found
+       **/
+      PacketAcknowledgmentNotFound: AugmentedError<ApiType>;
+      /**
+       * Packet commitment wasn't found
+       **/
+      PacketCommitmentNotFound: AugmentedError<ApiType>;
+      /**
+       * Packet receipt wasn't found
+       **/
+      PacketReceiptNotFound: AugmentedError<ApiType>;
+      /**
+       * Error processing ibc messages
+       **/
+      ProcessingError: AugmentedError<ApiType>;
+      /**
+       * Error generating trie proof
+       **/
+      ProofGenerationError: AugmentedError<ApiType>;
+      /**
+       * Error constructing packet
+       **/
+      SendPacketError: AugmentedError<ApiType>;
+      /**
+       * Latest height and timestamp for a client not found
+       **/
+      TimestampAndHeightNotFound: AugmentedError<ApiType>;
+      /**
+       * The interchain token transfer was not successfully initiated
+       **/
+      TransferFailed: AugmentedError<ApiType>;
+      /**
+       * Error Decoding utf8 bytes
+       **/
+      Utf8Error: AugmentedError<ApiType>;
+      /**
+       * Error writing acknowledgement to storage
+       **/
+      WriteAckError: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    ibcPing: {
+      /**
+       * Error opening channel
+       **/
+      ChannelInitError: AugmentedError<ApiType>;
+      /**
+       * Invalid params passed
+       **/
+      InvalidParams: AugmentedError<ApiType>;
+      /**
+       * Error registering packet
+       **/
+      PacketSendError: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

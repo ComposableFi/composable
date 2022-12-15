@@ -9,7 +9,7 @@ import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
 import type { BTreeMap, Bytes, Null, Option, Result, Struct, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, H256, Percent, Permill } from '@polkadot/types/interfaces/runtime';
-import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsAccountProxyProxyType, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDefiCurrencyPairCurrencyId, ComposableTraitsDexFee, ComposableTraitsLendingUpdateInput, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVestingVestingSchedule, ComposableTraitsVestingVestingScheduleIdSet, ComposableTraitsXcmAssetsXcmAssetLocation, FrameSupportScheduleLookupError, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, PalletCosmwasmContractInfo, PalletCosmwasmEntryPoint, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyVoteAccountVote, PalletDemocracyVoteThreshold, PalletDutchAuctionSellOrder, PalletMosaicAmmSwapInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, PalletMultisigTimepoint, PalletStakingRewardsRewardAccumulationHookError, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsAccountProxyProxyType, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDefiCurrencyPairCurrencyId, ComposableTraitsDexFee, ComposableTraitsLendingUpdateInput, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVestingVestingSchedule, ComposableTraitsVestingVestingScheduleIdSet, ComposableTraitsXcmAssetsXcmAssetLocation, FrameSupportScheduleLookupError, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, PalletCosmwasmContractInfo, PalletCosmwasmEntryPoint, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyVoteAccountVote, PalletDemocracyVoteThreshold, PalletDutchAuctionSellOrder, PalletIbcErrorsIbcError, PalletIbcEventsIbcEvent, PalletMosaicAmmSwapInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, PalletMultisigTimepoint, PalletStakingRewardsRewardAccumulationHookError, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>;
 
@@ -219,6 +219,14 @@ declare module '@polkadot/api-base/types/events' {
        **/
       OverFunded: AugmentedEvent<ApiType, [excessFunds: u128], { excessFunds: u128 }>;
       /**
+       * Called after rewards have been added through the `add` extrinsic.
+       **/
+      RewardsAdded: AugmentedEvent<ApiType, [additions: Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u64]>>], { additions: Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u64]>> }>;
+      /**
+       * Called after rewards have been deleted through the `delete` extrinsic.
+       **/
+      RewardsDeleted: AugmentedEvent<ApiType, [deletions: Vec<PalletCrowdloanRewardsModelsRemoteAccount>], { deletions: Vec<PalletCrowdloanRewardsModelsRemoteAccount> }>;
+      /**
        * A portion of rewards have been unlocked and future claims will not have locks
        **/
       RewardsUnlocked: AugmentedEvent<ApiType, [at: u64], { at: u64 }>;
@@ -413,6 +421,74 @@ declare module '@polkadot/api-base/types/events' {
       GrantRoot: AugmentedEvent<ApiType, [assetId: u128], { assetId: u128 }>;
       Remove: AugmentedEvent<ApiType, [assetId: u128], { assetId: u128 }>;
       Set: AugmentedEvent<ApiType, [assetId: u128, value: AccountId32], { assetId: u128, value: AccountId32 }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    ibc: {
+      /**
+       * Asset Admin Account Updated
+       **/
+      AssetAdminUpdated: AugmentedEvent<ApiType, [adminAccount: AccountId32], { adminAccount: AccountId32 }>;
+      /**
+       * A channel has been opened
+       **/
+      ChannelOpened: AugmentedEvent<ApiType, [channelId: Bytes, portId: Bytes], { channelId: Bytes, portId: Bytes }>;
+      /**
+       * Client has been frozen
+       **/
+      ClientFrozen: AugmentedEvent<ApiType, [clientId: Bytes, height: u64, revisionNumber: u64], { clientId: Bytes, height: u64, revisionNumber: u64 }>;
+      /**
+       * Client upgrade path has been set
+       **/
+      ClientUpgradeSet: AugmentedEvent<ApiType, []>;
+      /**
+       * Errors emitted by the ibc subsystem
+       **/
+      Errors: AugmentedEvent<ApiType, [errors: Vec<PalletIbcErrorsIbcError>], { errors: Vec<PalletIbcErrorsIbcError> }>;
+      /**
+       * Events emitted by the ibc subsystem
+       **/
+      Events: AugmentedEvent<ApiType, [events: Vec<PalletIbcEventsIbcEvent>], { events: Vec<PalletIbcEventsIbcEvent> }>;
+      /**
+       * On recv packet was not processed successfully processes
+       **/
+      OnRecvPacketError: AugmentedEvent<ApiType, [msg: Bytes], { msg: Bytes }>;
+      /**
+       * Pallet params updated
+       **/
+      ParamsUpdated: AugmentedEvent<ApiType, [sendEnabled: bool, receiveEnabled: bool], { sendEnabled: bool, receiveEnabled: bool }>;
+      /**
+       * Ibc tokens have been received and minted
+       **/
+      TokenReceived: AugmentedEvent<ApiType, [from: Bytes, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isReceiverSource: bool, sourceChannel: Bytes, destinationChannel: Bytes], { from: Bytes, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isReceiverSource: bool, sourceChannel: Bytes, destinationChannel: Bytes }>;
+      /**
+       * An outgoing Ibc token transfer has been completed and burnt
+       **/
+      TokenTransferCompleted: AugmentedEvent<ApiType, [from: Bytes, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isSenderSource: bool, sourceChannel: Bytes, destinationChannel: Bytes], { from: Bytes, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isSenderSource: bool, sourceChannel: Bytes, destinationChannel: Bytes }>;
+      /**
+       * Ibc transfer failed, received an acknowledgement error, tokens have been refunded
+       **/
+      TokenTransferFailed: AugmentedEvent<ApiType, [from: Bytes, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isSenderSource: bool, sourceChannel: Bytes, destinationChannel: Bytes], { from: Bytes, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isSenderSource: bool, sourceChannel: Bytes, destinationChannel: Bytes }>;
+      /**
+       * An Ibc token transfer has been started
+       **/
+      TokenTransferInitiated: AugmentedEvent<ApiType, [from: AccountId32, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isSenderSource: bool, sourceChannel: Bytes, destinationChannel: Bytes], { from: AccountId32, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isSenderSource: bool, sourceChannel: Bytes, destinationChannel: Bytes }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    ibcPing: {
+      /**
+       * A channel has been opened
+       **/
+      ChannelOpened: AugmentedEvent<ApiType, [channelId: Bytes, portId: Bytes], { channelId: Bytes, portId: Bytes }>;
+      /**
+       * A send packet has been registered
+       **/
+      PacketSent: AugmentedEvent<ApiType, []>;
       /**
        * Generic event
        **/
@@ -670,19 +746,19 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Liquidity added into the pool `T::PoolId`.
        **/
-      LiquidityAdded: AugmentedEvent<ApiType, [who: AccountId32, poolId: u128, assetAmounts: BTreeMap<u128, u128>, mintedLp: u128, poolType: Bytes], { who: AccountId32, poolId: u128, assetAmounts: BTreeMap<u128, u128>, mintedLp: u128, poolType: Bytes }>;
+      LiquidityAdded: AugmentedEvent<ApiType, [who: AccountId32, poolId: u128, assetAmounts: BTreeMap<u128, u128>, mintedLp: u128], { who: AccountId32, poolId: u128, assetAmounts: BTreeMap<u128, u128>, mintedLp: u128 }>;
       /**
        * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
        **/
-      LiquidityRemoved: AugmentedEvent<ApiType, [who: AccountId32, poolId: u128, assetAmounts: BTreeMap<u128, u128>, poolType: Bytes], { who: AccountId32, poolId: u128, assetAmounts: BTreeMap<u128, u128>, poolType: Bytes }>;
+      LiquidityRemoved: AugmentedEvent<ApiType, [who: AccountId32, poolId: u128, assetAmounts: BTreeMap<u128, u128>], { who: AccountId32, poolId: u128, assetAmounts: BTreeMap<u128, u128> }>;
       /**
        * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
        **/
-      PoolCreated: AugmentedEvent<ApiType, [poolId: u128, owner: AccountId32, assetWeights: BTreeMap<u128, Permill>, poolType: Bytes], { poolId: u128, owner: AccountId32, assetWeights: BTreeMap<u128, Permill>, poolType: Bytes }>;
+      PoolCreated: AugmentedEvent<ApiType, [poolId: u128, owner: AccountId32, assetWeights: BTreeMap<u128, Permill>], { poolId: u128, owner: AccountId32, assetWeights: BTreeMap<u128, Permill> }>;
       /**
        * Token exchange happened.
        **/
-      Swapped: AugmentedEvent<ApiType, [poolId: u128, who: AccountId32, baseAsset: u128, quoteAsset: u128, baseAmount: u128, quoteAmount: u128, fee: ComposableTraitsDexFee, poolType: Bytes], { poolId: u128, who: AccountId32, baseAsset: u128, quoteAsset: u128, baseAmount: u128, quoteAmount: u128, fee: ComposableTraitsDexFee, poolType: Bytes }>;
+      Swapped: AugmentedEvent<ApiType, [poolId: u128, who: AccountId32, baseAsset: u128, quoteAsset: u128, baseAmount: u128, quoteAmount: u128, fee: ComposableTraitsDexFee], { poolId: u128, who: AccountId32, baseAsset: u128, quoteAsset: u128, baseAmount: u128, quoteAmount: u128, fee: ComposableTraitsDexFee }>;
       /**
        * TWAP updated.
        **/

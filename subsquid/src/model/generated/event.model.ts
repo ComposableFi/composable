@@ -1,7 +1,7 @@
 import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, Index as Index_, OneToMany as OneToMany_} from "typeorm"
 import * as marshal from "./marshal"
 import {EventType} from "./_eventType"
-import {PabloTransaction} from "./pabloTransaction.model"
+import {PabloTransaction, fromJsonPabloTransaction} from "./_pabloTransaction"
 import {Activity} from "./activity.model"
 
 @Entity_()
@@ -43,6 +43,8 @@ export class Event {
     /**
      * If this transaction came from Pablo, it will have extra information
      */
+    @Column_("jsonb", {transformer: {to: obj => obj == null ? undefined : obj.toJSON(), from: obj => obj == null ? undefined : fromJsonPabloTransaction(obj)}, nullable: true})
+    pabloTransaction!: PabloTransaction | undefined | null
 
     @OneToMany_(() => Activity, e => e.event)
     activities!: Activity[]
