@@ -72,7 +72,7 @@ macro_rules! list_assets {
 	(
 		$(
 			$(#[$attr:meta])*
-			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal, $location:expr);
+			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal $(, $location:expr $(, $decimals:expr )?)? );
 		)*
 	) => {
 		$(
@@ -95,12 +95,20 @@ macro_rules! list_assets {
 		}
 
 		pub fn local_to_xcm_reserve(id: CurrencyId) -> Option<xcm::latest::MultiLocation> {
-			$(
-				let $NAME = $location;
-			)*
             match id {
 				$(
-					CurrencyId::$NAME => $NAME,
+					$( CurrencyId::$NAME => $location, )?
+				)*
+				_ => None,
+			}
+		}
+
+		pub fn remote_decimals_for_local(id: CurrencyId) -> Option<Exponent> {
+            match id {
+				$(
+					$(
+						$( CurrencyId::$NAME => $decimals, )?
+					)?
 				)*
 				_ => None,
 			}
@@ -114,10 +122,12 @@ macro_rules! list_assets {
 				static ref XCM_ASSETS: BTreeMap<Vec<u8>, CurrencyId> = {
 					let mut map = BTreeMap::new();
 					$(
-						let xcm_id: Option<xcm::latest::MultiLocation> = $location;
-						if let Some(xcm_id) = xcm_id {
-							map.insert(xcm_id.encode(), CurrencyId::$NAME);
-						}
+						$(
+							let xcm_id: Option<xcm::latest::MultiLocation> = $location;
+							if let Some(xcm_id) = xcm_id {
+								map.insert(xcm_id.encode(), CurrencyId::$NAME);
+							}
+						)?
 					)*
 					map
 				};
@@ -131,7 +141,7 @@ macro_rules! list_assets {
 					id: CurrencyId::$NAME.0 as u128,
 					name: Some(stringify!($NAME).as_bytes().to_vec()),
 					ratio: None,
-					decimals: Self::decimals(),
+					decimals: Self::remote_decimals_for_local(CurrencyId::$NAME).unwrap_or(Self::decimals()),
 					foreign_id: Self::local_to_xcm_reserve(CurrencyId::$NAME).map(XcmAssetLocation::new),
 					existential_deposit: 0_u128,
 				},)*
@@ -154,8 +164,7 @@ impl CurrencyId {
 			Some(topology::this::LOCAL)
 		);
 		/// Runtime native token Polkadot
-		pub const LAYR: CurrencyId = CurrencyId(2, None);
-		// NOTE: CurrencyId 3 is empty, fill as needed
+		pub const LAYR: CurrencyId = CurrencyId(2);
 
 		/// Kusama native token
 		pub const KSM: CurrencyId = CurrencyId(
@@ -171,6 +180,23 @@ impl CurrencyId {
 		);
 
 		pub const ibcDOT: CurrencyId = CurrencyId(6, None);
+
+		pub const KSM_USDT_LPT: CurrencyId = CurrencyId(105, None);
+		pub const PICA_USDT_LPT: CurrencyId = CurrencyId(106, None);
+
+		/// Staked asset xPICA Token
+		pub const xPICA: CurrencyId = CurrencyId(1001, None);
+		/// Staked asset xLAYR Token
+		pub const xLAYR: CurrencyId = CurrencyId(1002, None);
+
+		/// Staked asset xPBLO Token
+		pub const xPBLO: CurrencyId = CurrencyId(1005, None);
+
+		// fNFT Collection IDs (2001 - 100_000_000_000)
+		/// PICA Stake fNFT Collection
+		pub const PICA_STAKE_FNFT_COLLECTION: CurrencyId = CurrencyId(2001, None);
+		/// PBLO Stake fNFT Collection
+		pub const PBLO_STAKE_FNFT_COLLECTION: CurrencyId = CurrencyId(2005, None);
 
 		// Non-Native Tokens (101 - 1000)
 		/// Karura KAR
@@ -193,11 +219,6 @@ impl CurrencyId {
 		pub const vKSM: CurrencyId = CurrencyId(103, None);
 		/// Moonriver MOVR
 		pub const MOVR: CurrencyId = CurrencyId(104, None);
-
-		pub const KSM_USDT_LPT: CurrencyId = CurrencyId(105, None);
-		pub const PICA_USDT_LPT: CurrencyId = CurrencyId(106, None);
-		// NOTE: Empty CurrencyId slots starting with 107
-
 
 		/// Karura stable coin(Acala Dollar), not native.
 		pub const kUSD: CurrencyId = CurrencyId(
@@ -224,7 +245,8 @@ impl CurrencyId {
 					PalletInstance(topology::common_good_assets::ASSETS),
 					GeneralIndex(topology::common_good_assets::USDT),
 				),
-			})
+			}),
+			Some(6)
 		);
 		pub const USDC: CurrencyId = CurrencyId(131, None);
 		/// Wrapped BTC
@@ -233,24 +255,11 @@ impl CurrencyId {
 		pub const wETH: CurrencyId = CurrencyId(133, None);
 
 		// Staked asset xTokens (1001 - 2000)
-		/// Staked asset xPICA Token
-		pub const xPICA: CurrencyId = CurrencyId(1001, None);
-		/// Staked asset xLAYR Token
-		pub const xLAYR: CurrencyId = CurrencyId(1002, None);
+
 		/// Staked asset xKSM Token
 		pub const xKSM: CurrencyId = CurrencyId(1004, None);
-		/// Staked asset xPBLO Token
-		pub const xPBLO: CurrencyId = CurrencyId(1005, None);
-
-		// fNFT Collection IDs (2001 - 100_000_000_000)
-		/// PICA Stake fNFT Collection
-		pub const PICA_STAKE_FNFT_COLLECTION: CurrencyId = CurrencyId(2001, None);
-		/// PBLO Stake fNFT Collection
-		pub const PBLO_STAKE_FNFT_COLLECTION: CurrencyId = CurrencyId(2005, None);
 	}
 
-	// this to be removed because of XCMP and Parity Assets design one may not make sure assets all
-	// normalized to 12
 	#[inline(always)]
 	pub const fn decimals() -> Exponent {
 		12
@@ -347,6 +356,20 @@ mod common_sense {
 			}),
 			None
 		);
+	}
+
+	#[test]
+	fn one_right_map() {
+		let decimals = CurrencyId::remote_decimals_for_local(
+			CurrencyId::xcm_reserve_to_local(MultiLocation {
+				parents: 1,
+				interior: X3(Parachain(1000), PalletInstance(50), GeneralIndex(1984)),
+			})
+			.unwrap(),
+		)
+		.unwrap();
+
+		assert_eq!(decimals, 6);
 	}
 }
 mod ops {
