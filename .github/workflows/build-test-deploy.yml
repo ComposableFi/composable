@@ -435,14 +435,14 @@ jobs:
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
       - name: Deploy Project Artifacts to Vercel
         run: |
-          yes no | vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} > domain.txt
+          vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} > domain.txt
           echo "PREVIEW_URL=?(cat domain.txt)" >> $GITHUB_OUTPUT
       - name: Comment PR
         uses: thollander/actions-comment-pull-request@v1
         with:
           message: |
             Preview URL: ${{ steps.deploy-project-artifacts-to-vercel.outputs.PREVIEW_URL }}"
-          comment_includes: 'Nix commands for this PR'
+          comment_includes: 'Preview URL'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
 # TODO (vim): Decrease lead time until after release 3
