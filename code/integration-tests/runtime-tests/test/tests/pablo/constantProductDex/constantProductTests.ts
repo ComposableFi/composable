@@ -10,6 +10,7 @@ import BN from "bn.js";
 import { OrmlTokensAccountData } from "@composable/types/interfaces";
 import _ from "lodash";
 import {
+  calculateInGivenOut,
   calculateOutGivenIn
 } from "@composabletests/tests/pablo/testHandlers/constantProduct/weightedMath";
 
@@ -496,8 +497,8 @@ describe("tx.constantProductDex Tests", function () {
           baseAssetFundsCurrentlyInPools.free,
           quoteAssetFundsCurrentlyInPools.free,
           new BN(amount.toString()),
-            .5,
-          .5
+          5,
+          5
         );
         const expectedReducedByFee = expectedAmountOut.sub(resultFee.fee);
         debugger;
@@ -505,10 +506,11 @@ describe("tx.constantProductDex Tests", function () {
       }
     );
 
-    it(
+    it.only(
       "#4.5  I can buy an amount, and provided by the amount i want to get out, " +
         "and it'll be adjusted by the `inGivenOut` formula.",
       async function () {
+        const amount = Pica(1_000);
         const {
           data: [
             resultPoolId,
@@ -523,8 +525,28 @@ describe("tx.constantProductDex Tests", function () {
           api,
           walletTrader1,
           api.events.pablo.Swapped.is,
-          api.tx.pablo.buy(hardCodedPool1.poolId, 130, { assetId: 4, amount: Pica(1_000) }, false)
+          api.tx.pablo.buy(hardCodedPool1.poolId, 130, { assetId: 4, amount: amount }, false)
         );
+
+        const baseAssetFundsCurrentlyInPools = await api.query.tokens.accounts(
+          hardCodedPool1.poolWalletAddress,
+          hardCodedPool1.baseAssetId
+        );
+        const quoteAssetFundsCurrentlyInPools = await api.query.tokens.accounts(
+          hardCodedPool1.poolWalletAddress,
+          hardCodedPool1.quoteAssetId
+        );
+
+        const expectedAmountIn = calculateInGivenOut(
+          baseAssetFundsCurrentlyInPools.free,
+          quoteAssetFundsCurrentlyInPools.free,
+          new BN(amount.toString()),
+          5,
+          5
+        );
+        const expectedReducedByFee = expectedAmountIn.sub(resultFee.fee);
+        debugger;
+        expect(resultBaseAmount).to.be.bignumber.equal(new BN(expectedAmountIn.toString()));
       }
     );
 
@@ -585,7 +607,7 @@ describe("tx.constantProductDex Tests", function () {
         api.events.pablo.Swapped.is,
         api.tx.pablo.swap(hardCodedPool1.poolId, { assetId: 130, amount: 1_000 }, { assetId: 4, amount: 10_000 }, false) // ToDo: Update poolId & amounts if necessary!
       ).catch(exc => exc);
-      expect(exc.toString()).to.contain('pablo.CannotRespectMinimumRequested');
+      expect(exc.toString()).to.contain("pablo.CannotRespectMinimumRequested");
     });
 
     it("#4.11 I can not buy or swap in a pool that doesn't exist.", async function () {
@@ -602,7 +624,7 @@ describe("tx.constantProductDex Tests", function () {
           api.events.pablo.Swapped.is,
           api.tx.pablo.swap(1337, { assetId: 131, amount: 1_000 }, { assetId: 1, amount: 10_000 }, false) // ToDo: Update poolId & amounts if necessary!
         )
-      ]).catch(exc=>exc);
+      ]).catch(exc => exc);
       expect(exc1.toString()).to.contain("ToDo");
       expect(exc2.toString()).to.contain("ToDo");
     });
@@ -735,13 +757,19 @@ describe("tx.constantProductDex Tests", function () {
       expect(resultPoolId).to.be.bignumber.equal(new BN(hardCodedPool1.poolId)); // ToDo: Update pool id w/ created pool!
       // BTreeMaps are really the worst to deal with in JS... -.-
       expect(
-        new BN(_.filter(assets, function () {
-          if (assets.keys().next().value.toString() == '4') return assets.entries().next().value[1]
-        }).toString())
+        new BN(
+          _.filter(assets, function () {
+            if (assets.keys().next().value.toString() == "4") return assets.entries().next().value[1];
+          }).toString()
+        )
       ).to.be.bignumber.greaterThan(0);
-      expect(new BN(_.filter(assets, function () {
-        if (assets.keys().next().value.toString() == '130') return assets.entries().next().value[1]
-      }).toString())).to.be.bignumber.greaterThan(0);
+      expect(
+        new BN(
+          _.filter(assets, function () {
+            if (assets.keys().next().value.toString() == "130") return assets.entries().next().value[1];
+          }).toString()
+        )
+      ).to.be.bignumber.greaterThan(0);
       // expect(new BN(resultMintedLp.toString())).to.be.bignumber.closeTo(new BN(expectedAmountLpTokens.toString()), 1000)
       console.debug("MintedLp", resultMintedLp);
       console.debug("ExpectedLp", expectedAmountLpTokens);

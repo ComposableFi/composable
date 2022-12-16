@@ -11,7 +11,12 @@ import BN from "bn.js";
  * @return Ao => Amount user gets
  */
 export const calculateOutGivenIn = function (Bo: BN, Bi: BN, Ai: BN, Wi: number, Wo: number) {
-  return Bo.mul(new BN(1).sub(((Bi.div(Bi.add(Ai))).pow(new BN(Wi/Wo)))))
+  const mostInnerBrackets = Bi.div(Bi.add(Ai));
+  const toPower = mostInnerBrackets.pow(new BN(Wi/Wo));
+  const subOne = new BN(1).sub(toPower);
+  const timesBo = Bo.mul(subOne);
+  return timesBo;
+  //return Bo.mul(new BN(1).sub(((Bi.div(Bi.add(Ai))).pow(new BN(Wi/Wo)))))
 };
 
 /**
@@ -25,5 +30,10 @@ export const calculateOutGivenIn = function (Bo: BN, Bi: BN, Ai: BN, Wi: number,
  * @return Ao => Amount user has to put in.
  */
 export const calculateInGivenOut = function (Bo: BN, Bi: BN, Ao: BN, Wi: number, Wo: number) {
-  return Bi.mul(((Bo.div(Bo.sub(Ao))).pow(new BN(Wo/Wi))).sub(new BN(1)))
+  const mostInnerBrackets = (Bo.div(Bo.sub(Ao)));
+  const toPower = mostInnerBrackets.pow(new BN(Wo / Wi));
+  const subOne = toPower.sub(new BN(1));
+  const timesBi = Bi.mul(subOne);
+  // return Bi.mul(((Bo.div(Bo.sub(Ao))).pow(new BN(Wo/Wi))).sub(new BN(1)))
+  return timesBi
 };
