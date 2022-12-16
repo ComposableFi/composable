@@ -196,6 +196,7 @@ impl CurrencyId {
 
 		pub const KSM_USDT_LPT: CurrencyId = CurrencyId(105, None);
 		pub const PICA_USDT_LPT: CurrencyId = CurrencyId(106, None);
+		pub const PICA_KSM_LPT: CurrencyId = CurrencyId(107, None);
 		// NOTE: Empty CurrencyId slots starting with 107
 
 
