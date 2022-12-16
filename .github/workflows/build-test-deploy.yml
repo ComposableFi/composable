@@ -435,14 +435,14 @@ jobs:
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
       - name: Deploy Project Artifacts to Vercel
         run: |
-          vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} > domain.txt
-          echo "domain.txt": $(cat domain.txt)
-          echo "PREVIEW_URL=$(cat domain.txt)" >> $GITHUB_OUTPUT
+          PREVIEW_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})  
+          echo "preview-url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
+        id: deploy
       - name: Comment PR
         uses: thollander/actions-comment-pull-request@v1
         with:
           message: |
-            Pablo preview URL: ${{ steps.deploy-project-artifacts-to-vercel.outputs.PREVIEW_URL }}"
+            Pablo preview URL: ${{ steps.deploy.outputs.preview-url }}
           comment_includes: 'Pablo Preview URL'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -465,13 +465,14 @@ jobs:
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
       - name: Deploy Project Artifacts to Vercel
         run: |
-          vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} > domain.txt
-          echo "PREVIEW_URL=$(cat domain.txt)" >> $GITHUB_OUTPUT
+           PREVIEW_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+           echo "preview-url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
+        id: deploy
       - name: Comment PR
         uses: thollander/actions-comment-pull-request@v1
         with:
           message: |
-            Picasso preview URL: ${{ steps.deploy-project-artifacts-to-vercel.outputs.PREVIEW_URL }}
+            Picasso preview URL: ${{ steps.deploy.outputs.preview-url }}
           comment_includes: 'Picasso Preview URL'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
