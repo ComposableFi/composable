@@ -30,7 +30,20 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `lending`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
-	// Storage: Oracle Prices (r:2 w:0)
+	// same as vaults deposit plus 1 more read
+	// TODO: Please impl benchmarks
+	fn vault_deposit() -> Weight {
+		(140_947_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(10 as Weight))
+			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+	}
+	// same as vaults withdraw plus 1 more read
+	fn vault_withdraw() -> Weight {
+		(112_296_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(9 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
+    // Storage: Oracle Prices (r:2 w:0)
 	// Storage: Lending LendingCount (r:1 w:1)
 	// Storage: Vault VaultCount (r:1 w:1)
 	// Storage: CurrencyFactory AssetIdRanges (r:1 w:1)
