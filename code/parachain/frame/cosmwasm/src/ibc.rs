@@ -127,11 +127,15 @@ impl<T: Config> Pallet<T> {
 		let channel_id = ChannelId::from_str(&channel_id)
 			.map_err(|_| CosmwasmVMError::<T>::Ibc("unsupported channel name".to_string()))?;
 
+		
+		let (that_height, that_timestamp) = T::IbcRelayer::latest_height_and_timestamp(&port_id, &channel_id).map_err(|_| CosmwasmVMError::<T>::Ibc("failed to get counterparty info".to_string()))?;
+		let this_to_that_timestamp = |t|  t.nanos().checked_sub(T::UnixTime::now().as_nanos() as u64).unwrap().checked_add(that_timestamp).unwrap();
+		let this_height_to_that = |b| b.height.checked_sub(frame_system::Pallet::<T>::block_number()).unwrap().checked_add(that_height.revision_height).unwrap(); 
 		T::IbcRelayer::handle_message(HandlerMessage::SendPacket {
 			data: data.to_vec(),
 			timeout: ibc_primitives::Timeout::Absolute {
-				timestamp: timeout.timestamp().map(|t| t.nanos()),
-				height: timeout.block().map(|b| b.height),
+				timestamp: timeout.timestamp().map(this_to_that_timestamp),
+				height: timeout.block().map(this_height_to_that),
 			},
 			channel_id,
 			port_id,
