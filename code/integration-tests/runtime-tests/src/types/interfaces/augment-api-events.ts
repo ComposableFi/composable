@@ -6,7 +6,7 @@
 import '@polkadot/api-base/types/events';
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId } from '@composable/types/interfaces/common';
-import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsAccountProxyProxyType, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsLendingUpdateInput, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsXcmAssetsXcmAssetLocation, FrameSupportScheduleLookupError, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, PalletCosmwasmContractInfo, PalletCosmwasmEntryPoint, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyVoteAccountVote, PalletDutchAuctionSellOrder, PalletMosaicAmmSwapInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, PalletMultisigTimepoint, PalletStakingRewardsRewardAccumulationHookError, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@composable/types/interfaces/crowdloanRewards';
+import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsAccountProxyProxyType, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsLendingUpdateInput, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsXcmAssetsXcmAssetLocation, FrameSupportScheduleLookupError, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, PalletCosmwasmContractInfo, PalletCosmwasmEntryPoint, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyVoteAccountVote, PalletDutchAuctionSellOrder, PalletIbcErrorsIbcError, PalletIbcEventsIbcEvent, PalletMosaicAmmSwapInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, PalletMultisigTimepoint, PalletStakingRewardsRewardAccumulationHookError, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@composable/types/interfaces/crowdloanRewards';
 import type { PalletDemocracyVoteThreshold } from '@composable/types/interfaces/democracy';
 import type { ComposableTraitsDexFee } from '@composable/types/interfaces/pablo';
 import type { ComposableTraitsVestingVestingSchedule, ComposableTraitsVestingVestingScheduleIdSet } from '@composable/types/interfaces/vesting';
@@ -223,6 +223,14 @@ declare module '@polkadot/api-base/types/events' {
        **/
       OverFunded: AugmentedEvent<ApiType, [excessFunds: u128], { excessFunds: u128 }>;
       /**
+       * Called after rewards have been added through the `add` extrinsic.
+       **/
+      RewardsAdded: AugmentedEvent<ApiType, [additions: Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u64]>>], { additions: Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u64]>> }>;
+      /**
+       * Called after rewards have been deleted through the `delete` extrinsic.
+       **/
+      RewardsDeleted: AugmentedEvent<ApiType, [deletions: Vec<PalletCrowdloanRewardsModelsRemoteAccount>], { deletions: Vec<PalletCrowdloanRewardsModelsRemoteAccount> }>;
+      /**
        * A portion of rewards have been unlocked and future claims will not have locks
        **/
       RewardsUnlocked: AugmentedEvent<ApiType, [at: u64], { at: u64 }>;
@@ -417,6 +425,74 @@ declare module '@polkadot/api-base/types/events' {
       GrantRoot: AugmentedEvent<ApiType, [assetId: u128], { assetId: u128 }>;
       Remove: AugmentedEvent<ApiType, [assetId: u128], { assetId: u128 }>;
       Set: AugmentedEvent<ApiType, [assetId: u128, value: AccountId32], { assetId: u128, value: AccountId32 }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    ibc: {
+      /**
+       * Asset Admin Account Updated
+       **/
+      AssetAdminUpdated: AugmentedEvent<ApiType, [adminAccount: AccountId32], { adminAccount: AccountId32 }>;
+      /**
+       * A channel has been opened
+       **/
+      ChannelOpened: AugmentedEvent<ApiType, [channelId: Bytes, portId: Bytes], { channelId: Bytes, portId: Bytes }>;
+      /**
+       * Client has been frozen
+       **/
+      ClientFrozen: AugmentedEvent<ApiType, [clientId: Bytes, height: u64, revisionNumber: u64], { clientId: Bytes, height: u64, revisionNumber: u64 }>;
+      /**
+       * Client upgrade path has been set
+       **/
+      ClientUpgradeSet: AugmentedEvent<ApiType, []>;
+      /**
+       * Errors emitted by the ibc subsystem
+       **/
+      Errors: AugmentedEvent<ApiType, [errors: Vec<PalletIbcErrorsIbcError>], { errors: Vec<PalletIbcErrorsIbcError> }>;
+      /**
+       * Events emitted by the ibc subsystem
+       **/
+      Events: AugmentedEvent<ApiType, [events: Vec<PalletIbcEventsIbcEvent>], { events: Vec<PalletIbcEventsIbcEvent> }>;
+      /**
+       * On recv packet was not processed successfully processes
+       **/
+      OnRecvPacketError: AugmentedEvent<ApiType, [msg: Bytes], { msg: Bytes }>;
+      /**
+       * Pallet params updated
+       **/
+      ParamsUpdated: AugmentedEvent<ApiType, [sendEnabled: bool, receiveEnabled: bool], { sendEnabled: bool, receiveEnabled: bool }>;
+      /**
+       * Ibc tokens have been received and minted
+       **/
+      TokenReceived: AugmentedEvent<ApiType, [from: Bytes, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isReceiverSource: bool, sourceChannel: Bytes, destinationChannel: Bytes], { from: Bytes, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isReceiverSource: bool, sourceChannel: Bytes, destinationChannel: Bytes }>;
+      /**
+       * An outgoing Ibc token transfer has been completed and burnt
+       **/
+      TokenTransferCompleted: AugmentedEvent<ApiType, [from: Bytes, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isSenderSource: bool, sourceChannel: Bytes, destinationChannel: Bytes], { from: Bytes, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isSenderSource: bool, sourceChannel: Bytes, destinationChannel: Bytes }>;
+      /**
+       * Ibc transfer failed, received an acknowledgement error, tokens have been refunded
+       **/
+      TokenTransferFailed: AugmentedEvent<ApiType, [from: Bytes, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isSenderSource: bool, sourceChannel: Bytes, destinationChannel: Bytes], { from: Bytes, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isSenderSource: bool, sourceChannel: Bytes, destinationChannel: Bytes }>;
+      /**
+       * An Ibc token transfer has been started
+       **/
+      TokenTransferInitiated: AugmentedEvent<ApiType, [from: AccountId32, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isSenderSource: bool, sourceChannel: Bytes, destinationChannel: Bytes], { from: AccountId32, to: Bytes, ibcDenom: Bytes, localAssetId: Option<u128>, amount: u128, isSenderSource: bool, sourceChannel: Bytes, destinationChannel: Bytes }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    ibcPing: {
+      /**
+       * A channel has been opened
+       **/
+      ChannelOpened: AugmentedEvent<ApiType, [channelId: Bytes, portId: Bytes], { channelId: Bytes, portId: Bytes }>;
+      /**
+       * A send packet has been registered
+       **/
+      PacketSent: AugmentedEvent<ApiType, []>;
       /**
        * Generic event
        **/

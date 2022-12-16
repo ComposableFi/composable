@@ -1,17 +1,17 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { ComposableTraitsDefiCurrencyPairCurrencyId, CustomRpcBalance, CustomRpcCurrencyId, SafeRpcWrapper } from '@composable/types/interfaces/common';
+import type { CustomRpcBalance, CustomRpcCurrencyId, SafeRpcWrapper } from '@composable/types/interfaces/common';
 import type { BTreeMap, Enum, Null, Struct, u128 } from '@polkadot/types-codec';
-import type { AccountId32, AssetId, Balance, BlockNumber, Permill } from '@polkadot/types/interfaces/runtime';
+import type { AccountId32, AssetId, Balance, Permill } from '@polkadot/types/interfaces/runtime';
 
 /** @name ComposableTraitsDexFee */
 export interface ComposableTraitsDexFee extends Struct {
   readonly fee: u128;
-  readonly lp_fee: u128;
-  readonly owner_fee: u128;
-  readonly protocol_fee: u128;
-  readonly asset_id: u128;
+  readonly lpFee: u128;
+  readonly ownerFee: u128;
+  readonly protocolFee: u128;
+  readonly assetId: u128;
 }
 
 /** @name ComposableTraitsDexStakingRewardPool */
@@ -30,18 +30,7 @@ export interface PalletPabloPoolConfiguration extends Enum {
     readonly protocolFeeRate: Permill;
   } & Struct;
   } & Struct;
-  readonly isLiquidityBootstrapping: boolean;
-  readonly asLiquidityBootstrapping: {
-    readonly owner: AccountId32;
-    readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
-    readonly sale: {
-    readonly start: BlockNumber;
-    readonly end: BlockNumber;
-    readonly initial_weight: Permill;
-    readonly final_weight: Permill;
-  } & Struct;
-  } & Struct;
-  readonly type: 'DualAssetConstantProduct' | 'LiquidityBootstrapping';
+  readonly type: 'DualAssetConstantProduct';
 }
 
 /** @name PalletPabloPoolId */

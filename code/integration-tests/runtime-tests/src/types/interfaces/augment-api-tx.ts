@@ -6,7 +6,7 @@
 import '@polkadot/api-base/types/submittable';
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId, ComposableTraitsDefiSellCurrencyId, ComposableTraitsXcmXcmSellRequest } from '@composable/types/interfaces/common';
-import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsAccountProxyProxyType, ComposableTraitsAssetsBasicAssetMetadata, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsCurrencyRational64, ComposableTraitsDefiTake, ComposableTraitsDexAssetAmount, ComposableTraitsLendingCreateInput, ComposableTraitsLendingRepayStrategy, ComposableTraitsLendingUpdateInput, ComposableTraitsStakingRewardPoolConfiguration, ComposableTraitsStakingRewardUpdate, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVaultVaultConfig, ComposableTraitsXcmAssetsXcmAssetLocation, CumulusPrimitivesParachainInherentParachainInherentData, DaliRuntimeOpaqueSessionKeys, DaliRuntimeOriginCaller, FrameSupportScheduleMaybeHashed, PalletCosmwasmCodeIdentifier, PalletCrowdloanRewardsModelsProof, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyConviction, PalletDemocracyVoteAccountVote, PalletIdentityBitFlags, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletLiquidationsLiquidationStrategyConfiguration, PalletMosaicAmmSwapInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, PalletMultisigTimepoint, SpRuntimeHeader, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAsset, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@composable/types/interfaces/crowdloanRewards';
+import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsAccountProxyProxyType, ComposableTraitsAssetsBasicAssetMetadata, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsCurrencyRational64, ComposableTraitsDefiTake, ComposableTraitsDexAssetAmount, ComposableTraitsLendingCreateInput, ComposableTraitsLendingRepayStrategy, ComposableTraitsLendingUpdateInput, ComposableTraitsStakingRewardPoolConfiguration, ComposableTraitsStakingRewardUpdate, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVaultVaultConfig, ComposableTraitsXcmAssetsXcmAssetLocation, CumulusPrimitivesParachainInherentParachainInherentData, DaliRuntimeOpaqueSessionKeys, DaliRuntimeOriginCaller, FrameSupportScheduleMaybeHashed, PalletCosmwasmCodeIdentifier, PalletCrowdloanRewardsModelsProof, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyConviction, PalletDemocracyVoteAccountVote, PalletIbcAny, PalletIbcPalletParams, PalletIbcPingSendPingParams, PalletIbcTransferParams, PalletIbcUpgradeParams, PalletIdentityBitFlags, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletLiquidationsLiquidationStrategyConfiguration, PalletMosaicAmmSwapInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, PalletMultisigTimepoint, SpRuntimeHeader, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAsset, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@composable/types/interfaces/crowdloanRewards';
 import type { PalletPabloPoolInitConfiguration } from '@composable/types/interfaces/pablo';
 import type { ComposableTraitsVestingVestingScheduleIdSet, ComposableTraitsVestingVestingScheduleInfo } from '@composable/types/interfaces/vesting';
 import type { ApiTypes, AugmentedSubmittable, SubmittableExtrinsic, SubmittableExtrinsicFunction } from '@polkadot/api-base/types';
@@ -675,6 +675,11 @@ declare module '@polkadot/api-base/types/submittable' {
     };
     crowdloanRewards: {
       /**
+       * Adds all accounts in the `additions` vector. Add may be called even if the pallet has
+       * been initialized.
+       **/
+      add: AugmentedSubmittable<(additions: Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u64]>> | ([PalletCrowdloanRewardsModelsRemoteAccount | { RelayChain: any } | { Ethereum: any } | string | Uint8Array, u128 | AnyNumber | Uint8Array, u64 | AnyNumber | Uint8Array])[]) => SubmittableExtrinsic<ApiType>, [Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u64]>>]>;
+      /**
        * Associate a reward account. A valid proof has to be provided.
        * This call also claim the first reward (a.k.a. the first payment, which is a % of the
        * vested reward).
@@ -1162,6 +1167,32 @@ declare module '@polkadot/api-base/types/submittable' {
        * Sets the value of an `asset_id` to the signed account id. Only callable by root.
        **/
       set: AugmentedSubmittable<(assetId: u128 | AnyNumber | Uint8Array, value: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, AccountId32]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
+    ibc: {
+      deliver: AugmentedSubmittable<(messages: Vec<PalletIbcAny> | (PalletIbcAny | { typeUrl?: any; value?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Vec<PalletIbcAny>]>;
+      /**
+       * Freeze a client at a specific height
+       **/
+      freezeClient: AugmentedSubmittable<(clientId: Bytes | string | Uint8Array, height: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes, u64]>;
+      setParams: AugmentedSubmittable<(params: PalletIbcPalletParams | { sendEnabled?: any; receiveEnabled?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletIbcPalletParams]>;
+      transfer: AugmentedSubmittable<(params: PalletIbcTransferParams | { to?: any; sourceChannel?: any; timeout?: any } | string | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletIbcTransferParams, u128, u128]>;
+      /**
+       * We write the consensus & client state under these predefined paths so that
+       * we can produce state proofs of the values to connected chains
+       * in order to execute client upgrades.
+       **/
+      upgradeClient: AugmentedSubmittable<(params: PalletIbcUpgradeParams | { clientState?: any; consensusState?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletIbcUpgradeParams]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
+    ibcPing: {
+      sendPing: AugmentedSubmittable<(params: PalletIbcPingSendPingParams | { data?: any; timeoutHeightOffset?: any; timeoutTimestampOffset?: any; channelId?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletIbcPingSendPingParams]>;
       /**
        * Generic tx
        **/

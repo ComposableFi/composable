@@ -247,6 +247,9 @@ export default {
     ComposableTraitsCurrencyRational64: "Null",
     PalletCosmwasmInstrumentCostRules: "Null",
     PalletProxyProxyDefinition: "Null",
-    PalletProxyAnnouncement: "Null"
+    PalletProxyAnnouncement: "Null",
+    PalletIbcUpgradeParams: "Null",
+    PalletIbcTransferParams: "Null",
+    PalletIbcPalletParams: "Null"
   }
 };

@@ -95,10 +95,10 @@ export default {
     },
     ComposableTraitsDexFee: {
       fee: "u128",
-      lp_fee: "u128",
-      owner_fee: "u128",
-      protocol_fee: "u128",
-      asset_id: "u128"
+      lpFee: "u128",
+      ownerFee: "u128",
+      protocolFee: "u128",
+      assetId: "u128"
     },
     ComposableTraitsDexStakingRewardPool: "Null",
     RemoveLiquiditySimulationResult: {

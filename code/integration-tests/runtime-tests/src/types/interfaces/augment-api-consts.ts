@@ -305,6 +305,29 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    ibc: {
+      /**
+       * Expected block time in milliseconds
+       **/
+      expectedBlockTime: u64 & AugmentedConst<ApiType>;
+      /**
+       * Minimum connection delay period in seconds for ibc connections that can be created or
+       * accepted. Ensure that this is non-zero in production as it's a critical vulnerability.
+       **/
+      minimumConnectionDelay: u64 & AugmentedConst<ApiType>;
+      /**
+       * The native asset id, this will use the `NativeCurrency` for all operations.
+       **/
+      nativeAssetId: u128 & AugmentedConst<ApiType>;
+      /**
+       * Amount to be reserved for client and connection creation
+       **/
+      spamProtectionDeposit: u128 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     identity: {
       /**
        * The amount held on deposit for a registered identity
@@ -443,16 +466,7 @@ declare module '@polkadot/api-base/types/consts' {
       [key: string]: Codec;
     };
     pablo: {
-      msPerBlock: u32 & AugmentedConst<ApiType>;
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
-      /**
-       * AssetId of the PBLO asset
-       **/
-      pbloAssetId: u128 & AugmentedConst<ApiType>;
-      /**
-       * AssetId of the PICA asset
-       **/
-      picaAssetId: u128 & AugmentedConst<ApiType>;
       /**
        * The interval between TWAP computations.
        **/
