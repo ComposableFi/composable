@@ -21,8 +21,6 @@ use xcm_builder::ParentIsPreset;
 use xcm_emulator::TestExt;
 use xcm_executor::{traits::Convert, XcmExecutor};
 
-use frame_support::traits::fungibles::Inspect as MultiInspect;
-
 #[test]
 fn reserve_transfer_from_relay_alice_bob() {
 	simtest();
@@ -397,13 +395,13 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 		);
 
 		let treasury =
-			<Tokens as MultiInspect<_>>::balance(CurrencyId::KSM, &TreasuryAccount::get());
+			<Tokens as FungiblesInspect<_>>::balance(CurrencyId::KSM, &TreasuryAccount::get());
 		assert_lt!(
 			treasury,
 			ORDER_OF_FEE_ESTIMATE_ERROR * xcmp::xcm_asset_fee_estimator(4, CurrencyId::KSM)
 		);
 		let new_bob_on_sibling =
-			<Tokens as MultiInspect<_>>::balance(CurrencyId::KSM, &AccountId::from(bob()));
+			<Tokens as FungiblesInspect<_>>::balance(CurrencyId::KSM, &AccountId::from(bob()));
 		assert_lt_by!(
 			new_bob_on_sibling,
 			sibling_reserve_amount,
@@ -940,7 +938,7 @@ fn sibling_trap_assets_works() {
 		(balance, sibling_non_native_amount)
 	});
 
-	// buy execution via native token, and try withdraw on this some amount
+	log::info!(target: "bdd", "buy execution via native token, and try withdraw on this some amount");
 	Sibling::execute_with(|| {
 		let assets: MultiAsset = (
 			(Parent, X2(Parachain(THIS_PARA_ID), GeneralIndex(this_native_asset.into()))),
@@ -948,18 +946,13 @@ fn sibling_trap_assets_works() {
 		)
 			.into();
 		let xcm = vec![
-			WithdrawAsset(assets.clone().into()), /* withdraw native on target chain from origin
-			                                       * account */
-			BuyExecution {
-				// pay for origin account
-				fees: assets,
-				weight_limit: Unlimited,
-			},
+			WithdrawAsset(assets.clone().into()),
+			BuyExecution { fees: assets, weight_limit: Unlimited },
 			WithdrawAsset(
 				(
 					(Parent, X2(Parachain(SIBLING_PARA_ID), GeneralIndex(any_asset.into()))),
 					sibling_non_native_amount,
-				) // withdraw into VM holder asset, and do nothing...
+				)
 					.into(),
 			),
 		];
@@ -1029,7 +1022,7 @@ fn sibling_shib_to_transfer() {
 	});
 
 	let remote_sibling_asset_id = This::execute_with(|| {
-		log::info!(target: "bdd", "	and USD on Dali registered");
+		log::info!(target: "bdd", "	and SHIB on Dali registered");
 		use this_runtime::*;
 		let root = frame_system::RawOrigin::Root;
 		let location = XcmAssetLocation(MultiLocation::new(
@@ -1057,7 +1050,7 @@ fn sibling_shib_to_transfer() {
 	});
 	log::info!(target: "bdd", "{:?}", remote_sibling_asset_id);
 	Sibling::execute_with(|| {
-		log::info!(target: "bdd", "When Bob transfers some {:?} SHIB from from sibling to Dali", transfer_amount);
+		log::info!(target: "bdd", "When Bob transfers some {:?} SHIB from sibling to Dali", transfer_amount);
 		use sibling_runtime::*;
 		let origin = Origin::signed(bob().into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
@@ -1072,7 +1065,7 @@ fn sibling_shib_to_transfer() {
 			WeightLimit::Unlimited,
 		));
 		assert_eq!(
-			<Tokens as MultiInspect<_>>::balance(sibling_asset_id, &AccountId::from(bob())),
+			<Tokens as FungiblesInspect<_>>::balance(sibling_asset_id, &AccountId::from(bob())),
 			total_issuance - transfer_amount
 		);
 	});
@@ -1080,9 +1073,157 @@ fn sibling_shib_to_transfer() {
 	This::execute_with(|| {
 		use this_runtime::*;
 		log::info!(target: "bdd", "Then Bob gets some SHIB on Dali");
-		let fee = this_runtime::xcmp::xcm_asset_fee_estimator(5, remote_sibling_asset_id);
+		let fee = xcmp::xcm_asset_fee_estimator(5, remote_sibling_asset_id);
 		assert_gt!(transfer_amount, fee);
 		let balance = Tokens::free_balance(remote_sibling_asset_id, &AccountId::from(bob()));
 		assert_lt_by!(balance, transfer_amount, fee);
+	});
+}
+
+#[test]
+fn transfer_unknown_token_from_known_origin_ends_up_in_unknown_tokens() {
+	simtest();
+	let total_issuance = 3_500_000_000_000_000;
+	let transfer_amount = SHIB::ONE;
+	let sibling_asset_id = Sibling::execute_with(|| {
+		use sibling_runtime::*;
+		log::info!(target: "bdd", "Given one well-known/registered/sufficient/payable Sibling chain asset");
+		let sibling_asset_id =
+			CurrencyFactory::create(RangeId::TOKENS).expect("Valid range and ED; QED");
+		let root = frame_system::RawOrigin::Root;
+		let location = XcmAssetLocation(MultiLocation::new(
+			1,
+			X2(Parachain(SIBLING_PARA_ID), GeneralIndex(sibling_asset_id.into())),
+		));
+		AssetsRegistry::update_asset(
+			root.into(),
+			sibling_asset_id,
+			location,
+			Rational64::one(),
+			Some(SHIB::EXPONENT),
+		)
+		.expect("Asset already in Currency Factory; QED");
+
+		let root = frame_system::RawOrigin::Root;
+		Tokens::set_balance(
+			root.into(),
+			MultiAddress::Id(bob().into()),
+			sibling_asset_id,
+			total_issuance,
+			0,
+		)
+		.expect("Balance is valid; QED");
+		sibling_asset_id
+	});
+
+	let unknown_asset_id = Sibling::execute_with(|| {
+		use sibling_runtime::*;
+		log::info!(target: "bdd", "Given one not registered/nonpayable Sibling chain asset");
+		let sibling_asset_id =
+			CurrencyFactory::create(RangeId::TOKENS).expect("Valid range and ED; QED");
+		let root = frame_system::RawOrigin::Root;
+		let location = XcmAssetLocation(MultiLocation::new(
+			1,
+			X2(Parachain(SIBLING_PARA_ID), GeneralIndex(sibling_asset_id.into())),
+		));
+		AssetsRegistry::update_asset(
+			root.into(),
+			sibling_asset_id,
+			location,
+			Rational64::one(),
+			Some(SHIB::EXPONENT),
+		)
+		.expect("Asset already in Currency Factory; QED");
+
+		let root = frame_system::RawOrigin::Root;
+		Tokens::set_balance(
+			root.into(),
+			MultiAddress::Id(bob().into()),
+			sibling_asset_id,
+			total_issuance,
+			0,
+		)
+		.expect("Balance is valid; QED");
+		sibling_asset_id
+	});
+
+	let remote_sibling_asset_id = This::execute_with(|| {
+		use this_runtime::*;
+		let root = frame_system::RawOrigin::Root;
+		let location = XcmAssetLocation(MultiLocation::new(
+			1,
+			X2(Parachain(SIBLING_PARA_ID), GeneralIndex(sibling_asset_id.into())),
+		));
+		AssetsRegistry::register_asset(
+			root.into(),
+			location,
+			Rational64::one(),
+			Some(SHIB::EXPONENT),
+		)
+		.expect("Asset details are valid; QED");
+		System::events()
+			.iter()
+			.find_map(|x| match x.event {
+				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
+					asset_id,
+					location: _,
+					decimals: _,
+				}) => Some(asset_id),
+				_ => None,
+			})
+			.expect("Map exists; QED")
+	});
+
+	let assets = VersionedMultiAssets::V1(MultiAssets::from(vec![
+		(X1(GeneralIndex(unknown_asset_id.into())), transfer_amount).into(),
+		(X1(GeneralIndex(sibling_asset_id.into())), transfer_amount).into(),
+	]));
+
+	Sibling::execute_with(|| {
+		log::info!(target: "bdd", "When Bob transfers some known asset (as fee) and unknown asset");
+		use sibling_runtime::*;
+		let origin = Origin::signed(bob().into());
+		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
+			origin,
+			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
+				1,
+				X1(Parachain(THIS_PARA_ID))
+			))),
+			Box::new(Junction::AccountId32 { id: bob(), network: NetworkId::Any }.into().into()),
+			Box::new(assets),
+			0,
+			WeightLimit::Unlimited,
+		));
+		assert_eq!(
+			<Tokens as FungiblesInspect<_>>::balance(sibling_asset_id, &AccountId::from(bob())),
+			total_issuance - transfer_amount
+		);
+		assert_eq!(
+			<Tokens as FungiblesInspect<_>>::balance(unknown_asset_id, &AccountId::from(bob())),
+			total_issuance - transfer_amount
+		);
+	});
+
+	This::execute_with(|| {
+		use this_runtime::*;
+		log::info!(target: "bdd",  "Then destination chain took fee payment from first asset");
+		let fee = xcmp::xcm_asset_fee_estimator(5, remote_sibling_asset_id);
+		assert_gt!(transfer_amount, fee);
+		let balance = Tokens::free_balance(remote_sibling_asset_id, &AccountId::from(bob()));
+		assert_lt_by!(balance, transfer_amount, fee);
+
+		log::info!(target: "bdd",  "  and destination chain have unknown tokens balance");
+		let real_transfer_amount =
+			orml_unknown_tokens::Pallet::<Runtime>::concrete_fungible_balances(
+				MultiLocation {
+					parents: 0,
+					interior: X1(AccountId32 { id: bob(), network: NetworkId::Any }),
+				},
+				MultiLocation {
+					parents: 1,
+					interior: X2(Parachain(SIBLING_PARA_ID), GeneralIndex(unknown_asset_id.into())),
+				},
+			);
+		assert_eq!(real_transfer_amount, transfer_amount);
 	});
 }

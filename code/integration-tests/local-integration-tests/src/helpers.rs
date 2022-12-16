@@ -80,3 +80,35 @@ pub fn mint_relay_native_on_parachain(amount: Balance, to: &AccountId, para_id: 
 		.unwrap();
 	});
 }
+
+#[allow(dead_code)]
+pub fn mint_relay_native_on_common_good(amount: Balance, to: &AccountId, para_id: u32) {
+	KusamaRelay::execute_with(|| {
+		use kusama_runtime::*;
+		let _ = <Balances as frame_support::traits::Currency<_>>::deposit_creating(to, amount);
+		XcmPallet::teleport_assets(
+			Origin::signed(to.to_owned()),
+			Box::new(Parachain(para_id).into().into()),
+			Box::new(
+				Junction::AccountId32 { id: to.to_owned().into(), network: NetworkId::Any }
+					.into()
+					.into(),
+			),
+			Box::new((Here, amount).into()),
+			0,
+		)
+		.unwrap();
+	});
+}
+
+#[cfg(test)]
+mod test {
+	use codec::Encode;
+
+	#[test]
+	fn general_index_asset() {
+		let asset_id: u128 = 11;
+		let asset_id = hex::encode(asset_id.encode());
+		assert_eq!(&asset_id, "0b000000000000000000000000000000");
+	}
+}
