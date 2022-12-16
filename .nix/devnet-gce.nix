@@ -1,5 +1,5 @@
 { region, gce-input, docs, devnet, disk-size, machine-name, domain
-, extra-gce ? (_args: { }), extra-services ? (_args: { })
+, cerificateEmail, extra-gce ? (_args: { }), extra-services ? (_args: { })
 , extra-nginx-root ? (_args: { }), extra-nginx ? (_args: { })
 , extra-nginx-virtual ? (_args: { }), extra-nginx-hosts ? (_args: { }) }: {
   resources.gceNetworks.composable-devnet = gce-input // {
@@ -48,7 +48,7 @@
       };
       security.acme = {
         acceptTerms = true;
-        defaults = { email = "hussein@composable.finance"; };
+        defaults = { email = cerificateEmail; };
       };
       services.nginx = let
         virtualConfig = let
