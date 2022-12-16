@@ -436,7 +436,8 @@ jobs:
       - name: Deploy Project Artifacts to Vercel
         run: |
           vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} > domain.txt
-          echo "PREVIEW_URL=?(cat domain.txt)" >> $GITHUB_OUTPUT
+          cat domain.txt
+          echo "PREVIEW_URL=$(cat domain.txt)" >> $GITHUB_OUTPUT
       - name: Comment PR
         uses: thollander/actions-comment-pull-request@v1
         with:
@@ -465,12 +466,12 @@ jobs:
       - name: Deploy Project Artifacts to Vercel
         run: |
           vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} > domain.txt
-          echo "PREVIEW_URL=?(cat domain.txt)" >> $GITHUB_OUTPUT
+          echo "PREVIEW_URL=$(cat domain.txt)" >> $GITHUB_OUTPUT
       - name: Comment PR
         uses: thollander/actions-comment-pull-request@v1
         with:
           message: |
-            Picasso preview URL: ${{ steps.deploy-project-artifacts-to-vercel.outputs.PREVIEW_URL }}"
+            Picasso preview URL: ${{ steps.deploy-project-artifacts-to-vercel.outputs.PREVIEW_URL }}
           comment_includes: 'Picasso Preview URL'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
