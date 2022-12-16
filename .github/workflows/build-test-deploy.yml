@@ -416,6 +416,26 @@ jobs:
           command: nix -- build .#unit-tests
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+  deploy-pablo-preview:
+    name: "Deploy Pablo Preview"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Import project setting
+        run: |
+          mkdir -p .vercel
+          echo '${{ secrets.PABLO_PROJ_JSON }}' >> .vercel/project.json
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Build Project Artifacts
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy Project Artifacts to Vercel
+        run: |
+          vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} > domain.txt
+          vercel alias --token=${{ secrets.VERCEL_TOKEN }} set `cat domain.txt` pablo-nightly.app
+
 # TODO (vim): Decrease lead time until after release 3
 #  unit-tests-with-coverage:
 #    name: "Unit Tests with coverage"
