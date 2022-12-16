@@ -55,6 +55,7 @@
     "@polkadot/typegen": "9.10.2",
     "@polkadot/types": "9.10.2",
     "@polkadot/types-codec": "9.10.2",
+    "@types/bn.js": "^5.1.1",
     "@types/lodash": "^4.14.191",
     "@types/mocha": "10.0.1",
     "@types/node": "18.11.15",
