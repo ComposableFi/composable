@@ -22,8 +22,8 @@
                 || (isREADME name type) || (isJSON name type)
                 || (isProto name type));
           in pkgs.nix-gitignore.gitignoreFilterPure customFilter
-          [ ./../../.gitignore ] ./../../.;
-          src = ./../../.;
+          [ ./../../.gitignore ] ./../../code/.;
+          src = ./../../code/.;
         };
       };
     };
