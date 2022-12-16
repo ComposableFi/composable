@@ -27,7 +27,7 @@ export const calculateOutGivenIn = function (Bo: BN, Bi: BN, Ai: BN, Wi: number,
  * @param Ao Amount user wants out.
  * @param Wi Weight input token.
  * @param Wo Weight output token.
- * @return Ao => Amount user has to put in.
+ * @return Ai => Amount user has to put in.
  */
 export const calculateInGivenOut = function (Bo: BN, Bi: BN, Ao: BN, Wi: number, Wo: number) {
   const mostInnerBrackets = (Bo.div(Bo.sub(Ao)));
