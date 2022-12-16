@@ -23,7 +23,7 @@ Members of the First Council will consist of:
 - 0xBrainJar, Composable Founder/CEO
 - Jeff Smith, Composable General Counsel (GC)
 - Eoin Whelan, Composable CFO
-- Seun Lanlege, Composable Bridging Protocol Lead
+- Seun Lanlege, Founder of Polytope Labs
 - Ahmad Wehbi, Composable Head of Growth 
 - Karel, Composable CTO
 - 0xslenderman, Composable Head of Design
