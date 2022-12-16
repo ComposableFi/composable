@@ -963,6 +963,7 @@ jobs:
         - docs-check
         - hadolint-check
         - frontend-check
+        - lint-test-frontend
       steps:
         - run: echo "Goblins allow your work to see the light"
 
