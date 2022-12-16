@@ -11,8 +11,14 @@ use alloc::{
 	borrow::ToOwned, boxed::Box, collections::BTreeMap, format, string::String, vec, vec::Vec,
 };
 use core::{cell::SyncUnsafeCell, marker::PhantomData};
-use cosmwasm_vm::{cosmwasm_std::Coin, executor::InstantiateCall, system::CosmwasmContractMeta};
-use cosmwasm_vm_wasmi::code_gen::{self, Function, FunctionBuilder, TableSegment, WasmModule};
+use cosmwasm_vm::{
+	cosmwasm_std::{Coin, Reply, SubMsgResult},
+	executor::InstantiateCall,
+	system::CosmwasmContractMeta,
+};
+use cosmwasm_vm_wasmi::code_gen::{
+	self, Function, FunctionBuilder, PredefinedFunctions, Table, WasmModule,
+};
 use entrypoint::*;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{fungible, fungibles, fungibles::Mutate, Get};
@@ -43,6 +49,8 @@ const ED25519_PUBLIC_KEY2_HEX: &str =
 const BASE_ADDITIONAL_BINARY_SIZE: usize = 10;
 const FN_NAME: &str = "raw_fn";
 const INSTRUCTIONS_SAMPLE_COUNT: u32 = 50;
+// This is the first index where the user defined functions start
+const EXTRA_FN_INDEX: u32 = PredefinedFunctions::UserDefined as u32;
 
 // Substrate's benchmarks are compiled as follows: The upper part and the lower part are separate
 // functions. The upper part is the setup and the lower part is the actual benchmark which is put
@@ -89,7 +97,7 @@ fn get_shared_vm() -> &'static mut CosmwasmVMShared {
 /// Create a CosmWasm module with additional custom functions
 fn create_wasm_module_with_fns(
 	mut functions: Vec<(Function, Option<u32>)>,
-	table: Option<TableSegment>,
+	table: Option<Table>,
 ) -> wasmi::ModuleRef {
 	for (func, repeat) in &mut functions {
 		let mut instructions: Vec<Instruction> = match repeat {
@@ -583,20 +591,28 @@ benchmarks! {
 		Cosmwasm::<T>::do_continue_migrate(&mut vm.0, contract, "{}".as_bytes(), &mut |_event| {}).unwrap()
 	}
 
+	continue_query {
+		let sender = create_funded_account::<T>("origin");
+		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
+	}: {
+		Cosmwasm::<T>::do_continue_query(&mut vm.0, contract, "{}".as_bytes()).unwrap()
+	}
+
+	continue_reply {
+		let sender = create_funded_account::<T>("origin");
+		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
+	}: {
+		Cosmwasm::<T>::do_continue_reply(&mut vm.0, Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {})
+	}
+
 	query_info {
 		let sender = create_funded_account::<T>("origin");
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_query_info(&mut vm.0, contract).unwrap()
-	}
-
-	query_continuation {
-		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
-	}: {
-		Cosmwasm::<T>::do_continue_query(&mut vm.0, contract, "{}".as_bytes()).unwrap()
 	}
 
 	query_raw {
@@ -1161,9 +1177,7 @@ benchmarks! {
 				.instructions(vec![Instruction::I32Const(99), Instruction::Drop])
 				.build(), None),
 			(FunctionBuilder::new(FN_NAME)
-				// TODO(aeryz): This `8` is the offset of the first user defined function.
-				// code_gen should provide a constant value for this.
-				.instructions(vec![Instruction::Call(8)])
+				.instructions(vec![Instruction::Call(EXTRA_FN_INDEX)])
 				.build(),
 			Some(r))], None);
 	}: {
@@ -1175,7 +1189,7 @@ benchmarks! {
 	// The first parameter is the index of the function signature. Note that this indices
 	// are unique so if you have 8 functions and there are only 3 unique function signatures,
 	// there will be 3 signature in the list. And the order is first occurance based. That's
-	// why although the function index is 7, we are using 4 for the signature index.
+	// why although the function index is 9, we are using 4 for the signature index.
 	//
 	// The second parameter is reserved and not used right now.
 	//
@@ -1192,32 +1206,8 @@ benchmarks! {
 				.build(), None),
 			(FunctionBuilder::new(FN_NAME)
 				.instructions(vec![Instruction::I32Const(0), Instruction::CallIndirect(4, 0)])
-				.build(), None)
-			], Some(TableSegment { num_elements: 1, function_index: 8 }));
-	}: {
-		wasm_invoke(&mut module);
-	}
-
-	// We are benchmarking this per parameter because the execution time increases linearly depending
-	// on the number of parameters. It is because internally signatures are being compared. And this
-	// comparison takes more time
-	instruction_CallIndirect_per_param {
-		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let p in 1..100;
-
-		let mut indirect_caller_instructions = Vec::new();
-		let mut indirect_function = FunctionBuilder::new("indirect_function").instructions(vec![Instruction::I32Const(0), Instruction::Drop]);
-		for i in 0..p {
-			indirect_function = indirect_function.param(ValueType::I64);
-			indirect_caller_instructions.push(Instruction::I64Const(0));
-		}
-		indirect_caller_instructions.extend(vec![Instruction::I32Const(0), Instruction::CallIndirect(5, 0)]);
-
-		let mut module = create_wasm_module_with_fns(vec![
-			(indirect_function.build(), None),
-			(FunctionBuilder::new(FN_NAME)
-				.instructions(indirect_caller_instructions).build(), None),
-		], Some(TableSegment { num_elements: 1, function_index: 8 }));
+				.build(), Some(r))
+			], Some(Table::fill(EXTRA_FN_INDEX, 1)));
 	}: {
 		wasm_invoke(&mut module);
 	}
