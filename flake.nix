@@ -56,6 +56,7 @@
         ./rust.nix
         ./subsquid/subsquid.nix
         ./subwasm.nix
+        ./paritytech/zombienet/flake-module.nix
         ./scripts/zombienet/flake-module.nix
       ];
       systems =
@@ -79,6 +80,7 @@
         packages = {
           default = self'.packages.zombienet-rococo-local-dali-dev;
           devnet-dali = self'.packages.zombienet-rococo-local-dali-dev;
+          devnet-picasso = self'.packages.zombienet-rococo-local-picasso-dev;
           subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
           junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
           gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
@@ -86,27 +88,19 @@
             crane = crane.nightly;
           };
 
-          # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
           acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
             rust-overlay = self'.packages.rust-nightly;
           };
 
-          polkadot-node = pkgs.callPackage ./.nix/polkadot/polkadot-bin.nix {
-            rust-nightly = self'.packages.rust-nightly;
-          };
-
-          statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
-            rust-nightly = self'.packages.rust-nightly;
-          };
-
-          mmr-polkadot-node =
-            pkgs.callPackage ./.nix/polkadot/mmr-polkadot-bin.nix {
+          polkadot-node =
+            pkgs.callPackage ./paritytech/polkadot/polkadot-bin.nix {
               rust-nightly = self'.packages.rust-nightly;
             };
 
-          polkadot-launch =
-            pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix { };
-
+          statemine-node =
+            pkgs.callPackage ./paritytech/cumulus/statemine-bin.nix {
+              rust-nightly = self'.packages.rust-nightly;
+            };
         };
       };
       flake = {

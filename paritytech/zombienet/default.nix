@@ -26,7 +26,7 @@ in with prelude; rec {
       env = [{
         name = "RUST_LOG";
         value =
-          "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace";
+          "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
       }];
       name = name;
       validator = true;
@@ -135,4 +135,23 @@ in with prelude; rec {
     settings = mkSettings;
     types = mkTypes;
   };
+
+  zombienet-to-ops = zombienet:
+    let
+      ops-node = { name ? null, ws_port ? null, ... }:
+        if name != null && ws_port != null then {
+          ws_port = ws_port;
+          name = name;
+        } else
+          null;
+
+      driedCollators = collators:
+        builtins.filter (e: e != null) (builtins.map ops-node collators);
+      driedParachains = parachains:
+        builtins.map (e: driedCollators e.collators) parachains;
+    in {
+      parachain-nodes = driedParachains zombienet.parachains;
+      relaychain-nodes = builtins.filter (e: e != null)
+        (builtins.map ops-node zombienet.relaychain.nodes);
+    };
 }

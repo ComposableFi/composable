@@ -1,7 +1,8 @@
 { region, gce-input, docs, devnet, disk-size, machine-name, domain
-, extra-gce ? (_args: { }), extra-services ? (_args: { })
-, extra-nginx-root ? (_args: { }), extra-nginx ? (_args: { })
-, extra-nginx-virtual ? (_args: { }), extra-nginx-hosts ? (_args: { }) }: {
+, certificateEmail ? "hussein@composable.finance", extra-gce ? (_args: { })
+, extra-services ? (_args: { }), extra-nginx-root ? (_args: { })
+, extra-nginx ? (_args: { }), extra-nginx-virtual ? (_args: { })
+, extra-nginx-hosts ? (_args: { }) }: {
   resources.gceNetworks.composable-devnet = gce-input // {
     name = "composable-devnet-network";
     firewall = {
@@ -41,23 +42,23 @@
         serviceConfig = {
           Type = "simple";
           User = "root";
-          ExecStart = "${devnet.script}/bin/run-devnet-${devnet.chain-spec}";
+          ExecStart = getScript devnet.script;
           Restart = "always";
           RuntimeMaxSec = "86400"; # 1 day lease period for rococo, restart it
         };
       };
       security.acme = {
         acceptTerms = true;
-        defaults = { email = "hussein@composable.finance"; };
+        defaults = { email = certificateEmail; };
       };
       services.nginx = let
         virtualConfig = let
           routify-nodes = prefix:
             map (node: (node // { name = prefix + node.name; }));
           routified-composable-nodes =
-            routify-nodes "parachain/" devnet.parachain-nodes;
+            routify-nodes "parachain/" devnet.config.parachain-nodes;
           routified-polkadot-nodes =
-            routify-nodes "relaychain/" devnet.relaychain-nodes;
+            routify-nodes "relaychain/" devnet.config.relaychain-nodes;
           routified-nodes = routified-composable-nodes
             ++ routified-polkadot-nodes;
         in {
@@ -68,12 +69,12 @@
               (node: {
                 "/${node.name}" = {
                   proxyPass =
-                    "http://127.0.0.1:${builtins.toString node.wsPort}";
+                    "http://127.0.0.1:${builtins.toString node.ws_port}";
                   proxyWebsockets = true;
                   extraConfig = ''
                     proxy_set_header Origin "";
                     proxy_set_header Host 127.0.0.1:${
-                      builtins.toString node.wsPort
+                      builtins.toString node.ws_port
                     };
                   '';
                 };

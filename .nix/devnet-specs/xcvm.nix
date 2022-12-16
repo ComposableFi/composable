@@ -75,7 +75,7 @@
           "${junod-container-name}" = mk-composable-container
             (import ../services/junod.nix { rpcPort = junoRpcPort; });
           "${juno-indexer-container-name}" = mk-composable-container
-            (import ../services/juno-subql.nix {
+            (import ../services/juno-subql-indexer.nix {
               inherit pkgs;
               database = juno-indexer-db;
               juno = junod-container-name;

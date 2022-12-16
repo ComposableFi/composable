@@ -11,4 +11,5 @@
     nodePackages.typescript
     coreutils
   ];
+  containerRunInputs = [ pkgs.coreutils pkgs.glibc.bin pkgs.bash pkgs.procps ];
 }

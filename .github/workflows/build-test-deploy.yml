@@ -120,7 +120,36 @@ jobs:
       - run: |
           nix --version
           nix show-config                
-          nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
+          nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed          
+
+  check-nix-long:
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    needs:
+      - check-nix
+    concurrency:
+      group: ${{ github.workflow }}-check-nix-long-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          nix flake check --keep-going --allow-import-from-derivation --show-trace --no-update-lock-file --fallback --print-build-logs --debug -L
+
   cargo-fmt-check:
     name: "Cargo fmt check"
     runs-on: ubuntu-latest
@@ -592,41 +621,23 @@ jobs:
           command: nix -- build .#acala-node
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-  cache-kusama-parachains-devnet:
-    name: "Package kusama parachains devnet"
-    needs:
-      - package-polkadot-node
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-cache-kusama-parachains-devnet-${{ github.ref }}
-      cancel-in-progress: true
-    continue-on-error: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#kusama-picasso-karura-devnet
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   cache-devnet-all-dev-local:
-    name: "Package Full Devnet"
+    strategy:
+      matrix:
+        runtime: [devnet-dali-complete, devnet-picasso-complete, devnet]      
     needs:
       - package-polkadot-node
       - package-acala-node
       - package-statemine-node
+      - package-composable-node
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow }}-cache-devnet-all-dev-local-${{ github.ref }}
+      group: ${{ github.workflow }}-cache-devnet-all-dev-local-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
     continue-on-error: true
     container:
@@ -635,7 +646,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#devnet
+          command: nix -- build .#${{ matrix.runtime }}
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   lint-test-frontend:
@@ -972,6 +983,60 @@ jobs:
         env:
           NIXOPS_STATE_URL: gs://composable-state
           NIXOPS_STATE: "deployment.nixops"
+
+  check-devnet:
+      needs:
+        - cache-devnet-all-dev-local
+      continue-on-error: true
+      runs-on: ubuntu-latest
+      # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization
+      concurrency:
+        group: nix-deploy-devnet
+        cancel-in-progress: false
+      steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: false
+          fetch-depth: 0
+      - uses: cachix/install-nix-action@v17
+        with:
+          extra_nix_config: |
+            sandbox = relaxed
+            narinfo-cache-negative-ttl = 0
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix nixpkgs.jq
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{  env.CACHIX_COMPOSABLE }}
+
+      - uses: google-github-actions/setup-gcloud@v0
+        with:
+          service_account_key: ${{ secrets.GCP_CREDENTIALS }}
+          export_default_credentials: true
+
+      - name: Build & Push
+        run: |
+          cd devnet
+          jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
+          cd ..
+          if gsutil -q stat $NIXOPS_STATE_URL/$NIXOPS_STATE;
+          then
+            gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
+          else
+            nix develop .#ci --show-trace -L --command nixops create --check --dry-run --keep-going --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
+          fi
+          nix develop .#ci --show-trace -L --command nixops deploy --check --dry-run --keep-going --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
+  
+        env:
+          NIXOPS_STATE_URL: "gs://composable-state"
+          NIXOPS_STATE: "deployment.nixops"
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_DEVNET_SERVICE_ACCOUNT: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT }}
+          GCP_DEVNET_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT_KEY }}
 
   frontend-firebase-preview-deploy:
     name: "Firebase Preview channel PR deployment"
