@@ -436,8 +436,15 @@ jobs:
       - name: Deploy Project Artifacts to Vercel
         run: |
           vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} > domain.txt
-          vercel alias --token=${{ secrets.VERCEL_TOKEN }} set `cat domain.txt` pablo-nightly.app
-
+          echo "PREVIEW_URL=?(cat domain.txt)" >> $GITHUB_OUTPUT
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v1
+        with:
+          message: |
+            Preview URL: ${{ steps.deploy-project-artifacts-to-vercel.outputs.PREVIEW_URL }}"
+          comment_includes: 'Nix commands for this PR'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
 # TODO (vim): Decrease lead time until after release 3
 #  unit-tests-with-coverage:
 #    name: "Unit Tests with coverage"
