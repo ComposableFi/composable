@@ -435,7 +435,7 @@ jobs:
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
       - name: Deploy Project Artifacts to Vercel
         run: |
-          vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} > domain.txt
+          yes no | vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} > domain.txt
           echo "PREVIEW_URL=?(cat domain.txt)" >> $GITHUB_OUTPUT
       - name: Comment PR
         uses: thollander/actions-comment-pull-request@v1
