@@ -1,0 +1,158 @@
+#
+### Main Service 1: Squid Archive setups
+#
+services:
+  db:
+    image: postgres:14  # CockroachDB cluster might be a better fit for production deployment
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 3s
+        max_attempts: 3
+        window: 20s
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: squid-archive
+    ports:
+      - 5432:5432
+    volumes:
+      - db-data/:/var/lib/postgresql/data
+
+  local_chain:
+    image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+
+  ingest:
+    depends_on:
+      db:
+        condition: service_healthy
+      local_chain:
+        condition: service_started
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 3s
+        max_attempts: 3
+        window: 20s
+    image: subsquid/substrate-ingest:firesquid
+    command: [
+      # polkadot endpoints -- replace with your wss
+      "-e", "wss://local_chain",
+      # "-e", "wss://rpc.composablenodes.tech",
+      "-c", "10", # allow up to 20 pending requests for the above endpoint (default is 5)
+      #  "--start-block", "1000000", # uncomment to specify a non-zero start block
+      "--prom-port", "9090",
+      "--out", "postgres://postgres:postgres@db:5432/squid-archive"
+    ]
+    ports:
+      - "9090:9090" # prometheus port
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  gateway:
+    depends_on:
+      db:
+        condition: service_healthy
+    image: subsquid/substrate-gateway:firesquid
+    restart: on-failure
+    environment:
+      RUST_LOG: "substrate_gateway=info,actix_server=info"
+    command: [
+      "--database-url", "postgres://postgres:postgres@db:5432/squid-archive",
+      "--database-max-connections", "3", # max number of concurrent database connections
+      # "--evm-support" # uncomment for chains with Frontier EVM pallet
+      # (e.g. Moonbeam/Moonriver or Astar/Shiden)
+    ]
+    ports:
+      - "8888:8000"
+
+  # Explorer service is optional.
+  # It provides rich GraphQL API for querying archived data.
+  # Many developers find it very useful for exploration and debugging.
+  explorer:
+    image: subsquid/substrate-explorer:firesquid
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_TYPE: postgres # set to `cockroach` for Cockroach DB
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_PORT_PG: 5432
+      DB_NAME: "squid-archive"
+      DB_USER: "postgres"
+      DB_PASS: "postgres"
+
+    ports:
+      - "4010:3000"
+
+#
+### Main Service 2: Processor, aka squid processor
+#
+
+  # This DB service is used by squid
+  squid-db:
+    image: postgres:14
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 3s
+        max_attempts: 3
+        window: 20s
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_DB: squid
+      POSTGRES_PASSWORD: squid
+    volumes:
+      - db-data-squid/:/var/lib/postgresql/data
+
+  processor:
+    # image: squid-processor
+    image: docker.io/composablefi/subsquid-processor:latest
+    restart: on-failure
+    depends_on:
+      gateway:
+        condition: service_started
+      squid-db:
+        condition: service_started
+    environment:
+      DB_HOST: squid-db
+      DB_NAME: squid
+      DB_PASS: squid
+      DB_PORT: 5432
+      GQL_PORT: 4350
+      SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
+      RELAYCHAIN_URI: "wss://local_chain"
+
+  graphql-server:
+    # image: squid-processor
+    image: docker.io/composablefi/subsquid-processor:latest
+    restart: on-failure
+    entrypoint:
+      - npx 
+      - squid-graphql-server 
+      - --subscriptions    
+    depends_on:
+      processor:
+        condition: service_started
+    ports:
+      - 4350:4000
+    environment:
+      DB_NAME: squid
+      DB_HOST: squid-db
+      DB_PASS: squid
+      DB_PORT_PG: 5432
+
+volumes:
+  db-data:
+  db-data-squid:
