@@ -387,19 +387,10 @@ benchmarks! {
 		let new_admin = account::<<T as Config>::AccountIdExtended>("new_admin", 0, 0xCAFEBABE);
 		let (contract, _info) = create_instantiated_contract::<T>(origin.clone());
 
-	}: _(RawOrigin::Signed(origin), contract.clone(), new_admin.clone(), 100_000_000u64)
+	}: _(RawOrigin::Signed(origin), contract.clone(), Some(new_admin.clone()), 100_000_000u64)
 	verify {
 		// Make sure contract points to the new code
 		assert_eq!(ContractToInfo::<T>::get(&contract).unwrap().admin, Some(new_admin));
-	}
-
-	clear_admin {
-		let origin = create_funded_account::<T>("origin");
-		let (contract, _info) = create_instantiated_contract::<T>(origin.clone());
-	}: _(RawOrigin::Signed(origin), contract.clone(), 100_000_000u64)
-	verify {
-		// Make sure contract points to the new code
-		assert_eq!(ContractToInfo::<T>::get(&contract).unwrap().admin, None);
 	}
 
 	db_read {
