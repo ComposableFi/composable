@@ -1,6 +1,6 @@
 { self, ... }: {
-  perSystem =
-    { config, self', inputs', pkgs, system, crane, systemCommonRust, cargoTools, ... }: {
+  perSystem = { config, self', inputs', pkgs, system, crane, systemCommonRust
+    , cargoTools, ... }: {
       packages = {
         check-picasso-integration-tests = crane.nightly.cargoBuild
           (systemCommonRust.common-attrs // {
@@ -22,8 +22,6 @@
             cargoExtraArgs =
               "--features=local-integration-tests,dali,std --no-default-features --verbose";
           });
-
       };
-
     };
 }
