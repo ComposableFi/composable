@@ -45,6 +45,7 @@ It is clear that we are approaching a world in which the future of DeFi will be 
 In other words, the solution to the current fragmentation in DeFi is not more of the same bridges being built between one chain to another. 
 Instead, it is the unification of all ecosystems via a natively cross-chain infrastructure.
 
+## Limitations in Current Approaches
 Current approaches to solving these problems are limited by at least one of the below:
 - They are only focused on transfers, and not the broader developer experience
 - They are focused on creating an entirely new security model, based on a segregated chain
