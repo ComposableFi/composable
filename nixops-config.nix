@@ -13,7 +13,8 @@
               (builtins.getEnv "GOOGLE_APPLICATION_CREDENTIALS"));
           domainSuffix = getStringEnvOrDefault "NIXOPS_DEVNETS_DOMAIN_SUFFIX"
             "devnets.composablefinance.ninja";
-          cerificateEmail = getStringEnvOrDefault "NIXOPS_DEVNETS_CERTIFICATE_EMAIL"
+          certificateEmail =
+            getStringEnvOrDefault "NIXOPS_DEVNETS_CERTIFICATE_EMAIL"
             "hussein@composable.finance";
           gce-to-nix = { project_id, client_email, private_key, ... }: {
             project = project_id;
@@ -24,7 +25,7 @@
         in {
           default = let nixpkgs = self.inputs.nixpkgs;
           in import ./.nix/devnet.nix {
-            inherit nixpkgs gce-input domainSuffix cerificateEmail;
+            inherit nixpkgs gce-input domainSuffix certificateEmail;
             devnet-dali = pkgs.callPackage devnetTools.mk-devnet {
               inherit (self'.packages)
                 polkadot-launch composable-node polkadot-node;
