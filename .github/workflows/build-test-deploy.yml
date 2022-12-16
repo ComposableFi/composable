@@ -420,7 +420,9 @@ jobs:
     name: "Deploy Pablo Preview"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
       - name: Import project setting
