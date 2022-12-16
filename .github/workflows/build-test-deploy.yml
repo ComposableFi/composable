@@ -416,6 +416,66 @@ jobs:
           command: nix -- build .#unit-tests
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+  deploy-pablo-preview:
+    name: "Deploy Pablo Preview"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Import project setting
+        run: |
+          mkdir -p .vercel
+          echo '${{ secrets.PABLO_PROJ_JSON }}' >> .vercel/project.json
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Build Project Artifacts
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy Project Artifacts to Vercel
+        run: |
+          PREVIEW_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})  
+          echo "preview-url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
+        id: deploy
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v1
+        with:
+          message: |
+            Pablo preview URL: ${{ steps.deploy.outputs.preview-url }}
+          comment_includes: 'Pablo Preview URL'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-picasso-preview:
+    name: "Deploy Picasso Preview"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Import project setting
+        run: |
+          mkdir -p .vercel
+          echo '${{ secrets.PICASSO_PROJ_JSON }}' >> .vercel/project.json
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Build Project Artifacts
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy Project Artifacts to Vercel
+        run: |
+           PREVIEW_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+           echo "preview-url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
+        id: deploy
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v1
+        with:
+          message: |
+            Picasso preview URL: ${{ steps.deploy.outputs.preview-url }}
+          comment_includes: 'Picasso Preview URL'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 # TODO (vim): Decrease lead time until after release 3
 #  unit-tests-with-coverage:
 #    name: "Unit Tests with coverage"
