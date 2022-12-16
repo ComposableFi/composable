@@ -4,7 +4,7 @@
 
 use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::dex::{PriceAggregate, RemoveLiquiditySimulationResult};
+use composable_traits::dex::PriceAggregate;
 use sp_std::collections::btree_map::BTreeMap;
 
 // Pablo Runtime API declaration. Implemented for each runtime at
@@ -37,6 +37,6 @@ sp_api::decl_runtime_apis! {
 			pool_id: SafeRpcWrapper<PoolId>,
 			lp_amount: SafeRpcWrapper<Balance>,
 			min_expected_amounts: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
-		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>;
+		) -> BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>;
 	}
 }

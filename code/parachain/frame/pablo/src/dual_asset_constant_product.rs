@@ -6,7 +6,7 @@ use composable_maths::dex::{
 	},
 	per_thing_acceptable_computation_error, PoolWeightMathExt,
 };
-use composable_support::math::safe::SafeAdd;
+use composable_support::{collections::vec::bounded::BiBoundedVec, math::safe::SafeAdd};
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
 	dex::{AssetAmount, BasicPoolInfo, Fee, FeeConfig},
@@ -215,8 +215,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		pool: BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
 		pool_account: T::AccountId,
 		lp_amount: T::Balance,
-		min_receive: BoundedVec<AssetAmount<T::AssetId, T::Balance>, ConstU32<2>>,
-	) -> Result<(), DispatchError> {
+		min_receive: BiBoundedVec<AssetAmount<T::AssetId, T::Balance>, 1, 2>,
+	) -> Result<BTreeMap<T::AssetId, T::Balance>, DispatchError> {
 		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
 
 		let min_receive_with_current_balances = min_receive
@@ -231,7 +231,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
 
-		match min_receive_with_current_balances[..] {
+		let redeemed_assets = match min_receive_with_current_balances[..] {
 			[(single, (single_weight, single_balance))] => {
 				let single_redeemed_amount = compute_redeemed_for_lp(
 					lp_total_issuance,
@@ -252,6 +252,10 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					T::Convert::convert(single_redeemed_amount),
 					false, // pool account doesn't need to be kept alive
 				)?;
+
+				[(single.asset_id, T::Convert::convert(single_redeemed_amount))]
+					.into_iter()
+					.collect()
 			},
 			[(first_min_receive, (_first_weight, first_balance)), (second_min_receive, (_second_weight, second_balance))] =>
 			{
@@ -288,6 +292,13 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					T::Convert::convert(second_redeemed_amount),
 					false, // pool account doesn't need to be kept alive
 				)?;
+
+				[
+					(first_min_receive.asset_id, T::Convert::convert(first_redeemed_amount)),
+					(second_min_receive.asset_id, T::Convert::convert(second_redeemed_amount)),
+				]
+				.into_iter()
+				.collect()
 			},
 			_ => {
 				defensive!("this should be unreachable, since the input assets are bounded at 2");
@@ -297,7 +308,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 		T::Assets::burn_from(pool.lp_token, who, lp_amount)?;
 
-		Ok(())
+		Ok(redeemed_assets)
 	}
 
 	pub(crate) fn get_exchange_value(

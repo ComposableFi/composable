@@ -58,18 +58,19 @@ pub mod pallet {
 		WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::math::safe::{SafeArithmetic, SafeSub};
+	use composable_support::{
+		collections::vec::bounded::{bi_bounded_vec::BiBoundedVecOutOfBounds, BiBoundedVec},
+		math::safe::{SafeArithmetic, SafeSub},
+	};
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},
-		dex::{
-			Amm, BasicPoolInfo, Fee, PriceAggregate, RedeemableAssets,
-			RemoveLiquiditySimulationResult,
-		},
+		dex::{Amm, BasicPoolInfo, Fee, PriceAggregate, RedeemableAssets},
 	};
 	use core::fmt::Debug;
 	use frame_support::{
 		pallet_prelude::*,
+		storage::with_transaction,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
 			Time, TryCollect,
@@ -79,8 +80,7 @@ pub mod pallet {
 	use sp_arithmetic::FixedPointOperand;
 
 	use composable_maths::dex::{
-		constant_product::{compute_deposit_lp, compute_redeemed_for_lp},
-		price::compute_initial_price_cumulative,
+		constant_product::compute_redeemed_for_lp, price::compute_initial_price_cumulative,
 	};
 	use composable_traits::{
 		currency::BalanceLike,
@@ -89,7 +89,7 @@ pub mod pallet {
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::{
 		traits::{AccountIdConversion, Convert, One, Zero},
-		ArithmeticError, FixedPointNumber, Permill,
+		ArithmeticError, FixedPointNumber, Permill, TransactionOutcome,
 	};
 	use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
@@ -212,6 +212,8 @@ pub mod pallet {
 		IncorrectAssetAmounts,
 		UnsupportedOperation,
 		InitialDepositCannotBeZero,
+		/// The `min_amounts` passed to `remove_liquidity` must contain at least one asset.
+		MinAmountsMustContainAtLeastOneAsset,
 	}
 
 	#[pallet::config]
@@ -615,35 +617,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn lp_for_liquidity(
-			pool_config: PoolConfiguration<T::AccountId, T::AssetId>,
-			pool_account: T::AccountId,
-			base_amount: T::Balance,
-			quote_amount: T::Balance,
-		) -> Result<T::Balance, DispatchError> {
-			match pool_config {
-				PoolConfiguration::DualAssetConstantProduct(pool) => {
-					let assets = pool.assets_weights.keys().copied().collect::<Vec<_>>();
-					let currency_pair = CurrencyPair::new(assets[0], assets[1]);
-					let pool_base_aum =
-						T::Convert::convert(T::Assets::balance(currency_pair.base, &pool_account));
-					let pool_quote_aum =
-						T::Convert::convert(T::Assets::balance(currency_pair.quote, &pool_account));
-
-					let lp_total_issuance =
-						T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
-					let (_, amount_of_lp_token_to_mint) = compute_deposit_lp(
-						lp_total_issuance,
-						T::Convert::convert(base_amount),
-						T::Convert::convert(quote_amount),
-						pool_base_aum,
-						pool_quote_aum,
-					)?;
-					Ok(T::Convert::convert(amount_of_lp_token_to_mint))
-				},
-			}
-		}
-
 		#[deprecated(
 			note = "This is a temporary function for refactoring/migration purposes. Use `Amm::assets` instead."
 		)]
@@ -696,24 +669,17 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			amounts: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<Self::Balance, DispatchError> {
-			let pool = Self::get_pool(pool_id)?;
-			let pool_account = Self::account_id(&pool_id);
-			#[allow(deprecated)]
-			let currency_pair = Self::pool_ordered_pair(pool_id)?;
-			ensure!(amounts.len() < 3, Error::<T>::MoreThanTwoAssetsNotYetSupported);
-			let base_amount = *amounts.get(&currency_pair.base).ok_or(Error::<T>::MissingAmount)?;
-			let quote_amount =
-				*amounts.get(&currency_pair.quote).ok_or(Error::<T>::MissingAmount)?;
-			ensure!(
-				T::Assets::reducible_balance(currency_pair.base, who, false) >= base_amount,
-				Error::<T>::NotEnoughLiquidity
-			);
-			ensure!(
-				T::Assets::reducible_balance(currency_pair.quote, who, false) >= quote_amount,
-				Error::<T>::NotEnoughLiquidity
-			);
-
-			Self::lp_for_liquidity(pool, pool_account, base_amount, quote_amount)
+			with_transaction(|| {
+				// since we're simulating this, we want to immediately roll it back no matter what
+				// the outcome is
+				TransactionOutcome::Rollback(<Self as Amm>::add_liquidity(
+					who,
+					pool_id,
+					amounts,
+					Zero::zero(),
+					false,
+				))
+			})
 		}
 
 		fn redeemable_assets_for_lp_tokens(
@@ -751,48 +717,18 @@ pub mod pallet {
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-		) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError> {
-			let redeemable_assets = Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount)?;
-			let pool = Self::get_pool(pool_id)?;
-			#[allow(deprecated)]
-			let currency_pair = Self::pool_ordered_pair(pool_id)?;
-			let pool_account = Self::account_id(&pool_id);
-			match pool {
-				PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo { lp_token, .. }) => {
-					let base_amount = *redeemable_assets
-						.assets
-						.get(&currency_pair.base)
-						.ok_or(Error::<T>::InvalidAsset)?;
-					let quote_amount = *redeemable_assets
-						.assets
-						.get(&currency_pair.quote)
-						.ok_or(Error::<T>::InvalidAsset)?;
-					let lp_issued = T::Assets::total_issuance(lp_token);
-					let total_issuance = lp_issued.safe_sub(&lp_amount)?;
-
-					ensure!(
-						T::Assets::reducible_balance(currency_pair.base, &pool_account, false) >
-							base_amount,
-						Error::<T>::NotEnoughLiquidity
-					);
-					ensure!(
-						T::Assets::reducible_balance(currency_pair.quote, &pool_account, false) >
-							quote_amount,
-						Error::<T>::NotEnoughLiquidity
-					);
-					ensure!(
-						T::Assets::reducible_balance(lp_token, who, false) > lp_amount,
-						Error::<T>::NotEnoughLpToken
-					);
-					Ok(RemoveLiquiditySimulationResult {
-						assets: BTreeMap::from([
-							(currency_pair.base, base_amount),
-							(currency_pair.quote, quote_amount),
-							(lp_token, total_issuance),
-						]),
-					})
-				},
-			}
+			min_amounts: BTreeMap<Self::AssetId, Self::Balance>,
+		) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError> {
+			with_transaction(|| {
+				// since we're simulating this, we want to immediately roll it back no matter what
+				// the outcome is
+				TransactionOutcome::Rollback(<Self as Amm>::remove_liquidity(
+					who,
+					pool_id,
+					lp_amount,
+					min_amounts,
+				))
+			})
 		}
 
 		fn spot_price(
@@ -830,7 +766,7 @@ pub mod pallet {
 			assets: BTreeMap<Self::AssetId, Self::Balance>,
 			min_mint_amount: Self::Balance,
 			keep_alive: bool,
-		) -> Result<(), DispatchError> {
+		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			let minted_lp = match pool {
@@ -857,7 +793,7 @@ pub mod pallet {
 				asset_amounts: assets,
 				minted_lp,
 			});
-			Ok(())
+			Ok(minted_lp)
 		}
 
 		#[transactional]
@@ -866,32 +802,43 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
 			min_receive: BTreeMap<Self::AssetId, Self::Balance>,
-		) -> Result<(), DispatchError> {
+		) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError> {
 			let redeemable_assets = Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			match pool {
+			let res = match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) => {
-					DualAssetConstantProduct::<T>::remove_liquidity(
+					let res = DualAssetConstantProduct::<T>::remove_liquidity(
 						who,
 						info,
 						pool_account,
 						lp_amount,
-						min_receive
-							.into_iter()
-							.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
-							.try_collect()
-							.map_err(|_| Error::<T>::MoreThanTwoAssetsNotYetSupported)?,
+						BiBoundedVec::from_vec(
+							min_receive
+								.into_iter()
+								.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
+								.collect(),
+						)
+						.map_err(|err| match err {
+							BiBoundedVecOutOfBounds::LowerBoundError { .. } =>
+								Error::<T>::MinAmountsMustContainAtLeastOneAsset,
+							BiBoundedVecOutOfBounds::UpperBoundError { .. } =>
+								Error::<T>::MoreThanTwoAssetsNotYetSupported,
+						})?,
 					)?;
+
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
 						pool_id,
 						who: who.clone(),
 						asset_amounts: redeemable_assets.assets,
 					});
+
+					res
 				},
-			}
-			Ok(())
+			};
+
+			Ok(res)
 		}
 
 		#[transactional]
