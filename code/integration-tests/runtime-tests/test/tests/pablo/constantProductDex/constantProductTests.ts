@@ -84,8 +84,7 @@ describe("tx.constantProductDex Tests", function () {
     await api.disconnect();
   });
 
-  describe("1. Pool creation", function () {
-    return;
+  describe.skip("1. Pool creation", function () {
     it("#1.1  I can, as sudo, create a new Pablo Constant Product pool.", async function () {
       const owner = api.createType("AccountId32", poolOwnerWallet.publicKey);
       const poolConfiguration = api.createType("PalletPabloPoolInitConfiguration", {
@@ -240,9 +239,9 @@ describe("tx.constantProductDex Tests", function () {
   });
 
   describe("2. Providing liquidity", function () {
-    it("#2.1  I can provide liquidity to the predefined KSM<>USDT pool. ~~newly created pool. #1.1~~", async function () {
+    it.only("#2.1  I can provide liquidity to the predefined KSM<>USDT pool. ~~newly created pool. #1.1~~", async function () {
       const assets = api.createType("BTreeMap<u128, u128>", {
-        "4": Pica(10_000),
+        "4": Pica(100_000),
         "130": Pica(100_000)
       });
 
@@ -251,7 +250,17 @@ describe("tx.constantProductDex Tests", function () {
         hardCodedPool1.poolId.toString(), // ToDo: Update pool id w/ created pool!
         api.createType("BTreeMap<u128, u128>", assets)
       );
+      const baseAssetFundsCurrentlyInPoolsBefore = await api.query.tokens.accounts(
+        hardCodedPool1.poolWalletAddress,
+        hardCodedPool1.baseAssetId
+      );
+      const quoteAssetFundsCurrentlyInPoolsBefore = await api.query.tokens.accounts(
+        hardCodedPool1.poolWalletAddress,
+        hardCodedPool1.quoteAssetId
+      );
 
+      console.debug("KSM in pool:", baseAssetFundsCurrentlyInPoolsBefore.free.toString());
+      console.debug("USDT in pool:", quoteAssetFundsCurrentlyInPoolsBefore.free.toString());
       const {
         data: [resultWho, resultPoolId, resultAssetsAmount, resultMintedLp]
       } = await sendAndWaitForSuccess(
@@ -263,12 +272,24 @@ describe("tx.constantProductDex Tests", function () {
       );
       // ToDo
 
+      const baseAssetFundsCurrentlyInPoolsAfter = await api.query.tokens.accounts(
+        hardCodedPool1.poolWalletAddress,
+        hardCodedPool1.baseAssetId
+      );
+      const quoteAssetFundsCurrentlyInPoolsAfter = await api.query.tokens.accounts(
+        hardCodedPool1.poolWalletAddress,
+        hardCodedPool1.quoteAssetId
+      );
+
+      console.debug("KSM in pool:", baseAssetFundsCurrentlyInPoolsAfter.free.toString());
+      console.debug("USDT in pool:", quoteAssetFundsCurrentlyInPoolsAfter.free.toString());
+
       expect(resultWho.toString()).to.be.equal(api.createType("AccountId32", walletLpProvider1.publicKey).toString());
       expect(resultPoolId).to.be.bignumber.equal(new BN(hardCodedPool1.poolId)); // ToDo: Update pool id w/ created pool!
       expect(resultAssetsAmount).to.be.eql(assets);
       // expect(new BN(resultMintedLp.toString())).to.be.bignumber.closeTo(new BN(expectedAmountLpTokens.toString()), 1000)
-      console.debug("MintedLp", resultMintedLp);
-      console.debug("ExpectedLp", expectedAmountLpTokens);
+      // console.debug("MintedLp", resultMintedLp);
+      // console.debug("ExpectedLp", expectedAmountLpTokens);
     });
 
     it("#2.2  I can transfer my LP tokens to another user.", async function () {
@@ -454,7 +475,17 @@ describe("tx.constantProductDex Tests", function () {
       "#4.4  I can swap an amount, and provided by the amounts i want to give in, " +
         "and it'll be adjusted by the `outGivenIn` formula.",
       async function () {
-        const amount = Pica(10_000);
+        const amount = Pica(100);
+
+        const baseAssetFundsCurrentlyInPoolsBeforeTx = await api.query.tokens.accounts(
+          hardCodedPool1.poolWalletAddress,
+          hardCodedPool1.baseAssetId
+        );
+        const quoteAssetFundsCurrentlyInPoolsBeforeTx = await api.query.tokens.accounts(
+          hardCodedPool1.poolWalletAddress,
+          hardCodedPool1.quoteAssetId
+        );
+
         const {
           data: [
             resultPoolId,
@@ -484,18 +515,18 @@ describe("tx.constantProductDex Tests", function () {
         expect(resultBaseAsset).to.be.bignumber.equal(new BN(hardCodedPool1.baseAssetId));
         expect(resultQuoteAsset).to.be.bignumber.equal(new BN(hardCodedPool1.quoteAssetId));
 
-        const baseAssetFundsCurrentlyInPools = await api.query.tokens.accounts(
-          hardCodedPool1.poolWalletAddress,
-          hardCodedPool1.baseAssetId
-        );
-        const quoteAssetFundsCurrentlyInPools = await api.query.tokens.accounts(
-          hardCodedPool1.poolWalletAddress,
-          hardCodedPool1.quoteAssetId
-        );
-
+        console.debug("KSM in pool:", baseAssetFundsCurrentlyInPoolsBeforeTx.free.toString());
+        console.debug("USDT in pool:", quoteAssetFundsCurrentlyInPoolsBeforeTx.free.toString());
         const expectedAmountOut = calculateOutGivenIn(
-          baseAssetFundsCurrentlyInPools.free,
-          quoteAssetFundsCurrentlyInPools.free,
+          baseAssetFundsCurrentlyInPoolsBeforeTx.free,
+          quoteAssetFundsCurrentlyInPoolsBeforeTx.free,
+          new BN(amount.toString()),
+          5,
+          5
+        );
+        const expectedAmountOutWRONG = calculateOutGivenIn(
+          baseAssetFundsCurrentlyInPoolsBeforeTx.free,
+          quoteAssetFundsCurrentlyInPoolsBeforeTx.free,
           new BN(amount.toString()),
           5,
           5
@@ -510,7 +541,16 @@ describe("tx.constantProductDex Tests", function () {
       "#4.5  I can buy an amount, and provided by the amount i want to get out, " +
         "and it'll be adjusted by the `inGivenOut` formula.",
       async function () {
-        const amount = Pica(1_000);
+        const amount = Pica(100);
+
+        const baseAssetFundsCurrentlyInPoolsBeforeTx = await api.query.tokens.accounts(
+          hardCodedPool1.poolWalletAddress,
+          hardCodedPool1.baseAssetId
+        );
+        const quoteAssetFundsCurrentlyInPoolsBeforeTx = await api.query.tokens.accounts(
+          hardCodedPool1.poolWalletAddress,
+          hardCodedPool1.quoteAssetId
+        );
         const {
           data: [
             resultPoolId,
@@ -527,19 +567,19 @@ describe("tx.constantProductDex Tests", function () {
           api.events.pablo.Swapped.is,
           api.tx.pablo.buy(hardCodedPool1.poolId, 130, { assetId: 4, amount: amount }, false)
         );
-
-        const baseAssetFundsCurrentlyInPools = await api.query.tokens.accounts(
-          hardCodedPool1.poolWalletAddress,
-          hardCodedPool1.baseAssetId
-        );
-        const quoteAssetFundsCurrentlyInPools = await api.query.tokens.accounts(
-          hardCodedPool1.poolWalletAddress,
-          hardCodedPool1.quoteAssetId
-        );
+        console.debug("KSM in pool:", baseAssetFundsCurrentlyInPoolsBeforeTx.free.toString());
+        console.debug("USDT in pool:", quoteAssetFundsCurrentlyInPoolsBeforeTx.free.toString());
 
         const expectedAmountIn = calculateInGivenOut(
-          baseAssetFundsCurrentlyInPools.free,
-          quoteAssetFundsCurrentlyInPools.free,
+          baseAssetFundsCurrentlyInPoolsBeforeTx.free,
+          quoteAssetFundsCurrentlyInPoolsBeforeTx.free,
+          new BN(amount.toString()),
+          5,
+          5
+        );
+        const expectedAmountInWRONG = calculateInGivenOut(
+          quoteAssetFundsCurrentlyInPoolsBeforeTx.free,
+          baseAssetFundsCurrentlyInPoolsBeforeTx.free,
           new BN(amount.toString()),
           5,
           5
