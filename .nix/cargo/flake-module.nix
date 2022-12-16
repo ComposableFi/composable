@@ -16,9 +16,14 @@
               && (hasSuffix ".toml" name || hasSuffix ".lock" name);
             isRust = name: type: type == "regular" && hasSuffix ".rs" name;
             customFilter = name: type:
-              ((isCargo name type) || (isRust name type) || (isDir name type)
-                || (isREADME name type) || (isJSON name type)
-                || (isProto name type));
+              builtins.any (fun: fun name type) [
+                isCargo
+                isRust
+                isDir
+                isREADME
+                isJSON
+                isProto
+              ];
           in pkgs.nix-gitignore.gitignoreFilterPure customFilter
           [ ./../../.gitignore ] ./../../code/.;
           src = ./../../code/.;
