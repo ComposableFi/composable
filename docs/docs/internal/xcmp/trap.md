@@ -1,5 +1,7 @@
+---
+title: XCM transfers token loss
+---
 # Overview
-
 
 This document describes how a user may lose his tokens during XCM transfers.
 
