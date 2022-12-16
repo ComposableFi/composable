@@ -13,7 +13,7 @@ import type { ComposableTraitsVestingVestingSchedule, ComposableTraitsVestingVes
 import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
 import type { BTreeMap, Bytes, Null, Option, Result, Struct, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
-import type { AccountId32, H256, Percent } from '@polkadot/types/interfaces/runtime';
+import type { AccountId32, H256, Percent, Permill } from '@polkadot/types/interfaces/runtime';
 
 export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>;
 
@@ -489,6 +489,14 @@ declare module '@polkadot/api-base/types/events' {
     };
     lending: {
       /**
+       * Event emitted when asset is deposited by lender.
+       **/
+      AssetDeposited: AugmentedEvent<ApiType, [sender: AccountId32, marketId: u32, amount: u128], { sender: AccountId32, marketId: u32, amount: u128 }>;
+      /**
+       * Event emitted when asset is withdrawn by lender.
+       **/
+      AssetWithdrawn: AugmentedEvent<ApiType, [sender: AccountId32, marketId: u32, amount: u128], { sender: AccountId32, marketId: u32, amount: u128 }>;
+      /**
        * Event emitted when user borrows from given market.
        **/
       Borrowed: AugmentedEvent<ApiType, [sender: AccountId32, marketId: u32, amount: u128], { sender: AccountId32, marketId: u32, amount: u128 }>;
@@ -666,19 +674,15 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Liquidity added into the pool `T::PoolId`.
        **/
-      LiquidityAdded: AugmentedEvent<ApiType, [who: AccountId32, poolId: u128, mintedLp: u128], { who: AccountId32, poolId: u128, mintedLp: u128 }>;
+      LiquidityAdded: AugmentedEvent<ApiType, [who: AccountId32, poolId: u128, assetAmounts: BTreeMap<u128, u128>, mintedLp: u128], { who: AccountId32, poolId: u128, assetAmounts: BTreeMap<u128, u128>, mintedLp: u128 }>;
       /**
        * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
        **/
-      LiquidityRemoved: AugmentedEvent<ApiType, [who: AccountId32, poolId: u128], { who: AccountId32, poolId: u128 }>;
+      LiquidityRemoved: AugmentedEvent<ApiType, [who: AccountId32, poolId: u128, assetAmounts: BTreeMap<u128, u128>], { who: AccountId32, poolId: u128, assetAmounts: BTreeMap<u128, u128> }>;
       /**
        * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
        **/
-      PoolCreated: AugmentedEvent<ApiType, [poolId: u128, owner: AccountId32, assets: ComposableTraitsDefiCurrencyPairCurrencyId], { poolId: u128, owner: AccountId32, assets: ComposableTraitsDefiCurrencyPairCurrencyId }>;
-      /**
-       * The sale ended, the funds repatriated and the pool deleted.
-       **/
-      PoolDeleted: AugmentedEvent<ApiType, [poolId: u128, baseAmount: u128, quoteAmount: u128], { poolId: u128, baseAmount: u128, quoteAmount: u128 }>;
+      PoolCreated: AugmentedEvent<ApiType, [poolId: u128, owner: AccountId32, assetWeights: BTreeMap<u128, Permill>], { poolId: u128, owner: AccountId32, assetWeights: BTreeMap<u128, Permill> }>;
       /**
        * Token exchange happened.
        **/

@@ -1600,6 +1600,20 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       updateMarket: AugmentedSubmittable<(marketId: u32 | AnyNumber | Uint8Array, input: ComposableTraitsLendingUpdateInput | { collateralFactor?: any; underCollateralizedWarnPercent?: any; liquidators?: any; maxPriceAge?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, ComposableTraitsLendingUpdateInput]>;
       /**
+       * lender deposits assets to market.
+       * - `origin` : Sender of this extrinsic.
+       * - `market_id` : Market index to which asset will be deposited.
+       * - `amount` : Amount of asset to be deposited.
+       **/
+      vaultDeposit: AugmentedSubmittable<(marketId: u32 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u128]>;
+      /**
+       * lender withdraws assets to market.
+       * - `origin` : Sender of this extrinsic.
+       * - `market_id` : Market index to which asset will be withdrawn.
+       * - `amount` : Amount of asset to be withdrawn.
+       **/
+      vaultWithdraw: AugmentedSubmittable<(marketId: u32 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u128]>;
+      /**
        * Withdraw collateral from market.
        * - `origin` : Sender of this extrinsic.
        * - `market_id` : Market index from which collateral will be withdraw.
@@ -2135,7 +2149,7 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       killAnonymous: AugmentedSubmittable<(spawner: AccountId32 | string | Uint8Array, proxyType: ComposableTraitsAccountProxyProxyType | 'Any' | 'Governance' | 'CancelProxy' | number | Uint8Array, index: u16 | AnyNumber | Uint8Array, height: Compact<u32> | AnyNumber | Uint8Array, extIndex: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32, ComposableTraitsAccountProxyProxyType, u16, Compact<u32>, Compact<u32>]>;
       /**
-       * Dispatch the given `call` from an account that the sender is authorized for through
+       * Dispatch the given `call` from an account that the sender is authorised for through
        * `add_proxy`.
        * 
        * Removes any corresponding announcement(s).

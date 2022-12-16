@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId, CustomRpcBalance, CustomRpcCurrencyId, SafeRpcWrapper } from '@composable/types/interfaces/common';
-import type { BTreeMap, Enum, Null, Struct, u128, u16 } from '@polkadot/types-codec';
+import type { BTreeMap, Enum, Null, Struct, u128 } from '@polkadot/types-codec';
 import type { AccountId32, AssetId, Balance, BlockNumber, Permill } from '@polkadot/types/interfaces/runtime';
 
 /** @name ComposableTraitsDexFee */
@@ -19,19 +19,16 @@ export interface ComposableTraitsDexStakingRewardPool extends Null {}
 
 /** @name PalletPabloPoolConfiguration */
 export interface PalletPabloPoolConfiguration extends Enum {
-  readonly isStableSwap: boolean;
-  readonly asStableSwap: {
+  readonly isDualAssetConstantProduct: boolean;
+  readonly asDualAssetConstantProduct: {
     readonly owner: AccountId32;
-    readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
-    readonly amplification_coefficient: u16;
-    readonly fee: Permill;
+    readonly assetsWeights: BTreeMap<AssetId, Permill>;
+    readonly lpToken: u128;
+    readonly feeConfig: {
+    readonly feeRate: Permill;
+    readonly ownerFeeRate: Permill;
+    readonly protocolFeeRate: Permill;
   } & Struct;
-  readonly isConstantProduct: boolean;
-  readonly asConstantProduct: {
-    readonly owner: AccountId32;
-    readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
-    readonly fee: Permill;
-    readonly baseWeight: Permill;
   } & Struct;
   readonly isLiquidityBootstrapping: boolean;
   readonly asLiquidityBootstrapping: {
@@ -43,13 +40,8 @@ export interface PalletPabloPoolConfiguration extends Enum {
     readonly initial_weight: Permill;
     readonly final_weight: Permill;
   } & Struct;
-    readonly feeConfig: {
-    readonly feeRate: Permill;
-    readonly ownerFeeRate: Permill;
-    readonly protocolFeeRate: Permill;
   } & Struct;
-  } & Struct;
-  readonly type: 'StableSwap' | 'ConstantProduct' | 'LiquidityBootstrapping';
+  readonly type: 'DualAssetConstantProduct' | 'LiquidityBootstrapping';
 }
 
 /** @name PalletPabloPoolId */

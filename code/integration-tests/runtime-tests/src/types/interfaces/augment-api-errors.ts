@@ -182,7 +182,6 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     cosmwasm: {
-      ChargeGas: AugmentedError<ApiType>;
       CodeAlreadyExists: AugmentedError<ApiType>;
       CodeDecoding: AugmentedError<ApiType>;
       CodeEncoding: AugmentedError<ApiType>;
@@ -193,6 +192,7 @@ declare module '@polkadot/api-base/types/errors' {
       ContractHasNoInfo: AugmentedError<ApiType>;
       ContractNotFound: AugmentedError<ApiType>;
       ContractTrapped: AugmentedError<ApiType>;
+      FailedToSerialize: AugmentedError<ApiType>;
       Ibc: AugmentedError<ApiType>;
       Instrumentation: AugmentedError<ApiType>;
       InstrumentedCodeIsTooBig: AugmentedError<ApiType>;
@@ -202,8 +202,8 @@ declare module '@polkadot/api-base/types/errors' {
       NonceOverflow: AugmentedError<ApiType>;
       NotAuthorized: AugmentedError<ApiType>;
       NotEnoughFundsForUpload: AugmentedError<ApiType>;
+      OutOfGas: AugmentedError<ApiType>;
       RefcountOverflow: AugmentedError<ApiType>;
-      RefundGas: AugmentedError<ApiType>;
       SignatureVerificationError: AugmentedError<ApiType>;
       StackOverflow: AugmentedError<ApiType>;
       TransferFailed: AugmentedError<ApiType>;
@@ -924,7 +924,7 @@ declare module '@polkadot/api-base/types/errors' {
       AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
       AssetNotFound: AugmentedError<ApiType>;
       CannotRespectMinimumRequested: AugmentedError<ApiType>;
-      IncorrectAmountOfAssets: AugmentedError<ApiType>;
+      IncorrectAssetAmounts: AugmentedError<ApiType>;
       InitialDepositCannotBeZero: AugmentedError<ApiType>;
       InvalidAmount: AugmentedError<ApiType>;
       InvalidAsset: AugmentedError<ApiType>;

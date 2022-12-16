@@ -427,6 +427,12 @@ export interface PalletOracleWithdraw extends Struct {
   readonly unlockBlock: u32;
 }
 
+/** @name PalletProxyAnnouncement */
+export interface PalletProxyAnnouncement extends Null {}
+
+/** @name PalletProxyProxyDefinition */
+export interface PalletProxyProxyDefinition extends Null {}
+
 /** @name PalletSchedulerReleases */
 export interface PalletSchedulerReleases extends Null {}
 

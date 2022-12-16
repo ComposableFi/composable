@@ -246,5 +246,7 @@ export default {
     FrameSupportPalletId: "Null",
     ComposableTraitsCurrencyRational64: "Null",
     PalletCosmwasmInstrumentCostRules: "Null",
+    PalletProxyProxyDefinition: "Null",
+    PalletProxyAnnouncement: "Null"
   }
 };
