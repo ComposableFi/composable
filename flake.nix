@@ -57,6 +57,7 @@
         ./subsquid/subsquid.nix
         ./subwasm.nix
         ./scripts/zombienet/flake-module.nix
+        ./.nix/cargo/flake-module.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
