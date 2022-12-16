@@ -1,25 +1,16 @@
----
-title: References and Glossary
----
 # Overview
 
-Resources which allows to grasp  XCM.  For concrete message examples relevant for Composable look [here](./xcm-examples.md).
+Resources which allows to grasp XCM(P)('Cross Chain Message (Passing)').  For concrete message examples relevant for Composable look [here](./xcm-examples.md).
 
 ## Basics
 
-XCM - Cross Chain Message.
-
-XCMP - XCM passing.
-
-XCMP can be upward (parachain to relay), downward(relay to parachain, parachain to smart contract) and sibling(lateral, parachain to parachain) and anything in v3.
-
 [Moonbeam: Cross-Consensus Messaging (XCM)](https://docs.moonbeam.network/builders/xcm/overview/)
-
-## Conceptual
 
 [Polkadot's Cross-chain Message Passing Protocol: Shared Security and Polkadot's Design(video)](https://www.youtube.com/watch?v=XU6dAAQD9UE)
 
 [How XCM will actually be used with XCMP](https://forum.polkadot.network/t/how-xcm-will-actually-be-used-with-xcmp/190)
+
+[Tokens transfer scenarios](https://github.com/open-web3-stack/open-runtime-module-library/pull/856)]
 
 ## How to setup XCMP basics
 
