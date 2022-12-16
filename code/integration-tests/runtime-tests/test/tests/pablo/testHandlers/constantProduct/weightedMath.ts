@@ -1,4 +1,4 @@
-import BN from "bn.js";
+import BigNumber from "bignumber.js";
 
 /**
  * Ao = Bo * (1- (Bi / (Bi + Ai))^(Wi / Wo)))
@@ -10,13 +10,15 @@ import BN from "bn.js";
  * @param Wo Weight output token.
  * @return Ao => Amount user gets
  */
-export const calculateOutGivenIn = function (Bo: BN, Bi: BN, Ai: BN, Wi: number, Wo: number) {
-  const mostInnerBrackets = Bi.div(Bi.add(Ai));
-  const toPower = mostInnerBrackets.pow(new BN(Wi/Wo));
-  const subOne = new BN(1).sub(toPower);
-  const timesBo = Bo.mul(subOne);
+export const calculateOutGivenIn = function (Bo: BigNumber, Bi: BigNumber, Ai: BigNumber, Wi: BigNumber, Wo: BigNumber) {
+  BigNumber.DEBUG = true;
+  const mostInnerBrackets = Bi.div(Bi.plus(Ai));
+  const exponent = Wi.div(Wo)
+  const toPower = mostInnerBrackets.pow(exponent);
+  const subOne = BigNumber(1).minus( toPower);
+  const timesBo = Bo.multipliedBy(subOne);
   return timesBo;
-  //return Bo.mul(new BN(1).sub(((Bi.div(Bi.add(Ai))).pow(new BN(Wi/Wo)))))
+  //return Bo.mul(new bigint(1).sub(((Bi.div(Bi.add(Ai))).pow(new bigint(Wi/Wo)))))
 };
 
 /**
@@ -29,11 +31,13 @@ export const calculateOutGivenIn = function (Bo: BN, Bi: BN, Ai: BN, Wi: number,
  * @param Wo Weight output token.
  * @return Ai => Amount user has to put in.
  */
-export const calculateInGivenOut = function (Bo: BN, Bi: BN, Ao: BN, Wi: number, Wo: number) {
-  const mostInnerBrackets = (Bo.div(Bo.sub(Ao)));
-  const toPower = mostInnerBrackets.pow(new BN(Wo / Wi));
-  const subOne = toPower.sub(new BN(1));
-  const timesBi = Bi.mul(subOne);
-  // return Bi.mul(((Bo.div(Bo.sub(Ao))).pow(new BN(Wo/Wi))).sub(new BN(1)))
-  return timesBi
+export const calculateInGivenOut = function (Bo: BigNumber, Bi: BigNumber, Ao: BigNumber, Wi: BigNumber, Wo: BigNumber) {
+  BigNumber.DEBUG = true;
+  const mostInnerBrackets = Bo.div(Bo.minus(Ao));
+  const exponent = Wo.div(Wi)
+  const toPower = mostInnerBrackets.pow(exponent);
+  const subOne = toPower.minus(1);
+  const timesBi = Bi.multipliedBy(subOne);
+  // return Bi.mul(((Bo.div(Bo.sub(Ao))).pow(new bigint(Wo/Wi))).sub(new bigint(1)))
+  return timesBi;
 };
