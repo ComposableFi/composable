@@ -1,6 +1,9 @@
 #
 ### Main Service 1: Squid Archive setups
 #
+
+version: "3.8"
+
 services:
   db:
     image: postgres:14  # CockroachDB cluster might be a better fit for production deployment
