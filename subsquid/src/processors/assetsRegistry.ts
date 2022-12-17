@@ -4,7 +4,7 @@ import { ApiPromise, WsProvider } from "@polkadot/api";
 import { getHistoricalAssetPrice } from "./oracle";
 import { Asset, HistoricalAssetPrice } from "../model";
 import { chain } from "../config";
-import { XcmAssetLocation } from "subsquid/types/v10003";
+import { XcmAssetLocation } from "../types/v10002";
 import {
   AssetsRegistryAssetRegisteredEvent,
   AssetsRegistryAssetUpdatedEvent,
@@ -24,13 +24,13 @@ interface AssetUpdatedEvent {
 function getAssetRegisteredEvent(
   event: AssetsRegistryAssetRegisteredEvent
 ): AssetRegisteredEvent {
-  return event.asV10003;
+  return event.asV10002;
 }
 
 function getAssetUpdatedEvent(
   event: AssetsRegistryAssetUpdatedEvent
 ): AssetUpdatedEvent {
-  return event.asV10003;
+  return event.asV10002;
 }
 
 /**

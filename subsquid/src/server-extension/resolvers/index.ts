@@ -5,6 +5,7 @@ import { AssetsResolver } from "./assets";
 import { TotalValueLockedResolver } from "./totalValueLocked";
 import { TotalVolume } from "./totalVolume";
 import { StakingRewardsStatsResolver } from "./stakingRewards";
+import { PabloSpotPrice } from "./pabloSpotPrice";
 
 export {
   ActiveUsersResolver,
@@ -14,4 +15,5 @@ export {
   TotalValueLockedResolver,
   TotalVolume,
   StakingRewardsStatsResolver,
+  PabloSpotPrice,
 };

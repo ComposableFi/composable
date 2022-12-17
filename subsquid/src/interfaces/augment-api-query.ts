@@ -10,7 +10,7 @@ import type { Data } from '@polkadot/types';
 import type { BTreeMap, BTreeSet, Bytes, Null, Option, U8aFixed, Vec, WrapperKeepOpaque, bool, u128, u16, u32, u64 } from '@polkadot/types-codec';
 import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H256 } from '@polkadot/types/interfaces/runtime';
-import type { CommonMosaicRemoteAssetId, ComposableTraitsAccountProxyProxyDefinition, ComposableTraitsAssetsBasicAssetMetadata, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDexDexRoute, ComposableTraitsGovernanceSignedRawOrigin, ComposableTraitsLendingMarketConfig, ComposableTraitsOraclePrice, ComposableTraitsOracleRewardTracker, ComposableTraitsStakingRewardPool, ComposableTraitsStakingStake, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVestingVestingSchedule, ComposableTraitsXcmAssetsForeignMetadata, ComposableTraitsXcmAssetsXcmAssetLocation, ComposableTraitsXcmCumulusMethodId, CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueQueueConfigData, DaliRuntimeOpaqueSessionKeys, FrameSupportWeightsPerDispatchClassU64, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemPhase, IbcTransferPalletParams, OrmlTokensAccountData, OrmlTokensBalanceLock, OrmlTokensReserveData, PalletAccountProxyAnnouncement, PalletAuthorshipUncleEntryItem, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesReleases, PalletBalancesReserveData, PalletCollatorSelectionCandidateInfo, PalletCollectiveVotes, PalletCosmwasmCodeInfo, PalletCosmwasmContractInfo, PalletCrowdloanRewardsModelsRemoteAccount, PalletCrowdloanRewardsModelsReward, PalletCurrencyFactoryRanges, PalletDemocracyPreimageStatus, PalletDemocracyReferendumInfo, PalletDemocracyReleases, PalletDemocracyVoteThreshold, PalletDemocracyVoteVoting, PalletDutchAuctionSellOrder, PalletDutchAuctionTakeOrder, PalletIbcIbcConsensusState, PalletIdentityRegistrarInfo, PalletIdentityRegistration, PalletLiquidationsLiquidationStrategyConfiguration, PalletMosaicAssetInfo, PalletMosaicNetworkInfo, PalletMosaicRelayerStaleRelayer, PalletMultisigMultisig, PalletOracleAssetInfo, PalletOraclePrePrice, PalletOracleWithdraw, PalletPabloPoolConfiguration, PalletPabloPriceCumulative, PalletPabloTimeWeightedAveragePrice, PalletPreimageRequestStatus, PalletSchedulerScheduledV3, PalletTransactionPaymentReleases, PalletTreasuryProposal, PalletVaultModelsStrategyOverview, PalletVaultModelsVaultInfo, PalletXcmQueryStatus, PalletXcmVersionMigrationStage, PolkadotCorePrimitivesOutboundHrmpMessage, PolkadotPrimitivesV2AbridgedHostConfiguration, PolkadotPrimitivesV2PersistedValidationData, PolkadotPrimitivesV2UpgradeRestriction, SpConsensusAuraSr25519AppSr25519Public, SpCoreCryptoKeyTypeId, SpRuntimeDigest, SpTrieStorageProof, XcmV1MultiLocation, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+import type { CommonMosaicRemoteAssetId, ComposableTraitsAssetsBasicAssetMetadata, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsCurrencyRational64, ComposableTraitsDexDexRoute, ComposableTraitsGovernanceSignedRawOrigin, ComposableTraitsLendingMarketConfig, ComposableTraitsOraclePrice, ComposableTraitsOracleRewardTracker, ComposableTraitsStakingRewardPool, ComposableTraitsStakingStake, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVestingVestingSchedule, ComposableTraitsXcmAssetsForeignMetadata, ComposableTraitsXcmAssetsXcmAssetLocation, ComposableTraitsXcmCumulusMethodId, CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueQueueConfigData, DaliRuntimeOpaqueSessionKeys, FrameSupportWeightsPerDispatchClassU64, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemPhase, OrmlTokensAccountData, OrmlTokensBalanceLock, OrmlTokensReserveData, PalletAuthorshipUncleEntryItem, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesReleases, PalletBalancesReserveData, PalletCollatorSelectionCandidateInfo, PalletCollectiveVotes, PalletCosmwasmCodeInfo, PalletCosmwasmContractInfo, PalletCrowdloanRewardsModelsRemoteAccount, PalletCrowdloanRewardsModelsReward, PalletCurrencyFactoryRanges, PalletDemocracyPreimageStatus, PalletDemocracyReferendumInfo, PalletDemocracyReleases, PalletDemocracyVoteThreshold, PalletDemocracyVoteVoting, PalletDutchAuctionSellOrder, PalletDutchAuctionTakeOrder, PalletIbcPalletParams, PalletIdentityRegistrarInfo, PalletIdentityRegistration, PalletLiquidationsLiquidationStrategyConfiguration, PalletMosaicAssetInfo, PalletMosaicNetworkInfo, PalletMosaicRelayerStaleRelayer, PalletMultisigMultisig, PalletOracleAssetInfo, PalletOraclePrePrice, PalletOracleWithdraw, PalletPabloPoolConfiguration, PalletPabloPriceCumulative, PalletPabloTimeWeightedAveragePrice, PalletPreimageRequestStatus, PalletProxyAnnouncement, PalletProxyProxyDefinition, PalletSchedulerScheduledV3, PalletTransactionPaymentReleases, PalletTreasuryProposal, PalletVaultModelsStrategyOverview, PalletVaultModelsVaultInfo, PalletXcmQueryStatus, PalletXcmVersionMigrationStage, PolkadotCorePrimitivesOutboundHrmpMessage, PolkadotPrimitivesV2AbridgedHostConfiguration, PolkadotPrimitivesV2PersistedValidationData, PolkadotPrimitivesV2UpgradeRestriction, SpConsensusAuraSr25519AppSr25519Public, SpCoreCryptoKeyTypeId, SpRuntimeDigest, SpTrieStorageProof, XcmV1MultiLocation, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
 import type { Observable } from '@polkadot/types/types';
 
 export type __AugmentedQuery<ApiType extends ApiTypes> = AugmentedQuery<ApiType, () => unknown>;
@@ -22,7 +22,7 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * How much of asset amount is needed to pay for one unit of native token.
        **/
-      assetRatio: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<u128>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
+      assetRatio: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<ComposableTraitsCurrencyRational64>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
       /**
        * Mapping foreign asset to local asset.
        **/
@@ -289,6 +289,10 @@ declare module '@polkadot/api-base/types/storage' {
        * The rewards claimed so far.
        **/
       claimedRewards: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * If set, new locks will not be added to claims
+       **/
+      removeRewardLocks: AugmentedQuery<ApiType, () => Observable<Option<Null>>, []> & QueryableStorageEntry<ApiType, []>;
       rewards: AugmentedQuery<ApiType, (arg: PalletCrowdloanRewardsModelsRemoteAccount | { RelayChain: any } | { Ethereum: any } | string | Uint8Array) => Observable<Option<PalletCrowdloanRewardsModelsReward>>, [PalletCrowdloanRewardsModelsRemoteAccount]> & QueryableStorageEntry<ApiType, [PalletCrowdloanRewardsModelsRemoteAccount]>;
       /**
        * The total number of contributors.
@@ -479,6 +483,10 @@ declare module '@polkadot/api-base/types/storage' {
       acknowledgementCounter: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       channelCounter: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       /**
+       * ChannelIds open from this module
+       **/
+      channelIds: AugmentedQuery<ApiType, () => Observable<Vec<Bytes>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
        * connection_identifier => Vec<(port_id, channel_id)>
        **/
       channelsConnection: AugmentedQuery<ApiType, (arg: Bytes | string | Uint8Array) => Observable<Vec<ITuple<[Bytes, Bytes]>>>, [Bytes]> & QueryableStorageEntry<ApiType, [Bytes]>;
@@ -489,11 +497,11 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * client_id , Height => Height
        **/
-      clientUpdateHeight: AugmentedQuery<ApiType, (arg1: Bytes | string | Uint8Array, arg2: Bytes | string | Uint8Array) => Observable<Bytes>, [Bytes, Bytes]> & QueryableStorageEntry<ApiType, [Bytes, Bytes]>;
+      clientUpdateHeight: AugmentedQuery<ApiType, (arg1: Bytes | string | Uint8Array, arg2: Bytes | string | Uint8Array) => Observable<Option<Bytes>>, [Bytes, Bytes]> & QueryableStorageEntry<ApiType, [Bytes, Bytes]>;
       /**
        * client_id , Height => Timestamp
        **/
-      clientUpdateTime: AugmentedQuery<ApiType, (arg1: Bytes | string | Uint8Array, arg2: Bytes | string | Uint8Array) => Observable<u64>, [Bytes, Bytes]> & QueryableStorageEntry<ApiType, [Bytes, Bytes]>;
+      clientUpdateTime: AugmentedQuery<ApiType, (arg1: Bytes | string | Uint8Array, arg2: Bytes | string | Uint8Array) => Observable<Option<u64>>, [Bytes, Bytes]> & QueryableStorageEntry<ApiType, [Bytes, Bytes]>;
       /**
        * client_id => Vec<Connection_id>
        **/
@@ -503,14 +511,36 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       connectionCounter: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       /**
-       * height => IbcConsensusState
+       * Counter for the related counted storage map
        **/
-      hostConsensusStates: AugmentedQuery<ApiType, () => Observable<BTreeMap<u64, PalletIbcIbcConsensusState>>, []> & QueryableStorageEntry<ApiType, []>;
+      counterForIbcAssetIds: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Counter for the related counted storage map
+       **/
+      counterForIbcDenoms: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Active Escrow addresses
+       **/
+      escrowAddresses: AugmentedQuery<ApiType, () => Observable<BTreeSet<AccountId32>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Map of asset id to ibc denom pairs (T::AssetId, Vec<u8>)
+       * ibc denoms represented as utf8 string bytes
+       **/
+      ibcAssetIds: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<Bytes>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
+      /**
+       * Map of asset id to ibc denom pairs (Vec<u8>, T::AssetId)
+       * ibc denoms represented as utf8 string bytes
+       **/
+      ibcDenoms: AugmentedQuery<ApiType, (arg: Bytes | string | Uint8Array) => Observable<Option<u128>>, [Bytes]> & QueryableStorageEntry<ApiType, [Bytes]>;
       packetCounter: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * counter for packet receipts
        **/
       packetReceiptCounter: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Pallet Params used to disable sending or receipt of ibc tokens
+       **/
+      params: AugmentedQuery<ApiType, () => Observable<PalletIbcPalletParams>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Generic query
        **/
@@ -887,12 +917,12 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * The announcements made by the proxy (key).
        **/
-      announcements: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<ITuple<[Vec<PalletAccountProxyAnnouncement>, u128]>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
+      announcements: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<ITuple<[Vec<PalletProxyAnnouncement>, u128]>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
       /**
        * The set of account proxies. Maps the account which has delegated to the accounts
        * which are being delegated to, together with the amount held on deposit.
        **/
-      proxies: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<ITuple<[Vec<ComposableTraitsAccountProxyProxyDefinition>, u128]>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
+      proxies: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<ITuple<[Vec<PalletProxyProxyDefinition>, u128]>>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
       /**
        * Generic query
        **/
@@ -1118,7 +1148,7 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       [key: string]: QueryableStorageEntry<ApiType>;
     };
-    technicalCollective: {
+    technicalCommittee: {
       /**
        * The current members of the collective. This is stored sorted (just by value).
        **/
@@ -1148,7 +1178,7 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       [key: string]: QueryableStorageEntry<ApiType>;
     };
-    technicalMembership: {
+    technicalCommitteeMembership: {
       /**
        * The current membership, stored as an ordered Vec.
        **/
@@ -1207,29 +1237,6 @@ declare module '@polkadot/api-base/types/storage' {
     transactionPayment: {
       nextFeeMultiplier: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
       storageVersion: AugmentedQuery<ApiType, () => Observable<PalletTransactionPaymentReleases>, []> & QueryableStorageEntry<ApiType, []>;
-      /**
-       * Generic query
-       **/
-      [key: string]: QueryableStorageEntry<ApiType>;
-    };
-    transfer: {
-      /**
-       * ChannelIds open from this module
-       **/
-      channelIds: AugmentedQuery<ApiType, () => Observable<Vec<Bytes>>, []> & QueryableStorageEntry<ApiType, []>;
-      /**
-       * Counter for the related counted storage map
-       **/
-      counterForIbcAssetIds: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
-      /**
-       * Map of asset id to ibc denom pairs (T::AssetId, Vec<u8>)
-       * ibc denoms represented as utf8 string bytes
-       **/
-      ibcAssetIds: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<Bytes>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
-      /**
-       * Pallet Params used to disable sending or receipt of ibc tokens
-       **/
-      params: AugmentedQuery<ApiType, () => Observable<IbcTransferPalletParams>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Generic query
        **/

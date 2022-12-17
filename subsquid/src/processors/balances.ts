@@ -26,15 +26,15 @@ interface WithdrawEvent {
 }
 
 function getTransferEvent(event: BalancesTransferEvent): TransferEvent {
-  return event.asV10003;
+  return event.asV10002;
 }
 
 function getWithdrawEvent(event: BalancesWithdrawEvent): DepositEvent {
-  return event.asV10003;
+  return event.asV10002;
 }
 
 function getDepositEvent(event: BalancesDepositEvent): WithdrawEvent {
-  return event.asV10003;
+  return event.asV10002;
 }
 
 /**

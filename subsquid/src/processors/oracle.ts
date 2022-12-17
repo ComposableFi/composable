@@ -12,7 +12,7 @@ interface PriceChangedEvent {
 // function getPriceChangedEvent(
 //   event: OraclePriceChangedEvent
 // ): PriceChangedEvent {
-//   const [assetId, price] = event.asV2402;
+//   const [assetId, price] = event.asV10003;
 //   return { assetId, price };
 // }
 

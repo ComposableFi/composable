@@ -1,9 +1,10 @@
 import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_} from "typeorm"
+import * as marshal from "./marshal"
 import {PabloPool} from "./pabloPool.model"
 
 @Entity_()
-export class PabloTransaction {
-    constructor(props?: Partial<PabloTransaction>) {
+export class PabloAssetWeight {
+    constructor(props?: Partial<PabloAssetWeight>) {
         Object.assign(this, props)
     }
 
@@ -16,9 +17,8 @@ export class PabloTransaction {
 
     @Index_()
     @Column_("text", {nullable: false})
-    account!: string
+    assetId!: string
 
-    @Index_()
-    @Column_("timestamp with time zone", {nullable: false})
-    timestamp!: Date
+    @Column_("numeric", {transformer: marshal.floatTransformer, nullable: false})
+    weight!: number
 }

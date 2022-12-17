@@ -2,19 +2,19 @@ import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_} f
 
 @Entity_()
 export class Account {
-  constructor(props?: Partial<Account>) {
-    Object.assign(this, props)
-  }
+    constructor(props?: Partial<Account>) {
+        Object.assign(this, props)
+    }
 
-  /**
-   * Account address
-   */
-  @PrimaryColumn_()
-  id!: string
+    /**
+     * Account address
+     */
+    @PrimaryColumn_()
+    id!: string
 
-  /**
-   * Last event involving account
-   */
-  @Column_("text", {nullable: false})
-  eventId!: string
+    /**
+     * Last event involving account
+     */
+    @Column_("text", {nullable: false})
+    eventId!: string
 }
