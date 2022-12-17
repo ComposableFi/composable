@@ -145,6 +145,13 @@ pub mod pablo_picasso_init_pools {
 					CurrencyId::PICA_USDT_LPT,
 					Permill::from_rational::<u32>(3, 1000),
 				),
+				PoolCreationInput::new_two_token_pool(
+					CurrencyId::PICA,
+					Permill::from_percent(50),
+					CurrencyId::KSM,
+					CurrencyId::PICA_KSM_LPT,
+					Permill::from_rational::<u32>(3, 1000),
+				),
 			];
 
 			add_initial_pools_to_storage(pools)
