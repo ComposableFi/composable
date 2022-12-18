@@ -1,50 +1,88 @@
 import type { NextPage } from "next";
-import { Container, Box, Typography } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import { ConnectWalletFeaturedBox, Link, PageTitle } from "@/components";
 import { PoolDetails } from "@/components/Organisms/pool/PoolDetails";
-import { useDotSamaContext } from "substrate-react";
-import { useLiquidityPoolDetails } from "@/defi/hooks/useLiquidityPoolDetails";
+import { useDotSamaContext, useParachainApi } from "substrate-react";
 import { useRouter } from "next/router";
-import { useState, useEffect } from "react";
+import useStore from "@/store/useStore";
+import { pipe } from "fp-ts/lib/function";
+import { option } from "fp-ts";
+import { useEffect, useState } from "react";
+import { subscribePools } from "@/store/pools/subscribePools";
+import { PoolSelectSkeleton } from "@/components/Templates/pools/PoolSelectSkeleton";
+
+const isConnected = (status: string) => status === "connected";
+
+const breadcrumbs = [
+  <Link key="pool" underline="none" color="primary" href="/pool">
+    Pool
+  </Link>,
+  <Typography key="create-pool" color="text.primary">
+    Select
+  </Typography>,
+];
 
 const PoolDetailsPage: NextPage = () => {
-  const [poolId, setPoolId] = useState(-1);
-  const { baseAsset, quoteAsset } = useLiquidityPoolDetails(poolId);
   const router = useRouter();
+  const getPoolById = useStore((store) => store.pools.getPoolById);
+  const { extensionStatus } = useDotSamaContext();
+  const { parachainApi } = useParachainApi("picasso");
+  const [poolId, setPoolId] = useState<string>("");
+  const isPoolConfigLoaded = useStore((store) => store.pools.isLoaded);
 
   useEffect(() => {
-    if (router.isReady) {
-      let poolId = Number(router.query.poolId);
-      if (isNaN(poolId)) router.push("/pool");
-      setPoolId(Number(poolId));
+    if (!router.isReady) return;
+    const { poolId } = router.query;
+    if (isNaN(Number(poolId))) {
+      router.push("/pool");
+      return;
     }
+    setPoolId(poolId as string);
   }, [router]);
 
-  const { extensionStatus } = useDotSamaContext();
-  const connected = extensionStatus === "connected";
+  useEffect(() => {
+    if (parachainApi) {
+      return subscribePools(parachainApi);
+    }
+  }, [parachainApi]);
 
-  const breadcrumbs = [
-    <Link key="pool" underline="none" color="primary" href="/pool">
-      Pool
-    </Link>,
-    <Typography key="create-pool" color="text.primary">
-      Select
-    </Typography>,
-  ];
-
-  return (
-    <Default breadcrumbs={breadcrumbs}>
-      <Container maxWidth="lg">
-        <Box display="flex" flexDirection="column" alignItems="center" mb={8}>
-          <PageTitle
-            title={`${baseAsset?.getSymbol()}/${quoteAsset?.getSymbol()}` + " Pool"}
-            subtitle="Earn tokens while adding liquidity."
-          />
-        </Box>
-        {connected ? <PoolDetails mb={25} /> : <ConnectWalletFeaturedBox />}
-      </Container>
-    </Default>
+  return pipe(
+    isPoolConfigLoaded,
+    option.fromPredicate((a) => a),
+    option.fold(
+      () => <PoolSelectSkeleton />,
+      () => {
+        return pipe(
+          getPoolById(poolId as string),
+          option.fold(
+            () => <PoolSelectSkeleton />,
+            (a) => (
+              <Default breadcrumbs={breadcrumbs}>
+                <Container maxWidth="lg">
+                  <Box
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="center"
+                    mb={8}
+                  >
+                    <PageTitle
+                      title={`Some ${a.poolId.toString()}`}
+                      subtitle="Earn tokens while adding liquidity."
+                    />
+                  </Box>
+                  {isConnected(extensionStatus) ? (
+                    <PoolDetails mb={25} />
+                  ) : (
+                    <ConnectWalletFeaturedBox />
+                  )}
+                </Container>
+              </Default>
+            )
+          )
+        );
+      }
+    )
   );
 };
 

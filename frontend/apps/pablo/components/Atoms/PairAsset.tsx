@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, BoxProps, Typography, TypographyProps } from "@mui/material";
 import Image from "next/image";
-import { Asset } from "../types";
+import { Asset } from "shared";
 
 export type PairAssetProps = {
   assets: Asset[];
@@ -9,7 +9,7 @@ export type PairAssetProps = {
   iconOnly?: boolean;
   centeredLabel?: boolean;
   label?: string;
-  LabelProps?: TypographyProps,
+  LabelProps?: TypographyProps;
   separator?: string;
 } & BoxProps;
 
@@ -47,8 +47,8 @@ export const PairAsset: React.FC<PairAssetProps> = ({
               marginLeft={index > 0 ? -1.5 : undefined}
             >
               <Image
-                src={asset.icon}
-                alt={asset.label}
+                src={asset.getIconUrl()}
+                alt={asset.getSymbol()}
                 width={iconSize}
                 height={iconSize}
               />
@@ -58,7 +58,8 @@ export const PairAsset: React.FC<PairAssetProps> = ({
       )}
       {!iconOnly && (
         <Typography variant="body2" color="text.primary" {...LabelProps}>
-          {label || `${assets.map((asset) => asset.label).join(separator)}`}
+          {label ||
+            `${assets.map((asset) => asset.getSymbol()).join(separator)}`}
         </Typography>
       )}
     </Box>

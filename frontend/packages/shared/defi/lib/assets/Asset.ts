@@ -2,6 +2,8 @@ import { ApiPromise } from "@polkadot/api";
 import { fromChainIdUnit } from "../../unit";
 import { DropdownOptionWithIcon } from "../types";
 import BigNumber from "bignumber.js";
+import { pipe } from "fp-ts/function";
+import { option } from "fp-ts";
 
 export class Asset {
   protected __api?: ApiPromise;
@@ -132,12 +134,21 @@ export class Asset {
    * Get Asset Id on a different chain
    * @param {string} chainId
    * @param {boolean} inBn
-   * @returns {BigNumber | string}
+   * @returns {BigNumber | string | null}
    */
-  getIdOnChain(chainId: string, inBn: boolean = false): BigNumber | string {
-    const id = this.__parachainAssetIds.get(chainId);
-    if (!id) throw new Error(`Id not set for ${chainId}`);
-    return inBn ? id : id.toString();
+  getIdOnChain(
+    chainId: string,
+    inBn: boolean = false
+  ): BigNumber | string | null {
+    return pipe(
+      this.__parachainAssetIds.get(chainId),
+      option.fromNullable,
+      option.map((id) => (inBn ? id : id.toString())),
+      option.fold(
+        () => null,
+        (a) => a
+      )
+    );
   }
 
   setApi(api: ApiPromise) {
