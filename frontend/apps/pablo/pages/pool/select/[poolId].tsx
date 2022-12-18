@@ -67,12 +67,12 @@ const PoolDetailsPage: NextPage = () => {
                     mb={8}
                   >
                     <PageTitle
-                      title={`Some ${a.poolId.toString()}`}
+                      title={`${a.config.assets[0].getSymbol()}/${a.config.assets[1].getSymbol()} Pool`}
                       subtitle="Earn tokens while adding liquidity."
                     />
                   </Box>
                   {isConnected(extensionStatus) ? (
-                    <PoolDetails mb={25} />
+                    <PoolDetails poolId={poolId as string} />
                   ) : (
                     <ConnectWalletFeaturedBox />
                   )}

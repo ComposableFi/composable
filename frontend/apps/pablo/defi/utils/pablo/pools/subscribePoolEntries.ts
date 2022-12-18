@@ -4,11 +4,13 @@ import { pipe } from "fp-ts/function";
 import { option, readonlyArray } from "fp-ts";
 import BigNumber from "bignumber.js";
 import { PoolConfig, PoolKind } from "@/store/createPool/types";
-import { fromPermill, unwrapNumberOrHex } from "shared";
+import { Asset, fromPermill, unwrapNumberOrHex } from "shared";
 import type { PalletPabloPoolConfiguration } from "defi-interfaces";
+import { TokenId } from "tokens";
 
 export function subscribePoolEntries(
   parachainApi: ApiPromise,
+  tokens: Record<TokenId, Asset>,
   storeFn: (a: any) => void
 ) {
   return parachainApi.query.pablo.pools.entries(
@@ -46,6 +48,19 @@ export function subscribePoolEntries(
                     ])
                   ),
                   lpToken: (config.toJSON() as any)[kind].lpToken,
+                  assets: pipe(
+                    Object.keys((config.toJSON() as any)[kind].assetsWeights),
+                    readonlyArray.map((asset) =>
+                      pipe(
+                        Object.values<Asset>(tokens).find(
+                          (token) => token.getIdOnChain("picasso") === asset
+                        ),
+                        option.fromNullable
+                      )
+                    ),
+                    readonlyArray.compact,
+                    readonlyArray.toArray
+                  ),
                   feeConfig: {
                     feeRate: fromPermill(
                       unwrapNumberOrHex(

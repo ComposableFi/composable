@@ -1,4 +1,3 @@
-import PoolsUpdater from "@/updaters/pools/Updater";
 import LiquidityUpdater from "@/updaters/liquidity/Updater";
 import PoolStatsUpdater from "@/updaters/poolStats/Updater";
 import AssetsUpdater from "@/updaters/assets/Updater";
@@ -18,7 +17,6 @@ const BaseUpdater = () => {
       <AssetsUpdater />
       <LiquidityUpdater />
       <PoolStatsUpdater />
-      <PoolsUpdater />
     </>
   );
 };

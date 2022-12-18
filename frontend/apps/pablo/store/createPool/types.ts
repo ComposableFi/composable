@@ -1,5 +1,6 @@
 import BigNumber from "bignumber.js";
 import { option } from "fp-ts";
+import { Asset } from "shared";
 
 export type PoolKind = "dualAssetConstantPool" | "";
 
@@ -12,6 +13,7 @@ export type PoolConfig = {
     assetsWeights: {
       [assetId in number]: number;
     };
+    assets: [Asset, Asset];
     feeConfig: {
       feeRate: number;
       ownerFeeRate: number;

@@ -13,13 +13,11 @@ const createPoolSlice: StoreSlice<PoolSlice> = (set, get) => ({
         state.pools.isLoaded = true;
       });
     },
-    getPoolById: (poolId: string) => {
-      console.log(get().pools.config);
-      return pipe(
+    getPoolById: (poolId: string) =>
+      pipe(
         get().pools.config.find((pool) => pool.poolId.toString() === poolId),
         option.fromNullable
-      );
-    },
+      ),
   },
 });
 

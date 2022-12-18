@@ -1,21 +1,13 @@
 import {
+  alpha,
   Box,
-  useTheme,
-  Typography,
   BoxProps,
   Grid,
-  alpha,
+  Typography,
+  useTheme,
 } from "@mui/material";
-import { useLiquidityPoolDetails } from "@/defi/hooks/useLiquidityPoolDetails";
 import { PoolDetailsProps } from "./index";
-import { BaseAsset } from "@/components/Atoms";
-import { calculatePoolTotalValueLocked } from "@/defi/utils";
-import { useStakingRewardsPoolApy } from "@/defi/hooks/stakingRewards/useStakingRewardsPoolApy";
-import { useMemo } from "react";
-import BigNumber from "bignumber.js";
-import millify from "millify";
-import { useAssetIdOraclePrice } from "@/defi/hooks";
-import { useLiquidity } from "@/defi/hooks/useLiquidity";
+import { FC } from "react";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -27,7 +19,7 @@ type ItemProps = {
   value?: string;
 } & BoxProps;
 
-const Item: React.FC<ItemProps> = ({ label, value, children, ...boxProps }) => {
+const Item: FC<ItemProps> = ({ label, value, children, ...boxProps }) => {
   const theme = useTheme();
   return (
     <Box
@@ -56,75 +48,30 @@ const Item: React.FC<ItemProps> = ({ label, value, children, ...boxProps }) => {
   );
 };
 
-export const PoolStatistics: React.FC<PoolDetailsProps> = ({
+export const PoolStatistics: FC<PoolDetailsProps> = ({
   poolId,
   ...boxProps
 }) => {
-  const { pool, poolStats } = useLiquidityPoolDetails(poolId);
-
-  const pair = pool ? Object.keys(pool?.getAssets().assets) : null;
-  const base = pair?.[0] ?? "-";
-  const quote = pair?.[1] ?? "-";
-
-  const { baseAmount, quoteAmount } = useLiquidity(pool);
-
-  const baseAssetPriceUSD = useAssetIdOraclePrice(
-    base
-  );
-  const quoteAssetPriceUSD = useAssetIdOraclePrice(
-    quote
-  );
-
-  const stakePoolApy = useStakingRewardsPoolApy(pool?.getLiquidityProviderToken().getPicassoAssetId() as string ?? "-");
-  const rewardAPYs = useMemo(() => {
-    return Object.keys(stakePoolApy).reduce((v, i) => {
-      return v.plus(stakePoolApy[i])
-    }, new BigNumber(0))
-  }, [stakePoolApy]);
-
   return (
     <Box {...boxProps}>
       <Grid container spacing={4}>
         <Grid item {...twoColumnPageSize}>
-          <Item
-            label="Pool value"
-            value={`$${millify(
-              calculatePoolTotalValueLocked(
-                baseAmount,
-                quoteAmount,
-                baseAssetPriceUSD,
-                quoteAssetPriceUSD
-              ).toNumber()
-            )}`}
-          />
+          <Item label="Pool value" value={`N/A`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
-          <Item label="Rewards left" py={2}>
-            {poolStats.dailyRewards.map((asset) => (
-              <BaseAsset
-                key={asset.assetId}
-                icon={asset.icon}
-                label={asset.rewardAmountLeft}
-                justifyContent="center"
-                mt={0.5}
-              />
-            ))}
-          </Item>
+          <Item label="Rewards left" py={2}></Item>
         </Grid>
         <Grid item {...twoColumnPageSize}>
-          <Item label="Volume (24H)" value={`$${poolStats._24HrVolumeValue}`} />
+          <Item label="Volume (24H)" value={`N/A`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
-          <Item label="Fees (24H)" value={`$${poolStats._24HrFeeValue}`} />
+          <Item label="Fees (24H)" value={`N/A`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
-          <Item label="APY" value={`${rewardAPYs.toFixed(2)}%`} />
+          <Item label="APY" value={`N/A`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
-          <Item
-            label="Transactions (24H)"
-            value={`${poolStats._24HrTransactionCount}`}
-          />
+          <Item label="Transactions (24H)" value={`N/A`} />
         </Grid>
       </Grid>
     </Box>

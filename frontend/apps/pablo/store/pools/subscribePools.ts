@@ -6,12 +6,13 @@ export function subscribePools(api: ApiPromise) {
   return useStore.subscribe(
     (store) => ({
       isLoaded: store.substrateTokens.hasFetchedTokens,
+      tokens: store.substrateTokens.tokens,
       setPoolConfig: store.pools.setConfig,
     }),
-    ({ isLoaded, setPoolConfig }) => {
+    ({ isLoaded, setPoolConfig, tokens }) => {
       let unsub = Promise.resolve(() => {});
       if (isLoaded) {
-        unsub = subscribePoolEntries(api, setPoolConfig);
+        unsub = subscribePoolEntries(api, tokens, setPoolConfig);
       }
 
       return () => {

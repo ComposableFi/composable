@@ -1,12 +1,11 @@
 import { Box, BoxProps, Grid } from "@mui/material";
 import { TabItem, TabPanel, Tabs } from "@/components";
-import { useEffect, useMemo, useState } from "react";
+import { FC, SyntheticEvent, useState } from "react";
 import { PoolTVLChart } from "./PoolTVLChart";
 import { PoolStatistics } from "./PoolStatistics";
 import { PoolLiquidityPanel } from "./PoolLiquidityPanel";
 import { PoolStakingPanel } from "./PoolStakingPanel";
 import { PoolRewardsPanel } from "./PoolRewardsPanel";
-import { useRouter } from "next/router";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -19,39 +18,19 @@ const tabItems: TabItem[] = [
   },
   {
     label: "Staking",
+    disabled: true,
   },
   {
     label: "Rewards",
+    disabled: true,
   },
 ];
 
-export type PoolDetailsProps = { poolId: number } & BoxProps;
+export type PoolDetailsProps = { poolId: string } & BoxProps;
 
-export const PoolDetails: React.FC<BoxProps> = ({ ...boxProps }) => {
-  const [poolId, setPoolId] = useState(-1);
-  const router = useRouter();
-
-  useEffect(() => {
-    if (router.isReady) {
-      const { poolId, modal } = router.query;
-      setPoolId(Number(poolId));
-
-      // Switch to a tab on page load based on query string
-      if (modal && !Array.isArray(modal)) {
-        const labels = tabItems.map((tab) => tab.label);
-        const index = labels.findIndex(
-          (label) => label.toLowerCase() === modal.toLowerCase()
-        );
-        if (index > -1) {
-          setTab(index);
-        }
-        router.replace(`/pool/select/${poolId}`, undefined, { shallow: true });
-      }
-    }
-  }, [router]);
-
+export const PoolDetails: FC<PoolDetailsProps> = ({ poolId, ...boxProps }) => {
   const [tab, setTab] = useState<number>(0);
-  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_: SyntheticEvent, newValue: number) => {
     setTab(newValue);
   };
 
@@ -59,7 +38,7 @@ export const PoolDetails: React.FC<BoxProps> = ({ ...boxProps }) => {
     <Box {...boxProps}>
       <Grid container spacing={4}>
         <Grid item {...twoColumnPageSize}>
-          <PoolTVLChart poolId={poolId} />
+          <PoolTVLChart poolId={Number(poolId)} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
           <PoolStatistics poolId={poolId} />
