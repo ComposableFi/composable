@@ -6,8 +6,12 @@ export const appBarOverrides = (
 ): Partial<OverridesStyleRules> => ({
   styleOverrides: {
     root: {
-      marginTop: 1,
       background: `transparent`,
+    },
+    positionFixed: {
+      "&:after": {
+        backdropFilter: "blur(8px)",
+      },
     },
   },
 });

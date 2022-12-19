@@ -12,7 +12,7 @@ import {
   ListItemIcon,
   ListItemText,
   Theme,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import { NextRouter, useRouter } from "next/router";
@@ -20,6 +20,7 @@ import { Logo } from "../Atoms";
 import { MenuItemType } from "../types";
 import { FC } from "react";
 import { Link } from "../Molecules/Link";
+import config from "@/constants/config";
 
 const MENU_ITEMS: MenuItemType[] = [
   {
@@ -27,14 +28,14 @@ const MENU_ITEMS: MenuItemType[] = [
     path: "/",
     icon: dynamic(() => import("@mui/icons-material/Home")),
     status: "active",
-    matches: ["/"]
+    matches: ["/"],
   },
   {
     label: "Swap",
     path: "/swap",
     icon: dynamic(() => import("@mui/icons-material/SwapVert")),
     status: "active",
-    matches: ["/swap"]
+    matches: ["/swap"],
   },
   {
     label: "Pool",
@@ -45,36 +46,36 @@ const MENU_ITEMS: MenuItemType[] = [
       "/pool",
       "/pool/add-liquidity",
       "/pool/select",
-      "/pool/create-pool"
-    ]
+      "/pool/create-pool",
+    ],
   },
   {
     label: "Bond",
     path: "/bond",
     icon: dynamic(() => import("@mui/icons-material/Payments")),
     status: "active",
-    matches: ["/bond", "/bond/select"]
+    matches: ["/bond", "/bond/select"],
   },
   {
-    label: "Staking",
-    path: "/staking",
+    label: "Stake",
+    path: "/stake",
     icon: dynamic(() => import("@mui/icons-material/TollOutlined")),
     status: "active",
-    matches: ["/staking"]
+    matches: ["/stake"],
   },
   {
     label: "Picasso",
-    path: "/picasso",
+    path: config.picassoAppUrl,
     icon: dynamic(() => import("@mui/icons-material/Autorenew")),
     status: "active",
     endAdornment: (
-      <Link href="https://picasso.xyz/" target="_blank">
+      <Link href={config.picassoAppUrl} target="_blank">
         <IconButton>
           <OpenInNew />
         </IconButton>
       </Link>
-    )
-  }
+    ),
+  },
 ];
 
 const MenuItem = (
@@ -90,15 +91,17 @@ const MenuItem = (
       selected={selected}
       button
       onClick={() => {
-        if (config.path) {
+        if (config.status === "active" && !config.path.startsWith("http")) {
           router.push(config.path);
+        } else {
+          window.open(config.path, "_blank");
         }
       }}
       key={key}
       disabled={config.status === "inactive"}
       sx={{
         paddingLeft: isSubItem ? "3rem" : "1.5rem",
-        marginTop: 1
+        marginTop: 1,
       }}
     >
       <ListItemIcon>
@@ -123,7 +126,7 @@ export const NavBar: FC = () => {
       <Box
         sx={{
           padding: theme.spacing(6, 3),
-          mb: theme.spacing(6)
+          mb: theme.spacing(6),
         }}
       >
         <Logo />
