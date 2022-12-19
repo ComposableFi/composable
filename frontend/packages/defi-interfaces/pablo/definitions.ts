@@ -1,65 +1,90 @@
 export default {
   rpc: {
     pricesFor: {
-      description: "Get the price(in quote asset) for the given asset pair in the given pool for the given amount",
+      description:
+        "Get the price(in quote asset) for the given asset pair in the given pool for the given amount",
       params: [
         {
           name: "poolId",
-          type: "PalletPabloPoolId"
+          type: "PalletPabloPoolId",
         },
         {
           name: "baseAssetId",
-          type: "CustomRpcCurrencyId"
+          type: "CustomRpcCurrencyId",
         },
         {
           name: "quoteAssetId",
-          type: "CustomRpcCurrencyId"
+          type: "CustomRpcCurrencyId",
         },
         {
           name: "amount",
-          type: "CustomRpcBalance"
+          type: "CustomRpcBalance",
         },
         {
           name: "at",
           type: "Hash",
-          isOptional: true
-        }
+          isOptional: true,
+        },
       ],
-      type: "PalletPabloPriceAggregate"
-    }
+      type: "PalletPabloPriceAggregate",
+    },
+    simulateAddLiquidity: {
+      description: "Simulate add liquidity",
+      params: [
+        {
+          name: "who",
+          type: "SafeRpcWrapper<AccountId>",
+        },
+        {
+          name: "poolId",
+          type: "SafeRpcWrapper<PoolId>",
+        },
+        {
+          name: "amounts",
+          type: "BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>",
+        },
+      ],
+      type: "SafeRpcWrapper<Balance>",
+    },
+    simulateRemoveLiquidity: {
+      description:
+        "Get the price(in quote asset) for the given asset pair in the given pool for the given amount",
+      params: [
+        {
+          name: "who",
+          type: "SafeRpcWrapper<AccountId>",
+        },
+        {
+          name: "poolId",
+          type: "SafeRpcWrapper<PoolId>",
+        },
+        {
+          name: "lpAmount",
+          type: "SafeRpcWrapper<Balance>",
+        },
+        {
+          name: "minExpectedAmounts",
+          type: "BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>",
+        },
+      ],
+      type: "RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>",
+    },
   },
   types: {
     PalletPabloPoolInitConfiguration: "PalletPabloPoolConfiguration",
     PalletPabloPoolConfiguration: {
       _enum: {
-        StableSwap: {
+        DualAssetConstantProduct: {
           owner: "AccountId32",
-          pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
-          amplification_coefficient: "u16",
-          fee: "Permill"
-        },
-        ConstantProduct: {
-          owner: "AccountId32",
-          pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
-          fee: "Permill",
-          baseWeight: "Permill"
-        },
-        LiquidityBootstrapping: {
-          owner: "AccountId32",
-          pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
-          sale: {
-            start: "BlockNumber",
-            end: "BlockNumber",
-            initial_weight: "Permill",
-            final_weight: "Permill"
-          },
+          assetsWeights: "BoundedBTreeMap<T::AssetId, Permill, ConstU32<2>>",
+          lpToken: "u128",
           feeConfig: {
             feeRate: "Permill",
             ownerFeeRate: "Permill",
-            protocolFeeRate: "Permill"
-          }
-        }
-      }
+            protocolFeeRate: "Permill",
+          },
+        },
+      },
     },
     PalletPabloPriceCumulative: "Null",
     PalletPabloTimeWeightedAveragePrice: "Null",
@@ -68,15 +93,18 @@ export default {
       poolId: "PalletPabloPoolId",
       baseAssetId: "CustomRpcCurrencyId",
       quoteAssetId: "CustomRpcCurrencyId",
-      spotPrice: "CustomRpcBalance"
+      spotPrice: "CustomRpcBalance",
     },
     ComposableTraitsDexFee: {
       fee: "u128",
-      lp_fee: "u128",
-      owner_fee: "u128",
-      protocol_fee: "u128",
-      asset_id: "u128"
+      lpFee: "u128",
+      ownerFee: "u128",
+      protocolFee: "u128",
+      assetId: "u128",
     },
-    ComposableTraitsDexStakingRewardPool: "Null"
-  }
+    ComposableTraitsDexStakingRewardPool: "Null",
+    RemoveLiquiditySimulationResult: {
+      assets: "BTreeMap<AssetId, Balance>",
+    },
+  },
 };

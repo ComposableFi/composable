@@ -1,20 +1,19 @@
 import { BigNumberInput } from "@/components/Atoms";
 import { FormTitle } from "@/components/Organisms/FormTitle";
 import {
-  Box,
-  Button,
-  useTheme,
   alpha,
+  Box,
   BoxProps,
+  Button,
   Grid,
-  Typography,
   Theme,
+  Typography,
+  useTheme,
 } from "@mui/material";
 import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import FormWrapper from "../FormWrapper";
 import { TransactionSettings } from "@/components/Organisms/TransactionSettings";
-import useStore from "@/store/useStore";
 import { setUiState } from "@/store/ui/ui.slice";
 
 const availableFees = [0.1, 0.3, 1.0];
@@ -37,15 +36,13 @@ const SetFeesStep: React.FC<SetFeesStepProps> = ({
 }) => {
   const theme = useTheme();
 
-  const {
-    createPool
-  } = useStore();
+  const createPool = undefined as any;
 
   const [bestFee] = useState<BigNumber>(new BigNumber(0.3));
 
   const initialSwapFee = useMemo(() => {
     return new BigNumber(createPool.swapFee);
-  }, [createPool.swapFee])
+  }, [createPool.swapFee]);
 
   const similarPoolExist = useMemo(() => {
     if (createPool.similarPool.poolId !== -1) {
@@ -58,18 +55,18 @@ const SetFeesStep: React.FC<SetFeesStepProps> = ({
     similarPoolExist
       ? onSetSimilarPoolsHandler?.()
       : createPool.setSelectable({
-        currentStep: createPool.currentStep + 1
-      })
+          currentStep: createPool.currentStep + 1,
+        });
   };
 
   const setSwapFee = (fee: BigNumber) => {
-    createPool.setSelectable({ "swapFee": fee.toString() })
-  }
+    createPool.setSelectable({ swapFee: fee.toString() });
+  };
 
   const onBackHandler = () => {
     createPool.setSelectable({
-      currentStep: createPool.currentStep - 1
-    })
+      currentStep: createPool.currentStep - 1,
+    });
   };
 
   const onSettingHandler = () => {

@@ -1,5 +1,5 @@
-import { PairAsset, BaseAsset } from "@/components/Atoms";
-import { LiquidityProviderToken, Asset } from "shared";
+import { BaseAsset, PairAsset } from "@/components/Atoms";
+import { Asset, LiquidityProviderToken } from "shared";
 
 const BondPrincipalAssetIcon = ({
   bondedAsset,
@@ -7,12 +7,7 @@ const BondPrincipalAssetIcon = ({
   bondedAsset: LiquidityProviderToken | Asset | undefined;
 }) => {
   if (bondedAsset instanceof LiquidityProviderToken) {
-    return (
-      <PairAsset
-        assets={bondedAsset.getUnderlyingAssetJSON()}
-        separator="/"
-      />
-    );
+    return <PairAsset assets={[]} separator="/" />;
   }
 
   if (bondedAsset instanceof Asset) {

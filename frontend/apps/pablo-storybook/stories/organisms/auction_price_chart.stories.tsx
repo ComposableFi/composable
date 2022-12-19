@@ -1,9 +1,13 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { AuctionPriceChartProps, AuctionPriceChart } from "pablo/components/Organisms/auction/AuctionPriceChart";
+import {
+  AuctionPriceChart,
+  AuctionPriceChartProps,
+} from "pablo/components/Organisms/auction/AuctionPriceChart";
 
 import moment from "moment-timezone";
 import { Asset } from "shared";
+import { TOKENS } from "tokens";
 
 const dummyAuctionPrices = [
   [1644454200000, 7],
@@ -32,18 +36,17 @@ const Template: ComponentStory<typeof AuctionPriceChart> = (args) => (
 export const Default = Template.bind({});
 Default.args = {
   baseAsset: new Asset(
-    "Pablo",
-    "PBLO",
-    "/tokens/pblo.svg"
+    TOKENS.pblo.symbol,
+    TOKENS.pblo.symbol,
+    TOKENS.pblo.icon,
+    TOKENS.pblo.id
   ),
   chartSeries: {
     currentPriceSeries: dummyAuctionPrices,
     predictedPriceSeries: [],
   },
   height: "100%",
-  dateFormat: (
-    (timestamp: number | string) => {
-      return moment(timestamp).utc().format("MMM D, h:mm:ss A");
-    }
-  ),
+  dateFormat: (timestamp: number | string) => {
+    return moment(timestamp).utc().format("MMM D, h:mm:ss A");
+  },
 };

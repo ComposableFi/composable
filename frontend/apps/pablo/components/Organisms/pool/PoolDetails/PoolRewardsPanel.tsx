@@ -1,6 +1,5 @@
 import { BaseAsset, PairAsset } from "@/components/Atoms";
 import { useLiquidityPoolDetails } from "@/defi/hooks/useLiquidityPoolDetails";
-import { useUserProvidedLiquidityByPool } from "@/defi/hooks/useUserProvidedLiquidityByPool";
 import {
   alpha,
   Box,
@@ -68,22 +67,24 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
 }) => {
   const theme = useTheme();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const poolDetails = useLiquidityPoolDetails(poolId);
+  const poolDetails = useLiquidityPoolDetails(Number(poolId));
   const { pool } = poolDetails;
   const lpToken = pool?.getLiquidityProviderToken();
-  const lpAssetId = lpToken?.getPicassoAssetId() as string ?? "-";
+  const lpAssetId = (lpToken?.getPicassoAssetId() as string) ?? "-";
   const stakingRewardsPool = useStakingRewardPool(lpAssetId);
-  const rewardAssets = useAssets(stakingRewardsPool ? Object.keys(stakingRewardsPool.rewards) : []);
+  const rewardAssets = useAssets(
+    stakingRewardsPool ? Object.keys(stakingRewardsPool.rewards) : []
+  );
 
   // WIP - awaiting Andres' subsquid changes
   const lpStaked = new BigNumber(0);
-  const handleClaimRewards = useClaimStakingRewards({})
+  const handleClaimRewards = useClaimStakingRewards({});
 
   const isPendingClaimStakingRewards = usePendingExtrinsic(
     "claim",
     "stakingRewards",
     selectedAccount ? selectedAccount.address : "-"
-  )
+  );
 
   return (
     <BoxWrapper {...boxProps}>
@@ -93,16 +94,8 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
       >
         <Typography variant="h6">Your deposits</Typography>
       </Item>
-      <Item
-        value={lpStaked.toFormat()}
-        mt={4.375}
-      >
-        {
-          lpToken && <PairAsset
-            assets={lpToken.getUnderlyingAssetJSON()}
-            separator="/"
-          />
-        }
+      <Item value={lpStaked.toFormat()} mt={4.375}>
+        {lpToken && <PairAsset assets={[]} separator="/" />}
       </Item>
       {/* <Item
         value={userProvidedLiquidity.tokenAmounts.quoteAmount.toFormat()}
@@ -132,10 +125,7 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
       </Item>
       {rewardAssets.map((asset: Asset) => (
         <Item value={new BigNumber(0).toString()} mt={2} key={asset.getName()}>
-          <BaseAsset
-            icon={asset.getIconUrl()}
-            label={asset.getSymbol()}
-          />
+          <BaseAsset icon={asset.getIconUrl()} label={asset.getSymbol()} />
         </Item>
       ))}
 

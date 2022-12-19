@@ -19,7 +19,7 @@ export function useAssetsOverview(): OwnedAsset[] {
       try {
         asset.setPrice(oracleSlice.prices[asset.getSymbol()].coingecko.usd);
       } catch (err: any) {
-        console.log('[useAssetsOverview]: ', err.message);
+        console.log("[useAssetsOverview]: ", err.message);
         asset.setPrice(new BigNumber(0));
       }
     }

@@ -2,27 +2,25 @@ import type { NextPage } from "next";
 import { Box, Container, Typography } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import { Link } from "@/components";
-import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useDotSamaContext } from "substrate-react";
 import { AddLiquidityForm } from "@/components/Organisms/liquidity/AddForm";
-import AddLiquidityUpdater from "@/updaters/addLiquidity/Updater";
 import { useUiSlice } from "@/store/ui/ui.slice";
+import { useRouter } from "next/router";
 
-const AddLiquidity: NextPage = () => {
+const breadcrumbs = [
+  <Link key="pool" underline="none" color="primary" href="/pool">
+    Pool
+  </Link>,
+  <Typography key="add-liquidity" color="text.primary">
+    Add liquidity
+  </Typography>,
+];
+
+const AddLiquidityPage: NextPage = () => {
   const router = useRouter();
   const { extensionStatus } = useDotSamaContext();
-  const {isPolkadotModalOpen 
-  } = useUiSlice();
-
-  const breadcrumbs = [
-    <Link key="pool" underline="none" color="primary" href="/pool">
-      Pool
-    </Link>,
-    <Typography key="add-liquidity" color="text.primary">
-      Add liquidity
-    </Typography>,
-  ];
+  const { isPolkadotModalOpen } = useUiSlice();
 
   useEffect(() => {
     extensionStatus !== "connected" &&
@@ -42,7 +40,6 @@ const AddLiquidity: NextPage = () => {
             marginBottom: 18,
           }}
         >
-          <AddLiquidityUpdater />
           <AddLiquidityForm />
         </Box>
       </Container>
@@ -50,4 +47,4 @@ const AddLiquidity: NextPage = () => {
   );
 };
 
-export default AddLiquidity;
+export default AddLiquidityPage;

@@ -1,16 +1,24 @@
-import React from "react";
+import React, { FC } from "react";
 import { CircularProgress } from "@/components/Atoms";
-import { ModalProps, Modal } from "@/components/Molecules";
-import { 
-  alpha,
-  Box,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { Modal, ModalProps } from "@/components/Molecules";
+import { alpha, Box, Typography, useTheme } from "@mui/material";
 import { SupplyModalProps } from "./ConfirmSupplyModal";
 import { setUiState } from "@/store/ui/ui.slice";
+import BigNumber from "bignumber.js";
+import { Asset } from "shared";
 
-export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
+export const ConfirmingSupplyModal: FC<
+  SupplyModalProps &
+    ModalProps & {
+      assetOne: Asset;
+      assetTwo: Asset;
+      assetOneAmount: BigNumber;
+      assetTwoAmount: BigNumber;
+      priceOneInTwo: BigNumber;
+      priceTwoInOne: BigNumber;
+      lpReceiveAmount: BigNumber;
+    }
+> = ({
   assetOne,
   assetTwo,
   assetOneAmount,
@@ -25,43 +33,41 @@ export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
 
   const handelClose = () => {
     setUiState({ isConfirmingSupplyModalOpen: false });
-  }
+  };
 
   return (
-    <Modal
-      onClose={() => handelClose()}
-      {...rest}
-    >
+    <Modal onClose={() => handelClose()} {...rest}>
       {/* {!confirmed && ( */}
-        <Box
-          textAlign="center"
+      <Box
+        textAlign="center"
+        sx={{
+          width: 550,
+          [theme.breakpoints.down("sm")]: {
+            width: "100%",
+          },
+          padding: theme.spacing(3),
+        }}
+      >
+        <Box display="flex" justifyContent="center">
+          <CircularProgress size={96} />
+        </Box>
+        <Typography variant="h5" mt={8}>
+          Waiting for confirmation
+        </Typography>
+        <Typography variant="subtitle1" mt={2} color="text.secondary">
+          Adding {`${assetOneAmount}`} {assetOne?.getSymbol()} and{" "}
+          {`${assetTwoAmount}`} {assetTwo?.getSymbol()}
+        </Typography>
+        <Typography
+          variant="body1"
+          mt={2}
           sx={{
-            width: 550,
-            [theme.breakpoints.down('sm')]: {
-              width: '100%',
-            },
-            padding: theme.spacing(3)
+            color: alpha(theme.palette.common.white, theme.custom.opacity.main),
           }}
         >
-          <Box display="flex" justifyContent="center">
-            <CircularProgress size={96} />
-          </Box>
-          <Typography variant="h5" mt={8}>
-            Waiting for confirmation
-          </Typography>
-          <Typography variant="subtitle1" mt={2} color="text.secondary">
-            Adding {`${assetOneAmount}`} {assetOne?.getSymbol()} and {`${assetTwoAmount}`} {assetTwo?.getSymbol()}
-          </Typography>
-          <Typography 
-            variant="body1" 
-            mt={2}
-            sx={{
-              color: alpha(theme.palette.common.white, theme.custom.opacity.main),
-            }}
-          >
-            Confirming this transaction in your wallet
-          </Typography>
-        </Box>
+          Confirming this transaction in your wallet
+        </Typography>
+      </Box>
       {/* )} */}
 
       {/* {confirmed && (
@@ -102,6 +108,6 @@ export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           </Button>      
         </Box>
       )} */}
-    </Modal>  
+    </Modal>
   );
 };

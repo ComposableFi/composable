@@ -6,13 +6,17 @@ export function subscribePools(api: ApiPromise) {
   return useStore.subscribe(
     (store) => ({
       isLoaded: store.substrateTokens.hasFetchedTokens,
-      tokens: store.substrateTokens.tokens,
-      setPoolConfig: store.pools.setConfig,
+      isPoolsLoaded: store.pools.isLoaded,
     }),
-    ({ isLoaded, setPoolConfig, tokens }) => {
+    ({ isLoaded, isPoolsLoaded }) => {
       let unsub = Promise.resolve(() => {});
-      if (isLoaded) {
-        unsub = subscribePoolEntries(api, tokens, setPoolConfig);
+      if (isLoaded && !isPoolsLoaded) {
+        console.log("[Fetch pools]: initializing");
+        unsub = subscribePoolEntries(
+          api,
+          useStore.getState().substrateTokens.tokens,
+          useStore.getState().pools.setConfig
+        );
       }
 
       return () => {
@@ -20,7 +24,8 @@ export function subscribePools(api: ApiPromise) {
       };
     },
     {
-      equalityFn: (a, b) => a.isLoaded === b.isLoaded,
+      fireImmediately: true,
+      equalityFn: (a, b) => b.isLoaded && b.isPoolsLoaded,
     }
   );
 }

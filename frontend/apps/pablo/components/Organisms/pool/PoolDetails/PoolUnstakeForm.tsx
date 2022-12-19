@@ -1,15 +1,15 @@
 import {
   Box,
-  useTheme,
   Button,
-  Typography,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableRow,
+  Typography,
+  useTheme,
 } from "@mui/material";
-import { useMemo } from "react";
+import { FC, useMemo } from "react";
 import { PoolDetailsProps } from "./index";
 import { useLiquidityPoolDetails } from "@/defi/hooks/useLiquidityPoolDetails";
 import { useXTokensList } from "@/defi/hooks/financialNfts";
@@ -22,7 +22,7 @@ import { ConfirmingModal } from "../../swap/ConfirmingModal";
 import { useLpTokenPrice } from "@/defi/hooks";
 import BigNumber from "bignumber.js";
 
-const UnstakeFormPosition: React.FC<{
+const UnstakeFormPosition: FC<{
   financialNftId: string;
   principalAssets: Array<{ label?: string; icon: string }>;
   principalAssetValue: BigNumber;
@@ -48,7 +48,7 @@ const UnstakeFormPosition: React.FC<{
   return (
     <TableRow key={financialNftId}>
       <TableCell align="left">
-        <PairAsset assets={principalAssets} separator="/" />
+        <PairAsset assets={[]} separator="/" />
       </TableCell>
       <TableCell align="center">
         <Typography variant="body1">{stakedAmountInStr}</Typography>
@@ -67,10 +67,10 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
   ...boxProps
 }) => {
   const theme = useTheme();
-  const { pool } = useLiquidityPoolDetails(poolId);
+  const { pool } = useLiquidityPoolDetails(Number(poolId));
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const lpToken = pool?.getLiquidityProviderToken() ?? null;
-  const lpAssetId = lpToken?.getPicassoAssetId() as string ?? "-"
+  const lpAssetId = (lpToken?.getPicassoAssetId() as string) ?? "-";
   const positions = useXTokensList({ stakedAssetId: lpAssetId });
   const collectionId = useStakingRewardPoolCollectionId(lpAssetId);
 

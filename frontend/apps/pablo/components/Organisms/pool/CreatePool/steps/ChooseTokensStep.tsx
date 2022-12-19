@@ -1,20 +1,18 @@
 import { NotificationBox } from "@/components/Molecules";
 import { BigNumberInput, Select } from "@/components/Atoms";
 import { FormTitle } from "@/components/Organisms/FormTitle";
-import { Box, Button, useTheme, BoxProps, Grid } from "@mui/material";
+import { Box, BoxProps, Button, Grid, useTheme } from "@mui/material";
 import { useMemo, useState } from "react";
 import { getAMMOptions } from "@/defi/AMMs";
 import { UnverifiedPoolWarningModal } from "../UnverifiedPoolWarningModal";
 import { TransactionSettings } from "@/components/Organisms/TransactionSettings";
 import { useFilteredAssetListDropdownOptions } from "@/defi/hooks/assets/useFilteredAssetListDropdownOptions";
-import { useUiSlice,setUiState } from "@/store/ui/ui.slice";
+import { setUiState, useUiSlice } from "@/store/ui/ui.slice";
 import { AmmId } from "@/defi/types";
 import BigNumber from "bignumber.js";
 import FormWrapper from "../FormWrapper";
-import useStore from "@/store/useStore";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { TokenId } from "tokens";
-
 
 const labelProps = (label: string, disabled: boolean = false) => ({
   label: label,
@@ -54,12 +52,9 @@ const gridItem4ColumnProps = {
 
 const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
-
-  const {
-    createPool
-  } = useStore();
-
-  const { baseAsset, quoteAsset, ammId, setSelectable, currentStep } = createPool;
+  const createPool = undefined as any;
+  const { baseAsset, quoteAsset, ammId, setSelectable, currentStep } =
+    createPool;
 
   const baseAssetList = useFilteredAssetListDropdownOptions(quoteAsset);
   const quoteAssetList = useFilteredAssetListDropdownOptions(baseAsset);
@@ -76,7 +71,7 @@ const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
     (item: "baseAsset" | "quoteAsset" | "ammId" | "swapFee") =>
     (v: TokenId | AmmId | BigNumber) => {
       setSelectable({ [item]: v });
-  };
+    };
 
   const [initialFunds] = useState<BigNumber>(new BigNumber(20000));
   const [currentFunds] = useState<BigNumber>(new BigNumber(340));
@@ -106,9 +101,11 @@ const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   }, [baseAsset, quoteAsset, createPool.ammId, baseWeight, quoteWeight]);
 
   const onNextClickHandler = () => {
-    verified ? setSelectable({
-      currentStep: currentStep + 1
-    }) : setUiState({ isConfirmingModalOpen: true });
+    verified
+      ? setSelectable({
+          currentStep: currentStep + 1,
+        })
+      : setUiState({ isConfirmingModalOpen: true });
   };
 
   const tokenGridProps =
@@ -121,7 +118,7 @@ const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
         };
 
   const onSettingHandler = () => {
-    setUiState({ isTransactionSettingsModalOpen: true })
+    setUiState({ isTransactionSettingsModalOpen: true });
   };
 
   return (

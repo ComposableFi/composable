@@ -21,7 +21,7 @@ export const PoolSelectSkeleton = () => {
             subtitle="Earn tokens while adding liquidity."
           />
         </Box>
-        <Grid container>
+        <Grid container gap={4}>
           <Grid item xs={12} md={6}>
             <Skeleton
               variant="rectangular"

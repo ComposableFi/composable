@@ -6,6 +6,7 @@ import { ApiPromise } from "@polkadot/api";
 import { concatU8a } from "../../u8a";
 import { Asset } from "../assets/Asset";
 import BigNumber from "bignumber.js";
+import { TokenId } from "tokens";
 
 export class BasePabloPool implements Exchangeable {
   protected readonly __poolId: BigNumber;
@@ -59,7 +60,7 @@ export class BasePabloPool implements Exchangeable {
 
   async getAssetLiquidity(assetId: BigNumber): Promise<BigNumber> {
     const accountId = this.getAccountId();
-    const asset = new Asset("", "", "", this.__api);
+    const asset = new Asset("", "", "", "" as TokenId, this.__api);
     asset.setIdOnChain("picasso", assetId);
     const balance = await asset.balanceOf(accountId);
     return balance;
@@ -90,7 +91,7 @@ export class BasePabloPool implements Exchangeable {
 
       // const spotPrice = pricesFor.get("spotPrice");
       // return fromChainIdUnit(spotPrice ? BigInt(spotPrice.toString()) : 0);
-      return new BigNumber(0)
+      return new BigNumber(0);
     } catch (err: any) {
       console.error("[getSpotPrice] ", err.message);
       return new BigNumber(0);

@@ -1,6 +1,6 @@
-import { Box, useTheme, Button } from "@mui/material";
+import { Box, Button, useTheme } from "@mui/material";
 import { BigNumberInput } from "@/components/Atoms";
-import { useMemo, useState } from "react";
+import { FC, useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { PoolDetailsProps } from "./index";
@@ -14,16 +14,18 @@ import { SelectLockPeriod } from "@/components";
 import { extractDurationPresets } from "@/defi/utils/stakingRewards/durationPresets";
 import { useLpTokenUserBalance } from "@/defi/hooks";
 
-export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
+export const PoolStakeForm: FC<PoolDetailsProps> = ({
   poolId,
   ...boxProps
 }) => {
   const theme = useTheme();
-  const poolDetails = useLiquidityPoolDetails(poolId);
+  const poolDetails = useLiquidityPoolDetails(Number(poolId));
   const { baseAsset, quoteAsset, pool } = poolDetails;
   const lpToken = pool?.getLiquidityProviderToken() ?? null;
   const lpBalance = useLpTokenUserBalance(pool);
-  const stakingRewardPool = useStakingRewardPool(lpToken?.getPicassoAssetId() as string ?? "-");
+  const stakingRewardPool = useStakingRewardPool(
+    (lpToken?.getPicassoAssetId() as string) ?? "-"
+  );
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
   const [selectedMultiplier, setSelectedMultiplier] = useState<number>(0);
@@ -77,19 +79,7 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
             },
           }}
           EndAdornmentAssetProps={{
-            assets:
-              baseAsset && quoteAsset
-                ? [
-                  {
-                    icon: baseAsset.getIconUrl(),
-                    label: baseAsset.getSymbol(),
-                  },
-                  {
-                    icon: quoteAsset.getIconUrl(),
-                    label: quoteAsset.getSymbol(),
-                  },
-                ]
-                : [],
+            assets: baseAsset && quoteAsset ? [] : [],
             separator: "/",
           }}
         />

@@ -6,22 +6,20 @@ import BigNumber from "bignumber.js";
 type YourPositionProps = {
   noTitle?: boolean;
   noDivider?: boolean;
-  token1: Asset | undefined;
-  token2: Asset | undefined;
-  pooledAmount1: BigNumber;
-  pooledAmount2: BigNumber;
-  amount: BigNumber;
+  assets: Asset[];
+  amountIn: BigNumber;
+  amountOut: BigNumber;
+  expectedLP: BigNumber;
   share: BigNumber;
 } & BoxProps;
 
 export const YourPosition: React.FC<YourPositionProps> = ({
   noTitle,
   noDivider,
-  token1,
-  token2,
-  pooledAmount1,
-  pooledAmount2,
-  amount,
+  assets,
+  amountIn,
+  amountOut,
+  expectedLP,
   share,
   ...rest
 }) => {
@@ -47,28 +45,14 @@ export const YourPosition: React.FC<YourPositionProps> = ({
       <Label
         mt={noTitle ? 3 : 4}
         BalanceProps={{
-          balance: amount.toString(),
+          balance: expectedLP.toString(),
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",
           },
         }}
       >
-        {token1 && token2 && (
-          <PairAsset
-            assets={[
-              {
-                icon: token2.getIconUrl(),
-                label: token2.getSymbol(),
-              },
-              {
-                icon: token1.getIconUrl(),
-                label: token1.getSymbol(),
-              },
-            ]}
-            separator="/"
-          />
-        )}
+        <PairAsset assets={assets} separator="/" />
       </Label>
 
       <Label
@@ -86,10 +70,10 @@ export const YourPosition: React.FC<YourPositionProps> = ({
 
       <Label
         mt={3}
-        label={`Pooled ${token1?.getSymbol()}`}
+        label={`Pooled ${assets[0].getSymbol()}`}
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
-          balance: pooledAmount1.toString(),
+          balance: amountIn.toString(),
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",
@@ -99,10 +83,10 @@ export const YourPosition: React.FC<YourPositionProps> = ({
 
       <Label
         mt={3}
-        label={`Pooled ${token2?.getSymbol()}`}
+        label={`Pooled ${assets[1].getSymbol()}`}
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
-          balance: pooledAmount2.toString(),
+          balance: amountOut.toString(),
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",

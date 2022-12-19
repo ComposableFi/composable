@@ -1,5 +1,13 @@
 import type { NextPage } from "next";
-import { alpha, Box, Button, Container, Grid, Typography, useTheme } from "@mui/material";
+import {
+  alpha,
+  Box,
+  Button,
+  Container,
+  Grid,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { MessageBox } from "@/components/Atoms";
@@ -16,13 +24,13 @@ import useStore from "@/store/useStore";
 import { AllLiquidityTable } from "@/components/Templates/pools/AllLiquidityTable";
 
 const standardPageSize = {
-  xs: 12
+  xs: 12,
 };
 
 const Pool: NextPage = () => {
   const { extensionStatus } = useDotSamaContext();
 
-  const { createPool } = useStore();
+  const pools = useStore((store) => store.pools);
   const theme = useTheme();
   const router = useRouter();
   const [messageBoxOpen, setMessageBoxOpen] = useState(true);
@@ -33,7 +41,6 @@ const Pool: NextPage = () => {
   };
 
   const handleCreatePair = () => {
-    createPool.resetSlice();
     router.push("/pool/create-pool");
   };
 
@@ -56,69 +63,66 @@ const Pool: NextPage = () => {
             />
           )}
         </Box>
-        {
-          extensionStatus !== "connected" ?
-            (
-              <Grid item {...standardPageSize}>
-                <ConnectWalletFeaturedBox />
-              </Grid>
-            ) : (
-              <Grid>
-                <Grid item {...standardPageSize}>
-                  <HighlightBox>
-                    <Box
-                      display="flex"
-                      mb={3}
-                      justifyContent="space-between"
-                      alignItems="center"
+        {extensionStatus !== "connected" ? (
+          <Grid item {...standardPageSize}>
+            <ConnectWalletFeaturedBox />
+          </Grid>
+        ) : (
+          <Grid>
+            <Grid item {...standardPageSize}>
+              <HighlightBox>
+                <Box
+                  display="flex"
+                  mb={3}
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
+                  <Typography variant="h6">Your Liquidity</Typography>
+                  <Box>
+                    <Button
+                      disabled
+                      sx={{ marginRight: 2 }}
+                      onClick={handleCreatePair}
+                      variant="outlined"
                     >
-                      <Typography variant="h6">Your Liquidity</Typography>
-                      <Box>
-                        <Button
-                          disabled
-                          sx={{ marginRight: 2 }}
-                          onClick={handleCreatePair}
-                          variant="outlined"
-                        >
-                          Create a pair
-                        </Button>
-                        <Button disabled={
-                          allLpRewardingPools.length === 0
-                        } onClick={handleClick} variant="contained">
-                          Add Liquidity
-                        </Button>
-                      </Box>
-                    </Box>
-                    {
-                      <PoolsTable liquidityPools={poolsWithUserProvidedLiquidity} source="user" />
-                    }
-                  </HighlightBox>
-                  <Box mt={4} display="none" gap={1} justifyContent="center">
-                    <Typography
-                      textAlign="center"
-                      variant="body2"
-                      color={alpha(
-                        theme.palette.common.white,
-                        theme.custom.opacity.darker
-                      )}
+                      Create a pair
+                    </Button>
+                    <Button
+                      disabled={allLpRewardingPools.length === 0}
+                      onClick={handleClick}
+                      variant="contained"
                     >
-                      {`Don't see a pool you joined?`}
-                    </Typography>
-                    <Link href="/pool/import" key="import">
-                      <Typography
-                        textAlign="center"
-                        variant="body2"
-                        color="primary"
-                        sx={{ cursor: "pointer" }}
-                      >
-                        Import it.
-                      </Typography>
-                    </Link>
+                      Add Liquidity
+                    </Button>
                   </Box>
-                </Grid>
-              </Grid>
-            )
-        }
+                </Box>
+                {<PoolsTable liquidityPools={[]} source="user" />}
+              </HighlightBox>
+              <Box mt={4} display="none" gap={1} justifyContent="center">
+                <Typography
+                  textAlign="center"
+                  variant="body2"
+                  color={alpha(
+                    theme.palette.common.white,
+                    theme.custom.opacity.darker
+                  )}
+                >
+                  {`Don't see a pool you joined?`}
+                </Typography>
+                <Link href="/pool/import" key="import">
+                  <Typography
+                    textAlign="center"
+                    variant="body2"
+                    color="primary"
+                    sx={{ cursor: "pointer" }}
+                  >
+                    Import it.
+                  </Typography>
+                </Link>
+              </Box>
+            </Grid>
+          </Grid>
+        )}
         <AllLiquidityTable />
       </Container>
     </Default>

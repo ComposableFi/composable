@@ -3,7 +3,7 @@ import { Option, StorageKey } from "@polkadot/types";
 import { pipe } from "fp-ts/function";
 import { option, readonlyArray } from "fp-ts";
 import BigNumber from "bignumber.js";
-import { PoolConfig, PoolKind } from "@/store/createPool/types";
+import { PoolConfig, PoolKind } from "@/store/pools/types";
 import { Asset, fromPermill, unwrapNumberOrHex } from "shared";
 import type { PalletPabloPoolConfiguration } from "defi-interfaces";
 import { TokenId } from "tokens";
@@ -36,7 +36,7 @@ export function subscribePoolEntries(
                 poolId,
                 kind,
                 config: {
-                  owner: (config.toJSON() as any)[kind].toString(),
+                  owner: (config.toJSON() as any)[kind].owner.toString(),
                   assetsWeights: Object.fromEntries(
                     Object.entries(
                       (config.toJSON() as any)[kind].assetsWeights

@@ -1,8 +1,4 @@
-import {
-  TableCell,
-  TableRow,
-  Typography,
-} from "@mui/material";
+import { TableCell, TableRow, Typography } from "@mui/material";
 import { PairAsset } from "@/components/Atoms";
 import { useLpTokenPrice, useLpTokenUserBalance } from "@/defi/hooks";
 import { DualAssetConstantProduct } from "shared";
@@ -11,7 +7,7 @@ import BigNumber from "bignumber.js";
 const LiquidityProviderPositionRow = ({
   pool,
 }: {
-  pool: DualAssetConstantProduct
+  pool: DualAssetConstantProduct;
 }) => {
   const lpTokenUserBalance = useLpTokenUserBalance(pool);
   const lpTokenPrice = useLpTokenPrice(pool.getLiquidityProviderToken());
@@ -20,18 +16,15 @@ const LiquidityProviderPositionRow = ({
   return (
     <TableRow key={`${pool.getLiquidityProviderToken().getSymbol()}`}>
       <TableCell align="left">
-        <PairAsset
-          assets={pool.getLiquidityProviderToken().getUnderlyingAssetJSON()}
-          separator="/"
-        />
+        <PairAsset assets={[]} separator="/" />
+      </TableCell>
+      <TableCell align="left">
+        <Typography variant="body1">${lpTokenPrice.toFormat(2)}</Typography>
       </TableCell>
       <TableCell align="left">
         <Typography variant="body1">
-          ${lpTokenPrice.toFormat(2)}
+          {lpTokenUserBalance.toFormat(2)}
         </Typography>
-      </TableCell>
-      <TableCell align="left">
-        <Typography variant="body1">{lpTokenUserBalance.toFormat(2)}</Typography>
       </TableCell>
       <TableCell align="left">
         <Typography variant="body1">

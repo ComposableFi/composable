@@ -16,7 +16,6 @@ import FormWrapper from "../FormWrapper";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { useMobile } from "@/hooks/responsive";
 import { TransactionSettings } from "@/components/Organisms/TransactionSettings";
-import useStore from "@/store/useStore";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useAsset, useAssetBalance, useAssetIdOraclePrice } from "@/defi/hooks";
 import { setUiState } from "@/store/ui/ui.slice";
@@ -61,12 +60,9 @@ const priceLabelProps = (label: string, balance?: string) =>
     },
   } as const);
 
-const combinedSelectProps = (
-  asset: Asset | undefined,
-  isMobile?: boolean
-) =>
+const combinedSelectProps = (asset: Asset | undefined, isMobile?: boolean) =>
   ({
-    value: asset?.getPicassoAssetId() as string || "",
+    value: (asset?.getPicassoAssetId() as string) || "",
     dropdownModal: true,
     forceHiddenLabel: isMobile ? true : false,
     options: asset
@@ -90,7 +86,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
 
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const { createPool } = useStore();
+  const createPool = undefined as any;
 
   const baseAmount = useMemo(() => {
     return new BigNumber(createPool.liquidity.baseAmount);
@@ -109,15 +105,9 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const _baseAsset = useAsset(createPool.baseAsset);
   const _quoteAsset = useAsset(createPool.quoteAsset);
 
-  const balance1 = useAssetBalance(
-    _baseAsset,
-    "picasso"
-  )
+  const balance1 = useAssetBalance(_baseAsset, "picasso");
 
-  const balance2 = useAssetBalance(
-    _quoteAsset,
-    "picasso"
-  )
+  const balance2 = useAssetBalance(_quoteAsset, "picasso");
 
   const validToken1 = createPool.baseAsset !== "none";
   const validToken2 = createPool.quoteAsset !== "none";
@@ -143,7 +133,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   };
 
   const onSettingHandler = () => {
-    setUiState({ isTransactionSettingsModalOpen: true })
+    setUiState({ isTransactionSettingsModalOpen: true });
   };
 
   return (

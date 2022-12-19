@@ -4,13 +4,14 @@ import Default from "@/components/Templates/Default";
 import { ConnectWalletFeaturedBox, Link, PageTitle } from "@/components";
 import { PoolDetails } from "@/components/Organisms/pool/PoolDetails";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
-import { useRouter } from "next/router";
 import useStore from "@/store/useStore";
 import { pipe } from "fp-ts/lib/function";
 import { option } from "fp-ts";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { subscribePools } from "@/store/pools/subscribePools";
 import { PoolSelectSkeleton } from "@/components/Templates/pools/PoolSelectSkeleton";
+import { usePoolDetail } from "@/defi/hooks/pools/usePoolDetail";
+import { subscribePoolAmount } from "@/store/pools/subscribePoolAmount";
 
 const isConnected = (status: string) => status === "connected";
 
@@ -24,27 +25,19 @@ const breadcrumbs = [
 ];
 
 const PoolDetailsPage: NextPage = () => {
-  const router = useRouter();
   const getPoolById = useStore((store) => store.pools.getPoolById);
   const { extensionStatus } = useDotSamaContext();
   const { parachainApi } = useParachainApi("picasso");
-  const [poolId, setPoolId] = useState<string>("");
   const isPoolConfigLoaded = useStore((store) => store.pools.isLoaded);
-
-  useEffect(() => {
-    if (!router.isReady) return;
-    const { poolId } = router.query;
-    if (isNaN(Number(poolId))) {
-      router.push("/pool");
-      return;
-    }
-    setPoolId(poolId as string);
-  }, [router]);
+  const { poolId } = usePoolDetail();
 
   useEffect(() => {
     if (parachainApi) {
       return subscribePools(parachainApi);
     }
+  }, [parachainApi]);
+  useEffect(() => {
+    subscribePoolAmount(parachainApi);
   }, [parachainApi]);
 
   return pipe(
@@ -54,7 +47,7 @@ const PoolDetailsPage: NextPage = () => {
       () => <PoolSelectSkeleton />,
       () => {
         return pipe(
-          getPoolById(poolId as string),
+          getPoolById(poolId),
           option.fold(
             () => <PoolSelectSkeleton />,
             (a) => (
@@ -72,7 +65,7 @@ const PoolDetailsPage: NextPage = () => {
                     />
                   </Box>
                   {isConnected(extensionStatus) ? (
-                    <PoolDetails poolId={poolId as string} />
+                    <PoolDetails poolId={poolId} />
                   ) : (
                     <ConnectWalletFeaturedBox />
                   )}

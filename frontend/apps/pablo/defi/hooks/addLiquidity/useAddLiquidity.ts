@@ -1,15 +1,17 @@
 import { Executor } from "substrate-react";
 import { ApiPromise } from "@polkadot/api";
-import { toChainUnits } from "@/defi/utils";
 import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
 import { useSnackbar, VariantType } from "notistack";
 import { Signer } from "@polkadot/api/types";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { setUiState } from "@/store/ui/ui.slice";
-import { DualAssetConstantProduct } from "shared";
 import BigNumber from "bignumber.js";
 import router from "next/router";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
+import { toChainUnits } from "@/defi/utils";
+import { getAssetTree } from "@/components/Organisms/pool/AddLiquidity/utils";
+import { pipe } from "fp-ts/lib/function";
+import { option } from "fp-ts";
 
 const TxOrigin = "Add Liquidity";
 
@@ -34,49 +36,26 @@ export const useAddLiquidity = ({
   selectedAccount,
   executor,
   parachainApi,
-  assetOne,
-  assetTwo,
   assetOneAmount,
   assetTwoAmount,
+  assetInId,
+  assetOutId,
   lpReceiveAmount,
-  pool,
+  poolId,
   signer,
 }: {
   selectedAccount: InjectedAccountWithMeta | undefined;
   executor: Executor | undefined;
   parachainApi: ApiPromise | undefined;
-  assetOne: string | undefined;
-  assetTwo: string | undefined;
-  pool: DualAssetConstantProduct | undefined;
+  poolId: string | undefined;
+  assetInId: string | null;
+  assetOutId: string | null;
   assetOneAmount: BigNumber;
   assetTwoAmount: BigNumber;
   lpReceiveAmount: BigNumber;
   signer: Signer | undefined;
 }) => {
   const { enqueueSnackbar } = useSnackbar();
-
-  const { baseAmount, quoteAmount } = useMemo(() => {
-    if (!pool || !assetOne)
-      return {
-        baseAmount: undefined,
-        quoteAmount: undefined,
-      };
-
-    const pair = Object.keys(pool.getAssets().assets);
-    let isReversed = pair[0].toString() !== assetOne;
-    return {
-      baseAmount: toChainUnits(
-        isReversed ? assetTwoAmount : assetOneAmount
-      ).toString(),
-      quoteAmount: toChainUnits(
-        isReversed ? assetOneAmount : assetTwoAmount
-      ).toString(),
-    };
-  }, [pool, assetOne, assetOneAmount, assetTwoAmount]);
-
-  const _lpReceiveAmount = useMemo(() => {
-    return toChainUnits(lpReceiveAmount).toString();
-  }, [lpReceiveAmount]);
 
   const onTxReady = useCallback(
     (transactionHash: string) => {
@@ -107,11 +86,10 @@ export const useAddLiquidity = ({
         SNACKBAR_TYPES.SUCCESS
       );
       resetAddLiquiditySlice();
-      const poolId = pool?.getPoolId() as string;
       router.push("/pool/select/" + poolId);
       setUiState({ isConfirmingSupplyModalOpen: false });
     },
-    [pool, enqueueSnackbar]
+    [poolId, enqueueSnackbar]
   );
 
   const onTxError = useCallback(
@@ -131,27 +109,39 @@ export const useAddLiquidity = ({
         !selectedAccount ||
         !parachainApi ||
         !executor ||
-        !assetOne ||
-        !baseAmount ||
-        !quoteAmount ||
-        !assetTwo ||
         !signer ||
-        !pool
+        !poolId ||
+        !assetInId ||
+        !assetOutId
       ) {
-        throw new Error("Missing dependencies.");
+        return () => {};
       }
+      const assetTree = pipe(
+        getAssetTree(
+          {
+            assetIdOnChain: assetInId,
+            balance: assetOneAmount,
+          },
+          {
+            assetIdOnChain: assetOutId,
+            balance: assetTwoAmount,
+          }
+        ),
+        option.toNullable
+      );
+
+      if (!assetTree) return () => {};
 
       setUiState({ isConfirmingSupplyModalOpen: false });
 
       await executor.execute(
         parachainApi.tx.pablo.addLiquidity(
-          pool.getPoolId() as string,
+          poolId,
+          parachainApi.createType("BTreeMap<u128, u128>", assetTree),
           parachainApi.createType(
-            "BTreeMap<u128, u128>",
-            baseAmount,
-            quoteAmount
+            "u128",
+            toChainUnits(lpReceiveAmount).toString()
           ),
-          _lpReceiveAmount,
           true
         ),
         selectedAccount.address,
@@ -172,13 +162,13 @@ export const useAddLiquidity = ({
     selectedAccount,
     parachainApi,
     executor,
-    assetOne,
-    baseAmount,
-    quoteAmount,
-    assetTwo,
     signer,
-    pool,
-    _lpReceiveAmount,
+    poolId,
+    assetInId,
+    assetOutId,
+    assetOneAmount,
+    assetTwoAmount,
+    lpReceiveAmount,
     onTxReady,
     onTxFinalized,
     onTxError,
