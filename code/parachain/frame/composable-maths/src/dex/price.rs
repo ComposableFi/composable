@@ -1,9 +1,8 @@
 use composable_support::math::safe::{SafeArithmetic, SafeMul};
-use composable_traits::defi::Rate;
 use frame_support::ensure;
 use sp_runtime::{
 	traits::{AtLeast32Bit, Convert as ConvertTrait, Saturating, Zero},
-	ArithmeticError, DispatchError, FixedPointNumber, SaturatedConversion,
+	ArithmeticError, DispatchError, FixedPointNumber, FixedU128, SaturatedConversion,
 };
 
 /// Uniswap V2 TWAP
@@ -12,7 +11,7 @@ use sp_runtime::{
 /// Executes `compute_next_price_cumulative` with `previous_timestamp = 0`
 /// `current_timestamp =  1` and `previous_price_cumulative = 0`
 pub fn compute_initial_price_cumulative<Convert, Balance>(
-	current_exchange_rate: Rate,
+	current_exchange_rate: FixedU128,
 ) -> Result<Balance, DispatchError>
 where
 	Convert: ConvertTrait<u128, Balance>,
@@ -34,7 +33,7 @@ pub fn compute_next_price_cumulative<Convert, Balance, Timestamp>(
 	previous_timestamp: Timestamp,
 	previous_price_cumulative: Balance,
 	current_timestamp: Timestamp,
-	current_exchange_rate: Rate,
+	current_exchange_rate: FixedU128,
 ) -> Result<(Timestamp, Balance), DispatchError>
 where
 	Balance: SafeArithmetic,
@@ -47,7 +46,7 @@ where
 	);
 	let elapsed = current_timestamp.saturating_sub(previous_timestamp);
 	let new_price_cumulative: u128 = current_exchange_rate
-		.safe_mul(&Rate::saturated_from(elapsed.saturated_into::<u128>()))?
+		.safe_mul(&FixedU128::saturated_from(elapsed.saturated_into::<u128>()))?
 		.checked_mul_int(1_u128)
 		.ok_or(ArithmeticError::Overflow)?;
 	let current_price_cumulative =
@@ -61,12 +60,12 @@ pub fn compute_twap<Convert, Balance, Timestamp>(
 	current_price_cumulative: Balance,
 	previous_price_cumulative: Balance,
 	elapsed: Timestamp,
-) -> Result<Rate, DispatchError>
+) -> Result<FixedU128, DispatchError>
 where
 	Convert: ConvertTrait<Balance, u128>,
 	Timestamp: AtLeast32Bit + SaturatedConversion,
 {
-	Ok(Rate::checked_from_rational(
+	Ok(FixedU128::checked_from_rational(
 		Convert::convert(current_price_cumulative)
 			.saturating_sub(Convert::convert(previous_price_cumulative)),
 		elapsed.saturated_into::<u128>(),
@@ -79,15 +78,16 @@ mod test {
 	use crate::dex::price::compute_next_price_cumulative;
 
 	use super::compute_twap;
-	use composable_traits::defi::Rate;
-	use sp_runtime::{traits::ConvertInto, ArithmeticError, DispatchError, FixedPointNumber};
+	use sp_runtime::{
+		traits::ConvertInto, ArithmeticError, DispatchError, FixedPointNumber, FixedU128,
+	};
 
 	#[test]
 	fn compute_next_price_cumulative_works() {
 		let previous_timestamp = 10_u32;
 		let current_timestamp = 20_u32;
 		let previous_price_cumulative = 100_u128;
-		let current_exchange_rate = Rate::saturating_from_integer(10_u128);
+		let current_exchange_rate = FixedU128::saturating_from_integer(10_u128);
 		let price = compute_next_price_cumulative::<ConvertInto, u128, u32>(
 			previous_timestamp,
 			previous_price_cumulative,
@@ -102,7 +102,7 @@ mod test {
 		let previous_timestamp = 10_u32;
 		let current_timestamp = 20_u32;
 		let previous_price_cumulative = 100_u128;
-		let current_exchange_rate = Rate::saturating_from_integer(0_u128);
+		let current_exchange_rate = FixedU128::saturating_from_integer(0_u128);
 		let price = compute_next_price_cumulative::<ConvertInto, u128, u32>(
 			previous_timestamp,
 			previous_price_cumulative,
@@ -117,7 +117,7 @@ mod test {
 		let previous_timestamp = 30_u32;
 		let current_timestamp = 20_u32;
 		let previous_price_cumulative = 100_u128;
-		let current_exchange_rate = Rate::saturating_from_integer(10_u128);
+		let current_exchange_rate = FixedU128::saturating_from_integer(10_u128);
 		let price = compute_next_price_cumulative::<ConvertInto, u128, u32>(
 			previous_timestamp,
 			previous_price_cumulative,
@@ -137,7 +137,7 @@ mod test {
 			previous_price_cumulative,
 			elapsed,
 		);
-		assert_eq!(price, Ok(Rate::saturating_from_integer(10_u128)));
+		assert_eq!(price, Ok(FixedU128::saturating_from_integer(10_u128)));
 	}
 
 	#[test]
@@ -163,6 +163,6 @@ mod test {
 			previous_price_cumulative,
 			elapsed,
 		);
-		assert_eq!(price, Ok(Rate::saturating_from_integer(0_u128)));
+		assert_eq!(price, Ok(FixedU128::saturating_from_integer(0_u128)));
 	}
 }
