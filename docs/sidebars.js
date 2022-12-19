@@ -373,7 +373,7 @@ const sidebars = {
 		},
 		{
 			type: 'category',
-			label: 'Audits And Fixes',
+			label: 'Audits, Fixes & Bounties',
 
       link: {
         type: 'generated-index',
@@ -382,6 +382,7 @@ const sidebars = {
       collapsible: false,
       items: [
         'audits/audit-results-recommendations-and-remediations',
+        'audits/bug-bounty-programs'
       ]
     },
     {
