@@ -57,5 +57,5 @@ Please submit the following materials as part of your proposal:
 
 If you have any questions about the RFP or the project, please contact us at outreach@composable.finance
 
-[Cross-Chain Virtual Machine(XCVM)]: (https://docs.composable.finance/products/xcvm)
+[Cross-Chain Virtual Machine(XCVM)]: https://docs.composable.finance/products/xcvm
 [Inter-Blockchain Communication(IBC)]: https://ibcprotocol.org/
