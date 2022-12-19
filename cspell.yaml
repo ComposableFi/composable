@@ -50,6 +50,7 @@ ignoreRegExpList:
   - shebang
 
 ignorePaths:
+  - "docs/docusaurus.config.js"
   - "docs/static/fonts"
   - "docs/static/wasm"
   - "code/parachain/node/src/res"
