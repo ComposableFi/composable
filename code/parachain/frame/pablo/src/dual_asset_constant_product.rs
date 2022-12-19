@@ -145,15 +145,20 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					)?
 					.value
 				} else {
-					let input_ratio_first_to_second = Permill::from_rational(
-						first.amount,
-						first.amount.safe_add(&second.amount)?,
-					);
-
+					// REVIEW(benluelo): Should this validation be here? Or should this be an
+					// invariant expected by this function? It could be a `defensive!` assertion or
+					// a `debug_assert!`.
 					ensure!(
+						// ensure pool ratio isn't changing
 						per_thing_acceptable_computation_error(
-							input_ratio_first_to_second,
-							first_weight
+							Permill::from_rational(
+								T::Convert::convert(first.amount),
+								first_balance
+							),
+							Permill::from_rational(
+								T::Convert::convert(second.amount),
+								second_balance
+							),
 						),
 						Error::<T>::IncorrectAssetAmounts
 					);
@@ -165,7 +170,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 							lp_total_issuance,
 							T::Convert::convert(first.amount),
 							first_balance,
-							Permill::one(),
+							Permill::one(), // should be the sum of the ratios
 							pool.fee_config.fee_rate,
 						)?;
 					}
