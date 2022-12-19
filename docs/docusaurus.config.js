@@ -51,6 +51,13 @@ const config = {
 	themeConfig:
 		/** @type {import('@docusaurus/preset-classic').ThemeConfig} */
 		({
+	    algolia: {
+	      // The application ID provided by Algolia
+	      appId: '1GMXVIRCBW',
+	      // Public API key: it is safe to commit it
+	      apiKey: 'de939a9de56cd5e30ef4a25b9f61a641',
+	      indexName: 'composable',
+	    },
 			navbar: {
 				title: 'Composable Finance',
 				logo: {
