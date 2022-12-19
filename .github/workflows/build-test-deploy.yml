@@ -119,8 +119,9 @@ jobs:
           name: composable-community
       - run: |
           nix --version
-          nix show-config                
+          nix show-config
           nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
+
   cargo-fmt-check:
     name: "Cargo fmt check"
     runs-on: ubuntu-latest
@@ -135,6 +136,33 @@ jobs:
         with:
           command: nix -- build .#cargo-fmt-check
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
+  check-nix-long:
+    name: "Check nix long"
+    runs-on: ubuntu-latest
+    needs:
+      - check-nix
+    concurrency:
+      group: ${{ github.workflow }}-check-nix-long-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          name: composable-community
+      - run: |
+          chmod +x ./.github/workflows/check-nix-long.sh
+          source ./.github/workflows/check-nix-long.sh
 
   taplo-cli-check:
     name: "Taplo cli check"
@@ -707,41 +735,23 @@ jobs:
           command: nix -- build .#acala-node
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-  cache-kusama-parachains-devnet:
-    name: "Package kusama parachains devnet"
-    needs:
-      - package-polkadot-node
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-cache-kusama-parachains-devnet-${{ github.ref }}
-      cancel-in-progress: true
-    continue-on-error: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#kusama-picasso-karura-devnet
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
   cache-devnet-all-dev-local:
-    name: "Package Full Devnet"
+    name: "Cache devnet all dev local"
+    strategy:
+      matrix:
+        runtime: [devnet-dali-complete, devnet-picasso-complete, devnet-dali, devnet-centauri]      
     needs:
       - package-polkadot-node
       - package-acala-node
       - package-statemine-node
+      - package-composable-node
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow }}-cache-devnet-all-dev-local-${{ github.ref }}
+      group: ${{ github.workflow }}-cache-devnet-all-dev-local-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
     continue-on-error: true
     container:
@@ -750,7 +760,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#devnet
+          command: nix -- build .#${{ matrix.runtime }}
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   lint-test-frontend:
@@ -1008,6 +1018,8 @@ jobs:
         - test-running-of-pallet-benchmarks
         - local-integration-tests
         - unit-tests
+        - check-devnet
+        - check-nix-long
         # TODO (vim): Decrease lead time until after release 3
         #- cargo-udeps-check
         - nixfmt-check
@@ -1027,16 +1039,13 @@ jobs:
       steps:
         - run: echo "Goblins allow your work to see the light"
 
-  deploy-devnet:
-      name: "Devnet(Rococo Local Dali Dev) Deploy"
-      if: github.event_name == 'push' && github.ref_name == 'main'
+  check-devnet:
       needs:
-        - effects-gate
+        - cache-devnet-all-dev-local
       runs-on: ubuntu-latest
-      # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization
       concurrency:
-        group: nix-deploy-devnet
-        cancel-in-progress: false
+        group: $${github.workflow }}-check-devnet-${{ github.ref }}
+        cancel-in-progress: true
       steps:
       - uses: actions/checkout@v3
         with:
@@ -1053,7 +1062,7 @@ jobs:
           installCommand: |
             nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
-            nix-env -iA nixpkgs.cachix nixpkgs.jq
+            nix profile install github:cachix/cachix/3abb69595aa30b774b821efade3cb34da302440e nixpkgs#jq
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{  env.CACHIX_COMPOSABLE }}
 
@@ -1070,10 +1079,11 @@ jobs:
           if gsutil -q stat $NIXOPS_STATE_URL/$NIXOPS_STATE;
           then
             gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
+            nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --dry-run --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
           else
-            nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
+            nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --dry-run --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
           fi
-          nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
+
         env:
           NIXOPS_STATE_URL: "gs://composable-state"
           NIXOPS_STATE: "deployment.nixops"
@@ -1081,13 +1091,6 @@ jobs:
           GCP_DEVNET_SERVICE_ACCOUNT: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT }}
           GCP_DEVNET_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT_KEY }}
 
-      - name: Save NixOps State
-        if: always()
-        run: |
-          gsutil cp $NIXOPS_STATE $NIXOPS_STATE_URL/
-        env:
-          NIXOPS_STATE_URL: gs://composable-state
-          NIXOPS_STATE: "deployment.nixops"
 
   frontend-firebase-preview-deploy:
     name: "Firebase Preview channel PR deployment"
