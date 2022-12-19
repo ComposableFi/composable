@@ -529,3 +529,29 @@ pub fn compute_deposit_lp_<T: PerThing>(
 
 	Ok(ConstantProductAmmValueFeePair { value: issued, fee })
 }
+
+/// Computes the required deposit to recieve a minimum amount of LPT
+///
+/// NOTE: When considering accounting for fees - the result of this function may produce a result
+/// slightly lower than the minimum LP to mint.
+///
+/// # Parameters
+/// * `p_supply` - Existing supply of LP tokens
+/// * `p_issued_min` - Minumum LPT a user wants from thier investment
+/// * `b_k` - Balance of token `k`
+/// * `f` - Fee
+pub fn compute_deposit_for_min_lp<T: PerThing>(
+	p_supply: u128,
+	p_issued_min: u128,
+	b_k: u128,
+	f: T,
+) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {
+	let left_from_fee = f.left_from_one();
+	let nominator = p_issued_min.safe_mul(&b_k)?;
+	let denominator = left_from_fee.mul_ceil(p_supply);
+
+	let value = nominator.safe_div(&denominator)?;
+	let fee = value.safe_sub(&left_from_fee.mul_ceil(value))?;
+
+	Ok(ConstantProductAmmValueFeePair { value, fee })
+}
