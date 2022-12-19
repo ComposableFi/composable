@@ -170,8 +170,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 							lp_total_issuance,
 							T::Convert::convert(first.amount),
 							first_balance,
-							Permill::one(), // should be the sum of the ratios
-							pool.fee_config.fee_rate,
+							Permill::one(),
+							Zero::zero(),
 						)?;
 					}
 
@@ -180,7 +180,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 						T::Convert::convert(second.amount),
 						second_balance,
 						Permill::one(),
-						pool.fee_config.fee_rate,
+						Zero::zero(),
 					)?;
 
 					second_deposit.value
