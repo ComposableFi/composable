@@ -25,9 +25,9 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-parts, ... }:
+  outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
     let darwinFilter = import ./darwin-filter.nix { lib = nixpkgs.lib; };
-    in darwinFilter (flake-parts.lib.mkFlake { inherit self; } {
+    in darwinFilter (flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         # To import a flake module
         # 1. Add foo to inputs
@@ -128,8 +128,8 @@
                   } up --build --force-recreate -V --always-recreate-deps --remove-orphans
                 '';
               };
-          in self.inputs.nixpkgs.lib.composeManyExtensions [
-            self.inputs.arion-src.overlay
+          in inputs.nixpkgs.lib.composeManyExtensions [
+            inputs.arion-src.overlays.default
             (final: _prev: {
               composable = {
                 mkDevnetProgram = final.callPackage mkDevnetProgram { };
