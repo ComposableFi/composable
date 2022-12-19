@@ -1,0 +1,25 @@
+name: comment
+description: Comments on the PR that triggered the workflow.
+
+inputs:
+  message:
+    description: "The comment body"
+    required: true
+  tag:
+    description: "The comment identifier"
+    required: true
+  github-token:
+    description: "A github PAT used for authentication"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Comment PR
+      if: ${{ github.event_name == 'pull_request' }}
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        mode: upsert
+        message: ${{ inputs.message}}
+        comment_tag: ${{ inputs.comment-includes}}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
