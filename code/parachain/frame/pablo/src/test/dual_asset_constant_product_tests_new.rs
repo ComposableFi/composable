@@ -6,13 +6,13 @@ use composable_tests_helpers::{
 		currency::{BTC, USDT},
 		helper::RuntimeTrait,
 	},
-	ALICE, BOB,
+	ALICE, BOB, CHARLIE, DAVE,
 };
 use frame_support::{
 	assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
-use sp_runtime::Permill;
+use sp_runtime::{AccountId32, Permill};
 use sp_std::collections::btree_map::BTreeMap;
 
 //- test lp mint/burn
@@ -350,8 +350,15 @@ mod remove_liquidity {
 		assert_ok!(Tokens::mint_into(BTC, &CHARLIE, initial_btc));
 		assert_ok!(Tokens::mint_into(USDT, &CHARLIE, initial_usdt));
 		// Other LPs
-		let other_lps: Vec<AccountId> = (256..512)
+		let other_lps: Vec<AccountId> = (256_u16..512)
 			.map(|account_id| {
+				let account_id_inner: [u8; 32] = [0; 30]
+					.into_iter()
+					.chain(account_id.to_be_bytes())
+					.collect::<Vec<_>>()
+					.try_into()
+					.unwrap();
+				let account_id = AccountId32::new(account_id_inner);
 				assert_ok!(Tokens::mint_into(BTC, &account_id, initial_btc));
 				assert_ok!(Tokens::mint_into(USDT, &account_id, initial_usdt));
 				account_id
@@ -376,15 +383,15 @@ mod remove_liquidity {
 			false
 		));
 		// Other LPs
-		other_lps.iter().for_each(|account_id| {
+		for other_lp in other_lps {
 			assert_ok!(Pablo::add_liquidity(
-				Origin::signed(*account_id),
+				Origin::signed(other_lp),
 				pool_id,
 				BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
 				0,
 				false
 			));
-		});
+		}
 
 		let alice_lpt_balance = Tokens::balance(lp_token, &ALICE);
 		let charlie_lpt_balance = Tokens::balance(lp_token, &CHARLIE);

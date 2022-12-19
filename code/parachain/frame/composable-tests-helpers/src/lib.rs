@@ -13,3 +13,6 @@ pub const BOB: AccountId32 = AccountId32::new([
 pub const CHARLIE: AccountId32 = AccountId32::new([
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
 ]);
+pub const DAVE: AccountId32 = AccountId32::new([
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
+]);

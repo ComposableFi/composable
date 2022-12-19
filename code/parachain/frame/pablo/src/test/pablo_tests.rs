@@ -37,12 +37,13 @@ mod create {
 mod simulate {
 	use super::*;
 
+	use composable_tests_helpers::{ALICE, BOB};
 	use composable_traits::dex::Amm;
 	use frame_support::{bounded_btree_map, traits::fungibles::Mutate};
 	use sp_runtime::Permill;
 
 	use crate::{
-		mock::{new_test_ext, Origin, Pablo, System, Test, ALICE},
+		mock::{new_test_ext, Origin, Pablo, System, Test},
 		Event, PoolInitConfiguration,
 	};
 
