@@ -62,6 +62,14 @@ impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+	// TODO
+	fn update_market_functionality() -> Weight {
+		(96_881_000 as Weight)
+	}
+	// TODO
+	fn update_global_market_functionality() -> Weight {
+		(96_881_000 as Weight)
+	}
 	// Storage: Lending Markets (r:1 w:0)
 	// Storage: Lending AccountCollateral (r:1 w:1)
 	// Storage: Tokens Accounts (r:2 w:2)

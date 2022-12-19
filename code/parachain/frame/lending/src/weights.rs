@@ -11,6 +11,8 @@ use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
 	fn create_market() -> Weight;
+	fn update_market_functionality() -> Weight;
+	fn update_global_market_functionality() -> Weight;
 	fn vault_deposit() -> Weight;
 	fn vault_withdraw() -> Weight;
 	fn deposit_collateral() -> Weight;
@@ -32,6 +34,14 @@ impl WeightInfo for () {
 		(96_881_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(11 as Weight))
+	}
+	// TODO
+	fn update_market_functionality() -> Weight {
+		(96_881_000 as Weight)
+	}
+	// TODO
+	fn update_global_market_functionality() -> Weight {
+		(96_881_000 as Weight)
 	}
 	// same as vaults deposit plus 1 more read
 	fn vault_deposit() -> Weight {

@@ -85,6 +85,7 @@ impl<T: Config> Pallet<T> {
 					.updatable
 					.under_collateralized_warn_percent,
 				liquidators: config_input.updatable.liquidators,
+				is_paused_functionalities: vec![false; 7],
 			};
 			let debt_token_id = T::CurrencyFactory::reserve_lp_token_id()?;
 
@@ -122,6 +123,45 @@ impl<T: Config> Pallet<T> {
 			}
 		})?;
 		Ok(())
+	}
+
+	pub(crate) fn do_update_market_functionality(
+		manager: T::AccountId,
+		market_id: MarketId,
+		changed_functionalities: Vec<(u8, bool)>
+	) -> Result<(), DispatchError> {
+		Markets::<T>::mutate(market_id, |market| {
+			if let Some(market) = market {
+				ensure!(manager == market.manager, Error::<T>::Unauthorized);
+				for (index, is_paused) in changed_functionalities {
+					if (index as usize) < market.is_paused_functionalities.len() {
+						market.is_paused_functionalities[index as usize] = is_paused;
+					}
+				}
+				Ok(())
+			} else {
+				Err(Error::<T>::MarketDoesNotExist)
+			}
+		})?;
+		Ok(())
+	}
+
+	pub(crate) fn functionality_allowed(
+		market_id: &MarketId,
+		functionality: Functionality
+	) -> Result<bool, DispatchError> {
+		let (_, market) = Self::get_market(market_id)?;
+		let index;
+		match functionality {
+			Functionality::DepositVault => index = 0,
+			Functionality::WithdrawVault => index = 1,
+			Functionality::DepositCollateral => index = 2,
+			Functionality::WithdrawCollateral => index = 3,
+			Functionality::Borrow => index = 4,
+			Functionality::RepayBorrow => index = 5,
+			Functionality::Liquidate => index = 6,
+		}
+		Ok(!market.is_paused_functionalities[index])
 	}
 
 	/// Returns pair of market's id and market (as 'MarketConfig') via market's id
