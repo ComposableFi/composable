@@ -72,7 +72,9 @@ pub static BOB: AccountId = 2;
 #[allow(dead_code)]
 pub static CHARLIE: AccountId = 3;
 #[allow(dead_code)]
-pub static CURVE_ADMIN_FEE_ACC_ID: AccountId = 4;
+pub static DAVE: AccountId = 4;
+#[allow(dead_code)]
+pub static CURVE_ADMIN_FEE_ACC_ID: AccountId = 5;
 
 impl system::Config for Test {
 	type BaseCallFilter = Everything;
