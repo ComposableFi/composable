@@ -17,7 +17,7 @@ use cosmwasm_vm::{
 	system::CosmwasmContractMeta,
 };
 use cosmwasm_vm_wasmi::code_gen::{
-	self, Function, FunctionBuilder, PredefinedFunctions, Table, WasmModule,
+	self, Function, FunctionBuilder, Table, WasmModule, INDEX_OF_USER_DEFINED_FNS,
 };
 use entrypoint::*;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
@@ -50,7 +50,7 @@ const BASE_ADDITIONAL_BINARY_SIZE: usize = 10;
 const FN_NAME: &str = "raw_fn";
 const INSTRUCTIONS_SAMPLE_COUNT: u32 = 50;
 // This is the first index where the user defined functions start
-const EXTRA_FN_INDEX: u32 = PredefinedFunctions::UserDefined as u32;
+const EXTRA_FN_INDEX: u32 = INDEX_OF_USER_DEFINED_FNS;
 
 // Substrate's benchmarks are compiled as follows: The upper part and the lower part are separate
 // functions. The upper part is the setup and the lower part is the actual benchmark which is put
@@ -420,7 +420,7 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_read(&mut vm.0, "hello world".as_bytes()).unwrap()
+		Cosmwasm::<T>::do_db_read(&mut vm.0, "hello world".as_bytes()).unwrap();
 	}
 
 	db_read_other_contract {
@@ -428,7 +428,7 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info.clone(), vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_read_other_contract(&mut vm.0, &info.trie_id, "hello world".as_bytes()).unwrap()
+		Cosmwasm::<T>::do_db_read_other_contract(&mut vm.0, &info.trie_id, "hello world".as_bytes()).unwrap();
 	}
 
 	db_write {
@@ -436,7 +436,7 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap()
+		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}
 
 	db_scan {
@@ -444,7 +444,7 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_scan(&mut vm.0).unwrap()
+		Cosmwasm::<T>::do_db_scan(&mut vm.0).unwrap();
 	}
 
 	db_next {
@@ -453,7 +453,7 @@ benchmarks! {
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 		let iterator = Cosmwasm::<T>::do_db_scan(&mut vm.0).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_next(&mut vm.0, iterator).unwrap()
+		Cosmwasm::<T>::do_db_next(&mut vm.0, iterator).unwrap();
 	}
 
 	db_remove {
@@ -462,13 +462,13 @@ benchmarks! {
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_remove(&mut vm.0, "hello".as_bytes())
+		Cosmwasm::<T>::do_db_remove(&mut vm.0, "hello".as_bytes());
 	}
 
 	balance {
 		let sender = create_funded_account::<T>("origin");
 	}: {
-		Cosmwasm::<T>::do_balance(&sender, String::from("100000")).unwrap()
+		Cosmwasm::<T>::do_balance(&sender, String::from("100000")).unwrap();
 	}
 
 	transfer {
@@ -501,28 +501,28 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let _ = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_contract_meta(contract).unwrap()
+		Cosmwasm::<T>::do_contract_meta(contract).unwrap();
 	}
 
 	addr_validate {
 		let account = account::<<T as Config>::AccountIdExtended>("account", 0, 0xCAFEBABE);
 		let address = Cosmwasm::<T>::account_to_cosmwasm_addr(account);
 	}: {
-		Cosmwasm::<T>::do_addr_validate(address).unwrap()
+		Cosmwasm::<T>::do_addr_validate(address).unwrap();
 	}
 
 	addr_canonicalize {
 		let account = account::<<T as Config>::AccountIdExtended>("account", 0, 0xCAFEBABE);
 		let address = Cosmwasm::<T>::account_to_cosmwasm_addr(account);
 	}: {
-		Cosmwasm::<T>::do_addr_canonicalize(address).unwrap()
+		Cosmwasm::<T>::do_addr_canonicalize(address).unwrap();
 	}
 
 	addr_humanize {
 		let account = account::<<T as Config>::AccountIdExtended>("account", 0, 0xCAFEBABE);
 		let account = CanonicalCosmwasmAccount(CosmwasmAccount::new(account));
 	}: {
-		Cosmwasm::<T>::do_addr_humanize(&account)
+		Cosmwasm::<T>::do_addr_humanize(&account);
 	}
 
 	secp256k1_recover_pubkey {
@@ -534,7 +534,7 @@ benchmarks! {
 		hasher.update(message);
 		let message_hash = hasher.finalize();
 	}: {
-		Cosmwasm::<T>::do_secp256k1_recover_pubkey(&message_hash[..], &signature, 0).unwrap()
+		Cosmwasm::<T>::do_secp256k1_recover_pubkey(&message_hash[..], &signature, 0).unwrap();
 	}
 
 	secp256k1_verify {
@@ -543,7 +543,7 @@ benchmarks! {
 		let signature = hex::decode(SECP256K1_SIGNATURE_HEX).unwrap();
 		let public_key = hex::decode(SECP256K1_PUBLIC_KEY_HEX).unwrap();
 	}: {
-		Cosmwasm::<T>::do_secp256k1_verify(&message_hash, &signature, &public_key)
+		Cosmwasm::<T>::do_secp256k1_verify(&message_hash, &signature, &public_key);
 	}
 
 	ed25519_verify {
@@ -559,7 +559,7 @@ benchmarks! {
 		let signatures = vec![ED25519_SIGNATURE.as_slice(), ED25519_SIGNATURE2.as_slice()];
 		let public_keys = vec![ED25519_PUBLIC_KEY.as_slice(), ED25519_PUBLIC_KEY2.as_slice()];
 	}: {
-		Cosmwasm::<T>::do_ed25519_batch_verify(&messages, &signatures, &public_keys)
+		Cosmwasm::<T>::do_ed25519_batch_verify(&messages, &signatures, &public_keys);
 	}
 
 	continue_instantiate {
@@ -570,7 +570,7 @@ benchmarks! {
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_instantiate(&mut vm.0, meta, funds, "{}".as_bytes(), &mut |_event| {}).unwrap()
+		Cosmwasm::<T>::do_continue_instantiate(&mut vm.0, meta, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
 
 	continue_execute {
@@ -580,7 +580,7 @@ benchmarks! {
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_execute(&mut vm.0, contract, funds, "{}".as_bytes(), &mut |_event| {}).unwrap()
+		Cosmwasm::<T>::do_continue_execute(&mut vm.0, contract, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
 
 	continue_migrate {
@@ -588,7 +588,7 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_migrate(&mut vm.0, contract, "{}".as_bytes(), &mut |_event| {}).unwrap()
+		Cosmwasm::<T>::do_continue_migrate(&mut vm.0, contract, "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
 
 	continue_query {
@@ -596,7 +596,7 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_query(&mut vm.0, contract, "{}".as_bytes()).unwrap()
+		Cosmwasm::<T>::do_continue_query(&mut vm.0, contract, "{}".as_bytes()).unwrap();
 	}
 
 	continue_reply {
@@ -604,7 +604,7 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_reply(&mut vm.0, Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {})
+		Cosmwasm::<T>::do_continue_reply(&mut vm.0, Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {}).unwrap();
 	}
 
 	query_info {
@@ -612,7 +612,7 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_query_info(&mut vm.0, contract).unwrap()
+		Cosmwasm::<T>::do_query_info(&mut vm.0, contract).unwrap();
 	}
 
 	query_raw {
@@ -621,7 +621,7 @@ benchmarks! {
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
 		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}: {
-		Cosmwasm::<T>::do_query_raw(&mut vm.0, contract, "hello".as_bytes()).unwrap()
+		Cosmwasm::<T>::do_query_raw(&mut vm.0, contract, "hello".as_bytes()).unwrap();
 	}
 
 	// For `I64Const` and `Drop`. This will be also used to calculate the cost of an empty function call and additional
@@ -1188,7 +1188,7 @@ benchmarks! {
 	//
 	// The first parameter is the index of the function signature. Note that this indices
 	// are unique so if you have 8 functions and there are only 3 unique function signatures,
-	// there will be 3 signature in the list. And the order is first occurance based. That's
+	// there will be 3 signature in the list. And the order is first occurrence based. That's
 	// why although the function index is 9, we are using 4 for the signature index.
 	//
 	// The second parameter is reserved and not used right now.
