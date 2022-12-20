@@ -181,10 +181,6 @@ impl CurrencyId {
 
 		pub const ibcDOT: CurrencyId = CurrencyId(6, None);
 
-		pub const KSM_USDT_LPT: CurrencyId = CurrencyId(105, None);
-		pub const PICA_USDT_LPT: CurrencyId = CurrencyId(106, None);
-		pub const PICA_KSM_LPT: CurrencyId = CurrencyId(107, None);
-
 		/// Staked asset xPICA Token
 		pub const xPICA: CurrencyId = CurrencyId(1001, None);
 		/// Staked asset xLAYR Token
@@ -220,6 +216,12 @@ impl CurrencyId {
 		pub const vKSM: CurrencyId = CurrencyId(103, None);
 		/// Moonriver MOVR
 		pub const MOVR: CurrencyId = CurrencyId(104, None);
+
+		pub const KSM_USDT_LPT: CurrencyId = CurrencyId(105, None);
+		pub const PICA_USDT_LPT: CurrencyId = CurrencyId(106, None);
+		pub const PICA_KSM_LPT: CurrencyId = CurrencyId(107, None);
+		// NOTE: Empty CurrencyId slots starting with 108
+
 
 		/// Karura stable coin(Acala Dollar), not native.
 		pub const kUSD: CurrencyId = CurrencyId(
@@ -373,6 +375,7 @@ mod common_sense {
 		assert_eq!(decimals, 6);
 	}
 }
+
 mod ops {
 	use super::CurrencyId;
 	use core::ops::{Add, Mul};

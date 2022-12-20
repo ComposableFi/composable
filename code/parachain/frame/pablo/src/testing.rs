@@ -25,6 +25,12 @@ use crate::{Config, Event, Pallet, PoolInitConfiguration};
 #[allow(clippy::upper_case_acronyms)]
 type KSM = Currency<4, 12>;
 
+// copied from runtime/primitives/src/currency.rs
+// TODO(benluelo): pool creation helpers for these hardcoded pools
+pub const KSM_USDT_LPT: u128 = 105;
+pub const PICA_USDT_LPT: u128 = 106;
+pub const PICA_KSM_LPT: u128 = 107;
+
 // NOTE/FIXME(benluelo): These trait bounds can be simplified quite a bit once this issue is
 // resolved: https://github.com/rust-lang/rust/issues/20671#issuecomment-529752828
 //
@@ -47,7 +53,6 @@ pub trait PabloRuntimeConstraints:
 	type __SystemAccountId: From<AccountId32> + Clone;
 	type __TimestampMoment: From<u64>;
 	type __PabloBalance: BalanceLike + From<u128> + Zero;
-	// type __AssetId: Clone;
 }
 
 impl<T> PabloRuntimeConstraints for T
@@ -58,14 +63,12 @@ where
 	<T as SystemConfig>::BlockNumber: From<u32> + Into<u64> + SafeAdd,
 	<T as SystemConfig>::AccountId: From<AccountId32> + Clone,
 	<T as Config>::Balance: BalanceLike + From<u128> + Zero,
-	// <T as Config>::AssetId,
 	<T as pallet_timestamp::Config>::Moment: From<u64>,
 {
 	type __SystemAccountId = <T as SystemConfig>::AccountId;
 	type __SystemBlockNumber = <T as SystemConfig>::BlockNumber;
 	type __TimestampMoment = <T as pallet_timestamp::Config>::Moment;
 	type __PabloBalance = <T as Config>::Balance;
-	// type __AssetId = <T as Config>::AssetId;
 }
 
 fn mint_assets<Runtime: PabloRuntimeConstraints>(
@@ -87,8 +90,7 @@ pub mod pool_creation {
 		let asset_2_id = USDT::ID;
 
 		Runtime::assert_extrinsic_event_with(
-			Pallet::<Runtime>::create(
-				OriginFor::<Runtime>::root(),
+			Pallet::<Runtime>::do_create_pool(
 				PoolInitConfiguration::DualAssetConstantProduct {
 					owner: ALICE.into(),
 					assets_weights: bounded_btree_map! {
@@ -97,6 +99,7 @@ pub mod pool_creation {
 					},
 					fee: Permill::from_parts(10_000),
 				},
+				Some(PICA_USDT_LPT.into()),
 			),
 			|event| match event {
 				Event::PoolCreated { pool_id, .. } => Some(pool_id),
@@ -112,8 +115,7 @@ pub mod pool_creation {
 		let asset_2_id = USDT::ID;
 
 		let _pool_id = Runtime::assert_extrinsic_event_with(
-			Pallet::<Runtime>::create(
-				OriginFor::<Runtime>::root(),
+			Pallet::<Runtime>::do_create_pool(
 				PoolInitConfiguration::DualAssetConstantProduct {
 					owner: ALICE.into(),
 					assets_weights: bounded_btree_map! {
@@ -122,6 +124,7 @@ pub mod pool_creation {
 					},
 					fee: Permill::zero(),
 				},
+				Some(PICA_USDT_LPT.into()),
 			),
 			|event| match event {
 				Event::PoolCreated { pool_id, .. } => Some(pool_id),
@@ -137,6 +140,8 @@ pub mod pool_creation {
 		let asset_2_id = PICA::ID;
 
 		assert_noop!(
+			// don't need to use do_create_pool here as we're checking pool creation validations
+			// and never adding liquidity
 			Pallet::<Runtime>::create(
 				OriginFor::<Runtime>::root(),
 				PoolInitConfiguration::DualAssetConstantProduct {
@@ -192,12 +197,11 @@ pub mod providing_liquidity {
 pub fn add_liquidity<Runtime: PabloRuntimeConstraints>() {
 	next_block::<Pallet<Runtime>, Runtime>();
 
-	let asset_1_id: <Runtime as Config>::AssetId = 1_u128.into();
-	let asset_2_id: <Runtime as Config>::AssetId = 131_u128.into();
+	let asset_1_id: <Runtime as Config>::AssetId = PICA::ID.into();
+	let asset_2_id: <Runtime as Config>::AssetId = USDT::ID.into();
 
 	let pool_id = Runtime::assert_extrinsic_event_with(
-		Pallet::<Runtime>::create(
-			OriginFor::<Runtime>::root(),
+		Pallet::<Runtime>::do_create_pool(
 			PoolInitConfiguration::DualAssetConstantProduct {
 				owner: ALICE.into(),
 				assets_weights: [
@@ -209,6 +213,7 @@ pub fn add_liquidity<Runtime: PabloRuntimeConstraints>() {
 				.unwrap(),
 				fee: Permill::from_parts(10_000),
 			},
+			Some(PICA_USDT_LPT.into()),
 		),
 		|event| match event {
 			Event::PoolCreated { pool_id, .. } => Some(pool_id),
@@ -220,7 +225,7 @@ pub fn add_liquidity<Runtime: PabloRuntimeConstraints>() {
 	mint_assets::<Runtime>(asset_2_id, BOB, PICA::units(1_100_000));
 
 	let assets =
-		[(asset_1_id, PICA::units(1_000_000).into()), (asset_2_id, PICA::units(1_000_000).into())]
+		[(asset_1_id, PICA::units(1_000_000).into()), (asset_2_id, USDT::units(1_000_000).into())]
 			.into_iter()
 			.collect::<BTreeMap<_, _>>();
 
@@ -248,8 +253,7 @@ pub fn ksm_usdt<Runtime: PabloRuntimeConstraints>() {
 	let asset_2_id: <Runtime as Config>::AssetId = USDT::ID.into();
 
 	let pool_id = Runtime::assert_extrinsic_event_with(
-		Pallet::<Runtime>::create(
-			OriginFor::<Runtime>::root(),
+		Pallet::<Runtime>::do_create_pool(
 			PoolInitConfiguration::DualAssetConstantProduct {
 				owner: ALICE.into(),
 				assets_weights: [
@@ -261,6 +265,7 @@ pub fn ksm_usdt<Runtime: PabloRuntimeConstraints>() {
 				.unwrap(),
 				fee: Permill::from_parts(10_000),
 			},
+			Some(PICA_USDT_LPT.into()),
 		),
 		|event| match event {
 			Event::PoolCreated { pool_id, .. } => Some(pool_id),
