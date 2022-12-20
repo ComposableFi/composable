@@ -1,12 +1,12 @@
 import type { NextPage } from "next";
 import { Box, Container, Typography } from "@mui/material";
-import Default from "@/components/Templates/Default";
 import { Link } from "@/components";
 import { useEffect } from "react";
 import { useDotSamaContext } from "substrate-react";
 import { AddLiquidityForm } from "@/components/Organisms/liquidity/AddForm";
 import { useUiSlice } from "@/store/ui/ui.slice";
 import { useRouter } from "next/router";
+import { PoolLayout } from "@/components/Templates/pools/PoolLayout";
 
 const breadcrumbs = [
   <Link key="pool" underline="none" color="primary" href="/pool">
@@ -29,7 +29,7 @@ const AddLiquidityPage: NextPage = () => {
   }, [extensionStatus, isPolkadotModalOpen, router]);
 
   return (
-    <Default breadcrumbs={breadcrumbs}>
+    <PoolLayout breadcrumbs={breadcrumbs}>
       <Container maxWidth="lg">
         <Box
           sx={{
@@ -43,7 +43,7 @@ const AddLiquidityPage: NextPage = () => {
           <AddLiquidityForm />
         </Box>
       </Container>
-    </Default>
+    </PoolLayout>
   );
 };
 

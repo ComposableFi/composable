@@ -71,6 +71,7 @@ import type { RpcMethods } from "@polkadot/types/interfaces/rpc";
 import type {
   AccountId,
   AccountId32,
+  AssetId,
   Balance,
   BlockNumber,
   H160,
@@ -893,6 +894,18 @@ declare module "@polkadot/rpc-core/types/jsonrpc" {
                 [assetIn in string]: string;
               }
         ) => Observable<u128>
+      >;
+      simulateRemoveLiquidity: AugmentedRpc<
+        (
+          who: AccountId | string,
+          poolId: PalletPabloPoolId | string,
+          amount: Balance | string,
+          minExpectedAmounts:
+            | BTreeMap<CurrencyId, Balance>
+            | {
+                [assetIn in string]: string;
+              }
+        ) => Observable<BTreeMap<AssetId, Balance>>
       >;
     };
     payment: {

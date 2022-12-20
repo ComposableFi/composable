@@ -1,19 +1,16 @@
 import type { NextPage } from "next";
-import {
-  Container,
-  Typography,
-  Box,
-} from "@mui/material";
-import Default from "@/components/Templates/Default";
+import { Box, Container, Typography } from "@mui/material";
 import { Link } from "@/components";
 import { RemoveLiquidityForm } from "@/components/Organisms/liquidity/RemoveForm";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useDotSamaContext } from "substrate-react";
 import { useUiSlice } from "@/store/ui/ui.slice";
+import { PoolLayout } from "@/components/Templates/pools/PoolLayout";
+import { usePoolDetail } from "@/defi/hooks/pools/usePoolDetail";
+import { RemoveLiquiditySkeleton } from "@/components/Templates/pools/RemoveLiquiditySkeleton";
 
 const RemoveLiquidity: NextPage = () => {
-
   const breadcrumbs = [
     <Link key="pool" underline="none" color="primary" href="/pool">
       Pool
@@ -23,16 +20,27 @@ const RemoveLiquidity: NextPage = () => {
     </Typography>,
   ];
 
-  const {extensionStatus} = useDotSamaContext();
+  const { extensionStatus } = useDotSamaContext();
   const { isPolkadotModalOpen } = useUiSlice();
   const router = useRouter();
+  const { pool } = usePoolDetail();
 
   useEffect(() => {
-    extensionStatus !== "connected" && !isPolkadotModalOpen && router.push('/pool');
+    extensionStatus !== "connected" &&
+      !isPolkadotModalOpen &&
+      router.push("/pool");
   });
 
+  if (pool === null) {
+    return (
+      <PoolLayout breadcrumbs={breadcrumbs}>
+        <RemoveLiquiditySkeleton />
+      </PoolLayout>
+    );
+  }
+
   return (
-    <Default breadcrumbs={breadcrumbs}>
+    <PoolLayout breadcrumbs={breadcrumbs}>
       <Container maxWidth="lg">
         <Box
           sx={{
@@ -43,11 +51,10 @@ const RemoveLiquidity: NextPage = () => {
             marginBottom: 18,
           }}
         >
-          <RemoveLiquidityForm />
+          <RemoveLiquidityForm pool={pool} />
         </Box>
       </Container>
-    </Default>
-
+    </PoolLayout>
   );
 };
 

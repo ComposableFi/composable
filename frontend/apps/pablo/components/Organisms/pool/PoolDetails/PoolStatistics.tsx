@@ -48,10 +48,7 @@ const Item: FC<ItemProps> = ({ label, value, children, ...boxProps }) => {
   );
 };
 
-export const PoolStatistics: FC<PoolDetailsProps> = ({
-  poolId,
-  ...boxProps
-}) => {
+export const PoolStatistics: FC<PoolDetailsProps> = ({ pool, ...boxProps }) => {
   return (
     <Box {...boxProps}>
       <Grid container spacing={4}>

@@ -32,6 +32,7 @@ const initialState: SubstrateBalancesState = SUBSTRATE_NETWORK_IDS.reduce(
   },
   {} as SubstrateBalancesState
 );
+
 export interface SubstrateBalancesActions {
   updateBalance: (data: {
     network: SubstrateNetworkId;

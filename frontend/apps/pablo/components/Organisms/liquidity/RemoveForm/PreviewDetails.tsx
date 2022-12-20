@@ -26,34 +26,32 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
   price2,
   ...rest
 }) => {
-
   return (
     <Box {...rest}>
-      <Label BalanceProps={{
-        balance: `${lpToRemove.eq(0) ? '-' : millify(lpToRemove.toNumber())}`,
-        BalanceTypographyProps: {
-          variant: "body1",
-        },
-      }}
+      <Label
+        BalanceProps={{
+          balance: `${lpToRemove.eq(0) ? "-" : millify(lpToRemove.toNumber())}`,
+          BalanceTypographyProps: {
+            variant: "body1",
+          },
+        }}
       >
-        {token1 && token2 &&
-          <PairAsset
-            assets={[]}
-            separator="/"
-          />
-
-        }
+        {token1 && token2 && <PairAsset assets={[]} separator="/" />}
       </Label>
 
-      <Label mt={3}
-             BalanceProps={{
-               balance: `${millify(expectedReceiveAmountToken1.toNumber())}`,
-               BalanceTypographyProps: {
-                 variant: "body1",
-               },
-             }}
+      <Label
+        mt={3}
+        BalanceProps={{
+          balance: `${millify(expectedReceiveAmountToken1.toNumber())}`,
+          BalanceTypographyProps: {
+            variant: "body1",
+          },
+        }}
       >
-        <BaseAsset icon={token1?.getIconUrl()} label={`Expected ` + token1?.getSymbol()} />
+        <BaseAsset
+          icon={token1?.getIconUrl()}
+          label={`Expected ` + token1?.getSymbol()}
+        />
       </Label>
 
       <Label
@@ -65,7 +63,10 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
           },
         }}
       >
-        <BaseAsset icon={token2?.getIconUrl()} label={`Expected ` + token2?.getSymbol()} />
+        <BaseAsset
+          icon={token2?.getIconUrl()}
+          label={`Expected ` + token2?.getSymbol()}
+        />
       </Label>
 
       <Label

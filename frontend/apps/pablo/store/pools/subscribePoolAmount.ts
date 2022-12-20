@@ -58,7 +58,7 @@ export function subscribePoolAmount(api: ApiPromise | undefined) {
       }
     },
     {
-      equalityFn: (a, b) => b.isPoolLoaded,
+      equalityFn: (a, b) => a.isPoolLoaded && b.isPoolLoaded,
       fireImmediately: true,
     }
   );

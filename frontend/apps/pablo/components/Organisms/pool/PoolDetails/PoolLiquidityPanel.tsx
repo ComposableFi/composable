@@ -12,8 +12,6 @@ import { DonutChart } from "@/components/Atoms/DonutChart";
 import { PoolDetailsProps } from "./index";
 import { useRouter } from "next/router";
 import useStore from "@/store/useStore";
-import { pipe } from "fp-ts/lib/function";
-import { option } from "fp-ts";
 import { BaseAsset } from "@/components";
 import BigNumber from "bignumber.js";
 
@@ -54,17 +52,16 @@ function getPercentage(a: number, b: number) {
 }
 
 export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
-  poolId,
+  pool,
   ...boxProps
 }) => {
   const router = useRouter();
   const theme = useTheme();
-  const getPoolById = useStore((store) => store.pools.getPoolById);
   const poolAmount = useStore((store) => store.pools.poolAmount);
-  const pool = getPoolById(poolId);
   const lpTokens = useStore((store) => store.ownedLiquidity.tokens);
   const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
   const totalIssued = useStore((store) => store.pools.totalIssued);
+  const poolId = pool.poolId.toString();
 
   const handleAddLiquidity = () => {
     router.push(`/pool/add-liquidity/${poolId}`);
@@ -77,119 +74,107 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
     !isPoolsLoaded ||
     Object.keys(lpTokens).length === 0 ||
     Object.keys(totalIssued).length === 0
-  )
+  ) {
     return null;
+  }
 
-  return pipe(
-    pool,
-    option.fold(
-      () => null,
-      (p) => {
-        const [assetIn, assetOut] = p.config.assets;
-        const amount = poolAmount[p.poolId.toString()];
-        const amountIn = amount
-          ? amount[assetIn.getPicassoAssetId() as string]
-          : "0";
-        const amountOut = amount
-          ? amount[assetOut.getPicassoAssetId() as string]
-          : "0";
-        return (
-          <BoxWrapper {...boxProps}>
-            <Grid container>
-              <Grid item {...twoColumnPageSize}>
-                <Typography variant="h5">
-                  {lpTokens[p.config.lpToken].balance.free.toFormat(4)}
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Liquidity Provided
-                </Typography>
-              </Grid>
-              <Grid container item {...twoColumnPageSize} spacing={3}>
-                <Grid item {...twoColumnPageSize}>
-                  <Button
-                    variant="contained"
-                    size="large"
-                    fullWidth
-                    onClick={handleAddLiquidity}
-                  >
-                    Add liquidity
-                  </Button>
-                </Grid>
-                <Grid item {...twoColumnPageSize}>
-                  <Button
-                    disabled={lpTokens[p.config.lpToken].balance.free.isZero()}
-                    variant="outlined"
-                    size="large"
-                    fullWidth
-                    onClick={handleRemoveLiquidity}
-                  >
-                    Remove liquidity
-                  </Button>
-                </Grid>
-              </Grid>
-            </Grid>
+  const [assetIn, assetOut] = pool.config.assets;
+  const amount = poolAmount[pool.poolId.toString()];
+  const amountIn = amount ? amount[assetIn.getPicassoAssetId() as string] : "0";
+  const amountOut = amount
+    ? amount[assetOut.getPicassoAssetId() as string]
+    : "0";
+  return (
+    <BoxWrapper {...boxProps}>
+      <Grid container>
+        <Grid item {...twoColumnPageSize}>
+          <Typography variant="h5">
+            {lpTokens[pool.config.lpToken].balance.free.toFormat(4)}
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Liquidity Provided
+          </Typography>
+        </Grid>
+        <Grid container item {...twoColumnPageSize} spacing={3}>
+          <Grid item {...twoColumnPageSize}>
+            <Button
+              variant="contained"
+              size="large"
+              fullWidth
+              onClick={handleAddLiquidity}
+            >
+              Add liquidity
+            </Button>
+          </Grid>
+          <Grid item {...twoColumnPageSize}>
+            <Button
+              disabled={lpTokens[pool.config.lpToken].balance.free.isZero()}
+              variant="outlined"
+              size="large"
+              fullWidth
+              onClick={handleRemoveLiquidity}
+            >
+              Remove liquidity
+            </Button>
+          </Grid>
+        </Grid>
+      </Grid>
 
-            <Box mt={4}>
-              <Grid container spacing={4}>
-                <Grid item {...twoColumnPageSize}>
-                  <DonutChart
-                    data={[
-                      lpTokens[p.config.lpToken].balance.free
-                        .div(totalIssued[p.poolId.toString()])
-                        .multipliedBy(100)
-                        .toNumber() || 0,
-                      new BigNumber(100)
-                        .minus(
-                          lpTokens[p.config.lpToken].balance.free
-                            .div(totalIssued[p.poolId.toString()])
-                            .multipliedBy(100)
-                        )
-                        .toNumber() || 100,
-                    ]}
-                    colors={[
-                      alpha(
-                        theme.palette.common.white,
-                        theme.custom.opacity.main
-                      ),
-                      theme.palette.primary.main,
-                    ]}
-                    labels={DonutChartLabels}
-                    height={"249px"}
-                  />
-                </Grid>
-                <Grid item {...twoColumnPageSize}>
-                  <Box mt={8}>
-                    {" "}
-                    <Item value={amountIn}>
-                      <BaseAsset
-                        label={`Pooled ${assetIn.getSymbol()}`}
-                        icon={assetIn.getIconUrl()}
-                      />
-                    </Item>
-                    <Item value={amountOut} mt={4}>
-                      <BaseAsset
-                        label={`Pooled ${assetOut.getSymbol()}`}
-                        icon={assetOut.getIconUrl()}
-                      />
-                    </Item>
-                    <Item
-                      value={`${(
-                        lpTokens[p.config.lpToken].balance.free
-                          .div(totalIssued[p.poolId.toString()])
-                          .multipliedBy(100)
-                          .toNumber() || 0
-                      ).toFixed(2)}%`}
-                      mt={4}
-                    >
-                      <Typography variant="body1">Pool share</Typography>
-                    </Item>
-                  </Box>
-                </Grid>
-              </Grid>
+      <Box mt={4}>
+        <Grid container spacing={4}>
+          <Grid item {...twoColumnPageSize}>
+            <DonutChart
+              data={[
+                lpTokens[pool.config.lpToken].balance.free
+                  .div(totalIssued[pool.poolId.toString()])
+                  .multipliedBy(100)
+                  .toNumber() || 0,
+                new BigNumber(100)
+                  .minus(
+                    lpTokens[pool.config.lpToken].balance.free
+                      .div(totalIssued[pool.poolId.toString()])
+                      .multipliedBy(100)
+                  )
+                  .toNumber() || 100,
+              ]}
+              colors={[
+                alpha(theme.palette.common.white, theme.custom.opacity.main),
+                theme.palette.primary.main,
+              ]}
+              labels={DonutChartLabels}
+              height={"249px"}
+            />
+          </Grid>
+          <Grid item {...twoColumnPageSize}>
+            <Box mt={8}>
+              {" "}
+              <Item value={amountIn}>
+                <BaseAsset
+                  label={`Pooled ${assetIn.getSymbol()}`}
+                  icon={assetIn.getIconUrl()}
+                />
+              </Item>
+              <Item value={amountOut} mt={4}>
+                <BaseAsset
+                  label={`Pooled ${assetOut.getSymbol()}`}
+                  icon={assetOut.getIconUrl()}
+                />
+              </Item>
+              <Item
+                value={`${(
+                  lpTokens[pool.config.lpToken].balance.free
+                    .div(totalIssued[pool.poolId.toString()])
+                    .multipliedBy(100)
+                    .toNumber() || 0
+                ).toFixed(2)}%`}
+                mt={4}
+              >
+                <Typography variant="body1">Pool share</Typography>
+              </Item>
             </Box>
-          </BoxWrapper>
-        );
-      }
-    )
+          </Grid>
+        </Grid>
+      </Box>
+    </BoxWrapper>
   );
 };
