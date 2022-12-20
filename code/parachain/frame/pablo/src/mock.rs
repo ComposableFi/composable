@@ -164,8 +164,10 @@ impl pablo::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut storage =
-		frame_system::GenesisConfig::default().build_storage::<Test>().expect("success");
+	// let mut storage =
+	// 	frame_system::GenesisConfig::default().build_storage::<Test>().expect("success");
 
-	storage.into()
+	// storage.into()
+
+	sp_io::TestExternalities::default()
 }

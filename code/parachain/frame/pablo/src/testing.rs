@@ -164,28 +164,25 @@ pub mod providing_liquidity {
 		mint_assets::<Runtime>(PICA::ID, BOB, PICA::units(1_100_000));
 		mint_assets::<Runtime>(USDT::ID, BOB, USDT::units(1_100_000));
 
+		let assets = [
+			(PICA::ID.into(), PICA::units(10_000).into()),
+			(USDT::ID.into(), USDT::units(10_000).into()),
+		]
+		.into_iter()
+		.collect::<BTreeMap<_, _>>();
+
 		Runtime::assert_extrinsic_event(
 			Pallet::<Runtime>::add_liquidity(
 				OriginFor::<Runtime>::signed(BOB.into()),
 				pool_id,
-				[
-					(PICA::ID.into(), PICA::units(10_000).into()),
-					(USDT::ID.into(), USDT::units(10_000).into()),
-				]
-				.into_iter()
-				.collect(),
+				assets.clone(),
 				Zero::zero(),
 				true,
 			),
 			Event::<Runtime>::LiquidityAdded {
 				who: BOB.into(),
 				pool_id,
-				asset_amounts: [
-					(PICA::ID.into(), PICA::units(10_000).into()),
-					(USDT::ID.into(), USDT::units(10_000).into()),
-				]
-				.into_iter()
-				.collect(),
+				asset_amounts: assets,
 				minted_lp: 19_999_999_993_470_955_u128.into(),
 			},
 		);
