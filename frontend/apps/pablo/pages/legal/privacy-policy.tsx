@@ -24,9 +24,11 @@ const PrivacyPolicy: NextPage = () => {
   return (
     <Default breadcrumbs={[<></>]}>
       <div style={{ maxWidth: "1032px", margin: "0 auto" }}>
-        <Typography variant="h4" fontWeight="bold" marginBottom={12}>
-          Privacy Policy
-        </Typography>
+        <div style={{ marginBottom: "48px" }}>
+          <Typography variant="h4" fontWeight="bold">
+            Privacy Policy
+          </Typography>
+        </div>
         <Typography
           fontWeight="normal"
           fontSize="14px"

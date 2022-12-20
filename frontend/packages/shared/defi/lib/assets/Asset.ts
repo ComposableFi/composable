@@ -136,10 +136,7 @@ export class Asset {
    */
   getIdOnChain(chainId: string, inBn: boolean = false): BigNumber | string {
     const id = this.__parachainAssetIds.get(chainId);
-    if (!id) {
-      return '';
-      throw new Error(`Id not set for ${chainId}`);
-    }
+    if (!id) throw new Error(`Id not set for ${chainId}`);
     return inBn ? id : id.toString();
   }
 
