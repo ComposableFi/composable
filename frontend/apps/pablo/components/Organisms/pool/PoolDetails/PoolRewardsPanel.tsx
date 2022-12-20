@@ -1,5 +1,4 @@
 import { BaseAsset, PairAsset } from "@/components/Atoms";
-import { useLiquidityPoolDetails } from "@/defi/hooks/useLiquidityPoolDetails";
 import {
   alpha,
   Box,
@@ -20,6 +19,7 @@ import { useClaimStakingRewards } from "@/defi/hooks/stakingRewards/useClaimStak
 import { ConfirmingModal } from "../../swap/ConfirmingModal";
 import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { FC } from "react";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -61,16 +61,15 @@ const Item: React.FC<ItemProps> = ({
   );
 };
 
-export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
-  poolId,
+export const PoolRewardsPanel: FC<PoolDetailsProps> = ({
+  pool,
   ...boxProps
 }) => {
   const theme = useTheme();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const poolDetails = useLiquidityPoolDetails(Number(poolId));
-  const { pool } = poolDetails;
-  const lpToken = pool?.getLiquidityProviderToken();
-  const lpAssetId = (lpToken?.getPicassoAssetId() as string) ?? "-";
+  const poolId = pool.poolId.toString();
+  const lpAssetId = pool.config.lpToken.toString();
+  const lpToken = new Asset("", "", "", "pica", undefined);
   const stakingRewardsPool = useStakingRewardPool(lpAssetId);
   const rewardAssets = useAssets(
     stakingRewardsPool ? Object.keys(stakingRewardsPool.rewards) : []

@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import BigNumber from "bignumber.js";
 import { useRouter } from "next/router";
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import { ConfirmingModal } from "./ConfirmingModal";
 import { PreviewDetails } from "./PreviewDetails";
 import useDebounce from "@/hooks/useDebounce";
@@ -22,6 +22,7 @@ import { rest } from "lodash";
 import { PoolConfig } from "@/store/pools/types";
 import useStore from "@/store/useStore";
 import { fromChainUnits, toChainUnits } from "@/defi/utils";
+import { Asset } from "shared";
 
 export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
   const theme = useTheme();
@@ -32,9 +33,15 @@ export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
   const ownedLiquidity = useStore((store) => store.ownedLiquidity.tokens);
   const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
   const ownedLiquidityBalance = ownedLiquidity[pool.config.lpToken];
-  const lpBalance = ownedLiquidityBalance?.balance.free ?? new BigNumber(0);
+  const lpBalance = useMemo(
+    () => ownedLiquidityBalance?.balance.free ?? new BigNumber(0),
+    [ownedLiquidityBalance?.balance.free]
+  );
   const { isConfirmingModalOpen } = useUiSlice();
-  const [token1, token2] = ownedLiquidity[pool.config.lpToken].pair;
+  const [token1, token2] = ownedLiquidity[pool.config.lpToken]?.pair ?? [
+    new Asset("", "", "", "pica"),
+    new Asset("", "", "", "pica"),
+  ];
 
   const [percentage, setPercentage] = useState<number>(0);
   const [expectedRemoveAmountQuote, setExpectedRemoveAmountQuote] =
