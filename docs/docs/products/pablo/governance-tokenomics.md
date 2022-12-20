@@ -2,6 +2,13 @@
 
 ## Governance
 
+:::note
+
+Pablo’s native token, PBLO, is set for launch in late Q1 2023.
+During this time, the entire protocol will be governed by PICA.
+After the launch of fNFTs on Picasso, governance will solely be controlled by xPICA holders until the launch of PBLO.
+:::
+
 Users who stake their PBLO tokens are given xPBLO fNFTs. They are able to use xPBLO in order to partake in governance 
 decisions affecting the protocol and control routes for liquidity gauges.
 
