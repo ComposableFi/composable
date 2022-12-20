@@ -3,7 +3,7 @@ import { TokensSlice } from "@/store/tokens/types";
 import { SwapsSlice } from "@/store/swaps/types";
 import { LiquiditySlice } from "@/store/liquidity/types";
 import { RemoveLiquiditySlice } from "@/store/removeLiquidity/types";
-import { PoolSlice } from "@/store/pools/types";
+import { OwnedLiquiditySlice, PoolSlice } from "@/store/pools/types";
 import { PoolStatsSlice } from "@/store/poolStats/types";
 import { TokenBalancesSlice } from "./tokenBalances/types";
 import { BYOGSlice } from "@/store/byog/slice";
@@ -26,4 +26,5 @@ export type AllSlices = TokensSlice &
   RemoveLiquiditySlice &
   PoolStatsSlice &
   PoolSlice &
-  BYOGSlice;
+  BYOGSlice &
+  OwnedLiquiditySlice;

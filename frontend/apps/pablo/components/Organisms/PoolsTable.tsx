@@ -29,20 +29,16 @@ const tableHeaders: TableHeader[] = [
     header: "Pools",
   },
   {
-    header: "TVL",
-    tooltip: "Total value locked",
+    header: "",
   },
   {
-    header: "APY",
-    tooltip: "APY",
+    header: "",
   },
   {
-    header: "Daily Rewards",
-    tooltip: "Daily Rewards",
+    header: "",
   },
   {
-    header: "Volume",
-    tooltip: "Volume",
+    header: "",
   },
 ];
 
@@ -84,8 +80,8 @@ export const PoolsTable: FC<PoolsTableProps> = ({ liquidityPools, source }) => {
       <Table sx={{ minWidth: 420 }} aria-label="All Liquidity table">
         <TableHead>
           <TableRow>
-            {tableHeaders.map((th) => (
-              <TableCell key={th.header} align="left">
+            {tableHeaders.map((th, index) => (
+              <TableCell key={`${th.header}+${index}`} align="left">
                 <Box display="flex" alignItems="center" gap={1.75}>
                   <Typography variant="body1">{th.header}</Typography>
                   {th.tooltip && (
@@ -102,7 +98,7 @@ export const PoolsTable: FC<PoolsTableProps> = ({ liquidityPools, source }) => {
           {liquidityPools.map((row, index) => (
             <LiquidityPoolRow
               liquidityPool={row}
-              key={index}
+              key={`pools_${row.poolId.toString()}`}
               handleRowClick={handleRowClick}
             />
           ))}

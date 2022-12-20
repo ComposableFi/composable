@@ -35,6 +35,9 @@ export function subscribePoolAmount(api: ApiPromise | undefined) {
     async ({ isPoolLoaded }) => {
       if (!api || !isPoolLoaded) return;
 
+      const setPoolAmount = useStore.getState().pools.setPoolAmount;
+      const setTotalIssued = useStore.getState().pools.setTotalIssued;
+
       const pools = useStore.getState().pools.config;
       for (const pool of pools) {
         const assetIn = pool.config.assets[0].getPicassoAssetId() as string;
@@ -46,7 +49,12 @@ export function subscribePoolAmount(api: ApiPromise | undefined) {
           pool.config.owner
         );
 
-        useStore.getState().pools.setPoolAmount(pool.poolId.toString(), amount);
+        setPoolAmount(pool.poolId.toString(), amount);
+        api.query.tokens
+          .totalIssuance(pool.config.lpToken.toString())
+          .then((total) => {
+            setTotalIssued(pool.poolId, fromChainUnits(total.toString(), 12));
+          });
       }
     },
     {

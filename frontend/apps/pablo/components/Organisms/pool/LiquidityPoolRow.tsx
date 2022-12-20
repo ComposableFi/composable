@@ -1,4 +1,4 @@
-import { TableCell, TableRow, Typography } from "@mui/material";
+import { TableCell, TableRow } from "@mui/material";
 import { PoolConfig } from "@/store/createPool/types";
 import useStore from "@/store/useStore";
 import { PairAsset } from "@/components/Atoms";
@@ -27,16 +27,10 @@ const LiquidityPoolRow = ({
         <TableCell align="left">
           <PairAsset assets={assets} separator="/" />
         </TableCell>
-        <TableCell align="left">
-          <Typography variant="body2">N/A</Typography>
-        </TableCell>
-        <TableCell align="left">
-          <Typography variant="body2">N/A</Typography>
-        </TableCell>
-        <TableCell align="left">N/A</TableCell>
-        <TableCell align="left">
-          <Typography variant="body2">N/A</Typography>
-        </TableCell>
+        <TableCell align="left"></TableCell>
+        <TableCell align="left"></TableCell>
+        <TableCell align="left"></TableCell>
+        <TableCell align="left"></TableCell>
       </TableRow>
     );
   }

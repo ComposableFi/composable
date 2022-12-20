@@ -3,12 +3,13 @@ import { option } from "fp-ts";
 import { Asset } from "shared";
 
 export type PoolKind = "dualAssetConstantPool" | "";
-
+export type LPTokenId = number;
+export type PoolId = BigNumber;
 export type PoolConfig = {
   kind: PoolKind;
-  poolId: BigNumber;
+  poolId: PoolId;
   config: {
-    lpToken: number;
+    lpToken: LPTokenId;
     owner: string;
     assetsWeights: {
       [assetId in number]: number;
@@ -36,5 +37,37 @@ export interface PoolSlice {
     setConfig: (pools: PoolConfig[]) => void;
     getPoolById: (poolId: string) => option.Option<PoolConfig>;
     setPoolAmount: (poolId: string, payload: AssetAmountPair) => void;
+    totalIssued: {
+      [PoolId in string]: BigNumber;
+    };
+    setTotalIssued: (poolId: PoolId, totalIssued: BigNumber) => void;
+  };
+}
+
+export type LPTokenState = {
+  balance: {
+    free: BigNumber;
+    locked: BigNumber;
+  };
+  pair: [Asset, Asset];
+  poolId: PoolId;
+};
+export type OwnedLiquidityTokens = {
+  [key in LPTokenId]: LPTokenState;
+};
+
+export interface OwnedLiquiditySlice {
+  ownedLiquidity: {
+    tokens: OwnedLiquidityTokens;
+
+    setOwnedLiquidity: (
+      lpTokenId: LPTokenId,
+      balance: {
+        free: BigNumber;
+        locked: BigNumber;
+      },
+      pair: [Asset, Asset],
+      poolId: PoolId
+    ) => void;
   };
 }

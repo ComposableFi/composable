@@ -15,6 +15,7 @@ import useStore from "@/store/useStore";
 import { pipe } from "fp-ts/lib/function";
 import { option } from "fp-ts";
 import { BaseAsset } from "@/components";
+import BigNumber from "bignumber.js";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -42,6 +43,16 @@ const Item: React.FC<ItemProps> = ({ value, children, ...gridProps }) => {
 
 const DonutChartLabels = ["My Position", "Total Value Locked"];
 
+function getPercentage(a: number, b: number) {
+  const aValue = a || 0;
+  const bValue = b || 100;
+
+  const a_percent = (aValue / bValue) * 100;
+  const b_percent = 100 - a_percent;
+
+  return [a_percent, b_percent];
+}
+
 export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
   poolId,
   ...boxProps
@@ -51,6 +62,9 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
   const getPoolById = useStore((store) => store.pools.getPoolById);
   const poolAmount = useStore((store) => store.pools.poolAmount);
   const pool = getPoolById(poolId);
+  const lpTokens = useStore((store) => store.ownedLiquidity.tokens);
+  const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
+  const totalIssued = useStore((store) => store.pools.totalIssued);
 
   const handleAddLiquidity = () => {
     router.push(`/pool/add-liquidity/${poolId}`);
@@ -58,6 +72,13 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
   const handleRemoveLiquidity = () => {
     router.push(`/pool/remove-liquidity/${poolId}`);
   };
+
+  if (
+    !isPoolsLoaded ||
+    Object.keys(lpTokens).length === 0 ||
+    Object.keys(totalIssued).length === 0
+  )
+    return null;
 
   return pipe(
     pool,
@@ -76,7 +97,9 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
           <BoxWrapper {...boxProps}>
             <Grid container>
               <Grid item {...twoColumnPageSize}>
-                <Typography variant="h5">{`N/A`}</Typography>
+                <Typography variant="h5">
+                  {lpTokens[p.config.lpToken].balance.free.toFormat(4)}
+                </Typography>
                 <Typography variant="body1" color="text.secondary">
                   Liquidity Provided
                 </Typography>
@@ -94,7 +117,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
                 </Grid>
                 <Grid item {...twoColumnPageSize}>
                   <Button
-                    disabled={false}
+                    disabled={lpTokens[p.config.lpToken].balance.free.isZero()}
                     variant="outlined"
                     size="large"
                     fullWidth
@@ -110,7 +133,19 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
               <Grid container spacing={4}>
                 <Grid item {...twoColumnPageSize}>
                   <DonutChart
-                    data={[20, 80]}
+                    data={[
+                      lpTokens[p.config.lpToken].balance.free
+                        .div(totalIssued[p.poolId.toString()])
+                        .multipliedBy(100)
+                        .toNumber() || 0,
+                      new BigNumber(100)
+                        .minus(
+                          lpTokens[p.config.lpToken].balance.free
+                            .div(totalIssued[p.poolId.toString()])
+                            .multipliedBy(100)
+                        )
+                        .toNumber() || 100,
+                    ]}
                     colors={[
                       alpha(
                         theme.palette.common.white,
@@ -137,8 +172,15 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
                         icon={assetOut.getIconUrl()}
                       />
                     </Item>
-                    <Item value={`${0}%`} mt={4}>
-                      {/*// TODO: Pool share from amount*/}
+                    <Item
+                      value={`${(
+                        lpTokens[p.config.lpToken].balance.free
+                          .div(totalIssued[p.poolId.toString()])
+                          .multipliedBy(100)
+                          .toNumber() || 0
+                      ).toFixed(2)}%`}
+                      mt={4}
+                    >
                       <Typography variant="body1">Pool share</Typography>
                     </Item>
                   </Box>
