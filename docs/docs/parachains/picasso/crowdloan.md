@@ -1,6 +1,13 @@
 # The Picasso Crowdloan
 *Our strategy that lead to a successful parachain procurement.*
 
+:::caution
+
+Any unclaimed rewards from the crowdloan will be transferred to the Picasso treasury, via a governance proposal,
+three months after the crowdloan vesting period is concluded 
+
+:::
+
 ## Picasso Crowdloan Details
 
 Composable Finance has won the 13th Kusama parachain auction slot, 
