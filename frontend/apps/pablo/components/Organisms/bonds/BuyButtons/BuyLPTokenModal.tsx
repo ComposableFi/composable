@@ -135,6 +135,7 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
           mt={4}
           assetOne={new Asset("", "", "", "ksm", undefined)}
           assetTwo={new Asset("", "", "", "pica", undefined)}
+          poolShare={{}}
           price={price}
           revertPrice={revertPrice}
           share={share}

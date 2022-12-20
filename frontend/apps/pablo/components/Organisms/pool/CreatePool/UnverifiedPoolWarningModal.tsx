@@ -1,15 +1,15 @@
 import React from "react";
 import { Modal, ModalProps } from "@/components/Molecules";
-import { Box, Button, Typography, useTheme } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { WarningAmberRounded } from "@mui/icons-material";
 import { setUiState } from "@/store/ui/ui.slice";
 
 export const UnverifiedPoolWarningModal: React.FC<ModalProps> = ({
   ...modalProps
 }) => {
-  const theme = useTheme();
   const createPool = undefined as any;
-  const { currentStep, setSelectable } = createPool;
+  const currentStep = 1 as number;
+  const setSelectable = console.log;
 
   const handleClose = () => {
     setUiState({ isConfirmingModalOpen: false });
