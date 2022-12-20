@@ -65,7 +65,7 @@ pub mod pallet {
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},
-		dex::{Amm, BasicPoolInfo, Fee, PriceAggregate, RedeemableAssets},
+		dex::{Amm, BasicPoolInfo, Fee, PriceAggregate},
 	};
 	use core::fmt::Debug;
 	use frame_support::{
@@ -686,7 +686,7 @@ pub mod pallet {
 		fn redeemable_assets_for_lp_tokens(
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
+		) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			#[allow(deprecated)]
@@ -709,7 +709,7 @@ pub mod pallet {
 						})
 						.collect::<Result<BTreeMap<_, _>, _>>()?;
 
-					Ok(RedeemableAssets { assets })
+					Ok(assets)
 				},
 			}
 		}
@@ -804,7 +804,6 @@ pub mod pallet {
 			lp_amount: Self::Balance,
 			min_receive: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError> {
-			let redeemable_assets = Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			let res = match pool {
@@ -832,7 +831,7 @@ pub mod pallet {
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
 						pool_id,
 						who: who.clone(),
-						asset_amounts: redeemable_assets.assets,
+						asset_amounts: res.clone(),
 					});
 
 					res

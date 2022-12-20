@@ -73,7 +73,7 @@ pub trait Amm {
 	fn redeemable_assets_for_lp_tokens(
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
-	) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError>
+	) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
 
@@ -327,16 +327,6 @@ pub struct PriceAggregate<PoolId, AssetId, Balance> {
 	pub base_asset_id: AssetId,
 	pub quote_asset_id: AssetId,
 	pub spot_price: Balance, // prices based on any other stat such as TWAP goes here..
-}
-
-/// RedeemableAssets for given amount of lp tokens.
-#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct RedeemableAssets<AssetId, Balance>
-where
-	AssetId: Ord,
-{
-	pub assets: BTreeMap<AssetId, Balance>,
 }
 
 #[cfg(test)]
