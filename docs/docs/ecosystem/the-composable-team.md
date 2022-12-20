@@ -1,8 +1,8 @@
 # The Composable Team
 
-The Composable Finance team is made up of individuals dedicated to realizing a seamless cross-chain user experience and 
-a blockchain-agnostic future of DeFi. There are around 80 people on the Composable team; 40 developers, 12 on Product 
-and QA, 8 on Growth and HR, and 18 on design, marketing, and community. Select biographies of our core members are below.
+There are around 56 people on the Composable team; 29 in engineering and research; 8 in Infrastructure;
+3 in Product and design; 12 in Growth, marketing and business development; 5 in legal, finance and HR. 
+Select biographies of our core members are below.
 
 ## 0xbrainjar | Founder & CEO
 
@@ -95,15 +95,6 @@ Previous to joining Composable, he led the creative strategy at companies like P
 IT Engineering and Computer Science, which enables him to turn complex and tech-heavy concepts into seamless and 
 user-friendly experiences. [Twitter](https://twitter.com/0xslenderman)
 
-## Elliot Frost (MarmiteToast) | Head of Product
-
-Elliot had a career as a physical commodity trader in the European Gas and Carbon markets at firms such as Trafigura. 
-His deep passion for DeFi led him to become a trader at Covario, a Swiss-based crypto prime broker. 
-As Head of Product, Elliot ensures that the Composable vision is translated into high quality, innovative, 
-and user-centric products. It is the Product Team's responsibility to ensure that the technical developments 
-align with the broader strategy and business objectives. [LinkedIn](https://www.linkedin.com/in/elliot-f/) | 
-[Twitter](https://twitter.com/TLE_dot_com)
-
 ## Robert Zhuang | Head of Product Delivery
 
 Rob has more than 15 years of experience in project management and delivery. 
@@ -121,15 +112,6 @@ He obtained his BSc in Computer Science and his MSc in Artificial Intelligence a
 València. He is currently finishing his PhD in Cryptography and Distributed Systems. He also worked previously in 
 Machine Learning and NLP. [Linkedin](https://www.linkedin.com/in/antoniomlarribaflor/) | 
 [Twitter](https://twitter.com/Cryptoni0x)
-
-## Seun Lanlege | Principal Protocol Engineer
-
-With 6 years of experience in software engineering, Seun started his career in blockchain in consulting services, moving to Parity Technologies thereafter. 
-At Parity he worked on the Rust implementation of the Ethereum protocol, on the Substrate blockchain and framework, 
-and on the Polkadot Network. Seun brings deep technical expertise on protocol development, harnessing his knowledge 
-to power the development of trustless bridging solutions between various networks beyond DotSama, 
-including the IBC and more. 
-[LinkedIn](https://www.linkedin.com/in/seunlanlege/?originalSubdomain=ng) | [Twitter](https://twitter.com/seunlanlege)
 
 ## Blas Rodriguez Irizar | Bridging Lead
 
