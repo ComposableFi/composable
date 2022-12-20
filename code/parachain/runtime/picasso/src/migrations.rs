@@ -110,7 +110,7 @@ pub mod pablo_picasso_init_pools {
 		first_asset_weight: Permill,
 		fee: Permill,
 	) -> PoolInitConfiguration<AccountId, CurrencyId> {
-		let owner = AccountId::from([0; 32]);
+		let owner = PabloPalletId::get().into_account_truncating();
 
 		let mut assets_weights = BoundedBTreeMap::new();
 
