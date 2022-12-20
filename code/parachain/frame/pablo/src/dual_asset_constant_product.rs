@@ -1,17 +1,18 @@
-use core::cmp::Ordering;
-
 use crate::{AssetIdOf, Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::{
 	constant_product::{
 		compute_deposit_lp_, compute_first_deposit_lp_, compute_in_given_out_new,
-		compute_out_given_in_new, compute_redeemed_for_lp, get_other_deposit_given_min_ratio,
+		compute_out_given_in_new, compute_redeemed_for_lp,
 	},
-	per_thing_acceptable_computation_error, PoolWeightMathExt,
+	PoolWeightMathExt,
 };
 use composable_support::{collections::vec::bounded::BiBoundedVec, math::safe::SafeAdd};
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
-	dex::{AssetAmount, AssetDepositInfo, BasicPoolInfo, Fee, FeeConfig},
+	dex::{
+		normalize_asset_deposit_infos_to_min_ratio, AssetAmount, AssetDepositInfo,
+		AssetDepositNormalizationError, BasicPoolInfo, Fee, FeeConfig,
+	},
 };
 use frame_support::{
 	defensive,
@@ -20,40 +21,12 @@ use frame_support::{
 };
 use sp_runtime::{
 	traits::{Convert, One, Zero},
-	BoundedBTreeMap, Permill,
+	ArithmeticError, BoundedBTreeMap, Permill,
 };
-use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+use sp_std::collections::btree_map::BTreeMap;
 
 // Balancer V1 Constant Product Pool
 pub(crate) struct DualAssetConstantProduct<T>(PhantomData<T>);
-
-fn fix_deposit_ratios<T: Config>(
-	deposit_one: AssetDepositInfo<T::AssetId>,
-	depsoit_two: AssetDepositInfo<T::AssetId>,
-) -> Result<(AssetDepositInfo<T::AssetId>, AssetDepositInfo<T::AssetId>), DispatchError> {
-	match deposit_one.cmp_by_deposit_ratio(depsoit_two) {
-		Ordering::Less => normalize_to_min_ratio::<T>(deposit_one, depsoit_two),
-		Ordering::Equal => Ok((deposit_one, depsoit_two)),
-		Ordering::Greater => normalize_to_min_ratio::<T>(depsoit_two, deposit_one),
-	}
-}
-
-fn normalize_to_min_ratio<T: Config>(
-	min_deposit: AssetDepositInfo<T::AssetId>,
-	other: AssetDepositInfo<T::AssetId>,
-) -> Result<(AssetDepositInfo<T::AssetId>, AssetDepositInfo<T::AssetId>), DispatchError> {
-	Ok((
-		min_deposit,
-		AssetDepositInfo {
-			deposit_amount: get_other_deposit_given_min_ratio(
-				min_deposit.deposit_amount,
-				min_deposit.asset_balance,
-				other.asset_balance,
-			)?,
-			..other
-		},
-	))
-}
 
 impl<T: Config> DualAssetConstantProduct<T> {
 	pub(crate) fn do_create_pool(
@@ -118,126 +91,95 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		who: &T::AccountId,
 		pool: BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
 		pool_account: T::AccountId,
-		assets: BoundedVec<AssetAmount<T::AssetId, T::Balance>, ConstU32<2>>,
+		assets: BiBoundedVec<AssetAmount<T::AssetId, T::Balance>, 1, 2>,
 		min_mint_amount: T::Balance,
 		keep_alive: bool,
 	) -> Result<T::Balance, DispatchError> {
 		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
 
-		let assets_with_balances = assets
-			.iter()
-			.map(|asset_amount| {
-				if asset_amount.amount.is_zero() {
-					return Err(Error::<T>::InvalidAmount)
-				};
+		let assets_with_balances = assets.try_mapped(|asset_amount| {
+			if asset_amount.amount.is_zero() {
+				return Err(Error::<T>::InvalidAmount)
+			};
 
-				let balance =
-					pool_assets.remove(&asset_amount.asset_id).ok_or(Error::<T>::AssetNotFound)?;
+			let (weight, balance) =
+				pool_assets.remove(&asset_amount.asset_id).ok_or(Error::<T>::AssetNotFound)?;
 
-				Ok(AssetDepositInfo::from(
-					AssetAmount {
-						asset_id: asset_amount.asset_id,
-						amount: T::Convert::convert(asset_amount.amount),
-					},
-					balance,
-				))
+			Ok(AssetDepositInfo {
+				asset_id: asset_amount.asset_id,
+				deposit_amount: T::Convert::convert(asset_amount.amount),
+				asset_balance: balance,
+				asset_weight: weight,
 			})
-			.collect::<Result<Vec<_>, _>>()?;
+		})?;
 
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
 
-		let amount_of_lp_token_to_mint = match assets_with_balances[..] {
-			[single] => {
-				if lp_total_issuance.is_zero() {
-					return Err(Error::<T>::InitialDepositCannotBeZero.into())
-				}
+		let amount_of_lp_token_to_mint = if let [single] = assets_with_balances.as_slice() {
+			if lp_total_issuance.is_zero() {
+				return Err(Error::<T>::InitialDepositMustContainAllAssets.into())
+			}
 
-				let single_deposit = compute_deposit_lp_(
-					lp_total_issuance,
-					single.deposit_amount,
-					single.asset_balance,
-					single.asset_weight,
-					pool.fee_config.fee_rate,
-				)?;
+			let single_deposit = compute_deposit_lp_(
+				lp_total_issuance,
+				single.deposit_amount,
+				single.asset_balance,
+				single.asset_weight,
+				pool.fee_config.fee_rate,
+			)?;
 
-				T::Assets::transfer(
-					single.asset_id,
-					who,
-					&pool_account,
-					T::Convert::convert(single.deposit_amount),
-					keep_alive,
-				)?;
+			T::Assets::transfer(
+				single.asset_id,
+				who,
+				&pool_account,
+				T::Convert::convert(single.deposit_amount),
+				keep_alive,
+			)?;
 
-				single_deposit.value
-			},
-			[first, second] => {
-				let lp_to_mint = if lp_total_issuance.is_zero() {
-					compute_first_deposit_lp_(
-						&[
-							(first.deposit_amount, first.asset_weight),
-							(second.deposit_amount, second.asset_weight),
-						],
-						Permill::zero(),
-					)?
-					.value
-				} else {
-					let (first, second) = fix_deposit_ratios::<T>(first, second)?;
-					// REVIEW(benluelo): Should this validation be here? Or should this be an
-					// invariant expected by this function? It could be a `defensive!` assertion or
-					// a `debug_assert!`.
-					ensure!(
-						// ensure pool ratio isn't changing
-						per_thing_acceptable_computation_error(
-							Permill::from_rational(first.deposit_amount, first.asset_balance),
-							Permill::from_rational(second.deposit_amount, second.asset_balance),
-						),
-						Error::<T>::IncorrectAssetAmounts
-					);
-
-					// pass 1 as weight since adding liquidity for all assets
-					// see docs on compute_deposit_lp_ for more information
-					sp_std::if_std! {
-						let _first_deposit = compute_deposit_lp_(
-							lp_total_issuance,
-							first.deposit_amount,
-							first.asset_balance,
-							Permill::one(),
-							Zero::zero(),
-						)?;
-					}
-
-					let second_deposit = compute_deposit_lp_(
-						lp_total_issuance,
-						second.deposit_amount,
-						second.asset_balance,
-						Permill::one(),
-						Zero::zero(),
-					)?;
-
-					second_deposit.value
+			single_deposit.value
+		} else if lp_total_issuance.is_zero() {
+			compute_first_deposit_lp_(
+				assets_with_balances.iter().map(|adi| (adi.deposit_amount, adi.asset_weight)),
+				Permill::zero(),
+			)?
+			.value
+		} else {
+			let normalized_deposits =
+				match normalize_asset_deposit_infos_to_min_ratio(assets_with_balances.into()) {
+					Ok(normalized_assets) => normalized_assets,
+					Err(AssetDepositNormalizationError::ArithmeticOverflow) =>
+						return Err(DispatchError::Arithmetic(ArithmeticError::Overflow)),
+					Err(AssetDepositNormalizationError::NotEnoughAssets) =>
+						unreachable!("two assets were provided to the normalization function; qed;"),
 				};
 
-				T::Assets::transfer(
-					first.asset_id,
-					who,
-					&pool_account,
-					T::Convert::convert(first.deposit_amount),
-					keep_alive,
-				)?;
-				T::Assets::transfer(
-					second.asset_id,
-					who,
-					&pool_account,
-					T::Convert::convert(second.deposit_amount),
-					keep_alive,
-				)?;
+			// since the asset deposits were normalize, the lp_to_mint will be the same for all
+			// asset deposits
+			let asset_to_calculate_with =
+				normalized_deposits.first().expect("2 assets in the vec; qed;");
 
-				lp_to_mint
-			},
-			_ => {
-				defensive!("this should be unreachable, since the input assets are bounded at 2");
-				return Err(Error::<T>::UnsupportedOperation.into())
-			},
+			// pass 1 as weight since adding liquidity for all assets with normalized deposits
+			// see docs on compute_deposit_lp_ for more information
+			let lp_to_mint = compute_deposit_lp_(
+				lp_total_issuance,
+				asset_to_calculate_with.deposit_amount,
+				asset_to_calculate_with.asset_balance,
+				Permill::one(),
+				Zero::zero(),
+			)?
+			.value;
+
+			for normalized_deposit in normalized_deposits {
+				T::Assets::transfer(
+					normalized_deposit.asset_id,
+					who,
+					&pool_account,
+					T::Convert::convert(normalized_deposit.deposit_amount),
+					keep_alive,
+				)?;
+			}
+
+			lp_to_mint
 		};
 
 		let amount_of_lp_token_to_mint = T::Convert::convert(amount_of_lp_token_to_mint);
@@ -261,25 +203,22 @@ impl<T: Config> DualAssetConstantProduct<T> {
 	) -> Result<BTreeMap<T::AssetId, T::Balance>, DispatchError> {
 		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
 
-		let min_receive_with_current_balances = min_receive
-			.iter()
-			.map(|asset_amount| {
-				let balance =
-					pool_assets.remove(&asset_amount.asset_id).ok_or(Error::<T>::AssetNotFound)?;
+		let min_receive_with_current_balances = min_receive.try_mapped(|asset_amount| {
+			let balance =
+				pool_assets.remove(&asset_amount.asset_id).ok_or(Error::<T>::AssetNotFound)?;
 
-				Ok::<_, Error<T>>((asset_amount, balance))
-			})
-			.collect::<Result<Vec<_>, _>>()?;
+			Ok::<_, Error<T>>((asset_amount, balance))
+		})?;
 
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
 
-		let redeemed_assets = match min_receive_with_current_balances[..] {
+		let redeemed_assets = match min_receive_with_current_balances.as_slice() {
 			[(single, (single_weight, single_balance))] => {
 				let single_redeemed_amount = compute_redeemed_for_lp(
 					lp_total_issuance,
 					T::Convert::convert(lp_amount),
-					single_balance,
-					single_weight,
+					*single_balance,
+					*single_weight,
 				)?;
 
 				ensure!(
@@ -304,13 +243,13 @@ impl<T: Config> DualAssetConstantProduct<T> {
 				let first_redeemed_amount = compute_redeemed_for_lp(
 					lp_total_issuance,
 					T::Convert::convert(lp_amount),
-					first_balance,
+					*first_balance,
 					Permill::one(),
 				)?;
 				let second_redeemed_amount = compute_redeemed_for_lp(
 					lp_total_issuance,
 					T::Convert::convert(lp_amount),
-					second_balance,
+					*second_balance,
 					Permill::one(),
 				)?;
 

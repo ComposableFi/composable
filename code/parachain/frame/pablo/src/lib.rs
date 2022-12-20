@@ -212,6 +212,7 @@ pub mod pallet {
 		IncorrectAssetAmounts,
 		UnsupportedOperation,
 		InitialDepositCannotBeZero,
+		InitialDepositMustContainAllAssets,
 		/// The `min_amounts` passed to `remove_liquidity` must contain at least one asset.
 		MinAmountsMustContainAtLeastOneAsset,
 	}

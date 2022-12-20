@@ -3,6 +3,7 @@ use core::cmp::Ordering;
 use crate::{currency::BalanceLike, defi::CurrencyPair};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
+	ensure,
 	traits::{tokens::AssetId as AssetIdLike, Get},
 	BoundedVec, CloneNoBound, EqNoBound, PartialEqNoBound, RuntimeDebug, RuntimeDebugNoBound,
 };
@@ -10,7 +11,10 @@ use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-use sp_runtime::{BoundedBTreeMap, DispatchError, Permill, Rational128};
+use sp_runtime::{
+	helpers_128bit::multiply_by_rational_with_rounding, ArithmeticError, BoundedBTreeMap,
+	DispatchError, Permill, Rational128,
+};
 use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec::Vec};
 
 /// Specifies and amount together with the asset ID of the amount.
@@ -392,12 +396,15 @@ mod tests {
 pub struct AssetDepositInfo<AssetId> {
 	pub asset_id: AssetId,
 	pub deposit_amount: u128,
+	// rename to `existing_balance`
 	pub asset_balance: u128,
+	// could probably just be called `weight`?
 	pub asset_weight: Permill,
 }
 
 impl<AssetId> AssetDepositInfo<AssetId> {
 	pub fn from(deposit_amount: AssetAmount<AssetId, u128>, asset_info: (Permill, u128)) -> Self {
+		// TODO(ben,connor): debug assert asset_balance is non-zero?
 		AssetDepositInfo {
 			asset_id: deposit_amount.asset_id,
 			deposit_amount: deposit_amount.amount,
@@ -412,5 +419,112 @@ impl<AssetId> AssetDepositInfo<AssetId> {
 
 	pub fn cmp_by_deposit_ratio(&self, other: Self) -> Ordering {
 		self.get_deposit_ratio().cmp(&other.get_deposit_ratio())
+	}
+}
+
+pub fn normalize_asset_deposit_infos_to_min_ratio<AssetId: Copy>(
+	// REVIEW(ben,connor): Maybe make this a BiBoundedVec? Would remove the need for the custom
+	// error type as well.
+	mut adis: Vec<AssetDepositInfo<AssetId>>,
+) -> Result<Vec<AssetDepositInfo<AssetId>>, AssetDepositNormalizationError> {
+	ensure!(adis.len() > 1, AssetDepositNormalizationError::NotEnoughAssets);
+
+	let smallest = adis
+		.iter()
+		.map(|adi| adi.get_deposit_ratio())
+		.reduce(|acc, curr| acc.min(curr))
+		.expect("at least 2 items are present in the vec as per the check above; qed;");
+
+	dbg!(smallest);
+
+	for adi in adis.iter_mut() {
+		adi.deposit_amount = multiply_by_rational_with_rounding(
+			adi.asset_balance,
+			smallest.n(),
+			smallest.d(),
+			// amount out will be less than the maximum allowed, so round up
+			sp_arithmetic::Rounding::Up,
+		)
+		.ok_or(AssetDepositNormalizationError::ArithmeticOverflow)?;
+	}
+
+	Ok(adis)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AssetDepositNormalizationError {
+	ArithmeticOverflow,
+	NotEnoughAssets,
+}
+
+// impl From<AddLiquidityNormalizationError> for DispatchError {
+// 	fn from(value: AddLiquidityNormalizationError) -> Self {
+// 		match value {
+// 			AddLiquidityNormalizationError::ArithmeticOverflow =>
+// 				DispatchError::Arithmetic(ArithmeticError::Overflow),
+// 			AddLiquidityNormalizationError::NotEnoughAssets => Dispa,
+// 		}
+// 	}
+// }
+
+#[cfg(test)]
+mod test_asset_normalization {
+	use super::*;
+
+	fn generate_asset_deposit_infos<const N: usize>(
+		adi_inputs: [(u128, u128); N],
+	) -> Vec<AssetDepositInfo<u128>> {
+		adi_inputs
+			.into_iter()
+			.enumerate()
+			.map(|(id, (deposit, balance))| AssetDepositInfo {
+				asset_id: id as u128,
+				deposit_amount: deposit,
+				asset_balance: balance,
+				asset_weight: Permill::from_rational::<u32>(1, N as u32),
+			})
+			.collect()
+	}
+
+	#[test]
+	fn no_assets_error() {
+		assert_eq!(
+			normalize_asset_deposit_infos_to_min_ratio::<u128>(vec![]),
+			Err(AssetDepositNormalizationError::NotEnoughAssets)
+		);
+	}
+
+	#[test]
+	fn only_one_asset_error() {
+		assert_eq!(
+			normalize_asset_deposit_infos_to_min_ratio::<u128>(generate_asset_deposit_infos([(
+				100, 100
+			)])),
+			Err(AssetDepositNormalizationError::NotEnoughAssets)
+		);
+	}
+
+	#[test]
+	fn two_assets_works() {
+		assert_eq!(
+			normalize_asset_deposit_infos_to_min_ratio::<u128>(generate_asset_deposit_infos([
+				(300, 100),
+				(300, 200),
+			])),
+			Ok(generate_asset_deposit_infos([(150, 100), (300, 200)]))
+		);
+	}
+
+	#[test]
+	fn more_than_2_assets_works() {
+		assert_eq!(
+			normalize_asset_deposit_infos_to_min_ratio::<u128>(generate_asset_deposit_infos([
+				(300, 100),
+				(300, 200),
+				(200, 100),
+				(400, 600),
+			])),
+			Ok(generate_asset_deposit_infos([(67, 100), (134, 200), (67, 100), (400, 600)]))
+		);
 	}
 }
