@@ -9,7 +9,7 @@ use composable_maths::dex::{
 use composable_support::{collections::vec::bounded::BiBoundedVec, math::safe::SafeAdd};
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
-	dex::{AssetAmount, BasicPoolInfo, Fee, FeeConfig},
+	dex::{AssetAmount, AssetDepositInfo, BasicPoolInfo, Fee, FeeConfig},
 };
 use frame_support::{
 	defensive,
@@ -104,23 +104,29 @@ impl<T: Config> DualAssetConstantProduct<T> {
 				let balance =
 					pool_assets.remove(&asset_amount.asset_id).ok_or(Error::<T>::AssetNotFound)?;
 
-				Ok((asset_amount, balance))
+				Ok(AssetDepositInfo::from(
+					AssetAmount {
+						asset_id: asset_amount.asset_id,
+						amount: T::Convert::convert(asset_amount.amount),
+					},
+					balance,
+				))
 			})
 			.collect::<Result<Vec<_>, _>>()?;
 
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
 
 		let amount_of_lp_token_to_mint = match assets_with_balances[..] {
-			[(single, (single_weight, single_balance))] => {
+			[single] => {
 				if lp_total_issuance.is_zero() {
 					return Err(Error::<T>::InitialDepositCannotBeZero.into())
 				}
 
 				let single_deposit = compute_deposit_lp_(
 					lp_total_issuance,
-					T::Convert::convert(single.amount),
-					single_balance,
-					single_weight,
+					single.deposit_amount,
+					single.asset_balance,
+					single.asset_weight,
 					pool.fee_config.fee_rate,
 				)?;
 
@@ -128,18 +134,18 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					single.asset_id,
 					who,
 					&pool_account,
-					single.amount,
+					T::Convert::convert(single.deposit_amount),
 					keep_alive,
 				)?;
 
 				single_deposit.value
 			},
-			[(first, (first_weight, first_balance)), (second, (second_weight, second_balance))] => {
+			[first, second] => {
 				let lp_to_mint = if lp_total_issuance.is_zero() {
 					compute_first_deposit_lp_(
 						&[
-							(T::Convert::convert(first.amount), first_weight),
-							(T::Convert::convert(second.amount), second_weight),
+							(first.deposit_amount, first.asset_weight),
+							(second.deposit_amount, second.asset_weight),
 						],
 						Permill::zero(),
 					)?
@@ -151,14 +157,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					ensure!(
 						// ensure pool ratio isn't changing
 						per_thing_acceptable_computation_error(
-							Permill::from_rational(
-								T::Convert::convert(first.amount),
-								first_balance
-							),
-							Permill::from_rational(
-								T::Convert::convert(second.amount),
-								second_balance
-							),
+							Permill::from_rational(first.deposit_amount, first.asset_balance),
+							Permill::from_rational(second.deposit_amount, second.asset_balance),
 						),
 						Error::<T>::IncorrectAssetAmounts
 					);
@@ -168,8 +168,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					sp_std::if_std! {
 						let _first_deposit = compute_deposit_lp_(
 							lp_total_issuance,
-							T::Convert::convert(first.amount),
-							first_balance,
+							first.deposit_amount,
+							first.asset_balance,
 							Permill::one(),
 							Zero::zero(),
 						)?;
@@ -177,8 +177,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 					let second_deposit = compute_deposit_lp_(
 						lp_total_issuance,
-						T::Convert::convert(second.amount),
-						second_balance,
+						second.deposit_amount,
+						second.asset_balance,
 						Permill::one(),
 						Zero::zero(),
 					)?;
@@ -186,12 +186,18 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					second_deposit.value
 				};
 
-				T::Assets::transfer(first.asset_id, who, &pool_account, first.amount, keep_alive)?;
+				T::Assets::transfer(
+					first.asset_id,
+					who,
+					&pool_account,
+					T::Convert::convert(first.deposit_amount),
+					keep_alive,
+				)?;
 				T::Assets::transfer(
 					second.asset_id,
 					who,
 					&pool_account,
-					second.amount,
+					T::Convert::convert(second.deposit_amount),
 					keep_alive,
 				)?;
 

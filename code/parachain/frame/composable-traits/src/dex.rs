@@ -1,3 +1,5 @@
+use core::cmp::Ordering;
+
 use crate::{currency::BalanceLike, defi::CurrencyPair};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
@@ -8,7 +10,7 @@ use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-use sp_runtime::{BoundedBTreeMap, DispatchError, Permill};
+use sp_runtime::{BoundedBTreeMap, DispatchError, Permill, Rational128};
 use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec::Vec};
 
 /// Specifies and amount together with the asset ID of the amount.
@@ -381,5 +383,34 @@ mod tests {
 				asset_id: 1
 			}
 		);
+	}
+}
+
+#[derive(
+	Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, Copy, RuntimeDebug,
+)]
+pub struct AssetDepositInfo<AssetId> {
+	pub asset_id: AssetId,
+	pub deposit_amount: u128,
+	pub asset_balance: u128,
+	pub asset_weight: Permill,
+}
+
+impl<AssetId> AssetDepositInfo<AssetId> {
+	pub fn from(deposit_amount: AssetAmount<AssetId, u128>, asset_info: (Permill, u128)) -> Self {
+		AssetDepositInfo {
+			asset_id: deposit_amount.asset_id,
+			deposit_amount: deposit_amount.amount,
+			asset_balance: asset_info.1,
+			asset_weight: asset_info.0,
+		}
+	}
+
+	pub fn get_deposit_ratio(&self) -> Rational128 {
+		Rational128::from(self.deposit_amount, self.asset_balance)
+	}
+
+	pub fn cmp_by_deposit_ratio(&self, other: Self) -> Ordering {
+		self.get_deposit_ratio().cmp(&other.get_deposit_ratio())
 	}
 }

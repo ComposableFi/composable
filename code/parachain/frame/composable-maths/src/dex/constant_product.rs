@@ -1,6 +1,7 @@
 use composable_support::math::safe::{
 	safe_multiply_by_rational, SafeAdd, SafeDiv, SafeMul, SafeSub,
 };
+use core::cmp::Ordering;
 use frame_support::ensure;
 use rust_decimal::{
 	prelude::{FromPrimitive, ToPrimitive},
@@ -8,7 +9,7 @@ use rust_decimal::{
 };
 use sp_runtime::{
 	traits::{IntegerSquareRoot, One, Zero},
-	ArithmeticError, DispatchError, PerThing,
+	ArithmeticError, DispatchError, PerThing, Rational128,
 };
 
 /// From https://balancer.fi/whitepaper.pdf, equation (2)
@@ -554,4 +555,45 @@ pub fn compute_deposit_for_min_lp<T: PerThing>(
 	let fee = value.safe_sub(&left_from_fee.mul_ceil(value))?;
 
 	Ok(ConstantProductAmmValueFeePair { value, fee })
+}
+
+/// Given two pairs of deposit and balance, returns the pair with the smallest ratio or `None` if
+/// the ratios are equal.
+///
+/// # Parameters
+/// * token_one_d - Deposit of token one
+/// * token_one_b - Balance of token one
+/// * token_two_d - Deposit of token two
+/// * token_two_b - Balance of token two
+pub fn get_min_ratio_from_pair(
+	token_one_d: u128,
+	token_one_b: u128,
+	token_two_d: u128,
+	token_two_b: u128,
+) -> Option<(u128, u128)> {
+	let ratio_one = Rational128::from(token_one_d, token_one_b);
+	let ratio_two = Rational128::from(token_two_d, token_two_b);
+
+	match ratio_one.cmp(&ratio_two) {
+		Ordering::Less => Some((ratio_one.n(), ratio_one.d())),
+		Ordering::Equal => None,
+		Ordering::Greater => Some((ratio_one.n(), ratio_two.d())),
+	}
+}
+
+/// Solves for the deposit needed in a second ratio to have both ratios be equal
+pub fn get_other_deposit_given_min_ratio(
+	min_ratio_d: u128,
+	min_ratio_b: u128,
+	other_ratio_b: u128,
+) -> ConstantProductAmmResult<u128> {
+	let min_ratio_d = Decimal::safe_from_u128(min_ratio_d)?;
+	let min_ratio_b = Decimal::safe_from_u128(min_ratio_b)?;
+	let other_ratio_b = Decimal::safe_from_u128(other_ratio_b)?;
+
+	let min_ratio = min_ratio_d.safe_div(&min_ratio_b)?;
+
+	let other_ratio_d = other_ratio_b.safe_mul(&min_ratio)?;
+
+	Ok(other_ratio_d.safe_to_u128()?)
 }
