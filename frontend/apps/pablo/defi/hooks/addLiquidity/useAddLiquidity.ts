@@ -1,17 +1,18 @@
 import { Executor } from "substrate-react";
 import { ApiPromise } from "@polkadot/api";
 import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
-import { useSnackbar, VariantType } from "notistack";
+import { useSnackbar } from "notistack";
 import { Signer } from "@polkadot/api/types";
 import { useCallback } from "react";
 import { setUiState } from "@/store/ui/ui.slice";
 import BigNumber from "bignumber.js";
 import router from "next/router";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
-import { toChainUnits } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, toChainUnits } from "@/defi/utils";
 import { getAssetTree } from "@/components/Organisms/pool/AddLiquidity/utils";
 import { pipe } from "fp-ts/lib/function";
 import { option } from "fp-ts";
+import { subscanExtrinsicLink } from "shared";
 
 const TxOrigin = "Add Liquidity";
 
@@ -26,10 +27,10 @@ export function transactionStatusSnackbarMessage(
 /**
  * Later: move to snackbar utils
  */
-export const SNACKBAR_TYPES: Record<string, { variant: VariantType }> = {
-  ERROR: { variant: "error" },
-  SUCCESS: { variant: "success" },
-  INFO: { variant: "info" },
+export const SNACKBAR_TYPES: Record<string, any> = {
+  ERROR: { variant: "error", persist: true, isClosable: true },
+  SUCCESS: { variant: "success", persist: true, isClosable: true },
+  INFO: { variant: "info", persist: true, isClosable: true },
 };
 
 export const useAddLiquidity = ({
@@ -58,15 +59,11 @@ export const useAddLiquidity = ({
   const { enqueueSnackbar } = useSnackbar();
 
   const onTxReady = useCallback(
-    (transactionHash: string) => {
-      enqueueSnackbar(
-        transactionStatusSnackbarMessage(
-          TxOrigin,
-          transactionHash,
-          "Initiated"
-        ),
-        SNACKBAR_TYPES.INFO
-      );
+    (hash: string) => {
+      enqueueSnackbar(`${TxOrigin}: Initiated`, {
+        ...SNACKBAR_TYPES.INFO,
+        ...{ url: subscanExtrinsicLink(DEFAULT_NETWORK_ID, hash) },
+      });
       setUiState({
         isConfirmingSupplyModalOpen: true,
         isConfirmSupplyModalOpen: false,
@@ -76,15 +73,11 @@ export const useAddLiquidity = ({
   );
 
   const onTxFinalized = useCallback(
-    (transactionHash: string, _eventRecords: any[]) => {
-      enqueueSnackbar(
-        transactionStatusSnackbarMessage(
-          TxOrigin,
-          transactionHash,
-          "Finalized"
-        ),
-        SNACKBAR_TYPES.SUCCESS
-      );
+    (hash: string, _eventRecords: any[]) => {
+      enqueueSnackbar(`${TxOrigin}: Finalized`, {
+        ...SNACKBAR_TYPES.SUCCESS,
+        ...{ url: subscanExtrinsicLink(DEFAULT_NETWORK_ID, hash) },
+      });
       resetAddLiquiditySlice();
       router.push("/pool/select/" + poolId);
       setUiState({ isConfirmingSupplyModalOpen: false });
@@ -94,10 +87,10 @@ export const useAddLiquidity = ({
 
   const onTxError = useCallback(
     (transactionError: string) => {
-      enqueueSnackbar(
-        transactionStatusSnackbarMessage(TxOrigin, transactionError, "Error"),
-        SNACKBAR_TYPES.ERROR
-      );
+      enqueueSnackbar(`${TxOrigin}: Error`, {
+        ...SNACKBAR_TYPES.ERROR,
+        ...{ description: transactionError },
+      });
       setUiState({ isConfirmingSupplyModalOpen: false });
     },
     [enqueueSnackbar]
