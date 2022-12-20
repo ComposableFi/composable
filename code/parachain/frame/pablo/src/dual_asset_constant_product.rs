@@ -1,8 +1,10 @@
+use core::cmp::Ordering;
+
 use crate::{AssetIdOf, Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::{
 	constant_product::{
 		compute_deposit_lp_, compute_first_deposit_lp_, compute_in_given_out_new,
-		compute_out_given_in_new, compute_redeemed_for_lp,
+		compute_out_given_in_new, compute_redeemed_for_lp, get_other_deposit_given_min_ratio,
 	},
 	per_thing_acceptable_computation_error, PoolWeightMathExt,
 };
@@ -24,6 +26,34 @@ use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 // Balancer V1 Constant Product Pool
 pub(crate) struct DualAssetConstantProduct<T>(PhantomData<T>);
+
+fn fix_deposit_ratios<T: Config>(
+	deposit_one: AssetDepositInfo<T::AssetId>,
+	depsoit_two: AssetDepositInfo<T::AssetId>,
+) -> Result<(AssetDepositInfo<T::AssetId>, AssetDepositInfo<T::AssetId>), DispatchError> {
+	match deposit_one.cmp_by_deposit_ratio(depsoit_two) {
+		Ordering::Less => normalize_to_min_ratio::<T>(deposit_one, depsoit_two),
+		Ordering::Equal => Ok((deposit_one, depsoit_two)),
+		Ordering::Greater => normalize_to_min_ratio::<T>(depsoit_two, deposit_one),
+	}
+}
+
+fn normalize_to_min_ratio<T: Config>(
+	min_deposit: AssetDepositInfo<T::AssetId>,
+	other: AssetDepositInfo<T::AssetId>,
+) -> Result<(AssetDepositInfo<T::AssetId>, AssetDepositInfo<T::AssetId>), DispatchError> {
+	Ok((
+		min_deposit,
+		AssetDepositInfo {
+			deposit_amount: get_other_deposit_given_min_ratio(
+				min_deposit.deposit_amount,
+				min_deposit.asset_balance,
+				other.asset_balance,
+			)?,
+			..other
+		},
+	))
+}
 
 impl<T: Config> DualAssetConstantProduct<T> {
 	pub(crate) fn do_create_pool(
@@ -151,6 +181,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					)?
 					.value
 				} else {
+					let (first, second) = fix_deposit_ratios::<T>(first, second)?;
 					// REVIEW(benluelo): Should this validation be here? Or should this be an
 					// invariant expected by this function? It could be a `defensive!` assertion or
 					// a `debug_assert!`.
