@@ -1,4 +1,5 @@
 import {
+  BoxProps,
   Table,
   TableBody,
   TableCell,
@@ -6,8 +7,6 @@ import {
   TableHead,
   TableRow,
   Typography,
-  BoxProps,
-  Box,
 } from "@mui/material";
 import { BaseAsset } from "@/components/Atoms";
 import React from "react";
@@ -16,7 +15,6 @@ import { BoxWrapper } from "../BoxWrapper";
 import { useAssetsOverview } from "@/defi/hooks/overview/useAssetsOverview";
 import { NoPositionsPlaceholder } from "./NoPositionsPlaceholder";
 import { OVERVIEW_ERRORS } from "./errors";
-import millify from "millify";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -56,15 +54,20 @@ export const WalletBreakdownBox: React.FC<BoxProps> = ({ ...boxProps }) => {
             </TableHead>
             <TableBody>
               {assetsOverview.map((asset) => {
-                const ownedValue = asset.getBalance().multipliedBy(asset.getPrice())
+                const ownedValue = asset
+                  .getBalance()
+                  .multipliedBy(asset.getPrice());
                 return (
                   <TableRow key={asset.getName()}>
                     <TableCell align="left">
-                      <BaseAsset label={asset.getSymbol()} icon={asset.getIconUrl()} />
+                      <BaseAsset
+                        label={asset.getSymbol()}
+                        icon={asset.getIconUrl()}
+                      />
                     </TableCell>
                     <TableCell align="left">
                       <Typography variant="body1">
-                        ${asset.getPrice().toFixed(2)}
+                        ${asset.getPrice().toFixed(4)}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">
@@ -74,7 +77,10 @@ export const WalletBreakdownBox: React.FC<BoxProps> = ({ ...boxProps }) => {
                     </TableCell>
                     <TableCell align="left">
                       <Typography variant="body1">
-                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(ownedValue.toNumber())}
+                        {new Intl.NumberFormat("en-US", {
+                          style: "currency",
+                          currency: "USD",
+                        }).format(ownedValue.toNumber())}
                       </Typography>
                     </TableCell>
                   </TableRow>
