@@ -141,7 +141,7 @@ pub trait Amm {
 		pool_id: Self::PoolId,
 		in_asset: AssetAmount<Self::AssetId, Self::Balance>,
 		min_receive: AssetAmount<Self::AssetId, Self::Balance>,
-		keep_alive: bool,
+		keep_alive: bool, // blas: what's the meaning of this param?
 	) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError>;
 }
 

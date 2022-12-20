@@ -163,7 +163,8 @@ pub mod pallet {
 			asset_pair: CurrencyPair<T::AssetId>,
 			route: Option<BoundedVec<T::PoolId, T::MaxHopsInRoute>>,
 		) -> DispatchResult {
-			T::UpdateRouteOrigin::ensure_origin(origin)?;
+			T::UpdateRouteOrigin::ensure_origin(origin)?; // blas: why ignore output value?
+											  // blas: why not ensure_signed?
 			<Self as DexRouter<
 				T::AssetId,
 				T::PoolId,
@@ -452,7 +453,7 @@ pub mod pallet {
 		#[transactional]
 		fn do_swap(
 			who: &Self::AccountId,
-			_pool_id: Self::PoolId,
+			_pool_id: Self::PoolId, // blas: why add this argument at all?
 			in_asset: AssetAmount<Self::AssetId, Self::Balance>,
 			min_receive: AssetAmount<Self::AssetId, Self::Balance>,
 			keep_alive: bool,
@@ -460,17 +461,17 @@ pub mod pallet {
 			let currency_pair = CurrencyPair::new(min_receive.asset_id, in_asset.asset_id);
 			let (route, reverse) =
 				Self::get_route(currency_pair).ok_or(Error::<T>::NoRouteFound)?;
-			let mut forward_iter;
-			let mut backward_iter;
 			// Iterate forward or backward depending on the reverse flag to find the pools to swap
 			// with.
-			let route_iter: &mut dyn Iterator<Item = &T::PoolId> = if !reverse {
-				forward_iter = route.iter();
-				&mut forward_iter
-			} else {
-				backward_iter = route.iter().rev();
-				&mut backward_iter
-			};
+			let mut backward_iter;
+
+			// blas(nit): this could be reduced further into a function since it's also used in
+			// Self::do_buy
+			let mut route_iter: &mut dyn DoubleEndedIterator<Item = &T::PoolId> = &mut route.iter();
+			if reverse {
+				backward_iter = route_iter.rev();
+				route_iter = &mut backward_iter;
+			}
 			// Iterate and swap until we obtain the required asset in the `min_receive.asset_id`
 			let mut in_asset_itr = in_asset;
 			let mut swap_result: SwapResult<T::AssetId, T::Balance> = SwapResult {
@@ -483,24 +484,25 @@ pub mod pallet {
 				// other than `in_asset_itr.asset_id` gives us the out_asset_id
 				let out_asset_id = assets
 					.keys()
-					.copied()
-					.find(|a| *a != in_asset_itr.asset_id)
+					.find(|a| a != &&in_asset_itr.asset_id)
 					.ok_or(Error::<T>::NoRouteFound)?;
 				swap_result = T::Pablo::do_swap(
 					who,
 					*pool_id,
 					in_asset_itr,
-					AssetAmount::new(out_asset_id, T::Balance::zero()),
+					AssetAmount::new(*out_asset_id, T::Balance::zero()), /* blas: why balance::zero()? */
 					keep_alive,
 				)?;
-				in_asset_itr = swap_result.value;
+				in_asset_itr = swap_result.value; // blas: what's this?
 			}
 			ensure!(
-				swap_result.value.amount >= min_receive.amount,
+				swap_result.value.amount >= min_receive.amount, /* blas: why the ensure only on
+				                                                 * the latest swap_result value
+				                                                 * of the loop? */
 				Error::<T>::CanNotRespectMinAmountRequested
 			);
 			// TODO (vim): Final fee amount is not correct as the fee need to be incremented with
-			// each swap fee when iterating.
+			// each swap fee when iterating. // blas: what's the impact of goint to prod witht this
 			Ok(swap_result)
 		}
 
@@ -577,7 +579,10 @@ pub mod pallet {
 		fn add_liquidity(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
-			assets: BTreeMap<Self::AssetId, Self::Balance>,
+			assets: BTreeMap<Self::AssetId, Self::Balance>, /* blas: why a btree map? Are users
+			                                                 * are liquidity to more than 2
+			                                                 * assets? Can users add liquidity
+			                                                 * to only one asset with this tx? */
 			min_mint_amount: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
