@@ -490,6 +490,7 @@ pub mod pallet {
 		/// Note this function does not validate,
 		/// 1. if the pool is created by a valid origin.
 		/// 2. if a pool exists with the same pair already.
+		// blas: can't this (2) mean that someone can override the owner of an existing pool?
 		#[transactional]
 		pub fn do_create_pool(
 			init_config: PoolInitConfigurationOf<T>,
