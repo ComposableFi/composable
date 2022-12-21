@@ -9,16 +9,13 @@ pkgs.stdenv.mkDerivation {
     pkgs.rustfmt
   ];
   installPhase = ''
-    mkdir -p $out/tmp
+    mkdir -p $out
 
     ${pkgs.lib.meta.getExe packages.centauri-codegen} \
-      --path $out/tmp \
+      --path $out \
       --parachain-wasm=${packages.dali-runtime}/lib/runtime.optimized.wasm \
       --relaychain-wasm=${packages.rococo-wasm-runtime}/lib/rococo_runtime.compact.compressed.wasm
 
-    for file in $(ls $out/tmp); do
-      cat $out/tmp/$file | rustfmt --edition=2018 --emit=stdout > $out/$file
-    done
-    rm -r $out/tmp
+    rustfmt --edition=2018 $out/*
   '';
 }
