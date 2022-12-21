@@ -1,8 +1,8 @@
 use crate::{AssetIdOf, Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::{
 	constant_product::{
-		compute_deposit_lp_, compute_first_deposit_lp_, compute_in_given_out_new,
-		compute_out_given_in_new, compute_redeemed_for_lp,
+		compute_deposit_lp, compute_first_deposit_lp, compute_in_given_out_new,
+		compute_out_given_in, compute_redeemed_for_lp,
 	},
 	per_thing_acceptable_computation_error, PoolWeightMathExt,
 };
@@ -116,7 +116,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					return Err(Error::<T>::InitialDepositCannotBeZero.into())
 				}
 
-				let single_deposit = compute_deposit_lp_(
+				let single_deposit = compute_deposit_lp(
 					lp_total_issuance,
 					T::Convert::convert(single.amount),
 					single_balance,
@@ -136,7 +136,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			},
 			[(first, (first_weight, first_balance)), (second, (second_weight, second_balance))] => {
 				let lp_to_mint = if lp_total_issuance.is_zero() {
-					compute_first_deposit_lp_(
+					compute_first_deposit_lp(
 						&[
 							(T::Convert::convert(first.amount), first_weight),
 							(T::Convert::convert(second.amount), second_weight),
@@ -161,7 +161,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					// pass 1 as weight since adding liquidity for all assets
 					// see docs on compute_deposit_lp_ for more information
 					sp_std::if_std! {
-						let _first_deposit = compute_deposit_lp_(
+						let _first_deposit = compute_deposit_lp(
 							lp_total_issuance,
 							T::Convert::convert(first.amount),
 							first_balance,
@@ -170,7 +170,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 						)?;
 					}
 
-					let second_deposit = compute_deposit_lp_(
+					let second_deposit = compute_deposit_lp(
 						lp_total_issuance,
 						T::Convert::convert(second.amount),
 						second_balance,
@@ -331,7 +331,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let (w_i, b_i) = pool_assets.get(&in_asset.asset_id).ok_or(Error::<T>::AssetNotFound)?;
 		let (w_o, b_o) = pool_assets.get(&out_asset_id).ok_or(Error::<T>::AssetNotFound)?;
 
-		let amm_pair = compute_out_given_in_new::<_>(*w_i, *w_o, *b_i, *b_o, a_sent, fee)?;
+		let amm_pair = compute_out_given_in::<_>(*w_i, *w_o, *b_i, *b_o, a_sent, fee)?;
 
 		let a_out = AssetAmount::new(out_asset_id, T::Convert::convert(amm_pair.value));
 		let a_sent = AssetAmount::new(in_asset.asset_id, in_asset.amount);
