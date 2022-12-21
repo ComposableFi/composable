@@ -441,10 +441,10 @@ jobs:
 #    name: "Cargo udeps"
 #    needs: common-deps
 #    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+      # - self-hosted
+      # - linux
+      # - x64
+      # - sre
 #    concurrency:
 #      group: ${{ github.workflow }}-cargo-udeps-check-${{ github.ref }}
 #      cancel-in-progress: true
