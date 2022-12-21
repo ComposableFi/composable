@@ -406,12 +406,13 @@ pub fn normalize_asset_deposit_infos_to_min_ratio<AssetId: Debug + Copy>(
 	// error type as well.
 	mut asset_deposit_infos: Vec<AssetDepositInfo<AssetId>>,
 ) -> Result<Vec<AssetDepositInfo<AssetId>>, AssetDepositNormalizationError> {
+	// at least 2 assets are required to normalize
 	ensure!(asset_deposit_infos.len() > 1, AssetDepositNormalizationError::NotEnoughAssets);
 
 	let smallest_ratio = asset_deposit_infos
 		.iter()
 		.map(|adi| adi.get_deposit_ratio())
-		.reduce(|acc, curr| acc.min(curr))
+		.min()
 		.expect("at least 2 items are present in the vec as per the check above; qed;");
 
 	for asset_deposit_info in &mut asset_deposit_infos {
