@@ -101,8 +101,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
 
 		let assets_with_balances = assets.try_mapped(|asset_amount| {
-			dbg!(&asset_amount);
-
 			if asset_amount.amount.is_zero() {
 				return Err(Error::<T>::InvalidAmount)
 			};
@@ -147,8 +145,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			// a bit convoluted, but it works
 			ensure!(pool_assets.is_empty(), Error::<T>::UnsupportedOperation);
 
-			dbg!(&lp_total_issuance);
-
 			if lp_total_issuance.is_zero() {
 				let lp_to_mint = compute_first_deposit_lp_(
 					assets_with_balances.iter().map(|adi| (adi.deposit_amount, adi.asset_weight)),
@@ -182,8 +178,6 @@ impl<T: Config> DualAssetConstantProduct<T> {
 				// asset deposits
 				let asset_to_calculate_with =
 					normalized_deposits.first().expect("2 assets in the vec; qed;");
-
-				dbg!(&asset_to_calculate_with);
 
 				// pass 1 as weight since adding liquidity for all assets with normalized deposits
 				// see docs on compute_deposit_lp_ for more information

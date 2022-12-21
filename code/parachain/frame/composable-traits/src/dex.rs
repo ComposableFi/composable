@@ -400,6 +400,7 @@ impl<AssetId> AssetDepositInfo<AssetId> {
 	}
 }
 
+/// Normalizes a list of asset deposits to the smallest ratio of all of the contained assets.
 pub fn normalize_asset_deposit_infos_to_min_ratio<AssetId: Debug + Copy>(
 	// REVIEW(ben,connor): Maybe make this a BiBoundedVec? Would remove the need for the custom
 	// error type as well.
@@ -407,26 +408,31 @@ pub fn normalize_asset_deposit_infos_to_min_ratio<AssetId: Debug + Copy>(
 ) -> Result<Vec<AssetDepositInfo<AssetId>>, AssetDepositNormalizationError> {
 	ensure!(asset_deposit_infos.len() > 1, AssetDepositNormalizationError::NotEnoughAssets);
 
-	let smallest = asset_deposit_infos
+	let smallest_ratio = asset_deposit_infos
 		.iter()
 		.map(|adi| adi.get_deposit_ratio())
 		.reduce(|acc, curr| acc.min(curr))
 		.expect("at least 2 items are present in the vec as per the check above; qed;");
 
 	for asset_deposit_info in &mut asset_deposit_infos {
-		debug_assert!(!asset_deposit_info.existing_balance.is_zero());
+		debug_assert!(
+			!asset_deposit_info.existing_balance.is_zero(),
+			"balance for asset {:?} was zero when it should not have been; \
+			this will result in a `DivideByZero` error in production code.",
+			asset_deposit_info.asset_id
+		);
 
 		asset_deposit_info.deposit_amount = multiply_by_rational_with_rounding(
 			asset_deposit_info.existing_balance,
-			smallest.n(),
-			smallest.d(),
+			smallest_ratio.n(),
+			smallest_ratio.d(),
 			// amount out will be less than the maximum allowed, so round up
 			sp_arithmetic::Rounding::Up,
 		)
 		.ok_or(AssetDepositNormalizationError::ArithmeticOverflow)?;
 	}
 
-	Ok(dbg!(asset_deposit_infos))
+	Ok(asset_deposit_infos)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -436,7 +442,7 @@ pub enum AssetDepositNormalizationError {
 }
 
 #[cfg(test)]
-mod test_asset_normalization {
+mod test_asset_deposit_normalization {
 	use super::*;
 
 	fn generate_asset_deposit_infos<const N: usize>(
