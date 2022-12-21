@@ -15,21 +15,8 @@ jobs:
       - x64
       - sre
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: node:latest
     steps:
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-        shell: "bash"
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs
-          name: ${{ env.CACHIX_COMPOSABLE }}
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - uses: actions/checkout@v3
         with:
           lfs: true
