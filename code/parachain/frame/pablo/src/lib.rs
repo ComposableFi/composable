@@ -213,8 +213,10 @@ pub mod pallet {
 		UnsupportedOperation,
 		InitialDepositCannotBeZero,
 		InitialDepositMustContainAllAssets,
-		/// The `min_amounts` passed to `remove_liquidity` must contain at least one asset.
+		/// The `min_amounts` map passed to `remove_liquidity` must contain at least one asset.
 		MinAmountsMustContainAtLeastOneAsset,
+		/// The `assets` map passed to `add_liquidity` must contain at least one asset.
+		MustDepositMinimumOneAsset,
 	}
 
 	#[pallet::config]
@@ -776,12 +778,19 @@ pub mod pallet {
 						who,
 						info,
 						pool_account,
-						assets
-							.clone()
-							.into_iter()
-							.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
-							.try_collect()
-							.map_err(|_| Error::<T>::MoreThanTwoAssetsNotYetSupported)?,
+						BiBoundedVec::from_vec(
+							assets
+								.clone()
+								.into_iter()
+								.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
+								.collect(),
+						)
+						.map_err(|err| match err {
+							BiBoundedVecOutOfBounds::LowerBoundError { .. } =>
+								Error::<T>::MustDepositMinimumOneAsset,
+							BiBoundedVecOutOfBounds::UpperBoundError { .. } =>
+								Error::<T>::UnsupportedOperation,
+						})?,
 						min_mint_amount,
 						keep_alive,
 					)?,
@@ -813,18 +822,7 @@ pub mod pallet {
 						info,
 						pool_account,
 						lp_amount,
-						BiBoundedVec::from_vec(
-							min_receive
-								.into_iter()
-								.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
-								.collect(),
-						)
-						.map_err(|err| match err {
-							BiBoundedVecOutOfBounds::LowerBoundError { .. } =>
-								Error::<T>::MinAmountsMustContainAtLeastOneAsset,
-							BiBoundedVecOutOfBounds::UpperBoundError { .. } =>
-								Error::<T>::MoreThanTwoAssetsNotYetSupported,
-						})?,
+						min_receive.try_into().map_err(|_| Error::<T>::UnsupportedOperation)?,
 					)?;
 
 					Self::update_twap(pool_id)?;

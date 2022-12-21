@@ -72,6 +72,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		Ok(pool_id)
 	}
 
+	/// WARNING! This is not a cheap function to call; it does one storage read per asset in the
+	/// pool!
 	fn get_pool_balances(
 		pool: &BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
 		pool_account: &T::AccountId,
@@ -84,6 +86,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					(*weight, T::Convert::convert(T::Assets::balance(*asset_id, pool_account))),
 				)
 			})
+			// TODO(benluelo): This function should return an iterator, rather than eagerly
+			// collecting into a map. The caller can collect if they need a map.
 			.collect::<BTreeMap<_, _>>()
 	}
 
@@ -108,7 +112,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			Ok(AssetDepositInfo {
 				asset_id: asset_amount.asset_id,
 				deposit_amount: T::Convert::convert(asset_amount.amount),
-				asset_balance: balance,
+				existing_balance: balance,
 				asset_weight: weight,
 			})
 		})?;
@@ -123,7 +127,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			let single_deposit = compute_deposit_lp_(
 				lp_total_issuance,
 				single.deposit_amount,
-				single.asset_balance,
+				single.existing_balance,
 				single.asset_weight,
 				pool.fee_config.fee_rate,
 			)?;
@@ -163,7 +167,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			let lp_to_mint = compute_deposit_lp_(
 				lp_total_issuance,
 				asset_to_calculate_with.deposit_amount,
-				asset_to_calculate_with.asset_balance,
+				asset_to_calculate_with.existing_balance,
 				Permill::one(),
 				Zero::zero(),
 			)?
@@ -199,93 +203,42 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		pool: BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
 		pool_account: T::AccountId,
 		lp_amount: T::Balance,
-		min_receive: BiBoundedVec<AssetAmount<T::AssetId, T::Balance>, 1, 2>,
+		mut min_receive: BoundedBTreeMap<T::AssetId, T::Balance, ConstU32<2>>,
 	) -> Result<BTreeMap<T::AssetId, T::Balance>, DispatchError> {
-		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
-
-		let min_receive_with_current_balances = min_receive.try_mapped(|asset_amount| {
-			let balance =
-				pool_assets.remove(&asset_amount.asset_id).ok_or(Error::<T>::AssetNotFound)?;
-
-			Ok::<_, Error<T>>((asset_amount, balance))
-		})?;
-
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
 
-		let redeemed_assets = match min_receive_with_current_balances.as_slice() {
-			[(single, (single_weight, single_balance))] => {
-				let single_redeemed_amount = compute_redeemed_for_lp(
+		let redeemed_assets = Self::get_pool_balances(&pool, &pool_account)
+			.into_iter()
+			.map(|(id, (weight, balance))| {
+				let redeemed_amount = compute_redeemed_for_lp(
 					lp_total_issuance,
 					T::Convert::convert(lp_amount),
-					*single_balance,
-					*single_weight,
-				)?;
-
-				ensure!(
-					single_redeemed_amount >= T::Convert::convert(single.amount),
-					Error::<T>::CannotRespectMinimumRequested
-				);
-
-				T::Assets::transfer(
-					single.asset_id,
-					&pool_account,
-					who,
-					T::Convert::convert(single_redeemed_amount),
-					false, // pool account doesn't need to be kept alive
-				)?;
-
-				[(single.asset_id, T::Convert::convert(single_redeemed_amount))]
-					.into_iter()
-					.collect()
-			},
-			[(first_min_receive, (_first_weight, first_balance)), (second_min_receive, (_second_weight, second_balance))] =>
-			{
-				let first_redeemed_amount = compute_redeemed_for_lp(
-					lp_total_issuance,
-					T::Convert::convert(lp_amount),
-					*first_balance,
-					Permill::one(),
-				)?;
-				let second_redeemed_amount = compute_redeemed_for_lp(
-					lp_total_issuance,
-					T::Convert::convert(lp_amount),
-					*second_balance,
+					balance,
 					Permill::one(),
 				)?;
 
-				ensure!(
-					first_redeemed_amount >= T::Convert::convert(first_min_receive.amount) &&
-						second_redeemed_amount >= T::Convert::convert(second_min_receive.amount),
-					Error::<T>::CannotRespectMinimumRequested
-				);
+				if let Some(min_amount) = min_receive.remove(&id) {
+					ensure!(
+						redeemed_amount >= T::Convert::convert(min_amount),
+						Error::<T>::CannotRespectMinimumRequested
+					);
+				}
 
-				T::Assets::transfer(
-					first_min_receive.asset_id,
-					&pool_account,
-					who,
-					T::Convert::convert(first_redeemed_amount),
-					false, // pool account doesn't need to be kept alive
-				)?;
-				T::Assets::transfer(
-					second_min_receive.asset_id,
-					&pool_account,
-					who,
-					T::Convert::convert(second_redeemed_amount),
-					false, // pool account doesn't need to be kept alive
-				)?;
+				Ok::<_, DispatchError>((id, T::Convert::convert(redeemed_amount)))
+			})
+			.collect::<Result<BTreeMap<_, _>, _>>()?;
 
-				[
-					(first_min_receive.asset_id, T::Convert::convert(first_redeemed_amount)),
-					(second_min_receive.asset_id, T::Convert::convert(second_redeemed_amount)),
-				]
-				.into_iter()
-				.collect()
-			},
-			_ => {
-				defensive!("this should be unreachable, since the input assets are bounded at 2");
-				return Err(Error::<T>::UnsupportedOperation.into())
-			},
-		};
+		ensure!(min_receive.is_empty(), Error::<T>::AssetNotFound);
+
+		for (id, amount) in &redeemed_assets {
+			T::Assets::transfer(
+				*id,
+				&pool_account,
+				who,
+				*amount,
+				false, // pool account doesn't need to be kept alive
+			)?;
+		}
 
 		T::Assets::burn_from(pool.lp_token, who, lp_amount)?;
 

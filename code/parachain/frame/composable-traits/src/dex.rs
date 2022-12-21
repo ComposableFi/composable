@@ -73,7 +73,7 @@ pub trait Amm {
 	fn redeemable_assets_for_lp_tokens(
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
-	) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError>
+	) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
 
@@ -329,16 +329,6 @@ pub struct PriceAggregate<PoolId, AssetId, Balance> {
 	pub spot_price: Balance, // prices based on any other stat such as TWAP goes here..
 }
 
-/// RedeemableAssets for given amount of lp tokens.
-#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct RedeemableAssets<AssetId, Balance>
-where
-	AssetId: Ord,
-{
-	pub assets: BTreeMap<AssetId, Balance>,
-}
-
 #[cfg(test)]
 mod tests {
 	use crate::dex::{Fee, FeeConfig};
@@ -396,25 +386,13 @@ mod tests {
 pub struct AssetDepositInfo<AssetId> {
 	pub asset_id: AssetId,
 	pub deposit_amount: u128,
-	// rename to `existing_balance`
-	pub asset_balance: u128,
-	// could probably just be called `weight`?
+	pub existing_balance: u128,
 	pub asset_weight: Permill,
 }
 
 impl<AssetId> AssetDepositInfo<AssetId> {
-	pub fn from(deposit_amount: AssetAmount<AssetId, u128>, asset_info: (Permill, u128)) -> Self {
-		// TODO(ben,connor): debug assert asset_balance is non-zero?
-		AssetDepositInfo {
-			asset_id: deposit_amount.asset_id,
-			deposit_amount: deposit_amount.amount,
-			asset_balance: asset_info.1,
-			asset_weight: asset_info.0,
-		}
-	}
-
 	pub fn get_deposit_ratio(&self) -> Rational128 {
-		Rational128::from(self.deposit_amount, self.asset_balance)
+		Rational128::from(self.deposit_amount, self.existing_balance)
 	}
 
 	pub fn cmp_by_deposit_ratio(&self, other: Self) -> Ordering {
@@ -435,11 +413,9 @@ pub fn normalize_asset_deposit_infos_to_min_ratio<AssetId: Copy>(
 		.reduce(|acc, curr| acc.min(curr))
 		.expect("at least 2 items are present in the vec as per the check above; qed;");
 
-	dbg!(smallest);
-
 	for adi in adis.iter_mut() {
 		adi.deposit_amount = multiply_by_rational_with_rounding(
-			adi.asset_balance,
+			adi.existing_balance,
 			smallest.n(),
 			smallest.d(),
 			// amount out will be less than the maximum allowed, so round up
@@ -470,7 +446,7 @@ mod test_asset_normalization {
 			.map(|(id, (deposit, balance))| AssetDepositInfo {
 				asset_id: id as u128,
 				deposit_amount: deposit,
-				asset_balance: balance,
+				existing_balance: balance,
 				asset_weight: Permill::from_rational::<u32>(1, N as u32),
 			})
 			.collect()

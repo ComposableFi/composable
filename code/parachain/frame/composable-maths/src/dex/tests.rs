@@ -195,7 +195,7 @@ mod constant_product {
 			let pool_assets = vec![];
 			let f = Permill::zero();
 
-			let res = compute_first_deposit_lp_(&pool_assets, f);
+			let res = compute_first_deposit_lp_(pool_assets.into_iter(), f);
 
 			assert_eq!(res, Err(ConstantProductAmmError::InvalidTokensList))
 		}
@@ -203,12 +203,13 @@ mod constant_product {
 		#[test]
 		fn should_provide_correct_vales_on_fifty_fifty() {
 			let pool_assets = vec![
-				(100_000_000_000_000_000, Permill::from_rational::<u32>(1, 2)),
+				(100_000_000_000_000_000_u128, Permill::from_rational::<u32>(1, 2)),
 				(300_000_000_000_000_000, Permill::from_rational::<u32>(1, 2)),
 			];
 			let f = Permill::zero();
 
-			let res = compute_first_deposit_lp_(&pool_assets, f).expect("Inputs are valid; QED");
+			let res = compute_first_deposit_lp_(pool_assets.into_iter(), f)
+				.expect("Inputs are valid; QED");
 
 			// Actual expected 346_410_161_513_775_458
 			// -000000000310% Error
@@ -225,7 +226,7 @@ mod constant_product {
 			fn no_unexpected_errors_in_range(input in first_deposit_range_inputs()) {
 				let pool_assets = generate_pool_assets(input.number_of_assets);
 
-				let res = compute_first_deposit_lp_(&pool_assets, input.f);
+				let res = compute_first_deposit_lp_(pool_assets.into_iter(), input.f);
 
 				prop_assert!(dbg!(res).is_ok());
 			}
