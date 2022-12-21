@@ -37,67 +37,80 @@ function coingeckoRequest(
   );
 }
 
-export const subscription = useStore.subscribe(
-  (state) => state.substrateTokens,
-  (state) => {
-    const { hasFetchedTokens, tokens } = state;
+export function subscribePrices() {
+  return useStore.subscribe(
+    (state) => ({
+      tokens: state.substrateTokens.tokens,
+      hasFetched: state.substrateTokens.hasFetchedTokens,
+    }),
+    ({ hasFetched, tokens }) => {
+      if (hasFetched) {
+        console.log(`[Coingecko]: starting to fetch prices`);
+        let vs_currencies = [...oracleCurrencies];
+        let app_supported: TokenId[] = [];
 
-    if (hasFetchedTokens) {
-      let vs_currencies = [...oracleCurrencies];
-      let app_supported: TokenId[] = [];
-
-      for (const [id, asset] of Object.entries(tokens)) {
-        if (asset.isSupportedOn("picasso")) {
-          app_supported.push(id as TokenId);
+        for (const [id, asset] of Object.entries(tokens)) {
+          if (asset.isSupportedOn("picasso")) {
+            app_supported.push(id as TokenId);
+          }
         }
-      }
 
-      if (app_supported.length > 0) {
-        const tokensToFetch = app_supported
-          .filter((k) => !!TOKENS[k].coinGeckoId)
-          .map((k) => {
-            return TOKENS[k].coinGeckoId;
-          });
+        console.log(`[coingecko supported]: ${app_supported.join("-")}`);
 
-        const allTokenMetadata = Object.values(TOKENS);
-        coingeckoRequest(tokensToFetch as string[], vs_currencies)
-          .then((response: any) => {
-            const tokenIdPrice = Object.entries(response.data) as [
-              string,
-              Record<OracleCurrency, number>
-            ][];
+        if (app_supported.length > 0) {
+          const tokensToFetch = app_supported
+            .filter((k) => !!TOKENS[k].coinGeckoId)
+            .map((k) => {
+              return TOKENS[k].coinGeckoId;
+            });
 
-            for (const tokenAndPrice of tokenIdPrice) {
-              const token = allTokenMetadata.find(
-                (x) => x.coinGeckoId === tokenAndPrice[0]
-              );
+          const allTokenMetadata = Object.values(TOKENS);
+          coingeckoRequest(tokensToFetch as string[], vs_currencies)
+            .then((response: any) => {
+              const tokenIdPrice = Object.entries(response.data) as [
+                string,
+                Record<OracleCurrency, number>
+              ][];
 
-              if (token) {
-                const baseCurrencies = Object.keys(tokenAndPrice[1]);
+              for (const tokenAndPrice of tokenIdPrice) {
+                const token = allTokenMetadata.find(
+                  (x) => x.coinGeckoId === tokenAndPrice[0]
+                );
 
-                for (const baseCurrency of baseCurrencies) {
-                  console.log(
-                    "[CoinGecko Subscription] adding price of ",
-                    token.symbol,
-                    " base currency ",
-                    baseCurrency
-                  );
-                  setOraclePrice(
-                    token.symbol,
-                    "coingecko",
-                    baseCurrency as OracleCurrency,
-                    new BigNumber(
-                      tokenAndPrice[1][baseCurrency as OracleCurrency]
-                    )
-                  );
+                if (token) {
+                  const baseCurrencies = Object.keys(tokenAndPrice[1]);
+
+                  for (const baseCurrency of baseCurrencies) {
+                    console.log(
+                      "[CoinGecko Subscription] adding price of ",
+                      token.symbol,
+                      " base currency ",
+                      baseCurrency
+                    );
+                    setOraclePrice(
+                      token.symbol,
+                      "coingecko",
+                      baseCurrency as OracleCurrency,
+                      new BigNumber(
+                        tokenAndPrice[1][baseCurrency as OracleCurrency]
+                      )
+                    );
+                  }
                 }
               }
-            }
-          })
-          .catch((err) => {
-            console.log("[Coingecko] Oracle Subscription error", err.message);
-          });
+            })
+            .catch((err) => {
+              console.log(
+                "[Coingecko] Oracle Subscription error: ",
+                err.message
+              );
+            });
+        }
       }
+    },
+    {
+      fireImmediately: true,
+      equalityFn: (a, b) => a.hasFetched && b.hasFetched,
     }
-  }
-);
+  );
+}

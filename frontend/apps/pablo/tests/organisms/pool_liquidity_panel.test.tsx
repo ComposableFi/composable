@@ -4,7 +4,7 @@ import * as stories from "pablo-storybook/stories/organisms/pool_liquidity_panel
 
 const { Default } = composeStories(stories);
 
-test("renders PoolLiquidityPanel with default args", () => {
+test.skip("renders PoolLiquidityPanel with default args", () => {
   render(<Default />);
 
   expect(screen.queryAllByText("Add liquidity")).toBeTruthy();

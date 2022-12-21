@@ -14,6 +14,7 @@ import { useRouter } from "next/router";
 import useStore from "@/store/useStore";
 import { BaseAsset } from "@/components";
 import BigNumber from "bignumber.js";
+import { usePoolRatio } from "@/defi/hooks/pools/usePoolRatio";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -41,16 +42,6 @@ const Item: React.FC<ItemProps> = ({ value, children, ...gridProps }) => {
 
 const DonutChartLabels = ["My Position", "Total Value Locked"];
 
-function getPercentage(a: number, b: number) {
-  const aValue = a || 0;
-  const bValue = b || 100;
-
-  const a_percent = (aValue / bValue) * 100;
-  const b_percent = 100 - a_percent;
-
-  return [a_percent, b_percent];
-}
-
 export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
   pool,
   ...boxProps
@@ -61,6 +52,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
   const lpTokens = useStore((store) => store.ownedLiquidity.tokens);
   const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
   const totalIssued = useStore((store) => store.pools.totalIssued);
+  const { userTVL, ratio } = usePoolRatio(pool);
   const poolId = pool.poolId.toString();
 
   const handleAddLiquidity = () => {
@@ -80,17 +72,24 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
 
   const [assetIn, assetOut] = pool.config.assets;
   const amount = poolAmount[pool.poolId.toString()];
-  const amountIn = amount ? amount[assetIn.getPicassoAssetId() as string] : "0";
-  const amountOut = amount
-    ? amount[assetOut.getPicassoAssetId() as string]
-    : "0";
+  const amountIn = new BigNumber(
+    amount ? amount[assetIn.getPicassoAssetId() as string] : "0"
+  )
+    .multipliedBy(ratio)
+    .div(100)
+    .toFormat(4);
+  const amountOut = new BigNumber(
+    amount ? amount[assetOut.getPicassoAssetId() as string] : "0"
+  )
+    .multipliedBy(ratio)
+    .div(100)
+    .toFormat(4);
+
   return (
     <BoxWrapper {...boxProps}>
       <Grid container>
         <Grid item {...twoColumnPageSize}>
-          <Typography variant="h5">
-            {lpTokens[pool.config.lpToken].balance.free.toFormat(4)}
-          </Typography>
+          <Typography variant="h5">${userTVL.toFormat(2)}</Typography>
           <Typography variant="body1" color="text.secondary">
             Liquidity Provided
           </Typography>

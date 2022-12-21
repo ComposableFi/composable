@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import { PoolDetailsProps } from "./index";
 import { FC } from "react";
+import { usePoolRatio } from "@/defi/hooks/pools/usePoolRatio";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -49,11 +50,12 @@ const Item: FC<ItemProps> = ({ label, value, children, ...boxProps }) => {
 };
 
 export const PoolStatistics: FC<PoolDetailsProps> = ({ pool, ...boxProps }) => {
+  const { poolTVL } = usePoolRatio(pool);
   return (
     <Box {...boxProps}>
       <Grid container spacing={4}>
         <Grid item {...twoColumnPageSize}>
-          <Item label="Pool value" value={`N/A`} />
+          <Item label="Pool value" value={`$${poolTVL.toFormat(2)}`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
           <Item label="Rewards left" py={2}></Item>
