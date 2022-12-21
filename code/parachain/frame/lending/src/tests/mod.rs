@@ -25,6 +25,7 @@ pub mod interest;
 pub mod liquidation;
 pub mod market;
 pub mod offchain;
+pub mod pausing;
 pub mod prelude;
 pub mod repay;
 pub mod vault;
