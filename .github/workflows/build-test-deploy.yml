@@ -521,9 +521,9 @@ jobs:
     steps:
       - run: |
           apt-get update
-          apt-get install -y sudo curl git
-          curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-          sudo apt-get install git-lfs
+          apt-get install -y curl git
+          curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+          apt-get install git-lfs
       - uses: actions/checkout@v3
         with:
           lfs: true
@@ -562,9 +562,9 @@ jobs:
     steps:
       - run:
           apt-get update
-          apt-get install -y sudo curl git
-          curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-          sudo apt-get install git-lfs
+          apt-get install -y curl git
+          curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+          apt-get install git-lfs
       - uses: actions/checkout@v3
         with:
           lfs: true
