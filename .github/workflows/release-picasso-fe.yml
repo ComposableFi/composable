@@ -14,7 +14,10 @@ jobs:
       - linux
       - x64
       - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
+      - run: nix-env -iA nixpkgs.git-lfs nixpkgs.nodejs
       - uses: actions/checkout@v3
       - name: Install Vercel CL
         run: npm install --global vercel@latest
