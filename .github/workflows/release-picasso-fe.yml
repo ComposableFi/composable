@@ -17,8 +17,11 @@ jobs:
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
-      - run: nix-env -iA nixpkgs.git-lfs nixpkgs.nodejs
+      - run: nix-env -iA git-lfs nodejs
       - uses: actions/checkout@v3
+        with:
+          lfs: true
+          fetch-depth: 0      
       - name: Install Vercel CL
         run: npm install --global vercel@latest
       - name: Import project setting
