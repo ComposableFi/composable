@@ -3,6 +3,7 @@ import { BaseAsset, PairAsset } from "@/components/Atoms";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import { Button, Grid, GridProps } from "@mui/material";
 import { useRouter } from "next/router";
+import { FC } from "react";
 
 const threeColumnPageSize = {
   xs: 12,
@@ -33,7 +34,7 @@ export type BuyButtonsProps = {
   bond: SelectedBondOffer;
   iconSize?: number;
 } & GridProps;
-export const BuyButtons: React.FC<BuyButtonsProps> = ({
+export const BuyButtons: FC<BuyButtonsProps> = ({
   bond,
   iconSize = 24,
   ...gridProps
@@ -48,7 +49,10 @@ export const BuyButtons: React.FC<BuyButtonsProps> = ({
     }
   };
 
-  const isLpBond = bond.bondedAsset_s instanceof LiquidityProviderToken ? bond.bondedAsset_s.getUnderlyingAssetJSON() : null;
+  const isLpBond =
+    bond.bondedAsset_s instanceof LiquidityProviderToken
+      ? bond.bondedAsset_s.getUnderlyingAssetJSON()
+      : null;
   if (!isLpBond) return null;
 
   return (
@@ -75,10 +79,7 @@ export const BuyButtons: React.FC<BuyButtonsProps> = ({
       </Grid>
       <Grid item {...threeColumnPageSize}>
         <Button {...buttonProps(onBuyHandler("lp"))}>
-          {<PairAsset
-            assets={isLpBond}
-            {...restAssetProps("Create LP", iconSize)}
-          />}
+          {<PairAsset assets={[]} {...restAssetProps("Create LP", iconSize)} />}
         </Button>
       </Grid>
     </Grid>

@@ -1,37 +1,46 @@
 import type { NextPage } from "next";
 import { Box, Container, Typography } from "@mui/material";
-import Default from "@/components/Templates/Default";
 import { Link } from "@/components";
-import { useRouter } from "next/router";
+import { RemoveLiquidityForm } from "@/components/Organisms/liquidity/RemoveForm";
 import { useEffect } from "react";
+import { useRouter } from "next/router";
 import { useDotSamaContext } from "substrate-react";
-import { AddLiquidityForm } from "@/components/Organisms/liquidity/AddForm";
-import AddLiquidityUpdater from "@/updaters/addLiquidity/Updater";
 import { useUiSlice } from "@/store/ui/ui.slice";
+import { PoolLayout } from "@/components/Templates/pools/PoolLayout";
+import { usePoolDetail } from "@/defi/hooks/pools/usePoolDetail";
+import { RemoveLiquiditySkeleton } from "@/components/Templates/pools/RemoveLiquiditySkeleton";
 
-const AddLiquidity: NextPage = () => {
-  const router = useRouter();
-  const { extensionStatus } = useDotSamaContext();
-  const {isPolkadotModalOpen 
-  } = useUiSlice();
-
+const RemoveLiquidity: NextPage = () => {
   const breadcrumbs = [
     <Link key="pool" underline="none" color="primary" href="/pool">
       Pool
     </Link>,
     <Typography key="add-liquidity" color="text.primary">
-      Add liquidity
+      Remove liquidity
     </Typography>,
   ];
+
+  const { extensionStatus } = useDotSamaContext();
+  const { isPolkadotModalOpen } = useUiSlice();
+  const router = useRouter();
+  const { pool } = usePoolDetail();
 
   useEffect(() => {
     extensionStatus !== "connected" &&
       !isPolkadotModalOpen &&
       router.push("/pool");
-  }, [extensionStatus, isPolkadotModalOpen, router]);
+  });
+
+  if (pool === null) {
+    return (
+      <PoolLayout breadcrumbs={breadcrumbs}>
+        <RemoveLiquiditySkeleton />
+      </PoolLayout>
+    );
+  }
 
   return (
-    <Default breadcrumbs={breadcrumbs}>
+    <PoolLayout breadcrumbs={breadcrumbs}>
       <Container maxWidth="lg">
         <Box
           sx={{
@@ -42,12 +51,11 @@ const AddLiquidity: NextPage = () => {
             marginBottom: 18,
           }}
         >
-          <AddLiquidityUpdater />
-          <AddLiquidityForm />
+          <RemoveLiquidityForm pool={pool} />
         </Box>
       </Container>
-    </Default>
+    </PoolLayout>
   );
 };
 
-export default AddLiquidity;
+export default RemoveLiquidity;

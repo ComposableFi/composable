@@ -17,7 +17,8 @@ Default.args = {
   token: new Asset(
     TOKENS.pblo.symbol,
     TOKENS.pblo.symbol,
-    TOKENS.pblo.icon
+    TOKENS.pblo.icon,
+    TOKENS.pblo.id
   ),
   value: "500.00",
 };

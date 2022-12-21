@@ -1,17 +1,16 @@
 import {
   Box,
-  useTheme,
   Button,
-  Typography,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableRow,
+  Typography,
+  useTheme,
 } from "@mui/material";
-import { useMemo } from "react";
+import { FC, useMemo } from "react";
 import { PoolDetailsProps } from "./index";
-import { useLiquidityPoolDetails } from "@/defi/hooks/useLiquidityPoolDetails";
 import { useXTokensList } from "@/defi/hooks/financialNfts";
 import { useStakingRewardPoolCollectionId } from "@/store/stakingRewards/stakingRewards.slice";
 import { useUnstake } from "@/defi/hooks/stakingRewards";
@@ -19,10 +18,9 @@ import { PairAsset } from "@/components/Atoms";
 import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
 import { ConfirmingModal } from "../../swap/ConfirmingModal";
-import { useLpTokenPrice } from "@/defi/hooks";
 import BigNumber from "bignumber.js";
 
-const UnstakeFormPosition: React.FC<{
+const UnstakeFormPosition: FC<{
   financialNftId: string;
   principalAssets: Array<{ label?: string; icon: string }>;
   principalAssetValue: BigNumber;
@@ -48,7 +46,7 @@ const UnstakeFormPosition: React.FC<{
   return (
     <TableRow key={financialNftId}>
       <TableCell align="left">
-        <PairAsset assets={principalAssets} separator="/" />
+        <PairAsset assets={[]} separator="/" />
       </TableCell>
       <TableCell align="center">
         <Typography variant="body1">{stakedAmountInStr}</Typography>
@@ -63,14 +61,12 @@ const UnstakeFormPosition: React.FC<{
 };
 
 export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
-  poolId,
+  pool,
   ...boxProps
 }) => {
   const theme = useTheme();
-  const { pool } = useLiquidityPoolDetails(poolId);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const lpToken = pool?.getLiquidityProviderToken() ?? null;
-  const lpAssetId = lpToken?.getPicassoAssetId() as string ?? "-"
+  const lpAssetId = pool.config.lpToken.toString();
   const positions = useXTokensList({ stakedAssetId: lpAssetId });
   const collectionId = useStakingRewardPoolCollectionId(lpAssetId);
 
@@ -84,13 +80,9 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
     return undefined;
   }, [positions]);
 
-  const lpTokenPrice = useLpTokenPrice(lpToken ?? undefined);
+  const lpTokenPrice = new BigNumber(0);
 
-  const pairAssets = useMemo(() => {
-    if (!lpToken) return [];
-
-    return lpToken.getUnderlyingAssetJSON();
-  }, [lpToken]);
+  const pairAssets = pool.config.assets;
 
   const hasStakedPositions = useMemo(() => {
     return positions.length > 0;
@@ -124,8 +116,7 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
             color="text.secondary"
             textAlign={"center"}
           >
-            You don&apos;t currently have any {lpToken?.getSymbol()} positions
-            staked.
+            You don&apos;t currently have any positions staked.
           </Typography>
         </Box>
       )}
@@ -138,7 +129,16 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
                 ({ lockedPrincipalAsset, nftId, expiryDate, isExpired }) => {
                   return (
                     <UnstakeFormPosition
-                      principalAssets={pairAssets}
+                      principalAssets={[
+                        {
+                          icon: "",
+                          label: "",
+                        },
+                        {
+                          icon: "",
+                          label: "",
+                        },
+                      ]}
                       financialNftId={nftId}
                       principalAssetValue={lpTokenPrice}
                       principalAssetStakedAmount={lockedPrincipalAsset}
@@ -161,7 +161,7 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
           onClick={handleUnStake}
           disabled={!hasStakedPositions}
         >
-          {`Unstake ${lpToken?.getSymbol()}`}
+          {`Unstake `}
         </Button>
       </Box>
 

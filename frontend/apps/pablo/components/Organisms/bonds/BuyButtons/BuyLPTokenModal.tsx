@@ -10,6 +10,7 @@ import { PoolShare } from "../PoolShare";
 import BigNumber from "bignumber.js";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { setUiState } from "@/store/ui/ui.slice";
+import { Asset } from "shared";
 
 const containerProps = (theme: Theme) => ({
   p: 4,
@@ -89,7 +90,7 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
             maxValue={balance1}
             setValid={setValid1}
             EndAdornmentAssetProps={{
-              assets: [{ icon: token1.icon, label: "ETH" }],
+              assets: [],
               LabelProps: { variant: "body1" },
             }}
             LabelProps={labelProps(`${token1.symbol} Token`, balance1)}
@@ -119,7 +120,7 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
             maxValue={balance2}
             setValid={setValid2}
             EndAdornmentAssetProps={{
-              assets: [{ icon: token2.icon, label: "ETH" }],
+              assets: [],
               LabelProps: { variant: "body1" },
             }}
             LabelProps={labelProps(`${token2.symbol} Token`, balance2)}
@@ -132,8 +133,9 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
 
         <PoolShare
           mt={4}
-          tokenId1={bond.tokenId1}
-          tokenId2={bond.tokenId2}
+          assetOne={new Asset("", "", "", "ksm", undefined)}
+          assetTwo={new Asset("", "", "", "pica", undefined)}
+          poolShare={{}}
           price={price}
           revertPrice={revertPrice}
           share={share}

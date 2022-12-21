@@ -20,6 +20,7 @@ import {
 import moment from "moment";
 import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
+import { FC } from "react";
 
 const containerBoxProps = (theme: Theme) => ({
   p: 4,
@@ -49,21 +50,27 @@ export type ClaimFormProps = {
   bond: SelectedBondOffer;
 } & BoxProps;
 
-export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
+export const ClaimForm: FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
   const theme = useTheme();
   const { rewardAsset } = bond;
 
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const { claimable, milliSecondsSinceVestingStart, pendingRewards } =
     useBondedOfferVestingState(
-      bond.selectedBondOffer ? bond.selectedBondOffer.getBondOfferId() as string : "-"
+      bond.selectedBondOffer
+        ? (bond.selectedBondOffer.getBondOfferId() as string)
+        : "-"
     );
   const roi = useBondOfferROI(
-    bond.selectedBondOffer ? bond.selectedBondOffer.getBondOfferId() as string : "-"
+    bond.selectedBondOffer
+      ? (bond.selectedBondOffer.getBondOfferId() as string)
+      : "-"
   );
 
   const handleClaim = useVestingClaim(
-    bond.selectedBondOffer ? bond.selectedBondOffer.getRewardAssetId() as string : "",
+    bond.selectedBondOffer
+      ? (bond.selectedBondOffer.getRewardAssetId() as string)
+      : "",
     bond.vestingSchedules.length > 0
       ? bond.vestingSchedules[0].vestingScheduleId
       : new BigNumber(-1)
@@ -73,7 +80,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
     "claim",
     "vesting",
     selectedAccount?.address ?? "-"
-  )
+  );
 
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
@@ -85,9 +92,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
           value={claimable}
           maxValue={claimable}
           EndAdornmentAssetProps={{
-            assets: rewardAsset
-              ? [{ icon: rewardAsset.getIconUrl(), label: rewardAsset.getSymbol() }]
-              : [],
+            assets: rewardAsset ? [] : [],
             separator: "/",
             LabelProps: { variant: "body1" },
           }}
@@ -96,7 +101,9 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
             BalanceProps: claimable
               ? {
                   title: <AccountBalanceWalletIcon color="primary" />,
-                  balance: `${claimable.toFixed(2)} ${rewardAsset?.getSymbol()}`,
+                  balance: `${claimable.toFixed(
+                    2
+                  )} ${rewardAsset?.getSymbol()}`,
                 }
               : undefined,
           }}

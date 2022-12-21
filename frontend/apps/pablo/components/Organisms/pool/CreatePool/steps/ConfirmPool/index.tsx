@@ -1,7 +1,16 @@
 import { BaseAsset, Label } from "@/components/Atoms";
 import { Link } from "@/components/Molecules";
 import { FormTitle } from "@/components/Organisms/FormTitle";
-import { alpha, Box, BoxProps, Button, Divider, IconButton, Typography, useTheme } from "@mui/material";
+import {
+  alpha,
+  Box,
+  BoxProps,
+  Button,
+  Divider,
+  IconButton,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import FormWrapper from "../../FormWrapper";
@@ -10,15 +19,16 @@ import EditIcon from "@mui/icons-material/Edit";
 import { ConfirmingPoolModal } from "./ConfirmingPoolModal";
 import { AccessTimeRounded, OpenInNewRounded } from "@mui/icons-material";
 import moment from "moment-timezone";
-import useStore from "@/store/useStore";
 import { AMMs } from "@/defi/AMMs";
-import { useExecutor, useParachainApi, useSelectedAccount, useSigner } from "substrate-react";
+import {
+  useExecutor,
+  useParachainApi,
+  useSelectedAccount,
+  useSigner,
+} from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { EventRecord } from "@polkadot/types/interfaces/system/types";
-import {
-  addLiquidityToPoolViaPablo,
-  toChainUnits
-} from "@/defi/utils";
+import { addLiquidityToPoolViaPablo, toChainUnits } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
 import { setUiState } from "@/store/ui/ui.slice";
 import { useAssetIdOraclePrice } from "@/defi/hooks";
@@ -28,21 +38,21 @@ const labelProps = (
   balance?: string,
   fontWeight?: string | number
 ) =>
-({
-  label: label,
-  mb: 0,
-  TypographyProps: {
-    variant: "body1",
-    fontWeight: fontWeight
-  },
-  BalanceProps: {
-    balance: balance,
-    BalanceTypographyProps: {
+  ({
+    label: label,
+    mb: 0,
+    TypographyProps: {
       variant: "body1",
-      fontWeight: fontWeight
-    }
-  }
-} as const);
+      fontWeight: fontWeight,
+    },
+    BalanceProps: {
+      balance: balance,
+      BalanceTypographyProps: {
+        variant: "body1",
+        fontWeight: fontWeight,
+      },
+    },
+  } as const);
 
 const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
@@ -50,20 +60,18 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const signer = useSigner();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-
+  const createPool = undefined as any;
   const {
-    createPool: {
-      baseAsset,
-      quoteAsset,
-      liquidity,
-      currentStep,
-      swapFee,
-      ammId,
-      weights,
-      setSelectable,
-      resetSlice
-    }
-  } = useStore();
+    baseAsset,
+    quoteAsset,
+    liquidity,
+    currentStep,
+    swapFee,
+    ammId,
+    weights,
+    setSelectable,
+    resetSlice,
+  } = createPool;
 
   const _baseAsset = useAsset(baseAsset);
   const _quoteAsset = useAsset(quoteAsset);
@@ -112,7 +120,13 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   };
 
   const addLiquidity = async (poolId: number) => {
-    if (parachainApi && signer !== undefined && selectedAccount && executor && selectedAccount) {
+    if (
+      parachainApi &&
+      signer !== undefined &&
+      selectedAccount &&
+      executor &&
+      selectedAccount
+    ) {
       const { address } = selectedAccount;
 
       const call = addLiquidityToPoolViaPablo(
@@ -143,7 +157,10 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
     }
   };
 
-  const onCreateFinalized = (txHash: string, events: EventRecord[]): void | undefined => {
+  const onCreateFinalized = (
+    txHash: string,
+    events: EventRecord[]
+  ): void | undefined => {
     console.log("Pool Creation Finalized", txHash);
     setCreatedAt(Date.now());
 
@@ -230,7 +247,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
             borderColor: alpha(
               theme.palette.common.white,
               theme.custom.opacity.main
-            )
+            ),
           }}
         />
       </Box>

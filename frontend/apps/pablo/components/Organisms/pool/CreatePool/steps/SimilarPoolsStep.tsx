@@ -16,7 +16,6 @@ import { useAsset } from "@/defi/hooks/assets/useAsset";
 import BigNumber from "bignumber.js";
 import FormWrapper from "../FormWrapper";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import useStore from "@/store/useStore";
 import { setUiState } from "@/store/ui/ui.slice";
 
 const itemBoxProps = (theme: Theme) =>
@@ -38,16 +37,9 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
   ...boxProps
 }) => {
   const theme = useTheme();
-
-  const {
-    createPool: {
-      baseAsset,
-      quoteAsset,
-      currentStep,
-      similarPool,
-      setSelectable,
-    }
-  } = useStore();
+  const createPool = undefined as any;
+  const { baseAsset, quoteAsset, currentStep, similarPool, setSelectable } =
+    createPool;
 
   const [isSettingOnFlow, setIsSettingOnFlow] = useState<boolean>(false);
 
@@ -90,10 +82,7 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
       <Box mt={6} display="flex" justifyContent="center">
         {_baseAsset && _quoteAsset && (
           <PairAsset
-            assets={[
-              { icon: _baseAsset.getIconUrl(), label: _baseAsset.getSymbol() },
-              { icon: _quoteAsset.getIconUrl(), label: _quoteAsset.getSymbol() },
-            ]}
+            assets={[]}
             iconSize={32}
             LabelProps={{ variant: "body1" }}
             separator="/"

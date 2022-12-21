@@ -7,21 +7,23 @@ import {
   useTheme,
 } from "@mui/material";
 import { Settings } from "@mui/icons-material";
-import { useState } from "react";
+import { FC, useState } from "react";
 import {
-  DropdownCombinedBigNumberInput,
   BigNumberInput,
+  DropdownCombinedBigNumberInput,
   TransactionSettings,
 } from "@/components";
 import { useMobile } from "@/hooks/responsive";
-import { getFullHumanizedDateDiff, PabloLiquidityBootstrappingPool } from "shared";
+import {
+  getFullHumanizedDateDiff,
+  PabloLiquidityBootstrappingPool,
+} from "shared";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
 import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { useAuctionBuyForm } from "@/defi/hooks/auctions/useAuctionBuyForm";
 import { useDotSamaContext } from "substrate-react";
 import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
 import { setUiState } from "@/store/ui/ui.slice";
-import _ from "lodash";
 import { useAssetIdOraclePrice } from "@/defi/hooks";
 import { useAuctionTiming } from "@/defi/hooks/auctions/useAuctionTiming";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
@@ -31,7 +33,7 @@ export type BuyFormProps = {
   auction: PabloLiquidityBootstrappingPool;
 } & BoxProps;
 
-export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
+export const BuyForm: FC<BuyFormProps> = ({ auction, ...rest }) => {
   const { extensionStatus } = useDotSamaContext();
   const theme = useTheme();
   const isMobile = useMobile();
@@ -50,27 +52,27 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     setIsValidBaseInput,
     setIsValidQuoteInput,
     isBuyButtonDisabled,
-    minimumReceived
+    minimumReceived,
   } = useAuctionBuyForm();
 
   const priceUSDBase = useAssetIdOraclePrice(
-    baseAsset ? baseAsset.getPicassoAssetId() as string : "none"
+    baseAsset ? (baseAsset.getPicassoAssetId() as string) : "none"
   );
   const priceUSDQuote = useAssetIdOraclePrice(
-    quoteAsset ? quoteAsset.getPicassoAssetId() as string : "none"
+    quoteAsset ? (quoteAsset.getPicassoAssetId() as string) : "none"
   );
 
   const { isActive, isEnded, startTimestamp } = useAuctionTiming(auction);
   const initiateBuyTx = usePabloSwap({
-    baseAssetId: baseAsset?.getPicassoAssetId() as string ?? "-",
-    quoteAssetId: quoteAsset?.getPicassoAssetId() as string ?? "-",
+    baseAssetId: (baseAsset?.getPicassoAssetId() as string) ?? "-",
+    quoteAssetId: (quoteAsset?.getPicassoAssetId() as string) ?? "-",
     quoteAmount,
     minimumReceived,
-    swapOrigin: "Auction"
+    swapOrigin: "Auction",
   });
 
   const onSettingHandler = () => {
-    setUiState({ isTransactionSettingsModalOpen: true })
+    setUiState({ isTransactionSettingsModalOpen: true });
   };
 
   return (
@@ -107,13 +109,14 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
           maxValue={balanceQuote}
           setValid={setIsValidQuoteInput}
           noBorder
-          onMouseDown={_evt => {
-            if (manualUpdateMode !== 1) setManualUpdateMode(1)
+          onMouseDown={(_evt) => {
+            if (manualUpdateMode !== 1) setManualUpdateMode(1);
           }}
           value={quoteAmount}
           setValue={(value) => {
-            manualUpdateMode === 1 ?
-              onChangeTokenAmount("quote", value) : undefined
+            manualUpdateMode === 1
+              ? onChangeTokenAmount("quote", value)
+              : undefined;
           }}
           buttonLabel={"Max"}
           ButtonProps={{
@@ -125,7 +128,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
             },
           }}
           CombinedSelectProps={{
-            value: quoteAsset?.getPicassoAssetId() as string ?? "",
+            value: (quoteAsset?.getPicassoAssetId() as string) ?? "",
             dropdownModal: true,
             forceHiddenLabel: isMobile ? true : false,
             options: [
@@ -138,12 +141,12 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
               },
               ...(quoteAsset
                 ? [
-                  {
-                    value: quoteAsset.getPicassoAssetId(),
-                    icon: quoteAsset.getIconUrl(),
-                    label: quoteAsset.getSymbol(),
-                  },
-                ]
+                    {
+                      value: quoteAsset.getPicassoAssetId(),
+                      icon: quoteAsset.getIconUrl(),
+                      label: quoteAsset.getSymbol(),
+                    },
+                  ]
                 : []),
             ],
             borderLeft: false,
@@ -160,7 +163,9 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
         />
         {isValidQuoteInput && (
           <Typography variant="body2" mt={1.5}>
-            {`≈$${quoteAmount.multipliedBy(priceUSDQuote).toFixed(DEFAULT_UI_FORMAT_DECIMALS)}`}
+            {`≈$${quoteAmount
+              .multipliedBy(priceUSDQuote)
+              .toFixed(DEFAULT_UI_FORMAT_DECIMALS)}`}
           </Typography>
         )}
       </Box>
@@ -189,26 +194,17 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
       </Box>
       <Box mt={4} visibility={isActive ? undefined : "hidden"}>
         <BigNumberInput
-          onMouseDown={_evt => {
-            if (manualUpdateMode !== 2) setManualUpdateMode(2)
+          onMouseDown={(_evt) => {
+            if (manualUpdateMode !== 2) setManualUpdateMode(2);
           }}
           value={baseAmount}
           setValue={(value) => {
-            manualUpdateMode === 2 ?
-              onChangeTokenAmount("base", value) : undefined
+            manualUpdateMode === 2
+              ? onChangeTokenAmount("base", value)
+              : undefined;
           }}
           maxValue={balanceBase}
           setValid={setIsValidBaseInput}
-          EndAdornmentAssetProps={{
-            assets: baseAsset
-              ? [
-                {
-                  icon: baseAsset.getIconUrl(),
-                  label: baseAsset.getSymbol(),
-                },
-              ]
-              : [],
-          }}
           LabelProps={{
             label: "Launch token",
             BalanceProps: {
@@ -241,7 +237,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
             variant="contained"
             fullWidth
             onClick={() => {
-              setUiState({ isPolkadotModalOpen: true })
+              setUiState({ isPolkadotModalOpen: true });
             }}
           >
             Connect wallet

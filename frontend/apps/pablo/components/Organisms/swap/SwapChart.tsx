@@ -1,6 +1,6 @@
 import { Chart, PairAsset } from "@/components";
 import { Box, useTheme } from "@mui/material";
-import { useMemo } from "react";
+import { FC, useMemo } from "react";
 import { BoxProps } from "@mui/system";
 import { DEFI_CONFIG } from "@/defi/config";
 import useStore from "@/store/useStore";
@@ -10,7 +10,7 @@ import { useAsset } from "@/defi/hooks/assets/useAsset";
 import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
 
-const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
+const SwapChart: FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
 
   const { swaps } = useStore();
@@ -58,19 +58,7 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
           <Box>
             <Box pt={2} display="flex" gap={1}>
               {baseAsset && quoteAsset ? (
-                <PairAsset
-                  assets={[
-                    {
-                      icon: baseAsset.getIconUrl(),
-                      label: baseAsset.getSymbol(),
-                    },
-                    {
-                      icon: quoteAsset.getIconUrl(),
-                      label: quoteAsset.getSymbol(),
-                    },
-                  ]}
-                  separator="-"
-                />
+                <PairAsset assets={[]} separator="-" />
               ) : null}
               {/* <RefreshOutlined
                 sx={{

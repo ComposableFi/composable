@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import {
   picassoAssetsList,
   subscribeNativeBalance,
-  subscribePicassoBalanceByAssetId
+  subscribePicassoBalanceByAssetId,
 } from "shared";
 import { TokenId } from "tokens";
 import { SUBSTRATE_NETWORKS } from "shared/defi/constants";
@@ -65,8 +65,8 @@ const Updater = () => {
             setTokenBalance(tokenId, "picasso", balance.free, balance.locked);
           }
         ).then((sub) => {
-          subscriptions.push(sub)
-        })
+          subscriptions.push(sub);
+        });
       }
     });
 

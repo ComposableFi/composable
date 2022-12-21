@@ -1,27 +1,19 @@
 import {
-  Box,
-  useTheme,
-  Typography,
-  Grid,
   alpha,
+  Box,
   Button,
+  Grid,
   GridProps,
+  Typography,
+  useTheme,
 } from "@mui/material";
-import { BaseAsset } from "@/components/Atoms";
 import { BoxWrapper } from "../../BoxWrapper";
-import { useRouter } from "next/router";
 import { DonutChart } from "@/components/Atoms/DonutChart";
-import { useLiquidityPoolDetails } from "@/defi/hooks/useLiquidityPoolDetails";
 import { PoolDetailsProps } from "./index";
-import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
-import {
-  setManualPoolSearch,
-  setPool,
-} from "@/store/addLiquidity/addLiquidity.slice";
-import { useUserProvidedLiquidityByPool } from "@/defi/hooks/useUserProvidedLiquidityByPool";
-import { calculatePoolTotalValueLocked } from "@/defi/utils";
-import { useLiquidity } from "@/defi/hooks/useLiquidity";
-import { useAssetIdOraclePrice, useLpTokenPrice, useLpTokenUserBalance } from "@/defi/hooks";
+import { useRouter } from "next/router";
+import useStore from "@/store/useStore";
+import { BaseAsset } from "@/components";
+import BigNumber from "bignumber.js";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -49,67 +41,56 @@ const Item: React.FC<ItemProps> = ({ value, children, ...gridProps }) => {
 
 const DonutChartLabels = ["My Position", "Total Value Locked"];
 
+function getPercentage(a: number, b: number) {
+  const aValue = a || 0;
+  const bValue = b || 100;
+
+  const a_percent = (aValue / bValue) * 100;
+  const b_percent = 100 - a_percent;
+
+  return [a_percent, b_percent];
+}
+
 export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
-  poolId,
+  pool,
   ...boxProps
 }) => {
   const router = useRouter();
   const theme = useTheme();
-  const { setRemoveLiquidity } = useRemoveLiquidityState();
-
-  const poolDetails = useLiquidityPoolDetails(poolId);
-  const { pool } = poolDetails;
-  const { baseAmount, quoteAmount } = useLiquidity(pool);
-  const lpTokenBalance = useLpTokenUserBalance(pool);
-  const lpTokenPrice = useLpTokenPrice(pool?.getLiquidityProviderToken());
-  const providedLiquidityAmount = useUserProvidedLiquidityByPool(poolId)
-
-  const pair = pool ? Object.keys(pool?.getAssets().assets) : null;
-  const base = pair?.[0] ?? "-";
-  const quote = pair?.[1] ?? "-";
-
-  const baseAssetPriceUSD = useAssetIdOraclePrice(
-    base
-  );
-  const quoteAssetPriceUSD = useAssetIdOraclePrice(
-    quote
-  );
+  const poolAmount = useStore((store) => store.pools.poolAmount);
+  const lpTokens = useStore((store) => store.ownedLiquidity.tokens);
+  const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
+  const totalIssued = useStore((store) => store.pools.totalIssued);
+  const poolId = pool.poolId.toString();
 
   const handleAddLiquidity = () => {
-    if (poolDetails.baseAsset && poolDetails.quoteAsset && poolDetails.pool) {
-      setManualPoolSearch(false);
-      setPool(poolDetails.pool);
-      router.push("/pool/add-liquidity");
-    }
+    router.push(`/pool/add-liquidity/${poolId}`);
   };
-
   const handleRemoveLiquidity = () => {
-    if (poolDetails.baseAsset && poolDetails.quoteAsset) {
-      setRemoveLiquidity({
-        poolId,
-      });
-      router.push("/pool/remove-liquidity");
-    }
+    router.push(`/pool/remove-liquidity/${poolId}`);
   };
 
-  const totalValueLocked = calculatePoolTotalValueLocked(
-    quoteAmount,
-    baseAmount,
-    baseAssetPriceUSD,
-    quoteAssetPriceUSD
-  );
+  if (
+    !isPoolsLoaded ||
+    Object.keys(lpTokens).length === 0 ||
+    Object.keys(totalIssued).length === 0
+  ) {
+    return null;
+  }
 
-  const valueProvided = totalValueLocked.minus(
-    lpTokenPrice.times(lpTokenBalance)
-  );
-
+  const [assetIn, assetOut] = pool.config.assets;
+  const amount = poolAmount[pool.poolId.toString()];
+  const amountIn = amount ? amount[assetIn.getPicassoAssetId() as string] : "0";
+  const amountOut = amount
+    ? amount[assetOut.getPicassoAssetId() as string]
+    : "0";
   return (
     <BoxWrapper {...boxProps}>
       <Grid container>
         <Grid item {...twoColumnPageSize}>
-          <Typography variant="h5">{`$${valueProvided.toFormat(
-            2
-          )}`}</Typography>
+          <Typography variant="h5">
+            {lpTokens[pool.config.lpToken].balance.free.toFormat(4)}
+          </Typography>
           <Typography variant="body1" color="text.secondary">
             Liquidity Provided
           </Typography>
@@ -127,7 +108,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
           </Grid>
           <Grid item {...twoColumnPageSize}>
             <Button
-              disabled={lpTokenBalance.eq(0)}
+              disabled={lpTokens[pool.config.lpToken].balance.free.isZero()}
               variant="outlined"
               size="large"
               fullWidth
@@ -143,7 +124,19 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
         <Grid container spacing={4}>
           <Grid item {...twoColumnPageSize}>
             <DonutChart
-              data={[valueProvided.toNumber(), totalValueLocked.minus(valueProvided).toNumber()]}
+              data={[
+                lpTokens[pool.config.lpToken].balance.free
+                  .div(totalIssued[pool.poolId.toString()])
+                  .multipliedBy(100)
+                  .toNumber() || 0,
+                new BigNumber(100)
+                  .minus(
+                    lpTokens[pool.config.lpToken].balance.free
+                      .div(totalIssued[pool.poolId.toString()])
+                      .multipliedBy(100)
+                  )
+                  .toNumber() || 100,
+              ]}
               colors={[
                 alpha(theme.palette.common.white, theme.custom.opacity.main),
                 theme.palette.primary.main,
@@ -154,36 +147,26 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
           </Grid>
           <Grid item {...twoColumnPageSize}>
             <Box mt={8}>
-              {poolDetails.baseAsset && (
-                <Item
-                  value={providedLiquidityAmount.tokenAmounts.baseAmount.toFormat(2)}
-                >
-                  <BaseAsset
-                    label={`Pooled ${poolDetails.baseAsset.getSymbol()}`}
-                    icon={poolDetails.baseAsset.getIconUrl()}
-                  />
-                </Item>
-              )}
-              {poolDetails.quoteAsset && (
-                <Item
-                  value={providedLiquidityAmount.tokenAmounts.quoteAmount.toFormat(2)}
-                  mt={4}
-                >
-                  <BaseAsset
-                    label={`Pooled ${poolDetails.quoteAsset.getSymbol()}`}
-                    icon={poolDetails.quoteAsset.getIconUrl()}
-                  />
-                </Item>
-              )}
+              {" "}
+              <Item value={amountIn}>
+                <BaseAsset
+                  label={`Pooled ${assetIn.getSymbol()}`}
+                  icon={assetIn.getIconUrl()}
+                />
+              </Item>
+              <Item value={amountOut} mt={4}>
+                <BaseAsset
+                  label={`Pooled ${assetOut.getSymbol()}`}
+                  icon={assetOut.getIconUrl()}
+                />
+              </Item>
               <Item
-                value={`${
-                  totalValueLocked.eq(0)
-                    ? "0"
-                    : valueProvided
-                        .div(totalValueLocked)
-                        .times(100)
-                        .toFixed(2)
-                }%`}
+                value={`${(
+                  lpTokens[pool.config.lpToken].balance.free
+                    .div(totalIssued[pool.poolId.toString()])
+                    .multipliedBy(100)
+                    .toNumber() || 0
+                ).toFixed(2)}%`}
                 mt={4}
               >
                 <Typography variant="body1">Pool share</Typography>

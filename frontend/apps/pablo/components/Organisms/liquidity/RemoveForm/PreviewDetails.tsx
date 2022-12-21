@@ -1,22 +1,19 @@
 import React from "react";
-import { Label, BaseAsset, PairAsset } from "@/components/Atoms";
-import {
-  Box,
-  BoxProps,
-} from "@mui/material";
+import { BaseAsset, Label, PairAsset } from "@/components/Atoms";
+import { Box, BoxProps } from "@mui/material";
 
 import BigNumber from "bignumber.js";
 import millify from "millify";
 import { Asset } from "shared";
 
 export type PreviewDetailsProps = {
-  token1: Asset | undefined,
-  token2: Asset | undefined,
-  lpToRemove: BigNumber,
-  expectedReceiveAmountToken1: BigNumber,
-  expectedReceiveAmountToken2: BigNumber,
-  price1: BigNumber,
-  price2: BigNumber,
+  token1: Asset | undefined;
+  token2: Asset | undefined;
+  lpToRemove: BigNumber;
+  expectedReceiveAmountToken1: BigNumber;
+  expectedReceiveAmountToken2: BigNumber;
+  price1: BigNumber;
+  price2: BigNumber;
 } & BoxProps;
 
 export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
@@ -29,35 +26,21 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
   price2,
   ...rest
 }) => {
-
   return (
     <Box {...rest}>
-      <Label BalanceProps={{
-        balance: `${lpToRemove.eq(0) ? '-' : millify(lpToRemove.toNumber())}`,
-        BalanceTypographyProps: {
-          variant: "body1",
-        },
-      }}
+      <Label
+        BalanceProps={{
+          balance: `${lpToRemove.eq(0) ? "-" : millify(lpToRemove.toNumber())}`,
+          BalanceTypographyProps: {
+            variant: "body1",
+          },
+        }}
       >
-        {token1 && token2 &&
-          <PairAsset
-            assets={[
-              {
-                icon: token1.getIconUrl(),
-                label: token1.getSymbol(),
-              },
-              {
-                icon: token2.getIconUrl(),
-                label: token2.getSymbol(),
-              },
-            ]}
-            separator="/"
-          />
-
-        }
+        {token1 && token2 && <PairAsset assets={[]} separator="/" />}
       </Label>
 
-      <Label mt={3}
+      <Label
+        mt={3}
         BalanceProps={{
           balance: `${millify(expectedReceiveAmountToken1.toNumber())}`,
           BalanceTypographyProps: {
@@ -65,7 +48,10 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
           },
         }}
       >
-        <BaseAsset icon={token1?.getIconUrl()} label={`Expected ` + token1?.getSymbol()} />
+        <BaseAsset
+          icon={token1?.getIconUrl()}
+          label={`Expected ` + token1?.getSymbol()}
+        />
       </Label>
 
       <Label
@@ -77,7 +63,10 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
           },
         }}
       >
-        <BaseAsset icon={token2?.getIconUrl()} label={`Expected ` + token2?.getSymbol()} />
+        <BaseAsset
+          icon={token2?.getIconUrl()}
+          label={`Expected ` + token2?.getSymbol()}
+        />
       </Label>
 
       <Label
@@ -104,4 +93,3 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
     </Box>
   );
 };
-

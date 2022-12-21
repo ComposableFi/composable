@@ -19,7 +19,9 @@ const BondOfferRow = ({
     >
       <TableCell align="left">
         <BondPrincipalAssetIcon
-          bondedAsset={new Asset("Chaos", "CHAOS", "/tokens/chaos.svg")}
+          bondedAsset={
+            new Asset("Chaos", "CHAOS", "/tokens/chaos.svg", "chaos")
+          }
         />
       </TableCell>
       <TableCell align="left">

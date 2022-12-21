@@ -1,10 +1,9 @@
-import { Box, useTheme, Button } from "@mui/material";
+import { Box, Button, useTheme } from "@mui/material";
 import { BigNumberInput } from "@/components/Atoms";
-import { useMemo, useState } from "react";
+import { FC, useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { PoolDetailsProps } from "./index";
-import { useLiquidityPoolDetails } from "@/defi/hooks/useLiquidityPoolDetails";
 import { useStake } from "@/defi/hooks/stakingRewards";
 import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
 import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
@@ -12,18 +11,15 @@ import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { ConfirmingModal } from "../../swap/ConfirmingModal";
 import { SelectLockPeriod } from "@/components";
 import { extractDurationPresets } from "@/defi/utils/stakingRewards/durationPresets";
-import { useLpTokenUserBalance } from "@/defi/hooks";
 
-export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
-  poolId,
-  ...boxProps
-}) => {
+export const PoolStakeForm: FC<PoolDetailsProps> = ({ pool, ...boxProps }) => {
   const theme = useTheme();
-  const poolDetails = useLiquidityPoolDetails(poolId);
-  const { baseAsset, quoteAsset, pool } = poolDetails;
-  const lpToken = pool?.getLiquidityProviderToken() ?? null;
-  const lpBalance = useLpTokenUserBalance(pool);
-  const stakingRewardPool = useStakingRewardPool(lpToken?.getPicassoAssetId() as string ?? "-");
+  const baseAsset = pool.config.assets[0];
+  const quoteAsset = pool.config.assets[1];
+  const lpBalance = new BigNumber(0);
+  const stakingRewardPool = useStakingRewardPool(
+    pool.config.lpToken.toString() ?? "-"
+  );
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
   const [selectedMultiplier, setSelectedMultiplier] = useState<number>(0);
@@ -39,7 +35,7 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
 
   const handleStake = useStake({
     amount,
-    poolId: (lpToken?.getPicassoAssetId(true) as BigNumber) ?? undefined,
+    poolId: pool.poolId ?? undefined,
     durationPreset: durationPresetSelected
       ? new BigNumber(durationPresetSelected.periodInSeconds)
       : undefined,
@@ -72,24 +68,12 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
             TypographyProps: { color: "text.secondary" },
             BalanceProps: {
               title: <AccountBalanceWalletIcon color="primary" />,
-              balance: `${lpBalance} ${lpToken?.getSymbol()}`,
+              balance: `${lpBalance}`,
               BalanceTypographyProps: { color: "text.secondary" },
             },
           }}
           EndAdornmentAssetProps={{
-            assets:
-              baseAsset && quoteAsset
-                ? [
-                  {
-                    icon: baseAsset.getIconUrl(),
-                    label: baseAsset.getSymbol(),
-                  },
-                  {
-                    icon: quoteAsset.getIconUrl(),
-                    label: quoteAsset.getSymbol(),
-                  },
-                ]
-                : [],
+            assets: baseAsset && quoteAsset ? [] : [],
             separator: "/",
           }}
         />
@@ -99,8 +83,8 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
           durationPresetSelected={durationPresetSelected}
           setMultiplier={setSelectedMultiplier}
           periodItems={multipliers}
+          principalAssetSymbol={""}
           multiplier={selectedMultiplier}
-          principalAssetSymbol={lpToken?.getSymbol()}
         />
       </Box>
 
@@ -112,7 +96,7 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
           onClick={handleStake}
           disabled={!valid}
         >
-          {`Stake ${lpToken?.getSymbol()}`}
+          {`Stake`}
         </Button>
       </Box>
 
