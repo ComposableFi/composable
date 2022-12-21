@@ -530,14 +530,14 @@ pub fn compute_deposit_lp_<T: PerThing>(
 	Ok(ConstantProductAmmValueFeePair { value: issued, fee })
 }
 
-/// Computes the required deposit to recieve a minimum amount of LPT
+/// Computes the required deposit to receive a minimum amount of LPT
 ///
 /// NOTE: When considering accounting for fees - the result of this function may produce a result
 /// slightly lower than the minimum LP to mint.
 ///
 /// # Parameters
 /// * `p_supply` - Existing supply of LP tokens
-/// * `p_issued_min` - Minumum LPT a user wants from thier investment
+/// * `p_issued_min` - Minimum LPT a user wants from their investment
 /// * `b_k` - Balance of token `k`
 /// * `f` - Fee
 pub fn compute_deposit_for_min_lp<T: PerThing>(
