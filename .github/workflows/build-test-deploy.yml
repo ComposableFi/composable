@@ -735,6 +735,25 @@ jobs:
           command: nix -- build .#acala-node
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+  package-dali-subxt-client:
+    name: "Package Dali subxt client"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-dali-subxt-client-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#dali-subxt-client
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
   cache-devnet-all-dev-local:
     name: "Cache devnet all dev local"
     strategy:

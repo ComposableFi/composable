@@ -57,6 +57,7 @@
         ./subsquid/subsquid.nix
         ./subwasm.nix
         ./scripts/zombienet/flake-module.nix
+        ./centauri-codegen.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
@@ -80,6 +81,10 @@
           default = self'.packages.zombienet-rococo-local-dali-dev;
           devnet-dali = self'.packages.zombienet-rococo-local-dali-dev;
           subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
+          dali-subxt-client = pkgs.callPackage
+            ./code/utils/composable-subxt/dali-subxt-client.nix {
+              packages = self'.packages;
+            };
           junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
           gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
           wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
