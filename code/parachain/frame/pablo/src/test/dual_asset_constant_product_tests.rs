@@ -357,7 +357,7 @@ fn add_lp_with_min_mint_amount() {
 			crate::Event::<Test>::LiquidityAdded {
 				who: ALICE,
 				pool_id: 0,
-				asset_amounts: assets_with_init_amounts.into(),
+				asset_amounts: assets_with_init_amounts,
 				minted_lp: 199_999_999_814_806,
 			},
 		);

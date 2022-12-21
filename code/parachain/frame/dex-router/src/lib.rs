@@ -240,6 +240,8 @@ pub mod pallet {
 			min_receive: BTreeMap<T::AssetId, T::Balance>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
+			// REVIEW(benluelo): With the changes to the semantics of min_receive in
+			// Amm::remove_liquidity, this is no longer required
 			ensure!(min_receive.len() == 2, Error::<T>::OnlyDualAssetPoolsSupported);
 			let assets_vec = min_receive.keys().copied().collect::<Vec<_>>();
 			let asset_pair = pool_id_pair::<T>(

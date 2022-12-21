@@ -15,7 +15,6 @@ use composable_traits::{
 	},
 };
 use frame_support::{
-	defensive,
 	pallet_prelude::*,
 	traits::fungibles::{Inspect, Mutate, Transfer},
 };
@@ -72,8 +71,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		Ok(pool_id)
 	}
 
-	/// WARNING! This is not a cheap function to call; it does one storage read per asset in the
-	/// pool!
+	/// WARNING! This is not a cheap function to call; it does (at least) one storage read per asset
+	/// in the pool!
 	fn get_pool_balances(
 		pool: &BasicPoolInfo<T::AccountId, T::AssetId, ConstU32<2>>,
 		pool_account: &T::AccountId,
@@ -102,6 +101,8 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
 
 		let assets_with_balances = assets.try_mapped(|asset_amount| {
+			dbg!(&asset_amount);
+
 			if asset_amount.amount.is_zero() {
 				return Err(Error::<T>::InvalidAmount)
 			};
@@ -141,49 +142,72 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			)?;
 
 			single_deposit.value
-		} else if lp_total_issuance.is_zero() {
-			compute_first_deposit_lp_(
-				assets_with_balances.iter().map(|adi| (adi.deposit_amount, adi.asset_weight)),
-				Permill::zero(),
-			)?
-			.value
 		} else {
-			let normalized_deposits =
-				match normalize_asset_deposit_infos_to_min_ratio(assets_with_balances.into()) {
-					Ok(normalized_assets) => normalized_assets,
-					Err(AssetDepositNormalizationError::ArithmeticOverflow) =>
-						return Err(DispatchError::Arithmetic(ArithmeticError::Overflow)),
-					Err(AssetDepositNormalizationError::NotEnoughAssets) =>
-						unreachable!("two assets were provided to the normalization function; qed;"),
-				};
+			// ensure that `assets` contains all of the assets in the pool at this point
+			// a bit convoluted, but it works
+			ensure!(pool_assets.is_empty(), Error::<T>::UnsupportedOperation);
 
-			// since the asset deposits were normalize, the lp_to_mint will be the same for all
-			// asset deposits
-			let asset_to_calculate_with =
-				normalized_deposits.first().expect("2 assets in the vec; qed;");
+			dbg!(&lp_total_issuance);
 
-			// pass 1 as weight since adding liquidity for all assets with normalized deposits
-			// see docs on compute_deposit_lp_ for more information
-			let lp_to_mint = compute_deposit_lp_(
-				lp_total_issuance,
-				asset_to_calculate_with.deposit_amount,
-				asset_to_calculate_with.existing_balance,
-				Permill::one(),
-				Zero::zero(),
-			)?
-			.value;
+			if lp_total_issuance.is_zero() {
+				let lp_to_mint = compute_first_deposit_lp_(
+					assets_with_balances.iter().map(|adi| (adi.deposit_amount, adi.asset_weight)),
+					Permill::zero(),
+				)?
+				.value;
 
-			for normalized_deposit in normalized_deposits {
-				T::Assets::transfer(
-					normalized_deposit.asset_id,
-					who,
-					&pool_account,
-					T::Convert::convert(normalized_deposit.deposit_amount),
-					keep_alive,
-				)?;
+				for deposit in assets_with_balances {
+					T::Assets::transfer(
+						deposit.asset_id,
+						who,
+						&pool_account,
+						T::Convert::convert(deposit.deposit_amount),
+						keep_alive,
+					)?;
+				}
+
+				lp_to_mint
+			} else {
+				let normalized_deposits =
+					match normalize_asset_deposit_infos_to_min_ratio(assets_with_balances.into()) {
+						Ok(normalized_assets) => normalized_assets,
+						Err(AssetDepositNormalizationError::ArithmeticOverflow) =>
+							return Err(DispatchError::Arithmetic(ArithmeticError::Overflow)),
+						Err(AssetDepositNormalizationError::NotEnoughAssets) => unreachable!(
+							"two assets were provided to the normalization function; qed;"
+						),
+					};
+
+				// since the asset deposits were normalized, the lp_to_mint will be the same for all
+				// asset deposits
+				let asset_to_calculate_with =
+					normalized_deposits.first().expect("2 assets in the vec; qed;");
+
+				dbg!(&asset_to_calculate_with);
+
+				// pass 1 as weight since adding liquidity for all assets with normalized deposits
+				// see docs on compute_deposit_lp_ for more information
+				let lp_to_mint = compute_deposit_lp_(
+					lp_total_issuance,
+					asset_to_calculate_with.deposit_amount,
+					asset_to_calculate_with.existing_balance,
+					Permill::one(),
+					Zero::zero(),
+				)?
+				.value;
+
+				for normalized_deposit in normalized_deposits {
+					T::Assets::transfer(
+						normalized_deposit.asset_id,
+						who,
+						&pool_account,
+						T::Convert::convert(normalized_deposit.deposit_amount),
+						keep_alive,
+					)?;
+				}
+
+				lp_to_mint
 			}
-
-			lp_to_mint
 		};
 
 		let amount_of_lp_token_to_mint = T::Convert::convert(amount_of_lp_token_to_mint);

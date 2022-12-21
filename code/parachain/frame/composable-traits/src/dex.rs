@@ -12,8 +12,8 @@ use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 
 use sp_runtime::{
-	helpers_128bit::multiply_by_rational_with_rounding, ArithmeticError, BoundedBTreeMap,
-	DispatchError, Permill, Rational128,
+	helpers_128bit::multiply_by_rational_with_rounding, traits::Zero, ArithmeticError,
+	BoundedBTreeMap, DispatchError, Permill, Rational128,
 };
 use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec::Vec};
 
@@ -400,22 +400,24 @@ impl<AssetId> AssetDepositInfo<AssetId> {
 	}
 }
 
-pub fn normalize_asset_deposit_infos_to_min_ratio<AssetId: Copy>(
+pub fn normalize_asset_deposit_infos_to_min_ratio<AssetId: Debug + Copy>(
 	// REVIEW(ben,connor): Maybe make this a BiBoundedVec? Would remove the need for the custom
 	// error type as well.
-	mut adis: Vec<AssetDepositInfo<AssetId>>,
+	mut asset_deposit_infos: Vec<AssetDepositInfo<AssetId>>,
 ) -> Result<Vec<AssetDepositInfo<AssetId>>, AssetDepositNormalizationError> {
-	ensure!(adis.len() > 1, AssetDepositNormalizationError::NotEnoughAssets);
+	ensure!(asset_deposit_infos.len() > 1, AssetDepositNormalizationError::NotEnoughAssets);
 
-	let smallest = adis
+	let smallest = asset_deposit_infos
 		.iter()
 		.map(|adi| adi.get_deposit_ratio())
 		.reduce(|acc, curr| acc.min(curr))
 		.expect("at least 2 items are present in the vec as per the check above; qed;");
 
-	for adi in adis.iter_mut() {
-		adi.deposit_amount = multiply_by_rational_with_rounding(
-			adi.existing_balance,
+	for asset_deposit_info in &mut asset_deposit_infos {
+		debug_assert!(!asset_deposit_info.existing_balance.is_zero());
+
+		asset_deposit_info.deposit_amount = multiply_by_rational_with_rounding(
+			asset_deposit_info.existing_balance,
 			smallest.n(),
 			smallest.d(),
 			// amount out will be less than the maximum allowed, so round up
@@ -424,7 +426,7 @@ pub fn normalize_asset_deposit_infos_to_min_ratio<AssetId: Copy>(
 		.ok_or(AssetDepositNormalizationError::ArithmeticOverflow)?;
 	}
 
-	Ok(adis)
+	Ok(dbg!(asset_deposit_infos))
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
