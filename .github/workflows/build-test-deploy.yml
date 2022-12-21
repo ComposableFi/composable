@@ -4,9 +4,6 @@ on:
     branches:
       - release-*
       - main
-      # bors related branches. Please do not remove.
-      - staging
-      - trying
   pull_request:
     branches:
       - main
@@ -32,7 +29,11 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-composablejs-${{ github.ref }}
       cancel-in-progress: true
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -49,7 +50,11 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-common-deps-${{ github.ref }}
       cancel-in-progress: true
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -65,7 +70,11 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-build-common-test-deps-${{ github.ref }}
       cancel-in-progress: true
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -77,7 +86,11 @@ jobs:
 
   check-lfs:
     continue-on-error: false
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: ${{ github.workflow }}-check-lfs-${{ github.ref }}
       cancel-in-progress: true
@@ -96,7 +109,11 @@ jobs:
   check-nix:
     name: "Check nix"
     continue-on-error: false
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: ${{ github.workflow }}-check-nix-${{ github.ref }}
       cancel-in-progress: true
@@ -124,7 +141,11 @@ jobs:
 
   cargo-fmt-check:
     name: "Cargo fmt check"
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: ${{ github.workflow }}-cargo-fmt-check-${{ github.ref }}
       cancel-in-progress: true
@@ -139,7 +160,11 @@ jobs:
 
   check-nix-long:
     name: "Check nix long"
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     needs:
       - check-nix
     concurrency:
@@ -166,7 +191,11 @@ jobs:
 
   taplo-cli-check:
     name: "Taplo cli check"
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: ${{ github.workflow }}-taplo-cli-check-${{ github.ref }}
       cancel-in-progress: true
@@ -181,7 +210,11 @@ jobs:
 
   prettier-check:
     name: "Prettier check"
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: ${{ github.workflow }}-prettier-check-${{ github.ref }}
       cancel-in-progress: true
@@ -196,7 +229,11 @@ jobs:
 
   nixfmt-check:
     name: "Nixfmt check"
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: ${{ github.workflow }}-nixfmt-check-${{ github.ref }}
       cancel-in-progress: true
@@ -211,7 +248,11 @@ jobs:
 
   deadnix-check:
     name: "Deadnix check"
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: ${{ github.workflow }}-deadnix-check-${{ github.ref }}
       cancel-in-progress: true
@@ -226,7 +267,11 @@ jobs:
 
   spell-check:
     name: "Spelling check"
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: ${{ github.workflow }}-spell-check-${{ github.ref }}
       cancel-in-progress: true
@@ -242,7 +287,11 @@ jobs:
   # This isn't templated, since checkout needs to happen before templating occurs. 
   docs-check:
     name: "Docs check"
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: ${{ github.workflow }}-docs-check-${{ github.ref }}
       cancel-in-progress: true
@@ -311,7 +360,11 @@ jobs:
 
   frontend-check:
     name: "Frontend check"
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: ${{ github.workflow }}-frontend-check-${{ github.ref }}
       cancel-in-progress: true
@@ -346,7 +399,11 @@ jobs:
   cargo-clippy-check:
     name: "Cargo clippy check"
     needs: common-deps
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: ${{ github.workflow }}-cargo-clippy-check-${{ github.ref }}
       cancel-in-progress: true
@@ -362,7 +419,11 @@ jobs:
   cargo-deny-check:
     name: "Cargo deny check"
     needs: common-deps
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: ${{ github.workflow }}-cargo-deny-check-${{ github.ref }}
       cancel-in-progress: true
@@ -379,7 +440,11 @@ jobs:
 #  cargo-udeps-check:
 #    name: "Cargo udeps"
 #    needs: common-deps
-#    runs-on: ubuntu-latest
+#    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
 #    concurrency:
 #      group: ${{ github.workflow }}-cargo-udeps-check-${{ github.ref }}
 #      cancel-in-progress: true
@@ -446,7 +511,11 @@ jobs:
 
   deploy-pablo-preview:
     name: "Deploy Pablo Preview"
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     steps:
       - uses: actions/checkout@v3
         with:
@@ -476,7 +545,11 @@ jobs:
 
   deploy-picasso-preview:
     name: "Deploy Picasso Preview"
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     steps:
       - uses: actions/checkout@v3
         with:
@@ -766,7 +839,11 @@ jobs:
   lint-test-frontend:
     # Legacy because these should be nixified.
     name: Legacy Frontend Checks
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v3
@@ -825,7 +902,11 @@ jobs:
   # TODO: nixify these test steps, and add me to subsquid-processor
   test-subsquid:
     name: Test Subquid
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     steps:
       - uses: actions/checkout@v3
       - name: Setup jest
@@ -871,7 +952,11 @@ jobs:
 
   package-zombienet:
     needs: common-deps
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     concurrency:
       group: ${{ github.workflow }}-package-zombienet-${{ github.ref }}    
       cancel-in-progress: true
@@ -958,7 +1043,11 @@ jobs:
         - package-polkadot-node
         - package-composable-node
         - check-nix
-      runs-on: ubuntu-latest
+      runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
       timeout-minutes: 120
       concurrency:
         group: ${{ github.workflow }}-devnet-integration-tests-${{ github.ref }}
@@ -1008,7 +1097,11 @@ jobs:
   
   effects-gate:
       name: "Effect gate, automatically merged if passed"
-      runs-on: ubuntu-latest
+      runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
       needs:
         - check-lfs
         - check-nix
@@ -1042,7 +1135,11 @@ jobs:
   check-devnet:
       needs:
         - cache-devnet-all-dev-local
-      runs-on: ubuntu-latest
+      runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
       concurrency:
         group: $${github.workflow }}-check-devnet-${{ github.ref }}
         cancel-in-progress: true
@@ -1093,7 +1190,11 @@ jobs:
 
 
   nix-command-pr-comments:
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
     needs:
       - check-nix
     name: "Nix command PR comments"
