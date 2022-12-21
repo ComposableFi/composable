@@ -11,8 +11,14 @@ use alloc::{
 	borrow::ToOwned, boxed::Box, collections::BTreeMap, format, string::String, vec, vec::Vec,
 };
 use core::{cell::SyncUnsafeCell, marker::PhantomData};
-use cosmwasm_vm::{cosmwasm_std::Coin, executor::InstantiateCall, system::CosmwasmContractMeta};
-use cosmwasm_vm_wasmi::code_gen::{self, Function, FunctionBuilder, WasmModule};
+use cosmwasm_vm::{
+	cosmwasm_std::{Coin, Reply, SubMsgResult},
+	executor::InstantiateCall,
+	system::CosmwasmContractMeta,
+};
+use cosmwasm_vm_wasmi::code_gen::{
+	self, Function, FunctionBuilder, Table, WasmModule, INDEX_OF_USER_DEFINED_FNS,
+};
 use entrypoint::*;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{fungible, fungibles, fungibles::Mutate, Get};
@@ -43,6 +49,8 @@ const ED25519_PUBLIC_KEY2_HEX: &str =
 const BASE_ADDITIONAL_BINARY_SIZE: usize = 10;
 const FN_NAME: &str = "raw_fn";
 const INSTRUCTIONS_SAMPLE_COUNT: u32 = 50;
+// This is the first index where the user defined functions start
+const EXTRA_FN_INDEX: u32 = INDEX_OF_USER_DEFINED_FNS;
 
 // Substrate's benchmarks are compiled as follows: The upper part and the lower part are separate
 // functions. The upper part is the setup and the lower part is the actual benchmark which is put
@@ -65,6 +73,15 @@ lazy_static! {
 			cache: CosmwasmVMCache { code: Default::default() },
 		})
 	};
+	// ed25519_batch_verify functions gets a parameter of type `&[&[u8]]`. Since the closure
+	// cannot point to a non-static references data like explained previously, these are done
+	// globally.
+	static ref ED25519_MESSAGE: Vec<u8> = hex::decode(ED25519_MESSAGE_HEX).unwrap();
+	static ref ED25519_MESSAGE2: Vec<u8> = hex::decode(ED25519_MESSAGE2_HEX).unwrap();
+	static ref ED25519_SIGNATURE: Vec<u8> = hex::decode(ED25519_SIGNATURE_HEX).unwrap();
+	static ref ED25519_SIGNATURE2: Vec<u8> = hex::decode(ED25519_SIGNATURE2_HEX).unwrap();
+	static ref ED25519_PUBLIC_KEY: Vec<u8> = hex::decode(ED25519_PUBLIC_KEY_HEX).unwrap();
+	static ref ED25519_PUBLIC_KEY2: Vec<u8> = hex::decode(ED25519_PUBLIC_KEY2_HEX).unwrap();
 }
 
 /// Get a mutable reference to the shared vm
@@ -78,7 +95,10 @@ fn get_shared_vm() -> &'static mut CosmwasmVMShared {
 }
 
 /// Create a CosmWasm module with additional custom functions
-fn create_wasm_module_with_fns(mut functions: Vec<(Function, Option<u32>)>) -> wasmi::ModuleRef {
+fn create_wasm_module_with_fns(
+	mut functions: Vec<(Function, Option<u32>)>,
+	table: Option<Table>,
+) -> wasmi::ModuleRef {
 	for (func, repeat) in &mut functions {
 		let mut instructions: Vec<Instruction> = match repeat {
 			Some(repeat) => (0..*repeat * INSTRUCTIONS_MULTIPLIER)
@@ -93,6 +113,7 @@ fn create_wasm_module_with_fns(mut functions: Vec<(Function, Option<u32>)>) -> w
 	let wasm_module: WasmModule = code_gen::ModuleDefinition::new(
 		functions.into_iter().map(|(fns, _)| fns).collect(),
 		BASE_ADDITIONAL_BINARY_SIZE,
+		table,
 	)
 	.unwrap()
 	.try_into()
@@ -121,6 +142,7 @@ where
 		FN_NAME,
 		instructions,
 		BASE_ADDITIONAL_BINARY_SIZE,
+		None,
 	)
 	.unwrap()
 	.try_into()
@@ -200,7 +222,7 @@ where
 {
 	// 1. Generate a wasm code
 	let wasm_module: WasmModule =
-		code_gen::ModuleDefinition::new(Default::default(), BASE_ADDITIONAL_BINARY_SIZE)
+		code_gen::ModuleDefinition::new(Default::default(), BASE_ADDITIONAL_BINARY_SIZE, None)
 			.unwrap()
 			.into();
 	// 2. Properly upload the code (so that the necessary storage items are modified)
@@ -290,7 +312,7 @@ benchmarks! {
 	upload {
 		let n in 1..T::MaxCodeSize::get() - 10000;
 		let origin = create_funded_account::<T>("signer");
-		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), n as usize).unwrap().into();
+		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), n as usize, None).unwrap().into();
 	}: _(RawOrigin::Signed(origin), wasm_module.code.try_into().unwrap())
 
 	instantiate {
@@ -298,7 +320,7 @@ benchmarks! {
 		let origin = create_funded_account::<T>("origin");
 		// BASE_ADDITIONAL_BINARY_SIZE + 1 to make a different code so that it doesn't already exist
 		// in `PristineCode` and we don't get an error back.
-		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), BASE_ADDITIONAL_BINARY_SIZE + 1).unwrap().into();
+		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), BASE_ADDITIONAL_BINARY_SIZE + 1, None).unwrap().into();
 		Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 		let salt: ContractSaltOf<T> = vec![1].try_into().unwrap();
 		let label: ContractLabelOf<T> = "label".as_bytes().to_vec().try_into().unwrap();
@@ -362,7 +384,7 @@ benchmarks! {
 		let (contract, _info) = create_instantiated_contract::<T>(origin.clone());
 		{
 			// Upload the second contract but do not instantiate it, this will get `code_id = 2`
-			let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), 12).unwrap().into();
+			let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), 12, None).unwrap().into();
 			Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 		}
 		let message = b"{}".to_vec().try_into().unwrap();
@@ -398,7 +420,7 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_read(&mut vm.0, "hello world".as_bytes()).unwrap()
+		Cosmwasm::<T>::do_db_read(&mut vm.0, "hello world".as_bytes()).unwrap();
 	}
 
 	db_read_other_contract {
@@ -406,7 +428,7 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info.clone(), vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_read_other_contract(&mut vm.0, &info.trie_id, "hello world".as_bytes()).unwrap()
+		Cosmwasm::<T>::do_db_read_other_contract(&mut vm.0, &info.trie_id, "hello world".as_bytes()).unwrap();
 	}
 
 	db_write {
@@ -414,7 +436,7 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap()
+		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}
 
 	db_scan {
@@ -422,7 +444,7 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_scan(&mut vm.0).unwrap()
+		Cosmwasm::<T>::do_db_scan(&mut vm.0).unwrap();
 	}
 
 	db_next {
@@ -431,7 +453,7 @@ benchmarks! {
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 		let iterator = Cosmwasm::<T>::do_db_scan(&mut vm.0).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_next(&mut vm.0, iterator).unwrap()
+		Cosmwasm::<T>::do_db_next(&mut vm.0, iterator).unwrap();
 	}
 
 	db_remove {
@@ -440,13 +462,13 @@ benchmarks! {
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_remove(&mut vm.0, "hello".as_bytes())
+		Cosmwasm::<T>::do_db_remove(&mut vm.0, "hello".as_bytes());
 	}
 
 	balance {
 		let sender = create_funded_account::<T>("origin");
 	}: {
-		Cosmwasm::<T>::do_balance(&sender, String::from("100000")).unwrap()
+		Cosmwasm::<T>::do_balance(&sender, String::from("100000")).unwrap();
 	}
 
 	transfer {
@@ -479,41 +501,40 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let _ = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_contract_meta(contract).unwrap()
+		Cosmwasm::<T>::do_contract_meta(contract).unwrap();
 	}
 
 	addr_validate {
 		let account = account::<<T as Config>::AccountIdExtended>("account", 0, 0xCAFEBABE);
 		let address = Cosmwasm::<T>::account_to_cosmwasm_addr(account);
 	}: {
-		Cosmwasm::<T>::do_addr_validate(address).unwrap()
+		Cosmwasm::<T>::do_addr_validate(address).unwrap();
 	}
 
 	addr_canonicalize {
 		let account = account::<<T as Config>::AccountIdExtended>("account", 0, 0xCAFEBABE);
 		let address = Cosmwasm::<T>::account_to_cosmwasm_addr(account);
 	}: {
-		Cosmwasm::<T>::do_addr_canonicalize(address).unwrap()
+		Cosmwasm::<T>::do_addr_canonicalize(address).unwrap();
 	}
 
 	addr_humanize {
 		let account = account::<<T as Config>::AccountIdExtended>("account", 0, 0xCAFEBABE);
 		let account = CanonicalCosmwasmAccount(CosmwasmAccount::new(account));
 	}: {
-		Cosmwasm::<T>::do_addr_humanize(&account)
+		Cosmwasm::<T>::do_addr_humanize(&account);
 	}
 
 	secp256k1_recover_pubkey {
 		let message = "connect all the things";
 		let signature_hex = "dada130255a447ecf434a2df9193e6fbba663e4546c35c075cd6eea21d8c7cb1714b9b65a4f7f604ff6aad55fba73f8c36514a512bbbba03709b37069194f8a4";
-		// let signer_address = "0x12890D2cce102216644c59daE5baed380d84830c";
 		let signature = hex::decode(signature_hex).unwrap();
 		let mut hasher = Keccak256::new();
 		hasher.update(format!("\x19Ethereum Signed Message:\n{}", message.len()));
 		hasher.update(message);
 		let message_hash = hasher.finalize();
 	}: {
-		Cosmwasm::<T>::do_secp256k1_recover_pubkey(&message_hash[..], &signature, 0).unwrap()
+		Cosmwasm::<T>::do_secp256k1_recover_pubkey(&message_hash[..], &signature, 0).unwrap();
 	}
 
 	secp256k1_verify {
@@ -522,36 +543,23 @@ benchmarks! {
 		let signature = hex::decode(SECP256K1_SIGNATURE_HEX).unwrap();
 		let public_key = hex::decode(SECP256K1_PUBLIC_KEY_HEX).unwrap();
 	}: {
-		Cosmwasm::<T>::do_secp256k1_verify(&message_hash, &signature, &public_key)
+		Cosmwasm::<T>::do_secp256k1_verify(&message_hash, &signature, &public_key);
 	}
 
 	ed25519_verify {
-		let message = hex::decode(ED25519_MESSAGE_HEX).unwrap();
-		let signature = hex::decode(ED25519_SIGNATURE_HEX).unwrap();
-		let public_key = hex::decode(ED25519_PUBLIC_KEY_HEX).unwrap();
+		let message = ED25519_MESSAGE.as_slice();
+		let signature = ED25519_SIGNATURE.as_slice();
+		let public_key = ED25519_PUBLIC_KEY.as_slice();
 	}: {
 		Cosmwasm::<T>::do_ed25519_verify(&message, &signature, &public_key)
 	}
 
 	ed25519_batch_verify {
-		let messages: Vec<Vec<u8>> = [ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX]
-			.iter()
-			.map(|m| hex::decode(m).unwrap())
-			.collect();
-		let signatures: Vec<Vec<u8>> = [ED25519_SIGNATURE_HEX, ED25519_SIGNATURE2_HEX]
-			.iter()
-			.map(|m| hex::decode(m).unwrap())
-			.collect();
-		let public_keys: Vec<Vec<u8>> = [ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY2_HEX]
-			.iter()
-			.map(|m| hex::decode(m).unwrap())
-			.collect();
-
+		let messages = vec![ED25519_MESSAGE.as_slice(), ED25519_MESSAGE2.as_slice()];
+		let signatures = vec![ED25519_SIGNATURE.as_slice(), ED25519_SIGNATURE2.as_slice()];
+		let public_keys = vec![ED25519_PUBLIC_KEY.as_slice(), ED25519_PUBLIC_KEY2.as_slice()];
 	}: {
-		let messages: Vec<&[u8]> = messages.iter().map(Vec::as_slice).collect();
-		let signatures: Vec<&[u8]> = signatures.iter().map(Vec::as_slice).collect();
-		let public_keys: Vec<&[u8]> = public_keys.iter().map(Vec::as_slice).collect();
-		Cosmwasm::<T>::do_ed25519_batch_verify(&messages, &signatures, &public_keys)
+		Cosmwasm::<T>::do_ed25519_batch_verify(&messages, &signatures, &public_keys);
 	}
 
 	continue_instantiate {
@@ -562,7 +570,7 @@ benchmarks! {
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_instantiate(&mut vm.0, meta, funds, "{}".as_bytes(), &mut |_event| {}).unwrap()
+		Cosmwasm::<T>::do_continue_instantiate(&mut vm.0, meta, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
 
 	continue_execute {
@@ -572,7 +580,7 @@ benchmarks! {
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_execute(&mut vm.0, contract, funds, "{}".as_bytes(), &mut |_event| {}).unwrap()
+		Cosmwasm::<T>::do_continue_execute(&mut vm.0, contract, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
 
 	continue_migrate {
@@ -580,7 +588,23 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_migrate(&mut vm.0, contract, "{}".as_bytes(), &mut |_event| {}).unwrap()
+		Cosmwasm::<T>::do_continue_migrate(&mut vm.0, contract, "{}".as_bytes(), &mut |_event| {}).unwrap();
+	}
+
+	continue_query {
+		let sender = create_funded_account::<T>("origin");
+		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
+	}: {
+		Cosmwasm::<T>::do_continue_query(&mut vm.0, contract, "{}".as_bytes()).unwrap();
+	}
+
+	continue_reply {
+		let sender = create_funded_account::<T>("origin");
+		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
+	}: {
+		Cosmwasm::<T>::do_continue_reply(&mut vm.0, Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {}).unwrap();
 	}
 
 	query_info {
@@ -588,15 +612,7 @@ benchmarks! {
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_query_info(&mut vm.0, contract).unwrap()
-	}
-
-	query_continuation {
-		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
-	}: {
-		Cosmwasm::<T>::do_continue_query(&mut vm.0, contract, "{}".as_bytes()).unwrap()
+		Cosmwasm::<T>::do_query_info(&mut vm.0, contract).unwrap();
 	}
 
 	query_raw {
@@ -605,7 +621,7 @@ benchmarks! {
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
 		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}: {
-		Cosmwasm::<T>::do_query_raw(&mut vm.0, contract, "hello".as_bytes()).unwrap()
+		Cosmwasm::<T>::do_query_raw(&mut vm.0, contract, "hello".as_bytes()).unwrap();
 	}
 
 	// For `I64Const` and `Drop`. This will be also used to calculate the cost of an empty function call and additional
@@ -725,6 +741,13 @@ benchmarks! {
 	instruction_I64Add {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
 		let mut module = create_wasm_module_fn(Instruction::I64Add, create_binary_instruction_set::<i64>, r);
+	}: {
+		wasm_invoke(&mut module);
+	}
+
+	instruction_I64Sub {
+		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
+		let mut module = create_wasm_module_fn(Instruction::I64Sub, create_binary_instruction_set::<i64>, r);
 	}: {
 		wasm_invoke(&mut module);
 	}
@@ -1007,7 +1030,7 @@ benchmarks! {
 				.local(1, ValueType::I32)
 				.instructions(vec![Instruction::GetLocal(0), Instruction::Drop])
 				.build(),
-			Some(r))]);
+			Some(r))], None);
 	}: {
 		wasm_invoke(&mut module);
 	}
@@ -1020,7 +1043,7 @@ benchmarks! {
 				.local(1, ValueType::I32)
 				.instructions(vec![Instruction::I32Const(99), Instruction::SetLocal(0)])
 				.build(),
-			Some(r))]);
+			Some(r))], None);
 	}: {
 		wasm_invoke(&mut module);
 	}
@@ -1033,7 +1056,7 @@ benchmarks! {
 				.local(1, ValueType::I32)
 				.instructions(vec![Instruction::I32Const(99), Instruction::TeeLocal(0), Instruction::Drop])
 				.build(),
-			None)]);
+			None)], None);
 	}: {
 		wasm_invoke(&mut module);
 	}
@@ -1048,7 +1071,7 @@ benchmarks! {
 				.local(1, ValueType::I32)
 				.instructions(vec![Instruction::GetGlobal(0), Instruction::Drop])
 				.build(),
-			None)]);
+			None)], None);
 	}: {
 		wasm_invoke(&mut module);
 	}
@@ -1061,7 +1084,7 @@ benchmarks! {
 				.local(1, ValueType::I32)
 				.instructions(vec![Instruction::I32Const(99), Instruction::SetGlobal(0)])
 				.build(),
-			None)]);
+			None)], None);
 	}: {
 		wasm_invoke(&mut module);
 	}
@@ -1154,11 +1177,37 @@ benchmarks! {
 				.instructions(vec![Instruction::I32Const(99), Instruction::Drop])
 				.build(), None),
 			(FunctionBuilder::new(FN_NAME)
-				// TODO(aeryz): This `7` is the offset of the first user defined function.
-				// code_gen should provide a constant value for this.
-				.instructions(vec![Instruction::Call(7)])
+				.instructions(vec![Instruction::Call(EXTRA_FN_INDEX)])
 				.build(),
-			Some(r))]);
+			Some(r))], None);
+	}: {
+		wasm_invoke(&mut module);
+	}
+
+	// CallIndirect(u8, u32) calls a function through a table. That's why it is indirect.
+	//
+	// The first parameter is the index of the function signature. Note that this indices
+	// are unique so if you have 8 functions and there are only 3 unique function signatures,
+	// there will be 3 signature in the list. And the order is first occurrence based. That's
+	// why although the function index is 9, we are using 4 for the signature index.
+	//
+	// The second parameter is reserved and not used right now.
+	//
+	// CallIndirect pops a I32 value from the stack as the function table index. Then it gets
+	// the function at `function_index`. Then it compares the signature at the given index with
+	// the given function's signature. It fails if they don't match. Then it does the actual call.
+	//
+	// n_extra_instrs = 3
+	instruction_CallIndirect {
+		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
+		let mut module = create_wasm_module_with_fns(vec![
+			(FunctionBuilder::new("garbage")
+				.instructions(vec![Instruction::I32Const(99), Instruction::Drop])
+				.build(), None),
+			(FunctionBuilder::new(FN_NAME)
+				.instructions(vec![Instruction::I32Const(0), Instruction::CallIndirect(4, 0)])
+				.build(), Some(r))
+			], Some(Table::fill(EXTRA_FN_INDEX, 1)));
 	}: {
 		wasm_invoke(&mut module);
 	}

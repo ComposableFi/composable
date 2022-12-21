@@ -13,12 +13,12 @@ version = "3.0.0"
 
 [dependencies]
 composable-support = { path = "../composable-support", default-features = false }
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "d462cfed2986a2ff17fbad5a4ad97f7f92330ae5", default-features = false, features = [
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "336110d3d211514487214c7ace267279d09cedba", default-features = false, features = [
   "ibc3",
   "iterator",
   "stargate",
 ] }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "d462cfed2986a2ff17fbad5a4ad97f7f92330ae5", default-features = false, features = [
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "336110d3d211514487214c7ace267279d09cedba", default-features = false, features = [
   "iterator",
   "stargate",
 ] }

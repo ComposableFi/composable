@@ -296,7 +296,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		address: Self::Address,
 		message: &[u8],
 	) -> Result<cosmwasm_vm::executor::QueryResult, Self::Error> {
-		log::debug!(target: "runtime::contracts", "query_continuation");
+		log::debug!(target: "runtime::contracts", "continue_query");
 		Pallet::<T>::do_continue_query(self, address.into_inner(), message)
 	}
 
@@ -494,20 +494,16 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			VmGas::ContinueInstantiate { nb_of_coins } =>
 				T::WeightInfo::continue_instantiate(nb_of_coins),
 			VmGas::ContinueMigrate => T::WeightInfo::continue_migrate(),
-			VmGas::ContinueQuery => T::WeightInfo::query_continuation(),
+			VmGas::ContinueQuery => T::WeightInfo::continue_query(),
+			VmGas::ContinueReply => T::WeightInfo::continue_reply(),
 			VmGas::QueryRaw => T::WeightInfo::query_raw(),
 			VmGas::QueryInfo => T::WeightInfo::query_info(),
-			// VmGas::Debug is not charged
 			_ => 1_u64,
-			/*
-			-----------------
-			Unsupported operations
-			-----------------
-			VmGas::QueryCustom => todo!(),
-			VmGas::MessageCustom => todo!(),
-			VmGas::Burn => todo!(),
-			VmGas::AllBalance => todo!(),
-			*/
+			// NOTE: **Operations that require no charge**: Debug,
+			// NOTE: **Unsupported operations**:
+			// 		   QueryCustom, MessageCustom, Burn, AllBalance
+			// TODO(aeryz): Implement when centauri is ready: IbcTransfer, IbcSendPacket,
+			//				IbcCloseChannel
 		};
 		self.charge_raw(gas_to_charge)
 	}

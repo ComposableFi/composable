@@ -1475,7 +1475,6 @@ pub mod pallet {
 			contract: AccountIdOf<T>,
 			message: &[u8],
 		) -> Result<cosmwasm_vm::executor::QueryResult, CosmwasmVMError<T>> {
-			log::debug!(target: "runtime::contracts", "query_continuation");
 			let sender = vm.contract_address.clone().into_inner();
 			let info = Pallet::<T>::contract_info(&contract)?;
 			vm.shared.push_readonly();

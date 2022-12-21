@@ -87,6 +87,7 @@ pub struct CostRules<T: Config> {
 	i64ctz: u32,
 	i64popcnt: u32,
 	i64add: u32,
+	i64sub: u32,
 	i64mul: u32,
 	i64divs: u32,
 	i64divu: u32,
@@ -135,6 +136,7 @@ pub struct CostRules<T: Config> {
 	brtable: u32,
 	brtable_per_elem: u32,
 	call: u32,
+	call_indirect: u32,
 	#[codec(skip)]
 	_marker: PhantomData<T>,
 }
@@ -159,6 +161,7 @@ impl<T: Config> Default for CostRules<T> {
 			i64ctz: calculate_weight::<T>(T::WeightInfo::instruction_I64Ctz, 2),
 			i64popcnt: calculate_weight::<T>(T::WeightInfo::instruction_I64Popcnt, 2),
 			i64add: calculate_weight::<T>(T::WeightInfo::instruction_I64Add, 3),
+			i64sub: calculate_weight::<T>(T::WeightInfo::instruction_I64Sub, 3),
 			i64mul: calculate_weight::<T>(T::WeightInfo::instruction_I64Mul, 3),
 			i64divs: calculate_weight::<T>(T::WeightInfo::instruction_I64DivS, 3),
 			i64divu: calculate_weight::<T>(T::WeightInfo::instruction_I64DivU, 3),
@@ -208,8 +211,9 @@ impl<T: Config> Default for CostRules<T> {
 			br: calculate_weight::<T>(T::WeightInfo::instruction_Br, 1),
 			brif: calculate_weight::<T>(T::WeightInfo::instruction_BrIf, 1),
 			brtable: calculate_weight::<T>(T::WeightInfo::instruction_BrTable, 1),
-			brtable_per_elem: calculate_weight::<T>(T::WeightInfo::instruction_BrTable_per_elem, 1),
+			brtable_per_elem: calculate_weight::<T>(T::WeightInfo::instruction_BrTable_per_elem, 0),
 			call: calculate_weight::<T>(T::WeightInfo::instruction_Call, 2),
+			call_indirect: calculate_weight::<T>(T::WeightInfo::instruction_CallIndirect, 3),
 			_marker: PhantomData,
 		}
 	}
@@ -265,6 +269,7 @@ impl<T: Config> Rules for CostRules<T> {
 			Instruction::I64Ctz | Instruction::I32Ctz => self.i64ctz,
 			Instruction::I64Popcnt | Instruction::I32Popcnt => self.i64popcnt,
 			Instruction::I64Add | Instruction::I32Add => self.i64add,
+			Instruction::I64Sub | Instruction::I32Sub => self.i64sub,
 			Instruction::I64Mul | Instruction::I32Mul => self.i64mul,
 			Instruction::I64DivS | Instruction::I32DivS => self.i64divs,
 			Instruction::I64DivU | Instruction::I32DivU => self.i64divu,
@@ -280,7 +285,6 @@ impl<T: Config> Rules for CostRules<T> {
 			Instruction::I32ShrU |
 			Instruction::I64ShrS |
 			Instruction::I32ShrS => self.i64shrs,
-			// TODO(aeryz): I64Sub
 			Instruction::I64Rotl | Instruction::I32Rotl => self.i64rotl,
 			Instruction::I64Rotr | Instruction::I32Rotr => self.i64rotr,
 			Instruction::I32WrapI64 => self.i32wrapi64,
@@ -322,9 +326,7 @@ impl<T: Config> Rules for CostRules<T> {
 				.brtable
 				.saturating_add(self.brtable_per_elem.saturating_mul(table.table.len() as u32)),
 			Instruction::Call(_) => self.call,
-			// TODO(aeryz): CallIndirect will be implemented after the pallet is upgraded to IBC
-			// compatible VM
-			Instruction::CallIndirect(_, _) => self.call,
+			Instruction::CallIndirect(_, _) => self.call_indirect,
 			_ => 1_000,
 		};
 		Some(weight)

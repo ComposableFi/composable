@@ -2104,7 +2104,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=d462cfed2986a2ff17fbad5a4ad97f7f92330ae5#d462cfed2986a2ff17fbad5a4ad97f7f92330ae5"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=336110d3d211514487214c7ace267279d09cedba#336110d3d211514487214c7ace267279d09cedba"
 dependencies = [
  "cosmwasm-std 1.1.6",
  "either",
@@ -2116,7 +2116,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=d462cfed2986a2ff17fbad5a4ad97f7f92330ae5#d462cfed2986a2ff17fbad5a4ad97f7f92330ae5"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=336110d3d211514487214c7ace267279d09cedba#336110d3d211514487214c7ace267279d09cedba"
 dependencies = [
  "cosmwasm-std 1.1.6",
  "cosmwasm-vm",
@@ -16639,7 +16639,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.11.2",
+ "parking_lot 0.9.0",
  "regex",
  "serde",
  "serde_json",
@@ -16836,7 +16836,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if 1.0.0",
  "digest 0.10.6",
- "rand 0.8.5",
+ "rand 0.6.5",
  "static_assertions",
 ]
 
