@@ -5,7 +5,7 @@
 // this is required to allow for ambient/previous definitions
 import "@polkadot/rpc-core/types/jsonrpc";
 
-import type { CustomRpcBalance, CustomRpcCurrencyId } from "./common";
+import type { CurrencyId, CustomRpcBalance, CustomRpcCurrencyId } from "./common";
 import type { PalletPabloPoolId, PalletPabloPriceAggregate } from "./pablo";
 import type { AugmentedRpc } from "@polkadot/rpc-core/types";
 import type { StorageKey } from "@polkadot/types";
@@ -22,13 +22,11 @@ import type {
   u32,
   U64,
   u64,
-  Vec,
+  Vec
 } from "@polkadot/types-codec";
+import { BTreeMap, u128 } from "@polkadot/types-codec";
 import type { AnyNumber } from "@polkadot/types-codec/types";
-import type {
-  ExtrinsicOrHash,
-  ExtrinsicStatus,
-} from "@polkadot/types/interfaces/author";
+import type { ExtrinsicOrHash, ExtrinsicStatus } from "@polkadot/types/interfaces/author";
 import type { EpochAuthorship } from "@polkadot/types/interfaces/babe";
 import type { BeefySignedCommitment } from "@polkadot/types/interfaces/beefy";
 import type { BlockHash } from "@polkadot/types/interfaces/chain";
@@ -40,7 +38,7 @@ import type {
   ContractCallRequest,
   ContractExecResult,
   ContractInstantiateResult,
-  InstantiateRequest,
+  InstantiateRequest
 } from "@polkadot/types/interfaces/contracts";
 import type { BlockStats } from "@polkadot/types/interfaces/dev";
 import type { CreatedBlock } from "@polkadot/types/interfaces/engine";
@@ -58,27 +56,22 @@ import type {
   EthSyncStatus,
   EthTransaction,
   EthTransactionRequest,
-  EthWork,
+  EthWork
 } from "@polkadot/types/interfaces/eth";
 import type { Extrinsic } from "@polkadot/types/interfaces/extrinsics";
 import type {
   EncodedFinalityProofs,
   JustificationNotification,
-  ReportedRoundStates,
+  ReportedRoundStates
 } from "@polkadot/types/interfaces/grandpa";
-import type {
-  MmrLeafBatchProof,
-  MmrLeafProof,
-} from "@polkadot/types/interfaces/mmr";
+import type { MmrLeafBatchProof, MmrLeafProof } from "@polkadot/types/interfaces/mmr";
 import type { StorageKind } from "@polkadot/types/interfaces/offchain";
-import type {
-  FeeDetails,
-  RuntimeDispatchInfo,
-} from "@polkadot/types/interfaces/payment";
+import type { FeeDetails, RuntimeDispatchInfo } from "@polkadot/types/interfaces/payment";
 import type { RpcMethods } from "@polkadot/types/interfaces/rpc";
 import type {
   AccountId,
   AccountId32,
+  AssetId,
   Balance,
   BlockNumber,
   H160,
@@ -89,7 +82,7 @@ import type {
   Index,
   Justification,
   SignedBlock,
-  StorageData,
+  StorageData
 } from "@polkadot/types/interfaces/runtime";
 import type {
   ApplyExtrinsicResult,
@@ -99,7 +92,7 @@ import type {
   NetworkState,
   NodeRole,
   PeerInfo,
-  SyncState,
+  SyncState
 } from "@polkadot/types/interfaces/system";
 import type { IExtrinsic, Observable } from "@polkadot/types/types";
 import { Asset } from "./assets";
@@ -890,6 +883,29 @@ declare module "@polkadot/rpc-core/types/jsonrpc" {
           amount: CustomRpcBalance | string,
           at?: Hash | string | Uint8Array
         ) => Observable<PalletPabloPriceAggregate>
+      >;
+      simulateAddLiquidity: AugmentedRpc<
+        (
+          who: AccountId | string,
+          poolId: PalletPabloPoolId | string,
+          amounts:
+            | BTreeMap<CurrencyId, Balance>
+            | {
+                [assetIn in string]: string;
+              }
+        ) => Observable<u128>
+      >;
+      simulateRemoveLiquidity: AugmentedRpc<
+        (
+          who: AccountId | string,
+          poolId: PalletPabloPoolId | string,
+          amount: Balance | string,
+          minExpectedAmounts:
+            | BTreeMap<CurrencyId, Balance>
+            | {
+                [assetIn in string]: string;
+              }
+        ) => Observable<BTreeMap<AssetId, Balance>>
       >;
     };
     payment: {

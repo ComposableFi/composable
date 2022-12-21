@@ -1,36 +1,32 @@
-import { AmmId } from "@/defi/types";
+import BigNumber from "bignumber.js";
+import { option } from "fp-ts";
+import { Asset } from "shared";
 
-export interface CreatePoolSlice {
-    createPool: {
-        currentStep: number;
-        baseAsset: string | "none";
-        quoteAsset: string | "none";
-        ammId: AmmId | "none";
-        swapFee: string;
-        liquidity: {
-            baseAmount: string;
-            quoteAmount: string;
-        };
-        weights: {
-            baseWeight: string;
-            quoteWeight: string;
-        };
-        similarPool: {
-            poolId: number;
-            value: string;
-            volume: string;
-            fee: string;
-        };
-        setLiquidity: (liquidity: Partial<CreatePoolSlice["createPool"]["liquidity"]>) => void;
-        setWeights: (weights: Partial<CreatePoolSlice["createPool"]["weights"]>) => void;
-        setSimilarPool: (similarPool: Partial<CreatePoolSlice["createPool"]["similarPool"]>) => void;
-        setSelectable: (items: Partial<{
-            baseAsset: string | "none";
-            quoteAsset: string | "none";
-            ammId: AmmId | "none";
-            swapFee: string;
-            currentStep: number;
-        }>) => void;
-        resetSlice: () => void;
-    }
+export type PoolKind = "dualAssetConstantPool" | "";
+
+export type PoolConfig = {
+  kind: PoolKind;
+  poolId: BigNumber;
+  config: {
+    lpToken: number;
+    owner: string;
+    assetsWeights: {
+      [assetId in number]: number;
+    };
+    assets: [Asset, Asset];
+    feeConfig: {
+      feeRate: number;
+      ownerFeeRate: number;
+      protocolFeeRate: number;
+    };
+  };
+};
+
+export interface PoolSlice {
+  pools: {
+    isLoaded: boolean;
+    config: PoolConfig[];
+    setConfig: (pools: PoolConfig[]) => void;
+    getPoolById: (poolId: string) => option.Option<PoolConfig>;
+  };
 }

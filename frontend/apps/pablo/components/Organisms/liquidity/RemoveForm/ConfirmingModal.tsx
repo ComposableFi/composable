@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { FC, useState } from "react";
 import { Modal, ModalProps } from "@/components/Molecules";
 import { BaseAsset, CircularProgress, Label } from "@/components/Atoms";
 import {
@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import BigNumber from "bignumber.js";
-import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import {
   useExecutor,
@@ -24,10 +23,12 @@ import { useRouter } from "next/router";
 import { toChainUnits } from "@/defi/utils";
 import { setUiState } from "@/store/ui/ui.slice";
 import { Asset } from "shared";
+import { PoolConfig } from "@/store/pools/types";
 
 export type ConfirmingModalProps = {
   baseAsset: Asset;
   quoteAsset: Asset;
+  pool: PoolConfig;
   price1: BigNumber;
   price2: BigNumber;
   amount1: BigNumber;
@@ -37,9 +38,10 @@ export type ConfirmingModalProps = {
   setConfirmed?: (confirmed: boolean) => any;
 } & ModalProps;
 
-export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
+export const ConfirmingModal: FC<ConfirmingModalProps> = ({
   baseAsset,
   quoteAsset,
+  pool,
   price1,
   price2,
   amount1,
@@ -49,14 +51,11 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
   setConfirmed,
   ...rest
 }) => {
-  // WIP
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  const signer = useSigner();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+  const signer = useSigner();
   const router = useRouter();
   const executor = useExecutor();
-  const { poolId } = useRemoveLiquidityState();
-
   const theme = useTheme();
 
   const [confirming, setConfirming] = useState<boolean>(false);
@@ -79,9 +78,12 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
         const lpRemoveAmount = toChainUnits(lpBalance).times(percentage);
         executor.execute(
           parachainApi.tx.pablo.removeLiquidity(
-            parachainApi.createType("u128", poolId), // Pool ID
+            parachainApi.createType("u128", pool.poolId.toString()), // Pool ID
             parachainApi.createType("u128", lpRemoveAmount.dp(0).toString()), // LP Receive
-            parachainApi.createType("BTreeMap<u128, u128>", 0, 0)
+            parachainApi.createType("BTreeMap<u128, u128>", {
+              [baseAsset.getPicassoAssetId().toString()]: "0",
+              [quoteAsset.getPicassoAssetId().toString()]: "0",
+            })
           ),
           selectedAccount.address,
           parachainApi,
@@ -89,11 +91,11 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
           (_txHash: string) => {
             setConfirming(true);
           },
-          (txHash: string, events) => {
+          (txHash: string, _events) => {
             console.log("Finalized ", txHash);
             setUiState({ isConfirmingModalOpen: false });
             setConfirming(false);
-            router.push("/pool/select/" + poolId);
+            router.push(`/pool/select/${pool.poolId.toString()}`);
           },
           (txError) => {
             console.log("Error ", txError);

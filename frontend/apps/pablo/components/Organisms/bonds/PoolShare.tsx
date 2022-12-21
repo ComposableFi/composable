@@ -1,4 +1,3 @@
-import { getToken,TokenId } from "tokens";
 import {
   alpha,
   Box,
@@ -8,6 +7,9 @@ import {
   useTheme,
 } from "@mui/material";
 import BigNumber from "bignumber.js";
+import { FC } from "react";
+import { PoolAmount } from "@/store/pools/types";
+import { Asset } from "shared";
 
 const itemBoxPropsSX = (theme: Theme) =>
   ({
@@ -46,24 +48,24 @@ const ItemBox: React.FC<ItemBoxProps> = ({ value, label }) => {
 };
 
 export type PoolShareProps = {
-  tokenId1: TokenId;
-  tokenId2: TokenId;
+  poolShare: PoolAmount;
+  assetOne: Asset;
+  assetTwo: Asset;
   price: BigNumber;
   revertPrice: BigNumber;
   share: BigNumber;
 } & BoxProps;
 
-export const PoolShare: React.FC<PoolShareProps> = ({
-  tokenId1,
-  tokenId2,
+export const PoolShare: FC<PoolShareProps> = ({
+  poolShare,
+  assetOne,
+  assetTwo,
   price,
   revertPrice,
   share,
   ...rest
 }) => {
-  const theme = useTheme();
-  const token1 = getToken(tokenId1);
-  const token2 = getToken(tokenId2);
+  // TODO:Implement pool share
   return (
     <Box mt={4} {...rest}>
       <Typography variant="inputLabel">Price and pool share</Typography>
@@ -74,12 +76,12 @@ export const PoolShare: React.FC<PoolShareProps> = ({
         flexDirection={{ sm: "column", md: "row" }}
       >
         <ItemBox
-          value={price.toFixed()}
-          label={`${token2.symbol} per ${token1.symbol}`}
+          value={price.toFixed(2)}
+          label={`${assetTwo.getSymbol()} per ${assetOne.getSymbol()}`}
         />
         <ItemBox
-          value={revertPrice.toFixed()}
-          label={`${token1.symbol} per ${token2.symbol}`}
+          value={revertPrice.toFixed(2)}
+          label={`${assetOne.getSymbol()} per ${assetTwo.getSymbol()}`}
         />
         <ItemBox value={`${share.toFixed()}%`} label="Share of pool" />
       </Box>

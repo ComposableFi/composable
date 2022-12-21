@@ -1,68 +1,114 @@
-import { DropdownCombinedBigNumberInput } from "@/components/Molecules";
-import { useMobile } from "@/hooks/responsive";
-import { Box, BoxProps, Button, Typography, useTheme } from "@mui/material";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import { BoxProps, Button, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/router";
 import { FormTitle } from "../../FormTitle";
-import { ConfirmSupplyModal } from "./ConfirmSupplyModal";
-import { ConfirmingSupplyModal } from "./ConfirmingSupplyModal";
 import { TransactionSettings } from "../../TransactionSettings";
-import { YourPosition } from "../YourPosition";
-import { PoolShare } from "./PoolShare";
-import { useAddLiquidityForm } from "@/defi/hooks";
 import { useSnackbar } from "notistack";
-import BigNumber from "bignumber.js";
-import { useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
 import { setUiState, useUiSlice } from "@/store/ui/ui.slice";
+import { usePoolDetail } from "@/defi/hooks/pools/usePoolDetail";
+import useStore from "@/store/useStore";
+import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/function";
+import BigNumber from "bignumber.js";
+import { LiquidityInput } from "../../pool/AddLiquidity/LiquidityInput";
+import { PoolShare } from "@/components/Organisms/bonds/PoolShare";
+import {
+  getAssetOptions,
+  getInputConfig,
+} from "@/components/Organisms/liquidity/AddForm/utils";
+import { PlusIcon } from "@/components/Organisms/liquidity/AddForm/PlusIcon";
+import { useSimulateAddLiquidity } from "@/components/Organisms/pool/AddLiquidity/useSimulateAddLiquidity";
+import { ConfirmSupplyModal } from "@/components/Organisms/liquidity/AddForm/ConfirmSupplyModal";
+import { YourPosition } from "@/components/Organisms/liquidity/YourPosition";
 
-export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
-  const isMobile = useMobile();
+export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   const theme = useTheme();
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
-
-  const {
-    assetList1,
-    assetList2,
-    setAmount,
-    setToken,
-    share,
-    assetOneAmount,
-    assetTwoAmount,
-    assetOne,
-    assetTwo,
-    balanceOne,
-    balanceTwo,
-    valid,
-    isValidToken1,
-    isValidToken2,
-    setValid,
-    invalidTokenPair,
-    canSupply,
-    lpReceiveAmount,
-    needToSelectToken,
-    findPoolManually,
-    spotPrice,
-    pool,
-  } = useAddLiquidityForm();
-
-  const {
-
-      isConfirmSupplyModalOpen,
-      isConfirmingSupplyModalOpen
-    
-  } = useUiSlice();
-
-  const [manualUpdateMode, setManualUpdateMode] = useState<1 | 2>(1);
-
+  const { isConfirmSupplyModalOpen, isConfirmingSupplyModalOpen } =
+    useUiSlice();
   const onBackHandler = () => {
-    router.push("/pool");
+    router.push(`/pool/select/${poolId}`);
+  };
+  const onSettingHandler = () => {
+    setUiState({ isTransactionSettingsModalOpen: true });
+  };
+  const [{ amountOne, amountTwo }, setAmount] = useState<{
+    amountOne: BigNumber;
+    amountTwo: BigNumber;
+  }>({
+    amountOne: new BigNumber(0),
+    amountTwo: new BigNumber(0),
+  });
+
+  const handleConfirmSupplyButtonClick = () => {
+    pipe(
+      pool,
+      option.fold(
+        () => {
+          enqueueSnackbar(
+            "Liquidity pool for the selected token pair does not exist.",
+            {
+              variant: "error",
+            }
+          );
+        },
+        () => {
+          setUiState({ isConfirmSupplyModalOpen: true });
+        }
+      )
+    );
   };
 
-  const onSettingHandler = () => {
-    setUiState({ isTransactionSettingsModalOpen: true })
-  };
+  // Populate Dropdowns
+  const { poolId } = usePoolDetail();
+  const getPoolById = useStore((store) => store.pools.getPoolById);
+  const pool = getPoolById(poolId);
+  const getTokenBalance = useStore(
+    (store) => store.substrateBalances.getTokenBalance
+  );
+  const inputConfig = pipe(
+    getInputConfig(pool, getTokenBalance),
+    option.fold(
+      () => null,
+      (ic) => ic
+    )
+  );
+
+  const assetOptions = getAssetOptions(inputConfig ?? []);
+  const [leftConfig, rightConfig] = inputConfig ?? [];
+  const leftId = (leftConfig?.asset.getPicassoAssetId() as string) || null;
+  const rightId = (rightConfig?.asset.getPicassoAssetId() as string) || null;
+  const [simulated, setSimulated] = useState<BigNumber>(new BigNumber(0));
+  const simulate = useSimulateAddLiquidity();
+  const [isInValid, setInValid] = useState<boolean>(false);
+  const [isOutValid, setOutValid] = useState<boolean>(false);
+  const poolShare = useStore((store) => store.pools.poolAmount);
+
+  const inputValid = isInValid && isOutValid;
+  useEffect(() => {
+    if (leftId === null || rightId === null) return;
+    simulate(
+      poolId,
+      {
+        assetIdOnChain: leftId.toString(),
+        balance: amountOne,
+      },
+      {
+        assetIdOnChain: rightId.toString(),
+        balance: amountTwo,
+      }
+    ).then((simulatedValue) => {
+      if (!simulatedValue.eq(simulated)) {
+        setSimulated(simulatedValue);
+      }
+    });
+  }, [amountOne, amountTwo, leftId, poolId, rightId, simulate, simulated]);
+
+  if (inputConfig === null) {
+    return null;
+  }
 
   return (
     <HighlightBox
@@ -80,215 +126,94 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         onBackHandler={onBackHandler}
         onSettingHandler={onSettingHandler}
       />
-
       <Typography variant="subtitle1" textAlign="center" mt={4}>
         Use this tool to add tokens to the liquidity pool.
       </Typography>
+      <LiquidityInput
+        onValidationChange={setInValid}
+        config={leftConfig}
+        value={amountOne}
+        onChange={(v) =>
+          setAmount((state) => ({
+            ...state,
+            amountOne: v,
+          }))
+        }
+        assetDropdownItems={assetOptions}
+        label={"Token 1"}
+      />
 
-      <Box mt={4}>
-        <DropdownCombinedBigNumberInput
-          onMouseDown={() => setManualUpdateMode(1)}
-          maxValue={balanceOne}
-          setValid={setValid}
-          noBorder
-          value={assetOneAmount}
-          setValue={
-            manualUpdateMode === 1 ? setAmount("assetOneAmount") : undefined
-          }
-          InputProps={{
-            disabled: !isValidToken1,
-          }}
-          buttonLabel={isValidToken1 ? "Max" : undefined}
-          ButtonProps={{
-            onClick: () => setAmount("assetOneAmount")(balanceOne),
-            sx: {
-              padding: theme.spacing(1),
-            },
-          }}
-          CombinedSelectProps={{
-            disabled: !findPoolManually,
-            value: assetOne?.getPicassoAssetId() as string || "",
-            setValue: setToken("assetOne"),
-            dropdownModal: true,
-            forceHiddenLabel: isMobile ? true : false,
-            options: [
-              {
-                value: "none",
-                label: "Select",
-                icon: undefined,
-                disabled: true,
-                hidden: true,
-              },
-              ...assetList1,
-            ],
-            borderLeft: false,
-            minWidth: isMobile ? undefined : 150,
-            searchable: true,
-          }}
-          LabelProps={{
-            label: "Token 1",
-            BalanceProps: isValidToken1
-              ? {
-                  title: <AccountBalanceWalletIcon color="primary" />,
-                  balance: `${balanceOne}`,
-                }
-              : undefined,
-          }}
-        />
-      </Box>
+      <PlusIcon />
 
-      <Box mt={4} textAlign="center">
-        <Box
-          width={56}
-          height={56}
-          borderRadius="50%"
-          display="flex"
-          border={`2px solid ${theme.palette.primary.main}`}
-          justifyContent="center"
-          alignItems="center"
-          margin="auto"
-        >
-          <Typography variant="h5">+</Typography>
-        </Box>
-      </Box>
+      <LiquidityInput
+        onValidationChange={setOutValid}
+        config={rightConfig}
+        value={amountTwo}
+        onChange={(v) =>
+          setAmount((state) => ({
+            ...state,
+            amountTwo: v,
+          }))
+        }
+        assetDropdownItems={assetOptions}
+        label={"Token 2"}
+      />
 
-      <Box mt={4}>
-        <DropdownCombinedBigNumberInput
-          onMouseDown={() => setManualUpdateMode(2)}
-          maxValue={balanceTwo}
-          setValid={setValid}
-          noBorder
-          value={assetTwoAmount}
-          setValue={
-            manualUpdateMode === 2 ? setAmount("assetTwoAmount") : undefined
-          }
-          InputProps={{
-            disabled: !isValidToken2,
-          }}
-          buttonLabel={isValidToken2 ? "Max" : undefined}
-          ButtonProps={{
-            onClick: () => setAmount("assetTwoAmount")(balanceTwo),
-            sx: {
-              padding: theme.spacing(1),
-            },
-          }}
-          CombinedSelectProps={{
-            disabled: !findPoolManually,
-            value: assetTwo?.getPicassoAssetId() as string || "",
-            setValue: setToken("assetTwo"),
-            dropdownModal: true,
-            forceHiddenLabel: isMobile ? true : false,
-            options: [
-              {
-                value: "none",
-                label: "Select",
-                icon: undefined,
-                disabled: true,
-                hidden: true,
-              },
-              ...assetList2,
-            ],
-            borderLeft: false,
-            minWidth: isMobile ? undefined : 150,
-            searchable: true,
-          }}
-          LabelProps={{
-            label: "Token 2",
-            BalanceProps: isValidToken2
-              ? {
-                  title: <AccountBalanceWalletIcon color="primary" />,
-                  balance: `${balanceTwo}`,
-                }
-              : undefined,
-          }}
-        />
-      </Box>
+      <PoolShare
+        assetOne={leftConfig.asset}
+        assetTwo={rightConfig.asset}
+        poolShare={poolShare}
+        price={leftConfig.asset.getPrice()}
+        revertPrice={new BigNumber(1).div(1)}
+        share={new BigNumber(0.02)}
+      />
+      <Button
+        variant="contained"
+        size="large"
+        fullWidth
+        sx={{
+          mt: 2,
+        }}
+        disabled={!inputValid}
+        onClick={handleConfirmSupplyButtonClick}
+      >
+        Supply
+      </Button>
 
-      {valid && !invalidTokenPair() && canSupply() && (
-        <PoolShare
-          baseAsset={assetOne}
-          quoteAsset={assetTwo}
-          price={spotPrice}
-          revertPrice={new BigNumber(1).div(spotPrice)}
-          share={share.toNumber()}
-        />
-      )}
-
-      <Box mt={4}>
-        {needToSelectToken() && (
-          <Button variant="contained" size="large" fullWidth disabled>
-            Select tokens
-          </Button>
-        )}
-
-        {invalidTokenPair() && (
-          <Button variant="contained" size="large" fullWidth disabled>
-            Invalid pair
-          </Button>
-        )}
-
-        {!needToSelectToken() && canSupply() && !invalidTokenPair() && (
-          <Button
-            variant="contained"
-            size="large"
-            fullWidth
-            disabled={!valid}
-            onClick={() => {
-              if (!pool) {
-                return enqueueSnackbar(
-                  "Liquidity pool for the selected token pair does not exist.",
-                  {
-                    variant: "error",
-                  }
-                );
-              }
-
-              setUiState({ isConfirmSupplyModalOpen: true })
-            }}
-          >
-            Supply
-          </Button>
-        )}
-      </Box>
-
-      {valid && !invalidTokenPair() && canSupply() && (
+      {inputValid ? (
         <YourPosition
           noTitle={false}
-          token1={assetOne}
-          token2={assetTwo}
-          pooledAmount1={assetOneAmount}
-          pooledAmount2={assetTwoAmount}
-          amount={lpReceiveAmount}
-          share={share}
+          assets={inputConfig.map((config) => config.asset)}
+          amountIn={amountOne}
+          amountOut={amountTwo}
+          expectedLP={simulated}
+          share={new BigNumber(0)}
           mt={4}
         />
-      )}
+      ) : null}
 
       <ConfirmSupplyModal
         pool={pool}
-        lpReceiveAmount={lpReceiveAmount}
-        priceOneInTwo={spotPrice}
-        priceTwoInOne={new BigNumber(1).div(spotPrice)}
-        assetOneAmount={assetOneAmount}
-        assetTwoAmount={assetTwoAmount}
-        assetOne={assetOne}
-        assetTwo={assetTwo}
-        share={share}
+        inputConfig={inputConfig}
+        expectedLP={simulated}
+        share={new BigNumber(0)}
         open={isConfirmSupplyModalOpen}
+        amountOne={amountOne}
+        amountTwo={amountTwo}
       />
 
-      <ConfirmingSupplyModal
-        pool={pool}
-        open={isConfirmingSupplyModalOpen}
-        lpReceiveAmount={lpReceiveAmount}
-        priceOneInTwo={spotPrice}
-        priceTwoInOne={new BigNumber(1).div(spotPrice)}
-        assetOneAmount={assetOneAmount}
-        assetTwoAmount={assetTwoAmount}
-        assetOne={assetOne}
-        assetTwo={assetTwo}
-        share={share}
-      />
+      {/*<ConfirmingSupplyModal*/}
+      {/*  pool={pool}*/}
+      {/*  open={isConfirmingSupplyModalOpen}*/}
+      {/*  lpReceiveAmount={lpReceiveAmount}*/}
+      {/*  priceOneInTwo={spotPrice}*/}
+      {/*  priceTwoInOne={new BigNumber(1).div(spotPrice)}*/}
+      {/*  assetOneAmount={assetOneAmount}*/}
+      {/*  assetTwoAmount={assetTwoAmount}*/}
+      {/*  assetOne={assetOne}*/}
+      {/*  assetTwo={assetTwo}*/}
+      {/*  share={share}*/}
+      {/*/>*/}
 
       <TransactionSettings showSlippageSelection={false} />
     </HighlightBox>

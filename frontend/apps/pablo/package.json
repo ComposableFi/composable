@@ -34,6 +34,7 @@
     "bn.js": "^5.2.0",
     "contentful": "^9.1.5",
     "endpoints": "*",
+    "fp-ts": "^2.13.1",
     "graphql": "^16.4.0",
     "immer": "^9.0.7",
     "lodash": "^4.17.21",

@@ -9,7 +9,8 @@ import createTokensSlice from "./tokens/slice";
 import createTokenBalancesSlice from "./tokenBalances/slice";
 import { createBYOGSlice } from "@/store/byog/slice";
 import createPoolStatsSlice from "@/store/poolStats/slice";
-import createPoolSlice from "@/store/createPool/slice";
+import createPoolsSlice from "@/store/pools/slice";
+import createOwnedLiquiditySLice from "@/store/pools/ownedLiquidity.slice";
 
 const useStore = create<AllSlices>()(
   subscribeWithSelector(
@@ -20,9 +21,10 @@ const useStore = create<AllSlices>()(
         ...createSwapsSlice(...a),
         ...createLiquiditySlice(...a),
         ...createRemoveLiquiditySlice(...a),
-        ...createPoolSlice(...a),
+        ...createPoolsSlice(...a),
         ...createPoolStatsSlice(...a),
         ...createBYOGSlice(...a),
+        ...createOwnedLiquiditySLice(...a),
       }))
     )
   )
