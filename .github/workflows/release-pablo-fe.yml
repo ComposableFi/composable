@@ -15,9 +15,8 @@ jobs:
       - x64
       - sre
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: ubuntu:latest
     steps:
-      - run: nix-env -iA git-lfs nodejs
       - uses: actions/checkout@v3
         with:
           lfs: true
