@@ -16,8 +16,8 @@ to open XCM channels to other parachains to enable seamless, secure, and costles
 without gas fees. 
 
 In addition, Picasso maintains the Centauri IBC-Substrate bridge, which enables it to connect to IBC-enabled blockchains
-starting with the Cosmos ecosystem, as well as Mosaic, the transfer availability pallet, which opens up a bridge to 
-connect to EVM-compatible Layer 1s and 2s. Picasso’s suite of DeFi primitives like the Pablo DEX, are designed to 
+starting with the Cosmos ecosystem, which opens up a bridge to connect to EVM-compatible Layer 1s and 2s. 
+Picasso’s suite of DeFi primitives like the Pablo DEX, are designed to 
 attract and maintain deep liquidity through novel technology innovations, and strong alignment with user incentives.
 
 
@@ -40,7 +40,7 @@ functions into even more complex and valuable opportunities such as yield aggreg
 
 Using this framework, to assist in and stimulate the development process for building on Picasso, we have developed a 
 building base-level infrastructure from which other pallets can be created. Initially, we will be deploying our Oracle 
-(Apollo), Vaults (Cubic), Mosaic and Centauri pallets, in order to provide a foundation for Picasso. Picasso helps 
+(Apollo), Vaults (Cubic), Pablo and Centauri pallets, in order to provide a foundation for Picasso. Picasso helps 
 achieve this by creating a natively interoperable platform, and a modularly composable Substrate pallet ecosystem, and 
 helping move DeFi further along 
 [the spectrum of interoperability](https://medium.com/composable-finance/the-philosophy-of-the-cross-chain-ecosystem-a-continuum-of-interoperability-33ed81350190).
