@@ -1,15 +1,10 @@
-use composable_support::math::safe::{
-	SafeAdd, SafeDiv, SafeMul, SafeSub,
-};
+use composable_support::math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub};
 use frame_support::ensure;
 use rust_decimal::{
 	prelude::{FromPrimitive, ToPrimitive},
 	Decimal, MathematicalOps, RoundingStrategy,
 };
-use sp_runtime::{
-	traits::Zero,
-	ArithmeticError, DispatchError, PerThing,
-};
+use sp_runtime::{traits::Zero, ArithmeticError, DispatchError, PerThing};
 
 /// Compute the amount of the output token given the amount of the input token.
 ///

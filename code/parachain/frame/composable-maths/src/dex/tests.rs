@@ -721,8 +721,8 @@ mod constant_product {
 			let a_sent = 2;
 			let fee = Permill::zero();
 
-			let res = compute_out_given_in(w_i, w_o, b_i, b_o, a_sent, fee)
-				.expect("Valid input; QED");
+			let res =
+				compute_out_given_in(w_i, w_o, b_i, b_o, a_sent, fee).expect("Valid input; QED");
 
 			assert_eq!(res.fee, 0);
 		}
@@ -764,8 +764,8 @@ mod constant_product {
 			let a_sent = 256_000_000_000_000;
 			let fee = Permill::zero();
 
-			let res = compute_out_given_in(w_i, w_o, b_i, b_o, a_sent, fee)
-				.expect("Valid input; QED");
+			let res =
+				compute_out_given_in(w_i, w_o, b_i, b_o, a_sent, fee).expect("Valid input; QED");
 
 			// Actual expected 255_872_000_000_000
 			// +000000250000% Error
