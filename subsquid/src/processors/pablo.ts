@@ -48,7 +48,7 @@ function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
       ],
     };
   }
-  const { owner, poolId, assetWeights } = event.asV10003;
+  const { owner, poolId, assetWeights } = event.asV10004;
   return {
     owner,
     poolId,
@@ -79,7 +79,7 @@ function getLiquidityAddedEvent(
       mintedLp,
     };
   }
-  const { who, poolId, assetAmounts, mintedLp } = event.asV10003;
+  const { who, poolId, assetAmounts, mintedLp } = event.asV10004;
   return {
     who,
     poolId,
@@ -109,7 +109,7 @@ function getLiquidityRemovedEvent(
       ],
     };
   }
-  const { who, poolId, assetAmounts } = event.asV10003;
+  const { who, poolId, assetAmounts } = event.asV10004;
   return {
     who,
     poolId,

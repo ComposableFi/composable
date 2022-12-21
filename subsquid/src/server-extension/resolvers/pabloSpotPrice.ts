@@ -8,16 +8,10 @@ import {
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { divideBigInts } from "../../utils";
-import { PabloPoolAsset, PabloSwap } from "../../model";
+import { PabloAssetWeight, PabloPoolAsset, PabloSwap } from "../../model";
 
 @ObjectType()
 export class PabloSpotPrice {
-  @Field(() => String, { nullable: false })
-  baseAssetId!: string;
-
-  @Field(() => String, { nullable: false })
-  quoteAssetId!: string;
-
   @Field(() => BigInt, { nullable: false })
   spotPrice!: string;
 
@@ -106,12 +100,37 @@ export class PabloSpotPriceResolver {
         );
       }
 
+      const baseAssetWeight = await manager
+        .getRepository(PabloAssetWeight)
+        .findOne({
+          where: {
+            assetId: baseAssetId,
+            pool: {
+              id: poolId,
+            },
+          },
+        });
+
+      const quoteAssetWeight = await manager
+        .getRepository(PabloAssetWeight)
+        .findOne({
+          where: {
+            assetId: quoteAssetId,
+            pool: {
+              id: poolId,
+            },
+          },
+        });
+
+      const weightRatio =
+        baseAssetWeight?.weight && quoteAssetWeight?.weight
+          ? baseAssetWeight.weight / quoteAssetWeight.weight
+          : 1;
+
       return {
-        baseAssetId,
-        quoteAssetId,
-        spotPrice: divideBigInts(
-          quoteAsset.totalLiquidity,
-          quoteAsset.totalLiquidity
+        spotPrice: (
+          divideBigInts(quoteAsset.totalLiquidity, baseAsset.totalLiquidity) *
+          weightRatio
         ).toString(),
       };
     }
@@ -122,8 +141,6 @@ export class PabloSpotPriceResolver {
         : (1 / Number(swap.spotPrice)).toString();
 
     return {
-      baseAssetId,
-      quoteAssetId,
       spotPrice,
     };
   }

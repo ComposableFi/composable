@@ -282,15 +282,15 @@ export class PabloLiquidityAddedEvent {
     /**
      * Liquidity added into the pool `T::PoolId`.
      */
-    get isV10003(): boolean {
+    get isV10004(): boolean {
         return this._chain.getEventHash('Pablo.LiquidityAdded') === '768cdd130e4e7cbfa742e476f2af6c5e7de4bdbf1f44e61e9be3626f6efa24c7'
     }
 
     /**
      * Liquidity added into the pool `T::PoolId`.
      */
-    get asV10003(): {who: Uint8Array, poolId: bigint, assetAmounts: [bigint, bigint][], mintedLp: bigint} {
-        assert(this.isV10003)
+    get asV10004(): {who: Uint8Array, poolId: bigint, assetAmounts: [bigint, bigint][], mintedLp: bigint} {
+        assert(this.isV10004)
         return this._chain.decodeEvent(this.event)
     }
 }
@@ -326,15 +326,15 @@ export class PabloLiquidityRemovedEvent {
     /**
      * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
      */
-    get isV10003(): boolean {
+    get isV10004(): boolean {
         return this._chain.getEventHash('Pablo.LiquidityRemoved') === 'f83a7eb510fc980414891c8a407bd249e0662ff3a1e15034572f62a8a15540e5'
     }
 
     /**
      * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
      */
-    get asV10003(): {who: Uint8Array, poolId: bigint, assetAmounts: [bigint, bigint][]} {
-        assert(this.isV10003)
+    get asV10004(): {who: Uint8Array, poolId: bigint, assetAmounts: [bigint, bigint][]} {
+        assert(this.isV10004)
         return this._chain.decodeEvent(this.event)
     }
 }
@@ -370,15 +370,15 @@ export class PabloPoolCreatedEvent {
     /**
      * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
      */
-    get isV10003(): boolean {
+    get isV10004(): boolean {
         return this._chain.getEventHash('Pablo.PoolCreated') === 'dac2b11b70d76f7d768871c6ed616e443b2aaf161355f79320a567e4059a9b0a'
     }
 
     /**
      * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
      */
-    get asV10003(): {poolId: bigint, owner: Uint8Array, assetWeights: [bigint, number][]} {
-        assert(this.isV10003)
+    get asV10004(): {poolId: bigint, owner: Uint8Array, assetWeights: [bigint, number][]} {
+        assert(this.isV10004)
         return this._chain.decodeEvent(this.event)
     }
 }
