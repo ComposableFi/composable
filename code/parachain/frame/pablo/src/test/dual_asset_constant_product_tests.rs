@@ -704,7 +704,7 @@ fn cannot_swap_between_wrong_pairs() {
 
 		Tokens::mint_into(BTC, &BOB, currency::BTC::units(100_000)).unwrap();
 		// HACK(ben,connor): USDC isn't treated as having 6 decimals in our calculation, so use a 12
-		// decimal asset for caluclating the amout
+		// decimal asset for calculating the amount
 		Tokens::mint_into(USDC, &BOB, currency::BTC::units(100_000)).unwrap();
 
 		assert_ok!(<Pablo as Amm>::add_liquidity(
