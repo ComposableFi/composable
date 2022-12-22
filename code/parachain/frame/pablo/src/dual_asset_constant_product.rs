@@ -227,7 +227,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 		let redeemed_assets = Self::get_pool_balances(&pool, &pool_account)
 			.into_iter()
-			.map(|(id, (weight, balance))| {
+			.map(|(id, (_, balance))| {
 				let redeemed_amount = compute_redeemed_for_lp(
 					lp_total_issuance,
 					T::Convert::convert(lp_amount),

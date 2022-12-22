@@ -73,7 +73,7 @@ pub mod pallet {
 		storage::with_transaction,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
-			Time, TryCollect,
+			Time,
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
