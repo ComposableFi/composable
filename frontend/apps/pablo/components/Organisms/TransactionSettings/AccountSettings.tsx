@@ -92,7 +92,7 @@ const AccountSettings: React.FC<{}> = () => {
             fullWidth
           >
             <Image
-              src="/networks/polkadot_js.svg"
+              src="/networks/picasso.svg"
               width="24"
               height="24"
               alt="Polkadot.js"

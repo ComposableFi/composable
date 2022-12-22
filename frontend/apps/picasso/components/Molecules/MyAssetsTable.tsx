@@ -1,36 +1,28 @@
 import * as React from "react";
+import { useEffect } from "react";
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
   TableContainer,
+  TableContainerProps,
   TableHead,
   TableRow,
-  Box,
   Typography,
-  TableContainerProps,
 } from "@mui/material";
-import { TokenAsset } from "../Atom";
 import BigNumber from "bignumber.js";
 import { NoAssetsCover } from "./NoAssetsCover";
 import { TokenId } from "tokens";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { useStore } from "@/stores/root";
-import { PriceHashMap } from "@/stores/defi/stats/apollo";
+import { subscribeCoingeckoPrices } from "@/stores/defi/coingecko";
+import { useCoingecko } from "coingecko";
+import { TokenAsset } from "../Atom/TokenAsset";
 
 export type MyAssetsTableProps = TableContainerProps & {
   tokensToList: TokenId[];
 };
-
-function getPrice(
-  map: PriceHashMap,
-  token: TokenMetadata,
-  key: "open" | "close"
-): BigNumber {
-  return !!map[token.symbol] && !!map[token.symbol][key]
-    ? (map[token.symbol][key] as BigNumber)
-    : new BigNumber(0);
-}
 
 export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({
   tokensToList,
@@ -42,11 +34,11 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({
   const balances = useStore(
     ({ substrateBalances }) => substrateBalances.balances.picasso
   );
-  // dont know whether to use binance or our oracle here
-  // for now using oracle
-  const { binanceAssets, oracleAssets } = useStore(
-    ({ statsApollo }) => statsApollo
-  );
+  const prices = useCoingecko((state) => state.prices);
+
+  useEffect(() => {
+    return subscribeCoingeckoPrices();
+  }, []);
 
   if (tokenList && tokenList.length > 0) {
     return (
@@ -63,12 +55,8 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({
           </TableHead>
           <TableBody>
             {tokenList.map((row: TokenMetadata) => {
-              const openPrice = getPrice(oracleAssets, row, "open");
-              const closePrice = getPrice(oracleAssets, row, "open");
-              const change_24hr = openPrice
-                .minus(closePrice)
-                .div(openPrice.eq(0) ? 1 : openPrice)
-                .toNumber();
+              const price = prices[row.id].usd;
+              const change_24hr = prices[row.id].usd_24h_change;
               const balance = balances[row.id].balance;
               if (row.symbol) {
                 return (
@@ -79,7 +67,7 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({
                     <TableCell align="left">
                       {/* Needs work */}
                       <Typography variant="body2">
-                        $ {openPrice.toFormat(row.decimalsToDisplay)}
+                        $ {price.toFormat(row.decimalsToDisplay)}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">
@@ -98,10 +86,7 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({
                     </TableCell>
                     <TableCell align="left">
                       <Typography variant="body2">
-                        $
-                        {balance
-                          .times(openPrice)
-                          .toFormat(row.decimalsToDisplay)}
+                        ${balance.times(price).toFormat(row.decimalsToDisplay)}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">
@@ -113,7 +98,7 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({
                         }
                       >
                         {change_24hr > 0 ? "+" : ""}
-                        {new BigNumber(change_24hr * 100).toFormat(
+                        {new BigNumber(change_24hr).toFormat(
                           row.decimalsToDisplay
                         )}
                         %

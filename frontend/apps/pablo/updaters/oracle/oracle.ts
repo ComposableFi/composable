@@ -20,9 +20,9 @@ function coinGeckoApiUrl(): string {
 function coinGeckoHeaders():
   | { headers: { x_cg_pro_api_key: string } }
   | undefined {
-    if (process.env.COINGECKO_KEY) {
-      return { headers: { x_cg_pro_api_key: process.env.COINGECKO_KEY! } };
-    }
+  if (process.env.COINGECKO_KEY) {
+    return { headers: { x_cg_pro_api_key: process.env.COINGECKO_KEY! } };
+  }
 }
 
 function coingeckoRequest(
@@ -60,8 +60,8 @@ export const subscription = useStore.subscribe(
           });
 
         const allTokenMetadata = Object.values(TOKENS);
-        coingeckoRequest(tokensToFetch as string[], vs_currencies).then(
-          (response: any) => {
+        coingeckoRequest(tokensToFetch as string[], vs_currencies)
+          .then((response: any) => {
             const tokenIdPrice = Object.entries(response.data) as [
               string,
               Record<OracleCurrency, number>
@@ -93,10 +93,10 @@ export const subscription = useStore.subscribe(
                 }
               }
             }
-          }
-        ).catch(err => {
-          console.log('[Coingecko] Oracle Subscription error', err.message);
-        });
+          })
+          .catch((err) => {
+            console.log("[Coingecko] Oracle Subscription error", err.message);
+          });
       }
     }
   }

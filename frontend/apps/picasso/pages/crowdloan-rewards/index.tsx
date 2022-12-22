@@ -10,7 +10,6 @@ import { useCrowdloanRewardsEligibility } from "@/stores/defi/polkadot/crowdloan
 import { DEFAULT_EVM_ID } from "@/defi/polkadot/constants";
 import Default from "@/components/Templates/Default";
 import Image from "next/image";
-import { CrowdloanRewardsSoon } from "@/components/Molecules/CrowdloanRewardSoon";
 
 const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();
@@ -69,7 +68,6 @@ const CrowdloanRewards: NextPage = () => {
             textAlign="center"
             subtitle="Claim your PICA rewards for both KSM and stablecoin contributions."
           />
-          <CrowdloanRewardsSoon />
         </Grid>
         <Grid item {...standardPageSize}>
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>

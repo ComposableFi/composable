@@ -1,4 +1,4 @@
-/** @type {import('next').NextConfig} */
+/** @type {import("next").NextConfig} */
 const withPWA = require("next-pwa")({
   dest: "public",
   skipWaiting: true, // Turn this to false once you're ready to deploy a banner to develop update prompt.
@@ -42,7 +42,8 @@ const nextConfig = {
     WEBSITE_VERSION: getVersion(),
     SUBSTRATE_PROVIDER_URL_STATEMINE:
       process.env.SUBSTRATE_PROVIDER_URL_STATEMINE,
-  COINGECKO_KEY: process.env.COINGECKO_KEY},
+    COINGECKO_KEY: process.env.COINGECKO_KEY,
+  },
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,

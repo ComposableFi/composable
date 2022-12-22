@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { SnackbarKey, useSnackbar } from "notistack";
 import React, { FC, useCallback, useEffect, useMemo, useRef } from "react";
-import { Asset, callbackGate } from "shared";
+import { Asset, callbackGate, subscanExtrinsicLink } from "shared";
 import {
   useDotSamaContext,
   useExecutor,
@@ -102,7 +102,7 @@ export const GasFeeDropdown: FC<Props> = ({
                   variant: "success",
                   isClosable: true,
                   persist: true,
-                  url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+                  url: subscanExtrinsicLink("picasso", txHash),
                 });
                 originalFeeItem.current = tokenId;
                 setFeeItem(tokenId);

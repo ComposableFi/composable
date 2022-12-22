@@ -147,7 +147,7 @@ export function getDestChainFee(
     case "picasso=>kusama":
       if (selectedToken === "ksm") {
         return {
-          fee: fromChainIdUnit(new BigNumber("51105801784")),
+          fee: fromChainIdUnit(new BigNumber("115232479")),
           token: tokens.ksm,
         };
       }

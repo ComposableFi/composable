@@ -2,7 +2,6 @@
 module.exports = {
   collectCoverageFrom: ["**/*.{ts,tsx}", "!**/*.d.ts", "!**/node_modules/**"],
   collectCoverage: false,
-  collectCoverageFrom: ["**/*.{ts,tsx}", "**/*.js", "!**/node_modules/**"],
   verbose: true,
   moduleNameMapper: {
     // Handle CSS imports (with CSS modules)
@@ -40,7 +39,7 @@ module.exports = {
     "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", { presets: ["next/babel"] }],
   },
   transformIgnorePatterns: [
-    "node_modules/(?!@polkadot|@integrations-lib/core/|@babel/runtime/helpers/esm/|@substrate)",
+    "node_modules/(?!@polkadot|axios|@integrations-lib/core/|@babel/runtime/helpers/esm/|@substrate)",
     "^.+\\.module\\.(css|sass|scss)$",
   ],
   testPathIgnorePatterns: [
