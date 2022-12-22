@@ -95,7 +95,7 @@ export function getPoolTVL(stats: GetStatsReturn): BigNumber {
   }
 
   return Object.values(stats).reduce((acc, cur) => {
-    acc = acc.plus(cur.total.volume.multipliedBy(cur.spotPrice));
+    acc = acc.plus(cur.total.liquidity.multipliedBy(cur.spotPrice));
 
     return acc;
   }, new BigNumber(0));
@@ -107,7 +107,7 @@ export function getPoolVolume(stats: GetStatsReturn): BigNumber {
   }
 
   return Object.values(stats).reduce((acc, cur) => {
-    acc = acc.plus(cur.total.liquidity.multipliedBy(cur.spotPrice));
+    acc = acc.plus(cur.total.volume.multipliedBy(cur.spotPrice));
 
     return acc;
   }, new BigNumber(0));
