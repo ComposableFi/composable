@@ -41,6 +41,7 @@
     "@polkadot/types-codec": "^9.6.2",
     "@polkadot/types-create": "^9.6.2",
     "@polkadot/types-known": "^9.6.2",
-    "@polkadot/types-support": "^9.6.2"
+    "@polkadot/types-support": "^9.6.2",
+    "axios": "1.2.1"
   }
 }

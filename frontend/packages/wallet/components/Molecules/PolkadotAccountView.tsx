@@ -2,6 +2,7 @@ import { ContentCopy, OpenInNew, RepeatRounded } from "@mui/icons-material";
 import {
   alpha,
   Box,
+  Button,
   Grid,
   IconButton,
   Stack,
@@ -83,7 +84,11 @@ export const PolkadotAccountView = ({
                   onChangeAccount();
                 }}
               >
-                <RepeatRounded />
+                <RepeatRounded
+                  sx={{
+                    fontSize: "1rem",
+                  }}
+                />
               </IconButton>
             </Typography>
           </Grid>
@@ -124,7 +129,11 @@ export const PolkadotAccountView = ({
                     color="primary"
                     size="small"
                   >
-                    <ContentCopy></ContentCopy>
+                    <ContentCopy
+                      sx={{
+                        fontSize: "1rem",
+                      }}
+                    />
                   </IconButton>
                   <IconButton
                     onClick={(_evt) => {
@@ -137,11 +146,21 @@ export const PolkadotAccountView = ({
                     color="primary"
                     size="small"
                   >
-                    <OpenInNew></OpenInNew>
+                    <OpenInNew
+                      sx={{
+                        fontSize: "1rem",
+                      }}
+                    />
                   </IconButton>
                 </Box>
               </Box>
-              <Box>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                }}
+              >
                 {nativeCurrencyIcon ? (
                   <Image src={nativeCurrencyIcon} height="16px" width="16px" />
                 ) : null}
@@ -162,16 +181,23 @@ export const PolkadotAccountView = ({
         </Grid>
 
         <Box>
-          <Typography
+          <Button
+            variant="text"
             onClick={onDisconnectWallet}
-            color={theme.palette.text.secondary}
-            variant="body2"
             sx={{
               cursor: "pointer",
+              color: theme.palette.text.secondary,
+              "&:hover": {
+                color: theme.palette.common.white,
+                background: "transparent",
+              },
+              padding: 0,
+              background: "transparent",
             }}
+            disableRipple
           >
             Disconnect
-          </Typography>
+          </Button>
         </Box>
       </Stack>
     </TabPanel>

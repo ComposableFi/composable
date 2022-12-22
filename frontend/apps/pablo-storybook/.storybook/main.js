@@ -36,6 +36,7 @@ module.exports = {
       "@/stores": path.resolve(__dirname, "..", "..", "pablo", "stores"),
       "@/store": path.resolve(__dirname, "..", "..", "pablo", "store"),
       "@/updaters": path.resolve(__dirname, "..", "..", "pablo", "updaters"),
+      "@/constants": path.resolve(__dirname, "..", "..", "pablo", "constants"),
     };
 
     return config;

@@ -1,0 +1,13 @@
+{
+  "name": "coingecko",
+  "version": "1.0.0",
+  "peerDependencies": {
+    "zustand": "*",
+    "bignumber.js": "*",
+    "fp-ts": "*"
+  },
+  "dependencies": {
+    "axios": "^1.2.1",
+    "tokens": "*"
+  }
+}

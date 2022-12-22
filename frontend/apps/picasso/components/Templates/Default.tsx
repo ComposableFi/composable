@@ -1,5 +1,5 @@
 import * as React from "react";
-import { FC, ReactNode } from "react";
+import { FC, ReactNode, useState } from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -8,10 +8,16 @@ import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import { NavBar } from "../Molecules";
-import { alpha, Breadcrumbs, Typography, useTheme } from "@mui/material";
-import { useTablet } from "@/hooks/responsive";
+import {
+  alpha,
+  Breadcrumbs,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { GlobalSettings } from "../Organisms/Settings/GlobalSettings";
+import { ExternalLinksDropdown } from "@/components/Molecules/ExternalLinksDropdown";
 
 type DefaultLayoutProps = {
   breadcrumbs?: ReactNode[];
@@ -19,9 +25,9 @@ type DefaultLayoutProps = {
 
 export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
   const { children, breadcrumbs } = props;
-  const [mobileOpen, setMobileOpen] = React.useState(false);
-  const isTablet = useTablet();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useTheme();
+  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
   const drawerWidth = isTablet ? 240 : 320;
 
   const handleDrawerToggle = () => {
@@ -64,6 +70,7 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
           <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
             <GlobalSettings />
             <PolkadotConnect />
+            <ExternalLinksDropdown />
           </Box>
           {breadcrumbs && (
             <Breadcrumbs separator="›" aria-label="breadcrumb">

@@ -9,11 +9,10 @@ import {
 } from "@/stores/defi/polkadot/transfers/subscribers";
 import React, { FC, useEffect, useMemo } from "react";
 import { useValidation } from "@/components/Molecules/BigNumberInput/hooks";
-import { Tooltip, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { calculateTransferAmount } from "@/defi/polkadot/pallets/Transfer";
 import { useTransfer } from "@/defi/polkadot/hooks";
 import BigNumber from "bignumber.js";
-import { InfoTwoTone } from "@mui/icons-material";
 import { FEE_MULTIPLIER } from "shared/defi/constants";
 
 export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
@@ -145,17 +144,6 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
                 <Typography variant="inputLabel" ml={0.5}>
                   {humanBalance(balance) + " " + tokens[tokenId].symbol}
                 </Typography>
-                <Tooltip
-                  arrow
-                  placement="top"
-                  title={`${balance.toFixed()} ${tokens[tokenId].symbol}`}
-                  color="primary"
-                  sx={{
-                    fontSize: "1rem",
-                  }}
-                >
-                  <InfoTwoTone />
-                </Tooltip>
               </>
             ),
           },

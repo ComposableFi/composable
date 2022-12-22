@@ -1,10 +1,4 @@
-import {
-  alpha,
-  CommonColors,
-  createTheme,
-  PaletteMode,
-  ThemeOptions,
-} from "@mui/material";
+import { alpha, createTheme, PaletteMode, ThemeOptions } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { OverridesStyleRules } from "@mui/material/styles/overrides";
 import { Shadows } from "@mui/material/styles/shadows";
@@ -286,7 +280,7 @@ const buttonOverrides: Partial<OverridesStyleRules> = {
     containedPrimary: {
       backgroundColor: brandPalette.primary.light,
       "&:hover": {
-        backgroundColor: alpha(brandPalette.primary.light, 0.1),
+        backgroundColor: brandPalette.secondary.main,
       },
       "&:disabled": {
         backgroundColor: brandPalette.secondary.light,
@@ -513,6 +507,22 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
             "& .MuiListItemText-primary": {
               color: theme.palette.common.white,
             },
+          },
+        },
+        button: {
+          "&:hover": {
+            background: alpha(brandPalette.primary.main, 0.05),
+          },
+        },
+      },
+    },
+    MuiDrawer: {
+      styleOverrides: {
+        paperAnchorLeft: {
+          msOverflownStyle: "none",
+          scrollbarWidth: "none",
+          "&::-webkit-scrollbar": {
+            display: "none",
           },
         },
       },
