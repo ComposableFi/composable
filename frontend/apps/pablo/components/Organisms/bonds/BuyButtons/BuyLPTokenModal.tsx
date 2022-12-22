@@ -6,11 +6,9 @@ import { FormTitle } from "../../FormTitle";
 import { getToken } from "tokens";
 import { BigNumberInput } from "@/components/Atoms";
 import { TransactionSettings } from "../../TransactionSettings";
-import { PoolShare } from "../PoolShare";
 import BigNumber from "bignumber.js";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { setUiState } from "@/store/ui/ui.slice";
-import { Asset } from "shared";
 
 const containerProps = (theme: Theme) => ({
   p: 4,
@@ -58,9 +56,6 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
   const [amount2, setAmount2] = useState<BigNumber>(new BigNumber(0));
   const token1 = getToken(bond.tokenId1);
   const token2 = getToken(bond.tokenId2);
-  const [price] = useState<BigNumber>(new BigNumber(0.1));
-  const [revertPrice] = useState<BigNumber>(new BigNumber(10));
-  const [share] = useState<BigNumber>(new BigNumber(3.3));
 
   const onSettingHandler = () => {
     setUiState({ isTransactionSettingsModalOpen: true });
@@ -130,16 +125,6 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
             }}
           />
         </Box>
-
-        <PoolShare
-          mt={4}
-          assetOne={new Asset("", "", "", "ksm", undefined)}
-          assetTwo={new Asset("", "", "", "pica", undefined)}
-          poolShare={{}}
-          price={price}
-          revertPrice={revertPrice}
-          share={share}
-        />
 
         <Box mt={4}>
           <Button

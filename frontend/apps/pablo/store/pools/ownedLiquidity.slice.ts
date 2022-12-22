@@ -17,12 +17,14 @@ const NullLiquidity: LPTokenState = {
 const createOwnedLiquiditySLice: StoreSlice<OwnedLiquiditySlice> = (set) => ({
   ownedLiquidity: {
     tokens: {},
+    isLoaded: false,
     setOwnedLiquidity: (lpTokenId: LPTokenId, balance, pair, poolId) => {
       set((state) => {
         state.ownedLiquidity.tokens[lpTokenId] = { ...NullLiquidity };
         state.ownedLiquidity.tokens[lpTokenId].balance = balance;
         state.ownedLiquidity.tokens[lpTokenId].pair = pair;
         state.ownedLiquidity.tokens[lpTokenId].poolId = poolId;
+        state.ownedLiquidity.isLoaded = true;
       });
     },
   },

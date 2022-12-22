@@ -27,6 +27,7 @@ import {
   useSelectedAccount,
 } from "substrate-react";
 import { usePoolRatio } from "@/defi/hooks/pools/usePoolRatio";
+import BigNumber from "bignumber.js";
 
 const USER_NO_POOL = "You currently do not have any active liquidity pool.";
 
@@ -35,13 +36,10 @@ const tableHeaders: TableHeader[] = [
     header: "Pools",
   },
   {
-    header: "",
+    header: "Total value locked",
   },
   {
-    header: "",
-  },
-  {
-    header: "",
+    header: "Volume",
   },
   {
     header: "Balance",
@@ -148,15 +146,20 @@ const OwnedLiquidityPoolRow: FC<OwnedLiquidityRowProps> = ({
   userLiquidity,
 }) => {
   const pair = pool.config.assets;
-  const balance = userLiquidity[pool.config.lpToken].balance;
-  const { userVolume, userTVL } = usePoolRatio(pool);
+  const balance = userLiquidity[pool.config.lpToken]?.balance ?? {
+    free: new BigNumber(0),
+    locked: new BigNumber(0),
+  };
 
+  const { userVolume, userTVL } = usePoolRatio(pool);
+  if (!userLiquidity[pool.config.lpToken]) {
+    return <TableRow></TableRow>;
+  }
   return (
     <TableRow onClick={() => onClick(pool.poolId)} sx={{ cursor: "pointer" }}>
       <TableCell align="left">
         <PairAsset assets={pair} separator="/" />
       </TableCell>
-      <TableCell align="left"></TableCell>
       <TableCell align="left">${userTVL.toFormat(0)}</TableCell>
       <TableCell align="left">${userVolume.toFormat(0)}</TableCell>
       <TableCell align="left">

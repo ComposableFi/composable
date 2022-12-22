@@ -2,14 +2,17 @@ import {
   alpha,
   Box,
   BoxProps,
+  CircularProgress,
   Theme,
   Typography,
   useTheme,
 } from "@mui/material";
 import BigNumber from "bignumber.js";
-import { FC } from "react";
-import { PoolAmount } from "@/store/pools/types";
+import { FC, useEffect, useState } from "react";
+import { PoolConfig } from "@/store/pools/types";
 import { Asset } from "shared";
+import { getStats, GetStatsReturn } from "@/defi/utils";
+import useStore from "@/store/useStore";
 
 const itemBoxPropsSX = (theme: Theme) =>
   ({
@@ -48,24 +51,56 @@ const ItemBox: React.FC<ItemBoxProps> = ({ value, label }) => {
 };
 
 export type PoolShareProps = {
-  poolShare: PoolAmount;
-  assetOne: Asset;
-  assetTwo: Asset;
-  price: BigNumber;
-  revertPrice: BigNumber;
-  share: BigNumber;
+  pool: PoolConfig;
+  input: [Asset, Asset];
+  amounts: [BigNumber, BigNumber];
 } & BoxProps;
 
 export const PoolShare: FC<PoolShareProps> = ({
-  poolShare,
-  assetOne,
-  assetTwo,
-  price,
-  revertPrice,
-  share,
+  pool,
+  input,
+  amounts,
   ...rest
 }) => {
-  // TODO:Implement pool share
+  const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
+  const [stats, setStats] = useState<GetStatsReturn>(null);
+  useEffect(() => {
+    if (isPoolsLoaded && pool) {
+      getStats(pool).then((result) => {
+        setStats(result);
+      });
+    }
+  }, [isPoolsLoaded, pool]);
+
+  const [assetLeft, assetRight] = input;
+  const [amountLeft, amountRight] = amounts;
+  if (!stats) return <CircularProgress />;
+
+  const spotPriceOfATOB = stats[
+    assetLeft.getPicassoAssetId().toString()
+  ].spotPrice.isZero()
+    ? amountLeft.div(amountRight).isNaN()
+      ? new BigNumber(0)
+      : amountLeft.div(amountRight)
+    : stats[assetLeft.getPicassoAssetId().toString()].spotPrice;
+  const spotPriceOfBToA = stats[
+    assetRight.getPicassoAssetId().toString()
+  ].spotPrice.isZero()
+    ? amountRight.div(amountLeft).isNaN()
+      ? new BigNumber(0)
+      : amountRight.div(amountLeft)
+    : stats[assetRight.getPicassoAssetId().toString()].spotPrice;
+  const totalLiquidityA =
+    stats[assetLeft.getPicassoAssetId().toString()].total.liquidity;
+  const totalLiquidityB =
+    stats[assetRight.getPicassoAssetId().toString()].total.liquidity;
+  const ratioA = totalLiquidityA.isZero()
+    ? 100
+    : amountLeft.div(totalLiquidityA).multipliedBy(100).toNumber();
+  const ratioB = totalLiquidityB.isZero()
+    ? 100
+    : amountRight.div(totalLiquidityB).multipliedBy(100).toNumber();
+
   return (
     <Box mt={4} {...rest}>
       <Typography variant="inputLabel">Price and pool share</Typography>
@@ -76,14 +111,17 @@ export const PoolShare: FC<PoolShareProps> = ({
         flexDirection={{ sm: "column", md: "row" }}
       >
         <ItemBox
-          value={price.toFixed(2)}
-          label={`${assetTwo.getSymbol()} per ${assetOne.getSymbol()}`}
+          value={spotPriceOfATOB.toFixed(2)}
+          label={`${assetLeft.getSymbol()} per ${assetRight.getSymbol()}`}
         />
         <ItemBox
-          value={revertPrice.toFixed(2)}
-          label={`${assetOne.getSymbol()} per ${assetTwo.getSymbol()}`}
+          value={spotPriceOfBToA.toFixed(2)}
+          label={`${assetRight.getSymbol()} per ${assetLeft.getSymbol()}`}
         />
-        <ItemBox value={`${share.toFixed()}%`} label="Share of pool" />
+        <ItemBox
+          value={`${((ratioA + ratioB) / 2).toFixed()}%`}
+          label="Share of pool"
+        />
       </Box>
     </Box>
   );
