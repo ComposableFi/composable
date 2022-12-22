@@ -772,7 +772,7 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let minted_lp = match pool {
+			let (minted_lp, actual_deposited_amounts) = match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) =>
 					DualAssetConstantProduct::<T>::add_liquidity(
 						who,
@@ -800,7 +800,7 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::LiquidityAdded {
 				who: who.clone(),
 				pool_id,
-				asset_amounts: assets,
+				asset_amounts: actual_deposited_amounts,
 				minted_lp,
 			});
 			Ok(minted_lp)

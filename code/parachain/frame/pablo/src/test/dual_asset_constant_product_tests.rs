@@ -1136,3 +1136,84 @@ mod twap {
 		});
 	}
 }
+
+#[test]
+fn add_lp_amounts_get_normalized() {
+	new_test_ext().execute_with(|| {
+		next_block::<Pablo, Test>();
+
+		#[allow(non_camel_case_types)]
+		type FIRST_ASSET = currency::Currency<1337>;
+		#[allow(non_camel_case_types)]
+		type SECOND_ASSET = currency::Currency<1738>;
+
+		let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
+			owner: ALICE,
+			assets_weights: dual_asset_pool_weights(
+				FIRST_ASSET::ID,
+				Permill::from_percent(50_u32),
+				SECOND_ASSET::ID,
+			),
+			fee: Permill::zero(),
+		};
+
+		let init_first_asset_amount = FIRST_ASSET::units(200);
+		let init_second_asset_amount = SECOND_ASSET::units(100);
+		let first_asset_amount = FIRST_ASSET::units(10);
+		let second_asset_amount = SECOND_ASSET::units(10);
+
+		let assets_with_init_amounts = BTreeMap::from([
+			(FIRST_ASSET::ID, init_first_asset_amount),
+			(SECOND_ASSET::ID, init_second_asset_amount),
+		]);
+
+		let assets_with_amounts = BTreeMap::from([
+			(FIRST_ASSET::ID, first_asset_amount),
+			(SECOND_ASSET::ID, second_asset_amount),
+		]);
+
+		let pool_id = create_pool_from_config(pool_init_config);
+
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(FIRST_ASSET::ID, &ALICE, init_first_asset_amount));
+		assert_ok!(Tokens::mint_into(SECOND_ASSET::ID, &ALICE, init_second_asset_amount));
+
+		dbg!();
+
+		// Add the liquidity, min amount = 0
+		Test::assert_extrinsic_event(
+			Pablo::add_liquidity(
+				Origin::signed(ALICE),
+				pool_id,
+				assets_with_init_amounts.clone(),
+				0,
+				false,
+			),
+			crate::Event::<Test>::LiquidityAdded {
+				who: ALICE,
+				pool_id: 0,
+				asset_amounts: assets_with_init_amounts,
+				minted_lp: 282_842_712_193_942,
+			},
+		);
+
+		dbg!();
+
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(FIRST_ASSET::ID, &BOB, first_asset_amount));
+		assert_ok!(Tokens::mint_into(SECOND_ASSET::ID, &BOB, second_asset_amount));
+
+		Test::assert_extrinsic_event(
+			Pablo::add_liquidity(Origin::signed(BOB), pool_id, assets_with_amounts, 0, false),
+			crate::Event::<Test>::LiquidityAdded {
+				who: BOB,
+				pool_id: 0,
+				asset_amounts: BTreeMap::from([
+					(FIRST_ASSET::ID, FIRST_ASSET::units(10)),
+					(SECOND_ASSET::ID, SECOND_ASSET::units(5)),
+				]),
+				minted_lp: 14_142_135_609_697,
+			},
+		);
+	});
+}
