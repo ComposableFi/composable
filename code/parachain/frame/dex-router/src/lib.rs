@@ -32,7 +32,7 @@ pub mod pallet {
 	use composable_support::math::safe::SafeArithmetic;
 	use composable_traits::{
 		defi::CurrencyPair,
-		dex::{Amm, AssetAmount, DexRoute, DexRouter, RedeemableAssets, SwapResult},
+		dex::{Amm, AssetAmount, DexRoute, DexRouter, SwapResult},
 	};
 	use core::fmt::Debug;
 	use frame_support::{pallet_prelude::*, transactional, PalletId};
@@ -240,6 +240,8 @@ pub mod pallet {
 			min_receive: BTreeMap<T::AssetId, T::Balance>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
+			// REVIEW(benluelo): With the changes to the semantics of min_receive in
+			// Amm::remove_liquidity, this is no longer required
 			ensure!(min_receive.len() == 2, Error::<T>::OnlyDualAssetPoolsSupported);
 			let assets_vec = min_receive.keys().copied().collect::<Vec<_>>();
 			let asset_pair = pool_id_pair::<T>(
@@ -427,7 +429,7 @@ pub mod pallet {
 		fn redeemable_assets_for_lp_tokens(
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
+		) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
 				[pool_id] => T::Pablo::redeemable_assets_for_lp_tokens(pool_id, lp_amount),

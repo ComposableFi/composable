@@ -27,7 +27,7 @@ impl Default for ProxyType {
 		Self::Any
 	}
 }
-/// TODO (vim): Upstream the following APIs to Substrate/pallet-proxy and use.
+
 /// The parameters under which a particular account has a proxy relationship with some other
 /// account.
 #[derive(

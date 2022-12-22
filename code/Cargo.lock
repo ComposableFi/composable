@@ -1597,7 +1597,6 @@ version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-tests-helpers",
- "composable-traits",
  "frame-support",
  "frame-system",
  "parity-scale-codec",

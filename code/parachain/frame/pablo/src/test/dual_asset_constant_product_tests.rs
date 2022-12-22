@@ -249,8 +249,8 @@ fn test_redeemable_assets() {
 		// if we want to redeem all lp token, it must give same values as used for add_liquidity
 		let redeemable_assets = <Pablo as Amm>::redeemable_assets_for_lp_tokens(pool_id, lp)
 			.expect("redeemable_assets failed");
-		let base_amount = *redeemable_assets.assets.get(&BTC).expect("Invalid asset");
-		let quote_amount = *redeemable_assets.assets.get(&USDT).expect("Invalid asset");
+		let base_amount = *redeemable_assets.get(&BTC).expect("Invalid asset");
+		let quote_amount = *redeemable_assets.get(&USDT).expect("Invalid asset");
 
 		assert_ok!(default_acceptable_computation_error(base_amount, initial_btc));
 		assert_ok!(default_acceptable_computation_error(quote_amount, initial_usdt));
@@ -357,7 +357,7 @@ fn add_lp_with_min_mint_amount() {
 			crate::Event::<Test>::LiquidityAdded {
 				who: ALICE,
 				pool_id: 0,
-				asset_amounts: assets_with_init_amounts.into(),
+				asset_amounts: assets_with_init_amounts,
 				minted_lp: 199_999_999_814_806,
 			},
 		);

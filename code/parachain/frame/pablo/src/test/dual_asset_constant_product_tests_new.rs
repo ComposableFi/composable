@@ -75,7 +75,7 @@ fn add_remove_lp() {
 			crate::Event::LiquidityAdded {
 				who: ALICE,
 				pool_id,
-				asset_amounts: assets_with_amounts.into(),
+				asset_amounts: assets_with_amounts,
 				minted_lp: 199_999_999_814_806,
 			},
 		);
@@ -100,7 +100,7 @@ fn add_remove_lp() {
 			crate::Event::LiquidityAdded {
 				who: BOB,
 				pool_id,
-				asset_amounts: assets_with_next_amounts.into(),
+				asset_amounts: assets_with_next_amounts,
 				minted_lp: 19999999981480,
 			},
 		);
@@ -444,5 +444,132 @@ mod remove_liquidity {
 		// buys
 		assert!(with_buys.0 > without_buys.0);
 		assert!(with_buys.1 > without_buys.1);
+	}
+}
+
+mod integration {
+	use super::*;
+
+	#[test]
+	fn split_lp_tokens_then_remove() {
+		new_test_ext().execute_with(|| {
+			process_and_progress_blocks::<Pablo, Test>(1);
+
+			// Create pool
+			let fee = Permill::from_rational::<u32>(3, 1000);
+			// 50/50 BTC/USDT Pool with a 0.3% fee
+			let init_config = PoolInitConfiguration::DualAssetConstantProduct {
+				owner: ALICE,
+				assets_weights: dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT),
+				fee,
+			};
+			let pool_id = create_pool_from_config(init_config);
+			let lp_token = lp_token_of_pool(pool_id);
+
+			// Mint tokens for adding liquidity
+			let initial_btc = 512_000_000_000;
+			let initial_usdt = 512_000_000_000;
+			// Alice
+			assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
+			assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+
+			// Add liquidity
+			// Alice
+			assert_ok!(Pablo::add_liquidity(
+				Origin::signed(ALICE),
+				pool_id,
+				BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
+				0,
+				false
+			));
+
+			let alice_lpt_balance = Tokens::balance(lp_token, &ALICE);
+			Tokens::transfer(Origin::signed(ALICE), CHARLIE, lp_token, alice_lpt_balance / 2)
+				.expect("Alice has tokens");
+			let alice_lpt_balance = Tokens::balance(lp_token, &ALICE);
+			let charlie_lpt_balance = Tokens::balance(lp_token, &CHARLIE);
+
+			let min_receive = || BTreeMap::from([(BTC, 0), (USDT, 0)]);
+
+			// Remove liquidity
+			// Charlie
+			let pool_btc_pre_charlie_withdraw = Tokens::balance(BTC, &Pablo::account_id(&pool_id));
+			let pool_usdt_pre_charlie_withdraw =
+				Tokens::balance(USDT, &Pablo::account_id(&pool_id));
+			let total_lp_pre_charlie_withdraw = Tokens::total_issuance(lp_token);
+			let expected_charlie_btc =
+				composable_maths::dex::constant_product::compute_redeemed_for_lp(
+					total_lp_pre_charlie_withdraw,
+					charlie_lpt_balance,
+					pool_btc_pre_charlie_withdraw,
+					Permill::one(),
+				)
+				.expect("input will does not overflow");
+			let expected_charlie_usdt =
+				composable_maths::dex::constant_product::compute_redeemed_for_lp(
+					total_lp_pre_charlie_withdraw,
+					charlie_lpt_balance,
+					pool_usdt_pre_charlie_withdraw,
+					Permill::one(),
+				)
+				.expect("input will does not overflow");
+			Test::assert_extrinsic_event(
+				Pablo::remove_liquidity(
+					Origin::signed(CHARLIE),
+					pool_id,
+					charlie_lpt_balance,
+					min_receive(),
+				),
+				crate::Event::LiquidityRemoved {
+					who: CHARLIE,
+					pool_id,
+					asset_amounts: BTreeMap::from([
+						(BTC, expected_charlie_btc),
+						(USDT, expected_charlie_usdt),
+					]),
+				},
+			);
+			// Alice
+			let pool_btc_pre_alice_withdraw = Tokens::balance(BTC, &Pablo::account_id(&pool_id));
+			let pool_usdt_pre_alice_withdraw = Tokens::balance(USDT, &Pablo::account_id(&pool_id));
+			let total_lp_pre_alice_withdraw = Tokens::total_issuance(lp_token);
+			let expected_alice_btc =
+				composable_maths::dex::constant_product::compute_redeemed_for_lp(
+					total_lp_pre_alice_withdraw,
+					alice_lpt_balance,
+					pool_btc_pre_alice_withdraw,
+					Permill::one(),
+				)
+				.expect("input will does not overflow");
+			let expected_alice_usdt =
+				composable_maths::dex::constant_product::compute_redeemed_for_lp(
+					total_lp_pre_alice_withdraw,
+					alice_lpt_balance,
+					pool_usdt_pre_alice_withdraw,
+					Permill::one(),
+				)
+				.expect("input will does not overflow");
+			Test::assert_extrinsic_event(
+				Pablo::remove_liquidity(
+					Origin::signed(ALICE),
+					pool_id,
+					alice_lpt_balance,
+					min_receive(),
+				),
+				crate::Event::LiquidityRemoved {
+					who: ALICE,
+					pool_id,
+					asset_amounts: BTreeMap::from([
+						(BTC, expected_alice_btc),
+						(USDT, expected_alice_usdt),
+					]),
+				},
+			);
+
+			assert_eq!(Tokens::balance(BTC, &ALICE), expected_alice_btc);
+			assert_eq!(Tokens::balance(USDT, &ALICE), expected_alice_usdt);
+			assert_eq!(Tokens::balance(BTC, &CHARLIE), expected_charlie_btc);
+			assert_eq!(Tokens::balance(USDT, &CHARLIE), expected_charlie_usdt);
+		})
 	}
 }
