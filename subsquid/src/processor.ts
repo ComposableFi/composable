@@ -1,7 +1,7 @@
 import { SubstrateProcessor } from "@subsquid/substrate-processor";
 import { TypeormDatabase } from "@subsquid/typeorm-store";
 
-import { archive, chain } from "./config";
+import { archive, chain, firstBlock } from "./config";
 import {
   processLiquidityAddedEvent,
   processLiquidityRemovedEvent,
@@ -33,13 +33,8 @@ const processor = new SubstrateProcessor(new TypeormDatabase());
 const chainConnectionString = chain();
 const archiveConnectionString = archive();
 
-// Start from a block close to this runtime upgrade from Picasso
-// https://picasso.subscan.io/extrinsic/0xc875c8916e23c119f1d4202914dd0f28304aff62e46b0d51fed9b34e0aa30d9c
-// const FIRST_BLOCK = chainConnectionString === "picasso" ? 1_227_000 : 0;
-const FIRST_BLOCK = 0;
-
 processor.setBlockRange({
-  from: FIRST_BLOCK,
+  from: firstBlock(),
 });
 
 console.log(`Chain ${chainConnectionString}`);

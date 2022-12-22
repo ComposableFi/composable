@@ -24,3 +24,13 @@ export const archive = (): string => {
 
   return "http://127.0.0.1:8888/graphql";
 };
+
+export const firstBlock = (): number => {
+  const relayChain = chain();
+  if (relayChain === "wss://rpc.composablenodes.tech") {
+    // Start from a block close to this runtime upgrade from Picasso
+    // https://picasso.subscan.io/extrinsic/0xc875c8916e23c119f1d4202914dd0f28304aff62e46b0d51fed9b34e0aa30d9c
+    return 1_227_000;
+  }
+  return 0;
+};
