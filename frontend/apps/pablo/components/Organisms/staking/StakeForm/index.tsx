@@ -76,9 +76,7 @@ export const StakeForm: FC<
           },
         }}
         EndAdornmentAssetProps={{
-          assets: pabloAsset
-            ? [{ icon: pabloAsset.getIconUrl(), label: pabloAsset.getSymbol() }]
-            : [],
+          assets: pabloAsset ? [] : [],
         }}
       />
 

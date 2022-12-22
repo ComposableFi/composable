@@ -1,15 +1,18 @@
 import { Executor } from "substrate-react";
 import { ApiPromise } from "@polkadot/api";
-import { toChainUnits } from "@/defi/utils";
 import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
-import { useSnackbar, VariantType } from "notistack";
+import { useSnackbar } from "notistack";
 import { Signer } from "@polkadot/api/types";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { setUiState } from "@/store/ui/ui.slice";
-import { DualAssetConstantProduct } from "shared";
 import BigNumber from "bignumber.js";
 import router from "next/router";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
+import { DEFAULT_NETWORK_ID, toChainUnits } from "@/defi/utils";
+import { getAssetTree } from "@/components/Organisms/pool/AddLiquidity/utils";
+import { pipe } from "fp-ts/lib/function";
+import { option } from "fp-ts";
+import { subscanExtrinsicLink } from "shared";
 
 const TxOrigin = "Add Liquidity";
 
@@ -24,30 +27,30 @@ export function transactionStatusSnackbarMessage(
 /**
  * Later: move to snackbar utils
  */
-export const SNACKBAR_TYPES: Record<string, { variant: VariantType }> = {
-  ERROR: { variant: "error" },
-  SUCCESS: { variant: "success" },
-  INFO: { variant: "info" },
+export const SNACKBAR_TYPES: Record<string, any> = {
+  ERROR: { variant: "error", persist: true, isClosable: true },
+  SUCCESS: { variant: "success", persist: true, isClosable: true },
+  INFO: { variant: "info", persist: true, isClosable: true },
 };
 
 export const useAddLiquidity = ({
   selectedAccount,
   executor,
   parachainApi,
-  assetOne,
-  assetTwo,
   assetOneAmount,
   assetTwoAmount,
+  assetInId,
+  assetOutId,
   lpReceiveAmount,
-  pool,
+  poolId,
   signer,
 }: {
   selectedAccount: InjectedAccountWithMeta | undefined;
   executor: Executor | undefined;
   parachainApi: ApiPromise | undefined;
-  assetOne: string | undefined;
-  assetTwo: string | undefined;
-  pool: DualAssetConstantProduct | undefined;
+  poolId: string | undefined;
+  assetInId: string | null;
+  assetOutId: string | null;
   assetOneAmount: BigNumber;
   assetTwoAmount: BigNumber;
   lpReceiveAmount: BigNumber;
@@ -55,39 +58,12 @@ export const useAddLiquidity = ({
 }) => {
   const { enqueueSnackbar } = useSnackbar();
 
-  const { baseAmount, quoteAmount } = useMemo(() => {
-    if (!pool || !assetOne)
-      return {
-        baseAmount: undefined,
-        quoteAmount: undefined,
-      };
-
-    const pair = Object.keys(pool.getAssets().assets);
-    let isReversed = pair[0].toString() !== assetOne;
-    return {
-      baseAmount: toChainUnits(
-        isReversed ? assetTwoAmount : assetOneAmount
-      ).toString(),
-      quoteAmount: toChainUnits(
-        isReversed ? assetOneAmount : assetTwoAmount
-      ).toString(),
-    };
-  }, [pool, assetOne, assetOneAmount, assetTwoAmount]);
-
-  const _lpReceiveAmount = useMemo(() => {
-    return toChainUnits(lpReceiveAmount).toString();
-  }, [lpReceiveAmount]);
-
   const onTxReady = useCallback(
-    (transactionHash: string) => {
-      enqueueSnackbar(
-        transactionStatusSnackbarMessage(
-          TxOrigin,
-          transactionHash,
-          "Initiated"
-        ),
-        SNACKBAR_TYPES.INFO
-      );
+    (hash: string) => {
+      enqueueSnackbar(`${TxOrigin}: Initiated`, {
+        ...SNACKBAR_TYPES.INFO,
+        ...{ url: subscanExtrinsicLink(DEFAULT_NETWORK_ID, hash) },
+      });
       setUiState({
         isConfirmingSupplyModalOpen: true,
         isConfirmSupplyModalOpen: false,
@@ -97,29 +73,24 @@ export const useAddLiquidity = ({
   );
 
   const onTxFinalized = useCallback(
-    (transactionHash: string, _eventRecords: any[]) => {
-      enqueueSnackbar(
-        transactionStatusSnackbarMessage(
-          TxOrigin,
-          transactionHash,
-          "Finalized"
-        ),
-        SNACKBAR_TYPES.SUCCESS
-      );
+    (hash: string, _eventRecords: any[]) => {
+      enqueueSnackbar(`${TxOrigin}: Finalized`, {
+        ...SNACKBAR_TYPES.SUCCESS,
+        ...{ url: subscanExtrinsicLink(DEFAULT_NETWORK_ID, hash) },
+      });
       resetAddLiquiditySlice();
-      const poolId = pool?.getPoolId() as string;
       router.push("/pool/select/" + poolId);
       setUiState({ isConfirmingSupplyModalOpen: false });
     },
-    [pool, enqueueSnackbar]
+    [poolId, enqueueSnackbar]
   );
 
   const onTxError = useCallback(
     (transactionError: string) => {
-      enqueueSnackbar(
-        transactionStatusSnackbarMessage(TxOrigin, transactionError, "Error"),
-        SNACKBAR_TYPES.ERROR
-      );
+      enqueueSnackbar(`${TxOrigin}: Error`, {
+        ...SNACKBAR_TYPES.ERROR,
+        ...{ description: transactionError },
+      });
       setUiState({ isConfirmingSupplyModalOpen: false });
     },
     [enqueueSnackbar]
@@ -131,27 +102,39 @@ export const useAddLiquidity = ({
         !selectedAccount ||
         !parachainApi ||
         !executor ||
-        !assetOne ||
-        !baseAmount ||
-        !quoteAmount ||
-        !assetTwo ||
         !signer ||
-        !pool
+        !poolId ||
+        !assetInId ||
+        !assetOutId
       ) {
-        throw new Error("Missing dependencies.");
+        return () => {};
       }
+      const assetTree = pipe(
+        getAssetTree(
+          {
+            assetIdOnChain: assetInId,
+            balance: assetOneAmount,
+          },
+          {
+            assetIdOnChain: assetOutId,
+            balance: assetTwoAmount,
+          }
+        ),
+        option.toNullable
+      );
+
+      if (!assetTree) return () => {};
 
       setUiState({ isConfirmingSupplyModalOpen: false });
 
       await executor.execute(
         parachainApi.tx.pablo.addLiquidity(
-          pool.getPoolId() as string,
+          poolId,
+          parachainApi.createType("BTreeMap<u128, u128>", assetTree),
           parachainApi.createType(
-            "BTreeMap<u128, u128>",
-            baseAmount,
-            quoteAmount
+            "u128",
+            toChainUnits(lpReceiveAmount).toString()
           ),
-          _lpReceiveAmount,
           true
         ),
         selectedAccount.address,
@@ -172,13 +155,13 @@ export const useAddLiquidity = ({
     selectedAccount,
     parachainApi,
     executor,
-    assetOne,
-    baseAmount,
-    quoteAmount,
-    assetTwo,
     signer,
-    pool,
-    _lpReceiveAmount,
+    poolId,
+    assetInId,
+    assetOutId,
+    assetOneAmount,
+    assetTwoAmount,
+    lpReceiveAmount,
     onTxReady,
     onTxFinalized,
     onTxError,

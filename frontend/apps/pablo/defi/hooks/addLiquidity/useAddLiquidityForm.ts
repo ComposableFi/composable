@@ -29,7 +29,7 @@ export const useAddLiquidityForm = () => {
     if (pool) {
       const pair = Object.keys(pool.getAssets().assets);
       if (pair[0]) {
-        pool.getSpotPrice(new BigNumber(pair[0])).then(setSpotPrice)
+        pool.getSpotPrice(new BigNumber(pair[0])).then(setSpotPrice);
       }
     }
   }, [pool]);

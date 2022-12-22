@@ -1,18 +1,17 @@
 import { Stepper } from "@/components/Molecules";
-import { Box, useTheme, BoxProps } from "@mui/material";
+import { Box, BoxProps, useTheme } from "@mui/material";
 import ChooseTokensStep from "./steps/ChooseTokensStep";
 import SetFeesStep from "./steps/SetFeesStep";
 import { useState } from "react";
 import SimilarPoolsStep from "./steps/SimilarPoolsStep";
 import SetLiquidityStep from "./steps/SetLiquidityStep";
 import ConfirmPoolStep from "./steps/ConfirmPool";
-import useStore from "@/store/useStore";
 
 const steps = ["Choose tokens", "Set fees", "Set liquidity", "Confirm pool"];
 
 export const CreatePool: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
-  const { createPool: { currentStep } } = useStore();
+  const currentStep = 1 as number; // TODO implement steps once pool creation is required
   const [isSimilarPoolsStep, setIsSimilarPoolsStep] = useState<boolean>(false);
 
   const isChooseTokensStep = currentStep === 1;

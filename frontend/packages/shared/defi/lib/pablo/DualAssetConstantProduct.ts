@@ -5,6 +5,7 @@ import { PabloPoolFeeConfig } from "./PabloPoolFeeConfig";
 import { PabloPoolAssets } from "./PabloPoolAssets";
 import { LiquidityProviderToken } from "../LiquidityProviderToken";
 import BigNumber from "bignumber.js";
+import { TokenId } from "tokens";
 
 export class DualAssetConstantProduct extends BasePabloPool {
   protected readonly __lpToken: LiquidityProviderToken;
@@ -17,9 +18,16 @@ export class DualAssetConstantProduct extends BasePabloPool {
   ): DualAssetConstantProduct {
     try {
       const lpTokenAssetId = humanizedBnToBn(constantProductPoolJSON.lpToken);
-      const assets = PabloPoolAssets.fromJSON(constantProductPoolJSON.assetsWeights);
+      const assets = PabloPoolAssets.fromJSON(
+        constantProductPoolJSON.assetsWeights
+      );
       const underlyingAssets = assets.intoAssets(supportedAssets);
-      const lpToken = new LiquidityProviderToken(underlyingAssets, lpTokenAssetId, api);
+      const lpToken = new LiquidityProviderToken(
+        underlyingAssets,
+        lpTokenAssetId,
+        lpTokenAssetId.toString() as TokenId,
+        api
+      );
 
       return new DualAssetConstantProduct(
         api,
@@ -50,19 +58,18 @@ export class DualAssetConstantProduct extends BasePabloPool {
   getLiquidityProviderToken(): LiquidityProviderToken {
     return this.__lpToken;
   }
+
   /**
    * Calculate Spot Price
-   * Uses math from: 
+   * Uses math from:
    * https://dev.balancer.fi/resources/pool-math/weighted-math
    * @param {BigNumber} tokenInId asset of token that will be provided to pool
    * @returns {BigNumber} spot price of the asset
    */
-  async getSpotPrice(
-    tokenInId: BigNumber
-  ): Promise<BigNumber> {
+  async getSpotPrice(tokenInId: BigNumber): Promise<BigNumber> {
     const assets = Object.keys(this.__assets.toJSON());
-    const AssetInId = assets.find(asset => asset === tokenInId.toString());
-    const AssetOutId = assets.find(asset => asset !== tokenInId.toString());
+    const AssetInId = assets.find((asset) => asset === tokenInId.toString());
+    const AssetOutId = assets.find((asset) => asset !== tokenInId.toString());
     if (AssetInId && AssetOutId) {
       const Wi = this.__assets.assets[AssetInId];
       const Wo = this.__assets.assets[AssetInId];
@@ -70,9 +77,7 @@ export class DualAssetConstantProduct extends BasePabloPool {
       const Bi = await this.getAssetLiquidity(new BigNumber(AssetInId));
       const Bo = await this.getAssetLiquidity(new BigNumber(AssetOutId));
 
-      return new BigNumber(Bi.div(Wi)).div(new BigNumber(
-        Bo.div(Wo)
-      ));
+      return new BigNumber(Bi.div(Wi)).div(new BigNumber(Bo.div(Wo)));
     }
 
     return new BigNumber(0);

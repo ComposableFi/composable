@@ -1,68 +1,80 @@
 import React from "react";
-import { ModalProps, Modal } from "@/components/Molecules";
-import { Label, BaseAsset } from "@/components/Atoms";
+import { Modal, ModalProps } from "@/components/Molecules";
+import { BaseAsset, Label } from "@/components/Atoms";
 import {
   alpha,
   Box,
+  Button,
   IconButton,
   Typography,
   useTheme,
-  Button,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import BigNumber from "bignumber.js";
-import { useSigner, useExecutor, useParachainApi, useSelectedAccount } from "substrate-react";
-import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils/constants";
-import { useAddLiquidity } from "@/defi/hooks";
+import {
+  useExecutor,
+  useParachainApi,
+  useSelectedAccount,
+  useSigner,
+} from "substrate-react";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { setUiState } from "@/store/ui/ui.slice";
-import { DualAssetConstantProduct } from "shared";
-import { Asset } from "shared";
+import { PoolConfig } from "@/store/createPool/types";
+import { option } from "fp-ts";
+import { pipe } from "fp-ts/lib/function";
+import { InputConfig } from "@/components/Organisms/liquidity/AddForm/types";
+import { useAddLiquidity } from "@/defi/hooks";
+
 export interface SupplyModalProps {
-  assetOne: Asset | undefined;
-  assetTwo: Asset | undefined;
-  assetOneAmount: BigNumber;
-  assetTwoAmount: BigNumber;
-  lpReceiveAmount: BigNumber;
-  priceOneInTwo: BigNumber;
-  priceTwoInOne: BigNumber;
-  pool: DualAssetConstantProduct | undefined;
+  pool: option.Option<PoolConfig>;
+  inputConfig: InputConfig[];
   share: BigNumber;
+  expectedLP: BigNumber;
+  amountOne: BigNumber;
+  amountTwo: BigNumber;
 }
 
 export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
-  assetOne,
-  assetTwo,
-  assetOneAmount,
-  assetTwoAmount,
-  lpReceiveAmount,
-  priceOneInTwo,
-  priceTwoInOne,
   pool,
   share,
+  inputConfig,
+  expectedLP,
+  amountTwo,
+  amountOne,
   ...rest
 }) => {
   const theme = useTheme();
-
   const signer = useSigner();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const executor = useExecutor();
+  const poolConfig = pipe(pool, option.toNullable);
+  const poolId = poolConfig?.poolId.toString();
 
   const onConfirmSupply = useAddLiquidity({
     selectedAccount,
     executor,
     parachainApi,
-    assetOne: assetOne?.getPicassoAssetId() as string,
-    assetTwo: assetTwo?.getPicassoAssetId() as string,
-    assetOneAmount,
-    assetTwoAmount,
-    lpReceiveAmount,
-    pool,
-    signer
+    assetOneAmount: amountOne,
+    assetTwoAmount: amountTwo,
+    lpReceiveAmount: expectedLP,
+    poolId,
+    signer,
+    assetInId:
+      poolConfig?.config.assets[0].getPicassoAssetId().toString() ?? null,
+    assetOutId:
+      poolConfig?.config.assets[1].getPicassoAssetId().toString() ?? null,
   });
 
+  if (poolConfig === null) return null;
+  const assetOne = poolConfig.config.assets[0];
+  const assetTwo = poolConfig.config.assets[1];
+
   return (
-    <Modal onClose={() => setUiState({ isConfirmSupplyModalOpen: false })} {...rest}>
+    <Modal
+      onClose={() => setUiState({ isConfirmSupplyModalOpen: false })}
+      {...rest}
+    >
       <Box
         sx={{
           background: theme.palette.gradient.secondary,
@@ -80,17 +92,19 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
       >
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Typography variant="body1">You will receive</Typography>
-          <IconButton onClick={() => setUiState({ isConfirmSupplyModalOpen: false })}>
+          <IconButton
+            onClick={() => setUiState({ isConfirmSupplyModalOpen: false })}
+          >
             <CloseIcon />
           </IconButton>
         </Box>
 
         <Typography variant="h5" mt={1.75}>
-          {`${lpReceiveAmount.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}`}
+          {expectedLP.toString()}
         </Typography>
 
         <Typography variant="body1" color="text.secondary" mt={1.75}>
-          {`LP ${assetOne?.getSymbol()}/${assetTwo?.getSymbol()} Tokens`}
+          {`LP ${assetOne.getSymbol()}/${assetTwo.getSymbol()} Tokens`}
         </Typography>
 
         <Typography variant="body2" mt={4} textAlign="center" paddingX={4.25}>
@@ -108,10 +122,10 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
 
         <Label
           mt={4}
-          label={`Pooled ${assetOne?.getSymbol()}`}
+          label={`Pooled ${assetOne.getSymbol()}`}
           BalanceProps={{
-            title: <BaseAsset icon={assetOne?.getIconUrl()} pr={1} />,
-            balance: `${assetOneAmount}`,
+            title: <BaseAsset icon={assetOne.getIconUrl()} pr={1} />,
+            balance: `${0}`, // TODO: From inputConfig
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -120,10 +134,10 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
 
         <Label
           mt={2}
-          label={`Pooled ${assetTwo?.getSymbol()}`}
+          label={`Pooled ${assetTwo.getSymbol()}`}
           BalanceProps={{
-            title: <BaseAsset icon={assetTwo?.getIconUrl()} pr={1} />,
-            balance: `${assetTwoAmount}`,
+            title: <BaseAsset icon={assetTwo.getIconUrl()} pr={1} />,
+            balance: `${0}`, // TODO: from inputConfig
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -134,7 +148,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label={`Price`}
           BalanceProps={{
-            balance: `1 ${assetOne?.getSymbol()} = ${priceOneInTwo} ${assetTwo?.getSymbol()}`,
+            balance: `1 ${assetOne?.getSymbol()} = ${0} ${assetTwo?.getSymbol()}`, // TODO: From input config
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -145,7 +159,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label=""
           BalanceProps={{
-            balance: `1 ${assetTwo?.getSymbol()} = ${priceTwoInOne} ${assetOne?.getSymbol()}`,
+            balance: `1 ${assetTwo?.getSymbol()} = ${0} ${assetOne?.getSymbol()}`, // TODO: fromInput
             BalanceTypographyProps: {
               variant: "body1",
             },

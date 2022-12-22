@@ -2,6 +2,7 @@ import { Asset } from "shared";
 import { ApiPromise } from "@polkadot/api";
 import { useEffect, useState } from "react";
 import BigNumber from "bignumber.js";
+import { TokenId } from "tokens";
 
 export type TotalXTokensIssuedProps = {
   shareAssetId?: string;
@@ -17,7 +18,7 @@ export function useTotalXTokensIssued({
   useEffect(() => {
     if (!api || !shareAssetId) return;
 
-    const xAsset = new Asset("", "", "", api);
+    const xAsset = new Asset("", "", "", "" as TokenId, api);
     xAsset.setIdOnChain("picasso", new BigNumber(shareAssetId));
     xAsset.totalIssued().then(setXTokensIssued);
   }, [api, shareAssetId]);

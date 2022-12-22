@@ -1,9 +1,10 @@
 import * as React from "react";
-import Document, { Html, Head, Main, NextScript } from "next/document";
+import Document, { Head, Html, Main, NextScript } from "next/document";
 import createEmotionServer from "@emotion/server/create-instance";
 import createEmotionCache from "@/styles/createEmotionCache";
 import { getDesignTokens } from "@/styles/theme";
 import { createTheme } from "@mui/material";
+import config from "@/constants/config";
 
 export default class MyDocument extends Document {
   render() {
@@ -85,7 +86,7 @@ export default class MyDocument extends Document {
           <link rel="manifest" href="/manifest.json" />
           <link rel="shortcut icon" href="/pwa/favicon.ico" />
           <meta name="twitter:card" content="summary" />
-          <meta name="twitter:url" content="https://picasso.xyz" />
+          <meta name="twitter:url" content={config.twitterUrl} />
           <meta
             name="twitter:title"
             content="Composable Finance Picasso Parachain"
@@ -94,7 +95,10 @@ export default class MyDocument extends Document {
             name="twitter:description"
             content="The interoperable crosschain DeFi Hub built on the DotSama ecosystem"
           />
-          <meta name="twitter:image" content="/pwa/android-chrome-512x512.png" />
+          <meta
+            name="twitter:image"
+            content="/pwa/android-chrome-512x512.png"
+          />
           <meta name="twitter:creator" content="@picasso_network" />
           <meta property="og:type" content="website" />
           <meta

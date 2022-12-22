@@ -1,4 +1,4 @@
-import { getToken, TOKENS, Token, TokenId } from "tokens";
+import { Token, TokenId, TOKENS } from "tokens";
 import { useMobile } from "@/hooks/responsive";
 import {
   Box,
@@ -41,6 +41,7 @@ export const ImportPool: React.FC<BoxProps> = ({ ...rest }) => {
     setUiState({ isTransactionSettingsModalOpen: true });
   };
 
+  const poolId = "0";
   return (
     <HighlightBox width={isMobile ? "100%" : 550} margin="auto" {...rest}>
       <FormTitle
@@ -131,7 +132,7 @@ export const ImportPool: React.FC<BoxProps> = ({ ...rest }) => {
             size="large"
             fullWidth
             onClick={() => {
-              setUiState({ isPolkadotModalOpen: true })
+              setUiState({ isPolkadotModalOpen: true });
             }}
           >
             Connect wallet to find pools
@@ -155,19 +156,7 @@ export const ImportPool: React.FC<BoxProps> = ({ ...rest }) => {
                 disabled
               >
                 <MenuItem value={0}>
-                  <PairAsset
-                    assets={[
-                      {
-                        icon: getToken(token1Value).icon,
-                        label: getToken(token1Value).symbol,
-                      },
-                      {
-                        icon: getToken(token2Value).icon,
-                        label: getToken(token2Value).symbol,
-                      },
-                    ]}
-                    separator="/"
-                  />
+                  <PairAsset assets={[]} separator="/" />
                 </MenuItem>
               </Select>
             </Box>
@@ -202,7 +191,7 @@ export const ImportPool: React.FC<BoxProps> = ({ ...rest }) => {
                 {`You don't have liquidity in this pool yet.`}
               </Typography>
             </Box>
-            <Link href="/pool/add-liquidity" key="import">
+            <Link href={`/pool/add-liquidity/${poolId}`} key="import">
               <Typography
                 textAlign="center"
                 variant="subtitle1"

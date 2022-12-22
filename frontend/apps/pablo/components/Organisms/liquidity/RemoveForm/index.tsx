@@ -11,28 +11,37 @@ import {
 } from "@mui/material";
 import BigNumber from "bignumber.js";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import { ConfirmingModal } from "./ConfirmingModal";
 import { PreviewDetails } from "./PreviewDetails";
-import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import useDebounce from "@/hooks/useDebounce";
-import { useLiquidityPoolDetails, useLpTokenUserBalance } from "@/defi/hooks";
-import { fetchSpotPrice, toChainUnits } from "@/defi/utils";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { setUiState, useUiSlice } from "@/store/ui/ui.slice";
+import { rest } from "lodash";
+import { PoolConfig } from "@/store/pools/types";
+import useStore from "@/store/useStore";
+import { fromChainUnits, toChainUnits } from "@/defi/utils";
+import { Asset } from "shared";
 
-export const RemoveLiquidityForm = ({ ...rest }) => {
+export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
   const theme = useTheme();
   const router = useRouter();
 
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-
-  const { poolId } = useRemoveLiquidityState();
-  const { baseAsset, quoteAsset, pool } = useLiquidityPoolDetails(poolId);
-  const lpBalance = useLpTokenUserBalance(pool);
+  const ownedLiquidity = useStore((store) => store.ownedLiquidity.tokens);
+  const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
+  const ownedLiquidityBalance = ownedLiquidity[pool.config.lpToken];
+  const lpBalance = useMemo(
+    () => ownedLiquidityBalance?.balance.free ?? new BigNumber(0),
+    [ownedLiquidityBalance?.balance.free]
+  );
   const { isConfirmingModalOpen } = useUiSlice();
+  const [token1, token2] = ownedLiquidity[pool.config.lpToken]?.pair ?? [
+    new Asset("", "", "", "pica"),
+    new Asset("", "", "", "pica"),
+  ];
 
   const [percentage, setPercentage] = useState<number>(0);
   const [expectedRemoveAmountQuote, setExpectedRemoveAmountQuote] =
@@ -45,23 +54,23 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
   const [priceOfQuote, setPriceOfQuote] = useState(new BigNumber(0));
   const debouncedPercentage = useDebounce(percentage, 500);
 
-  useEffect(() => {
-    if (poolId !== -1 && baseAsset && quoteAsset && parachainApi) {
-      fetchSpotPrice(
-        parachainApi,
-        {
-          base: baseAsset.getPicassoAssetId().toString(),
-          quote: quoteAsset.getPicassoAssetId().toString(),
-        },
-        poolId
-      ).then((basePrice) => {
-        const basePriceBn = new BigNumber(basePrice);
-
-        setPriceOfBase(basePriceBn);
-        setPriceOfQuote(new BigNumber(1).div(basePriceBn));
-      });
-    }
-  }, [poolId, baseAsset, quoteAsset, parachainApi]);
+  // useEffect(() => {
+  //   if (poolId !== -1 && baseAsset && quoteAsset && parachainApi) {
+  //     fetchSpotPrice(
+  //       parachainApi,
+  //       {
+  //         base: baseAsset.getPicassoAssetId().toString(),
+  //         quote: quoteAsset.getPicassoAssetId().toString(),
+  //       },
+  //       poolId
+  //     ).then((basePrice) => {
+  //       const basePriceBn = new BigNumber(basePrice);
+  //
+  //       setPriceOfBase(basePriceBn);
+  //       setPriceOfQuote(new BigNumber(1).div(basePriceBn));
+  //     });
+  //   }
+  // }, [poolId, baseAsset, quoteAsset, parachainApi]);
 
   useEffect(() => {
     if (
@@ -69,48 +78,44 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
       debouncedPercentage > 0 &&
       lpBalance.gt(0) &&
       selectedAccount &&
-      baseAsset &&
-      quoteAsset
+      token1 &&
+      token2
     ) {
       const selectedLpAmount = toChainUnits(
         lpBalance.times(debouncedPercentage / 100)
       );
 
-      const b = baseAsset.getPicassoAssetId().toString();
-      const q = quoteAsset.getPicassoAssetId().toString();
-
-      // parachainApi.rpc.pablo
-      //   .simulateRemoveLiquidity(
-      //     parachainApi.createType("AccountId32", selectedAccount.address),
-      //     parachainApi.createType("PalletPabloPoolId", poolId.toString()),
-      //     parachainApi.createType(
-      //       "CustomRpcBalance",
-      //       selectedLpAmount.dp(0).toString()
-      //     ),
-      //     parachainApi.createType("BTreeMap<SafeRpcWrapper, SafeRpcWrapper>", {
-      //       [b]: "0",
-      //       [q]: "0",
-      //     })
-      //   )
-      //   .then((response: any) => {
-      //     const remove = fromRemoveLiquiditySimulationResult(response.toJSON());
-      //     setExpectedRemoveAmountBase(remove[b]);
-      //     setExpectedRemoveAmountQuote(remove[q]);
-      //   })
-      //   .catch((err: any) => {
-      //     setExpectedRemoveAmountBase(new BigNumber(0));
-      //     setExpectedRemoveAmountQuote(new BigNumber(0));
-      //     console.error(err);
-      //   });
+      const b = pool.config.assets[0].getPicassoAssetId().toString();
+      const q = pool.config.assets[1].getPicassoAssetId().toString();
+      parachainApi.rpc.pablo
+        .simulateRemoveLiquidity(
+          selectedAccount.address,
+          pool.poolId.toString(),
+          selectedLpAmount.dp(0).toString(),
+          {
+            [b]: "0",
+            [q]: "0",
+          }
+        )
+        .then((response: any) => {
+          const expectedRewards = response.toJSON().assets;
+          setExpectedRemoveAmountBase(fromChainUnits(expectedRewards[b]));
+          setExpectedRemoveAmountQuote(fromChainUnits(expectedRewards[q]));
+        })
+        .catch((err: any) => {
+          setExpectedRemoveAmountBase(new BigNumber(0));
+          setExpectedRemoveAmountQuote(new BigNumber(0));
+          console.error(err);
+        });
     }
   }, [
     parachainApi,
     debouncedPercentage,
     lpBalance,
-    poolId,
     selectedAccount,
-    baseAsset,
-    quoteAsset,
+    token1,
+    token2,
+    pool,
   ]);
 
   const onBackHandler = () => {
@@ -210,12 +215,12 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
         </Box>
       </Box>
 
-      {baseAsset && quoteAsset && (
+      {token1 && token2 && (
         <PreviewDetails
           lpToRemove={lpBalance.times(debouncedPercentage).div(100)}
           mt={4}
-          token1={baseAsset}
-          token2={quoteAsset}
+          token1={token1}
+          token2={token2}
           expectedReceiveAmountToken1={expectedRemoveAmountBase}
           expectedReceiveAmountToken2={expectedRemoveAmountQuote}
           price1={priceOfBase}
@@ -271,14 +276,15 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
         </>
       )}
 
-      {!confirmed && baseAsset && quoteAsset && (
+      {!confirmed && token1 && token2 && (
         <ConfirmingModal
           lpBalance={lpBalance}
           percentage={new BigNumber(debouncedPercentage).div(100)}
+          pool={pool}
           price1={priceOfBase}
           price2={priceOfQuote}
-          baseAsset={baseAsset}
-          quoteAsset={quoteAsset}
+          baseAsset={token1}
+          quoteAsset={token2}
           open={isConfirmingModalOpen}
           amount1={expectedRemoveAmountBase}
           amount2={expectedRemoveAmountQuote}

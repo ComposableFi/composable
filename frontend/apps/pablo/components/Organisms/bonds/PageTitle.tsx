@@ -1,6 +1,6 @@
 import { BaseAsset, PairAsset } from "@/components/Atoms";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
-import { Box, Typography, BoxProps } from "@mui/material";
+import { Box, BoxProps, Typography } from "@mui/material";
 import { useCallback } from "react";
 import { Asset, LiquidityProviderToken } from "shared";
 
@@ -20,7 +20,7 @@ export const PageTitle: React.FC<PageTitleProps> = ({
       const underlyingAssets = bondedAsset_s.getUnderlyingAssetJSON();
       return (
         <PairAsset
-          assets={underlyingAssets}
+          assets={[]}
           label={`${bondedAsset_s.getSymbol()}`}
           LabelProps={{ variant: "h4" }}
           iconSize={iconSize}
@@ -60,7 +60,9 @@ export const PageTitle: React.FC<PageTitleProps> = ({
         textAlign="center"
         fontWeight="normal"
       >
-        {rewardAsset ? `Buy ${rewardAsset.getSymbol()} while supplying tokens` : "-"}
+        {rewardAsset
+          ? `Buy ${rewardAsset.getSymbol()} while supplying tokens`
+          : "-"}
       </Typography>
     </Box>
   );

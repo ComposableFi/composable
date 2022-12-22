@@ -1,23 +1,22 @@
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useTheme } from "@mui/material";
 import {
-  useDotSamaContext,
-  useEagerConnect,
   SupportedWalletId,
   useConnectedAccounts,
+  useDotSamaContext,
+  useEagerConnect,
   useTransactions,
 } from "substrate-react";
 import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
-import { Wallet } from "wallet";
+import { NetworkId, Wallet } from "wallet";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
-import { NetworkId } from "wallet";
 import { useStore } from "@/stores/root";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 
 const BLOCKCHAIN_NETWORKS_SUPPORTED = [
   {
     name: "DotSama",
-    icon: "/networks/polkadot_js.svg",
+    icon: "/networks/picasso.svg",
     networkId: NetworkId.Polkadot,
     explorerUrl: "https://picasso.subscan.io/",
     nativeCurrencyIcon: "/logos/picasso.svg",

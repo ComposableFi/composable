@@ -1,5 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
-import { subscanAccountLink } from "../../Networks";
+import { subscanExtrinsicLink } from "../../Networks";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import { Executor, useSigner } from "substrate-react";
@@ -41,11 +41,11 @@ export function useCrowdloanRewardsAssociate({
   const onAssociationReady = useCallback(
     (transactionHash: string) => {
       if (selectedPicassoAddress)
-      enqueueSnackbar("Claim processing...", {
-        variant: "info",
-        isClosable: true,
-        url: subscanAccountLink("picasso", selectedPicassoAddress),
-      });
+        enqueueSnackbar("Claim processing...", {
+          variant: "info",
+          isClosable: true,
+          url: subscanExtrinsicLink("picasso", selectedPicassoAddress),
+        });
     },
     [enqueueSnackbar, selectedPicassoAddress]
   );
@@ -53,11 +53,11 @@ export function useCrowdloanRewardsAssociate({
   const onAssociateFinalized = useCallback(
     (transactionHash: string) => {
       if (selectedPicassoAddress)
-      enqueueSnackbar("Your claim was successful!", {
-        variant: "success",
-        isClosable: true,
-        url: subscanAccountLink("picasso", selectedPicassoAddress),
-      });
+        enqueueSnackbar("Your claim was successful!", {
+          variant: "success",
+          isClosable: true,
+          url: subscanExtrinsicLink("picasso", selectedPicassoAddress),
+        });
 
       if (api) {
         fetchAssociations(
@@ -83,7 +83,13 @@ export function useCrowdloanRewardsAssociate({
 
   return useCallback(
     async (signature: string) => {
-      if (!api || !signer || !executor || !associateMode || !selectedPicassoAddress)
+      if (
+        !api ||
+        !signer ||
+        !executor ||
+        !associateMode ||
+        !selectedPicassoAddress
+      )
         return;
       try {
         const signatureParam = createSignatureParam(
@@ -114,7 +120,7 @@ export function useCrowdloanRewardsAssociate({
       onAssociationReady,
       onAssociateFinalized,
       onAssociationFail,
-      signer
+      signer,
     ]
   );
 }

@@ -165,7 +165,7 @@ export const WalletViewModal: FC<WalletViewProps> = ({
             }}
           >
             <Badge
-              icon={<Lock />}
+              icon={<Lock sx={{ fontSize: "1rem" }} />}
               background={alpha(theme.palette.warning.main, 0.1)}
               color={theme.palette.warning.main}
               label="Locked"

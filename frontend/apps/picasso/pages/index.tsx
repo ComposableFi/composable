@@ -15,7 +15,6 @@ import { useState } from "react";
 import { MyStakesTable } from "@/components/Molecules/MyStakesTable";
 import { useStore } from "@/stores/root";
 import { useDotSamaContext } from "substrate-react";
-import { CrowdloanRewardsSoon } from "@/components/Molecules/CrowdloanRewardSoon";
 
 const Overview: NextPage = () => {
   const { extensionStatus } = useDotSamaContext();
@@ -51,7 +50,6 @@ const Overview: NextPage = () => {
             textAlign="center"
             subtitle="Your Portfolio in full view. Check on your positions and claim rewards."
           />
-          <CrowdloanRewardsSoon />
         </Grid>
         {extensionStatus !== "connected" && (
           <Grid item {...standardPageSize}>
@@ -72,7 +70,7 @@ const Overview: NextPage = () => {
             {/* My Assets Tab Panels */}
             {/* Pass in more token ids to show here */}
             <TabPanel value={tabValue} index={0}>
-              <MyAssetsTable tokensToList={["pica"]} />
+              <MyAssetsTable tokensToList={["pica", "usdt", "ksm"]} />
             </TabPanel>
 
             {/* My Staking Tab Panels */}
@@ -80,7 +78,7 @@ const Overview: NextPage = () => {
               <Box px={2}>
                 <PageTitle title="Picasso" textAlign="left" fontSize={40} />
               </Box>
-              <MyAssetsTable tokensToList={["pica"]} />
+              <MyAssetsTable tokensToList={["pica", "usdt", "ksm"]} />
             </TabPanel>
 
             <TabPanel value={tabValue} index={1}>

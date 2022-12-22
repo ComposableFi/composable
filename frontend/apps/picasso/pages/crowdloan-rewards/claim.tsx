@@ -8,7 +8,6 @@ import {
   StablecoinClaimForm,
 } from "@/components";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
-import { useStore } from "@/stores/root";
 import { Grid, Typography, useTheme } from "@mui/material";
 import { stringToHex } from "@polkadot/util";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -29,18 +28,16 @@ import {
 import { useCrowdloanRewardsClaim } from "@/defi/polkadot/hooks/crowdloanRewards/useCrowdloanRewardsClaim";
 import { useCrowdloanRewardsAssociate } from "@/defi/polkadot/hooks/crowdloanRewards/useCrowdloanRewardsAssociate";
 import {
-  useCrowdloanRewardsStepGivenConnectedAccounts,
   useCrowdloanRewardsClaimableRewards,
   useCrowdloanRewardsClaimedRewards,
   useCrowdloanRewardsContributionAndRewards,
   useCrowdloanRewardsEligibility,
   useCrowdloanRewardsEthereumAddressAssociatedAccount,
   useCrowdloanRewardsHasStarted,
+  useCrowdloanRewardsStepGivenConnectedAccounts,
 } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
 import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
 import { KsmAndEthAssociationInfoBox } from "@/components/Organisms/CrowdloanRewards/KsmAndEthAssociationInfoBox";
-import { UnavailableFeature } from "@/components/Molecules/UnavailableFeature";
-import { CrowdloanRewardsSoon } from "@/components/Molecules/CrowdloanRewardSoon";
 
 const ERROR_MESSAGES = {
   KSM_WALLET_NOT_CONNECTED: {
@@ -300,7 +297,6 @@ export const ClaimLoanPage = () => {
             textAlign="center"
             subtitle="You will be able to check on your positions here."
           />
-          <CrowdloanRewardsSoon />
         </Grid>
         {hasNothingToClaim && (
           <Grid item {...standardPageSize}>

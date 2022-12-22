@@ -10,7 +10,7 @@ export type PicassoRpcAsset = {
   ratio: AssetRatio | null;
 };
 
-type AssetRatio = {
+export type AssetRatio = {
   n: number;
   d: number;
 };
@@ -30,7 +30,7 @@ export async function picassoAssetsList(
           unwrapNumberOrHex(asset.existentialDeposit.toString()),
           asset.decimals.toNumber()
         ),
-        ratio: (asset.ratio.toJSON() as AssetRatio) ?? null
+        ratio: (asset.ratio.toJSON() as AssetRatio) ?? null,
       };
     });
   } catch (err) {

@@ -2,12 +2,16 @@ import { ApiPromise } from "@polkadot/api";
 import { fromChainIdUnit } from "../../unit";
 import { DropdownOptionWithIcon } from "../types";
 import BigNumber from "bignumber.js";
+import { pipe } from "fp-ts/function";
+import { option } from "fp-ts";
+import { TokenId } from "tokens";
 
 export class Asset {
   protected __api?: ApiPromise;
   protected readonly __name: string;
   protected readonly __symbol: string;
   protected readonly __iconUrl: string;
+  protected readonly __tokenId: TokenId;
   protected __price: BigNumber = new BigNumber(0);
   protected __decimals: Map<string, number>;
   protected __parachainAssetIds: Map<string, BigNumber>;
@@ -29,11 +33,18 @@ export class Asset {
     });
   }
 
-  constructor(name: string, symbol: string, iconUrl: string, api?: ApiPromise) {
+  constructor(
+    name: string,
+    symbol: string,
+    iconUrl: string,
+    tokenId: TokenId,
+    api?: ApiPromise
+  ) {
     this.__api = api;
     this.__name = name;
     this.__symbol = symbol;
     this.__iconUrl = iconUrl;
+    this.__tokenId = tokenId;
     this.__parachainAssetIds = new Map<string, BigNumber>();
     this.__decimals = new Map<string, number>();
   }
@@ -70,6 +81,10 @@ export class Asset {
 
   getIconUrl(): string {
     return this.__iconUrl;
+  }
+
+  getTokenId(): TokenId {
+    return this.__tokenId;
   }
 
   /**
@@ -132,12 +147,21 @@ export class Asset {
    * Get Asset Id on a different chain
    * @param {string} chainId
    * @param {boolean} inBn
-   * @returns {BigNumber | string}
+   * @returns {BigNumber | string | null}
    */
-  getIdOnChain(chainId: string, inBn: boolean = false): BigNumber | string {
-    const id = this.__parachainAssetIds.get(chainId);
-    if (!id) throw new Error(`Id not set for ${chainId}`);
-    return inBn ? id : id.toString();
+  getIdOnChain(
+    chainId: string,
+    inBn: boolean = false
+  ): BigNumber | string | null {
+    return pipe(
+      this.__parachainAssetIds.get(chainId),
+      option.fromNullable,
+      option.map((id) => (inBn ? id : id.toString())),
+      option.fold(
+        () => null,
+        (a) => a
+      )
+    );
   }
 
   setApi(api: ApiPromise) {
@@ -171,6 +195,7 @@ export class OwnedAsset extends Asset {
       asset.getSymbol(),
       asset.getIconUrl(),
       balance,
+      asset.getTokenId(),
       asset.getApi()
     );
     ownedAsset.setIdOnChain(
@@ -185,9 +210,10 @@ export class OwnedAsset extends Asset {
     symbol: string,
     iconUrl: string,
     balance: BigNumber,
+    tokenId: TokenId,
     api?: ApiPromise
   ) {
-    super(name, symbol, iconUrl, api);
+    super(name, symbol, iconUrl, tokenId, api);
 
     this.__balance = balance;
   }

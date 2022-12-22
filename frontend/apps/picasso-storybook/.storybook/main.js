@@ -34,6 +34,13 @@ module.exports = {
       "@/hooks": path.resolve(__dirname, "..", "..", "picasso", "hooks"),
       "@/defi": path.resolve(__dirname, "..", "..", "picasso", "defi"),
       "@/stores": path.resolve(__dirname, "..", "..", "picasso", "stores"),
+      "@/constants": path.resolve(
+        __dirname,
+        "..",
+        "..",
+        "picasso",
+        "constants"
+      ),
     };
 
     return config;

@@ -88,6 +88,9 @@ const ThemeResponsiveSnackbarComp = forwardRef<
                 url={url}
               />
             }
+            sx={{
+              padding: 2,
+            }}
           >
             <Box
               sx={{
@@ -95,6 +98,7 @@ const ThemeResponsiveSnackbarComp = forwardRef<
                 width: "100%",
                 justifyContent: "space-between",
                 alignItems: "center",
+                height: theme.spacing(8),
               }}
             >
               <Message title={message} description={description} />

@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
-import { useCallback } from "react";
+import { FC, useCallback } from "react";
 import { Asset, LiquidityProviderToken } from "shared";
 import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
 import { useAssetIdOraclePrice } from "@/defi/hooks";
@@ -48,7 +48,7 @@ export type SupplySummaryProps = {
   bond: SelectedBondOffer;
 } & BoxProps;
 
-export const SupplySummary: React.FC<SupplySummaryProps> = ({
+export const SupplySummary: FC<SupplySummaryProps> = ({
   bond,
   ...boxProps
 }) => {
@@ -62,13 +62,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
   const renderIcons = useCallback(() => {
     if (bondedAsset_s instanceof LiquidityProviderToken) {
       const underlyingAssets = bondedAsset_s.getUnderlyingAssetJSON();
-      return (
-        <PairAsset
-          assets={underlyingAssets}
-          iconOnly
-          iconSize={36}
-        />
-      );
+      return <PairAsset assets={[]} iconOnly iconSize={36} />;
     } else if (bondedAsset_s instanceof Asset) {
       return (
         <BaseAsset

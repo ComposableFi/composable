@@ -9,10 +9,24 @@ on:
 
 jobs:
   Deploy-Production:
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: node:latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Install Vercel CLI
+      - run: |
+          apt-get update
+          apt-get install -y curl git
+          curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+          apt-get install git-lfs
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+          fetch-depth: 0      
+      - name: Install Vercel CL
         run: npm install --global vercel@latest
       - name: Import project setting
         run: |

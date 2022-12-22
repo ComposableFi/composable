@@ -17,7 +17,7 @@ import {
 import BigNumber from "bignumber.js";
 import { FormTitle } from "../../FormTitle";
 import { useMobile } from "@/hooks/responsive";
-import { getToken, TOKENS, TokenId } from "tokens";
+import { getToken, TokenId, TOKENS } from "tokens";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { InfoOutlined, SwapVertRounded } from "@mui/icons-material";
 import { BigNumberInput } from "@/components/Atoms";
@@ -140,13 +140,13 @@ export const BuySingleTokenModal: React.FC<BuySingleTokenModalProps> = ({
             CombinedSelectProps={{
               value: tokenId1,
               setValue: setTokenId1,
-              options: Object.values(TOKENS).map(x => {
+              options: Object.values(TOKENS).map((x) => {
                 return {
                   value: x.id,
                   label: x.symbol,
                   shortLabel: x.symbol,
-                  icon: x.icon
-                }
+                  icon: x.icon,
+                };
               }),
               ...defaultCombinedSelectProps(isMobile),
             }}
@@ -173,7 +173,7 @@ export const BuySingleTokenModal: React.FC<BuySingleTokenModalProps> = ({
             maxValue={balance2}
             setValid={setValid2}
             EndAdornmentAssetProps={{
-              assets: [{ icon: token2.icon, label: "ETH" }],
+              assets: [],
               LabelProps: { variant: "body1" },
             }}
             LabelProps={labelProps("To", balance2)}

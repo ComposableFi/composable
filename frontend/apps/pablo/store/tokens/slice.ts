@@ -7,7 +7,12 @@ const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
   substrateTokens: {
     hasFetchedTokens: false,
     tokens: Object.values(TOKENS).reduce((agg, token) => {
-      agg[token.id] = new Asset(token.symbol, token.symbol, token.icon);
+      agg[token.id] = new Asset(
+        token.symbol,
+        token.symbol,
+        token.icon,
+        token.id
+      );
       return agg;
     }, {} as Record<TokenId, Asset>),
     setTokens: (tokenMetadata) => {

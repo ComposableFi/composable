@@ -9,7 +9,6 @@ import {
   isPalletSupported,
   unwrapNumberOrHex,
 } from "shared";
-import { BN } from "@polkadot/util";
 import { ComposableTraitsOraclePrice } from "defi-interfaces";
 
 export function binanceMapPairToSourceSymbol(pair: string) {
@@ -79,9 +78,7 @@ export const useApolloStats = () => {
 
   // Pulls price from the binance websocket and updates the store
   useEffect(() => {
-    const unsub = setupBinancePricePull();
-
-    return unsub;
+    return setupBinancePricePull();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -92,7 +89,7 @@ export const useApolloStats = () => {
     Object.keys(oracleAssets).forEach((symbol) => {
       const unsubPromise: Promise<() => void> = callbackGate(
         (api, picaId) => {
-          isPalletSupported(api)("Oracle")
+          return isPalletSupported(api)("Oracle")
             ? api.query.oracle.prices(
                 picaId.toString(),
                 (prices: ComposableTraitsOraclePrice) => {
