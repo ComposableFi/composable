@@ -35,4 +35,10 @@ rust_decimal = { version = "1.2", default-features = false, features = [
 
 [features]
 default = ["std"]
-std = ["codec/std", "frame-support/std", "sp-std/std", "scale-info/std", "composable-support/std"]
+std = [
+  "codec/std",
+  "frame-support/std",
+  "sp-std/std",
+  "scale-info/std",
+  "composable-support/std",
+]
