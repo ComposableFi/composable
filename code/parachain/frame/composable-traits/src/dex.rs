@@ -12,7 +12,7 @@ use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 
 use sp_runtime::{
-	helpers_128bit::multiply_by_rational_with_rounding, traits::Zero, ArithmeticError,
+	helpers_128bit::multiply_by_rational_with_rounding, traits::Zero,
 	BoundedBTreeMap, DispatchError, Permill, Rational128,
 };
 use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec::Vec};
