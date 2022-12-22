@@ -18,6 +18,7 @@ import {
   HistoricalVolume,
   LockedSource,
   PabloPool,
+  PabloPoolAsset,
 } from "./model";
 
 export async function get<T extends { id: string }>(
@@ -33,10 +34,11 @@ export async function getLatestPoolByPoolId<T extends Entity>(
   poolId: bigint
 ): Promise<PabloPool | undefined> {
   return store.get<PabloPool>(PabloPool, {
-    where: { poolId },
-    order: { calculatedTimestamp: "DESC" },
+    where: { id: poolId.toString() },
+    order: { timestamp: "DESC" },
     relations: {
       poolAssets: true,
+      poolAssetWeights: true,
     },
   });
 }
@@ -425,4 +427,47 @@ export async function storeCurrentLockedValue(
     await ctx.store.save(currentLockedValueAll);
     await ctx.store.save(currentLockedValueSource);
   }
+}
+
+/**
+ * Creates asset fpr Pablo pool
+ * @param pool
+ * @param assetId
+ */
+export function createPabloAsset(
+  pool: PabloPool,
+  assetId: string
+): PabloPoolAsset {
+  return new PabloPoolAsset({
+    id: randomUUID(),
+    assetId,
+    pool,
+    totalLiquidity: BigInt(0),
+    totalVolume: BigInt(0),
+  });
+}
+
+/**
+ * Get Pablo pool asset by asset id and pool id. If it doesn't exist, create it.
+ * @param ctx
+ * @param pool
+ * @param assetId
+ */
+export async function getOrCreatePabloAsset(
+  ctx: EventHandlerContext<Store>,
+  pool: PabloPool,
+  assetId: string
+): Promise<PabloPoolAsset> {
+  let pabloAsset = await ctx.store.get(PabloPoolAsset, {
+    where: {
+      assetId,
+      pool: {
+        id: pool.id,
+      },
+    },
+  });
+  if (!pabloAsset) {
+    pabloAsset = createPabloAsset(pool, assetId);
+  }
+  return Promise.resolve(pabloAsset);
 }

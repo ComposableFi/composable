@@ -5,27 +5,27 @@ import {Currency} from "./_currency"
 
 @Entity_()
 export class HistoricalVolume {
-  constructor(props?: Partial<HistoricalVolume>) {
-    Object.assign(this, props)
-  }
+    constructor(props?: Partial<HistoricalVolume>) {
+        Object.assign(this, props)
+    }
 
-  @PrimaryColumn_()
-  id!: string
+    @PrimaryColumn_()
+    id!: string
 
-  @Index_()
-  @ManyToOne_(() => Event, {nullable: true})
-  event!: Event
+    @Index_()
+    @ManyToOne_(() => Event, {nullable: true})
+    event!: Event
 
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  amount!: bigint
+    @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+    amount!: bigint
 
-  @Column_("varchar", {length: 3, nullable: false})
-  currency!: Currency
+    @Column_("varchar", {length: 3, nullable: false})
+    currency!: Currency
 
-  @Index_()
-  @Column_("timestamp with time zone", {nullable: false})
-  timestamp!: Date
+    @Index_()
+    @Column_("timestamp with time zone", {nullable: false})
+    timestamp!: Date
 
-  @Column_("text", {nullable: false})
-  assetId!: string
+    @Column_("text", {nullable: false})
+    assetId!: string
 }

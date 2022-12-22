@@ -64,6 +64,7 @@ BCENT
 BCENTS
 BCOIN
 BCOINS
+bigdecimal
 bignr # used frequently throughout the frontend as a shorthand for bignumber
 bignumber
 bignumbers

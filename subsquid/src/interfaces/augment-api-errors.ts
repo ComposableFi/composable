@@ -182,7 +182,6 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     cosmwasm: {
-      ChargeGas: AugmentedError<ApiType>;
       CodeAlreadyExists: AugmentedError<ApiType>;
       CodeDecoding: AugmentedError<ApiType>;
       CodeEncoding: AugmentedError<ApiType>;
@@ -193,19 +192,23 @@ declare module '@polkadot/api-base/types/errors' {
       ContractHasNoInfo: AugmentedError<ApiType>;
       ContractNotFound: AugmentedError<ApiType>;
       ContractTrapped: AugmentedError<ApiType>;
+      FailedToSerialize: AugmentedError<ApiType>;
+      Ibc: AugmentedError<ApiType>;
       Instrumentation: AugmentedError<ApiType>;
       InstrumentedCodeIsTooBig: AugmentedError<ApiType>;
       IteratorIdOverflow: AugmentedError<ApiType>;
       IteratorNotFound: AugmentedError<ApiType>;
       LabelTooBig: AugmentedError<ApiType>;
       NonceOverflow: AugmentedError<ApiType>;
+      NotAuthorized: AugmentedError<ApiType>;
       NotEnoughFundsForUpload: AugmentedError<ApiType>;
+      OutOfGas: AugmentedError<ApiType>;
       RefcountOverflow: AugmentedError<ApiType>;
-      RefundGas: AugmentedError<ApiType>;
       SignatureVerificationError: AugmentedError<ApiType>;
       StackOverflow: AugmentedError<ApiType>;
       TransferFailed: AugmentedError<ApiType>;
       UnknownDenom: AugmentedError<ApiType>;
+      Unsupported: AugmentedError<ApiType>;
       VmCreation: AugmentedError<ApiType>;
       VMDepthOverflow: AugmentedError<ApiType>;
       /**
@@ -288,6 +291,10 @@ declare module '@polkadot/api-base/types/errors' {
       NothingToClaim: AugmentedError<ApiType>;
       NotInitialized: AugmentedError<ApiType>;
       RewardsNotFunded: AugmentedError<ApiType>;
+      /**
+       * Returned by `delete` if the provided expected reward mismatches the actual reward.
+       **/
+      UnexpectedRewardAmount: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -447,6 +454,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NoRouteFound: AugmentedError<ApiType>;
       /**
+       * Only dual asset pools supported
+       **/
+      OnlyDualAssetPoolsSupported: AugmentedError<ApiType>;
+      /**
        * Unexpected node found while route validation.
        **/
       UnexpectedNodeFoundWhileValidation: AugmentedError<ApiType>;
@@ -515,13 +526,29 @@ declare module '@polkadot/api-base/types/errors' {
     };
     ibc: {
       /**
+       * Failed to derive channel escrow address
+       **/
+      ChannelEscrowAddress: AugmentedError<ApiType>;
+      /**
+       * Error opening channel
+       **/
+      ChannelInitError: AugmentedError<ApiType>;
+      /**
        * Channel not found
        **/
       ChannelNotFound: AugmentedError<ApiType>;
       /**
+       * Error Freezing client
+       **/
+      ClientFreezeFailed: AugmentedError<ApiType>;
+      /**
        * Client state not found
        **/
       ClientStateNotFound: AugmentedError<ApiType>;
+      /**
+       * Client update time and height not found
+       **/
+      ClientUpdateNotFound: AugmentedError<ApiType>;
       /**
        * Connection not found
        **/
@@ -539,13 +566,45 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       EncodingError: AugmentedError<ApiType>;
       /**
+       * Unable to get client revision number
+       **/
+      FailedToGetRevisionNumber: AugmentedError<ApiType>;
+      /**
+       * Invalid amount
+       **/
+      InvalidAmount: AugmentedError<ApiType>;
+      /**
+       * Invalid asset id
+       **/
+      InvalidAssetId: AugmentedError<ApiType>;
+      /**
+       * Invalid channel id
+       **/
+      InvalidChannelId: AugmentedError<ApiType>;
+      /**
+       * Invalid Ibc denom
+       **/
+      InvalidIbcDenom: AugmentedError<ApiType>;
+      /**
        * Invalid message for extrinsic
        **/
       InvalidMessageType: AugmentedError<ApiType>;
       /**
+       * Invalid params passed
+       **/
+      InvalidParams: AugmentedError<ApiType>;
+      /**
+       * Invalid port id
+       **/
+      InvalidPortId: AugmentedError<ApiType>;
+      /**
        * Invalid route
        **/
       InvalidRoute: AugmentedError<ApiType>;
+      /**
+       * Invalid timestamp
+       **/
+      InvalidTimestamp: AugmentedError<ApiType>;
       /**
        * Other forms of errors
        **/
@@ -574,6 +633,22 @@ declare module '@polkadot/api-base/types/errors' {
        * Error constructing packet
        **/
       SendPacketError: AugmentedError<ApiType>;
+      /**
+       * Latest height and timestamp for a client not found
+       **/
+      TimestampAndHeightNotFound: AugmentedError<ApiType>;
+      /**
+       * The interchain token transfer was not successfully initiated
+       **/
+      TransferFailed: AugmentedError<ApiType>;
+      /**
+       * Error Decoding utf8 bytes
+       **/
+      Utf8Error: AugmentedError<ApiType>;
+      /**
+       * Error writing acknowledgement to storage
+       **/
+      WriteAckError: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -999,12 +1074,19 @@ declare module '@polkadot/api-base/types/errors' {
     pablo: {
       AmpFactorMustBeGreaterThanZero: AugmentedError<ApiType>;
       AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
+      AssetNotFound: AugmentedError<ApiType>;
       CannotRespectMinimumRequested: AugmentedError<ApiType>;
+      IncorrectAssetAmounts: AugmentedError<ApiType>;
+      InitialDepositCannotBeZero: AugmentedError<ApiType>;
       InvalidAmount: AugmentedError<ApiType>;
       InvalidAsset: AugmentedError<ApiType>;
       InvalidFees: AugmentedError<ApiType>;
       InvalidPair: AugmentedError<ApiType>;
       InvalidSaleState: AugmentedError<ApiType>;
+      /**
+       * The `min_amounts` passed to `remove_liquidity` must contain at least one asset.
+       **/
+      MinAmountsMustContainAtLeastOneAsset: AugmentedError<ApiType>;
       MissingAmount: AugmentedError<ApiType>;
       MissingMinExpectedAmount: AugmentedError<ApiType>;
       MoreThanTwoAssetsNotYetSupported: AugmentedError<ApiType>;
@@ -1016,6 +1098,7 @@ declare module '@polkadot/api-base/types/errors' {
       PairMismatch: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
       StakingPoolConfigError: AugmentedError<ApiType>;
+      UnsupportedOperation: AugmentedError<ApiType>;
       WeightsMustBeNonZero: AugmentedError<ApiType>;
       WeightsMustSumToOne: AugmentedError<ApiType>;
       /**
@@ -1240,7 +1323,15 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     stakingRewards: {
+      /**
+       * Some operation resulted in an arithmetic overflow.
+       **/
+      ArithmeticError: AugmentedError<ApiType>;
       BackToTheFuture: AugmentedError<ApiType>;
+      /**
+       * The duration provided was not valid for the pool.
+       **/
+      DurationPresetNotFound: AugmentedError<ApiType>;
       /**
        * Invalid end block number provided for creating a pool.
        **/
@@ -1254,10 +1345,6 @@ declare module '@polkadot/api-base/types/errors' {
        * Reward's max limit reached.
        **/
       MaxRewardLimitReached: AugmentedError<ApiType>;
-      /**
-       * No duration presets configured.
-       **/
-      NoDurationPresetsConfigured: AugmentedError<ApiType>;
       /**
        * No duration presets were provided upon pool creation.
        **/
@@ -1379,7 +1466,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    technicalCollective: {
+    technicalCommittee: {
       /**
        * Members are already initialized!
        **/
@@ -1425,7 +1512,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    technicalMembership: {
+    technicalCommitteeMembership: {
       /**
        * Already a member.
        **/
@@ -1473,48 +1560,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       MaxLocksExceeded: AugmentedError<ApiType>;
       TooManyReserves: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
-    transfer: {
-      /**
-       * Error opening channel
-       **/
-      ChannelInitError: AugmentedError<ApiType>;
-      /**
-       * Unable to get client revision number
-       **/
-      FailedToGetRevisionNumber: AugmentedError<ApiType>;
-      /**
-       * Invalid amount
-       **/
-      InvalidAmount: AugmentedError<ApiType>;
-      /**
-       * Invalid asset id
-       **/
-      InvalidAssetId: AugmentedError<ApiType>;
-      /**
-       * Invalid Ibc denom
-       **/
-      InvalidIbcDenom: AugmentedError<ApiType>;
-      /**
-       * Invalid params passed
-       **/
-      InvalidParams: AugmentedError<ApiType>;
-      /**
-       * Invalid timestamp
-       **/
-      InvalidTimestamp: AugmentedError<ApiType>;
-      /**
-       * The interchain token transfer was not successfully initiated
-       **/
-      TransferFailed: AugmentedError<ApiType>;
-      /**
-       * Error Decoding utf8 bytes
-       **/
-      Utf8Error: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

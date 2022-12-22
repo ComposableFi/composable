@@ -49,3 +49,8 @@ export function getAmountWithoutDecimals(
 ): BigNumber {
   return BigNumber(amount.toString()).div(BigNumber(10 ** decimals));
 }
+
+export function divideBigInts(a: bigint, b: bigint, decimals = 4): number {
+  const precision = BigInt(10 ** decimals);
+  return Number((precision * a) / b) / Number(precision);
+}

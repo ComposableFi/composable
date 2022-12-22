@@ -54,7 +54,6 @@
         ./price-feed.nix
         ./release.nix
         ./rust.nix
-        ./subsquid/subsquid.nix
         ./subwasm.nix
         ./scripts/zombienet/flake-module.nix
       ];

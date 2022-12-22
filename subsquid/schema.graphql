@@ -5,37 +5,59 @@ type Account @entity {
   eventId: String!
 }
 
+enum PabloPoolType {
+  DualAssetConstantProduct
+}
+
 type PabloPool @entity {
+  "Pool ID"
   id: ID!
   "ID of the last event that was used to derive this entity data"
   eventId: ID!
-  "Pool ID"
-  poolId: BigInt!
-  owner: String!
+  owner: String! @index
+  poolType: PabloPoolType!
   lpIssued: BigInt!
   transactionCount: Int!
-  totalLiquidity: String!
-  totalVolume: String!
-  totalFees: String!
-  baseAssetId: String!
-  "Asset used for all quotes in this type"
-  quoteAssetId: String!
-  blockNumber: BigInt! @index
-  "Unix timestamp in ms"
-  calculatedTimestamp: BigInt!
+  "Timestamp of the block in which this activity occurred"
+  timestamp: DateTime! @index
   poolAssets: [PabloPoolAsset!] @derivedFrom(field: "pool")
-  transactions: [PabloTransaction!] @derivedFrom(field: "pool")
+  poolAssetWeights: [PabloAssetWeight!] @derivedFrom(field: "pool")
+}
+
+type PabloAssetWeight @entity {
+  id: ID!
+  pool: PabloPool! @index
+  assetId: String! @index
+  weight: Float!
+}
+
+type PabloTransaction @entity {
+  id: ID!
+  pool: PabloPool! @index
+  account: String! @index
+  timestamp: DateTime! @index
 }
 
 type PabloPoolAsset @entity {
+  "Asset ID"
   id: ID!
   assetId: String!
-  pool: PabloPool!
+  pool: PabloPool! @index
   totalLiquidity: BigInt!
   totalVolume: BigInt!
-  blockNumber: BigInt! @index
-  "Unix timestamp in ms"
-  calculatedTimestamp: BigInt!
+}
+
+type PabloFee @entity {
+  id: ID!
+  event: Event!
+  pool: PabloPool! @index
+  assetId: String! @index
+  account: String! @index
+  fee: BigInt!
+  lpFee: BigInt!
+  ownerFee: BigInt!
+  protocolFee: BigInt!
+  timestamp: DateTime! @index
 }
 
 type BondedFinanceBondOffer @entity {
@@ -133,7 +155,9 @@ enum LockedSource {
   VestingSchedules
 }
 
-type StakingPosition @entity @index(fields: ["fnftCollectionId", "fnftInstanceId"], unique: true) {
+type StakingPosition
+  @entity
+  @index(fields: ["fnftCollectionId", "fnftInstanceId"], unique: true) {
   id: ID!
   event: Event! @unique @index
   "Unique identifier for the position on chain"
@@ -167,20 +191,22 @@ type HistoricalVolume @entity {
   assetId: String!
 }
 
-type PabloTransaction @entity {
+type PabloSwap @entity {
   id: ID!
-  event: Event! @unique @index
-  pool: PabloPool!
-  baseAssetId: String!
+  event: Event!
+  pool: PabloPool! @index
+  baseAssetId: String! @index
   baseAssetAmount: BigInt!
-  quoteAssetId: String!
+  quoteAssetId: String! @index
   quoteAssetAmount: BigInt!
-  spotPrice: String!
-  "Optional: Only certain transaction types have fees charged by Pablo. Does NOT include the collected extrinsic execution fee."
-  fee: String!
+  spotPrice: String! # Using a string for arbitrary precision
+  fee: PabloFee!
+  timestamp: DateTime! @index
 }
 
-type CurrentLockedValue @entity @index(fields: ["assetId", "source"], unique: true) {
+type CurrentLockedValue
+  @entity
+  @index(fields: ["assetId", "source"], unique: true) {
   id: ID!
   assetId: String! @index
   event: Event! @index
@@ -189,25 +215,25 @@ type CurrentLockedValue @entity @index(fields: ["assetId", "source"], unique: tr
 }
 
 enum EventType {
-  ADD_LIQUIDITY,
-  REMOVE_LIQUIDITY,
-  SWAP,
-  CREATE_POOL,
-  DELETE_POOL,
-  BALANCES_TRANSFER,
-  BALANCES_DEPOSIT,
-  BALANCES_WITHDRAW,
-  STAKING_REWARDS_REWARD_POOL_CREATED,
-  STAKING_REWARDS_STAKED,
-  STAKING_REWARDS_STAKE_AMOUNT_EXTENDED,
-  STAKING_REWARDS_UNSTAKE,
-  STAKING_REWARDS_SPLIT_POSITION,
-  BONDED_FINANCE_NEW_OFFER,
-  BONDED_FINANCE_NEW_BOND,
-  BONDED_FINANCE_OFFER_CANCELLED,
-  VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED,
-  VESTING_SCHEDULES_CLAIMED,
-  VESTING_SCHEDULES_VESTING_SCHEDULES_UPDATED,
+  ADD_LIQUIDITY
+  REMOVE_LIQUIDITY
+  SWAP
+  CREATE_POOL
+  DELETE_POOL
+  BALANCES_TRANSFER
+  BALANCES_DEPOSIT
+  BALANCES_WITHDRAW
+  STAKING_REWARDS_REWARD_POOL_CREATED
+  STAKING_REWARDS_STAKED
+  STAKING_REWARDS_STAKE_AMOUNT_EXTENDED
+  STAKING_REWARDS_UNSTAKE
+  STAKING_REWARDS_SPLIT_POSITION
+  BONDED_FINANCE_NEW_OFFER
+  BONDED_FINANCE_NEW_BOND
+  BONDED_FINANCE_OFFER_CANCELLED
+  VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED
+  VESTING_SCHEDULES_CLAIMED
+  VESTING_SCHEDULES_VESTING_SCHEDULES_UPDATED
 }
 
 type Event @entity {
@@ -220,7 +246,5 @@ type Event @entity {
   blockNumber: BigInt! @index
   "Timestamp of the block in which this transaction was registered"
   timestamp: DateTime! @index
-  "If this transaction came from Pablo, it will have extra information"
-  pabloTransaction: PabloTransaction @derivedFrom(field: "event")
   activities: [Activity!] @derivedFrom(field: "event")
 }
