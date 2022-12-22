@@ -830,7 +830,6 @@ jobs:
       - linux
       - x64
       - sre
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     concurrency:
       group: ${{ github.workflow }}-package-dali-subxt-client-${{ github.ref }}
       cancel-in-progress: true
