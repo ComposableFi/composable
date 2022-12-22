@@ -249,7 +249,7 @@ pub mod defs {
 	pub type BTC = Currency<2000>;
 	pub type USDT = Currency<130, 6>;
 
-	pub type NORMALIZED = USDT;
+	pub type NORMALIZED = Currency<0xDEADC0DE, 12>;
 }
 
 pub use defs::*;
