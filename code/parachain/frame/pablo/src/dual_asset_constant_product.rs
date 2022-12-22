@@ -1,8 +1,8 @@
 use crate::{AssetIdOf, Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::{
 	constant_product::{
-		compute_deposit_lp_, compute_first_deposit_lp_, compute_in_given_out_new,
-		compute_out_given_in_new, compute_redeemed_for_lp,
+		compute_deposit_lp, compute_first_deposit_lp, compute_in_given_out,
+		compute_out_given_in, compute_redeemed_for_lp,
 	},
 	PoolWeightMathExt,
 };
@@ -123,7 +123,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 				return Err(Error::<T>::InitialDepositMustContainAllAssets.into())
 			}
 
-			let single_deposit = compute_deposit_lp_(
+			let single_deposit = compute_deposit_lp(
 				lp_total_issuance,
 				single.deposit_amount,
 				single.existing_balance,
@@ -146,7 +146,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 			ensure!(pool_assets.is_empty(), Error::<T>::UnsupportedOperation);
 
 			if lp_total_issuance.is_zero() {
-				let lp_to_mint = compute_first_deposit_lp_(
+				let lp_to_mint = compute_first_deposit_lp(
 					assets_with_balances.iter().map(|adi| (adi.deposit_amount, adi.asset_weight)),
 					Permill::zero(),
 				)?
@@ -181,7 +181,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 				// pass 1 as weight since adding liquidity for all assets with normalized deposits
 				// see docs on compute_deposit_lp_ for more information
-				let lp_to_mint = compute_deposit_lp_(
+				let lp_to_mint = compute_deposit_lp(
 					lp_total_issuance,
 					asset_to_calculate_with.deposit_amount,
 					asset_to_calculate_with.existing_balance,
@@ -283,7 +283,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let (w_i, b_i) = pool_assets.get(&in_asset.asset_id).ok_or(Error::<T>::AssetNotFound)?;
 		let (w_o, b_o) = pool_assets.get(&out_asset_id).ok_or(Error::<T>::AssetNotFound)?;
 
-		let amm_pair = compute_out_given_in_new::<_>(*w_i, *w_o, *b_i, *b_o, a_sent, fee)?;
+		let amm_pair = compute_out_given_in::<_>(*w_i, *w_o, *b_i, *b_o, a_sent, fee)?;
 
 		let a_out = AssetAmount::new(out_asset_id, T::Convert::convert(amm_pair.value));
 		let a_sent = AssetAmount::new(in_asset.asset_id, in_asset.amount);
@@ -314,7 +314,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		let (w_o, b_o) = pool_assets.get(&out_asset.asset_id).ok_or(Error::<T>::AssetNotFound)?;
 		let (w_i, b_i) = pool_assets.get(&in_asset_id).ok_or(Error::<T>::AssetNotFound)?;
 
-		let amm_pair = compute_in_given_out_new(*w_i, *w_o, *b_i, *b_o, a_out, fee)?;
+		let amm_pair = compute_in_given_out(*w_i, *w_o, *b_i, *b_o, a_out, fee)?;
 
 		let a_sent = AssetAmount::new(in_asset_id, T::Convert::convert(amm_pair.value));
 		let fee = pool.fee_config.calculate_fees(in_asset_id, T::Convert::convert(amm_pair.fee));

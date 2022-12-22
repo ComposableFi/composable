@@ -195,7 +195,7 @@ mod constant_product {
 			let pool_assets = vec![];
 			let f = Permill::zero();
 
-			let res = compute_first_deposit_lp_(pool_assets.into_iter(), f);
+			let res = compute_first_deposit_lp(pool_assets.into_iter(), f);
 
 			assert_eq!(res, Err(ConstantProductAmmError::InvalidTokensList))
 		}
@@ -208,7 +208,7 @@ mod constant_product {
 			];
 			let f = Permill::zero();
 
-			let res = compute_first_deposit_lp_(pool_assets.into_iter(), f)
+			let res = compute_first_deposit_lp(pool_assets.into_iter(), f)
 				.expect("Inputs are valid; QED");
 
 			// Actual expected 346_410_161_513_775_458
@@ -226,9 +226,9 @@ mod constant_product {
 			fn no_unexpected_errors_in_range(input in first_deposit_range_inputs()) {
 				let pool_assets = generate_pool_assets(input.number_of_assets);
 
-				let res = compute_first_deposit_lp_(pool_assets.into_iter(), input.f);
+				let res = compute_first_deposit_lp(pool_assets.into_iter(), input.f);
 
-				prop_assert!(dbg!(res).is_ok());
+				prop_assert!(res.is_ok());
 			}
 		}
 	}
@@ -333,7 +333,7 @@ mod constant_product {
 			let w_k = Permill::from_rational::<u32>(1, 2);
 			let f = Permill::zero();
 
-			let res = compute_deposit_lp_(p_supply, d_k, b_k, w_k, f);
+			let res = compute_deposit_lp(p_supply, d_k, b_k, w_k, f);
 
 			assert_eq!(res, Err(ConstantProductAmmError::from(ArithmeticError::DivisionByZero)));
 		}
@@ -346,7 +346,7 @@ mod constant_product {
 			let w_k = Permill::from_rational::<u32>(1, 2);
 			let f = Permill::zero();
 
-			let res = compute_deposit_lp_(p_supply, d_k, b_k, w_k, f).expect("Input is valid; QED");
+			let res = compute_deposit_lp(p_supply, d_k, b_k, w_k, f).expect("Input is valid; QED");
 
 			// Actual expected 127_984_003_998_750
 			// -000000010411% Error
@@ -359,7 +359,7 @@ mod constant_product {
 
 			#[test]
 			fn should_pass_with_expected_values(i_and_o in checked_inputs_and_outputs()) {
-				let res = compute_deposit_lp_(
+				let res = compute_deposit_lp(
 					i_and_o.p_supply,
 					i_and_o.d_k,
 					i_and_o.b_k,
@@ -377,7 +377,7 @@ mod constant_product {
 
 			#[test]
 			fn no_unexpected_errors_in_range(i_and_o in range_inputs()) {
-				let res = compute_deposit_lp_(
+				let res = compute_deposit_lp(
 					i_and_o.p_supply,
 					i_and_o.d_k,
 					i_and_o.b_k,
@@ -385,7 +385,7 @@ mod constant_product {
 					i_and_o.f
 				);
 
-				prop_assert!(dbg!(res).is_ok());
+				prop_assert!(res.is_ok());
 			}
 		}
 	}
@@ -506,8 +506,8 @@ mod constant_product {
 			let a_out = 2;
 			let f = Permill::zero();
 
-			let res = compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f)
-				.expect("Input is valid; QED");
+			let res =
+				compute_in_given_out(w_i, w_o, b_i, b_o, a_out, f).expect("Input is valid; QED");
 
 			assert_eq!(res.fee, 0);
 		}
@@ -521,7 +521,7 @@ mod constant_product {
 			let a_out = 2;
 			let f = Permill::from_percent(10);
 
-			let res = compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f);
+			let res = compute_in_given_out(w_i, w_o, b_i, b_o, a_out, f);
 
 			assert_eq!(res, Err(ConstantProductAmmError::from(ArithmeticError::DivisionByZero)));
 		}
@@ -535,7 +535,7 @@ mod constant_product {
 			let a_out = 0;
 			let f = Permill::from_percent(10);
 
-			let res = compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f);
+			let res = compute_in_given_out(w_i, w_o, b_i, b_o, a_out, f);
 
 			assert_eq!(res, Err(ConstantProductAmmError::from(ArithmeticError::DivisionByZero)));
 		}
@@ -549,7 +549,7 @@ mod constant_product {
 			let a_out = 256;
 			let f = Permill::from_percent(10);
 
-			let res = compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f);
+			let res = compute_in_given_out(w_i, w_o, b_i, b_o, a_out, f);
 
 			assert_eq!(res, Err(ConstantProductAmmError::CannotTakeMoreThanAvailable))
 		}
@@ -563,8 +563,7 @@ mod constant_product {
 			let a_out = 256_000_000_000_000;
 			let f = Permill::zero();
 
-			let res =
-				compute_in_given_out_new(w_i, w_o, b_i, b_o, a_out, f).expect("Inputs are valid");
+			let res = compute_in_given_out(w_i, w_o, b_i, b_o, a_out, f).expect("Inputs are valid");
 
 			// Actual expected 256_128_000_000_000
 			// +000000250000% Error
@@ -577,7 +576,7 @@ mod constant_product {
 
 			#[test]
 			fn should_pass_with_expected_values(i_and_o in checked_inputs_and_outputs()) {
-				let res = compute_in_given_out_new(
+				let res = compute_in_given_out(
 					i_and_o.w_i,
 					i_and_o.w_o,
 					i_and_o.b_i,
@@ -596,7 +595,7 @@ mod constant_product {
 
 			#[test]
 			fn no_unexpected_errors_in_range(i_and_o in range_inputs()) {
-				let res = compute_in_given_out_new(
+				let res = compute_in_given_out(
 					i_and_o.w_i,
 					i_and_o.w_o,
 					i_and_o.b_i,
@@ -723,7 +722,7 @@ mod constant_product {
 			let a_sent = 2;
 			let fee = Permill::zero();
 
-			let res = compute_out_given_in_new(w_i, w_o, b_i, b_o, a_sent, fee)
+			let res = compute_out_given_in(w_i, w_o, b_i, b_o, a_sent, fee)
 				.expect("Valid input; QED");
 
 			assert_eq!(res.fee, 0);
@@ -738,7 +737,7 @@ mod constant_product {
 			let a_sent = 2;
 			let fee = Permill::zero();
 
-			let res = compute_out_given_in_new(w_i, w_o, b_i, b_o, a_sent, fee);
+			let res = compute_out_given_in(w_i, w_o, b_i, b_o, a_sent, fee);
 
 			assert_eq!(res, Err(ConstantProductAmmError::from(ArithmeticError::DivisionByZero)));
 		}
@@ -752,7 +751,7 @@ mod constant_product {
 			let a_sent = 0;
 			let fee = Permill::zero();
 
-			let res = compute_out_given_in_new(w_i, w_o, b_i, b_o, a_sent, fee);
+			let res = compute_out_given_in(w_i, w_o, b_i, b_o, a_sent, fee);
 
 			assert_eq!(res, Err(ConstantProductAmmError::from(ArithmeticError::DivisionByZero)));
 		}
@@ -766,7 +765,7 @@ mod constant_product {
 			let a_sent = 256_000_000_000_000;
 			let fee = Permill::zero();
 
-			let res = compute_out_given_in_new(w_i, w_o, b_i, b_o, a_sent, fee)
+			let res = compute_out_given_in(w_i, w_o, b_i, b_o, a_sent, fee)
 				.expect("Valid input; QED");
 
 			// Actual expected 255_872_000_000_000
@@ -780,7 +779,7 @@ mod constant_product {
 
 			#[test]
 			fn should_pass_with_expected_values(i_and_o in checked_inputs_and_outputs()) {
-				let res = compute_out_given_in_new(
+				let res = compute_out_given_in(
 					i_and_o.w_i,
 					i_and_o.w_o,
 					i_and_o.b_i,
@@ -800,7 +799,7 @@ mod constant_product {
 
 			#[test]
 			fn no_unexpected_errors_in_range(i_and_o in range_inputs()) {
-				let res = compute_out_given_in_new(
+				let res = compute_out_given_in(
 					i_and_o.w_i,
 					i_and_o.w_o,
 					i_and_o.b_i,
@@ -859,7 +858,7 @@ mod constant_product {
 				.value;
 
 			let res =
-				compute_deposit_lp_(p_supply, d_k, b_k, w_k, f).expect("no values cause overflow");
+				compute_deposit_lp(p_supply, d_k, b_k, w_k, f).expect("no values cause overflow");
 
 			assert_eq!(res.value, p_issued_min);
 		}
@@ -877,7 +876,7 @@ mod constant_product {
 				.value;
 
 			let res =
-				compute_deposit_lp_(p_supply, d_k, b_k, w_k, f).expect("no values cause overflow");
+				compute_deposit_lp(p_supply, d_k, b_k, w_k, f).expect("no values cause overflow");
 
 			assert!(default_acceptable_computation_error(res.value, p_issued_min).is_ok());
 		}
@@ -899,7 +898,7 @@ mod constant_product {
 					.value;
 
 				let res =
-					compute_deposit_lp_(
+					compute_deposit_lp(
 					i_and_o.p_supply,
 					d_k,
 					i_and_o.b_k,
