@@ -219,7 +219,6 @@ export async function processLiquidityAddedEvent(
     const asset = await getOrCreatePabloAsset(ctx, pool, assetId.toString());
 
     asset.totalLiquidity += amount;
-    asset.totalVolume += amount;
 
     await ctx.store.save(asset);
   }
@@ -287,7 +286,6 @@ export async function processLiquidityRemovedEvent(
     const asset = await getOrCreatePabloAsset(ctx, pool, assetId.toString());
 
     asset.totalLiquidity -= amount;
-    asset.totalVolume += amount;
 
     await ctx.store.save(asset);
   }
