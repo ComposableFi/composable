@@ -1,8 +1,8 @@
 use crate::{AssetIdOf, Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::{
 	constant_product::{
-		compute_deposit_lp, compute_first_deposit_lp, compute_in_given_out,
-		compute_out_given_in, compute_redeemed_for_lp,
+		compute_deposit_lp, compute_first_deposit_lp, compute_in_given_out, compute_out_given_in,
+		compute_redeemed_for_lp,
 	},
 	PoolWeightMathExt,
 };
