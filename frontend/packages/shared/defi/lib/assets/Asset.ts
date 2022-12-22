@@ -54,12 +54,10 @@ export class Asset {
    * on picasso parachain
    * string by default
    * @param inBn boolean
-   * @returns BigNumber | string
+   * @returns BigNumber | string | null
    */
-  getPicassoAssetId(inBn: boolean = false): BigNumber | string {
-    const picassoAssetId = this.__parachainAssetIds.get("picasso");
-    if (!picassoAssetId) throw new Error("Asset Unavailable on Picasso");
-    return inBn ? picassoAssetId : picassoAssetId.toString();
+  getPicassoAssetId(inBn: boolean = false) {
+    return this.getIdOnChain("picasso", inBn);
   }
 
   isSupportedOn(network: string): boolean {

@@ -5,6 +5,7 @@ import { ApiPromise } from "@polkadot/api";
 import { Asset, subscribePicassoBalanceByAssetId } from "shared";
 import BigNumber from "bignumber.js";
 import { PoolConfig } from "@/store/pools/types";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 function getTokenPair(config: PoolConfig) {
   const [a, b] = config.config.assets;
@@ -27,6 +28,7 @@ export function subscribeOwnedLiquidity(
         prevSub?.();
       }
       if (!isPoolsLoaded) return;
+      const tokens = useStore.getState().substrateTokens.tokens;
       const config = useStore.getState().pools.config;
       const setOwnedLiquidityToken =
         useStore.getState().ownedLiquidity.setOwnedLiquidity;
@@ -34,11 +36,16 @@ export function subscribeOwnedLiquidity(
       pipe(
         readonlyArray.fromArray(config),
         readonlyArray.map((configItem) => {
+          const asset = Object.values(tokens).find(
+            (token) =>
+              token.getPicassoAssetId()?.toString() ===
+              configItem.config.lpToken.toString()
+          );
           prevSub = subscribePicassoBalanceByAssetId(
             api,
             accountAddress,
             new BigNumber(configItem.config.lpToken),
-            12, // TODO: This value should be fetched from Asset RPC
+            asset?.getDecimals(DEFAULT_NETWORK_ID) || 12,
             (balanceData) => {
               const pair = getTokenPair(configItem);
               const poolId = configItem.poolId;

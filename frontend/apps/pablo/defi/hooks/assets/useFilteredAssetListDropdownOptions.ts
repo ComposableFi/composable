@@ -14,10 +14,11 @@ export function useFilteredAssetListDropdownOptions(
     return Object.values(tokens)
       .filter((asset) => {
         try {
-          const picaId = asset.getPicassoAssetId() as string;
-          return picaId === assetId;
+          return (
+            !!asset.getPicassoAssetId().toString() &&
+            asset.getPicassoAssetId.toString() !== assetId
+          );
         } catch (err: any) {
-          console.log("Error Missing ID: ", asset.getSymbol(), err.message);
           return false;
         }
       })
@@ -28,6 +29,5 @@ export function useFilteredAssetListDropdownOptions(
         icon: asset.getIconUrl(),
       }));
   }, [assetId, tokens, hasFetchedTokens]);
-
   return assetOptions;
 }

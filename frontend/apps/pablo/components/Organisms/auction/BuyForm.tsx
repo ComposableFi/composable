@@ -64,6 +64,7 @@ export const BuyForm: FC<BuyFormProps> = ({ auction, ...rest }) => {
 
   const { isActive, isEnded, startTimestamp } = useAuctionTiming(auction);
   const initiateBuyTx = usePabloSwap({
+    pool: undefined,
     baseAssetId: (baseAsset?.getPicassoAssetId() as string) ?? "-",
     quoteAssetId: (quoteAsset?.getPicassoAssetId() as string) ?? "-",
     quoteAmount,

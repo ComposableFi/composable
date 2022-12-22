@@ -15,6 +15,7 @@ import useStore from "@/store/useStore";
 import { BaseAsset } from "@/components";
 import BigNumber from "bignumber.js";
 import { usePoolRatio } from "@/defi/hooks/pools/usePoolRatio";
+import { FC } from "react";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -25,7 +26,7 @@ type ItemProps = {
   value: string;
 } & GridProps;
 
-const Item: React.FC<ItemProps> = ({ value, children, ...gridProps }) => {
+const Item: FC<ItemProps> = ({ value, children, ...gridProps }) => {
   return (
     <Grid container {...gridProps}>
       <Grid item {...twoColumnPageSize}>
@@ -42,7 +43,7 @@ const Item: React.FC<ItemProps> = ({ value, children, ...gridProps }) => {
 
 const DonutChartLabels = ["My Position", "Total Value Locked"];
 
-export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
+export const PoolLiquidityPanel: FC<PoolDetailsProps> = ({
   pool,
   ...boxProps
 }) => {
