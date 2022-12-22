@@ -29,7 +29,7 @@ export const WalletIndicator: React.FC<ConnectionButtonProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const polkaIcon = "/networks/polkadot_js.svg";
+  const polkaIcon = "/networks/picasso.svg";
   const ethIcon = "/networks/mainnet.svg";
   const shouldShowAddButton =
     blockchainNetworksSupported.length > 1 &&

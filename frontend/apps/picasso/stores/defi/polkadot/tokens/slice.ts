@@ -3,6 +3,7 @@ import { StoreSlice } from "@/stores/types";
 import { Token, TokenId, TOKENS } from "tokens";
 import BigNumber from "bignumber.js";
 import {
+  AssetRatio,
   PicassoRpcAsset,
   StatemineAssetMetadata,
 } from "@/defi/polkadot/pallets/Assets";
@@ -16,6 +17,7 @@ export type TokenMetadata = Token & {
     kusama: string | null;
     statemine: string | null;
   };
+  ratio: Record<SubstrateNetworkId, AssetRatio | null>;
   decimals: Record<SubstrateNetworkId, number | null>;
   existentialDeposit: Record<SubstrateNetworkId, BigNumber | null>;
 };
@@ -42,6 +44,11 @@ const initialState = {
           karura: null,
         },
         existentialDeposit: {
+          kusama: null,
+          picasso: null,
+          karura: null,
+        },
+        ratio: {
           kusama: null,
           picasso: null,
           karura: null,
@@ -102,6 +109,7 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
             token.decimals.picasso = listItem.decimals ?? 12;
             token.chainId.picasso = listItem.id;
             token.existentialDeposit.picasso = listItem.existentialDeposit;
+            token.ratio.picasso = listItem.ratio;
           }
         });
         // karuraList.forEach(listItem => {

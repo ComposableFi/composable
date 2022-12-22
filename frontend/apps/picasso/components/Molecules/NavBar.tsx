@@ -18,6 +18,7 @@ import Link from "next/link";
 import { NextRouter, useRouter } from "next/router";
 import { Logo } from "../Atom";
 import { FC } from "react";
+import config from "@/constants/config";
 
 type MenuItem = {
   label: string;
@@ -67,7 +68,7 @@ const RoutesConfig: ConfigType[] = [
     matches: ["/staking"],
   },
   {
-    label: "Bonding",
+    label: "Bond",
     path: "/bonds",
     icon: dynamic(() => import("@mui/icons-material/PaymentsRounded")),
     status: "active",
@@ -75,16 +76,12 @@ const RoutesConfig: ConfigType[] = [
   },
   {
     label: "Governance",
-    path: process.env.PICASSO_GOVERNANCE_URL || "",
+    path: config.governanceUrl,
     icon: dynamic(() => import("@mui/icons-material/HowToVoteRounded")),
     status: "active",
     matches: [],
     endAdornment: (
-      <a
-        target="_blank"
-        href={process.env.PICASSO_GOVERNANCE_URL || ""}
-        rel="noopener noreferrer"
-      >
+      <a target="_blank" href={config.governanceUrl} rel="noopener noreferrer">
         <IconButton color="primary">
           <OpenInNew />
         </IconButton>
@@ -93,7 +90,7 @@ const RoutesConfig: ConfigType[] = [
   },
   {
     label: "Pablo",
-    path: "",
+    path: config.pabloUrl,
     icon: dynamic(() => import("@mui/icons-material/Autorenew")),
     status: "inactive",
     endAdornment: (
@@ -156,6 +153,7 @@ export const NavBar: FC = () => {
         sx={{
           padding: theme.spacing(6, 3),
           mb: theme.spacing(4),
+          cursor: "pointer",
         }}
       >
         <Logo />

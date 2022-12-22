@@ -1,4 +1,4 @@
-/** @type {import('next').NextConfig} */
+/** @type {import("next").NextConfig} */
 const withPWA = require("next-pwa")({
   dest: "public",
   skipWaiting: true, // Turn this to false once you're ready to deploy a banner to develop update prompt.
@@ -15,6 +15,8 @@ const withTM = require("next-transpile-modules")([
   "defi-interfaces",
   "wallet",
   "endpoints",
+  "coingecko",
+  "axios",
 ]);
 
 function getVersion() {
@@ -50,7 +52,6 @@ const nextConfig = {
     RPC_URL_250: process.env.RPC_URL_250,
     SUBSQUID_URL: process.env.SUBSQUID_URL,
     WEBSITE_VERSION: getVersion(),
-    PICASSO_GOVERNANCE_URL: process.env.PICASSO_GOVERNANCE_URL,
   },
   webpack(config) {
     config.module.rules.push({

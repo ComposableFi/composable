@@ -75,9 +75,7 @@ export const Wallet: FC<WalletProps> = ({
   return (
     <>
       <ConnectionStatus
-        setSelectedAsset={() => {
-          console.log("Hello");
-        }}
+        setSelectedAsset={() => {}}
         selectedAsset={""}
         onOpenConnectionModal={() => {
           if (polkadotExtensionStatus === "connected") {
