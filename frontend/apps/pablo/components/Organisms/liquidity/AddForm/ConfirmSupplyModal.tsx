@@ -23,7 +23,7 @@ import { PoolConfig } from "@/store/createPool/types";
 import { InputConfig } from "@/components/Organisms/liquidity/AddForm/types";
 import { useAddLiquidity } from "@/defi/hooks";
 import useStore from "@/store/useStore";
-import { getStats, GetStatsReturn } from "@/defi/utils";
+import { getPriceAndRatio, getStats, GetStatsReturn } from "@/defi/utils";
 
 export interface SupplyModalProps {
   pool: PoolConfig;
@@ -71,34 +71,17 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
     }
   }, [isPoolsLoaded, pool]);
 
-  if (pool === null || stats === null) return null;
+  if (stats === null) return null;
   const assetOne = pool.config.assets[0];
   const assetTwo = pool.config.assets[1];
 
-  const spotPriceOfATOB = stats[
-    assetOne.getPicassoAssetId().toString()
-  ].spotPrice.isZero()
-    ? amountOne.div(amountTwo).isNaN()
-      ? new BigNumber(0)
-      : amountOne.div(amountTwo)
-    : stats[assetOne.getPicassoAssetId().toString()].spotPrice;
-  const spotPriceOfBToA = stats[
-    assetTwo.getPicassoAssetId().toString()
-  ].spotPrice.isZero()
-    ? amountTwo.div(amountOne).isNaN()
-      ? new BigNumber(0)
-      : amountTwo.div(amountOne)
-    : stats[assetTwo.getPicassoAssetId().toString()].spotPrice;
-  const totalLiquidityA =
-    stats[assetOne.getPicassoAssetId().toString()].total.liquidity;
-  const totalLiquidityB =
-    stats[assetTwo.getPicassoAssetId().toString()].total.liquidity;
-  const ratioA = totalLiquidityA.isZero()
-    ? 100
-    : amountOne.div(totalLiquidityA).multipliedBy(100).toNumber();
-  const ratioB = totalLiquidityB.isZero()
-    ? 100
-    : amountTwo.div(totalLiquidityB).multipliedBy(100).toNumber();
+  const { spotPriceOfATOB, spotPriceOfBToA, ratioA, ratioB } = getPriceAndRatio(
+    stats,
+    assetOne,
+    amountOne,
+    amountTwo,
+    assetTwo
+  );
 
   return (
     <Modal

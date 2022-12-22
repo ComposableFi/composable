@@ -112,3 +112,43 @@ export function getPoolVolume(stats: GetStatsReturn): BigNumber {
     return acc;
   }, new BigNumber(0));
 }
+
+export function getPriceAndRatio(
+  stats: {
+    [p: string]: {
+      asset: Asset;
+      total: { liquidity: BigNumber; volume: BigNumber };
+      spotPrice: BigNumber;
+    };
+  },
+  assetOne: Asset,
+  amountOne: BigNumber,
+  amountTwo: BigNumber,
+  assetTwo: Asset
+) {
+  const spotPriceOfATOB = stats[
+    assetOne.getPicassoAssetId().toString()
+  ].spotPrice.isZero()
+    ? amountOne.div(amountTwo).isNaN()
+      ? new BigNumber(0)
+      : amountOne.div(amountTwo)
+    : stats[assetOne.getPicassoAssetId().toString()].spotPrice;
+  const spotPriceOfBToA = stats[
+    assetTwo.getPicassoAssetId().toString()
+  ].spotPrice.isZero()
+    ? amountTwo.div(amountOne).isNaN()
+      ? new BigNumber(0)
+      : amountTwo.div(amountOne)
+    : stats[assetTwo.getPicassoAssetId().toString()].spotPrice;
+  const totalLiquidityA =
+    stats[assetOne.getPicassoAssetId().toString()].total.liquidity;
+  const totalLiquidityB =
+    stats[assetTwo.getPicassoAssetId().toString()].total.liquidity;
+  const ratioA = totalLiquidityA.isZero()
+    ? 100
+    : amountOne.div(totalLiquidityA).multipliedBy(100).toNumber();
+  const ratioB = totalLiquidityB.isZero()
+    ? 100
+    : amountTwo.div(totalLiquidityB).multipliedBy(100).toNumber();
+  return { spotPriceOfATOB, spotPriceOfBToA, ratioA, ratioB };
+}

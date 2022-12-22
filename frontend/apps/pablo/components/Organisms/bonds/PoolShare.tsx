@@ -11,7 +11,7 @@ import BigNumber from "bignumber.js";
 import { FC, useEffect, useState } from "react";
 import { PoolConfig } from "@/store/pools/types";
 import { Asset } from "shared";
-import { getStats, GetStatsReturn } from "@/defi/utils";
+import { getPriceAndRatio, getStats, GetStatsReturn } from "@/defi/utils";
 import useStore from "@/store/useStore";
 
 const itemBoxPropsSX = (theme: Theme) =>
@@ -72,34 +72,17 @@ export const PoolShare: FC<PoolShareProps> = ({
     }
   }, [isPoolsLoaded, pool]);
 
-  const [assetLeft, assetRight] = input;
-  const [amountLeft, amountRight] = amounts;
+  const [assetOne, assetTwo] = input;
+  const [amountOne, amountTwo] = amounts;
   if (!stats) return <CircularProgress />;
 
-  const spotPriceOfATOB = stats[
-    assetLeft.getPicassoAssetId().toString()
-  ].spotPrice.isZero()
-    ? amountLeft.div(amountRight).isNaN()
-      ? new BigNumber(0)
-      : amountLeft.div(amountRight)
-    : stats[assetLeft.getPicassoAssetId().toString()].spotPrice;
-  const spotPriceOfBToA = stats[
-    assetRight.getPicassoAssetId().toString()
-  ].spotPrice.isZero()
-    ? amountRight.div(amountLeft).isNaN()
-      ? new BigNumber(0)
-      : amountRight.div(amountLeft)
-    : stats[assetRight.getPicassoAssetId().toString()].spotPrice;
-  const totalLiquidityA =
-    stats[assetLeft.getPicassoAssetId().toString()].total.liquidity;
-  const totalLiquidityB =
-    stats[assetRight.getPicassoAssetId().toString()].total.liquidity;
-  const ratioA = totalLiquidityA.isZero()
-    ? 100
-    : amountLeft.div(totalLiquidityA).multipliedBy(100).toNumber();
-  const ratioB = totalLiquidityB.isZero()
-    ? 100
-    : amountRight.div(totalLiquidityB).multipliedBy(100).toNumber();
+  const { spotPriceOfATOB, spotPriceOfBToA, ratioA, ratioB } = getPriceAndRatio(
+    stats,
+    assetOne,
+    amountOne,
+    amountTwo,
+    assetTwo
+  );
 
   return (
     <Box mt={4} {...rest}>
@@ -112,11 +95,11 @@ export const PoolShare: FC<PoolShareProps> = ({
       >
         <ItemBox
           value={spotPriceOfATOB.toFixed(2)}
-          label={`${assetLeft.getSymbol()} per ${assetRight.getSymbol()}`}
+          label={`${assetOne.getSymbol()} per ${assetTwo.getSymbol()}`}
         />
         <ItemBox
           value={spotPriceOfBToA.toFixed(2)}
-          label={`${assetRight.getSymbol()} per ${assetLeft.getSymbol()}`}
+          label={`${assetTwo.getSymbol()} per ${assetOne.getSymbol()}`}
         />
         <ItemBox
           value={`${((ratioA + ratioB) / 2).toFixed()}%`}
