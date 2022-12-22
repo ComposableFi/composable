@@ -179,10 +179,11 @@ mod constant_product {
 			}
 		}
 
-		fn generate_pool_assets(number_of_assets: u32) -> Vec<(u128, Permill)> {
+		fn generate_pool_assets(number_of_assets: u32) -> Vec<(u128, u128, Permill)> {
 			(0..number_of_assets)
 				.map(|n| {
 					(
+						n.into(),
 						100_000_000_000_000 * (n + 1) as u128,
 						Permill::from_rational(1, number_of_assets),
 					)
@@ -195,7 +196,7 @@ mod constant_product {
 			let pool_assets = vec![];
 			let f = Permill::zero();
 
-			let res = compute_first_deposit_lp(pool_assets.into_iter(), f);
+			let res = compute_first_deposit_lp::<u128, _>(pool_assets.into_iter(), f);
 
 			assert_eq!(res, Err(ConstantProductAmmError::InvalidTokensList))
 		}
@@ -203,8 +204,9 @@ mod constant_product {
 		#[test]
 		fn should_provide_correct_vales_on_fifty_fifty() {
 			let pool_assets = vec![
-				(100_000_000_000_000_000_u128, Permill::from_rational::<u32>(1, 2)),
-				(300_000_000_000_000_000, Permill::from_rational::<u32>(1, 2)),
+				// HACK(ben,connor): First tuple parameter is the asset id
+				(1_u128, 100_000_000_000_000_000_u128, Permill::from_rational::<u32>(1, 2)),
+				(2, 300_000_000_000_000_000, Permill::from_rational::<u32>(1, 2)),
 			];
 			let f = Permill::zero();
 

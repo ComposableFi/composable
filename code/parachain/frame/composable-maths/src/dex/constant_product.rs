@@ -66,12 +66,12 @@ trait SafeDecimalConversions {
 	/// Converts a `u128` fixed point number with 12 decimal places to decimal.
 	///
 	/// Conducts `number / 10^12`.
-	fn safe_from_fixed_point(num: u128) -> Result<Self, ArithmeticError>
+	fn safe_from_fixed_point(num: u128, decimals: u128) -> Result<Self, ArithmeticError>
 	where
 		Self: Sized;
 
 	/// Safely convert to a fixed-point `u128` with 12 decimals.
-	fn safe_to_fixed_point(self) -> Result<u128, ArithmeticError>;
+	fn safe_to_fixed_point(self, decimals: u128) -> Result<u128, ArithmeticError>;
 
 	/// Computes the decimal value of a a `PerThing` by taking the deconstructed parts of a
 	/// `PerThing` and dividing them by `PerThing::one()`.
@@ -95,18 +95,18 @@ impl SafeDecimalConversions for Decimal {
 		self.to_u128().ok_or(ArithmeticError::Overflow)
 	}
 
-	fn safe_from_fixed_point(fixed_point: u128) -> Result<Self, ArithmeticError> {
+	fn safe_from_fixed_point(fixed_point: u128, decimals: u128) -> Result<Self, ArithmeticError> {
 		let numerator = Decimal::safe_from_u128(fixed_point)?;
 		let denominator = Decimal::from(10)
-			.checked_powd(Decimal::from(12))
+			.checked_powd(Decimal::from(decimals))
 			.ok_or(ArithmeticError::Overflow)?;
 
 		numerator.safe_div(&denominator)
 	}
 
-	fn safe_to_fixed_point(self) -> Result<u128, ArithmeticError> {
+	fn safe_to_fixed_point(self, decimals: u128) -> Result<u128, ArithmeticError> {
 		let rhs = Decimal::from(10)
-			.checked_powd(Decimal::from(12))
+			.checked_powd(Decimal::from(decimals))
 			.ok_or(ArithmeticError::Overflow)?;
 
 		self.safe_mul(&rhs)?.to_u128().ok_or(ArithmeticError::Overflow)
@@ -276,7 +276,7 @@ impl From<ConstantProductAmmError> for DispatchError {
 /// Fees are currently always 0. Fees are normally charged to avoid fee-less swaps by adding and
 /// removing liquidity. With the initial deposit, these chances are so low that it is safe to
 /// process without a fee.
-///
+//  TODO: FIX COMMENT
 /// Balances must be in fixed point 12 decimal representation.
 ///
 /// # Parameters
@@ -285,18 +285,26 @@ impl From<ConstantProductAmmError> for DispatchError {
 ///
 /// https://github.com/ComposableFi/composable/blob/main/rfcs/0008-pablo-lbp-cpp-restructure.md#42-liquidity-provider-token-lpt-math-updates
 /// Equation 6
-pub fn compute_first_deposit_lp<T: PerThing>(
+pub fn compute_first_deposit_lp<AssetId: Into<u128>, T: PerThing>(
 	// REVIEW(benluelo): Make this a named struct instead of a tuple?
-	mut pool_assets: impl ExactSizeIterator<Item = (u128, T)>,
+	mut pool_assets: impl ExactSizeIterator<Item = (AssetId, u128, T)>,
 	_f: T,
 ) -> ConstantProductAmmResult<ConstantProductAmmValueFeePair> {
 	let k: u128 = pool_assets.len().try_into().map_err(|_| ArithmeticError::Overflow)?;
 	ensure!(!k.is_zero(), ConstantProductAmmError::InvalidTokensList);
 
+	// taken from runtime/primitives/currency
+	const USDT_ID: u128 = 130;
+
 	let product = pool_assets.try_fold::<_, _, Result<_, ArithmeticError>>(
 		Decimal::from(1),
-		|product, (d_i, w_i)| {
-			let d_i = Decimal::safe_from_fixed_point(d_i)?;
+		|product, (asset_id, d_i, w_i)| {
+			let decimal = match asset_id.into() {
+				USDT_ID => 6,
+				_ => 12,
+			};
+
+			let d_i = Decimal::safe_from_fixed_point(d_i, decimal)?;
 			let w_i = Decimal::safe_from_per_thing(w_i)?;
 			let pow = d_i.checked_powd(w_i).ok_or(ArithmeticError::Overflow)?;
 
@@ -308,7 +316,8 @@ pub fn compute_first_deposit_lp<T: PerThing>(
 	let product = k.safe_mul(&product)?;
 
 	// NOTE: Zero fees on first deposit
-	Ok(ConstantProductAmmValueFeePair { value: product.safe_to_fixed_point()?, fee: 0 })
+	// NOTE(ben,connor): LP token has 12 decimals
+	Ok(ConstantProductAmmValueFeePair { value: product.safe_to_fixed_point(12)?, fee: 0 })
 }
 
 /// Computes the LP to mint on an existing deposit.

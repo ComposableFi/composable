@@ -247,7 +247,7 @@ pub mod defs {
 	pub type PICA = Currency<1>;
 	pub type XPICA = Currency<2>;
 	pub type BTC = Currency<2000>;
-	pub type USDT = Currency<130>;
+	pub type USDT = Currency<130, 6>;
 
 	pub type NORMALIZED = USDT;
 }

@@ -222,15 +222,12 @@ fn test_redeemable_assets() {
 
 		let pool = get_pool(pool_id);
 
-		let unit = 1_000_000_000_000;
-
 		let btc_price = 45_000;
-
 		let nb_of_btc = 100;
 
 		// 100 BTC/4.5M USDT
-		let initial_btc = nb_of_btc * unit;
-		let initial_usdt = nb_of_btc * btc_price * unit;
+		let initial_btc = currency::BTC::units(nb_of_btc);
+		let initial_usdt = nb_of_btc * currency::USDT::units(btc_price);
 
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
@@ -499,15 +496,13 @@ fn remove_lp_failure() {
 	});
 }
 
-//
 // - test exchange failure
 #[test]
 fn exchange_failure() {
 	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
-		let initial_btc = 1_00_u128 * unit;
+		let initial_btc = currency::BTC::ONE;
 		let btc_price = 45_000_u128;
-		let initial_usdt = initial_btc * btc_price;
+		let initial_usdt = currency::USDT::ONE * btc_price;
 		let pool_init_config = valid_pool_init_config(
 			&ALICE,
 			BTC,
@@ -515,12 +510,12 @@ fn exchange_failure() {
 			USDT,
 			Permill::zero(),
 		);
-		let exchange_base_amount = 100 * unit;
+
 		common_exchange_failure(
 			pool_init_config,
 			AssetAmount::new(USDT, initial_usdt),
 			AssetAmount::new(BTC, initial_btc),
-			AssetAmount::new(BTC, exchange_base_amount),
+			AssetAmount::new(BTC, currency::BTC::units(100)),
 			LP_TOKEN_ID,
 		)
 	});
@@ -533,20 +528,19 @@ fn exchange_failure() {
 #[test]
 fn high_slippage() {
 	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
-		let initial_btc = 1_00_u128 * unit;
+		let initial_btc = currency::BTC::ONE;
 		let btc_price = 45_000_u128;
-		let initial_usdt = initial_btc * btc_price;
+		let initial_usdt = currency::USDT::ONE * btc_price;
 		let pool_id = create_pool(
 			BTC,
-			USDT,
+			currency::USDT::ID,
 			initial_btc,
 			initial_usdt,
 			LP_TOKEN_ID,
 			Permill::zero(),
 			Permill::zero(),
 		);
-		let bob_btc = 99_u128 * unit;
+		let bob_btc = currency::BTC::units(99);
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(BTC, &BOB, bob_btc));
 
@@ -693,20 +687,26 @@ fn avoid_exchange_without_liquidity() {
 #[test]
 fn cannot_swap_between_wrong_pairs() {
 	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
 		let lp_fee = Permill::from_float(0.05);
 		let pool_init_config =
 			valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, lp_fee);
+
 		System::set_block_number(1);
+
 		let pool_id = Pablo::do_create_pool(pool_init_config, Some(LP_TOKEN_ID))
 			.expect("pool creation failed");
-		let base_amount = 100_000_u128 * unit;
-		let quote_amount = 100_000_u128 * unit;
-		assert_ok!(Tokens::mint_into(BTC, &ALICE, base_amount));
-		assert_ok!(Tokens::mint_into(USDT, &ALICE, quote_amount));
 
-		assert_ok!(Tokens::mint_into(BTC, &BOB, base_amount));
-		assert_ok!(Tokens::mint_into(USDC, &BOB, quote_amount));
+		let base_amount = currency::BTC::units(100_000);
+		let quote_amount = currency::USDT::units(100_000);
+
+		Tokens::mint_into(BTC, &ALICE, currency::BTC::units(100_000)).unwrap();
+		Tokens::mint_into(USDT, &ALICE, currency::USDT::units(100_000)).unwrap();
+
+		Tokens::mint_into(BTC, &BOB, currency::BTC::units(100_000)).unwrap();
+		// HACK(ben,connor): USDC isn't treated as having 6 decimals in our calculation, so use a 12
+		// decimal asset for caluclating the amout
+		Tokens::mint_into(USDC, &BOB, currency::BTC::units(100_000)).unwrap();
+
 		assert_ok!(<Pablo as Amm>::add_liquidity(
 			&ALICE,
 			pool_id,
@@ -714,7 +714,10 @@ fn cannot_swap_between_wrong_pairs() {
 			0,
 			false
 		));
-		let usdc_amount = 2000_u128 * unit;
+
+		// HACK: see above comment
+		let usdc_amount = currency::BTC::units(2_000);
+
 		assert_noop!(
 			Pablo::swap(
 				Origin::signed(BOB),
@@ -741,15 +744,14 @@ fn cannot_swap_between_wrong_pairs() {
 #[test]
 fn cannot_get_exchange_value_for_wrong_asset() {
 	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
 		let lp_fee = Permill::from_float(0.05);
 		let pool_init_config =
 			valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, lp_fee);
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config, Some(LP_TOKEN_ID))
 			.expect("pool creation failed");
-		let base_amount = 100_000_u128 * unit;
-		let quote_amount = 100_000_u128 * unit;
+		let base_amount = currency::BTC::units(100_000);
+		let quote_amount = currency::USDT::units(100_000);
 		assert_ok!(Tokens::mint_into(BTC, &ALICE, base_amount));
 		assert_ok!(Tokens::mint_into(USDT, &ALICE, quote_amount));
 
@@ -760,7 +762,9 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 			0,
 			false
 		));
-		let usdc_amount = 2000_u128 * unit;
+
+		let usdc_amount = currency::USDT::units(2_000);
+
 		assert_noop!(
 			<Pablo as Amm>::spot_price(pool_id, AssetAmount::new(USDC, usdc_amount), BTC, true),
 			Error::<Test>::AssetNotFound

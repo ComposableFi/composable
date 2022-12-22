@@ -155,7 +155,9 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 			if lp_total_issuance.is_zero() {
 				let lp_to_mint = compute_first_deposit_lp(
-					assets_with_balances.iter().map(|adi| (adi.deposit_amount, adi.asset_weight)),
+					assets_with_balances
+						.iter()
+						.map(|adi| (adi.asset_id, adi.deposit_amount, adi.asset_weight)),
 					Permill::zero(),
 				)?
 				.value;
