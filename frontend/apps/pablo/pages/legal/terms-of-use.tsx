@@ -43,7 +43,7 @@ const TermsOfUse: NextPage = () => {
           These Terms of Use (“Terms”) constitute a binding and enforceable
           legal contract between Composable Finance Ltd. and all its affiliates
           (“Composable,” “we,” “us,” or the “Company”) and you, an end user of
-          the services (“you” or "User”) of Pablo or its features described
+          the services (“you” or &quot;User”) of Pablo or its features described
           further below and available at app.pablo.xyz (the “Services”). These
           Terms include guidelines, announcements, additional terms, policies,
           and disclaimers made available or issued by us from time to time.
@@ -712,7 +712,7 @@ const TermsOfUse: NextPage = () => {
           from and against any loss, damage, liability, claim, or demand,
           including reasonable attorneys’ fees and expenses, made by any third
           party due to or arising out of: (a) your access and use of the Site
-          and Services and any other party's access and use of the Site with
+          and Services and any other party&apos;s access and use of the Site with
           your assistance or using any device or account that you own or
           control; (b) your breach or alleged breach of these Terms; (c) any
           breach of your representations and warranties set forth in these
