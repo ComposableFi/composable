@@ -21,10 +21,7 @@ use orml_traits::MultiCurrency;
 use parachains_common::AssetId as CommonAssetId;
 use primitives::currency::{CurrencyId, WellKnownCurrency};
 use sp_runtime::{traits::AccountIdConversion, MultiAddress};
-use xcm::{
-	v1::{Junction, MultiLocation},
-	VersionedMultiLocation,
-};
+use xcm::v1::{Junction, MultiLocation};
 use xcm_emulator::TestExt;
 
 #[test]
@@ -129,7 +126,7 @@ fn transfer_usdt_from_statemine_to_this() {
 	});
 
 	Statemine::execute_with(|| {
-		log::info!(target: "bdd", "When Bob transfers some {:?} USDT from from Statemine to Dali", usdt_transfer_amount);
+		log::info!(target: "bdd", "When Bob transfers some {:?} USDT from Statemine to Dali", usdt_transfer_amount);
 		use statemine_runtime::*;
 		let origin = Origin::signed(BOB.into());
 		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
@@ -230,7 +227,7 @@ fn rockmine_shib_to_dali_transfer() {
 	log::info!(target: "bdd", "{:?}", remote_statemine_asset_id);
 	let transfer_amount = 1_000_000_000_000;
 	Statemine::execute_with(|| {
-		log::info!(target: "bdd", "When Bob transfers some {:?} SHIB from from Statemine to Dali", transfer_amount);
+		log::info!(target: "bdd", "When Bob transfers some {:?} SHIB from Statemine to Dali", transfer_amount);
 		use statemine_runtime::*;
 		let origin = Origin::signed(BOB.into());
 		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
@@ -331,7 +328,7 @@ fn rockmine_stable_to_dali_transfer() {
 	});
 	log::info!(target: "bdd", "{:?}", remote_statemine_asset_id);
 	Statemine::execute_with(|| {
-		log::info!(target: "bdd", "When Bob transfers some {:?} STABLE from from Statemine to Dali", transfer_amount);
+		log::info!(target: "bdd", "When Bob transfers some {:?} STABLE from Statemine to Dali", transfer_amount);
 		use statemine_runtime::*;
 		let origin = Origin::signed(BOB.into());
 		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
@@ -383,7 +380,7 @@ fn this_chain_statemine_transfers_back_and_forth_work() {
 		Statemine::execute_with(|| statemine_runtime::Balances::balance(&this_parachain_account));
 
 	let (this_reserve, statemine_reserve) = KusamaRelay::execute_with(|| {
-		log::info!(target : "xcmp::test", "============ RELAY");
+		log::info!(target : "bdd", "Parachains have some amounts on relay");
 		let _ = relay_runtime::Balances::make_free_balance_be(&this_para_id, TEN);
 		(
 			relay_runtime::Balances::balance(&this_para_id),
@@ -391,7 +388,10 @@ fn this_chain_statemine_transfers_back_and_forth_work() {
 		)
 	});
 
-	this_chain_side(relay_native_asset_amount, foreign_asset_id_on_this);
+	bob_has_statemine_asset_on_this_and_transfers_it_to_reserve(
+		relay_native_asset_amount,
+		foreign_asset_id_on_this,
+	);
 
 	// during transfer relay rebalanced amounts
 	KusamaRelay::execute_with(|| {
@@ -430,10 +430,12 @@ fn this_chain_statemine_transfers_back_and_forth_work() {
 	});
 }
 
-// transfer custom asset from this chain  to Statemine
-fn this_chain_side(relay_native_asset_amount: u128, foreign_asset_id_on_this: CurrencyId) {
+fn bob_has_statemine_asset_on_this_and_transfers_it_to_reserve(
+	relay_native_asset_amount: u128,
+	foreign_asset_id_on_this: CurrencyId,
+) {
 	This::execute_with(|| {
-		log::info!(target: "xcmp::test", "============= THIS");
+		log::info!(target: "bdd", "Bob has some amounts of relay native and Statemine asset on This");
 		use this_runtime::*;
 
 		let bob_statemine_asset_amount =
@@ -449,8 +451,8 @@ fn this_chain_side(relay_native_asset_amount: u128, foreign_asset_id_on_this: Cu
 		);
 		assert_ok!(Tokens::deposit(CurrencyId::RELAY_NATIVE, &AccountId::from(BOB), TEN));
 		assert!(relay_native_asset_amount != 0);
-		log::info!(target: "xcmp::test", "sending assets back to statemine");
-		assert_ok!(XTokens::transfer_multicurrencies(
+		log::info!(target: "bdd", "Bob sending Statemine to reserve chain to his account");
+		let error = XTokens::transfer_multicurrencies(
 			Origin::signed(BOB.into()),
 			vec![
 				(CurrencyId::RELAY_NATIVE, relay_native_asset_amount),
@@ -462,13 +464,57 @@ fn this_chain_side(relay_native_asset_amount: u128, foreign_asset_id_on_this: Cu
 					1,
 					X2(
 						Parachain(topology::common_good_assets::ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB }
-					)
+						Junction::AccountId32 { network: NetworkId::Any, id: BOB },
+					),
 				)
-				.into()
+				.into(),
 			),
-			4 * FEE_WEIGHT_THIS as u64
+			4 * FEE_WEIGHT_THIS as u64,
+		)
+		.unwrap_err();
+
+		assert!(matches!(
+			error,
+			sp_runtime::DispatchError::Module(ModuleError {
+				index: _, // NOTE: finding pay to map pallet/error to index would look better/shorter/faster
+				error: _,
+				message: Some(msg),
+			}) if Into::<&'static str>::into(orml_xtokens::Error::<Runtime>::MinXcmFeeNotDefined) == msg
 		));
+
+		let location = XcmAssetLocation::new(MultiLocation::new(
+			1,
+			X1(Parachain(topology::common_good_assets::ID)),
+		));
+
+		AssetsRegistry::set_min_fee(
+			frame_system::RawOrigin::Root.into(),
+			ParaId::from(topology::common_good_assets::ID),
+			location,
+			Some(4_000_000_000),
+		)
+		.unwrap();
+
+		XTokens::transfer_multicurrencies(
+			Origin::signed(BOB.into()),
+			vec![
+				(CurrencyId::RELAY_NATIVE, relay_native_asset_amount),
+				(foreign_asset_id_on_this, UNIT),
+			],
+			0,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Parachain(topology::common_good_assets::ID),
+						Junction::AccountId32 { network: NetworkId::Any, id: BOB },
+					),
+				)
+				.into(),
+			),
+			4 * FEE_WEIGHT_THIS as u64,
+		)
+		.unwrap();
 
 		assert_eq!(
 			bob_statemine_asset_amount - UNIT,
@@ -534,7 +580,7 @@ fn statemine_side(this_parachain_account_init_amount: u128, statemine_asset_id: 
 	);
 
 	Statemine::execute_with(|| {
-		log::info!(target: "xcmp::test", "============= ASSETS");
+		log::info!(target: "bdd", "Alice transfers Statemine asset to Bob on This chain");
 		let origin = Origin::signed(ALICE.into());
 
 		assert_ok!(PolkadotXcm::reserve_transfer_assets(
@@ -565,14 +611,7 @@ fn statemine_side(this_parachain_account_init_amount: u128, statemine_asset_id: 
 fn register_statemine_asset(remote_asset_id: CommonAssetId, ratio: Rational64) -> CurrencyId {
 	This::execute_with(|| {
 		use this_runtime::*;
-		let location = XcmAssetLocation::new(MultiLocation::new(
-			1,
-			X3(
-				Parachain(topology::common_good_assets::ID),
-				PalletInstance(50),
-				GeneralIndex(remote_asset_id as u128),
-			),
-		));
+		let location = state_mine_asset(remote_asset_id);
 		AssetsRegistry::register_asset(
 			frame_system::RawOrigin::Root.into(),
 			location.clone(),
@@ -580,17 +619,7 @@ fn register_statemine_asset(remote_asset_id: CommonAssetId, ratio: Rational64) -
 			None,
 		)
 		.unwrap();
-		let location = XcmAssetLocation::new(MultiLocation::new(
-			1,
-			X1(Parachain(topology::common_good_assets::ID)),
-		));
-		AssetsRegistry::set_min_fee(
-			frame_system::RawOrigin::Root.into(),
-			ParaId::from(topology::common_good_assets::ID),
-			location,
-			Some(4_000_000_000),
-		)
-		.unwrap();
+
 		System::events()
 			.iter()
 			.find_map(|x| match x.event {
@@ -605,9 +634,95 @@ fn register_statemine_asset(remote_asset_id: CommonAssetId, ratio: Rational64) -
 	})
 }
 
+fn state_mine_asset(remote_asset_id: u32) -> XcmAssetLocation {
+	XcmAssetLocation::new(MultiLocation::new(
+		1,
+		X3(
+			Parachain(topology::common_good_assets::ID),
+			PalletInstance(50),
+			GeneralIndex(remote_asset_id as u128),
+		),
+	))
+}
+
 #[test]
-fn general_index_asset() {
-	let asset_id: u128 = 11;
-	let asset_id = hex::encode(asset_id.encode());
-	assert_eq!(&asset_id, "0b000000000000000000000000000000");
+#[ignore = "will panic in debug and silently eat error in xcm-queue (so run all tests in release only on latest Polkadot deps could be good)"]
+fn cannot_reserve_transfer_from_two_consensuses_in_one_message() {
+	simtest();
+	let transfer_amount = 1_000_000_000_000;
+	crate::helpers::mint_relay_native_on_parachain(
+		transfer_amount * 4,
+		&AccountId::from(bob()),
+		SIBLING_PARA_ID,
+	);
+
+	let total_issuance = 3_500_000_000_000_000;
+	let sibling_asset_id = Sibling::execute_with(|| {
+		use sibling_runtime::*;
+		let sibling_asset_id =
+			CurrencyFactory::create(composable_traits::currency::RangeId::TOKENS)
+				.expect("Valid range and ED; QED");
+		let root = frame_system::RawOrigin::Root;
+		let location = XcmAssetLocation(MultiLocation::new(
+			1,
+			X2(Parachain(SIBLING_PARA_ID), GeneralIndex(sibling_asset_id.into())),
+		));
+		AssetsRegistry::update_asset(
+			root.into(),
+			sibling_asset_id,
+			location,
+			rational!(15 / 1_000_000_000),
+			Some(STABLE::EXPONENT),
+		)
+		.expect("Asset already in Currency Factory; QED");
+
+		let root = frame_system::RawOrigin::Root;
+		Tokens::set_balance(
+			root.into(),
+			MultiAddress::Id(bob().into()),
+			sibling_asset_id,
+			total_issuance,
+			0,
+		)
+		.expect("Balance is valid; QED");
+		sibling_asset_id
+	});
+
+	let assets = VersionedMultiAssets::V1(MultiAssets::from(vec![
+		((MultiLocation { parents: 1, interior: Junctions::Here }), transfer_amount).into(),
+		(X1(GeneralIndex(sibling_asset_id.into())), transfer_amount).into(),
+	]));
+
+	let native_before = Sibling::execute_with(|| {
+		log::info!(target: "bdd", "When Bob transfers some {:?} SHIB from sibling to Dali", transfer_amount);
+		use sibling_runtime::*;
+		let native_before = <Tokens as FungiblesInspect<_>>::balance(
+			CurrencyId::RELAY_NATIVE,
+			&AccountId::from(bob()),
+		);
+		let origin = Origin::signed(bob().into());
+		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
+			origin,
+			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
+				1,
+				X1(Parachain(THIS_PARA_ID))
+			))),
+			Box::new(Junction::AccountId32 { id: bob(), network: NetworkId::Any }.into().into()),
+			Box::new(assets),
+			0,
+			WeightLimit::Unlimited,
+		));
+		native_before
+	});
+
+	Sibling::execute_with(|| {
+		use sibling_runtime::*;
+		assert_eq!(
+			<Tokens as FungiblesInspect<_>>::balance(
+				CurrencyId::RELAY_NATIVE,
+				&AccountId::from(bob())
+			),
+			native_before - transfer_amount
+		);
+	});
 }

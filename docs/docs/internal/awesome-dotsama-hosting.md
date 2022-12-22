@@ -1,7 +1,3 @@
----
-title: Polkadot Hosting
----
-
 # Overview
 
 To run, any chain needs:
@@ -30,6 +26,7 @@ There are guides and tools which help to make life easier
 - https://www.youtube.com/watch?v=9BPGQOM7d2E
 - https://github.com/paritytech/polkadot-introspector 
 - https://github.com/maxsam4/fork-off-substrate
+- [chopsticks](https://github.com/AcalaNetwork/chopsticks) - [smoldot](https://github.com/paritytech/smoldot) light client Substrate runtime host with fork and upgrade capabilities running in JavaScript VM
 
 ## Test chains
 

@@ -32,7 +32,6 @@
 # these should probably be replaced with stakes and bonds respectively
 # various keywords
 # various rust methods and types
-
 0xsequence
 1ubrf2y
 5C4hrfjw
@@ -59,11 +58,11 @@ assetsinfo
 autofetch
 autorenew
 azuretools
-bech
 BCENT
 BCENTS
 BCOIN
 BCOINS
+bech
 bigdecimal
 bignr # used frequently throughout the frontend as a shorthand for bignumber
 bignumber
@@ -85,9 +84,9 @@ buildx
 cachix
 cdylib
 charlie
-chevdor
 cheatcode
 cheatcodes
+chevdor
 chrono
 cita
 claimunstake
@@ -100,6 +99,7 @@ codeowners
 codepaths
 codesandbox
 commonmark # https://commonmark.org/help
+composablenodes
 composabletests
 containerd
 containrrr # `containrrr/watchtower` docker image
@@ -111,9 +111,10 @@ crev # cargo-crev
 crowdloaning
 currentmemory
 DACP
-dappsys
 dalek
+dappsys
 deadnix
+deburr
 devcontainers
 devel
 dhms # day hour minute second
@@ -185,10 +186,11 @@ jsonrpsee
 junod
 keccak
 keccak256
+keyval
 Konnect
 lastmod
-lcgfmg
 lazyledger
+lcgfmg
 lcov
 LIBCLANG
 libcurl
@@ -211,10 +213,10 @@ messagingxcm
 millify
 miniserve
 minvested
-mochawesome
 mlength
 mlengthmod
 mload
+mochawesome
 msapplication
 mstore
 Multiaddr
@@ -249,18 +251,20 @@ nrwl
 numtide
 offboarded
 offences
+on_unbalanceds
 oneliner
 oneof
 oneshot
-on_unbalanceds
 opentype
 OPTARG
 oraclesetup # script of package.json
 oraclestake
 Origin
+OSMO
 oxalica # github username
 pacman
 pandoc
+papaparse
 parablock
 paritytech
 patchelf
@@ -295,6 +299,7 @@ preclaim
 preclaims
 precommit
 precommits
+Prefixer
 preinstall
 prevote
 procps
@@ -304,6 +309,7 @@ prost
 protobufs
 protoc
 PROTOC
+protos
 PTRACE
 radiumblock
 rebag
@@ -317,6 +323,7 @@ resourcemonitor
 revhash
 rewardaccumulationhook
 rewardtrackerstore
+rfdc # really fast deep clone
 ripemd
 rlib
 rngs
@@ -346,22 +353,24 @@ serayuzgur
 serie
 serokell
 setaf
-sharded
 setglobal
 setlocal
+sharded
 shortkey
 shrs
+Sighash
 signale
 skinparam
-Sighash
-smallvec
-snackbars
-solhint
 slength
 slengthmod
 sload
+smallvec
+smoldot
+snackbars
+solhint
 sparkline
 sproof
+sqlinit
 squeezy
 sstore
 Stackexchange
@@ -372,18 +381,20 @@ statemine
 stdenv
 stdstore
 structopt
+structs
 styleguide
 submessage
 submessages
+submod
 Subql
 substituters
-submod
 subwasm
 subxt
 supertrait
 svgbob
 svgr
 sysinfo
+tailwindcss
 tamasfe
 taplo
 teelocal
@@ -410,11 +421,12 @@ typechain
 typegen
 typeorm
 udeps
-unescrow
 unbond
 unbonded
 unbonding
+unescrow
 unfound
+unhexify
 unlookup
 unpruned
 unstakeform
@@ -428,7 +440,6 @@ USDCUSDT
 usermod
 vadimcn
 Varint
-# various rust methods and types
 vsicons
 wasmd
 wasmi
@@ -454,24 +465,3 @@ yzhang
 zlfzypzcr
 zstd
 zustand
-DACP
-Origin
-OSMO
-Prefixer
-protobufs
-protos
-divn
-XCVM
-tmpfs
-nodev
-nosuid
-papaparse
-polkassembly
-structs
-tailwindcss
-keyval
-rfdc # really fast deep clone
-unhexify
-deburr
-sqlinit
-composablenodes

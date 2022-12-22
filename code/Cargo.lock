@@ -7051,6 +7051,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
+ "orml-unknown-tokens",
  "orml-xtokens",
  "pallet-assets 1.0.0",
  "pallet-assets-registry",
