@@ -5,7 +5,7 @@ The related code audits are provided for context.
 
 ## Audits:
 
-1. [Halborn Audit - 29.02.2021](./halborn/pallets-assets-bondedFinance-dutchAuction-oracle-vesting-dexRouter-mosaic-security-audit-report.pdf)
+1. [Halborn Audit - 29.02.2021]
 
     Pallets:
    - Assets
@@ -16,7 +16,7 @@ The related code audits are provided for context.
    - Dex-Router
    - Mosaic
 
-2. [Halborn Audit - 24.05.2022](./halborn/pallets-dutchAuction-oracle-lending-liquidation-security-audit-report.pdf)
+2. [Halborn Audit - 24.05.2022]
    
     Pallets:
    - Dutch Auction
@@ -24,43 +24,34 @@ The related code audits are provided for context.
    - Lending
    - Liquidation
    
-3. [Halborn Audit - 30.07.2022](./halborn/pallet-pablo-security-audit-report.pdf)
+3. [Halborn Audit - 30.07.2022]
 
     Pallets:
    - Pablo
 
-4. [Halborn Audit - 08.08.2022](./halborn/pallets-democracyV1-crowdloan-currencyFactory-security-audit-report.pdf)
+4. [Halborn Audit - 08.08.2022]
 
     Pallets:
    - Democracy
    - Currency Factory
    - Crowdloan Rewards
 
-5. [Halborn Audit - 23.08.2022](./halborn/pallet-vesting-security-audit-report.pdf)
+5. [Halborn Audit - 23.08.2022]
 
     Pallets: 
    - Vesting
 
-6. [Halborn Audit - 19.09.2022](./halborn/pallet-democracy-security-audit-report.pdf)
+6. [Halborn Audit - 19.09.2022]
 
     Pallets: 
    - Democracy
 
-7. [Halborn Audit - 26.09.2022](./halborn/pallet-BYOG-security-audit-report.pdf)
+7. [Halborn Audit - 26.09.2022]
 
     Pallets:
    - BYOG (Bring your own Gas)
 
-8. [Halborn Audit - 10.10.2022](./halborn/pallet-IBC-pallet-security-audit-report.pdf)
 
-    Pallet:
-   - IBC (Inter-Blockchain-Communication)
-
-9. [Halborn Audit - 10.10.2022](./halborn/pallets-stakingRewards-fNFT-security-audit-report.pdf)
-
-    Pallets:
-   - Staking Rewards
-   - fNFT
    
 ## Post-Mortems
 
