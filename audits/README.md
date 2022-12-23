@@ -5,7 +5,7 @@ The related code audits are provided for context.
 
 ## Audits:
 
-1. [Halborn Audit - 29.02.2021]
+1. [Halborn Audit - 29.02.2021](./halborn/audit01-assets-bondedFinance-dutchAuction-oracle-vesting-dexRouter-mosaic.pdf)
 
     Pallets:
    - Assets
@@ -15,43 +15,26 @@ The related code audits are provided for context.
    - Vesting
    - Dex-Router
    - Mosaic
-
-2. [Halborn Audit - 24.05.2022]
    
-    Pallets:
-   - Dutch Auction
-   - Oracle
-   - Lending
-   - Liquidation
-   
-3. [Halborn Audit - 30.07.2022]
+2. [Halborn Audit - 30.07.2022](./halborn/audit03-pallets-pabloV2.pdf)
 
     Pallets:
    - Pablo
 
-4. [Halborn Audit - 08.08.2022]
-
-    Pallets:
-   - Democracy
-   - Currency Factory
-   - Crowdloan Rewards
-
-5. [Halborn Audit - 23.08.2022]
+3. [Halborn Audit - 23.08.2022](./halborn/audit04-vesting-pallet.pdf)
 
     Pallets: 
    - Vesting
 
-6. [Halborn Audit - 19.09.2022]
+4. [Halborn Audit - 19.09.2022](./halborn/audit05-democracy-Pallet.pdf)
 
     Pallets: 
    - Democracy
 
-7. [Halborn Audit - 26.09.2022]
+5. [Halborn Audit - 26.09.2022](./halborn/audit06-byoGas.pdf)
 
     Pallets:
    - BYOG (Bring your own Gas)
-
-
    
 ## Post-Mortems
 
