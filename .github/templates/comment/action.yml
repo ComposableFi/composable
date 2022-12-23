@@ -17,9 +17,8 @@ runs:
   steps:
     - name: Comment PR
       if: ${{ github.event_name == 'pull_request' }}
-      uses: thollander/actions-comment-pull-request@v2
+      uses: mshick/add-pr-comment@v2
       with:
-        mode: recreate
         message: ${{ inputs.message }}
-        comment_tag: ${{ inputs.tag }}
-        GITHUB_TOKEN: ${{ inputs.github-token }}
+        message-id: ${{ inputs.tag }}
+        repo-token: ${{ inputs.github-token }}
