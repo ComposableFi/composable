@@ -16,7 +16,7 @@ to open XCM channels to other parachains to enable seamless, secure, and costles
 without gas fees. 
 
 In addition, Picasso maintains the Centauri IBC-Substrate bridge, which enables it to connect to IBC-enabled blockchains
-starting with the Cosmos ecosystem, which opens up a bridge to connect to EVM-compatible Layer 1s and 2s. 
+starting with the Cosmos ecosystem, and later ETH 2.0.
 Picasso’s suite of DeFi primitives like the Pablo DEX, are designed to 
 attract and maintain deep liquidity through novel technology innovations, and strong alignment with user incentives.
 
@@ -25,7 +25,7 @@ attract and maintain deep liquidity through novel technology innovations, and st
 
 The vision for Picasso is to become a cross-chain hub with a robust set of novel DeFi primitive pallets that attract 
 liquidity from the larger DeFi landscape. Picasso, through its native interoperability, aims to become an ecosystem 
-flush with liquidity from multiple different blockchain networks. These include EVM-compatible Layer 1s and 2s, and the 
+flush with liquidity from multiple different blockchain networks. These include EVM-compatible Layer 1s and 2s, NEAR, and the 
 Cosmos network of blockchains. As part of this vision, Picasso will act as an incubator parachain for applications, 
 developers, and users. It will provide an interoperable ecosystem where different parties can easily interact and deploy
 different projects on an efficient and well-maintained blockchain infrastructure.
