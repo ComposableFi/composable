@@ -1,4 +1,3 @@
-
 export type { FormTitleProps } from "./FormTitle";
 export type { ValueSelectorProps } from "./ValueSelector";
 export type { AuctionStatusIndicatorProps } from "./auction/AuctionStatusIndicator";
@@ -16,7 +15,6 @@ export { TransactionSettings } from "./TransactionSettings";
 export { RemoveLiquidityForm } from "./liquidity/RemoveForm";
 export { AddLiquidityForm } from "./liquidity/AddForm";
 
-export { CreatePool } from "./pool/CreatePool";
 export { UnverifiedPoolWarningModal } from "./pool/CreatePool/UnverifiedPoolWarningModal";
 export { ImportPool } from "./ImportPool";
 export { ClaimForm } from "./bonds/ClaimForm";
@@ -64,4 +62,3 @@ export { PoolStakingPanel } from "./pool/PoolDetails/PoolStakingPanel";
 export { PoolStakeForm } from "./pool/PoolDetails/PoolStakeForm";
 export { PoolUnstakeForm } from "./pool/PoolDetails/PoolUnstakeForm";
 export { PoolRewardsPanel } from "./pool/PoolDetails/PoolRewardsPanel";
-

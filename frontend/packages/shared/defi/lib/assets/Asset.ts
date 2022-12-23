@@ -92,9 +92,8 @@ export class Asset {
    */
   async balanceOf(account: string): Promise<BigNumber> {
     try {
-      if (!this.__api) throw new Error("API Unavailable.");
-
       const picassoId = this.getPicassoAssetId();
+      if (!this.__api || !picassoId) throw new Error("API Unavailable.");
 
       const _assetId = this.__api.createType(
         "CustomRpcCurrencyId",

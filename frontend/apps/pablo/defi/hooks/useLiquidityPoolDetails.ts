@@ -7,8 +7,7 @@ import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slic
 import useStore from "@/store/useStore";
 
 export const useLiquidityPoolDetails = (poolId: number) => {
-  const { poolStats, poolStatsValue, putPoolStats, substrateTokens } =
-    useStore();
+  const { poolStats, poolStatsValue, substrateTokens } = useStore();
   const { tokens, hasFetchedTokens } = substrateTokens;
 
   const allLpRewardingPools = useAllLpTokenRewardingPools();
@@ -41,12 +40,12 @@ export const useLiquidityPoolDetails = (poolId: number) => {
         let quote = underlyingAssets[1];
         const baseAsset = assets.find((asset) =>
           (base.getPicassoAssetId(true) as BigNumber).eq(
-            asset.getPicassoAssetId(true)
+            asset.getPicassoAssetId(true) ?? new BigNumber(0)
           )
         );
         const quoteAsset = assets.find((asset) =>
           (quote.getPicassoAssetId(true) as BigNumber).eq(
-            asset.getPicassoAssetId(true)
+            asset.getPicassoAssetId(true) ?? new BigNumber(0)
           )
         );
         setPool(matchingPool);
@@ -59,11 +58,6 @@ export const useLiquidityPoolDetails = (poolId: number) => {
       setQuoteAsset(undefined);
     }
   }, [poolId, allLpRewardingPools, tokens, hasFetchedTokens]);
-
-  useEffect(() => {
-    if (pool) {
-    }
-  }, [pool, putPoolStats]);
 
   const _poolStats = useMemo(() => {
     let _poolValue = {

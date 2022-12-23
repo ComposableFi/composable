@@ -85,8 +85,8 @@ export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
         lpBalance.times(debouncedPercentage / 100)
       );
 
-      const b = pool.config.assets[0].getPicassoAssetId().toString();
-      const q = pool.config.assets[1].getPicassoAssetId().toString();
+      const b = pool.config.assets[0].getPicassoAssetId()?.toString() || "0";
+      const q = pool.config.assets[1].getPicassoAssetId()?.toString() || "0";
       parachainApi.rpc.pablo
         .simulateRemoveLiquidity(
           selectedAccount.address,

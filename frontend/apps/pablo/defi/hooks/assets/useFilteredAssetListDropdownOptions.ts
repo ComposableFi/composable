@@ -15,7 +15,7 @@ export function useFilteredAssetListDropdownOptions(
       .filter((asset) => {
         try {
           return (
-            !!asset.getPicassoAssetId().toString() &&
+            !!asset.getPicassoAssetId()?.toString() &&
             asset.getPicassoAssetId.toString() !== assetId
           );
         } catch (err: any) {
