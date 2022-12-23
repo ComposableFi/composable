@@ -762,7 +762,7 @@ mod extend {
 					// (as during one of the blocks the reward accumulation was paused)
 					// already accumulated at 1 unit per second,, this is the resulting inflation:
 					// (60*10^12) * ((6*10^12) * 1.01) / ((5*10^12) * 1.01)
-					reductions: btree_map([(USDT::ID, 72_000_000_000_000)]),
+					reductions: btree_map([(USDT::ID, USDT::units(72))]),
 					lock: Lock {
 						started_at: <<Test as crate::Config>::UnixTime as UnixTime>::now()
 							.as_secs(),

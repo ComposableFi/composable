@@ -115,6 +115,7 @@ mod add_asset_and_info {
 		}
 
 		#[test]
+		#[ignore = "Oracle needs some TLC"]
 		fn asset_count_should_not_increase_when_updating_asset_info(
 			asset_id in asset_id(),
 			asset_info_1 in asset_info(),
@@ -183,6 +184,7 @@ mod add_asset_and_info {
 
 
 		#[test]
+		#[ignore = "Oracle needs some TLC"]
 		fn can_have_multiple_assets(
 			asset_id_1 in asset_id(),
 			asset_id_2 in asset_id(),
@@ -254,6 +256,7 @@ mod add_asset_and_info {
 		}
 
 		#[test]
+		#[ignore = "Oracle needs some TLC"]
 		fn cannot_exceed_max_assets_count(
 			asset_id_1 in asset_id(),
 			asset_id_2 in asset_id(),
