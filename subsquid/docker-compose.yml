@@ -22,7 +22,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - db-data/:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
 
   ingest:
     depends_on:
@@ -83,7 +83,6 @@ services:
       DB_NAME: "squid-archive"
       DB_USER: "postgres"
       DB_PASS: "postgres"
-
     ports:
       - "4010:3000"
 
@@ -109,7 +108,7 @@ services:
       POSTGRES_DB: squid
       POSTGRES_PASSWORD: squid
     volumes:
-      - db-data-squid/:/var/lib/postgresql/data
+      - db-data-squid:/var/lib/postgresql/data
 
   processor:
     image: squid-processor
