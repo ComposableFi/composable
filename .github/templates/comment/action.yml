@@ -20,6 +20,6 @@ runs:
       uses: thollander/actions-comment-pull-request@v2
       with:
         mode: recreate
-        message: ${{ inputs.message}}
-        comment_tag: ${{ inputs.comment-includes}}
+        message: ${{ inputs.message }}
+        comment_tag: ${{ inputs.tag }}
         GITHUB_TOKEN: ${{ inputs.github-token }}

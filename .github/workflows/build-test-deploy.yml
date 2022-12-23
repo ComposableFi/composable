@@ -546,8 +546,8 @@ jobs:
         uses: "./.github/templates/comment"
         with:
           message: |
-            Pablo preview URL: ${{ steps.deploy.outputs.preview-url }}
-          comment-includes: 'Pablo Preview URL'
+            Pablo Preview URL: ${{ steps.deploy.outputs.preview-url }}
+          tag: 'Pablo Preview URL'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   deploy-picasso-preview:
@@ -587,8 +587,8 @@ jobs:
         uses: "./.github/templates/comment"
         with:
           message: |
-            Picasso preview URL: ${{ steps.deploy.outputs.preview-url }}
-          comment-includes: 'Picasso Preview URL'
+            Picasso Preview URL: ${{ steps.deploy.outputs.preview-url }}
+          tag: 'Picasso Preview URL'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
 # TODO (vim): Decrease lead time until after release 3
