@@ -363,7 +363,19 @@ const sidebars = {
             },
             collapsible: false,
             items: [
-                'ecosystem/build-on-composable-ecosystem-development',
+                {
+                    type: 'category',
+                    label: 'Build on Composable: Ecosystem Development',
+                    link: {
+                        type: `doc`,
+                        id: `ecosystem/build-on-composable-ecosystem-development`,
+                    },
+                    collapsible: false,
+                items: [
+                    'ecosystem/rfp-canonical-stablecoin-desgin-and-integration',
+
+                ]
+                },
                 'ecosystem/composable-grants',
                 'ecosystem/business-line-development',
                 'ecosystem/press-kit',
