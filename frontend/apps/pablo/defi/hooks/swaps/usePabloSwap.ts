@@ -7,17 +7,19 @@ import BigNumber from "bignumber.js";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from "react";
 import {
-  useSigner,
   useExecutor,
   useParachainApi,
   useSelectedAccount,
+  useSigner,
 } from "substrate-react";
 import {
-  transactionStatusSnackbarMessage,
   SNACKBAR_TYPES,
+  transactionStatusSnackbarMessage,
 } from "../addLiquidity/useAddLiquidity";
+import { PoolConfig } from "@/store/pools/types";
 
 type PabloSwapProps = {
+  pool: PoolConfig | undefined;
   baseAssetId: string;
   quoteAssetId: string;
   minimumReceived: BigNumber;
@@ -26,6 +28,7 @@ type PabloSwapProps = {
 };
 
 export function usePabloSwap({
+  pool,
   quoteAssetId,
   baseAssetId,
   quoteAmount,
@@ -112,13 +115,27 @@ export function usePabloSwap({
         !validAssetPair ||
         !selectedAccount ||
         !amount ||
-        !minimumReceive
+        !minimumReceive ||
+        !pool
       ) {
         throw new Error("Missing dependencies.");
       }
 
+      const toChainQuoteAmount = toChainUnits(quoteAmount).toString();
+      const toChainMinReceive = toChainUnits(minimumReceived).toString();
       await executor.execute(
-        parachainApi.tx.dexRouter.exchange(pair, amount, minimumReceive),
+        parachainApi.tx.pablo.swap(
+          pool.poolId.toString(),
+          {
+            assetId: quoteAssetId,
+            amount: toChainQuoteAmount,
+          },
+          {
+            assetId: baseAssetId,
+            amount: toChainMinReceive,
+          },
+          true
+        ),
         selectedAccount.address,
         parachainApi,
         signer,
@@ -137,7 +154,7 @@ export function usePabloSwap({
     selectedAccount,
     amount,
     minimumReceive,
-    pair,
+    pool,
     onTxReady,
     onTxFinalized,
     onTxError,

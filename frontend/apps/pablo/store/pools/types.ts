@@ -59,6 +59,7 @@ export type OwnedLiquidityTokens = {
 export interface OwnedLiquiditySlice {
   ownedLiquidity: {
     tokens: OwnedLiquidityTokens;
+    isLoaded: boolean;
 
     setOwnedLiquidity: (
       lpTokenId: LPTokenId,

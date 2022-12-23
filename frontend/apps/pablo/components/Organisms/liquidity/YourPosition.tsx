@@ -1,29 +1,63 @@
 import { Label, PairAsset } from "@/components/Atoms";
 import { Asset } from "shared";
-import { alpha, Box, BoxProps, Typography, useTheme } from "@mui/material";
+import {
+  alpha,
+  Box,
+  BoxProps,
+  CircularProgress,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import BigNumber from "bignumber.js";
+import { FC, useEffect, useState } from "react";
+import { PoolConfig } from "@/store/pools/types";
+import useStore from "@/store/useStore";
+import { getStats, GetStatsReturn } from "@/defi/utils";
 
 type YourPositionProps = {
+  pool: PoolConfig;
   noTitle?: boolean;
   noDivider?: boolean;
   assets: Asset[];
-  amountIn: BigNumber;
-  amountOut: BigNumber;
+  amounts: [BigNumber, BigNumber];
   expectedLP: BigNumber;
-  share: BigNumber;
 } & BoxProps;
 
-export const YourPosition: React.FC<YourPositionProps> = ({
+export const YourPosition: FC<YourPositionProps> = ({
   noTitle,
   noDivider,
   assets,
-  amountIn,
-  amountOut,
   expectedLP,
-  share,
+  amounts,
+  pool,
   ...rest
 }) => {
   const theme = useTheme();
+  const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
+  const [stats, setStats] = useState<GetStatsReturn>(null);
+  useEffect(() => {
+    if (isPoolsLoaded && pool) {
+      getStats(pool).then((result) => {
+        setStats(result);
+      });
+    }
+  }, [isPoolsLoaded, pool]);
+
+  const [assetLeft, assetRight] = assets;
+  const [amountLeft, amountRight] = amounts;
+  if (!stats) return <CircularProgress />;
+  const totalLiquidityA =
+    stats[assetLeft.getPicassoAssetId()?.toString() || "0"].total.liquidity;
+  const totalLiquidityB =
+    stats[assetRight.getPicassoAssetId()?.toString() || "0"].total.liquidity;
+  const ratioA = totalLiquidityA.isZero()
+    ? 100
+    : amountLeft.div(totalLiquidityA).multipliedBy(100).toNumber();
+  const ratioB = totalLiquidityB.isZero()
+    ? 100
+    : amountRight.div(totalLiquidityB).multipliedBy(100).toNumber();
+
+  if (!stats) return null;
 
   return (
     <Box
@@ -60,7 +94,7 @@ export const YourPosition: React.FC<YourPositionProps> = ({
         label="Share of pool"
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
-          balance: `${share.toFixed(4)}%`,
+          balance: `${((ratioA + ratioB) / 2).toFixed()}%`,
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",
@@ -73,7 +107,7 @@ export const YourPosition: React.FC<YourPositionProps> = ({
         label={`Pooled ${assets[0].getSymbol()}`}
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
-          balance: amountIn.toString(),
+          balance: amountLeft.toString(),
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",
@@ -86,7 +120,7 @@ export const YourPosition: React.FC<YourPositionProps> = ({
         label={`Pooled ${assets[1].getSymbol()}`}
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
-          balance: amountOut.toString(),
+          balance: amountRight.toString(),
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",

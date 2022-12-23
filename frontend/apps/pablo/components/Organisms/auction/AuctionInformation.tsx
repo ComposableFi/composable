@@ -1,13 +1,16 @@
-import { Box, BoxProps, Typography, useTheme, Grid } from "@mui/material";
-import { getFullHumanizedDateDiff, PabloLiquidityBootstrappingPool } from "shared";
-import { nFormatter } from "shared";
+import { Box, BoxProps, Grid, Typography } from "@mui/material";
+import {
+  Asset,
+  getFullHumanizedDateDiff,
+  nFormatter,
+  PabloLiquidityBootstrappingPool,
+} from "shared";
 import { useMemo } from "react";
 import { useAuctionSpotPrice } from "@/defi/hooks/auctions";
 import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { LiquidityBootstrappingPoolStatistics } from "@/store/auctions/auctions.types";
 import { useAssetIdOraclePrice } from "@/defi/hooks";
 import { useAuctionTiming } from "@/defi/hooks/auctions/useAuctionTiming";
-import { Asset } from "shared";
 import BigNumber from "bignumber.js";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 
@@ -25,8 +28,8 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
   stats,
   ...rest
 }) => {
-  const theme = useTheme();
-  const { isActive, isEnded, duration, endTimestamp } = useAuctionTiming(auction);
+  const { isActive, isEnded, duration, endTimestamp } =
+    useAuctionTiming(auction);
   const standardPageSize = {
     xs: 12,
     sm: 6,
@@ -47,8 +50,12 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
     }
   };
 
-  const spotPrice = useAuctionSpotPrice(auction ? (auction.getPoolId(true) as BigNumber).toNumber() : -1);
-  const quoteAssetPrice = useAssetIdOraclePrice(quoteAsset.getPicassoAssetId());
+  const spotPrice = useAuctionSpotPrice(
+    auction ? (auction.getPoolId(true) as BigNumber).toNumber() : -1
+  );
+  const quoteAssetPrice = useAssetIdOraclePrice(
+    quoteAsset.getPicassoAssetId()?.toString()
+  );
 
   let {
     tokenRaised,

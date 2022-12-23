@@ -2,23 +2,26 @@ import { Box, BoxProps, TypographyProps } from "@mui/material";
 import BigNumber from "bignumber.js";
 import { Label } from "@/components";
 import { Asset } from "shared";
-import { useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID, fromChainUnits, toChainUnits } from "@/defi/utils";
+import { PoolConfig } from "@/store/pools/types";
 
 export type SwapSummaryProps = {
   quoteAsset: Asset | undefined;
   baseAsset: Asset | undefined;
   minimumReceived: BigNumber;
-  priceImpact: BigNumber,
-  PriceImpactProps?: TypographyProps,
+  priceImpact: BigNumber;
+  PriceImpactProps?: TypographyProps;
   baseAssetAmount: BigNumber;
   quoteAssetAmount: BigNumber;
   feeCharged: BigNumber;
   spotPrice: BigNumber;
+  pool: PoolConfig;
 } & BoxProps;
 
-export const SwapSummary: React.FC<SwapSummaryProps> = ({
+export const SwapSummary: FC<SwapSummaryProps> = ({
+  pool,
   quoteAsset,
   baseAsset,
   minimumReceived,
@@ -37,23 +40,28 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
 
   const [estimatedGas, setGasEstimated] = useState(new BigNumber(0));
   useEffect(() => {
-    if (parachainApi && selectedAccount && baseAsset && quoteAsset) {
-      let pair = {
-        base: baseAsset.getPicassoAssetId() as string,
-        quote: quoteAsset.getPicassoAssetId() as string,
-      };
+    const baseAssetId = baseAsset?.getPicassoAssetId()?.toString();
+    const quoteAssetId = quoteAsset?.getPicassoAssetId()?.toString();
 
-      parachainApi.tx.dexRouter
-        .exchange(
-          pair,
-          parachainApi.createType(
-            "u128",
-            toChainUnits(quoteAssetAmount).toString()
-          ),
-          parachainApi.createType(
-            "u128",
-            toChainUnits(minimumReceived).toString()
-          )
+    if (
+      parachainApi &&
+      selectedAccount &&
+      baseAssetId &&
+      quoteAssetId &&
+      pool
+    ) {
+      parachainApi.tx.pablo
+        .swap(
+          pool.poolId.toString(),
+          {
+            assetId: quoteAssetId,
+            amount: toChainUnits(quoteAssetAmount.toString()).toString(),
+          },
+          {
+            assetId: baseAssetId,
+            amount: toChainUnits(baseAssetAmount.toString()).toString(),
+          },
+          true
         )
         .paymentInfo(selectedAccount.address)
         .then((gasInfo) => {
@@ -67,6 +75,8 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
     minimumReceived,
     selectedAccount,
     parachainApi,
+    pool,
+    baseAssetAmount,
   ]);
 
   if (!validTokens) {
@@ -78,9 +88,7 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
       <Label
         label="Price"
         BalanceProps={{
-          balance: `1 ${baseAsset?.getSymbol()} = ${spotPrice.toFixed()} ${
-            quoteAsset?.getSymbol()
-          }`,
+          balance: `1 ${baseAsset?.getSymbol()} = ${spotPrice.toFixed()} ${quoteAsset?.getSymbol()}`,
         }}
         mb={2}
       />
