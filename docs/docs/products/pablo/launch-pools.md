@@ -10,14 +10,10 @@ based on the BalancerFi weighted math implementation of (x * y = K) for:
 :::note
 
 Pablo’s native token, PBLO, is set for launch in late Q1 2023.
-During this time, the entire protocol will be governed by PICA.
-After the launch of fNFTs on Picasso, governance will solely be controlled by xPICA holders until the launch of PBLO.
 :::
-
-Unlike other DEXs, Pablo does not rely on a highly inflationary reward token to incentivize users.
 Instead, liquidity providers(LPs) directly benefit from the success and adoption of Pablo.
 LPs are provided LP-tokens relative to the funds they add to a liquidity pool on Pablo.
-A percentage of the total buy/sell order and swap fees are distributed to liquidity providers who bond their LP-tokens.
+A percentage of the total buy/sell order and swap fees are distributed to liquidity providers.
 Then the accumulated fees are added back to the pool, effectively resulting in a pro-rata redistribution to LPs
 based on the LP-token share they redeem and the total value of the pool.
 If a user adds/removes liquidity from a pool, creating a high degree of liquidity imbalance,

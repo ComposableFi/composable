@@ -6,7 +6,7 @@ provide a complete suite of features that together form a protocol that is great
 
 Pablo offers multiple AMM-types, enhanced customizability for LPs and traders, liquidity-bootstrapping pools, 
 cross-chain assets through our IBC and EVM bridges, and single sided staking.
-Upon launch, Balancer pools based on [BalancerFi weighted math] will be available,
+Upon launch, Pablo will support dual asset Constant product(x * y = k) pools based on [BalancerFi weighted math]
 followed shortly after by Stableswap and the aforementioned liquidity-bootstrapping pools (LBP). 
 In addition, Pablo aims to overcome the short-falls that other DEXs face such as mercenary capital
 and relying solely on a high inflationary reward token. 
