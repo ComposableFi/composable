@@ -19,7 +19,7 @@ runs:
       if: ${{ github.event_name == 'pull_request' }}
       uses: thollander/actions-comment-pull-request@v2
       with:
-        mode: upsert
+        mode: recreate
         message: ${{ inputs.message}}
         comment_tag: ${{ inputs.comment-includes}}
         GITHUB_TOKEN: ${{ inputs.github-token }}
