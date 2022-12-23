@@ -22,7 +22,7 @@ export const useSwapsChart = () => {
 
   const updateChart = useCallback(() => {
     if (selectedPool && quote !== "none") {
-      const poolId = (selectedPool.getPoolId(true) as BigNumber).toNumber();
+      const poolId = selectedPool.poolId.toNumber();
       fetchSwapsChart(
         poolId,
         quote,
@@ -42,7 +42,7 @@ export const useSwapsChart = () => {
 
   useEffect(() => {
     if (selectedPool && quote !== "none") {
-      const poolId = (selectedPool.getPoolId(true) as BigNumber).toNumber()
+      const poolId = selectedPool.poolId.toNumber();
       fetch24HourOldPrice(poolId, quote).then((oldPrice) => {
         set24HourOldPrice(oldPrice);
       });

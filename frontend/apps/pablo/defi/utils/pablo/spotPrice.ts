@@ -1,20 +1,19 @@
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { fromChainUnits, toChainUnits } from "../units";
+import { PoolConfig } from "@/store/pools/types";
 
 export async function fetchSpotPrice(
   api: ApiPromise,
-  pair: {
-    base: string;
-    quote: string;
-  },
-  poolId: number
+  pool: PoolConfig,
+  baseAssetId: string,
+  quoteAssetId: string
 ): Promise<BigNumber> {
   try {
     const pricesFor = await api.rpc.pablo.pricesFor(
-      api.createType("PalletPabloPoolId", poolId.toString()),
-      api.createType("CustomRpcCurrencyId", pair.base),
-      api.createType("CustomRpcCurrencyId", pair.quote),
+      api.createType("PalletPabloPoolId", pool.poolId.toString()),
+      api.createType("CustomRpcCurrencyId", baseAssetId),
+      api.createType("CustomRpcCurrencyId", quoteAssetId),
       api.createType("CustomRpcBalance", toChainUnits(1).toString())
     );
 

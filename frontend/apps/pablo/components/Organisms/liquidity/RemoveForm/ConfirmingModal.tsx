@@ -81,8 +81,8 @@ export const ConfirmingModal: FC<ConfirmingModalProps> = ({
             parachainApi.createType("u128", pool.poolId.toString()), // Pool ID
             parachainApi.createType("u128", lpRemoveAmount.dp(0).toString()), // LP Receive
             parachainApi.createType("BTreeMap<u128, u128>", {
-              [baseAsset.getPicassoAssetId().toString()]: "0",
-              [quoteAsset.getPicassoAssetId().toString()]: "0",
+              [baseAsset.getPicassoAssetId()?.toString() || "0"]: "0",
+              [quoteAsset.getPicassoAssetId()?.toString() || "0"]: "0",
             })
           ),
           selectedAccount.address,

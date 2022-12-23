@@ -47,9 +47,9 @@ export const YourPosition: FC<YourPositionProps> = ({
   const [amountLeft, amountRight] = amounts;
   if (!stats) return <CircularProgress />;
   const totalLiquidityA =
-    stats[assetLeft.getPicassoAssetId().toString()].total.liquidity;
+    stats[assetLeft.getPicassoAssetId()?.toString() || "0"].total.liquidity;
   const totalLiquidityB =
-    stats[assetRight.getPicassoAssetId().toString()].total.liquidity;
+    stats[assetRight.getPicassoAssetId()?.toString() || "0"].total.liquidity;
   const ratioA = totalLiquidityA.isZero()
     ? 100
     : amountLeft.div(totalLiquidityA).multipliedBy(100).toNumber();

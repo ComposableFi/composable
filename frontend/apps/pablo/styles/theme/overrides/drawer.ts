@@ -1,7 +1,9 @@
 import { OverridesStyleRules } from "@mui/material/styles/overrides";
-import { alpha, Theme } from "@mui/material";
+import { Theme } from "@mui/material";
 
-export const drawerOverrides = (theme: Theme): Partial<OverridesStyleRules> => ({
+export const drawerOverrides = (
+  theme: Theme
+): Partial<OverridesStyleRules> => ({
   styleOverrides: {
     paper: {
       backgroundColor: "transparent",
@@ -10,6 +12,13 @@ export const drawerOverrides = (theme: Theme): Partial<OverridesStyleRules> => (
       borderRight: theme.spacing(0),
       boxSizing: "border-box",
       padding: theme.spacing(0),
+    },
+    paperAnchorLeft: {
+      msOverflownStyle: "none",
+      scrollbarWidth: "none",
+      "&::-webkit-scrollbar": {
+        display: "none",
+      },
     },
   },
 });

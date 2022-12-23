@@ -84,7 +84,7 @@ export default function useBondOffer(offerId: string) {
 
   const bondedAssetValue = useAssetPrice(bondedAsset_s);
   const rewardAssetValue = useAssetIdOraclePrice(
-    rewardAsset ? rewardAsset.getPicassoAssetId() : undefined
+    rewardAsset ? rewardAsset.getPicassoAssetId()?.toString() : undefined
   );
 
   const roi = useMemo(() => {

@@ -30,9 +30,9 @@ export async function getStats(pool: PoolConfig): Promise<GetStatsReturn> {
     return null;
   }
   for (const asset of assets) {
-    const assetId = asset.getPicassoAssetId().toString();
+    const assetId = asset.getPicassoAssetId()?.toString();
     const otherAsset = pool.config.assets.find(
-      (a) => a.getPicassoAssetId().toString() !== assetId
+      (a) => a.getPicassoAssetId()?.toString() !== assetId
     );
     const total = poolResponse.pabloPoolAssets.reduce(
       (acc, cur) => {
@@ -48,11 +48,13 @@ export async function getStats(pool: PoolConfig): Promise<GetStatsReturn> {
       { liquidity: new BigNumber(0), volume: new BigNumber(0) }
     );
     stats ||= {};
-    stats[assetId] = {
-      total,
-      asset,
-      spotPrice: new BigNumber(0),
-    };
+    if (assetId) {
+      stats[assetId] = {
+        total,
+        asset,
+        spotPrice: new BigNumber(0),
+      };
+    }
 
     if (otherAsset) {
       const assetPrice = getOraclePrice(asset.getSymbol(), "coingecko", "usd");
@@ -65,24 +67,28 @@ export async function getStats(pool: PoolConfig): Promise<GetStatsReturn> {
       if (assetPrice.isZero() && !otherAssetPrice.isZero()) {
         const spotPriceResponse = await querySpotPriceFromPool(
           pool.poolId.toString(),
-          asset.getPicassoAssetId().toString(),
-          otherAsset.getPicassoAssetId().toString()
+          asset.getPicassoAssetId()?.toString() || "0",
+          otherAsset.getPicassoAssetId()?.toString() || "0"
         );
         const spotPrice =
           spotPriceResponse.data?.pabloSpotPrice?.spotPrice || 0;
-        stats[assetId] = {
-          total,
-          asset,
-          spotPrice: new BigNumber(spotPrice).multipliedBy(otherAssetPrice),
-        };
+        if (assetId) {
+          stats[assetId] = {
+            total,
+            asset,
+            spotPrice: new BigNumber(spotPrice).multipliedBy(otherAssetPrice),
+          };
+        }
       }
       // If we don't have the other asset, and current assetPrice is zero, resolve to 0
       else {
-        stats[assetId] = {
-          total,
-          asset,
-          spotPrice: asset.getPrice(),
-        };
+        if (assetId) {
+          stats[assetId] = {
+            total,
+            asset,
+            spotPrice: asset.getPrice(),
+          };
+        }
       }
     }
   }
@@ -126,24 +132,20 @@ export function getPriceAndRatio(
   amountTwo: BigNumber,
   assetTwo: Asset
 ) {
-  const spotPriceOfATOB = stats[
-    assetOne.getPicassoAssetId().toString()
-  ].spotPrice.isZero()
+  const assetOneId = assetOne.getPicassoAssetId()?.toString() ?? "0";
+  const assetTwoId = assetTwo.getPicassoAssetId()?.toString() ?? "0";
+  const spotPriceOfATOB = stats[assetOneId].spotPrice.isZero()
     ? amountOne.div(amountTwo).isNaN()
       ? new BigNumber(0)
       : amountOne.div(amountTwo)
-    : stats[assetOne.getPicassoAssetId().toString()].spotPrice;
-  const spotPriceOfBToA = stats[
-    assetTwo.getPicassoAssetId().toString()
-  ].spotPrice.isZero()
+    : stats[assetTwoId].spotPrice;
+  const spotPriceOfBToA = stats[assetTwoId].spotPrice.isZero()
     ? amountTwo.div(amountOne).isNaN()
       ? new BigNumber(0)
       : amountTwo.div(amountOne)
-    : stats[assetTwo.getPicassoAssetId().toString()].spotPrice;
-  const totalLiquidityA =
-    stats[assetOne.getPicassoAssetId().toString()].total.liquidity;
-  const totalLiquidityB =
-    stats[assetTwo.getPicassoAssetId().toString()].total.liquidity;
+    : stats[assetTwoId].spotPrice;
+  const totalLiquidityA = stats[assetOneId].total.liquidity;
+  const totalLiquidityB = stats[assetTwoId].total.liquidity;
   const ratioA = totalLiquidityA.isZero()
     ? 100
     : amountOne.div(totalLiquidityA).multipliedBy(100).toNumber();

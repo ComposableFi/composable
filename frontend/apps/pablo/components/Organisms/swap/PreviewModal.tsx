@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { Modal, ModalProps } from "@/components/Molecules";
 import { BaseAsset, Label } from "@/components/Atoms";
 import {
@@ -16,6 +16,7 @@ import BigNumber from "bignumber.js";
 import { Asset } from "shared";
 import { useAppSettingsSlice } from "@/store/appSettings/slice";
 import { setUiState } from "@/store/ui/ui.slice";
+import { PoolConfig } from "@/store/pools/types";
 
 export type PreviewModalProps = {
   setConfirmed?: (confirmed: boolean) => any;
@@ -27,10 +28,11 @@ export type PreviewModalProps = {
   minimumReceived: BigNumber;
   spotPrice: BigNumber;
   priceImpact: BigNumber;
+  selectedPool: PoolConfig;
   onConfirmSwap: () => void;
 } & ModalProps;
 
-export const PreviewModal: React.FC<PreviewModalProps> = ({
+export const PreviewModal: FC<PreviewModalProps> = ({
   setConfirmed,
   baseAsset,
   quoteAsset,
@@ -41,6 +43,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   spotPrice,
   priceImpact,
   onConfirmSwap,
+  selectedPool,
   ...modalProps
 }) => {
   const theme = useTheme();
@@ -48,15 +51,18 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   const confirmSwap = () => {
     setUiState({
       isSwapPreviewModalOpen: false,
-      isConfirmingModalOpen: true
-    })
+      isConfirmingModalOpen: true,
+    });
     onConfirmSwap();
   };
 
   const slippage = useAppSettingsSlice().transactionSettings.tolerance;
 
   return (
-    <Modal onClose={() => setUiState({ isSwapPreviewModalOpen: false })} {...modalProps}>
+    <Modal
+      onClose={() => setUiState({ isSwapPreviewModalOpen: false })}
+      {...modalProps}
+    >
       <Box
         sx={{
           background: theme.palette.gradient.secondary,
@@ -74,7 +80,9 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
       >
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Typography variant="h6">Confirm swap</Typography>
-          <IconButton onClick={() => setUiState({ isSwapPreviewModalOpen: false })}>
+          <IconButton
+            onClick={() => setUiState({ isSwapPreviewModalOpen: false })}
+          >
             <CloseIcon sx={{ color: "text.secondary" }} />
           </IconButton>
         </Box>
@@ -141,6 +149,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
         />
 
         <SwapSummary
+          pool={selectedPool}
           mt={4}
           priceImpact={priceImpact}
           quoteAssetAmount={quoteAmount}

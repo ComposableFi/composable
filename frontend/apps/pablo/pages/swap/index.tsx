@@ -1,61 +1,31 @@
 import type { NextPage } from "next";
-import { Container, Box, Grid } from "@mui/material";
-import Default from "@/components/Templates/Default";
+import { Box, Container, Grid } from "@mui/material";
 import AccountSettings from "@/components/Organisms/TransactionSettings/AccountSettings";
 import { PageTitle } from "@/components";
 import SwapForm from "@/components/Organisms/swap/SwapForm";
-import SwapChart from "@/components/Organisms/swap/SwapChart";
+import { PoolLayout } from "@/components/Templates/pools/PoolLayout";
 
-const twoColumnPageSize = {
+const standardPageSize = {
   xs: 12,
-  md: 12,
-  lg: 6,
 };
 
 const Swap: NextPage = () => {
   return (
-    <Default>
+    <PoolLayout>
       <Container maxWidth="lg">
         <Box mb={25}>
           <Box textAlign="center">
-            <PageTitle
-              title="Swap"
-            />
+            <PageTitle title="Swap" />
           </Box>
           <Grid mt={4} container spacing={4}>
-            <Grid item {...twoColumnPageSize}>
-              <SwapChart height={610}/>
-            </Grid>
-            <Grid item {...twoColumnPageSize}>
+            <Grid item {...standardPageSize}>
               <SwapForm />
             </Grid>
           </Grid>
-          {/* {message.text && (
-            <Box sx={{maxWidth: 854, margin: "auto"}}>
-              <Alert
-                severity={message.severity}
-                alertText={message.text}
-                onClose={() => dispatch(setMessage({}))}
-                underlined
-                centered
-                action={
-                  message.link ? (
-                    <Link
-                      href={message.link}
-                      target="_blank"
-                      rel="noopener"
-                    >
-                      <OpenInNewRoundedIcon />
-                    </Link>
-                  ) : undefined
-                }
-              />
-            </Box>
-          )} */}
           <AccountSettings />
         </Box>
       </Container>
-    </Default>
+    </PoolLayout>
   );
 };
 
