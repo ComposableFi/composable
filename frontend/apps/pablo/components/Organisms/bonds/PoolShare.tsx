@@ -2,14 +2,17 @@ import {
   alpha,
   Box,
   BoxProps,
+  CircularProgress,
   Theme,
   Typography,
   useTheme,
 } from "@mui/material";
 import BigNumber from "bignumber.js";
-import { FC } from "react";
-import { PoolAmount } from "@/store/pools/types";
+import { FC, useEffect, useState } from "react";
+import { PoolConfig } from "@/store/pools/types";
 import { Asset } from "shared";
+import { getPriceAndRatio, getStats, GetStatsReturn } from "@/defi/utils";
+import useStore from "@/store/useStore";
 
 const itemBoxPropsSX = (theme: Theme) =>
   ({
@@ -48,24 +51,39 @@ const ItemBox: React.FC<ItemBoxProps> = ({ value, label }) => {
 };
 
 export type PoolShareProps = {
-  poolShare: PoolAmount;
-  assetOne: Asset;
-  assetTwo: Asset;
-  price: BigNumber;
-  revertPrice: BigNumber;
-  share: BigNumber;
+  pool: PoolConfig;
+  input: [Asset, Asset];
+  amounts: [BigNumber, BigNumber];
 } & BoxProps;
 
 export const PoolShare: FC<PoolShareProps> = ({
-  poolShare,
-  assetOne,
-  assetTwo,
-  price,
-  revertPrice,
-  share,
+  pool,
+  input,
+  amounts,
   ...rest
 }) => {
-  // TODO:Implement pool share
+  const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
+  const [stats, setStats] = useState<GetStatsReturn>(null);
+  useEffect(() => {
+    if (isPoolsLoaded && pool) {
+      getStats(pool).then((result) => {
+        setStats(result);
+      });
+    }
+  }, [isPoolsLoaded, pool]);
+
+  const [assetOne, assetTwo] = input;
+  const [amountOne, amountTwo] = amounts;
+  if (!stats) return <CircularProgress />;
+
+  const { spotPriceOfATOB, spotPriceOfBToA, ratioA, ratioB } = getPriceAndRatio(
+    stats,
+    assetOne,
+    amountOne,
+    amountTwo,
+    assetTwo
+  );
+
   return (
     <Box mt={4} {...rest}>
       <Typography variant="inputLabel">Price and pool share</Typography>
@@ -76,14 +94,17 @@ export const PoolShare: FC<PoolShareProps> = ({
         flexDirection={{ sm: "column", md: "row" }}
       >
         <ItemBox
-          value={price.toFixed(2)}
+          value={spotPriceOfATOB.toFixed(2)}
+          label={`${assetOne.getSymbol()} per ${assetTwo.getSymbol()}`}
+        />
+        <ItemBox
+          value={spotPriceOfBToA.toFixed(2)}
           label={`${assetTwo.getSymbol()} per ${assetOne.getSymbol()}`}
         />
         <ItemBox
-          value={revertPrice.toFixed(2)}
-          label={`${assetOne.getSymbol()} per ${assetTwo.getSymbol()}`}
+          value={`${((ratioA + ratioB) / 2).toFixed()}%`}
+          label="Share of pool"
         />
-        <ItemBox value={`${share.toFixed()}%`} label="Share of pool" />
       </Box>
     </Box>
   );

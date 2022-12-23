@@ -45,6 +45,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   const handleConfirmSupplyButtonClick = () => {
     pipe(
       pool,
+      option.fromNullable,
       option.fold(
         () => {
           enqueueSnackbar(
@@ -64,12 +65,12 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   // Populate Dropdowns
   const { poolId } = usePoolDetail();
   const getPoolById = useStore((store) => store.pools.getPoolById);
-  const pool = getPoolById(poolId);
+  const pool = pipe(getPoolById(poolId), option.toNullable);
   const getTokenBalance = useStore(
     (store) => store.substrateBalances.getTokenBalance
   );
   const inputConfig = pipe(
-    getInputConfig(pool, getTokenBalance),
+    getInputConfig(pipe(pool, option.fromNullable), getTokenBalance),
     option.fold(
       () => null,
       (ic) => ic
@@ -159,14 +160,14 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         label={"Token 2"}
       />
 
-      <PoolShare
-        assetOne={leftConfig.asset}
-        assetTwo={rightConfig.asset}
-        poolShare={poolShare}
-        price={leftConfig.asset.getPrice()}
-        revertPrice={new BigNumber(1).div(1)}
-        share={new BigNumber(0.02)}
-      />
+      {pool ? (
+        <PoolShare
+          pool={pool}
+          input={[leftConfig.asset, rightConfig.asset]}
+          amounts={[amountOne, amountTwo]}
+        />
+      ) : null}
+
       <Button
         variant="contained"
         size="large"
@@ -180,27 +181,28 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         Supply
       </Button>
 
-      {inputValid ? (
+      {inputValid && pool ? (
         <YourPosition
+          pool={pool}
+          amounts={[amountOne, amountTwo]}
           noTitle={false}
           assets={inputConfig.map((config) => config.asset)}
-          amountIn={amountOne}
-          amountOut={amountTwo}
           expectedLP={simulated}
-          share={new BigNumber(0)}
           mt={4}
         />
       ) : null}
 
-      <ConfirmSupplyModal
-        pool={pool}
-        inputConfig={inputConfig}
-        expectedLP={simulated}
-        share={new BigNumber(0)}
-        open={isConfirmSupplyModalOpen}
-        amountOne={amountOne}
-        amountTwo={amountTwo}
-      />
+      {pool ? (
+        <ConfirmSupplyModal
+          pool={pool}
+          inputConfig={inputConfig}
+          expectedLP={simulated}
+          share={new BigNumber(0)}
+          open={isConfirmSupplyModalOpen}
+          amountOne={amountOne}
+          amountTwo={amountTwo}
+        />
+      ) : null}
 
       {/*<ConfirmingSupplyModal*/}
       {/*  pool={pool}*/}

@@ -14,13 +14,20 @@ import {
 import { useRouter } from "next/router";
 import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
-import React, { FC, useState } from "react";
-import { OwnedLiquidityTokens, PoolId } from "@/store/pools/types";
-import BigNumber from "bignumber.js";
-import { Asset } from "shared";
+import React, { FC, useEffect, useState } from "react";
+import { OwnedLiquidityTokens, PoolConfig, PoolId } from "@/store/pools/types";
 import { PairAsset } from "@/components";
 import { NoPositionsPlaceholder } from "../overview/NoPositionsPlaceholder";
-import { fromChainUnits } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import useStore from "@/store/useStore";
+import { subscribeOwnedLiquidity } from "@/store/pools/subscribeOwnedLiquidity";
+import {
+  useDotSamaContext,
+  useParachainApi,
+  useSelectedAccount,
+} from "substrate-react";
+import { usePoolRatio } from "@/defi/hooks/pools/usePoolRatio";
+import BigNumber from "bignumber.js";
 
 const USER_NO_POOL = "You currently do not have any active liquidity pool.";
 
@@ -29,13 +36,10 @@ const tableHeaders: TableHeader[] = [
     header: "Pools",
   },
   {
-    header: "",
+    header: "Total value locked",
   },
   {
-    header: "",
-  },
-  {
-    header: "",
+    header: "Volume",
   },
   {
     header: "Balance",
@@ -43,16 +47,31 @@ const tableHeaders: TableHeader[] = [
 ];
 
 export type YourLiquidityTableProps = {
-  tokens: OwnedLiquidityTokens;
+  pools: PoolConfig[];
 };
 
 const SEE_MORE_OFFSET = 5;
 
-export const YourLiquidityTable: FC<YourLiquidityTableProps> = ({ tokens }) => {
+export const YourLiquidityTable: FC<YourLiquidityTableProps> = ({ pools }) => {
   const theme = useTheme();
   const [startIndex, setStartIndex] = useState(0);
   const router = useRouter();
-  const noLiquidityToken = Object.keys(tokens).length === 0;
+  const userOwnedLiquidity = useStore((store) => store.ownedLiquidity.tokens);
+  const noLiquidityToken = Object.keys(userOwnedLiquidity).length === 0;
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+  const { extensionStatus } = useDotSamaContext();
+
+  useEffect(() => {
+    let unsub: any = undefined;
+    if (parachainApi && selectedAccount && extensionStatus === "connected") {
+      unsub = subscribeOwnedLiquidity(parachainApi, selectedAccount.address);
+    }
+
+    return () => {
+      unsub?.();
+    };
+  }, [extensionStatus, selectedAccount, parachainApi]);
 
   const handleRowClick = (poolId: PoolId) => {
     router.push(`/pool/select/${poolId.toString()}`);
@@ -86,23 +105,18 @@ export const YourLiquidityTable: FC<YourLiquidityTableProps> = ({ tokens }) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {Object.values(tokens)
-            .filter((token) =>
-              token.balance.free.isGreaterThanOrEqualTo(fromChainUnits(1))
-            )
-            .map(({ balance, poolId, pair }) => (
-              <OwnedLiquidityPoolRow
-                poolId={poolId}
-                key={`owned_liquidity_${poolId.toString()}`}
-                pair={pair}
-                onClick={handleRowClick}
-                balance={balance}
-              />
-            ))}
+          {pools.map((pool) => (
+            <OwnedLiquidityPoolRow
+              pool={pool}
+              key={`owned_liquidity_${pool.poolId.toString()}`}
+              onClick={handleRowClick}
+              userLiquidity={userOwnedLiquidity}
+            />
+          ))}
         </TableBody>
       </Table>
-
-      {Object.keys(tokens).length > startIndex + SEE_MORE_OFFSET && (
+      {Object.keys(userOwnedLiquidity).length >
+        startIndex + SEE_MORE_OFFSET && (
         <Box
           onClick={handleSeeMore}
           mt={4}
@@ -122,28 +136,32 @@ export const YourLiquidityTable: FC<YourLiquidityTableProps> = ({ tokens }) => {
 };
 type OwnedLiquidityRowProps = {
   onClick: (poolId: PoolId) => void;
-  balance: {
-    free: BigNumber;
-    locked: BigNumber;
-  };
-  pair: [Asset, Asset];
-  poolId: PoolId;
+  pool: PoolConfig;
+  userLiquidity: OwnedLiquidityTokens;
 };
 
 const OwnedLiquidityPoolRow: FC<OwnedLiquidityRowProps> = ({
-  pair,
-  balance,
-  poolId,
+  pool,
   onClick,
+  userLiquidity,
 }) => {
+  const pair = pool.config.assets;
+  const balance = userLiquidity[pool.config.lpToken]?.balance ?? {
+    free: new BigNumber(0),
+    locked: new BigNumber(0),
+  };
+
+  const { userVolume, userTVL } = usePoolRatio(pool);
+  if (!userLiquidity[pool.config.lpToken]) {
+    return <TableRow></TableRow>;
+  }
   return (
-    <TableRow onClick={() => onClick(poolId)} sx={{ cursor: "pointer" }}>
+    <TableRow onClick={() => onClick(pool.poolId)} sx={{ cursor: "pointer" }}>
       <TableCell align="left">
         <PairAsset assets={pair} separator="/" />
       </TableCell>
-      <TableCell align="left"></TableCell>
-      <TableCell align="left"></TableCell>
-      <TableCell align="left"></TableCell>
+      <TableCell align="left">${userTVL.toFormat(0)}</TableCell>
+      <TableCell align="left">${userVolume.toFormat(0)}</TableCell>
       <TableCell align="left">
         <Typography variant="body2">{balance.free.toFormat(4)}</Typography>
       </TableCell>
