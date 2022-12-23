@@ -35,6 +35,17 @@ The related code audits are provided for context.
 
     Pallets:
    - BYOG (Bring your own Gas)
+
+6. [Halborn Audit - 10.10.2022](./halborn/audit07-ibc-pallet.pdf)
+
+   Pallet:
+   - IBC (Inter-Blockchain-Communication)
+
+7. [Halborn Audit - 10.10.2022](./halborn/audit08-pallets-stakingRewards-fnft.pdf)
+
+   Pallets:
+   - Staking Rewards
+   - fNFT
    
 ## Post-Mortems
 
