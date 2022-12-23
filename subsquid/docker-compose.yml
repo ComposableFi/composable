@@ -139,12 +139,13 @@ services:
       processor:
         condition: service_started
     ports:
-      - 4350:4000
+      - 4350:4350
     environment:
       DB_NAME: squid
       DB_HOST: squid-db
       DB_PASS: squid
       DB_PORT_PG: 5432
+      GQL_PORT: 4350
 
 volumes:
   db-data:
