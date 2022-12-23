@@ -16,8 +16,7 @@ LPs are provided LP-tokens relative to the funds they add to a liquidity pool on
 A percentage of the total buy/sell order and swap fees are distributed to liquidity providers.
 Then the accumulated fees are added back to the pool, effectively resulting in a pro-rata redistribution to LPs
 based on the LP-token share they redeem and the total value of the pool.
-If a user adds/removes liquidity from a pool, creating a high degree of liquidity imbalance,
-the standard 0.3% fee applies.
+If a user provides liquidity in only one asset to a pool, they are charged the pool fee rate for creating an imbalance.
 
 Pablo is uniquely positioned as the hub for cross-chain transactions in DotSama, and community backed liquidity. 
 The initial pools are a mere first step on our path to deep cross-chain liquidity 
