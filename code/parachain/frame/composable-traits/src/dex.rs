@@ -100,8 +100,8 @@ pub trait Amm {
 
 	/// Get pure exchange value for given units of "in" given asset.
 	/// `pool_id` the pool containing the `asset_id`.
-	/// `in_asset` the amount of `asset_id` the user wants to swap.
-	/// `out_asset_id` the asset the user is interested in.
+	/// `base_asset` the amount of `asset_id` the user wants to swap.
+	/// `quote_asset_id` the asset the user is interested in.
 	fn spot_price(
 		pool_id: Self::PoolId,
 		base_asset: AssetAmount<Self::AssetId, Self::Balance>,

@@ -222,15 +222,12 @@ fn test_redeemable_assets() {
 
 		let pool = get_pool(pool_id);
 
-		let unit = 1_000_000_000_000;
-
 		let btc_price = 45_000;
-
 		let nb_of_btc = 100;
 
 		// 100 BTC/4.5M USDT
-		let initial_btc = nb_of_btc * unit;
-		let initial_usdt = nb_of_btc * btc_price * unit;
+		let initial_btc = currency::BTC::units(nb_of_btc);
+		let initial_usdt = nb_of_btc * currency::USDT::units(btc_price);
 
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
@@ -499,15 +496,13 @@ fn remove_lp_failure() {
 	});
 }
 
-//
 // - test exchange failure
 #[test]
 fn exchange_failure() {
 	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
-		let initial_btc = 1_00_u128 * unit;
+		let initial_btc = currency::BTC::ONE;
 		let btc_price = 45_000_u128;
-		let initial_usdt = initial_btc * btc_price;
+		let initial_usdt = currency::USDT::ONE * btc_price;
 		let pool_init_config = valid_pool_init_config(
 			&ALICE,
 			BTC,
@@ -515,12 +510,12 @@ fn exchange_failure() {
 			USDT,
 			Permill::zero(),
 		);
-		let exchange_base_amount = 100 * unit;
+
 		common_exchange_failure(
 			pool_init_config,
 			AssetAmount::new(USDT, initial_usdt),
 			AssetAmount::new(BTC, initial_btc),
-			AssetAmount::new(BTC, exchange_base_amount),
+			AssetAmount::new(BTC, currency::BTC::units(100)),
 			LP_TOKEN_ID,
 		)
 	});
@@ -533,20 +528,19 @@ fn exchange_failure() {
 #[test]
 fn high_slippage() {
 	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
-		let initial_btc = 1_00_u128 * unit;
+		let initial_btc = currency::BTC::ONE;
 		let btc_price = 45_000_u128;
-		let initial_usdt = initial_btc * btc_price;
+		let initial_usdt = currency::USDT::ONE * btc_price;
 		let pool_id = create_pool(
 			BTC,
-			USDT,
+			currency::USDT::ID,
 			initial_btc,
 			initial_usdt,
 			LP_TOKEN_ID,
 			Permill::zero(),
 			Permill::zero(),
 		);
-		let bob_btc = 99_u128 * unit;
+		let bob_btc = currency::BTC::units(99);
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(BTC, &BOB, bob_btc));
 
@@ -693,20 +687,26 @@ fn avoid_exchange_without_liquidity() {
 #[test]
 fn cannot_swap_between_wrong_pairs() {
 	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
 		let lp_fee = Permill::from_float(0.05);
 		let pool_init_config =
 			valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, lp_fee);
+
 		System::set_block_number(1);
+
 		let pool_id = Pablo::do_create_pool(pool_init_config, Some(LP_TOKEN_ID))
 			.expect("pool creation failed");
-		let base_amount = 100_000_u128 * unit;
-		let quote_amount = 100_000_u128 * unit;
-		assert_ok!(Tokens::mint_into(BTC, &ALICE, base_amount));
-		assert_ok!(Tokens::mint_into(USDT, &ALICE, quote_amount));
 
-		assert_ok!(Tokens::mint_into(BTC, &BOB, base_amount));
-		assert_ok!(Tokens::mint_into(USDC, &BOB, quote_amount));
+		let base_amount = currency::BTC::units(100_000);
+		let quote_amount = currency::USDT::units(100_000);
+
+		Tokens::mint_into(BTC, &ALICE, currency::BTC::units(100_000)).unwrap();
+		Tokens::mint_into(USDT, &ALICE, currency::USDT::units(100_000)).unwrap();
+
+		Tokens::mint_into(BTC, &BOB, currency::BTC::units(100_000)).unwrap();
+		// HACK(ben,connor): USDC isn't treated as having 6 decimals in our calculation, so use a 12
+		// decimal asset for calculating the amount
+		Tokens::mint_into(USDC, &BOB, currency::BTC::units(100_000)).unwrap();
+
 		assert_ok!(<Pablo as Amm>::add_liquidity(
 			&ALICE,
 			pool_id,
@@ -714,7 +714,10 @@ fn cannot_swap_between_wrong_pairs() {
 			0,
 			false
 		));
-		let usdc_amount = 2000_u128 * unit;
+
+		// HACK: see above comment
+		let usdc_amount = currency::BTC::units(2_000);
+
 		assert_noop!(
 			Pablo::swap(
 				Origin::signed(BOB),
@@ -741,15 +744,14 @@ fn cannot_swap_between_wrong_pairs() {
 #[test]
 fn cannot_get_exchange_value_for_wrong_asset() {
 	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
 		let lp_fee = Permill::from_float(0.05);
 		let pool_init_config =
 			valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, lp_fee);
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config, Some(LP_TOKEN_ID))
 			.expect("pool creation failed");
-		let base_amount = 100_000_u128 * unit;
-		let quote_amount = 100_000_u128 * unit;
+		let base_amount = currency::BTC::units(100_000);
+		let quote_amount = currency::USDT::units(100_000);
 		assert_ok!(Tokens::mint_into(BTC, &ALICE, base_amount));
 		assert_ok!(Tokens::mint_into(USDT, &ALICE, quote_amount));
 
@@ -760,7 +762,9 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 			0,
 			false
 		));
-		let usdc_amount = 2000_u128 * unit;
+
+		let usdc_amount = currency::USDT::units(2_000);
+
 		assert_noop!(
 			<Pablo as Amm>::spot_price(pool_id, AssetAmount::new(USDC, usdc_amount), BTC, true),
 			Error::<Test>::AssetNotFound
@@ -1135,4 +1139,85 @@ mod twap {
 			assert!(twap.quote_twap < max_quote_price);
 		});
 	}
+}
+
+#[test]
+fn add_lp_amounts_get_normalized() {
+	new_test_ext().execute_with(|| {
+		next_block::<Pablo, Test>();
+
+		#[allow(non_camel_case_types)]
+		type FIRST_ASSET = currency::Currency<1337>;
+		#[allow(non_camel_case_types)]
+		type SECOND_ASSET = currency::Currency<1738>;
+
+		let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
+			owner: ALICE,
+			assets_weights: dual_asset_pool_weights(
+				FIRST_ASSET::ID,
+				Permill::from_percent(50_u32),
+				SECOND_ASSET::ID,
+			),
+			fee: Permill::zero(),
+		};
+
+		let init_first_asset_amount = FIRST_ASSET::units(200);
+		let init_second_asset_amount = SECOND_ASSET::units(100);
+		let first_asset_amount = FIRST_ASSET::units(10);
+		let second_asset_amount = SECOND_ASSET::units(10);
+
+		let assets_with_init_amounts = BTreeMap::from([
+			(FIRST_ASSET::ID, init_first_asset_amount),
+			(SECOND_ASSET::ID, init_second_asset_amount),
+		]);
+
+		let assets_with_amounts = BTreeMap::from([
+			(FIRST_ASSET::ID, first_asset_amount),
+			(SECOND_ASSET::ID, second_asset_amount),
+		]);
+
+		let pool_id = create_pool_from_config(pool_init_config);
+
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(FIRST_ASSET::ID, &ALICE, init_first_asset_amount));
+		assert_ok!(Tokens::mint_into(SECOND_ASSET::ID, &ALICE, init_second_asset_amount));
+
+		dbg!();
+
+		// Add the liquidity, min amount = 0
+		Test::assert_extrinsic_event(
+			Pablo::add_liquidity(
+				Origin::signed(ALICE),
+				pool_id,
+				assets_with_init_amounts.clone(),
+				0,
+				false,
+			),
+			crate::Event::<Test>::LiquidityAdded {
+				who: ALICE,
+				pool_id: 0,
+				asset_amounts: assets_with_init_amounts,
+				minted_lp: 282_842_712_193_942,
+			},
+		);
+
+		dbg!();
+
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(FIRST_ASSET::ID, &BOB, first_asset_amount));
+		assert_ok!(Tokens::mint_into(SECOND_ASSET::ID, &BOB, second_asset_amount));
+
+		Test::assert_extrinsic_event(
+			Pablo::add_liquidity(Origin::signed(BOB), pool_id, assets_with_amounts, 0, false),
+			crate::Event::<Test>::LiquidityAdded {
+				who: BOB,
+				pool_id: 0,
+				asset_amounts: BTreeMap::from([
+					(FIRST_ASSET::ID, FIRST_ASSET::units(10)),
+					(SECOND_ASSET::ID, SECOND_ASSET::units(5)),
+				]),
+				minted_lp: 14_142_135_609_697,
+			},
+		);
+	});
 }

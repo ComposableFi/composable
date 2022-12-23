@@ -97,7 +97,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		assets: BiBoundedVec<AssetAmount<T::AssetId, T::Balance>, 1, 2>,
 		min_mint_amount: T::Balance,
 		keep_alive: bool,
-	) -> Result<T::Balance, DispatchError> {
+	) -> Result<(T::Balance, BTreeMap<T::AssetId, T::Balance>), DispatchError> {
 		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
 
 		let assets_with_balances = assets.try_mapped(|asset_amount| {
@@ -118,7 +118,9 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
 
-		let amount_of_lp_token_to_mint = if let [single] = assets_with_balances.as_slice() {
+		let (amount_of_lp_token_to_mint, actual_amounts_deposited) = if let [single] =
+			assets_with_balances.as_slice()
+		{
 			if lp_total_issuance.is_zero() {
 				return Err(Error::<T>::InitialDepositMustContainAllAssets.into())
 			}
@@ -139,7 +141,13 @@ impl<T: Config> DualAssetConstantProduct<T> {
 				keep_alive,
 			)?;
 
-			single_deposit.value
+			(
+				single_deposit.value,
+				assets_with_balances
+					.into_iter()
+					.map(|adi| (adi.asset_id, T::Convert::convert(adi.deposit_amount)))
+					.collect(),
+			)
 		} else {
 			// ensure that `assets` contains all of the assets in the pool at this point
 			// a bit convoluted, but it works
@@ -147,12 +155,14 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 			if lp_total_issuance.is_zero() {
 				let lp_to_mint = compute_first_deposit_lp(
-					assets_with_balances.iter().map(|adi| (adi.deposit_amount, adi.asset_weight)),
+					assets_with_balances
+						.iter()
+						.map(|adi| (adi.asset_id, adi.deposit_amount, adi.asset_weight)),
 					Permill::zero(),
 				)?
 				.value;
 
-				for deposit in assets_with_balances {
+				for deposit in &assets_with_balances {
 					T::Assets::transfer(
 						deposit.asset_id,
 						who,
@@ -162,7 +172,13 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					)?;
 				}
 
-				lp_to_mint
+				(
+					lp_to_mint,
+					assets_with_balances
+						.into_iter()
+						.map(|adi| (adi.asset_id, T::Convert::convert(adi.deposit_amount)))
+						.collect(),
+				)
 			} else {
 				let normalized_deposits =
 					match normalize_asset_deposit_infos_to_min_ratio(assets_with_balances.into()) {
@@ -190,7 +206,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 				)?
 				.value;
 
-				for normalized_deposit in normalized_deposits {
+				for normalized_deposit in &normalized_deposits {
 					T::Assets::transfer(
 						normalized_deposit.asset_id,
 						who,
@@ -200,7 +216,13 @@ impl<T: Config> DualAssetConstantProduct<T> {
 					)?;
 				}
 
-				lp_to_mint
+				(
+					lp_to_mint,
+					normalized_deposits
+						.into_iter()
+						.map(|adi| (adi.asset_id, T::Convert::convert(adi.deposit_amount)))
+						.collect(),
+				)
 			}
 		};
 
@@ -213,7 +235,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 
 		T::Assets::mint_into(pool.lp_token, who, amount_of_lp_token_to_mint)?;
 
-		Ok(amount_of_lp_token_to_mint)
+		Ok((amount_of_lp_token_to_mint, actual_amounts_deposited))
 	}
 
 	pub(crate) fn remove_liquidity(

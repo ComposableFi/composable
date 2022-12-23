@@ -5,11 +5,18 @@ title: XCM transfers token loss
 
 This document describes how a user may lose his tokens during XCM transfers.
 
+Reader should have grasped high level [XCM(P) concepts](./awesome-xcmp.md) before.
+
 As of now, it is about handling `lost` assets on our parachain. 
 
 Please refer to guides of other chains on what they consider to be 'lost' restoration.
 
 This document does not describe a token loss when an XCM message does not reach our parachain XCM message queue.
+
+
+## User provided no fee to pay
+
+[Talk to Parity](https://github.com/paritytech/polkadot/issues/2702)
 
 ## Lost locations
 
@@ -46,6 +53,8 @@ For example,
 Technical collective or Root transfer amount to valid account back. 
 
 This can happens because of bad formed XCM message or misconfiguration of XCM(or lack of it for specific chains/assets).
+
+[**Currently tokens trapped only if fee token is known (so please send 2 tokens)**](https://github.com/paritytech/polkadot/issues/2702)
 
 ### When do assets end up in `treasury`?
 
