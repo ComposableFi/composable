@@ -51,15 +51,15 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
     priceImpact,
     inputMode,
     setInputMode,
-    pabloPool,
+    pabloPool
   } = useSwaps({ selectedAccount });
 
   const initiateSwapTx = usePabloSwap({
     pool: pabloPool,
-    baseAssetId: selectedAssetTwoId,
-    quoteAssetId: selectedAssetOneId,
+    baseAsset: pabloPool?.config.assets.find(a => a.getPicassoAssetId() === selectedAssetTwoId),
+    quoteAsset: pabloPool?.config.assets.find(b => b.getPicassoAssetId() === selectedAssetOneId),
     quoteAmount: assetOneAmount,
-    minimumReceived,
+    minimumReceived
   });
 
   const isConfirmingModalOpen = usePendingExtrinsic(
@@ -101,13 +101,14 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
             assetOneInputValid ? `${percentageToSwap}%` : undefined
           }
           ReferenceTextProps={{
-            onClick: () => {},
+            onClick: () => {
+            },
             sx: {
               cursor: "pointer",
               "&:hover": {
-                color: theme.palette.primary.main,
-              },
-            },
+                color: theme.palette.primary.main
+              }
+            }
           }}
           ButtonProps={{
             onClick: () => {
@@ -115,7 +116,7 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
                 percentageToSwap / 100
               );
               onChangeTokenAmount(balanceLimit);
-            },
+            }
           }}
           CombinedSelectProps={{
             value: selectedAssetOneId,
@@ -132,22 +133,22 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
                 label: "Select",
                 icon: undefined,
                 disabled: true,
-                hidden: true,
+                hidden: true
               },
-              ...assetList,
+              ...assetList
             ],
             borderLeft: false,
             minWidth: isMobile ? undefined : 150,
-            searchable: true,
+            searchable: true
           }}
           LabelProps={{
             label: "From",
             BalanceProps: selectedAssetOne
               ? {
-                  title: <AccountBalanceWalletIcon color="primary" />,
-                  balance: balance1.toFixed(4),
-                }
-              : undefined,
+                title: <AccountBalanceWalletIcon color="primary" />,
+                balance: balance1.toFixed(4)
+              }
+              : undefined
           }}
         />
       </Box>
@@ -172,7 +173,8 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
           }}
           setValue={inputMode === 2 ? onChangeTokenAmount : undefined}
           ButtonProps={{
-            onClick: () => {},
+            onClick: () => {
+            }
           }}
           CombinedSelectProps={{
             value: selectedAssetTwoId,
@@ -189,22 +191,22 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
                 label: "Select",
                 icon: undefined,
                 disabled: true,
-                hidden: true,
+                hidden: true
               },
-              ...assetList,
+              ...assetList
             ],
             borderLeft: false,
             minWidth: isMobile ? undefined : 150,
-            searchable: true,
+            searchable: true
           }}
           LabelProps={{
             label: "To",
             BalanceProps: selectedAssetTwo
               ? {
-                  title: <AccountBalanceWalletIcon color="primary" />,
-                  balance: balance2.toFixed(4),
-                }
-              : undefined,
+                title: <AccountBalanceWalletIcon color="primary" />,
+                balance: balance2.toFixed(4)
+              }
+              : undefined
           }}
         />
       </Box>

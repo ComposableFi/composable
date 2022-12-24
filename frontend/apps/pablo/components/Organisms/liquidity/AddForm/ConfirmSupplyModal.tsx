@@ -58,8 +58,8 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
     lpReceiveAmount: expectedLP,
     poolId,
     signer,
-    assetInId: pool.config.assets[0].getPicassoAssetId()?.toString() ?? null,
-    assetOutId: pool.config.assets[1].getPicassoAssetId()?.toString() ?? null,
+    assetIn: pool.config.assets[0],
+    assetOut: pool.config.assets[1],
   });
   const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
   const [stats, setStats] = useState<GetStatsReturn>(null);

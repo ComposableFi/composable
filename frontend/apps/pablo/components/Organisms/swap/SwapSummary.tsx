@@ -48,6 +48,8 @@ export const SwapSummary: FC<SwapSummaryProps> = ({
       selectedAccount &&
       baseAssetId &&
       quoteAssetId &&
+      quoteAsset &&
+      baseAsset &&
       pool
     ) {
       parachainApi.tx.pablo
@@ -55,11 +57,17 @@ export const SwapSummary: FC<SwapSummaryProps> = ({
           pool.poolId.toString(),
           {
             assetId: quoteAssetId,
-            amount: toChainUnits(quoteAssetAmount.toString()).toString(),
+            amount: toChainUnits(
+              quoteAssetAmount.toString(),
+              quoteAsset.getDecimals(DEFAULT_NETWORK_ID)
+            ).toString(),
           },
           {
             assetId: baseAssetId,
-            amount: toChainUnits(baseAssetAmount.toString()).toString(),
+            amount: toChainUnits(
+              baseAssetAmount.toString(),
+              baseAsset.getDecimals(DEFAULT_NETWORK_ID)
+            ).toString(),
           },
           true
         )
