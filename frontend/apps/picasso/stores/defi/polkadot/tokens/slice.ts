@@ -17,7 +17,7 @@ export type TokenMetadata = Token & {
     kusama: string | null;
     statemine: string | null;
   };
-  ratio: Record<SubstrateNetworkId, AssetRatio | null>;
+  lpRatio: Record<SubstrateNetworkId, AssetRatio | null>;
   decimals: Record<SubstrateNetworkId, number | null>;
   existentialDeposit: Record<SubstrateNetworkId, BigNumber | null>;
 };
@@ -109,7 +109,7 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
             token.decimals.picasso = listItem.decimals ?? 12;
             token.chainId.picasso = listItem.id;
             token.existentialDeposit.picasso = listItem.existentialDeposit;
-            token.ratio.picasso = listItem.ratio;
+            token.ratio.picasso = listItem.lpRatio;
           }
         });
         // karuraList.forEach(listItem => {

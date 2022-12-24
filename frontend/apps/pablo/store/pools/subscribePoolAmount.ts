@@ -2,16 +2,6 @@ import { ApiPromise } from "@polkadot/api";
 import useStore from "@/store/useStore";
 import { fromChainUnits } from "@/defi/utils";
 
-// const POOL_4_130_ADDRESS = "5w3oyasYQg6xWPRnTBT5A2zLnRDBngFZQP2ify51JjUfKCDD";
-// const POOL_1_130_ADDRESS =
-//   "5w3oyasYQg6xWPRnTBTLu4XvtutPFEMS93yEDukqmZMPaznS";
-// const POOL_1_4_ADDRESS = "";
-//
-// // This should be fetched from RPC or inside
-// const hardcodedPoolWalletAddress = {
-//
-// }
-
 async function fetchInPool(
   api: ApiPromise,
   assetIn: string,
