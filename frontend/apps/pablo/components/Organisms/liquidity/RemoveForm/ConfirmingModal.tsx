@@ -22,8 +22,9 @@ import {
 import { useRouter } from "next/router";
 import { toChainUnits } from "@/defi/utils";
 import { setUiState } from "@/store/ui/ui.slice";
-import { Asset } from "shared";
+import { Asset, subscanExtrinsicLink } from "shared";
 import { PoolConfig } from "@/store/pools/types";
+import { useSnackbar } from "notistack";
 
 export type ConfirmingModalProps = {
   baseAsset: Asset;
@@ -57,7 +58,7 @@ export const ConfirmingModal: FC<ConfirmingModalProps> = ({
   const router = useRouter();
   const executor = useExecutor();
   const theme = useTheme();
-
+  const { enqueueSnackbar } = useSnackbar();
   const [confirming, setConfirming] = useState<boolean>(false);
 
   const onCloseHandler = () => {
@@ -65,7 +66,6 @@ export const ConfirmingModal: FC<ConfirmingModalProps> = ({
   };
 
   const confirmRemoveHandler = async () => {
-    // WIP
     if (
       parachainApi &&
       signer !== undefined &&
@@ -93,6 +93,10 @@ export const ConfirmingModal: FC<ConfirmingModalProps> = ({
           },
           (txHash: string, _events) => {
             console.log("Finalized ", txHash);
+            enqueueSnackbar("Liquidity: removed", {
+              variant: "success",
+              url: subscanExtrinsicLink(DEFAULT_NETWORK_ID, txHash),
+            });
             setUiState({ isConfirmingModalOpen: false });
             setConfirming(false);
             router.push(`/pool/select/${pool.poolId.toString()}`);
