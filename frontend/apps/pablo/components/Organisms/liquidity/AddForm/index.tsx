@@ -105,7 +105,17 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         setSimulated(simulatedValue);
       }
     });
-  }, [amountOne, amountTwo, leftId, poolId, rightId, simulate, simulated]);
+  }, [
+    amountOne,
+    amountTwo,
+    leftConfig?.asset,
+    leftId,
+    poolId,
+    rightConfig?.asset,
+    rightId,
+    simulate,
+    simulated,
+  ]);
 
   if (inputConfig === null) {
     return null;
