@@ -76,7 +76,7 @@ export const ConfirmSupplyModal: FC<SupplyModalProps & ModalProps> = ({
 
   if (stats === null) return null;
 
-  const { ratioA, ratioB } = getPriceAndRatio(
+  const { shareOfPool } = getPriceAndRatio(
     stats,
     assetOne,
     amountOne,
@@ -188,7 +188,7 @@ export const ConfirmSupplyModal: FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label={`Share of pool`}
           BalanceProps={{
-            balance: `${((ratioA + ratioB) / 2).toFixed()}%`,
+            balance: `${shareOfPool.toFixed()}%`,
             BalanceTypographyProps: {
               variant: "body1",
             },

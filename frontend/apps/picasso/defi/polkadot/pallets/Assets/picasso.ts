@@ -30,7 +30,7 @@ export async function picassoAssetsList(
           unwrapNumberOrHex(asset.existentialDeposit.toString()),
           asset.decimals.toNumber()
         ),
-        ratio: (asset.lpRatio.toJSON() as AssetRatio) ?? null,
+        ratio: (asset.ratio.toJSON() as AssetRatio) ?? null,
       };
     });
   } catch (err) {

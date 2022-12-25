@@ -6,8 +6,8 @@ import { Asset, callbackGate } from "shared";
 import { PoolConfig } from "@/store/pools/types";
 
 export const usePoolSpotPrice = (
-  pool: PoolConfig | undefined,
-  input: [Asset, Asset] | undefined
+  pool: PoolConfig | undefined | null,
+  input: [Asset, Asset] | undefined | null
 ) => {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const [spotPrice, setSpotPrice] = useState<BigNumber>(new BigNumber(0));
