@@ -16,6 +16,7 @@ import {
   FEE_MULTIPLIER,
 } from "shared/defi/constants";
 import { useExecutor } from "substrate-react";
+import { fromChainUnits } from "pablo/defi/utils";
 
 export const TransferFeeDisplay = () => {
   const executor = useExecutor();
@@ -65,7 +66,12 @@ export const TransferFeeDisplay = () => {
           <TextExpander
             short={
               <Typography variant="body2">
-                {humanBalance(fee.partialFee.multipliedBy(FEE_MULTIPLIER))}{" "}
+                {humanBalance(
+                  fromChainUnits(
+                    fee.partialFee.multipliedBy(FEE_MULTIPLIER),
+                    tokens[feeToken].decimals[from] ?? 12
+                  )
+                )}{" "}
                 {tokens[feeToken].symbol}
               </Typography>
             }
