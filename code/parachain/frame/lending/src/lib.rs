@@ -476,7 +476,8 @@ pub mod pallet {
 		WithdrawCollateralPaused,
 		BorrowPaused,
 		RepayBorrowPaused,
-		LiquidatePaused
+		LiquidatePaused,
+		FunctionalityNotAddedToMarket
 	}
 
 	// ----------------------------------------------------------------------------------------------------

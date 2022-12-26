@@ -146,22 +146,32 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	pub(crate) fn get_functionality_index(
+		functionality: Functionality
+	) -> usize {
+		match functionality {
+			Functionality::DepositVault => 0,
+			Functionality::WithdrawVault => 1,
+			Functionality::DepositCollateral => 2,
+			Functionality::WithdrawCollateral => 3,
+			Functionality::Borrow => 4,
+			Functionality::RepayBorrow => 5,
+			Functionality::Liquidate => 6,
+		}
+	}
+
 	pub(crate) fn functionality_allowed(
 		market_id: &MarketId,
 		functionality: Functionality
 	) -> Result<bool, DispatchError> {
 		let (_, market) = Self::get_market(market_id)?;
-		let index;
-		match functionality {
-			Functionality::DepositVault => index = 0,
-			Functionality::WithdrawVault => index = 1,
-			Functionality::DepositCollateral => index = 2,
-			Functionality::WithdrawCollateral => index = 3,
-			Functionality::Borrow => index = 4,
-			Functionality::RepayBorrow => index = 5,
-			Functionality::Liquidate => index = 6,
+		let index = Self::get_functionality_index(functionality);
+		let functionalities_length = market.is_paused_functionalities.len();
+		if index >= functionalities_length {
+			Err(Error::<T>::FunctionalityNotAddedToMarket.into())
+		} else {
+			Ok(!market.is_paused_functionalities[index])
 		}
-		Ok(!market.is_paused_functionalities[index])
 	}
 
 	/// Returns pair of market's id and market (as 'MarketConfig') via market's id
