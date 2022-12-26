@@ -16,7 +16,6 @@ LPs are provided LP-tokens relative to the funds they add to a liquidity pool on
 A percentage of the total buy/sell order and swap fees are distributed to liquidity providers.
 Then the accumulated fees are added back to the pool, effectively resulting in a pro-rata redistribution to LPs
 based on the LP-token share they redeem and the total value of the pool.
-If a user provides liquidity in only one asset to a pool, they are charged the pool fee rate for creating an imbalance.
 
 Pablo is uniquely positioned as the hub for cross-chain transactions in DotSama, and community backed liquidity. 
 The initial pools are a mere first step on our path to deep cross-chain liquidity 
@@ -24,11 +23,11 @@ and will be followed by stableswap and liquidity Bootstrapping pools with improv
 
 ## How fees work on Pablo
 
-### Overview
+### Transaction Fees 
 Transaction fees are paid by any user posting transactions on-chain.
-All Fees are calculated based on the “weight” of a transaction representing the computational load and storage cost.
+All Fees are calculated based on the “weight” of a transaction representing the computational load and storage cost. The asset used for fees can be changed via BYOG (Bring Your Own Gas) to a configured fee asset of the user's choice.
 
-### Buy, Sell & Swap Fees
+### Swap Fees
 Transactions through Pablo native liquidity pools for asset swaps and buy/sell orders incur fees at
 0.3% of the total amount traded and are paid by the trader in the input asset.
-The asset used for fees can be changed via BYOG (Bring Your Own Gas) to a configured fee asset of the user's choice.
+
