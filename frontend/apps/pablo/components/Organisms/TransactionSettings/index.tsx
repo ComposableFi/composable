@@ -18,7 +18,10 @@ import {
 import BigNumber from "bignumber.js";
 import React, { useState } from "react";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
-import { setTransactionSetting, useAppSettingsSlice } from "@/store/appSettings/slice";
+import {
+  setTransactionSetting,
+  useAppSettingsSlice,
+} from "@/store/appSettings/slice";
 import { setUiState, useUiSlice } from "@/store/ui/ui.slice";
 
 const toleranceSuffix = "     %";
@@ -58,9 +61,7 @@ export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
     minDeadline,
   } = useAppSettingsSlice();
 
-  const { 
-    isTransactionSettingsModalOpen
-   } = useUiSlice();
+  const { isTransactionSettingsModalOpen } = useUiSlice();
   const isModalOpen = isTransactionSettingsModalOpen;
 
   const [isToleranceFocussed, setIsToleranceFocussed] =
@@ -74,7 +75,7 @@ export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
   );
 
   const toleranceSelected = (value: number) => {
-    return value === tolerance;
+    return value.toFixed(2).toString() === toleranceStringValue;
   };
 
   const onDeadlineChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,12 +137,14 @@ export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
                     sx={{ gap: 2, pr: 2, color: theme.palette.text.secondary }}
                     onChange={onToleranceChange}
                   >
-                    {toleranceOptions.map((value) => (
+                    {React.Children.map(toleranceOptions, (value) => (
                       <FormControlLabel
-                        key={value}
                         value={value.toFixed(2)}
                         control={<Radio sx={{ display: "none" }} />}
                         label={`${value.toFixed(1)} %`}
+                        checked={
+                          value.toFixed(2).toString() === toleranceStringValue
+                        }
                         sx={{
                           color: toleranceSelected(value)
                             ? theme.palette.primary.main
