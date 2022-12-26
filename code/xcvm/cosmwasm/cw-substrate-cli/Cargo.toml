@@ -1,0 +1,18 @@
+[package]
+name = "cw-substrate-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+subxt = "0.25"
+tokio = { version = "1.0", features = ["full"] }
+scale = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
+sp-keyring = "7.0.0"
+sc-keystore = "7.0.0"
+sp-core = "10.0.0"
+sp-application-crypto = "11.0.0"
+sp-keystore = "0.16.0"
+frame-support = "7.0.0"
+clap = { version = "4.0.30", features = ["derive"] }
+cosmwasm-orchestrate = { git = "https://github.com/ComposableFi/cosmwasm-vm" }
+thiserror = "1.0.38"
