@@ -5,7 +5,6 @@ import {
   Breadcrumbs,
   createTheme,
   ThemeProvider,
-  Typography,
   useTheme,
 } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
@@ -165,18 +164,6 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
           }}
         >
           <Box sx={{ flexGrow: 1 }}>{children}</Box>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-              height: theme.spacing(2),
-            }}
-          >
-            <Typography variant="caption">
-              {process.env.WEBSITE_VERSION}
-            </Typography>
-          </Box>
         </Box>
       </Box>
     </>
