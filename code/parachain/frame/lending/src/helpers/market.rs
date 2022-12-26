@@ -128,7 +128,7 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn do_update_market_functionality(
 		manager: T::AccountId,
 		market_id: MarketId,
-		changed_functionalities: Vec<(u8, bool)>
+		changed_functionalities: Vec<(u8, bool)>,
 	) -> Result<(), DispatchError> {
 		Markets::<T>::mutate(market_id, |market| {
 			if let Some(market) = market {
@@ -146,9 +146,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub(crate) fn get_functionality_index(
-		functionality: Functionality
-	) -> usize {
+	pub(crate) fn get_functionality_index(functionality: Functionality) -> usize {
 		match functionality {
 			Functionality::DepositVault => 0,
 			Functionality::WithdrawVault => 1,
@@ -162,7 +160,7 @@ impl<T: Config> Pallet<T> {
 
 	pub(crate) fn functionality_allowed(
 		market_id: &MarketId,
-		functionality: Functionality
+		functionality: Functionality,
 	) -> Result<bool, DispatchError> {
 		let (_, market) = Self::get_market(market_id)?;
 		let index = Self::get_functionality_index(functionality);

@@ -88,7 +88,7 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId, Bloc
 	pub interest_rate_model: InterestRateModel,
 	pub under_collateralized_warn_percent: Percent,
 	pub liquidators: Vec<LiquidationStrategyId>,
-	pub is_paused_functionalities: Vec<bool>
+	pub is_paused_functionalities: Vec<bool>,
 }
 
 /// Different ways that a market can be repaid.
@@ -253,12 +253,12 @@ pub trait Lending: DeFiEngine {
 	fn update_market_functionality(
 		manager: Self::AccountId,
 		market_id: Self::MarketId,
-		new_states: Vec<(u8, bool)>
+		new_states: Vec<(u8, bool)>,
 	) -> Result<(), DispatchError>;
 
 	fn update_global_market_functionality(
 		manager: Self::AccountId,
-		new_states: Vec<(u8, bool)>
+		new_states: Vec<(u8, bool)>,
 	) -> Result<(), DispatchError>;
 
 	fn get_market_state(

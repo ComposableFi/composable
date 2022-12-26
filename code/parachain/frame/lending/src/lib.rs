@@ -264,7 +264,7 @@ pub mod pallet {
 		WithdrawCollateral,
 		Borrow,
 		RepayBorrow,
-		Liquidate
+		Liquidate,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -391,15 +391,35 @@ pub mod pallet {
 			changed_functionalities: Vec<(u8, bool)>,
 		},
 		/// Event emitted when asset is deposited by lender.
-		AssetDeposited { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
+		AssetDeposited {
+			sender: T::AccountId,
+			market_id: MarketId,
+			amount: T::Balance,
+		},
 		/// Event emitted when asset is withdrawn by lender.
-		AssetWithdrawn { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
+		AssetWithdrawn {
+			sender: T::AccountId,
+			market_id: MarketId,
+			amount: T::Balance,
+		},
 		/// Event emitted when collateral is deposited.
-		CollateralDeposited { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
+		CollateralDeposited {
+			sender: T::AccountId,
+			market_id: MarketId,
+			amount: T::Balance,
+		},
 		/// Event emitted when collateral is withdrawn.
-		CollateralWithdrawn { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
+		CollateralWithdrawn {
+			sender: T::AccountId,
+			market_id: MarketId,
+			amount: T::Balance,
+		},
 		/// Event emitted when user borrows from given market.
-		Borrowed { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
+		Borrowed {
+			sender: T::AccountId,
+			market_id: MarketId,
+			amount: T::Balance,
+		},
 		/// Event emitted when user repays borrow of beneficiary in given market.
 		BorrowRepaid {
 			sender: T::AccountId,
@@ -408,9 +428,15 @@ pub mod pallet {
 			amount: T::Balance,
 		},
 		/// Event emitted when a liquidation is initiated for a loan.
-		LiquidationInitiated { market_id: MarketId, borrowers: Vec<T::AccountId> },
+		LiquidationInitiated {
+			market_id: MarketId,
+			borrowers: Vec<T::AccountId>,
+		},
 		/// Event emitted to warn that loan may go under collateralize soon.
-		MayGoUnderCollateralizedSoon { market_id: MarketId, account: T::AccountId },
+		MayGoUnderCollateralizedSoon {
+			market_id: MarketId,
+			account: T::AccountId,
+		},
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -477,7 +503,7 @@ pub mod pallet {
 		BorrowPaused,
 		RepayBorrowPaused,
 		LiquidatePaused,
-		FunctionalityNotAddedToMarket
+		FunctionalityNotAddedToMarket,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -579,25 +605,38 @@ pub mod pallet {
 		fn update_market_functionality(
 			manager: Self::AccountId,
 			market_id: Self::MarketId,
-			changed_functionalities: Vec<(u8, bool)>
+			changed_functionalities: Vec<(u8, bool)>,
 		) -> Result<(), DispatchError> {
-			Self::do_update_market_functionality(manager, market_id, changed_functionalities.clone())?;
-			Self::deposit_event(Event::<T>::FunctionalityChanged { market_id, changed_functionalities });
+			Self::do_update_market_functionality(
+				manager,
+				market_id,
+				changed_functionalities.clone(),
+			)?;
+			Self::deposit_event(Event::<T>::FunctionalityChanged {
+				market_id,
+				changed_functionalities,
+			});
 			Ok(())
 		}
 
 		fn update_global_market_functionality(
 			manager: Self::AccountId,
-			changed_functionalities: Vec<(u8, bool)>
+			changed_functionalities: Vec<(u8, bool)>,
 		) -> Result<(), DispatchError> {
 			for market_id in Markets::<T>::iter_keys() {
-				Self::do_update_market_functionality(manager.clone(), market_id, changed_functionalities.clone())?;
+				Self::do_update_market_functionality(
+					manager.clone(),
+					market_id,
+					changed_functionalities.clone(),
+				)?;
 			}
 			Self::deposit_event(Event::<T>::GlobalFunctionalityChanged { changed_functionalities });
 			Ok(())
 		}
 
-		fn get_market_state(market_id: &Self::MarketId) -> Result<(&Self::MarketId, Self::MarketConfig), DispatchError> {
+		fn get_market_state(
+			market_id: &Self::MarketId,
+		) -> Result<(&Self::MarketId, Self::MarketConfig), DispatchError> {
 			Self::get_market(&market_id)
 		}
 
@@ -610,7 +649,10 @@ pub mod pallet {
 			account: &Self::AccountId,
 			amount: LendAssetAmountOf<Self>,
 		) -> Result<(), DispatchError> {
-			ensure!(Self::functionality_allowed(market_id, Functionality::DepositVault)?, Error::<T>::DepositVaultPaused);
+			ensure!(
+				Self::functionality_allowed(market_id, Functionality::DepositVault)?,
+				Error::<T>::DepositVaultPaused
+			);
 			let (_, market) = Self::get_market(market_id)?;
 			T::VaultLender::deposit(&market.borrow_asset_vault, account, amount)?;
 			Self::deposit_event(Event::<T>::AssetDeposited {
@@ -626,7 +668,10 @@ pub mod pallet {
 			account: &Self::AccountId,
 			amount: LendAssetAmountOf<Self>,
 		) -> Result<(), DispatchError> {
-			ensure!(Self::functionality_allowed(market_id, Functionality::WithdrawVault)?, Error::<T>::WithdrawVaultPaused);
+			ensure!(
+				Self::functionality_allowed(market_id, Functionality::WithdrawVault)?,
+				Error::<T>::WithdrawVaultPaused
+			);
 			let (_, market) = Self::get_market(market_id)?;
 			T::VaultLender::withdraw(&market.borrow_asset_vault, account, amount)?;
 			Self::deposit_event(Event::<T>::AssetWithdrawn {
@@ -643,7 +688,10 @@ pub mod pallet {
 			amount: CollateralLpAmountOf<Self>,
 			keep_alive: bool,
 		) -> Result<(), DispatchError> {
-			ensure!(Self::functionality_allowed(market_id, Functionality::DepositCollateral)?, Error::<T>::DepositCollateralPaused);
+			ensure!(
+				Self::functionality_allowed(market_id, Functionality::DepositCollateral)?,
+				Error::<T>::DepositCollateralPaused
+			);
 			Self::do_deposit_collateral(
 				market_id,
 				account,
@@ -663,7 +711,10 @@ pub mod pallet {
 			account: &Self::AccountId,
 			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
-			ensure!(Self::functionality_allowed(market_id, Functionality::WithdrawCollateral)?, Error::<T>::WithdrawCollateralPaused);
+			ensure!(
+				Self::functionality_allowed(market_id, Functionality::WithdrawCollateral)?,
+				Error::<T>::WithdrawCollateralPaused
+			);
 			Self::do_withdraw_collateral(market_id, account, amount.try_into_validated()?)?;
 			Self::deposit_event(Event::<T>::CollateralWithdrawn {
 				sender: account.clone(),
@@ -682,7 +733,10 @@ pub mod pallet {
 			borrowing_account: &Self::AccountId,
 			amount_to_borrow: BorrowAmountOf<Self>,
 		) -> Result<(), DispatchError> {
-			ensure!(Self::functionality_allowed(market_id, Functionality::Borrow)?, Error::<T>::BorrowPaused);
+			ensure!(
+				Self::functionality_allowed(market_id, Functionality::Borrow)?,
+				Error::<T>::BorrowPaused
+			);
 			Self::do_borrow(market_id, borrowing_account, amount_to_borrow)?;
 			Self::deposit_event(Event::<T>::Borrowed {
 				sender: borrowing_account.clone(),
@@ -700,7 +754,10 @@ pub mod pallet {
 			total_repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
 			keep_alive: bool,
 		) -> Result<BorrowAmountOf<Self>, DispatchError> {
-			ensure!(Self::functionality_allowed(market_id, Functionality::RepayBorrow)?, Error::<T>::RepayBorrowPaused);
+			ensure!(
+				Self::functionality_allowed(market_id, Functionality::RepayBorrow)?,
+				Error::<T>::RepayBorrowPaused
+			);
 			let amount = Self::do_repay_borrow(
 				market_id,
 				from,
@@ -732,7 +789,10 @@ pub mod pallet {
 			now: Timestamp,
 		) -> Result<(), DispatchError> {
 			// if repay borrow is paused, accrue interest should be paused as well
-			ensure!(Self::functionality_allowed(market_id, Functionality::RepayBorrow)?, Error::<T>::RepayBorrowPaused);
+			ensure!(
+				Self::functionality_allowed(market_id, Functionality::RepayBorrow)?,
+				Error::<T>::RepayBorrowPaused
+			);
 			Self::do_accrue_interest(market_id, now)
 		}
 
@@ -782,7 +842,10 @@ pub mod pallet {
 			market_id: &<Self as Lending>::MarketId,
 			borrowers: BoundedVec<<Self as DeFiEngine>::AccountId, Self::MaxLiquidationBatchSize>,
 		) -> Result<Vec<<Self as DeFiEngine>::AccountId>, DispatchError> {
-			ensure!(Self::functionality_allowed(market_id, Functionality::Liquidate)?, Error::<T>::LiquidatePaused);
+			ensure!(
+				Self::functionality_allowed(market_id, Functionality::Liquidate)?,
+				Error::<T>::LiquidatePaused
+			);
 			let subjected_borrowers = Self::do_liquidate(liquidator, market_id, borrowers)?;
 			// if at least one borrower was affected then liquidation been initiated
 			if !subjected_borrowers.is_empty() {
@@ -852,7 +915,11 @@ pub mod pallet {
 			changed_functionalities: Vec<(u8, bool)>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as Lending>::update_market_functionality(who, market_id, changed_functionalities)?;
+			<Self as Lending>::update_market_functionality(
+				who,
+				market_id,
+				changed_functionalities,
+			)?;
 			Ok(().into())
 		}
 

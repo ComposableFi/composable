@@ -1,7 +1,7 @@
 use super::prelude::*;
-use crate::{tests::{process_and_progress_blocks}, Functionality};
-use frame_support::traits::{ fungibles::Mutate};
-use composable_traits::{vault::Vault as VaultTrait};
+use crate::{tests::process_and_progress_blocks, Functionality};
+use composable_traits::vault::Vault as VaultTrait;
+use frame_support::traits::fungibles::Mutate;
 use num_traits::Pow;
 
 #[test]
@@ -13,62 +13,78 @@ fn test_pausing_vault_deposit() {
 		let borrow = 10;
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, collateral));
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, borrow));
-		let vault_deposit_index = Lending::get_functionality_index(Functionality::DepositVault).try_into().unwrap();
-        // only manager can pause/unpause
+		let vault_deposit_index = Lending::get_functionality_index(Functionality::DepositVault)
+			.try_into()
+			.unwrap();
+		// only manager can pause/unpause
 		assert_noop!(
-			Lending::update_market_functionality(Origin::signed(*BOB), market_id, vec![(vault_deposit_index, true)]),
+			Lending::update_market_functionality(
+				Origin::signed(*BOB),
+				market_id,
+				vec![(vault_deposit_index, true)]
+			),
 			crate::Error::<Runtime>::Unauthorized
 		);
 
-        // pausing should go through
+		// pausing should go through
 		assert_extrinsic_event::<Runtime>(
-			Lending::update_market_functionality(Origin::signed(*ALICE), market_id, vec![(vault_deposit_index, true)]),
+			Lending::update_market_functionality(
+				Origin::signed(*ALICE),
+				market_id,
+				vec![(vault_deposit_index, true)],
+			),
 			Event::Lending(crate::Event::FunctionalityChanged {
 				market_id,
-				changed_functionalities: vec![(0, true)]
+				changed_functionalities: vec![(0, true)],
 			}),
 		);
 
 		let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
 		// market state should have changed
-		assert_eq!(market_state.is_paused_functionalities, vec![true, false, false, false, false, false, false]);
-        // vault deposit should fail because it is paused
-        assert_noop!(
-            Lending::vault_deposit(Origin::signed(*ALICE), market_id, borrow),
-            crate::Error::<Runtime>::DepositVaultPaused
-        );
+		assert_eq!(
+			market_state.is_paused_functionalities,
+			vec![true, false, false, false, false, false, false]
+		);
+		// vault deposit should fail because it is paused
+		assert_noop!(
+			Lending::vault_deposit(Origin::signed(*ALICE), market_id, borrow),
+			crate::Error::<Runtime>::DepositVaultPaused
+		);
 
 		process_and_progress_blocks::<Lending, Runtime>(1);
 		// vault deposit should still fail because it is paused
 		assert_noop!(
-            Lending::vault_deposit(Origin::signed(*ALICE), market_id, borrow),
-            crate::Error::<Runtime>::DepositVaultPaused
-        );
+			Lending::vault_deposit(Origin::signed(*ALICE), market_id, borrow),
+			crate::Error::<Runtime>::DepositVaultPaused
+		);
 		// try unpausing by not a manager
-        assert_noop!(
-			Lending::update_market_functionality(Origin::signed(*BOB), market_id, vec![(vault_deposit_index, false)]),
+		assert_noop!(
+			Lending::update_market_functionality(
+				Origin::signed(*BOB),
+				market_id,
+				vec![(vault_deposit_index, false)]
+			),
 			crate::Error::<Runtime>::Unauthorized
 		);
-        // manager unpauses
-        assert_ok!(
-			Lending::update_market_functionality(Origin::signed(*ALICE), market_id, vec![(vault_deposit_index, false)])
-		);
-        let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
+		// manager unpauses
+		assert_ok!(Lending::update_market_functionality(
+			Origin::signed(*ALICE),
+			market_id,
+			vec![(vault_deposit_index, false)]
+		));
+		let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
 		// market state should have changed
 		assert_eq!(market_state.is_paused_functionalities, vec![false; 7]);
-        // vault withdraw should succeed
-		assert_ok!(
-			Lending::vault_deposit(Origin::signed(*ALICE), market_id, borrow),
-		);
+		// vault withdraw should succeed
+		assert_ok!(Lending::vault_deposit(Origin::signed(*ALICE), market_id, borrow),);
 	});
 }
-
 
 #[test]
 fn test_pausing_vault_withdraw() {
 	new_test_ext().execute_with(|| {
 		let (market_id, vault_id) = create_simple_market();
-        let vault_account = Vault::account_id(&vault_id);
+		let vault_account = Vault::account_id(&vault_id);
 
 		let collateral = 1_000_000_000_000;
 		let borrow = 10;
@@ -76,24 +92,37 @@ fn test_pausing_vault_withdraw() {
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, borrow));
 
 		assert_ok!(Lending::vault_deposit(Origin::signed(*ALICE), market_id, borrow));
-		let vault_withdraw_index = Lending::get_functionality_index(Functionality::WithdrawVault).try_into().unwrap();
+		let vault_withdraw_index = Lending::get_functionality_index(Functionality::WithdrawVault)
+			.try_into()
+			.unwrap();
 		// only manager can pause/unpause
 		assert_noop!(
-			Lending::update_market_functionality(Origin::signed(*BOB), market_id, vec![(vault_withdraw_index, true)]),
+			Lending::update_market_functionality(
+				Origin::signed(*BOB),
+				market_id,
+				vec![(vault_withdraw_index, true)]
+			),
 			crate::Error::<Runtime>::Unauthorized
 		);
 		// pausing should go through
 		assert_extrinsic_event::<Runtime>(
-			Lending::update_market_functionality(Origin::signed(*ALICE), market_id, vec![(vault_withdraw_index, true)]),
+			Lending::update_market_functionality(
+				Origin::signed(*ALICE),
+				market_id,
+				vec![(vault_withdraw_index, true)],
+			),
 			Event::Lending(crate::Event::FunctionalityChanged {
 				market_id,
-				changed_functionalities: vec![(1, true)]
+				changed_functionalities: vec![(1, true)],
 			}),
 		);
 
 		let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
 		// market state should have changed
-		assert_eq!(market_state.is_paused_functionalities, vec![false, true, false, false, false, false, false]);
+		assert_eq!(
+			market_state.is_paused_functionalities,
+			vec![false, true, false, false, false, false, false]
+		);
 		// vault withdraw should fail because it is paused
 		assert_noop!(
 			Lending::vault_withdraw(Origin::signed(*ALICE), market_id, borrow),
@@ -106,21 +135,29 @@ fn test_pausing_vault_withdraw() {
 			crate::Error::<Runtime>::WithdrawVaultPaused
 		);
 		// try unpausing by not a manager
-        assert_noop!(
-			Lending::update_market_functionality(Origin::signed(*BOB), market_id, vec![(vault_withdraw_index, false)]),
+		assert_noop!(
+			Lending::update_market_functionality(
+				Origin::signed(*BOB),
+				market_id,
+				vec![(vault_withdraw_index, false)]
+			),
 			crate::Error::<Runtime>::Unauthorized
 		);
-        // manager unpauses
-        assert_ok!(
-			Lending::update_market_functionality(Origin::signed(*ALICE), market_id, vec![(vault_withdraw_index, false)])
-		);
-        let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
+		// manager unpauses
+		assert_ok!(Lending::update_market_functionality(
+			Origin::signed(*ALICE),
+			market_id,
+			vec![(vault_withdraw_index, false)]
+		));
+		let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
 		// market state should have changed
 		assert_eq!(market_state.is_paused_functionalities, vec![false; 7]);
-        // vault withdraw should succeed
-		assert_ok!(
-			Lending::vault_withdraw(Origin::signed(*ALICE), market_id, Assets::balance(USDT::ID, &vault_account))
-		);
+		// vault withdraw should succeed
+		assert_ok!(Lending::vault_withdraw(
+			Origin::signed(*ALICE),
+			market_id,
+			Assets::balance(USDT::ID, &vault_account)
+		));
 	});
 }
 
@@ -133,20 +170,30 @@ fn test_pausing_collateral_deposit() {
 		let borrow = 10;
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, collateral));
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, borrow));
-		
+
 		assert_ok!(Lending::vault_deposit(Origin::signed(*ALICE), market_id, borrow));
-		let collateral_deposit_index = Lending::get_functionality_index(Functionality::DepositCollateral).try_into().unwrap();
+		let collateral_deposit_index =
+			Lending::get_functionality_index(Functionality::DepositCollateral)
+				.try_into()
+				.unwrap();
 		// pausing should go through
 		assert_extrinsic_event::<Runtime>(
-			Lending::update_market_functionality(Origin::signed(*ALICE), market_id, vec![(collateral_deposit_index, true)]),
+			Lending::update_market_functionality(
+				Origin::signed(*ALICE),
+				market_id,
+				vec![(collateral_deposit_index, true)],
+			),
 			Event::Lending(crate::Event::FunctionalityChanged {
 				market_id,
-				changed_functionalities: vec![(2, true)]
+				changed_functionalities: vec![(2, true)],
 			}),
 		);
 		let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
 		// market state should have changed
-		assert_eq!(market_state.is_paused_functionalities, vec![false, false, true, false, false, false, false]);
+		assert_eq!(
+			market_state.is_paused_functionalities,
+			vec![false, false, true, false, false, false, false]
+		);
 
 		assert_noop!(
 			Lending::deposit_collateral(Origin::signed(*ALICE), market_id, collateral, false),
@@ -159,19 +206,16 @@ fn test_pausing_collateral_deposit() {
 			crate::Error::<Runtime>::DepositCollateralPaused
 		);
 		// manager unpauses
-        assert_ok!(
-			Lending::update_market_functionality(Origin::signed(*ALICE), market_id, vec![(collateral_deposit_index, false)])
-		);
+		assert_ok!(Lending::update_market_functionality(
+			Origin::signed(*ALICE),
+			market_id,
+			vec![(collateral_deposit_index, false)]
+		));
 		let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
 		// market state should have changed
 		assert_eq!(market_state.is_paused_functionalities, vec![false; 7]);
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(
-				Origin::signed(*ALICE),
-				market_id,
-				collateral,
-				false,
-			),
+			Lending::deposit_collateral(Origin::signed(*ALICE), market_id, collateral, false),
 			Event::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral,
@@ -199,47 +243,52 @@ fn test_pausing_borrow() {
 		let borrow = 10;
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, collateral));
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, borrow));
-		
+
 		assert_ok!(Lending::vault_deposit(Origin::signed(*ALICE), market_id, borrow));
-		let borrow_index = Lending::get_functionality_index(Functionality::Borrow).try_into().unwrap();
+		let borrow_index =
+			Lending::get_functionality_index(Functionality::Borrow).try_into().unwrap();
 		// pausing should go through
 		assert_extrinsic_event::<Runtime>(
-			Lending::update_market_functionality(Origin::signed(*ALICE), market_id, vec![(borrow_index, true)]),
+			Lending::update_market_functionality(
+				Origin::signed(*ALICE),
+				market_id,
+				vec![(borrow_index, true)],
+			),
 			Event::Lending(crate::Event::FunctionalityChanged {
 				market_id,
-				changed_functionalities: vec![(4, true)]
+				changed_functionalities: vec![(4, true)],
 			}),
 		);
 		let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
 		// market state should have changed
-		assert_eq!(market_state.is_paused_functionalities, vec![false, false, false, false, true, false, false]);
+		assert_eq!(
+			market_state.is_paused_functionalities,
+			vec![false, false, false, false, true, false, false]
+		);
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(
-				Origin::signed(*ALICE),
-				market_id,
-				collateral,
-				false,
-			),
+			Lending::deposit_collateral(Origin::signed(*ALICE), market_id, collateral, false),
 			Event::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral,
-				market_id: market_id,
+				market_id,
 			}),
 		);
 		process_and_progress_blocks::<Lending, Runtime>(1);
-		
+
 		// We waited 1 block, the market should have withdraw the funds
 		// now we should fail to borrow
 		assert_noop!(
 			Lending::borrow(Origin::signed(*ALICE), market_id, borrow - 1),
 			crate::Error::<Runtime>::BorrowPaused
 		);
-		
+
 		// manager unpauses
-        assert_ok!(
-			Lending::update_market_functionality(Origin::signed(*ALICE), market_id, vec![(borrow_index, false)])
-		);
+		assert_ok!(Lending::update_market_functionality(
+			Origin::signed(*ALICE),
+			market_id,
+			vec![(borrow_index, false)]
+		));
 		let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
 		// market state should have changed
 		assert_eq!(market_state.is_paused_functionalities, vec![false; 7]);
@@ -286,9 +335,7 @@ fn test_pausing_repay_borrow() {
 			// borrow_limit * COLLATERAL::ONE / price_of(COLLATERAL::ONE)
 			// REVIEW: I'm still not sure if this makes sense
 			let limit_normalized = Lending::get_borrow_limit(&market_id, &account).unwrap();
-			let limit = limit_normalized
-				.mul(BTC::ONE)
-				.div(get_price(BTC::ID, BTC::ONE));
+			let limit = limit_normalized.mul(BTC::ONE).div(get_price(BTC::ID, BTC::ONE));
 			limit
 		};
 
@@ -304,32 +351,39 @@ fn test_pausing_repay_borrow() {
 		);
 
 		let alice_total_debt_with_interest_initial =
-			Lending::total_debt_with_interest(&market_id, &ALICE)
-				.unwrap()
-				.unwrap_amount();
+			Lending::total_debt_with_interest(&market_id, &ALICE).unwrap().unwrap_amount();
 
 		process_and_progress_blocks::<Lending, Runtime>(1_000);
 
 		let alice_total_debt_with_interest_before_repay_pause =
-		Lending::total_debt_with_interest(&market_id, &ALICE)
-			.unwrap()
-			.unwrap_amount();
+			Lending::total_debt_with_interest(&market_id, &ALICE).unwrap().unwrap_amount();
 
 		// interest accured
-		assert!(alice_total_debt_with_interest_initial < alice_total_debt_with_interest_before_repay_pause);
+		assert!(
+			alice_total_debt_with_interest_initial <
+				alice_total_debt_with_interest_before_repay_pause
+		);
 
-		let repay_borrow_index = Lending::get_functionality_index(Functionality::RepayBorrow).try_into().unwrap();
+		let repay_borrow_index =
+			Lending::get_functionality_index(Functionality::RepayBorrow).try_into().unwrap();
 		// pausing should go through
 		assert_extrinsic_event::<Runtime>(
-			Lending::update_market_functionality(Origin::signed(*ALICE), market_id, vec![(repay_borrow_index, true)]),
+			Lending::update_market_functionality(
+				Origin::signed(*ALICE),
+				market_id,
+				vec![(repay_borrow_index, true)],
+			),
 			Event::Lending(crate::Event::FunctionalityChanged {
 				market_id,
-				changed_functionalities: vec![(5, true)]
+				changed_functionalities: vec![(5, true)],
 			}),
 		);
 		let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
 		// market state should have changed
-		assert_eq!(market_state.is_paused_functionalities, vec![false, false, false, false, false, true, false]);
+		assert_eq!(
+			market_state.is_paused_functionalities,
+			vec![false, false, false, false, false, true, false]
+		);
 
 		// cant repay borrow
 		assert_noop!(
@@ -342,22 +396,25 @@ fn test_pausing_repay_borrow() {
 			),
 			crate::Error::<Runtime>::RepayBorrowPaused
 		);
-		
+
 		// no new interest should accure due to repay pause
 		process_and_progress_blocks::<Lending, Runtime>(1_000);
 
 		// new debt plus interest
 		let alice_total_debt_with_interest_after_repay_pause =
-		Lending::total_debt_with_interest(&market_id, &ALICE)
-			.unwrap()
-			.unwrap_amount();
+			Lending::total_debt_with_interest(&market_id, &ALICE).unwrap().unwrap_amount();
 		// should be equal
-		assert_eq!(alice_total_debt_with_interest_after_repay_pause, alice_total_debt_with_interest_before_repay_pause);
+		assert_eq!(
+			alice_total_debt_with_interest_after_repay_pause,
+			alice_total_debt_with_interest_before_repay_pause
+		);
 
 		// manager unpauses
-        assert_ok!(
-			Lending::update_market_functionality(Origin::signed(*ALICE), market_id, vec![(repay_borrow_index, false)])
-		);
+		assert_ok!(Lending::update_market_functionality(
+			Origin::signed(*ALICE),
+			market_id,
+			vec![(repay_borrow_index, false)]
+		));
 		let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
 		// market state should have changed
 		assert_eq!(market_state.is_paused_functionalities, vec![false; 7]);
@@ -373,24 +430,26 @@ fn test_pausing_repay_borrow() {
 			),
 			Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
 				sender: *ALICE,
-				market_id: market_id,
+				market_id,
 				beneficiary: *ALICE,
 				amount: USDT::units(1) / 10_000,
 			}),
 		);
 
 		let alice_total_debt_with_interest_after_repay_unpause =
-		Lending::total_debt_with_interest(&market_id, &ALICE)
-			.unwrap()
-			.unwrap_amount();
-		assert!(alice_total_debt_with_interest_after_repay_pause > alice_total_debt_with_interest_after_repay_unpause);
+			Lending::total_debt_with_interest(&market_id, &ALICE).unwrap().unwrap_amount();
+		assert!(
+			alice_total_debt_with_interest_after_repay_pause >
+				alice_total_debt_with_interest_after_repay_unpause
+		);
 		process_and_progress_blocks::<Lending, Runtime>(1_000);
 		// interest should grow
 		let alice_total_debt_with_interest_after_repay_unpause_next =
-		Lending::total_debt_with_interest(&market_id, &ALICE)
-			.unwrap()
-			.unwrap_amount();
-		assert!(alice_total_debt_with_interest_after_repay_unpause_next > alice_total_debt_with_interest_after_repay_unpause);
+			Lending::total_debt_with_interest(&market_id, &ALICE).unwrap().unwrap_amount();
+		assert!(
+			alice_total_debt_with_interest_after_repay_unpause_next >
+				alice_total_debt_with_interest_after_repay_unpause
+		);
 	});
 }
 
@@ -431,49 +490,58 @@ fn test_pausing_liquidation() {
 			}),
 		);
 
-		let liquidate_index = Lending::get_functionality_index(Functionality::Liquidate).try_into().unwrap();
+		let liquidate_index =
+			Lending::get_functionality_index(Functionality::Liquidate).try_into().unwrap();
 		// pausing should go through
 		assert_extrinsic_event::<Runtime>(
-			Lending::update_market_functionality(Origin::signed(*ALICE), market_id, vec![(liquidate_index, true)]),
+			Lending::update_market_functionality(
+				Origin::signed(*ALICE),
+				market_id,
+				vec![(liquidate_index, true)],
+			),
 			Event::Lending(crate::Event::FunctionalityChanged {
-				market_id: market_id,
-				changed_functionalities: vec![(6, true)]
+				market_id,
+				changed_functionalities: vec![(6, true)],
 			}),
 		);
 		let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
 		// market state should have changed
-		assert_eq!(market_state.is_paused_functionalities, vec![false, false, false, false, false, false, true]);
+		assert_eq!(
+			market_state.is_paused_functionalities,
+			vec![false, false, false, false, false, false, true]
+		);
 
 		process_and_progress_blocks::<Lending, Runtime>(10_000);
 
-				assert_noop!(
-					Lending::liquidate(
-						Origin::signed(*ALICE),
-						market_id.clone(),
-						TestBoundedVec::try_from(vec![*ALICE]).unwrap(),
-					),
-					crate::Error::<Runtime>::LiquidatePaused
-				);
+		assert_noop!(
+			Lending::liquidate(
+				Origin::signed(*ALICE),
+				market_id.clone(),
+				TestBoundedVec::try_from(vec![*ALICE]).unwrap(),
+			),
+			crate::Error::<Runtime>::LiquidatePaused
+		);
 
-				process_and_progress_blocks::<Lending, Runtime>(10_000);
+		process_and_progress_blocks::<Lending, Runtime>(10_000);
 
+		assert_noop!(
+			Lending::liquidate(
+				Origin::signed(*ALICE),
+				market_id.clone(),
+				TestBoundedVec::try_from(vec![*ALICE]).unwrap(),
+			),
+			crate::Error::<Runtime>::LiquidatePaused
+		);
 
-				assert_noop!(
-					Lending::liquidate(
-						Origin::signed(*ALICE),
-						market_id.clone(),
-						TestBoundedVec::try_from(vec![*ALICE]).unwrap(),
-					),
-					crate::Error::<Runtime>::LiquidatePaused
-				);
-
-				// manager unpauses
-				assert_ok!(
-					Lending::update_market_functionality(Origin::signed(*ALICE), market_id, vec![(liquidate_index, false)])
-				);
-				let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
-				// market state should have changed
-				assert_eq!(market_state.is_paused_functionalities, vec![false; 7]);
+		// manager unpauses
+		assert_ok!(Lending::update_market_functionality(
+			Origin::signed(*ALICE),
+			market_id,
+			vec![(liquidate_index, false)]
+		));
+		let (_, market_state) = Lending::get_market_state(&market_id).unwrap();
+		// market state should have changed
+		assert_eq!(market_state.is_paused_functionalities, vec![false; 7]);
 
 		assert_extrinsic_event::<Runtime>(
 			Lending::liquidate(
@@ -493,13 +561,12 @@ fn test_pausing_liquidation() {
 }
 
 // return all combinations of vec with length desired_len where items are booleans
-fn get_bool_vec(num: i32, desired_len: usize) -> (Vec<(u8, bool)>, Vec<bool>){
+fn get_bool_vec(num: i32, desired_len: usize) -> (Vec<(u8, bool)>, Vec<bool>) {
 	let mut single_position = 1;
 	let mut index = 0;
 	let mut changed_functionalitie = Vec::new();
 	let mut result_functionalities = Vec::new();
 	while single_position <= num {
-		
 		if single_position & num != 0 {
 			changed_functionalitie.push((index, true));
 			result_functionalities.push(true);
@@ -519,8 +586,14 @@ fn get_bool_vec(num: i32, desired_len: usize) -> (Vec<(u8, bool)>, Vec<bool>){
 fn test_get_bool_vec() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(get_bool_vec(0, 4), (vec![], vec![false; 4]));
-		assert_eq!(get_bool_vec(7, 4), (vec![(0, true), (1, true), (2, true)], vec![true, true, true, false]));
-		assert_eq!(get_bool_vec(9, 4), (vec![(0, true), (3, true)], vec![true, false, false, true]));
+		assert_eq!(
+			get_bool_vec(7, 4),
+			(vec![(0, true), (1, true), (2, true)], vec![true, true, true, false])
+		);
+		assert_eq!(
+			get_bool_vec(9, 4),
+			(vec![(0, true), (3, true)], vec![true, false, false, true])
+		);
 	});
 }
 
@@ -537,29 +610,40 @@ fn test_pausing_global() {
 		assert_eq!(functionality_len_1, functionality_len_2);
 
 		for i in 0..2.pow(functionality_len_1) {
-			let (changed_functionalities, result_functionalities) = get_bool_vec(i, functionality_len_1);
+			let (changed_functionalities, result_functionalities) =
+				get_bool_vec(i, functionality_len_1);
 			assert_noop!(
-				Lending::update_global_market_functionality(Origin::signed(*BOB), changed_functionalities.clone()),
+				Lending::update_global_market_functionality(
+					Origin::signed(*BOB),
+					changed_functionalities.clone()
+				),
 				crate::Error::<Runtime>::Unauthorized
 			);
 			// pausing should go through
 			assert_extrinsic_event::<Runtime>(
-				Lending::update_global_market_functionality(Origin::signed(*ALICE), changed_functionalities.clone()),
+				Lending::update_global_market_functionality(
+					Origin::signed(*ALICE),
+					changed_functionalities.clone(),
+				),
 				Event::Lending(crate::Event::GlobalFunctionalityChanged {
-					changed_functionalities: changed_functionalities.clone()
+					changed_functionalities: changed_functionalities.clone(),
 				}),
 			);
 			let (_, market_state_1) = Lending::get_market_state(&market_id_1).unwrap();
 			let (_, market_state_2) = Lending::get_market_state(&market_id_2).unwrap();
 			assert_eq!(market_state_1.is_paused_functionalities, result_functionalities.clone());
 			assert_eq!(market_state_2.is_paused_functionalities, result_functionalities.clone());
-			let undo_changes: Vec<(u8, bool)> = changed_functionalities.iter().map(|(i, change)| -> (u8, bool) {
-				(*i, !*change)
-			}).collect();
+			let undo_changes: Vec<(u8, bool)> = changed_functionalities
+				.iter()
+				.map(|(i, change)| -> (u8, bool) { (*i, !*change) })
+				.collect();
 			assert_extrinsic_event::<Runtime>(
-				Lending::update_global_market_functionality(Origin::signed(*ALICE), undo_changes.clone()),
+				Lending::update_global_market_functionality(
+					Origin::signed(*ALICE),
+					undo_changes.clone(),
+				),
 				Event::Lending(crate::Event::GlobalFunctionalityChanged {
-					changed_functionalities: undo_changes.clone()
+					changed_functionalities: undo_changes.clone(),
 				}),
 			);
 			let (_, market_state_1) = Lending::get_market_state(&market_id_1).unwrap();
@@ -567,7 +651,6 @@ fn test_pausing_global() {
 			assert_eq!(market_state_1.is_paused_functionalities, vec![false; functionality_len_1]);
 			assert_eq!(market_state_2.is_paused_functionalities, vec![false; functionality_len_2]);
 		}
-		
 	});
 }
 
@@ -638,4 +721,3 @@ proptest! {
 		})?;
 	}
 }
-
