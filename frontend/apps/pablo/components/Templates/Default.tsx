@@ -14,12 +14,14 @@ import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import Toolbar from "@mui/material/Toolbar";
 import * as React from "react";
-import { FC, useMemo } from "react";
+import { FC, useMemo, useState } from "react";
 import { NavBar } from "../Organisms";
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { AnimatedCircles } from "@/components/Molecules/AnimatedCircles";
 import NoSSR from "@/components/Atoms/NoSSR";
 import { GasFeeDropdown } from "@/components/Organisms/BYOG/GasFeeDropdown";
+import { BYOGModal } from "@/components/Organisms/BYOG/BYOGModal";
+import { TokenId } from "tokens";
 
 type DefaultLayoutProps = {
   breadcrumbs?: React.ReactNode[];
@@ -56,6 +58,8 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
     ? theme.custom.drawerWidth.tablet
     : theme.custom.drawerWidth.desktop;
 
+  const [isBYOGModalOpen, setBYOGModalState] = useState(false);
+  const [selectedBYOGTokenId, setSelectedBYOGToken] = useState<TokenId>("pica");
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
@@ -95,8 +99,13 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               <NoSSR>
                 <GasFeeDropdown
-                  toggleModal={() => {}}
-                  setTargetFeeItem={() => {}}
+                  toggleModal={() => setBYOGModalState((state) => !state)}
+                  setTargetFeeItem={(tokenId) => setSelectedBYOGToken(tokenId)}
+                />
+                <BYOGModal
+                  state={isBYOGModalOpen}
+                  targetFeeItem={selectedBYOGTokenId}
+                  onClose={() => setBYOGModalState(false)}
                 />
                 <ThemeProvider theme={walletThemeOverride}>
                   <PolkadotConnect />
