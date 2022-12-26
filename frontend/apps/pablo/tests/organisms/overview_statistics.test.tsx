@@ -9,5 +9,5 @@ test("renders Overview/Statistics with default args", () => {
 
   expect(screen.queryAllByText("Total value locked")).toBeTruthy();
   expect(screen.queryAllByText("24h trading volume")).toBeTruthy();
-  expect(screen.queryAllByText("PABLO price")).toBeTruthy();
+  expect(screen.queryAllByText("PBLO price")).toBeTruthy();
 });

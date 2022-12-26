@@ -55,7 +55,7 @@ export const Statistics: React.FC<GridProps> = ({ ...gridProps }) => {
         />
       </Grid>
       <Grid item {...threeColumnPageSize}>
-        <Item label="PABLO price" value={`$${PBLO_PRICE.toFormat()}`} />
+        <Item label="PBLO price" value={`$${PBLO_PRICE.toFormat()}`} />
       </Grid>
     </Grid>
   );
