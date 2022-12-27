@@ -72,7 +72,7 @@ export const SwapRoute: React.FC<SwapRouteProps> = ({
             width="auto"
           />
           <ChevronRightIcon />
-          <BaseAsset icon={"/tokens/pablo.svg"} label={`PABLO`} width="auto" />
+          <BaseAsset icon={"/tokens/pablo.svg"} label={`PBLO`} width="auto" />
           <ChevronRightIcon />
           <BaseAsset
             icon={baseAsset?.getIconUrl()}

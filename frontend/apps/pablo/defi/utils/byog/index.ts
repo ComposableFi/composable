@@ -62,9 +62,11 @@ export async function getPaymentAsset({
         const [assetId] = result.toJSON();
         if (assetId) {
           const [tokenId, asset] =
-            Object.entries<Asset>(tokens).find(
-              ([assetId, token]) => token.getIdOnChain("picasso") === assetId
-            ) ?? [];
+            Object.entries<Asset>(tokens).find(([_, token]) => {
+              return (
+                token.getIdOnChain("picasso")?.toString() === assetId.toString()
+              );
+            }) ?? [];
 
           if (asset) {
             return tokenId as TokenId;

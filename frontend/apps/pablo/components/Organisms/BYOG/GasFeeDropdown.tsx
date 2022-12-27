@@ -68,6 +68,7 @@ export const GasFeeDropdown: FC<Props> = ({
         tokenId: tokenId,
       }));
   }, [feeItem, balances, tokens]);
+
   const handleChangeItem = (item: React.ChangeEvent<HTMLInputElement>) => {
     const selectedAssetId = item.target.value as TokenId;
     if (selectedAssetId === feeItem) return;
@@ -196,6 +197,12 @@ export const GasFeeDropdown: FC<Props> = ({
       size="small"
       sx={{
         minWidth: "170px",
+        "& .MuiInputAdornment-root": {
+          marginRight: 0,
+        },
+        "& .MuiInputBase-inputAdornedStart": {
+          paddingRight: "4rem !important",
+        },
       }}
       onChange={handleChangeItem}
       renderValue={(value) => {
@@ -210,29 +217,31 @@ export const GasFeeDropdown: FC<Props> = ({
             ? "Your current token balance is less than existential deposit for this token"
             : "Your balance is zero, try adding more funds to your wallet.";
           return (
-            <Box
-              sx={{
-                minWidth: theme.spacing(9),
-                padding: theme.spacing(0),
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              color={theme.palette.error.main}
-            >
-              <Tooltip
-                title={
-                  <>
-                    <Typography>Wrong gas token for this transfer.</Typography>
-                    <Typography variant="caption">{reason}</Typography>
-                  </>
-                }
-                placement="bottom"
+            <Box display="flex" alignItems="center">
+              <Box
+                sx={{
+                  minWidth: theme.spacing(9),
+                  padding: theme.spacing(0),
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                color={theme.palette.error.main}
               >
-                <>
+                <Tooltip
+                  title={
+                    <>
+                      <Typography>
+                        Wrong gas token for this transfer.
+                      </Typography>
+                      <Typography variant="caption">{reason}</Typography>
+                    </>
+                  }
+                  placement="bottom"
+                >
                   <ErrorOutline />
-                </>
-              </Tooltip>
+                </Tooltip>
+              </Box>
             </Box>
           );
         }
