@@ -58,16 +58,10 @@ export const PoolStatistics: FC<PoolDetailsProps> = ({ pool, ...boxProps }) => {
           <Item label="Pool value" value={`$${poolTVL.toFormat(2)}`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
-          <Item label="Rewards left" py={2}></Item>
-        </Grid>
-        <Grid item {...twoColumnPageSize}>
           <Item label="Volume (24H)" value={`N/A`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
           <Item label="Fees (24H)" value={`N/A`} />
-        </Grid>
-        <Grid item {...twoColumnPageSize}>
-          <Item label="APY" value={`N/A`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
           <Item label="Transactions (24H)" value={`N/A`} />
