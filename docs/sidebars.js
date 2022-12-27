@@ -349,6 +349,19 @@ const sidebars = {
                         'products/cosmwasm-orchestrate/tutorial-dex'
                     ]
                 },
+                {
+                    type: 'category',
+                    label: 'Cosmwasm Substrate CLI',
+                    link: {
+                        type: 'doc',
+                        id: 'developer-guides/cw-substrate-cli'
+                    },
+                    collapsible: true,
+                    collapsed: true,
+                    items: [
+                        'developer-guides/cw-substrate-cli/walkthrough'
+                    ]
+                },
                 'developer-guides/oracle-set-up-guide',
                 'developer-guides/collator-set-up-guide',
             ],
