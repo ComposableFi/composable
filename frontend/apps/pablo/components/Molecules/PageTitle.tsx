@@ -1,12 +1,15 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { TypographyProps } from "@mui/system";
+import { FC } from "react";
+import Head from "next/head";
+import config from "@/constants/config";
 
 export type PageTitleProps = TypographyProps & {
   title: string;
   subtitle?: string;
   withDot?: boolean;
 };
-export const PageTitle: React.FC<PageTitleProps> = ({
+export const PageTitle: FC<PageTitleProps> = ({
   title,
   subtitle,
   withDot = false,
@@ -17,6 +20,9 @@ export const PageTitle: React.FC<PageTitleProps> = ({
 
   return (
     <>
+      <Head>
+        <title>{`${title} - ${config.appDescription}`}</title>
+      </Head>
       <Typography
         textAlign={textAlign}
         variant="h4"
