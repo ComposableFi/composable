@@ -31,7 +31,18 @@ interface OfferCancelledEvent {
 export function getNewOfferEvent(
   event: BondedFinanceNewOfferEvent
 ): NewOfferEvent {
-  return event.asV10002;
+  if (event.isV1000) {
+    const { offerId } = event.asV1000;
+    return {
+      offerId,
+      beneficiary: new Uint8Array(),
+    };
+  }
+  const { offerId, beneficiary } = event.asV1400;
+  return {
+    offerId,
+    beneficiary,
+  };
 }
 
 /**
@@ -41,7 +52,7 @@ export function getNewOfferEvent(
 export function getNewBondEvent(
   event: BondedFinanceNewBondEvent
 ): NewBondEvent {
-  const { offerId, nbOfBonds } = event.asV10002;
+  const { offerId, nbOfBonds } = event.asV1000;
   return { offerId, nbOfBonds };
 }
 
@@ -52,7 +63,7 @@ export function getNewBondEvent(
 export function getOfferCancelledEvent(
   event: BondedFinanceOfferCancelledEvent
 ): OfferCancelledEvent {
-  return event.asV10002;
+  return event.asV1000;
 }
 
 /**
@@ -90,6 +101,11 @@ export async function processNewOfferEvent(
   console.log("Process NewOffer");
   // TODO: check why not triggered
   const event = new BondedFinanceNewOfferEvent(ctx);
+
+  if (event.isV1000) {
+    // no-op
+    return;
+  }
 
   const newOffer = getNewBondOffer(ctx, event);
 

@@ -50,7 +50,7 @@ export async function processAssetRegisteredEvent(
   const assetRegisteredEvent = getAssetRegisteredEvent(event);
   const { assetId, decimals } = assetRegisteredEvent;
 
-  const wsProvider = new WsProvider(chain());
+  const wsProvider = new WsProvider("wss://rpc.composablenodes.tech");
   const api = await ApiPromise.create({ provider: wsProvider });
 
   let price = 0n;

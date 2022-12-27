@@ -17,7 +17,7 @@ import {
   PabloSwap,
   PabloAssetWeight,
 } from "../model";
-import { Fee } from "../types/v10002";
+import { Fee } from "../types/v10005";
 import { divideBigInts, encodeAccount } from "../utils";
 import {
   getLatestPoolByPoolId,
@@ -37,18 +37,7 @@ interface PoolCreatedEvent {
 }
 
 function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
-  if (event.isV10002) {
-    const { owner, poolId, assets } = event.asV10002;
-    return {
-      owner,
-      poolId,
-      assetWeights: [
-        [assets.base, 0],
-        [assets.quote, 0],
-      ],
-    };
-  }
-  const { owner, poolId, assetWeights } = event.asV10004;
+  const { owner, poolId, assetWeights } = event.asV10005;
   return {
     owner,
     poolId,
@@ -66,20 +55,7 @@ interface LiquidityAddedEvent {
 function getLiquidityAddedEvent(
   event: PabloLiquidityAddedEvent
 ): LiquidityAddedEvent {
-  if (event.isV10002) {
-    const { who, poolId, mintedLp } = event.asV10002;
-    return {
-      who,
-      poolId,
-      assetAmounts: [
-        // This version should not be reached, but needs to be handled
-        [0n, 0n],
-        [0n, 0n],
-      ],
-      mintedLp,
-    };
-  }
-  const { who, poolId, assetAmounts, mintedLp } = event.asV10004;
+  const { who, poolId, assetAmounts, mintedLp } = event.asV10005;
   return {
     who,
     poolId,
@@ -97,19 +73,7 @@ interface LiquidityRemovedEvent {
 function getLiquidityRemovedEvent(
   event: PabloLiquidityRemovedEvent
 ): LiquidityRemovedEvent {
-  if (event.isV10002) {
-    const { who, poolId } = event.asV10002;
-    return {
-      who,
-      poolId,
-      assetAmounts: [
-        // This version should not be reached, but needs to be handled
-        [0n, 0n],
-        [0n, 0n],
-      ],
-    };
-  }
-  const { who, poolId, assetAmounts } = event.asV10004;
+  const { who, poolId, assetAmounts } = event.asV10005;
   return {
     who,
     poolId,
@@ -129,7 +93,7 @@ interface SwappedEvent {
 
 function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
   const { who, poolId, baseAsset, baseAmount, quoteAsset, quoteAmount, fee } =
-    event.asV10002;
+    event.asV10005;
   return {
     who,
     poolId,

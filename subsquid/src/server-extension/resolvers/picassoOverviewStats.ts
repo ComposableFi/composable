@@ -46,7 +46,7 @@ export class PicassoOverviewStatsResolver
 
   @FieldResolver({ name: "totalValueLocked", defaultValue: 0 })
   async totalValueLocked(): Promise<bigint> {
-    const wsProvider = new WsProvider(chain());
+    const wsProvider = new WsProvider("wss://rpc.composablenodes.tech");
     const api = await ApiPromise.create({ provider: wsProvider });
 
     const manager = await this.tx();

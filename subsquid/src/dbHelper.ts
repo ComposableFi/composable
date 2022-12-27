@@ -202,7 +202,7 @@ export async function storeHistoricalLockedValue(
   amountsLocked: Record<string, bigint>,
   source: LockedSource
 ): Promise<void> {
-  const wsProvider = new WsProvider(chain());
+  const wsProvider = new WsProvider("wss://rpc.composablenodes.tech");
   const api = await ApiPromise.create({ provider: wsProvider });
   const oraclePrices: Record<string, bigint> = {};
   const assetDecimals: Record<string, number> = {};
@@ -284,7 +284,7 @@ export async function storeHistoricalVolume(
   quoteAssetId: string,
   amount: bigint
 ): Promise<void> {
-  const wsProvider = new WsProvider(chain());
+  const wsProvider = new WsProvider("wss://rpc.composablenodes.tech");
   const api = await ApiPromise.create({ provider: wsProvider });
   let assetPrice = 0n;
 
