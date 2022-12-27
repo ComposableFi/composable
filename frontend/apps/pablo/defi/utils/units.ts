@@ -14,17 +14,13 @@ export function toChainUnits(
   decimals: number = 12
 ): BigNumber {
   const base = new BigNumber(10);
-  return new BigNumber(amount).times(base.pow(decimals));
+  return new BigNumber(amount).times(base.pow(decimals)).decimalPlaces(0);
 }
 
-export function fromPermill(
-  amount: string | number
-): BigNumber {
+export function fromPermill(amount: string | number): BigNumber {
   return new BigNumber(amount).div(PERMILL_UNIT).times(100);
 }
 
-export function fromPerbill(
-  amount: string | number
-): BigNumber {
+export function fromPerbill(amount: string | number): BigNumber {
   return new BigNumber(amount).div(PERBILL_UNIT);
 }

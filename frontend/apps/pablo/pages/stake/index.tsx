@@ -17,7 +17,7 @@ const StakingPage: NextPage = () => {
         >
           <PageTitle
             title="Stake"
-            subtitle="Lock PBLO to mint xPBLO, the yield bearing governance fNFT."
+            subtitle="Stake and lock tokens for additional yield"
           />
           <UnavailableFeature pageTitle={"Stake"} />
         </Box>

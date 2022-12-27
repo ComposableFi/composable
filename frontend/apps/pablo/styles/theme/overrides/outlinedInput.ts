@@ -60,9 +60,9 @@ export const outlinedInputOverrides = (
         height: theme.spacing(7),
       },
       "&.MuiInputBase-adornedStart": {
-        paddingLeft: theme.spacing(3),
+        paddingLeft: theme.spacing(1),
         [theme.breakpoints.down("sm")]: {
-          paddingLeft: theme.spacing(2),
+          paddingLeft: theme.spacing(0.5),
         },
       },
       "& .MuiSelect-select": {

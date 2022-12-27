@@ -1,5 +1,4 @@
 import React from "react";
-import { useTheme } from "@mui/material";
 import { DropdownCombinedInput, DropdownCombinedInputProps } from "./index";
 import { useValidation } from "@/hooks/bignumber";
 import BigNumber from "bignumber.js";
@@ -13,8 +12,6 @@ export type DropdownCombinedBigNumberInputProps = {
 export const DropdownCombinedBigNumberInput: React.FC<
   DropdownCombinedBigNumberInputProps
 > = ({ value, setValue: setter, setValid, maxDecimals, maxValue, ...rest }) => {
-  const theme = useTheme();
-
   const maxDec = maxDecimals ? maxDecimals : 18;
   const {
     bignrValue,

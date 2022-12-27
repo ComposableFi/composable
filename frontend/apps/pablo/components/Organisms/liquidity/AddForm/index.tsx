@@ -21,6 +21,7 @@ import { PlusIcon } from "@/components/Organisms/liquidity/AddForm/PlusIcon";
 import { useSimulateAddLiquidity } from "@/components/Organisms/pool/AddLiquidity/useSimulateAddLiquidity";
 import { ConfirmSupplyModal } from "@/components/Organisms/liquidity/AddForm/ConfirmSupplyModal";
 import { YourPosition } from "@/components/Organisms/liquidity/YourPosition";
+import { ConfirmingSupplyModal } from "@/components/Organisms/liquidity/AddForm/ConfirmingSupplyModal";
 import { usePoolSpotPrice } from "@/defi/hooks/pools/usePoolSpotPrice";
 
 function amountWithRatio(
@@ -115,11 +116,11 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
     simulate(
       poolId,
       {
-        assetIdOnChain: leftId.toString(),
+        asset: leftConfig.asset,
         balance: amountOne,
       },
       {
-        assetIdOnChain: rightId.toString(),
+        asset: rightConfig.asset,
         balance: amountTwo,
       }
     ).then((simulatedValue) => {
@@ -127,7 +128,17 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         setSimulated(simulatedValue);
       }
     });
-  }, [amountOne, amountTwo, leftId, poolId, rightId, simulate, simulated]);
+  }, [
+    amountOne,
+    amountTwo,
+    leftConfig?.asset,
+    leftId,
+    poolId,
+    rightConfig?.asset,
+    rightId,
+    simulate,
+    simulated,
+  ]);
 
   if (inputConfig === null) {
     return null;
@@ -226,18 +237,17 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         />
       ) : null}
 
-      {/*<ConfirmingSupplyModal*/}
-      {/*  pool={pool}*/}
-      {/*  open={isConfirmingSupplyModalOpen}*/}
-      {/*  lpReceiveAmount={lpReceiveAmount}*/}
-      {/*  priceOneInTwo={spotPrice}*/}
-      {/*  priceTwoInOne={new BigNumber(1).div(spotPrice)}*/}
-      {/*  assetOneAmount={assetOneAmount}*/}
-      {/*  assetTwoAmount={assetTwoAmount}*/}
-      {/*  assetOne={assetOne}*/}
-      {/*  assetTwo={assetTwo}*/}
-      {/*  share={share}*/}
-      {/*/>*/}
+      {pool ? (
+        <ConfirmingSupplyModal
+          pool={pool}
+          inputConfig={inputConfig}
+          expectedLP={simulated}
+          share={new BigNumber(0)}
+          open={isConfirmingSupplyModalOpen}
+          amountOne={amountOne}
+          amountTwo={amountTwo}
+        />
+      ) : null}
 
       <TransactionSettings showSlippageSelection={false} />
     </HighlightBox>
