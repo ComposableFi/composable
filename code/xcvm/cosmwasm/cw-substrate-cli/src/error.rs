@@ -23,6 +23,9 @@ pub enum Error {
 	#[error("Shell command failure.")]
 	ShellCommandFailure,
 
+	#[error("{0}")]
+	ToolNotInstalled(String),
+
 	#[error("Internal error: {0}")]
 	Internal(Box<dyn std::error::Error>),
 }

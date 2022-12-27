@@ -3,12 +3,13 @@ use clap::Args;
 use std::process::Command;
 
 const CARGO_GENERATE_COMMAND_NAME: &str = "generate";
-const CARGO_GENERATE_PROJECT_NAME: &str = "cargo-generate";
-const CARGO_GENERATE_VERSION: &str = "0.17.0";
-
 const CARGO_TEMPLATE_KEY_PROJECT_DESCRIPTION: &str = "project_description";
 const CARGO_TEMPLATE_KEY_PROJECT_AUTHORS: &str = "project_authors";
 const CARGO_TEMPLATE_GIT: &str = "https://github.com/ComposableFi/cw-template-project";
+const CARGO_GENERATE_HELP_MESSAGE: &str = r#"
+cargo-generate is not installed. Please install it by running `cargo install cargo-generate`.
+See more at: https://github.com/cargo-generate/cargo-generate
+"#;
 
 #[derive(Args, Debug)]
 /// Interact with a substrate-based chain.
@@ -28,7 +29,7 @@ pub struct NewCommand {
 
 impl NewCommand {
 	pub fn run(self) -> Result<(), Error> {
-		self.install_cargo_generate()?;
+		self.check_if_generate_installed()?;
 
 		let mut command = Command::new("cargo");
 
@@ -59,32 +60,17 @@ impl NewCommand {
 		}
 	}
 
-	fn check_if_generate_installed(&self) -> Result<bool, Error> {
-		Ok(Command::new("cargo")
+	fn check_if_generate_installed(&self) -> Result<(), Error> {
+		if Command::new("cargo")
 			.arg(CARGO_GENERATE_COMMAND_NAME)
 			.arg("-V")
 			.status()
 			.map_err(|e| Error::Internal(Box::new(e)))?
-			.success())
-	}
-
-	fn install_cargo_generate(&self) -> Result<(), Error> {
-		if self.check_if_generate_installed()? {
-			return Ok(())
-		}
-
-		let status = Command::new("cargo")
-			.arg("install")
-			.arg(CARGO_GENERATE_PROJECT_NAME)
-			.arg("--version")
-			.arg(CARGO_GENERATE_VERSION)
-			.status()
-			.map_err(|e| Error::Internal(Box::new(e)))?;
-
-		if status.success() {
+			.success()
+		{
 			Ok(())
 		} else {
-			Err(Error::ShellCommandFailure)
+			Err(Error::ToolNotInstalled(CARGO_GENERATE_HELP_MESSAGE.into()))
 		}
 	}
 }
