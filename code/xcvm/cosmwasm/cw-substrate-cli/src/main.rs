@@ -17,6 +17,6 @@ async fn main() {
 	};
 
 	if let Err(e) = result {
-		println!("{}", e);
+		eprintln!("{}", e);
 	}
 }

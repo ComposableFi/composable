@@ -12,7 +12,7 @@ See more at: https://github.com/cargo-generate/cargo-generate
 "#;
 
 #[derive(Args, Debug)]
-/// Interact with a substrate-based chain.
+/// Create a base CosmWasm project.
 pub struct NewCommand {
 	/// Project name
 	#[arg(short, long)]

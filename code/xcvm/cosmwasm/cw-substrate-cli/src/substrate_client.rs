@@ -2,7 +2,7 @@ use crate::{
 	error::Error,
 	types::api::{
 		self,
-		cosmwasm::events::{Emitted, Executed, Instantiated, Uploaded},
+		cosmwasm::events::{AdminUpdated, Emitted, Executed, Instantiated, Migrated, Uploaded},
 		runtime_types::{
 			pallet_cosmwasm::pallet::CodeIdentifier,
 			primitives::currency::CurrencyId,
@@ -25,24 +25,31 @@ use subxt::{
 	OnlineClient, SubstrateConfig,
 };
 
-#[derive(Args, Debug)]
 /// Interact with a substrate-based chain.
+#[derive(Args, Debug)]
 pub struct SubstrateCommand {
-	#[arg(short, long, value_parser = parse_keyring, conflicts_with_all = &["seed", "mnemonic"])]
+	/// Name of the development account that will be used as signer. (eg. alice)
+	// NOTE(aeryz): This conflicts with `scheme` because it can only be `sr25519`.
+	#[arg(short, long, value_parser = parse_keyring, conflicts_with_all = &["seed", "mnemonic", "scheme"])]
 	name: Option<Keyring>,
 
+	/// Secret seed of the signer
 	#[arg(short, long, conflicts_with_all = &["name", "mnemonic"])]
 	seed: Option<Vec<u8>>,
 
+	/// Mnemonic of the signer
 	#[arg(short, long, conflicts_with_all = &["name", "seed"])]
 	mnemonic: Option<String>,
 
+	/// Signature scheme. (eg. sr25519, ed25519)
 	#[arg(long, default_value_t = KeyScheme::Sr25519)]
 	scheme: KeyScheme,
 
+	/// Password for the mnemonic
 	#[arg(short, long)]
 	password: Option<String>,
 
+	/// Websocket endpoint of the substrate chain
 	#[arg(short = 'c', long, default_value_t = String::from("ws://127.0.0.1:9944"))]
 	chain_endpoint: String,
 
@@ -108,32 +115,85 @@ pub enum CosmwasmCommand {
 
 	/// Instantiate a CosmWasm contract
 	Instantiate {
-		#[arg(short = 'c', long)]
+		/// Code ID of the code that will be used to instantiate the contract
+		#[arg(short, long)]
 		code_id: u64,
-		#[arg(short = 's', long)]
+		/// Additional data to be used in contract address derivation in case you want to
+		/// instantiate the same contract with the same message and label multiple times
+		#[arg(short, long)]
 		salt: String,
-		#[arg(short = 'a', long)]
+		/// Contract's admin
+		#[arg(short, long)]
 		admin: Option<AccountId32>,
-		#[arg(short = 'l', long)]
+		/// Human-readable label of the contract
+		#[arg(short, long)]
 		label: String,
-		#[arg(short = 'f', long, value_parser = parse_funds)]
+		/// Funds to be moved prior to execution. Format is "ASSET-1:AMOUNT-1,ASSET-2:AMOUNT-2"
+		#[arg(short, long, value_parser = parse_funds)]
 		funds: Option<BTreeMap<u128, u128>>,
-		#[arg(short = 'g', long)]
+		/// Gas limit
+		#[arg(short, long)]
 		gas: u64,
-		#[arg(short = 'm', long)]
+		/// Instantiate message
+		#[arg(short, long)]
 		message: String,
 	},
 
 	/// Execute a CosmWasm contract
 	Execute {
-		#[arg(short = 'c', long)]
+		/// Contract to be executed
+		#[arg(short, long)]
 		contract: AccountId32,
-		#[arg(short = 'f', long, value_parser = parse_funds)]
+		/// Funds to be moved prior to execution. Format is "ASSET-1:AMOUNT-1,ASSET-2:AMOUNT-2"
+		#[arg(short, long, value_parser = parse_funds)]
 		funds: Option<BTreeMap<u128, u128>>,
-		#[arg(short = 'g', long)]
+		#[arg(short, long)]
+		/// Gas limit
 		gas: u64,
-		#[arg(short = 'm', long)]
+		/// Execute message
+		#[arg(short, long)]
 		message: String,
+	},
+
+	/// Migrate a CosmWasm contract
+	Migrate {
+		/// Contract to be migrated
+		#[arg(short, long)]
+		contract: AccountId32,
+		/// The new code ID to use
+		#[arg(short, long)]
+		new_code_id: u64,
+		/// Gas limit
+		#[arg(short, long)]
+		gas: u64,
+		/// Migrate message
+		#[arg(short, long)]
+		message: String,
+	},
+
+	/// Update admin of a CosmWasm contract
+	#[clap(group(
+        ArgGroup::new("admin")
+        .required(true)
+        .args(&["new_admin", "no_admin"]),
+    ))]
+	UpdateAdmin {
+		/// Contract to be updated
+		#[arg(short, long)]
+		contract: AccountId32,
+		/// New admin of the contract
+		#[arg(short = 'a', long, conflicts_with = "no_admin")]
+		new_admin: Option<AccountId32>,
+		/// Erase the admin of the contract (migrates are not possible after this point)
+		#[arg(long, conflicts_with = "new_admin")]
+		// NOTE: This argument won't be used programmatically. It exists so that
+		// users don't accidentally delete the admin because they forget to set
+		// `new_admin`. If this flag is on, we ensure `new_admin` is `None` and
+		// hence the admin will be deleted.
+		no_admin: bool,
+		/// Gas limit
+		#[arg(short, long)]
+		gas: u64,
 	},
 }
 
@@ -256,6 +316,44 @@ impl SubstrateCommand {
 
 				println!("[ + ] Contract executed.");
 				print_cosmwasm_events(&events)?;
+
+				Ok(())
+			},
+			CosmwasmCommand::Migrate { contract, new_code_id, gas, message } => {
+				let Some(pair) = pair else {
+					return Err(Error::OperationNeedsToBeSigned);
+				};
+
+				let events = do_signed_transaction(
+					self.chain_endpoint,
+					pair,
+					api::tx().cosmwasm().migrate(
+						contract,
+						CodeIdentifier::CodeId(new_code_id),
+						gas,
+						BoundedVec(message.into()),
+					),
+				)
+				.await?;
+				let _ = find_and_cast_events::<Migrated>(&events, true)?;
+				println!("[ + ] Contract migrated.");
+				print_cosmwasm_events(&events)?;
+
+				Ok(())
+			},
+			CosmwasmCommand::UpdateAdmin { contract, new_admin, gas, .. } => {
+				let Some(pair) = pair else {
+					return Err(Error::OperationNeedsToBeSigned);
+				};
+
+				let events = do_signed_transaction(
+					self.chain_endpoint,
+					pair,
+					api::tx().cosmwasm().update_admin(contract, new_admin, gas),
+				)
+				.await?;
+				let _ = find_and_cast_events::<AdminUpdated>(&events, true)?;
+				println!("[ + ] Contract's admin is updated.");
 
 				Ok(())
 			},
