@@ -8,7 +8,7 @@ import { HighlightBox } from "@/components/Atoms/HighlightBox";
 import { setUiState, useUiSlice } from "@/store/ui/ui.slice";
 import { usePoolDetail } from "@/defi/hooks/pools/usePoolDetail";
 import useStore from "@/store/useStore";
-import { option } from "fp-ts";
+import { either, option } from "fp-ts";
 import { pipe } from "fp-ts/lib/function";
 import BigNumber from "bignumber.js";
 import { LiquidityInput } from "../../pool/AddLiquidity/LiquidityInput";
@@ -22,6 +22,29 @@ import { useSimulateAddLiquidity } from "@/components/Organisms/pool/AddLiquidit
 import { ConfirmSupplyModal } from "@/components/Organisms/liquidity/AddForm/ConfirmSupplyModal";
 import { YourPosition } from "@/components/Organisms/liquidity/YourPosition";
 import { ConfirmingSupplyModal } from "@/components/Organisms/liquidity/AddForm/ConfirmingSupplyModal";
+import { usePoolSpotPrice } from "@/defi/hooks/pools/usePoolSpotPrice";
+
+function amountWithRatio(
+  amount: BigNumber,
+  spotPrice: BigNumber,
+  isReverse: boolean
+) {
+  return pipe(
+    isReverse,
+    either.fromPredicate(
+      (v) => !v,
+      () => new BigNumber(1)
+    ),
+    either.fold(
+      (v) =>
+        v.div(
+          amount.multipliedBy(spotPrice.isZero() ? new BigNumber(1) : spotPrice)
+        ),
+      () =>
+        amount.multipliedBy(spotPrice.isZero() ? new BigNumber(1) : spotPrice)
+    )
+  );
+}
 
 export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   const theme = useTheme();
@@ -77,7 +100,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
       (ic) => ic
     )
   );
-
+  const { spotPrice } = usePoolSpotPrice(pool, pool?.config.assets);
   const assetOptions = getAssetOptions(inputConfig ?? []);
   const [leftConfig, rightConfig] = inputConfig ?? [];
   const leftId = (leftConfig?.asset.getPicassoAssetId() as string) || null;
@@ -145,10 +168,10 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         config={leftConfig}
         value={amountOne}
         onChange={(v) =>
-          setAmount((state) => ({
-            ...state,
+          setAmount({
             amountOne: v,
-          }))
+            amountTwo: amountWithRatio(v, spotPrice, false),
+          })
         }
         assetDropdownItems={assetOptions}
         label={"Token 1"}
@@ -161,10 +184,10 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         config={rightConfig}
         value={amountTwo}
         onChange={(v) =>
-          setAmount((state) => ({
-            ...state,
+          setAmount({
+            amountOne: amountWithRatio(v, spotPrice, true),
             amountTwo: v,
-          }))
+          })
         }
         assetDropdownItems={assetOptions}
         label={"Token 2"}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { Modal, ModalProps } from "@/components/Molecules";
 import { BaseAsset, Label } from "@/components/Atoms";
 import {
@@ -24,6 +24,7 @@ import { InputConfig } from "@/components/Organisms/liquidity/AddForm/types";
 import { useAddLiquidity } from "@/defi/hooks";
 import useStore from "@/store/useStore";
 import { getPriceAndRatio, getStats, GetStatsReturn } from "@/defi/utils";
+import { usePoolSpotPrice } from "@/defi/hooks/pools/usePoolSpotPrice";
 
 export interface SupplyModalProps {
   pool: PoolConfig;
@@ -34,7 +35,7 @@ export interface SupplyModalProps {
   amountTwo: BigNumber;
 }
 
-export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
+export const ConfirmSupplyModal: FC<SupplyModalProps & ModalProps> = ({
   pool,
   inputConfig,
   expectedLP,
@@ -48,6 +49,8 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const executor = useExecutor();
   const poolId = pool.poolId.toString();
+  const [assetOne, assetTwo] = inputConfig.map((input) => input.asset);
+  const { spotPrice } = usePoolSpotPrice(pool, [assetOne, assetTwo]);
 
   const onConfirmSupply = useAddLiquidity({
     selectedAccount,
@@ -72,10 +75,8 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
   }, [isPoolsLoaded, pool]);
 
   if (stats === null) return null;
-  const assetOne = pool.config.assets[0];
-  const assetTwo = pool.config.assets[1];
 
-  const { spotPriceOfATOB, spotPriceOfBToA, ratioA, ratioB } = getPriceAndRatio(
+  const { shareOfPool } = getPriceAndRatio(
     stats,
     assetOne,
     amountOne,
@@ -161,7 +162,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label={`Price`}
           BalanceProps={{
-            balance: `1 ${assetOne?.getSymbol()} = ${spotPriceOfBToA.toFormat(
+            balance: `1 ${assetOne?.getSymbol()} = ${spotPrice.toFormat(
               4
             )} ${assetTwo?.getSymbol()}`,
             BalanceTypographyProps: {
@@ -174,9 +175,9 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label=""
           BalanceProps={{
-            balance: `1 ${assetTwo?.getSymbol()} = ${spotPriceOfATOB.toFormat(
-              4
-            )} ${assetOne?.getSymbol()}`,
+            balance: `1 ${assetTwo?.getSymbol()} = ${new BigNumber(1)
+              .div(spotPrice)
+              .toFormat(4)} ${assetOne?.getSymbol()}`,
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -187,7 +188,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label={`Share of pool`}
           BalanceProps={{
-            balance: `${((ratioA + ratioB) / 2).toFixed()}%`,
+            balance: `${shareOfPool.toFixed()}%`,
             BalanceTypographyProps: {
               variant: "body1",
             },

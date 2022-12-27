@@ -32,7 +32,7 @@ export const usePoolRatio = (pool: PoolConfig) => {
   }, [pool]);
 
   return {
-    ratio: poolRatio,
+    lpRatio: poolRatio,
     poolVolume: poolVolume,
     poolTVL: poolTVL,
     userVolume: poolVolume.multipliedBy(new BigNumber(poolRatio)).div(100),

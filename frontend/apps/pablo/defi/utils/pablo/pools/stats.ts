@@ -134,16 +134,6 @@ export function getPriceAndRatio(
 ) {
   const assetOneId = assetOne.getPicassoAssetId()?.toString() ?? "0";
   const assetTwoId = assetTwo.getPicassoAssetId()?.toString() ?? "0";
-  const spotPriceOfATOB = stats[assetOneId].spotPrice.isZero()
-    ? amountOne.div(amountTwo).isNaN()
-      ? new BigNumber(0)
-      : amountOne.div(amountTwo)
-    : stats[assetTwoId].spotPrice;
-  const spotPriceOfBToA = stats[assetTwoId].spotPrice.isZero()
-    ? amountTwo.div(amountOne).isNaN()
-      ? new BigNumber(0)
-      : amountTwo.div(amountOne)
-    : stats[assetTwoId].spotPrice;
   const totalLiquidityA = stats[assetOneId].total.liquidity;
   const totalLiquidityB = stats[assetTwoId].total.liquidity;
   const ratioA = totalLiquidityA.isZero()
@@ -152,5 +142,5 @@ export function getPriceAndRatio(
   const ratioB = totalLiquidityB.isZero()
     ? 100
     : amountTwo.div(totalLiquidityB).multipliedBy(100).toNumber();
-  return { spotPriceOfATOB, spotPriceOfBToA, ratioA, ratioB };
+  return { shareOfPool: ratioB + ratioA };
 }

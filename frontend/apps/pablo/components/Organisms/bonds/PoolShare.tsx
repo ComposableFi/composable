@@ -13,6 +13,7 @@ import { PoolConfig } from "@/store/pools/types";
 import { Asset } from "shared";
 import { getPriceAndRatio, getStats, GetStatsReturn } from "@/defi/utils";
 import useStore from "@/store/useStore";
+import { usePoolSpotPrice } from "@/defi/hooks/pools/usePoolSpotPrice";
 
 const itemBoxPropsSX = (theme: Theme) =>
   ({
@@ -40,7 +41,7 @@ type ItemBoxProps = {
   label: string;
 };
 
-const ItemBox: React.FC<ItemBoxProps> = ({ value, label }) => {
+const ItemBox: FC<ItemBoxProps> = ({ value, label }) => {
   const theme = useTheme();
   return (
     <Box sx={itemBoxPropsSX(theme)}>
@@ -74,9 +75,11 @@ export const PoolShare: FC<PoolShareProps> = ({
 
   const [assetOne, assetTwo] = input;
   const [amountOne, amountTwo] = amounts;
+  const { spotPrice } = usePoolSpotPrice(pool, input);
+
   if (!stats) return <CircularProgress />;
 
-  const { spotPriceOfATOB, spotPriceOfBToA, ratioA, ratioB } = getPriceAndRatio(
+  const { shareOfPool } = getPriceAndRatio(
     stats,
     assetOne,
     amountOne,
@@ -94,17 +97,14 @@ export const PoolShare: FC<PoolShareProps> = ({
         flexDirection={{ sm: "column", md: "row" }}
       >
         <ItemBox
-          value={spotPriceOfATOB.toFixed(2)}
+          value={spotPrice.toFixed(4)}
           label={`${assetOne.getSymbol()} per ${assetTwo.getSymbol()}`}
         />
         <ItemBox
-          value={spotPriceOfBToA.toFixed(2)}
+          value={BigNumber(1).div(spotPrice).toFixed(4)}
           label={`${assetTwo.getSymbol()} per ${assetOne.getSymbol()}`}
         />
-        <ItemBox
-          value={`${((ratioA + ratioB) / 2).toFixed()}%`}
-          label="Share of pool"
-        />
+        <ItemBox value={`${shareOfPool.toFixed()}%`} label="Share of pool" />
       </Box>
     </Box>
   );

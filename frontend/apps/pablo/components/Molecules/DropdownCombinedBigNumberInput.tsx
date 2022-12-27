@@ -31,12 +31,14 @@ export const DropdownCombinedBigNumberInput: React.FC<
   }, [hasError, setValid]);
 
   React.useEffect(() => {
-    setter && setter(bignrValue);
+    if (!(value as BigNumber).eq(bignrValue)) {
+      setter && setter(bignrValue);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bignrValue]);
 
   React.useEffect(() => {
-    if (value !== bignrValue) {
+    if (!(value as BigNumber).eq(bignrValue)) {
       setValue(value as BigNumber);
       setStringValue((value as BigNumber).toFixed());
     }
