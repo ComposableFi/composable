@@ -8,9 +8,10 @@ import BigNumber from "bignumber.js";
 import { ApiPromise } from "@polkadot/api";
 import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { getAssetTree } from "@/components/Organisms/pool/AddLiquidity/utils";
+import { Asset } from "shared";
 
 export type AssetWithBalance = {
-  assetIdOnChain: string;
+  asset: Asset;
   balance: BigNumber;
 };
 

@@ -1,15 +1,12 @@
 export type { FormTitleProps } from "./FormTitle";
 export type { ValueSelectorProps } from "./ValueSelector";
-export type { AuctionStatusIndicatorProps } from "./auction/AuctionStatusIndicator";
 export type { TransactionSettingsProps } from "./TransactionSettings";
 
 export { NavBar } from "./NavBar";
 export { FormTitle } from "./FormTitle";
 export { ValueSelector } from "./ValueSelector";
-export { AllAuctionsTable } from "./AllAuctionsTable";
 export { AllBondTable } from "./AllBondTable";
 export { YourBondTable } from "./YourBondTable";
-export { AuctionStatusIndicator } from "./auction/AuctionStatusIndicator";
 export { TransactionSettings } from "./TransactionSettings";
 
 export { RemoveLiquidityForm } from "./liquidity/RemoveForm";
@@ -46,8 +43,8 @@ export { RenewModal } from "./staking/UnstakeForm/RenewModal";
 export type { UnstakeModalProps } from "./staking/UnstakeForm/UnstakeModal";
 export { UnstakeModal } from "./staking/UnstakeForm/UnstakeModal";
 
-export type { CheckableXPabloItemBoxProps } from "./staking/UnstakeForm/CheckableXPabloItemBox"
-export { CheckableXPabloItemBox } from "./staking/UnstakeForm/CheckableXPabloItemBox"
+export type { CheckableXPabloItemBoxProps } from "./staking/UnstakeForm/CheckableXPabloItemBox";
+export { CheckableXPabloItemBox } from "./staking/UnstakeForm/CheckableXPabloItemBox";
 
 export { ConnectWalletFeaturedBox } from "./ConnectWalletFeaturedBox";
 

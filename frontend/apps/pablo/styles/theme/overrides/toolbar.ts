@@ -7,6 +7,9 @@ export const toolbarOverrides = (
   styleOverrides: {
     root: {
       padding: theme.spacing(1, 6),
+      "& .MuiButtonBase-root,  & .MuiFormControl-root": {
+        backdropFilter: "blur(8px)",
+      },
     },
   },
 });

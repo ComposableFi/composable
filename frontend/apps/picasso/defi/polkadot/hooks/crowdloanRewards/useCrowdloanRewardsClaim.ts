@@ -23,28 +23,26 @@ export function useCrowdloanRewardsClaim({
 
   const onClaimReady = useCallback(
     (transactionHash: string) => {
-      if (selectedPicassoAddress)
-        enqueueSnackbar("Claim processing...", {
-          variant: "info",
-          isClosable: true,
-          url: subscanExtrinsicLink("picasso", selectedPicassoAddress),
-        });
+      enqueueSnackbar("Claim processing...", {
+        variant: "info",
+        isClosable: true,
+        url: subscanExtrinsicLink("picasso", transactionHash),
+      });
     },
-    [enqueueSnackbar, selectedPicassoAddress]
+    [enqueueSnackbar]
   );
 
   const onClaimFinalized = useCallback(
     (transactionHash: string) => {
-      if (selectedPicassoAddress)
-        enqueueSnackbar("Your claim was successful!", {
-          variant: "success",
-          isClosable: true,
-          url: subscanExtrinsicLink("picasso", selectedPicassoAddress),
-        });
+      enqueueSnackbar("Your claim was successful!", {
+        variant: "success",
+        isClosable: true,
+        url: subscanExtrinsicLink("picasso", transactionHash),
+      });
 
       setCrowdloanRewardsState({ claimableAmount: new BigNumber(0) });
     },
-    [enqueueSnackbar, selectedPicassoAddress]
+    [enqueueSnackbar]
   );
 
   const onClaimFail = useCallback(

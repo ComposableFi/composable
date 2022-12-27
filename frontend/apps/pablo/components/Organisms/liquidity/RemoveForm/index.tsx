@@ -135,7 +135,9 @@ export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
   };
 
   useEffect(() => {
-    confirmed && setUiState({ isConfirmingModalOpen: false });
+    if (confirmed) {
+      setUiState({ isConfirmingModalOpen: false });
+    }
   }, [confirmed]);
 
   return (

@@ -12,7 +12,7 @@ import BigNumber from "bignumber.js";
 import { FC, useEffect, useState } from "react";
 import { PoolConfig } from "@/store/pools/types";
 import useStore from "@/store/useStore";
-import { getStats, GetStatsReturn } from "@/defi/utils";
+import { getPriceAndRatio, getStats, GetStatsReturn } from "@/defi/utils";
 
 type YourPositionProps = {
   pool: PoolConfig;
@@ -43,21 +43,17 @@ export const YourPosition: FC<YourPositionProps> = ({
     }
   }, [isPoolsLoaded, pool]);
 
-  const [assetLeft, assetRight] = assets;
-  const [amountLeft, amountRight] = amounts;
+  const [assetOne, assetTwo] = assets;
+  const [amountOne, amountTwo] = amounts;
   if (!stats) return <CircularProgress />;
-  const totalLiquidityA =
-    stats[assetLeft.getPicassoAssetId()?.toString() || "0"].total.liquidity;
-  const totalLiquidityB =
-    stats[assetRight.getPicassoAssetId()?.toString() || "0"].total.liquidity;
-  const ratioA = totalLiquidityA.isZero()
-    ? 100
-    : amountLeft.div(totalLiquidityA).multipliedBy(100).toNumber();
-  const ratioB = totalLiquidityB.isZero()
-    ? 100
-    : amountRight.div(totalLiquidityB).multipliedBy(100).toNumber();
 
-  if (!stats) return null;
+  const { shareOfPool } = getPriceAndRatio(
+    stats,
+    assetOne,
+    amountOne,
+    amountTwo,
+    assetTwo
+  );
 
   return (
     <Box
@@ -94,7 +90,7 @@ export const YourPosition: FC<YourPositionProps> = ({
         label="Share of pool"
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
-          balance: `${((ratioA + ratioB) / 2).toFixed()}%`,
+          balance: `${shareOfPool.toFixed()}%`,
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",
@@ -107,7 +103,7 @@ export const YourPosition: FC<YourPositionProps> = ({
         label={`Pooled ${assets[0].getSymbol()}`}
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
-          balance: amountLeft.toString(),
+          balance: amountOne.toString(),
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",
@@ -120,7 +116,7 @@ export const YourPosition: FC<YourPositionProps> = ({
         label={`Pooled ${assets[1].getSymbol()}`}
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
-          balance: amountRight.toString(),
+          balance: amountTwo.toString(),
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",
