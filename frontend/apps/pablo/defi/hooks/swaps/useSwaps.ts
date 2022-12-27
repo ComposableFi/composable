@@ -309,40 +309,20 @@ export function useSwaps({
   useEffect(() => {
     if (parachainApi && selectedPool) {
       if (previousSlippage != slippage) {
-        if (minimumReceived.gt(0)) {
-          if (selectedPool) {
-            //
-            // const  = calculateOutGivenIn(
-            //   baseAmount,
-            //   quoteAmount,
-            //   assetOneAmount,
-            //   new BigNumber(5),
-            //   new BigNumber(5)
-            // );
-            //
-            // const slippageAmount = assetOneAmount
-            //   .minus(feeCharged)
-            //   .multipliedBy(slippage);
-            // const minReceive = assetOneAmount.minus(slippageAmount);
-            //
-            // setMinimumReceived(minReceive);
-          }
+        if (minimumReceived.value.gt(0)) {
+          onChangeTokenAmount(assetOneAmount);
         }
       }
     }
     return;
   }, [
-    spotPrice,
-    selectedPool,
-    balance1,
-    previousSlippage,
-    minimumReceived,
-    feeCharged,
-    slippageAmount,
-    slippage,
-    parachainApi,
     assetOneAmount,
-    assetTwoAmount,
+    minimumReceived.value,
+    onChangeTokenAmount,
+    parachainApi,
+    previousSlippage,
+    selectedPool,
+    slippage,
   ]);
 
   const flipAssets = () => {

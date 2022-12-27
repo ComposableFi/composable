@@ -47,6 +47,7 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
     setAssetOneInputValid,
     setAssetTwoInputValid,
     assetOneInputValid,
+    assetTwoInputValid,
     percentageToSwap,
     priceImpact,
     inputMode,
@@ -105,7 +106,11 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
             assetOneInputValid ? `${percentageToSwap}%` : undefined
           }
           ReferenceTextProps={{
-            onClick: () => {},
+            onClick: () => {
+              onChangeTokenAmount(
+                balance1.multipliedBy(percentageToSwap / 100)
+              );
+            },
             sx: {
               cursor: "pointer",
               "&:hover": {
@@ -115,9 +120,7 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
           }}
           ButtonProps={{
             onClick: () => {
-              const balanceLimit = balance1.multipliedBy(
-                percentageToSwap / 100
-              );
+              const balanceLimit = balance1.multipliedBy(percentageToSwap);
               onChangeTokenAmount(balanceLimit);
             },
           }}
@@ -174,8 +177,27 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
             setInputMode(2);
           }}
           setValue={inputMode === 2 ? onChangeTokenAmount : undefined}
+          referenceText={
+            assetTwoInputValid ? `${percentageToSwap}%` : undefined
+          }
+          ReferenceTextProps={{
+            onClick: () => {
+              onChangeTokenAmount(
+                balance2.multipliedBy(percentageToSwap / 100)
+              );
+            },
+            sx: {
+              cursor: "pointer",
+              "&:hover": {
+                color: theme.palette.primary.main,
+              },
+            },
+          }}
+          buttonLabel={assetTwoInputValid ? "Max" : undefined}
           ButtonProps={{
-            onClick: () => {},
+            onClick: () => {
+              onChangeTokenAmount(balance2);
+            },
           }}
           CombinedSelectProps={{
             value: selectedAssetTwoId,
