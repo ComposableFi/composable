@@ -17,11 +17,12 @@ import {
   transactionStatusSnackbarMessage,
 } from "../addLiquidity/useAddLiquidity";
 import { PoolConfig } from "@/store/pools/types";
+import { Asset } from "shared";
 
 type PabloSwapProps = {
   pool: PoolConfig | undefined;
-  baseAssetId: string;
-  quoteAssetId: string;
+  baseAsset: Asset | undefined;
+  quoteAsset: Asset | undefined;
   minimumReceived: BigNumber;
   quoteAmount: BigNumber;
   swapOrigin?: "Auction" | "Swap";
@@ -29,8 +30,8 @@ type PabloSwapProps = {
 
 export function usePabloSwap({
   pool,
-  quoteAssetId,
-  baseAssetId,
+  quoteAsset,
+  baseAsset,
   quoteAmount,
   minimumReceived,
   swapOrigin = "Swap",
@@ -40,6 +41,9 @@ export function usePabloSwap({
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const signer = useSigner();
   const executor = useExecutor();
+
+  const quoteAssetId = quoteAsset?.getPicassoAssetId()?.toString();
+  const baseAssetId = quoteAsset?.getPicassoAssetId()?.toString();
 
   const onTxReady = useCallback(
     (transactionHash: string) => {
@@ -80,33 +84,38 @@ export function usePabloSwap({
   );
 
   const validAssetPair = useMemo(() => {
+    if (!baseAssetId || !quoteAssetId) return false;
     return isValidAssetPair(baseAssetId, quoteAssetId);
   }, [baseAssetId, quoteAssetId]);
-
-  const pair = useMemo(() => {
+  useMemo(() => {
     return {
       base: baseAssetId,
       quote: quoteAssetId,
     };
   }, [baseAssetId, quoteAssetId]);
-
   const amount = useMemo(() => {
     if (!parachainApi) return null;
     return parachainApi.createType(
       "u128",
-      toChainUnits(quoteAmount).toString()
+      toChainUnits(
+        quoteAmount,
+        quoteAsset?.getDecimals(DEFAULT_NETWORK_ID)
+      ).toString()
     );
-  }, [parachainApi, quoteAmount]);
+  }, [parachainApi, quoteAmount, quoteAsset]);
 
   const minimumReceive = useMemo(() => {
     if (!parachainApi) return null;
     return parachainApi.createType(
       "u128",
-      toChainUnits(minimumReceived).toString()
+      toChainUnits(
+        minimumReceived,
+        baseAsset?.getDecimals(DEFAULT_NETWORK_ID)
+      ).toString()
     );
-  }, [parachainApi, minimumReceived]);
+  }, [parachainApi, minimumReceived, baseAsset]);
 
-  const useSwapTx = useCallback(async (): Promise<void> => {
+  return useCallback(async (): Promise<void> => {
     try {
       if (
         !parachainApi ||
@@ -121,17 +130,24 @@ export function usePabloSwap({
         throw new Error("Missing dependencies.");
       }
 
-      const toChainQuoteAmount = toChainUnits(quoteAmount).toString();
-      const toChainMinReceive = toChainUnits(minimumReceived).toString();
+      const toChainQuoteAmount = toChainUnits(
+        quoteAmount,
+        quoteAsset?.getDecimals(DEFAULT_NETWORK_ID)
+      ).toString();
+      const toChainMinReceive = toChainUnits(
+        minimumReceived,
+        baseAsset?.getDecimals(DEFAULT_NETWORK_ID)
+      ).toString();
+
       await executor.execute(
         parachainApi.tx.pablo.swap(
           pool.poolId.toString(),
           {
-            assetId: quoteAssetId,
+            assetId: quoteAsset?.getPicassoAssetId()?.toString(),
             amount: toChainQuoteAmount,
           },
           {
-            assetId: baseAssetId,
+            assetId: quoteAsset?.getPicassoAssetId()?.toString(),
             amount: toChainMinReceive,
           },
           true
@@ -155,10 +171,12 @@ export function usePabloSwap({
     amount,
     minimumReceive,
     pool,
+    quoteAmount,
+    quoteAsset,
+    minimumReceived,
+    baseAsset,
     onTxReady,
     onTxFinalized,
     onTxError,
   ]);
-
-  return useSwapTx;
 }

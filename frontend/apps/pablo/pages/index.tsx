@@ -28,7 +28,7 @@ const Home: NextPage = () => {
                 <ConnectWalletFeaturedBox
                   mt={8}
                   title="Connect wallet"
-                  textBelow="To see your portfolio, wallet needs to be connected."
+                  textBelow="To see your portfolio, connect your wallet."
                   ButtonProps={{ label: "Connect Wallet", size: "small" }}
                 />
               </Grid>

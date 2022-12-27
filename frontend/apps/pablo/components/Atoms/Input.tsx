@@ -1,19 +1,17 @@
 import React, { ReactElement } from "react";
 import {
+  Box,
   Button,
   ButtonProps as MuiButtonProps,
+  IconButton,
   InputAdornment,
   TextField,
   TextFieldProps,
   Typography,
   useTheme,
-  Box,
-  IconButton,
 } from "@mui/material";
-import { BaseAsset } from "./BaseAsset";
 import { Label, LabelProps } from "./Label";
 import ClearIcon from "@mui/icons-material/Clear";
-import { Asset } from "../types";
 import { PairAsset, PairAssetProps } from "./PairAsset";
 
 export type InputProps = {
@@ -69,7 +67,6 @@ export const Input: React.FC<InputProps> = ({
         onFocus={handleOnFocus}
         onBlur={handleOnBlur}
         InputProps={{
-          ...InputProps,
           startAdornment: StartAdornmentAssetProps && (
             <InputAdornment position="start">
               <PairAsset {...StartAdornmentAssetProps} />
@@ -127,6 +124,7 @@ export const Input: React.FC<InputProps> = ({
               {customEndAdornment && customEndAdornment}
             </InputAdornment>
           ),
+          ...InputProps,
         }}
         sx={{
           "& .MuiOutlinedInput-root": {
