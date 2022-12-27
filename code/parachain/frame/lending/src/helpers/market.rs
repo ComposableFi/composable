@@ -15,6 +15,7 @@ use sp_runtime::{
 	traits::{One, Saturating, Zero},
 	DispatchError, FixedU128, Perquintill,
 };
+use sp_std::{vec, vec::Vec};
 
 impl<T: Config> Pallet<T> {
 	pub(crate) fn do_create_market(
@@ -135,7 +136,10 @@ impl<T: Config> Pallet<T> {
 				ensure!(manager == market.manager, Error::<T>::Unauthorized);
 				for (index, is_paused) in changed_functionalities {
 					if (index as usize) < market.is_paused_functionalities.len() {
-						market.is_paused_functionalities[index as usize] = is_paused;
+						if let Some(elem) = market.is_paused_functionalities.get_mut(index as usize)
+						{
+							*elem = is_paused
+						};
 					}
 				}
 				Ok(())
@@ -164,11 +168,9 @@ impl<T: Config> Pallet<T> {
 	) -> Result<bool, DispatchError> {
 		let (_, market) = Self::get_market(market_id)?;
 		let index = Self::get_functionality_index(functionality);
-		let functionalities_length = market.is_paused_functionalities.len();
-		if index >= functionalities_length {
-			Err(Error::<T>::FunctionalityNotAddedToMarket.into())
-		} else {
-			Ok(!market.is_paused_functionalities[index])
+		match market.is_paused_functionalities.get(index) {
+			Some(val) => Ok(!val),
+			None => Err(Error::<T>::FunctionalityNotAddedToMarket.into()),
 		}
 	}
 

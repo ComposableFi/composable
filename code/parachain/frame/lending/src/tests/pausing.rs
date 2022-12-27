@@ -358,7 +358,7 @@ fn test_pausing_repay_borrow() {
 		let alice_total_debt_with_interest_before_repay_pause =
 			Lending::total_debt_with_interest(&market_id, &ALICE).unwrap().unwrap_amount();
 
-		// interest accured
+		// interest accrued
 		assert!(
 			alice_total_debt_with_interest_initial <
 				alice_total_debt_with_interest_before_repay_pause
@@ -397,7 +397,7 @@ fn test_pausing_repay_borrow() {
 			crate::Error::<Runtime>::RepayBorrowPaused
 		);
 
-		// no new interest should accure due to repay pause
+		// no new interest should accrued due to repay pause
 		process_and_progress_blocks::<Lending, Runtime>(1_000);
 
 		// new debt plus interest
@@ -564,11 +564,11 @@ fn test_pausing_liquidation() {
 fn get_bool_vec(num: i32, desired_len: usize) -> (Vec<(u8, bool)>, Vec<bool>) {
 	let mut single_position = 1;
 	let mut index = 0;
-	let mut changed_functionalitie = Vec::new();
+	let mut changed_functionalities = Vec::new();
 	let mut result_functionalities = Vec::new();
 	while single_position <= num {
 		if single_position & num != 0 {
-			changed_functionalitie.push((index, true));
+			changed_functionalities.push((index, true));
 			result_functionalities.push(true);
 		} else {
 			result_functionalities.push(false);
@@ -579,7 +579,7 @@ fn get_bool_vec(num: i32, desired_len: usize) -> (Vec<(u8, bool)>, Vec<bool>) {
 	while desired_len > result_functionalities.len() {
 		result_functionalities.push(false);
 	}
-	(changed_functionalitie, result_functionalities)
+	(changed_functionalities, result_functionalities)
 }
 
 #[test]

@@ -54,6 +54,28 @@ fn lending_benchmarking_setup<T: Config + pallet_oracle::Config>() -> LendingBen
 	LendingBenchmarkingSetup { caller, origin, bank, pair, input }
 }
 
+/// Returns all combinations of vec with length desired_len where items are booleans
+fn get_bool_vec(num: i32, desired_len: usize) -> (Vec<(u8, bool)>, Vec<bool>) {
+	let mut single_position = 1;
+	let mut index = 0;
+	let mut changed_functionalities = Vec::new();
+	let mut result_functionalities = Vec::new();
+	while single_position <= num {
+		if single_position & num != 0 {
+			changed_functionalities.push((index, true));
+			result_functionalities.push(true);
+		} else {
+			result_functionalities.push(false);
+		}
+		single_position = single_position << 1;
+		index += 1;
+	}
+	while desired_len > result_functionalities.len() {
+		result_functionalities.push(false);
+	}
+	(changed_functionalities, result_functionalities)
+}
+
 pub struct LendingBenchmarkingSetup<T: Config> {
 	caller: <T as frame_system::Config>::AccountId,
 	origin: RawOrigin<<T as frame_system::Config>::AccountId>,
@@ -91,6 +113,94 @@ benchmarks! {
 			input,
 		} = lending_benchmarking_setup::<T>();
 	}: _(origin, input, false)
+
+	vault_deposit {
+		let LendingBenchmarkingSetup {
+			caller,
+			origin,
+			bank,
+			pair,
+			input,
+		} = lending_benchmarking_setup::<T>();
+
+		let amount: BalanceOf<T> = 1_000_000_u64.into();
+
+		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
+	}: _(origin, market_id, amount)
+	verify {
+		assert_last_event::<T>(Event::AssetDeposited {
+			sender: caller,
+			market_id: market_id,
+			amount,
+		}.into())
+	}
+
+	vault_withdraw {
+		let LendingBenchmarkingSetup {
+			caller,
+			origin,
+			bank,
+			pair,
+			input,
+		} = lending_benchmarking_setup::<T>();
+
+		let amount: BalanceOf<T> = 1_000_000_u64.into();
+
+		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
+		Lending::<T>::vault_deposit(origin.clone().into(), market_id, amount).unwrap();
+	}: _(origin, market_id, amount)
+	verify {
+		assert_last_event::<T>(Event::AssetWithdrawn {
+			sender: caller,
+			market_id: market_id,
+			amount,
+		}.into())
+	}
+
+	update_market_functionality {
+		// 2 power 7 is 128
+		let t in 0..128;
+		let LendingBenchmarkingSetup {
+			caller,
+			origin,
+			bank,
+			pair,
+			input,
+		} = lending_benchmarking_setup::<T>();
+		let  (changed_functionalities, _result_functionalities) = get_bool_vec(t.try_into().unwrap(), 7);
+
+		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
+	}: _(origin, market_id, changed_functionalities.clone())
+	verify {
+		assert_last_event::<T>(Event::FunctionalityChanged {
+			market_id,
+			changed_functionalities,
+		}.into())
+	}
+
+	update_global_market_functionality {
+		// 2 power 7 is 128
+		let t in 0..128;
+		let m in 0..10;
+		let LendingBenchmarkingSetup {
+			caller,
+			origin,
+			bank,
+			pair,
+			input,
+		} = lending_benchmarking_setup::<T>();
+
+		let  (changed_functionalities, _result_functionalities) = get_bool_vec(t.try_into().unwrap(), 7);
+		for i in 0..m {
+			create_market_from_raw_origin::<T>(origin.clone(), input.clone());
+		}
+
+	}: _(origin, changed_functionalities.clone())
+	verify {
+		assert_last_event::<T>(Event::GlobalFunctionalityChanged {
+			changed_functionalities,
+		}.into())
+	}
 
 	deposit_collateral {
 		let LendingBenchmarkingSetup {

@@ -35,21 +35,21 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(11 as Weight))
 	}
-	// TODO
+	// TODO yet to get generated weights
 	fn update_market_functionality() -> Weight {
 		(96_881_000 as Weight)
 	}
-	// TODO
+	// TODO yet to get generated weights
 	fn update_global_market_functionality() -> Weight {
 		(96_881_000 as Weight)
 	}
-	// same as vaults deposit plus 1 more read
+	// TODO yet to get generated weights
 	fn vault_deposit() -> Weight {
 		(140_947_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(10 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
-	// same as vaults withdraw plus 1 more read
+	// TODO yet to get generated weights
 	fn vault_withdraw() -> Weight {
 		(112_296_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(9 as Weight))

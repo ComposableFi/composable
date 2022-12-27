@@ -637,7 +637,7 @@ pub mod pallet {
 		fn get_market_state(
 			market_id: &Self::MarketId,
 		) -> Result<(&Self::MarketId, Self::MarketConfig), DispatchError> {
-			Self::get_market(&market_id)
+			Self::get_market(market_id)
 		}
 
 		fn account_id(market_id: &Self::MarketId) -> Self::AccountId {
