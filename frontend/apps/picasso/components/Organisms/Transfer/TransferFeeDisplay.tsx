@@ -10,7 +10,7 @@ import { subscribeTransactionFee } from "@/stores/defi/polkadot/transfers/subscr
 import { useStore } from "@/stores/root";
 import { Stack, Typography } from "@mui/material";
 import { useEffect } from "react";
-import { humanBalance } from "shared";
+import { fromChainIdUnit, humanBalance } from "shared";
 import {
   DESTINATION_FEE_MULTIPLIER,
   FEE_MULTIPLIER,
@@ -65,7 +65,12 @@ export const TransferFeeDisplay = () => {
           <TextExpander
             short={
               <Typography variant="body2">
-                {humanBalance(fee.partialFee.multipliedBy(FEE_MULTIPLIER))}{" "}
+                {humanBalance(
+                  fromChainIdUnit(
+                    fee.partialFee.multipliedBy(FEE_MULTIPLIER),
+                    tokens[feeToken].decimals[from] ?? 12
+                  )
+                )}{" "}
                 {tokens[feeToken].symbol}
               </Typography>
             }
