@@ -3,9 +3,10 @@ import { PicassoOverviewStatsResolver } from "./picassoOverviewStats";
 import { PabloOverviewStatsResolver } from "./pabloOverviewStats";
 import { AssetsResolver } from "./assets";
 import { TotalValueLockedResolver } from "./totalValueLocked";
-import { TotalVolume } from "./totalVolume";
+import { TotalVolumeResolver } from "./totalVolume";
 import { StakingRewardsStatsResolver } from "./stakingRewards";
-import { PabloSpotPrice } from "./pabloSpotPrice";
+import { PabloSpotPriceResolver } from "./pabloSpotPrice";
+import { PabloDailyResolver } from "./pabloDaily";
 
 export {
   ActiveUsersResolver,
@@ -13,7 +14,8 @@ export {
   PabloOverviewStatsResolver,
   AssetsResolver,
   TotalValueLockedResolver,
-  TotalVolume,
+  TotalVolumeResolver,
   StakingRewardsStatsResolver,
-  PabloSpotPrice,
+  PabloSpotPriceResolver,
+  PabloDailyResolver,
 };
