@@ -1,8 +1,9 @@
 import * as React from "react";
-import Document, { Html, Head, Main, NextScript } from "next/document";
+import Document, { Head, Html, Main, NextScript } from "next/document";
 import createEmotionServer from "@emotion/server/create-instance";
 import createEmotionCache from "@/styles/createEmotionCache";
 import { createTheme } from "@/styles/theme";
+import config from "@/constants/config";
 
 export default class MyDocument extends Document {
   render() {
@@ -11,121 +12,101 @@ export default class MyDocument extends Document {
       <Html lang="en">
         <Head>
           {/* PWA Related */}
-          <meta name="application-name" content="PWA App" />
+          <meta name="application-name" content={config.applicationName} />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta
             name="apple-mobile-web-app-status-bar-style"
             content="default"
           />
-          <meta name="apple-mobile-web-app-title" content="PWA App" />
-          <meta name="description" content="Best PWA App in the world" />
+          <meta
+            name="apple-mobile-web-app-title"
+            content={config.applicationName}
+          />
+          <meta name="description" content={config.appDescription} />
           <meta name="format-detection" content="telephone=no" />
           <meta name="mobile-web-app-capable" content="yes" />
           <meta
             name="msapplication-config"
             content="/icons/browserconfig.xml"
           />
-          <meta name="msapplication-TileColor" content="#2B5797" />
+          <meta
+            name="msapplication-TileColor"
+            content={theme.palette.primary.main}
+          />
           <meta name="msapplication-tap-highlight" content="no" />
 
-          <link rel="apple-touch-icon" href="/icons/touch-icon-iphone.png" />
-          <link
-            rel="apple-touch-icon"
-            sizes="152x152"
-            href="/icons/touch-icon-ipad.png"
-          />
           <link
             rel="apple-touch-icon"
             sizes="180x180"
-            href="/icons/touch-icon-iphone-retina.png"
+            href="/pwa/apple-touch-icon.png"
           />
-          <link
-            rel="apple-touch-icon"
-            sizes="167x167"
-            href="/icons/touch-icon-ipad-retina.png"
-          />
-
           <link
             rel="icon"
             type="image/png"
             sizes="32x32"
-            href="/icons/favicon-32x32.png"
+            href="/pwa/favicon-32x32.png"
           />
           <link
             rel="icon"
             type="image/png"
             sizes="16x16"
-            href="/icons/favicon-16x16.png"
+            href="/pwa/favicon-16x16.png"
           />
-          <link rel="manifest" href="/frontend/apps/pablo/public/manifest.json" />
-          <link
-            rel="mask-icon"
-            href="/icons/safari-pinned-tab.svg"
-            color="#5bbad5"
-          />
-          <link rel="shortcut icon" href="/frontend/apps/pablo/public/favicon.ico" />
+          <link rel="manifest" href="/manifest.json" />
+          <link rel="shortcut icon" href="/favicon.ico" />
           <meta name="twitter:card" content="summary" />
-          <meta name="twitter:url" content="https://yourdomain.com" />
-          <meta name="twitter:title" content="PWA App" />
-          <meta
-            name="twitter:description"
-            content="Best PWA App in the world"
-          />
-          <meta
-            name="twitter:image"
-            content="https://yourdomain.com/icons/android-chrome-192x192.png"
-          />
-          <meta name="twitter:creator" content="@DavidWShadow" />
+          <meta name="twitter:url" content={config.appUrl} />
+          <meta name="twitter:title" content={config.applicationName} />
+          <meta name="twitter:description" content={config.appDescription} />
+          <meta name="twitter:image" content="/pwa/192x192.png" />
+          <meta name="twitter:creator" content={config.twitterHandle} />
           <meta property="og:type" content="website" />
-          <meta property="og:title" content="PWA App" />
-          <meta property="og:description" content="Best PWA App in the world" />
-          <meta property="og:site_name" content="PWA App" />
-          <meta property="og:url" content="https://yourdomain.com" />
-          <meta
-            property="og:image"
-            content="https://yourdomain.com/icons/apple-touch-icon.png"
-          />
+          <meta property="og:title" content={config.applicationName} />
+          <meta property="og:description" content={config.appDescription} />
+          <meta property="og:site_name" content={config.applicationName} />
+          <meta property="og:url" content={config.appUrl} />
+          <meta property="og:image" content="/pwa/192x192.png" />
 
           {/* Apple Splash screen */}
           <link
             rel="apple-touch-startup-image"
-            href="/images/apple_splash_2048.png"
+            href="/pwa/2048x2732.png"
             sizes="2048x2732"
           />
           <link
             rel="apple-touch-startup-image"
-            href="/images/apple_splash_1668.png"
+            href="/pwa/1668x2048.png"
             sizes="1668x2224"
           />
           <link
             rel="apple-touch-startup-image"
-            href="/images/apple_splash_1536.png"
+            href="/pwa/1536x2048.png"
             sizes="1536x2048"
           />
           <link
             rel="apple-touch-startup-image"
-            href="/images/apple_splash_1125.png"
+            href="/pwa/1125x2436.png"
             sizes="1125x2436"
           />
           <link
             rel="apple-touch-startup-image"
-            href="/images/apple_splash_1242.png"
+            href="/pwa/1242x2208.png"
             sizes="1242x2208"
           />
           <link
             rel="apple-touch-startup-image"
-            href="/images/apple_splash_750.png"
+            href="/pwa/750x1334.png"
             sizes="750x1334"
           />
           <link
             rel="apple-touch-startup-image"
-            href="/images/apple_splash_640.png"
+            href="/pwa/640x1136.png"
             sizes="640x1136"
           />
 
           {/* PWA primary color */}
           <meta name="theme-color" content={theme.palette.primary.main} />
-          <link rel="shortcut icon" href="/static/favicon.ico" />
+          <link rel="shortcut icon" href="/pwa/favicon.ico" />
           <link
             rel="stylesheet"
             href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"

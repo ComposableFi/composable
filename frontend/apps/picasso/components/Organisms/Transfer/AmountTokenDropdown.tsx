@@ -7,7 +7,7 @@ import {
   subscribeDefaultTransferToken,
   subscribeTokenOptions,
 } from "@/stores/defi/polkadot/transfers/subscribers";
-import React, { FC, useEffect, useMemo } from "react";
+import React, { FC, useEffect, useMemo, useRef } from "react";
 import { useValidation } from "@/components/Molecules/BigNumberInput/hooks";
 import { Typography } from "@mui/material";
 import { calculateTransferAmount } from "@/defi/polkadot/pallets/Transfer";
@@ -48,6 +48,7 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
     (state) => state.transfers.setFormError,
     () => true
   );
+  const isDirty = useRef(false);
 
   const maxAmountToTransfer = useMemo(() => {
     const amount = callbackGate(
@@ -113,6 +114,7 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
   useEffect(() => {
     if (!bignrValue.eq(amount)) {
       updateAmount(bignrValue);
+      isDirty.current = true;
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -166,11 +168,11 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
           disabled,
         }}
       />
-      {hasError && (
+      {hasError && isDirty.current ? (
         <Typography variant="caption" color="error.main">
           Please input a valid number
         </Typography>
-      )}
+      ) : null}
     </>
   );
 };

@@ -7,7 +7,6 @@ export const appBarOverrides = (
   styleOverrides: {
     root: {
       background: `transparent`,
-      backdropFilter: "blur(8px)",
     },
   },
 });

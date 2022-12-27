@@ -14,6 +14,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { SNACKBAR_TIMEOUT_DURATION } from "@/constants";
 
 const progress = keyframes([
   {
@@ -30,7 +31,7 @@ type NotificationOverrideProps = CustomContentProps & {
   description?: string;
   url?: string;
   isClosable?: boolean;
-  timeout: number;
+  timeout?: number;
 };
 
 const ThemeResponsiveSnackbarComp = forwardRef<
@@ -38,7 +39,15 @@ const ThemeResponsiveSnackbarComp = forwardRef<
   NotificationOverrideProps
 >(
   (
-    { variant, timeout, id, isClosable, message, description, url },
+    {
+      variant,
+      timeout = SNACKBAR_TIMEOUT_DURATION,
+      id,
+      isClosable,
+      message,
+      description,
+      url,
+    },
     forwardedRef
   ) => {
     const { closeSnackbar } = useSnackbar();

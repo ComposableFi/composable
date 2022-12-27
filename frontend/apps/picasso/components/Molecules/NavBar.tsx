@@ -68,13 +68,6 @@ const RoutesConfig: ConfigType[] = [
     matches: ["/staking"],
   },
   {
-    label: "Bond",
-    path: "/bonds",
-    icon: dynamic(() => import("@mui/icons-material/PaymentsRounded")),
-    status: "active",
-    matches: ["/bonds"],
-  },
-  {
     label: "Governance",
     path: config.governanceUrl,
     icon: dynamic(() => import("@mui/icons-material/HowToVoteRounded")),

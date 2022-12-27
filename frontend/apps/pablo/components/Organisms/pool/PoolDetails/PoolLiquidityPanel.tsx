@@ -53,7 +53,7 @@ export const PoolLiquidityPanel: FC<PoolDetailsProps> = ({
   const lpTokens = useStore((store) => store.ownedLiquidity.tokens);
   const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
   const totalIssued = useStore((store) => store.pools.totalIssued);
-  const { userTVL, ratio } = usePoolRatio(pool);
+  const { userTVL, lpRatio } = usePoolRatio(pool);
   const poolId = pool.poolId.toString();
 
   const handleAddLiquidity = () => {
@@ -76,13 +76,13 @@ export const PoolLiquidityPanel: FC<PoolDetailsProps> = ({
   const amountIn = new BigNumber(
     amount ? amount[assetIn.getPicassoAssetId() as string] : "0"
   )
-    .multipliedBy(ratio)
+    .multipliedBy(lpRatio)
     .div(100)
     .toFormat(4);
   const amountOut = new BigNumber(
     amount ? amount[assetOut.getPicassoAssetId() as string] : "0"
   )
-    .multipliedBy(ratio)
+    .multipliedBy(lpRatio)
     .div(100)
     .toFormat(4);
 
