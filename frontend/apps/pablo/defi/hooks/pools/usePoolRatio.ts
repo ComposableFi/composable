@@ -1,13 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GetStatsReturn } from "../../utils/pablo/pools/stats";
-import {
-  getPoolTVL,
-  getPoolVolume,
-  getStats,
-} from "../../utils/pablo/pools/stats";
+import { getPoolVolume, getStats } from "../../utils/pablo/pools/stats";
 import useStore from "@/store/useStore";
 import { PoolConfig } from "@/store/pools/types";
 import BigNumber from "bignumber.js";
+import { getOraclePrice } from "@/store/oracle/slice";
 
 export const usePoolRatio = (pool: PoolConfig) => {
   const userOwnedLiquidity = useStore((store) => store.ownedLiquidity.tokens);
@@ -15,10 +12,41 @@ export const usePoolRatio = (pool: PoolConfig) => {
     free: new BigNumber(0),
     locked: new BigNumber(0),
   };
+  const poolAmount = useStore((store) => store.pools.poolAmount);
+  const isTokensLoaded = useStore(
+    (store) => store.substrateTokens.hasFetchedTokens
+  );
+  const poolTVL = useMemo(() => {
+    if (!poolAmount || !isTokensLoaded) {
+      return new BigNumber(0);
+    }
+    const [assetOne, assetTwo] = pool.config.assets;
+    const priceOne = getOraclePrice(assetOne.getSymbol(), "coingecko", "usd");
+    const priceTwo = getOraclePrice(assetTwo.getSymbol(), "coingecko", "usd");
+    const amountOne =
+      poolAmount[pool.poolId.toString()]?.[
+        assetOne.getPicassoAssetId()?.toString() ?? ""
+      ];
+    const amountTwo =
+      poolAmount[pool.poolId.toString()]?.[
+        assetTwo.getPicassoAssetId()?.toString() ?? ""
+      ];
+
+    if (amountOne?.length === 0 || amountTwo?.length === 0) {
+      return new BigNumber(0);
+    }
+    if (priceOne.isZero()) {
+      return new BigNumber(amountTwo).multipliedBy(priceTwo.multipliedBy(2));
+    }
+
+    return new BigNumber(amountOne).multipliedBy(priceOne.multipliedBy(2));
+  }, [pool.config.assets, pool.poolId, poolAmount, isTokensLoaded]);
+
+  console.log("PoolTVL: ", pool?.poolId.toString(), poolTVL.toString());
+
   const [stats, setStats] = useState<GetStatsReturn>(null);
   const totalIssued = useStore((store) => store.pools.totalIssued);
   const poolVolume = getPoolVolume(stats);
-  const poolTVL = getPoolTVL(stats);
   const poolRatio =
     balance.free
       .div(totalIssued[pool.poolId.toString()])

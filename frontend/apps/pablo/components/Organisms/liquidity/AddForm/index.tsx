@@ -167,12 +167,19 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         onValidationChange={setInValid}
         config={leftConfig}
         value={amountOne}
-        onChange={(v) =>
-          setAmount({
-            amountOne: v,
-            amountTwo: amountWithRatio(v, spotPrice, false),
-          })
-        }
+        onChange={(v) => {
+          if (spotPrice.isZero()) {
+            setAmount((state) => ({
+              ...state,
+              amountOne: v,
+            }));
+          } else {
+            setAmount({
+              amountOne: v,
+              amountTwo: amountWithRatio(v, spotPrice, true),
+            });
+          }
+        }}
         assetDropdownItems={assetOptions}
         label={"Token 1"}
       />
@@ -183,12 +190,19 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         onValidationChange={setOutValid}
         config={rightConfig}
         value={amountTwo}
-        onChange={(v) =>
-          setAmount({
-            amountOne: amountWithRatio(v, spotPrice, true),
-            amountTwo: v,
-          })
-        }
+        onChange={(v) => {
+          if (spotPrice.isZero()) {
+            setAmount((state) => ({
+              ...state,
+              amountTwo: v,
+            }));
+          } else {
+            setAmount({
+              amountOne: amountWithRatio(v, spotPrice, false),
+              amountTwo: v,
+            });
+          }
+        }}
         assetDropdownItems={assetOptions}
         label={"Token 2"}
       />

@@ -7,7 +7,8 @@ export async function fetchSpotPrice(
   api: ApiPromise,
   pool: PoolConfig,
   baseAssetId: string,
-  quoteAssetId: string
+  quoteAssetId: string,
+  decimals: number = 12
 ): Promise<BigNumber> {
   try {
     const pricesFor = await api.rpc.pablo.pricesFor(
@@ -18,7 +19,7 @@ export async function fetchSpotPrice(
     );
 
     const spotPrice = pricesFor.get("spotPrice");
-    return fromChainUnits(spotPrice ? spotPrice.toString() : "0");
+    return fromChainUnits(spotPrice ? spotPrice.toString() : "0", decimals);
   } catch (err: any) {
     console.error(err);
     return new BigNumber(0);
