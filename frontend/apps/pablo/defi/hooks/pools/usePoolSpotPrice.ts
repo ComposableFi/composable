@@ -20,7 +20,8 @@ export const usePoolSpotPrice = (
           api,
           poolConfig,
           assetTwo.getPicassoAssetId() as string,
-          assetOne.getPicassoAssetId() as string
+          assetOne.getPicassoAssetId() as string,
+          assetTwo.getDecimals(DEFAULT_NETWORK_ID)
         ).then(setSpotPrice);
       },
       parachainApi,
