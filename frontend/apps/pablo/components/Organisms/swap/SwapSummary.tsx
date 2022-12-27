@@ -10,7 +10,10 @@ import { PoolConfig } from "@/store/pools/types";
 export type SwapSummaryProps = {
   quoteAsset: Asset | undefined;
   baseAsset: Asset | undefined;
-  minimumReceived: BigNumber;
+  minimumReceived: {
+    asset: Asset | undefined;
+    value: BigNumber;
+  };
   priceImpact: BigNumber;
   PriceImpactProps?: TypographyProps;
   baseAssetAmount: BigNumber;
@@ -107,21 +110,7 @@ export const SwapSummary: FC<SwapSummaryProps> = ({
           title: "Minimum received",
         }}
         BalanceProps={{
-          balance: `${minimumReceived.toFixed()} ${baseAsset?.getSymbol()}`,
-        }}
-        mb={2}
-      />
-      <Label
-        label="Price Impact"
-        TooltipProps={{
-          title: "Price Impact",
-        }}
-        BalanceProps={{
-          balance: `${priceImpact.abs().toFixed(4)} %`,
-          BalanceTypographyProps: {
-            color: priceImpact.gt(0) ? "success.main" : "error.main",
-            ...PriceImpactProps,
-          },
+          balance: `${minimumReceived.value.toFixed()} ${minimumReceived.asset?.getSymbol()}`,
         }}
         mb={2}
       />

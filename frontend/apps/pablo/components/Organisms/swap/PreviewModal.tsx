@@ -25,7 +25,10 @@ export type PreviewModalProps = {
   baseAssetAmount: BigNumber;
   quoteAmount: BigNumber;
   feeCharged: BigNumber;
-  minimumReceived: BigNumber;
+  minimumReceived: {
+    asset: Asset | undefined;
+    value: BigNumber;
+  };
   spotPrice: BigNumber;
   priceImpact: BigNumber;
   selectedPool: PoolConfig;

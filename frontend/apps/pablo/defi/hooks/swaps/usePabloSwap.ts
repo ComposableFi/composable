@@ -147,7 +147,7 @@ export function usePabloSwap({
             amount: toChainQuoteAmount,
           },
           {
-            assetId: quoteAsset?.getPicassoAssetId()?.toString(),
+            assetId: baseAsset?.getPicassoAssetId()?.toString(),
             amount: toChainMinReceive,
           },
           true

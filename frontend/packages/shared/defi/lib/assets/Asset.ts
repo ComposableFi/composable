@@ -104,7 +104,10 @@ export class Asset {
         _assetId,
         _accountId32
       );
-      return fromChainIdUnit(BigInt(balance.toString()));
+      return fromChainIdUnit(
+        BigInt(balance.toString()),
+        this.__decimals.get("picasso")
+      );
     } catch (err: any) {
       console.error("[balanceOf]", err.message);
       return new BigNumber(0);
