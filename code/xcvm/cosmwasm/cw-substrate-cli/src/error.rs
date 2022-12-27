@@ -28,4 +28,10 @@ pub enum Error {
 
 	#[error("Internal error: {0}")]
 	Internal(Box<dyn std::error::Error>),
+
+	#[error("Codec error occured. `pallet-cosmwasm` versions might be different.")]
+	Codec,
+
+	#[error("Extrinsic didn't return an error but it also didn't emit the expected event.")]
+	ExpectedEventNotEmitted,
 }
