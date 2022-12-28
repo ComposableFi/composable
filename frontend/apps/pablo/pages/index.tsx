@@ -1,6 +1,5 @@
 import type { NextPage } from "next";
 import { Box, Container, Grid } from "@mui/material";
-import Default from "@/components/Templates/Default";
 import { PageTitle } from "@/components";
 import { Statistics } from "@/components/Organisms/overview/Statistics";
 import { useDotSamaContext } from "substrate-react";
@@ -9,13 +8,14 @@ import { WalletBreakdownBox } from "@/components/Organisms/overview/WalletBreakd
 import { LiquidityProvidersBox } from "@/components/Organisms/overview/LiquidityProvidersBox";
 import { TVLChart } from "@/components/Organisms/overview/TVLChart";
 import { VolumeChart } from "@/components/Organisms/overview/VolumeChart";
+import { PoolLayout } from "@/components/Templates/pools/PoolLayout";
 
 const Home: NextPage = () => {
   const { extensionStatus } = useDotSamaContext();
   const connected = extensionStatus === "connected";
 
   return (
-    <Default>
+    <PoolLayout>
       <Container maxWidth="lg">
         <Box mb={25}>
           <Box textAlign="center">
@@ -54,7 +54,7 @@ const Home: NextPage = () => {
           )}
         </Box>
       </Container>
-    </Default>
+    </PoolLayout>
   );
 };
 
