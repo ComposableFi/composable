@@ -38,9 +38,7 @@ const tableHeaders: TableHeader[] = [
   {
     header: "Total value locked",
   },
-  {
-    header: "Volume",
-  },
+
   {
     header: "Balance",
   },
@@ -105,14 +103,22 @@ export const YourLiquidityTable: FC<YourLiquidityTableProps> = ({ pools }) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {pools.map((pool) => (
-            <OwnedLiquidityPoolRow
-              pool={pool}
-              key={`owned_liquidity_${pool.poolId.toString()}`}
-              onClick={handleRowClick}
-              userLiquidity={userOwnedLiquidity}
-            />
-          ))}
+          {pools.map((pool) => {
+            const balance = userOwnedLiquidity[pool.config.lpToken]
+              ?.balance ?? {
+              free: new BigNumber(0),
+              locked: new BigNumber(0),
+            };
+            if (balance.free.isZero()) return null;
+            return (
+              <OwnedLiquidityPoolRow
+                pool={pool}
+                key={`owned_liquidity_${pool.poolId.toString()}`}
+                onClick={handleRowClick}
+                userLiquidity={userOwnedLiquidity}
+              />
+            );
+          })}
         </TableBody>
       </Table>
       {Object.keys(userOwnedLiquidity).length >
@@ -161,7 +167,6 @@ const OwnedLiquidityPoolRow: FC<OwnedLiquidityRowProps> = ({
         <PairAsset assets={pair} separator="/" />
       </TableCell>
       <TableCell align="left">${userTVL.toFormat(0)}</TableCell>
-      <TableCell align="left">${userVolume.toFormat(0)}</TableCell>
       <TableCell align="left">
         <Typography variant="body2">{balance.free.toFormat(4)}</Typography>
       </TableCell>

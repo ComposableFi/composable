@@ -3,6 +3,7 @@ import { PoolConfig } from "@/store/createPool/types";
 import useStore from "@/store/useStore";
 import { PairAsset } from "@/components/Atoms";
 import { usePoolRatio } from "@/defi/hooks/pools/usePoolRatio";
+import { usePoolTotalVolume } from "@/defi/hooks/pools/usePoolTotalVolume";
 
 const LiquidityPoolRow = ({
   liquidityPool,
@@ -13,7 +14,8 @@ const LiquidityPoolRow = ({
 }) => {
   const isLoaded = useStore((store) => store.substrateTokens.hasFetchedTokens);
   const assets = liquidityPool.config.assets;
-  const { poolVolume, poolTVL } = usePoolRatio(liquidityPool);
+  const { poolTVL } = usePoolRatio(liquidityPool);
+  const poolVolume = usePoolTotalVolume(liquidityPool);
 
   if (isLoaded) {
     return (
