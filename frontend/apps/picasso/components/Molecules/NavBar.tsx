@@ -85,7 +85,7 @@ const RoutesConfig: ConfigType[] = [
     label: "Pablo",
     path: config.pabloUrl,
     icon: dynamic(() => import("@mui/icons-material/Autorenew")),
-    status: "inactive",
+    status: "active",
     endAdornment: (
       <Link href="#" passHref>
         <IconButton>

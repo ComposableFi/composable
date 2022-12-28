@@ -60,7 +60,7 @@ export const subscribeDestinationMultiLocation = async (
       // Picasso to Kusama needs recipient in MultiLocation
       if (
         sourceChain === "picasso" &&
-        ["kusama", "statemine"].includes(targetChain) &&
+        ["kusama"].includes(targetChain) &&
         recipient
       ) {
         // Set destination. Should have 2 Junctions, first to parent and then to wallet
@@ -82,6 +82,30 @@ export const subscribeDestinationMultiLocation = async (
             }
           )
         );
+      } else if (
+        sourceChain === "picasso" &&
+        targetChain === "statemine" &&
+        recipient
+      ) {
+        const dest = api.createType("XcmVersionedMultiLocation", {
+          V1: api.createType("XcmV1MultiLocation", {
+            parents: api.createType("u8", 1),
+            interior: api.createType("XcmV1MultilocationJunctions", {
+              X2: [
+                api.createType("XcmV1Junction", {
+                  Parachain: api.createType("Compact<u32>", 1000),
+                }),
+                api.createType("XcmV1Junction", {
+                  AccountId32: {
+                    network: api.createType("XcmV0JunctionNetworkId", "Any"),
+                    id: api.createType("AccountId32", recipient),
+                  },
+                }),
+              ],
+            }),
+          }),
+        });
+        set(dest as any);
       }
 
       // Karura <> Picasso needs recipient in MultiDestLocation

@@ -32,7 +32,10 @@ export const subscribeTransferApiCall = async (allProviders: AllProviders) => {
       }
 
       // Both Karura and Kusama as targetChain
-      if (from === "picasso") {
+      if (from === "picasso" && to === "statemine") {
+        set(api.tx.xTokens.transferMultiassetWithFee);
+        console.log("transfer is set");
+      } else if (from === "picasso") {
         try {
           set(api.tx.xTokens.transfer);
         } catch (e) {

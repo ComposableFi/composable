@@ -17,6 +17,7 @@ export const subscribeMultiAsset = async (allProviders: AllProviders) => {
       existentialDeposit: store.transfers.existentialDeposit,
     }),
     ({ selectedToken, from, to, amount }) => {
+      console.log(amount.toString());
       const api = allProviders[from].parachainApi;
       if (!api) return;
       const amountToTransfer = useStore
@@ -109,7 +110,34 @@ export const subscribeMultiAsset = async (allProviders: AllProviders) => {
         );
       }
 
-      if (from === "picasso") {
+      if (from === "picasso" && to === "statemine") {
+        const asset = api.createType("XcmVersionedMultiAsset", {
+          V1: api.createType("XcmV1MultiAsset", {
+            id: api.createType("XcmV1MultiassetAssetId", {
+              Concrete: api.createType("XcmV1MultiLocation", {
+                parents: api.createType("u8", 1),
+                interior: api.createType("XcmV1MultilocationJunctions", {
+                  X3: [
+                    api.createType("XcmV1Junction", {
+                      Parachain: api.createType("Compact<u32>", 1000),
+                    }),
+                    api.createType("XcmV1Junction", {
+                      PalletInstance: api.createType("u8", 50),
+                    }),
+                    api.createType("XcmV1Junction", {
+                      GeneralIndex: api.createType("Compact<u128>", "1984"),
+                    }),
+                  ],
+                }),
+              }),
+            }),
+            fun: api.createType("XcmV1MultiassetFungibility", {
+              Fungible: amountToTransfer,
+            }),
+          }),
+        });
+        set(asset as any);
+      } else if (from === "picasso") {
         set(api.createType("u128", selectedTokenId.toString()));
       }
     },
