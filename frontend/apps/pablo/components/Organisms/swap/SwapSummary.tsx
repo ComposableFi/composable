@@ -99,7 +99,9 @@ export const SwapSummary: FC<SwapSummaryProps> = ({
       <Label
         label="Price"
         BalanceProps={{
-          balance: `1 ${baseAsset?.getSymbol()} = ${spotPrice.toFixed()} ${quoteAsset?.getSymbol()}`,
+          balance: `1 ${baseAsset?.getSymbol()} = ${spotPrice.toFormat(
+            quoteAsset?.getDecimals(DEFAULT_NETWORK_ID) || 12
+          )} ${quoteAsset?.getSymbol()}`,
         }}
         mb={2}
       />
@@ -110,7 +112,9 @@ export const SwapSummary: FC<SwapSummaryProps> = ({
           title: "Minimum received",
         }}
         BalanceProps={{
-          balance: `${minimumReceived.value.toFixed()} ${minimumReceived.asset?.getSymbol()}`,
+          balance: `${minimumReceived.value.toFormat(
+            minimumReceived.asset?.getDecimals(DEFAULT_NETWORK_ID) || 12
+          )} ${minimumReceived.asset?.getSymbol()}`,
         }}
         mb={2}
       />
