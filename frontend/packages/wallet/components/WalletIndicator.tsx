@@ -17,6 +17,7 @@ type ConnectionButtonProps = {
   onClick: () => void;
   isEthereumConnected?: boolean;
   isPolkadotConnected: boolean;
+  hideEth?: boolean;
   blockchainNetworksSupported: BlockchainNetwork[];
 };
 
@@ -26,6 +27,7 @@ export const WalletIndicator: React.FC<ConnectionButtonProps> = ({
   isEthereumConnected = false,
   isPolkadotConnected,
   blockchainNetworksSupported,
+  hideEth,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -66,15 +68,17 @@ export const WalletIndicator: React.FC<ConnectionButtonProps> = ({
               alt="Account"
             />
           </Box>
-          <Box sx={{ display: "flex" }}>
-            <Image
-              style={{ filter: "grayscale(100%)" }}
-              src={ethIcon}
-              width="24"
-              height="24"
-              alt="Account"
-            />
-          </Box>
+          {!hideEth ? (
+            <Box sx={{ display: "flex" }}>
+              <Image
+                style={{ filter: "grayscale(100%)" }}
+                src={ethIcon}
+                width="24"
+                height="24"
+                alt="Account"
+              />
+            </Box>
+          ) : null}
         </>
       );
     }
