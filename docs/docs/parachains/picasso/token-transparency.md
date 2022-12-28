@@ -123,7 +123,7 @@ HCMDYY3ittCoNQEtZV9XAxMQkC6YYKgC6cxZuJkAdikhuqQ
 
 5w53mgBc2w2kNQZgFBaYT5h79cQQNfv8vUuoa85zUe5VxBvQ
 
-No other tokens will be considered circulating unless approved by protocol governance. 
+No other tokens will be considered circulating unless approved by governance. 
 
 
 ## Glossary
