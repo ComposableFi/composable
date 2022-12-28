@@ -179,7 +179,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
           } else {
             setAmount({
               amountOne: v,
-              amountTwo: amountWithRatio(v, spotPrice, false),
+              amountTwo: v.div(baseAmount).multipliedBy(quoteAmount),
             });
           }
         }}
@@ -201,8 +201,8 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
             }));
           } else {
             setAmount({
-              amountOne: amountWithRatio(v, spotPrice, true),
-              amountTwo: v,
+              amountOne: v.div(quoteAmount).multipliedBy(baseAmount),
+              amountTwo: v, // amountTwo / Pool.amountTwo = RATIO
             });
           }
         }}
@@ -215,6 +215,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
           pool={pool}
           input={[leftConfig.asset, rightConfig.asset]}
           amounts={[amountOne, amountTwo]}
+          simulated={simulated}
         />
       ) : null}
 

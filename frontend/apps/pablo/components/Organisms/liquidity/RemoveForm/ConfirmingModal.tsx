@@ -92,10 +92,11 @@ export const ConfirmingModal: FC<ConfirmingModalProps> = ({
             setConfirming(true);
           },
           (txHash: string, _events) => {
-            console.log("Finalized ", txHash);
             enqueueSnackbar("Liquidity: removed", {
               variant: "success",
               url: subscanExtrinsicLink(DEFAULT_NETWORK_ID, txHash),
+              persist: true,
+              isClosable: true,
             });
             setUiState({ isConfirmingModalOpen: false });
             setConfirming(false);

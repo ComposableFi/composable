@@ -9,7 +9,7 @@ import { useMemo } from "react";
 export const usePoolSpotPrice = (
   pool: PoolConfig | undefined | null,
   input: [Asset, Asset] | undefined | null,
-  isReversed: boolean
+  isReversed: boolean = false
 ) => {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   // const [spotPrice, setSpotPrice] = useState<BigNumber>(new BigNumber(0));

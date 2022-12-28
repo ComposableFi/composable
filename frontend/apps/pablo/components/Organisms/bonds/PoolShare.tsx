@@ -2,16 +2,14 @@ import {
   alpha,
   Box,
   BoxProps,
-  CircularProgress,
   Theme,
   Typography,
   useTheme,
 } from "@mui/material";
 import BigNumber from "bignumber.js";
-import { FC, useEffect, useState } from "react";
+import { FC } from "react";
 import { PoolConfig } from "@/store/pools/types";
 import { Asset } from "shared";
-import { getPriceAndRatio, getStats, GetStatsReturn } from "@/defi/utils";
 import useStore from "@/store/useStore";
 import { usePoolSpotPrice } from "@/defi/hooks/pools/usePoolSpotPrice";
 
@@ -55,43 +53,34 @@ export type PoolShareProps = {
   pool: PoolConfig;
   input: [Asset, Asset];
   amounts: [BigNumber, BigNumber];
+  simulated: BigNumber;
 } & BoxProps;
 
 export const PoolShare: FC<PoolShareProps> = ({
   pool,
   input,
   amounts,
+  simulated,
   ...rest
 }) => {
   const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
-  const [stats, setStats] = useState<GetStatsReturn>(null);
-  useEffect(() => {
-    if (isPoolsLoaded && pool) {
-      getStats(pool).then((result) => {
-        setStats(result);
-      });
-    }
-  }, [isPoolsLoaded, pool]);
-
   const [assetOne, assetTwo] = input;
   const [amountOne, amountTwo] = amounts;
   const { spotPrice } = usePoolSpotPrice(pool, input);
+  const twoPerOne = BigNumber(1).div(spotPrice).isFinite()
+    ? BigNumber(1).div(spotPrice).toFixed(4)
+    : "0.0000";
+  const onePerTwo =
+    spotPrice.isFinite() && !spotPrice.isNaN()
+      ? spotPrice.toFormat(4)
+      : "0.0000";
 
-  if (!stats) return <CircularProgress />;
+  const totalIssued = useStore((store) => store.pools.totalIssued);
 
-  const { shareOfPool } = getPriceAndRatio(
-    stats,
-    assetOne,
-    amountOne,
-    amountTwo,
-    assetTwo
-  );
+  const shareOfPool = simulated
+    .div(totalIssued[pool.poolId.toString()].plus(simulated))
+    .multipliedBy(100);
 
-  const onePerTwo = BigNumber(1).div(spotPrice).isFinite() ?
-    BigNumber(1).div(spotPrice).toFixed(4) :
-    "0.0000";
-  const twoPerOne = spotPrice.isFinite() && !spotPrice.isNaN() ?
-    spotPrice.toFormat(4) : "0.0000";
   return (
     <Box mt={4} {...rest}>
       <Typography variant="inputLabel">Price and pool share</Typography>
@@ -109,7 +98,7 @@ export const PoolShare: FC<PoolShareProps> = ({
           value={twoPerOne}
           label={`${assetTwo.getSymbol()} per ${assetOne.getSymbol()}`}
         />
-        <ItemBox value={`${shareOfPool.toFixed()}%`} label="Share of pool" />
+        <ItemBox value={`${shareOfPool.toFixed(4)}%`} label="Share of pool" />
       </Box>
     </Box>
   );
