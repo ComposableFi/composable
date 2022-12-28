@@ -10,7 +10,10 @@ import { PoolConfig } from "@/store/pools/types";
 export type SwapSummaryProps = {
   quoteAsset: Asset | undefined;
   baseAsset: Asset | undefined;
-  minimumReceived: BigNumber;
+  minimumReceived: {
+    asset: Asset | undefined;
+    value: BigNumber;
+  };
   priceImpact: BigNumber;
   PriceImpactProps?: TypographyProps;
   baseAssetAmount: BigNumber;
@@ -96,7 +99,9 @@ export const SwapSummary: FC<SwapSummaryProps> = ({
       <Label
         label="Price"
         BalanceProps={{
-          balance: `1 ${baseAsset?.getSymbol()} = ${spotPrice.toFixed()} ${quoteAsset?.getSymbol()}`,
+          balance: `1 ${baseAsset?.getSymbol()} = ${spotPrice.toFormat(
+            quoteAsset?.getDecimals(DEFAULT_NETWORK_ID) || 12
+          )} ${quoteAsset?.getSymbol()}`,
         }}
         mb={2}
       />
@@ -107,21 +112,9 @@ export const SwapSummary: FC<SwapSummaryProps> = ({
           title: "Minimum received",
         }}
         BalanceProps={{
-          balance: `${minimumReceived.toFixed()} ${baseAsset?.getSymbol()}`,
-        }}
-        mb={2}
-      />
-      <Label
-        label="Price Impact"
-        TooltipProps={{
-          title: "Price Impact",
-        }}
-        BalanceProps={{
-          balance: `${priceImpact.abs().toFixed(4)} %`,
-          BalanceTypographyProps: {
-            color: priceImpact.gt(0) ? "success.main" : "error.main",
-            ...PriceImpactProps,
-          },
+          balance: `${minimumReceived.value.toFormat(
+            minimumReceived.asset?.getDecimals(DEFAULT_NETWORK_ID) || 12
+          )} ${minimumReceived.asset?.getSymbol()}`,
         }}
         mb={2}
       />

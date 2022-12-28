@@ -19,6 +19,7 @@ import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { SettingsModalHandler } from "./SettingsModalHandler";
 import { SwapVertAsset } from "@/components/Organisms/swap/SwapVertAsset";
 import { SwapButton } from "@/components/Organisms/swap/SwapButton";
+import BigNumber from "bignumber.js";
 
 const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
@@ -47,19 +48,24 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
     setAssetOneInputValid,
     setAssetTwoInputValid,
     assetOneInputValid,
+    assetTwoInputValid,
     percentageToSwap,
     priceImpact,
     inputMode,
     setInputMode,
-    pabloPool
+    pabloPool,
   } = useSwaps({ selectedAccount });
 
   const initiateSwapTx = usePabloSwap({
     pool: pabloPool,
-    baseAsset: pabloPool?.config.assets.find(a => a.getPicassoAssetId() === selectedAssetTwoId),
-    quoteAsset: pabloPool?.config.assets.find(b => b.getPicassoAssetId() === selectedAssetOneId),
+    baseAsset: pabloPool?.config.assets.find(
+      (a) => a.getPicassoAssetId() === selectedAssetTwoId
+    ),
+    quoteAsset: pabloPool?.config.assets.find(
+      (b) => b.getPicassoAssetId() === selectedAssetOneId
+    ),
     quoteAmount: assetOneAmount,
-    minimumReceived
+    minimumReceived: minimumReceived.value,
   });
 
   const isConfirmingModalOpen = usePendingExtrinsic(
@@ -88,10 +94,12 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
       <Box mt={4}>
         <DropdownCombinedBigNumberInput
           isAnchorable
-          maxValue={balance1.multipliedBy(percentageToSwap / 100)}
+          maxValue={balance1}
           setValid={setAssetOneInputValid}
           noBorder
-          value={assetOneAmount}
+          value={assetOneAmount.decimalPlaces(
+            selectedAssetOne?.getDecimals(DEFAULT_NETWORK_ID) || 12
+          )}
           onMouseDown={() => {
             setInputMode(1);
           }}
@@ -102,21 +110,22 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
           }
           ReferenceTextProps={{
             onClick: () => {
+              onChangeTokenAmount(
+                balance1.multipliedBy(percentageToSwap / 100)
+              );
             },
             sx: {
               cursor: "pointer",
               "&:hover": {
-                color: theme.palette.primary.main
-              }
-            }
+                color: theme.palette.primary.main,
+              },
+            },
           }}
           ButtonProps={{
             onClick: () => {
-              const balanceLimit = balance1.multipliedBy(
-                percentageToSwap / 100
-              );
+              const balanceLimit = balance1.multipliedBy(percentageToSwap);
               onChangeTokenAmount(balanceLimit);
-            }
+            },
           }}
           CombinedSelectProps={{
             value: selectedAssetOneId,
@@ -133,22 +142,22 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
                 label: "Select",
                 icon: undefined,
                 disabled: true,
-                hidden: true
+                hidden: true,
               },
-              ...assetList
+              ...assetList,
             ],
             borderLeft: false,
             minWidth: isMobile ? undefined : 150,
-            searchable: true
+            searchable: true,
           }}
           LabelProps={{
             label: "From",
             BalanceProps: selectedAssetOne
               ? {
-                title: <AccountBalanceWalletIcon color="primary" />,
-                balance: balance1.toFixed(4)
-              }
-              : undefined
+                  title: <AccountBalanceWalletIcon color="primary" />,
+                  balance: balance1.toFixed(4),
+                }
+              : undefined,
           }}
         />
       </Box>
@@ -160,21 +169,40 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
       )}
 
       <SwapVertAsset selectedAccount={selectedAccount} />
-
       <Box mt={4}>
         <DropdownCombinedBigNumberInput
           isAnchorable
           maxValue={balance2}
           setValid={setAssetTwoInputValid}
           noBorder
-          value={assetTwoAmount}
+          value={assetTwoAmount.decimalPlaces(
+            selectedAssetTwo?.getDecimals(DEFAULT_NETWORK_ID) || 12
+          )}
           onMouseDown={() => {
             setInputMode(2);
           }}
           setValue={inputMode === 2 ? onChangeTokenAmount : undefined}
+          referenceText={
+            assetTwoInputValid ? `${percentageToSwap}%` : undefined
+          }
+          ReferenceTextProps={{
+            onClick: () => {
+              onChangeTokenAmount(
+                balance2.multipliedBy(percentageToSwap / 100)
+              );
+            },
+            sx: {
+              cursor: "pointer",
+              "&:hover": {
+                color: theme.palette.primary.main,
+              },
+            },
+          }}
+          buttonLabel={assetTwoInputValid ? "Max" : undefined}
           ButtonProps={{
             onClick: () => {
-            }
+              onChangeTokenAmount(balance2);
+            },
           }}
           CombinedSelectProps={{
             value: selectedAssetTwoId,
@@ -191,22 +219,22 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
                 label: "Select",
                 icon: undefined,
                 disabled: true,
-                hidden: true
+                hidden: true,
               },
-              ...assetList
+              ...assetList,
             ],
             borderLeft: false,
             minWidth: isMobile ? undefined : 150,
-            searchable: true
+            searchable: true,
           }}
           LabelProps={{
             label: "To",
             BalanceProps: selectedAssetTwo
               ? {
-                title: <AccountBalanceWalletIcon color="primary" />,
-                balance: balance2.toFixed(4)
-              }
-              : undefined
+                  title: <AccountBalanceWalletIcon color="primary" />,
+                  balance: balance2.toFixed(4),
+                }
+              : undefined,
           }}
         />
       </Box>
@@ -232,9 +260,11 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
               {selectedAssetOne.getSymbol()}
             </Typography>
             <Tooltip
-              title={`1 ${selectedAssetOne?.getSymbol()} = ${spotPrice.toFixed(
-                DEFAULT_UI_FORMAT_DECIMALS
-              )} ${selectedAssetTwo.getSymbol()}`}
+              title={`1 ${selectedAssetOne?.getSymbol()} = ${new BigNumber(1)
+                .div(spotPrice)
+                .toFixed(
+                  DEFAULT_UI_FORMAT_DECIMALS
+                )} ${selectedAssetTwo.getSymbol()}`}
               placement="top"
             >
               <InfoOutlined sx={{ color: theme.palette.primary.main }} />

@@ -7,16 +7,13 @@ const styles = {
   hexplore: "#B265FF",
 };
 
-const Link = ({ children }: { children: string }) => {
+const BoldTitle = ({ children }: { children: string }) => {
   return (
-    <a
-      href={`https://${children}`}
-      style={{ color: styles.hexplore, textDecoration: "unset" }}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      {children}
-    </a>
+    <>
+      <br />
+      <span style={{fontWeight: 'bold', paddingLeft: '15px'}}>{children}</span>
+      <br />
+    </>
   );
 };
 
@@ -85,9 +82,7 @@ const TermsOfUse: NextPage = () => {
           aware of and to have accepted, any such changes by your continued use
           of the Site.
           <br />
-          <br />
-          1. Eligibility
-          <br />
+          <BoldTitle>1. Eligibility</BoldTitle>
           <br />
           The Site is intended for users who are at least eighteen (18) years of
           age. All users who are minors in the jurisdiction in which they reside
@@ -132,9 +127,7 @@ const TermsOfUse: NextPage = () => {
           network (VPN) to circumvent the restrictions set forth herein is
           prohibited.
           <br />
-          <br />
-          1. Informational Resource
-          <br />
+          <BoldTitle>2. Informational Resource</BoldTitle>
           <br />
           All information, including graphs, charts, tokenomics, projections,
           and all other data, provided in connection with your access to the
@@ -155,9 +148,7 @@ const TermsOfUse: NextPage = () => {
           or current and does not undertake to periodically review the materials
           for accuracy, completeness or recency.
           <br />
-          <br />
-          1. Intellectual Property Rights
-          <br />
+          <BoldTitle>3. Intellectual Property Rights</BoldTitle>
           <br />
           Unless otherwise indicated, the Site is our proprietary property and
           all source code, databases, smart contracts, functionality, software,
@@ -176,9 +167,7 @@ const TermsOfUse: NextPage = () => {
           otherwise exploited for any commercial purpose whatsoever, without our
           express prior written permission.
           <br />
-          <br />
-          1. Third-Party Website and Content
-          <br />
+          <BoldTitle>4. Third-Party Website and Content</BoldTitle>
           <br />
           The Site may contain (or you may be sent via the Site) links to other
           websites (“Third-Party Websites”) as well as articles, photographs,
@@ -205,15 +194,13 @@ const TermsOfUse: NextPage = () => {
           you or harm caused to you relating to or resulting in any way from any
           Third-Party Content or any contact with Third-Party Websites.
           <br />
-          <br />
-          1. Unacceptable Use or Conduct
-          <br />
+          <BoldTitle>5. Unacceptable Use or Conduct</BoldTitle>
           <br />
           As a condition to accessing or using the Site or the Services, you
           will not:
           <br />
           <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
+          <ol type='a' style={{ margin: "0px 0px 0px -15px" }}>
             <li>
               Violate any applicable law, including, without limitation, any
               relevant and applicable anti-money laundering and anti-terrorist
@@ -310,9 +297,7 @@ const TermsOfUse: NextPage = () => {
             </li>
           </ol>
           <br />
-          <br />
-          1. Proprietary Rights
-          <br />
+          <BoldTitle>6. Proprietary Rights</BoldTitle>
           <br />
           You acknowledge that certain aspects of the Site or the Services may
           use, incorporate or link to certain open-source components and that
@@ -348,8 +333,7 @@ const TermsOfUse: NextPage = () => {
           digital assets from any Composable-developed smart contract only to
           the blockchain address from which you deposited the Digital Assets.
           <br />
-          <br />
-          1. Forward-Looking Statements
+          <BoldTitle>7. Forward-Looking Statements</BoldTitle>
           <br />
           <br />
           This information contains “forward-looking statements.” These
@@ -384,9 +368,7 @@ const TermsOfUse: NextPage = () => {
           statements. Therefore, you should not rely on any of these
           forward-looking statements.
           <br />
-          <br />
-          1. Not an Offering
-          <br />
+          <BoldTitle>8. Not an Offering</BoldTitle>
           <br />
           Any information in this Site does not constitute an offer to sell or a
           solicitation of an offer to purchase securities, assets, including
@@ -400,9 +382,7 @@ const TermsOfUse: NextPage = () => {
           provided and the information is only current as of the date of its
           release and is subject to change over time.
           <br />
-          <br />
-          1. Not Professional Advice
-          <br />
+          <BoldTitle>9. Not Professional Advice</BoldTitle>
           <br />
           All information provided by the Site or Services is for informational
           purposes only and should not be construed as professional advice. You
@@ -421,14 +401,12 @@ const TermsOfUse: NextPage = () => {
           communications nor any information that we provide to you is intended
           as, or shall be considered or construed as advice.
           <br />
-          <br />
-          1. Assumption of Risks
-          <br />
+          <BoldTitle>10. Assumption of Risks</BoldTitle>
           <br />
           You represent and warrant that you:
           <br />
           <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
+          <ol type='a' style={{ margin: "0px 0px 0px -15px" }}>
             <li>
               Have the necessary technical expertise and ability to review and
               evaluate the security, integrity and operation of any transactions
@@ -619,10 +597,7 @@ const TermsOfUse: NextPage = () => {
               the risks set forth herein.
             </li>
           </ol>
-          <br />
-          <br />
-          1. Disclosures and Disclaimers
-          <br />
+          <BoldTitle>11. Disclosures and Disclaimers</BoldTitle>
           <br />
           Composable is a developer of software. Composable does not operate a
           digital asset or derivatives exchange platform or offer trade
@@ -666,9 +641,7 @@ const TermsOfUse: NextPage = () => {
           ENVIRONMENT, YOU SHOULD USE YOUR BEST JUDGMENT AND EXERCISE CAUTION
           WHERE APPROPRIATE.
           <br />
-          <br />
-          1. Limitation of Liability
-          <br />
+          <BoldTitle>12. Limitation of Liability</BoldTitle>
           <br />
           Under no circumstances shall Composable or any of its officers,
           directors, employees, contractors, agents, affiliates, or subsidiaries
@@ -704,9 +677,7 @@ const TermsOfUse: NextPage = () => {
           these Terms may not apply to you. This limitation of liability shall
           apply to the fullest extent permitted by law.
           <br />
-          <br />
-          1. Indemnification and Full Release
-          <br />
+          <BoldTitle>13. Indemnification and Full Release</BoldTitle>
           <br />
           You hereby agree to defend, indemnify, and hold Composable harmless
           from and against any loss, damage, liability, claim, or demand,
@@ -749,9 +720,9 @@ const TermsOfUse: NextPage = () => {
           suppliers, and contractors in relation to any of the risks set forth
           in the section on “Assumption of Risks.”
           <br />
-          <br />
-          1. Dispute Resolution
-          <br />
+          <BoldTitle>
+          14. Dispute Resolution
+          </BoldTitle>
           <br />
           Please read this section carefully: it may significantly affect your
           legal rights, including your right to file a lawsuit in court and to
@@ -759,7 +730,7 @@ const TermsOfUse: NextPage = () => {
           binding arbitration and a class action waiver.
           <br />
           <br />
-          Good Faith Negotiations
+          <span style={{textDecoration: 'underline', paddingLeft: '15px', fontWeight: 'bold'}}>Good Faith Negotiations</span>
           <br />
           <br />
           Prior to commencing any legal proceeding against us of any kind,
@@ -787,7 +758,9 @@ const TermsOfUse: NextPage = () => {
           party may submit the Dispute to arbitration as set forth below.
           <br />
           <br />
+          <span style={{textDecoration: 'underline', paddingLeft: '15px', fontWeight: 'bold'}}>
           No Representative Actions
+          </span>
           <br />
           <br />
           You and Composable agree that any Dispute arising out of or related to
@@ -798,7 +771,9 @@ const TermsOfUse: NextPage = () => {
           proceeding.
           <br />
           <br />
+          <span style={{textDecoration: 'underline', paddingLeft: '15px', fontWeight: 'bold'}}>
           Agreement to Arbitrate
+          </span>
           <br />
           <br />
           You and we are each waiving the right to a trial by jury and to have
@@ -817,7 +792,9 @@ const TermsOfUse: NextPage = () => {
           hereunder without the prior written consent of both parties.
           <br />
           <br />
+          <span style={{textDecoration: 'underline', paddingLeft: '15px', fontWeight: 'bold'}}>
           Opting Out
+          </span>
           <br />
           <br />
           You have the right to opt out of binding arbitration within fifteen
@@ -832,8 +809,9 @@ const TermsOfUse: NextPage = () => {
           resolve the Dispute in accordance with the provisions on governing law
           and venue provided in these Terms.
           <br />
-          1. Reserved Rights
-          <br />
+          <BoldTitle>
+          15. Reserved Rights
+          </BoldTitle>
           <br />
           Composable reserves the following rights: (a) with or without notice
           to you, to modify, substitute, eliminate or add to the Site; (b) to
@@ -843,27 +821,27 @@ const TermsOfUse: NextPage = () => {
           requesting or directing that we disclose information or content or
           information that you provide.
           <br />
-          <br />
-          1. Assignment
-          <br />
+          <BoldTitle>
+          16. Assignment
+          </BoldTitle>
           <br />
           These Terms may be assigned without your prior consent to any person
           or entity, including Composable’s affiliates, successors and assigns.
           You may not assign or transfer any rights or obligations under this
           agreement without our prior written consent.
           <br />
-          <br />
-          1. Governing Law and Venue
-          <br />
+          <BoldTitle>
+          17. Governing Law and Venue
+          </BoldTitle>
           <br />
           These Terms and any separate agreements whereby we provide you
           Services shall be governed by and construed in accordance with the
           laws of Saint Lucia. Any dispute between the Parties that is not
           subject to arbitration will be resolved in Saint Lucia.
           <br />
-          <br />
-          1. Entire Agreement
-          <br />
+          <BoldTitle>
+          18. Entire Agreement
+          </BoldTitle>
           <br />
           These Terms, including the Privacy Policy and other policies or
           operating rules published by us, constitute the entire agreement and
@@ -875,9 +853,9 @@ const TermsOfUse: NextPage = () => {
           us to exercise or enforce any right or provision of these Terms shall
           not constitute a waiver of such right or provision.
           <br />
-          <br />
-          1. Access and Acceptance
-          <br />
+          <BoldTitle>
+          19. Access and Acceptance
+          </BoldTitle>
           <br />
           By accessing or interacting with Pablo, the Site, our Services and/or
           any of the other Composable protocols or by acknowledging these Terms

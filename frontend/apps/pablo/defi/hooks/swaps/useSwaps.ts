@@ -1,6 +1,10 @@
 import { Asset } from "shared";
 import { Option } from "@/components/types";
-import { calculator, DEFAULT_NETWORK_ID } from "@/defi/utils";
+import {
+  calculateInGivenOut,
+  calculateOutGivenIn,
+  DEFAULT_NETWORK_ID,
+} from "@/defi/utils";
 import { usePrevious } from "@/hooks/usePrevious";
 import { useAppSettingsSlice } from "@/store/appSettings/slice";
 import { useAssetBalance } from "@/defi/hooks";
@@ -20,8 +24,8 @@ import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { PoolConfig } from "@/store/pools/types";
-import { useSpotPrice } from "@/defi/hooks/swaps/useSpotPrice";
 import { getOraclePrice } from "@/store/oracle/slice";
+import { usePoolSpotPrice } from "@/defi/hooks/pools/usePoolSpotPrice";
 
 export function useSwaps({
   selectedAccount,
@@ -42,7 +46,10 @@ export function useSwaps({
   inputMode: 1 | 2;
   setInputMode: Dispatch<SetStateAction<1 | 2>>;
   pabloPool: PoolConfig | undefined;
-  minimumReceived: BigNumber;
+  minimumReceived: {
+    asset: Asset | undefined;
+    value: BigNumber;
+  };
   slippageAmount: BigNumber;
   feeCharged: BigNumber;
   spotPrice: BigNumber;
@@ -67,7 +74,6 @@ export function useSwaps({
   const {
     tokenAmounts: { assetOneAmount, assetTwoAmount },
     setTokenAmounts,
-    spotPrice,
     selectedAssets,
     selectedPool,
     setSelectedAsset,
@@ -75,6 +81,8 @@ export function useSwaps({
     resetSwaps,
     flipAssetSelection,
   } = useStore((store) => store.swaps);
+  const { baseAmount, quoteAmount, baseAsset, quoteAsset } =
+    useLiquidity(selectedPool);
 
   useEffect(() => {
     return () => {
@@ -125,7 +133,6 @@ export function useSwaps({
 
   const balance1 = useAssetBalance(selectedAssetOne, "picasso");
   const balance2 = useAssetBalance(selectedAssetTwo, "picasso");
-  useSpotPrice();
 
   const pools = useStore((store) => store.pools.config);
   const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
@@ -181,7 +188,14 @@ export function useSwaps({
     setSelectedPool,
   ]);
 
-  const [minimumReceived, setMinimumReceived] = useState(new BigNumber(0));
+  const [minimumReceived, setMinimumReceived] = useState<{
+    asset: Asset | undefined;
+    value: BigNumber;
+  }>({
+    asset: baseAsset,
+    value: new BigNumber(0),
+  });
+
   const [slippageAmount, setSlippageAmount] = useState(new BigNumber(0));
   const [feeCharged, setFeeCharged] = useState(new BigNumber(0));
 
@@ -194,26 +208,89 @@ export function useSwaps({
 
   const onChangeTokenAmount = (amount: BigNumber) => {
     if (selectedPool && amount.gt(0)) {
+      const sideUpdated = inputMode === 1 ? "quote" : "base";
       const feePercentage = selectedPool.config.feeConfig.feeRate;
-      const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } =
-        calculator(
-          inputMode === 1 ? "quote" : "base",
-          amount,
-          spotPrice,
-          slippage,
-          feePercentage
+      let minReceive = new BigNumber(0);
+      const tokenQuoteAmount =
+        selectedAssetOneId === quoteAsset?.getPicassoAssetId()
+          ? quoteAmount
+          : baseAmount;
+      const tokenBaseAmount =
+        selectedAssetTwoId === baseAsset?.getPicassoAssetId()
+          ? baseAmount
+          : quoteAmount;
+
+      const tokenQuoteAsset =
+        selectedAssetOneId === quoteAsset?.getPicassoAssetId()
+          ? quoteAsset
+          : baseAsset;
+      const tokenBaseAsset =
+        selectedAssetTwoId === baseAsset?.getPicassoAssetId()
+          ? baseAsset
+          : quoteAsset;
+      if (sideUpdated === "quote") {
+        const feeCharged = (
+          amount.gt(balance1) ? balance1 : amount
+        ).multipliedBy(feePercentage / 100);
+        const amountIn = (amount.gt(balance1) ? balance1 : amount).minus(
+          feeCharged
         );
-      setTokenAmounts({
-        assetOneAmount: inputMode === 2 ? tokenOutAmount : amount,
-        assetTwoAmount: inputMode === 1 ? tokenOutAmount : amount,
-      });
-      setMinimumReceived(minReceive);
-      setFeeCharged(feeChargedAmount);
-      setSlippageAmount(slippageAmount);
+        const amountOut = calculateOutGivenIn(
+          tokenBaseAmount,
+          tokenQuoteAmount,
+          amountIn,
+          new BigNumber(5),
+          new BigNumber(5)
+        );
+
+        const slippageAmount = amountOut.multipliedBy(slippage / 100);
+        minReceive = amountOut.minus(slippageAmount);
+        setMinimumReceived({
+          asset: tokenBaseAsset,
+          value: minReceive,
+        });
+        setFeeCharged(feeCharged);
+        setSlippageAmount(slippageAmount);
+        setTokenAmounts({
+          assetOneAmount: amount.gt(balance1) ? balance1 : amount,
+          assetTwoAmount: amountOut,
+        });
+      } else {
+        const amountOut = amount.gt(balance1) ? balance1 : amount;
+        const amountIn = calculateInGivenOut(
+          tokenBaseAmount,
+          tokenQuoteAmount,
+          amountOut,
+          new BigNumber(5),
+          new BigNumber(5)
+        );
+        const slippageAmount = amountOut.multipliedBy(slippage / 100);
+        const assetOneAmount = amountIn.div(
+          new BigNumber(1).minus(feePercentage / 100)
+        );
+        const feeCharged = assetOneAmount.multipliedBy(feePercentage / 100);
+        minReceive = amountOut.minus(slippageAmount);
+        setTokenAmounts({
+          assetOneAmount: assetOneAmount,
+          assetTwoAmount: amount,
+        });
+
+        setMinimumReceived({
+          value: minReceive,
+          asset: tokenBaseAsset,
+        });
+        setFeeCharged(feeCharged);
+        setSlippageAmount(slippageAmount);
+      }
     }
   };
 
-  const { baseAmount, quoteAmount } = useLiquidity(selectedPool);
+  const { spotPrice } = usePoolSpotPrice(
+    selectedPool,
+    selectedPool?.config.assets,
+    Boolean(selectedAssetOneId === quoteAsset?.getPicassoAssetId()?.toString())
+  );
+
   const poolAssets = selectedPool
     ? Object.keys(selectedPool.config.assets)
     : null;
@@ -244,35 +321,20 @@ export function useSwaps({
   useEffect(() => {
     if (parachainApi && selectedPool) {
       if (previousSlippage != slippage) {
-        if (minimumReceived.gt(0)) {
-          const feePercentage = selectedPool.config.feeConfig.feeRate;
-
-          if (selectedPool) {
-            const { minReceive } = calculator(
-              "quote",
-              assetOneAmount,
-              spotPrice,
-              slippage,
-              feePercentage
-            );
-            setMinimumReceived(minReceive);
-          }
+        if (minimumReceived.value.gt(0)) {
+          onChangeTokenAmount(assetOneAmount);
         }
       }
     }
     return;
   }, [
-    spotPrice,
-    selectedPool,
-    balance1,
-    previousSlippage,
-    minimumReceived,
-    feeCharged,
-    slippageAmount,
-    slippage,
-    parachainApi,
     assetOneAmount,
-    assetTwoAmount,
+    minimumReceived.value,
+    onChangeTokenAmount,
+    parachainApi,
+    previousSlippage,
+    selectedPool,
+    slippage,
   ]);
 
   const flipAssets = () => {

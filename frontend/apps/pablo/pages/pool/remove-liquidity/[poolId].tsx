@@ -9,6 +9,7 @@ import { useUiSlice } from "@/store/ui/ui.slice";
 import { PoolLayout } from "@/components/Templates/pools/PoolLayout";
 import { usePoolDetail } from "@/defi/hooks/pools/usePoolDetail";
 import { RemoveLiquiditySkeleton } from "@/components/Templates/pools/RemoveLiquiditySkeleton";
+import useStore from "@/store/useStore";
 
 const RemoveLiquidity: NextPage = () => {
   const breadcrumbs = [
@@ -24,6 +25,7 @@ const RemoveLiquidity: NextPage = () => {
   const { isPolkadotModalOpen } = useUiSlice();
   const router = useRouter();
   const { pool } = usePoolDetail();
+  const isPoolLoaded = useStore((store) => store.pools.isLoaded);
 
   useEffect(() => {
     extensionStatus !== "connected" &&
@@ -31,7 +33,7 @@ const RemoveLiquidity: NextPage = () => {
       router.push("/pool");
   });
 
-  if (pool === null) {
+  if (pool === null || !isPoolLoaded) {
     return (
       <PoolLayout breadcrumbs={breadcrumbs}>
         <RemoveLiquiditySkeleton />

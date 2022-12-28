@@ -130,7 +130,8 @@ export function getPriceAndRatio(
   assetOne: Asset,
   amountOne: BigNumber,
   amountTwo: BigNumber,
-  assetTwo: Asset
+  assetTwo: Asset,
+  simulated: BigNumber
 ) {
   const assetOneId = assetOne.getPicassoAssetId()?.toString() ?? "0";
   const assetTwoId = assetTwo.getPicassoAssetId()?.toString() ?? "0";
@@ -142,5 +143,5 @@ export function getPriceAndRatio(
   const ratioB = totalLiquidityB.isZero()
     ? 100
     : amountTwo.div(totalLiquidityB).multipliedBy(100).toNumber();
-  return { shareOfPool: ratioB + ratioA };
+  return { shareOfPool: Math.min(ratioB + ratioA, 100) };
 }

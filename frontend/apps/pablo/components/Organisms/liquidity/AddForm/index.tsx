@@ -23,6 +23,7 @@ import { ConfirmSupplyModal } from "@/components/Organisms/liquidity/AddForm/Con
 import { YourPosition } from "@/components/Organisms/liquidity/YourPosition";
 import { ConfirmingSupplyModal } from "@/components/Organisms/liquidity/AddForm/ConfirmingSupplyModal";
 import { usePoolSpotPrice } from "@/defi/hooks/pools/usePoolSpotPrice";
+import { useLiquidity } from "@/defi/hooks";
 
 function amountWithRatio(
   amount: BigNumber,
@@ -101,6 +102,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
     )
   );
   const { spotPrice } = usePoolSpotPrice(pool, pool?.config.assets);
+  const { baseAmount, quoteAmount } = useLiquidity(pool);
   const assetOptions = getAssetOptions(inputConfig ?? []);
   const [leftConfig, rightConfig] = inputConfig ?? [];
   const leftId = (leftConfig?.asset.getPicassoAssetId() as string) || null;
@@ -109,8 +111,9 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   const simulate = useSimulateAddLiquidity();
   const [isInValid, setInValid] = useState<boolean>(false);
   const [isOutValid, setOutValid] = useState<boolean>(false);
-
   const inputValid = isInValid && isOutValid;
+  const isPoolEmpty = baseAmount.isZero() && quoteAmount.isZero();
+
   useEffect(() => {
     if (leftId === null || rightId === null) return;
     simulate(
@@ -167,12 +170,19 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         onValidationChange={setInValid}
         config={leftConfig}
         value={amountOne}
-        onChange={(v) =>
-          setAmount({
-            amountOne: v,
-            amountTwo: amountWithRatio(v, spotPrice, false),
-          })
-        }
+        onChange={(v) => {
+          if (isPoolEmpty) {
+            setAmount((state) => ({
+              ...state,
+              amountOne: v,
+            }));
+          } else {
+            setAmount({
+              amountOne: v,
+              amountTwo: v.div(baseAmount).multipliedBy(quoteAmount),
+            });
+          }
+        }}
         assetDropdownItems={assetOptions}
         label={"Token 1"}
       />
@@ -183,12 +193,19 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         onValidationChange={setOutValid}
         config={rightConfig}
         value={amountTwo}
-        onChange={(v) =>
-          setAmount({
-            amountOne: amountWithRatio(v, spotPrice, true),
-            amountTwo: v,
-          })
-        }
+        onChange={(v) => {
+          if (isPoolEmpty) {
+            setAmount((state) => ({
+              ...state,
+              amountTwo: v,
+            }));
+          } else {
+            setAmount({
+              amountOne: v.div(quoteAmount).multipliedBy(baseAmount),
+              amountTwo: v, // amountTwo / Pool.amountTwo = RATIO
+            });
+          }
+        }}
         assetDropdownItems={assetOptions}
         label={"Token 2"}
       />
@@ -198,6 +215,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
           pool={pool}
           input={[leftConfig.asset, rightConfig.asset]}
           amounts={[amountOne, amountTwo]}
+          simulated={simulated}
         />
       ) : null}
 

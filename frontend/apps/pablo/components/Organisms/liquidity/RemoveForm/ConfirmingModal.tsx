@@ -92,10 +92,11 @@ export const ConfirmingModal: FC<ConfirmingModalProps> = ({
             setConfirming(true);
           },
           (txHash: string, _events) => {
-            console.log("Finalized ", txHash);
             enqueueSnackbar("Liquidity: removed", {
               variant: "success",
               url: subscanExtrinsicLink(DEFAULT_NETWORK_ID, txHash),
+              persist: true,
+              isClosable: true,
             });
             setUiState({ isConfirmingModalOpen: false });
             setConfirming(false);
@@ -198,7 +199,9 @@ export const ConfirmingModal: FC<ConfirmingModalProps> = ({
             mt={4}
             label={`Price`}
             BalanceProps={{
-              balance: `1 ${quoteAsset.getSymbol()} = ${price1} ${baseAsset.getSymbol()}`,
+              balance: `1 ${quoteAsset.getSymbol()} = ${price1.toFormat(
+                quoteAsset.getDecimals(DEFAULT_NETWORK_ID)
+              )} ${baseAsset.getSymbol()}`,
               BalanceTypographyProps: {
                 variant: "body1",
               },
@@ -209,7 +212,9 @@ export const ConfirmingModal: FC<ConfirmingModalProps> = ({
             mt={2}
             label=""
             BalanceProps={{
-              balance: `1 ${baseAsset.getSymbol()} = ${price2} ${quoteAsset.getSymbol()}`,
+              balance: `1 ${baseAsset.getSymbol()} = ${price2.toFormat(
+                baseAsset.getDecimals(DEFAULT_NETWORK_ID)
+              )} ${quoteAsset.getSymbol()}`,
               BalanceTypographyProps: {
                 variant: "body1",
               },

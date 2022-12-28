@@ -2,15 +2,24 @@ import { useCallback, useEffect, useState } from "react";
 import BigNumber from "bignumber.js";
 import useStore from "@/store/useStore";
 import { PoolConfig } from "@/store/pools/types";
+import { getSubAccount } from "@/defi/utils/pablo/getSubAccount";
+import { useParachainApi } from "substrate-react";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { Asset } from "shared";
 
-export function useLiquidity(liquidityPool: PoolConfig | undefined): {
+export function useLiquidity(liquidityPool: PoolConfig | undefined | null): {
   baseAmount: BigNumber;
   quoteAmount: BigNumber;
+  baseAsset: Asset | undefined;
+  quoteAsset: Asset | undefined;
 } {
   const { substrateTokens } = useStore();
   const { tokens, hasFetchedTokens } = substrateTokens;
   const [baseAmount, setBaseAmount] = useState(new BigNumber(0));
   const [quoteAmount, setQuoteAmount] = useState(new BigNumber(0));
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const [baseAsset, setBaseAsset] = useState<Asset | undefined>(undefined);
+  const [quoteAsset, setQuoteAsset] = useState<Asset | undefined>(undefined);
 
   const reset = useCallback(() => {
     setBaseAmount(new BigNumber(0));
@@ -18,7 +27,7 @@ export function useLiquidity(liquidityPool: PoolConfig | undefined): {
   }, []);
 
   useEffect(() => {
-    if (!liquidityPool || !hasFetchedTokens) {
+    if (!liquidityPool || !hasFetchedTokens || !parachainApi) {
       reset();
       return;
     }
@@ -34,10 +43,15 @@ export function useLiquidity(liquidityPool: PoolConfig | undefined): {
       (asset) => asset.getPicassoAssetId()?.toString() === poolPair[1]
     );
 
-    const accountId = liquidityPool.config.owner;
+    const accountId = getSubAccount(
+      parachainApi,
+      liquidityPool.poolId.toString()
+    );
     if (baseAsset) baseAsset.balanceOf(accountId).then(setBaseAmount);
     if (quoteAsset) quoteAsset.balanceOf(accountId).then(setQuoteAmount);
-  }, [liquidityPool, tokens, reset, hasFetchedTokens]);
+    setBaseAsset(baseAsset);
+    setQuoteAsset(quoteAsset);
+  }, [liquidityPool, tokens, reset, hasFetchedTokens, parachainApi]);
 
-  return { baseAmount, quoteAmount };
+  return { baseAmount, quoteAmount, baseAsset, quoteAsset };
 }

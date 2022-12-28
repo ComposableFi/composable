@@ -23,7 +23,7 @@ import { PoolConfig } from "@/store/createPool/types";
 import { InputConfig } from "@/components/Organisms/liquidity/AddForm/types";
 import { useAddLiquidity } from "@/defi/hooks";
 import useStore from "@/store/useStore";
-import { getPriceAndRatio, getStats, GetStatsReturn } from "@/defi/utils";
+import { getStats, GetStatsReturn } from "@/defi/utils";
 import { usePoolSpotPrice } from "@/defi/hooks/pools/usePoolSpotPrice";
 
 export interface SupplyModalProps {
@@ -51,6 +51,11 @@ export const ConfirmSupplyModal: FC<SupplyModalProps & ModalProps> = ({
   const poolId = pool.poolId.toString();
   const [assetOne, assetTwo] = inputConfig.map((input) => input.asset);
   const { spotPrice } = usePoolSpotPrice(pool, [assetOne, assetTwo]);
+  const totalIssued = useStore((store) => store.pools.totalIssued);
+
+  const shareOfPool = expectedLP
+    .div(totalIssued[pool.poolId.toString()].plus(expectedLP))
+    .multipliedBy(100);
 
   const onConfirmSupply = useAddLiquidity({
     selectedAccount,
@@ -75,14 +80,13 @@ export const ConfirmSupplyModal: FC<SupplyModalProps & ModalProps> = ({
   }, [isPoolsLoaded, pool]);
 
   if (stats === null) return null;
-
-  const { shareOfPool } = getPriceAndRatio(
-    stats,
-    assetOne,
-    amountOne,
-    amountTwo,
-    assetTwo
-  );
+  const twoPerOne = BigNumber(1).div(spotPrice).isFinite()
+    ? BigNumber(1).div(spotPrice).toFixed(4)
+    : "0.0000";
+  const onePerTwo =
+    spotPrice.isFinite() && !spotPrice.isNaN()
+      ? spotPrice.toFormat(4)
+      : "0.0000";
 
   return (
     <Modal
@@ -162,9 +166,7 @@ export const ConfirmSupplyModal: FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label={`Price`}
           BalanceProps={{
-            balance: `1 ${assetOne?.getSymbol()} = ${spotPrice.toFormat(
-              4
-            )} ${assetTwo?.getSymbol()}`,
+            balance: `1 ${assetOne?.getSymbol()} = ${twoPerOne} ${assetTwo?.getSymbol()}`,
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -175,9 +177,7 @@ export const ConfirmSupplyModal: FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label=""
           BalanceProps={{
-            balance: `1 ${assetTwo?.getSymbol()} = ${new BigNumber(1)
-              .div(spotPrice)
-              .toFormat(4)} ${assetOne?.getSymbol()}`,
+            balance: `1 ${assetTwo?.getSymbol()} = ${onePerTwo} ${assetOne?.getSymbol()}`,
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -188,7 +188,7 @@ export const ConfirmSupplyModal: FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label={`Share of pool`}
           BalanceProps={{
-            balance: `${shareOfPool.toFixed()}%`,
+            balance: `${shareOfPool.toFixed(4)}%`,
             BalanceTypographyProps: {
               variant: "body1",
             },
