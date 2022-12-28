@@ -78,7 +78,10 @@ Liquidity Programs Multisig : 5ytrBrTBma4kKfmEXGoKGMVjfyTnKgpvXaiwwCbXCbdZQK25
 
 Treasury Pallet for accruing fees: https://polkadot.js.org/apps/#/treasury
 
+
 ### Protocol Controlled Addresses
+
+
 
 #### Crowdloan Pallet Funds
 
@@ -93,15 +96,16 @@ will unlock based on the vesting schedule specified on the PICA token distributi
 For more on how the vesting pallet works, 
 please read: [https://github.com/paritytech/substrate/blob/master/frame/vesting/src/lib.rs.](https://github.com/paritytech/substrate/blob/master/frame/vesting/src/lib.rs)
 
-#### State of PICA Supply as of November 25th, 2022
 
-- Circulating Supply: N/A
+#### State of PICA Supply as of December 28th, 2022
+
+- Circulating Supply: At most currently ~15% of Total supply. 
 - Total Supply: 10 Billion
 - Gross Inflation: N/A
 - Net Inflation: N/A
 - Burnt Fees: N/A
 
-The PICA token generation event (TGE) is expected to occur within Q4 2022. 
+The PICA token generation event (TGE) occured on December 28th, 2022 at block number 1,444,176 on our chain. 
 Total PICA supply at this time is 10 billion, which is the genesis supply of PICA. 
 Additional PICA token distributions, inflation, etc. will be reported here once PICA goes into circulation after the TGE.
 
@@ -109,17 +113,27 @@ Additional PICA token distributions, inflation, etc. will be reported here once 
 
 #### Historical Token Release Since Network Launch
 
-No tokens are presently circulating. Crowdloan tokens will be released for use after release 2, 
-and will be half of the total crowdloan contribution. These tokens will be considered circulating. 
-No other tokens will be considered circulating unless approved by protocol governance.
+As per the tokeneconomics, half of the crowdloan rewards are now available, and the locked portion will continue vesting according to the vesting schedule. The unlocked tokens are considered circulating.
+
+The treasury has seeded QA, testing stages, and operational wallets: 
+
+5wiDStfPBJDhzJmkNqnjsbAmunqbSb8h1JobZV7FiMzgEmZu
+
+HCMDYY3ittCoNQEtZV9XAxMQkC6YYKgC6cxZuJkAdikhuqQ
+
+5w53mgBc2w2kNQZgFBaYT5h79cQQNfv8vUuoa85zUe5VxBvQ
+
+No other tokens will be considered circulating unless approved by protocol governance. 
+
 
 ## Glossary
 
 - **Circulating Supply**: 
   Circulating supply refers to all tokens that are held in accounts 
   outside of the non-circulating Composable and protocol-controlled addresses listed above.
-    - Circulating supply is presently 0 but will include a portion of crowdloan funds released to users. 
-      No other multisig wallets or tokens will be considered circulating unless voted upon by protocol governance to become circulating.
+    - Circulating supply is currently the unvested tokens associated with the crowdloan rewards. 
+      No other multisig wallets or tokens will be considered circulating unless voted upon by protocol governance to become circulating, unless otherwise above.
+
 - **Total Supply**: 
   Total supply refers to the number of coins or tokens that currently exist and are either in circulation or locked somehow. 
   It is the sum of coins that were already minted (or issued) minus the total number of coins that were burned or destroyed. 
