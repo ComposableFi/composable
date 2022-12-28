@@ -5,6 +5,7 @@ import { Box, BoxProps } from "@mui/material";
 import BigNumber from "bignumber.js";
 import millify from "millify";
 import { Asset } from "shared";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 export type PreviewDetailsProps = {
   token1: Asset | undefined;
@@ -42,7 +43,9 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
       <Label
         mt={3}
         BalanceProps={{
-          balance: `${millify(expectedReceiveAmountToken1.toNumber())}`,
+          balance: expectedReceiveAmountToken1.toFormat(
+            token1?.getDecimals(DEFAULT_NETWORK_ID)
+          ),
           BalanceTypographyProps: {
             variant: "body1",
           },
@@ -57,7 +60,9 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
       <Label
         mt={3}
         BalanceProps={{
-          balance: `${millify(expectedReceiveAmountToken2.toNumber())}`,
+          balance: expectedReceiveAmountToken2.toFormat(
+            token2?.getDecimals(DEFAULT_NETWORK_ID)
+          ),
           BalanceTypographyProps: {
             variant: "body1",
           },
@@ -73,7 +78,9 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
         mt={4}
         label={`Price`}
         BalanceProps={{
-          balance: `1 ${token2?.getSymbol()} = ${price2} ${token1?.getSymbol()}`,
+          balance: `1 ${token2?.getSymbol()} = ${price2.toFormat(
+            token1?.getDecimals(DEFAULT_NETWORK_ID) || 12
+          )} ${token1?.getSymbol()}`,
           BalanceTypographyProps: {
             variant: "body2",
           },
@@ -84,7 +91,9 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
         mt={2}
         label=""
         BalanceProps={{
-          balance: `1 ${token1?.getSymbol()} = ${price1} ${token2?.getSymbol()}`,
+          balance: `1 ${token1?.getSymbol()} = ${price1.toFormat(
+            token2?.getDecimals(DEFAULT_NETWORK_ID) || 12
+          )} ${token2?.getSymbol()}`,
           BalanceTypographyProps: {
             variant: "body2",
           },

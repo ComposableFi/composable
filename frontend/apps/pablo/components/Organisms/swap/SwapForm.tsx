@@ -19,6 +19,7 @@ import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { SettingsModalHandler } from "./SettingsModalHandler";
 import { SwapVertAsset } from "@/components/Organisms/swap/SwapVertAsset";
 import { SwapButton } from "@/components/Organisms/swap/SwapButton";
+import BigNumber from "bignumber.js";
 
 const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
@@ -96,7 +97,9 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
           maxValue={balance1}
           setValid={setAssetOneInputValid}
           noBorder
-          value={assetOneAmount}
+          value={assetOneAmount.decimalPlaces(
+            selectedAssetOne?.getDecimals(DEFAULT_NETWORK_ID) || 12
+          )}
           onMouseDown={() => {
             setInputMode(1);
           }}
@@ -172,7 +175,9 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
           maxValue={balance2}
           setValid={setAssetTwoInputValid}
           noBorder
-          value={assetTwoAmount}
+          value={assetTwoAmount.decimalPlaces(
+            selectedAssetTwo?.getDecimals(DEFAULT_NETWORK_ID) || 12
+          )}
           onMouseDown={() => {
             setInputMode(2);
           }}
@@ -255,9 +260,11 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
               {selectedAssetOne.getSymbol()}
             </Typography>
             <Tooltip
-              title={`1 ${selectedAssetOne?.getSymbol()} = ${spotPrice.toFixed(
-                DEFAULT_UI_FORMAT_DECIMALS
-              )} ${selectedAssetTwo.getSymbol()}`}
+              title={`1 ${selectedAssetOne?.getSymbol()} = ${new BigNumber(1)
+                .div(spotPrice)
+                .toFixed(
+                  DEFAULT_UI_FORMAT_DECIMALS
+                )} ${selectedAssetTwo.getSymbol()}`}
               placement="top"
             >
               <InfoOutlined sx={{ color: theme.palette.primary.main }} />

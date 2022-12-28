@@ -1,6 +1,10 @@
 import { Asset } from "shared";
 import { Option } from "@/components/types";
-import { calculateOutGivenIn, DEFAULT_NETWORK_ID } from "@/defi/utils";
+import {
+  calculateInGivenOut,
+  calculateOutGivenIn,
+  DEFAULT_NETWORK_ID,
+} from "@/defi/utils";
 import { usePrevious } from "@/hooks/usePrevious";
 import { useAppSettingsSlice } from "@/store/appSettings/slice";
 import { useAssetBalance } from "@/defi/hooks";
@@ -191,6 +195,7 @@ export function useSwaps({
     asset: baseAsset,
     value: new BigNumber(0),
   });
+
   const [slippageAmount, setSlippageAmount] = useState(new BigNumber(0));
   const [feeCharged, setFeeCharged] = useState(new BigNumber(0));
 
@@ -224,52 +229,57 @@ export function useSwaps({
           ? baseAsset
           : quoteAsset;
       if (sideUpdated === "quote") {
-        const toAmount = calculateOutGivenIn(
+        const feeCharged = (
+          amount.gt(balance1) ? balance1 : amount
+        ).multipliedBy(feePercentage / 100);
+        const amountIn = (amount.gt(balance1) ? balance1 : amount).minus(
+          feeCharged
+        );
+        const amountOut = calculateOutGivenIn(
           tokenBaseAmount,
           tokenQuoteAmount,
-          amount.gt(balance1) ? balance1 : amount,
+          amountIn,
           new BigNumber(5),
           new BigNumber(5)
         );
 
-        const feeChargedAmount = toAmount.multipliedBy(feePercentage / 100);
-        const slippageAmount = toAmount.multipliedBy(slippage / 100);
-        minReceive = toAmount.minus(slippageAmount.plus(feeChargedAmount));
+        const slippageAmount = amountOut.multipliedBy(slippage / 100);
+        minReceive = amountOut.minus(slippageAmount);
         setMinimumReceived({
           asset: tokenBaseAsset,
           value: minReceive,
         });
-        setFeeCharged(feeChargedAmount);
+        setFeeCharged(feeCharged);
         setSlippageAmount(slippageAmount);
         setTokenAmounts({
           assetOneAmount: amount.gt(balance1) ? balance1 : amount,
-          assetTwoAmount: toAmount.minus(feeChargedAmount),
+          assetTwoAmount: amountOut,
         });
       } else {
-        // INPUT mode 2 = token2 change, base change
-        // MinReceive for baseChange
-
-        const fromAmount = calculateOutGivenIn(
-          tokenQuoteAmount,
+        const amountOut = amount.gt(balance1) ? balance1 : amount;
+        const amountIn = calculateInGivenOut(
           tokenBaseAmount,
-          amount,
+          tokenQuoteAmount,
+          amountOut,
           new BigNumber(5),
           new BigNumber(5)
         );
-
-        const feeChargedAmount = fromAmount.multipliedBy(feePercentage / 100);
-        const slippageAmount = fromAmount.multipliedBy(slippage / 100);
-        minReceive = fromAmount.minus(slippageAmount.plus(feeChargedAmount));
+        const slippageAmount = amountOut.multipliedBy(slippage / 100);
+        const assetOneAmount = amountIn.div(
+          new BigNumber(1).minus(feePercentage / 100)
+        );
+        const feeCharged = assetOneAmount.multipliedBy(feePercentage / 100);
+        minReceive = amountOut.minus(slippageAmount);
         setTokenAmounts({
-          assetOneAmount: fromAmount.minus(feeChargedAmount),
+          assetOneAmount: assetOneAmount,
           assetTwoAmount: amount,
         });
 
         setMinimumReceived({
           value: minReceive,
-          asset: tokenQuoteAsset,
+          asset: tokenBaseAsset,
         });
-        setFeeCharged(feeChargedAmount);
+        setFeeCharged(feeCharged);
         setSlippageAmount(slippageAmount);
       }
     }
@@ -277,8 +287,10 @@ export function useSwaps({
 
   const { spotPrice } = usePoolSpotPrice(
     selectedPool,
-    selectedPool?.config.assets
+    selectedPool?.config.assets,
+    Boolean(selectedAssetOneId === quoteAsset?.getPicassoAssetId()?.toString())
   );
+
   const poolAssets = selectedPool
     ? Object.keys(selectedPool.config.assets)
     : null;

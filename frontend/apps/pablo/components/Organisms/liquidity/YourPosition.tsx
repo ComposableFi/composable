@@ -52,7 +52,8 @@ export const YourPosition: FC<YourPositionProps> = ({
     assetOne,
     amountOne,
     amountTwo,
-    assetTwo
+    assetTwo,
+    expectedLP
   );
 
   return (

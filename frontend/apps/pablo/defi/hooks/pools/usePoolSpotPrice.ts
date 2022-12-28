@@ -8,7 +8,8 @@ import { useMemo } from "react";
 
 export const usePoolSpotPrice = (
   pool: PoolConfig | undefined | null,
-  input: [Asset, Asset] | undefined | null
+  input: [Asset, Asset] | undefined | null,
+  isReversed: boolean = false
 ) => {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   // const [spotPrice, setSpotPrice] = useState<BigNumber>(new BigNumber(0));
@@ -36,16 +37,19 @@ export const usePoolSpotPrice = (
 
   // The below calculation is to not use pricesFor
   const spotPrice = useMemo(() => {
-    return new BigNumber(1).div(
-      calculateOutGivenIn(
-        baseAmount,
-        quoteAmount,
-        new BigNumber(1),
-        new BigNumber(5),
-        new BigNumber(5)
-      )
+    const out = calculateOutGivenIn(
+      baseAmount,
+      quoteAmount,
+      new BigNumber(1),
+      new BigNumber(5),
+      new BigNumber(5)
     );
-  }, [baseAmount, quoteAmount]);
+    if (isReversed) {
+      return new BigNumber(1).div(out);
+    }
+
+    return out;
+  }, [baseAmount, quoteAmount, isReversed]);
   return {
     spotPrice,
   };
