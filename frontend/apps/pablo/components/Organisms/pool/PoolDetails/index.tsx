@@ -1,10 +1,17 @@
-import { Box, BoxProps, Grid } from "@mui/material";
+import {
+  alpha,
+  Box,
+  BoxProps,
+  Grid,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import { TabItem, TabPanel, Tabs } from "@/components";
 import { FC, SyntheticEvent, useState } from "react";
-import { PoolTVLChart } from "./PoolTVLChart";
 import { PoolStatistics } from "./PoolStatistics";
 import { PoolLiquidityPanel } from "./PoolLiquidityPanel";
 import { PoolConfig } from "@/store/pools/types";
+import { HighlightBox } from "@/components/Atoms/HighlightBox";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -32,12 +39,48 @@ export const PoolDetails: FC<PoolDetailsProps> = ({ pool, ...boxProps }) => {
   const handleTabChange = (_: SyntheticEvent, newValue: number) => {
     setTab(newValue);
   };
+  const theme = useTheme();
 
   return (
     <Box {...boxProps}>
       <Grid container spacing={4}>
         <Grid item {...twoColumnPageSize}>
-          <PoolTVLChart poolId={Number(pool.poolId)} />
+          <HighlightBox
+            variant="outlined"
+            sx={{
+              border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+              background: alpha(theme.palette.common.white, 0.05),
+            }}
+          >
+            <Typography variant="h5" textAlign="left" mb={4}>
+              TVL
+            </Typography>
+            <Box
+              sx={{
+                height: theme.spacing(18),
+                minHeight: theme.spacing(18),
+                display: "flex",
+                alignItems: "center",
+                flexDirection: "column",
+              }}
+              gap={2}
+            >
+              <Box
+                sx={{
+                  backgroundColor: alpha(theme.palette.common.white, 0.1),
+                  borderRadius: "8px",
+                  padding: theme.spacing(2),
+                  height: "200px",
+                  display: "flex",
+                  alignItems: "end",
+                }}
+              >
+                <Typography variant="caption" textAlign="left">
+                  Chart will be available once enough data is gathered...
+                </Typography>
+              </Box>
+            </Box>
+          </HighlightBox>
         </Grid>
         <Grid item {...twoColumnPageSize}>
           <PoolStatistics pool={pool} />
