@@ -11,7 +11,6 @@ export function calculator(
   tokenOutAmount: BigNumber;
   feeChargedAmount: BigNumber;
   slippageAmount: BigNumber;
-  minReceive: BigNumber;
 } {
   let tokenOutAmount = new BigNumber(0);
   const slippagePercentage = new BigNumber(slippage).div(100);
@@ -33,25 +32,13 @@ export function calculator(
   let feeChargedAmount = new BigNumber(0);
   feeChargedAmount =
     sideUpdated === "base"
-      ? tokenOutAmount.times(feePercentage)
-      : tokenAmount.times(feePercentage);
-
-  let minReceive = new BigNumber(0);
-  if (sideUpdated === "base") {
-    minReceive = tokenOutAmount
-      .minus(slippageAmount.plus(feeChargedAmount))
-      .times(oneQuoteInBase);
-  } else {
-    minReceive = tokenAmount
-      .minus(slippageAmount.plus(feeChargedAmount))
-      .times(oneQuoteInBase);
-  }
+      ? tokenOutAmount.minus(slippageAmount).times(feePercentage)
+      : tokenAmount.minus(slippageAmount).times(feePercentage);
 
   return {
     feeChargedAmount: feeChargedAmount.dp(formatDecimals),
     slippageAmount: slippageAmount.dp(formatDecimals),
     tokenOutAmount: tokenOutAmount.dp(formatDecimals),
-    minReceive: minReceive.dp(formatDecimals),
   };
 }
 
@@ -105,20 +92,20 @@ export function calculateChangePercent(
  *       );
  *       expectedReducedByFee = expectedAmountOut.minus(BigNumber(resultFee.fee.toString()));
  */
-export const calculateOutGivenIn = function(
+export const calculateOutGivenIn = function (
   Bo: BigNumber,
   Bi: BigNumber,
   Ai: BigNumber,
   Wi: BigNumber,
   Wo: BigNumber
-)
-{
+) {
   const mostInnerBrackets = Bi.div(Bi.plus(Ai));
   const exponent = Wi.div(Wo);
   const toPower = mostInnerBrackets.pow(exponent);
   const subOne = BigNumber(1).minus(toPower);
   const timesBo = Bo.multipliedBy(subOne);
-  return timesBo;
+
+  return new BigNumber(timesBo.decimalPlaces(12).toString());
   //return Bo.mul(new bigint(1).sub(((Bi.div(Bi.add(Ai))).pow(new bigint(Wi/Wo)))))
 };
 
@@ -142,19 +129,17 @@ export const calculateOutGivenIn = function(
  *         );
  *         const expectedReducedByFee = expectedAmountIn.plus(BigNumber(resultFee.fee.toString()));
  */
-export const calculateInGivenOut = function(
+export const calculateInGivenOut = function (
   Bo: BigNumber,
   Bi: BigNumber,
   Ao: BigNumber,
   Wi: BigNumber,
   Wo: BigNumber
-)
-{
+) {
   const mostInnerBrackets = Bo.div(Bo.minus(Ao));
   const exponent = Wo.div(Wi);
   const toPower = mostInnerBrackets.pow(exponent);
   const subOne = toPower.minus(1);
   const timesBi = Bi.multipliedBy(subOne);
-  // return Bi.mul(((Bo.div(Bo.sub(Ao))).pow(new bigint(Wo/Wi))).sub(new bigint(1)))
-  return timesBi;
+  return new BigNumber(timesBi.decimalPlaces(12).toString());
 };

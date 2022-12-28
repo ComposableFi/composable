@@ -84,6 +84,14 @@ export const ConfirmSupplyModal: FC<SupplyModalProps & ModalProps> = ({
     assetTwo
   );
 
+  const onePerTwo = BigNumber(1).div(spotPrice).isFinite()
+    ? BigNumber(1).div(spotPrice).toFixed(4)
+    : "0.0000";
+  const twoPerOne =
+    spotPrice.isFinite() && !spotPrice.isNaN()
+      ? spotPrice.toFormat(4)
+      : "0.0000";
+
   return (
     <Modal
       onClose={() => setUiState({ isConfirmSupplyModalOpen: false })}
@@ -162,9 +170,7 @@ export const ConfirmSupplyModal: FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label={`Price`}
           BalanceProps={{
-            balance: `1 ${assetOne?.getSymbol()} = ${spotPrice.toFormat(
-              4
-            )} ${assetTwo?.getSymbol()}`,
+            balance: `1 ${assetOne?.getSymbol()} = ${twoPerOne} ${assetTwo?.getSymbol()}`,
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -175,9 +181,7 @@ export const ConfirmSupplyModal: FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label=""
           BalanceProps={{
-            balance: `1 ${assetTwo?.getSymbol()} = ${new BigNumber(1)
-              .div(spotPrice)
-              .toFormat(4)} ${assetOne?.getSymbol()}`,
+            balance: `1 ${assetTwo?.getSymbol()} = ${onePerTwo} ${assetOne?.getSymbol()}`,
             BalanceTypographyProps: {
               variant: "body1",
             },
