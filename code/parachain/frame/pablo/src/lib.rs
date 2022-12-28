@@ -217,6 +217,8 @@ pub mod pallet {
 		MinAmountsMustContainAtLeastOneAsset,
 		/// The `assets` map passed to `add_liquidity` must contain at least one asset.
 		MustDepositMinimumOneAsset,
+		/// Cannot swap an asset with itself.
+		CannotSwapSameAsset,
 	}
 
 	#[pallet::config]
@@ -847,6 +849,8 @@ pub mod pallet {
 			min_receive: AssetAmount<Self::AssetId, Self::Balance>,
 			keep_alive: bool,
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
+			ensure!(in_asset.asset_id != min_receive.asset_id, Error::<T>::CannotSwapSameAsset);
+
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			let (amount_out, amount_in, fee, _owner) = match pool {

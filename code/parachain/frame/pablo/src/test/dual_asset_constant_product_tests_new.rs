@@ -188,6 +188,7 @@ mod do_buy {
 mod do_swap {
 	use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 	use composable_traits::dex::{Amm, AssetAmount};
+	use frame_support::assert_noop;
 
 	use super::*;
 
@@ -251,6 +252,32 @@ mod do_swap {
 				Tokens::balance(BTC, &Pablo::account_id(&pool_id)),
 				initial_btc + btc_to_swap.amount
 			)
+		});
+	}
+
+	#[test]
+	fn cannot_swap_same_asset() {
+		new_test_ext().execute_with(|| {
+			process_and_progress_blocks::<Pablo, Test>(1);
+
+			// 50/50 BTC/USDT Pool with a 0.3% fee
+			let pool_id =
+				create_pool_from_config(PoolInitConfiguration::DualAssetConstantProduct {
+					owner: ALICE,
+					assets_weights: dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT),
+					fee: Permill::from_rational::<u32>(3, 1000),
+				});
+
+			assert_noop!(
+				Pablo::swap(
+					Origin::signed(BOB),
+					pool_id,
+					AssetAmount::new(BTC, 128_000),
+					AssetAmount::new(BTC, 0),
+					false
+				),
+				crate::Error::<Test>::CannotSwapSameAsset
+			);
 		});
 	}
 }
