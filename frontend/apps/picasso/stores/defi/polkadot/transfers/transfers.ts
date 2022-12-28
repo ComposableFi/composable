@@ -259,6 +259,7 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
           transferExtrinsic === null ||
           get().transfers.destinationMultiLocation === null
         ) {
+          console.log("no multi asset or transferExtrinsic or location");
           return; // bail if required params are not available.
         }
 
@@ -315,6 +316,7 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
             },
           });
           const feeAssetItem = api.createType("u32", 0); // First item in the list.
+
           const args = [
             get().transfers.destinationMultiLocation,
             beneficiary,
@@ -324,6 +326,35 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
           ];
 
           return transferExtrinsic(...args) as SubmittableExtrinsic<"promise">;
+        }
+
+        if (
+          get().transfers.networks.from === "picasso" &&
+          get().transfers.networks.to === "statemine"
+        ) {
+          const fee = api.createType("XcmVersionedMultiAsset", {
+            V1: api.createType("XcmV1MultiAsset", {
+              id: api.createType("XcmV1MultiassetAssetId", {
+                Concrete: api.createType("XcmV1MultiLocation", {
+                  parents: api.createType("u8", 1),
+                  interior: api.createType(
+                    "XcmV1MultilocationJunctions",
+                    "Here"
+                  ),
+                }),
+              }),
+              fun: api.createType("XcmV1MultiassetFungibility", {
+                Fungible: api.createType("Compact<u128>", 10000000000),
+              }),
+            }),
+          });
+
+          return transferExtrinsic(
+            get().transfers.multiAsset,
+            fee,
+            get().transfers.destinationMultiLocation,
+            api.createType("u64", 90000000000)
+          );
         }
 
         // Else state where from is Picasso
