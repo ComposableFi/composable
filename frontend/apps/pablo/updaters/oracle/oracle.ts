@@ -11,7 +11,7 @@ import BigNumber from "bignumber.js";
 function coinGeckoApiUrl(): string {
   switch (process.env.NODE_ENV) {
     case "production":
-      return "https://pro-api.coingecko.com/api/v3/simple/price";
+      return "https://api.coingecko.com/api/v3/simple/price";
     default:
       return "https://api.coingecko.com/api/v3/simple/price";
   }
