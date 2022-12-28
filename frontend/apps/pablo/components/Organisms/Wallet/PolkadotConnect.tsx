@@ -85,6 +85,7 @@ export const PolkadotConnect: FC = () => {
       isEthereumWalletActive={false} // TODO mark EVM related stuff as optional.
       onConnectEthereumWallet={() => Promise.resolve()}
       onDisconnectEthereum={() => Promise.resolve()}
+      hideEth={true}
     />
   );
 };

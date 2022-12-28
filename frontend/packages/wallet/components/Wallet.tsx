@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { ConnectionStatus } from "./ConnectionStatus";
 import { ConnectionModal } from "./ConnectionModal";
 import { WalletViewModal } from "./WalletViewModal";
@@ -34,6 +34,7 @@ export type WalletProps = {
   supportedEthereumWallets: Array<EthereumWallet>;
   supportedPolkadotWallets: Array<PolkadotWallet>;
   connectedAccountNativeBalance: BigNumber;
+  hideEth?: boolean;
 };
 
 export const Wallet: FC<WalletProps> = ({
@@ -53,6 +54,7 @@ export const Wallet: FC<WalletProps> = ({
   connectedAccountNativeBalance,
   connectedWalletTransactions,
   ethereumConnectorInUse,
+  hideEth,
 }) => {
   const label =
     isEthereumWalletActive || polkadotExtensionStatus === "connected"
@@ -63,6 +65,22 @@ export const Wallet: FC<WalletProps> = ({
   const [walletConnectStep, setWalletConnectStep] = useState(
     WalletConnectStep.SelectNetwork
   );
+
+  useEffect(() => {
+    const openWalletModal = () => {
+      if (polkadotExtensionStatus === "connected") {
+        setIsOpenWalletViewModal(true);
+      } else {
+        setIsOpenConnectionModal(true);
+      }
+    };
+
+    document.addEventListener("WalletConnect", openWalletModal, {
+      passive: true,
+    });
+
+    return () => document.removeEventListener("WalletConnect", openWalletModal);
+  }, []);
 
   const selectedPolkadotWallet = supportedPolkadotWallets.find((x) => {
     return x.walletId === localStorage.getItem("wallet-id");
@@ -88,6 +106,7 @@ export const Wallet: FC<WalletProps> = ({
         isEthereumActive={isEthereumWalletActive}
         isPolkadotActive={polkadotExtensionStatus === "connected"}
         ownedAssets={[]}
+        hideEth={hideEth}
         blockchainNetworksSupported={blockchainNetworksSupported}
       />
 
