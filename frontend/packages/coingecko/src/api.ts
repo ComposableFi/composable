@@ -12,7 +12,7 @@ function coinGeckoApiUrl(): string {
     ),
     either.fold(
       (v) => v,
-      () => "https://pro-api.coingecko.com/api/v3/simple/price"
+      () => "https://api.coingecko.com/api/v3/simple/price"
     )
   );
 }
