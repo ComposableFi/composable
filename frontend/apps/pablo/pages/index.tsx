@@ -19,7 +19,10 @@ const Home: NextPage = () => {
       <Container maxWidth="lg">
         <Box mb={25}>
           <Box textAlign="center">
-            <PageTitle title="Overview" />
+            <PageTitle
+              title="Overview"
+              subtitle="Visualize general stats, your portfolio and your open positions."
+            />
           </Box>
 
           <Grid container>
