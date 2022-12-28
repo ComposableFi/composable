@@ -44,7 +44,7 @@ export const PoolDetails: FC<PoolDetailsProps> = ({ pool, ...boxProps }) => {
   return (
     <Box {...boxProps}>
       <Grid container spacing={4}>
-        <Grid item {...twoColumnPageSize}>
+        <Grid item xs={12} sm={6} md={8}>
           <HighlightBox
             variant="outlined"
             sx={{
@@ -71,7 +71,7 @@ export const PoolDetails: FC<PoolDetailsProps> = ({ pool, ...boxProps }) => {
             </Box>
           </HighlightBox>
         </Grid>
-        <Grid item {...twoColumnPageSize}>
+        <Grid item xs={12} sm={6} md={4}>
           <PoolStatistics pool={pool} />
         </Grid>
       </Grid>
