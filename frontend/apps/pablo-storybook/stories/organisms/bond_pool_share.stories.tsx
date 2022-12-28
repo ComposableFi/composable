@@ -51,4 +51,5 @@ Default.args = {
     new Asset("", "", "", "pica", undefined),
     new Asset("", "", "", "ksm", undefined),
   ],
+  simulated: new BigNumber(0),
 };

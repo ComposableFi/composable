@@ -76,9 +76,11 @@ export const PoolShare: FC<PoolShareProps> = ({
       : "0.0000";
 
   const totalIssued = useStore((store) => store.pools.totalIssued);
+  const poolTotalIssued =
+    totalIssued[pool.poolId.toString()] ?? new BigNumber(0);
 
   const shareOfPool = simulated
-    .div(totalIssued[pool.poolId.toString()].plus(simulated))
+    .div(poolTotalIssued.plus(simulated))
     .multipliedBy(100);
 
   return (
