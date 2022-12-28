@@ -1,8 +1,7 @@
 const config = {
   picassoAppUrl: "https://app.picasso.xyz",
-  applicationName: "Composable Finance Pablo DEX",
-  appDescription:
-    "The decentralized exchange for crosschain liquidity in DotSama",
+  applicationName: "Pablo | Composable Finance",
+  appDescription: "The community owned substrate-native DEX on Kusama",
   appUrl: "app.pablo.finance",
   twitterHandle: "@picasso_network",
 } as const;
