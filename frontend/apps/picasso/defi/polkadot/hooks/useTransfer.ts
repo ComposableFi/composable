@@ -81,7 +81,8 @@ export const useTransfer = () => {
               closeSnackbar,
               snackbarKey,
               enqueueSnackbar,
-              txHash
+              txHash,
+              from
             );
           } else {
             closeSnackbar(snackbarKey);
