@@ -1,12 +1,5 @@
 import type { NextPage } from "next";
-import {
-  alpha,
-  Box,
-  Container,
-  Grid,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { Box, Container, Grid, Typography, useTheme } from "@mui/material";
 import { PageTitle } from "@/components";
 import { useDotSamaContext } from "substrate-react";
 import { ConnectWalletFeaturedBox } from "@/components/Organisms/ConnectWalletFeaturedBox";
@@ -62,15 +55,15 @@ const Home: NextPage = () => {
                   >
                     <Box
                       sx={{
-                        backgroundColor: alpha(theme.palette.common.white, 0.1),
-                        borderRadius: "8px",
-                        padding: theme.spacing(2),
-                        height: "200px",
+                        height: theme.spacing(20),
+                        minHeight: theme.spacing(20),
                         display: "flex",
-                        alignItems: "end",
+                        alignItems: "center",
+                        flexDirection: "column",
                       }}
+                      gap={2}
                     >
-                      <Typography variant="caption" textAlign="left">
+                      <Typography variant="body2" textAlign="left">
                         Chart will be available once enough data is gathered...
                       </Typography>
                     </Box>
@@ -92,20 +85,9 @@ const Home: NextPage = () => {
                     }}
                     gap={2}
                   >
-                    <Box
-                      sx={{
-                        backgroundColor: alpha(theme.palette.common.white, 0.1),
-                        borderRadius: "8px",
-                        padding: theme.spacing(2),
-                        height: "200px",
-                        display: "flex",
-                        alignItems: "end",
-                      }}
-                    >
-                      <Typography variant="caption" textAlign="left">
-                        Chart will be available once enough data is gathered...
-                      </Typography>
-                    </Box>
+                    <Typography variant="body2" textAlign="left">
+                      Chart will be available once enough data is gathered...
+                    </Typography>
                   </Box>
                 </HighlightBox>
               </Grid>

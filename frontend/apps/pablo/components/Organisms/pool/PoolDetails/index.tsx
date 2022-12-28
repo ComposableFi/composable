@@ -65,20 +65,9 @@ export const PoolDetails: FC<PoolDetailsProps> = ({ pool, ...boxProps }) => {
               }}
               gap={2}
             >
-              <Box
-                sx={{
-                  backgroundColor: alpha(theme.palette.common.white, 0.1),
-                  borderRadius: "8px",
-                  padding: theme.spacing(2),
-                  height: "200px",
-                  display: "flex",
-                  alignItems: "end",
-                }}
-              >
-                <Typography variant="caption" textAlign="left">
-                  Chart will be available once enough data is gathered...
-                </Typography>
-              </Box>
+              <Typography variant="body1" textAlign="left">
+                Chart will be available once enough data is gathered...
+              </Typography>
             </Box>
           </HighlightBox>
         </Grid>
