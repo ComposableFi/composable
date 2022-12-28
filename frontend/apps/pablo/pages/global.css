@@ -20,3 +20,14 @@
 .apexcharts-tooltip.apexcharts-theme-dark.apexcharts-active .y-label {
   font-weight: bold;
 }
+
+ol {
+  padding-inline-start: 35px;
+}
+
+li::marker {
+  text-indent: 10px !important;
+  text-align: start !important;
+  text-align-last: start !important;
+  letter-spacing: -0.1em;
+}

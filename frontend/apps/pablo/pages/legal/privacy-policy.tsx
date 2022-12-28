@@ -20,9 +20,19 @@ const Link = ({ children }: { children: string }) => {
   );
 };
 
+const BoldTitle = ({ children }: { children: string }) => {
+  return (
+    <>
+      <br />
+      <span style={{fontWeight: 'bold', paddingLeft: '15px'}}>{children}</span>
+      <br />
+    </>
+  );
+};
+
 const PrivacyPolicy: NextPage = () => {
   return (
-    <Default breadcrumbs={[<></>]}>
+    <Default breadcrumbs={[]}>
       <div style={{ maxWidth: "1032px", margin: "0 auto" }}>
         <div style={{ marginBottom: "48px" }}>
           <Typography variant="h4" fontWeight="bold">
@@ -32,6 +42,7 @@ const PrivacyPolicy: NextPage = () => {
         <Typography
           fontWeight="normal"
           fontSize="14px"
+          style={{ cursor: 'default', pointerEvents: 'auto'}}
           color={styles.titanium_06}
           marginBottom={12}
         >
@@ -59,12 +70,13 @@ const PrivacyPolicy: NextPage = () => {
           with the Services as described in the Terms of Use available at{" "}
           <Link>app.pablo.finance/terms-of-use</Link>.
           <br />
+          <br />
           Personal Data, as defined under Saint Lucia’s Data Protection Act,
           refers to information about a data subject that is recorded in any
           form including:
           <br />
           <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
+          <ol type='a' style={{ margin: "0px 0px 0px -15px" }}>
             <li>
               information relating to the race, national or ethnic origin,
               religion, age, sexual orientation, sexual life or marital status
@@ -107,19 +119,20 @@ const PrivacyPolicy: NextPage = () => {
           activities described in this Privacy Policy, of your Personal Data and
           other information. If you do not agree with the terms of this Privacy
           Policy, you should immediately discontinue the use of the Services and
-          refrain from accessing the Site. We reserve the right to revise and
+          refrain from accessing the Site.
+          <br /><br />We reserve the right to revise and
           update this Privacy Policy at any time. Any changes will be effective
           immediately upon our posting of the latest version of the Privacy
           Policy in the Site. Your continued use of the Services indicates your
           consent to the latest version of the Privacy Policy then published or
           posted.
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>
-              Collected Information
-              <br />
-              When you interact with our Site and/or avail of our Services, we
-              may collect:
-            </li>{" "}
+          <br />
+          <BoldTitle>1. Collected Information</BoldTitle>
+          <br />
+          When you interact with our Site and/or avail of our Services, we may collect:
+          <br />
+          <br />
+          <ol type='a' style={{ margin: "0px 0px 0px -15px" }}>
             <li>
               Log Files: This includes, but is not limited to, the files that
               record events that occur in connection with your use of the Site.
@@ -197,14 +210,13 @@ const PrivacyPolicy: NextPage = () => {
           information regarding any on-site behavior or actions taken; and (3)
           collect data or information from your navigation and/or interaction in
           the Site.
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>Collection of Personal Data</li>
-          </ol>
+          <br />
+          <BoldTitle>2. Collection of Personal Data</BoldTitle>
           <br />
           Personal Data is collected when you use our Services or when you:
           <br />
           <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
+          <ol type='a' style={{ margin: "0px 0px 0px -15px" }}>
             <li>Deposit cryptocurrency assets</li>
             <li>Make trades</li>
             <li>Withdraw cryptocurrency assets</li>
@@ -212,15 +224,15 @@ const PrivacyPolicy: NextPage = () => {
           <br />
           The is not an exhaustive list of how we collect Personal Data as we
           may also collect Personal Data from other companies or third parties.
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>Services and Features</li>
-          </ol>
+          <br />
+          <BoldTitle>3. Services and Features</BoldTitle>
+          <br />
           The Personal Data we collect is used to provide our Services and the
           Site’s Features as well as maintain and improve our Services as
           described in the Terms of Use. This includes using Personal Data to:
           <br />
           <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
+          <ol type='a' style={{ margin: "0px 0px 0px -15px" }}>
             <li>
               Operate, maintain, customize, measure, and improve our Services;
             </li>
@@ -244,17 +256,17 @@ const PrivacyPolicy: NextPage = () => {
               records.
             </li>
           </ol>
+          <BoldTitle>4. Sharing and Disclosure of Information</BoldTitle>
           <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>Sharing and Disclosure of Information</li>
-          </ol>
           As a matter of principle, we do not sell, rent, exchange, share or
           otherwise disclose your Personal Data to third parties for marketing
           purposes. If we share or disclose information that we collect, we do
           so in accordance with the practices described in this Privacy Policy.
           The categories of parties with whom and instances where we may share
           your information include, but shall not be limited to:
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
+          <br />
+          <br />
+          <ol type='a' style={{ margin: "0px 0px 0px -15px" }}>
             <li>
               Affiliates. We share information with our affiliates and related
               entities, including where they act as our service providers.
@@ -302,12 +314,12 @@ const PrivacyPolicy: NextPage = () => {
               performance of a contract of for the provision of the Services.
             </li>
           </ol>
+          <br />
           Notwithstanding the above, we may share information that does not
           identify you (including information that has been aggregated or
           de-identified), except as otherwise prohibited by applicable law.
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>Additional Disclosure</li>
-          </ol>
+          <br />
+          <BoldTitle>5. Additional Disclosure</BoldTitle>
           <br />
           This Additional Disclosure governs our collection, use and sharing of
           Personal Data that users provide to us to start or complete the
@@ -320,7 +332,7 @@ const PrivacyPolicy: NextPage = () => {
           information which includes, but is not limited to the following:
           <br />
           <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
+          <ol type='a' style={{ margin: "0px 0px 0px -15px" }}>
             <li>Contact details</li>
             <li>IP addresses</li>
             <li>Trading history</li>
@@ -332,10 +344,7 @@ const PrivacyPolicy: NextPage = () => {
           this Additional Disclosure, except as otherwise prohibited by
           applicable law.
           <br />
-          <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>Other Parties</li>
-          </ol>
+          <BoldTitle>6. Other Parties</BoldTitle>
           <br />
           We may integrate technologies operated or controlled by other parties
           into parts of the Services. For example, the Services may include
@@ -355,10 +364,7 @@ const PrivacyPolicy: NextPage = () => {
           provided by the other parties. We encourage you to read and
           familiarize yourself with their privacy policies and terms of use.
           <br />
-          <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>Data Security</li>
-          </ol>
+          <BoldTitle>7. Data Security</BoldTitle>
           <br />
           We implement and maintain reasonable administrative, physical, and
           technical security safeguards to help protect your Personal Data from
@@ -370,10 +376,7 @@ const PrivacyPolicy: NextPage = () => {
           activity on the Pablo protocol relating to any of your network
           addresses or cryptocurrency wallets.
           <br />
-          <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>International Transfer</li>
-          </ol>
+          <BoldTitle>8. International Transfer</BoldTitle>
           <br />
           Information collected through the Services may be transferred to,
           processed, stored, and used in the European Economic Area (“EEA”), the
@@ -385,10 +388,7 @@ const PrivacyPolicy: NextPage = () => {
           Data in the EEA, the UK and other jurisdictions as set out in this
           Privacy Policy.
           <br />
-          <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>Your Rights</li>
-          </ol>
+          <BoldTitle>9. Your Rights</BoldTitle>
           <br />
           Your rights under this Privacy Policy include the right to: (1)
           request access and obtain a copy of your Personal Data; (2) rectify,
@@ -437,20 +437,14 @@ const PrivacyPolicy: NextPage = () => {
           rights in accordance with the applicable data protections laws by
           providing you with the reason(s) for the denial of your request.
           <br />
-          <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>Retention Period</li>
-          </ol>
+          <BoldTitle>10. Retention Period</BoldTitle>
           <br />
           We store and retain Personal Data you have provided for as long as
           necessary for your continued use of the Services, pursuant to your
           contract with us, and in compliance with applicable laws and
           regulations.
           <br />
-          <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>Withdrawal and Deactivation</li>
-          </ol>
+          <BoldTitle>11. Withdrawal and Deactivation</BoldTitle>
           <br />
           If you decide to stop using our Services, or deactivate your account
           (if applicable), all Personal Data or information collected relating
@@ -475,10 +469,7 @@ const PrivacyPolicy: NextPage = () => {
           lawfulness of the collection of your data based on the consent given
           prior to the withdrawal.
           <br />
-          <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>Legal Age</li>
-          </ol>
+          <BoldTitle>12. Legal Age</BoldTitle>
           <br />
           The Services are intended for general audiences and are directed to
           users who are of legal age. Minors who lack the legal capacity under
@@ -488,31 +479,26 @@ const PrivacyPolicy: NextPage = () => {
           information collected from the minor who may have used our Services
           without our knowledge to ensure compliance with applicable laws.
           <br />
+          <BoldTitle>13. Applicable Law and Jurisdiction</BoldTitle>
           <br />
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>
-              Applicable Law and Jurisdiction
-              <br />
-              This Privacy Policy shall be governed by and construed in
-              accordance with the laws of Saint Lucia, without regard to
-              conflict of law principles. Any disputes arising in respect of
-              this Privacy Policy shall be submitted to the exclusive
-              jurisdiction of the courts of Saint Lucia.
-            </li>
-          </ol>
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>
-              Specific Disclosures and Notices
-              <br />
-              Specific Notice to California Residents (“CCPA Notice”)
-              <br />
-              The California Consumer Privacy Act of 2018 (“CCPA”) requires
-              certain businesses to provide a CCPA Notice to explain how a
-              company collects, uses, and shares Personal Data of California
-              residents and the rights and choices offered regarding the
-              handling of such data or information.
-            </li>
-          </ol>
+          This Privacy Policy shall be governed by and construed in
+          accordance with the laws of Saint Lucia, without regard to
+          conflict of law principles. Any disputes arising in respect of
+          this Privacy Policy shall be submitted to the exclusive
+          jurisdiction of the courts of Saint Lucia.
+          <br />
+          <BoldTitle>14. Specific Disclosures and Notices</BoldTitle>
+          <br />
+          <span style={{textDecoration: 'underline', fontWeight: 'bold', paddingLeft: '15px'}}>Specific Notice to California Residents (“CCPA Notice”)</span>
+          <br />
+          <br />
+          The California Consumer Privacy Act of 2018 (“CCPA”) requires
+          certain businesses to provide a CCPA Notice to explain how a
+          company collects, uses, and shares Personal Data of California
+          residents and the rights and choices offered regarding the
+          handling of such data or information.
+          <br />
+          <br />
           <ul style={{ margin: "0px 0px 0px -15px" }}>
             <li>
               Privacy Practices. We will not sell your Personal Data or
@@ -562,8 +548,11 @@ const PrivacyPolicy: NextPage = () => {
               confirming their authority.
             </li>
           </ul>
-          Additional Disclosures for European Union Data Subjects or User We
-          will process your Personal Data for the purposes described above, as
+          <br />
+          <span style={{fontWeight: 'bold', textDecoration: 'underline', paddingLeft: '15px'}}>Additional Disclosures for European Union Data Subjects or User</span>
+          <br />
+          <br />
+          We will process your Personal Data for the purposes described above, as
           applicable. Our justifications and bases for processing your Personal
           Data include: (1) you have given consent to the process to us or our
           Service provides for one or more specific purposes; (2) processing is
@@ -572,6 +561,7 @@ const PrivacyPolicy: NextPage = () => {
           processing is necessary for any legitimate interests pursued by us or
           a third party, and your interests and fundamental rights and freedoms
           do not override those interests.
+          <br />
           <br />
           Your rights under the GDPR include the right to: (1) request access
           and obtain a copy of your Personal Data; (2) request rectification or
@@ -584,6 +574,7 @@ const PrivacyPolicy: NextPage = () => {
           held by your address that may be related to the data we collect is
           beyond our control.
           <br />
+          <br />
           To exercise any of your rights under the GDPR, please contact us at
           legal@composable.finance. We may require additional information from
           you to process your request. Please note that we may retain
@@ -592,13 +583,19 @@ const PrivacyPolicy: NextPage = () => {
           in accordance with our legitimate interests, including to comply with
           our legal obligations, resolve disputes, prevent fraud, and enforce
           our agreements.
-          <ol style={{ margin: "0px 0px 0px -15px" }}>
-            <li>Contact Us</li>
-          </ol>
+          <br />
+          <BoldTitle>15. Contact Us</BoldTitle>
+          <br />
           If you have any requests pursuant to the above provisions, questions
           or comments about this Privacy Policy, our data practices, or our
           compliance with applicable law, please contact us by email at:
-          legal@composable.finance or by mail at: 1st Floor, The Sotheby
+          <a
+            style={{
+              textDecoration: "underline",
+              color: styles.titanium_06,
+            }}
+            href="mailto:legal@composable.finance"
+          >legal@composable.finance</a> or by mail at: 1st Floor, The Sotheby
           Building, Rodney Village, Rodney Bay, LC 04 101, Gros Islet, Saint
           Lucia.
           <br />
