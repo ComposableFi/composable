@@ -142,5 +142,5 @@ export function getPriceAndRatio(
   const ratioB = totalLiquidityB.isZero()
     ? 100
     : amountTwo.div(totalLiquidityB).multipliedBy(100).toNumber();
-  return { shareOfPool: ratioB + ratioA };
+  return { shareOfPool: Math.min(ratioB + ratioA, 100) };
 }

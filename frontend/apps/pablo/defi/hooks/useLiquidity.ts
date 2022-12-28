@@ -7,7 +7,7 @@ import { useParachainApi } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { Asset } from "shared";
 
-export function useLiquidity(liquidityPool: PoolConfig | undefined): {
+export function useLiquidity(liquidityPool: PoolConfig | undefined | null): {
   baseAmount: BigNumber;
   quoteAmount: BigNumber;
   baseAsset: Asset | undefined;

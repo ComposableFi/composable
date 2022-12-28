@@ -87,6 +87,11 @@ export const PoolShare: FC<PoolShareProps> = ({
     assetTwo
   );
 
+  const onePerTwo = BigNumber(1).div(spotPrice).isFinite() ?
+    BigNumber(1).div(spotPrice).toFixed(4) :
+    "0.0000";
+  const twoPerOne = spotPrice.isFinite() && !spotPrice.isNaN() ?
+    spotPrice.toFormat(4) : "0.0000";
   return (
     <Box mt={4} {...rest}>
       <Typography variant="inputLabel">Price and pool share</Typography>
@@ -97,11 +102,11 @@ export const PoolShare: FC<PoolShareProps> = ({
         flexDirection={{ sm: "column", md: "row" }}
       >
         <ItemBox
-          value={spotPrice.toFixed(4)}
+          value={onePerTwo}
           label={`${assetOne.getSymbol()} per ${assetTwo.getSymbol()}`}
         />
         <ItemBox
-          value={BigNumber(1).div(spotPrice).toFixed(4)}
+          value={twoPerOne}
           label={`${assetTwo.getSymbol()} per ${assetOne.getSymbol()}`}
         />
         <ItemBox value={`${shareOfPool.toFixed()}%`} label="Share of pool" />

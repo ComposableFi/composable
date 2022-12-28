@@ -298,8 +298,8 @@ export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
           lpBalance={lpBalance}
           percentage={new BigNumber(debouncedPercentage).div(100)}
           pool={pool}
-          price1={priceOfBase}
-          price2={priceOfQuote}
+          price1={priceOfQuote}
+          price2={priceOfBase}
           baseAsset={token1}
           quoteAsset={token2}
           open={isConfirmingModalOpen}
