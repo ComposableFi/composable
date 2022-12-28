@@ -219,6 +219,8 @@ pub mod pallet {
 		MustDepositMinimumOneAsset,
 		/// Cannot swap an asset with itself.
 		CannotSwapSameAsset,
+		/// Cannot buy an asset with itself.
+		CannotBuyAssetWithItself,
 	}
 
 	#[pallet::config]
@@ -919,6 +921,8 @@ pub mod pallet {
 			out_asset: AssetAmount<Self::AssetId, Self::Balance>,
 			keep_alive: bool,
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
+			ensure!(in_asset_id != out_asset.asset_id, Error::<T>::CannotBuyAssetWithItself);
+
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			let (amount_sent, _owner, fees) = match pool {
