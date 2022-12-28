@@ -7,15 +7,16 @@ import { useMemo } from "react";
 
 export const TVLChart = ({}) => {
   const theme = useTheme();
-  const { chartSeries, setSelectedInterval, selectedInterval, durationLabels } = usePabloHistoricalTotalValueLocked();
+  const { chartSeries, setSelectedInterval, selectedInterval, durationLabels } =
+    usePabloHistoricalTotalValueLocked();
 
   const change = useMemo(() => {
-    if (chartSeries.length === 0) return 0; 
+    if (chartSeries.length === 0) return 0;
 
     const head = chartSeries[0][1];
     const tail = chartSeries[chartSeries.length - 1][1];
-    
-    return ((tail - head) / tail)
+
+    return (tail - head) / tail;
   }, [chartSeries]);
 
   return (
@@ -23,7 +24,9 @@ export const TVLChart = ({}) => {
       <Chart
         height="100%"
         title="TVL"
-        changeTextColor={change < 0 ? theme.palette.error.main : theme.palette.success.main}
+        changeTextColor={
+          change < 0 ? theme.palette.error.main : theme.palette.success.main
+        }
         changeIntroText={`Past 24 hours`}
         changeText={change.toFixed(2)}
         AreaChartProps={{
@@ -35,7 +38,7 @@ export const TVLChart = ({}) => {
         }}
         currentInterval={selectedInterval}
         onIntervalChange={setSelectedInterval}
-        intervals={DEFI_CONFIG.swapChartIntervals.map(x => x.symbol)}
+        intervals={DEFI_CONFIG.swapChartIntervals.map((x) => x.symbol)}
         timeSlots={durationLabels}
       />
     </HighlightBox>

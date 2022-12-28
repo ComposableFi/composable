@@ -1,7 +1,7 @@
 import { TokenDropdownCombinedInput } from "@/components";
 import { amountInputStyle } from "@/components/Organisms/Transfer/transfer-styles";
 import { useStore } from "@/stores/root";
-import { callbackGate, humanBalance } from "shared";
+import { callbackGate } from "shared";
 import { useExistentialDeposit } from "@/defi/polkadot/hooks/useExistentialDeposit";
 import {
   subscribeDefaultTransferToken,
@@ -144,7 +144,7 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
             balanceText: (
               <>
                 <Typography variant="inputLabel" ml={0.5}>
-                  {humanBalance(balance) + " " + tokens[tokenId].symbol}
+                  {balance.toFormat(4) + " " + tokens[tokenId].symbol}
                 </Typography>
               </>
             ),

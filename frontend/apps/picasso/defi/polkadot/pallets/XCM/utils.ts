@@ -4,7 +4,7 @@ import { AnyComponentMap, EnqueueSnackbar, SnackbarKey } from "notistack";
 import { pipe } from "fp-ts/function";
 import { findFirst } from "fp-ts/Array";
 import { boolean, option } from "fp-ts";
-import { subscanExtrinsicLink } from "shared";
+import { subscanExtrinsicLink, SubstrateNetworkId } from "shared";
 
 export function xcmPalletEventParser(
   records: EventRecord[],
@@ -12,7 +12,8 @@ export function xcmPalletEventParser(
   closeSnackbar: (key?: SnackbarKey) => void,
   snackbarKey: SnackbarKey | undefined,
   enqueueSnackbar: EnqueueSnackbar<AnyComponentMap>,
-  txHash: string
+  txHash: string,
+  from: SubstrateNetworkId
 ) {
   pipe(
     records,
@@ -35,7 +36,7 @@ export function xcmPalletEventParser(
           description: "",
           variant: "error",
           isCloseable: true,
-          url: subscanExtrinsicLink("picasso", txHash),
+          url: subscanExtrinsicLink(from, txHash),
         });
       },
       boolean.fold(
@@ -48,7 +49,7 @@ export function xcmPalletEventParser(
               description: "XcmV2TraitsOutcome: Incomplete",
               variant: "error",
               isCloseable: true,
-              url: subscanExtrinsicLink("picasso", txHash),
+              url: subscanExtrinsicLink(from, txHash),
             }
           );
         },
@@ -58,7 +59,7 @@ export function xcmPalletEventParser(
             persist: true,
             variant: "success",
             isCloseable: true,
-            url: subscanExtrinsicLink("picasso", txHash),
+            url: subscanExtrinsicLink(from, txHash),
           });
         }
       )

@@ -1,25 +1,27 @@
 import type { NextPage } from "next";
-import { Box, Container, Grid } from "@mui/material";
+import { Box, Container, Grid, Typography, useTheme } from "@mui/material";
 import { PageTitle } from "@/components";
-import { Statistics } from "@/components/Organisms/overview/Statistics";
 import { useDotSamaContext } from "substrate-react";
 import { ConnectWalletFeaturedBox } from "@/components/Organisms/ConnectWalletFeaturedBox";
 import { WalletBreakdownBox } from "@/components/Organisms/overview/WalletBreakdownBox";
 import { LiquidityProvidersBox } from "@/components/Organisms/overview/LiquidityProvidersBox";
-import { TVLChart } from "@/components/Organisms/overview/TVLChart";
-import { VolumeChart } from "@/components/Organisms/overview/VolumeChart";
 import { PoolLayout } from "@/components/Templates/pools/PoolLayout";
+import { HighlightBox } from "@/components/Atoms/HighlightBox";
 
 const Home: NextPage = () => {
   const { extensionStatus } = useDotSamaContext();
   const connected = extensionStatus === "connected";
+  const theme = useTheme();
 
   return (
     <PoolLayout>
       <Container maxWidth="lg">
         <Box mb={25}>
           <Box textAlign="center">
-            <PageTitle title="Overview" />
+            <PageTitle
+              title="Overview"
+              subtitle="Visualize general stats, your portfolio and your open positions."
+            />
           </Box>
 
           <Grid container>
@@ -33,15 +35,61 @@ const Home: NextPage = () => {
                 />
               </Grid>
             )}
-            <Grid item xs={12} mt={8}>
-              <Statistics />
-            </Grid>
+            <Grid item xs={12} mt={8}></Grid>
             <Grid container spacing={8}>
               <Grid item xs={12} md={6} mt={8}>
-                <TVLChart />
+                <HighlightBox>
+                  <Typography variant="h5" textAlign="left" mb={4}>
+                    Total value locked
+                  </Typography>
+                  <Box
+                    sx={{
+                      height: theme.spacing(20),
+                      minHeight: theme.spacing(20),
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      flexDirection: "column",
+                    }}
+                    gap={2}
+                  >
+                    <Box
+                      sx={{
+                        height: theme.spacing(20),
+                        minHeight: theme.spacing(20),
+                        display: "flex",
+                        alignItems: "center",
+                        flexDirection: "column",
+                      }}
+                      gap={2}
+                    >
+                      <Typography variant="body2" textAlign="left">
+                        Chart will be available once enough data is gathered...
+                      </Typography>
+                    </Box>
+                  </Box>
+                </HighlightBox>
               </Grid>
               <Grid item xs={12} md={6} mt={8}>
-                <VolumeChart />
+                <HighlightBox>
+                  <Typography variant="h5" textAlign="left" mb={4}>
+                    Volume
+                  </Typography>
+                  <Box
+                    sx={{
+                      height: theme.spacing(20),
+                      minHeight: theme.spacing(20),
+                      display: "flex",
+                      alignItems: "center",
+                      flexDirection: "column",
+                    }}
+                    gap={2}
+                  >
+                    <Typography variant="body2" textAlign="left">
+                      Chart will be available once enough data is gathered...
+                    </Typography>
+                  </Box>
+                </HighlightBox>
               </Grid>
             </Grid>
           </Grid>
