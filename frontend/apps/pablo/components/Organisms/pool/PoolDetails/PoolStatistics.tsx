@@ -30,7 +30,7 @@ export const PoolStatistics: FC<PoolDetailsProps> = ({ pool, ...boxProps }) => {
           }}
           gap={2}
         >
-          <Typography variant="body1" textAlign="left">
+          <Typography variant="h6" textAlign="left">
             ${poolTVL.toFormat(2)}
           </Typography>
         </Box>
