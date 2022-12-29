@@ -641,6 +641,7 @@ dependencies = [
 name = "cw-substrate-cli"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "clap",
  "cosmwasm-orchestrate",
  "cosmwasm-std 1.1.9",

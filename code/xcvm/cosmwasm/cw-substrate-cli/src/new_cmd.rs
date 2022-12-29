@@ -1,4 +1,5 @@
 use crate::error::Error;
+use anyhow::anyhow;
 use clap::Args;
 use std::process::Command;
 
@@ -14,65 +15,62 @@ See more at: https://github.com/cargo-generate/cargo-generate
 #[derive(Args, Debug)]
 /// Create a base CosmWasm project.
 pub struct NewCommand {
-    /// Project name
-    #[arg(short, long)]
-    name: Option<String>,
+	/// Project name
+	#[arg(short, long)]
+	name: Option<String>,
 
-    /// Project description
-    #[arg(short, long)]
-    description: Option<String>,
+	/// Project description
+	#[arg(short, long)]
+	description: Option<String>,
 
-    /// Project authors
-    #[arg(short, long)]
-    author: Option<String>,
+	/// Project authors
+	#[arg(short, long)]
+	author: Option<String>,
 }
 
 impl NewCommand {
-    pub fn run(self) -> Result<(), Error> {
-        self.check_if_generate_installed()?;
+	pub fn run(self) -> anyhow::Result<()> {
+		self.check_if_generate_installed()?;
 
-        let mut command = Command::new("cargo");
+		let mut command = Command::new("cargo");
 
-        let _ = command.args([CARGO_GENERATE_COMMAND_NAME, "--git", CARGO_TEMPLATE_GIT]);
+		let _ = command.args([CARGO_GENERATE_COMMAND_NAME, "--git", CARGO_TEMPLATE_GIT]);
 
-        if let Some(name) = self.name {
-            let _ = command.arg("-n").arg(&name);
-        }
+		if let Some(name) = self.name {
+			let _ = command.arg("-n").arg(&name);
+		}
 
-        if let Some(description) = self.description {
-            let _ = command.arg("-d").arg(&format!(
-                "{}={}",
-                CARGO_TEMPLATE_KEY_PROJECT_DESCRIPTION, description
-            ));
-        }
+		if let Some(description) = self.description {
+			let _ = command
+				.arg("-d")
+				.arg(&format!("{}={}", CARGO_TEMPLATE_KEY_PROJECT_DESCRIPTION, description));
+		}
 
-        if let Some(author) = self.author {
-            let _ = command.arg("-d").arg(&format!(
-                "{}={}",
-                CARGO_TEMPLATE_KEY_PROJECT_AUTHORS, author
-            ));
-        }
+		if let Some(author) = self.author {
+			let _ = command
+				.arg("-d")
+				.arg(&format!("{}={}", CARGO_TEMPLATE_KEY_PROJECT_AUTHORS, author));
+		}
 
-        let status = command.status().map_err(|e| Error::Internal(Box::new(e)))?;
+		let status = command.status()?;
 
-        if status.success() {
-            Ok(())
-        } else {
-            Err(Error::ShellCommandFailure)
-        }
-    }
+		if status.success() {
+			Ok(())
+		} else {
+			Err(anyhow!("{}", Error::ShellCommandFailure))
+		}
+	}
 
-    fn check_if_generate_installed(&self) -> Result<(), Error> {
-        if Command::new("cargo")
-            .arg(CARGO_GENERATE_COMMAND_NAME)
-            .arg("-V")
-            .status()
-            .map_err(|e| Error::Internal(Box::new(e)))?
-            .success()
-        {
-            Ok(())
-        } else {
-            Err(Error::ToolNotInstalled(CARGO_GENERATE_HELP_MESSAGE.into()))
-        }
-    }
+	fn check_if_generate_installed(&self) -> anyhow::Result<()> {
+		if Command::new("cargo")
+			.arg(CARGO_GENERATE_COMMAND_NAME)
+			.arg("-V")
+			.status()?
+			.success()
+		{
+			Ok(())
+		} else {
+			Err(anyhow!("{}", Error::ToolNotInstalled(CARGO_GENERATE_HELP_MESSAGE.into())))
+		}
+	}
 }
