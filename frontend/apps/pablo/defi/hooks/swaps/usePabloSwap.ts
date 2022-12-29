@@ -12,12 +12,9 @@ import {
   useSelectedAccount,
   useSigner,
 } from "substrate-react";
-import {
-  SNACKBAR_TYPES,
-  transactionStatusSnackbarMessage,
-} from "../addLiquidity/useAddLiquidity";
+import { SNACKBAR_TYPES } from "../addLiquidity/useAddLiquidity";
 import { PoolConfig } from "@/store/pools/types";
-import { Asset } from "shared";
+import { Asset, subscanExtrinsicLink } from "shared";
 
 type PabloSwapProps = {
   pool: PoolConfig | undefined;
@@ -47,38 +44,29 @@ export function usePabloSwap({
 
   const onTxReady = useCallback(
     (transactionHash: string) => {
-      enqueueSnackbar(
-        transactionStatusSnackbarMessage(
-          swapOrigin,
-          transactionHash,
-          "Initiated"
-        ),
-        SNACKBAR_TYPES.INFO
-      );
+      enqueueSnackbar(`${swapOrigin}: Initiated`, {
+        url: subscanExtrinsicLink(DEFAULT_NETWORK_ID, transactionHash),
+        ...SNACKBAR_TYPES.INFO,
+      });
     },
     [enqueueSnackbar, swapOrigin]
   );
 
   const onTxFinalized = useCallback(
     (transactionHash: string, _eventRecords: any[]) => {
-      enqueueSnackbar(
-        transactionStatusSnackbarMessage(
-          swapOrigin,
-          transactionHash,
-          "Finalized"
-        ),
-        SNACKBAR_TYPES.SUCCESS
-      );
+      enqueueSnackbar(`${swapOrigin}: Finalized`, {
+        url: subscanExtrinsicLink(DEFAULT_NETWORK_ID, transactionHash),
+        ...SNACKBAR_TYPES.SUCCESS,
+      });
     },
     [enqueueSnackbar, swapOrigin]
   );
 
   const onTxError = useCallback(
     (transactionError: string) => {
-      enqueueSnackbar(
-        transactionStatusSnackbarMessage(swapOrigin, transactionError, "Error"),
-        SNACKBAR_TYPES.ERROR
-      );
+      enqueueSnackbar(`${swapOrigin}: Error: ${transactionError}`, {
+        ...SNACKBAR_TYPES.ERROR,
+      });
     },
     [enqueueSnackbar, swapOrigin]
   );
