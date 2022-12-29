@@ -107,6 +107,11 @@ export function useSwaps({
 
   const selectedAssetOne = useAsset(selectedAssetOneId);
   const selectedAssetTwo = useAsset(selectedAssetTwoId);
+  const { spotPrice } = usePoolSpotPrice(
+    selectedPool,
+    selectedPool?.config.assets,
+    Boolean(selectedAssetOneId === quoteAsset?.getPicassoAssetId()?.toString())
+  );
   const [asset1PriceUsd, asset2PriceUsd] = useMemo(() => {
     let asset1Price = new BigNumber(0);
     let asset2Price = new BigNumber(0);
@@ -117,19 +122,25 @@ export function useSwaps({
       ? getOraclePrice(selectedAssetTwo.getSymbol(), "coingecko", "usd")
       : asset2Price;
 
-    if (asset1Price.eq(0) && selectedAssetOne?.getSymbol() === "PICA") {
+    if (
+      asset1Price.eq(0) &&
+      selectedAssetOne?.getSymbol().toUpperCase() === "PICA"
+    ) {
       asset1Price = asset2Price.eq(0)
         ? new BigNumber(0)
-        : new BigNumber(1).div(asset2Price);
+        : asset2Price.div(spotPrice);
     }
-    if (asset2Price.eq(0) && selectedAssetTwo?.getSymbol() === "PICA") {
+    if (
+      asset2Price.eq(0) &&
+      selectedAssetTwo?.getSymbol().toUpperCase() === "PICA"
+    ) {
       asset2Price = asset1Price.eq(0)
         ? new BigNumber(0)
-        : new BigNumber(1).div(asset1Price);
+        : asset1Price.div(new BigNumber(1).div(spotPrice));
     }
 
     return [asset1Price, asset2Price];
-  }, [selectedAssetOne, selectedAssetTwo]);
+  }, [selectedAssetOne, selectedAssetTwo, spotPrice]);
 
   const balance1 = useAssetBalance(selectedAssetOne, "picasso");
   const balance2 = useAssetBalance(selectedAssetTwo, "picasso");
@@ -284,12 +295,6 @@ export function useSwaps({
       }
     }
   };
-
-  const { spotPrice } = usePoolSpotPrice(
-    selectedPool,
-    selectedPool?.config.assets,
-    Boolean(selectedAssetOneId === quoteAsset?.getPicassoAssetId()?.toString())
-  );
 
   const poolAssets = selectedPool
     ? Object.keys(selectedPool.config.assets)
