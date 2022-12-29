@@ -177,18 +177,25 @@ type HistoricalLockedValue @entity {
   id: ID!
   event: Event! @index
   amount: BigInt!
-  currency: Currency!
+  "Total amount of locked value"
+  accumulatedAmount: BigInt!
   timestamp: DateTime! @index
   source: LockedSource!
+  assetId: String! @index
+  "ID of the entity that locked the value (e.g. Pablo pool id)"
+  sourceEntityId: String @index
 }
 
 type HistoricalVolume @entity {
   id: ID!
   event: Event! @index
   amount: BigInt!
-  currency: Currency!
+  "Total volume"
+  accumulatedAmount: BigInt!
   timestamp: DateTime! @index
-  assetId: String!
+  assetId: String! @index
+  source: LockedSource!
+  pool: PabloPool! @index
 }
 
 type PabloSwap @entity {

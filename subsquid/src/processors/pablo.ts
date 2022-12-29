@@ -9,13 +9,14 @@ import {
 } from "../types/events";
 import {
   EventType,
+  HistoricalVolume,
   LockedSource,
+  PabloAssetWeight,
+  PabloFee,
   PabloPool,
   PabloPoolType,
-  PabloTransaction,
-  PabloFee,
   PabloSwap,
-  PabloAssetWeight,
+  PabloTransaction,
 } from "../model";
 import { Fee } from "../types/v10002";
 import { divideBigInts, encodeAccount } from "../utils";
@@ -25,9 +26,7 @@ import {
   saveAccountAndEvent,
   saveActivity,
   saveEvent,
-  storeCurrentLockedValue,
   storeHistoricalLockedValue,
-  storeHistoricalVolume,
 } from "../dbHelper";
 
 interface PoolCreatedEvent {
@@ -234,17 +233,12 @@ export async function processLiquidityAddedEvent(
 
   await ctx.store.save(pool);
 
-  const amountsLocked = assetAmounts.reduce<Record<string, bigint>>(
-    (acc, [assetId, amount]) => ({
-      ...acc,
-      [assetId.toString()]: amount,
-    }),
-    {}
+  await storeHistoricalLockedValue(
+    ctx,
+    assetAmounts.map(([assetId, amount]) => [assetId.toString(), amount]),
+    LockedSource.Pablo,
+    pool.id
   );
-
-  // TODO: refactor following functions to expect array of [assetId, amount]
-  await storeHistoricalLockedValue(ctx, amountsLocked, LockedSource.Pablo);
-  await storeCurrentLockedValue(ctx, amountsLocked, LockedSource.Pablo);
 }
 
 export async function processLiquidityRemovedEvent(
@@ -301,17 +295,12 @@ export async function processLiquidityRemovedEvent(
 
   await ctx.store.save(pool);
 
-  const amountsLocked = assetAmounts.reduce<Record<string, bigint>>(
-    (acc, [assetId, amount]) => ({
-      ...acc,
-      [assetId.toString()]: -amount,
-    }),
-    {}
+  await storeHistoricalLockedValue(
+    ctx,
+    assetAmounts.map(([assetId, amount]) => [assetId.toString(), -amount]),
+    LockedSource.Pablo,
+    pool.id
   );
-
-  // TODO: refactor following functions to expect array of [assetId, amount]
-  await storeHistoricalLockedValue(ctx, amountsLocked, LockedSource.Pablo);
-  await storeCurrentLockedValue(ctx, amountsLocked, LockedSource.Pablo);
 }
 
 export async function processSwappedEvent(
@@ -435,5 +424,54 @@ export async function processSwappedEvent(
 
   await ctx.store.save(pool);
 
-  await storeHistoricalVolume(ctx, quoteAssetId.toString(), quoteAmount);
+  const latestBaseAssetVolume =
+    (
+      await ctx.store.findOne(HistoricalVolume, {
+        where: {
+          assetId: baseAssetId.toString(),
+          pool: {
+            id: pool.id,
+          },
+          source: LockedSource.Pablo,
+        },
+      })
+    )?.accumulatedAmount || 0n;
+
+  const latestQuoteAssetVolume =
+    (
+      await ctx.store.findOne(HistoricalVolume, {
+        where: {
+          assetId: quoteAssetId.toString(),
+          pool: {
+            id: pool.id,
+          },
+          source: LockedSource.Pablo,
+        },
+      })
+    )?.accumulatedAmount || 0n;
+
+  const historicalVolumeBaseAsset = new HistoricalVolume({
+    id: randomUUID(),
+    event,
+    amount: baseAmount,
+    accumulatedAmount: latestBaseAssetVolume + baseAmount,
+    assetId: baseAssetId.toString(),
+    pool,
+    timestamp: new Date(ctx.block.timestamp),
+    source: LockedSource.Pablo,
+  });
+
+  const historicalVolumeQuoteAsset = new HistoricalVolume({
+    id: randomUUID(),
+    event,
+    amount: quoteAmount,
+    accumulatedAmount: latestQuoteAssetVolume + quoteAmount,
+    assetId: quoteAssetId.toString(),
+    pool,
+    timestamp: new Date(ctx.block.timestamp),
+    source: LockedSource.Pablo,
+  });
+
+  await ctx.store.save(historicalVolumeBaseAsset);
+  await ctx.store.save(historicalVolumeQuoteAsset);
 }

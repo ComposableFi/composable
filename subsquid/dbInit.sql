@@ -43,7 +43,7 @@ LANGUAGE SQL
 IMMUTABLE
 AS $$
     SELECT
-        COALESCE(amount, 0)
+        COALESCE(accumulated_amount, 0)
     FROM historical_locked_value
     WHERE
         timestamp < date_trunc('hour', current_timestamp) - $1 * interval '1 hour'
@@ -61,7 +61,7 @@ LANGUAGE SQL
 IMMUTABLE
 AS $$
     SELECT
-        COALESCE(amount, 0)
+        COALESCE(accumulated_amount, 0)
     FROM historical_volume
     WHERE
         timestamp < date_trunc('hour', current_timestamp) - $1 * interval '1 hour'

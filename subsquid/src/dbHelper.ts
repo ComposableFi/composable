@@ -196,236 +196,45 @@ export async function saveAccountAndEvent(
  * @param ctx
  * @param amountsLocked
  * @param source
+ * @param sourceEntityId
  */
 export async function storeHistoricalLockedValue(
   ctx: EventHandlerContext<Store>,
-  amountsLocked: Record<string, bigint>,
-  source: LockedSource
+  amountsLocked: [string, bigint][], // [assetId, amountLocked]
+  source: LockedSource,
+  sourceEntityId: string
 ): Promise<void> {
-  const wsProvider = new WsProvider(chain());
-  const api = await ApiPromise.create({ provider: wsProvider });
-  const oraclePrices: Record<string, bigint> = {};
-  const assetDecimals: Record<string, number> = {};
+  const event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
 
-  for (const assetId of Object.keys(amountsLocked)) {
-    const asset = await ctx.store.get(Asset, {
-      where: {
-        id: assetId,
-      },
+  if (!event) {
+    // no-op
+    return;
+  }
+
+  for (const [assetId, amount] of amountsLocked) {
+    const lastAccumulatedValue =
+      (
+        await ctx.store.findOne(HistoricalLockedValue, {
+          where: {
+            source: LockedSource.Pablo,
+            assetId: assetId.toString(),
+            sourceEntityId,
+          },
+        })
+      )?.accumulatedAmount || 0n;
+
+    const historicalLockedValue = new HistoricalLockedValue({
+      id: randomUUID(),
+      event,
+      amount,
+      accumulatedAmount: lastAccumulatedValue + amount,
+      timestamp: new Date(ctx.block.timestamp),
+      source,
+      assetId,
+      sourceEntityId,
     });
 
-    if (asset?.decimals) {
-      assetDecimals[assetId] = asset?.decimals || 12;
-    }
-  }
-
-  try {
-    for (const assetId of Object.keys(amountsLocked)) {
-      const oraclePrice = await api.query.oracle.prices(assetId);
-      if (!oraclePrice?.price) {
-        return;
-      }
-      oraclePrices[assetId] = BigInt(oraclePrice.price.toString());
-    }
-  } catch (error) {
-    console.warn("Warning: Oracle not available.");
-    return;
-  }
-
-  const netLockedValue = Object.keys(oraclePrices).reduce((agg, assetId) => {
-    if (!assetDecimals[assetId]) {
-      // Ignore assets for which we don't know decimals
-      return agg;
-    }
-    const lockedValue = BigNumber(oraclePrices[assetId].toString()).times(
-      getAmountWithoutDecimals(amountsLocked[assetId], assetDecimals[assetId])
-    );
-    return BigInt(agg) + BigInt(lockedValue.toString());
-  }, BigInt(0));
-
-  const lastLockedValueAll = await getLastLockedValue(ctx, LockedSource.All);
-  const lastLockedValueSource = await getLastLockedValue(ctx, source);
-  const event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
-
-  if (!event) {
-    return Promise.reject(new Error("Event not found"));
-  }
-
-  const historicalLockedValueAll = new HistoricalLockedValue({
-    id: randomUUID(),
-    event,
-    amount: lastLockedValueAll + netLockedValue,
-    currency: Currency.USD,
-    timestamp: new Date(ctx.block.timestamp),
-    source: LockedSource.All,
-  });
-
-  const historicalLockedValueSource = new HistoricalLockedValue({
-    id: randomUUID(),
-    event,
-    amount: lastLockedValueSource + netLockedValue,
-    currency: Currency.USD,
-    timestamp: new Date(ctx.block.timestamp),
-    source,
-  });
-
-  await ctx.store.save(historicalLockedValueAll);
-  await ctx.store.save(historicalLockedValueSource);
-}
-
-/**
- * Stores a new HistoricalVolume for the specified quote asset
- * @param ctx
- * @param quoteAssetId
- * @param amount
- */
-export async function storeHistoricalVolume(
-  ctx: EventHandlerContext<Store>,
-  quoteAssetId: string,
-  amount: bigint
-): Promise<void> {
-  const wsProvider = new WsProvider(chain());
-  const api = await ApiPromise.create({ provider: wsProvider });
-  let assetPrice = 0n;
-
-  try {
-    const oraclePrice = await api.query.oracle.prices(quoteAssetId);
-    if (!oraclePrice?.price) {
-      return;
-    }
-    assetPrice = BigInt(oraclePrice.price.toString());
-  } catch (error) {
-    console.warn("Warning: Oracle not available.");
-    return;
-  }
-
-  // TODO: get decimals for this asset
-  // NOTE: normalize to 12 decimals for historical values?
-
-  const volume = amount * assetPrice;
-
-  const lastVolume = await getLastVolume(ctx, quoteAssetId);
-
-  const event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
-
-  if (!event) {
-    return Promise.reject(new Error("Event not found"));
-  }
-
-  const historicalVolume = new HistoricalVolume({
-    id: randomUUID(),
-    event,
-    amount: lastVolume + volume,
-    currency: Currency.USD,
-    assetId: quoteAssetId,
-    timestamp: new Date(ctx.block.timestamp),
-  });
-
-  await ctx.store.save(historicalVolume);
-}
-
-/**
- * Get latest locked value
- */
-export async function getLastLockedValue(
-  ctx: EventHandlerContext<Store>,
-  source: LockedSource
-): Promise<bigint> {
-  const lastLockedValue = await ctx.store.findOne(HistoricalLockedValue, {
-    where: { source },
-    order: { timestamp: "DESC" },
-    relations: { event: true },
-  });
-
-  return BigInt(lastLockedValue?.amount || 0);
-}
-
-/**
- * Get latest volume
- */
-export async function getLastVolume(
-  ctx: EventHandlerContext<Store>,
-  assetId: string
-): Promise<bigint> {
-  const lastVolume = await ctx.store.findOne(HistoricalVolume, {
-    where: { assetId },
-    order: { timestamp: "DESC" },
-    relations: { event: true },
-  });
-
-  return BigInt(lastVolume?.amount || 0);
-}
-
-/**
- * Get currently locked value for a given asset and source, or create new one,
- * and increase/decrease locked amount.
- */
-export async function getOrCreateCurrentLockedValue(
-  ctx: EventHandlerContext<Store>,
-  assetId: string,
-  amount: bigint,
-  source: LockedSource,
-  event: Event
-): Promise<CurrentLockedValue> {
-  const currentLockedValue = await ctx.store.get(CurrentLockedValue, {
-    where: { assetId, source },
-    relations: { event: true },
-  });
-
-  if (currentLockedValue) {
-    currentLockedValue.amount += amount;
-    currentLockedValue.event = event;
-    return Promise.resolve(currentLockedValue);
-  }
-
-  const newCurrentLockedValue = new CurrentLockedValue({
-    id: randomUUID(),
-    assetId,
-    event,
-    amount,
-    source,
-  });
-
-  return Promise.resolve(newCurrentLockedValue);
-}
-
-/**
- * Stores a new CurrentLockedValue with current locked amount
- * for the specified asset and source
- * @param ctx
- * @param amountsLocked
- * @param source
- */
-export async function storeCurrentLockedValue(
-  ctx: EventHandlerContext<Store>,
-  amountsLocked: Record<string, bigint>,
-  source: LockedSource
-): Promise<void> {
-  let event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
-
-  if (!event) {
-    return Promise.reject(new Error("Event not found"));
-  }
-
-  for (const assetId of Object.keys(amountsLocked)) {
-    const amount = amountsLocked[assetId];
-    const currentLockedValueAll = await getOrCreateCurrentLockedValue(
-      ctx,
-      assetId,
-      amount,
-      LockedSource.All,
-      event
-    );
-    const currentLockedValueSource = await getOrCreateCurrentLockedValue(
-      ctx,
-      assetId,
-      amount,
-      source,
-      event
-    );
-
-    await ctx.store.save(currentLockedValueAll);
-    await ctx.store.save(currentLockedValueSource);
+    await ctx.store.save(historicalLockedValue);
   }
 }
 

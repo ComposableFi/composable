@@ -7,6 +7,7 @@ import {
 } from "../types/v10002";
 import {
   EventType,
+  HistoricalLockedValue,
   LockedSource,
   Schedule,
   ScheduleWindow,
@@ -17,11 +18,7 @@ import {
   VestingVestingScheduleAddedEvent,
 } from "../types/events";
 import { encodeAccount } from "../utils";
-import {
-  saveAccountAndEvent,
-  storeCurrentLockedValue,
-  storeHistoricalLockedValue,
-} from "../dbHelper";
+import { saveAccountAndEvent, storeHistoricalLockedValue } from "../dbHelper";
 
 interface VestingScheduleAddedEvent {
   from: Uint8Array;
@@ -117,14 +114,9 @@ export async function processVestingScheduleAddedEvent(
 
   await storeHistoricalLockedValue(
     ctx,
-    { [asset.toString()]: scheduleAmount },
-    LockedSource.VestingSchedules
-  );
-
-  await storeCurrentLockedValue(
-    ctx,
-    { [asset.toString()]: scheduleAmount },
-    LockedSource.VestingSchedules
+    [[asset.toString(), scheduleAmount]],
+    LockedSource.VestingSchedules,
+    vestingSchedule.scheduleId.toString()
   );
 }
 
@@ -208,14 +200,9 @@ export async function processVestingClaimedEvent(
 
     await storeHistoricalLockedValue(
       ctx,
-      { [schedule.assetId]: -amount },
-      LockedSource.VestingSchedules
-    );
-
-    await storeCurrentLockedValue(
-      ctx,
-      { [schedule.assetId]: -amount },
-      LockedSource.VestingSchedules
+      [[schedule.assetId, -amount]],
+      LockedSource.VestingSchedules,
+      schedule.scheduleId.toString()
     );
   }
 }

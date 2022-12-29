@@ -1,7 +1,6 @@
 import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_} from "typeorm"
 import * as marshal from "./marshal"
 import {Event} from "./event.model"
-import {Currency} from "./_currency"
 import {LockedSource} from "./_lockedSource"
 
 @Entity_()
@@ -20,8 +19,11 @@ export class HistoricalLockedValue {
     @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
     amount!: bigint
 
-    @Column_("varchar", {length: 3, nullable: false})
-    currency!: Currency
+    /**
+     * Total amount of locked value
+     */
+    @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+    accumulatedAmount!: bigint
 
     @Index_()
     @Column_("timestamp with time zone", {nullable: false})
@@ -29,4 +31,15 @@ export class HistoricalLockedValue {
 
     @Column_("varchar", {length: 16, nullable: false})
     source!: LockedSource
+
+    @Index_()
+    @Column_("text", {nullable: false})
+    assetId!: string
+
+    /**
+     * ID of the entity that locked the value (e.g. Pablo pool id)
+     */
+    @Index_()
+    @Column_("text", {nullable: true})
+    sourceEntityId!: string | undefined | null
 }

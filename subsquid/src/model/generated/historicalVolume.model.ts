@@ -1,7 +1,8 @@
 import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_} from "typeorm"
 import * as marshal from "./marshal"
 import {Event} from "./event.model"
-import {Currency} from "./_currency"
+import {LockedSource} from "./_lockedSource"
+import {PabloPool} from "./pabloPool.model"
 
 @Entity_()
 export class HistoricalVolume {
@@ -19,13 +20,24 @@ export class HistoricalVolume {
     @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
     amount!: bigint
 
-    @Column_("varchar", {length: 3, nullable: false})
-    currency!: Currency
+    /**
+     * Total volume
+     */
+    @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+    accumulatedAmount!: bigint
 
     @Index_()
     @Column_("timestamp with time zone", {nullable: false})
     timestamp!: Date
 
+    @Index_()
     @Column_("text", {nullable: false})
     assetId!: string
+
+    @Column_("varchar", {length: 16, nullable: false})
+    source!: LockedSource
+
+    @Index_()
+    @ManyToOne_(() => PabloPool, {nullable: true})
+    pool!: PabloPool
 }
