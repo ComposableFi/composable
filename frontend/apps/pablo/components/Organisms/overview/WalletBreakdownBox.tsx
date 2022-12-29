@@ -60,6 +60,9 @@ export const WalletBreakdownBox: React.FC<BoxProps> = ({ ...boxProps }) => {
                   asset.getSymbol() === "PICA"
                     ? asset.getBalance().multipliedBy(picaDiscovered)
                     : asset.getBalance().multipliedBy(asset.getPrice());
+
+                const assetPrice = asset.getSymbol() === "PICA" ? picaDiscovered.toFixed(6) : asset.getPrice().toFixed(4)
+
                 return (
                   <TableRow key={asset.getName()}>
                     <TableCell align="left">
@@ -70,7 +73,7 @@ export const WalletBreakdownBox: React.FC<BoxProps> = ({ ...boxProps }) => {
                     </TableCell>
                     <TableCell align="left">
                       <Typography variant="body1">
-                        ${asset.getPrice().toFixed(4)}
+                        ${assetPrice}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">

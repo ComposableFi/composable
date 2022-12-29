@@ -36,7 +36,7 @@ export const usePicaPriceDiscovery = () => {
   useEffect(() => {
     const usdtPrice = getOraclePrice("USDT", "coingecko", "usd");
     setPicaPrice(usdtPrice.multipliedBy(new BigNumber(1).div(spotPrice)));
-  }, [spotPrice.toString(16)]);
+  }, [spotPrice]);
 
   return picaPrice;
 };
