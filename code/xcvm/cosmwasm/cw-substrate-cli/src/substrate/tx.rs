@@ -55,7 +55,7 @@ impl Command {
         MultiSigner: From<<P as Pair>::Public>,
     {
         match self.subcommands {
-            Subcommands::Upload(ref upload) => {
+            Subcommands::Upload(upload) => {
                 let code = upload.fetch_code().await?;
                 let events = do_signed_transaction(
                     chain_endpoint,

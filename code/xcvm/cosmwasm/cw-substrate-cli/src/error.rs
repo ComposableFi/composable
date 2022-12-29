@@ -35,6 +35,12 @@ pub enum Error {
     #[error("Extrinsic didn't return an error but it also didn't emit the expected event.")]
     ExpectedEventNotEmitted,
 
-    #[error("Network error.")]
-    Network,
+    #[error("Network error: {0}")]
+    Network(String),
+
+    #[error("Serialization: {0}")]
+    Serialization(String),
+
+    #[error("Rpc error: {0}")]
+    Rpc(String),
 }

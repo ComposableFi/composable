@@ -4,7 +4,7 @@ use cosmwasm_orchestrate::fetcher::{CosmosApi, CosmosFetcher, FileFetcher};
 use std::{collections::BTreeMap, fs, io::Read, path::PathBuf};
 use subxt::ext::sp_core::crypto::AccountId32;
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Debug)]
 #[clap(group(
         ArgGroup::new("wasm_source")
         .required(true)
@@ -29,7 +29,7 @@ pub struct Upload {
     pub code_id: Option<u64>,
 }
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Clone, Debug)]
 pub struct Instantiate {
     /// Code ID of the code that will be used to instantiate the contract
     #[arg(short, long)]
@@ -55,7 +55,7 @@ pub struct Instantiate {
     pub message: String,
 }
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Debug)]
 pub struct Execute {
     /// Contract to be executed
     #[arg(short, long)]
@@ -71,7 +71,7 @@ pub struct Execute {
     pub message: String,
 }
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Debug)]
 pub struct Migrate {
     /// Contract to be migrated
     #[arg(short, long)]
@@ -87,7 +87,7 @@ pub struct Migrate {
     pub message: String,
 }
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Debug)]
 #[clap(group(
     ArgGroup::new("admin")
     .required(true)
@@ -112,6 +112,19 @@ pub struct UpdateAdmin {
     pub gas: u64,
 }
 
+#[derive(Args, Debug)]
+pub struct Query {
+    /// Contract to be queried
+    #[arg(short, long)]
+    pub contract: AccountId32,
+    /// Gas limit
+    #[arg(short, long)]
+    pub gas: u64,
+    /// Query request
+    #[arg(short, long)]
+    pub query: String,
+}
+
 impl Upload {
     pub async fn fetch_code(&self) -> Result<Vec<u8>, Error> {
         let code = if let Some(file_path) = self.file_path.as_ref() {
@@ -124,16 +137,16 @@ impl Upload {
         } else if let Some(url) = self.url.as_ref() {
             FileFetcher::from_url(url)
                 .await
-                .map_err(|_| Error::Network)?
+                .map_err(|e| Error::Network(e.to_string()))?
         } else if let Some(cosmos_url) = self.cosmos_rpc.as_ref() {
             if let Some(contract) = self.contract.as_ref() {
                 CosmosFetcher::from_contract_addr(cosmos_url, contract)
                     .await
-                    .map_err(|_| Error::Network)?
+                    .map_err(|e| Error::Network(e.to_string()))?
             } else if let Some(code_id) = self.code_id.as_ref() {
                 CosmosFetcher::from_code_id(cosmos_url, *code_id)
                     .await
-                    .map_err(|_| Error::Network)?
+                    .map_err(|e| Error::Network(e.to_string()))?
             } else {
                 panic!("impossible")
             }

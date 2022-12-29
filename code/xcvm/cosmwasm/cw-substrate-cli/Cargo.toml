@@ -16,3 +16,9 @@ frame-support = "7.0.0"
 clap = { version = "4.0.30", features = ["derive"] }
 cosmwasm-orchestrate = { git = "https://github.com/ComposableFi/cosmwasm-vm" }
 thiserror = "1.0.38"
+serde = "1.0.0"
+reqwest = "0.11"
+cosmwasm-std = "1.0"
+serde_json = { version = "1.0", features = ["raw_value"] }
+jsonrpc = "0.14"
+hex = "0.4"

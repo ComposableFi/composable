@@ -94,12 +94,12 @@ impl Command {
         MultiSigner: From<<P as Pair>::Public>,
     {
         match self.subcommand {
-            Subcommands::Rpc(_) => todo!(),
+            Subcommands::Rpc(command) => command.run(self.chain_endpoint).await,
             Subcommands::Tx(command) => {
                 let Some(pair) = get_signer_pair::<P>(self.name, self.mnemonic, self.seed, self.password)? else {
                     return Err(Error::OperationNeedsToBeSigned);
                 };
-                command.run(pair, self.chain_endpoint.clone()).await
+                command.run(pair, self.chain_endpoint).await
             }
         }
     }
