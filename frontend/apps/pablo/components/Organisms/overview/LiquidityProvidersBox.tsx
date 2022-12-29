@@ -20,8 +20,6 @@ export const LiquidityProvidersBox: FC<BoxProps> = ({ ...boxProps }) => {
     return !balance.free.isZero();
   });
 
-  console.log(hasParticipated);
-
   return (
     <BoxWrapper title="Liquidity provider positions" {...boxProps}>
       {pools.length === 0 || !hasParticipated ? (
