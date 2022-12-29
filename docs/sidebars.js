@@ -359,6 +359,7 @@ const sidebars = {
                     collapsible: true,
                     collapsed: true,
                     items: [
+                        'developer-guides/cw-substrate-cli/new-project',
                         'developer-guides/cw-substrate-cli/walkthrough'
                     ]
                 },

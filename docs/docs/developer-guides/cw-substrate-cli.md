@@ -3,6 +3,16 @@
 Cosmwasm Substrate CLI is a cli tool to quickly get started with the XCVM ecosystem and
 interact with a chain that runs `pallet-cosmwasm`.
 
+## Create a CosmWasm project
+
+You can create a base CosmWasm project that you can work upon.
+
+```
+cw-substrate-cli new --name get-started --author $(whoami) --description "Get started with CosmWasm"
+```
+
+See [here](./cw-substrate-cli/new-project.md) for more.
+
 ## Upload a CosmWasm contract
 
 For interacting with `pallet-cosmwasm`, `substrate` subcommand is used. To be able

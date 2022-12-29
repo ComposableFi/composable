@@ -128,11 +128,11 @@ pub struct Query {
 impl Upload {
     pub async fn fetch_code(&self) -> Result<Vec<u8>, Error> {
         let code = if let Some(file_path) = self.file_path.as_ref() {
-            let mut f = fs::File::open(file_path).expect("Could not read file");
-            let metadata = fs::metadata(file_path).expect("Could not read metadata");
-            let mut buffer = vec![0; metadata.len() as usize];
+            let mut f = fs::File::open(file_path).map_err(|e| Error::Generic(Box::new(e)))?;
+            let metadata = fs::metadata(file_path).map_err(|e| Error::Generic(Box::new(e)))?;
+            let mut buffer = vec![0u8; metadata.len() as usize];
             f.read_exact(&mut buffer)
-                .expect("Buffer overflow during file read");
+                .map_err(|e| Error::Generic(Box::new(e)))?;
             buffer
         } else if let Some(url) = self.url.as_ref() {
             FileFetcher::from_url(url)
