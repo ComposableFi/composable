@@ -40,4 +40,10 @@ export class HistoricalVolume {
     @Index_()
     @ManyToOne_(() => PabloPool, {nullable: true})
     pool!: PabloPool
+
+    /**
+     * Last updated block id
+     */
+    @Column_("text", {nullable: false})
+    blockId!: string
 }

@@ -43,4 +43,10 @@ export class PabloFee {
     @Index_()
     @Column_("timestamp with time zone", {nullable: false})
     timestamp!: Date
+
+    /**
+     * Last updated block id
+     */
+    @Column_("text", {nullable: false})
+    blockId!: string
 }

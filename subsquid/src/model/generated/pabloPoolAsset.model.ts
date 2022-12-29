@@ -26,4 +26,10 @@ export class PabloPoolAsset {
 
     @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
     totalVolume!: bigint
+
+    /**
+     * Last updated block id
+     */
+    @Column_("text", {nullable: false})
+    blockId!: string
 }

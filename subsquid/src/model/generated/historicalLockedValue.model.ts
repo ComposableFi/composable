@@ -42,4 +42,10 @@ export class HistoricalLockedValue {
     @Index_()
     @Column_("text", {nullable: true})
     sourceEntityId!: string | undefined | null
+
+    /**
+     * Last updated block id
+     */
+    @Column_("text", {nullable: false})
+    blockId!: string
 }

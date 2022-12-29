@@ -21,4 +21,10 @@ export class PabloAssetWeight {
 
     @Column_("numeric", {transformer: marshal.floatTransformer, nullable: false})
     weight!: number
+
+    /**
+     * Last updated block id
+     */
+    @Column_("text", {nullable: false})
+    blockId!: string
 }

@@ -7,7 +7,6 @@ import {
 } from "../types/v10002";
 import {
   EventType,
-  HistoricalLockedValue,
   LockedSource,
   Schedule,
   ScheduleWindow,
@@ -84,6 +83,7 @@ export function createVestingSchedule(
     schedule: createSchedule(schedule),
     totalAmount: scheduleAmount,
     fullyClaimed: false,
+    blockId: ctx.block.id,
   });
 }
 
@@ -141,10 +141,12 @@ function getVestingScheduleClaimedEvent(
 /**
  * Update already claimed amount and set the schedule as full claimed when
  * necessary.
+ * @param ctx
  * @param vestingSchedule
  * @param claimed
  */
 export function updatedClaimedAmount(
+  ctx: EventHandlerContext<Store>,
   vestingSchedule: VestingSchedule,
   claimed: bigint
 ): void {
@@ -152,6 +154,7 @@ export function updatedClaimedAmount(
   if (vestingSchedule.schedule.alreadyClaimed === vestingSchedule.totalAmount) {
     vestingSchedule.fullyClaimed = true;
   }
+  vestingSchedule.blockId = ctx.block.id;
 }
 
 /**
@@ -194,7 +197,7 @@ export async function processVestingClaimedEvent(
 
     schedule.eventId = ctx.event.id;
 
-    updatedClaimedAmount(schedule, amount);
+    updatedClaimedAmount(ctx, schedule, amount);
 
     await ctx.store.save(schedule);
 

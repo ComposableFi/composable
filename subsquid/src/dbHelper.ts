@@ -1,35 +1,20 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Entity, Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
-import { ApiPromise, WsProvider } from "@polkadot/api";
 import { hexToU8a } from "@polkadot/util";
-import BigNumber from "bignumber.js";
-import { chain } from "./config";
-import { encodeAccount, getAmountWithoutDecimals } from "./utils";
+import { encodeAccount } from "./utils";
 import {
   Account,
   Activity,
-  Asset,
-  Currency,
-  CurrentLockedValue,
   Event,
   EventType,
   HistoricalLockedValue,
-  HistoricalVolume,
   LockedSource,
   PabloPool,
   PabloPoolAsset,
 } from "./model";
 
-export async function get<T extends { id: string }>(
-  store: Store,
-  EntityConstructor: EntityConstructor<T>,
-  id: string
-): Promise<T | undefined> {
-  return store.get<T>(EntityConstructor, id);
-}
-
-export async function getLatestPoolByPoolId<T extends Entity>(
+export async function getLatestPoolByPoolId(
   store: Store,
   poolId: bigint
 ): Promise<PabloPool | undefined> {
@@ -42,25 +27,6 @@ export async function getLatestPoolByPoolId<T extends Entity>(
     },
   });
 }
-
-export async function getOrCreate<T extends Entity>(
-  store: Store,
-  EntityConstructor: EntityConstructor<T>,
-  id: string
-): Promise<T> {
-  let entity = await store.get<T>(EntityConstructor, id);
-
-  if (entity === undefined) {
-    entity = new EntityConstructor();
-    entity.id = id;
-  }
-
-  return entity;
-}
-
-export type EntityConstructor<T> = {
-  new (...args: any[]): T;
-};
 
 /**
  * Create or update account and store event in database.
@@ -93,6 +59,7 @@ export async function getOrCreateAccount(
 
   account.id = accId;
   account.eventId = ctx.event.id;
+  account.blockId = ctx.block.id;
 
   await ctx.store.save(account);
 
@@ -121,6 +88,7 @@ export async function saveEvent(
     eventType,
     blockNumber: BigInt(ctx.block.height),
     timestamp: new Date(ctx.block.timestamp),
+    blockId: ctx.block.id,
   });
 
   // Store event
@@ -145,6 +113,7 @@ export async function saveActivity(
     event,
     accountId,
     timestamp: new Date(ctx.block.timestamp),
+    blockId: ctx.block.id,
   });
 
   await ctx.store.save(activity);
@@ -232,28 +201,11 @@ export async function storeHistoricalLockedValue(
       source,
       assetId,
       sourceEntityId,
+      blockId: ctx.block.id,
     });
 
     await ctx.store.save(historicalLockedValue);
   }
-}
-
-/**
- * Creates asset fpr Pablo pool
- * @param pool
- * @param assetId
- */
-export function createPabloAsset(
-  pool: PabloPool,
-  assetId: string
-): PabloPoolAsset {
-  return new PabloPoolAsset({
-    id: randomUUID(),
-    assetId,
-    pool,
-    totalLiquidity: BigInt(0),
-    totalVolume: BigInt(0),
-  });
 }
 
 /**
@@ -276,7 +228,14 @@ export async function getOrCreatePabloAsset(
     },
   });
   if (!pabloAsset) {
-    pabloAsset = createPabloAsset(pool, assetId);
+    pabloAsset = new PabloPoolAsset({
+      id: randomUUID(),
+      assetId,
+      pool,
+      totalLiquidity: BigInt(0),
+      totalVolume: BigInt(0),
+      blockId: ctx.block.id,
+    });
   }
   return Promise.resolve(pabloAsset);
 }

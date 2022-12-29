@@ -73,6 +73,7 @@ export function getNewBondOffer(
     totalPurchased: BigInt(0),
     beneficiary: encodeAccount(beneficiary),
     cancelled: false,
+    blockId: ctx.block.id,
   });
 }
 
@@ -100,16 +101,19 @@ export async function processNewOfferEvent(
 
 /**
  * Based on the event, update the BondedFinanceBondOffer.
+ * @param ctx
  * @param stored
  * @param event
  */
 export function updateBondOffer(
+  ctx: EventHandlerContext<Store>,
   stored: BondedFinanceBondOffer,
   event: BondedFinanceNewBondEvent
 ): void {
   const { nbOfBonds } = getNewBondEvent(event);
 
   stored.totalPurchased += nbOfBonds;
+  stored.blockId = ctx.block.id;
 }
 
 /**
@@ -134,7 +138,7 @@ export async function processNewBondEvent(
   }
 
   // If offerId is already stored, add to total amount purchased.
-  updateBondOffer(stored, event);
+  updateBondOffer(ctx, stored, event);
 
   await ctx.store.save(stored);
 
@@ -144,10 +148,15 @@ export async function processNewBondEvent(
 /**
  * Cancel the bond offer.
  *  - Set `cancelled` to true.
+ * @param ctx
  * @param stored
  */
-export function cancelBondOffer(stored: BondedFinanceBondOffer): void {
+export function cancelBondOffer(
+  ctx: EventHandlerContext<Store>,
+  stored: BondedFinanceBondOffer
+): void {
   stored.cancelled = true;
+  stored.blockId = ctx.block.id;
 }
 
 /**
@@ -172,7 +181,7 @@ export async function processOfferCancelledEvent(
   }
 
   // Set bond offer as `cancelled`.
-  cancelBondOffer(stored);
+  cancelBondOffer(ctx, stored);
 
   // Save bond offer.
   await ctx.store.save(stored);

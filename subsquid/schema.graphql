@@ -3,6 +3,8 @@ type Account @entity {
   id: ID!
   "Last event involving account"
   eventId: String!
+  "Last updated block id"
+  blockId: String!
 }
 
 enum PabloPoolType {
@@ -22,6 +24,8 @@ type PabloPool @entity {
   timestamp: DateTime! @index
   poolAssets: [PabloPoolAsset!] @derivedFrom(field: "pool")
   poolAssetWeights: [PabloAssetWeight!] @derivedFrom(field: "pool")
+  "Last updated block id"
+  blockId: String!
 }
 
 type PabloAssetWeight @entity {
@@ -29,6 +33,8 @@ type PabloAssetWeight @entity {
   pool: PabloPool! @index
   assetId: String! @index
   weight: Float!
+  "Last updated block id"
+  blockId: String!
 }
 
 type PabloTransaction @entity {
@@ -36,6 +42,8 @@ type PabloTransaction @entity {
   pool: PabloPool! @index
   account: String! @index
   timestamp: DateTime! @index
+  "Last updated block id"
+  blockId: String!
 }
 
 type PabloPoolAsset @entity {
@@ -45,6 +53,8 @@ type PabloPoolAsset @entity {
   pool: PabloPool! @index
   totalLiquidity: BigInt!
   totalVolume: BigInt!
+  "Last updated block id"
+  blockId: String!
 }
 
 type PabloFee @entity {
@@ -58,6 +68,8 @@ type PabloFee @entity {
   ownerFee: BigInt!
   protocolFee: BigInt!
   timestamp: DateTime! @index
+  "Last updated block id"
+  blockId: String!
 }
 
 type BondedFinanceBondOffer @entity {
@@ -70,6 +82,8 @@ type BondedFinanceBondOffer @entity {
   beneficiary: String!
   "True if the offer has been cancelled"
   cancelled: Boolean!
+  "Last updated block id"
+  blockId: String!
 }
 
 type ScheduleWindow {
@@ -104,6 +118,8 @@ type VestingSchedule @entity {
   totalAmount: BigInt!
   "True if the schedule has been fully claimed"
   fullyClaimed: Boolean!
+  "Last updated block id"
+  blockId: String!
 }
 
 type Activity @entity {
@@ -114,6 +130,8 @@ type Activity @entity {
   accountId: String! @index
   "Timestamp of the block in which this activity occurred"
   timestamp: DateTime! @index
+  "Last updated block id"
+  blockId: String!
 }
 
 type Asset @entity {
@@ -125,6 +143,8 @@ type Asset @entity {
   price: BigInt!
   decimals: Int
   historicalPrices: [HistoricalAssetPrice!] @derivedFrom(field: "asset")
+  "Last updated block id"
+  blockId: String!
 }
 
 enum Currency {
@@ -140,12 +160,16 @@ type HistoricalAssetPrice @entity {
   price: BigInt!
   timestamp: DateTime! @index
   currency: Currency!
+  "Last updated block id"
+  blockId: String!
 }
 
 type RewardPool @entity {
   id: ID!
   eventId: String! @index
   poolId: String! @index
+  "Last updated block id"
+  blockId: String!
 }
 
 enum LockedSource {
@@ -184,6 +208,8 @@ type HistoricalLockedValue @entity {
   assetId: String! @index
   "ID of the entity that locked the value (e.g. Pablo pool id)"
   sourceEntityId: String @index
+  "Last updated block id"
+  blockId: String!
 }
 
 type HistoricalVolume @entity {
@@ -196,6 +222,8 @@ type HistoricalVolume @entity {
   assetId: String! @index
   source: LockedSource!
   pool: PabloPool! @index
+  "Last updated block id"
+  blockId: String!
 }
 
 type PabloSwap @entity {
@@ -209,6 +237,8 @@ type PabloSwap @entity {
   spotPrice: String! # Using a string for arbitrary precision
   fee: PabloFee!
   timestamp: DateTime! @index
+  "Last updated block id"
+  blockId: String!
 }
 
 type CurrentLockedValue
@@ -254,4 +284,6 @@ type Event @entity {
   "Timestamp of the block in which this transaction was registered"
   timestamp: DateTime! @index
   activities: [Activity!] @derivedFrom(field: "event")
+  "Last updated block id"
+  blockId: String!
 }

@@ -47,4 +47,10 @@ export class PabloPool {
 
     @OneToMany_(() => PabloAssetWeight, e => e.pool)
     poolAssetWeights!: PabloAssetWeight[]
+
+    /**
+     * Last updated block id
+     */
+    @Column_("text", {nullable: false})
+    blockId!: string
 }

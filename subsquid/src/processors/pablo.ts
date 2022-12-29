@@ -162,6 +162,7 @@ export async function processPoolCreatedEvent(
     lpIssued: BigInt(0),
     transactionCount: 0,
     timestamp: new Date(ctx.block.timestamp),
+    blockId: ctx.block.id,
   });
 
   // Store pool
@@ -174,6 +175,7 @@ export async function processPoolCreatedEvent(
       pool,
       assetId: assetId.toString(),
       weight: weight / 1_000_000,
+      blockId: ctx.block.id,
     });
 
     await ctx.store.save(pabloAssetWeight);
@@ -212,12 +214,14 @@ export async function processLiquidityAddedEvent(
   pool.timestamp = new Date(ctx.block.timestamp);
   pool.transactionCount += 1;
   pool.lpIssued += mintedLp;
+  pool.blockId = ctx.block.id;
 
   // Update or create assets
   for (const [assetId, amount] of assetAmounts) {
     const asset = await getOrCreatePabloAsset(ctx, pool, assetId.toString());
 
     asset.totalLiquidity += amount;
+    asset.blockId = ctx.block.id;
 
     await ctx.store.save(asset);
   }
@@ -227,6 +231,7 @@ export async function processLiquidityAddedEvent(
     pool,
     account: who,
     timestamp: new Date(ctx.block.timestamp),
+    blockId: ctx.block.id,
   });
 
   await ctx.store.save(pabloTransaction);
@@ -274,12 +279,14 @@ export async function processLiquidityRemovedEvent(
   pool.eventId = ctx.event.id;
   pool.timestamp = new Date(ctx.block.timestamp);
   pool.transactionCount += 1;
+  pool.blockId = ctx.block.id;
 
   // Update or create assets
   for (const [assetId, amount] of assetAmounts) {
     const asset = await getOrCreatePabloAsset(ctx, pool, assetId.toString());
 
     asset.totalLiquidity -= amount;
+    asset.blockId = ctx.block.id;
 
     await ctx.store.save(asset);
   }
@@ -289,6 +296,7 @@ export async function processLiquidityRemovedEvent(
     pool,
     account: who,
     timestamp: new Date(ctx.block.timestamp),
+    blockId: ctx.block.id,
   });
 
   await ctx.store.save(pabloTransaction);
@@ -330,7 +338,9 @@ export async function processSwappedEvent(
   const { poolType } = pool;
 
   if (poolType !== PabloPoolType.DualAssetConstantProduct) {
-    throw new Error("Only DualAssetConstantProduct pools are supported now.");
+    throw new Error(
+      "Only DualAssetConstantProduct pools are currently supported."
+    );
   }
 
   // Create and save account and event
@@ -343,6 +353,7 @@ export async function processSwappedEvent(
   pool.eventId = ctx.event.id;
   pool.timestamp = new Date(ctx.block.timestamp);
   pool.transactionCount += 1;
+  pool.blockId = ctx.block.id;
 
   const baseAsset = await getOrCreatePabloAsset(
     ctx,
@@ -358,11 +369,13 @@ export async function processSwappedEvent(
 
   baseAsset.totalVolume += baseAmount;
   baseAsset.totalLiquidity -= baseAmount;
+  baseAsset.blockId = ctx.block.id;
 
   await ctx.store.save(baseAsset);
 
   quoteAsset.totalVolume += quoteAmount;
   quoteAsset.totalLiquidity += quoteAmount;
+  quoteAsset.blockId = ctx.block.id;
 
   await ctx.store.save(quoteAsset);
 
@@ -377,6 +390,7 @@ export async function processSwappedEvent(
     ownerFee: fee.ownerFee,
     protocolFee: fee.protocolFee,
     timestamp: new Date(ctx.block.timestamp),
+    blockId: ctx.block.id,
   });
 
   await ctx.store.save(pabloFee);
@@ -386,6 +400,7 @@ export async function processSwappedEvent(
     pool,
     account: who,
     timestamp: new Date(ctx.block.timestamp),
+    blockId: ctx.block.id,
   });
 
   await ctx.store.save(pabloTransaction);
@@ -399,7 +414,7 @@ export async function processSwappedEvent(
   );
 
   if (!baseAssetWeight || !quoteAssetWeight) {
-    console.error("Asset weight not found");
+    console.error("Asset weights not found");
     return;
   }
 
@@ -418,6 +433,7 @@ export async function processSwappedEvent(
     ).toString(),
     fee: pabloFee,
     timestamp: new Date(ctx.block.timestamp),
+    blockId: ctx.block.id,
   });
 
   await ctx.store.save(pabloSwap);
@@ -459,6 +475,7 @@ export async function processSwappedEvent(
     pool,
     timestamp: new Date(ctx.block.timestamp),
     source: LockedSource.Pablo,
+    blockId: ctx.block.id,
   });
 
   const historicalVolumeQuoteAsset = new HistoricalVolume({
@@ -470,6 +487,7 @@ export async function processSwappedEvent(
     pool,
     timestamp: new Date(ctx.block.timestamp),
     source: LockedSource.Pablo,
+    blockId: ctx.block.id,
   });
 
   await ctx.store.save(historicalVolumeBaseAsset);

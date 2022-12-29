@@ -72,6 +72,7 @@ export async function processAssetRegisteredEvent(
     eventId: ctx.event.id,
     price,
     decimals,
+    blockId: ctx.block.id,
   });
 
   await ctx.store.save(asset);
@@ -114,6 +115,7 @@ export async function processAssetUpdatedEvent(
 
   asset.decimals = decimals;
   asset.eventId = ctx.event.id;
+  asset.blockId = ctx.block.id;
 
   await ctx.store.save(asset);
 }

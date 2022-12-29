@@ -52,6 +52,7 @@ function createNewBondEvent(offerId: string, nbOfBonds: bigint) {
  * @param purchased - Amount of purchased bonds
  * @param beneficiary - Bond beneficiary
  * @param cancelled - True is offer has been cancelled
+ * @param blockId - Last updated block id
  */
 function assertBondedFinanceBondOffer(
   bondArg: BondedFinanceBondOffer,
@@ -59,13 +60,15 @@ function assertBondedFinanceBondOffer(
   offerId?: string,
   purchased?: bigint,
   beneficiary?: string,
-  cancelled?: boolean
+  cancelled?: boolean,
+  blockId?: string,
 ) {
   if (eventId) expect(bondArg.eventId).to.equal(eventId);
   if (offerId) expect(bondArg.offerId).to.equal(offerId);
   if (purchased) expect(bondArg.totalPurchased).to.equal(purchased);
   if (beneficiary) expect(bondArg.beneficiary).to.equal(beneficiary);
   if (cancelled !== undefined) expect(bondArg.cancelled).to.equal(cancelled);
+  if (blockId) expect(bondArg.blockId).to.equal(blockId);
 }
 
 describe("Bonded finance Tests", () => {
@@ -98,10 +101,10 @@ describe("Bonded finance Tests", () => {
       cancelled: false,
     });
 
-    updateBondOffer(bondOffer, event1);
+    updateBondOffer(ctx, bondOffer, event1);
     assertBondedFinanceBondOffer(bondOffer, "1", "1", 30n, BOB, false);
 
-    updateBondOffer(bondOffer, event2);
+    updateBondOffer(ctx, bondOffer, event2);
     assertBondedFinanceBondOffer(bondOffer, "1", "1", 130n, BOB, false);
   });
 
@@ -117,7 +120,7 @@ describe("Bonded finance Tests", () => {
 
     assertBondedFinanceBondOffer(bondOffer, "1", "1", 10n, BOB, false);
 
-    cancelBondOffer(bondOffer);
+    cancelBondOffer(ctx, bondOffer);
 
     assertBondedFinanceBondOffer(bondOffer, "1", "1", 10n, BOB, true);
   });
