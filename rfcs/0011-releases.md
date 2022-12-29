@@ -20,7 +20,7 @@ Each composable node release involves a release of (at-least) the following comp
 
     In order to allow clear identification with the native runtime version of each node release the runtime version for each runtime is an integer that is monotonic increasing for each release.
 2. The Composable Node - main node executable.
-   This is in the format `vMajor.Minor` (eg: `v5.4200`). Where `Major=Branch number eg: 5` and `Minor=Runtime spec_version eg: 4200`. The major version number ensures that there is always a way to branch the code for an upcoming release with relevant feature flags etc., while also serving as the major version for that release. Minor version always serves to indicate a backwards compatible patch to that release.
+   This is in the format `vMajor.Minor.Patch` (eg: `v5.4200.10`). Where `Major=Branch number eg: 5`, `Minor=Runtime spec_version eg: 4200` and `Patch=a patch version 0..n`. The major version number ensures that there is always a way to branch the code for an upcoming release with relevant feature flags etc., while also serving as the major version for that release. Minor version always serves to indicate a backwards compatible patch to that release.
 3. Subsquid - Data archival and query system for networks.
 4. Frontends - There are two FE components in existence at the time of this writing.
 5. ComposableJs - This is the library to interact with composable parachains using typescript/JS.
@@ -44,7 +44,7 @@ etc.
 #### 3.1.1. Expected Typical Release Artifact List 
 
 ```
-- Composable Node v5.4200
+- Composable Node v5.4200.12
 -- Runtimes
 --- dali-4200
 --- picasso-4200
@@ -65,10 +65,10 @@ Typical Composable releases involve multiple rounds of QA and external audits/te
 As the work starts for a `vMajor` (eg: v5) release,
 
 1. Create a branch `release-v5`.
-2. in order to make/deploy (in staging) a release create a tag `release-v5.4200` from the previously created branch, which should trigger a workflow.
+2. in order to make/deploy (in staging) a release create a tag `release-v5.4200.0` from the previously created branch, which should trigger a workflow.
 3. QA/Audit happens on these released tag.
-4. Any reported issues must be fixed on `main` and merged/cherry picked to the `release-v5.4200` branch. Then a tag should be created for the next round and so on until "release-able" version is found.
-5. Node and runtimes are release together from the same tag while other components(eg: fe) must have their own tag/workflows to release.
+4. Any reported issues must be fixed on `main` and merged/cherry picked to the `release-v5` branch. Then a tag should be created for the next round and so on until "release-able" version is found.
+5. Node and runtimes are released together from the same tag while other components(eg: fe) must have their own tag/workflows to release.
 
 #### 3.2.1 Frontend releases:
 Frontend releases follows the above guideline, with a few rules:
@@ -111,14 +111,14 @@ Releasing from a branch:
 In case of release from tag:
 ```shell
 # Checkout old tag
-git checkout release-v1.10001 --force
+git checkout release-v1.10001.0 --force
 
 # Make diff with new release tag to review changes
-git merge release-v1.10002 --no-commit --squash
+git merge release-v1.10002.0 --no-commit --squash
 
 # Sign new tag
-git checkout release-v1.10002 --force
-git tag --sign "release-v1.10002-alice" --message "reviewed"
+git checkout release-v1.10002.0 --force
+git tag --sign "release-v1.10002.0-alice" --message "reviewed"
 ```
 
 ## 4. Implementation
@@ -155,5 +155,5 @@ The following section lays out the release steps for each release in a checklist
 - [ ] Run `cargo build` once to update the Cargo.lock file.
 - [ ] Update the `v<Major>` branch on Github and make PR to master. Get it merged to main before next step. Note that `v<Major>` branch must not be deleted.
 - [ ] Get the tip of the branch signed according to 3.2.4 section.
-- [ ] Finally, create a tag `v<Branch.Spec_version>` (eg: `v5.4201`) to trigger the release artifact build.
+- [ ] Finally, create a tag `v<Branch.Spec_version.Path>` (eg: `v5.4201.0`) to trigger the release artifact build.
 - [ ] Run on upgrade to new runtime on fork of live node data and running runtime (previous release).
