@@ -94,10 +94,7 @@ message Result {
 
 message AssetAmount {
   AssetId assetId = 1;
-  oneof balance_type {
-    Ratio ratio = 2;
-    Unit unit = 3;
-  }
+  Balance balance = 2;
 }
 
 message IpRegister {
