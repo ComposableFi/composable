@@ -9,7 +9,7 @@ import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { subscribeTransactionFee } from "@/stores/defi/polkadot/transfers/subscribers";
 import { useStore } from "@/stores/root";
 import { Stack, Typography } from "@mui/material";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { humanBalance } from "shared";
 import {
   DESTINATION_FEE_MULTIPLIER,
@@ -22,7 +22,6 @@ export const TransferFeeDisplay = () => {
   const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
   const setFeeToken = useStore((state) => state.transfers.setFeeToken);
   const feeToken = useStore((state) => state.transfers.feeToken);
-
   const { from, to, account, fromProvider } = useTransfer();
   const fee = useStore((state) => state.transfers.fee);
   const selectedToken = useStore((state) => state.transfers.selectedToken);
@@ -57,16 +56,27 @@ export const TransferFeeDisplay = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromProvider.parachainApi, account?.address, from]);
 
+  const calculatedFee = useMemo(() => {
+    const partialFee = fee.partialFee;
+
+    const ratio = from === "picasso" ? tokens[feeToken].ratio[from] : null;
+    let converted = partialFee;
+    if (ratio && ratio.n && ratio.d) {
+      converted = converted.multipliedBy(ratio.n).div(ratio.d);
+    }
+
+    return converted
+      .multipliedBy(FEE_MULTIPLIER)
+      .toFormat(tokens[feeToken].decimals[from] ?? 12);
+  }, [fee.partialFee, feeToken, from, tokens]);
+
   return (
     <Stack direction="column" gap={4}>
       <FeeDisplay
         label="Fee"
         feeText={
           <Typography variant="body2">
-            {fee.partialFee
-              .multipliedBy(FEE_MULTIPLIER)
-              .toFormat(tokens[feeToken].decimals[from] ?? 12)}{" "}
-            {tokens[feeToken].symbol}
+            {calculatedFee} {tokens[feeToken].symbol}
           </Typography>
         }
         TooltipProps={{
