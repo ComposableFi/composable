@@ -31,8 +31,8 @@ export function useValidation({
     const eventValue = event.target.value;
     if (!eventValue.length) {
       setStringValue(eventValue);
-      setValue(new BigNumber(0));
       setValid(false);
+      return;
     }
 
     if (eventValue.match(FLOAT_NUMBER)) {
