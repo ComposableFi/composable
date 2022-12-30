@@ -2,11 +2,12 @@ import { AllProviders } from "@/defi/polkadot/context/hooks";
 import { Executor, getSigner } from "substrate-react";
 import { useStore } from "@/stores/root";
 import { APP_NAME } from "@/defi/polkadot/constants";
-import { fromChainIdUnit, SubstrateNetworkId, unwrapNumberOrHex } from "shared";
+import { SubstrateNetworkId, unwrapNumberOrHex } from "shared";
 import BigNumber from "bignumber.js";
 import { AssetRatio } from "@/defi/polkadot/pallets/Assets";
 import { pipe } from "fp-ts/function";
 import { option } from "fp-ts";
+import { fromChainUnits } from "pablo/defi/utils";
 
 function getFeeInToken(
   partialFee: BigNumber,
@@ -63,16 +64,13 @@ export const subscribeTransactionFee = async (
       const signer = await getSigner(APP_NAME, walletAddress);
       try {
         const info = await executor.paymentInfo(call, walletAddress, signer);
-        const partialFee = fromChainIdUnit(
-          unwrapNumberOrHex(info.partialFee.toString())
-        );
+        const partialFee = new BigNumber(info.partialFee.toString());
 
         useStore.getState().transfers.updateFee({
           class: info.class.toString(),
-          partialFee: getFeeInToken(
-            partialFee,
-            from,
-            selectedToken.ratio[from]
+          partialFee: fromChainUnits(
+            getFeeInToken(partialFee, from, selectedToken.ratio[from]),
+            selectedToken.decimals[from] ?? 12
           ),
           weight: unwrapNumberOrHex(info.weight.toString()),
         } as {
