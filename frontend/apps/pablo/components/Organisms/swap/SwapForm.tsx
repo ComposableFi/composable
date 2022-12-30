@@ -144,7 +144,9 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
                 disabled: true,
                 hidden: true,
               },
-              ...assetList,
+              ...assetList.filter(
+                (asset) => asset.value !== selectedAssetTwoId
+              ),
             ],
             borderLeft: false,
             minWidth: isMobile ? undefined : 150,
@@ -221,7 +223,9 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
                 disabled: true,
                 hidden: true,
               },
-              ...assetList,
+              ...assetList.filter(
+                (asset) => asset.value !== selectedAssetOneId
+              ),
             ],
             borderLeft: false,
             minWidth: isMobile ? undefined : 150,
