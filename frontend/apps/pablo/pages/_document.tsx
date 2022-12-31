@@ -58,14 +58,20 @@ export default class MyDocument extends Document {
           <meta name="twitter:url" content={config.appUrl} />
           <meta name="twitter:title" content={config.applicationName} />
           <meta name="twitter:description" content={config.appDescription} />
-          <meta name="twitter:image" content="/pwa/192x192.png" />
+          <meta
+            name="twitter:image"
+            content="https://raw.githubusercontent.com/fl-y/random-assets/main/assets/pablo-banner.jpg"
+          />
           <meta name="twitter:creator" content={config.twitterHandle} />
           <meta property="og:type" content="website" />
           <meta property="og:title" content={config.applicationName} />
           <meta property="og:description" content={config.appDescription} />
           <meta property="og:site_name" content={config.applicationName} />
           <meta property="og:url" content={config.appUrl} />
-          <meta property="og:image" content="/pwa/192x192.png" />
+          <meta
+            name="og:image"
+            content="https://raw.githubusercontent.com/fl-y/random-assets/main/assets/pablo-banner.jpg"
+          />
 
           {/* Apple Splash screen */}
           <link
