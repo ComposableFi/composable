@@ -589,7 +589,7 @@ fn single_pool_route_test() {
 		));
 		let bob_eth_amount = Tokens::balance(ETH, &EVE);
 		let bob_usdc_amount = Tokens::balance(USDC, &EVE);
-		assert_eq!(6101284169738, bob_eth_amount);
+		assert_eq!(2999999999999, bob_eth_amount);
 		assert_eq!(8999999999999, bob_usdc_amount);
 	});
 }

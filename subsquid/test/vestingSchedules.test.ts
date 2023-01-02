@@ -18,7 +18,7 @@ import {
 import {
   VestingSchedule as VestingScheduleType,
   VestingScheduleIdSet,
-} from "../src/types/v2402";
+} from "../src/types/v10002";
 import {
   VestingClaimedEvent,
   VestingVestingScheduleAddedEvent,
@@ -154,7 +154,7 @@ function createVestingScheduleAddedEvent(
     scheduleAmount,
   };
 
-  when(eventMock.asV10003).thenReturn(evt);
+  when(eventMock.asV10002).thenReturn(evt);
 
   const event = instance(eventMock);
 
@@ -177,7 +177,7 @@ function createVestingScheduleClaimedEvent(
     claimedAmountPerSchedule,
   };
 
-  when(eventMock.asV10003).thenReturn(evt);
+  when(eventMock.asV10002).thenReturn(evt);
 
   const event = instance(eventMock);
 
@@ -271,7 +271,7 @@ describe("Vesting schedule added", () => {
       ]
     );
 
-    const { claimedAmountPerSchedule } = event.asV10003;
+    const { claimedAmountPerSchedule } = event.asV10002;
 
     for (let i = 0; i < claimedAmountPerSchedule.length; i += 1) {
       const [id, amount] = claimedAmountPerSchedule[i];
@@ -317,7 +317,7 @@ describe("Vesting schedule added", () => {
       [[3n, 100n]]
     );
 
-    const { claimedAmountPerSchedule } = event.asV10003;
+    const { claimedAmountPerSchedule } = event.asV10002;
     const [id, amount] = claimedAmountPerSchedule[0];
 
     const vestingSchedule = createMockVestingSchedule(id, "1");

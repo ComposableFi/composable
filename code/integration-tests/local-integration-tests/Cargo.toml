@@ -47,6 +47,7 @@ indices = { package = "pallet-indices", git = "https://github.com/paritytech/sub
 membership = { package = "pallet-membership", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10", default-features = false }
+orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10", default-features = false }
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10", default-features = false }
 randomness-collective-flip = { package = "pallet-randomness-collective-flip", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 scheduler = { package = "pallet-scheduler", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
@@ -170,6 +171,7 @@ std = [
   "orml-tokens/std",
   "orml-xtokens/std",
   "orml-traits/std",
+  "orml-unknown-tokens/std",
   "treasury/std",
   "democracy/std",
   "scheduler/std",

@@ -8,8 +8,10 @@ import {
 } from "@mui/material";
 import BigNumber from "bignumber.js";
 import { FC } from "react";
-import { PoolAmount } from "@/store/pools/types";
+import { PoolConfig } from "@/store/pools/types";
 import { Asset } from "shared";
+import useStore from "@/store/useStore";
+import { usePoolSpotPrice } from "@/defi/hooks/pools/usePoolSpotPrice";
 
 const itemBoxPropsSX = (theme: Theme) =>
   ({
@@ -37,7 +39,7 @@ type ItemBoxProps = {
   label: string;
 };
 
-const ItemBox: React.FC<ItemBoxProps> = ({ value, label }) => {
+const ItemBox: FC<ItemBoxProps> = ({ value, label }) => {
   const theme = useTheme();
   return (
     <Box sx={itemBoxPropsSX(theme)}>
@@ -48,24 +50,39 @@ const ItemBox: React.FC<ItemBoxProps> = ({ value, label }) => {
 };
 
 export type PoolShareProps = {
-  poolShare: PoolAmount;
-  assetOne: Asset;
-  assetTwo: Asset;
-  price: BigNumber;
-  revertPrice: BigNumber;
-  share: BigNumber;
+  pool: PoolConfig;
+  input: [Asset, Asset];
+  amounts: [BigNumber, BigNumber];
+  simulated: BigNumber;
 } & BoxProps;
 
 export const PoolShare: FC<PoolShareProps> = ({
-  poolShare,
-  assetOne,
-  assetTwo,
-  price,
-  revertPrice,
-  share,
+  pool,
+  input,
+  amounts,
+  simulated,
   ...rest
 }) => {
-  // TODO:Implement pool share
+  const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
+  const [assetOne, assetTwo] = input;
+  const [amountOne, amountTwo] = amounts;
+  const { spotPrice } = usePoolSpotPrice(pool, input);
+  const twoPerOne = BigNumber(1).div(spotPrice).isFinite()
+    ? BigNumber(1).div(spotPrice).toFixed(4)
+    : "0.0000";
+  const onePerTwo =
+    spotPrice.isFinite() && !spotPrice.isNaN()
+      ? spotPrice.toFormat(4)
+      : "0.0000";
+
+  const totalIssued = useStore((store) => store.pools.totalIssued);
+  const poolTotalIssued =
+    totalIssued[pool.poolId.toString()] ?? new BigNumber(0);
+
+  const shareOfPool = simulated
+    .div(poolTotalIssued.plus(simulated))
+    .multipliedBy(100);
+
   return (
     <Box mt={4} {...rest}>
       <Typography variant="inputLabel">Price and pool share</Typography>
@@ -76,14 +93,14 @@ export const PoolShare: FC<PoolShareProps> = ({
         flexDirection={{ sm: "column", md: "row" }}
       >
         <ItemBox
-          value={price.toFixed(2)}
-          label={`${assetTwo.getSymbol()} per ${assetOne.getSymbol()}`}
-        />
-        <ItemBox
-          value={revertPrice.toFixed(2)}
+          value={onePerTwo}
           label={`${assetOne.getSymbol()} per ${assetTwo.getSymbol()}`}
         />
-        <ItemBox value={`${share.toFixed()}%`} label="Share of pool" />
+        <ItemBox
+          value={twoPerOne}
+          label={`${assetTwo.getSymbol()} per ${assetOne.getSymbol()}`}
+        />
+        <ItemBox value={`${shareOfPool.toFixed(4)}%`} label="Share of pool" />
       </Box>
     </Box>
   );

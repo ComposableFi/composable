@@ -15,6 +15,7 @@ export type ConnectionStatusProps = {
     icon: string;
     label: string;
   }>;
+  hideEth?: boolean;
   blockchainNetworksSupported: BlockchainNetwork[];
 };
 
@@ -27,6 +28,7 @@ export const ConnectionStatus = ({
   onOpenConnectionModal,
   setSelectedAsset,
   blockchainNetworksSupported,
+  hideEth,
 }: ConnectionStatusProps) => {
   const theme = useTheme();
 
@@ -64,6 +66,7 @@ export const ConnectionStatus = ({
         isPolkadotConnected={isPolkadotActive}
         label={label}
         blockchainNetworksSupported={blockchainNetworksSupported}
+        hideEth={hideEth}
       />
     </Box>
   );

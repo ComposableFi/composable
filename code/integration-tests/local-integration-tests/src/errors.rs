@@ -15,13 +15,11 @@ pub fn under_existential_deposit<AssetsRegistry: AssetRatioInspect<AssetId = Cur
 	_instruction_count: usize,
 ) -> Balance {
 	let ed = multi_existential_deposits::<AssetsRegistry>(&asset_id);
-	dbg!(&ed, &asset_id);
 	assert_gt!(ed, Balance::one());
 	ed - Balance::one()
 }
 
 #[test]
-#[ignore = "not sure why this is failing?"]
 fn transfer_native_from_relay_enough_for_fee_but_not_enough_for_ed_ends_up_in_treasury() {
 	simtest();
 	let receiver = charlie();
@@ -305,7 +303,7 @@ fn cannot_transfer_away_if_min_fee_is_not_defined() {
 }
 
 #[test]
-fn cannot_reserver_transfer_assets_from_self() {
+fn cannot_reserve_transfer_assets_from_self() {
 	simtest();
 	let transfer_amount = 3 * RELAY_NATIVE::ONE;
 	let limit = 4_600_000_000;

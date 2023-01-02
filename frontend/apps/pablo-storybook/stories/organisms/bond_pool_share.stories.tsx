@@ -25,9 +25,31 @@ const Template: ComponentStory<typeof PoolShare> = (args) => (
 
 export const Default = Template.bind({});
 Default.args = {
-  assetOne: new Asset("", "", "", "pica", undefined),
-  assetTwo: new Asset("", "", "", "usdt", undefined),
-  price: new BigNumber(0.1),
-  revertPrice: new BigNumber(10),
-  share: new BigNumber(3.3),
+  pool: {
+    kind: "dualAssetConstantPool",
+    poolId: new BigNumber("0"),
+    config: {
+      lpToken: 106,
+      owner: "0abcd",
+      assetsWeights: {
+        1: 0,
+        4: 0,
+      },
+      assets: [
+        new Asset("", "", "", "pica", undefined),
+        new Asset("", "", "", "ksm", undefined),
+      ],
+      feeConfig: {
+        feeRate: 0,
+        ownerFeeRate: 0,
+        protocolFeeRate: 0,
+      },
+    },
+  },
+  amounts: [new BigNumber(0), new BigNumber(1)],
+  input: [
+    new Asset("", "", "", "pica", undefined),
+    new Asset("", "", "", "ksm", undefined),
+  ],
+  simulated: new BigNumber(0),
 };

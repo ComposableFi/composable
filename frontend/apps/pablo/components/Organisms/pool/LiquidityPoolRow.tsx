@@ -2,6 +2,8 @@ import { TableCell, TableRow } from "@mui/material";
 import { PoolConfig } from "@/store/createPool/types";
 import useStore from "@/store/useStore";
 import { PairAsset } from "@/components/Atoms";
+import { usePoolRatio } from "@/defi/hooks/pools/usePoolRatio";
+import { usePoolTotalVolume } from "@/defi/hooks/pools/usePoolTotalVolume";
 
 const LiquidityPoolRow = ({
   liquidityPool,
@@ -10,10 +12,10 @@ const LiquidityPoolRow = ({
   liquidityPool: PoolConfig;
   handleRowClick: (e: any, poolId: string) => void;
 }) => {
-  const tokens = useStore((store) => store.substrateTokens.tokens);
   const isLoaded = useStore((store) => store.substrateTokens.hasFetchedTokens);
-  const lpAssetId = liquidityPool.config.lpToken;
   const assets = liquidityPool.config.assets;
+  const { poolTVL } = usePoolRatio(liquidityPool);
+  const poolVolume = usePoolTotalVolume(liquidityPool);
 
   if (isLoaded) {
     return (
@@ -27,10 +29,8 @@ const LiquidityPoolRow = ({
         <TableCell align="left">
           <PairAsset assets={assets} separator="/" />
         </TableCell>
-        <TableCell align="left"></TableCell>
-        <TableCell align="left"></TableCell>
-        <TableCell align="left"></TableCell>
-        <TableCell align="left"></TableCell>
+        <TableCell align="left">${poolTVL.toFormat(0)}</TableCell>
+        <TableCell align="left">${poolVolume.toFormat(0)}</TableCell>
       </TableRow>
     );
   }

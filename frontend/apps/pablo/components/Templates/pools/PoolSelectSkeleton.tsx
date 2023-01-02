@@ -38,14 +38,6 @@ export const PoolSelectSkeleton = () => {
               }}
             />
           </Grid>
-          <Grid item xs={12}>
-            <Skeleton
-              variant="rectangular"
-              sx={{
-                height: "450px",
-              }}
-            />
-          </Grid>
         </Grid>
       </Container>
     </Default>

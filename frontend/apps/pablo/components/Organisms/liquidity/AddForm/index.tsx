@@ -8,7 +8,7 @@ import { HighlightBox } from "@/components/Atoms/HighlightBox";
 import { setUiState, useUiSlice } from "@/store/ui/ui.slice";
 import { usePoolDetail } from "@/defi/hooks/pools/usePoolDetail";
 import useStore from "@/store/useStore";
-import { option } from "fp-ts";
+import { either, option } from "fp-ts";
 import { pipe } from "fp-ts/lib/function";
 import BigNumber from "bignumber.js";
 import { LiquidityInput } from "../../pool/AddLiquidity/LiquidityInput";
@@ -21,6 +21,31 @@ import { PlusIcon } from "@/components/Organisms/liquidity/AddForm/PlusIcon";
 import { useSimulateAddLiquidity } from "@/components/Organisms/pool/AddLiquidity/useSimulateAddLiquidity";
 import { ConfirmSupplyModal } from "@/components/Organisms/liquidity/AddForm/ConfirmSupplyModal";
 import { YourPosition } from "@/components/Organisms/liquidity/YourPosition";
+import { ConfirmingSupplyModal } from "@/components/Organisms/liquidity/AddForm/ConfirmingSupplyModal";
+import { usePoolSpotPrice } from "@/defi/hooks/pools/usePoolSpotPrice";
+import { useLiquidity } from "@/defi/hooks";
+
+function amountWithRatio(
+  amount: BigNumber,
+  spotPrice: BigNumber,
+  isReverse: boolean
+) {
+  return pipe(
+    isReverse,
+    either.fromPredicate(
+      (v) => !v,
+      () => new BigNumber(1)
+    ),
+    either.fold(
+      (v) =>
+        v.div(
+          amount.multipliedBy(spotPrice.isZero() ? new BigNumber(1) : spotPrice)
+        ),
+      () =>
+        amount.multipliedBy(spotPrice.isZero() ? new BigNumber(1) : spotPrice)
+    )
+  );
+}
 
 export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   const theme = useTheme();
@@ -45,6 +70,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   const handleConfirmSupplyButtonClick = () => {
     pipe(
       pool,
+      option.fromNullable,
       option.fold(
         () => {
           enqueueSnackbar(
@@ -64,18 +90,19 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   // Populate Dropdowns
   const { poolId } = usePoolDetail();
   const getPoolById = useStore((store) => store.pools.getPoolById);
-  const pool = getPoolById(poolId);
+  const pool = pipe(getPoolById(poolId), option.toNullable);
   const getTokenBalance = useStore(
     (store) => store.substrateBalances.getTokenBalance
   );
   const inputConfig = pipe(
-    getInputConfig(pool, getTokenBalance),
+    getInputConfig(pipe(pool, option.fromNullable), getTokenBalance),
     option.fold(
       () => null,
       (ic) => ic
     )
   );
-
+  const { spotPrice } = usePoolSpotPrice(pool, pool?.config.assets);
+  const { baseAmount, quoteAmount } = useLiquidity(pool);
   const assetOptions = getAssetOptions(inputConfig ?? []);
   const [leftConfig, rightConfig] = inputConfig ?? [];
   const leftId = (leftConfig?.asset.getPicassoAssetId() as string) || null;
@@ -84,19 +111,19 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   const simulate = useSimulateAddLiquidity();
   const [isInValid, setInValid] = useState<boolean>(false);
   const [isOutValid, setOutValid] = useState<boolean>(false);
-  const poolShare = useStore((store) => store.pools.poolAmount);
-
   const inputValid = isInValid && isOutValid;
+  const isPoolEmpty = baseAmount.isZero() && quoteAmount.isZero();
+
   useEffect(() => {
     if (leftId === null || rightId === null) return;
     simulate(
       poolId,
       {
-        assetIdOnChain: leftId.toString(),
+        asset: leftConfig.asset,
         balance: amountOne,
       },
       {
-        assetIdOnChain: rightId.toString(),
+        asset: rightConfig.asset,
         balance: amountTwo,
       }
     ).then((simulatedValue) => {
@@ -104,7 +131,17 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         setSimulated(simulatedValue);
       }
     });
-  }, [amountOne, amountTwo, leftId, poolId, rightId, simulate, simulated]);
+  }, [
+    amountOne,
+    amountTwo,
+    leftConfig?.asset,
+    leftId,
+    poolId,
+    rightConfig?.asset,
+    rightId,
+    simulate,
+    simulated,
+  ]);
 
   if (inputConfig === null) {
     return null;
@@ -133,12 +170,19 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         onValidationChange={setInValid}
         config={leftConfig}
         value={amountOne}
-        onChange={(v) =>
-          setAmount((state) => ({
-            ...state,
-            amountOne: v,
-          }))
-        }
+        onChange={(v) => {
+          if (isPoolEmpty) {
+            setAmount((state) => ({
+              ...state,
+              amountOne: v,
+            }));
+          } else {
+            setAmount({
+              amountOne: v,
+              amountTwo: v.div(baseAmount).multipliedBy(quoteAmount),
+            });
+          }
+        }}
         assetDropdownItems={assetOptions}
         label={"Token 1"}
       />
@@ -149,24 +193,32 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         onValidationChange={setOutValid}
         config={rightConfig}
         value={amountTwo}
-        onChange={(v) =>
-          setAmount((state) => ({
-            ...state,
-            amountTwo: v,
-          }))
-        }
+        onChange={(v) => {
+          if (isPoolEmpty) {
+            setAmount((state) => ({
+              ...state,
+              amountTwo: v,
+            }));
+          } else {
+            setAmount({
+              amountOne: v.div(quoteAmount).multipliedBy(baseAmount),
+              amountTwo: v, // amountTwo / Pool.amountTwo = RATIO
+            });
+          }
+        }}
         assetDropdownItems={assetOptions}
         label={"Token 2"}
       />
 
-      <PoolShare
-        assetOne={leftConfig.asset}
-        assetTwo={rightConfig.asset}
-        poolShare={poolShare}
-        price={leftConfig.asset.getPrice()}
-        revertPrice={new BigNumber(1).div(1)}
-        share={new BigNumber(0.02)}
-      />
+      {pool ? (
+        <PoolShare
+          pool={pool}
+          input={[leftConfig.asset, rightConfig.asset]}
+          amounts={[amountOne, amountTwo]}
+          simulated={simulated}
+        />
+      ) : null}
+
       <Button
         variant="contained"
         size="large"
@@ -180,40 +232,40 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         Supply
       </Button>
 
-      {inputValid ? (
+      {inputValid && pool ? (
         <YourPosition
+          pool={pool}
+          amounts={[amountOne, amountTwo]}
           noTitle={false}
           assets={inputConfig.map((config) => config.asset)}
-          amountIn={amountOne}
-          amountOut={amountTwo}
           expectedLP={simulated}
-          share={new BigNumber(0)}
           mt={4}
         />
       ) : null}
 
-      <ConfirmSupplyModal
-        pool={pool}
-        inputConfig={inputConfig}
-        expectedLP={simulated}
-        share={new BigNumber(0)}
-        open={isConfirmSupplyModalOpen}
-        amountOne={amountOne}
-        amountTwo={amountTwo}
-      />
+      {pool ? (
+        <ConfirmSupplyModal
+          pool={pool}
+          inputConfig={inputConfig}
+          expectedLP={simulated}
+          share={new BigNumber(0)}
+          open={isConfirmSupplyModalOpen}
+          amountOne={amountOne}
+          amountTwo={amountTwo}
+        />
+      ) : null}
 
-      {/*<ConfirmingSupplyModal*/}
-      {/*  pool={pool}*/}
-      {/*  open={isConfirmingSupplyModalOpen}*/}
-      {/*  lpReceiveAmount={lpReceiveAmount}*/}
-      {/*  priceOneInTwo={spotPrice}*/}
-      {/*  priceTwoInOne={new BigNumber(1).div(spotPrice)}*/}
-      {/*  assetOneAmount={assetOneAmount}*/}
-      {/*  assetTwoAmount={assetTwoAmount}*/}
-      {/*  assetOne={assetOne}*/}
-      {/*  assetTwo={assetTwo}*/}
-      {/*  share={share}*/}
-      {/*/>*/}
+      {pool ? (
+        <ConfirmingSupplyModal
+          pool={pool}
+          inputConfig={inputConfig}
+          expectedLP={simulated}
+          share={new BigNumber(0)}
+          open={isConfirmingSupplyModalOpen}
+          amountOne={amountOne}
+          amountTwo={amountTwo}
+        />
+      ) : null}
 
       <TransactionSettings showSlippageSelection={false} />
     </HighlightBox>

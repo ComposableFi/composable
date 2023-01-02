@@ -68,13 +68,6 @@ const RoutesConfig: ConfigType[] = [
     matches: ["/staking"],
   },
   {
-    label: "Bond",
-    path: "/bonds",
-    icon: dynamic(() => import("@mui/icons-material/PaymentsRounded")),
-    status: "active",
-    matches: ["/bonds"],
-  },
-  {
     label: "Governance",
     path: config.governanceUrl,
     icon: dynamic(() => import("@mui/icons-material/HowToVoteRounded")),
@@ -92,7 +85,7 @@ const RoutesConfig: ConfigType[] = [
     label: "Pablo",
     path: config.pabloUrl,
     icon: dynamic(() => import("@mui/icons-material/Autorenew")),
-    status: "inactive",
+    status: "active",
     endAdornment: (
       <Link href="#" passHref>
         <IconButton>

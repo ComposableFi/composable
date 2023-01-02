@@ -2,7 +2,7 @@ name: Release Artifacts
 on:
   push:
     tags:
-      - 'release-v[0-9]+\.[0-9]+'
+      - 'release-v[0-9]+\.[0-9]+\.[0-9]+'
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
@@ -24,20 +24,15 @@ jobs:
       group: build-runtime-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
     container:
-      image: ubuntu:latest
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     strategy:
       matrix:
         runtime: [dali, picasso, composable]
     steps:
-      - run: |
-          apt-get update
-          apt-get install -y curl git
-          curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
-          apt-get install git-lfs
       - uses: actions/checkout@v3
         with:
-          lfs: true
           fetch-depth: 0
+          
       - name: Setup nix configuration
         run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf

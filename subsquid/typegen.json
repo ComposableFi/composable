@@ -4,6 +4,10 @@
   "specVersions": "daliDevVersions.jsonl",
   "typesBundle": "kusama",
   "events": [
+    "Pablo.PoolCreated",
+    "Pablo.LiquidityAdded",
+    "Pablo.LiquidityRemoved",
+    "Pablo.Swapped",
     "Balances.Transfer",
     "Balances.Slashed",
     "Balances.Deposit",

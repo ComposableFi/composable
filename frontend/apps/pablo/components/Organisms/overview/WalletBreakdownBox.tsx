@@ -15,6 +15,7 @@ import { BoxWrapper } from "../BoxWrapper";
 import { useAssetsOverview } from "@/defi/hooks/overview/useAssetsOverview";
 import { NoPositionsPlaceholder } from "./NoPositionsPlaceholder";
 import { OVERVIEW_ERRORS } from "./errors";
+import { usePicaPriceDiscovery } from "@/defi/hooks/overview/usePicaPriceDiscovery";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -33,6 +34,7 @@ const tableHeaders: TableHeader[] = [
 
 export const WalletBreakdownBox: React.FC<BoxProps> = ({ ...boxProps }) => {
   const assetsOverview = useAssetsOverview();
+  const picaDiscovered = usePicaPriceDiscovery();
 
   return (
     <BoxWrapper title="Wallet Breakdown" {...boxProps}>
@@ -54,9 +56,13 @@ export const WalletBreakdownBox: React.FC<BoxProps> = ({ ...boxProps }) => {
             </TableHead>
             <TableBody>
               {assetsOverview.map((asset) => {
-                const ownedValue = asset
-                  .getBalance()
-                  .multipliedBy(asset.getPrice());
+                const ownedValue =
+                  asset.getSymbol() === "PICA"
+                    ? asset.getBalance().multipliedBy(picaDiscovered)
+                    : asset.getBalance().multipliedBy(asset.getPrice());
+
+                const assetPrice = asset.getSymbol() === "PICA" ? picaDiscovered.toFixed(6) : asset.getPrice().toFixed(4)
+
                 return (
                   <TableRow key={asset.getName()}>
                     <TableCell align="left">
@@ -67,7 +73,7 @@ export const WalletBreakdownBox: React.FC<BoxProps> = ({ ...boxProps }) => {
                     </TableCell>
                     <TableCell align="left">
                       <Typography variant="body1">
-                        ${asset.getPrice().toFixed(4)}
+                        ${assetPrice}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">

@@ -1,29 +1,43 @@
 import { ApiPromise } from "@polkadot/api";
 import useStore from "@/store/useStore";
-import { fromChainUnits } from "@/defi/utils";
-
-// const POOL_4_130_ADDRESS = "5w3oyasYQg6xWPRnTBT5A2zLnRDBngFZQP2ify51JjUfKCDD";
-// const POOL_1_130_ADDRESS =
-//   "5w3oyasYQg6xWPRnTBTLu4XvtutPFEMS93yEDukqmZMPaznS";
-// const POOL_1_4_ADDRESS = "";
-//
-// // This should be fetched from RPC or inside
-// const hardcodedPoolWalletAddress = {
-//
-// }
+import { DEFAULT_NETWORK_ID, fromChainUnits } from "@/defi/utils";
+import { Asset } from "shared";
+import { getSubAccount } from "@/defi/utils/pablo/getSubAccount";
 
 async function fetchInPool(
   api: ApiPromise,
-  assetIn: string,
-  assetOut: string,
+  assetIn: Asset,
+  assetOut: Asset,
   wallet: string
 ) {
-  const inPoolAssetIn = await api.query.tokens.accounts(wallet, assetIn);
-  const inPoolAssetOut = await api.query.tokens.accounts(wallet, assetOut);
+  let inPoolAssetIn: any;
+  let inPoolAssetOut: any;
+
+  const assetInId = assetIn.getPicassoAssetId()?.toString() ?? "";
+  const assetOutId = assetOut.getPicassoAssetId()?.toString() ?? "";
+  if (assetInId === "1") {
+    const out = await api.query.system.account(wallet);
+    inPoolAssetIn = out.data;
+  } else {
+    inPoolAssetIn = await api.query.tokens.accounts(wallet, assetInId);
+  }
+
+  if (assetOutId === "1") {
+    const out = await api.query.system.account(wallet);
+    inPoolAssetOut = out.data;
+  } else {
+    inPoolAssetOut = await api.query.tokens.accounts(wallet, assetOutId);
+  }
 
   return {
-    [assetIn]: fromChainUnits(inPoolAssetIn.free.toString()).toString(),
-    [assetOut]: fromChainUnits(inPoolAssetOut.free.toString()).toString(),
+    [assetInId]: fromChainUnits(
+      inPoolAssetIn.free.toString(),
+      assetIn.getDecimals(DEFAULT_NETWORK_ID)
+    ).toString(),
+    [assetOutId]: fromChainUnits(
+      inPoolAssetOut.free.toString(),
+      assetOut.getDecimals(DEFAULT_NETWORK_ID)
+    ).toString(),
   };
 }
 
@@ -40,15 +54,16 @@ export function subscribePoolAmount(api: ApiPromise | undefined) {
 
       const pools = useStore.getState().pools.config;
       for (const pool of pools) {
-        const assetIn = pool.config.assets[0].getPicassoAssetId() as string;
-        const assetOut = pool.config.assets[1].getPicassoAssetId() as string;
+        const assetIn = pool.config.assets[0];
+        const assetOut = pool.config.assets[1];
+        const ownerWalletAddress = getSubAccount(api, pool.poolId.toString());
+
         const amount = await fetchInPool(
           api,
           assetIn,
           assetOut,
-          pool.config.owner
+          ownerWalletAddress
         );
-
         setPoolAmount(pool.poolId.toString(), amount);
         api.query.tokens
           .totalIssuance(pool.config.lpToken.toString())

@@ -1,21 +1,15 @@
-import {
-  alpha,
-  Box,
-  BoxProps,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { alpha, Box, BoxProps, Typography, useTheme } from "@mui/material";
 import { BaseAsset } from "@/components";
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useState } from "react";
 import { Asset } from "shared";
 
 export type SwapRouteProps = {
-  quoteAsset: Asset | undefined,
-  baseAsset: Asset | undefined,
-  visibleOnMount?: boolean,
+  quoteAsset: Asset | undefined;
+  baseAsset: Asset | undefined;
+  visibleOnMount?: boolean;
 } & BoxProps;
 
 export const SwapRoute: React.FC<SwapRouteProps> = ({
@@ -24,7 +18,6 @@ export const SwapRoute: React.FC<SwapRouteProps> = ({
   visibleOnMount = true,
   ...boxProps
 }) => {
-
   const [open, setOpen] = useState<boolean>(visibleOnMount);
   const theme = useTheme();
 
@@ -44,19 +37,17 @@ export const SwapRoute: React.FC<SwapRouteProps> = ({
           gap={1}
           py={1.375}
           px={3}
-          sx={{cursor: "pointer"}}
+          sx={{ cursor: "pointer" }}
           onClick={() => setOpen(!open)}
         >
           <Typography variant="body1" color="primary.main">
             View swap route
           </Typography>
-          {
-            open ? (
-              <KeyboardArrowUpIcon color="primary" />
-            ) : (
-              <KeyboardArrowDownIcon color="primary" />
-            )
-          }
+          {open ? (
+            <KeyboardArrowUpIcon color="primary" />
+          ) : (
+            <KeyboardArrowDownIcon color="primary" />
+          )}
         </Box>
       </Box>
       {open && (
@@ -68,7 +59,6 @@ export const SwapRoute: React.FC<SwapRouteProps> = ({
           gap={1}
           py={2.75}
           px={3}
-          borderRadius="50%"
           sx={{
             background: alpha(
               theme.palette.common.white,
@@ -76,13 +66,21 @@ export const SwapRoute: React.FC<SwapRouteProps> = ({
             ),
           }}
         >
-          <BaseAsset icon={quoteAsset?.getIconUrl()} label={quoteAsset?.getSymbol()} width="auto" />
+          <BaseAsset
+            icon={quoteAsset?.getIconUrl()}
+            label={quoteAsset?.getSymbol()}
+            width="auto"
+          />
           <ChevronRightIcon />
-          <BaseAsset icon={'/tokens/pablo.svg'} label={`PABLO`} width="auto" />
+          <BaseAsset icon={"/tokens/pablo.svg"} label={`PBLO`} width="auto" />
           <ChevronRightIcon />
-          <BaseAsset icon={baseAsset?.getIconUrl()} label={baseAsset?.getSymbol()} width="auto" />
+          <BaseAsset
+            icon={baseAsset?.getIconUrl()}
+            label={baseAsset?.getSymbol()}
+            width="auto"
+          />
         </Box>
       )}
     </Box>
   );
-}
+};

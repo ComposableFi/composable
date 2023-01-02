@@ -10,8 +10,8 @@ import { NetworkId, Wallet } from "wallet";
 import { ConnectorType } from "bi-lib";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import BigNumber from "bignumber.js";
 import { FC } from "react";
+import useStore from "@/store/useStore";
 
 const BLOCKCHAIN_NETWORKS_SUPPORTED = [
   {
@@ -54,8 +54,10 @@ export const PolkadotConnect: FC = () => {
   const accounts = useConnectedAccounts(DEFAULT_NETWORK_ID);
   const connectedAccount = useSelectedAccount("picasso");
   useEagerConnect(DEFAULT_NETWORK_ID);
-
   const transactions = useTransactions(connectedAccount?.address ?? "-");
+  const picaBalance = useStore(
+    (store) => store.substrateBalances.tokenBalances.picasso.pica.free
+  );
 
   return (
     <Wallet
@@ -65,7 +67,7 @@ export const PolkadotConnect: FC = () => {
           timestamp: tx.timestamp,
         };
       })}
-      connectedAccountNativeBalance={new BigNumber(0)}
+      connectedAccountNativeBalance={picaBalance}
       onDisconnectDotsamaWallet={deactivate}
       onConnectPolkadotWallet={activate as any}
       blockchainNetworksSupported={BLOCKCHAIN_NETWORKS_SUPPORTED}
@@ -85,6 +87,7 @@ export const PolkadotConnect: FC = () => {
       isEthereumWalletActive={false} // TODO mark EVM related stuff as optional.
       onConnectEthereumWallet={() => Promise.resolve()}
       onDisconnectEthereum={() => Promise.resolve()}
+      hideEth={true}
     />
   );
 };

@@ -1,66 +1,31 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  BoxProps,
-} from "@mui/material";
-import React from "react";
-import { TableHeader } from "@/defi/types";
+import { BoxProps } from "@mui/material";
+import React, { FC } from "react";
 import { BoxWrapper } from "../BoxWrapper";
-import { usePoolsWithLpBalance } from "@/defi/hooks/overview/usePoolsWithLpBalance";
 import { NoPositionsPlaceholder } from "./NoPositionsPlaceholder";
 import { OVERVIEW_ERRORS } from "./errors";
-import LiquidityProviderPositionRow from "./LiquidityProviderPositionRow";
+import useStore from "@/store/useStore";
+import { YourLiquidityTable } from "@/components/Organisms/pool/YourLiquidityTable";
+import BigNumber from "bignumber.js";
 
-const tableHeaders: TableHeader[] = [
-  {
-    header: "Assets",
-  },
-  {
-    header: "Price",
-  },
-  {
-    header: "Amount",
-  },
-  {
-    header: "Value",
-  },
-  {
-    header: "APR",
-  },
-];
+export const LiquidityProvidersBox: FC<BoxProps> = ({ ...boxProps }) => {
+  const pools = useStore((store) => store.pools.config);
+  const userOwnedLiquidity = useStore((store) => store.ownedLiquidity.tokens);
+  const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
+  const hasParticipated = pools.some((pool) => {
+    const balance = userOwnedLiquidity[pool.config.lpToken]?.balance ?? {
+      free: new BigNumber(0),
+      locked: new BigNumber(0),
+    };
 
-export const LiquidityProvidersBox: React.FC<BoxProps> = ({ ...boxProps }) => {
-  const pools = usePoolsWithLpBalance();
+    return !balance.free.isZero();
+  });
 
   return (
     <BoxWrapper title="Liquidity provider positions" {...boxProps}>
-      {pools.length === 0 && (
+      {pools.length === 0 || !hasParticipated ? (
         <NoPositionsPlaceholder text={OVERVIEW_ERRORS.NO_LP} />
-      )}
-
-      {pools.length > 0 && (
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                {tableHeaders.map((th) => (
-                  <TableCell key={th.header} align="left">
-                    {th.header}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {pools.map((pool, index) => (
-                <LiquidityProviderPositionRow pool={pool} key={index} />
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+      ) : (
+        <YourLiquidityTable pools={pools} />
       )}
     </BoxWrapper>
   );

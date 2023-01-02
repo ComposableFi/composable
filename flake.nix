@@ -37,7 +37,7 @@
         ./code/benchmarks.nix
         ./code/common-deps.nix
         ./code/composable-nodes.nix
-        ./code/integration-tests.nix
+        ./code/integration-tests/local-integration-tests/flake-module.nix
         ./code/simnode-tests.nix
         ./code/integration-tests/runtime-tests/runtime-tests.nix
         ./code/runtimes.nix
@@ -54,10 +54,10 @@
         ./price-feed.nix
         ./release.nix
         ./rust.nix
-        ./subsquid/subsquid.nix
         ./subwasm.nix
         ./scripts/zombienet/flake-module.nix
         ./centauri-codegen.nix
+        ./.nix/cargo/flake-module.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];

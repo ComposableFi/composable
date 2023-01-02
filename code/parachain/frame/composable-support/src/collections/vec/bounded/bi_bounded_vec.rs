@@ -77,7 +77,12 @@ impl<T, const L: usize, const U: usize> BiBoundedVec<T, L, U> {
 		}
 	}
 
-	/// Returns a reference to underlying `Vec``
+	/// Returns the inner (unbounded!) [`Vec<T>`].
+	pub fn into_inner(self) -> Vec<T> {
+		self.inner
+	}
+
+	/// Returns a reference to underlying `Vec`
 	///
 	/// # Example
 	/// ```

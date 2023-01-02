@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import {
   VestingSchedule as VestingScheduleType,
   VestingScheduleIdSet,
-} from "../types/v10003";
+} from "../types/v10002";
 import {
   EventType,
   LockedSource,
@@ -39,7 +39,7 @@ interface VestingScheduleAddedEvent {
 function getVestingScheduleAddedEvent(
   event: VestingVestingScheduleAddedEvent
 ): VestingScheduleAddedEvent {
-  return event.asV10003;
+  return event.asV10002;
 }
 
 /**
@@ -143,7 +143,7 @@ interface VestingScheduleClaimedEvent {
 function getVestingScheduleClaimedEvent(
   event: VestingClaimedEvent
 ): VestingScheduleClaimedEvent {
-  return event.asV10003;
+  return event.asV10002;
 }
 
 /**

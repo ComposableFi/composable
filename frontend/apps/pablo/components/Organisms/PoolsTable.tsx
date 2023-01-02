@@ -29,16 +29,10 @@ const tableHeaders: TableHeader[] = [
     header: "Pools",
   },
   {
-    header: "",
+    header: "Total value locked",
   },
   {
-    header: "",
-  },
-  {
-    header: "",
-  },
-  {
-    header: "",
+    header: "Volume",
   },
 ];
 

@@ -1,27 +1,27 @@
 {
-    "name": "PWA App",
-    "short_name": "App",
-    "icons": [
-      {
-        "src": "/icons/android-chrome-192x192.png",
-        "sizes": "192x192",
-        "type": "image/png",
-        "purpose": "any maskable"
-      },
-      {
-        "src": "/icons/android-chrome-384x384.png",
-        "sizes": "384x384",
-        "type": "image/png"
-      },
-      {
-        "src": "/icons/icon-512x512.png",
-        "sizes": "512x512",
-        "type": "image/png"
-      }
-    ],
-    "theme_color": "#FFFFFF",
-    "background_color": "#FFFFFF",
-    "start_url": "/",
-    "display": "standalone",
-    "orientation": "portrait"
-  }
+  "name": "Pablo | Composable Finance",
+  "short_name": "Pablo DEX",
+  "icons": [
+    {
+      "src": "/pwa/192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa/384x384.png",
+      "sizes": "384x384",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa/512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#9C4AED",
+  "background_color": "#2D0B4F",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait"
+}

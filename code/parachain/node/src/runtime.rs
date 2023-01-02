@@ -196,7 +196,11 @@ define_trait! {
 		#[cfg(feature = "composable")]
 		impl for composable_runtime {}
 
-		impl for picasso_runtime {}
+		impl for picasso_runtime {
+			fn (io, deps) {
+				io.merge(Pablo::new(deps.client).into_rpc())
+			}
+		}
 
 		#[cfg(feature = "dali")]
 		impl for dali_runtime {

@@ -62,22 +62,12 @@ export const TransferFeeDisplay = () => {
       <FeeDisplay
         label="Fee"
         feeText={
-          <TextExpander
-            short={
-              <Typography variant="body2">
-                {humanBalance(fee.partialFee.multipliedBy(FEE_MULTIPLIER))}{" "}
-                {tokens[feeToken].symbol}
-              </Typography>
-            }
-            expanded={
-              <Typography variant="body2">
-                {fee.partialFee
-                  .multipliedBy(FEE_MULTIPLIER)
-                  .toFormat(tokens[feeToken].decimals[from] ?? 12)}{" "}
-                {tokens[feeToken].symbol}
-              </Typography>
-            }
-          />
+          <Typography variant="body2">
+            {fee.partialFee
+              .multipliedBy(FEE_MULTIPLIER)
+              .toFormat(tokens[feeToken].decimals[from] ?? 12)}{" "}
+            {tokens[feeToken].symbol}
+          </Typography>
         }
         TooltipProps={{
           title:

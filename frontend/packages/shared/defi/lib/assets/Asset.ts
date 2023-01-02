@@ -54,12 +54,10 @@ export class Asset {
    * on picasso parachain
    * string by default
    * @param inBn boolean
-   * @returns BigNumber | string
+   * @returns BigNumber | string | null
    */
-  getPicassoAssetId(inBn: boolean = false): BigNumber | string {
-    const picassoAssetId = this.__parachainAssetIds.get("picasso");
-    if (!picassoAssetId) throw new Error("Asset Unavailable on Picasso");
-    return inBn ? picassoAssetId : picassoAssetId.toString();
+  getPicassoAssetId(inBn: boolean = false) {
+    return this.getIdOnChain("picasso", inBn);
   }
 
   isSupportedOn(network: string): boolean {
@@ -94,9 +92,8 @@ export class Asset {
    */
   async balanceOf(account: string): Promise<BigNumber> {
     try {
-      if (!this.__api) throw new Error("API Unavailable.");
-
       const picassoId = this.getPicassoAssetId();
+      if (!this.__api || !picassoId) throw new Error("API Unavailable.");
 
       const _assetId = this.__api.createType(
         "CustomRpcCurrencyId",
@@ -107,7 +104,10 @@ export class Asset {
         _assetId,
         _accountId32
       );
-      return fromChainIdUnit(BigInt(balance.toString()));
+      return fromChainIdUnit(
+        BigInt(balance.toString()),
+        this.__decimals.get("picasso")
+      );
     } catch (err: any) {
       console.error("[balanceOf]", err.message);
       return new BigNumber(0);

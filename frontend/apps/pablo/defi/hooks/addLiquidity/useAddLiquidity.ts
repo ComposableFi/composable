@@ -12,7 +12,7 @@ import { DEFAULT_NETWORK_ID, toChainUnits } from "@/defi/utils";
 import { getAssetTree } from "@/components/Organisms/pool/AddLiquidity/utils";
 import { pipe } from "fp-ts/lib/function";
 import { option } from "fp-ts";
-import { subscanExtrinsicLink } from "shared";
+import { Asset, subscanExtrinsicLink } from "shared";
 
 const TxOrigin = "Add Liquidity";
 
@@ -39,8 +39,8 @@ export const useAddLiquidity = ({
   parachainApi,
   assetOneAmount,
   assetTwoAmount,
-  assetInId,
-  assetOutId,
+  assetIn,
+  assetOut,
   lpReceiveAmount,
   poolId,
   signer,
@@ -49,8 +49,8 @@ export const useAddLiquidity = ({
   executor: Executor | undefined;
   parachainApi: ApiPromise | undefined;
   poolId: string | undefined;
-  assetInId: string | null;
-  assetOutId: string | null;
+  assetIn: Asset | undefined;
+  assetOut: Asset | undefined;
   assetOneAmount: BigNumber;
   assetTwoAmount: BigNumber;
   lpReceiveAmount: BigNumber;
@@ -104,19 +104,19 @@ export const useAddLiquidity = ({
         !executor ||
         !signer ||
         !poolId ||
-        !assetInId ||
-        !assetOutId
+        !assetIn ||
+        !assetOut
       ) {
         return () => {};
       }
       const assetTree = pipe(
         getAssetTree(
           {
-            assetIdOnChain: assetInId,
+            asset: assetIn,
             balance: assetOneAmount,
           },
           {
-            assetIdOnChain: assetOutId,
+            asset: assetOut,
             balance: assetTwoAmount,
           }
         ),
@@ -157,8 +157,8 @@ export const useAddLiquidity = ({
     executor,
     signer,
     poolId,
-    assetInId,
-    assetOutId,
+    assetIn,
+    assetOut,
     assetOneAmount,
     assetTwoAmount,
     lpReceiveAmount,

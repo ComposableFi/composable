@@ -8,10 +8,5 @@ export const appBarOverrides = (
     root: {
       background: `transparent`,
     },
-    positionFixed: {
-      "&:after": {
-        backdropFilter: "blur(8px)",
-      },
-    },
   },
 });

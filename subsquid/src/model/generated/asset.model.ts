@@ -4,32 +4,32 @@ import {HistoricalAssetPrice} from "./historicalAssetPrice.model"
 
 @Entity_()
 export class Asset {
-  constructor(props?: Partial<Asset>) {
-    Object.assign(this, props)
-  }
+    constructor(props?: Partial<Asset>) {
+        Object.assign(this, props)
+    }
 
-  /**
-   * ID of the asset
-   */
-  @PrimaryColumn_()
-  id!: string
+    /**
+     * ID of the asset
+     */
+    @PrimaryColumn_()
+    id!: string
 
-  /**
-   * ID of the event that added the last price
-   */
-  @Index_()
-  @Column_("text", {nullable: false})
-  eventId!: string
+    /**
+     * ID of the event that added the last price
+     */
+    @Index_()
+    @Column_("text", {nullable: false})
+    eventId!: string
 
-  /**
-   * Latest price in USD
-   */
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  price!: bigint
+    /**
+     * Latest price in USD
+     */
+    @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+    price!: bigint
 
-  @Column_("int4", {nullable: true})
-  decimals!: number | undefined | null
+    @Column_("int4", {nullable: true})
+    decimals!: number | undefined | null
 
-  @OneToMany_(() => HistoricalAssetPrice, e => e.asset)
-  historicalPrices!: HistoricalAssetPrice[]
+    @OneToMany_(() => HistoricalAssetPrice, e => e.asset)
+    historicalPrices!: HistoricalAssetPrice[]
 }

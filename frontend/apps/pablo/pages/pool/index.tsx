@@ -18,7 +18,10 @@ const Pool: NextPage = () => {
   return (
     <PoolLayout>
       <Container maxWidth="lg">
-        <PageTitle title="Pool" subtitle="Add liquidity to earn tokens." />
+        <PageTitle
+          title="Pool"
+          subtitle="Provide liquidity to earn trading fees."
+        />
         <LiquidityRewardsMessage />
         {extensionStatus !== "connected" ? (
           <Grid item {...standardPageSize}>

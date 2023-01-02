@@ -69,7 +69,7 @@ export const useTransfer = () => {
               description: "",
               variant: "info",
               isCloseable: true,
-              url: subscanExtrinsicLink("picasso", txHash),
+              url: subscanExtrinsicLink(from, txHash),
             }
           );
         },
@@ -81,7 +81,8 @@ export const useTransfer = () => {
               closeSnackbar,
               snackbarKey,
               enqueueSnackbar,
-              txHash
+              txHash,
+              from
             );
           } else {
             closeSnackbar(snackbarKey);
@@ -90,7 +91,7 @@ export const useTransfer = () => {
               description: "",
               variant: "success",
               isCloseable: true,
-              url: subscanExtrinsicLink("picasso", txHash),
+              url: subscanExtrinsicLink(from, txHash),
             });
           }
 

@@ -1,6 +1,9 @@
+use core::cmp::Ordering;
+
 use crate::{currency::BalanceLike, defi::CurrencyPair};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
+	ensure,
 	traits::{tokens::AssetId as AssetIdLike, Get},
 	BoundedVec, CloneNoBound, EqNoBound, PartialEqNoBound, RuntimeDebug, RuntimeDebugNoBound,
 };
@@ -8,7 +11,10 @@ use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-use sp_runtime::{BoundedBTreeMap, DispatchError, Permill};
+use sp_runtime::{
+	helpers_128bit::multiply_by_rational_with_rounding, traits::Zero, BoundedBTreeMap,
+	DispatchError, Permill, Rational128,
+};
 use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec::Vec};
 
 /// Specifies and amount together with the asset ID of the amount.
@@ -67,7 +73,7 @@ pub trait Amm {
 	fn redeemable_assets_for_lp_tokens(
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
-	) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError>
+	) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
 
@@ -94,8 +100,8 @@ pub trait Amm {
 
 	/// Get pure exchange value for given units of "in" given asset.
 	/// `pool_id` the pool containing the `asset_id`.
-	/// `in_asset` the amount of `asset_id` the user wants to swap.
-	/// `out_asset_id` the asset the user is interested in.
+	/// `base_asset` the amount of `asset_id` the user wants to swap.
+	/// `quote_asset_id` the asset the user is interested in.
 	fn spot_price(
 		pool_id: Self::PoolId,
 		base_asset: AssetAmount<Self::AssetId, Self::Balance>,
@@ -323,16 +329,6 @@ pub struct PriceAggregate<PoolId, AssetId, Balance> {
 	pub spot_price: Balance, // prices based on any other stat such as TWAP goes here..
 }
 
-/// RedeemableAssets for given amount of lp tokens.
-#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct RedeemableAssets<AssetId, Balance>
-where
-	AssetId: Ord,
-{
-	pub assets: BTreeMap<AssetId, Balance>,
-}
-
 #[cfg(test)]
 mod tests {
 	use crate::dex::{Fee, FeeConfig};
@@ -380,6 +376,130 @@ mod tests {
 				protocol_fee: 1_000_000,
 				asset_id: 1
 			}
+		);
+	}
+}
+
+#[derive(
+	Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, Copy, RuntimeDebug,
+)]
+pub struct AssetDepositInfo<AssetId> {
+	pub asset_id: AssetId,
+	pub deposit_amount: u128,
+	pub existing_balance: u128,
+	pub asset_weight: Permill,
+}
+
+impl<AssetId> AssetDepositInfo<AssetId> {
+	pub fn get_deposit_ratio(&self) -> Rational128 {
+		Rational128::from(self.deposit_amount, self.existing_balance)
+	}
+
+	pub fn cmp_by_deposit_ratio(&self, other: Self) -> Ordering {
+		self.get_deposit_ratio().cmp(&other.get_deposit_ratio())
+	}
+}
+
+/// Normalizes a list of asset deposits to the smallest ratio of all of the contained assets.
+pub fn normalize_asset_deposit_infos_to_min_ratio<AssetId: Debug + Copy>(
+	// REVIEW(ben,connor): Maybe make this a BiBoundedVec? Would remove the need for the custom
+	// error type as well.
+	mut asset_deposit_infos: Vec<AssetDepositInfo<AssetId>>,
+) -> Result<Vec<AssetDepositInfo<AssetId>>, AssetDepositNormalizationError> {
+	// at least 2 assets are required to normalize
+	ensure!(asset_deposit_infos.len() > 1, AssetDepositNormalizationError::NotEnoughAssets);
+
+	let smallest_ratio = asset_deposit_infos
+		.iter()
+		.map(|adi| adi.get_deposit_ratio())
+		.min()
+		.expect("at least 2 items are present in the vec as per the check above; qed;");
+
+	for asset_deposit_info in &mut asset_deposit_infos {
+		debug_assert!(
+			!asset_deposit_info.existing_balance.is_zero(),
+			"balance for asset {:?} was zero when it should not have been; \
+			this will result in a `DivideByZero` error in production code.",
+			asset_deposit_info.asset_id
+		);
+
+		asset_deposit_info.deposit_amount = multiply_by_rational_with_rounding(
+			asset_deposit_info.existing_balance,
+			smallest_ratio.n(),
+			smallest_ratio.d(),
+			// amount out will be less than the maximum allowed, so round up
+			sp_arithmetic::Rounding::Up,
+		)
+		.ok_or(AssetDepositNormalizationError::ArithmeticOverflow)?;
+	}
+
+	Ok(asset_deposit_infos)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AssetDepositNormalizationError {
+	ArithmeticOverflow,
+	NotEnoughAssets,
+}
+
+#[cfg(test)]
+mod test_asset_deposit_normalization {
+	use super::*;
+
+	fn generate_asset_deposit_infos<const N: usize>(
+		adi_inputs: [(u128, u128); N],
+	) -> Vec<AssetDepositInfo<u128>> {
+		adi_inputs
+			.into_iter()
+			.enumerate()
+			.map(|(id, (deposit, balance))| AssetDepositInfo {
+				asset_id: id as u128,
+				deposit_amount: deposit,
+				existing_balance: balance,
+				asset_weight: Permill::from_rational::<u32>(1, N as u32),
+			})
+			.collect()
+	}
+
+	#[test]
+	fn no_assets_error() {
+		assert_eq!(
+			normalize_asset_deposit_infos_to_min_ratio::<u128>(vec![]),
+			Err(AssetDepositNormalizationError::NotEnoughAssets)
+		);
+	}
+
+	#[test]
+	fn only_one_asset_error() {
+		assert_eq!(
+			normalize_asset_deposit_infos_to_min_ratio::<u128>(generate_asset_deposit_infos([(
+				100, 100
+			)])),
+			Err(AssetDepositNormalizationError::NotEnoughAssets)
+		);
+	}
+
+	#[test]
+	fn two_assets_works() {
+		assert_eq!(
+			normalize_asset_deposit_infos_to_min_ratio::<u128>(generate_asset_deposit_infos([
+				(300, 100),
+				(300, 200),
+			])),
+			Ok(generate_asset_deposit_infos([(150, 100), (300, 200)]))
+		);
+	}
+
+	#[test]
+	fn more_than_2_assets_works() {
+		assert_eq!(
+			normalize_asset_deposit_infos_to_min_ratio::<u128>(generate_asset_deposit_infos([
+				(300, 100),
+				(300, 200),
+				(200, 100),
+				(400, 600),
+			])),
+			Ok(generate_asset_deposit_infos([(67, 100), (134, 200), (67, 100), (400, 600)]))
 		);
 	}
 }

@@ -27,11 +27,9 @@ import { Asset } from "shared";
 export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
   const theme = useTheme();
   const router = useRouter();
-
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const ownedLiquidity = useStore((store) => store.ownedLiquidity.tokens);
-  const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
   const ownedLiquidityBalance = ownedLiquidity[pool.config.lpToken];
   const lpBalance = useMemo(
     () => ownedLiquidityBalance?.balance.free ?? new BigNumber(0),
@@ -54,24 +52,6 @@ export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
   const [priceOfQuote, setPriceOfQuote] = useState(new BigNumber(0));
   const debouncedPercentage = useDebounce(percentage, 500);
 
-  // useEffect(() => {
-  //   if (poolId !== -1 && baseAsset && quoteAsset && parachainApi) {
-  //     fetchSpotPrice(
-  //       parachainApi,
-  //       {
-  //         base: baseAsset.getPicassoAssetId().toString(),
-  //         quote: quoteAsset.getPicassoAssetId().toString(),
-  //       },
-  //       poolId
-  //     ).then((basePrice) => {
-  //       const basePriceBn = new BigNumber(basePrice);
-  //
-  //       setPriceOfBase(basePriceBn);
-  //       setPriceOfQuote(new BigNumber(1).div(basePriceBn));
-  //     });
-  //   }
-  // }, [poolId, baseAsset, quoteAsset, parachainApi]);
-
   useEffect(() => {
     if (
       parachainApi &&
@@ -85,8 +65,8 @@ export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
         lpBalance.times(debouncedPercentage / 100)
       );
 
-      const b = pool.config.assets[0].getPicassoAssetId().toString();
-      const q = pool.config.assets[1].getPicassoAssetId().toString();
+      const b = pool.config.assets[0].getPicassoAssetId()?.toString() || "0";
+      const q = pool.config.assets[1].getPicassoAssetId()?.toString() || "0";
       parachainApi.rpc.pablo
         .simulateRemoveLiquidity(
           selectedAccount.address,
@@ -99,8 +79,43 @@ export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
         )
         .then((response: any) => {
           const expectedRewards = response.toJSON().assets;
-          setExpectedRemoveAmountBase(fromChainUnits(expectedRewards[b]));
-          setExpectedRemoveAmountQuote(fromChainUnits(expectedRewards[q]));
+          setExpectedRemoveAmountBase(
+            fromChainUnits(
+              expectedRewards[b],
+              token1.getDecimals(DEFAULT_NETWORK_ID)
+            )
+          );
+          setPriceOfBase(
+            new BigNumber(1).div(
+              fromChainUnits(
+                expectedRewards[b],
+                token1.getDecimals(DEFAULT_NETWORK_ID)
+              ).div(
+                fromChainUnits(
+                  expectedRewards[q],
+                  token2.getDecimals(DEFAULT_NETWORK_ID)
+                )
+              )
+            )
+          );
+          setExpectedRemoveAmountQuote(
+            fromChainUnits(
+              expectedRewards[q],
+              token2.getDecimals(DEFAULT_NETWORK_ID)
+            )
+          );
+
+          setPriceOfQuote(
+            fromChainUnits(
+              expectedRewards[b],
+              token1.getDecimals(DEFAULT_NETWORK_ID)
+            ).div(
+              fromChainUnits(
+                expectedRewards[q],
+                token2.getDecimals(DEFAULT_NETWORK_ID)
+              )
+            )
+          );
         })
         .catch((err: any) => {
           setExpectedRemoveAmountBase(new BigNumber(0));
@@ -135,7 +150,9 @@ export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
   };
 
   useEffect(() => {
-    confirmed && setUiState({ isConfirmingModalOpen: false });
+    if (confirmed) {
+      setUiState({ isConfirmingModalOpen: false });
+    }
   }, [confirmed]);
 
   return (
@@ -281,8 +298,8 @@ export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
           lpBalance={lpBalance}
           percentage={new BigNumber(debouncedPercentage).div(100)}
           pool={pool}
-          price1={priceOfBase}
-          price2={priceOfQuote}
+          price1={priceOfQuote}
+          price2={priceOfBase}
           baseAsset={token1}
           quoteAsset={token2}
           open={isConfirmingModalOpen}

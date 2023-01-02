@@ -10,6 +10,7 @@ pub use composable_traits::{
 	rational,
 	xcm::assets::XcmAssetLocation,
 };
+
 pub use cumulus_primitives_core::ParaId;
 pub use frame_support::{
 	assert_err, assert_err_ignore_postinfo, assert_ok, log,
@@ -27,7 +28,8 @@ pub use primitives::{currency::*, topology};
 pub use sp_runtime::{
 	traits::StaticLookup, DispatchError, FixedPointNumber, FixedU128, ModuleError,
 };
-pub use xcm::{latest::prelude::*, VersionedMultiLocation};
+
+pub use xcm::{latest::prelude::*, VersionedMultiAssets, VersionedMultiLocation};
 pub use xcm_emulator::TestExt;
 pub use xcm_executor::XcmExecutor;
 

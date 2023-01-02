@@ -50,20 +50,6 @@ const MENU_ITEMS: MenuItemType[] = [
     ],
   },
   {
-    label: "Bond",
-    path: "/bond",
-    icon: dynamic(() => import("@mui/icons-material/Payments")),
-    status: "active",
-    matches: ["/bond", "/bond/select"],
-  },
-  {
-    label: "Stake",
-    path: "/stake",
-    icon: dynamic(() => import("@mui/icons-material/TollOutlined")),
-    status: "active",
-    matches: ["/stake"],
-  },
-  {
     label: "Picasso",
     path: config.picassoAppUrl,
     icon: dynamic(() => import("@mui/icons-material/Autorenew")),

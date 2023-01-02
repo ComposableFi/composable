@@ -22,8 +22,9 @@ import {
 import { useRouter } from "next/router";
 import { toChainUnits } from "@/defi/utils";
 import { setUiState } from "@/store/ui/ui.slice";
-import { Asset } from "shared";
+import { Asset, subscanExtrinsicLink } from "shared";
 import { PoolConfig } from "@/store/pools/types";
+import { useSnackbar } from "notistack";
 
 export type ConfirmingModalProps = {
   baseAsset: Asset;
@@ -57,7 +58,7 @@ export const ConfirmingModal: FC<ConfirmingModalProps> = ({
   const router = useRouter();
   const executor = useExecutor();
   const theme = useTheme();
-
+  const { enqueueSnackbar } = useSnackbar();
   const [confirming, setConfirming] = useState<boolean>(false);
 
   const onCloseHandler = () => {
@@ -65,7 +66,6 @@ export const ConfirmingModal: FC<ConfirmingModalProps> = ({
   };
 
   const confirmRemoveHandler = async () => {
-    // WIP
     if (
       parachainApi &&
       signer !== undefined &&
@@ -81,8 +81,8 @@ export const ConfirmingModal: FC<ConfirmingModalProps> = ({
             parachainApi.createType("u128", pool.poolId.toString()), // Pool ID
             parachainApi.createType("u128", lpRemoveAmount.dp(0).toString()), // LP Receive
             parachainApi.createType("BTreeMap<u128, u128>", {
-              [baseAsset.getPicassoAssetId().toString()]: "0",
-              [quoteAsset.getPicassoAssetId().toString()]: "0",
+              [baseAsset.getPicassoAssetId()?.toString() || "0"]: "0",
+              [quoteAsset.getPicassoAssetId()?.toString() || "0"]: "0",
             })
           ),
           selectedAccount.address,
@@ -92,7 +92,12 @@ export const ConfirmingModal: FC<ConfirmingModalProps> = ({
             setConfirming(true);
           },
           (txHash: string, _events) => {
-            console.log("Finalized ", txHash);
+            enqueueSnackbar("Liquidity: removed", {
+              variant: "success",
+              url: subscanExtrinsicLink(DEFAULT_NETWORK_ID, txHash),
+              persist: true,
+              isClosable: true,
+            });
             setUiState({ isConfirmingModalOpen: false });
             setConfirming(false);
             router.push(`/pool/select/${pool.poolId.toString()}`);
@@ -194,7 +199,9 @@ export const ConfirmingModal: FC<ConfirmingModalProps> = ({
             mt={4}
             label={`Price`}
             BalanceProps={{
-              balance: `1 ${quoteAsset.getSymbol()} = ${price1} ${baseAsset.getSymbol()}`,
+              balance: `1 ${quoteAsset.getSymbol()} = ${price1.toFormat(
+                quoteAsset.getDecimals(DEFAULT_NETWORK_ID)
+              )} ${baseAsset.getSymbol()}`,
               BalanceTypographyProps: {
                 variant: "body1",
               },
@@ -205,7 +212,9 @@ export const ConfirmingModal: FC<ConfirmingModalProps> = ({
             mt={2}
             label=""
             BalanceProps={{
-              balance: `1 ${baseAsset.getSymbol()} = ${price2} ${quoteAsset.getSymbol()}`,
+              balance: `1 ${baseAsset.getSymbol()} = ${price2.toFormat(
+                baseAsset.getDecimals(DEFAULT_NETWORK_ID)
+              )} ${quoteAsset.getSymbol()}`,
               BalanceTypographyProps: {
                 variant: "body1",
               },

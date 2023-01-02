@@ -9,7 +9,7 @@ import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
 import type { Bytes, Option, Text, U8aFixed, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
 import type { AccountId32, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
-import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
+import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, PalletCosmwasmInstrumentCostRules, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
 
@@ -165,6 +165,7 @@ declare module '@polkadot/api-base/types/consts' {
        * Pallet unique ID.
        **/
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      wasmCostRules: PalletCosmwasmInstrumentCostRules & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -179,6 +180,14 @@ declare module '@polkadot/api-base/types/consts' {
        * The upfront liquidity unlocked at first claim.
        **/
       initialPayment: Perbill & AugmentedConst<ApiType>;
+      /**
+       * If claimed amounts should be locked by the pallet
+       **/
+      lockByDefault: bool & AugmentedConst<ApiType>;
+      /**
+       * The unique identifier for locks maintained by this pallet.
+       **/
+      lockId: U8aFixed & AugmentedConst<ApiType>;
       /**
        * The percentage of excess funds required to trigger the `OverFunded` event.
        **/
@@ -298,9 +307,22 @@ declare module '@polkadot/api-base/types/consts' {
     };
     ibc: {
       /**
-       * Expected blocktime
+       * Expected block time in milliseconds
        **/
       expectedBlockTime: u64 & AugmentedConst<ApiType>;
+      /**
+       * Minimum connection delay period in seconds for ibc connections that can be created or
+       * accepted. Ensure that this is non-zero in production as it's a critical vulnerability.
+       **/
+      minimumConnectionDelay: u64 & AugmentedConst<ApiType>;
+      /**
+       * The native asset id, this will use the `NativeCurrency` for all operations.
+       **/
+      nativeAssetId: u128 & AugmentedConst<ApiType>;
+      /**
+       * Amount to be reserved for client and connection creation
+       **/
+      spamProtectionDeposit: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -444,46 +466,11 @@ declare module '@polkadot/api-base/types/consts' {
       [key: string]: Codec;
     };
     pablo: {
-      /**
-       * Maximum initial weight.
-       **/
-      lbpMaxInitialWeight: Permill & AugmentedConst<ApiType>;
-      /**
-       * Maximum duration for a sale.
-       **/
-      lbpMaxSaleDuration: u32 & AugmentedConst<ApiType>;
-      /**
-       * Minimum final weight.
-       **/
-      lbpMinFinalWeight: Permill & AugmentedConst<ApiType>;
-      /**
-       * Minimum duration for a sale.
-       **/
-      lbpMinSaleDuration: u32 & AugmentedConst<ApiType>;
-      msPerBlock: u32 & AugmentedConst<ApiType>;
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
-      /**
-       * AssetId of the PBLO asset
-       **/
-      pbloAssetId: u128 & AugmentedConst<ApiType>;
-      pbloStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
-      /**
-       * AssetId of the PICA asset
-       **/
-      picaAssetId: u128 & AugmentedConst<ApiType>;
-      picaStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
       /**
        * The interval between TWAP computations.
        **/
       twapInterval: u64 & AugmentedConst<ApiType>;
-      /**
-       * AssetId of the xToken variant of PBLO asset
-       **/
-      xPbloAssetId: u128 & AugmentedConst<ApiType>;
-      /**
-       * AssetId of the xToken variant of PICA asset
-       **/
-      xPicaAssetId: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -658,13 +645,6 @@ declare module '@polkadot/api-base/types/consts' {
        * transactions.
        **/
       operationalFeeMultiplier: u8 & AugmentedConst<ApiType>;
-      /**
-       * Generic const
-       **/
-      [key: string]: Codec;
-    };
-    transfer: {
-      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

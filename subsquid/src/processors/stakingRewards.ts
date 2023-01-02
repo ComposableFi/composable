@@ -59,7 +59,7 @@ interface SplitPositionEvent {
 function getRewardPoolCreatedEvent(
   event: StakingRewardsRewardPoolCreatedEvent
 ): RewardPoolCreatedEvent {
-  const { poolId, owner, endBlock } = event.asV2402;
+  const { poolId, owner, endBlock } = event.asV10003;
   return { poolId, owner, endBlock };
 }
 
@@ -73,7 +73,7 @@ function getStakedEvent(event: StakingRewardsStakedEvent): StakedEvent {
     fnftInstanceId,
     rewardMultiplier,
     keepAlive,
-  } = event.asV2402;
+  } = event.asV10003;
   return {
     poolId,
     owner,
@@ -87,21 +87,21 @@ function getStakedEvent(event: StakingRewardsStakedEvent): StakedEvent {
 }
 
 function getUnstakedEvent(event: StakingRewardsUnstakedEvent): UnstakedEvent {
-  const { owner, fnftCollectionId, fnftInstanceId, slash } = event.asV2402;
+  const { owner, fnftCollectionId, fnftInstanceId, slash } = event.asV10003;
   return { owner, fnftCollectionId, fnftInstanceId, slash };
 }
 
 function getStakeAmountExtendedEvent(
   event: StakingRewardsStakeAmountExtendedEvent
 ): StakeAmountExtendedEvent {
-  const { fnftCollectionId, fnftInstanceId, amount } = event.asV2402;
+  const { fnftCollectionId, fnftInstanceId, amount } = event.asV10003;
   return { fnftCollectionId, fnftInstanceId, amount };
 }
 
 function getSplitPositionEvent(
   event: StakingRewardsSplitPositionEvent
 ): SplitPositionEvent {
-  const { positions } = event.asV2402;
+  const { positions } = event.asV10003;
   return { positions };
 }
 

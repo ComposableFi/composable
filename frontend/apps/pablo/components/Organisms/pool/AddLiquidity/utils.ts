@@ -1,4 +1,4 @@
-import { toChainUnits } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, toChainUnits } from "@/defi/utils";
 import { option } from "fp-ts";
 import { AssetWithBalance } from "@/components/Organisms/pool/AddLiquidity/useSimulateAddLiquidity";
 
@@ -6,20 +6,25 @@ export function getAssetTree(
   leftAssetWithBalance: AssetWithBalance,
   rightAssetWithBalance: AssetWithBalance
 ) {
+  const leftId = leftAssetWithBalance.asset.getPicassoAssetId()?.toString() ?? "";
+  const rightId = rightAssetWithBalance.asset.getPicassoAssetId()?.toString() ?? "";
+
   const left = {
-    [leftAssetWithBalance.assetIdOnChain]: toChainUnits(
-      leftAssetWithBalance.balance
-    ).toString(),
+    [leftId]: toChainUnits(
+      leftAssetWithBalance.balance,
+      leftAssetWithBalance.asset.getDecimals(DEFAULT_NETWORK_ID)
+    ).toString()
   };
   const right = {
-    [rightAssetWithBalance.assetIdOnChain]: toChainUnits(
-      rightAssetWithBalance.balance
-    ).toString(),
+    [rightId]: toChainUnits(
+      rightAssetWithBalance.balance,
+      rightAssetWithBalance.asset.getDecimals(DEFAULT_NETWORK_ID)
+    ).toString()
   };
 
   const out = {
     ...left,
-    ...right,
+    ...right
   };
 
   return Object.keys(out).length === 2 ? option.some(out) : option.none;

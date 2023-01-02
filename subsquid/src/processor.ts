@@ -1,27 +1,13 @@
 import { SubstrateProcessor } from "@subsquid/substrate-processor";
 import { TypeormDatabase } from "@subsquid/typeorm-store";
-import { archive, chain } from "./config";
-// import {
-//   PabloLiquidityAddedEvent,
-//   PabloLiquidityRemovedEvent,
-//   PabloPoolCreatedEvent,
-//   PabloPoolDeletedEvent,
-//   PabloSwappedEvent,
-// } from "./types/events";
-// import {
-//   processLiquidityAddedEvent,
-//   processLiquidityRemovedEvent,
-//   processPoolCreatedEvent,
-//   processPoolDeletedEvent,
-//   processSwappedEvent,
-// } from "./processors/pablo";
-// import {
-//   processRewardPoolCreatedEvent,
-//   processSplitPositionEvent,
-//   processStakeAmountExtendedEvent,
-//   processStakedEvent,
-//   processUnstakedEvent,
-// } from "./processors/stakingRewards";
+
+import { archive, chain, firstBlock } from "./config";
+import {
+  processLiquidityAddedEvent,
+  processLiquidityRemovedEvent,
+  processPoolCreatedEvent,
+  processSwappedEvent,
+} from "./processors/pablo";
 import {
   processDepositEvent,
   processTransferEvent,
@@ -47,6 +33,10 @@ const processor = new SubstrateProcessor(new TypeormDatabase());
 const chainConnectionString = chain();
 const archiveConnectionString = archive();
 
+processor.setBlockRange({
+  from: firstBlock(),
+});
+
 console.log(`Chain ${chainConnectionString}`);
 console.log(`Archive ${archiveConnectionString}`);
 
@@ -56,30 +46,21 @@ processor.setDataSource({
   chain: chainConnectionString,
 });
 
-// processor.addEventHandler("Pablo.PoolCreated", async (ctx) => {
-//   const event = new PabloPoolCreatedEvent(ctx);
-//   await processPoolCreatedEvent(ctx, event);
-// });
-//
-// processor.addEventHandler("Pablo.PoolDeleted", async (ctx) => {
-//   const event = new PabloPoolDeletedEvent(ctx);
-//   await processPoolDeletedEvent(ctx, event);
-// });
-//
-// processor.addEventHandler("Pablo.LiquidityAdded", async (ctx) => {
-//   const event = new PabloLiquidityAddedEvent(ctx);
-//   await processLiquidityAddedEvent(ctx, event);
-// });
-//
-// processor.addEventHandler("Pablo.LiquidityRemoved", async (ctx) => {
-//   const event = new PabloLiquidityRemovedEvent(ctx);
-//   await processLiquidityRemovedEvent(ctx, event);
-// });
-//
-// processor.addEventHandler("Pablo.Swapped", async (ctx) => {
-//   const event = new PabloSwappedEvent(ctx);
-//   await processSwappedEvent(ctx, event);
-// });
+processor.addEventHandler("Pablo.PoolCreated", async (ctx) => {
+  await processPoolCreatedEvent(ctx);
+});
+
+processor.addEventHandler("Pablo.LiquidityAdded", async (ctx) => {
+  await processLiquidityAddedEvent(ctx);
+});
+
+processor.addEventHandler("Pablo.LiquidityRemoved", async (ctx) => {
+  await processLiquidityRemovedEvent(ctx);
+});
+
+processor.addEventHandler("Pablo.Swapped", async (ctx) => {
+  await processSwappedEvent(ctx);
+});
 
 processor.addEventHandler("Balances.Transfer", processTransferEvent);
 

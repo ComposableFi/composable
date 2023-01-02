@@ -31,13 +31,13 @@ export function useValidation({
     const eventValue = event.target.value;
     if (!eventValue.length) {
       setStringValue(eventValue);
-      setValue(new BigNumber(0));
       setValid(false);
+      return;
     }
 
     if (eventValue.match(FLOAT_NUMBER)) {
       const bignr = new BigNumber(eventValue);
-      if ((bignr.decimalPlaces() || 0  ) > maxDec) {
+      if ((bignr.decimalPlaces() || 0) > maxDec) {
         setValid(false);
         return;
       }
@@ -66,8 +66,6 @@ export function useValidation({
         // or maybe change this to invalid value
         setStringValue(maxValue.toFixed());
         setValue(maxValue);
-        setStringValue(maxValue.toFixed());
-        setValid(false);
         return;
       }
 

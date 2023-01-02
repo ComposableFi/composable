@@ -65,7 +65,7 @@ pub mod pallet {
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},
-		dex::{Amm, BasicPoolInfo, Fee, PriceAggregate, RedeemableAssets},
+		dex::{Amm, BasicPoolInfo, Fee, PriceAggregate},
 	};
 	use core::fmt::Debug;
 	use frame_support::{
@@ -73,7 +73,7 @@ pub mod pallet {
 		storage::with_transaction,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
-			Time, TryCollect,
+			Time,
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
@@ -212,8 +212,11 @@ pub mod pallet {
 		IncorrectAssetAmounts,
 		UnsupportedOperation,
 		InitialDepositCannotBeZero,
-		/// The `min_amounts` passed to `remove_liquidity` must contain at least one asset.
+		InitialDepositMustContainAllAssets,
+		/// The `min_amounts` map passed to `remove_liquidity` must contain at least one asset.
 		MinAmountsMustContainAtLeastOneAsset,
+		/// The `assets` map passed to `add_liquidity` must contain at least one asset.
+		MustDepositMinimumOneAsset,
 	}
 
 	#[pallet::config]
@@ -685,7 +688,7 @@ pub mod pallet {
 		fn redeemable_assets_for_lp_tokens(
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
+		) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			#[allow(deprecated)]
@@ -708,7 +711,7 @@ pub mod pallet {
 						})
 						.collect::<Result<BTreeMap<_, _>, _>>()?;
 
-					Ok(RedeemableAssets { assets })
+					Ok(assets)
 				},
 			}
 		}
@@ -769,18 +772,25 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let minted_lp = match pool {
+			let (minted_lp, actual_deposited_amounts) = match pool {
 				PoolConfiguration::DualAssetConstantProduct(info) =>
 					DualAssetConstantProduct::<T>::add_liquidity(
 						who,
 						info,
 						pool_account,
-						assets
-							.clone()
-							.into_iter()
-							.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
-							.try_collect()
-							.map_err(|_| Error::<T>::MoreThanTwoAssetsNotYetSupported)?,
+						BiBoundedVec::from_vec(
+							assets
+								.clone()
+								.into_iter()
+								.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
+								.collect(),
+						)
+						.map_err(|err| match err {
+							BiBoundedVecOutOfBounds::LowerBoundError { .. } =>
+								Error::<T>::MustDepositMinimumOneAsset,
+							BiBoundedVecOutOfBounds::UpperBoundError { .. } =>
+								Error::<T>::UnsupportedOperation,
+						})?,
 						min_mint_amount,
 						keep_alive,
 					)?,
@@ -790,7 +800,7 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::LiquidityAdded {
 				who: who.clone(),
 				pool_id,
-				asset_amounts: assets,
+				asset_amounts: actual_deposited_amounts,
 				minted_lp,
 			});
 			Ok(minted_lp)
@@ -803,7 +813,6 @@ pub mod pallet {
 			lp_amount: Self::Balance,
 			min_receive: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError> {
-			let redeemable_assets = Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			let res = match pool {
@@ -813,25 +822,14 @@ pub mod pallet {
 						info,
 						pool_account,
 						lp_amount,
-						BiBoundedVec::from_vec(
-							min_receive
-								.into_iter()
-								.map(|(asset_id, amount)| AssetAmount { asset_id, amount })
-								.collect(),
-						)
-						.map_err(|err| match err {
-							BiBoundedVecOutOfBounds::LowerBoundError { .. } =>
-								Error::<T>::MinAmountsMustContainAtLeastOneAsset,
-							BiBoundedVecOutOfBounds::UpperBoundError { .. } =>
-								Error::<T>::MoreThanTwoAssetsNotYetSupported,
-						})?,
+						min_receive.try_into().map_err(|_| Error::<T>::UnsupportedOperation)?,
 					)?;
 
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
 						pool_id,
 						who: who.clone(),
-						asset_amounts: redeemable_assets.assets,
+						asset_amounts: res.clone(),
 					});
 
 					res
