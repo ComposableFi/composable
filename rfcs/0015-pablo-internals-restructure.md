@@ -1,15 +1,17 @@
+# RFC-0015
+
 The [current implementation of `DualAssetConstantProduct`][dacp] is tightly
 coupled with the pablo pallet, depending on pablo's `Config` trait directly for
 all of it's functionality and directly modifying pablo's storage. This makes it
 very difficult to test, since a full runtime is required to provide the required
 mocks for it to work properly.
 
-### Goals
+## Goals
 
 1. Remove `DualAssetConstantProduct`'s direct dependency on pablo
 2. Make all of the `DualAssetConstantProduct` functionality pure
 
-### Implementation
+## Implementation
 
 Goal 1 is quite simple to implement, the required steps are outlined below:
 
@@ -155,7 +157,7 @@ Possible Solutions:
 
 ---
 
-### Notes
+## Notes
 
 1. This is a common pattern used throughout our codebase:
 
@@ -202,14 +204,14 @@ Possible Solutions:
    >
    > ```rust
    > trait Config {
-   > 	type C: PartialEq;
+   >     type C: PartialEq;
    > }
    >
    > // Foo implements [`PartialEq`] because `C` bounds [`PartialEq`].
    > // Otherwise compilation will fail with an output telling `c` doesn't implement [`PartialEq`].
    > #[derive(PartialEqNoBound)]
    > struct Foo<T: Config> {
-   > 	c: T::C,
+   >     c: T::C,
    > }
    > ```
 
