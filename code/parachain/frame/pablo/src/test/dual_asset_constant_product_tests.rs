@@ -1232,7 +1232,7 @@ fn add_lp_amounts_get_normalized() {
 			Tokens::total_issuance(lp_token),
 			*normalized_assets.get(&SECOND_ASSET::ID).expect("contains key-value pair"),
 			Tokens::balance(SECOND_ASSET::ID, &pool_account),
-			Permill::from_percent(50),
+			Permill::one(),
 			Permill::zero(),
 		)
 		.expect("no overflow")
