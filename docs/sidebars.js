@@ -54,8 +54,8 @@ const sidebars = {
                             collapsible: true,
                             collapsed: true,
                             items:[
+                                'parachains/picasso/pica-use-cases',
                                 'parachains/picasso/token-transparency',
-                                'parachains/picasso/pica-use-cases'
                             ]
                         },
                         {
