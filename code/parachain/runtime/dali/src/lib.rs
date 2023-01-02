@@ -66,7 +66,10 @@ use composable_traits::{
 use cosmwasm::instrument::CostRules;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{
+	crypto::{KeyTypeId, Ss58Codec},
+	OpaqueMetadata,
+};
 use sp_runtime::{
 	generic, impl_opaque_keys,
 	traits::{
@@ -1091,17 +1094,17 @@ parameter_types! {
 pub struct AccountToAddr;
 impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		match a.strip_prefix("0x") {
-			Some(account_id) => Ok(<[u8; 32]>::try_from(hex::decode(account_id).map_err(|_| ())?)
-				.map_err(|_| ())?
-				.into()),
-			_ => Err(()),
-		}
+		AccountId32::from_str(&a).map_err(|_| ())
 	}
 }
 impl Convert<AccountId, alloc::string::String> for AccountToAddr {
 	fn convert(a: AccountId) -> alloc::string::String {
-		alloc::format!("0x{}", hex::encode(a))
+		a.to_ss58check()
+	}
+}
+impl Convert<Vec<u8>, Result<AccountId, ()>> for AccountToAddr {
+	fn convert(a: Vec<u8>) -> Result<AccountId, ()> {
+		Ok(AccountId32::new(a.try_into().map_err(|_| ())))
 	}
 }
 

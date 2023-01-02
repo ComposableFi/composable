@@ -256,7 +256,8 @@ pub mod pallet {
 
 		/// A way to convert from our native account to cosmwasm `Addr`.
 		type AccountToAddr: Convert<AccountIdOf<Self>, String>
-			+ Convert<String, Result<AccountIdOf<Self>, ()>>;
+			+ Convert<String, Result<AccountIdOf<Self>, ()>>
+			+ Convert<Vec<u8>, Result<AccountIdOf<Self>, ()>>;
 
 		/// Type of an account balance.
 		type Balance: Balance + Into<u128>;
@@ -941,6 +942,13 @@ pub mod pallet {
 			cosmwasm_addr: String,
 		) -> Result<AccountIdOf<T>, <T as VMPallet>::VmError> {
 			T::AccountToAddr::convert(cosmwasm_addr)
+				.map_err(|()| CosmwasmVMError::AccountConversionFailure)
+		}
+
+		pub(crate) fn canonical_addr_to_account(
+			canonical: Vec<u8>,
+		) -> Result<AccountIdOf<T>, <T as VMPallet>::VmError> {
+			T::AccountToAddr::convert(canonical)
 				.map_err(|()| CosmwasmVMError::AccountConversionFailure)
 		}
 
