@@ -29,6 +29,7 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
+
 pub use pallet::*;
 
 #[cfg(test)]
@@ -37,6 +38,11 @@ mod mock;
 mod mock_fnft;
 #[cfg(test)]
 mod test;
+
+#[cfg(test)]
+mod rfc_0015_example_explicit;
+#[cfg(test)]
+mod rfc_0015_example_hooks;
 
 pub mod weights;
 
