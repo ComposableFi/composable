@@ -17,6 +17,7 @@ type LiquidityInputProps = Controlled &
     onValidationChange: (valid: boolean) => void;
     gasFeeToken: Asset | null;
     transactionFee: BigNumber;
+    gasFeeEd: BigNumber;
   };
 
 export const LiquidityInput: FC<LiquidityInputProps> = ({
@@ -28,6 +29,7 @@ export const LiquidityInput: FC<LiquidityInputProps> = ({
   onValidationChange,
   transactionFee,
   gasFeeToken,
+  gasFeeEd,
 }) => {
   const theme = useTheme();
   const isMobile = useMobile();
@@ -37,12 +39,11 @@ export const LiquidityInput: FC<LiquidityInputProps> = ({
 
   const maxAmount =
     config.asset.getSymbol() === gasFeeToken?.getSymbol()
-      ? config.balance.free.minus(transactionFee)
+      ? config.balance.free.minus(transactionFee).minus(gasFeeEd)
       : config.balance.free;
   return (
     <Box mt={4}>
       <DropdownCombinedBigNumberInput
-        // onMouseDown={(a) => console.log("onMouseDown", a)}
         maxValue={maxAmount}
         setValid={onValidationChange}
         noBorder

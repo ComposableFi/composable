@@ -8,7 +8,7 @@ import { HighlightBox } from "@/components/Atoms/HighlightBox";
 import { setUiState, useUiSlice } from "@/store/ui/ui.slice";
 import { usePoolDetail } from "@/defi/hooks/pools/usePoolDetail";
 import useStore from "@/store/useStore";
-import { either, option } from "fp-ts";
+import { option } from "fp-ts";
 import { pipe } from "fp-ts/lib/function";
 import BigNumber from "bignumber.js";
 import { LiquidityInput } from "../../pool/AddLiquidity/LiquidityInput";
@@ -35,28 +35,6 @@ import {
   fromChainUnits,
 } from "@/defi/utils";
 import { getAssetTree } from "@/components/Organisms/pool/AddLiquidity/utils";
-
-function amountWithRatio(
-  amount: BigNumber,
-  spotPrice: BigNumber,
-  isReverse: boolean
-) {
-  return pipe(
-    isReverse,
-    either.fromPredicate(
-      (v) => !v,
-      () => new BigNumber(1)
-    ),
-    either.fold(
-      (v) =>
-        v.div(
-          amount.multipliedBy(spotPrice.isZero() ? new BigNumber(1) : spotPrice)
-        ),
-      () =>
-        amount.multipliedBy(spotPrice.isZero() ? new BigNumber(1) : spotPrice)
-    )
-  );
-}
 
 export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   const theme = useTheme();
@@ -134,6 +112,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   const gasFeeToken = useStore(
     (store) => store.substrateTokens.tokens[store.byog.feeItem]
   );
+  const gasFeeEd = useStore((store) => store.byog.feeItemEd);
   const { baseAmount, quoteAmount } = useLiquidity(pool);
   const assetOptions = getAssetOptions(inputConfig ?? []);
   const [leftConfig, rightConfig] = inputConfig ?? [];
@@ -272,6 +251,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         config={leftConfig}
         transactionFee={transactionFee}
         gasFeeToken={gasFeeToken}
+        gasFeeEd={gasFeeEd}
         value={amountOne}
         onChange={(v) => {
           if (isPoolEmpty) {
@@ -297,6 +277,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         config={rightConfig}
         transactionFee={transactionFee}
         gasFeeToken={gasFeeToken}
+        gasFeeEd={gasFeeEd}
         value={amountTwo}
         onChange={(v) => {
           if (isPoolEmpty) {
