@@ -1,5 +1,5 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
-import { Entity, Store } from "@subsquid/typeorm-store";
+import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { hexToU8a } from "@polkadot/util";
 import { encodeAccount } from "./utils";
@@ -10,6 +10,7 @@ import {
   EventType,
   HistoricalLockedValue,
   LockedSource,
+  PabloAssetWeight,
   PabloPool,
   PabloPoolAsset,
 } from "./model";
@@ -228,6 +229,14 @@ export async function getOrCreatePabloAsset(
     },
   });
   if (!pabloAsset) {
+    const weight = await ctx.store.get(PabloAssetWeight, {
+      where: {
+        assetId,
+        pool: {
+          id: pool.id,
+        },
+      },
+    });
     pabloAsset = new PabloPoolAsset({
       id: randomUUID(),
       assetId,
@@ -235,6 +244,7 @@ export async function getOrCreatePabloAsset(
       totalLiquidity: BigInt(0),
       totalVolume: BigInt(0),
       blockId: ctx.block.id,
+      weight: weight?.weight || 0,
     });
   }
   return Promise.resolve(pabloAsset);

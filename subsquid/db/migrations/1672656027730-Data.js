@@ -1,14 +1,14 @@
-module.exports = class Data1672318447042 {
-    name = 'Data1672318447042'
+module.exports = class Data1672656027730 {
+    name = 'Data1672656027730'
 
     async up(db) {
         await db.query(`CREATE TABLE "account" ("id" character varying NOT NULL, "event_id" text NOT NULL, "block_id" text NOT NULL, CONSTRAINT "PK_54115ee388cdb6d86bb4bf5b2ea" PRIMARY KEY ("id"))`)
-        await db.query(`CREATE TABLE "pablo_pool_asset" ("id" character varying NOT NULL, "asset_id" text NOT NULL, "total_liquidity" numeric NOT NULL, "total_volume" numeric NOT NULL, "block_id" text NOT NULL, "pool_id" character varying, CONSTRAINT "PK_fc75f8a8a8a0ac8408eef787237" PRIMARY KEY ("id"))`)
+        await db.query(`CREATE TABLE "pablo_pool_asset" ("id" character varying NOT NULL, "asset_id" text NOT NULL, "total_liquidity" numeric NOT NULL, "total_volume" numeric NOT NULL, "block_id" text NOT NULL, "weight" numeric NOT NULL, "pool_id" character varying, CONSTRAINT "PK_fc75f8a8a8a0ac8408eef787237" PRIMARY KEY ("id"))`)
         await db.query(`CREATE INDEX "IDX_7fd4cdb45620476d1de745a265" ON "pablo_pool_asset" ("pool_id") `)
         await db.query(`CREATE TABLE "pablo_asset_weight" ("id" character varying NOT NULL, "asset_id" text NOT NULL, "weight" numeric NOT NULL, "block_id" text NOT NULL, "pool_id" character varying, CONSTRAINT "PK_dc958c38ef7c95de59fb7b3cc3b" PRIMARY KEY ("id"))`)
         await db.query(`CREATE INDEX "IDX_956be1c3085c6b2256333aca78" ON "pablo_asset_weight" ("pool_id") `)
         await db.query(`CREATE INDEX "IDX_986c61507f2b090b168939c3ba" ON "pablo_asset_weight" ("asset_id") `)
-        await db.query(`CREATE TABLE "pablo_pool" ("id" character varying NOT NULL, "event_id" text NOT NULL, "owner" text NOT NULL, "pool_type" character varying(24) NOT NULL, "lp_issued" numeric NOT NULL, "transaction_count" integer NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "block_id" text NOT NULL, CONSTRAINT "PK_28d674c3fdadf69d19745e5343a" PRIMARY KEY ("id"))`)
+        await db.query(`CREATE TABLE "pablo_pool" ("id" character varying NOT NULL, "event_id" text NOT NULL, "owner" text NOT NULL, "pool_type" character varying(24) NOT NULL, "lp_issued" numeric NOT NULL, "transaction_count" integer NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "block_id" text NOT NULL, "base_asset_id" text NOT NULL, CONSTRAINT "PK_28d674c3fdadf69d19745e5343a" PRIMARY KEY ("id"))`)
         await db.query(`CREATE INDEX "IDX_76686140a45d0a11fadadc16f6" ON "pablo_pool" ("owner") `)
         await db.query(`CREATE INDEX "IDX_c5772b79e56d97f7eee239ba9e" ON "pablo_pool" ("timestamp") `)
         await db.query(`CREATE TABLE "pablo_transaction" ("id" character varying NOT NULL, "account" text NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "block_id" text NOT NULL, "pool_id" character varying, CONSTRAINT "PK_8b040ecc6da14a71ef547ae2ae6" PRIMARY KEY ("id"))`)

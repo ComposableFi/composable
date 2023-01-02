@@ -8,7 +8,7 @@ import {
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { IsEnum } from "class-validator";
-import { HistoricalLockedValue, LockedSource } from "../../model";
+import { HistoricalLockedValue, LockedSource, PabloPool } from "../../model";
 import { getStartAndStep } from "./common";
 
 @ObjectType()
@@ -22,6 +22,9 @@ export class TotalValueLocked {
   @Field(() => BigInt, { nullable: false })
   totalValueLocked!: bigint;
 
+  @Field(() => String, { nullable: false })
+  assetId!: string;
+
   constructor(props: Partial<TotalValueLocked>) {
     Object.assign(this, props);
   }
@@ -32,12 +35,15 @@ export class TotalValueLockedInput {
   @Field(() => String, { nullable: false })
   range!: string;
 
-  @Field(() => String, { nullable: true, defaultValue: LockedSource.All })
+  @Field(() => String, { nullable: false })
   @IsEnum(LockedSource, {
     message:
-      "Value must be a LockedSource enum. For example, 'All', 'Pablo', 'VestingSchedules', 'StakingRewards', etc",
+      "Value must be a LockedSource enum. For example, 'Pablo', 'VestingSchedules', 'StakingRewards', etc",
   })
-  source?: LockedSource;
+  source!: LockedSource;
+
+  @Field(() => String, { nullable: false })
+  poolId!: string;
 }
 
 @Resolver()
@@ -48,11 +54,24 @@ export class TotalValueLockedResolver {
   async totalValueLocked(
     @Arg("params", { validate: true }) input: TotalValueLockedInput
   ): Promise<TotalValueLocked[]> {
-    const { range, source } = input;
+    const { range, source, poolId } = input;
 
     const manager = await this.tx();
 
     const { startHoursAgo, step } = getStartAndStep(range);
+
+    const pool = await manager.getRepository(PabloPool).findOne({
+      where: { id: poolId.toString() },
+      order: { timestamp: "DESC" },
+      relations: {
+        poolAssets: true,
+        poolAssetWeights: true,
+      },
+    });
+
+    if (!pool) {
+      throw new Error(`Pool with id ${poolId} not found`);
+    }
 
     const rows: { period: string; total_value_locked: string }[] = await manager
       .getRepository(HistoricalLockedValue)
@@ -68,15 +87,16 @@ export class TotalValueLockedResolver {
           )
           SELECT
               date_trunc('hour', current_timestamp) - hour * interval '1 hour' as period,
-              coalesce(hourly_total_value_locked(hour, '${source}'), 0) as total_value_locked
+              coalesce(hourly_total_value_locked(hour, '${source}', '${poolId}'), 0) as total_value_locked
           FROM range
           UNION
           (SELECT
               CURRENT_TIMESTAMP as period,
-              COALESCE(amount, 0) as total_value_locked
+              COALESCE(accumulated_amount, 0) as total_value_locked
           FROM historical_locked_value
           WHERE source = '${source}'
-          ORDER BY period DESC
+          AND source_entity_id = '${poolId}'
+          ORDER BY timestamp DESC
           LIMIT 1)
           ORDER BY period;
           `
@@ -88,6 +108,7 @@ export class TotalValueLockedResolver {
           date: new Date(row.period).toISOString(),
           totalValueLocked: BigInt(row.total_value_locked),
           source,
+          assetId: pool?.poolAssets[0].assetId || "",
         })
     );
   }

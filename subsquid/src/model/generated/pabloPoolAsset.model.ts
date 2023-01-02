@@ -32,4 +32,7 @@ export class PabloPoolAsset {
      */
     @Column_("text", {nullable: false})
     blockId!: string
+
+    @Column_("numeric", {transformer: marshal.floatTransformer, nullable: false})
+    weight!: number
 }

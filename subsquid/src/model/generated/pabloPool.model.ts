@@ -53,4 +53,10 @@ export class PabloPool {
      */
     @Column_("text", {nullable: false})
     blockId!: string
+
+    /**
+     * Asset to be used as reference when calculating the pool's TVL
+     */
+    @Column_("text", {nullable: false})
+    baseAssetId!: string
 }

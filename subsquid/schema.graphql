@@ -26,6 +26,8 @@ type PabloPool @entity {
   poolAssetWeights: [PabloAssetWeight!] @derivedFrom(field: "pool")
   "Last updated block id"
   blockId: String!
+  "Asset to be used as reference when calculating the pool's TVL"
+  baseAssetId: String!
 }
 
 type PabloAssetWeight @entity {
@@ -55,6 +57,7 @@ type PabloPoolAsset @entity {
   totalVolume: BigInt!
   "Last updated block id"
   blockId: String!
+  weight: Float!
 }
 
 type PabloFee @entity {

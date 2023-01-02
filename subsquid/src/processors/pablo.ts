@@ -163,6 +163,7 @@ export async function processPoolCreatedEvent(
     transactionCount: 0,
     timestamp: new Date(ctx.block.timestamp),
     blockId: ctx.block.id,
+    baseAssetId: assetWeights[0][0].toString(),
   });
 
   // Store pool
@@ -238,9 +239,30 @@ export async function processLiquidityAddedEvent(
 
   await ctx.store.save(pool);
 
+  const spotPrices = await getSpotPrices(
+    ctx,
+    assetAmounts.map(([assetId]) => assetId.toString()),
+    pool
+  );
+
+  // Normalize locked values to a base asset ID
+  const tvl = assetAmounts.reduce((acc, [assetId, amount]) => {
+    if (!spotPrices[assetId.toString()]) {
+      return acc;
+    }
+    if (assetId === BigInt(pool.baseAssetId)) {
+      return acc + amount;
+    }
+    return (
+      acc +
+      (amount * BigInt(10 ** 8)) /
+        BigInt(Math.round(spotPrices[assetId.toString()] * 10 ** 8))
+    );
+  }, 0n);
+
   await storeHistoricalLockedValue(
     ctx,
-    assetAmounts.map(([assetId, amount]) => [assetId.toString(), amount]),
+    [[pool.baseAssetId, tvl]],
     LockedSource.Pablo,
     pool.id
   );
@@ -303,9 +325,30 @@ export async function processLiquidityRemovedEvent(
 
   await ctx.store.save(pool);
 
+  const spotPrices = await getSpotPrices(
+    ctx,
+    assetAmounts.map(([assetId]) => assetId.toString()),
+    pool
+  );
+
+  // Normalize locked values to a base asset ID
+  const tvl = assetAmounts.reduce((acc, [assetId, amount]) => {
+    if (!spotPrices[assetId.toString()]) {
+      return acc;
+    }
+    if (assetId === BigInt(pool.baseAssetId)) {
+      return acc + amount;
+    }
+    return (
+      acc +
+      (amount * BigInt(10 ** 8)) /
+        BigInt(Math.round(spotPrices[assetId.toString()] * 10 ** 8))
+    );
+  }, 0n);
+
   await storeHistoricalLockedValue(
     ctx,
-    assetAmounts.map(([assetId, amount]) => [assetId.toString(), -amount]),
+    [[pool.baseAssetId, tvl]],
     LockedSource.Pablo,
     pool.id
   );
@@ -492,4 +535,43 @@ export async function processSwappedEvent(
 
   await ctx.store.save(historicalVolumeBaseAsset);
   await ctx.store.save(historicalVolumeQuoteAsset);
+}
+
+async function getSpotPrices(
+  ctx: EventHandlerContext<Store, { event: true }>,
+  assetIds: string[],
+  pool: PabloPool
+): Promise<Record<string, number>> {
+  let baseAssetTotalLiquidity = 0n;
+  let baseAssetWeight = 1;
+
+  // Update or create assets
+  for (const assetId of assetIds) {
+    const asset = await getOrCreatePabloAsset(ctx, pool, assetId.toString());
+
+    if (pool.baseAssetId === assetId) {
+      baseAssetTotalLiquidity = asset.totalLiquidity;
+      baseAssetWeight = asset.weight;
+    }
+
+    await ctx.store.save(asset);
+  }
+
+  const assetSpotPrices: Record<string, number> = {};
+
+  if (baseAssetTotalLiquidity === 0n) {
+    return assetSpotPrices;
+  }
+
+  for (const assetId of assetIds) {
+    const asset = await getOrCreatePabloAsset(ctx, pool, assetId.toString());
+    assetSpotPrices[assetId.toString()] =
+      pool.baseAssetId === assetId.toString()
+        ? 1
+        : (divideBigInts(asset.totalLiquidity, baseAssetTotalLiquidity) *
+            baseAssetWeight) /
+          asset.weight;
+  }
+
+  return assetSpotPrices;
 }

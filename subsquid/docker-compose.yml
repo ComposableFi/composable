@@ -37,10 +37,10 @@ services:
     image: subsquid/substrate-ingest:firesquid
     command: [
       # polkadot endpoints -- replace with your wss
-#      "-e", "wss://rpc.composablenodes.tech",
-      "-e", "ws://host.docker.internal:9988",
+      "-e", "wss://rpc.composablenodes.tech",
+#      "-e", "ws://host.docker.internal:9988",
       "-c", "10", # allow up to 20 pending requests for the above endpoint (default is 5)
-      #  "--start-block", "1000000", # uncomment to specify a non-zero start block
+      "--start-block", "1227000", # uncomment to specify a non-zero start block
       "--prom-port", "9090",
       "--out", "postgres://postgres:postgres@db:5432/squid-archive"
     ]
@@ -126,8 +126,8 @@ services:
       DB_PORT: 5432
       GQL_PORT: 4350
       SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
-#      RELAYCHAIN_URI: "wss://rpc.composablenodes.tech"
-      RELAYCHAIN_URI: "ws://host.docker.internal:9988"
+      RELAYCHAIN_URI: "wss://rpc.composablenodes.tech"
+#      RELAYCHAIN_URI: "ws://host.docker.internal:9988"
 
   graphql-server:
     image: squid-processor
