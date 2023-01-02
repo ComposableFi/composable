@@ -4,7 +4,7 @@ Providing liquidity on a decentralized exchange (DEX) like Pablo can be a way to
 by allowing others to trade with your assets. Here is a guide on how to provide liquidity on the Pablo DEX. 
 Release 2 will begin with 3 pools on launch which are as follows:
 
-![how_to_LP_title]()
+![how_to_LP_title](./images-provide-liquidity/how-to-lp-title.png)
 
 - KSM/USDT
 - PICA/USDT
