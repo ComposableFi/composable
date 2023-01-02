@@ -8,11 +8,15 @@ import {
   Config,
   Controlled,
 } from "@/components/Organisms/liquidity/AddForm/types";
+import { Asset } from "shared";
+import BigNumber from "bignumber.js";
 
 type LiquidityInputProps = Controlled &
   AssetDropdown & { config: Config | null } & {
     label: string;
     onValidationChange: (valid: boolean) => void;
+    gasFeeToken: Asset | null;
+    transactionFee: BigNumber;
   };
 
 export const LiquidityInput: FC<LiquidityInputProps> = ({
@@ -22,6 +26,8 @@ export const LiquidityInput: FC<LiquidityInputProps> = ({
   assetDropdownItems,
   label,
   onValidationChange,
+  transactionFee,
+  gasFeeToken,
 }) => {
   const theme = useTheme();
   const isMobile = useMobile();
@@ -29,21 +35,25 @@ export const LiquidityInput: FC<LiquidityInputProps> = ({
     return <Skeleton variant="rectangular" width="100%" height="68px" />;
   }
 
+  const maxAmount =
+    config.asset.getSymbol() === gasFeeToken?.getSymbol()
+      ? config.balance.free.minus(transactionFee)
+      : config.balance.free;
   return (
     <Box mt={4}>
       <DropdownCombinedBigNumberInput
         // onMouseDown={(a) => console.log("onMouseDown", a)}
-        maxValue={config.balance.free}
+        maxValue={maxAmount}
         setValid={onValidationChange}
         noBorder
         value={value}
         setValue={onChange}
         InputProps={{
-          disabled: config.balance.free.isZero(),
+          disabled: maxAmount.isZero(),
         }}
         buttonLabel="Max"
         ButtonProps={{
-          onClick: () => onChange(config.balance.free),
+          onClick: () => onChange(maxAmount),
           sx: {
             padding: theme.spacing(1),
           },
@@ -53,7 +63,7 @@ export const LiquidityInput: FC<LiquidityInputProps> = ({
           value: (config.asset.getPicassoAssetId() as string) || "",
           setValue: (_v) => console.log("Setting token"),
           dropdownModal: true,
-          forceHiddenLabel: isMobile ? true : false,
+          forceHiddenLabel: isMobile,
           options: assetDropdownItems,
           borderLeft: false,
           minWidth: isMobile ? undefined : 150,

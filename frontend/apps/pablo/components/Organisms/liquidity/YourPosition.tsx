@@ -12,7 +12,12 @@ import BigNumber from "bignumber.js";
 import { FC, useEffect, useState } from "react";
 import { PoolConfig } from "@/store/pools/types";
 import useStore from "@/store/useStore";
-import { getPriceAndRatio, getStats, GetStatsReturn } from "@/defi/utils";
+import {
+  DEFAULT_NETWORK_ID,
+  getPriceAndRatio,
+  getStats,
+  GetStatsReturn,
+} from "@/defi/utils";
 
 type YourPositionProps = {
   pool: PoolConfig;
@@ -21,6 +26,8 @@ type YourPositionProps = {
   assets: Asset[];
   amounts: [BigNumber, BigNumber];
   expectedLP: BigNumber;
+  transactionFee: BigNumber;
+  gasFeeToken: Asset;
 } & BoxProps;
 
 export const YourPosition: FC<YourPositionProps> = ({
@@ -30,6 +37,9 @@ export const YourPosition: FC<YourPositionProps> = ({
   expectedLP,
   amounts,
   pool,
+  gasFeeToken,
+  transactionFee,
+
   ...rest
 }) => {
   const theme = useTheme();
@@ -118,6 +128,21 @@ export const YourPosition: FC<YourPositionProps> = ({
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
           balance: amountTwo.toString(),
+          BalanceTypographyProps: {
+            variant: "body1",
+            fontWeight: "bold",
+          },
+        }}
+      />
+
+      <Label
+        mt={3}
+        label={`Transaction fee`}
+        TypographyProps={{ variant: "body1" }}
+        BalanceProps={{
+          balance: `${transactionFee.toFormat(
+            gasFeeToken.getDecimals(DEFAULT_NETWORK_ID)
+          )} ${gasFeeToken.getSymbol()}`,
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",

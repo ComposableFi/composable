@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { FormTitle } from "../../FormTitle";
 import { TransactionSettings } from "../../TransactionSettings";
 import { useSnackbar } from "notistack";
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
 import { setUiState, useUiSlice } from "@/store/ui/ui.slice";
 import { usePoolDetail } from "@/defi/hooks/pools/usePoolDetail";
@@ -22,8 +22,19 @@ import { useSimulateAddLiquidity } from "@/components/Organisms/pool/AddLiquidit
 import { ConfirmSupplyModal } from "@/components/Organisms/liquidity/AddForm/ConfirmSupplyModal";
 import { YourPosition } from "@/components/Organisms/liquidity/YourPosition";
 import { ConfirmingSupplyModal } from "@/components/Organisms/liquidity/AddForm/ConfirmingSupplyModal";
-import { usePoolSpotPrice } from "@/defi/hooks/pools/usePoolSpotPrice";
 import { useLiquidity } from "@/defi/hooks";
+import {
+  useExecutor,
+  useParachainApi,
+  useSelectedAccount,
+  useSigner,
+} from "substrate-react";
+import {
+  addLiquidityToPoolViaPablo,
+  DEFAULT_NETWORK_ID,
+  fromChainUnits,
+} from "@/defi/utils";
+import { getAssetTree } from "@/components/Organisms/pool/AddLiquidity/utils";
 
 function amountWithRatio(
   amount: BigNumber,
@@ -67,6 +78,28 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
     amountTwo: new BigNumber(0),
   });
 
+  const gasBalance = useStore(
+    (store) => {
+      const gasFeeToken = store.byog.feeItem;
+      return store.substrateBalances.tokenBalances.picasso[gasFeeToken];
+    },
+    (a, b) => a.free.eq(b.free)
+  );
+
+  const gasFeeRatio = useStore((store) =>
+    store.substrateTokens.tokens[store.byog.feeItem].getRatio()
+  );
+
+  const gasFeeTokenDecimals = useStore((store) =>
+    store.substrateTokens.tokens[store.byog.feeItem].getDecimals(
+      DEFAULT_NETWORK_ID
+    )
+  );
+
+  const [transactionFee, setTransactionFee] = useState<BigNumber>(
+    new BigNumber(0)
+  );
+
   const handleConfirmSupplyButtonClick = () => {
     pipe(
       pool,
@@ -96,12 +129,11 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   );
   const inputConfig = pipe(
     getInputConfig(pipe(pool, option.fromNullable), getTokenBalance),
-    option.fold(
-      () => null,
-      (ic) => ic
-    )
+    option.toNullable
   );
-  const { spotPrice } = usePoolSpotPrice(pool, pool?.config.assets);
+  const gasFeeToken = useStore(
+    (store) => store.substrateTokens.tokens[store.byog.feeItem]
+  );
   const { baseAmount, quoteAmount } = useLiquidity(pool);
   const assetOptions = getAssetOptions(inputConfig ?? []);
   const [leftConfig, rightConfig] = inputConfig ?? [];
@@ -111,8 +143,12 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   const simulate = useSimulateAddLiquidity();
   const [isInValid, setInValid] = useState<boolean>(false);
   const [isOutValid, setOutValid] = useState<boolean>(false);
-  const inputValid = isInValid && isOutValid;
+  const inputValid = isInValid && isOutValid && gasBalance.free.gt(0);
   const isPoolEmpty = baseAmount.isZero() && quoteAmount.isZero();
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const executor = useExecutor();
+  const account = useSelectedAccount(DEFAULT_NETWORK_ID);
+  const signer = useSigner();
 
   useEffect(() => {
     if (leftId === null || rightId === null) return;
@@ -143,6 +179,71 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
     simulated,
   ]);
 
+  useMemo(() => {
+    if (
+      parachainApi &&
+      poolId &&
+      executor &&
+      account &&
+      signer &&
+      leftConfig &&
+      rightConfig
+    ) {
+      try {
+        const assetTree = getAssetTree(
+          {
+            asset: leftConfig.asset,
+            balance: amountOne,
+          },
+          {
+            asset: rightConfig.asset,
+            balance: amountTwo,
+          }
+        );
+        const paymentInfo = pipe(
+          assetTree,
+          option.map((assets) =>
+            addLiquidityToPoolViaPablo(parachainApi, poolId, assets)
+          ),
+          option.map((call) =>
+            executor.paymentInfo(call, account.address, signer)
+          ),
+          option.toNullable
+        );
+        let transactionFee = new BigNumber(0);
+        if (paymentInfo) {
+          paymentInfo.then((result) => {
+            if (!gasFeeRatio) {
+              transactionFee = fromChainUnits(result.partialFee.toString());
+            } else {
+              transactionFee = fromChainUnits(
+                new BigNumber(result.partialFee.toString())
+                  .multipliedBy(gasFeeRatio.n)
+                  .div(gasFeeRatio.d),
+                gasFeeTokenDecimals
+              );
+            }
+            setTransactionFee(transactionFee);
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, [
+    account,
+    amountOne,
+    amountTwo,
+    executor,
+    gasFeeRatio,
+    gasFeeTokenDecimals,
+    leftConfig?.asset,
+    parachainApi,
+    poolId,
+    rightConfig?.asset,
+    signer,
+  ]);
+
   if (inputConfig === null) {
     return null;
   }
@@ -169,6 +270,8 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
       <LiquidityInput
         onValidationChange={setInValid}
         config={leftConfig}
+        transactionFee={transactionFee}
+        gasFeeToken={gasFeeToken}
         value={amountOne}
         onChange={(v) => {
           if (isPoolEmpty) {
@@ -192,6 +295,8 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
       <LiquidityInput
         onValidationChange={setOutValid}
         config={rightConfig}
+        transactionFee={transactionFee}
+        gasFeeToken={gasFeeToken}
         value={amountTwo}
         onChange={(v) => {
           if (isPoolEmpty) {
@@ -239,6 +344,8 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
           noTitle={false}
           assets={inputConfig.map((config) => config.asset)}
           expectedLP={simulated}
+          transactionFee={transactionFee}
+          gasFeeToken={gasFeeToken}
           mt={4}
         />
       ) : null}
