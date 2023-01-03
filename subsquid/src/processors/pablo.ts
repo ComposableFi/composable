@@ -422,22 +422,6 @@ export async function processSwappedEvent(
 
   await ctx.store.save(quoteAsset);
 
-  const pabloFee = new PabloFee({
-    id: randomUUID(),
-    event,
-    pool,
-    assetId: fee.assetId.toString(),
-    account: who,
-    fee: fee.fee,
-    lpFee: fee.lpFee,
-    ownerFee: fee.ownerFee,
-    protocolFee: fee.protocolFee,
-    timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash,
-  });
-
-  await ctx.store.save(pabloFee);
-
   const pabloTransaction = new PabloTransaction({
     id: ctx.event.id,
     pool,
@@ -462,6 +446,32 @@ export async function processSwappedEvent(
   }
 
   const weightRatio = baseAssetWeight.weight / quoteAssetWeight.weight;
+
+  const spotPrice = divideBigInts(quoteAmount, baseAmount) * weightRatio;
+
+  const feeSpotPrice = BigNumber(
+    fee.assetId.toString() === pool.baseAssetId ? 1 : spotPrice
+  );
+
+  const pabloFee = new PabloFee({
+    id: randomUUID(),
+    event,
+    pool,
+    assetId: pool.baseAssetId,
+    account: who,
+    fee: BigInt(BigNumber(fee.fee.toString()).div(feeSpotPrice).toFixed(0)),
+    lpFee: BigInt(BigNumber(fee.lpFee.toString()).div(feeSpotPrice).toFixed(0)),
+    ownerFee: BigInt(
+      BigNumber(fee.ownerFee.toString()).div(feeSpotPrice).toFixed(0)
+    ),
+    protocolFee: BigInt(
+      BigNumber(fee.protocolFee.toString()).div(feeSpotPrice).toFixed(0)
+    ),
+    timestamp: new Date(ctx.block.timestamp),
+    blockId: ctx.block.hash,
+  });
+
+  await ctx.store.save(pabloFee);
 
   const pabloSwap = new PabloSwap({
     id: randomUUID(),
