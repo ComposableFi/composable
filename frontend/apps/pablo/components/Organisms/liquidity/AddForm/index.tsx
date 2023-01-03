@@ -35,6 +35,8 @@ import {
   fromChainUnits,
 } from "@/defi/utils";
 import { getAssetTree } from "@/components/Organisms/pool/AddLiquidity/utils";
+import siteConfig from "@/constants/config";
+import { InputConfig } from "@/components/Organisms/liquidity/AddForm/types";
 
 export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   const theme = useTheme();
@@ -122,7 +124,39 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   const simulate = useSimulateAddLiquidity();
   const [isInValid, setInValid] = useState<boolean>(false);
   const [isOutValid, setOutValid] = useState<boolean>(false);
-  const inputValid = isInValid && isOutValid && gasBalance.free.gt(0);
+  const hasEnoughBalance = useMemo(() => {
+    if (!leftConfig || !rightConfig) return false;
+
+    function getMaxAmount(config: InputConfig) {
+      return config.asset.getSymbol() === gasFeeToken?.getSymbol()
+        ? config.balance.free
+            .minus(transactionFee.multipliedBy(siteConfig.gasFeeMultiplier))
+            .minus(gasFeeEd)
+            .dp(gasFeeToken.getDecimals(DEFAULT_NETWORK_ID) ?? 12)
+        : config.balance.free;
+    }
+
+    if (leftConfig.asset.getSymbol() === gasFeeToken.getSymbol()) {
+      return amountOne.lte(getMaxAmount(leftConfig));
+    } else if (rightConfig.asset.getSymbol() === gasFeeToken.getSymbol()) {
+      return amountTwo.lte(getMaxAmount(leftConfig));
+    } else {
+      return (
+        amountOne.lte(leftConfig.balance.free) &&
+        amountTwo.lte(rightConfig.balance.free)
+      );
+    }
+  }, [
+    amountOne,
+    amountTwo,
+    gasFeeEd,
+    gasFeeToken,
+    leftConfig,
+    rightConfig,
+    transactionFee,
+  ]);
+  const inputValid =
+    isInValid && isOutValid && gasBalance.free.gt(0) && hasEnoughBalance;
   const isPoolEmpty = baseAmount.isZero() && quoteAmount.isZero();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const executor = useExecutor();
@@ -216,10 +250,10 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
     executor,
     gasFeeRatio,
     gasFeeTokenDecimals,
-    leftConfig?.asset,
+    leftConfig,
     parachainApi,
     poolId,
-    rightConfig?.asset,
+    rightConfig,
     signer,
   ]);
 
