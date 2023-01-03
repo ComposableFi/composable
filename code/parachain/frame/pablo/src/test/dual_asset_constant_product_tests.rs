@@ -571,8 +571,10 @@ fn fees() {
 		let initial_btc = 1_00_u128 * unit;
 		let btc_price = 45_000_u128;
 		let initial_usdt = initial_btc * btc_price;
-		let lp_fee = Permill::from_float(0.05);
-		let owner_fee = Permill::from_float(0.01);
+		// 0.05
+		let lp_fee = Permill::from_percent(5);
+		// 0.01
+		let owner_fee = Permill::from_percent(1);
 		let pool_id = create_pool(BTC, USDT, initial_btc, initial_usdt, LP_TOKEN_ID, lp_fee, owner_fee);
 		let bob_usdt = 45_000_u128 * unit;
 		let quote_usdt = bob_usdt - lp_fee.mul_floor(bob_usdt);
@@ -621,7 +623,8 @@ fn staking_pool_test() {
 			BTC,
 			Permill::from_percent(50_u32),
 			USDT,
-			Permill::from_float(0.05),
+			// 0.05
+			Permill::from_percent(5),
 		);
 
 		let pool_id = Pablo::do_create_pool(pool_init_config, Some(LP_TOKEN_ID))
@@ -645,8 +648,8 @@ fn staking_pool_test() {
 		// });
 
 		let bob_usdt = 45_000_u128 * unit;
-		let trading_fee = Perbill::from_float(0.05).mul_floor(bob_usdt);
-		let protocol_fee = Perbill::from_float(0.2).mul_floor(trading_fee);
+		let trading_fee = Perbill::from_percent(5).mul_floor(bob_usdt);
+		let protocol_fee = Perbill::from_percent(20).mul_floor(trading_fee);
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 
@@ -672,7 +675,7 @@ fn staking_pool_test() {
 fn avoid_exchange_without_liquidity() {
 	new_test_ext().execute_with(|| {
 		let unit = 1_000_000_000_000_u128;
-		let lp_fee = Permill::from_float(0.05);
+		let lp_fee = Permill::from_percent(5);
 		let pool_init_config =
 			valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, lp_fee);
 		System::set_block_number(1);
@@ -696,7 +699,7 @@ fn avoid_exchange_without_liquidity() {
 #[test]
 fn cannot_swap_between_wrong_pairs() {
 	new_test_ext().execute_with(|| {
-		let lp_fee = Permill::from_float(0.05);
+		let lp_fee = Permill::from_percent(5);
 		let pool_init_config =
 			valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, lp_fee);
 
@@ -753,7 +756,8 @@ fn cannot_swap_between_wrong_pairs() {
 #[test]
 fn cannot_get_exchange_value_for_wrong_asset() {
 	new_test_ext().execute_with(|| {
-		let lp_fee = Permill::from_float(0.05);
+		// 0.05
+		let lp_fee = Permill::from_rational::<u32>(5, 100);
 		let pool_init_config =
 			valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, lp_fee);
 		System::set_block_number(1);
@@ -928,7 +932,8 @@ proptest! {
 			initial_btc,
 			initial_usdt,
 			LP_TOKEN_ID,
-			Permill::from_float(0.025),
+			// 0.025
+			Permill::from_rational::<u32>(25, 1000),
 			Permill::zero(),
 		  );
 		  let pool = get_pool(pool_id);
