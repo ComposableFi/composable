@@ -1104,7 +1104,7 @@ impl Convert<AccountId, alloc::string::String> for AccountToAddr {
 }
 impl Convert<Vec<u8>, Result<AccountId, ()>> for AccountToAddr {
 	fn convert(a: Vec<u8>) -> Result<AccountId, ()> {
-		Ok(AccountId32::new(a.try_into().map_err(|_| ())))
+		Ok(AccountId32::new(a.try_into().map_err(|_| ())?))
 	}
 }
 
