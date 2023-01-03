@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_methods)]
+
 use crate::mock::Test;
 
 use crate::{
@@ -515,17 +517,17 @@ fn exchange_failure() {
 		let initial_usdt = currency::USDT::ONE * btc_price;
 		let pool_init_config = valid_pool_init_config(
 			&ALICE,
-			BTC,
+			currency::BTC::ID,
 			Permill::from_percent(50_u32),
-			USDT,
+			currency::USDT::ID,
 			Permill::zero(),
 		);
 
 		common_exchange_failure(
 			pool_init_config,
-			AssetAmount::new(USDT, initial_usdt),
-			AssetAmount::new(BTC, initial_btc),
-			AssetAmount::new(BTC, currency::BTC::units(100)),
+			AssetAmount::new(currency::USDT::ID, initial_usdt),
+			AssetAmount::new(currency::BTC::ID, initial_btc),
+			AssetAmount::new(currency::USDT::ID, currency::USDT::units(100)),
 			LP_TOKEN_ID,
 		)
 	});

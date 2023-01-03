@@ -103,8 +103,6 @@ export default {
       assetId: "u128",
     },
     ComposableTraitsDexStakingRewardPool: "Null",
-    RemoveLiquiditySimulationResult: {
-      assets: "BTreeMap<AssetId, Balance>",
-    },
+    RemoveLiquiditySimulationResult: "BTreeMap<AssetId, Balance>",
   },
 };

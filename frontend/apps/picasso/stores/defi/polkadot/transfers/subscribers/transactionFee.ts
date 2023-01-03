@@ -6,7 +6,7 @@ import { fromChainIdUnit, SubstrateNetworkId, unwrapNumberOrHex } from "shared";
 import BigNumber from "bignumber.js";
 import { AssetRatio } from "@/defi/polkadot/pallets/Assets";
 import { pipe } from "fp-ts/function";
-import { either, option } from "fp-ts";
+import { option } from "fp-ts";
 
 function getFeeInToken(
   partialFee: BigNumber,
@@ -15,14 +15,10 @@ function getFeeInToken(
 ): BigNumber {
   return pipe(
     ratio,
-    either.fromNullable(partialFee),
-    either.fold(
-      (partialFee) =>
-        network === "picasso" ? option.none : option.some(partialFee),
-      (r) => option.some(partialFee.multipliedBy(r.n).div(r.d))
-    ),
+    option.fromNullable,
+    option.map((r) => partialFee.multipliedBy(r.n).div(r.d)),
     option.fold(
-      () => new BigNumber(0),
+      () => partialFee,
       (fee) => fee
     )
   );
@@ -40,8 +36,7 @@ export const subscribeTransactionFee = async (
       sourceChain: store.transfers.networks.from,
       transferExtrinsic: store.transfers.transferExtrinsic,
       amount: store.transfers.amount,
-      selectedToken:
-        store.substrateTokens.tokens[store.transfers.feeItem],
+      selectedToken: store.substrateTokens.tokens[store.transfers.feeItem],
       from: store.transfers.networks.from,
     }),
     async ({
@@ -68,22 +63,13 @@ export const subscribeTransactionFee = async (
       const signer = await getSigner(APP_NAME, walletAddress);
       try {
         const info = await executor.paymentInfo(call, walletAddress, signer);
-        const partialFee = fromChainIdUnit(
-          unwrapNumberOrHex(info.partialFee.toString())
-        );
-        // Either network is picasso or not
-        // if network is not picasso
-        // partialFee is enough
-        // if network is picasso,
-        // then we need to check if feeToken is set (BYOG)
-        // pass the fee token to function
+        const partialFee = new BigNumber(info.partialFee.toString());
 
         useStore.getState().transfers.updateFee({
           class: info.class.toString(),
-          partialFee: getFeeInToken(
-            partialFee,
-            from,
-            selectedToken.ratio[from]
+          partialFee: fromChainIdUnit(
+            getFeeInToken(partialFee, from, selectedToken.ratio[from]),
+            selectedToken.decimals[from] ?? 12
           ),
           weight: unwrapNumberOrHex(info.weight.toString()),
         } as {
