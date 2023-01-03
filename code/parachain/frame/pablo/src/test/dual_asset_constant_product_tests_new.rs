@@ -119,9 +119,12 @@ fn add_remove_lp() {
 }
 
 mod do_buy {
+	use composable_maths::dex::constant_product::compute_in_given_out;
 	use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 	use composable_traits::dex::{Amm, AssetAmount};
 	use frame_support::assert_noop;
+	use proptest::prelude::*;
+	use sp_runtime::PerThing;
 
 	use super::*;
 
@@ -203,6 +206,72 @@ mod do_buy {
 				crate::Error::<Test>::CannotBuyAssetWithItself,
 			);
 		});
+	}
+
+	const FIRST_ASSET_WEIGHTS: [u32; 6] = [80, 20, 75, 25, 60, 40];
+
+	prop_compose! {
+		fn first_asset_weight()
+		(x in 0..FIRST_ASSET_WEIGHTS.len()) -> Permill {
+			Permill::from_percent(FIRST_ASSET_WEIGHTS[x])
+		}
+	}
+
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases(FIRST_ASSET_WEIGHTS.len() as u32))]
+
+		#[test]
+		fn should_respect_non_50_50_weight(first_asset_weight in first_asset_weight()) {
+			new_test_ext().execute_with(|| {
+				process_and_progress_blocks::<Pablo, Test>(1);
+
+				// BTC/USDT Pool with a 0% fee
+				let pool_id =
+					create_pool_from_config(PoolInitConfiguration::DualAssetConstantProduct {
+						owner: ALICE,
+						assets_weights: dual_asset_pool_weights(BTC, first_asset_weight, USDT),
+						fee: Permill::zero(),
+					});
+
+				// Mint tokens for adding liquidity
+				let initial_btc = BTC::units(512_000);
+				let initial_usdt = USDT::units(512_000);
+				assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
+				assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+
+				// Add liquidity
+				assert_ok!(Pablo::add_liquidity(
+					Origin::signed(ALICE),
+					pool_id,
+					BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
+					0,
+					false
+				));
+
+				// Mint tokens for buy
+				let bob_btc = BTC::units(256_000);
+				assert_ok!(Tokens::mint_into(BTC, &BOB, bob_btc));
+				assert_eq!(Tokens::balance(BTC, &BOB), bob_btc);
+
+				// Do buy
+				let usdt_to_buy = AssetAmount::new(USDT, USDT::units(128));
+				assert_ok!(Pablo::do_buy(&BOB, pool_id, BTC, usdt_to_buy, false));
+
+				let expected_btc_post_buy = bob_btc -
+					compute_in_given_out(
+						first_asset_weight,
+						first_asset_weight.left_from_one(),
+						initial_btc,
+						initial_usdt,
+						usdt_to_buy.amount,
+						Permill::zero(),
+					)
+					.expect("no overflow")
+					.value;
+
+				assert_eq!(Tokens::balance(BTC, &BOB), expected_btc_post_buy);
+			})
+		}
 	}
 }
 
