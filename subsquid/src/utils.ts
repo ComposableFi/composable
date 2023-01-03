@@ -50,7 +50,8 @@ export function getAmountWithoutDecimals(
   return BigNumber(amount.toString()).div(BigNumber(10 ** decimals));
 }
 
-export function divideBigInts(a: bigint, b: bigint, decimals = 8): number {
-  const precision = BigInt(10 ** decimals);
-  return Number((precision * a) / b) / Number(precision);
+export function divideBigInts(a: bigint, b: bigint): number {
+  const quote = BigNumber(a.toString());
+  const base = BigNumber(b.toString());
+  return quote.div(base).toNumber();
 }

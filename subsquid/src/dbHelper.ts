@@ -2,7 +2,8 @@ import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { hexToU8a } from "@polkadot/util";
-import { encodeAccount } from "./utils";
+import { EntityManager } from "typeorm";
+import { divideBigInts, encodeAccount } from "./utils";
 import {
   Account,
   Activity,
@@ -13,6 +14,7 @@ import {
   PabloAssetWeight,
   PabloPool,
   PabloPoolAsset,
+  PabloSwap,
 } from "./model";
 
 export async function getLatestPoolByPoolId(
@@ -248,4 +250,123 @@ export async function getOrCreatePabloAsset(
     });
   }
   return Promise.resolve(pabloAsset);
+}
+
+export async function getSpotPrice(
+  ctx: EventHandlerContext<Store> | EntityManager,
+  baseAssetId: string,
+  quoteAssetId: string,
+  poolId: string
+): Promise<number> {
+  const isRepository = ctx instanceof EntityManager;
+
+  const swap1 = isRepository
+    ? await ctx.getRepository(PabloSwap).findOne({
+        where: {
+          baseAssetId,
+          quoteAssetId,
+          pool: {
+            id: poolId,
+          },
+        },
+      })
+    : await ctx.store.get(PabloSwap, {
+        where: {
+          baseAssetId,
+          quoteAssetId,
+          pool: {
+            id: poolId,
+          },
+        },
+      });
+
+  const swap2 = isRepository
+    ? await ctx.getRepository(PabloSwap).findOne({
+        where: {
+          baseAssetId: quoteAssetId,
+          quoteAssetId: baseAssetId,
+          pool: {
+            id: poolId,
+          },
+        },
+      })
+    : await ctx.store.get(PabloSwap, {
+        where: {
+          baseAssetId: quoteAssetId,
+          quoteAssetId: baseAssetId,
+          pool: {
+            id: poolId,
+          },
+        },
+      });
+
+  const timestamp1 = swap1?.timestamp;
+  const timestamp2 = swap2?.timestamp;
+
+  let swap: PabloSwap;
+
+  if (timestamp1 && !timestamp2) {
+    swap = swap1;
+  } else if (!timestamp1 && timestamp2) {
+    swap = swap2;
+  } else if (timestamp1 && timestamp2) {
+    swap = timestamp1 > timestamp2 ? swap1 : swap2;
+  } else {
+    // If no timestamp, we need to calculate the spot price using the liquidity
+    const baseWhere = {
+      assetId: baseAssetId,
+      pool: {
+        id: poolId,
+      },
+    };
+    const baseAsset = isRepository
+      ? await ctx.getRepository(PabloPoolAsset).findOne({
+          where: baseWhere,
+        })
+      : await ctx.store.findOne(PabloPoolAsset, { where: baseWhere });
+
+    const quoteWhere = {
+      assetId: baseAssetId,
+      pool: {
+        id: poolId,
+      },
+    };
+    const quoteAsset = isRepository
+      ? await ctx.getRepository(PabloPoolAsset).findOne({
+          where: quoteWhere,
+        })
+      : await ctx.store.findOne(PabloPoolAsset, { where: quoteWhere });
+
+    if (!baseAsset || !quoteAsset) {
+      throw new Error(
+        "No liquidity data for this pool. Can't compute spot price."
+      );
+    }
+
+    const baseAssetWeight = isRepository
+      ? await ctx.getRepository(PabloAssetWeight).findOne({
+          where: baseWhere,
+        })
+      : await ctx.store.findOne(PabloAssetWeight, { where: baseWhere });
+
+    const quoteAssetWeight = isRepository
+      ? await ctx.getRepository(PabloAssetWeight).findOne({
+          where: baseWhere,
+        })
+      : await ctx.store.findOne(PabloAssetWeight, { where: quoteWhere });
+
+    const weightRatio =
+      baseAssetWeight?.weight && quoteAssetWeight?.weight
+        ? baseAssetWeight.weight / quoteAssetWeight.weight
+        : 1;
+
+    return (
+      divideBigInts(quoteAsset.totalLiquidity, baseAsset.totalLiquidity) *
+      weightRatio
+    );
+  }
+
+  return baseAssetId === swap.baseAssetId
+    ? Number(swap.spotPrice)
+    : 1 / Number(swap.spotPrice);
 }

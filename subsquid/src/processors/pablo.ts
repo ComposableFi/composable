@@ -1,6 +1,7 @@
 import { Store } from "@subsquid/typeorm-store";
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { randomUUID } from "crypto";
+import BigNumber from "bignumber.js";
 import {
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
@@ -23,6 +24,7 @@ import { divideBigInts, encodeAccount } from "../utils";
 import {
   getLatestPoolByPoolId,
   getOrCreatePabloAsset,
+  getSpotPrice,
   saveAccountAndEvent,
   saveActivity,
   saveEvent,
@@ -239,26 +241,25 @@ export async function processLiquidityAddedEvent(
 
   await ctx.store.save(pool);
 
-  const spotPrices = await getSpotPrices(
-    ctx,
-    assetAmounts.map(([assetId]) => assetId.toString()),
-    pool
-  );
-
   // Normalize locked values to a base asset ID
-  const tvl = assetAmounts.reduce((acc, [assetId, amount]) => {
-    if (!spotPrices[assetId.toString()]) {
-      return acc;
-    }
+  let tvl = 0n;
+  for (const [assetId, amount] of assetAmounts) {
     if (assetId === BigInt(pool.baseAssetId)) {
-      return acc + amount;
+      tvl += amount;
+    } else {
+      const spotPrice = await getSpotPrice(
+        ctx,
+        pool.baseAssetId,
+        assetId.toString(),
+        pool.id
+      );
+      const normalizedAmount = BigNumber(amount.toString())
+        .div(BigNumber(spotPrice.toString()))
+        .toFixed(0);
+
+      tvl += BigInt(normalizedAmount);
     }
-    return (
-      acc +
-      (amount * BigInt(10 ** 8)) /
-        BigInt(Math.round(spotPrices[assetId.toString()] * 10 ** 8))
-    );
-  }, 0n);
+  }
 
   await storeHistoricalLockedValue(
     ctx,
@@ -325,30 +326,29 @@ export async function processLiquidityRemovedEvent(
 
   await ctx.store.save(pool);
 
-  const spotPrices = await getSpotPrices(
-    ctx,
-    assetAmounts.map(([assetId]) => assetId.toString()),
-    pool
-  );
-
   // Normalize locked values to a base asset ID
-  const tvl = assetAmounts.reduce((acc, [assetId, amount]) => {
-    if (!spotPrices[assetId.toString()]) {
-      return acc;
-    }
+  let tvl = 0n;
+  for (const [assetId, amount] of assetAmounts) {
     if (assetId === BigInt(pool.baseAssetId)) {
-      return acc + amount;
+      tvl += amount;
+    } else {
+      const spotPrice = await getSpotPrice(
+        ctx,
+        pool.baseAssetId,
+        assetId.toString(),
+        pool.id
+      );
+      const normalizedAmount = BigNumber(amount.toString())
+        .div(BigNumber(spotPrice.toString()))
+        .toFixed(0);
+
+      tvl += BigInt(normalizedAmount);
     }
-    return (
-      acc +
-      (amount * BigInt(10 ** 8)) /
-        BigInt(Math.round(spotPrices[assetId.toString()] * 10 ** 8))
-    );
-  }, 0n);
+  }
 
   await storeHistoricalLockedValue(
     ctx,
-    [[pool.baseAssetId, tvl]],
+    [[pool.baseAssetId, -tvl]],
     LockedSource.Pablo,
     pool.id
   );
