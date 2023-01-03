@@ -182,7 +182,7 @@ const sidebars = {
                     collapsed: true,
                     items: [
                         'products/pablo/swaps-trading',
-                        'products/pablo/liquidity-provision',
+                        'products/pablo/launch-pools',
                         'products/pablo/auctions-bonding',
                         'products/pablo/xPBLO-fNFT-staking',
                         'products/pablo/cross-chain-DEX',
