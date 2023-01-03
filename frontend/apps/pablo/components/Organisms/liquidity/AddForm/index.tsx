@@ -142,7 +142,9 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
             .minus(transactionFee.multipliedBy(siteConfig.gasFeeMultiplier))
             .minus(gasFeeEd)
             .dp(gasFeeToken.getDecimals(DEFAULT_NETWORK_ID) ?? 12)
-        : config.balance.free;
+        : config.balance.free.minus(
+            config.asset.getExistentialDeposit(DEFAULT_NETWORK_ID) ?? 0
+          );
     }
 
     if (leftConfig.asset.getSymbol() === gasFeeToken.getSymbol()) {
@@ -371,6 +373,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
       <Button
         variant="contained"
         size="large"
+        color={inputValid ? "primary" : "secondary"}
         fullWidth
         sx={{
           mt: 2,
@@ -378,7 +381,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         disabled={!inputValid}
         onClick={handleConfirmSupplyButtonClick}
       >
-        Supply
+        {inputValid ? "Supply" : "Insufficient balance to add liquidity"}
       </Button>
 
       {inputValid && pool ? (
@@ -394,7 +397,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         />
       ) : null}
 
-      {pool ? (
+      {pool && simulated ? (
         <ConfirmSupplyModal
           pool={pool}
           inputConfig={inputConfig}

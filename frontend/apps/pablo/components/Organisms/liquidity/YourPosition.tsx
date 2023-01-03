@@ -101,7 +101,11 @@ export const YourPosition: FC<YourPositionProps> = ({
         label="Share of pool"
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
-          balance: `${shareOfPool.toFixed()}%`,
+          balance: `${
+            shareOfPool.toFixed() === "0"
+              ? shareOfPool.toFixed(12)
+              : shareOfPool.toFixed()
+          }%`,
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",
@@ -111,10 +115,12 @@ export const YourPosition: FC<YourPositionProps> = ({
 
       <Label
         mt={3}
-        label={`Pooled ${assets[0].getSymbol()}`}
+        label={`Pooled ${assetOne.getSymbol()}`}
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
-          balance: amountOne.toString(),
+          balance: amountOne.toFormat(
+            assetOne.getDecimals(DEFAULT_NETWORK_ID) ?? 12
+          ),
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",
@@ -124,10 +130,10 @@ export const YourPosition: FC<YourPositionProps> = ({
 
       <Label
         mt={3}
-        label={`Pooled ${assets[1].getSymbol()}`}
+        label={`Pooled ${assetTwo.getSymbol()}`}
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
-          balance: amountTwo.toString(),
+          balance: amountTwo.toFormat(assetTwo.getDecimals(DEFAULT_NETWORK_ID)),
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",
@@ -137,12 +143,12 @@ export const YourPosition: FC<YourPositionProps> = ({
 
       <Label
         mt={3}
-        label={`Transaction fee`}
+        label={`Transaction fee (${gasFeeToken.getSymbol()})`}
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
           balance: `${transactionFee.toFormat(
             gasFeeToken.getDecimals(DEFAULT_NETWORK_ID)
-          )} ${gasFeeToken.getSymbol()}`,
+          )}`,
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",

@@ -1,4 +1,4 @@
-import { Box, Skeleton, useTheme } from "@mui/material";
+import { Box, Skeleton, Typography, useTheme } from "@mui/material";
 import { DropdownCombinedBigNumberInput } from "@/components";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { FC } from "react";
@@ -43,20 +43,27 @@ export const LiquidityInput: FC<LiquidityInputProps> = ({
     .minus(transactionFee.multipliedBy(siteConfig.gasFeeMultiplier))
     .minus(gasFeeEd)
     .dp(gasFeeToken?.getDecimals(DEFAULT_NETWORK_ID) ?? 12);
+  const inputBalance = config.balance.free.minus(
+    config.asset.getExistentialDeposit(DEFAULT_NETWORK_ID) ?? 0
+  );
   const maxAmount =
     config.asset.getSymbol() === gasFeeToken?.getSymbol()
       ? threshold.gte(0)
         ? threshold
         : new BigNumber(0)
-      : config.balance.free;
+      : inputBalance.lte(0)
+      ? new BigNumber(0)
+      : inputBalance;
 
   const fieldValue = value.gt(maxAmount) ? maxAmount : value;
-
+  const isValueGreaterThanMax = value.gt(maxAmount);
   return (
     <Box mt={4}>
       <DropdownCombinedBigNumberInput
         maxValue={maxAmount}
-        setValid={onValidationChange}
+        setValid={(validationStatus) =>
+          onValidationChange(validationStatus && !isValueGreaterThanMax)
+        }
         noBorder
         value={fieldValue}
         setValue={onChange}
@@ -66,6 +73,7 @@ export const LiquidityInput: FC<LiquidityInputProps> = ({
         buttonLabel="Max"
         ButtonProps={{
           onClick: () => onChange(maxAmount),
+          disabled: maxAmount.isZero(),
           sx: {
             padding: theme.spacing(1),
           },
@@ -89,6 +97,18 @@ export const LiquidityInput: FC<LiquidityInputProps> = ({
           },
         }}
       />
+      {isValueGreaterThanMax || maxAmount.isZero() ? (
+        <Typography
+          variant="caption"
+          color="error"
+          textAlign="left"
+          sx={{ display: "flex", ml: 2 }}
+        >
+          {isValueGreaterThanMax
+            ? "Your token balance is too low to fulfill the pool ratio."
+            : "Your token balance is too low to add liquidity."}
+        </Typography>
+      ) : null}
     </Box>
   );
 };
