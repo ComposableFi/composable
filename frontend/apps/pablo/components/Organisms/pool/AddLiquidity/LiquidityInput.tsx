@@ -39,13 +39,18 @@ export const LiquidityInput: FC<LiquidityInputProps> = ({
     return <Skeleton variant="rectangular" width="100%" height="68px" />;
   }
 
+  const threshold = config.balance.free
+    .minus(transactionFee.multipliedBy(siteConfig.gasFeeMultiplier))
+    .minus(gasFeeEd)
+    .dp(gasFeeToken?.getDecimals(DEFAULT_NETWORK_ID) ?? 12);
   const maxAmount =
     config.asset.getSymbol() === gasFeeToken?.getSymbol()
-      ? config.balance.free
-          .minus(transactionFee.multipliedBy(siteConfig.gasFeeMultiplier))
-          .minus(gasFeeEd)
-          .dp(gasFeeToken.getDecimals(DEFAULT_NETWORK_ID) ?? 12)
+      ? threshold.gte(0)
+        ? threshold
+        : new BigNumber(0)
       : config.balance.free;
+
+  const fieldValue = value.gt(maxAmount) ? maxAmount : value;
 
   return (
     <Box mt={4}>
@@ -53,7 +58,7 @@ export const LiquidityInput: FC<LiquidityInputProps> = ({
         maxValue={maxAmount}
         setValid={onValidationChange}
         noBorder
-        value={value}
+        value={fieldValue}
         setValue={onChange}
         InputProps={{
           disabled: maxAmount.isZero(),

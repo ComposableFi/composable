@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { FormTitle } from "../../FormTitle";
 import { TransactionSettings } from "../../TransactionSettings";
 import { useSnackbar } from "notistack";
-import { FC, useEffect, useMemo, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
 import { setUiState, useUiSlice } from "@/store/ui/ui.slice";
 import { usePoolDetail } from "@/defi/hooks/pools/usePoolDetail";
@@ -107,17 +107,26 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   const getTokenBalance = useStore(
     (store) => store.substrateBalances.getTokenBalance
   );
-  const inputConfig = pipe(
-    getInputConfig(pipe(pool, option.fromNullable), getTokenBalance),
-    option.toNullable
+  const inputConfig = useMemo(
+    () =>
+      pipe(
+        getInputConfig(pipe(pool, option.fromNullable), getTokenBalance),
+        option.toNullable
+      ),
+    [getTokenBalance, pool]
   );
   const gasFeeToken = useStore(
     (store) => store.substrateTokens.tokens[store.byog.feeItem]
   );
   const gasFeeEd = useStore((store) => store.byog.feeItemEd);
   const { baseAmount, quoteAmount } = useLiquidity(pool);
-  const assetOptions = getAssetOptions(inputConfig ?? []);
-  const [leftConfig, rightConfig] = inputConfig ?? [];
+  const assetOptions = useMemo(
+    () => getAssetOptions(inputConfig ?? []),
+    [inputConfig]
+  );
+  const [leftConfig, rightConfig] = useMemo(() => {
+    return inputConfig ?? [];
+  }, [inputConfig]);
   const leftId = (leftConfig?.asset.getPicassoAssetId() as string) || null;
   const rightId = (rightConfig?.asset.getPicassoAssetId() as string) || null;
   const [simulated, setSimulated] = useState<BigNumber>(new BigNumber(0));
@@ -164,7 +173,14 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
   const signer = useSigner();
 
   useEffect(() => {
-    if (leftId === null || rightId === null) return;
+    if (
+      leftId === null ||
+      rightId === null ||
+      amountOne.lte(0) ||
+      amountTwo.lte(0) ||
+      !inputValid
+    )
+      return;
     simulate(
       poolId,
       {
@@ -190,6 +206,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
     rightId,
     simulate,
     simulated,
+    inputValid,
   ]);
 
   useMemo(() => {
@@ -200,7 +217,9 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
       account &&
       signer &&
       leftConfig &&
-      rightConfig
+      rightConfig &&
+      amountOne.gt(0) &&
+      amountTwo.gt(0)
     ) {
       try {
         const assetTree = getAssetTree(
@@ -257,6 +276,40 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
     signer,
   ]);
 
+  const setTokenOneAmount = useCallback(
+    (v) => {
+      if (isPoolEmpty) {
+        setAmount((state) => ({
+          ...state,
+          amountOne: v,
+        }));
+      } else {
+        setAmount({
+          amountOne: v,
+          amountTwo: v.div(baseAmount).multipliedBy(quoteAmount),
+        });
+      }
+    },
+    [baseAmount, isPoolEmpty, quoteAmount]
+  );
+
+  const setTokenTwoAmount = useCallback(
+    (v) => {
+      if (isPoolEmpty) {
+        setAmount((state) => ({
+          ...state,
+          amountTwo: v,
+        }));
+      } else {
+        setAmount({
+          amountOne: v.div(quoteAmount).multipliedBy(baseAmount),
+          amountTwo: v, // amountTwo / Pool.amountTwo = RATIO
+        });
+      }
+    },
+    [baseAmount, isPoolEmpty, quoteAmount]
+  );
+
   if (inputConfig === null) {
     return null;
   }
@@ -287,19 +340,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         gasFeeToken={gasFeeToken}
         gasFeeEd={gasFeeEd}
         value={amountOne}
-        onChange={(v) => {
-          if (isPoolEmpty) {
-            setAmount((state) => ({
-              ...state,
-              amountOne: v,
-            }));
-          } else {
-            setAmount({
-              amountOne: v,
-              amountTwo: v.div(baseAmount).multipliedBy(quoteAmount),
-            });
-          }
-        }}
+        onChange={setTokenOneAmount}
         assetDropdownItems={assetOptions}
         label={"Token 1"}
       />
@@ -313,19 +354,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
         gasFeeToken={gasFeeToken}
         gasFeeEd={gasFeeEd}
         value={amountTwo}
-        onChange={(v) => {
-          if (isPoolEmpty) {
-            setAmount((state) => ({
-              ...state,
-              amountTwo: v,
-            }));
-          } else {
-            setAmount({
-              amountOne: v.div(quoteAmount).multipliedBy(baseAmount),
-              amountTwo: v, // amountTwo / Pool.amountTwo = RATIO
-            });
-          }
-        }}
+        onChange={setTokenTwoAmount}
         assetDropdownItems={assetOptions}
         label={"Token 2"}
       />
