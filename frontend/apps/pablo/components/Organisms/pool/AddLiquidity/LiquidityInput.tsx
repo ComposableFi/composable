@@ -1,7 +1,7 @@
 import { Box, Skeleton, Typography, useTheme } from "@mui/material";
 import { DropdownCombinedBigNumberInput } from "@/components";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import { useMobile } from "@/hooks/responsive";
 import {
   AssetDropdown,
@@ -12,6 +12,7 @@ import { Asset } from "shared";
 import BigNumber from "bignumber.js";
 import siteConfig from "@/constants/config";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import useStore from "@/store/useStore";
 
 type LiquidityInputProps = Controlled &
   AssetDropdown & { config: Config | null } & {
@@ -35,28 +36,43 @@ export const LiquidityInput: FC<LiquidityInputProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMobile();
-  if (config === null) {
-    return <Skeleton variant="rectangular" width="100%" height="68px" />;
-  }
-
-  const threshold = config.balance.free
-    .minus(transactionFee.multipliedBy(siteConfig.gasFeeMultiplier))
-    .minus(gasFeeEd)
-    .dp(gasFeeToken?.getDecimals(DEFAULT_NETWORK_ID) ?? 12);
-  const inputBalance = config.balance.free.minus(
-    config.asset.getExistentialDeposit(DEFAULT_NETWORK_ID) ?? 0
-  );
-  const maxAmount =
-    config.asset.getSymbol() === gasFeeToken?.getSymbol()
+  const isBYOGLoaded = useStore((store) => store.byog.isLoaded);
+  const threshold = useMemo(() => {
+    if (!config) return new BigNumber(0);
+    return config.balance.free
+      .minus(transactionFee.multipliedBy(siteConfig.gasFeeMultiplier))
+      .minus(gasFeeEd)
+      .dp(gasFeeToken?.getDecimals(DEFAULT_NETWORK_ID) ?? 12);
+  }, [config, gasFeeEd, gasFeeToken, transactionFee]);
+  const inputBalance = useMemo(() => {
+    if (!config) return new BigNumber(0);
+    return config.balance.free.minus(
+      config.asset.getExistentialDeposit(DEFAULT_NETWORK_ID) ?? 0
+    );
+  }, [config]);
+  const maxAmount = useMemo(() => {
+    if (!config) return new BigNumber(0);
+    return config.asset.getSymbol() === gasFeeToken?.getSymbol()
       ? threshold.gte(0)
         ? threshold
         : new BigNumber(0)
       : inputBalance.lte(0)
       ? new BigNumber(0)
       : inputBalance;
+  }, [config, gasFeeToken, inputBalance, threshold]);
 
-  const fieldValue = value.gt(maxAmount) ? maxAmount : value;
-  const isValueGreaterThanMax = value.gt(maxAmount);
+  const isValueGreaterThanMax = useMemo(() => {
+    return value.gt(maxAmount);
+  }, [value, maxAmount]);
+
+  const fieldValue = useMemo(() => {
+    return isValueGreaterThanMax ? maxAmount : value;
+  }, [value, maxAmount, isValueGreaterThanMax]);
+
+  if (config === null || !isBYOGLoaded) {
+    return <Skeleton variant="rectangular" width="100%" height="68px" />;
+  }
+
   return (
     <Box mt={4}>
       <DropdownCombinedBigNumberInput

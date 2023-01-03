@@ -46,6 +46,7 @@ export const subscribeFeeItemEd = async (api: ApiPromise) => {
 
       if (ed) {
         useStore.getState().byog.setFeeItemEd(ed);
+        useStore.getState().byog.setLoaded(true);
       }
     },
     {

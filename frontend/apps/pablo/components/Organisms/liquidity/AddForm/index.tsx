@@ -220,8 +220,8 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
       signer &&
       leftConfig &&
       rightConfig &&
-      amountOne.gt(0) &&
-      amountTwo.gt(0)
+      amountOne.gte(0) &&
+      amountTwo.gte(0)
     ) {
       try {
         const assetTree = getAssetTree(
