@@ -46,7 +46,6 @@ where
 	frame_system::Pallet::<Runtime>::initialize(
 		&next_block,
 		header.parent_hash(),
-		// &[0u8; 32].into(),
 		&Default::default(),
 	);
 

@@ -640,12 +640,6 @@ fn staking_pool_test() {
 			0,
 			false
 		));
-		// make sure a Staking pool is created.
-		// assert_has_event::<Test, _>(|e| {
-		// 	matches!(e.event,
-		//            mock::Event::StakingRewards(pallet_staking_rewards::Event::RewardPoolCreated {
-		// owner, .. })            if owner == Pablo::account_id(&pool_id) )
-		// });
 
 		let bob_usdt = 45_000_u128 * unit;
 		let trading_fee = Perbill::from_percent(5).mul_floor(bob_usdt);
@@ -660,14 +654,6 @@ fn staking_pool_test() {
 			AssetAmount::new(BTC, 0_u128),
 			false
 		));
-		// lp_fee is taken from quote
-		// from lp_fee 20 % (default) (as per owner_fee) goes to staking pool
-		// assert_has_event::<Test, _>(|e| {
-		//        println!("{:?}", e.event);
-		// 	matches!(e.event,
-		//            mock::Event::StakingRewards(pallet_staking_rewards::Event::RewardTransferred {
-		// from, reward_currency, reward_increment, ..})            if from == BOB &&
-		// reward_currency == USDT && reward_increment == protocol_fee) });
 	});
 }
 
