@@ -2,6 +2,7 @@
 
 use std::collections::BTreeMap;
 
+use composable_maths::dex::constant_product::compute_first_deposit_lp;
 use composable_support::math::safe::SafeAdd;
 use composable_tests_helpers::{
 	test::{
@@ -52,7 +53,7 @@ pub trait PabloRuntimeConstraints:
 	type __SystemBlockNumber: From<u32> + Into<u64> + SafeAdd;
 	type __SystemAccountId: From<AccountId32> + Clone;
 	type __TimestampMoment: From<u64>;
-	type __PabloBalance: BalanceLike + From<u128> + Zero;
+	type __PabloBalance: BalanceLike + From<u128> + Into<u128> + Zero;
 }
 
 impl<T> PabloRuntimeConstraints for T
@@ -62,7 +63,7 @@ where
 	T: SystemConfig + Config + pallet_timestamp::Config,
 	<T as SystemConfig>::BlockNumber: From<u32> + Into<u64> + SafeAdd,
 	<T as SystemConfig>::AccountId: From<AccountId32> + Clone,
-	<T as Config>::Balance: BalanceLike + From<u128> + Zero,
+	<T as Config>::Balance: BalanceLike + From<u128> + Into<u128> + Zero,
 	<T as pallet_timestamp::Config>::Moment: From<u64>,
 {
 	type __SystemAccountId = <T as SystemConfig>::AccountId;
@@ -187,8 +188,17 @@ pub mod providing_liquidity {
 			Event::<Runtime>::LiquidityAdded {
 				who: BOB.into(),
 				pool_id,
-				asset_amounts: assets,
-				minted_lp: 19_999_999_993_470_955_u128.into(),
+				asset_amounts: assets.clone(),
+				// minted_lp: 19_999_999_993_470_955_u128.into(),
+				minted_lp: compute_first_deposit_lp(
+					assets.into_iter().map(|(id, deposit)| {
+						(id.into(), deposit.into(), Permill::from_rational::<u32>(1, 2))
+					}),
+					Zero::zero(),
+				)
+				.unwrap()
+				.value
+				.into(),
 			},
 		);
 	}
@@ -240,8 +250,16 @@ pub fn add_liquidity<Runtime: PabloRuntimeConstraints>() {
 		Event::<Runtime>::LiquidityAdded {
 			who: BOB.into(),
 			pool_id,
-			asset_amounts: assets,
-			minted_lp: 1_999_999_994_552_971_605_u128.into(),
+			asset_amounts: assets.clone(),
+			minted_lp: compute_first_deposit_lp(
+				assets.into_iter().map(|(id, deposit)| {
+					(id.into(), deposit.into(), Permill::from_rational::<u32>(1, 2))
+				}),
+				Zero::zero(),
+			)
+			.unwrap()
+			.value
+			.into(),
 		},
 	);
 }
@@ -291,9 +309,18 @@ pub fn ksm_usdt<Runtime: PabloRuntimeConstraints>() {
 		Event::<Runtime>::LiquidityAdded {
 			who: BOB.into(),
 			pool_id,
-			asset_amounts: assets,
+			asset_amounts: assets.clone(),
 			// TODO(benluelo): Figure out where this number comes from
-			minted_lp: 63_245_552_925_824_u128.into(),
+			// minted_lp: 63_245_552_925_824_u128.into(),
+			minted_lp: compute_first_deposit_lp(
+				assets.into_iter().map(|(id, deposit)| {
+					(id.into(), deposit.into(), Permill::from_rational::<u32>(1, 2))
+				}),
+				Zero::zero(),
+			)
+			.unwrap()
+			.value
+			.into(),
 		},
 	);
 }
