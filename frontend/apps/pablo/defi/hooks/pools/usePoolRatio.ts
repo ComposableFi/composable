@@ -42,8 +42,6 @@ export const usePoolRatio = (pool: PoolConfig) => {
     return new BigNumber(amountOne).multipliedBy(priceOne.multipliedBy(2));
   }, [pool.config.assets, pool.poolId, poolAmount, isTokensLoaded]);
 
-  console.log("PoolTVL: ", pool?.poolId.toString(), poolTVL.toString());
-
   const [stats, setStats] = useState<GetStatsReturn>(null);
   const totalIssued = useStore((store) => store.pools.totalIssued);
   const poolVolume = getPoolVolume(stats);

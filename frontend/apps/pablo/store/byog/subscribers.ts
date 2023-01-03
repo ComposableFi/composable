@@ -3,8 +3,7 @@ import { fromChainIdUnit } from "shared";
 import BigNumber from "bignumber.js";
 
 import * as TaskEither from "fp-ts/TaskEither";
-import { flow, pipe } from "fp-ts/function";
-import * as Option from "fp-ts/lib/Option";
+import { pipe } from "fp-ts/function";
 import useStore from "@/store/useStore";
 
 function toString(value: unknown): string {
@@ -19,8 +18,8 @@ function strToBN(value: string): BigNumber {
   return fromChainIdUnit(new BigNumber(value));
 }
 
-function anyToBigNumber(value: unknown) {
-  return pipe(value, toString, strToBN);
+function anyToBigNumber(value: any) {
+  return pipe(value.isSome ? value.toString() : "0", strToBN);
 }
 
 function fetchEd(api: ApiPromise) {
@@ -41,26 +40,13 @@ export const subscribeFeeItemEd = async (api: ApiPromise) => {
     async ({ feeItem, isLoaded }) => {
       if (!isLoaded) return;
 
-      pipe(
-        Option.fromNullable(
-          useStore
-            .getState()
-            .substrateTokens.tokens[feeItem].getIdOnChain("picasso")
-        ),
-        Option.map(fetchEd(api)),
-        Option.map(
-          flow(
-            TaskEither.map(anyToBigNumber),
-            TaskEither.map((existentialValue) => {
-              useStore
-                .getState()
-                .byog.setFeeItemEd(
-                  existentialValue.isNaN() ? new BigNumber(0) : existentialValue
-                );
-            })
-          )
-        )
-      );
+      const ed = useStore
+        .getState()
+        .substrateTokens.tokens[feeItem].getExistentialDeposit("picasso");
+
+      if (ed) {
+        useStore.getState().byog.setFeeItemEd(ed);
+      }
     },
     {
       fireImmediately: true,

@@ -185,6 +185,10 @@ export class Asset {
     );
   }
 
+  getExistentialDeposit(network: SubstrateNetworkId) {
+    return this.__existentialDeposit.get(network);
+  }
+
   setApi(api: ApiPromise) {
     this.__api = api;
   }

@@ -10,6 +10,8 @@ import {
 } from "@/components/Organisms/liquidity/AddForm/types";
 import { Asset } from "shared";
 import BigNumber from "bignumber.js";
+import siteConfig from "@/constants/config";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 type LiquidityInputProps = Controlled &
   AssetDropdown & { config: Config | null } & {
@@ -39,8 +41,12 @@ export const LiquidityInput: FC<LiquidityInputProps> = ({
 
   const maxAmount =
     config.asset.getSymbol() === gasFeeToken?.getSymbol()
-      ? config.balance.free.minus(transactionFee).minus(gasFeeEd)
+      ? config.balance.free
+          .minus(transactionFee.multipliedBy(siteConfig.gasFeeMultiplier))
+          .minus(gasFeeEd)
+          .dp(gasFeeToken.getDecimals(DEFAULT_NETWORK_ID) ?? 12)
       : config.balance.free;
+
   return (
     <Box mt={4}>
       <DropdownCombinedBigNumberInput
