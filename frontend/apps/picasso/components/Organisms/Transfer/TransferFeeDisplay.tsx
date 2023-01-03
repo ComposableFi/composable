@@ -22,7 +22,6 @@ export const TransferFeeDisplay = () => {
   const tokens = useStore(({ substrateTokens }) => substrateTokens.tokens);
   const setFeeToken = useStore((state) => state.transfers.setFeeToken);
   const feeToken = useStore((state) => state.transfers.feeToken);
-
   const { from, to, account, fromProvider } = useTransfer();
   const fee = useStore((state) => state.transfers.fee);
   const selectedToken = useStore((state) => state.transfers.selectedToken);
