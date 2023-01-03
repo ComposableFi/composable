@@ -105,7 +105,7 @@ please read: [https://github.com/paritytech/substrate/blob/master/frame/vesting/
 - Net Inflation: N/A
 - Burnt Fees: N/A
 
-The PICA token generation event (TGE) occured on December 28th, 2022 at block number 1,444,176 on our chain. 
+The PICA token generation event (TGE) occurred on December 28th, 2022 at block number 1,444,176 on our chain. 
 Total PICA supply at this time is 10 billion, which is the genesis supply of PICA. 
 Additional PICA token distributions, inflation, etc. will be reported here once PICA goes into circulation after the TGE.
 

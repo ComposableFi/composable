@@ -160,6 +160,7 @@ gsutil
 hadolint
 hasher
 hasura
+hardfork
 hevm
 hexdump
 hexlify

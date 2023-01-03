@@ -182,7 +182,7 @@ const sidebars = {
                     collapsed: true,
                     items: [
                         'products/pablo/swaps-trading',
-                        'products/pablo/liquidity-provision',
+                        'products/pablo/launch-pools',
                         'products/pablo/auctions-bonding',
                         'products/pablo/xPBLO-fNFT-staking',
                         'products/pablo/cross-chain-DEX',
@@ -373,7 +373,7 @@ const sidebars = {
         },
         {
             type: 'category',
-            label: 'Audits And Fixes',
+            label: 'Audits, Fixes & Bug Bounties',
 
             link: {
                 type: 'generated-index',
@@ -382,6 +382,7 @@ const sidebars = {
             collapsible: false,
             items: [
                 'audits/audit-results-recommendations-and-remediations',
+                `audits/immunefi-bug-bounty-program`
             ]
         },
         {

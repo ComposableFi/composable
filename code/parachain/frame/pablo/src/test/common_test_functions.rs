@@ -287,6 +287,9 @@ pub fn common_exchange_failure(
 	exchange_first_amount: AssetAmount<AssetId, Balance>,
 	lp_token_id: AssetId,
 ) {
+	assert_eq!(init_first_amount.asset_id, exchange_first_amount.asset_id);
+	assert_ne!(init_second_amount.asset_id, exchange_first_amount.asset_id);
+
 	let pool_id =
 		Pablo::do_create_pool(init_config, Some(lp_token_id)).expect("pool creation failed");
 	// Mint the tokens
@@ -318,14 +321,14 @@ pub fn common_exchange_failure(
 		),
 		orml_tokens::Error::<Test>::BalanceTooLow
 	);
-	let expected_value = exchange_first_amount.amount + 1;
-	// error as expected_value is more that input
+
+	// error as the expected value is more that input
 	assert_noop!(
 		Pablo::swap(
 			Origin::signed(BOB),
 			pool_id,
 			AssetAmount::new(exchange_first_amount.asset_id, exchange_first_amount.amount),
-			AssetAmount::new(init_second_amount.asset_id, expected_value),
+			AssetAmount::new(init_second_amount.asset_id, dbg!(init_second_amount.amount + 1)),
 			false
 		),
 		crate::Error::<Test>::CannotRespectMinimumRequested
