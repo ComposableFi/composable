@@ -83,7 +83,7 @@ export function createVestingSchedule(
     schedule: createSchedule(schedule),
     totalAmount: scheduleAmount,
     fullyClaimed: false,
-    blockId: ctx.block.id,
+    blockId: ctx.block.hash,
   });
 }
 

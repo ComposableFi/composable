@@ -72,7 +72,7 @@ export async function processAssetRegisteredEvent(
     eventId: ctx.event.id,
     price,
     decimals,
-    blockId: ctx.block.id,
+    blockId: ctx.block.hash,
   });
 
   await ctx.store.save(asset);

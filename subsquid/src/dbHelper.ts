@@ -91,7 +91,7 @@ export async function saveEvent(
     eventType,
     blockNumber: BigInt(ctx.block.height),
     timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.id,
+    blockId: ctx.block.hash,
   });
 
   // Store event
@@ -116,7 +116,7 @@ export async function saveActivity(
     event,
     accountId,
     timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.id,
+    blockId: ctx.block.hash,
   });
 
   await ctx.store.save(activity);
@@ -204,7 +204,7 @@ export async function storeHistoricalLockedValue(
       source,
       assetId,
       sourceEntityId,
-      blockId: ctx.block.id,
+      blockId: ctx.block.hash,
     });
 
     await ctx.store.save(historicalLockedValue);
@@ -245,7 +245,7 @@ export async function getOrCreatePabloAsset(
       pool,
       totalLiquidity: BigInt(0),
       totalVolume: BigInt(0),
-      blockId: ctx.block.id,
+      blockId: ctx.block.hash,
       weight: weight?.weight || 0,
     });
   }

@@ -50,7 +50,7 @@ export function getHistoricalAssetPrice(
     price,
     timestamp: new Date(ctx.block.timestamp),
     currency: Currency.USD,
-    blockId: ctx.block.id,
+    blockId: ctx.block.hash,
   });
 }
 

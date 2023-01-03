@@ -73,7 +73,7 @@ export function getNewBondOffer(
     totalPurchased: BigInt(0),
     beneficiary: encodeAccount(beneficiary),
     cancelled: false,
-    blockId: ctx.block.id,
+    blockId: ctx.block.hash,
   });
 }
 

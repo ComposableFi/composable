@@ -164,7 +164,7 @@ export async function processPoolCreatedEvent(
     lpIssued: BigInt(0),
     transactionCount: 0,
     timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.id,
+    blockId: ctx.block.hash,
     baseAssetId: assetWeights[0][0].toString(),
   });
 
@@ -178,7 +178,7 @@ export async function processPoolCreatedEvent(
       pool,
       assetId: assetId.toString(),
       weight: weight / 1_000_000,
-      blockId: ctx.block.id,
+      blockId: ctx.block.hash,
     });
 
     await ctx.store.save(pabloAssetWeight);
@@ -234,7 +234,7 @@ export async function processLiquidityAddedEvent(
     pool,
     account: who,
     timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.id,
+    blockId: ctx.block.hash,
   });
 
   await ctx.store.save(pabloTransaction);
@@ -319,7 +319,7 @@ export async function processLiquidityRemovedEvent(
     pool,
     account: who,
     timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.id,
+    blockId: ctx.block.hash,
   });
 
   await ctx.store.save(pabloTransaction);
@@ -433,7 +433,7 @@ export async function processSwappedEvent(
     ownerFee: fee.ownerFee,
     protocolFee: fee.protocolFee,
     timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.id,
+    blockId: ctx.block.hash,
   });
 
   await ctx.store.save(pabloFee);
@@ -443,7 +443,7 @@ export async function processSwappedEvent(
     pool,
     account: who,
     timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.id,
+    blockId: ctx.block.hash,
   });
 
   await ctx.store.save(pabloTransaction);
@@ -476,7 +476,7 @@ export async function processSwappedEvent(
     ).toString(),
     fee: pabloFee,
     timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.id,
+    blockId: ctx.block.hash,
   });
 
   await ctx.store.save(pabloSwap);
@@ -518,7 +518,7 @@ export async function processSwappedEvent(
     pool,
     timestamp: new Date(ctx.block.timestamp),
     source: LockedSource.Pablo,
-    blockId: ctx.block.id,
+    blockId: ctx.block.hash,
   });
 
   const historicalVolumeQuoteAsset = new HistoricalVolume({
@@ -530,48 +530,9 @@ export async function processSwappedEvent(
     pool,
     timestamp: new Date(ctx.block.timestamp),
     source: LockedSource.Pablo,
-    blockId: ctx.block.id,
+    blockId: ctx.block.hash,
   });
 
   await ctx.store.save(historicalVolumeBaseAsset);
   await ctx.store.save(historicalVolumeQuoteAsset);
-}
-
-async function getSpotPrices(
-  ctx: EventHandlerContext<Store, { event: true }>,
-  assetIds: string[],
-  pool: PabloPool
-): Promise<Record<string, number>> {
-  let baseAssetTotalLiquidity = 0n;
-  let baseAssetWeight = 1;
-
-  // Update or create assets
-  for (const assetId of assetIds) {
-    const asset = await getOrCreatePabloAsset(ctx, pool, assetId.toString());
-
-    if (pool.baseAssetId === assetId) {
-      baseAssetTotalLiquidity = asset.totalLiquidity;
-      baseAssetWeight = asset.weight;
-    }
-
-    await ctx.store.save(asset);
-  }
-
-  const assetSpotPrices: Record<string, number> = {};
-
-  if (baseAssetTotalLiquidity === 0n) {
-    return assetSpotPrices;
-  }
-
-  for (const assetId of assetIds) {
-    const asset = await getOrCreatePabloAsset(ctx, pool, assetId.toString());
-    assetSpotPrices[assetId.toString()] =
-      pool.baseAssetId === assetId.toString()
-        ? 1
-        : (divideBigInts(asset.totalLiquidity, baseAssetTotalLiquidity) *
-            baseAssetWeight) /
-          asset.weight;
-  }
-
-  return assetSpotPrices;
 }
