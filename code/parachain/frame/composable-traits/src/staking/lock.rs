@@ -9,6 +9,8 @@ use core::fmt::Debug;
 
 use crate::time::{DurationSeconds, Timestamp};
 
+// TODO(benluelo): Move this module into this file
+
 /// defines staking duration, rewards and early unstake penalty
 #[derive(
 	DebugNoBound, PartialEqNoBound, EqNoBound, CloneNoBound, MaxEncodedLen, Encode, Decode, TypeInfo,
@@ -16,6 +18,8 @@ use crate::time::{DurationSeconds, Timestamp};
 #[scale_info(skip_type_params(MaxDurationPresets))]
 pub struct LockConfig<MaxDurationPresets: Get<u32>> {
 	/// The possible locking duration.
+	// TODO(benluelo): This should be a curve (but linear), with start and end points, and a
+	// "multiplier" per second.
 	pub duration_presets:
 		BoundedBTreeMap<DurationSeconds, Validated<FixedU64, GeOne>, MaxDurationPresets>,
 	/// The penalty applied if a staker unstake before the end date.
@@ -34,6 +38,7 @@ pub struct Lock {
 	pub unlock_penalty: Perbill,
 }
 
+// REVIEW(benluelo): This trait is currently unused; is it necessary?
 pub trait Locking {
 	type AccountId;
 	type InstanceId;

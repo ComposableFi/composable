@@ -33,9 +33,14 @@
 	clippy::disallowed_types
 )]
 
+// TODO(benluelo): Move all non-pallet code (trait implementations, helper fns, etc) into separate
+// files
+// REVIEW(benluelo): Review usage of #[transctional] throughout this pallet
+
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 mod benchmarking;
 
+// TODO(benluelo): Remove mock runtime; see RFC 0015.
 #[cfg(test)]
 pub(crate) mod runtime;
 
@@ -46,6 +51,7 @@ pub(crate) mod test_helpers;
 
 mod validation;
 
+// REVIEW(benluelo): Is this prelude useful?
 pub mod prelude;
 pub mod weights;
 
@@ -464,6 +470,9 @@ pub mod pallet {
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		// TODO(benluelo): Remove hardcoded asset ids from Config and pass [(staked id, share id,
+		// fnft id)] to the config instead.
+		// TODO(benluelo): Figure out what to do for the above when decoupling fnft
 		fn build(&self) {
 			let owner: T::AccountId = T::PalletId::get().into_account_truncating();
 			create_default_pool::<T>(
@@ -736,7 +745,7 @@ pub mod pallet {
 					ensure!(
 						initial_reward_config.iter().all(|(_, reward_config)| {
 							if reward_config.reward_rate.amount > T::Balance::zero() {
-								// If none zero reward, check that the slashed amount is greater
+								// If non-zero reward, check that the slashed amount is greater
 								// than ED
 								lock.unlock_penalty
 									.left_from_one()
@@ -791,6 +800,7 @@ pub mod pallet {
 		}
 	}
 
+	// TODO(benluelo): Remove this implementation
 	impl<T: Config> FinancialNftProtocol for Pallet<T> {
 		type ItemId = FinancialNftInstanceIdOf<T>;
 		type AssetId = AssetIdOf<T>;
@@ -1086,7 +1096,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// TODO(benluelo): Split this out into a separate function/file
 		#[transactional]
 		fn split(
 			who: &Self::AccountId,
@@ -1314,7 +1323,7 @@ pub mod pallet {
 		/// * `pool_id` - Pool identifier
 		/// * `mut rewards_pool` - Rewards pool to update
 		/// * `stake` - Stake position
-		/// * `early_unlock` - If there should be an early unlock penalty
+		/// * `penalize_for_early_unlock` - If there should be an early unlock penalty
 		/// * `keep_alive` - If the transaction should be kept alive
 		// TODO(benluelo): This function does too much - while claim and unstake have similar
 		// functionality, I don't think this is the best abstraction of that. Refactor to have
@@ -1701,10 +1710,12 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 		let releasable_periods_surpassed =
 			cmp::min(maximum_releasable_periods, periods_surpassed.into());
 
-		// SAFETY: Usage of mul is safe here because newly_accumulated_rewards =
-		//      (    total_locked_rewards            elapsed_time        )
-		//  min ( ------------------------- , -------------------------- )
-		//      ( reward.reward_rate.amount   reward_rate_period_seconds )
+		// SAFETY: Usage of mul is safe here. newly_accumulated_rewards is defined as:
+		//
+		//     (    total_locked_rewards            elapsed_time        )
+		// min ( ------------------------- , -------------------------- )
+		//     ( reward.reward_rate.amount   reward_rate_period_seconds )
+		//
 		// If LHS is smaller, this will result in total_locked_rewards, which we know fits in a
 		// u128. If RHS is smaller, this has to be < total_locked_rewards, so it will also fit.
 		let newly_accumulated_rewards =

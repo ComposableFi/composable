@@ -18,6 +18,8 @@ use sp_runtime::{
 use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec::Vec};
 
 /// Specifies and amount together with the asset ID of the amount.
+// REVIEW(benluelo): Evaluate the usefulness of this type. We often end up converting between
+// BTreeMap<A, B> and Vec<AssetAmount<A, B>>, for seemingly little benefit.
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Copy, RuntimeDebug)]
 pub struct AssetAmount<AssetId, Balance> {
 	pub asset_id: AssetId,

@@ -24,6 +24,7 @@ pub trait FinancialNft<AccountId>: Inspect<AccountId> {
 
 	/// Retrieve the next valid financial NFT ID for the given collection in order to
 	/// mint a new NFT.
+	// TODO(benluelo): Remove this, it should be handled internally and doesn't need to be exposed.
 	fn get_next_nft_id(collection: &Self::CollectionId) -> Result<Self::ItemId, DispatchError>;
 }
 

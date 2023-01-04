@@ -11,7 +11,11 @@ use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
 use sp_runtime::{DispatchError, Permill};
 
+// TODO(benluelo): Remove all references to fNFT in this module
+
+// TODO(benluelo): Remove this module, move it's contents into this file
 pub mod lock;
+// REVIEW(benluelo): The contents of this file are currently unused, can they be removed?
 pub mod math;
 
 /// Defines staking duration, rewards and early unstake penalty for a given asset type.
