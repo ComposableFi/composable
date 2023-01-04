@@ -9,8 +9,6 @@ use core::fmt::Debug;
 
 use crate::time::{DurationSeconds, Timestamp};
 
-// TODO(benluelo): Move this module into this file
-
 /// defines staking duration, rewards and early unstake penalty
 #[derive(
 	DebugNoBound, PartialEqNoBound, EqNoBound, CloneNoBound, MaxEncodedLen, Encode, Decode, TypeInfo,
@@ -27,6 +25,7 @@ pub struct LockConfig<MaxDurationPresets: Get<u32>> {
 	pub unlock_penalty: Perbill,
 }
 
+// REVIEW(benluelo): What do these docs mean? This is a lock, not an fNFT
 /// staking typed fNFT, usually can be mapped to raw fNFT storage type
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
 pub struct Lock {

@@ -13,6 +13,8 @@ use sp_runtime::{DispatchError, Permill};
 
 // TODO(benluelo): Remove all references to fNFT in this module
 
+// TODO(benluelo): Remove bounds on struct generics throughout this module (see RFC 0015)
+
 // TODO(benluelo): Remove this module, move it's contents into this file
 pub mod lock;
 // REVIEW(benluelo): The contents of this file are currently unused, can they be removed?
@@ -245,6 +247,7 @@ pub trait ManageStaking {
 	) -> Result<Self::RewardPoolId, DispatchError>;
 }
 
+// TODO(benluelo): Improve these docs
 /// is unaware of concrete positions
 pub trait ProtocolStaking {
 	type AccountId;
@@ -263,6 +266,8 @@ pub trait ProtocolStaking {
 	) -> DispatchResult;
 }
 
+// TODO(benluelo): Update the docs for all of the methods as they have gone out of sync with the
+// parameters
 /// Interface for protocol staking.
 pub trait Staking {
 	type AccountId;
