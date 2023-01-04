@@ -52,13 +52,13 @@ export const LiquidityInput: FC<LiquidityInputProps> = ({
   }, [config]);
   const maxAmount = useMemo(() => {
     if (!config) return new BigNumber(0);
-    return config.asset.getSymbol() === gasFeeToken?.getSymbol()
-      ? threshold.gte(0)
-        ? threshold
-        : new BigNumber(0)
-      : inputBalance.lte(0)
+    const normalizedThreshold = threshold.gte(0) ? threshold : new BigNumber(0);
+    const normalizedInputBalance = inputBalance.lte(0)
       ? new BigNumber(0)
       : inputBalance;
+    return config.asset.getSymbol() === gasFeeToken?.getSymbol()
+      ? normalizedThreshold
+      : normalizedInputBalance;
   }, [config, gasFeeToken, inputBalance, threshold]);
 
   const isValueGreaterThanMax = useMemo(() => {
