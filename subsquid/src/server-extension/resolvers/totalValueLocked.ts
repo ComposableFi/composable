@@ -7,23 +7,17 @@ import {
   Resolver,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { IsEnum } from "class-validator";
-import { HistoricalLockedValue, LockedSource, PabloPool } from "../../model";
-import { getStartAndStep } from "./common";
+import { HistoricalLockedValue, LockedSource } from "../../model";
+import { getRange } from "./common";
+import { PicassoTVL } from "./picassoOverviewStats";
 
 @ObjectType()
 export class TotalValueLocked {
   @Field(() => String, { nullable: false })
   date!: string;
 
-  @Field(() => String, { nullable: false })
-  source!: string;
-
-  @Field(() => BigInt, { nullable: false })
-  totalValueLocked!: bigint;
-
-  @Field(() => String, { nullable: false })
-  assetId!: string;
+  @Field(() => [PicassoTVL], { nullable: false })
+  lockedValues!: PicassoTVL[];
 
   constructor(props: Partial<TotalValueLocked>) {
     Object.assign(this, props);
@@ -35,15 +29,8 @@ export class TotalValueLockedInput {
   @Field(() => String, { nullable: false })
   range!: string;
 
-  @Field(() => String, { nullable: false })
-  @IsEnum(LockedSource, {
-    message:
-      "Value must be a LockedSource enum. For example, 'Pablo', 'VestingSchedules', 'StakingRewards', etc",
-  })
-  source!: LockedSource;
-
-  @Field(() => String, { nullable: false })
-  poolId!: string;
+  @Field(() => String, { nullable: true })
+  source?: LockedSource;
 }
 
 @Resolver()
@@ -54,62 +41,73 @@ export class TotalValueLockedResolver {
   async totalValueLocked(
     @Arg("params", { validate: true }) input: TotalValueLockedInput
   ): Promise<TotalValueLocked[]> {
-    const { range, source, poolId } = input;
+    const { range, source } = input;
 
     const manager = await this.tx();
 
-    const { startHoursAgo, step } = getStartAndStep(range);
+    const sources = source ? [source] : Object.values(LockedSource);
+    const timestamps = getRange(range);
 
-    const pool = await manager.getRepository(PabloPool).findOne({
-      where: { id: poolId.toString() },
-      order: { timestamp: "DESC" },
-      relations: {
-        poolAssets: true,
-        poolAssetWeights: true,
-      },
-    });
+    // Map timestamp to {assetId -> tvl}
+    const lockedValues: Record<
+      string,
+      Record<string, bigint>
+    > = timestamps.reduce((acc, timestamp) => {
+      return {
+        ...acc,
+        [timestamp.toISOString()]: {},
+      };
+    }, {});
 
-    if (!pool) {
-      throw new Error(`Pool with id ${poolId} not found`);
+    for (const lockedSource of sources) {
+      const assetIds: string[] = (
+        await manager
+          .getRepository(HistoricalLockedValue)
+          .createQueryBuilder("value")
+          .select("value.assetId", "assetId")
+          .where("value.source = :source", { source: lockedSource })
+          .groupBy("value.assetId")
+          .getRawMany()
+      ).map((row) => row.assetId);
+
+      const rows = [];
+
+      for (const assetId of assetIds) {
+        for (const timestamp of timestamps) {
+          const time = timestamp.toISOString();
+          const row = await manager
+            .getRepository(HistoricalLockedValue)
+            .createQueryBuilder()
+            .select(`'${time}'`, "date")
+            .addSelect("asset_id", "assetId")
+            .addSelect(
+              `coalesce(tvl('${time}', '${lockedSource}', '${assetId}'), 0)`,
+              "totalValueLocked"
+            )
+            .getRawOne();
+
+          lockedValues[time] = {
+            ...(lockedValues[time] ?? {}),
+            [assetId]:
+              (lockedValues?.[time]?.[assetId] || 0n) +
+              BigInt(row.totalValueLocked),
+          };
+
+          rows.push(row);
+        }
+      }
     }
 
-    const rows: { period: string; total_value_locked: string }[] = await manager
-      .getRepository(HistoricalLockedValue)
-      .query(
-        `
-          WITH range AS (
-            SELECT
-              generate_series (
-                ${startHoursAgo},
-                0,
-                ${-step}
-              ) AS hour
-          )
-          SELECT
-              date_trunc('hour', current_timestamp) - hour * interval '1 hour' as period,
-              coalesce(hourly_total_value_locked(hour, '${source}', '${poolId}'), 0) as total_value_locked
-          FROM range
-          UNION
-          (SELECT
-              CURRENT_TIMESTAMP as period,
-              COALESCE(accumulated_amount, 0) as total_value_locked
-          FROM historical_locked_value
-          WHERE source = '${source}'
-          AND source_entity_id = '${poolId}'
-          ORDER BY timestamp DESC
-          LIMIT 1)
-          ORDER BY period;
-          `
-      );
+    return Object.keys(lockedValues).map((date) => {
+      const tvl: PicassoTVL[] = [];
+      for (const assetId in lockedValues[date]) {
+        tvl.push({ assetId, amount: lockedValues[date][assetId] });
+      }
 
-    return rows.map(
-      (row) =>
-        new TotalValueLocked({
-          date: new Date(row.period).toISOString(),
-          totalValueLocked: BigInt(row.total_value_locked),
-          source,
-          assetId: pool?.poolAssets[0].assetId || "",
-        })
-    );
+      return new TotalValueLocked({
+        date,
+        lockedValues: tvl,
+      });
+    });
   }
 }

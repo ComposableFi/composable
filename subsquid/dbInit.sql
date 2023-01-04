@@ -70,3 +70,23 @@ AS $$
     ORDER BY timestamp DESC
     LIMIT 1
 $$;
+
+CREATE OR REPLACE FUNCTION tvl (
+    time_threshold TIMESTAMP,
+    source VARCHAR(30),
+    asset_id VARCHAR(30)
+)
+    RETURNS bigint
+    LANGUAGE SQL
+    IMMUTABLE
+AS $$
+SELECT
+    COALESCE(accumulated_amount, 0)
+FROM historical_locked_value
+WHERE
+        timestamp < time_threshold
+  AND historical_locked_value.source = $2
+  AND historical_locked_value.asset_id = $3
+ORDER BY timestamp DESC
+LIMIT 1
+$$;

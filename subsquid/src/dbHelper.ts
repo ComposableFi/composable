@@ -188,7 +188,7 @@ export async function storeHistoricalLockedValue(
       (
         await ctx.store.findOne(HistoricalLockedValue, {
           where: {
-            source: LockedSource.Pablo,
+            source,
             assetId: assetId.toString(),
             sourceEntityId,
           },

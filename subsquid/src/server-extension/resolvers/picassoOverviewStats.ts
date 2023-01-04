@@ -10,7 +10,7 @@ import type { EntityManager } from "typeorm";
 import { Event, Account, Activity, HistoricalLockedValue } from "../../model";
 
 @ObjectType()
-class PicassoTVL {
+export class PicassoTVL {
   @Field(() => String, { nullable: false })
   assetId!: string;
 

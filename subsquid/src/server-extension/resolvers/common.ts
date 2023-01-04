@@ -46,3 +46,45 @@ export function getStartAndStep(range: string): {
 }
 
 export const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+export function getRange(range: string): Date[] {
+  const dates: Date[] = [];
+  const now = new Date();
+
+  if (range === "day") {
+    for (let i = -23; i <= 0; i += 1) {
+      dates.push(
+        new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          now.getHours() + i
+        )
+      );
+    }
+  } else if (range === "week") {
+    for (let i = -5; i <= 0; i += 1) {
+      dates.push(
+        new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, 0)
+      );
+    }
+  } else if (range === "month") {
+    for (let i = -28; i <= 0; i += 1) {
+      dates.push(
+        new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, 0)
+      );
+    }
+  } else if (range === "year") {
+    for (let i = -10; i <= 0; i += 1) {
+      dates.push(new Date(now.getFullYear(), now.getMonth() + i, 1, 0));
+    }
+  } else {
+    throw new Error(
+      "Invalid range. It should be 'day', 'week', 'month' or 'year'."
+    );
+  }
+
+  dates.push(now);
+
+  return dates;
+}
