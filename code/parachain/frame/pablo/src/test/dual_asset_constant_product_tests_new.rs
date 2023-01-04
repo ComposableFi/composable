@@ -3,10 +3,12 @@ use composable_tests_helpers::test::{
 	currency::{BTC, USDT},
 	helper::RuntimeTrait,
 };
+use composable_traits::dex::AssetAmount;
 use frame_support::{
 	assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
+use proptest::prelude::*;
 use sp_runtime::Permill;
 use sp_std::collections::btree_map::BTreeMap;
 
@@ -118,12 +120,26 @@ fn add_remove_lp() {
 	});
 }
 
+/// Zero value `AssetAmount` for BTC
+const ZERO_BTC: AssetAmount<AssetId, Balance> = AssetAmount { asset_id: BTC, amount: 0 };
+
+/// Zero value `AssetAmount` for USDT
+const ZERO_USDT: AssetAmount<AssetId, Balance> = AssetAmount { asset_id: USDT, amount: 0 };
+
+const FIRST_ASSET_WEIGHTS: [u32; 6] = [80, 20, 75, 25, 60, 40];
+
+prop_compose! {
+	fn first_asset_weight()
+	(x in 0..FIRST_ASSET_WEIGHTS.len()) -> Permill {
+		Permill::from_percent(FIRST_ASSET_WEIGHTS[x])
+	}
+}
+
 mod do_buy {
 	use composable_maths::dex::constant_product::compute_in_given_out;
 	use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 	use composable_traits::dex::{Amm, AssetAmount};
 	use frame_support::assert_noop;
-	use proptest::prelude::*;
 	use sp_runtime::PerThing;
 
 	use super::*;
@@ -208,18 +224,10 @@ mod do_buy {
 		});
 	}
 
-	const FIRST_ASSET_WEIGHTS: [u32; 6] = [80, 20, 75, 25, 60, 40];
-
-	prop_compose! {
-		fn first_asset_weight()
-		(x in 0..FIRST_ASSET_WEIGHTS.len()) -> Permill {
-			Permill::from_percent(FIRST_ASSET_WEIGHTS[x])
-		}
-	}
-
 	proptest! {
 		#![proptest_config(ProptestConfig::with_cases(FIRST_ASSET_WEIGHTS.len() as u32))]
 
+		/// Ensure the outcome of the `do_buy` function respects token pool weights other than 50/50
 		#[test]
 		fn should_respect_non_50_50_weight(first_asset_weight in first_asset_weight()) {
 			new_test_ext().execute_with(|| {
@@ -276,9 +284,11 @@ mod do_buy {
 }
 
 mod do_swap {
+	use composable_maths::dex::constant_product::compute_out_given_in;
 	use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 	use composable_traits::dex::{Amm, AssetAmount};
 	use frame_support::assert_noop;
+	use sp_runtime::PerThing;
 
 	use super::*;
 
@@ -370,18 +380,137 @@ mod do_swap {
 			);
 		});
 	}
+
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases(FIRST_ASSET_WEIGHTS.len() as u32))]
+
+		/// Ensure the outcome of the `do_swap` function respects token pool weights other than 50/50
+		#[test]
+		fn should_respect_non_50_50_weight(first_asset_weight in first_asset_weight()) {
+			new_test_ext().execute_with(|| {
+				process_and_progress_blocks::<Pablo, Test>(1);
+
+				// BTC/USDT Pool with a 0% fee
+				let pool_id =
+					create_pool_from_config(PoolInitConfiguration::DualAssetConstantProduct {
+						owner: ALICE,
+						assets_weights: dual_asset_pool_weights(BTC, first_asset_weight, USDT),
+						fee: Permill::zero(),
+					});
+
+				// Mint tokens for adding liquidity
+				let initial_btc = BTC::units(512_000);
+				let initial_usdt = USDT::units(512_000);
+				assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
+				assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+
+				// Add liquidity
+				assert_ok!(Pablo::add_liquidity(
+					Origin::signed(ALICE),
+					pool_id,
+					BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
+					0,
+					false
+				));
+
+				// Mint tokens for swap
+				let usdt_to_swap = AssetAmount::new(USDT, USDT::units(256_000));
+				assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_to_swap.amount));
+				assert_eq!(Tokens::balance(USDT, &BOB), usdt_to_swap.amount);
+
+				// Do swap
+				assert_ok!(Pablo::do_swap(&BOB, pool_id, usdt_to_swap, ZERO_BTC, false));
+
+				let expected_btc_post_buy =	compute_out_given_in(
+						first_asset_weight.left_from_one(),
+						first_asset_weight,
+						initial_usdt,
+						initial_btc,
+						usdt_to_swap.amount,
+						Permill::zero(),
+					)
+					.expect("no overflow")
+					.value;
+
+				assert_eq!(Tokens::balance(BTC, &BOB), expected_btc_post_buy);
+			})
+		}
+	}
 }
 
-mod remove_liquidity {
-	use composable_traits::dex::{Amm, AssetAmount};
+mod add_liquidity {
+	use composable_maths::dex::constant_product::compute_deposit_lp;
 
 	use super::*;
 
-	/// Zero value `AssetAmount` for BTC
-	const ZERO_BTC: AssetAmount<AssetId, Balance> = AssetAmount { asset_id: BTC, amount: 0 };
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases(FIRST_ASSET_WEIGHTS.len() as u32))]
 
-	/// Zero value `AssetAmount` for USDT
-	const ZERO_USDT: AssetAmount<AssetId, Balance> = AssetAmount { asset_id: USDT, amount: 0 };
+		/// Ensure the outcome of the `do_swap` function respects token pool weights other than 50/50
+		#[test]
+		fn should_respect_non_50_50_weight_on_second_deposit(first_asset_weight in first_asset_weight()) {
+			new_test_ext().execute_with(|| {
+				process_and_progress_blocks::<Pablo, Test>(1);
+
+				// BTC/USDT Pool with a 0% fee
+				let pool_id =
+					create_pool_from_config(PoolInitConfiguration::DualAssetConstantProduct {
+						owner: ALICE,
+						assets_weights: dual_asset_pool_weights(BTC, first_asset_weight, USDT),
+						fee: Permill::zero(),
+					});
+				let lp_token = lp_token_of_pool(pool_id);
+				let pool_account = Pablo::account_id(&pool_id);
+
+				// Mint tokens for adding initial liquidity
+				let initial_btc = BTC::units(512_000);
+				let initial_usdt = USDT::units(512_000);
+				assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
+				assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+
+				// Add liquidity
+				assert_ok!(Pablo::add_liquidity(
+					Origin::signed(ALICE),
+					pool_id,
+					BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
+					0,
+					false
+				));
+
+				// Mint tokens for second deposit
+				let second_btc_deposit_max = BTC::units(512_000);
+				let second_usdt_deposit_max = USDT::units(512_000);
+				assert_ok!(Tokens::mint_into(BTC, &BOB, second_btc_deposit_max));
+				assert_ok!(Tokens::mint_into(USDT, &BOB, second_usdt_deposit_max));
+
+				let expected_lp = compute_deposit_lp(
+					Tokens::total_issuance(lp_token),
+					second_btc_deposit_max,
+					Tokens::balance(BTC, &pool_account),
+					Permill::one(),
+					Permill::zero()
+				).expect("no overflow").value;
+
+				// Add liquidity for second deposit
+				assert_ok!(Pablo::add_liquidity(
+					Origin::signed(BOB),
+					pool_id,
+					BTreeMap::from([(BTC, second_btc_deposit_max), (USDT, second_usdt_deposit_max)]),
+					0,
+					false
+				));
+
+				assert_eq!(Tokens::balance(lp_token, &BOB), expected_lp);
+			})
+		}
+	}
+}
+
+mod remove_liquidity {
+	use composable_maths::dex::constant_product::compute_redeemed_for_lp;
+	use composable_traits::dex::{Amm, AssetAmount};
+
+	use super::*;
 
 	/// Create pool with 50/50 BTC/USDT Pool with a 0.3% fee
 	/// Mint tokens for adding liquidity in accounts for Alice, Charlie, and 256 other LPs
@@ -403,6 +532,7 @@ mod remove_liquidity {
 		};
 		let pool_id = create_pool_from_config(init_config);
 		let lp_token = lp_token_of_pool(pool_id);
+		let pool_account = Pablo::account_id(&pool_id);
 
 		// Mint tokens for adding liquidity
 		let initial_btc = 512_000_000_000;
@@ -474,62 +604,55 @@ mod remove_liquidity {
 			assert_ok!(Pablo::do_buy(&DAVE, pool_id, USDT, btc_to_move, false));
 		}
 
-		let min_receive = || BTreeMap::from([(BTC, 0), (USDT, 0)]);
-
 		// Remove liquidity
+
 		// Charlie
-		let pool_btc_pre_charlie_withdraw = Tokens::balance(BTC, &Pablo::account_id(&pool_id));
-		let pool_usdt_pre_charlie_withdraw = Tokens::balance(USDT, &Pablo::account_id(&pool_id));
-		let total_lp_pre_charlie_withdraw = Tokens::total_issuance(lp_token);
+		let expected_charlie_btc = compute_redeemed_for_lp(
+			Tokens::total_issuance(lp_token),
+			charlie_lpt_balance,
+			Tokens::balance(BTC, &pool_account),
+			Permill::one(),
+		)
+		.expect("input will not overflow");
+		let expected_charlie_usdt = compute_redeemed_for_lp(
+			Tokens::total_issuance(lp_token),
+			charlie_lpt_balance,
+			Tokens::balance(USDT, &pool_account),
+			Permill::one(),
+		)
+		.expect("input will not overflow");
+
 		assert_ok!(Pablo::remove_liquidity(
 			Origin::signed(CHARLIE),
 			pool_id,
 			charlie_lpt_balance,
-			min_receive()
+			BTreeMap::new()
 		));
+
 		// Alice
-		let pool_btc_pre_alice_withdraw = Tokens::balance(BTC, &Pablo::account_id(&pool_id));
-		let pool_usdt_pre_alice_withdraw = Tokens::balance(USDT, &Pablo::account_id(&pool_id));
-		let total_lp_pre_alice_withdraw = Tokens::total_issuance(lp_token);
+		// NOTE: Alice had more LPT as they were the first LP. As it stands, the first LP will be
+		// awarded more LPT than the following LPs when the deposit is the same.
+		let expected_alice_btc = compute_redeemed_for_lp(
+			Tokens::total_issuance(lp_token),
+			alice_lpt_balance,
+			Tokens::balance(BTC, &Pablo::account_id(&pool_id)),
+			Permill::one(),
+		)
+		.expect("input will not overflow");
+		let expected_alice_usdt = compute_redeemed_for_lp(
+			Tokens::total_issuance(lp_token),
+			alice_lpt_balance,
+			Tokens::balance(USDT, &Pablo::account_id(&pool_id)),
+			Permill::one(),
+		)
+		.expect("input will not overflow");
+
 		assert_ok!(Pablo::remove_liquidity(
 			Origin::signed(ALICE),
 			pool_id,
 			alice_lpt_balance,
-			min_receive()
+			BTreeMap::new(),
 		));
-
-		// NOTE: Alice had more LPT as they were the first LP. As it stands, the first LP will be
-		// awarded more LPT than the following LPs when the deposit is the same.
-		let expected_alice_btc = composable_maths::dex::constant_product::compute_redeemed_for_lp(
-			total_lp_pre_alice_withdraw,
-			alice_lpt_balance,
-			pool_btc_pre_alice_withdraw,
-			Permill::one(),
-		)
-		.expect("input will does not overflow");
-		let expected_alice_usdt = composable_maths::dex::constant_product::compute_redeemed_for_lp(
-			total_lp_pre_alice_withdraw,
-			alice_lpt_balance,
-			pool_usdt_pre_alice_withdraw,
-			Permill::one(),
-		)
-		.expect("input will does not overflow");
-		let expected_charlie_btc =
-			composable_maths::dex::constant_product::compute_redeemed_for_lp(
-				total_lp_pre_charlie_withdraw,
-				charlie_lpt_balance,
-				pool_btc_pre_charlie_withdraw,
-				Permill::one(),
-			)
-			.expect("input will does not overflow");
-		let expected_charlie_usdt =
-			composable_maths::dex::constant_product::compute_redeemed_for_lp(
-				total_lp_pre_charlie_withdraw,
-				charlie_lpt_balance,
-				pool_usdt_pre_charlie_withdraw,
-				Permill::one(),
-			)
-			.expect("input will does not overflow");
 
 		assert_eq!(Tokens::balance(BTC, &ALICE), expected_alice_btc);
 		assert_eq!(Tokens::balance(USDT, &ALICE), expected_alice_usdt);
@@ -562,9 +685,80 @@ mod remove_liquidity {
 		assert!(with_buys.0 > without_buys.0);
 		assert!(with_buys.1 > without_buys.1);
 	}
+
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases(FIRST_ASSET_WEIGHTS.len() as u32))]
+
+		/// Ensure the outcome of the `remove_liquidity` function respects token pool weights other than 50/50
+		#[test]
+		fn should_respect_non_50_50_weight(first_asset_weight in first_asset_weight()) {
+			new_test_ext().execute_with(|| {
+				process_and_progress_blocks::<Pablo, Test>(1);
+
+				// BTC/USDT Pool with a 0% fee
+				let pool_id =
+					create_pool_from_config(PoolInitConfiguration::DualAssetConstantProduct {
+						owner: ALICE,
+						assets_weights: dual_asset_pool_weights(BTC, first_asset_weight, USDT),
+						fee: Permill::zero(),
+					});
+				let lp_token = lp_token_of_pool(pool_id);
+				let pool_account = Pablo::account_id(&pool_id);
+
+				// Mint tokens for adding liquidity
+				let initial_btc = BTC::units(512_000);
+				let initial_usdt = USDT::units(512_000);
+				assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
+				assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+
+				// Add liquidity
+				assert_ok!(Pablo::add_liquidity(
+					Origin::signed(ALICE),
+					pool_id,
+					BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
+					0,
+					false
+				));
+				let alice_lpt_balance = Tokens::balance(lp_token, &ALICE);
+
+				// Do swap
+				let usdt_to_swap = AssetAmount::new(USDT, USDT::units(256_000));
+				assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_to_swap.amount));
+				assert_ok!(Pablo::do_swap(&BOB, pool_id, usdt_to_swap, ZERO_BTC, false));
+
+				// Remove liquidity
+				let expected_alice_btc = compute_redeemed_for_lp(
+					Tokens::total_issuance(lp_token),
+					alice_lpt_balance,
+					Tokens::balance(BTC, &pool_account),
+					Permill::one(),
+				)
+				.expect("input will not overflow");
+				let expected_alice_usdt = compute_redeemed_for_lp(
+					Tokens::total_issuance(lp_token),
+					alice_lpt_balance,
+					Tokens::balance(USDT, &pool_account),
+					Permill::one(),
+				)
+				.expect("input will not overflow");
+
+				assert_ok!(Pablo::remove_liquidity(
+					Origin::signed(ALICE),
+					pool_id,
+					alice_lpt_balance,
+					BTreeMap::new(),
+				));
+
+				assert_eq!(Tokens::balance(BTC, &ALICE), expected_alice_btc);
+				assert_eq!(Tokens::balance(USDT, &ALICE), expected_alice_usdt);
+			})
+		}
+	}
 }
 
 mod integration {
+	use composable_maths::dex::constant_product::compute_redeemed_for_lp;
+
 	use super::*;
 
 	#[test]
@@ -582,10 +776,11 @@ mod integration {
 			};
 			let pool_id = create_pool_from_config(init_config);
 			let lp_token = lp_token_of_pool(pool_id);
+			let pool_account = Pablo::account_id(&pool_id);
 
 			// Mint tokens for adding liquidity
-			let initial_btc = 512_000_000_000;
-			let initial_usdt = 512_000_000_000;
+			let initial_btc = BTC::units(512_000);
+			let initial_usdt = USDT::units(512_000);
 			// Alice
 			assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
 			assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
@@ -606,36 +801,29 @@ mod integration {
 			let alice_lpt_balance = Tokens::balance(lp_token, &ALICE);
 			let charlie_lpt_balance = Tokens::balance(lp_token, &CHARLIE);
 
-			let min_receive = || BTreeMap::from([(BTC, 0), (USDT, 0)]);
-
 			// Remove liquidity
 			// Charlie
-			let pool_btc_pre_charlie_withdraw = Tokens::balance(BTC, &Pablo::account_id(&pool_id));
-			let pool_usdt_pre_charlie_withdraw =
-				Tokens::balance(USDT, &Pablo::account_id(&pool_id));
-			let total_lp_pre_charlie_withdraw = Tokens::total_issuance(lp_token);
-			let expected_charlie_btc =
-				composable_maths::dex::constant_product::compute_redeemed_for_lp(
-					total_lp_pre_charlie_withdraw,
-					charlie_lpt_balance,
-					pool_btc_pre_charlie_withdraw,
-					Permill::one(),
-				)
-				.expect("input will does not overflow");
-			let expected_charlie_usdt =
-				composable_maths::dex::constant_product::compute_redeemed_for_lp(
-					total_lp_pre_charlie_withdraw,
-					charlie_lpt_balance,
-					pool_usdt_pre_charlie_withdraw,
-					Permill::one(),
-				)
-				.expect("input will does not overflow");
+			let expected_charlie_btc = compute_redeemed_for_lp(
+				Tokens::total_issuance(lp_token),
+				charlie_lpt_balance,
+				Tokens::balance(BTC, &pool_account),
+				Permill::one(),
+			)
+			.expect("input will does not overflow");
+			let expected_charlie_usdt = compute_redeemed_for_lp(
+				Tokens::total_issuance(lp_token),
+				charlie_lpt_balance,
+				Tokens::balance(USDT, &pool_account),
+				Permill::one(),
+			)
+			.expect("input will does not overflow");
+
 			Test::assert_extrinsic_event(
 				Pablo::remove_liquidity(
 					Origin::signed(CHARLIE),
 					pool_id,
 					charlie_lpt_balance,
-					min_receive(),
+					BTreeMap::new(),
 				),
 				crate::Event::LiquidityRemoved {
 					who: CHARLIE,
@@ -646,32 +834,29 @@ mod integration {
 					]),
 				},
 			);
+
 			// Alice
-			let pool_btc_pre_alice_withdraw = Tokens::balance(BTC, &Pablo::account_id(&pool_id));
-			let pool_usdt_pre_alice_withdraw = Tokens::balance(USDT, &Pablo::account_id(&pool_id));
-			let total_lp_pre_alice_withdraw = Tokens::total_issuance(lp_token);
-			let expected_alice_btc =
-				composable_maths::dex::constant_product::compute_redeemed_for_lp(
-					total_lp_pre_alice_withdraw,
-					alice_lpt_balance,
-					pool_btc_pre_alice_withdraw,
-					Permill::one(),
-				)
-				.expect("input will does not overflow");
-			let expected_alice_usdt =
-				composable_maths::dex::constant_product::compute_redeemed_for_lp(
-					total_lp_pre_alice_withdraw,
-					alice_lpt_balance,
-					pool_usdt_pre_alice_withdraw,
-					Permill::one(),
-				)
-				.expect("input will does not overflow");
+			let expected_alice_btc = compute_redeemed_for_lp(
+				Tokens::total_issuance(lp_token),
+				alice_lpt_balance,
+				Tokens::balance(BTC, &pool_account),
+				Permill::one(),
+			)
+			.expect("input will does not overflow");
+			let expected_alice_usdt = compute_redeemed_for_lp(
+				Tokens::total_issuance(lp_token),
+				alice_lpt_balance,
+				Tokens::balance(USDT, &pool_account),
+				Permill::one(),
+			)
+			.expect("input will does not overflow");
+
 			Test::assert_extrinsic_event(
 				Pablo::remove_liquidity(
 					Origin::signed(ALICE),
 					pool_id,
 					alice_lpt_balance,
-					min_receive(),
+					BTreeMap::new(),
 				),
 				crate::Event::LiquidityRemoved {
 					who: ALICE,
