@@ -1,7 +1,7 @@
 import { ApolloClient, InMemoryCache, HttpLink } from "@apollo/client/core";
 import fetch from "cross-fetch";
 
-const uri = process.env.SUBSQUID_URL || "http://127.0.0.1:4000/graphql";
+const uri = process.env.SUBSQUID_URL || "http://127.0.0.1:4350/graphql";
 
 export const client = new ApolloClient({
   uri,

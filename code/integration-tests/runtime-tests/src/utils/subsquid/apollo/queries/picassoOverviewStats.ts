@@ -4,7 +4,10 @@ export type OverviewStats = {
   overviewStats: {
     accountHoldersCount: number;
     activeUsersCount: number;
-    totalValueLocked: string;
+    totalValueLocked: {
+      assetId: string;
+      amount: string;
+    }[];
     transactionsCount: number;
   };
 };
@@ -14,7 +17,10 @@ export const OVERVIEW_STATS = gql`
     overviewStats {
       accountHoldersCount
       activeUsersCount
-      totalValueLocked
+      totalValueLocked {
+        amount
+        assetId
+      }
       transactionsCount
     }
   }

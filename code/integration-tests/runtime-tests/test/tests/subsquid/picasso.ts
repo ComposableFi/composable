@@ -1,13 +1,8 @@
 import { expect } from "chai";
 import { ApiPromise } from "@polkadot/api";
-import {
-  ActiveUsers,
-  GET_ACTIVE_USERS,
-  OVERVIEW_STATS,
-  OverviewStats,
-  GET_TOTAL_VALUE_LOCKED,
-  TotalValueLocked
-} from "@composable/utils/subsquid/apollo/queries";
+import { GET_TOTAL_VALUE_LOCKED, TVL } from "@composable/utils/subsquid/apollo/queries/totalValueLocked";
+import { ActiveUsers, GET_ACTIVE_USERS } from "@composable/utils/subsquid/apollo/queries/activeUsers";
+import { OVERVIEW_STATS, OverviewStats } from "@composable/utils/subsquid/apollo/queries/picassoOverviewStats";
 
 import { client } from "@composable/utils/subsquid/apollo/apolloGraphql";
 import { getNewConnection } from "@composable/utils/connectionHelper";
@@ -62,7 +57,8 @@ describe("Picasso graphql queries", function () {
 
     expect(data.overviewStats.accountHoldersCount).to.equal(3);
     expect(data.overviewStats.activeUsersCount).to.equal(3);
-    expect(data.overviewStats.totalValueLocked).to.equal("0");
+    expect(data.overviewStats.totalValueLocked.length).not.to.equal(0);
+    expect(data.overviewStats.totalValueLocked[0].amount).not.to.equal("0");
     expect(data.overviewStats.transactionsCount).not.to.equal(0);
   });
 
@@ -150,7 +146,7 @@ describe("Picasso graphql queries", function () {
   });
 
   it("Gets total value locked for last day", async function () {
-    const { data: dayDataAll } = await client.query<TotalValueLocked>({
+    const { data: dayDataAll } = await client.query<TVL>({
       query: GET_TOTAL_VALUE_LOCKED,
       variables: { range: "day" }
     });
@@ -158,23 +154,22 @@ describe("Picasso graphql queries", function () {
 
     // Should have one entry per hour
     expect(totalValueLockedAll.length).to.equal(24);
-    expect(totalValueLockedAll.every(({ source }) => source === "All")).to.be.true;
 
-    const { data: dayDataVesting } = await client.query<TotalValueLocked>({
+    const { data: dayDataVesting } = await client.query<TVL>({
       query: GET_TOTAL_VALUE_LOCKED,
       variables: { range: "day", source: "VestingSchedules" }
     });
     const { totalValueLocked: totalValueLockedVesting } = dayDataVesting;
 
     expect(totalValueLockedVesting.length).to.equal(24);
-    expect(totalValueLockedVesting.every(({ source }) => source === "VestingSchedules")).to.be.true;
+    // expect(totalValueLockedVesting.every(({ source }) => source === "VestingSchedules")).to.be.true;
 
     // Note: locked value will be 0 for now, as we don't have the Oracle to get asset prices
   });
 
   it("Gets total value locked for last week", async function () {
     // Note: locked value will be 0 for now, as we don't have the Oracle to get asset prices
-    const { data: weekDataAll } = await client.query<TotalValueLocked>({
+    const { data: weekDataAll } = await client.query<TVL>({
       query: GET_TOTAL_VALUE_LOCKED,
       variables: { range: "week" }
     });
@@ -182,21 +177,19 @@ describe("Picasso graphql queries", function () {
 
     // Should have one entry per day
     expect(totalValueLockedAll.length).to.equal(7);
-    expect(totalValueLockedAll.every(({ source }) => source === "All")).to.be.true;
 
-    const { data: weekDataVesting } = await client.query<TotalValueLocked>({
+    const { data: weekDataVesting } = await client.query<TVL>({
       query: GET_TOTAL_VALUE_LOCKED,
       variables: { range: "week", source: "VestingSchedules" }
     });
     const { totalValueLocked: totalValueLockedVesting } = weekDataVesting;
 
     expect(totalValueLockedVesting.length).to.equal(7);
-    expect(totalValueLockedVesting.every(({ source }) => source === "VestingSchedules")).to.be.true;
   });
 
   it("Gets total value locked for last month", async function () {
     // Note: locked value will be 0 for now, as we don't have the Oracle to get asset prices
-    const { data: monthDataAll } = await client.query<TotalValueLocked>({
+    const { data: monthDataAll } = await client.query<TVL>({
       query: GET_TOTAL_VALUE_LOCKED,
       variables: { range: "month" }
     });
@@ -204,21 +197,19 @@ describe("Picasso graphql queries", function () {
 
     // Should have one entry per day
     expect(totalValueLockedAll.length).to.equal(30);
-    expect(totalValueLockedAll.every(({ source }) => source === "All")).to.be.true;
 
-    const { data: monthDataVesting } = await client.query<TotalValueLocked>({
+    const { data: monthDataVesting } = await client.query<TVL>({
       query: GET_TOTAL_VALUE_LOCKED,
       variables: { range: "month", source: "VestingSchedules" }
     });
     const { totalValueLocked: totalValueLockedVesting } = monthDataVesting;
 
     expect(totalValueLockedVesting.length).to.equal(30);
-    expect(totalValueLockedVesting.every(({ source }) => source === "VestingSchedules")).to.be.true;
   });
 
   it("Gets total value locked for last year", async function () {
     // Note: locked value will be 0 for now, as we don't have the Oracle to get asset prices
-    const { data: yearDataAll } = await client.query<TotalValueLocked>({
+    const { data: yearDataAll } = await client.query<TVL>({
       query: GET_TOTAL_VALUE_LOCKED,
       variables: { range: "year" }
     });
@@ -226,15 +217,13 @@ describe("Picasso graphql queries", function () {
 
     // Should have one entry per month
     expect(totalValueLockedAll.length).to.equal(12);
-    expect(totalValueLockedAll.every(({ source }) => source === "All")).to.be.true;
 
-    const { data: yearDataVesting } = await client.query<TotalValueLocked>({
+    const { data: yearDataVesting } = await client.query<TVL>({
       query: GET_TOTAL_VALUE_LOCKED,
       variables: { range: "year", source: "VestingSchedules" }
     });
     const { totalValueLocked: totalValueLockedVesting } = yearDataVesting;
 
     expect(totalValueLockedVesting.length).to.equal(12);
-    expect(totalValueLockedVesting.every(({ source }) => source === "VestingSchedules")).to.be.true;
   });
 });

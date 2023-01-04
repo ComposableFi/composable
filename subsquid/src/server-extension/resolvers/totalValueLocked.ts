@@ -70,8 +70,6 @@ export class TotalValueLockedResolver {
           .getRawMany()
       ).map((row) => row.assetId);
 
-      const rows = [];
-
       for (const assetId of assetIds) {
         for (const timestamp of timestamps) {
           const time = timestamp.toISOString();
@@ -92,8 +90,6 @@ export class TotalValueLockedResolver {
               (lockedValues?.[time]?.[assetId] || 0n) +
               BigInt(row.totalValueLocked),
           };
-
-          rows.push(row);
         }
       }
     }

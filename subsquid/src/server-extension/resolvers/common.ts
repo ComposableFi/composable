@@ -52,7 +52,7 @@ export function getRange(range: string): Date[] {
   const now = new Date();
 
   if (range === "day") {
-    for (let i = -23; i <= 0; i += 1) {
+    for (let i = -22; i <= 0; i += 1) {
       dates.push(
         new Date(
           now.getFullYear(),
