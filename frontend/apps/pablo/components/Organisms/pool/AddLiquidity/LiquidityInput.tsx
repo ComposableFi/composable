@@ -88,7 +88,9 @@ export const LiquidityInput: FC<LiquidityInputProps> = ({
         }}
         buttonLabel="Max"
         ButtonProps={{
-          onClick: () => onChange(maxAmount),
+          onClick: () => {
+            onChange(maxAmount);
+          },
           disabled: maxAmount.isZero(),
           sx: {
             padding: theme.spacing(1),

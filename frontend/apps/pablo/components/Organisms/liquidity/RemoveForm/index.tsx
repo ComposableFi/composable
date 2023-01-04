@@ -79,7 +79,6 @@ export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
         )
         .then((response: any) => {
           const expectedRewards = response.toJSON().assets;
-          console.log(JSON.stringify(response.toJSON()));
           setExpectedRemoveAmountBase(
             fromChainUnits(
               expectedRewards[b] ?? 0,

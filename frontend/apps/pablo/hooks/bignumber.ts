@@ -32,6 +32,7 @@ export function useValidation({
     if (!eventValue.length) {
       setStringValue(eventValue);
       setValid(false);
+      setValue(new BigNumber(0));
       return;
     }
 

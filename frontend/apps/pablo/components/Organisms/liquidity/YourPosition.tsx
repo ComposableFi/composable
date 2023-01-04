@@ -45,6 +45,9 @@ export const YourPosition: FC<YourPositionProps> = ({
   const theme = useTheme();
   const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
   const [stats, setStats] = useState<GetStatsReturn>(null);
+  const [assetOne, assetTwo] = assets;
+  const [amountOne, amountTwo] = amounts;
+
   useEffect(() => {
     if (isPoolsLoaded && pool) {
       getStats(pool).then((result) => {
@@ -52,9 +55,7 @@ export const YourPosition: FC<YourPositionProps> = ({
       });
     }
   }, [isPoolsLoaded, pool]);
-
-  const [assetOne, assetTwo] = assets;
-  const [amountOne, amountTwo] = amounts;
+  
   if (!stats) return <CircularProgress />;
 
   const { shareOfPool } = getPriceAndRatio(
@@ -72,9 +73,9 @@ export const YourPosition: FC<YourPositionProps> = ({
         noDivider
           ? undefined
           : `1px solid ${alpha(
-              theme.palette.common.white,
-              theme.custom.opacity.main
-            )}`
+            theme.palette.common.white,
+            theme.custom.opacity.main
+          )}`
       }
       {...rest}
     >
