@@ -75,12 +75,6 @@ export function usePabloSwap({
     if (!baseAssetId || !quoteAssetId) return false;
     return isValidAssetPair(baseAssetId, quoteAssetId);
   }, [baseAssetId, quoteAssetId]);
-  useMemo(() => {
-    return {
-      base: baseAssetId,
-      quote: quoteAssetId,
-    };
-  }, [baseAssetId, quoteAssetId]);
   const amount = useMemo(() => {
     if (!parachainApi) return null;
     return parachainApi.createType(
@@ -91,7 +85,6 @@ export function usePabloSwap({
       ).toString()
     );
   }, [parachainApi, quoteAmount, quoteAsset]);
-
   const minimumReceive = useMemo(() => {
     if (!parachainApi) return null;
     return parachainApi.createType(

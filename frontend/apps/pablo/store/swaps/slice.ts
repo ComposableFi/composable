@@ -10,8 +10,8 @@ const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
     },
     spotPrice: new BigNumber(0),
     selectedAssets: {
-      base: "none",
-      quote: "none",
+      base: "4",
+      quote: "1",
     },
     selectedPool: undefined,
     setSelectedAsset: (id, side) =>
