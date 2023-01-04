@@ -19,7 +19,6 @@ use frame_support::{
 };
 use frame_system::{pallet_prelude::OriginFor, Config as SystemConfig};
 use sp_arithmetic::Permill;
-use sp_keyring::sr25519::Keyring;
 use sp_runtime::{traits::Zero, AccountId32};
 
 use crate::{Config, Event, Pallet, PoolInitConfiguration};
@@ -40,13 +39,14 @@ pub const PICA_KSM_LPT: u128 = 107;
 // their associated type constraints) are! To work with this, we write some extra boilerplate here
 // to make the call site only require a simple `<Runtime: Trait>` constraint as opposed to repeating
 // the trait bounds on every function.
+// TODO(benluelo): Proc macro to generate the boilerplate around this trait
 
 /// This trait defines the constraints that pablo assumes from the runtime, allowing tests using
 /// this trait to bound the runtime to be run with any runtime thatr fits within these criteria.
 pub trait PabloRuntimeConstraints:
 	RuntimeTrait<Event<Self>>
 	+ SystemConfig<BlockNumber = Self::__SystemBlockNumber, AccountId = Self::__SystemAccountId>
-	+ Config<Balance = Self::__PabloBalance> // , AssetId = Self::__AssetId
+	+ Config<Balance = Self::__PabloBalance>
 	+ pallet_timestamp::Config<Moment = Self::__TimestampMoment>
 {
 	// these associated types aren't intended to be used, they only exist for the reasons
@@ -190,7 +190,6 @@ pub mod providing_liquidity {
 				who: bob().into(),
 				pool_id,
 				asset_amounts: assets.clone(),
-				// minted_lp: 19_999_999_993_470_955_u128.into(),
 				minted_lp: compute_first_deposit_lp(
 					assets.into_iter().map(|(id, deposit)| {
 						(id.into(), deposit.into(), Permill::from_rational::<u32>(1, 2))
@@ -284,7 +283,7 @@ pub fn ksm_usdt<Runtime: PabloRuntimeConstraints>() {
 				.unwrap(),
 				fee: Permill::from_parts(10_000),
 			},
-			Some(PICA_USDT_LPT.into()),
+			Some(KSM_USDT_LPT.into()),
 		),
 		|event| match event {
 			Event::PoolCreated { pool_id, .. } => Some(pool_id),
@@ -311,8 +310,6 @@ pub fn ksm_usdt<Runtime: PabloRuntimeConstraints>() {
 			who: bob().into(),
 			pool_id,
 			asset_amounts: assets.clone(),
-			// TODO(benluelo): Figure out where this number comes from
-			// minted_lp: 63_245_552_925_824_u128.into(),
 			minted_lp: compute_first_deposit_lp(
 				assets.into_iter().map(|(id, deposit)| {
 					(id.into(), deposit.into(), Permill::from_rational::<u32>(1, 2))

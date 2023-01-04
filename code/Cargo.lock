@@ -9294,7 +9294,6 @@ dependencies = [
  "sp-arithmetic",
  "sp-core",
  "sp-io",
- "sp-keyring",
  "sp-runtime",
  "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?rev=9bdc51acad943bd07fae159f59564a1b464d33b5)",
  "syn 1.0.105",
