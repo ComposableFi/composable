@@ -15,6 +15,7 @@ import {
 import { SNACKBAR_TYPES } from "../addLiquidity/useAddLiquidity";
 import { PoolConfig } from "@/store/pools/types";
 import { Asset, subscanExtrinsicLink } from "shared";
+import { setUiState } from "@/store/ui/ui.slice";
 
 type PabloSwapProps = {
   pool: PoolConfig | undefined;
@@ -58,6 +59,7 @@ export function usePabloSwap({
         url: subscanExtrinsicLink(DEFAULT_NETWORK_ID, transactionHash),
         ...SNACKBAR_TYPES.SUCCESS,
       });
+      setUiState({ isConfirmingModalOpen: false });
     },
     [enqueueSnackbar, swapOrigin]
   );
@@ -67,6 +69,7 @@ export function usePabloSwap({
       enqueueSnackbar(`${swapOrigin}: Error: ${transactionError}`, {
         ...SNACKBAR_TYPES.ERROR,
       });
+      setUiState({ isConfirmingModalOpen: false });
     },
     [enqueueSnackbar, swapOrigin]
   );
