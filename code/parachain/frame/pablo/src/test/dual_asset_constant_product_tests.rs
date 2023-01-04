@@ -14,7 +14,7 @@ use crate::{
 };
 use composable_support::math::safe::safe_multiply_by_rational;
 use composable_tests_helpers::{
-	prop_assert_ok,
+	alice, bob, prop_assert_ok,
 	test::{
 		block::next_block,
 		currency,
@@ -22,7 +22,6 @@ use composable_tests_helpers::{
 			acceptable_computation_error, default_acceptable_computation_error, RuntimeTrait,
 		},
 	},
-	ALICE, BOB,
 };
 use composable_traits::dex::{Amm, AssetAmount, BasicPoolInfo, FeeConfig};
 use frame_support::{
@@ -49,7 +48,7 @@ fn create_pool(
 	System::set_block_number(1);
 	let asset_weights = dual_asset_pool_weights(base_asset, Permill::from_percent(50), quote_asset);
 	let actual_pool_id = DACP::<Test>::do_create_pool(
-		&ALICE,
+		&alice(),
 		FeeConfig {
 			fee_rate: lp_fee,
 			owner_fee_rate: protocol_fee,
@@ -61,12 +60,12 @@ fn create_pool(
 	.expect("pool creation failed");
 
 	// Mint the tokens
-	assert_ok!(Tokens::mint_into(base_asset, &ALICE, base_amount));
-	assert_ok!(Tokens::mint_into(quote_asset, &ALICE, quote_amount));
+	assert_ok!(Tokens::mint_into(base_asset, &alice(), base_amount));
+	assert_ok!(Tokens::mint_into(quote_asset, &alice(), quote_amount));
 
 	// Add the liquidity
 	assert_ok!(<Pablo as Amm>::add_liquidity(
-		&ALICE,
+		&alice(),
 		actual_pool_id,
 		BTreeMap::from([(base_asset, base_amount), (quote_asset, quote_amount)]),
 		0,
@@ -75,7 +74,7 @@ fn create_pool(
 	assert_last_event::<Test, _>(|e| {
 		matches!(&e.event,
             mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, .. })
-            if who == &ALICE && pool_id == &actual_pool_id)
+            if who == &alice() && pool_id == &actual_pool_id)
 	});
 	actual_pool_id
 }
@@ -91,7 +90,7 @@ fn get_pool(pool_id: PoolId) -> BasicPoolInfo<AccountId, AssetId, ConstU32<2>> {
 fn test() {
 	new_test_ext().execute_with(|| {
 		let pool_init_config = valid_pool_init_config(
-			&ALICE,
+			&alice(),
 			BTC,
 			Permill::from_percent(50_u32),
 			USDT,
@@ -120,14 +119,14 @@ fn test() {
 		let initial_usdt = nb_of_btc * btc_price * unit;
 
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
-		assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+		assert_ok!(Tokens::mint_into(BTC, &alice(), initial_btc));
+		assert_ok!(Tokens::mint_into(USDT, &alice(), initial_usdt));
 
-		let initial_user_invariant = current_product(ALICE);
+		let initial_user_invariant = current_product(alice());
 
 		// Add the liquidity
 		assert_ok!(<Pablo as Amm>::add_liquidity(
-			&ALICE,
+			&alice(),
 			pool_id,
 			BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
 			0,
@@ -147,12 +146,12 @@ fn test() {
 
 		// swap a btc
 		let swap_btc = unit;
-		assert_ok!(Tokens::mint_into(BTC, &BOB, swap_btc));
+		assert_ok!(Tokens::mint_into(BTC, &bob(), swap_btc));
 		// in_given_out uses greedy rounding so bob will need some extra USDT
-		assert_ok!(Tokens::mint_into(USDT, &BOB, swap_btc));
+		assert_ok!(Tokens::mint_into(USDT, &bob(), swap_btc));
 
 		<Pablo as Amm>::do_swap(
-			&BOB,
+			&bob(),
 			pool_id,
 			AssetAmount::new(BTC, swap_btc),
 			AssetAmount::new(USDT, 0),
@@ -166,12 +165,12 @@ fn test() {
 			new_pool_invariant
 		));
 
-		<Pablo as Amm>::do_buy(&BOB, pool_id, USDT, AssetAmount::new(BTC, swap_btc), false)
+		<Pablo as Amm>::do_buy(&bob(), pool_id, USDT, AssetAmount::new(BTC, swap_btc), false)
 			.expect("buy failed");
 
 		let precision = 100;
 		let epsilon = 5;
-		let bob_btc = Tokens::balance(BTC, &BOB);
+		let bob_btc = Tokens::balance(BTC, &bob());
 		assert_ok!(acceptable_computation_error(bob_btc, swap_btc, precision, epsilon));
 
 		let new_pool_invariant = current_pool_product();
@@ -180,17 +179,17 @@ fn test() {
 			new_pool_invariant
 		));
 
-		let lp = Tokens::balance(pool.lp_token, &ALICE);
+		let lp = Tokens::balance(pool.lp_token, &alice());
 		assert_ok!(<Pablo as Amm>::remove_liquidity(
-			&ALICE,
+			&alice(),
 			pool_id,
 			lp,
 			BTreeMap::from([(USDT, 0), (BTC, 0)])
 		));
 
 		// Alice should get back a different amount of tokens.
-		let alice_btc = Tokens::balance(BTC, &ALICE);
-		let alice_usdt = Tokens::balance(USDT, &ALICE);
+		let alice_btc = Tokens::balance(BTC, &alice());
+		let alice_usdt = Tokens::balance(USDT, &alice());
 		assert_ok!(default_acceptable_computation_error(alice_btc, initial_btc));
 		assert_ok!(default_acceptable_computation_error(alice_usdt, initial_usdt));
 	});
@@ -214,7 +213,7 @@ pub fn valid_pool_init_config(
 fn test_redeemable_assets() {
 	new_test_ext().execute_with(|| {
 		let pool_init_config = valid_pool_init_config(
-			&ALICE,
+			&alice(),
 			BTC,
 			Permill::from_percent(50_u32),
 			USDT,
@@ -233,19 +232,19 @@ fn test_redeemable_assets() {
 		let initial_usdt = nb_of_btc * currency::USDT::units(btc_price);
 
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
-		assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+		assert_ok!(Tokens::mint_into(BTC, &alice(), initial_btc));
+		assert_ok!(Tokens::mint_into(USDT, &alice(), initial_usdt));
 
 		// Add the liquidity
 		assert_ok!(<Pablo as Amm>::add_liquidity(
-			&ALICE,
+			&alice(),
 			pool_id,
 			BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
 			0,
 			false
 		));
 
-		let lp = Tokens::balance(pool.lp_token, &ALICE);
+		let lp = Tokens::balance(pool.lp_token, &alice());
 		// if we want to redeem all lp token, it must give same values as used for add_liquidity
 		let redeemable_assets = <Pablo as Amm>::redeemable_assets_for_lp_tokens(pool_id, lp)
 			.expect("redeemable_assets failed");
@@ -286,14 +285,14 @@ fn test_add_liquidity_with_disproportionate_amount() {
 
 		let base_amount = 30_u128 * unit;
 		let quote_amount = 1_00_u128 * unit;
-		assert_ok!(Tokens::mint_into(USDC, &ALICE, base_amount));
-		assert_ok!(Tokens::mint_into(USDT, &ALICE, quote_amount));
+		assert_ok!(Tokens::mint_into(USDC, &alice(), base_amount));
+		assert_ok!(Tokens::mint_into(USDT, &alice(), quote_amount));
 
 		// Add the liquidity, user tries to provide more quote_amount compare to
 		// pool's ratio
 		assert_noop!(
 			<Pablo as Amm>::add_liquidity(
-				&ALICE,
+				&alice(),
 				pool,
 				BTreeMap::from([(USDC, base_amount), (USDT, quote_amount)]),
 				0,
@@ -314,7 +313,7 @@ fn add_lp_with_min_mint_amount() {
 		let second_asset = USDT;
 
 		let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
-			owner: ALICE,
+			owner: alice(),
 			assets_weights: dual_asset_pool_weights(
 				first_asset,
 				Permill::from_percent(50_u32),
@@ -342,20 +341,20 @@ fn add_lp_with_min_mint_amount() {
 		let lp_token = lp_token_of_pool(pool_id);
 
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(first_asset, &ALICE, init_first_asset_amount));
-		assert_ok!(Tokens::mint_into(second_asset, &ALICE, init_second_asset_amount));
+		assert_ok!(Tokens::mint_into(first_asset, &alice(), init_first_asset_amount));
+		assert_ok!(Tokens::mint_into(second_asset, &alice(), init_second_asset_amount));
 
 		// Add the liquidity, min amount = 0
 		Test::assert_extrinsic_event(
 			Pablo::add_liquidity(
-				Origin::signed(ALICE),
+				Origin::signed(alice()),
 				pool_id,
 				assets_with_init_amounts.clone(),
 				0,
 				false,
 			),
 			crate::Event::<Test>::LiquidityAdded {
-				who: ALICE,
+				who: alice(),
 				pool_id: 0,
 				asset_amounts: assets_with_init_amounts,
 				minted_lp: 199_999_999_814_806,
@@ -363,11 +362,11 @@ fn add_lp_with_min_mint_amount() {
 		);
 
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(first_asset, &BOB, first_asset_amount));
-		assert_ok!(Tokens::mint_into(second_asset, &BOB, second_asset_amount));
+		assert_ok!(Tokens::mint_into(first_asset, &bob(), first_asset_amount));
+		assert_ok!(Tokens::mint_into(second_asset, &bob(), second_asset_amount));
 
-		let _alice_lp = Tokens::balance(lp_token, &ALICE);
-		let bob_lp = Tokens::balance(lp_token, &BOB);
+		let _alice_lp = Tokens::balance(lp_token, &alice());
+		let bob_lp = Tokens::balance(lp_token, &bob());
 
 		assert_eq!(bob_lp, 0_u128, "BOB should not have any LP tokens");
 
@@ -379,7 +378,7 @@ fn add_lp_with_min_mint_amount() {
 		// Add the liquidity, but expect more lp tokens, hence errors
 		assert_noop!(
 			Pablo::add_liquidity(
-				Origin::signed(BOB),
+				Origin::signed(bob()),
 				pool_id,
 				assets_with_amounts.clone(),
 				// Arbitrarily large number, 200 * 10^12
@@ -391,7 +390,7 @@ fn add_lp_with_min_mint_amount() {
 
 		// Add liquidity with min_mint_amount
 		assert_ok!(Pablo::add_liquidity(
-			Origin::signed(BOB),
+			Origin::signed(bob()),
 			pool_id,
 			assets_with_amounts,
 			1,
@@ -416,7 +415,7 @@ fn remove_lp_failure() {
 		next_block::<Pablo, Test>();
 
 		let pool_init_config = valid_pool_init_config(
-			&ALICE,
+			&alice(),
 			currency::BTC::ID,
 			Permill::from_percent(50_u32),
 			currency::USDT::ID,
@@ -434,14 +433,14 @@ fn remove_lp_failure() {
 		let pool_id = create_pool_from_config(pool_init_config);
 
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(first_asset, &ALICE, init_first_asset_amount));
-		assert_ok!(Tokens::mint_into(second_asset, &ALICE, init_second_asset_amount));
+		assert_ok!(Tokens::mint_into(first_asset, &alice(), init_first_asset_amount));
+		assert_ok!(Tokens::mint_into(second_asset, &alice(), init_second_asset_amount));
 
 		let lp_token = lp_token_of_pool(pool_id);
 
 		// Add the liquidity
 		assert_ok!(Pablo::add_liquidity(
-			Origin::signed(ALICE),
+			Origin::signed(alice()),
 			pool_id,
 			[(first_asset, init_first_asset_amount), (second_asset, init_second_asset_amount)]
 				.into_iter()
@@ -451,15 +450,15 @@ fn remove_lp_failure() {
 		));
 
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(first_asset, &BOB, first_asset_amount));
-		assert_ok!(Tokens::mint_into(second_asset, &BOB, second_asset_amount));
+		assert_ok!(Tokens::mint_into(first_asset, &bob(), first_asset_amount));
+		assert_ok!(Tokens::mint_into(second_asset, &bob(), second_asset_amount));
 
-		let bob_lp_before_adding_liquidity = Tokens::balance(lp_token, &BOB);
+		let bob_lp_before_adding_liquidity = Tokens::balance(lp_token, &bob());
 		assert_eq!(bob_lp_before_adding_liquidity, 0_u128);
 
 		// Add the liquidity
 		assert_ok!(Pablo::add_liquidity(
-			Origin::signed(BOB),
+			Origin::signed(bob()),
 			pool_id,
 			[(first_asset, first_asset_amount), (second_asset, second_asset_amount)]
 				.into_iter()
@@ -468,12 +467,12 @@ fn remove_lp_failure() {
 			false
 		));
 
-		let bob_lp_after_adding_liquidity = Tokens::balance(lp_token, &BOB);
+		let bob_lp_after_adding_liquidity = Tokens::balance(lp_token, &bob());
 
 		// error as trying to redeem more tokens than lp
 		assert_noop!(
 			Pablo::remove_liquidity(
-				Origin::signed(BOB),
+				Origin::signed(bob()),
 				pool_id,
 				bob_lp_after_adding_liquidity + 1,
 				[(first_asset, 1), (second_asset, 1)].into_iter().collect()
@@ -484,7 +483,7 @@ fn remove_lp_failure() {
 		// error as expected values are more than actual redeemed values.
 		assert_noop!(
 			Pablo::remove_liquidity(
-				Origin::signed(BOB),
+				Origin::signed(bob()),
 				pool_id,
 				bob_lp_after_adding_liquidity,
 				[
@@ -507,7 +506,7 @@ fn exchange_failure() {
 		let btc_price = 45_000_u128;
 		let initial_usdt = currency::USDT::ONE * btc_price;
 		let pool_init_config = valid_pool_init_config(
-			&ALICE,
+			&alice(),
 			currency::BTC::ID,
 			Permill::from_percent(50_u32),
 			currency::USDT::ID,
@@ -545,16 +544,16 @@ fn high_slippage() {
 		);
 		let bob_btc = currency::BTC::units(99);
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(BTC, &BOB, bob_btc));
+		assert_ok!(Tokens::mint_into(BTC, &bob(), bob_btc));
 
 		assert_ok!(<Pablo as Amm>::do_swap(
-			&BOB,
+			&bob(),
 			pool_id,
 			AssetAmount::new(BTC, bob_btc),
 			AssetAmount::new(USDT, 0_u128),
 			false
 		));
-		let usdt_balance = Tokens::balance(USDT, &BOB);
+		let usdt_balance = Tokens::balance(USDT, &bob());
 		let idea_usdt_balance = bob_btc * btc_price;
 		assert!((idea_usdt_balance - usdt_balance) > 5_u128);
 	});
@@ -581,9 +580,9 @@ fn fees() {
 		let expected_btc_value = <Pablo as Amm>::spot_price(pool_id, AssetAmount::new(USDT, quote_usdt), BTC, true)
 			.expect("get_exchange_value failed");
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
+		assert_ok!(Tokens::mint_into(USDT, &bob(), bob_usdt));
 
-		assert_ok!(<Pablo as Amm>::do_buy(&BOB, pool_id, USDT, AssetAmount::new(BTC, expected_btc_value.value.amount), false));
+		assert_ok!(<Pablo as Amm>::do_buy(&bob(), pool_id, USDT, AssetAmount::new(BTC, expected_btc_value.value.amount), false));
 		let price = pallet::prices_for::<Test>(
 			pool_id,
 			BTC,
@@ -591,14 +590,14 @@ fn fees() {
 			unit,
 		).expect("success");
 		assert_eq!(price.spot_price, 46_326_729_585_161_862);
-		let btc_balance = Tokens::balance(BTC, &BOB);
+		let btc_balance = Tokens::balance(BTC, &bob());
         sp_std::if_std! {
             println!("expected_btc_value {:?}, btc_balance {:?}", expected_btc_value.value.amount, btc_balance);
         }
 		assert_ok!(default_acceptable_computation_error(expected_btc_value.value.amount, btc_balance));
         // lp_fee is taken from quote 
 		// from lp_fee 1 % (as per owner_fee) goes to pool owner (ALICE)
-        let alice_usdt_bal = Tokens::balance(USDT, &ALICE);
+        let alice_usdt_bal = Tokens::balance(USDT, &alice());
         let expected_alice_usdt_bal = owner_fee.mul_floor(lp_fee.mul_floor(bob_usdt));
         sp_std::if_std! {
             println!("alice_usdt_bal {:?}, expected_alice_usdt_bal {:?}", alice_usdt_bal, expected_alice_usdt_bal);
@@ -619,7 +618,7 @@ fn staking_pool_test() {
 		let btc_price = 45_000_u128;
 		let initial_usdt = initial_btc * btc_price;
 		let pool_init_config = valid_pool_init_config(
-			&ALICE,
+			&alice(),
 			BTC,
 			Permill::from_percent(50_u32),
 			USDT,
@@ -630,11 +629,11 @@ fn staking_pool_test() {
 		let pool_id = Pablo::do_create_pool(pool_init_config, Some(LP_TOKEN_ID))
 			.expect("pool creation failed");
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
-		assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+		assert_ok!(Tokens::mint_into(BTC, &alice(), initial_btc));
+		assert_ok!(Tokens::mint_into(USDT, &alice(), initial_usdt));
 		// Add the liquidity
 		assert_ok!(<Pablo as Amm>::add_liquidity(
-			&ALICE,
+			&alice(),
 			pool_id,
 			BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
 			0,
@@ -645,10 +644,10 @@ fn staking_pool_test() {
 		let trading_fee = Perbill::from_percent(5).mul_floor(bob_usdt);
 		let protocol_fee = Perbill::from_percent(20).mul_floor(trading_fee);
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
+		assert_ok!(Tokens::mint_into(USDT, &bob(), bob_usdt));
 
 		assert_ok!(<Pablo as Amm>::do_swap(
-			&BOB,
+			&bob(),
 			pool_id,
 			AssetAmount::new(USDT, bob_usdt),
 			AssetAmount::new(BTC, 0_u128),
@@ -663,7 +662,7 @@ fn avoid_exchange_without_liquidity() {
 		let unit = 1_000_000_000_000_u128;
 		let lp_fee = Permill::from_percent(5);
 		let pool_init_config =
-			valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, lp_fee);
+			valid_pool_init_config(&alice(), BTC, Permill::from_percent(50_u32), USDT, lp_fee);
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config, Some(LP_TOKEN_ID))
 			.expect("pool creation failed");
@@ -671,7 +670,7 @@ fn avoid_exchange_without_liquidity() {
 		let quote_usdt = bob_usdt - lp_fee.mul_floor(bob_usdt);
 		assert_noop!(
 			<Pablo as Amm>::do_swap(
-				&ALICE,
+				&alice(),
 				pool_id,
 				AssetAmount::new(USDT, quote_usdt),
 				AssetAmount::new(BTC, 0_u128),
@@ -687,7 +686,7 @@ fn cannot_swap_between_wrong_pairs() {
 	new_test_ext().execute_with(|| {
 		let lp_fee = Permill::from_percent(5);
 		let pool_init_config =
-			valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, lp_fee);
+			valid_pool_init_config(&alice(), BTC, Permill::from_percent(50_u32), USDT, lp_fee);
 
 		System::set_block_number(1);
 
@@ -697,16 +696,16 @@ fn cannot_swap_between_wrong_pairs() {
 		let base_amount = currency::BTC::units(100_000);
 		let quote_amount = currency::USDT::units(100_000);
 
-		Tokens::mint_into(BTC, &ALICE, currency::BTC::units(100_000)).unwrap();
-		Tokens::mint_into(USDT, &ALICE, currency::USDT::units(100_000)).unwrap();
+		Tokens::mint_into(BTC, &alice(), currency::BTC::units(100_000)).unwrap();
+		Tokens::mint_into(USDT, &alice(), currency::USDT::units(100_000)).unwrap();
 
-		Tokens::mint_into(BTC, &BOB, currency::BTC::units(100_000)).unwrap();
+		Tokens::mint_into(BTC, &bob(), currency::BTC::units(100_000)).unwrap();
 		// HACK(ben,connor): USDC isn't treated as having 6 decimals in our calculation, so use a 12
 		// decimal asset for calculating the amount
-		Tokens::mint_into(USDC, &BOB, currency::BTC::units(100_000)).unwrap();
+		Tokens::mint_into(USDC, &bob(), currency::BTC::units(100_000)).unwrap();
 
 		assert_ok!(<Pablo as Amm>::add_liquidity(
-			&ALICE,
+			&alice(),
 			pool_id,
 			BTreeMap::from([(BTC, base_amount), (USDT, quote_amount)]),
 			0,
@@ -718,7 +717,7 @@ fn cannot_swap_between_wrong_pairs() {
 
 		assert_noop!(
 			Pablo::swap(
-				Origin::signed(BOB),
+				Origin::signed(bob()),
 				pool_id,
 				AssetAmount::new(USDC, usdc_amount),
 				AssetAmount::new(BTC, 0_u128),
@@ -728,7 +727,7 @@ fn cannot_swap_between_wrong_pairs() {
 		);
 		assert_noop!(
 			Pablo::swap(
-				Origin::signed(BOB),
+				Origin::signed(bob()),
 				pool_id,
 				AssetAmount::new(BTC, usdc_amount),
 				AssetAmount::new(USDC, 0_u128),
@@ -745,17 +744,17 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 		// 0.05
 		let lp_fee = Permill::from_rational::<u32>(5, 100);
 		let pool_init_config =
-			valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, lp_fee);
+			valid_pool_init_config(&alice(), BTC, Permill::from_percent(50_u32), USDT, lp_fee);
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config, Some(LP_TOKEN_ID))
 			.expect("pool creation failed");
 		let base_amount = currency::BTC::units(100_000);
 		let quote_amount = currency::USDT::units(100_000);
-		assert_ok!(Tokens::mint_into(BTC, &ALICE, base_amount));
-		assert_ok!(Tokens::mint_into(USDT, &ALICE, quote_amount));
+		assert_ok!(Tokens::mint_into(BTC, &alice(), base_amount));
+		assert_ok!(Tokens::mint_into(USDT, &alice(), quote_amount));
 
 		assert_ok!(<Pablo as Amm>::add_liquidity(
-			&ALICE,
+			&alice(),
 			pool_id,
 			BTreeMap::from([(BTC, base_amount), (USDT, quote_amount)]),
 			0,
@@ -775,7 +774,7 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 fn weights_zero() {
 	new_test_ext().execute_with(|| {
 		let pool_init_config =
-			valid_pool_init_config(&ALICE, BTC, Permill::zero(), USDT, Permill::zero());
+			valid_pool_init_config(&alice(), BTC, Permill::zero(), USDT, Permill::zero());
 		assert_noop!(
 			Pablo::do_create_pool(pool_init_config, Some(LP_TOKEN_ID)),
 			Error::<Test>::WeightsMustBeNonZero
@@ -790,7 +789,7 @@ fn weights_sum_to_more_than_one() {
 		asset_weights.try_insert(BTC, Permill::from_percent(50)).expect("Should work");
 		asset_weights.try_insert(USDT, Permill::from_percent(51)).expect("Should work");
 		let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
-			owner: ALICE,
+			owner: alice(),
 			assets_weights: asset_weights,
 			fee: Permill::zero(),
 		};
@@ -825,32 +824,32 @@ proptest! {
 				Permill::zero(),
 				Permill::zero(),
 			);
-			prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
+			prop_assert_ok!(Tokens::mint_into(USDT, &bob(), usdt_value));
 			prop_assert_ok!(
 				Pablo::swap(
-					Origin::signed(BOB),
+					Origin::signed(bob()),
 					pool_id,
 					AssetAmount::new(USDT, usdt_value),
 					AssetAmount::new(BTC, 0_u128),
 					false
 				)
 			);
-			let bob_btc = Tokens::balance(BTC, &BOB);
+			let bob_btc = Tokens::balance(BTC, &bob());
 
 			// mint extra BTC equal to slippage so that original amount of USDT can be buy back
 			prop_assert_ok!(
-				Tokens::mint_into(BTC, &BOB, btc_value - bob_btc)
+				Tokens::mint_into(BTC, &bob(), btc_value - bob_btc)
 			);
 			prop_assert_ok!(
 				Pablo::buy(
-					Origin::signed(BOB),
+					Origin::signed(bob()),
 					pool_id,
 					BTC,
 					AssetAmount::new(USDT, usdt_value),
 					false
 				)
 			);
-			let bob_usdt = Tokens::balance(USDT, &BOB);
+			let bob_usdt = Tokens::balance(USDT, &bob());
 
 			let slippage = usdt_value -  bob_usdt;
 			let slippage_percentage = slippage as f64 * 100.0_f64 / usdt_value as f64;
@@ -881,20 +880,20 @@ proptest! {
 			Permill::zero(),
 		  );
 		  let pool = get_pool(pool_id);
-		  prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
-		  prop_assert_ok!(Tokens::mint_into(BTC, &BOB, btc_value));
-		  prop_assert_ok!(Pablo::add_liquidity(Origin::signed(BOB), pool_id,
+		  prop_assert_ok!(Tokens::mint_into(USDT, &bob(), usdt_value));
+		  prop_assert_ok!(Tokens::mint_into(BTC, &bob(), btc_value));
+		  prop_assert_ok!(Pablo::add_liquidity(Origin::signed(bob()), pool_id,
 				BTreeMap::from([(BTC, btc_value), (USDT, usdt_value)]), 0, false));
 		  let term1 = initial_usdt.integer_sqrt_checked().expect("integer_sqrt failed");
 		  let term2 = initial_btc.integer_sqrt_checked().expect("integer_sqrt failed");
 		  let expected_lp_tokens = safe_multiply_by_rational(term1, btc_value, term2).expect("multiply_by_rational failed");
-		  let lp_token = Tokens::balance(pool.lp_token, &BOB);
+		  let lp_token = Tokens::balance(pool.lp_token, &bob());
 		  prop_assert_ok!(default_acceptable_computation_error(expected_lp_tokens, lp_token));
-		  prop_assert_ok!(Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp_token,
+		  prop_assert_ok!(Pablo::remove_liquidity(Origin::signed(bob()), pool_id, lp_token,
 				BTreeMap::from([(USDT, 0), (BTC, 0)])
 			));
-		  let btc_value_redeemed = Tokens::balance(BTC, &BOB);
-		  let usdt_value_redeemed = Tokens::balance(USDT, &BOB);
+		  let btc_value_redeemed = Tokens::balance(BTC, &bob());
+		  let usdt_value_redeemed = Tokens::balance(USDT, &bob());
 		  prop_assert_ok!(default_acceptable_computation_error(btc_value_redeemed, btc_value));
 		  prop_assert_ok!(default_acceptable_computation_error(usdt_value_redeemed, usdt_value));
 		  Ok(())
@@ -923,13 +922,13 @@ proptest! {
 			Permill::zero(),
 		  );
 		  let pool = get_pool(pool_id);
-		  prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
-		  prop_assert_ok!(Pablo::swap(Origin::signed(BOB), pool_id, AssetAmount::new(USDT, usdt_value), AssetAmount::new(BTC, 0), false));
+		  prop_assert_ok!(Tokens::mint_into(USDT, &bob(), usdt_value));
+		  prop_assert_ok!(Pablo::swap(Origin::signed(bob()), pool_id, AssetAmount::new(USDT, usdt_value), AssetAmount::new(BTC, 0), false));
 		  let usdt_value_after_fee = usdt_value - pool.fee_config.fee_rate.mul_floor(usdt_value);
 		  let ratio = initial_btc as f64 / initial_usdt as f64;
 		  let expected_btc_value = ratio * usdt_value_after_fee as f64;
 		  let expected_btc_value = expected_btc_value as u128;
-		  let bob_btc = Tokens::balance(BTC, &BOB);
+		  let bob_btc = Tokens::balance(BTC, &bob());
 		  prop_assert_ok!(default_acceptable_computation_error(bob_btc, expected_btc_value));
 		  Ok(())
 	  })?;
@@ -940,7 +939,7 @@ proptest! {
 		base_weight_in_percent in 1..100_u32,
 	) {
 	  new_test_ext().execute_with(|| {
-		let pool_init_config = valid_pool_init_config(&ALICE, BTC, Permill::from_percent(base_weight_in_percent), USDT, Permill::zero());
+		let pool_init_config = valid_pool_init_config(&alice(), BTC, Permill::from_percent(base_weight_in_percent), USDT, Permill::zero());
 		  prop_assert_ok!(Pablo::do_create_pool(pool_init_config, Some(LP_TOKEN_ID)));
 		  Ok(())
 	  })?;
@@ -991,9 +990,9 @@ mod twap {
 			// execute a swap to invoke update_twap() however it will only update price_cumulative
 			// and not twap as elapsed time is < TWAPInterval
 			let usdt_value = unit;
-			assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
+			assert_ok!(Tokens::mint_into(USDT, &bob(), usdt_value));
 			assert_ok!(Pablo::swap(
-				Origin::signed(BOB),
+				Origin::signed(bob()),
 				pool_id,
 				AssetAmount::new(USDT, usdt_value),
 				AssetAmount::new(BTC, 0),
@@ -1089,9 +1088,9 @@ mod twap {
 				process_and_progress_blocks::<Pablo, Test>(block_number.try_into().unwrap());
 				// execute a swap to invoke update_twap() on given block_number
 				let usdt_value = unit;
-				assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
+				assert_ok!(Tokens::mint_into(USDT, &bob(), usdt_value));
 				assert_ok!(Pablo::swap(
-					Origin::signed(BOB),
+					Origin::signed(bob()),
 					pool_identifier,
 					AssetAmount::new(USDT, usdt_value),
 					AssetAmount::new(BTC, 0),
@@ -1152,7 +1151,7 @@ fn add_lp_amounts_get_normalized() {
 		type SECOND_ASSET = currency::Currency<1738>;
 
 		let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
-			owner: ALICE,
+			owner: alice(),
 			assets_weights: dual_asset_pool_weights(
 				FIRST_ASSET::ID,
 				Permill::from_percent(50_u32),
@@ -1179,22 +1178,22 @@ fn add_lp_amounts_get_normalized() {
 		let pool_id = create_pool_from_config(pool_init_config);
 
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(FIRST_ASSET::ID, &ALICE, init_first_asset_amount));
-		assert_ok!(Tokens::mint_into(SECOND_ASSET::ID, &ALICE, init_second_asset_amount));
+		assert_ok!(Tokens::mint_into(FIRST_ASSET::ID, &alice(), init_first_asset_amount));
+		assert_ok!(Tokens::mint_into(SECOND_ASSET::ID, &alice(), init_second_asset_amount));
 
 		dbg!();
 
 		// Add the liquidity, min amount = 0
 		Test::assert_extrinsic_event(
 			Pablo::add_liquidity(
-				Origin::signed(ALICE),
+				Origin::signed(alice()),
 				pool_id,
 				assets_with_init_amounts.clone(),
 				0,
 				false,
 			),
 			crate::Event::<Test>::LiquidityAdded {
-				who: ALICE,
+				who: alice(),
 				pool_id: 0,
 				asset_amounts: assets_with_init_amounts,
 				minted_lp: 282_842_712_193_942,
@@ -1204,13 +1203,13 @@ fn add_lp_amounts_get_normalized() {
 		dbg!();
 
 		// Mint the tokens
-		assert_ok!(Tokens::mint_into(FIRST_ASSET::ID, &BOB, first_asset_amount));
-		assert_ok!(Tokens::mint_into(SECOND_ASSET::ID, &BOB, second_asset_amount));
+		assert_ok!(Tokens::mint_into(FIRST_ASSET::ID, &bob(), first_asset_amount));
+		assert_ok!(Tokens::mint_into(SECOND_ASSET::ID, &bob(), second_asset_amount));
 
 		Test::assert_extrinsic_event(
-			Pablo::add_liquidity(Origin::signed(BOB), pool_id, assets_with_amounts, 0, false),
+			Pablo::add_liquidity(Origin::signed(bob()), pool_id, assets_with_amounts, 0, false),
 			crate::Event::<Test>::LiquidityAdded {
-				who: BOB,
+				who: bob(),
 				pool_id: 0,
 				asset_amounts: BTreeMap::from([
 					(FIRST_ASSET::ID, FIRST_ASSET::units(10)),

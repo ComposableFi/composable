@@ -5,7 +5,7 @@ use crate::{
 	PoolConfiguration::DualAssetConstantProduct,
 	PoolInitConfiguration,
 };
-use composable_tests_helpers::{ALICE, BOB};
+use composable_tests_helpers::{alice, bob};
 use composable_traits::dex::AssetAmount;
 use frame_support::{
 	assert_noop, assert_ok,
@@ -50,13 +50,13 @@ pub fn common_add_remove_lp(
 	);
 	let pair = get_pair(init_config);
 	// Mint the tokens
-	assert_ok!(Tokens::mint_into(pair[0], &ALICE, first_asset_amount));
-	assert_ok!(Tokens::mint_into(pair[1], &ALICE, second_asset_amount));
+	assert_ok!(Tokens::mint_into(pair[0], &alice(), first_asset_amount));
+	assert_ok!(Tokens::mint_into(pair[1], &alice(), second_asset_amount));
 
 	System::set_block_number(System::block_number() + 1);
 	// Add the liquidity
 	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(ALICE),
+		Origin::signed(alice()),
 		actual_pool_id,
 		BTreeMap::from([(pair[0], first_asset_amount), (pair[1], second_asset_amount)]),
 		0,
@@ -65,7 +65,7 @@ pub fn common_add_remove_lp(
 	assert_last_event::<Test, _>(|e| {
 		matches!(&e.event,
 			mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, /* base_amount, quote_amount, */ .. })
-			if who == &ALICE
+			if who == &alice()
 			&& pool_id == &actual_pool_id
 			// && base_amount == first_asset_amount
 			// && quote_amount == second_asset_amount
@@ -77,16 +77,16 @@ pub fn common_add_remove_lp(
 		DualAssetConstantProduct(pool) => pool.lp_token,
 	};
 	// Mint the tokens
-	assert_ok!(Tokens::mint_into(pair[0], &BOB, next_first_asset_amount));
-	assert_ok!(Tokens::mint_into(pair[1], &BOB, next_second_asset_amount));
+	assert_ok!(Tokens::mint_into(pair[0], &bob(), next_first_asset_amount));
+	assert_ok!(Tokens::mint_into(pair[1], &bob(), next_second_asset_amount));
 
-	let lp = Tokens::balance(lp_token, &BOB);
+	let lp = Tokens::balance(lp_token, &bob());
 	assert_eq!(lp, 0_u128);
 
 	System::set_block_number(System::block_number() + 1);
 	// Add the liquidity
 	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(BOB),
+		Origin::signed(bob()),
 		actual_pool_id,
 		BTreeMap::from([(pair[0], next_first_asset_amount), (pair[1], next_second_asset_amount)]),
 		0,
@@ -95,21 +95,21 @@ pub fn common_add_remove_lp(
 	assert_last_event::<Test, _>(|e| {
 		matches!(&e.event,
 		mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, /* base_amount, quote_amount, */  .. })
-		if who == &BOB
+		if who == &bob()
 			&& pool_id == &actual_pool_id
 			// && base_amount == next_first_asset_amount
 			// && quote_amount == next_second_asset_amount
 		)
 	});
-	let lp = Tokens::balance(lp_token, &BOB);
+	let lp = Tokens::balance(lp_token, &bob());
 	assert!(expected_lp_check(next_first_asset_amount, next_second_asset_amount, lp));
 	assert_ok!(Pablo::remove_liquidity(
-		Origin::signed(BOB),
+		Origin::signed(bob()),
 		actual_pool_id,
 		lp,
 		BTreeMap::from([(pair[0], 0_u128), (pair[1], 0_u128)]),
 	));
-	let lp = Tokens::balance(lp_token, &BOB);
+	let lp = Tokens::balance(lp_token, &bob());
 	// all lp tokens must have been burnt
 	assert_eq!(lp, 0_u128);
 }
@@ -155,8 +155,8 @@ pub fn common_add_lp_with_min_mint_amount(
 	let [first_asset, second_asset] = get_pair(init_config);
 
 	// Mint the tokens
-	assert_ok!(Tokens::mint_into(first_asset, &ALICE, init_first_asset_amount));
-	assert_ok!(Tokens::mint_into(second_asset, &ALICE, init_second_asset_amount));
+	assert_ok!(Tokens::mint_into(first_asset, &alice(), init_first_asset_amount));
+	assert_ok!(Tokens::mint_into(second_asset, &alice(), init_second_asset_amount));
 
 	let assets_with_amounts = BTreeMap::from([
 		(first_asset, init_first_asset_amount),
@@ -165,7 +165,7 @@ pub fn common_add_lp_with_min_mint_amount(
 
 	// Add the liquidity, min amount = 0
 	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(ALICE),
+		Origin::signed(alice()),
 		pool_id,
 		assets_with_amounts.clone(),
 		0,
@@ -173,11 +173,11 @@ pub fn common_add_lp_with_min_mint_amount(
 	));
 
 	// Mint the tokens
-	assert_ok!(Tokens::mint_into(first_asset, &BOB, first_asset_amount));
-	assert_ok!(Tokens::mint_into(second_asset, &BOB, second_asset_amount));
+	assert_ok!(Tokens::mint_into(first_asset, &bob(), first_asset_amount));
+	assert_ok!(Tokens::mint_into(second_asset, &bob(), second_asset_amount));
 
-	let alice_lp = Tokens::balance(lp_token, &ALICE);
-	let bob_lp = Tokens::balance(lp_token, &BOB);
+	let alice_lp = Tokens::balance(lp_token, &alice());
+	let bob_lp = Tokens::balance(lp_token, &bob());
 
 	assert_eq!(bob_lp, 0_u128, "BOB should not have any LP tokens");
 
@@ -192,7 +192,7 @@ pub fn common_add_lp_with_min_mint_amount(
 	// Add the liquidity, but expect more lp tokens, hence errors
 	assert_noop!(
 		Pablo::add_liquidity(
-			Origin::signed(BOB),
+			Origin::signed(bob()),
 			pool_id,
 			assets_with_amounts.clone(),
 			min_mint_amount + 1,
@@ -203,7 +203,7 @@ pub fn common_add_lp_with_min_mint_amount(
 
 	// Add liquidity with min_mint_amount
 	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(BOB),
+		Origin::signed(bob()),
 		pool_id,
 		assets_with_amounts,
 		min_mint_amount,
@@ -223,12 +223,12 @@ pub fn common_remove_lp_failure(
 		.expect("pool creation failed");
 	let pair = get_pair(init_config);
 	// Mint the tokens
-	assert_ok!(Tokens::mint_into(pair[0], &ALICE, init_base_amount));
-	assert_ok!(Tokens::mint_into(pair[1], &ALICE, init_quote_amount));
+	assert_ok!(Tokens::mint_into(pair[0], &alice(), init_base_amount));
+	assert_ok!(Tokens::mint_into(pair[1], &alice(), init_quote_amount));
 
 	// Add the liquidity
 	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(ALICE),
+		Origin::signed(alice()),
 		pool_id,
 		BTreeMap::from([(pair[0], init_base_amount), (pair[1], init_quote_amount)]),
 		0,
@@ -240,24 +240,24 @@ pub fn common_remove_lp_failure(
 		DualAssetConstantProduct(pool) => pool.lp_token,
 	};
 	// Mint the tokens
-	assert_ok!(Tokens::mint_into(pair[0], &BOB, base_amount));
-	assert_ok!(Tokens::mint_into(pair[1], &BOB, quote_amount));
+	assert_ok!(Tokens::mint_into(pair[0], &bob(), base_amount));
+	assert_ok!(Tokens::mint_into(pair[1], &bob(), quote_amount));
 
-	let lp = Tokens::balance(lp_token, &BOB);
+	let lp = Tokens::balance(lp_token, &bob());
 	assert_eq!(lp, 0_u128);
 	// Add the liquidity
 	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(BOB),
+		Origin::signed(bob()),
 		pool_id,
 		BTreeMap::from([(pair[0], base_amount), (pair[1], quote_amount)]),
 		0,
 		false
 	));
-	let lp = Tokens::balance(lp_token, &BOB);
+	let lp = Tokens::balance(lp_token, &bob());
 	// error as trying to redeem more tokens than lp
 	assert_noop!(
 		Pablo::remove_liquidity(
-			Origin::signed(BOB),
+			Origin::signed(bob()),
 			pool_id,
 			lp + 1,
 			BTreeMap::from([(pair[0], 0), (pair[1], 0)])
@@ -269,7 +269,7 @@ pub fn common_remove_lp_failure(
 	// error as expected values are more than actual redeemed values.
 	assert_noop!(
 		Pablo::remove_liquidity(
-			Origin::signed(BOB),
+			Origin::signed(bob()),
 			pool_id,
 			lp,
 			BTreeMap::from([
@@ -294,12 +294,12 @@ pub fn common_exchange_failure(
 	let pool_id =
 		Pablo::do_create_pool(init_config, Some(lp_token_id)).expect("pool creation failed");
 	// Mint the tokens
-	assert_ok!(Tokens::mint_into(init_first_amount.asset_id, &ALICE, init_first_amount.amount));
-	assert_ok!(Tokens::mint_into(init_second_amount.asset_id, &ALICE, init_second_amount.amount));
+	assert_ok!(Tokens::mint_into(init_first_amount.asset_id, &alice(), init_first_amount.amount));
+	assert_ok!(Tokens::mint_into(init_second_amount.asset_id, &alice(), init_second_amount.amount));
 
 	// Add the liquidity
 	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(ALICE),
+		Origin::signed(alice()),
 		pool_id,
 		BTreeMap::from([
 			(init_first_amount.asset_id, init_first_amount.amount),
@@ -310,11 +310,11 @@ pub fn common_exchange_failure(
 	));
 
 	// Mint the tokens
-	assert_ok!(Tokens::mint_into(init_first_amount.asset_id, &BOB, exchange_first_amount.amount));
+	assert_ok!(Tokens::mint_into(init_first_amount.asset_id, &bob(), exchange_first_amount.amount));
 	// error as trying to swap more value than balance
 	assert_noop!(
 		Pablo::swap(
-			Origin::signed(BOB),
+			Origin::signed(bob()),
 			pool_id,
 			AssetAmount::new(exchange_first_amount.asset_id, exchange_first_amount.amount + 1),
 			AssetAmount::new(init_second_amount.asset_id, 0),
@@ -326,7 +326,7 @@ pub fn common_exchange_failure(
 	// error as the expected value is more that input
 	assert_noop!(
 		Pablo::swap(
-			Origin::signed(BOB),
+			Origin::signed(bob()),
 			pool_id,
 			AssetAmount::new(exchange_first_amount.asset_id, exchange_first_amount.amount),
 			AssetAmount::new(init_second_amount.asset_id, dbg!(init_second_amount.amount + 1)),
@@ -362,9 +362,9 @@ mod create {
 			System::set_block_number(1);
 			let pool_weights = dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT);
 			assert_ok!(Pablo::create(
-				Origin::signed(ALICE),
+				Origin::signed(alice()),
 				PoolInitConfiguration::DualAssetConstantProduct {
-					owner: ALICE,
+					owner: alice(),
 					assets_weights: pool_weights.clone(),
 					fee: Permill::zero(),
 				},

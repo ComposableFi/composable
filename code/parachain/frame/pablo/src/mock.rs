@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use crate as pablo;
-use composable_tests_helpers::{test::currency, ALICE};
+use composable_tests_helpers::{alice, test::currency};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{EitherOfDiverse, Everything},
@@ -139,7 +139,7 @@ impl pallet_timestamp::Config for Test {
 }
 
 ord_parameter_types! {
-	pub const RootAccount: AccountId = ALICE;
+	pub const RootAccount: AccountId = alice();
 }
 
 impl pablo::Config for Test {

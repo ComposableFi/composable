@@ -11,7 +11,7 @@ use sp_runtime::Permill;
 
 mod create {
 
-	use composable_tests_helpers::ALICE;
+	use composable_tests_helpers::alice;
 
 	use crate::PoolInitConfigurationOf;
 
@@ -20,7 +20,7 @@ mod create {
 	#[test]
 	fn should_successfully_create_50_50_pool() {
 		new_test_ext().execute_with(|| {
-			let owner = ALICE;
+			let owner = alice();
 			let assets_weights = dual_asset_pool_weights(USDC, Permill::from_percent(50), USDT);
 			let fee = Permill::from_percent(1);
 			let pool_config = PoolInitConfigurationOf::<Test>::DualAssetConstantProduct {
@@ -37,7 +37,7 @@ mod create {
 mod simulate {
 	use super::*;
 
-	use composable_tests_helpers::{ALICE, BOB};
+	use composable_tests_helpers::{alice, bob};
 	use composable_traits::dex::Amm;
 	use frame_support::{bounded_btree_map, traits::fungibles::Mutate};
 	use sp_runtime::Permill;
@@ -53,9 +53,9 @@ mod simulate {
 			System::set_block_number(1);
 			let pool_id = Test::assert_extrinsic_event_with(
 				Pablo::create(
-					Origin::signed(ALICE),
+					Origin::signed(alice()),
 					PoolInitConfiguration::DualAssetConstantProduct {
-						owner: ALICE,
+						owner: alice(),
 						assets_weights: bounded_btree_map! {
 							USDT => Permill::from_percent(50),
 							USDC => Permill::from_percent(50),
@@ -69,11 +69,11 @@ mod simulate {
 				},
 			);
 
-			Tokens::mint_into(USDT, &BOB, 1_000_000_000_000_000).unwrap();
-			Tokens::mint_into(USDC, &BOB, 1_000_000_000_000_000).unwrap();
+			Tokens::mint_into(USDT, &bob(), 1_000_000_000_000_000).unwrap();
+			Tokens::mint_into(USDC, &bob(), 1_000_000_000_000_000).unwrap();
 
 			let add_simulation_result = <Pablo as Amm>::simulate_add_liquidity(
-				&BOB,
+				&bob(),
 				pool_id,
 				[(USDT, 100_000_000), (USDC, 100_000_000)].into_iter().collect(),
 			)
@@ -81,7 +81,7 @@ mod simulate {
 
 			let add_result = Test::assert_extrinsic_event_with(
 				Pablo::add_liquidity(
-					Origin::signed(BOB),
+					Origin::signed(bob()),
 					pool_id,
 					[(USDT, 100_000_000), (USDC, 100_000_000)].into_iter().collect(),
 					0,
@@ -96,7 +96,7 @@ mod simulate {
 			assert_eq!(add_simulation_result, add_result);
 
 			let remove_simulation_result = <Pablo as Amm>::simulate_remove_liquidity(
-				&BOB,
+				&bob(),
 				pool_id,
 				add_result,
 				[(USDT, 0), (USDC, 0)].into_iter().collect(),
@@ -105,7 +105,7 @@ mod simulate {
 
 			let remove_result = Test::assert_extrinsic_event_with(
 				Pablo::remove_liquidity(
-					Origin::signed(BOB),
+					Origin::signed(bob()),
 					pool_id,
 					add_result,
 					[(USDT, 0), (USDC, 0)].into_iter().collect(),

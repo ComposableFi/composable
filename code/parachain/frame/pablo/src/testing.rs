@@ -5,12 +5,12 @@ use std::collections::BTreeMap;
 use composable_maths::dex::constant_product::compute_first_deposit_lp;
 use composable_support::math::safe::SafeAdd;
 use composable_tests_helpers::{
+	alice, bob,
 	test::{
 		block::next_block,
 		currency::{Currency, PICA, USDT},
 		helper::RuntimeTrait,
 	},
-	ALICE, BOB,
 };
 use composable_traits::currency::BalanceLike;
 use frame_support::{
@@ -19,6 +19,7 @@ use frame_support::{
 };
 use frame_system::{pallet_prelude::OriginFor, Config as SystemConfig};
 use sp_arithmetic::Permill;
+use sp_keyring::sr25519::Keyring;
 use sp_runtime::{traits::Zero, AccountId32};
 
 use crate::{Config, Event, Pallet, PoolInitConfiguration};
@@ -93,7 +94,7 @@ pub mod pool_creation {
 		Runtime::assert_extrinsic_event_with(
 			Pallet::<Runtime>::do_create_pool(
 				PoolInitConfiguration::DualAssetConstantProduct {
-					owner: ALICE.into(),
+					owner: alice().into(),
 					assets_weights: bounded_btree_map! {
 						asset_1_id.into() => Permill::from_parts(500_000),
 						asset_2_id.into() => Permill::from_parts(500_000),
@@ -118,7 +119,7 @@ pub mod pool_creation {
 		let _pool_id = Runtime::assert_extrinsic_event_with(
 			Pallet::<Runtime>::do_create_pool(
 				PoolInitConfiguration::DualAssetConstantProduct {
-					owner: ALICE.into(),
+					owner: alice().into(),
 					assets_weights: bounded_btree_map! {
 						asset_1_id.into() => Permill::from_parts(500_000),
 						asset_2_id.into() => Permill::from_parts(500_000),
@@ -146,7 +147,7 @@ pub mod pool_creation {
 			Pallet::<Runtime>::create(
 				OriginFor::<Runtime>::root(),
 				PoolInitConfiguration::DualAssetConstantProduct {
-					owner: ALICE.into(),
+					owner: alice().into(),
 					assets_weights: bounded_btree_map! {
 						asset_1_id.into() => Permill::from_parts(500_000),
 						asset_2_id.into() => Permill::from_parts(500_000),
@@ -167,8 +168,8 @@ pub mod providing_liquidity {
 
 		let pool_id = super::pool_creation::create_new_constant_product_pool_1_1::<Runtime>();
 
-		mint_assets::<Runtime>(PICA::ID, BOB, PICA::units(1_100_000));
-		mint_assets::<Runtime>(USDT::ID, BOB, USDT::units(1_100_000));
+		mint_assets::<Runtime>(PICA::ID, bob(), PICA::units(1_100_000));
+		mint_assets::<Runtime>(USDT::ID, bob(), USDT::units(1_100_000));
 
 		let assets = [
 			(PICA::ID.into(), PICA::units(10_000).into()),
@@ -179,14 +180,14 @@ pub mod providing_liquidity {
 
 		Runtime::assert_extrinsic_event(
 			Pallet::<Runtime>::add_liquidity(
-				OriginFor::<Runtime>::signed(BOB.into()),
+				OriginFor::<Runtime>::signed(bob().into()),
 				pool_id,
 				assets.clone(),
 				Zero::zero(),
 				true,
 			),
 			Event::<Runtime>::LiquidityAdded {
-				who: BOB.into(),
+				who: bob().into(),
 				pool_id,
 				asset_amounts: assets.clone(),
 				// minted_lp: 19_999_999_993_470_955_u128.into(),
@@ -213,7 +214,7 @@ pub fn add_liquidity<Runtime: PabloRuntimeConstraints>() {
 	let pool_id = Runtime::assert_extrinsic_event_with(
 		Pallet::<Runtime>::do_create_pool(
 			PoolInitConfiguration::DualAssetConstantProduct {
-				owner: ALICE.into(),
+				owner: alice().into(),
 				assets_weights: [
 					(asset_1_id, Permill::from_parts(500_000)),
 					(asset_2_id, Permill::from_parts(500_000)),
@@ -231,8 +232,8 @@ pub fn add_liquidity<Runtime: PabloRuntimeConstraints>() {
 		},
 	);
 
-	mint_assets::<Runtime>(asset_1_id, BOB, PICA::units(1_100_000));
-	mint_assets::<Runtime>(asset_2_id, BOB, PICA::units(1_100_000));
+	mint_assets::<Runtime>(asset_1_id, bob(), PICA::units(1_100_000));
+	mint_assets::<Runtime>(asset_2_id, bob(), PICA::units(1_100_000));
 
 	let assets =
 		[(asset_1_id, PICA::units(1_000_000).into()), (asset_2_id, USDT::units(1_000_000).into())]
@@ -241,14 +242,14 @@ pub fn add_liquidity<Runtime: PabloRuntimeConstraints>() {
 
 	Runtime::assert_extrinsic_event(
 		Pallet::<Runtime>::add_liquidity(
-			OriginFor::<Runtime>::signed(BOB.into()),
+			OriginFor::<Runtime>::signed(bob().into()),
 			pool_id,
 			assets.clone(),
 			Zero::zero(),
 			true,
 		),
 		Event::<Runtime>::LiquidityAdded {
-			who: BOB.into(),
+			who: bob().into(),
 			pool_id,
 			asset_amounts: assets.clone(),
 			minted_lp: compute_first_deposit_lp(
@@ -273,7 +274,7 @@ pub fn ksm_usdt<Runtime: PabloRuntimeConstraints>() {
 	let pool_id = Runtime::assert_extrinsic_event_with(
 		Pallet::<Runtime>::do_create_pool(
 			PoolInitConfiguration::DualAssetConstantProduct {
-				owner: ALICE.into(),
+				owner: alice().into(),
 				assets_weights: [
 					(asset_1_id, Permill::from_parts(500_000)),
 					(asset_2_id, Permill::from_parts(500_000)),
@@ -291,8 +292,8 @@ pub fn ksm_usdt<Runtime: PabloRuntimeConstraints>() {
 		},
 	);
 
-	mint_assets::<Runtime>(asset_1_id, BOB, KSM::units(1_000_000));
-	mint_assets::<Runtime>(asset_2_id, BOB, USDT::units(1_000_000));
+	mint_assets::<Runtime>(asset_1_id, bob(), KSM::units(1_000_000));
+	mint_assets::<Runtime>(asset_2_id, bob(), USDT::units(1_000_000));
 
 	let assets = [(asset_1_id, KSM::units(10).into()), (asset_2_id, USDT::units(100).into())]
 		.into_iter()
@@ -300,14 +301,14 @@ pub fn ksm_usdt<Runtime: PabloRuntimeConstraints>() {
 
 	Runtime::assert_extrinsic_event(
 		Pallet::<Runtime>::add_liquidity(
-			OriginFor::<Runtime>::signed(BOB.into()),
+			OriginFor::<Runtime>::signed(bob().into()),
 			pool_id,
 			assets.clone(),
 			Zero::zero(),
 			true,
 		),
 		Event::<Runtime>::LiquidityAdded {
-			who: BOB.into(),
+			who: bob().into(),
 			pool_id,
 			asset_amounts: assets.clone(),
 			// TODO(benluelo): Figure out where this number comes from
