@@ -7,7 +7,7 @@ const { StatsOverviewTabStory } = composeStories(stories);
 test("renders Network Tabs", () => {
   render(<StatsOverviewTabStory />);
   expect(screen.getByText("Picasso market cap")).toBeInTheDocument();
-  expect(screen.getByText("Picasso circulating supply")).toBeInTheDocument();
+  expect(screen.getByText("Picasso total supply")).toBeInTheDocument();
   expect(screen.getByText("0")).toBeInTheDocument();
   expect(screen.getByText("$0.00")).toBeInTheDocument();
 });

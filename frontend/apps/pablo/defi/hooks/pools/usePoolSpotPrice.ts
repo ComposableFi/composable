@@ -17,24 +17,6 @@ export const usePoolSpotPrice = (
     pool as PoolConfig | undefined
   );
 
-  // useEffect(() => {
-  //   callbackGate(
-  //     (api, poolConfig, inputConfig) => {
-  //       const [assetOne, assetTwo] = inputConfig;
-  //       fetchSpotPrice(
-  //         api,
-  //         poolConfig,
-  //         assetTwo.getPicassoAssetId() as string,
-  //         assetOne.getPicassoAssetId() as string,
-  //         assetTwo.getDecimals(DEFAULT_NETWORK_ID)
-  //       ).then(setSpotPrice);
-  //     },
-  //     parachainApi,
-  //     pool,
-  //     input
-  //   );
-  // }, [input, parachainApi, pool]);
-
   // The below calculation is to not use pricesFor
   const spotPrice = useMemo(() => {
     const out = calculateOutGivenIn(

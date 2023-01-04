@@ -1,10 +1,6 @@
-import { Asset } from "shared";
+import { Asset, calculateInGivenOut, calculateOutGivenIn } from "shared";
 import { Option } from "@/components/types";
-import {
-  calculateInGivenOut,
-  calculateOutGivenIn,
-  DEFAULT_NETWORK_ID,
-} from "@/defi/utils";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { usePrevious } from "@/hooks/usePrevious";
 import { useAppSettingsSlice } from "@/store/appSettings/slice";
 import { useAssetBalance } from "@/defi/hooks";

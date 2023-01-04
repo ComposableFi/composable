@@ -1,19 +1,19 @@
 import { ApiPromise } from "@polkadot/api";
-import useStore from "@/store/useStore";
-import { DEFAULT_NETWORK_ID, fromChainUnits } from "@/defi/utils";
-import { Asset, getSubAccount } from "shared";
+import { fromChainIdUnit, getSubAccount } from "shared";
+import { useStore } from "@/stores/root";
+import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 
 async function fetchInPool(
   api: ApiPromise,
-  assetIn: Asset,
-  assetOut: Asset,
+  assetIn: TokenMetadata,
+  assetOut: TokenMetadata,
   wallet: string
 ) {
   let inPoolAssetIn: any;
   let inPoolAssetOut: any;
 
-  const assetInId = assetIn.getPicassoAssetId()?.toString() ?? "";
-  const assetOutId = assetOut.getPicassoAssetId()?.toString() ?? "";
+  const assetInId = assetIn.chainId.picasso?.toString() ?? "";
+  const assetOutId = assetOut.chainId.picasso?.toString() ?? "";
   if (assetInId === "1") {
     const out = await api.query.system.account(wallet);
     inPoolAssetIn = out.data;
@@ -29,13 +29,13 @@ async function fetchInPool(
   }
 
   return {
-    [assetInId]: fromChainUnits(
+    [assetInId]: fromChainIdUnit(
       inPoolAssetIn.free.toString(),
-      assetIn.getDecimals(DEFAULT_NETWORK_ID)
+      assetIn.decimals.picasso ?? 12
     ).toString(),
-    [assetOutId]: fromChainUnits(
+    [assetOutId]: fromChainIdUnit(
       inPoolAssetOut.free.toString(),
-      assetOut.getDecimals(DEFAULT_NETWORK_ID)
+      assetOut.decimals.picasso ?? 12
     ).toString(),
   };
 }
@@ -57,17 +57,20 @@ export function subscribePoolAmount(api: ApiPromise | undefined) {
         const assetOut = pool.config.assets[1];
         const ownerWalletAddress = getSubAccount(api, pool.poolId.toString());
 
+        console.log(ownerWalletAddress);
+
         const amount = await fetchInPool(
           api,
           assetIn,
           assetOut,
           ownerWalletAddress
         );
+
         setPoolAmount(pool.poolId.toString(), amount);
         api.query.tokens
           .totalIssuance(pool.config.lpToken.toString())
           .then((total) => {
-            setTotalIssued(pool.poolId, fromChainUnits(total.toString(), 12));
+            setTotalIssued(pool.poolId, fromChainIdUnit(total.toString(), 12));
           });
       }
     },
