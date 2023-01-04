@@ -16,6 +16,8 @@ import { PoolShare } from "@/components/Organisms/bonds/PoolShare";
 import {
   getAssetOptions,
   getInputConfig,
+  getPaymentInfoCall,
+  parseRuntimeInfo,
 } from "@/components/Organisms/liquidity/AddForm/utils";
 import { PlusIcon } from "@/components/Organisms/liquidity/AddForm/PlusIcon";
 import { useSimulateAddLiquidity } from "@/components/Organisms/pool/AddLiquidity/useSimulateAddLiquidity";
@@ -29,11 +31,7 @@ import {
   useSelectedAccount,
   useSigner,
 } from "substrate-react";
-import {
-  addLiquidityToPoolViaPablo,
-  DEFAULT_NETWORK_ID,
-  fromChainUnits,
-} from "@/defi/utils";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { getAssetTree } from "@/components/Organisms/pool/AddLiquidity/utils";
 import siteConfig from "@/constants/config";
 import { InputConfig } from "@/components/Organisms/liquidity/AddForm/types";
@@ -211,7 +209,7 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
     inputValid,
   ]);
 
-  useMemo(() => {
+  useEffect(() => {
     if (
       parachainApi &&
       poolId &&
@@ -220,49 +218,38 @@ export const AddLiquidityForm: FC<BoxProps> = ({ ...rest }) => {
       signer &&
       leftConfig &&
       rightConfig &&
+      gasFeeTokenDecimals &&
       amountOne.gte(0) &&
       amountTwo.gte(0)
     ) {
-      try {
-        const assetTree = getAssetTree(
-          {
-            asset: leftConfig.asset,
-            balance: amountOne,
-          },
-          {
-            asset: rightConfig.asset,
-            balance: amountTwo,
-          }
-        );
-        const paymentInfo = pipe(
-          assetTree,
-          option.map((assets) =>
-            addLiquidityToPoolViaPablo(parachainApi, poolId, assets)
-          ),
-          option.map((call) =>
-            executor.paymentInfo(call, account.address, signer)
-          ),
-          option.toNullable
-        );
-        let transactionFee = new BigNumber(0);
-        if (paymentInfo) {
-          paymentInfo.then((result) => {
-            if (!gasFeeRatio) {
-              transactionFee = fromChainUnits(result.partialFee.toString());
-            } else {
-              transactionFee = fromChainUnits(
-                new BigNumber(result.partialFee.toString())
-                  .multipliedBy(gasFeeRatio.n)
-                  .div(gasFeeRatio.d),
-                gasFeeTokenDecimals
-              );
-            }
-            setTransactionFee(transactionFee);
-          });
+      const assetTree = getAssetTree(
+        {
+          asset: leftConfig.asset,
+          balance: amountOne,
+        },
+        {
+          asset: rightConfig.asset,
+          balance: amountTwo,
         }
-      } catch (e) {
-        console.error(e);
-      }
+      );
+      const call = getPaymentInfoCall(
+        assetTree,
+        parachainApi,
+        poolId,
+        executor,
+        account,
+        signer
+      );
+      pipe(
+        call,
+        option.map((task) =>
+          task().then((result) =>
+            setTransactionFee(
+              parseRuntimeInfo(result, gasFeeRatio, gasFeeTokenDecimals)
+            )
+          )
+        )
+      );
     }
   }, [
     account,
