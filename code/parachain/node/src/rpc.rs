@@ -11,6 +11,8 @@ use sc_client_api::StateBackendFor;
 use std::sync::Arc;
 
 use common::OpaqueBlock;
+use pallet_ibc_runtime_api::IbcRuntimeApi;
+use primitives::CurrencyId;
 pub use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool::FullPool;
 use sp_api::{ProvideRuntimeApi, StateBackend};
@@ -20,9 +22,9 @@ use sp_runtime::traits::BlakeTwo256;
 use crate::{
 	client::{FullBackend, FullClient},
 	runtime::{
-		assets::ExtendWithAssetsApi, cosmwasm::ExtendWithCosmwasmApi,
-		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, lending::ExtendWithLendingApi,
-		pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
+		assets::ExtendWithAssetsApi, centauri_rpc::ExtendWithIbcApi,
+		cosmwasm::ExtendWithCosmwasmApi, crowdloan_rewards::ExtendWithCrowdloanRewardsApi,
+		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
 	},
 };
 
@@ -66,7 +68,9 @@ where
 			+ ExtendWithCrowdloanRewardsApi<RuntimeApi, Executor>
 			+ ExtendWithPabloApi<RuntimeApi, Executor>
 			+ ExtendWithLendingApi<RuntimeApi, Executor>
-			+ ExtendWithCosmwasmApi<RuntimeApi, Executor>,
+			+ ExtendWithCosmwasmApi<RuntimeApi, Executor>
+			+ ExtendWithIbcApi<RuntimeApi, Executor>
+			+ IbcRuntimeApi<OpaqueBlock, CurrencyId>,
 {
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
@@ -101,6 +105,9 @@ where
 		&mut io, deps,
 	)?;
 
+	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_ibc_api(
+		&mut io, deps,
+	)?;
 	// Extend this RPC with a custom API by using the following syntax.
 	// `YourRpcStruct` should have a reference to a client, which is needed
 	// to call into the runtime.

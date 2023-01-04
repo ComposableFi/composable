@@ -5,6 +5,7 @@ use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApiServer};
 use cumulus_primitives_core::CollectCollationInfo;
 use lending_rpc::{Lending, LendingApiServer};
 use pablo_rpc::{Pablo, PabloApiServer};
+use pallet_ibc_rpc::{IbcApiServer, IbcRpcHandler};
 use pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi;
 use sp_api::{ApiExt, Metadata, StateBackend};
 use sp_block_builder::BlockBuilder;
@@ -242,6 +243,24 @@ define_trait! {
 		impl for dali_runtime {
 			fn (io, deps) {
 				io.merge(Cosmwasm::new(deps.client).into_rpc())
+			}
+		}
+	}
+
+	mod centauri_rpc {
+		pub trait ExtendWithIbcApi {
+			fn extend_with_ibc_api(io, deps) ;
+		}
+
+		#[cfg(feature = "composable")]
+		impl for composable_runtime {}
+
+		impl for picasso_runtime {}
+
+		#[cfg(feature = "dali")]
+		impl for dali_runtime {
+			fn (io, deps) {
+				io.merge(IbcRpcHandler::new(deps.client.clone(), deps.chain_props).into_rpc())
 			}
 		}
 	}

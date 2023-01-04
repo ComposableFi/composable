@@ -1636,6 +1636,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "hex",
+ "ibc-rpc",
+ "ibc-runtime-api",
  "jsonrpsee 0.14.0",
  "lending-rpc",
  "lending-runtime-api",
@@ -5278,6 +5280,33 @@ dependencies = [
  "bytes 1.3.0",
  "prost 0.11.3",
  "serde",
+ "tendermint-proto",
+]
+
+[[package]]
+name = "ibc-rpc"
+version = "0.1.0"
+source = "git+https://github.com/ComposableFi/centauri?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
+dependencies = [
+ "frame-system",
+ "hex-literal",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "ibc-derive 0.1.0 (git+https://github.com/ComposableFi/centauri?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "ibc-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/centauri?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "ibc-runtime-api",
+ "jsonrpsee 0.14.0",
+ "pallet-ibc 0.0.1 (git+https://github.com/ComposableFi/centauri?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "parity-scale-codec",
+ "sc-chain-spec",
+ "sc-client-api",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "sp-trie",
  "tendermint-proto",
 ]
 
@@ -16640,7 +16669,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.9.0",
+ "parking_lot 0.11.2",
  "regex",
  "serde",
  "serde_json",
@@ -16837,7 +16866,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if 1.0.0",
  "digest 0.10.6",
- "rand 0.6.5",
+ "rand 0.8.5",
  "static_assertions",
 ]
 
