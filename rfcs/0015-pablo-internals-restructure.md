@@ -114,46 +114,49 @@ reads and writes, to different storages depending on the pallet used for
 
 Possible Solutions:
 
-- **All** inputs and **all** outputs to the functions will be declared. See
-  [this file][explicit-example] for an example.
+1. **All** inputs and **all** outputs to the functions will be declared. See
+   [this file][explicit-example] for an example.
 
-  Pros:
+   Pros:
 
-  - Full separation from the runtime - a
-    [`TestExternalities`][test-externalities] is no longer required to test the
-    functionality.
-  - Inputs to and requirements of the functions are explicitly stated, resulting
-    in them being easier to reason about.
-  - Function is now entirely pure - no state modifications are done from within
-    the function.
+   - Full separation from the runtime - a
+     [`TestExternalities`][test-externalities] is no longer required to test the
+     functionality.
+   - Inputs to and requirements of the functions are explicitly stated,
+     resulting in them being easier to reason about.
+   - Function is now entirely pure - no state modifications are done from within
+     the function.
 
-  Cons:
+   Cons:
 
-  - This could incur unnecessary storage reads if, for example, a value only
-    needs to be read in certain branches.
+   - This could incur unnecessary storage reads if, for example, a value only
+     needs to be read in certain branches. _However_, if there is an instance
+     where there is a function that contains a significant amount of conditional
+     reads/writes, it's likely that the function in question is doing too much
+     and should be broken down into smaller, more focused functions.
 
-- pass "hooks" to the functions, that would then be called whenever that value
-  is needed. See [this file][hooks-example] for an example.
+2. Pass "hooks" to the functions, that would then be called whenever that value
+   is needed. See [this file][hooks-example] for an example.
 
-  Pros:
+   Pros:
 
-  - Full separation from the runtime - a
-    [`TestExternalities`][test-externalities] is no longer required to test the
-    functionality.
-  - Inputs to and requirements of the functions are explicitly stated, resulting
-    in them being easier to reason about.
+   - Full separation from the runtime - a
+     [`TestExternalities`][test-externalities] is no longer required to test the
+     functionality.
+   - Inputs to and requirements of the functions are explicitly stated,
+     resulting in them being easier to reason about.
 
-  Cons:
+   Cons:
 
-  - Somewhat verbose, both in implementation and testing. The implementation
-    requires writing out function signatures for every external input and
-    testing requires creating something that can implement said interface (as
-    seen in the linked example). This is also somewhat "not DRY" as the input
-    definitions are essentially just redefining the trait methods they're
-    replacing.
-  - This isn't technically pure, as there are still state modifications done,
-    just now hidden behind a function call instead of an associated method on a
-    trait.
+   - Somewhat verbose, both in implementation and testing. The implementation
+     requires writing out function signatures for every external input and
+     testing requires creating something that can implement said interface (as
+     seen in the linked example). This is also somewhat "not DRY" as the input
+     definitions are essentially just redefining the trait methods they're
+     replacing.
+   - This isn't technically pure, as there are still state modifications done,
+     just now hidden behind a function call instead of an associated method on a
+     trait.
 
 ---
 
@@ -237,6 +240,47 @@ Possible Solutions:
    (seemingly unnecessary) bounds to functions and types that make use of types
    defined in this way.
 
+   ### Possible Solutions
+
+   - Implement the traits manually (only required on types that need to have a
+     type param skipped, usually a `Get<_>` param).
+
+   - Use const generics internally, passing the values to the tyeps that require
+     them:
+
+     ```rust
+     #[pallet::config]
+     pub trait Config: frame_system::Config {
+         const MAX: u32;
+     }
+
+     struct Bounded<const MAX: u32> {
+         vec: BoundedVec<u32, ConstU32<MAX>>,
+     }
+
+     impl<const MAX: u32> Bounded<MAX> {
+         fn new() -> Self {
+             Self { vec: Default::default() }
+         }
+     }
+
+     let bounded = Bounded::<{ T::MAX }>::new();
+
+     ```
+
+     However, this requires
+     [`#[feature(generic_const_exprs]`][generic-const-exprs-issue], so it may
+     not be an ideal solution.
+
+   - Use an alternative, such as [derive-where].
+
+   - Bug parity to improve their macros (unlikely to be fruitful).
+
+   - Create our own custom derives for std traits.
+
+   - Just deal with the extra bounds as it's only an ergonomics issue and
+     doesn't cause any _actual_ issues otherwise.
+
 [dacp]:
   https://github.com/ComposableFi/composable/blob/d90581d9349eb088ca930cf971dc05a21dca56b7/code/parachain/frame/pablo/src/dual_asset_constant_product.rs#L28
   "DualAssetConstantProduct"
@@ -261,7 +305,7 @@ Possible Solutions:
 [scale-info]: https://docs.rs/scale-info/latest/scale_info/ "scale_info crate"
 [scale-info-bounds]:
   https://docs.rs/scale-info/latest/scale_info/#scale_infobounds
-  "#[scale_info(bounds(..))]"
+  "`#[scale_info(bounds(..))]`"
 [serde-attr-bound]: https://serde.rs/attr-bound.html "Serde bound attribute"
 [serde-container-attr-bound]:
   https://serde.rs/container-attrs.html#bound
@@ -269,7 +313,9 @@ Possible Solutions:
 [test-externalities]:
   https://paritytech.github.io/substrate/master/sp_io/type.TestExternalities.html
   "Test Externalities"
-[hooks-example]:
-  ../code/parachain/frame/pablo/src/rfc_0015_example_hooks.rs
+[hooks-example]: ../code/parachain/frame/pablo/src/rfc_0015_example_hooks.rs
 [explicit-example]:
   ../code/parachain/frame/pablo/src/rfc_0015_example_explicit.rs
+[generic-const-exprs-issue]:
+  https://github.com/rust-lang/rust/issues/76560
+  "`#[feature(generic_const_exprs)]`"
