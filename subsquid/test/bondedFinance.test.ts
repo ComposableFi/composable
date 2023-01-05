@@ -61,7 +61,7 @@ function assertBondedFinanceBondOffer(
   purchased?: bigint,
   beneficiary?: string,
   cancelled?: boolean,
-  blockId?: string,
+  blockId?: string
 ) {
   if (eventId) expect(bondArg.eventId).to.equal(eventId);
   if (offerId) expect(bondArg.offerId).to.equal(offerId);
