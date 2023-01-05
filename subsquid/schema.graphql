@@ -27,7 +27,7 @@ type PabloPool @entity {
   "Last updated block id"
   blockId: String!
   "Asset to be used as reference when calculating the pool's TVL"
-  baseAssetId: String!
+  quoteAssetId: String!
 }
 
 type PabloAssetWeight @entity {

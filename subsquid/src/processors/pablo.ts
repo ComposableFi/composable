@@ -165,7 +165,7 @@ export async function processPoolCreatedEvent(
     transactionCount: 0,
     timestamp: new Date(ctx.block.timestamp),
     blockId: ctx.block.hash,
-    baseAssetId: assetWeights[0][0].toString(),
+    quoteAssetId: assetWeights[0][0].toString(),
   });
 
   // Store pool
@@ -244,12 +244,12 @@ export async function processLiquidityAddedEvent(
   // Normalize locked values to a base asset ID
   let tvl = 0n;
   for (const [assetId, amount] of assetAmounts) {
-    if (assetId === BigInt(pool.baseAssetId)) {
+    if (assetId === BigInt(pool.quoteAssetId)) {
       tvl += amount;
     } else {
       const spotPrice = await getSpotPrice(
         ctx,
-        pool.baseAssetId,
+        pool.quoteAssetId,
         assetId.toString(),
         pool.id
       );
@@ -263,7 +263,7 @@ export async function processLiquidityAddedEvent(
 
   await storeHistoricalLockedValue(
     ctx,
-    [[pool.baseAssetId, tvl]],
+    [[pool.quoteAssetId, tvl]],
     LockedSource.Pablo,
     pool.id
   );
@@ -329,12 +329,12 @@ export async function processLiquidityRemovedEvent(
   // Normalize locked values to a base asset ID
   let tvl = 0n;
   for (const [assetId, amount] of assetAmounts) {
-    if (assetId === BigInt(pool.baseAssetId)) {
+    if (assetId === BigInt(pool.quoteAssetId)) {
       tvl += amount;
     } else {
       const spotPrice = await getSpotPrice(
         ctx,
-        pool.baseAssetId,
+        pool.quoteAssetId,
         assetId.toString(),
         pool.id
       );
@@ -348,7 +348,7 @@ export async function processLiquidityRemovedEvent(
 
   await storeHistoricalLockedValue(
     ctx,
-    [[pool.baseAssetId, -tvl]],
+    [[pool.quoteAssetId, -tvl]],
     LockedSource.Pablo,
     pool.id
   );
@@ -450,14 +450,14 @@ export async function processSwappedEvent(
   const spotPrice = divideBigInts(quoteAmount, baseAmount) * weightRatio;
 
   const feeSpotPrice = BigNumber(
-    fee.assetId.toString() === pool.baseAssetId ? 1 : spotPrice
+    fee.assetId.toString() === pool.quoteAssetId ? 1 : spotPrice
   );
 
   const pabloFee = new PabloFee({
     id: ctx.event.id,
     event,
     pool,
-    assetId: pool.baseAssetId,
+    assetId: pool.quoteAssetId,
     account: who,
     fee: BigInt(BigNumber(fee.fee.toString()).div(feeSpotPrice).toFixed(0)),
     lpFee: BigInt(BigNumber(fee.lpFee.toString()).div(feeSpotPrice).toFixed(0)),

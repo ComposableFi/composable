@@ -116,7 +116,7 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
       throw new Error(`Pool ${daily.poolId} not found`);
     }
 
-    return Promise.resolve(pool.baseAssetId);
+    return Promise.resolve(pool.quoteAssetId);
   }
 
   @Query(() => PabloDaily)

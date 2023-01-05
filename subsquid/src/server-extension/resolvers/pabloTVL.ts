@@ -72,7 +72,7 @@ export class PabloTVLResolver {
         .select(`'${time}'`, "date")
         .addSelect("asset_id", "assetId")
         .addSelect(
-          `coalesce(tvl('${time}', 'Pablo', '${pool.baseAssetId}'), 0)`,
+          `coalesce(tvl('${time}', 'Pablo', '${pool.quoteAssetId}'), 0)`,
           "totalValueLocked"
         )
         .getRawOne();
@@ -84,7 +84,7 @@ export class PabloTVLResolver {
       return new PabloTVL({
         date,
         totalValueLocked: lockedValues[date],
-        assetId: pool.baseAssetId,
+        assetId: pool.quoteAssetId,
       });
     });
   }

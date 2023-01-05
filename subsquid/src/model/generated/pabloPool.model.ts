@@ -58,5 +58,5 @@ export class PabloPool {
      * Asset to be used as reference when calculating the pool's TVL
      */
     @Column_("text", {nullable: false})
-    baseAssetId!: string
+    quoteAssetId!: string
 }
