@@ -14,7 +14,7 @@ The process is the same as for USDT transfers from Bitfinex to Statemine.
 :::
 
 Read our guides on how to create and connect a [Talisman] or [Polkadot.js] wallet on Picasso.
-Watch the video of the following our guide here: https://youtu.be/SmTsDK1pI3Q
+Watch the video of the following guide here: https://youtu.be/SmTsDK1pI3Q
 
 ![picasso_homepage](./picasso-homepage.png)
 
