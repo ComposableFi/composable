@@ -1,6 +1,8 @@
-import { TokenAsset } from "@/components";
-import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
+import * as React from "react";
 import {
+  Box,
+  Button,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -10,10 +12,14 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import BigNumber from "bignumber.js";
-import * as React from "react";
-import { humanBalance } from "shared";
 import { NoAssetsCover } from "./NoAssetsCover";
+import { TokenAsset, TokenPairAsset } from "@/components";
+import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
+import { getROI } from "@/defi/polkadot/pallets/BondedFinance";
+import { humanBalance } from "shared";
+import { useQuery } from "@apollo/client";
+import { GET_BONDED_FINANCE } from "@/apollo/queries";
+import BigNumber from "bignumber.js";
 
 export type AllBondsTableProps = TableContainerProps & {
   bonds?: BondOffer[];
@@ -41,6 +47,27 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
   onRowClick = () => {},
   ...rest
 }) => {
+  const { loading, data, error } = useQuery(GET_BONDED_FINANCE);
+
+  if (error) {
+    console.error(error);
+    return (
+      <Box>
+        <Typography textAlign="center">An error occurred.</Typography>
+        <Button onClick={() => window.location.reload()}>Reload</Button>
+      </Box>
+    );
+  }
+
+  if (loading) {
+    return (
+      <>
+        <Typography>...</Typography>
+        <Skeleton width={200} height={50} />
+      </>
+    );
+  }
+  const bondedFinanceBondOffers = data.bondedFinanceBondOffers;
   if (bonds && bonds.length > 0) {
     return (
       <TableContainer {...rest}>
@@ -54,42 +81,63 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {bonds.map((currentBond) => {
-              const { bondPrice, asset, price, rewardPrice, bondOfferId } =
-                currentBond;
-              const roi = new BigNumber(1);
-
-              let totalPurchased = new BigNumber(0);
-              return (
-                <TableRow
-                  sx={{
-                    "&:hover": {
-                      cursor: "pointer",
-                    },
-                  }}
-                  key={"pica"}
-                  onClick={() => onRowClick(String(bondOfferId))}
-                >
-                  <TableCell align="left">
-                    <TokenAsset tokenId="pica" />
-                  </TableCell>
-                  <TableCell align="left">
-                    <Typography variant="body2">$0</Typography>
-                  </TableCell>
-                  <TableCell align="left">
-                    <Typography
-                      variant="body2"
-                      color={roi.lt(0) ? "error.main" : "featured.lemon"}
-                    >
-                      55%
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="left">
-                    <Typography variant="body2">$0</Typography>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {bonds.map(
+              ({ bondPrice, asset, price, rewardPrice, bondOfferId }) => {
+                const roi = getROI(rewardPrice, price);
+                let currentBond = bondedFinanceBondOffers.find(
+                  (offer: any) => offer.offerId === bondOfferId.toString()
+                );
+                if (!currentBond) {
+                  return null;
+                }
+                let totalPurchased = getTotalPurchasedInFormat(
+                  currentBond,
+                  bondPrice,
+                  price
+                );
+                return (
+                  <TableRow
+                    sx={{
+                      "&:hover": {
+                        cursor: "pointer",
+                      },
+                    }}
+                    key={
+                      Array.isArray(asset)
+                        ? asset.map((a) => a.symbol).join("+")
+                        : asset.symbol
+                    }
+                    onClick={() => onRowClick(String(bondOfferId))}
+                  >
+                    <TableCell align="left">
+                      {Array.isArray(asset) && (
+                        <TokenPairAsset tokenIds={asset.map(({ id }) => id)} />
+                      )}
+                      {!Array.isArray(asset) && (
+                        <TokenAsset tokenId={asset.id} />
+                      )}
+                    </TableCell>
+                    <TableCell align="left">
+                      <Typography variant="body2">
+                        ${humanBalance(price)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="left">
+                      <Typography
+                        variant="body2"
+                        color={roi.lt(0) ? "error.main" : "featured.lemon"}
+                      >
+                        {roi.gt(0) ? "+" : ""}
+                        {humanBalance(roi)}%
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="left">
+                      <Typography variant="body2">${totalPurchased}</Typography>
+                    </TableCell>
+                  </TableRow>
+                );
+              }
+            )}
           </TableBody>
         </Table>
       </TableContainer>
