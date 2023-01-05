@@ -1,11 +1,4 @@
-import {
-  Arg,
-  Field,
-  InputType,
-  ObjectType,
-  Query,
-  Resolver,
-} from "type-graphql";
+import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { PabloSwap } from "../../model";
 import { getSpotPrice } from "../../dbHelper";
@@ -37,22 +30,15 @@ export class PabloSpotPriceResolver {
   constructor(private tx: () => Promise<EntityManager>) {}
 
   @Query(() => PabloSpotPrice)
-  async pabloSpotPrice(
-    @Arg("params", { validate: true }) input: PabloSpotPriceInput
-  ): Promise<PabloSpotPrice> {
+  async pabloSpotPrice(@Arg("params", { validate: true }) input: PabloSpotPriceInput): Promise<PabloSpotPrice> {
     const { baseAssetId, quoteAssetId, poolId } = input;
 
     const manager = await this.tx();
 
-    const spotPrice = await getSpotPrice(
-      manager,
-      baseAssetId,
-      quoteAssetId,
-      poolId
-    );
+    const spotPrice = await getSpotPrice(manager, baseAssetId, quoteAssetId, poolId);
 
     return {
-      spotPrice: spotPrice.toString(),
+      spotPrice: spotPrice.toString()
     };
   }
 }

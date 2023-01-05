@@ -1,11 +1,4 @@
-import {
-  Field,
-  FieldResolver,
-  ObjectType,
-  Query,
-  Resolver,
-  ResolverInterface,
-} from "type-graphql";
+import { Field, FieldResolver, ObjectType, Query, Resolver, ResolverInterface } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { Account, HistoricalLockedValue, LockedSource } from "../../model";
 
@@ -38,9 +31,7 @@ export class PabloOverviewStats {
 }
 
 @Resolver(() => PabloOverviewStats)
-export class PabloOverviewStatsResolver
-  implements ResolverInterface<PabloOverviewStats>
-{
+export class PabloOverviewStatsResolver implements ResolverInterface<PabloOverviewStats> {
   constructor(private tx: () => Promise<EntityManager>) {}
 
   @FieldResolver({ name: "totalValueLocked", defaultValue: 0 })
@@ -50,21 +41,18 @@ export class PabloOverviewStatsResolver
     const lockedValue = await manager.find(HistoricalLockedValue, {
       select: ["amount", "assetId"],
       where: {
-        source: LockedSource.Pablo,
-      },
+        source: LockedSource.Pablo
+      }
     });
 
-    const totalValueLocked = lockedValue.reduce<Record<string, bigint>>(
-      (acc, value) => {
-        acc[value.assetId] = (acc[value.assetId] || 0n) + value.amount;
-        return acc;
-      },
-      {}
-    );
+    const totalValueLocked = lockedValue.reduce<Record<string, bigint>>((acc, value) => {
+      acc[value.assetId] = (acc[value.assetId] || 0n) + value.amount;
+      return acc;
+    }, {});
 
     const tvlList: TVL[] = [];
 
-    Object.keys(totalValueLocked).forEach((assetId) => {
+    Object.keys(totalValueLocked).forEach(assetId => {
       const tvl = new TVL();
       tvl.assetId = assetId;
       tvl.amount = totalValueLocked[assetId];
@@ -87,35 +75,30 @@ export class PabloOverviewStatsResolver
   async averageLockMultiplier(): Promise<number> {
     const manager = await this.tx();
 
-    const averageLockMultiplier: { average_reward_multiplier: number }[] =
-      await manager.getRepository(Account).query(
-        `
+    const averageLockMultiplier: { average_reward_multiplier: number }[] = await manager.getRepository(Account).query(
+      `
         SELECT
             avg(reward_multiplier) as average_reward_multiplier
         FROM staking_position
         WHERE asset_id = '5'
       `
-      );
-
-    return Promise.resolve(
-      averageLockMultiplier?.[0]?.average_reward_multiplier || 0
     );
+
+    return Promise.resolve(averageLockMultiplier?.[0]?.average_reward_multiplier || 0);
   }
 
   @FieldResolver({ name: "averageLockTime", defaultValue: 0 })
   async averageLockTime(): Promise<number> {
     const manager = await this.tx();
 
-    const averageDuration: { average_duration: number }[] = await manager
-      .getRepository(Account)
-      .query(
-        `
+    const averageDuration: { average_duration: number }[] = await manager.getRepository(Account).query(
+      `
         SELECT
             avg(duration) as average_duration
         FROM staking_position
         WHERE asset_id = '5'
       `
-      );
+    );
 
     return Promise.resolve(averageDuration?.[0]?.average_duration || 0);
   }
@@ -128,7 +111,7 @@ export class PabloOverviewStatsResolver
         totalValueLocked: [],
         totalXPicaMinted: 0n,
         averageLockMultiplier: 0,
-        averageLockTime: 0,
+        averageLockTime: 0
       })
     );
   }

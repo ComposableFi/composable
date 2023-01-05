@@ -7,7 +7,7 @@ import {
   Query,
   Resolver,
   ResolverInterface,
-  Root,
+  Root
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
@@ -54,9 +54,9 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
       where: {
         timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS)),
         pool: {
-          id: daily.poolId,
-        },
-      },
+          id: daily.poolId
+        }
+      }
     });
 
     const totalSwap = latestSwaps.reduce((acc, swap) => {
@@ -70,16 +70,14 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
   async transactions(@Root() daily: PabloDaily): Promise<bigint> {
     const manager = await this.tx();
 
-    const latestTransactions = await manager
-      .getRepository(PabloTransaction)
-      .find({
-        where: {
-          timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS)),
-          pool: {
-            id: daily.poolId,
-          },
-        },
-      });
+    const latestTransactions = await manager.getRepository(PabloTransaction).find({
+      where: {
+        timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS)),
+        pool: {
+          id: daily.poolId
+        }
+      }
+    });
 
     return Promise.resolve(BigInt(latestTransactions.length));
   }
@@ -91,8 +89,8 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
     const latestFees = await manager.getRepository(PabloFee).find({
       where: {
         timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS)),
-        ...(daily.poolId && { pool: { id: daily.poolId } }),
-      },
+        ...(daily.poolId && { pool: { id: daily.poolId } })
+      }
     });
 
     const totalFees = latestFees.reduce((acc, fee) => {
@@ -108,8 +106,8 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
 
     const pool = await manager.getRepository(PabloPool).findOne({
       where: {
-        id: daily.poolId,
-      },
+        id: daily.poolId
+      }
     });
 
     if (!pool) {
@@ -120,9 +118,7 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
   }
 
   @Query(() => PabloDaily)
-  async pabloDaily(
-    @Arg("params", { validate: true }) input: PabloDailyInput
-  ): Promise<PabloDaily> {
+  async pabloDaily(@Arg("params", { validate: true }) input: PabloDailyInput): Promise<PabloDaily> {
     // Default values
     return Promise.resolve(
       new PabloDaily({
@@ -130,7 +126,7 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
         assetId: "",
         volume: 0n,
         transactions: 0n,
-        fees: 0n,
+        fees: 0n
       })
     );
   }

@@ -1,11 +1,4 @@
-import {
-  Field,
-  FieldResolver,
-  ObjectType,
-  Query,
-  Resolver,
-  ResolverInterface,
-} from "type-graphql";
+import { Field, FieldResolver, ObjectType, Query, Resolver, ResolverInterface } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { Event, Account, Activity, HistoricalLockedValue } from "../../model";
 
@@ -38,32 +31,25 @@ export class PicassoOverviewStats {
 }
 
 @Resolver(() => PicassoOverviewStats)
-export class PicassoOverviewStatsResolver
-  implements ResolverInterface<PicassoOverviewStats>
-{
+export class PicassoOverviewStatsResolver implements ResolverInterface<PicassoOverviewStats> {
   constructor(private tx: () => Promise<EntityManager>) {}
 
   @FieldResolver({ name: "totalValueLocked", defaultValue: 0 })
   async totalValueLocked(): Promise<PicassoTVL[]> {
     const manager = await this.tx();
 
-    const lockedValues = await manager
-      .getRepository(HistoricalLockedValue)
-      .find({
-        select: ["amount", "assetId"],
-      });
+    const lockedValues = await manager.getRepository(HistoricalLockedValue).find({
+      select: ["amount", "assetId"]
+    });
 
-    const totalValueLocked = lockedValues.reduce<Record<string, bigint>>(
-      (acc, value) => {
-        acc[value.assetId] = (acc[value.assetId] || 0n) + value.amount;
-        return acc;
-      },
-      {}
-    );
+    const totalValueLocked = lockedValues.reduce<Record<string, bigint>>((acc, value) => {
+      acc[value.assetId] = (acc[value.assetId] || 0n) + value.amount;
+      return acc;
+    }, {});
 
     const tvlList: PicassoTVL[] = [];
 
-    Object.keys(totalValueLocked).forEach((assetId) => {
+    Object.keys(totalValueLocked).forEach(assetId => {
       const tvl = new PicassoTVL();
       tvl.assetId = assetId;
       tvl.amount = totalValueLocked[assetId];
@@ -86,16 +72,14 @@ export class PicassoOverviewStatsResolver
   async accountHoldersCount(): Promise<number> {
     const manager = await this.tx();
 
-    const accounts: { accounts_count: number }[] = await manager
-      .getRepository(Account)
-      .query(
-        `
+    const accounts: { accounts_count: number }[] = await manager.getRepository(Account).query(
+      `
         SELECT
           count(*) as accounts_count
         FROM account
         LIMIT 1
       `
-      );
+    );
 
     return Promise.resolve(accounts?.[0]?.accounts_count || 0);
   }
@@ -104,16 +88,14 @@ export class PicassoOverviewStatsResolver
   async activeUsersCount(): Promise<number> {
     const manager = await this.tx();
 
-    const activeUsers: { active_users_count: number }[] = await manager
-      .getRepository(Activity)
-      .query(
-        `
+    const activeUsers: { active_users_count: number }[] = await manager.getRepository(Activity).query(
+      `
         SELECT
           count(distinct account_id) as active_users_count
         FROM activity
         WHERE timestamp > current_timestamp - interval '1 day'
       `
-      );
+    );
 
     return Promise.resolve(activeUsers?.[0]?.active_users_count || 0);
   }
@@ -126,7 +108,7 @@ export class PicassoOverviewStatsResolver
         totalValueLocked: [],
         transactionsCount: 0,
         accountHoldersCount: 0,
-        activeUsersCount: 0,
+        activeUsersCount: 0
       })
     );
   }

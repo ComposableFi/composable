@@ -1,8 +1,4 @@
-import {
-  EventHandlerContext,
-  SubstrateBlock,
-  SubstrateEvent,
-} from "@subsquid/substrate-processor";
+import { EventHandlerContext, SubstrateBlock, SubstrateEvent } from "@subsquid/substrate-processor";
 import { instance, mock } from "ts-mockito";
 import * as ss58 from "@subsquid/ss58";
 import { Store } from "@subsquid/typeorm-store";
@@ -12,17 +8,13 @@ import BigNumber from "bignumber.js";
 export const BOB = "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6";
 export const CHARLIE = "5wr4XcyxyJYQb71PbSPxhqujKnsS9UAydBhSypGvFgh2QXBa";
 
-export function createCtx(
-  storeMock: Store,
-  blockHeight: number
-): EventHandlerContext<Store, { event: true }> {
+export function createCtx(storeMock: Store, blockHeight: number): EventHandlerContext<Store, { event: true }> {
   const blockMock: SubstrateBlock = mock<SubstrateBlock>();
   blockMock.height = blockHeight;
   blockMock.timestamp = 123; // TODO: use better example
   const event: SubstrateEvent = mock<SubstrateEvent>();
   event.id = randomUUID();
-  const ctxMock: EventHandlerContext<Store, { event: true }> =
-    mock<EventHandlerContext<Store, { event: true }>>();
+  const ctxMock: EventHandlerContext<Store, { event: true }> = mock<EventHandlerContext<Store, { event: true }>>();
   const ctx: EventHandlerContext<Store, { event: true }> = instance(ctxMock);
   ctx.store = instance(storeMock);
   ctx.block = blockMock;
@@ -43,10 +35,7 @@ export function encodeAccount(account: Uint8Array): string {
 }
 
 // Get amount without decimals
-export function getAmountWithoutDecimals(
-  amount: bigint,
-  decimals: number
-): BigNumber {
+export function getAmountWithoutDecimals(amount: bigint, decimals: number): BigNumber {
   return BigNumber(amount.toString()).div(BigNumber(10 ** decimals));
 }
 

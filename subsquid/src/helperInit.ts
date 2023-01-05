@@ -3,9 +3,7 @@ import { DataSource } from "typeorm";
 import fs from "fs";
 import path from "path";
 
-const sqlInitScript = fs
-  .readFileSync(path.join(__dirname, "../dbInit.sql"))
-  .toString();
+const sqlInitScript = fs.readFileSync(path.join(__dirname, "../dbInit.sql")).toString();
 
 const AppDataSource = new DataSource({
   type: "postgres",
@@ -14,11 +12,11 @@ const AppDataSource = new DataSource({
   port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
   database: process.env.DB_NAME || "postgres",
   username: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASS || "postgres",
+  password: process.env.DB_PASS || "postgres"
 });
 
 AppDataSource.initialize()
-  .then(async (dataSource) => {
+  .then(async dataSource => {
     try {
       await dataSource.query(sqlInitScript);
     } finally {
@@ -30,12 +28,12 @@ AppDataSource.initialize()
       console.log("Helper functions successfully created.");
       process.exit(0);
     },
-    (err) => {
+    err => {
       console.error(err);
       process.exit(1);
     }
   )
-  .catch((err) => {
+  .catch(err => {
     console.error("Error during helper functions initialization", err);
     process.exit(1);
   });

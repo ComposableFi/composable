@@ -2,15 +2,8 @@ export function getStartAndStep(range: string): {
   startHoursAgo: number;
   step: number;
 } {
-  if (
-    range !== "day" &&
-    range !== "week" &&
-    range !== "month" &&
-    range !== "year"
-  ) {
-    throw new Error(
-      "Invalid range. It should be 'day', 'week', 'month' or 'year'."
-    );
+  if (range !== "day" && range !== "week" && range !== "month" && range !== "year") {
+    throw new Error("Invalid range. It should be 'day', 'week', 'month' or 'year'.");
   }
 
   let startHoursAgo: number;
@@ -41,7 +34,7 @@ export function getStartAndStep(range: string): {
 
   return {
     startHoursAgo,
-    step,
+    step
   };
 }
 
@@ -53,35 +46,22 @@ export function getRange(range: string): Date[] {
 
   if (range === "day") {
     for (let i = -22; i <= 0; i += 1) {
-      dates.push(
-        new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate(),
-          now.getHours() + i
-        )
-      );
+      dates.push(new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + i));
     }
   } else if (range === "week") {
     for (let i = -5; i <= 0; i += 1) {
-      dates.push(
-        new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, 0)
-      );
+      dates.push(new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, 0));
     }
   } else if (range === "month") {
     for (let i = -28; i <= 0; i += 1) {
-      dates.push(
-        new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, 0)
-      );
+      dates.push(new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, 0));
     }
   } else if (range === "year") {
     for (let i = -10; i <= 0; i += 1) {
       dates.push(new Date(now.getFullYear(), now.getMonth() + i, 1, 0));
     }
   } else {
-    throw new Error(
-      "Invalid range. It should be 'day', 'week', 'month' or 'year'."
-    );
+    throw new Error("Invalid range. It should be 'day', 'week', 'month' or 'year'.");
   }
 
   dates.push(now);

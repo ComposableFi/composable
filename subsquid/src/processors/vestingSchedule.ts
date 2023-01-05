@@ -1,21 +1,9 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
-import {
-  VestingSchedule as VestingScheduleType,
-  VestingScheduleIdSet,
-} from "../types/v10002";
-import {
-  EventType,
-  LockedSource,
-  Schedule,
-  ScheduleWindow,
-  VestingSchedule,
-} from "../model";
-import {
-  VestingClaimedEvent,
-  VestingVestingScheduleAddedEvent,
-} from "../types/events";
+import { VestingSchedule as VestingScheduleType, VestingScheduleIdSet } from "../types/v10002";
+import { EventType, LockedSource, Schedule, ScheduleWindow, VestingSchedule } from "../model";
+import { VestingClaimedEvent, VestingVestingScheduleAddedEvent } from "../types/events";
 import { encodeAccount } from "../utils";
 import { saveAccountAndEvent, storeHistoricalLockedValue } from "../dbHelper";
 
@@ -32,9 +20,7 @@ interface VestingScheduleAddedEvent {
  * Extract information about a VestingScheduleAdded event.
  * @param event
  */
-function getVestingScheduleAddedEvent(
-  event: VestingVestingScheduleAddedEvent
-): VestingScheduleAddedEvent {
+function getVestingScheduleAddedEvent(event: VestingVestingScheduleAddedEvent): VestingScheduleAddedEvent {
   return event.asV10002;
 }
 
@@ -67,8 +53,7 @@ export function createVestingSchedule(
   ctx: EventHandlerContext<Store>,
   event: VestingVestingScheduleAddedEvent
 ): VestingSchedule {
-  const { from, to, asset, schedule, scheduleAmount } =
-    getVestingScheduleAddedEvent(event);
+  const { from, to, asset, schedule, scheduleAmount } = getVestingScheduleAddedEvent(event);
 
   const fromAccount = encodeAccount(from);
   const toAccount = encodeAccount(to);
@@ -83,7 +68,7 @@ export function createVestingSchedule(
     schedule: createSchedule(schedule),
     totalAmount: scheduleAmount,
     fullyClaimed: false,
-    blockId: ctx.block.hash,
+    blockId: ctx.block.hash
   });
 }
 
@@ -94,19 +79,16 @@ export function createVestingSchedule(
  *  - Create event.
  * @param ctx
  */
-export async function processVestingScheduleAddedEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processVestingScheduleAddedEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Process VestingScheduleAdded");
   const event = new VestingVestingScheduleAddedEvent(ctx);
 
   const vestingSchedule = createVestingSchedule(ctx, event);
 
-  await saveAccountAndEvent(
-    ctx,
-    EventType.VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED,
-    [vestingSchedule.from, vestingSchedule.to]
-  );
+  await saveAccountAndEvent(ctx, EventType.VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED, [
+    vestingSchedule.from,
+    vestingSchedule.to
+  ]);
 
   await ctx.store.save(vestingSchedule);
 
@@ -132,9 +114,7 @@ interface VestingScheduleClaimedEvent {
  * Extracts information about a VestingClaimed event
  * @param event
  */
-function getVestingScheduleClaimedEvent(
-  event: VestingClaimedEvent
-): VestingScheduleClaimedEvent {
+function getVestingScheduleClaimedEvent(event: VestingClaimedEvent): VestingScheduleClaimedEvent {
   return event.asV10002;
 }
 
@@ -163,32 +143,22 @@ export function updatedClaimedAmount(
  *  - Set fullyClaimed when whole locked value has been claimed.
  * @param ctx
  */
-export async function processVestingClaimedEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processVestingClaimedEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Process Claimed");
   const event = new VestingClaimedEvent(ctx);
 
-  const { who, claimedAmountPerSchedule } =
-    getVestingScheduleClaimedEvent(event);
+  const { who, claimedAmountPerSchedule } = getVestingScheduleClaimedEvent(event);
 
-  await saveAccountAndEvent(
-    ctx,
-    EventType.VESTING_SCHEDULES_CLAIMED,
-    encodeAccount(who)
-  );
+  await saveAccountAndEvent(ctx, EventType.VESTING_SCHEDULES_CLAIMED, encodeAccount(who));
 
   for (let i = 0; i < claimedAmountPerSchedule.length; i += 1) {
     const [id, amount] = claimedAmountPerSchedule[i];
 
-    const schedule: VestingSchedule | undefined = await ctx.store.get(
-      VestingSchedule,
-      {
-        where: {
-          scheduleId: id,
-        },
+    const schedule: VestingSchedule | undefined = await ctx.store.get(VestingSchedule, {
+      where: {
+        scheduleId: id
       }
-    );
+    });
 
     if (!schedule) {
       // no-op

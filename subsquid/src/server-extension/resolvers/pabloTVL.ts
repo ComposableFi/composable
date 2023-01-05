@@ -1,11 +1,4 @@
-import {
-  Arg,
-  Field,
-  InputType,
-  ObjectType,
-  Query,
-  Resolver,
-} from "type-graphql";
+import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { HistoricalLockedValue, PabloPool } from "../../model";
 import { getRange } from "./common";
@@ -40,9 +33,7 @@ export class PabloTVLResolver {
   constructor(private tx: () => Promise<EntityManager>) {}
 
   @Query(() => [PabloTVL])
-  async pabloTVL(
-    @Arg("params", { validate: true }) input: PabloTVLInput
-  ): Promise<PabloTVL[]> {
+  async pabloTVL(@Arg("params", { validate: true }) input: PabloTVLInput): Promise<PabloTVL[]> {
     const { range, poolId } = input;
 
     const manager = await this.tx();
@@ -52,8 +43,8 @@ export class PabloTVLResolver {
       order: { timestamp: "DESC" },
       relations: {
         poolAssets: true,
-        poolAssetWeights: true,
-      },
+        poolAssetWeights: true
+      }
     });
 
     if (!pool) {
@@ -71,20 +62,17 @@ export class PabloTVLResolver {
         .createQueryBuilder()
         .select(`'${time}'`, "date")
         .addSelect("asset_id", "assetId")
-        .addSelect(
-          `coalesce(tvl('${time}', 'Pablo', '${pool.quoteAssetId}'), 0)`,
-          "totalValueLocked"
-        )
+        .addSelect(`coalesce(tvl('${time}', 'Pablo', '${pool.quoteAssetId}'), 0)`, "totalValueLocked")
         .getRawOne();
 
       lockedValues[time] = row.totalValueLocked;
     }
 
-    return Object.keys(lockedValues).map((date) => {
+    return Object.keys(lockedValues).map(date => {
       return new PabloTVL({
         date,
         totalValueLocked: lockedValues[date],
-        assetId: pool.quoteAssetId,
+        assetId: pool.quoteAssetId
       });
     });
   }

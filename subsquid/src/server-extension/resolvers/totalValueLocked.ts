@@ -1,11 +1,4 @@
-import {
-  Arg,
-  Field,
-  InputType,
-  ObjectType,
-  Query,
-  Resolver,
-} from "type-graphql";
+import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { HistoricalLockedValue, LockedSource } from "../../model";
 import { getRange } from "./common";
@@ -38,9 +31,7 @@ export class TotalValueLockedResolver {
   constructor(private tx: () => Promise<EntityManager>) {}
 
   @Query(() => [TotalValueLocked])
-  async totalValueLocked(
-    @Arg("params", { validate: true }) input: TotalValueLockedInput
-  ): Promise<TotalValueLocked[]> {
+  async totalValueLocked(@Arg("params", { validate: true }) input: TotalValueLockedInput): Promise<TotalValueLocked[]> {
     const { range, source } = input;
 
     const manager = await this.tx();
@@ -49,13 +40,10 @@ export class TotalValueLockedResolver {
     const timestamps = getRange(range);
 
     // Map timestamp to {assetId -> tvl}
-    const lockedValues: Record<
-      string,
-      Record<string, bigint>
-    > = timestamps.reduce((acc, timestamp) => {
+    const lockedValues: Record<string, Record<string, bigint>> = timestamps.reduce((acc, timestamp) => {
       return {
         ...acc,
-        [timestamp.toISOString()]: {},
+        [timestamp.toISOString()]: {}
       };
     }, {});
 
@@ -68,7 +56,7 @@ export class TotalValueLockedResolver {
           .where("value.source = :source", { source: lockedSource })
           .groupBy("value.assetId")
           .getRawMany()
-      ).map((row) => row.assetId);
+      ).map(row => row.assetId);
 
       for (const assetId of assetIds) {
         for (const timestamp of timestamps) {
@@ -78,23 +66,18 @@ export class TotalValueLockedResolver {
             .createQueryBuilder()
             .select(`'${time}'`, "date")
             .addSelect("asset_id", "assetId")
-            .addSelect(
-              `coalesce(tvl('${time}', '${lockedSource}', '${assetId}'), 0)`,
-              "totalValueLocked"
-            )
+            .addSelect(`coalesce(tvl('${time}', '${lockedSource}', '${assetId}'), 0)`, "totalValueLocked")
             .getRawOne();
 
           lockedValues[time] = {
             ...(lockedValues[time] ?? {}),
-            [assetId]:
-              (lockedValues?.[time]?.[assetId] || 0n) +
-              BigInt(row.totalValueLocked),
+            [assetId]: (lockedValues?.[time]?.[assetId] || 0n) + BigInt(row.totalValueLocked)
           };
         }
       }
     }
 
-    return Object.keys(lockedValues).map((date) => {
+    return Object.keys(lockedValues).map(date => {
       const tvl: PicassoTVL[] = [];
       for (const assetId in lockedValues[date]) {
         tvl.push({ assetId, amount: lockedValues[date][assetId] });
@@ -102,7 +85,7 @@ export class TotalValueLockedResolver {
 
       return new TotalValueLocked({
         date,
-        lockedValues: tvl,
+        lockedValues: tvl
       });
     });
   }

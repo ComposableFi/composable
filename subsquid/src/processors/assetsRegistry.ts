@@ -5,10 +5,7 @@ import { getHistoricalAssetPrice } from "./oracle";
 import { Asset, HistoricalAssetPrice } from "../model";
 import { chain } from "../config";
 import { XcmAssetLocation } from "../types/v10002";
-import {
-  AssetsRegistryAssetRegisteredEvent,
-  AssetsRegistryAssetUpdatedEvent,
-} from "../types/events";
+import { AssetsRegistryAssetRegisteredEvent, AssetsRegistryAssetUpdatedEvent } from "../types/events";
 
 interface AssetRegisteredEvent {
   assetId: bigint;
@@ -21,15 +18,11 @@ interface AssetUpdatedEvent {
   location: XcmAssetLocation;
 }
 
-function getAssetRegisteredEvent(
-  event: AssetsRegistryAssetRegisteredEvent
-): AssetRegisteredEvent {
+function getAssetRegisteredEvent(event: AssetsRegistryAssetRegisteredEvent): AssetRegisteredEvent {
   return event.asV10002;
 }
 
-function getAssetUpdatedEvent(
-  event: AssetsRegistryAssetUpdatedEvent
-): AssetUpdatedEvent {
+function getAssetUpdatedEvent(event: AssetsRegistryAssetUpdatedEvent): AssetUpdatedEvent {
   return event.asV10002;
 }
 
@@ -42,9 +35,7 @@ function getAssetUpdatedEvent(
  * sudo account
  * @param ctx
  */
-export async function processAssetRegisteredEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processAssetRegisteredEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Process AssetsRegistry.AssetRegistered event");
   const event = new AssetsRegistryAssetRegisteredEvent(ctx);
   const assetRegisteredEvent = getAssetRegisteredEvent(event);
@@ -72,16 +63,12 @@ export async function processAssetRegisteredEvent(
     eventId: ctx.event.id,
     price,
     decimals,
-    blockId: ctx.block.hash,
+    blockId: ctx.block.hash
   });
 
   await ctx.store.save(asset);
 
-  const historicalAssetPrice: HistoricalAssetPrice = getHistoricalAssetPrice(
-    ctx,
-    asset,
-    price
-  );
+  const historicalAssetPrice: HistoricalAssetPrice = getHistoricalAssetPrice(ctx, asset, price);
 
   await ctx.store.save(historicalAssetPrice);
 }
@@ -94,9 +81,7 @@ export async function processAssetRegisteredEvent(
  * sudo account
  * @param ctx
  */
-export async function processAssetUpdatedEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processAssetUpdatedEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Process AssetsRegistry.AssetUpdated event");
   const event = new AssetsRegistryAssetUpdatedEvent(ctx);
   const assetUpdatedEvent = getAssetUpdatedEvent(event);
@@ -104,8 +89,8 @@ export async function processAssetUpdatedEvent(
 
   const asset: Asset | undefined = await ctx.store.get(Asset, {
     where: {
-      id: assetId.toString(),
-    },
+      id: assetId.toString()
+    }
   });
 
   if (!asset) {

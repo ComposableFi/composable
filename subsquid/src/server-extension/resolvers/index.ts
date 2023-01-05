@@ -19,5 +19,5 @@ export {
   StakingRewardsStatsResolver,
   PabloSpotPriceResolver,
   PabloDailyResolver,
-  PabloTVLResolver,
+  PabloTVLResolver
 };

@@ -78,10 +78,8 @@ export class AssetsResolver {
     // Query the closest historical prices for each asset that are older than the threshold (24h),
     // and the oldest prices that are newer than the threshold. This will allow the data to be
     // populated when a new asset has been recently added, and therefore has not enough data yet.
-    const historicalAssetPrices: HistoricalPrice[] = await manager
-      .getRepository(HistoricalAssetPrice)
-      .query(
-        `
+    const historicalAssetPrices: HistoricalPrice[] = await manager.getRepository(HistoricalAssetPrice).query(
+      `
             SELECT *
             FROM historical_asset_price
             WHERE timestamp IN (
@@ -99,32 +97,24 @@ export class AssetsResolver {
                 GROUP BY asset_id
             )
         `
-      );
+    );
 
     // Prepare data and format for returning.
-    const historicalPrices = historicalAssetPrices.reduce<
-      Record<string, AssetData>
-    >((acc, curr) => {
+    const historicalPrices = historicalAssetPrices.reduce<Record<string, AssetData>>((acc, curr) => {
       const price = BigInt(assetsPrices?.[curr.asset_id] || curr.price);
       const prevPrice = BigInt(curr.price);
       // When getting 2 entries for the same asset, it will keep the oldest, which
       // represents the price of the asset before the 24h threshold.
       // Otherwise, it will use the oldest available price from the last 24 hours.
-      if (
-        !acc[curr.asset_id] ||
-        acc[curr.asset_id].timestamp > curr.timestamp
-      ) {
+      if (!acc[curr.asset_id] || acc[curr.asset_id].timestamp > curr.timestamp) {
         acc[curr.asset_id] = {
           id: curr.asset_id,
           eventId: curr.event_id,
           timestamp: curr.timestamp,
           price,
           prevPrice,
-          change:
-            prevPrice > 0
-              ? Number((100n * (price - prevPrice)) / prevPrice)
-              : null, // avoid error if dividing by zero
-          currency: curr.currency.toString(),
+          change: prevPrice > 0 ? Number((100n * (price - prevPrice)) / prevPrice) : null, // avoid error if dividing by zero
+          currency: curr.currency.toString()
         };
       }
 

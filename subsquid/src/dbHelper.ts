@@ -14,20 +14,17 @@ import {
   PabloAssetWeight,
   PabloPool,
   PabloPoolAsset,
-  PabloSwap,
+  PabloSwap
 } from "./model";
 
-export async function getLatestPoolByPoolId(
-  store: Store,
-  poolId: bigint
-): Promise<PabloPool | undefined> {
+export async function getLatestPoolByPoolId(store: Store, poolId: bigint): Promise<PabloPool | undefined> {
   return store.get<PabloPool>(PabloPool, {
     where: { id: poolId.toString() },
     order: { timestamp: "DESC" },
     relations: {
       poolAssets: true,
-      poolAssetWeights: true,
-    },
+      poolAssetWeights: true
+    }
   });
 }
 
@@ -53,7 +50,7 @@ export async function getOrCreateAccount(
   }
 
   let account: Account | undefined = await ctx.store.get(Account, {
-    where: { id: accId },
+    where: { id: accId }
   });
 
   if (!account) {
@@ -76,10 +73,7 @@ export async function getOrCreateAccount(
  * @param ctx
  * @param eventType
  */
-export async function saveEvent(
-  ctx: EventHandlerContext<Store>,
-  eventType: EventType
-): Promise<Event> {
+export async function saveEvent(ctx: EventHandlerContext<Store>, eventType: EventType): Promise<Event> {
   const accountId: string = ctx.event.extrinsic?.signature?.address.value
     ? encodeAccount(hexToU8a(ctx.event.extrinsic?.signature?.address.value))
     : ctx.event.extrinsic?.signature?.address;
@@ -91,7 +85,7 @@ export async function saveEvent(
     eventType,
     blockNumber: BigInt(ctx.block.height),
     timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash,
+    blockId: ctx.block.hash
   });
 
   // Store event
@@ -106,17 +100,13 @@ export async function saveEvent(
  * @param event
  * @param accountId
  */
-export async function saveActivity(
-  ctx: EventHandlerContext<Store>,
-  event: Event,
-  accountId: string
-): Promise<string> {
+export async function saveActivity(ctx: EventHandlerContext<Store>, event: Event, accountId: string): Promise<string> {
   const activity = new Activity({
     id: randomUUID(),
     event,
     accountId,
     timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash,
+    blockId: ctx.block.hash
   });
 
   await ctx.store.save(activity);
@@ -139,8 +129,7 @@ export async function saveAccountAndEvent(
   eventType: EventType,
   accountId?: string | string[]
 ): Promise<{ accounts: Account[]; event: Event }> {
-  const accountIds: (string | undefined)[] =
-    typeof accountId === "string" ? [accountId] : accountId || [];
+  const accountIds: (string | undefined)[] = typeof accountId === "string" ? [accountId] : accountId || [];
 
   const event = await saveEvent(ctx, eventType);
 
@@ -190,8 +179,8 @@ export async function storeHistoricalLockedValue(
           where: {
             source,
             assetId: assetId.toString(),
-            sourceEntityId,
-          },
+            sourceEntityId
+          }
         })
       )?.accumulatedAmount || 0n;
 
@@ -204,7 +193,7 @@ export async function storeHistoricalLockedValue(
       source,
       assetId,
       sourceEntityId,
-      blockId: ctx.block.hash,
+      blockId: ctx.block.hash
     });
 
     await ctx.store.save(historicalLockedValue);
@@ -226,18 +215,18 @@ export async function getOrCreatePabloAsset(
     where: {
       assetId,
       pool: {
-        id: pool.id,
-      },
-    },
+        id: pool.id
+      }
+    }
   });
   if (!pabloAsset) {
     const weight = await ctx.store.get(PabloAssetWeight, {
       where: {
         assetId,
         pool: {
-          id: pool.id,
-        },
-      },
+          id: pool.id
+        }
+      }
     });
     pabloAsset = new PabloPoolAsset({
       id: randomUUID(),
@@ -246,7 +235,7 @@ export async function getOrCreatePabloAsset(
       totalLiquidity: BigInt(0),
       totalVolume: BigInt(0),
       blockId: ctx.block.hash,
-      weight: weight?.weight || 0,
+      weight: weight?.weight || 0
     });
   }
   return Promise.resolve(pabloAsset);
@@ -266,18 +255,18 @@ export async function getSpotPrice(
           baseAssetId,
           quoteAssetId,
           pool: {
-            id: poolId,
-          },
-        },
+            id: poolId
+          }
+        }
       })
     : await ctx.store.get(PabloSwap, {
         where: {
           baseAssetId,
           quoteAssetId,
           pool: {
-            id: poolId,
-          },
-        },
+            id: poolId
+          }
+        }
       });
 
   const swap2 = isRepository
@@ -286,18 +275,18 @@ export async function getSpotPrice(
           baseAssetId: quoteAssetId,
           quoteAssetId: baseAssetId,
           pool: {
-            id: poolId,
-          },
-        },
+            id: poolId
+          }
+        }
       })
     : await ctx.store.get(PabloSwap, {
         where: {
           baseAssetId: quoteAssetId,
           quoteAssetId: baseAssetId,
           pool: {
-            id: poolId,
-          },
-        },
+            id: poolId
+          }
+        }
       });
 
   const timestamp1 = swap1?.timestamp;
@@ -316,57 +305,48 @@ export async function getSpotPrice(
     const baseWhere = {
       assetId: baseAssetId,
       pool: {
-        id: poolId,
-      },
+        id: poolId
+      }
     };
     const baseAsset = isRepository
       ? await ctx.getRepository(PabloPoolAsset).findOne({
-          where: baseWhere,
+          where: baseWhere
         })
       : await ctx.store.findOne(PabloPoolAsset, { where: baseWhere });
 
     const quoteWhere = {
       assetId: baseAssetId,
       pool: {
-        id: poolId,
-      },
+        id: poolId
+      }
     };
     const quoteAsset = isRepository
       ? await ctx.getRepository(PabloPoolAsset).findOne({
-          where: quoteWhere,
+          where: quoteWhere
         })
       : await ctx.store.findOne(PabloPoolAsset, { where: quoteWhere });
 
     if (!baseAsset || !quoteAsset) {
-      throw new Error(
-        "No liquidity data for this pool. Can't compute spot price."
-      );
+      throw new Error("No liquidity data for this pool. Can't compute spot price.");
     }
 
     const baseAssetWeight = isRepository
       ? await ctx.getRepository(PabloAssetWeight).findOne({
-          where: baseWhere,
+          where: baseWhere
         })
       : await ctx.store.findOne(PabloAssetWeight, { where: baseWhere });
 
     const quoteAssetWeight = isRepository
       ? await ctx.getRepository(PabloAssetWeight).findOne({
-          where: baseWhere,
+          where: baseWhere
         })
       : await ctx.store.findOne(PabloAssetWeight, { where: quoteWhere });
 
     const weightRatio =
-      baseAssetWeight?.weight && quoteAssetWeight?.weight
-        ? baseAssetWeight.weight / quoteAssetWeight.weight
-        : 1;
+      baseAssetWeight?.weight && quoteAssetWeight?.weight ? baseAssetWeight.weight / quoteAssetWeight.weight : 1;
 
-    return (
-      divideBigInts(quoteAsset.totalLiquidity, baseAsset.totalLiquidity) *
-      weightRatio
-    );
+    return divideBigInts(quoteAsset.totalLiquidity, baseAsset.totalLiquidity) * weightRatio;
   }
 
-  return baseAssetId === swap.baseAssetId
-    ? Number(swap.spotPrice)
-    : 1 / Number(swap.spotPrice);
+  return baseAssetId === swap.baseAssetId ? Number(swap.spotPrice) : 1 / Number(swap.spotPrice);
 }
