@@ -454,7 +454,7 @@ export async function processSwappedEvent(
   );
 
   const pabloFee = new PabloFee({
-    id: randomUUID(),
+    id: ctx.event.id,
     event,
     pool,
     assetId: pool.baseAssetId,
