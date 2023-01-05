@@ -43,6 +43,7 @@ use orml_traits::{parameter_type_with_key, LockIdentifier};
 // TODO: consider moving this to shared runtime
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
+use alloc::string::ToString;
 use common::{
 	fees::{
 		multi_existential_deposits, NativeExistentialDeposit, PriceConverter, WeightToFeeConverter,
@@ -66,10 +67,7 @@ use composable_traits::{
 use cosmwasm::instrument::CostRules;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
-use sp_core::{
-	crypto::{KeyTypeId, Ss58Codec},
-	OpaqueMetadata,
-};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	generic, impl_opaque_keys,
 	traits::{
@@ -1094,17 +1092,28 @@ parameter_types! {
 pub struct AccountToAddr;
 impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		AccountId32::from_str(&a).map_err(|_| ())
+		if let Some(hex_account) = a.strip_prefix("0x") {
+			let account = hex::decode(hex_account).map_err(|_| ())?;
+			let account = <[u8; 32]>::try_from(account).map_err(|_| ())?;
+			Ok(account.into())
+		} else {
+			let account =
+				ibc_primitives::runtime_interface::ss58_to_account_id_32(&a).map_err(|_| ())?;
+			Ok(account.into())
+		}
 	}
 }
 impl Convert<AccountId, alloc::string::String> for AccountToAddr {
 	fn convert(a: AccountId) -> alloc::string::String {
-		a.to_ss58check()
+		// TODO(aeryz): Although this function is internally infallible, it returns
+		// a result. This needs to be fixed before this PR to get merged.
+		let account = ibc_primitives::runtime_interface::account_id_to_ss58(a.into()).unwrap();
+		String::from_utf8_lossy(account.as_slice()).to_string()
 	}
 }
 impl Convert<Vec<u8>, Result<AccountId, ()>> for AccountToAddr {
 	fn convert(a: Vec<u8>) -> Result<AccountId, ()> {
-		Ok(AccountId32::new(a.try_into().map_err(|_| ())?))
+		Ok(<[u8; 32]>::try_from(a).map_err(|_| ())?.into())
 	}
 }
 
