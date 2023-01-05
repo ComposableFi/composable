@@ -8,16 +8,13 @@ You can find more details on how to move assets to the Statemine in this [articl
 [article from Polkadot]: https://support.polkadot.network/support/solutions/articles/65000181634-how-to-withdraw-usdt-from-bitfinex-on-statemine
 
 :::note
-USDT is a sufficient asset, which means you don't need KSM in your Statemine account to receive USDT.
-
-However, you do need KSM in the Statemine account in order to send USDT, since the transaction fees are paid in KSM. 
-To learn how to teleport KSM to Statemine, [please read this article].
+USDT is a “sufficient” asset, which means you don't need KSM in your Statemine account to receive USDT.
+However, you do need KSM in the Statemine account in order to transfer USDT, since transaction fees are paid in KSM.
+The process is the same as for USDT transfers from Bitfinex to Statemine.
 :::
 
-[please read this article]: https://support.polkadot.network/support/solutions/articles/65000181119
-
 Watch the video for our guide here: https://youtu.be/SmTsDK1pI3Q
-Read our guides on how to create and connect a wallet the [Talisman] or [Polkadot.js] on Picasso.
+Read our guides on how to create and connect a [Talisman] or [Polkadot.js] wallet on Picasso.
 
 ![picasso_homepage](./picasso-homepage.png)
 
@@ -26,7 +23,7 @@ Read our guides on how to create and connect a wallet the [Talisman] or [Polkado
 1. Make sure your wallet is connected to Picasso by clicking the button “Wallets” in the top right corner. 
    If a wallet is already connected it reads “Connected”, 
    just make sure that in this case the intended wallet for the transfer is connected.
-2. You should watch out that your Statemine and Picasso wallet have “Keep alive” toggle enabled. More about that later.
+2. You should watch out that you have “Keep alive” toggle enabled. More about that later.
 3. Click “Transfers” in the main menu to the left.
 
 ## Transfer Details
