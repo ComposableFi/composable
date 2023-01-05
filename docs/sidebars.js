@@ -265,6 +265,8 @@ const sidebars = {
                 },
                 'user-guides/claim-rewards-guide',
                 'user-guides/polkassembly-picasso-governance',
+                'user-guides/trade-on-pablo',
+                'user-guides/pablo-provide-liquidity'
             ]
         },
         {
