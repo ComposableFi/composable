@@ -11,11 +11,14 @@ import {
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
-import { PabloFee, PabloSwap, PabloTransaction } from "../../model";
+import { PabloFee, PabloPool, PabloSwap, PabloTransaction } from "../../model";
 import { DAY_IN_MS } from "./common";
 
 @ObjectType()
 export class PabloDaily {
+  @Field(() => String, { nullable: false })
+  assetId!: string;
+
   @Field(() => BigInt, { nullable: false })
   volume!: bigint;
 
@@ -42,6 +45,23 @@ export class PabloDailyInput {
 @Resolver(() => PabloDaily)
 export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
   constructor(private tx: () => Promise<EntityManager>) {}
+
+  @FieldResolver({ name: "assetId" })
+  async assetId(@Root() daily: PabloDaily): Promise<string> {
+    const manager = await this.tx();
+
+    const pool = await manager.getRepository(PabloPool).findOne({
+      where: {
+        id: daily.poolId,
+      },
+    });
+
+    if (!pool) {
+      throw new Error("Pool not found");
+    }
+
+    return Promise.resolve(pool.baseAssetId);
+  }
 
   @FieldResolver({ name: "volume", defaultValue: 0n })
   async volume(@Root() daily: PabloDaily): Promise<bigint> {
@@ -107,6 +127,7 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
         volume: 0n,
         transactions: 0n,
         fees: 0n,
+        assetId: "",
       })
     );
   }
