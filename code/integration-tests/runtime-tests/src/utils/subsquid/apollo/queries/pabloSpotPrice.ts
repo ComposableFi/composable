@@ -7,9 +7,9 @@ export type PabloSpotPrice = {
 };
 
 export const PABLO_SPOT_PRICE = gql`
-    query pabloSpotPrice($baseAssetId: String!, $quoteAssetId: String!, $poolId: String!) {
-        pabloSpotPrice(params: { baseAssetId: $baseAssetId, quoteAssetId: $quoteAssetId, poolId: $poolId }) {
-            spotPrice
-        }
+  query pabloSpotPrice($baseAssetId: String!, $quoteAssetId: String!, $poolId: String!) {
+    pabloSpotPrice(params: { baseAssetId: $baseAssetId, quoteAssetId: $quoteAssetId, poolId: $poolId }) {
+      spotPrice
     }
+  }
 `;
