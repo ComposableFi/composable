@@ -6,6 +6,7 @@ export type PabloDaily = {
     transactions: bigint;
     fees: bigint;
     poolId?: string;
+    assetId: string;
   };
 };
 
@@ -16,6 +17,7 @@ export const PABLO_DAILY = gql`
       transactions
       fees
       poolId
+      assetId
     }
   }
 `;
