@@ -86,35 +86,37 @@ in rec {
       ++ builtins.filter (flag: !(builtins.elem flag mandatory-flags)) flags;
     };
 
-  mk-shared-security-network = { parachains, relaychain }: {
-    parachains = mk-parachains parachains;
-    relaychain = mk-relaychain relaychain;
-    hrmpChannels = let
-      map = builtins.map;
-      filter = builtins.filter;
-      ids = map (x: x.id) parachains;
-      cross = pkgs.lib.cartesianProductOfSets {
-        sender = ids;
-        recipient = ids;
-      };
-      unique = filter (x: x.sender != x.recipient) cross;
-    in map (connection: {
-      sender = connection.sender;
-      recipient = connection.recipient;
-      maxCapacity = 8;
-      maxMessageSize = 16384;
-    }) unique;
-    genesis = {
-      runtime = {
-        runtime_genesis_config = {
-          configuration = {
-            config = {
-              validation_upgrade_frequency = 2;
-              validation_upgrade_delay = 2;
+  mk-shared-security-network =
+    { parachains, relaychain, sessionLengthInBlocks ? 100 }: {
+      parachains = mk-parachains parachains;
+      relaychain = mk-relaychain relaychain;
+      hrmpChannels = let
+        map = builtins.map;
+        filter = builtins.filter;
+        ids = map (x: x.id) parachains;
+        cross = pkgs.lib.cartesianProductOfSets {
+          sender = ids;
+          recipient = ids;
+        };
+        unique = filter (x: x.sender != x.recipient) cross;
+      in map (connection: {
+        sender = connection.sender;
+        recipient = connection.recipient;
+        maxCapacity = 8;
+        maxMessageSize = 16384;
+      }) unique;
+      genesis = {
+        runtime = {
+          runtime_genesis_config = {
+            configuration = {
+              config = {
+                validation_upgrade_frequency = 2;
+                validation_upgrade_delay = 2;
+              };
             };
           };
         };
+        session_length_in_blocks = sessionLengthInBlocks;
       };
     };
-  };
 }

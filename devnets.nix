@@ -24,6 +24,7 @@
       devnet-dali-centauri-1 = (pkgs.callPackage devnetTools.mk-devnet {
         inherit (packages) polkadot-launch composable-node polkadot-node;
         chain-spec = "dali-dev";
+        sessionLengthInBlocks = 10;
       }).script;
 
       devnet-dali-centauri-2 = (pkgs.callPackage devnetTools.mk-devnet {
@@ -31,6 +32,7 @@
         network-config-path =
           ./scripts/polkadot-launch/rococo-local-dali-dev-2.nix;
         chain-spec = "dali-dev";
+        sessionLengthInBlocks = 10;
       }).script;
 
       # Centauri Persistent Devnet

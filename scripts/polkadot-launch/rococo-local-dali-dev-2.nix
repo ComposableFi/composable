@@ -4,7 +4,7 @@
 # more structured and portable and officially endorsed by parity
 # so with nix it is easier to build own (nix+curl+websocket)
 
-{ pkgs, polkadot-bin, composable-bin }:
+{ pkgs, polkadot-bin, composable-bin, sessionLengthInBlocks ? 100 }:
 with pkgs;
 let builder = pkgs.callPackage ./network-builder.nix { };
 in {
@@ -43,5 +43,6 @@ in {
         "--enable-offchain-indexing=true"
       ];
     }];
+    inherit sessionLengthInBlocks;
   };
 }

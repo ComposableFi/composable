@@ -5,11 +5,13 @@
       mk-devnet = { lib, writeTextFile, writeShellApplication
         , useGlobalChainSpec ? true, polkadot-launch, composable-node
         , polkadot-node, chain-spec, network-config-path ?
-          ./scripts/polkadot-launch/rococo-local-dali-dev.nix }:
+          ./scripts/polkadot-launch/rococo-local-dali-dev.nix
+        , sessionLengthInBlocks ? 100 }:
         let
           original-config = (pkgs.callPackage network-config-path {
             polkadot-bin = polkadot-node;
             composable-bin = composable-node;
+            inherit sessionLengthInBlocks;
           }).result;
 
           patched-config = if useGlobalChainSpec then

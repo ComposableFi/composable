@@ -1,5 +1,5 @@
 # obsolete
-{ pkgs, polkadot-bin, composable-bin }:
+{ pkgs, polkadot-bin, composable-bin, sessionLengthInBlocks ? 100 }:
 with pkgs;
 let builder = pkgs.callPackage ./network-builder.nix { };
 in {
@@ -37,5 +37,6 @@ in {
         "--log=runtime::contracts=debug"
       ];
     }];
+    inherit sessionLengthInBlocks;
   };
 }
