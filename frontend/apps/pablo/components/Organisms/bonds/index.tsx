@@ -1,6 +1,6 @@
-import { AllBondTable } from "@/components/Organisms/AllBondTable";
-import { YourBondTable } from "@/components/Organisms/YourBondTable";
 import { Box, BoxProps, Grid, Typography } from "@mui/material";
+import { YourBondTable } from "@/components/Organisms/YourBondTable";
+import { AllBondTable } from "@/components/Organisms/AllBondTable";
 import { BoxWrapper } from "../BoxWrapper";
 
 const standardPageSize = {
