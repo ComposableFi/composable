@@ -13,8 +13,8 @@ However, you do need KSM in the Statemine account in order to transfer USDT, sin
 The process is the same as for USDT transfers from Bitfinex to Statemine.
 :::
 
-Watch the video for our guide here: https://youtu.be/SmTsDK1pI3Q
 Read our guides on how to create and connect a [Talisman] or [Polkadot.js] wallet on Picasso.
+Watch the video of the following our guide here: https://youtu.be/SmTsDK1pI3Q
 
 ![picasso_homepage](./picasso-homepage.png)
 
