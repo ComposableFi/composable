@@ -28,9 +28,7 @@ import {
 } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { EventRecord } from "@polkadot/types/interfaces/system/types";
-import { addLiquidityToPoolViaPablo, toChainUnits } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
-import { setUiState } from "@/store/ui/ui.slice";
 import { useAssetIdOraclePrice } from "@/defi/hooks";
 
 const labelProps = (
@@ -119,44 +117,6 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
     setSelectable({ currentStep: 2 });
   };
 
-  const addLiquidity = async (poolId: number) => {
-    if (
-      parachainApi &&
-      signer !== undefined &&
-      selectedAccount &&
-      executor &&
-      selectedAccount
-    ) {
-      const { address } = selectedAccount;
-
-      const call = addLiquidityToPoolViaPablo(
-        parachainApi,
-        poolId,
-        toChainUnits(liquidity.baseAmount).toString(),
-        toChainUnits(liquidity.quoteAmount).toString()
-      );
-
-      executor.execute(
-        call,
-        selectedAccount.address,
-        parachainApi,
-        signer,
-        (txHash: string) => {
-          console.log("Add Liq Tx Hash: ", txHash);
-        },
-        (txHash: string, events) => {
-          setUiState({ isConfirmingModalOpen: false });
-          console.log("Add Liq Tx Hash: ", txHash);
-          resetSlice();
-        },
-        (errorMessage: string) => {
-          setUiState({ isConfirmingModalOpen: false });
-          console.log("Add Liq Error: ", errorMessage);
-        }
-      );
-    }
-  };
-
   const onCreateFinalized = (
     txHash: string,
     events: EventRecord[]
@@ -176,7 +136,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
           poolCreated.event.data &&
           poolCreated.event.data.length
         ) {
-          addLiquidity(poolCreated.event.data[0]);
+          // TODO: Insert ADD LIQUIDITY here
         }
       }
     }
@@ -296,7 +256,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
               <Typography variant="body2" color="text.secondary">
                 Etherscan
               </Typography>
-              <Link href="/frontend/apps/pablo/pages" target="_blank">
+              <Link href="/" target="_blank">
                 <OpenInNewRounded color="primary" />
               </Link>
             </Box>

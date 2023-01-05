@@ -6,25 +6,31 @@ export function getAssetTree(
   leftAssetWithBalance: AssetWithBalance,
   rightAssetWithBalance: AssetWithBalance
 ) {
-  const leftId = leftAssetWithBalance.asset.getPicassoAssetId()?.toString() ?? "";
-  const rightId = rightAssetWithBalance.asset.getPicassoAssetId()?.toString() ?? "";
+  const leftId =
+    leftAssetWithBalance.asset.getPicassoAssetId()?.toString() ?? "";
+  const rightId =
+    rightAssetWithBalance.asset.getPicassoAssetId()?.toString() ?? "";
 
   const left = {
     [leftId]: toChainUnits(
-      leftAssetWithBalance.balance,
+      leftAssetWithBalance.balance.dp(
+        leftAssetWithBalance.asset.getDecimals(DEFAULT_NETWORK_ID) ?? 12
+      ),
       leftAssetWithBalance.asset.getDecimals(DEFAULT_NETWORK_ID)
-    ).toString()
+    ).toString(),
   };
   const right = {
     [rightId]: toChainUnits(
-      rightAssetWithBalance.balance,
+      rightAssetWithBalance.balance.dp(
+        rightAssetWithBalance.asset.getDecimals(DEFAULT_NETWORK_ID) ?? 12
+      ),
       rightAssetWithBalance.asset.getDecimals(DEFAULT_NETWORK_ID)
-    ).toString()
+    ).toString(),
   };
 
   const out = {
     ...left,
-    ...right
+    ...right,
   };
 
   return Object.keys(out).length === 2 ? option.some(out) : option.none;

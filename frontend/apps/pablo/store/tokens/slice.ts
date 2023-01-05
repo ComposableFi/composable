@@ -37,9 +37,17 @@ const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
             state.substrateTokens.tokens[identifier as TokenId].setApi(
               tokenMetadata.picasso.api
             );
+
             state.substrateTokens.tokens[identifier as TokenId].setDecimals(
               "picasso",
               listItem.decimals
+            );
+
+            state.substrateTokens.tokens[
+              identifier as TokenId
+            ].setExistentialDeposit("picasso", listItem.existentialDeposit);
+            state.substrateTokens.tokens[identifier as TokenId].setRatio(
+              listItem.ratio
             );
           }
         });
