@@ -2,9 +2,21 @@
 
 The Statemine parachain acts as the issuer of fungible and non-fungible tokens on Kusama, 
 this means if you want to transfer non-native assets on Kusama to use on Picasso, 
-they first need to be transferred from the Statemine to your Picasso wallet. 
-Watch the video for this guide here: https://youtu.be/SmTsDK1pI3Q
+they first need to be transferred from the Statemine to your Picasso wallet.
+You can find more details on how to move assets to the Statemine in this [article from Polkadot].
 
+[article from Polkadot]: https://support.polkadot.network/support/solutions/articles/65000181634-how-to-withdraw-usdt-from-bitfinex-on-statemine
+
+:::note
+USDT is a sufficient asset, which means you don't need KSM in your Statemine account to receive USDT.
+
+However, you do need KSM in the Statemine account in order to send USDT, since the transaction fees are paid in KSM. 
+To learn how to teleport KSM to Statemine, [please read this article].
+:::
+
+[please read this article]: https://support.polkadot.network/support/solutions/articles/65000181119
+
+Watch the video for our guide here: https://youtu.be/SmTsDK1pI3Q
 Read our guides on how to create and connect a wallet the [Talisman] or [Polkadot.js] on Picasso.
 
 ![picasso_homepage](./picasso-homepage.png)

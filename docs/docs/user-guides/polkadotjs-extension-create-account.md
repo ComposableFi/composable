@@ -52,9 +52,8 @@ On the next page, fill in the form as follows:
 
 ![account_credentials](./account-credentials.png)
 
-1. Select the network you will use with the account. In this case, we choose Picasso. 
-   Making dedicated wallets for networks means you will not need to change the account display format regularly 
-   to be valid for a specific chain. 
+1. Select the network you will use with the account.
+   In this case, we simply choose to use it on any DotSama chain.
    For more details on how accounts work in Polkadot/Kusama, please read the Polkadot documentation.
 2. Add a display name for the account (e.g., Picasso)
 3. Set a password. You will sign transactions with this password. Please note: 
