@@ -13,38 +13,37 @@ aligned incentives for token holders, and sustainable yields for liquidity provi
 
 ![transaction_details](./images-trade-on-pablo/transaction-details.jpg)
 
-3. Select the token you would like to trade for PICA, currently, USDT or KSM can be traded for PICA.
-
 ![token_select](./images-trade-on-pablo/token-select.png)
 
-4. Once you have specified an amount for the selected pair you want to trade, press ‘Swap’
-
-![transaction_swap](./images-trade-on-pablo/transaction-swap.png)
-
-Note: By clicking the ‘settings’ ⚙️’ icon, users can adjust their slippage tolerance and set a transaction deadline.
+3. Select the token you would like to trade for PICA, currently, USDT or KSM can be traded for PICA.
 
 ![transaction_settings](./images-trade-on-pablo/transaction-settings.png)
 
-5. A pop-up asking for confirmation to swap will appear, press ‘Confirm Swap’.
+Note: By clicking the ‘settings’ ⚙️’ icon, users can adjust their slippage tolerance and set a transaction deadline.
+
+Slippage: The difference between the expected price of a trade and the price at which the trade is executed. 
+When a large order is executed but there isn't enough volume at the chosen price to maintain the current bid/ask spread.
+
+Transaction Deadline: The amount of time the transaction stays “alive” to be processed on chain. 
+High network load can cause extended processing time leading to changes in market details for ongoing transaction.
+
+![transaction_swap](./images-trade-on-pablo/transaction-swap.png)
+
+4. Once you have specified an amount for the selected pair you want to trade, press ‘Swap’
 
 ![confirm_swap](./images-trade-on-pablo/confirm-swap.png)
 
-6. Depending on whether you are using Talisman or Polkadot.js, you will be asked to sign the transaction.
+5. A pop-up asking for confirmation to swap will appear, press ‘Confirm Swap’.
 
 ![transaction_sign](./images-trade-on-pablo/transaction-sign.jpg)
+
+6. You will be asked to sign the transaction using your password.
+
+![transaction_initiated](./images-trade-on-pablo/transaction-initiated.png)
 
 7. Once the transaction has been signed, a ‘Swap Transaction Initiated’ message will appear and after a few seconds, 
     your trade should be completed.
 
-![transaction_initiated](./images-trade-on-pablo/transaction-initiated.png)
-
-8. Once your transaction is complete, a 'Swap Transaction Finalized' message will appear to confirm the transaction.
-
 ![transaction finalized](./images-trade-on-pablo/transaction-finalized.png)
 
-You can see an overview of multiple wallets and transactions 
-from an early iteration of the proxy wallet we are designing for the XCVM. 
-The Proxy Wallet aims to provide a frictionless interface for users 
-looking to take advantage of cross-chain opportunities.
-
-![wallet_overview](./images-trade-on-pablo/wallet-overview.jpg)
+8. Once your transaction is complete, a 'Swap Transaction Finalized' message will appear to confirm the transaction.
