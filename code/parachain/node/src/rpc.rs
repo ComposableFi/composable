@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 use common::OpaqueBlock;
 use pallet_ibc_runtime_api::IbcRuntimeApi;
-use primitives::CurrencyId;
+use primitives::currency::CurrencyId;
 pub use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool::FullPool;
 use sp_api::{ProvideRuntimeApi, StateBackend};
