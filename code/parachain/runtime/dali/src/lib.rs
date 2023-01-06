@@ -1088,7 +1088,6 @@ parameter_types! {
 }
 
 /// Native <-> Cosmwasm account mapping
-/// TODO(hussein-aitlahcen): Probably nicer to have SS58 representation here.
 pub struct AccountToAddr;
 impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
@@ -1105,9 +1104,7 @@ impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
 }
 impl Convert<AccountId, alloc::string::String> for AccountToAddr {
 	fn convert(a: AccountId) -> alloc::string::String {
-		// TODO(aeryz): Although this function is internally infallible, it returns
-		// a result. This needs to be fixed before this PR to get merged.
-		let account = ibc_primitives::runtime_interface::account_id_to_ss58(a.into()).unwrap();
+		let account = ibc_primitives::runtime_interface::account_id_to_ss58(a.into(), 49);
 		String::from_utf8_lossy(account.as_slice()).to_string()
 	}
 }
