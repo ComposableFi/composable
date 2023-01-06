@@ -23,7 +23,7 @@ pub fn aggregate_tests(tests_module_path: &str) {
 	let ast = match read_module_file(vec![tests_module_path.to_string()]) {
 		Ok(ast) => ast,
 		Err(path) => {
-			println!("cargo:rerun-if-changed=src/{path}*");
+			rerun_if_changed(&path, true);
 			return
 		},
 	};
@@ -34,7 +34,7 @@ pub fn aggregate_tests(tests_module_path: &str) {
 			.filter_map(|item| to_output(item, "testing".to_string()))
 			.collect::<Result<Vec<_>, _>>()
 		else {
-			println!("cargo:rerun-if-changed=src/{tests_module_path}*");
+			rerun_if_changed(tests_module_path, true);
 			return;
 		};
 
@@ -59,7 +59,11 @@ pub fn aggregate_tests(tests_module_path: &str) {
 	)
 	.unwrap();
 
-	println!("cargo:rerun-if-changed=src/{tests_module_path}*");
+	rerun_if_changed(tests_module_path, true);
+}
+
+fn rerun_if_changed(path: &str, glob: bool) {
+	println!("cargo:rerun-if-changed=src/{}{}", path, if glob { "*" } else { "" });
 }
 
 fn read_module_file(paths: Vec<String>) -> Result<syn::File, String> {
