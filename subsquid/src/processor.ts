@@ -22,11 +22,6 @@ import {
   processVestingClaimedEvent,
   processVestingScheduleAddedEvent,
 } from "./processors/vestingSchedule";
-// import { processOraclePriceChanged } from "./processors/oracle";
-import {
-  processAssetRegisteredEvent,
-  processAssetUpdatedEvent,
-} from "./processors/assetsRegistry";
 
 const processor = new SubstrateProcessor(new TypeormDatabase());
 
@@ -105,14 +100,14 @@ processor.addEventHandler("Vesting.Claimed", processVestingClaimedEvent);
 //
 // processor.addEventHandler("Oracle.PriceChanged", processOraclePriceChanged);
 
-processor.addEventHandler(
-  "AssetsRegistry.AssetRegistered",
-  processAssetRegisteredEvent
-);
-
-processor.addEventHandler(
-  "AssetsRegistry.AssetUpdated",
-  processAssetUpdatedEvent
-);
+// processor.addEventHandler(
+//   "AssetsRegistry.AssetRegistered",
+//   processAssetRegisteredEvent
+// );
+//
+// processor.addEventHandler(
+//   "AssetsRegistry.AssetUpdated",
+//   processAssetUpdatedEvent
+// );
 
 processor.run();

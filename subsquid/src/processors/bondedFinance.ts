@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import {
   BondedFinanceNewBondEvent,
   BondedFinanceNewOfferEvent,
-  BondedFinanceOfferCancelledEvent,
+  BondedFinanceOfferCancelledEvent
 } from "../types/events";
 import { BondedFinanceBondOffer, EventType } from "../model";
 import { saveAccountAndEvent } from "../dbHelper";
@@ -28,9 +28,7 @@ interface OfferCancelledEvent {
  * Extract relevant information about a bond offer.
  * @param event
  */
-export function getNewOfferEvent(
-  event: BondedFinanceNewOfferEvent
-): NewOfferEvent {
+export function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEvent {
   return event.asV10002;
 }
 
@@ -38,9 +36,7 @@ export function getNewOfferEvent(
  * Extract relevant information about a new bond.
  * @param event
  */
-export function getNewBondEvent(
-  event: BondedFinanceNewBondEvent
-): NewBondEvent {
+export function getNewBondEvent(event: BondedFinanceNewBondEvent): NewBondEvent {
   const { offerId, nbOfBonds } = event.asV10002;
   return { offerId, nbOfBonds };
 }
@@ -49,9 +45,7 @@ export function getNewBondEvent(
  * Extract relevant information about a new bond.
  * @param event
  */
-export function getOfferCancelledEvent(
-  event: BondedFinanceOfferCancelledEvent
-): OfferCancelledEvent {
+export function getOfferCancelledEvent(event: BondedFinanceOfferCancelledEvent): OfferCancelledEvent {
   return event.asV10002;
 }
 
@@ -73,6 +67,7 @@ export function getNewBondOffer(
     totalPurchased: BigInt(0),
     beneficiary: encodeAccount(beneficiary),
     cancelled: false,
+    blockId: ctx.block.hash
   });
 }
 
@@ -84,9 +79,7 @@ export function getNewBondOffer(
  *   - Create Activity.
  * @param ctx
  */
-export async function processNewOfferEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processNewOfferEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Process NewOffer");
   // TODO: check why not triggered
   const event = new BondedFinanceNewOfferEvent(ctx);
@@ -100,16 +93,19 @@ export async function processNewOfferEvent(
 
 /**
  * Based on the event, update the BondedFinanceBondOffer.
+ * @param ctx
  * @param stored
  * @param event
  */
 export function updateBondOffer(
+  ctx: EventHandlerContext<Store>,
   stored: BondedFinanceBondOffer,
   event: BondedFinanceNewBondEvent
 ): void {
   const { nbOfBonds } = getNewBondEvent(event);
 
   stored.totalPurchased += nbOfBonds;
+  stored.blockId = ctx.block.id;
 }
 
 /**
@@ -117,16 +113,14 @@ export function updateBondOffer(
  * - Update database with new bond information.
  * @param ctx
  */
-export async function processNewBondEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processNewBondEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Process NewBond");
   const event = new BondedFinanceNewBondEvent(ctx);
   const { offerId } = getNewBondEvent(event);
 
   // Get stored information (when possible) about the bond offer.
   const stored = await ctx.store.get(BondedFinanceBondOffer, {
-    where: { offerId: offerId.toString() },
+    where: { offerId: offerId.toString() }
   });
 
   if (!stored?.id) {
@@ -134,7 +128,7 @@ export async function processNewBondEvent(
   }
 
   // If offerId is already stored, add to total amount purchased.
-  updateBondOffer(stored, event);
+  updateBondOffer(ctx, stored, event);
 
   await ctx.store.save(stored);
 
@@ -144,10 +138,12 @@ export async function processNewBondEvent(
 /**
  * Cancel the bond offer.
  *  - Set `cancelled` to true.
+ * @param ctx
  * @param stored
  */
-export function cancelBondOffer(stored: BondedFinanceBondOffer): void {
+export function cancelBondOffer(ctx: EventHandlerContext<Store>, stored: BondedFinanceBondOffer): void {
   stored.cancelled = true;
+  stored.blockId = ctx.block.id;
 }
 
 /**
@@ -155,16 +151,14 @@ export function cancelBondOffer(stored: BondedFinanceBondOffer): void {
  *  - Set bond offer as `cancelled`
  * @param ctx
  */
-export async function processOfferCancelledEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processOfferCancelledEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Process OfferCancelled");
   const event = new BondedFinanceOfferCancelledEvent(ctx);
   const { offerId } = getOfferCancelledEvent(event);
 
   // Get stored information (when possible) about the bond offer.
   const stored = await ctx.store.get(BondedFinanceBondOffer, {
-    where: { offerId: offerId.toString() },
+    where: { offerId: offerId.toString() }
   });
 
   if (!stored?.id) {
@@ -172,7 +166,7 @@ export async function processOfferCancelledEvent(
   }
 
   // Set bond offer as `cancelled`.
-  cancelBondOffer(stored);
+  cancelBondOffer(ctx, stored);
 
   // Save bond offer.
   await ctx.store.save(stored);

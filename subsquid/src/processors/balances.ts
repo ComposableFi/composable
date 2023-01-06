@@ -1,10 +1,6 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
-import {
-  BalancesDepositEvent,
-  BalancesTransferEvent,
-  BalancesWithdrawEvent,
-} from "../types/events";
+import { BalancesDepositEvent, BalancesTransferEvent, BalancesWithdrawEvent } from "../types/events";
 import { encodeAccount } from "../utils";
 import { saveAccountAndEvent } from "../dbHelper";
 import { EventType } from "../model";
@@ -45,9 +41,7 @@ function getDepositEvent(event: BalancesDepositEvent): WithdrawEvent {
  *   - Create Activity
  * @param ctx
  */
-export async function processTransferEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processTransferEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Process transfer");
   const event = new BalancesTransferEvent(ctx);
   const transferEvent = getTransferEvent(event);
@@ -64,9 +58,7 @@ export async function processTransferEvent(
  *   - Create Activity.
  * @param ctx
  */
-export async function processWithdrawEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processWithdrawEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Process withdraw");
   const evt = new BalancesWithdrawEvent(ctx);
   const event = getWithdrawEvent(evt);
@@ -82,9 +74,7 @@ export async function processWithdrawEvent(
  *   - Create Activity.
  * @param ctx
  */
-export async function processDepositEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processDepositEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Process deposit");
   const evt = new BalancesDepositEvent(ctx);
   const event = getDepositEvent(evt);

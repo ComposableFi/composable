@@ -291,7 +291,7 @@ describe("Vesting schedule added", () => {
         undefined
       );
 
-      updatedClaimedAmount(vestingSchedule, amount);
+      updatedClaimedAmount(ctx, vestingSchedule, amount);
 
       assertVestingSchedule(
         vestingSchedule,
@@ -335,7 +335,7 @@ describe("Vesting schedule added", () => {
       undefined
     );
 
-    updatedClaimedAmount(vestingSchedule, amount);
+    updatedClaimedAmount(ctx, vestingSchedule, amount);
 
     assertVestingSchedule(
       vestingSchedule,

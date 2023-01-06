@@ -61,4 +61,10 @@ export class VestingSchedule {
      */
     @Column_("bool", {nullable: false})
     fullyClaimed!: boolean
+
+    /**
+     * Last updated block id
+     */
+    @Column_("text", {nullable: false})
+    blockId!: string
 }

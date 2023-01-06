@@ -1,11 +1,4 @@
-import {
-  Arg,
-  Field,
-  InputType,
-  ObjectType,
-  Query,
-  Resolver,
-} from "type-graphql";
+import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { HistoricalVolume } from "../../model";
 import { getStartAndStep } from "./common";
@@ -34,9 +27,7 @@ export class TotalVolumeResolver {
   constructor(private tx: () => Promise<EntityManager>) {}
 
   @Query(() => [TotalVolume])
-  async totalVolume(
-    @Arg("params", { validate: true }) input: TotalVolumeInput
-  ): Promise<TotalVolume[]> {
+  async totalVolume(@Arg("params", { validate: true }) input: TotalVolumeInput): Promise<TotalVolume[]> {
     const { range } = input;
 
     const { startHoursAgo, step } = getStartAndStep(range);
@@ -72,10 +63,10 @@ export class TotalVolumeResolver {
     );
 
     return rows.map(
-      (row) =>
+      row =>
         new TotalVolume({
           date: new Date(row.period).toISOString(),
-          totalVolume: BigInt(row.total_volume),
+          totalVolume: BigInt(row.total_volume)
         })
     );
   }

@@ -35,4 +35,10 @@ export class HistoricalAssetPrice {
 
     @Column_("varchar", {length: 3, nullable: false})
     currency!: Currency
+
+    /**
+     * Last updated block id
+     */
+    @Column_("text", {nullable: false})
+    blockId!: string
 }
