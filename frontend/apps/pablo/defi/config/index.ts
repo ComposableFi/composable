@@ -46,4 +46,4 @@ export const DEFI_CONFIG = {
       range: "year",
     },
   ],
-} as const;
+};

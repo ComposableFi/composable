@@ -66,7 +66,7 @@ export function fetchPabloOverviewStatsTVL() {
       await fetchSubsquid<{
         pabloOverviewStats: PabloOverviewStats;
       }>(queryPabloOverviewStatsTVL(), true),
-    () => ({ pabloOverviewStats: null })
+    () => ({ pabloOverviewStats: { totalValueLocked: [] } })
   );
 }
 

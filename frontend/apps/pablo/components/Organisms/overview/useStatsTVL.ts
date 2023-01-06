@@ -35,7 +35,7 @@ export const useStatsTVL = () => {
         )
       )
     );
-  }, []);
+  }, [getTokenById, picaPrice]);
 
   return [totalValueLocked, statsLoading] as const;
 };

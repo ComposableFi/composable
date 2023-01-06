@@ -80,7 +80,7 @@ const usePoolDailyStats = (poolId: string) => {
         )
       );
     }
-  }, [hasFetchedPools, hasFetchedTokens]);
+  }, [getTokenById, hasFetchedPools, hasFetchedTokens, picaPrice, poolId]);
 
   return {
     isLoading,

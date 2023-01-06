@@ -21,7 +21,7 @@ export function usePabloHistoricalTotalValueLocked(): {
   isLoading: boolean;
 } {
   const [selectedInterval, setSelectedInterval] = useState<Range>(
-    DEFI_CONFIG.swapChartIntervals[0].range
+    DEFI_CONFIG.swapChartIntervals[0].range as Range
   );
   const hasFetchedTokens = useStore(
     (store) => store.substrateTokens.hasFetchedTokens

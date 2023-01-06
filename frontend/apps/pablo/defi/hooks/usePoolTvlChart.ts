@@ -9,6 +9,7 @@ import { fetchPabloTVLChartForPool } from "@/defi/subsquid/pools/queries";
 import { parseLockedValue } from "@/components/Organisms/overview/parseLockedValue";
 import { usePicaPriceDiscovery } from "@/defi/hooks/overview/usePicaPriceDiscovery";
 import BigNumber from "bignumber.js";
+import { Range } from "@/defi/subsquid/overview";
 
 export const usePoolTvlChart = (poolId: string) => {
   const getTokenById = useStore((store) => store.substrateTokens.getTokenById);
@@ -28,7 +29,9 @@ export const usePoolTvlChart = (poolId: string) => {
     if (hasFetchedTokens && hasFetchedPools && picaPrice.gt(0)) {
       const task = pipe(
         TE.fromIO(() => setIsLoading(true)),
-        TE.chain(fetchPabloTVLChartForPool(poolId, selectedInterval.range)),
+        TE.chain(
+          fetchPabloTVLChartForPool(poolId, selectedInterval.range as Range)
+        ),
         TE.chainFirst(() => TE.fromIO(() => setIsLoading(false)))
       );
 
