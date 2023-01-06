@@ -26,7 +26,7 @@ signal-hook = "0.3.13"
 signal-hook-tokio = { version = "0.3.1", features = ["futures-v0_3"] }
 sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 subxt = "0.22.0"
-tokio = { version = "1.18.0", features = ["full"] }
+tokio = { version = "1.23.1", features = ["full"] }
 tokio-stream = "0.1.8"
 url = "1.7.2"
 warp = "0.3.2"

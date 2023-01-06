@@ -29,4 +29,4 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 subxt = { git = "https://github.com/paritytech/subxt", rev = "2fe9a1446d32b93a10804db3304ccaac65f764b8" }
-tokio = { version = "1.8", features = ["rt-multi-thread", "macros", "time"] }
+tokio = { version = "1.23", features = ["rt-multi-thread", "macros", "time"] }
