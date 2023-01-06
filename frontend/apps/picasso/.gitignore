@@ -45,3 +45,6 @@ public/sw.js
 eslint_report.json
 
 .firebase/
+
+# Sentry
+.sentryclirc

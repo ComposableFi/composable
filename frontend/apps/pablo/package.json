@@ -24,6 +24,7 @@
     "@mui/material": "^5.5.2",
     "@polkadot/api": "^9.6.2",
     "@polkadot/util": "^10.1.6",
+    "@sentry/nextjs": "^7.29.0",
     "@svgr/webpack": "^6.1.2",
     "@web3-react/core": "^6.1.9",
     "@web3-react/injected-connector": "^6.0.7",

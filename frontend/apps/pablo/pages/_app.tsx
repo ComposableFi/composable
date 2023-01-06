@@ -1,7 +1,6 @@
 import "defi-interfaces";
 
 import * as React from "react";
-import { hotjar } from "react-hotjar";
 import { AppProps } from "next/app";
 import { ThemeProvider } from "@mui/material/styles";
 import { CacheProvider, EmotionCache } from "@emotion/react";
@@ -18,7 +17,6 @@ import BaseUpdater from "@/updaters/BaseUpdater";
 import * as definitions from "defi-interfaces/definitions";
 import { SnackbarProvider } from "notistack";
 import { ThemeResponsiveSnackbar } from "@/components";
-import { SNACKBAR_TIMEOUT_DURATION } from "@/constants";
 import { getEnvironment } from "shared/endpoints";
 
 const rpc = Object.keys(definitions)
@@ -53,26 +51,6 @@ interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache;
 }
 
-const initializeContentful = async () => {
-  // const {fields} = await getEntry({
-  //   id: "[ENTER_ENTRY_ID_TO_FETCH_JSON_FROM_CONTENTFUL]"
-  // });
-  // console.log(fields);
-};
-
-const initializeHotjar = () => {
-  if (
-    process.env.NODE_ENV === "production" &&
-    process.env.NEXT_PUBLIC_HOTJAR_ID &&
-    process.env.NEXT_PUBLIC_HOTJAR_SITE_ID
-  ) {
-    hotjar.initialize(
-      parseInt(process.env.NEXT_PUBLIC_HOTJAR_ID),
-      parseInt(process.env.NEXT_PUBLIC_HOTJAR_SITE_ID)
-    );
-  }
-};
-
 export default function MyApp(props: MyAppProps) {
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
   const [mode, setMode] = React.useState<"light" | "dark">("dark");
@@ -86,11 +64,6 @@ export default function MyApp(props: MyAppProps) {
   );
 
   const theme = React.useMemo(() => createTheme(mode), [mode]);
-
-  React.useEffect(initializeHotjar, []);
-  React.useEffect(() => {
-    initializeContentful();
-  }, []);
 
   return (
     <CacheProvider value={emotionCache}>

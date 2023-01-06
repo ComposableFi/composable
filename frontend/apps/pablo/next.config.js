@@ -4,7 +4,7 @@ const withPWA = require("next-pwa")({
   skipWaiting: true, // Turn this to false once you're ready to deploy a banner to develop update prompt.
   mode: process.env.NODE_ENV === "production" ? "production" : "development", // This will create worker-box production build.
 });
-
+const { withSentryConfig } = require("@sentry/nextjs");
 const withTM = require("next-transpile-modules")([
   "@polkadot/react-identicon",
   "substrate-react",
@@ -17,6 +17,15 @@ const withTM = require("next-transpile-modules")([
 ]);
 
 const nextConfig = {
+  sentry: {
+    // Use `hidden-source-map` rather than `source-map` as the Webpack `devtool`
+    // for client-side builds. (This will be the default starting in
+    // `@sentry/nextjs` version 8.0.0.) See
+    // https://webpack.js.org/configuration/devtool/ and
+    // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/#use-hidden-source-map
+    // for more information.
+    hideSourceMaps: true,
+  },
   images: {
     unoptimized: true,
   },
@@ -40,4 +49,4 @@ const nextConfig = {
   },
 };
 
-module.exports = withPWA(withTM(nextConfig));
+module.exports = withSentryConfig(withPWA(withTM(nextConfig)));

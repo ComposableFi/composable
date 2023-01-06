@@ -19,7 +19,6 @@ import Head from "next/head";
 import { SnackbarProvider } from "notistack";
 
 import * as React from "react";
-import { hotjar } from "react-hotjar";
 import { getEnvironment } from "shared/endpoints";
 import { DotSamaContextProvider, ExecutorProvider } from "substrate-react";
 // Client-side cache, shared for the whole session of the user in the browser.
@@ -29,25 +28,6 @@ interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache;
 }
 
-const initializeContentful = async () => {
-  // const {fields} = await getEntry({
-  //   id: "[ENTER_ENTRY_ID_TO_FETCH_JSON_FROM_CONTENTFUL]"
-  // });
-  // console.log(fields);
-};
-
-const initializeHotjar = () => {
-  if (
-    process.env.NODE_ENV === "production" &&
-    process.env.NEXT_PUBLIC_HOTJAR_ID &&
-    process.env.NEXT_PUBLIC_HOTJAR_SITE_ID
-  ) {
-    hotjar.initialize(
-      parseInt(process.env.NEXT_PUBLIC_HOTJAR_ID),
-      parseInt(process.env.NEXT_PUBLIC_HOTJAR_SITE_ID)
-    );
-  }
-};
 const rpc = Object.keys(definitions)
   .filter((k) => {
     if (!(definitions as any)[k].rpc) {
@@ -85,11 +65,6 @@ export default function MyApp(props: MyAppProps) {
   );
 
   const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
-
-  React.useEffect(initializeHotjar, []);
-  React.useEffect(() => {
-    initializeContentful();
-  }, []);
 
   return (
     <CacheProvider value={emotionCache}>
