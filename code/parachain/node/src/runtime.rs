@@ -3,10 +3,11 @@ use common::{AccountId, Balance, Index, OpaqueBlock};
 use cosmwasm_rpc::{Cosmwasm, CosmwasmApiServer};
 use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApiServer};
 use cumulus_primitives_core::CollectCollationInfo;
+use ibc_rpc::{IbcApiServer, IbcRpcHandler};
 use lending_rpc::{Lending, LendingApiServer};
 use pablo_rpc::{Pablo, PabloApiServer};
-use pallet_ibc_rpc::{IbcApiServer, IbcRpcHandler};
 use pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi;
+use primitives::currency::CurrencyId;
 use sp_api::{ApiExt, Metadata, StateBackend};
 use sp_block_builder::BlockBuilder;
 use sp_consensus_aura::{sr25519, AuraApi};
@@ -247,7 +248,7 @@ define_trait! {
 		}
 	}
 
-	mod centauri_rpc {
+	mod ibc {
 		pub trait ExtendWithIbcApi {
 			fn extend_with_ibc_api(io, deps) ;
 		}
