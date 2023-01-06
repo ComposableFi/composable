@@ -20,7 +20,4 @@ pub enum Error {
 
     #[error("{0}")]
     ToolNotInstalled(String),
-
-    #[error("Extrinsic didn't return an error but it also didn't emit the expected event.")]
-    ExpectedEventNotEmitted,
 }
