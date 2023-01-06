@@ -1,4 +1,4 @@
-import { useTheme } from "@mui/material";
+import { Skeleton, useTheme } from "@mui/material";
 import { Chart } from "@/components";
 import { DEFI_CONFIG } from "@/defi/config";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
@@ -7,8 +7,13 @@ import { useMemo } from "react";
 
 export const TVLChart = ({}) => {
   const theme = useTheme();
-  const { chartSeries, setSelectedInterval, selectedInterval, durationLabels } =
-    usePabloHistoricalTotalValueLocked();
+  const {
+    chartSeries,
+    setSelectedInterval,
+    selectedInterval,
+    durationLabels,
+    isLoading,
+  } = usePabloHistoricalTotalValueLocked();
 
   const change = useMemo(() => {
     if (chartSeries.length === 0) return 0;
@@ -18,6 +23,10 @@ export const TVLChart = ({}) => {
 
     return (tail - head) / tail;
   }, [chartSeries]);
+
+  if (isLoading) {
+    return <Skeleton variant="rounded" width="100%" height="512px" />;
+  }
 
   return (
     <HighlightBox>
@@ -38,7 +47,7 @@ export const TVLChart = ({}) => {
         }}
         currentInterval={selectedInterval}
         onIntervalChange={setSelectedInterval}
-        intervals={DEFI_CONFIG.swapChartIntervals.map((x) => x.symbol)}
+        intervals={DEFI_CONFIG.swapChartIntervals.map((x) => x.range)}
         timeSlots={durationLabels}
       />
     </HighlightBox>

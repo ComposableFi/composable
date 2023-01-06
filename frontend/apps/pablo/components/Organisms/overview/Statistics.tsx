@@ -1,8 +1,9 @@
-import { Grid, Typography } from "@mui/material";
+import { Grid, Skeleton, Typography } from "@mui/material";
 import { GridProps } from "@mui/system";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
 import BigNumber from "bignumber.js";
 import { FC } from "react";
+import { useStatsTVL } from "@/components/Organisms/overview/useStatsTVL";
 
 const twoColumns = {
   xs: 12,
@@ -32,16 +33,20 @@ const Item: FC<ItemProps> = ({ label, value }) => {
 };
 
 export const Statistics: FC<GridProps> = ({ ...gridProps }) => {
-  const totalValueLocked = new BigNumber(0);
+  const [totalValueLocked, statsLoading] = useStatsTVL();
   const tradingVolume24hrs = new BigNumber(0);
 
   return (
     <Grid container spacing={3} {...gridProps}>
       <Grid item {...twoColumns}>
-        <Item
-          label="Total value locked"
-          value={`$${totalValueLocked.toFormat()}`}
-        />
+        {statsLoading ? (
+          <Skeleton width="100%" height="133px" variant="rounded" />
+        ) : (
+          <Item
+            label="Total value locked"
+            value={`$${totalValueLocked.toFormat(2)}`}
+          />
+        )}
       </Grid>
       <Grid item {...twoColumns}>
         <Item
