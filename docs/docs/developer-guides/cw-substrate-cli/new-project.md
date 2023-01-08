@@ -13,7 +13,7 @@ cargo install cargo-generate
 Then run the `new` command:
 
 ```sh
-cw-substrate-cli new --name get-started --author $(whoami) --description "Get started with CosmWasm"
+cw-substrate-cli new --name get-started --description "Get started with CosmWasm"
 ```
 
 As you can see, the tool created a project for you. Let's skim through the project structure really quickly.

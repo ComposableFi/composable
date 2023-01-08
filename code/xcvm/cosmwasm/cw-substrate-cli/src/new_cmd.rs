@@ -5,7 +5,6 @@ use std::process::Command;
 
 const CARGO_GENERATE_COMMAND_NAME: &str = "generate";
 const CARGO_TEMPLATE_KEY_PROJECT_DESCRIPTION: &str = "project_description";
-const CARGO_TEMPLATE_KEY_PROJECT_AUTHORS: &str = "project_authors";
 const CARGO_TEMPLATE_GIT: &str = "https://github.com/ComposableFi/cw-template-project";
 const CARGO_GENERATE_HELP_MESSAGE: &str = r#"
 cargo-generate is not installed. Please install it by running `cargo install cargo-generate`.
@@ -22,10 +21,6 @@ pub struct NewCommand {
 	/// Project description
 	#[arg(short, long)]
 	description: Option<String>,
-
-	/// Project authors
-	#[arg(short, long)]
-	author: Option<String>,
 }
 
 impl NewCommand {
@@ -44,12 +39,6 @@ impl NewCommand {
 			let _ = command
 				.arg("-d")
 				.arg(&format!("{}={}", CARGO_TEMPLATE_KEY_PROJECT_DESCRIPTION, description));
-		}
-
-		if let Some(author) = self.author {
-			let _ = command
-				.arg("-d")
-				.arg(&format!("{}={}", CARGO_TEMPLATE_KEY_PROJECT_AUTHORS, author));
 		}
 
 		let status = command.status()?;
