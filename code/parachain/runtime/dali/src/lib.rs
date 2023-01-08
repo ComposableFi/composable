@@ -1091,15 +1091,9 @@ parameter_types! {
 pub struct AccountToAddr;
 impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		if let Some(hex_account) = a.strip_prefix("0x") {
-			let account = hex::decode(hex_account).map_err(|_| ())?;
-			let account = <[u8; 32]>::try_from(account).map_err(|_| ())?;
-			Ok(account.into())
-		} else {
-			let account =
-				ibc_primitives::runtime_interface::ss58_to_account_id_32(&a).map_err(|_| ())?;
-			Ok(account.into())
-		}
+		let account =
+			ibc_primitives::runtime_interface::ss58_to_account_id_32(&a).map_err(|_| ())?;
+		Ok(account.into())
 	}
 }
 impl Convert<AccountId, alloc::string::String> for AccountToAddr {
