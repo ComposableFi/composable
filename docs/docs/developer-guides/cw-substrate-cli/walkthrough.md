@@ -29,7 +29,7 @@ Output:
 
 ## Instantiating the contract
 
-Next step is to instantiate the contract, so that we have an instance of the contract that we can execute and query. The upload command returned a code ID. This code
+The next step is to instantiate the contract so that we have an instance of the contract that we can execute and query. The upload command returned a code ID. This code
 ID is used to identify the wasm binary (compiled CosmWasm contract). We will use this code ID to instantiate the contract from.
 
 We want to use the following configurations to instantiate the contract:
@@ -38,7 +38,7 @@ We want to use the following configurations to instantiate the contract:
 - Salt: Just a random salt.
 - Label: Let's say that it is "our-fancy-cw20base-contract".
 - Maximum gas: We don't care, let's set it to `10000000000`
-- Instantiate message: Let's instantiate a PICA token and give initial balance to Bob's account
+- Instantiate message: Let's instantiate a PICA token and give some initial balance to Bob's account
 ```json
 {
   "name": "Picasso",
@@ -61,13 +61,13 @@ So the command will be:
 cw-substrate-cli substrate -c ws://127.0.0.1:9988 -n alice \
     tx instantiate \
     -c 1 \
-    -s randomsalt \
+    -s random-salt \
     -l our-fancy-cw20base-contract \
     -g 10000000000 \
     -m '{"name":"Picasso","symbol":"PICA","decimals":6,"initial_balances":[{"amount":"1000000000000","address":"0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48"}]}'
 ```
 
-See that apart from the address of the contract that is instantiated, we also get the raw CosmWasm events.
+Note that apart from the address of the contract that is instantiated, we also get the raw CosmWasm events.
 
 Output:
 ```
@@ -119,7 +119,7 @@ Output:
   
 ## Query the balance
 
-Although you can that the events clearly shows the transfer happened. Let's query the contract to check out our balance to make sure. Since the query is not a transaction
+Although you can see that the events clearly show the transfer happened. Let's query the contract to check out our balance to make sure. Since the query is not a transaction
 but an RPC call, we'll use the subcommand `rpc` instead of `tx`.
 
 Note that we are using a different protocol and port for the RPC endpoint.

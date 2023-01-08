@@ -1,6 +1,6 @@
 # CosmWasm Substrate CLI
 
-Cosmwasm Substrate CLI is a cli tool to quickly get started with the XCVM ecosystem and
+Cosmwasm Substrate CLI is a CLI tool to quickly get started with the XCVM ecosystem and
 interact with a chain that runs `pallet-cosmwasm`.
 
 ## Create a CosmWasm project
@@ -16,7 +16,7 @@ See [here](./cw-substrate-cli/new-project.md) for more.
 ## Upload a CosmWasm contract
 
 For interacting with `pallet-cosmwasm`, `substrate` subcommand is used. To be able
-to call your contracts, you need to upload it to the chain first. There are several
+to call your contracts, you need to upload them to the chain first. There are several
 sources to upload your contracts:
 
 ### 1. Upload a local contract binary
@@ -32,7 +32,7 @@ cw-substrate-cli -n alice upload -f /path/to/file.wasm
 
 ### 2. Upload a contract from a running chain
 
-If a Cosmos chain provides a RPC endpoint, you can use it to load the contracts
+If a Cosmos chain provides an RPC endpoint, you can use it to load the contracts
 to `cw-substrate-cli`. All you need to know is the RPC endpoint to fetch the
 contract from, and either the contract address that uses the contract code
 or code ID that identifies the contract code.

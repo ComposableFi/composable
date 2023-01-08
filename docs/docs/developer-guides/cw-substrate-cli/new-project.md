@@ -41,8 +41,8 @@ Output:
     └── state.rs
 ```
 
-There are few notable things:
-* `.cargo/config` defines few `cargo` aiases to make things simpler.
+There are a few notable things:
+* `.cargo/config` defines a few `cargo` aliases to simplify things.
 * `Cargo.toml` defines a `run-script` called `optimize` to get an optimized build which is super important
 when you want to test your contracts on a chain.
 * `integration_tests.rs` contains a basic integration test scenario with `cosmwasm-orchestrate`. It is our great
@@ -59,7 +59,7 @@ cargo wasm
 But the thing is, this is not optimized for binary size. So the output binary size will be pretty huge. To upload
 and use it in `pallet-cosmwasm`, we should get an optimized build. 
 
-There are two ways to do this. First is to use the official rust optimizer which needs you have `cargo-run-script`
+There are two ways to do this. First is to use the official rust optimizer which needs you have to `cargo-run-script`
 and `docker` installed. After installing `cargo-run-script` by running `cargo install cargo-run-script` and `docker`,
 run:
 
@@ -67,7 +67,7 @@ run:
 cargo run-script optimize
 ```
 
-The second and a hacky way (in case you don't want to install anything) is building the binary by enabling the binary stripping flags.
+The second and hacky way (in case you don't want to install anything) is building the binary by enabling the binary stripping flags.
 
 ```sh
 RUSTFLAGS='-C link-arg=-s' cargo build --release --lib --target wasm32-unknown-unknown
