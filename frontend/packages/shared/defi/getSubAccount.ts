@@ -1,6 +1,6 @@
-import { concatU8a } from "shared/defi/u8a";
+import { concatU8a } from "./u8a";
 import { ApiPromise } from "@polkadot/api";
-import { PALLET_TYPE_ID } from "shared/defi/constants";
+import { PALLET_TYPE_ID } from "./constants";
 
 export function getSubAccount(api: ApiPromise, poolId: string) {
   const palletId = api.consts.pablo.palletId.toU8a();
