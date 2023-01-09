@@ -10,7 +10,7 @@ import { SwapSummary } from "./SwapSummary";
 import { SwapRoute } from "./SwapRoute";
 import { PreviewModal } from "./PreviewModal";
 import { ConfirmingModal } from "./ConfirmingModal";
-import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
+import { useSelectedAccount } from "substrate-react";
 import { useSwaps } from "@/defi/hooks/swaps/useSwaps";
 import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
@@ -68,13 +68,7 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
     minimumReceived: minimumReceived.value,
   });
 
-  const isConfirmingModalOpen = usePendingExtrinsic(
-    "pablo",
-    "swap",
-    selectedAccount?.address ?? "-"
-  );
-
-  const { isSwapPreviewModalOpen } = useUiSlice();
+  const { isSwapPreviewModalOpen, isConfirmingModalOpen } = useUiSlice();
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
 
   useEffect(() => {
