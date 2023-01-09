@@ -32,15 +32,17 @@ export const useTelemetry = () => {
     let fullBlockCheck = false; // We set this to wait 1 additional block to ensure we have a full block time and not a partial block time
     const unsubPromise = callbackGate(
       (api) =>
-        api.rpc.chain.subscribeNewHeads((header) => {
-          setLastBlock(new BigNumber(header.number.toString()));
-          const diff = new BigNumber(Date.now() - lastTime);
-          if (fullBlockCheck) {
-            pushAverageTime(diff);
-            lastTime = Date.now();
+        api.rpc.chain.subscribeNewHeads(
+          (header: { number: { toString: () => BigNumber.Value } }) => {
+            setLastBlock(new BigNumber(header.number.toString()));
+            const diff = new BigNumber(Date.now() - lastTime);
+            if (fullBlockCheck) {
+              pushAverageTime(diff);
+              lastTime = Date.now();
+            }
+            fullBlockCheck = true;
           }
-          fullBlockCheck = true;
-        }),
+        ),
       parachainApi
     );
 
@@ -52,8 +54,9 @@ export const useTelemetry = () => {
   useEffect(() => {
     const unsubPromise = callbackGate(
       (api) =>
-        api.rpc.chain.subscribeFinalizedHeads((header) =>
-          setFinalizedBlock(new BigNumber(header.number.toString()))
+        api.rpc.chain.subscribeFinalizedHeads(
+          (header: { number: { toString: () => BigNumber.Value } }) =>
+            setFinalizedBlock(new BigNumber(header.number.toString()))
         ),
       parachainApi
     );

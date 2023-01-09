@@ -1,5 +1,4 @@
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
-import { useTheme } from "@mui/material";
 import {
   SupportedWalletId,
   useConnectedAccounts,
@@ -7,11 +6,12 @@ import {
   useEagerConnect,
   useTransactions,
 } from "substrate-react";
-import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
 import { NetworkId, Wallet } from "wallet";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import { useStore } from "@/stores/root";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
+import config from "@/constants/config";
+import { FC } from "react";
 
 const BLOCKCHAIN_NETWORKS_SUPPORTED = [
   {
@@ -55,15 +55,16 @@ const ETHEREUM_WALLETS_SUPPORTED = [
   },
 ];
 
-export const PolkadotConnect: React.FC<{}> = () => {
-  const theme = useTheme();
+export const PolkadotConnect: FC = () => {
   const { deactivate, extensionStatus, activate, setSelectedAccount } =
     useDotSamaContext();
-  const accounts = useConnectedAccounts(DEFAULT_NETWORK_ID);
-  const { account, connectorType } = useBlockchainProvider(DEFAULT_EVM_ID);
+  const accounts = useConnectedAccounts(config.defaultNetworkId);
+  const { account, connectorType } = useBlockchainProvider(
+    config.evm.defaultNetworkId
+  );
   const connectedAccount = useSelectedAccount();
   const biLibConnector = useConnector(ConnectorType.MetaMask);
-  useEagerConnect(DEFAULT_NETWORK_ID);
+  useEagerConnect(config.defaultNetworkId);
 
   const balance = useStore(
     ({ substrateBalances }) => substrateBalances.balances.picasso.pica

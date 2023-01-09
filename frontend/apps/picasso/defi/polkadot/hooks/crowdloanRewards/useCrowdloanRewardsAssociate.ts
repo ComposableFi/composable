@@ -1,11 +1,11 @@
 import { ApiPromise } from "@polkadot/api";
-import { subscanExtrinsicLink } from "../../Networks";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import { Executor, useSigner } from "substrate-react";
 import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { fetchAssociations } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards";
 import { setCrowdloanRewardsState } from "@/stores/defi/polkadot/crowdloanRewards/crowdloanRewards.slice";
+import { subscanExtrinsicLink } from "shared";
 
 export type AssociateProps = {
   api: ApiPromise | undefined;

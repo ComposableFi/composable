@@ -1,13 +1,13 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { TypographyProps } from "@mui/system";
 import Head from "next/head";
-import { APP_NAME } from "@/defi/polkadot/constants";
+import { FC } from "react";
 
 type PageTitleProps = TypographyProps & {
   title: string;
   subtitle?: string;
 };
-export const PageTitle: React.FC<PageTitleProps> = ({
+export const PageTitle: FC<PageTitleProps> = ({
   title,
   subtitle,
   ...props

@@ -1,8 +1,6 @@
 import { client as apolloClient } from "@/apollo/apolloGraphql";
 import { ThemeResponsiveSnackbar } from "@/components/Molecules/Snackbar";
 import { ColorModeContext } from "@/contexts/ColorMode";
-import { NETWORKS } from "@/defi/Networks";
-import { APP_NAME } from "@/defi/polkadot/constants";
 import SubstrateBalancesUpdater from "@/stores/defi/polkadot/balances/PolkadotBalancesUpdater";
 import CrowdloanRewardsUpdater from "@/stores/defi/polkadot/crowdloanRewards/CrowdloanRewardsUpdater";
 import createEmotionCache from "@/styles/createEmotionCache";
@@ -22,6 +20,7 @@ import * as React from "react";
 import { hotjar } from "react-hotjar";
 import { getEnvironment } from "shared/endpoints";
 import { DotSamaContextProvider, ExecutorProvider } from "substrate-react";
+import config from "@/constants/config";
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
 
@@ -122,15 +121,17 @@ export default function MyApp(props: MyAppProps) {
                 types,
               },
             ]}
-            appName={APP_NAME}
+            appName={config.appName}
           >
             <BlockchainProvider
-              blockchainInfo={Object.entries(NETWORKS).map(([netId, net]) => {
-                return {
-                  chainId: +netId,
-                  rpcUrl: net.rpcUrl,
-                };
-              })}
+              blockchainInfo={Object.entries(config.evm.networks).map(
+                ([netId, net]) => {
+                  return {
+                    chainId: +netId,
+                    rpcUrl: net.rpcUrl,
+                  };
+                }
+              )}
             >
               <ApolloProvider client={apolloClient}>
                 <SubstrateBalancesUpdater />

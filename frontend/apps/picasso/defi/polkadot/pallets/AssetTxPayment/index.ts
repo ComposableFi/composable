@@ -2,8 +2,9 @@ import { TokenId } from "tokens";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { ApiPromise } from "@polkadot/api";
 import { Signer } from "@polkadot/api/types";
-import { Executor, ParachainId, RelayChainId } from "substrate-react";
+import { Executor } from "substrate-react";
 import { extractTokenByNetworkIdentifier } from "../Assets";
+import { SubstrateNetworkId } from "shared";
 
 export type SetPaymentAssetArgs = {
   api: ApiPromise;
@@ -43,7 +44,7 @@ export async function setPaymentAsset({
 export type GetPaymentAssetArgs = {
   api: ApiPromise;
   walletAddress: string;
-  network: ParachainId | Extract<"kusama", RelayChainId>;
+  network: SubstrateNetworkId;
   tokens: Record<TokenId, TokenMetadata>;
 };
 

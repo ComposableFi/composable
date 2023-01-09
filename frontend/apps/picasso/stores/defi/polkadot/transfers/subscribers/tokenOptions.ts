@@ -1,9 +1,8 @@
-import { TRANSFER_ASSET_LIST } from "@/defi/config";
-
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { TokenOption } from "@/stores/defi/polkadot/transfers/transfers";
 import { useStore } from "@/stores/root";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
+import config from "@/constants/config";
+import { SubstrateNetworkId } from "shared";
 
 function extractOptions(
   from: SubstrateNetworkId,
@@ -22,7 +21,7 @@ function extractOptions(
       const balance = balances[from][currentValue.id].free;
 
       // only include allowed assets
-      if (!TRANSFER_ASSET_LIST[from][to].includes(currentValue.id)) {
+      if (!config.transferAssetList[from][to].includes(currentValue.id)) {
         return previousValue;
       }
 

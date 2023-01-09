@@ -7,14 +7,14 @@ import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useDotSamaContext } from "substrate-react";
 import { useCrowdloanRewardsEligibility } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
-import { DEFAULT_EVM_ID } from "@/defi/polkadot/constants";
 import Default from "@/components/Templates/Default";
 import Image from "next/image";
+import config from "@/constants/config";
 
 const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
-  const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
+  const { account } = useBlockchainProvider(config.evm.defaultNetworkId);
   const selectedAccount = useSelectedAccount();
 
   const breadcrumbs = [

@@ -1,7 +1,7 @@
 import React from "react";
 import { BaseAsset, BaseAssetProps } from "./BaseAsset";
-import { NetworkId } from "@/defi/types";
-import { getNetwork } from "@/defi/Networks";
+import { NetworkId } from "@/constants/types";
+import { getNetwork } from "@/constants/config";
 
 export type NetworkAssetProps = {
   networkId: NetworkId;

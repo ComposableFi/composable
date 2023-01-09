@@ -12,7 +12,6 @@ import { Grid, Typography, useTheme } from "@mui/material";
 import { stringToHex } from "@polkadot/util";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { crowdLoanSignableMessage } from "@/utils/crowdloanRewards";
-import { useRouter } from "next/router";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import {
   useConnectedAccounts,
@@ -36,8 +35,8 @@ import {
   useCrowdloanRewardsHasStarted,
   useCrowdloanRewardsStepGivenConnectedAccounts,
 } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
-import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
 import { KsmAndEthAssociationInfoBox } from "@/components/Organisms/CrowdloanRewards/KsmAndEthAssociationInfoBox";
+import config from "@/constants/config";
 
 const ERROR_MESSAGES = {
   KSM_WALLET_NOT_CONNECTED: {
@@ -57,13 +56,14 @@ const ERROR_MESSAGES = {
 };
 
 export const ClaimLoanPage = () => {
-  const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
   const { isActive } = useConnector(ConnectorType.MetaMask);
-  const { signer, account } = useBlockchainProvider(DEFAULT_EVM_ID);
+  const { signer, account } = useBlockchainProvider(
+    config.evm.defaultNetworkId
+  );
   const { extensionStatus, signer: polkaSigner } = useDotSamaContext();
   const { parachainApi } = usePicassoProvider();
-  const accounts = useConnectedAccounts(DEFAULT_NETWORK_ID);
+  const accounts = useConnectedAccounts(config.defaultNetworkId);
   const { initialPayment } = useCrowdloanRewardsSlice();
   const executor = useExecutor();
   const selectedAccount = useSelectedAccount();

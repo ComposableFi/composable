@@ -1,45 +1,31 @@
 import { Story } from "@storybook/react";
-import { Notification, NotificationProps } from "picasso/components";
-
-const NotificationStories = (props: NotificationProps) => {
-  return (
-    <Notification {...props} />
-  );
-};
+import { Notification } from "picasso/components";
 
 export default {
   title: "atoms/Notification/Inline",
-  component: NotificationStories,
+  component: Notification,
 };
 
-const Template: Story<typeof NotificationStories> = (args) => (
-  <NotificationStories {...args} />
+const Template: Story<typeof Notification> = (args) => (
+  <Notification {...args} />
 );
 
-export const NotificationSuccess = Template.bind({});
-
-NotificationSuccess.args = {
+export const NotificationSuccess = Template.bind({
   severity: "success",
   alertText: "Text element",
-}
+});
 
-export const NotificationError = Template.bind({});
-
-NotificationError.args = {
+export const NotificationError = Template.bind({
   severity: "error",
   alertText: "Text element",
-}
+});
 
-export const NotificationInfo = Template.bind({});
-
-NotificationInfo.args = {
+export const NotificationInfo = Template.bind({
   severity: "info",
   alertText: "Text element",
-}
+});
 
-export const NotificationWarning = Template.bind({});
-
-NotificationWarning.args = {
+export const NotificationWarning = Template.bind({
   severity: "warning",
   alertText: "Text element",
-}
+});

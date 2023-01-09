@@ -1,7 +1,12 @@
-import { DEFI_CONFIG } from "./config";
 import { TokenId } from "tokens";
+import config from "@/constants/config";
+import { SubstrateNetworkId } from "shared";
 
-export type NetworkId = typeof DEFI_CONFIG.networkIds[number];
+export type AllowedTransferList = {
+  [key in SubstrateNetworkId]: Record<SubstrateNetworkId, Array<TokenId>>;
+};
+
+export type NetworkId = typeof config.evm.networkIds[number];
 export type Network = {
   name: string;
   rpcUrl: string;
@@ -14,7 +19,7 @@ export type Network = {
   nativeToken: TokenId;
 };
 
-export type AMM_ID = typeof DEFI_CONFIG.ammIds[number];
+export type AMM_ID = typeof config.evm.ammIds[number];
 export type AMM = {
   id: AMM_ID;
   icon: string;

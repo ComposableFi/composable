@@ -1,7 +1,10 @@
-import { AllProviders } from "@/defi/polkadot/context/hooks";
 import { useStore } from "@/stores/root";
+import { SubstrateNetworkId } from "shared";
+import { ChainApi } from "substrate-react";
 
-export const subscribeTransferApiCall = async (allProviders: AllProviders) => {
+export const subscribeTransferApiCall = async (allProviders: {
+  [chainId in SubstrateNetworkId]: ChainApi;
+}) => {
   return useStore.subscribe(
     (store) => ({
       from: store.transfers.networks.from,

@@ -12,8 +12,8 @@ import {
 import { RewardPool } from "@/stores/defi/polkadot/stakingRewards/slice";
 import { Executor, getSigner } from "substrate-react";
 import { AnyComponentMap, EnqueueSnackbar, SnackbarKey } from "notistack";
-import { APP_NAME } from "@/defi/polkadot/constants";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
+import config from "@/constants/config";
 
 export async function fetchStakingRewardPosition(
   api: ApiPromise,
@@ -105,7 +105,7 @@ export function stake({
   return callbackGate(
     async (executor, api, account) => {
       let snackbarKey: SnackbarKey | undefined;
-      const signer = await getSigner(APP_NAME, account.address);
+      const signer = await getSigner(config.appName, account.address);
       await executor.execute(
         api.tx.stakingRewards.stake(
           assetId.toString(),

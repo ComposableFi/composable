@@ -1,8 +1,8 @@
 import { ApiPromise } from "@polkadot/api";
 import { Signer } from "@polkadot/api/types";
-import { Executor, ParachainId, RelayChainId } from "substrate-react";
+import { Executor } from "substrate-react";
 import { TokenId } from "tokens";
-import { Asset } from "shared";
+import { Asset, ParachainId } from "shared";
 
 export type SetPaymentAssetArgs = {
   api: ApiPromise;
@@ -42,7 +42,7 @@ export async function setPaymentAsset({
 export type GetPaymentAssetArgs = {
   api: ApiPromise;
   walletAddress: string;
-  network: ParachainId | Extract<"kusama", RelayChainId>;
+  network: ParachainId;
   tokens: Record<TokenId, Asset>;
 };
 

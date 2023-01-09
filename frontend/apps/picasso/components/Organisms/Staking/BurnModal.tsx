@@ -5,10 +5,10 @@ import { FC, useMemo } from "react";
 import { callbackGate, formatNumber, subscanExtrinsicLink } from "shared";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { getSigner, useExecutor } from "substrate-react";
-import { APP_NAME } from "@/defi/polkadot/constants";
 import { SnackbarKey, useSnackbar } from "notistack";
 import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
 import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
+import config from "@/constants/config";
 
 export const BurnModal: FC<{
   open: boolean;
@@ -26,7 +26,7 @@ export const BurnModal: FC<{
     let snackbarKey: SnackbarKey | undefined;
     callbackGate(
       async (api, acc, exec) => {
-        const signer = await getSigner(APP_NAME, acc.address);
+        const signer = await getSigner(config.appName, acc.address);
         await exec.execute(
           api.tx.stakingRewards.unstake(...selectedToken),
           acc.address,

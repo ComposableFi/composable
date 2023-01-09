@@ -1,14 +1,8 @@
-import { 
-  NetworkAssetProps,
-  NetworkAsset 
-} from "picasso/components";
-import { NETWORK_IDS } from "picasso/defi/Networks";
+import { NetworkAsset, NetworkAssetProps } from "picasso/components";
 
-import { 
-  Box, 
-  SxProps, 
-} from "@mui/material";
+import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
+import config from "picasso/constants/config";
 
 const NetworkAssetsStories = (props: NetworkAssetProps) => {
   const boxStyle: Partial<SxProps> = {
@@ -30,16 +24,16 @@ export default {
   component: NetworkAssetsStories,
   argTypes: {
     networkId: {
-      options: NETWORK_IDS,
+      options: config.evm.networkIds,
       control: {
         type: "select",
       },
     },
-  }
+  },
 };
 
 const defaultArgs = {
-  networkId: NETWORK_IDS[0],
+  networkId: config.evm.networkIds[0],
   iconSize: 24,
 };
 
@@ -48,4 +42,4 @@ const Template: Story<typeof NetworkAssetsStories> = (args) => (
 );
 
 export const NetworkAssets = Template.bind({});
-NetworkAssets.args = defaultArgs
+NetworkAssets.args = defaultArgs;

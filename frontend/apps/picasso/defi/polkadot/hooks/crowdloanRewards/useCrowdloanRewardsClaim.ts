@@ -1,5 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
-import { subscanExtrinsicLink } from "../../Networks";
+import { subscanExtrinsicLink } from "shared";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import { Executor, useSigner } from "substrate-react";

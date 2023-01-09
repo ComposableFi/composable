@@ -1,6 +1,3 @@
-import { PICASSO_SUPPORTED_TRANSFERS } from "@/defi/config";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import BigNumber from "bignumber.js";
 import { TokenId } from "tokens";
 import { StoreSlice } from "@/stores/types";
@@ -15,6 +12,9 @@ import { ApiPromise } from "@polkadot/api";
 import { getAmountToTransfer } from "@/defi/polkadot/pallets/Transfer";
 import { SubmittableExtrinsic } from "@polkadot/api/types";
 import { TokenMetadata } from "../tokens/slice";
+import { SubstrateNetworkId } from "shared";
+import { SUBSTRATE_NETWORKS } from "shared/defi/constants";
+import config from "@/constants/config";
 
 export interface TokenOption {
   tokenId: TokenId;
@@ -69,7 +69,9 @@ const networks = Object.keys(SUBSTRATE_NETWORKS)
   .map((networkId) => ({
     networkId: networkId as SubstrateNetworkId,
   }))
-  .filter(({ networkId }) => PICASSO_SUPPORTED_TRANSFERS.includes(networkId));
+  .filter(({ networkId }) =>
+    config.picassoSupportedTransfers.includes(networkId)
+  );
 
 const initialState: TransfersState = {
   networks: {

@@ -1,10 +1,9 @@
 import { NetworkSelect, NetworkSelectProps } from "picasso/components";
-import { NETWORK_IDS } from "picasso/defi/Networks";
-import { SUBSTRATE_NETWORK_IDS } from "picasso/defi/polkadot/Networks";
-import { NetworkId } from "picasso/defi/types";
 import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
 import { useState } from "react";
+import { getSubstrateNetwork, SubstrateNetworkId } from "shared";
+import config, { getNetwork } from "picasso/constants/config";
 
 const NetworkSelectsStories = (props: NetworkSelectProps) => {
   const boxStyle: Partial<SxProps> = {
@@ -17,13 +16,15 @@ const NetworkSelectsStories = (props: NetworkSelectProps) => {
   };
 
   const [value, setValue] = useState(
-    props.substrateNetwork ? SUBSTRATE_NETWORK_IDS[0] : NETWORK_IDS[0]
+    props.substrateNetwork
+      ? getSubstrateNetwork("picasso" as SubstrateNetworkId)
+      : getNetwork(1)
   );
 
   return (
     <Box sx={boxStyle}>
       <NetworkSelect value={value} setValue={setValue} {...props} />
-      <NetworkSelect value={NETWORK_IDS[0]} {...props} disabled />
+      <NetworkSelect value={config.evm.networkIds} {...props} disabled />
     </Box>
   );
 };
@@ -39,12 +40,12 @@ const Template: Story<typeof NetworkSelectsStories> = (args) => (
 export const NetworkSelects = Template.bind({});
 NetworkSelects.args = {
   searchable: true,
-  options: NETWORK_IDS.map((networkId) => ({ networkId: networkId })),
+  options: config.evm.networkIds.map((networkId) => ({ networkId: networkId })),
 };
 
 export const SubstrateNetworkSelect = Template.bind({});
 SubstrateNetworkSelect.args = {
   searchable: true,
   substrateNetwork: true,
-  options: SUBSTRATE_NETWORK_IDS.map((networkId) => ({ networkId: networkId })),
+  options: [],
 };

@@ -7,15 +7,13 @@ import { NetworkSelect } from "@/components";
 import { SwapHoriz } from "@mui/icons-material";
 import React, { FC, useMemo } from "react";
 import { useStore } from "@/stores/root";
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { availableTargetNetwork } from "@/defi/polkadot/pallets/xcmp";
+import { SubstrateNetworkId } from "shared";
 
 export const TransferNetworkSelector: FC<{ disabled: boolean }> = ({
   disabled,
 }) => {
-  const { networks, updateNetworks, updateTokenId } = useStore(
-    ({ transfers }) => transfers
-  );
+  const { networks, updateNetworks } = useStore(({ transfers }) => transfers);
 
   const handleUpdateFromValue = (value: SubstrateNetworkId) => {
     const targetNetwork = networks.options.find(

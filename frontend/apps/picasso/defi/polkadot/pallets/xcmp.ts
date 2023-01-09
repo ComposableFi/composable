@@ -1,5 +1,4 @@
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
-import { RelayChainId } from "substrate-react";
+import { SubstrateNetworkId } from "shared";
 
 export function availableTargetNetwork(
   network: SubstrateNetworkId,

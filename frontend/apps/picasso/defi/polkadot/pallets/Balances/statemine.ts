@@ -1,8 +1,7 @@
 import { ApiPromise } from "@polkadot/api";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import BigNumber from "bignumber.js";
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
-import { fromChainIdUnit } from "shared";
+import { fromChainIdUnit, SubstrateNetworkId } from "shared";
 import { TokenBalance } from "@/stores/defi/polkadot/balances/slice";
 
 export function subscribeStatemineBalance(

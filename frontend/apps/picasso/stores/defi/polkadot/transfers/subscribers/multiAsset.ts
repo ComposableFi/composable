@@ -1,12 +1,15 @@
-import { AllProviders } from "@/defi/polkadot/context/hooks";
 import { useStore } from "@/stores/root";
 import {
   AcalaPrimitivesCurrencyCurrencyId,
   XcmVersionedMultiAsset,
   XcmVersionedMultiAssets,
 } from "@acala-network/types/interfaces/types-lookup";
+import { SubstrateNetworkId } from "shared";
+import { ChainApi } from "substrate-react";
 
-export const subscribeMultiAsset = async (allProviders: AllProviders) => {
+export const subscribeMultiAsset = async (allProviders: {
+  [chainId in SubstrateNetworkId]: ChainApi;
+}) => {
   return useStore.subscribe(
     (store) => ({
       selectedToken: store.transfers.selectedToken,

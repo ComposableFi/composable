@@ -1,12 +1,10 @@
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { ApiPromise } from "@polkadot/api";
 import { u128 } from "@polkadot/types-codec";
 import BigNumber from "bignumber.js";
-import { fromChainIdUnit, toChainIdUnit } from "shared";
-import { ParachainId, RelayChainId } from "substrate-react";
+import { fromChainIdUnit, SubstrateNetworkId, toChainIdUnit } from "shared";
 import { TokenId } from "tokens";
+import { SUBSTRATE_NETWORKS } from "shared/defi/constants";
 
 export function getAmountToTransfer({
   balance,
@@ -111,8 +109,8 @@ export function calculateTransferAmount({
  * @param {TokenId} selectedToken
  */
 export function getDestChainFee(
-  sourceChain: ParachainId | RelayChainId,
-  targetChain: ParachainId | RelayChainId,
+  sourceChain: SubstrateNetworkId,
+  targetChain: SubstrateNetworkId,
   tokens: Record<TokenId, TokenMetadata>,
   selectedToken: TokenId
 ) {

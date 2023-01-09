@@ -1,14 +1,13 @@
 import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { ApiPromise } from "@polkadot/api";
 import { decodeAddress, encodeAddress } from "@polkadot/util-crypto";
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  fetchClaimedRewards,
   fetchClaimableRewards,
+  fetchClaimedRewards,
+  findAssociatedByAccount,
   findAssociation,
   isAssociatedAccountSameAsConnectedAccount,
-  findAssociatedByAccount,
 } from "./crowdloanRewards";
 import {
   CrowdloanAssociation,
@@ -17,6 +16,7 @@ import {
 } from "./crowdloanRewards.slice";
 import BigNumber from "bignumber.js";
 import { fromChainIdUnit } from "shared";
+import { SUBSTRATE_NETWORKS } from "shared/defi/constants";
 
 export const toKusamaAddressFormat = (address: string) =>
   encodeAddress(address, SUBSTRATE_NETWORKS.kusama.ss58Format);
@@ -119,7 +119,7 @@ export const useCrowdloanRewardsClaimableRewards = (
       await api.query.crowdloanRewards.vestingTimeStart();
 
     if (startTimestampOption.isNone) {
-      return new BigNumber(0)
+      return new BigNumber(0);
     }
 
     const startTimestamp = new BigNumber(startTimestampOption.toString());
@@ -161,11 +161,16 @@ export const useCrowdloanRewardsClaimableRewards = (
       (isEthAccountEligible || isPicassoAccountEligible)
     ) {
       const rewardsCodec = await api.query.crowdloanRewards.rewards(
-        isEthAccountEligible ? {
-          Ethereum: ethAccount
-        } : {
-          RelayChain: encodeAddress(decodeAddress(picassoAccount), SUBSTRATE_NETWORKS.kusama.ss58Format)
-        }
+        isEthAccountEligible
+          ? {
+              Ethereum: ethAccount,
+            }
+          : {
+              RelayChain: encodeAddress(
+                decodeAddress(picassoAccount),
+                SUBSTRATE_NETWORKS.kusama.ss58Format
+              ),
+            }
       );
       const rewards = rewardsCodec.toJSON() as {
         vestingPeriod: number;
@@ -179,14 +184,16 @@ export const useCrowdloanRewardsClaimableRewards = (
 
       const vestingPoint = now.minus(startTimestamp);
       if (vestingPoint.gt(rewards.vestingPeriod)) {
-        return fromChainIdUnit(BigInt(rewards.total))
+        return fromChainIdUnit(BigInt(rewards.total));
       } else {
         const upfront = totalRewards.times(initialPayment);
         const vestingWindow = vestingPoint.minus(vestingPoint.mod(vestingStep));
-        const vested = new BigNumber(fromChainIdUnit(BigInt(rewards.total))).minus(upfront);
-        return upfront.plus(
-          vested.times(vestingWindow.div(rewards.vestingPeriod))
-        ).dp(4)
+        const vested = new BigNumber(
+          fromChainIdUnit(BigInt(rewards.total))
+        ).minus(upfront);
+        return upfront
+          .plus(vested.times(vestingWindow.div(rewards.vestingPeriod)))
+          .dp(4);
       }
     }
     return new BigNumber(0);

@@ -1,12 +1,11 @@
 import React, { useMemo } from "react";
-import { NetworkId } from "@/defi/types";
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
-import { getNetwork } from "@/defi/Networks";
-import { getSubstrateNetwork } from "@/defi/polkadot/Networks";
 import { Select, SelectProps } from "./Select";
+import { getSubstrateNetwork, SubstrateNetworkId } from "shared";
+import { NetworkId } from "@/constants/types";
+import { getNetwork } from "@/constants/config";
 
 type NetworkOption = {
-  networkId: NetworkId | SubstrateNetworkId;
+  networkId: SubstrateNetworkId | NetworkId;
   disabled?: boolean;
 };
 

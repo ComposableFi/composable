@@ -1,9 +1,8 @@
-import { toTokenUnitsBN } from "shared";
+import { SubstrateNetworkId, toTokenUnitsBN } from "shared";
 import { TokenId } from "tokens";
 import { ApiPromise } from "@polkadot/api";
-import { SUBSTRATE_NETWORKS } from "../../Networks";
-import { SubstrateNetworkId } from "../../types";
 import { TokenBalance } from "@/stores/defi/polkadot/balances/slice";
+import { SUBSTRATE_NETWORKS } from "shared/defi/constants";
 
 export async function subscribeNativeBalance(
   account: string,
