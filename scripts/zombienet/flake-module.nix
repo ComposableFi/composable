@@ -4,8 +4,8 @@
       paritytech-zombienet-src = pkgs.fetchFromGitHub {
         owner = "paritytech";
         repo = "zombienet";
-        rev = "9cf8e598f0b8e8b88bc1b0e677acb7ba322c3a1a";
-        hash = "sha256-+tyVQa+BYdFphSLbinMFZlhV/fPG8R+/mwij36WwEEM=";
+        rev = "81a88811674772c1a03ea0a6081a7331a1210d64";
+        hash = "sha256-59lorg8GHkMH41SnijMFQyuJEsNWVuizxtoQzGP2osE=";
       };
 
       build = pkgs.callPackage ./default.nix { };
@@ -71,12 +71,9 @@
           name = "zombienet-rococo-local-dali-dev";
           runtimeInputs = [ pkgs.nodejs pkgs.yq paritytech-zombienet ];
           text = ''
-            printf '${builtins.toJSON config}' > ${name}.json
-            CONFIG=$PWD
-            ${pkgs.yq}/bin/yq  . ${name}.json --toml-output > ${name}.toml
-            cat ${name}.toml      
+            printf '${builtins.toJSON config}' > /tmp/${name}.json
             cd ${paritytech-zombienet}            
-            npm run zombie spawn "$CONFIG"/${name}.toml
+            npm run zombie spawn /tmp/${name}.json
           '';
         };
       };
