@@ -110,7 +110,7 @@ const Transfers: NextPage = () => {
 
   const hasEnoughGasFee = useMemo(() => {
     const feeBalance = getBalance(feeTokenId.id, from);
-    return feeBalance.gte(fee.partialFee.multipliedBy(FEE_MULTIPLIER));
+    return feeBalance.free.gte(fee.partialFee.multipliedBy(FEE_MULTIPLIER));
   }, [fee.partialFee, feeTokenId.id, from, getBalance]);
 
   useEffect(() => {

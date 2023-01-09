@@ -51,7 +51,12 @@ const Updater = () => {
           tokens[tokenId].getPicassoAssetId(true) as BigNumber,
           tokens[tokenId].getDecimals("picasso") as number,
           (balance) => {
-            setTokenBalance(tokenId, "picasso", balance.free, balance.locked);
+            setTokenBalance(
+              tokenId,
+              "picasso",
+              balance.free.minus(balance.locked),
+              balance.locked
+            );
           }
         ).then((sub) => {
           subscriptions.push(sub);
@@ -62,7 +67,12 @@ const Updater = () => {
           account.address,
           "picasso",
           (balance) => {
-            setTokenBalance(tokenId, "picasso", balance.free, balance.locked);
+            setTokenBalance(
+              tokenId,
+              "picasso",
+              balance.free.minus(balance.locked),
+              balance.locked
+            );
           }
         ).then((sub) => {
           subscriptions.push(sub);

@@ -3,7 +3,7 @@ import { TokenId } from "tokens";
 import { ApiPromise } from "@polkadot/api";
 import { SUBSTRATE_NETWORKS } from "../../Networks";
 import { SubstrateNetworkId } from "../../types";
-import BigNumber from "bignumber.js";
+import { TokenBalance } from "@/stores/defi/polkadot/balances/slice";
 
 export async function subscribeNativeBalance(
   account: string,
@@ -13,7 +13,7 @@ export async function subscribeNativeBalance(
   updateBalance: (data: {
     tokenId: TokenId;
     network: SubstrateNetworkId;
-    balance: BigNumber;
+    balance: TokenBalance;
   }) => void
 ) {
   if (!api) return;
@@ -24,16 +24,20 @@ export async function subscribeNativeBalance(
     const blObject: any = result.toJSON();
 
     const {
-      data: { free }
+      data: { free, reserved },
     } = blObject;
 
     const { decimals } = SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId];
-    const bnBalance = toTokenUnitsBN(free, decimals);
+    const bnFree = toTokenUnitsBN(free, decimals);
+    const bnLocked = toTokenUnitsBN(reserved, decimals);
 
     updateBalance({
       network: chainId as SubstrateNetworkId,
       tokenId,
-      balance: bnBalance
+      balance: {
+        free: bnFree,
+        locked: bnLocked,
+      },
     });
   });
 

@@ -58,6 +58,9 @@ export const PolkadotConnect: FC = () => {
   const picaBalance = useStore(
     (store) => store.substrateBalances.tokenBalances.picasso.pica.free
   );
+  const picaLocked = useStore(
+    (store) => store.substrateBalances.tokenBalances.picasso.pica.locked
+  );
 
   return (
     <Wallet
@@ -67,7 +70,10 @@ export const PolkadotConnect: FC = () => {
           timestamp: tx.timestamp,
         };
       })}
-      connectedAccountNativeBalance={picaBalance}
+      connectedAccountNativeBalance={{
+        free: picaBalance,
+        locked: picaLocked,
+      }}
       onDisconnectDotsamaWallet={deactivate}
       onConnectPolkadotWallet={activate as any}
       blockchainNetworksSupported={BLOCKCHAIN_NETWORKS_SUPPORTED}
