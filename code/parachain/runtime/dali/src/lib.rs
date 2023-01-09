@@ -1712,7 +1712,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl ibc_runtime_api::IbcRuntimeApi<Block, AssetId> for Runtime {
+	impl ibc_runtime_api::IbcRuntimeApi<Block, CurrencyId> for Runtime {
 		fn para_id() -> u32 {
 			<Runtime as cumulus_pallet_parachain_system::Config>::SelfParaId::get().into()
 		}
@@ -1813,11 +1813,11 @@ impl_runtime_apis! {
 			Ibc::packet_receipt(channel_id, port_id, seq).ok()
 		}
 
-		fn denom_trace(asset_id: AssetId) -> Option<ibc_primitives::QueryDenomTraceResponse> {
+		fn denom_trace(asset_id: CurrencyId) -> Option<ibc_primitives::QueryDenomTraceResponse> {
 			Ibc::get_denom_trace(asset_id)
 		}
 
-		fn denom_traces(key: Option<AssetId>, offset: Option<u32>, limit: u64, count_total: bool) -> ibc_primitives::QueryDenomTracesResponse {
+		fn denom_traces(key: Option<CurrencyId>, offset: Option<u32>, limit: u64, count_total: bool) -> ibc_primitives::QueryDenomTracesResponse {
 			let key = key.map(|k| Either::Left(k)).or_else(|| offset.map(|o| Either::Right(o)));
 			Ibc::get_denom_traces(key, limit, count_total)
 		}
