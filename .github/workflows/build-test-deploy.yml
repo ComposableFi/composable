@@ -1069,10 +1069,10 @@ jobs:
 
   devnet-integration-tests:
       name: "Devnet integration tests"
-      needs:
-        - package-polkadot-node
-        - package-composable-node
-        - check-nix
+      # needs:
+      #   - package-polkadot-node
+      #   - package-composable-node
+      #   - check-nix
       runs-on:
       - self-hosted
       - linux
@@ -1106,10 +1106,21 @@ jobs:
 
       - run: |
           ( nix run .#devnet-dali 2>&1 & ) | tee devnet-dali.log &
-          until test -f devnet-dali.log; do sleep 1 && echo "waiting network start"; done;
-
-          ( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 "Network launched 🚀🚀"
-          echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
+          until test -f devnet-dali.log; do
+            sleep 1 && echo "waiting network start";
+          done;
+          TIMEOUT=240
+          COMMAND="( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 \"Network launched 🚀🚀\""
+          set +o errexit
+          timeout $TIMEOUT bash -c "$COMMAND"
+          START_RESULT="$?"
+          set -o errexit
+          if [[ $START_RESULT -ne 0 ]] ; then 
+            printf "failed to start devnet within %s with exit code %s" "$TIMEOUT" "$START_RESULT"
+            exit $START_RESULT
+          fi
+          
+          echo "PATH=$(pwd):$PATH" >> "$GITHUB_ENV"
           cd code/integration-tests/runtime-tests || exit
           npm install -q
           export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_short 2>&1>runtime-tests.log & RUNTIME_TESTS_PID=$!
