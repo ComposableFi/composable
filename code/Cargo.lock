@@ -1647,6 +1647,7 @@ dependencies = [
  "pablo-runtime-api",
  "pallet-assets 1.0.0",
  "pallet-crowdloan-rewards",
+ "pallet-ibc 0.0.1 (git+https://github.com/ComposableFi/centauri?rev=07d409d95bc6ad204609a345306c743aaa98b711)",
  "pallet-transaction-payment-rpc",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
