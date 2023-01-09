@@ -7,7 +7,6 @@ use ibc_rpc::{IbcApiServer, IbcRpcHandler};
 use lending_rpc::{Lending, LendingApiServer};
 use pablo_rpc::{Pablo, PabloApiServer};
 use pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi;
-use primitives::currency::CurrencyId;
 use sp_api::{ApiExt, Metadata, StateBackend};
 use sp_block_builder::BlockBuilder;
 use sp_consensus_aura::{sr25519, AuraApi};

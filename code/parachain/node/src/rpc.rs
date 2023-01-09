@@ -11,8 +11,6 @@ use sc_client_api::StateBackendFor;
 use std::sync::Arc;
 
 use common::OpaqueBlock;
-use ibc_runtime_api::IbcRuntimeApi;
-use primitives::currency::CurrencyId;
 pub use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool::FullPool;
 use sp_api::{ProvideRuntimeApi, StateBackend};
