@@ -56,7 +56,7 @@
         ./rust.nix
         ./subwasm.nix
         ./scripts/zombienet/flake-module.nix
-        ./centauri-codegen.nix
+        ./.nix/centauri-codegen.nix
         ./.nix/cargo/flake-module.nix
       ];
       systems =
