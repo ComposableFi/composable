@@ -1,4 +1,3 @@
-import { useSpotPrice } from './../../../../pablo/defi/hooks/swaps/useSpotPrice';
 import { useMemo } from "react";
 import BigNumber from "bignumber.js";
 import { calculateOutGivenIn } from "shared";
@@ -12,9 +11,7 @@ export const usePicaPriceDiscovery = (): BigNumber => {
   const pools = useStore((store) => store.pools.config);
   const poolAmount = useStore((store) => store.pools.poolAmount);
   const tokens = useStore((store) => store.substrateTokens.tokens);
-  const usdtPrice = useCoingecko(
-    (store) => store.prices.usdt
-  );
+  const usdtPrice = useCoingecko((store) => store.prices.usdt);
   const spotPrice = useMemo(() => {
     const picaUsdtPool = pipe(
       pools,
@@ -24,11 +21,12 @@ export const usePicaPriceDiscovery = (): BigNumber => {
       )
     );
 
-
     return pipe(
       picaUsdtPool,
       O.bindTo("pool"),
-      O.bind("amount", ({ pool }) => pipe(poolAmount[pool.poolId.toString()], O.fromNullable)),
+      O.bind("amount", ({ pool }) =>
+        pipe(poolAmount[pool.poolId.toString()], O.fromNullable)
+      ),
       O.bind("usdtChainId", () =>
         pipe(tokens.usdt.chainId.picasso?.toString(), O.fromNullable)
       ),
@@ -65,6 +63,7 @@ export const usePicaPriceDiscovery = (): BigNumber => {
     );
   }, [poolAmount, pools, tokens.usdt.chainId.picasso]);
 
-
-  return spotPrice.isZero() ? new BigNumber(0) : usdtPrice.usd.multipliedBy(spotPrice); 
+  return spotPrice.isZero()
+    ? new BigNumber(0)
+    : usdtPrice.usd.multipliedBy(spotPrice);
 };
