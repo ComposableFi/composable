@@ -11,6 +11,9 @@
       build = pkgs.callPackage ./default.nix { };
       npmDeps = pkgs.callPackage ../../.nix/npm.nix { };
       all-dev-local-config = ./all-dev-local.toml;
+      runtimeDeps = with pkgs;
+        [ coreutils bash procps git git-lfs ]
+        ++ lib.optional stdenv.isLinux glibc.bin;
     in with build; {
       packages = rec {
         paritytech-zombienet = pkgs.stdenv.mkDerivation {
@@ -36,7 +39,7 @@
 
         zombienet = pkgs.writeShellApplication {
           name = "zombienet";
-          runtimeInputs = [ pkgs.nodejs paritytech-zombienet ];
+          runtimeInputs = [ pkgs.nodejs paritytech-zombienet ] ++ runtimeDeps;
           text = ''
             cd ${paritytech-zombienet}
             npm run zombie
@@ -45,7 +48,7 @@
 
         zombienet-rococo-local-dali-dev-statemine = pkgs.writeShellApplication {
           name = "zombienet-rococo-local-dali-dev-statemine";
-          runtimeInputs = [ pkgs.nodejs paritytech-zombienet ];
+          runtimeInputs = [ pkgs.nodejs paritytech-zombienet ] ++ runtimeDeps;
           text = ''
             cd ${paritytech-zombienet}            
             npm run zombie spawn ${all-dev-local-config}
@@ -69,8 +72,9 @@
           };
         in pkgs.writeShellApplication rec {
           name = "zombienet-rococo-local-dali-dev";
-          runtimeInputs = [ pkgs.nodejs pkgs.yq paritytech-zombienet ];
+          runtimeInputs = [ pkgs.nodejs paritytech-zombienet ] ++ runtimeDeps;
           text = ''
+            export DEBUG="zombie*"
             printf '${builtins.toJSON config}' > /tmp/${name}.json
             cd ${paritytech-zombienet}            
             npm run zombie spawn /tmp/${name}.json
