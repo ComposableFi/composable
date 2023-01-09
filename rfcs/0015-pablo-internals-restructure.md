@@ -1,15 +1,30 @@
 # RFC-0015
 
+This RFC is related to this document:
+https://docs.google.com/document/d/1DxPJT2o2WPb-zoi44U3sUidM09DAXS2ltlVuvlIIex0/edit?usp=sharing
+
+## Problem
+
 The [current implementation of `DualAssetConstantProduct`][dacp] is tightly
 coupled with the pablo pallet, depending on pablo's `Config` trait directly for
 all of it's functionality and directly modifying pablo's storage. This makes it
 very difficult to test, since a full runtime is required to provide the required
 mocks for it to work properly.
 
-## Goals
+The current testing suite also makes heavy use of [proptest], which is very
+flaky if not done properly, and it is very difficult to do properly as well. The
+library is also quite old and unmaintained, with very poor documentation and DX.
+
+The document linked at the beginning of this RFC mentions [kani], which is
+similar to proptest, but uses a proof harness rather than randomly generated
+inputs ("props") - essentially testing every input for the function. A more
+thorough comparison can be found [here][kani-tool-comparison].
+
+Ideally, we want to:
 
 1. Remove `DualAssetConstantProduct`'s direct dependency on pablo
-2. Make all of the `DualAssetConstantProduct` functionality pure
+2. Make all of the `DualAssetConstantProduct` functionality pure, to simplify
+   testing requirements and enable the use of kani for our business logic
 
 ## Implementation
 
@@ -66,7 +81,7 @@ Goal 1 is quite simple to implement, the required steps are outlined below:
            + Mutate<AccountId>
            + Transfer<AccountId>,
        TConvert: Convert<Balance, u128>,
-       // these are required by BasicPoolInfo - see note(1) for more information.
+       // these are required by BasicPoolInfo - see note(1) for more information
        AccountId: Clone + PartialEq + Ord + Debug,
        AssetId: Ord + Clone + Debug,
    {
@@ -133,7 +148,7 @@ Possible Solutions:
      needs to be read in certain branches. _However_, if there is an instance
      where there is a function that contains a significant amount of conditional
      reads/writes, it's likely that the function in question is doing too much
-     and should be broken down into smaller, more focused functions.
+     and should be broken down into smaller, more focused pieces.
 
 2. Pass "hooks" to the functions, that would then be called whenever that value
    is needed. See [this file][hooks-example] for an example.
@@ -319,3 +334,8 @@ Possible Solutions:
 [generic-const-exprs-issue]:
   https://github.com/rust-lang/rust/issues/76560
   "`#[feature(generic_const_exprs)]`"
+[proptest]: https://github.com/proptest-rs/proptest "Proptest"
+[kani]: https://github.com/model-checking/kani "Kani Rust Verifier"
+[kani-tool-comparison]:
+  https://model-checking.github.io/kani/tool-comparison.html
+  "Kani - Comparison with other tools"
