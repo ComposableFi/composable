@@ -37,8 +37,7 @@ asset metadata (ticker-symbol, decimal precision, and ratio)
 
 * Support the existing local asset IDs we have hard-coded
 
-* Utilize both pallet-balances and pallet-assets from Parity for maintaining 
-balances within our consensus system
+* Supply an Asset Transactor to our XCM Config
 
 # Other Solutions
 
@@ -85,17 +84,6 @@ the mintable or non-mintable pallet-assets instance.
 
 This new routing layer can implement traits that pallet-assets may be lacking.
 
-The primary downside of this is that we will be adding a storage read to each of our 
-financial transactions that require routing. Given that we may be implementing 
-important traits on top of pallet-assets through this router, it may be an 
-unavoidable bottleneck in this design. Input that may help circumvent this 
-bottleneck would be much appreciated.
-
-One way to minimize this issue is to stick with orml-tokens but maintain 
-multiple instances. This would allow us to only provide a singe instance of 
-orml-tokens to the instances that need it without the context of the other 
-instance (scopes that only require local xor foreign assets).
-
 ## Adapted Asset Registry
 
 Asset Registry must be updated with distinct paths for both local (mintable) and 
@@ -107,6 +95,9 @@ Asset Registry will also be responsible for maintaining asset metadata.
 
 To complete the implementation of a new assets' system, we will conduct four 
 main tasks.
+
+To-Do comments for these tasks will be added in the Dali 
+runtime.
 
 ## Declare Two pallet-asset Instances
 
@@ -125,23 +116,17 @@ From Moonbeam's `NormalFilter`:
 > asset-manager, while minting/burning only happens through xcm messages
 > This can change in the future
 
-While Moonbeam does not want asset minting or burning to occur outside of XCM, 
+While Moonbeam does not want asset minting or burning to occur outside XCM, 
 on Picasso - minting and burning is a core function of Pablo and Staking.
 
-The following is a task breakdown of what is needed to implement two instances 
-of pallet-assets. To-Do comments for these tasks will be added in the Dali 
-runtime.
+**Steps**:
+* Import & Declare pallet-assets
+  * To interact with Parity's pallet assets, we must first import it from our 
+  patched Substrate repository.
+  * We must then declare two instances within our `construct_runtime!` macro.
 
-### Import & Declare pallet-assets
-
-To interact with Parity's pallet assets, we must first import it from our 
-patched Substrate repository.
-
-We must then declare two instances within our `construct_runtime!` macro.
-
-### Configure Each Instance of pallet-assets
-
-For details on the configuration of pallet-assets, see [here](https://paritytech.github.io/substrate/master/pallet_assets/pallet/trait.Config.html#)
+* Configure Each Instance of pallet-assets
+  * NOTE: For details on the configuration of pallet-assets, see [here](https://paritytech.github.io/substrate/master/pallet_assets/pallet/trait.Config.html#)
 
 ## Update Assets Registry
 
@@ -157,7 +142,9 @@ pallet-assets.
 
 **Steps**:
 
-* Provide configuration item for both instances of pallet-assets
+* Provide configuration item for asset creation to assets-registry
+
+* Provide configuration item for max length of ticker-symbols
 
 ### Pallet Storage
 
@@ -167,7 +154,7 @@ to be created.
 
 **Steps**:
 
-* Add a nonce storage item that will be used for generating local asset IDs
+* Add a nonce storage item that will be used for generating foreign asset IDs
 
 * Add storage item for Asset ticker-symbol
 
@@ -182,6 +169,40 @@ generic in their input.
 * Update `register_*_asset` routes
 
 * Update `update_*_asset` routes
+
+### Asset ID Creation
+
+To assist in the routing between both instances of pallet-assets, we can 
+dedicate the first 8 bytes to either a pallet ID or other information that 
+determines the source of the asset. The remaining 8 bytes of the asset ID can 
+be the hash of a nonce provided by the source. A hard-coded list of source 
+prefixes can be used to determine which instance of pallet-assets will belong 
+to.
+
+To create a hash from the nonce, `sp_core::hashing::blake2_64` can be used
+
+```rust
+/// Create a new asset ID derived from `source_prefix` and a `source_nonce`.
+///
+/// # Parameters
+/// * `source_prefix` - The prefix uniquely identifying the source (normally a 
+/// `frame_support::PalletId`)
+/// * `source_nonce` - A nonce provided by the source, unique to this asset in 
+/// the scope of the source
+fn create_asset_id(source_prefix: [u8; 8], source_nonce: u64) -> T::LocalAssetId {
+  
+}
+```
+
+**Steps**:
+
+* Create `create_asset_id` function within assets-registry and wrap it in a 
+trait
+
+* Provide assets-registry with the new trait to pallets that need to create 
+assets, 
+
+* Create nonce within the pallets for asset IDs, call function accordingly
 
 ## Create Assets Manager
 
@@ -200,15 +221,15 @@ Registry to route between our two instances of pallet-assets.
 
 * Rename our `pallet-assets` to `pallet-assets-manager`
 
-* Create function for determining which instance of pallet-assets an asset 
-belongs to
-
 * Add routes for both instances to existing functions
+  * Use first 8 bytes of the asest ID to route the asset
 
 * Implement `MutateHold` on-top of pallet-assets via pallet-assets-manager
 
 * Use a call filter to block calls into the individual instances of 
 pallet-assets
+
+* Provide assets-manager as the XCM Asset Transactor
 
 ## Migrate Hard-Coded Assets
 

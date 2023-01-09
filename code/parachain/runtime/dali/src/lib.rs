@@ -804,6 +804,10 @@ impl assets_registry::Config for Runtime {
 	type ParachainOrGovernanceOrigin = EnsureRootOrHalfNativeCouncil;
 	type Balance = Balance;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
+	// TODO(RFC-0013): Update Assets Registry - Pallet Configuration
+	// Provide configuration item for asset creation to assets-registry
+	// type CreateLocalAssets = LocalAssets;
+	// type CreateForeignAssetsAssets = ForeignAssetsAssets;
 }
 
 impl assets::Config for Runtime {

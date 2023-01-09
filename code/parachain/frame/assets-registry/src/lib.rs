@@ -39,7 +39,7 @@ pub mod pallet {
 	};
 	use cumulus_primitives_core::ParaId;
 	use frame_support::{
-		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
+		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin, Twox128,
 	};
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
@@ -81,6 +81,13 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		type Balance: BalanceLike;
 		type CurrencyFactory: CurrencyFactory<AssetId = Self::LocalAssetId, Balance = Self::Balance>;
+		// TODO(RFC-0013): Update Assets Registry - Pallet Configuration
+		// | Provide configuration item for asset creation to assets-registry
+		// type CreateLocalAssets: fungibles::Create<Self::AccountId>;
+		// type CreateForeignAssetsAssets: fungibles::Create<Self::AccountId>;
+		// | Provide configuration item for max length of ticker-symbols
+		// #[pallet::constant]
+		// type TickerSymbolMaxChars: Get<u8>;
 	}
 
 	#[pallet::pallet]
@@ -116,6 +123,24 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn asset_ratio)]
 	pub type AssetRatio<T: Config> = StorageMap<_, Twox128, T::LocalAssetId, Rational, OptionQuery>;
+
+	// TODO(RFC-0013): Update Assets Registry - Pallet Storage
+	// | Add a nonce storage item that will be used for generating foreign asset IDs
+	// #[pallet::storage]
+	// #[pallet::getter(fn foreign_asset_id_nonce)]
+	// #[allow(clippy::disallowed_types)] // nonce, ValueQuery is OK
+	// pub type VestingScheduleNonce<T: Config> =
+	// 	StorageValue<_, u64, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
+	// | Add storage item for Asset ticker-symbol
+	// #[pallet::storage]
+	// #[pallet::getter(fn asset_ticker_symbol)]
+	// pub type AssetTickerSymbol<T: Config> = StorageMap<
+	// 	_,
+	// 	Twox128,
+	// 	T::LocalAssetId,
+	// 	BoundedVec<u8, T::TickerSymbolMaxChars>,
+	// 	OptionQuery,
+	// >;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config>(sp_std::marker::PhantomData<T>);
@@ -187,6 +212,10 @@ pub mod pallet {
 		/// `ed` - same meaning as in for foreign asset account (if None, then asset is not
 		/// sufficient)
 		#[pallet::weight(<T as Config>::WeightInfo::register_asset())]
+		// TODO(RFC-0013): Update Assets Registry - Pallet Functions
+		// | Update `register_*_asset` routes
+		// | Split this into `register_local_asset` and `register_foreign_asset` call functions
+		// | Add backing function that is generic over each of them
 		pub fn register_asset(
 			origin: OriginFor<T>,
 			location: T::ForeignAssetId,
@@ -208,6 +237,10 @@ pub mod pallet {
 		/// Use with caution as it allow reroute assets location.
 		/// See `register_asset` for parameters meaning.
 		#[pallet::weight(<T as Config>::WeightInfo::update_asset())]
+		// TODO(RFC-0013): Update Assets Registry - Pallet Functions
+		// | Update `update_*_asset` routes
+		// | Split this into `update_local_asset` and `update_foreign_asset` call functions
+		// | Add backing function that is generic over each of them
 		pub fn update_asset(
 			origin: OriginFor<T>,
 			asset_id: T::LocalAssetId,
