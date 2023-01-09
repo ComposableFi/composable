@@ -28,7 +28,7 @@ given asset.
   * Zero or One multi-locations ↔ One asset ID
 
 * Given a way to uniquely identify an asset, one should be able to retrieve 
-asset metadata (ticker-number, decimal precision, and ratio)
+asset metadata (ticker-symbol, decimal precision, and ratio)
 
 * Support the traits from `frame_support::traits::tokens::fungibles`
   * Specifically `MutateHold`
@@ -75,12 +75,26 @@ that some amount of assisted routing will be necessary. While routing between
 pallet-assets and pallet-balances is trivial, routing between pallet-balances 
 and two instances of pallet-assets becomes more difficult.
 
-Our current asset router (also called pallet-assets, to be renamed to asset 
+Ideally, this routing would not be needed, but both our local and foreign asset 
+will, in some instances, interact within the same scope (i.e. Pablo).
+
+Our current asset router (also called pallet-assets, to be renamed to assets 
 manager) already completes the more trivial routing. To conduct the non-trivial 
 routing, we can depend on asset-registry to inform us if an asset belongs to 
 the mintable or non-mintable pallet-assets instance.
 
 This new routing layer can implement traits that pallet-assets may be lacking.
+
+The primary downside of this is that we will be adding a storage read to each of our 
+financial transactions that require routing. Given that we may be implementing 
+important traits on top of pallet-assets through this router, it may be an 
+unavoidable bottleneck in this design. Input that may help circumvent this 
+bottleneck would be much appreciated.
+
+One way to minimize this issue is to stick with orml-tokens but maintain 
+multiple instances. This would allow us to only provide a singe instance of 
+orml-tokens to the instances that need it without the context of the other 
+instance (scopes that only require local xor foreign assets).
 
 ## Adapted Asset Registry
 
@@ -96,22 +110,118 @@ main tasks.
 
 ## Declare Two pallet-asset Instances
 
-<!-- TODO -->
+A great reference for what it looks like to have two instances of pallet-assets 
+can be found within the `PureStake/moonbeam` repository. Within the Moonbeam 
+runtime, there are two instances of pallet-assets, the first for foreign assets 
+and the second for local assets.
 
-## Update Asset Registry
+While the approach of having two instances of pallet-assets will work for us, 
+it's important to note a difference between the goals of Moonbeam and Picasso.
 
-<!-- TODO -->
+From Moonbeam's `NormalFilter`:
+> Normal Call Filter
+> We dont allow to create nor mint assets, this for now is disabled
+> We only allow transfers. For now creation of assets will go through
+> asset-manager, while minting/burning only happens through xcm messages
+> This can change in the future
 
-## Create Asset Manager
+While Moonbeam does not want asset minting or burning to occur outside of XCM, 
+on Picasso - minting and burning is a core function of Pablo and Staking.
 
-Calling this Asset Manager instead of Asset Router to avoid confusion between 
-this and Asset Registry when abbreviated with "AR".
+The following is a task breakdown of what is needed to implement two instances 
+of pallet-assets. To-Do comments for these tasks will be added in the Dali 
+runtime.
 
-<!-- TODO -->
+### Import & Declare pallet-assets
+
+To interact with Parity's pallet assets, we must first import it from our 
+patched Substrate repository.
+
+We must then declare two instances within our `construct_runtime!` macro.
+
+### Configure Each Instance of pallet-assets
+
+For details on the configuration of pallet-assets, see [here](https://paritytech.github.io/substrate/master/pallet_assets/pallet/trait.Config.html#)
+
+## Update Assets Registry
+
+Assets Registry will be responsible for registering both foreign and local 
+assets. As part of the registration process, asset-meta data should be provided 
+and updatable through assets-registry.
+
+### Pallet Configuration
+
+To be responsible for registering both foreign and local assets, assets-registry
+will need access to the creation functionality of both instances of 
+pallet-assets.
+
+**Steps**:
+
+* Provide configuration item for both instances of pallet-assets
+
+### Pallet Storage
+
+To accomplish this, minimal storage modifications will be required. The current 
+pallet storage items do not need to be altered, but several new ones will need 
+to be created.
+
+**Steps**:
+
+* Add a nonce storage item that will be used for generating local asset IDs
+
+* Add storage item for Asset ticker-symbol
+
+### Pallet Functions
+
+To avoid confusion top level `Call` functions should be explicit in 
+which asset type they are dealing with. Underlying functions can be more 
+generic in their input.
+
+**Steps**:
+
+* Update `register_*_asset` routes
+
+* Update `update_*_asset` routes
+
+## Create Assets Manager
+
+NOTE: *Calling this Asset Manager instead of Asset Router to avoid confusion 
+between this and Asset Registry when abbreviated with "AR".*
+
+Assets Manager will mostly be a migration of the current pallet-assets that we 
+created to route between pallet-balances and orml-tokens. The primary difference 
+being that assets-manager will also need to handle routing between our two 
+instances of Parity's pallet-assets as well as pallet-balances.
+
+As stated in the design, we can depend on information provided by Assets 
+Registry to route between our two instances of pallet-assets. 
+
+**Steps**:
+
+* Rename our `pallet-assets` to `pallet-assets-manager`
+
+* Create function for determining which instance of pallet-assets an asset 
+belongs to
+
+* Add routes for both instances to existing functions
+
+* Implement `MutateHold` on-top of pallet-assets via pallet-assets-manager
+
+* Use a call filter to block calls into the individual instances of 
+pallet-assets
 
 ## Migrate Hard-Coded Assets
 
-<!-- TODO -->
+The data-migration may be handled in two main tasks:
+
+* Append new storage elements to assets-registry
+  * Add nonce
+  * Add ticker-number to existing tokens
+  * Create entries for local assets not previously found in assets-registry
+
+* Migrate existing orml-tokens storage to appropriate instance of pallet-assets
+
+<!-- TODO This should provide more clear details and will in the future -->
 
 # Glossary
 
@@ -121,7 +231,7 @@ consensus systems
 * **Local Asset ID** - A way to identify a single asset within the scope of a
 single consensus system
 
-* **Ticker-Number** - Small set of letters commonly used to identify an asset 
+* **Ticker-Symbol** - Small set of letters commonly used to identify an asset 
 (PBLO, PICA, BTC, USDT, POOP)
 
 * **decimal precision** - In the context of some amount of a single fungible asset,

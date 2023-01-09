@@ -1290,6 +1290,18 @@ impl pallet_ibc_ping::Config for Runtime {
 	type IbcHandler = Ibc;
 }
 
+// TODO(RFC-0013): Configure Each Instance of pallet-assets
+// pub type ForeignAssetsInstance = ();
+// pub type LocalAssetsInstance = pallet_assets::Instance1;
+//
+// impl pallet_assets::Config<ForeignAssetsInstance> for Runtime {
+// 	...
+// }
+//
+// impl pallet_assets::Config<LocalAssetsInstance> for Runtime {
+// 	...
+// }
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1361,6 +1373,11 @@ construct_runtime!(
 		// depends on fNFT being initialized before it.
 		Fnft: pallet_fnft = 67,
 		StakingRewards: pallet_staking_rewards = 68,
+		// TODO(RFC-0013): Import & Declare pallet-assets
+		// We must then declare two instances within our `construct_runtime!` macro.
+		// NOTE(connor): May need to consider putting these before other pallets.
+		// ForeignAssets = 69,
+		// LocalAssets = 70,
 
 		CallFilter: call_filter = 140,
 
