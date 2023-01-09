@@ -7,7 +7,7 @@ import {
   subscribeDefaultTransferToken,
   subscribeTokenOptions,
 } from "@/stores/defi/polkadot/transfers/subscribers";
-import React, { FC, useEffect, useMemo, useRef } from "react";
+import React, { FC, MutableRefObject, useEffect, useMemo } from "react";
 import { useValidation } from "@/components/Molecules/BigNumberInput/hooks";
 import { Typography } from "@mui/material";
 import { calculateTransferAmount } from "@/defi/polkadot/pallets/Transfer";
@@ -15,9 +15,10 @@ import { useTransfer } from "@/defi/polkadot/hooks";
 import BigNumber from "bignumber.js";
 import { FEE_MULTIPLIER } from "shared/defi/constants";
 
-export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
-  disabled,
-}) => {
+export const AmountTokenDropdown: FC<{
+  disabled: boolean;
+  isDirty: MutableRefObject<boolean>;
+}> = ({ disabled, isDirty }) => {
   const updateAmount = useStore(
     (state) => state.transfers.updateAmount,
     () => true
@@ -48,7 +49,6 @@ export const AmountTokenDropdown: FC<{ disabled: boolean }> = ({
     (state) => state.transfers.setFormError,
     () => true
   );
-  const isDirty = useRef(false);
 
   const maxAmountToTransfer = useMemo(() => {
     const amount = callbackGate(
