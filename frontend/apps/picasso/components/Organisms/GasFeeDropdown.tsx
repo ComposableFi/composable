@@ -52,13 +52,13 @@ export const GasFeeDropdown: FC<Props> = ({
       .filter(
         (token) =>
           token.id === SUBSTRATE_NETWORKS.picasso.tokenId ||
-          !balances["picasso"][token.id].balance.isZero()
+          !balances["picasso"][token.id].free.isZero()
       )
       .map((token) => ({
         value: token.id,
         label: token.symbol,
         icon: token.icon,
-        disabled: balances["picasso"][token.id].balance.isZero(),
+        disabled: balances["picasso"][token.id].free.isZero(),
         selected: feeItem === token.id,
         tokenId: token.id,
       }));
@@ -197,7 +197,7 @@ export const GasFeeDropdown: FC<Props> = ({
         if (!picassoProvider.parachainApi) return null;
         const option = options.find((option) => option.value == value);
         const optionBalance = option
-          ? balances.picasso[option.tokenId].balance
+          ? balances.picasso[option.tokenId].free
           : new BigNumber(0);
         if (!option || optionBalance.lte(feeItemEd) || optionBalance.eq(0)) {
           let reason: string;

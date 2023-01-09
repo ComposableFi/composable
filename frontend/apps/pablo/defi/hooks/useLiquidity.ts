@@ -2,10 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import BigNumber from "bignumber.js";
 import useStore from "@/store/useStore";
 import { PoolConfig } from "@/store/pools/types";
-import { getSubAccount } from "@/defi/utils/pablo/getSubAccount";
 import { useParachainApi } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import { Asset } from "shared";
+import { Asset, getSubAccount } from "shared";
 
 export function useLiquidity(liquidityPool: PoolConfig | undefined | null): {
   baseAmount: BigNumber;

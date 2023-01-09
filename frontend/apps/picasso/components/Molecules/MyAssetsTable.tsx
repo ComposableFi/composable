@@ -46,7 +46,7 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({
   const picaPrice = usePicaPriceDiscovery();
 
   useEffect(() => {
-    const unsubPrices = subscribeCoingeckoPrices(); 
+    const unsubPrices = subscribeCoingeckoPrices();
     const unsubPools = pipe(
       parachainApi,
       O.fromNullable,
@@ -88,7 +88,7 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({
             {tokenList.map((row: TokenMetadata) => {
               const price = row.id === "pica" ? picaPrice : prices[row.id].usd;
               const change_24hr = row.id === "pica" ? 0 : prices[row.id].usd_24h_change;
-              const balance = balances[row.id].balance;
+              const balance = balances[row.id].free;
               const decimalsToDisplay = row.id === "pica" ? 6 : row.decimalsToDisplay;
               if (row.symbol) {
                 return (

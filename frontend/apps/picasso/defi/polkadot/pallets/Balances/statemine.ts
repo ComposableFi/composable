@@ -3,13 +3,14 @@ import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import BigNumber from "bignumber.js";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { fromChainIdUnit } from "shared";
+import { TokenBalance } from "@/stores/defi/polkadot/balances/slice";
 
 export function subscribeStatemineBalance(
   api: ApiPromise,
   address: string,
   asset: TokenMetadata,
   chainId: SubstrateNetworkId,
-  callback: (value: BigNumber) => void
+  callback: (value: TokenBalance) => void
 ) {
   const onChainId =
     asset.chainId[chainId] instanceof BigNumber
@@ -18,13 +19,17 @@ export function subscribeStatemineBalance(
   if (onChainId) {
     api.query.assets.account(onChainId, address, (assetAccount: any) => {
       assetAccount.isSome && asset.decimals[chainId] !== null
-        ? callback(
-            fromChainIdUnit(
+        ? callback({
+            free: fromChainIdUnit(
               new BigNumber(assetAccount.toJSON().balance.toString()),
               asset.decimals[chainId]
-            )
-          )
-        : callback(new BigNumber(0));
+            ),
+            locked: new BigNumber(0),
+          })
+        : callback({
+            free: new BigNumber(0),
+            locked: new BigNumber(0),
+          });
     });
   }
 }

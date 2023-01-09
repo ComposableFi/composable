@@ -33,7 +33,10 @@ export type WalletProps = {
   selectedPolkadotAccount: InjectedAccountWithMeta | undefined;
   supportedEthereumWallets: Array<EthereumWallet>;
   supportedPolkadotWallets: Array<PolkadotWallet>;
-  connectedAccountNativeBalance: BigNumber;
+  connectedAccountNativeBalance: {
+    free: BigNumber;
+    locked: BigNumber;
+  };
   hideEth?: boolean;
 };
 

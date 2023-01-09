@@ -1,7 +1,5 @@
-import { useParachainApi } from "substrate-react";
-import { calculateOutGivenIn, DEFAULT_NETWORK_ID } from "@/defi/utils";
 import BigNumber from "bignumber.js";
-import { Asset } from "shared";
+import { Asset, calculateOutGivenIn } from "shared";
 import { PoolConfig } from "@/store/pools/types";
 import { useLiquidity } from "@/defi/hooks";
 import { useMemo } from "react";
@@ -11,8 +9,6 @@ export const usePoolSpotPrice = (
   input: [Asset, Asset] | undefined | null,
   isReversed: boolean = false
 ) => {
-  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  // const [spotPrice, setSpotPrice] = useState<BigNumber>(new BigNumber(0));
   const { baseAmount, quoteAmount } = useLiquidity(
     pool as PoolConfig | undefined
   );

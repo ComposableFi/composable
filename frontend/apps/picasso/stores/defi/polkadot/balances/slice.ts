@@ -5,7 +5,8 @@ import { TokenId, TOKENS } from "tokens";
 import BigNumber from "bignumber.js";
 
 export type TokenBalance = {
-  balance: BigNumber;
+  free: BigNumber;
+  locked: BigNumber;
 };
 
 type SubstrateBalancesState = {
@@ -22,7 +23,8 @@ const initialState: SubstrateBalancesState = SUBSTRATE_NETWORK_IDS.reduce(
         ...prev.balances,
         [chain]: Object.keys(TOKENS).reduce((agg, tokenId) => {
           agg[tokenId as TokenId] = {
-            balance: new BigNumber(0),
+            free: new BigNumber(0),
+            locked: new BigNumber(0),
           };
 
           return agg;
@@ -37,10 +39,10 @@ export interface SubstrateBalancesActions {
   updateBalance: (data: {
     network: SubstrateNetworkId;
     tokenId: TokenId;
-    balance: BigNumber;
+    balance: TokenBalance;
   }) => void;
   clearBalance: () => void;
-  getBalance: (token: TokenId, network: SubstrateNetworkId) => BigNumber;
+  getBalance: (token: TokenId, network: SubstrateNetworkId) => TokenBalance;
 }
 
 export interface SubstrateBalancesSlice {
@@ -52,20 +54,6 @@ export const createSubstrateBalancesSlice: StoreSlice<
 > = (set, get) => ({
   substrateBalances: {
     ...initialState,
-    updateBalance: ({
-      network,
-      tokenId,
-      balance,
-    }: {
-      network: SubstrateNetworkId;
-      tokenId: TokenId;
-      balance: BigNumber;
-    }) => {
-      set((state) => {
-        state.substrateBalances.balances[network][tokenId].balance = balance;
-        return state;
-      });
-    },
     clearBalance: () => {
       set((state) => {
         for (const network in state.substrateBalances.balances) {
@@ -74,18 +62,32 @@ export const createSubstrateBalancesSlice: StoreSlice<
           ]) {
             state.substrateBalances.balances[network as SubstrateNetworkId][
               token as TokenId
-            ].balance = new BigNumber(0);
+            ].free = new BigNumber(0);
+            state.substrateBalances.balances[network as SubstrateNetworkId][
+              token as TokenId
+            ].locked = new BigNumber(0);
           }
         }
 
         return state;
       });
     },
-    getBalance: (token: TokenId, network: SubstrateNetworkId): BigNumber => {
-      return get().substrateBalances.balances[network][token].balance;
+    updateBalance: ({
+      network,
+      tokenId,
+      balance,
+    }: {
+      network: SubstrateNetworkId;
+      tokenId: TokenId;
+      balance: TokenBalance;
+    }) => {
+      set((state) => {
+        state.substrateBalances.balances[network][tokenId] = balance;
+        return state;
+      });
     },
-    getAssetBalance: (tokenId: TokenId, network: SubstrateNetworkId) => {
-      return get().substrateBalances.balances[network][tokenId].balance;
+    getBalance: (token: TokenId, network: SubstrateNetworkId): TokenBalance => {
+      return get().substrateBalances.balances[network][token];
     },
   },
 });

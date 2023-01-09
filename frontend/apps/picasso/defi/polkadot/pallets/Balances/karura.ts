@@ -4,12 +4,13 @@ import { ApiPromise } from "@polkadot/api";
 import { UnsubscribePromise } from "@polkadot/api-base/types/base";
 import BigNumber from "bignumber.js";
 import { fromChainIdUnit } from "shared";
+import { TokenBalance } from "@/stores/defi/polkadot/balances/slice";
 
 export async function subscribeKaruraBalance(
   api: ApiPromise,
   accountId: string,
   tokenMetadata: TokenMetadata,
-  callback: (balance: BigNumber) => void
+  callback: (balance: TokenBalance) => void
 ): Promise<() => void> {
   let unsub: UnsubscribePromise = new Promise(() => {});
   try {
@@ -25,16 +26,23 @@ export async function subscribeKaruraBalance(
         token: api.createType(
           "AcalaPrimitivesCurrencyTokenSymbol",
           tokenMetadata.chainId.karura
-        )
+        ),
       }),
       (result: OrmlTokensAccountData) => {
-        const { free } = result.toJSON() as any;
-        const balance = fromChainIdUnit(new BigNumber(free.toString()));
-        callback(balance);
+        const { free, reserved } = result.toJSON() as any;
+        const bnFree = fromChainIdUnit(new BigNumber(free.toString()));
+        const bnLocked = fromChainIdUnit(new BigNumber(reserved.toString()));
+        callback({
+          free: bnFree,
+          locked: bnLocked,
+        });
       }
     );
   } catch (error) {
-    callback(new BigNumber(0));
+    callback({
+      free: new BigNumber(0),
+      locked: new BigNumber(0),
+    });
     console.error(error);
   }
   return unsub;
