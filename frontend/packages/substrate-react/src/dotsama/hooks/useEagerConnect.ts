@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { ParachainId, SupportedWalletId } from "../types";
+import { SupportedWalletId } from "../types";
 import { useDotSamaContext } from "./useDotSamaContext";
 import { useParachainApi } from "./useParachainApi";
 import { useSelectedAccount } from "./useSelectedAccount";
+import { ParachainId } from "shared";
 
 /**
  * Idea is to have substrate-react
@@ -10,8 +11,11 @@ import { useSelectedAccount } from "./useSelectedAccount";
  * once the user lands on consumer web
  * app
  */
-export const useEagerConnect = (chainId: ParachainId): boolean => {
-  const { activate, setSelectedAccount, extensionStatus, connectedAccounts } = useDotSamaContext();
+export const useEagerConnect = (
+  chainId: ParachainId
+): boolean => {
+  const { activate, setSelectedAccount, extensionStatus, connectedAccounts } =
+    useDotSamaContext();
   const { parachainApi } = useParachainApi(chainId);
   const [hasTriedEagerConnect, setHasTriedEagerConnect] =
     useState<boolean>(false);

@@ -7,10 +7,10 @@ import { Option } from "@polkadot/types-codec";
 import { ITuple } from "@polkadot/types-codec/types";
 import { fetchAssetPrice } from "./Oracle";
 import { Executor, getSigner, TokenId } from "substrate-react";
-import { APP_NAME } from "@/defi/polkadot/constants";
 import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { fromChainIdUnit, subscanExtrinsicLink } from "shared";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
+import config from "@/constants/config";
 
 export function createArrayOfLength(length: number): number[] {
   return Array.from(Array(length).keys());
@@ -197,7 +197,7 @@ export async function claim(
   onStart: (txHash: string) => void
 ) {
   if (parachainApi && account && executor && vestingScheduleId) {
-    const signer = await getSigner(APP_NAME, account.address);
+    const signer = await getSigner(config.appName, account.address);
     await executor.execute(
       parachainApi.tx.vesting.claim(assetId, { One: vestingScheduleId }),
       account.address,
@@ -223,7 +223,7 @@ export async function purchaseBond({
 }: PurchaseBond) {
   if (parachainApi && account && executor) {
     try {
-      const signer = await getSigner(APP_NAME, account.address);
+      const signer = await getSigner(config.appName, account.address);
       await executor
         .execute(
           parachainApi.tx.bondedFinance.bond(

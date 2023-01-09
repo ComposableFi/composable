@@ -1,23 +1,13 @@
-import {
-  ParachainApi,
-  RelaychainApi,
-  useDotSamaContext
-} from "substrate-react";
+import { ChainApi, useDotSamaContext } from "substrate-react";
 import { useMemo } from "react";
+import { SubstrateNetworkId } from "shared";
 
-export type AllProviders = {
-  kusama: RelaychainApi;
-  polkadot: RelaychainApi;
-  karura: ParachainApi;
-  picasso: ParachainApi;
-  statemine: ParachainApi;
-};
-export const useAllParachainProviders: () => AllProviders = () => {
+export const useAllParachainProviders = () => {
   const { parachainProviders, relaychainProviders } = useDotSamaContext();
   return useMemo(
-    () => ({
+    (): Record<SubstrateNetworkId, ChainApi> => ({
       ...parachainProviders,
-      ...relaychainProviders
+      ...relaychainProviders,
     }),
     [parachainProviders, relaychainProviders]
   );

@@ -1,4 +1,3 @@
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { StoreSlice } from "@/stores/types";
 import { Token, TokenId, TOKENS } from "tokens";
 import BigNumber from "bignumber.js";
@@ -8,7 +7,8 @@ import {
   StatemineAssetMetadata,
 } from "@/defi/polkadot/pallets/Assets";
 import { KusamaAsset } from "@/defi/polkadot/pallets/Assets/kusama";
-import { ParachainNetworks } from "substrate-react";
+import { parachainNetworks } from "substrate-react";
+import { SubstrateNetworkId } from "shared";
 
 export type TokenMetadata = Token & {
   chainId: {
@@ -92,13 +92,13 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
                 ];
               console.log("[Statemine] Found supported asset", token.id);
               token.decimals.statemine =
-                listItem.decimals ?? ParachainNetworks.statemine.decimals;
+                listItem.decimals ?? parachainNetworks.statemine.decimals;
               token.chainId.statemine = listItem.id;
               token.existentialDeposit.statemine = listItem.existentialDeposit;
             }
           });
         }
-        
+
         if (picassoList) {
           picassoList.forEach((listItem) => {
             /**
@@ -117,7 +117,7 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
             }
           });
         }
-        
+
         // karuraList.forEach(listItem => {
         //   /**
         //    * Here identifier is in lower case
@@ -146,7 +146,7 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
 
           state.substrateTokens.tokens.ksm.chainId.kusama =
           kusamaAssetMetadata.chainId;
-          
+
           state.substrateTokens.tokens.ksm.existentialDeposit.kusama =
           kusamaAssetMetadata.existentialDeposit;
         }

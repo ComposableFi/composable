@@ -1,10 +1,11 @@
-import { AllProviders } from "@/defi/polkadot/context/hooks";
 import { useStore } from "@/stores/root";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { XcmVersionedMultiLocation } from "@polkadot/types/lookup";
+import { SubstrateNetworkId } from "shared";
+import { ChainApi } from "substrate-react";
+import { SUBSTRATE_NETWORKS } from "shared/defi/constants";
 
 export const subscribeDestinationMultiLocation = async (
-  allProviders: AllProviders,
+  allProviders: { [chainId in SubstrateNetworkId]: ChainApi },
   targetAddress: string
 ) => {
   return useStore.subscribe(

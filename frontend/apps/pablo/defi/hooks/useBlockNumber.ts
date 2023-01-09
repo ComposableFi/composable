@@ -1,6 +1,7 @@
 import BigNumber from "bignumber.js";
 import { useEffect, useState } from "react";
-import { ParachainId, useParachainApi } from "substrate-react";
+import { useParachainApi } from "substrate-react";
+import { ParachainId } from "shared";
 
 export default function useBlockNumber(parachainId: ParachainId): BigNumber {
   const { parachainApi } = useParachainApi(parachainId);
@@ -8,9 +9,11 @@ export default function useBlockNumber(parachainId: ParachainId): BigNumber {
 
   useEffect(() => {
     if (parachainApi) {
-      const sub = parachainApi.rpc.chain.subscribeNewHeads((header) => {
-        setBlockNumber(new BigNumber(header.number.toString()));
-      });
+      const sub = parachainApi.rpc.chain.subscribeNewHeads(
+        (header: { number: { toString: () => BigNumber.Value } }) => {
+          setBlockNumber(new BigNumber(header.number.toString()));
+        }
+      );
 
       return function () {
         sub.then((s) => s());

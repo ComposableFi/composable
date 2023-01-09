@@ -16,6 +16,10 @@ export const BondBox: FC<BondBoxProps> = ({
 }) => {
   const theme = useTheme();
 
+  const successOrError = discountColor > 0
+    ? theme.palette.featured.lemon
+    : theme.palette.error.main;
+
   return (
     <Box
       sx={{
@@ -40,9 +44,7 @@ export const BondBox: FC<BondBoxProps> = ({
         color={
           discountColor == 0
             ? theme.palette.common.white
-            : discountColor > 0
-            ? theme.palette.featured.lemon
-            : theme.palette.error.main
+            : successOrError
         }
       >
         {description}

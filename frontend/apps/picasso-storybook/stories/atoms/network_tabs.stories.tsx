@@ -1,26 +1,23 @@
-import React from "react";
-import { 
-  NetworkTabsProps,
+import {
   NetworkTabItem,
-  NetworkTabs, 
+  NetworkTabs,
+  NetworkTabsProps,
 } from "picasso/components";
-import { 
-  Box, 
-  SxProps,
-} from "@mui/material";
-import { NETWORK_IDS } from "picasso/defi/Networks";
+import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
+import config from "picasso/constants/config";
+import { SyntheticEvent, useState } from "react";
 
 const networkItems: NetworkTabItem[] = [
   {
-    networkId: NETWORK_IDS[0],
+    networkId: config.evm.networkIds[0],
   },
   {
-    networkId:  NETWORK_IDS[1],
+    networkId: config.evm.networkIds[1],
   },
   {
-    networkId:  NETWORK_IDS[2],
-  }
+    networkId: config.evm.networkIds[2],
+  },
 ];
 
 const NetworkTabsStories = (props: NetworkTabsProps) => {
@@ -32,15 +29,15 @@ const NetworkTabsStories = (props: NetworkTabsProps) => {
     overflow: "auto",
   };
 
-  const [value, setValue] = React.useState<number>(NETWORK_IDS[0]);
+  const [value, setValue] = useState<number>(config.evm.networkIds[0]);
 
-  const handleChange = (_: React.SyntheticEvent, newValue: number) => {
+  const handleChange = (_: SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
 
   return (
     <Box sx={boxStyle}>
-      <NetworkTabs {...props} value={value} onChange={handleChange}  />
+      <NetworkTabs {...props} value={value} onChange={handleChange} />
     </Box>
   );
 };
@@ -52,7 +49,7 @@ export default {
 const defaultArgs = {
   items: networkItems,
   iconSize: 24,
-}
+};
 const Template: Story<typeof NetworkTabsStories> = (args) => (
   <NetworkTabsStories {...args} />
 );

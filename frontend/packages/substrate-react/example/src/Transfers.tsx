@@ -1,12 +1,12 @@
-import 'react-app-polyfill/ie11';
-import { useEffect, useState } from 'react';
+import "react-app-polyfill/ie11";
+import { useEffect, useState } from "react";
 import {
   SupportedWalletId,
   useDotSamaContext,
   useExecutor,
   useParachainApi,
-} from '../../src/index';
-import BigNumber from 'bignumber.js';
+} from "../../src";
+import BigNumber from "bignumber.js";
 import { useExtrinsicStore } from "../../src/extrinsics/store/extrinsics/extrinsics.slice";
 
 const APP_NAME = "Demo App";

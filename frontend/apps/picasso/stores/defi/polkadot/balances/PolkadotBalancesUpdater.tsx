@@ -1,14 +1,7 @@
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
-import { callbackGate } from "shared";
+import { callbackGate, SubstrateNetworkId } from "shared";
 import { useCallback, useEffect } from "react";
 import { useStore } from "@/stores/root";
-import {
-  ParachainApi,
-  ParachainId,
-  RelayChainId,
-  useDotSamaContext,
-  useEagerConnect,
-} from "substrate-react";
+import { ChainApi, useDotSamaContext, useEagerConnect } from "substrate-react";
 
 import {
   subscribeKaruraBalance,
@@ -17,16 +10,11 @@ import {
   subscribeStatemineBalance,
 } from "@/defi/polkadot/pallets/Balances";
 import { TokenMetadata } from "../tokens/slice";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import {
-  karuraAssetsList,
-  picassoAssetsList,
-} from "@/defi/polkadot/pallets/Assets";
+import { picassoAssetsList } from "@/defi/polkadot/pallets/Assets";
 import { VoidFn } from "@polkadot/api/types";
-import { AcalaPrimitivesCurrencyCurrencyId } from "@acala-network/types/interfaces/types-lookup";
-import { ApiPromise } from "@polkadot/api";
 import { kusamaAssetsList } from "@/defi/polkadot/pallets/Assets/kusama";
 import { statemineAssetList } from "@/defi/polkadot/pallets/Assets/statemine";
+import { SUBSTRATE_NETWORKS } from "shared/defi/constants";
 
 const PolkadotBalancesUpdater = () => {
   useEagerConnect("picasso");
@@ -90,7 +78,7 @@ const PolkadotBalancesUpdater = () => {
 
   const picassoBalanceSubscriber = useCallback(
     async (
-      chain: ParachainApi,
+      chain: ChainApi,
       tokenMetadata: TokenMetadata,
       chainId,
       accounts
@@ -128,13 +116,12 @@ const PolkadotBalancesUpdater = () => {
         ([chainId, chain]) => {
           console.log("Subscribing native balance", chainId);
           if (
-            connectedAccounts[chainId as RelayChainId | ParachainId] &&
+            connectedAccounts[chainId as SubstrateNetworkId] &&
             chain.parachainApi
           ) {
             subscribeNativeBalance(
-              connectedAccounts[chainId as ParachainId | RelayChainId][
-                selectedAccount
-              ].address,
+              connectedAccounts[chainId as SubstrateNetworkId][selectedAccount]
+                .address,
               chain.parachainApi,
               chainId,
               SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId].tokenId,

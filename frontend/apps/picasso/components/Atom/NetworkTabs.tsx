@@ -1,12 +1,12 @@
 import React from "react";
 import {
-  TabsProps as MuiTabsProps,
-  Tabs as MuiTabs,
   Tab as MuiTab,
+  Tabs as MuiTabs,
+  TabsProps as MuiTabsProps,
 } from "@mui/material";
-import { NetworkId } from "@/defi/types";
-import { getNetwork } from "@/defi/Networks";
 import Image from "next/image";
+import { NetworkId } from "@/constants/types";
+import { getNetwork } from "@/constants/config";
 
 export type NetworkTabItem = {
   networkId: NetworkId;

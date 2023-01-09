@@ -1,4 +1,3 @@
-import { AMMAssetProps } from "./AMMAsset";
 export { Logo } from "./Logo";
 
 export type { BaseAssetProps } from "./BaseAsset";
@@ -39,9 +38,6 @@ export { Tabs } from "./Tabs";
 
 export type { NetworkTabItem, NetworkTabsProps } from "./NetworkTabs";
 export { NetworkTabs } from "./NetworkTabs";
-
-export type { AMMAssetProps } from "./AMMAsset";
-export { AMMAsset } from "./AMMAsset";
 
 export type { AreaChartProps } from "./AreaChart";
 export { AreaChart } from "./AreaChart";

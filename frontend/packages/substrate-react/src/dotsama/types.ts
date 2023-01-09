@@ -2,17 +2,16 @@ import { ApiPromise } from "@polkadot/api";
 import { DEFI_CONFIG } from "./config";
 import type { Signer as InjectedSigner } from "@polkadot/api/types";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
+import { ParachainId, RelaychainId, SubstrateNetworkId } from "shared";
+
 export type TokenId = typeof DEFI_CONFIG.tokenIds[number];
-export type ParachainId = typeof DEFI_CONFIG.parachainIds[number];
-export type RelayChainId = typeof DEFI_CONFIG.relayChainIds[number];
-export type ChainIdUnion = ParachainId | RelayChainId;
 export type AccountType = "secp256k1" | "*25519";
 
 export type SubstrateChainApiStatus = "initializing" | "failed" | "connected";
 
 export enum SupportedWalletId {
   Talisman = "talisman",
-  Polkadotjs = "polkadot-js"
+  Polkadotjs = "polkadot-js",
 }
 
 export type DotSamaExtensionStatus =
@@ -28,26 +27,28 @@ export interface SubstrateChainApi {
   prefix: number;
 }
 
-export interface ParachainApi extends SubstrateChainApi {
-  chainId: ParachainId;
+export interface ChainApi extends SubstrateChainApi {
+  chainId: SubstrateNetworkId;
 }
 
-export interface RelaychainApi extends SubstrateChainApi {
-  chainId: RelayChainId;
-}
-
-export type ConnectedAccounts = Record<RelayChainId | ParachainId, InjectedAccountWithMeta[]>;
+export type ConnectedAccounts = Record<
+  SubstrateNetworkId,
+  InjectedAccountWithMeta[]
+>;
 
 export interface DotSamaContext {
   signer: InjectedSigner | undefined;
-  parachainProviders: { [chainId in ParachainId]: ParachainApi };
-  relaychainProviders: { [chainId in RelayChainId]: RelaychainApi };
+  parachainProviders: { [chainId in ParachainId]: ChainApi };
+  relaychainProviders: { [chainId in RelaychainId]: ChainApi };
   extensionStatus: DotSamaExtensionStatus;
-  activate?: (walletId?: SupportedWalletId, selectedDefaultAccount?: boolean) => Promise<any[] | undefined>;
+  activate?: (
+    walletId?: SupportedWalletId,
+    selectedDefaultAccount?: boolean
+  ) => Promise<any[] | undefined>;
   deactivate?: () => Promise<void>;
   selectedAccount: number;
   setSelectedAccount?: (account: number) => void;
-  connectedAccounts: ConnectedAccounts
+  connectedAccounts: ConnectedAccounts;
 }
 
 export interface SubstrateNetwork {
@@ -65,9 +66,9 @@ export interface SubstrateNetwork {
 
 export interface ParachainNetwork extends SubstrateNetwork {
   parachainId: number;
-  relayChain: RelayChainId;
+  relayChain: "kusama" | "polkadot";
 }
 
 export interface RelaychainNetwork extends SubstrateNetwork {
-  networkId: RelayChainId;
+  networkId: "kusama" | "polkadot";
 }

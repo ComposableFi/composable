@@ -3,7 +3,7 @@ import { ApiPromise } from "@polkadot/api";
 import { fromChainIdUnit } from "shared";
 import BigNumber from "bignumber.js";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
-import { ParachainNetworks } from "substrate-react";
+import { parachainNetworks } from "substrate-react";
 import { TokenBalance } from "@/stores/defi/polkadot/balances/slice";
 
 export const fetchBalanceByAssetId = async (
@@ -43,11 +43,11 @@ export const subscribePicassoBalanceByAssetId = async (
         callback({
           free: fromChainIdUnit(
             new BigNumber(balance.free.toString()),
-            tokenMetadata.decimals.picasso ?? ParachainNetworks.picasso.decimals
+            tokenMetadata.decimals.picasso ?? parachainNetworks.picasso.decimals
           ),
           locked: fromChainIdUnit(
             new BigNumber(balance.reserved.toString()),
-            tokenMetadata.decimals.picasso ?? ParachainNetworks.picasso.decimals
+            tokenMetadata.decimals.picasso ?? parachainNetworks.picasso.decimals
           ),
         });
       }

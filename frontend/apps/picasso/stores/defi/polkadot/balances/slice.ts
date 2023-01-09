@@ -1,8 +1,8 @@
-import { SUBSTRATE_NETWORK_IDS } from "@/defi/polkadot/Networks";
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { StoreSlice } from "@/stores/types";
 import { TokenId, TOKENS } from "tokens";
 import BigNumber from "bignumber.js";
+import { SubstrateNetworkId } from "shared";
+import { SUBSTRATE_NETWORKS } from "shared/defi/constants";
 
 export type TokenBalance = {
   free: BigNumber;
@@ -16,24 +16,23 @@ type SubstrateBalancesState = {
     };
   };
 };
-const initialState: SubstrateBalancesState = SUBSTRATE_NETWORK_IDS.reduce(
-  (prev, chain: SubstrateNetworkId) => {
-    return {
-      balances: {
-        ...prev.balances,
-        [chain]: Object.keys(TOKENS).reduce((agg, tokenId) => {
-          agg[tokenId as TokenId] = {
-            free: new BigNumber(0),
+const initialState: SubstrateBalancesState = Object.keys(
+  SUBSTRATE_NETWORKS
+).reduce((prev, chain) => {
+  return {
+    balances: {
+      ...prev.balances,
+      [chain]: Object.keys(TOKENS).reduce((agg, tokenId) => {
+        agg[tokenId as TokenId] = {
+          free: new BigNumber(0),
             locked: new BigNumber(0),
-          };
+        };
 
-          return agg;
-        }, {} as { [assetId in TokenId]: TokenBalance }),
-      },
-    };
-  },
-  {} as SubstrateBalancesState
-);
+        return agg;
+      }, {} as { [assetId in TokenId]: TokenBalance }),
+    },
+  };
+}, {} as SubstrateBalancesState);
 
 export interface SubstrateBalancesActions {
   updateBalance: (data: {

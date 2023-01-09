@@ -1,7 +1,7 @@
 import { TokenId } from "tokens";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
-import { SubstrateNetworkId } from "../../types";
 import BigNumber from "bignumber.js";
+import { SubstrateNetworkId } from "shared";
 
 export function extractTokenByNetworkIdentifier(
   tokens: Record<TokenId, TokenMetadata>,

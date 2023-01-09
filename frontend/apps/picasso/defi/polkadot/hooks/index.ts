@@ -4,8 +4,8 @@ import {
   useParachainApi,
   useRelayChainApi,
 } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "../constants";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
+import config from "@/constants/config";
 
 export const usePicassoProvider = () => useParachainApi("picasso");
 
@@ -17,7 +17,7 @@ export const useSelectedAccount: () =>
   | InjectedAccountWithMeta
   | undefined = (): InjectedAccountWithMeta | undefined => {
   const { selectedAccount } = useDotSamaContext();
-  const accounts = useConnectedAccounts(DEFAULT_NETWORK_ID);
+  const accounts = useConnectedAccounts(config.defaultNetworkId);
   return accounts.length && selectedAccount !== -1
     ? accounts[selectedAccount]
     : undefined;

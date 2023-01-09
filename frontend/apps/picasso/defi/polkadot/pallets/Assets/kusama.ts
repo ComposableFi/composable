@@ -1,7 +1,7 @@
+import { SUBSTRATE_NETWORKS } from "shared/defi/constants";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { fromChainIdUnit, unwrapNumberOrHex } from "shared";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
 export type KusamaAsset = {
   chainId: string;

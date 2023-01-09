@@ -2,7 +2,6 @@ import { BaseAsset, Select } from "@/components";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import {
   getPaymentAsset,
   setPaymentAsset,
@@ -25,6 +24,7 @@ import React, { FC, useCallback, useEffect, useMemo, useRef } from "react";
 import { callbackGate, subscanExtrinsicLink } from "shared";
 import { useDotSamaContext, useExecutor } from "substrate-react";
 import { TokenId } from "tokens";
+import { SUBSTRATE_NETWORKS } from "shared/defi/constants";
 
 type Props = {
   toggleModal: () => void;

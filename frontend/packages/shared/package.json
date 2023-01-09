@@ -9,7 +9,8 @@
     "defi-interfaces": "*",
     "moment": "^2.29.4",
     "tokens": "*",
-    "fp-ts": "^2.13.1"
+    "fp-ts": "^2.13.1",
+    "substrate-react": "*"
   },
   "devDependencies": {
     "@types/jest": "^28.1.4",

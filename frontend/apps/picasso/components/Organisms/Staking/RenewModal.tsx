@@ -15,7 +15,7 @@ import { useStore } from "@/stores/root";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { getSigner, useExecutor } from "substrate-react";
 import { SnackbarKey, useSnackbar } from "notistack";
-import { APP_NAME } from "@/defi/polkadot/constants";
+import config from "@/constants/config";
 
 export const RenewModal: FC<{
   open: boolean;
@@ -54,7 +54,7 @@ export const RenewModal: FC<{
     let snackbarKey: SnackbarKey | undefined;
     callbackGate(
       async (api, acc, executor) => {
-        const signer = await getSigner(APP_NAME, acc.address);
+        const signer = await getSigner(config.appName, acc.address);
         await executor.execute(
           (api.tx.stakingRewards.extend as any)(
             selectedToken[0],
