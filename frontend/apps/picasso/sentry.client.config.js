@@ -10,7 +10,7 @@ Sentry.init({
   environment: process.env.NODE_ENV === "production" ? "Release" : "Preview",
   dsn:
     SENTRY_DSN ||
-    "https://860b4ff0b6464cb3b7ed577283902a8a@o4504457137160192.ingest.sentry.io/4504457246867456",
+    "https://e142a817d8444e3a89ba06dff08e4007@o4504458416029696.ingest.sentry.io/4504473894780929",
   // Adjust this value in production, or use tracesSampler for greater control
   tracesSampleRate: 1.0,
   // ...
