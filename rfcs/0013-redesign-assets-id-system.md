@@ -41,6 +41,10 @@ asset metadata (ticker-symbol, decimal precision, and ratio)
 
 # Other Solutions
 
+* [Acala](./0013/acala-analysis.md)
+* [Moonbeam](./0013/moonbeam-analysis.md)
+* [Parallel](./0013/parallel-finance-analysis.md)
+
 <!-- TODO: These are mostly done, but I will introduce them to the repo in 
 their own files -->
 
