@@ -5,9 +5,13 @@
 import * as Sentry from "@sentry/nextjs";
 
 const SENTRY_DSN = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN;
-
+const defaultEnvironmentSetup =
+  process.env.NODE_ENV === "production" ? "production" : "development";
 Sentry.init({
-  environment: process.env.NODE_ENV === "production" ? "Release" : "Preview",
+  environment:
+    process.env.NEXT_PUBLIC_VERCEL_URL.replace("/", "")
+      .trim()
+      .substring(0, 63) ?? defaultEnvironmentSetup,
   dsn:
     SENTRY_DSN ||
     "https://e142a817d8444e3a89ba06dff08e4007@o4504458416029696.ingest.sentry.io/4504473894780929",
