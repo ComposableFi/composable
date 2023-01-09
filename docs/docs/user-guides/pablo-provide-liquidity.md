@@ -52,6 +52,6 @@ and distributed to liquidity providers in proportion to their share of the pool.
 
 8. 'Add liquidity: Initiated' message will appear as the transaction is being processed and confirmed. 
 
-![add_liqquidity_finalized](./images-provide-liquidity/add-liquidity-finalized.png)
+![add_liquidity_finalized](./images-provide-liquidity/add-liquidity-finalized.png)
 
 9. Users can be redirected to view their transaction on Subscan by clicking the left button below.

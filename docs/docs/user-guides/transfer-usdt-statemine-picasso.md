@@ -18,7 +18,7 @@ Watch the video of the following guide here: https://youtu.be/SmTsDK1pI3Q
 
 ![picasso_homepage](./picasso-homepage.png)
 
-![picasso_transfers](images-transfer-usdt-statemin-picasso/transfers.png)
+![picasso_transfers](./images-transfer-usdt-statemin-picasso/transfers.png)
 
 1. Make sure your wallet is connected to Picasso by clicking the button “Wallets” in the top right corner. 
    If a wallet is already connected it reads “Connected”, 
@@ -32,7 +32,7 @@ On the transfers page you will see the transfer details, including the transfer 
 In the top right corner, next to your wallet, you can see that we have chosen to pay our transfer fees (Gas) in USDT, 
 this will be important in a moment. For now just remember that we will be paying fees in USDT instead of KSM.
 
-![transfer_details](images-transfer-usdt-statemin-picasso/transfer-details.png)
+![transfer_details](./images-transfer-usdt-statemin-picasso/transfer-details.png)
 
 1. Using the dropdown menus set the transfer to go from “Statemine” to “Picasso”
 2. Choose the currency and amount you want to transfer, in our case we choose to transfer 100 USDT.
@@ -43,7 +43,7 @@ this will be important in a moment. For now just remember that we will be paying
 Once you click transfer, you will be asked to sign your transaction. 
 You will see the connected wallet from where the transaction originates and some technical details in this window.
 
-![sign_statemine_transfer](images-transfer-usdt-statemin-picasso/sign-statemine-transaction.png)
+![sign_statemine_transfer](./images-transfer-usdt-statemin-picasso/sign-statemine-transaction.png)
 
 1. Sign the transaction using your password.
 2. Click “sign the transaction”
@@ -52,9 +52,9 @@ You should see a notification pop-up at the bottom of the screen,
 clicking it will lead you to https://picasso.subscan.io/ where you can observe the chain processing your transaction. 
 Depending on the current load of the network, this might take a moment.
 
-![transfer_initiated](images-transfer-usdt-statemin-picasso/transfer-initiated.png)
+![transfer_initiated](./images-transfer-usdt-statemin-picasso/transfer-initiated.png)
 
-![transfer_confirmed](images-transfer-usdt-statemin-picasso/transfer-confirmed.png)
+![transfer_confirmed](./images-transfer-usdt-statemin-picasso/transfer-confirmed.png)
 
 Checking our transaction in the Polkadot.js explorer, 
 we can see that the amount deposited is a little lower than 100 USDT 
