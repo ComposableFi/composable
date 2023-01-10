@@ -2,16 +2,20 @@
   perSystem = { config, self', inputs', pkgs, system, zombieTools, ... }:
     let
       prelude = zombieTools.builder;
+      relaychainBase = {
+        chain = "rococo-local";
+        default_command = pkgs.lib.meta.getExe self'.packages.polkadot-node;
+        count = 3;
+      };
+
       zombienet-rococo-local-composable-config = with prelude;
-        { chain ? null, ws_port ? null, rpc_port ? null, relay_ws_port ? null }:
+        { chain ? null, ws_port ? null, rpc_port ? null, relay_ws_port ? null
+        , relay_rpc_port ? null, rust_log_add ? null }:
         mkZombienet {
-          relaychain = {
-            chain = "rococo-local";
-            default_command = pkgs.lib.meta.getExe self'.packages.polkadot-node;
-            count = 3;
-          } // (pkgs.lib.optionalAttrs (chain != null) {
-            ws_port = relay_ws_port;
-          });
+          relaychain = relaychainBase
+            // (pkgs.lib.optionalAttrs (chain != null) {
+              ws_port = relay_ws_port;
+            });
           parachains = [
             ({
               command = pkgs.lib.meta.getExe self'.packages.composable-node;
@@ -19,6 +23,9 @@
               id = 2087;
               collators = 3;
             } // (pkgs.lib.optionalAttrs (chain != null) { inherit chain; })
+              // (pkgs.lib.optionalAttrs (rust_log_add != null) {
+                inherit rust_log_add;
+              })
               // (pkgs.lib.optionalAttrs (ws_port != null) { inherit ws_port; })
               // (pkgs.lib.optionalAttrs (rpc_port != null) {
                 inherit rpc_port;
@@ -30,12 +37,7 @@
         with prelude;
         let
           config = mkZombienet {
-            relaychain = {
-              chain = "rococo-local";
-              default_command =
-                pkgs.lib.meta.getExe self'.packages.polkadot-node;
-              count = 3;
-            };
+            relaychain = relaychainBase;
             parachains = [
               {
                 command = pkgs.lib.meta.getExe self'.packages.composable-node;
@@ -82,8 +84,26 @@
 
         zombienet-rococo-local-picasso-dev =
           zombieTools.writeZombienetShellApplication
-          "zombienet-rococo-local-dali-dev"
+          "zombienet-rococo-local-picasso-dev"
           (zombienet-rococo-local-composable-config { chain = "picasso-dev"; });
+
+        zombienet-dali-centauri-a =
+          zombieTools.writeZombienetShellApplication "zombienet-dali-centauri-a"
+          (zombienet-rococo-local-composable-config {
+            rust_log_add =
+              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
+          });
+
+        zombienet-dali-centauri-b =
+          zombieTools.writeZombienetShellApplication "zombienet-dali-centauri-b"
+          (zombienet-rococo-local-composable-config {
+            ws_port = 29988;
+            rpc_port = 32201;
+            relay_ws_port = 29944;
+            relay_rpc_port = 31445;
+            rust_log_add =
+              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
+          });
       };
 
       apps = rec {
@@ -97,9 +117,24 @@
           program = self'.packages.zombienet-dali-complete;
         };
 
+        zombienet-dali-centauri-a = {
+          type = "app";
+          program = self'.packages.zombienet-dali-centauri-a;
+        };
+
         zombienet-picasso-complete = {
           type = "app";
           program = self'.packages.zombienet-picasso-complete;
+        };
+
+        zombienet-log-follow = {
+          program = pkgs.writeShellApplication rec {
+            name = "zombienet-log-follow";
+            text = ''
+              docker exec -it composable-devnet-a-1   bash  -c 'LOG=$(find /tmp/ -name "zombie-*" | head --lines=1)/alice.log && tail --follow $LOG'
+            '';
+          };
+          type = "app";
         };
 
         zombienet-rococo-local-dali-dev = {

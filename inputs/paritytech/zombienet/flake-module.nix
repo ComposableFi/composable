@@ -49,6 +49,12 @@
           runtimeInputs = [ pkgs.nodejs paritytech-zombienet ] ++ runtimeDeps;
           text = ''
             export DEBUG="zombie*"
+            if [[ -d /tmp ]];
+            then 
+              echo "using /tmp"
+            else
+              mkdir --parents /tmp && chown 777 /tmp
+            fi               
             printf '${builtins.toJSON config}' > /tmp/${name}.json
             cd ${paritytech-zombienet}            
             npm run zombie spawn /tmp/${name}.json
