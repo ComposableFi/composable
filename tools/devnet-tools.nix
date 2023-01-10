@@ -80,7 +80,7 @@
               pkgs.nodePackages.node-gyp
               pkgs.nodePackages.typescript
             ];
-            src = ./scripts/lease-period-prolongator;
+            src = ../scripts/lease-period-prolongator;
             buildPhase = ''
               export HOME=$(pwd)
               yarn --offline
