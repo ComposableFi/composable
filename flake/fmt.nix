@@ -84,7 +84,8 @@
           '';
         };
 
-        taplo-cli-check = let taplo-toml = ./.taplo.toml; in pkgs.stdenv.mkDerivation {
+        taplo-cli-check = let taplo-toml = ./.taplo.toml;
+        in pkgs.stdenv.mkDerivation {
           name = "taplo-cli-check";
           dontUnpack = true;
           buildInputs = [ allTomlFiles pkgs.taplo-cli ];
@@ -95,7 +96,8 @@
           '';
         };
 
-        hadolint-check = let hadolint-yaml = ./.hadolint.yaml; in pkgs.stdenv.mkDerivation {
+        hadolint-check = let hadolint-yaml = ./.hadolint.yaml;
+        in pkgs.stdenv.mkDerivation {
           name = "hadolint-check";
           dontUnpack = true;
           buildInputs = [ allDirectoriesAndFiles pkgs.hadolint ];
@@ -113,7 +115,8 @@
           '';
         };
 
-        spell-check = let cspell-yaml = ./cspell.yaml; in pkgs.stdenv.mkDerivation {
+        spell-check = let cspell-yaml = ./cspell.yaml;
+        in pkgs.stdenv.mkDerivation {
           name = "cspell-check";
           dontUnpack = true;
           buildInputs = [ allDirectoriesAndFiles pkgs.nodePackages.cspell ];
