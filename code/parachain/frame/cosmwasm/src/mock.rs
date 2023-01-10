@@ -1,9 +1,19 @@
-use core::marker::PhantomData;
-
-use crate::*;
-
-use crate::instrument::CostRules;
+use crate::{
+	hook::Hook,
+	instrument::CostRules,
+	runtimes::{abstraction::CosmwasmAccount, vm::CosmwasmVM},
+	types::*,
+	*,
+};
 use composable_traits::currency::{CurrencyFactory, RangeId};
+use core::marker::PhantomData;
+use cosmwasm_vm::{
+	cosmwasm_std::{
+		ContractResult, Event as CosmwasmEvent, QueryResponse, Response, SubMsg, WasmMsg,
+	},
+	vm::{VMBase, VmErrorOf, VmGas},
+};
+use cosmwasm_vm_wasmi::WasmiVM;
 use frame_support::{
 	pallet_prelude::ConstU32,
 	parameter_types,
@@ -262,6 +272,84 @@ impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for IbcLoopback<T> {
 	}
 }
 
+pub struct MockHook;
+
+pub const MOCK_CONTRACT_ADDRESS: AccountIdOf<Test> = AccountId32::new([u8::MAX; 32]);
+pub const MOCK_CONTRACT_EVENT_TY: &str = "magic";
+pub const MOCK_QUERY_JS: &str = "It's JavaScript, What Did You Expect";
+
+pub const ALICE: AccountIdOf<Test> = AccountId32::new([0u8; 32]);
+
+impl Hook<Test> for MockHook {
+	fn precompiled_info(
+		contract_address: &AccountIdOf<Test>,
+	) -> Option<
+		PrecompiledInfo<
+			AccountIdOf<Test>,
+			CodeHashOf<Test>,
+			ContractLabelOf<Test>,
+			ContractTrieIdOf<Test>,
+		>,
+	> {
+		if contract_address == &MOCK_CONTRACT_ADDRESS {
+			Some(PrecompiledInfo {
+				code: CodeInfo {
+					creator: ALICE,
+					pristine_code_hash: Default::default(),
+					instrumentation_version: u16::MAX,
+					refcount: u32::MAX,
+					ibc_capable: true,
+				},
+				contract: ContractInfo {
+					code_id: u64::MAX,
+					trie_id: Default::default(),
+					instantiator: ALICE,
+					admin: Some(ALICE),
+					label: Default::default(),
+				},
+			})
+		} else {
+			None
+		}
+	}
+
+	fn precompiled_execute<'a>(
+		vm: &mut WasmiVM<CosmwasmVM<'a, Test>>,
+		_entrypoint: EntryPoint,
+		message: &[u8],
+	) -> Result<
+		ContractResult<Response<<WasmiVM<CosmwasmVM<'a, Test>> as VMBase>::MessageCustom>>,
+		VmErrorOf<WasmiVM<CosmwasmVM<'a, Test>>>,
+	> {
+		vm.charge(VmGas::Instrumentation { metered: 1 })?;
+		let mut response = Response::new()
+			.add_event(CosmwasmEvent::new(MOCK_CONTRACT_EVENT_TY))
+			.set_data(0xDEADC0DE_u32.to_le_bytes());
+		let depth = message.get(0).copied().unwrap_or(0);
+		if depth > 0u8 {
+			response = response.add_submessage(SubMsg::new(WasmMsg::Execute {
+				contract_addr: AccountToAddr::convert(MOCK_CONTRACT_ADDRESS),
+				msg: vec![depth - 1].into(),
+				funds: Default::default(),
+			}));
+		}
+		match vm
+			.continue_query(CosmwasmAccount::new(MOCK_CONTRACT_ADDRESS), Default::default())?
+			.into()
+		{
+			ContractResult::Err(x) if x == MOCK_QUERY_JS => Ok(ContractResult::Ok(response)),
+			_ => Ok(ContractResult::Err("JavaScript must fail".into())),
+		}
+	}
+
+	fn precompiled_query<'a>(
+		_vm: &mut WasmiVM<CosmwasmVM<'a, Test>>,
+		_message: &[u8],
+	) -> Result<ContractResult<QueryResponse>, VmErrorOf<WasmiVM<CosmwasmVM<'a, Test>>>> {
+		Ok(ContractResult::Err(MOCK_QUERY_JS.into()))
+	}
+}
+
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type AccountIdExtended = AccountId;
@@ -294,6 +382,7 @@ impl Config for Test {
 	type WasmCostRules = WasmCostRules;
 	type IbcRelayerAccount = IbcRelayerAccount;
 	type IbcRelayer = IbcLoopback<Self>;
+	type Hook = MockHook;
 }
 
 // Build genesis storage according to the mock runtime.

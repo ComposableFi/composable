@@ -1,8 +1,4 @@
-use crate::{
-	runtimes::wasmi::{CosmwasmVM, ExportRequirement},
-	Config,
-};
-
+use crate::{runtimes::vm::ExportRequirement, types::DefaultCosmwasmVM, Config};
 use core::marker::PhantomData;
 use cosmwasm_vm::{
 	executor::{
@@ -43,20 +39,20 @@ impl<T: Config> Version<T> {
 		// Memory related exports.
 		(
 			ExportRequirement::Mandatory,
-			AllocateCall::<PointerOf<CosmwasmVM<T>>>::NAME,
+			AllocateCall::<PointerOf<DefaultCosmwasmVM<T>>>::NAME,
 			// extern "C" fn allocate(size: usize) -> u32;
 			&[parity_wasm::elements::ValueType::I32],
 		),
 		(
 			ExportRequirement::Mandatory,
-			DeallocateCall::<PointerOf<CosmwasmVM<T>>>::NAME,
+			DeallocateCall::<PointerOf<DefaultCosmwasmVM<T>>>::NAME,
 			// extern "C" fn deallocate(pointer: u32);
 			&[parity_wasm::elements::ValueType::I32],
 		),
 		// Contract execution exports.
 		(
 			ExportRequirement::Mandatory,
-			InstantiateCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			InstantiateCall::<VmMessageCustomOf<DefaultCosmwasmVM<T>>>::NAME,
 			// extern "C" fn instantiate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 			&[
 				parity_wasm::elements::ValueType::I32,
@@ -66,7 +62,7 @@ impl<T: Config> Version<T> {
 		),
 		(
 			ExportRequirement::Mandatory,
-			ExecuteCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			ExecuteCall::<VmMessageCustomOf<DefaultCosmwasmVM<T>>>::NAME,
 			// extern "C" fn execute(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 			&[
 				parity_wasm::elements::ValueType::I32,
@@ -82,13 +78,13 @@ impl<T: Config> Version<T> {
 		),
 		(
 			ExportRequirement::Optional,
-			MigrateCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			MigrateCall::<VmMessageCustomOf<DefaultCosmwasmVM<T>>>::NAME,
 			// extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32;
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
 		(
 			ExportRequirement::Optional,
-			ReplyCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			ReplyCall::<VmMessageCustomOf<DefaultCosmwasmVM<T>>>::NAME,
 			// extern "C" fn reply(env_ptr: u32, msg_ptr: u32) -> u32;
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
@@ -113,27 +109,27 @@ impl<T: Config> Version<T> {
 		),
 		(
 			ExportRequirement::Mandatory,
-			IbcChannelConnectCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			IbcChannelConnectCall::<VmMessageCustomOf<DefaultCosmwasmVM<T>>>::NAME,
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
 		(
 			ExportRequirement::Mandatory,
-			IbcChannelCloseCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			IbcChannelCloseCall::<VmMessageCustomOf<DefaultCosmwasmVM<T>>>::NAME,
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
 		(
 			ExportRequirement::Mandatory,
-			IbcPacketReceiveCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			IbcPacketReceiveCall::<VmMessageCustomOf<DefaultCosmwasmVM<T>>>::NAME,
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
 		(
 			ExportRequirement::Mandatory,
-			IbcPacketAckCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			IbcPacketAckCall::<VmMessageCustomOf<DefaultCosmwasmVM<T>>>::NAME,
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
 		(
 			ExportRequirement::Mandatory,
-			IbcPacketTimeoutCall::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
+			IbcPacketTimeoutCall::<VmMessageCustomOf<DefaultCosmwasmVM<T>>>::NAME,
 			&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 		),
 	];
