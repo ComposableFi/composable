@@ -32,12 +32,14 @@
       imports = [
         # External `inputs` that the authors did not nixify themselves
         ./inputs/AcalaNetwork/acala.nix
+        ./inputs/cosmos/cosmwasm.nix
         ./inputs/cosmos/gex.nix
         ./inputs/CosmosContracts/juno.nix
         ./inputs/CosmWasm/wasmvm.nix
         ./inputs/paritytech/statemine.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/polkadot-launch.nix
+        ./inputs/Wasmswap/wasmswap-contracts.nix
 
         # our own packages
         ./code/services/cmc-api/cmc-api.nix
@@ -50,7 +52,6 @@
         ./code/runtimes.nix
         ./code/xcvm/xcvm-contracts.nix
         ./code/utils/composable-subxt/subxt.nix
-        ./code/xcvm/cosmos/wasmswap.nix
         
 
         # The things we use within flake parts to build packages, apps, devShells, and devnets. 
@@ -67,7 +68,6 @@
         ./flake/fmt.nix
 
         ./devnets.nix
-        ./code/xcvm/cosmos/flake-module.nix
         ./docs/docs.nix
         ./frontend/frontend.nix
         ./nixops-config.nix
