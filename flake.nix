@@ -62,6 +62,7 @@
         ./parachains/statemine.nix
         ./parachains/polkadot.nix
         ./parachains/polkadot-launch.nix
+        ./overlays.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
@@ -81,31 +82,6 @@
           # NOTE: Do not add packages here directly, instead, put them in flake-parts.
         };
       };
-      flake = {
-        # NOTE: These will bue put in a part soon.
-        overlays = {
-          default = let
-            mkDevnetProgram = { pkgs }:
-              name: spec:
-              pkgs.writeShellApplication {
-                inherit name;
-                runtimeInputs =
-                  [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-                text = ''
-                  arion --prebuilt-file ${
-                    pkgs.arion.build spec
-                  } up --build --force-recreate -V --always-recreate-deps --remove-orphans
-                '';
-              };
-          in inputs.nixpkgs.lib.composeManyExtensions [
-            inputs.arion-src.overlays.default
-            (final: _prev: {
-              composable = {
-                mkDevnetProgram = final.callPackage mkDevnetProgram { };
-              };
-            })
-          ];
-        };
-      };
+      
     });
 }
