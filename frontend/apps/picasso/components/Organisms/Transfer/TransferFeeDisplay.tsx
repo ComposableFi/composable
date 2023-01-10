@@ -1,6 +1,5 @@
 import { FeeDisplay } from "@/components";
 import { TextExpander } from "@/components/Molecules/TextExpander";
-import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import { useTransfer } from "@/defi/polkadot/hooks";
 import { getPaymentAsset } from "@/defi/polkadot/pallets/AssetTxPayment";
 
@@ -15,7 +14,7 @@ import {
   DESTINATION_FEE_MULTIPLIER,
   FEE_MULTIPLIER,
 } from "shared/defi/constants";
-import { useExecutor } from "substrate-react";
+import { useAllProviders, useExecutor, useSigner } from "substrate-react";
 
 export const TransferFeeDisplay = () => {
   const executor = useExecutor();
@@ -26,21 +25,23 @@ export const TransferFeeDisplay = () => {
   const fee = useStore((state) => state.transfers.fee);
   const selectedToken = useStore((state) => state.transfers.selectedToken);
   const destFee = getDestChainFee(from, to, tokens, selectedToken);
-  const allProviders = useAllParachainProviders();
+  const allProviders = useAllProviders();
+  const signer = useSigner();
 
   useEffect(() => {
-    if (executor && account) {
+    if (executor && account && signer) {
       const unsub = subscribeTransactionFee(
         allProviders,
         account.address,
-        executor
+        executor,
+        signer
       );
 
       return () => {
         unsub.then((call) => call());
       };
     }
-  }, [executor, allProviders, account]);
+  }, [executor, allProviders, account, signer]);
 
   useEffect(() => {
     if (fromProvider.parachainApi && account) {

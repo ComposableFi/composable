@@ -1,15 +1,14 @@
-import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import { useSelectedAccount } from "@/defi/polkadot/hooks/index";
 import { useStore } from "@/stores/root";
 import { SnackbarKey, useSnackbar } from "notistack";
-import { useExecutor, useSigner } from "substrate-react";
+import { useAllProviders, useExecutor, useSigner } from "substrate-react";
 import BigNumber from "bignumber.js";
 import { xcmPalletEventParser } from "@/defi/polkadot/pallets/XCM/utils";
 import { subscanExtrinsicLink } from "shared";
 import { useRef } from "react";
 
 export const useTransfer = () => {
-  const allProviders = useAllParachainProviders();
+  const allProviders = useAllProviders();
   const from = useStore((state) => state.transfers.networks.from);
   const fromProvider = allProviders[from];
   const to = useStore((state) => state.transfers.networks.to);
@@ -23,7 +22,6 @@ export const useTransfer = () => {
   const amount = useStore((state) => state.transfers.amount);
   const setAmount = useStore((state) => state.transfers.updateAmount);
   const account = useSelectedAccount();
-  const providers = useAllParachainProviders();
   const executor = useExecutor();
 
   const getBalance = useStore(
@@ -40,7 +38,7 @@ export const useTransfer = () => {
     : account?.address;
 
   const transfer = async () => {
-    const api = providers[from].parachainApi;
+    const api = allProviders[from].parachainApi;
 
     if (!signer || !api || !executor || !account || feeToken.length === 0) {
       console.error("No API or Executor or account", {

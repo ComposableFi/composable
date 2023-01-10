@@ -5,3 +5,4 @@ export * from "./useParachainApi";
 export * from "./useRelayChainApi";
 export * from "./useSelectedAccount";
 export * from "./useSigner";
+export * from "./useAllProviders";
