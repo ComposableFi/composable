@@ -25,8 +25,8 @@
                 isProto
               ];
           in pkgs.nix-gitignore.gitignoreFilterPure customFilter
-          [ ./../../.gitignore ] ./../../code/.;
-          src = ./../../code/.;
+          [ ./../.gitignore ] ./../code/.;
+          src = ./../code/.;
         };
       };
     };

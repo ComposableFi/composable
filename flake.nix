@@ -32,6 +32,7 @@
       imports = [
         # External `inputs` that the authors did not nixify
         ./inputs/AcalaNetwork/acala.nix
+        ./inputs/cosmos/gex.nix
         ./inputs/paritytech/statemine.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/polkadot-launch.nix
@@ -46,6 +47,9 @@
         ./code/integration-tests/runtime-tests/runtime-tests.nix
         ./code/runtimes.nix
         ./code/xcvm/xcvm-contracts.nix
+        ./code/utils/composable-subxt/subxt.nix
+        ./code/xcvm/cosmos/junod.nix
+        ./code/xcvm/cosmos/wasmswap.nix
         
 
         # The things we use within flake parts to build packages, apps, devShells, and devnets. 
@@ -53,26 +57,23 @@
         # flake parts. They themselves do not define packages, apps, devShells or devnets.        
         ./tools/devnet-tools.nix # _module.args.devnetTools
         ./tools/rust.nix # _module.args.rust
+        ./tools/cargo-tools.nix # _module.args.cargoTools
 
         # Everything that is not an input, tool, package, or devnet, but still part of the final flake
         ./flake/dev-shells.nix
         ./flake/docker.nix
+        ./flake/overlays.nix
+        ./flake/fmt.nix
+
         ./devnets.nix
         ./code/xcvm/cosmos/flake-module.nix
         ./docs/docs.nix
-        ./fmt.nix
         ./frontend/frontend.nix
         ./nixops-config.nix
         ./price-feed.nix
         ./release.nix
         ./subwasm.nix
         ./scripts/zombienet/flake-module.nix
-        ./.nix/cargo/flake-module.nix
-        ./code/utils/composable-subxt/subxt.nix
-        ./code/xcvm/cosmos/junod.nix
-        ./code/xcvm/cosmos/gex.nix
-        ./code/xcvm/cosmos/wasmswap.nix
-        ./overlays.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
