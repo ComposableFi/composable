@@ -16,6 +16,8 @@
         ++ lib.optional stdenv.isLinux glibc.bin;
     in with build; {
       packages = rec {
+        default = devnet-dali;
+        devnet-dali = zombienet-rococo-local-dali-dev;
         paritytech-zombienet = pkgs.stdenv.mkDerivation {
           name = "zombienet";
           src = "${paritytech-zombienet-src}/javascript";

@@ -44,6 +44,7 @@
         ./inputs/Wasmswap/wasmswap-contracts.nix
 
         # The things we use within flake parts to build packages, apps, devShells, and devnets. 
+        ./tools/pkgs.nix # _module.args.pkgs
         ./tools/devnet-tools.nix # _module.args.devnetTools
         ./tools/rust.nix # _module.args.rust
         ./tools/cargo-tools.nix # _module.args.cargoTools
@@ -77,22 +78,5 @@
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
-      perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
-        _module.args.pkgs = import self.inputs.nixpkgs {
-          inherit system;
-          overlays = with self.inputs; [
-            self.overlays.default
-            npm-buildpackage.overlays.default
-            rust-overlay.overlays.default
-          ];
-        };
-        packages = {
-          # TODO: remove this from here
-          default = self'.packages.zombienet-rococo-local-dali-dev;
-          devnet-dali = self'.packages.zombienet-rococo-local-dali-dev;
-          # NOTE: Do not add packages here directly, instead, put them in flake-parts.
-        };
-      };
-
     });
 }
