@@ -30,9 +30,10 @@
     let darwinFilter = import ./darwin-filter.nix { lib = nixpkgs.lib; };
     in darwinFilter (flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
-        # External `inputs` that the authors did not nixify
+        # External `inputs` that the authors did not nixify themselves
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/cosmos/gex.nix
+        ./inputs/CosmosContracts/juno.nix
         ./inputs/paritytech/statemine.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/polkadot-launch.nix
@@ -48,7 +49,6 @@
         ./code/runtimes.nix
         ./code/xcvm/xcvm-contracts.nix
         ./code/utils/composable-subxt/subxt.nix
-        ./code/xcvm/cosmos/junod.nix
         ./code/xcvm/cosmos/wasmswap.nix
         
 
