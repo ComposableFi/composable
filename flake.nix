@@ -34,6 +34,7 @@
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/cosmos/gex.nix
         ./inputs/CosmosContracts/juno.nix
+        ./inputs/CosmWasm/wasmvm.nix
         ./inputs/paritytech/statemine.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/polkadot-launch.nix
