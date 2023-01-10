@@ -36,6 +36,7 @@
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/polkadot-launch.nix
 
+        # our own packages
         ./code/services/cmc-api/cmc-api.nix
         ./code/benchmarks.nix
         ./code/common-deps.nix
@@ -45,10 +46,18 @@
         ./code/integration-tests/runtime-tests/runtime-tests.nix
         ./code/runtimes.nix
         ./code/xcvm/xcvm-contracts.nix
-        ./dev-shells.nix
-        ./devnet-tools.nix
+        
+
+        # The things we use within flake parts to build packages, apps, devShells, and devnets. 
+        # They use flake-parts _module.args system in order to define tools that can be used in other
+        # flake parts. They themselves do not define packages, apps, devShells or devnets.        
+        ./tools/devnet-tools.nix # _module.args.devnetTools
+        ./tools/rust.nix # _module.args.rust
+
+        # Everything that is not an input, tool, package, or devnet, but still part of the final flake
+        ./flake/dev-shells.nix
+        ./flake/docker.nix
         ./devnets.nix
-        ./docker.nix
         ./code/xcvm/cosmos/flake-module.nix
         ./docs/docs.nix
         ./fmt.nix
@@ -56,7 +65,6 @@
         ./nixops-config.nix
         ./price-feed.nix
         ./release.nix
-        ./rust.nix
         ./subwasm.nix
         ./scripts/zombienet/flake-module.nix
         ./.nix/cargo/flake-module.nix

@@ -38,7 +38,7 @@
 
         rust-stable = pkgs.rust-bin.stable.latest.default;
         rust-nightly =
-          pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+          pkgs.rust-bin.fromRustupToolchainFile ../rust-toolchain.toml;
 
         cargo-fmt-check = crane.nightly.cargoFmt (systemCommonRust.common-attrs
           // {
