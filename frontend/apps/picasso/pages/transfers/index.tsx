@@ -36,13 +36,10 @@ import { TransferKSMAlert } from "@/components/Molecules";
 import { fromChainIdUnit } from "shared";
 import config from "@/constants/config";
 
-ø;
-
 const Transfers: NextPage = () => {
   const { setAmount, from, balance, transfer, to, isDirty } = useTransfer();
   const amount = useStore((state) => state.transfers.amount);
   const allProviders = useAllParachainProviders();
-
   const tokens = useStore((state) => state.substrateTokens.tokens);
   const isLoaded = useStore((state) => state.substrateTokens.isLoaded);
   const fee = useStore((state) => state.transfers.fee);
