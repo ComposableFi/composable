@@ -95,7 +95,7 @@
               pkgs.nodePackages.node-gyp
               pkgs.nodePackages.typescript
             ];
-            src = ./composablejs;
+            src = ../composablejs;
             buildPhase = ''
               export HOME=$(pwd)
               yarn --offline
