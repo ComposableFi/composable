@@ -1069,10 +1069,10 @@ jobs:
 
   devnet-integration-tests:
       name: "Devnet integration tests"
-      # needs:
-      #   - package-polkadot-node
-      #   - package-composable-node
-      #   - check-nix
+      needs:
+        - package-polkadot-node
+        - package-composable-node
+        - check-nix
       runs-on:
       - self-hosted
       - linux
