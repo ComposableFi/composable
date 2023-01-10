@@ -8,7 +8,7 @@
         hash = "sha256-EC6XKbcI+Is0RGlmC8WGjPqiFh9Ulf3bXDoVihtYqsU=";
       };
 
-      build = pkgs.callPackage ./default.nix { };
+      build = pkgs.callPackage ./zombienet/default.nix { };
       npmDeps = pkgs.callPackage ../../.nix/npm.nix { };
       all-dev-local-config = ./all-dev-local.toml;
       runtimeDeps = with pkgs;
@@ -20,7 +20,18 @@
           name = "zombienet";
           src = "${paritytech-zombienet-src}/javascript";
           buildInputs = with pkgs; [ nodejs ];
-          nativeBuildInputs = npmDeps.nativeBuildInputs;
+          nativeBuildInputs = with pkgs; [
+            yarn
+            nodejs
+            python3
+            pkg-config
+            vips
+            python3
+            nodePackages.node-gyp-build
+            nodePackages.node-gyp
+            nodePackages.typescript
+            coreutils
+          ];
           buildPhase = ''
             mkdir home
             export HOME=$PWD/home
