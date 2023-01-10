@@ -5,6 +5,7 @@ import {
   fromChainIdUnit,
   fromPerbill,
   humanDateDiff,
+  isPalletSupported,
   subscanExtrinsicLink,
   toChainIdUnit,
   unwrapNumberOrHex,
@@ -62,6 +63,7 @@ export function transformRewardPool(rewardPoolsWrapped: any): RewardPool {
 }
 
 export async function fetchRewardPools(api: ApiPromise, assetId: number) {
+  if (!isPalletSupported(api)("StakingRewards")) return null;
   const rewardPoolsWrapped: any = (
     await api.query.stakingRewards.rewardPools(api.createType("u128", assetId))
   ).toJSON();

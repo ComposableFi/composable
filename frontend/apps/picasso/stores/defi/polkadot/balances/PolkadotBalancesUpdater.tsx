@@ -50,25 +50,24 @@ const PolkadotBalancesUpdater = () => {
    * after API creation
    */
   useEffect(() => {
-
     if (parachainProviders.picasso.parachainApi) {
       picassoAssetsList(parachainProviders.picasso.parachainApi).then(
-        (picaAssetMetadataList) =>  {
-          updateTokens(picaAssetMetadataList, [], null)
+        (picaAssetMetadataList) => {
+          updateTokens(picaAssetMetadataList, [], null);
         }
-      )
+      );
     }
 
     if (relaychainProviders.kusama.parachainApi) {
       kusamaAssetsList(relaychainProviders.kusama.parachainApi).then(
-        kusamaAsset => updateTokens([], [], kusamaAsset)
-      )
+        (kusamaAsset) => updateTokens([], [], kusamaAsset)
+      );
     }
 
     if (parachainProviders.statemine.parachainApi) {
       statemineAssetList(parachainProviders.statemine.parachainApi).then(
-        statemineAssets => updateTokens([], statemineAssets, null)
-      )
+        (statemineAssets) => updateTokens([], statemineAssets, null)
+      );
     }
   }, [
     parachainProviders,
@@ -116,7 +115,9 @@ const PolkadotBalancesUpdater = () => {
         ([chainId, chain]) => {
           console.log("Subscribing native balance", chainId);
           if (
-            connectedAccounts[chainId as SubstrateNetworkId] &&
+            connectedAccounts[chainId as SubstrateNetworkId]?.[
+              selectedAccount
+            ] &&
             chain.parachainApi
           ) {
             subscribeNativeBalance(
