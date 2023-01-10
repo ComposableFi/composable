@@ -1,9 +1,9 @@
 import { Grid, Skeleton, Typography } from "@mui/material";
 import { GridProps } from "@mui/system";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
-import BigNumber from "bignumber.js";
 import { FC } from "react";
 import { useStatsTVL } from "@/components/Organisms/overview/useStatsTVL";
+import { useDailyVolume } from "@/components/Organisms/overview/useDailyVolume";
 
 const twoColumns = {
   xs: 12,
@@ -34,7 +34,7 @@ const Item: FC<ItemProps> = ({ label, value }) => {
 
 export const Statistics: FC<GridProps> = ({ ...gridProps }) => {
   const [totalValueLocked, statsLoading] = useStatsTVL();
-  const tradingVolume24hrs = new BigNumber(0);
+  const [dailyVolume, isVolumeLoading] = useDailyVolume();
 
   return (
     <Grid container spacing={3} {...gridProps}>
@@ -49,10 +49,14 @@ export const Statistics: FC<GridProps> = ({ ...gridProps }) => {
         )}
       </Grid>
       <Grid item {...twoColumns}>
-        <Item
-          label="24h trading volume"
-          value={`$${tradingVolume24hrs.toFormat()}`}
-        />
+        {isVolumeLoading ? (
+          <Skeleton width="100%" height="133px" variant="rounded" />
+        ) : (
+          <Item
+            label="24h trading volume"
+            value={`$${dailyVolume.toFormat(0)}`}
+          />
+        )}
       </Grid>
     </Grid>
   );

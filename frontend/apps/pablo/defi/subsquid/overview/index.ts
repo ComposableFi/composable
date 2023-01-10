@@ -121,3 +121,75 @@ query totalValueLockedChart {
   }
 }
 `;
+
+type PabloOverviewDailyVolume = {
+  pabloOverviewStats: {
+    dailyVolume: Array<{
+      assetId: string;
+      amount: string;
+    }>;
+  };
+};
+
+export const queryPabloOverviewDailyVolume = () => `
+query MyQuery {
+  pabloOverviewStats {
+    dailyVolume {
+      amount
+      assetId
+    }
+  }
+} 
+`;
+
+export function fetchPabloOverviewDailyVolume() {
+  return tryCatch(
+    async () =>
+      await fetchSubsquid<PabloOverviewDailyVolume>(
+        queryPabloOverviewDailyVolume(),
+        true
+      ),
+    () =>
+      ({
+        pabloOverviewStats: {
+          dailyVolume: [],
+        },
+      } as PabloOverviewDailyVolume)
+  );
+}
+
+type PabloTotalVolume = {
+  pabloTotalVolume: Array<{
+    date: string;
+    volumes: Array<{
+      assetId: string;
+      amount: string;
+    }>;
+  }>;
+};
+
+export const queryPabloTotalVolume = (range: Range) => `
+query MyQuery {
+  pabloTotalVolume(params: {range: "${range}"}) {
+    date
+    volumes {
+      amount
+      assetId
+    }
+  }
+}`;
+
+export function fetchPabloTotalVolume(range: Range) {
+  return () =>
+    tryCatch(
+      async () =>
+        await fetchSubsquid<PabloTotalVolume>(
+          queryPabloTotalVolume(range),
+          true
+        ),
+      () =>
+        ({
+          pabloTotalVolume: [],
+        } as PabloTotalVolume)
+    );
+}
