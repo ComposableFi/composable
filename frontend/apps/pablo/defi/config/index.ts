@@ -1,5 +1,5 @@
 export const DEFI_CONFIG = {
-  substrateNetworks: ["picasso", "karura", "kusama", "polkadot", "statemine"] as const,
+  substrateNetworks: ["picasso", "karura", "kusama", "statemine"] as const,
   networkIds: [1, 137, 42161, 43114, 1285, 250] as const, // important
   ammIds: ["uniswap", "curve", "balancer"] as const,
   swapChartIntervals: [
