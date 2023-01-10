@@ -10,7 +10,6 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "post-update": "echo \"codesandbox preview only, need an update\" && yarn upgrade --latest",
-    "postinstall": "node ./.scripts/postinstall.js",
     "sync": "node ./.scripts/sync.js",
     "lint:report": "eslint --output-file eslint_report.json --format json .",
     "export": "./node_modules/.bin/next export"
