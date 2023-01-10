@@ -70,11 +70,10 @@
         # Everything that is not an input, tool, package, or devnet, but still part of the final flake
         ./flake/dev-shells.nix
         ./flake/docker.nix
-        ./flake/overlays.nix
         ./flake/fmt.nix
         ./flake/nixops-config.nix
-
-        ./release.nix
+        ./flake/overlays.nix
+        ./flake/release.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
