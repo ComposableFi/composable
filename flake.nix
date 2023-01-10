@@ -32,6 +32,7 @@
       imports = [
         # External `inputs` that the authors did not nixify themselves
         ./inputs/AcalaNetwork/acala.nix
+        ./inputs/chevdor/subwasm.nix
         ./inputs/cosmos/cosmwasm.nix
         ./inputs/cosmos/gex.nix
         ./inputs/CosmosContracts/juno.nix
@@ -70,11 +71,10 @@
         ./flake/docker.nix
         ./flake/overlays.nix
         ./flake/fmt.nix
-
-        ./nixops-config.nix
+        ./flake/nixops-config.nix
+        
         ./price-feed.nix
         ./release.nix
-        ./subwasm.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
