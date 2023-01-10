@@ -18,6 +18,7 @@
           pname = "bifrost";
           src = bifrost-src;
           doCheck = false;
+          # https://app.clickup.com/t/20465559/NX-53
           __noChroot = true;
           buildInputs = with pkgs; [ openssl zstd ];
           configurePhase = ''
