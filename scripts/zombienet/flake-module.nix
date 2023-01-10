@@ -4,13 +4,16 @@
       paritytech-zombienet-src = pkgs.fetchFromGitHub {
         owner = "paritytech";
         repo = "zombienet";
-        rev = "9cf8e598f0b8e8b88bc1b0e677acb7ba322c3a1a";
-        hash = "sha256-+tyVQa+BYdFphSLbinMFZlhV/fPG8R+/mwij36WwEEM=";
+        rev = "81a88811674772c1a03ea0a6081a7331a1210d64";
+        hash = "sha256-59lorg8GHkMH41SnijMFQyuJEsNWVuizxtoQzGP2osE=";
       };
 
       build = pkgs.callPackage ./default.nix { };
       npmDeps = pkgs.callPackage ../../.nix/npm.nix { };
       all-dev-local-config = ./all-dev-local.toml;
+      runtimeDeps = with pkgs;
+        [ coreutils bash procps git git-lfs ]
+        ++ lib.optional stdenv.isLinux glibc.bin;
     in with build; {
       packages = rec {
         paritytech-zombienet = pkgs.stdenv.mkDerivation {
@@ -36,7 +39,7 @@
 
         zombienet = pkgs.writeShellApplication {
           name = "zombienet";
-          runtimeInputs = [ pkgs.nodejs paritytech-zombienet ];
+          runtimeInputs = [ pkgs.nodejs paritytech-zombienet ] ++ runtimeDeps;
           text = ''
             cd ${paritytech-zombienet}
             npm run zombie
@@ -45,7 +48,7 @@
 
         zombienet-rococo-local-dali-dev-statemine = pkgs.writeShellApplication {
           name = "zombienet-rococo-local-dali-dev-statemine";
-          runtimeInputs = [ pkgs.nodejs paritytech-zombienet ];
+          runtimeInputs = [ pkgs.nodejs paritytech-zombienet ] ++ runtimeDeps;
           text = ''
             cd ${paritytech-zombienet}            
             npm run zombie spawn ${all-dev-local-config}
@@ -69,14 +72,12 @@
           };
         in pkgs.writeShellApplication rec {
           name = "zombienet-rococo-local-dali-dev";
-          runtimeInputs = [ pkgs.nodejs pkgs.yq paritytech-zombienet ];
+          runtimeInputs = [ pkgs.nodejs paritytech-zombienet ] ++ runtimeDeps;
           text = ''
-            printf '${builtins.toJSON config}' > ${name}.json
-            CONFIG=$PWD
-            ${pkgs.yq}/bin/yq  . ${name}.json --toml-output > ${name}.toml
-            cat ${name}.toml      
+            export DEBUG="zombie*"
+            printf '${builtins.toJSON config}' > /tmp/${name}.json
             cd ${paritytech-zombienet}            
-            npm run zombie spawn "$CONFIG"/${name}.toml
+            npm run zombie spawn /tmp/${name}.json
           '';
         };
       };
