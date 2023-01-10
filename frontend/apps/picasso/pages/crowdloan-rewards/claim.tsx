@@ -11,7 +11,7 @@ import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import { Grid, Typography, useTheme } from "@mui/material";
 import { stringToHex } from "@polkadot/util";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { crowdLoanSignableMessage } from "@/utils/crowdloanRewards";
+import { crowdLoanSignableMessage } from "@/components/Organisms/CrowdloanRewards/crowdLoanSignableMessage";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import {
   useConnectedAccounts,
