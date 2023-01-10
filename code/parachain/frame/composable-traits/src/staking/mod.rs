@@ -178,6 +178,7 @@ pub enum RewardPoolConfiguration<
 		// possible lock config for this reward
 		lock: LockConfig<MaxDurationPresets>,
 
+		// TODO: Remove and use soon-to-be-defined asset registry traits instead
 		// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
 		share_asset_id: AssetId,
 

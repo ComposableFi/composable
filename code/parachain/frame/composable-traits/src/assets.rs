@@ -36,10 +36,11 @@ pub struct Asset<Balance, ForeignId> {
 	pub existential_deposit: Balance,
 }
 
+#[derive(Debug, Encode, Decode, TypeInfo, Clone, PartialEq, Eq)]
 pub struct LocalAssetId(u128);
 
 impl LocalAssetId {
-	fn new(protocol: [u8; 8], id: u64) -> Self {
+	pub fn new(protocol: [u8; 8], id: u64) -> Self {
 		LocalAssetId(u128::from_le_bytes(
 			protocol
 				.into_iter()
@@ -49,8 +50,13 @@ impl LocalAssetId {
 				.expect("Fits"),
 		))
 	}
+
+	pub fn inner(&self) -> u128 {
+		self.0
+	}
 }
 
+#[derive(Debug, Encode, Decode, TypeInfo, Clone, PartialEq, Eq)]
 pub enum AssetIdentifier {
 	LocalAsset(LocalAssetId),
 	ForeignAsset(MultiLocation),
