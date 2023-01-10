@@ -84,18 +84,18 @@
           '';
         };
 
-        taplo-cli-check = pkgs.stdenv.mkDerivation {
+        taplo-cli-check = let taplo-toml = ./.taplo.toml; in pkgs.stdenv.mkDerivation {
           name = "taplo-cli-check";
           dontUnpack = true;
           buildInputs = [ allTomlFiles pkgs.taplo-cli ];
           installPhase = ''
             mkdir $out
             cd ${allTomlFiles}
-            taplo check --verbose
+            taplo check -c  ${taplo-toml}--verbose
           '';
         };
 
-        hadolint-check = pkgs.stdenv.mkDerivation {
+        hadolint-check = let hadolint-yaml = ./.hadolint.yaml; in pkgs.stdenv.mkDerivation {
           name = "hadolint-check";
           dontUnpack = true;
           buildInputs = [ allDirectoriesAndFiles pkgs.hadolint ];
@@ -106,7 +106,7 @@
             total_exit_code=0
             for file in $(find ${allDirectoriesAndFiles} -name "Dockerfile" -or -name "*.dockerfile"); do
               echo "=== $file ==="
-              hadolint --config ${allDirectoriesAndFiles}/.hadolint.yaml $file || total_exit_code=$?
+              hadolint --config ${hadolint-yaml} $file || total_exit_code=$?
               echo ""
             done
             exit $total_exit_code
