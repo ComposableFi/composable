@@ -103,13 +103,14 @@
       };
 
       devnet-picasso-complete = let
-        config = (pkgs.callPackage ../scripts/polkadot-launch/all-dev-local.nix {
-          chainspec = "picasso-dev";
-          polkadot-bin = packages.polkadot-node;
-          composable-bin = packages.composable-node;
-          statemine-bin = packages.statemine-node;
-          acala-bin = packages.acala-node;
-        }).result;
+        config =
+          (pkgs.callPackage ../scripts/polkadot-launch/all-dev-local.nix {
+            chainspec = "picasso-dev";
+            polkadot-bin = packages.polkadot-node;
+            composable-bin = packages.composable-node;
+            statemine-bin = packages.statemine-node;
+            acala-bin = packages.acala-node;
+          }).result;
         config-file = pkgs.writeTextFile {
           name = "all-dev-local.json";
           text = "${builtins.toJSON config}";
@@ -124,13 +125,14 @@
       };
 
       devnet-dali-complete = let
-        config = (pkgs.callPackage ../scripts/polkadot-launch/all-dev-local.nix {
-          chainspec = "dali-dev";
-          polkadot-bin = packages.polkadot-node;
-          composable-bin = packages.composable-node;
-          statemine-bin = packages.statemine-node;
-          acala-bin = packages.acala-node;
-        }).result;
+        config =
+          (pkgs.callPackage ../scripts/polkadot-launch/all-dev-local.nix {
+            chainspec = "dali-dev";
+            polkadot-bin = packages.polkadot-node;
+            composable-bin = packages.composable-node;
+            statemine-bin = packages.statemine-node;
+            acala-bin = packages.acala-node;
+          }).result;
         config-file = pkgs.writeTextFile {
           name = "all-dev-local.json";
           text = "${builtins.toJSON config}";

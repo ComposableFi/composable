@@ -67,7 +67,7 @@
         # our devnets
         # TODO: Split into multiple files
         ./devnets/all.nix
-        
+
         # Everything that is not an input, tool, package, or devnet, but still part of the final flake
         ./flake/dev-shells.nix
         ./flake/docker.nix
