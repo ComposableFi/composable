@@ -1,8 +1,4 @@
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
-import {
-  usePicassoProvider,
-  useSelectedAccount,
-} from "@/defi/polkadot/hooks/index";
 import { ApiPromise } from "@polkadot/api";
 import { useStore } from "@/stores/root";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
@@ -12,6 +8,8 @@ import BigNumber from "bignumber.js";
 import { stringToU8a, u8aToHex } from "@polkadot/util";
 import { unwrapNumberOrHex } from "shared";
 import { useCallback, useEffect, useState } from "react";
+import { usePicassoProvider } from "substrate-react";
+import { usePicassoAccount } from "@/defi/polkadot/hooks/index";
 
 const PALLET_TYPE_ID = "modl";
 
@@ -129,7 +127,7 @@ export function useActiveBonds() {
     bonds: state.bonds.bonds,
   }));
   const { parachainApi } = usePicassoProvider();
-  const account = useSelectedAccount();
+  const account = usePicassoAccount();
   const [activeBonds, setActiveBonds] = useState<Array<ActiveBond>>([]);
   const { data, loading, error } = useQuery(GET_VESTING_SCHEDULE_BY_ADDRESS, {
     variables: {

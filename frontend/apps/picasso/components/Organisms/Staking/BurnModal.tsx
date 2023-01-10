@@ -3,8 +3,8 @@ import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { FC, useMemo } from "react";
 import { callbackGate, formatNumber, subscanExtrinsicLink } from "shared";
-import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
-import { useExecutor, useSigner } from "substrate-react";
+import { usePicassoAccount } from "@/defi/polkadot/hooks";
+import { useExecutor, usePicassoProvider, useSigner } from "substrate-react";
 import { SnackbarKey, useSnackbar } from "notistack";
 import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
 import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
@@ -15,7 +15,7 @@ export const BurnModal: FC<{
   selectedToken: [string, string];
 }> = ({ open, onClose, selectedToken }) => {
   const { parachainApi } = usePicassoProvider();
-  const account = useSelectedAccount();
+  const account = usePicassoAccount();
   const executor = useExecutor();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const { stakingPortfolio, refresh } = useStakingRewards();

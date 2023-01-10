@@ -1,21 +1,10 @@
-import {
-  useConnectedAccounts,
-  useDotSamaContext,
-  useParachainApi,
-  useRelayChainApi,
-} from "substrate-react";
+import { useConnectedAccounts, useDotSamaContext } from "substrate-react";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import config from "@/constants/config";
 
-export const usePicassoProvider = () => useParachainApi("picasso");
-
-export const useKaruraProvider = () => useParachainApi("karura");
-
-export const useKusamaProvider = () => useRelayChainApi("kusama");
-
-export const useSelectedAccount: () =>
+export const usePicassoAccount: () => InjectedAccountWithMeta | undefined = ():
   | InjectedAccountWithMeta
-  | undefined = (): InjectedAccountWithMeta | undefined => {
+  | undefined => {
   const { selectedAccount } = useDotSamaContext();
   const accounts = useConnectedAccounts(config.defaultNetworkId);
   return accounts.length && selectedAccount !== -1
@@ -23,16 +12,6 @@ export const useSelectedAccount: () =>
     : undefined;
 };
 
-export const usePicassoAccounts = (): InjectedAccountWithMeta[] => {
-  const accounts = useConnectedAccounts("picasso");
-  return accounts;
-};
-
-export const useKusamaAccounts = (): InjectedAccountWithMeta[] => {
-  const accounts = useConnectedAccounts("karura");
-  return accounts;
-};
-
-export * from "./useBlockInterval";
+export * from "../../../../../packages/substrate-react/src/dotsama/hooks/useBlockInterval";
 export * from "./useExistentialDeposit";
 export * from "./useTransfer";

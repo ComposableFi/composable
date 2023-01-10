@@ -1,4 +1,3 @@
-import { usePicassoAccounts, usePicassoProvider } from "@/defi/polkadot/hooks";
 import { useEffect } from "react";
 import { useBlockchainProvider } from "bi-lib";
 import { fromPerbill } from "shared";
@@ -7,6 +6,7 @@ import { fetchAssociations, fetchContributionAndRewardsFromJSON } from "./crowdl
 import { CrowdloanContributionRecord, setCrowdloanRewardsState } from "./crowdloanRewards.slice";
 import config from "@/constants/config";
 import { SUBSTRATE_NETWORKS } from "shared/defi/constants";
+import { usePicassoAccounts, usePicassoProvider } from "substrate-react";
 // Import static JSON files
 // import rewardsAndContributions from "@/defi/polkadot/constants/pica-rewards-contributions.json";
 // import rewardsAndContributionsDev from "@/defi/polkadot/constants/pica-rewards-contributions-dev.json";

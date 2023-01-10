@@ -1,7 +1,7 @@
 import { useCallback, useEffect, VoidFunctionComponent } from "react";
-import { usePicassoAccounts, usePicassoProvider } from "@/defi/polkadot/hooks";
 import { fetchBonds } from "@/defi/polkadot/pallets/BondedFinance";
 import { useStore } from "@/stores/root";
+import { usePicassoAccounts, usePicassoProvider } from "substrate-react";
 
 export const Updater: VoidFunctionComponent = () => {
   const { parachainApi: api } = usePicassoProvider();

@@ -1,4 +1,4 @@
-import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import {
   SupportedWalletId,
   useConnectedAccounts,
@@ -62,7 +62,7 @@ export const PolkadotConnect: FC = () => {
   const { account, connectorType } = useBlockchainProvider(
     config.evm.defaultNetworkId
   );
-  const connectedAccount = useSelectedAccount();
+  const connectedAccount = usePicassoAccount();
   const biLibConnector = useConnector(ConnectorType.MetaMask);
   useEagerConnect(config.defaultNetworkId);
 

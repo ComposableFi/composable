@@ -20,11 +20,11 @@ import { subscribeCoingeckoPrices } from "@/stores/defi/coingecko";
 import { useCoingecko } from "coingecko";
 import { TokenAsset } from "../Atom/TokenAsset";
 import { pipe } from "fp-ts/lib/function";
-import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { subscribePoolAmount } from "@/stores/defi/polkadot/pablo/subscribePoolAmount";
 import { subscribePools } from "@/stores/defi/polkadot/pablo/subscribePools";
 import * as O from "fp-ts/Option";
 import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscovery";
+import { usePicassoProvider } from "substrate-react";
 
 export type MyAssetsTableProps = TableContainerProps & {
   tokensToList: TokenId[];
@@ -87,9 +87,11 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({
           <TableBody>
             {tokenList.map((row: TokenMetadata) => {
               const price = row.id === "pica" ? picaPrice : prices[row.id].usd;
-              const change_24hr = row.id === "pica" ? 0 : prices[row.id].usd_24h_change;
+              const change_24hr =
+                row.id === "pica" ? 0 : prices[row.id].usd_24h_change;
               const balance = balances[row.id].free;
-              const decimalsToDisplay = row.id === "pica" ? 6 : row.decimalsToDisplay;
+              const decimalsToDisplay =
+                row.id === "pica" ? 6 : row.decimalsToDisplay;
               if (row.symbol) {
                 return (
                   <TableRow key={row.symbol}>

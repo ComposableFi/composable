@@ -7,7 +7,7 @@ import {
   SS8WalletHelper,
   StablecoinClaimForm,
 } from "@/components";
-import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
+import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import { Grid, Typography, useTheme } from "@mui/material";
 import { stringToHex } from "@polkadot/util";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -18,6 +18,7 @@ import {
   useDotSamaContext,
   useExecutor,
   usePendingExtrinsic,
+  usePicassoProvider,
 } from "substrate-react";
 import { useSnackbar } from "notistack";
 import {
@@ -66,7 +67,7 @@ export const ClaimLoanPage = () => {
   const accounts = useConnectedAccounts(config.defaultNetworkId);
   const { initialPayment } = useCrowdloanRewardsSlice();
   const executor = useExecutor();
-  const selectedAccount = useSelectedAccount();
+  const selectedAccount = usePicassoAccount();
   const theme = useTheme();
   const hasStarted = useCrowdloanRewardsHasStarted(parachainApi);
 

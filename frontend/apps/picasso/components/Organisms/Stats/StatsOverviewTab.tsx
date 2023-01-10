@@ -7,12 +7,12 @@ import { TotalValueLockedChart } from "@/components/Organisms/Stats/TotalValueLo
 import { FC, useEffect, useMemo } from "react";
 import { formatNumber, humanBalance } from "shared";
 import { subscribePools } from "@/stores/defi/polkadot/pablo/subscribePools";
-import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import * as O from "fp-ts/Option";
 import { pipe } from "fp-ts/function";
 import { subscribePoolAmount } from "@/stores/defi/polkadot/pablo/subscribePoolAmount";
 import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscovery";
 import { subscribeCoingeckoPrices } from "@/stores/defi/coingecko";
+import { usePicassoProvider } from "substrate-react";
 
 export const StatsOverviewTab: FC = () => {
   const circulatingSupply = useCirculatingSupply();
@@ -22,7 +22,7 @@ export const StatsOverviewTab: FC = () => {
   const price = usePicaPriceDiscovery();
 
   useEffect(() => {
-    const unsubPrices = subscribeCoingeckoPrices(); 
+    const unsubPrices = subscribeCoingeckoPrices();
     const unsubPools = pipe(
       parachainApi,
       O.fromNullable,

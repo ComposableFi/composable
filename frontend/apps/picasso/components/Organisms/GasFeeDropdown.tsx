@@ -1,6 +1,6 @@
 import { BaseAsset, Select } from "@/components";
 
-import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
+import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import {
   getPaymentAsset,
   setPaymentAsset,
@@ -21,7 +21,11 @@ import BigNumber from "bignumber.js";
 import { SnackbarKey, useSnackbar } from "notistack";
 import React, { FC, useCallback, useEffect, useMemo, useRef } from "react";
 import { callbackGate, subscanExtrinsicLink } from "shared";
-import { useDotSamaContext, useExecutor } from "substrate-react";
+import {
+  useDotSamaContext,
+  useExecutor,
+  usePicassoProvider,
+} from "substrate-react";
 import { TokenId } from "tokens";
 import { SUBSTRATE_NETWORKS } from "shared/defi/constants";
 
@@ -71,7 +75,7 @@ export const GasFeeDropdown: FC<Props> = ({
     applyTokenChange(selectedAssetId);
   };
   const picassoProvider = usePicassoProvider();
-  const account = useSelectedAccount();
+  const account = usePicassoAccount();
   const executor = useExecutor();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 

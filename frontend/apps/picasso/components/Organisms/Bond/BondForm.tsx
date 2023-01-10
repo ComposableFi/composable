@@ -14,8 +14,8 @@ import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import PositionDetails from "@/components/Atom/PositionDetails";
 import BigNumber from "bignumber.js";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
-import { useExecutor, useSigner } from "substrate-react";
-import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
+import { useExecutor, usePicassoProvider, useSigner } from "substrate-react";
+import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import { useSnackbar } from "notistack";
 import {
   getTokenString,
@@ -63,7 +63,7 @@ export const BondForm: FC<{
   const [open2nd, setOpen2nd] = useState<boolean>(false);
   const [transferDetails, setTransferDetails] = useState<PositionItem>({});
   const { parachainApi } = usePicassoProvider();
-  const account = useSelectedAccount();
+  const account = usePicassoAccount();
   const executor = useExecutor();
   const { enqueueSnackbar } = useSnackbar();
   const signer = useSigner();

@@ -1,8 +1,6 @@
-import { usePicassoProvider } from "@/defi/polkadot/hooks";
-import { pipe } from "fp-ts/function";
-import { option, readonlyArray } from "fp-ts";
 import { ReactNode } from "react";
 import { isPalletSupported } from "shared";
+import { usePicassoProvider } from "substrate-react";
 
 type Props = {
   pallet: string;

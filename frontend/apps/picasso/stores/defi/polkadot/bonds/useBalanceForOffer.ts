@@ -1,8 +1,9 @@
 import BigNumber from "bignumber.js";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
-import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
+import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import { useEffect, useState } from "react";
 import { fetchBalanceByAssetId } from "@/defi/polkadot/pallets/Balances";
+import { usePicassoProvider } from "substrate-react";
 
 type BondOfferBalances = {
   [key: string]: BigNumber;
@@ -10,7 +11,7 @@ type BondOfferBalances = {
 
 export function useBalanceForOffer(offer: BondOffer) {
   const { parachainApi } = usePicassoProvider();
-  const account = useSelectedAccount();
+  const account = usePicassoAccount();
   const [balances, setBalances] = useState<BondOfferBalances>({});
 
   useEffect(() => {

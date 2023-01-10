@@ -1,8 +1,8 @@
-import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { useEffect, useState } from "react";
 import BigNumber from "bignumber.js";
 import { callbackGate, fromChainIdUnit, unwrapNumberOrHex } from "shared";
 import { u128 } from "@polkadot/types-codec";
+import { usePicassoProvider } from "substrate-react";
 
 export const useCirculatingSupply = () => {
   const { parachainApi } = usePicassoProvider();

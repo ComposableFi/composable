@@ -2,10 +2,13 @@ import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 import { getClaimable } from "@/components/Organisms/Bond/utils";
 import { fromChainIdUnit, humanDate, SHORT_HUMAN_DATE } from "shared";
 import BigNumber from "bignumber.js";
-import { useCurrentBlockAndTime } from "@/defi/polkadot/utils";
-import { useBlockInterval, usePicassoProvider } from "@/defi/polkadot/hooks";
 import { findCurrentBond } from "@/stores/defi/polkadot/bonds/utils";
 import { useActiveBonds } from "@/defi/polkadot/hooks/useActiveBonds";
+import {
+  useBlockInterval,
+  useCurrentBlockAndTime,
+  usePicassoProvider,
+} from "substrate-react";
 
 export const useClaim = (bondOfferId?: string) => {
   const { activeBonds } = useActiveBonds();

@@ -12,7 +12,7 @@ import { DurationOption } from "@/defi/polkadot/pallets/StakingRewards";
 import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
 import BigNumber from "bignumber.js";
 import { useStore } from "@/stores/root";
-import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import { useExecutor, useSigner } from "substrate-react";
 import { SnackbarKey, useSnackbar } from "notistack";
 
@@ -33,7 +33,7 @@ export const RenewModal: FC<{
   const { parachainApi, stakingPortfolio, refresh } = useStakingRewards();
   const [isValid, setValid] = useState(true);
   const [fnftCollectionId, fnftInstanceId] = selectedToken;
-  const account = useSelectedAccount();
+  const account = usePicassoAccount();
   const executor = useExecutor();
   const { closeSnackbar, enqueueSnackbar } = useSnackbar();
   const currentPortfolio = stakingPortfolio.find(

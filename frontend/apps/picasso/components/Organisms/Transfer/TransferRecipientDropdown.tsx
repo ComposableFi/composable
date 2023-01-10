@@ -1,8 +1,8 @@
 import { RecipientDropdown } from "@/components";
 import React, { useEffect } from "react";
 import { useStore } from "@/stores/root";
-import { useKusamaAccounts, usePicassoAccounts } from "@/defi/polkadot/hooks";
 import { resetRecipient } from "@/stores/defi/polkadot/transfers/subscribers/resetRecipient";
+import { useKusamaAccounts, usePicassoAccounts } from "substrate-react";
 
 function attachNetworkIconToItems(network: "kusama" | "picasso") {
   return (items: any[]) => {
@@ -17,6 +17,7 @@ function attachNetworkIconToItems(network: "kusama" | "picasso") {
     });
   };
 }
+
 function prependEmpty(
   items: Array<{
     disabled?: boolean;
@@ -35,6 +36,7 @@ function prependEmpty(
     ...items,
   ];
 }
+
 function composeOptions(
   items: Array<{ address: string; name: string; icon: string }>
 ): Array<{ value: string; label: string; icon: string }> {
