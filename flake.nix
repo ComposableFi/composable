@@ -59,6 +59,7 @@
         ./code/runtimes.nix
         ./code/xcvm/xcvm-contracts.nix
         ./code/utils/composable-subxt/subxt.nix
+        ./code/utils/price-feed/price-feed.nix
         ./docs/docs.nix
         ./frontend/frontend.nix
 
@@ -72,8 +73,7 @@
         ./flake/overlays.nix
         ./flake/fmt.nix
         ./flake/nixops-config.nix
-        
-        ./price-feed.nix
+
         ./release.nix
       ];
       systems =
