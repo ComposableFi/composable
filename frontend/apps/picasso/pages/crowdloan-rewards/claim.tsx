@@ -71,13 +71,22 @@ export const ClaimLoanPage = () => {
   const theme = useTheme();
   const hasStarted = useCrowdloanRewardsHasStarted(parachainApi);
 
-  const [ethClaimable, setEthClaimable] = useState(new BigNumber(0));
-  const [ethClaimed, setEthClaimed] = useState(new BigNumber(0));
-  const [ethTotal, setEthTotal] = useState(new BigNumber(0));
+  const [ethAccountClaimable, setEthAccountClaimable] = useState(
+    new BigNumber(0)
+  );
+  const [ethAccountClaimed, setEthAccountClaimed] = useState(new BigNumber(0));
+  const [ethAccountTotalRewards, setEthAccountTotalRewards] = useState(
+    new BigNumber(0)
+  );
 
-  const [ksmClaimable, setKsmClaimable] = useState(new BigNumber(0));
-  const [ksmClaimed, setKsmClaimed] = useState(new BigNumber(0));
-  const [ksmTotal, setKsmTotal] = useState(new BigNumber(0));
+  const [parachainAccountClaimable, setParachainAccountClaimable] = useState(
+    new BigNumber(0)
+  );
+  const [parachainAccountClaimed, setParachainAccountClaimed] = useState(
+    new BigNumber(0)
+  );
+  const [parachainAccountTotalRewards, setParachainAccountTotalRewards] =
+    useState(new BigNumber(0));
   const [ineligibleText, setIneligibleText] = useState({
     title: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.title,
     textBelow: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message,
@@ -113,9 +122,9 @@ export const ClaimLoanPage = () => {
             const total = fromChainIdUnit(result.unwrap().total.toString());
             const claimed = fromChainIdUnit(result.unwrap().claimed.toString());
 
-            setEthClaimable(total.minus(claimed));
-            setEthClaimed(claimed);
-            setEthTotal(total);
+            setEthAccountClaimable(total.minus(claimed));
+            setEthAccountClaimed(claimed);
+            setEthAccountTotalRewards(total);
           }
         });
     }
@@ -132,19 +141,22 @@ export const ClaimLoanPage = () => {
                 result.unwrap().claimed.toString()
               );
 
-              setKsmClaimable(total.minus(claimed));
-              setKsmClaimed(claimed);
-              setKsmTotal(total);
+              setParachainAccountClaimable(total.minus(claimed));
+              setParachainAccountClaimed(claimed);
+              setParachainAccountTotalRewards(total);
             }
           });
       });
     }
   }, [parachainApi, account]);
 
-  const isEthAccountEligible = useMemo(() => !ethTotal.isZero(), [ethTotal]);
+  const isEthAccountEligible = useMemo(
+    () => !ethAccountTotalRewards.isZero(),
+    [ethAccountTotalRewards]
+  );
   const isPicassoAccountEligible = useMemo(
-    () => !ksmTotal.isZero(),
-    [ksmTotal]
+    () => !parachainAccountTotalRewards.isZero(),
+    [parachainAccountTotalRewards]
   );
 
   const nextStep = useCrowdloanRewardsStepGivenConnectedAccounts(
@@ -354,13 +366,13 @@ export const ClaimLoanPage = () => {
                 }
                 disabled={
                   !hasStarted ||
-                  ethClaimable.eq(0) ||
+                  ethAccountClaimable.eq(0) ||
                   nextStep === CrowdloanStep.None
                 }
-                claimedRewards={ethClaimed}
+                claimedRewards={ethAccountClaimed}
                 amountContributed={contributedAmount}
-                availableToClaim={ethClaimable}
-                totalRewards={ethTotal}
+                availableToClaim={ethAccountClaimable}
+                totalRewards={ethAccountTotalRewards}
                 readonlyCrowdLoanContribution={true}
                 readonlyAvailableToClaim
                 readonlyTotalPicaVested
@@ -377,13 +389,13 @@ export const ClaimLoanPage = () => {
                 isClaiming={isPendingAssociate || isPendingClaim}
                 disabled={
                   !hasStarted ||
-                  ksmClaimable.eq(0) ||
+                  parachainAccountClaimable.eq(0) ||
                   nextStep === CrowdloanStep.None
                 }
-                claimedRewards={ksmClaimed}
+                claimedRewards={parachainAccountClaimed}
                 amountContributed={contributedAmount}
-                availableToClaim={ksmClaimable}
-                totalRewards={ksmTotal}
+                availableToClaim={parachainAccountClaimable}
+                totalRewards={parachainAccountTotalRewards}
                 readonlyCrowdLoanContribution={true}
                 readonlyAvailableToClaim
                 readonlyTotalPicaVested
