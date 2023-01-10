@@ -113,7 +113,7 @@
           '';
         };
 
-        spell-check = pkgs.stdenv.mkDerivation {
+        spell-check = let cspell-yaml = ./cspell.yaml; in pkgs.stdenv.mkDerivation {
           name = "cspell-check";
           dontUnpack = true;
           buildInputs = [ allDirectoriesAndFiles pkgs.nodePackages.cspell ];
@@ -121,7 +121,7 @@
             mkdir $out
             echo "cspell version: $(cspell --version)"
             cd ${allDirectoriesAndFiles}
-            cspell lint --config cspell.yaml --no-progress "**"
+            cspell lint --config ${cspell-yaml} --no-progress "**"
           '';
         };
 

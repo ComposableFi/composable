@@ -30,13 +30,13 @@ dictionaries:
 
 dictionaryDefinitions:
   - name: names
-    path: ".config/dictionaries/names.dic"
+    path: "./dictionaries/names.dic"
     addWords: true
   - name: terminology
-    path: ".config/dictionaries/terminology.dic"
+    path: "./dictionaries/terminology.dic"
     addWords: true
   - name: technical
-    path: ".config/dictionaries/technical.dic"
+    path: "./dictionaries/technical.dic"
     addWords: true
 
 patterns:
@@ -50,6 +50,7 @@ ignoreRegExpList:
   - shebang
 
 ignorePaths:
+  - "dictionaries"
   - "docs/docusaurus.config.js"
   - "docs/static/fonts"
   - "docs/static/wasm"
