@@ -8,6 +8,7 @@
         hash = "sha256-EC6XKbcI+Is0RGlmC8WGjPqiFh9Ulf3bXDoVihtYqsU=";
       };
 
+      all-dev-local-config = ./zombienet/all-dev-local.toml;
       build = pkgs.callPackage ./zombienet/default.nix { };
       npmDeps = pkgs.callPackage ../../.nix/npm.nix { };
       all-dev-local-config = ./all-dev-local.toml;
