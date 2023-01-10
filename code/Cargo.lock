@@ -8268,6 +8268,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-assets-transactor-router"
+version = "0.1.0"
+dependencies = [
+ "composable-support",
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "primitives",
+ "scale-info",
+ "sp-api",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?rev=9bdc51acad943bd07fae159f59564a1b464d33b5)",
+]
+
+[[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
 source = "git+https://github.com/ComposableFi/substrate?rev=9bdc51acad943bd07fae159f59564a1b464d33b5#9bdc51acad943bd07fae159f59564a1b464d33b5"
