@@ -27,7 +27,7 @@
   };
 
   outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
-    let darwinFilter = import ./darwin-filter.nix { lib = nixpkgs.lib; };
+    let darwinFilter = import ./flake/darwin-filter.nix { lib = nixpkgs.lib; };
     in darwinFilter (flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         # External `inputs` that the authors did not nixify themselves
