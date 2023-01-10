@@ -1,2 +1,2 @@
 pub mod abstraction;
-pub mod wasmi;
+pub mod vm;

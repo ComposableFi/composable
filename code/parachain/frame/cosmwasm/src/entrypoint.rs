@@ -1,21 +1,23 @@
 use crate::{
+	hook::Hook,
 	runtimes::{
 		abstraction::CosmwasmAccount,
-		wasmi::{CosmwasmVM, CosmwasmVMError, CosmwasmVMShared},
+		vm::{ContractRuntime, CosmwasmVMError, CosmwasmVMShared},
 	},
-	AccountIdOf, CodeIdToInfo, Config, ContractInfoOf, ContractLabelOf, ContractMessageOf,
-	ContractToInfo, CurrentNonce, EntryPoint, Error, Event, FundsOf, Pallet,
+	types::*,
+	CodeIdToInfo, Config, ContractToInfo, CurrentNonce, Error, Event, Pallet,
 };
 use alloc::vec::Vec;
 use composable_support::abstractions::utils::increment::Increment;
 use core::marker::PhantomData;
-
 use cosmwasm_vm::{
 	cosmwasm_std::{Binary, Coin, Event as CosmwasmEvent},
-	executor::{ExecuteCall, InstantiateCall, MigrateCall, ReplyCall},
+	executor::{
+		cosmwasm_call, AsFunctionName, ExecuteCall, InstantiateCall, MigrateCall, ReplyCall,
+	},
 	system::{
-		cosmwasm_system_entrypoint, cosmwasm_system_entrypoint_serialize, cosmwasm_system_run,
-		CosmwasmCallVM, CosmwasmCodeId, StargateCosmwasmCallVM,
+		cosmwasm_system_entrypoint_hook, cosmwasm_system_run_hook, CosmwasmCallVM, CosmwasmCodeId,
+		CosmwasmDynamicVM, StargateCosmwasmCallVM,
 	},
 	vm::VmErrorOf,
 };
@@ -31,9 +33,7 @@ pub struct EntryPointCaller<S: CallerState> {
 pub struct Dispatchable<I, O, T: Config> {
 	sender: AccountIdOf<T>,
 	contract: AccountIdOf<T>,
-	contract_info: ContractInfoOf<T>,
-	entry_point: EntryPoint,
-	/// Output of the dispatch call, () can be used in case it is irrelevant
+	entrypoint: EntryPoint,
 	output: O,
 	marker: PhantomData<I>,
 }
@@ -69,7 +69,10 @@ impl EntryPointCaller<InstantiateCall> {
 		let contract =
 			Pallet::<T>::derive_contract_address(&instantiator, salt, code_hash, message);
 		// Make sure that contract address does not already exist
-		ensure!(!ContractToInfo::<T>::contains_key(&contract), Error::<T>::ContractAlreadyExists);
+		ensure!(
+			Pallet::<T>::contract_exists(&contract).is_err(),
+			Error::<T>::ContractAlreadyExists
+		);
 		let nonce = CurrentNonce::<T>::increment().map_err(|_| Error::<T>::NonceOverflow)?;
 		let trie_id = Pallet::<T>::derive_contract_trie_id(&contract, nonce);
 		let contract_info = ContractInfoOf::<T> {
@@ -94,8 +97,7 @@ impl EntryPointCaller<InstantiateCall> {
 			state: Dispatchable {
 				sender: instantiator,
 				contract: contract.clone(),
-				contract_info,
-				entry_point: EntryPoint::Instantiate,
+				entrypoint: EntryPoint::Instantiate,
 				output: contract,
 				marker: PhantomData,
 			},
@@ -112,13 +114,11 @@ impl EntryPointCaller<ExecuteCall> {
 		executor: AccountIdOf<T>,
 		contract: AccountIdOf<T>,
 	) -> Result<EntryPointCaller<Dispatchable<ExecuteCall, (), T>>, Error<T>> {
-		let contract_info = Pallet::<T>::contract_info(&contract)?;
 		Ok(EntryPointCaller {
 			state: Dispatchable {
-				entry_point: EntryPoint::Execute,
+				entrypoint: EntryPoint::Execute,
 				sender: executor,
 				contract,
-				contract_info,
 				output: (),
 				marker: PhantomData,
 			},
@@ -135,13 +135,11 @@ impl EntryPointCaller<ReplyCall> {
 		executor: AccountIdOf<T>,
 		contract: AccountIdOf<T>,
 	) -> Result<EntryPointCaller<Dispatchable<ReplyCall, (), T>>, Error<T>> {
-		let contract_info = Pallet::<T>::contract_info(&contract)?;
 		Ok(EntryPointCaller {
 			state: Dispatchable {
-				entry_point: EntryPoint::Reply,
+				entrypoint: EntryPoint::Reply,
 				sender: executor,
 				contract,
-				contract_info,
 				output: (),
 				marker: PhantomData,
 			},
@@ -163,7 +161,6 @@ impl EntryPointCaller<MigrateCall> {
 		new_code_id: CosmwasmCodeId,
 	) -> Result<EntryPointCaller<Dispatchable<MigrateCall, (), T>>, Error<T>> {
 		let contract_info = Pallet::<T>::contract_info(&contract)?;
-
 		// If the migrate already happened, no need to do that again.
 		// This is the case for sub-message execution where `migrate` is
 		// called by the VM.
@@ -172,7 +169,6 @@ impl EntryPointCaller<MigrateCall> {
 				shared,
 				migrator.clone(),
 				contract.clone(),
-				contract_info.clone(),
 				Default::default(),
 				|vm| {
 					cosmwasm_vm::system::migrate(
@@ -195,8 +191,7 @@ impl EntryPointCaller<MigrateCall> {
 			state: Dispatchable {
 				sender: migrator,
 				contract,
-				contract_info,
-				entry_point: EntryPoint::Migrate,
+				entrypoint: EntryPoint::Migrate,
 				output: (),
 				marker: PhantomData,
 			},
@@ -221,28 +216,23 @@ where
 		message: ContractMessageOf<T>,
 	) -> Result<O, CosmwasmVMError<T>>
 	where
-		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I> + StargateCosmwasmCallVM,
-		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
+		for<'x> WasmiVM<DefaultCosmwasmVM<'x, T>>:
+			CosmwasmCallVM<I> + CosmwasmDynamicVM<I> + StargateCosmwasmCallVM,
+		for<'x> VmErrorOf<WasmiVM<DefaultCosmwasmVM<'x, T>>>:
+			From<CosmwasmVMError<T>> + Into<CosmwasmVMError<T>>,
+		I: AsFunctionName,
 	{
+		let entrypoint = self.state.entrypoint;
 		self.call_internal(shared, funds, |vm| {
-			cosmwasm_system_entrypoint::<I, _>(vm, &message).map_err(Into::into)
-		})
-	}
-
-	#[allow(dead_code)]
-	pub fn call_json<Message>(
-		self,
-		shared: &mut CosmwasmVMShared,
-		funds: FundsOf<T>,
-		message: Message,
-	) -> Result<O, CosmwasmVMError<T>>
-	where
-		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I> + StargateCosmwasmCallVM,
-		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
-		Message: serde::Serialize,
-	{
-		self.call_internal(shared, funds, |vm| {
-			cosmwasm_system_entrypoint_serialize::<I, _, Message>(vm, &message).map_err(Into::into)
+			cosmwasm_system_entrypoint_hook::<I, _>(vm, &message, |vm, message| {
+				match vm.0.contract_runtime {
+					ContractRuntime::Dynamic { .. } =>
+						cosmwasm_call::<I, _>(vm, message).map(Into::into),
+					ContractRuntime::Static =>
+						T::Hook::precompiled_execute(vm, entrypoint, message),
+				}
+			})
+			.map_err(Into::into)
 		})
 	}
 
@@ -253,18 +243,18 @@ where
 		message: F,
 	) -> Result<O, CosmwasmVMError<T>>
 	where
-		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I> + StargateCosmwasmCallVM,
-		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
+		for<'x> WasmiVM<DefaultCosmwasmVM<'x, T>>:
+			CosmwasmCallVM<I> + CosmwasmDynamicVM<I> + StargateCosmwasmCallVM,
+		for<'x> VmErrorOf<WasmiVM<DefaultCosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
 		F: for<'x> FnOnce(
-			&'x mut WasmiVM<CosmwasmVM<'x, T>>,
+			&'x mut WasmiVM<DefaultCosmwasmVM<'x, T>>,
 		) -> Result<(Option<Binary>, Vec<CosmwasmEvent>), CosmwasmVMError<T>>,
 	{
 		Pallet::<T>::do_extrinsic_dispatch(
 			shared,
-			self.state.entry_point,
+			self.state.entrypoint,
 			self.state.sender,
 			self.state.contract,
-			self.state.contract_info,
 			funds,
 			|vm| message(vm).map_err(Into::into),
 		)?;
@@ -286,8 +276,10 @@ where
 		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
 	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>>
 	where
-		for<'x> WasmiVM<CosmwasmVM<'x, T>>: CosmwasmCallVM<I> + StargateCosmwasmCallVM,
-		for<'x> VmErrorOf<WasmiVM<CosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
+		for<'x> WasmiVM<DefaultCosmwasmVM<'x, T>>:
+			CosmwasmCallVM<I> + CosmwasmDynamicVM<I> + StargateCosmwasmCallVM,
+		for<'x> VmErrorOf<WasmiVM<DefaultCosmwasmVM<'x, T>>>:
+			From<CosmwasmVMError<T>> + Into<CosmwasmVMError<T>>,
 	{
 		// Call `cosmwasm_call` to transfer funds and create the vm instance before
 		// calling the callback.
@@ -295,12 +287,22 @@ where
 			shared,
 			self.state.sender,
 			self.state.contract,
-			self.state.contract_info,
 			funds,
 			// `cosmwasm_system_run` is called instead of `cosmwasm_system_entrypoint` here
 			// because here, we want to continue running the transaction with the given
-			// entrypoint, not create a new transaction.
-			|vm| cosmwasm_system_run::<I, _>(vm, message, event_handler).map_err(Into::into),
+			// entrypoint
+			|vm| {
+				cosmwasm_system_run_hook::<I, _>(vm, message, event_handler, |vm, message| match vm
+					.0
+					.contract_runtime
+				{
+					ContractRuntime::Dynamic { .. } =>
+						cosmwasm_call::<I, _>(vm, message).map(Into::into),
+					ContractRuntime::Static =>
+						T::Hook::precompiled_execute(vm, self.state.entrypoint, message),
+				})
+				.map_err(Into::into)
+			},
 		)
 	}
 }

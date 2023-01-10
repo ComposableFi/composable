@@ -1,4 +1,4 @@
-use crate::{AccountIdOf, Config, Pallet};
+use crate::{types::AccountIdOf, Config, Pallet};
 use alloc::{collections::VecDeque, string::String, vec::Vec};
 use codec::Encode;
 use core::marker::PhantomData;
@@ -54,7 +54,7 @@ impl<T: Config> AsRef<AccountIdOf<T>> for CosmwasmAccount<T> {
 }
 
 impl<T: Config> CosmwasmAccount<T> {
-	pub fn new(x: AccountIdOf<T>) -> Self {
+	pub const fn new(x: AccountIdOf<T>) -> Self {
 		CosmwasmAccount(PhantomData, x)
 	}
 }

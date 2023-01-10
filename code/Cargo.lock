@@ -2098,10 +2098,9 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=336110d3d211514487214c7ace267279d09cedba#336110d3d211514487214c7ace267279d09cedba"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=08a9e5cd977b06855699e4e587746ff4f706dca2#08a9e5cd977b06855699e4e587746ff4f706dca2"
 dependencies = [
  "cosmwasm-std 1.1.6",
- "either",
  "log 0.4.17",
  "serde",
  "serde_json",
@@ -2110,7 +2109,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=336110d3d211514487214c7ace267279d09cedba#336110d3d211514487214c7ace267279d09cedba"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=08a9e5cd977b06855699e4e587746ff4f706dca2#08a9e5cd977b06855699e4e587746ff4f706dca2"
 dependencies = [
  "cosmwasm-std 1.1.6",
  "cosmwasm-vm",
@@ -8230,6 +8229,7 @@ name = "pallet-cosmwasm"
 version = "1.0.0"
 dependencies = [
  "composable-support",
+ "composable-tests-helpers",
  "composable-traits",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
