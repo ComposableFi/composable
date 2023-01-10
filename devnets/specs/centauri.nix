@@ -1,4 +1,4 @@
-{ pkgs, devnet-1, devnet-2, devnetTools, ... }: {
+{ pkgs, devnet-a, devnet-b, devnetTools, ... }: {
   modules = [
     (let
       configPathSource = "/tmp/config.toml";
@@ -16,15 +16,15 @@
       };
       devnetConfigs = [
         {
-          containerName = "devnet-1";
+          containerName = "devnet-a";
           ports = [ 9944 9988 9989 9990 ];
-          devnet = devnet-1;
+          devnet = devnet-a;
           networkName = network-name;
         }
         {
-          containerName = "devnet-2";
+          containerName = "devnet-b";
           ports = [ 29944 29988 29989 29990 ];
-          devnet = devnet-2;
+          devnet = devnet-b;
           networkName = network-name-2;
         }
       ];

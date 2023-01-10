@@ -2,41 +2,13 @@
   perSystem = { config, self', inputs', pkgs, system, devnetTools, ... }: {
     packages = let packages = self'.packages;
     in rec {
-      # Dali devnet
-      devnet-dali-centauri-1 = (pkgs.callPackage devnetTools.mk-devnet {
-        inherit (packages) polkadot-launch composable-node polkadot-node;
-        network-config-path =
-          ../scripts/polkadot-launch/rococo-local-dali-dev.nix;
-        chain-spec = "dali-dev";
-      }).script;
-
-      devnet-dali-centauri-2 = (pkgs.callPackage devnetTools.mk-devnet {
-        inherit (packages) polkadot-launch composable-node polkadot-node;
-        network-config-path =
-          ../scripts/polkadot-launch/rococo-local-dali-dev-2.nix;
-        chain-spec = "dali-dev";
-      }).script;
-
       # Centauri Persistent Devnet
       devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
         (import ./specs/centauri.nix {
           inherit pkgs devnetTools;
-          devnet-1 = devnet-dali-centauri-1;
-          devnet-2 = devnet-dali-centauri-2;
+          devnet-a = packages.zombienet-dali-centauri-a;
+          devnet-b = packages.zombienet-dali-centauri-b;
         });
-
-      # Dali bridge devnet
-      bridge-devnet-dali = (devnetTools.mk-bridge-devnet {
-        inherit packages;
-        inherit (packages) polkadot-launch composable-node polkadot-node;
-      }).script;
-
-      # Dali bridge devnet with mmr-polkadot
-      bridge-mmr-devnet-dali = (devnetTools.mk-bridge-devnet {
-        inherit packages;
-        inherit (packages) polkadot-launch composable-node;
-        polkadot-node = packages.mmr-polkadot-node;
-      }).script;
 
       # Picasso devnet
       devnet-picasso = (pkgs.callPackage devnetTools.mk-devnet {
@@ -48,40 +20,6 @@
         container-tools = devnetTools.withDevNetContainerTools;
         containerName = "composable-devnet-container";
         devNet = packages.zombienet-rococo-local-dali-dev;
-      };
-
-      # Dali Bridge devnet container
-      bridge-devnet-dali-container = devnetTools.mk-devnet-container {
-        container-tools = devnetTools.withDevNetContainerTools;
-        containerName = "composable-bridge-devnet-container";
-        devNet = packages.bridge-devnet-dali;
-      };
-
-      # Dali Bridge devnet container with mmr-polkadot
-      bridge-mmr-devnet-dali-container = devnetTools.mk-devnet-container {
-        container-tools = devnetTools.withDevNetContainerTools;
-        containerName = "composable-bridge-mmr-devnet-container";
-        devNet = packages.bridge-mmr-devnet-dali;
-      };
-
-      devnet-rococo-dali-karura = let
-        config = (pkgs.callPackage
-          ../scripts/polkadot-launch/kusama-local-dali-dev-karura-dev.nix {
-            polkadot-bin = packages.polkadot-node;
-            composable-bin = packages.composable-node;
-            acala-bin = packages.acala-node;
-          }).result;
-        config-file = pkgs.writeTextFile {
-          name = "kusama-local-dali-dev-karura-dev.json";
-          text = "${builtins.toJSON config}";
-        };
-      in pkgs.writeShellApplication {
-        name = "run-rococo-dali-karura";
-        text = ''
-          cat ${config-file}
-          rm -rf /tmp/polkadot-launch
-          ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-        '';
       };
 
       devnet-picasso-complete = let
