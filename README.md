@@ -1,7 +1,7 @@
 <br />
 
 <p align="center">
-  <img alt="Composable Finance" title="Composable Finance" src="banner.png">
+  <img alt="Composable Finance" title="Composable Finance" src="./docs/banner.png">
 </p>
 
 <br />
