@@ -5,7 +5,7 @@ interact with a chain that runs `pallet-cosmwasm`.
 
 ## Create a CosmWasm project
 
-You can create a base CosmWasm project that you can work upon.
+You can create a base CosmWasm project that you can work on.
 
 ```
 cw-substrate-cli new --name get-started --author $(whoami) --description "Get started with CosmWasm"
