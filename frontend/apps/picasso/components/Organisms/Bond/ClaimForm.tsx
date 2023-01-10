@@ -1,14 +1,14 @@
 import { alpha, useTheme } from "@mui/material/styles";
 import { Box, Button, InputAdornment, Stack, Typography } from "@mui/material";
 import { BigNumberInput, TokenAsset } from "@/components";
-import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
+import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import { useActiveBonds } from "@/defi/polkadot/hooks/useActiveBonds";
 import PositionDetailsRow from "@/components/Atom/PositionDetailsRow";
 import { claim, getROI } from "@/defi/polkadot/pallets/BondedFinance";
 import router from "next/router";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 import { PairAsset } from "@/components/Atom/PairAsset";
-import { useExecutor } from "substrate-react";
+import { useExecutor, usePicassoProvider } from "substrate-react";
 import { humanBalance, subscanExtrinsicLink } from "shared";
 import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
 import { findCurrentBond } from "@/stores/defi/polkadot/bonds/utils";
@@ -16,7 +16,7 @@ import { SnackbarKey, useSnackbar } from "notistack";
 
 export const ClaimForm = () => {
   const theme = useTheme();
-  const account = useSelectedAccount();
+  const account = usePicassoAccount();
   const { parachainApi } = usePicassoProvider();
   const { activeBonds } = useActiveBonds();
   const executor = useExecutor();

@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { FeaturedBox, PageTitle, SS8WalletHelper } from "@/components";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
-import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import { useDotSamaContext } from "substrate-react";
 import { useCrowdloanRewardsEligibility } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
 import Default from "@/components/Templates/Default";
@@ -15,7 +15,7 @@ const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
   const { account } = useBlockchainProvider(config.evm.defaultNetworkId);
-  const selectedAccount = useSelectedAccount();
+  const selectedAccount = usePicassoAccount();
 
   const breadcrumbs = [
     <Link key="Overview" underline="none" color="primary" href="/">

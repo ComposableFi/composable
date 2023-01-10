@@ -6,12 +6,12 @@ import { useCirculatingSupply } from "@/apollo/hooks/useCirculatingSupply";
 import { FC, useEffect, useMemo } from "react";
 import { formatNumber, humanBalance } from "shared";
 import { subscribePools } from "@/stores/defi/polkadot/pablo/subscribePools";
-import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import * as O from "fp-ts/Option";
 import { pipe } from "fp-ts/function";
 import { subscribePoolAmount } from "@/stores/defi/polkadot/pablo/subscribePoolAmount";
 import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscovery";
 import { subscribeCoingeckoPrices } from "@/stores/defi/coingecko";
+import { usePicassoProvider } from "substrate-react";
 
 // NOTE: useTotalValueLocked hook to fetch TVL Stats
 

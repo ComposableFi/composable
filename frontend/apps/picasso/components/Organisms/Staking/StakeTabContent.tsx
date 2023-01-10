@@ -14,7 +14,7 @@ import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { FutureDatePaper } from "@/components/Atom/FutureDatePaper";
 import { WarningAmberRounded } from "@mui/icons-material";
 import { FC, useEffect, useState } from "react";
-import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import { useSnackbar } from "notistack";
 import {
   calculateStakingPeriodAPR,
@@ -65,7 +65,7 @@ export const StakeTabContent: FC = () => {
     : 0;
 
   const [lockPeriod, setLockPeriod] = useState<string>("");
-  const account = useSelectedAccount();
+  const account = usePicassoAccount();
   const inputValue = parseInt(lockPeriod) || minDuration;
   const signer = useSigner();
 

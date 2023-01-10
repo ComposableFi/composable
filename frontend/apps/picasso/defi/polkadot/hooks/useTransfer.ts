@@ -1,4 +1,4 @@
-import { useSelectedAccount } from "@/defi/polkadot/hooks/index";
+import { usePicassoAccount } from "@/defi/polkadot/hooks/index";
 import { useStore } from "@/stores/root";
 import { SnackbarKey, useSnackbar } from "notistack";
 import { useAllProviders, useExecutor, useSigner } from "substrate-react";
@@ -21,7 +21,7 @@ export const useTransfer = () => {
   const feeToken = useStore(({ transfers }) => transfers.feeToken);
   const amount = useStore((state) => state.transfers.amount);
   const setAmount = useStore((state) => state.transfers.updateAmount);
-  const account = useSelectedAccount();
+  const account = usePicassoAccount();
   const executor = useExecutor();
 
   const getBalance = useStore(

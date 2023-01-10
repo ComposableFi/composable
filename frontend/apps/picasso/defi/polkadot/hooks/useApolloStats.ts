@@ -1,4 +1,3 @@
-import { usePicassoProvider } from "@/defi/polkadot/hooks/index";
 import { useStore } from "@/stores/root";
 import { WebsocketClient } from "binance";
 import BigNumber from "bignumber.js";
@@ -10,6 +9,7 @@ import {
   unwrapNumberOrHex,
 } from "shared";
 import { ComposableTraitsOraclePrice } from "defi-interfaces";
+import { usePicassoProvider } from "substrate-react";
 
 export function binanceMapPairToSourceSymbol(pair: string) {
   const out = {

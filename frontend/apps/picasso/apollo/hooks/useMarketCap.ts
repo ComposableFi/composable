@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import BigNumber from "bignumber.js";
-import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import {
   callbackGate,
   fromChainIdUnit,
@@ -11,6 +10,7 @@ import {
 import { useCirculatingSupply } from "@/apollo/hooks/useCirculatingSupply";
 import { ComposableTraitsOraclePrice } from "defi-interfaces";
 import { useStore } from "@/stores/root";
+import { usePicassoProvider } from "substrate-react";
 
 export const useMarketCap = () => {
   const circulatingSupply = useCirculatingSupply();

@@ -1,9 +1,8 @@
 import { useEffect } from "react";
-import { useBlockInterval } from "@/defi/polkadot/hooks/useBlockInterval";
 import { useStore } from "@/stores/root";
-import { usePicassoProvider } from "@/defi/polkadot/hooks/index";
 import { callbackGate } from "shared";
 import BigNumber from "bignumber.js";
+import { useBlockInterval, usePicassoProvider } from "substrate-react";
 
 export const useTelemetry = () => {
   const time = useBlockInterval();

@@ -1,8 +1,8 @@
 import { BondOffer } from "shared";
 import { useMemo } from "react";
 import { AVERAGE_BLOCK_TIME, calculateVestingTime } from "@/defi/utils";
-import { useBlockInterval } from "../useBlockInterval";
 import BigNumber from "bignumber.js";
+import { useBlockInterval } from "substrate-react";
 
 export default function useBondVestingTime(
   bondOffer: BondOffer | undefined
@@ -11,7 +11,6 @@ export default function useBondVestingTime(
 
   const vestingTime = useMemo(() => {
     if (bondOffer) {
-
       const blockInterval = averageBlockTime
         ? new BigNumber(averageBlockTime.toString())
         : new BigNumber(AVERAGE_BLOCK_TIME);

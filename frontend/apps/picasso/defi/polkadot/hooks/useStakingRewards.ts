@@ -1,4 +1,4 @@
-import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import { useStore } from "@/stores/root";
 import { useCallback, useEffect } from "react";
 import { useQuery } from "@apollo/client";
@@ -20,7 +20,7 @@ import {
 } from "@/stores/defi/polkadot/stakingRewards/slice";
 
 export const useStakingRewards = () => {
-  const account = useSelectedAccount();
+  const account = usePicassoAccount();
 
   const pica = useStore(({ substrateTokens }) => substrateTokens.tokens.pica);
   const { parachainApi } = useParachainApi("picasso");

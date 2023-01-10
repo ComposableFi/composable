@@ -21,7 +21,7 @@ import {
   subscribeMultiAsset,
   subscribeTransferApiCall,
 } from "@/stores/defi/polkadot/transfers/subscribers";
-import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import BigNumber from "bignumber.js";
 import {
   DESTINATION_FEE_MULTIPLIER,
@@ -75,7 +75,7 @@ const Transfers: NextPage = () => {
     );
   }, [tokens, to, destFee?.fee, selectedToken]);
   const feeTokenId = useStore((state) => state.transfers.getFeeToken(from));
-  const selectedAccount = useSelectedAccount();
+  const selectedAccount = usePicassoAccount();
   const hasPendingXcmTransfer = usePendingExtrinsic(
     "reserveTransferAssets",
     "xcmPallet",
