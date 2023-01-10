@@ -39,6 +39,7 @@
         ./inputs/paritytech/statemine.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/polkadot-launch.nix
+        ./inputs/paritytech/zombienet.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
 
         # The things we use within flake parts to build packages, apps, devShells, and devnets. 
@@ -74,7 +75,6 @@
         ./price-feed.nix
         ./release.nix
         ./subwasm.nix
-        ./scripts/zombienet/flake-module.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
