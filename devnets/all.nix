@@ -23,19 +23,21 @@
       # Dali devnet
       devnet-dali-centauri-1 = (pkgs.callPackage devnetTools.mk-devnet {
         inherit (packages) polkadot-launch composable-node polkadot-node;
+        network-config-path =
+          ../scripts/polkadot-launch/rococo-local-dali-dev.nix;
         chain-spec = "dali-dev";
       }).script;
 
       devnet-dali-centauri-2 = (pkgs.callPackage devnetTools.mk-devnet {
         inherit (packages) polkadot-launch composable-node polkadot-node;
         network-config-path =
-          ./scripts/polkadot-launch/rococo-local-dali-dev-2.nix;
+          ../scripts/polkadot-launch/rococo-local-dali-dev-2.nix;
         chain-spec = "dali-dev";
       }).script;
 
       # Centauri Persistent Devnet
       devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
-        (import ./.nix/devnet-specs/centauri.nix {
+        (import ./specs/centauri.nix {
           inherit pkgs;
           devnet-1 = devnet-dali-centauri-1;
           devnet-2 = devnet-dali-centauri-2;
@@ -82,7 +84,7 @@
 
       devnet-rococo-dali-karura = let
         config = (pkgs.callPackage
-          ./scripts/polkadot-launch/kusama-local-dali-dev-karura-dev.nix {
+          ../scripts/polkadot-launch/kusama-local-dali-dev-karura-dev.nix {
             polkadot-bin = packages.polkadot-node;
             composable-bin = packages.composable-node;
             acala-bin = packages.acala-node;
@@ -101,7 +103,7 @@
       };
 
       devnet-picasso-complete = let
-        config = (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
+        config = (pkgs.callPackage ../scripts/polkadot-launch/all-dev-local.nix {
           chainspec = "picasso-dev";
           polkadot-bin = packages.polkadot-node;
           composable-bin = packages.composable-node;
@@ -122,7 +124,7 @@
       };
 
       devnet-dali-complete = let
-        config = (pkgs.callPackage ./scripts/polkadot-launch/all-dev-local.nix {
+        config = (pkgs.callPackage ../scripts/polkadot-launch/all-dev-local.nix {
           chainspec = "dali-dev";
           polkadot-bin = packages.polkadot-node;
           composable-bin = packages.composable-node;
@@ -167,7 +169,7 @@
         };
 
       devnet = pkgs.composable.mkDevnetProgram "devnet-default"
-        (import ./.nix/devnet-specs/default.nix {
+        (import ./specs/default.nix {
           inherit pkgs;
           price-feed = packages.price-feed;
           devnet = packages.devnet-dali-complete;
@@ -175,14 +177,14 @@
         });
 
       devnet-xcvm = pkgs.composable.mkDevnetProgram "devnet-xcvm"
-        (import ./.nix/devnet-specs/xcvm.nix {
+        (import ./specs/xcvm.nix {
           inherit pkgs;
           devnet-dali = packages.zombienet-rococo-local-dali-dev;
         });
 
       devnet-dali-persistent =
         pkgs.composable.mkDevnetProgram "devnet-dali-persistent"
-        (import ./.nix/devnet-specs/default.nix {
+        (import ./specs/default.nix {
           inherit pkgs;
           price-feed = packages.price-feed;
           devnet = packages.devnet-dali-complete;
@@ -191,7 +193,7 @@
 
       devnet-picasso-persistent =
         pkgs.composable.mkDevnetProgram "devnet-picasso-persistent"
-        (import ./.nix/devnet-specs/default.nix {
+        (import ./specs/default.nix {
           inherit pkgs;
           price-feed = packages.price-feed;
           devnet = packages.devnet-picasso-complete;
@@ -200,7 +202,7 @@
 
       kusama-picasso-karura-devnet = let
         config = (pkgs.callPackage
-          ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
+          ../scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
             polkadot-bin = packages.polkadot-node;
             composable-bin = packages.composable-node;
             acala-bin = packages.acala-node;

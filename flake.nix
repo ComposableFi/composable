@@ -41,6 +41,11 @@
         ./inputs/paritytech/polkadot-launch.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
 
+        # The things we use within flake parts to build packages, apps, devShells, and devnets. 
+        ./tools/devnet-tools.nix # _module.args.devnetTools
+        ./tools/rust.nix # _module.args.rust
+        ./tools/cargo-tools.nix # _module.args.cargoTools
+
         # our own packages
         ./code/services/cmc-api/cmc-api.nix
         ./code/benchmarks.nix
@@ -52,24 +57,19 @@
         ./code/runtimes.nix
         ./code/xcvm/xcvm-contracts.nix
         ./code/utils/composable-subxt/subxt.nix
+        ./docs/docs.nix
+        ./frontend/frontend.nix
+
+        # our devnets
+        # TODO: Split into multiple files
+        ./devnets/all.nix
         
-
-        # The things we use within flake parts to build packages, apps, devShells, and devnets. 
-        # They use flake-parts _module.args system in order to define tools that can be used in other
-        # flake parts. They themselves do not define packages, apps, devShells or devnets.        
-        ./tools/devnet-tools.nix # _module.args.devnetTools
-        ./tools/rust.nix # _module.args.rust
-        ./tools/cargo-tools.nix # _module.args.cargoTools
-
         # Everything that is not an input, tool, package, or devnet, but still part of the final flake
         ./flake/dev-shells.nix
         ./flake/docker.nix
         ./flake/overlays.nix
         ./flake/fmt.nix
 
-        ./devnets.nix
-        ./docs/docs.nix
-        ./frontend/frontend.nix
         ./nixops-config.nix
         ./price-feed.nix
         ./release.nix
