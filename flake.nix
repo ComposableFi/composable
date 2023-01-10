@@ -82,6 +82,6 @@
           # NOTE: Do not add packages here directly, instead, put them in flake-parts.
         };
       };
-      
+
     });
 }
