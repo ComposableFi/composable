@@ -2,10 +2,10 @@
   perSystem = { config, self', inputs', pkgs, system, ... }:
     let
       paritytech-zombienet-src = pkgs.fetchFromGitHub {
-        owner = "paritytech";
+        owner = "dzmitry-lahoda-forks";
         repo = "zombienet";
-        rev = "81a88811674772c1a03ea0a6081a7331a1210d64";
-        hash = "sha256-59lorg8GHkMH41SnijMFQyuJEsNWVuizxtoQzGP2osE=";
+        rev = "b9f089eb55a7cb1d4c12575b8323cb9b9fab4a60";
+        hash = "sha256-EC6XKbcI+Is0RGlmC8WGjPqiFh9Ulf3bXDoVihtYqsU=";
       };
 
       build = pkgs.callPackage ./default.nix { };
@@ -72,8 +72,11 @@
           };
         in pkgs.writeShellApplication rec {
           name = "zombienet-rococo-local-dali-dev";
-          runtimeInputs = [ pkgs.nodejs paritytech-zombienet ] ++ runtimeDeps;
+          runtimeInputs = [ pkgs.nodejs paritytech-zombienet pkgs.bash ]
+            ++ runtimeDeps;
           text = ''
+            realpath bash
+            bash --version
             export DEBUG="zombie*"
             printf '${builtins.toJSON config}' > /tmp/${name}.json
             cd ${paritytech-zombienet}            
