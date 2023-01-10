@@ -217,6 +217,7 @@ const PolkadotBalancesUpdater = () => {
                   }
                 );
               }
+              break;
             default:
               break;
           }

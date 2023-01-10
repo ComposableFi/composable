@@ -11,7 +11,7 @@ export type KusamaAsset = {
   existentialDeposit: BigNumber;
 };
 
-export function kusamaAssetsList(api: ApiPromise): Promise<KusamaAsset> {
+export async function kusamaAssetsList(api: ApiPromise): Promise<KusamaAsset> {
   const existentialDeposit = api.consts.balances.existentialDeposit;
   return new Promise((res) => {
     res({

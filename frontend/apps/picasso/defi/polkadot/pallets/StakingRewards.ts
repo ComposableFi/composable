@@ -11,10 +11,10 @@ import {
   unwrapNumberOrHex,
 } from "shared";
 import { RewardPool } from "@/stores/defi/polkadot/stakingRewards/slice";
-import { Executor, getSigner } from "substrate-react";
+import { Executor } from "substrate-react";
 import { AnyComponentMap, EnqueueSnackbar, SnackbarKey } from "notistack";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
-import config from "@/constants/config";
+import { Signer } from "@polkadot/api/types";
 
 export async function fetchStakingRewardPosition(
   api: ApiPromise,
@@ -94,6 +94,7 @@ export function stake({
   lockPeriod,
   enqueueSnackbar,
   closeSnackbar,
+  signer,
 }: {
   executor: Executor | undefined;
   parachainApi: ApiPromise | undefined;
@@ -103,11 +104,11 @@ export function stake({
   lockPeriod: string;
   enqueueSnackbar: EnqueueSnackbar<AnyComponentMap>;
   closeSnackbar: (key?: SnackbarKey) => void;
+  signer: Signer | undefined;
 }) {
   return callbackGate(
-    async (executor, api, account) => {
+    async (executor, api, account, _signer) => {
       let snackbarKey: SnackbarKey | undefined;
-      const signer = await getSigner(config.appName, account.address);
       await executor.execute(
         api.tx.stakingRewards.stake(
           assetId.toString(),
@@ -116,7 +117,7 @@ export function stake({
         ),
         account.address,
         api,
-        signer,
+        _signer,
         (txHash: string) => {
           snackbarKey = enqueueSnackbar("Processing stake on the chain", {
             variant: "info",
@@ -150,7 +151,8 @@ export function stake({
     },
     executor,
     parachainApi,
-    account
+    account,
+    signer
   );
 }
 

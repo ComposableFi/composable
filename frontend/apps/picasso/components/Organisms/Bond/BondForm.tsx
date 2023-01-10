@@ -14,7 +14,7 @@ import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import PositionDetails from "@/components/Atom/PositionDetails";
 import BigNumber from "bignumber.js";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
-import { useExecutor } from "substrate-react";
+import { useExecutor, useSigner } from "substrate-react";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useSnackbar } from "notistack";
 import {
@@ -66,6 +66,7 @@ export const BondForm: FC<{
   const account = useSelectedAccount();
   const executor = useExecutor();
   const { enqueueSnackbar } = useSnackbar();
+  const signer = useSigner();
 
   const handleApprove = () => {
     setOpen(true);
@@ -89,6 +90,7 @@ export const BondForm: FC<{
       parachainApi,
       account,
       executor,
+      signer,
       offerId,
       bondInput,
       enqueueSnackbar,
@@ -114,6 +116,7 @@ export const BondForm: FC<{
       setOpen,
       setOpen2nd,
       handleFormReset,
+      signer,
     });
   };
 
@@ -251,9 +254,9 @@ export const BondForm: FC<{
             startAdornment: (
               <InputAdornment position={"start"}>
                 {Array.isArray(bondOffer.asset) ? (
-                  <PairAsset assets={bondOffer.asset}/>
+                  <PairAsset assets={bondOffer.asset} />
                 ) : (
-                  <TokenAsset tokenId={bondOffer.asset.id}/>
+                  <TokenAsset tokenId={bondOffer.asset.id} />
                 )}
               </InputAdornment>
             ),
@@ -312,7 +315,7 @@ export const BondForm: FC<{
             color="text.secondary"
             mt={theme.spacing(2)}
           >
-            Are you sure you want to bond for a negative discount? <br/>
+            Are you sure you want to bond for a negative discount? <br />
             You will lose money if you do this...
           </Typography>
         )}
@@ -396,7 +399,7 @@ export const BondForm: FC<{
           color="text.secondary"
           mt={theme.spacing(2)}
         >
-          This bond is offered at a negative discount. <br/>
+          This bond is offered at a negative discount. <br />
           Please consider waiting until bond returns to positive discount.
         </Typography>
         <Button

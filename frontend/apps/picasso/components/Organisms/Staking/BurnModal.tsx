@@ -4,11 +4,10 @@ import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { FC, useMemo } from "react";
 import { callbackGate, formatNumber, subscanExtrinsicLink } from "shared";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
-import { getSigner, useExecutor } from "substrate-react";
+import { useExecutor, useSigner } from "substrate-react";
 import { SnackbarKey, useSnackbar } from "notistack";
 import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
 import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
-import config from "@/constants/config";
 
 export const BurnModal: FC<{
   open: boolean;
@@ -21,17 +20,17 @@ export const BurnModal: FC<{
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const { stakingPortfolio, refresh } = useStakingRewards();
   const [fnftCollectionId, fnftInstanceId] = selectedToken;
+  const signer = useSigner();
 
   const handleBurnUnstake = () => {
     let snackbarKey: SnackbarKey | undefined;
     callbackGate(
-      async (api, acc, exec) => {
-        const signer = await getSigner(config.appName, acc.address);
+      async (api, acc, exec, _signer) => {
         await exec.execute(
           api.tx.stakingRewards.unstake(...selectedToken),
           acc.address,
           api,
-          signer,
+          _signer,
           (txHash: string) => {
             snackbarKey = enqueueSnackbar("Processing transaction", {
               variant: "info",
@@ -68,7 +67,8 @@ export const BurnModal: FC<{
       },
       parachainApi,
       account,
-      executor
+      executor,
+      signer
     );
   };
 

@@ -1,5 +1,4 @@
 import { BaseAsset, Select } from "@/components";
-import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import {
@@ -72,7 +71,6 @@ export const GasFeeDropdown: FC<Props> = ({
     applyTokenChange(selectedAssetId);
   };
   const picassoProvider = usePicassoProvider();
-  useAllParachainProviders();
   const account = useSelectedAccount();
   const executor = useExecutor();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();

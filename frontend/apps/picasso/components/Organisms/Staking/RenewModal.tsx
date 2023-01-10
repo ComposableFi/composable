@@ -13,9 +13,8 @@ import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
 import BigNumber from "bignumber.js";
 import { useStore } from "@/stores/root";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
-import { getSigner, useExecutor } from "substrate-react";
+import { useExecutor, useSigner } from "substrate-react";
 import { SnackbarKey, useSnackbar } from "notistack";
-import config from "@/constants/config";
 
 export const RenewModal: FC<{
   open: boolean;
@@ -25,7 +24,7 @@ export const RenewModal: FC<{
   const [extendPeriod, setExtendPeriod] = useState<DurationOption | undefined>(
     undefined
   );
-
+  const signer = useSigner();
   const pica = useStore(({ substrateTokens }) => substrateTokens.tokens.pica);
   const native = useStore(
     ({ substrateBalances }) => substrateBalances.balances.picasso.pica.free
@@ -53,8 +52,7 @@ export const RenewModal: FC<{
 
     let snackbarKey: SnackbarKey | undefined;
     callbackGate(
-      async (api, acc, executor) => {
-        const signer = await getSigner(config.appName, acc.address);
+      async (api, acc, executor, _signer) => {
         await executor.execute(
           (api.tx.stakingRewards.extend as any)(
             selectedToken[0],
@@ -63,7 +61,7 @@ export const RenewModal: FC<{
           ),
           acc.address,
           api,
-          signer,
+          _signer,
           (txHash: string) => {
             snackbarKey = enqueueSnackbar("Processing transaction", {
               variant: "info",
@@ -100,7 +98,8 @@ export const RenewModal: FC<{
       },
       parachainApi,
       account,
-      executor
+      executor,
+      signer
     );
     refresh();
     onClose();

@@ -22,13 +22,12 @@ import {
   subscribeTransferApiCall,
 } from "@/stores/defi/polkadot/transfers/subscribers";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
-import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import BigNumber from "bignumber.js";
 import {
   DESTINATION_FEE_MULTIPLIER,
   FEE_MULTIPLIER,
 } from "shared/defi/constants";
-import { usePendingExtrinsic } from "substrate-react";
+import { useAllProviders, usePendingExtrinsic } from "substrate-react";
 import { InfoOutlined } from "@mui/icons-material";
 import { pipe } from "fp-ts/function";
 import { option } from "fp-ts";
@@ -36,8 +35,7 @@ import { option } from "fp-ts";
 const Transfers: NextPage = () => {
   const { setAmount, from, balance, transfer, to, isDirty } = useTransfer();
   const amount = useStore((state) => state.transfers.amount);
-  const allProviders = useAllParachainProviders();
-
+  const allProviders = useAllProviders();
   const tokens = useStore((state) => state.substrateTokens.tokens);
   const isLoaded = useStore((state) => state.substrateTokens.isLoaded);
   const fee = useStore((state) => state.transfers.fee);

@@ -11,6 +11,7 @@ import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { fromChainIdUnit, subscanExtrinsicLink } from "shared";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import config from "@/constants/config";
+import { Signer } from "@polkadot/api/types";
 
 export function createArrayOfLength(length: number): number[] {
   return Array.from(Array(length).keys());
@@ -181,6 +182,7 @@ export type PurchaseBond = {
   setOpen: (value: ((prevState: boolean) => boolean) | boolean) => void;
   setOpen2nd: (value: ((prevState: boolean) => boolean) | boolean) => void;
   handleFormReset: () => void;
+  signer: Signer | undefined;
 };
 export type ClaimType = {
   parachainApi: ApiPromise | undefined;
@@ -214,6 +216,7 @@ export async function purchaseBond({
   parachainApi,
   account,
   executor,
+  signer,
   offerId,
   bondInput,
   enqueueSnackbar,
@@ -221,9 +224,8 @@ export async function purchaseBond({
   setOpen2nd,
   handleFormReset,
 }: PurchaseBond) {
-  if (parachainApi && account && executor) {
+  if (parachainApi && account && executor && signer) {
     try {
-      const signer = await getSigner(config.appName, account.address);
       await executor
         .execute(
           parachainApi.tx.bondedFinance.bond(
