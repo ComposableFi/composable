@@ -38,40 +38,40 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	/// The range of component `n` is `[1, 100]`.
 	/// The range of component `p` is `[1, 100]`.
 	fn set_members(m: u32, n: u32, p: u32, ) -> Weight {
-		(0 as Weight)
+		Weight::from_ref_time(0 as u64)
 			// Standard Error: 23_000
-			.saturating_add((20_718_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add(Weight::from_ref_time(20_718_000 as u64).saturating_mul(m as u64))
 			// Standard Error: 23_000
-			.saturating_add((365_000 as Weight).saturating_mul(n as Weight))
+			.saturating_add(Weight::from_ref_time(365_000 as u64).saturating_mul(n as u64))
 			// Standard Error: 23_000
-			.saturating_add((27_666_000 as Weight).saturating_mul(p as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(p as Weight)))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(p as Weight)))
+			.saturating_add(Weight::from_ref_time(27_666_000 as u64).saturating_mul(p as u64))
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(p as u64)))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
+			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(p as u64)))
 	}
 	// Storage: Council Members (r:1 w:0)
 	/// The range of component `b` is `[1, 1024]`.
 	/// The range of component `m` is `[1, 100]`.
 	fn execute(b: u32, m: u32, ) -> Weight {
-		(42_954_000 as Weight)
+		Weight::from_ref_time(42_954_000 as u64)
 			// Standard Error: 0
-			.saturating_add((2_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(Weight::from_ref_time(2_000 as u64).saturating_mul(b as u64))
 			// Standard Error: 2_000
-			.saturating_add((88_000 as Weight).saturating_mul(m as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(Weight::from_ref_time(88_000 as u64).saturating_mul(m as u64))
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: Council Members (r:1 w:0)
 	// Storage: Council ProposalOf (r:1 w:0)
 	/// The range of component `b` is `[1, 1024]`.
 	/// The range of component `m` is `[1, 100]`.
 	fn propose_execute(b: u32, m: u32, ) -> Weight {
-		(47_049_000 as Weight)
+		Weight::from_ref_time(47_049_000 as u64)
 			// Standard Error: 0
-			.saturating_add((4_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(Weight::from_ref_time(4_000 as u64).saturating_mul(b as u64))
 			// Standard Error: 2_000
-			.saturating_add((170_000 as Weight).saturating_mul(m as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+			.saturating_add(Weight::from_ref_time(170_000 as u64).saturating_mul(m as u64))
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
 	}
 	// Storage: Council Members (r:1 w:0)
 	// Storage: Council ProposalOf (r:1 w:1)
@@ -82,25 +82,25 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	/// The range of component `m` is `[2, 100]`.
 	/// The range of component `p` is `[1, 100]`.
 	fn propose_proposed(b: u32, m: u32, p: u32, ) -> Weight {
-		(64_124_000 as Weight)
+		Weight::from_ref_time(64_124_000 as u64)
 			// Standard Error: 0
-			.saturating_add((10_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(Weight::from_ref_time(10_000 as u64).saturating_mul(b as u64))
 			// Standard Error: 6_000
-			.saturating_add((104_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add(Weight::from_ref_time(104_000 as u64).saturating_mul(m as u64))
 			// Standard Error: 6_000
-			.saturating_add((533_000 as Weight).saturating_mul(p as Weight))
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+			.saturating_add(Weight::from_ref_time(533_000 as u64).saturating_mul(p as u64))
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 	// Storage: Council Members (r:1 w:0)
 	// Storage: Council Voting (r:1 w:1)
 	/// The range of component `m` is `[5, 100]`.
 	fn vote(m: u32, ) -> Weight {
-		(76_824_000 as Weight)
+		Weight::from_ref_time(76_824_000 as u64)
 			// Standard Error: 9_000
-			.saturating_add((257_000 as Weight).saturating_mul(m as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(257_000 as u64).saturating_mul(m as u64))
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Council Voting (r:1 w:1)
 	// Storage: Council Members (r:1 w:0)
@@ -109,13 +109,13 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	/// The range of component `m` is `[4, 100]`.
 	/// The range of component `p` is `[1, 100]`.
 	fn close_early_disapproved(m: u32, p: u32, ) -> Weight {
-		(74_717_000 as Weight)
+		Weight::from_ref_time(74_717_000 as u64)
 			// Standard Error: 6_000
-			.saturating_add((159_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add(Weight::from_ref_time(159_000 as u64).saturating_mul(m as u64))
 			// Standard Error: 5_000
-			.saturating_add((460_000 as Weight).saturating_mul(p as Weight))
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+			.saturating_add(Weight::from_ref_time(460_000 as u64).saturating_mul(p as u64))
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Council Voting (r:1 w:1)
 	// Storage: Council Members (r:1 w:0)
@@ -125,15 +125,15 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	/// The range of component `m` is `[4, 100]`.
 	/// The range of component `p` is `[1, 100]`.
 	fn close_early_approved(b: u32, m: u32, p: u32, ) -> Weight {
-		(88_068_000 as Weight)
+		Weight::from_ref_time(88_068_000 as u64)
 			// Standard Error: 0
-			.saturating_add((7_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(Weight::from_ref_time(7_000 as u64).saturating_mul(b as u64))
 			// Standard Error: 6_000
-			.saturating_add((199_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add(Weight::from_ref_time(199_000 as u64).saturating_mul(m as u64))
 			// Standard Error: 6_000
-			.saturating_add((531_000 as Weight).saturating_mul(p as Weight))
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+			.saturating_add(Weight::from_ref_time(531_000 as u64).saturating_mul(p as u64))
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Council Voting (r:1 w:1)
 	// Storage: Council Members (r:1 w:0)
@@ -143,13 +143,13 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	/// The range of component `m` is `[4, 100]`.
 	/// The range of component `p` is `[1, 100]`.
 	fn close_disapproved(m: u32, p: u32, ) -> Weight {
-		(78_225_000 as Weight)
+		Weight::from_ref_time(78_225_000 as u64)
 			// Standard Error: 6_000
-			.saturating_add((186_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add(Weight::from_ref_time(186_000 as u64).saturating_mul(m as u64))
 			// Standard Error: 6_000
-			.saturating_add((451_000 as Weight).saturating_mul(p as Weight))
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+			.saturating_add(Weight::from_ref_time(451_000 as u64).saturating_mul(p as u64))
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Council Voting (r:1 w:1)
 	// Storage: Council Members (r:1 w:0)
@@ -160,25 +160,25 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	/// The range of component `m` is `[4, 100]`.
 	/// The range of component `p` is `[1, 100]`.
 	fn close_approved(b: u32, m: u32, p: u32, ) -> Weight {
-		(91_125_000 as Weight)
+		Weight::from_ref_time(91_125_000 as u64)
 			// Standard Error: 0
-			.saturating_add((9_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(Weight::from_ref_time(9_000 as u64).saturating_mul(b as u64))
 			// Standard Error: 7_000
-			.saturating_add((203_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add(Weight::from_ref_time(203_000 as u64).saturating_mul(m as u64))
 			// Standard Error: 7_000
-			.saturating_add((548_000 as Weight).saturating_mul(p as Weight))
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+			.saturating_add(Weight::from_ref_time(548_000 as u64).saturating_mul(p as u64))
+			.saturating_add(T::DbWeight::get().reads(5 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Council Proposals (r:1 w:1)
 	// Storage: Council Voting (r:0 w:1)
 	// Storage: Council ProposalOf (r:0 w:1)
 	/// The range of component `p` is `[1, 100]`.
 	fn disapprove_proposal(p: u32, ) -> Weight {
-		(47_091_000 as Weight)
+		Weight::from_ref_time(47_091_000 as u64)
 			// Standard Error: 5_000
-			.saturating_add((588_000 as Weight).saturating_mul(p as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+			.saturating_add(Weight::from_ref_time(588_000 as u64).saturating_mul(p as u64))
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 }

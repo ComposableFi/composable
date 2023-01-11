@@ -36,9 +36,9 @@ impl<T: frame_system::Config> vault::WeightInfo for WeightInfo<T> {
 	// Storage: Vault LpTokensToVaults (r:0 w:1)
 	// Storage: Vault Vaults (r:0 w:1)
 	fn create() -> Weight {
-		(204_212_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+		Weight::from_ref_time(204_212_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
 	// Storage: Vault Vaults (r:1 w:0)
 	// Storage: Tokens Accounts (r:3 w:3)
@@ -46,51 +46,51 @@ impl<T: frame_system::Config> vault::WeightInfo for WeightInfo<T> {
 	// Storage: Vault CapitalStructure (r:2 w:0)
 	// Storage: System Account (r:1 w:1)
 	fn deposit() -> Weight {
-		(197_850_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(9 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+		Weight::from_ref_time(197_850_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(9 as u64))
+			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
 	// Storage: Vault Vaults (r:1 w:0)
 	// Storage: Tokens Accounts (r:3 w:3)
 	// Storage: Vault CapitalStructure (r:2 w:0)
 	// Storage: Tokens TotalIssuance (r:2 w:1)
 	fn withdraw() -> Weight {
-		(172_128_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(8 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		Weight::from_ref_time(172_128_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(8 as u64))
+			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 	// Storage: Vault Vaults (r:1 w:1)
 	fn emergency_shutdown() -> Weight {
-		(57_947_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(57_947_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Vault Vaults (r:1 w:1)
 	fn start_() -> Weight {
-		(44_463_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(44_463_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Vault Vaults (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn add_surcharge() -> Weight {
-		(112_857_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(112_857_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Vault Vaults (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn claim_surcharge() -> Weight {
-		(99_688_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(99_688_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Vault Vaults (r:1 w:1)
 	// Storage: System Account (r:1 w:0)
 	// Storage: Vault LpTokensToVaults (r:0 w:1)
 	fn delete_tombstoned() -> Weight {
-		(42_146_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(42_146_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 }

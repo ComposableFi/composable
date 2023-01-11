@@ -33,15 +33,15 @@ impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 	// same as vaults deposit plus 1 more read
 	// TODO: Please impl benchmarks
 	fn vault_deposit() -> Weight {
-		(140_947_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(10 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+		Weight::from_ref_time(140_947_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(10 as u64))
+			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
 	// same as vaults withdraw plus 1 more read
 	fn vault_withdraw() -> Weight {
-		(112_296_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(9 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		Weight::from_ref_time(112_296_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(9 as u64))
+			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
     // Storage: Oracle Prices (r:2 w:0)
 	// Storage: Lending LendingCount (r:1 w:1)
@@ -56,18 +56,18 @@ impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 	// Storage: Lending BorrowIndex (r:0 w:1)
 	// Storage: Lending Markets (r:0 w:1)
 	fn create_market() -> Weight {
-		(193_469_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(8 as Weight))
-			.saturating_add(T::DbWeight::get().writes(12 as Weight))
+		Weight::from_ref_time(193_469_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(8 as u64))
+			.saturating_add(T::DbWeight::get().writes(12 as u64))
 	}
 	// Storage: Lending Markets (r:1 w:0)
 	// Storage: Lending AccountCollateral (r:1 w:1)
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:1)
 	fn deposit_collateral() -> Weight {
-		(124_740_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		Weight::from_ref_time(124_740_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(5 as u64))
+			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 	// Storage: Lending Markets (r:1 w:0)
 	// Storage: Lending AccountCollateral (r:1 w:1)
@@ -78,9 +78,9 @@ impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle Prices (r:2 w:0)
 	// Storage: Tokens Accounts (r:2 w:2)
 	fn withdraw_collateral() -> Weight {
-		(156_615_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(11 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(156_615_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(11 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Lending Markets (r:1 w:0)
 	// Storage: Vault Vaults (r:1 w:0)
@@ -98,9 +98,9 @@ impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 	// Storage: Lending LastBlockTimestamp (r:1 w:0)
 	// Storage: Lending BorrowRent (r:1 w:1)
 	fn borrow() -> Weight {
-		(419_169_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(21 as Weight))
-			.saturating_add(T::DbWeight::get().writes(8 as Weight))
+		Weight::from_ref_time(419_169_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(21 as u64))
+			.saturating_add(T::DbWeight::get().writes(8 as u64))
 	}
 	// Storage: Lending BorrowTimestamp (r:1 w:1)
 	// Storage: Lending LastBlockTimestamp (r:1 w:0)
@@ -114,9 +114,9 @@ impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 	// Storage: Lending BorrowRent (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	fn repay_borrow() -> Weight {
-		(301_514_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(14 as Weight))
-			.saturating_add(T::DbWeight::get().writes(7 as Weight))
+		Weight::from_ref_time(301_514_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(14 as u64))
+			.saturating_add(T::DbWeight::get().writes(7 as u64))
 	}
 	// Storage: Lending Markets (r:1 w:0)
 	// Storage: Vault Vaults (r:1 w:0)
@@ -127,15 +127,15 @@ impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 	// Storage: Lending DebtIndex (r:1 w:0)
 	/// The range of component `b` is `[1, 1000]`.
 	fn liquidate(b: u32, ) -> Weight {
-		(577_340_000 as Weight)
+		Weight::from_ref_time(577_340_000 as u64)
 			// Standard Error: 266_000
-			.saturating_add((35_069_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(T::DbWeight::get().reads(9 as Weight))
+			.saturating_add(Weight::from_ref_time(35_069_000 as u64).saturating_mul(b as u64))
+			.saturating_add(T::DbWeight::get().reads(9 as u64))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	fn now() -> Weight {
-		(4_457_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+		Weight::from_ref_time(4_457_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: Lending DebtTokenForMarket (r:1 w:0)
 	// Storage: Tokens Accounts (r:2 w:0)
@@ -146,45 +146,45 @@ impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 	// Storage: Lending BorrowIndex (r:1 w:1)
 	/// The range of component `x` is `[1, 1000]`.
 	fn accrue_interest(x: u32, ) -> Weight {
-		(89_649_000 as Weight)
+		Weight::from_ref_time(89_649_000 as u64)
 			// Standard Error: 1_000
-			.saturating_add((7_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(T::DbWeight::get().reads(8 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+			.saturating_add(Weight::from_ref_time(7_000 as u64).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(8 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	fn account_id() -> Weight {
-		(1_760_000 as Weight)
+		Weight::from_ref_time(1_760_000 as u64)
 	}
 	// Storage: Vault Vaults (r:1 w:0)
 	// Storage: Vault CapitalStructure (r:1 w:0)
 	fn available_funds() -> Weight {
-		(19_563_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+		Weight::from_ref_time(19_563_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
 	}
 	// Storage: Vault Vaults (r:1 w:0)
 	// Storage: Vault CapitalStructure (r:1 w:1)
 	// Storage: Tokens Accounts (r:2 w:2)
 	fn handle_withdrawable() -> Weight {
-		(72_570_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(72_570_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Vault Vaults (r:1 w:0)
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: Vault CapitalStructure (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn handle_depositable() -> Weight {
-		(125_535_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		Weight::from_ref_time(125_535_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(5 as u64))
+			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 	// Storage: Vault Vaults (r:1 w:0)
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: Vault CapitalStructure (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn handle_must_liquidate() -> Weight {
-		(112_571_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		Weight::from_ref_time(112_571_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(5 as u64))
+			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 }

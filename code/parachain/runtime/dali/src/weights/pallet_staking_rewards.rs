@@ -35,11 +35,11 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: Fnft Collection (r:1 w:1)
 	/// The range of component `r` is `[1, 10]`.
 	fn create_reward_pool(r: u32, ) -> Weight {
-		(88_726_000 as Weight)
+		Weight::from_ref_time(88_726_000 as u64)
 			// Standard Error: 372_000
-			.saturating_add((1_054_000 as Weight).saturating_mul(r as Weight))
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+			.saturating_add(Weight::from_ref_time(1_054_000 as u64).saturating_mul(r as u64))
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: StakingRewards RewardPools (r:1 w:1)
 	// Storage: Tokens Accounts (r:3 w:3)
@@ -55,11 +55,11 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: StakingRewards Stakes (r:0 w:1)
 	/// The range of component `r` is `[1, 10]`.
 	fn stake(r: u32, ) -> Weight {
-		(346_706_000 as Weight)
+		Weight::from_ref_time(346_706_000 as u64)
 			// Standard Error: 921_000
-			.saturating_add((1_005_000 as Weight).saturating_mul(r as Weight))
-			.saturating_add(T::DbWeight::get().reads(15 as Weight))
-			.saturating_add(T::DbWeight::get().writes(13 as Weight))
+			.saturating_add(Weight::from_ref_time(1_005_000 as u64).saturating_mul(r as u64))
+			.saturating_add(T::DbWeight::get().reads(15 as u64))
+			.saturating_add(T::DbWeight::get().writes(13 as u64))
 	}
 	// Storage: Fnft Instance (r:1 w:0)
 	// Storage: StakingRewards Stakes (r:1 w:1)
@@ -70,11 +70,11 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: Timestamp Now (r:1 w:0)
 	/// The range of component `r` is `[1, 10]`.
 	fn extend(r: u32, ) -> Weight {
-		(244_934_000 as Weight)
+		Weight::from_ref_time(244_934_000 as u64)
 			// Standard Error: 615_000
-			.saturating_add((706_000 as Weight).saturating_mul(r as Weight))
-			.saturating_add(T::DbWeight::get().reads(11 as Weight))
-			.saturating_add(T::DbWeight::get().writes(8 as Weight))
+			.saturating_add(Weight::from_ref_time(706_000 as u64).saturating_mul(r as u64))
+			.saturating_add(T::DbWeight::get().reads(11 as u64))
+			.saturating_add(T::DbWeight::get().writes(8 as u64))
 	}
 	// Storage: Fnft Instance (r:1 w:1)
 	// Storage: StakingRewards Stakes (r:1 w:1)
@@ -87,11 +87,11 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: Fnft OwnerInstances (r:1 w:1)
 	/// The range of component `r` is `[1, 10]`.
 	fn unstake(r: u32, ) -> Weight {
-		(343_031_000 as Weight)
+		Weight::from_ref_time(343_031_000 as u64)
 			// Standard Error: 964_000
-			.saturating_add((11_617_000 as Weight).saturating_mul(r as Weight))
-			.saturating_add(T::DbWeight::get().reads(14 as Weight))
-			.saturating_add(T::DbWeight::get().writes(13 as Weight))
+			.saturating_add(Weight::from_ref_time(11_617_000 as u64).saturating_mul(r as u64))
+			.saturating_add(T::DbWeight::get().reads(14 as u64))
+			.saturating_add(T::DbWeight::get().writes(13 as u64))
 	}
 	// Storage: Fnft Instance (r:2 w:1)
 	// Storage: StakingRewards Stakes (r:1 w:2)
@@ -105,33 +105,33 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: System Account (r:2 w:1)
 	/// The range of component `r` is `[1, 10]`.
 	fn split(r: u32, ) -> Weight {
-		(434_367_000 as Weight)
+		Weight::from_ref_time(434_367_000 as u64)
 			// Standard Error: 990_000
-			.saturating_add((1_461_000 as Weight).saturating_mul(r as Weight))
-			.saturating_add(T::DbWeight::get().reads(18 as Weight))
-			.saturating_add(T::DbWeight::get().writes(15 as Weight))
+			.saturating_add(Weight::from_ref_time(1_461_000 as u64).saturating_mul(r as u64))
+			.saturating_add(T::DbWeight::get().reads(18 as u64))
+			.saturating_add(T::DbWeight::get().writes(15 as u64))
 	}
 	// Storage: System Account (r:1 w:0)
 	// Storage: StakingRewards RewardsPotIsEmpty (r:1 w:1)
 	fn reward_accumulation_hook_reward_update_calculation() -> Weight {
-		(42_797_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(42_797_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	fn unix_time_now() -> Weight {
-		(6_073_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+		Weight::from_ref_time(6_073_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: StakingRewards RewardPools (r:1 w:1)
 	// Storage: Timestamp Now (r:1 w:0)
 	/// The range of component `r` is `[1, 10]`.
 	fn update_rewards_pool(r: u32, ) -> Weight {
-		(66_443_000 as Weight)
+		Weight::from_ref_time(66_443_000 as u64)
 			// Standard Error: 342_000
-			.saturating_add((1_434_000 as Weight).saturating_mul(r as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(1_434_000 as u64).saturating_mul(r as u64))
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Fnft Instance (r:1 w:0)
 	// Storage: StakingRewards Stakes (r:1 w:1)
@@ -139,19 +139,19 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: Tokens TotalIssuance (r:1 w:0)
 	/// The range of component `r` is `[1, 10]`.
 	fn claim(r: u32, ) -> Weight {
-		(97_667_000 as Weight)
+		Weight::from_ref_time(97_667_000 as u64)
 			// Standard Error: 411_000
-			.saturating_add((4_084_000 as Weight).saturating_mul(r as Weight))
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+			.saturating_add(Weight::from_ref_time(4_084_000 as u64).saturating_mul(r as u64))
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: StakingRewards RewardPools (r:1 w:1)
 	// Storage: StakingRewards RewardsPotIsEmpty (r:1 w:0)
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:1)
 	fn add_to_rewards_pot() -> Weight {
-		(147_772_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		Weight::from_ref_time(147_772_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(5 as u64))
+			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 }

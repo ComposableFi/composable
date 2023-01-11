@@ -32,27 +32,27 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic Relayer (r:0 w:1)
 	fn set_relayer() -> Weight {
-		(39_459_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(39_459_000 as u64)
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Mosaic Relayer (r:1 w:1)
 	fn rotate_relayer() -> Weight {
-		(46_172_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(46_172_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Mosaic Relayer (r:1 w:0)
 	// Storage: Mosaic NetworkInfos (r:0 w:1)
 	fn set_network() -> Weight {
-		(49_641_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(49_641_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Mosaic AssetsInfo (r:1 w:1)
 	fn set_budget() -> Weight {
-		(50_164_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(50_164_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Mosaic AssetsInfo (r:1 w:0)
 	// Storage: Mosaic LocalToRemoteAsset (r:1 w:0)
@@ -62,25 +62,25 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic OutgoingTransactions (r:1 w:1)
 	// Storage: Mosaic Nonce (r:1 w:1)
 	fn transfer_to() -> Weight {
-		(165_301_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(8 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		Weight::from_ref_time(165_301_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(8 as u64))
+			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 	// Storage: Mosaic Relayer (r:1 w:0)
 	// Storage: Mosaic RemoteToLocalAsset (r:1 w:0)
 	// Storage: Mosaic OutgoingTransactions (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn accept_transfer() -> Weight {
-		(108_775_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(108_775_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Mosaic OutgoingTransactions (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn claim_stale_to() -> Weight {
-		(131_694_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(131_694_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Mosaic Relayer (r:1 w:0)
 	// Storage: Mosaic RemoteToLocalAsset (r:1 w:0)
@@ -88,49 +88,49 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Mosaic IncomingTransactions (r:1 w:1)
 	fn timelocked_mint() -> Weight {
-		(139_184_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(139_184_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(5 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Mosaic TimeLockPeriod (r:0 w:1)
 	fn set_timelock_duration() -> Weight {
-		(14_200_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(14_200_000 as u64)
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Mosaic Relayer (r:1 w:0)
 	// Storage: Mosaic RemoteToLocalAsset (r:1 w:0)
 	// Storage: Mosaic IncomingTransactions (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn rescind_timelocked_mint() -> Weight {
-		(107_275_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(107_275_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Mosaic IncomingTransactions (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn claim_to() -> Weight {
-		(149_121_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(149_121_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Mosaic NetworkInfos (r:1 w:0)
 	// Storage: Mosaic LocalToRemoteAsset (r:1 w:1)
 	// Storage: Mosaic RemoteToLocalAsset (r:0 w:1)
 	fn update_asset_mapping() -> Weight {
-		(58_422_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(58_422_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Mosaic RemoteAmmWhitelist (r:1 w:1)
 	fn add_remote_amm_id() -> Weight {
-		(22_066_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(22_066_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Mosaic RemoteAmmWhitelist (r:1 w:1)
 	fn remove_remote_amm_id() -> Weight {
-		(23_674_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(23_674_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 }
