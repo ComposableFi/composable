@@ -11,7 +11,6 @@
       all-dev-local-config = ./zombienet/all-dev-local.toml;
       build = pkgs.callPackage ./zombienet/default.nix { };
       npmDeps = pkgs.callPackage ../../.nix/npm.nix { };
-      all-dev-local-config = ./all-dev-local.toml;
       runtimeDeps = with pkgs;
         [ coreutils bash procps git git-lfs ]
         ++ lib.optional stdenv.isLinux glibc.bin;
