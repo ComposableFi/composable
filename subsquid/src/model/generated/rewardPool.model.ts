@@ -16,4 +16,10 @@ export class RewardPool {
     @Index_()
     @Column_("text", {nullable: false})
     poolId!: string
+
+    /**
+     * Last updated block id
+     */
+    @Column_("text", {nullable: false})
+    blockId!: string
 }

@@ -208,7 +208,7 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
       const tokenId = get().transfers.selectedToken;
       const balances = get().substrateBalances.balances;
 
-      return balances[from][tokenId].balance;
+      return balances[from][tokenId].free.minus(balances[from][tokenId].locked);
     },
     getTransferAmount: (api: ApiPromise) => {
       return getAmountToTransfer({
@@ -225,7 +225,7 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
     isTokenBalanceZero: (tokenId: TokenId) => {
       const from = get().transfers.networks.from;
       const balances = get().substrateBalances.balances;
-      return balances[from][tokenId].balance.eq(0);
+      return balances[from][tokenId].free.eq(0);
     },
     setTransferExtrinsic: (call) => {
       set((state) => {

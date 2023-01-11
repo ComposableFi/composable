@@ -1,11 +1,4 @@
-import {
-  Arg,
-  Field,
-  InputType,
-  ObjectType,
-  Query,
-  Resolver,
-} from "type-graphql";
+import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { Activity } from "../../model";
 
@@ -33,20 +26,11 @@ export class ActiveUsersResolver {
   constructor(private tx: () => Promise<EntityManager>) {}
 
   @Query(() => [ActiveUsers])
-  async activeUsers(
-    @Arg("params", { validate: true }) input: ActiveUsersInput
-  ): Promise<ActiveUsers[]> {
+  async activeUsers(@Arg("params", { validate: true }) input: ActiveUsersInput): Promise<ActiveUsers[]> {
     const { range } = input;
 
-    if (
-      range !== "day" &&
-      range !== "week" &&
-      range !== "month" &&
-      range !== "year"
-    ) {
-      throw new Error(
-        "Invalid range. It should be 'day', 'week', 'month' or 'year'."
-      );
+    if (range !== "day" && range !== "week" && range !== "month" && range !== "year") {
+      throw new Error("Invalid range. It should be 'day', 'week', 'month' or 'year'.");
     }
 
     const manager = await this.tx();
@@ -145,10 +129,10 @@ export class ActiveUsersResolver {
     }
 
     return rows.map(
-      (row) =>
+      row =>
         new ActiveUsers({
           date: row.period,
-          count: Number(row.count),
+          count: Number(row.count)
         })
     );
   }

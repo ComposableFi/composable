@@ -41,7 +41,10 @@ export type ModalProps = DialogProps & {
 };
 
 export type WalletViewProps = {
-  balance: BigNumber;
+  balance: {
+    free: BigNumber;
+    locked: BigNumber;
+  };
 
   polkadotNetwork?: BlockchainNetwork;
   ethereumNetwork?: BlockchainNetwork;
@@ -129,7 +132,7 @@ export const WalletViewModal: FC<WalletViewProps> = ({
                 fontSize: "2rem",
               }}
             >
-              {balance.toFixed(2)}
+              {balance.free.toFixed(2)}
             </Typography>
             <Typography
               sx={{
@@ -168,7 +171,7 @@ export const WalletViewModal: FC<WalletViewProps> = ({
               icon={<Lock sx={{ fontSize: "1rem" }} />}
               background={alpha(theme.palette.warning.main, 0.1)}
               color={theme.palette.warning.main}
-              label="Locked"
+              label={`${balance.locked.toFixed(2)} Locked`}
             />
           </Box>
         </Grid>

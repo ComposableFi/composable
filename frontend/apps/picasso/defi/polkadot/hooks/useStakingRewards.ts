@@ -48,7 +48,7 @@ export const useStakingRewards = () => {
     Object.values(rewardPools).length > 0 && rewardPools[assetId]; // PICA reward pool is necessary
 
   const balance = useStore(
-    (state) => state.substrateBalances.balances.picasso.pica.balance
+    (state) => state.substrateBalances.balances.picasso.pica.free
   );
   const setRewardPool = useStore((state) => state.setRewardPool);
   const picaRewardPool = useStore((state) => state.rewardPools[assetId]);

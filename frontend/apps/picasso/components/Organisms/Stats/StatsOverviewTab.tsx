@@ -3,16 +3,53 @@ import { FeaturedBox } from "@/components/Molecules";
 import { DailyActiveUsersChart } from "@/components/Organisms/Stats/DailyActiveUsersChart";
 import { useOverviewStats } from "@/apollo/hooks/useOverviewStats";
 import { useCirculatingSupply } from "@/apollo/hooks/useCirculatingSupply";
-import { useMarketCap } from "@/apollo/hooks/useMarketCap";
 import { TotalValueLockedChart } from "@/components/Organisms/Stats/TotalValueLockedChart";
-import { FC } from "react";
-import { formatNumber } from "shared";
+import { FC, useEffect, useMemo } from "react";
+import { formatNumber, humanBalance } from "shared";
+import { subscribePools } from "@/stores/defi/polkadot/pablo/subscribePools";
+import { usePicassoProvider } from "@/defi/polkadot/hooks";
+import * as O from "fp-ts/Option";
+import { pipe } from "fp-ts/function";
+import { subscribePoolAmount } from "@/stores/defi/polkadot/pablo/subscribePoolAmount";
+import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscovery";
+import { subscribeCoingeckoPrices } from "@/stores/defi/coingecko";
 
 export const StatsOverviewTab: FC = () => {
   const circulatingSupply = useCirculatingSupply();
-  const marketCap = useMarketCap();
   const { data, loading } = useOverviewStats();
+  const { parachainApi } = usePicassoProvider();
   const theme = useTheme();
+  const price = usePicaPriceDiscovery();
+
+  useEffect(() => {
+    const unsubPrices = subscribeCoingeckoPrices(); 
+    const unsubPools = pipe(
+      parachainApi,
+      O.fromNullable,
+      O.map((api) => subscribePools(api))
+    );
+    const unsubPoolAmount = pipe(
+      parachainApi,
+      O.fromNullable,
+      O.map((api) => subscribePoolAmount(api))
+    );
+
+    return () => {
+      pipe(
+        O.bindTo("uPoolAmount")(unsubPoolAmount),
+        O.bind("uPools", () => unsubPools),
+        O.map(({ uPools, uPoolAmount }) => {
+          uPools();
+          uPoolAmount();
+        })
+      );
+      unsubPrices();
+    };
+  }, [parachainApi]);
+  const marketCap = useMemo(
+    () => circulatingSupply.multipliedBy(price),
+    [circulatingSupply, price]
+  );
 
   return (
     <Grid container spacing={4}>
@@ -69,7 +106,7 @@ export const StatsOverviewTab: FC = () => {
               "The total value of all minted PICA in USD. (total supply * current market price)",
           }}
           textAbove="Picasso market cap"
-          title={`$${marketCap.toFormat(2)}`}
+          title={`$${humanBalance(marketCap)}`}
         />
       </Grid>
       <Grid item xs={12} sm={6} md={4}>
@@ -80,7 +117,7 @@ export const StatsOverviewTab: FC = () => {
           TooltipProps={{
             title: "The number of coins publicly available in the market.",
           }}
-          textAbove="Picasso circulating supply"
+          textAbove="Picasso total supply"
           title={circulatingSupply.toFormat(0)}
         />
       </Grid>

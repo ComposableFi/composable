@@ -28,7 +28,7 @@ export const RenewModal: FC<{
 
   const pica = useStore(({ substrateTokens }) => substrateTokens.tokens.pica);
   const native = useStore(
-    ({ substrateBalances }) => substrateBalances.balances.picasso.pica.balance
+    ({ substrateBalances }) => substrateBalances.balances.picasso.pica.free
   );
   const [extendAmount, setExtendAmount] = useState<BigNumber>(new BigNumber(0));
   const { parachainApi, stakingPortfolio, refresh } = useStakingRewards();

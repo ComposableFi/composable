@@ -32,4 +32,10 @@ export class Asset {
 
     @OneToMany_(() => HistoricalAssetPrice, e => e.asset)
     historicalPrices!: HistoricalAssetPrice[]
+
+    /**
+     * Last updated block id
+     */
+    @Column_("text", {nullable: false})
+    blockId!: string
 }

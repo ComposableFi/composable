@@ -6,6 +6,7 @@ import { useExecutor, useSigner } from "substrate-react";
 import BigNumber from "bignumber.js";
 import { xcmPalletEventParser } from "@/defi/polkadot/pallets/XCM/utils";
 import { subscanExtrinsicLink } from "shared";
+import { useRef } from "react";
 
 export const useTransfer = () => {
   const allProviders = useAllParachainProviders();
@@ -31,6 +32,8 @@ export const useTransfer = () => {
   const makeTransferCall = useStore(
     (state) => state.transfers.makeTransferCall
   );
+
+  const isDirty = useRef(false);
 
   const TARGET_ACCOUNT_ADDRESS = selectedRecipient.length
     ? selectedRecipient
@@ -96,6 +99,7 @@ export const useTransfer = () => {
           }
 
           setAmount(new BigNumber(0));
+          isDirty.current = false;
         },
         (err) => {
           snackbarKey = enqueueSnackbar("Transfer failed", {
@@ -130,5 +134,6 @@ export const useTransfer = () => {
     setAmount,
     toProvider,
     TARGET_ACCOUNT_ADDRESS,
+    isDirty,
   };
 };

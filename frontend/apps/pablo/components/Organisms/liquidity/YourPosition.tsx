@@ -12,7 +12,12 @@ import BigNumber from "bignumber.js";
 import { FC, useEffect, useState } from "react";
 import { PoolConfig } from "@/store/pools/types";
 import useStore from "@/store/useStore";
-import { getPriceAndRatio, getStats, GetStatsReturn } from "@/defi/utils";
+import {
+  DEFAULT_NETWORK_ID,
+  getPriceAndRatio,
+  getStats,
+  GetStatsReturn,
+} from "@/defi/utils";
 
 type YourPositionProps = {
   pool: PoolConfig;
@@ -21,6 +26,8 @@ type YourPositionProps = {
   assets: Asset[];
   amounts: [BigNumber, BigNumber];
   expectedLP: BigNumber;
+  transactionFee: BigNumber;
+  gasFeeToken: Asset;
 } & BoxProps;
 
 export const YourPosition: FC<YourPositionProps> = ({
@@ -30,11 +37,17 @@ export const YourPosition: FC<YourPositionProps> = ({
   expectedLP,
   amounts,
   pool,
+  gasFeeToken,
+  transactionFee,
+
   ...rest
 }) => {
   const theme = useTheme();
   const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
   const [stats, setStats] = useState<GetStatsReturn>(null);
+  const [assetOne, assetTwo] = assets;
+  const [amountOne, amountTwo] = amounts;
+
   useEffect(() => {
     if (isPoolsLoaded && pool) {
       getStats(pool).then((result) => {
@@ -42,9 +55,7 @@ export const YourPosition: FC<YourPositionProps> = ({
       });
     }
   }, [isPoolsLoaded, pool]);
-
-  const [assetOne, assetTwo] = assets;
-  const [amountOne, amountTwo] = amounts;
+  
   if (!stats) return <CircularProgress />;
 
   const { shareOfPool } = getPriceAndRatio(
@@ -62,9 +73,9 @@ export const YourPosition: FC<YourPositionProps> = ({
         noDivider
           ? undefined
           : `1px solid ${alpha(
-              theme.palette.common.white,
-              theme.custom.opacity.main
-            )}`
+            theme.palette.common.white,
+            theme.custom.opacity.main
+          )}`
       }
       {...rest}
     >
@@ -91,7 +102,11 @@ export const YourPosition: FC<YourPositionProps> = ({
         label="Share of pool"
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
-          balance: `${shareOfPool.toFixed()}%`,
+          balance: `${
+            shareOfPool.toFixed() === "0"
+              ? shareOfPool.toFixed(12)
+              : shareOfPool.toFixed()
+          }%`,
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",
@@ -101,10 +116,12 @@ export const YourPosition: FC<YourPositionProps> = ({
 
       <Label
         mt={3}
-        label={`Pooled ${assets[0].getSymbol()}`}
+        label={`Pooled ${assetOne.getSymbol()}`}
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
-          balance: amountOne.toString(),
+          balance: amountOne.toFormat(
+            assetOne.getDecimals(DEFAULT_NETWORK_ID) ?? 12
+          ),
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",
@@ -114,10 +131,25 @@ export const YourPosition: FC<YourPositionProps> = ({
 
       <Label
         mt={3}
-        label={`Pooled ${assets[1].getSymbol()}`}
+        label={`Pooled ${assetTwo.getSymbol()}`}
         TypographyProps={{ variant: "body1" }}
         BalanceProps={{
-          balance: amountTwo.toString(),
+          balance: amountTwo.toFormat(assetTwo.getDecimals(DEFAULT_NETWORK_ID)),
+          BalanceTypographyProps: {
+            variant: "body1",
+            fontWeight: "bold",
+          },
+        }}
+      />
+
+      <Label
+        mt={3}
+        label={`Transaction fee (${gasFeeToken.getSymbol()})`}
+        TypographyProps={{ variant: "body1" }}
+        BalanceProps={{
+          balance: `${transactionFee.toFormat(
+            gasFeeToken.getDecimals(DEFAULT_NETWORK_ID)
+          )}`,
           BalanceTypographyProps: {
             variant: "body1",
             fontWeight: "bold",

@@ -1,6 +1,6 @@
 import { DropdownCombinedBigNumberInput } from "@/components";
 import { useMobile } from "@/hooks/responsive";
-import { Box, Tooltip, Typography, useTheme } from "@mui/material";
+import { Box, Skeleton, Tooltip, Typography, useTheme } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { FC, useEffect, useState } from "react";
 import { BoxProps } from "@mui/system";
@@ -10,7 +10,7 @@ import { SwapSummary } from "./SwapSummary";
 import { SwapRoute } from "./SwapRoute";
 import { PreviewModal } from "./PreviewModal";
 import { ConfirmingModal } from "./ConfirmingModal";
-import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
+import { useSelectedAccount } from "substrate-react";
 import { useSwaps } from "@/defi/hooks/swaps/useSwaps";
 import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
 import { HighlightBox } from "@/components/Atoms/HighlightBox";
@@ -20,6 +20,8 @@ import { SettingsModalHandler } from "./SettingsModalHandler";
 import { SwapVertAsset } from "@/components/Organisms/swap/SwapVertAsset";
 import { SwapButton } from "@/components/Organisms/swap/SwapButton";
 import BigNumber from "bignumber.js";
+import useStore from "@/store/useStore";
+import { usePicaPriceDiscovery } from "@/defi/hooks/overview/usePicaPriceDiscovery";
 
 const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
@@ -27,6 +29,15 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
 
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
+  const hasFetchedPools = useStore((store) => store.pools.isLoaded);
+  const hasFetchedTokens = useStore(
+    (store) => store.substrateTokens.hasFetchedTokens
+  );
+  const picaPrice = usePicaPriceDiscovery();
+
+  const isSwapFormReady =
+    hasFetchedPools && hasFetchedTokens && !picaPrice.isZero();
+  
   const {
     balance1,
     balance2,
@@ -68,13 +79,7 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
     minimumReceived: minimumReceived.value,
   });
 
-  const isConfirmingModalOpen = usePendingExtrinsic(
-    "pablo",
-    "swap",
-    selectedAccount?.address ?? "-"
-  );
-
-  const { isSwapPreviewModalOpen } = useUiSlice();
+  const { isSwapPreviewModalOpen, isConfirmingModalOpen } = useUiSlice();
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
 
   useEffect(() => {
@@ -83,6 +88,10 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
       setUiState({ isConfirmingModalOpen: false });
     }
   }, [isConfirmed]);
+
+  if (!isSwapFormReady) {
+    return <Skeleton variant="rounded" width="100%" height="600px" />;
+  }
 
   return (
     <HighlightBox margin="auto" {...boxProps}>

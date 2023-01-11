@@ -19,7 +19,7 @@ function extractOptions(
         return previousValue;
       }
       // calculate balance for token
-      const balance = balances[from][currentValue.id].balance;
+      const balance = balances[from][currentValue.id].free;
 
       // only include allowed assets
       if (!TRANSFER_ASSET_LIST[from][to].includes(currentValue.id)) {

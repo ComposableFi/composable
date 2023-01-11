@@ -155,7 +155,7 @@ export const ConfirmSupplyModal: FC<SupplyModalProps & ModalProps> = ({
           label={`Pooled ${assetTwo.getSymbol()}`}
           BalanceProps={{
             title: <BaseAsset icon={assetTwo.getIconUrl()} pr={1} />,
-            balance: `${amountTwo.toFormat(4)}`,
+            balance: `${amountTwo.toFormat(4, 1)}`,
             BalanceTypographyProps: {
               variant: "body1",
             },

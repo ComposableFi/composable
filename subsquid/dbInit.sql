@@ -36,18 +36,20 @@ $$;
 -- Get the latest total value locked previous to a given hour
 CREATE OR REPLACE FUNCTION hourly_total_value_locked (
   hours_ago INT,
-  source VARCHAR(30)
+  source VARCHAR(30),
+  source_entity_id VARCHAR(30)
 )
 RETURNS bigint
 LANGUAGE SQL
 IMMUTABLE
 AS $$
     SELECT
-        COALESCE(amount, 0)
+        COALESCE(accumulated_amount, 0)
     FROM historical_locked_value
     WHERE
         timestamp < date_trunc('hour', current_timestamp) - $1 * interval '1 hour'
     AND historical_locked_value.source = $2
+    AND historical_locked_value.source_entity_id = $3
     ORDER BY timestamp DESC
     LIMIT 1
 $$;
@@ -61,10 +63,30 @@ LANGUAGE SQL
 IMMUTABLE
 AS $$
     SELECT
-        COALESCE(amount, 0)
+        COALESCE(accumulated_amount, 0)
     FROM historical_volume
     WHERE
         timestamp < date_trunc('hour', current_timestamp) - $1 * interval '1 hour'
     ORDER BY timestamp DESC
     LIMIT 1
+$$;
+
+CREATE OR REPLACE FUNCTION tvl (
+    time_threshold TIMESTAMP,
+    source VARCHAR(30),
+    asset_id VARCHAR(30)
+)
+    RETURNS bigint
+    LANGUAGE SQL
+    IMMUTABLE
+AS $$
+SELECT
+    COALESCE(accumulated_amount, 0)
+FROM historical_locked_value
+WHERE
+        timestamp < time_threshold
+  AND historical_locked_value.source = $2
+  AND historical_locked_value.asset_id = $3
+ORDER BY timestamp DESC
+LIMIT 1
 $$;

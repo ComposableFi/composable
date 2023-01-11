@@ -66,7 +66,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
   useEagerConnect(DEFAULT_NETWORK_ID);
 
   const balance = useStore(
-    ({ substrateBalances }) => substrateBalances.balances.picasso.pica.balance
+    ({ substrateBalances }) => substrateBalances.balances.picasso.pica
   );
 
   const transactions = useTransactions(connectedAccount?.address ?? "-");

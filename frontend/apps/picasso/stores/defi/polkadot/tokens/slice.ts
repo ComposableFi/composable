@@ -61,10 +61,10 @@ const initialState = {
 
 interface TokensActions {
   updateTokens: (
-    picassoList: Array<PicassoRpcAsset>,
+    picassoList: Array<PicassoRpcAsset> | null,
     // karuraList: Array<HumanizedKaruraAssetMetadata>,
-    statemineList: Array<StatemineAssetMetadata>,
-    kusamaAssetMetadata: KusamaAsset
+    statemineList: Array<StatemineAssetMetadata> | null,
+    kusamaAssetMetadata: KusamaAsset | null
   ) => void;
 }
 
@@ -83,35 +83,41 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
       kusamaAssetMetadata
     ) => {
       set((state) => {
-        statemineList.forEach((listItem) => {
-          if (listItem.id === "1984" || listItem.id === "ksm") {
-            const token =
-              state.substrateTokens.tokens[
-                listItem.id === "1984" ? "usdt" : ("ksm" as TokenId)
-              ];
-            console.log("[Statemine] Found supported asset", token.id);
-            token.decimals.statemine =
-              listItem.decimals ?? ParachainNetworks.statemine.decimals;
-            token.chainId.statemine = listItem.id;
-            token.existentialDeposit.statemine = listItem.existentialDeposit;
-          }
-        });
-        picassoList.forEach((listItem) => {
-          /**
-           * Here identifier is in lower case
-           * name mapped as token id
-           * might change later
-           * update decimals and id
-           */
-          const identifier = listItem.name.toLowerCase();
-          const token = state.substrateTokens.tokens[identifier as TokenId];
-          if (token) {
-            token.decimals.picasso = listItem.decimals ?? 12;
-            token.chainId.picasso = listItem.id;
-            token.existentialDeposit.picasso = listItem.existentialDeposit;
-            token.ratio.picasso = listItem.ratio;
-          }
-        });
+        if (statemineList) {
+          statemineList.forEach((listItem) => {
+            if (listItem.id === "1984" || listItem.id === "ksm") {
+              const token =
+                state.substrateTokens.tokens[
+                  listItem.id === "1984" ? "usdt" : ("ksm" as TokenId)
+                ];
+              console.log("[Statemine] Found supported asset", token.id);
+              token.decimals.statemine =
+                listItem.decimals ?? ParachainNetworks.statemine.decimals;
+              token.chainId.statemine = listItem.id;
+              token.existentialDeposit.statemine = listItem.existentialDeposit;
+            }
+          });
+        }
+        
+        if (picassoList) {
+          picassoList.forEach((listItem) => {
+            /**
+             * Here identifier is in lower case
+             * name mapped as token id
+             * might change later
+             * update decimals and id
+             */
+            const identifier = listItem.name.toLowerCase();
+            const token = state.substrateTokens.tokens[identifier as TokenId];
+            if (token) {
+              token.decimals.picasso = listItem.decimals ?? 12;
+              token.chainId.picasso = listItem.id;
+              token.existentialDeposit.picasso = listItem.existentialDeposit;
+              token.ratio.picasso = listItem.ratio;
+            }
+          });
+        }
+        
         // karuraList.forEach(listItem => {
         //   /**
         //    * Here identifier is in lower case
@@ -134,18 +140,23 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
 
         // This is done only for Kusama chain
         // If more tokens are imported, this needs a dedicated function
-        state.substrateTokens.tokens.ksm.decimals.kusama =
+        if (kusamaAssetMetadata) {
+          state.substrateTokens.tokens.ksm.decimals.kusama =
           kusamaAssetMetadata.decimals;
-        state.substrateTokens.tokens.ksm.chainId.kusama =
+
+          state.substrateTokens.tokens.ksm.chainId.kusama =
           kusamaAssetMetadata.chainId;
-        state.substrateTokens.tokens.ksm.existentialDeposit.kusama =
+          
+          state.substrateTokens.tokens.ksm.existentialDeposit.kusama =
           kusamaAssetMetadata.existentialDeposit;
+        }
+
 
         // TODO : enable this condition when karura is supported
         // if (picassoList.length + karuraList.length > 0) {
         //   state.substrateTokens.isLoaded = true;
         // }
-        if (picassoList.length > 0) {
+        if (picassoList && picassoList.length > 0) {
           state.substrateTokens.isLoaded = true;
         }
       });

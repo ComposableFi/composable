@@ -1,8 +1,7 @@
 import { ApiPromise } from "@polkadot/api";
 import useStore from "@/store/useStore";
 import { DEFAULT_NETWORK_ID, fromChainUnits } from "@/defi/utils";
-import { Asset } from "shared";
-import { getSubAccount } from "@/defi/utils/pablo/getSubAccount";
+import { Asset, getSubAccount } from "shared";
 
 async function fetchInPool(
   api: ApiPromise,

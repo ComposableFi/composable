@@ -62,26 +62,26 @@ const PolkadotBalancesUpdater = () => {
    * after API creation
    */
   useEffect(() => {
-    callbackGate(
-      async (_picaApi, _kusamaApi, _statemineApi) => {
-        const statemineAssetMetadataList = await statemineAssetList(
-          _statemineApi
-        );
-        const picaAssetMetadataList = await picassoAssetsList(_picaApi);
-        // const karuraAssetMetadataList = await karuraAssetsList(_karApi);
-        const kusamaAssetMetadata = await kusamaAssetsList(_kusamaApi);
-        updateTokens(
-          picaAssetMetadataList,
-          // karuraAssetMetadataList,
-          statemineAssetMetadataList,
-          kusamaAssetMetadata
-        );
-      },
-      parachainProviders.picasso.parachainApi,
-      // parachainProviders.karura.parachainApi,
-      relaychainProviders.kusama.parachainApi,
-      parachainProviders.statemine.parachainApi
-    );
+
+    if (parachainProviders.picasso.parachainApi) {
+      picassoAssetsList(parachainProviders.picasso.parachainApi).then(
+        (picaAssetMetadataList) =>  {
+          updateTokens(picaAssetMetadataList, [], null)
+        }
+      )
+    }
+
+    if (relaychainProviders.kusama.parachainApi) {
+      kusamaAssetsList(relaychainProviders.kusama.parachainApi).then(
+        kusamaAsset => updateTokens([], [], kusamaAsset)
+      )
+    }
+
+    if (parachainProviders.statemine.parachainApi) {
+      statemineAssetList(parachainProviders.statemine.parachainApi).then(
+        statemineAssets => updateTokens([], statemineAssets, null)
+      )
+    }
   }, [
     parachainProviders,
     relaychainProviders.kusama.parachainApi,

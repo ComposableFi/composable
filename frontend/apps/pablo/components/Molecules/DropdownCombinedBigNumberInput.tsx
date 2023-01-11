@@ -38,7 +38,7 @@ export const DropdownCombinedBigNumberInput: React.FC<
   }, [bignrValue]);
 
   React.useEffect(() => {
-    if (!(value as BigNumber).eq(bignrValue)) {
+    if (!(value as BigNumber).eq(bignrValue) && (value as BigNumber).gte(0)) {
       setValue(value as BigNumber);
       setStringValue((value as BigNumber).toFixed());
     }

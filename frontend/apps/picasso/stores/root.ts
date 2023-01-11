@@ -1,15 +1,16 @@
 import create from "zustand";
 import { createUISlice } from "./ui/ui";
 import {
-  createTokensSlice,
   createBondsSlice,
   createOracleSlice,
   createPolkadotSlice,
+  createPoolsSlice,
   createStakingRewardsSlice,
   createStatsApolloSlice,
   createStatsOverviewSlice,
   createStatsTelemetrySlice,
   createSubstrateBalancesSlice,
+  createTokensSlice,
   createTransfersSlice,
 } from "./defi";
 
@@ -32,6 +33,7 @@ export const useStore = create<AllSlices>()(
         ...createBondsSlice(...a),
         ...createOracleSlice(...a),
         ...createStakingRewardsSlice(...a),
+        ...createPoolsSlice(...a),
       }))
     )
   )

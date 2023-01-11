@@ -1,66 +1,32 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
-import { Entity, Store } from "@subsquid/typeorm-store";
+import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
-import { ApiPromise, WsProvider } from "@polkadot/api";
 import { hexToU8a } from "@polkadot/util";
-import BigNumber from "bignumber.js";
-import { chain } from "./config";
-import { encodeAccount, getAmountWithoutDecimals } from "./utils";
+import { EntityManager } from "typeorm";
+import { divideBigInts, encodeAccount } from "./utils";
 import {
   Account,
   Activity,
-  Asset,
-  Currency,
-  CurrentLockedValue,
   Event,
   EventType,
   HistoricalLockedValue,
-  HistoricalVolume,
   LockedSource,
+  PabloAssetWeight,
   PabloPool,
   PabloPoolAsset,
+  PabloSwap
 } from "./model";
 
-export async function get<T extends { id: string }>(
-  store: Store,
-  EntityConstructor: EntityConstructor<T>,
-  id: string
-): Promise<T | undefined> {
-  return store.get<T>(EntityConstructor, id);
-}
-
-export async function getLatestPoolByPoolId<T extends Entity>(
-  store: Store,
-  poolId: bigint
-): Promise<PabloPool | undefined> {
+export async function getLatestPoolByPoolId(store: Store, poolId: bigint): Promise<PabloPool | undefined> {
   return store.get<PabloPool>(PabloPool, {
     where: { id: poolId.toString() },
     order: { timestamp: "DESC" },
     relations: {
       poolAssets: true,
-      poolAssetWeights: true,
-    },
+      poolAssetWeights: true
+    }
   });
 }
-
-export async function getOrCreate<T extends Entity>(
-  store: Store,
-  EntityConstructor: EntityConstructor<T>,
-  id: string
-): Promise<T> {
-  let entity = await store.get<T>(EntityConstructor, id);
-
-  if (entity === undefined) {
-    entity = new EntityConstructor();
-    entity.id = id;
-  }
-
-  return entity;
-}
-
-export type EntityConstructor<T> = {
-  new (...args: any[]): T;
-};
 
 /**
  * Create or update account and store event in database.
@@ -84,7 +50,7 @@ export async function getOrCreateAccount(
   }
 
   let account: Account | undefined = await ctx.store.get(Account, {
-    where: { id: accId },
+    where: { id: accId }
   });
 
   if (!account) {
@@ -93,6 +59,7 @@ export async function getOrCreateAccount(
 
   account.id = accId;
   account.eventId = ctx.event.id;
+  account.blockId = ctx.block.id;
 
   await ctx.store.save(account);
 
@@ -106,10 +73,7 @@ export async function getOrCreateAccount(
  * @param ctx
  * @param eventType
  */
-export async function saveEvent(
-  ctx: EventHandlerContext<Store>,
-  eventType: EventType
-): Promise<Event> {
+export async function saveEvent(ctx: EventHandlerContext<Store>, eventType: EventType): Promise<Event> {
   const accountId: string = ctx.event.extrinsic?.signature?.address.value
     ? encodeAccount(hexToU8a(ctx.event.extrinsic?.signature?.address.value))
     : ctx.event.extrinsic?.signature?.address;
@@ -121,6 +85,7 @@ export async function saveEvent(
     eventType,
     blockNumber: BigInt(ctx.block.height),
     timestamp: new Date(ctx.block.timestamp),
+    blockId: ctx.block.hash
   });
 
   // Store event
@@ -135,16 +100,13 @@ export async function saveEvent(
  * @param event
  * @param accountId
  */
-export async function saveActivity(
-  ctx: EventHandlerContext<Store>,
-  event: Event,
-  accountId: string
-): Promise<string> {
+export async function saveActivity(ctx: EventHandlerContext<Store>, event: Event, accountId: string): Promise<string> {
   const activity = new Activity({
     id: randomUUID(),
     event,
     accountId,
     timestamp: new Date(ctx.block.timestamp),
+    blockId: ctx.block.hash
   });
 
   await ctx.store.save(activity);
@@ -167,8 +129,7 @@ export async function saveAccountAndEvent(
   eventType: EventType,
   accountId?: string | string[]
 ): Promise<{ accounts: Account[]; event: Event }> {
-  const accountIds: (string | undefined)[] =
-    typeof accountId === "string" ? [accountId] : accountId || [];
+  const accountIds: (string | undefined)[] = typeof accountId === "string" ? [accountId] : accountId || [];
 
   const event = await saveEvent(ctx, eventType);
 
@@ -196,255 +157,47 @@ export async function saveAccountAndEvent(
  * @param ctx
  * @param amountsLocked
  * @param source
+ * @param sourceEntityId
  */
 export async function storeHistoricalLockedValue(
   ctx: EventHandlerContext<Store>,
-  amountsLocked: Record<string, bigint>,
-  source: LockedSource
+  amountsLocked: [string, bigint][], // [assetId, amountLocked]
+  source: LockedSource,
+  sourceEntityId: string
 ): Promise<void> {
-  const wsProvider = new WsProvider(chain());
-  const api = await ApiPromise.create({ provider: wsProvider });
-  const oraclePrices: Record<string, bigint> = {};
-  const assetDecimals: Record<string, number> = {};
+  const event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
 
-  for (const assetId of Object.keys(amountsLocked)) {
-    const asset = await ctx.store.get(Asset, {
-      where: {
-        id: assetId,
-      },
+  if (!event) {
+    // no-op
+    return;
+  }
+
+  for (const [assetId, amount] of amountsLocked) {
+    const lastAccumulatedValue =
+      (
+        await ctx.store.findOne(HistoricalLockedValue, {
+          where: {
+            source,
+            assetId: assetId.toString(),
+            sourceEntityId
+          }
+        })
+      )?.accumulatedAmount || 0n;
+
+    const historicalLockedValue = new HistoricalLockedValue({
+      id: randomUUID(),
+      event,
+      amount,
+      accumulatedAmount: lastAccumulatedValue + amount,
+      timestamp: new Date(ctx.block.timestamp),
+      source,
+      assetId,
+      sourceEntityId,
+      blockId: ctx.block.hash
     });
 
-    if (asset?.decimals) {
-      assetDecimals[assetId] = asset?.decimals || 12;
-    }
+    await ctx.store.save(historicalLockedValue);
   }
-
-  try {
-    for (const assetId of Object.keys(amountsLocked)) {
-      const oraclePrice = await api.query.oracle.prices(assetId);
-      if (!oraclePrice?.price) {
-        return;
-      }
-      oraclePrices[assetId] = BigInt(oraclePrice.price.toString());
-    }
-  } catch (error) {
-    console.warn("Warning: Oracle not available.");
-    return;
-  }
-
-  const netLockedValue = Object.keys(oraclePrices).reduce((agg, assetId) => {
-    if (!assetDecimals[assetId]) {
-      // Ignore assets for which we don't know decimals
-      return agg;
-    }
-    const lockedValue = BigNumber(oraclePrices[assetId].toString()).times(
-      getAmountWithoutDecimals(amountsLocked[assetId], assetDecimals[assetId])
-    );
-    return BigInt(agg) + BigInt(lockedValue.toString());
-  }, BigInt(0));
-
-  const lastLockedValueAll = await getLastLockedValue(ctx, LockedSource.All);
-  const lastLockedValueSource = await getLastLockedValue(ctx, source);
-  const event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
-
-  if (!event) {
-    return Promise.reject(new Error("Event not found"));
-  }
-
-  const historicalLockedValueAll = new HistoricalLockedValue({
-    id: randomUUID(),
-    event,
-    amount: lastLockedValueAll + netLockedValue,
-    currency: Currency.USD,
-    timestamp: new Date(ctx.block.timestamp),
-    source: LockedSource.All,
-  });
-
-  const historicalLockedValueSource = new HistoricalLockedValue({
-    id: randomUUID(),
-    event,
-    amount: lastLockedValueSource + netLockedValue,
-    currency: Currency.USD,
-    timestamp: new Date(ctx.block.timestamp),
-    source,
-  });
-
-  await ctx.store.save(historicalLockedValueAll);
-  await ctx.store.save(historicalLockedValueSource);
-}
-
-/**
- * Stores a new HistoricalVolume for the specified quote asset
- * @param ctx
- * @param quoteAssetId
- * @param amount
- */
-export async function storeHistoricalVolume(
-  ctx: EventHandlerContext<Store>,
-  quoteAssetId: string,
-  amount: bigint
-): Promise<void> {
-  const wsProvider = new WsProvider(chain());
-  const api = await ApiPromise.create({ provider: wsProvider });
-  let assetPrice = 0n;
-
-  try {
-    const oraclePrice = await api.query.oracle.prices(quoteAssetId);
-    if (!oraclePrice?.price) {
-      return;
-    }
-    assetPrice = BigInt(oraclePrice.price.toString());
-  } catch (error) {
-    console.warn("Warning: Oracle not available.");
-    return;
-  }
-
-  // TODO: get decimals for this asset
-  // NOTE: normalize to 12 decimals for historical values?
-
-  const volume = amount * assetPrice;
-
-  const lastVolume = await getLastVolume(ctx, quoteAssetId);
-
-  const event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
-
-  if (!event) {
-    return Promise.reject(new Error("Event not found"));
-  }
-
-  const historicalVolume = new HistoricalVolume({
-    id: randomUUID(),
-    event,
-    amount: lastVolume + volume,
-    currency: Currency.USD,
-    assetId: quoteAssetId,
-    timestamp: new Date(ctx.block.timestamp),
-  });
-
-  await ctx.store.save(historicalVolume);
-}
-
-/**
- * Get latest locked value
- */
-export async function getLastLockedValue(
-  ctx: EventHandlerContext<Store>,
-  source: LockedSource
-): Promise<bigint> {
-  const lastLockedValue = await ctx.store.findOne(HistoricalLockedValue, {
-    where: { source },
-    order: { timestamp: "DESC" },
-    relations: { event: true },
-  });
-
-  return BigInt(lastLockedValue?.amount || 0);
-}
-
-/**
- * Get latest volume
- */
-export async function getLastVolume(
-  ctx: EventHandlerContext<Store>,
-  assetId: string
-): Promise<bigint> {
-  const lastVolume = await ctx.store.findOne(HistoricalVolume, {
-    where: { assetId },
-    order: { timestamp: "DESC" },
-    relations: { event: true },
-  });
-
-  return BigInt(lastVolume?.amount || 0);
-}
-
-/**
- * Get currently locked value for a given asset and source, or create new one,
- * and increase/decrease locked amount.
- */
-export async function getOrCreateCurrentLockedValue(
-  ctx: EventHandlerContext<Store>,
-  assetId: string,
-  amount: bigint,
-  source: LockedSource,
-  event: Event
-): Promise<CurrentLockedValue> {
-  const currentLockedValue = await ctx.store.get(CurrentLockedValue, {
-    where: { assetId, source },
-    relations: { event: true },
-  });
-
-  if (currentLockedValue) {
-    currentLockedValue.amount += amount;
-    currentLockedValue.event = event;
-    return Promise.resolve(currentLockedValue);
-  }
-
-  const newCurrentLockedValue = new CurrentLockedValue({
-    id: randomUUID(),
-    assetId,
-    event,
-    amount,
-    source,
-  });
-
-  return Promise.resolve(newCurrentLockedValue);
-}
-
-/**
- * Stores a new CurrentLockedValue with current locked amount
- * for the specified asset and source
- * @param ctx
- * @param amountsLocked
- * @param source
- */
-export async function storeCurrentLockedValue(
-  ctx: EventHandlerContext<Store>,
-  amountsLocked: Record<string, bigint>,
-  source: LockedSource
-): Promise<void> {
-  let event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
-
-  if (!event) {
-    return Promise.reject(new Error("Event not found"));
-  }
-
-  for (const assetId of Object.keys(amountsLocked)) {
-    const amount = amountsLocked[assetId];
-    const currentLockedValueAll = await getOrCreateCurrentLockedValue(
-      ctx,
-      assetId,
-      amount,
-      LockedSource.All,
-      event
-    );
-    const currentLockedValueSource = await getOrCreateCurrentLockedValue(
-      ctx,
-      assetId,
-      amount,
-      source,
-      event
-    );
-
-    await ctx.store.save(currentLockedValueAll);
-    await ctx.store.save(currentLockedValueSource);
-  }
-}
-
-/**
- * Creates asset fpr Pablo pool
- * @param pool
- * @param assetId
- */
-export function createPabloAsset(
-  pool: PabloPool,
-  assetId: string
-): PabloPoolAsset {
-  return new PabloPoolAsset({
-    id: randomUUID(),
-    assetId,
-    pool,
-    totalLiquidity: BigInt(0),
-    totalVolume: BigInt(0),
-  });
 }
 
 /**
@@ -462,12 +215,138 @@ export async function getOrCreatePabloAsset(
     where: {
       assetId,
       pool: {
-        id: pool.id,
-      },
-    },
+        id: pool.id
+      }
+    }
   });
   if (!pabloAsset) {
-    pabloAsset = createPabloAsset(pool, assetId);
+    const weight = await ctx.store.get(PabloAssetWeight, {
+      where: {
+        assetId,
+        pool: {
+          id: pool.id
+        }
+      }
+    });
+    pabloAsset = new PabloPoolAsset({
+      id: randomUUID(),
+      assetId,
+      pool,
+      totalLiquidity: BigInt(0),
+      totalVolume: BigInt(0),
+      blockId: ctx.block.hash,
+      weight: weight?.weight || 0
+    });
   }
   return Promise.resolve(pabloAsset);
+}
+
+export async function getSpotPrice(
+  ctx: EventHandlerContext<Store> | EntityManager,
+  baseAssetId: string,
+  quoteAssetId: string,
+  poolId: string
+): Promise<number> {
+  const isRepository = ctx instanceof EntityManager;
+
+  const swap1 = isRepository
+    ? await ctx.getRepository(PabloSwap).findOne({
+        where: {
+          baseAssetId,
+          quoteAssetId,
+          pool: {
+            id: poolId
+          }
+        }
+      })
+    : await ctx.store.get(PabloSwap, {
+        where: {
+          baseAssetId,
+          quoteAssetId,
+          pool: {
+            id: poolId
+          }
+        }
+      });
+
+  const swap2 = isRepository
+    ? await ctx.getRepository(PabloSwap).findOne({
+        where: {
+          baseAssetId: quoteAssetId,
+          quoteAssetId: baseAssetId,
+          pool: {
+            id: poolId
+          }
+        }
+      })
+    : await ctx.store.get(PabloSwap, {
+        where: {
+          baseAssetId: quoteAssetId,
+          quoteAssetId: baseAssetId,
+          pool: {
+            id: poolId
+          }
+        }
+      });
+
+  const timestamp1 = swap1?.timestamp;
+  const timestamp2 = swap2?.timestamp;
+
+  let swap: PabloSwap;
+
+  if (timestamp1 && !timestamp2) {
+    swap = swap1;
+  } else if (!timestamp1 && timestamp2) {
+    swap = swap2;
+  } else if (timestamp1 && timestamp2) {
+    swap = timestamp1 > timestamp2 ? swap1 : swap2;
+  } else {
+    // If no timestamp, we need to calculate the spot price using the liquidity
+    const baseWhere = {
+      assetId: baseAssetId,
+      pool: {
+        id: poolId
+      }
+    };
+    const baseAsset = isRepository
+      ? await ctx.getRepository(PabloPoolAsset).findOne({
+          where: baseWhere
+        })
+      : await ctx.store.findOne(PabloPoolAsset, { where: baseWhere });
+
+    const quoteWhere = {
+      assetId: baseAssetId,
+      pool: {
+        id: poolId
+      }
+    };
+    const quoteAsset = isRepository
+      ? await ctx.getRepository(PabloPoolAsset).findOne({
+          where: quoteWhere
+        })
+      : await ctx.store.findOne(PabloPoolAsset, { where: quoteWhere });
+
+    if (!baseAsset || !quoteAsset) {
+      throw new Error("No liquidity data for this pool. Can't compute spot price.");
+    }
+
+    const baseAssetWeight = isRepository
+      ? await ctx.getRepository(PabloAssetWeight).findOne({
+          where: baseWhere
+        })
+      : await ctx.store.findOne(PabloAssetWeight, { where: baseWhere });
+
+    const quoteAssetWeight = isRepository
+      ? await ctx.getRepository(PabloAssetWeight).findOne({
+          where: baseWhere
+        })
+      : await ctx.store.findOne(PabloAssetWeight, { where: quoteWhere });
+
+    const weightRatio =
+      baseAssetWeight?.weight && quoteAssetWeight?.weight ? baseAssetWeight.weight / quoteAssetWeight.weight : 1;
+
+    return divideBigInts(quoteAsset.totalLiquidity, baseAsset.totalLiquidity) * weightRatio;
+  }
+
+  return baseAssetId === swap.baseAssetId ? Number(swap.spotPrice) : 1 / Number(swap.spotPrice);
 }
