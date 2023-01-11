@@ -10,6 +10,7 @@ import {
   callbackGate,
   fromChainIdUnit,
   fromPerbill,
+  isPalletSupported,
   unwrapNumberOrHex,
 } from "shared";
 import { useExecutor, useParachainApi } from "substrate-react";
@@ -18,6 +19,9 @@ import {
   PortfolioItem,
   StakingPortfolio,
 } from "@/stores/defi/polkadot/stakingRewards/slice";
+import { pipe } from "fp-ts/lib/function";
+import * as O from "fp-ts/Option";
+import { flow } from "fp-ts/function";
 
 export const useStakingRewards = () => {
   const account = usePicassoAccount();
@@ -53,17 +57,20 @@ export const useStakingRewards = () => {
   const setRewardPool = useStore((state) => state.setRewardPool);
   const picaRewardPool = useStore((state) => state.rewardPools[assetId]);
   const executor = useExecutor();
-
   useEffect(() => {
-    callbackGate(
-      (api) =>
-        fetchRewardPools(api, assetId).then((pool) =>
-          callbackGate(
-            (poolToStore) => setRewardPool(assetId, poolToStore),
-            pool
+    pipe(
+      O.bindTo("api")(O.fromNullable(parachainApi)),
+      O.bind("available", ({ api }) =>
+        O.fromPredicate(() => isPalletSupported(api)("StakingRewards"))(api)
+      ),
+      O.map(({ api }) =>
+        fetchRewardPools(api, assetId).then(
+          flow(
+            O.fromNullable,
+            O.map((poolToStore) => setRewardPool(assetId, poolToStore))
           )
-        ),
-      parachainApi
+        )
+      )
     );
   }, [assetId, parachainApi, setRewardPool]);
 

@@ -5,7 +5,6 @@ import {
   fromChainIdUnit,
   fromPerbill,
   humanDateDiff,
-  isPalletSupported,
   subscanExtrinsicLink,
   toChainIdUnit,
   unwrapNumberOrHex,
@@ -15,6 +14,10 @@ import { Executor } from "substrate-react";
 import { AnyComponentMap, EnqueueSnackbar, SnackbarKey } from "notistack";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { Signer } from "@polkadot/api/types";
+import { pipe } from "fp-ts/lib/function";
+import * as E from "fp-ts/Either";
+import * as TE from "fp-ts/TaskEither";
+import { tryCatch } from "fp-ts/TaskEither";
 
 export async function fetchStakingRewardPosition(
   api: ApiPromise,
@@ -37,11 +40,12 @@ export async function fetchStakingRewardPosition(
 }
 
 export function transformRewardPool(rewardPoolsWrapped: any): RewardPool {
+  console.log(rewardPoolsWrapped);
   return {
     owner: rewardPoolsWrapped.owner,
-    assetId: rewardPoolsWrapped.assetId.toString(),
+    // assetId: rewardPoolsWrapped.assetId.toString(), assetId is removed
     rewards: rewardPoolsWrapped.rewards,
-    totalShares: unwrapNumberOrHex(rewardPoolsWrapped.totalShares.toString()),
+    // totalShares: unwrapNumberOrHex(rewardPoolsWrapped.totalShares.toString()), total shares is removed
     claimedShares: unwrapNumberOrHex(
       rewardPoolsWrapped.claimedShares.toString()
     ),
@@ -63,14 +67,27 @@ export function transformRewardPool(rewardPoolsWrapped: any): RewardPool {
 }
 
 export async function fetchRewardPools(api: ApiPromise, assetId: number) {
-  if (!isPalletSupported(api)("StakingRewards")) return null;
-  const rewardPoolsWrapped: any = (
-    await api.query.stakingRewards.rewardPools(api.createType("u128", assetId))
-  ).toJSON();
+  const getRewardPools = tryCatch(
+    () => api.query.stakingRewards.rewardPools(api.createType("u128", assetId)),
+    () => new Error("Could not query reward pools")
+  );
 
-  if (!rewardPoolsWrapped) return null;
+  const task: TE.TaskEither<Error, RewardPool> = pipe(
+    getRewardPools,
+    TE.chainW((e) =>
+      e.isSome
+        ? TE.right(transformRewardPool(e.toJSON()))
+        : TE.left(new Error("Empty result from reward pool"))
+    )
+  );
 
-  return transformRewardPool(rewardPoolsWrapped);
+  return pipe(
+    await task(),
+    E.fold(
+      () => null,
+      (a) => a
+    )
+  )
 }
 
 export function formatDurationOption(duration: string, multiplier: BigNumber) {
