@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_methods)]
+
 //! Benchmarks
 
 use crate::*;
@@ -17,7 +19,7 @@ use frame_support::{
 	traits::{fungibles::Mutate, Get, OriginTrait, TryCollect, UnixTime},
 	BoundedBTreeMap,
 };
-use frame_system::{pallet_prelude::OriginFor, EventRecord};
+use frame_system::pallet_prelude::OriginFor;
 use sp_arithmetic::{fixed_point::FixedU64, traits::SaturatedConversion, Perbill, Permill};
 use sp_runtime::traits::{BlockNumberProvider, One};
 use sp_std::collections::btree_map::BTreeMap;
@@ -72,14 +74,6 @@ fn reward_config<T: Config>(
 		.unwrap()
 }
 
-fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
-	let events = frame_system::Pallet::<T>::events();
-	let system_event: <T as frame_system::Config>::Event = generic_event.into();
-	// compare to the last event record
-	let EventRecord { event, .. } = &events[events.len() - 1];
-	assert_eq!(event, &system_event);
-}
-
 benchmarks! {
 	where_clause {
 		where
@@ -96,7 +90,11 @@ benchmarks! {
 		let end_block = 5_u128.saturated_into();
 	}: _(OriginFor::<T>::root(), get_reward_pool::<T>(owner.clone(), r))
 	verify {
-		assert_last_event::<T>(Event::RewardPoolCreated { pool_id, owner, end_block }.into());
+		T::assert_last_event(Event::RewardPoolCreated {
+			pool_id,
+			owner,
+			end_block
+		});
 	}
 
 	stake {
@@ -110,24 +108,22 @@ benchmarks! {
 		let pool_owner: T::AccountId = account("owner", 0, 0);
 
 		frame_system::Pallet::<T>::set_block_number(1.into());
-		<Pallet<T>>::create_reward_pool(OriginFor::<T>::root(), get_reward_pool::<T>(pool_owner, r))?;
+		Pallet::<T>::create_reward_pool(OriginFor::<T>::root(), get_reward_pool::<T>(pool_owner, r))?;
 		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into())?;
 
 		frame_system::Pallet::<T>::set_block_number(2.into());
 	}: _(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)
 	verify {
-		assert_last_event::<T>(
-			Event::Staked {
-				pool_id: asset_id,
-				owner: staker,
-				amount,
-				duration_preset,
-				fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
-				fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(),
-				reward_multiplier,
-				keep_alive
-			}.into()
-		);
+		T::assert_last_event(Event::Staked {
+			pool_id: asset_id,
+			owner: staker,
+			amount,
+			duration_preset,
+			fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
+			fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(),
+			reward_multiplier,
+			keep_alive
+		});
 	}
 
 	extend {
@@ -147,13 +143,11 @@ benchmarks! {
 		<Pallet<T>>::stake(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)?;
 	}: _(OriginFor::<T>::signed(staker), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into(), amount)
 	verify {
-		assert_last_event::<T>(
-			Event::StakeAmountExtended {
-				fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
-				fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(),
-				amount
-			}.into()
-		);
+		T::assert_last_event(Event::StakeAmountExtended {
+			fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
+			fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(),
+			amount
+		});
 	}
 
 	unstake {
@@ -173,14 +167,12 @@ benchmarks! {
 		<Pallet<T>>::stake(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)?;
 	}: _(OriginFor::<T>::signed(staker.clone()), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into())
 	verify {
-		assert_last_event::<T>(
-			Event::Unstaked {
-				owner: staker,
-				fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
-				fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(),
-				slash: Some(Perbill::from_percent(5).mul_ceil(amount))
-			}.into(),
-		);
+		T::assert_last_event(Event::Unstaked {
+			owner: staker,
+			fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
+			fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(),
+			slash: Some(Perbill::from_percent(5).mul_ceil(amount))
+		});
 	}
 
 	split {
@@ -244,7 +236,12 @@ benchmarks! {
 
 		let mut reward = RewardPools::<T>::get(&pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
 	}: {
-		let reward = Pallet::<T>::reward_accumulation_hook_reward_update_calculation(pool_id, reward_asset_id,&mut reward, now);
+		Pallet::<T>::reward_accumulation_hook_reward_update_calculation(
+			pool_id,
+			reward_asset_id,
+			&mut reward,
+			now
+		);
 	}
 
 	unix_time_now {}: {
@@ -268,6 +265,11 @@ benchmarks! {
 		.try_into()
 		.unwrap();
 	}: _(OriginFor::<T>::root(), pool_id, updates)
+	verify {
+		T::assert_last_event(Event::RewardPoolUpdated {
+			pool_id,
+		});
+	}
 
 	claim {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
@@ -286,7 +288,11 @@ benchmarks! {
 		<Pallet<T>>::stake(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)?;
 	}: _(OriginFor::<T>::signed(staker.clone()), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into())
 	verify {
-		assert_last_event::<T>(Event::Claimed { owner: staker, fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(), fnft_instance_id: FNFT_INSTANCE_ID_BASE.into() }.into());
+		T::assert_last_event(Event::Claimed {
+			owner: staker,
+			fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
+			fnft_instance_id: FNFT_INSTANCE_ID_BASE.into()
+		});
 	}
 
 	add_to_rewards_pot {
