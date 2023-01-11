@@ -1475,28 +1475,24 @@ pub mod pallet {
 				now_seconds,
 			) {
 				Ok(()) => {},
-				Err(BackToTheFuture) => {
+				Err(err) => {
+					let error_type = match err {
+						BackToTheFuture => RewardAccumulationHookError::BackToTheFuture,
+						// REVIEW(benluelo): Does this need to be inserted here? it's written to in
+						// do_reward_accumulation as well.
+						RewardsPotEmpty => {
+							if !RewardsPotIsEmpty::<T>::contains_key(pool_id, reward_asset_id) {
+								RewardsPotIsEmpty::<T>::insert(pool_id, reward_asset_id, ());
+							}
+							RewardAccumulationHookError::RewardsPotEmpty
+						},
+						ArithmeticError => RewardAccumulationHookError::ArithmeticError,
+					};
+
 					Self::deposit_event(Event::<T>::RewardAccumulationHookError {
 						pool_id,
 						asset_id: reward_asset_id,
-						error: RewardAccumulationHookError::BackToTheFuture,
-					});
-				},
-				Err(RewardsPotEmpty) => {
-					if !RewardsPotIsEmpty::<T>::contains_key(pool_id, reward_asset_id) {
-						RewardsPotIsEmpty::<T>::insert(pool_id, reward_asset_id, ());
-						Self::deposit_event(Event::<T>::RewardAccumulationHookError {
-							pool_id,
-							asset_id: reward_asset_id,
-							error: RewardAccumulationHookError::RewardsPotEmpty,
-						});
-					}
-				},
-				Err(ArithmeticError) => {
-					Self::deposit_event(Event::<T>::RewardAccumulationHookError {
-						pool_id,
-						asset_id: reward_asset_id,
-						error: RewardAccumulationHookError::ArithmeticError,
+						error: error_type,
 					});
 				},
 			}
