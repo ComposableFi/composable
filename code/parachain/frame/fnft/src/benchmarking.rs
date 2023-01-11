@@ -26,6 +26,5 @@ benchmarks! {
 			RawOrigin::Signed(user1).into(), collection_id, created_nft_id, user2
 		).expect("Transfer failed")
 	}
+	impl_benchmark_test_suite!(Fnft, crate::test::mock::new_test_ext(), crate::test::mock::MockRuntime);
 }
-
-impl_benchmark_test_suite!(Fnft, crate::test::mock::new_test_ext(), crate::test::mock::MockRuntime);
