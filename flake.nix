@@ -34,6 +34,7 @@
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/centauri/centauri-codegen.nix
         ./inputs/chevdor/subwasm.nix
+        ./inputs/composable/dali-subxt-client.nix
         ./inputs/cosmos/cosmwasm.nix
         ./inputs/cosmos/gex.nix
         ./inputs/CosmosContracts/juno.nix
