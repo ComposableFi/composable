@@ -68,8 +68,6 @@
 #![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use composable_traits::assets::AssetIdentifier;
-use frame_support::pallet_prelude::DispatchResult;
 pub use pallet::*;
 
 // mod orml;
@@ -109,8 +107,7 @@ macro_rules! route {
 pub mod pallet {
 	use crate::{weights::WeightInfo, AssetTypeInspect};
 	use composable_traits::{
-		assets::AssetIdentifier,
-		currency::{AssetIdLike, BalanceLike, RangeId},
+		currency::{AssetIdLike, BalanceLike},
 		governance::{GovernanceRegistry, SignedRawOrigin},
 	};
 	use frame_support::{
@@ -123,6 +120,7 @@ pub mod pallet {
 	// use num_traits::Zero;
 	use orml_traits::GetByKey;
 	use sp_runtime::{traits::Lookup, DispatchError};
+	use xcm::v2::MultiLocation;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -192,15 +190,18 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::transfer())]
 		pub fn transfer(
 			origin: OriginFor<T>,
-			asset: AssetIdentifier,
+			asset: T::AssetId,
 			dest: <T::Lookup as StaticLookup>::Source,
 			#[pallet::compact] amount: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
-			let src = ensure_signed(origin)?;
+			let source = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
 
-			Pallet::<T>::do_transfer(asset, dest, amount, keep_alive)
+			<Pallet<T> as fungibles::Transfer<_>>::transfer(
+				asset, &source, &dest, amount, keep_alive,
+			)?;
+			Ok(())
 		}
 
 		/// Transfer `amount` of the native asset from `origin` to `dest`. This is slightly
@@ -218,9 +219,9 @@ pub mod pallet {
 			#[pallet::compact] value: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
-			let src = ensure_signed(origin)?;
+			let source = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as NativeTransfer<T::AccountId>>::transfer(&src, &dest, value, keep_alive)?;
+			<Self as fungible::Transfer<_>>::transfer(&source, &dest, value, keep_alive)?;
 			Ok(())
 		}
 
@@ -243,7 +244,7 @@ pub mod pallet {
 			ensure_root(origin)?;
 			let source = T::Lookup::lookup(source)?;
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as Transfer<_>>::transfer(asset, &source, &dest, value, keep_alive)?;
+			<Self as fungibles::Transfer<_>>::transfer(asset, &source, &dest, value, keep_alive)?;
 			Ok(())
 		}
 
@@ -265,7 +266,7 @@ pub mod pallet {
 			ensure_root(origin)?;
 			let source = T::Lookup::lookup(source)?;
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as NativeTransfer<_>>::transfer(&source, &dest, value, keep_alive)?;
+			<Self as fungible::Transfer<_>>::transfer(&source, &dest, value, keep_alive)?;
 			Ok(())
 		}
 
@@ -282,10 +283,13 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let transactor = ensure_signed(origin)?;
-			let reducible_balance =
-				<Self as Inspect<T::AccountId>>::reducible_balance(asset, &transactor, keep_alive);
+			let reducible_balance = <Self as fungibles::Inspect<T::AccountId>>::reducible_balance(
+				asset,
+				&transactor,
+				keep_alive,
+			);
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as Transfer<T::AccountId>>::transfer(
+			<Self as fungibles::Transfer<T::AccountId>>::transfer(
 				asset,
 				&transactor,
 				&dest,
@@ -308,9 +312,9 @@ pub mod pallet {
 		) -> DispatchResult {
 			let transactor = ensure_signed(origin)?;
 			let reducible_balance =
-				<Self as NativeInspect<T::AccountId>>::reducible_balance(&transactor, keep_alive);
+				<Self as fungible::Inspect<_>>::reducible_balance(&transactor, keep_alive);
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as NativeTransfer<T::AccountId>>::transfer(
+			<Self as fungible::Transfer<_>>::transfer(
 				&transactor,
 				&dest,
 				reducible_balance,
@@ -328,9 +332,9 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
 			ensure_root(origin)?;
-			let id = T::GenerateCurrencyId::create(RangeId::TOKENS)?;
+			let id = todo!();
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
+			<Self as fungibles::Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(())
 		}
 
@@ -346,11 +350,11 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
 			ensure_root(origin)?;
-			let id = T::GenerateCurrencyId::create(RangeId::TOKENS)?;
+			let id = todo!();
 			let governance_origin = T::Lookup::lookup(governance_origin)?;
 			T::GovernanceRegistry::set(id, SignedRawOrigin::Signed(governance_origin));
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
+			<Self as fungibles::Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(())
 		}
 
@@ -362,9 +366,9 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 			#[pallet::compact] amount: T::Balance,
 		) -> DispatchResult {
-			ensure_admin_or_governance::<T>(origin, &asset_id)?;
+			Pallet::<T>::ensure_admin_or_governance(origin, &asset_id)?;
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
+			<Self as fungibles::Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
 			Ok(())
 		}
 
@@ -376,64 +380,44 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 			#[pallet::compact] amount: T::Balance,
 		) -> DispatchResult {
-			ensure_admin_or_governance::<T>(origin, &asset_id)?;
+			Pallet::<T>::ensure_admin_or_governance(origin, &asset_id)?;
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as Mutate<T::AccountId>>::burn_from(asset_id, &dest, amount)?;
+			<Self as fungibles::Mutate<T::AccountId>>::burn_from(asset_id, &dest, amount)?;
 			Ok(())
 		}
 	}
-}
 
-/// Returns `Ok(())` if origin is root or asset is signed by root or by origin
-pub(crate) fn ensure_admin_or_governance<T: Config>(
-	origin: OriginFor<T>,
-	asset_id: &T::AssetId,
-) -> Result<(), DispatchError> {
-	// TODO: that must be ensure_asset_origin(origin, asset_id))
-	if T::AdminOrigin::ensure_origin(origin.clone()).is_ok() {
-		return Ok(())
-	}
-
-	match origin.into() {
-		Ok(frame_system::RawOrigin::Signed(account)) => {
-			match T::GovernanceRegistry::get(asset_id) {
-				Ok(SignedRawOrigin::Root) => Ok(()), /* ISSUE: it says if */
-				// (call_origin.is_signed &&
-				// asst_owner.is_root) then allow
-				// mint/burn -> anybody can mint and
-				// burn PICA?
-				// TODO: https://app.clickup.com/t/37h4edu
-				Ok(SignedRawOrigin::Signed(acc)) if acc == account => Ok(()),
-				_ => Err(DispatchError::BadOrigin),
+	impl<T: Config> Pallet<T> {
+		/// Returns `Ok(())` if origin is root or asset is signed by root or by origin
+		pub(crate) fn ensure_admin_or_governance(
+			origin: OriginFor<T>,
+			asset_id: &T::AssetId,
+		) -> Result<(), DispatchError> {
+			// TODO: that must be ensure_asset_origin(origin, asset_id))
+			if T::AdminOrigin::ensure_origin(origin.clone()).is_ok() {
+				return Ok(())
 			}
-		},
-		Ok(frame_system::RawOrigin::Root) => Ok(()),
-		_ => Err(DispatchError::BadOrigin), /* ISSUE: likely will not support collective
-											* origin which is reasonable to have for
-											* governance
-											https://app.clickup.com/t/37h4edu
-											*/
-	}
-}
 
-impl<T: Config> Pallet<T> {
-	pub fn do_transfer(
-		asset: AssetIdentifier,
-		dest: T::AssetId,
-		amount: T::Balance,
-		keep_alive: bool,
-	) -> DispatchResult {
-		// use frame_support::traits::{fungible::Transfer as _, fungibles::Transfer as _};
-
-		match asset {
-			AssetIdentifier::LocalAsset(local) => {
-				let local = local.inner();
-				// route_native_or_local! {
-				// 	transfer(local, dest, amount)
-				// }
-			},
-			AssetIdentifier::ForeignAsset(foreign) =>
-				T::ForeignTransactor::transfer(T::AssetLookup::lookup(foreign), dest, amount),
+			match origin.into() {
+				Ok(frame_system::RawOrigin::Signed(account)) => {
+					match T::GovernanceRegistry::get(asset_id) {
+						Ok(SignedRawOrigin::Root) => Ok(()), /* ISSUE: it says if */
+						// (call_origin.is_signed &&
+						// asst_owner.is_root) then allow
+						// mint/burn -> anybody can mint and
+						// burn PICA?
+						// TODO: https://app.clickup.com/t/37h4edu
+						Ok(SignedRawOrigin::Signed(acc)) if acc == account => Ok(()),
+						_ => Err(DispatchError::BadOrigin),
+					}
+				},
+				Ok(frame_system::RawOrigin::Root) => Ok(()),
+				_ => Err(DispatchError::BadOrigin), /* ISSUE: likely will not support collective
+													* origin which is reasonable to have for
+													* governance
+													https://app.clickup.com/t/37h4edu
+													*/
+			}
 		}
 	}
 }
@@ -618,91 +602,60 @@ mod fungibles_impls {
 	use crate::{Config, Pallet};
 
 	impl<T: Config> Unbalanced<T::AccountId> for Pallet<T> {
-		fn set_balance(
-			asset: Self::AssetId,
-			who: &T::AccountId,
-			amount: Self::Balance,
-		) -> DispatchResult {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::set_balance(who, amount)
-			}
-			let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-			<<T as Config>::MultiCurrency>::set_balance(asset, who, amount)
+		route! {
+			fn set_balance(
+				asset: Self::AssetId,
+				who: &T::AccountId,
+				amount: Self::Balance
+			) -> DispatchResult;
 		}
 
-		fn set_total_issuance(asset: Self::AssetId, amount: Self::Balance) {
-			// route_native_or_local! {
-			// 	set_total_issuance(asset, amount)
-			// }
-			todo!();
+		route! {
+			fn set_total_issuance(asset: Self::AssetId, amount: Self::Balance);
 		}
 
-		fn decrease_balance(
-			asset: Self::AssetId,
-			who: &T::AccountId,
-			amount: Self::Balance,
-		) -> Result<Self::Balance, DispatchError> {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::decrease_balance(who, amount)
-			}
-			let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-			<<T as Config>::MultiCurrency>::decrease_balance(asset, who, amount)
+		route! {
+			fn decrease_balance(
+				asset: Self::AssetId,
+				who: &T::AccountId,
+				amount: Self::Balance
+			) -> Result<Self::Balance, DispatchError>;
 		}
 
-		fn decrease_balance_at_most(
-			asset: Self::AssetId,
-			who: &T::AccountId,
-			amount: Self::Balance,
-		) -> Self::Balance {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::decrease_balance_at_most(who, amount)
-			}
-			if let Some(asset) = valid_asset_id::<T>(asset) {
-				return <<T as Config>::MultiCurrency>::decrease_balance_at_most(asset, who, amount)
-			}
-			T::Balance::zero()
+		route! {
+			fn decrease_balance_at_most(
+				asset: Self::AssetId,
+				who: &T::AccountId,
+				amount: Self::Balance
+			) -> Self::Balance;
 		}
 
-		fn increase_balance(
-			asset: Self::AssetId,
-			who: &T::AccountId,
-			amount: Self::Balance,
-		) -> Result<Self::Balance, DispatchError> {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::increase_balance(who, amount)
-			}
-			let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-			<<T as Config>::MultiCurrency>::increase_balance(asset, who, amount)
+		route! {
+			fn increase_balance(
+				asset: Self::AssetId,
+				who: &T::AccountId,
+				amount: Self::Balance
+			) -> Result<Self::Balance, DispatchError>;
 		}
 
-		fn increase_balance_at_most(
-			asset: Self::AssetId,
-			who: &T::AccountId,
-			amount: Self::Balance,
-		) -> Self::Balance {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::increase_balance_at_most(who, amount)
-			}
-			if let Some(asset) = valid_asset_id::<T>(asset) {
-				return <<T as Config>::MultiCurrency>::increase_balance_at_most(asset, who, amount)
-			}
-			T::Balance::zero()
+		route! {
+			fn increase_balance_at_most(
+				asset: Self::AssetId,
+				who: &T::AccountId,
+				amount: Self::Balance
+			) -> Self::Balance;
 		}
 	}
 
 	impl<T: Config> Transfer<T::AccountId> for Pallet<T> {
-		fn transfer(
-			asset: Self::AssetId,
-			source: &T::AccountId,
-			dest: &T::AccountId,
-			amount: Self::Balance,
-			keep_alive: bool,
-		) -> Result<Self::Balance, DispatchError> {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::transfer(source, dest, amount, keep_alive)
-			}
-			let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-			<<T as Config>::MultiCurrency>::transfer(asset, source, dest, amount, keep_alive)
+		route! {
+			fn transfer(
+				asset: Self::AssetId,
+				source: &T::AccountId,
+				dest: &T::AccountId,
+				amount: Self::Balance,
+				keep_alive: bool
+			) -> Result<Self::Balance, DispatchError>;
 		}
 	}
 
@@ -710,9 +663,9 @@ mod fungibles_impls {
 		fn hold(asset: Self::AssetId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
 			if asset == T::NativeAssetId::get() {
 				return <<T as Config>::NativeCurrency>::hold(who, amount)
+			} else {
+				todo!()
 			}
-			let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-			<<T as Config>::MultiCurrency>::hold(asset, who, amount)
 		}
 
 		fn release(
@@ -723,9 +676,9 @@ mod fungibles_impls {
 		) -> Result<Self::Balance, DispatchError> {
 			if asset == T::NativeAssetId::get() {
 				return <<T as Config>::NativeCurrency>::release(who, amount, best_effort)
+			} else {
+				todo!()
 			}
-			let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-			<<T as Config>::MultiCurrency>::release(asset, who, amount, best_effort)
 		}
 
 		fn transfer_held(
@@ -744,65 +697,44 @@ mod fungibles_impls {
 					best_effort,
 					on_hold,
 				)
+			} else {
+				todo!()
 			}
-			let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-			<<T as Config>::MultiCurrency>::transfer_held(
-				asset,
-				source,
-				dest,
-				amount,
-				best_effort,
-				on_hold,
-			)
 		}
 	}
 
 	impl<T: Config> Mutate<T::AccountId> for Pallet<T> {
-		fn mint_into(
-			asset: Self::AssetId,
-			who: &T::AccountId,
-			amount: Self::Balance,
-		) -> DispatchResult {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::mint_into(who, amount)
-			}
-			let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-			<<T as Config>::MultiCurrency>::mint_into(asset, who, amount)
-		}
-		fn burn_from(
-			asset: Self::AssetId,
-			who: &T::AccountId,
-			amount: Self::Balance,
-		) -> Result<Self::Balance, DispatchError> {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::burn_from(who, amount)
-			}
-			let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-			<<T as Config>::MultiCurrency>::burn_from(asset, who, amount)
+		route! {
+			fn mint_into(
+				asset: Self::AssetId,
+				who: &T::AccountId,
+				amount: Self::Balance
+			) -> DispatchResult;
 		}
 
-		fn slash(
-			asset: Self::AssetId,
-			who: &T::AccountId,
-			amount: Self::Balance,
-		) -> Result<Self::Balance, DispatchError> {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::slash(who, amount)
-			}
-			let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-			<<T as Config>::MultiCurrency>::slash(asset, who, amount)
+		route! {
+			fn burn_from(
+				asset: Self::AssetId,
+				who: &T::AccountId,
+				amount: Self::Balance
+			) -> Result<Self::Balance, DispatchError>;
 		}
-		fn teleport(
-			asset: Self::AssetId,
-			source: &T::AccountId,
-			dest: &T::AccountId,
-			amount: Self::Balance,
-		) -> Result<Self::Balance, DispatchError> {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::teleport(source, dest, amount)
-			}
-			let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-			<<T as Config>::MultiCurrency>::teleport(asset, source, dest, amount)
+
+		route! {
+			fn slash(
+				asset: Self::AssetId,
+				who: &T::AccountId,
+				amount: Self::Balance
+			) -> Result<Self::Balance, DispatchError>;
+		}
+
+		route! {
+			fn teleport(
+				asset: Self::AssetId,
+				source: &T::AccountId,
+				dest: &T::AccountId,
+				amount: Self::Balance
+			) -> Result<Self::Balance, DispatchError>;
 		}
 	}
 
@@ -813,74 +745,56 @@ mod fungibles_impls {
 		fn total_issuance(asset: Self::AssetId) -> Self::Balance {
 			if asset == T::NativeAssetId::get() {
 				return <<T as Config>::NativeCurrency>::total_issuance()
+			} else {
+				match <T::AssetLookup as crate::AssetTypeInspect>::inspect(&asset) {
+					crate::AssetType::Foreign =>
+						<<T as Config>::ForeignTransactor>::total_issuance(asset),
+					crate::AssetType::Local =>
+						<<T as Config>::LocalTransactor>::total_issuance(asset),
+				}
 			}
-			if let Some(asset) = valid_asset_id::<T>(asset) {
-				return <<T as Config>::MultiCurrency>::total_issuance(asset)
-			}
-			T::Balance::zero()
 		}
 
 		fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
 			if asset == T::NativeAssetId::get() {
 				return <<T as Config>::NativeCurrency>::minimum_balance()
+			} else {
+				match <T::AssetLookup as crate::AssetTypeInspect>::inspect(&asset) {
+					crate::AssetType::Foreign =>
+						<<T as Config>::ForeignTransactor>::minimum_balance(asset),
+					crate::AssetType::Local =>
+						<<T as Config>::LocalTransactor>::minimum_balance(asset),
+				}
 			}
-			if let Some(asset) = valid_asset_id::<T>(asset) {
-				return <<T as Config>::MultiCurrency>::minimum_balance(asset)
-			}
-			T::Balance::zero()
 		}
 
-		fn balance(asset: Self::AssetId, who: &T::AccountId) -> Self::Balance {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::balance(who)
-			}
-			if let Some(asset) = valid_asset_id::<T>(asset) {
-				return <<T as Config>::MultiCurrency>::balance(asset, who)
-			}
-			T::Balance::zero()
+		route! {
+			fn balance(asset: Self::AssetId, who: &T::AccountId) -> Self::Balance;
 		}
 
-		fn reducible_balance(
-			asset: Self::AssetId,
-			who: &T::AccountId,
-			keep_alive: bool,
-		) -> Self::Balance {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::reducible_balance(who, keep_alive)
-			}
-			if let Some(asset) = valid_asset_id::<T>(asset) {
-				return <<T as Config>::MultiCurrency>::reducible_balance(asset, who, keep_alive)
-			}
-			T::Balance::zero()
+		route! {
+			fn reducible_balance(
+				asset: Self::AssetId,
+				who: &T::AccountId,
+				keep_alive: bool
+			) -> Self::Balance;
 		}
 
-		fn can_deposit(
-			asset: Self::AssetId,
-			who: &T::AccountId,
-			amount: Self::Balance,
-			mint: bool,
-		) -> DepositConsequence {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::can_deposit(who, amount, mint)
-			}
-			if let Some(asset) = valid_asset_id::<T>(asset) {
-				return <<T as Config>::MultiCurrency>::can_deposit(asset, who, amount, mint)
-			}
-			DepositConsequence::UnknownAsset
+		route! {
+			fn can_deposit(
+				asset: Self::AssetId,
+				who: &T::AccountId,
+				amount: Self::Balance,
+				mint: bool
+			) -> DepositConsequence;
 		}
 
-		fn can_withdraw(
-			asset: Self::AssetId,
-			who: &T::AccountId,
-			amount: Self::Balance,
-		) -> WithdrawConsequence<Self::Balance> {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::can_withdraw(who, amount)
-			}
-			if let Some(asset) = valid_asset_id::<T>(asset) {
-				return <<T as Config>::MultiCurrency>::can_withdraw(asset, who, amount)
-			}
-			WithdrawConsequence::UnknownAsset
+		route! {
+			fn can_withdraw(
+				asset: Self::AssetId,
+				who: &T::AccountId,
+				amount: Self::Balance
+			) -> WithdrawConsequence<Self::Balance>;
 		}
 	}
 
@@ -895,7 +809,7 @@ mod fungibles_impls {
 	}
 }
 
-trait AssetTypeInspect {
+pub trait AssetTypeInspect {
 	type AssetId;
 
 	fn inspect(asset: &Self::AssetId) -> AssetType;
