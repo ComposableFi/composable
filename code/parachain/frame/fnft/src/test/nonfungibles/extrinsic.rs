@@ -7,7 +7,6 @@ use frame_support::{
 	assert_noop, assert_ok,
 	traits::tokens::nonfungibles::{Create, Inspect},
 };
-use sp_runtime::DispatchError;
 
 use crate::{
 	test::{
@@ -20,7 +19,7 @@ use crate::{
 
 /// Tests a simple transfer between 2 accounts, with only 1 total NFT existing.
 #[test]
-fn simple() {
+fn transfer_simple() {
 	new_test_ext().execute_with(|| {
 		let created_nft_id = mint_nft_and_assert();
 
@@ -32,7 +31,14 @@ fn simple() {
 			"owner before transfer should be ALICE"
 		);
 
-		assert_ok!(Nft::transfer(Origin::signed(ALICE), TEST_COLLECTION_ID, created_nft_id, BOB));
+		MockRuntime::assert_extrinsic_event(
+			Nft::transfer(Origin::signed(ALICE), TEST_COLLECTION_ID, created_nft_id, BOB),
+			crate::Event::FinancialNftTransferred {
+				collection_id: TEST_COLLECTION_ID,
+				instance_id: created_nft_id,
+				to: BOB,
+			},
+		);
 
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
@@ -241,7 +247,7 @@ fn ownership_check() {
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 		assert_noop!(
 			Nft::transfer(Origin::signed(BOB), TEST_COLLECTION_ID, created_nft_id, ALICE),
-			DispatchError::from(crate::Error::<MockRuntime>::MustBeOwner)
+			crate::Error::<MockRuntime>::MustBeOwner
 		);
 	});
 }
@@ -252,7 +258,7 @@ fn instance_not_found() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
 			Nft::transfer(Origin::signed(ALICE), TEST_COLLECTION_ID, 1, BOB),
-			DispatchError::from(crate::Error::<MockRuntime>::MustBeOwner)
+			crate::Error::<MockRuntime>::MustBeOwner
 		);
 	});
 }
