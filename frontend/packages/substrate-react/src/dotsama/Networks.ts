@@ -26,7 +26,7 @@ export const ParachainNetworks: ParachainNetworks = {
   },
   picasso: {
     name: "Picasso",
-    wsUrl: "wss://picasso-rpc.composable.finance",
+    wsUrl: "wss://picasso-rpc-lb.composablenodes.tech ",
     tokenId: "pica",
     prefix: 49,
     accountType: "*25519",
