@@ -10,9 +10,10 @@ aligned incentives for token holders, and sustainable yields for liquidity provi
 ## How to trade on Pablo
 
 1. On [app.pablo.finance], go to the ‘Swap’ page
-2. Connect your wallet if necessary. Read our guide how to create and connect a wallet.
+2. Connect your wallet if necessary. Read our guides [how to create and connect a wallet].
 
 [app.pablo.finance]: app.pablo.finance
+[how to create and connect a wallet]: docs.composable.finance/accounts-wallets
 
 ![swap_page](./images-how-to-trade/swap-page.jpg)
 

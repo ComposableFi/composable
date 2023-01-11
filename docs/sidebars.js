@@ -263,8 +263,20 @@ const sidebars = {
                         `user-guides/transfer-usdt-statemine-picasso`,
                     ],
                 },
-                'user-guides/how-to-trade-pica-on-pablo-guide',
-                'user-guides/claim-rewards-guide',
+                {
+                    type: 'category',
+                    label: 'Transactions and Trading',
+                    link: {
+                        type: 'generated-index',
+                        slug: 'transactions and trading'
+                    },
+                    collapsible: true,
+                    items: [
+                        'user-guides/claim-rewards-guide',
+                        `user-guides/transfer-usdt-statemine-picasso`,
+                        'user-guides/how-to-trade-pica-on-pablo',
+                    ]
+                },
                 'user-guides/polkassembly-picasso-governance'
             ]
         },
