@@ -11,13 +11,13 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # FRAME
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 
 # substrate primitives
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 
 # local
 composable-support = { path = "../../composable-support" }

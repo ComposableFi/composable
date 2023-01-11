@@ -10,6 +10,6 @@ common = { package = "simnode-common", path = "../parachain/common" }
 node = { package = "composable-node", path = "../../parachain/node", features = [
   "dali",
 ] }
-substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "polkadot-v0.9.27" }
+substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "polkadot-v0.9.30" }
 
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }

@@ -1002,40 +1002,6 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl<Call, AccountId> simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime
-		where
-			Call: Codec,
-			AccountId: Codec + EncodeLike<AccountId32> + Into<AccountId32> + Clone+ PartialEq + TypeInfo + Debug,
-	{
-		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
-			use sp_runtime::{
-				generic::Era, MultiSignature,
-				traits::StaticLookup,
-			};
-			use sp_core::sr25519;
-			let nonce = frame_system::Pallet::<Runtime>::account_nonce(signer.clone());
-			let extra = (
-				system::CheckNonZeroSender::<Runtime>::new(),
-				system::CheckSpecVersion::<Runtime>::new(),
-				system::CheckTxVersion::<Runtime>::new(),
-				system::CheckGenesis::<Runtime>::new(),
-				system::CheckEra::<Runtime>::from(Era::Immortal),
-				system::CheckNonce::<Runtime>::from(nonce),
-				system::CheckWeight::<Runtime>::new(),
-				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
-			);
-			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
-			let address = AccountIdLookup::unlookup(signer.into());
-			let ext = generic::UncheckedExtrinsic::<Address, Call, Signature, SignedExtra>::new_signed(
-				call,
-				address,
-				signature,
-				extra,
-			);
-			ext.encode()
-		}
-	}
-
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (
