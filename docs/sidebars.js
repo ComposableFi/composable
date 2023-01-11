@@ -260,10 +260,23 @@ const sidebars = {
                     items: [
                         'user-guides/polkadotjs-extension-create-account',
                         'user-guides/talisman-create-account',
+                    ],
+                },
+                {
+                    type: 'category',
+                    label: 'Transactions and Trading',
+                    link: {
+                        type: 'generated-index',
+                        slug: 'transactions-and-trading'
+                    },
+                    collapsible: true,
+                    items: [
+                        'user-guides/claim-rewards-guide',
+                        'user-guides/how-to-provide-liquidity',
                         `user-guides/transfer-usdt-statemine-picasso`,
                     ],
                 },
-                'user-guides/claim-rewards-guide',
+
                 'user-guides/polkassembly-picasso-governance',
             ]
         },
