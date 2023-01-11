@@ -5,6 +5,8 @@ import BigNumber from "bignumber.js";
 import { pipe } from "fp-ts/function";
 import { option } from "fp-ts";
 import { TokenId } from "tokens";
+import { AssetRatio } from "./picasso";
+import { SubstrateNetworkId } from "../../../SubstrateNetworks";
 
 export class Asset {
   protected __api?: ApiPromise;
@@ -14,6 +16,8 @@ export class Asset {
   protected readonly __tokenId: TokenId;
   protected __price: BigNumber = new BigNumber(0);
   protected __decimals: Map<string, number>;
+  protected __ratio: AssetRatio | null;
+  protected __existentialDeposit: Map<SubstrateNetworkId, BigNumber | null>;
   protected __parachainAssetIds: Map<string, BigNumber>;
 
   /**
@@ -46,7 +50,9 @@ export class Asset {
     this.__iconUrl = iconUrl;
     this.__tokenId = tokenId;
     this.__parachainAssetIds = new Map<string, BigNumber>();
+    this.__existentialDeposit = new Map<SubstrateNetworkId, BigNumber | null>();
     this.__decimals = new Map<string, number>();
+    this.__ratio = null;
   }
 
   /**
@@ -75,6 +81,10 @@ export class Asset {
 
   getDecimals(network: string) {
     return this.__decimals.get(network);
+  }
+
+  getRatio() {
+    return this.__ratio;
   }
 
   getIconUrl(): string {
@@ -144,6 +154,17 @@ export class Asset {
   }
 
   /**
+   * Set Asset Ratio to Pica
+   */
+  setRatio(ratio: AssetRatio | null) {
+    this.__ratio = ratio;
+  }
+
+  setExistentialDeposit(network: SubstrateNetworkId, ed: BigNumber | null) {
+    this.__existentialDeposit.set(network, ed);
+  }
+
+  /**
    * Get Asset Id on a different chain
    * @param {string} chainId
    * @param {boolean} inBn
@@ -162,6 +183,10 @@ export class Asset {
         (a) => a
       )
     );
+  }
+
+  getExistentialDeposit(network: SubstrateNetworkId) {
+    return this.__existentialDeposit.get(network);
   }
 
   setApi(api: ApiPromise) {

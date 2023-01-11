@@ -22,4 +22,4 @@ whereas other protocols often set fixed fees at 0.3% across all pairs.
 The volatility and volume can depend significantly depending on the pool assets, 
 and therefore increasing the customizability will boost efficiency of the DEX.
 
-[BalancersFi weighted math]: https://docs.balancer.fi/concepts/math/weighted-math
+[BalancerFi weighted math]: https://docs.balancer.fi/concepts/math/weighted-math

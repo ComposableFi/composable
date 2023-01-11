@@ -41,4 +41,10 @@ export class Event {
 
     @OneToMany_(() => Activity, e => e.event)
     activities!: Activity[]
+
+    /**
+     * Last updated block id
+     */
+    @Column_("text", {nullable: false})
+    blockId!: string
 }

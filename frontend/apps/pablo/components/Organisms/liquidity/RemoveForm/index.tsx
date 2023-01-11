@@ -78,21 +78,21 @@ export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
           }
         )
         .then((response: any) => {
-          const expectedRewards = response.toJSON().assets;
+          const expectedRewards = response.toJSON();
           setExpectedRemoveAmountBase(
             fromChainUnits(
-              expectedRewards[b],
+              expectedRewards[b] ?? 0,
               token1.getDecimals(DEFAULT_NETWORK_ID)
             )
           );
           setPriceOfBase(
             new BigNumber(1).div(
               fromChainUnits(
-                expectedRewards[b],
+                expectedRewards[b] ?? 0,
                 token1.getDecimals(DEFAULT_NETWORK_ID)
               ).div(
                 fromChainUnits(
-                  expectedRewards[q],
+                  expectedRewards[q] ?? 0,
                   token2.getDecimals(DEFAULT_NETWORK_ID)
                 )
               )
@@ -100,14 +100,14 @@ export const RemoveLiquidityForm: FC<{ pool: PoolConfig }> = ({ pool }) => {
           );
           setExpectedRemoveAmountQuote(
             fromChainUnits(
-              expectedRewards[q],
+              expectedRewards[q] ?? 0,
               token2.getDecimals(DEFAULT_NETWORK_ID)
             )
           );
 
           setPriceOfQuote(
             fromChainUnits(
-              expectedRewards[b],
+              expectedRewards[b] ?? 0,
               token1.getDecimals(DEFAULT_NETWORK_ID)
             ).div(
               fromChainUnits(

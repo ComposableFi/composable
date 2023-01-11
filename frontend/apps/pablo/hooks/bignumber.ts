@@ -29,12 +29,6 @@ export function useValidation({
 
   const validate = (event: React.ChangeEvent<HTMLInputElement>) => {
     const eventValue = event.target.value;
-    if (!eventValue.length) {
-      setStringValue(eventValue);
-      setValid(false);
-      return;
-    }
-
     if (eventValue.match(FLOAT_NUMBER)) {
       const bignr = new BigNumber(eventValue);
       if ((bignr.decimalPlaces() || 0) > maxDec) {
@@ -72,11 +66,9 @@ export function useValidation({
       setStringValue(eventValue);
       setValid(true);
       setValue(bignr);
-    } else {
-      if (eventValue.match(NUMBERS_ONE_DOT)) {
-        setStringValue(eventValue);
-        setValid(false);
-      }
+    } else if (eventValue.match(NUMBERS_ONE_DOT) || eventValue.length === 0) {
+      setStringValue(eventValue);
+      setValid(false);
     }
   };
 
@@ -87,5 +79,5 @@ export function useValidation({
     validate,
     setValue,
     setStringValue,
-  };
+  } as const;
 }

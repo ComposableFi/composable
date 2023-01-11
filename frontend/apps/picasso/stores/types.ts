@@ -3,6 +3,7 @@ import { StateCreator } from "zustand";
 import {
   OracleSlice,
   PolkadotSlice,
+  PoolSlice,
   StakingRewardsSlice,
   StatsApolloSlice,
   StatsOverviewSlice,
@@ -34,4 +35,5 @@ export type AllSlices = PolkadotSlice &
   SubstrateBalancesSlice &
   BondsSlice &
   StakingRewardsSlice &
-  OracleSlice;
+  OracleSlice &
+  PoolSlice;

@@ -35,4 +35,10 @@ export class BondedFinanceBondOffer {
      */
     @Column_("bool", {nullable: false})
     cancelled!: boolean
+
+    /**
+     * Last updated block id
+     */
+    @Column_("text", {nullable: false})
+    blockId!: string
 }

@@ -2,10 +2,19 @@
 
 The Statemine parachain acts as the issuer of fungible and non-fungible tokens on Kusama, 
 this means if you want to transfer non-native assets on Kusama to use on Picasso, 
-they first need to be transferred from the Statemine to your Picasso wallet. 
-Watch the video for this guide here: https://youtu.be/SmTsDK1pI3Q
+they first need to be transferred from the Statemine to your Picasso wallet.
+You can find more details on how to move assets to the Statemine in this [article from Polkadot].
 
-Read our guides on how to create and connect a wallet the [Talisman] or [Polkadot.js] on Picasso.
+[article from Polkadot]: https://support.polkadot.network/support/solutions/articles/65000181634-how-to-withdraw-usdt-from-bitfinex-on-statemine
+
+:::note
+USDT is a “sufficient” asset, which means you don't need KSM in your Statemine account to receive USDT.
+However, you do need KSM in the Statemine account in order to transfer USDT, since transaction fees are paid in KSM.
+The process is the same as for USDT transfers from Bitfinex to Statemine.
+:::
+
+Read our guides on how to create and connect a [Talisman] or [Polkadot.js] wallet on Picasso.
+Watch the video of the following guide here: https://youtu.be/SmTsDK1pI3Q
 
 ![picasso_homepage](./picasso-homepage.png)
 
@@ -14,7 +23,7 @@ Read our guides on how to create and connect a wallet the [Talisman] or [Polkado
 1. Make sure your wallet is connected to Picasso by clicking the button “Wallets” in the top right corner. 
    If a wallet is already connected it reads “Connected”, 
    just make sure that in this case the intended wallet for the transfer is connected.
-2. You should watch out that your Statemine and Picasso wallet have “Keep alive” toggle enabled. More about that later.
+2. You should watch out that you have “Keep alive” toggle enabled. More about that later.
 3. Click “Transfers” in the main menu to the left.
 
 ## Transfer Details

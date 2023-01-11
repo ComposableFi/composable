@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_methods)]
+
 use crate::mock::Test;
 
 use crate::{
@@ -10,6 +12,7 @@ use crate::{
 	PoolConfiguration::DualAssetConstantProduct,
 	PoolInitConfiguration,
 };
+use composable_maths::dex::constant_product::{compute_deposit_lp, compute_first_deposit_lp};
 use composable_support::math::safe::safe_multiply_by_rational;
 use composable_tests_helpers::{
 	prop_assert_ok,
@@ -342,6 +345,15 @@ fn add_lp_with_min_mint_amount() {
 		assert_ok!(Tokens::mint_into(first_asset, &ALICE, init_first_asset_amount));
 		assert_ok!(Tokens::mint_into(second_asset, &ALICE, init_second_asset_amount));
 
+		let minted_lp = compute_first_deposit_lp(
+			assets_with_init_amounts.iter().map(|(asset_id, asset_balance)| {
+				(*asset_id, *asset_balance, Permill::from_percent(50))
+			}),
+			Permill::zero(),
+		)
+		.expect("no overflow")
+		.value;
+
 		// Add the liquidity, min amount = 0
 		Test::assert_extrinsic_event(
 			Pablo::add_liquidity(
@@ -355,7 +367,7 @@ fn add_lp_with_min_mint_amount() {
 				who: ALICE,
 				pool_id: 0,
 				asset_amounts: assets_with_init_amounts,
-				minted_lp: 199_999_999_814_806,
+				minted_lp,
 			},
 		);
 
@@ -505,17 +517,17 @@ fn exchange_failure() {
 		let initial_usdt = currency::USDT::ONE * btc_price;
 		let pool_init_config = valid_pool_init_config(
 			&ALICE,
-			BTC,
+			currency::BTC::ID,
 			Permill::from_percent(50_u32),
-			USDT,
+			currency::USDT::ID,
 			Permill::zero(),
 		);
 
 		common_exchange_failure(
 			pool_init_config,
-			AssetAmount::new(USDT, initial_usdt),
-			AssetAmount::new(BTC, initial_btc),
-			AssetAmount::new(BTC, currency::BTC::units(100)),
+			AssetAmount::new(currency::USDT::ID, initial_usdt),
+			AssetAmount::new(currency::BTC::ID, initial_btc),
+			AssetAmount::new(currency::USDT::ID, currency::USDT::units(100)),
 			LP_TOKEN_ID,
 		)
 	});
@@ -662,14 +674,13 @@ fn staking_pool_test() {
 #[test]
 fn avoid_exchange_without_liquidity() {
 	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
 		let lp_fee = Permill::from_float(0.05);
 		let pool_init_config =
 			valid_pool_init_config(&ALICE, BTC, Permill::from_percent(50_u32), USDT, lp_fee);
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config, Some(LP_TOKEN_ID))
 			.expect("pool creation failed");
-		let bob_usdt = 45_000_u128 * unit;
+		let bob_usdt = currency::BTC::units(45_000);
 		let quote_usdt = bob_usdt - lp_fee.mul_floor(bob_usdt);
 		assert_noop!(
 			<Pablo as Amm>::do_swap(
@@ -1182,7 +1193,14 @@ fn add_lp_amounts_get_normalized() {
 		assert_ok!(Tokens::mint_into(FIRST_ASSET::ID, &ALICE, init_first_asset_amount));
 		assert_ok!(Tokens::mint_into(SECOND_ASSET::ID, &ALICE, init_second_asset_amount));
 
-		dbg!();
+		let minted_lp = compute_first_deposit_lp(
+			assets_with_init_amounts.iter().map(|(asset_id, asset_balance)| {
+				(*asset_id, *asset_balance, Permill::from_percent(50))
+			}),
+			Permill::zero(),
+		)
+		.expect("no overflow")
+		.value;
 
 		// Add the liquidity, min amount = 0
 		Test::assert_extrinsic_event(
@@ -1197,26 +1215,38 @@ fn add_lp_amounts_get_normalized() {
 				who: ALICE,
 				pool_id: 0,
 				asset_amounts: assets_with_init_amounts,
-				minted_lp: 282_842_712_193_942,
+				minted_lp,
 			},
 		);
-
-		dbg!();
 
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(FIRST_ASSET::ID, &BOB, first_asset_amount));
 		assert_ok!(Tokens::mint_into(SECOND_ASSET::ID, &BOB, second_asset_amount));
+
+		let normalized_assets = BTreeMap::from([
+			(FIRST_ASSET::ID, FIRST_ASSET::units(10)),
+			(SECOND_ASSET::ID, SECOND_ASSET::units(5)),
+		]);
+		let lp_token = get_pool(pool_id).lp_token;
+		let pool_account = Pablo::account_id(&pool_id);
+
+		let minted_lp = compute_deposit_lp(
+			Tokens::total_issuance(lp_token),
+			*normalized_assets.get(&SECOND_ASSET::ID).expect("contains key-value pair"),
+			Tokens::balance(SECOND_ASSET::ID, &pool_account),
+			Permill::one(),
+			Permill::zero(),
+		)
+		.expect("no overflow")
+		.value;
 
 		Test::assert_extrinsic_event(
 			Pablo::add_liquidity(Origin::signed(BOB), pool_id, assets_with_amounts, 0, false),
 			crate::Event::<Test>::LiquidityAdded {
 				who: BOB,
 				pool_id: 0,
-				asset_amounts: BTreeMap::from([
-					(FIRST_ASSET::ID, FIRST_ASSET::units(10)),
-					(SECOND_ASSET::ID, SECOND_ASSET::units(5)),
-				]),
-				minted_lp: 14_142_135_609_697,
+				asset_amounts: normalized_assets,
+				minted_lp,
 			},
 		);
 	});

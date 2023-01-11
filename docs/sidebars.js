@@ -182,7 +182,7 @@ const sidebars = {
                     collapsed: true,
                     items: [
                         'products/pablo/swaps-trading',
-                        'products/pablo/liquidity-provision',
+                        'products/pablo/launch-pools',
                         'products/pablo/auctions-bonding',
                         'products/pablo/xPBLO-fNFT-staking',
                         'products/pablo/cross-chain-DEX',
@@ -363,7 +363,19 @@ const sidebars = {
             },
             collapsible: false,
             items: [
-                'ecosystem/build-on-composable-ecosystem-development',
+                {
+                    type: 'category',
+                    label: 'Build on Composable: Ecosystem Development',
+                    link: {
+                        type: `doc`,
+                        id: `ecosystem/build-on-composable-ecosystem-development`,
+                    },
+                    collapsible: false,
+                items: [
+                    'ecosystem/rfp-canonical-stablecoin-design-and-integration',
+
+                ]
+                },
                 'ecosystem/composable-grants',
                 'ecosystem/business-line-development',
                 'ecosystem/press-kit',
@@ -373,7 +385,7 @@ const sidebars = {
         },
         {
             type: 'category',
-            label: 'Audits And Fixes',
+            label: 'Audits, Fixes & Bug Bounties',
 
             link: {
                 type: 'generated-index',
@@ -382,6 +394,7 @@ const sidebars = {
             collapsible: false,
             items: [
                 'audits/audit-results-recommendations-and-remediations',
+                `audits/immunefi-bug-bounty-program`
             ]
         },
         {

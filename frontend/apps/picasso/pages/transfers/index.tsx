@@ -34,7 +34,7 @@ import { pipe } from "fp-ts/function";
 import { option } from "fp-ts";
 
 const Transfers: NextPage = () => {
-  const { setAmount, from, balance, transfer, to } = useTransfer();
+  const { setAmount, from, balance, transfer, to, isDirty } = useTransfer();
   const amount = useStore((state) => state.transfers.amount);
   const allProviders = useAllParachainProviders();
 
@@ -110,7 +110,7 @@ const Transfers: NextPage = () => {
 
   const hasEnoughGasFee = useMemo(() => {
     const feeBalance = getBalance(feeTokenId.id, from);
-    return feeBalance.gte(fee.partialFee.multipliedBy(FEE_MULTIPLIER));
+    return feeBalance.free.gte(fee.partialFee.multipliedBy(FEE_MULTIPLIER));
   }, [fee.partialFee, feeTokenId.id, from, getBalance]);
 
   useEffect(() => {
@@ -138,7 +138,10 @@ const Transfers: NextPage = () => {
           <TransferNetworkSelector disabled={hasPendingTransfer} />
         </Grid>
         <Grid item {...gridItemStyle()}>
-          <AmountTokenDropdown disabled={hasPendingTransfer} />
+          <AmountTokenDropdown
+            disabled={hasPendingTransfer}
+            isDirty={isDirty}
+          />
         </Grid>
         <Grid item {...gridItemStyle("1.5rem")}>
           <TransferRecipientDropdown />

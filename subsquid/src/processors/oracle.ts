@@ -22,13 +22,10 @@ interface PriceChangedEvent {
  * @param asset
  * @param price
  */
-export function updateAsset(
-  ctx: EventHandlerContext<Store>,
-  asset: Asset,
-  price: bigint
-): void {
+export function updateAsset(ctx: EventHandlerContext<Store>, asset: Asset, price: bigint): void {
   asset.eventId = ctx.event.id;
   asset.price = price;
+  asset.blockId = ctx.block.id;
 }
 
 /**
@@ -49,6 +46,7 @@ export function getHistoricalAssetPrice(
     price,
     timestamp: new Date(ctx.block.timestamp),
     currency: Currency.USD,
+    blockId: ctx.block.hash
   });
 }
 

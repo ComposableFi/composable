@@ -1,8 +1,4 @@
-import {
-  Box,
-  useTheme,
-  Typography,
-} from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 import { Chart } from "@/components/Molecules";
 import { DEFI_CONFIG } from "@/defi/config";
 import { useState } from "react";
@@ -11,22 +7,22 @@ import BigNumber from "bignumber.js";
 
 export const BondPortfolioChart: React.FC<{}> = ({}) => {
   const theme = useTheme();
-  const {total, change, series} = {
+  const { total, change, series } = {
     total: new BigNumber(24546395.04),
     change: 2,
     series: [],
   };
   const intervals = DEFI_CONFIG.bondChartIntervals;
-  const [currentInterval, setCurrentInterval] = useState(
-    intervals[0].symbol
-  );
+  const [currentInterval, setCurrentInterval] = useState(intervals[0]);
   const changeText = change >= 0 ? `+${change}` : change;
-  const changeTextColor = change >= 0
-                            ? theme.palette.featured.main
-                            : theme.palette.error.main;
+  const changeTextColor =
+    change >= 0 ? theme.palette.featured.main : theme.palette.error.main;
 
   const onIntervalChange = (interval: string) => {
-    setCurrentInterval(interval);
+    const found = intervals.findIndex((i) => i.symbol === interval);
+    if (found > -1) {
+      setCurrentInterval(intervals[found]);
+    }
   };
 
   const onRefreshChart = () => {
@@ -63,9 +59,8 @@ export const BondPortfolioChart: React.FC<{}> = ({}) => {
       }}
       onIntervalChange={onIntervalChange}
       intervals={intervals.map((interval) => interval.symbol)}
-      currentInterval={currentInterval}
-      sx={{background: theme.palette.gradient.secondary}}
+      currentInterval={currentInterval.symbol}
+      sx={{ background: theme.palette.gradient.secondary }}
     />
   );
 };
-

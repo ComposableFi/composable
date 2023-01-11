@@ -9,13 +9,12 @@ export function toChainIdUnit(value: number | BigNumber, decimalPlaces = 12) {
 }
 
 export function fromChainIdUnit(
-  value: number | BigNumber | BigInt,
+  value: number | BigNumber | BigInt | string,
   decimalPlaces?: null | number | string
 ) {
   let decimals = !decimalPlaces ? 12 : Number(decimalPlaces);
-  return (BigNumber.isBigNumber(value)
-    ? value
-    : new BigNumber(value.toString())
+  return (
+    BigNumber.isBigNumber(value) ? value : new BigNumber(value.toString())
   ).dividedBy(10 ** decimals);
 }
 

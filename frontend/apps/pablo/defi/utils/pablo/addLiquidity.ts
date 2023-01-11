@@ -1,21 +1,17 @@
 import { ApiPromise } from "@polkadot/api";
 import { SubmittableExtrinsic } from "@polkadot/api/types";
+import { toChainUnits } from "@/defi/utils";
 
 export function addLiquidityToPoolViaPablo(
   api: ApiPromise,
-  poolId: number,
-  baseAmount: string,
-  quoteAmount: string,
-  minMintAmount: number = 0
+  poolId: string,
+  assetTree: any,
+  minLP: number = 0
 ): SubmittableExtrinsic<"promise"> {
-  const baseAmountParam = api.createType("u128", baseAmount);
-  const quoteAmountParam = api.createType("u128", quoteAmount);
-  const keepAliveParam = api.createType("bool", true);
-
   return api.tx.pablo.addLiquidity(
     poolId,
-    api.createType("BTreeMap<u128, u128>", baseAmountParam, quoteAmountParam),
-    minMintAmount,
-    keepAliveParam
+    api.createType("BTreeMap<u128, u128>", assetTree),
+    api.createType("u128", toChainUnits(minLP).toString()),
+    true
   );
 }

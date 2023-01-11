@@ -19,6 +19,12 @@ import { useStore } from "@/stores/root";
 import { subscribeCoingeckoPrices } from "@/stores/defi/coingecko";
 import { useCoingecko } from "coingecko";
 import { TokenAsset } from "../Atom/TokenAsset";
+import { pipe } from "fp-ts/lib/function";
+import { usePicassoProvider } from "@/defi/polkadot/hooks";
+import { subscribePoolAmount } from "@/stores/defi/polkadot/pablo/subscribePoolAmount";
+import { subscribePools } from "@/stores/defi/polkadot/pablo/subscribePools";
+import * as O from "fp-ts/Option";
+import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscovery";
 
 export type MyAssetsTableProps = TableContainerProps & {
   tokensToList: TokenId[];
@@ -35,10 +41,35 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({
     ({ substrateBalances }) => substrateBalances.balances.picasso
   );
   const prices = useCoingecko((state) => state.prices);
+  const { parachainApi } = usePicassoProvider();
+
+  const picaPrice = usePicaPriceDiscovery();
 
   useEffect(() => {
-    return subscribeCoingeckoPrices();
-  }, []);
+    const unsubPrices = subscribeCoingeckoPrices();
+    const unsubPools = pipe(
+      parachainApi,
+      O.fromNullable,
+      O.map((api) => subscribePools(api))
+    );
+    const unsubPoolAmount = pipe(
+      parachainApi,
+      O.fromNullable,
+      O.map((api) => subscribePoolAmount(api))
+    );
+
+    return () => {
+      pipe(
+        O.bindTo("uPoolAmount")(unsubPoolAmount),
+        O.bind("uPools", () => unsubPools),
+        O.map(({ uPools, uPoolAmount }) => {
+          uPools();
+          uPoolAmount();
+        })
+      );
+      unsubPrices();
+    };
+  }, [parachainApi]);
 
   if (tokenList && tokenList.length > 0) {
     return (
@@ -55,9 +86,10 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({
           </TableHead>
           <TableBody>
             {tokenList.map((row: TokenMetadata) => {
-              const price = prices[row.id].usd;
-              const change_24hr = prices[row.id].usd_24h_change;
-              const balance = balances[row.id].balance;
+              const price = row.id === "pica" ? picaPrice : prices[row.id].usd;
+              const change_24hr = row.id === "pica" ? 0 : prices[row.id].usd_24h_change;
+              const balance = balances[row.id].free;
+              const decimalsToDisplay = row.id === "pica" ? 6 : row.decimalsToDisplay;
               if (row.symbol) {
                 return (
                   <TableRow key={row.symbol}>
@@ -67,7 +99,7 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({
                     <TableCell align="left">
                       {/* Needs work */}
                       <Typography variant="body2">
-                        $ {price.toFormat(row.decimalsToDisplay)}
+                        ${price.toFormat(decimalsToDisplay)}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">

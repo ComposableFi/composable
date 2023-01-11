@@ -1,12 +1,5 @@
-import {
-  alpha,
-  Box,
-  BoxProps,
-  Grid,
-  Typography,
-  useTheme,
-} from "@mui/material";
-import { TabItem, TabPanel, Tabs } from "@/components";
+import { Box, BoxProps, Grid, useTheme } from "@mui/material";
+import { PoolTVLChart, TabItem, TabPanel, Tabs } from "@/components";
 import { FC, SyntheticEvent, useState } from "react";
 import { PoolStatistics } from "./PoolStatistics";
 import { PoolLiquidityPanel } from "./PoolLiquidityPanel";
@@ -44,34 +37,12 @@ export const PoolDetails: FC<PoolDetailsProps> = ({ pool, ...boxProps }) => {
   return (
     <Box {...boxProps}>
       <Grid container spacing={4}>
-        <Grid item xs={12} sm={6} md={8}>
-          <HighlightBox
-            variant="outlined"
-            sx={{
-              border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
-              background: alpha(theme.palette.common.white, 0.05),
-            }}
-          >
-            <Typography variant="h5" textAlign="left" mb={4}>
-              TVL
-            </Typography>
-            <Box
-              sx={{
-                height: theme.spacing(18),
-                minHeight: theme.spacing(18),
-                display: "flex",
-                alignItems: "center",
-                flexDirection: "column",
-              }}
-              gap={2}
-            >
-              <Typography variant="body1" textAlign="left">
-                Chart will be available once enough data is gathered...
-              </Typography>
-            </Box>
+        <Grid item xs={12} sm={6}>
+          <HighlightBox>
+            <PoolTVLChart poolId={pool.poolId.toString()} />
           </HighlightBox>
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6}>
           <PoolStatistics pool={pool} />
         </Grid>
       </Grid>

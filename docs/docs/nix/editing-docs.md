@@ -30,6 +30,6 @@ nix build ".#spell-check"
 If you want to build a static copy of these docs, run:
 
 ```bash
-nix build ".#docs-static
+nix build ".#docs-static"
 ```
 

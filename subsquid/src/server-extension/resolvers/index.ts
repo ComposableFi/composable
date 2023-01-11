@@ -7,6 +7,9 @@ import { TotalVolumeResolver } from "./totalVolume";
 import { StakingRewardsStatsResolver } from "./stakingRewards";
 import { PabloSpotPriceResolver } from "./pabloSpotPrice";
 import { PabloDailyResolver } from "./pabloDaily";
+import { PabloTVLResolver } from "./pabloTVL";
+import { PabloVolumeResolver } from "./pabloVolume";
+import { PabloTotalVolumeResolver } from "./pabloTotalVolume";
 
 export {
   ActiveUsersResolver,
@@ -18,4 +21,7 @@ export {
   StakingRewardsStatsResolver,
   PabloSpotPriceResolver,
   PabloDailyResolver,
+  PabloTVLResolver,
+  PabloVolumeResolver,
+  PabloTotalVolumeResolver
 };

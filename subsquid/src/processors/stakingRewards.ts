@@ -6,20 +6,10 @@ import {
   StakingRewardsSplitPositionEvent,
   StakingRewardsStakeAmountExtendedEvent,
   StakingRewardsStakedEvent,
-  StakingRewardsUnstakedEvent,
+  StakingRewardsUnstakedEvent
 } from "../types/events";
-import {
-  saveAccountAndEvent,
-  storeCurrentLockedValue,
-  storeHistoricalLockedValue,
-} from "../dbHelper";
-import {
-  Event,
-  EventType,
-  LockedSource,
-  RewardPool,
-  StakingPosition,
-} from "../model";
+import { saveAccountAndEvent, storeCurrentLockedValue, storeHistoricalLockedValue } from "../dbHelper";
+import { Event, EventType, LockedSource, RewardPool, StakingPosition } from "../model";
 import { encodeAccount } from "../utils";
 
 interface RewardPoolCreatedEvent {
@@ -56,24 +46,14 @@ interface SplitPositionEvent {
   positions: [bigint, bigint, bigint][]; // [collectionId, instanceId, balance]
 }
 
-function getRewardPoolCreatedEvent(
-  event: StakingRewardsRewardPoolCreatedEvent
-): RewardPoolCreatedEvent {
+function getRewardPoolCreatedEvent(event: StakingRewardsRewardPoolCreatedEvent): RewardPoolCreatedEvent {
   const { poolId, owner, endBlock } = event.asV10003;
   return { poolId, owner, endBlock };
 }
 
 function getStakedEvent(event: StakingRewardsStakedEvent): StakedEvent {
-  const {
-    poolId,
-    owner,
-    amount,
-    durationPreset,
-    fnftCollectionId,
-    fnftInstanceId,
-    rewardMultiplier,
-    keepAlive,
-  } = event.asV10003;
+  const { poolId, owner, amount, durationPreset, fnftCollectionId, fnftInstanceId, rewardMultiplier, keepAlive } =
+    event.asV10003;
   return {
     poolId,
     owner,
@@ -82,7 +62,7 @@ function getStakedEvent(event: StakingRewardsStakedEvent): StakedEvent {
     fnftCollectionId,
     fnftInstanceId,
     rewardMultiplier,
-    keepAlive,
+    keepAlive
   };
 }
 
@@ -91,16 +71,12 @@ function getUnstakedEvent(event: StakingRewardsUnstakedEvent): UnstakedEvent {
   return { owner, fnftCollectionId, fnftInstanceId, slash };
 }
 
-function getStakeAmountExtendedEvent(
-  event: StakingRewardsStakeAmountExtendedEvent
-): StakeAmountExtendedEvent {
+function getStakeAmountExtendedEvent(event: StakingRewardsStakeAmountExtendedEvent): StakeAmountExtendedEvent {
   const { fnftCollectionId, fnftInstanceId, amount } = event.asV10003;
   return { fnftCollectionId, fnftInstanceId, amount };
 }
 
-function getSplitPositionEvent(
-  event: StakingRewardsSplitPositionEvent
-): SplitPositionEvent {
+function getSplitPositionEvent(event: StakingRewardsSplitPositionEvent): SplitPositionEvent {
   const { positions } = event.asV10003;
   return { positions };
 }
@@ -109,7 +85,7 @@ export function createRewardPool(eventId: string, poolId: bigint): RewardPool {
   return new RewardPool({
     id: randomUUID(),
     eventId,
-    poolId: poolId.toString(),
+    poolId: poolId.toString()
   });
 }
 
@@ -148,7 +124,7 @@ export function createStakingPosition(
     endTimestamp: BigInt(startTimestamp + BigInt(duration * 1_000n)),
     rewardMultiplier,
     assetId,
-    source: LockedSource.StakingRewards,
+    source: LockedSource.StakingRewards
   });
 }
 
@@ -158,11 +134,7 @@ export function createStakingPosition(
  * @param newAmount
  * @param event
  */
-export function updateStakingPositionAmount(
-  position: StakingPosition,
-  newAmount: bigint,
-  event: Event
-): void {
+export function updateStakingPositionAmount(position: StakingPosition, newAmount: bigint, event: Event): void {
   position.amount = newAmount;
   position.event = event;
 }
@@ -197,7 +169,7 @@ export function splitStakingPosition(
     endTimestamp: position.endTimestamp,
     rewardMultiplier: position.rewardMultiplier,
     assetId: position.assetId,
-    source: LockedSource.StakingRewards,
+    source: LockedSource.StakingRewards
   });
 }
 
@@ -207,9 +179,7 @@ export function splitStakingPosition(
  *  - Update account and store event.
  * @param ctx
  */
-export async function processRewardPoolCreatedEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processRewardPoolCreatedEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Processing `StakingRewards.RewardPoolCreated`");
   const evt = new StakingRewardsRewardPoolCreatedEvent(ctx);
   const event = getRewardPoolCreatedEvent(evt);
@@ -221,11 +191,7 @@ export async function processRewardPoolCreatedEvent(
 
   await ctx.store.save(stakingPool);
 
-  await saveAccountAndEvent(
-    ctx,
-    EventType.STAKING_REWARDS_REWARD_POOL_CREATED,
-    owner
-  );
+  await saveAccountAndEvent(ctx, EventType.STAKING_REWARDS_REWARD_POOL_CREATED, owner);
 }
 
 /**
@@ -234,27 +200,14 @@ export async function processRewardPoolCreatedEvent(
  *  - Update account and store event.
  * @param ctx
  */
-export async function processStakedEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processStakedEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Processing `StakingRewards.Staked`");
   const evt = new StakingRewardsStakedEvent(ctx);
   const stakedEvent = getStakedEvent(evt);
   const owner = encodeAccount(stakedEvent.owner);
-  const {
-    poolId,
-    fnftCollectionId,
-    fnftInstanceId,
-    amount,
-    durationPreset,
-    rewardMultiplier,
-  } = stakedEvent;
+  const { poolId, fnftCollectionId, fnftInstanceId, amount, durationPreset, rewardMultiplier } = stakedEvent;
 
-  const { event } = await saveAccountAndEvent(
-    ctx,
-    EventType.STAKING_REWARDS_STAKED,
-    owner
-  );
+  const { event } = await saveAccountAndEvent(ctx, EventType.STAKING_REWARDS_STAKED, owner);
 
   const stakingPosition = createStakingPosition(
     fnftCollectionId,
@@ -271,7 +224,7 @@ export async function processStakedEvent(
   await storeHistoricalLockedValue(
     ctx,
     {
-      [poolId.toString()]: amount,
+      [poolId.toString()]: amount
     },
     LockedSource.StakingRewards
   );
@@ -279,7 +232,7 @@ export async function processStakedEvent(
   await storeCurrentLockedValue(
     ctx,
     {
-      [poolId.toString()]: amount,
+      [poolId.toString()]: amount
     },
     LockedSource.StakingRewards
   );
@@ -293,9 +246,7 @@ export async function processStakedEvent(
  *  - Update account and store event.
  * @param ctx
  */
-export async function processStakeAmountExtendedEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processStakeAmountExtendedEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Processing `StakeAmountExtended`");
   const evt = new StakingRewardsStakeAmountExtendedEvent(ctx);
   const stakeAmountExtendedEvent = getStakeAmountExtendedEvent(evt);
@@ -304,11 +255,11 @@ export async function processStakeAmountExtendedEvent(
   const stakingPosition = await ctx.store.get(StakingPosition, {
     where: {
       fnftCollectionId: fnftCollectionId.toString(),
-      fnftInstanceId: fnftInstanceId.toString(),
+      fnftInstanceId: fnftInstanceId.toString()
     },
     relations: {
-      event: true,
-    },
+      event: true
+    }
   });
 
   if (!stakingPosition) {
@@ -322,18 +273,14 @@ export async function processStakeAmountExtendedEvent(
     stakingPosition.owner
   );
 
-  updateStakingPositionAmount(
-    stakingPosition,
-    stakingPosition.amount + amount,
-    event
-  );
+  updateStakingPositionAmount(stakingPosition, stakingPosition.amount + amount, event);
 
   await ctx.store.save(stakingPosition);
 
   await storeHistoricalLockedValue(
     ctx,
     {
-      [stakingPosition.assetId]: amount,
+      [stakingPosition.assetId]: amount
     },
     LockedSource.StakingRewards
   );
@@ -341,7 +288,7 @@ export async function processStakeAmountExtendedEvent(
   await storeCurrentLockedValue(
     ctx,
     {
-      [stakingPosition.assetId]: amount,
+      [stakingPosition.assetId]: amount
     },
     LockedSource.StakingRewards
   );
@@ -353,22 +300,19 @@ export async function processStakeAmountExtendedEvent(
  *  - Update account and store event.
  * @param ctx
  */
-export async function processUnstakedEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processUnstakedEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Processing `StakingRewards.Unstaked`");
   const evt = new StakingRewardsUnstakedEvent(ctx);
-  const { owner, fnftCollectionId, fnftInstanceId, slash } =
-    getUnstakedEvent(evt);
+  const { owner, fnftCollectionId, fnftInstanceId, slash } = getUnstakedEvent(evt);
 
   const position = await ctx.store.get(StakingPosition, {
     where: {
       fnftCollectionId: fnftCollectionId.toString(),
-      fnftInstanceId: fnftInstanceId.toString(),
+      fnftInstanceId: fnftInstanceId.toString()
     },
     relations: {
-      event: true,
-    },
+      event: true
+    }
   });
 
   if (!position) {
@@ -378,24 +322,16 @@ export async function processUnstakedEvent(
 
   const unstakedAmount = BigInt(position.amount) - BigInt(slash || 0);
 
-  const { event } = await saveAccountAndEvent(
-    ctx,
-    EventType.STAKING_REWARDS_UNSTAKE,
-    encodeAccount(owner)
-  );
+  const { event } = await saveAccountAndEvent(ctx, EventType.STAKING_REWARDS_UNSTAKE, encodeAccount(owner));
 
-  updateStakingPositionAmount(
-    position,
-    position.amount - unstakedAmount,
-    event
-  );
+  updateStakingPositionAmount(position, position.amount - unstakedAmount, event);
 
   await ctx.store.save(position);
 
   await storeHistoricalLockedValue(
     ctx,
     {
-      [position.assetId]: -unstakedAmount,
+      [position.assetId]: -unstakedAmount
     },
     LockedSource.StakingRewards
   );
@@ -403,7 +339,7 @@ export async function processUnstakedEvent(
   await storeCurrentLockedValue(
     ctx,
     {
-      [position.assetId]: -unstakedAmount,
+      [position.assetId]: -unstakedAmount
     },
     LockedSource.StakingRewards
   );
@@ -416,26 +352,22 @@ export async function processUnstakedEvent(
  *  - Update account and store event.
  * @param ctx
  */
-export async function processSplitPositionEvent(
-  ctx: EventHandlerContext<Store>
-): Promise<void> {
+export async function processSplitPositionEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Processing `StakingRewards.SplitPosition`");
   const evt = new StakingRewardsSplitPositionEvent(ctx);
   const splitPositionEvent = getSplitPositionEvent(evt);
   const { positions } = splitPositionEvent;
-  const [
-    [fnftCollectionId, oldFnftInstanceId, oldPositionAmount],
-    [_, newFnftInstanceId, newPositionAmount],
-  ] = positions;
+  const [[fnftCollectionId, oldFnftInstanceId, oldPositionAmount], [_, newFnftInstanceId, newPositionAmount]] =
+    positions;
 
   const position = await ctx.store.get(StakingPosition, {
     where: {
       fnftCollectionId: fnftCollectionId.toString(),
-      fnftInstanceId: oldFnftInstanceId.toString(),
+      fnftInstanceId: oldFnftInstanceId.toString()
     },
     relations: {
-      event: true,
-    },
+      event: true
+    }
   });
 
   if (!position) {
@@ -443,19 +375,9 @@ export async function processSplitPositionEvent(
     return;
   }
 
-  const { event } = await saveAccountAndEvent(
-    ctx,
-    EventType.STAKING_REWARDS_SPLIT_POSITION,
-    position.owner
-  );
+  const { event } = await saveAccountAndEvent(ctx, EventType.STAKING_REWARDS_SPLIT_POSITION, position.owner);
 
-  const newPosition = splitStakingPosition(
-    position,
-    oldPositionAmount,
-    newPositionAmount,
-    newFnftInstanceId,
-    event
-  );
+  const newPosition = splitStakingPosition(position, oldPositionAmount, newPositionAmount, newFnftInstanceId, event);
 
   if (!newPosition) {
     // no-op.

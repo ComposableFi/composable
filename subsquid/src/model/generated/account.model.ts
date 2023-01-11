@@ -17,4 +17,10 @@ export class Account {
      */
     @Column_("text", {nullable: false})
     eventId!: string
+
+    /**
+     * Last updated block id
+     */
+    @Column_("text", {nullable: false})
+    blockId!: string
 }
