@@ -1,10 +1,10 @@
 <br />
 
-<p align="center">
-  <img alt="Composable Finance" title="Composable Finance" src="banner.png">
-</p>
+![Composable Finance](https://cloudflare-ipfs.com/ipfs/QmVK5edAEtLAsm79rj88oEgPtx5CKzY9tN9xmY7g4EdBdV?filename=ComposableFi_banner.png "Composable Finance")
 
 <br />
+
+
 
 ## Monorepo for Composable Finance
 
