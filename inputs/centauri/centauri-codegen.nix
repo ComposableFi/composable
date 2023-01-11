@@ -1,5 +1,5 @@
-{ self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
+{ ... }: {
+  perSystem = { pkgs, crane, ... }: {
     packages = rec {
       centauri-codegen = let
         src = pkgs.fetchFromGitHub {
