@@ -37,7 +37,7 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
 
   const isSwapFormReady =
     hasFetchedPools && hasFetchedTokens && !picaPrice.isZero();
-  
+
   const {
     balance1,
     balance2,
@@ -286,7 +286,11 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
         )}
       </Box>
 
-      <SwapButton />
+      <SwapButton
+        assetOneAmount={assetOneAmount}
+        assetTwoAmount={assetTwoAmount}
+        valid={valid}
+      />
 
       {valid && pabloPool && (
         <SwapSummary
