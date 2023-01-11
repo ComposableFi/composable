@@ -23,6 +23,25 @@ import { PoolConfig } from "@/store/pools/types";
 import { getOraclePrice } from "@/store/oracle/slice";
 import { usePoolSpotPrice } from "@/defi/hooks/pools/usePoolSpotPrice";
 
+function useInputValidation() {
+  const [assetOneInputValid, setAssetOneInputValid] = useState(true);
+  const [assetTwoInputValid, setAssetTwoInputValid] = useState(true);
+  const hasValidInputs = useMemo(
+    () => assetOneInputValid && assetTwoInputValid,
+    [assetOneInputValid, assetTwoInputValid]
+  );
+
+  return {
+    setAssetOneInputValid,
+    setAssetTwoInputValid,
+    assetOneInputValid,
+    assetTwoInputValid,
+    hasValidInputs,
+  };
+}
+
+const percentageToSwap = 50;
+
 export function useSwaps({
   selectedAccount,
 }: {
@@ -63,10 +82,17 @@ export function useSwaps({
   const slippage = useAppSettingsSlice().transactionSettings.tolerance;
   const previousSlippage = usePrevious(slippage);
 
+  const {
+    setAssetOneInputValid,
+    setAssetTwoInputValid,
+    assetOneInputValid,
+    assetTwoInputValid,
+    hasValidInputs,
+  } = useInputValidation();
   const [inputMode, setInputMode] = useState<1 | 2>(1);
-  const [assetOneInputValid, setAssetOneInputValid] = useState(true);
-  const [assetTwoInputValid, setAssetTwoInputValid] = useState(true);
+
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+
   const {
     tokenAmounts: { assetOneAmount, assetTwoAmount },
     setTokenAmounts,
@@ -352,9 +378,10 @@ export function useSwaps({
     resetTokenAmounts();
   };
 
-  const valid = assetOneInputValid && assetTwoInputValid && !!selectedPool;
-
-  const percentageToSwap = 50;
+  const valid = useMemo(
+    () => hasValidInputs && !!selectedPool,
+    [hasValidInputs, selectedPool]
+  );
 
   return {
     inputMode,

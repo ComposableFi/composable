@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { DEFI_CONFIG } from "@/defi/config";
-import { fetchPabloOverviewTVLChart, Range } from "@/defi/subsquid/overview";
+import { fetchPabloTotalVolume, Range } from "@/defi/subsquid/overview";
 import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/TaskEither";
 import * as E from "fp-ts/Either";
@@ -13,7 +13,7 @@ import { usePicaPriceDiscovery } from "@/defi/hooks/overview/usePicaPriceDiscove
 
 const durationLabels: string[] = [];
 
-export function usePabloHistoricalTotalValueLocked(): {
+export function useVolumeChart(): {
   chartSeries: [number, number][];
   selectedInterval: string;
   setSelectedInterval: Dispatch<SetStateAction<Range>>;
@@ -34,7 +34,7 @@ export function usePabloHistoricalTotalValueLocked(): {
   useEffect(() => {
     const task = pipe(
       TE.fromIO(() => setIsLoading(true)),
-      TE.chain(fetchPabloOverviewTVLChart(selectedInterval)),
+      TE.chain(fetchPabloTotalVolume(selectedInterval)),
       TE.chainFirst(() => TE.fromIO(() => setIsLoading(false)))
     );
     if (hasFetchedTokens) {
@@ -42,15 +42,17 @@ export function usePabloHistoricalTotalValueLocked(): {
         flow(
           E.match(
             () => setChartSeries([]),
-            (tvl) => {
+            (totalVolume) => {
               const chart = pipe(
-                A.fromArray(tvl.totalValueLocked),
+                A.fromArray(totalVolume.pabloTotalVolume),
                 A.map((item) => {
-                  const tvl = item.lockedValues.reduce(
+                  const date = Date.parse(item.date);
+
+                  const tvl = item.volumes.reduce(
                     parseLockedValue(getTokenById, picaPrice),
                     new BigNumber(0)
                   );
-                  const date = Date.parse(item.date);
+
                   return [date, tvl.toNumber()] as const;
                 }),
                 A.toArray

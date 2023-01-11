@@ -1,6 +1,8 @@
 import { Field, FieldResolver, ObjectType, Query, Resolver, ResolverInterface } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { Account, HistoricalLockedValue, LockedSource } from "../../model";
+import { MoreThan } from "typeorm";
+import { Account, HistoricalLockedValue, LockedSource, PabloSwap } from "../../model";
+import { DAY_IN_MS } from "./common";
 
 @ObjectType()
 class TVL {
@@ -24,6 +26,9 @@ export class PabloOverviewStats {
 
   @Field(() => Number, { nullable: false })
   averageLockTime!: number;
+
+  @Field(() => [TVL], { nullable: false })
+  dailyVolume!: TVL[];
 
   constructor(props: Partial<PabloOverviewStats>) {
     Object.assign(this, props);
@@ -103,6 +108,34 @@ export class PabloOverviewStatsResolver implements ResolverInterface<PabloOvervi
     return Promise.resolve(averageDuration?.[0]?.average_duration || 0);
   }
 
+  @FieldResolver({ name: "dailyVolume" })
+  async dailyVolume(): Promise<TVL[]> {
+    const manager = await this.tx();
+
+    const latestSwaps = await manager.getRepository(PabloSwap).find({
+      where: {
+        timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS))
+      }
+    });
+
+    const volumes = latestSwaps.reduce<Record<string, bigint>>((acc, swap) => {
+      acc[swap.baseAssetId] = (acc[swap.baseAssetId] || 0n) + swap.baseAssetAmount;
+      acc[swap.quoteAssetId] = (acc[swap.quoteAssetId] || 0n) + swap.quoteAssetAmount;
+      return acc;
+    }, {});
+
+    const tvlList: TVL[] = [];
+
+    Object.keys(volumes).forEach(assetId => {
+      const tvl = new TVL();
+      tvl.assetId = assetId;
+      tvl.amount = volumes[assetId];
+      tvlList.push(tvl);
+    });
+
+    return Promise.resolve(tvlList);
+  }
+
   @Query(() => PabloOverviewStats)
   async pabloOverviewStats(): Promise<PabloOverviewStats> {
     // Default values
@@ -111,7 +144,8 @@ export class PabloOverviewStatsResolver implements ResolverInterface<PabloOvervi
         totalValueLocked: [],
         totalXPicaMinted: 0n,
         averageLockMultiplier: 0,
-        averageLockTime: 0
+        averageLockTime: 0,
+        dailyVolume: []
       })
     );
   }

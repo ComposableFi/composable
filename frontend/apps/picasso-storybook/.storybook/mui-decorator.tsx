@@ -3,8 +3,7 @@ import { getDesignTokens } from "picasso/styles/theme";
 import { ThemeProvider as EmotionThemeProvider } from "@emotion/react";
 import { Box, createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import { FC, useMemo, useState } from "react";
-import { client as apolloClient } from "picasso/apollo/apolloGraphql";
-import { ApolloProvider } from "@apollo/client";
+import { MockedProvider } from "@apollo/client/testing";
 
 export const MUIDecorator: FC = ({ children }) => {
   const [mode, setMode] = useState<"light" | "dark">("dark");
@@ -12,19 +11,18 @@ export const MUIDecorator: FC = ({ children }) => {
     () => ({
       toggleColorMode: () => {
         setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
-      }
+      },
     }),
     []
   );
 
-
   return (
     <Box
       sx={{
-        position: "relative"
+        position: "relative",
       }}
     >
-      <ApolloProvider client={apolloClient}>
+      <MockedProvider mocks={[]} addTypename={false}>
         <ColorModeContext.Provider value={colorMode}>
           <EmotionThemeProvider theme={createTheme(getDesignTokens(mode))}>
             <ThemeProvider theme={createTheme(getDesignTokens(mode))}>
@@ -34,7 +32,7 @@ export const MUIDecorator: FC = ({ children }) => {
             </ThemeProvider>
           </EmotionThemeProvider>
         </ColorModeContext.Provider>
-      </ApolloProvider>
+      </MockedProvider>
     </Box>
   );
 };

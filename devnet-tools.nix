@@ -66,9 +66,7 @@
           };
 
           runAsRoot = ''
-            mkdir --parents /usr/bin /tmp
-            chown 777 /tmp
-            ln --target-directory=/usr/bin /bin/ldd # https://github.com/napi-rs/napi-rs/issues/1335
+            mkdir --parents /usr/bin /tmp && chown 777 /tmp
           '';
         };
 

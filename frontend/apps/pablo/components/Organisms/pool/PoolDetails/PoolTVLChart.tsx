@@ -1,10 +1,11 @@
-import { useTheme } from "@mui/material";
+import { Skeleton, useTheme } from "@mui/material";
 import { Chart } from "@/components/Molecules";
 import { DEFI_CONFIG } from "@/defi/config";
 import { usePoolTvlChart } from "@/defi/hooks/usePoolTvlChart";
+import { FC } from "react";
 
-export const PoolTVLChart: React.FC<{
-  poolId: number
+export const PoolTVLChart: FC<{
+  poolId: string;
 }> = ({ poolId }) => {
   const theme = useTheme();
 
@@ -12,16 +13,23 @@ export const PoolTVLChart: React.FC<{
     selectedInterval,
     setSelectedInterval,
     chartSeries,
-    seriesIntervals
+    isLoading,
+    seriesIntervals,
   } = usePoolTvlChart(poolId);
 
   const onIntervalChange = (intervalSymbol: string) => {
-    const interval = DEFI_CONFIG.swapChartIntervals.find(i => i.symbol===intervalSymbol)
+    const interval = DEFI_CONFIG.swapChartIntervals.find(
+      (i) => i.symbol === intervalSymbol
+    );
     if (interval) {
-      setSelectedInterval(interval)
+      // @ts-ignore
+      setSelectedInterval(interval);
     }
   };
 
+  if (isLoading) {
+    return <Skeleton variant="rounded" width="100%" height="420px" />;
+  }
   return (
     <Chart
       title="TVL"
@@ -35,11 +43,12 @@ export const PoolTVLChart: React.FC<{
         color: theme.palette.common.white,
       }}
       onIntervalChange={onIntervalChange}
-      intervals={DEFI_CONFIG.swapChartIntervals.map((interval) => interval.symbol)}
+      intervals={DEFI_CONFIG.swapChartIntervals.map(
+        (interval) => interval.symbol
+      )}
       currentInterval={selectedInterval.symbol}
       timeSlots={seriesIntervals}
-      sx={{background: theme.palette.gradient.secondary}}
+      sx={{ background: theme.palette.gradient.secondary }}
     />
   );
 };
-
