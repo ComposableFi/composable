@@ -1,9 +1,9 @@
 import { TokenId, TOKENS } from "tokens";
 import { StoreSlice } from "../types";
 import { TokensSlice } from "./types";
-import { Asset } from "shared";
+import { Asset, SubstrateNetworkId } from "shared";
 
-const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
+const createTokensSlice: StoreSlice<TokensSlice> = (set, get) => ({
   substrateTokens: {
     hasFetchedTokens: false,
     tokens: Object.values(TOKENS).reduce((agg, token) => {
@@ -54,6 +54,11 @@ const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
         state.substrateTokens.hasFetchedTokens = true;
         return state;
       });
+    },
+    getTokenById: (onChainId: string, network: SubstrateNetworkId) => {
+      return Object.values(get().substrateTokens.tokens).find(
+        (token) => token.getIdOnChain(network)?.toString() === onChainId
+      );
     },
   },
 });

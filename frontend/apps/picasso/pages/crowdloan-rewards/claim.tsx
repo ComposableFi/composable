@@ -14,6 +14,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { crowdLoanSignableMessage } from "@/utils/crowdloanRewards";
 import { useRouter } from "next/router";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
+import type { PalletCrowdloanRewardsModelsReward } from "defi-interfaces";
+import type { Option } from "@polkadot/types";
 import {
   useConnectedAccounts,
   useDotSamaContext,
@@ -28,16 +30,15 @@ import {
 import { useCrowdloanRewardsClaim } from "@/defi/polkadot/hooks/crowdloanRewards/useCrowdloanRewardsClaim";
 import { useCrowdloanRewardsAssociate } from "@/defi/polkadot/hooks/crowdloanRewards/useCrowdloanRewardsAssociate";
 import {
-  useCrowdloanRewardsClaimableRewards,
-  useCrowdloanRewardsClaimedRewards,
   useCrowdloanRewardsContributionAndRewards,
-  useCrowdloanRewardsEligibility,
   useCrowdloanRewardsEthereumAddressAssociatedAccount,
   useCrowdloanRewardsHasStarted,
   useCrowdloanRewardsStepGivenConnectedAccounts,
 } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
 import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
 import { KsmAndEthAssociationInfoBox } from "@/components/Organisms/CrowdloanRewards/KsmAndEthAssociationInfoBox";
+import BigNumber from "bignumber.js";
+import { fromChainIdUnit } from "shared";
 
 const ERROR_MESSAGES = {
   KSM_WALLET_NOT_CONNECTED: {
@@ -70,6 +71,22 @@ export const ClaimLoanPage = () => {
   const theme = useTheme();
   const hasStarted = useCrowdloanRewardsHasStarted(parachainApi);
 
+  const [ethAccountClaimable, setEthAccountClaimable] = useState(
+    new BigNumber(0)
+  );
+  const [ethAccountClaimed, setEthAccountClaimed] = useState(new BigNumber(0));
+  const [ethAccountTotalRewards, setEthAccountTotalRewards] = useState(
+    new BigNumber(0)
+  );
+
+  const [parachainAccountClaimable, setParachainAccountClaimable] = useState(
+    new BigNumber(0)
+  );
+  const [parachainAccountClaimed, setParachainAccountClaimed] = useState(
+    new BigNumber(0)
+  );
+  const [parachainAccountTotalRewards, setParachainAccountTotalRewards] =
+    useState(new BigNumber(0));
   const [ineligibleText, setIneligibleText] = useState({
     title: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.title,
     textBelow: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message,
@@ -94,40 +111,69 @@ export const ClaimLoanPage = () => {
       accounts
     );
 
+  useEffect(() => {
+    if (parachainApi && account) {
+      parachainApi.query.crowdloanRewards
+        .rewards<Option<PalletCrowdloanRewardsModelsReward>>({
+          ethereum: account.toLowerCase(),
+        })
+        .then((result) => {
+          if (result.isSome) {
+            const total = fromChainIdUnit(result.unwrap().total.toString());
+            const claimed = fromChainIdUnit(result.unwrap().claimed.toString());
+
+            setEthAccountClaimable(total.minus(claimed));
+            setEthAccountClaimed(claimed);
+            setEthAccountTotalRewards(total);
+          }
+        });
+    }
+    if (parachainApi && accounts) {
+      accounts.forEach((account) => {
+        parachainApi.query.crowdloanRewards
+          .rewards<Option<PalletCrowdloanRewardsModelsReward>>({
+            relaychain: account.address,
+          })
+          .then((result) => {
+            if (result.isSome) {
+              const total = fromChainIdUnit(result.unwrap().total.toString());
+              const claimed = fromChainIdUnit(
+                result.unwrap().claimed.toString()
+              );
+
+              setParachainAccountClaimable(total.minus(claimed));
+              setParachainAccountClaimed(claimed);
+              setParachainAccountTotalRewards(total);
+            }
+          });
+      });
+    }
+  }, [parachainApi, account, accounts]);
+
+  const isEthAccountEligible = useMemo(
+    () => !ethAccountTotalRewards.isZero(),
+    [ethAccountTotalRewards]
+  );
+  const isPicassoAccountEligible = useMemo(
+    () => !parachainAccountTotalRewards.isZero(),
+    [parachainAccountTotalRewards]
+  );
+
   const nextStep = useCrowdloanRewardsStepGivenConnectedAccounts(
     selectedAccount?.address,
-    account?.toLowerCase()
-  );
-
-  const availableToClaim = useCrowdloanRewardsClaimableRewards(
-    nextStep,
     account?.toLowerCase(),
-    selectedAccount?.address,
-    parachainApi,
-    initialPayment
+    isEthAccountEligible,
+    isPicassoAccountEligible
   );
-
-  const claimedRewards = useCrowdloanRewardsClaimedRewards(
-    account?.toLowerCase(),
-    selectedAccount?.address,
-    parachainApi
-  );
-
-  const { isEthAccountEligible, isPicassoAccountEligible } =
-    useCrowdloanRewardsEligibility(
-      account?.toLowerCase(),
-      selectedAccount?.address
-    );
 
   const isEligibleForBothAddresses =
     isEthAccountEligible && isPicassoAccountEligible;
 
-  const { contributedAmount, totalRewards } =
-    useCrowdloanRewardsContributionAndRewards(
-      nextStep,
-      account?.toLowerCase(),
-      selectedAccount?.address
-    );
+  const { contributedAmount } = useCrowdloanRewardsContributionAndRewards(
+    nextStep,
+    account?.toLowerCase(),
+    selectedAccount?.address
+  );
 
   const flow = useMemo(() => {
     if (isEthAccountEligible && isPicassoAccountEligible) {
@@ -320,13 +366,13 @@ export const ClaimLoanPage = () => {
                 }
                 disabled={
                   !hasStarted ||
-                  availableToClaim.eq(0) ||
+                  ethAccountClaimable.eq(0) ||
                   nextStep === CrowdloanStep.None
                 }
-                claimedRewards={claimedRewards}
+                claimedRewards={ethAccountClaimed}
                 amountContributed={contributedAmount}
-                availableToClaim={availableToClaim}
-                totalRewards={totalRewards}
+                availableToClaim={ethAccountClaimable}
+                totalRewards={ethAccountTotalRewards}
                 readonlyCrowdLoanContribution={true}
                 readonlyAvailableToClaim
                 readonlyTotalPicaVested
@@ -343,13 +389,13 @@ export const ClaimLoanPage = () => {
                 isClaiming={isPendingAssociate || isPendingClaim}
                 disabled={
                   !hasStarted ||
-                  availableToClaim.eq(0) ||
+                  parachainAccountClaimable.eq(0) ||
                   nextStep === CrowdloanStep.None
                 }
-                claimedRewards={claimedRewards}
+                claimedRewards={parachainAccountClaimed}
                 amountContributed={contributedAmount}
-                availableToClaim={availableToClaim}
-                totalRewards={totalRewards}
+                availableToClaim={parachainAccountClaimable}
+                totalRewards={parachainAccountTotalRewards}
                 readonlyCrowdLoanContribution={true}
                 readonlyAvailableToClaim
                 readonlyTotalPicaVested

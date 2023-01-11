@@ -1,22 +1,10 @@
 import { TokenId } from "tokens";
 import { DEFI_CONFIG } from "../../defi/config/index";
-import { Asset, PicassoRpcAsset } from "shared";
+import { Asset, PicassoRpcAsset, SubstrateNetworkId } from "shared";
 import { ApiPromise } from "@polkadot/api";
-import BigNumber from "bignumber.js";
 
 export type SubstrateNetwork = typeof DEFI_CONFIG.substrateNetworks[number];
 export type PicassoAssetsRPCMetadata = Array<PicassoRpcAsset>;
-export type KaruraAssetsRPCMetadata = Array<{
-  name: string;
-  symbol: string;
-  decimals: number;
-  minimalBalance: string;
-  existentialDeposit: BigNumber;
-  ratio: {
-    n: BigNumber;
-    d: BigNumber;
-  };
-}>;
 
 export interface TokensSlice {
   substrateTokens: {
@@ -28,5 +16,9 @@ export interface TokensSlice {
         api: ApiPromise;
       };
     }) => void;
+    getTokenById: (
+      onChainId: string,
+      network: SubstrateNetworkId
+    ) => Asset | undefined;
   };
 }

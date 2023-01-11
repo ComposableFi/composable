@@ -12,5 +12,5 @@ const Template: ComponentStory<typeof PoolTVLChart> = (args) => (
 
 export const Default = Template.bind({});
 Default.args = {
-  poolId: 0,
+  poolId: "0",
 };

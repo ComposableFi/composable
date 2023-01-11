@@ -1,17 +1,16 @@
-import { useMemo } from "react";
+import { FC, useMemo } from "react";
 import { Box, Button } from "@mui/material";
 import { setUiState } from "@/store/ui/ui.slice";
-import { useDotSamaContext, useSelectedAccount } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import { useSwaps } from "@/defi/hooks";
+import { useDotSamaContext } from "substrate-react";
 import useStore from "@/store/useStore";
+import BigNumber from "bignumber.js";
 
-export const SwapButton = () => {
+export const SwapButton: FC<{
+  valid: boolean;
+  assetOneAmount: BigNumber;
+  assetTwoAmount: BigNumber;
+}> = ({ valid, assetOneAmount, assetTwoAmount }) => {
   const { extensionStatus } = useDotSamaContext();
-  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const { valid, assetOneAmount, assetTwoAmount } = useSwaps({
-    selectedAccount,
-  });
   const selectedPool = useStore((store) => store.swaps.selectedPool);
 
   const buttonText = useMemo(() => {
