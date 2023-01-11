@@ -263,8 +263,9 @@ const sidebars = {
                         `user-guides/transfer-usdt-statemine-picasso`,
                     ],
                 },
+                'user-guides/how-to-trade-pica-on-pablo-guide',
                 'user-guides/claim-rewards-guide',
-                'user-guides/polkassembly-picasso-governance',
+                'user-guides/polkassembly-picasso-governance'
             ]
         },
         {
