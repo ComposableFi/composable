@@ -4,8 +4,6 @@
 
 <br />
 
-
-
 ## Monorepo for Composable Finance
 
 [![Latest Release](https://img.shields.io/github/v/tag/composablefi/composable)][latest-url]
