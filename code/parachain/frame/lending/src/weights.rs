@@ -46,12 +46,12 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
 	}
 	fn deposit_collateral() -> Weight {
-		123_789_000_u64
+		Weight::from_ref_time(123_789_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(6_u64))
 			.saturating_add(RocksDbWeight::get().writes(4_u64))
 	}
 	fn withdraw_collateral() -> Weight {
-		138_802_000_u64
+		Weight::from_ref_time(138_802_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(10_u64))
 			.saturating_add(RocksDbWeight::get().writes(3_u64))
 	}
@@ -71,7 +71,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(7 as u64))
 	}
 	fn now() -> Weight {
-		(4_744_000 as u64).saturating_add(RocksDbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(4_744_000 as u64).saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 	fn accrue_interest(_x: u32) -> Weight {
 		Weight::from_ref_time(76_626_000 as u64)
@@ -82,7 +82,8 @@ impl WeightInfo for () {
 		Weight::from_ref_time(3_126_000 as u64)
 	}
 	fn available_funds() -> Weight {
-		(16_450_000 as u64).saturating_add(RocksDbWeight::get().reads(2 as u64))
+		Weight::from_ref_time(16_450_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 	}
 	fn handle_withdrawable() -> Weight {
 		Weight::from_ref_time(20_716_000 as u64)

@@ -3,7 +3,7 @@
 #![allow(unused_imports)]
 #![allow(clippy::unnecessary_cast)]
 
-use frame_support::{traits::Get, weights::{RefTimeWeight, Weight, constants::RocksDbWeight}};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
@@ -26,58 +26,58 @@ pub trait WeightInfo {
 // For backwards compatibility and tests
 impl WeightInfo for () {
   fn set_relayer() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
   }
 
   fn rotate_relayer() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
   }
 
   fn set_network() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
   }
 
   fn set_budget() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
   }
 
   fn transfer_to() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
   }
 
   fn accept_transfer() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
   }
 
   fn claim_stale_to() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
   }
 
   fn timelocked_mint() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
   }
 
   fn set_timelock_duration() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
   }
 
   fn rescind_timelocked_mint() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
   }
 
   fn claim_to() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
   }
 
   fn update_asset_mapping() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
   }
 
   fn add_remote_amm_id() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
   }
   fn remove_remote_amm_id() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
   }
 }
 

@@ -6,7 +6,7 @@ use parity_wasm::elements::{Instruction, Module};
 use scale_info::TypeInfo;
 use wasm_instrument::gas_metering::{self, MemoryGrowCost, Rules};
 
-pub const INSTRUCTIONS_MULTIPLIER: u32 = 100;
+pub const INSTRUCTIONS_MULTIPLIER: u64 = 100;
 
 /// Current instrumentation version
 /// Must be incremented whenever the instrumentation is updated.
@@ -51,11 +51,12 @@ type WeightFn = fn(n: u32) -> Weight;
 fn calculate_weight<T: Config>(weight_fn: WeightFn, n_additional_instrs: u32) -> u32 {
 	(weight_fn(1).saturating_sub(weight_fn(0)).saturating_sub(
 		T::WeightInfo::instruction_I64Const(1)
-			.saturating_sub(T::WeightInfo::instruction_I64Const(0)) /
-			2,
-	) as u32)
-		.saturating_mul(n_additional_instrs) /
-		INSTRUCTIONS_MULTIPLIER
+			.saturating_sub(T::WeightInfo::instruction_I64Const(0))
+			.saturating_div(2),
+	))
+	.saturating_mul(n_additional_instrs as u64)
+	.saturating_div(INSTRUCTIONS_MULTIPLIER)
+	.ref_time() as u32
 }
 
 /// Calculates a weight that is dependent on other weight. Eg. `else` because it cannot
@@ -63,8 +64,9 @@ fn calculate_weight<T: Config>(weight_fn: WeightFn, n_additional_instrs: u32) ->
 fn calculate_weight_custom<T: Config>(weight_fn: WeightFn, custom_fn: WeightFn) -> u32 {
 	(weight_fn(1)
 		.saturating_sub(weight_fn(0))
-		.saturating_sub(custom_fn(1).saturating_sub(custom_fn(0)) / 2) as u32) /
-		INSTRUCTIONS_MULTIPLIER
+		.saturating_sub(custom_fn(1).saturating_sub(custom_fn(0)).saturating_div(2)))
+	.saturating_div(INSTRUCTIONS_MULTIPLIER)
+	.ref_time() as u32
 }
 
 #[derive(Encode, Decode, TypeInfo)]

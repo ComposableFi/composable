@@ -4,8 +4,6 @@ use super::*;
 use common::governance::native::*;
 use frame_support::traits::LockIdentifier;
 
-pub type NativeDemocracy = democracy::Instance1;
-
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
 
@@ -30,7 +28,7 @@ impl membership::Config<NativeCouncilMembership> for Runtime {
 
 impl collective::Config<NativeCouncilCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
-	type Proposal = Call;
+	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
@@ -56,7 +54,7 @@ impl membership::Config<NativeTechnicalMembership> for Runtime {
 
 impl collective::Config<NativeTechnicalMembership> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
-	type Proposal = Call;
+	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
@@ -82,11 +80,11 @@ parameter_types! {
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
 	pub const DemocracyId: LockIdentifier = *b"democrac";
-	pub RootOrigin: Origin = frame_system::RawOrigin::Root.into();
+	pub RootOrigin: RuntimeOrigin = frame_system::RawOrigin::Root.into();
 }
 
-impl democracy::Config<NativeDemocracy> for Runtime {
-	type Proposal = Call;
+impl democracy::Config for Runtime {
+	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type EnactmentPeriod = EnactmentPeriod;
@@ -121,10 +119,6 @@ impl democracy::Config<NativeDemocracy> for Runtime {
 	type PreimageByteDeposit = PreimageByteDeposit;
 	type Scheduler = Scheduler;
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
-	type EnsureRoot = EnsureRoot<AccountId>;
-	type DemocracyId = DemocracyId;
-	type RuntimeOrigin = RuntimeOrigin;
-	type ProtocolRoot = RootOrigin;
 }
 
 // NOTE: making it multi via module_cdp_treasury seems fails other pallets

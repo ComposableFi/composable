@@ -50,7 +50,7 @@ pub type Barrier = (
 	TakeWeightCredit,
 );
 
-pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, RelayNetwork>;
+pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, RelayNetwork>;
 
 /// The means for routing XCM messages which are not for local execution into the right message
 /// queues.
@@ -93,18 +93,18 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	// Sovereign account converter; this attempts to derive an `AccountId` from the origin location
 	// using `LocationToAccountId` and then turn that into the usual `Signed` origin. Useful for
 	// foreign chains who want to have a local sovereign account on this chain which they control.
-	SovereignSignedViaLocation<LocationToAccountId, Origin>,
+	SovereignSignedViaLocation<LocationToAccountId, RuntimeOrigin>,
 	// Native converter for Relay-chain (Parent) location; will converts to a `Relay` origin when
 	// recognized.
-	RelayChainAsNative<RelayOrigin, Origin>,
+	RelayChainAsNative<RelayOrigin, RuntimeOrigin>,
 	// Native converter for sibling Parachains; will convert to a `SiblingPara` origin when
 	// recognized.
-	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, Origin>,
+	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, RuntimeOrigin>,
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
-	SignedAccountId32AsNative<RelayNetwork, Origin>,
+	SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
 	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
-	XcmPassthrough<Origin>,
+	XcmPassthrough<RuntimeOrigin>,
 );
 
 pub struct StaticAssetsMap;
@@ -161,11 +161,11 @@ impl<
 		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
 	> DropAssets for CaptureDropAssets<Treasury, PriceConverter, AssetConverter>
 {
-	fn drop_assets(origin: &MultiLocation, assets: Assets) -> Weight {
+	fn drop_assets(origin: &MultiLocation, assets: Assets) -> u64 {
 		let multi_assets: Vec<MultiAsset> = assets.into();
 		let mut can_return_on_request = vec![];
 		log::info!(target : "xcmp", "drop_assets");
-		let mut weight = Weight::zero();
+		let mut weight = 0;
 		for asset in multi_assets {
 			if let MultiAsset { id: Concrete(location), fun: Fungible(_amount) } = asset.clone() {
 				if let Some(_converted) = AssetConverter::convert(location) {
@@ -200,7 +200,7 @@ impl xcm_executor::Config for XcmConfig {
 	type IsTeleporter = (); // <- should be enough to allow teleportation of PICA
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 
 	type Trader = Trader;
 	type ResponseHandler = RelayerXcm;
@@ -243,7 +243,7 @@ impl orml_xtokens::Config for Runtime {
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = ThisLocal;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type MaxAssetsForTransfer = XcmMaxAssetsForTransfer;
@@ -258,7 +258,7 @@ impl orml_unknown_tokens::Config for Runtime {
 
 parameter_types! {
 	// One XCM operation is 200_000_000 weight, cross-chain transfer ~= 2x of transfer.
-	pub const UnitWeightCost: Weight = 200_000_000;
+	pub const UnitWeightCost: u64 = 200_000_000;
 	pub const MaxInstructions: u32 = 100;
 }
 
@@ -270,7 +270,7 @@ pub fn xcm_asset_fee_estimator(instructions: u8, asset_id: CurrencyId) -> Balanc
 		.1
 }
 
-pub fn xcm_fee_estimator(instructions: u8) -> Weight {
+pub fn xcm_fee_estimator(instructions: u8) -> u64 {
 	assert!((instructions as u32) <= MaxInstructions::get());
 	UnitWeightCost::get() * instructions as u64
 }
@@ -284,10 +284,10 @@ parameter_types! {
 }
 
 pub type CouncilToPlurality =
-	BackingToPlurality<Origin, collective::Origin<Runtime, NativeCouncilCollective>, CouncilBodyId>;
+	BackingToPlurality<RuntimeOrigin, collective::Origin<Runtime, NativeCouncilCollective>, CouncilBodyId>;
 
-pub struct RootToHereLocation<Origin, AccountId, Network>(
-	PhantomData<(Origin, AccountId, Network)>,
+pub struct RootToHereLocation<RuntimeOrigin, AccountId, Network>(
+	PhantomData<(RuntimeOrigin, AccountId, Network)>,
 );
 impl<Origin: OriginTrait + Clone, AccountId: Into<[u8; 32]>, Network: Get<NetworkId>>
 	xcm_executor::traits::Convert<Origin, MultiLocation>
@@ -308,12 +308,12 @@ where
 pub type RootOrNativeCouncilOrSignedLocation = (RootOrNativeCouncilLocation, LocalOriginToLocation);
 
 pub type RootOrNativeCouncilLocation =
-	(CouncilToPlurality, RootToHereLocation<Origin, AccountId, RelayNetwork>);
+	(CouncilToPlurality, RootToHereLocation<RuntimeOrigin, AccountId, RelayNetwork>);
 
 pub struct RootExecuteFilter;
 
-impl Contains<(MultiLocation, Xcm<Call>)> for RootExecuteFilter {
-	fn contains((origin, _call): &(MultiLocation, Xcm<Call>)) -> bool {
+impl Contains<(MultiLocation, Xcm<RuntimeCall>)> for RootExecuteFilter {
+	fn contains((origin, _call): &(MultiLocation, Xcm<RuntimeCall>)) -> bool {
 		origin == &MultiLocation { parents: 0, interior: Here }
 	}
 }
@@ -321,14 +321,14 @@ impl Contains<(MultiLocation, Xcm<Call>)> for RootExecuteFilter {
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmRouter = XcmRouter;
-	type SendXcmOrigin = EnsureXcmOrigin<Origin, RootOrNativeCouncilLocation>;
-	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, RootOrNativeCouncilOrSignedLocation>;
+	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, RootOrNativeCouncilLocation>;
+	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, RootOrNativeCouncilOrSignedLocation>;
 	type XcmExecuteFilter = RootExecuteFilter;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = Everything;
 	type LocationInverter = LocationInverter<Ancestry>;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
 

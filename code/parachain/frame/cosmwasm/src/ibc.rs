@@ -34,7 +34,7 @@ use sp_runtime::SaturatedConversion;
 use sp_std::{marker::PhantomData, str::FromStr};
 
 use crate::runtimes::wasmi::InitialStorageMutability;
-use frame_support::{ensure, traits::Get, weights::Weight, RuntimeDebug};
+use frame_support::{ensure, traits::Get, RuntimeDebug};
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
 	core::{
@@ -270,7 +270,7 @@ impl<T: Config> Router<T> {
 		address: T::AccountIdExtended,
 		contract_info: ContractInfoOf<T>,
 	) -> Result<VmPerContract<T>, IbcError> {
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let vm = {
 			let runtime =
 				<Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
@@ -334,7 +334,7 @@ impl<T: Config> Router<T> {
 			),
 			Addr::unchecked(relayer.to_string()),
 		);
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (data, _) = cosmwasm_system_entrypoint_serialize::<
@@ -473,7 +473,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			channel: map_channel(port_id, channel_id, metadata)?,
 			counterparty_version: counterparty_version.to_string(),
 		};
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
@@ -501,7 +501,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let message = IbcChannelConnectMsg::OpenConfirm {
 			channel: map_channel(port_id, channel_id, metadata)?,
 		};
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
@@ -538,7 +538,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					.to_string(),
 			),
 		};
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
@@ -565,7 +565,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let message = IbcChannelCloseMsg::CloseConfirm {
 			channel: map_channel(port_id, channel_id, metadata)?,
 		};
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
@@ -622,7 +622,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			Addr::unchecked(relayer.to_string()),
 		);
 
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
@@ -665,7 +665,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			Addr::unchecked(relayer.to_string()),
 		);
 
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<

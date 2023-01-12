@@ -72,8 +72,7 @@ impl<T: frame_system::Config> crowdloan_rewards::weights::WeightInfo for WeightI
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
-	
-	fn unlock_rewards_for(x: u32) -> Weight {
-		x as _
+	fn unlock_rewards_for(_: u32) -> Weight {
+    Weight::from_ref_time(10_000)
 	}
 }

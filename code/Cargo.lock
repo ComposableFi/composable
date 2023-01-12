@@ -742,24 +742,24 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
 dependencies = [
- "beefy-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "beefy-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "beefy-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "beefy-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "ckb-merkle-mountain-range",
  "derive_more",
- "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "light-client-common 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "pallet-beefy-mmr 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "pallet-mmr 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "light-client-common 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "pallet-beefy-mmr 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "pallet-mmr 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "parity-scale-codec",
  "rs_merkle",
- "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-core-hashing 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-mmr-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-core-hashing 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-mmr-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
 ]
 
 [[package]]
@@ -788,17 +788,17 @@ dependencies = [
 [[package]]
 name = "beefy-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
 dependencies = [
- "beefy-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "beefy-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "ckb-merkle-mountain-range",
  "derive_more",
- "light-client-common 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "light-client-common 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "parity-scale-codec",
  "rs_merkle",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-mmr-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-mmr-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
 ]
 
 [[package]]
@@ -1702,7 +1702,7 @@ dependencies = [
  "pablo-runtime-api",
  "pallet-assets",
  "pallet-crowdloan-rewards",
- "pallet-ibc 0.0.1 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "pallet-ibc 0.0.1 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "pallet-transaction-payment-rpc",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
@@ -1723,6 +1723,7 @@ dependencies = [
  "sc-finality-grandpa",
  "sc-keystore",
  "sc-network",
+ "sc-network-common",
  "sc-rpc",
  "sc-rpc-api",
  "sc-service",
@@ -3284,8 +3285,8 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex",
  "hex-literal",
- "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "ibc-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "ibc-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "ibc-runtime-api",
  "lending-runtime-api",
  "orml-tokens",
@@ -3312,8 +3313,8 @@ dependencies = [
  "pallet-dutch-auction",
  "pallet-fnft",
  "pallet-governance-registry",
- "pallet-ibc 0.0.1 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "pallet-ibc-ping 0.0.1 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "pallet-ibc 0.0.1 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "pallet-ibc-ping 0.0.1 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "pallet-identity",
  "pallet-indices",
  "pallet-lending",
@@ -4844,22 +4845,22 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
 dependencies = [
  "anyhow",
  "derive_more",
  "finality-grandpa",
- "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "hash-db",
- "light-client-common 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "light-client-common 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "parity-scale-codec",
- "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-finality-grandpa 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-finality-grandpa 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "sp-storage 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
 ]
 
 [[package]]
@@ -4886,22 +4887,22 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-verifier"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
 dependencies = [
  "anyhow",
  "finality-grandpa",
- "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "grandpa-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "grandpa-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "hash-db",
- "light-client-common 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "light-client-common 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "parity-scale-codec",
  "primitive-types",
- "sp-finality-grandpa 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-state-machine 0.12.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-finality-grandpa 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-state-machine 0.12.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
 ]
 
 [[package]]
@@ -5331,6 +5332,33 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
+dependencies = [
+ "derive_more",
+ "flex-error",
+ "ibc-derive 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "ics23",
+ "num-traits",
+ "parity-scale-codec",
+ "primitive-types",
+ "prost 0.11.6",
+ "safe-regex",
+ "scale-info",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "subtle-encoding",
+ "tendermint",
+ "tendermint-proto",
+ "time 0.3.17",
+ "tracing",
+ "uint",
+]
+
+[[package]]
+name = "ibc"
+version = "0.15.0"
 source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
 dependencies = [
  "derive_more",
@@ -5383,6 +5411,18 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
+dependencies = [
+ "convert_case 0.6.0",
+ "proc-macro-crate 1.2.1",
+ "proc-macro2 1.0.49",
+ "quote 1.0.23",
+ "syn 1.0.107",
+]
+
+[[package]]
+name = "ibc-derive"
+version = "0.1.0"
 source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
 dependencies = [
  "convert_case 0.6.0",
@@ -5407,6 +5447,30 @@ dependencies = [
 [[package]]
 name = "ibc-primitives"
 version = "0.1.0"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
+dependencies = [
+ "base58",
+ "blake2",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "hex",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "parity-scale-codec",
+ "ripemd",
+ "scale-info",
+ "serde",
+ "sha2 0.10.6",
+ "sha3",
+ "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-runtime-interface 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+]
+
+[[package]]
+name = "ibc-primitives"
+version = "0.1.0"
 source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
 dependencies = [
  "base58",
@@ -5416,7 +5480,6 @@ dependencies = [
  "parity-scale-codec",
  "ripemd",
  "scale-info",
- "serde",
  "sha2 0.10.6",
  "sha3",
  "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
@@ -5453,6 +5516,18 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
+dependencies = [
+ "base64 0.13.1",
+ "bytes 1.3.0",
+ "prost 0.11.6",
+ "serde",
+ "tendermint-proto",
+]
+
+[[package]]
+name = "ibc-proto"
+version = "0.18.0"
 source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
 dependencies = [
  "base64 0.13.1",
@@ -5477,24 +5552,24 @@ dependencies = [
 [[package]]
 name = "ibc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
 dependencies = [
- "ibc-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "pallet-ibc 0.0.1 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "ibc-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "pallet-ibc 0.0.1 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "parity-scale-codec",
- "sp-api 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-api 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
 ]
 
 [[package]]
 name = "ics07-tendermint"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
 dependencies = [
  "bytes 1.3.0",
  "flex-error",
- "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "ics23",
  "prost 0.11.6",
  "serde",
@@ -5529,26 +5604,26 @@ dependencies = [
 [[package]]
 name = "ics10-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
 dependencies = [
  "anyhow",
  "derive_more",
  "finality-grandpa",
- "grandpa-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "grandpa-light-client-verifier 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "light-client-common 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "grandpa-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "grandpa-light-client-verifier 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "light-client-common 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "parity-scale-codec",
  "primitive-types",
  "prost 0.11.6",
  "prost-build 0.11.6",
  "prost-types 0.11.6",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-finality-grandpa 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-finality-grandpa 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "tendermint",
  "tendermint-proto",
 ]
@@ -5583,27 +5658,27 @@ dependencies = [
 [[package]]
 name = "ics11-beefy"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
 dependencies = [
  "anyhow",
- "beefy-light-client 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "beefy-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "beefy-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "beefy-light-client 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "beefy-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "beefy-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "bytes 1.3.0",
  "derive_more",
- "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "light-client-common 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "light-client-common 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "parity-scale-codec",
  "primitive-types",
  "prost 0.11.6",
  "prost-build 0.11.6",
  "prost-types 0.11.6",
  "serde",
- "sp-mmr-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-storage 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-mmr-primitives 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-storage 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "tendermint",
  "tendermint-proto",
 ]
@@ -7119,17 +7194,17 @@ dependencies = [
 [[package]]
 name = "light-client-common"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
 dependencies = [
  "anyhow",
  "derive_more",
  "hash-db",
- "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "parity-scale-codec",
  "primitive-types",
  "serde",
- "sp-storage 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-storage 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
 ]
 
 [[package]]
@@ -8969,44 +9044,44 @@ dependencies = [
 [[package]]
 name = "pallet-ibc"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
 dependencies = [
- "beefy-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.27)",
+ "beefy-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.30)",
  "derive_more",
  "finality-grandpa",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "grandpa-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "frame-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "grandpa-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "hex",
  "hex-literal",
- "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "ibc-derive 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "ibc-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "ics07-tendermint 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "ics10-grandpa 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "ics11-beefy 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "ibc-derive 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "ibc-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "ics07-tendermint 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "ics10-grandpa 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "ics11-beefy 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "ics23",
- "light-client-common 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "light-client-common 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "log 0.4.17",
- "pallet-ibc-ping 0.0.1 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "pallet-timestamp 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "parachain-info 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.27)",
+ "pallet-ibc-ping 0.0.1 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "pallet-timestamp 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "parachain-info 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.30)",
  "parity-scale-codec",
  "prost 0.11.6",
  "scale-info",
  "serde",
  "serde_json",
  "sha2 0.10.6",
- "simple-iavl 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-finality-grandpa 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "simple-iavl 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-finality-grandpa 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "tendermint",
  "tendermint-light-client-verifier",
  "tendermint-proto",
@@ -9060,19 +9135,19 @@ dependencies = [
 [[package]]
 name = "pallet-ibc-ping"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
 dependencies = [
- "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
- "ibc-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355)",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "ibc 0.15.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
+ "ibc-primitives 0.1.0 (git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30)",
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27)",
+ "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
 ]
 
 [[package]]
@@ -14690,7 +14765,7 @@ dependencies = [
 [[package]]
 name = "simple-iavl"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri/?rev=c7d2f2d812074850c3b5ab7e42fa582f72582355#c7d2f2d812074850c3b5ab7e42fa582f72582355"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.30#6160c518c21b75f9fa5026a3edf5a68f110d093e"
 dependencies = [
  "bytes 1.3.0",
  "ics23",

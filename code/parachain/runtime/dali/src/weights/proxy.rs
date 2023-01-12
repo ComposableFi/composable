@@ -109,21 +109,10 @@ impl<T: frame_system::Config> proxy::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
-	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
-	// Storage: Proxy Proxies (r:1 w:1)
-	/// The range of component `p` is `[1, 3]`.
-	fn anonymous(_p: u32, ) -> Weight {
-		Weight::from_ref_time(56_123_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+	fn create_pure(_: u32) -> Weight {
+		Weight::from_ref_time(10_000 as u64)
 	}
-	// Storage: Proxy Proxies (r:1 w:1)
-	/// The range of component `p` is `[0, 2]`.
-	fn kill_anonymous(p: u32, ) -> Weight {
-		Weight::from_ref_time(31_468_000 as u64)
-			// Standard Error: 3_488_000
-			.saturating_add(Weight::from_ref_time(152_000 as u64).saturating_mul(p as u64))
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+	fn kill_pure(_: u32) -> Weight {
+		Weight::from_ref_time(10_000 as u64)
 	}
 }

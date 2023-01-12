@@ -17,7 +17,7 @@ pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: DutchAuction Configurations (r:0 w:1)
 	fn add_configuration() -> Weight {
-		(8_434_000 as u64).saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(8_434_000 as u64).saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: DutchAuction OrdersIndex (r:1 w:1)
 	// Storage: System Account (r:1 w:1)

@@ -83,9 +83,10 @@ use sp_std::prelude::*;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Contains, Everything, Get, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
+  pallet_prelude::DispatchClass,
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
 	PalletId, StorageValue,
@@ -374,25 +375,12 @@ impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrD
 }
 
 impl asset_tx_payment::Config for Runtime {
+  type RuntimeEvent = RuntimeEvent;
 	type Fungibles = Tokens;
 	type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
 		PriceConverter<AssetsRegistry>,
 		TransferToTreasuryOrDrop,
 	>;
-
-	type UseUserConfiguration = ConstBool<true>;
-
-	type WeightInfo = weights::asset_tx_payment::WeightInfo<Runtime>;
-
-	type ConfigurationOrigin = EnsureRootOrHalfNativeCouncil;
-
-	type ConfigurationExistentialDeposit = NativeExistentialDeposit;
-
-	type PayableCall = Call;
-
-	type Lock = Assets;
-
-	type BalanceConverter = PriceConverter<AssetsRegistry>;
 }
 
 impl sudo::Config for Runtime {
@@ -413,18 +401,18 @@ impl indices::Config for Runtime {
 	type WeightInfo = weights::indices::WeightInfo<Runtime>;
 }
 
-pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
 
 impl<LocalCall> system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
-	Call: From<LocalCall>,
+	RuntimeCall: From<LocalCall>,
 {
 	fn create_transaction<C: system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-		call: Call,
+		call: RuntimeCall,
 		public: <Signature as sp_runtime::traits::Verify>::Signer,
 		account: AccountId,
 		nonce: AccountIndex,
-	) -> Option<(Call, <UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload)> {
+	) -> Option<(RuntimeCall, <UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload)> {
 		use sp_runtime::{
 			generic::{Era, SignedPayload},
 			traits::StaticLookup,
@@ -469,9 +457,9 @@ impl system::offchain::SigningTypes for Runtime {
 
 impl<C> system::offchain::SendTransactionTypes<C> for Runtime
 where
-	Call: From<C>,
+	RuntimeCall: From<C>,
 {
-	type OverarchingCall = Call;
+	type OverarchingCall = RuntimeCall;
 	type Extrinsic = UncheckedExtrinsic;
 }
 
@@ -522,9 +510,9 @@ impl oracle::Config for Runtime {
 // See https://github.com/paritytech/cumulus/blob/polkadot-v0.9.8/polkadot-parachains/rococo/src/lib.rs for details.
 parameter_types! {
 	/// 1/4 of block weight is reserved for XCMP
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
+	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 	/// 1/4 of block weight is reserved for handling Downward messages
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
+	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -627,6 +615,9 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
+  type OnSlash = ();
+  type OnTransfer = ();
+  type OnDeposit = ();
 }
 
 parameter_types! {
@@ -676,19 +667,19 @@ impl utility::Config for Runtime {
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
 }
 
-impl InstanceFilter<Call> for ProxyType {
-	fn filter(&self, c: &Call) -> bool {
+impl InstanceFilter<RuntimeCall> for ProxyType {
+	fn filter(&self, c: &RuntimeCall) -> bool {
 		match self {
 			ProxyType::Any => true,
 			ProxyType::Governance => matches!(
 				c,
-				Call::Democracy(..) |
-					Call::Council(..) | Call::TechnicalCommittee(..) |
-					Call::Treasury(..) | Call::Utility(..)
+				RuntimeCall::Democracy(..) |
+					RuntimeCall::Council(..) | RuntimeCall::TechnicalCommittee(..) |
+					RuntimeCall::Treasury(..) | RuntimeCall::Utility(..)
 			),
 			ProxyType::CancelProxy => {
 				// TODO (vim): We might not need this
-				matches!(c, Call::Proxy(proxy::Call::reject_announcement { .. }))
+				matches!(c, RuntimeCall::Proxy(proxy::Call::reject_announcement { .. }))
 			},
 		}
 	}
@@ -893,10 +884,10 @@ impl pallet_staking_rewards::Config for Runtime {
 // TODO(hussein-aitlahcen):
 // remove IBC pallets from the call filter once centauri is merged
 pub struct BaseCallFilter;
-impl Contains<Call> for BaseCallFilter {
-	fn contains(call: &Call) -> bool {
+impl Contains<RuntimeCall> for BaseCallFilter {
+	fn contains(call: &RuntimeCall) -> bool {
 		!(call_filter::Pallet::<Runtime>::contains(call) ||
-			matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Treasury(_)))
+			matches!(call, RuntimeCall::Tokens(_) | RuntimeCall::Indices(_) | RuntimeCall::Treasury(_)))
 	}
 }
 
@@ -965,7 +956,7 @@ impl dutch_auction::Config for Runtime {
 	type UnixTime = Timestamp;
 	type WeightInfo = weights::dutch_auction::WeightInfo<Runtime>;
 	type PositionExistentialDeposit = NativeExistentialDeposit;
-	type XcmOrigin = Origin;
+	type XcmOrigin = RuntimeOrigin;
 	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type XcmSender = XcmRouter;
 }
@@ -1334,7 +1325,7 @@ construct_runtime!(
 		Council: collective::<Instance1> = 30,
 		CouncilMembership: membership::<Instance1> = 31,
 		Treasury: treasury::<Instance1> = 32,
-		Democracy: democracy::<Instance1> = 33,
+		Democracy: democracy = 33,
 		TechnicalCommittee: collective::<Instance2> = 70,
 		TechnicalCommitteeMembership: membership::<Instance2> = 71,
 
@@ -1402,7 +1393,7 @@ pub type SignedExtra = (
 	asset_tx_payment::ChargeAssetTxPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = executive::Executive<

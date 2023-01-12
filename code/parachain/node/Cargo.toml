@@ -38,7 +38,7 @@ lending-runtime-api = { path = "../frame/lending/runtime-api" }
 pablo-rpc = { path = "../frame/pablo/rpc" }
 pablo-runtime-api = { path = "../frame/pablo/runtime-api" }
 
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "c7d2f2d812074850c3b5ab7e42fa582f72582355" }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", branch = "polkadot-v0.9.30" }
 
 # FRAME Dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
@@ -60,6 +60,7 @@ sc-consensus-slots = { git = "https://github.com/paritytech/substrate", branch =
 sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 sc-service = { git = "https://github.com/paritytech/substrate", features = [

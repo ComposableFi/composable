@@ -15,42 +15,42 @@ pub trait WeightInfo {
 
 impl WeightInfo for () {
 	fn create_reward_pool(_r: u32) -> Weight {
-		10_000
+		Weight::from_ref_time(10_000)
 	}
 
 	fn stake(_r: u32) -> Weight {
-		10_000
+		Weight::from_ref_time(10_000)
 	}
 
 	fn extend(_r: u32) -> Weight {
-		10_000
+		Weight::from_ref_time(10_000)
 	}
 
 	fn unstake(_r: u32) -> Weight {
-		10_000
+		Weight::from_ref_time(10_000)
 	}
 
 	fn split(_r: u32) -> Weight {
-		10_000
+		Weight::from_ref_time(10_000)
 	}
 
 	fn reward_accumulation_hook_reward_update_calculation() -> Weight {
-		10_000
+		Weight::from_ref_time(10_000)
 	}
 
 	fn unix_time_now() -> Weight {
-		10_000
+		Weight::from_ref_time(10_000)
 	}
 
 	fn update_rewards_pool(_r: u32) -> Weight {
-		10_000
+		Weight::from_ref_time(10_000)
 	}
 
 	fn claim(_r: u32) -> Weight {
-		10_000
+		Weight::from_ref_time(10_000)
 	}
 
 	fn add_to_rewards_pot() -> Weight {
-		10_000
+		Weight::from_ref_time(10_000)
 	}
 }

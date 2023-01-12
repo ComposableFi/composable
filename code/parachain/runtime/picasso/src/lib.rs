@@ -420,20 +420,6 @@ impl asset_tx_payment::Config for Runtime {
 		PriceConverter<AssetsRegistry>,
 		TransferToTreasuryOrDrop,
 	>;
-
-	// type UseUserConfiguration = ConstBool<true>;
-
-	// type WeightInfo = weights::asset_tx_payment::WeightInfo<Runtime>;
-
-	// type ConfigurationOrigin = EnsureRootOrTwoThirdNativeCouncil;
-
-	// type ConfigurationExistentialDeposit = NativeExistentialDeposit;
-
-	// type PayableCall = Call;
-
-	// type Lock = Assets;
-
-	// type BalanceConverter = PriceConverter<AssetsRegistry>;
 }
 
 impl sudo::Config for Runtime {

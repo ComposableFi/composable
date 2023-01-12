@@ -762,7 +762,10 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 		// TODO: not up to date as whole composable setup
 		!matches!(
 			call,
-			RuntimeCall::Tokens(_) | RuntimeCall::Indices(_) | RuntimeCall::Democracy(_) | RuntimeCall::Treasury(_)
+			RuntimeCall::Tokens(_) |
+				RuntimeCall::Indices(_) |
+				RuntimeCall::Democracy(_) |
+				RuntimeCall::Treasury(_)
 		)
 	}
 }
