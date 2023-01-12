@@ -49,6 +49,8 @@ mod validation;
 pub mod prelude;
 pub mod weights;
 
+use core::num::{NonZeroU128, NonZeroU64};
+
 use crate::prelude::*;
 
 use composable_support::math::safe::{SafeDiv, SafeMul, SafeSub};
@@ -213,7 +215,7 @@ pub mod pallet {
 	pub enum RewardAccumulationHookError {
 		BackToTheFuture,
 		RewardsPotEmpty,
-		ArithmeticError,
+		Overflow,
 	}
 
 	#[pallet::error]
@@ -737,18 +739,17 @@ pub mod pallet {
 					);
 
 					ensure!(
-						initial_reward_config.iter().all(|(_, reward_config)| {
+						initial_reward_config.iter().all(|(reward_asset_id, reward_config)| {
 							if reward_config.reward_rate.amount > T::Balance::zero() {
-								// If none zero reward, check that the slashed amount is greater
-								// than ED
+								// if the reward rate amount is non-zero, then ensure that the
+								// slashed amount is >= the exisistential deposit for this asset
 								lock.unlock_penalty
 									.left_from_one()
 									.mul(reward_config.reward_rate.amount) >=
-									existential_deposit
+									T::ExistentialDeposits::get(reward_asset_id)
 							} else {
-								// Else, return true so check passes
-								// NOTE(connor): This is a band-aid that some better type management
-								// would remove the need for, outside the scope of this PR
+								// otherwise, since there are no rewards, no need to check against
+								// the existential deposit
 								true
 							}
 						}),
@@ -1466,8 +1467,6 @@ pub mod pallet {
 			reward: &mut Reward<T::Balance>,
 			now_seconds: u64,
 		) {
-			use RewardAccumulationCalculationError::*;
-
 			let pool_account = Self::pool_account_id(&pool_id);
 
 			match do_reward_accumulation::<T>(
@@ -1479,18 +1478,19 @@ pub mod pallet {
 			) {
 				Ok(()) => {},
 				Err(err) => {
-					let error_type = match err {
-						BackToTheFuture => RewardAccumulationHookError::BackToTheFuture,
-						// REVIEW(benluelo): Does this need to be inserted here? it's written to in
-						// do_reward_accumulation as well.
-						RewardsPotEmpty => {
-							if !RewardsPotIsEmpty::<T>::contains_key(pool_id, reward_asset_id) {
-								RewardsPotIsEmpty::<T>::insert(pool_id, reward_asset_id, ());
-							}
-							RewardAccumulationHookError::RewardsPotEmpty
-						},
-						ArithmeticError => RewardAccumulationHookError::ArithmeticError,
-					};
+					let error_type = err.into();
+
+					if let RewardAccumulationHookError::RewardsPotEmpty = error_type {
+						// the event is only to be emitted once, so check if the pot was already
+						// emptied first
+						if !RewardsPotIsEmpty::<T>::contains_key(pool_id, reward_asset_id) {
+							RewardsPotIsEmpty::<T>::insert(pool_id, reward_asset_id, ());
+						} else {
+							// if the pot was already empty, then there wasn't *really* an error;
+							// short circuit here so the event doesn't get emitted.
+							return
+						}
+					}
 
 					Self::deposit_event(Event::<T>::RewardAccumulationHookError {
 						pool_id,
@@ -1642,15 +1642,15 @@ fn update_rewards_pool<T: Config>(
 
 		for (asset_id, update) in reward_updates {
 			let reward = pool.rewards.get_mut(&asset_id).ok_or(Error::<T>::RewardAssetNotFound)?;
-			match do_reward_accumulation::<T>(pool_id, asset_id, reward, &pool_account, now_seconds)
+			if let Err(err) =
+				do_reward_accumulation::<T>(pool_id, asset_id, reward, &pool_account, now_seconds)
 			{
-				Ok(()) => {},
-				Err(RewardAccumulationCalculationError::BackToTheFuture) =>
-					return Err(Error::<T>::BackToTheFuture.into()),
-				Err(RewardAccumulationCalculationError::RewardsPotEmpty) =>
-					return Err(Error::<T>::RewardsPotEmpty.into()),
-				Err(RewardAccumulationCalculationError::ArithmeticError) =>
-					return Err(Error::<T>::ArithmeticError.into()),
+				use RewardAccumulationCalculationError::*;
+				return match err {
+					BackToTheFuture => Err(Error::<T>::BackToTheFuture.into()),
+					RewardsPotEmpty => Err(Error::<T>::RewardsPotEmpty.into()),
+					Overflow => Err(Error::<T>::ArithmeticError.into()),
+				}
 			}
 
 			reward.reward_rate = update.reward_rate;
@@ -1663,6 +1663,13 @@ fn update_rewards_pool<T: Config>(
 }
 
 /// Calculates the update to the reward and unlocks the accumulated rewards from the pool account.
+///
+/// NOTE: `<uX as Div<NonZeroUX>>::div` is used throughout this function as a safe,
+/// non-panicking alternative to the regular `Div::div` implementation on the primitive numeric
+/// types. The semantics are the same for both functions, see [here][nonzero-impls] for more
+/// information.
+///
+/// [nonzero-impls]: https://doc.rust-lang.org/src/core/num/nonzero.rs.html#268-308
 pub(crate) fn do_reward_accumulation<T: Config>(
 	pool_id: T::AssetId,
 	asset_id: T::AssetId,
@@ -1670,9 +1677,10 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 	pool_account: &T::AccountId,
 	now_seconds: u64,
 ) -> Result<(), RewardAccumulationCalculationError> {
-	if reward.reward_rate.amount.is_zero() {
+	// short-circuit if the reward rate amount is zero
+	let Some(reward_rate_amount) = NonZeroU128::new(reward.reward_rate.amount.into()) else {
 		return Ok(())
-	}
+	};
 
 	let elapsed_time = now_seconds
 		.safe_sub(&reward.last_updated_timestamp)
@@ -1680,68 +1688,76 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 
 	let reward_rate_period_seconds = reward.reward_rate.period.as_secs();
 
-	// SAFETY(benluelo): Usage of Div::div: Integer division can only fail if rhs == 0, and
-	// reward_rate_period_seconds is a NonZeroU64 here
-	let periods_surpassed = elapsed_time.div(reward_rate_period_seconds.get());
+	let periods_surpassed = <u64 as Div<NonZeroU64>>::div(elapsed_time, reward_rate_period_seconds);
 
-	if periods_surpassed.is_zero() {
-		Ok(())
-	} else {
-		let total_locked_rewards: u128 = T::Assets::balance_on_hold(asset_id, pool_account).into();
+	// if no periods have been surpassed, short-circuit
+	let Some(periods_surpassed) = NonZeroU64::new(periods_surpassed) else {
+		return Ok(())
+	};
 
-		// the maximum amount repayable given the reward rate.
-		// i.e. if total locked is 50, and the reward rate is 15, then this would be 3
-		//
-		// SAFETY(benluelo): Usage of Div::div: Integer division can only fail if rhs == 0, and
-		// reward.reward_rate.amount is known to be non-zero here as per the check at the beginning
-		// of this function
-		let maximum_releasable_periods = total_locked_rewards.div(reward.reward_rate.amount.into());
+	let total_locked_rewards: u128 = T::Assets::balance_on_hold(asset_id, pool_account).into();
 
-		let releasable_periods_surpassed =
-			cmp::min(maximum_releasable_periods, periods_surpassed.into());
+	// the maximum amount repayable given the reward rate.
+	// i.e. if total locked is 50, and the reward rate is 15, then this would be 3
+	let maximum_releasable_periods =
+		NonZeroU128::new(<u128 as Div<NonZeroU128>>::div(total_locked_rewards, reward_rate_amount))
+			// if the maximum releasable periods is zero, then that means the pot doesn't have
+			// enough in it to fund a single period.
+			.ok_or(RewardAccumulationCalculationError::RewardsPotEmpty)?;
 
-		// SAFETY: Usage of mul is safe here because newly_accumulated_rewards =
-		//      (    total_locked_rewards            elapsed_time        )
-		//  min ( ------------------------- , -------------------------- )
-		//      ( reward.reward_rate.amount   reward_rate_period_seconds )
-		// If LHS is smaller, this will result in total_locked_rewards, which we know fits in a
-		// u128. If RHS is smaller, this has to be < total_locked_rewards, so it will also fit.
-		let newly_accumulated_rewards =
-			releasable_periods_surpassed.mul(reward.reward_rate.amount.into());
-		let new_total_rewards = newly_accumulated_rewards
-			.safe_add(&reward.total_rewards.into())
-			.map_err(|_| RewardAccumulationCalculationError::ArithmeticError)?;
+	let releasable_periods_surpassed =
+		cmp::min(maximum_releasable_periods, periods_surpassed.into());
 
-		// u64::MAX is roughly 584.9 billion years in the future, so saturating at that should be ok
-		let last_updated_timestamp = reward.last_updated_timestamp.saturating_add(
-			reward_rate_period_seconds
-				.get()
-				.saturating_mul(releasable_periods_surpassed.saturated_into::<u64>()),
-		);
+	// SAFETY: Usage of mul is safe here. See the following proof:
+	//
+	// ```plaintext
+	//                                    (  total_locked_rewards           elapsed_time        )
+	// releasable_periods_surpassed = min ( ---------------------- , -------------------------- )
+	//                                    (   reward_rate_amount     reward_rate_period_seconds )
+	// 											   ^ LHS				       ^ RHS
+	//
+	//                             {                      (  total_locked_rewards  )
+	//                             { reward_rate_amount * ( ---------------------- ),     if LHS <= RHS
+	//                             {                      (   reward_rate_amount   )
+	// newly_accumulated_rewards = {
+	//                             {                      (        elapsed_time        )
+	//                             { reward_rate_amount * ( -------------------------- ), if RHS < LHS
+	//                             {                      ( reward_rate_period_seconds )
+	// ```
+	//
+	// Note that the second function of the piecewise definition above will always be <= the first,
+	// since if it were larger it would not have been selected; and since the first function is
+	// always infallible (the resulting value will always be <= the total_locked_rewards input due
+	// to integer division), the second part is also infallible if it is less than the first.
+	let newly_accumulated_rewards = releasable_periods_surpassed
+		.checked_mul(reward_rate_amount)
+		.expect("should not fail; see above for proof; qed;");
 
-		if !newly_accumulated_rewards.is_zero() {
-			T::Assets::release(
-				asset_id,
-				pool_account,
-				newly_accumulated_rewards.into(),
-				false, // not best effort, entire amount must be released
-			)
-			.expect("funds should be available to release based on previous check; qed;");
+	let new_total_rewards = newly_accumulated_rewards
+		.get()
+		.checked_add(reward.total_rewards.into())
+		// TODO(benluelo): Rename to overflow to be more specific
+		.ok_or(RewardAccumulationCalculationError::Overflow)?;
 
-			reward.total_rewards = new_total_rewards.into();
-			reward.last_updated_timestamp = last_updated_timestamp;
+	// u64::MAX is roughly 584.9 billion years in the future, so saturating at that should be ok
+	let last_updated_timestamp = reward.last_updated_timestamp.saturating_add(
+		reward_rate_period_seconds
+			.get()
+			.saturating_mul(releasable_periods_surpassed.get().saturated_into::<u64>()),
+	);
 
-			let new_balance_on_hold = T::Assets::balance_on_hold(asset_id, pool_account);
+	T::Assets::release(
+		asset_id,
+		pool_account,
+		newly_accumulated_rewards.get().into(),
+		false, // not best effort, entire amount must be released
+	)
+	.expect("funds should be available to release; see above for proof; qed;");
 
-			if new_balance_on_hold.into().is_zero() {
-				RewardsPotIsEmpty::<T>::insert(pool_id, asset_id, ());
-			}
+	reward.total_rewards = new_total_rewards.into();
+	reward.last_updated_timestamp = last_updated_timestamp;
 
-			Ok(())
-		} else {
-			Err(RewardAccumulationCalculationError::RewardsPotEmpty)
-		}
-	}
+	Ok(())
 }
 
 pub(crate) enum RewardAccumulationCalculationError {
@@ -1750,8 +1766,18 @@ pub(crate) enum RewardAccumulationCalculationError {
 	/// The rewards pot (held balance) for this pool is empty or doesn't have enough held balance
 	/// to release for the rewards accumulated.
 	RewardsPotEmpty,
-	/// Some operation resulted in an arithmetic error.
-	ArithmeticError,
+	/// Accumulating rewards for an account overflowed.
+	Overflow,
+}
+
+impl From<RewardAccumulationCalculationError> for RewardAccumulationHookError {
+	fn from(value: RewardAccumulationCalculationError) -> Self {
+		match value {
+			RewardAccumulationCalculationError::BackToTheFuture => Self::BackToTheFuture,
+			RewardAccumulationCalculationError::RewardsPotEmpty => Self::RewardsPotEmpty,
+			RewardAccumulationCalculationError::Overflow => Self::Overflow,
+		}
+	}
 }
 
 pub(crate) fn claim_of_stake<T: Config>(
