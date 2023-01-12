@@ -13,7 +13,6 @@ pub mod indices;
 pub mod membership;
 pub mod multisig;
 // pub mod scheduler;
-pub mod asset_tx_payment;
 pub mod pablo;
 pub mod proxy;
 pub mod session;

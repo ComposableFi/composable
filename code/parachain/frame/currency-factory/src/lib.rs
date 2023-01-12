@@ -80,7 +80,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency which can be created from thin air.
 		type AssetId: AssetIdLike
@@ -95,7 +95,7 @@ pub mod pallet {
 		type Balance: BalanceLike;
 
 		///  can add new ranges or assign metadata
-		type AddOrigin: EnsureOrigin<Self::Origin>;
+		type AddOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		type WeightInfo: WeightInfo;
 	}
 

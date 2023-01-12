@@ -121,7 +121,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// Airdrop ID
 		type AirdropId: Copy
@@ -968,7 +968,7 @@ pub mod pallet {
 	/// * The recipient has funds to claim
 	#[pallet::validate_unsigned]
 	impl<T: Config> ValidateUnsigned for Pallet<T> {
-		type Call = Call<T>;
+		type RuntimeCall = RuntimeCall<T>;
 
 		fn validate_unsigned(_: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			if let Call::claim { airdrop_id, reward_account, proof } = call {

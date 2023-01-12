@@ -14,7 +14,7 @@ where
 		+ treasury::Config<I, Currency = balances::Pallet<R>>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v2::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v2::AccountId>,
-	<R as frame_system::Config>::Event: From<balances::Event<R>>,
+	<R as frame_system::Config>::RuntimeEvent: From<balances::Event<R>>,
 	<R as balances::Config>::Balance: From<u128>,
 {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
@@ -82,16 +82,16 @@ mod tests {
 
 	impl frame_system::Config for Test {
 		type BaseCallFilter = Everything;
-		type Origin = Origin;
+		type RuntimeOrigin = RuntimeOrigin;
 		type Index = u64;
 		type BlockNumber = u64;
-		type Call = Call;
+		type RuntimeCall = RuntimeCall;
 		type Hash = H256;
 		type Hashing = BlakeTwo256;
 		type AccountId = AccountId;
 		type Lookup = IdentityLookup<Self::AccountId>;
 		type Header = Header;
-		type Event = Event;
+		type RuntimeEvent = RuntimeEvent;
 		type BlockHashCount = BlockHashCount;
 		type BlockLength = BlockLength;
 		type BlockWeights = ();
@@ -113,7 +113,7 @@ mod tests {
 
 	impl balances::Config for Test {
 		type Balance = u128;
-		type Event = Event;
+		type RuntimeEvent = RuntimeEvent;
 		type DustRemoval = ();
 		type ExistentialDeposit = ExistentialDeposit;
 		type AccountStore = System;
@@ -148,7 +148,7 @@ mod tests {
 	}
 
 	impl collator_selection::Config for Test {
-		type Event = Event;
+		type RuntimeEvent = RuntimeEvent;
 		type Currency = Balances;
 		type UpdateOrigin = EnsureRoot<AccountId>;
 		type PotId = PotId;
@@ -171,7 +171,7 @@ mod tests {
 
 	type ReserveIdentifier = [u8; 8];
 	impl orml_tokens::Config for Test {
-		type Event = Event;
+		type RuntimeEvent = RuntimeEvent;
 		type Balance = Balance;
 		type Amount = Amount;
 		type CurrencyId = CurrencyId;
@@ -198,8 +198,8 @@ mod tests {
 	}
 
 	impl sudo::Config for Test {
-		type Event = Event;
-		type Call = Call;
+		type RuntimeEvent = RuntimeEvent;
+		type RuntimeCall = RuntimeCall;
 	}
 
 	parameter_types! {
@@ -220,7 +220,7 @@ mod tests {
 		type Currency = Balances;
 		type ApproveOrigin = EnsureRoot<AccountId>;
 		type RejectOrigin = EnsureRoot<AccountId>;
-		type Event = Event;
+		type RuntimeEvent = RuntimeEvent;
 		type OnSlash = Treasury;
 		type ProposalBond = ProposalBond;
 		type ProposalBondMinimum = ProposalBondMinimum;

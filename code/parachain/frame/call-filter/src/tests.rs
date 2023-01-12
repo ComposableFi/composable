@@ -5,7 +5,7 @@ use mock::{Event, *};
 use sp_runtime::traits::BadOrigin;
 use support::{assert_noop, assert_ok};
 
-const BALANCE_TRANSFER: &<Runtime as system::Config>::Call =
+const BALANCE_TRANSFER: &<Runtime as system::Config>::RuntimeCall =
 	&mock::Call::Balances(pallet_balances::Call::transfer { dest: ALICE, value: 10 });
 #[test]
 fn pause_transaction_work() {

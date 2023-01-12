@@ -16,7 +16,7 @@ parameter_types! {
 }
 
 impl membership::Config<NativeCouncilMembership> for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AddOrigin = EnsureRootOrHalfNativeCouncil;
 	type RemoveOrigin = EnsureRootOrHalfNativeCouncil;
 	type SwapOrigin = EnsureRootOrHalfNativeCouncil;
@@ -29,9 +29,9 @@ impl membership::Config<NativeCouncilMembership> for Runtime {
 }
 
 impl collective::Config<NativeCouncilCollective> for Runtime {
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = Call;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
@@ -40,7 +40,7 @@ impl collective::Config<NativeCouncilCollective> for Runtime {
 }
 
 impl membership::Config<NativeTechnicalMembership> for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 
 	type AddOrigin = EnsureRootOrHalfNativeCouncilOrTechnical;
 	type RemoveOrigin = EnsureRootOrHalfNativeCouncilOrTechnical;
@@ -55,9 +55,9 @@ impl membership::Config<NativeTechnicalMembership> for Runtime {
 }
 
 impl collective::Config<NativeTechnicalMembership> for Runtime {
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = Call;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
@@ -87,7 +87,7 @@ parameter_types! {
 
 impl democracy::Config<NativeDemocracy> for Runtime {
 	type Proposal = Call;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type EnactmentPeriod = EnactmentPeriod;
 	type LaunchPeriod = LaunchPeriod;
@@ -123,7 +123,7 @@ impl democracy::Config<NativeDemocracy> for Runtime {
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 	type EnsureRoot = EnsureRoot<AccountId>;
 	type DemocracyId = DemocracyId;
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	type ProtocolRoot = RootOrigin;
 }
 
@@ -133,7 +133,7 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type Currency = Balances;
 	type ApproveOrigin = EnsureRootOrHalfNativeCouncil;
 	type RejectOrigin = EnsureRootOrHalfNativeCouncil;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnSlash = Treasury;
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
@@ -149,7 +149,7 @@ impl treasury::Config<NativeTreasury> for Runtime {
 }
 
 impl governance_registry::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = CurrencyId;
 	type WeightInfo = governance_registry::weights::SubstrateWeight<Runtime>;
 }

@@ -32,9 +32,6 @@ pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use xcmp::XcmConfig;
 
-use governance::*;
-use prelude::*;
-
 use common::{
 	fees::{
 		multi_existential_deposits, NativeExistentialDeposit, PriceConverter, WeightToFeeConverter,
@@ -47,12 +44,14 @@ use common::{
 	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
-
+use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
 	dex::{Amm, PriceAggregate},
 	xcm::assets::RemoteAssetRegistryInspect,
 };
+use governance::*;
+use prelude::*;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -62,36 +61,30 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
-
-use composable_support::rpc_helpers::SafeRpcWrapper;
-use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, vec::Vec};
-
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
 // A few exports that help ease life for downstream crates.
+use codec::Encode;
+use frame_support::traits::{fungibles, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade};
 pub use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime,
+	pallet_prelude::DispatchClass,
+	parameter_types,
 	traits::{
 		ConstBool, ConstU128, ConstU16, ConstU32, Contains, Everything, KeyOwnerProofSystem,
 		Nothing, Randomness, StorageInfo,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		ConstantMultiplier, DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient,
-		WeightToFeeCoefficients, WeightToFeePolynomial,
+		ConstantMultiplier, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		WeightToFeePolynomial,
 	},
 	PalletId, StorageValue,
 };
-
-pub use governance::TreasuryAccount;
-
-use codec::{Codec, Encode, EncodeLike};
-use frame_support::traits::{fungibles, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade};
 use frame_system as system;
-use scale_info::TypeInfo;
-use sp_runtime::AccountId32;
+pub use governance::TreasuryAccount;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
@@ -197,7 +190,7 @@ impl system::Config for Runtime {
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
 	/// The aggregated dispatch type that is available for extrinsics.
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
 	type Lookup = AccountIdLookup<AccountId, AccountIndex>;
 	/// The index type for storing how many extrinsics an account has signed.
@@ -211,9 +204,9 @@ impl system::Config for Runtime {
 	/// The header type.
 	type Header = generic::Header<BlockNumber, BlakeTwo256>;
 	/// The ubiquitous event type.
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	/// The ubiquitous origin type.
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
 	/// The weight of database operations that the runtime can invoke.
@@ -247,7 +240,7 @@ parameter_types! {
 }
 
 impl assets_registry::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = CurrencyId;
 	type Balance = Balance;
 	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
@@ -263,7 +256,7 @@ parameter_types! {
 }
 
 impl pablo::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type Convert = sp_runtime::traits::ConvertInto;
@@ -317,7 +310,7 @@ parameter_types! {
 impl identity::Config for Runtime {
 	type BasicDeposit = BasicDeposit;
 	type Currency = Balances;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type FieldDeposit = FieldDeposit;
 	type ForceOrigin = EnsureRoot<AccountId>;
 	type MaxAdditionalFields = MaxAdditionalFields;
@@ -336,11 +329,11 @@ parameter_types! {
 }
 
 impl multisig::Config for Runtime {
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type Currency = Balances;
 	type DepositBase = DepositBase;
 	type DepositFactor = DepositFactor;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MaxSignatories = MaxSignatories;
 	type WeightInfo = weights::multisig::WeightInfo<Runtime>;
 }
@@ -373,7 +366,7 @@ impl balances::Config for Runtime {
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// The ubiquitous event type.
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = Treasury;
 	type ExistentialDeposit = NativeExistentialDeposit;
 	type AccountStore = System;
@@ -400,7 +393,7 @@ parameter_types! {
 }
 
 impl transaction_payment::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, StakingPot<Runtime, NativeTreasury>>;
 	type WeightToFee = WeightToFeeConverter;
@@ -421,30 +414,31 @@ impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrD
 }
 
 impl asset_tx_payment::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
 	type Fungibles = Tokens;
 	type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
 		PriceConverter<AssetsRegistry>,
 		TransferToTreasuryOrDrop,
 	>;
 
-	type UseUserConfiguration = ConstBool<true>;
+	// type UseUserConfiguration = ConstBool<true>;
 
-	type WeightInfo = weights::asset_tx_payment::WeightInfo<Runtime>;
+	// type WeightInfo = weights::asset_tx_payment::WeightInfo<Runtime>;
 
-	type ConfigurationOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	// type ConfigurationOrigin = EnsureRootOrTwoThirdNativeCouncil;
 
-	type ConfigurationExistentialDeposit = NativeExistentialDeposit;
+	// type ConfigurationExistentialDeposit = NativeExistentialDeposit;
 
-	type PayableCall = Call;
+	// type PayableCall = Call;
 
-	type Lock = Assets;
+	// type Lock = Assets;
 
-	type BalanceConverter = PriceConverter<AssetsRegistry>;
+	// type BalanceConverter = PriceConverter<AssetsRegistry>;
 }
 
 impl sudo::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 }
 
 parameter_types! {
@@ -453,25 +447,28 @@ parameter_types! {
 }
 
 impl indices::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AccountIndex = AccountIndex;
 	type Currency = Balances;
 	type Deposit = IndexDeposit;
 	type WeightInfo = weights::indices::WeightInfo<Runtime>;
 }
 
-pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
 
 impl<LocalCall> system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
-	Call: From<LocalCall>,
+	RuntimeCall: From<LocalCall>,
 {
 	fn create_transaction<C: system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-		call: Call,
+		call: RuntimeCall,
 		public: <Signature as sp_runtime::traits::Verify>::Signer,
 		account: AccountId,
 		nonce: AccountIndex,
-	) -> Option<(Call, <UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload)> {
+	) -> Option<(
+		RuntimeCall,
+		<UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
+	)> {
 		use sp_runtime::{
 			generic::{Era, SignedPayload},
 			traits::StaticLookup,
@@ -516,14 +513,14 @@ impl system::offchain::SigningTypes for Runtime {
 
 impl<C> system::offchain::SendTransactionTypes<C> for Runtime
 where
-	Call: From<C>,
+	RuntimeCall: From<C>,
 {
-	type OverarchingCall = Call;
+	type OverarchingCall = RuntimeCall;
 	type Extrinsic = UncheckedExtrinsic;
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnSystemEvent = ();
 	type SelfParaId = parachain_info::Pallet<Runtime>;
 	type OutboundXcmpMessageSource = XcmpQueue;
@@ -553,7 +550,7 @@ parameter_types! {
 }
 
 impl session::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type ValidatorId = <Self as system::Config>::AccountId;
 	// we don't have stash and controller, thus we don't need the convert as well.
 	type ValidatorIdOf = collator_selection::IdentityCollator;
@@ -578,7 +575,7 @@ parameter_types! {
 }
 
 impl collator_selection::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type UpdateOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type PotId = PotId;
@@ -604,7 +601,7 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
@@ -617,6 +614,9 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
+	type OnSlash = ();
+	type OnTransfer = ();
+	type OnDeposit = ();
 }
 
 parameter_types! {
@@ -627,10 +627,10 @@ parameter_types! {
 }
 
 impl scheduler::Config for Runtime {
-	type Event = Event;
-	type Origin = Origin;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
 	type PalletsOrigin = OriginCaller;
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
@@ -647,7 +647,7 @@ parameter_types! {
 
 impl preimage::Config for Runtime {
 	type WeightInfo = preimage::weights::SubstrateWeight<Runtime>;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRoot<AccountId>;
 	type MaxSize = PreimageMaxSize;
@@ -656,14 +656,14 @@ impl preimage::Config for Runtime {
 }
 
 impl utility::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 	type PalletsOrigin = OriginCaller;
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
 }
 
 impl currency_factory::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
@@ -680,18 +680,20 @@ parameter_types! {
 	pub const LockCrowdloanRewards: bool = true;
 }
 
-impl InstanceFilter<Call> for ProxyType {
-	fn filter(&self, c: &Call) -> bool {
+impl InstanceFilter<RuntimeCall> for ProxyType {
+	fn filter(&self, c: &RuntimeCall) -> bool {
 		match self {
 			ProxyType::Any => true,
 			ProxyType::Governance => matches!(
 				c,
-				Call::Democracy(..) |
-					Call::Council(..) | Call::TechnicalCommittee(..) |
-					Call::Treasury(..) | Call::Utility(..)
+				RuntimeCall::Democracy(..) |
+					RuntimeCall::Council(..) |
+					RuntimeCall::TechnicalCommittee(..) |
+					RuntimeCall::Treasury(..) |
+					RuntimeCall::Utility(..)
 			),
 			ProxyType::CancelProxy => {
-				matches!(c, Call::Proxy(proxy::Call::reject_announcement { .. }))
+				matches!(c, RuntimeCall::Proxy(proxy::Call::reject_announcement { .. }))
 			},
 		}
 	}
@@ -713,8 +715,8 @@ parameter_types! {
 pub type ProxyPrice = NativeExistentialDeposit;
 
 impl proxy::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 	type Currency = Assets;
 	type ProxyType = ProxyType;
 	type ProxyDepositBase = ProxyPrice;
@@ -728,7 +730,7 @@ impl proxy::Config for Runtime {
 }
 
 impl crowdloan_rewards::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type RewardAsset = Assets;
 	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
@@ -753,7 +755,7 @@ parameter_types! {
 
 impl vesting::Config for Runtime {
 	type Currency = Assets;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
 	type VestedTransferOrigin = EnsureRootOrTwoThirdNativeCouncil;
@@ -776,7 +778,7 @@ impl bonded_finance::Config for Runtime {
 	type BondOfferId = BondOfferId;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type Currency = Assets;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MinReward = MinReward;
 	type NativeCurrency = Balances;
 	type PalletId = BondedFinanceId;
@@ -787,15 +789,18 @@ impl bonded_finance::Config for Runtime {
 
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
-impl Contains<Call> for BaseCallFilter {
-	fn contains(call: &Call) -> bool {
+impl Contains<RuntimeCall> for BaseCallFilter {
+	fn contains(call: &RuntimeCall) -> bool {
 		!(call_filter::Pallet::<Runtime>::contains(call) ||
-			matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Treasury(_)))
+			matches!(
+				call,
+				RuntimeCall::Tokens(_) | RuntimeCall::Indices(_) | RuntimeCall::Treasury(_)
+			))
 	}
 }
 
 impl call_filter::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type UpdateOrigin = EnsureRootOrHalfNativeTechnical;
 	type Hook = ();
 	type WeightInfo = ();
@@ -835,7 +840,7 @@ construct_runtime!(
 		Council: collective::<Instance1> = 30,
 		CouncilMembership: membership::<Instance1> = 31,
 		Treasury: treasury::<Instance1> = 32,
-		Democracy: democracy::<Instance1> = 33,
+		Democracy: democracy = 33,
 		TechnicalCommittee: collective::<Instance2> = 72,
 		TechnicalCommitteeMembership: membership::<Instance2> = 73,
 
@@ -885,7 +890,8 @@ pub type SignedExtra = (
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic =
+	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = executive::Executive<
 	Runtime,

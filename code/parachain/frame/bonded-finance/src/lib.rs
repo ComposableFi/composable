@@ -113,7 +113,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The native currency, used for the stake required to create an offer.
 		type NativeCurrency: fungible::Mutate<AccountIdOf<Self>>
@@ -163,7 +163,7 @@ pub mod pallet {
 		type MinReward: Get<BalanceOf<Self>>;
 
 		/// The origin that is allowed to cancel bond offers.
-		type AdminOrigin: EnsureOrigin<Self::Origin>;
+		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// Weights
 		type WeightInfo: WeightInfo;

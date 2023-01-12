@@ -111,8 +111,8 @@ impl frame_system::Config for Runtime {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -120,7 +120,7 @@ impl frame_system::Config for Runtime {
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -139,7 +139,7 @@ parameter_types! {
 
 impl pallet_balances::Config for Runtime {
 	type Balance = Balance;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -163,7 +163,7 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 impl pallet_currency_factory::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
 	type Balance = Balance;
@@ -182,7 +182,7 @@ parameter_types! {
 }
 
 impl pallet_vault::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Tokens;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
@@ -213,7 +213,7 @@ parameter_types! {
 
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
@@ -278,7 +278,7 @@ impl LocalAssets<CurrencyId> for Decimals {
 }
 
 impl pallet_oracle::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Assets;
 	type AssetId = CurrencyId;
 	type PriceValue = Balance;
@@ -350,7 +350,7 @@ impl SendXcm for XcmFake {
 }
 
 impl pallet_dutch_auction::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type UnixTime = Timestamp;
 	type OrderId = OrderId;
 	type MultiCurrency = Assets;
@@ -364,7 +364,7 @@ impl pallet_dutch_auction::Config for Runtime {
 }
 
 impl pallet_liquidations::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type UnixTime = Timestamp;
 	type DutchAuction = DutchAuction;
 	type LiquidationStrategyId = LiquidationStrategyId;
@@ -434,7 +434,7 @@ impl pallet_lending::Config for Runtime {
 	type VaultId = VaultId;
 	type Vault = Vault;
 	type VaultLender = Vault;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
 	type CurrencyFactory = LpTokenFactory;
@@ -513,7 +513,7 @@ impl<T> MockedExtension<T> {
 
 impl<T: Config + Send + Sync + std::fmt::Debug + TypeInfo> SignedExtension for MockedExtension<T> {
 	type AccountId = AccountId;
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type AdditionalSigned = ();
 	type Pre = ();
 	const IDENTIFIER: &'static str = "MockedExtension";

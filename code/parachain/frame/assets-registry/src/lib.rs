@@ -49,7 +49,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// Identifier for the class of local asset.
 		type LocalAssetId: FullCodec
@@ -75,9 +75,9 @@ pub mod pallet {
 			+ TypeInfo;
 
 		/// The origin which may set local and foreign admins.
-		type UpdateAssetRegistryOrigin: EnsureOrigin<Self::Origin>;
+		type UpdateAssetRegistryOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// really can be governance of this chain or remote parachain origin
-		type ParachainOrGovernanceOrigin: EnsureOrigin<Self::Origin>;
+		type ParachainOrGovernanceOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		type WeightInfo: WeightInfo;
 		type Balance: BalanceLike;
 		type CurrencyFactory: CurrencyFactory<AssetId = Self::LocalAssetId, Balance = Self::Balance>;

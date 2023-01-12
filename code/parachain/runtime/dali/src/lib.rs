@@ -200,7 +200,7 @@ impl system::Config for Runtime {
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
 	/// The aggregated dispatch type that is available for extrinsics.
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
 	type Lookup = AccountIdLookup<AccountId, AccountIndex>;
 	/// The index type for storing how many extrinsics an account has signed.
@@ -214,9 +214,9 @@ impl system::Config for Runtime {
 	/// The header type.
 	type Header = generic::Header<BlockNumber, BlakeTwo256>;
 	/// The ubiquitous event type.
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	/// The ubiquitous origin type.
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
 	/// The weight of database operations that the runtime can invoke.
@@ -270,7 +270,7 @@ parameter_types! {
 impl identity::Config for Runtime {
 	type BasicDeposit = BasicDeposit;
 	type Currency = Balances;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type FieldDeposit = FieldDeposit;
 	type ForceOrigin = EnsureRoot<AccountId>;
 	type MaxAdditionalFields = MaxAdditionalFields;
@@ -289,11 +289,11 @@ parameter_types! {
 }
 
 impl multisig::Config for Runtime {
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type Currency = Balances;
 	type DepositBase = DepositBase;
 	type DepositFactor = DepositFactor;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MaxSignatories = MaxSignatories;
 	type WeightInfo = weights::multisig::WeightInfo<Runtime>;
 }
@@ -326,7 +326,7 @@ impl balances::Config for Runtime {
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// The ubiquitous event type.
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = Treasury;
 	type ExistentialDeposit = NativeExistentialDeposit;
 	type AccountStore = System;
@@ -353,7 +353,7 @@ parameter_types! {
 }
 
 impl transaction_payment::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, StakingPot<Runtime, NativeTreasury>>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
@@ -396,8 +396,8 @@ impl asset_tx_payment::Config for Runtime {
 }
 
 impl sudo::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 }
 
 parameter_types! {
@@ -406,7 +406,7 @@ parameter_types! {
 }
 
 impl indices::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AccountIndex = AccountIndex;
 	type Currency = Balances;
 	type Deposit = IndexDeposit;
@@ -493,7 +493,7 @@ parameter_types! {
 }
 
 impl oracle::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Currency = Balances;
 	type AssetId = CurrencyId;
@@ -528,7 +528,7 @@ parameter_types! {
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnSystemEvent = ();
 	type SelfParaId = parachain_info::Pallet<Runtime>;
 	type OutboundXcmpMessageSource = XcmpQueue;
@@ -559,7 +559,7 @@ parameter_types! {
 }
 
 impl session::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type ValidatorId = <Self as system::Config>::AccountId;
 	// we don't have stash and controller, thus we don't need the convert as well.
 	type ValidatorIdOf = collator_selection::IdentityCollator;
@@ -584,7 +584,7 @@ parameter_types! {
 }
 
 impl collator_selection::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type UpdateOrigin = EnsureRootOrHalfNativeCouncil;
 	type PotId = PotId;
@@ -614,7 +614,7 @@ parameter_types! {
 
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
@@ -656,10 +656,10 @@ parameter_types! {
 }
 
 impl scheduler::Config for Runtime {
-	type Event = Event;
-	type Origin = Origin;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
 	type PalletsOrigin = OriginCaller;
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
@@ -670,8 +670,8 @@ impl scheduler::Config for Runtime {
 }
 
 impl utility::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 	type PalletsOrigin = OriginCaller;
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
 }
@@ -710,8 +710,8 @@ parameter_types! {
 }
 
 impl proxy::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 	type Currency = Assets;
 	type ProxyType = ProxyType;
 	type ProxyDepositBase = ProxyPrice;
@@ -730,7 +730,7 @@ parameter_types! {
 }
 
 impl pallet_fnft::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MaxProperties = ConstU32<16>;
 	type FinancialNftCollectionId = CurrencyId;
 	type FinancialNftInstanceId = FinancialNftInstanceId;
@@ -748,7 +748,7 @@ parameter_types! {
 
 impl preimage::Config for Runtime {
 	type WeightInfo = preimage::weights::SubstrateWeight<Runtime>;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRoot<AccountId>;
 	type MaxSize = PreimageMaxSize;
@@ -769,7 +769,7 @@ parameter_types! {
 }
 
 impl vault::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type CurrencyFactory = CurrencyFactory;
 	type AssetId = CurrencyId;
@@ -789,7 +789,7 @@ impl vault::Config for Runtime {
 }
 
 impl currency_factory::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
@@ -797,7 +797,7 @@ impl currency_factory::Config for Runtime {
 }
 
 impl assets_registry::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = CurrencyId;
 	type CurrencyFactory = CurrencyFactory;
 	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
@@ -831,7 +831,7 @@ parameter_types! {
 }
 
 impl crowdloan_rewards::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type RewardAsset = Assets;
 	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
@@ -863,7 +863,7 @@ parameter_types! {
 }
 
 impl pallet_staking_rewards::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type AssetId = CurrencyId;
 	type Assets = Assets;
@@ -901,7 +901,7 @@ impl Contains<Call> for BaseCallFilter {
 }
 
 impl call_filter::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type UpdateOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type Hook = ();
 	type WeightInfo = ();
@@ -915,7 +915,7 @@ parameter_types! {
 
 impl vesting::Config for Runtime {
 	type Currency = Assets;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
 	type VestedTransferOrigin = EnsureRootOrHalfNativeCouncil;
@@ -938,7 +938,7 @@ impl bonded_finance::Config for Runtime {
 	type BondOfferId = BondOfferId;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type Currency = Assets;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MinReward = MinReward;
 	type NativeCurrency = Balances;
 	type PalletId = BondedFinanceId;
@@ -958,7 +958,7 @@ impl composable_traits::defi::DeFiComposableConfig for Runtime {
 
 impl dutch_auction::Config for Runtime {
 	type NativeCurrency = Balances;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MultiCurrency = Assets;
 	type PalletId = DutchAuctionId;
 	type OrderId = u128;
@@ -977,7 +977,7 @@ parameter_types! {
 }
 
 impl mosaic::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type PalletId = MosaicId;
 	type Assets = Assets;
 	type MinimumTTL = MinimumTTL;
@@ -999,7 +999,7 @@ parameter_types! {
 }
 
 impl liquidations::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type UnixTime = Timestamp;
 	type DutchAuction = DutchAuction;
 	type LiquidationStrategyId = LiquidationStrategyId;
@@ -1019,7 +1019,7 @@ parameter_types! {
 }
 
 impl lending::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Oracle = Oracle;
 	type VaultId = u64;
 	type Vault = Vault;
@@ -1045,7 +1045,7 @@ parameter_types! {
 }
 
 impl pablo::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type Convert = ConvertInto;
@@ -1069,7 +1069,7 @@ parameter_types! {
 }
 
 impl dex_router::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type MaxHopsInRoute = MaxHopsCount;
@@ -1143,7 +1143,7 @@ parameter_types! {
 }
 
 impl cosmwasm::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
 	type MaxFrames = MaxFrames;
@@ -1275,7 +1275,7 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 
 impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type NativeCurrency = Balances;
 	type Balance = Balance;
 	type AssetId = CurrencyId;
@@ -1298,7 +1298,7 @@ impl pallet_ibc::Config for Runtime {
 }
 
 impl pallet_ibc_ping::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type IbcHandler = Ibc;
 }
 

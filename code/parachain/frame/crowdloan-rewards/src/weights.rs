@@ -64,7 +64,8 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 
-	fn unlock_rewards_for(x: u32) -> Weight {
-		x as _
+	fn unlock_rewards_for(_x: u32) -> Weight {
+		// TODO(hussein-aitlahcen): extrinsic added without benchmark
+		Weight::from_ref_time(10_000 as u64)
 	}
 }

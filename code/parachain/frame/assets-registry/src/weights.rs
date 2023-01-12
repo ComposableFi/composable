@@ -14,15 +14,15 @@ pub trait WeightInfo {
 
 impl WeightInfo for () {
 	fn register_asset() -> Weight {
-		0
+		Weight::from_ref_time(10_0000)
 	}
 
 	fn update_asset() -> Weight {
-		0
+		Weight::from_ref_time(10_0000)
 	}
 
 	fn set_min_fee() -> Weight {
-		0
+		Weight::from_ref_time(10_0000)
 	}
 }
 
@@ -30,12 +30,12 @@ impl WeightInfo for () {
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn register_asset() -> Weight {
-		(9_958_000 as u64).saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(9_958_000 as u64).saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	fn update_asset() -> Weight {
-		(9_958_000 as u64).saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(9_958_000 as u64).saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	fn set_min_fee() -> Weight {
-		(9_958_000 as u64).saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(9_958_000 as u64).saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 }

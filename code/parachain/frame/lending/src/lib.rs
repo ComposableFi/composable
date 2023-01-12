@@ -123,7 +123,7 @@ pub mod pallet {
 	pub trait Config:
 		CreateSignedTransaction<Call<Self>> + frame_system::Config + DeFiComposableConfig
 	{
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		type Oracle: Oracle<
 			AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,

@@ -133,6 +133,5 @@ runtime-benchmarks = [
 ]
 std = ["picasso-runtime/std", "composable-runtime/std", "dali-runtime/std"]
 
-
 [package.metadata.cargo-udeps.ignore]
 normal = ["pallet-bonded-finance"]

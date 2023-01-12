@@ -36,7 +36,7 @@ pub const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_p
 
 type SystemAccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type SystemOriginOf<T> = <T as frame_system::Config>::Origin;
-type SystemEventOf<T> = <T as frame_system::Config>::Event;
+type SystemEventOf<T> = <T as frame_system::Config>::RuntimeEvent;
 pub type TestBoundedVec = BoundedVec<AccountId, MaxLiquidationBatchSize>;
 
 // Bounds for configuration generic type, used in create market helpers.

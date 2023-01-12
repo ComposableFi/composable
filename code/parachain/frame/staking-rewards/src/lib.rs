@@ -290,7 +290,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The reward balance type.
 		type Balance: Parameter
@@ -374,10 +374,10 @@ pub mod pallet {
 		type MaxRewardConfigsPerPool: Get<u32>;
 
 		/// Required origin for reward pool creation.
-		type RewardPoolCreationOrigin: EnsureOrigin<Self::Origin>;
+		type RewardPoolCreationOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// Required origin for reward pool creation.
-		type RewardPoolUpdateOrigin: EnsureOrigin<Self::Origin>;
+		type RewardPoolUpdateOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		#[pallet::constant]
 		type PicaAssetId: Get<Self::AssetId>;

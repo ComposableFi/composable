@@ -226,7 +226,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// Type representing the unique ID of an asset.
 		type AssetId: FullCodec
@@ -281,10 +281,10 @@ pub mod pallet {
 		type LocalAssets: LocalAssets<AssetIdOf<Self>>;
 
 		/// Required origin for pool creation.
-		type PoolCreationOrigin: EnsureOrigin<Self::Origin>;
+		type PoolCreationOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// Required origin to enable TWAP on pool.
-		type EnableTwapOrigin: EnsureOrigin<Self::Origin>;
+		type EnableTwapOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// Time provider.
 		type Time: Time;
@@ -449,7 +449,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
-			let mut weight: Weight = 0;
+			let mut weight: Weight = Weight::from_ref_time(0);
 			let twap_enabled_pools: Vec<T::PoolId> =
 				PriceCumulativeState::<T>::iter_keys().collect();
 			for pool_id in twap_enabled_pools {
@@ -473,7 +473,7 @@ pub mod pallet {
 					},
 				);
 				if result.is_ok() {
-					weight += 1;
+					weight = weight.saturating_add(Weight::from_ref_time(1));
 					if let Some(updated_twap) = TWAPState::<T>::get(pool_id) {
 						#[allow(deprecated)]
 						if let Ok(assets) = Self::pool_ordered_pair(pool_id) {

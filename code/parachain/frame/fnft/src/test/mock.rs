@@ -51,7 +51,7 @@ impl FnftAccountProxyTypeSelector<ProxyType> for MockFnftAccountProxyType {
 
 type AccountProxyWrapperInstance = AccountProxyWrapper<MockRuntime>;
 impl crate::Config for MockRuntime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MaxProperties = ConstU32<16>;
 	type FinancialNftCollectionId = u128;
 	type FinancialNftInstanceId = u64;
@@ -77,8 +77,8 @@ parameter_types! {
 }
 
 impl pallet_proxy::Config for MockRuntime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 	type Currency = ();
 	type ProxyType = ProxyType;
 	type ProxyDepositBase = ProxyPrice;
@@ -101,8 +101,8 @@ impl system::Config for MockRuntime {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -110,7 +110,7 @@ impl system::Config for MockRuntime {
 	type AccountId = AccountId32;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
