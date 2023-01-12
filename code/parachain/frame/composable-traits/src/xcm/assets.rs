@@ -14,7 +14,7 @@ use crate::{
 };
 
 /// works only with concrete assets
-#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
+#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct XcmAssetLocation(
 	#[cfg_attr(feature = "std", serde(with = "MultiLocationDef"))] pub xcm::latest::MultiLocation,
@@ -66,9 +66,7 @@ pub trait RemoteAssetRegistryInspect {
 	type Balance;
 
 	/// Return reserve location for given asset.
-	fn asset_to_remote(
-		asset_id: Self::AssetId,
-	) -> Option<ForeignMetadata<Self::AssetNativeLocation>>;
+	fn asset_to_remote(asset_id: Self::AssetId) -> Option<Self::AssetNativeLocation>;
 
 	/// Return asset for given reserve location.
 	fn location_to_asset(location: Self::AssetNativeLocation) -> Option<Self::AssetId>;
@@ -112,7 +110,6 @@ pub trait RemoteAssetRegistryMutate {
 		asset_id: Self::AssetId,
 		location: Self::AssetNativeLocation,
 		ratio: Rational64,
-		decimals: Option<Exponent>,
 	) -> DispatchResult;
 
 	/// allows change  ratio of how much remote assets is needed for unit of native

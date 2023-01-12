@@ -795,6 +795,11 @@ impl currency_factory::Config for Runtime {
 	type Balance = Balance;
 }
 
+parameter_types! {
+	pub const AssetNameMaxChars: u32 = 32;
+	pub const AssetSymbolMaxChars: u32 = 8;
+}
+
 impl assets_registry::Config for Runtime {
 	type Event = Event;
 	type LocalAssetId = CurrencyId;
@@ -804,6 +809,8 @@ impl assets_registry::Config for Runtime {
 	type ParachainOrGovernanceOrigin = EnsureRootOrHalfNativeCouncil;
 	type Balance = Balance;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
+	type AssetNameMaxChars = AssetNameMaxChars;
+	type AssetSymbolMaxChars = AssetSymbolMaxChars;
 	// TODO(RFC-0013): Update Assets Registry - Pallet Configuration
 	// Provide configuration item for asset creation to assets-registry
 	// type CreateLocalAssets = LocalAssets;
@@ -1235,7 +1242,6 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 			asset_id,
 			location,
 			Rational64::one(),
-			Some(12),
 		)?;
 
 		Ok(asset_id)

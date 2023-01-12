@@ -4,7 +4,7 @@ use composable_traits::{
 	assets::Asset,
 	currency::Rational64,
 	rational,
-	xcm::assets::{ForeignMetadata, RemoteAssetRegistryInspect, XcmAssetLocation},
+	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 use frame_support::{assert_noop, assert_ok};
 use frame_system::RawOrigin;
@@ -41,7 +41,7 @@ fn set_metadata() {
 			.unwrap();
 		assert_eq!(
 			<AssetsRegistry as RemoteAssetRegistryInspect>::asset_to_remote(asset_id),
-			Some(ForeignMetadata { decimals: Some(4), location: XcmAssetLocation::RELAY_NATIVE })
+			Some(XcmAssetLocation::RELAY_NATIVE)
 		);
 
 		assert_eq!(
@@ -77,10 +77,7 @@ fn register_asset() {
 			Some(decimals)
 		));
 		let local_asset_id = AssetsRegistry::from_foreign_asset(location.clone()).unwrap();
-		assert_eq!(
-			AssetsRegistry::from_local_asset(local_asset_id),
-			Some(ForeignMetadata { decimals: Some(decimals), location: location.clone() })
-		);
+		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), Some(location.clone()));
 
 		assert_noop!(
 			AssetsRegistry::register_asset(Origin::root(), location, ratio, Some(decimals)),
@@ -107,10 +104,7 @@ fn update_asset() {
 		));
 
 		let local_asset_id = AssetsRegistry::from_foreign_asset(location.clone()).unwrap();
-		assert_eq!(
-			AssetsRegistry::from_local_asset(local_asset_id),
-			Some(ForeignMetadata { decimals: Some(decimals), location: location.clone() })
-		);
+		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), Some(location.clone()));
 		assert_eq!(AssetsRegistry::asset_ratio(local_asset_id), Some(ratio));
 
 		let new_decimals = 12;
@@ -122,10 +116,7 @@ fn update_asset() {
 			new_ratio,
 			Some(new_decimals)
 		));
-		assert_eq!(
-			AssetsRegistry::from_local_asset(local_asset_id),
-			Some(ForeignMetadata { decimals: Some(new_decimals), location })
-		);
+		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), Some(location));
 		assert_eq!(AssetsRegistry::asset_ratio(local_asset_id), Some(new_ratio));
 	})
 }
@@ -170,12 +161,7 @@ fn get_foreign_assets_list_should_work() {
 
 		assert_eq!(foreign_assets, vec![]);
 
-		assert_ok!(AssetsRegistry::register_asset(
-			Origin::root(),
-			location.clone(),
-			ratio,
-			Some(decimals)
-		));
+		assert_ok!(AssetsRegistry::register_asset(Origin::root(), location, ratio, Some(decimals)));
 
 		let foreign_assets = AssetsRegistry::get_foreign_assets_list();
 

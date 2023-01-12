@@ -2,7 +2,7 @@
 //! positive side effects
 
 use super::*;
-use crate::{self as pallet_assets_registry, prelude::*};
+use crate::{self as pallet_assets_registry};
 
 #[allow(unused_imports)]
 use crate::Pallet as AssetsRegistry;

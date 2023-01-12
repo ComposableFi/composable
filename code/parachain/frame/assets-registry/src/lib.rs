@@ -13,7 +13,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![doc = include_str!("../README.md")]
 
+use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::RuntimeDebug;
 pub use pallet::*;
+use scale_info::TypeInfo;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
@@ -35,11 +38,12 @@ pub mod pallet {
 	use composable_traits::{
 		assets::Asset,
 		currency::{BalanceLike, CurrencyFactory, Exponent, ForeignByNative, RangeId},
-		xcm::assets::{ForeignMetadata, RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
+		xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
 	};
 	use cumulus_primitives_core::ParaId;
 	use frame_support::{
-		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin, Twox128,
+		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin, BoundedVec,
+		Twox128,
 	};
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
@@ -62,7 +66,8 @@ pub mod pallet {
 			+ Debug
 			+ Default
 			+ Ord
-			+ TypeInfo;
+			+ TypeInfo
+			+ MaxEncodedLen;
 
 		/// Identifier for the class of foreign asset.
 		type ForeignAssetId: FullCodec
@@ -72,7 +77,8 @@ pub mod pallet {
 			+ Debug
 			+ Clone
 			+ Default
-			+ TypeInfo;
+			+ TypeInfo
+			+ MaxEncodedLen;
 
 		/// The origin which may set local and foreign admins.
 		type UpdateAssetRegistryOrigin: EnsureOrigin<Self::Origin>;
@@ -86,20 +92,21 @@ pub mod pallet {
 		// type CreateLocalAssets: fungibles::Create<Self::AccountId>;
 		// type CreateForeignAssetsAssets: fungibles::Create<Self::AccountId>;
 		// | Provide configuration item for max length of ticker-symbols
-		// #[pallet::constant]
-		// type TickerSymbolMaxChars: Get<u8>;
+		#[pallet::constant]
+		type AssetSymbolMaxChars: Get<u32>;
+		#[pallet::constant]
+		type AssetNameMaxChars: Get<u32>;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
-	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	/// Mapping local asset to foreign asset.
 	#[pallet::storage]
 	#[pallet::getter(fn from_local_asset)]
 	pub type LocalToForeign<T: Config> =
-		StorageMap<_, Twox128, T::LocalAssetId, ForeignMetadata<T::ForeignAssetId>, OptionQuery>;
+		StorageMap<_, Twox128, T::LocalAssetId, T::ForeignAssetId, OptionQuery>;
 
 	/// Mapping foreign asset to local asset.
 	#[pallet::storage]
@@ -123,6 +130,20 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn asset_ratio)]
 	pub type AssetRatio<T: Config> = StorageMap<_, Twox128, T::LocalAssetId, Rational, OptionQuery>;
+
+	/// Metadata of an asset
+	#[pallet::storage]
+	#[pallet::getter(fn decimals)]
+	pub type Metadata<T: Config> = StorageMap<
+		_,
+		Twox128,
+		T::LocalAssetId,
+		crate::AssetMetadata<
+			BoundedVec<u8, T::AssetNameMaxChars>,
+			BoundedVec<u8, T::AssetSymbolMaxChars>,
+		>,
+		OptionQuery,
+	>;
 
 	// TODO(RFC-0013): Update Assets Registry - Pallet Storage
 	// | Add a nonce storage item that will be used for generating foreign asset IDs
@@ -228,7 +249,7 @@ pub mod pallet {
 				Error::<T>::ForeignAssetAlreadyRegistered
 			);
 			let asset_id = T::CurrencyFactory::create(RangeId::FOREIGN_ASSETS)?;
-			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
+			Self::set_reserve_location(asset_id, location.clone(), ratio)?;
 			Self::deposit_event(Event::<T>::AssetRegistered { asset_id, location, decimals });
 			Ok(().into())
 		}
@@ -249,7 +270,7 @@ pub mod pallet {
 			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
-			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
+			Self::set_reserve_location(asset_id, location.clone(), ratio)?;
 			Self::deposit_event(Event::<T>::AssetUpdated { asset_id, location, decimals });
 			Ok(().into())
 		}
@@ -295,10 +316,9 @@ pub mod pallet {
 			asset_id: Self::AssetId,
 			location: Self::AssetNativeLocation,
 			ratio: Rational,
-			decimals: Option<Exponent>,
 		) -> DispatchResult {
 			ForeignToLocal::<T>::insert(&location, asset_id);
-			LocalToForeign::<T>::insert(asset_id, ForeignMetadata { decimals, location });
+			LocalToForeign::<T>::insert(asset_id, location);
 			AssetRatio::<T>::mutate_exists(asset_id, |x| *x = Some(ratio));
 			Ok(())
 		}
@@ -319,9 +339,7 @@ pub mod pallet {
 		type AssetNativeLocation = T::ForeignAssetId;
 		type Balance = T::Balance;
 
-		fn asset_to_remote(
-			asset_id: Self::AssetId,
-		) -> Option<composable_traits::xcm::assets::ForeignMetadata<Self::AssetNativeLocation>> {
+		fn asset_to_remote(asset_id: Self::AssetId) -> Option<Self::AssetNativeLocation> {
 			LocalToForeign::<T>::get(asset_id)
 		}
 
@@ -339,12 +357,11 @@ pub mod pallet {
 		fn get_foreign_assets_list() -> Vec<Asset<T::Balance, Self::AssetNativeLocation>> {
 			ForeignToLocal::<T>::iter()
 				.map(|(_, asset_id)| {
-					let foreign_metadata = LocalToForeign::<T>::get(asset_id)
+					let foreign_id = LocalToForeign::<T>::get(asset_id)
 						.expect("Must exist, as it does in ForeignToLocal");
-					let decimals = match foreign_metadata.decimals {
-						Some(exponent) => exponent,
-						_ => 12_u8,
-					};
+					let decimals =
+						<Pallet<T> as crate::InspectRegistryMetadata>::decimals(&asset_id)
+							.unwrap_or(12);
 					let ratio = AssetRatio::<T>::get(asset_id);
 
 					Asset {
@@ -352,7 +369,7 @@ pub mod pallet {
 						id: asset_id.into(),
 						decimals,
 						ratio,
-						foreign_id: Some(foreign_metadata.location),
+						foreign_id: Some(foreign_id),
 						existential_deposit: T::Balance::default(),
 					}
 				})
@@ -366,4 +383,47 @@ pub mod pallet {
 			AssetRatio::<T>::get(asset_id).map(Into::into)
 		}
 	}
+
+	impl<T: Config> crate::InspectRegistryMetadata for Pallet<T> {
+		type AssetId = T::LocalAssetId;
+
+		/// Return the name of an asset.
+		fn name(asset: &Self::AssetId) -> Option<Vec<u8>> {
+			Metadata::<T>::get(asset).map(|metadata| metadata.name.to_vec())
+		}
+
+		/// Return the symbol of an asset.
+		fn symbol(asset: &Self::AssetId) -> Option<Vec<u8>> {
+			// Metadata::<T>::get(asset).symbol.to_vec()
+			Metadata::<T>::get(asset).map(|metadata| metadata.symbol.to_vec())
+		}
+
+		/// Return the decimals of an asset.
+		fn decimals(asset: &Self::AssetId) -> Option<u8> {
+			Metadata::<T>::get(asset).map(|metadata| metadata.decimals)
+		}
+	}
+}
+
+/// Routing of indepent parts of the `AssetMetadata` from `pallet-assets-registry`
+pub trait InspectRegistryMetadata {
+	type AssetId;
+
+	/// Return the name of an asset.
+	fn name(asset: &Self::AssetId) -> Option<Vec<u8>>;
+	/// Return the symbol of an asset.
+	fn symbol(asset: &Self::AssetId) -> Option<Vec<u8>>;
+	/// Return the decimals of an asset.
+	fn decimals(asset: &Self::AssetId) -> Option<u8>;
+}
+
+/// Structure to represent basic asset metadata such as: name, symbol, decimals.
+#[derive(Clone, Encode, Decode, Eq, PartialEq, Default, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+pub struct AssetMetadata<BoundedName, BoundedSymbol> {
+	/// Name of the asset.
+	pub name: BoundedName,
+	/// Symbol of the asset.
+	pub symbol: BoundedSymbol,
+	/// The number of decimals this asset uses to represent one unit.
+	pub decimals: u8,
 }

@@ -79,6 +79,11 @@ ord_parameter_types! {
 	pub const RootAccount: AccountId = ROOT;
 }
 
+parameter_types! {
+	pub const AssetNameMaxChars: u32 = 32;
+	pub const AssetSymbolMaxChars: u32 = 8;
+}
+
 type AssetId = u128;
 
 impl pallet_assets_registry::Config for Runtime {
@@ -96,6 +101,8 @@ impl pallet_assets_registry::Config for Runtime {
 		EnsureRoot<AccountId>,                  // for benchmarks
 	>;
 	type WeightInfo = SubstrateWeight<Self>;
+	type AssetNameMaxChars = AssetNameMaxChars;
+	type AssetSymbolMaxChars = AssetSymbolMaxChars;
 }
 
 // Build genesis storage according to the mock runtime.

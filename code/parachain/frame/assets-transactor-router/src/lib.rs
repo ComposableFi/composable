@@ -131,15 +131,16 @@ pub mod pallet {
 		#[pallet::constant]
 		type NativeAssetId: Get<Self::AssetId>;
 
-		type ForeignTransactor: fungibles::Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+		type ForeignTransactor: fungibles::Create<Self::AccountId>
+			+ fungibles::Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ fungibles::Transfer<Self::AccountId>
 			+ fungibles::Mutate<Self::AccountId>
 			+ fungibles::Unbalanced<Self::AccountId>
 			+ fungibles::InspectHold<Self::AccountId>
-			+ fungibles::Transfer<Self::AccountId>
 			+ fungibles::MutateHold<Self::AccountId>;
 
-		type LocalTransactor: fungibles::Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+		type LocalTransactor: fungibles::Create<Self::AccountId>
+			+ fungibles::Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ fungibles::Transfer<Self::AccountId>
 			+ fungibles::Mutate<Self::AccountId>
 			+ fungibles::Unbalanced<Self::AccountId>
@@ -594,12 +595,28 @@ mod fungibles_impls {
 				MutateHold as NativeMutateHold, Transfer as NativeTransfer,
 				Unbalanced as NativeUnbalanced,
 			},
-			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer, Unbalanced},
+			fungibles::{Create, Inspect, InspectHold, Mutate, MutateHold, Transfer, Unbalanced},
 			DepositConsequence, WithdrawConsequence,
 		},
 	};
 
 	use crate::{Config, Pallet};
+
+	impl<T: Config> Create<T::AccountId> for Pallet<T> {
+		fn create(
+			id: T::AssetId,
+			admin: T::AccountId,
+			is_sufficent: bool,
+			min_balance: Self::Balance,
+		) -> DispatchResult {
+			match <T::AssetLookup as crate::AssetTypeInspect>::inspect(&id) {
+				crate::AssetType::Foreign =>
+					<<T as Config>::ForeignTransactor>::create(id, admin, is_sufficent, min_balance),
+				crate::AssetType::Local =>
+					<<T as Config>::LocalTransactor>::create(id, admin, is_sufficent, min_balance),
+			}
+		}
+	}
 
 	impl<T: Config> Unbalanced<T::AccountId> for Pallet<T> {
 		route! {

@@ -209,8 +209,7 @@ impl<
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
 		if let Some(location) = WellKnownXcmpAssets::local_to_remote(id, ThisParaId::get().into()) {
 			Some(location)
-		} else if let Some(location) = AssetRegistry::asset_to_remote(id).map(|x| x.location.into())
-		{
+		} else if let Some(location) = AssetRegistry::asset_to_remote(id).map(|x| x.into()) {
 			Some(location)
 		} else {
 			log::trace!(
