@@ -43,9 +43,9 @@ pub enum CodeIdentifier<T: Config> {
 	CodeId(CosmwasmCodeId),
 	CodeHash(CodeHashOf<T>),
 }
-/// Precompiled contract/code metadata.
+/// Pallet contract/code metadata.
 #[derive(Clone, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
-pub struct PrecompiledInfo<AccountId, Hash, Label, TrieId> {
+pub struct PalletContractCodeInfo<AccountId, Hash, Label, TrieId> {
 	/// Hardcoded code info representing the precompiled code backing the contract.
 	pub code: CodeInfo<AccountId, Hash>,
 	/// Hardcoded contract info representing the precompiled contract.
@@ -73,13 +73,13 @@ pub struct CodeInfo<AccountId, Hash> {
 pub struct ContractInfo<AccountId, Label, TrieId> {
 	/// The code this contract is baked by.
 	pub code_id: CosmwasmCodeId,
-	/// The contract trie ID.
+	/// The contract trie ID (The unique storage prefix).
 	pub trie_id: TrieId,
 	/// Account that created this instance.
 	pub instantiator: AccountId,
 	/// Current admin of the contract instance.
 	/// If the value is [`None`], the contract cannot be migrated.
 	pub admin: Option<AccountId>,
-	/// Contract label defined by the instantiator.w
+	/// Contract label defined by the instantiator.
 	pub label: Label,
 }
