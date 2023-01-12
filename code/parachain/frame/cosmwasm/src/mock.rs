@@ -277,15 +277,20 @@ impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for IbcLoopback<T> {
 
 pub struct MockHook;
 
-pub const MOCK_CONTRACT_ADDRESS_1: AccountIdOf<Test> = AccountId32::new([u8::MAX; 32]);
-pub const MOCK_CONTRACT_ADDRESS_2: AccountIdOf<Test> = AccountId32::new([120u8; 32]);
+pub const MOCK_PALLET_CONTRACT_ADDRESS_1: AccountIdOf<Test> = AccountId32::new([u8::MAX; 32]);
+pub const MOCK_PALLET_CONTRACT_ADDRESS_2: AccountIdOf<Test> = AccountId32::new([120u8; 32]);
 
-pub const MOCK_CONTRACT_EVENT_TY: &str = "magic";
+pub const MOCK_CONTRACT_EVENT_TYPE_1: &str = "magic";
+pub const MOCK_CONTRACT_EVENT_TYPE_2: &str = "magic but it is blue";
 pub const MOCK_QUERY_JS: &str = "It's JavaScript, What Did You Expect";
 
-pub const ALICE: AccountIdOf<Test> = AccountId32::new([0u8; 32]);
+pub const MOCK_PALLET_ACCOUNT_ID_1: AccountIdOf<Test> = AccountId32::new([1u8; 32]);
+pub const MOCK_PALLET_ACCOUNT_ID_2: AccountIdOf<Test> = AccountId32::new([2u8; 32]);
 
 impl PalletHook<Test> for MockHook {
+	// This mocked hook shows two pallets with contract hooks that currently exhibit the same
+	// behavior. The behavior does not need to be identical in practice.
+
 	fn precompiled_info(
 		contract_address: &AccountIdOf<Test>,
 	) -> Option<
@@ -297,15 +302,15 @@ impl PalletHook<Test> for MockHook {
 		>,
 	> {
 		match *contract_address {
-			MOCK_CONTRACT_ADDRESS_1 => Some(PalletContractCodeInfo::new(
-				ALICE,
+			MOCK_PALLET_CONTRACT_ADDRESS_1 => Some(PalletContractCodeInfo::new(
+				MOCK_PALLET_ACCOUNT_ID_1,
 				false,
-				"pallet-mock".as_bytes().to_vec().try_into().unwrap_or_default(),
+				"pallet-mock-1".as_bytes().to_vec().try_into().unwrap_or_default(),
 			)),
-			MOCK_CONTRACT_ADDRESS_2 => Some(PalletContractCodeInfo::new(
-				ALICE,
+			MOCK_PALLET_CONTRACT_ADDRESS_2 => Some(PalletContractCodeInfo::new(
+				MOCK_PALLET_ACCOUNT_ID_2,
 				false,
-				"pallet-mock".as_bytes().to_vec().try_into().unwrap_or_default(),
+				"pallet-mock-2".as_bytes().to_vec().try_into().unwrap_or_default(),
 			)),
 			_ => None,
 		}
@@ -320,22 +325,47 @@ impl PalletHook<Test> for MockHook {
 		VmErrorOf<WasmiVM<CosmwasmVM<'a, Test>>>,
 	> {
 		match *vm.0.contract_address.as_ref() {
-			MOCK_CONTRACT_ADDRESS_1 => {
+			MOCK_PALLET_CONTRACT_ADDRESS_1 => {
 				vm.charge(VmGas::Instrumentation { metered: 1 })?;
 				let mut response = Response::new()
-					.add_event(CosmwasmEvent::new(MOCK_CONTRACT_EVENT_TY))
+					.add_event(CosmwasmEvent::new(MOCK_CONTRACT_EVENT_TYPE_1))
 					.set_data(0xDEADC0DE_u32.to_le_bytes());
 				let depth = message.first().copied().unwrap_or(0);
-				if depth > 0u8 {
+				if depth > 0 {
 					response = response.add_submessage(SubMsg::new(WasmMsg::Execute {
-						contract_addr: AccountToAddr::convert(MOCK_CONTRACT_ADDRESS_1),
+						contract_addr: AccountToAddr::convert(MOCK_PALLET_CONTRACT_ADDRESS_1),
 						msg: vec![depth - 1].into(),
 						funds: Default::default(),
 					}));
 				}
 				match vm
 					.continue_query(
-						CosmwasmAccount::new(MOCK_CONTRACT_ADDRESS_1),
+						CosmwasmAccount::new(MOCK_PALLET_CONTRACT_ADDRESS_1),
+						Default::default(),
+					)?
+					.into()
+				{
+					ContractResult::Err(x) if x == MOCK_QUERY_JS =>
+						Ok(ContractResult::Ok(response)),
+					_ => Ok(ContractResult::Err("JavaScript must fail".into())),
+				}
+			},
+			MOCK_PALLET_CONTRACT_ADDRESS_2 => {
+				vm.charge(VmGas::Instrumentation { metered: 1 })?;
+				let mut response = Response::new()
+					.add_event(CosmwasmEvent::new(MOCK_CONTRACT_EVENT_TYPE_2))
+					.set_data(0xDEADC0DE_u32.to_le_bytes());
+				let depth = message.first().copied().unwrap_or(0);
+				if depth > 0 {
+					response = response.add_submessage(SubMsg::new(WasmMsg::Execute {
+						contract_addr: AccountToAddr::convert(MOCK_PALLET_CONTRACT_ADDRESS_2),
+						msg: vec![depth - 1].into(),
+						funds: Default::default(),
+					}));
+				}
+				match vm
+					.continue_query(
+						CosmwasmAccount::new(MOCK_PALLET_CONTRACT_ADDRESS_2),
 						Default::default(),
 					)?
 					.into()
@@ -354,7 +384,7 @@ impl PalletHook<Test> for MockHook {
 		_message: &[u8],
 	) -> Result<ContractResult<QueryResponse>, VmErrorOf<WasmiVM<CosmwasmVM<'a, Test>>>> {
 		match *vm.0.contract_address.as_ref() {
-			MOCK_CONTRACT_ADDRESS_1 | MOCK_CONTRACT_ADDRESS_2 =>
+			MOCK_PALLET_CONTRACT_ADDRESS_1 | MOCK_PALLET_CONTRACT_ADDRESS_2 =>
 				Ok(ContractResult::Err(MOCK_QUERY_JS.into())),
 			_ => Err(CosmwasmVMError::Unsupported), // Should be impossible
 		}
