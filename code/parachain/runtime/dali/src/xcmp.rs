@@ -283,8 +283,11 @@ parameter_types! {
 	pub const CouncilBodyId: BodyId = BodyId::Executive;
 }
 
-pub type CouncilToPlurality =
-	BackingToPlurality<RuntimeOrigin, collective::Origin<Runtime, NativeCouncilCollective>, CouncilBodyId>;
+pub type CouncilToPlurality = BackingToPlurality<
+	RuntimeOrigin,
+	collective::Origin<Runtime, NativeCouncilCollective>,
+	CouncilBodyId,
+>;
 
 pub struct RootToHereLocation<RuntimeOrigin, AccountId, Network>(
 	PhantomData<(RuntimeOrigin, AccountId, Network)>,

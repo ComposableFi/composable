@@ -729,10 +729,7 @@ fn map_order(order: Order) -> Result<IbcOrder, IbcError> {
 }
 
 impl<T: Config + Send + Sync + Default> IbcModuleRouter for Router<T> {
-	fn get_route_mut(
-		&mut self,
-		module_id: &ModuleId,
-	) -> Option<&mut dyn IbcModule> {
+	fn get_route_mut(&mut self, module_id: &ModuleId) -> Option<&mut dyn IbcModule> {
 		if module_id == &into_module_id::<T>() {
 			return Some(self)
 		}

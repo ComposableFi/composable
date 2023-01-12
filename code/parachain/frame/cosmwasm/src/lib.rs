@@ -658,7 +658,9 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			log::info!(target: "runtime::contracts", "outcome: {:?}", outcome);
 			let post_info = PostDispatchInfo {
-				actual_weight: Some(Weight::from_ref_time(initial_gas.saturating_sub(remaining_gas))),
+				actual_weight: Some(Weight::from_ref_time(
+					initial_gas.saturating_sub(remaining_gas),
+				)),
 				pays_fee: Pays::Yes,
 			};
 			match outcome {
