@@ -1183,6 +1183,7 @@ parameter_types! {
 
 type CosmwasmRouter = cosmwasm::ibc::Router<Runtime>;
 
+#[allow(clippy::derivable_impls)]
 impl Default for Runtime {
 	fn default() -> Self {
 		Self {}
