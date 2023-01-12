@@ -2,11 +2,11 @@
 /* eslint-disable */
 
 import type { BTreeMap, Null, Struct, u128, u16, u32, u64 } from '@polkadot/types-codec';
-import type { AccountId, AccountId32, AssetId, Balance, Perbill } from '@polkadot/types/interfaces/runtime';
+import type { AccountId, AccountId32, AssetId, Balance, FixedU64, Perbill } from '@polkadot/types/interfaces/runtime';
 
 /** @name ComposableTraitsStakingLockLockConfig */
 export interface ComposableTraitsStakingLockLockConfig extends Struct {
-  readonly durationPresets: BTreeMap<u64, Perbill>;
+  readonly durationPresets: BTreeMap<u64, FixedU64>;
   readonly unlockPenalty: Perbill;
 }
 

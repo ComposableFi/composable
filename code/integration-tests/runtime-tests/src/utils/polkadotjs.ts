@@ -1,6 +1,7 @@
 import { ApiPromise } from "@polkadot/api";
 import { AnyTuple, IEvent } from "@polkadot/types/types";
 import { AddressOrPair, SubmittableExtrinsic } from "@polkadot/api/types";
+import { EventRecord } from "@polkadot/types/interfaces/system";
 
 /**
  * Sends an unsigned extrinsic and waits for success.
@@ -36,6 +37,26 @@ export async function sendAndWaitForSuccess<T extends AnyTuple>(
   intendedToFail = false
 ): Promise<IEvent<T>> {
   return await sendAndWaitFor(api, sender, filter, call, intendedToFail);
+}
+
+/**
+ * Sends a signed extrinsic and waits for success.
+ *
+ * @param {ApiPromise} api Connected API Client.
+ * @param {AddressOrPair} sender Wallet initiating the transaction.
+ * @param {IEvent<AnyTuple>} filter Success event to be waited for.
+ * @param {SubmittableExtrinsic<Promise>} call Extrinsic call.
+ * @param {boolean} intendedToFail If set to true the transaction is expected to fail.
+ * @returns all events belonging to the transactions.
+ */
+export async function sendAndWaitForSuccessWithAllEvents<T extends AnyTuple>(
+  api: ApiPromise,
+  sender: AddressOrPair,
+  filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
+  call: SubmittableExtrinsic<"promise">,
+  intendedToFail = false
+): Promise<EventRecord[]> {
+  return await sendAndWaitForAllEvents(api, sender, filter, call, intendedToFail);
 }
 
 /**
@@ -210,6 +231,74 @@ export function sendAndWaitFor<T extends AnyTuple>(
               // @ts-ignore
               const event = res.events.find(e => filter(e.event)).event;
               if (filter(event)) resolve(event);
+            }
+            reject(Error("1014: Priority is too low:"));
+          }
+        }
+      })
+      .catch(function (e) {
+        reject(Error(e.stack));
+      });
+  });
+}
+
+/**
+ * As `sendAndWaitFor` but returns all events.
+ *
+ * @param api api object
+ * @param sender the sender of the transaction
+ * @param filter which event to filter for
+ * @param call a call that can be submitted to the chain
+ * @param {boolean} intendedToFail If true a failed submission will be counted as a success.
+ * @returns event that fits the filter
+ */
+export function sendAndWaitForAllEvents<T extends AnyTuple>(
+  api: ApiPromise,
+  sender: AddressOrPair,
+  filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
+  call: SubmittableExtrinsic<"promise">,
+  intendedToFail: boolean
+): Promise<EventRecord[]> {
+  return new Promise<EventRecord[]>(function (resolve, reject) {
+    call
+      .signAndSend(sender, { nonce: -1 }, function (res) {
+        const { dispatchError, status } = res;
+        if (dispatchError) {
+          if (dispatchError.isModule) {
+            // for module errors, we have the section indexed, lookup
+            const decoded = api.registry.findMetaError(dispatchError.asModule);
+            const { docs, name, section } = decoded;
+            if (intendedToFail) {
+              // @ts-ignore
+              const event = res.events.find(e => filter(e.event)).event;
+              if (filter(event)) resolve(res.events);
+            }
+            reject(Error(`${section}.${name}: ${docs.join(" ")}`));
+          } else {
+            if (intendedToFail) {
+              // @ts-ignore
+              const event = res.events.find(e => filter(e.event)).event;
+              if (filter(event)) resolve(res.events);
+            }
+            reject(Error(dispatchError.toString()));
+          }
+        }
+        if (status.isInBlock || status.isFinalized) {
+          if (res.events.find(e => filter(e.event)) == undefined) return reject(status.toString());
+          // @ts-ignore
+          const event = res.events.find(e => filter(e.event)).event;
+          if (filter(event)) {
+            if (intendedToFail) {
+              // @ts-ignore
+              const event = res.events.find(e => filter(e.event)).event;
+              if (filter(event)) reject(res.events);
+            }
+            resolve(res.events);
+          } else {
+            if (intendedToFail) {
+              // @ts-ignore
+              const event = res.events.find(e => filter(e.event)).event;
+              if (filter(event)) resolve(res.events);
             }
             reject(Error("1014: Priority is too low:"));
           }

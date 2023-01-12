@@ -31,6 +31,7 @@
   "license": "Public Domain",
   "devDependencies": {
     "@types/chai": "^4.3.3",
+    "@types/lodash": "^4.14.191",
     "@types/minimist": "^1.2.2",
     "@typescript-eslint/eslint-plugin": "^5.41.0",
     "@typescript-eslint/parser": "^5.41.0",
@@ -59,6 +60,7 @@
     "@types/mocha": "^10.0.0",
     "@types/node": "^18.11.8",
     "@types/ramda": "^0.28.18",
+    "bignumber.js": "^9.1.1",
     "chai": "^4.3.6",
     "chai-as-promised": "^7.1.1",
     "chai-bn": "^0.3.1",
@@ -66,6 +68,7 @@
     "eslint-plugin-mocha": "^10.1.0",
     "eslint-plugin-mocha-no-only": "^1.1.1",
     "ethers": "^5.7.2",
+    "lodash": "^4.17.21",
     "minimist": "^1.2.7",
     "mocha": "^10.1.0",
     "mochawesome": "^7.1.3",

@@ -7,11 +7,12 @@ import '@polkadot/types/types/registry';
 
 import type { Asset } from '@composable/types/interfaces/assets';
 import type { AssetsBalance, ComposableTraitsDefiCurrencyPairCurrencyId, ComposableTraitsDefiSellCurrencyId, ComposableTraitsXcmCumulusMethodId, ComposableTraitsXcmXcmSellRequest, CurrencyId, CustomRpcBalance, CustomRpcCurrencyId, SafeRpcWrapper } from '@composable/types/interfaces/common';
-import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsAccountProxyProxyDefinition, ComposableTraitsAccountProxyProxyType, ComposableTraitsAssetsBasicAssetMetadata, ComposableTraitsAssetsXcmAssetLocation, ComposableTraitsAuctionAuctionStepFunction, ComposableTraitsBondedFinanceBondDuration, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsBondedFinanceBondOfferReward, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDefiSell, ComposableTraitsDefiTake, ComposableTraitsDexAssetAmount, ComposableTraitsDexConstantProductPoolInfo, ComposableTraitsDexDexRoute, ComposableTraitsDexStableSwapPoolInfo, ComposableTraitsGovernanceSignedRawOrigin, ComposableTraitsLendingCreateInput, ComposableTraitsLendingMarketConfig, ComposableTraitsLendingRepayStrategy, ComposableTraitsLendingUpdateInput, ComposableTraitsOraclePrice, ComposableTraitsOracleRewardTracker, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVaultVaultConfig, ComposableTraitsVestingVestingSchedule, ComposableTraitsVestingVestingScheduleIdSet, ComposableTraitsVestingVestingScheduleInfo, ComposableTraitsXcmAssetsForeignMetadata, ComposableTraitsXcmAssetsXcmAssetLocation, CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueInboundStatus, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueOutboundStatus, CumulusPalletXcmpQueueQueueConfigData, CumulusPrimitivesParachainInherentParachainInherentData, DaliRuntimeOpaqueSessionKeys, DaliRuntimeOriginCaller, FrameSupportScheduleLookupError, FrameSupportScheduleMaybeHashed, FrameSystemAccountInfo, IbcTraitOpenChannelParams, IbcTransferPalletParams, IbcTransferTransferParams, OrmlTokensAccountData, OrmlTokensBalanceLock, OrmlTokensReserveData, PalletAccountProxyAnnouncement, PalletAssetsRegistryCandidateStatus, PalletAssetsRegistryForeignMetadata, PalletCollatorSelectionCandidateInfo, PalletCosmwasmCodeIdentifier, PalletCosmwasmCodeInfo, PalletCosmwasmContractInfo, PalletCosmwasmEntryPoint, PalletCrowdloanRewardsModelsEcdsaSignature, PalletCrowdloanRewardsModelsProof, PalletCrowdloanRewardsModelsRemoteAccount, PalletCrowdloanRewardsModelsReward, PalletCrowdloanRewardsReward, PalletDemocracyConviction, PalletDemocracyVoteAccountVote, PalletDutchAuctionSellOrder, PalletDutchAuctionTakeOrder, PalletIbcAny, PalletIbcConnectionParams, PalletIbcErrorsIbcError, PalletIbcEventsIbcEvent, PalletIbcIbcConsensusState, PalletIbcPingSendPingParams, PalletIdentityBitFlags, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletIdentityRegistrarInfo, PalletIdentityRegistration, PalletLiquidationsLiquidationStrategyConfiguration, PalletLiquidityBootstrappingPool, PalletMosaicAmmSwapInfo, PalletMosaicAssetInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, PalletMosaicRelayerStaleRelayer, PalletOracleAssetInfo, PalletOraclePrePrice, PalletOraclePrice, PalletOracleWithdraw, PalletSchedulerReleases, PalletSchedulerScheduledV2, PalletSchedulerScheduledV3, PalletTreasuryProposal, PalletVaultModelsStrategyOverview, PalletVaultModelsVaultInfo, PolkadotParachainPrimitivesXcmpMessageFormat, PolkadotPrimitivesV1AbridgedHostConfiguration, PolkadotPrimitivesV1PersistedValidationData, PolkadotPrimitivesV2AbridgedHostConfiguration, PolkadotPrimitivesV2PersistedValidationData, PolkadotPrimitivesV2UpgradeRestriction, SpConsensusAuraSr25519AppSr25519Public, SpTrieStorageProof, XcmVersionedMultiAsset } from '@composable/types/interfaces/crowdloanRewards';
+import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsAccountProxyProxyDefinition, ComposableTraitsAccountProxyProxyType, ComposableTraitsAssetsBasicAssetMetadata, ComposableTraitsAssetsXcmAssetLocation, ComposableTraitsAuctionAuctionStepFunction, ComposableTraitsBondedFinanceBondDuration, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsBondedFinanceBondOfferReward, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsCurrencyRational64, ComposableTraitsDefiSell, ComposableTraitsDefiTake, ComposableTraitsDexAssetAmount, ComposableTraitsDexConstantProductPoolInfo, ComposableTraitsDexDexRoute, ComposableTraitsDexStableSwapPoolInfo, ComposableTraitsGovernanceSignedRawOrigin, ComposableTraitsLendingCreateInput, ComposableTraitsLendingMarketConfig, ComposableTraitsLendingRepayStrategy, ComposableTraitsLendingUpdateInput, ComposableTraitsOraclePrice, ComposableTraitsOracleRewardTracker, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVaultVaultConfig, ComposableTraitsXcmAssetsForeignMetadata, ComposableTraitsXcmAssetsXcmAssetLocation, CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueInboundStatus, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueOutboundStatus, CumulusPalletXcmpQueueQueueConfigData, CumulusPrimitivesParachainInherentParachainInherentData, DaliRuntimeOpaqueSessionKeys, DaliRuntimeOriginCaller, FrameSupportPalletId, FrameSupportScheduleLookupError, FrameSupportScheduleMaybeHashed, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, FrameSupportWeightsPerDispatchClassU64, FrameSupportWeightsRuntimeDbWeight, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, FrameSystemPhase, IbcTraitOpenChannelParams, IbcTransferPalletParams, IbcTransferTransferParams, OrmlTokensAccountData, OrmlTokensBalanceLock, OrmlTokensReserveData, PalletAccountProxyAnnouncement, PalletAssetsRegistryCandidateStatus, PalletAssetsRegistryForeignMetadata, PalletAuthorshipUncleEntryItem, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesReleases, PalletBalancesReserveData, PalletCollatorSelectionCandidateInfo, PalletCollectiveVotes, PalletCosmwasmCodeIdentifier, PalletCosmwasmCodeInfo, PalletCosmwasmContractInfo, PalletCosmwasmEntryPoint, PalletCosmwasmInstrumentCostRules, PalletCrowdloanRewardsModelsEcdsaSignature, PalletCrowdloanRewardsModelsProof, PalletCrowdloanRewardsModelsRemoteAccount, PalletCrowdloanRewardsModelsReward, PalletCrowdloanRewardsReward, PalletDemocracyConviction, PalletDemocracyVoteAccountVote, PalletDutchAuctionSellOrder, PalletDutchAuctionTakeOrder, PalletIbcAny, PalletIbcConnectionParams, PalletIbcErrorsIbcError, PalletIbcEventsIbcEvent, PalletIbcIbcConsensusState, PalletIbcPalletParams, PalletIbcPingSendPingParams, PalletIbcTransferParams, PalletIbcUpgradeParams, PalletIdentityBitFlags, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletIdentityRegistrarInfo, PalletIdentityRegistration, PalletLiquidationsLiquidationStrategyConfiguration, PalletLiquidityBootstrappingPool, PalletMosaicAmmSwapInfo, PalletMosaicAssetInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, PalletMosaicRelayerStaleRelayer, PalletMultisigMultisig, PalletMultisigTimepoint, PalletOracleAssetInfo, PalletOraclePrePrice, PalletOraclePrice, PalletOracleWithdraw, PalletProxyAnnouncement, PalletProxyProxyDefinition, PalletSchedulerReleases, PalletSchedulerScheduledV2, PalletSchedulerScheduledV3, PalletTransactionPaymentReleases, PalletTreasuryProposal, PalletVaultModelsStrategyOverview, PalletVaultModelsVaultInfo, PalletXcmQueryStatus, PalletXcmVersionMigrationStage, PolkadotCorePrimitivesOutboundHrmpMessage, PolkadotParachainPrimitivesXcmpMessageFormat, PolkadotPrimitivesV1AbridgedHostConfiguration, PolkadotPrimitivesV1PersistedValidationData, PolkadotPrimitivesV2AbridgedHostConfiguration, PolkadotPrimitivesV2PersistedValidationData, PolkadotPrimitivesV2UpgradeRestriction, SpConsensusAuraSr25519AppSr25519Public, SpCoreCryptoKeyTypeId, SpRuntimeDigest, SpRuntimeDispatchError, SpRuntimeHeader, SpTrieStorageProof, SpVersionRuntimeVersion, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2WeightLimit, XcmV2Xcm, XcmVersionedMultiAsset, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@composable/types/interfaces/crowdloanRewards';
 import type { PalletCurrencyFactoryRanges, PalletCurrencyFactoryRangesRange } from '@composable/types/interfaces/currencyFactory';
 import type { PalletDemocracyPreimageStatus, PalletDemocracyReferendumInfo, PalletDemocracyReleases, PalletDemocracyVoteThreshold, PalletDemocracyVoteVoting, PalletPreimageRequestStatus } from '@composable/types/interfaces/democracy';
 import type { ComposableTraitsDexFee, ComposableTraitsDexStakingRewardPool, PalletPabloPoolConfiguration, PalletPabloPoolId, PalletPabloPoolInitConfiguration, PalletPabloPriceAggregate, PalletPabloPriceCumulative, PalletPabloTimeWeightedAveragePrice } from '@composable/types/interfaces/pablo';
 import type { ComposableTraitsStakingLockLockConfig, ComposableTraitsStakingRewardConfig, ComposableTraitsStakingRewardPool, ComposableTraitsStakingRewardPoolConfiguration, ComposableTraitsStakingRewardUpdate, ComposableTraitsStakingStake, PalletStakingRewardsRewardAccumulationHookError } from '@composable/types/interfaces/stakingRewards';
+import type { ComposableTraitsVestingVestingSchedule, ComposableTraitsVestingVestingScheduleIdSet, ComposableTraitsVestingVestingScheduleInfo, VestingWindow } from '@composable/types/interfaces/vesting';
 import type { Data, StorageKey } from '@polkadot/types';
 import type { BitVec, Bool, Bytes, F32, F64, I128, I16, I256, I32, I64, I8, Json, Null, OptionBool, Raw, Text, Type, U128, U16, U256, U32, U64, U8, USize, bool, f32, f64, i128, i16, i256, i32, i64, i8, u128, u16, u256, u32, u64, u8, usize } from '@polkadot/types-codec';
 import type { BlockAttestations, IncludedBlocks, MoreAttestations } from '@polkadot/types/interfaces/attestations';
@@ -71,7 +72,6 @@ import type { Multiplier } from '@polkadot/types/interfaces/txpayment';
 import type { TransactionSource, TransactionValidity, ValidTransaction } from '@polkadot/types/interfaces/txqueue';
 import type { ClassDetails, ClassId, ClassMetadata, DepositBalance, DepositBalanceOf, DestroyWitness, InstanceDetails, InstanceId, InstanceMetadata } from '@polkadot/types/interfaces/uniques';
 import type { Multisig, Timepoint } from '@polkadot/types/interfaces/utility';
-import type { VestingInfo } from '@polkadot/types/interfaces/vesting';
 import type { AssetInstance, AssetInstanceV0, AssetInstanceV1, AssetInstanceV2, BodyId, BodyPart, DoubleEncodedCall, Fungibility, FungibilityV0, FungibilityV1, FungibilityV2, InboundStatus, InstructionV2, InteriorMultiLocation, Junction, JunctionV0, JunctionV1, JunctionV2, Junctions, JunctionsV1, JunctionsV2, MultiAsset, MultiAssetFilter, MultiAssetFilterV1, MultiAssetFilterV2, MultiAssetV0, MultiAssetV1, MultiAssetV2, MultiAssets, MultiAssetsV1, MultiAssetsV2, MultiLocation, MultiLocationV0, MultiLocationV1, MultiLocationV2, NetworkId, OriginKindV0, OriginKindV1, OriginKindV2, OutboundStatus, Outcome, QueryId, QueryStatus, QueueConfigData, Response, ResponseV0, ResponseV1, ResponseV2, ResponseV2Error, ResponseV2Result, VersionMigrationStage, VersionedMultiAsset, VersionedMultiAssets, VersionedMultiLocation, VersionedResponse, VersionedXcm, WeightLimitV2, WildFungibility, WildFungibilityV0, WildFungibilityV1, WildFungibilityV2, WildMultiAsset, WildMultiAssetV1, WildMultiAssetV2, Xcm, XcmAssetId, XcmError, XcmErrorV0, XcmErrorV1, XcmErrorV2, XcmOrder, XcmOrderV0, XcmOrderV1, XcmOrderV2, XcmOrigin, XcmOriginKind, XcmV0, XcmV1, XcmV2, XcmVersion, XcmpMessageFormat } from '@polkadot/types/interfaces/xcm';
 
 declare module '@polkadot/types/types/registry' {
@@ -247,6 +247,7 @@ declare module '@polkadot/types/types/registry' {
     ComposableTraitsBondedFinanceBondOffer: ComposableTraitsBondedFinanceBondOffer;
     ComposableTraitsBondedFinanceBondOfferReward: ComposableTraitsBondedFinanceBondOfferReward;
     ComposableTraitsCallFilterCallFilterEntry: ComposableTraitsCallFilterCallFilterEntry;
+    ComposableTraitsCurrencyRational64: ComposableTraitsCurrencyRational64;
     ComposableTraitsDefiCurrencyPairCurrencyId: ComposableTraitsDefiCurrencyPairCurrencyId;
     ComposableTraitsDefiSell: ComposableTraitsDefiSell;
     ComposableTraitsDefiSellCurrencyId: ComposableTraitsDefiSellCurrencyId;
@@ -528,9 +529,19 @@ declare module '@polkadot/types/types/registry' {
     Forcing: Forcing;
     ForkTreePendingChange: ForkTreePendingChange;
     ForkTreePendingChangeNode: ForkTreePendingChangeNode;
+    FrameSupportPalletId: FrameSupportPalletId;
     FrameSupportScheduleLookupError: FrameSupportScheduleLookupError;
     FrameSupportScheduleMaybeHashed: FrameSupportScheduleMaybeHashed;
+    FrameSupportTokensMiscBalanceStatus: FrameSupportTokensMiscBalanceStatus;
+    FrameSupportWeightsDispatchInfo: FrameSupportWeightsDispatchInfo;
+    FrameSupportWeightsPerDispatchClassU64: FrameSupportWeightsPerDispatchClassU64;
+    FrameSupportWeightsRuntimeDbWeight: FrameSupportWeightsRuntimeDbWeight;
     FrameSystemAccountInfo: FrameSystemAccountInfo;
+    FrameSystemEventRecord: FrameSystemEventRecord;
+    FrameSystemLastRuntimeUpgradeInfo: FrameSystemLastRuntimeUpgradeInfo;
+    FrameSystemLimitsBlockLength: FrameSystemLimitsBlockLength;
+    FrameSystemLimitsBlockWeights: FrameSystemLimitsBlockWeights;
+    FrameSystemPhase: FrameSystemPhase;
     FullIdentification: FullIdentification;
     FunctionArgumentMetadataLatest: FunctionArgumentMetadataLatest;
     FunctionArgumentMetadataV10: FunctionArgumentMetadataV10;
@@ -797,15 +808,22 @@ declare module '@polkadot/types/types/registry' {
     PalletAccountProxyAnnouncement: PalletAccountProxyAnnouncement;
     PalletAssetsRegistryCandidateStatus: PalletAssetsRegistryCandidateStatus;
     PalletAssetsRegistryForeignMetadata: PalletAssetsRegistryForeignMetadata;
+    PalletAuthorshipUncleEntryItem: PalletAuthorshipUncleEntryItem;
+    PalletBalancesAccountData: PalletBalancesAccountData;
+    PalletBalancesBalanceLock: PalletBalancesBalanceLock;
+    PalletBalancesReleases: PalletBalancesReleases;
+    PalletBalancesReserveData: PalletBalancesReserveData;
     PalletCallMetadataLatest: PalletCallMetadataLatest;
     PalletCallMetadataV14: PalletCallMetadataV14;
     PalletCollatorSelectionCandidateInfo: PalletCollatorSelectionCandidateInfo;
+    PalletCollectiveVotes: PalletCollectiveVotes;
     PalletConstantMetadataLatest: PalletConstantMetadataLatest;
     PalletConstantMetadataV14: PalletConstantMetadataV14;
     PalletCosmwasmCodeIdentifier: PalletCosmwasmCodeIdentifier;
     PalletCosmwasmCodeInfo: PalletCosmwasmCodeInfo;
     PalletCosmwasmContractInfo: PalletCosmwasmContractInfo;
     PalletCosmwasmEntryPoint: PalletCosmwasmEntryPoint;
+    PalletCosmwasmInstrumentCostRules: PalletCosmwasmInstrumentCostRules;
     PalletCrowdloanRewardsModelsEcdsaSignature: PalletCrowdloanRewardsModelsEcdsaSignature;
     PalletCrowdloanRewardsModelsProof: PalletCrowdloanRewardsModelsProof;
     PalletCrowdloanRewardsModelsRemoteAccount: PalletCrowdloanRewardsModelsRemoteAccount;
@@ -831,7 +849,10 @@ declare module '@polkadot/types/types/registry' {
     PalletIbcErrorsIbcError: PalletIbcErrorsIbcError;
     PalletIbcEventsIbcEvent: PalletIbcEventsIbcEvent;
     PalletIbcIbcConsensusState: PalletIbcIbcConsensusState;
+    PalletIbcPalletParams: PalletIbcPalletParams;
     PalletIbcPingSendPingParams: PalletIbcPingSendPingParams;
+    PalletIbcTransferParams: PalletIbcTransferParams;
+    PalletIbcUpgradeParams: PalletIbcUpgradeParams;
     PalletId: PalletId;
     PalletIdentityBitFlags: PalletIdentityBitFlags;
     PalletIdentityIdentityInfo: PalletIdentityIdentityInfo;
@@ -847,6 +868,8 @@ declare module '@polkadot/types/types/registry' {
     PalletMosaicDecayBudgetPenaltyDecayer: PalletMosaicDecayBudgetPenaltyDecayer;
     PalletMosaicNetworkInfo: PalletMosaicNetworkInfo;
     PalletMosaicRelayerStaleRelayer: PalletMosaicRelayerStaleRelayer;
+    PalletMultisigMultisig: PalletMultisigMultisig;
+    PalletMultisigTimepoint: PalletMultisigTimepoint;
     PalletOracleAssetInfo: PalletOracleAssetInfo;
     PalletOraclePrePrice: PalletOraclePrePrice;
     PalletOraclePrice: PalletOraclePrice;
@@ -858,6 +881,8 @@ declare module '@polkadot/types/types/registry' {
     PalletPabloPriceCumulative: PalletPabloPriceCumulative;
     PalletPabloTimeWeightedAveragePrice: PalletPabloTimeWeightedAveragePrice;
     PalletPreimageRequestStatus: PalletPreimageRequestStatus;
+    PalletProxyAnnouncement: PalletProxyAnnouncement;
+    PalletProxyProxyDefinition: PalletProxyProxyDefinition;
     PalletSchedulerReleases: PalletSchedulerReleases;
     PalletSchedulerScheduledV2: PalletSchedulerScheduledV2;
     PalletSchedulerScheduledV3: PalletSchedulerScheduledV3;
@@ -865,10 +890,13 @@ declare module '@polkadot/types/types/registry' {
     PalletStakingRewardsRewardAccumulationHookError: PalletStakingRewardsRewardAccumulationHookError;
     PalletStorageMetadataLatest: PalletStorageMetadataLatest;
     PalletStorageMetadataV14: PalletStorageMetadataV14;
+    PalletTransactionPaymentReleases: PalletTransactionPaymentReleases;
     PalletTreasuryProposal: PalletTreasuryProposal;
     PalletVaultModelsStrategyOverview: PalletVaultModelsStrategyOverview;
     PalletVaultModelsVaultInfo: PalletVaultModelsVaultInfo;
     PalletVersion: PalletVersion;
+    PalletXcmQueryStatus: PalletXcmQueryStatus;
+    PalletXcmVersionMigrationStage: PalletXcmVersionMigrationStage;
     ParachainDispatchOrigin: ParachainDispatchOrigin;
     ParachainInherentData: ParachainInherentData;
     ParachainProposal: ParachainProposal;
@@ -911,6 +939,7 @@ declare module '@polkadot/types/types/registry' {
     Phase: Phase;
     PhragmenScore: PhragmenScore;
     Points: Points;
+    PolkadotCorePrimitivesOutboundHrmpMessage: PolkadotCorePrimitivesOutboundHrmpMessage;
     PolkadotParachainPrimitivesXcmpMessageFormat: PolkadotParachainPrimitivesXcmpMessageFormat;
     PolkadotPrimitivesV1AbridgedHostConfiguration: PolkadotPrimitivesV1AbridgedHostConfiguration;
     PolkadotPrimitivesV1PersistedValidationData: PolkadotPrimitivesV1PersistedValidationData;
@@ -1109,8 +1138,13 @@ declare module '@polkadot/types/types/registry' {
     SpanIndex: SpanIndex;
     SpanRecord: SpanRecord;
     SpConsensusAuraSr25519AppSr25519Public: SpConsensusAuraSr25519AppSr25519Public;
+    SpCoreCryptoKeyTypeId: SpCoreCryptoKeyTypeId;
     SpecVersion: SpecVersion;
+    SpRuntimeDigest: SpRuntimeDigest;
+    SpRuntimeDispatchError: SpRuntimeDispatchError;
+    SpRuntimeHeader: SpRuntimeHeader;
     SpTrieStorageProof: SpTrieStorageProof;
+    SpVersionRuntimeVersion: SpVersionRuntimeVersion;
     Sr25519Signature: Sr25519Signature;
     StakingLedger: StakingLedger;
     StakingLedgerTo223: StakingLedgerTo223;
@@ -1243,8 +1277,8 @@ declare module '@polkadot/types/types/registry' {
     VersionedResponse: VersionedResponse;
     VersionedXcm: VersionedXcm;
     VersionMigrationStage: VersionMigrationStage;
-    VestingInfo: VestingInfo;
     VestingSchedule: VestingSchedule;
+    VestingWindow: VestingWindow;
     Vote: Vote;
     VoteIndex: VoteIndex;
     Voter: Voter;
@@ -1294,8 +1328,19 @@ declare module '@polkadot/types/types/registry' {
     XcmpMessageFormat: XcmpMessageFormat;
     XcmV0: XcmV0;
     XcmV1: XcmV1;
+    XcmV1MultiAsset: XcmV1MultiAsset;
+    XcmV1MultiassetMultiAssets: XcmV1MultiassetMultiAssets;
+    XcmV1MultiLocation: XcmV1MultiLocation;
     XcmV2: XcmV2;
+    XcmV2Response: XcmV2Response;
+    XcmV2TraitsError: XcmV2TraitsError;
+    XcmV2TraitsOutcome: XcmV2TraitsOutcome;
+    XcmV2WeightLimit: XcmV2WeightLimit;
+    XcmV2Xcm: XcmV2Xcm;
     XcmVersion: XcmVersion;
     XcmVersionedMultiAsset: XcmVersionedMultiAsset;
+    XcmVersionedMultiAssets: XcmVersionedMultiAssets;
+    XcmVersionedMultiLocation: XcmVersionedMultiLocation;
+    XcmVersionedXcm: XcmVersionedXcm;
   } // InterfaceTypes
 } // declare module
