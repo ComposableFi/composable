@@ -241,6 +241,8 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			location: T::ForeignAssetId,
 			ratio: Rational,
+			name: BoundedVec<u8, T::AssetNameMaxChars>,
+			symbol: BoundedVec<u8, T::AssetSymbolMaxChars>,
 			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
@@ -387,20 +389,34 @@ pub mod pallet {
 	impl<T: Config> crate::InspectRegistryMetadata for Pallet<T> {
 		type AssetId = T::LocalAssetId;
 
-		/// Return the name of an asset.
-		fn name(asset: &Self::AssetId) -> Option<Vec<u8>> {
-			Metadata::<T>::get(asset).map(|metadata| metadata.name.to_vec())
+		fn name(asset_id: &Self::AssetId) -> Option<Vec<u8>> {
+			Metadata::<T>::get(asset_id).map(|metadata| metadata.name.to_vec())
 		}
 
-		/// Return the symbol of an asset.
-		fn symbol(asset: &Self::AssetId) -> Option<Vec<u8>> {
-			// Metadata::<T>::get(asset).symbol.to_vec()
-			Metadata::<T>::get(asset).map(|metadata| metadata.symbol.to_vec())
+		fn symbol(asset_id: &Self::AssetId) -> Option<Vec<u8>> {
+			Metadata::<T>::get(asset_id).map(|metadata| metadata.symbol.to_vec())
 		}
 
-		/// Return the decimals of an asset.
-		fn decimals(asset: &Self::AssetId) -> Option<u8> {
-			Metadata::<T>::get(asset).map(|metadata| metadata.decimals)
+		fn decimals(asset_id: &Self::AssetId) -> Option<u8> {
+			Metadata::<T>::get(asset_id).map(|metadata| metadata.decimals)
+		}
+	}
+
+	impl<T: Config>
+		crate::MutateRegistryMetadata<
+			BoundedVec<u8, T::AssetNameMaxChars>,
+			BoundedVec<u8, T::AssetSymbolMaxChars>,
+		> for Pallet<T>
+	{
+		type AssetId = T::LocalAssetId;
+
+		fn set(
+			asset_id: &Self::AssetId,
+			name: Option<BoundedVec<u8, T::AssetNameMaxChars>>,
+			symbol: Option<BoundedVec<u8, T::AssetSymbolMaxChars>>,
+			decimals: Option<u8>,
+		) {
+			todo!("Upsert Metadata of asset");
 		}
 	}
 }
@@ -410,11 +426,22 @@ pub trait InspectRegistryMetadata {
 	type AssetId;
 
 	/// Return the name of an asset.
-	fn name(asset: &Self::AssetId) -> Option<Vec<u8>>;
+	fn name(asset_id: &Self::AssetId) -> Option<Vec<u8>>;
 	/// Return the symbol of an asset.
-	fn symbol(asset: &Self::AssetId) -> Option<Vec<u8>>;
+	fn symbol(asset_id: &Self::AssetId) -> Option<Vec<u8>>;
 	/// Return the decimals of an asset.
-	fn decimals(asset: &Self::AssetId) -> Option<u8>;
+	fn decimals(asset_id: &Self::AssetId) -> Option<u8>;
+}
+
+pub trait MutateRegistryMetadata<BoundedName, BoundedSymbol> {
+	type AssetId;
+
+	fn set(
+		asset_id: &Self::AssetId,
+		name: Option<BoundedName>,
+		symbol: Option<BoundedSymbol>,
+		decimals: Option<u8>,
+	);
 }
 
 /// Structure to represent basic asset metadata such as: name, symbol, decimals.
