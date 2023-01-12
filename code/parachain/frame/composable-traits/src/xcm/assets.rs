@@ -92,6 +92,15 @@ pub trait RemoteAssetRegistryMutate {
 	type AssetNativeLocation;
 	type Balance;
 
+	fn register_asset(
+		asset_id: Self::AssetId,
+		location: Option<Self::AssetNativeLocation>,
+		ratio: Rational64,
+		name: Vec<u8>,
+		symbol: Vec<u8>,
+		decimals: u8,
+	) -> DispatchResult;
+
 	/// Set asset native location.
 	///
 	/// Adds mapping between native location and local asset id and vice versa.
@@ -109,14 +118,10 @@ pub trait RemoteAssetRegistryMutate {
 	fn set_reserve_location(
 		asset_id: Self::AssetId,
 		location: Self::AssetNativeLocation,
-		ratio: Rational64,
 	) -> DispatchResult;
 
 	/// allows change  ratio of how much remote assets is needed for unit of native
-	fn update_ratio(
-		location: Self::AssetNativeLocation,
-		ratio: Option<Rational64>,
-	) -> DispatchResult;
+	fn update_ratio(asset_id: Self::AssetId, ratio: Option<Rational64>) -> DispatchResult;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
