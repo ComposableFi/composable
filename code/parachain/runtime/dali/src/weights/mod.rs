@@ -10,6 +10,7 @@ pub mod currency_factory;
 pub mod democracy;
 pub mod dex_router;
 pub mod dutch_auction;
+pub mod fnft;
 pub mod frame_system;
 pub mod identity;
 pub mod indices;

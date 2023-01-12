@@ -738,6 +738,7 @@ impl pallet_fnft::Config for Runtime {
 	type AccountProxy = AccountProxyWrapperInstance;
 	type ProxyTypeSelector = FnftAccountProxyType;
 	type PalletId = FnftPalletId;
+	type WeightInfo = weights::fnft::WeightInfo<Runtime>;
 }
 
 parameter_types! {

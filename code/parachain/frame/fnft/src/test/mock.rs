@@ -59,6 +59,7 @@ impl crate::Config for MockRuntime {
 	type AccountProxy = AccountProxyWrapperInstance;
 	type ProxyTypeSelector = MockFnftAccountProxyType;
 	type PalletId = FnftPalletId;
+	type WeightInfo = ();
 }
 
 impl pallet_timestamp::Config for MockRuntime {

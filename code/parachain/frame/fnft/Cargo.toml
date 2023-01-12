@@ -16,6 +16,8 @@ package = "parity-scale-codec"
 version = "3.0.0"
 
 [dependencies]
+composable-tests-helpers = { default-features = false, path = "../composable-tests-helpers", optional = true }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
@@ -34,6 +36,7 @@ composable-traits = { path = "../composable-traits", default-features = false }
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 composable-traits = { path = "../composable-traits", features = ["test-utils"] }
+frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
@@ -56,6 +59,8 @@ std = [
 ]
 
 runtime-benchmarks = [
+  "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
+  "composable-tests-helpers",
 ]
