@@ -1818,7 +1818,7 @@ impl_runtime_apis! {
 		}
 
 		fn denom_traces(key: Option<CurrencyId>, offset: Option<u32>, limit: u64, count_total: bool) -> ibc_primitives::QueryDenomTracesResponse {
-			let key = key.map(|k| Either::Left(k)).or_else(|| offset.map(|o| Either::Right(o)));
+			let key = key.map(Either::Left).or_else(|| offset.map(Either::Right));
 			Ibc::get_denom_traces(key, limit, count_total)
 		}
 
