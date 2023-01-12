@@ -201,26 +201,6 @@
           devnet = packages.devnet-picasso-complete;
           frontend = packages.frontend-static-picasso-persistent;
         });
-
-      kusama-picasso-karura-devnet = let
-        config = (pkgs.callPackage
-          ../scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
-            polkadot-bin = packages.polkadot-node;
-            composable-bin = packages.composable-node;
-            acala-bin = packages.acala-node;
-          }).result;
-        config-file = pkgs.writeTextFile {
-          name = "kusama-local-picasso-dev-karura-dev.json";
-          text = "${builtins.toJSON config}";
-        };
-      in pkgs.writeShellApplication {
-        name = "kusama-picasso-karura";
-        text = ''
-          cat ${config-file}
-          rm -rf /tmp/polkadot-launch
-          ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-        '';
-      };
     };
   };
 }

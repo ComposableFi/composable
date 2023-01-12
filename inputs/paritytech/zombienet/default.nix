@@ -135,4 +135,24 @@ in with prelude; rec {
     settings = mkSettings;
     types = mkTypes;
   };
+
+  zombienet-to-ops = zombienet:
+    # output network information in a format that ops(compose, deploy, tests) can consume
+    let
+      ops-node = { name ? null, ws_port ? null, ... }:
+        if name != null && ws_port != null then {
+          ws_port = ws_port;
+          name = name;
+        } else
+          null;
+
+      driedCollators = collators:
+        builtins.filter (e: e != null) (builtins.map ops-node collators);
+      driedParachains = parachains:
+        builtins.map (e: driedCollators e.collators) parachains;
+    in {
+      parachain-nodes = driedParachains zombienet.parachains;
+      relaychain-nodes = builtins.filter (e: e != null)
+        (builtins.map ops-node zombienet.relaychain.nodes);
+    };
 }
