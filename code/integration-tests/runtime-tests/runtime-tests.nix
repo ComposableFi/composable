@@ -55,7 +55,7 @@
           cd code/integration-tests/runtime-tests || exit
           npm install -q
           export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_short 2>&1>runtime-tests.log & RUNTIME_TESTS_PID=$!
-          until test -f runtime-tests.log; do sleep 1 && echo "waiting tests start"; done;
+          wait_for_log "runtime-tests.log" "waiting tests start"
           tail --follow runtime-tests.log &
           ( tail --follow --lines=0 runtime-tests.log & ) | ( grep --max-count=5 "API-WS: disconnected from" >stop.log & )
           ( while : ; do if test $( wc --lines stop.log | cut --delimiter " " --fields 1 ) -gt 4; then kill -s SIGKILL $RUNTIME_TESTS_PID && echo "Failed" && exit 42; fi; sleep 1; done ) &
