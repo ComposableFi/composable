@@ -6,17 +6,14 @@ export async function fetchStakingRewardPools(
   parachainApi: ApiPromise,
   assetIds: Array<string>
 ): Promise<Array<{ pool: StakingRewardPool; assetId: string }>> {
-  let _stakingRewardPools: Array<{ pool: StakingRewardPool; assetId: string }> = [];
+  let _stakingRewardPools: Array<{ pool: StakingRewardPool; assetId: string }> =
+    [];
 
   try {
-    for (
-      const assetId of assetIds
-    ) {
+    for (const assetId of assetIds) {
       try {
         let stakingRewardPoolAtIndex: any =
-          await parachainApi.query.stakingRewards.rewardPools(
-            assetId
-          );
+          await parachainApi.query.stakingRewards.rewardPools(assetId);
 
         stakingRewardPoolAtIndex = stakingRewardPoolAtIndex.toJSON();
 
@@ -25,9 +22,7 @@ export async function fetchStakingRewardPools(
           // throw new Error(`[AssetId: ${assetId}] Staking Reward Pool does not exist`);
         }
 
-        const _decoded = decodeStakingRewardPool(
-          stakingRewardPoolAtIndex
-        );
+        const _decoded = decodeStakingRewardPool(stakingRewardPoolAtIndex);
 
         _stakingRewardPools.push({ pool: _decoded, assetId });
       } catch (err: any) {

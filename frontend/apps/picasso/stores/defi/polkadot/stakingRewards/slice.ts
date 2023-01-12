@@ -4,8 +4,6 @@ import { StakingPosition } from "@/apollo/queries/stakingPositions";
 
 export type RewardPool = {
   owner: string;
-  assetId: number;
-  totalShares: BigNumber;
   claimedShares: BigNumber;
   endBlock: BigNumber;
   lock: {
@@ -16,6 +14,7 @@ export type RewardPool = {
   };
   shareAssetId: string;
   financialNftAssetId: string;
+  minimumStakingAmount: BigNumber;
 };
 export type PortfolioItem = {
   instanceId: string;
@@ -31,11 +30,11 @@ export type PortfolioItem = {
 export type PortfolioTuple = [string, string, PortfolioItem];
 export type StakingPortfolio = Array<PortfolioItem>;
 export type StakingRewardsSlice = {
-  // TODO: key better to be in string as we might have types not cast-able to number.
+  isRewardPoolLoaded: boolean;
   rewardPools: {
-    [key in number]: RewardPool;
+    [key in string]: RewardPool;
   };
-  setRewardPool: (assetId: number, pool: RewardPool) => void;
+  setRewardPool: (assetId: string, pool: RewardPool) => void;
   stakingPositions: StakingPosition[];
   isStakingPositionsLoadingState: boolean;
   setStakingPositions: (positions: StakingPosition[]) => void;
@@ -44,10 +43,11 @@ export type StakingRewardsSlice = {
   setStakingPortfolio: (value: StakingPortfolio) => void;
 };
 const initialState = {
+  isRewardPoolLoaded: false,
   rewardPools: {
-    1: {
+    "1": {
       owner: "",
-      assetId: 1,
+      assetId: "1",
       totalShares: new BigNumber(0),
       claimedShares: new BigNumber(0),
       endBlock: new BigNumber(0),
@@ -57,6 +57,7 @@ const initialState = {
       },
       shareAssetId: "",
       financialNftAssetId: "",
+      minimumStakingAmount: new BigNumber(0),
     },
   },
   stakingPositions: [],
@@ -68,9 +69,10 @@ export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (
   set
 ) => ({
   ...initialState,
-  setRewardPool: (assetId: number, pool: RewardPool) =>
+  setRewardPool: (assetId: string, pool: RewardPool) =>
     set((state) => {
       state.rewardPools[assetId] = pool;
+      state.isRewardPoolLoaded = true;
 
       return state;
     }),

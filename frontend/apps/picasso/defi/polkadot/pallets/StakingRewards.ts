@@ -15,7 +15,6 @@ import { AnyComponentMap, EnqueueSnackbar, SnackbarKey } from "notistack";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { Signer } from "@polkadot/api/types";
 import { pipe } from "fp-ts/lib/function";
-import * as E from "fp-ts/Either";
 import * as TE from "fp-ts/TaskEither";
 import { tryCatch } from "fp-ts/TaskEither";
 
@@ -40,7 +39,6 @@ export async function fetchStakingRewardPosition(
 }
 
 export function transformRewardPool(rewardPoolsWrapped: any): RewardPool {
-  console.log(rewardPoolsWrapped);
   return {
     owner: rewardPoolsWrapped.owner,
     // assetId: rewardPoolsWrapped.assetId.toString(), assetId is removed
@@ -63,16 +61,22 @@ export function transformRewardPool(rewardPoolsWrapped: any): RewardPool {
     },
     shareAssetId: rewardPoolsWrapped.shareAssetId.toString(),
     financialNftAssetId: rewardPoolsWrapped.financialNftAssetId.toString(),
+    minimumStakingAmount: fromChainIdUnit(
+      rewardPoolsWrapped.minimumStakingAmount.toString()
+    ),
   } as unknown as RewardPool;
 }
 
-export async function fetchRewardPools(api: ApiPromise, assetId: number) {
+export function tryFetchRewardPool(
+  api: ApiPromise,
+  assetId: string | number
+): TE.TaskEither<Error, RewardPool> {
   const getRewardPools = tryCatch(
     () => api.query.stakingRewards.rewardPools(api.createType("u128", assetId)),
     () => new Error("Could not query reward pools")
   );
 
-  const task: TE.TaskEither<Error, RewardPool> = pipe(
+  return pipe(
     getRewardPools,
     TE.chainW((e) =>
       e.isSome
@@ -80,14 +84,6 @@ export async function fetchRewardPools(api: ApiPromise, assetId: number) {
         : TE.left(new Error("Empty result from reward pool"))
     )
   );
-
-  return pipe(
-    await task(),
-    E.fold(
-      () => null,
-      (a) => a
-    )
-  )
 }
 
 export function formatDurationOption(duration: string, multiplier: BigNumber) {
@@ -101,6 +97,19 @@ export function formatDurationOption(duration: string, multiplier: BigNumber) {
 export type DurationOption = {
   [key in number]: string;
 };
+
+function onReady(
+  enqueueSnackbar: EnqueueSnackbar<AnyComponentMap>
+): (txHash: string) => string | number {
+  return (txHash: string) => {
+    return enqueueSnackbar("Processing stake on the chain", {
+      variant: "info",
+      isClosable: true,
+      persist: true,
+      url: subscanExtrinsicLink("picasso", txHash),
+    });
+  };
+}
 
 export function stake({
   executor,
@@ -135,13 +144,8 @@ export function stake({
         account.address,
         api,
         _signer,
-        (txHash: string) => {
-          snackbarKey = enqueueSnackbar("Processing stake on the chain", {
-            variant: "info",
-            isClosable: true,
-            persist: true,
-            url: subscanExtrinsicLink("picasso", txHash),
-          });
+        (txHash) => {
+          snackbarKey = onReady(enqueueSnackbar)(txHash);
         },
         (txHash: string) => {
           closeSnackbar(snackbarKey);
