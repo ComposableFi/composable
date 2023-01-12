@@ -1,6 +1,7 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { HistoricalLockedValue, PabloPool } from "../../model";
+import { LessThan } from "typeorm";
+import { HistoricalLockedValue, LockedSource, PabloPool } from "../../model";
 import { getRange } from "./common";
 
 @ObjectType()
@@ -57,15 +58,20 @@ export class PabloTVLResolver {
 
     for (const timestamp of timestamps) {
       const time = timestamp.toISOString();
-      const row = await manager
-        .getRepository(HistoricalLockedValue)
-        .createQueryBuilder()
-        .select(`'${time}'`, "date")
-        .addSelect("asset_id", "assetId")
-        .addSelect(`coalesce(tvl('${time}', 'Pablo', '${pool.quoteAssetId}'), 0)`, "totalValueLocked")
-        .getRawOne();
 
-      lockedValues[time] = row.totalValueLocked;
+      const historicalLockedValue = await manager.getRepository(HistoricalLockedValue).findOne({
+        where: {
+          timestamp: LessThan(new Date(time)),
+          source: LockedSource.Pablo,
+          assetId: pool.quoteAssetId,
+          sourceEntityId: poolId
+        },
+        order: {
+          timestamp: "DESC"
+        }
+      });
+
+      lockedValues[time] = historicalLockedValue?.accumulatedAmount || 0n;
     }
 
     return Object.keys(lockedValues).map(date => {
