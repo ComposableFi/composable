@@ -11,12 +11,13 @@ use crate::{
 		add_to_rewards_pot_and_assert, create_rewards_pool_and_assert, split_and_assert,
 		stake_and_assert, unstake_and_assert,
 	},
-	Config, RewardPoolConfigurationOf, RewardPools, Stakes,
+	Config, FinancialNftInstanceIdOf, RewardAccumulationHookError, RewardPoolConfigurationOf,
+	RewardPools, Stakes,
 };
 
 use composable_support::validation::TryIntoValidated;
 use composable_tests_helpers::test::{
-	block::{next_block, process_and_progress_blocks},
+	block::{next_block, process_and_progress_blocks, process_and_progress_blocks_with},
 	currency::{BTC, PICA, USDT, XPICA},
 	helper::RuntimeTrait,
 };
@@ -1131,22 +1132,8 @@ fn test_split_position() {
 
 		mint_assets([ALICE], [PICA::ID], PICA::units(2000));
 
-		let existing_fnft_instance_id = stake_and_assert::<Test>(
-			ALICE,
-			PICA::ID,
-			PICA::units(1_000),
-			ONE_HOUR,
-			// crate::Event::Staked {
-			// 	pool_id: PICA::ID,
-			// 	owner: BOB,
-			// 	amount: PICA::units(1_000),
-			// 	duration_preset: ONE_HOUR,
-			// 	fnft_collection_id: 1,
-			// 	fnft_instance_id: 0,
-			// 	reward_multiplier: FixedU64::from_rational(101, 100),
-			// 	keep_alive: true,
-			// },
-		);
+		let existing_fnft_instance_id =
+			stake_and_assert::<Test>(ALICE, PICA::ID, PICA::units(1_000), ONE_HOUR);
 
 		let existing_stake_before_split =
 			Stakes::<Test>::get(1, existing_fnft_instance_id).expect("stake should exist");
@@ -1164,6 +1151,10 @@ fn test_split_position() {
 		let existing_stake =
 			Stakes::<Test>::get(1, existing_fnft_instance_id).expect("stake should exist");
 		let new_stake = Stakes::<Test>::get(1, new_fnft_instance_id).expect("stake should exist");
+
+		Test::assert_last_event(Event::StakingRewards(crate::Event::SplitPosition {
+			positions: vec![(PICA::ID, 0, existing_stake.stake), (PICA::ID, 1, new_stake.stake)],
+		}));
 
 		// validate stake and share as per ratio
 		assert_eq!(existing_stake.stake, ratio.mul_floor(existing_stake_before_split.stake));
@@ -1187,11 +1178,103 @@ fn test_split_position() {
 		assert_eq!(balance(XPICA::ID, &FinancialNft::asset_account(&1, &1)), new_stake.share);
 
 		assert_eq!(new_stake.reductions.get(&USDT::ID), Some(&0));
-
-		Test::assert_last_event(Event::StakingRewards(crate::Event::SplitPosition {
-			positions: vec![(PICA::ID, 0, existing_stake.stake), (PICA::ID, 1, new_stake.stake)],
-		}));
 	});
+}
+
+#[test]
+fn split_positions_accrue_same_as_original_position() {
+	fn create_pool_and_stake() -> FinancialNftInstanceIdOf<Test> {
+		create_rewards_pool_and_assert::<Test>(RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: PICA::ID,
+			start_block: 2,
+			end_block: 100_000,
+			reward_configs: [(
+				USDT::ID,
+				RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1)) },
+			)]
+			.into_iter()
+			.try_collect()
+			.unwrap(),
+			lock: default_lock_config(),
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+		});
+
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+
+		mint_assets([BOB], [USDT::ID], USDT::units(1_000));
+		add_to_rewards_pot_and_assert::<Test>(BOB, PICA::ID, USDT::ID, USDT::units(1_000));
+
+		mint_assets([ALICE], [PICA::ID], PICA::units(2000));
+		stake_and_assert::<Test>(ALICE, PICA::ID, PICA::units(1_000), ONE_HOUR)
+	}
+
+	fn process_blocks() {
+		process_and_progress_blocks_with::<StakingRewards, Test>(BLOCKS_TO_ACCRUE_FOR, || {
+			<Test as RuntimeTrait<crate::Event<Test>>>::assert_no_event(
+				crate::Event::RewardAccumulationHookError {
+					pool_id: PICA::ID,
+					asset_id: USDT::ID,
+					error: RewardAccumulationHookError::RewardsPotEmpty,
+				},
+			);
+		});
+	}
+
+	const BLOCKS_TO_ACCRUE_FOR: usize = 150;
+
+	let accrued_without_split = new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+
+		let existing_fnft_instance_id = create_pool_and_stake();
+
+		process_blocks();
+
+		crate::Pallet::<Test>::claim(
+			Origin::signed(ALICE),
+			STAKING_FNFT_COLLECTION_ID,
+			existing_fnft_instance_id,
+		)
+		.unwrap();
+
+		Tokens::balance(USDT::ID, &ALICE)
+	});
+
+	let accrued_with_split = new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+
+		let existing_fnft_instance_id = create_pool_and_stake();
+
+		let ratio = Permill::from_rational(1_u32, 7_u32);
+
+		let new_fnft_instance_id = split_and_assert::<Test>(
+			ALICE,
+			STAKING_FNFT_COLLECTION_ID,
+			existing_fnft_instance_id,
+			ratio.try_into_validated().expect("valid split ratio"),
+		);
+
+		process_blocks();
+
+		crate::Pallet::<Test>::claim(
+			Origin::signed(ALICE),
+			STAKING_FNFT_COLLECTION_ID,
+			existing_fnft_instance_id,
+		)
+		.unwrap();
+		crate::Pallet::<Test>::claim(
+			Origin::signed(ALICE),
+			STAKING_FNFT_COLLECTION_ID,
+			new_fnft_instance_id,
+		)
+		.unwrap();
+
+		Tokens::balance(USDT::ID, &ALICE)
+	});
+
+	assert_eq!(accrued_with_split, accrued_without_split)
 }
 
 // TODO(connor): Move unit tests for functions to one (or more) modules per function
