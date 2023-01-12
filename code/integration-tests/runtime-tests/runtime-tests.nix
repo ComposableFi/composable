@@ -33,9 +33,14 @@
           ( ${
             pkgs.lib.meta.getExe self'.packages.devnet-dali
           } 2>&1 & ) | tee devnet-dali.log &
-          until test -f devnet-dali.log; do
-            sleep 1 && echo "waiting network start";
-          done;
+          wait_for_log () {
+           until test -f "$1"; do
+              sleep 1 
+              echo "$2"
+            done
+          }
+          
+          wait_for_log "devnet-dali.log" "waiting network start"
           TIMEOUT=240
           COMMAND="( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 \"Network launched 🚀🚀\""
           set +o errexit
