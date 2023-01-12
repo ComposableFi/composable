@@ -61,7 +61,7 @@ export function usePabloHistoricalTotalValueLocked(): {
         )
       );
     }
-  }, [selectedInterval, hasFetchedTokens]);
+  }, [selectedInterval, hasFetchedTokens, getTokenById, picaPrice]);
 
   return {
     isLoading,
