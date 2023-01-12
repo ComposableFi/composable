@@ -545,7 +545,7 @@ pub mod pallet {
 
 		/// Create a new stake.
 		///
-		/// Emits `Staked` event when successful.
+		/// Emits `Staked` when successful.
 		#[pallet::weight(T::WeightInfo::stake(T::MaxRewardConfigsPerPool::get()))]
 		pub fn stake(
 			origin: OriginFor<T>,
@@ -563,7 +563,7 @@ pub mod pallet {
 
 		/// Extend an existing stake.
 		///
-		/// Emits `StakeExtended` event when successful.
+		/// Emits `StakeExtended` when successful.
 		#[pallet::weight(T::WeightInfo::extend(T::MaxRewardConfigsPerPool::get()))]
 		pub fn extend(
 			origin: OriginFor<T>,
@@ -592,7 +592,7 @@ pub mod pallet {
 
 		/// Remove a stake.
 		///
-		/// Emits `Unstaked` event when successful.
+		/// Emits `Unstaked` when successful.
 		#[pallet::weight(T::WeightInfo::unstake(T::MaxRewardConfigsPerPool::get()))]
 		pub fn unstake(
 			origin: OriginFor<T>,
@@ -610,6 +610,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Split a stake into two parts, by a ratio.
+		///
+		/// Emits `SplitPosition` when successful.
 		#[pallet::weight(T::WeightInfo::split(T::MaxRewardConfigsPerPool::get()))]
 		pub fn split(
 			origin: OriginFor<T>,
@@ -645,7 +648,7 @@ pub mod pallet {
 
 		/// Claim a current reward for some position.
 		///
-		/// Emits `Claimed` event when successful.
+		/// Emits `Claimed` when successful.
 		#[pallet::weight(T::WeightInfo::claim(T::MaxRewardConfigsPerPool::get()))]
 		pub fn claim(
 			origin: OriginFor<T>,
