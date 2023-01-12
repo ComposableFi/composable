@@ -76,15 +76,7 @@ rfcs/ @ComposableFi/developers
 docs/ @ComposableFi/developers @ComposableFi/technical-writers @0xbrainjar2
 scripts/ @ComposableFi/developers @ComposableFi/nix
 code/utils/ @ComposableFi/developers @ComposableFi/nix @ComposableFi/testers
-.remarkrc @ComposableFi/developers
-.taplo.toml @ComposableFi/nix @ComposableFi/parachain-leads
 Makefile.toml @ComposableFi/developers @ComposableFi/testers
-
-### Spelling
-
-.config/dictionaries/ @ComposableFi/developers @ComposableFi/technical-writers
-cspell.yaml @ComposableFi/technical-writers @ComposableFi/parachain-leads
-frontmatter.json @ComposableFi/technical-writers @ComposableFi/parachain-leads
 
 ## Oracle Setup Script
 scripts/oracle-setup @ComposableFi/parachain

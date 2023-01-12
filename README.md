@@ -1,7 +1,7 @@
 <br />
 
 <p align="center">
-  <img alt="Composable Finance" title="Composable Finance" src="banner.png">
+  <img alt="Composable Finance" title="Composable Finance" src="./docs/banner.png">
 </p>
 
 <br />
@@ -37,3 +37,4 @@ Refer [RFC-0011](./rfcs/0011-releases.md).
 ## Nix
 
 We use [`nix`](https://nixos.org/) in order to reproducibly build all of our packages. [Check out our Nix docs here in order to build our packages](https://docs.composable.finance/nix.html).
+
