@@ -29,7 +29,14 @@ interface OfferCancelledEvent {
  * @param event
  */
 export function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEvent {
-  return event.asV10002;
+  if (event.isV1000) {
+    const { offerId } = event.asV1000;
+    return {
+      offerId,
+      beneficiary: new Uint8Array()
+    };
+  }
+  return event.asV1400;
 }
 
 /**
@@ -37,7 +44,7 @@ export function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEve
  * @param event
  */
 export function getNewBondEvent(event: BondedFinanceNewBondEvent): NewBondEvent {
-  const { offerId, nbOfBonds } = event.asV10002;
+  const { offerId, nbOfBonds } = event.asV1000;
   return { offerId, nbOfBonds };
 }
 
@@ -46,7 +53,7 @@ export function getNewBondEvent(event: BondedFinanceNewBondEvent): NewBondEvent 
  * @param event
  */
 export function getOfferCancelledEvent(event: BondedFinanceOfferCancelledEvent): OfferCancelledEvent {
-  return event.asV10002;
+  return event.asV1000;
 }
 
 /**
@@ -105,7 +112,7 @@ export function updateBondOffer(
   const { nbOfBonds } = getNewBondEvent(event);
 
   stored.totalPurchased += nbOfBonds;
-  stored.blockId = ctx.block.id;
+  stored.blockId = ctx.block.hash;
 }
 
 /**
@@ -143,7 +150,7 @@ export async function processNewBondEvent(ctx: EventHandlerContext<Store>): Prom
  */
 export function cancelBondOffer(ctx: EventHandlerContext<Store>, stored: BondedFinanceBondOffer): void {
   stored.cancelled = true;
-  stored.blockId = ctx.block.id;
+  stored.blockId = ctx.block.hash;
 }
 
 /**
