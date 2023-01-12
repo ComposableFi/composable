@@ -38,9 +38,9 @@
 extern crate alloc;
 
 pub use pallet::*;
-pub mod hook;
 pub mod ibc;
 pub mod instrument;
+pub mod pallet_hook;
 pub mod runtimes;
 pub mod types;
 pub mod version;
@@ -62,8 +62,8 @@ pub mod pallet {
 	const SUBSTRATE_ECDSA_SIGNATURE_LEN: usize = 65;
 	use crate::{
 		entrypoint::*,
-		hook::Hook,
 		instrument::{gas_and_stack_instrumentation, CostRules, INSTRUMENTATION_VERSION},
+		pallet_hook::PalletHook,
 		runtimes::{
 			abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas, VMPallet},
 			vm::{
@@ -299,7 +299,7 @@ pub mod pallet {
 
 		/// A hook into the VM execution semantic, allowing the runtime to hook into a contract
 		/// execution.
-		type Hook: Hook<Self>;
+		type PalletHook: PalletHook<Self>;
 	}
 
 	#[pallet::pallet]
@@ -717,7 +717,7 @@ pub mod pallet {
 
 		/// Ensure that a contract exists.
 		pub(crate) fn contract_exists(contract: &AccountIdOf<T>) -> Result<(), Error<T>> {
-			match T::Hook::precompiled_info(contract) {
+			match T::PalletHook::precompiled_info(contract) {
 				Some(_) => Ok(()),
 				None if ContractToInfo::<T>::contains_key(contract) => Ok(()),
 				_ => Err(Error::<T>::ContractNotFound),
@@ -990,7 +990,7 @@ pub mod pallet {
 				funds,
 			};
 
-			match T::Hook::precompiled_info(&contract) {
+			match T::PalletHook::precompiled_info(&contract) {
 				Some(precompiled_info) => Ok(WasmiVM(CosmwasmVM {
 					host_functions_by_index: Default::default(),
 					cosmwasm_env: env,
@@ -1446,7 +1446,7 @@ pub mod pallet {
 			address: AccountIdOf<T>,
 		) -> Result<ContractInfoResponse, CosmwasmVMError<T>> {
 			// TODO: cache or at least check if its current contract and use `self.contract_info`
-			let (contract_info, code_info) = match T::Hook::precompiled_info(&address) {
+			let (contract_info, code_info) = match T::PalletHook::precompiled_info(&address) {
 				Some(precompiled_info) => (precompiled_info.contract, precompiled_info.code),
 				None => {
 					let contract_info = if &address == vm.contract_address.as_ref() {
@@ -1488,7 +1488,7 @@ pub mod pallet {
 						ContractBackend::CosmWasm { .. } =>
 							cosmwasm_call::<QueryCall, WasmiVM<DefaultCosmwasmVM<T>>>(vm, message),
 						ContractBackend::Pallet =>
-							T::Hook::precompiled_query(vm, message).map(Into::into),
+							T::PalletHook::precompiled_query(vm, message).map(Into::into),
 					}
 				});
 			vm.shared.pop_readonly();

@@ -1,6 +1,6 @@
 use crate::{
-	hook::Hook,
 	instrument::CostRules,
+	pallet_hook::PalletHook,
 	runtimes::{abstraction::CosmwasmAccount, vm::CosmwasmVM},
 	types::*,
 	*,
@@ -280,7 +280,7 @@ pub const MOCK_QUERY_JS: &str = "It's JavaScript, What Did You Expect";
 
 pub const ALICE: AccountIdOf<Test> = AccountId32::new([0u8; 32]);
 
-impl Hook<Test> for MockHook {
+impl PalletHook<Test> for MockHook {
 	fn precompiled_info(
 		contract_address: &AccountIdOf<Test>,
 	) -> Option<
@@ -382,7 +382,7 @@ impl Config for Test {
 	type WasmCostRules = WasmCostRules;
 	type IbcRelayerAccount = IbcRelayerAccount;
 	type IbcRelayer = IbcLoopback<Self>;
-	type Hook = MockHook;
+	type PalletHook = MockHook;
 }
 
 // Build genesis storage according to the mock runtime.
