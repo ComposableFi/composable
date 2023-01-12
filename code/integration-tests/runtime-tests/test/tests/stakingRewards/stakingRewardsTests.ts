@@ -227,7 +227,7 @@ describe("tx.stakingRewards Tests", function() {
       const currentBlockNumber = await api.query.system.number();
       const startBlock = api.createType("u32", currentBlockNumber.addn(4));
       const endBlock = api.createType("u32", currentBlockNumber.addn(24));
-      const assetId = api.createType("u128", 4);
+      const assetId = api.createType("u128", POOL_11_BASE_ASSET_ID);
       const amount = Pica(100_000);
       const durationPreset = {
         "12": 1000000000,
