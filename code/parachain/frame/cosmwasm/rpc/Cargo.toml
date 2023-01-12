@@ -28,4 +28,4 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 ] }
 
 # rpc
-jsonrpsee = { version = "0.14.0", features = ["server", "macros"] }
+jsonrpsee = { version = "0.15.1", features = ["server", "macros"] }
