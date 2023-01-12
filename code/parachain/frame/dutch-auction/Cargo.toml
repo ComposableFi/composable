@@ -29,8 +29,8 @@ frame-support = { default-features = false, git = "https://github.com/paritytech
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
-orml-tokens = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "02b1462a0e0e7bc06b3cdd6789c0e108f8a2b527" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "02b1462a0e0e7bc06b3cdd6789c0e108f8a2b527", default-features = false }
+orml-tokens = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30", default-features = false }
 polkadot-parachain = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.30" }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
@@ -48,7 +48,7 @@ xcm = { git = "https://github.com/paritytech/polkadot", default-features = false
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 hex-literal = { version = "0.3.3" }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "02b1462a0e0e7bc06b3cdd6789c0e108f8a2b527" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30" }
 pallet-assets = { path = '../assets' }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 pallet-currency-factory = { path = "../currency-factory" }

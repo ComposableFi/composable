@@ -45,8 +45,8 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "02b1462a0e0e7bc06b3cdd6789c0e108f8a2b527" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "02b1462a0e0e7bc06b3cdd6789c0e108f8a2b527" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 proptest = "1.0"
 

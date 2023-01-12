@@ -45,10 +45,10 @@ collective = { package = "pallet-collective", git = "https://github.com/parityte
 democracy = { package = "pallet-democracy", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 indices = { package = "pallet-indices", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 membership = { package = "pallet-membership", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "02b1462a0e0e7bc06b3cdd6789c0e108f8a2b527", default-features = false }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "02b1462a0e0e7bc06b3cdd6789c0e108f8a2b527", default-features = false }
-orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "02b1462a0e0e7bc06b3cdd6789c0e108f8a2b527", default-features = false }
-orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "02b1462a0e0e7bc06b3cdd6789c0e108f8a2b527", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30", default-features = false }
+orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30", default-features = false }
+orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30", default-features = false }
 randomness-collective-flip = { package = "pallet-randomness-collective-flip", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 scheduler = { package = "pallet-scheduler", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 session = { package = "pallet-session", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }

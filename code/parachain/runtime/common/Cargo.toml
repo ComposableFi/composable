@@ -40,7 +40,7 @@ treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/s
 composable-support = { path = "../../frame/composable-support", default-features = false }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "02b1462a0e0e7bc06b3cdd6789c0e108f8a2b527", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
@@ -49,7 +49,7 @@ smallvec = "1.7.0"
 
 [dev-dependencies]
 authorship = { package = "pallet-authorship", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "02b1462a0e0e7bc06b3cdd6789c0e108f8a2b527", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30", default-features = false }
 serde = { version = "1.0.136" }
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 
