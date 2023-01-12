@@ -67,7 +67,7 @@ pub mod pallet {
 		runtimes::{
 			abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas, VMPallet},
 			vm::{
-				CodeValidation, ContractRuntime, CosmwasmVM, CosmwasmVMCache, CosmwasmVMError,
+				CodeValidation, ContractBackend, CosmwasmVM, CosmwasmVMCache, CosmwasmVMError,
 				CosmwasmVMShared, InitialStorageMutability, ValidationError,
 			},
 		},
@@ -999,7 +999,7 @@ pub mod pallet {
 					contract_info: precompiled_info.contract,
 					shared,
 					iterators: Default::default(),
-					contract_runtime: ContractRuntime::Static,
+					contract_runtime: ContractBackend::Pallet,
 				})),
 				None => {
 					let info = Self::contract_info(&contract)?;
@@ -1038,7 +1038,7 @@ pub mod pallet {
 						contract_info: info,
 						shared,
 						iterators: Default::default(),
-						contract_runtime: ContractRuntime::Dynamic { executing_module: module },
+						contract_runtime: ContractBackend::CosmWasm { executing_module: module },
 					}))
 				},
 			}
@@ -1485,9 +1485,9 @@ pub mod pallet {
 			let result =
 				Pallet::<T>::cosmwasm_call(vm.shared, sender, contract, Default::default(), |vm| {
 					match vm.0.contract_runtime {
-						ContractRuntime::Dynamic { .. } =>
+						ContractBackend::CosmWasm { .. } =>
 							cosmwasm_call::<QueryCall, WasmiVM<DefaultCosmwasmVM<T>>>(vm, message),
-						ContractRuntime::Static =>
+						ContractBackend::Pallet =>
 							T::Hook::precompiled_query(vm, message).map(Into::into),
 					}
 				});

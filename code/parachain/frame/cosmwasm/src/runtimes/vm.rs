@@ -25,54 +25,57 @@ use wasmi_validation::{validate_module, PlainValidator};
 
 /// Different type of contract runtimes. A contract might either be dynamically loaded or statically
 /// invoked (precompiled).
-pub enum ContractRuntime {
-	/// A dynamically loaded contract, the code has been previously uploaded by a user.
-	/// The `executing_module` field represent the wasmi module instantiated for the code.
-	Dynamic { executing_module: WasmiModule },
-	/// A precompiled contract, it's behavior is dictated by the blockchain host.
-	Static,
+pub enum ContractBackend {
+	/// A dynamically loaded CosmWasmbased contract. This code has previously been uploaded by a
+	/// user.
+	CosmWasm {
+		/// The wasmi module instantiated for the CosmWasm contract.
+		executing_module: WasmiModule,
+	},
+	/// A substrate pallet, which is a precompiled contract that is included in the runtime.
+	Pallet,
 }
 
-impl WasmiContext for ContractRuntime {
+impl WasmiContext for ContractBackend {
 	fn executing_module(&self) -> Option<WasmiModule> {
 		match self {
-			ContractRuntime::Dynamic { executing_module } => Some(executing_module.clone()),
-			ContractRuntime::Static => None,
+			ContractBackend::CosmWasm { executing_module } => Some(executing_module.clone()),
+			ContractBackend::Pallet => None,
 		}
 	}
 }
 
-impl Pointable for ContractRuntime {
+impl Pointable for ContractBackend {
 	type Pointer = u32;
 }
 
-impl ReadableMemory for ContractRuntime {
+impl ReadableMemory for ContractBackend {
 	type Error = WasmiVMError;
 	fn read(&self, offset: Self::Pointer, buffer: &mut [u8]) -> Result<(), Self::Error> {
 		match self {
-			ContractRuntime::Dynamic { executing_module } => executing_module
+			ContractBackend::CosmWasm { executing_module } => executing_module
 				.memory
 				.get_into(offset, buffer)
 				.map_err(|_| WasmiVMError::LowLevelMemoryReadError.into()),
-			ContractRuntime::Static => Err(WasmiVMError::NotADynamicModule),
+			ContractBackend::Pallet => Err(WasmiVMError::NotADynamicModule),
 		}
 	}
 }
 
-impl WritableMemory for ContractRuntime {
+impl WritableMemory for ContractBackend {
 	type Error = WasmiVMError;
 	fn write(&self, offset: Self::Pointer, buffer: &[u8]) -> Result<(), Self::Error> {
 		match self {
-			ContractRuntime::Dynamic { executing_module } => executing_module
+			ContractBackend::CosmWasm { executing_module } => executing_module
 				.memory
 				.set(offset, buffer)
 				.map_err(|_| WasmiVMError::LowLevelMemoryWriteError.into()),
-			ContractRuntime::Static => Err(WasmiVMError::NotADynamicModule),
+			ContractBackend::Pallet => Err(WasmiVMError::NotADynamicModule),
 		}
 	}
 }
 
-impl ReadWriteMemory for ContractRuntime {}
+impl ReadWriteMemory for ContractBackend {}
 
 #[derive(Debug)]
 pub enum CosmwasmVMError<T: Config> {
@@ -217,7 +220,7 @@ pub struct CosmwasmVM<'a, T: Config> {
 	/// Iterator id's to corresponding keys. Keys are used to get the next key.
 	pub iterators: BTreeMap<u32, ChildTriePrefixIterator<(Vec<u8>, Vec<u8>)>>,
 	/// Actual contract runtime
-	pub contract_runtime: ContractRuntime,
+	pub contract_runtime: ContractBackend,
 }
 
 impl<'a, T: Config> Has<Env> for CosmwasmVM<'a, T> {
@@ -250,11 +253,11 @@ impl<'a, T: Config> WasmiHost<Self> for CosmwasmVM<'a, T> {
 }
 
 impl<'a, T: Config> Pointable for CosmwasmVM<'a, T> {
-	type Pointer = <ContractRuntime as Pointable>::Pointer;
+	type Pointer = <ContractBackend as Pointable>::Pointer;
 }
 
 impl<'a, T: Config> ReadableMemory for CosmwasmVM<'a, T> {
-	type Error = <ContractRuntime as ReadableMemory>::Error;
+	type Error = <ContractBackend as ReadableMemory>::Error;
 	fn read(&self, offset: Self::Pointer, buffer: &mut [u8]) -> Result<(), Self::Error> {
 		let _ = self.contract_runtime.read(offset, buffer)?;
 		Ok(())
@@ -262,7 +265,7 @@ impl<'a, T: Config> ReadableMemory for CosmwasmVM<'a, T> {
 }
 
 impl<'a, T: Config> WritableMemory for CosmwasmVM<'a, T> {
-	type Error = <ContractRuntime as WritableMemory>::Error;
+	type Error = <ContractBackend as WritableMemory>::Error;
 	fn write(&self, offset: Self::Pointer, buffer: &[u8]) -> Result<(), Self::Error> {
 		let _ = self.contract_runtime.write(offset, buffer)?;
 		Ok(())
