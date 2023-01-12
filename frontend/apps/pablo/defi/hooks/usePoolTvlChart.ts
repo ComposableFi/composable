@@ -62,7 +62,14 @@ export const usePoolTvlChart = (poolId: string) => {
         )
       );
     }
-  }, [picaPrice, hasFetchedTokens, hasFetchedPools, selectedInterval, poolId]);
+  }, [
+    picaPrice,
+    hasFetchedTokens,
+    hasFetchedPools,
+    selectedInterval,
+    poolId,
+    getTokenById,
+  ]);
 
   return {
     isLoading,
