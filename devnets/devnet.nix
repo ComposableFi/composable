@@ -1,4 +1,5 @@
-{ nixpkgs, devnet-dali, devnet-picasso, gce-input, docs, rev }:
+{ nixpkgs, devnet-dali, devnet-picasso, gce-input, docs, rev, domainSuffix
+, certificateEmail }:
 let
   region = "europe-central2-c";
 
@@ -59,7 +60,7 @@ let
       };
       security.acme = {
         acceptTerms = true;
-        defaults = { email = "hussein@composable.finance"; };
+        defaults = { email = certificateEmail; };
       };
       services.journald = {
         extraConfig = ''
@@ -89,7 +90,6 @@ let
               forceSSL = true;
             } // attrs;
           };
-          # I agree, the hardcoded ports are a shame
         in mkDomain domain ({
           locations = proxyChain chain 9988 // proxyChain "${chain}/bob" 9989
             // proxyChain "${chain}/charlie" 9990 // proxyChain "rococo" 9944
@@ -108,7 +108,7 @@ let
   };
 
   dali-persistent-machine = mkPersistentMachine {
-    domain = "persistent.devnets.composablefinance.ninja";
+    domain = "persistent.${domainSuffix}";
     machine-name = "composable-persistent-devnet";
     ip = "persistent-devnet-ip";
     package = "devnet-dali-persistent";
@@ -116,7 +116,7 @@ let
   };
 
   picasso-persistent-machine = mkPersistentMachine {
-    domain = "persistent.picasso.devnets.composablefinance.ninja";
+    domain = "persistent.picasso.${domainSuffix}";
     machine-name = "picasso-composable-persistent-devnet";
     ip = "picasso-persistent-devnet-ip";
     package = "devnet-picasso-persistent";
@@ -126,14 +126,11 @@ let
 in builtins.foldl' (machines: devnet:
   let
     machine = import ./devnet-gce.nix {
-      inherit region;
-      inherit gce-input;
-      inherit devnet;
-      inherit docs;
+      inherit region certificateEmail gce-input devnet docs;
       disk-size = 200;
       machine-name = "composable-devnet-${devnet.chain-spec}";
       domain = let prefix = nixpkgs.lib.removeSuffix "-dev" devnet.chain-spec;
-      in "${prefix}.devnets.composablefinance.ninja";
+      in "${prefix}.${domainSuffix}";
     };
   in machines // machine) ({
     inherit nixpkgs;
