@@ -228,8 +228,7 @@ where
 				match vm.0.contract_runtime {
 					ContractBackend::CosmWasm { .. } =>
 						cosmwasm_call::<I, _>(vm, message).map(Into::into),
-					ContractBackend::Pallet =>
-						T::PalletHook::precompiled_execute(vm, entrypoint, message),
+					ContractBackend::Pallet => T::PalletHook::execute(vm, entrypoint, message),
 				}
 			})
 			.map_err(Into::into)
@@ -299,7 +298,7 @@ where
 					ContractBackend::CosmWasm { .. } =>
 						cosmwasm_call::<I, _>(vm, message).map(Into::into),
 					ContractBackend::Pallet =>
-						T::PalletHook::precompiled_execute(vm, self.state.entrypoint, message),
+						T::PalletHook::execute(vm, self.state.entrypoint, message),
 				})
 				.map_err(Into::into)
 			},
