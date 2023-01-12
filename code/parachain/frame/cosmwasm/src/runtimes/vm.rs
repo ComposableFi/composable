@@ -56,7 +56,7 @@ impl ReadableMemory for ContractBackend {
 			ContractBackend::CosmWasm { executing_module } => executing_module
 				.memory
 				.get_into(offset, buffer)
-				.map_err(|_| WasmiVMError::LowLevelMemoryReadError.into()),
+				.map_err(|_| WasmiVMError::LowLevelMemoryReadError),
 			ContractBackend::Pallet => Err(WasmiVMError::NotADynamicModule),
 		}
 	}
@@ -69,7 +69,7 @@ impl WritableMemory for ContractBackend {
 			ContractBackend::CosmWasm { executing_module } => executing_module
 				.memory
 				.set(offset, buffer)
-				.map_err(|_| WasmiVMError::LowLevelMemoryWriteError.into()),
+				.map_err(|_| WasmiVMError::LowLevelMemoryWriteError),
 			ContractBackend::Pallet => Err(WasmiVMError::NotADynamicModule),
 		}
 	}
@@ -259,7 +259,7 @@ impl<'a, T: Config> Pointable for CosmwasmVM<'a, T> {
 impl<'a, T: Config> ReadableMemory for CosmwasmVM<'a, T> {
 	type Error = <ContractBackend as ReadableMemory>::Error;
 	fn read(&self, offset: Self::Pointer, buffer: &mut [u8]) -> Result<(), Self::Error> {
-		let _ = self.contract_runtime.read(offset, buffer)?;
+		self.contract_runtime.read(offset, buffer)?;
 		Ok(())
 	}
 }
@@ -267,7 +267,7 @@ impl<'a, T: Config> ReadableMemory for CosmwasmVM<'a, T> {
 impl<'a, T: Config> WritableMemory for CosmwasmVM<'a, T> {
 	type Error = <ContractBackend as WritableMemory>::Error;
 	fn write(&self, offset: Self::Pointer, buffer: &[u8]) -> Result<(), Self::Error> {
-		let _ = self.contract_runtime.write(offset, buffer)?;
+		self.contract_runtime.write(offset, buffer)?;
 		Ok(())
 	}
 }

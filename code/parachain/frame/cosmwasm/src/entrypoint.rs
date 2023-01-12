@@ -91,7 +91,7 @@ impl EntryPointCaller<InstantiateCall> {
 		})?;
 		Pallet::<T>::deposit_event(Event::<T>::Instantiated {
 			contract: contract.clone(),
-			info: contract_info.clone(),
+			info: contract_info,
 		});
 		Ok(EntryPointCaller {
 			state: Dispatchable {
