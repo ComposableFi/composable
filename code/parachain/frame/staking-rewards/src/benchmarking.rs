@@ -20,7 +20,10 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::OriginFor;
 use sp_arithmetic::{fixed_point::FixedU64, traits::SaturatedConversion, Perbill, Permill};
-use sp_runtime::traits::{BlockNumberProvider, One};
+use sp_runtime::{
+	traits::{BlockNumberProvider, One},
+	PerThing,
+};
 use sp_std::collections::btree_map::BTreeMap;
 
 use crate::test_helpers::stake_and_assert;
@@ -204,10 +207,12 @@ benchmarks! {
 				+ T::BlockNumber::one()
 		);
 
+		let amount = 100_000_000_u128;
+
 		<T::Assets as Mutate<T::AccountId>>::mint_into(
 			BASE_ASSET_ID.into(),
 			&staker,
-			100_000_000_000.into(),
+			100_000_000_000_u128.into(),
 		).expect("minting should succeed");
 
 		let instance_id = stake_and_assert::<T>(
@@ -221,13 +226,19 @@ benchmarks! {
 			.try_into_validated()
 			.unwrap();
 
+		let original = ratio.mul_floor(amount);
+		let new = ratio.left_from_one().mul_ceil(amount);
+
 		let origin = OriginFor::<T>::signed(staker);
 
 		let fnft_collection_id = STAKING_FNFT_COLLECTION_ID.into();
 	}: _(origin, fnft_collection_id, instance_id, ratio)
 	verify {
 		T::assert_last_event(Event::SplitPosition {
-			positions: vec![]
+			positions: vec![
+				(fnft_collection_id, instance_id, original.into()),
+				(fnft_collection_id, 1.into(), new.into())
+			]
 		});
 	}
 
