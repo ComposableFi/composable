@@ -58,7 +58,7 @@ use composable_traits::staking::{Reward, RewardUpdate};
 use frame_support::{
 	traits::{
 		fungibles::{Inspect as FungiblesInspect, InspectHold, MutateHold, Transfer},
-		UnixTime,
+		Defensive, DefensiveSaturating, UnixTime,
 	},
 	transactional, BoundedBTreeMap,
 };
@@ -1469,13 +1469,7 @@ pub mod pallet {
 		) {
 			let pool_account = Self::pool_account_id(&pool_id);
 
-			match do_reward_accumulation::<T>(
-				pool_id,
-				reward_asset_id,
-				reward,
-				&pool_account,
-				now_seconds,
-			) {
+			match do_reward_accumulation::<T>(reward_asset_id, reward, &pool_account, now_seconds) {
 				Ok(()) => {},
 				Err(err) => {
 					let error_type = err.into();
@@ -1643,7 +1637,7 @@ fn update_rewards_pool<T: Config>(
 		for (asset_id, update) in reward_updates {
 			let reward = pool.rewards.get_mut(&asset_id).ok_or(Error::<T>::RewardAssetNotFound)?;
 			if let Err(err) =
-				do_reward_accumulation::<T>(pool_id, asset_id, reward, &pool_account, now_seconds)
+				do_reward_accumulation::<T>(asset_id, reward, &pool_account, now_seconds)
 			{
 				use RewardAccumulationCalculationError::*;
 				return match err {
@@ -1671,7 +1665,6 @@ fn update_rewards_pool<T: Config>(
 ///
 /// [nonzero-impls]: https://doc.rust-lang.org/src/core/num/nonzero.rs.html#268-308
 pub(crate) fn do_reward_accumulation<T: Config>(
-	pool_id: T::AssetId,
 	asset_id: T::AssetId,
 	reward: &mut Reward<T::Balance>,
 	pool_account: &T::AccountId,
@@ -1688,6 +1681,9 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 
 	let reward_rate_period_seconds = reward.reward_rate.period.as_secs();
 
+	//          elapsed_time
+	// = --------------------------
+	//   reward_rate_period_seconds
 	let periods_surpassed = <u64 as Div<NonZeroU64>>::div(elapsed_time, reward_rate_period_seconds);
 
 	// if no periods have been surpassed, short-circuit
@@ -1699,30 +1695,32 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 
 	// the maximum amount repayable given the reward rate.
 	// i.e. if total locked is 50, and the reward rate is 15, then this would be 3
+	//
+	//    total_locked_rewards
+	// = ----------------------
+	//     reward_rate_amount
 	let maximum_releasable_periods =
 		NonZeroU128::new(<u128 as Div<NonZeroU128>>::div(total_locked_rewards, reward_rate_amount))
 			// if the maximum releasable periods is zero, then that means the pot doesn't have
 			// enough in it to fund a single period.
 			.ok_or(RewardAccumulationCalculationError::RewardsPotEmpty)?;
 
+	//     (  total_locked_rewards           elapsed_time        )
+	// min ( ---------------------- , -------------------------- )
+	//     (   reward_rate_amount     reward_rate_period_seconds )
 	let releasable_periods_surpassed =
 		cmp::min(maximum_releasable_periods, periods_surpassed.into());
 
 	// SAFETY: Usage of mul is safe here. See the following proof:
 	//
 	// ```plaintext
-	//                                    (  total_locked_rewards           elapsed_time        )
-	// releasable_periods_surpassed = min ( ---------------------- , -------------------------- )
-	//                                    (   reward_rate_amount     reward_rate_period_seconds )
-	// 											   ^ LHS				       ^ RHS
-	//
-	//                             {                      (  total_locked_rewards  )
-	//                             { reward_rate_amount * ( ---------------------- ),     if LHS <= RHS
-	//                             {                      (   reward_rate_amount   )
-	// newly_accumulated_rewards = {
-	//                             {                      (        elapsed_time        )
-	//                             { reward_rate_amount * ( -------------------------- ), if RHS < LHS
-	//                             {                      ( reward_rate_period_seconds )
+	//   {                       total_locked_rewards
+	//   { reward_rate_amount * ----------------------,     if maximum_releasable_periods <= periods_surpassed
+	//   {                        reward_rate_amount
+	// = {
+	//   {                             elapsed_time
+	//   { reward_rate_amount * --------------------------, if periods_surpassed < maximum_releasable_periods
+	//   {                      reward_rate_period_seconds
 	// ```
 	//
 	// Note that the second function of the piecewise definition above will always be <= the first,
@@ -1738,11 +1736,13 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 		.checked_add(reward.total_rewards.into())
 		.ok_or(RewardAccumulationCalculationError::Overflow)?;
 
-	// u64::MAX is roughly 584.9 billion years in the future, so saturating at that should be ok
-	let last_updated_timestamp = reward.last_updated_timestamp.saturating_add(
-		reward_rate_period_seconds
-			.get()
-			.saturating_mul(releasable_periods_surpassed.get().saturated_into::<u64>()),
+	// `u64::MAX` in seconds is roughly 584.9 billion years in the future, so saturating at that
+	// should be ok; we should never reach a case where the timestamp overflows that. Use defensive
+	// anyways so we get notified if this is hit somehow due to some sort of logic error.
+	let last_updated_timestamp = reward.last_updated_timestamp.defensive_saturating_add(
+		reward_rate_period_seconds.get().defensive_saturating_mul(
+			releasable_periods_surpassed.get().try_into().defensive_unwrap_or(u64::MAX),
+		),
 	);
 
 	T::Assets::release(
