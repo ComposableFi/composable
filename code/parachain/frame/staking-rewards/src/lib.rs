@@ -1736,7 +1736,6 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 	let new_total_rewards = newly_accumulated_rewards
 		.get()
 		.checked_add(reward.total_rewards.into())
-		// TODO(benluelo): Rename to overflow to be more specific
 		.ok_or(RewardAccumulationCalculationError::Overflow)?;
 
 	// u64::MAX is roughly 584.9 billion years in the future, so saturating at that should be ok
