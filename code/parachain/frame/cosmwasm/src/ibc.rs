@@ -159,9 +159,15 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-#[derive(Default, RuntimeDebug, Eq, PartialEq, Clone)]
+#[derive(RuntimeDebug, Eq, PartialEq, Clone)]
 pub struct Router<T: Config> {
 	_marker: PhantomData<T>,
+}
+
+impl<T: Config> Default for Router<T> {
+	fn default() -> Self {
+		Self { _marker: <_>::default() }
+	}
 }
 
 struct MapBinary(sp_std::vec::Vec<u8>);
@@ -717,19 +723,16 @@ fn map_order(order: Order) -> Result<IbcOrder, IbcError> {
 }
 
 impl<T: Config + Send + Sync + Default> IbcModuleRouter for Router<T> {
-	fn get_route_mut(
-		&mut self,
-		module_id: &impl core::borrow::Borrow<ModuleId>,
-	) -> Option<&mut dyn IbcModule> {
-		if module_id.borrow() == &into_module_id::<T>() {
+	fn get_route_mut(&mut self, module_id: &ModuleId) -> Option<&mut dyn IbcModule> {
+		if module_id == &into_module_id::<T>() {
 			return Some(self)
 		}
 
 		None
 	}
 
-	fn has_route(module_id: &impl sp_std::borrow::Borrow<ModuleId>) -> bool {
-		module_id.borrow() == &into_module_id::<T>()
+	fn has_route(module_id: &ModuleId) -> bool {
+		module_id == &into_module_id::<T>()
 	}
 
 	fn lookup_module_by_port(port_id: &PortId) -> Option<ModuleId> {
