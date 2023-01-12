@@ -44,7 +44,7 @@ use frame_system::EventRecord;
 use proptest::prelude::*;
 use sp_arithmetic::{fixed_point::FixedU64, Perbill, Permill};
 use sp_core::sr25519::Public;
-use sp_runtime::PerThing;
+use sp_runtime::{traits::One, PerThing};
 use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 
 pub(crate) mod prelude;
@@ -94,6 +94,34 @@ fn duration_presets_minimum_is_1() {
 					.into_iter()
 					.try_collect()
 					.unwrap(),
+					unlock_penalty: Perbill::from_percent(5),
+				},
+				share_asset_id: XPICA::ID,
+				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+			},
+		));
+	});
+}
+
+#[test]
+fn zero_length_duration_preset_works() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+
+		assert_ok!(StakingRewards::create_reward_pool(
+			Origin::root(),
+			RewardRateBasedIncentive {
+				owner: ALICE,
+				asset_id: PICA::ID,
+				start_block: 2,
+				end_block: 5,
+				reward_configs: default_reward_config(),
+				lock: LockConfig {
+					duration_presets: [(0, FixedU64::one().try_into_validated().expect(">= 1")),]
+						.into_iter()
+						.try_collect()
+						.unwrap(),
 					unlock_penalty: Perbill::from_percent(5),
 				},
 				share_asset_id: XPICA::ID,
@@ -760,7 +788,7 @@ mod extend {
 					.expect("boosted amount calculation should not fail"),
 					// 5 units already staked, 6 more units added, 10 blocks worth of rewards
 					// (as during one of the blocks the reward accumulation was paused)
-					// already accumulated at 1 unit per second,, this is the resulting inflation:
+					// already accumulated at 1 unit per second, this is the resulting inflation:
 					// (60*10^12) * ((6*10^12) * 1.01) / ((5*10^12) * 1.01)
 					reductions: btree_map([(USDT::ID, USDT::units(72))]),
 					lock: Lock {
