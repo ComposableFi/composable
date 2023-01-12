@@ -58,6 +58,7 @@
       _module.args.zombieTools = rec {
         inherit zombienet-rococo-local-composable-config
           writeZombienetShellApplication zombienet-to-ops;
+        builder = prelude;
       };
       packages = rec {
         inherit paritytech-zombienet;

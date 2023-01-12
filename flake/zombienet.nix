@@ -1,7 +1,7 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }:
     let
-       prelude = pkgs.callPackage ./zombienet/default.nix { };
+      prelude = pkgs.callPackage ./zombienet/default.nix { };
       zombienet-rococo-local-composable-config = with prelude;
         { chain ? null, ws_port ? null, rpc_port ? null, relay_ws_port ? null }:
         mkZombienet {
