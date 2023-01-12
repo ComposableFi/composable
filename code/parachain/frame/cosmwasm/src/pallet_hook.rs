@@ -70,3 +70,41 @@ where {
 		Err(Error::<T>::Unsupported.into())
 	}
 }
+
+impl<AccountId, Hash, Label, TrieId> PalletContractCodeInfo<AccountId, Hash, Label, TrieId>
+where
+	AccountId: Clone,
+	Hash: Default,
+	TrieId: Default,
+{
+	pub fn new(account_id: AccountId, ibc_capable: bool, label: Label) -> Self {
+		PalletContractCodeInfo {
+			code: CodeInfo::<AccountId, Hash> {
+				// When this is used for an actual Pallet, we would use the Pallet's AccountId
+				creator: account_id.clone(),
+				// Not applicable to Pallet, so we use default()
+				pristine_code_hash: Default::default(),
+				// Not applicable since we use native gas metering
+				instrumentation_version: u16::MAX,
+				// Not applicable to Pallet, so we use the max
+				refcount: u32::MAX,
+				// A pallet can choose wether to be IBC capable
+				ibc_capable,
+			},
+			contract: ContractInfo {
+				// Pallets don't need a code ID, but we do not want to clash with CosmWasm
+				// contracts so we pick u64::MAX
+				code_id: u64::MAX,
+				// We have no storage
+				trie_id: Default::default(),
+				// When this is used for an actual Pallet, we would use the Pallet's AccountId
+				instantiator: account_id.clone(),
+				// When this is used for an actual Pallet, we would use Some(the Pallet's
+				// AccountId)
+				admin: Some(account_id),
+				// When this is used for an actual Pallet, we would use "pallet-PALLET_NAME"
+				label,
+			},
+		}
+	}
+}

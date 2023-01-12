@@ -297,35 +297,16 @@ impl PalletHook<Test> for MockHook {
 		>,
 	> {
 		match *contract_address {
-			MOCK_CONTRACT_ADDRESS_1 => Some(PalletContractCodeInfo {
-				code: CodeInfo {
-					// When this is used for an actual Pallet, we would use the Pallet's AccountId
-					creator: ALICE,
-					// Not applicable to Pallet, so we use default()
-					pristine_code_hash: Default::default(),
-					// Not applicable since we use native gas metering
-					instrumentation_version: u16::MAX,
-					// Not applicable to Pallet, so we use the max
-					refcount: u32::MAX,
-					// A pallet can choose wether to be IBC capable
-					ibc_capable: false,
-				},
-				contract: ContractInfo {
-					// Pallets don't need a code ID, but we do not want to clash with CosmWasm
-					// contracts so we pick u64::MAX
-					code_id: u64::MAX,
-					// We have no storage
-					trie_id: Default::default(),
-					// When this is used for an actual Pallet, we would use the Pallet's AccountId
-					instantiator: ALICE,
-					// When this is used for an actual Pallet, we would use Some(the Pallet's
-					// AccountId)
-					admin: Some(ALICE),
-					// When this is used for an actual Pallet, we would use "pallet-PALLET_NAME"
-					label: Default::default(),
-				},
-			}),
-			MOCK_CONTRACT_ADDRESS_2 => None,
+			MOCK_CONTRACT_ADDRESS_1 => Some(PalletContractCodeInfo::new(
+				ALICE,
+				false,
+				"pallet-mock".as_bytes().to_vec().try_into().unwrap_or_default(),
+			)),
+			MOCK_CONTRACT_ADDRESS_2 => Some(PalletContractCodeInfo::new(
+				ALICE,
+				false,
+				"pallet-mock".as_bytes().to_vec().try_into().unwrap_or_default(),
+			)),
 			_ => None,
 		}
 	}
