@@ -379,7 +379,10 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
 
   const weightRatio = baseAssetWeight.weight / quoteAssetWeight.weight;
 
-  const spotPrice = divideBigInts(quoteAmount, baseAmount) * weightRatio;
+  const normalizedQuoteAmount = (quoteAssetId === 130n ? 1_000_000n : 1n) * quoteAmount;
+  const normalizedBaseAmount = (baseAssetId === 130n ? 1_000_000n : 1n) * baseAmount;
+
+  const spotPrice = divideBigInts(normalizedQuoteAmount, normalizedBaseAmount) * weightRatio;
 
   const feeSpotPrice = BigNumber(fee.assetId.toString() === pool.quoteAssetId ? 1 : spotPrice);
 
@@ -407,7 +410,7 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
     baseAssetAmount: baseAmount,
     quoteAssetId: quoteAssetId.toString(),
     quoteAssetAmount: quoteAmount,
-    spotPrice: (divideBigInts(quoteAmount, baseAmount) * weightRatio).toString(),
+    spotPrice: spotPrice.toString(),
     fee: pabloFee,
     timestamp: new Date(ctx.block.timestamp),
     blockId: ctx.block.hash

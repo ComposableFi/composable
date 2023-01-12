@@ -38,7 +38,7 @@ services:
     command: [
         # polkadot endpoints -- replace with your wss
         "-e",
-        "wss://rpc.composablenodes.tech",
+        "wss://picasso-rpc-lb.composablenodes.tech",
         #      "-e", "ws://host.docker.internal:9988",
         "-c",
         "10", # allow up to 20 pending requests for the above endpoint (default is 5)
@@ -132,7 +132,7 @@ services:
       DB_PORT: 5432
       GQL_PORT: 4350
       SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
-      RELAYCHAIN_URI: "wss://rpc.composablenodes.tech"
+      RELAYCHAIN_URI: "wss://picasso-rpc-lb.composablenodes.tech"
   #      RELAYCHAIN_URI: "ws://host.docker.internal:9988"
 
   graphql-server:
