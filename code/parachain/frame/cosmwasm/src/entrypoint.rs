@@ -1,5 +1,5 @@
 use crate::{
-	hook::Hook,
+	pallet_hook::PalletHook,
 	runtimes::{
 		abstraction::CosmwasmAccount,
 		vm::{ContractBackend, CosmwasmVMError, CosmwasmVMShared},
@@ -229,7 +229,7 @@ where
 					ContractBackend::CosmWasm { .. } =>
 						cosmwasm_call::<I, _>(vm, message).map(Into::into),
 					ContractBackend::Pallet =>
-						T::Hook::precompiled_execute(vm, entrypoint, message),
+						T::PalletHook::precompiled_execute(vm, entrypoint, message),
 				}
 			})
 			.map_err(Into::into)
@@ -299,7 +299,7 @@ where
 					ContractBackend::CosmWasm { .. } =>
 						cosmwasm_call::<I, _>(vm, message).map(Into::into),
 					ContractBackend::Pallet =>
-						T::Hook::precompiled_execute(vm, self.state.entrypoint, message),
+						T::PalletHook::precompiled_execute(vm, self.state.entrypoint, message),
 				})
 				.map_err(Into::into)
 			},

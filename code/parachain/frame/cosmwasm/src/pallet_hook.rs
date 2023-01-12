@@ -5,8 +5,8 @@ use cosmwasm_vm::{
 };
 use cosmwasm_vm_wasmi::WasmiVM;
 
-/// A hook into the VM, used to call precompiled contracts.
-pub trait Hook<T: Config> {
+/// A hook for pallets into the VM. Used to call substrate pallets from a CosmWasm contract.
+pub trait PalletHook<T: Config> {
 	/// Return hardcoded contract informations for a precompiled contract.
 	fn precompiled_info(
 		contract_address: &AccountIdOf<T>,
@@ -32,7 +32,7 @@ pub trait Hook<T: Config> {
 }
 
 /// Default implementation, acting as identity (unhooked).
-impl<T: Config> Hook<T> for () {
+impl<T: Config> PalletHook<T> for () {
 	fn precompiled_info(
 		_: &AccountIdOf<T>,
 	) -> Option<
