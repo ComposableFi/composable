@@ -2,7 +2,7 @@ use crate::{
 	hook::Hook,
 	runtimes::{
 		abstraction::CosmwasmAccount,
-		vm::{ContractRuntime, CosmwasmVMError, CosmwasmVMShared},
+		vm::{ContractBackend, CosmwasmVMError, CosmwasmVMShared},
 	},
 	types::*,
 	CodeIdToInfo, Config, ContractToInfo, CurrentNonce, Error, Event, Pallet,
@@ -226,9 +226,9 @@ where
 		self.call_internal(shared, funds, |vm| {
 			cosmwasm_system_entrypoint_hook::<I, _>(vm, &message, |vm, message| {
 				match vm.0.contract_runtime {
-					ContractRuntime::Dynamic { .. } =>
+					ContractBackend::CosmWasm { .. } =>
 						cosmwasm_call::<I, _>(vm, message).map(Into::into),
-					ContractRuntime::Static =>
+					ContractBackend::Pallet =>
 						T::Hook::precompiled_execute(vm, entrypoint, message),
 				}
 			})
@@ -296,9 +296,9 @@ where
 					.0
 					.contract_runtime
 				{
-					ContractRuntime::Dynamic { .. } =>
+					ContractBackend::CosmWasm { .. } =>
 						cosmwasm_call::<I, _>(vm, message).map(Into::into),
-					ContractRuntime::Static =>
+					ContractBackend::Pallet =>
 						T::Hook::precompiled_execute(vm, self.state.entrypoint, message),
 				})
 				.map_err(Into::into)
