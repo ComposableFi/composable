@@ -191,15 +191,12 @@ export default {
     IbcTransferPalletParams: "Null",
     IbcTransferTransferParams: "Null",
     ComposableTraitsOracleRewardTracker: "Null",
-    ComposableTraitsStakingStake: "Null",
-    ComposableTraitsStakingRewardUpdate: "Null",
     ComposableTraitsAccountProxyProxyType: "Null",
     ComposableTraitsAccountProxyProxyDefinition: "Null",
     PalletAccountProxyAnnouncement: "Null",
     PalletCosmwasmContractInfo: "Null",
     PalletCosmwasmCodeInfo: "Null",
     PalletCosmwasmEntryPoint: "Null",
-    PalletStakingRewardsRewardAccumulationHookError: "Null",
     XcmVersionedMultiAssets: "Null",
     XcmVersionedMultiLocation: "Null",
     XcmVersionedXcm: "Null",
@@ -244,5 +241,10 @@ export default {
     FrameSupportPalletId: "Null",
     ComposableTraitsCurrencyRational64: "Null",
     PalletCosmwasmInstrumentCostRules: "Null",
+    PalletIbcUpgradeParams: "Null",
+    PalletIbcTransferParams: "Null",
+    PalletIbcPalletParams: "Null",
+    PalletProxyProxyDefinition: "Null",
+    PalletProxyAnnouncement: "Null"
   }
 };

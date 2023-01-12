@@ -24,7 +24,7 @@ export default {
       lastUpdatedTimestamp: "u64"
     },
     ComposableTraitsStakingLockLockConfig: {
-      durationPresets: "BTreeMap<u64, Perbill>",
+      durationPresets: "BTreeMap<u64, FixedU64>",
       unlockPenalty: "Perbill"
     },
     ComposableTraitsStakingRewardPoolConfiguration: {
