@@ -291,7 +291,7 @@ impl PalletHook<Test> for MockHook {
 	// This mocked hook shows two pallets with contract hooks that currently exhibit the same
 	// behavior. The behavior does not need to be identical in practice.
 
-	fn precompiled_info(
+	fn info(
 		contract_address: &AccountIdOf<Test>,
 	) -> Option<
 		PalletContractCodeInfo<
@@ -316,7 +316,7 @@ impl PalletHook<Test> for MockHook {
 		}
 	}
 
-	fn precompiled_execute<'a>(
+	fn execute<'a>(
 		vm: &mut WasmiVM<CosmwasmVM<'a, Test>>,
 		_entrypoint: EntryPoint,
 		message: &[u8],
@@ -379,7 +379,7 @@ impl PalletHook<Test> for MockHook {
 		}
 	}
 
-	fn precompiled_query<'a>(
+	fn query<'a>(
 		vm: &mut WasmiVM<CosmwasmVM<'a, Test>>,
 		_message: &[u8],
 	) -> Result<ContractResult<QueryResponse>, VmErrorOf<WasmiVM<CosmwasmVM<'a, Test>>>> {

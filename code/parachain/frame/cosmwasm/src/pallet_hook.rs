@@ -8,7 +8,7 @@ use cosmwasm_vm_wasmi::WasmiVM;
 /// A hook for pallets into the VM. Used to call substrate pallets from a CosmWasm contract.
 pub trait PalletHook<T: Config> {
 	/// Return hardcoded contract informations for a precompiled contract.
-	fn precompiled_info(
+	fn info(
 		contract_address: &AccountIdOf<T>,
 	) -> Option<
 		PalletContractCodeInfo<
@@ -20,7 +20,7 @@ pub trait PalletHook<T: Config> {
 	>;
 
 	/// Hook into a contract call.
-	fn precompiled_execute<'a>(
+	fn execute<'a>(
 		vm: &mut WasmiVM<CosmwasmVM<'a, T>>,
 		entrypoint: EntryPoint,
 		message: &[u8],
@@ -30,7 +30,7 @@ pub trait PalletHook<T: Config> {
 	>;
 
 	/// Hook into a contract query.
-	fn precompiled_query<'a>(
+	fn query<'a>(
 		vm: &mut WasmiVM<CosmwasmVM<'a, T>>,
 		message: &[u8],
 	) -> Result<ContractResult<QueryResponse>, VmErrorOf<WasmiVM<CosmwasmVM<'a, T>>>>;
@@ -38,7 +38,7 @@ pub trait PalletHook<T: Config> {
 
 /// Default implementation, acting as identity (unhooked).
 impl<T: Config> PalletHook<T> for () {
-	fn precompiled_info(
+	fn info(
 		_: &AccountIdOf<T>,
 	) -> Option<
 		PalletContractCodeInfo<
@@ -51,7 +51,7 @@ impl<T: Config> PalletHook<T> for () {
 		None
 	}
 
-	fn precompiled_execute<'a>(
+	fn execute<'a>(
 		_vm: &mut WasmiVM<CosmwasmVM<'a, T>>,
 		_entrypoint: EntryPoint,
 		_message: &[u8],
@@ -63,7 +63,7 @@ where {
 		Err(Error::<T>::Unsupported.into())
 	}
 
-	fn precompiled_query<'a>(
+	fn query<'a>(
 		_vm: &mut WasmiVM<CosmwasmVM<'a, T>>,
 		_: &[u8],
 	) -> Result<ContractResult<QueryResponse>, VmErrorOf<WasmiVM<CosmwasmVM<'a, T>>>> {
