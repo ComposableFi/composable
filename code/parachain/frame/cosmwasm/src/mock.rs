@@ -1,7 +1,10 @@
 use crate::{
 	instrument::CostRules,
 	pallet_hook::PalletHook,
-	runtimes::{abstraction::CosmwasmAccount, vm::CosmwasmVM},
+	runtimes::{
+		abstraction::CosmwasmAccount,
+		vm::{CosmwasmVM, CosmwasmVMError},
+	},
 	types::*,
 	*,
 };
@@ -274,7 +277,9 @@ impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for IbcLoopback<T> {
 
 pub struct MockHook;
 
-pub const MOCK_CONTRACT_ADDRESS: AccountIdOf<Test> = AccountId32::new([u8::MAX; 32]);
+pub const MOCK_CONTRACT_ADDRESS_1: AccountIdOf<Test> = AccountId32::new([u8::MAX; 32]);
+pub const MOCK_CONTRACT_ADDRESS_2: AccountIdOf<Test> = AccountId32::new([120u8; 32]);
+
 pub const MOCK_CONTRACT_EVENT_TY: &str = "magic";
 pub const MOCK_QUERY_JS: &str = "It's JavaScript, What Did You Expect";
 
@@ -284,32 +289,44 @@ impl PalletHook<Test> for MockHook {
 	fn precompiled_info(
 		contract_address: &AccountIdOf<Test>,
 	) -> Option<
-		PrecompiledInfo<
+		PalletContractCodeInfo<
 			AccountIdOf<Test>,
 			CodeHashOf<Test>,
 			ContractLabelOf<Test>,
 			ContractTrieIdOf<Test>,
 		>,
 	> {
-		if contract_address == &MOCK_CONTRACT_ADDRESS {
-			Some(PrecompiledInfo {
+		match *contract_address {
+			MOCK_CONTRACT_ADDRESS_1 => Some(PalletContractCodeInfo {
 				code: CodeInfo {
+					// When this is used for an actual Pallet, we would use the Pallet's AccountId
 					creator: ALICE,
+					// Not applicable to Pallet, so we use default()
 					pristine_code_hash: Default::default(),
+					// Not applicable since we use native gas metering
 					instrumentation_version: u16::MAX,
+					// Not applicable to Pallet, so we use the max
 					refcount: u32::MAX,
-					ibc_capable: true,
+					// A pallet can choose wether to be IBC capable
+					ibc_capable: false,
 				},
 				contract: ContractInfo {
+					// Pallets don't need a code ID, but we do not want to clash with CosmWasm
+					// contracts so we pick u64::MAX
 					code_id: u64::MAX,
+					// We have no storage
 					trie_id: Default::default(),
+					// When this is used for an actual Pallet, we would use the Pallet's AccountId
 					instantiator: ALICE,
+					// When this is used for an actual Pallet, we would use Some(the Pallet's
+					// AccountId)
 					admin: Some(ALICE),
+					// When this is used for an actual Pallet, we would use "pallet-PALLET_NAME"
 					label: Default::default(),
 				},
-			})
-		} else {
-			None
+			}),
+			MOCK_CONTRACT_ADDRESS_2 => None,
+			_ => None,
 		}
 	}
 
@@ -321,32 +338,45 @@ impl PalletHook<Test> for MockHook {
 		ContractResult<Response<<WasmiVM<CosmwasmVM<'a, Test>> as VMBase>::MessageCustom>>,
 		VmErrorOf<WasmiVM<CosmwasmVM<'a, Test>>>,
 	> {
-		vm.charge(VmGas::Instrumentation { metered: 1 })?;
-		let mut response = Response::new()
-			.add_event(CosmwasmEvent::new(MOCK_CONTRACT_EVENT_TY))
-			.set_data(0xDEADC0DE_u32.to_le_bytes());
-		let depth = message.get(0).copied().unwrap_or(0);
-		if depth > 0u8 {
-			response = response.add_submessage(SubMsg::new(WasmMsg::Execute {
-				contract_addr: AccountToAddr::convert(MOCK_CONTRACT_ADDRESS),
-				msg: vec![depth - 1].into(),
-				funds: Default::default(),
-			}));
-		}
-		match vm
-			.continue_query(CosmwasmAccount::new(MOCK_CONTRACT_ADDRESS), Default::default())?
-			.into()
-		{
-			ContractResult::Err(x) if x == MOCK_QUERY_JS => Ok(ContractResult::Ok(response)),
-			_ => Ok(ContractResult::Err("JavaScript must fail".into())),
+		match *vm.0.contract_address.as_ref() {
+			MOCK_CONTRACT_ADDRESS_1 => {
+				vm.charge(VmGas::Instrumentation { metered: 1 })?;
+				let mut response = Response::new()
+					.add_event(CosmwasmEvent::new(MOCK_CONTRACT_EVENT_TY))
+					.set_data(0xDEADC0DE_u32.to_le_bytes());
+				let depth = message.first().copied().unwrap_or(0);
+				if depth > 0u8 {
+					response = response.add_submessage(SubMsg::new(WasmMsg::Execute {
+						contract_addr: AccountToAddr::convert(MOCK_CONTRACT_ADDRESS_1),
+						msg: vec![depth - 1].into(),
+						funds: Default::default(),
+					}));
+				}
+				match vm
+					.continue_query(
+						CosmwasmAccount::new(MOCK_CONTRACT_ADDRESS_1),
+						Default::default(),
+					)?
+					.into()
+				{
+					ContractResult::Err(x) if x == MOCK_QUERY_JS =>
+						Ok(ContractResult::Ok(response)),
+					_ => Ok(ContractResult::Err("JavaScript must fail".into())),
+				}
+			},
+			_ => Err(CosmwasmVMError::Unsupported), // Should be impossible
 		}
 	}
 
 	fn precompiled_query<'a>(
-		_vm: &mut WasmiVM<CosmwasmVM<'a, Test>>,
+		vm: &mut WasmiVM<CosmwasmVM<'a, Test>>,
 		_message: &[u8],
 	) -> Result<ContractResult<QueryResponse>, VmErrorOf<WasmiVM<CosmwasmVM<'a, Test>>>> {
-		Ok(ContractResult::Err(MOCK_QUERY_JS.into()))
+		match *vm.0.contract_address.as_ref() {
+			MOCK_CONTRACT_ADDRESS_1 | MOCK_CONTRACT_ADDRESS_2 =>
+				Ok(ContractResult::Err(MOCK_QUERY_JS.into())),
+			_ => Err(CosmwasmVMError::Unsupported), // Should be impossible
+		}
 	}
 }
 

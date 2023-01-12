@@ -11,7 +11,12 @@ pub trait PalletHook<T: Config> {
 	fn precompiled_info(
 		contract_address: &AccountIdOf<T>,
 	) -> Option<
-		PrecompiledInfo<AccountIdOf<T>, CodeHashOf<T>, ContractLabelOf<T>, ContractTrieIdOf<T>>,
+		PalletContractCodeInfo<
+			AccountIdOf<T>,
+			CodeHashOf<T>,
+			ContractLabelOf<T>,
+			ContractTrieIdOf<T>,
+		>,
 	>;
 
 	/// Hook into a contract call.
@@ -36,7 +41,12 @@ impl<T: Config> PalletHook<T> for () {
 	fn precompiled_info(
 		_: &AccountIdOf<T>,
 	) -> Option<
-		PrecompiledInfo<AccountIdOf<T>, CodeHashOf<T>, ContractLabelOf<T>, ContractTrieIdOf<T>>,
+		PalletContractCodeInfo<
+			AccountIdOf<T>,
+			CodeHashOf<T>,
+			ContractLabelOf<T>,
+			ContractTrieIdOf<T>,
+		>,
 	> {
 		None
 	}

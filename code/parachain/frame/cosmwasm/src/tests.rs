@@ -237,12 +237,12 @@ mod precompiled {
 			let depth = 10;
 			assert_ok!(Cosmwasm::execute(
 				Origin::signed(ALICE),
-				MOCK_CONTRACT_ADDRESS,
+				MOCK_CONTRACT_ADDRESS_1,
 				Default::default(),
 				100_000_000_000_000u64,
 				BoundedVec::truncate_from(vec![depth])
 			),);
-			let expected_event_contract = MOCK_CONTRACT_ADDRESS;
+			let expected_event_contract = MOCK_CONTRACT_ADDRESS_1;
 			let expected_event_ty = make_event_type(MOCK_CONTRACT_EVENT_TY);
 			assert_eq!(
 				Test::assert_event_with(|event: Event<Test>| match event {
