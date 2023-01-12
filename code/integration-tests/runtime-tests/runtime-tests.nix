@@ -27,6 +27,41 @@
           ${runtime-tests}
         '';
       };
+
+      devnet-integration-tests =
+        pkgs.writeShellScriptBin "devnet-integration-tests" ''
+          ( ${
+            pkgs.lib.meta.getExe self'.packages.devnet-dali
+          } 2>&1 & ) | tee devnet-dali.log &
+          until test -f devnet-dali.log; do
+            sleep 1 && echo "waiting network start";
+          done;
+          TIMEOUT=240
+          COMMAND="( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 \"Network launched 🚀🚀\""
+          set +o errexit
+          timeout $TIMEOUT bash -c "$COMMAND"
+          START_RESULT="$?"
+          set -o errexit
+          if [[ $START_RESULT -ne 0 ]] ; then 
+            printf "failed to start devnet within %s with exit code %s" "$TIMEOUT" "$START_RESULT"
+            exit $START_RESULT
+          fi
+
+          cd code/integration-tests/runtime-tests || exit
+          npm install -q
+          export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_short 2>&1>runtime-tests.log & RUNTIME_TESTS_PID=$!
+          until test -f runtime-tests.log; do sleep 1 && echo "waiting tests start"; done;
+          tail --follow runtime-tests.log &
+          ( tail --follow --lines=0 runtime-tests.log & ) | ( grep --max-count=5 "API-WS: disconnected from" >stop.log & )
+          ( while : ; do if test $( wc --lines stop.log | cut --delimiter " " --fields 1 ) -gt 4; then kill -s SIGKILL $RUNTIME_TESTS_PID && echo "Failed" && exit 42; fi; sleep 1; done ) &
+          wait $RUNTIME_TESTS_PID
+          exit $?
+        '';
+    };
+    apps = {
+      devnet-integration-tests = self.inputs.flake-utils.lib.mkApp {
+        drv = self'.packages.devnet-integration-tests;
+      };
     };
   };
 }
