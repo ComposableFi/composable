@@ -63,7 +63,7 @@ export function useVolumeChart(): {
         )
       );
     }
-  }, [selectedInterval, hasFetchedTokens]);
+  }, [selectedInterval, hasFetchedTokens, getTokenById, picaPrice]);
 
   return {
     isLoading,
