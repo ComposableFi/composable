@@ -2,13 +2,17 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use codec::Encode;
 use composable_tests_helpers::test::{block::process_and_progress_blocks, helper::RuntimeTrait};
-use composable_traits::{account_proxy::ProxyType, fnft::FinancialNft};
+use composable_traits::{
+	account_proxy::ProxyType,
+	fnft::{FinancialNft, FnftAccountProxyTypeSelector},
+};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::tokens::nonfungibles::{Create, Inspect},
 };
 
 use crate::{
+	pallet,
 	test::{
 		mock::{new_test_ext, Event, MockRuntime, Nft, Origin, Proxy},
 		prelude::{TEST_COLLECTION_ID, *},
@@ -31,6 +35,14 @@ fn transfer_simple() {
 			"owner before transfer should be ALICE"
 		);
 
+		for proxy_type in <MockRuntime as pallet::Config>::ProxyTypeSelector::get_proxy_types() {
+			assert_ok!(Proxy::find_proxy(
+				&Nft::asset_account(&TEST_COLLECTION_ID, &created_nft_id),
+				&ALICE,
+				Some(proxy_type)
+			));
+		}
+
 		MockRuntime::assert_extrinsic_event(
 			Nft::transfer(Origin::signed(ALICE), TEST_COLLECTION_ID, created_nft_id, BOB),
 			crate::Event::FinancialNftTransferred {
@@ -39,6 +51,13 @@ fn transfer_simple() {
 				to: BOB,
 			},
 		);
+		for proxy_type in <MockRuntime as pallet::Config>::ProxyTypeSelector::get_proxy_types() {
+			assert_ok!(Proxy::find_proxy(
+				&Nft::asset_account(&TEST_COLLECTION_ID, &created_nft_id),
+				&BOB,
+				Some(proxy_type)
+			));
+		}
 
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
