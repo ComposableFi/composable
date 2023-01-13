@@ -189,15 +189,15 @@ jobs:
           chmod +x ./.github/workflows/check-nix-long.sh
           source ./.github/workflows/check-nix-long.sh
 
-  taplo-cli-check:
-    name: "Taplo cli check"
+  taplo-check:
+    name: "Taplo check"
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow }}-taplo-cli-check-${{ github.ref }}
+      group: ${{ github.workflow }}-taplo-check-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -205,7 +205,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#taplo-cli-check
+          command: nix -- build .#taplo-check
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   prettier-check:
@@ -1133,7 +1133,7 @@ jobs:
         - cargo-clippy-check
         - cargo-deny-check
         - cargo-fmt-check
-        - taplo-cli-check
+        - taplo-check
         - prettier-check
         # Simnode is flaky, enable once not flaky
         # - check-simnode
