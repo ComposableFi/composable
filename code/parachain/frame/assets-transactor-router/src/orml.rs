@@ -1,6 +1,6 @@
 //! Implementations of common trait definitions from [orml](https://docs.rs/orml-traits).
 
-use crate::{Config, Pallet};
+use crate::{route, route_asset_type, Config, Pallet};
 use composable_traits::assets::{AssetType, AssetTypeInspect};
 use frame_support::{
 	dispatch::DispatchResult,
@@ -11,53 +11,16 @@ use frame_support::{
 use orml_traits::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
 use sp_runtime::{traits::CheckedSub, ArithmeticError, DispatchError};
 
-macro_rules! route {
-	(
-		fn $fn:ident($asset:ident: $asset_ty:ty, $($arg:ident: $ty:ty),*) $(-> $ret:ty)?;
-	) => {
-		fn $fn($asset: $asset_ty, $($arg:$ty),*) $(-> $ret)? {
-			if T::AssetId::from($asset.into()) == <T::NativeAssetId as frame_support::traits::Get<_>>::get() {
-				<<T as Config>::NativeCurrency>::$fn($($arg),*)
-			} else {
-				match <T::AssetLookup as composable_traits::assets::AssetTypeInspect>::inspect(&$asset) {
-					composable_traits::assets::AssetType::Foreign => {
-						<<T as Config>::ForeignTransactor>::$fn($asset, $($arg),*)
-					}
-					composable_traits::assets::AssetType::Local => {
-						<<T as Config>::LocalTransactor>::$fn($asset, $($arg),*)
-					}
-				}
-			}
-		}
-	};
-}
-
 impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 	type CurrencyId = T::AssetId;
 	type Balance = T::Balance;
 
-	fn minimum_balance(currency_id: Self::CurrencyId) -> Self::Balance {
-		if currency_id == T::NativeAssetId::get() {
-			<<T as Config>::NativeCurrency>::minimum_balance()
-		} else {
-			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
-				AssetType::Foreign =>
-					<<T as Config>::ForeignTransactor>::minimum_balance(currency_id),
-				AssetType::Local => <<T as Config>::LocalTransactor>::minimum_balance(currency_id),
-			}
-		}
+	route! {
+		fn minimum_balance(currency_id: Self::CurrencyId) -> Self::Balance;
 	}
 
-	fn total_issuance(currency_id: Self::CurrencyId) -> Self::Balance {
-		if currency_id == T::NativeAssetId::get() {
-			<<T as Config>::NativeCurrency>::total_issuance()
-		} else {
-			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
-				AssetType::Foreign =>
-					<<T as Config>::ForeignTransactor>::total_issuance(currency_id),
-				AssetType::Local => <<T as Config>::LocalTransactor>::total_issuance(currency_id),
-			}
-		}
+	route! {
+		fn total_issuance(currency_id: Self::CurrencyId) -> Self::Balance;
 	}
 
 	route! {
@@ -84,14 +47,8 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 				new_balance,
 			)
 		} else {
-			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
-				AssetType::Foreign => <<T as Config>::ForeignTransactor>::ensure_can_withdraw(
-					currency_id,
-					who,
-					amount,
-				),
-				AssetType::Local =>
-					<<T as Config>::LocalTransactor>::ensure_can_withdraw(currency_id, who, amount),
+			route_asset_type! {
+				ensure_can_withdraw(currency_id, who, amount)
 			}
 		}
 	}
@@ -110,11 +67,8 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 				ExistenceRequirement::AllowDeath,
 			)
 		} else {
-			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
-				AssetType::Foreign =>
-					<<T as Config>::ForeignTransactor>::transfer(currency_id, from, to, amount),
-				AssetType::Local =>
-					<<T as Config>::LocalTransactor>::transfer(currency_id, from, to, amount),
+			route_asset_type! {
+				transfer(currency_id, from, to, amount)
 			}
 		}
 	}
@@ -130,11 +84,8 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 			<<T as Config>::NativeCurrency>::deposit_creating(who, amount);
 			Ok(())
 		} else {
-			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
-				AssetType::Foreign =>
-					<<T as Config>::ForeignTransactor>::deposit(currency_id, who, amount),
-				AssetType::Local =>
-					<<T as Config>::LocalTransactor>::deposit(currency_id, who, amount),
+			route_asset_type! {
+				deposit(currency_id, who, amount)
 			}
 		}
 	}
@@ -155,11 +106,8 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 			)
 			.map(|_| ())
 		} else {
-			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
-				AssetType::Foreign =>
-					<<T as Config>::ForeignTransactor>::withdraw(currency_id, who, amount),
-				AssetType::Local =>
-					<<T as Config>::LocalTransactor>::withdraw(currency_id, who, amount),
+			route_asset_type! {
+				deposit(currency_id, who, amount)
 			}
 		}
 	}
@@ -178,11 +126,8 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 			// MultiCurrency trait.
 			<<T as Config>::NativeCurrency>::slash(who, amount).1
 		} else {
-			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
-				AssetType::Foreign =>
-					<<T as Config>::ForeignTransactor>::slash(currency_id, who, amount),
-				AssetType::Local =>
-					<<T as Config>::LocalTransactor>::slash(currency_id, who, amount),
+			route_asset_type! {
+				slash(currency_id, who, amount)
 			}
 		}
 	}

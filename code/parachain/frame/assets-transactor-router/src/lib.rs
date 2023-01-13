@@ -86,24 +86,35 @@ pub mod weights;
 
 macro_rules! route {
 	(
-		fn $fn:ident($asset:ident: $asset_ty:ty, $($arg:ident: $ty:ty),*) $(-> $ret:ty)?;
+		fn $fn:ident($asset:ident: $asset_ty:ty $(, $arg:ident: $ty:ty)* $(,)?) $(-> $ret:ty)?;
 	) => {
 		fn $fn($asset: $asset_ty, $($arg:$ty),*) $(-> $ret)? {
 			if T::AssetId::from($asset.into()) == <T::NativeAssetId as frame_support::traits::Get<_>>::get() {
 				<<T as Config>::NativeCurrency>::$fn($($arg),*)
 			} else {
-				match <T::AssetLookup as composable_traits::assets::AssetTypeInspect>::inspect(&$asset) {
-					composable_traits::assets::AssetType::Foreign => {
-						<<T as Config>::ForeignTransactor>::$fn($asset, $($arg),*)
-					}
-					composable_traits::assets::AssetType::Local => {
-						<<T as Config>::LocalTransactor>::$fn($asset, $($arg),*)
-					}
-				}
+				crate::route_asset_type! { $fn($asset, $($arg),*) }
 			}
 		}
 	};
 }
+
+macro_rules! route_asset_type {
+	(
+		$fn:ident($asset:ident $(, $arg:ident)* $(,)?)
+	) => {
+		match <T::AssetLookup as composable_traits::assets::AssetTypeInspect>::inspect(&$asset) {
+			composable_traits::assets::AssetType::Foreign => {
+				<<T as Config>::ForeignTransactor>::$fn($asset, $($arg),*)
+			}
+			composable_traits::assets::AssetType::Local => {
+				<<T as Config>::LocalTransactor>::$fn($asset, $($arg),*)
+			}
+		}
+	};
+}
+
+pub(crate) use route;
+pub(crate) use route_asset_type;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -857,27 +868,12 @@ mod fungibles_impls {
 		type AssetId = T::AssetId;
 		type Balance = T::Balance;
 
-		fn total_issuance(asset: Self::AssetId) -> Self::Balance {
-			if asset == T::NativeAssetId::get() {
-				<<T as Config>::NativeCurrency>::total_issuance()
-			} else {
-				match <T::AssetLookup as AssetTypeInspect>::inspect(&asset) {
-					AssetType::Foreign => <<T as Config>::ForeignTransactor>::total_issuance(asset),
-					AssetType::Local => <<T as Config>::LocalTransactor>::total_issuance(asset),
-				}
-			}
+		route! {
+			fn total_issuance(asset: Self::AssetId) -> Self::Balance;
 		}
 
-		fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
-			if asset == T::NativeAssetId::get() {
-				<<T as Config>::NativeCurrency>::minimum_balance()
-			} else {
-				match <T::AssetLookup as AssetTypeInspect>::inspect(&asset) {
-					AssetType::Foreign =>
-						<<T as Config>::ForeignTransactor>::minimum_balance(asset),
-					AssetType::Local => <<T as Config>::LocalTransactor>::minimum_balance(asset),
-				}
-			}
+		route! {
+			fn minimum_balance(asset: Self::AssetId) -> Self::Balance;
 		}
 
 		route! {
