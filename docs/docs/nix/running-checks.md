@@ -10,15 +10,25 @@ Since checks are just packages defined by our repositories' flakes, you can effi
 
 Nix also allows you to easily format the entire repository per our formatting spec.
 
-## Examples
-
-### Formatting the repository
+## Formatting the repository
 
 We have many different formatting checks, but instead of checking what is unformatted, you can simply run one command to format the entire repository:
 
 ```bash
 nix run ".#fmt"
 ```
+
+## Running all checks
+
+This check runs most of the checks that CI runs. Note that running these checks for the first time will take very long as nothing is cached yet. After that, checks should be faster.
+
+```bash
+nix run ".#check"
+```
+
+## Running individual checks
+
+It is also possible to run individual checks, here are some examples:
 
 ### Checking your spelling
 
