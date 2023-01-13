@@ -24,7 +24,7 @@
         cargoArtifacts = crane.stable.buildDepsOnly {
           inherit src;
           doCheck = false;
-          cargoExtraArgs = "-p hyperspace";
+          cargoExtraArgs = "-p hyperspace --features dali";
           cargoTestCommand = "";
           BuildInputs = [ pkgs.protobuf ];
           PROTOC = "${pkgs.protobuf}/bin/protoc";
