@@ -1,24 +1,6 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, devnetTools, ... }: {
-    packages = let
-      packages = self'.packages;
-
-      # for containers which are intended for testing, debug and development (including running isolated runtime)
-      docker-in-docker = with pkgs; [ docker docker-buildx docker-compose ];
-      containers-tools-minimal = with pkgs; [ acl direnv home-manager cachix ];
-      container-tools = with pkgs;
-        [
-          bash
-          bottom
-          coreutils
-          findutils
-          gawk
-          gnugrep
-          less
-          nettools
-          nix
-          procps
-        ] ++ containers-tools-minimal;
+    packages = let packages = self'.packages;
     in rec {
       # Dali devnet
       devnet-dali-centauri-1 = (pkgs.callPackage devnetTools.mk-devnet {
@@ -63,21 +45,21 @@
       }).script;
 
       devnet-container = devnetTools.mk-devnet-container {
-        inherit container-tools;
+        container-tools = devnetTools.withDevNetContainerTools;
         containerName = "composable-devnet-container";
         devNet = packages.zombienet-rococo-local-dali-dev;
       };
 
       # Dali Bridge devnet container
       bridge-devnet-dali-container = devnetTools.mk-devnet-container {
-        inherit container-tools;
+        container-tools = devnetTools.withDevNetContainerTools;
         containerName = "composable-bridge-devnet-container";
         devNet = packages.bridge-devnet-dali;
       };
 
       # Dali Bridge devnet container with mmr-polkadot
       bridge-mmr-devnet-dali-container = devnetTools.mk-devnet-container {
-        inherit container-tools;
+        container-tools = devnetTools.withDevNetContainerTools;
         containerName = "composable-bridge-mmr-devnet-container";
         devNet = packages.bridge-mmr-devnet-dali;
       };

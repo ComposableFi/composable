@@ -1,7 +1,15 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }: {
     _module.args.devnetTools = rec {
+      withDockerInDocker = with pkgs; [ docker docker-buildx docker-compose ];
+      withUserContainerTools = with pkgs; [ acl direnv home-manager cachix ];
+      withBaseContainerTools = with pkgs; [ bash coreutils procps ];
+      withDevNetContainerTools = with pkgs;
+        [ bottom findutils gawk gnugrep less nettools nix ]
+        ++ withBaseContainerTools ++ withUserContainerTools;
 
+      getScript = script:
+        "${pkgs.lib.getBin script}/bin/${pkgs.lib.getName script}";
       mk-devnet = { lib, writeTextFile, writeShellApplication
         , useGlobalChainSpec ? true, polkadot-launch, composable-node
         , polkadot-node, chain-spec, network-config-path ?
@@ -49,7 +57,7 @@
           useGlobalChainSpec = false;
         });
 
-      mk-devnet-container = { containerName, devNet, container-tools }:
+      mk-devnet-container = { containerName, devNet, withDevNetContainerTools }:
         pkgs.lib.trace "Run Dali runtime on Composable node"
         pkgs.dockerTools.buildImage {
           name = containerName;
@@ -57,14 +65,10 @@
           copyToRoot = pkgs.buildEnv {
             name = "image-root";
             paths = [ devNet pkgs.curl pkgs.websocat pkgs.glibc.bin ]
-              ++ container-tools;
+              ++ withDevNetContainerTools;
             pathsToLink = [ "/bin" ];
           };
-          config = {
-            Entrypoint =
-              [ "${pkgs.lib.getBin devNet}/bin/${pkgs.lib.getName devNet}" ];
-          };
-
+          config = { Entrypoint = [ getScript devNet ]; };
           runAsRoot = ''
             mkdir --parents /usr/bin /tmp && chown 777 /tmp
           '';
