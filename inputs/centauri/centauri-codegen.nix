@@ -5,8 +5,8 @@
         src = pkgs.fetchFromGitHub {
           owner = "ComposableFi";
           repo = "centauri";
-          rev = "31e8b13fcc9ab2a86f4561a9a51deaf117d7d416";
-          hash = "sha256-jiClH5l0N0CTf+ozazBfmJgP60hPfSyHQrT1zW7YJuY=";
+          rev = "ecefd88ad0ddcb2b55553c23f985f540bee7a80b";
+          hash = "sha256-sHrYRsVbbBwF2XqUVfBDdXP99K8s8A7cwL30+TUvrrs=";
         };
       in crane.stable.buildPackage {
         name = "centauri-codegen";
