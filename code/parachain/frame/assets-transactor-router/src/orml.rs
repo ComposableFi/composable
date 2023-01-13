@@ -1,201 +1,219 @@
 //! Implementations of common trait definitions from [orml](https://docs.rs/orml-traits).
 
-use crate::{valid_asset_id, Config, Error, Pallet};
+use crate::{Config, Pallet};
+use composable_traits::assets::{AssetType, AssetTypeInspect};
 use frame_support::{
 	dispatch::DispatchResult,
-	pallet_prelude::MaybeSerializeDeserialize,
 	traits::{
 		Currency, ExistenceRequirement, Get, LockableCurrency, ReservableCurrency, WithdrawReasons,
 	},
 };
-use num_traits::CheckedSub;
 use orml_traits::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
-use sp_runtime::{
-	traits::{AtLeast32BitUnsigned, Saturating, Zero},
-	ArithmeticError, DispatchError,
-};
+use sp_runtime::{traits::CheckedSub, ArithmeticError, DispatchError};
 
-impl<T: Config, AccountId> MultiCurrency<AccountId> for Pallet<T>
-where
-	<T as Config>::Balance: Saturating + AtLeast32BitUnsigned + num_traits::Saturating,
-	<T as Config>::AssetId: MaybeSerializeDeserialize,
-	<T as Config>::NativeCurrency: Currency<AccountId, Balance = T::Balance>,
-	<T as Config>::MultiCurrency:
-		MultiCurrency<AccountId, Balance = T::Balance, CurrencyId = T::AssetId>,
-{
+macro_rules! route {
+	(
+		fn $fn:ident($asset:ident: $asset_ty:ty, $($arg:ident: $ty:ty),*) $(-> $ret:ty)?;
+	) => {
+		fn $fn($asset: $asset_ty, $($arg:$ty),*) $(-> $ret)? {
+			if T::AssetId::from($asset.into()) == <T::NativeAssetId as frame_support::traits::Get<_>>::get() {
+				<<T as Config>::NativeCurrency>::$fn($($arg),*)
+			} else {
+				match <T::AssetLookup as composable_traits::assets::AssetTypeInspect>::inspect(&$asset) {
+					composable_traits::assets::AssetType::Foreign => {
+						<<T as Config>::ForeignTransactor>::$fn($asset, $($arg),*)
+					}
+					composable_traits::assets::AssetType::Local => {
+						<<T as Config>::LocalTransactor>::$fn($asset, $($arg),*)
+					}
+				}
+			}
+		}
+	};
+}
+
+impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 	type CurrencyId = T::AssetId;
-
 	type Balance = T::Balance;
 
 	fn minimum_balance(currency_id: Self::CurrencyId) -> Self::Balance {
 		if currency_id == T::NativeAssetId::get() {
-			return <<T as Config>::NativeCurrency>::minimum_balance()
+			<<T as Config>::NativeCurrency>::minimum_balance()
+		} else {
+			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
+				AssetType::Foreign =>
+					<<T as Config>::ForeignTransactor>::minimum_balance(currency_id),
+				AssetType::Local => <<T as Config>::LocalTransactor>::minimum_balance(currency_id),
+			}
 		}
-		if let Some(currency_id) = valid_asset_id::<T>(currency_id) {
-			return <<T as Config>::MultiCurrency>::minimum_balance(currency_id)
-		}
-		T::Balance::zero()
 	}
 
 	fn total_issuance(currency_id: Self::CurrencyId) -> Self::Balance {
 		if currency_id == T::NativeAssetId::get() {
-			return <<T as Config>::NativeCurrency>::total_issuance()
+			<<T as Config>::NativeCurrency>::total_issuance()
+		} else {
+			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
+				AssetType::Foreign =>
+					<<T as Config>::ForeignTransactor>::total_issuance(currency_id),
+				AssetType::Local => <<T as Config>::LocalTransactor>::total_issuance(currency_id),
+			}
 		}
-		if let Some(currency_id) = valid_asset_id::<T>(currency_id) {
-			return <<T as Config>::MultiCurrency>::total_issuance(currency_id)
-		}
-		T::Balance::zero()
 	}
 
-	fn total_balance(currency_id: Self::CurrencyId, who: &AccountId) -> Self::Balance {
-		if currency_id == T::NativeAssetId::get() {
-			return <<T as Config>::NativeCurrency>::total_balance(who)
-		}
-		if let Some(currency_id) = valid_asset_id::<T>(currency_id) {
-			return <<T as Config>::MultiCurrency>::total_balance(currency_id, who)
-		}
-		T::Balance::zero()
+	route! {
+		fn total_balance(currency_id: Self::CurrencyId, who: &T::AccountId) -> Self::Balance;
 	}
 
-	fn free_balance(currency_id: Self::CurrencyId, who: &AccountId) -> Self::Balance {
-		if currency_id == T::NativeAssetId::get() {
-			return <<T as Config>::NativeCurrency>::free_balance(who)
-		}
-		if let Some(currency_id) = valid_asset_id::<T>(currency_id) {
-			return <<T as Config>::MultiCurrency>::free_balance(currency_id, who)
-		}
-		T::Balance::zero()
+	route! {
+		fn free_balance(currency_id: Self::CurrencyId, who: &T::AccountId) -> Self::Balance;
 	}
 
 	fn ensure_can_withdraw(
 		currency_id: Self::CurrencyId,
-		who: &AccountId,
+		who: &T::AccountId,
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if currency_id == T::NativeAssetId::get() {
 			let new_balance = <<T as Config>::NativeCurrency>::free_balance(who)
 				.checked_sub(&amount)
 				.ok_or(DispatchError::Arithmetic(ArithmeticError::Underflow))?;
-			return <<T as Config>::NativeCurrency>::ensure_can_withdraw(
+			<<T as Config>::NativeCurrency>::ensure_can_withdraw(
 				who,
 				amount,
 				WithdrawReasons::all(),
 				new_balance,
 			)
+		} else {
+			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
+				AssetType::Foreign => <<T as Config>::ForeignTransactor>::ensure_can_withdraw(
+					currency_id,
+					who,
+					amount,
+				),
+				AssetType::Local =>
+					<<T as Config>::LocalTransactor>::ensure_can_withdraw(currency_id, who, amount),
+			}
 		}
-		let currency_id = valid_asset_id::<T>(currency_id).ok_or(Error::<T>::InvalidCurrency)?;
-		<<T as Config>::MultiCurrency>::ensure_can_withdraw(currency_id, who, amount)
 	}
 
 	fn transfer(
 		currency_id: Self::CurrencyId,
-		from: &AccountId,
-		to: &AccountId,
+		from: &T::AccountId,
+		to: &T::AccountId,
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if currency_id == T::NativeAssetId::get() {
-			return <<T as Config>::NativeCurrency>::transfer(
+			<<T as Config>::NativeCurrency>::transfer(
 				from,
 				to,
 				amount,
 				ExistenceRequirement::AllowDeath,
 			)
+		} else {
+			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
+				AssetType::Foreign =>
+					<<T as Config>::ForeignTransactor>::transfer(currency_id, from, to, amount),
+				AssetType::Local =>
+					<<T as Config>::LocalTransactor>::transfer(currency_id, from, to, amount),
+			}
 		}
-		let currency_id = valid_asset_id::<T>(currency_id).ok_or(Error::<T>::InvalidCurrency)?;
-		<<T as Config>::MultiCurrency>::transfer(currency_id, from, to, amount)
 	}
 
 	fn deposit(
 		currency_id: Self::CurrencyId,
-		who: &AccountId,
+		who: &T::AccountId,
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if currency_id == T::NativeAssetId::get() {
 			// Drop the imbalance, causing the total issuance to increase, in accordance with the
 			// MultiCurrency trait.
 			<<T as Config>::NativeCurrency>::deposit_creating(who, amount);
-			return Ok(())
+			Ok(())
+		} else {
+			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
+				AssetType::Foreign =>
+					<<T as Config>::ForeignTransactor>::deposit(currency_id, who, amount),
+				AssetType::Local =>
+					<<T as Config>::LocalTransactor>::deposit(currency_id, who, amount),
+			}
 		}
-		let currency_id = valid_asset_id::<T>(currency_id).ok_or(Error::<T>::InvalidCurrency)?;
-		<<T as Config>::MultiCurrency>::deposit(currency_id, who, amount)
 	}
 
 	fn withdraw(
 		currency_id: Self::CurrencyId,
-		who: &AccountId,
+		who: &T::AccountId,
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if currency_id == T::NativeAssetId::get() {
 			// Drop the imbalance, causing the total issuance to decrease, in accordance with the
 			// MultiCurrency trait.
-			return <<T as Config>::NativeCurrency>::withdraw(
+			<<T as Config>::NativeCurrency>::withdraw(
 				who,
 				amount,
 				WithdrawReasons::all(),
 				ExistenceRequirement::AllowDeath,
 			)
 			.map(|_| ())
+		} else {
+			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
+				AssetType::Foreign =>
+					<<T as Config>::ForeignTransactor>::withdraw(currency_id, who, amount),
+				AssetType::Local =>
+					<<T as Config>::LocalTransactor>::withdraw(currency_id, who, amount),
+			}
 		}
-		let currency_id = valid_asset_id::<T>(currency_id).ok_or(Error::<T>::InvalidCurrency)?;
-		<<T as Config>::MultiCurrency>::withdraw(currency_id, who, amount)
 	}
 
-	fn can_slash(currency_id: Self::CurrencyId, who: &AccountId, amount: Self::Balance) -> bool {
-		if currency_id == T::NativeAssetId::get() {
-			return <<T as Config>::NativeCurrency>::can_slash(who, amount)
-		}
-		if let Some(currency_id) = valid_asset_id::<T>(currency_id) {
-			return <<T as Config>::MultiCurrency>::can_slash(currency_id, who, amount)
-		}
-		false
+	route! {
+		fn can_slash(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> bool;
 	}
 
 	fn slash(
 		currency_id: Self::CurrencyId,
-		who: &AccountId,
+		who: &T::AccountId,
 		amount: Self::Balance,
 	) -> Self::Balance {
 		if currency_id == T::NativeAssetId::get() {
 			// Drop the imbalance, causing the total issuance to decrease, in accordance with the
 			// MultiCurrency trait.
-			return <<T as Config>::NativeCurrency>::slash(who, amount).1
+			<<T as Config>::NativeCurrency>::slash(who, amount).1
+		} else {
+			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
+				AssetType::Foreign =>
+					<<T as Config>::ForeignTransactor>::slash(currency_id, who, amount),
+				AssetType::Local =>
+					<<T as Config>::LocalTransactor>::slash(currency_id, who, amount),
+			}
 		}
-		if let Some(currency_id) = valid_asset_id::<T>(currency_id) {
-			return <<T as Config>::MultiCurrency>::slash(currency_id, who, amount)
-		}
-		T::Balance::zero()
 	}
 }
 
-impl<T: Config, AccountId> MultiLockableCurrency<AccountId> for Pallet<T>
-where
-	<T as Config>::NativeCurrency: LockableCurrency<AccountId, Balance = T::Balance>
-		+ Currency<AccountId, Balance = T::Balance>,
-	<T as Config>::MultiCurrency:
-		MultiLockableCurrency<AccountId, Balance = T::Balance, CurrencyId = T::AssetId>,
-	<T as Config>::Balance: Saturating + num_traits::Saturating,
-	<T as Config>::AssetId: MaybeSerializeDeserialize,
-{
+impl<T: Config> MultiLockableCurrency<T::AccountId> for Pallet<T> {
 	type Moment = T::BlockNumber;
 
 	fn set_lock(
 		lock_id: orml_traits::LockIdentifier,
 		currency_id: Self::CurrencyId,
-		who: &AccountId,
+		who: &T::AccountId,
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if currency_id == T::NativeAssetId::get() {
 			<<T as Config>::NativeCurrency>::set_lock(lock_id, who, amount, WithdrawReasons::all());
-			return Ok(())
+			Ok(())
+		} else {
+			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
+				AssetType::Foreign =>
+					<<T as Config>::ForeignTransactor>::set_lock(lock_id, currency_id, who, amount),
+				AssetType::Local =>
+					<<T as Config>::LocalTransactor>::set_lock(lock_id, currency_id, who, amount),
+			}
 		}
-		let currency_id = valid_asset_id::<T>(currency_id).ok_or(Error::<T>::InvalidCurrency)?;
-		<<T as Config>::MultiCurrency>::set_lock(lock_id, currency_id, who, amount)
 	}
 
 	fn extend_lock(
 		lock_id: orml_traits::LockIdentifier,
 		currency_id: Self::CurrencyId,
-		who: &AccountId,
+		who: &T::AccountId,
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if currency_id == T::NativeAssetId::get() {
@@ -205,119 +223,95 @@ where
 				amount,
 				WithdrawReasons::all(),
 			);
-			return Ok(())
+			Ok(())
+		} else {
+			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
+				AssetType::Foreign => <<T as Config>::ForeignTransactor>::extend_lock(
+					lock_id,
+					currency_id,
+					who,
+					amount,
+				),
+				AssetType::Local =>
+					<<T as Config>::LocalTransactor>::extend_lock(lock_id, currency_id, who, amount),
+			}
 		}
-		let currency_id = valid_asset_id::<T>(currency_id).ok_or(Error::<T>::InvalidCurrency)?;
-		<<T as Config>::MultiCurrency>::extend_lock(lock_id, currency_id, who, amount)
 	}
 
 	fn remove_lock(
 		lock_id: orml_traits::LockIdentifier,
 		currency_id: Self::CurrencyId,
-		who: &AccountId,
+		who: &T::AccountId,
 	) -> DispatchResult {
 		if currency_id == T::NativeAssetId::get() {
 			<<T as Config>::NativeCurrency>::remove_lock(lock_id, who);
-			return Ok(())
+			Ok(())
+		} else {
+			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
+				AssetType::Foreign =>
+					<<T as Config>::ForeignTransactor>::remove_lock(lock_id, currency_id, who),
+				AssetType::Local =>
+					<<T as Config>::LocalTransactor>::remove_lock(lock_id, currency_id, who),
+			}
 		}
-		let currency_id = valid_asset_id::<T>(currency_id).ok_or(Error::<T>::InvalidCurrency)?;
-		<<T as Config>::MultiCurrency>::remove_lock(lock_id, currency_id, who)
 	}
 }
 
-impl<T: Config, AccountId> MultiReservableCurrency<AccountId> for Pallet<T>
-where
-	<T as Config>::NativeCurrency: ReservableCurrency<AccountId, Balance = T::Balance>
-		+ Currency<AccountId, Balance = T::Balance>,
-	<T as Config>::MultiCurrency:
-		MultiReservableCurrency<AccountId, Balance = T::Balance, CurrencyId = T::AssetId>,
-	<T as Config>::Balance: Saturating + num_traits::Saturating,
-	<T as Config>::AssetId: MaybeSerializeDeserialize,
-{
-	fn can_reserve(currency_id: Self::CurrencyId, who: &AccountId, amount: Self::Balance) -> bool {
-		if currency_id == T::NativeAssetId::get() {
-			return <<T as Config>::NativeCurrency>::can_reserve(who, amount)
-		}
-		if let Some(currency_id) = valid_asset_id::<T>(currency_id) {
-			return <<T as Config>::MultiCurrency>::can_reserve(currency_id, who, amount)
-		}
-		false
+impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
+	route! {
+		fn can_reserve(
+			currency_id: Self::CurrencyId,
+			who: &T::AccountId,
+			amount: Self::Balance
+		) -> bool;
 	}
 
 	fn slash_reserved(
 		currency_id: Self::CurrencyId,
-		who: &AccountId,
+		who: &T::AccountId,
 		amount: Self::Balance,
 	) -> Self::Balance {
 		if currency_id == T::NativeAssetId::get() {
 			// Drop the negative imbalance, causing the total issuance to be reduced, in accordance
 			// with `MultiReservableCurrency`.
-			return <<T as Config>::NativeCurrency>::slash_reserved(who, amount).1
+			<<T as Config>::NativeCurrency>::slash_reserved(who, amount).1
+		} else {
+			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
+				AssetType::Foreign =>
+					<<T as Config>::ForeignTransactor>::slash_reserved(currency_id, who, amount),
+				AssetType::Local =>
+					<<T as Config>::LocalTransactor>::slash_reserved(currency_id, who, amount),
+			}
 		}
-		if let Some(currency_id) = valid_asset_id::<T>(currency_id) {
-			return <<T as Config>::MultiCurrency>::slash_reserved(currency_id, who, amount)
-		}
-		T::Balance::zero()
 	}
 
-	fn reserved_balance(currency_id: Self::CurrencyId, who: &AccountId) -> Self::Balance {
-		if currency_id == T::NativeAssetId::get() {
-			return <<T as Config>::NativeCurrency>::reserved_balance(who)
-		}
-		if let Some(currency_id) = valid_asset_id::<T>(currency_id) {
-			return <<T as Config>::MultiCurrency>::reserved_balance(currency_id, who)
-		}
-		T::Balance::zero()
+	route! {
+		fn reserved_balance(currency_id: Self::CurrencyId, who: &T::AccountId) -> Self::Balance;
 	}
 
-	fn reserve(
-		currency_id: Self::CurrencyId,
-		who: &AccountId,
-		amount: Self::Balance,
-	) -> sp_runtime::DispatchResult {
-		if currency_id == T::NativeAssetId::get() {
-			return <<T as Config>::NativeCurrency>::reserve(who, amount)
-		}
-		let currency_id = valid_asset_id::<T>(currency_id).ok_or(Error::<T>::InvalidCurrency)?;
-		<<T as Config>::MultiCurrency>::reserve(currency_id, who, amount)
+	route! {
+		fn reserve(
+			currency_id: Self::CurrencyId,
+			who: &T::AccountId,
+			amount: Self::Balance
+		) -> sp_runtime::DispatchResult;
 	}
 
-	fn unreserve(
-		currency_id: Self::CurrencyId,
-		who: &AccountId,
-		amount: Self::Balance,
-	) -> Self::Balance {
-		if currency_id == T::NativeAssetId::get() {
-			return <<T as Config>::NativeCurrency>::unreserve(who, amount)
-		}
-		if let Some(currency_id) = valid_asset_id::<T>(currency_id) {
-			return <<T as Config>::MultiCurrency>::unreserve(currency_id, who, amount)
-		}
-		T::Balance::zero()
+	route! {
+		fn unreserve(
+			currency_id: Self::CurrencyId,
+			who: &T::AccountId,
+			amount: Self::Balance
+		) -> Self::Balance;
 	}
 
-	fn repatriate_reserved(
-		currency_id: Self::CurrencyId,
-		slashed: &AccountId,
-		beneficiary: &AccountId,
-		amount: Self::Balance,
-		status: orml_traits::BalanceStatus,
-	) -> core::result::Result<Self::Balance, DispatchError> {
-		if currency_id == T::NativeAssetId::get() {
-			return <<T as Config>::NativeCurrency>::repatriate_reserved(
-				slashed,
-				beneficiary,
-				amount,
-				status,
-			)
-		}
-		let currency_id = valid_asset_id::<T>(currency_id).ok_or(Error::<T>::InvalidCurrency)?;
-		<<T as Config>::MultiCurrency>::repatriate_reserved(
-			currency_id,
-			slashed,
-			beneficiary,
-			amount,
-			status,
-		)
+	route! {
+		fn repatriate_reserved(
+			currency_id: Self::CurrencyId,
+			slashed: &T::AccountId,
+			beneficiary: &T::AccountId,
+			amount: Self::Balance,
+			status: orml_traits::BalanceStatus
+		) -> core::result::Result<Self::Balance, DispatchError>;
 	}
 }

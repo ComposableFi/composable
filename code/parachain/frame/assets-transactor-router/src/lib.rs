@@ -72,7 +72,7 @@ use composable_traits::currency::Rational64;
 pub use pallet::*;
 use sp_runtime::DispatchError;
 
-// mod orml;
+mod orml;
 
 // #[cfg(test)]
 // mod mocks;
@@ -119,17 +119,19 @@ pub mod pallet {
 		dispatch::DispatchResult,
 		pallet_prelude::*,
 		sp_runtime::traits::StaticLookup,
-		traits::{fungible, fungibles, EnsureOrigin},
+		traits::{
+			fungible, fungibles, Currency, EnsureOrigin, LockableCurrency, ReservableCurrency,
+		},
 	};
 	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
-	use orml_traits::GetByKey;
+	use orml_traits::{GetByKey, MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
 	use sp_runtime::DispatchError;
 	use sp_std::{fmt::Debug, str, vec::Vec};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// currency id
-		type AssetId: AssetIdLike + From<u128> + Into<u128>;
+		type AssetId: AssetIdLike + From<u128> + Into<u128> + MaybeSerializeDeserialize;
 		type AssetLocation: FullCodec
 			+ Eq
 			+ PartialEq
@@ -149,14 +151,34 @@ pub mod pallet {
 			+ fungibles::Mutate<Self::AccountId>
 			+ fungibles::Unbalanced<Self::AccountId>
 			+ fungibles::InspectHold<Self::AccountId>
-			+ fungibles::MutateHold<Self::AccountId>;
+			+ fungibles::MutateHold<Self::AccountId>
+			+ MultiCurrency<Self::AccountId, Balance = Self::Balance, CurrencyId = Self::AssetId>
+			+ MultiLockableCurrency<
+				Self::AccountId,
+				Balance = Self::Balance,
+				CurrencyId = Self::AssetId,
+			> + MultiReservableCurrency<
+				Self::AccountId,
+				Balance = Self::Balance,
+				CurrencyId = Self::AssetId,
+			>;
 
 		type LocalTransactor: fungibles::Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ fungibles::Transfer<Self::AccountId>
 			+ fungibles::Mutate<Self::AccountId>
 			+ fungibles::Unbalanced<Self::AccountId>
 			+ fungibles::InspectHold<Self::AccountId>
-			+ fungibles::MutateHold<Self::AccountId>;
+			+ fungibles::MutateHold<Self::AccountId>
+			+ MultiCurrency<Self::AccountId, Balance = Self::Balance, CurrencyId = Self::AssetId>
+			+ MultiLockableCurrency<
+				Self::AccountId,
+				Balance = Self::Balance,
+				CurrencyId = Self::AssetId,
+			> + MultiReservableCurrency<
+				Self::AccountId,
+				Balance = Self::Balance,
+				CurrencyId = Self::AssetId,
+			>;
 
 		// TODO(benluelo): Move trait bounds here, rename to NativeTransactor
 		type NativeCurrency: fungible::Inspect<Self::AccountId, Balance = Self::Balance>
@@ -165,7 +187,10 @@ pub mod pallet {
 			+ fungible::Unbalanced<Self::AccountId>
 			+ fungible::InspectHold<Self::AccountId>
 			+ fungible::Transfer<Self::AccountId>
-			+ fungible::MutateHold<Self::AccountId>;
+			+ fungible::MutateHold<Self::AccountId>
+			+ Currency<Self::AccountId, Balance = Self::Balance>
+			+ LockableCurrency<Self::AccountId, Balance = Self::Balance>
+			+ ReservableCurrency<Self::AccountId, Balance = Self::Balance>;
 
 		type GovernanceRegistry: GetByKey<Self::AssetId, Result<SignedRawOrigin<Self::AccountId>, DispatchError>>
 			+ GovernanceRegistry<Self::AssetId, Self::AccountId>;
