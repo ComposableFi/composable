@@ -1,9 +1,11 @@
 import { FC, useMemo, useState } from "react";
 import {
   formatNumber,
+  fromChainIdUnit,
   getRange,
   PRESET_RANGE,
   PresetRange,
+  SubstrateNetworkId,
   tail,
 } from "shared";
 import { useQuery } from "@apollo/client";
@@ -15,29 +17,74 @@ import {
 } from "@/apollo/queries/totalValueLocked";
 import { ChartLoadingSkeleton } from "@/components/Organisms/Stats/ChartLoadingSkeleton";
 import { changeCalculator } from "@/components/Organisms/Stats/utils";
+import * as O from "fp-ts/Option";
+import { pipe } from "fp-ts/function";
+import { useStore } from "@/stores/root";
+import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscovery";
+import { useCoingecko } from "coingecko";
+import BigNumber from "bignumber.js";
 
 export const TotalValueLockedChart: FC = () => {
   const theme = useTheme();
   const [range, setRange] = useState<PresetRange>("24h");
+  const tokens = useStore((store) => store.substrateTokens.tokens);
   const { data, loading, error } = useQuery<TotalValueLocked>(
     GET_TOTAL_VALUE_LOCKED,
     {
       variables: {
         range: getRange(range),
+        source: "Pablo",
       },
       pollInterval: 60_000, // Every minute
     }
   );
+  const picaPrice = usePicaPriceDiscovery();
+  const prices = useCoingecko((store) => store.prices);
   const chartSeries: [number, number][] = useMemo(() => {
-    if (!data) return [];
+    const getTokenById = (id: string, network: SubstrateNetworkId) =>
+      Object.values(tokens).find(
+        (token) => token.chainId[network]?.toString() === id
+      );
+    return pipe(
+      data,
+      O.fromNullable,
+      O.map((data) =>
+        data.totalValueLocked.map((item) => {
+          const date = Date.parse(item.date);
+          const tvl = item.lockedValues
+            .filter((lv) => lv.assetId === "1")
+            .reduce((acc, cur) => {
+              return pipe(
+                getTokenById(cur.assetId, "picasso"),
+                O.fromNullable,
+                O.map((asset) =>
+                  pipe(
+                    asset,
+                    (a) => fromChainIdUnit(cur.amount, a.decimals.picasso),
+                    (amount) =>
+                      amount.multipliedBy(
+                        asset.id === "pica" ? picaPrice : prices[asset.id].usd
+                      )
+                  )
+                ),
+                O.fold(
+                  () => acc,
+                  (price) => {
+                    return acc.plus(price);
+                  }
+                )
+              );
+            }, new BigNumber(0));
 
-    const tuples: [number, number][] = data.totalValueLocked.map((tvl) => {
-      const date = new Date(Number(tvl.date));
-      return [date.getTime(), tvl.totalValueLocked];
-    });
-
-    return tuples.sort((a, b) => (a[0] > b[0] ? 1 : -1));
-  }, [data]);
+          return [date, tvl.dp(0).toNumber()] as [number, number];
+        })
+      ),
+      O.fold(
+        () => [],
+        (v) => v
+      )
+    );
+  }, [data, picaPrice, prices, tokens]);
   const change = useMemo(() => {
     return changeCalculator(chartSeries, theme);
   }, [chartSeries, theme]);

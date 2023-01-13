@@ -77,6 +77,7 @@
         ./flake/nixops-config.nix
         ./flake/overlays.nix
         ./flake/release.nix
+        ./inputs/bifrost-finance/bifrost/flake-module.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];

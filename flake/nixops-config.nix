@@ -3,10 +3,19 @@
     nixopsConfigurations = withSystem "x86_64-linux"
       ({ config, self', inputs', pkgs, devnetTools, ... }:
         let
+          getStringEnvOrDefault = name: default:
+            if (builtins.getEnv name) != "" then
+              (builtins.getEnv name)
+            else
+              default;
           service-account-credential-key-file-input = builtins.fromJSON
             (builtins.readFile
               (builtins.getEnv "GOOGLE_APPLICATION_CREDENTIALS"));
-
+          domainSuffix = getStringEnvOrDefault "NIXOPS_DEVNETS_DOMAIN_SUFFIX"
+            "devnets.composablefinance.ninja";
+          certificateEmail =
+            getStringEnvOrDefault "NIXOPS_DEVNETS_CERTIFICATE_EMAIL"
+            "hussein@composable.finance";
           gce-to-nix = { project_id, client_email, private_key, ... }: {
             project = project_id;
             serviceAccount = client_email;
@@ -16,8 +25,7 @@
         in {
           default = let nixpkgs = self.inputs.nixpkgs;
           in import ../devnets/devnet.nix {
-            inherit nixpkgs;
-            inherit gce-input;
+            inherit nixpkgs gce-input domainSuffix certificateEmail;
             devnet-dali = pkgs.callPackage devnetTools.mk-devnet {
               inherit (self'.packages)
                 polkadot-launch composable-node polkadot-node;

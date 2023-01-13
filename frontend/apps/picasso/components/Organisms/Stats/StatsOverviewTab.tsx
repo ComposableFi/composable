@@ -13,6 +13,7 @@ import { pipe } from "fp-ts/function";
 import { subscribePoolAmount } from "@/stores/defi/polkadot/pablo/subscribePoolAmount";
 import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscovery";
 import { subscribeCoingeckoPrices } from "@/stores/defi/coingecko";
+import { useTotalValueLocked } from "@/components/Organisms/Stats/utils";
 
 export const StatsOverviewTab: FC = () => {
   const circulatingSupply = useCirculatingSupply();
@@ -20,9 +21,10 @@ export const StatsOverviewTab: FC = () => {
   const { parachainApi } = usePicassoProvider();
   const theme = useTheme();
   const price = usePicaPriceDiscovery();
+  const totalValueLocked = useTotalValueLocked();
 
   useEffect(() => {
-    const unsubPrices = subscribeCoingeckoPrices(); 
+    const unsubPrices = subscribeCoingeckoPrices();
     const unsubPools = pipe(
       parachainApi,
       O.fromNullable,
@@ -64,7 +66,7 @@ export const StatsOverviewTab: FC = () => {
                 "The total value of PICA in USD deposited in Picasso's smart contracts.",
             }}
             textAbove="Total value locked"
-            title={data?.overviewStats.totalValueLocked.toString()}
+            title={`$${totalValueLocked}`}
           />
         )}
       </Grid>
