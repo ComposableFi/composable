@@ -62,7 +62,7 @@
       };
       packages = rec {
         inherit paritytech-zombienet;
-        
+
         zombienet = pkgs.writeShellApplication {
           name = "zombienet";
           runtimeInputs = [ pkgs.nodejs paritytech-zombienet ] ++ runtimeDeps;

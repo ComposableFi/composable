@@ -1,7 +1,7 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, ... }:
+  perSystem = { config, self', inputs', pkgs, system, zombieTools, ... }:
     let
-      prelude = pkgs.callPackage ./zombienet/default.nix { };
+      prelude = zombieTools.builder;
       zombienet-rococo-local-composable-config = with prelude;
         { chain ? null, ws_port ? null, rpc_port ? null, relay_ws_port ? null }:
         mkZombienet {
@@ -26,25 +26,63 @@
           ];
         };
 
+      mk-zombienet-all = name: chain:
+        with prelude;
+        let
+          config = mkZombienet {
+            relaychain = {
+              chain = "rococo-local";
+              default_command =
+                pkgs.lib.meta.getExe self'.packages.polkadot-node;
+              count = 3;
+            };
+            parachains = [
+              {
+                command = pkgs.lib.meta.getExe self'.packages.composable-node;
+                inherit chain;
+                id = 2087;
+                collators = 3;
+              }
+
+              {
+                command = pkgs.lib.meta.getExe self'.packages.statemine-node;
+                chain = "statemine-local";
+                id = 1000;
+                collators = 2;
+                ws_port = 10008;
+                rpc_port = 32220;
+              }
+
+              {
+                command = pkgs.lib.meta.getExe self'.packages.acala-node;
+                chain = "karura-dev";
+                id = 2000;
+                collators = 0;
+                ws_port = 9999;
+                rpc_port = 32210;
+              }
+            ];
+          };
+        in zombieTools.writeZombienetShellApplication name config;
+
     in with prelude; {
       packages = rec {
         default = devnet-dali;
         devnet-dali = zombienet-rococo-local-dali-dev;
 
-        zombienet-rococo-local-dali-dev-statemine = pkgs.writeShellApplication {
-          name = "zombienet-rococo-local-dali-dev-statemine";
-          runtimeInputs = [ pkgs.nodejs paritytech-zombienet ] ++ runtimeDeps;
-          text = ''
-            cd ${paritytech-zombienet}            
-            npm run zombie spawn ${all-dev-local-config}
-          '';
-        };
+        zombienet-dali-complete =
+          mk-zombienet-all "devnet-dali-complete" "dali-dev";
+        zombienet-picasso-complete =
+          mk-zombienet-all "devnet-picasso-complete" "picasso-dev";
+
         zombienet-rococo-local-dali-dev =
-          zombieTools.writeZombienetShellApplication "zombienet-rococo-local-dali-dev"
+          zombieTools.writeZombienetShellApplication
+          "zombienet-rococo-local-dali-dev"
           (zombienet-rococo-local-composable-config { });
 
         zombienet-rococo-local-picasso-dev =
-          zombieTools.writeZombienetShellApplication "zombienet-rococo-local-dali-dev"
+          zombieTools.writeZombienetShellApplication
+          "zombienet-rococo-local-dali-dev"
           (zombienet-rococo-local-composable-config { chain = "picasso-dev"; });
       };
 
@@ -54,13 +92,23 @@
           type = "app";
           program = self'.packages.zombienet;
         };
-        zombienet-rococo-local-dali-dev-statemine = {
+        zombienet-dali-complete = {
           type = "app";
-          program = self'.packages.zombienet-rococo-local-dali-dev-statemine;
+          program = self'.packages.zombienet-dali-complete;
         };
+
+        zombienet-picasso-complete = {
+          type = "app";
+          program = self'.packages.zombienet-picasso-complete;
+        };
+
         zombienet-rococo-local-dali-dev = {
           type = "app";
           program = self'.packages.zombienet-rococo-local-dali-dev;
+        };
+        zombienet-rococo-local-picasso-dev = {
+          type = "app";
+          program = self'.packages.zombienet-rococo-local-picasso-dev;
         };
       };
     };
