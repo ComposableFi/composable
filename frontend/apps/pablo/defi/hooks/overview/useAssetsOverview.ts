@@ -25,7 +25,7 @@ export function useAssetsOverview(): OwnedAsset[] {
     }
 
     return assetsWithBalance;
-  }, [parachainApi, assetsWithBalance]);
+  }, [parachainApi, assetsWithBalance, oracleSlice.prices]);
 
   useAsyncEffect(async (): Promise<void> => {
     updateWithPrices().then(setAssetsWithValue);

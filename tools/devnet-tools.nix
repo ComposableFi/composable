@@ -5,7 +5,7 @@
       mk-devnet = { lib, writeTextFile, writeShellApplication
         , useGlobalChainSpec ? true, polkadot-launch, composable-node
         , polkadot-node, chain-spec, network-config-path ?
-          ./scripts/polkadot-launch/rococo-local-dali-dev.nix }:
+          ../scripts/polkadot-launch/rococo-local-dali-dev.nix }:
         let
           original-config = (pkgs.callPackage network-config-path {
             polkadot-bin = polkadot-node;
@@ -45,7 +45,7 @@
           inherit (packages) polkadot-launch composable-node polkadot-node;
           chain-spec = "dali-dev";
           network-config-path =
-            ./scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
+            ../scripts/polkadot-launch/bridge-rococo-local-dali-dev.nix;
           useGlobalChainSpec = false;
         });
 
