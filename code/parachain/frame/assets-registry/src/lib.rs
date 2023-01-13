@@ -13,11 +13,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![doc = include_str!("../README.md")]
 
-use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::RuntimeDebug;
 pub use pallet::*;
-use scale_info::TypeInfo;
-use sp_runtime::{DispatchError, DispatchResult};
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
@@ -37,7 +33,10 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::FullCodec;
 	use composable_traits::{
-		assets::{Asset, AssetType, AssetTypeInspect},
+		assets::{
+			Asset, AssetMetadata, AssetType, AssetTypeInspect, InspectRegistryMetadata,
+			LocalOrForeignAssetId, MutateRegistryMetadata,
+		},
 		currency::{BalanceLike, CurrencyFactory, Exponent, ForeignByNative},
 		xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
 	};
@@ -142,10 +141,7 @@ pub mod pallet {
 		_,
 		Twox128,
 		T::LocalAssetId,
-		crate::AssetMetadata<
-			BoundedVec<u8, T::AssetNameMaxChars>,
-			BoundedVec<u8, T::AssetSymbolMaxChars>,
-		>,
+		AssetMetadata<BoundedVec<u8, T::AssetNameMaxChars>, BoundedVec<u8, T::AssetSymbolMaxChars>>,
 		OptionQuery,
 	>;
 
@@ -236,17 +232,17 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::register_asset())]
 		pub fn register_asset(
 			origin: OriginFor<T>,
-			local_or_foreign: crate::LocalOrForeignAssetId<T::LocalAssetId, T::ForeignAssetId>,
+			local_or_foreign: LocalOrForeignAssetId<T::LocalAssetId, T::ForeignAssetId>,
 			ratio: Rational,
 			name: Vec<u8>,
 			symbol: Vec<u8>,
 			decimals: Exponent,
-		) -> DispatchResultWithPostInfo {
+		) -> DispatchResult {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
 
 			let (asset_id, location) = match local_or_foreign {
-				crate::LocalOrForeignAssetId::Local(asset_id) => (asset_id, None),
-				crate::LocalOrForeignAssetId::Foreign(location) => (
+				LocalOrForeignAssetId::Local(asset_id) => (asset_id, None),
+				LocalOrForeignAssetId::Foreign(location) => (
 					T::LocalAssetId::from(u128::from_be_bytes(sp_core::blake2_128(
 						&location.encode(),
 					))),
@@ -262,22 +258,9 @@ pub mod pallet {
 			}
 
 			<Self as RemoteAssetRegistryMutate>::register_asset(
-				asset_id,
-				location.clone(),
-				ratio,
-				name.clone(),
-				symbol.clone(),
-				decimals,
+				asset_id, location, ratio, name, symbol, decimals,
 			)?;
-			Self::deposit_event(Event::<T>::AssetRegistered {
-				asset_id,
-				location,
-				name,
-				symbol,
-				decimals,
-				ratio,
-			});
-			Ok(().into())
+			Ok(())
 		}
 
 		/// Update the location of a foreign asset.
@@ -292,7 +275,6 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
 			Self::set_reserve_location(asset_id, location.clone())?;
-			Self::deposit_event(Event::AssetLocationUpdated { asset_id, location });
 			Ok(().into())
 		}
 
@@ -308,7 +290,6 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
 			Self::update_ratio(asset_id, ratio)?;
-			Self::deposit_event(Event::AssetRatioUpdated { asset_id, ratio });
 			Ok(())
 		}
 
@@ -333,15 +314,7 @@ pub mod pallet {
 			decimals: Option<u8>,
 		) -> DispatchResult {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
-			let metadata = <Self as crate::MutateRegistryMetadata>::update_metadata(
-				&asset_id, name, symbol, decimals,
-			)?;
-			Self::deposit_event(Event::AssetMetadataUpdated {
-				asset_id,
-				name: metadata.name.to_vec(),
-				symbol: metadata.symbol.to_vec(),
-				decimals: metadata.decimals,
-			});
+			<Self as MutateRegistryMetadata>::update_metadata(&asset_id, name, symbol, decimals)?;
 			Ok(())
 		}
 
@@ -388,14 +361,25 @@ pub mod pallet {
 			symbol: Vec<u8>,
 			decimals: u8,
 		) -> DispatchResult {
-			if let Some(location) = location {
+			if let Some(location) = location.clone() {
 				Self::set_reserve_location(asset_id, location)?;
 			}
 
 			Self::update_ratio(asset_id, Some(ratio))?;
-			<Self as crate::MutateRegistryMetadata>::set_metadata(
-				&asset_id, name, symbol, decimals,
+			<Self as MutateRegistryMetadata>::set_metadata(
+				&asset_id,
+				name.clone(),
+				symbol.clone(),
+				decimals,
 			)?;
+			Self::deposit_event(Event::<T>::AssetRegistered {
+				asset_id,
+				location,
+				name,
+				symbol,
+				decimals,
+				ratio,
+			});
 			Ok(())
 		}
 
@@ -404,12 +388,14 @@ pub mod pallet {
 			location: Self::AssetNativeLocation,
 		) -> DispatchResult {
 			ForeignToLocal::<T>::insert(&location, asset_id);
-			LocalToForeign::<T>::insert(asset_id, location);
+			LocalToForeign::<T>::insert(asset_id, location.clone());
+			Self::deposit_event(Event::AssetLocationUpdated { asset_id, location });
 			Ok(())
 		}
 
 		fn update_ratio(asset_id: Self::AssetId, ratio: Option<Rational>) -> DispatchResult {
 			AssetRatio::<T>::mutate_exists(asset_id, |x| *x = ratio);
+			Self::deposit_event(Event::AssetRatioUpdated { asset_id, ratio });
 			Ok(())
 		}
 	}
@@ -439,8 +425,7 @@ pub mod pallet {
 				.map(|(_, asset_id)| {
 					let foreign_id = LocalToForeign::<T>::get(asset_id);
 					let decimals =
-						<Pallet<T> as crate::InspectRegistryMetadata>::decimals(&asset_id)
-							.unwrap_or(12);
+						<Pallet<T> as InspectRegistryMetadata>::decimals(&asset_id).unwrap_or(12);
 					let ratio = AssetRatio::<T>::get(asset_id);
 
 					Asset {
@@ -463,10 +448,10 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> crate::InspectRegistryMetadata for Pallet<T> {
+	impl<T: Config> InspectRegistryMetadata for Pallet<T> {
 		type AssetId = T::LocalAssetId;
 
-		fn name(asset_id: &Self::AssetId) -> Option<Vec<u8>> {
+		fn asset_name(asset_id: &Self::AssetId) -> Option<Vec<u8>> {
 			Metadata::<T>::get(asset_id).map(|metadata| metadata.name.to_vec())
 		}
 
@@ -479,7 +464,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> crate::MutateRegistryMetadata for Pallet<T> {
+	impl<T: Config> MutateRegistryMetadata for Pallet<T> {
 		type AssetId = T::LocalAssetId;
 		type BoundedName = BoundedVec<u8, T::AssetNameMaxChars>;
 		type BoundedSymbol = BoundedVec<u8, T::AssetSymbolMaxChars>;
@@ -494,7 +479,7 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::StringExceedsMaxLength)?;
 			let symbol = Self::BoundedSymbol::try_from(symbol)
 				.map_err(|_| Error::<T>::StringExceedsMaxLength)?;
-			Metadata::<T>::insert(asset_id, crate::AssetMetadata { name, symbol, decimals });
+			Metadata::<T>::insert(asset_id, AssetMetadata { name, symbol, decimals });
 			Ok(())
 		}
 
@@ -503,7 +488,7 @@ pub mod pallet {
 			name: Option<Vec<u8>>,
 			symbol: Option<Vec<u8>>,
 			decimals: Option<u8>,
-		) -> Result<crate::AssetMetadata<Self::BoundedName, Self::BoundedSymbol>, DispatchError> {
+		) -> DispatchResult {
 			let name = name
 				.map(BoundedVec::<u8, T::AssetNameMaxChars>::try_from)
 				.transpose()
@@ -518,8 +503,13 @@ pub mod pallet {
 					let symbol = symbol.unwrap_or(metadata.clone().symbol);
 					let decimals = decimals.unwrap_or(metadata.decimals);
 
-					*metadata = crate::AssetMetadata { name, symbol, decimals };
-					return Some(metadata.clone())
+					*metadata = AssetMetadata { name, symbol, decimals };
+					Self::deposit_event(Event::AssetMetadataUpdated {
+						asset_id: *asset_id,
+						name: metadata.name.to_vec(),
+						symbol: metadata.symbol.to_vec(),
+						decimals: metadata.decimals,
+					});
 				}
 				None
 			})
@@ -538,58 +528,4 @@ pub mod pallet {
 			}
 		}
 	}
-}
-
-/// Routing of indepent parts of the `AssetMetadata` from `pallet-assets-registry`
-pub trait InspectRegistryMetadata {
-	type AssetId;
-
-	/// Return the name of an asset.
-	fn name(asset_id: &Self::AssetId) -> Option<Vec<u8>>;
-	/// Return the symbol of an asset.
-	fn symbol(asset_id: &Self::AssetId) -> Option<Vec<u8>>;
-	/// Return the decimals of an asset.
-	fn decimals(asset_id: &Self::AssetId) -> Option<u8>;
-}
-
-pub trait MutateRegistryMetadata {
-	type AssetId;
-	type BoundedName;
-	type BoundedSymbol;
-
-	/// Sets the metadata of an asset
-	fn set_metadata(
-		asset_id: &Self::AssetId,
-		name: Vec<u8>,
-		symbol: Vec<u8>,
-		decimals: u8,
-	) -> DispatchResult;
-
-	/// Update the metadata of an asset.
-	///
-	/// All metadata feilds are optional, only those provided as `Some` will be updated, the
-	/// rest will be unchanged.
-	fn update_metadata(
-		asset_id: &Self::AssetId,
-		name: Option<Vec<u8>>,
-		symbol: Option<Vec<u8>>,
-		decimals: Option<u8>,
-	) -> Result<AssetMetadata<Self::BoundedName, Self::BoundedSymbol>, DispatchError>;
-}
-
-/// Structure to represent basic asset metadata such as: name, symbol, decimals.
-#[derive(Clone, Encode, Decode, Eq, PartialEq, Default, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct AssetMetadata<BoundedName, BoundedSymbol> {
-	/// Name of the asset.
-	pub name: BoundedName,
-	/// Symbol of the asset.
-	pub symbol: BoundedSymbol,
-	/// The number of decimals this asset uses to represent one unit.
-	pub decimals: u8,
-}
-
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub enum LocalOrForeignAssetId<LocalAssetId, ForeignAssetId> {
-	Local(LocalAssetId),
-	Foreign(ForeignAssetId),
 }

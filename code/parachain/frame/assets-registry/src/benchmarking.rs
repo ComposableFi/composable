@@ -6,7 +6,10 @@ use crate::{self as pallet_assets_registry};
 
 #[allow(unused_imports)]
 use crate::Pallet as AssetsRegistry;
-use composable_traits::{currency::Rational64, rational, xcm::assets::XcmAssetLocation};
+use codec::{Decode, Encode};
+use composable_traits::{
+	assets::LocalOrForeignAssetId, currency::Rational64, rational, xcm::assets::XcmAssetLocation,
+};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
 use sp_std::prelude::*;

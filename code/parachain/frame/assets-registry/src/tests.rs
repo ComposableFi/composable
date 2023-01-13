@@ -1,7 +1,7 @@
 use crate::{prelude::*, runtime::*, Error};
 use codec::{Decode, Encode};
 use composable_traits::{
-	assets::Asset,
+	assets::{Asset, LocalOrForeignAssetId},
 	currency::Rational64,
 	rational,
 	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
@@ -24,7 +24,7 @@ fn set_metadata() {
 		System::set_block_number(1);
 		assert_ok!(AssetsRegistry::register_asset(
 			RawOrigin::Root.into(),
-			crate::LocalOrForeignAssetId::Foreign(XcmAssetLocation::RELAY_NATIVE),
+			LocalOrForeignAssetId::Foreign(XcmAssetLocation::RELAY_NATIVE),
 			rational!(42 / 123),
 			b"Kusama".to_vec(),
 			b"KSM".to_vec(),
@@ -77,7 +77,7 @@ fn register_asset() {
 
 		assert_ok!(AssetsRegistry::register_asset(
 			Origin::root(),
-			crate::LocalOrForeignAssetId::Foreign(location.clone()),
+			LocalOrForeignAssetId::Foreign(location.clone()),
 			ratio,
 			b"Kusama".to_vec(),
 			b"KSM".to_vec(),
@@ -89,7 +89,7 @@ fn register_asset() {
 		assert_noop!(
 			AssetsRegistry::register_asset(
 				Origin::root(),
-				crate::LocalOrForeignAssetId::Foreign(location),
+				LocalOrForeignAssetId::Foreign(location),
 				ratio,
 				b"Kusama".to_vec(),
 				b"KSM".to_vec(),
@@ -114,7 +114,7 @@ fn update_asset() {
 
 		assert_ok!(AssetsRegistry::register_asset(
 			Origin::root(),
-			crate::LocalOrForeignAssetId::Foreign(location.clone()),
+			LocalOrForeignAssetId::Foreign(location.clone()),
 			ratio,
 			b"Kusama".to_vec(),
 			b"KSM".to_vec(),
@@ -181,7 +181,7 @@ fn get_foreign_assets_list_should_work() {
 
 		assert_ok!(AssetsRegistry::register_asset(
 			Origin::root(),
-			crate::LocalOrForeignAssetId::Foreign(location),
+			LocalOrForeignAssetId::Foreign(location),
 			ratio,
 			b"Kusama".to_vec(),
 			b"KSM".to_vec(),
