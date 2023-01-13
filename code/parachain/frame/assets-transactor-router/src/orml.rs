@@ -221,11 +221,8 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 			// with `MultiReservableCurrency`.
 			<<T as Config>::NativeCurrency>::slash_reserved(who, amount).1
 		} else {
-			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
-				AssetType::Foreign =>
-					<<T as Config>::ForeignTransactor>::slash_reserved(currency_id, who, amount),
-				AssetType::Local =>
-					<<T as Config>::LocalTransactor>::slash_reserved(currency_id, who, amount),
+			route_asset_type! {
+				slash_reserved(currency_id, who, amount)
 			}
 		}
 	}
