@@ -73,6 +73,7 @@
         ./flake/dev-shells.nix
         ./flake/docker.nix
         ./flake/fmt.nix
+        ./flake/help.nix
         ./flake/nixops-config.nix
         ./flake/overlays.nix
         ./flake/release.nix
