@@ -244,23 +244,28 @@ export function useSwaps({
       const sideUpdated = inputMode === 1 ? "quote" : "base";
       const feePercentage = selectedPool.config.feeConfig.feeRate;
       let minReceive = new BigNumber(0);
-      const tokenQuoteAmount =
+      const { tokenQuoteAmount, tokenQuoteAsset } =
         selectedAssetOneId === quoteAsset?.getPicassoAssetId()
-          ? quoteAmount
-          : baseAmount;
-      const tokenBaseAmount =
-        selectedAssetTwoId === baseAsset?.getPicassoAssetId()
-          ? baseAmount
-          : quoteAmount;
+          ? {
+              tokenQuoteAmount: quoteAmount,
+              tokenQuoteAsset: quoteAsset,
+            }
+          : {
+              tokenQuoteAmount: baseAmount,
+              tokenQuoteAsset: baseAsset,
+            };
 
-      const tokenQuoteAsset =
-        selectedAssetOneId === quoteAsset?.getPicassoAssetId()
-          ? quoteAsset
-          : baseAsset;
-      const tokenBaseAsset =
+      const { tokenBaseAmount, tokenBaseAsset } =
         selectedAssetTwoId === baseAsset?.getPicassoAssetId()
-          ? baseAsset
-          : quoteAsset;
+          ? {
+              tokenBaseAsset: baseAsset,
+              tokenBaseAmount: baseAmount,
+            }
+          : {
+              tokenBaseAsset: quoteAsset,
+              tokenBaseAmount: quoteAmount,
+            };
+
       if (sideUpdated === "quote") {
         const feeCharged = (
           amount.gt(balance1) ? balance1 : amount
@@ -289,7 +294,7 @@ export function useSwaps({
           assetTwoAmount: amountOut,
         });
       } else {
-        const amountOut = amount.gt(balance1) ? balance1 : amount;
+        const amountOut = amount.gt(balance2) ? balance2 : amount;
         const amountIn = calculateInGivenOut(
           tokenBaseAmount,
           tokenQuoteAmount,
@@ -310,7 +315,7 @@ export function useSwaps({
 
         setMinimumReceived({
           value: minReceive,
-          asset: tokenBaseAsset,
+          asset: tokenQuoteAsset,
         });
         setFeeCharged(feeCharged);
         setSlippageAmount(slippageAmount);
@@ -379,8 +384,19 @@ export function useSwaps({
   };
 
   const valid = useMemo(
-    () => hasValidInputs && !!selectedPool,
-    [hasValidInputs, selectedPool]
+    () =>
+      hasValidInputs &&
+      !!selectedPool &&
+      assetOneAmount.lte(balance1) &&
+      assetTwoAmount.lte(balance2),
+    [
+      assetOneAmount,
+      assetTwoAmount,
+      balance1,
+      balance2,
+      hasValidInputs,
+      selectedPool,
+    ]
   );
 
   return {
