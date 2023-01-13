@@ -132,8 +132,7 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
           }}
           ButtonProps={{
             onClick: () => {
-              const balanceLimit = balance1.multipliedBy(percentageToSwap);
-              onChangeTokenAmount(balanceLimit);
+              onChangeTokenAmount(balance1);
             },
           }}
           CombinedSelectProps={{
@@ -172,6 +171,16 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
           }}
         />
       </Box>
+      {assetOneAmount.gt(balance1) ? (
+        <Typography
+          variant="caption"
+          color="error"
+          textAlign="left"
+          sx={{ display: "flex", ml: 2 }}
+        >
+          Your token balance is too low to perform swap
+        </Typography>
+      ) : null}
 
       {valid && (
         <Typography variant="body2" mt={1.5}>
@@ -250,6 +259,16 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
               : undefined,
           }}
         />
+        {assetTwoAmount.gt(balance2) ? (
+          <Typography
+            variant="caption"
+            color="error"
+            textAlign="left"
+            sx={{ display: "flex", ml: 2 }}
+          >
+            Your token balance is too low to perform swap
+          </Typography>
+        ) : null}
       </Box>
 
       {valid && (
