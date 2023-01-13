@@ -15,7 +15,7 @@
           gce-input = gce-to-nix service-account-credential-key-file-input;
         in {
           default = let nixpkgs = self.inputs.nixpkgs;
-          in import ./.nix/devnet.nix {
+          in import ../devnets/devnet.nix {
             inherit nixpkgs;
             inherit gce-input;
             devnet-dali = pkgs.callPackage devnetTools.mk-devnet {
