@@ -1238,11 +1238,7 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 			1,
 			X1(Junction::GeneralIndex(asset_id.into())),
 		));
-		assets_registry::Pallet::<Runtime>::set_reserve_location(
-			asset_id,
-			location,
-			Rational64::one(),
-		)?;
+		assets_registry::Pallet::<Runtime>::set_reserve_location(asset_id, location)?;
 
 		Ok(asset_id)
 	}

@@ -20,21 +20,53 @@ benchmarks! {
 
 	register_asset {
 		let location = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..]).unwrap();
+		let location = LocalOrForeignAssetId::Foreign(location);
 		let ratio = rational!(42 / 123);
+		let name = b"Kusama".to_vec();
+		let symbol = b"KSM".to_vec();
+		let decimals = 3;
+	}: _(RawOrigin::Root, location, ratio, name, symbol, decimals)
+
+	update_asset_location {
+		let location_base = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..]).unwrap();
+		let location = LocalOrForeignAssetId::Foreign(location_base.clone());
+		let ratio = rational!(42 / 123);
+		let name = b"Kusama".to_vec();
+		let symbol = b"KSM".to_vec();
 		let decimals = 3;
 
-	}: _(RawOrigin::Root, location, ratio, Some(decimals))
+		AssetsRegistry::<T>::register_asset(RawOrigin::Root.into(), location, ratio, name, symbol, decimals).unwrap();
 
-	update_asset {
-		let location = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..]).unwrap();
+		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location_base.clone()).unwrap();
+	}: _(RawOrigin::Root, local_asset_id, location_base)
+
+	update_asset_ratio {
+		let location_base = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..]).unwrap();
+		let location = LocalOrForeignAssetId::Foreign(location_base.clone());
 		let ratio = rational!(42 / 123);
+		let name = b"Kusama".to_vec();
+		let symbol = b"KSM".to_vec();
 		let decimals = 3;
 
-		AssetsRegistry::<T>::register_asset(RawOrigin::Root.into(), location.clone(), ratio, Some(decimals)).unwrap();
+		AssetsRegistry::<T>::register_asset(RawOrigin::Root.into(), location, ratio, name, symbol, decimals).unwrap();
 
-		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location.clone()).unwrap();
+		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location_base).unwrap();
+	}: _(RawOrigin::Root, local_asset_id, Some(rational!(420 / 8008)))
 
-	}: _(RawOrigin::Root, local_asset_id, location, rational!(42 / 123), Some(3))
+	update_asset_metadata {
+		let location_base = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..]).unwrap();
+		let location = LocalOrForeignAssetId::Foreign(location_base.clone());
+		let ratio = rational!(42 / 123);
+		let name = b"Kusama".to_vec();
+		let symbol = b"KSM".to_vec();
+		let decimals = 3;
+
+		AssetsRegistry::<T>::register_asset(RawOrigin::Root.into(), location, ratio, name, symbol, decimals).unwrap();
+
+		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location_base).unwrap();
+		let name = b"Cooler Kusama".to_vec();
+		let symbol = b"CKSM".to_vec();
+	}: _(RawOrigin::Root, local_asset_id, Some(name), Some(symbol), Some(18))
 
 	set_min_fee {
 		let target_parachain_id = 100_u32.into();

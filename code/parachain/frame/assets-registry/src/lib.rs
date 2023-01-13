@@ -37,8 +37,8 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::FullCodec;
 	use composable_traits::{
-		assets::Asset,
-		currency::{BalanceLike, CurrencyFactory, Exponent, ForeignByNative, RangeId},
+		assets::{Asset, AssetType, AssetTypeInspect},
+		currency::{BalanceLike, CurrencyFactory, Exponent, ForeignByNative},
 		xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
 	};
 	use cumulus_primitives_core::ParaId;
@@ -236,13 +236,23 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::register_asset())]
 		pub fn register_asset(
 			origin: OriginFor<T>,
-			location: Option<T::ForeignAssetId>,
+			local_or_foreign: crate::LocalOrForeignAssetId<T::LocalAssetId, T::ForeignAssetId>,
 			ratio: Rational,
 			name: Vec<u8>,
 			symbol: Vec<u8>,
 			decimals: Exponent,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
+
+			let (asset_id, location) = match local_or_foreign {
+				crate::LocalOrForeignAssetId::Local(asset_id) => (asset_id, None),
+				crate::LocalOrForeignAssetId::Foreign(location) => (
+					T::LocalAssetId::from(u128::from_be_bytes(sp_core::blake2_128(
+						&location.encode(),
+					))),
+					Some(location),
+				),
+			};
 
 			if let Some(location) = location.clone() {
 				ensure!(
@@ -251,7 +261,6 @@ pub mod pallet {
 				);
 			}
 
-			let asset_id = T::CurrencyFactory::create(RangeId::FOREIGN_ASSETS)?;
 			<Self as RemoteAssetRegistryMutate>::register_asset(
 				asset_id,
 				location.clone(),
@@ -517,6 +526,18 @@ pub mod pallet {
 			.ok_or_else(|| Error::<T>::AssetNotFound.into())
 		}
 	}
+
+	impl<T: Config> AssetTypeInspect for Pallet<T> {
+		type AssetId = T::LocalAssetId;
+
+		fn inspect(asset: &Self::AssetId) -> AssetType {
+			if LocalToForeign::<T>::contains_key(asset) {
+				AssetType::Foreign
+			} else {
+				AssetType::Local
+			}
+		}
+	}
 }
 
 /// Routing of indepent parts of the `AssetMetadata` from `pallet-assets-registry`
@@ -565,4 +586,10 @@ pub struct AssetMetadata<BoundedName, BoundedSymbol> {
 	pub symbol: BoundedSymbol,
 	/// The number of decimals this asset uses to represent one unit.
 	pub decimals: u8,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+pub enum LocalOrForeignAssetId<LocalAssetId, ForeignAssetId> {
+	Local(LocalAssetId),
+	Foreign(ForeignAssetId),
 }
