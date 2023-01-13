@@ -1,10 +1,10 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, ... }:
+  perSystem = { pkgs, ... }:
    {
       packages = {
         help = pkgs.writeShellApplication {
           name = "help";
-          runtimeInputs = with pkgs; [ glow ];
+          runtimeInputs = [ pkgs.glow ];
           text = ''
               glow ${./help.md}
           '';
