@@ -6,6 +6,12 @@
 nix run ".#devnet-dali"
 ```
 
+## Enter a development shell
+
+```sh
+nix develop
+```
+
 ## Format the entire repository
 
 ```sh
