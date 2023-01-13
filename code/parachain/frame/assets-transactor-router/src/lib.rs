@@ -87,14 +87,14 @@ macro_rules! route {
 		fn $fn:ident($asset:ident: $asset_ty:ty, $($arg:ident: $ty:ty),*) $(-> $ret:ty)?;
 	) => {
 		fn $fn($asset: $asset_ty, $($arg:$ty),*) $(-> $ret)? {
-			if T::AssetId::from($asset.into()) == <T::NativeAssetId as ::frame_support::traits::Get<_>>::get() {
+			if T::AssetId::from($asset.into()) == <T::NativeAssetId as frame_support::traits::Get<_>>::get() {
 				<<T as Config>::NativeCurrency>::$fn($($arg),*)
 			} else {
-				match <T::AssetLookup as crate::AssetTypeInspect>::inspect(&$asset) {
-					crate::AssetType::Foreign => {
+				match <T::AssetLookup as composable_traits::assets::AssetTypeInspect>::inspect(&$asset) {
+					composable_traits::assets::AssetType::Foreign => {
 						<<T as Config>::ForeignTransactor>::$fn($asset, $($arg),*)
 					}
-					crate::AssetType::Local => {
+					composable_traits::assets::AssetType::Local => {
 						<<T as Config>::LocalTransactor>::$fn($asset, $($arg),*)
 					}
 				}
@@ -105,8 +105,9 @@ macro_rules! route {
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::{weights::WeightInfo, AssetTypeInspect};
+	use crate::weights::WeightInfo;
 	use composable_traits::{
+		assets::{AssetType, AssetTypeInspect},
 		currency::{AssetIdLike, BalanceLike},
 		governance::{GovernanceRegistry, SignedRawOrigin},
 	};
@@ -119,28 +120,26 @@ pub mod pallet {
 	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 	// use num_traits::Zero;
 	use orml_traits::GetByKey;
-	use sp_runtime::{traits::Lookup, DispatchError};
-	use xcm::v2::MultiLocation;
+	use sp_runtime::DispatchError;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// currency id
 		type AssetId: AssetIdLike + From<u128> + Into<u128>;
+		type AssetLocation: Clone + PartialEq + TypeInfo;
 		type Balance: BalanceLike;
 
 		#[pallet::constant]
 		type NativeAssetId: Get<Self::AssetId>;
 
-		type ForeignTransactor: fungibles::Create<Self::AccountId>
-			+ fungibles::Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+		type ForeignTransactor: fungibles::Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ fungibles::Transfer<Self::AccountId>
 			+ fungibles::Mutate<Self::AccountId>
 			+ fungibles::Unbalanced<Self::AccountId>
 			+ fungibles::InspectHold<Self::AccountId>
 			+ fungibles::MutateHold<Self::AccountId>;
 
-		type LocalTransactor: fungibles::Create<Self::AccountId>
-			+ fungibles::Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+		type LocalTransactor: fungibles::Inspect<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ fungibles::Transfer<Self::AccountId>
 			+ fungibles::Mutate<Self::AccountId>
 			+ fungibles::Unbalanced<Self::AccountId>
@@ -163,8 +162,7 @@ pub mod pallet {
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
 
 		// will be assets-registry
-		type AssetLookup: Lookup<Source = MultiLocation, Target = Self::AssetId>
-			+ AssetTypeInspect<AssetId = Self::AssetId>;
+		type AssetLookup: AssetTypeInspect<AssetId = Self::AssetId>;
 
 		type WeightInfo: WeightInfo;
 	}
@@ -587,6 +585,7 @@ mod fungible_impls {
 }
 
 mod fungibles_impls {
+	use composable_traits::assets::{AssetType, AssetTypeInspect};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::tokens::{
@@ -595,28 +594,12 @@ mod fungibles_impls {
 				MutateHold as NativeMutateHold, Transfer as NativeTransfer,
 				Unbalanced as NativeUnbalanced,
 			},
-			fungibles::{Create, Inspect, InspectHold, Mutate, MutateHold, Transfer, Unbalanced},
+			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer, Unbalanced},
 			DepositConsequence, WithdrawConsequence,
 		},
 	};
 
 	use crate::{Config, Pallet};
-
-	impl<T: Config> Create<T::AccountId> for Pallet<T> {
-		fn create(
-			id: T::AssetId,
-			admin: T::AccountId,
-			is_sufficent: bool,
-			min_balance: Self::Balance,
-		) -> DispatchResult {
-			match <T::AssetLookup as crate::AssetTypeInspect>::inspect(&id) {
-				crate::AssetType::Foreign =>
-					<<T as Config>::ForeignTransactor>::create(id, admin, is_sufficent, min_balance),
-				crate::AssetType::Local =>
-					<<T as Config>::LocalTransactor>::create(id, admin, is_sufficent, min_balance),
-			}
-		}
-	}
 
 	impl<T: Config> Unbalanced<T::AccountId> for Pallet<T> {
 		route! {
@@ -677,46 +660,28 @@ mod fungibles_impls {
 	}
 
 	impl<T: Config> MutateHold<T::AccountId> for Pallet<T> {
-		fn hold(asset: Self::AssetId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::hold(who, amount)
-			} else {
-				todo!()
-			}
+		route! {
+			fn hold(asset: Self::AssetId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult;
 		}
 
-		fn release(
-			asset: Self::AssetId,
-			who: &T::AccountId,
-			amount: Self::Balance,
-			best_effort: bool,
-		) -> Result<Self::Balance, DispatchError> {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::release(who, amount, best_effort)
-			} else {
-				todo!()
-			}
+		route! {
+			fn release(
+				asset: Self::AssetId,
+				who: &T::AccountId,
+				amount: Self::Balance,
+				best_effort: bool
+			) -> Result<Self::Balance, DispatchError>;
 		}
 
-		fn transfer_held(
-			asset: Self::AssetId,
-			source: &T::AccountId,
-			dest: &T::AccountId,
-			amount: Self::Balance,
-			best_effort: bool,
-			on_hold: bool,
-		) -> Result<Self::Balance, DispatchError> {
-			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::transfer_held(
-					source,
-					dest,
-					amount,
-					best_effort,
-					on_hold,
-				)
-			} else {
-				todo!()
-			}
+		route! {
+			fn transfer_held(
+				asset: Self::AssetId,
+				source: &T::AccountId,
+				dest: &T::AccountId,
+				amount: Self::Balance,
+				best_effort: bool,
+				on_hold: bool
+			) -> Result<Self::Balance, DispatchError>;
 		}
 	}
 
@@ -761,26 +726,23 @@ mod fungibles_impls {
 
 		fn total_issuance(asset: Self::AssetId) -> Self::Balance {
 			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::total_issuance()
+				<<T as Config>::NativeCurrency>::total_issuance()
 			} else {
-				match <T::AssetLookup as crate::AssetTypeInspect>::inspect(&asset) {
-					crate::AssetType::Foreign =>
-						<<T as Config>::ForeignTransactor>::total_issuance(asset),
-					crate::AssetType::Local =>
-						<<T as Config>::LocalTransactor>::total_issuance(asset),
+				match <T::AssetLookup as AssetTypeInspect>::inspect(&asset) {
+					AssetType::Foreign => <<T as Config>::ForeignTransactor>::total_issuance(asset),
+					AssetType::Local => <<T as Config>::LocalTransactor>::total_issuance(asset),
 				}
 			}
 		}
 
 		fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
 			if asset == T::NativeAssetId::get() {
-				return <<T as Config>::NativeCurrency>::minimum_balance()
+				<<T as Config>::NativeCurrency>::minimum_balance()
 			} else {
-				match <T::AssetLookup as crate::AssetTypeInspect>::inspect(&asset) {
-					crate::AssetType::Foreign =>
+				match <T::AssetLookup as AssetTypeInspect>::inspect(&asset) {
+					AssetType::Foreign =>
 						<<T as Config>::ForeignTransactor>::minimum_balance(asset),
-					crate::AssetType::Local =>
-						<<T as Config>::LocalTransactor>::minimum_balance(asset),
+					AssetType::Local => <<T as Config>::LocalTransactor>::minimum_balance(asset),
 				}
 			}
 		}
@@ -824,15 +786,4 @@ mod fungibles_impls {
 			fn can_hold(asset: Self::AssetId, who: &T::AccountId, amount: Self::Balance) -> bool;
 		}
 	}
-}
-
-pub trait AssetTypeInspect {
-	type AssetId;
-
-	fn inspect(asset: &Self::AssetId) -> AssetType;
-}
-
-pub enum AssetType {
-	Foreign,
-	Local,
 }

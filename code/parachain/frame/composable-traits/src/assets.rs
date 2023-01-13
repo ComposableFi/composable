@@ -3,7 +3,6 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::collections::vec::bounded::BiBoundedVec;
 use scale_info::TypeInfo;
 use sp_std::vec::Vec;
-use xcm::v2::MultiLocation;
 
 use crate::currency::{Exponent, Rational64};
 #[cfg(feature = "std")]
@@ -36,28 +35,13 @@ pub struct Asset<Balance, ForeignId> {
 	pub existential_deposit: Balance,
 }
 
-#[derive(Debug, Encode, Decode, TypeInfo, Clone, PartialEq, Eq)]
-pub struct LocalAssetId(u128);
+pub trait AssetTypeInspect {
+	type AssetId;
 
-impl LocalAssetId {
-	pub fn new(protocol: [u8; 8], id: u64) -> Self {
-		LocalAssetId(u128::from_le_bytes(
-			protocol
-				.into_iter()
-				.chain(id.to_le_bytes())
-				.collect::<Vec<u8>>()
-				.try_into()
-				.expect("Fits"),
-		))
-	}
-
-	pub fn inner(&self) -> u128 {
-		self.0
-	}
+	fn inspect(asset: &Self::AssetId) -> AssetType;
 }
 
-#[derive(Debug, Encode, Decode, TypeInfo, Clone, PartialEq, Eq)]
-pub enum AssetIdentifier {
-	LocalAsset(LocalAssetId),
-	ForeignAsset(MultiLocation),
+pub enum AssetType {
+	Foreign,
+	Local,
 }
