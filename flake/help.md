@@ -17,4 +17,17 @@ nix run ".#fmt"
 ```sh
 nix run ".#check"
 ```
+
+## Show all possible packages, apps, and devShells
+
+```sh
+nix flake show
+```
+
+## Run a package/app with full logs
+
+```sh
+nix run ".#devnet-dali" -L
+```
+
 [Read the full docs here](https://docs.composable.finance/nix/)
