@@ -68,7 +68,9 @@
 #![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use composable_traits::currency::Rational64;
 pub use pallet::*;
+use sp_runtime::DispatchError;
 
 // mod orml;
 
@@ -107,7 +109,7 @@ macro_rules! route {
 pub mod pallet {
 	use crate::weights::WeightInfo;
 	use composable_traits::{
-		assets::{AssetType, AssetTypeInspect},
+		assets::AssetTypeInspect,
 		currency::{AssetIdLike, BalanceLike},
 		governance::{GovernanceRegistry, SignedRawOrigin},
 	};
@@ -119,14 +121,29 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 	// use num_traits::Zero;
+	use codec::FullCodec;
+	use composable_traits::{
+		assets::{CreateAsset, InspectRegistryMetadata},
+		currency::Rational64,
+		xcm::assets::RemoteAssetRegistryMutate,
+	};
 	use orml_traits::GetByKey;
 	use sp_runtime::DispatchError;
+	use sp_std::{fmt::Debug, str, vec::Vec};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// currency id
 		type AssetId: AssetIdLike + From<u128> + Into<u128>;
-		type AssetLocation: Clone + PartialEq + TypeInfo;
+		type AssetLocation: FullCodec
+			+ Eq
+			+ PartialEq
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Clone
+			+ Default
+			+ TypeInfo
+			+ MaxEncodedLen;
 		type Balance: BalanceLike;
 
 		#[pallet::constant]
@@ -162,7 +179,11 @@ pub mod pallet {
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
 
 		// will be assets-registry
-		type AssetLookup: AssetTypeInspect<AssetId = Self::AssetId>;
+		type AssetLookup: AssetTypeInspect<AssetId = Self::AssetId>
+			+ RemoteAssetRegistryMutate<
+				AssetId = Self::AssetId,
+				AssetNativeLocation = Self::AssetLocation,
+			> + InspectRegistryMetadata;
 
 		type WeightInfo: WeightInfo;
 	}
@@ -417,6 +438,55 @@ pub mod pallet {
 													https://app.clickup.com/t/37h4edu
 													*/
 			}
+		}
+	}
+
+	impl<T: Config> CreateAsset for Pallet<T> {
+		type LocalAssetId = T::AssetId;
+		type ForeignAssetId = T::AssetLocation;
+
+		fn create_local_asset(
+			protocol_id: [u8; 8],
+			nonce: u64,
+			name: Vec<u8>,
+			symbol: Vec<u8>,
+			decimals: u8,
+			ratio: Option<Rational64>,
+		) -> Result<Self::LocalAssetId, DispatchError> {
+			let bytes = protocol_id
+				.into_iter()
+				.chain(nonce.to_le_bytes())
+				.collect::<Vec<u8>>()
+				.try_into()
+				.expect("[u8; 8] + bytes(u64) = [u8; 16]");
+			let asset_id = Self::LocalAssetId::from(u128::from_le_bytes(bytes));
+
+			T::AssetLookup::register_asset(asset_id, None, ratio, name, symbol, decimals)?;
+
+			Ok(asset_id)
+		}
+
+		fn create_foreign_asset(
+			foreign_asset_id: Self::ForeignAssetId,
+			name: Vec<u8>,
+			symbol: Vec<u8>,
+			decimals: u8,
+			ratio: Option<Rational64>,
+		) -> Result<Self::LocalAssetId, DispatchError> {
+			let asset_id = Self::LocalAssetId::from(u128::from_be_bytes(sp_core::blake2_128(
+				&foreign_asset_id.encode(),
+			)));
+
+			T::AssetLookup::register_asset(
+				asset_id,
+				Some(foreign_asset_id),
+				ratio,
+				name,
+				symbol,
+				decimals,
+			)?;
+
+			Ok(asset_id)
 		}
 	}
 }

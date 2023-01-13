@@ -95,7 +95,7 @@ pub trait RemoteAssetRegistryMutate {
 	fn register_asset(
 		asset_id: Self::AssetId,
 		location: Option<Self::AssetNativeLocation>,
-		ratio: Rational64,
+		ratio: Option<Rational64>,
 		name: Vec<u8>,
 		symbol: Vec<u8>,
 		decimals: u8,

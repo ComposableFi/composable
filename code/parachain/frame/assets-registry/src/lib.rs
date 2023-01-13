@@ -173,7 +173,7 @@ pub mod pallet {
 			name: Vec<u8>,
 			symbol: Vec<u8>,
 			decimals: u8,
-			ratio: Rational,
+			ratio: Option<Rational>,
 		},
 		AssetLocationUpdated {
 			asset_id: T::LocalAssetId,
@@ -233,7 +233,7 @@ pub mod pallet {
 		pub fn register_asset(
 			origin: OriginFor<T>,
 			local_or_foreign: LocalOrForeignAssetId<T::LocalAssetId, T::ForeignAssetId>,
-			ratio: Rational,
+			ratio: Option<Rational>,
 			name: Vec<u8>,
 			symbol: Vec<u8>,
 			decimals: Exponent,
@@ -274,7 +274,7 @@ pub mod pallet {
 			location: T::ForeignAssetId,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
-			Self::set_reserve_location(asset_id, location.clone())?;
+			Self::set_reserve_location(asset_id, location)?;
 			Ok(().into())
 		}
 
@@ -356,7 +356,7 @@ pub mod pallet {
 		fn register_asset(
 			asset_id: Self::AssetId,
 			location: Option<Self::AssetNativeLocation>,
-			ratio: Rational,
+			ratio: Option<Rational>,
 			name: Vec<u8>,
 			symbol: Vec<u8>,
 			decimals: u8,
@@ -365,7 +365,7 @@ pub mod pallet {
 				Self::set_reserve_location(asset_id, location)?;
 			}
 
-			Self::update_ratio(asset_id, Some(ratio))?;
+			Self::update_ratio(asset_id, ratio)?;
 			<Self as MutateRegistryMetadata>::set_metadata(
 				&asset_id,
 				name.clone(),

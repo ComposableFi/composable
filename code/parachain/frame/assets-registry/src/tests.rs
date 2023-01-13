@@ -25,7 +25,7 @@ fn set_metadata() {
 		assert_ok!(AssetsRegistry::register_asset(
 			RawOrigin::Root.into(),
 			LocalOrForeignAssetId::Foreign(XcmAssetLocation::RELAY_NATIVE),
-			rational!(42 / 123),
+			Some(rational!(42 / 123)),
 			b"Kusama".to_vec(),
 			b"KSM".to_vec(),
 			4
@@ -78,7 +78,7 @@ fn register_asset() {
 		assert_ok!(AssetsRegistry::register_asset(
 			Origin::root(),
 			LocalOrForeignAssetId::Foreign(location.clone()),
-			ratio,
+			Some(ratio),
 			b"Kusama".to_vec(),
 			b"KSM".to_vec(),
 			decimals
@@ -90,7 +90,7 @@ fn register_asset() {
 			AssetsRegistry::register_asset(
 				Origin::root(),
 				LocalOrForeignAssetId::Foreign(location),
-				ratio,
+				Some(ratio),
 				b"Kusama".to_vec(),
 				b"KSM".to_vec(),
 				decimals
@@ -115,7 +115,7 @@ fn update_asset() {
 		assert_ok!(AssetsRegistry::register_asset(
 			Origin::root(),
 			LocalOrForeignAssetId::Foreign(location.clone()),
-			ratio,
+			Some(ratio),
 			b"Kusama".to_vec(),
 			b"KSM".to_vec(),
 			decimals
@@ -182,7 +182,7 @@ fn get_foreign_assets_list_should_work() {
 		assert_ok!(AssetsRegistry::register_asset(
 			Origin::root(),
 			LocalOrForeignAssetId::Foreign(location),
-			ratio,
+			Some(ratio),
 			b"Kusama".to_vec(),
 			b"KSM".to_vec(),
 			decimals

@@ -2,7 +2,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::collections::vec::bounded::BiBoundedVec;
 use scale_info::TypeInfo;
-use sp_runtime::{DispatchResult, RuntimeDebug};
+use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::vec::Vec;
 
 use crate::currency::{Exponent, Rational64};
@@ -98,4 +98,42 @@ pub struct AssetMetadata<BoundedName, BoundedSymbol> {
 pub enum LocalOrForeignAssetId<LocalAssetId, ForeignAssetId> {
 	Local(LocalAssetId),
 	Foreign(ForeignAssetId),
+}
+
+pub trait CreateAsset {
+	type LocalAssetId;
+	type ForeignAssetId;
+
+	/// Create a local asset
+	///
+	/// # Parameters
+	/// * `protocol_id` - The unique ID of the protocol that owns this asset (often a `PalletId`)
+	/// * `nonce` - A nonce controlled by the owning protocol that uniquely identifies the asset in
+	///   the scope of the protocol
+	/// * `name` - Name of the asset
+	/// * `symbol` - Symbol of the asset
+	/// * `decimals` - The number of decimals this asset uses to represent one unit
+	fn create_local_asset(
+		protocol_id: [u8; 8],
+		nonce: u64,
+		name: Vec<u8>,
+		symbol: Vec<u8>,
+		decimals: u8,
+		ratio: Option<Rational64>,
+	) -> Result<Self::LocalAssetId, DispatchError>;
+
+	/// Create a foreign asset
+	///
+	/// # Parameters
+	/// * `foreign_asset_id` - Foreign asset ID or relative location
+	/// * `name` - Name of the asset
+	/// * `symbol` - Symbol of the asset
+	/// * `decimals` - The number of decimals this asset uses to represent one unit
+	fn create_foreign_asset(
+		foreign_asset_id: Self::ForeignAssetId,
+		name: Vec<u8>,
+		symbol: Vec<u8>,
+		decimals: u8,
+		ratio: Option<Rational64>,
+	) -> Result<Self::LocalAssetId, DispatchError>;
 }

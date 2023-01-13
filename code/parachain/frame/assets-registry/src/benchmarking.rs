@@ -28,7 +28,7 @@ benchmarks! {
 		let name = b"Kusama".to_vec();
 		let symbol = b"KSM".to_vec();
 		let decimals = 3;
-	}: _(RawOrigin::Root, location, ratio, name, symbol, decimals)
+	}: _(RawOrigin::Root, location, Some(ratio), name, symbol, decimals)
 
 	update_asset_location {
 		let location_base = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..]).unwrap();
@@ -38,7 +38,7 @@ benchmarks! {
 		let symbol = b"KSM".to_vec();
 		let decimals = 3;
 
-		AssetsRegistry::<T>::register_asset(RawOrigin::Root.into(), location, ratio, name, symbol, decimals).unwrap();
+		AssetsRegistry::<T>::register_asset(RawOrigin::Root.into(), location, Some(ratio), name, symbol, decimals).unwrap();
 
 		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location_base.clone()).unwrap();
 	}: _(RawOrigin::Root, local_asset_id, location_base)
@@ -51,7 +51,7 @@ benchmarks! {
 		let symbol = b"KSM".to_vec();
 		let decimals = 3;
 
-		AssetsRegistry::<T>::register_asset(RawOrigin::Root.into(), location, ratio, name, symbol, decimals).unwrap();
+		AssetsRegistry::<T>::register_asset(RawOrigin::Root.into(), location, Some(ratio), name, symbol, decimals).unwrap();
 
 		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location_base).unwrap();
 	}: _(RawOrigin::Root, local_asset_id, Some(rational!(420 / 8008)))
@@ -64,7 +64,7 @@ benchmarks! {
 		let symbol = b"KSM".to_vec();
 		let decimals = 3;
 
-		AssetsRegistry::<T>::register_asset(RawOrigin::Root.into(), location, ratio, name, symbol, decimals).unwrap();
+		AssetsRegistry::<T>::register_asset(RawOrigin::Root.into(), location, Some(ratio), name, symbol, decimals).unwrap();
 
 		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location_base).unwrap();
 		let name = b"Cooler Kusama".to_vec();
