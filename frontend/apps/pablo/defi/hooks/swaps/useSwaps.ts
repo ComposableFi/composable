@@ -384,11 +384,7 @@ export function useSwaps({
   };
 
   const valid = useMemo(
-    () =>
-      hasValidInputs &&
-      !!selectedPool &&
-      assetOneAmount.lte(balance1) &&
-      assetTwoAmount.lte(balance2),
+    () => hasValidInputs && !!selectedPool,
     [
       assetOneAmount,
       assetTwoAmount,

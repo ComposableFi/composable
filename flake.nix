@@ -69,9 +69,11 @@
         ./devnets/all.nix
 
         # Everything that is not an input, tool, package, or devnet, but still part of the final flake
+        ./flake/check.nix
         ./flake/dev-shells.nix
         ./flake/docker.nix
         ./flake/fmt.nix
+        ./flake/help.nix
         ./flake/nixops-config.nix
         ./flake/overlays.nix
         ./flake/release.nix
