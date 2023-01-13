@@ -1,9 +1,8 @@
-import { Grid, useTheme } from "@mui/material";
+import { Grid, Paper, Typography, useTheme } from "@mui/material";
 import { FeaturedBox } from "@/components/Molecules";
 import { DailyActiveUsersChart } from "@/components/Organisms/Stats/DailyActiveUsersChart";
 import { useOverviewStats } from "@/apollo/hooks/useOverviewStats";
 import { useCirculatingSupply } from "@/apollo/hooks/useCirculatingSupply";
-import { TotalValueLockedChart } from "@/components/Organisms/Stats/TotalValueLockedChart";
 import { FC, useEffect, useMemo } from "react";
 import { formatNumber, humanBalance } from "shared";
 import { subscribePools } from "@/stores/defi/polkadot/pablo/subscribePools";
@@ -13,7 +12,8 @@ import { pipe } from "fp-ts/function";
 import { subscribePoolAmount } from "@/stores/defi/polkadot/pablo/subscribePoolAmount";
 import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscovery";
 import { subscribeCoingeckoPrices } from "@/stores/defi/coingecko";
-import { useTotalValueLocked } from "@/components/Organisms/Stats/utils";
+
+// NOTE: useTotalValueLocked hook to fetch TVL Stats
 
 export const StatsOverviewTab: FC = () => {
   const circulatingSupply = useCirculatingSupply();
@@ -21,7 +21,6 @@ export const StatsOverviewTab: FC = () => {
   const { parachainApi } = usePicassoProvider();
   const theme = useTheme();
   const price = usePicaPriceDiscovery();
-  const totalValueLocked = useTotalValueLocked();
 
   useEffect(() => {
     const unsubPrices = subscribeCoingeckoPrices();
@@ -63,10 +62,10 @@ export const StatsOverviewTab: FC = () => {
             }}
             TooltipProps={{
               title:
-                "The total value of PICA in USD deposited in Picasso's smart contracts.",
+                "The total value of PICA in USD deposited into Picasso's smart contract. Will be updated when PICA staking is live.",
             }}
             textAbove="Total value locked"
-            title={`$${totalValueLocked}`}
+            title={`-`}
           />
         )}
       </Grid>
@@ -139,7 +138,19 @@ export const StatsOverviewTab: FC = () => {
         )}
       </Grid>
       <Grid item xs={12}>
-        <TotalValueLockedChart />
+        {/*Use TotalValueLockedChart component and remove the following once TVL chart for picasso is ready*/}
+        <Paper
+          sx={{
+            p: 6,
+          }}
+        >
+          <Typography color="text.secondary" variant="body2">
+            Total value locked
+          </Typography>
+          <Typography variant="body2" mt={8}>
+            The chart will be available once enough data is gathered...
+          </Typography>
+        </Paper>
       </Grid>
       <Grid item xs={12}>
         <DailyActiveUsersChart />
