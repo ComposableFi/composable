@@ -908,30 +908,7 @@ describe("[SHORT] Pablo: Constant Product Test Suite", function () {
     it("#4.8  I can not buy with the base asset being the same as the quote asset.", async function () {
       const transferAmount = Pica(100);
 
-      const baseAssetFundsCurrentlyInPoolsBeforeTx = await api.query.tokens.accounts(
-        hardCodedPool1.poolWalletAddress,
-        hardCodedPool1.baseAssetId
-      );
-      const Bo = BigNumber(baseAssetFundsCurrentlyInPoolsBeforeTx.free.toString());
-      const Bi = BigNumber(baseAssetFundsCurrentlyInPoolsBeforeTx.free.toString());
-      const priceFirstTrade = calculateInGivenOut(
-        Bo,
-        Bi,
-        BigNumber(transferAmount.toString()),
-        BigNumber(5),
-        BigNumber(5)
-      );
-      const {
-        data: [
-          resultPoolId,
-          resultWho,
-          resultBaseAsset,
-          resultQuoteAsset,
-          resultBaseAmount,
-          resultQuoteAmount,
-          resultFee
-        ]
-      } = await sendAndWaitForSuccess(
+      const exc = await sendAndWaitForSuccess(
         api,
         walletTrader1,
         api.events.pablo.Swapped.is,
@@ -944,16 +921,8 @@ describe("[SHORT] Pablo: Constant Product Test Suite", function () {
           },
           false
         )
-      );
-
-      expect(resultPoolId).to.be.bignumber.equal(new BN(hardCodedPool1.poolId));
-      expect(resultWho.toString()).to.be.equal(api.createType("AccountId32", walletTrader1.publicKey).toString());
-      expect(resultBaseAsset).to.be.bignumber.equal(new BN(hardCodedPool1.baseAssetId));
-      expect(resultQuoteAsset).to.be.bignumber.equal(new BN(hardCodedPool1.baseAssetId));
-      expect(resultBaseAmount).to.be.bignumber.equal(new BN(transferAmount.toString()));
-      expect(resultQuoteAmount).to.be.bignumber.equal(
-        new BN(priceFirstTrade.toFixed(0)).add(resultFee.lpFee.add(resultFee.protocolFee))
-      );
+      ).catch(exc=>exc);
+      expect(exc.toString()).to.contain("pablo.CannotBuyAssetWithItself")
     });
 
     it("#4.20  I can not swap with the minimum amount requested being the same as the inAsset.", async function () {
@@ -974,7 +943,7 @@ describe("[SHORT] Pablo: Constant Product Test Suite", function () {
           false
         )
       ).catch(exc => exc);
-      expect(exc.toString()).to.contain("pablo.CannotRespectMinimumRequested");
+      expect(exc.toString()).to.contain("pablo.CannotSwapSameAsset");
     });
 
     it("#4.11 I can not buy or swap in a pool that doesn't exist.", async function () {
