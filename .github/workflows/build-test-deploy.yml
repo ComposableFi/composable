@@ -766,6 +766,25 @@ jobs:
           command: nix -- build .#composable-bench-node
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+  package-polkadot-node:
+    name: "Package Polkadot node"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-polkadot-node-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#polkadot-node
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
   package-parachain-node:
     name: "Package Statemine node"
     runs-on:
@@ -775,7 +794,7 @@ jobs:
       - sre
     strategy:
       matrix:
-          node: [polkadot, statemine, bifrost, acala]    
+          node: [statemine, bifrost]    
     concurrency:
       group: ${{ github.workflow }}-package-${{ matrix.node }}-node-${{ github.ref }}
       cancel-in-progress: true
@@ -786,6 +805,25 @@ jobs:
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#${{ matrix.node }}-node
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+       
+  package-acala-node:
+    name: "Package Acala node"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-acala-node-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#acala-node
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   cache-devnet-all-dev-local:
