@@ -20,7 +20,7 @@
       # Centauri Persistent Devnet
       devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
         (import ./specs/centauri.nix {
-          inherit pkgs;
+          inherit pkgs devnetTools;
           devnet-1 = devnet-dali-centauri-1;
           devnet-2 = devnet-dali-centauri-2;
         });
@@ -154,7 +154,7 @@
 
       devnet = pkgs.composable.mkDevnetProgram "devnet-default"
         (import ./specs/default.nix {
-          inherit pkgs;
+          inherit pkgs devnetTools;
           price-feed = packages.price-feed;
           devnet = packages.devnet-dali-complete;
           frontend = packages.frontend-static;
@@ -162,14 +162,14 @@
 
       devnet-xcvm = pkgs.composable.mkDevnetProgram "devnet-xcvm"
         (import ./specs/xcvm.nix {
-          inherit pkgs;
+          inherit pkgs devnetTools;
           devnet-dali = packages.zombienet-rococo-local-dali-dev;
         });
 
       devnet-dali-persistent =
         pkgs.composable.mkDevnetProgram "devnet-dali-persistent"
         (import ./specs/default.nix {
-          inherit pkgs;
+          inherit pkgs devnetTools;
           price-feed = packages.price-feed;
           devnet = packages.devnet-dali-complete;
           frontend = packages.frontend-static-persistent;

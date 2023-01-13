@@ -1,4 +1,4 @@
-{ pkgs, price-feed, devnet, frontend, ... }: {
+{ pkgs, price-feed, devnet, frontend, devnetTools, ... }: {
   modules = [
     (let
       price-feed-container-name = "price-feed";
@@ -77,8 +77,7 @@
 
           "${devnet-container-name}" = mkComposableContainer
             (import ../services/devnet.nix {
-              inherit pkgs;
-              inherit devnet;
+              inherit pkgs devnetTools devnet;
               ports = [
                 {
                   host = rococoPort;
@@ -178,4 +177,3 @@
   ];
   inherit pkgs;
 }
-
