@@ -4,8 +4,9 @@
       check = let
         checks = [
           "nixfmt-check"
-          "hadolint-check"
           "deadnix-check"
+          "taplo-check"
+          "hadolint-check"
           "spell-check"
           "docs-static"
         ];

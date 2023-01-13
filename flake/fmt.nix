@@ -117,7 +117,7 @@
 
         spell-check = let cspell-yaml = ./cspell.yaml;
         in pkgs.stdenv.mkDerivation {
-          name = "cspell-check";
+          name = "spell-check";
           dontUnpack = true;
           buildInputs = [ allDirectoriesAndFiles pkgs.nodePackages.cspell ];
           installPhase = ''
