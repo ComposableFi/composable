@@ -213,6 +213,8 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
     asset.blockId = ctx.block.id;
 
     await ctx.store.save(asset);
+
+    await storeHistoricalLockedValue(ctx, [[assetId.toString(), amount]], LockedSource.Pablo, pool.id);
   }
 
   const pabloTransaction = new PabloTransaction({
@@ -226,10 +228,6 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
   await ctx.store.save(pabloTransaction);
 
   await ctx.store.save(pool);
-
-  for (const [assetId, amount] of assetAmounts) {
-    await storeHistoricalLockedValue(ctx, [[assetId.toString(), amount]], LockedSource.Pablo, pool.id);
-  }
 }
 
 export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {
@@ -267,6 +265,8 @@ export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Stor
     asset.blockId = ctx.block.id;
 
     await ctx.store.save(asset);
+
+    await storeHistoricalLockedValue(ctx, [[assetId.toString(), -amount]], LockedSource.Pablo, pool.id);
   }
 
   const pabloTransaction = new PabloTransaction({
@@ -280,10 +280,6 @@ export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Stor
   await ctx.store.save(pabloTransaction);
 
   await ctx.store.save(pool);
-
-  for (const [assetId, amount] of assetAmounts) {
-    await storeHistoricalLockedValue(ctx, [[assetId.toString(), -amount]], LockedSource.Pablo, pool.id);
-  }
 }
 
 export async function processSwappedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {
@@ -334,6 +330,16 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
   quoteAsset.blockId = ctx.block.id;
 
   await ctx.store.save(quoteAsset);
+
+  await storeHistoricalLockedValue(
+    ctx,
+    [
+      [baseAssetId.toString(), -baseAmount],
+      [quoteAssetId.toString(), quoteAmount]
+    ],
+    LockedSource.Pablo,
+    pool.id
+  );
 
   const pabloTransaction = new PabloTransaction({
     id: ctx.event.id,
