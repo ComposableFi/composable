@@ -42,10 +42,9 @@ name = "RUST_LOG"
 value = "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace"
 
 
-
 [relaychain]
 chain = "rococo-local"
-default_args = [ "-lparachain=debug",]
+default_args = ["-lparachain=debug"]
 default_command = "/nix/store/0wpw4f5zfa9sgmvpjyayndkiscdi8w4z-polkadot-v0.9.27/bin/polkadot"
 [[relaychain.nodes]]
 name = "rococo-local-alice"
