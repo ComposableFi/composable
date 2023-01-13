@@ -33,6 +33,7 @@
         # External `inputs` that the authors did not nixify themselves
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/centauri/centauri-codegen.nix
+        ./inputs/centauri/hyperspace.nix
         ./inputs/chevdor/subwasm.nix
         ./inputs/composable/dali-subxt-client.nix
         ./inputs/cosmos/cosmwasm.nix
