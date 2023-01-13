@@ -19,18 +19,21 @@
           containerName = "devnet-1";
           ports = [ 9944 9988 9989 9990 ];
           devnet = devnet-1;
+          networkName = network-name;
         }
         {
           containerName = "devnet-2";
           ports = [ 29944 29988 29989 29990 ];
           devnet = devnet-2;
+          networkName = network-name-2;
         }
       ];
 
       network-name = "composable_devnet";
-      mkComposableContainer = container:
+      network-name-2 = "composable_devnet_2";
+      mkComposableContainer = container: networks:
         container // {
-          service = container.service // { networks = [ network-name ]; };
+          service = container.service // { inherit networks; };
         };
 
       toService = devnetConfig: {
@@ -42,12 +45,13 @@
             host = port;
             container = port;
           }) devnetConfig.ports;
-        });
+        }) [ devnetConfig.networkName ];
       };
     in {
       config = {
         project.name = "composable";
         networks."${network-name}" = { };
+        networks."${network-name-2}" = { };
 
         services = builtins.listToAttrs (map toService devnetConfigs) // {
           "hyperspace-create-clients" = mkComposableContainer
@@ -63,7 +67,7 @@
               # is the cleanest option. Once it succeeds, the next commands won't have the same restart
               # policy, as they should not fail
               restartPolicy = "on-failure";
-            });
+            }) [ network-name network-name-2 ];
 
           "hyperspace-create-connection" = mkComposableContainer
             (import ../services/centauri.nix {
@@ -78,7 +82,7 @@
               inherit configPathSource configPathContainer;
               dependsOn = dependsOnCreateClient;
               restartPolicy = "no";
-            });
+            }) [ network-name network-name-2 ];
 
           "hyperspace-create-channels" = mkComposableContainer
             (import ../services/centauri.nix {
@@ -97,7 +101,7 @@
               inherit configPathSource configPathContainer;
               dependsOn = dependsOnCreateConnection;
               restartPolicy = "no";
-            });
+            }) [ network-name network-name-2 ];
 
           "hyperspace-relay" = mkComposableContainer
             (import ../services/centauri.nix {
@@ -107,7 +111,7 @@
               dependsOn = dependsOnCreateConnection;
               # safely restart on failure due to connectivity loss for instance
               restartPolicy = "on-failure";
-            });
+            }) [ network-name network-name-2 ];
         };
       };
     })

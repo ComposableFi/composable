@@ -42,6 +42,9 @@ mod nonfungibles {
 	/// Tests the pallet's [`InspectEnumerable`] implementation.
 	mod inspect_enumerable;
 
+	/// Tests the pallet's extrinsics implementation.
+	mod extrinsic;
+
 	/// Tests the pallet's [`Create`] implementation.
 	#[test]
 	fn create_inspect() {

@@ -212,6 +212,7 @@ impl pallet_fnft::Config for Test {
 	type AccountProxy = AccountProxyWrapperInstance;
 	type ProxyTypeSelector = FnftAccountProxyType;
 	type PalletId = FnftPalletId;
+	type WeightInfo = ();
 }
 
 parameter_types! {
