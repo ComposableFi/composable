@@ -85,17 +85,60 @@ Check that:
 - `hrmpMaxParachain*Channels` is not exceeded by any participant chains.
 ## Counterparty chain to accept our request and request back
 
-Encode the preimage above via `Democracy -> Submit preimage`.
+Encode the extrinsic `preimage` above via `Democracy -> Submit preimage` (or [`Developer -> Extrinsics -> preimage -> notePreimage`](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fbifrost-rpc.dwellir.com#/extrinsics/decode/0x40001d0129000101000210000400000000070010a5d4e81300000000070010a5d4e800060003009435775c1802083c01270800003c00d1070000e8030000009001000d010004000100451f)). 
 
-Then `Submit proposal`.
+Copy [hash of preimage from events](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fbifrost-rpc.dwellir.com#/explorer/query/0x80a4fcf41e271e8f88777b686661f19e53379730e0f11bbb3342514897134a88).
 
-https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-3.aca-api.network%2Fws#/extrinsics/decode/0x33000101000210000400000000070010a5d4e81300000000070010a5d4e800060003009435775c1802083c01270800003c0027080000e8030000009001000d010004000100411f
+Then `Submit proposal` using hash.
 
 **Details** 
 
 Find the latest `proposal` or successful `referenda` to open channels and compare differences with our message. Things change so the further examples are likely to be out of date.
 
 Please do all relevant checks from the previous step.
+
+
+**Example**
+
+````
+# Overview
+
+Details of Bifrost open channels proposal for [Open HRMP cross-chain communication channel between Picasso and Bifrost](https://bifrost.subsquare.io/democracy/proposal/25)
+
+## Preimage
+
+[0x29000101000210000400000000070010a5d4e81300000000070010a5d4e800060003009435775c1802083c01270800003c00d1070000e8030000009001000d010004000100451f](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fbifrost-rpc.dwellir.com#/extrinsics/decode/0x29000101000210000400000000070010a5d4e81300000000070010a5d4e800060003009435775c1802083c01270800003c00d1070000e8030000009001000d010004000100451f)
+
+
+## Proposal
+
+
+```markdown
+Picasso aims to become the DeFi hub of Kusama, connecting parachains with the broader Cosmos ecosystem. Through opening this XCM channel, Bifrost assets will have access to Picasso dapps, thereby increasing the utility and TVL of vKSM and other Bifrost tokens.
+
+For example, we will setup pools for vKSM and BNC on Pablo, as well as integrating them within our later released pallets such as CosmWasm. This opens up the possibility to also support these tokens within our IBC bridge that will launch in the future too.
+
+### Flow
+
+- Accepts existing open request channel from Picasso
+- Sends open request to Picasso
+
+### Requires
+
+This requires 11 KSM to be on the target Parachain 2001(Bifrost) account.
+
+
+### Detailed flow
+
+- Sends XCM message to Kusama
+- Puts 1 KSM into holder from Parachain 2001 account
+- Sets 1 KSM as payment asset
+- Executes batch transaction [0x1802083c01270800003c00d1070000e803000000900100](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama.api.onfinality.io%2Fpublic-ws#/extrinsics/decode/0x1802083c01270800003c00d1070000e803000000900100)
+- Accepts open channel request from Picasso 2087
+- Sends open channel request to Picasso 2087 with default parameters
+- Remaining fee assets are returned back to Parachain 2001 account
+```
+````
 
 ## Accept on our chain request
 
