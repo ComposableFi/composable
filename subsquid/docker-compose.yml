@@ -24,55 +24,6 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
 
-  ingest:
-    depends_on:
-      db:
-        condition: service_healthy
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 3s
-        max_attempts: 3
-        window: 20s
-    image: subsquid/substrate-ingest:firesquid
-    command: [
-        # polkadot endpoints -- replace with your wss
-        "-e",
-        "wss://picasso-rpc-lb.composablenodes.tech",
-        #      "-e", "ws://host.docker.internal:9988",
-        "-c",
-        "10", # allow up to 20 pending requests for the above endpoint (default is 5)
-        "--start-block",
-        "1400000", # uncomment to specify a non-zero start block
-        "--prom-port",
-        "9090",
-        "--out",
-        "postgres://postgres:postgres@db:5432/squid-archive",
-      ]
-    ports:
-      - "9090:9090" # prometheus port
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-  gateway:
-    depends_on:
-      db:
-        condition: service_healthy
-    image: subsquid/substrate-gateway:firesquid
-    restart: on-failure
-    environment:
-      RUST_LOG: "substrate_gateway=info,actix_server=info"
-    command: [
-        "--database-url",
-        "postgres://postgres:postgres@db:5432/squid-archive",
-        "--database-max-connections",
-        "3", # max number of concurrent database connections
-        # "--evm-support" # uncomment for chains with Frontier EVM pallet
-        # (e.g. Moonbeam/Moonriver or Astar/Shiden)
-      ]
-    ports:
-      - "8888:8000"
-
   # Explorer service is optional.
   # It provides rich GraphQL API for querying archived data.
   # Many developers find it very useful for exploration and debugging.
@@ -121,8 +72,6 @@ services:
     image: squid-processor
     restart: on-failure
     depends_on:
-      gateway:
-        condition: service_started
       squid-db:
         condition: service_started
     environment:
@@ -131,7 +80,7 @@ services:
       DB_PASS: squid
       DB_PORT: 5432
       GQL_PORT: 4350
-      SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
+      SUBSQUID_ARCHIVE_URI: "https://subsquid-archive.composablenodes.tech/graphql"
       RELAYCHAIN_URI: "wss://picasso-rpc-lb.composablenodes.tech"
   #      RELAYCHAIN_URI: "ws://host.docker.internal:9988"
 

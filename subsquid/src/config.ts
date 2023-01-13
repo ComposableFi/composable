@@ -22,7 +22,7 @@ export const archive = (): string => {
     return process.env.SUBSQUID_ARCHIVE_URI!.toString();
   }
 
-  return "http://127.0.0.1:8888/graphql";
+  return "https://subsquid-archive.composablenodes.tech/graphql";
 };
 
 export const firstBlock = (): number => {
