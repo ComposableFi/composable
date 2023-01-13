@@ -165,11 +165,10 @@ export async function storeHistoricalLockedValue(
   source: LockedSource,
   sourceEntityId: string
 ): Promise<void> {
-  const event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
+  let event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
 
   if (!event) {
-    // no-op
-    return;
+    event = await saveEvent(ctx, EventType.SWAP);
   }
 
   for (const [assetId, amount] of amountsLocked) {

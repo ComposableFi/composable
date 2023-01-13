@@ -412,6 +412,9 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
             id: pool.id
           },
           source: LockedSource.Pablo
+        },
+        order: {
+          timestamp: "DESC"
         }
       })
     )?.accumulatedAmount || 0n;
@@ -425,6 +428,9 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
             id: pool.id
           },
           source: LockedSource.Pablo
+        },
+        order: {
+          timestamp: "DESC"
         }
       })
     )?.accumulatedAmount || 0n;
