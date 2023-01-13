@@ -135,6 +135,7 @@ ensdomains
 extendsi
 ferdie
 fetchgit
+fetchurl
 fgrep
 findutils
 fnft
