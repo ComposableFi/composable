@@ -108,10 +108,12 @@ macro_rules! route {
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::weights::WeightInfo;
+	use codec::FullCodec;
 	use composable_traits::{
-		assets::AssetTypeInspect,
-		currency::{AssetIdLike, BalanceLike},
+		assets::{AssetTypeInspect, CreateAsset, InspectRegistryMetadata, MutateRegistryMetadata},
+		currency::{AssetIdLike, BalanceLike, Rational64},
 		governance::{GovernanceRegistry, SignedRawOrigin},
+		xcm::assets::RemoteAssetRegistryMutate,
 	};
 	use frame_support::{
 		dispatch::DispatchResult,
@@ -120,13 +122,6 @@ pub mod pallet {
 		traits::{fungible, fungibles, EnsureOrigin},
 	};
 	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
-	// use num_traits::Zero;
-	use codec::FullCodec;
-	use composable_traits::{
-		assets::{CreateAsset, InspectRegistryMetadata},
-		currency::Rational64,
-		xcm::assets::RemoteAssetRegistryMutate,
-	};
 	use orml_traits::GetByKey;
 	use sp_runtime::DispatchError;
 	use sp_std::{fmt::Debug, str, vec::Vec};
@@ -183,7 +178,8 @@ pub mod pallet {
 			+ RemoteAssetRegistryMutate<
 				AssetId = Self::AssetId,
 				AssetNativeLocation = Self::AssetLocation,
-			> + InspectRegistryMetadata;
+			> + InspectRegistryMetadata<AssetId = Self::AssetId>
+			+ MutateRegistryMetadata<AssetId = Self::AssetId>;
 
 		type WeightInfo: WeightInfo;
 	}
@@ -655,7 +651,9 @@ mod fungible_impls {
 }
 
 mod fungibles_impls {
-	use composable_traits::assets::{AssetType, AssetTypeInspect};
+	use composable_traits::assets::{
+		AssetType, AssetTypeInspect, InspectRegistryMetadata, MutateRegistryMetadata,
+	};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::tokens::{
@@ -664,12 +662,52 @@ mod fungibles_impls {
 				MutateHold as NativeMutateHold, Transfer as NativeTransfer,
 				Unbalanced as NativeUnbalanced,
 			},
-			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer, Unbalanced},
+			fungibles::{self, Inspect, InspectHold, Mutate, MutateHold, Transfer, Unbalanced},
 			DepositConsequence, WithdrawConsequence,
 		},
 	};
 
 	use crate::{Config, Pallet};
+
+	impl<T: Config> fungibles::metadata::Inspect<T::AccountId> for Pallet<T> {
+		fn name(asset: Self::AssetId) -> Vec<u8> {
+			<T::AssetLookup as InspectRegistryMetadata>::asset_name(&asset).unwrap_or_default()
+		}
+
+		fn symbol(asset: Self::AssetId) -> Vec<u8> {
+			<T::AssetLookup as InspectRegistryMetadata>::symbol(&asset).unwrap_or_default()
+		}
+
+		fn decimals(asset: Self::AssetId) -> u8 {
+			<T::AssetLookup as InspectRegistryMetadata>::decimals(&asset).unwrap_or_default()
+		}
+	}
+
+	impl<T: Config> fungibles::metadata::Mutate<T::AccountId> for Pallet<T> {
+		fn set(
+			asset: Self::AssetId,
+			_from: &T::AccountId,
+			name: Vec<u8>,
+			symbol: Vec<u8>,
+			decimals: u8,
+		) -> DispatchResult {
+			<T::AssetLookup as MutateRegistryMetadata>::set_metadata(&asset, name, symbol, decimals)
+		}
+	}
+
+	impl<T: Config> fungibles::InspectMetadata<T::AccountId> for Pallet<T> {
+		fn name(asset: &Self::AssetId) -> Vec<u8> {
+			<Self as fungibles::metadata::Inspect<T::AccountId>>::name(*asset)
+		}
+
+		fn symbol(asset: &Self::AssetId) -> Vec<u8> {
+			<Self as fungibles::metadata::Inspect<T::AccountId>>::symbol(*asset)
+		}
+
+		fn decimals(asset: &Self::AssetId) -> u8 {
+			<Self as fungibles::metadata::Inspect<T::AccountId>>::decimals(*asset)
+		}
+	}
 
 	impl<T: Config> Unbalanced<T::AccountId> for Pallet<T> {
 		route! {
