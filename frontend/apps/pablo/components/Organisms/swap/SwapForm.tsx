@@ -259,16 +259,6 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
               : undefined,
           }}
         />
-        {assetTwoAmount.gt(balance2) ? (
-          <Typography
-            variant="caption"
-            color="error"
-            textAlign="left"
-            sx={{ display: "flex", ml: 2 }}
-          >
-            Your token balance is too low to perform swap
-          </Typography>
-        ) : null}
       </Box>
 
       {valid && (
