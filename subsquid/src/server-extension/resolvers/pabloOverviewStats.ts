@@ -1,7 +1,7 @@
 import { Field, FieldResolver, ObjectType, Query, Resolver, ResolverInterface } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
-import { Account, HistoricalLockedValue, LockedSource, PabloSwap } from "../../model";
+import { Account, PabloPoolAsset, PabloSwap } from "../../model";
 import { DAY_IN_MS } from "./common";
 
 @ObjectType()
@@ -11,6 +11,10 @@ class TVL {
 
   @Field(() => BigInt, { nullable: false })
   amount!: bigint;
+
+  constructor(props: TVL) {
+    Object.assign(this, props);
+  }
 }
 
 @ObjectType()
@@ -43,26 +47,22 @@ export class PabloOverviewStatsResolver implements ResolverInterface<PabloOvervi
   async totalValueLocked(): Promise<TVL[]> {
     const manager = await this.tx();
 
-    const lockedValue = await manager.find(HistoricalLockedValue, {
-      select: ["amount", "assetId"],
-      where: {
-        source: LockedSource.Pablo
-      }
+    const poolAssets = await manager.find(PabloPoolAsset, {
+      select: ["assetId", "totalLiquidity"]
     });
 
-    const totalValueLocked = lockedValue.reduce<Record<string, bigint>>((acc, value) => {
-      acc[value.assetId] = (acc[value.assetId] || 0n) + value.amount;
+    const totalValueLocked = poolAssets.reduce<Record<string, bigint>>((acc, curr) => {
+      acc[curr.assetId] = (acc[curr.assetId] || 0n) + curr.totalLiquidity;
       return acc;
     }, {});
 
-    const tvlList: TVL[] = [];
-
-    Object.keys(totalValueLocked).forEach(assetId => {
-      const tvl = new TVL();
-      tvl.assetId = assetId;
-      tvl.amount = totalValueLocked[assetId];
-      tvlList.push(tvl);
-    });
+    const tvlList = Object.keys(totalValueLocked).map(
+      assetId =>
+        new TVL({
+          assetId,
+          amount: totalValueLocked[assetId]
+        })
+    );
 
     return Promise.resolve(tvlList);
   }
@@ -124,14 +124,13 @@ export class PabloOverviewStatsResolver implements ResolverInterface<PabloOvervi
       return acc;
     }, {});
 
-    const tvlList: TVL[] = [];
-
-    Object.keys(volumes).forEach(assetId => {
-      const tvl = new TVL();
-      tvl.assetId = assetId;
-      tvl.amount = volumes[assetId];
-      tvlList.push(tvl);
-    });
+    const tvlList = Object.keys(volumes).map(
+      assetId =>
+        new TVL({
+          assetId,
+          amount: volumes[assetId]
+        })
+    );
 
     return Promise.resolve(tvlList);
   }

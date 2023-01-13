@@ -24,7 +24,6 @@ import { divideBigInts, encodeAccount } from "../utils";
 import {
   getLatestPoolByPoolId,
   getOrCreatePabloAsset,
-  getSpotPrice,
   saveAccountAndEvent,
   saveActivity,
   saveEvent,
@@ -228,20 +227,9 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
 
   await ctx.store.save(pool);
 
-  // Normalize locked values to a base asset ID
-  let tvl = 0n;
   for (const [assetId, amount] of assetAmounts) {
-    if (assetId === BigInt(pool.quoteAssetId)) {
-      tvl += amount;
-    } else {
-      const spotPrice = await getSpotPrice(ctx, pool.quoteAssetId, assetId.toString(), pool.id);
-      const normalizedAmount = BigNumber(amount.toString()).div(BigNumber(spotPrice.toString())).toFixed(0);
-
-      tvl += BigInt(normalizedAmount);
-    }
+    await storeHistoricalLockedValue(ctx, [[assetId.toString(), amount]], LockedSource.Pablo, pool.id);
   }
-
-  await storeHistoricalLockedValue(ctx, [[pool.quoteAssetId, tvl]], LockedSource.Pablo, pool.id);
 }
 
 export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {
@@ -293,20 +281,9 @@ export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Stor
 
   await ctx.store.save(pool);
 
-  // Normalize locked values to a base asset ID
-  let tvl = 0n;
   for (const [assetId, amount] of assetAmounts) {
-    if (assetId === BigInt(pool.quoteAssetId)) {
-      tvl += amount;
-    } else {
-      const spotPrice = await getSpotPrice(ctx, pool.quoteAssetId, assetId.toString(), pool.id);
-      const normalizedAmount = BigNumber(amount.toString()).div(BigNumber(spotPrice.toString())).toFixed(0);
-
-      tvl += BigInt(normalizedAmount);
-    }
+    await storeHistoricalLockedValue(ctx, [[assetId.toString(), -amount]], LockedSource.Pablo, pool.id);
   }
-
-  await storeHistoricalLockedValue(ctx, [[pool.quoteAssetId, -tvl]], LockedSource.Pablo, pool.id);
 }
 
 export async function processSwappedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {

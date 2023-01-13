@@ -178,8 +178,11 @@ export async function storeHistoricalLockedValue(
         await ctx.store.findOne(HistoricalLockedValue, {
           where: {
             source,
-            assetId: assetId.toString(),
+            assetId,
             sourceEntityId
+          },
+          order: {
+            timestamp: "DESC"
           }
         })
       )?.accumulatedAmount || 0n;
