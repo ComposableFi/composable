@@ -18,7 +18,7 @@ impl WeightInfo for () {
 	}
 
 	fn update_asset() -> Weight {
-		Weight::from_ref_time(10_0000)
+		Weight::from_ref_time(100_000)
 	}
 
 	fn set_min_fee() -> Weight {
