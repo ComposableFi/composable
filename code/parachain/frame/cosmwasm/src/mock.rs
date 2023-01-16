@@ -244,6 +244,19 @@ impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for IbcLoopback<T> {
 	) -> Result<(), ibc_primitives::Error> {
 		todo!("loopback")
 	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn create_client(
+	) -> Result<::ibc::core::ics24_host::identifier::ClientId, ibc_primitives::Error> {
+		todo!("loopback")
+	}
+	#[cfg(feature = "runtime-benchmarks")]
+	fn create_connection(
+		_client_id: ::ibc::core::ics24_host::identifier::ClientId,
+		_connection_id: ::ibc::core::ics24_host::identifier::ConnectionId,
+	) -> Result<(), ibc_primitives::Error> {
+		todo!("loopback")
+	}
 }
 
 impl Config for Test {
