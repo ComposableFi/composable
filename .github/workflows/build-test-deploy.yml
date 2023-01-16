@@ -652,27 +652,27 @@ jobs:
           command: nix -- run .#benchmarks-once-${{ matrix.runtime }}
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-  local-integration-tests:
-    name: "Local integration tests"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: local-integration-tests-${{ matrix.runtime }}-${{ github.ref }}
-      cancel-in-progress: true
-    strategy:
-      matrix:
-        runtime: [dali, picasso]
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#check-${{ matrix.runtime }}-integration-tests
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  # local-integration-tests:
+  #   name: "Local integration tests"
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: local-integration-tests-${{ matrix.runtime }}-${{ github.ref }}
+  #     cancel-in-progress: true
+  #   strategy:
+  #     matrix:
+  #       runtime: [dali, picasso]
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: "./.github/templates/watch-exec"
+  #       with:
+  #         command: nix -- build .#check-${{ matrix.runtime }}-integration-tests
+  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   package-composable-node:
     name: "Package Composable node"
@@ -1089,7 +1089,8 @@ jobs:
         - package-polkadot-node
         - package-composable-node
         - test-running-of-pallet-benchmarks
-        - local-integration-tests
+        # FIXUP(hussein): reenable once v0.9.30 -> v0.9.33
+        # - local-integration-tests
         - unit-tests
         - check-devnet
         - check-nix-long
