@@ -47,12 +47,12 @@
 
         polkadot-node = buildPolkadotNode rec {
           name = "polkadot-v${version}";
-          version = "0.9.27";
+          version = "0.9.30";
           repo = "polkadot";
           owner = "paritytech";
           rev = "v${version}";
-          hash = "sha256-LEz3OrVgdFTCnVwzU8C6GeEougaOl2qo7jS9qIdMqAM=";
-          cargoSha256 = "sha256-6y+WK2k1rhqMxMjEJhzJ26WDMKZjXQ+q3ca2hbbeLvA=";
+          hash = "sha256-3hmoTTzdvC1s0GsfgEz6vaIh/obx+MHCqjnUJR6NRVk=";
+          cargoSha256 = "sha256-YzQspHuHDWOeh9xvFIy0BF6xiep3pr8QEiJDK9Vb8fg=";
         };
       };
     };
