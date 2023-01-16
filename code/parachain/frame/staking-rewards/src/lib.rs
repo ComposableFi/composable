@@ -379,24 +379,6 @@ pub mod pallet {
 		/// Required origin for reward pool creation.
 		type RewardPoolUpdateOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
-		#[pallet::constant]
-		type PicaAssetId: Get<Self::AssetId>;
-
-		#[pallet::constant]
-		type XPicaAssetId: Get<Self::AssetId>;
-
-		#[pallet::constant]
-		type PbloAssetId: Get<Self::AssetId>;
-
-		#[pallet::constant]
-		type XPbloAssetId: Get<Self::AssetId>;
-
-		#[pallet::constant]
-		type PicaStakeFinancialNftCollectionId: Get<Self::AssetId>;
-
-		#[pallet::constant]
-		type PbloStakeFinancialNftCollectionId: Get<Self::AssetId>;
-
 		type WeightInfo: WeightInfo;
 
 		#[pallet::constant]
@@ -462,75 +444,6 @@ pub mod pallet {
 	#[allow(clippy::disallowed_types)]
 	pub(super) type RewardsPotIsEmpty<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, T::AssetId, Blake2_128Concat, T::AssetId, ()>;
-
-	#[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config> {
-		_phantom: sp_std::marker::PhantomData<T>,
-	}
-
-	#[cfg(feature = "std")]
-	impl<T: Config> Default for GenesisConfig<T> {
-		fn default() -> Self {
-			GenesisConfig { _phantom: Default::default() }
-		}
-	}
-
-	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
-		fn build(&self) {
-			let owner: T::AccountId = T::PalletId::get().into_account_truncating();
-			create_default_pool::<T>(
-				&owner,
-				T::PicaAssetId::get(),
-				T::XPicaAssetId::get(),
-				T::PicaStakeFinancialNftCollectionId::get(),
-			);
-			create_default_pool::<T>(
-				&owner,
-				T::PbloAssetId::get(),
-				T::XPbloAssetId::get(),
-				T::PbloStakeFinancialNftCollectionId::get(),
-			);
-		}
-	}
-
-	fn create_default_pool<T: Config>(
-		owner: &T::AccountId,
-		staked_asset_id: T::AssetId,
-		share_asset_id: T::AssetId,
-		financial_nft_asset_id: T::AssetId,
-	) {
-		// TODO (vim): Review these with product
-		let staking_pool: RewardPoolOf<T> = RewardPool {
-			owner: owner.clone(),
-			rewards: Default::default(),
-			claimed_shares: T::Balance::zero(),
-			start_block: T::BlockNumber::zero(),
-			end_block: T::BlockNumber::zero(),
-			lock: LockConfig {
-				duration_presets: [
-					(
-						ONE_WEEK,
-						FixedU64::from_rational(101, 100).try_into_validated().expect(">= 1"),
-					),
-					(
-						ONE_MONTH,
-						FixedU64::from_rational(110, 100).try_into_validated().expect(">= 1"),
-					),
-				]
-				.into_iter()
-				.try_collect()
-				.expect("Genesis config must be correct; qed"),
-				unlock_penalty: Default::default(),
-			},
-			share_asset_id,
-			financial_nft_asset_id,
-			minimum_staking_amount: T::Balance::from(2_000_000_u128),
-		};
-		RewardPools::<T>::insert(staked_asset_id, staking_pool);
-		T::FinancialNft::create_collection(&financial_nft_asset_id, owner, owner)
-			.expect("Genesis config must be correct; qed");
-	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {

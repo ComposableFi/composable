@@ -863,12 +863,6 @@ parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
 	pub const MaxStakingDurationPresets : u32 = 10;
 	pub const MaxRewardConfigsPerPool : u32 = 10;
-	pub const PicaAssetId : CurrencyId = CurrencyId::PICA;
-	pub const PbloAssetId : CurrencyId = CurrencyId::PBLO;
-	pub const XPicaAssetId: CurrencyId = CurrencyId::xPICA;
-	pub const XPbloAssetId: CurrencyId = CurrencyId::xPBLO;
-	pub const PicaStakeFinancialNftCollectionId: CurrencyId = CurrencyId::PICA_STAKE_FNFT_COLLECTION;
-	pub const PbloStakeFinancialNftCollectionId: CurrencyId = CurrencyId::PBLO_STAKE_FNFT_COLLECTION;
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
 }
 
@@ -888,12 +882,6 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
 	type FinancialNft = Fnft;
 	type FinancialNftInstanceId = FinancialNftInstanceId;
-	type PicaAssetId = PicaAssetId;
-	type PbloAssetId = PbloAssetId;
-	type XPicaAssetId = XPicaAssetId;
-	type XPbloAssetId = XPbloAssetId;
-	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
-	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type LockId = StakingRewardsLockId;
 	type TreasuryAccount = TreasuryAccount;
 	type ExistentialDeposits = MultiExistentialDeposits;
