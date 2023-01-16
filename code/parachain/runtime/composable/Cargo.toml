@@ -91,7 +91,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 ] }
 frame-benchmarking = { package = "frame-benchmarking", git = "https://github.com/paritytech/substrate", default-features = false, optional = true, branch = "polkadot-v0.9.30" }
 hex-literal = { version = "0.3.4", optional = true }
-system-benchmarking = { package = "frame-system-benchmarking", git = "https://github.com/paritytech/substrate", default-features = false, optional = true, branch = "polkadot-v0.9.30" }
+frame-system-benchmarking = { package = "frame-system-benchmarking", git = "https://github.com/paritytech/substrate", default-features = false, optional = true, branch = "polkadot-v0.9.30" }
 
 # Parachain Utilities
 collator-selection = { package = "pallet-collator-selection", git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.30" }
@@ -127,7 +127,7 @@ runtime-benchmarks = [
   "balances/runtime-benchmarks",
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
-  "system-benchmarking",
+  "frame-system-benchmarking/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
   "hex-literal",
   "balances/runtime-benchmarks",

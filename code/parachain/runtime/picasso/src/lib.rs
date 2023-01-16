@@ -901,8 +901,7 @@ mod benches {
 		[balances, Balances]
 		[session, SessionBench::<Runtime>]
 		[timestamp, Timestamp]
-	// TODO: broken
-		// [collator_selection, CollatorSelection]
+		[collator_selection, CollatorSelection]
 		[indices, Indices]
 		[membership, CouncilMembership]
 		[treasury, Treasury]
@@ -1146,14 +1145,12 @@ impl_runtime_apis! {
 		) {
 			use frame_benchmarking::{Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
-			use system_benchmarking::Pallet as SystemBench;
+			use frame_system_benchmarking::Pallet as SystemBench;
 			use session_benchmarking::Pallet as SessionBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
-
 			let storage_info = AllPalletsWithSystem::storage_info();
-
 			return (list, storage_info)
 		}
 
@@ -1162,8 +1159,8 @@ impl_runtime_apis! {
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, TrackedStorageKey};
 
-			use system_benchmarking::Pallet as SystemBench;
-			impl system_benchmarking::Config for Runtime {}
+			use frame_system_benchmarking::Pallet as SystemBench;
+			impl frame_system_benchmarking::Config for Runtime {}
 
 			use session_benchmarking::Pallet as SessionBench;
 			impl session_benchmarking::Config for Runtime {}
