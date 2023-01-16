@@ -49,13 +49,17 @@ fn get_reward_pool<T: Config>(
 
 fn lock_config<T: Config>() -> LockConfig<T::MaxStakingDurationPresets> {
 	LockConfig {
-		duration_presets: [
-			(ONE_HOUR, FixedU64::from_rational(101, 100).try_into_validated().expect(">= 1")), /* 1% */
-			(ONE_MINUTE, FixedU64::from_rational(1_001, 1_000).try_into_validated().expect(">= 1")), /* 0.1% */
-		]
-		.into_iter()
-		.try_collect()
-		.unwrap(),
+		duration_multipliers: frame_support::bounded_btree_map! {
+			// 1%
+			ONE_HOUR => FixedU64::from_rational(101, 100)
+				.try_into_validated()
+				.expect(">= 1"),
+			// 0.1%
+			ONE_MINUTE => FixedU64::from_rational(1_001, 1_000)
+				.try_into_validated()
+				.expect(">= 1"),
+		}
+		.into(),
 		unlock_penalty: Perbill::from_percent(5),
 	}
 }
