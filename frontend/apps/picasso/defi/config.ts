@@ -62,3 +62,5 @@ export const STATEMINE_SUBSCAN_URL = "https://statemine.subscan.io/";
 export const KUSAMA_SUBSCAN_URL = "https://kusama.subscan.io/";
 export const PICASSO_SUBSCAN_URL = "https://picasso.subscan.io/";
 export const KARURA_SUBSCAN_URL = "https://karura.subscan.io/";
+
+export const PICASSO_STATEMINE_KSM_TRANSFER_FEE = 10_000_000_000;
