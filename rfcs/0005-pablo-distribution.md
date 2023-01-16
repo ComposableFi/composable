@@ -1,5 +1,4 @@
-Design Proposal: Pablo Fees & Staking Rewards Distribution
-==========================================================
+# Design Proposal: Pablo Fees & Staking Rewards Distribution
 
 Table of Contents
 
@@ -24,8 +23,10 @@ Table of Contents
         -   [5.2.1. FeeConfig](#521-feeconfig)
         -   [5.2.2. LP Trading Fee
             Distribution](#522-lp-trading-fee-distribution)
-        -   [5.2.3. PBLO Staker Trading Fee
-            Distribution](#523-pblo-staker-trading-fee-distribution)
+        -   [5.2.3. PBLO Staker Pool
+            Creation](#523-pblo-staker-pool-creation)
+        -   [5.2.4. PBLO Staker Trading Fee
+            Distribution](#524-pblo-staker-trading-fee-distribution)
     -   [5.3. Pallet Staking Rewards - LP/PICA/PBLO/Other Token Staking
         Reward
         Pools](#53-pallet-staking-rewards-lppicapbloother-token-staking-reward-pools)
@@ -80,18 +81,9 @@ discussions about the subject.
 
 ### 2.1. PBLO Token Initial Distribution
 
-According to the tokenomics design the Pablo is supposed to be
-distributed as follows,
+**NOTE**: PBLO token does not have a set release date and its details
+are not finalized.
 
--   Ecosystem fund - x
-
--   Farming rewards - y
-
--   LBP Auction - z
-
--   …​
-
-TODO fill above with details from the original sheet.
 
 The farming rewards are incentives for liquidity provider(LP)s who stake
 their LP tokens for Pablo pools. How much reward is allocated as
@@ -226,13 +218,16 @@ for brevity.
     -   This is to handle cases where a Pablo pool fees are in a
         different asset type than what is preferred.
 
-### 4.7 Financial NFT Requirements
+### 4.7. Financial NFT Requirements
 
-1. Each staked position MUST be represented as a https://todo.link[fNFT].
-2. Owning a PBLO staked position fNFT(xPBLO) MUST allow voting for protocol 
-   governance based on the xPBLO granted.
-3. Each staked position plus its rewards MUST be transferable by transferring 
-   the ownership of its NFT including the voting rights.
+1.  Each staked position MUST be represented as a
+    [fNFT](https://github.com/ComposableFi/composable/tree/main/code/parachain/frame/fnft).
+
+2.  Owning a PBLO staked position fNFT(xPBLO) MUST allow voting for
+    protocol governance based on the xPBLO granted.
+
+3.  Each staked position plus its rewards MUST be transferable by
+    transferring the ownership of its NFT including the voting rights.
 
 ## 5. Method
 
@@ -248,7 +243,7 @@ treasury eventually as treasury does not stake it’s PBLO?
 In order to 1. support LP staking 2. LP trading fee distribution and 3.
 PBLO staking reward using trading fees, following changes are proposed
 for
-[Pallet-Pablo](https://github.com/ComposableFi/composable/tree/main/frame/pablo).
+[Pallet-Pablo](https://github.com/ComposableFi/composable/tree/main/code/parachain/frame/pablo).
 
 #### 5.2.1. FeeConfig
 
@@ -272,8 +267,6 @@ new field `protocol_fee`.
         pub protocol_fee_rate: Permill,
     }
 
-**Existing code must be modified to use this data structure**.
-
 Given this,
 
     fee = // calculation depends on the pool type: based on the fee_rate
@@ -294,6 +287,7 @@ automatically redeemed according their pool LP ratio, check
 [reference](https://hackmd.io/@HaydenAdams/HJ9jLsfTz#Fee-Structure).
 This results in trading fee share being diluted overtime for smaller
 pools as follows.
+
 
 After <img src="0005-pablo-distribution-assets/images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>
 trades and <img src="0005-pablo-distribution-assets/images/stem-0e51a2dede42189d77627c4d742822c3.png" width="13" height="6" alt="stem 0e51a2dede42189d77627c4d742822c3" /></span>
@@ -325,8 +319,9 @@ Dilution of LPs](#appendix-a-trading-fee-inflation-to-avoid-dilution-of-lps).
 
 #### 5.2.3. PBLO Staker Pool Creation
 
-When creating new Pablo pool, the creator should have option to create n PBLO staking pool.
-This newly created staking pool will receive rewards from trading fees from Pablo pool as mention in section 5.2.4
+When creating new Pablo pool, the creator should have option to create a
+PBLO staking pool. This newly created staking pool will receive rewards
+from trading fees from Pablo pool as mention in section 5.2.4
 
 #### 5.2.4. PBLO Staker Trading Fee Distribution
 
@@ -339,15 +334,11 @@ PBLO to create a demand/additional value for PBLO.
 
 <img src="0005-pablo-distribution-assets/images/images/pablo-fNFT-pblo-staking-fee-distro.png" width="510" height="346" alt="pablo fNFT pblo staking fee distro" />
 
-Will it need a change in
-[this](https://github.com/ComposableFi/composable/blob/main/frame/composable-traits/src/staking_rewards.rs#L96)
-?
-
 ### 5.3. Pallet Staking Rewards - LP/PICA/PBLO/Other Token Staking Reward Pools
 
 This section covers how the staking rewards are distributed using the
 [staking rewards
-pallet](https://github.com/ComposableFi/composable/tree/main/frame/staking-rewards).
+pallet](https://github.com/ComposableFi/composable/tree/main/code/parachain/frame/staking-rewards).
 
 #### 5.3.1. Analysis of Reward Calculations
 
@@ -499,18 +490,29 @@ to this as the "reward pooling(**RP**) based approach".
 Staking rewards pallet already uses the following data structure
 representing a staking position,
 
-    pub struct Stake<RewardPoolId, Balance, Reductions> {
+    /// Staking typed fNFT, usually can be mapped to raw fNFT storage type. A position identifier
+    /// should exist for each position when stored in the runtime storage.
+    /// TODO refer to the relevant section in the design doc.
+    #[derive(DebugNoBound, PartialEqNoBound, EqNoBound, CloneNoBound, Encode, Decode, TypeInfo)]
+    #[scale_info(skip_type_params(MaxReductions))]
+    pub struct Stake<
+        AssetId: Debug + PartialEq + Eq + Clone,
+        RewardPoolId: Debug + PartialEq + Eq + Clone,
+        Balance: Debug + PartialEq + Eq + Clone,
+        MaxReductions: Get<u32>,
+    > {
         /// Reward Pool ID from which pool to allocate rewards for this
         pub reward_pool_id: RewardPoolId,
 
-        /// The original stake this NFT was minted for or updated NFT with increased stake amount.
+        /// The original stake this position was created for or updated position with any extended
+        /// stake amount.
         pub stake: Balance,
 
         /// Pool share received for this position
         pub share: Balance,
 
         /// Reduced rewards by asset for the position (d_n)
-        pub reductions: Reductions,
+        pub reductions: BoundedBTreeMap<AssetId, Balance, MaxReductions>,
 
         /// The lock period for the stake.
         pub lock: Lock,
@@ -521,11 +523,10 @@ Which is referred to in the algorithms in the following sections.
 Now in order to allow redeeming the above staking position, following
 data structures is to be tracked in the staking rewards pallet,
 
+    /// Defines staking duration, rewards and early unstake penalty for a given asset type.
+    /// TODO refer to the relevant section in the design doc.
     #[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-    pub struct Reward<AssetId, Balance> {
-        /// asset id of the reward
-        pub asset_id: AssetId,
-
+    pub struct Reward<Balance> {
         /// Total rewards including inflation for adjusting for new stakers joining the pool. All
         /// stakers in a pool are eligible to receive a part of this value based on their share of the
         /// pool.
@@ -534,42 +535,61 @@ data structures is to be tracked in the staking rewards pallet,
         /// Already claimed rewards by stakers by unstaking.
         pub claimed_rewards: Balance,
 
-        /// A book keeping field to track the actual total reward without the
-        /// reward dilution adjustment caused by new stakers joining the pool.
+        /// A book keeping field to track the actual total reward without the reward dilution
+        /// adjustment caused by new stakers joining the pool.
+        ///
+        /// total_dilution_adjustment + claimed_rewards is the same as the sum of all of the reductions
+        /// of all of the stakes in the pool.
         pub total_dilution_adjustment: Balance,
-
-        /// Upper bound on the `total_rewards - total_dilution_adjustment`.
-        pub max_rewards: Balance,
 
         /// The rewarding rate that increases the pool `total_reward`
         /// at a given time.
-        pub reward_rate: Perbill,
+        pub reward_rate: RewardRate<Balance>,
+
+        /// The last time the reward was updated, in seconds.
+        pub last_updated_timestamp: u64,
     }
 
     /// A reward pool is a collection of rewards that are allocated to stakers to incentivize a
     /// particular purpose. Eg: a pool of rewards for incentivizing adding liquidity to a pablo swap
     /// pool. TODO refer to the relevant section in the design doc.
-    #[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-    pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets, Rewards> {
+    #[derive(
+        RuntimeDebugNoBound, PartialEqNoBound, EqNoBound, CloneNoBound, Encode, Decode, TypeInfo,
+    )]
+    #[scale_info(skip_type_params(MaxDurationPresets, MaxRewards))]
+    pub struct RewardPool<
+        AccountId: Debug + PartialEq + Eq + Clone,
+        AssetId: Debug + PartialEq + Eq + Clone,
+        Balance: Debug + PartialEq + Eq + Clone,
+        BlockNumber: Debug + PartialEq + Eq + Clone,
+        MaxDurationPresets: Get<u32>,
+        MaxRewards: Get<u32>,
+    > {
         pub owner: AccountId,
 
-        /// The staked asset id of the reward pool.
-        pub asset_id: AssetId,
-
         /// rewards accumulated
-        pub rewards: Rewards,
-
-        /// Total shares distributed among stakers
-        pub total_shares: Balance,
+        pub rewards: BoundedBTreeMap<AssetId, Reward<Balance>, MaxRewards>,
 
         /// Already claimed shares by stakers by unstaking
         pub claimed_shares: Balance,
+
+        /// Pool will start adding rewards to the pool at this block number.
+        pub start_block: BlockNumber,
 
         /// Pool would stop adding rewards to pool at this block number.
         pub end_block: BlockNumber,
 
         // possible lock config for this pool
-        pub lock: LockConfig<DurationPresets>,
+        pub lock: LockConfig<MaxDurationPresets>,
+
+        // Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
+        pub share_asset_id: AssetId,
+
+        // Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
+        pub financial_nft_asset_id: AssetId,
+
+        /// Minimum amount to be staked.
+        pub minimum_staking_amount: Balance,
     }
 
 Following sections describe the algorithms for various operations on the
@@ -646,6 +666,7 @@ Following algorithm should be part of the block hook in the pallet.
 
 New trading fee <img src="0005-pablo-distribution-assets/images/stem-88ffccf5d7e5534d6a1c8255ea6f8491.png" width="203" height="19" alt="stem 88ffccf5d7e5534d6a1c8255ea6f8491" /></span>
 
+
 For <img src="0005-pablo-distribution-assets/images/stem-64bf6f450600e539b13faa38cda05cdd.png" width="20" height="9" alt="stem 64bf6f450600e539b13faa38cda05cdd" /></span>
 liquidity provider,
 
@@ -709,4 +730,4 @@ fNFT at the time of LP event might make sense. i.e fNFT represents the
 LP position on the pool as well as the rewards position for PBLO tokens
 for LPs.
 
-Last updated 2022-06-29 11:48:18 +0200
+Last updated 2023-01-17 01:45:40 +0200
