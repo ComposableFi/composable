@@ -39,3 +39,4 @@ export { ThemeResponsiveSnackbar } from "./Snackbar/ThemeResponsiveSnackbar";
 
 export { ApolloTable } from "./ApolloTable";
 export { VotingDetailsBox } from "./VotingDetailsBox";
+export { TransferKSMAlert } from "./TransferKSMAlert";
