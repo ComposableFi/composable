@@ -80,10 +80,8 @@ pub mod pallet {
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
 		fnft::{FinancialNft, FinancialNftProtocol},
-		staking::{
-			lock::LockConfig, RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod,
-		},
-		time::{DurationSeconds, ONE_MONTH, ONE_WEEK},
+		staking::{RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod},
+		time::DurationSeconds,
 	};
 	use frame_support::{
 		defensive,
