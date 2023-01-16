@@ -38,7 +38,7 @@ lending-runtime-api = { path = "../frame/lending/runtime-api" }
 pablo-rpc = { path = "../frame/pablo/rpc" }
 pablo-runtime-api = { path = "../frame/pablo/runtime-api" }
 
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri", branch = "polkadot-v0.9.30" }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "f0d44fe83c078b2d9fb040337c8152f037ba817d" }
 
 # FRAME Dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
