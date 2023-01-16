@@ -1,9 +1,15 @@
+#![allow(clippy::expect_fun_call)]
+
 use crate::{
+	reward_accumulation_hook_reward_update_calculation,
 	test_helpers::{add_to_rewards_pot_and_assert, create_rewards_pool_and_assert},
-	RewardAccumulationHookError,
+	RewardAccumulationHookError, RewardsPotIsEmpty,
 };
 use composable_tests_helpers::test::{block::process_and_progress_blocks, helper::RuntimeTrait};
-use frame_support::traits::{fungibles::InspectHold, TryCollect, UnixTime};
+use frame_support::{
+	bounded_btree_map,
+	traits::{fungibles::InspectHold, TryCollect, UnixTime},
+};
 
 use crate::test::prelude::*;
 
@@ -22,6 +28,8 @@ type XF = Currency<1099, 12>;
 #[test]
 fn test_reward_update_calculation() {
 	new_test_ext().execute_with(|| {
+		init_logger();
+
 		// block 0 is weird, start at 1 instead
 		process_and_progress_blocks::<crate::Pallet<Test>, Test>(1);
 
@@ -44,7 +52,13 @@ fn test_reward_update_calculation() {
 			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 		});
 
-		add_to_rewards_pot_and_assert::<Test>(ALICE, PICA::ID, PICA::ID, PICA::units(10_000));
+		add_to_rewards_pot_and_assert::<Test>(
+			ALICE,
+			PICA::ID,
+			PICA::ID,
+			PICA::units(10_000),
+			false,
+		);
 
 		// the expected total_rewards amount for each block surpassed
 		let expected = [
@@ -65,7 +79,7 @@ fn test_reward_update_calculation() {
 			// to clear events
 			process_and_progress_blocks::<crate::Pallet<Test>, Test>(1);
 
-			StakingRewards::reward_accumulation_hook_reward_update_calculation(
+			reward_accumulation_hook_reward_update_calculation::<Test>(
 				PICA::ID,
 				PICA::ID,
 				&mut reward,
@@ -75,7 +89,7 @@ fn test_reward_update_calculation() {
 			println!("blocks surpassed: {}", block_number);
 			for error in [
 				RewardAccumulationHookError::BackToTheFuture,
-				RewardAccumulationHookError::RewardsPotEmpty,
+				RewardAccumulationHookError::Overflow,
 			] {
 				Test::assert_no_event(Event::StakingRewards(
 					crate::Event::<Test>::RewardAccumulationHookError {
@@ -86,12 +100,6 @@ fn test_reward_update_calculation() {
 				));
 			}
 
-			Test::assert_no_event(crate::Event::<Test>::RewardAccumulationHookError {
-				pool_id: PICA::ID,
-				asset_id: PICA::ID,
-				error: RewardAccumulationHookError::RewardsPotEmpty,
-			});
-
 			assert_eq!(
 				reward.total_rewards, expected_total_rewards,
 				"blocks surpassed: {block_number}"
@@ -100,7 +108,7 @@ fn test_reward_update_calculation() {
 
 		let current_block_number = (expected.len() + 1) as u64;
 
-		StakingRewards::reward_accumulation_hook_reward_update_calculation(
+		reward_accumulation_hook_reward_update_calculation::<Test>(
 			PICA::ID,
 			PICA::ID,
 			&mut reward,
@@ -108,10 +116,9 @@ fn test_reward_update_calculation() {
 		);
 
 		// should not report an error since the pot is not empty
-		Test::assert_no_event(crate::Event::<Test>::RewardAccumulationHookError {
+		Test::assert_no_event(crate::Event::<Test>::RewardPoolPaused {
 			pool_id: PICA::ID,
 			asset_id: PICA::ID,
-			error: RewardAccumulationHookError::RewardsPotEmpty,
 		});
 	})
 }
@@ -119,7 +126,8 @@ fn test_reward_update_calculation() {
 #[test]
 fn test_accumulate_rewards_pool_empty_refill() {
 	new_test_ext().execute_with(|| {
-		const STARTING_BLOCK: u64 = 10;
+		init_logger();
+
 		type A = Currency<97, 12>;
 		type XA = Currency<1097, 12>;
 		type B = Currency<98, 12>;
@@ -132,27 +140,23 @@ fn test_accumulate_rewards_pool_empty_refill() {
 
 		let mut current_block = System::block_number();
 
-		progress_to_block(STARTING_BLOCK, &mut current_block);
+		progress_to_block(10, &mut current_block);
 
-		// 0.000_02 A per second
-		const A_A_REWARD_RATE: u128 = A::units(2) / 100_000;
+		// 2 A per second
+		const A_A_REWARD_RATE: u128 = A::units(2);
 		const A_A_AMOUNT_TO_ADD_TO_REWARDS_POT: u128 = A_A_REWARD_RATE * block_seconds(4);
 
-		// 0.000_02 B per second
-		const A_B_REWARD_RATE: u128 = B::units(2) / 100_000;
-
 		mint_assets([ALICE], [A::ID], A::units(10_000));
-		mint_assets([ALICE], [B::ID], B::units(10_000));
 
 		create_rewards_pool_and_assert::<Test>(RewardPoolConfiguration::RewardRateBasedIncentive {
 			owner: ALICE,
 			asset_id: A::ID,
 			start_block: current_block + 1,
 			end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
-			reward_configs: [
-				(A::ID, RewardConfig { reward_rate: RewardRate::per_second(A_A_REWARD_RATE) }),
-				(B::ID, RewardConfig { reward_rate: RewardRate::per_second(A_B_REWARD_RATE) }),
-			]
+			reward_configs: [(
+				A::ID,
+				RewardConfig { reward_rate: RewardRate::per_second(A_A_REWARD_RATE) },
+			)]
 			.into_iter()
 			.try_collect()
 			.unwrap(),
@@ -164,75 +168,71 @@ fn test_accumulate_rewards_pool_empty_refill() {
 
 		progress_to_block(current_block + 1, &mut current_block);
 
-		check_events([
-			crate::Event::<Test>::RewardAccumulationHookError {
-				pool_id: A::ID,
-				asset_id: A::ID,
-				error: RewardAccumulationHookError::RewardsPotEmpty,
-			},
-			crate::Event::<Test>::RewardAccumulationHookError {
-				pool_id: A::ID,
-				asset_id: B::ID,
-				error: RewardAccumulationHookError::RewardsPotEmpty,
-			},
-		]);
+		check_events([crate::Event::<Test>::RewardPoolStarted { pool_id: A::ID }]);
 
 		progress_to_block(current_block + 1, &mut current_block);
 
-		// RewardsPotEmpty event should only be emitted once, not every block
-		check_events([]);
+		check_events([crate::Event::<Test>::RewardPoolPaused { pool_id: A::ID, asset_id: A::ID }]);
+
+		progress_to_block(current_block + 1, &mut current_block);
 
 		add_to_rewards_pot_and_assert::<Test>(
 			ALICE,
 			A::ID,
 			A::ID,
 			A_A_AMOUNT_TO_ADD_TO_REWARDS_POT,
+			true,
 		);
 
-		check_events([crate::Event::<Test>::RewardsPotIncreased {
-			pool_id: A::ID,
-			asset_id: A::ID,
-			amount: A_A_REWARD_RATE * block_seconds(4),
-		}]);
+		check_events([
+			crate::Event::<Test>::RewardPoolResumed { pool_id: A::ID, asset_id: A::ID },
+			crate::Event::<Test>::RewardsPotIncreased {
+				pool_id: A::ID,
+				asset_id: A::ID,
+				amount: A_A_REWARD_RATE * block_seconds(4),
+			},
+		]);
 
-		progress_to_block(STARTING_BLOCK + 5, &mut current_block);
+		progress_to_block(current_block + 4, &mut current_block);
 
 		check_rewards(&[CheckRewards {
 			owner: ALICE,
 			pool_asset_id: A::ID,
-			pool_rewards: &[
-				PoolRewards {
-					reward_asset_id: A::ID,
-					expected_total_rewards: A_A_REWARD_RATE * block_seconds(3),
-					expected_locked_balance: A_A_AMOUNT_TO_ADD_TO_REWARDS_POT -
-						A_A_REWARD_RATE * block_seconds(3),
-					expected_unlocked_balance: A_A_REWARD_RATE * block_seconds(3),
-				},
-				PoolRewards {
-					reward_asset_id: B::ID,
-					expected_total_rewards: 0,
-					expected_locked_balance: 0,
-					expected_unlocked_balance: 0,
-				},
-			],
+			pool_rewards: &[PoolRewards {
+				reward_asset_id: A::ID,
+				expected_total_rewards: A_A_REWARD_RATE * block_seconds(4),
+				expected_locked_balance: A_A_AMOUNT_TO_ADD_TO_REWARDS_POT -
+					A_A_REWARD_RATE * block_seconds(4),
+				expected_unlocked_balance: A_A_REWARD_RATE * block_seconds(4),
+			}],
 		}]);
 
 		check_events([]);
 
-		assert_eq!(current_block, 15);
-
 		progress_to_block(current_block + 1, &mut current_block);
 
-		// Note: reward pot for A_B should become empty, once it adds the remaining rewards.
-		// Should we emit some event on the pallet? If yes, it should be asserted here.
+		check_rewards(&[CheckRewards {
+			owner: ALICE,
+			pool_asset_id: A::ID,
+			pool_rewards: &[PoolRewards {
+				reward_asset_id: A::ID,
+				expected_total_rewards: A_A_AMOUNT_TO_ADD_TO_REWARDS_POT,
+				expected_locked_balance: 0,
+				expected_unlocked_balance: A_A_AMOUNT_TO_ADD_TO_REWARDS_POT,
+			}],
+		}]);
+
+		check_events([crate::Event::<Test>::RewardPoolPaused { pool_id: A::ID, asset_id: A::ID }]);
 	});
 }
 
-#[test]
-// takes about 3 minutes to run in debug, 20 seconds in release
 // does not do any claiming
+#[test]
+#[ignore = "this is a very large test that tests functionality tested more succinctly in other tests; slated for removal"]
 fn test_accumulate_rewards_hook() {
 	new_test_ext().execute_with(|| {
+		init_logger();
+
 		const STARTING_BLOCK: u64 = 10;
 
 		let mut current_block = System::block_number();
@@ -280,9 +280,22 @@ fn test_accumulate_rewards_hook() {
 		});
 
 		mint_assets([ALICE], [A::ID], A_A_INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert::<Test>(ALICE, ALICES_POOL_ID, A::ID, A_A_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert::<Test>(
+			ALICE,
+			ALICES_POOL_ID,
+			A::ID,
+			A_A_INITIAL_AMOUNT,
+			false,
+		);
+
 		mint_assets([ALICE], [B::ID], A_B_INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert::<Test>(ALICE, ALICES_POOL_ID, B::ID, A_B_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert::<Test>(
+			ALICE,
+			ALICES_POOL_ID,
+			B::ID,
+			A_B_INITIAL_AMOUNT,
+			false,
+		);
 
 		const BOBS_POOL_ID: u128 = C::ID;
 
@@ -305,9 +318,22 @@ fn test_accumulate_rewards_hook() {
 		});
 
 		mint_assets([ALICE], [D::ID], C_D_INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert::<Test>(ALICE, BOBS_POOL_ID, D::ID, C_D_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert::<Test>(
+			ALICE,
+			BOBS_POOL_ID,
+			D::ID,
+			C_D_INITIAL_AMOUNT,
+			false,
+		);
+
 		mint_assets([ALICE], [E::ID], C_E_INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert::<Test>(ALICE, BOBS_POOL_ID, E::ID, C_E_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert::<Test>(
+			ALICE,
+			BOBS_POOL_ID,
+			E::ID,
+			C_E_INITIAL_AMOUNT,
+			false,
+		);
 
 		{
 			progress_to_block(STARTING_BLOCK + 2, &mut current_block);
@@ -474,8 +500,8 @@ fn test_accumulate_rewards_hook() {
 				},
 			]);
 
-			// Note: reward pot for C_E should become empty. Should we emit some event? If yes, it
-			// should be asserted here.
+			// Note: reward pot for C_E should become empty.
+			check_events([]);
 		}
 
 		{
@@ -526,8 +552,7 @@ fn test_accumulate_rewards_hook() {
 				},
 			]);
 
-			// Note: reward pot for D_E should become empty. Should we emit some event? If yes,
-			// it should be asserted here.
+			check_events([crate::Event::RewardPoolPaused { pool_id: C::ID, asset_id: E::ID }]);
 		}
 
 		// add a new, zero-reward pool
@@ -603,8 +628,9 @@ fn test_accumulate_rewards_hook() {
 			]);
 
 			// Note: reward pot for A_B should become empty.
-			// Should we emit some event on the pallet? If yes, it should be asserted here.
+			check_events([crate::Event::RewardPoolPaused { pool_id: A::ID, asset_id: B::ID }]);
 		}
+
 		{
 			progress_to_block(STARTING_BLOCK + 8334, &mut current_block);
 
@@ -658,7 +684,7 @@ fn test_accumulate_rewards_hook() {
 			]);
 
 			// Note: reward pot for A_A should become empty.
-			// Should we emit some event on the pallet? If yes, it should be asserted here.
+			check_events([crate::Event::RewardPoolPaused { pool_id: A::ID, asset_id: A::ID }]);
 		}
 	});
 }
@@ -666,53 +692,80 @@ fn test_accumulate_rewards_hook() {
 #[test]
 fn test_pause_in_reward_accumulation_hook() {
 	new_test_ext().execute_with(|| {
-		const STARTING_BLOCK: u64 = 10;
+		init_logger();
+
+		const POOL_STARTING_BLOCK: u64 = 10;
 
 		let mut current_block = System::block_number();
 
-		progress_to_block(STARTING_BLOCK, &mut current_block);
-
 		// 0.000_002 A per second
-		// initial amount will be fully rewarded after 50_000 seconds (8334 blocks)
 		const A_A_REWARD_RATE: u128 = A::units(2) / 1_000_000;
-		const A_A_INITIAL_AMOUNT: u128 = A::units(1) / 10;
-		const A_A_REFUNDING_AMOUNT: u128 = A::units(1);
-		const A_A_PAUSED_BLOCKS: u64 = 250;
+		// fund the pot with 100 blocks worth of rewards
+		const A_A_FIRST_FUND_AMOUNT: u128 = A_A_REWARD_RATE * block_seconds(100);
+		const A_A_SECOND_FUND_AMOUNT: u128 = A::units(1);
 
 		// 0.000_002 B per second
-		// initial amount will be fully rewarded after 25_000 seconds (4167 blocks)
 		const A_B_REWARD_RATE: u128 = B::units(2) / 1_000_000;
-		const A_B_INITIAL_AMOUNT: u128 = A::units(5) / 100;
-		const A_B_REFUNDING_AMOUNT: u128 = A::units(5);
+		// fund the pool with 0.005 B to start
+		// 2_500 seconds of rewards, 416.6̅ blocks (417 full blocks) @ 6 seconds/block
+		const A_B_FIRST_FUND_AMOUNT: u128 = B::units(5) / 1_000;
+		// fund the pool with 0.001 B the 2nd time it gets funded (double the first amount)
+		// 5_000 seconds of rewards, 833.3̅ blocks (834 full blocks) @ 6 seconds/block
+		const A_B_SECOND_FUND_AMOUNT: u128 = A_B_FIRST_FUND_AMOUNT * 2;
 		const A_B_PAUSED_BLOCKS: u64 = 50;
 
 		const ALICES_POOL_ID: u128 = A::ID;
 
+		progress_to_block(1, &mut current_block);
+
+		log::info!("creating pool at block {current_block}");
+
+		// Pool that lasts for 1 year
 		create_rewards_pool_and_assert::<Test>(RewardPoolConfiguration::RewardRateBasedIncentive {
 			owner: ALICE,
 			asset_id: ALICES_POOL_ID,
-			start_block: current_block + 1,
-			end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
-			reward_configs: [
-				(A::ID, RewardConfig { reward_rate: RewardRate::per_second(A_A_REWARD_RATE) }),
-				(B::ID, RewardConfig { reward_rate: RewardRate::per_second(A_B_REWARD_RATE) }),
-			]
-			.into_iter()
-			.try_collect()
-			.unwrap(),
+			start_block: POOL_STARTING_BLOCK,
+			end_block: POOL_STARTING_BLOCK + ONE_YEAR_OF_BLOCKS,
+			reward_configs: bounded_btree_map! {
+				A::ID => RewardConfig {
+					reward_rate: RewardRate::per_second(A_A_REWARD_RATE)
+				},
+				B::ID => RewardConfig {
+					reward_rate: RewardRate::per_second(A_B_REWARD_RATE)
+				},
+			},
 			lock: default_lock_config(),
 			share_asset_id: XA::ID,
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 		});
 
-		mint_assets([ALICE], [A::ID], A_A_INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert::<Test>(ALICE, ALICES_POOL_ID, A::ID, A_A_INITIAL_AMOUNT);
-		mint_assets([ALICE], [B::ID], A_B_INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert::<Test>(ALICE, ALICES_POOL_ID, B::ID, A_B_INITIAL_AMOUNT);
+		mint_assets([BOB], [A::ID], A_A_FIRST_FUND_AMOUNT);
+		add_to_rewards_pot_and_assert::<Test>(
+			BOB,
+			ALICES_POOL_ID,
+			A::ID,
+			A_A_FIRST_FUND_AMOUNT,
+			false,
+		);
+
+		mint_assets([BOB], [B::ID], A_B_FIRST_FUND_AMOUNT);
+		add_to_rewards_pot_and_assert::<Test>(
+			BOB,
+			ALICES_POOL_ID,
+			B::ID,
+			A_B_FIRST_FUND_AMOUNT,
+			false,
+		);
+
+		progress_to_block(POOL_STARTING_BLOCK, &mut current_block);
+
+		check_events([crate::Event::<Test>::RewardPoolStarted { pool_id: ALICES_POOL_ID }]);
+
+		dbg!(RewardsPotIsEmpty::<Test>::iter_values().collect::<Vec<_>>());
 
 		{
-			progress_to_block(STARTING_BLOCK + 334, &mut current_block);
+			progress_to_block(POOL_STARTING_BLOCK + 100 + 1, &mut current_block);
 
 			check_rewards(&[CheckRewards {
 				owner: ALICE,
@@ -720,30 +773,28 @@ fn test_pause_in_reward_accumulation_hook() {
 				pool_rewards: &[
 					PoolRewards {
 						reward_asset_id: A::ID,
-						expected_total_rewards: A_A_REWARD_RATE *
-							block_seconds(current_block - STARTING_BLOCK),
-						expected_locked_balance: A_A_INITIAL_AMOUNT -
-							(A_A_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
-						expected_unlocked_balance: A_A_REWARD_RATE *
-							block_seconds(current_block - STARTING_BLOCK),
+						expected_total_rewards: A_A_FIRST_FUND_AMOUNT,
+						expected_locked_balance: 0,
+						expected_unlocked_balance: A_A_FIRST_FUND_AMOUNT,
 					},
 					PoolRewards {
 						reward_asset_id: B::ID,
 						expected_total_rewards: A_B_REWARD_RATE *
-							block_seconds(current_block - STARTING_BLOCK),
-						expected_locked_balance: A_B_INITIAL_AMOUNT -
-							(A_B_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							block_seconds(current_block - POOL_STARTING_BLOCK),
+						expected_locked_balance: A_B_FIRST_FUND_AMOUNT -
+							(A_B_REWARD_RATE *
+								block_seconds(current_block - POOL_STARTING_BLOCK)),
 						expected_unlocked_balance: A_B_REWARD_RATE *
-							block_seconds(current_block - STARTING_BLOCK),
+							block_seconds(current_block - POOL_STARTING_BLOCK),
 					},
 				],
 			}]);
 
-			// Rewards for B should be "paused" now, until funds are added to the rewards pot
+			check_events([crate::Event::RewardPoolPaused { pool_id: A::ID, asset_id: A::ID }]);
 		}
 
 		{
-			progress_to_block(STARTING_BLOCK + 4167, &mut current_block);
+			progress_to_block(POOL_STARTING_BLOCK + 417 + 1, &mut current_block);
 
 			check_rewards(&[CheckRewards {
 				owner: ALICE,
@@ -751,66 +802,47 @@ fn test_pause_in_reward_accumulation_hook() {
 				pool_rewards: &[
 					PoolRewards {
 						reward_asset_id: A::ID,
-						expected_total_rewards: A_A_REWARD_RATE *
-							block_seconds(current_block - STARTING_BLOCK),
-						expected_locked_balance: A_A_INITIAL_AMOUNT -
-							(A_A_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
-						expected_unlocked_balance: A_A_REWARD_RATE *
-							block_seconds(current_block - STARTING_BLOCK),
+						expected_total_rewards: A_A_FIRST_FUND_AMOUNT,
+						expected_locked_balance: 0,
+						expected_unlocked_balance: A_A_FIRST_FUND_AMOUNT,
 					},
 					PoolRewards {
 						reward_asset_id: B::ID,
-						expected_total_rewards: A_B_INITIAL_AMOUNT,
+						expected_total_rewards: A_B_FIRST_FUND_AMOUNT,
 						expected_locked_balance: 0,
-						expected_unlocked_balance: A_B_INITIAL_AMOUNT,
+						expected_unlocked_balance: A_B_FIRST_FUND_AMOUNT,
 					},
 				],
 			}]);
 
-			// Note: reward pot for A_B should become empty.
-			// Should we emit some event on the pallet? If yes, it should be asserted here.
+			check_events([crate::Event::RewardPoolPaused { pool_id: A::ID, asset_id: B::ID }]);
 		}
 
 		{
-			// During these blocks, no rewards of B will be accumulated
-			progress_to_block(current_block + A_B_PAUSED_BLOCKS, &mut current_block);
+			// progress 10 blocks paused (this will also clear the events)
+			progress_to_block(current_block + 10, &mut current_block);
 
-			check_rewards(&[CheckRewards {
-				owner: ALICE,
-				pool_asset_id: A::ID,
-				pool_rewards: &[
-					PoolRewards {
-						reward_asset_id: A::ID,
-						expected_total_rewards: A_A_REWARD_RATE *
-							block_seconds(current_block - STARTING_BLOCK),
-						expected_locked_balance: A_A_INITIAL_AMOUNT -
-							(A_A_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
-						expected_unlocked_balance: A_A_REWARD_RATE *
-							block_seconds(current_block - STARTING_BLOCK),
-					},
-					PoolRewards {
-						reward_asset_id: B::ID,
-						expected_total_rewards: A_B_INITIAL_AMOUNT,
-						expected_locked_balance: 0,
-						expected_unlocked_balance: A_B_INITIAL_AMOUNT,
-					},
-				],
-			}]);
-
-			// Add funds to the reward pot
-			mint_assets([ALICE], [B::ID], A_B_REFUNDING_AMOUNT);
+			// Add funds to the pot for B
+			mint_assets([ALICE], [B::ID], A_B_SECOND_FUND_AMOUNT);
 			add_to_rewards_pot_and_assert::<Test>(
 				ALICE,
 				ALICES_POOL_ID,
 				B::ID,
-				A_B_REFUNDING_AMOUNT,
+				A_B_SECOND_FUND_AMOUNT,
+				true, // pot was empty, this should restart it
 			);
 
-			check_events([crate::Event::<Test>::RewardsPotIncreased {
-				pool_id: A::ID,
-				asset_id: B::ID,
-				amount: A_B_REFUNDING_AMOUNT,
-			}]);
+			check_events([
+				crate::Event::<Test>::RewardsPotIncreased {
+					pool_id: ALICES_POOL_ID,
+					asset_id: B::ID,
+					amount: A_B_SECOND_FUND_AMOUNT,
+				},
+				crate::Event::<Test>::RewardPoolResumed {
+					pool_id: ALICES_POOL_ID,
+					asset_id: B::ID,
+				},
+			]);
 		}
 
 		{
@@ -822,33 +854,28 @@ fn test_pause_in_reward_accumulation_hook() {
 				pool_rewards: &[
 					PoolRewards {
 						reward_asset_id: A::ID,
-						expected_total_rewards: A_A_REWARD_RATE *
-							block_seconds(current_block - STARTING_BLOCK),
-						expected_locked_balance: A_A_INITIAL_AMOUNT -
-							(A_A_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
-						expected_unlocked_balance: A_A_REWARD_RATE *
-							block_seconds(current_block - STARTING_BLOCK),
+						expected_total_rewards: A_A_FIRST_FUND_AMOUNT,
+						expected_locked_balance: 0,
+						expected_unlocked_balance: A_A_FIRST_FUND_AMOUNT,
 					},
 					PoolRewards {
 						reward_asset_id: B::ID,
-						expected_total_rewards: A_B_INITIAL_AMOUNT +
+						expected_total_rewards: A_B_FIRST_FUND_AMOUNT +
 							A_B_REWARD_RATE * block_seconds(10),
-						expected_locked_balance: A_B_REFUNDING_AMOUNT -
+						expected_locked_balance: A_B_SECOND_FUND_AMOUNT -
 							A_B_REWARD_RATE * block_seconds(10),
-						expected_unlocked_balance: A_B_INITIAL_AMOUNT +
+						expected_unlocked_balance: A_B_FIRST_FUND_AMOUNT +
 							A_B_REWARD_RATE * block_seconds(10),
 					},
 				],
 			}]);
+
+			check_events([]);
 		}
 
 		{
-			progress_to_block(STARTING_BLOCK + 8334, &mut current_block);
-
-			// While reward pot was empty, reward pool was "paused", leaving 2 periods that
-			// won't have releasable rewards. This needs to be subtracted from the expected
-			// total rewards. This happens when the pot getting empty does not align with blocks.
-			const REWARDS_THAT_SHOULD_NOT_BE_ACCUMULATED_FOR_B: u128 = 2 * A_B_REWARD_RATE;
+			// 834 blocks, less the 10 progressed above
+			progress_to_block(current_block + 834 + 1 - 10, &mut current_block);
 
 			check_rewards(&[CheckRewards {
 				owner: ALICE,
@@ -856,44 +883,33 @@ fn test_pause_in_reward_accumulation_hook() {
 				pool_rewards: &[
 					PoolRewards {
 						reward_asset_id: A::ID,
-						expected_total_rewards: A_A_INITIAL_AMOUNT,
+						expected_total_rewards: A_A_FIRST_FUND_AMOUNT,
 						expected_locked_balance: 0,
-						expected_unlocked_balance: A_A_INITIAL_AMOUNT,
+						expected_unlocked_balance: A_A_FIRST_FUND_AMOUNT,
 					},
 					PoolRewards {
 						reward_asset_id: B::ID,
-						expected_total_rewards: A_B_REWARD_RATE *
-							block_seconds(current_block - A_B_PAUSED_BLOCKS - STARTING_BLOCK) -
-							REWARDS_THAT_SHOULD_NOT_BE_ACCUMULATED_FOR_B,
-						expected_locked_balance: A_B_INITIAL_AMOUNT + A_B_REFUNDING_AMOUNT -
-							(A_B_REWARD_RATE *
-								block_seconds(
-									current_block - A_B_PAUSED_BLOCKS - STARTING_BLOCK,
-								) - REWARDS_THAT_SHOULD_NOT_BE_ACCUMULATED_FOR_B),
-						expected_unlocked_balance: A_B_REWARD_RATE *
-							block_seconds(current_block - A_B_PAUSED_BLOCKS - STARTING_BLOCK) -
-							REWARDS_THAT_SHOULD_NOT_BE_ACCUMULATED_FOR_B,
+						expected_total_rewards: A_B_FIRST_FUND_AMOUNT + A_B_SECOND_FUND_AMOUNT,
+						expected_locked_balance: 0,
+						expected_unlocked_balance: A_B_FIRST_FUND_AMOUNT + A_B_SECOND_FUND_AMOUNT,
 					},
 				],
 			}]);
 
-			// Note: reward pot for A_A should become empty.
-			// Should we emit some event on the pallet? If yes, it should be asserted here.
+			check_events([crate::Event::RewardPoolPaused { pool_id: A::ID, asset_id: B::ID }]);
 		}
 	});
 }
 
 fn check_events(expected_events: impl IntoIterator<Item = crate::Event<Test>>) {
 	let mut expected_events = expected_events.into_iter().collect::<Vec<_>>();
-	for record in System::events() {
-		if let Event::StakingRewards(staking_event) = record.event {
-			let idx = expected_events
-				.iter()
-				.position(|e| e.eq(&staking_event))
-				.expect(&format!("unexpected event: {staking_event:#?}"));
+	for staking_event in <Test as RuntimeTrait<crate::Event<Test>>>::pallet_events() {
+		let idx = expected_events
+			.iter()
+			.position(|e| e.eq(&staking_event))
+			.expect(&format!("unexpected event: {staking_event:#?}"));
 
-			expected_events.remove(idx);
-		}
+		expected_events.remove(idx);
 	}
 
 	assert!(
@@ -909,7 +925,14 @@ fn progress_to_block(block: u64, counter: &mut u64) {
 	);
 
 	let new_blocks = block - *counter;
-	process_and_progress_blocks::<StakingRewards, Test>(new_blocks.try_into().unwrap());
+	process_and_progress_blocks_with::<StakingRewards, Test>(
+		new_blocks.try_into().unwrap(),
+		|| {
+			// let found_events =
+			// 	<Test as RuntimeTrait<crate::Event<Test>>>::pallet_events().collect::<Vec<_>>();
+			// dbg!(found_events);
+		},
+	);
 
 	*counter = System::block_number();
 	assert_eq!(

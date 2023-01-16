@@ -1,6 +1,7 @@
 pub use crate::prelude::*;
 
 use composable_tests_helpers::test::block::MILLISECS_PER_BLOCK;
+use log::LevelFilter;
 pub use sp_core::{
 	sr25519::{Public, Signature},
 	H256,
@@ -23,3 +24,7 @@ pub(crate) const ONE_YEAR_OF_BLOCKS: u64 = 60 * 60 * 24 * 365 / (block_seconds(1
 pub(crate) const STAKING_FNFT_COLLECTION_ID: CurrencyId = 1;
 
 pub(crate) const MINIMUM_STAKING_AMOUNT: u128 = 10_000;
+
+pub(crate) fn init_logger() {
+	let _ = env_logger::builder().filter_level(LevelFilter::Info).is_test(true).try_init();
+}

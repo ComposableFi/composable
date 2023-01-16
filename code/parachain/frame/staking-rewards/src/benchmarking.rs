@@ -244,7 +244,7 @@ benchmarks! {
 
 		let mut reward = RewardPools::<T>::get(&pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
 	}: {
-		let reward = Pallet::<T>::reward_accumulation_hook_reward_update_calculation(pool_id, reward_asset_id,&mut reward, now);
+		crate::reward_accumulation_hook_reward_update_calculation::<T>(pool_id, reward_asset_id,&mut reward, now);
 	}
 
 	unix_time_now {}: {

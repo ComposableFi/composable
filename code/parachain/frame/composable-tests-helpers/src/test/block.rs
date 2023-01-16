@@ -20,8 +20,25 @@ where
 	>,
 	<Runtime as frame_system::Config>::Hash: From<[u8; 32]>,
 {
+	process_and_progress_blocks_with::<Pallet, Runtime>(blocks_to_process, || {})
+}
+
+/// Processes the specified amount of blocks with [`next_block()`], and calls the specified callback
+/// after each block.
+pub fn process_and_progress_blocks_with<Pallet, Runtime>(blocks_to_process: usize, cb: impl Fn())
+where
+	Runtime: FrameSystemConfig + PalletTimestampConfig,
+	<Runtime as FrameSystemConfig>::BlockNumber: SafeAdd,
+	Pallet: Hooks<<Runtime as FrameSystemConfig>::BlockNumber>,
+	u64: Mul<
+		<Runtime as FrameSystemConfig>::BlockNumber,
+		Output = <Runtime as PalletTimestampConfig>::Moment,
+	>,
+	<Runtime as frame_system::Config>::Hash: From<[u8; 32]>,
+{
 	(0..blocks_to_process).for_each(|_| {
 		next_block::<Pallet, Runtime>();
+		cb();
 	})
 }
 

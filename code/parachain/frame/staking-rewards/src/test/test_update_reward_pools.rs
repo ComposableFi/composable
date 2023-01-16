@@ -1,28 +1,48 @@
+use core::ops::Mul;
+
+use composable_support::validation::TryIntoValidated;
 use composable_tests_helpers::test::{
 	block::process_and_progress_blocks,
 	currency::{PICA, USDT, XPICA},
 	helper::RuntimeTrait,
 };
-use composable_traits::staking::{
-	Reward, RewardConfig, RewardPoolConfiguration, RewardRate, RewardRatePeriod, RewardUpdate,
+use composable_traits::{
+	staking::{
+		lock::LockConfig, Reward, RewardConfig, RewardPoolConfiguration, RewardRate,
+		RewardRatePeriod, RewardUpdate,
+	},
+	time::{ONE_HOUR, ONE_MINUTE},
 };
-use frame_support::{traits::TryCollect, BoundedBTreeMap};
+use frame_support::{
+	bounded_btree_map,
+	traits::{fungibles::Inspect, TryCollect},
+	BoundedBTreeMap,
+};
+use sp_arithmetic::fixed_point::FixedU64;
+use sp_runtime::{FixedPointNumber, Perbill};
 
 use crate::{
-	runtime::{MaxRewardConfigsPerPool, Origin, StakingRewards, Test, ALICE},
+	runtime::{
+		MaxRewardConfigsPerPool, Origin, StakingRewards, System, Test, Tokens, ALICE, BOB, CHARLIE,
+	},
 	test::{
 		default_lock_config, mint_assets, new_test_ext,
 		prelude::{
-			block_seconds, MINIMUM_STAKING_AMOUNT, ONE_YEAR_OF_BLOCKS, STAKING_FNFT_COLLECTION_ID,
+			block_seconds, init_logger, MINIMUM_STAKING_AMOUNT, ONE_YEAR_OF_BLOCKS,
+			STAKING_FNFT_COLLECTION_ID,
 		},
 		test_reward_accumulation_hook::{check_rewards, CheckRewards, PoolRewards},
 	},
-	test_helpers::{add_to_rewards_pot_and_assert, create_rewards_pool_and_assert},
+	test_helpers::{
+		add_to_rewards_pot_and_assert, create_rewards_pool_and_assert, stake_and_assert,
+	},
 };
 
 #[test]
 fn test_update_reward_pool() {
 	new_test_ext().execute_with(|| {
+		init_logger();
+
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		const INITIAL_AMOUNT: u128 = PICA::units(100);
@@ -49,9 +69,9 @@ fn test_update_reward_pool() {
 		});
 
 		mint_assets([ALICE], [USDT::ID], INITIAL_AMOUNT);
-		add_to_rewards_pot_and_assert::<Test>(ALICE, PICA::ID, USDT::ID, INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert::<Test>(ALICE, PICA::ID, USDT::ID, INITIAL_AMOUNT, false);
 
-		process_and_progress_blocks::<StakingRewards, Test>(1);
+		process_and_progress_blocks::<StakingRewards, Test>(2);
 
 		check_rewards(&[CheckRewards {
 			owner: ALICE,
@@ -123,5 +143,83 @@ fn test_update_reward_pool() {
 					(UPDATED_REWARD_RATE_AMOUNT * block_seconds(11)),
 			}],
 		}]);
+	})
+}
+
+#[test]
+fn update_accumulates_properly() {
+	new_test_ext().execute_with(|| {
+		process_and_progress_blocks::<StakingRewards, Test>(10);
+
+		let reward_rate = RewardRate::per_second(USDT::units(1) / 1_000);
+
+		Test::assert_extrinsic_event(
+			StakingRewards::create_reward_pool(
+				Origin::root(),
+				RewardPoolConfiguration::RewardRateBasedIncentive {
+					owner: ALICE,
+					asset_id: PICA::ID,
+					start_block: 50,
+					end_block: 100_000,
+					reward_configs: bounded_btree_map! {
+						USDT::ID => RewardConfig {
+							reward_rate: reward_rate.clone(),
+						},
+					},
+					lock: LockConfig {
+						duration_presets: bounded_btree_map! {
+							// 1%
+							ONE_HOUR => FixedU64::from_rational(101, 100)
+								.try_into_validated()
+								.expect(">= 1"),
+							// 0.1%
+							ONE_MINUTE => FixedU64::from_rational(1_001, 1_000)
+								.try_into_validated()
+								.expect(">= 1"),
+						},
+						unlock_penalty: Perbill::from_percent(5),
+					},
+					share_asset_id: XPICA::ID,
+					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+					minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+				},
+			),
+			crate::Event::<Test>::RewardPoolCreated {
+				pool_id: PICA::ID,
+				owner: ALICE,
+				end_block: 100_000,
+			},
+		);
+
+		process_and_progress_blocks::<StakingRewards, Test>(10);
+
+		mint_assets([BOB], [USDT::ID], USDT::units(100_000));
+		add_to_rewards_pot_and_assert::<Test>(BOB, PICA::ID, USDT::ID, USDT::units(100_000), false);
+
+		process_and_progress_blocks::<StakingRewards, Test>(30);
+
+		assert_eq!(System::block_number(), 50);
+
+		mint_assets([CHARLIE], [PICA::ID], PICA::units(101));
+		let stake_id = stake_and_assert::<Test>(CHARLIE, PICA::ID, PICA::units(100), ONE_HOUR);
+
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+
+		Test::assert_extrinsic_event(
+			StakingRewards::claim(Origin::signed(CHARLIE), STAKING_FNFT_COLLECTION_ID, stake_id),
+			crate::Event::Claimed {
+				owner: CHARLIE,
+				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
+				fnft_instance_id: stake_id,
+			},
+		);
+
+		let claimed = Tokens::balance(USDT::ID, &CHARLIE);
+
+		dbg!(claimed);
+
+		let expected = dbg!(reward_rate).amount.mul(block_seconds(1));
+
+		assert_eq!(expected, claimed);
 	})
 }
