@@ -1,6 +1,11 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
     packages = rec {
+      hyperspace-dali-container = pkgs.dockerTools.buildImage {
+        tag = "latest";
+        name = "hyperspace-dali";
+        config = { Entrypoint = [ "${hyperspace-dali}/bin/hyperspace" ]; };
+      };
       hyperspace-dali = let
         src = pkgs.stdenv.mkDerivation {
           name = "centauri-src";
@@ -18,7 +23,6 @@
             cp ${self'.packages.dali-subxt-client}/* $out/utils/subxt/generated/src/
           '';
         };
-
       in crane.stable.buildPackage {
         name = "hyperspace-dali";
         cargoArtifacts = crane.stable.buildDepsOnly {
