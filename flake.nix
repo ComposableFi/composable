@@ -32,7 +32,10 @@
       imports = [
         # External `inputs` that the authors did not nixify themselves
         ./inputs/AcalaNetwork/acala.nix
+        ./inputs/centauri/centauri-codegen.nix
+        ./inputs/centauri/hyperspace.nix
         ./inputs/chevdor/subwasm.nix
+        ./inputs/composable/dali-subxt-client.nix
         ./inputs/cosmos/cosmwasm.nix
         ./inputs/cosmos/gex.nix
         ./inputs/CosmosContracts/juno.nix
@@ -69,9 +72,11 @@
         ./devnets/all.nix
 
         # Everything that is not an input, tool, package, or devnet, but still part of the final flake
+        ./flake/check.nix
         ./flake/dev-shells.nix
         ./flake/docker.nix
         ./flake/fmt.nix
+        ./flake/help.nix
         ./flake/nixops-config.nix
         ./flake/overlays.nix
         ./flake/release.nix

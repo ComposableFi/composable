@@ -39,7 +39,7 @@
               echo "$2"
             done
           }
-          
+
           wait_for_log "devnet-dali.log" "waiting network start"
           TIMEOUT=240
           COMMAND="( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 \"Network launched 🚀🚀\""

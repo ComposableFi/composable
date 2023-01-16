@@ -84,9 +84,9 @@
           '';
         };
 
-        taplo-cli-check = let taplo-toml = ./.taplo.toml;
+        taplo-check = let taplo-toml = ./.taplo.toml;
         in pkgs.stdenv.mkDerivation {
-          name = "taplo-cli-check";
+          name = "taplo-check";
           dontUnpack = true;
           buildInputs = [ allTomlFiles pkgs.taplo-cli ];
           installPhase = ''
@@ -117,7 +117,7 @@
 
         spell-check = let cspell-yaml = ./cspell.yaml;
         in pkgs.stdenv.mkDerivation {
-          name = "cspell-check";
+          name = "spell-check";
           dontUnpack = true;
           buildInputs = [ allDirectoriesAndFiles pkgs.nodePackages.cspell ];
           installPhase = ''
