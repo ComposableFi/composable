@@ -277,7 +277,7 @@ benchmarks! {
 			.unwrap()
 			.clone();
 	}: {
-		Pallet::<T>::reward_accumulation_hook_reward_update_calculation(
+		crate::reward_accumulation_hook_reward_update_calculation::<T>(
 			pool_id,
 			reward_asset_id,
 			&mut reward,

@@ -6,13 +6,12 @@ pub(crate) use crate::runtime::{new_test_ext, Test};
 use crate::{
 	claim_of_stake,
 	runtime::*,
-	test::prelude::{H256, MINIMUM_STAKING_AMOUNT, STAKING_FNFT_COLLECTION_ID},
+	test::prelude::{MINIMUM_STAKING_AMOUNT, STAKING_FNFT_COLLECTION_ID},
 	test_helpers::{
 		add_to_rewards_pot_and_assert, create_rewards_pool_and_assert, split_and_assert,
 		stake_and_assert, unstake_and_assert,
 	},
-	Config, FinancialNftInstanceIdOf, RewardAccumulationHookError, RewardPoolConfigurationOf,
-	RewardPools, Stakes,
+	FinancialNftInstanceIdOf, RewardPoolConfigurationOf, RewardPools, Stakes,
 };
 
 use composable_support::validation::TryIntoValidated;
@@ -41,7 +40,6 @@ use frame_support::{
 	},
 	BoundedBTreeMap,
 };
-use frame_system::EventRecord;
 use proptest::prelude::*;
 use sp_arithmetic::{fixed_point::FixedU64, Perbill, Permill};
 use sp_core::sr25519::Public;
@@ -730,16 +728,23 @@ mod extend {
 				},
 			);
 
-			// This block the reward pot is "paused", so these rewards will not accumulate
-			process_and_progress_blocks::<StakingRewards, Test>(1);
-
 			mint_assets([ALICE], [USDT::ID], USDT::units(100_000));
 			add_to_rewards_pot_and_assert::<Test>(
 				ALICE,
 				STAKED_ASSET::ID,
 				USDT::ID,
 				USDT::units(100_000),
+				// should NOT emit the `resumed` event since the pot was funded before the pool
+				// started
+				false,
 			);
+
+			// progress to the start block
+			process_and_progress_blocks::<StakingRewards, Test>(1);
+
+			Test::assert_event(crate::Event::<Test>::RewardPoolStarted {
+				pool_id: STAKED_ASSET::ID,
+			});
 
 			let staked_amount = STAKED_ASSET::units(5);
 			let extended_amount = STAKED_ASSET::units(6);
@@ -851,6 +856,9 @@ mod extend {
 				STAKED_ASSET::ID,
 				USDT::ID,
 				USDT::units(100_000),
+				// should NOT emit the `resume` event due to progressing to the start block (block
+				// 2) above
+				false,
 			);
 
 			let staked_amount = STAKED_ASSET::units(5);
@@ -967,6 +975,9 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 			PICA::ID,
 			USDT::ID,
 			USDT::units(100_000_000),
+			// should NOT emit the `resume` event due to progressing to the start block (block 2)
+			// above
+			false,
 		);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
@@ -1015,6 +1026,9 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 			PICA::ID,
 			USDT::ID,
 			USDT::units(100_000_000),
+			// should NOT emit the `resume` event due to progressing to the start block (block 2)
+			// above
+			false,
 		);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
@@ -1044,6 +1058,9 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 			PICA::ID,
 			USDT::ID,
 			USDT::units(100_000_000),
+			// should NOT emit the `resume` event due to progressing to the start block (block 2)
+			// above
+			false,
 		);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
@@ -1205,7 +1222,15 @@ fn split_positions_accrue_same_as_original_position() {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		mint_assets([BOB], [USDT::ID], USDT::units(1_000));
-		add_to_rewards_pot_and_assert::<Test>(BOB, PICA::ID, USDT::ID, USDT::units(1_000));
+		add_to_rewards_pot_and_assert::<Test>(
+			BOB,
+			PICA::ID,
+			USDT::ID,
+			USDT::units(1_000),
+			// should NOT emit the `resume` event due to progressing to the start block (block 2)
+			// above
+			false,
+		);
 
 		mint_assets([ALICE], [PICA::ID], PICA::units(2000));
 		stake_and_assert::<Test>(ALICE, PICA::ID, PICA::units(1_000), ONE_HOUR)
@@ -1214,11 +1239,7 @@ fn split_positions_accrue_same_as_original_position() {
 	fn process_blocks() {
 		process_and_progress_blocks_with::<StakingRewards, Test>(BLOCKS_TO_ACCRUE_FOR, || {
 			<Test as RuntimeTrait<crate::Event<Test>>>::assert_no_event(
-				crate::Event::RewardAccumulationHookError {
-					pool_id: PICA::ID,
-					asset_id: USDT::ID,
-					error: RewardAccumulationHookError::RewardsPotEmpty,
-				},
+				crate::Event::RewardPoolPaused { pool_id: PICA::ID, asset_id: USDT::ID },
 			);
 		});
 	}
@@ -1307,7 +1328,17 @@ fn unstake_should_not_allow_non_owner() {
 	new_test_ext().execute_with(|| {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
-		create_rewards_pool_and_assert::<Test>(get_default_reward_pool());
+		create_rewards_pool_and_assert::<Test>(RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: PICA::ID,
+			start_block: 2,
+			end_block: 100,
+			reward_configs: default_reward_config(),
+			lock: default_lock_config(),
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+		});
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
@@ -1318,6 +1349,9 @@ fn unstake_should_not_allow_non_owner() {
 			PICA::ID,
 			USDT::ID,
 			USDT::units(100_000_000),
+			// should NOT emit the `resume` event due to progressing to the start block (block 2)
+			// above
+			false,
 		);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
@@ -1389,6 +1423,7 @@ fn unstake_should_work() {
 			PICA::ID,
 			USDT::ID,
 			USDT::units(100_000_000),
+			false,
 		);
 
 		next_block::<crate::Pallet<Test>, Test>();
@@ -1403,6 +1438,8 @@ fn unstake_should_work() {
 	})
 }
 mod claim {
+	use crate::test::prelude::init_logger;
+
 	use super::*;
 
 	#[test]
@@ -1515,6 +1552,8 @@ mod claim {
 		const DURATION: u64 = ONE_HOUR;
 
 		new_test_ext().execute_with(|| {
+			init_logger();
+
 			process_and_progress_blocks::<StakingRewards, Test>(1);
 			assert_ok!(StakingRewards::create_reward_pool(
 				Origin::root(),
@@ -1523,6 +1562,10 @@ mod claim {
 
 			let staked_asset_id = PICA::ID;
 
+			process_and_progress_blocks::<StakingRewards, Test>(1);
+
+			Test::assert_event(crate::Event::<Test>::RewardPoolStarted { pool_id: PICA::ID });
+
 			// far more than is necessary
 			mint_assets([CHARLIE], [USDT::ID], USDT::units(100_000_000));
 			add_to_rewards_pot_and_assert::<Test>(
@@ -1530,6 +1573,7 @@ mod claim {
 				PICA::ID,
 				USDT::ID,
 				USDT::units(100_000_000),
+				false,
 			);
 
 			process_and_progress_blocks::<StakingRewards, Test>(1);
@@ -1583,11 +1627,11 @@ mod claim {
 			|pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 				assert_ok!(StakingRewards::claim(Origin::signed(staker), 1, 0));
 
-				assert_last_event::<Test, _>(|e| {
-					matches!(&e.event,
-            		Event::StakingRewards(crate::Event::Claimed{ owner, fnft_collection_id, fnft_instance_id })
-            		if owner == &staker && fnft_collection_id == &1 && fnft_instance_id == &0)
-				});
+				Test::assert_last_event(Event::StakingRewards(crate::Event::Claimed {
+					owner: staker,
+					fnft_collection_id: 1,
+					fnft_instance_id: 0,
+				}));
 
 				let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 
@@ -1661,7 +1705,7 @@ mod stake_proptests {
 				prop_assert_ok!(StakingRewards::stake(
 					owner,
 					pool_id,
-					amount.into(),
+					amount,
 					duration_preset,
 				));
 
@@ -1694,7 +1738,7 @@ mod stake_proptests {
 					StakingRewards::stake(
 						owner,
 						pool_id,
-						amount.into(),
+						amount,
 						duration_preset,
 					),
 					Error::<Test>::StakedAmountTooLow
@@ -1975,14 +2019,6 @@ fn default_reward_config() -> BoundedBTreeMap<u128, RewardConfig<u128>, MaxRewar
 		.into_iter()
 		.try_collect()
 		.unwrap()
-}
-
-pub fn assert_last_event<T, F>(matcher: F)
-where
-	T: Config,
-	F: FnOnce(&EventRecord<Event, H256>) -> bool,
-{
-	assert!(matcher(System::events().last().expect("events expected")));
 }
 
 fn mint_assets(

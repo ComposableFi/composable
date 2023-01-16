@@ -49,25 +49,25 @@ mod validation;
 pub mod prelude;
 pub mod weights;
 
-use core::num::{NonZeroU128, NonZeroU64};
-
-use crate::prelude::*;
-
 use composable_support::math::safe::{SafeDiv, SafeMul, SafeSub};
 use composable_traits::staking::{Reward, RewardUpdate};
+use core::{
+	cmp,
+	cmp::Ordering,
+	num::{NonZeroU128, NonZeroU64},
+	ops::Div,
+};
 use frame_support::{
 	traits::{
 		fungibles::{Inspect as FungiblesInspect, InspectHold, MutateHold, Transfer},
 		Defensive, DefensiveSaturating, UnixTime,
 	},
-	transactional, BoundedBTreeMap,
+	BoundedBTreeMap,
 };
+
+use crate::prelude::*;
+
 pub use pallet::*;
-use sp_runtime::SaturatedConversion;
-use sp_std::{
-	cmp,
-	ops::{Div, Mul},
-};
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -117,8 +117,8 @@ pub mod pallet {
 	use sp_std::{fmt::Debug, ops::Mul, vec, vec::Vec};
 
 	use crate::{
-		add_to_rewards_pot, claim_of_stake, do_reward_accumulation, prelude::*,
-		update_rewards_pool, validation::ValidSplitRatio, RewardAccumulationCalculationError,
+		accumulate_rewards_hook, add_to_rewards_pot, claim_of_stake, prelude::*,
+		update_rewards_pool, validation::ValidSplitRatio,
 	};
 
 	#[pallet::event]
@@ -132,6 +132,10 @@ pub mod pallet {
 			owner: T::AccountId,
 			/// End block
 			end_block: T::BlockNumber,
+		},
+		/// Pool with specified id `T::AssetId` has started accumulating rewards.
+		RewardPoolStarted {
+			pool_id: T::AssetId,
 		},
 		Staked {
 			/// Id of the pool that was staked in.
@@ -209,12 +213,19 @@ pub mod pallet {
 			reward_asset_id: T::AssetId,
 			amount_slashed: T::Balance,
 		},
+		RewardPoolPaused {
+			pool_id: T::AssetId,
+			asset_id: T::AssetId,
+		},
+		RewardPoolResumed {
+			pool_id: T::AssetId,
+			asset_id: T::AssetId,
+		},
 	}
 
 	#[derive(Copy, Clone, Debug, PartialEq, Eq, Encode, Decode, TypeInfo)]
 	pub enum RewardAccumulationHookError {
 		BackToTheFuture,
-		RewardsPotEmpty,
 		Overflow,
 	}
 
@@ -525,7 +536,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		/// Weight: see `begin_block`
 		fn on_initialize(_: T::BlockNumber) -> Weight {
-			Self::accumulate_rewards_hook()
+			accumulate_rewards_hook::<T>()
 		}
 	}
 
@@ -1399,6 +1410,7 @@ pub mod pallet {
 
 		// TODO(benluelo): Rename to 'reward_multiplier_of' and return a Result<&_, Error<T>>
 		// (remove the clone as well)
+		// REVIEW(benluelo): Does this function provide anything meaningful?
 		pub(crate) fn reward_multiplier(
 			rewards_pool: &RewardPoolOf<T>,
 			duration_preset: DurationSeconds,
@@ -1459,73 +1471,6 @@ pub mod pallet {
 			}
 
 			Ok((rewards_btree_map, reductions))
-		}
-
-		pub(crate) fn reward_accumulation_hook_reward_update_calculation(
-			pool_id: T::AssetId,
-			reward_asset_id: T::AssetId,
-			reward: &mut Reward<T::Balance>,
-			now_seconds: u64,
-		) {
-			let pool_account = Self::pool_account_id(&pool_id);
-
-			match do_reward_accumulation::<T>(reward_asset_id, reward, &pool_account, now_seconds) {
-				Ok(()) => {},
-				Err(err) => {
-					let error_type = err.into();
-
-					if let RewardAccumulationHookError::RewardsPotEmpty = error_type {
-						// the event is only to be emitted once, so check if the pot was already
-						// emptied first
-						if !RewardsPotIsEmpty::<T>::contains_key(pool_id, reward_asset_id) {
-							RewardsPotIsEmpty::<T>::insert(pool_id, reward_asset_id, ());
-						} else {
-							// if the pot was already empty, then there wasn't *really* an error;
-							// short circuit here so the event doesn't get emitted.
-							return
-						}
-					}
-
-					Self::deposit_event(Event::<T>::RewardAccumulationHookError {
-						pool_id,
-						asset_id: reward_asset_id,
-						error: error_type,
-					});
-				},
-			}
-		}
-
-		pub(crate) fn accumulate_rewards_hook() -> Weight {
-			let now_seconds = T::UnixTime::now().as_secs();
-			let unix_time_now_weight = T::WeightInfo::unix_time_now();
-
-			let mut total_weight = unix_time_now_weight;
-
-			RewardPools::<T>::translate(|pool_id, mut reward_pool: RewardPoolOf<T>| {
-				// If reward pool has not started, do not accumulate rewards or adjust weight
-				if reward_pool.start_block <= frame_system::Pallet::<T>::current_block_number() {
-					for (asset_id, reward) in &mut reward_pool.rewards {
-						Self::reward_accumulation_hook_reward_update_calculation(
-							pool_id,
-							*asset_id,
-							reward,
-							now_seconds,
-						);
-					}
-
-					// reward_pool.rewards is limited T::MaxRewardConfigsPerPool, which is Get<u32>
-					let number_of_rewards_in_pool = reward_pool.rewards.len() as u64;
-
-					total_weight += (number_of_rewards_in_pool * T::WeightInfo::reward_accumulation_hook_reward_update_calculation()) +
-					// NOTE: `StorageMap::translate` does one read and one write per item
-					T::DbWeight::get().reads(1) +
-					T::DbWeight::get().writes(1);
-				}
-
-				Some(reward_pool)
-			});
-
-			total_weight
 		}
 	}
 
@@ -1588,8 +1533,134 @@ pub mod pallet {
 		}
 	}
 }
+/// Accumulates the rewards in a pool, if the pot isn't empty. Emits the relevant events
+/// after accumulation. See [`accumulate_reward`] for more information about how the
+/// accumulation calculation is done.
+pub(crate) fn reward_accumulation_hook_reward_update_calculation<T: Config>(
+	pool_id: T::AssetId,
+	reward_asset_id: T::AssetId,
+	reward: &mut Reward<T::Balance>,
+	now_seconds: u64,
+) {
+	let pool_account = Pallet::<T>::pool_account_id(&pool_id);
 
-#[transactional]
+	log::info!("calculating rewards for pool {pool_id:?}, asset {reward_asset_id:?}");
+
+	// no need to calculate if the pot is empty, this will be unset if and when enough funds
+	// are added to the pot
+	if RewardsPotIsEmpty::<T>::contains_key(pool_id, reward_asset_id) {
+		log::info!(
+			"pot for pool {pool_id:?}, asset {reward_asset_id:?} is empty, not accumulating"
+		);
+		return
+	}
+
+	log::info!("accumulating rewards for pool {pool_id:?}, asset {reward_asset_id:?}");
+
+	match accumulate_reward::<T>(reward_asset_id, reward, &pool_account, now_seconds) {
+		RewardAccumulationCalculationOutcome::Success => {
+			log::info!("accumulation successful");
+		},
+		RewardAccumulationCalculationOutcome::BackToTheFuture => {
+			Pallet::<T>::deposit_event(Event::<T>::RewardAccumulationHookError {
+				pool_id,
+				asset_id: reward_asset_id,
+				error: RewardAccumulationHookError::BackToTheFuture,
+			});
+		},
+		RewardAccumulationCalculationOutcome::Overflow => {
+			Pallet::<T>::deposit_event(Event::<T>::RewardAccumulationHookError {
+				pool_id,
+				asset_id: reward_asset_id,
+				error: RewardAccumulationHookError::Overflow,
+			});
+		},
+		RewardAccumulationCalculationOutcome::RewardsPotEmpty => {
+			log::info!("accumulation successful, but pot is now empty");
+			// The event only needs to be emitted once, since there's no need to notify that
+			// the pool has paused if the pot was already emptied previously. Due to the
+			// check above, we know that the pot had funds before the accumulation was done;
+			// this `debug_assert!` exists to ensure that nothing else modifies the storage
+			// between the aforementioned check and now.
+			debug_assert!(!RewardsPotIsEmpty::<T>::contains_key(pool_id, reward_asset_id));
+
+			RewardsPotIsEmpty::<T>::insert(pool_id, reward_asset_id, ());
+
+			Pallet::<T>::deposit_event(Event::<T>::RewardPoolPaused {
+				pool_id,
+				asset_id: reward_asset_id,
+			});
+		},
+	}
+}
+
+pub(crate) fn accumulate_rewards_hook<T: Config>() -> Weight {
+	let now_seconds = T::UnixTime::now().as_secs();
+	let unix_time_now_weight = T::WeightInfo::unix_time_now();
+
+	let mut total_weight = unix_time_now_weight;
+
+	let current_block = frame_system::Pallet::<T>::block_number();
+
+	RewardPools::<T>::translate(|pool_id, mut reward_pool: RewardPoolOf<T>| {
+		// NOTE: `StorageMap::translate` does one read and one write per item,
+		// unconditionally
+		total_weight += T::DbWeight::get().reads(1) + T::DbWeight::get().writes(1);
+
+		total_weight +=
+			accumulate_pool_rewards::<T>(pool_id, &mut reward_pool, current_block, now_seconds);
+
+		Some(reward_pool)
+	});
+
+	total_weight
+}
+
+/// Accumulates all of the rewards in the provided pool, updating them in-place. Returns the weight
+/// of the calculations.
+#[must_use = "the calculated weight does nothing on it's own"]
+fn accumulate_pool_rewards<T: Config>(
+	pool_id: T::AssetId,
+	reward_pool: &mut RewardPoolOf<T>,
+	current_block: T::BlockNumber,
+	now_seconds: u64,
+) -> Weight {
+	// If reward pool has not started, do not accumulate rewards or adjust weight
+	match reward_pool.start_block.cmp(&current_block) {
+		// start block < current -> accumulate normally
+		Ordering::Less =>
+			(&mut reward_pool.rewards).into_iter().fold(0, |mut acc, (asset_id, reward)| {
+				reward_accumulation_hook_reward_update_calculation::<T>(
+					pool_id,
+					*asset_id,
+					reward,
+					now_seconds,
+				);
+
+				acc = acc.defensive_saturating_add(
+					T::WeightInfo::reward_accumulation_hook_reward_update_calculation(),
+				);
+
+				acc
+			}),
+		// start block == current -> accumulation starts now, but the effects won't be seen until
+		// the next block; set all of the reward's last updated timestamp to `now` so that reward
+		// accumulation starts from this point in time, not when the pool was created. Also notify
+		// that the pool has started.
+		Ordering::Equal => {
+			for (_asset_id, reward) in &mut reward_pool.rewards {
+				reward.last_updated_timestamp = now_seconds;
+			}
+
+			Pallet::<T>::deposit_event(Event::RewardPoolStarted { pool_id });
+
+			0
+		},
+		// start block > current -> don't accumulate, do nothing
+		Ordering::Greater => 0,
+	}
+}
+
 fn add_to_rewards_pot<T: Config>(
 	who: T::AccountId,
 	pool_id: T::AssetId,
@@ -1602,11 +1673,6 @@ fn add_to_rewards_pot<T: Config>(
 
 		let reward = pool.rewards.get_mut(&asset_id).ok_or(Error::<T>::RewardAssetNotFound)?;
 
-		if RewardsPotIsEmpty::<T>::contains_key(pool_id, asset_id) {
-			reward.last_updated_timestamp = T::UnixTime::now().as_secs();
-			RewardsPotIsEmpty::<T>::remove(pool_id, asset_id);
-		}
-
 		let pool_account = Pallet::<T>::pool_account_id(&pool_id);
 
 		T::Assets::transfer(asset_id, &who, &pool_account, amount, keep_alive)?;
@@ -1614,11 +1680,35 @@ fn add_to_rewards_pot<T: Config>(
 
 		Pallet::<T>::deposit_event(Event::<T>::RewardsPotIncreased { pool_id, asset_id, amount });
 
+		// if the pot was previously empty, *and* the amount added resulted in the pot having enough
+		// balance to reward again, then resume accumulation and un-mark the pot as empty.
+		//
+		// NOTE: Pools that haven't started yet will never (i.e. should never) be in the
+		// `RewardsPotIsEmpty` storage, so this check should fail for the aforementioned pools.
+		//
+		// TODO(benluelo): Maybe add some debug assertions for the above? This would be the most
+		// useful if the chain that QA uses is compiled with debug assertions enabled.
+		//
+		// REVIEW(benluelo): This could be averted if we stored the timestamp in the
+		// `RewardsPotIsEmpty` storage, making it into a "reward pool state" representatatio
+		// instead.
+		if RewardsPotIsEmpty::<T>::contains_key(pool_id, asset_id) &&
+			T::Assets::balance_on_hold(asset_id, &pool_account) >=
+				reward
+					.reward_rate
+					.amount_per_period()
+					.defensive_unwrap_or_else(|| u128::MAX.into())
+		{
+			reward.last_updated_timestamp = T::UnixTime::now().as_secs();
+			RewardsPotIsEmpty::<T>::remove(pool_id, asset_id);
+
+			Pallet::<T>::deposit_event(Event::<T>::RewardPoolResumed { pool_id, asset_id });
+		}
+
 		Ok(())
 	})
 }
 
-#[transactional]
 fn update_rewards_pool<T: Config>(
 	pool_id: T::AssetId,
 	reward_updates: BoundedBTreeMap<
@@ -1630,22 +1720,17 @@ fn update_rewards_pool<T: Config>(
 	RewardPools::<T>::try_mutate(pool_id, |pool| {
 		let pool = pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-		let pool_account = Pallet::<T>::pool_account_id(&pool_id);
-
 		let now_seconds = T::UnixTime::now().as_secs();
 
 		for (asset_id, update) in reward_updates {
 			let reward = pool.rewards.get_mut(&asset_id).ok_or(Error::<T>::RewardAssetNotFound)?;
-			if let Err(err) =
-				do_reward_accumulation::<T>(asset_id, reward, &pool_account, now_seconds)
-			{
-				use RewardAccumulationCalculationError::*;
-				return match err {
-					BackToTheFuture => Err(Error::<T>::BackToTheFuture.into()),
-					RewardsPotEmpty => Err(Error::<T>::RewardsPotEmpty.into()),
-					Overflow => Err(Error::<T>::ArithmeticError.into()),
-				}
-			}
+
+			reward_accumulation_hook_reward_update_calculation::<T>(
+				pool_id,
+				asset_id,
+				reward,
+				now_seconds,
+			);
 
 			reward.reward_rate = update.reward_rate;
 		}
@@ -1656,7 +1741,8 @@ fn update_rewards_pool<T: Config>(
 	})
 }
 
-/// Calculates the update to the reward and unlocks the accumulated rewards from the pool account.
+/// Calculates the update to the reward and unlocks the accumulated rewards from the pool account,
+/// updating the provided [`Reward`] in-place.
 ///
 /// NOTE: `<uX as Div<NonZeroUX>>::div` is used throughout this function as a safe,
 /// non-panicking alternative to the regular `Div::div` implementation on the primitive numeric
@@ -1664,59 +1750,72 @@ fn update_rewards_pool<T: Config>(
 /// information.
 ///
 /// [nonzero-impls]: https://doc.rust-lang.org/src/core/num/nonzero.rs.html#268-308
-pub(crate) fn do_reward_accumulation<T: Config>(
+pub(crate) fn accumulate_reward<T: Config>(
 	asset_id: T::AssetId,
 	reward: &mut Reward<T::Balance>,
 	pool_account: &T::AccountId,
 	now_seconds: u64,
-) -> Result<(), RewardAccumulationCalculationError> {
-	// short-circuit if the reward rate amount is zero
-	let Some(reward_rate_amount) = NonZeroU128::new(reward.reward_rate.amount.into()) else {
-		return Ok(())
-	};
+) -> RewardAccumulationCalculationOutcome {
+	// TODO(benluelo): Refactor the calculations here into a separate function to make it easier to
+	// test with proptest/ kani. The nonzero checks can be left outside of said function.
 
-	let elapsed_time = now_seconds
-		.safe_sub(&reward.last_updated_timestamp)
-		.map_err(|_| RewardAccumulationCalculationError::BackToTheFuture)?;
+	// short-circuit if the reward rate amount is zero
+	let Some(reward_rate_amount) = NonZeroU128::new(reward.reward_rate.amount.into())
+		else {
+			return RewardAccumulationCalculationOutcome::Success
+		};
+
+	// REVIEW(benluelo): Should this be a user-facing error? Or would defensively saturating at zero
+	// for elapsed_time be better? This should never be hit, and if it is then it's either a logic
+	// error or the chain state is wonky (in which case there are probably bigger issues than this
+	// hook!)
+	let Some(elapsed_time) = now_seconds
+		.checked_sub(reward.last_updated_timestamp)
+		else {
+			return RewardAccumulationCalculationOutcome::BackToTheFuture
+		};
 
 	let reward_rate_period_seconds = reward.reward_rate.period.as_secs();
 
 	//          elapsed_time
 	// = --------------------------
 	//   reward_rate_period_seconds
-	let periods_surpassed = <u64 as Div<NonZeroU64>>::div(elapsed_time, reward_rate_period_seconds);
-
-	// if no periods have been surpassed, short-circuit
-	let Some(periods_surpassed) = NonZeroU64::new(periods_surpassed) else {
-		return Ok(())
-	};
+	let Some(periods_surpassed) =
+		NonZeroU64::new(<u64 as Div<NonZeroU64>>::div(elapsed_time, reward_rate_period_seconds))
+		else {
+			// if no periods have been surpassed, short-circuit
+			return RewardAccumulationCalculationOutcome::Success
+		};
 
 	let total_locked_rewards: u128 = T::Assets::balance_on_hold(asset_id, pool_account).into();
+	log::info!("total_locked_rewards = {total_locked_rewards}");
 
 	// the maximum amount repayable given the reward rate.
 	// i.e. if total locked is 50, and the reward rate is 15, then this would be 3
 	//
-	//    total_locked_rewards
-	// = ----------------------
-	//     reward_rate_amount
-	let maximum_releasable_periods =
+	//   total_locked_rewards
+	// = --------------------
+	//    reward_rate_amount
+	let Some(maximum_releasable_periods) =
 		NonZeroU128::new(<u128 as Div<NonZeroU128>>::div(total_locked_rewards, reward_rate_amount))
+		else {
 			// if the maximum releasable periods is zero, then that means the pot doesn't have
 			// enough in it to fund a single period.
-			.ok_or(RewardAccumulationCalculationError::RewardsPotEmpty)?;
+			return RewardAccumulationCalculationOutcome::RewardsPotEmpty;
+		};
 
-	//     (  total_locked_rewards           elapsed_time        )
-	// min ( ---------------------- , -------------------------- )
-	//     (   reward_rate_amount     reward_rate_period_seconds )
+	//     ( total_locked_rewards          elapsed_time        )
+	// min ( -------------------- , -------------------------- )
+	//     (  reward_rate_amount    reward_rate_period_seconds )
 	let releasable_periods_surpassed =
 		cmp::min(maximum_releasable_periods, periods_surpassed.into());
 
 	// SAFETY: Usage of mul is safe here. See the following proof:
 	//
 	// ```plaintext
-	//   {                       total_locked_rewards
-	//   { reward_rate_amount * ----------------------,     if maximum_releasable_periods <= periods_surpassed
-	//   {                        reward_rate_amount
+	//   {                      total_locked_rewards
+	//   { reward_rate_amount * --------------------,       if maximum_releasable_periods <= periods_surpassed
+	//   {                       reward_rate_amount
 	// = {
 	//   {                             elapsed_time
 	//   { reward_rate_amount * --------------------------, if periods_surpassed < maximum_releasable_periods
@@ -1731,10 +1830,14 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 		.checked_mul(reward_rate_amount)
 		.expect("should not fail; see above for proof; qed;");
 
-	let new_total_rewards = newly_accumulated_rewards
+	let Some(new_total_rewards) = newly_accumulated_rewards
 		.get()
 		.checked_add(reward.total_rewards.into())
-		.ok_or(RewardAccumulationCalculationError::Overflow)?;
+		else {
+			return RewardAccumulationCalculationOutcome::Overflow;
+		};
+
+	log::info!("asset_id: {asset_id:?}; new_total_rewards = {new_total_rewards}");
 
 	// `u64::MAX` in seconds is roughly 584.9 billion years in the future, so saturating at that
 	// should be ok; we should never reach a case where the timestamp overflows that. Use defensive
@@ -1756,27 +1859,20 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 	reward.total_rewards = new_total_rewards.into();
 	reward.last_updated_timestamp = last_updated_timestamp;
 
-	Ok(())
+	RewardAccumulationCalculationOutcome::Success
 }
 
-pub(crate) enum RewardAccumulationCalculationError {
+#[derive(Debug)]
+pub(crate) enum RewardAccumulationCalculationOutcome {
+	/// The calculation succeeded with no errors.
+	Success,
 	/// T::UnixTime::now() returned a value in the past.
 	BackToTheFuture,
 	/// The rewards pot (held balance) for this pool is empty or doesn't have enough held balance
-	/// to release for the rewards accumulated.
+	/// to release for one period.
 	RewardsPotEmpty,
 	/// Accumulating rewards for an account overflowed.
 	Overflow,
-}
-
-impl From<RewardAccumulationCalculationError> for RewardAccumulationHookError {
-	fn from(value: RewardAccumulationCalculationError) -> Self {
-		match value {
-			RewardAccumulationCalculationError::BackToTheFuture => Self::BackToTheFuture,
-			RewardAccumulationCalculationError::RewardsPotEmpty => Self::RewardsPotEmpty,
-			RewardAccumulationCalculationError::Overflow => Self::Overflow,
-		}
-	}
 }
 
 pub(crate) fn claim_of_stake<T: Config>(
