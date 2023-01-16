@@ -19,7 +19,7 @@ use frame_support::{
 	BoundedBTreeMap,
 };
 use sp_arithmetic::fixed_point::FixedU64;
-use sp_runtime::{FixedPointNumber, Perbill};
+use sp_runtime::Perbill;
 
 use crate::{
 	runtime::{
@@ -168,7 +168,7 @@ fn update_accumulates_properly() {
 						},
 					},
 					lock: LockConfig {
-						duration_presets: bounded_btree_map! {
+						duration_multipliers: bounded_btree_map! {
 							// 1%
 							ONE_HOUR => FixedU64::from_rational(101, 100)
 								.try_into_validated()
@@ -177,7 +177,8 @@ fn update_accumulates_properly() {
 							ONE_MINUTE => FixedU64::from_rational(1_001, 1_000)
 								.try_into_validated()
 								.expect(">= 1"),
-						},
+						}
+						.into(),
 						unlock_penalty: Perbill::from_percent(5),
 					},
 					share_asset_id: XPICA::ID,
