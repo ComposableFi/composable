@@ -30,6 +30,7 @@ pub(crate) fn add_to_rewards_pot_and_assert<Runtime>(
 	pool_id: Runtime::AssetId,
 	asset_id: Runtime::AssetId,
 	amount: Runtime::Balance,
+	should_resume: bool,
 ) where
 	Runtime: crate::Config + RuntimeTrait<crate::Event<Runtime>>,
 	<Runtime as frame_system::Config>::Event: Parameter
@@ -42,16 +43,30 @@ pub(crate) fn add_to_rewards_pot_and_assert<Runtime>(
 	<Runtime as frame_system::Config>::Origin:
 		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
-	Runtime::assert_extrinsic_event(
-		Pallet::<Runtime>::add_to_rewards_pot(
-			OriginFor::<Runtime>::signed(who),
-			pool_id,
-			asset_id,
-			amount,
-			false,
-		),
-		crate::Event::RewardsPotIncreased { pool_id, asset_id, amount },
+	Pallet::<Runtime>::add_to_rewards_pot(
+		OriginFor::<Runtime>::signed(who),
+		pool_id,
+		asset_id,
+		amount,
+		false,
 	)
+	.unwrap();
+
+	let mut events = frame_system::Pallet::<Runtime>::events();
+
+	let expected_resume_event = crate::Event::RewardPoolResumed { pool_id, asset_id };
+	if should_resume {
+		let resume_event = events.pop().expect("expected event to be emitted").event;
+		assert_eq!(resume_event, expected_resume_event.into());
+	} else {
+		Runtime::assert_no_event(expected_resume_event)
+	}
+
+	let increased_event = events.pop().expect("expected event to be emitted").event;
+	assert_eq!(
+		increased_event,
+		crate::Event::RewardsPotIncreased { pool_id, asset_id, amount }.into()
+	);
 }
 
 pub fn stake_and_assert<Runtime>(
