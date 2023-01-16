@@ -7,6 +7,25 @@ import { coingeckoRequest, useCoingecko } from "coingecko";
 import { tryCatch } from "fp-ts/TaskEither";
 import BigNumber from "bignumber.js";
 
+function tryFetchCoingeckoPrices(tokens: Record<TokenId, TokenMetadata>) {
+  return tryCatch(
+    () =>
+      coingeckoRequest(
+        pipe(
+          Object.entries<TokenMetadata>(tokens),
+          readonlyArray.fromArray,
+          readonlyArray.filter(([_, meta]) => meta.chainId.picasso !== null),
+          readonlyArray.filterMap(([tokenId, _]) =>
+            pipe(TOKENS[tokenId as TokenId].coinGeckoId, option.fromNullable)
+          ),
+          readonlyArray.toArray
+        ),
+        ["usd"]
+      ),
+    () => option.none
+  );
+}
+
 export const subscribeCoingeckoPrices: () => () => void = () =>
   useStore.subscribe(
     (state) => ({
@@ -16,27 +35,7 @@ export const subscribeCoingeckoPrices: () => () => void = () =>
     ({ isLoaded, tokens }) => {
       if (isLoaded) {
         pipe(
-          tryCatch(
-            () =>
-              coingeckoRequest(
-                pipe(
-                  Object.entries<TokenMetadata>(tokens),
-                  readonlyArray.fromArray,
-                  readonlyArray.filter(
-                    ([_, meta]) => meta.chainId.picasso !== null
-                  ),
-                  readonlyArray.filterMap(([tokenId, _]) =>
-                    pipe(
-                      TOKENS[tokenId as TokenId].coinGeckoId,
-                      option.fromNullable
-                    )
-                  ),
-                  readonlyArray.toArray
-                ),
-                ["usd"]
-              ),
-            () => option.none
-          ),
+          tryFetchCoingeckoPrices(tokens),
           taskEither.map((response) => {
             pipe(
               response.data as {
@@ -68,6 +67,7 @@ export const subscribeCoingeckoPrices: () => () => void = () =>
       }
     },
     {
-      equalityFn: (a, b) => a.isLoaded === b.isLoaded && a.isLoaded,
+      fireImmediately: true,
+      equalityFn: (a, b) => a.isLoaded === b.isLoaded && b.isLoaded,
     }
   );
