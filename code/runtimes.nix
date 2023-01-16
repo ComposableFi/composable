@@ -89,8 +89,8 @@
           dontUnpack = true;
           src = pkgs.fetchurl {
             url =
-              "https://github.com/paritytech/polkadot/releases/download/v0.9.27/rococo_runtime-v9270.compact.compressed.wasm";
-            sha256 = "sha256-OK8U58TW4TBsSOudPdpXHw0sjbEHtCQuOBIaNn+WleE=";
+              "https://github.com/paritytech/polkadot/releases/download/v0.9.30/rococo_runtime-v9300.compact.compressed.wasm";
+            sha256 = "sha256-ztquolf/S0YpDhVoejzid5nTJO4N8sv2eHb+g5qignM=";
           };
           installPhase = ''
             mkdir -p $out/lib
