@@ -68,7 +68,7 @@ benchmarks! {
 		T::NativeCurrency: Currency<T::AccountId>,
 		T::AccountId: UncheckedFrom<H256>,
 		T::CurrencyId: From<u128>,
-		T::Origin: From<cumulus_pallet_xcm::RuntimeOrigin>,
+		T::RuntimeOrigin: From<cumulus_pallet_xcm::Origin>,
 	}
 	add_configuration {
 		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });

@@ -40,7 +40,7 @@ pub(crate) fn produce_block<T: crate::Config + pallet_timestamp::Config>(
 }
 
 #[allow(dead_code)]
-pub(crate) fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
+pub(crate) fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	let events = frame_system::Pallet::<T>::events();
 	let system_event: <T as frame_system::Config>::RuntimeEvent = generic_event.into();
 	// compare to the last event record

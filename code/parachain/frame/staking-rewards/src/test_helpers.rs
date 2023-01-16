@@ -41,7 +41,7 @@ pub(crate) fn add_to_rewards_pot_and_assert<Runtime>(
 		+ From<crate::Event<Runtime>>,
 	<<Runtime as frame_system::Config>::RuntimeEvent as TryInto<crate::Event<Runtime>>>::Error:
 		Debug,
-	<Runtime as frame_system::Config>::Origin:
+	<Runtime as frame_system::Config>::RuntimeOrigin:
 		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	Pallet::<Runtime>::add_to_rewards_pot(
@@ -86,7 +86,7 @@ where
 		+ From<crate::Event<Runtime>>,
 	<<Runtime as frame_system::Config>::RuntimeEvent as TryInto<crate::Event<Runtime>>>::Error:
 		Debug,
-	<Runtime as frame_system::Config>::Origin:
+	<Runtime as frame_system::Config>::RuntimeOrigin:
 		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	Runtime::assert_extrinsic_event_with(
@@ -139,7 +139,7 @@ pub fn unstake_and_assert<Runtime>(
 		+ From<crate::Event<Runtime>>,
 	<<Runtime as frame_system::Config>::RuntimeEvent as TryInto<crate::Event<Runtime>>>::Error:
 		Debug,
-	<Runtime as frame_system::Config>::Origin:
+	<Runtime as frame_system::Config>::RuntimeOrigin:
 		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	let position_before_unstake =
@@ -533,7 +533,7 @@ where
 		+ From<crate::Event<Runtime>>,
 	<<Runtime as frame_system::Config>::RuntimeEvent as TryInto<crate::Event<Runtime>>>::Error:
 		Debug,
-	<Runtime as frame_system::Config>::Origin:
+	<Runtime as frame_system::Config>::RuntimeOrigin:
 		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	let existing_stake_before_split =

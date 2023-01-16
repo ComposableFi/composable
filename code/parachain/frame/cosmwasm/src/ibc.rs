@@ -774,16 +774,15 @@ impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for NoRelayer<T> {
 	) -> Result<(), ibc_primitives::Error> {
 		Err(ibc_primitives::Error::Other { msg: Some("not supported".to_string()) })
 	}
-
 	#[cfg(feature = "runtime-benchmarks")]
-	fn create_client(
-	) -> Result<::ibc::core::ics24_host::identifier::ClientId, ibc_primitives::Error> {
+	fn create_client() -> Result<ibc::core::ics24_host::identifier::ClientId, ibc_primitives::Error>
+	{
 		Err(ibc_primitives::Error::Other { msg: Some("not supported".to_string()) })
 	}
 	#[cfg(feature = "runtime-benchmarks")]
 	fn create_connection(
-		_client_id: ::ibc::core::ics24_host::identifier::ClientId,
-		_connection_id: ::ibc::core::ics24_host::identifier::ConnectionId,
+		_client_id: ibc::core::ics24_host::identifier::ClientId,
+		_connection_id: ConnectionId,
 	) -> Result<(), ibc_primitives::Error> {
 		Err(ibc_primitives::Error::Other { msg: Some("not supported".to_string()) })
 	}
