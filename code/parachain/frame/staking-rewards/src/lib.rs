@@ -1626,10 +1626,10 @@ fn accumulate_pool_rewards<T: Config>(
 	now_seconds: u64,
 ) -> Weight {
 	// If reward pool has not started, do not accumulate rewards or adjust weight
-	match reward_pool.start_block.cmp(&current_block) {
+	Weight::from_ref_time(match reward_pool.start_block.cmp(&current_block) {
 		// start block < current -> accumulate normally
 		Ordering::Less =>
-			(&mut reward_pool.rewards).into_iter().fold(0, |mut acc, (asset_id, reward)| {
+			(&mut reward_pool.rewards).into_iter().fold(0u64, |mut acc, (asset_id, reward)| {
 				reward_accumulation_hook_reward_update_calculation::<T>(
 					pool_id,
 					*asset_id,
@@ -1638,7 +1638,7 @@ fn accumulate_pool_rewards<T: Config>(
 				);
 
 				acc = acc.defensive_saturating_add(
-					T::WeightInfo::reward_accumulation_hook_reward_update_calculation(),
+					T::WeightInfo::reward_accumulation_hook_reward_update_calculation().ref_time(),
 				);
 
 				acc
@@ -1658,7 +1658,7 @@ fn accumulate_pool_rewards<T: Config>(
 		},
 		// start block > current -> don't accumulate, do nothing
 		Ordering::Greater => 0,
-	}
+	})
 }
 
 fn add_to_rewards_pot<T: Config>(
