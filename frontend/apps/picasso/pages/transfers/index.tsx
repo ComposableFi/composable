@@ -33,6 +33,8 @@ import { InfoOutlined } from "@mui/icons-material";
 import { pipe } from "fp-ts/function";
 import { option } from "fp-ts";
 import { TransferKSMAlert } from "@/components/Molecules";
+import { PICASSO_STATEMINE_KSM_TRANSFER_FEE } from "@/defi/config";
+import { fromChainIdUnit } from "shared";
 
 const Transfers: NextPage = () => {
   const { setAmount, from, balance, transfer, to, isDirty } = useTransfer();
@@ -51,9 +53,14 @@ const Transfers: NextPage = () => {
     () =>
       from === "picasso" &&
       to === "statemine" &&
-      ksmBalance.lt(0.01) &&
+      ksmBalance.lt(
+        fromChainIdUnit(
+          PICASSO_STATEMINE_KSM_TRANSFER_FEE,
+          tokens.ksm.decimals.picasso
+        )
+      ) &&
       selectedToken === "usdt",
-    [from, to, ksmBalance, selectedToken]
+    [from, to, ksmBalance, tokens.ksm.decimals.picasso, selectedToken]
   );
   // TODO this value can be moved to its own store subscriber
   const minValue = useMemo(() => {
