@@ -14,7 +14,7 @@ pub trait WeightInfo {
 
 impl WeightInfo for () {
 	fn register_asset() -> Weight {
-		Weight::from_ref_time(10_0000)
+		Weight::from_ref_time(100_000)
 	}
 
 	fn update_asset() -> Weight {
