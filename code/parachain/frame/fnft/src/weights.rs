@@ -12,5 +12,5 @@ pub trait WeightInfo {
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	fn transfer() -> Weight {10_000}
+	fn transfer() -> Weight { Weight::from_ref_time(10_000) }
 }
