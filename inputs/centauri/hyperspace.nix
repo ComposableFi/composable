@@ -6,6 +6,7 @@
         name = "hyperspace-dali";
         config = { Entrypoint = [ "${hyperspace-dali}/bin/hyperspace" ]; };
       };
+
       hyperspace-dali = let
         src = pkgs.stdenv.mkDerivation {
           name = "centauri-src";
