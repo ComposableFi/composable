@@ -15,7 +15,7 @@ Let's say that we want to upload the `v1.0.1` release of `cw20_base`. We can dir
 from the [release page](https://github.com/CosmWasm/cw-plus/releases).
 
 ```sh
-cw-substrate-cli substrate -c ws://127.0.0.1:9988 -n alice tx upload --url https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm
+ccw substrate -c ws://127.0.0.1:9988 -n alice tx upload --url https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm
 ```
 
 Output:
@@ -58,7 +58,7 @@ make use of SS58 representations in the contracts as well, but for now, this is 
 
 So the command will be:
 ```sh
-cw-substrate-cli substrate -c ws://127.0.0.1:9988 -n alice \
+ccw substrate -c ws://127.0.0.1:9988 -n alice \
     tx instantiate \
     -c 1 \
     -s random-salt \
@@ -92,7 +92,7 @@ generation that we use is based on the instantiate parameters that we provide, n
 address, use that address to execute the contract.
 
 ```sh
-cw-substrate-cli substrate -c ws://127.0.0.1:9988 -n bob \
+ccw substrate -c ws://127.0.0.1:9988 -n bob \
     tx execute \
     -c  5EszMeNDPmy4orcLEHRLiJawAt5xAvfK5VH7REV8bpB1jtjX \
     -g 10000000000 \
@@ -125,7 +125,7 @@ but an RPC call, we'll use the subcommand `rpc` instead of `tx`.
 Note that we are using a different protocol and port for the RPC endpoint.
 
 ```
-cw-substrate-cli substrate -c http://127.0.0.1:32200 \
+ccw substrate -c http://127.0.0.1:32200 \
     rpc query \
     -c 5EszMeNDPmy4orcLEHRLiJawAt5xAvfK5VH7REV8bpB1jtjX \
     -g 10000000000 \
@@ -134,7 +134,7 @@ cw-substrate-cli substrate -c http://127.0.0.1:32200 \
 
 Output:
 ```
-cw-substrate-cli substrate -c http://127.0.0.1:32200 \
+ccw substrate -c http://127.0.0.1:32200 \
     rpc query \
     -c 5EszMeNDPmy4orcLEHRLiJawAt5xAvfK5VH7REV8bpB1jtjX \
     -g 100000000 \

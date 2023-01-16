@@ -303,6 +303,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a20104e2335ce8a659d6dd92a51a767a0c062599c73b343fd152cb401e828c3d"
 
 [[package]]
+name = "ccw"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "cosmwasm-orchestrate",
+ "cosmwasm-std 1.1.9",
+ "frame-support",
+ "hex",
+ "jsonrpc",
+ "parity-scale-codec",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sp-core 10.0.0",
+ "sp-keyring",
+ "subxt",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "cfg-expr"
 version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -635,28 +657,6 @@ dependencies = [
  "rand_core 0.5.1",
  "subtle",
  "zeroize",
-]
-
-[[package]]
-name = "cw-substrate-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "cosmwasm-orchestrate",
- "cosmwasm-std 1.1.9",
- "frame-support",
- "hex",
- "jsonrpc",
- "parity-scale-codec",
- "reqwest",
- "serde",
- "serde_json",
- "sp-core 10.0.0",
- "sp-keyring",
- "subxt",
- "thiserror",
- "tokio",
 ]
 
 [[package]]

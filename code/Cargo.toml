@@ -26,7 +26,7 @@ runtime-benchmarks = ["composable-node/runtime-benchmarks"]
 std = ["composable-node/std"]
 
 [workspace]
-exclude = ["utils/extrinsics-docs-scraper", "integration-tests", "xcvm/cosmwasm/cw-substrate-cli"]
+exclude = ["utils/extrinsics-docs-scraper", "integration-tests", "xcvm/cosmwasm/cli"]
 members = [
   "services/cmc-api",
   "parachain/frame/*",

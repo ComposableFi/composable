@@ -8,10 +8,10 @@ interact with a chain that runs `pallet-cosmwasm`.
 You can create a base CosmWasm project that you can work on.
 
 ```
-cw-substrate-cli new --name get-started --author $(whoami) --description "Get started with CosmWasm"
+ccw new --name get-started --author $(whoami) --description "Get started with CosmWasm"
 ```
 
-See [here](./cw-substrate-cli/new-project.md) for more.
+See [here](./ccw/new-project.md) for more.
 
 ## Upload a CosmWasm contract
 
@@ -27,36 +27,36 @@ For now, the examples will use development accounts for signing extrinsics, but
 we will explain it further later.
 
 ```sh
-cw-substrate-cli -n alice upload -f /path/to/file.wasm
+ccw -n alice upload -f /path/to/file.wasm
 ```
 
 ### 2. Upload a contract from a running chain
 
 If a Cosmos chain provides an RPC endpoint, you can use it to load the contracts
-to `cw-substrate-cli`. All you need to know is the RPC endpoint to fetch the
+to `ccw`. All you need to know is the RPC endpoint to fetch the
 contract from, and either the contract address that uses the contract code
 or code ID that identifies the contract code.
 
 Fetch using the contract address:
 ```sh
-cw-substrate-cli -n alice upload --cosmos-rpc https://juno-api.polkachu.com --contract juno19rqljkh95gh40s7qdx40ksx3zq5tm4qsmsrdz9smw668x9zdr3lqtg33mf
+ccw -n alice upload --cosmos-rpc https://juno-api.polkachu.com --contract juno19rqljkh95gh40s7qdx40ksx3zq5tm4qsmsrdz9smw668x9zdr3lqtg33mf
 ```
 
 Fetch using the code ID:
 ```sh
-cw-substrate-cli -n alice upload --cosmos-rpc https://juno-api.polkachu.com --code-id 1
+ccw -n alice upload --cosmos-rpc https://juno-api.polkachu.com --code-id 1
 ```
 
 ### 3. Upload a contract from a server
 
 One common thing is to go to a contract's release page and download the contract
-binary from there. You don't have to do that with `cw-substrate-cli`.
+binary from there. You don't have to do that with `ccw`.
 
 ```sh
 # Fetch the official release of `cw20_base.wasm`
-cw-substrate-cli -n alice upload --url https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm
+ccw -n alice upload --url https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm
 ```
 
 ## Interact with a contract
 
-For examples of interacting with the contract, go to the [walkthrough](./cw-substrate-cli/walkthrough.md).
+For examples of interacting with the contract, go to the [walkthrough](./ccw/walkthrough.md).

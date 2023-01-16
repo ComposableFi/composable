@@ -351,16 +351,16 @@ const sidebars = {
                 },
                 {
                     type: 'category',
-                    label: 'Cosmwasm Substrate CLI',
+                    label: 'Cosmwasm CLI',
                     link: {
                         type: 'doc',
-                        id: 'developer-guides/cw-substrate-cli'
+                        id: 'developer-guides/ccw'
                     },
                     collapsible: true,
                     collapsed: true,
                     items: [
-                        'developer-guides/cw-substrate-cli/new-project',
-                        'developer-guides/cw-substrate-cli/walkthrough'
+                        'developer-guides/ccw/new-project',
+                        'developer-guides/ccw/walkthrough'
                     ]
                 },
                 'developer-guides/oracle-set-up-guide',
