@@ -22,7 +22,7 @@ impl WeightInfo for () {
 	}
 
 	fn set_min_fee() -> Weight {
-		Weight::from_ref_time(10_0000)
+		Weight::from_ref_time(100_000)
 	}
 }
 
