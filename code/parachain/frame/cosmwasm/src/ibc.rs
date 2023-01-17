@@ -375,7 +375,6 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		counterparty: &Counterparty,
 		version: &IbcVersion,
 		_relayer: &IbcSigner,
-		// TODO: perhaps, we can remove this.
 		// weight_limit: Weight, https://github.com/ComposableFi/centauri/issues/129
 	) -> Result<(), IbcError> {
 		let address = Self::port_to_address(port_id)?;
