@@ -168,7 +168,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
                   label: "Crowdloan contribution",
                   TooltipProps: {
                     title:
-                      "Only direct contributions are listed here, but in your rewards Bifrost and other means of contributing are taken into account.",
+                      "Amount of Stablecoin you have contributed to the Picasso crowdloan on this account",
                     children: <></>,
                   },
                 },

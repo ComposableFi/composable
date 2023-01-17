@@ -14,8 +14,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { crowdLoanSignableMessage } from "@/utils/crowdloanRewards";
 import { useRouter } from "next/router";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
-import type { PalletCrowdloanRewardsModelsReward } from "defi-interfaces";
-import type { Option } from "@polkadot/types";
 import {
   useConnectedAccounts,
   useDotSamaContext,
@@ -30,15 +28,16 @@ import {
 import { useCrowdloanRewardsClaim } from "@/defi/polkadot/hooks/crowdloanRewards/useCrowdloanRewardsClaim";
 import { useCrowdloanRewardsAssociate } from "@/defi/polkadot/hooks/crowdloanRewards/useCrowdloanRewardsAssociate";
 import {
+  useCrowdloanRewardsClaimableRewards,
+  useCrowdloanRewardsClaimedRewards,
   useCrowdloanRewardsContributionAndRewards,
+  useCrowdloanRewardsEligibility,
   useCrowdloanRewardsEthereumAddressAssociatedAccount,
   useCrowdloanRewardsHasStarted,
   useCrowdloanRewardsStepGivenConnectedAccounts,
 } from "@/stores/defi/polkadot/crowdloanRewards/hooks";
 import { DEFAULT_EVM_ID, DEFAULT_NETWORK_ID } from "@/defi/polkadot/constants";
 import { KsmAndEthAssociationInfoBox } from "@/components/Organisms/CrowdloanRewards/KsmAndEthAssociationInfoBox";
-import BigNumber from "bignumber.js";
-import { fromChainIdUnit } from "shared";
 
 const ERROR_MESSAGES = {
   KSM_WALLET_NOT_CONNECTED: {
@@ -71,13 +70,6 @@ export const ClaimLoanPage = () => {
   const theme = useTheme();
   const hasStarted = useCrowdloanRewardsHasStarted(parachainApi);
 
-  const [ethClaimable, setEthClaimable] = useState(new BigNumber(0));
-  const [ethClaimed, setEthClaimed] = useState(new BigNumber(0));
-  const [ethTotal, setEthTotal] = useState(new BigNumber(0));
-
-  const [ksmClaimable, setKsmClaimable] = useState(new BigNumber(0));
-  const [ksmClaimed, setKsmClaimed] = useState(new BigNumber(0));
-  const [ksmTotal, setKsmTotal] = useState(new BigNumber(0));
   const [ineligibleText, setIneligibleText] = useState({
     title: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.title,
     textBelow: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message,
@@ -102,66 +94,40 @@ export const ClaimLoanPage = () => {
       accounts
     );
 
-  useEffect(() => {
-    if (parachainApi && account) {
-      parachainApi.query.crowdloanRewards
-        .rewards<Option<PalletCrowdloanRewardsModelsReward>>({
-          ethereum: account.toLowerCase(),
-        })
-        .then((result) => {
-          if (result.isSome) {
-            const total = fromChainIdUnit(result.unwrap().total.toString());
-            const claimed = fromChainIdUnit(result.unwrap().claimed.toString());
-
-            setEthClaimable(total.minus(claimed));
-            setEthClaimed(claimed);
-            setEthTotal(total);
-          }
-        });
-    }
-    if (parachainApi && accounts) {
-      accounts.forEach((account) => {
-        parachainApi.query.crowdloanRewards
-          .rewards<Option<PalletCrowdloanRewardsModelsReward>>({
-            relaychain: account.address,
-          })
-          .then((result) => {
-            if (result.isSome) {
-              const total = fromChainIdUnit(result.unwrap().total.toString());
-              const claimed = fromChainIdUnit(
-                result.unwrap().claimed.toString()
-              );
-
-              setKsmClaimable(total.minus(claimed));
-              setKsmClaimed(claimed);
-              setKsmTotal(total);
-            }
-          });
-      });
-    }
-  }, [parachainApi, account]);
-
-  const isEthAccountEligible = useMemo(() => !ethTotal.isZero(), [ethTotal]);
-  const isPicassoAccountEligible = useMemo(
-    () => !ksmTotal.isZero(),
-    [ksmTotal]
-  );
-
   const nextStep = useCrowdloanRewardsStepGivenConnectedAccounts(
     selectedAccount?.address,
-    account?.toLowerCase(),
-    isEthAccountEligible,
-    isPicassoAccountEligible
+    account?.toLowerCase()
   );
+
+  const availableToClaim = useCrowdloanRewardsClaimableRewards(
+    nextStep,
+    account?.toLowerCase(),
+    selectedAccount?.address,
+    parachainApi,
+    initialPayment
+  );
+
+  const claimedRewards = useCrowdloanRewardsClaimedRewards(
+    account?.toLowerCase(),
+    selectedAccount?.address,
+    parachainApi
+  );
+
+  const { isEthAccountEligible, isPicassoAccountEligible } =
+    useCrowdloanRewardsEligibility(
+      account?.toLowerCase(),
+      selectedAccount?.address
+    );
 
   const isEligibleForBothAddresses =
     isEthAccountEligible && isPicassoAccountEligible;
 
-  const { contributedAmount } = useCrowdloanRewardsContributionAndRewards(
-    nextStep,
-    account?.toLowerCase(),
-    selectedAccount?.address
-  );
+  const { contributedAmount, totalRewards } =
+    useCrowdloanRewardsContributionAndRewards(
+      nextStep,
+      account?.toLowerCase(),
+      selectedAccount?.address
+    );
 
   const flow = useMemo(() => {
     if (isEthAccountEligible && isPicassoAccountEligible) {
@@ -354,13 +320,13 @@ export const ClaimLoanPage = () => {
                 }
                 disabled={
                   !hasStarted ||
-                  ethClaimable.eq(0) ||
+                  availableToClaim.eq(0) ||
                   nextStep === CrowdloanStep.None
                 }
-                claimedRewards={ethClaimed}
+                claimedRewards={claimedRewards}
                 amountContributed={contributedAmount}
-                availableToClaim={ethClaimable}
-                totalRewards={ethTotal}
+                availableToClaim={availableToClaim}
+                totalRewards={totalRewards}
                 readonlyCrowdLoanContribution={true}
                 readonlyAvailableToClaim
                 readonlyTotalPicaVested
@@ -377,13 +343,13 @@ export const ClaimLoanPage = () => {
                 isClaiming={isPendingAssociate || isPendingClaim}
                 disabled={
                   !hasStarted ||
-                  ksmClaimable.eq(0) ||
+                  availableToClaim.eq(0) ||
                   nextStep === CrowdloanStep.None
                 }
-                claimedRewards={ksmClaimed}
+                claimedRewards={claimedRewards}
                 amountContributed={contributedAmount}
-                availableToClaim={ksmClaimable}
-                totalRewards={ksmTotal}
+                availableToClaim={availableToClaim}
+                totalRewards={totalRewards}
                 readonlyCrowdLoanContribution={true}
                 readonlyAvailableToClaim
                 readonlyTotalPicaVested
