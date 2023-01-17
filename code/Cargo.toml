@@ -30,6 +30,7 @@ exclude = ["utils/extrinsics-docs-scraper", "integration-tests"]
 members = [
   "services/cmc-api",
   "parachain/frame/*",
+  # TODO(hussein): let's upgrade them in v0.9.33
   # "integration-tests/local-integration-tests",
   "parachain/node",
   "parachain/runtime/common",
@@ -44,6 +45,7 @@ members = [
   "utils/price-feed",
   "utils/collator-sidecar",
   "utils/composable-subxt",
+  # TODO(hussein): do we completely remove this?
   # "simnode/simnode-tests",
   # "simnode/common",
   "utils/wasm-optimizer",
