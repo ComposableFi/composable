@@ -61,9 +61,16 @@ them as needed. While existing assets should maintain their current ID, we can
 define a new way to derive asset IDs automatically for assets created in the 
 future.
 
-A simple approach to this would be processing a nonce using a fixed-length 
-hashing algorithm. Given the fixed length of the hash output, no collisions will
-exist between previous hard-coded asset IDs and ones generated from the hash.
+To create a local asset ID, we can form a full asset ID from the combination of
+the assets' namespace (pallet or protocol) and a nonce/key provided by that 
+namespace.
+
+## Foreign Asset ID Generation
+
+Foreign assets should always be created with a provided, and unique, relative 
+multi-location. A corresponding local asset ID that implements the `Copy` trait 
+is still required in addition to the multi-location. To ensure we have both of 
+theses, we can hash the provided multi-location to create a local asset ID.
 
 ## Asset Types and Asset Routing
 
@@ -85,8 +92,6 @@ Our current asset router (also called pallet-assets, to be renamed to assets
 manager) already completes the more trivial routing. To conduct the non-trivial 
 routing, we can depend on asset-registry to inform us if an asset belongs to 
 the mintable or non-mintable pallet-assets instance.
-
-This new routing layer can implement traits that pallet-assets may be lacking.
 
 ## Adapted Asset Registry
 
@@ -123,14 +128,17 @@ From Moonbeam's `NormalFilter`:
 While Moonbeam does not want asset minting or burning to occur outside XCM, 
 on Picasso - minting and burning is a core function of Pablo and Staking.
 
+While using Parity's pallet-assets may be ideal, the lack of lock/hold 
+functionality provided by the interface makes it insufficient for our solution. 
+Therefore, implementing additional traits not found in orml-tokens on our 
+routing layer is instead more ideal, especially since user balances are already 
+on chain.
+
 **Steps**:
-* Import & Declare pallet-assets
-  * To interact with Parity's pallet assets, we must first import it from our 
-  patched Substrate repository.
+* Import & Declare orml-tokens
   * We must then declare two instances within our `construct_runtime!` macro.
 
-* Configure Each Instance of pallet-assets
-  * NOTE: For details on the configuration of pallet-assets, see [here](https://paritytech.github.io/substrate/master/pallet_assets/pallet/trait.Config.html#)
+* Configure Each Instance of orml-tokens
 
 ## Update Assets Registry
 
@@ -164,59 +172,36 @@ to be created.
 
 ### Pallet Functions
 
-To avoid confusion top level `Call` functions should be explicit in 
-which asset type they are dealing with. Underlying functions can be more 
-generic in their input.
+Assets registry now must support the storage of both local and foreign assets.
+To allow for this, the `register_asset` interface must support both types of 
+assets. 
 
-**Steps**:
-
-* Update `register_*_asset` routes
-
-* Update `update_*_asset` routes
+To enable this, instead of only passing a multi-location, we switch to an enum 
+of either multi-location or local ID.
 
 ### Asset ID Creation
 
 To assist in the routing between both instances of pallet-assets, we can 
 dedicate the first 8 bytes to either a pallet ID or other information that 
 determines the source of the asset. The remaining 8 bytes of the asset ID can 
-be the hash of a nonce provided by the source. A hard-coded list of source 
-prefixes can be used to determine which instance of pallet-assets will belong 
-to.
+be the nonce provided by the source.
 
 To create a hash from the nonce, `sp_core::hashing::blake2_64` can be used
 
-```rust
-/// Create a new asset ID derived from `source_prefix` and a `source_nonce`.
-///
-/// # Parameters
-/// * `source_prefix` - The prefix uniquely identifying the source (normally a 
-/// `frame_support::PalletId`)
-/// * `source_nonce` - A nonce provided by the source, unique to this asset in 
-/// the scope of the source
-fn create_asset_id(source_prefix: [u8; 8], source_nonce: u64) -> T::LocalAssetId {
-  
-}
-```
-
 **Steps**:
 
-* Create `create_asset_id` function within assets-registry and wrap it in a 
-trait
+* Provide assets registry with either our previously described local asset ID
+or a multi-location
 
-* Provide assets-registry with the new trait to pallets that need to create 
-assets, 
+* If assets registry receives a multi-location, hash the multilocation to create
+a new ID
 
-* Create nonce within the pallets for asset IDs, call function accordingly
-
-## Create Assets Manager
-
-NOTE: *Calling this Asset Manager instead of Asset Router to avoid confusion 
-between this and Asset Registry when abbreviated with "AR".*
+## Create Assets Transactor Router (Assets Manager)
 
 Assets Manager will mostly be a migration of the current pallet-assets that we 
 created to route between pallet-balances and orml-tokens. The primary difference 
 being that assets-manager will also need to handle routing between our two 
-instances of Parity's pallet-assets as well as pallet-balances.
+instances of orml-tokens as well as pallet-balances.
 
 As stated in the design, we can depend on information provided by Assets 
 Registry to route between our two instances of pallet-assets. 
@@ -226,9 +211,8 @@ Registry to route between our two instances of pallet-assets.
 * Rename our `pallet-assets` to `pallet-assets-manager`
 
 * Add routes for both instances to existing functions
-  * Use first 8 bytes of the asest ID to route the asset
 
-* Implement `MutateHold` on-top of pallet-assets via pallet-assets-manager
+* Expose the `metadata::Inspect` and `InspectMetadata` traits from the manager
 
 * Use a call filter to block calls into the individual instances of 
 pallet-assets
@@ -244,7 +228,7 @@ The data-migration may be handled in two main tasks:
   * Add ticker-number to existing tokens
   * Create entries for local assets not previously found in assets-registry
 
-* Migrate existing orml-tokens storage to appropriate instance of pallet-assets
+* Migrate existing orml-tokens storage to appropriate instances of orml-tokens
 
 <!-- TODO This should provide more clear details and will in the future -->
 
