@@ -1631,7 +1631,7 @@ fn accumulate_pool_rewards<T: Config>(
 		Ordering::Less =>
 			(&mut reward_pool.rewards)
 				.into_iter()
-				.fold(0u64, |mut acc, (asset_id, reward)| {
+				.fold(0_u64, |mut acc, (asset_id, reward)| {
 					reward_accumulation_hook_reward_update_calculation::<T>(
 						pool_id,
 						*asset_id,
