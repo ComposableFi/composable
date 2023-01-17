@@ -221,7 +221,7 @@ for brevity.
 ### 4.7. Financial NFT Requirements
 
 1.  Each staked position MUST be represented as a
-    [fNFT](https://github.com/ComposableFi/composable/tree/main/code/parachain/frame/fnft).
+    [fNFT](https://github.com/ComposableFi/composable/blob/main/rfcs/0006-financial-nft.md).
 
 2.  Owning a PBLO staked position fNFT(xPBLO) MUST allow voting for
     protocol governance based on the xPBLO granted.
@@ -254,18 +254,7 @@ abstraction over all fees that could be charged on a pool to allow for
 extension. At this time a 100% of the owner fee should be defined as a
 new field `protocol_fee`.
 
-    /// Pool Fee Config
-    #[derive(
-        Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, Copy, RuntimeDebug,
-    )]
-    pub struct FeeConfig {
-        /// Amount of the fee pool charges for the exchange, this goes to liquidity provider.
-        pub fee_rate: Permill,
-        /// Amount of the fee that goes out to the owner of the pool
-        pub owner_fee_rate: Permill,
-        /// Amount of the protocol fees(for PBLO holders) out of owner_fees.
-        pub protocol_fee_rate: Permill,
-    }
+[FeeConfig](https://github.com/ComposableFi/composable/blob/abf9b87c57856b4e83aac66eaca2734bd2d99044/code/parachain/frame/composable-traits/src/dex.rs#L189)
 
 Given this,
 
@@ -490,107 +479,16 @@ to this as the "reward pooling(**RP**) based approach".
 Staking rewards pallet already uses the following data structure
 representing a staking position,
 
-    /// Staking typed fNFT, usually can be mapped to raw fNFT storage type. A position identifier
-    /// should exist for each position when stored in the runtime storage.
-    /// TODO refer to the relevant section in the design doc.
-    #[derive(DebugNoBound, PartialEqNoBound, EqNoBound, CloneNoBound, Encode, Decode, TypeInfo)]
-    #[scale_info(skip_type_params(MaxReductions))]
-    pub struct Stake<
-        AssetId: Debug + PartialEq + Eq + Clone,
-        RewardPoolId: Debug + PartialEq + Eq + Clone,
-        Balance: Debug + PartialEq + Eq + Clone,
-        MaxReductions: Get<u32>,
-    > {
-        /// Reward Pool ID from which pool to allocate rewards for this
-        pub reward_pool_id: RewardPoolId,
-
-        /// The original stake this position was created for or updated position with any extended
-        /// stake amount.
-        pub stake: Balance,
-
-        /// Pool share received for this position
-        pub share: Balance,
-
-        /// Reduced rewards by asset for the position (d_n)
-        pub reductions: BoundedBTreeMap<AssetId, Balance, MaxReductions>,
-
-        /// The lock period for the stake.
-        pub lock: Lock,
-    }
+[Stake](https://github.com/ComposableFi/composable/blob/abf9b87c57856b4e83aac66eaca2734bd2d99044/code/parachain/frame/composable-traits/src/staking/mod.rs#L210)
 
 Which is referred to in the algorithms in the following sections.
 
 Now in order to allow redeeming the above staking position, following
 data structures is to be tracked in the staking rewards pallet,
 
-    /// Defines staking duration, rewards and early unstake penalty for a given asset type.
-    /// TODO refer to the relevant section in the design doc.
-    #[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-    pub struct Reward<Balance> {
-        /// Total rewards including inflation for adjusting for new stakers joining the pool. All
-        /// stakers in a pool are eligible to receive a part of this value based on their share of the
-        /// pool.
-        pub total_rewards: Balance,
+[Reward](https://github.com/ComposableFi/composable/blob/abf9b87c57856b4e83aac66eaca2734bd2d99044/code/parachain/frame/composable-traits/src/staking/mod.rs#L20)
 
-        /// Already claimed rewards by stakers by unstaking.
-        pub claimed_rewards: Balance,
-
-        /// A book keeping field to track the actual total reward without the reward dilution
-        /// adjustment caused by new stakers joining the pool.
-        ///
-        /// total_dilution_adjustment + claimed_rewards is the same as the sum of all of the reductions
-        /// of all of the stakes in the pool.
-        pub total_dilution_adjustment: Balance,
-
-        /// The rewarding rate that increases the pool `total_reward`
-        /// at a given time.
-        pub reward_rate: RewardRate<Balance>,
-
-        /// The last time the reward was updated, in seconds.
-        pub last_updated_timestamp: u64,
-    }
-
-    /// A reward pool is a collection of rewards that are allocated to stakers to incentivize a
-    /// particular purpose. Eg: a pool of rewards for incentivizing adding liquidity to a pablo swap
-    /// pool. TODO refer to the relevant section in the design doc.
-    #[derive(
-        RuntimeDebugNoBound, PartialEqNoBound, EqNoBound, CloneNoBound, Encode, Decode, TypeInfo,
-    )]
-    #[scale_info(skip_type_params(MaxDurationPresets, MaxRewards))]
-    pub struct RewardPool<
-        AccountId: Debug + PartialEq + Eq + Clone,
-        AssetId: Debug + PartialEq + Eq + Clone,
-        Balance: Debug + PartialEq + Eq + Clone,
-        BlockNumber: Debug + PartialEq + Eq + Clone,
-        MaxDurationPresets: Get<u32>,
-        MaxRewards: Get<u32>,
-    > {
-        pub owner: AccountId,
-
-        /// rewards accumulated
-        pub rewards: BoundedBTreeMap<AssetId, Reward<Balance>, MaxRewards>,
-
-        /// Already claimed shares by stakers by unstaking
-        pub claimed_shares: Balance,
-
-        /// Pool will start adding rewards to the pool at this block number.
-        pub start_block: BlockNumber,
-
-        /// Pool would stop adding rewards to pool at this block number.
-        pub end_block: BlockNumber,
-
-        // possible lock config for this pool
-        pub lock: LockConfig<MaxDurationPresets>,
-
-        // Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
-        pub share_asset_id: AssetId,
-
-        // Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
-        pub financial_nft_asset_id: AssetId,
-
-        /// Minimum amount to be staked.
-        pub minimum_staking_amount: Balance,
-    }
+[RewardPool](https://github.com/ComposableFi/composable/blob/abf9b87c57856b4e83aac66eaca2734bd2d99044/code/parachain/frame/composable-traits/src/staking/mod.rs#L113)
 
 Following sections describe the algorithms for various operations on the
 rewards pool based on these data structures.

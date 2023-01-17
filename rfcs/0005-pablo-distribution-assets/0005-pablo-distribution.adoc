@@ -135,7 +135,7 @@ g -up-> UC12
 
 === Financial NFT Requirements
 
-. Each staked position MUST be represented as a https://github.com/ComposableFi/composable/tree/main/code/parachain/frame/fnft[fNFT].
+. Each staked position MUST be represented as a https://github.com/ComposableFi/composable/blob/main/rfcs/0006-financial-nft.md[fNFT].
 . Owning a PBLO staked position fNFT(xPBLO) MUST allow voting for protocol governance based on the xPBLO granted.
 . Each staked position plus its rewards MUST be transferable by transferring the ownership of its NFT including the voting rights.
 
@@ -194,10 +194,7 @@ In order to 1. support LP staking 2. LP trading fee distribution and 3. PBLO sta
 
 Each pool in Pablo defines a fee percentage to be charged for each trade.Except for LBPs other pools also define an owner fee that is a percentage out of the main trading fee. The `FeeConfig` is a new abstraction over all fees that could be charged on a pool to allow for extension. At this time a 100% of the owner fee should be defined as a new field `protocol_fee`.
 
-[source,rust]
-----
-include::../../code/parachain/frame/composable-traits/src/dex.rs[lines=185..196]
-----
+https://github.com/ComposableFi/composable/blob/abf9b87c57856b4e83aac66eaca2734bd2d99044/code/parachain/frame/composable-traits/src/dex.rs#L189[FeeConfig]
 
 Given this,
 ----
@@ -372,24 +369,15 @@ As this method uses a reward pooling based approach to calculate the rewards for
 
 Staking rewards pallet already uses the following data structure representing a staking position,
 
-[source,rust]
-----
-include::../../code/parachain/frame/composable-traits/src/staking/mod.rs[lines=205..231]
-----
+https://github.com/ComposableFi/composable/blob/abf9b87c57856b4e83aac66eaca2734bd2d99044/code/parachain/frame/composable-traits/src/staking/mod.rs#L210[Stake]
 
 Which is referred to in the algorithms in the following sections.
 
 Now in order to allow redeeming the above staking position, following data structures is to be tracked in the staking rewards pallet,
 
-[source,rust]
-----
-include::../../code/parachain/frame/composable-traits/src/staking/mod.rs[lines=17..42]
-----
+https://github.com/ComposableFi/composable/blob/abf9b87c57856b4e83aac66eaca2734bd2d99044/code/parachain/frame/composable-traits/src/staking/mod.rs#L20[Reward]
 
-[source,rust]
-----
-include::../../code/parachain/frame/composable-traits/src/staking/mod.rs[lines=106..146]
-----
+https://github.com/ComposableFi/composable/blob/abf9b87c57856b4e83aac66eaca2734bd2d99044/code/parachain/frame/composable-traits/src/staking/mod.rs#L113[RewardPool]
 
 Following sections describe the algorithms for various operations on the rewards pool based on these data structures.
 
@@ -556,8 +544,9 @@ while (assetId = stake_pools.has_next) is (yes)
         :reward.total_rewards += new_reward;
         note left
             In case not having enough funds
-            the pool will pause. it will recover
-            once enough rewards are accumulated.
+            the pool will pause. it will resume
+            once there are enough funds available
+            to accumulate again.
         endnote
         :reward.last_updated_timestamp = current_time;
     endwhile (no)
