@@ -32,7 +32,11 @@ fn test_liquidate_multiple() {
 		let borrowers_vec = vec![first_borrower, second_borrower, third_borrower];
 		let borrowers = TestBoundedVec::try_from(borrowers_vec.clone()).unwrap();
 		assert_extrinsic_event::<Runtime>(
-			Lending::liquidate(RuntimeOrigin::signed(manager), market_id.clone(), borrowers.clone()),
+			Lending::liquidate(
+				RuntimeOrigin::signed(manager),
+				market_id.clone(),
+				borrowers.clone(),
+			),
 			RuntimeEvent::Lending(crate::Event::LiquidationInitiated {
 				market_id,
 				borrowers: borrowers_vec,
@@ -143,7 +147,12 @@ fn liquidation() {
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(RuntimeOrigin::signed(*ALICE), market_id, collateral, false),
+			Lending::deposit_collateral(
+				RuntimeOrigin::signed(*ALICE),
+				market_id,
+				collateral,
+				false,
+			),
 			RuntimeEvent::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral,
@@ -257,7 +266,12 @@ fn market_owner_cannot_retroactively_liquidate() {
 		assert_ok!(Tokens::mint_into(BTC::ID, &BOB, collateral_amount));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(RuntimeOrigin::signed(*BOB), market_id, collateral_amount, false),
+			Lending::deposit_collateral(
+				RuntimeOrigin::signed(*BOB),
+				market_id,
+				collateral_amount,
+				false,
+			),
 			RuntimeEvent::Lending(crate::Event::CollateralDeposited {
 				sender: *BOB,
 				amount: collateral_amount,

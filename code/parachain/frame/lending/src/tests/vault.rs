@@ -17,7 +17,12 @@ fn vault_takes_part_of_borrow_so_cannot_withdraw() {
 
 		assert_ok!(Lending::vault_deposit(RuntimeOrigin::signed(*ALICE), market_id, deposit_btc));
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(RuntimeOrigin::signed(*ALICE), market_id, deposit_usdt, false),
+			Lending::deposit_collateral(
+				RuntimeOrigin::signed(*ALICE),
+				market_id,
+				deposit_usdt,
+				false,
+			),
 			RuntimeEvent::Lending(pallet_lending::Event::<Runtime>::CollateralDeposited {
 				sender: *ALICE,
 				market_id,
@@ -32,11 +37,13 @@ fn vault_takes_part_of_borrow_so_cannot_withdraw() {
 			),
 			orml_tokens::Error::<Runtime>::BalanceTooLow
 		);
-		assert_no_event::<Runtime>(RuntimeEvent::Lending(pallet_lending::Event::<Runtime>::Borrowed {
-			sender: *ALICE,
-			market_id,
-			amount: deposit_btc + initial_total_cash,
-		}));
+		assert_no_event::<Runtime>(RuntimeEvent::Lending(
+			pallet_lending::Event::<Runtime>::Borrowed {
+				sender: *ALICE,
+				market_id,
+				amount: deposit_btc + initial_total_cash,
+			},
+		));
 	});
 }
 

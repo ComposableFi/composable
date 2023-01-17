@@ -320,7 +320,12 @@ fn borrow_flow() {
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, collateral_amount));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(RuntimeOrigin::signed(*ALICE), market, collateral_amount, false),
+			Lending::deposit_collateral(
+				RuntimeOrigin::signed(*ALICE),
+				market,
+				collateral_amount,
+				false,
+			),
 			RuntimeEvent::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral_amount,
@@ -360,7 +365,12 @@ fn zero_amount_collateral_deposit_or_withdraw() {
 		let collateral_amount = 0;
 		let error_message = "Can not deposit or withdraw zero collateral";
 		assert_noop!(
-			Lending::deposit_collateral(RuntimeOrigin::signed(*ALICE), market, collateral_amount, false),
+			Lending::deposit_collateral(
+				RuntimeOrigin::signed(*ALICE),
+				market,
+				collateral_amount,
+				false
+			),
 			error_message
 		);
 

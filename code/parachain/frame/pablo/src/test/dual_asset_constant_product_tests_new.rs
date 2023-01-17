@@ -199,7 +199,13 @@ mod do_buy {
 				});
 
 			assert_noop!(
-				Pablo::buy(RuntimeOrigin::signed(BOB), pool_id, BTC, AssetAmount::new(BTC, 0), false),
+				Pablo::buy(
+					RuntimeOrigin::signed(BOB),
+					pool_id,
+					BTC,
+					AssetAmount::new(BTC, 0),
+					false
+				),
 				crate::Error::<Test>::CannotBuyAssetWithItself,
 			);
 		});
@@ -532,8 +538,13 @@ mod integration {
 			));
 
 			let alice_lpt_balance = Tokens::balance(lp_token, &ALICE);
-			Tokens::transfer(RuntimeOrigin::signed(ALICE), CHARLIE, lp_token, alice_lpt_balance / 2)
-				.expect("Alice has tokens");
+			Tokens::transfer(
+				RuntimeOrigin::signed(ALICE),
+				CHARLIE,
+				lp_token,
+				alice_lpt_balance / 2,
+			)
+			.expect("Alice has tokens");
 			let alice_lpt_balance = Tokens::balance(lp_token, &ALICE);
 			let charlie_lpt_balance = Tokens::balance(lp_token, &CHARLIE);
 

@@ -2,9 +2,9 @@ use crate::{
 	mocks::{
 		currency_factory::MockCurrencyId,
 		tests::{
-			AccountId, Balance, Balances, BlockNumber, CreationDeposit, RuntimeEvent, ExistentialDeposit,
-			ExtBuilder, RuntimeOrigin, System, Test, Tokens, TombstoneDuration, Vaults,
-			ACCOUNT_FREE_START, ALICE, BOB, CHARLIE, MINIMUM_BALANCE,
+			AccountId, Balance, Balances, BlockNumber, CreationDeposit, ExistentialDeposit,
+			ExtBuilder, RuntimeEvent, RuntimeOrigin, System, Test, Tokens, TombstoneDuration,
+			Vaults, ACCOUNT_FREE_START, ALICE, BOB, CHARLIE, MINIMUM_BALANCE,
 		},
 	},
 	models::VaultInfo,

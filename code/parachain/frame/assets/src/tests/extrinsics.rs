@@ -112,8 +112,13 @@ fn test_force_transfer_native() {
 #[test]
 fn test_transfer_all() {
 	new_test_ext().execute_with(|| {
-		Pallet::<Test>::transfer_all(RuntimeOrigin::signed(FROM_ACCOUNT), ASSET_ID, TO_ACCOUNT, true)
-			.expect("transfer_all should work");
+		Pallet::<Test>::transfer_all(
+			RuntimeOrigin::signed(FROM_ACCOUNT),
+			ASSET_ID,
+			TO_ACCOUNT,
+			true,
+		)
+		.expect("transfer_all should work");
 		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &FROM_ACCOUNT), 1);
 		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT), INIT_AMOUNT * 2 - 1);
 	});

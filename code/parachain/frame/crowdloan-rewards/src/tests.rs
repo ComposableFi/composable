@@ -2,8 +2,8 @@ use crate::{
 	ethereum_recover,
 	mocks::{
 		ethereum_address, generate_accounts, AccountId, Balance, Balances, ClaimKey,
-		CrowdloanRewards, EthKey, ExtBuilder, Moment, RuntimeOrigin, System, Test, Timestamp, ALICE,
-		INITIAL_PAYMENT, PROOF_PREFIX, VESTING_STEP,
+		CrowdloanRewards, EthKey, ExtBuilder, Moment, RuntimeOrigin, System, Test, Timestamp,
+		ALICE, INITIAL_PAYMENT, PROOF_PREFIX, VESTING_STEP,
 	},
 	models::{Proof, RemoteAccount},
 	Error, Event, RemoteAccountOf, RewardAmountOf, VestingPeriodOf,
@@ -92,7 +92,10 @@ mod unlock_rewards_for {
 
 			let accounts: Vec<AccountId> =
 				accounts.into_iter().map(|(account, _claim_key)| account).collect();
-			assert_ok!(CrowdloanRewards::unlock_rewards_for(RuntimeOrigin::root(), accounts.clone()));
+			assert_ok!(CrowdloanRewards::unlock_rewards_for(
+				RuntimeOrigin::root(),
+				accounts.clone()
+			));
 
 			assert_ok!(<Balances as Transfer<AccountId>>::transfer(
 				&accounts[0],
@@ -325,7 +328,10 @@ fn test_initialize_totals() {
 fn initialize_should_fail_when_not_funded() {
 	with_rewards_default(|_set_moment, _accounts| {
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), 0);
-		assert_noop!(CrowdloanRewards::initialize(RuntimeOrigin::root()), Error::<Test>::RewardsNotFunded);
+		assert_noop!(
+			CrowdloanRewards::initialize(RuntimeOrigin::root()),
+			Error::<Test>::RewardsNotFunded
+		);
 	});
 }
 

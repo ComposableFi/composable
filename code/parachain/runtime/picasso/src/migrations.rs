@@ -187,9 +187,17 @@ mod tests {
 			unhashed::put_raw(&old_prefix, &[42]);
 
 			let hash_root = storage_root(StateVersion::V1);
-			assert_ne!(TechCollectiveRenameMigration::on_runtime_upgrade(), Weight::from_ref_time(0));
+			assert_ne!(
+				TechCollectiveRenameMigration::on_runtime_upgrade(),
+				Weight::from_ref_time(0)
+			);
 			assert_ne!(hash_root, storage_root(StateVersion::V1));
-			let updated = || assert_eq!(TechCollectiveRenameMigration::on_runtime_upgrade(), Weight::from_ref_time(0));
+			let updated = || {
+				assert_eq!(
+					TechCollectiveRenameMigration::on_runtime_upgrade(),
+					Weight::from_ref_time(0)
+				)
+			};
 			assert_storage_noop!(updated());
 
 			assert!(unhashed::get_raw(&old_prefix).is_none());

@@ -526,7 +526,9 @@ fn claim_works() {
 
 		System::set_block_number(11);
 		// remain locked if not claimed
-		assert!(Tokens::transfer(RuntimeOrigin::signed(BOB), ALICE, MockCurrencyId::BTC, 10).is_err());
+		assert!(
+			Tokens::transfer(RuntimeOrigin::signed(BOB), ALICE, MockCurrencyId::BTC, 10).is_err()
+		);
 		// unlocked after claiming
 		assert_ok!(Vesting::claim(
 			RuntimeOrigin::signed(BOB),
@@ -546,7 +548,9 @@ fn claim_works() {
 		assert!(VestingSchedules::<Runtime>::contains_key(BOB, MockCurrencyId::BTC));
 		assert_ok!(Tokens::transfer(RuntimeOrigin::signed(BOB), ALICE, MockCurrencyId::BTC, 10));
 		// more are still locked
-		assert!(Tokens::transfer(RuntimeOrigin::signed(BOB), ALICE, MockCurrencyId::BTC, 1).is_err());
+		assert!(
+			Tokens::transfer(RuntimeOrigin::signed(BOB), ALICE, MockCurrencyId::BTC, 1).is_err()
+		);
 
 		System::set_block_number(21);
 		// claim more
@@ -592,7 +596,11 @@ fn claim_nonexistent_schedules() {
 
 		// Claim all schedules
 		assert_noop!(
-			Vesting::claim(RuntimeOrigin::signed(BOB), MockCurrencyId::BTC, VestingScheduleIdSet::All,),
+			Vesting::claim(
+				RuntimeOrigin::signed(BOB),
+				MockCurrencyId::BTC,
+				VestingScheduleIdSet::All,
+			),
 			Error::<Runtime>::VestingScheduleNotFound
 		);
 
@@ -1165,7 +1173,9 @@ fn update_vesting_schedules_works() {
 			MockCurrencyId::BTC,
 			VestingScheduleIdSet::All
 		));
-		assert!(Tokens::transfer(RuntimeOrigin::signed(BOB), ALICE, MockCurrencyId::BTC, 1).is_err());
+		assert!(
+			Tokens::transfer(RuntimeOrigin::signed(BOB), ALICE, MockCurrencyId::BTC, 1).is_err()
+		);
 
 		System::set_block_number(21);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);

@@ -89,7 +89,8 @@ fn setup_sell() {
 			Assets::balance(PICA, &DutchAuctionPalletId::get().into_account_truncating()) -
 				treasury;
 		assert!(treasury_added > 0);
-		let ask_gas = <Runtime as pallet_dutch_auction::Config>::WeightInfo::ask().ref_time() as u128;
+		let ask_gas =
+			<Runtime as pallet_dutch_auction::Config>::WeightInfo::ask().ref_time() as u128;
 		assert!(treasury_added >= ask_gas);
 		let reserved = Assets::reserved_balance(BTC, &ALICE);
 		assert!(not_reserved < reserved && reserved == 1);
@@ -119,10 +120,12 @@ fn with_immediate_exact_buy() {
 		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 		DutchAuction::ask(RuntimeOrigin::signed(seller), sell, configuration).unwrap();
 		let order_id = crate::OrdersIndex::<Runtime>::get();
-		let result = DutchAuction::take(RuntimeOrigin::signed(buyer), order_id, Take::new(1, fixed(999)));
+		let result =
+			DutchAuction::take(RuntimeOrigin::signed(buyer), order_id, Take::new(1, fixed(999)));
 		assert!(!result.is_ok());
 		let not_reserved = <Assets as MultiReservableCurrency<_>>::reserved_balance(USDT, &BOB);
-		let result = DutchAuction::take(RuntimeOrigin::signed(buyer), order_id, Take::new(1, fixed(1000)));
+		let result =
+			DutchAuction::take(RuntimeOrigin::signed(buyer), order_id, Take::new(1, fixed(1000)));
 		assert_ok!(result);
 		let reserved = Assets::reserved_balance(USDT, &BOB);
 		assert!(not_reserved < reserved && reserved == take_amount);
@@ -150,8 +153,16 @@ fn with_two_takes_higher_than_limit_and_not_enough_for_all() {
 		let sell = Sell::new(BTC, USDT, sell_amount, fixed(take_amount));
 		DutchAuction::ask(RuntimeOrigin::signed(seller), sell, configuration).unwrap();
 		let order_id = crate::OrdersIndex::<Runtime>::get();
-		assert_ok!(DutchAuction::take(RuntimeOrigin::signed(buyer), order_id, Take::new(1, fixed(1001))));
-		assert_ok!(DutchAuction::take(RuntimeOrigin::signed(buyer), order_id, Take::new(1, fixed(1002))));
+		assert_ok!(DutchAuction::take(
+			RuntimeOrigin::signed(buyer),
+			order_id,
+			Take::new(1, fixed(1001))
+		));
+		assert_ok!(DutchAuction::take(
+			RuntimeOrigin::signed(buyer),
+			order_id,
+			Take::new(1, fixed(1002))
+		));
 
 		DutchAuction::on_finalize(42);
 

@@ -209,9 +209,9 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = Everything;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
-  type OnSlash = ();
-  type OnDeposit = ();
-  type OnTransfer = ();
+	type OnSlash = ();
+	type OnDeposit = ();
+	type OnTransfer = ();
 }
 
 ord_parameter_types! {

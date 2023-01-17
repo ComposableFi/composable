@@ -129,9 +129,9 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = Everything;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
-  type OnSlash = ();
-  type OnDeposit = ();
-  type OnTransfer = ();
+	type OnSlash = ();
+	type OnDeposit = ();
+	type OnTransfer = ();
 }
 
 parameter_types! {

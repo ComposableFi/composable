@@ -23,7 +23,8 @@ use sp_runtime::{FixedPointNumber, Perbill};
 
 use crate::{
 	runtime::{
-		MaxRewardConfigsPerPool, RuntimeOrigin, StakingRewards, System, Test, Tokens, ALICE, BOB, CHARLIE,
+		MaxRewardConfigsPerPool, RuntimeOrigin, StakingRewards, System, Test, Tokens, ALICE, BOB,
+		CHARLIE,
 	},
 	test::{
 		default_lock_config, mint_assets, new_test_ext,
@@ -206,7 +207,11 @@ fn update_accumulates_properly() {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		Test::assert_extrinsic_event(
-			StakingRewards::claim(RuntimeOrigin::signed(CHARLIE), STAKING_FNFT_COLLECTION_ID, stake_id),
+			StakingRewards::claim(
+				RuntimeOrigin::signed(CHARLIE),
+				STAKING_FNFT_COLLECTION_ID,
+				stake_id,
+			),
 			crate::Event::Claimed {
 				owner: CHARLIE,
 				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,

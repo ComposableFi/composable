@@ -15,7 +15,7 @@ mod mint_into {
 	use crate::{
 		pallet::*,
 		test::{
-			mock::{new_test_ext, RuntimeEvent, MockRuntime},
+			mock::{new_test_ext, MockRuntime, RuntimeEvent},
 			prelude::*,
 			ALICE, BOB,
 		},
@@ -191,7 +191,7 @@ mod burn_from {
 	use crate::{
 		pallet::*,
 		test::{
-			mock::{new_test_ext, RuntimeEvent, MockRuntime},
+			mock::{new_test_ext, MockRuntime, RuntimeEvent},
 			prelude::{TEST_COLLECTION_ID, *},
 			ALICE, BOB,
 		},
@@ -267,7 +267,7 @@ mod burn_from {
 		use sp_runtime::DispatchError;
 
 		use crate::test::{
-			mock::{new_test_ext, RuntimeEvent, MockRuntime},
+			mock::{new_test_ext, MockRuntime, RuntimeEvent},
 			prelude::{mint_many_nfts_and_assert, mint_nft_and_assert, TEST_COLLECTION_ID},
 			ALICE, BOB,
 		};
@@ -306,10 +306,12 @@ mod burn_from {
 					mint_many_nfts_and_assert::<10>(ALICE, TEST_COLLECTION_ID);
 
 				assert_ok!(Nft::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)));
-				MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftBurned {
-					collection_id: TEST_COLLECTION_ID,
-					instance_id: nft_to_burn,
-				}));
+				MockRuntime::assert_last_event(RuntimeEvent::Nft(
+					crate::Event::FinancialNftBurned {
+						collection_id: TEST_COLLECTION_ID,
+						instance_id: nft_to_burn,
+					},
+				));
 
 				assert_noop!(
 					Nft::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)),
@@ -325,10 +327,12 @@ mod burn_from {
 				let nft_to_burn = mint_nft_and_assert();
 
 				assert_ok!(Nft::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)));
-				MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftBurned {
-					collection_id: TEST_COLLECTION_ID,
-					instance_id: nft_to_burn,
-				}));
+				MockRuntime::assert_last_event(RuntimeEvent::Nft(
+					crate::Event::FinancialNftBurned {
+						collection_id: TEST_COLLECTION_ID,
+						instance_id: nft_to_burn,
+					},
+				));
 
 				assert_noop!(
 					Nft::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)),

@@ -40,7 +40,7 @@ mod simulate {
 	use sp_runtime::Permill;
 
 	use crate::{
-		mock::{new_test_ext, RuntimeOrigin, Pablo, System, Test, ALICE},
+		mock::{new_test_ext, Pablo, RuntimeOrigin, System, Test, ALICE},
 		Event, PoolInitConfiguration,
 	};
 

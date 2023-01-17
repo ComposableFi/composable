@@ -333,7 +333,10 @@ fn stake_should_fail_before_start_of_rewards_pool() {
 		let pool_id = PICA::ID;
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
-		assert_ok!(StakingRewards::create_reward_pool(RuntimeOrigin::root(), get_default_reward_pool()));
+		assert_ok!(StakingRewards::create_reward_pool(
+			RuntimeOrigin::root(),
+			get_default_reward_pool()
+		));
 
 		assert_noop!(
 			StakingRewards::stake(RuntimeOrigin::signed(staker), pool_id, amount, duration),
@@ -372,7 +375,10 @@ fn stake_should_fail_if_amount_is_less_than_minimum() {
 		let pool_id = PICA::ID;
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
-		assert_ok!(StakingRewards::create_reward_pool(RuntimeOrigin::root(), get_default_reward_pool()));
+		assert_ok!(StakingRewards::create_reward_pool(
+			RuntimeOrigin::root(),
+			get_default_reward_pool()
+		));
 
 		assert_noop!(
 			StakingRewards::stake(RuntimeOrigin::signed(staker), pool_id, amount, duration),
@@ -506,7 +512,10 @@ fn stake_in_case_of_zero_inflation_should_work() {
 	new_test_ext().execute_with(|| {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
-		assert_ok!(StakingRewards::create_reward_pool(RuntimeOrigin::root(), get_default_reward_pool()));
+		assert_ok!(StakingRewards::create_reward_pool(
+			RuntimeOrigin::root(),
+			get_default_reward_pool()
+		));
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 		let staker: Public = ALICE;
 		let amount: u128 = 100_500_u128;
@@ -938,7 +947,10 @@ fn unstake_non_existent_stake_should_not_work() {
 fn not_owner_of_stake_can_not_unstake() {
 	new_test_ext().execute_with(|| {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
-		assert_ok!(StakingRewards::create_reward_pool(RuntimeOrigin::root(), get_default_reward_pool()));
+		assert_ok!(StakingRewards::create_reward_pool(
+			RuntimeOrigin::root(),
+			get_default_reward_pool()
+		));
 		let owner = ALICE;
 		let not_owner = BOB;
 		let pool_id = PICA::ID;
@@ -950,7 +962,12 @@ fn not_owner_of_stake_can_not_unstake() {
 		mint_assets([owner, not_owner], [staked_asset_id], amount * 2);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
-		assert_ok!(StakingRewards::stake(RuntimeOrigin::signed(owner), pool_id, amount, duration_preset));
+		assert_ok!(StakingRewards::stake(
+			RuntimeOrigin::signed(owner),
+			pool_id,
+			amount,
+			duration_preset
+		));
 
 		assert_noop!(
 			StakingRewards::unstake(RuntimeOrigin::signed(not_owner), 1, 0),
@@ -1929,7 +1946,10 @@ fn with_stake<R>(
 ) -> R {
 	new_test_ext().execute_with(|| {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
-		assert_ok!(StakingRewards::create_reward_pool(RuntimeOrigin::root(), get_default_reward_pool()));
+		assert_ok!(StakingRewards::create_reward_pool(
+			RuntimeOrigin::root(),
+			get_default_reward_pool()
+		));
 
 		let staked_asset_id = PICA::ID;
 		let rewards_pool =
@@ -1946,7 +1966,8 @@ fn with_stake<R>(
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 		let fnft_instance_id = stake_and_assert::<Test>(staker, PICA::ID, amount, duration);
 
-		// assert_ok!(StakingRewards::stake(RuntimeOrigin::signed(staker), pool_id, amount, duration));
+		// assert_ok!(StakingRewards::stake(RuntimeOrigin::signed(staker), pool_id, amount,
+		// duration));
 		assert_eq!(balance(staked_asset_id, &staker), amount);
 
 		let stake = StakingRewards::stakes(1, 0).expect("stake expected. QED");

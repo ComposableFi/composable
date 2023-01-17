@@ -162,7 +162,12 @@ fn test_repay_total_debt() {
 		let deposit_collateral = |account, balance| {
 			assert_ok!(Tokens::mint_into(BTC::ID, account, balance));
 			assert_extrinsic_event::<Runtime>(
-				Lending::deposit_collateral(RuntimeOrigin::signed(*account), market_index, balance, false),
+				Lending::deposit_collateral(
+					RuntimeOrigin::signed(*account),
+					market_index,
+					balance,
+					false,
+				),
 				RuntimeEvent::Lending(crate::Event::<Runtime>::CollateralDeposited {
 					market_id: market_index,
 					amount: BTC::ONE,

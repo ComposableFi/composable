@@ -1241,7 +1241,13 @@ fn add_lp_amounts_get_normalized() {
 		.value;
 
 		Test::assert_extrinsic_event(
-			Pablo::add_liquidity(RuntimeOrigin::signed(BOB), pool_id, assets_with_amounts, 0, false),
+			Pablo::add_liquidity(
+				RuntimeOrigin::signed(BOB),
+				pool_id,
+				assets_with_amounts,
+				0,
+				false,
+			),
 			crate::Event::<Test>::LiquidityAdded {
 				who: BOB,
 				pool_id: 0,

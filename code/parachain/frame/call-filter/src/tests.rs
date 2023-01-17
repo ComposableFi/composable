@@ -16,7 +16,10 @@ fn pause_transaction_work() {
 			pallet_name: b"Balances".to_vec().try_into().unwrap(),
 			function_name: b"transfer".to_vec().try_into().unwrap(),
 		};
-		assert_noop!(Filter::disable(RuntimeOrigin::signed(5), balances_transfer.clone()), BadOrigin);
+		assert_noop!(
+			Filter::disable(RuntimeOrigin::signed(5), balances_transfer.clone()),
+			BadOrigin
+		);
 
 		assert_eq!(Filter::disabled_calls(&balances_transfer), None);
 		assert_ok!(Filter::disable(RuntimeOrigin::signed(1), balances_transfer.clone()));
@@ -64,7 +67,10 @@ fn enable_work() {
 		assert_ok!(Filter::disable(RuntimeOrigin::signed(1), balances_transfer.clone()));
 		assert_eq!(Filter::disabled_calls(&balances_transfer), Some(()));
 
-		assert_noop!(Filter::enable(RuntimeOrigin::signed(5), balances_transfer.clone()), BadOrigin);
+		assert_noop!(
+			Filter::enable(RuntimeOrigin::signed(5), balances_transfer.clone()),
+			BadOrigin
+		);
 
 		assert_ok!(Filter::enable(RuntimeOrigin::signed(1), balances_transfer.clone()));
 		System::assert_last_event(RuntimeEvent::Filter(crate::Event::Enabled {

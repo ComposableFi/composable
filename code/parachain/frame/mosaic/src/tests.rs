@@ -115,7 +115,10 @@ mod ensure_relayer {
 	fn ensure_relayer_origin_checked() {
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
-			assert_err!(Mosaic::ensure_relayer(RuntimeOrigin::signed(ALICE)), DispatchError::BadOrigin);
+			assert_err!(
+				Mosaic::ensure_relayer(RuntimeOrigin::signed(ALICE)),
+				DispatchError::BadOrigin
+			);
 		})
 	}
 }
@@ -134,14 +137,20 @@ mod set_relayer {
 	#[test]
 	fn relayer_cannot_set_relayer() {
 		new_test_ext().execute_with(|| {
-			assert_noop!(Mosaic::set_relayer(RuntimeOrigin::relayer(), ALICE), DispatchError::BadOrigin);
+			assert_noop!(
+				Mosaic::set_relayer(RuntimeOrigin::relayer(), ALICE),
+				DispatchError::BadOrigin
+			);
 		})
 	}
 
 	#[test]
 	fn none_cannot_set_relayer() {
 		new_test_ext().execute_with(|| {
-			assert_noop!(Mosaic::set_relayer(RuntimeOrigin::none(), ALICE), DispatchError::BadOrigin);
+			assert_noop!(
+				Mosaic::set_relayer(RuntimeOrigin::none(), ALICE),
+				DispatchError::BadOrigin
+			);
 		})
 	}
 	#[test]
@@ -227,7 +236,11 @@ mod set_network {
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 
-			assert_ok!(Mosaic::set_network(RuntimeOrigin::relayer(), network_id, network_info.clone()));
+			assert_ok!(Mosaic::set_network(
+				RuntimeOrigin::relayer(),
+				network_id,
+				network_info.clone()
+			));
 			assert_eq!(Mosaic::network_infos(network_id), Some(network_info));
 		})
 	}
@@ -300,7 +313,12 @@ mod budget {
 		fn none_cannot_set_budget() {
 			new_test_ext().execute_with(|| {
 				assert_noop!(
-					Mosaic::set_budget(RuntimeOrigin::none(), 1, 1, BudgetPenaltyDecayer::linear(5)),
+					Mosaic::set_budget(
+						RuntimeOrigin::none(),
+						1,
+						1,
+						BudgetPenaltyDecayer::linear(5)
+					),
 					DispatchError::BadOrigin
 				);
 			})
@@ -400,7 +418,12 @@ fn initialize() {
 		1,
 		NetworkInfo { enabled: true, min_transfer_size: 1, max_transfer_size: 100000 },
 	));
-	assert_ok!(Mosaic::set_budget(RuntimeOrigin::root(), 1, BUDGET, BudgetPenaltyDecayer::linear(10)));
+	assert_ok!(Mosaic::set_budget(
+		RuntimeOrigin::root(),
+		1,
+		BUDGET,
+		BudgetPenaltyDecayer::linear(10)
+	));
 	assert_ok!(Mosaic::update_asset_mapping(
 		RuntimeOrigin::root(),
 		ASSET_ID,
@@ -955,7 +978,13 @@ mod transfer_to {
 			initialize();
 			do_transfer_to();
 			assert_noop!(
-				Mosaic::accept_transfer(RuntimeOrigin::relayer(), ALICE, NETWORK_ID, REMOTE_ASSET_ID, 101),
+				Mosaic::accept_transfer(
+					RuntimeOrigin::relayer(),
+					ALICE,
+					NETWORK_ID,
+					REMOTE_ASSET_ID,
+					101
+				),
 				Error::<Test>::AmountMismatch
 			);
 		})
@@ -1016,7 +1045,13 @@ mod transfer_to {
 			System::set_block_number(current_block + Mosaic::timelock_period() + 1);
 			assert_ok!(Mosaic::claim_stale_to(RuntimeOrigin::signed(ALICE), 1, ALICE));
 			assert_noop!(
-				Mosaic::accept_transfer(RuntimeOrigin::relayer(), ALICE, NETWORK_ID, REMOTE_ASSET_ID, 100),
+				Mosaic::accept_transfer(
+					RuntimeOrigin::relayer(),
+					ALICE,
+					NETWORK_ID,
+					REMOTE_ASSET_ID,
+					100
+				),
 				Error::<Test>::NoOutgoingTx
 			);
 		})
@@ -1343,7 +1378,10 @@ mod claim_to {
 			let lock_time = 10;
 			do_timelocked_mint(ALICE, 50, lock_time);
 			let current_block = System::block_number();
-			assert_noop!(Mosaic::claim_to(RuntimeOrigin::alice(), 1, ALICE), Error::<Test>::TxStillLocked);
+			assert_noop!(
+				Mosaic::claim_to(RuntimeOrigin::alice(), 1, ALICE),
+				Error::<Test>::TxStillLocked
+			);
 			System::set_block_number(current_block + lock_time + 1);
 			assert_ok!(Mosaic::claim_to(RuntimeOrigin::alice(), 1, ALICE));
 		})

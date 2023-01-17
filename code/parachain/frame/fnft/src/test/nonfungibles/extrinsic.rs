@@ -14,7 +14,7 @@ use frame_support::{
 use crate::{
 	pallet,
 	test::{
-		mock::{new_test_ext, RuntimeEvent, MockRuntime, Nft, RuntimeOrigin, Proxy},
+		mock::{new_test_ext, MockRuntime, Nft, Proxy, RuntimeEvent, RuntimeOrigin},
 		prelude::{TEST_COLLECTION_ID, *},
 		ALICE, BOB, CHARLIE,
 	},
@@ -102,7 +102,12 @@ fn roundtrip() {
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
 		// send one of ALICE's NFTs to BOB
-		assert_ok!(Nft::transfer(RuntimeOrigin::signed(ALICE), TEST_COLLECTION_ID, nft_to_trade, BOB));
+		assert_ok!(Nft::transfer(
+			RuntimeOrigin::signed(ALICE),
+			TEST_COLLECTION_ID,
+			nft_to_trade,
+			BOB
+		));
 		MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: nft_to_trade,
@@ -115,7 +120,12 @@ fn roundtrip() {
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
 		// send said NFT back
-		assert_ok!(Nft::transfer(RuntimeOrigin::signed(BOB), TEST_COLLECTION_ID, nft_to_trade, ALICE));
+		assert_ok!(Nft::transfer(
+			RuntimeOrigin::signed(BOB),
+			TEST_COLLECTION_ID,
+			nft_to_trade,
+			ALICE
+		));
 		MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: nft_to_trade,
@@ -189,12 +199,19 @@ fn many() {
 
 		// transfer all of CHARLIES's NFTs to BOB
 		for nft_id in charlies_nfts.iter() {
-			assert_ok!(Nft::transfer(RuntimeOrigin::signed(CHARLIE), TEST_COLLECTION_ID, *nft_id, BOB));
-			MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftTransferred {
-				collection_id: TEST_COLLECTION_ID,
-				instance_id: *nft_id,
-				to: BOB,
-			}));
+			assert_ok!(Nft::transfer(
+				RuntimeOrigin::signed(CHARLIE),
+				TEST_COLLECTION_ID,
+				*nft_id,
+				BOB
+			));
+			MockRuntime::assert_last_event(RuntimeEvent::Nft(
+				crate::Event::FinancialNftTransferred {
+					collection_id: TEST_COLLECTION_ID,
+					instance_id: *nft_id,
+					to: BOB,
+				},
+			));
 			process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(2);
 		}
 

@@ -13,7 +13,7 @@ use std::{
 use crate::{
 	pallet::{Event as NftEvent, Instance, OwnerInstances},
 	test::{
-		mock::{RuntimeEvent, MockRuntime, Nft},
+		mock::{MockRuntime, Nft, RuntimeEvent},
 		ALICE, BOB,
 	},
 	AccountIdOf, FinancialNftCollectionIdOf, FinancialNftInstanceIdOf, Pallet,

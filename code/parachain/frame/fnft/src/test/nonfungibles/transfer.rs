@@ -11,7 +11,7 @@ use sp_runtime::DispatchError;
 
 use crate::{
 	test::{
-		mock::{new_test_ext, RuntimeEvent, MockRuntime, Nft, Proxy},
+		mock::{new_test_ext, MockRuntime, Nft, Proxy, RuntimeEvent},
 		prelude::{TEST_COLLECTION_ID, *},
 		ALICE, BOB, CHARLIE,
 	},
@@ -185,11 +185,13 @@ fn many() {
 				nft_id,
 				&BOB
 			));
-			MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftTransferred {
-				collection_id: TEST_COLLECTION_ID,
-				instance_id: *nft_id,
-				to: BOB,
-			}));
+			MockRuntime::assert_last_event(RuntimeEvent::Nft(
+				crate::Event::FinancialNftTransferred {
+					collection_id: TEST_COLLECTION_ID,
+					instance_id: *nft_id,
+					to: BOB,
+				},
+			));
 			process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(2);
 		}
 
