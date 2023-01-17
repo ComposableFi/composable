@@ -270,13 +270,11 @@ pub fn run() -> Result<()> {
 						id => panic!("Unknown Chain: {}", id),
 					}),
 				#[cfg(not(feature = "runtime-benchmarks"))]
-				BenchmarkCmd::Storage(_) =>
-					return Err(sc_cli::Error::Input(
-						"Compile with --features=runtime-benchmarks \
+				BenchmarkCmd::Storage(_) => Err(sc_cli::Error::Input(
+					"Compile with --features=runtime-benchmarks \
 						 to enable storage benchmarks."
-							.into(),
-					)
-					.into()),
+						.into(),
+				)),
 				#[cfg(feature = "runtime-benchmarks")]
 				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| match config.chain_spec.id() {
 					id if id.contains("picasso") => {

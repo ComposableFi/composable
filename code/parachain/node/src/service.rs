@@ -24,7 +24,7 @@ use crate::{
 		pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
 	},
 };
-use sc_client_api::{ExecutorProvider, StateBackendFor};
+use sc_client_api::StateBackendFor;
 use sc_executor::NativeExecutionDispatch;
 use sc_service::{Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
@@ -521,7 +521,7 @@ where
 		_,
 	>(cumulus_client_consensus_aura::ImportQueueParams {
 		block_import: client.clone(),
-		client: client.clone(),
+		client,
 		create_inherent_data_providers: move |_, _| async move {
 			let time = sp_timestamp::InherentDataProvider::from_system_time();
 

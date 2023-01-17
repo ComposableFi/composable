@@ -102,9 +102,7 @@ use composable_traits::{
 	xcm::assets::{RemoteAssetRegistryMutate, XcmAssetLocation},
 };
 use frame_support::{
-	traits::{
-		fungibles, ConstU32, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade,
-	},
+	traits::{fungibles, ConstU32, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade},
 	weights::ConstantMultiplier,
 };
 use frame_system as system;
