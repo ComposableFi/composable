@@ -17841,28 +17841,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "xcmp"
-version = "0.1.0"
-dependencies = [
- "base58",
- "clap 3.2.23",
- "composable-subxt",
- "env_logger 0.9.3",
- "hex",
- "parity-scale-codec",
- "sc-cli",
- "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
- "sp-externalities 0.12.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
- "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
- "sp-keyring",
- "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
- "sp-runtime-interface 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
- "subxt 0.23.0",
- "tokio",
-]
-
-[[package]]
 name = "xcvm-core"
 version = "0.1.0"
 dependencies = [

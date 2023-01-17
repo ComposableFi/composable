@@ -46,7 +46,6 @@ members = [
   "utils/composable-subxt",
   # "simnode/simnode-tests",
   # "simnode/common",
-  "utils/xcmp",
   "utils/wasm-optimizer",
   "xcvm/lib/*",
   "xcvm/cosmwasm/contracts/*",
