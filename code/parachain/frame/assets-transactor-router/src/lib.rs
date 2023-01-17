@@ -380,11 +380,24 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::mint_initialize())]
 		pub fn mint_initialize(
 			origin: OriginFor<T>,
+			protocol_id: [u8; 8],
+			nonce: u64,
+			name: Vec<u8>,
+			symbol: Vec<u8>,
+			decimals: u8,
+			ratio: Option<Rational64>,
 			#[pallet::compact] amount: T::Balance,
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
 			ensure_root(origin)?;
-			let id = todo!();
+			let id = <Self as CreateAsset>::create_local_asset(
+				protocol_id,
+				nonce,
+				name,
+				symbol,
+				decimals,
+				ratio,
+			)?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as fungibles::Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(())
@@ -397,12 +410,25 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::mint_initialize())]
 		pub fn mint_initialize_with_governance(
 			origin: OriginFor<T>,
+			protocol_id: [u8; 8],
+			nonce: u64,
+			name: Vec<u8>,
+			symbol: Vec<u8>,
+			decimals: u8,
+			ratio: Option<Rational64>,
 			#[pallet::compact] amount: T::Balance,
 			governance_origin: <T::Lookup as StaticLookup>::Source,
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
 			ensure_root(origin)?;
-			let id = todo!();
+			let id = <Self as CreateAsset>::create_local_asset(
+				protocol_id,
+				nonce,
+				name,
+				symbol,
+				decimals,
+				ratio,
+			)?;
 			let governance_origin = T::Lookup::lookup(governance_origin)?;
 			T::GovernanceRegistry::set(id, SignedRawOrigin::Signed(governance_origin));
 			let dest = T::Lookup::lookup(dest)?;
