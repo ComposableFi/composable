@@ -50,7 +50,7 @@ AggrTrades
 airdropper
 alice
 apexcharts
-arion
+arion #nix #docker
 arrayify
 asciidoctor
 assetinfo
@@ -138,7 +138,7 @@ fetchgit
 fetchurl
 fgrep
 findutils
-fnft
+fnft #protocol
 fnfts
 fontconfig
 fontname
@@ -161,7 +161,7 @@ growmemory
 gsutil
 hadolint
 hasher
-hasura
+hasura #database #gql
 hardfork
 hevm
 hexdump
@@ -182,7 +182,7 @@ infima
 inprocess
 instrs
 ipam
-ipetkov # github username
+ipetkov #github-handle #rust #nix
 iszero
 journalctl
 jsonrpsee
@@ -287,7 +287,7 @@ pingpong
 pkgconf
 pkgconfig
 pkgs
-plantuml
+plantuml #diagrasm #tool
 Pointable
 polkalaunch
 polkassembly
@@ -331,8 +331,7 @@ ripemd
 rlib
 rngs
 rnix
-rocksdb
-ROCKSDB
+rocksdb #database
 rotr
 Rotr
 rpath
@@ -343,7 +342,7 @@ rustfmt
 RUSTSEC # RUSTSEC-XXXX-XXXX is id of RustSec Advisory Database
 rustup
 safu
-sccache
+sccache #rust
 schemars
 scrollbox
 searchbar
@@ -380,7 +379,7 @@ Stackexchange
 stakeform
 stakerclaimunstake
 startuml
-statemine
+statemine #parachain #paritytech
 stdenv
 stdstore
 structopt
