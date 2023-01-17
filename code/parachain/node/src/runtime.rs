@@ -255,6 +255,7 @@ define_trait! {
 		#[cfg(feature = "composable")]
 		impl for composable_runtime {}
 
+		#[cfg(feature = "picasso")]
 		impl for picasso_runtime {}
 
 		#[cfg(feature = "dali")]
