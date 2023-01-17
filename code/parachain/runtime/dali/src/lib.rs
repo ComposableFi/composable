@@ -1427,7 +1427,7 @@ mod benches {
 		[balances, Balances]
 		[session, SessionBench::<Runtime>]
 		[timestamp, Timestamp]
-	// TODO(hussein) Still broken on v0.9.30
+	  // TODO(hussein) Still broken on v0.9.30
 		// [collator_selection, CollatorSelection]
 		[indices, Indices]
 		[membership, CouncilMembership]
@@ -1445,7 +1445,24 @@ mod benches {
 		[mosaic, Mosaic]
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
-		[lending, Lending]
+    // TODO(hussein): broken as of v0.9.30
+		// [lending, Lending]
+    /*
+      2023-01-17 13:01:50 panicked at 'Timestamp slot must match `CurrentSlot`', /sources/b44e579ebfa6a9c3cb36e320617fc592078911c53e5f75fcffd348678aec1f49/pallet-aura-4.0.0-dev/src/lib.rs:299:9
+Error:
+   0: Invalid input: Error executing and verifying runtime benchmark: Execution aborted due to trap: wasm trap: wasm `unreachable` instruction executed
+      WASM backtrace:
+
+          0: 0x7c44 - <unknown>!rust_begin_unwind
+          1: 0x15456 - <unknown>!core::panicking::panic_fmt::hbd719b21b7458dd3
+          2: 0x518a89 - <unknown>!pallet_aura::<impl frame_support::traits::hooks::OnTimestampSet<<T as pallet_timestamp::pallet::Config>::Moment> for pallet_aura::pallet::Pallet<T>>::on_timestamp_set::h18f88ba233c0b591
+          3: 0x54665d - <unknown>!pallet_timestamp::<impl pallet_timestamp::pallet::Pallet<T>>::set_timestamp::ha4c72baaa2c36987
+          4: 0x801c62 - <unknown>!pallet_lending::benchmarking::setup::produce_block::hf5f1f77bfd4bce7c
+          5: 0x8e59c3 - <unknown>!<pallet_lending::benchmarking::SelectedBenchmark as frame_benchmarking::utils::BenchmarkingSetup<T>>::instance::h48a1d91aceee3bf1
+          6: 0x90679c - <unknown>!pallet_lending::benchmarking::<impl frame_benchmarking::utils::Benchmarking for pallet_lending::pallet::Pallet<T>>::run_benchmark::hb135064c01208619
+          7: 0x8d23f7 - <unknown>!<dali_runtime::Runtime as frame_benchmarking::utils::runtime_decl_for_Benchmark::BenchmarkV1<sp_runtime::generic::block::Block<sp_runtime::generic::header::Header<u32,sp_runtime::traits::BlakeTwo256>,sp_runtime::generic::unchecked_extrinsic::UncheckedExtrinsic<sp_runtime::multiaddress::MultiAddress<<<sp_runtime::MultiSignature as sp_runtime::traits::Verify>::Signer as sp_runtime::traits::IdentifyAccount>::AccountId,u32>,dali_runtime::RuntimeCall,sp_runtime::MultiSignature,(frame_system::extensions::check_non_zero_sender::CheckNonZeroSender<dali_runtime::Runtime>,frame_system::extensions::check_spec_version::CheckSpecVersion<dali_runtime::Runtime>,frame_system::extensions::check_tx_version::CheckTxVersion<dali_runtime::Runtime>,frame_system::extensions::check_genesis::CheckGenesis<dali_runtime::Runtime>,frame_system::extensions::check_mortality::CheckMortality<dali_runtime::Runtime>,frame_system::extensions::check_nonce::CheckNonce<dali_runtime::Runtime>,frame_system::extensions::check_weight::CheckWeight<dali_runtime::Runtime>,pallet_asset_tx_payment::ChargeAssetTxPayment<dali_runtime::Runtime>)>>>>::dispatch_benchmark::h2e63e652b0d76345
+          8: 0x965f70 - <unknown>!Benchmark_dispatch_benchmark
+    */
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
 		[pallet_staking_rewards, StakingRewards]
