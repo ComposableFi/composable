@@ -332,33 +332,19 @@ export const useCrowdloanRewardsEthereumAddressAssociatedAccount = (
  * @param {ApiPromise} api API object
  * @returns {boolean}
  */
-export const useCrowdloanRewardsHasStarted = (
-  api?: ApiPromise
-): {
-  hasStarted: boolean;
-  timeStart: number;
-  timeElapsed: number;
-} => {
+export const useCrowdloanRewardsHasStarted = (api?: ApiPromise): boolean => {
   const [hasStarted, setHasStarted] = useState(false);
-  const [timeStart, setTimeStart] = useState(0);
-  const [timeElapsed, setTimeElapsed] = useState(0);
 
   useEffect(() => {
     if (api) {
       api.query.crowdloanRewards.vestingTimeStart((timeStart) => {
         const bn = new BigNumber(timeStart.value.toString()); // converting to string and then BN (type safe)
-        setHasStarted(bn.dp(0).toNumber() < Date.now());
-        setTimeStart(bn.dp(0).toNumber());
-        setTimeElapsed(Date.now() - bn.dp(0).toNumber());
+        setHasStarted(bn.toNumber() < Date.now());
       });
     }
   }, [api]);
 
-  return {
-    hasStarted,
-    timeStart,
-    timeElapsed,
-  };
+  return hasStarted;
 };
 
 export const useCrowdloanRewardsStepGivenConnectedAccounts = (
