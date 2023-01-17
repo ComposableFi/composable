@@ -135,7 +135,7 @@ impl<
 		let multi_assets: Vec<MultiAsset> = assets.into();
 		let mut can_return_on_request = vec![];
 		log::info!(target : "xcmp", "drop_assets");
-		let mut weight = 0u64;
+		let mut weight = 0_u64;
 		for asset in multi_assets {
 			if let MultiAsset { id: Concrete(location), fun: Fungible(_amount) } = asset.clone() {
 				if let Some(_converted) = AssetConverter::convert(location) {

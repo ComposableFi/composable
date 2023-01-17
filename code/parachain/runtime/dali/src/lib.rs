@@ -93,7 +93,7 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-use codec::{Codec, Encode, EncodeLike};
+use codec::Encode;
 use common::fees::WellKnownForeignToNativePriceConverter;
 use composable_traits::{
 	account_proxy::{AccountProxyWrapper, ProxyType},
@@ -103,7 +103,7 @@ use composable_traits::{
 };
 use frame_support::{
 	traits::{
-		fungibles, ConstBool, ConstU32, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade,
+		fungibles, ConstU32, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade,
 	},
 	weights::ConstantMultiplier,
 };
@@ -119,7 +119,7 @@ use pallet_ibc::{
 use scale_info::TypeInfo;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::{AccountId32, Either::*};
+use sp_runtime::Either::*;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
 use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, vec::Vec};
 use system::{

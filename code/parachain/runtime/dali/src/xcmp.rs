@@ -9,7 +9,6 @@ use cumulus_primitives_core::ParaId;
 use frame_support::{
 	log, parameter_types,
 	traits::{Everything, OriginTrait, PalletInfoAccess},
-	weights::Weight,
 };
 use orml_traits::{
 	location::{AbsoluteReserveProvider, RelativeReserveProvider, Reserve},
@@ -20,7 +19,7 @@ use orml_xcm_support::{
 };
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use sp_runtime::traits::{Convert, Zero};
+use sp_runtime::traits::Convert;
 use sp_std::{marker::PhantomData, prelude::*};
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -153,7 +152,7 @@ pub struct CaptureDropAssets<
 /// if asset  put  into Holding Registry of XCM VM, but did nothing to this
 /// or if  too small to pay weight,
 /// it will get here
-/// if asset location and origin is known, put into treasury,  
+/// if asset location and origin is known, put into treasury,
 /// else if asset location and origin not know, hash it until it will be added
 impl<
 		Treasury: TakeRevenue,
