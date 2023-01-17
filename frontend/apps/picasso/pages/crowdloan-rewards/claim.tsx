@@ -148,7 +148,7 @@ export const ClaimLoanPage = () => {
           });
       });
     }
-  }, [parachainApi, account, accounts]);
+  }, [parachainApi, account]);
 
   const isEthAccountEligible = useMemo(
     () => !ethAccountTotalRewards.isZero(),
