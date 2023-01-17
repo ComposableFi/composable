@@ -36,7 +36,7 @@ pub type OrderId = u32;
 pub type Amount = i64;
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-pub type SystemOriginOf<T> = <T as frame_system::Config>::Origin;
+pub type SystemOriginOf<T> = <T as frame_system::Config>::RuntimeOrigin;
 
 frame_support::construct_runtime! {
 	pub enum Runtime where
@@ -137,6 +137,9 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = Everything;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
+  type OnSlash = ();
+  type OnDeposit = ();
+  type OnTransfer = ();
 }
 
 pub static ALICE: Public =
@@ -205,8 +208,8 @@ impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
 		todo!("please test via local-integration-tests")
 	}
 }
-impl From<Origin> for XcmFake {
-	fn from(_: Origin) -> Self {
+impl From<RuntimeOrigin> for XcmFake {
+	fn from(_: RuntimeOrigin) -> Self {
 		todo!("please test via local-integration-tests")
 	}
 }

@@ -2,8 +2,8 @@ use crate::{
 	mocks::{
 		currency_factory::MockCurrencyId,
 		tests::{
-			AccountId, Balance, Balances, BlockNumber, CreationDeposit, Event, ExistentialDeposit,
-			ExtBuilder, Origin, System, Test, Tokens, TombstoneDuration, Vaults,
+			AccountId, Balance, Balances, BlockNumber, CreationDeposit, RuntimeEvent, ExistentialDeposit,
+			ExtBuilder, RuntimeOrigin, System, Test, Tokens, TombstoneDuration, Vaults,
 			ACCOUNT_FREE_START, ALICE, BOB, CHARLIE, MINIMUM_BALANCE,
 		},
 	},
@@ -53,7 +53,7 @@ fn create_vault_with_share(
 
 fn create_vault_with_deposit(asset_id: MockCurrencyId, deposit: Balance) -> u64 {
 	let v = Vaults::create(
-		Origin::signed(ALICE),
+		RuntimeOrigin::signed(ALICE),
 		VaultConfig {
 			asset_id,
 			manager: ALICE,
@@ -176,7 +176,7 @@ proptest! {
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, total_funds));
 			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), total_funds);
 
-			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, total_funds));
+			prop_assert_ok!(Vaults::deposit(RuntimeOrigin::signed(ALICE), vault_id, total_funds));
 
 			let expected_strategy_funds = strategy_share.mul_floor(total_funds);
 
@@ -258,7 +258,7 @@ proptest! {
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, total_funds));
 			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), total_funds);
 
-			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, total_funds));
+			prop_assert_ok!(Vaults::deposit(RuntimeOrigin::signed(ALICE), vault_id, total_funds));
 
 			let expected_strategy_funds = strategy_share.mul_floor(total_funds);
 
@@ -283,7 +283,7 @@ proptest! {
 			let reserve = total_funds - expected_strategy_funds;
 			prop_assert_ok!(
 				Vaults::withdraw(
-					Origin::signed(ALICE),
+					RuntimeOrigin::signed(ALICE),
 					vault_id,
 					reserve
 				)
@@ -338,8 +338,8 @@ proptest! {
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), amount);
 
-			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount));
-			prop_assert_ok!(Vaults::withdraw(Origin::signed(ALICE), vault_id, amount));
+			prop_assert_ok!(Vaults::deposit(RuntimeOrigin::signed(ALICE), vault_id, amount));
+			prop_assert_ok!(Vaults::withdraw(RuntimeOrigin::signed(ALICE), vault_id, amount));
 
 			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), amount);
 			Ok(())
@@ -367,13 +367,13 @@ proptest! {
 			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), amount1);
 			prop_assert_eq!(Tokens::balance(asset_id, &CHARLIE), amount3);
 
-			prop_assert_ok!(Vaults::deposit(Origin::signed(CHARLIE), vault_id, amount3));
-			prop_assert_ok!(Vaults::deposit(Origin::signed(BOB), vault_id, amount2));
-			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount1));
+			prop_assert_ok!(Vaults::deposit(RuntimeOrigin::signed(CHARLIE), vault_id, amount3));
+			prop_assert_ok!(Vaults::deposit(RuntimeOrigin::signed(BOB), vault_id, amount2));
+			prop_assert_ok!(Vaults::deposit(RuntimeOrigin::signed(ALICE), vault_id, amount1));
 
-			prop_assert_ok!(Vaults::withdraw(Origin::signed(ALICE), vault_id, amount1));
-			prop_assert_ok!(Vaults::withdraw(Origin::signed(CHARLIE), vault_id, amount3));
-			prop_assert_ok!(Vaults::withdraw(Origin::signed(BOB), vault_id, amount2));
+			prop_assert_ok!(Vaults::withdraw(RuntimeOrigin::signed(ALICE), vault_id, amount1));
+			prop_assert_ok!(Vaults::withdraw(RuntimeOrigin::signed(CHARLIE), vault_id, amount3));
+			prop_assert_ok!(Vaults::withdraw(RuntimeOrigin::signed(BOB), vault_id, amount2));
 
 			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), amount1);
 			prop_assert_eq!(Tokens::balance(asset_id, &BOB), amount2);
@@ -411,7 +411,7 @@ proptest! {
 
 			prop_assert_eq!(Tokens::balance(vault_info.lp_token_id, &ALICE),  0);
 
-			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount));
+			prop_assert_ok!(Vaults::deposit(RuntimeOrigin::signed(ALICE), vault_id, amount));
 
 			prop_assert_eq!(Tokens::balance(vault_info.lp_token_id, &ALICE), amount);
 			Ok(())
@@ -430,7 +430,7 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
 			prop_assert_eq!(Tokens::balance(vault.lp_token_id, &ALICE), 0);
-			assert_noop!(Vaults::withdraw(Origin::signed(ALICE), vault_id, amount), ArithmeticError::Overflow);
+			assert_noop!(Vaults::withdraw(RuntimeOrigin::signed(ALICE), vault_id, amount), ArithmeticError::Overflow);
 			Ok(())
 		})?;
 	}
@@ -446,10 +446,10 @@ proptest! {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
 			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
-			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount));
+			prop_assert_ok!(Vaults::deposit(RuntimeOrigin::signed(ALICE), vault_id, amount));
 
 			prop_assert_eq!(Tokens::balance(vault.lp_token_id, &BOB), 0);
-			assert_noop!(Vaults::withdraw(Origin::signed(BOB), vault_id, amount), Error::<Test>::InsufficientLpTokens);
+			assert_noop!(Vaults::withdraw(RuntimeOrigin::signed(BOB), vault_id, amount), Error::<Test>::InsufficientLpTokens);
 			Ok(())
 		})?;
 	}
@@ -492,15 +492,15 @@ proptest! {
 			prop_assert_ok!(Tokens::mint_into(asset_id, &BOB, amount2));
 			prop_assert_ok!(Tokens::mint_into(asset_id, &strategy_account_id, strategy_profits));
 
-			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount1));
+			prop_assert_ok!(Vaults::deposit(RuntimeOrigin::signed(ALICE), vault_id, amount1));
 			prop_assert_ok!(<Vaults as StrategicVault>::deposit(&vault_id, &strategy_account_id, strategy_profits));
-			prop_assert_ok!(Vaults::deposit(Origin::signed(BOB), vault_id, amount2));
+			prop_assert_ok!(Vaults::deposit(RuntimeOrigin::signed(BOB), vault_id, amount2));
 
 			let alice_lp = Tokens::balance(vault.lp_token_id, &ALICE);
 			let bob_lp = Tokens::balance(vault.lp_token_id, &BOB);
 
-			prop_assert_ok!(Vaults::withdraw(Origin::signed(ALICE), vault_id, alice_lp));
-			prop_assert_ok!(Vaults::withdraw(Origin::signed(BOB), vault_id, bob_lp));
+			prop_assert_ok!(Vaults::withdraw(RuntimeOrigin::signed(ALICE), vault_id, alice_lp));
+			prop_assert_ok!(Vaults::withdraw(RuntimeOrigin::signed(BOB), vault_id, bob_lp));
 
 			let alice_total_balance = Tokens::balance(asset_id, &ALICE);
 			let bob_total_balance = Tokens::balance(asset_id, &BOB);
@@ -538,13 +538,13 @@ proptest! {
 			prop_assert_eq!(Tokens::balance(asset_id, &Vaults::account_id(&vault_id1)), 0);
 			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount1));
-			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id1, amount1));
+			prop_assert_ok!(Vaults::deposit(RuntimeOrigin::signed(ALICE), vault_id1, amount1));
 
 			// Bob deposit an amount in vault 2
 			prop_assert_eq!(Tokens::balance(asset_id, &Vaults::account_id(&vault_id2)), 0);
 			prop_assert_eq!(Tokens::balance(asset_id, &BOB), 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &BOB, amount2));
-			prop_assert_ok!(Vaults::deposit(Origin::signed(BOB), vault_id2, amount2));
+			prop_assert_ok!(Vaults::deposit(RuntimeOrigin::signed(BOB), vault_id2, amount2));
 
 			// The funds should not be shared.
 			prop_assert_eq!(Tokens::balance(asset_id, &Vaults::account_id(&vault_id1)), amount1);
@@ -566,14 +566,14 @@ proptest! {
 
 			prop_assert_eq!(Tokens::balance(asset_id, &ALICE), 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount1));
-			prop_assert_ok!(Vaults::deposit(Origin::signed(ALICE), vault_id, amount1));
+			prop_assert_ok!(Vaults::deposit(RuntimeOrigin::signed(ALICE), vault_id, amount1));
 
 			// Rate unchanged
 			prop_assert_eq!(Vaults::stock_dilution_rate(&vault_id), Ok(Rate::from(1)));
 
 			prop_assert_eq!(Tokens::balance(asset_id, &BOB), 0);
 			prop_assert_ok!(Tokens::mint_into(asset_id, &BOB, amount2));
-			prop_assert_ok!(Vaults::deposit(Origin::signed(BOB), vault_id, amount2));
+			prop_assert_ok!(Vaults::deposit(RuntimeOrigin::signed(BOB), vault_id, amount2));
 
 			// Rate unchanged
 			prop_assert_eq!(Vaults::stock_dilution_rate(&vault_id), Ok(Rate::from(1)));
@@ -665,7 +665,7 @@ proptest! {
 			// Liquidity providers deposit all their native tokens to receive LP tokens
 			// BEFORE losses and profits
 			for (account, initial_native_tokens) in before_moment_lps() {
-				let origin = Origin::signed(account);
+				let origin = RuntimeOrigin::signed(account);
 				prop_assert_ok!(Vaults::deposit(origin, vault_id, initial_native_tokens));
 			}
 
@@ -690,7 +690,7 @@ proptest! {
 			// Liquidity providers deposit all their native tokens to receive LP tokens
 			// AFTER losses and profits
 			for (account, initial_native_tokens) in after_moment_lps() {
-				let origin = Origin::signed(account);
+				let origin = RuntimeOrigin::signed(account);
 				prop_assert_ok!(Vaults::deposit(origin, vault_id, initial_native_tokens));
 			}
 
@@ -704,7 +704,7 @@ proptest! {
 				let withdrawn_lp_tokens = lp_tokens / 2;
 
 				// Withdraws all LP tokens
-				prop_assert_ok!(Vaults::withdraw(Origin::signed(account), vault_id, withdrawn_lp_tokens));
+				prop_assert_ok!(Vaults::withdraw(RuntimeOrigin::signed(account), vault_id, withdrawn_lp_tokens));
 
 				// New balance that includes losses and profits
 				let new_native_tokens = Tokens::balance(asset_id, &account);
@@ -762,7 +762,7 @@ fn test_vault_claim_surcharge_existential() {
 		Balances::mint_into(&ALICE, ExistentialDeposit::get() * 3).unwrap();
 		let id = create_vault_with_deposit(MockCurrencyId::A, ExistentialDeposit::get());
 		System::set_block_number(10000000000);
-		Vaults::claim_surcharge(Origin::none(), id, Some(ALICE))
+		Vaults::claim_surcharge(RuntimeOrigin::none(), id, Some(ALICE))
 			.expect("claiming surcharge for existential should always ok");
 	})
 }
@@ -775,7 +775,7 @@ fn test_vault_claim_surcharge_rent_exempt() {
 		System::set_block_number(1);
 		let id = create_vault_with_deposit(MockCurrencyId::A, ExistentialDeposit::get() / 2);
 		System::set_block_number(1);
-		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
+		Vaults::claim_surcharge(RuntimeOrigin::none(), id, Some(CHARLIE))
 			.expect("claiming surcharge for rent should work");
 		assert!(Balances::balance(&CHARLIE) == 0);
 		let vault = Vaults::vault_data(id).unwrap();
@@ -792,7 +792,7 @@ fn test_vault_claim_surcharge_rent_charge() {
 		let id = create_vault_with_deposit(MockCurrencyId::A, ExistentialDeposit::get() / 2);
 		let duration = 20;
 		System::set_block_number(duration);
-		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
+		Vaults::claim_surcharge(RuntimeOrigin::none(), id, Some(CHARLIE))
 			.expect("claiming surcharge for rent should work");
 		assert!(Balances::balance(&CHARLIE) > 0);
 		let vault = Vaults::vault_data(id).unwrap();
@@ -809,7 +809,7 @@ fn test_vault_claim_surcharge_rent_evict() {
 		let id = create_vault_with_deposit(MockCurrencyId::A, ExistentialDeposit::get() / 2);
 		let duration = 100000;
 		System::set_block_number(duration);
-		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
+		Vaults::claim_surcharge(RuntimeOrigin::none(), id, Some(CHARLIE))
 			.expect("claiming surcharge for rent should work");
 		assert!(Balances::balance(&CHARLIE) > 0);
 		let vault = Vaults::vault_data(id).unwrap();
@@ -826,13 +826,13 @@ fn test_vault_add_surcharge() {
 		let id = create_vault_with_deposit(MockCurrencyId::A, ExistentialDeposit::get() / 2);
 		let duration = 100000;
 		System::set_block_number(duration);
-		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
+		Vaults::claim_surcharge(RuntimeOrigin::none(), id, Some(CHARLIE))
 			.expect("claiming surcharge for rent should work");
 		assert!(Balances::balance(&CHARLIE) > 0);
 		let vault = Vaults::vault_data(id).unwrap();
 		assert!(vault.capabilities.is_tombstoned());
 		Vaults::add_surcharge(
-			Origin::signed(ALICE),
+			RuntimeOrigin::signed(ALICE),
 			id,
 			Validated::new(CreationDeposit::get()).unwrap(),
 		)
@@ -850,18 +850,18 @@ fn test_vault_delete_tombstoned() {
 		System::set_block_number(0);
 		let id = create_vault_with_deposit(MockCurrencyId::A, ExistentialDeposit::get() - 1);
 		System::set_block_number(1000000);
-		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
+		Vaults::claim_surcharge(RuntimeOrigin::none(), id, Some(CHARLIE))
 			.expect("claiming surcharge for rent should work");
 		let after_surcharge_balance = Balances::balance(&CHARLIE);
 		assert!(after_surcharge_balance > 0);
 		let vault = Vaults::vault_data(id).unwrap();
 		assert!(vault.capabilities.is_tombstoned());
 		System::set_block_number(1000000 + TombstoneDuration::get());
-		Vaults::delete_tombstoned(Origin::signed(CHARLIE), id, None).unwrap();
+		Vaults::delete_tombstoned(RuntimeOrigin::signed(CHARLIE), id, None).unwrap();
 		let after_delete_balance = Balances::balance(&CHARLIE);
 		assert!(after_delete_balance > after_surcharge_balance);
 		// second time should error, as the vault is not deleted.
-		Vaults::delete_tombstoned(Origin::signed(CHARLIE), id, None).unwrap_err();
+		Vaults::delete_tombstoned(RuntimeOrigin::signed(CHARLIE), id, None).unwrap_err();
 	})
 }
 
@@ -873,13 +873,13 @@ fn test_vault_delete_tombstoned_insufficient_time_fails() {
 		System::set_block_number(0);
 		let id = create_vault_with_deposit(MockCurrencyId::A, ExistentialDeposit::get() - 1);
 		System::set_block_number(1000000);
-		Vaults::claim_surcharge(Origin::none(), id, Some(CHARLIE))
+		Vaults::claim_surcharge(RuntimeOrigin::none(), id, Some(CHARLIE))
 			.expect("claiming surcharge for rent should work");
 		assert!(Balances::balance(&CHARLIE) > 0);
 		let vault = Vaults::vault_data(id).unwrap();
 		assert!(vault.capabilities.is_tombstoned());
 		System::set_block_number(1000000 + TombstoneDuration::get() - 1);
-		Vaults::delete_tombstoned(Origin::signed(ALICE), id, None).unwrap_err();
+		Vaults::delete_tombstoned(RuntimeOrigin::signed(ALICE), id, None).unwrap_err();
 	})
 }
 
@@ -889,7 +889,7 @@ fn test_vault_delete_tombstoned_non_tombstoned_fails() {
 		Balances::mint_into(&ALICE, ExistentialDeposit::get() - 1).unwrap();
 		assert_eq!(Balances::balance(&CHARLIE), 0);
 		let id = create_vault_with_deposit(MockCurrencyId::A, CreationDeposit::get());
-		Vaults::delete_tombstoned(Origin::signed(ALICE), id, None).unwrap_err();
+		Vaults::delete_tombstoned(RuntimeOrigin::signed(ALICE), id, None).unwrap_err();
 	})
 }
 
@@ -897,9 +897,9 @@ fn test_vault_delete_tombstoned_non_tombstoned_fails() {
 fn test_vault_emergency_shutdown_origin() {
 	ExtBuilder::default().build().execute_with(|| {
 		let (id, _) = create_vault(ALICE, MockCurrencyId::A);
-		Vaults::emergency_shutdown(Origin::signed(ALICE), id)
+		Vaults::emergency_shutdown(RuntimeOrigin::signed(ALICE), id)
 			.expect_err("only root may emergency_shutdown");
-		Vaults::emergency_shutdown(Origin::none(), id)
+		Vaults::emergency_shutdown(RuntimeOrigin::none(), id)
 			.expect_err("only root may emergency_shutdown");
 	})
 }
@@ -912,22 +912,22 @@ fn test_vault_emergency_shutdown() {
 		// ensure that the specific deposit cannot be withdrawn if the vault is stopped.
 		Tokens::mint_into(MockCurrencyId::A, &ALICE, 1000)
 			.expect("minting for ALICE should succeed");
-		Vaults::deposit(Origin::signed(ALICE), id, 100)
+		Vaults::deposit(RuntimeOrigin::signed(ALICE), id, 100)
 			.expect("depositing in active vault should succeed");
 
 		// Shutdown the vault, and ensure that the deposited funds cannot be withdrawn.
-		Vaults::emergency_shutdown(Origin::root(), id)
+		Vaults::emergency_shutdown(RuntimeOrigin::root(), id)
 			.expect("root should be able to emergency shutdown");
-		Vaults::deposit(Origin::signed(ALICE), id, 100)
+		Vaults::deposit(RuntimeOrigin::signed(ALICE), id, 100)
 			.expect_err("depositing in stopped vault should fail");
-		Vaults::withdraw(Origin::signed(ALICE), id, 100)
+		Vaults::withdraw(RuntimeOrigin::signed(ALICE), id, 100)
 			.expect_err("withdrawing from stopped vault should fail");
 
 		// Restart the vault, and ensure that funds can be withdrawn and deposited
-		Vaults::start(Origin::root(), id).expect("root can restart the vault");
-		Vaults::deposit(Origin::signed(ALICE), id, 100)
+		Vaults::start(RuntimeOrigin::root(), id).expect("root can restart the vault");
+		Vaults::deposit(RuntimeOrigin::signed(ALICE), id, 100)
 			.expect("depositing in restarted vault should succeed");
-		Vaults::withdraw(Origin::signed(ALICE), id, 100)
+		Vaults::withdraw(RuntimeOrigin::signed(ALICE), id, 100)
 			.expect("withdrawing from restarted vault should succeed");
 	});
 }
@@ -937,7 +937,7 @@ fn liquidate_strategy_can_not_be_executed_by_non_manager_accounts() {
 	ExtBuilder::default().build().execute_with(|| {
 		let (id, _) = create_vault(ALICE, MockCurrencyId::A);
 		assert_noop!(
-			Vaults::liquidate_strategy(Origin::signed(BOB), id, 100),
+			Vaults::liquidate_strategy(RuntimeOrigin::signed(BOB), id, 100),
 			Error::<Test>::AccountIsNotManager
 		);
 	});
@@ -959,20 +959,20 @@ fn do_liquidate_strategy_successfully_liquidates_a_strategy_account(
 
 		let (id, _) = create_vault(strategy_account_id, currency_id);
 
-		Vaults::deposit(Origin::signed(ALICE), id, total_funds).unwrap();
+		Vaults::deposit(RuntimeOrigin::signed(ALICE), id, total_funds).unwrap();
 		assert_eq!(Tokens::balance(currency_id, &strategy_account_id), 0);
 
 		<Vaults as StrategicVault>::withdraw(&id, &strategy_account_id, strategy_vault).unwrap();
 		assert!(CapitalStructure::<Test>::try_get(id, strategy_account_id).is_ok());
 		assert_eq!(Tokens::balance(currency_id, &strategy_account_id), strategy_vault);
 
-		Vaults::liquidate_strategy(Origin::signed(ALICE), id, strategy_account_id).unwrap();
+		Vaults::liquidate_strategy(RuntimeOrigin::signed(ALICE), id, strategy_account_id).unwrap();
 		assert!(CapitalStructure::<Test>::try_get(id, strategy_account_id).is_err());
 		assert_eq!(
 			<Vaults as StrategicVault>::available_funds(&id, &strategy_account_id),
 			Ok(FundsAvailability::MustLiquidate)
 		);
-		System::assert_has_event(Event::Vaults(crate::Event::LiquidateStrategy {
+		System::assert_has_event(RuntimeEvent::Vaults(crate::Event::LiquidateStrategy {
 			account: strategy_account_id,
 			amount: strategy_vault,
 		}));

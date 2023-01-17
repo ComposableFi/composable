@@ -64,4 +64,5 @@ std = [
   "composable-support/std",
   "composable-maths/std",
   "rust_decimal/std",
+  "frame-benchmarking/std",
 ]

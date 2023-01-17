@@ -76,6 +76,7 @@ std = [
   "xcm/std",
   "polkadot-parachain/std",
   "log/std",
+  "frame-benchmarking/std",
 ]
 
 runtime-benchmarks = [

@@ -159,6 +159,9 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = Everything;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
+  type OnSlash = ();
+  type OnDeposit = ();
+  type OnTransfer = ();
 }
 
 pub struct NoopRegistry;
@@ -280,14 +283,14 @@ impl crate::Config for Test {
 	type TreasuryAccount = TreasuryAccountId;
 }
 
-impl InstanceFilter<Call> for ProxyType {
-	fn filter(&self, c: &Call) -> bool {
+impl InstanceFilter<RuntimeCall> for ProxyType {
+	fn filter(&self, c: &RuntimeCall) -> bool {
 		match self {
 			ProxyType::Any => true,
 			ProxyType::Governance => matches!(
 				c,
 				// TODO democracy
-				Call::System(..)
+				RuntimeCall::System(..)
 			),
 			// ProxyType::Staking => {
 			// 	matches!(c, Call::Staking(..) | Call::Session(..) | Call::Utility(..))

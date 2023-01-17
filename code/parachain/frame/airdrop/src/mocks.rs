@@ -175,7 +175,7 @@ impl Identity {
 				ethereum_proof(ethereum_account, reward_account.clone()),
 		};
 
-		Airdrop::claim(Origin::none(), airdrop_id, reward_account, proof)
+		Airdrop::claim(RuntimeOrigin::none(), airdrop_id, reward_account, proof)
 	}
 }
 

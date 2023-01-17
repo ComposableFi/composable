@@ -66,10 +66,11 @@ std = [
   "sp-std/std",
   "scale-info/std",
   "composable-traits/std",
+  "frame-benchmarking/std",
 ]
 
 runtime-benchmarks = [
-  'frame-benchmarking',
-  'frame-support/runtime-benchmarks',
-  'frame-system/runtime-benchmarks',
+  "frame-benchmarking",
+  "frame-support/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
 ]

@@ -16,7 +16,7 @@ fn test_liquidate_multiple() {
 		// Deposit USDT in the vault.
 		let vault_value = USDT::units(100_000_000);
 		assert_ok!(Tokens::mint_into(USDT::ID, &lender, vault_value));
-		assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, vault_value));
+		assert_ok!(Vault::deposit(RuntimeOrigin::signed(lender), vault_id, vault_value));
 		process_and_progress_blocks::<Lending, Runtime>(1);
 		// Deposit 1 BTC collateral from borrowers' accounts.
 		mint_and_deposit_collateral::<Runtime>(first_borrower, BTC::units(1), market_id, BTC::ID);
@@ -32,8 +32,8 @@ fn test_liquidate_multiple() {
 		let borrowers_vec = vec![first_borrower, second_borrower, third_borrower];
 		let borrowers = TestBoundedVec::try_from(borrowers_vec.clone()).unwrap();
 		assert_extrinsic_event::<Runtime>(
-			Lending::liquidate(Origin::signed(manager), market_id.clone(), borrowers.clone()),
-			Event::Lending(crate::Event::LiquidationInitiated {
+			Lending::liquidate(RuntimeOrigin::signed(manager), market_id.clone(), borrowers.clone()),
+			RuntimeEvent::Lending(crate::Event::LiquidationInitiated {
 				market_id,
 				borrowers: borrowers_vec,
 			}),
@@ -83,7 +83,7 @@ fn test_liquidation_storage_transaction_rollback() {
 		// Deposit USDT in the vault.
 		let vault_value = USDT::units(100_000_000);
 		assert_ok!(Tokens::mint_into(USDT::ID, &lender, vault_value));
-		assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, vault_value));
+		assert_ok!(Vault::deposit(RuntimeOrigin::signed(lender), vault_id, vault_value));
 		process_and_progress_blocks::<Lending, Runtime>(1);
 		// Deposit 1 BTC collateral from normal borrower account.
 		crate::tests::mint_and_deposit_collateral::<Runtime>(
@@ -111,11 +111,11 @@ fn test_liquidation_storage_transaction_rollback() {
 		set_price(BTC::ID, NORMALIZED::units(38_000));
 		assert_extrinsic_event::<Runtime>(
 			Lending::liquidate(
-				Origin::signed(manager),
+				RuntimeOrigin::signed(manager),
 				market_id.clone(),
 				TestBoundedVec::try_from(vec![normal_borrower, borrower_with_a_twist]).unwrap(),
 			),
-			Event::Lending(crate::Event::LiquidationInitiated {
+			RuntimeEvent::Lending(crate::Event::LiquidationInitiated {
 				market_id,
 				borrowers: vec![normal_borrower],
 			}),
@@ -143,8 +143,8 @@ fn liquidation() {
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(Origin::signed(*ALICE), market_id, collateral, false),
-			Event::Lending(crate::Event::CollateralDeposited {
+			Lending::deposit_collateral(RuntimeOrigin::signed(*ALICE), market_id, collateral, false),
+			RuntimeEvent::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral,
 				market_id,
@@ -154,7 +154,7 @@ fn liquidation() {
 		let usdt_amt = 2 * DEFAULT_COLLATERAL_FACTOR * USDT::ONE * get_price(BTC::ID, collateral) /
 			get_price(NORMALIZED::ID, NORMALIZED::ONE);
 		assert_ok!(Tokens::mint_into(USDT::ID, &CHARLIE, usdt_amt));
-		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, usdt_amt));
+		assert_ok!(Vault::deposit(RuntimeOrigin::signed(*CHARLIE), vault, usdt_amt));
 
 		// Allow the market to initialize it's account by withdrawing
 		// from the vault
@@ -164,8 +164,8 @@ fn liquidation() {
 		assert!(borrow_limit > 0);
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::borrow(Origin::signed(*ALICE), market_id, borrow_limit),
-			Event::Lending(crate::Event::Borrowed {
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market_id, borrow_limit),
+			RuntimeEvent::Lending(crate::Event::Borrowed {
 				sender: *ALICE,
 				amount: borrow_limit,
 				market_id,
@@ -176,11 +176,11 @@ fn liquidation() {
 
 		assert_extrinsic_event::<Runtime>(
 			Lending::liquidate(
-				Origin::signed(*ALICE),
+				RuntimeOrigin::signed(*ALICE),
 				market_id.clone(),
 				TestBoundedVec::try_from(vec![*ALICE]).unwrap(),
 			),
-			Event::Lending(crate::Event::LiquidationInitiated {
+			RuntimeEvent::Lending(crate::Event::LiquidationInitiated {
 				market_id,
 				borrowers: vec![*ALICE],
 			}),
@@ -207,12 +207,12 @@ fn test_warn_soon_under_collateralized() {
 		let two_btc_amount = BTC::units(2);
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, two_btc_amount));
 		assert_ok!(Lending::deposit_collateral(
-			Origin::signed(*ALICE),
+			RuntimeOrigin::signed(*ALICE),
 			market,
 			two_btc_amount,
 			false
 		));
-		let event = Event::Lending(crate::Event::CollateralDeposited {
+		let event = RuntimeEvent::Lending(crate::Event::CollateralDeposited {
 			sender: *ALICE,
 			amount: two_btc_amount,
 			market_id: market,
@@ -221,7 +221,7 @@ fn test_warn_soon_under_collateralized() {
 
 		let usdt_amt = USDT::units(100_000);
 		assert_ok!(Tokens::mint_into(USDT::ID, &CHARLIE, usdt_amt));
-		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, usdt_amt));
+		assert_ok!(Vault::deposit(RuntimeOrigin::signed(*CHARLIE), vault, usdt_amt));
 
 		process_and_progress_blocks::<Lending, Runtime>(1);
 
@@ -230,8 +230,8 @@ fn test_warn_soon_under_collateralized() {
 		let borrow_amount = USDT::units(80);
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),
-			Event::Lending(crate::Event::Borrowed {
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market, borrow_amount),
+			RuntimeEvent::Lending(crate::Event::Borrowed {
 				sender: *ALICE,
 				amount: borrow_amount,
 				market_id: market,
@@ -257,8 +257,8 @@ fn market_owner_cannot_retroactively_liquidate() {
 		assert_ok!(Tokens::mint_into(BTC::ID, &BOB, collateral_amount));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(Origin::signed(*BOB), market_id, collateral_amount, false),
-			Event::Lending(crate::Event::CollateralDeposited {
+			Lending::deposit_collateral(RuntimeOrigin::signed(*BOB), market_id, collateral_amount, false),
+			RuntimeEvent::Lending(crate::Event::CollateralDeposited {
 				sender: *BOB,
 				amount: collateral_amount,
 				market_id,
@@ -267,7 +267,7 @@ fn market_owner_cannot_retroactively_liquidate() {
 
 		let borrow_asset_deposit = USDT::units(1_000_000_000);
 		assert_ok!(Tokens::mint_into(USDT::ID, &CHARLIE, borrow_asset_deposit));
-		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, borrow_asset_deposit));
+		assert_ok!(Vault::deposit(RuntimeOrigin::signed(*CHARLIE), vault, borrow_asset_deposit));
 
 		process_and_progress_blocks::<Lending, Runtime>(1);
 
@@ -275,8 +275,8 @@ fn market_owner_cannot_retroactively_liquidate() {
 		process_and_progress_blocks::<Lending, Runtime>(2);
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::borrow(Origin::signed(*BOB), market_id, limit_normalized),
-			Event::Lending(crate::Event::Borrowed {
+			Lending::borrow(RuntimeOrigin::signed(*BOB), market_id, limit_normalized),
+			RuntimeEvent::Lending(crate::Event::Borrowed {
 				sender: *BOB,
 				amount: limit_normalized,
 				market_id,
@@ -295,7 +295,7 @@ fn market_owner_cannot_retroactively_liquidate() {
 		};
 		// ALICE is the creator of the market.
 		assert_noop!(
-			Lending::update_market(Origin::signed(*ALICE), market_id, updatable),
+			Lending::update_market(RuntimeOrigin::signed(*ALICE), market_id, updatable),
 			Error::<Runtime>::CannotIncreaseCollateralFactorOfOpenMarket
 		);
 		// if above update was succeeded BOB's loan would have to be liquidated.

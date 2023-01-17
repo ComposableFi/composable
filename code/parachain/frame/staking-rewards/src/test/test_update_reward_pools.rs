@@ -23,7 +23,7 @@ use sp_runtime::{FixedPointNumber, Perbill};
 
 use crate::{
 	runtime::{
-		MaxRewardConfigsPerPool, Origin, StakingRewards, System, Test, Tokens, ALICE, BOB, CHARLIE,
+		MaxRewardConfigsPerPool, RuntimeOrigin, StakingRewards, System, Test, Tokens, ALICE, BOB, CHARLIE,
 	},
 	test::{
 		default_lock_config, mint_assets, new_test_ext,
@@ -94,7 +94,7 @@ fn test_update_reward_pool() {
 		.unwrap();
 
 		Test::assert_extrinsic_event(
-			StakingRewards::update_rewards_pool(Origin::root(), PICA::ID, reward_updates),
+			StakingRewards::update_rewards_pool(RuntimeOrigin::root(), PICA::ID, reward_updates),
 			crate::Event::RewardPoolUpdated { pool_id: PICA::ID },
 		);
 
@@ -155,7 +155,7 @@ fn update_accumulates_properly() {
 
 		Test::assert_extrinsic_event(
 			StakingRewards::create_reward_pool(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				RewardPoolConfiguration::RewardRateBasedIncentive {
 					owner: ALICE,
 					asset_id: PICA::ID,
@@ -206,7 +206,7 @@ fn update_accumulates_properly() {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		Test::assert_extrinsic_event(
-			StakingRewards::claim(Origin::signed(CHARLIE), STAKING_FNFT_COLLECTION_ID, stake_id),
+			StakingRewards::claim(RuntimeOrigin::signed(CHARLIE), STAKING_FNFT_COLLECTION_ID, stake_id),
 			crate::Event::Claimed {
 				owner: CHARLIE,
 				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,

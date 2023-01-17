@@ -209,6 +209,9 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = Everything;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
+  type OnSlash = ();
+  type OnDeposit = ();
+  type OnTransfer = ();
 }
 
 ord_parameter_types! {
@@ -323,8 +326,8 @@ impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
 		unimplemented!("please test via local-integration-tests")
 	}
 }
-impl From<Origin> for XcmFake {
-	fn from(_: Origin) -> Self {
+impl From<RuntimeOrigin> for XcmFake {
+	fn from(_: RuntimeOrigin) -> Self {
 		unimplemented!("please test via local-integration-tests")
 	}
 }
@@ -364,7 +367,7 @@ impl pallet_liquidations::Config for Runtime {
 	type MaxLiquidationStrategiesAmount = ConstU32<3>;
 }
 
-pub type Extrinsic = TestXt<Call, ()>;
+pub type Extrinsic = TestXt<RuntimeCall, ()>;
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
 impl frame_system::offchain::SigningTypes for Runtime {
@@ -374,22 +377,22 @@ impl frame_system::offchain::SigningTypes for Runtime {
 
 impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Runtime
 where
-	Call: From<LocalCall>,
+	RuntimeCall: From<LocalCall>,
 {
-	type OverarchingCall = Call;
+	type OverarchingCall = RuntimeCall;
 	type Extrinsic = Extrinsic;
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
-	Call: From<LocalCall>,
+	RuntimeCall: From<LocalCall>,
 {
 	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-		call: Call,
+		call: RuntimeCall,
 		_public: <Signature as Verify>::Signer,
 		_account: AccountId,
 		nonce: u64,
-	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+	) -> Option<(RuntimeCall, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
 		Some((call, (nonce, ())))
 	}
 }

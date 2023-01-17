@@ -67,7 +67,7 @@ pub enum ComposableCall {
 #[test]
 fn serde_call() {
 	let order = Sell::new(PICA, KUSD, 100, FixedU128::saturating_from_integer(42_u64));
-	let sell_typed = Call::Liquidations(pallet_liquidations::Call::<Runtime>::sell {
+	let sell_typed = RuntimeCall::Liquidations(pallet_liquidations::Call::<Runtime>::sell {
 		order: order.clone(),
 		configuration: Default::default(),
 	});

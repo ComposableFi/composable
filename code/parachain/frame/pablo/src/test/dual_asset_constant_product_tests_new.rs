@@ -66,7 +66,7 @@ fn add_remove_lp() {
 
 		Test::assert_extrinsic_event(
 			Pablo::add_liquidity(
-				Origin::signed(ALICE),
+				RuntimeOrigin::signed(ALICE),
 				pool_id,
 				assets_with_amounts.clone(),
 				0,
@@ -91,7 +91,7 @@ fn add_remove_lp() {
 		// Add the liquidity
 		Test::assert_extrinsic_event(
 			Pablo::add_liquidity(
-				Origin::signed(BOB),
+				RuntimeOrigin::signed(BOB),
 				pool_id,
 				assets_with_next_amounts.clone(),
 				0,
@@ -108,7 +108,7 @@ fn add_remove_lp() {
 		assert!(Tokens::balance(lp_token, &BOB) > 0);
 
 		assert_ok!(Pablo::remove_liquidity(
-			Origin::signed(BOB),
+			RuntimeOrigin::signed(BOB),
 			pool_id,
 			Tokens::balance(lp_token, &BOB),
 			BTreeMap::from([(first_asset, 0_u128), (second_asset, 0_u128)]),
@@ -149,7 +149,7 @@ mod do_buy {
 
 			// Add liquidity
 			assert_ok!(Pablo::add_liquidity(
-				Origin::signed(ALICE),
+				RuntimeOrigin::signed(ALICE),
 				pool_id,
 				BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
 				0,
@@ -199,7 +199,7 @@ mod do_buy {
 				});
 
 			assert_noop!(
-				Pablo::buy(Origin::signed(BOB), pool_id, BTC, AssetAmount::new(BTC, 0), false),
+				Pablo::buy(RuntimeOrigin::signed(BOB), pool_id, BTC, AssetAmount::new(BTC, 0), false),
 				crate::Error::<Test>::CannotBuyAssetWithItself,
 			);
 		});
@@ -237,7 +237,7 @@ mod do_swap {
 
 			// Add liquidity
 			assert_ok!(Pablo::add_liquidity(
-				Origin::signed(ALICE),
+				RuntimeOrigin::signed(ALICE),
 				pool_id,
 				BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
 				0,
@@ -291,7 +291,7 @@ mod do_swap {
 
 			assert_noop!(
 				Pablo::swap(
-					Origin::signed(BOB),
+					RuntimeOrigin::signed(BOB),
 					pool_id,
 					AssetAmount::new(BTC, 128_000),
 					AssetAmount::new(BTC, 0),
@@ -356,7 +356,7 @@ mod remove_liquidity {
 		// Add liquidity
 		// Alice
 		assert_ok!(Pablo::add_liquidity(
-			Origin::signed(ALICE),
+			RuntimeOrigin::signed(ALICE),
 			pool_id,
 			BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
 			0,
@@ -364,7 +364,7 @@ mod remove_liquidity {
 		));
 		// Charlie
 		assert_ok!(Pablo::add_liquidity(
-			Origin::signed(CHARLIE),
+			RuntimeOrigin::signed(CHARLIE),
 			pool_id,
 			BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
 			0,
@@ -373,7 +373,7 @@ mod remove_liquidity {
 		// Other LPs
 		other_lps.iter().for_each(|account_id| {
 			assert_ok!(Pablo::add_liquidity(
-				Origin::signed(*account_id),
+				RuntimeOrigin::signed(*account_id),
 				pool_id,
 				BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
 				0,
@@ -413,7 +413,7 @@ mod remove_liquidity {
 		let pool_usdt_pre_charlie_withdraw = Tokens::balance(USDT, &Pablo::account_id(&pool_id));
 		let total_lp_pre_charlie_withdraw = Tokens::total_issuance(lp_token);
 		assert_ok!(Pablo::remove_liquidity(
-			Origin::signed(CHARLIE),
+			RuntimeOrigin::signed(CHARLIE),
 			pool_id,
 			charlie_lpt_balance,
 			min_receive()
@@ -423,7 +423,7 @@ mod remove_liquidity {
 		let pool_usdt_pre_alice_withdraw = Tokens::balance(USDT, &Pablo::account_id(&pool_id));
 		let total_lp_pre_alice_withdraw = Tokens::total_issuance(lp_token);
 		assert_ok!(Pablo::remove_liquidity(
-			Origin::signed(ALICE),
+			RuntimeOrigin::signed(ALICE),
 			pool_id,
 			alice_lpt_balance,
 			min_receive()
@@ -524,7 +524,7 @@ mod integration {
 			// Add liquidity
 			// Alice
 			assert_ok!(Pablo::add_liquidity(
-				Origin::signed(ALICE),
+				RuntimeOrigin::signed(ALICE),
 				pool_id,
 				BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
 				0,
@@ -532,7 +532,7 @@ mod integration {
 			));
 
 			let alice_lpt_balance = Tokens::balance(lp_token, &ALICE);
-			Tokens::transfer(Origin::signed(ALICE), CHARLIE, lp_token, alice_lpt_balance / 2)
+			Tokens::transfer(RuntimeOrigin::signed(ALICE), CHARLIE, lp_token, alice_lpt_balance / 2)
 				.expect("Alice has tokens");
 			let alice_lpt_balance = Tokens::balance(lp_token, &ALICE);
 			let charlie_lpt_balance = Tokens::balance(lp_token, &CHARLIE);
@@ -563,7 +563,7 @@ mod integration {
 				.expect("input will does not overflow");
 			Test::assert_extrinsic_event(
 				Pablo::remove_liquidity(
-					Origin::signed(CHARLIE),
+					RuntimeOrigin::signed(CHARLIE),
 					pool_id,
 					charlie_lpt_balance,
 					min_receive(),
@@ -599,7 +599,7 @@ mod integration {
 				.expect("input will does not overflow");
 			Test::assert_extrinsic_event(
 				Pablo::remove_liquidity(
-					Origin::signed(ALICE),
+					RuntimeOrigin::signed(ALICE),
 					pool_id,
 					alice_lpt_balance,
 					min_receive(),

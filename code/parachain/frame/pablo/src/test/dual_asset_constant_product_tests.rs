@@ -74,7 +74,7 @@ fn create_pool(
 	));
 	assert_last_event::<Test, _>(|e| {
 		matches!(e.event,
-            mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, .. })
+            mock::RuntimeEvent::Pablo(crate::Event::LiquidityAdded { who, pool_id, .. })
             if who == ALICE && pool_id == actual_pool_id)
 	});
 	actual_pool_id
@@ -258,7 +258,7 @@ fn test_redeemable_assets() {
 }
 
 pub fn create_pool_from_config(init_config: PoolInitConfiguration<u128, u128>) -> u128 {
-	Test::assert_extrinsic_event_with(Pablo::create(Origin::root(), init_config), |event| {
+	Test::assert_extrinsic_event_with(Pablo::create(RuntimeOrigin::root(), init_config), |event| {
 		match event {
 			crate::Event::PoolCreated { pool_id, .. } => Some(pool_id),
 			_ => None,
@@ -357,7 +357,7 @@ fn add_lp_with_min_mint_amount() {
 		// Add the liquidity, min amount = 0
 		Test::assert_extrinsic_event(
 			Pablo::add_liquidity(
-				Origin::signed(ALICE),
+				RuntimeOrigin::signed(ALICE),
 				pool_id,
 				assets_with_init_amounts.clone(),
 				0,
@@ -388,7 +388,7 @@ fn add_lp_with_min_mint_amount() {
 		// Add the liquidity, but expect more lp tokens, hence errors
 		assert_noop!(
 			Pablo::add_liquidity(
-				Origin::signed(BOB),
+				RuntimeOrigin::signed(BOB),
 				pool_id,
 				assets_with_amounts.clone(),
 				// Arbitrarily large number, 200 * 10^12
@@ -400,7 +400,7 @@ fn add_lp_with_min_mint_amount() {
 
 		// Add liquidity with min_mint_amount
 		assert_ok!(Pablo::add_liquidity(
-			Origin::signed(BOB),
+			RuntimeOrigin::signed(BOB),
 			pool_id,
 			assets_with_amounts,
 			1,
@@ -450,7 +450,7 @@ fn remove_lp_failure() {
 
 		// Add the liquidity
 		assert_ok!(Pablo::add_liquidity(
-			Origin::signed(ALICE),
+			RuntimeOrigin::signed(ALICE),
 			pool_id,
 			[(first_asset, init_first_asset_amount), (second_asset, init_second_asset_amount)]
 				.into_iter()
@@ -468,7 +468,7 @@ fn remove_lp_failure() {
 
 		// Add the liquidity
 		assert_ok!(Pablo::add_liquidity(
-			Origin::signed(BOB),
+			RuntimeOrigin::signed(BOB),
 			pool_id,
 			[(first_asset, first_asset_amount), (second_asset, second_asset_amount)]
 				.into_iter()
@@ -482,7 +482,7 @@ fn remove_lp_failure() {
 		// error as trying to redeem more tokens than lp
 		assert_noop!(
 			Pablo::remove_liquidity(
-				Origin::signed(BOB),
+				RuntimeOrigin::signed(BOB),
 				pool_id,
 				bob_lp_after_adding_liquidity + 1,
 				[(first_asset, 1), (second_asset, 1)].into_iter().collect()
@@ -493,7 +493,7 @@ fn remove_lp_failure() {
 		// error as expected values are more than actual redeemed values.
 		assert_noop!(
 			Pablo::remove_liquidity(
-				Origin::signed(BOB),
+				RuntimeOrigin::signed(BOB),
 				pool_id,
 				bob_lp_after_adding_liquidity,
 				[
@@ -642,7 +642,7 @@ fn staking_pool_test() {
         // make sure a Staking pool is created.
 		assert_has_event::<Test, _>(|e| {
 			matches!(e.event,
-	            mock::Event::StakingRewards(pallet_staking_rewards::Event::RewardPoolCreated { owner, .. })
+	            mock::RuntimeEvent::StakingRewards(pallet_staking_rewards::Event::RewardPoolCreated { owner, .. })
 	            if owner == Pablo::account_id(&pool_id) )
 		});
 
@@ -664,7 +664,7 @@ fn staking_pool_test() {
 		assert_has_event::<Test, _>(|e| {
 	        println!("{:?}", e.event);
 			matches!(e.event,
-	            mock::Event::StakingRewards(pallet_staking_rewards::Event::RewardTransferred { from, reward_currency, reward_increment, ..})
+	            mock::RuntimeEvent::StakingRewards(pallet_staking_rewards::Event::RewardTransferred { from, reward_currency, reward_increment, ..})
 	            if from == BOB && reward_currency == USDT && reward_increment == protocol_fee)
 		});
 
@@ -731,7 +731,7 @@ fn cannot_swap_between_wrong_pairs() {
 
 		assert_noop!(
 			Pablo::swap(
-				Origin::signed(BOB),
+				RuntimeOrigin::signed(BOB),
 				pool_id,
 				AssetAmount::new(USDC, usdc_amount),
 				AssetAmount::new(BTC, 0_u128),
@@ -741,7 +741,7 @@ fn cannot_swap_between_wrong_pairs() {
 		);
 		assert_noop!(
 			Pablo::swap(
-				Origin::signed(BOB),
+				RuntimeOrigin::signed(BOB),
 				pool_id,
 				AssetAmount::new(BTC, usdc_amount),
 				AssetAmount::new(USDC, 0_u128),
@@ -840,7 +840,7 @@ proptest! {
 			prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
 			prop_assert_ok!(
 				Pablo::swap(
-					Origin::signed(BOB),
+					RuntimeOrigin::signed(BOB),
 					pool_id,
 					AssetAmount::new(USDT, usdt_value),
 					AssetAmount::new(BTC, 0_u128),
@@ -855,7 +855,7 @@ proptest! {
 			);
 			prop_assert_ok!(
 				Pablo::buy(
-					Origin::signed(BOB),
+					RuntimeOrigin::signed(BOB),
 					pool_id,
 					BTC,
 					AssetAmount::new(USDT, usdt_value),
@@ -895,14 +895,14 @@ proptest! {
 		  let pool = get_pool(pool_id);
 		  prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
 		  prop_assert_ok!(Tokens::mint_into(BTC, &BOB, btc_value));
-		  prop_assert_ok!(Pablo::add_liquidity(Origin::signed(BOB), pool_id,
+		  prop_assert_ok!(Pablo::add_liquidity(RuntimeOrigin::signed(BOB), pool_id,
 				BTreeMap::from([(BTC, btc_value), (USDT, usdt_value)]), 0, false));
 		  let term1 = initial_usdt.integer_sqrt_checked().expect("integer_sqrt failed");
 		  let term2 = initial_btc.integer_sqrt_checked().expect("integer_sqrt failed");
 		  let expected_lp_tokens = safe_multiply_by_rational(term1, btc_value, term2).expect("multiply_by_rational failed");
 		  let lp_token = Tokens::balance(pool.lp_token, &BOB);
 		  prop_assert_ok!(default_acceptable_computation_error(expected_lp_tokens, lp_token));
-		  prop_assert_ok!(Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp_token,
+		  prop_assert_ok!(Pablo::remove_liquidity(RuntimeOrigin::signed(BOB), pool_id, lp_token,
 				BTreeMap::from([(USDT, 0), (BTC, 0)])
 			));
 		  let btc_value_redeemed = Tokens::balance(BTC, &BOB);
@@ -935,7 +935,7 @@ proptest! {
 		  );
 		  let pool = get_pool(pool_id);
 		  prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
-		  prop_assert_ok!(Pablo::swap(Origin::signed(BOB), pool_id, AssetAmount::new(USDT, usdt_value), AssetAmount::new(BTC, 0), false));
+		  prop_assert_ok!(Pablo::swap(RuntimeOrigin::signed(BOB), pool_id, AssetAmount::new(USDT, usdt_value), AssetAmount::new(BTC, 0), false));
 		  let usdt_value_after_fee = usdt_value - pool.fee_config.fee_rate.mul_floor(usdt_value);
 		  let ratio = initial_btc as f64 / initial_usdt as f64;
 		  let expected_btc_value = ratio * usdt_value_after_fee as f64;
@@ -983,7 +983,7 @@ mod twap {
 
 			System::set_block_number(0);
 			assert_eq!(Pablo::twap(pool_id), None);
-			assert_ok!(Pablo::enable_twap(Origin::root(), pool_id));
+			assert_ok!(Pablo::enable_twap(RuntimeOrigin::root(), pool_id));
 			process_and_progress_blocks::<Pablo, Test>(1);
 
 			assert_eq!(
@@ -1004,7 +1004,7 @@ mod twap {
 			let usdt_value = unit;
 			assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
 			assert_ok!(Pablo::swap(
-				Origin::signed(BOB),
+				RuntimeOrigin::signed(BOB),
 				pool_id,
 				AssetAmount::new(USDT, usdt_value),
 				AssetAmount::new(BTC, 0),
@@ -1083,7 +1083,7 @@ mod twap {
 			};
 			System::set_block_number(0);
 			assert_eq!(Pablo::twap(pool_identifier), None);
-			assert_ok!(Pablo::enable_twap(Origin::root(), pool_identifier));
+			assert_ok!(Pablo::enable_twap(RuntimeOrigin::root(), pool_identifier));
 			process_and_progress_blocks::<Pablo, Test>(1);
 
 			assert_eq!(
@@ -1102,7 +1102,7 @@ mod twap {
 				let usdt_value = unit;
 				assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
 				assert_ok!(Pablo::swap(
-					Origin::signed(BOB),
+					RuntimeOrigin::signed(BOB),
 					pool_identifier,
 					AssetAmount::new(USDT, usdt_value),
 					AssetAmount::new(BTC, 0),
@@ -1128,7 +1128,7 @@ mod twap {
 			run_to_block_and_swap(TWAP_INTERVAL_BLOCKS + 1);
 			assert_has_event::<Test, _>(|e| {
 				matches!(e.event,
-				mock::Event::Pablo(crate::Event::TwapUpdated { pool_id, ..})
+				mock::RuntimeEvent::Pablo(crate::Event::TwapUpdated { pool_id, ..})
 				if pool_id == pool_identifier
 				)
 			});
@@ -1205,7 +1205,7 @@ fn add_lp_amounts_get_normalized() {
 		// Add the liquidity, min amount = 0
 		Test::assert_extrinsic_event(
 			Pablo::add_liquidity(
-				Origin::signed(ALICE),
+				RuntimeOrigin::signed(ALICE),
 				pool_id,
 				assets_with_init_amounts.clone(),
 				0,
@@ -1241,7 +1241,7 @@ fn add_lp_amounts_get_normalized() {
 		.value;
 
 		Test::assert_extrinsic_event(
-			Pablo::add_liquidity(Origin::signed(BOB), pool_id, assets_with_amounts, 0, false),
+			Pablo::add_liquidity(RuntimeOrigin::signed(BOB), pool_id, assets_with_amounts, 0, false),
 			crate::Event::<Test>::LiquidityAdded {
 				who: BOB,
 				pool_id: 0,

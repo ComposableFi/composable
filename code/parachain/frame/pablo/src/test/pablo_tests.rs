@@ -40,7 +40,7 @@ mod simulate {
 	use sp_runtime::Permill;
 
 	use crate::{
-		mock::{new_test_ext, Origin, Pablo, System, Test, ALICE},
+		mock::{new_test_ext, RuntimeOrigin, Pablo, System, Test, ALICE},
 		Event, PoolInitConfiguration,
 	};
 
@@ -50,7 +50,7 @@ mod simulate {
 			System::set_block_number(1);
 			let pool_id = Test::assert_extrinsic_event_with(
 				Pablo::create(
-					Origin::signed(ALICE),
+					RuntimeOrigin::signed(ALICE),
 					PoolInitConfiguration::DualAssetConstantProduct {
 						owner: ALICE,
 						assets_weights: bounded_btree_map! {
@@ -78,7 +78,7 @@ mod simulate {
 
 			let add_result = Test::assert_extrinsic_event_with(
 				Pablo::add_liquidity(
-					Origin::signed(BOB),
+					RuntimeOrigin::signed(BOB),
 					pool_id,
 					[(USDT, 100_000_000), (USDC, 100_000_000)].into_iter().collect(),
 					0,
@@ -102,7 +102,7 @@ mod simulate {
 
 			let remove_result = Test::assert_extrinsic_event_with(
 				Pablo::remove_liquidity(
-					Origin::signed(BOB),
+					RuntimeOrigin::signed(BOB),
 					pool_id,
 					add_result,
 					[(USDT, 0), (USDC, 0)].into_iter().collect(),

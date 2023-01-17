@@ -48,7 +48,7 @@ fn xcm_sell_with_same_asset() {
 		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 		let configuration_id = 1;
 		DutchAuction::add_configuration(
-			Origin::signed(seller),
+			RuntimeOrigin::signed(seller),
 			configuration_id,
 			configuration.clone(),
 		)
@@ -61,7 +61,7 @@ fn xcm_sell_with_same_asset() {
 			configuration: configuration_id,
 		};
 		assert_noop!(
-			DutchAuction::xcm_sell(Origin::signed(seller), request),
+			DutchAuction::xcm_sell(RuntimeOrigin::signed(seller), request),
 			sp_runtime::DispatchError::Other("Auction creation with the same asset."),
 		);
 	});
@@ -84,12 +84,12 @@ fn setup_sell() {
 		let gas = Assets::balance(PICA, &ALICE);
 		let treasury =
 			Assets::balance(PICA, &DutchAuctionPalletId::get().into_account_truncating());
-		DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
+		DutchAuction::ask(RuntimeOrigin::signed(seller), sell, configuration).unwrap();
 		let treasury_added =
 			Assets::balance(PICA, &DutchAuctionPalletId::get().into_account_truncating()) -
 				treasury;
 		assert!(treasury_added > 0);
-		let ask_gas = <Runtime as pallet_dutch_auction::Config>::WeightInfo::ask() as u128;
+		let ask_gas = <Runtime as pallet_dutch_auction::Config>::WeightInfo::ask().ref_time() as u128;
 		assert!(treasury_added >= ask_gas);
 		let reserved = Assets::reserved_balance(BTC, &ALICE);
 		assert!(not_reserved < reserved && reserved == 1);
@@ -117,12 +117,12 @@ fn with_immediate_exact_buy() {
 		let take_amount = 1000_u128;
 		let sell = Sell::new(BTC, USDT, sell_amount, fixed(take_amount));
 		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
-		DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
+		DutchAuction::ask(RuntimeOrigin::signed(seller), sell, configuration).unwrap();
 		let order_id = crate::OrdersIndex::<Runtime>::get();
-		let result = DutchAuction::take(Origin::signed(buyer), order_id, Take::new(1, fixed(999)));
+		let result = DutchAuction::take(RuntimeOrigin::signed(buyer), order_id, Take::new(1, fixed(999)));
 		assert!(!result.is_ok());
 		let not_reserved = <Assets as MultiReservableCurrency<_>>::reserved_balance(USDT, &BOB);
-		let result = DutchAuction::take(Origin::signed(buyer), order_id, Take::new(1, fixed(1000)));
+		let result = DutchAuction::take(RuntimeOrigin::signed(buyer), order_id, Take::new(1, fixed(1000)));
 		assert_ok!(result);
 		let reserved = Assets::reserved_balance(USDT, &BOB);
 		assert!(not_reserved < reserved && reserved == take_amount);
@@ -148,10 +148,10 @@ fn with_two_takes_higher_than_limit_and_not_enough_for_all() {
 		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 
 		let sell = Sell::new(BTC, USDT, sell_amount, fixed(take_amount));
-		DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
+		DutchAuction::ask(RuntimeOrigin::signed(seller), sell, configuration).unwrap();
 		let order_id = crate::OrdersIndex::<Runtime>::get();
-		assert_ok!(DutchAuction::take(Origin::signed(buyer), order_id, Take::new(1, fixed(1001))));
-		assert_ok!(DutchAuction::take(Origin::signed(buyer), order_id, Take::new(1, fixed(1002))));
+		assert_ok!(DutchAuction::take(RuntimeOrigin::signed(buyer), order_id, Take::new(1, fixed(1001))));
+		assert_ok!(DutchAuction::take(RuntimeOrigin::signed(buyer), order_id, Take::new(1, fixed(1002))));
 
 		DutchAuction::on_finalize(42);
 
@@ -168,10 +168,10 @@ fn liquidation() {
 			let seller = AccountId::from_raw(ALICE.0);
 			let sell = Sell::new(BTC, USDT, 1, fixed(1000));
 			let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
-			DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
+			DutchAuction::ask(RuntimeOrigin::signed(seller), sell, configuration).unwrap();
 			let order_id = crate::OrdersIndex::<Runtime>::get();
 			let balance_before = <Balances as fungible::Inspect<_>>::balance(&ALICE);
-			DutchAuction::liquidate(Origin::signed(seller), order_id).unwrap();
+			DutchAuction::liquidate(RuntimeOrigin::signed(seller), order_id).unwrap();
 
 			let balance_after = <Balances as fungible::Inspect<_>>::balance(&ALICE);
 			prop_assert!(balance_before < balance_after, "cleaning up is incentivized");

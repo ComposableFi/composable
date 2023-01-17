@@ -90,6 +90,7 @@ std = [
   "xcm/std",
   "sp-keystore",
   "sp-application-crypto",
+  "frame-benchmarking/std",
 ]
 
 runtime-benchmarks = [

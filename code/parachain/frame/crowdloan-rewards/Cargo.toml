@@ -76,6 +76,7 @@ std = [
   "sp-arithmetic/std",
   "scale-info/std",
   "serde/std",
+  "frame-benchmarking/std",
 ]
 
 runtime-benchmarks = [

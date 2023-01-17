@@ -134,6 +134,9 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = Everything;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
+  type OnSlash = ();
+  type OnDeposit = ();
+  type OnTransfer = ();
 }
 
 pub static ALICE: Public =
@@ -188,7 +191,7 @@ impl pallet_dutch_auction::Config for Runtime {
 	type NativeCurrency = Balances;
 	type AdminOrigin = EnsureOneOf<EnsureRoot<AccountId>, EnsureSignedBy<RootAccount, AccountId>>;
 	type XcmSender = XcmFake;
-	type XcmOrigin = Origin;
+	type XcmOrigin = RuntimeOrigin;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -202,8 +205,8 @@ impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
 		todo!("please test via local-integration-tests")
 	}
 }
-impl From<Origin> for XcmFake {
-	fn from(_: Origin) -> Self {
+impl From<RuntimeOrigin> for XcmFake {
+	fn from(_: RuntimeOrigin) -> Self {
 		todo!("please test via local-integration-tests")
 	}
 }

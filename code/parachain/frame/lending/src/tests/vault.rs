@@ -15,10 +15,10 @@ fn vault_takes_part_of_borrow_so_cannot_withdraw() {
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, deposit_usdt));
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, deposit_btc));
 
-		assert_ok!(Lending::vault_deposit(Origin::signed(*ALICE), market_id, deposit_btc));
+		assert_ok!(Lending::vault_deposit(RuntimeOrigin::signed(*ALICE), market_id, deposit_btc));
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(Origin::signed(*ALICE), market_id, deposit_usdt, false),
-			Event::Lending(pallet_lending::Event::<Runtime>::CollateralDeposited {
+			Lending::deposit_collateral(RuntimeOrigin::signed(*ALICE), market_id, deposit_usdt, false),
+			RuntimeEvent::Lending(pallet_lending::Event::<Runtime>::CollateralDeposited {
 				sender: *ALICE,
 				market_id,
 				amount: deposit_usdt,
@@ -26,13 +26,13 @@ fn vault_takes_part_of_borrow_so_cannot_withdraw() {
 		);
 		assert_noop!(
 			Lending::borrow(
-				Origin::signed(*ALICE),
+				RuntimeOrigin::signed(*ALICE),
 				market_id.clone(),
 				deposit_btc + initial_total_cash
 			),
 			orml_tokens::Error::<Runtime>::BalanceTooLow
 		);
-		assert_no_event::<Runtime>(Event::Lending(pallet_lending::Event::<Runtime>::Borrowed {
+		assert_no_event::<Runtime>(RuntimeEvent::Lending(pallet_lending::Event::<Runtime>::Borrowed {
 			sender: *ALICE,
 			market_id,
 			amount: deposit_btc + initial_total_cash,
@@ -50,11 +50,11 @@ fn test_vault_market_can_withdraw() {
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, collateral));
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, borrow));
 
-		assert_ok!(Lending::vault_deposit(Origin::signed(*ALICE), market, borrow));
+		assert_ok!(Lending::vault_deposit(RuntimeOrigin::signed(*ALICE), market, borrow));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral, false),
-			Event::Lending(crate::Event::CollateralDeposited {
+			Lending::deposit_collateral(RuntimeOrigin::signed(*ALICE), market, collateral, false),
+			RuntimeEvent::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral,
 				market_id: market,
@@ -63,8 +63,8 @@ fn test_vault_market_can_withdraw() {
 		process_and_progress_blocks::<Lending, Runtime>(1);
 		// We waited 1 block, the market should have withdraw the funds
 		assert_extrinsic_event::<Runtime>(
-			Lending::borrow(Origin::signed(*ALICE), market, borrow - 1),
-			Event::Lending(crate::Event::Borrowed {
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market, borrow - 1),
+			RuntimeEvent::Lending(crate::Event::Borrowed {
 				sender: *ALICE,
 				amount: borrow - 1, // DEFAULT_MARKET_VAULT_RESERVE
 				market_id: market,
@@ -132,7 +132,7 @@ proptest! {
 			let vault_account = Vault::account_id(&vault_id);
 			// Deposit USDT in the vault.
 			prop_assert_ok!(Tokens::mint_into(USDT::ID, &lender, USDT::units(total_amount)));
-			prop_assert_ok!(Lending::vault_deposit(Origin::signed(lender), market_id, USDT::units(total_amount)));
+			prop_assert_ok!(Lending::vault_deposit(RuntimeOrigin::signed(lender), market_id, USDT::units(total_amount)));
 			// Process one block to transfer not-reserved assets to the corresponded market.
 			process_and_progress_blocks::<Lending, Runtime>(1);
 			// Generate a bunch of borrowers' accounts.
@@ -150,7 +150,7 @@ proptest! {
 			// For some reason lender needs some of his money back.
 			// So, he withdraw all assets from vault's account.
 			prop_assert_ok!(Lending::vault_withdraw(
-				Origin::signed(lender),
+				RuntimeOrigin::signed(lender),
 				market_id,
 				Assets::balance(USDT::ID, &vault_account)
 			));
@@ -185,7 +185,7 @@ proptest! {
 			prop_assert!(Lending::ensure_can_borrow_from_vault(&vault_id, &market_account).is_ok());
 			// Lender decided withdraw money from the vault again.
 			prop_assert_ok!(Lending::vault_withdraw(
-						Origin::signed(lender),
+						RuntimeOrigin::signed(lender),
 						market_id,
 						Assets::balance(USDT::ID, &vault_account)
 					));
@@ -196,13 +196,13 @@ proptest! {
 			set_price(BTC::ID, NORMALIZED::units(50_000));
 
 			// Check that we can not borrow from market related to unbalanced vault
-			prop_assert_noop!(Lending::borrow(Origin::signed(*borrowers.get(0).unwrap()), market_id, Assets::balance(USDT::ID, &market_account)),
+			prop_assert_noop!(Lending::borrow(RuntimeOrigin::signed(*borrowers.get(0).unwrap()), market_id, Assets::balance(USDT::ID, &market_account)),
 				Error::<Runtime>::CannotBorrowFromMarketWithUnbalancedVault);
 			process_and_progress_blocks::<Lending, Runtime>(1);
 
 			// Lender puts back assets to the vault.
 			prop_assert_ok!(Tokens::mint_into(USDT::ID, &lender, USDT::units(total_amount)));
-			prop_assert_ok!(Lending::vault_deposit(Origin::signed(lender), market_id, USDT::units(total_amount)));
+			prop_assert_ok!(Lending::vault_deposit(RuntimeOrigin::signed(lender), market_id, USDT::units(total_amount)));
 			process_and_progress_blocks::<Lending, Runtime>(1);
 			// Vault is balanced.
 			assert!(Lending::ensure_can_borrow_from_vault(&vault_id, &market_account).is_ok());

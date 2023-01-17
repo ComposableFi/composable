@@ -60,6 +60,7 @@ std = [
   "sp-arithmetic/std",
   "composable-traits/std",
   "scale-info/std",
+  "frame-benchmarking/std",
 ]
 
 runtime-benchmarks = [

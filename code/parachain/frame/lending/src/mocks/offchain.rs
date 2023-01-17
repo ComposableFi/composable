@@ -42,7 +42,7 @@ use sp_runtime::testing::{Block, Digest, Header as HeaderType, TestSignature, Te
 pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		100
+		frame_support::weights::Weight::from_ref_time(100)
 	}
 }
 
@@ -55,7 +55,7 @@ pub type Executive = frame_executive::Executive<
 	CustomOnRuntimeUpgrade,
 >;
 
-pub type TestExtrinsic = TestXt<Call, MockedExtension<Runtime>>;
+pub type TestExtrinsic = TestXt<RuntimeCall, MockedExtension<Runtime>>;
 pub type TestBlock = Block<TestExtrinsic>;
 pub type Balance = u128;
 pub type Amount = i128;
@@ -226,6 +226,9 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = Everything;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
+  type OnSlash = ();
+  type OnDeposit = ();
+  type OnTransfer = ();
 }
 
 ord_parameter_types! {
@@ -335,8 +338,8 @@ impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
 		unimplemented!("please test via local-integration-tests")
 	}
 }
-impl From<Origin> for XcmFake {
-	fn from(_: Origin) -> Self {
+impl From<RuntimeOrigin> for XcmFake {
+	fn from(_: RuntimeOrigin) -> Self {
 		unimplemented!("please test via local-integration-tests")
 	}
 }
@@ -385,22 +388,22 @@ impl frame_system::offchain::SigningTypes for Runtime {
 
 impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Runtime
 where
-	Call: From<LocalCall>,
+	RuntimeCall: From<LocalCall>,
 {
-	type OverarchingCall = Call;
+	type OverarchingCall = RuntimeCall;
 	type Extrinsic = Extrinsic;
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
-	Call: From<LocalCall>,
+	RuntimeCall: From<LocalCall>,
 {
 	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-		call: Call,
+		call: RuntimeCall,
 		_public: Public,
 		_account: AccountId,
 		nonce: u64,
-	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+	) -> Option<(RuntimeCall, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
 		Some((call, (nonce, MockedExtension::new())))
 	}
 }
@@ -513,7 +516,7 @@ impl<T> MockedExtension<T> {
 
 impl<T: Config + Send + Sync + std::fmt::Debug + TypeInfo> SignedExtension for MockedExtension<T> {
 	type AccountId = AccountId;
-	type RuntimeCall = RuntimeCall;
+	type Call = RuntimeCall;
 	type AdditionalSigned = ();
 	type Pre = ();
 	const IDENTIFIER: &'static str = "MockedExtension";

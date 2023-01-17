@@ -184,6 +184,9 @@ mod tests {
 		type DustRemovalWhitelist = Everything;
 		type OnKilledTokenAccount = ();
 		type OnNewTokenAccount = ();
+    type OnSlash = ();
+    type OnDeposit = ();
+    type OnTransfer = ();
 	}
 
 	ord_parameter_types! {

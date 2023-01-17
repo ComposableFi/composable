@@ -40,16 +40,16 @@ use proptest::prelude::*;
 use sp_runtime::{DispatchError, TokenError};
 
 pub trait OriginExt {
-	fn relayer() -> Origin {
-		Origin::signed(RELAYER)
+	fn relayer() -> RuntimeOrigin {
+		RuntimeOrigin::signed(RELAYER)
 	}
 
-	fn alice() -> Origin {
-		Origin::signed(ALICE)
+	fn alice() -> RuntimeOrigin {
+		RuntimeOrigin::signed(ALICE)
 	}
 
-	fn bob() -> Origin {
-		Origin::signed(BOB)
+	fn bob() -> RuntimeOrigin {
+		RuntimeOrigin::signed(BOB)
 	}
 }
 
@@ -58,7 +58,7 @@ const NETWORK_ID: NetworkId = 1;
 const ASSET_ID: AssetId = 1;
 const REMOTE_ASSET_ID: RemoteAssetId = [1u8; 20];
 
-impl OriginExt for Origin {}
+impl OriginExt for RuntimeOrigin {}
 
 prop_compose! {
 	fn account_id()
@@ -105,7 +105,7 @@ mod ensure_relayer {
 	fn ensure_relayer_is_set() {
 		new_test_ext().execute_with(|| {
 			assert_err!(
-				Mosaic::ensure_relayer(Origin::signed(ALICE)),
+				Mosaic::ensure_relayer(RuntimeOrigin::signed(ALICE)),
 				Error::<Test>::RelayerNotSet
 			);
 		})
@@ -114,8 +114,8 @@ mod ensure_relayer {
 	#[test]
 	fn ensure_relayer_origin_checked() {
 		new_test_ext().execute_with(|| {
-			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
-			assert_err!(Mosaic::ensure_relayer(Origin::signed(ALICE)), DispatchError::BadOrigin);
+			assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
+			assert_err!(Mosaic::ensure_relayer(RuntimeOrigin::signed(ALICE)), DispatchError::BadOrigin);
 		})
 	}
 }
@@ -126,7 +126,7 @@ mod set_relayer {
 	#[test]
 	fn set_relayer() {
 		new_test_ext().execute_with(|| {
-			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 			assert_eq!(Mosaic::relayer_account_id(), Ok(RELAYER));
 		})
 	}
@@ -134,21 +134,21 @@ mod set_relayer {
 	#[test]
 	fn relayer_cannot_set_relayer() {
 		new_test_ext().execute_with(|| {
-			assert_noop!(Mosaic::set_relayer(Origin::relayer(), ALICE), DispatchError::BadOrigin);
+			assert_noop!(Mosaic::set_relayer(RuntimeOrigin::relayer(), ALICE), DispatchError::BadOrigin);
 		})
 	}
 
 	#[test]
 	fn none_cannot_set_relayer() {
 		new_test_ext().execute_with(|| {
-			assert_noop!(Mosaic::set_relayer(Origin::none(), ALICE), DispatchError::BadOrigin);
+			assert_noop!(Mosaic::set_relayer(RuntimeOrigin::none(), ALICE), DispatchError::BadOrigin);
 		})
 	}
 	#[test]
 	fn alice_cannot_set_relayer() {
 		new_test_ext().execute_with(|| {
 			assert_noop!(
-				Mosaic::set_relayer(Origin::signed(ALICE), ALICE),
+				Mosaic::set_relayer(RuntimeOrigin::signed(ALICE), ALICE),
 				DispatchError::BadOrigin
 			);
 		})
@@ -163,16 +163,16 @@ mod rotate_relayer {
 		new_test_ext().execute_with(|| {
 			let ttl = 500;
 			let current_block = System::block_number();
-			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 
 			//first rotation
 			let validated_ttl = Validated::new(ttl).unwrap();
-			assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, validated_ttl));
+			assert_ok!(Mosaic::rotate_relayer(RuntimeOrigin::relayer(), BOB, validated_ttl));
 			System::set_block_number(current_block + ttl);
 			assert_eq!(Mosaic::relayer_account_id(), Ok(BOB));
 
 			// second rotation
-			assert_ok!(Mosaic::rotate_relayer(Origin::signed(BOB), CHARLIE, validated_ttl));
+			assert_ok!(Mosaic::rotate_relayer(RuntimeOrigin::signed(BOB), CHARLIE, validated_ttl));
 			System::set_block_number(current_block + 2 * ttl);
 			assert_eq!(Mosaic::relayer_account_id(), Ok(CHARLIE));
 		})
@@ -183,9 +183,9 @@ mod rotate_relayer {
 		new_test_ext().execute_with(|| {
 			let ttl = 500;
 			let current_block = System::block_number();
-			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 			let validated_ttl = Validated::new(ttl).unwrap();
-			assert_ok!(Mosaic::rotate_relayer(Origin::relayer(), BOB, validated_ttl));
+			assert_ok!(Mosaic::rotate_relayer(RuntimeOrigin::relayer(), BOB, validated_ttl));
 			System::set_block_number(current_block + ttl - 1); // just before the ttl
 			assert_eq!(Mosaic::relayer_account_id(), Ok(RELAYER)); // not BOB
 		})
@@ -195,9 +195,9 @@ mod rotate_relayer {
 	fn arbitrary_account_cannot_rotate_relayer() {
 		new_test_ext().execute_with(|| {
 			let ttl = Validated::new(500).unwrap();
-			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 			assert_noop!(
-				Mosaic::rotate_relayer(Origin::signed(ALICE), BOB, ttl),
+				Mosaic::rotate_relayer(RuntimeOrigin::signed(ALICE), BOB, ttl),
 				DispatchError::BadOrigin
 			);
 		})
@@ -207,9 +207,9 @@ mod rotate_relayer {
 	fn none_cannot_rotate_relayer() {
 		new_test_ext().execute_with(|| {
 			let ttl = Validated::new(500).unwrap();
-			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 			assert_noop!(
-				Mosaic::rotate_relayer(Origin::none(), BOB, ttl),
+				Mosaic::rotate_relayer(RuntimeOrigin::none(), BOB, ttl),
 				DispatchError::BadOrigin
 			);
 		})
@@ -225,9 +225,9 @@ mod set_network {
 		let network_info =
 			NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
 		new_test_ext().execute_with(|| {
-			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 
-			assert_ok!(Mosaic::set_network(Origin::relayer(), network_id, network_info.clone()));
+			assert_ok!(Mosaic::set_network(RuntimeOrigin::relayer(), network_id, network_info.clone()));
 			assert_eq!(Mosaic::network_infos(network_id), Some(network_info));
 		})
 	}
@@ -238,10 +238,10 @@ mod set_network {
 		let network_info =
 			NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
 		new_test_ext().execute_with(|| {
-			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 
 			assert_noop!(
-				Mosaic::set_network(Origin::root(), network_id, network_info.clone()),
+				Mosaic::set_network(RuntimeOrigin::root(), network_id, network_info.clone()),
 				DispatchError::BadOrigin
 			);
 		})
@@ -253,10 +253,10 @@ mod set_network {
 		let network_info =
 			NetworkInfo { enabled: false, min_transfer_size: 1, max_transfer_size: 100000 };
 		new_test_ext().execute_with(|| {
-			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 
 			assert_noop!(
-				Mosaic::set_network(Origin::none(), network_id, network_info.clone()),
+				Mosaic::set_network(RuntimeOrigin::none(), network_id, network_info.clone()),
 				DispatchError::BadOrigin
 			);
 		})
@@ -273,7 +273,7 @@ mod budget {
 		fn root_can_set_budget() {
 			new_test_ext().execute_with(|| {
 				assert_ok!(Mosaic::set_budget(
-					Origin::root(),
+					RuntimeOrigin::root(),
 					1,
 					1,
 					BudgetPenaltyDecayer::linear(5)
@@ -286,7 +286,7 @@ mod budget {
 			new_test_ext().execute_with(|| {
 				assert_noop!(
 					Mosaic::set_budget(
-						Origin::signed(ALICE),
+						RuntimeOrigin::signed(ALICE),
 						1,
 						1,
 						BudgetPenaltyDecayer::linear(5)
@@ -300,7 +300,7 @@ mod budget {
 		fn none_cannot_set_budget() {
 			new_test_ext().execute_with(|| {
 				assert_noop!(
-					Mosaic::set_budget(Origin::none(), 1, 1, BudgetPenaltyDecayer::linear(5)),
+					Mosaic::set_budget(RuntimeOrigin::none(), 1, 1, BudgetPenaltyDecayer::linear(5)),
 					DispatchError::BadOrigin
 				);
 			})
@@ -311,13 +311,13 @@ mod budget {
 	fn budget_are_isolated() {
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_budget(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				1,
 				0xCAFEBABE,
 				BudgetPenaltyDecayer::linear(10)
 			));
 			assert_ok!(Mosaic::set_budget(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				2,
 				0xDEADC0DE,
 				BudgetPenaltyDecayer::linear(5)
@@ -332,7 +332,7 @@ mod budget {
 		new_test_ext().execute_with(|| {
 			let initial_block = System::block_number();
 			assert_ok!(Mosaic::set_budget(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				1,
 				0xCAFEBABE,
 				BudgetPenaltyDecayer::linear(10)
@@ -344,7 +344,7 @@ mod budget {
 
 			System::set_block_number(initial_block + 1);
 			assert_ok!(Mosaic::set_budget(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				1,
 				0xDEADC0DE,
 				BudgetPenaltyDecayer::linear(10)
@@ -374,7 +374,7 @@ fn incoming_outgoing_accounts_are_isolated() {
 		assert_eq!(balance_of(SubAccount::new_outgoing(ALICE)), 0);
 		assert_eq!(balance_of(SubAccount::new_incoming(ALICE)), 0);
 		assert_ok!(Mosaic::transfer_to(
-			Origin::signed(ALICE),
+			RuntimeOrigin::signed(ALICE),
 			network_id,
 			asset_id,
 			ethereum_address,
@@ -394,15 +394,15 @@ fn incoming_outgoing_accounts_are_isolated() {
 fn initialize() {
 	System::set_block_number(1);
 
-	assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+	assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 	assert_ok!(Mosaic::set_network(
-		Origin::relayer(),
+		RuntimeOrigin::relayer(),
 		1,
 		NetworkInfo { enabled: true, min_transfer_size: 1, max_transfer_size: 100000 },
 	));
-	assert_ok!(Mosaic::set_budget(Origin::root(), 1, BUDGET, BudgetPenaltyDecayer::linear(10)));
+	assert_ok!(Mosaic::set_budget(RuntimeOrigin::root(), 1, BUDGET, BudgetPenaltyDecayer::linear(10)));
 	assert_ok!(Mosaic::update_asset_mapping(
-		Origin::root(),
+		RuntimeOrigin::root(),
 		ASSET_ID,
 		NETWORK_ID,
 		Some(REMOTE_ASSET_ID)
@@ -413,7 +413,7 @@ fn do_timelocked_mint(to: AccountId, amount: Balance, lock_time: u64) {
 	let initial_block = System::block_number();
 
 	assert_ok!(Mosaic::timelocked_mint(
-		Origin::relayer(),
+		RuntimeOrigin::relayer(),
 		NETWORK_ID,
 		REMOTE_ASSET_ID,
 		to,
@@ -445,14 +445,14 @@ mod timelocked_mint {
 			initialize();
 			let unsupported_remote_asset_id: RemoteAssetId = [0xFFu8; 20];
 			assert_ok!(Mosaic::update_asset_mapping(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				0xCAFEBABE,
 				NETWORK_ID,
 				Some(unsupported_remote_asset_id)
 			));
 			assert_noop!(
 				Mosaic::timelocked_mint(
-					Origin::relayer(),
+					RuntimeOrigin::relayer(),
 					NETWORK_ID,
 					unsupported_remote_asset_id,
 					ALICE,
@@ -471,7 +471,7 @@ mod timelocked_mint {
 			initialize();
 			assert_noop!(
 				Mosaic::timelocked_mint(
-					Origin::relayer(),
+					RuntimeOrigin::relayer(),
 					NETWORK_ID,
 					REMOTE_ASSET_ID,
 					ALICE,
@@ -490,7 +490,7 @@ mod timelocked_mint {
 			initialize();
 			assert_noop!(
 				Mosaic::timelocked_mint(
-					Origin::signed(ALICE),
+					RuntimeOrigin::signed(ALICE),
 					NETWORK_ID,
 					REMOTE_ASSET_ID,
 					ALICE,
@@ -509,7 +509,7 @@ mod timelocked_mint {
 			initialize();
 			assert_noop!(
 				Mosaic::timelocked_mint(
-					Origin::none(),
+					RuntimeOrigin::none(),
 					NETWORK_ID,
 					REMOTE_ASSET_ID,
 					ALICE,
@@ -529,7 +529,7 @@ mod timelocked_mint {
 			let amount = 50;
 			let lock_time = 10;
 			assert_ok!(Mosaic::timelocked_mint(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				NETWORK_ID,
 				REMOTE_ASSET_ID,
 				ALICE,
@@ -552,7 +552,7 @@ mod timelocked_mint {
 			let lock_time = 10;
 
 			assert_ok!(Mosaic::timelocked_mint(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				NETWORK_ID,
 				REMOTE_ASSET_ID,
 				ALICE,
@@ -569,7 +569,7 @@ mod timelocked_mint {
 			let new_lock_time = 20;
 
 			assert_ok!(Mosaic::timelocked_mint(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				NETWORK_ID,
 				REMOTE_ASSET_ID,
 				ALICE,
@@ -595,7 +595,7 @@ mod timelocked_mint {
 			let initial_block = System::block_number();
 
 			assert_ok!(Mosaic::rescind_timelocked_mint(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				NETWORK_ID,
 				REMOTE_ASSET_ID,
 				ALICE,
@@ -607,7 +607,7 @@ mod timelocked_mint {
 			);
 			let transfer_amount = 9;
 			assert_ok!(Mosaic::rescind_timelocked_mint(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				NETWORK_ID,
 				REMOTE_ASSET_ID,
 				ALICE,
@@ -636,23 +636,23 @@ mod timelocked_mint {
 				// initialize
 				System::set_block_number(start_block);
 
-				prop_assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+				prop_assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 				prop_assert_ok!(Mosaic::set_network(
-					Origin::relayer(),
+					RuntimeOrigin::relayer(),
 					network_id,
 					NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
 				), "relayer may set network info");
-				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
-			prop_assert_ok!(Mosaic::update_asset_mapping(Origin::root(), asset_id, network_id, Some(remote_asset_id)));
+				prop_assert_ok!(Mosaic::set_budget(RuntimeOrigin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
+			prop_assert_ok!(Mosaic::update_asset_mapping(RuntimeOrigin::root(), asset_id, network_id, Some(remote_asset_id)));
 
 
 				// We've split the budget in two parts. Both within the budget
 				prop_assert_eq!(budget, first_part + second_part);
 				// When mint the first part of the budget, it should be fine.
-				prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), network_id, remote_asset_id, account_a, first_part, 0, Default::default()));
+				prop_assert_ok!(Mosaic::timelocked_mint(RuntimeOrigin::relayer(), network_id, remote_asset_id, account_a, first_part, 0, Default::default()));
 				// The new penalised_budget should be budget - first_part.
 				// When we mint the second part of the budget, it should be fine because it matches the penalised_budget.
-				prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), network_id, remote_asset_id, account_a, second_part, 0, Default::default()));
+				prop_assert_ok!(Mosaic::timelocked_mint(RuntimeOrigin::relayer(), network_id, remote_asset_id, account_a, second_part, 0, Default::default()));
 
 				Ok(())
 			})?;
@@ -674,25 +674,25 @@ mod timelocked_mint {
 				// initialize
 				System::set_block_number(start_block);
 
-				prop_assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+				prop_assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 				prop_assert_ok!(Mosaic::set_network(
-					Origin::relayer(),
+					RuntimeOrigin::relayer(),
 					network_id,
 					NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
 				), "relayer may set network info");
-				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
-			prop_assert_ok!(Mosaic::update_asset_mapping(Origin::root(), asset_id, network_id, Some(remote_asset_id)));
+				prop_assert_ok!(Mosaic::set_budget(RuntimeOrigin::root(), asset_id, budget, BudgetPenaltyDecayer::linear(decay)), "root may set budget");
+			prop_assert_ok!(Mosaic::update_asset_mapping(RuntimeOrigin::root(), asset_id, network_id, Some(remote_asset_id)));
 
 
 				// We've split the budget in two parts. Both within the budget
 				prop_assert_eq!(budget, first_part + second_part);
 				// When mint the first part of the budget, it should be fine.
-				prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), network_id, remote_asset_id, account_a, first_part, 0, Default::default()));
+				prop_assert_ok!(Mosaic::timelocked_mint(RuntimeOrigin::relayer(), network_id, remote_asset_id, account_a, first_part, 0, Default::default()));
 				// The new penalised_budget should be budget - first_part.
 				// When we mint the second part of the budget, it should be fine because it matches the penalised_budget.
-				prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), network_id, remote_asset_id, account_a, second_part, 0, Default::default()));
+				prop_assert_ok!(Mosaic::timelocked_mint(RuntimeOrigin::relayer(), network_id, remote_asset_id, account_a, second_part, 0, Default::default()));
 				// When we mint more than the penalised budget, it should fail.
-				prop_assert_noop!(Mosaic::timelocked_mint(Origin::relayer(), network_id, remote_asset_id, account_a, 1, 0, Default::default()), Error::<Test>::InsufficientBudget);
+				prop_assert_noop!(Mosaic::timelocked_mint(RuntimeOrigin::relayer(), network_id, remote_asset_id, account_a, 1, 0, Default::default()), Error::<Test>::InsufficientBudget);
 				Ok(())
 			})?;
 		}
@@ -719,14 +719,14 @@ mod timelocked_mint {
 
 				let budget_penalty_decayer = BudgetPenaltyDecayer::linear(decay_factor);
 
-				prop_assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+				prop_assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 				prop_assert_ok!(Mosaic::set_network(
-					Origin::relayer(),
+					RuntimeOrigin::relayer(),
 					network_id,
 					NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
 				), "relayer may set network info");
-				prop_assert_ok!(Mosaic::set_budget(Origin::root(), asset_id, budget, budget_penalty_decayer.clone()), "root may set budget");
-			prop_assert_ok!(Mosaic::update_asset_mapping(Origin::root(), asset_id, network_id, Some(remote_asset_id)));
+				prop_assert_ok!(Mosaic::set_budget(RuntimeOrigin::root(), asset_id, budget, budget_penalty_decayer.clone()), "root may set budget");
+			prop_assert_ok!(Mosaic::update_asset_mapping(RuntimeOrigin::root(), asset_id, network_id, Some(remote_asset_id)));
 
 
 				// We've split the budget in two parts. Both within the budget
@@ -740,14 +740,14 @@ mod timelocked_mint {
 				for _ in 0..iteration_count {
 
 					// When mint the first part of the budget, it should be fine.
-					prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), network_id, remote_asset_id, account_a, first_part, 0, Default::default()));
+					prop_assert_ok!(Mosaic::timelocked_mint(RuntimeOrigin::relayer(), network_id, remote_asset_id, account_a, first_part, 0, Default::default()));
 					// The new penalised_budget should be budget - first_part.
 					// When we mint the second part of the budget, it should be fine because it matches the penalised_budget.
-					prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), network_id, remote_asset_id, account_a, second_part, 0, Default::default()));
+					prop_assert_ok!(Mosaic::timelocked_mint(RuntimeOrigin::relayer(), network_id, remote_asset_id, account_a, second_part, 0, Default::default()));
 
 
 					// When we mint more than the penalised budget, it should fail.
-					prop_assert_noop!(Mosaic::timelocked_mint(Origin::relayer(), network_id, remote_asset_id, account_a, 1, 0, Default::default()), Error::<Test>::InsufficientBudget);
+					prop_assert_noop!(Mosaic::timelocked_mint(RuntimeOrigin::relayer(), network_id, remote_asset_id, account_a, 1, 0, Default::default()), Error::<Test>::InsufficientBudget);
 
 
 					// We wait until the budget has recovered
@@ -769,7 +769,7 @@ mod rescind_timelocked_mint {
 			initialize();
 			assert_noop!(
 				Mosaic::rescind_timelocked_mint(
-					Origin::relayer(),
+					RuntimeOrigin::relayer(),
 					NETWORK_ID,
 					REMOTE_ASSET_ID,
 					ALICE,
@@ -788,14 +788,14 @@ mod rescind_timelocked_mint {
 			do_timelocked_mint(ALICE, 50, lock_time);
 			let another_remote_asset_id = [0xFFu8; 20];
 			assert_ok!(Mosaic::update_asset_mapping(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				0xCAFEBABE,
 				NETWORK_ID,
 				Some(another_remote_asset_id)
 			));
 			assert_noop!(
 				Mosaic::rescind_timelocked_mint(
-					Origin::relayer(),
+					RuntimeOrigin::relayer(),
 					NETWORK_ID,
 					another_remote_asset_id,
 					ALICE,
@@ -814,7 +814,7 @@ mod rescind_timelocked_mint {
 			do_timelocked_mint(ALICE, 50, lock_time);
 			assert_noop!(
 				Mosaic::rescind_timelocked_mint(
-					Origin::relayer(),
+					RuntimeOrigin::relayer(),
 					NETWORK_ID,
 					REMOTE_ASSET_ID,
 					BOB,
@@ -834,7 +834,7 @@ mod rescind_timelocked_mint {
 			do_timelocked_mint(ALICE, amount, lock_time);
 			assert_noop!(
 				Mosaic::rescind_timelocked_mint(
-					Origin::relayer(),
+					RuntimeOrigin::relayer(),
 					NETWORK_ID,
 					REMOTE_ASSET_ID,
 					ALICE,
@@ -859,7 +859,7 @@ mod rescind_timelocked_mint {
 
 			let rescind_amount = 9;
 			assert_ok!(Mosaic::rescind_timelocked_mint(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				NETWORK_ID,
 				REMOTE_ASSET_ID,
 				ALICE,
@@ -871,7 +871,7 @@ mod rescind_timelocked_mint {
 			);
 
 			assert_ok!(Mosaic::rescind_timelocked_mint(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				NETWORK_ID,
 				REMOTE_ASSET_ID,
 				ALICE,
@@ -890,7 +890,7 @@ mod set_timelock_duration {
 	fn set_timelock_duration() {
 		new_test_ext().execute_with(|| {
 			assert_ok!(Mosaic::set_timelock_duration(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				Validated::new(MinimumTimeLockPeriod::get() + 1).unwrap()
 			));
 		})
@@ -901,7 +901,7 @@ mod set_timelock_duration {
 		new_test_ext().execute_with(|| {
 			assert_noop!(
 				Mosaic::set_timelock_duration(
-					Origin::signed(ALICE),
+					RuntimeOrigin::signed(ALICE),
 					Validated::new(MinimumTimeLockPeriod::get() + 1).unwrap()
 				),
 				DispatchError::BadOrigin
@@ -914,7 +914,7 @@ mod set_timelock_duration {
 		new_test_ext().execute_with(|| {
 			assert_noop!(
 				Mosaic::set_timelock_duration(
-					Origin::none(),
+					RuntimeOrigin::none(),
 					Validated::new(MinimumTimeLockPeriod::get() + 1).unwrap()
 				),
 				DispatchError::BadOrigin
@@ -940,7 +940,7 @@ mod transfer_to {
 			initialize();
 			do_transfer_to();
 			assert_ok!(Mosaic::accept_transfer(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				ALICE,
 				NETWORK_ID,
 				REMOTE_ASSET_ID,
@@ -955,7 +955,7 @@ mod transfer_to {
 			initialize();
 			do_transfer_to();
 			assert_noop!(
-				Mosaic::accept_transfer(Origin::relayer(), ALICE, NETWORK_ID, REMOTE_ASSET_ID, 101),
+				Mosaic::accept_transfer(RuntimeOrigin::relayer(), ALICE, NETWORK_ID, REMOTE_ASSET_ID, 101),
 				Error::<Test>::AmountMismatch
 			);
 		})
@@ -968,7 +968,7 @@ mod transfer_to {
 			do_transfer_to();
 			let current_block = System::block_number();
 			System::set_block_number(current_block + Mosaic::timelock_period() + 1);
-			assert_ok!(Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE));
+			assert_ok!(Mosaic::claim_stale_to(RuntimeOrigin::signed(ALICE), 1, ALICE));
 		})
 	}
 
@@ -980,7 +980,7 @@ mod transfer_to {
 			let current_block = System::block_number();
 			System::set_block_number(current_block + Mosaic::timelock_period() - 1);
 			assert_noop!(
-				Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE),
+				Mosaic::claim_stale_to(RuntimeOrigin::signed(ALICE), 1, ALICE),
 				Error::<Test>::TxStillLocked
 			);
 		})
@@ -992,7 +992,7 @@ mod transfer_to {
 			initialize();
 			do_transfer_to();
 			assert_ok!(Mosaic::accept_transfer(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				ALICE,
 				NETWORK_ID,
 				REMOTE_ASSET_ID,
@@ -1001,7 +1001,7 @@ mod transfer_to {
 			let current_block = System::block_number();
 			System::set_block_number(current_block + Mosaic::timelock_period() + 1);
 			assert_noop!(
-				Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE),
+				Mosaic::claim_stale_to(RuntimeOrigin::signed(ALICE), 1, ALICE),
 				Error::<Test>::NoStaleTransactions
 			);
 		})
@@ -1014,9 +1014,9 @@ mod transfer_to {
 			do_transfer_to();
 			let current_block = System::block_number();
 			System::set_block_number(current_block + Mosaic::timelock_period() + 1);
-			assert_ok!(Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE));
+			assert_ok!(Mosaic::claim_stale_to(RuntimeOrigin::signed(ALICE), 1, ALICE));
 			assert_noop!(
-				Mosaic::accept_transfer(Origin::relayer(), ALICE, NETWORK_ID, REMOTE_ASSET_ID, 100),
+				Mosaic::accept_transfer(RuntimeOrigin::relayer(), ALICE, NETWORK_ID, REMOTE_ASSET_ID, 100),
 				Error::<Test>::NoOutgoingTx
 			);
 		})
@@ -1030,14 +1030,14 @@ mod transfer_to {
 			let current_block = System::block_number();
 			System::set_block_number(current_block + Mosaic::timelock_period() + 1);
 			assert_ok!(Mosaic::accept_transfer(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				ALICE,
 				NETWORK_ID,
 				REMOTE_ASSET_ID,
 				20
 			));
 			// System::set_block_number(current_block + Mosaic::timelock_period() + 1);
-			assert_ok!(Mosaic::claim_stale_to(Origin::signed(ALICE), 1, ALICE));
+			assert_ok!(Mosaic::claim_stale_to(RuntimeOrigin::signed(ALICE), 1, ALICE));
 		})
 	}
 
@@ -1047,18 +1047,18 @@ mod transfer_to {
 			let min_transfer_size = 1000;
 			let max_transfer_size = 100000;
 
-			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 
 			let network_id = 1;
 			assert_ok!(Mosaic::set_network(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				network_id,
 				NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
 			));
 
 			let asset_id: u128 = 1;
 			assert_ok!(Mosaic::set_budget(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				asset_id,
 				10000,
 				BudgetPenaltyDecayer::linear(10)
@@ -1066,7 +1066,7 @@ mod transfer_to {
 
 			let remote_asset_id = [0xFFu8; 20];
 			assert_ok!(Mosaic::update_asset_mapping(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				asset_id,
 				network_id,
 				Some(remote_asset_id)
@@ -1077,7 +1077,7 @@ mod transfer_to {
 			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 			assert_noop!(
 				Mosaic::transfer_to(
-					Origin::signed(ALICE),
+					RuntimeOrigin::signed(ALICE),
 					network_id,
 					asset_id,
 					ethereum_address,
@@ -1099,18 +1099,18 @@ mod transfer_to {
 			let min_transfer_size = 1;
 			let max_transfer_size = 100000;
 
-			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 
 			let network_id = 1;
 			assert_ok!(Mosaic::set_network(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				network_id,
 				NetworkInfo { enabled: true, min_transfer_size, max_transfer_size },
 			));
 
 			let asset_id: u128 = 1;
 			assert_ok!(Mosaic::set_budget(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				asset_id,
 				10000,
 				BudgetPenaltyDecayer::linear(10)
@@ -1118,7 +1118,7 @@ mod transfer_to {
 
 			let remote_asset_id = [0xFFu8; 20];
 			assert_ok!(Mosaic::update_asset_mapping(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				asset_id,
 				network_id,
 				Some(remote_asset_id)
@@ -1130,7 +1130,7 @@ mod transfer_to {
 			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 			assert_noop!(
 				Mosaic::transfer_to(
-					Origin::signed(ALICE),
+					RuntimeOrigin::signed(ALICE),
 					network_id,
 					asset_id,
 					ethereum_address,
@@ -1164,7 +1164,7 @@ mod transfer_to {
 			assert_eq!(account_balance(), amount);
 			assert_eq!(outgoing_balance(), 0);
 			assert_ok!(Mosaic::transfer_to(
-				Origin::signed(ALICE),
+				RuntimeOrigin::signed(ALICE),
 				network_id,
 				asset_id,
 				ethereum_address,
@@ -1183,9 +1183,9 @@ mod transfer_to {
 	#[test]
 	fn transfer_to_unsupported_asset() {
 		ExtBuilder { balances: Default::default() }.build().execute_with(|| {
-			assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+			assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 			assert_ok!(Mosaic::set_network(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				1,
 				NetworkInfo { enabled: true, min_transfer_size: 1, max_transfer_size: 100000 },
 			));
@@ -1200,7 +1200,7 @@ mod transfer_to {
 			assert_ok!(Tokens::mint_into(asset_id, &ALICE, amount));
 			assert_noop!(
 				Mosaic::transfer_to(
-					Origin::signed(ALICE),
+					RuntimeOrigin::signed(ALICE),
 					network_id,
 					asset_id,
 					ethereum_address,
@@ -1222,7 +1222,7 @@ mod transfer_to {
 		let swap_to_native = false;
 
 		assert_ok!(Mosaic::transfer_to(
-			Origin::signed(ALICE),
+			RuntimeOrigin::signed(ALICE),
 			NETWORK_ID,
 			ASSET_ID,
 			ethereum_address,
@@ -1263,7 +1263,7 @@ mod transfer_to {
 			*nonce
 		});
 
-		System::assert_last_event(mock::Event::Mosaic(crate::Event::TransferOut {
+		System::assert_last_event(mock::RuntimeEvent::Mosaic(crate::Event::TransferOut {
 			id,
 			to: ethereum_address,
 			asset_id: ASSET_ID,
@@ -1287,7 +1287,7 @@ mod accept_transfer {
 			initialize();
 			assert_noop!(
 				Mosaic::timelocked_mint(
-					Origin::relayer(),
+					RuntimeOrigin::relayer(),
 					NETWORK_ID,
 					REMOTE_ASSET_ID,
 					ALICE,
@@ -1310,7 +1310,7 @@ mod accept_transfer {
 			let initial_block = System::block_number();
 
 			assert_ok!(Mosaic::rescind_timelocked_mint(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				NETWORK_ID,
 				REMOTE_ASSET_ID,
 				ALICE,
@@ -1322,7 +1322,7 @@ mod accept_transfer {
 			);
 			let transfer_amount = 9;
 			assert_ok!(Mosaic::rescind_timelocked_mint(
-				Origin::relayer(),
+				RuntimeOrigin::relayer(),
 				NETWORK_ID,
 				REMOTE_ASSET_ID,
 				ALICE,
@@ -1343,9 +1343,9 @@ mod claim_to {
 			let lock_time = 10;
 			do_timelocked_mint(ALICE, 50, lock_time);
 			let current_block = System::block_number();
-			assert_noop!(Mosaic::claim_to(Origin::alice(), 1, ALICE), Error::<Test>::TxStillLocked);
+			assert_noop!(Mosaic::claim_to(RuntimeOrigin::alice(), 1, ALICE), Error::<Test>::TxStillLocked);
 			System::set_block_number(current_block + lock_time + 1);
-			assert_ok!(Mosaic::claim_to(Origin::alice(), 1, ALICE));
+			assert_ok!(Mosaic::claim_to(RuntimeOrigin::alice(), 1, ALICE));
 		})
 	}
 }
@@ -1425,7 +1425,7 @@ mod add_remote_amm_id {
 
 				System::set_block_number(start_block);
 				prop_assert_ok!(Mosaic::add_remote_amm_id(
-					Origin::root(),
+					RuntimeOrigin::root(),
 					network_id,
 					amm_id
 				));
@@ -1444,14 +1444,14 @@ mod add_remote_amm_id {
 
 				System::set_block_number(start_block);
 				prop_assert_ok!(Mosaic::add_remote_amm_id(
-					Origin::root(),
+					RuntimeOrigin::root(),
 					network_id,
 					amm_id
 				));
 
 				prop_assert_noop!(
 					Mosaic::add_remote_amm_id(
-						Origin::root(),
+						RuntimeOrigin::root(),
 						network_id,
 						amm_id
 					),
@@ -1480,13 +1480,13 @@ mod remove_remote_amm_id {
 
 				System::set_block_number(start_block);
 				prop_assert_ok!(Mosaic::add_remote_amm_id(
-					Origin::root(),
+					RuntimeOrigin::root(),
 					network_id,
 					amm_id
 				));
 
 				prop_assert_ok!(Mosaic::remove_remote_amm_id(
-					Origin::root(),
+					RuntimeOrigin::root(),
 					network_id,
 					amm_id
 				));
@@ -1506,7 +1506,7 @@ mod remove_remote_amm_id {
 				System::set_block_number(start_block);
 				prop_assert_noop!(
 					Mosaic::remove_remote_amm_id(
-						Origin::root(),
+						RuntimeOrigin::root(),
 						network_id,
 						amm_id
 					),
@@ -1540,16 +1540,16 @@ mod do_transfer_with_remote_amm_swap {
 
 				assert_ok!(Tokens::mint_into(asset_id, &account_a, amount));
 
-				assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+				assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 
 				assert_ok!(Mosaic::set_network(
-					Origin::relayer(),
+					RuntimeOrigin::relayer(),
 					network_id,
 					NetworkInfo { enabled: true,  min_transfer_size: 1, max_transfer_size: amount },
 				));
 
 				assert_ok!(Mosaic::set_budget(
-					Origin::root(),
+					RuntimeOrigin::root(),
 					asset_id,
 					amount,
 					BudgetPenaltyDecayer::linear(10)
@@ -1557,7 +1557,7 @@ mod do_transfer_with_remote_amm_swap {
 
 				let remote_asset_id = [0xFFu8; 20];
 				assert_ok!(Mosaic::update_asset_mapping(
-					Origin::root(),
+					RuntimeOrigin::root(),
 					asset_id,
 					network_id,
 					Some(remote_asset_id)
@@ -1567,7 +1567,7 @@ mod do_transfer_with_remote_amm_swap {
 
 				System::set_block_number(start_block);
 				prop_assert_ok!(Mosaic::add_remote_amm_id(
-					Origin::root(),
+					RuntimeOrigin::root(),
 					network_id,
 					amm_id
 				));
@@ -1582,7 +1582,7 @@ mod do_transfer_with_remote_amm_swap {
 				};
 
 				prop_assert_ok!(Mosaic::transfer_to(
-					Origin::signed(account_a),
+					RuntimeOrigin::signed(account_a),
 					network_id,
 					asset_id,
 					ethereum_address,
@@ -1613,16 +1613,16 @@ mod do_transfer_with_remote_amm_swap {
 
 				assert_ok!(Tokens::mint_into(asset_id, &account_a, amount));
 
-				assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+				assert_ok!(Mosaic::set_relayer(RuntimeOrigin::root(), RELAYER));
 
 				assert_ok!(Mosaic::set_network(
-					Origin::relayer(),
+					RuntimeOrigin::relayer(),
 					network_id,
 					NetworkInfo { enabled: true,  min_transfer_size: 1, max_transfer_size: amount },
 				));
 
 				assert_ok!(Mosaic::set_budget(
-					Origin::root(),
+					RuntimeOrigin::root(),
 					asset_id,
 					amount,
 					BudgetPenaltyDecayer::linear(10)
@@ -1630,7 +1630,7 @@ mod do_transfer_with_remote_amm_swap {
 
 				let remote_asset_id = [0xFFu8; 20];
 				assert_ok!(Mosaic::update_asset_mapping(
-					Origin::root(),
+					RuntimeOrigin::root(),
 					asset_id,
 					network_id,
 					Some(remote_asset_id)
@@ -1655,7 +1655,7 @@ mod do_transfer_with_remote_amm_swap {
 				};
 
 				prop_assert_noop!(Mosaic::transfer_to(
-					Origin::signed(account_a),
+					RuntimeOrigin::signed(account_a),
 					network_id,
 					asset_id,
 					ethereum_address,

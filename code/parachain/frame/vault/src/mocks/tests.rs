@@ -131,6 +131,9 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = Everything;
 	type OnKilledTokenAccount = ();
 	type OnNewTokenAccount = ();
+  type OnSlash = ();
+  type OnDeposit = ();
+  type OnTransfer = ();
 }
 
 impl crate::mocks::currency_factory::Config for Test {

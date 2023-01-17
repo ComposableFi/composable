@@ -13,7 +13,7 @@ use std::{
 use crate::{
 	pallet::{Event as NftEvent, Instance, OwnerInstances},
 	test::{
-		mock::{Event, MockRuntime, Nft},
+		mock::{RuntimeEvent, MockRuntime, Nft},
 		ALICE, BOB,
 	},
 	AccountIdOf, FinancialNftCollectionIdOf, FinancialNftInstanceIdOf, Pallet,
@@ -30,7 +30,7 @@ pub(crate) fn mint_nft_and_assert() -> FinancialNftInstanceIdOf<MockRuntime> {
 	let created_nft_id = 1_u64;
 	assert_ok!(Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &created_nft_id, &ALICE));
 
-	MockRuntime::assert_last_event(Event::Nft(NftEvent::FinancialNftCreated {
+	MockRuntime::assert_last_event(RuntimeEvent::Nft(NftEvent::FinancialNftCreated {
 		collection_id: TEST_COLLECTION_ID,
 		instance_id: created_nft_id,
 	}));
@@ -67,7 +67,7 @@ pub(crate) fn mint_into_and_assert() -> FinancialNftInstanceIdOf<MockRuntime> {
 	Nft::create_collection(&TEST_COLLECTION_ID, &ALICE, &BOB).unwrap();
 	Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
 
-	MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftCreated {
+	MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftCreated {
 		collection_id: TEST_COLLECTION_ID,
 		instance_id: NEW_NFT_ID,
 	}));
@@ -97,7 +97,7 @@ pub(crate) fn mint_many_nfts_and_assert<const AMOUNT: usize>(
 		let new_nft_id = Pallet::<MockRuntime>::get_next_nft_id(&collection).unwrap();
 		Pallet::<MockRuntime>::mint_into(&collection, &new_nft_id, &who).unwrap();
 
-		MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftCreated {
+		MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftCreated {
 			collection_id: collection,
 			instance_id: new_nft_id,
 		}));

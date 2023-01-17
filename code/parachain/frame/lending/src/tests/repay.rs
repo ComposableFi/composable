@@ -18,8 +18,8 @@ fn test_repay_partial_amount() {
 		let borrow_asset_deposit = BORROW::units(1_000_000);
 		assert_ok!(Tokens::mint_into(BORROW::ID, &CHARLIE, borrow_asset_deposit));
 		assert_extrinsic_event::<Runtime>(
-			Vault::deposit(Origin::signed(*CHARLIE), vault_id, borrow_asset_deposit),
-			Event::Vault(pallet_vault::Event::<Runtime>::Deposited {
+			Vault::deposit(RuntimeOrigin::signed(*CHARLIE), vault_id, borrow_asset_deposit),
+			RuntimeEvent::Vault(pallet_vault::Event::<Runtime>::Deposited {
 				account: *CHARLIE,
 				asset_amount: borrow_asset_deposit,
 				lp_amount: borrow_asset_deposit,
@@ -45,8 +45,8 @@ fn test_repay_partial_amount() {
 		let alice_limit = get_collateral_borrow_limit_for_account(*ALICE);
 		assert_extrinsic_event::<Runtime>(
 			// partial borrow
-			Lending::borrow(Origin::signed(*ALICE), market_index, alice_limit / 2),
-			Event::Lending(crate::Event::<Runtime>::Borrowed {
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market_index, alice_limit / 2),
+			RuntimeEvent::Lending(crate::Event::<Runtime>::Borrowed {
 				sender: *ALICE,
 				market_id: market_index,
 				amount: alice_limit / 2,
@@ -58,13 +58,13 @@ fn test_repay_partial_amount() {
 		// pay off a small amount
 		assert_extrinsic_event::<Runtime>(
 			Lending::repay_borrow(
-				Origin::signed(*ALICE),
+				RuntimeOrigin::signed(*ALICE),
 				market_index,
 				*ALICE,
 				RepayStrategy::PartialAmount(BORROW::units(1) / 10_000),
 				false,
 			),
-			Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
+			RuntimeEvent::Lending(crate::Event::<Runtime>::BorrowRepaid {
 				sender: *ALICE,
 				market_id: market_index,
 				beneficiary: *ALICE,
@@ -78,13 +78,13 @@ fn test_repay_partial_amount() {
 		// pay off a small amount
 		assert_extrinsic_event::<Runtime>(
 			Lending::repay_borrow(
-				Origin::signed(*ALICE),
+				RuntimeOrigin::signed(*ALICE),
 				market_index,
 				*ALICE,
 				RepayStrategy::PartialAmount(BORROW::units(1) / 10_000),
 				false,
 			),
-			Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
+			RuntimeEvent::Lending(crate::Event::<Runtime>::BorrowRepaid {
 				sender: *ALICE,
 				market_id: market_index,
 				beneficiary: *ALICE,
@@ -107,7 +107,7 @@ fn test_repay_partial_amount() {
 		// can't repay more than is owed
 		assert_err!(
 			Lending::repay_borrow(
-				Origin::signed(*ALICE),
+				RuntimeOrigin::signed(*ALICE),
 				market_index,
 				*ALICE,
 				RepayStrategy::PartialAmount(alice_total_debt_with_interest + 1),
@@ -123,7 +123,7 @@ fn test_repay_partial_amount() {
 			},
 		);
 
-		assert_no_event::<Runtime>(Event::Lending(crate::Event::BorrowRepaid {
+		assert_no_event::<Runtime>(RuntimeEvent::Lending(crate::Event::BorrowRepaid {
 			sender: *ALICE,
 			market_id: market_index,
 			beneficiary: *ALICE,
@@ -132,13 +132,13 @@ fn test_repay_partial_amount() {
 
 		assert_extrinsic_event::<Runtime>(
 			Lending::repay_borrow(
-				Origin::signed(*ALICE),
+				RuntimeOrigin::signed(*ALICE),
 				market_index,
 				*ALICE,
 				RepayStrategy::PartialAmount(alice_total_debt_with_interest),
 				false,
 			),
-			Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
+			RuntimeEvent::Lending(crate::Event::<Runtime>::BorrowRepaid {
 				sender: *ALICE,
 				market_id: market_index,
 				beneficiary: *ALICE,
@@ -162,8 +162,8 @@ fn test_repay_total_debt() {
 		let deposit_collateral = |account, balance| {
 			assert_ok!(Tokens::mint_into(BTC::ID, account, balance));
 			assert_extrinsic_event::<Runtime>(
-				Lending::deposit_collateral(Origin::signed(*account), market_index, balance, false),
-				Event::Lending(crate::Event::<Runtime>::CollateralDeposited {
+				Lending::deposit_collateral(RuntimeOrigin::signed(*account), market_index, balance, false),
+				RuntimeEvent::Lending(crate::Event::<Runtime>::CollateralDeposited {
 					market_id: market_index,
 					amount: BTC::ONE,
 					sender: *account,
@@ -177,7 +177,7 @@ fn test_repay_total_debt() {
 		// CHARLIE is the lender
 		let borrow_asset_deposit = USDT::units(1_000_000);
 		assert_ok!(Tokens::mint_into(USDT::ID, &CHARLIE, borrow_asset_deposit));
-		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault_id, borrow_asset_deposit));
+		assert_ok!(Vault::deposit(RuntimeOrigin::signed(*CHARLIE), vault_id, borrow_asset_deposit));
 
 		// processes one block
 		process_and_progress_blocks::<Lending, Runtime>(1);
@@ -195,8 +195,8 @@ fn test_repay_total_debt() {
 
 		let alice_borrow_limit = get_btc_borrow_limit_for_account(*ALICE);
 		assert_extrinsic_event::<Runtime>(
-			Lending::borrow(Origin::signed(*ALICE), market_index, alice_borrow_limit),
-			Event::Lending(crate::Event::<Runtime>::Borrowed {
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market_index, alice_borrow_limit),
+			RuntimeEvent::Lending(crate::Event::<Runtime>::Borrowed {
 				sender: *ALICE,
 				market_id: market_index,
 				amount: alice_borrow_limit,
@@ -207,8 +207,8 @@ fn test_repay_total_debt() {
 
 		let bob_limit_after_blocks = get_btc_borrow_limit_for_account(*BOB);
 		assert_extrinsic_event::<Runtime>(
-			Lending::borrow(Origin::signed(*BOB), market_index, bob_limit_after_blocks),
-			Event::Lending(crate::Event::<Runtime>::Borrowed {
+			Lending::borrow(RuntimeOrigin::signed(*BOB), market_index, bob_limit_after_blocks),
+			RuntimeEvent::Lending(crate::Event::<Runtime>::Borrowed {
 				sender: *BOB,
 				market_id: market_index,
 				amount: bob_limit_after_blocks,
@@ -231,13 +231,13 @@ fn test_repay_total_debt() {
 		{
 			assert_extrinsic_event::<Runtime>(
 				Lending::repay_borrow(
-					Origin::signed(*ALICE),
+					RuntimeOrigin::signed(*ALICE),
 					market_index,
 					*ALICE,
 					RepayStrategy::TotalDebt,
 					false,
 				),
-				Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
+				RuntimeEvent::Lending(crate::Event::<Runtime>::BorrowRepaid {
 					sender: *ALICE,
 					market_id: market_index,
 					beneficiary: *ALICE,
@@ -255,13 +255,13 @@ fn test_repay_total_debt() {
 		{
 			assert_extrinsic_event::<Runtime>(
 				Lending::repay_borrow(
-					Origin::signed(*BOB),
+					RuntimeOrigin::signed(*BOB),
 					market_index,
 					*BOB,
 					RepayStrategy::TotalDebt,
 					false,
 				),
-				Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
+				RuntimeEvent::Lending(crate::Event::<Runtime>::BorrowRepaid {
 					sender: *BOB,
 					market_id: market_index,
 					beneficiary: *BOB,

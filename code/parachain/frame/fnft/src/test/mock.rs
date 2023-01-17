@@ -123,14 +123,14 @@ impl system::Config for MockRuntime {
 	type MaxConsumers = ConstU32<16>;
 }
 
-impl InstanceFilter<Call> for ProxyType {
-	fn filter(&self, c: &Call) -> bool {
+impl InstanceFilter<RuntimeCall> for ProxyType {
+	fn filter(&self, c: &RuntimeCall) -> bool {
 		match self {
 			ProxyType::Any => true,
 			ProxyType::Governance => matches!(
 				c,
 				// TODO democracy
-				Call::System(..)
+				RuntimeCall::System(..)
 			),
 			_ => false,
 		}

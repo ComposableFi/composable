@@ -178,7 +178,7 @@ impl ClaimKey {
 		}
 	}
 	pub fn claim(&self, reward_account: AccountId) -> DispatchResultWithPostInfo {
-		CrowdloanRewards::claim(Origin::signed(reward_account))
+		CrowdloanRewards::claim(RuntimeOrigin::signed(reward_account))
 	}
 	pub fn associate(&self, reward_account: AccountId) -> DispatchResultWithPostInfo {
 		let proof = match self {
@@ -186,7 +186,7 @@ impl ClaimKey {
 			ClaimKey::Eth(ethereum_account) =>
 				ethereum_proof(ethereum_account, reward_account.clone()),
 		};
-		CrowdloanRewards::associate(Origin::none(), reward_account, proof)
+		CrowdloanRewards::associate(RuntimeOrigin::none(), reward_account, proof)
 	}
 }
 

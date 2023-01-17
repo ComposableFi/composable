@@ -62,6 +62,7 @@ std = [
   "composable-support/std",
   "pallet-proxy/std",
   "composable-tests-helpers/std",
+  "frame-benchmarking/std",
 ]
 
 runtime-benchmarks = [
@@ -69,6 +70,6 @@ runtime-benchmarks = [
   "pallet-balances/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
   "frame-support/runtime-benchmarks",
-  "frame-benchmarking/runtime-benchmarks",
+  "frame-benchmarking",
   "composable-tests-helpers",
 ]
