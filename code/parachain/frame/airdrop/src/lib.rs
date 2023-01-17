@@ -968,7 +968,7 @@ pub mod pallet {
 	/// * The recipient has funds to claim
 	#[pallet::validate_unsigned]
 	impl<T: Config> ValidateUnsigned for Pallet<T> {
-		type RuntimeCall = RuntimeCall<T>;
+		type Call = Call<T>;
 
 		fn validate_unsigned(_: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			if let Call::claim { airdrop_id, reward_account, proof } = call {
