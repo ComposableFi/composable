@@ -33,33 +33,33 @@ impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	/// The range of component `c` is `[0, 1000]`.
 	fn batch(c: u32, ) -> Weight {
-		Weight::from_ref_time(74_898_000 as u64)
+		Weight::from_ref_time(74_898_000_u64)
 			// Standard Error: 21_000
-			.saturating_add(Weight::from_ref_time(11_752_000 as u64).saturating_mul(c as u64))
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(Weight::from_ref_time(11_752_000_u64).saturating_mul(c as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn as_derivative() -> Weight {
-		Weight::from_ref_time(22_785_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(22_785_000_u64)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	/// The range of component `c` is `[0, 1000]`.
 	fn batch_all(c: u32, ) -> Weight {
-		Weight::from_ref_time(45_812_000 as u64)
+		Weight::from_ref_time(45_812_000_u64)
 			// Standard Error: 28_000
-			.saturating_add(Weight::from_ref_time(12_304_000 as u64).saturating_mul(c as u64))
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(Weight::from_ref_time(12_304_000_u64).saturating_mul(c as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
 	}
 	fn dispatch_as() -> Weight {
-		Weight::from_ref_time(34_784_000 as u64)
+		Weight::from_ref_time(34_784_000_u64)
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	/// The range of component `c` is `[0, 1000]`.
 	fn force_batch(c: u32, ) -> Weight {
-		Weight::from_ref_time(49_951_000 as u64)
+		Weight::from_ref_time(49_951_000_u64)
 			// Standard Error: 27_000
-			.saturating_add(Weight::from_ref_time(11_721_000 as u64).saturating_mul(c as u64))
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(Weight::from_ref_time(11_721_000_u64).saturating_mul(c as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
 	}
 }

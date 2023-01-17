@@ -34,9 +34,9 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: Pablo PoolCount (r:1 w:1)
 	// Storage: Pablo Pools (r:0 w:1)
 	fn create() -> Weight {
-		Weight::from_ref_time(62_554_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
+		Weight::from_ref_time(62_554_000_u64)
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:5 w:5)
@@ -44,9 +44,9 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn add_liquidity() -> Weight {
-		Weight::from_ref_time(347_743_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(9 as u64))
-			.saturating_add(T::DbWeight::get().writes(8 as u64))
+		Weight::from_ref_time(347_743_000_u64)
+			.saturating_add(T::DbWeight::get().reads(9_u64))
+			.saturating_add(T::DbWeight::get().writes(8_u64))
 	}
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens TotalIssuance (r:1 w:1)
@@ -54,34 +54,34 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:0)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn remove_liquidity() -> Weight {
-		Weight::from_ref_time(222_190_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(9 as u64))
-			.saturating_add(T::DbWeight::get().writes(7 as u64))
+		Weight::from_ref_time(222_190_000_u64)
+			.saturating_add(T::DbWeight::get().reads(9_u64))
+			.saturating_add(T::DbWeight::get().writes(7_u64))
 	}
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:4 w:4)
 	// Storage: System Account (r:2 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn buy() -> Weight {
-		Weight::from_ref_time(191_476_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(8 as u64))
-			.saturating_add(T::DbWeight::get().writes(6 as u64))
+		Weight::from_ref_time(191_476_000_u64)
+			.saturating_add(T::DbWeight::get().reads(8_u64))
+			.saturating_add(T::DbWeight::get().writes(6_u64))
 	}
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:4 w:4)
 	// Storage: System Account (r:2 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn swap() -> Weight {
-		Weight::from_ref_time(184_948_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(8 as u64))
-			.saturating_add(T::DbWeight::get().writes(6 as u64))
+		Weight::from_ref_time(184_948_000_u64)
+			.saturating_add(T::DbWeight::get().reads(8_u64))
+			.saturating_add(T::DbWeight::get().writes(6_u64))
 	}
 	// Storage: CurrencyFactory AssetIdRanges (r:1 w:1)
 	// Storage: Pablo PoolCount (r:1 w:1)
 	// Storage: Pablo Pools (r:0 w:1)
 	fn do_create_pool() -> Weight {
-		Weight::from_ref_time(54_928_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
+		Weight::from_ref_time(54_928_000_u64)
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
 }

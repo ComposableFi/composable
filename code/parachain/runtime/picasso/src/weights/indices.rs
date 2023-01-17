@@ -32,34 +32,34 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> indices::WeightInfo for WeightInfo<T> {
 	// Storage: Indices Accounts (r:1 w:1)
 	fn claim() -> Weight {
-		Weight::from_ref_time(68_112_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(68_112_000_u64)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Indices Accounts (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn transfer() -> Weight {
-		Weight::from_ref_time(84_937_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(84_937_000_u64)
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	// Storage: Indices Accounts (r:1 w:1)
 	fn free() -> Weight {
-		Weight::from_ref_time(70_776_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(70_776_000_u64)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Indices Accounts (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn force_transfer() -> Weight {
-		Weight::from_ref_time(72_052_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(72_052_000_u64)
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	// Storage: Indices Accounts (r:1 w:1)
 	fn freeze() -> Weight {
-		Weight::from_ref_time(79_057_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(79_057_000_u64)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 }

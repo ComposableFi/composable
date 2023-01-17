@@ -32,21 +32,21 @@ impl<T: frame_system::Config> crowdloan_rewards::weights::WeightInfo for WeightI
 	// Storage: CrowdloanRewards TotalContributors (r:0 w:1)
 	// Storage: CrowdloanRewards TotalRewards (r:0 w:1)
 	fn populate(x: u32, ) -> Weight {
-		Weight::from_ref_time(0 as u64)
+		Weight::from_ref_time(0_u64)
 			// Standard Error: 109_000
-			.saturating_add(Weight::from_ref_time(6_792_000 as u64).saturating_mul(x as u64))
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(x as u64)))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
-			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(x as u64)))
+			.saturating_add(Weight::from_ref_time(6_792_000_u64).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().reads((1_u64).saturating_mul(x as u64)))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
+			.saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(x as u64)))
 	}
 	// Storage: CrowdloanRewards VestingBlockStart (r:1 w:1)
 	fn initialize(x: u32, ) -> Weight {
-		Weight::from_ref_time(33_355_000 as u64)
+		Weight::from_ref_time(33_355_000_u64)
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(1_000 as u64).saturating_mul(x as u64))
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add(Weight::from_ref_time(1_000_u64).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: CrowdloanRewards VestingBlockStart (r:1 w:0)
 	// Storage: CrowdloanRewards Rewards (r:1 w:1)
@@ -54,11 +54,11 @@ impl<T: frame_system::Config> crowdloan_rewards::weights::WeightInfo for WeightI
 	// Storage: CrowdloanRewards ClaimedRewards (r:1 w:1)
 	// Storage: CrowdloanRewards Associations (r:0 w:1)
 	fn associate(x: u32, ) -> Weight {
-		Weight::from_ref_time(169_323_000 as u64)
+		Weight::from_ref_time(169_323_000_u64)
 			// Standard Error: 1_000
-			.saturating_add(Weight::from_ref_time(8_000 as u64).saturating_mul(x as u64))
-			.saturating_add(T::DbWeight::get().reads(4 as u64))
-			.saturating_add(T::DbWeight::get().writes(4 as u64))
+			.saturating_add(Weight::from_ref_time(8_000_u64).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(4_u64))
+			.saturating_add(T::DbWeight::get().writes(4_u64))
 	}
 	// Storage: CrowdloanRewards Associations (r:1 w:0)
 	// Storage: CrowdloanRewards VestingBlockStart (r:1 w:0)
@@ -66,11 +66,11 @@ impl<T: frame_system::Config> crowdloan_rewards::weights::WeightInfo for WeightI
 	// Storage: System Account (r:1 w:1)
 	// Storage: CrowdloanRewards ClaimedRewards (r:1 w:1)
 	fn claim(x: u32, ) -> Weight {
-		Weight::from_ref_time(94_034_000 as u64)
+		Weight::from_ref_time(94_034_000_u64)
 			// Standard Error: 1_000
-			.saturating_add(Weight::from_ref_time(31_000 as u64).saturating_mul(x as u64))
-			.saturating_add(T::DbWeight::get().reads(5 as u64))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
+			.saturating_add(Weight::from_ref_time(31_000_u64).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(5_u64))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
 	fn unlock_rewards_for(_: u32) -> Weight {
     Weight::from_ref_time(10_000)

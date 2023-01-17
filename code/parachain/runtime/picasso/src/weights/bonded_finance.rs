@@ -35,9 +35,9 @@ impl<T: frame_system::Config> bonded_finance::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: BondedFinance BondOffers (r:0 w:1)
 	fn offer() -> Weight {
-		Weight::from_ref_time(164_423_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(5 as u64))
-			.saturating_add(T::DbWeight::get().writes(6 as u64))
+		Weight::from_ref_time(164_423_000_u64)
+			.saturating_add(T::DbWeight::get().reads(5_u64))
+			.saturating_add(T::DbWeight::get().writes(6_u64))
 	}
 	// Storage: BondedFinance BondOffers (r:1 w:1)
 	// Storage: Tokens Accounts (r:4 w:4)
@@ -46,15 +46,15 @@ impl<T: frame_system::Config> bonded_finance::WeightInfo for WeightInfo<T> {
 	// Storage: Vesting VestingSchedules (r:2 w:2)
 	// Storage: Tokens Locks (r:2 w:2)
 	fn bond() -> Weight {
-		Weight::from_ref_time(362_546_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(12 as u64))
-			.saturating_add(T::DbWeight::get().writes(12 as u64))
+		Weight::from_ref_time(362_546_000_u64)
+			.saturating_add(T::DbWeight::get().reads(12_u64))
+			.saturating_add(T::DbWeight::get().writes(12_u64))
 	}
 	// Storage: BondedFinance BondOffers (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn cancel() -> Weight {
-		Weight::from_ref_time(103_724_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(3 as u64))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
+		Weight::from_ref_time(103_724_000_u64)
+			.saturating_add(T::DbWeight::get().reads(3_u64))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
 }

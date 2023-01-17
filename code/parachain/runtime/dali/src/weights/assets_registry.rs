@@ -35,22 +35,22 @@ impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 	// Storage: AssetsRegistry AssetRatio (r:1 w:1)
 	// Storage: AssetsRegistry LocalToForeign (r:0 w:1)
 	fn register_asset() -> Weight {
-		Weight::from_ref_time(63_771_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(3 as u64))
-			.saturating_add(T::DbWeight::get().writes(4 as u64))
+		Weight::from_ref_time(63_771_000_u64)
+			.saturating_add(T::DbWeight::get().reads(3_u64))
+			.saturating_add(T::DbWeight::get().writes(4_u64))
 	}
 	// Storage: AssetsRegistry AssetRatio (r:1 w:1)
 	// Storage: AssetsRegistry LocalToForeign (r:0 w:1)
 	// Storage: AssetsRegistry ForeignToLocal (r:0 w:1)
 	fn update_asset() -> Weight {
-		Weight::from_ref_time(49_298_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
+		Weight::from_ref_time(49_298_000_u64)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
 	// Storage: AssetsRegistry MinFeeAmounts (r:1 w:1)
 	fn set_min_fee() -> Weight {
-		Weight::from_ref_time(43_550_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(43_550_000_u64)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 }

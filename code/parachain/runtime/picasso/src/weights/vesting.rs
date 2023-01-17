@@ -36,11 +36,11 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	/// The range of component `s` is `[1, 128]`.
 	fn claim(s: u32, ) -> Weight {
-		Weight::from_ref_time(106_646_000 as u64)
+		Weight::from_ref_time(106_646_000_u64)
 			// Standard Error: 14_000
-			.saturating_add(Weight::from_ref_time(4_437_000 as u64).saturating_mul(s as u64))
-			.saturating_add(T::DbWeight::get().reads(4 as u64))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
+			.saturating_add(Weight::from_ref_time(4_437_000_u64).saturating_mul(s as u64))
+			.saturating_add(T::DbWeight::get().reads(4_u64))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
 	// Storage: Vesting VestingScheduleNonce (r:1 w:1)
 	// Storage: Vesting VestingSchedules (r:1 w:1)
@@ -48,9 +48,9 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:2 w:1)
 	// Storage: Tokens Locks (r:1 w:1)
 	fn vested_transfer() -> Weight {
-		Weight::from_ref_time(162_725_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(7 as u64))
-			.saturating_add(T::DbWeight::get().writes(6 as u64))
+		Weight::from_ref_time(162_725_000_u64)
+			.saturating_add(T::DbWeight::get().reads(7_u64))
+			.saturating_add(T::DbWeight::get().writes(6_u64))
 	}
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
@@ -59,11 +59,11 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: Vesting VestingScheduleNonce (r:1 w:1)
 	/// The range of component `s` is `[0, 128]`.
 	fn update_vesting_schedules(s: u32, ) -> Weight {
-		Weight::from_ref_time(104_345_000 as u64)
+		Weight::from_ref_time(104_345_000_u64)
 			// Standard Error: 13_000
-			.saturating_add(Weight::from_ref_time(2_866_000 as u64).saturating_mul(s as u64))
-			.saturating_add(T::DbWeight::get().reads(4 as u64))
-			.saturating_add(T::DbWeight::get().writes(5 as u64))
+			.saturating_add(Weight::from_ref_time(2_866_000_u64).saturating_mul(s as u64))
+			.saturating_add(T::DbWeight::get().reads(4_u64))
+			.saturating_add(T::DbWeight::get().writes(5_u64))
 	}
 	// Storage: Vesting VestingSchedules (r:1 w:1)
 	// Storage: Timestamp Now (r:1 w:0)
@@ -71,10 +71,10 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	/// The range of component `s` is `[1, 128]`.
 	fn claim_for(s: u32, ) -> Weight {
-		Weight::from_ref_time(105_194_000 as u64)
+		Weight::from_ref_time(105_194_000_u64)
 			// Standard Error: 14_000
-			.saturating_add(Weight::from_ref_time(4_213_000 as u64).saturating_mul(s as u64))
-			.saturating_add(T::DbWeight::get().reads(4 as u64))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
+			.saturating_add(Weight::from_ref_time(4_213_000_u64).saturating_mul(s as u64))
+			.saturating_add(T::DbWeight::get().reads(4_u64))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
 }

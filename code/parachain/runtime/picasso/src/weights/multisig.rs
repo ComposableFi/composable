@@ -33,23 +33,23 @@ impl<T: frame_system::Config> multisig::WeightInfo for WeightInfo<T> {
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	/// The range of component `z` is `[0, 10000]`.
 	fn as_multi_threshold_1(z: u32, ) -> Weight {
-		Weight::from_ref_time(61_608_000 as u64)
+		Weight::from_ref_time(61_608_000_u64)
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(1_000 as u64).saturating_mul(z as u64))
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(Weight::from_ref_time(1_000_u64).saturating_mul(z as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
 	}
 	// Storage: Multisig Multisigs (r:1 w:1)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	/// The range of component `s` is `[2, 100]`.
 	/// The range of component `z` is `[0, 10000]`.
 	fn as_multi_create(s: u32, z: u32, ) -> Weight {
-		Weight::from_ref_time(97_466_000 as u64)
+		Weight::from_ref_time(97_466_000_u64)
 			// Standard Error: 8_000
-			.saturating_add(Weight::from_ref_time(351_000 as u64).saturating_mul(s as u64))
+			.saturating_add(Weight::from_ref_time(351_000_u64).saturating_mul(s as u64))
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(2_000 as u64).saturating_mul(z as u64))
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add(Weight::from_ref_time(2_000_u64).saturating_mul(z as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Multisig Multisigs (r:1 w:1)
 	// Storage: Multisig Calls (r:1 w:1)
@@ -57,38 +57,38 @@ impl<T: frame_system::Config> multisig::WeightInfo for WeightInfo<T> {
 	/// The range of component `s` is `[2, 100]`.
 	/// The range of component `z` is `[0, 10000]`.
 	fn as_multi_create_store(s: u32, z: u32, ) -> Weight {
-		Weight::from_ref_time(104_050_000 as u64)
+		Weight::from_ref_time(104_050_000_u64)
 			// Standard Error: 9_000
-			.saturating_add(Weight::from_ref_time(451_000 as u64).saturating_mul(s as u64))
+			.saturating_add(Weight::from_ref_time(451_000_u64).saturating_mul(s as u64))
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(3_000 as u64).saturating_mul(z as u64))
-			.saturating_add(T::DbWeight::get().reads(3 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+			.saturating_add(Weight::from_ref_time(3_000_u64).saturating_mul(z as u64))
+			.saturating_add(T::DbWeight::get().reads(3_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	// Storage: Multisig Multisigs (r:1 w:1)
 	/// The range of component `s` is `[3, 100]`.
 	/// The range of component `z` is `[0, 10000]`.
 	fn as_multi_approve(s: u32, z: u32, ) -> Weight {
-		Weight::from_ref_time(65_459_000 as u64)
+		Weight::from_ref_time(65_459_000_u64)
 			// Standard Error: 6_000
-			.saturating_add(Weight::from_ref_time(319_000 as u64).saturating_mul(s as u64))
+			.saturating_add(Weight::from_ref_time(319_000_u64).saturating_mul(s as u64))
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(2_000 as u64).saturating_mul(z as u64))
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add(Weight::from_ref_time(2_000_u64).saturating_mul(z as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Multisig Multisigs (r:1 w:1)
 	// Storage: Multisig Calls (r:1 w:1)
 	/// The range of component `s` is `[3, 100]`.
 	/// The range of component `z` is `[0, 10000]`.
 	fn as_multi_approve_store(s: u32, z: u32, ) -> Weight {
-		Weight::from_ref_time(108_024_000 as u64)
+		Weight::from_ref_time(108_024_000_u64)
 			// Standard Error: 9_000
-			.saturating_add(Weight::from_ref_time(331_000 as u64).saturating_mul(s as u64))
+			.saturating_add(Weight::from_ref_time(331_000_u64).saturating_mul(s as u64))
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(3_000 as u64).saturating_mul(z as u64))
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+			.saturating_add(Weight::from_ref_time(3_000_u64).saturating_mul(z as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	// Storage: Multisig Multisigs (r:1 w:1)
 	// Storage: Multisig Calls (r:1 w:1)
@@ -97,33 +97,33 @@ impl<T: frame_system::Config> multisig::WeightInfo for WeightInfo<T> {
 	/// The range of component `s` is `[2, 100]`.
 	/// The range of component `z` is `[0, 10000]`.
 	fn as_multi_complete(s: u32, z: u32, ) -> Weight {
-		Weight::from_ref_time(115_065_000 as u64)
+		Weight::from_ref_time(115_065_000_u64)
 			// Standard Error: 9_000
-			.saturating_add(Weight::from_ref_time(817_000 as u64).saturating_mul(s as u64))
+			.saturating_add(Weight::from_ref_time(817_000_u64).saturating_mul(s as u64))
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(5_000 as u64).saturating_mul(z as u64))
-			.saturating_add(T::DbWeight::get().reads(4 as u64))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
+			.saturating_add(Weight::from_ref_time(5_000_u64).saturating_mul(z as u64))
+			.saturating_add(T::DbWeight::get().reads(4_u64))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
 	// Storage: Multisig Multisigs (r:1 w:1)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	/// The range of component `s` is `[2, 100]`.
 	fn approve_as_multi_create(s: u32, ) -> Weight {
-		Weight::from_ref_time(89_056_000 as u64)
+		Weight::from_ref_time(89_056_000_u64)
 			// Standard Error: 8_000
-			.saturating_add(Weight::from_ref_time(398_000 as u64).saturating_mul(s as u64))
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add(Weight::from_ref_time(398_000_u64).saturating_mul(s as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Multisig Multisigs (r:1 w:1)
 	// Storage: Multisig Calls (r:1 w:0)
 	/// The range of component `s` is `[2, 100]`.
 	fn approve_as_multi_approve(s: u32, ) -> Weight {
-		Weight::from_ref_time(58_807_000 as u64)
+		Weight::from_ref_time(58_807_000_u64)
 			// Standard Error: 6_000
-			.saturating_add(Weight::from_ref_time(377_000 as u64).saturating_mul(s as u64))
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add(Weight::from_ref_time(377_000_u64).saturating_mul(s as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Multisig Multisigs (r:1 w:1)
 	// Storage: Multisig Calls (r:1 w:1)
@@ -131,20 +131,20 @@ impl<T: frame_system::Config> multisig::WeightInfo for WeightInfo<T> {
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	/// The range of component `s` is `[2, 100]`.
 	fn approve_as_multi_complete(s: u32, ) -> Weight {
-		Weight::from_ref_time(163_338_000 as u64)
+		Weight::from_ref_time(163_338_000_u64)
 			// Standard Error: 12_000
-			.saturating_add(Weight::from_ref_time(772_000 as u64).saturating_mul(s as u64))
-			.saturating_add(T::DbWeight::get().reads(4 as u64))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
+			.saturating_add(Weight::from_ref_time(772_000_u64).saturating_mul(s as u64))
+			.saturating_add(T::DbWeight::get().reads(4_u64))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
 	// Storage: Multisig Multisigs (r:1 w:1)
 	// Storage: Multisig Calls (r:1 w:1)
 	/// The range of component `s` is `[2, 100]`.
 	fn cancel_as_multi(s: u32, ) -> Weight {
-		Weight::from_ref_time(126_595_000 as u64)
+		Weight::from_ref_time(126_595_000_u64)
 			// Standard Error: 8_000
-			.saturating_add(Weight::from_ref_time(425_000 as u64).saturating_mul(s as u64))
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+			.saturating_add(Weight::from_ref_time(425_000_u64).saturating_mul(s as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 }

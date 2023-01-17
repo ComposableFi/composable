@@ -33,9 +33,9 @@ impl<T: frame_system::Config> liquidations::WeightInfo for WeightInfo<T> {
 	// Storage: Liquidations StrategyIndex (r:1 w:1)
 	// Storage: Liquidations Strategies (r:0 w:1)
 	fn add_liquidation_strategy() -> Weight {
-		Weight::from_ref_time(20_015_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(20_015_000_u64)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	// Storage: Liquidations Strategies (r:2 w:0)
 	// Storage: DutchAuction OrdersIndex (r:1 w:1)
@@ -45,11 +45,11 @@ impl<T: frame_system::Config> liquidations::WeightInfo for WeightInfo<T> {
 	// Storage: DutchAuction SellOrders (r:0 w:1)
 	/// The range of component `x` is `[1, 9]`.
 	fn sell(x: u32, ) -> Weight {
-		Weight::from_ref_time(145_970_000 as u64)
+		Weight::from_ref_time(145_970_000_u64)
 			// Standard Error: 323_000
-			.saturating_add(Weight::from_ref_time(4_431_000 as u64).saturating_mul(x as u64))
-			.saturating_add(T::DbWeight::get().reads(5 as u64))
-			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(x as u64)))
-			.saturating_add(T::DbWeight::get().writes(4 as u64))
+			.saturating_add(Weight::from_ref_time(4_431_000_u64).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(5_u64))
+			.saturating_add(T::DbWeight::get().reads((1_u64).saturating_mul(x as u64)))
+			.saturating_add(T::DbWeight::get().writes(4_u64))
 	}
 }

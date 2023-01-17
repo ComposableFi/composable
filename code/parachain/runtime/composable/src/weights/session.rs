@@ -33,15 +33,15 @@ impl<T: frame_system::Config> session::WeightInfo for WeightInfo<T> {
 	// Storage: Session NextKeys (r:1 w:1)
 	// Storage: Session KeyOwner (r:1 w:1)
 	fn set_keys() -> Weight {
-		Weight::from_ref_time(44_501_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(44_501_000_u64)
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	// Storage: Session NextKeys (r:1 w:1)
 	// Storage: Session KeyOwner (r:0 w:1)
 	fn purge_keys() -> Weight {
-		Weight::from_ref_time(36_298_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(36_298_000_u64)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 }

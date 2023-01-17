@@ -31,49 +31,49 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> treasury::WeightInfo for WeightInfo<T> {
 	fn spend() -> Weight {
-		Weight::from_ref_time(589_000 as u64)
+		Weight::from_ref_time(589_000_u64)
 	}
 	// Storage: Treasury ProposalCount (r:1 w:1)
 	// Storage: Treasury Proposals (r:0 w:1)
 	fn propose_spend() -> Weight {
-		Weight::from_ref_time(67_476_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(67_476_000_u64)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	// Storage: Treasury Proposals (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn reject_proposal() -> Weight {
-		Weight::from_ref_time(97_021_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(3 as u64))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
+		Weight::from_ref_time(97_021_000_u64)
+			.saturating_add(T::DbWeight::get().reads(3_u64))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
 	// Storage: Treasury Proposals (r:1 w:0)
 	// Storage: Treasury Approvals (r:1 w:1)
 	/// The range of component `p` is `[0, 29]`.
 	fn approve_proposal(p: u32, ) -> Weight {
-		Weight::from_ref_time(29_230_000 as u64)
+		Weight::from_ref_time(29_230_000_u64)
 			// Standard Error: 14_000
-			.saturating_add(Weight::from_ref_time(341_000 as u64).saturating_mul(p as u64))
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add(Weight::from_ref_time(341_000_u64).saturating_mul(p as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Treasury Approvals (r:1 w:1)
 	fn remove_approval() -> Weight {
-		Weight::from_ref_time(20_076_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(20_076_000_u64)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: System Account (r:1 w:0)
 	// Storage: Treasury Approvals (r:1 w:1)
 	// Storage: Treasury Proposals (r:1 w:1)
 	/// The range of component `p` is `[0, 30]`.
 	fn on_initialize_proposals(p: u32, ) -> Weight {
-		Weight::from_ref_time(77_938_000 as u64)
+		Weight::from_ref_time(77_938_000_u64)
 			// Standard Error: 165_000
-			.saturating_add(Weight::from_ref_time(76_281_000 as u64).saturating_mul(p as u64))
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().reads((3 as u64).saturating_mul(p as u64)))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
-			.saturating_add(T::DbWeight::get().writes((3 as u64).saturating_mul(p as u64)))
+			.saturating_add(Weight::from_ref_time(76_281_000_u64).saturating_mul(p as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().reads((3_u64).saturating_mul(p as u64)))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
+			.saturating_add(T::DbWeight::get().writes((3_u64).saturating_mul(p as u64)))
 	}
 }

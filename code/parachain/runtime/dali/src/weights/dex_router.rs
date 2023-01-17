@@ -33,9 +33,9 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: Pablo Pools (r:4 w:0)
 	// Storage: DexRouter DexRoutes (r:2 w:1)
 	fn update_route() -> Weight {
-		Weight::from_ref_time(96_642_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(6 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(96_642_000_u64)
+			.saturating_add(T::DbWeight::get().reads(6_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: DexRouter DexRoutes (r:2 w:0)
 	// Storage: Pablo Pools (r:4 w:0)
@@ -43,9 +43,9 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:4 w:0)
 	// Storage: Pablo PriceCumulativeState (r:4 w:4)
 	fn swap() -> Weight {
-		Weight::from_ref_time(656_289_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(27 as u64))
-			.saturating_add(T::DbWeight::get().writes(17 as u64))
+		Weight::from_ref_time(656_289_000_u64)
+			.saturating_add(T::DbWeight::get().reads(27_u64))
+			.saturating_add(T::DbWeight::get().writes(17_u64))
 	}
 	// Storage: DexRouter DexRoutes (r:1 w:0)
 	// Storage: Pablo Pools (r:4 w:0)
@@ -53,9 +53,9 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:4 w:0)
 	// Storage: Pablo PriceCumulativeState (r:4 w:4)
 	fn buy() -> Weight {
-		Weight::from_ref_time(651_013_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(26 as u64))
-			.saturating_add(T::DbWeight::get().writes(17 as u64))
+		Weight::from_ref_time(651_013_000_u64)
+			.saturating_add(T::DbWeight::get().reads(26_u64))
+			.saturating_add(T::DbWeight::get().writes(17_u64))
 	}
 	// Storage: DexRouter DexRoutes (r:1 w:0)
 	// Storage: Pablo Pools (r:1 w:0)
@@ -64,9 +64,9 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn add_liquidity() -> Weight {
-		Weight::from_ref_time(322_811_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(10 as u64))
-			.saturating_add(T::DbWeight::get().writes(8 as u64))
+		Weight::from_ref_time(322_811_000_u64)
+			.saturating_add(T::DbWeight::get().reads(10_u64))
+			.saturating_add(T::DbWeight::get().writes(8_u64))
 	}
 	// Storage: DexRouter DexRoutes (r:1 w:0)
 	// Storage: Pablo Pools (r:1 w:0)
@@ -74,8 +74,8 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:3 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn remove_liquidity() -> Weight {
-		Weight::from_ref_time(164_497_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(7 as u64))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
+		Weight::from_ref_time(164_497_000_u64)
+			.saturating_add(T::DbWeight::get().reads(7_u64))
+			.saturating_add(T::DbWeight::get().writes(3_u64))
 	}
 }
