@@ -1,6 +1,6 @@
-# CosmWasm Substrate CLI
+# Composable CosmWasm CLI
 
-Cosmwasm Substrate CLI is a CLI tool to quickly get started with the XCVM ecosystem and
+Composable Cosmwasm CLI is a CLI tool to quickly get started with the XCVM ecosystem and
 interact with a chain that runs `pallet-cosmwasm`.
 
 ## Create a CosmWasm project
