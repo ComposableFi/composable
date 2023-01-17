@@ -1,10 +1,9 @@
-import { Box, BoxProps, Grid, useTheme } from "@mui/material";
-import { PoolTVLChart, TabItem, TabPanel, Tabs } from "@/components";
+import { Box, BoxProps, Grid } from "@mui/material";
+import { TabItem, TabPanel, Tabs } from "@/components";
 import { FC, SyntheticEvent, useState } from "react";
 import { PoolStatistics } from "./PoolStatistics";
 import { PoolLiquidityPanel } from "./PoolLiquidityPanel";
 import { PoolConfig } from "@/store/pools/types";
-import { HighlightBox } from "@/components/Atoms/HighlightBox";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -32,17 +31,11 @@ export const PoolDetails: FC<PoolDetailsProps> = ({ pool, ...boxProps }) => {
   const handleTabChange = (_: SyntheticEvent, newValue: number) => {
     setTab(newValue);
   };
-  const theme = useTheme();
 
   return (
     <Box {...boxProps}>
       <Grid container spacing={4}>
-        <Grid item xs={12} sm={6}>
-          <HighlightBox>
-            <PoolTVLChart poolId={pool.poolId.toString()} />
-          </HighlightBox>
-        </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12}>
           <PoolStatistics pool={pool} />
         </Grid>
       </Grid>
