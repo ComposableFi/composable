@@ -353,7 +353,7 @@ pub mod pallet {
 		///
 		/// * Emits an `Uploaded` event on success.
 		///
-		/// Arguments
+		/// # Arguments
 		///
 		/// - `origin` the original dispatching the extrinsic.
 		/// - `code` the actual wasm code.
@@ -370,10 +370,11 @@ pub mod pallet {
 		/// * Emits an `Executed` event.
 		/// * Possibly emit `Emitted` events.
 		///
-		/// Arguments
+		/// # Arguments
 		///
 		/// * `origin` the origin dispatching the extrinsic.
-		/// * `code_id` the unique code id generated when the code has been uploaded via [`upload`].
+		/// * `code_identifier` the unique code id generated when the code has been uploaded via
+		///   [`upload`].
 		/// * `salt` the salt, usually used to instantiate the same contract multiple times.
 		/// * `funds` the assets transferred to the contract prior to calling it's `instantiate`
 		///   export.
@@ -413,7 +414,7 @@ pub mod pallet {
 		/// * Emits an `Executed` event.
 		/// * Possibly emit `Emitted` events.
 		///
-		/// Arguments
+		/// # Arguments
 		///
 		/// * `origin` the origin dispatching the extrinsic.
 		/// * `code_id` the unique code id generated when the code has been uploaded via [`upload`].
@@ -445,7 +446,7 @@ pub mod pallet {
 		/// * Emits an `Executed` event.
 		/// * Possibly emit `Emitted` events.
 		///
-		/// Arguments
+		/// # Arguments
 		///
 		/// * `origin` the origin dispatching the extrinsic.
 		/// * `contract` the address of the contract that we want to migrate
@@ -474,7 +475,7 @@ pub mod pallet {
 		///
 		/// * Emits a `AdminUpdated` event on success.
 		///
-		/// Arguments
+		/// # Arguments
 		///
 		/// * `origin` the origin dispatching the extrinsic.
 		/// * `contract` the address of the contract that we want to migrate.
