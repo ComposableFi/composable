@@ -205,7 +205,7 @@ pub mod pallet {
 			+ GovernanceRegistry<Self::AssetId, Self::AccountId>;
 
 		/// origin of admin of this pallet
-		type AdminOrigin: EnsureOrigin<Self::Origin>;
+		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		// will be assets-registry
 		type AssetLookup: AssetTypeInspect<AssetId = Self::AssetId>
