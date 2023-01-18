@@ -38,59 +38,47 @@ pub struct Dispatchable<I, O, T: Config> {
 	marker: PhantomData<I>,
 }
 
-/// Setup state for `instantiate` entrypoint.
-impl EntryPointCaller<InstantiateCall> {
-	/// Prepares for `instantiate` entrypoint call.
-	///
-	/// * `instantiator` - Address of the account that calls this entrypoint.
-	pub(crate) fn setup<T: Config>(
-		instantiator: AccountIdOf<T>,
-		code_id: CosmwasmCodeId,
-		salt: &[u8],
-		admin: Option<AccountIdOf<T>>,
-		label: ContractLabelOf<T>,
-		message: &[u8],
-	) -> Result<EntryPointCaller<Dispatchable<InstantiateCall, AccountIdOf<T>, T>>, Error<T>> {
-		let code_hash = CodeIdToInfo::<T>::get(code_id)
-			.ok_or(Error::<T>::CodeNotFound)?
-			.pristine_code_hash;
-		let contract =
-			Pallet::<T>::derive_contract_address(&instantiator, salt, code_hash, message);
-		// Make sure that contract address does not already exist
-		ensure!(
-			Pallet::<T>::contract_exists(&contract).is_err(),
-			Error::<T>::ContractAlreadyExists
-		);
-		let nonce = CurrentNonce::<T>::increment().map_err(|_| Error::<T>::NonceOverflow)?;
-		let trie_id = Pallet::<T>::derive_contract_trie_id(&contract, nonce);
-		let contract_info = ContractInfoOf::<T> {
-			instantiator: instantiator.clone(),
-			code_id,
-			trie_id,
-			admin,
-			label,
-		};
-		ContractToInfo::<T>::insert(&contract, &contract_info);
-		CodeIdToInfo::<T>::try_mutate(code_id, |entry| -> Result<(), Error<T>> {
-			let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
-			code_info.refcount =
-				code_info.refcount.checked_add(1).ok_or(Error::<T>::RefcountOverflow)?;
-			Ok(())
-		})?;
-		Pallet::<T>::deposit_event(Event::<T>::Instantiated {
+/// Prepares for `instantiate` entrypoint call.
+///
+/// * `instantiator` - Address of the account that calls this entrypoint.
+pub(crate) fn setup_instantiate_call<T: Config>(
+	instantiator: AccountIdOf<T>,
+	code_id: CosmwasmCodeId,
+	salt: &[u8],
+	admin: Option<AccountIdOf<T>>,
+	label: ContractLabelOf<T>,
+	message: &[u8],
+) -> Result<EntryPointCaller<Dispatchable<InstantiateCall, AccountIdOf<T>, T>>, Error<T>> {
+	let code_hash = CodeIdToInfo::<T>::get(code_id)
+		.ok_or(Error::<T>::CodeNotFound)?
+		.pristine_code_hash;
+	let contract = Pallet::<T>::derive_contract_address(&instantiator, salt, code_hash, message);
+	// Make sure that contract address does not already exist
+	ensure!(Pallet::<T>::contract_exists(&contract).is_err(), Error::<T>::ContractAlreadyExists);
+	let nonce = CurrentNonce::<T>::increment().map_err(|_| Error::<T>::NonceOverflow)?;
+	let trie_id = Pallet::<T>::derive_contract_trie_id(&contract, nonce);
+	let contract_info =
+		ContractInfoOf::<T> { instantiator: instantiator.clone(), code_id, trie_id, admin, label };
+	ContractToInfo::<T>::insert(&contract, &contract_info);
+	CodeIdToInfo::<T>::try_mutate(code_id, |entry| -> Result<(), Error<T>> {
+		let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
+		code_info.refcount =
+			code_info.refcount.checked_add(1).ok_or(Error::<T>::RefcountOverflow)?;
+		Ok(())
+	})?;
+	Pallet::<T>::deposit_event(Event::<T>::Instantiated {
+		contract: contract.clone(),
+		info: contract_info,
+	});
+	Ok(EntryPointCaller {
+		state: Dispatchable {
+			sender: instantiator,
 			contract: contract.clone(),
-			info: contract_info,
-		});
-		Ok(EntryPointCaller {
-			state: Dispatchable {
-				sender: instantiator,
-				contract: contract.clone(),
-				entrypoint: EntryPoint::Instantiate,
-				output: contract,
-				marker: PhantomData,
-			},
-		})
-	}
+			entrypoint: EntryPoint::Instantiate,
+			output: contract,
+			marker: PhantomData,
+		},
+	})
 }
 
 impl EntryPointCaller<ExecuteCall> {
