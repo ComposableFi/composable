@@ -30,11 +30,11 @@ match_types! {
 }
 
 parameter_types! {
-	pub const BaseXcmWeight: Weight = 100_000_000;
+	pub const BaseXcmWeight: u64 = 100_000_000;
 	pub const XcmMaxAssetsForTransfer: usize = 2;
 	pub RelayNativeLocation: MultiLocation = MultiLocation::parent();
 	pub RelayOrigin: cumulus_pallet_xcm::Origin = cumulus_pallet_xcm::Origin::Relay;
-	pub const UnitWeightCost: Weight = 200_000_000;
+	pub const UnitWeightCost: u64 = 200_000_000;
 	pub const MaxInstructions: u32 = 100;
 }
 pub struct ThisChain<T>(PhantomData<T>);
@@ -71,10 +71,10 @@ impl<
 	> TransactionFeePoolTrader<AssetConverter, PriceConverter, Treasury, WeightToFeeConverter>
 {
 	pub fn weight_to_asset(
-		weight: Weight,
+		weight: u64,
 		asset_id: CurrencyId,
 	) -> Result<(Balance, Balance), XcmError> {
-		let fee = WeightToFeeConverter::weight_to_fee(&weight);
+		let fee = WeightToFeeConverter::weight_to_fee(&Weight::from_ref_time(weight));
 		log::trace!(target : "xcmp::weight_to_asset", "required payment in native token is: {:?}", fee );
 		let price =
 			PriceConverter::to_asset_balance(fee, asset_id).map_err(|_| XcmError::TooExpensive)?;
@@ -101,7 +101,7 @@ impl<
 		}
 	}
 
-	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
+	fn buy_weight(&mut self, weight: u64, payment: Assets) -> Result<Assets, XcmError> {
 		if weight.is_zero() {
 			return Ok(payment)
 		}
@@ -132,9 +132,9 @@ impl<
 		Err(XcmError::TooExpensive)
 	}
 
-	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
+	fn refund_weight(&mut self, weight: u64) -> Option<MultiAsset> {
 		if let Some(ref asset_location) = self.asset_location {
-			let fee = WeightToFeeConverter::weight_to_fee(&weight);
+			let fee = WeightToFeeConverter::weight_to_fee(&Weight::from_ref_time(weight));
 			let fee = self.fee.min(fee);
 			let price = fee.saturating_mul(self.price) / self.fee;
 			self.price = self.price.saturating_sub(price);

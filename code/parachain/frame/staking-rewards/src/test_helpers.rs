@@ -33,14 +33,15 @@ pub(crate) fn add_to_rewards_pot_and_assert<Runtime>(
 	should_resume: bool,
 ) where
 	Runtime: crate::Config + RuntimeTrait<crate::Event<Runtime>>,
-	<Runtime as frame_system::Config>::Event: Parameter
+	<Runtime as frame_system::Config>::RuntimeEvent: Parameter
 		+ Member
 		+ Debug
 		+ Clone
 		+ TryInto<crate::Event<Runtime>>
 		+ From<crate::Event<Runtime>>,
-	<<Runtime as frame_system::Config>::Event as TryInto<crate::Event<Runtime>>>::Error: Debug,
-	<Runtime as frame_system::Config>::Origin:
+	<<Runtime as frame_system::Config>::RuntimeEvent as TryInto<crate::Event<Runtime>>>::Error:
+		Debug,
+	<Runtime as frame_system::Config>::RuntimeOrigin:
 		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	Pallet::<Runtime>::add_to_rewards_pot(
@@ -77,14 +78,15 @@ pub fn stake_and_assert<Runtime>(
 ) -> <Runtime as crate::Config>::FinancialNftInstanceId
 where
 	Runtime: crate::Config + RuntimeTrait<crate::Event<Runtime>>,
-	<Runtime as frame_system::Config>::Event: Parameter
+	<Runtime as frame_system::Config>::RuntimeEvent: Parameter
 		+ Member
 		+ Debug
 		+ Clone
 		+ TryInto<crate::Event<Runtime>>
 		+ From<crate::Event<Runtime>>,
-	<<Runtime as frame_system::Config>::Event as TryInto<crate::Event<Runtime>>>::Error: Debug,
-	<Runtime as frame_system::Config>::Origin:
+	<<Runtime as frame_system::Config>::RuntimeEvent as TryInto<crate::Event<Runtime>>>::Error:
+		Debug,
+	<Runtime as frame_system::Config>::RuntimeOrigin:
 		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	Runtime::assert_extrinsic_event_with(
@@ -129,14 +131,15 @@ pub fn unstake_and_assert<Runtime>(
 	should_be_early_unstake: bool,
 ) where
 	Runtime: crate::Config + RuntimeTrait<crate::Event<Runtime>>,
-	<Runtime as frame_system::Config>::Event: Parameter
+	<Runtime as frame_system::Config>::RuntimeEvent: Parameter
 		+ Member
 		+ Debug
 		+ Clone
 		+ TryInto<crate::Event<Runtime>>
 		+ From<crate::Event<Runtime>>,
-	<<Runtime as frame_system::Config>::Event as TryInto<crate::Event<Runtime>>>::Error: Debug,
-	<Runtime as frame_system::Config>::Origin:
+	<<Runtime as frame_system::Config>::RuntimeEvent as TryInto<crate::Event<Runtime>>>::Error:
+		Debug,
+	<Runtime as frame_system::Config>::RuntimeOrigin:
 		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	let position_before_unstake =
@@ -522,14 +525,15 @@ pub fn split_and_assert<Runtime>(
 ) -> FinancialNftInstanceIdOf<Runtime>
 where
 	Runtime: crate::Config + RuntimeTrait<crate::Event<Runtime>>,
-	<Runtime as frame_system::Config>::Event: Parameter
+	<Runtime as frame_system::Config>::RuntimeEvent: Parameter
 		+ Member
 		+ Debug
 		+ Clone
 		+ TryInto<crate::Event<Runtime>>
 		+ From<crate::Event<Runtime>>,
-	<<Runtime as frame_system::Config>::Event as TryInto<crate::Event<Runtime>>>::Error: Debug,
-	<Runtime as frame_system::Config>::Origin:
+	<<Runtime as frame_system::Config>::RuntimeEvent as TryInto<crate::Event<Runtime>>>::Error:
+		Debug,
+	<Runtime as frame_system::Config>::RuntimeOrigin:
 		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	let existing_stake_before_split =

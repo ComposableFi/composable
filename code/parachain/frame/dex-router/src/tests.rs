@@ -53,7 +53,7 @@ fn create_constant_product_amm_pool(assets: AssetAmountPair<u128, u128>, fee: Pe
 
 	// Create Pablo pool
 	let pool_id = Test::assert_extrinsic_event_with(
-		Pablo::create(Origin::signed(ALICE), init_config),
+		Pablo::create(RuntimeOrigin::signed(ALICE), init_config),
 		|event| match event {
 			pallet_pablo::Event::<Test>::PoolCreated { pool_id, .. } => Some(pool_id),
 			_ => None,
@@ -173,7 +173,7 @@ fn get_route_tests() {
 
 		let dex_route = vec![create_usdc_eth_pool(), create_usdt_usdc_pool()];
 		assert_ok!(DexRouter::update_route(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			currency_pair,
 			Some(dex_route.clone().try_into().unwrap())
 		));
@@ -194,7 +194,7 @@ fn update_route_origin_tests() {
 		// only UpdateRouteOrigin can update the route which is set to EnsureRoot in mock.
 		assert_noop!(
 			DexRouter::update_route(
-				Origin::signed(ALICE),
+				RuntimeOrigin::signed(ALICE),
 				currency_pair,
 				Some(dex_route.try_into().unwrap())
 			),
@@ -215,7 +215,7 @@ fn halborn_hal11_route_with_cycle() {
 			vec![create_usdt_usdc_pool(), create_usdc_usdt_pool(), create_usdt_usdc_pool()];
 		assert_noop!(
 			DexRouter::update_route(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				currency_pair,
 				Some(dex_route.try_into().unwrap())
 			),
@@ -229,7 +229,7 @@ fn halborn_hal11_route_with_cycle() {
 		let dex_route = vec![usdt_usdc_pool, usdc_usdt_pool, usdt_usdc_pool];
 		assert_noop!(
 			DexRouter::update_route(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				currency_pair,
 				Some(dex_route.try_into().unwrap())
 			),
@@ -239,7 +239,7 @@ fn halborn_hal11_route_with_cycle() {
 		let dex_route = vec![usdt_usdc_pool, usdc_usdt_pool];
 		assert_noop!(
 			DexRouter::update_route(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				CurrencyPair::new(USDC, USDC),
 				Some(dex_route.try_into().unwrap())
 			),
@@ -259,7 +259,7 @@ fn update_route_tests() {
 		// insert
 		let dex_route = vec![create_usdc_eth_pool(), create_usdt_usdc_pool()];
 		assert_ok!(DexRouter::update_route(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			currency_pair,
 			Some(dex_route.clone().try_into().unwrap())
 		));
@@ -268,14 +268,14 @@ fn update_route_tests() {
 		// update
 		let dex_route = vec![create_dai_eth_pool(), create_usdt_dai_pool()];
 		assert_ok!(DexRouter::update_route(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			currency_pair,
 			Some(dex_route.clone().try_into().unwrap())
 		));
 		assert_eq!(DexRouter::get_route(currency_pair), Some((dex_route, false)));
 
 		// delete
-		assert_ok!(DexRouter::update_route(Origin::root(), currency_pair, None));
+		assert_ok!(DexRouter::update_route(RuntimeOrigin::root(), currency_pair, None));
 		assert_eq!(DexRouter::get_route(currency_pair), None);
 
 		// invalid route, case #1
@@ -286,7 +286,7 @@ fn update_route_tests() {
 		];
 		assert_noop!(
 			DexRouter::update_route(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				currency_pair,
 				Some(dex_route.try_into().unwrap())
 			),
@@ -297,7 +297,7 @@ fn update_route_tests() {
 		let dex_route = vec![create_usdt_usdc_pool(), create_usdc_eth_pool()];
 		assert_noop!(
 			DexRouter::update_route(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				currency_pair,
 				Some(dex_route.try_into().unwrap())
 			),
@@ -308,7 +308,7 @@ fn update_route_tests() {
 		let dex_route = vec![create_usdc_eth_pool()];
 		assert_noop!(
 			DexRouter::update_route(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				currency_pair,
 				Some(dex_route.try_into().unwrap())
 			),
@@ -318,7 +318,7 @@ fn update_route_tests() {
 		// route with a single pool.
 		let dex_route = vec![create_usdt_usdc_pool()];
 		assert_ok!(DexRouter::update_route(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			CurrencyPair::new(USDT, USDC),
 			Some(dex_route.try_into().unwrap())
 		));
@@ -334,7 +334,7 @@ fn exchange_tests() {
 		let currency_pair = CurrencyPair { base: USDT, quote: ETH };
 		let dex_route = vec![create_usdc_eth_pool(), create_usdt_usdc_pool()];
 		assert_ok!(DexRouter::update_route(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			currency_pair,
 			Some(dex_route.try_into().unwrap())
 		));
@@ -408,7 +408,7 @@ fn buy_test() {
 		// USDT/USDC
 		// USDT/ETH
 		assert_ok!(DexRouter::update_route(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			currency_pair,
 			Some(dex_route.try_into().unwrap())
 		));
@@ -469,7 +469,7 @@ fn unsupported_operation_test() {
 		// USDT/USDC
 		// USDT/ETH
 		assert_ok!(DexRouter::update_route(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			currency_pair,
 			Some(dex_route.try_into().unwrap())
 		));
@@ -511,7 +511,7 @@ fn single_pool_route_test() {
 		let dex_route = vec![create_usdc_eth_pool()];
 		// USDC/ETH
 		assert_ok!(DexRouter::update_route(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			currency_pair,
 			Some(dex_route.clone().try_into().unwrap())
 		));
@@ -575,7 +575,7 @@ fn single_pool_route_test() {
 		assert_ok!(Tokens::mint_into(USDC, &EVE, usdc_amount));
 		// base, quote amount should match currency_pair's base quote asset
 		assert_ok!(DexRouter::add_liquidity(
-			Origin::signed(EVE),
+			RuntimeOrigin::signed(EVE),
 			BTreeMap::from([(ETH, eth_amount), (USDC, usdc_amount)]),
 			0_u128,
 			false
@@ -583,7 +583,7 @@ fn single_pool_route_test() {
 		let lp_amount = Tokens::balance(lp_token, &EVE);
 		// min_base_amount, min_quote_amount should match currency_pair's base quote asset
 		assert_ok!(DexRouter::remove_liquidity(
-			Origin::signed(EVE),
+			RuntimeOrigin::signed(EVE),
 			lp_amount,
 			BTreeMap::from([(ETH, 0), (USDC, 0)]),
 		));

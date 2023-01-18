@@ -33,7 +33,7 @@ proptest! {
 		range in valid_ranges(),
 	) {
 		new_test_ext().execute_with(|| {
-			prop_assert_ok!(CurrencyRanges::add_range(Origin::root(), range));
+			prop_assert_ok!(CurrencyRanges::add_range(RuntimeOrigin::root(), range));
 			Ok(())
 		})?;
 	}

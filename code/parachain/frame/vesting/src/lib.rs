@@ -119,7 +119,7 @@ pub mod module {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		type Currency: MultiLockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
@@ -128,10 +128,10 @@ pub mod module {
 		type MinVestedTransfer: Get<BalanceOf<Self>>;
 
 		/// Required origin for vested transfer.
-		type VestedTransferOrigin: EnsureOrigin<Self::Origin>;
+		type VestedTransferOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// Required origin for updating schedules.
-		type UpdateSchedulesOrigin: EnsureOrigin<Self::Origin>;
+		type UpdateSchedulesOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// Weight information for extrinsics in this module.
 		type WeightInfo: WeightInfo;

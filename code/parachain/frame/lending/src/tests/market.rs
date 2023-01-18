@@ -12,7 +12,7 @@ fn can_update_market() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		let manager = *ALICE;
-		let origin = Origin::signed(manager);
+		let origin = RuntimeOrigin::signed(manager);
 		// Create a market
 		let ((market_id, _), _) = create_simple_vaulted_market(BTC::instance(), manager);
 		// Get the market from the storage via market id
@@ -30,7 +30,7 @@ fn can_update_market() {
 		let market_updated_event: crate::Event<Runtime> =
 			crate::Event::MarketUpdated { market_id, input: update_input };
 		// check if the event was emitted
-		System::assert_has_event(Event::Lending(market_updated_event));
+		System::assert_has_event(RuntimeEvent::Lending(market_updated_event));
 
 		// validation on input fails as it has collateral_factor less than one
 		let update_input = UpdateInput {
@@ -71,7 +71,7 @@ fn can_create_valid_market() {
             assert_eq!(price, EXPECTED_AMOUNT_OF_BORROW_ASSET);
 
             let should_have_failed = Lending::create_market(
-                Origin::signed(*ALICE),
+                RuntimeOrigin::signed(*ALICE),
                 config.clone(),
                 false,
             );
@@ -96,7 +96,7 @@ fn can_create_valid_market() {
 
             Tokens::mint_into(BORROW_ASSET_ID, &*ALICE, INITIAL_BORROW_ASSET_AMOUNT).unwrap();
             let manager = *ALICE;
-            let origin = Origin::signed(manager);
+            let origin = RuntimeOrigin::signed(manager);
             let input = config.clone();
 
             let should_be_created = Lending::create_market(origin, config, false);
@@ -114,7 +114,7 @@ fn can_create_valid_market() {
             let market_id = pallet_lending::pallet::MarketId::new(1);
             let vault_id = 1;
             let market_created_event = crate::Event::MarketCreated {market_id, vault_id, manager, currency_pair};
-            System::assert_has_event(Event::Lending(market_created_event));
+            System::assert_has_event(RuntimeEvent::Lending(market_created_event));
 
             let initial_market_volume = Lending::calculate_initial_market_volume(BORROW_ASSET_ID).unwrap();
             let alice_balance_after_market_creation = Tokens::balance(BORROW_ASSET_ID, &*ALICE);
@@ -136,7 +136,7 @@ fn can_create_valid_market() {
                     topics: event_topics,
                     phase: Phase::Initialization,
                     event:
-                        Event::Lending(crate::Event::MarketCreated {
+                        RuntimeEvent::Lending(crate::Event::MarketCreated {
                             currency_pair:
                                 CurrencyPair { base: COLLATERAL_ASSET_ID, quote: BORROW_ASSET_ID },
                             market_id: created_market_id @ MarketId(1),
@@ -198,7 +198,7 @@ fn can_create_valid_market_with_keep_alive() {
             assert_eq!(price, EXPECTED_AMOUNT_OF_BORROW_ASSET);
 
             let should_have_failed = Lending::create_market(
-                Origin::signed(*ALICE),
+                RuntimeOrigin::signed(*ALICE),
                 config.clone(),
                 true,
             );
@@ -223,7 +223,7 @@ fn can_create_valid_market_with_keep_alive() {
 
             Tokens::mint_into(BORROW_ASSET_ID, &*ALICE, INITIAL_BORROW_ASSET_AMOUNT).unwrap();
             let manager = *ALICE;
-            let origin = Origin::signed(manager);
+            let origin = RuntimeOrigin::signed(manager);
             let input = config.clone();
 
             let should_be_created = Lending::create_market(origin, config, true);
@@ -241,7 +241,7 @@ fn can_create_valid_market_with_keep_alive() {
             let market_id = pallet_lending::pallet::MarketId::new(1);
             let vault_id = 1;
             let market_created_event = crate::Event::MarketCreated {market_id, vault_id, manager, currency_pair};
-            System::assert_has_event(Event::Lending(market_created_event));
+            System::assert_has_event(RuntimeEvent::Lending(market_created_event));
 
             let initial_market_volume = Lending::calculate_initial_market_volume(BORROW_ASSET_ID).unwrap();
             let alice_balance_after_market_creation = Tokens::balance(BORROW_ASSET_ID, &*ALICE);
@@ -263,7 +263,7 @@ fn can_create_valid_market_with_keep_alive() {
                     topics: event_topics,
                     phase: Phase::Initialization,
                     event:
-                        Event::Lending(crate::Event::MarketCreated {
+                        RuntimeEvent::Lending(crate::Event::MarketCreated {
                             currency_pair:
                                 CurrencyPair { base: COLLATERAL_ASSET_ID, quote: BORROW_ASSET_ID },
                             market_id: created_market_id @ MarketId(1),
@@ -370,18 +370,18 @@ proptest! {
 			let (market, _) = create_simple_market();
 			let before = Tokens::balance( BTC::ID, &ALICE);
 			prop_assert_ok!(Tokens::mint_into( BTC::ID, &ALICE, amount));
-			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, amount, false));
+			prop_assert_ok!(Lending::deposit_collateral(RuntimeOrigin::signed(*ALICE), market, amount, false));
 			let event =
-				Event::Lending(crate::Event::CollateralDeposited {
+				RuntimeEvent::Lending(crate::Event::CollateralDeposited {
 					sender: *ALICE,
 					amount,
 					market_id: market,
 				});
 			System::assert_last_event(event);
 
-			prop_assert_ok!(Lending::withdraw_collateral(Origin::signed(*ALICE), market, amount));
+			prop_assert_ok!(Lending::withdraw_collateral(RuntimeOrigin::signed(*ALICE), market, amount));
 			let event =
-				Event::Lending(crate::Event::CollateralWithdrawn {
+				RuntimeEvent::Lending(crate::Event::CollateralWithdrawn {
 					sender: *ALICE,
 					amount,
 					market_id: market,
@@ -398,9 +398,9 @@ proptest! {
 		new_test_ext().execute_with(|| {
 			let (market, _vault) = create_simple_market();
 			prop_assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, amount));
-			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, amount, false));
+			prop_assert_ok!(Lending::deposit_collateral(RuntimeOrigin::signed(*ALICE), market, amount, false));
 			let event =
-				Event::Lending(crate::Event::CollateralDeposited {
+				RuntimeEvent::Lending(crate::Event::CollateralDeposited {
 					sender: *ALICE,
 					amount,
 					market_id: market,
@@ -408,11 +408,11 @@ proptest! {
 			System::assert_last_event(event);
 
 			prop_assert_eq!(
-				Lending::withdraw_collateral(Origin::signed(*ALICE), market, amount + 1),
+				Lending::withdraw_collateral(RuntimeOrigin::signed(*ALICE), market, amount + 1),
 				Err(Error::<Runtime>::NotEnoughCollateralToWithdraw.into())
 			);
 			let event =
-				Event::Lending(crate::Event::CollateralWithdrawn {
+				RuntimeEvent::Lending(crate::Event::CollateralWithdrawn {
 					sender: *ALICE,
 					amount: amount + 1,
 					market_id: market,
@@ -429,17 +429,17 @@ proptest! {
 			let ((market, _), collateral_asset) = create_simple_vaulted_market(BTC::instance(), *ALICE);
 			let before = Tokens::balance(collateral_asset, &ALICE);
 			prop_assert_ok!(Tokens::mint_into(collateral_asset, &ALICE, amount));
-			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, amount , false));
+			prop_assert_ok!(Lending::deposit_collateral(RuntimeOrigin::signed(*ALICE), market, amount , false));
 			let event =
-				Event::Lending(crate::Event::CollateralDeposited {
+				RuntimeEvent::Lending(crate::Event::CollateralDeposited {
 					sender: *ALICE,
 					amount,
 					market_id: market,
 				});
 			System::assert_last_event(event);
-			prop_assert_ok!(Lending::withdraw_collateral(Origin::signed(*ALICE), market, amount));
+			prop_assert_ok!(Lending::withdraw_collateral(RuntimeOrigin::signed(*ALICE), market, amount));
 			let event =
-				Event::Lending(crate::Event::CollateralWithdrawn {
+				RuntimeEvent::Lending(crate::Event::CollateralWithdrawn {
 					sender: *ALICE,
 					amount,
 					market_id: market,
@@ -465,10 +465,10 @@ proptest! {
 			prop_assert_ne!(Lending::account_id(&market_id1), Lending::account_id(&market_id2));
 
 			prop_assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, amount1));
-			prop_assert_ok!(Vault::deposit(Origin::signed(*ALICE), vault_id1, amount1));
+			prop_assert_ok!(Vault::deposit(RuntimeOrigin::signed(*ALICE), vault_id1, amount1));
 
 			prop_assert_ok!(Tokens::mint_into(USDT::ID, &BOB, 10*amount2));
-			prop_assert_ok!(Vault::deposit(Origin::signed(*BOB), vault_id2, 10*amount2));
+			prop_assert_ok!(Vault::deposit(RuntimeOrigin::signed(*BOB), vault_id2, 10*amount2));
 
 		process_and_progress_blocks::<Lending, Runtime>(1);
 

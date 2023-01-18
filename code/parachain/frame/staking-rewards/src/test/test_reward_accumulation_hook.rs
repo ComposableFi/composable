@@ -91,7 +91,7 @@ fn test_reward_update_calculation() {
 				RewardAccumulationHookError::BackToTheFuture,
 				RewardAccumulationHookError::Overflow,
 			] {
-				Test::assert_no_event(Event::StakingRewards(
+				Test::assert_no_event(RuntimeEvent::StakingRewards(
 					crate::Event::<Test>::RewardAccumulationHookError {
 						pool_id: PICA::ID,
 						asset_id: PICA::ID,

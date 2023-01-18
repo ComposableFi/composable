@@ -130,7 +130,7 @@ pub mod pallet {
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type UnixTime: UnixTime;
 		type OrderId: OrderIdLike + WrappingNext + Zero + One;
 		type MultiCurrency: MultiCurrency<
@@ -151,10 +151,10 @@ pub mod pallet {
 		#[pallet::constant]
 		type PositionExistentialDeposit: Get<Self::Balance>;
 
-		type XcmOrigin: From<<Self as frame_system::Config>::Origin>
+		type XcmOrigin: From<<Self as frame_system::Config>::RuntimeOrigin>
 			+ Into<Result<CumulusOrigin, <Self as Config>::XcmOrigin>>;
 		/// origin of admin of this pallet
-		type AdminOrigin: EnsureOrigin<<Self as frame_system::Config>::Origin>;
+		type AdminOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
 
 		type XcmSender: SendXcm;
 	}

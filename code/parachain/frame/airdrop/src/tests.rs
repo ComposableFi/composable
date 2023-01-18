@@ -1,7 +1,7 @@
 use crate::{
 	mocks::{
 		ethereum_address, generate_accounts, AccountId, Airdrop, AirdropId, Balance, Balances,
-		EthereumKey, ExtBuilder, Identity, MockRuntime, Moment, Origin, System, Timestamp,
+		EthereumKey, ExtBuilder, Identity, MockRuntime, Moment, RuntimeOrigin, System, Timestamp,
 		PROOF_PREFIX, STAKE,
 	},
 	models::AirdropState,
@@ -55,7 +55,7 @@ fn with_recipients<R>(
 
 	ExtBuilder::default().build().execute_with(|| {
 		System::set_block_number(0xDEADC0DE);
-		let creator = Origin::signed(CREATOR);
+		let creator = RuntimeOrigin::signed(CREATOR);
 		let start_moment = 0xCAFEBABE;
 		let set_moment = |x: Moment| Timestamp::set_timestamp(start_moment + x);
 
@@ -88,7 +88,7 @@ mod create_airdrop {
 
 	#[test]
 	fn should_create_airdrop_without_start_successfully() {
-		let creator = Origin::signed(CREATOR);
+		let creator = RuntimeOrigin::signed(CREATOR);
 		let start: Option<Moment> = None;
 		let vesting_schedule = DEFAULT_VESTING_PERIOD;
 
@@ -104,7 +104,7 @@ mod create_airdrop {
 	#[test]
 	#[allow(clippy::disallowed_methods)] // Allow unwrap
 	fn should_create_airdrop_with_start_successfully() {
-		let creator = Origin::signed(CREATOR);
+		let creator = RuntimeOrigin::signed(CREATOR);
 		let start: Option<Moment> = Some(DEFAULT_VESTING_PERIOD * 2);
 		let vesting_schedule = DEFAULT_VESTING_PERIOD;
 
@@ -120,7 +120,7 @@ mod create_airdrop {
 
 	#[test]
 	fn should_fail_to_create_an_airdrop_in_the_past() {
-		let creator = Origin::signed(CREATOR);
+		let creator = RuntimeOrigin::signed(CREATOR);
 		let start: Option<Moment> = Some(DEFAULT_VESTING_PERIOD * 2);
 		let vesting_schedule = DEFAULT_VESTING_PERIOD;
 
@@ -144,8 +144,8 @@ mod add_recipient {
 
 	#[test]
 	fn should_fail_to_add_recipients_if_origin_is_not_creator() {
-		let creator = Origin::signed(CREATOR);
-		let other = Origin::signed(OTHER);
+		let creator = RuntimeOrigin::signed(CREATOR);
+		let other = RuntimeOrigin::signed(OTHER);
 		let start: Option<Moment> = Some(DEFAULT_VESTING_PERIOD * 2);
 		let vesting_schedule = DEFAULT_VESTING_PERIOD;
 		let accounts = generate_accounts(128);
@@ -174,7 +174,7 @@ mod add_recipient {
 
 	#[test]
 	fn should_fail_to_add_recipients_if_origin_has_insufficient_funds() {
-		let creator = Origin::signed(CREATOR);
+		let creator = RuntimeOrigin::signed(CREATOR);
 		let start: Option<Moment> = Some(DEFAULT_VESTING_PERIOD * 2);
 		let vesting_schedule = DEFAULT_VESTING_PERIOD;
 		let accounts = generate_accounts(128);
@@ -203,7 +203,7 @@ mod add_recipient {
 
 	#[test]
 	fn should_fail_to_add_recipients_if_airdrop_does_not_exist() {
-		let creator = Origin::signed(CREATOR);
+		let creator = RuntimeOrigin::signed(CREATOR);
 		let accounts = generate_accounts(128);
 		let recipients = accounts
 			.iter()
@@ -251,7 +251,7 @@ mod remove_recipient {
 
 	#[test]
 	fn should_fail_to_remove_recipient_if_origin_is_not_creator() {
-		let other = Origin::signed(OTHER);
+		let other = RuntimeOrigin::signed(OTHER);
 
 		with_default_recipients(|_, accounts| {
 			assert_noop!(
@@ -263,13 +263,13 @@ mod remove_recipient {
 
 	#[test]
 	fn should_fail_to_remove_recipient_if_recipient_started_claiming() {
-		let creator = Origin::signed(CREATOR);
+		let creator = RuntimeOrigin::signed(CREATOR);
 
 		with_default_recipients(|set_moment, accounts| {
 			set_moment(DEFAULT_VESTING_PERIOD);
 
 			assert_ok!(Airdrop::claim(
-				Origin::none(),
+				RuntimeOrigin::none(),
 				1,
 				accounts[0].clone().0,
 				accounts[0].clone().1.proof(accounts[0].clone().0)
@@ -283,7 +283,7 @@ mod remove_recipient {
 
 	#[test]
 	fn should_prune_airdrop_if_last_recipient_is_removed() {
-		let creator = Origin::signed(CREATOR);
+		let creator = RuntimeOrigin::signed(CREATOR);
 
 		with_default_recipients(|_, accounts| {
 			assert!(Airdrop::airdrops(1).is_some());
@@ -300,7 +300,7 @@ mod remove_recipient {
 
 	#[test]
 	fn should_remove_recipient_successfully() {
-		let creator = Origin::signed(CREATOR);
+		let creator = RuntimeOrigin::signed(CREATOR);
 
 		with_default_recipients(|_, accounts| {
 			assert_ok!(Airdrop::remove_recipient(
@@ -320,7 +320,7 @@ mod enable_airdrop {
 
 	#[test]
 	fn should_fail_to_enable_airdrop_if_origin_is_not_creator() {
-		let other = Origin::signed(OTHER);
+		let other = RuntimeOrigin::signed(OTHER);
 
 		with_default_recipients(|_, _| {
 			assert_noop!(
@@ -332,7 +332,7 @@ mod enable_airdrop {
 
 	#[test]
 	fn should_fail_to_enable_airdrop_if_airdrop_has_already_been_scheduled() {
-		let creator = Origin::signed(CREATOR);
+		let creator = RuntimeOrigin::signed(CREATOR);
 		let start_at = Some(DEFAULT_VESTING_PERIOD * 2);
 
 		ExtBuilder::default().build().execute_with(|| {
@@ -363,7 +363,7 @@ mod disable_airdrop {
 
 	#[test]
 	fn should_fail_to_disable_airdrop_if_origin_is_not_creator() {
-		let other = Origin::signed(OTHER);
+		let other = RuntimeOrigin::signed(OTHER);
 
 		with_default_recipients(|_, _| {
 			assert_noop!(
@@ -376,7 +376,7 @@ mod disable_airdrop {
 	#[test]
 	#[allow(clippy::disallowed_methods)] // Allow unwrap
 	fn should_disable_airdrop_successfully() {
-		let creator = Origin::signed(CREATOR);
+		let creator = RuntimeOrigin::signed(CREATOR);
 
 		with_default_recipients(|set_moment, _| {
 			set_moment(DEFAULT_VESTING_PERIOD * 2);

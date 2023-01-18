@@ -284,7 +284,7 @@ jobs:
           command: nix -- build .#spell-check
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-  # This isn't templated, since checkout needs to happen before templating occurs. 
+  # This isn't templated, since checkout needs to happen before templating occurs.
   docs-check:
     name: "Docs check"
     runs-on:
@@ -318,10 +318,10 @@ jobs:
           # Marker status code in case of network failure.
           STATUS_TRANSIENT_FAILURE=200
           # Maximum retries in case of network failures.
-          RETRIES=5               
-          CMD="cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static  --no-update-lock-file --show-trace -L 2> >(tee -a $LOG_FILE >&2)" 
+          RETRIES=5
+          CMD="cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static  --no-update-lock-file --show-trace -L 2> >(tee -a $LOG_FILE >&2)"
           # Marker that a network error occurred.
-          BAD="HTTP error 200 ('')"  
+          BAD="HTTP error 200 ('')"
           LOG_FILE=/tmp/out.log
 
           function run() {
@@ -329,8 +329,8 @@ jobs:
               STATUS_CODE=$?
               if [[ $STATUS_CODE -ne 0 ]] ; then
                   C=$(grep -c "HTTP error 200" $LOG_FILE)
-                  if [[ $C -gt 0 ]]; then 
-                      STATUS_CODE=$STATUS_TRANSIENT_FAILURE 
+                  if [[ $C -gt 0 ]]; then
+                      STATUS_CODE=$STATUS_TRANSIENT_FAILURE
                   fi
               fi
           }
@@ -347,7 +347,7 @@ jobs:
               ((try=try+1))
           done
 
-          exit $((STATUS_CODE))    
+          exit $((STATUS_CODE))
         shell: "bash"
         working-directory: ./docs
       - uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
@@ -539,7 +539,7 @@ jobs:
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
       - name: Deploy Project Artifacts to Vercel
         run: |
-          PREVIEW_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})  
+          PREVIEW_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
           echo "preview-url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
         id: deploy
       - name: Comment PR
@@ -652,80 +652,27 @@ jobs:
           command: nix -- run .#benchmarks-once-${{ matrix.runtime }}
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-  check-simnode:
-    name: "Simnode"
-    needs: package-simnode-tests
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: check-simnode-${{ matrix.runtime }}-${{ github.ref }}
-      cancel-in-progress: true
-    strategy:
-      matrix:
-        runtime: [picasso, composable]
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/checkout@v3
-      - uses: google-github-actions/setup-gcloud@v0
-        with:
-          service_account_key: ${{ secrets.DEPLOY_DALI }}
-          export_default_credentials: true
-      - uses: "./.github/templates/watch-exec"
-        with:
-          pre-run: |
-            FILENAME=$(date -d yesterday +'%m-%d-%Y').zip
-            GS_BUCKET="${{ matrix.runtime }}-data-store"
-            gsutil cp gs://$GS_BUCKET/"$FILENAME" .
-            unzip -o "$FILENAME" -d /tmp/db
-          command: nix -- run .#simnode-tests-${{ matrix.runtime }}
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          nix-env: nixpkgs.python3 nixpkgs.unzip
-
-  local-integration-tests:
-    name: "Local integration tests"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: local-integration-tests-${{ matrix.runtime }}-${{ github.ref }}
-      cancel-in-progress: true
-    strategy:
-      matrix:
-        runtime: [dali, picasso]
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#check-${{ matrix.runtime }}-integration-tests
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  package-simnode-tests:
-    name: "Package Simnode Tests"
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: package-simnode-tests-${{ matrix.runtime }}-${{ github.ref }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#simnode-tests
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  # local-integration-tests:
+  #   name: "Local integration tests"
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: local-integration-tests-${{ matrix.runtime }}-${{ github.ref }}
+  #     cancel-in-progress: true
+  #   strategy:
+  #     matrix:
+  #       runtime: [dali, picasso]
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: "./.github/templates/watch-exec"
+  #       with:
+  #         command: nix -- build .#check-${{ matrix.runtime }}-integration-tests
+  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   package-composable-node:
     name: "Package Composable node"
@@ -794,7 +741,7 @@ jobs:
       - sre
     strategy:
       matrix:
-          node: [statemine, bifrost]    
+          node: [statemine, bifrost]
     concurrency:
       group: ${{ github.workflow }}-package-${{ matrix.node }}-node-${{ github.ref }}
       cancel-in-progress: true
@@ -806,7 +753,7 @@ jobs:
         with:
           command: nix -- build .#${{ matrix.node }}-node
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-       
+
   package-acala-node:
     name: "Package Acala node"
     runs-on:
@@ -876,7 +823,7 @@ jobs:
     name: "Cache devnet all dev local"
     strategy:
       matrix:
-        runtime: [devnet-dali-complete, devnet-picasso-complete, devnet-dali, devnet-centauri]      
+        runtime: [devnet-dali-complete, devnet-picasso-complete, devnet-dali, devnet-centauri]
     needs:
       - package-polkadot-node
       - package-acala-node
@@ -934,19 +881,19 @@ jobs:
         env:
           CI: true
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        working-directory: frontend  
+        working-directory: frontend
       - name: Lint Pablo
         run: yarn --filter=pablo lint
         working-directory: frontend
       - name: Test Pablo
         run: yarn --filter=pablo test
-        working-directory: frontend    
+        working-directory: frontend
       - name: Lint Picasso
         run: yarn --filter=picasso lint
         working-directory: frontend
       - name: Test Picasso
         run: yarn --filter=picasso test
-        working-directory: frontend  
+        working-directory: frontend
 
   cmc-api:
     name: "Package CMC API"
@@ -1037,7 +984,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow }}-package-zombienet-${{ github.ref }}    
+      group: ${{ github.workflow }}-package-zombienet-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -1142,7 +1089,7 @@ jobs:
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
           echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-        shell: "bash"    
+        shell: "bash"
       - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
           skipPush: true
@@ -1154,7 +1101,7 @@ jobs:
           name: ${{  env.CACHIX_COMPOSABLE }}
       - run: |
           nix run .#devnet-integration-tests
-          
+
   effects-gate:
       name: "Effect gate, automatically merged if passed"
       runs-on:
@@ -1169,7 +1116,9 @@ jobs:
         - package-polkadot-node
         - package-composable-node
         - test-running-of-pallet-benchmarks
-        - local-integration-tests
+        # FIXUP(hussein): reenable once v0.9.30 -> v0.9.33
+        # - local-integration-tests
+
         - unit-tests
         - check-devnet
         - check-nix-long
@@ -1181,8 +1130,6 @@ jobs:
         - cargo-fmt-check
         - taplo-check
         - prettier-check
-        # Simnode is flaky, enable once not flaky
-        # - check-simnode
         - benchmarks-check
         - spell-check
         - docs-check

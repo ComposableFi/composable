@@ -29,74 +29,74 @@ pub trait WeightInfo {
 
 impl WeightInfo for () {
 	fn create_market() -> Weight {
-		(96_881_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(11 as Weight))
+		Weight::from_ref_time(96_881_000_u64)
+			.saturating_add(RocksDbWeight::get().reads(5_u64))
+			.saturating_add(RocksDbWeight::get().writes(11_u64))
 	}
 	// same as vaults deposit plus 1 more read
 	fn vault_deposit() -> Weight {
-		(140_947_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(10 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+		Weight::from_ref_time(140_947_000_u64)
+			.saturating_add(RocksDbWeight::get().reads(10_u64))
+			.saturating_add(RocksDbWeight::get().writes(5_u64))
 	}
 	// same as vaults withdraw plus 1 more read
 	fn vault_withdraw() -> Weight {
-		(112_296_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+		Weight::from_ref_time(112_296_000_u64)
+			.saturating_add(RocksDbWeight::get().reads(9_u64))
+			.saturating_add(RocksDbWeight::get().writes(4_u64))
 	}
 	fn deposit_collateral() -> Weight {
-		123_789_000_u64
+		Weight::from_ref_time(123_789_000_u64)
 			.saturating_add(RocksDbWeight::get().reads(6_u64))
 			.saturating_add(RocksDbWeight::get().writes(4_u64))
 	}
 	fn withdraw_collateral() -> Weight {
-		138_802_000_u64
+		Weight::from_ref_time(138_802_000_u64)
 			.saturating_add(RocksDbWeight::get().reads(10_u64))
 			.saturating_add(RocksDbWeight::get().writes(3_u64))
 	}
 	fn borrow() -> Weight {
-		(332_730_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(19 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(9 as Weight))
+		Weight::from_ref_time(332_730_000_u64)
+			.saturating_add(RocksDbWeight::get().reads(19_u64))
+			.saturating_add(RocksDbWeight::get().writes(9_u64))
 	}
 	fn repay_borrow() -> Weight {
-		(209_694_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+		Weight::from_ref_time(209_694_000_u64)
+			.saturating_add(RocksDbWeight::get().reads(13_u64))
+			.saturating_add(RocksDbWeight::get().writes(6_u64))
 	}
 	fn liquidate(b: u32) -> Weight {
-		(25_879_000 as Weight)
-			.saturating_add((7_877_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
+		Weight::from_ref_time(25_879_000_u64)
+			.saturating_add(Weight::from_ref_time(7_877_000_u64).saturating_mul(b as u64))
+			.saturating_add(RocksDbWeight::get().reads(7_u64))
 	}
 	fn now() -> Weight {
-		(4_744_000 as Weight).saturating_add(RocksDbWeight::get().reads(1 as Weight))
+		Weight::from_ref_time(4_744_000_u64).saturating_add(RocksDbWeight::get().reads(1_u64))
 	}
 	fn accrue_interest(_x: u32) -> Weight {
-		(76_626_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(76_626_000_u64)
+			.saturating_add(RocksDbWeight::get().reads(8_u64))
+			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
 	fn account_id() -> Weight {
-		(3_126_000 as Weight)
+		Weight::from_ref_time(3_126_000_u64)
 	}
 	fn available_funds() -> Weight {
-		(16_450_000 as Weight).saturating_add(RocksDbWeight::get().reads(2 as Weight))
+		Weight::from_ref_time(16_450_000_u64).saturating_add(RocksDbWeight::get().reads(2_u64))
 	}
 	fn handle_withdrawable() -> Weight {
-		(20_716_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(20_716_000_u64)
+			.saturating_add(RocksDbWeight::get().reads(2_u64))
+			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
 	fn handle_depositable() -> Weight {
-		(40_066_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(40_066_000_u64)
+			.saturating_add(RocksDbWeight::get().reads(3_u64))
+			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
 	fn handle_must_liquidate() -> Weight {
-		(38_744_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(38_744_000_u64)
+			.saturating_add(RocksDbWeight::get().reads(3_u64))
+			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
 }

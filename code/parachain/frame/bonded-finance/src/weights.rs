@@ -13,12 +13,12 @@ pub trait WeightInfo {
 
 impl WeightInfo for () {
 	fn offer() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
 	}
 	fn bond() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
 	}
 	fn cancel() -> Weight {
-    10_000 as Weight
+    Weight::from_ref_time(10_000)
 	}
 }

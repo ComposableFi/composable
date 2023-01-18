@@ -41,10 +41,10 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: system::Config {
 		/// Overarching event type
-		type Event: From<Event<Self>> + IsType<<Self as system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as system::Config>::RuntimeEvent>;
 
 		/// The origin which may set, update or remove filter.
-		type UpdateOrigin: EnsureOrigin<Self::Origin>;
+		type UpdateOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		// NOTE: can match by binary prefix which is much more efficient than string comparison.
 		#[pallet::constant]
@@ -164,11 +164,11 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> Contains<T::Call> for Pallet<T>
+	impl<T: Config> Contains<T::RuntimeCall> for Pallet<T>
 	where
-		<T as system::Config>::Call: GetCallMetadata,
+		<T as system::Config>::RuntimeCall: GetCallMetadata,
 	{
-		fn contains(call: &T::Call) -> bool {
+		fn contains(call: &T::RuntimeCall) -> bool {
 			let CallMetadata { function_name, pallet_name } = call.get_call_metadata();
 			match (
 				BoundedVec::try_from(pallet_name.as_bytes().to_vec()),

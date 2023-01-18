@@ -24,21 +24,23 @@ pub fn move_runtime_pallet<
 >() -> Weight {
 	let new_pallet_name = <NewPallet as PalletInfoAccess>::name();
 	let migrated_storage_version = StorageVersion::new(MIGRATED_STORAGE_VERSION);
-	if new_pallet_name != OLD_NAME &&
-		NewPallet::on_chain_storage_version() < migrated_storage_version
-	{
-		log::info!(target: "migrations", "move_runtime_pallet from {:?} to  {:?} as {:?}", OLD_NAME, new_pallet_name, migrated_storage_version);
-		frame_support::storage::migration::move_pallet(
-			OLD_NAME.as_bytes(),
-			new_pallet_name.as_bytes(),
-		);
-		migrated_storage_version.put::<NewPallet>();
-		// CAUTION: here is conservative estimate for 6 DB read and writes, for big migration should
-		// measure and parametrise (this is not the case now)
-		return 100_000_u64
-	}
-
-	0_u64
+	Weight::from_ref_time(
+		if new_pallet_name != OLD_NAME &&
+			NewPallet::on_chain_storage_version() < migrated_storage_version
+		{
+			log::info!(target: "migrations", "move_runtime_pallet from {:?} to  {:?} as {:?}", OLD_NAME, new_pallet_name, migrated_storage_version);
+			frame_support::storage::migration::move_pallet(
+				OLD_NAME.as_bytes(),
+				new_pallet_name.as_bytes(),
+			);
+			migrated_storage_version.put::<NewPallet>();
+			// CAUTION: here is conservative estimate for 6 DB read and writes, for big migration
+			// should measure and parametrise (this is not the case now)
+			100_000_u64
+		} else {
+			0_u64
+		},
+	)
 }
 
 impl OnRuntimeUpgrade for TechCollectiveRenameMigration {
@@ -90,7 +92,7 @@ pub mod pablo_picasso_init_pools {
 	/// Expects a vec of (pool_init_config, pool_lp_token_id)
 	pub fn add_initial_pools_to_storage(pools: Vec<PoolCreationInput>) -> Weight {
 		if !Pablo::pool_count().is_zero() {
-			return 0
+			return Weight::zero()
 		}
 
 		pools.iter().for_each(|pool_creation_input| {
@@ -101,7 +103,7 @@ pub mod pablo_picasso_init_pools {
 			.expect("Pool config is valid; QED");
 		});
 
-		weights::pablo::WeightInfo::<Runtime>::do_create_pool() * pools.len() as Weight
+		weights::pablo::WeightInfo::<Runtime>::do_create_pool().saturating_mul(pools.len() as u64)
 	}
 
 	fn create_two_token_pool_config(
@@ -185,9 +187,17 @@ mod tests {
 			unhashed::put_raw(&old_prefix, &[42]);
 
 			let hash_root = storage_root(StateVersion::V1);
-			assert_ne!(TechCollectiveRenameMigration::on_runtime_upgrade(), 0);
+			assert_ne!(
+				TechCollectiveRenameMigration::on_runtime_upgrade(),
+				Weight::from_ref_time(0)
+			);
 			assert_ne!(hash_root, storage_root(StateVersion::V1));
-			let updated = || assert_eq!(TechCollectiveRenameMigration::on_runtime_upgrade(), 0);
+			let updated = || {
+				assert_eq!(
+					TechCollectiveRenameMigration::on_runtime_upgrade(),
+					Weight::from_ref_time(0)
+				)
+			};
 			assert_storage_noop!(updated());
 
 			assert!(unhashed::get_raw(&old_prefix).is_none());

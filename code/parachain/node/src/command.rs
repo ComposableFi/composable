@@ -269,37 +269,41 @@ pub fn run() -> Result<()> {
 						},
 						id => panic!("Unknown Chain: {}", id),
 					}),
-				BenchmarkCmd::Storage(cmd) =>
-					runner.sync_run(|config| match config.chain_spec.id() {
-						id if id.contains("picasso") => {
-							let partials = new_partial::<
-								picasso_runtime::RuntimeApi,
-								PicassoExecutor,
-							>(&config)?;
-							let db = partials.backend.expose_db();
-							let storage = partials.backend.expose_storage();
-							cmd.run(config, partials.client, db, storage)
-						},
-						#[cfg(feature = "dali")]
-						id if id.contains("dali") => {
-							let partials =
-								new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(&config)?;
-							let db = partials.backend.expose_db();
-							let storage = partials.backend.expose_storage();
-							cmd.run(config, partials.client, db, storage)
-						},
-						#[cfg(feature = "composable")]
-						id if id.contains("composable") => {
-							let partials = new_partial::<
-								composable_runtime::RuntimeApi,
-								ComposableExecutor,
-							>(&config)?;
-							let db = partials.backend.expose_db();
-							let storage = partials.backend.expose_storage();
-							cmd.run(config, partials.client, db, storage)
-						},
-						id => panic!("Unknown Chain: {}", id),
-					}),
+				#[cfg(not(feature = "runtime-benchmarks"))]
+				BenchmarkCmd::Storage(_) => Err(sc_cli::Error::Input(
+					"Compile with --features=runtime-benchmarks \
+						 to enable storage benchmarks."
+						.into(),
+				)),
+				#[cfg(feature = "runtime-benchmarks")]
+				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| match config.chain_spec.id() {
+					id if id.contains("picasso") => {
+						let partials =
+							new_partial::<picasso_runtime::RuntimeApi, PicassoExecutor>(&config)?;
+						let db = partials.backend.expose_db();
+						let storage = partials.backend.expose_storage();
+						cmd.run(config, partials.client, db, storage)
+					},
+					#[cfg(feature = "dali")]
+					id if id.contains("dali") => {
+						let partials =
+							new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(&config)?;
+						let db = partials.backend.expose_db();
+						let storage = partials.backend.expose_storage();
+						cmd.run(config, partials.client, db, storage)
+					},
+					#[cfg(feature = "composable")]
+					id if id.contains("composable") => {
+						let partials = new_partial::<
+							composable_runtime::RuntimeApi,
+							ComposableExecutor,
+						>(&config)?;
+						let db = partials.backend.expose_db();
+						let storage = partials.backend.expose_storage();
+						cmd.run(config, partials.client, db, storage)
+					},
+					id => panic!("Unknown Chain: {}", id),
+				}),
 
 				BenchmarkCmd::Overhead(_) |
 				BenchmarkCmd::Extrinsic(_) |
@@ -380,7 +384,7 @@ impl CliConfiguration<Self> for RelayChainCli {
 	fn base_path(&self) -> Result<Option<BasePath>> {
 		Ok(self
 			.shared_params()
-			.base_path()
+			.base_path()?
 			.or_else(|| self.base_path.clone().map(Into::into)))
 	}
 
@@ -429,10 +433,6 @@ impl CliConfiguration<Self> for RelayChainCli {
 
 	fn transaction_pool(&self, x: bool) -> Result<sc_service::config::TransactionPoolOptions> {
 		self.base.base.transaction_pool(x)
-	}
-
-	fn state_cache_child_ratio(&self) -> Result<Option<usize>> {
-		self.base.base.state_cache_child_ratio()
 	}
 
 	fn rpc_methods(&self) -> Result<sc_service::config::RpcMethods> {

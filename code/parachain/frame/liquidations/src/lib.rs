@@ -82,7 +82,7 @@ pub mod pallet {
 	#[pallet::config]
 
 	pub trait Config: frame_system::Config + DeFiComposableConfig {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		type UnixTime: UnixTime;
 
@@ -108,13 +108,14 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 
 		// /// when called, engine pops latest order to liquidate and pushes back result
-		// type Liquidate: Parameter + Dispatchable<Origin = Self::Origin> + From<Call<Self>>;
+		// type Liquidate: Parameter + Dispatchable<Origin = Self::RuntimeOrigin> +
+		// From<Call<Self>>;
 		type WeightInfo: WeightInfo;
 
 		/// is used to talk to external liquidation engines
 		type XcmSender: xcm::latest::SendXcm;
 
-		type CanModifyStrategies: EnsureOrigin<Self::Origin>;
+		type CanModifyStrategies: EnsureOrigin<Self::RuntimeOrigin>;
 		type MaxLiquidationStrategiesAmount: Get<u32>;
 	}
 
