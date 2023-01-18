@@ -35,11 +35,17 @@
 
 #[cfg(test)]
 mod test;
+pub mod weights;
 
 pub use pallet::*;
 
+#[cfg(any(feature = "runtime-benchmarks", test))]
+mod benchmarking;
+
+pub use crate::weights::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::WeightInfo;
 	use codec::FullCodec;
 	use composable_support::math::safe::SafeAdd;
 	use composable_traits::{
@@ -56,6 +62,7 @@ pub mod pallet {
 		},
 		PalletId,
 	};
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_arithmetic::traits::One;
 	use sp_runtime::traits::{AccountIdConversion, Zero};
 	use sp_std::{
@@ -103,7 +110,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		type MaxProperties: Get<u32>;
 
@@ -140,6 +147,8 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -198,6 +207,25 @@ pub mod pallet {
 		(AccountIdOf<T>, AccountIdOf<T>, BTreeMap<Vec<u8>, Vec<u8>>),
 		OptionQuery,
 	>;
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		/// transfer fnft to a new owner
+		#[pallet::weight(T::WeightInfo::transfer())]
+		pub fn transfer(
+			origin: OriginFor<T>,
+			collection: FinancialNftCollectionIdOf<T>,
+			instance: FinancialNftInstanceIdOf<T>,
+			destination: AccountIdOf<T>,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let fnfts = OwnerInstances::<T>::get(&who).ok_or(Error::<T>::MustBeOwner)?;
+			ensure!(fnfts.contains(&(collection, instance)), Error::<T>::MustBeOwner);
+			let _ =
+				<Self as Transfer<AccountIdOf<T>>>::transfer(&collection, &instance, &destination);
+			Ok(())
+		}
+	}
 
 	impl<T: Config> Inspect<AccountIdOf<T>> for Pallet<T> {
 		type ItemId = FinancialNftInstanceIdOf<T>;

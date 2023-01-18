@@ -30,7 +30,6 @@ export function useAssetBalance(
         }
       } catch (err: any) {
         // console.log(`useAssetBalance ${_tokenId} Error: `, err.message)
-
       }
     }
 

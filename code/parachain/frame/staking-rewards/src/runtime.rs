@@ -79,8 +79,8 @@ impl frame_system::Config for Test {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -88,7 +88,7 @@ impl frame_system::Config for Test {
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -107,7 +107,7 @@ parameter_types! {
 
 impl pallet_balances::Config for Test {
 	type Balance = Balance;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -131,7 +131,7 @@ impl pallet_timestamp::Config for Test {
 }
 
 impl pallet_currency_factory::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
 	type Balance = Balance;
@@ -146,7 +146,7 @@ parameter_type_with_key! {
 
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
@@ -159,6 +159,9 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = Everything;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
+	type OnSlash = ();
+	type OnDeposit = ();
+	type OnTransfer = ();
 }
 
 pub struct NoopRegistry;
@@ -204,7 +207,7 @@ parameter_types! {
 
 type AccountProxyWrapperInstance = AccountProxyWrapper<Test>;
 impl pallet_fnft::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MaxProperties = ConstU32<16>;
 	type FinancialNftCollectionId = CurrencyId;
 	type FinancialNftInstanceId = FinancialNftInstanceId;
@@ -212,6 +215,7 @@ impl pallet_fnft::Config for Test {
 	type AccountProxy = AccountProxyWrapperInstance;
 	type ProxyTypeSelector = FnftAccountProxyType;
 	type PalletId = FnftPalletId;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -222,8 +226,8 @@ parameter_types! {
 }
 
 impl pallet_proxy::Config for Test {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 	type Currency = ();
 	type ProxyType = ProxyType;
 	type ProxyDepositBase = ProxyPrice;
@@ -252,7 +256,7 @@ parameter_types! {
 }
 
 impl crate::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type AssetId = CurrencyId;
 	type FinancialNft = FinancialNft;
@@ -279,14 +283,14 @@ impl crate::Config for Test {
 	type TreasuryAccount = TreasuryAccountId;
 }
 
-impl InstanceFilter<Call> for ProxyType {
-	fn filter(&self, c: &Call) -> bool {
+impl InstanceFilter<RuntimeCall> for ProxyType {
+	fn filter(&self, c: &RuntimeCall) -> bool {
 		match self {
 			ProxyType::Any => true,
 			ProxyType::Governance => matches!(
 				c,
 				// TODO democracy
-				Call::System(..)
+				RuntimeCall::System(..)
 			),
 			// ProxyType::Staking => {
 			// 	matches!(c, Call::Staking(..) | Call::Session(..) | Call::Utility(..))

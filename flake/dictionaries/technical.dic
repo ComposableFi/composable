@@ -1,0 +1,472 @@
+# abcdef
+# adoc
+# binance-rs types
+# BN method (javascript)
+# bors
+# code-workspace
+# commands, programs, libs, tools, etc
+# cosmwasm types
+# crates
+# css
+# databases
+# docker
+# dummy currencies
+# environment variables
+# file attributes
+# fonts
+# for the memes
+# frontend stuff
+# GCP
+# git
+# graphviz
+# icons
+# markdown
+# misc technical terms
+# nix
+# not sure where to put these
+# npm
+# parts of hashes
+# substrate types
+# sudo
+# systemctl
+# these should probably be replaced with stakes and bonds respectively
+# various keywords
+# various rust methods and types
+0xsequence
+1ubrf2y
+5C4hrfjw
+aarch
+abicoder
+acala
+ACENT
+ACENTS
+ACOIN
+ACOINS
+adda
+addn
+adduser
+adoc
+AggrTrades
+airdropper
+alice
+apexcharts
+arion
+arrayify
+asciidoctor
+assetinfo
+assetsinfo
+autofetch
+autorenew
+azuretools
+BCENT
+BCENTS
+BCOIN
+BCOINS
+bech
+bigdecimal
+bignr # used frequently throughout the frontend as a shorthand for bignumber
+bignumber
+bignumbers
+binop
+bintools
+bitfield
+bitfields
+bitvec
+bob
+bootnode
+bootnodes
+brif
+browserconfig
+brtable
+bufferutil
+buildpackage
+buildx
+cachix
+cdylib
+charlie
+cheatcode
+cheatcodes
+chevdor
+chrono
+cita
+claimunstake
+clickup
+clsx
+cmake
+cmark
+codegen
+codeowners
+codepaths
+codesandbox
+commonmark # https://commonmark.org/help
+composablenodes
+composabletests
+containerd
+containrrr # `containrrr/watchtower` docker image
+contentful
+coreutils
+cosm
+Cosmoverse
+crev # cargo-crev
+crowdloaning
+currentmemory
+DACP
+dalek
+dappsys
+deadnix
+deburr
+devcontainers
+devel
+dhms # day hour minute second
+dispatchables
+divn
+divs
+divu
+dockerfile
+dotgraphs
+drawio
+eamodio
+ebnf
+edgeware
+endef
+enduml
+endwhile
+ensdomains
+extendsi
+ferdie
+fetchgit
+fetchurl
+fgrep
+findutils
+fnft
+fnfts
+fontconfig
+fontname
+freetype
+fsevenm
+FSIZE
+fslot
+getglobal
+getlocal
+getrandom
+giga
+GITREPO
+GITUSER
+gnugrep
+gnumake
+gpgsign
+graphviz
+grep
+growmemory
+gsutil
+hadolint
+hasher
+hasura
+hardfork
+hevm
+hexdump
+hexlify
+hljs
+horiz
+hotjar
+iavl
+idents
+iefix
+IERC
+ifeq
+imagesdir
+imagesoutdir
+immer
+includeurl
+infima
+inprocess
+instrs
+ipam
+ipetkov # github username
+iszero
+journalctl
+jsonrpsee
+junod
+keccak
+keccak256
+keyval
+Konnect
+lastmod
+lazyledger
+lcgfmg
+lcov
+LIBCLANG
+libcurl
+libexpat
+libfreetype
+libp2p
+libsecp
+libsecp256k1
+libudev
+libwasmvm
+llvm
+localstorage
+loglevel
+lparachain
+lppicapbloother
+mdbook
+MEMLOCK
+mergify
+messagingxcm
+millify
+miniserve
+minvested
+mlength
+mlengthmod
+mload
+mochawesome
+msapplication
+mstore
+Multiaddr
+multiassets
+multihash
+mutantdino
+narinfo
+nettools
+newlength
+nextjs
+NFTID
+nixfmt
+nixified
+nixify
+nixops
+nixos
+nixpkgs
+nocapture
+nocompile
+noconfirm
+nodedir
+nodev
+NOFILE
+nomiclabs
+NOPASSWD
+nosuid
+notistack
+npmjs
+npos
+NPROC
+nrwl
+numtide
+offboarded
+offences
+on_unbalanceds
+oneliner
+oneof
+oneshot
+opentype
+OPTARG
+oraclesetup # script of package.json
+oraclestake
+Origin
+OSMO
+oxalica # github username
+pacman
+pandoc
+papaparse
+parablock
+paritytech
+patchelf
+pctest
+peasy
+peekable
+peerset
+penwidth
+perbill
+permill
+permissionlessly
+perquintill
+perthing
+perthousand
+phragmen
+pingpong
+pkgconf
+pkgconfig
+pkgs
+plantuml
+Pointable
+polkalaunch
+polkassembly
+popcnt
+Popcnt
+popout
+postinfo
+powd
+powf
+prebaked
+preclaim
+preclaims
+precommit
+precommits
+Prefixer
+preinstall
+prevote
+procps
+proptest
+proptests
+prost
+protobufs
+protoc
+PROTOC
+protos
+PTRACE
+Quickstart
+radiumblock
+rebag
+rebagged
+rebond
+reduxjs
+registryaddr
+rekt
+remappings
+resourcemonitor
+revhash
+rewardaccumulationhook
+rewardtrackerstore
+rfdc # really fast deep clone
+ripemd
+rlib
+rngs
+rnix
+rocksdb
+ROCKSDB
+rotr
+Rotr
+rpath
+rustc
+RUSTC
+RUSTFLAGS
+rustfmt
+RUSTSEC # RUSTSEC-XXXX-XXXX is id of RustSec Advisory Database
+rustup
+safu
+sccache
+schemars
+scrollbox
+searchbar
+searchresults
+seccomp
+sectnumlevels
+sectnums
+Seedable
+serayuzgur
+serie
+serokell
+setaf
+setglobal
+setlocal
+sharded
+shortkey
+shrs
+Sighash
+signale
+skinparam
+slength
+slengthmod
+sload
+smallvec
+smoldot
+snackbars
+solhint
+sparkline
+sproof
+sqlinit
+squeezy
+sstore
+Stackexchange
+stakeform
+stakerclaimunstake
+startuml
+statemine
+stdenv
+stdstore
+structopt
+structs
+styleguide
+submessage
+submessages
+submod
+Subql
+substituters
+subwasm
+subxt
+supertrait
+svgbob
+svgr
+sysinfo
+tailwindcss
+tamasfe
+taplo
+teelocal
+tendermint
+TentangNanti
+termcolor
+thiserror
+tmpfs
+toc
+toclevels
+tokenvalue
+tomoki
+toolchains
+toolset
+tooltipped
+tooltiptext
+tput
+trimed
+truetype
+tsconfigs
+tsdx
+tungstenite
+typechain
+typegen
+typeorm
+udeps
+unbond
+unbonded
+unbonding
+unescrow
+unfound
+unhexify
+unlookup
+unpruned
+unstakeform
+unsubs
+unvouch
+unvouched
+upsert
+uptodate # used throughout our codebase
+urql
+USDCUSDT
+usermod
+vadimcn
+Varint
+vsicons
+wasmd
+wasmi
+wasmswap
+wasmtime
+wasmvm
+websocat
+websocket
+websockets
+whereis
+WORKDIR
+wrapi
+wscat
+xaxis
+XCVM
+xorriso
+xorshift # rand_xorshift
+xpablo
+xpablos
+xtokens
+yaxis
+yzhang
+zlfzypzcr
+zstd
+zustand
+quickstart

@@ -4,7 +4,7 @@ use super::*;
 use common::governance::native::*;
 use frame_support::traits::LockIdentifier;
 
-pub type NativeDemocracy = democracy::Instance1;
+// pub type NativeDemocracy = democracy::Instance1;
 
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
@@ -16,7 +16,7 @@ parameter_types! {
 }
 
 impl membership::Config<NativeCouncilMembership> for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AddOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type RemoveOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type SwapOrigin = EnsureRootOrTwoThirdNativeCouncil;
@@ -29,9 +29,9 @@ impl membership::Config<NativeCouncilMembership> for Runtime {
 }
 
 impl collective::Config<NativeCouncilCollective> for Runtime {
-	type Origin = Origin;
-	type Proposal = Call;
-	type Event = Event;
+	type RuntimeOrigin = RuntimeOrigin;
+	type Proposal = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
@@ -40,7 +40,7 @@ impl collective::Config<NativeCouncilCollective> for Runtime {
 }
 
 impl membership::Config<NativeTechnicalMembership> for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AddOrigin = EnsureRootOrTwoThirdNativeCouncilOrTechnical;
 	type RemoveOrigin = EnsureRootOrTwoThirdNativeCouncilOrTechnical;
 	type SwapOrigin = EnsureRootOrTwoThirdNativeCouncilOrTechnical;
@@ -53,9 +53,9 @@ impl membership::Config<NativeTechnicalMembership> for Runtime {
 }
 
 impl collective::Config<NativeTechnicalMembership> for Runtime {
-	type Origin = Origin;
-	type Proposal = Call;
-	type Event = Event;
+	type RuntimeOrigin = RuntimeOrigin;
+	type Proposal = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
@@ -82,12 +82,12 @@ parameter_types! {
 	pub const MaxProposals: u32 = 100;
 	// cspell:disable-next
 	pub const DemocracyId: LockIdentifier = *b"democrac";
-	pub RootOrigin: Origin = frame_system::RawOrigin::Root.into();
+	pub RootOrigin: RuntimeOrigin = frame_system::RawOrigin::Root.into();
 }
 
-impl democracy::Config<NativeDemocracy> for Runtime {
-	type Proposal = Call;
-	type Event = Event;
+impl democracy::Config for Runtime {
+	type Proposal = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type EnactmentPeriod = EnactmentPeriod;
 	type LaunchPeriod = LaunchPeriod;
@@ -122,10 +122,6 @@ impl democracy::Config<NativeDemocracy> for Runtime {
 	type PreimageByteDeposit = PreimageByteDeposit;
 	type Scheduler = Scheduler;
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
-	type EnsureRoot = EnsureRoot<AccountId>;
-	type DemocracyId = DemocracyId;
-	type Origin = Origin;
-	type ProtocolRoot = RootOrigin;
 }
 
 parameter_types! {
@@ -146,7 +142,7 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type Currency = Balances;
 	type ApproveOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type RejectOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnSlash = Treasury;
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
@@ -162,7 +158,7 @@ impl treasury::Config<NativeTreasury> for Runtime {
 }
 
 impl governance_registry::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = CurrencyId;
 	type WeightInfo = ();
 }

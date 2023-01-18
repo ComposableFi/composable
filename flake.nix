@@ -1,3 +1,4 @@
+# We use https://flake.parts/ in order split this flake into multiple parts.
 {
   description = "Composable Finance";
 
@@ -26,13 +27,32 @@
   };
 
   outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
-    let darwinFilter = import ./darwin-filter.nix { lib = nixpkgs.lib; };
+    let darwinFilter = import ./flake/darwin-filter.nix { lib = nixpkgs.lib; };
     in darwinFilter (flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
-        # To import a flake module
-        # 1. Add foo to inputs
-        # 2. Add foo as a parameter to the outputs function
-        # 3. Add here: foo.flakeModule
+        # External `inputs` that the authors did not nixify themselves
+        ./inputs/AcalaNetwork/acala.nix
+        ./inputs/centauri/centauri-codegen.nix
+        ./inputs/centauri/hyperspace.nix
+        ./inputs/chevdor/subwasm.nix
+        ./inputs/composable/dali-subxt-client.nix
+        ./inputs/cosmos/cosmwasm.nix
+        ./inputs/cosmos/gex.nix
+        ./inputs/CosmosContracts/juno.nix
+        ./inputs/CosmWasm/wasmvm.nix
+        ./inputs/paritytech/statemine.nix
+        ./inputs/paritytech/polkadot.nix
+        ./inputs/paritytech/polkadot-launch.nix
+        ./inputs/paritytech/zombienet.nix
+        ./inputs/Wasmswap/wasmswap-contracts.nix
+
+        # The things we use within flake parts to build packages, apps, devShells, and devnets. 
+        ./tools/pkgs.nix # _module.args.pkgs
+        ./tools/devnet-tools.nix # _module.args.devnetTools
+        ./tools/rust.nix # _module.args.rust
+        ./tools/cargo-tools.nix # _module.args.cargoTools
+
+        # our own packages
         ./code/services/cmc-api/cmc-api.nix
         ./code/benchmarks.nix
         ./code/common-deps.nix
@@ -42,101 +62,27 @@
         ./code/integration-tests/runtime-tests/runtime-tests.nix
         ./code/runtimes.nix
         ./code/xcvm/xcvm-contracts.nix
-        ./dev-shells.nix
-        ./devnet-tools.nix
-        ./devnets.nix
-        ./docker.nix
-        ./code/xcvm/cosmos/flake-module.nix
+        ./code/utils/composable-subxt/subxt.nix
+        ./code/utils/price-feed/price-feed.nix
         ./docs/docs.nix
-        ./fmt.nix
         ./frontend/frontend.nix
-        ./nixops-config.nix
-        ./price-feed.nix
-        ./release.nix
-        ./rust.nix
-        ./subwasm.nix
-        ./scripts/zombienet/flake-module.nix
-        ./.nix/cargo/flake-module.nix
+
+        # our devnets
+        # TODO: Split into multiple files
+        ./devnets/all.nix
+
+        # Everything that is not an input, tool, package, or devnet, but still part of the final flake
+        ./flake/check.nix
+        ./flake/dev-shells.nix
+        ./flake/docker.nix
+        ./flake/fmt.nix
+        ./flake/help.nix
+        ./flake/nixops-config.nix
+        ./flake/overlays.nix
+        ./flake/release.nix
+        ./inputs/bifrost-finance/bifrost/flake-module.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
-      perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
-        # Per-system attributes can be defined here. The self' and inputs'
-        # module parameters provide easy access to attributes of the same
-        # system.
-
-        # Equivalent to  inputs'.nixpkgs.legacyPackages.hello;
-        # packages.default = pkgs.hello;
-
-        _module.args.pkgs = import self.inputs.nixpkgs {
-          inherit system;
-          overlays = with self.inputs; [
-            self.overlays.default
-            npm-buildpackage.overlays.default
-            rust-overlay.overlays.default
-          ];
-        };
-        packages = {
-          default = self'.packages.zombienet-rococo-local-dali-dev;
-          devnet-dali = self'.packages.zombienet-rococo-local-dali-dev;
-          subxt = pkgs.callPackage ./code/utils/composable-subxt/subxt.nix { };
-          junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
-          gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
-          wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
-            crane = crane.nightly;
-          };
-
-          # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
-          acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
-            rust-overlay = self'.packages.rust-nightly;
-          };
-
-          polkadot-node = pkgs.callPackage ./.nix/polkadot/polkadot-bin.nix {
-            rust-nightly = self'.packages.rust-nightly;
-          };
-
-          statemine-node = pkgs.callPackage ./.nix/statemine-bin.nix {
-            rust-nightly = self'.packages.rust-nightly;
-          };
-
-          mmr-polkadot-node =
-            pkgs.callPackage ./.nix/polkadot/mmr-polkadot-bin.nix {
-              rust-nightly = self'.packages.rust-nightly;
-            };
-
-          polkadot-launch =
-            pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix { };
-
-        };
-      };
-      flake = {
-        # The usual flake attributes can be defined here, including system-
-        # agnostic ones like nixosModule and system-enumerating ones, although
-        # those are more easily expressed in perSystem.
-
-        overlays = {
-          default = let
-            mkDevnetProgram = { pkgs }:
-              name: spec:
-              pkgs.writeShellApplication {
-                inherit name;
-                runtimeInputs =
-                  [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-                text = ''
-                  arion --prebuilt-file ${
-                    pkgs.arion.build spec
-                  } up --build --force-recreate -V --always-recreate-deps --remove-orphans
-                '';
-              };
-          in inputs.nixpkgs.lib.composeManyExtensions [
-            inputs.arion-src.overlays.default
-            (final: _prev: {
-              composable = {
-                mkDevnetProgram = final.callPackage mkDevnetProgram { };
-              };
-            })
-          ];
-        };
-      };
     });
 }

@@ -55,8 +55,8 @@ impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u32;
 	type Hash = H256;
@@ -64,7 +64,7 @@ impl frame_system::Config for Test {
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type DbWeight = ();
 	type Version = ();
@@ -81,7 +81,7 @@ impl frame_system::Config for Test {
 impl governance_registry::Config for Test {
 	type AssetId = CurrencyId;
 	type WeightInfo = ();
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 }
 
 parameter_types! {
@@ -96,7 +96,7 @@ parameter_type_with_key! {
 
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
@@ -109,12 +109,15 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = Everything;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
+	type OnSlash = ();
+	type OnDeposit = ();
+	type OnTransfer = ();
 }
 
 impl pallet_balances::Config for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type MaxLocks = ConstU32<50>;
@@ -244,10 +247,23 @@ impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for IbcLoopback<T> {
 	) -> Result<(), ibc_primitives::Error> {
 		todo!("loopback")
 	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn create_client(
+	) -> Result<::ibc::core::ics24_host::identifier::ClientId, ibc_primitives::Error> {
+		todo!("loopback")
+	}
+	#[cfg(feature = "runtime-benchmarks")]
+	fn create_connection(
+		_client_id: ::ibc::core::ics24_host::identifier::ClientId,
+		_connection_id: ::ibc::core::ics24_host::identifier::ConnectionId,
+	) -> Result<(), ibc_primitives::Error> {
+		todo!("loopback")
+	}
 }
 
 impl Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
 	type MaxFrames = MaxFrames;

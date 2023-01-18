@@ -33,33 +33,33 @@ impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	/// The range of component `c` is `[0, 1000]`.
 	fn batch(c: u32, ) -> Weight {
-		(44_973_000 as Weight)
+		Weight::from_ref_time(44_973_000_u64)
 			// Standard Error: 9_000
-			.saturating_add((11_193_000 as Weight).saturating_mul(c as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(Weight::from_ref_time(11_193_000_u64).saturating_mul(c as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn as_derivative() -> Weight {
-		(22_271_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+		Weight::from_ref_time(22_271_000_u64)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	/// The range of component `c` is `[0, 1000]`.
 	fn batch_all(c: u32, ) -> Weight {
-		(55_138_000 as Weight)
+		Weight::from_ref_time(55_138_000_u64)
 			// Standard Error: 14_000
-			.saturating_add((11_670_000 as Weight).saturating_mul(c as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(Weight::from_ref_time(11_670_000_u64).saturating_mul(c as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
 	}
 	fn dispatch_as() -> Weight {
-		(35_508_000 as Weight)
+		Weight::from_ref_time(35_508_000_u64)
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	/// The range of component `c` is `[0, 1000]`.
 	fn force_batch(c: u32, ) -> Weight {
-		(17_121_000 as Weight)
+		Weight::from_ref_time(17_121_000_u64)
 			// Standard Error: 14_000
-			.saturating_add((11_256_000 as Weight).saturating_mul(c as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(Weight::from_ref_time(11_256_000_u64).saturating_mul(c as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
 	}
 }

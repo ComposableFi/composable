@@ -40,16 +40,16 @@ parameter_types! {
 }
 
 impl system::Config for MockRuntime {
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	type Index = u64;
 	type BlockNumber = BlockNumber;
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type Hash = H256;
 	type Hashing = ::sp_runtime::traits::BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = sp_runtime::generic::Header<u32, BlakeTwo256>;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -68,7 +68,7 @@ impl system::Config for MockRuntime {
 
 impl pallet_balances::Config for MockRuntime {
 	type Balance = Balance;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ();
 	type AccountStore = System;
@@ -89,7 +89,7 @@ impl pallet_airdrop::Config for MockRuntime {
 	type AirdropId = AirdropId;
 	type Balance = Balance;
 	type Convert = ConvertInto;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Moment = Moment;
 	type RelayChainAccountId = RelayChainAccountId;
 	type RecipientFundAsset = Balances;
@@ -175,7 +175,7 @@ impl Identity {
 				ethereum_proof(ethereum_account, reward_account.clone()),
 		};
 
-		Airdrop::claim(Origin::none(), airdrop_id, reward_account, proof)
+		Airdrop::claim(RuntimeOrigin::none(), airdrop_id, reward_account, proof)
 	}
 }
 

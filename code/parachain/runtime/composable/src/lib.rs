@@ -24,11 +24,13 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 mod weights;
 mod xcmp;
+
 use common::{
 	rewards::StakingPot, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	ForeignAssetId, Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
 	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
+use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::assets::Asset;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
@@ -40,46 +42,40 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
-
-use composable_support::rpc_helpers::SafeRpcWrapper;
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
 // A few exports that help ease life for downstream crates.
+use codec::Encode;
 pub use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime,
+	pallet_prelude::DispatchClass,
+	parameter_types,
 	traits::{
 		Contains, EitherOfDiverse, Everything, KeyOwnerProofSystem, LockIdentifier, Nothing,
 		Randomness, StorageInfo,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
 	PalletId, StorageValue,
 };
-
-use codec::{Codec, Encode, EncodeLike};
 use frame_support::{
 	traits::{EqualPrivilegeOnly, OnRuntimeUpgrade},
 	weights::ConstantMultiplier,
 };
 use frame_system as system;
-use scale_info::TypeInfo;
-use sp_runtime::AccountId32;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
-use sp_std::fmt::Debug;
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
-
 pub type CouncilInstance = collective::Instance1;
 pub type EnsureRootOrHalfCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
@@ -173,7 +169,7 @@ impl system::Config for Runtime {
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
 	/// The aggregated dispatch type that is available for extrinsics.
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
 	type Lookup = AccountIdLookup<AccountId, AccountIndex>;
 	/// The index type for storing how many extrinsics an account has signed.
@@ -187,9 +183,9 @@ impl system::Config for Runtime {
 	/// The header type.
 	type Header = generic::Header<BlockNumber, BlakeTwo256>;
 	/// The ubiquitous event type.
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	/// The ubiquitous origin type.
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
 	/// The weight of database operations that the runtime can invoke.
@@ -262,7 +258,7 @@ impl balances::Config for Runtime {
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// The ubiquitous event type.
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = Treasury;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -293,7 +289,7 @@ impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		let p = CurrencyId::milli::<Balance>();
-		let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
+		let q = 10 * Balance::from(ExtrinsicBaseWeight::get().ref_time());
 		smallvec::smallvec![WeightToFeeCoefficient {
 			degree: 1,
 			negative: false,
@@ -306,7 +302,7 @@ impl WeightToFeePolynomial for WeightToFee {
 type NativeTreasury = treasury::Instance1;
 
 impl transaction_payment::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, StakingPot<Runtime, NativeTreasury>>;
 	type WeightToFee = WeightToFee;
@@ -317,8 +313,8 @@ impl transaction_payment::Config for Runtime {
 }
 
 impl sudo::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 }
 
 parameter_types! {
@@ -327,25 +323,28 @@ parameter_types! {
 }
 
 impl indices::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AccountIndex = AccountIndex;
 	type Currency = Balances;
 	type Deposit = IndexDeposit;
 	type WeightInfo = weights::indices::WeightInfo<Runtime>;
 }
 
-pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
 
 impl<LocalCall> system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
-	Call: From<LocalCall>,
+	RuntimeCall: From<LocalCall>,
 {
 	fn create_transaction<C: system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-		call: Call,
+		call: RuntimeCall,
 		public: <Signature as sp_runtime::traits::Verify>::Signer,
 		account: AccountId,
 		nonce: AccountIndex,
-	) -> Option<(Call, <UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload)> {
+	) -> Option<(
+		RuntimeCall,
+		<UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
+	)> {
 		use sp_runtime::{
 			generic::{Era, SignedPayload},
 			traits::StaticLookup,
@@ -390,9 +389,9 @@ impl system::offchain::SigningTypes for Runtime {
 
 impl<C> system::offchain::SendTransactionTypes<C> for Runtime
 where
-	Call: From<C>,
+	RuntimeCall: From<C>,
 {
-	type OverarchingCall = Call;
+	type OverarchingCall = RuntimeCall;
 	type Extrinsic = UncheckedExtrinsic;
 }
 
@@ -412,13 +411,13 @@ parameter_types! {
 // See https://github.com/paritytech/cumulus/blob/polkadot-v0.9.8/polkadot-parachains/rococo/src/lib.rs for details.
 parameter_types! {
 	/// 1/4 of block weight is reserved for XCMP
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
+	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 	/// 1/4 of block weight is reserved for handling Downward messages
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
+	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnSystemEvent = ();
 	type SelfParaId = parachain_info::Pallet<Runtime>;
 	type OutboundXcmpMessageSource = XcmpQueue;
@@ -448,7 +447,7 @@ parameter_types! {
 }
 
 impl session::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type ValidatorId = <Self as system::Config>::AccountId;
 	// we don't have stash and controller, thus we don't need the convert as well.
 	type ValidatorIdOf = collator_selection::IdentityCollator;
@@ -473,7 +472,7 @@ parameter_types! {
 }
 
 impl collator_selection::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type UpdateOrigin = EnsureRootOrHalfCouncil;
 	type PotId = PotId;
@@ -523,7 +522,7 @@ parameter_types! {
 
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
@@ -536,6 +535,9 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
+	type OnSlash = ();
+	type OnDeposit = ();
+	type OnTransfer = ();
 }
 
 parameter_types! {
@@ -556,7 +558,7 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type Currency = Balances;
 	type ApproveOrigin = EnsureRootOrHalfCouncil;
 	type RejectOrigin = EnsureRootOrHalfCouncil;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnSlash = Treasury;
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
@@ -578,7 +580,7 @@ parameter_types! {
 }
 
 impl membership::Config<membership::Instance1> for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AddOrigin = EnsureRootOrHalfCouncil;
 	type RemoveOrigin = EnsureRootOrHalfCouncil;
 	type SwapOrigin = EnsureRootOrHalfCouncil;
@@ -591,9 +593,9 @@ impl membership::Config<membership::Instance1> for Runtime {
 }
 
 impl collective::Config<CouncilInstance> for Runtime {
-	type Origin = Origin;
-	type Proposal = Call;
-	type Event = Event;
+	type RuntimeOrigin = RuntimeOrigin;
+	type Proposal = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
@@ -609,10 +611,10 @@ parameter_types! {
 }
 
 impl scheduler::Config for Runtime {
-	type Event = Event;
-	type Origin = Origin;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
 	type PalletsOrigin = OriginCaller;
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
@@ -629,7 +631,7 @@ parameter_types! {
 
 impl preimage::Config for Runtime {
 	type WeightInfo = preimage::weights::SubstrateWeight<Runtime>;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRoot<AccountId>;
 	type MaxSize = PreimageMaxSize;
@@ -638,20 +640,20 @@ impl preimage::Config for Runtime {
 }
 
 impl utility::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 	type PalletsOrigin = OriginCaller;
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
 }
 
 impl governance_registry::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = CurrencyId;
 	type WeightInfo = ();
 }
 
 impl currency_factory::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
@@ -672,12 +674,12 @@ parameter_types! {
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
 	pub const DemocracyId: LockIdentifier = *b"democrac";
-	pub RootOrigin: Origin = frame_system::RawOrigin::Root.into();
+	pub RootOrigin: RuntimeOrigin = frame_system::RawOrigin::Root.into();
 }
 
-impl democracy::Config<democracy::Instance1> for Runtime {
-	type Proposal = Call;
-	type Event = Event;
+impl democracy::Config for Runtime {
+	type Proposal = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type EnactmentPeriod = EnactmentPeriod;
 	type LaunchPeriod = LaunchPeriod;
@@ -710,10 +712,6 @@ impl democracy::Config<democracy::Instance1> for Runtime {
 	type PreimageByteDeposit = PreimageByteDeposit;
 	type Scheduler = Scheduler;
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
-	type EnsureRoot = EnsureRoot<AccountId>;
-	type DemocracyId = DemocracyId;
-	type Origin = Origin;
-	type ProtocolRoot = RootOrigin;
 }
 
 parameter_types! {
@@ -727,7 +725,7 @@ parameter_types! {
 }
 
 impl crowdloan_rewards::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type RewardAsset = Assets;
 	type AdminOrigin = EnsureRootOrHalfCouncil;
@@ -759,10 +757,16 @@ parameter_types! {
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
-impl Contains<Call> for BaseCallFilter {
-	fn contains(call: &Call) -> bool {
+impl Contains<RuntimeCall> for BaseCallFilter {
+	fn contains(call: &RuntimeCall) -> bool {
 		// TODO: not up to date as whole composable setup
-		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
+		!matches!(
+			call,
+			RuntimeCall::Tokens(_) |
+				RuntimeCall::Indices(_) |
+				RuntimeCall::Democracy(_) |
+				RuntimeCall::Treasury(_)
+		)
 	}
 }
 
@@ -796,7 +800,7 @@ construct_runtime!(
 		Council: collective::<Instance1> = 30,
 		CouncilMembership: membership::<Instance1> = 31,
 		Treasury: treasury::<Instance1> = 32,
-		Democracy: democracy::<Instance1> = 33,
+		Democracy: democracy = 33,
 		Scheduler: scheduler = 34,
 		Utility: utility = 35,
 		Preimage: preimage = 36,
@@ -834,9 +838,10 @@ pub type SignedExtra = (
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic =
+	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 
-// Migration for scheduler pallet to move from a plain Call to a CallOrHash.
+// Migration for scheduler pallet to move from a plain RuntimeCall to a CallOrHash.
 pub struct SchedulerMigrationV3;
 impl OnRuntimeUpgrade for SchedulerMigrationV3 {
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
@@ -865,7 +870,7 @@ mod benches {
 		[balances, Balances]
 		[session, SessionBench::<Runtime>]
 		[timestamp, Timestamp]
-	// TODO: broken
+	// TODO(hussein) Still broken on v0.9.30
 		// [collator_selection, CollatorSelection]
 		[indices, Indices]
 		[membership, CouncilMembership]
@@ -1002,40 +1007,6 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl<Call, AccountId> simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime
-		where
-			Call: Codec,
-			AccountId: Codec + EncodeLike<AccountId32> + Into<AccountId32> + Clone+ PartialEq + TypeInfo + Debug,
-	{
-		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
-			use sp_runtime::{
-				generic::Era, MultiSignature,
-				traits::StaticLookup,
-			};
-			use sp_core::sr25519;
-			let nonce = frame_system::Pallet::<Runtime>::account_nonce(signer.clone());
-			let extra = (
-				system::CheckNonZeroSender::<Runtime>::new(),
-				system::CheckSpecVersion::<Runtime>::new(),
-				system::CheckTxVersion::<Runtime>::new(),
-				system::CheckGenesis::<Runtime>::new(),
-				system::CheckEra::<Runtime>::from(Era::Immortal),
-				system::CheckNonce::<Runtime>::from(nonce),
-				system::CheckWeight::<Runtime>::new(),
-				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
-			);
-			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
-			let address = AccountIdLookup::unlookup(signer.into());
-			let ext = generic::UncheckedExtrinsic::<Address, Call, Signature, SignedExtra>::new_signed(
-				call,
-				address,
-				signature,
-				extra,
-			);
-			ext.encode()
-		}
-	}
-
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (
@@ -1044,15 +1015,12 @@ impl_runtime_apis! {
 		) {
 			use frame_benchmarking::{Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
-			use system_benchmarking::Pallet as SystemBench;
+			use frame_system_benchmarking::Pallet as SystemBench;
 			use session_benchmarking::Pallet as SessionBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
-
 			list_benchmarks!(list, extra);
-
 			let storage_info = AllPalletsWithSystem::storage_info();
-
 			(list, storage_info)
 		}
 
@@ -1061,8 +1029,8 @@ impl_runtime_apis! {
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, TrackedStorageKey};
 
-			use system_benchmarking::Pallet as SystemBench;
-			impl system_benchmarking::Config for Runtime {}
+			use frame_system_benchmarking::Pallet as SystemBench;
+			impl frame_system_benchmarking::Config for Runtime {}
 
 			use session_benchmarking::Pallet as SessionBench;
 			impl session_benchmarking::Config for Runtime {}
@@ -1082,9 +1050,7 @@ impl_runtime_apis! {
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
-
 			add_benchmarks!(params, batches);
-
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
 		}

@@ -55,7 +55,7 @@ pub mod pablo_picasso_init_pools {
 	/// Expects a vec of (pool_init_config, pool_lp_token_id)
 	fn add_initial_pools_to_storage(pools: Vec<PoolCreationInput>) -> Weight {
 		if !Pablo::pool_count().is_zero() {
-			return 0
+			return Weight::zero()
 		}
 
 		pools.iter().for_each(|pool_creation_input| {
@@ -66,7 +66,7 @@ pub mod pablo_picasso_init_pools {
 			.expect("Pool config is valid; QED");
 		});
 
-		weights::pablo::WeightInfo::<Runtime>::do_create_pool() * pools.len() as Weight
+		weights::pablo::WeightInfo::<Runtime>::do_create_pool().saturating_mul(pools.len() as u64)
 	}
 
 	fn create_two_token_pool_config(

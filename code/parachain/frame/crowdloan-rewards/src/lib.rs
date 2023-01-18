@@ -146,7 +146,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		#[allow(missing_docs)]
 		type Balance: Default
@@ -175,7 +175,7 @@ pub mod pallet {
 		type Time: Time<Moment = Self::Moment>;
 
 		/// The origin that is allowed to `initialize` the pallet.
-		type AdminOrigin: EnsureOrigin<Self::Origin>;
+		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// A conversion function from `Self::Moment` to `Self::Balance`
 		type Convert: Convert<Self::Moment, Self::Balance>;

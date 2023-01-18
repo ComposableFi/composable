@@ -11,7 +11,7 @@ use sp_runtime::DispatchError;
 
 use crate::{
 	test::{
-		mock::{new_test_ext, Event, MockRuntime, Nft, Proxy},
+		mock::{new_test_ext, MockRuntime, Nft, Proxy, RuntimeEvent},
 		prelude::{TEST_COLLECTION_ID, *},
 		ALICE, BOB, CHARLIE,
 	},
@@ -32,7 +32,11 @@ fn simple() {
 			"owner before transfer should be ALICE"
 		);
 
-		assert_ok!(Nft::transfer(&TEST_COLLECTION_ID, &created_nft_id, &BOB));
+		assert_ok!(<Nft as Transfer<AccountIdOf<MockRuntime>>>::transfer(
+			&TEST_COLLECTION_ID,
+			&created_nft_id,
+			&BOB
+		));
 
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
@@ -77,8 +81,12 @@ fn roundtrip() {
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
 		// send one of ALICE's NFTs to BOB
-		assert_ok!(Nft::transfer(&TEST_COLLECTION_ID, &nft_to_trade, &BOB));
-		MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftTransferred {
+		assert_ok!(<Nft as Transfer<AccountIdOf<MockRuntime>>>::transfer(
+			&TEST_COLLECTION_ID,
+			&nft_to_trade,
+			&BOB
+		));
+		MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: nft_to_trade,
 			to: BOB,
@@ -90,8 +98,12 @@ fn roundtrip() {
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
 		// send said NFT back
-		assert_ok!(Nft::transfer(&TEST_COLLECTION_ID, &nft_to_trade, &ALICE));
-		MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftTransferred {
+		assert_ok!(<Nft as Transfer<AccountIdOf<MockRuntime>>>::transfer(
+			&TEST_COLLECTION_ID,
+			&nft_to_trade,
+			&ALICE
+		));
+		MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: nft_to_trade,
 			to: ALICE,
@@ -141,8 +153,12 @@ fn many() {
 		}
 
 		// transfer one of ALICE's NFTs to BOB
-		assert_ok!(Nft::transfer(&TEST_COLLECTION_ID, &a0, &BOB));
-		MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftTransferred {
+		assert_ok!(<Nft as Transfer<AccountIdOf<MockRuntime>>>::transfer(
+			&TEST_COLLECTION_ID,
+			&a0,
+			&BOB
+		));
+		MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: a0,
 			to: BOB,
@@ -164,12 +180,18 @@ fn many() {
 
 		// transfer all of CHARLIES's NFTs to BOB
 		for nft_id in charlies_nfts.iter() {
-			assert_ok!(Nft::transfer(&TEST_COLLECTION_ID, nft_id, &BOB));
-			MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftTransferred {
-				collection_id: TEST_COLLECTION_ID,
-				instance_id: *nft_id,
-				to: BOB,
-			}));
+			assert_ok!(<Nft as Transfer<AccountIdOf<MockRuntime>>>::transfer(
+				&TEST_COLLECTION_ID,
+				nft_id,
+				&BOB
+			));
+			MockRuntime::assert_last_event(RuntimeEvent::Nft(
+				crate::Event::FinancialNftTransferred {
+					collection_id: TEST_COLLECTION_ID,
+					instance_id: *nft_id,
+					to: BOB,
+				},
+			));
 			process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(2);
 		}
 
@@ -188,8 +210,12 @@ fn many() {
         ]);
 
 		// transfer one of (what was originally CHARLIES's) NFTs from BOB to ALICE
-		assert_ok!(Nft::transfer(&TEST_COLLECTION_ID, &c9, &ALICE));
-		MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftTransferred {
+		assert_ok!(<Nft as Transfer<AccountIdOf<MockRuntime>>>::transfer(
+			&TEST_COLLECTION_ID,
+			&c9,
+			&ALICE
+		));
+		MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: c9,
 			to: ALICE,
@@ -210,8 +236,12 @@ fn many() {
         ]);
 
 		// transfer one of (what was originally CHARLIES's) NFTs from ALICE back to CHARLIE
-		assert_ok!(Nft::transfer(&TEST_COLLECTION_ID, &c9, &CHARLIE),);
-		MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftTransferred {
+		assert_ok!(<Nft as Transfer<AccountIdOf<MockRuntime>>>::transfer(
+			&TEST_COLLECTION_ID,
+			&c9,
+			&CHARLIE
+		),);
+		MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: c9,
 			to: CHARLIE,
@@ -238,7 +268,7 @@ fn many() {
 fn instance_not_found() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
-			Nft::transfer(&TEST_COLLECTION_ID, &1, &ALICE),
+			<Nft as Transfer<AccountIdOf<MockRuntime>>>::transfer(&TEST_COLLECTION_ID, &1, &ALICE),
 			DispatchError::from(crate::Error::<MockRuntime>::InstanceNotFound)
 		);
 	});

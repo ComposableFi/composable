@@ -54,6 +54,19 @@ impl<Balance> RewardRate<Balance> {
 		Self { period: RewardRatePeriod::PerSecond, amount: amount.into() }
 	}
 }
+impl<Balance> RewardRate<Balance>
+where
+	Balance: Copy + Into<u128> + From<u128>,
+{
+	/// The amount that will be rewarded in one period.
+	// TODO(benluelo): Encode somehow that one period will always be rewardable. We can most likely
+	// use `Validated` for this, although we may encounter some issues with orphan rules.
+	pub fn amount_per_period(&self) -> Option<Balance> {
+		u128::from(self.period.as_secs().get())
+			.checked_mul(self.amount.into())
+			.map(Into::into)
+	}
+}
 
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
 pub enum RewardRatePeriod {

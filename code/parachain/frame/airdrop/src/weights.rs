@@ -11,26 +11,26 @@ pub trait WeightInfo {
 
 impl WeightInfo for () {
 	fn create_airdrop() -> Weight {
-		0
+		Weight::from_ref_time(10_000)
 	}
 
 	fn add_recipient(_x: u32) -> Weight {
-		0
+		Weight::from_ref_time(10_000)
 	}
 
 	fn remove_recipient() -> Weight {
-		0
+		Weight::from_ref_time(10_000)
 	}
 
 	fn enable_airdrop() -> Weight {
-		0
+		Weight::from_ref_time(10_000)
 	}
 
 	fn disable_airdrop() -> Weight {
-		0
+		Weight::from_ref_time(10_000)
 	}
 
 	fn claim(_x: u32) -> Weight {
-		0
+		Weight::from_ref_time(10_000)
 	}
 }

@@ -2,8 +2,8 @@ use crate::{
 	ethereum_recover,
 	mocks::{
 		ethereum_address, generate_accounts, AccountId, Balance, Balances, ClaimKey,
-		CrowdloanRewards, EthKey, ExtBuilder, Moment, Origin, System, Test, Timestamp, ALICE,
-		INITIAL_PAYMENT, PROOF_PREFIX, VESTING_STEP,
+		CrowdloanRewards, EthKey, ExtBuilder, Moment, RuntimeOrigin, System, Test, Timestamp,
+		ALICE, INITIAL_PAYMENT, PROOF_PREFIX, VESTING_STEP,
 	},
 	models::{Proof, RemoteAccount},
 	Error, Event, RemoteAccountOf, RewardAmountOf, VestingPeriodOf,
@@ -35,7 +35,7 @@ fn with_rewards<R>(
 		let set_moment = |x: Moment| Timestamp::set_timestamp(random_moment_start + x);
 		set_moment(0);
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), reward * count);
-		assert_ok!(CrowdloanRewards::populate(Origin::root(), rewards));
+		assert_ok!(CrowdloanRewards::populate(RuntimeOrigin::root(), rewards));
 		execute(&set_moment, accounts)
 	})
 }
@@ -57,7 +57,7 @@ mod unlock_rewards_for {
 	#[test]
 	fn should_set_remove_rewards_lock() {
 		with_rewards_default(|_set_moment, accounts| {
-			assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+			assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 
 			for (picasso_account, remote_account) in accounts.clone().into_iter() {
 				assert_ok!(remote_account.associate(picasso_account));
@@ -66,7 +66,7 @@ mod unlock_rewards_for {
 			assert!(CrowdloanRewards::remove_reward_locks().is_none());
 
 			let accounts = accounts.into_iter().map(|(account, _claim_key)| account).collect();
-			assert_ok!(CrowdloanRewards::unlock_rewards_for(Origin::root(), accounts));
+			assert_ok!(CrowdloanRewards::unlock_rewards_for(RuntimeOrigin::root(), accounts));
 			assert!(CrowdloanRewards::remove_reward_locks().is_some());
 		})
 	}
@@ -74,7 +74,7 @@ mod unlock_rewards_for {
 	#[test]
 	fn should_unlock_reward_assets_for_accounts() {
 		with_rewards_default(|_bugs_bugs_bugs, accounts| {
-			assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+			assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 
 			for (picasso_account, remote_account) in accounts.clone().into_iter() {
 				assert_ok!(remote_account.associate(picasso_account));
@@ -92,7 +92,10 @@ mod unlock_rewards_for {
 
 			let accounts: Vec<AccountId> =
 				accounts.into_iter().map(|(account, _claim_key)| account).collect();
-			assert_ok!(CrowdloanRewards::unlock_rewards_for(Origin::root(), accounts.clone()));
+			assert_ok!(CrowdloanRewards::unlock_rewards_for(
+				RuntimeOrigin::root(),
+				accounts.clone()
+			));
 
 			assert_ok!(<Balances as Transfer<AccountId>>::transfer(
 				&accounts[0],
@@ -114,7 +117,7 @@ fn test_populate_rewards_not_funded() {
 	};
 	ExtBuilder::default().build().execute_with(|| {
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), 0);
-		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)));
+		assert_ok!(CrowdloanRewards::populate(RuntimeOrigin::root(), gen(100, DEFAULT_REWARD)));
 	});
 }
 
@@ -133,7 +136,7 @@ fn test_incremental_populate() {
 			let slice = accounts[start..start + 1000].to_vec();
 			let expected_total_rewards = (i + 1) as u128 * 1000 * DEFAULT_REWARD;
 			Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
-			assert_ok!(CrowdloanRewards::populate(Origin::root(), slice));
+			assert_ok!(CrowdloanRewards::populate(RuntimeOrigin::root(), slice));
 			assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		}
 		// Repopulating using the same accounts must overwrite existing entries.
@@ -141,7 +144,7 @@ fn test_incremental_populate() {
 		for i in 0..10 {
 			let start = i * 1000;
 			let slice = accounts[start..start + 1000].to_vec();
-			assert_ok!(CrowdloanRewards::populate(Origin::root(), slice));
+			assert_ok!(CrowdloanRewards::populate(RuntimeOrigin::root(), slice));
 			assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		}
 	});
@@ -158,13 +161,13 @@ fn test_populate_ok() {
 	ExtBuilder::default().build().execute_with(|| {
 		let expected_total_rewards = 0;
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
-		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(0, DEFAULT_REWARD)));
+		assert_ok!(CrowdloanRewards::populate(RuntimeOrigin::root(), gen(0, DEFAULT_REWARD)));
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
 
 		let expected_total_rewards = 100 * DEFAULT_REWARD;
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
-		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)));
+		assert_ok!(CrowdloanRewards::populate(RuntimeOrigin::root(), gen(100, DEFAULT_REWARD)));
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
 
@@ -174,7 +177,7 @@ fn test_populate_ok() {
 		let s = frame_support::storage_root(StateVersion::V1);
 		let expected_total_rewards = 100 * DEFAULT_REWARD;
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
-		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)));
+		assert_ok!(CrowdloanRewards::populate(RuntimeOrigin::root(), gen(100, DEFAULT_REWARD)));
 		assert_eq!(s, frame_support::storage_root(StateVersion::V1));
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
@@ -182,7 +185,7 @@ fn test_populate_ok() {
 		// Overwrite rewards + 100 new contributors
 		let expected_total_rewards = 200 * (DEFAULT_REWARD + 1);
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
-		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(200, DEFAULT_REWARD + 1)));
+		assert_ok!(CrowdloanRewards::populate(RuntimeOrigin::root(), gen(200, DEFAULT_REWARD + 1)));
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
 	});
@@ -199,10 +202,10 @@ fn test_add_ok() {
 	ExtBuilder::default().build().execute_with(|| {
 		let expected_total_rewards = 100 * DEFAULT_REWARD;
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards * 2);
-		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, DEFAULT_REWARD)));
+		assert_ok!(CrowdloanRewards::populate(RuntimeOrigin::root(), gen(100, DEFAULT_REWARD)));
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
-		CrowdloanRewards::add(Origin::root(), gen(200, DEFAULT_REWARD)).unwrap();
+		CrowdloanRewards::add(RuntimeOrigin::root(), gen(200, DEFAULT_REWARD)).unwrap();
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards * 2);
 	});
 }
@@ -218,13 +221,13 @@ fn populate_should_overwrite_existing_rewards_with_new_values() {
 	ExtBuilder::default().build().execute_with(|| {
 		let expected_total_rewards = 100 * 200;
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
-		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, 200)));
+		assert_ok!(CrowdloanRewards::populate(RuntimeOrigin::root(), gen(100, 200)));
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
 
 		let expected_total_rewards = 100 * 100;
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), expected_total_rewards);
-		assert_ok!(CrowdloanRewards::populate(Origin::root(), gen(100, 100)));
+		assert_ok!(CrowdloanRewards::populate(RuntimeOrigin::root(), gen(100, 100)));
 		assert_eq!(CrowdloanRewards::total_rewards(), expected_total_rewards);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
 	});
@@ -233,9 +236,9 @@ fn populate_should_overwrite_existing_rewards_with_new_values() {
 #[test]
 fn test_populate_after_initialize_ko() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+		assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 		assert_noop!(
-			CrowdloanRewards::populate(Origin::root(), vec![]),
+			CrowdloanRewards::populate(RuntimeOrigin::root(), vec![]),
 			Error::<Test>::AlreadyInitialized
 		);
 	});
@@ -244,7 +247,7 @@ fn test_populate_after_initialize_ko() {
 #[test]
 fn test_initialize_ok() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+		assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 		assert_eq!(CrowdloanRewards::total_rewards(), 0);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
 	});
@@ -253,7 +256,7 @@ fn test_initialize_ok() {
 #[test]
 fn test_initialize_at_ok() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(CrowdloanRewards::initialize_at(Origin::root(), 10));
+		assert_ok!(CrowdloanRewards::initialize_at(RuntimeOrigin::root(), 10));
 		assert_eq!(CrowdloanRewards::total_rewards(), 0);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
 	});
@@ -264,7 +267,7 @@ fn test_initialize_at_ko() {
 	ExtBuilder::default().build().execute_with(|| {
 		Timestamp::set_timestamp(100);
 		assert_noop!(
-			CrowdloanRewards::initialize_at(Origin::root(), 99),
+			CrowdloanRewards::initialize_at(RuntimeOrigin::root(), 99),
 			Error::<Test>::BackToTheFuture
 		);
 	});
@@ -274,7 +277,7 @@ fn test_initialize_at_ko() {
 fn test_invalid_early_at_claim() {
 	with_rewards_default(|set_moment, accounts| {
 		let now = Timestamp::now();
-		assert_ok!(CrowdloanRewards::initialize_at(Origin::root(), now + 10));
+		assert_ok!(CrowdloanRewards::initialize_at(RuntimeOrigin::root(), now + 10));
 
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
 			assert_noop!(
@@ -294,9 +297,9 @@ fn test_invalid_early_at_claim() {
 #[test]
 fn test_initialize_once() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+		assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 		assert_noop!(
-			CrowdloanRewards::initialize(Origin::root()),
+			CrowdloanRewards::initialize(RuntimeOrigin::root()),
 			Error::<Test>::AlreadyInitialized
 		);
 	});
@@ -314,7 +317,7 @@ fn test_not_initialized() {
 #[test]
 fn test_initialize_totals() {
 	with_rewards_default(|_, _| {
-		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+		assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 		assert_eq!(CrowdloanRewards::total_rewards(), DEFAULT_REWARD * DEFAULT_NB_OF_CONTRIBUTORS);
 		assert_eq!(CrowdloanRewards::total_contributors() as u128, DEFAULT_NB_OF_CONTRIBUTORS);
 		assert_eq!(CrowdloanRewards::claimed_rewards(), 0);
@@ -325,7 +328,10 @@ fn test_initialize_totals() {
 fn initialize_should_fail_when_not_funded() {
 	with_rewards_default(|_set_moment, _accounts| {
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), 0);
-		assert_noop!(CrowdloanRewards::initialize(Origin::root()), Error::<Test>::RewardsNotFunded);
+		assert_noop!(
+			CrowdloanRewards::initialize(RuntimeOrigin::root()),
+			Error::<Test>::RewardsNotFunded
+		);
 	});
 }
 
@@ -337,7 +343,7 @@ fn initialize_should_emit_warning_when_over_funded() {
 			DEFAULT_REWARD * DEFAULT_NB_OF_CONTRIBUTORS * 2,
 		);
 
-		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+		assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 		assert_eq!(
 			Test::assert_event_with(|event| match event {
 				Event::<Test>::OverFunded { excess_funds } => {
@@ -355,7 +361,7 @@ fn initialize_should_emit_warning_when_over_funded() {
 #[test]
 fn test_initial_payment() {
 	with_rewards_default(|_, accounts| {
-		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+		assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.associate(picasso_account.clone()));
 			assert_eq!(Balances::total_balance(&picasso_account), INITIAL_PAYMENT * DEFAULT_REWARD);
@@ -370,7 +376,7 @@ fn test_initial_payment() {
 #[test]
 fn test_invalid_early_claim() {
 	with_rewards_default(|_, accounts| {
-		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+		assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.associate(picasso_account.clone()));
 			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NothingToClaim);
@@ -381,7 +387,7 @@ fn test_invalid_early_claim() {
 #[test]
 fn test_not_a_contributor() {
 	with_rewards_default(|_, _| {
-		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+		assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 		for account in 0..100 {
 			assert_noop!(
 				ClaimKey::Relay(ed25519::Pair::from_seed(&[account as u8; 32]))
@@ -395,7 +401,7 @@ fn test_not_a_contributor() {
 #[test]
 fn test_association_ok() {
 	with_rewards_default(|_, accounts| {
-		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+		assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.associate(picasso_account));
 		}
@@ -405,7 +411,7 @@ fn test_association_ok() {
 #[test]
 fn test_association_ko() {
 	with_rewards_default(|_, accounts| {
-		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+		assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_noop!(remote_account.claim(picasso_account), Error::<Test>::NotAssociated);
 		}
@@ -415,7 +421,7 @@ fn test_association_ko() {
 #[test]
 fn test_invalid_less_than_a_week() {
 	with_rewards_default(|set_moment, accounts| {
-		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+		assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
 			assert_ok!(remote_account.associate(picasso_account));
 		}
@@ -436,7 +442,7 @@ fn test_valid_claim_full() {
 	let total_vested_reward = DEFAULT_NB_OF_CONTRIBUTORS * DEFAULT_REWARD - total_initial_reward;
 	let nb_of_vesting_step = DEFAULT_VESTING_PERIOD / VESTING_STEP;
 	with_rewards_default(|set_moment, accounts| {
-		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+		assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 		// Initial payment
 		for (picasso_account, remote_account) in accounts.clone().into_iter() {
 			assert_ok!(remote_account.associate(picasso_account));
@@ -462,7 +468,7 @@ fn test_valid_claim_full() {
 #[test]
 fn test_valid_claim_no_vesting() {
 	with_rewards(DEFAULT_NB_OF_CONTRIBUTORS, DEFAULT_REWARD, 0, |_, accounts| {
-		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+		assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 		// Initial payment = full reward
 		for (picasso_account, remote_account) in accounts.into_iter() {
 			assert_ok!(remote_account.associate(picasso_account));
@@ -500,13 +506,13 @@ fn test_valid_eth_hardcoded() {
 	let proof = Proof::Ethereum(eth_proof);
 	ExtBuilder::default().build().execute_with(|| {
 		Balances::make_free_balance_be(&CrowdloanRewards::account_id(), reward_amount);
-		assert_ok!(CrowdloanRewards::populate(Origin::root(), rewards));
-		assert_ok!(CrowdloanRewards::initialize(Origin::root()));
-		assert_ok!(CrowdloanRewards::associate(Origin::none(), ALICE, proof));
+		assert_ok!(CrowdloanRewards::populate(RuntimeOrigin::root(), rewards));
+		assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
+		assert_ok!(CrowdloanRewards::associate(RuntimeOrigin::none(), ALICE, proof));
 		Timestamp::set_timestamp(VESTING_STEP);
-		assert_ok!(CrowdloanRewards::claim(Origin::signed(ALICE)));
+		assert_ok!(CrowdloanRewards::claim(RuntimeOrigin::signed(ALICE)));
 		Timestamp::set_timestamp(DEFAULT_VESTING_PERIOD);
-		assert_ok!(CrowdloanRewards::claim(Origin::signed(ALICE)));
+		assert_ok!(CrowdloanRewards::claim(RuntimeOrigin::signed(ALICE)));
 		assert_eq!(CrowdloanRewards::claimed_rewards(), CrowdloanRewards::total_rewards());
 	});
 }
@@ -517,7 +523,7 @@ mod test_prevalidate_association {
 		DEFAULT_VESTING_PERIOD,
 	};
 	use crate::{
-		mocks::{CrowdloanRewards, Origin},
+		mocks::{CrowdloanRewards, RuntimeOrigin},
 		ValidityError,
 	};
 	use frame_support::{
@@ -536,11 +542,11 @@ mod test_prevalidate_association {
 	#[test]
 	fn already_associated_associate_transactions_are_recognized() {
 		with_rewards_default(|_, accounts| {
-			assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+			assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 
 			for (reward_account, remote_account) in accounts.clone() {
 				assert_ok!(CrowdloanRewards::associate(
-					Origin::none(),
+					RuntimeOrigin::none(),
 					reward_account.clone(),
 					remote_account.proof(reward_account.clone()),
 				));
@@ -559,7 +565,7 @@ mod test_prevalidate_association {
 	#[test]
 	fn no_reward_associate_transactions_are_recognized() {
 		with_rewards(DEFAULT_NB_OF_CONTRIBUTORS, 0, DEFAULT_VESTING_PERIOD, |_, accounts| {
-			assert_ok!(CrowdloanRewards::initialize(Origin::root()));
+			assert_ok!(CrowdloanRewards::initialize(RuntimeOrigin::root()));
 
 			for (reward_account, remote_account) in accounts {
 				let validate_result = setup_call(remote_account, &reward_account);

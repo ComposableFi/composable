@@ -1,6 +1,6 @@
 import { DropdownCombinedBigNumberInput } from "@/components";
 import { useMobile } from "@/hooks/responsive";
-import { Box, Tooltip, Typography, useTheme } from "@mui/material";
+import { Box, Skeleton, Tooltip, Typography, useTheme } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { FC, useEffect, useState } from "react";
 import { BoxProps } from "@mui/system";
@@ -20,12 +20,23 @@ import { SettingsModalHandler } from "./SettingsModalHandler";
 import { SwapVertAsset } from "@/components/Organisms/swap/SwapVertAsset";
 import { SwapButton } from "@/components/Organisms/swap/SwapButton";
 import BigNumber from "bignumber.js";
+import useStore from "@/store/useStore";
+import { usePicaPriceDiscovery } from "@/defi/hooks/overview/usePicaPriceDiscovery";
 
 const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
   const theme = useTheme();
 
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+
+  const hasFetchedPools = useStore((store) => store.pools.isLoaded);
+  const hasFetchedTokens = useStore(
+    (store) => store.substrateTokens.hasFetchedTokens
+  );
+  const picaPrice = usePicaPriceDiscovery();
+
+  const isSwapFormReady =
+    hasFetchedPools && hasFetchedTokens && !picaPrice.isZero();
 
   const {
     balance1,
@@ -78,6 +89,10 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
     }
   }, [isConfirmed]);
 
+  if (!isSwapFormReady) {
+    return <Skeleton variant="rounded" width="100%" height="600px" />;
+  }
+
   return (
     <HighlightBox margin="auto" {...boxProps}>
       <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -117,8 +132,7 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
           }}
           ButtonProps={{
             onClick: () => {
-              const balanceLimit = balance1.multipliedBy(percentageToSwap);
-              onChangeTokenAmount(balanceLimit);
+              onChangeTokenAmount(balance1);
             },
           }}
           CombinedSelectProps={{
@@ -157,6 +171,16 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
           }}
         />
       </Box>
+      {assetOneAmount.gt(balance1) ? (
+        <Typography
+          variant="caption"
+          color="error"
+          textAlign="left"
+          sx={{ display: "flex", ml: 2 }}
+        >
+          Your token balance is too low to perform swap
+        </Typography>
+      ) : null}
 
       {valid && (
         <Typography variant="body2" mt={1.5}>
@@ -271,7 +295,11 @@ const SwapForm: FC<BoxProps> = ({ ...boxProps }) => {
         )}
       </Box>
 
-      <SwapButton />
+      <SwapButton
+        assetOneAmount={assetOneAmount}
+        assetTwoAmount={assetTwoAmount}
+        valid={valid}
+      />
 
       {valid && pabloPool && (
         <SwapSummary

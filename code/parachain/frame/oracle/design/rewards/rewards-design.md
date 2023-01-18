@@ -100,7 +100,7 @@ distribution ratio,
             + treasury::Config<Currency = balances::Pallet<R>>,
         <R as frame_system::Config>::AccountId: From<polkadot_primitives::v2::AccountId>,
         <R as frame_system::Config>::AccountId: Into<polkadot_primitives::v2::AccountId>,
-        <R as frame_system::Config>::Event: From<balances::Event<R>>,
+        <R as frame_system::Config>::RuntimeEvent: From<balances::Event<R>>,
         <R as balances::Config>::Balance: From<u128>,
     {
         fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {

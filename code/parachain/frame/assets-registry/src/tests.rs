@@ -33,7 +33,7 @@ fn set_metadata() {
 		let asset_id = System::events()
 			.iter()
 			.find_map(|x| match x.event {
-				Event::AssetsRegistry(crate::Event::<Runtime>::AssetRegistered {
+				RuntimeEvent::AssetsRegistry(crate::Event::<Runtime>::AssetRegistered {
 					asset_id,
 					location: _,
 					name: _,
@@ -76,7 +76,7 @@ fn register_asset() {
 		assert_eq!(AssetsRegistry::from_foreign_asset(location.clone()), None);
 
 		assert_ok!(AssetsRegistry::register_asset(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			LocalOrForeignAssetId::Foreign(location.clone()),
 			Some(ratio),
 			b"Kusama".to_vec(),
@@ -88,7 +88,7 @@ fn register_asset() {
 
 		assert_noop!(
 			AssetsRegistry::register_asset(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				LocalOrForeignAssetId::Foreign(location),
 				Some(ratio),
 				b"Kusama".to_vec(),
@@ -113,7 +113,7 @@ fn update_asset() {
 		let decimals = 3;
 
 		assert_ok!(AssetsRegistry::register_asset(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			LocalOrForeignAssetId::Foreign(location.clone()),
 			Some(ratio),
 			b"Kusama".to_vec(),
@@ -128,7 +128,7 @@ fn update_asset() {
 		let new_decimals = 12;
 		let new_ratio = rational!(100500 / 666);
 		// assert_ok!(AssetsRegistry::update_asset(
-		// 	Origin::root(),
+		// RuntimeOrigin::root(),
 		// 	local_asset_id,
 		// 	location.clone(),
 		// 	new_ratio,
@@ -152,7 +152,7 @@ fn set_min_fee() {
 		);
 
 		assert_ok!(AssetsRegistry::set_min_fee(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			target_parachain_id,
 			foreign_asset_id.clone(),
 			Some(balance)
@@ -180,7 +180,7 @@ fn get_foreign_assets_list_should_work() {
 		assert_eq!(foreign_assets, vec![]);
 
 		assert_ok!(AssetsRegistry::register_asset(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			LocalOrForeignAssetId::Foreign(location),
 			Some(ratio),
 			b"Kusama".to_vec(),

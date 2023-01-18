@@ -9,11 +9,11 @@ Ideas in this document are taken from [Google's Engineering Practices](https://g
 
 # Creating a PR
 
-- Make sure you read the [contributing guidelines](https://github.com/ComposableFi/composable/blob/main/docs/CONTRIBUTING.md). 
+- Make sure you read the [contributing guidelines](https://github.com/ComposableFi/composable/blob/main/docs/CONTRIBUTING.md).
 
 - Always branch off of `main` for both feature (`feat`) and `bugfix` branches. If you are working together with other developers on a feature and want to each have your your branch, create a `feat/{feature}/{GITHUB_USERNAME}` branch. Once the `feat/{feature}` branch has been deleted, we may delete all nested branches(!).
 
-- Commits must be signed, as well as that all code should pass our automated checks and tests. Code will not be reviewed until all checks succeed. 
+- Commits must be signed, as well as that all code should pass our automated checks and tests. Code will not be reviewed until all checks succeed.
 
 - Fill in the PR template, and make sure to describe your changes well. The developer reviewing your work may be out of the loop on the need of the change, and unfamiliar with the product itself. Linking to a ticket or issue is also acceptable.
 

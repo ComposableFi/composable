@@ -23,6 +23,25 @@ import { PoolConfig } from "@/store/pools/types";
 import { getOraclePrice } from "@/store/oracle/slice";
 import { usePoolSpotPrice } from "@/defi/hooks/pools/usePoolSpotPrice";
 
+function useInputValidation() {
+  const [assetOneInputValid, setAssetOneInputValid] = useState(true);
+  const [assetTwoInputValid, setAssetTwoInputValid] = useState(true);
+  const hasValidInputs = useMemo(
+    () => assetOneInputValid && assetTwoInputValid,
+    [assetOneInputValid, assetTwoInputValid]
+  );
+
+  return {
+    setAssetOneInputValid,
+    setAssetTwoInputValid,
+    assetOneInputValid,
+    assetTwoInputValid,
+    hasValidInputs,
+  };
+}
+
+const percentageToSwap = 50;
+
 export function useSwaps({
   selectedAccount,
 }: {
@@ -63,10 +82,17 @@ export function useSwaps({
   const slippage = useAppSettingsSlice().transactionSettings.tolerance;
   const previousSlippage = usePrevious(slippage);
 
+  const {
+    setAssetOneInputValid,
+    setAssetTwoInputValid,
+    assetOneInputValid,
+    assetTwoInputValid,
+    hasValidInputs,
+  } = useInputValidation();
   const [inputMode, setInputMode] = useState<1 | 2>(1);
-  const [assetOneInputValid, setAssetOneInputValid] = useState(true);
-  const [assetTwoInputValid, setAssetTwoInputValid] = useState(true);
+
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+
   const {
     tokenAmounts: { assetOneAmount, assetTwoAmount },
     setTokenAmounts,
@@ -218,23 +244,28 @@ export function useSwaps({
       const sideUpdated = inputMode === 1 ? "quote" : "base";
       const feePercentage = selectedPool.config.feeConfig.feeRate;
       let minReceive = new BigNumber(0);
-      const tokenQuoteAmount =
+      const { tokenQuoteAmount, tokenQuoteAsset } =
         selectedAssetOneId === quoteAsset?.getPicassoAssetId()
-          ? quoteAmount
-          : baseAmount;
-      const tokenBaseAmount =
-        selectedAssetTwoId === baseAsset?.getPicassoAssetId()
-          ? baseAmount
-          : quoteAmount;
+          ? {
+              tokenQuoteAmount: quoteAmount,
+              tokenQuoteAsset: quoteAsset,
+            }
+          : {
+              tokenQuoteAmount: baseAmount,
+              tokenQuoteAsset: baseAsset,
+            };
 
-      const tokenQuoteAsset =
-        selectedAssetOneId === quoteAsset?.getPicassoAssetId()
-          ? quoteAsset
-          : baseAsset;
-      const tokenBaseAsset =
+      const { tokenBaseAmount, tokenBaseAsset } =
         selectedAssetTwoId === baseAsset?.getPicassoAssetId()
-          ? baseAsset
-          : quoteAsset;
+          ? {
+              tokenBaseAsset: baseAsset,
+              tokenBaseAmount: baseAmount,
+            }
+          : {
+              tokenBaseAsset: quoteAsset,
+              tokenBaseAmount: quoteAmount,
+            };
+
       if (sideUpdated === "quote") {
         const feeCharged = (
           amount.gt(balance1) ? balance1 : amount
@@ -263,7 +294,7 @@ export function useSwaps({
           assetTwoAmount: amountOut,
         });
       } else {
-        const amountOut = amount.gt(balance1) ? balance1 : amount;
+        const amountOut = amount.gt(balance2) ? balance2 : amount;
         const amountIn = calculateInGivenOut(
           tokenBaseAmount,
           tokenQuoteAmount,
@@ -284,7 +315,7 @@ export function useSwaps({
 
         setMinimumReceived({
           value: minReceive,
-          asset: tokenBaseAsset,
+          asset: tokenQuoteAsset,
         });
         setFeeCharged(feeCharged);
         setSlippageAmount(slippageAmount);
@@ -352,9 +383,17 @@ export function useSwaps({
     resetTokenAmounts();
   };
 
-  const valid = assetOneInputValid && assetTwoInputValid && !!selectedPool;
-
-  const percentageToSwap = 50;
+  const valid = useMemo(
+    () => hasValidInputs && !!selectedPool,
+    [
+      assetOneAmount,
+      assetTwoAmount,
+      balance1,
+      balance2,
+      hasValidInputs,
+      selectedPool,
+    ]
+  );
 
   return {
     inputMode,

@@ -3,11 +3,11 @@
 #[derive(derive_more::From)]
 pub enum AllRuntimeEvents {
 	/// Picasso runtime events
-	Picasso(picasso_runtime::Event),
+	Picasso(picasso_runtime::RuntimeEvent),
 	/// Dali runtime events
-	Dali(dali_runtime::Event),
+	Dali(dali_runtime::RuntimeEvent),
 	/// Composable runtime events
-	Composable(composable_runtime::Event),
+	Composable(composable_runtime::RuntimeEvent),
 }
 
 /// Convenience method to match on [`AllRuntimeEvents`]
@@ -16,9 +16,9 @@ macro_rules! match_event {
 	($ev:expr, $event:ident, $sub_ev:pat) => {{
 		matches!(
 			$ev,
-			AllRuntimeEvents::Picasso(picasso_runtime::Event::$event($sub_ev)) |
-				AllRuntimeEvents::Dali(dali_runtime::Event::$event($sub_ev)) |
-				AllRuntimeEvents::Composable(composable_runtime::Event::$event($sub_ev))
+			AllRuntimeEvents::Picasso(picasso_runtime::RuntimeEvent::$event($sub_ev)) |
+				AllRuntimeEvents::Dali(dali_runtime::RuntimeEvent::$event($sub_ev)) |
+				AllRuntimeEvents::Composable(composable_runtime::RuntimeEvent::$event($sub_ev))
 		)
 	}};
 }

@@ -17,22 +17,22 @@ pub trait WeightInfo {
 // For backwards compatibility and tests
 impl WeightInfo for () {
     fn update_route() -> Weight {
-        10_000
+        Weight::from_ref_time(10_000)
     }
 
     fn buy() -> Weight  {
-        10_000
+        Weight::from_ref_time(10_000)
     }
 
     fn swap() -> Weight {
-        10_000
+        Weight::from_ref_time(10_000)
     }
 
     fn add_liquidity() -> Weight {
-        10_000
+        Weight::from_ref_time(10_000)
     }
 
     fn remove_liquidity() -> Weight {
-        10_000
+        Weight::from_ref_time(10_000)
     }
 }
