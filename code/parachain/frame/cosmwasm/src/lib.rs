@@ -95,7 +95,7 @@ pub mod pallet {
 			ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env,
 			Event as CosmwasmEvent, MessageInfo, Timestamp, TransactionInfo,
 		},
-		executor::{cosmwasm_call, ExecuteCall, MigrateCall, QueryCall, QueryResponse, ReplyCall},
+		executor::{cosmwasm_call, MigrateCall, QueryCall, QueryResponse, ReplyCall},
 		system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
@@ -875,7 +875,7 @@ pub mod pallet {
 			funds: FundsOf<T>,
 			message: ContractMessageOf<T>,
 		) -> Result<(), CosmwasmVMError<T>> {
-			EntryPointCaller::<ExecuteCall>::setup(who, contract)?.call(shared, funds, message)
+			setup_execute_call(who, contract)?.call(shared, funds, message)
 		}
 
 		fn do_migrate(
@@ -1399,11 +1399,12 @@ pub mod pallet {
 			message: &[u8],
 			event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
 		) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
-			EntryPointCaller::<ExecuteCall>::setup(
-				vm.contract_address.clone().into_inner(),
-				contract,
-			)?
-			.continue_run(vm.shared, funds, message, event_handler)
+			setup_execute_call(vm.contract_address.clone().into_inner(), contract)?.continue_run(
+				vm.shared,
+				funds,
+				message,
+				event_handler,
+			)
 		}
 
 		pub(crate) fn do_continue_reply<'a>(
@@ -1570,11 +1571,7 @@ pub mod pallet {
 		message: ContractMessageOf<T>,
 	) -> Result<(), CosmwasmVMError<T>> {
 		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		EntryPointCaller::<ExecuteCall>::setup(executor, contract)?.call(
-			&mut shared,
-			funds,
-			message,
-		)
+		setup_execute_call(executor, contract)?.call(&mut shared, funds, message)
 	}
 
 	impl<T: Config> VMPallet for T {

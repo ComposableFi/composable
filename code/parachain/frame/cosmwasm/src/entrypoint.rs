@@ -81,25 +81,23 @@ pub(crate) fn setup_instantiate_call<T: Config>(
 	})
 }
 
-impl EntryPointCaller<ExecuteCall> {
-	/// Prepares for `execute` entrypoint call.
-	///
-	/// * `executor` - Address of the account that calls this entrypoint.
-	/// * `contract` - Address of the contract to be called.
-	pub(crate) fn setup<T: Config>(
-		executor: AccountIdOf<T>,
-		contract: AccountIdOf<T>,
-	) -> Result<EntryPointCaller<Dispatchable<ExecuteCall, (), T>>, Error<T>> {
-		Ok(EntryPointCaller {
-			state: Dispatchable {
-				entrypoint: EntryPoint::Execute,
-				sender: executor,
-				contract,
-				output: (),
-				marker: PhantomData,
-			},
-		})
-	}
+/// Prepares for `execute` entrypoint call.
+///
+/// * `executor` - Address of the account that calls this entrypoint.
+/// * `contract` - Address of the contract to be called.
+pub(crate) fn setup_execute_call<T: Config>(
+	executor: AccountIdOf<T>,
+	contract: AccountIdOf<T>,
+) -> Result<EntryPointCaller<Dispatchable<ExecuteCall, (), T>>, Error<T>> {
+	Ok(EntryPointCaller {
+		state: Dispatchable {
+			entrypoint: EntryPoint::Execute,
+			sender: executor,
+			contract,
+			output: (),
+			marker: PhantomData,
+		},
+	})
 }
 
 impl EntryPointCaller<ReplyCall> {
