@@ -240,7 +240,7 @@ mod pallet_contracts {
 			System::set_block_number(0xDEADBEEF);
 			let depth = 10;
 			assert_ok!(Cosmwasm::execute(
-				Origin::signed(MOCK_PALLET_ACCOUNT_ID_1),
+				RuntimeOrigin::signed(MOCK_PALLET_ACCOUNT_ID_1),
 				MOCK_PALLET_CONTRACT_ADDRESS_1,
 				Default::default(),
 				100_000_000_000_000u64,
@@ -263,7 +263,7 @@ mod pallet_contracts {
 			// The second pallet with a contract hook
 			let depth = 20;
 			assert_ok!(Cosmwasm::execute(
-				Origin::signed(MOCK_PALLET_ACCOUNT_ID_2),
+				RuntimeOrigin::signed(MOCK_PALLET_ACCOUNT_ID_2),
 				MOCK_PALLET_CONTRACT_ADDRESS_2,
 				Default::default(),
 				100_000_000_000_000u64,
