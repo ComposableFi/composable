@@ -1,4 +1,5 @@
 use crate::*;
+use frame_support::assert_ok;
 use mocks::{new_test_ext, GovernanceRegistry, RuntimeOrigin, Test};
 use orml_traits::MultiCurrency;
 
@@ -19,16 +20,15 @@ fn create_asset_id(protocol_id: [u8; 8], nonce: u64) -> u128 {
 }
 
 #[test]
-#[ignore = "Not sure what this is testing"]
 fn set_only_by_root() {
 	new_test_ext().execute_with(|| {
-		GovernanceRegistry::set(RuntimeOrigin::root(), 1, 1).unwrap();
-		Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::root(), &2).unwrap();
-		Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::signed(1), &2).unwrap_err();
-		Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::signed(2), &1).unwrap_err();
-		Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::signed(1), &1).unwrap();
-		Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::none(), &1).unwrap_err();
-		Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::none(), &2).unwrap_err();
+		assert_ok!(GovernanceRegistry::set(RuntimeOrigin::root(), 1, 1));
+		assert_ok!(Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::root(), &2));
+		assert_ok!(Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::signed(1), &2));
+		assert_ok!(Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::signed(2), &1));
+		assert_ok!(Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::signed(1), &1));
+		assert_ok!(Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::none(), &1));
+		assert_ok!(Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::none(), &2));
 	});
 }
 
@@ -36,14 +36,13 @@ fn set_only_by_root() {
 fn test_transfer() {
 	let asset_id = 1;
 	new_test_ext().execute_with(|| {
-		Pallet::<Test>::transfer(
+		assert_ok!(Pallet::<Test>::transfer(
 			RuntimeOrigin::signed(FROM_ACCOUNT),
 			asset_id,
 			TO_ACCOUNT,
 			TRANSFER_AMOUNT,
 			true,
-		)
-		.expect("transfer should work");
+		));
 		assert_eq!(
 			Pallet::<Test>::total_balance(asset_id, &FROM_ACCOUNT),
 			INIT_AMOUNT - TRANSFER_AMOUNT
@@ -59,13 +58,12 @@ fn test_transfer() {
 fn test_transfer_native() {
 	let asset_id = 1;
 	new_test_ext().execute_with(|| {
-		Pallet::<Test>::transfer_native(
+		assert_ok!(Pallet::<Test>::transfer_native(
 			RuntimeOrigin::signed(FROM_ACCOUNT),
 			TO_ACCOUNT,
 			TRANSFER_AMOUNT,
 			true,
-		)
-		.expect("transfer_native should work");
+		));
 		assert_eq!(
 			Pallet::<Test>::total_balance(asset_id, &FROM_ACCOUNT),
 			INIT_AMOUNT - TRANSFER_AMOUNT
@@ -81,15 +79,14 @@ fn test_transfer_native() {
 fn test_force_transfer() {
 	let asset_id = 1;
 	new_test_ext().execute_with(|| {
-		Pallet::<Test>::force_transfer(
+		assert_ok!(Pallet::<Test>::force_transfer(
 			RuntimeOrigin::root(),
 			asset_id,
 			FROM_ACCOUNT,
 			TO_ACCOUNT,
 			TRANSFER_AMOUNT,
 			true,
-		)
-		.expect("force_transfer should work");
+		));
 		assert_eq!(
 			Pallet::<Test>::total_balance(asset_id, &FROM_ACCOUNT),
 			INIT_AMOUNT - TRANSFER_AMOUNT
@@ -105,14 +102,13 @@ fn test_force_transfer() {
 fn test_force_transfer_native() {
 	let asset_id = 1;
 	new_test_ext().execute_with(|| {
-		Pallet::<Test>::force_transfer_native(
+		assert_ok!(Pallet::<Test>::force_transfer_native(
 			RuntimeOrigin::root(),
 			FROM_ACCOUNT,
 			TO_ACCOUNT,
 			TRANSFER_AMOUNT,
 			true,
-		)
-		.expect("force_transfer_native should work");
+		));
 		assert_eq!(
 			Pallet::<Test>::total_balance(asset_id, &FROM_ACCOUNT),
 			INIT_AMOUNT - TRANSFER_AMOUNT
@@ -128,13 +124,12 @@ fn test_force_transfer_native() {
 fn test_transfer_all() {
 	let asset_id = 1;
 	new_test_ext().execute_with(|| {
-		Pallet::<Test>::transfer_all(
+		assert_ok!(Pallet::<Test>::transfer_all(
 			RuntimeOrigin::signed(FROM_ACCOUNT),
 			asset_id,
 			TO_ACCOUNT,
 			true,
-		)
-		.expect("transfer_all should work");
+		));
 		assert_eq!(Pallet::<Test>::total_balance(asset_id, &FROM_ACCOUNT), 1);
 		assert_eq!(Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT), INIT_AMOUNT * 2 - 1);
 	});
@@ -144,8 +139,11 @@ fn test_transfer_all() {
 fn test_transfer_all_native() {
 	let asset_id = 1;
 	new_test_ext().execute_with(|| {
-		Pallet::<Test>::transfer_all_native(RuntimeOrigin::signed(FROM_ACCOUNT), TO_ACCOUNT, true)
-			.expect("transfer_all_native should work");
+		assert_ok!(Pallet::<Test>::transfer_all_native(
+			RuntimeOrigin::signed(FROM_ACCOUNT),
+			TO_ACCOUNT,
+			true
+		));
 		assert_eq!(Pallet::<Test>::total_balance(asset_id, &FROM_ACCOUNT), 1);
 		assert_eq!(Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT), INIT_AMOUNT * 2 - 1);
 	});
@@ -158,7 +156,7 @@ fn test_mint_initialize() {
 	let asset_id = create_asset_id(prototcol_id, nonce);
 	new_test_ext().execute_with(|| {
 		assert_eq!(Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT), INIT_AMOUNT);
-		Pallet::<Test>::mint_initialize(
+		assert_ok!(Pallet::<Test>::mint_initialize(
 			RuntimeOrigin::root(),
 			prototcol_id,
 			nonce,
@@ -168,8 +166,7 @@ fn test_mint_initialize() {
 			None,
 			TRANSFER_AMOUNT,
 			TO_ACCOUNT,
-		)
-		.expect("mint_initialize should work");
+		));
 		assert_eq!(
 			Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT),
 			INIT_AMOUNT + TRANSFER_AMOUNT
@@ -184,7 +181,7 @@ fn test_mint_initialize_with_governance() {
 	let asset_id = create_asset_id(prototcol_id, nonce);
 	new_test_ext().execute_with(|| {
 		assert_eq!(Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT), INIT_AMOUNT);
-		Pallet::<Test>::mint_initialize_with_governance(
+		assert_ok!(Pallet::<Test>::mint_initialize_with_governance(
 			RuntimeOrigin::root(),
 			prototcol_id,
 			nonce,
@@ -195,16 +192,15 @@ fn test_mint_initialize_with_governance() {
 			TRANSFER_AMOUNT,
 			TO_ACCOUNT,
 			TO_ACCOUNT,
-		)
-		.expect("mint_initialize_with_governance should work");
+		));
 		assert_eq!(
 			Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT),
 			INIT_AMOUNT + TRANSFER_AMOUNT
 		);
-		Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::signed(TO_ACCOUNT), &asset_id)
-			.expect(
-			"mint_initialize_with_governance should add governance_origin to GovernanceRegistry",
-		);
+		assert_ok!(Pallet::<Test>::ensure_admin_or_governance(
+			RuntimeOrigin::signed(TO_ACCOUNT),
+			&asset_id
+		));
 	});
 }
 
@@ -212,17 +208,16 @@ fn test_mint_initialize_with_governance() {
 fn test_mint_into() {
 	let asset_id = 1;
 	new_test_ext().execute_with(|| {
-		GovernanceRegistry::set(RuntimeOrigin::root(), asset_id, FROM_ACCOUNT).unwrap();
+		assert_ok!(GovernanceRegistry::set(RuntimeOrigin::root(), asset_id, FROM_ACCOUNT));
 		assert_eq!(Pallet::<Test>::total_balance(asset_id, &FROM_ACCOUNT), INIT_AMOUNT);
 		assert_eq!(Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT), INIT_AMOUNT);
 
-		Pallet::<Test>::mint_into(
+		assert_ok!(Pallet::<Test>::mint_into(
 			RuntimeOrigin::signed(FROM_ACCOUNT),
 			asset_id,
 			TO_ACCOUNT,
 			TRANSFER_AMOUNT,
-		)
-		.expect("mint_into should work");
+		));
 		assert_eq!(Pallet::<Test>::total_balance(asset_id, &FROM_ACCOUNT), INIT_AMOUNT);
 		assert_eq!(
 			Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT),
@@ -235,17 +230,16 @@ fn test_mint_into() {
 fn test_burn_from() {
 	let asset_id = 1;
 	new_test_ext().execute_with(|| {
-		GovernanceRegistry::set(RuntimeOrigin::root(), asset_id, FROM_ACCOUNT).unwrap();
+		assert_ok!(GovernanceRegistry::set(RuntimeOrigin::root(), asset_id, FROM_ACCOUNT));
 		assert_eq!(Pallet::<Test>::total_balance(asset_id, &FROM_ACCOUNT), INIT_AMOUNT);
 		assert_eq!(Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT), INIT_AMOUNT);
 
-		Pallet::<Test>::burn_from(
+		assert_ok!(Pallet::<Test>::burn_from(
 			RuntimeOrigin::signed(FROM_ACCOUNT),
 			asset_id,
 			TO_ACCOUNT,
 			TRANSFER_AMOUNT,
-		)
-		.expect("burn_from should work");
+		));
 		assert_eq!(Pallet::<Test>::total_balance(asset_id, &FROM_ACCOUNT), INIT_AMOUNT);
 		assert_eq!(
 			Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT),
