@@ -14,8 +14,8 @@
           src = pkgs.fetchFromGitHub {
             owner = "ComposableFi";
             repo = "centauri";
-            rev = "ecefd88ad0ddcb2b55553c23f985f540bee7a80b";
-            hash = "sha256-sHrYRsVbbBwF2XqUVfBDdXP99K8s8A7cwL30+TUvrrs=";
+            rev = "29fc08f0585fe1df793f6eadee50b98f64e9a475";
+            hash = "sha256-B20X3ipmHSC+O+Vfobb4UcTQH7QnSkt0DIGfTRPhTIM=";
           };
           installPhase = ''
             mkdir $out
