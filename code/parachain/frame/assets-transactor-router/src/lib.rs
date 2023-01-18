@@ -68,17 +68,15 @@
 #![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use composable_traits::currency::Rational64;
 pub use pallet::*;
-use sp_runtime::DispatchError;
 
 mod orml;
 
-// #[cfg(test)]
-// mod mocks;
+#[cfg(test)]
+mod mocks;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 // #[cfg(any(feature = "runtime-benchmarks", test))]
 // mod benchmarking;
@@ -391,7 +389,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure_root(origin)?;
 			let id = <Self as CreateAsset>::create_local_asset(
-				protocol_id,
+				protocol_id.try_into().expect(""),
 				nonce,
 				name,
 				symbol,

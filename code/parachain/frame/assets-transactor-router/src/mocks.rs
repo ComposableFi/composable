@@ -1,29 +1,23 @@
 use crate::*;
 
-use composable_traits::{
-	currency::{CurrencyFactory, RangeId},
-	xcm::assets::XcmAssetLocation,
-};
+use composable_traits::xcm::assets::XcmAssetLocation;
 use frame_support::{
 	parameter_types,
 	traits::{Everything, GenesisBuild},
 };
 use frame_system as system;
-use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
-use primitives::currency::ValidateCurrencyId;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
-	DispatchError,
+	traits::{BlakeTwo256, IdentityLookup, Zero},
 };
 use system::EnsureRoot;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub type Block = frame_system::mocking::MockBlock<Test>;
 pub type AccountId = u64;
-pub type AssetId = u64;
+pub type AssetId = u128;
 pub type Amount = i128;
 pub type Balance = u64;
 
@@ -49,11 +43,13 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>} = 1,
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 2,
-		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 3,
-		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
-		Assets: crate::{Pallet, Call, Storage} = 5,
+		System: frame_system = 1,
+		Balances: pallet_balances = 2,
+		GovernanceRegistry: governance_registry = 3,
+		Tokens: orml_tokens = 4,
+		AssetsRegistry: assets_registry = 5,
+		AssetsTransactorRouter: crate = 6,
+
 	}
 );
 
@@ -67,39 +63,36 @@ parameter_types! {
 	pub const NativeAssetId: AssetId = 1;
 }
 
-pub struct CurrencyIdGenerator;
-
-impl CurrencyFactory for CurrencyIdGenerator {
-	type AssetId = AssetId;
-	type Balance = Balance;
-
-	fn create(_: RangeId) -> Result<Self::AssetId, sp_runtime::DispatchError> {
-		Ok(1)
-	}
-
-	fn protocol_asset_id_to_unique_asset_id(
-		_protocol_asset_id: u32,
-		_range_id: RangeId,
-	) -> Result<Self::AssetId, DispatchError> {
-		Ok(1)
-	}
-
-	fn unique_asset_id_to_protocol_asset_id(_unique_asset_id: Self::AssetId) -> u32 {
-		1
-	}
-}
-
 impl Config for Test {
 	type AssetId = AssetId;
+	type AssetLocation = XcmAssetLocation;
 	type Balance = Balance;
 	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = CurrencyIdGenerator;
 	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
+	type LocalTransactor = Tokens;
+	// TODO(connor): Use second instance of `Tokens`
+	type ForeignTransactor = Tokens;
 	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type CurrencyValidator = ValidateCurrencyId;
+	type AssetLookup = AssetsRegistry;
+}
+
+parameter_types! {
+	pub const AssetSymbolMaxChars: u32 = 16;
+	pub const AssetNameMaxChars: u32 = 32;
+}
+
+impl assets_registry::Config for Test {
+	type Event = Event;
+	type LocalAssetId = AssetId;
+	type ForeignAssetId = XcmAssetLocation;
+	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
+	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
+	type Balance = Balance;
+	type AssetSymbolMaxChars = AssetSymbolMaxChars;
+	type AssetNameMaxChars = AssetNameMaxChars;
 }
 
 parameter_types! {

@@ -25,27 +25,14 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		CurrencyFactory : pallet_currency_factory::{Pallet, Call, Storage, Event<T>},
-
-		AssetsRegistry: pallet_assets_registry::{Pallet, Call, Storage, Event<T>},
+		System: frame_system,
+		AssetsRegistry: pallet_assets_registry,
 	}
 );
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
-}
-
-impl pallet_currency_factory::Config for Runtime {
-	type Event = Event;
-	type AssetId = AssetId;
-	type Balance = Balance;
-	type AddOrigin = EnsureOneOf<
-		EnsureSignedBy<RootAccount, AccountId>, // for tests
-		EnsureRoot<AccountId>,                  // for benchmarks
-	>;
-	type WeightInfo = pallet_currency_factory::SubstrateWeight<Self>;
 }
 
 impl system::Config for Runtime {
@@ -90,7 +77,6 @@ impl pallet_assets_registry::Config for Runtime {
 	type Event = Event;
 	type LocalAssetId = AssetId;
 	type Balance = Balance;
-	type CurrencyFactory = CurrencyFactory;
 	type ForeignAssetId = XcmAssetLocation;
 	type UpdateAssetRegistryOrigin = EnsureOneOf<
 		EnsureSignedBy<RootAccount, AccountId>, // for tests

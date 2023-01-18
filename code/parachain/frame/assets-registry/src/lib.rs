@@ -37,7 +37,7 @@ pub mod pallet {
 			Asset, AssetMetadata, AssetType, AssetTypeInspect, InspectRegistryMetadata,
 			LocalOrForeignAssetId, MutateRegistryMetadata,
 		},
-		currency::{BalanceLike, CurrencyFactory, Exponent, ForeignByNative},
+		currency::{BalanceLike, Exponent, ForeignByNative},
 		xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
 	};
 	use cumulus_primitives_core::ParaId;
@@ -89,8 +89,6 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		type Balance: BalanceLike;
-
-		type CurrencyFactory: CurrencyFactory<AssetId = Self::LocalAssetId, Balance = Self::Balance>;
 
 		/// Maximum number of characters allowed in an asset symbol
 		#[pallet::constant]

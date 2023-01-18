@@ -29,6 +29,7 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 # local
 composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
+assets-registry ={ package = "pallet-assets-registry", path = "../assets-registry", default-features = false }
 
 # misc
 codec = { default-features = false, features = [
@@ -38,7 +39,29 @@ scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
 
+[dev-dependencies]
+composable-tests-helpers = { path = "../composable-tests-helpers" }
+frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "504d11bd1af3613a0e66b47b99713675e9b6bd10" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+proptest = "1.0"
+
 [features]
+
 default = ["std"]
 
-std = ["sp-api/std", "composable-traits/std"]
+std = [
+  "composable-traits/std",
+  "codec/std",
+  "frame-support/std",
+  "sp-runtime/std",
+  "sp-api/std",
+  "orml-traits/std",
+]
+
+runtime-benchmarks = [
+  "frame-benchmarking",
+  "frame-support/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+]
