@@ -60,23 +60,21 @@ scheduler = { package = "pallet-scheduler", git = "https://github.com/paritytech
 session = { package = "pallet-session", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 smallvec = "1.6.1"
 
-asset-tx-payment = { package = "pallet-asset-tx-payment", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 proxy = { package = "pallet-proxy", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 
 # local modules
-assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
-assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false }
+assets = { package = "pallet-assets", path = "../../frame/assets", default-features = false }
+assets-registry = { package = "pallet-assets-registry", path = "../../frame/assets-registry", default-features = false }
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 common = { path = "../common", default-features = false }
-composable-support = { path = '../../frame/composable-support', default-features = false }
+composable-support = { path = "../../frame/composable-support", default-features = false }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
-crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
+crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = "../../frame/crowdloan-rewards", default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
 dex-router = { package = "pallet-dex-router", path = "../../frame/dex-router", default-features = false }
 dutch-auction = { package = "pallet-dutch-auction", path = "../../frame/dutch-auction", default-features = false }
@@ -91,6 +89,8 @@ pallet-staking-rewards = { path = "../../frame/staking-rewards", default-feature
 primitives = { path = "../primitives", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
+asset-tx-payment = { package = "pallet-asset-tx-payment", path = "../../frame/transaction-payment/asset-tx-payment", default-features = false }
+transaction-payment = { package = "pallet-transaction-payment", path = "../../frame/transaction-payment", default-features = false }
 
 # cosmwasm support
 cosmwasm = { package = "pallet-cosmwasm", path = "../../frame/cosmwasm", default-features = false }
@@ -98,14 +98,14 @@ hex = { version = "0.4.0", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
+transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", path = "../../frame/transaction-payment/rpc/runtime-api", default-features = false }
 
 # local RPCs
-assets-runtime-api = { path = '../../frame/assets/runtime-api', default-features = false }
-cosmwasm-runtime-api = { path = '../../frame/cosmwasm/runtime-api', default-features = false }
-crowdloan-rewards-runtime-api = { path = '../../frame/crowdloan-rewards/runtime-api', default-features = false }
-lending-runtime-api = { path = '../../frame/lending/runtime-api', default-features = false }
-pablo-runtime-api = { path = '../../frame/pablo/runtime-api', default-features = false }
+assets-runtime-api = { path = "../../frame/assets/runtime-api", default-features = false }
+cosmwasm-runtime-api = { path = "../../frame/cosmwasm/runtime-api", default-features = false }
+crowdloan-rewards-runtime-api = { path = "../../frame/crowdloan-rewards/runtime-api", default-features = false }
+lending-runtime-api = { path = "../../frame/lending/runtime-api", default-features = false }
+pablo-runtime-api = { path = "../../frame/pablo/runtime-api", default-features = false }
 
 # Used for runtime benchmarking
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
@@ -211,6 +211,7 @@ runtime-benchmarks = [
   "pallet-staking-rewards/runtime-benchmarks",
   "cosmwasm/runtime-benchmarks",
   "pallet-ibc/runtime-benchmarks",
+  "asset-tx-payment/runtime-benchmarks",
 ]
 std = [
   "assets-registry/std",

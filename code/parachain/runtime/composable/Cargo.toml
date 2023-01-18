@@ -60,7 +60,6 @@ session = { package = "pallet-session", git = "https://github.com/paritytech/sub
 smallvec = "1.6.1"
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 
@@ -76,10 +75,11 @@ governance-registry = { package = "pallet-governance-registry", path = "../../fr
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false, optional = true }
 primitives = { path = "../primitives", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false, optional = true }
+transaction-payment = { package = "pallet-transaction-payment", path = "../../frame/transaction-payment", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
+transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", path = "../../frame/transaction-payment/rpc/runtime-api", default-features = false }
 
 # local RPCs
 assets-runtime-api = { path = '../../frame/assets/runtime-api', default-features = false }

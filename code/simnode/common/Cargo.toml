@@ -9,7 +9,6 @@ substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode"
 
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 
 sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
@@ -23,7 +22,8 @@ sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 
-asset-tx-payment = { package = "pallet-asset-tx-payment", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
+asset-tx-payment = { package = "pallet-asset-tx-payment", path = "../../parachain/frame/transaction-payment", default-features = false }
+transaction-payment = { package = "pallet-transaction-payment", path = "../../parachain/frame/transaction-payment", default-features = false }
 
 common = { path = "../../parachain/runtime/common" }
 composable-runtime = { path = "../../parachain/runtime/composable" }

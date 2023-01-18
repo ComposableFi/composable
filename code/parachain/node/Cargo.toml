@@ -37,14 +37,14 @@ lending-rpc = { path = "../frame/lending/rpc" }
 lending-runtime-api = { path = "../frame/lending/runtime-api" }
 pablo-rpc = { path = "../frame/pablo/rpc" }
 pablo-runtime-api = { path = "../frame/pablo/runtime-api" }
+pallet-transaction-payment-rpc = { path = "../frame/transaction-payment/rpc" }
+pallet-transaction-payment-rpc-runtime-api = { path = "../frame/transaction-payment/rpc/runtime-api" }
 
 pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "f0d44fe83c078b2d9fb040337c8152f037ba817d" }
 
 # FRAME Dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 

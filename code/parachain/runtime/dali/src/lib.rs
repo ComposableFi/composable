@@ -84,7 +84,9 @@ pub use frame_support::{
 	construct_runtime,
 	pallet_prelude::DispatchClass,
 	parameter_types,
-	traits::{Contains, Everything, Get, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
+	traits::{
+		ConstBool, Contains, Everything, Get, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo,
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -374,12 +376,25 @@ impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrD
 }
 
 impl asset_tx_payment::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type Fungibles = Tokens;
 	type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
 		PriceConverter<AssetsRegistry>,
 		TransferToTreasuryOrDrop,
 	>;
+
+	type UseUserConfiguration = ConstBool<true>;
+
+	type WeightInfo = weights::asset_tx_payment::WeightInfo<Runtime>;
+
+	type ConfigurationOrigin = EnsureRootOrHalfNativeCouncil;
+
+	type ConfigurationExistentialDeposit = NativeExistentialDeposit;
+
+	type PayableCall = RuntimeCall;
+
+	type Lock = Assets;
+
+	type BalanceConverter = PriceConverter<AssetsRegistry>;
 }
 
 impl sudo::Config for Runtime {

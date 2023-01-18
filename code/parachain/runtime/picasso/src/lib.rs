@@ -414,12 +414,25 @@ impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrD
 }
 
 impl asset_tx_payment::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type Fungibles = Tokens;
 	type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
 		PriceConverter<AssetsRegistry>,
 		TransferToTreasuryOrDrop,
 	>;
+
+	type UseUserConfiguration = ConstBool<true>;
+
+	type WeightInfo = weights::asset_tx_payment::WeightInfo<Runtime>;
+
+	type ConfigurationOrigin = EnsureRootOrTwoThirdNativeCouncil;
+
+	type ConfigurationExistentialDeposit = NativeExistentialDeposit;
+
+	type PayableCall = RuntimeCall;
+
+	type Lock = Assets;
+
+	type BalanceConverter = PriceConverter<AssetsRegistry>;
 }
 
 impl sudo::Config for Runtime {
@@ -623,7 +636,7 @@ impl scheduler::Config for Runtime {
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type PreimageProvider = Preimage;
 	type NoPreimagePostponement = NoPreimagePostponement;
-	type WeightInfo = scheduler::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::scheduler::WeightInfo<Runtime>;
 }
 
 parameter_types! {

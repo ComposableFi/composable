@@ -55,7 +55,6 @@ session = { package = "pallet-session", git = "https://github.com/paritytech/sub
 smallvec = "1.6.1"
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 
@@ -72,11 +71,11 @@ liquidations = { package = "pallet-liquidations", path = "../../parachain/frame/
 oracle = { package = "pallet-oracle", path = "../../parachain/frame/oracle", default-features = false }
 primitives = { path = "../../parachain/runtime/primitives", default-features = false }
 vault = { package = "pallet-vault", path = "../../parachain/frame/vault", default-features = false }
-
+transaction-payment = { package = "pallet-transaction-payment", path = "../../parachain/frame/transaction-payment", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
+transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", path = "../../parachain/frame/transaction-payment", default-features = false }
 
 # Used for runtime benchmarking
 benchmarking = { package = "frame-benchmarking", git = "https://github.com/paritytech/substrate", default-features = false, optional = true, branch = "polkadot-v0.9.30" }
