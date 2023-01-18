@@ -24,11 +24,6 @@ use cosmwasm_vm::{
 use cosmwasm_vm_wasmi::WasmiVM;
 use frame_support::ensure;
 
-/// State machine for entrypoint calls like `instantiate`, `migrate`, etc.
-pub struct EntryPointCaller<S> {
-	state: S,
-}
-
 /// Generic ready-to-call state for all input types
 pub struct Dispatchable<I, O, T: Config> {
 	sender: AccountIdOf<T>,
@@ -48,7 +43,7 @@ pub(crate) fn setup_instantiate_call<T: Config>(
 	admin: Option<AccountIdOf<T>>,
 	label: ContractLabelOf<T>,
 	message: &[u8],
-) -> Result<EntryPointCaller<Dispatchable<InstantiateCall, AccountIdOf<T>, T>>, Error<T>> {
+) -> Result<Dispatchable<InstantiateCall, AccountIdOf<T>, T>, Error<T>> {
 	let code_hash = CodeIdToInfo::<T>::get(code_id)
 		.ok_or(Error::<T>::CodeNotFound)?
 		.pristine_code_hash;
@@ -70,14 +65,12 @@ pub(crate) fn setup_instantiate_call<T: Config>(
 		contract: contract.clone(),
 		info: contract_info,
 	});
-	Ok(EntryPointCaller {
-		state: Dispatchable {
-			sender: instantiator,
-			contract: contract.clone(),
-			entrypoint: EntryPoint::Instantiate,
-			output: contract,
-			marker: PhantomData,
-		},
+	Ok(Dispatchable {
+		sender: instantiator,
+		contract: contract.clone(),
+		entrypoint: EntryPoint::Instantiate,
+		output: contract,
+		marker: PhantomData,
 	})
 }
 
@@ -88,15 +81,13 @@ pub(crate) fn setup_instantiate_call<T: Config>(
 pub(crate) fn setup_execute_call<T: Config>(
 	executor: AccountIdOf<T>,
 	contract: AccountIdOf<T>,
-) -> Result<EntryPointCaller<Dispatchable<ExecuteCall, (), T>>, Error<T>> {
-	Ok(EntryPointCaller {
-		state: Dispatchable {
-			entrypoint: EntryPoint::Execute,
-			sender: executor,
-			contract,
-			output: (),
-			marker: PhantomData,
-		},
+) -> Result<Dispatchable<ExecuteCall, (), T>, Error<T>> {
+	Ok(Dispatchable {
+		entrypoint: EntryPoint::Execute,
+		sender: executor,
+		contract,
+		output: (),
+		marker: PhantomData,
 	})
 }
 
@@ -107,15 +98,13 @@ pub(crate) fn setup_execute_call<T: Config>(
 pub(crate) fn setup_reply_call<T: Config>(
 	executor: AccountIdOf<T>,
 	contract: AccountIdOf<T>,
-) -> Result<EntryPointCaller<Dispatchable<ReplyCall, (), T>>, Error<T>> {
-	Ok(EntryPointCaller {
-		state: Dispatchable {
-			entrypoint: EntryPoint::Reply,
-			sender: executor,
-			contract,
-			output: (),
-			marker: PhantomData,
-		},
+) -> Result<Dispatchable<ReplyCall, (), T>, Error<T>> {
+	Ok(Dispatchable {
+		entrypoint: EntryPoint::Reply,
+		sender: executor,
+		contract,
+		output: (),
+		marker: PhantomData,
 	})
 }
 
@@ -129,7 +118,7 @@ pub(crate) fn setup_migrate_call<T: Config>(
 	migrator: AccountIdOf<T>,
 	contract: AccountIdOf<T>,
 	new_code_id: CosmwasmCodeId,
-) -> Result<EntryPointCaller<Dispatchable<MigrateCall, (), T>>, Error<T>> {
+) -> Result<Dispatchable<MigrateCall, (), T>, Error<T>> {
 	let contract_info = Pallet::<T>::contract_info(&contract)?;
 	// If the migrate already happened, no need to do that again.
 	// This is the case for sub-message execution where `migrate` is
@@ -157,22 +146,17 @@ pub(crate) fn setup_migrate_call<T: Config>(
 		to: new_code_id,
 	});
 
-	Ok(EntryPointCaller {
-		state: Dispatchable {
-			sender: migrator,
-			contract,
-			entrypoint: EntryPoint::Migrate,
-			output: (),
-			marker: PhantomData,
-		},
+	Ok(Dispatchable {
+		sender: migrator,
+		contract,
+		entrypoint: EntryPoint::Migrate,
+		output: (),
+		marker: PhantomData,
 	})
 }
 
 /// Dispatch state for all `Input`s
-impl<I, O, T> EntryPointCaller<Dispatchable<I, O, T>>
-where
-	T: Config,
-{
+impl<I, O, T: Config> Dispatchable<I, O, T> {
 	/// Start a cosmwasm transaction by calling an entrypoint.
 	///
 	/// * `shared` - Shared state of the Cosmwasm VM.
@@ -191,7 +175,7 @@ where
 			From<CosmwasmVMError<T>> + Into<CosmwasmVMError<T>>,
 		I: AsFunctionName,
 	{
-		let entrypoint = self.state.entrypoint;
+		let entrypoint = self.entrypoint;
 		self.call_internal(shared, funds, |vm| {
 			cosmwasm_system_entrypoint_hook::<I, _>(vm, &message, |vm, message| {
 				match vm.0.contract_runtime {
@@ -220,13 +204,13 @@ where
 	{
 		Pallet::<T>::do_extrinsic_dispatch(
 			shared,
-			self.state.entrypoint,
-			self.state.sender,
-			self.state.contract,
+			self.entrypoint,
+			self.sender,
+			self.contract,
 			funds,
 			|vm| message(vm).map_err(Into::into),
 		)?;
-		Ok(self.state.output)
+		Ok(self.output)
 	}
 
 	/// Continue the execution by running an entrypoint. This is used for running
@@ -253,8 +237,8 @@ where
 		// calling the callback.
 		Pallet::<T>::cosmwasm_call(
 			shared,
-			self.state.sender,
-			self.state.contract,
+			self.sender,
+			self.contract,
 			funds,
 			// `cosmwasm_system_run` is called instead of `cosmwasm_system_entrypoint` here
 			// because here, we want to continue running the transaction with the given
@@ -266,8 +250,7 @@ where
 				{
 					ContractBackend::CosmWasm { .. } =>
 						cosmwasm_call::<I, _>(vm, message).map(Into::into),
-					ContractBackend::Pallet =>
-						T::PalletHook::execute(vm, self.state.entrypoint, message),
+					ContractBackend::Pallet => T::PalletHook::execute(vm, self.entrypoint, message),
 				})
 				.map_err(Into::into)
 			},
