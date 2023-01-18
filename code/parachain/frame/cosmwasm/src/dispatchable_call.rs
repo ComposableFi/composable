@@ -1,18 +1,15 @@
 use crate::{
 	pallet_hook::PalletHook,
-	runtimes::{
-		vm::{ContractBackend, CosmwasmVMError, CosmwasmVMShared},
-	},
-	types::*, Config, Pallet,
+	runtimes::vm::{ContractBackend, CosmwasmVMError, CosmwasmVMShared},
+	types::*,
+	Config, Pallet,
 };
 use alloc::vec::Vec;
 
 use core::marker::PhantomData;
 use cosmwasm_vm::{
 	cosmwasm_std::{Binary, Coin, Event as CosmwasmEvent},
-	executor::{
-		cosmwasm_call, AsFunctionName,
-	},
+	executor::{cosmwasm_call, AsFunctionName},
 	system::{
 		cosmwasm_system_entrypoint_hook, cosmwasm_system_run_hook, CosmwasmCallVM,
 		CosmwasmDynamicVM, StargateCosmwasmCallVM,
@@ -20,7 +17,6 @@ use cosmwasm_vm::{
 	vm::VmErrorOf,
 };
 use cosmwasm_vm_wasmi::WasmiVM;
-
 
 /// Generic ready-to-call state for all input types
 pub struct DispatchableCall<I, O, T: Config> {
