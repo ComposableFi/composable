@@ -14,7 +14,6 @@ use alloc::{
 use core::{cell::SyncUnsafeCell, marker::PhantomData};
 use cosmwasm_vm::{
 	cosmwasm_std::{Coin, Reply, SubMsgResult},
-	executor::InstantiateCall,
 	system::CosmwasmContractMeta,
 };
 use cosmwasm_vm_wasmi::code_gen::{
