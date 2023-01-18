@@ -23,16 +23,6 @@ use cosmwasm_vm::{
 };
 use cosmwasm_vm_wasmi::WasmiVM;
 use frame_support::ensure;
-
-/// Generic ready-to-call state for all input types
-pub struct Dispatchable<I, O, T: Config> {
-	sender: AccountIdOf<T>,
-	contract: AccountIdOf<T>,
-	entrypoint: EntryPoint,
-	output: O,
-	marker: PhantomData<I>,
-}
-
 /// Prepares for `instantiate` entrypoint call.
 ///
 /// * `instantiator` - Address of the account that calls this entrypoint.
@@ -43,7 +33,7 @@ pub(crate) fn setup_instantiate_call<T: Config>(
 	admin: Option<AccountIdOf<T>>,
 	label: ContractLabelOf<T>,
 	message: &[u8],
-) -> Result<Dispatchable<InstantiateCall, AccountIdOf<T>, T>, Error<T>> {
+) -> Result<DispatchableCall<InstantiateCall, AccountIdOf<T>, T>, Error<T>> {
 	let code_hash = CodeIdToInfo::<T>::get(code_id)
 		.ok_or(Error::<T>::CodeNotFound)?
 		.pristine_code_hash;
@@ -65,7 +55,7 @@ pub(crate) fn setup_instantiate_call<T: Config>(
 		contract: contract.clone(),
 		info: contract_info,
 	});
-	Ok(Dispatchable {
+	Ok(DispatchableCall {
 		sender: instantiator,
 		contract: contract.clone(),
 		entrypoint: EntryPoint::Instantiate,
@@ -81,8 +71,8 @@ pub(crate) fn setup_instantiate_call<T: Config>(
 pub(crate) fn setup_execute_call<T: Config>(
 	executor: AccountIdOf<T>,
 	contract: AccountIdOf<T>,
-) -> Result<Dispatchable<ExecuteCall, (), T>, Error<T>> {
-	Ok(Dispatchable {
+) -> Result<DispatchableCall<ExecuteCall, (), T>, Error<T>> {
+	Ok(DispatchableCall {
 		entrypoint: EntryPoint::Execute,
 		sender: executor,
 		contract,
@@ -98,8 +88,8 @@ pub(crate) fn setup_execute_call<T: Config>(
 pub(crate) fn setup_reply_call<T: Config>(
 	executor: AccountIdOf<T>,
 	contract: AccountIdOf<T>,
-) -> Result<Dispatchable<ReplyCall, (), T>, Error<T>> {
-	Ok(Dispatchable {
+) -> Result<DispatchableCall<ReplyCall, (), T>, Error<T>> {
+	Ok(DispatchableCall {
 		entrypoint: EntryPoint::Reply,
 		sender: executor,
 		contract,
@@ -118,7 +108,7 @@ pub(crate) fn setup_migrate_call<T: Config>(
 	migrator: AccountIdOf<T>,
 	contract: AccountIdOf<T>,
 	new_code_id: CosmwasmCodeId,
-) -> Result<Dispatchable<MigrateCall, (), T>, Error<T>> {
+) -> Result<DispatchableCall<MigrateCall, (), T>, Error<T>> {
 	let contract_info = Pallet::<T>::contract_info(&contract)?;
 	// If the migrate already happened, no need to do that again.
 	// This is the case for sub-message execution where `migrate` is
@@ -146,7 +136,7 @@ pub(crate) fn setup_migrate_call<T: Config>(
 		to: new_code_id,
 	});
 
-	Ok(Dispatchable {
+	Ok(DispatchableCall {
 		sender: migrator,
 		contract,
 		entrypoint: EntryPoint::Migrate,
@@ -155,8 +145,17 @@ pub(crate) fn setup_migrate_call<T: Config>(
 	})
 }
 
+/// Generic ready-to-call state for all input types
+pub struct DispatchableCall<I, O, T: Config> {
+	sender: AccountIdOf<T>,
+	contract: AccountIdOf<T>,
+	entrypoint: EntryPoint,
+	output: O,
+	marker: PhantomData<I>,
+}
+
 /// Dispatch state for all `Input`s
-impl<I, O, T: Config> Dispatchable<I, O, T> {
+impl<I, O, T: Config> DispatchableCall<I, O, T> {
 	/// Start a cosmwasm transaction by calling an entrypoint.
 	///
 	/// * `shared` - Shared state of the Cosmwasm VM.
