@@ -2,8 +2,8 @@ use crate::*;
 use mocks::{new_test_ext, GovernanceRegistry, RuntimeOrigin, Test};
 use orml_traits::MultiCurrency;
 
-const FROM_ACCOUNT: u64 = 1;
-const TO_ACCOUNT: u64 = 2;
+const FROM_ACCOUNT: u128 = 1;
+const TO_ACCOUNT: u128 = 2;
 const INIT_AMOUNT: u64 = 1000;
 const TRANSFER_AMOUNT: u64 = 500;
 

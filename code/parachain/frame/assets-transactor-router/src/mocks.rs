@@ -16,7 +16,7 @@ use system::EnsureRoot;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub type Block = frame_system::mocking::MockBlock<Test>;
-pub type AccountId = u64;
+pub type AccountId = u128;
 pub type AssetId = u128;
 pub type Amount = i128;
 pub type Balance = u64;
