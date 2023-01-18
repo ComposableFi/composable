@@ -845,6 +845,33 @@ jobs:
           command: nix -- build .#dali-subxt-client
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+  package-hyperspace-dali:
+    name: "Package Hyperspace"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-hyperspace-dali-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#hyperspace-dali
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - uses: "./.github/templates/docker-publish"
+        with:
+          command: nix -- build .#hyperspace-dali-container
+          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          name: hyperspace-dali
+          artifact: hyperspace-dali:latest
+
   cache-devnet-all-dev-local:
     name: "Cache devnet all dev local"
     strategy:
