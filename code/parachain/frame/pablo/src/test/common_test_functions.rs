@@ -45,7 +45,7 @@ pub fn common_add_remove_lp(
 	let actual_pool_id = Pablo::do_create_pool(init_config.clone(), Some(lp_token_id))
 		.expect("pool creation failed");
 	assert_has_event::<Test, _>(
-		|e| matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == actual_pool_id),
+		|e| matches!(e.event, mock::RuntimeEvent::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == actual_pool_id),
 	);
 	let pair = get_pair(init_config);
 	// Mint the tokens
@@ -55,7 +55,7 @@ pub fn common_add_remove_lp(
 	System::set_block_number(System::block_number() + 1);
 	// Add the liquidity
 	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(ALICE),
+		RuntimeOrigin::signed(ALICE),
 		actual_pool_id,
 		BTreeMap::from([(pair[0], first_asset_amount), (pair[1], second_asset_amount)]),
 		0,
@@ -63,7 +63,7 @@ pub fn common_add_remove_lp(
 	));
 	assert_last_event::<Test, _>(|e| {
 		matches!(e.event,
-			mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, /* base_amount, quote_amount, */ .. })
+			mock::RuntimeEvent::Pablo(crate::Event::LiquidityAdded { who, pool_id, /* base_amount, quote_amount, */ .. })
 			if who == ALICE
 			&& pool_id == actual_pool_id
 			// && base_amount == first_asset_amount
@@ -85,7 +85,7 @@ pub fn common_add_remove_lp(
 	System::set_block_number(System::block_number() + 1);
 	// Add the liquidity
 	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(BOB),
+		RuntimeOrigin::signed(BOB),
 		actual_pool_id,
 		BTreeMap::from([(pair[0], next_first_asset_amount), (pair[1], next_second_asset_amount)]),
 		0,
@@ -93,7 +93,7 @@ pub fn common_add_remove_lp(
 	));
 	assert_last_event::<Test, _>(|e| {
 		matches!(e.event,
-		mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, /* base_amount, quote_amount, */  .. })
+		mock::RuntimeEvent::Pablo(crate::Event::LiquidityAdded { who, pool_id, /* base_amount, quote_amount, */  .. })
 		if who == BOB
 			&& pool_id == actual_pool_id
 			// && base_amount == next_first_asset_amount
@@ -103,7 +103,7 @@ pub fn common_add_remove_lp(
 	let lp = Tokens::balance(lp_token, &BOB);
 	assert!(expected_lp_check(next_first_asset_amount, next_second_asset_amount, lp));
 	assert_ok!(Pablo::remove_liquidity(
-		Origin::signed(BOB),
+		RuntimeOrigin::signed(BOB),
 		actual_pool_id,
 		lp,
 		BTreeMap::from([(pair[0], 0_u128), (pair[1], 0_u128)]),
@@ -135,12 +135,12 @@ pub fn common_add_lp_with_min_mint_amount(
 	second_asset_amount: Balance,
 	expected_lp: impl Fn(Balance, Balance, Balance, Balance, Balance) -> Balance,
 ) {
-	Pablo::create(Origin::root(), init_config.clone()).expect("pool creation failed");
+	Pablo::create(RuntimeOrigin::root(), init_config.clone()).expect("pool creation failed");
 
 	let pool_id = System::events()
 		.into_iter()
 		.find_map(|event| match event.event {
-			Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) => Some(pool_id),
+			RuntimeEvent::Pablo(crate::Event::PoolCreated { pool_id, .. }) => Some(pool_id),
 			_ => None,
 		})
 		.expect("pool creation should emit an event if successful; qed;");
@@ -164,7 +164,7 @@ pub fn common_add_lp_with_min_mint_amount(
 
 	// Add the liquidity, min amount = 0
 	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(ALICE),
+		RuntimeOrigin::signed(ALICE),
 		pool_id,
 		assets_with_amounts.clone(),
 		0,
@@ -191,7 +191,7 @@ pub fn common_add_lp_with_min_mint_amount(
 	// Add the liquidity, but expect more lp tokens, hence errors
 	assert_noop!(
 		Pablo::add_liquidity(
-			Origin::signed(BOB),
+			RuntimeOrigin::signed(BOB),
 			pool_id,
 			assets_with_amounts.clone(),
 			min_mint_amount + 1,
@@ -202,7 +202,7 @@ pub fn common_add_lp_with_min_mint_amount(
 
 	// Add liquidity with min_mint_amount
 	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(BOB),
+		RuntimeOrigin::signed(BOB),
 		pool_id,
 		assets_with_amounts,
 		min_mint_amount,
@@ -227,7 +227,7 @@ pub fn common_remove_lp_failure(
 
 	// Add the liquidity
 	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(ALICE),
+		RuntimeOrigin::signed(ALICE),
 		pool_id,
 		BTreeMap::from([(pair[0], init_base_amount), (pair[1], init_quote_amount)]),
 		0,
@@ -246,7 +246,7 @@ pub fn common_remove_lp_failure(
 	assert_eq!(lp, 0_u128);
 	// Add the liquidity
 	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(BOB),
+		RuntimeOrigin::signed(BOB),
 		pool_id,
 		BTreeMap::from([(pair[0], base_amount), (pair[1], quote_amount)]),
 		0,
@@ -256,7 +256,7 @@ pub fn common_remove_lp_failure(
 	// error as trying to redeem more tokens than lp
 	assert_noop!(
 		Pablo::remove_liquidity(
-			Origin::signed(BOB),
+			RuntimeOrigin::signed(BOB),
 			pool_id,
 			lp + 1,
 			BTreeMap::from([(pair[0], 0), (pair[1], 0)])
@@ -268,7 +268,7 @@ pub fn common_remove_lp_failure(
 	// error as expected values are more than actual redeemed values.
 	assert_noop!(
 		Pablo::remove_liquidity(
-			Origin::signed(BOB),
+			RuntimeOrigin::signed(BOB),
 			pool_id,
 			lp,
 			BTreeMap::from([
@@ -298,7 +298,7 @@ pub fn common_exchange_failure(
 
 	// Add the liquidity
 	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(ALICE),
+		RuntimeOrigin::signed(ALICE),
 		pool_id,
 		BTreeMap::from([
 			(init_first_amount.asset_id, init_first_amount.amount),
@@ -313,7 +313,7 @@ pub fn common_exchange_failure(
 	// error as trying to swap more value than balance
 	assert_noop!(
 		Pablo::swap(
-			Origin::signed(BOB),
+			RuntimeOrigin::signed(BOB),
 			pool_id,
 			AssetAmount::new(exchange_first_amount.asset_id, exchange_first_amount.amount + 1),
 			AssetAmount::new(init_second_amount.asset_id, 0),
@@ -325,7 +325,7 @@ pub fn common_exchange_failure(
 	// error as the expected value is more that input
 	assert_noop!(
 		Pablo::swap(
-			Origin::signed(BOB),
+			RuntimeOrigin::signed(BOB),
 			pool_id,
 			AssetAmount::new(exchange_first_amount.asset_id, exchange_first_amount.amount),
 			AssetAmount::new(init_second_amount.asset_id, dbg!(init_second_amount.amount + 1)),
@@ -338,7 +338,7 @@ pub fn common_exchange_failure(
 pub fn assert_has_event<T, F>(matcher: F)
 where
 	T: Config,
-	F: Fn(&EventRecord<mock::Event, H256>) -> bool,
+	F: Fn(&EventRecord<mock::RuntimeEvent, H256>) -> bool,
 {
 	assert!(System::events().iter().any(matcher));
 }
@@ -346,7 +346,7 @@ where
 pub fn assert_last_event<T, F>(matcher: F)
 where
 	T: Config,
-	F: FnOnce(&EventRecord<mock::Event, H256>) -> bool,
+	F: FnOnce(&EventRecord<mock::RuntimeEvent, H256>) -> bool,
 {
 	assert!(matcher(System::events().last().expect("events expected")));
 }
@@ -361,7 +361,7 @@ mod create {
 			System::set_block_number(1);
 			let pool_weights = dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT);
 			assert_ok!(Pablo::create(
-				Origin::signed(ALICE),
+				RuntimeOrigin::signed(ALICE),
 				PoolInitConfiguration::DualAssetConstantProduct {
 					owner: ALICE,
 					assets_weights: pool_weights.clone(),
@@ -370,7 +370,7 @@ mod create {
 			));
 			let inner_weights = pool_weights.into_inner();
 			assert_has_event::<Test, _>(|e| {
-				matches!(&e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id: 0, asset_weights, .. }) if asset_weights.clone() == inner_weights)
+				matches!(&e.event, mock::RuntimeEvent::Pablo(crate::Event::PoolCreated { pool_id: 0, asset_weights, .. }) if asset_weights.clone() == inner_weights)
 			});
 		});
 	}

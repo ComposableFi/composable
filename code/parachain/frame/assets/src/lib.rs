@@ -106,13 +106,13 @@ pub mod pallet {
 	use num_traits::Zero;
 	use orml_traits::GetByKey;
 	use primitives::currency::ValidateCurrencyId;
-	use sp_runtime::DispatchError;
+	use sp_runtime::{DispatchError, FixedPointOperand};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// currency id
 		type AssetId: AssetIdLike;
-		type Balance: BalanceLike;
+		type Balance: BalanceLike + FixedPointOperand;
 		#[pallet::constant]
 		type NativeAssetId: Get<Self::AssetId>;
 		type GenerateCurrencyId: CurrencyFactory<AssetId = Self::AssetId, Balance = Self::Balance>;
@@ -122,7 +122,7 @@ pub mod pallet {
 			+ GovernanceRegistry<Self::AssetId, Self::AccountId>;
 		type WeightInfo: WeightInfo;
 		/// origin of admin of this pallet
-		type AdminOrigin: EnsureOrigin<Self::Origin>;
+		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		type CurrencyValidator: Validate<Self::AssetId, ValidateCurrencyId>;
 	}
 

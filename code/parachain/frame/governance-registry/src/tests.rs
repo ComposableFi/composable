@@ -1,13 +1,13 @@
 use composable_traits::governance::SignedRawOrigin;
 
-use crate::mock::{new_test_ext, GovRegistry, Origin};
+use crate::mock::{new_test_ext, GovRegistry, RuntimeOrigin};
 
 #[test]
 fn set_only_by_root() {
 	new_test_ext().execute_with(|| {
-		GovRegistry::set(Origin::none(), 1, 1).unwrap_err();
-		GovRegistry::set(Origin::signed(0), 1, 1).unwrap_err();
-		GovRegistry::set(Origin::root(), 1, 1).unwrap();
+		GovRegistry::set(RuntimeOrigin::none(), 1, 1).unwrap_err();
+		GovRegistry::set(RuntimeOrigin::signed(0), 1, 1).unwrap_err();
+		GovRegistry::set(RuntimeOrigin::root(), 1, 1).unwrap();
 		assert_eq!(GovRegistry::get(&1).unwrap(), SignedRawOrigin::Signed(1))
 	});
 }
@@ -15,9 +15,9 @@ fn set_only_by_root() {
 #[test]
 fn grant_root_only_by_root() {
 	new_test_ext().execute_with(|| {
-		GovRegistry::grant_root(Origin::none(), 1).unwrap_err();
-		GovRegistry::grant_root(Origin::signed(0), 1).unwrap_err();
-		GovRegistry::grant_root(Origin::root(), 1).unwrap();
+		GovRegistry::grant_root(RuntimeOrigin::none(), 1).unwrap_err();
+		GovRegistry::grant_root(RuntimeOrigin::signed(0), 1).unwrap_err();
+		GovRegistry::grant_root(RuntimeOrigin::root(), 1).unwrap();
 		assert_eq!(GovRegistry::get(&1).unwrap(), SignedRawOrigin::Root)
 	});
 }

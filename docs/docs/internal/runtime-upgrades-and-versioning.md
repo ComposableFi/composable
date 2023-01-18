@@ -27,8 +27,8 @@ cloud "Shared security (and versioning)" {
         }
     }
 
-    node "Kusama Node v0.9.27" as kusama {
-        artifact "Upgradable runtime (WASM) Kusama v0.9.27" as kusama_runtime
+    node "Kusama Node v0.9.30" as kusama {
+        artifact "Upgradable runtime (WASM) Kusama v0.9.30" as kusama_runtime
     } 
 }
 

@@ -9,6 +9,6 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_fnft::WeightInfo for WeightInfo<T> {
 	fn transfer() -> Weight {
-		(10_000 as Weight)
+		Weight::from_ref_time(10_000)
 	}
 }

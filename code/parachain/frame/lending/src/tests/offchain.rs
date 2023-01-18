@@ -41,7 +41,7 @@ fn test_liquidation_offchain_worker() {
 		// Deposit USDT in the vault.
 		let vault_value = USDT::units(100_000_000);
 		assert_ok!(Tokens::mint_into(USDT::ID, &lender, vault_value));
-		assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, vault_value));
+		assert_ok!(Vault::deposit(RuntimeOrigin::signed(lender), vault_id, vault_value));
 
 		//test::block::process_and_progress_blocks::<Lending, Runtime>(1);
 		crate::Markets::<Runtime>::iter().for_each(|x| println!("{:?}", x));
@@ -77,7 +77,7 @@ fn test_liquidation_offchain_worker() {
 		// Check that it is transaction which leads to the risky borrow liquidation.
 		assert_eq!(
 			tx.call,
-			Call::Lending(crate::Call::liquidate {
+			RuntimeCall::Lending(crate::Call::liquidate {
 				market_id,
 				borrowers: TestBoundedVec::try_from(vec![risky_borrower]).unwrap()
 			})
@@ -87,20 +87,20 @@ fn test_liquidation_offchain_worker() {
 		// Check event from Lending pallet
 		let event =
 			crate::Event::LiquidationInitiated { market_id, borrowers: vec![risky_borrower] };
-		System::assert_has_event(Event::Lending(event));
+		System::assert_has_event(RuntimeEvent::Lending(event));
 		// Check event from Liquidations pallet
 		let event = pallet_liquidations::Event::PositionWasSentToLiquidation {};
-		System::assert_has_event(Event::Liquidations(event));
+		System::assert_has_event(RuntimeEvent::Liquidations(event));
 		// Check that events for the reliable borrow were not emitted
 		// Check event from Lending pallet
 		let event = crate::Event::<Runtime>::LiquidationInitiated {
 			market_id,
 			borrowers: vec![reliable_borrower],
 		};
-		assert_no_event::<Runtime>(Event::Lending(event));
+		assert_no_event::<Runtime>(RuntimeEvent::Lending(event));
 		// Check that Liquidations pallet emitted only one event
 		let event =
-			Event::Liquidations(pallet_liquidations::Event::PositionWasSentToLiquidation {});
+			RuntimeEvent::Liquidations(pallet_liquidations::Event::PositionWasSentToLiquidation {});
 		assert!(System::events().iter().filter(|record| record.event == event).count() == 1);
 	});
 }

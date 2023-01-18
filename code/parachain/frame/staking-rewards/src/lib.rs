@@ -290,7 +290,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The reward balance type.
 		type Balance: Parameter
@@ -374,10 +374,10 @@ pub mod pallet {
 		type MaxRewardConfigsPerPool: Get<u32>;
 
 		/// Required origin for reward pool creation.
-		type RewardPoolCreationOrigin: EnsureOrigin<Self::Origin>;
+		type RewardPoolCreationOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// Required origin for reward pool creation.
-		type RewardPoolUpdateOrigin: EnsureOrigin<Self::Origin>;
+		type RewardPoolUpdateOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		#[pallet::constant]
 		type PicaAssetId: Get<Self::AssetId>;
@@ -1626,23 +1626,26 @@ fn accumulate_pool_rewards<T: Config>(
 	now_seconds: u64,
 ) -> Weight {
 	// If reward pool has not started, do not accumulate rewards or adjust weight
-	match reward_pool.start_block.cmp(&current_block) {
+	Weight::from_ref_time(match reward_pool.start_block.cmp(&current_block) {
 		// start block < current -> accumulate normally
 		Ordering::Less =>
-			(&mut reward_pool.rewards).into_iter().fold(0, |mut acc, (asset_id, reward)| {
-				reward_accumulation_hook_reward_update_calculation::<T>(
-					pool_id,
-					*asset_id,
-					reward,
-					now_seconds,
-				);
+			(&mut reward_pool.rewards)
+				.into_iter()
+				.fold(0_u64, |mut acc, (asset_id, reward)| {
+					reward_accumulation_hook_reward_update_calculation::<T>(
+						pool_id,
+						*asset_id,
+						reward,
+						now_seconds,
+					);
 
-				acc = acc.defensive_saturating_add(
-					T::WeightInfo::reward_accumulation_hook_reward_update_calculation(),
-				);
+					acc = acc.defensive_saturating_add(
+						T::WeightInfo::reward_accumulation_hook_reward_update_calculation()
+							.ref_time(),
+					);
 
-				acc
-			}),
+					acc
+				}),
 		// start block == current -> accumulation starts now, but the effects won't be seen until
 		// the next block; set all of the reward's last updated timestamp to `now` so that reward
 		// accumulation starts from this point in time, not when the pool was created. Also notify
@@ -1658,7 +1661,7 @@ fn accumulate_pool_rewards<T: Config>(
 		},
 		// start block > current -> don't accumulate, do nothing
 		Ordering::Greater => 0,
-	}
+	})
 }
 
 fn add_to_rewards_pot<T: Config>(

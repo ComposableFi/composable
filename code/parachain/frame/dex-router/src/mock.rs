@@ -65,7 +65,7 @@ frame_support::construct_runtime!(
 );
 
 impl pallet_currency_factory::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = AssetId;
 	type AddOrigin = EnsureRoot<AccountId>;
 	type Balance = Balance;
@@ -82,8 +82,8 @@ impl system::Config for Test {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -91,7 +91,7 @@ impl system::Config for Test {
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -112,7 +112,7 @@ impl pallet_balances::Config for Test {
 	type MaxLocks = ();
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
@@ -128,7 +128,7 @@ parameter_type_with_key! {
 
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = AssetId;
@@ -141,6 +141,9 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = Everything;
 	type OnKilledTokenAccount = ();
 	type OnNewTokenAccount = ();
+	type OnSlash = ();
+	type OnDeposit = ();
+	type OnTransfer = ();
 }
 
 parameter_types! {
@@ -181,7 +184,7 @@ parameter_types! {
 }
 
 impl pallet_staking_rewards::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type AssetId = AssetId;
 	type Assets = Tokens;
@@ -208,7 +211,7 @@ impl pallet_staking_rewards::Config for Test {
 }
 
 impl pallet_pablo::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = AssetId;
 	type Balance = Balance;
 	type CurrencyFactory = LpTokenFactory;
@@ -232,7 +235,7 @@ parameter_types! {
 }
 
 impl dex_router::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = AssetId;
 	type Balance = Balance;
 	type MaxHopsInRoute = MaxHopsCount;

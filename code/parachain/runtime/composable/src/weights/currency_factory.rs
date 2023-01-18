@@ -9,14 +9,14 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> currency_factory::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:2 w:2)
 	fn add_range() -> Weight {
-		(99_095_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(99_095_000_u64)
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	// Storage: System Account (r:1 w:1)
 	fn set_metadata() -> Weight {
-		(59_284_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(59_284_000_u64)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 }

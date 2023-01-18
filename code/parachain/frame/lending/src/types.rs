@@ -26,7 +26,7 @@ pub(crate) struct InitializeBlockCallCounters {
 impl InitializeBlockCallCounters {
 	pub(crate) fn calculate_weight<T: Config>(&self) -> Weight {
 		use crate::weights::WeightInfo;
-		let mut weight: Weight = 0;
+		let mut weight = Weight::from_ref_time(0);
 		let one_read = T::DbWeight::get().reads(1);
 		weight += u64::from(self.now) * <T as Config>::WeightInfo::now();
 		weight += u64::from(self.read_markets) * one_read;

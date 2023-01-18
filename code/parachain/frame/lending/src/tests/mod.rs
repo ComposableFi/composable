@@ -35,8 +35,8 @@ pub const DEFAULT_MAX_PRICE_AGE: u64 = 1020;
 pub const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 
 type SystemAccountIdOf<T> = <T as frame_system::Config>::AccountId;
-type SystemOriginOf<T> = <T as frame_system::Config>::Origin;
-type SystemEventOf<T> = <T as frame_system::Config>::Event;
+type SystemOriginOf<T> = <T as frame_system::Config>::RuntimeOrigin;
+type SystemEventOf<T> = <T as frame_system::Config>::RuntimeEvent;
 pub type TestBoundedVec = BoundedVec<AccountId, MaxLiquidationBatchSize>;
 
 // Bounds for configuration generic type, used in create market helpers.
@@ -314,14 +314,14 @@ pub fn borrow<T>(
 /// event.
 pub fn assert_extrinsic_event<T: crate::Config>(
 	result: DispatchResultWithPostInfo,
-	event: <T as crate::Config>::Event,
+	event: <T as crate::Config>::RuntimeEvent,
 ) {
 	assert_ok!(result);
 	frame_system::Pallet::<T>::assert_last_event(event.into());
 }
 
 /// Asserts the event wasn't dispatched.
-pub fn assert_no_event<T>(event: T::Event)
+pub fn assert_no_event<T>(event: T::RuntimeEvent)
 where
 	T: frame_system::Config,
 {
