@@ -808,13 +808,12 @@ impl currency_factory::Config for Runtime {
 
 parameter_types! {
 	pub const AssetNameMaxChars: u32 = 32;
-	pub const AssetSymbolMaxChars: u32 = 8;
+	pub const AssetSymbolMaxChars: u32 = 16;
 }
 
 impl assets_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = CurrencyId;
-	type CurrencyFactory = CurrencyFactory;
 	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
 	type UpdateAssetRegistryOrigin = EnsureRootOrHalfNativeCouncil;
 	type ParachainOrGovernanceOrigin = EnsureRootOrHalfNativeCouncil;
@@ -822,10 +821,6 @@ impl assets_registry::Config for Runtime {
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 	type AssetNameMaxChars = AssetNameMaxChars;
 	type AssetSymbolMaxChars = AssetSymbolMaxChars;
-	// TODO(RFC-0013): Update Assets Registry - Pallet Configuration
-	// Provide configuration item for asset creation to assets-registry
-	// type CreateLocalAssets = LocalAssets;
-	// type CreateForeignAssetsAssets = ForeignAssetsAssets;
 }
 
 impl assets::Config for Runtime {
