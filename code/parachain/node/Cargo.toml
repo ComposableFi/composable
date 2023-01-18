@@ -40,6 +40,7 @@ pablo-runtime-api = { path = "../frame/pablo/runtime-api" }
 pallet-transaction-payment-rpc = { path = "../frame/transaction-payment/rpc" }
 pallet-transaction-payment-rpc-runtime-api = { path = "../frame/transaction-payment/rpc/runtime-api" }
 
+ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev = "f0d44fe83c078b2d9fb040337c8152f037ba817d" }
 pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "f0d44fe83c078b2d9fb040337c8152f037ba817d" }
 
 # FRAME Dependencies
