@@ -62,7 +62,7 @@
           name = "zombienet-rococo-local-dali-dev-statemine";
           runtimeInputs = [ pkgs.nodejs paritytech-zombienet ] ++ runtimeDeps;
           text = ''
-            cd ${paritytech-zombienet}            
+            cd ${paritytech-zombienet}
             npm run zombie spawn ${all-dev-local-config}
           '';
         };
@@ -91,7 +91,7 @@
             bash --version
             export DEBUG="zombie*"
             printf '${builtins.toJSON config}' > /tmp/${name}.json
-            cd ${paritytech-zombienet}            
+            cd ${paritytech-zombienet}
             npm run zombie spawn /tmp/${name}.json
           '';
         };

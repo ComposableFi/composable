@@ -23,19 +23,19 @@ where
 	T: ChainInfo,
 	<T as ChainInfo>::Runtime:
 		system::Config<AccountId = AccountId32> + sudo::Config + parachain_info::Config,
-	<T::Runtime as system::Config>::Event: Into<AllRuntimeEvents> + Clone,
+	<T::Runtime as system::Config>::RuntimeEvent: Into<AllRuntimeEvents> + Clone,
 	<T::RuntimeApi as ConstructRuntimeApi<T::Block, FullClientFor<T>>>::RuntimeApi:
 		CreateTransactionApi<
 			T::Block,
 			<T::Runtime as system::Config>::AccountId,
-			<T::Runtime as system::Config>::Call,
+			<T::Runtime as system::Config>::RuntimeCall,
 		>,
 	<<T as ChainInfo>::Runtime as system::Config>::AccountId: codec::Codec,
-	<<T as ChainInfo>::Runtime as system::Config>::Call: codec::Codec,
+	<<T as ChainInfo>::Runtime as system::Config>::RuntimeCall: codec::Codec,
 	<TFullCallExecutor<T::Block, NativeElseWasmExecutor<T::ExecutorDispatch>> as CallExecutor<
 		T::Block,
 	>>::Error: std::fmt::Debug,
-	<T::Runtime as system::Config>::Call:
+	<T::Runtime as system::Config>::RuntimeCall:
 		From<system::Call<T::Runtime>> + From<sudo::Call<T::Runtime>>,
 	<T::Runtime as sudo::Config>::Call: From<system::Call<T::Runtime>>,
 	<<T::Block as BlockT>::Header as Header>::Number: num_traits::cast::AsPrimitive<u32>,

@@ -34,7 +34,7 @@ use sp_runtime::SaturatedConversion;
 use sp_std::{marker::PhantomData, str::FromStr};
 
 use crate::runtimes::wasmi::InitialStorageMutability;
-use frame_support::{ensure, traits::Get, weights::Weight, RuntimeDebug};
+use frame_support::{ensure, traits::Get, RuntimeDebug};
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
 	core::{
@@ -159,9 +159,15 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-#[derive(Default, RuntimeDebug, Eq, PartialEq, Clone)]
+#[derive(RuntimeDebug, Eq, PartialEq, Clone)]
 pub struct Router<T: Config> {
 	_marker: PhantomData<T>,
+}
+
+impl<T: Config> Default for Router<T> {
+	fn default() -> Self {
+		Self { _marker: <_>::default() }
+	}
 }
 
 struct MapBinary(sp_std::vec::Vec<u8>);
@@ -264,7 +270,7 @@ impl<T: Config> Router<T> {
 		address: T::AccountIdExtended,
 		contract_info: ContractInfoOf<T>,
 	) -> Result<VmPerContract<T>, IbcError> {
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let vm = {
 			let runtime =
 				<Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
@@ -328,7 +334,7 @@ impl<T: Config> Router<T> {
 			),
 			Addr::unchecked(relayer.to_string()),
 		);
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (data, _) = cosmwasm_system_entrypoint_serialize::<
@@ -368,6 +374,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		channel_id: &ChannelId,
 		counterparty: &Counterparty,
 		version: &IbcVersion,
+		_relayer: &pallet_ibc::Signer,
 		// weight_limit: Weight, https://github.com/ComposableFi/centauri/issues/129
 	) -> Result<(), IbcError> {
 		let address = Self::port_to_address(port_id)?;
@@ -416,6 +423,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		counterparty: &Counterparty,
 		version: &IbcVersion,
 		_counterparty_version: &IbcVersion,
+		_relayer: &pallet_ibc::Signer,
 	) -> Result<IbcVersion, IbcError> {
 		let address = Self::port_to_address(port_id)?;
 		let contract_info = Self::to_ibc_contract(&address)?;
@@ -457,6 +465,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		port_id: &PortId,
 		channel_id: &ChannelId,
 		counterparty_version: &IbcVersion,
+		_relayer: &pallet_ibc::Signer,
 	) -> Result<(), IbcError> {
 		let metadata = ctx
 			.channel_end(&(port_id.clone(), *channel_id))
@@ -467,7 +476,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			channel: map_channel(port_id, channel_id, metadata)?,
 			counterparty_version: counterparty_version.to_string(),
 		};
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
@@ -486,6 +495,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
+		_relayer: &pallet_ibc::Signer,
 	) -> Result<(), IbcError> {
 		let metadata = ctx
 			.channel_end(&(port_id.clone(), *channel_id))
@@ -495,7 +505,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let message = IbcChannelConnectMsg::OpenConfirm {
 			channel: map_channel(port_id, channel_id, metadata)?,
 		};
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
@@ -513,6 +523,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
+		_relayer: &pallet_ibc::Signer,
 	) -> Result<(), IbcError> {
 		let metadata = ctx
 			.channel_end(&(port_id.clone(), *channel_id))
@@ -532,7 +543,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 					.to_string(),
 			),
 		};
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
@@ -550,6 +561,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
+		_relayer: &pallet_ibc::Signer,
 	) -> Result<(), IbcError> {
 		let metadata = ctx
 			.channel_end(&(port_id.clone(), *channel_id))
@@ -559,7 +571,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let message = IbcChannelCloseMsg::CloseConfirm {
 			channel: map_channel(port_id, channel_id, metadata)?,
 		};
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
@@ -616,7 +628,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			Addr::unchecked(relayer.to_string()),
 		);
 
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
@@ -659,7 +671,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			Addr::unchecked(relayer.to_string()),
 		);
 
-		let gas = Weight::MAX;
+		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
@@ -717,19 +729,16 @@ fn map_order(order: Order) -> Result<IbcOrder, IbcError> {
 }
 
 impl<T: Config + Send + Sync + Default> IbcModuleRouter for Router<T> {
-	fn get_route_mut(
-		&mut self,
-		module_id: &impl core::borrow::Borrow<ModuleId>,
-	) -> Option<&mut dyn IbcModule> {
-		if module_id.borrow() == &into_module_id::<T>() {
+	fn get_route_mut(&mut self, module_id: &ModuleId) -> Option<&mut dyn IbcModule> {
+		if module_id == &into_module_id::<T>() {
 			return Some(self)
 		}
 
 		None
 	}
 
-	fn has_route(module_id: &impl sp_std::borrow::Borrow<ModuleId>) -> bool {
-		module_id.borrow() == &into_module_id::<T>()
+	fn has_route(module_id: &ModuleId) -> bool {
+		module_id == &into_module_id::<T>()
 	}
 
 	fn lookup_module_by_port(port_id: &PortId) -> Option<ModuleId> {
@@ -762,6 +771,18 @@ impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for NoRelayer<T> {
 	fn write_acknowledgement(
 		_packet: &ibc::core::ics04_channel::packet::Packet,
 		_ack: sp_std::vec::Vec<u8>,
+	) -> Result<(), ibc_primitives::Error> {
+		Err(ibc_primitives::Error::Other { msg: Some("not supported".to_string()) })
+	}
+	#[cfg(feature = "runtime-benchmarks")]
+	fn create_client() -> Result<ibc::core::ics24_host::identifier::ClientId, ibc_primitives::Error>
+	{
+		Err(ibc_primitives::Error::Other { msg: Some("not supported".to_string()) })
+	}
+	#[cfg(feature = "runtime-benchmarks")]
+	fn create_connection(
+		_client_id: ibc::core::ics24_host::identifier::ClientId,
+		_connection_id: ConnectionId,
 	) -> Result<(), ibc_primitives::Error> {
 		Err(ibc_primitives::Error::Other { msg: Some("not supported".to_string()) })
 	}

@@ -49,16 +49,14 @@ pub mod pallet {
 		time::MS_PER_YEAR_NAIVE,
 	};
 	use frame_support::{
-		dispatch::{DispatchResult, DispatchResultWithPostInfo},
+		dispatch::{DispatchClass, DispatchResult, DispatchResultWithPostInfo, Pays},
 		pallet_prelude::*,
 		traits::{
 			BalanceStatus, Currency, EnsureOrigin,
 			ExistenceRequirement::{AllowDeath, KeepAlive},
 			ReservableCurrency, Time,
 		},
-		transactional,
-		weights::{DispatchClass::Operational, Pays},
-		PalletId,
+		transactional, PalletId,
 	};
 	use frame_system::{
 		offchain::{
@@ -120,7 +118,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: CreateSignedTransaction<Call<Self>> + frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type Balance: BalanceLike + From<u128>;
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId, Balance = Self::Balance>;
@@ -157,9 +155,9 @@ pub mod pallet {
 		/// Blocks until price is considered stale
 		type StalePrice: Get<Self::BlockNumber>;
 		/// Origin to add new price types
-		type AddOracle: EnsureOrigin<Self::Origin>;
+		type AddOracle: EnsureOrigin<Self::RuntimeOrigin>;
 		/// Origin to manage rewards
-		type RewardOrigin: EnsureOrigin<Self::Origin>;
+		type RewardOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// Upper bound for max answers for a price
 		type MaxAnswerBound: Get<u32>;
 		/// Upper bound for total assets available for the oracle
@@ -705,7 +703,7 @@ pub mod pallet {
 		/// - `asset_id`: id for the asset
 		///
 		/// Emits `PriceSubmitted` event when successful.
-		#[pallet::weight((T::WeightInfo::submit_price(T::MaxAnswerBound::get()), Operational))]
+		#[pallet::weight((T::WeightInfo::submit_price(T::MaxAnswerBound::get()), DispatchClass::Operational))]
 		pub fn submit_price(
 			origin: OriginFor<T>,
 			price: T::PriceValue,

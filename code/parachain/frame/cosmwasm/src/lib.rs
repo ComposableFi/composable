@@ -207,7 +207,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config<AccountId = AccountIdOf<Self>> + Debug {
 		#[allow(missing_docs)]
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		type AccountIdExtended: Parameter
 			+ Member
@@ -415,7 +415,7 @@ pub mod pallet {
 		///   export.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::instantiate(funds.len() as u32).saturating_add(*gas))]
+		#[pallet::weight(T::WeightInfo::instantiate(funds.len() as u32).saturating_add(Weight::from_ref_time(*gas)))]
 		pub fn instantiate(
 			origin: OriginFor<T>,
 			code_identifier: CodeIdentifier<T>,
@@ -428,7 +428,9 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-			let initial_gas = T::WeightInfo::instantiate(funds.len() as u32).saturating_add(gas);
+			let initial_gas = T::WeightInfo::instantiate(funds.len() as u32)
+				.saturating_add(Weight::from_ref_time(gas))
+				.ref_time();
 			let outcome = Self::do_instantiate(
 				&mut shared,
 				who,
@@ -456,7 +458,7 @@ pub mod pallet {
 		///   export.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::execute(funds.len() as u32).saturating_add(*gas))]
+		#[pallet::weight(T::WeightInfo::execute(funds.len() as u32).saturating_add(Weight::from_ref_time(*gas)))]
 		pub fn execute(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
@@ -466,7 +468,9 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-			let initial_gas = T::WeightInfo::execute(funds.len() as u32).saturating_add(gas);
+			let initial_gas = T::WeightInfo::execute(funds.len() as u32)
+				.saturating_add(Weight::from_ref_time(gas))
+				.ref_time();
 			let outcome = Self::do_execute(&mut shared, who, contract, funds, message);
 			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
 		}
@@ -485,7 +489,7 @@ pub mod pallet {
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		/// * `message` MigrateMsg, that will be passed to the contract.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::migrate().saturating_add(*gas))]
+		#[pallet::weight(T::WeightInfo::migrate().saturating_add(Weight::from_ref_time(*gas)))]
 		pub fn migrate(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
@@ -495,7 +499,8 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-			let initial_gas = T::WeightInfo::migrate().saturating_add(gas);
+			let initial_gas =
+				T::WeightInfo::migrate().saturating_add(Weight::from_ref_time(gas)).ref_time();
 			let outcome =
 				Self::do_migrate(&mut shared, who, contract, new_code_identifier, message);
 			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
@@ -512,7 +517,7 @@ pub mod pallet {
 		/// * `new_admin` new admin of the contract that we want to update to.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::update_admin().saturating_add(*gas))]
+		#[pallet::weight(T::WeightInfo::update_admin().saturating_add(Weight::from_ref_time(*gas)))]
 		pub fn update_admin(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
@@ -521,7 +526,9 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-			let initial_gas = T::WeightInfo::update_admin().saturating_add(gas);
+			let initial_gas = T::WeightInfo::update_admin()
+				.saturating_add(Weight::from_ref_time(gas))
+				.ref_time();
 			let outcome =
 				Self::do_update_admin(&mut shared, who, contract.clone(), new_admin.clone());
 			Self::deposit_event(Event::<T>::AdminUpdated { contract, new_admin });
@@ -651,7 +658,9 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			log::info!(target: "runtime::contracts", "outcome: {:?}", outcome);
 			let post_info = PostDispatchInfo {
-				actual_weight: Some(initial_gas.saturating_sub(remaining_gas)),
+				actual_weight: Some(Weight::from_ref_time(
+					initial_gas.saturating_sub(remaining_gas),
+				)),
 				pays_fee: Pays::Yes,
 			};
 			match outcome {

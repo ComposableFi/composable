@@ -45,16 +45,16 @@ parameter_types! {
 }
 
 impl system::Config for Test {
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	type Index = u64;
 	type BlockNumber = BlockNumber;
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type Hash = H256;
 	type Hashing = ::sp_runtime::traits::BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = sp_runtime::generic::Header<u32, BlakeTwo256>;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -73,7 +73,7 @@ impl system::Config for Test {
 
 impl pallet_balances::Config for Test {
 	type Balance = Balance;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ();
 	type AccountStore = System;
@@ -94,7 +94,7 @@ parameter_types! {
 }
 
 impl pallet_crowdloan_rewards::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type RewardAsset = Balances;
 	type Balance = Balance;
 	type Convert = ConvertInto;
@@ -178,7 +178,7 @@ impl ClaimKey {
 		}
 	}
 	pub fn claim(&self, reward_account: AccountId) -> DispatchResultWithPostInfo {
-		CrowdloanRewards::claim(Origin::signed(reward_account))
+		CrowdloanRewards::claim(RuntimeOrigin::signed(reward_account))
 	}
 	pub fn associate(&self, reward_account: AccountId) -> DispatchResultWithPostInfo {
 		let proof = match self {
@@ -186,7 +186,7 @@ impl ClaimKey {
 			ClaimKey::Eth(ethereum_account) =>
 				ethereum_proof(ethereum_account, reward_account.clone()),
 		};
-		CrowdloanRewards::associate(Origin::none(), reward_account, proof)
+		CrowdloanRewards::associate(RuntimeOrigin::none(), reward_account, proof)
 	}
 }
 

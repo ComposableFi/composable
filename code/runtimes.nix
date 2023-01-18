@@ -84,7 +84,19 @@
           name = "composable";
           features = "runtime-benchmarks";
         };
-
+        rococo-wasm-runtime = pkgs.stdenv.mkDerivation {
+          name = "rococo-wasm-runtime";
+          dontUnpack = true;
+          src = pkgs.fetchurl {
+            url =
+              "https://github.com/paritytech/polkadot/releases/download/v0.9.30/rococo_runtime-v9300.compact.compressed.wasm";
+            sha256 = "sha256-ztquolf/S0YpDhVoejzid5nTJO4N8sv2eHb+g5qignM=";
+          };
+          installPhase = ''
+            mkdir -p $out/lib
+            cp $src $out/lib/rococo_runtime.compact.compressed.wasm
+          '';
+        };
       };
 
     };

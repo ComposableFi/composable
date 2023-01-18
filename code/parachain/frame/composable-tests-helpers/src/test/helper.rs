@@ -41,14 +41,14 @@ pub fn default_acceptable_computation_error(x: u128, y: u128) -> Result<(), Fixe
 	acceptable_computation_error(x, y, DEFAULT_PRECISION, DEFAULT_EPSILON)
 }
 
-type EventRecordOf<T> = EventRecord<<T as Config>::Event, <T as Config>::Hash>;
+type EventRecordOf<T> = EventRecord<<T as Config>::RuntimeEvent, <T as Config>::Hash>;
 
 // NOTE/FIXME(benluelo): These trait bounds can be simplified quite a bit once this issue is
 // resolved: https://github.com/rust-lang/rust/issues/20671#issuecomment-529752828
 pub trait RuntimeTrait<PalletEvent>:
 	Config<
-	Event = <Self as RuntimeTrait<PalletEvent>>::Event,
-	Origin = <Self as RuntimeTrait<PalletEvent>>::Origin,
+	RuntimeEvent = <Self as RuntimeTrait<PalletEvent>>::Event,
+	RuntimeOrigin = <Self as RuntimeTrait<PalletEvent>>::Origin,
 >
 where
 	PalletEvent: Clone + Debug + PartialEq,
@@ -225,13 +225,14 @@ event checked: {pallet_event:#?}
 impl<Runtime, PalletEvent> RuntimeTrait<PalletEvent> for Runtime
 where
 	Runtime: Config,
-	<Runtime as Config>::Event:
+	<Runtime as Config>::RuntimeEvent:
 		Parameter + Member + Debug + Clone + TryInto<PalletEvent> + From<PalletEvent>,
-	<<Runtime as Config>::Event as TryInto<PalletEvent>>::Error: Debug,
-	<Runtime as Config>::Origin: OriginTrait<AccountId = <Runtime as Config>::AccountId>,
+	<<Runtime as Config>::RuntimeEvent as TryInto<PalletEvent>>::Error: Debug,
+	<Runtime as Config>::RuntimeOrigin: OriginTrait<AccountId = <Runtime as Config>::AccountId>,
 	PalletEvent: Clone + Debug + PartialEq,
 {
-	type Event = <Runtime as Config>::Event;
-	type EventTryIntoPalletEventError = <<Runtime as Config>::Event as TryInto<PalletEvent>>::Error;
-	type Origin = <Runtime as Config>::Origin;
+	type Event = <Runtime as Config>::RuntimeEvent;
+	type EventTryIntoPalletEventError =
+		<<Runtime as Config>::RuntimeEvent as TryInto<PalletEvent>>::Error;
+	type Origin = <Runtime as Config>::RuntimeOrigin;
 }

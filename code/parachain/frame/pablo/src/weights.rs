@@ -17,10 +17,22 @@ pub trait WeightInfo {
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	fn create() -> Weight {10_000}
-	fn add_liquidity() -> Weight {10_000}
-	fn remove_liquidity() -> Weight {10_000}
-	fn buy() -> Weight {10_000}
-	fn swap() -> Weight {10_000}
-	fn do_create_pool() -> Weight {10_000}
+	fn create() -> Weight {
+    Weight::from_ref_time(10_000 )
+  }
+	fn add_liquidity() -> Weight {
+    Weight::from_ref_time(10_000 )
+  }
+	fn remove_liquidity() -> Weight {
+    Weight::from_ref_time(10_000 )
+  }
+	fn buy() -> Weight {
+    Weight::from_ref_time(10_000 )
+  }
+	fn swap() -> Weight {
+    Weight::from_ref_time(10_000 )
+  }
+	fn do_create_pool() -> Weight {
+    Weight::from_ref_time(10_000 )
+  }
 }

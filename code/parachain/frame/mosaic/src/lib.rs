@@ -64,7 +64,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		type PalletId: Get<PalletId>;
 
@@ -108,7 +108,7 @@ pub mod pallet {
 
 		/// Origin capable of setting the relayer and AMM IDs. Intended to be RootOrHalfCouncil, as
 		/// it is also used as the origin capable of stopping attackers.
-		type ControlOrigin: EnsureOrigin<Self::Origin>;
+		type ControlOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// Weight implementation used for extrinsics.
 		type WeightInfo: WeightInfo;

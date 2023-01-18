@@ -13,12 +13,12 @@ fn test_borrow_repay_in_same_block() {
 
 		assert_extrinsic_event::<Runtime>(
 			Lending::deposit_collateral(
-				Origin::signed(*ALICE),
+				RuntimeOrigin::signed(*ALICE),
 				market_id,
 				collateral_amount,
 				false,
 			),
-			Event::Lending(crate::Event::CollateralDeposited {
+			RuntimeEvent::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral_amount,
 				market_id,
@@ -27,7 +27,7 @@ fn test_borrow_repay_in_same_block() {
 
 		let borrow_asset_deposit = USDT::units(1_000_000_000);
 		assert_ok!(Tokens::mint_into(USDT::ID, &CHARLIE, borrow_asset_deposit));
-		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, borrow_asset_deposit));
+		assert_ok!(Vault::deposit(RuntimeOrigin::signed(*CHARLIE), vault, borrow_asset_deposit));
 		let mut total_cash =
 			DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(borrow_asset_deposit) + initial_total_cash;
 
@@ -38,8 +38,8 @@ fn test_borrow_repay_in_same_block() {
 		process_and_progress_blocks::<Lending, Runtime>(1); // <- ???
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::borrow(Origin::signed(*ALICE), market_id, limit_normalized / 4),
-			Event::Lending(crate::Event::Borrowed {
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market_id, limit_normalized / 4),
+			RuntimeEvent::Lending(crate::Event::Borrowed {
 				sender: *ALICE,
 				amount: limit_normalized / 4,
 				market_id,
@@ -59,7 +59,7 @@ fn test_borrow_repay_in_same_block() {
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, alice_repay_amount - (limit_normalized / 4)));
 		assert_noop!(
 			Lending::repay_borrow(
-				Origin::signed(*ALICE),
+				RuntimeOrigin::signed(*ALICE),
 				market_id,
 				*ALICE,
 				RepayStrategy::PartialAmount(alice_repay_amount),
@@ -68,7 +68,7 @@ fn test_borrow_repay_in_same_block() {
 			Error::<Runtime>::BorrowAndRepayInSameBlockIsNotSupported,
 		);
 
-		assert_no_event::<Runtime>(Event::Lending(crate::Event::BorrowRepaid {
+		assert_no_event::<Runtime>(RuntimeEvent::Lending(crate::Event::BorrowRepaid {
 			sender: *ALICE,
 			market_id,
 			beneficiary: *ALICE,
@@ -124,7 +124,7 @@ fn old_price() {
 		let borrow_amount = USDT::units(BORROW_AMOUNT);
 
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, borrow_amount));
-		assert_ok!(Vault::deposit(Origin::signed(*ALICE), vault, borrow_amount * 2));
+		assert_ok!(Vault::deposit(RuntimeOrigin::signed(*ALICE), vault, borrow_amount * 2));
 
 		// Set BTC price
 		set_price(BTC::ID, BTC::ONE.mul(FIRST_PRICE));
@@ -139,7 +139,7 @@ fn old_price() {
 
 		// Deposit BTC on the market
 		assert_ok!(Lending::deposit_collateral(
-			Origin::signed(*ALICE),
+			RuntimeOrigin::signed(*ALICE),
 			market,
 			collateral_amount,
 			false
@@ -151,7 +151,7 @@ fn old_price() {
 
 		// Try to borrow by SECOND_PRICE
 		assert_noop!(
-			Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market, borrow_amount),
 			Error::<Runtime>::NotEnoughCollateralToBorrow
 		);
 
@@ -164,7 +164,7 @@ fn old_price() {
 
 		// Try to borrow by SECOND_PRICE
 		assert_noop!(
-			Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market, borrow_amount),
 			Error::<Runtime>::PriceTooOld
 		);
 
@@ -173,7 +173,7 @@ fn old_price() {
 		set_price(USDT::ID, USDT::ONE);
 
 		// Try to borrow by FIRST_PRICE
-		assert_ok!(Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),);
+		assert_ok!(Lending::borrow(RuntimeOrigin::signed(*ALICE), market, borrow_amount),);
 
 		// skip blocks
 		process_and_progress_blocks::<Lending, Runtime>(DEFAULT_MAX_PRICE_AGE as usize + 1);
@@ -184,7 +184,7 @@ fn old_price() {
 
 		// Try to borrow by SECOND_PRICE
 		assert_noop!(
-			Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market, borrow_amount),
 			Error::<Runtime>::NotEnoughCollateralToBorrow
 		);
 
@@ -193,7 +193,7 @@ fn old_price() {
 
 		// Try to repay by SECOND_PRICE
 		assert_ok!(Lending::repay_borrow(
-			Origin::signed(*ALICE),
+			RuntimeOrigin::signed(*ALICE),
 			market,
 			*ALICE,
 			RepayStrategy::PartialAmount(borrow_amount),
@@ -215,12 +215,12 @@ fn borrow_flow() {
 
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral_amount));
 		assert_ok!(Lending::deposit_collateral(
-			Origin::signed(*ALICE),
+			RuntimeOrigin::signed(*ALICE),
 			market,
 			collateral_amount,
 			false
 		));
-		let event = Event::Lending(crate::Event::CollateralDeposited {
+		let event = RuntimeEvent::Lending(crate::Event::CollateralDeposited {
 			sender: *ALICE,
 			amount: collateral_amount,
 			market_id: market,
@@ -235,7 +235,7 @@ fn borrow_flow() {
 		);
 
 		assert_ok!(Tokens::mint_into(USDT::ID, &CHARLIE, borrow_amount));
-		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, borrow_amount));
+		assert_ok!(Vault::deposit(RuntimeOrigin::signed(*CHARLIE), vault, borrow_amount));
 
 		process_and_progress_blocks::<Lending, Runtime>(1);
 
@@ -246,8 +246,8 @@ fn borrow_flow() {
 		let alice_borrow = borrow_amount / DEFAULT_COLLATERAL_FACTOR / 10;
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::borrow(Origin::signed(*ALICE), market, alice_borrow),
-			Event::Lending(crate::Event::Borrowed {
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market, alice_borrow),
+			RuntimeEvent::Lending(crate::Event::Borrowed {
 				sender: *ALICE,
 				amount: alice_borrow,
 				market_id: market,
@@ -285,19 +285,19 @@ fn borrow_flow() {
 
 		assert!(borrow > alice_borrow);
 		assert_noop!(
-			Lending::borrow(Origin::signed(*ALICE), market, original_limit),
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market, original_limit),
 			Error::<Runtime>::NotEnoughCollateralToBorrow
 		);
 
-		assert_no_event::<Runtime>(Event::Lending(crate::Event::Borrowed {
+		assert_no_event::<Runtime>(RuntimeEvent::Lending(crate::Event::Borrowed {
 			sender: *ALICE,
 			amount: original_limit,
 			market_id: market,
 		}));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::borrow(Origin::signed(*ALICE), market, new_limit),
-			Event::Lending(crate::Event::Borrowed {
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market, new_limit),
+			RuntimeEvent::Lending(crate::Event::Borrowed {
 				sender: *ALICE,
 				amount: new_limit,
 				market_id: market,
@@ -305,11 +305,11 @@ fn borrow_flow() {
 		);
 
 		assert_noop!(
-			Lending::borrow(Origin::signed(*ALICE), market, USDT::ONE),
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market, USDT::ONE),
 			Error::<Runtime>::InvalidTimestampOnBorrowRequest
 		);
 
-		assert_no_event::<Runtime>(Event::Lending(crate::Event::Borrowed {
+		assert_no_event::<Runtime>(RuntimeEvent::Lending(crate::Event::Borrowed {
 			sender: *ALICE,
 			amount: USDT::ONE,
 			market_id: market,
@@ -320,8 +320,13 @@ fn borrow_flow() {
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, collateral_amount));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount, false),
-			Event::Lending(crate::Event::CollateralDeposited {
+			Lending::deposit_collateral(
+				RuntimeOrigin::signed(*ALICE),
+				market,
+				collateral_amount,
+				false,
+			),
+			RuntimeEvent::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral_amount,
 				market_id: market,
@@ -332,19 +337,19 @@ fn borrow_flow() {
 		assert!(get_price(BTC::ID, collateral_amount) > alice_limit);
 
 		assert_noop!(
-			Lending::borrow(Origin::signed(*ALICE), market, alice_limit * 100),
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market, alice_limit * 100),
 			Error::<Runtime>::NotEnoughCollateralToBorrow
 		);
 
-		assert_no_event::<Runtime>(Event::Lending(crate::Event::Borrowed {
+		assert_no_event::<Runtime>(RuntimeEvent::Lending(crate::Event::Borrowed {
 			sender: *ALICE,
 			amount: alice_limit * 100,
 			market_id: market,
 		}));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::borrow(Origin::signed(*ALICE), market, 10),
-			Event::Lending(crate::Event::Borrowed {
+			Lending::borrow(RuntimeOrigin::signed(*ALICE), market, 10),
+			RuntimeEvent::Lending(crate::Event::Borrowed {
 				sender: *ALICE,
 				amount: 10,
 				market_id: market,
@@ -360,12 +365,17 @@ fn zero_amount_collateral_deposit_or_withdraw() {
 		let collateral_amount = 0;
 		let error_message = "Can not deposit or withdraw zero collateral";
 		assert_noop!(
-			Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount, false),
+			Lending::deposit_collateral(
+				RuntimeOrigin::signed(*ALICE),
+				market,
+				collateral_amount,
+				false
+			),
 			error_message
 		);
 
 		assert_noop!(
-			Lending::withdraw_collateral(Origin::signed(*ALICE), market, collateral_amount,),
+			Lending::withdraw_collateral(RuntimeOrigin::signed(*ALICE), market, collateral_amount,),
 			error_message
 		);
 	})

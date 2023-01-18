@@ -15,17 +15,17 @@ hex = "0.4.3"
 scale-codec = { package = "parity-scale-codec", version = "3.0.0", features = [
   "derive",
 ] }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", features = [
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30", features = [
   "std",
   "full_crypto",
 ] }
 
 subxt = { git = "https://github.com/paritytech/subxt", rev = "2fe9a1446d32b93a10804db3304ccaac65f764b8" }
 
-sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 tokio = { version = "1.8", features = ["rt-multi-thread", "macros", "time"] }
 
 [build-dependencies]

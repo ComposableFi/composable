@@ -33,48 +33,48 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity Registrars (r:1 w:1)
 	/// The range of component `r` is `[1, 7]`.
 	fn add_registrar(r: u32, ) -> Weight {
-		(41_932_000 as Weight)
+		Weight::from_ref_time(41_932_000_u64)
 			// Standard Error: 175_000
-			.saturating_add((1_049_000 as Weight).saturating_mul(r as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(1_049_000_u64).saturating_mul(r as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Identity IdentityOf (r:1 w:1)
 	/// The range of component `r` is `[1, 8]`.
 	/// The range of component `x` is `[1, 32]`.
 	fn set_identity(r: u32, x: u32, ) -> Weight {
-		(82_246_000 as Weight)
+		Weight::from_ref_time(82_246_000_u64)
 			// Standard Error: 277_000
-			.saturating_add((837_000 as Weight).saturating_mul(r as Weight))
+			.saturating_add(Weight::from_ref_time(837_000_u64).saturating_mul(r as u64))
 			// Standard Error: 46_000
-			.saturating_add((1_132_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(1_132_000_u64).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Identity IdentityOf (r:1 w:0)
 	// Storage: Identity SubsOf (r:1 w:1)
 	// Storage: Identity SuperOf (r:1 w:1)
 	/// The range of component `s` is `[1, 32]`.
 	fn set_subs_new(s: u32, ) -> Weight {
-		(76_453_000 as Weight)
+		Weight::from_ref_time(76_453_000_u64)
 			// Standard Error: 64_000
-			.saturating_add((8_170_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(s as Weight)))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(s as Weight)))
+			.saturating_add(Weight::from_ref_time(8_170_000_u64).saturating_mul(s as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().reads((1_u64).saturating_mul(s as u64)))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
+			.saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(s as u64)))
 	}
 	// Storage: Identity IdentityOf (r:1 w:0)
 	// Storage: Identity SubsOf (r:1 w:1)
 	// Storage: Identity SuperOf (r:0 w:1)
 	/// The range of component `p` is `[1, 32]`.
 	fn set_subs_old(p: u32, ) -> Weight {
-		(74_449_000 as Weight)
+		Weight::from_ref_time(74_449_000_u64)
 			// Standard Error: 31_000
-			.saturating_add((2_882_000 as Weight).saturating_mul(p as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(p as Weight)))
+			.saturating_add(Weight::from_ref_time(2_882_000_u64).saturating_mul(p as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
+			.saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(p as u64)))
 	}
 	// Storage: Identity SubsOf (r:1 w:1)
 	// Storage: Identity IdentityOf (r:1 w:1)
@@ -83,81 +83,81 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	/// The range of component `s` is `[1, 32]`.
 	/// The range of component `x` is `[1, 32]`.
 	fn clear_identity(r: u32, s: u32, x: u32, ) -> Weight {
-		(82_866_000 as Weight)
+		Weight::from_ref_time(82_866_000_u64)
 			// Standard Error: 231_000
-			.saturating_add((1_254_000 as Weight).saturating_mul(r as Weight))
+			.saturating_add(Weight::from_ref_time(1_254_000_u64).saturating_mul(r as u64))
 			// Standard Error: 35_000
-			.saturating_add((3_020_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add(Weight::from_ref_time(3_020_000_u64).saturating_mul(s as u64))
 			// Standard Error: 35_000
-			.saturating_add((552_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(s as Weight)))
+			.saturating_add(Weight::from_ref_time(552_000_u64).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
+			.saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(s as u64)))
 	}
 	// Storage: Identity Registrars (r:1 w:0)
 	// Storage: Identity IdentityOf (r:1 w:1)
 	/// The range of component `r` is `[1, 8]`.
 	/// The range of component `x` is `[1, 32]`.
 	fn request_judgement(r: u32, x: u32, ) -> Weight {
-		(91_504_000 as Weight)
+		Weight::from_ref_time(91_504_000_u64)
 			// Standard Error: 186_000
-			.saturating_add((326_000 as Weight).saturating_mul(r as Weight))
+			.saturating_add(Weight::from_ref_time(326_000_u64).saturating_mul(r as u64))
 			// Standard Error: 31_000
-			.saturating_add((1_150_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(1_150_000_u64).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Identity IdentityOf (r:1 w:1)
 	/// The range of component `r` is `[1, 8]`.
 	/// The range of component `x` is `[1, 32]`.
 	fn cancel_request(r: u32, x: u32, ) -> Weight {
-		(85_352_000 as Weight)
+		Weight::from_ref_time(85_352_000_u64)
 			// Standard Error: 162_000
-			.saturating_add((232_000 as Weight).saturating_mul(r as Weight))
+			.saturating_add(Weight::from_ref_time(232_000_u64).saturating_mul(r as u64))
 			// Standard Error: 27_000
-			.saturating_add((1_082_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(1_082_000_u64).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Identity Registrars (r:1 w:1)
 	/// The range of component `r` is `[1, 7]`.
 	fn set_fee(r: u32, ) -> Weight {
-		(21_692_000 as Weight)
+		Weight::from_ref_time(21_692_000_u64)
 			// Standard Error: 156_000
-			.saturating_add((981_000 as Weight).saturating_mul(r as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(981_000_u64).saturating_mul(r as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Identity Registrars (r:1 w:1)
 	/// The range of component `r` is `[1, 7]`.
 	fn set_account_id(r: u32, ) -> Weight {
-		(22_687_000 as Weight)
+		Weight::from_ref_time(22_687_000_u64)
 			// Standard Error: 92_000
-			.saturating_add((663_000 as Weight).saturating_mul(r as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(663_000_u64).saturating_mul(r as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Identity Registrars (r:1 w:1)
 	/// The range of component `r` is `[1, 7]`.
 	fn set_fields(r: u32, ) -> Weight {
-		(23_213_000 as Weight)
+		Weight::from_ref_time(23_213_000_u64)
 			// Standard Error: 207_000
-			.saturating_add((710_000 as Weight).saturating_mul(r as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(710_000_u64).saturating_mul(r as u64))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Identity Registrars (r:1 w:0)
 	// Storage: Identity IdentityOf (r:1 w:1)
 	/// The range of component `r` is `[1, 7]`.
 	/// The range of component `x` is `[1, 32]`.
 	fn provide_judgement(r: u32, x: u32, ) -> Weight {
-		(60_463_000 as Weight)
+		Weight::from_ref_time(60_463_000_u64)
 			// Standard Error: 186_000
-			.saturating_add((908_000 as Weight).saturating_mul(r as Weight))
+			.saturating_add(Weight::from_ref_time(908_000_u64).saturating_mul(r as u64))
 			// Standard Error: 26_000
-			.saturating_add((1_055_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(1_055_000_u64).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Identity SubsOf (r:1 w:1)
 	// Storage: Identity IdentityOf (r:1 w:1)
@@ -167,53 +167,53 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	/// The range of component `s` is `[1, 32]`.
 	/// The range of component `x` is `[1, 32]`.
 	fn kill_identity(_r: u32, s: u32, _x: u32, ) -> Weight {
-		(128_164_000 as Weight)
+		Weight::from_ref_time(128_164_000_u64)
 			// Standard Error: 36_000
-			.saturating_add((2_976_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(s as Weight)))
+			.saturating_add(Weight::from_ref_time(2_976_000_u64).saturating_mul(s as u64))
+			.saturating_add(T::DbWeight::get().reads(4_u64))
+			.saturating_add(T::DbWeight::get().writes(4_u64))
+			.saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(s as u64)))
 	}
 	// Storage: Identity IdentityOf (r:1 w:0)
 	// Storage: Identity SuperOf (r:1 w:1)
 	// Storage: Identity SubsOf (r:1 w:1)
 	/// The range of component `s` is `[1, 31]`.
 	fn add_sub(s: u32, ) -> Weight {
-		(94_819_000 as Weight)
+		Weight::from_ref_time(94_819_000_u64)
 			// Standard Error: 41_000
-			.saturating_add((408_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+			.saturating_add(Weight::from_ref_time(408_000_u64).saturating_mul(s as u64))
+			.saturating_add(T::DbWeight::get().reads(3_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	// Storage: Identity IdentityOf (r:1 w:0)
 	// Storage: Identity SuperOf (r:1 w:1)
 	/// The range of component `s` is `[1, 32]`.
 	fn rename_sub(s: u32, ) -> Weight {
-		(36_368_000 as Weight)
+		Weight::from_ref_time(36_368_000_u64)
 			// Standard Error: 22_000
-			.saturating_add((223_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(223_000_u64).saturating_mul(s as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: Identity IdentityOf (r:1 w:0)
 	// Storage: Identity SuperOf (r:1 w:1)
 	// Storage: Identity SubsOf (r:1 w:1)
 	/// The range of component `s` is `[1, 32]`.
 	fn remove_sub(s: u32, ) -> Weight {
-		(95_261_000 as Weight)
+		Weight::from_ref_time(95_261_000_u64)
 			// Standard Error: 28_000
-			.saturating_add((408_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+			.saturating_add(Weight::from_ref_time(408_000_u64).saturating_mul(s as u64))
+			.saturating_add(T::DbWeight::get().reads(3_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	// Storage: Identity SuperOf (r:1 w:1)
 	// Storage: Identity SubsOf (r:1 w:1)
 	/// The range of component `s` is `[1, 31]`.
 	fn quit_sub(s: u32, ) -> Weight {
-		(67_477_000 as Weight)
+		Weight::from_ref_time(67_477_000_u64)
 			// Standard Error: 30_000
-			.saturating_add((411_000 as Weight).saturating_mul(s as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+			.saturating_add(Weight::from_ref_time(411_000_u64).saturating_mul(s as u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 }

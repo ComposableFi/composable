@@ -11,7 +11,7 @@ use sp_runtime::DispatchError;
 
 use crate::{
 	test::{
-		mock::{new_test_ext, Event, MockRuntime, Nft, Proxy},
+		mock::{new_test_ext, MockRuntime, Nft, Proxy, RuntimeEvent},
 		prelude::{TEST_COLLECTION_ID, *},
 		ALICE, BOB, CHARLIE,
 	},
@@ -86,7 +86,7 @@ fn roundtrip() {
 			&nft_to_trade,
 			&BOB
 		));
-		MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftTransferred {
+		MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: nft_to_trade,
 			to: BOB,
@@ -103,7 +103,7 @@ fn roundtrip() {
 			&nft_to_trade,
 			&ALICE
 		));
-		MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftTransferred {
+		MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: nft_to_trade,
 			to: ALICE,
@@ -158,7 +158,7 @@ fn many() {
 			&a0,
 			&BOB
 		));
-		MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftTransferred {
+		MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: a0,
 			to: BOB,
@@ -185,11 +185,13 @@ fn many() {
 				nft_id,
 				&BOB
 			));
-			MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftTransferred {
-				collection_id: TEST_COLLECTION_ID,
-				instance_id: *nft_id,
-				to: BOB,
-			}));
+			MockRuntime::assert_last_event(RuntimeEvent::Nft(
+				crate::Event::FinancialNftTransferred {
+					collection_id: TEST_COLLECTION_ID,
+					instance_id: *nft_id,
+					to: BOB,
+				},
+			));
 			process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(2);
 		}
 
@@ -213,7 +215,7 @@ fn many() {
 			&c9,
 			&ALICE
 		));
-		MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftTransferred {
+		MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: c9,
 			to: ALICE,
@@ -239,7 +241,7 @@ fn many() {
 			&c9,
 			&CHARLIE
 		),);
-		MockRuntime::assert_last_event(Event::Nft(crate::Event::FinancialNftTransferred {
+		MockRuntime::assert_last_event(RuntimeEvent::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: c9,
 			to: CHARLIE,

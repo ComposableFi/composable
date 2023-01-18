@@ -1,6 +1,5 @@
 // std
 use std::{sync::Arc, time::Duration};
-
 // Cumulus Imports
 use common::OpaqueBlock;
 use cumulus_client_cli::CollatorOptions;
@@ -12,20 +11,10 @@ use cumulus_client_service::{
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
-use cumulus_relay_chain_rpc_interface::RelayChainRPCInterface;
+use cumulus_relay_chain_rpc_interface::{create_client_and_start_worker, RelayChainRpcInterface};
 use polkadot_service::CollatorPair;
-
+use sc_network_common::service::NetworkBlock;
 // Substrate Imports
-use sc_client_api::{ExecutorProvider, StateBackendFor};
-use sc_executor::NativeExecutionDispatch;
-use sc_service::{Configuration, PartialComponents, TaskManager};
-use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
-use sp_api::{ConstructRuntimeApi, StateBackend};
-#[cfg(feature = "ocw")]
-use sp_core::crypto::KeyTypeId;
-use sp_runtime::traits::BlakeTwo256;
-use sp_trie::PrefixedMemoryDB;
-
 use crate::{
 	client::{Client, FullBackend, FullClient},
 	rpc,
@@ -35,6 +24,15 @@ use crate::{
 		pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
 	},
 };
+use sc_client_api::StateBackendFor;
+use sc_executor::NativeExecutionDispatch;
+use sc_service::{Configuration, PartialComponents, TaskManager};
+use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
+use sp_api::{ConstructRuntimeApi, StateBackend};
+#[cfg(feature = "ocw")]
+use sp_core::crypto::KeyTypeId;
+use sp_runtime::traits::BlakeTwo256;
+use sp_trie::PrefixedMemoryDB;
 
 pub struct PicassoExecutor;
 
@@ -337,7 +335,7 @@ where
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue = cumulus_client_service::SharedImportQueue::new(params.import_queue);
-	let (network, system_rpc_tx, start_network) =
+	let (network, system_rpc_tx, tx_handler_controller, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
 			client: client.clone(),
@@ -384,6 +382,7 @@ where
 		keystore: params.keystore_container.sync_keystore(),
 		backend: backend.clone(),
 		network: network.clone(),
+		tx_handler_controller,
 		system_rpc_tx,
 		telemetry: telemetry.as_mut(),
 	})?;
@@ -438,7 +437,7 @@ where
 									"Failed to create parachain inherent",
 								)
 							})?;
-							Ok((time, slot, parachain_inherent))
+							Ok((slot, time, parachain_inherent))
 						}
 					},
 					block_import: client.clone(),
@@ -448,11 +447,11 @@ where
 					keystore,
 					force_authoring,
 					slot_duration,
+					telemetry: telemetry.as_ref().map(|t| t.handle()),
 					// We got around 500ms for proposing
 					block_proposal_slot_portion: SlotProportion::new(1_f32 / 24_f32),
 					// And a maximum of 750ms if slots are skipped
 					max_block_proposal_slot_portion: Some(SlotProportion::new(1_f32 / 16_f32)),
-					telemetry: telemetry.as_ref().map(|t| t.handle()),
 				},
 			);
 
@@ -520,10 +519,9 @@ where
 		_,
 		_,
 		_,
-		_,
 	>(cumulus_client_consensus_aura::ImportQueueParams {
 		block_import: client.clone(),
-		client: client.clone(),
+		client,
 		create_inherent_data_providers: move |_, _| async move {
 			let time = sp_timestamp::InherentDataProvider::from_system_time();
 
@@ -533,10 +531,9 @@ where
 					slot_duration,
 				);
 
-			Ok((time, slot))
+			Ok((slot, time))
 		},
 		registry: config.prometheus_registry(),
-		can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
 		spawner: &task_manager.spawn_essential_handle(),
 		telemetry,
 	})
@@ -551,8 +548,10 @@ async fn build_relay_chain_interface(
 	collator_options: CollatorOptions,
 ) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
 	match collator_options.relay_chain_rpc_url {
-		Some(relay_chain_url) =>
-			Ok((Arc::new(RelayChainRPCInterface::new(relay_chain_url).await?) as Arc<_>, None)),
+		Some(relay_chain_url) => {
+			let client = create_client_and_start_worker(relay_chain_url, task_manager).await?;
+			Ok((Arc::new(RelayChainRpcInterface::new(client)) as Arc<_>, None))
+		},
 		None => build_inprocess_relay_chain(
 			polkadot_config,
 			parachain_config,

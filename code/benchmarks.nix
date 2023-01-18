@@ -13,8 +13,8 @@
           --wasm-instantiation-strategy=legacy-instance-reuse \
           --pallet="*" \
           --extrinsic="*" \
-          --steps=1 \
-          --repeat=1
+          --steps=2 \
+          --repeat=2
         '';
 
       generate-benchmarks = { chain, steps, repeat }:

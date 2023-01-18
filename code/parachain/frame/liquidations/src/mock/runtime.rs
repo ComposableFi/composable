@@ -36,7 +36,7 @@ pub type OrderId = u32;
 pub type Amount = i64;
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-pub type SystemOriginOf<T> = <T as frame_system::Config>::Origin;
+pub type SystemOriginOf<T> = <T as frame_system::Config>::RuntimeOrigin;
 
 frame_support::construct_runtime! {
 	pub enum Runtime where
@@ -64,8 +64,8 @@ impl frame_system::Config for Runtime {
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -73,7 +73,7 @@ impl frame_system::Config for Runtime {
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type DbWeight = ();
 	type Version = ();
@@ -93,7 +93,7 @@ parameter_types! {
 
 impl pallet_balances::Config for Runtime {
 	type Balance = Balance;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = NativeExistentialDeposit;
 	type AccountStore = System;
@@ -124,7 +124,7 @@ parameter_type_with_key! {
 
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
@@ -137,6 +137,9 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = Everything;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
+	type OnSlash = ();
+	type OnDeposit = ();
+	type OnTransfer = ();
 }
 
 pub static ALICE: Public =
@@ -164,7 +167,7 @@ impl pallet_assets::Config for Runtime {
 }
 
 impl pallet_currency_factory::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
 	type Balance = Balance;
@@ -205,8 +208,8 @@ impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
 		todo!("please test via local-integration-tests")
 	}
 }
-impl From<Origin> for XcmFake {
-	fn from(_: Origin) -> Self {
+impl From<RuntimeOrigin> for XcmFake {
+	fn from(_: RuntimeOrigin) -> Self {
 		todo!("please test via local-integration-tests")
 	}
 }
@@ -220,7 +223,7 @@ impl SendXcm for XcmFake {
 }
 
 impl pallet_dutch_auction::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type UnixTime = Timestamp;
 	type OrderId = OrderId;
 	type MultiCurrency = Assets;
@@ -239,7 +242,7 @@ parameter_types! {
 
 type LiquidationStrategyId = u32;
 impl pallet_liquidations::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type UnixTime = Timestamp;
 	type OrderId = OrderId;
 	type WeightInfo = SubstrateWeight<Self>;

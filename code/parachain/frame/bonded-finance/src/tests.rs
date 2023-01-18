@@ -15,7 +15,7 @@ use frame_support::{
 		tokens::WithdrawConsequence,
 	},
 };
-use mock::{Event, *};
+use mock::{RuntimeEvent, *};
 use proptest::prelude::*;
 
 prop_compose! {
@@ -64,7 +64,7 @@ proptest! {
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
-					  System::assert_last_event(Event::BondedFinance(crate::Event::NewOffer{ offer_id, beneficiary: BOB }));
+					  System::assert_last_event(RuntimeEvent::BondedFinance(crate::Event::NewOffer{ offer_id, beneficiary: BOB }));
 					  Ok(())
 			  })?;
 	  }
@@ -113,7 +113,7 @@ proptest! {
 					  prop_assert_ok!(BondedFinance::do_bond(offer_id, &BOB, half_nb_of_bonds, false));
 
 					  // Alice cancel the offer
-					  prop_assert_ok!(BondedFinance::cancel(Origin::signed(ALICE), offer_id));
+					  prop_assert_ok!(BondedFinance::cancel(RuntimeOrigin::signed(ALICE), offer_id));
 
 					// The remaining half is refunded to alice
 		  let precision = 100;
@@ -136,7 +136,7 @@ proptest! {
 					  let offer_id = offer_id.expect("impossible; qed");
 
 					  // Alice cancel the offer
-					  prop_assert_ok!(BondedFinance::cancel(Origin::signed(ALICE), offer_id));
+					  prop_assert_ok!(BondedFinance::cancel(RuntimeOrigin::signed(ALICE), offer_id));
 
 					  // The stake is refunded
 						prop_assert_eq!(Tokens::balance(NATIVE_CURRENCY_ID, &ALICE), Stake::get());
@@ -155,9 +155,9 @@ proptest! {
 					  let offer_id = offer_id.expect("impossible; qed");
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
-					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds, false));
+					  prop_assert_ok!(BondedFinance::bond(RuntimeOrigin::signed(BOB), offer_id, offer.nb_of_bonds, false));
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds, false),
+							  BondedFinance::bond(RuntimeOrigin::signed(BOB), offer_id, offer.nb_of_bonds, false),
 							  Err(Error::<Runtime>::OfferCompleted.into())
 					  );
 
@@ -175,7 +175,7 @@ proptest! {
 											  0
 									  );
 									  System::set_block_number(return_in);
-									  prop_assert_ok!(Vesting::claim(Origin::signed(BOB), offer.asset, VestingScheduleIdSet::All));
+									  prop_assert_ok!(Vesting::claim(RuntimeOrigin::signed(BOB), offer.asset, VestingScheduleIdSet::All));
 									  prop_assert_eq!(
 											  Tokens::balance(offer.asset, &BOB),
 											  offer.total_price().expect("impossible; qed;")
@@ -230,23 +230,23 @@ proptest! {
 					  let offer_id = offer_id.expect("impossible; qed");
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
-					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds - 1, false));
+					  prop_assert_ok!(BondedFinance::bond(RuntimeOrigin::signed(BOB), offer_id, offer.nb_of_bonds - 1, false));
 
-					  System::assert_last_event(Event::BondedFinance(crate::Event::NewBond {
+					  System::assert_last_event(RuntimeEvent::BondedFinance(crate::Event::NewBond {
 							  offer_id,
 							  who: BOB,
 							  nb_of_bonds: offer.nb_of_bonds - 1
 					  }));
 
-					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, 1, false));
+					  prop_assert_ok!(BondedFinance::bond(RuntimeOrigin::signed(BOB), offer_id, 1, false));
 
-					  System::assert_has_event(Event::BondedFinance(crate::Event::NewBond {
+					  System::assert_has_event(RuntimeEvent::BondedFinance(crate::Event::NewBond {
 							  offer_id,
 							  who: BOB,
 							  nb_of_bonds: 1
 					  }));
 
-					  System::assert_last_event(Event::BondedFinance(crate::Event::OfferCompleted { offer_id }));
+					  System::assert_last_event(RuntimeEvent::BondedFinance(crate::Event::OfferCompleted { offer_id }));
 
 					  Ok(())
 			  })?;
@@ -285,8 +285,8 @@ proptest! {
 
 					  System::set_block_number(offer.reward.maturity);
 
-					  prop_assert_ok!(Vesting::claim(Origin::signed(BOB), offer.reward.asset, VestingScheduleIdSet::All));
-					  prop_assert_ok!(Vesting::claim(Origin::signed(CHARLIE), offer.reward.asset, VestingScheduleIdSet::All));
+					  prop_assert_ok!(Vesting::claim(RuntimeOrigin::signed(BOB), offer.reward.asset, VestingScheduleIdSet::All));
+					  prop_assert_ok!(Vesting::claim(RuntimeOrigin::signed(CHARLIE), offer.reward.asset, VestingScheduleIdSet::All));
 
 					  prop_assert!(Tokens::can_withdraw(offer.reward.asset, &BOB, bob_reward) == WithdrawConsequence::Success);
 					  prop_assert!(Tokens::can_withdraw(offer.reward.asset, &CHARLIE, charlie_reward) == WithdrawConsequence::Success);
@@ -306,7 +306,7 @@ proptest! {
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id + 1, offer.nb_of_bonds,false),
+							  BondedFinance::bond(RuntimeOrigin::signed(BOB), offer_id + 1, offer.nb_of_bonds,false),
 							  Err(Error::<Runtime>::BondOfferNotFound.into())
 					  );
 
@@ -325,11 +325,11 @@ proptest! {
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds + 1,false),
+							  BondedFinance::bond(RuntimeOrigin::signed(BOB), offer_id, offer.nb_of_bonds + 1,false),
 							  Err(Error::<Runtime>::InvalidNumberOfBonds.into())
 					  );
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id, 0,false),
+							  BondedFinance::bond(RuntimeOrigin::signed(BOB), offer_id, 0,false),
 							  Err(Error::<Runtime>::InvalidNumberOfBonds.into())
 					  );
 
@@ -347,9 +347,9 @@ proptest! {
 					  let offer_id = offer_id.expect("impossible; qed");
 
 					  prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, offer.total_price().expect("impossible; qed;")));
-					  prop_assert_ok!(BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds,false));
+					  prop_assert_ok!(BondedFinance::bond(RuntimeOrigin::signed(BOB), offer_id, offer.nb_of_bonds,false));
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds,false),
+							  BondedFinance::bond(RuntimeOrigin::signed(BOB), offer_id, offer.nb_of_bonds,false),
 							  Err(Error::<Runtime>::OfferCompleted.into())
 					  );
 
@@ -371,20 +371,20 @@ proptest! {
 					  let offer_id = offer_id.expect("impossible; qed");
 
 					  prop_assert_eq!(
-							  BondedFinance::cancel(Origin::signed(BOB), offer_id),
+							  BondedFinance::cancel(RuntimeOrigin::signed(BOB), offer_id),
 							  Err(BadOrigin.into())
 					  );
 
-					  prop_assert_ok!(BondedFinance::cancel(Origin::signed(ALICE), offer_id));
+					  prop_assert_ok!(BondedFinance::cancel(RuntimeOrigin::signed(ALICE), offer_id));
 						prop_assert_eq!(Tokens::balance(NATIVE_CURRENCY_ID, &ALICE), Stake::get());
 						prop_assert_eq!(Tokens::balance(offer.reward.asset, &ALICE), offer.reward.amount);
 
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds,false),
+							  BondedFinance::bond(RuntimeOrigin::signed(BOB), offer_id, offer.nb_of_bonds,false),
 							  Err(Error::<Runtime>::BondOfferNotFound.into())
 					  );
 
-					  System::assert_last_event(Event::BondedFinance(crate::Event::OfferCancelled { offer_id }));
+					  System::assert_last_event(RuntimeEvent::BondedFinance(crate::Event::OfferCancelled { offer_id }));
 
 					  Ok(())
 			  })?;
@@ -402,20 +402,20 @@ proptest! {
 					  let offer_id = offer_id.expect("impossible; qed");
 
 					  prop_assert_eq!(
-							  BondedFinance::cancel(Origin::signed(BOB), offer_id),
+							  BondedFinance::cancel(RuntimeOrigin::signed(BOB), offer_id),
 							  Err(BadOrigin.into())
 					  );
 
-					  prop_assert_ok!(BondedFinance::cancel(Origin::root(), offer_id));
+					  prop_assert_ok!(BondedFinance::cancel(RuntimeOrigin::root(), offer_id));
 						prop_assert_eq!(Tokens::balance(NATIVE_CURRENCY_ID, &ALICE), Stake::get());
 						prop_assert_eq!(Tokens::balance(offer.reward.asset, &ALICE), offer.reward.amount);
 
 					  prop_assert_eq!(
-							  BondedFinance::bond(Origin::signed(BOB), offer_id, offer.nb_of_bonds,false),
+							  BondedFinance::bond(RuntimeOrigin::signed(BOB), offer_id, offer.nb_of_bonds,false),
 							  Err(Error::<Runtime>::BondOfferNotFound.into())
 					  );
 
-					  System::assert_last_event(Event::BondedFinance(crate::Event::OfferCancelled { offer_id }));
+					  System::assert_last_event(RuntimeEvent::BondedFinance(crate::Event::OfferCancelled { offer_id }));
 
 					  Ok(())
 			  })?;

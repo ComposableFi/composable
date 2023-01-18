@@ -72,9 +72,9 @@ fn reward_config<T: Config>(
 		.unwrap()
 }
 
-fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
+fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	let events = frame_system::Pallet::<T>::events();
-	let system_event: <T as frame_system::Config>::Event = generic_event.into();
+	let system_event: <T as frame_system::Config>::RuntimeEvent = generic_event.into();
 	// compare to the last event record
 	let EventRecord { event, .. } = &events[events.len() - 1];
 	assert_eq!(event, &system_event);
@@ -244,7 +244,7 @@ benchmarks! {
 
 		let mut reward = RewardPools::<T>::get(&pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
 	}: {
-		let reward = Pallet::<T>::reward_accumulation_hook_reward_update_calculation(pool_id, reward_asset_id,&mut reward, now);
+		crate::reward_accumulation_hook_reward_update_calculation::<T>(pool_id, reward_asset_id,&mut reward, now);
 	}
 
 	unix_time_now {}: {

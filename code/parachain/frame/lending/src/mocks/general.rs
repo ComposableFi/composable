@@ -94,8 +94,8 @@ impl frame_system::Config for Runtime {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -103,7 +103,7 @@ impl frame_system::Config for Runtime {
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -122,7 +122,7 @@ parameter_types! {
 
 impl pallet_balances::Config for Runtime {
 	type Balance = Balance;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -146,7 +146,7 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 impl pallet_currency_factory::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
 	type Balance = Balance;
@@ -165,7 +165,7 @@ parameter_types! {
 }
 
 impl pallet_vault::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Tokens;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
@@ -196,7 +196,7 @@ parameter_types! {
 
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
@@ -209,6 +209,9 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = Everything;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
+	type OnSlash = ();
+	type OnDeposit = ();
+	type OnTransfer = ();
 }
 
 ord_parameter_types! {
@@ -265,7 +268,7 @@ impl LocalAssets<CurrencyId> for Decimals {
 }
 
 impl pallet_oracle::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Assets;
 	type AssetId = CurrencyId;
 	type PriceValue = Balance;
@@ -323,8 +326,8 @@ impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
 		unimplemented!("please test via local-integration-tests")
 	}
 }
-impl From<Origin> for XcmFake {
-	fn from(_: Origin) -> Self {
+impl From<RuntimeOrigin> for XcmFake {
+	fn from(_: RuntimeOrigin) -> Self {
 		unimplemented!("please test via local-integration-tests")
 	}
 }
@@ -338,7 +341,7 @@ impl SendXcm for XcmFake {
 }
 
 impl pallet_dutch_auction::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type UnixTime = Timestamp;
 	type OrderId = OrderId;
 	type MultiCurrency = Assets;
@@ -352,7 +355,7 @@ impl pallet_dutch_auction::Config for Runtime {
 }
 
 impl pallet_liquidations::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type UnixTime = Timestamp;
 	type DutchAuction = DutchAuction;
 	type LiquidationStrategyId = LiquidationStrategyId;
@@ -364,7 +367,7 @@ impl pallet_liquidations::Config for Runtime {
 	type MaxLiquidationStrategiesAmount = ConstU32<3>;
 }
 
-pub type Extrinsic = TestXt<Call, ()>;
+pub type Extrinsic = TestXt<RuntimeCall, ()>;
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
 impl frame_system::offchain::SigningTypes for Runtime {
@@ -374,22 +377,22 @@ impl frame_system::offchain::SigningTypes for Runtime {
 
 impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Runtime
 where
-	Call: From<LocalCall>,
+	RuntimeCall: From<LocalCall>,
 {
-	type OverarchingCall = Call;
+	type OverarchingCall = RuntimeCall;
 	type Extrinsic = Extrinsic;
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
 where
-	Call: From<LocalCall>,
+	RuntimeCall: From<LocalCall>,
 {
 	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-		call: Call,
+		call: RuntimeCall,
 		_public: <Signature as Verify>::Signer,
 		_account: AccountId,
 		nonce: u64,
-	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+	) -> Option<(RuntimeCall, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
 		Some((call, (nonce, ())))
 	}
 }
@@ -424,7 +427,7 @@ impl pallet_lending::Config for Runtime {
 	type VaultId = VaultId;
 	type Vault = Vault;
 	type VaultLender = Vault;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
 	type CurrencyFactory = LpTokenFactory;
