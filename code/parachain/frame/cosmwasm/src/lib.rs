@@ -95,7 +95,7 @@ pub mod pallet {
 			ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env,
 			Event as CosmwasmEvent, MessageInfo, Timestamp, TransactionInfo,
 		},
-		executor::{cosmwasm_call, MigrateCall, QueryCall, QueryResponse},
+		executor::{cosmwasm_call, QueryCall, QueryResponse},
 		system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
@@ -891,7 +891,7 @@ pub mod pallet {
 					CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
 			};
 
-			EntryPointCaller::<MigrateCall>::setup(shared, who, contract, new_code_id)?.call(
+			setup_migrate_call(shared, who, contract, new_code_id)?.call(
 				shared,
 				Default::default(),
 				message,
@@ -1431,7 +1431,7 @@ pub mod pallet {
 			event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
 		) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
 			let CosmwasmContractMeta { code_id, .. } = Self::do_running_contract_meta(vm);
-			EntryPointCaller::<MigrateCall>::setup(
+			setup_migrate_call(
 				vm.shared,
 				vm.contract_address.clone().into_inner(),
 				contract,

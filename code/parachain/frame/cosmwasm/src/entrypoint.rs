@@ -119,56 +119,53 @@ pub(crate) fn setup_reply_call<T: Config>(
 	})
 }
 
-/// Setup state for `migrate` entrypoint.
-impl EntryPointCaller<MigrateCall> {
-	/// Prepares for `migrate` entrypoint call.
-	///
-	/// * `migrator` - Address of the account that calls this entrypoint.
-	/// * `contract` - Address of the contract to be called.
-	/// * `new_code_id` - New code id that the contract will point to (or use).
-	pub(crate) fn setup<T: Config>(
-		shared: &mut CosmwasmVMShared,
-		migrator: AccountIdOf<T>,
-		contract: AccountIdOf<T>,
-		new_code_id: CosmwasmCodeId,
-	) -> Result<EntryPointCaller<Dispatchable<MigrateCall, (), T>>, Error<T>> {
-		let contract_info = Pallet::<T>::contract_info(&contract)?;
-		// If the migrate already happened, no need to do that again.
-		// This is the case for sub-message execution where `migrate` is
-		// called by the VM.
-		if contract_info.code_id != new_code_id {
-			Pallet::<T>::cosmwasm_call(
-				shared,
-				migrator.clone(),
-				contract.clone(),
-				Default::default(),
-				|vm| {
-					cosmwasm_vm::system::migrate(
-						vm,
-						CosmwasmAccount::new(migrator.clone()),
-						CosmwasmAccount::new(contract.clone()),
-						new_code_id,
-					)
-				},
-			)
-			.map_err(|_| Error::<T>::NotAuthorized)?;
-		}
-
-		Pallet::<T>::deposit_event(Event::<T>::Migrated {
-			contract: contract.clone(),
-			to: new_code_id,
-		});
-
-		Ok(EntryPointCaller {
-			state: Dispatchable {
-				sender: migrator,
-				contract,
-				entrypoint: EntryPoint::Migrate,
-				output: (),
-				marker: PhantomData,
+/// Prepares for `migrate` entrypoint call.
+///
+/// * `migrator` - Address of the account that calls this entrypoint.
+/// * `contract` - Address of the contract to be called.
+/// * `new_code_id` - New code id that the contract will point to (or use).
+pub(crate) fn setup_migrate_call<T: Config>(
+	shared: &mut CosmwasmVMShared,
+	migrator: AccountIdOf<T>,
+	contract: AccountIdOf<T>,
+	new_code_id: CosmwasmCodeId,
+) -> Result<EntryPointCaller<Dispatchable<MigrateCall, (), T>>, Error<T>> {
+	let contract_info = Pallet::<T>::contract_info(&contract)?;
+	// If the migrate already happened, no need to do that again.
+	// This is the case for sub-message execution where `migrate` is
+	// called by the VM.
+	if contract_info.code_id != new_code_id {
+		Pallet::<T>::cosmwasm_call(
+			shared,
+			migrator.clone(),
+			contract.clone(),
+			Default::default(),
+			|vm| {
+				cosmwasm_vm::system::migrate(
+					vm,
+					CosmwasmAccount::new(migrator.clone()),
+					CosmwasmAccount::new(contract.clone()),
+					new_code_id,
+				)
 			},
-		})
+		)
+		.map_err(|_| Error::<T>::NotAuthorized)?;
 	}
+
+	Pallet::<T>::deposit_event(Event::<T>::Migrated {
+		contract: contract.clone(),
+		to: new_code_id,
+	});
+
+	Ok(EntryPointCaller {
+		state: Dispatchable {
+			sender: migrator,
+			contract,
+			entrypoint: EntryPoint::Migrate,
+			output: (),
+			marker: PhantomData,
+		},
+	})
 }
 
 /// Dispatch state for all `Input`s
