@@ -95,10 +95,7 @@ pub mod pallet {
 			ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env,
 			Event as CosmwasmEvent, MessageInfo, Timestamp, TransactionInfo,
 		},
-		executor::{
-			cosmwasm_call, ExecuteCall, InstantiateCall, MigrateCall, QueryCall, QueryResponse,
-			ReplyCall,
-		},
+		executor::{cosmwasm_call, ExecuteCall, MigrateCall, QueryCall, QueryResponse, ReplyCall},
 		system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
@@ -866,7 +863,7 @@ pub mod pallet {
 				CodeIdentifier::CodeHash(code_hash) =>
 					CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
 			};
-			EntryPointCaller::<InstantiateCall>::setup(who, code_id, &salt, admin, label, &message)?
+			setup_instantiate_call(who, code_id, &salt, admin, label, &message)?
 				.call(shared, funds, message)
 				.map(|_| ())
 		}
@@ -1380,7 +1377,7 @@ pub mod pallet {
 			message: &[u8],
 			event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
 		) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
-			EntryPointCaller::<InstantiateCall>::setup(
+			setup_instantiate_call(
 				vm.contract_address.clone().into_inner(),
 				code_id,
 				&[],
@@ -1558,15 +1555,11 @@ pub mod pallet {
 			.try_into()
 			.map_err(|_| CosmwasmVMError::Rpc(String::from("'message' is too large")))?;
 		let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		EntryPointCaller::<InstantiateCall>::setup(
-			instantiator,
-			code_id,
-			&salt,
-			admin,
-			label,
-			&message,
-		)?
-		.call(&mut shared, funds, message)
+		setup_instantiate_call(instantiator, code_id, &salt, admin, label, &message)?.call(
+			&mut shared,
+			funds,
+			message,
+		)
 	}
 
 	pub fn execute<T: Config>(

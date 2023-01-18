@@ -230,7 +230,7 @@ where
 	Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 
 	// 3. Instantiate the contract and get the contract address
-	let contract_addr = EntryPointCaller::<InstantiateCall>::setup::<T>(
+	let contract_addr = setup_instantiate_call::<T>(
 		origin.clone(),
 		1,
 		"salt".as_bytes(),
