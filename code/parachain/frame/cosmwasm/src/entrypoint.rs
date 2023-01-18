@@ -25,7 +25,7 @@ use cosmwasm_vm_wasmi::WasmiVM;
 use frame_support::ensure;
 
 /// State machine for entrypoint calls like `instantiate`, `migrate`, etc.
-pub struct EntryPointCaller<S: CallerState> {
+pub struct EntryPointCaller<S> {
 	state: S,
 }
 
@@ -37,18 +37,6 @@ pub struct Dispatchable<I, O, T: Config> {
 	output: O,
 	marker: PhantomData<I>,
 }
-
-pub trait CallerState {}
-
-impl CallerState for MigrateCall {}
-
-impl CallerState for InstantiateCall {}
-
-impl CallerState for ExecuteCall {}
-
-impl CallerState for ReplyCall {}
-
-impl<I, O, T: Config> CallerState for Dispatchable<I, O, T> {}
 
 /// Setup state for `instantiate` entrypoint.
 impl EntryPointCaller<InstantiateCall> {
