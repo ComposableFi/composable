@@ -100,25 +100,23 @@ pub(crate) fn setup_execute_call<T: Config>(
 	})
 }
 
-impl EntryPointCaller<ReplyCall> {
-	/// Prepares for `reply` entrypoint call.
-	///
-	/// * `executor` - Address of the account that calls this entrypoint.
-	/// * `contract` - Address of the contract to be called.
-	pub(crate) fn setup<T: Config>(
-		executor: AccountIdOf<T>,
-		contract: AccountIdOf<T>,
-	) -> Result<EntryPointCaller<Dispatchable<ReplyCall, (), T>>, Error<T>> {
-		Ok(EntryPointCaller {
-			state: Dispatchable {
-				entrypoint: EntryPoint::Reply,
-				sender: executor,
-				contract,
-				output: (),
-				marker: PhantomData,
-			},
-		})
-	}
+/// Prepares for `reply` entrypoint call.
+///
+/// * `executor` - Address of the account that calls this entrypoint.
+/// * `contract` - Address of the contract to be called.
+pub(crate) fn setup_reply_call<T: Config>(
+	executor: AccountIdOf<T>,
+	contract: AccountIdOf<T>,
+) -> Result<EntryPointCaller<Dispatchable<ReplyCall, (), T>>, Error<T>> {
+	Ok(EntryPointCaller {
+		state: Dispatchable {
+			entrypoint: EntryPoint::Reply,
+			sender: executor,
+			contract,
+			output: (),
+			marker: PhantomData,
+		},
+	})
 }
 
 /// Setup state for `migrate` entrypoint.

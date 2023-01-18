@@ -95,7 +95,7 @@ pub mod pallet {
 			ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env,
 			Event as CosmwasmEvent, MessageInfo, Timestamp, TransactionInfo,
 		},
-		executor::{cosmwasm_call, MigrateCall, QueryCall, QueryResponse, ReplyCall},
+		executor::{cosmwasm_call, MigrateCall, QueryCall, QueryResponse},
 		system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
@@ -1412,7 +1412,7 @@ pub mod pallet {
 			reply: cosmwasm_vm::cosmwasm_std::Reply,
 			event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
 		) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
-			EntryPointCaller::<ReplyCall>::setup(
+			setup_reply_call(
 				vm.contract_address.clone().into_inner(),
 				vm.contract_address.clone().into_inner(),
 			)?
