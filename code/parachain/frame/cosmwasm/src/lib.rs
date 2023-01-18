@@ -38,6 +38,7 @@
 extern crate alloc;
 
 pub use pallet::*;
+pub mod dispatchable_call;
 pub mod ibc;
 pub mod instrument;
 pub mod pallet_hook;
