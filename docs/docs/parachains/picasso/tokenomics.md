@@ -20,8 +20,7 @@ The total supply of PICA is 10 billion tokens. PICA Token distribution is intend
 |                  Liquidity Programs                   |  1,500,000,000 |       15%        | 15% of the total token supply will be released as rewards for participants in Liquidity Programs on Picasso. This includes programs such as xPICA.                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 
-
-**Estimated allocation and length of program is subject to change. [Specific Disclaimers and Disclosures for the PICA Token](../../faqs/disclaimer-disclosure-pica-token.md)
-
 ![pica_allocation_pie](./pica-allocation-pie.png)
-*All terms related to token allocations are subject to change. [Legal disclosures apply.](../../faqs/legal-disclaimer-disclosures.md)
+
+**Estimated allocation and length of program is subject to change. 
+[Specific Disclaimers and Disclosures for the PICA Token](../../faqs/disclaimers-disclosures-for-composable-tokens.md)

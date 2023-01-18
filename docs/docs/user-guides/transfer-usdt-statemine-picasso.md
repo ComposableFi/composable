@@ -63,7 +63,5 @@ because we paid our transaction fees in USDT, which in this case was deducted fr
 Going back to Picasso the “Transfer successful” notification confirms your transaction. 
 You can now use the funds we just transferred on Picasso.
 
-[Legal Disclosures & Disclaimers](../faqs/legal-disclaimer-disclosures.md)
-
 [Talisman]: https://docs.composable.finance/user-guides/talisman-create-account
 [Polkadot.js]: https://docs.composable.finance/user-guides/polkadotjs-extension-create-account
