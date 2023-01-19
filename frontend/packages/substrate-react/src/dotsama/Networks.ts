@@ -2,7 +2,7 @@ import {
   ParachainId,
   ParachainNetwork,
   RelayChainId,
-  RelaychainNetwork
+  RelaychainNetwork,
 } from "./types";
 
 export type ParachainNetworks = {
@@ -19,10 +19,9 @@ export const ParachainNetworks: ParachainNetworks = {
     decimals: 12,
     color: "#113911",
     symbol: "KSM",
-    logo:
-      "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/statemine/logo.svg",
+    logo: "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/statemine/logo.svg",
     parachainId: 1000,
-    relayChain: "kusama"
+    relayChain: "kusama",
   },
   picasso: {
     name: "Picasso",
@@ -34,10 +33,9 @@ export const ParachainNetworks: ParachainNetworks = {
     decimals: 12,
     color: "#B09A9F",
     symbol: "PICA",
-    logo:
-      "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/picasso/logo.svg",
+    logo: "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/picasso/logo.svg",
     parachainId: 2087,
-    relayChain: "kusama"
+    relayChain: "kusama",
   },
   karura: {
     name: "Karura",
@@ -49,11 +47,10 @@ export const ParachainNetworks: ParachainNetworks = {
     decimals: 12,
     color: "#ff4c3b",
     symbol: "KAR",
-    logo:
-      "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/karura/logo.svg",
+    logo: "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/karura/logo.svg",
     parachainId: 2000,
-    relayChain: "kusama"
-  }
+    relayChain: "kusama",
+  },
 };
 
 export const RelayChainNetworks: {
@@ -63,30 +60,28 @@ export const RelayChainNetworks: {
     name: "Kusama",
     color: "#000000",
     prefix: 2,
-    logo:
-      "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/kusama/logo.svg",
+    logo: "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/kusama/logo.svg",
     networkId: "kusama",
     accountType: "*25519",
     wsUrl: "wss://kusama-rpc.polkadot.io",
     subscanUrl: "https://kusama.subscan.io/",
     decimals: 12,
     tokenId: "ksm",
-    symbol: "KSM"
+    symbol: "KSM",
   },
   polkadot: {
     name: "Polkadot",
     color: "#e6007a",
     prefix: 0,
-    logo:
-      "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/polkadot/logo.svg",
+    logo: "https://raw.githubusercontent.com/TalismanSociety/chaindata/2778d4b989407a2e9fca6ae897fe849561f74afe/assets/polkadot/logo.svg",
     networkId: "polkadot",
     accountType: "*25519",
     wsUrl: "wss://rpc.polkadot.io",
     subscanUrl: "https://polkadot.subscan.io/",
     decimals: 10,
     tokenId: "dot",
-    symbol: "DOT"
-  }
+    symbol: "DOT",
+  },
 };
 
 export const getParachainNetwork = (
