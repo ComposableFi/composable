@@ -49,6 +49,7 @@ pub mod utils;
 pub mod weights;
 pub use crate::ibc::NoRelayer;
 pub mod entrypoint;
+mod mapping;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
@@ -149,7 +150,6 @@ pub mod pallet {
 		Emitted { contract: AccountIdOf<T>, ty: Vec<u8>, attributes: Vec<(Vec<u8>, Vec<u8>)> },
 		Migrated { contract: AccountIdOf<T>, to: CosmwasmCodeId },
 		AdminUpdated { contract: AccountIdOf<T>, new_admin: Option<AccountIdOf<T>> },
-		IbcChannelOpen { contract: AccountIdOf<T> },
 	}
 
 	#[pallet::error]
