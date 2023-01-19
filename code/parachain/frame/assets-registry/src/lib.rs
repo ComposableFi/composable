@@ -33,13 +33,17 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::FullCodec;
 	use composable_traits::{
-		assets::Asset,
-		currency::{BalanceLike, CurrencyFactory, Exponent, ForeignByNative, RangeId},
-		xcm::assets::{ForeignMetadata, RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
+		assets::{
+			Asset, AssetMetadata, AssetType, AssetTypeInspect, InspectRegistryMetadata,
+			LocalOrForeignAssetId, MutateRegistryMetadata,
+		},
+		currency::{BalanceLike, Exponent, ForeignByNative},
+		xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
 	};
 	use cumulus_primitives_core::ParaId;
 	use frame_support::{
-		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
+		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin, BoundedVec,
+		Twox128,
 	};
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
@@ -62,7 +66,8 @@ pub mod pallet {
 			+ Debug
 			+ Default
 			+ Ord
-			+ TypeInfo;
+			+ TypeInfo
+			+ MaxEncodedLen;
 
 		/// Identifier for the class of foreign asset.
 		type ForeignAssetId: FullCodec
@@ -72,27 +77,36 @@ pub mod pallet {
 			+ Debug
 			+ Clone
 			+ Default
-			+ TypeInfo;
+			+ TypeInfo
+			+ MaxEncodedLen;
 
-		/// The origin which may set local and foreign admins.
 		type UpdateAssetRegistryOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
 		/// really can be governance of this chain or remote parachain origin
 		type ParachainOrGovernanceOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
 		type WeightInfo: WeightInfo;
+
 		type Balance: BalanceLike;
-		type CurrencyFactory: CurrencyFactory<AssetId = Self::LocalAssetId, Balance = Self::Balance>;
+
+		/// Maximum number of characters allowed in an asset symbol
+		#[pallet::constant]
+		type AssetSymbolMaxChars: Get<u32>;
+
+		/// Maximum number of characters allowed in an asset name
+		#[pallet::constant]
+		type AssetNameMaxChars: Get<u32>;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
-	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	/// Mapping local asset to foreign asset.
 	#[pallet::storage]
 	#[pallet::getter(fn from_local_asset)]
 	pub type LocalToForeign<T: Config> =
-		StorageMap<_, Twox128, T::LocalAssetId, ForeignMetadata<T::ForeignAssetId>, OptionQuery>;
+		StorageMap<_, Twox128, T::LocalAssetId, T::ForeignAssetId, OptionQuery>;
 
 	/// Mapping foreign asset to local asset.
 	#[pallet::storage]
@@ -116,6 +130,17 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn asset_ratio)]
 	pub type AssetRatio<T: Config> = StorageMap<_, Twox128, T::LocalAssetId, Rational, OptionQuery>;
+
+	/// Metadata of an asset
+	#[pallet::storage]
+	#[pallet::getter(fn decimals)]
+	pub type Metadata<T: Config> = StorageMap<
+		_,
+		Twox128,
+		T::LocalAssetId,
+		AssetMetadata<BoundedVec<u8, T::AssetNameMaxChars>, BoundedVec<u8, T::AssetSymbolMaxChars>>,
+		OptionQuery,
+	>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config>(sp_std::marker::PhantomData<T>);
@@ -141,13 +166,25 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		AssetRegistered {
 			asset_id: T::LocalAssetId,
-			location: T::ForeignAssetId,
-			decimals: Option<Exponent>,
+			location: Option<T::ForeignAssetId>,
+			name: Vec<u8>,
+			symbol: Vec<u8>,
+			decimals: u8,
+			ratio: Option<Rational>,
 		},
-		AssetUpdated {
+		AssetLocationUpdated {
 			asset_id: T::LocalAssetId,
 			location: T::ForeignAssetId,
-			decimals: Option<Exponent>,
+		},
+		AssetRatioUpdated {
+			asset_id: T::LocalAssetId,
+			ratio: Option<Rational>,
+		},
+		AssetMetadataUpdated {
+			asset_id: T::LocalAssetId,
+			name: Vec<u8>,
+			symbol: Vec<u8>,
+			decimals: u8,
 		},
 		MinFeeUpdated {
 			target_parachain_id: ParaId,
@@ -160,19 +197,18 @@ pub mod pallet {
 	pub enum Error<T> {
 		AssetNotFound,
 		ForeignAssetAlreadyRegistered,
+		StringExceedsMaxLength,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Creates asset using `CurrencyFactory`.
-		/// Raises `AssetRegistered` event
-		///
-		/// Sets only required fields by `CurrencyFactory`, to upsert metadata use referenced
-		/// pallet.
+		/// Creates an asset.
 		///
 		/// # Parameters:
 		///
-		/// `ratio` -  
+		/// * `location` - Foreign asset location, use `None` when registering local assets
+		///
+		/// * `ratio` -
 		/// Allows `bring you own gas` fees.
 		/// Set to `None` to prevent payment in this asset, only transferring.
 		/// Setting to some will NOT start minting tokens with specified ratio.
@@ -182,43 +218,101 @@ pub mod pallet {
 		///  amount_of_foreign_asset = amount_of_native_asset * ratio
 		/// ```
 		///
-		/// `decimals` - `human` number of decimals
+		/// * `name` - Name of the asset
 		///
-		/// `ed` - same meaning as in for foreign asset account (if None, then asset is not
-		/// sufficient)
+		/// * symbol - Symbol of the asset
+		///
+		/// * decimals - The number of decimals this asset uses to represent one unit
+		///
+		/// # Emmits
+		/// * `AssetRegistered`
 		#[pallet::weight(<T as Config>::WeightInfo::register_asset())]
 		pub fn register_asset(
 			origin: OriginFor<T>,
-			location: T::ForeignAssetId,
-			ratio: Rational,
-			decimals: Option<Exponent>,
-		) -> DispatchResultWithPostInfo {
+			local_or_foreign: LocalOrForeignAssetId<T::LocalAssetId, T::ForeignAssetId>,
+			ratio: Option<Rational>,
+			name: Vec<u8>,
+			symbol: Vec<u8>,
+			decimals: Exponent,
+		) -> DispatchResult {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
-			ensure!(
-				!ForeignToLocal::<T>::contains_key(&location),
-				Error::<T>::ForeignAssetAlreadyRegistered
-			);
-			let asset_id = T::CurrencyFactory::create(RangeId::FOREIGN_ASSETS)?;
-			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
-			Self::deposit_event(Event::<T>::AssetRegistered { asset_id, location, decimals });
-			Ok(().into())
+
+			let (asset_id, location) = match local_or_foreign {
+				LocalOrForeignAssetId::Local(asset_id) => (asset_id, None),
+				LocalOrForeignAssetId::Foreign(location) => (
+					T::LocalAssetId::from(u128::from_be_bytes(sp_core::blake2_128(
+						&location.encode(),
+					))),
+					Some(location),
+				),
+			};
+
+			if let Some(location) = location.clone() {
+				ensure!(
+					!ForeignToLocal::<T>::contains_key(&location),
+					Error::<T>::ForeignAssetAlreadyRegistered
+				);
+			}
+
+			<Self as RemoteAssetRegistryMutate>::register_asset(
+				asset_id, location, ratio, name, symbol, decimals,
+			)?;
+			Ok(())
 		}
 
-		/// Given well existing asset, update its remote information.
-		/// Use with caution as it allow reroute assets location.
-		/// See `register_asset` for parameters meaning.
+		/// Update the location of a foreign asset.
+		///
+		/// Emmits:
+		/// * `AssetLocationUpdated`
 		#[pallet::weight(<T as Config>::WeightInfo::update_asset())]
-		pub fn update_asset(
+		pub fn update_asset_location(
 			origin: OriginFor<T>,
 			asset_id: T::LocalAssetId,
 			location: T::ForeignAssetId,
-			ratio: Rational,
-			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
-			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
-			Self::deposit_event(Event::<T>::AssetUpdated { asset_id, location, decimals });
+			Self::set_reserve_location(asset_id, location)?;
 			Ok(().into())
+		}
+
+		/// Update the ratio of an asset.
+		///
+		/// Emmits:
+		/// * `AssetRatioUpdated`
+		#[pallet::weight(10_000)]
+		pub fn update_asset_ratio(
+			origin: OriginFor<T>,
+			asset_id: T::LocalAssetId,
+			ratio: Option<Rational>,
+		) -> DispatchResult {
+			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
+			Self::update_ratio(asset_id, ratio)?;
+			Ok(())
+		}
+
+		/// Update the metadata of an asset.
+		///
+		/// All metadata feilds are optional, only those provided as `Some` will be updated, the
+		/// rest will be unchanged.
+		///
+		/// # Parameters:
+		/// * `name` - Name of the asset
+		/// * symbol - Symbol of the asset
+		/// * decimals - The number of decimals this asset uses to represent one unit
+		///
+		/// Emmits:
+		/// * `AssetMetadataUpdated`
+		#[pallet::weight(10_000)]
+		pub fn update_asset_metadata(
+			origin: OriginFor<T>,
+			asset_id: T::LocalAssetId,
+			name: Option<Vec<u8>>,
+			symbol: Option<Vec<u8>>,
+			decimals: Option<u8>,
+		) -> DispatchResult {
+			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
+			<Self as MutateRegistryMetadata>::update_metadata(&asset_id, name, symbol, decimals)?;
+			Ok(())
 		}
 
 		/// Minimal amount of `foreign_asset_id` required to send message to other network.
@@ -253,30 +347,52 @@ pub mod pallet {
 
 	impl<T: Config> RemoteAssetRegistryMutate for Pallet<T> {
 		type AssetId = T::LocalAssetId;
-
 		type AssetNativeLocation = T::ForeignAssetId;
-
 		type Balance = T::Balance;
+
+		fn register_asset(
+			asset_id: Self::AssetId,
+			location: Option<Self::AssetNativeLocation>,
+			ratio: Option<Rational>,
+			name: Vec<u8>,
+			symbol: Vec<u8>,
+			decimals: u8,
+		) -> DispatchResult {
+			if let Some(location) = location.clone() {
+				Self::set_reserve_location(asset_id, location)?;
+			}
+
+			Self::update_ratio(asset_id, ratio)?;
+			<Self as MutateRegistryMetadata>::set_metadata(
+				&asset_id,
+				name.clone(),
+				symbol.clone(),
+				decimals,
+			)?;
+			Self::deposit_event(Event::<T>::AssetRegistered {
+				asset_id,
+				location,
+				name,
+				symbol,
+				decimals,
+				ratio,
+			});
+			Ok(())
+		}
 
 		fn set_reserve_location(
 			asset_id: Self::AssetId,
 			location: Self::AssetNativeLocation,
-			ratio: Rational,
-			decimals: Option<Exponent>,
 		) -> DispatchResult {
 			ForeignToLocal::<T>::insert(&location, asset_id);
-			LocalToForeign::<T>::insert(asset_id, ForeignMetadata { decimals, location });
-			AssetRatio::<T>::mutate_exists(asset_id, |x| *x = Some(ratio));
+			LocalToForeign::<T>::insert(asset_id, location.clone());
+			Self::deposit_event(Event::AssetLocationUpdated { asset_id, location });
 			Ok(())
 		}
 
-		fn update_ratio(
-			location: Self::AssetNativeLocation,
-			ratio: Option<Rational>,
-		) -> DispatchResult {
-			let asset_id =
-				ForeignToLocal::<T>::try_get(location).map_err(|_| Error::<T>::AssetNotFound)?;
+		fn update_ratio(asset_id: Self::AssetId, ratio: Option<Rational>) -> DispatchResult {
 			AssetRatio::<T>::mutate_exists(asset_id, |x| *x = ratio);
+			Self::deposit_event(Event::AssetRatioUpdated { asset_id, ratio });
 			Ok(())
 		}
 	}
@@ -286,9 +402,7 @@ pub mod pallet {
 		type AssetNativeLocation = T::ForeignAssetId;
 		type Balance = T::Balance;
 
-		fn asset_to_remote(
-			asset_id: Self::AssetId,
-		) -> Option<composable_traits::xcm::assets::ForeignMetadata<Self::AssetNativeLocation>> {
+		fn asset_to_remote(asset_id: Self::AssetId) -> Option<Self::AssetNativeLocation> {
 			LocalToForeign::<T>::get(asset_id)
 		}
 
@@ -306,12 +420,9 @@ pub mod pallet {
 		fn get_foreign_assets_list() -> Vec<Asset<T::Balance, Self::AssetNativeLocation>> {
 			ForeignToLocal::<T>::iter()
 				.map(|(_, asset_id)| {
-					let foreign_metadata = LocalToForeign::<T>::get(asset_id)
-						.expect("Must exist, as it does in ForeignToLocal");
-					let decimals = match foreign_metadata.decimals {
-						Some(exponent) => exponent,
-						_ => 12_u8,
-					};
+					let foreign_id = LocalToForeign::<T>::get(asset_id);
+					let decimals =
+						<Pallet<T> as InspectRegistryMetadata>::decimals(&asset_id).unwrap_or(12);
 					let ratio = AssetRatio::<T>::get(asset_id);
 
 					Asset {
@@ -319,7 +430,7 @@ pub mod pallet {
 						id: asset_id.into(),
 						decimals,
 						ratio,
-						foreign_id: Some(foreign_metadata.location),
+						foreign_id,
 						existential_deposit: T::Balance::default(),
 					}
 				})
@@ -331,6 +442,87 @@ pub mod pallet {
 		type AssetId = T::LocalAssetId;
 		fn get_ratio(asset_id: Self::AssetId) -> Option<ForeignByNative> {
 			AssetRatio::<T>::get(asset_id).map(Into::into)
+		}
+	}
+
+	impl<T: Config> InspectRegistryMetadata for Pallet<T> {
+		type AssetId = T::LocalAssetId;
+
+		fn asset_name(asset_id: &Self::AssetId) -> Option<Vec<u8>> {
+			Metadata::<T>::get(asset_id).map(|metadata| metadata.name.to_vec())
+		}
+
+		fn symbol(asset_id: &Self::AssetId) -> Option<Vec<u8>> {
+			Metadata::<T>::get(asset_id).map(|metadata| metadata.symbol.to_vec())
+		}
+
+		fn decimals(asset_id: &Self::AssetId) -> Option<u8> {
+			Metadata::<T>::get(asset_id).map(|metadata| metadata.decimals)
+		}
+	}
+
+	impl<T: Config> MutateRegistryMetadata for Pallet<T> {
+		type AssetId = T::LocalAssetId;
+		type BoundedName = BoundedVec<u8, T::AssetNameMaxChars>;
+		type BoundedSymbol = BoundedVec<u8, T::AssetSymbolMaxChars>;
+
+		fn set_metadata(
+			asset_id: &Self::AssetId,
+			name: Vec<u8>,
+			symbol: Vec<u8>,
+			decimals: u8,
+		) -> DispatchResult {
+			let name = Self::BoundedName::try_from(name)
+				.map_err(|_| Error::<T>::StringExceedsMaxLength)?;
+			let symbol = Self::BoundedSymbol::try_from(symbol)
+				.map_err(|_| Error::<T>::StringExceedsMaxLength)?;
+			Metadata::<T>::insert(asset_id, AssetMetadata { name, symbol, decimals });
+			Ok(())
+		}
+
+		fn update_metadata(
+			asset_id: &Self::AssetId,
+			name: Option<Vec<u8>>,
+			symbol: Option<Vec<u8>>,
+			decimals: Option<u8>,
+		) -> DispatchResult {
+			let name = name
+				.map(BoundedVec::<u8, T::AssetNameMaxChars>::try_from)
+				.transpose()
+				.map_err(|_| Error::<T>::StringExceedsMaxLength)?;
+			let symbol = symbol
+				.map(BoundedVec::<u8, T::AssetSymbolMaxChars>::try_from)
+				.transpose()
+				.map_err(|_| Error::<T>::StringExceedsMaxLength)?;
+			Metadata::<T>::mutate_exists(asset_id, |metadata| {
+				if let Some(metadata) = metadata {
+					let name = name.unwrap_or(metadata.clone().name);
+					let symbol = symbol.unwrap_or(metadata.clone().symbol);
+					let decimals = decimals.unwrap_or(metadata.decimals);
+
+					*metadata = AssetMetadata { name, symbol, decimals };
+					Self::deposit_event(Event::AssetMetadataUpdated {
+						asset_id: *asset_id,
+						name: metadata.name.to_vec(),
+						symbol: metadata.symbol.to_vec(),
+						decimals: metadata.decimals,
+					});
+				}
+				None
+			})
+			.ok_or_else(|| Error::<T>::AssetNotFound.into())
+		}
+	}
+
+	impl<T: Config> AssetTypeInspect for Pallet<T> {
+		type AssetId = T::LocalAssetId;
+
+		fn inspect(asset: &Self::AssetId) -> AssetType {
+			if LocalToForeign::<T>::contains_key(asset) {
+				AssetType::Foreign
+			} else {
+				AssetType::Local
+			}
 		}
 	}
 }

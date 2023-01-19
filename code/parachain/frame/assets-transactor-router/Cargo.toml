@@ -1,0 +1,67 @@
+[package]
+authors = ["Composable Developers"]
+edition = "2021"
+homepage = "https://composable.finance"
+name = "pallet-assets-transactor-router"
+version = "0.1.0"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+
+primitives = { path = "../../runtime/primitives", default-features = false }
+sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+
+xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.30" }
+
+# orml
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30", default-features = false }
+
+# local
+composable-support = { path = "../composable-support", default-features = false }
+composable-traits = { path = "../composable-traits", default-features = false }
+assets-registry ={ package = "pallet-assets-registry", path = "../assets-registry", default-features = false }
+
+# misc
+codec = { default-features = false, features = [
+  "derive",
+], package = "parity-scale-codec", version = "3.0.0" }
+scale-info = { version = "2.1.1", default-features = false, features = [
+  "derive",
+] }
+
+[dev-dependencies]
+composable-tests-helpers = { path = "../composable-tests-helpers" }
+frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+proptest = "1.0"
+
+[features]
+
+default = ["std"]
+
+std = [
+  "composable-traits/std",
+  "codec/std",
+  "frame-support/std",
+  "sp-runtime/std",
+  "sp-api/std",
+  "orml-traits/std",
+]
+
+runtime-benchmarks = [
+  "frame-benchmarking",
+  "frame-support/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+]

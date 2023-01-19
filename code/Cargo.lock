@@ -7963,6 +7963,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-assets-transactor-router"
+version = "0.1.0"
+dependencies = [
+ "composable-support",
+ "composable-tests-helpers",
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-assets-registry",
+ "pallet-balances",
+ "pallet-governance-registry",
+ "parity-scale-codec",
+ "primitives",
+ "proptest",
+ "scale-info",
+ "sp-api",
+ "sp-arithmetic 5.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "xcm",
+]
+
+[[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30#a3ed0119c45cdd0d571ad34e5b3ee7518c8cef8d"

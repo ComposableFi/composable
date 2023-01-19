@@ -806,15 +806,21 @@ impl currency_factory::Config for Runtime {
 	type Balance = Balance;
 }
 
+parameter_types! {
+	pub const AssetNameMaxChars: u32 = 32;
+	pub const AssetSymbolMaxChars: u32 = 16;
+}
+
 impl assets_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = CurrencyId;
-	type CurrencyFactory = CurrencyFactory;
 	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
 	type UpdateAssetRegistryOrigin = EnsureRootOrHalfNativeCouncil;
 	type ParachainOrGovernanceOrigin = EnsureRootOrHalfNativeCouncil;
 	type Balance = Balance;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
+	type AssetNameMaxChars = AssetNameMaxChars;
+	type AssetSymbolMaxChars = AssetSymbolMaxChars;
 }
 
 impl assets::Config for Runtime {
@@ -1252,12 +1258,7 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 			1,
 			X1(Junction::GeneralIndex(asset_id.into())),
 		));
-		assets_registry::Pallet::<Runtime>::set_reserve_location(
-			asset_id,
-			location,
-			Rational64::one(),
-			Some(12),
-		)?;
+		assets_registry::Pallet::<Runtime>::set_reserve_location(asset_id, location)?;
 
 		Ok(asset_id)
 	}
@@ -1314,6 +1315,18 @@ impl pallet_ibc_ping::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type IbcHandler = Ibc;
 }
+
+// TODO(RFC-0013): Configure Each Instance of pallet-assets
+// pub type ForeignAssetsInstance = ();
+// pub type LocalAssetsInstance = pallet_assets::Instance1;
+//
+// impl pallet_assets::Config<ForeignAssetsInstance> for Runtime {
+// 	...
+// }
+//
+// impl pallet_assets::Config<LocalAssetsInstance> for Runtime {
+// 	...
+// }
 
 construct_runtime!(
 	pub enum Runtime where
@@ -1386,6 +1399,11 @@ construct_runtime!(
 		// depends on fNFT being initialized before it.
 		Fnft: pallet_fnft = 67,
 		StakingRewards: pallet_staking_rewards = 68,
+		// TODO(RFC-0013): Import & Declare pallet-assets
+		// We must then declare two instances within our `construct_runtime!` macro.
+		// NOTE(connor): May need to consider putting these before other pallets.
+		// ForeignAssets = 69,
+		// LocalAssets = 70,
 
 		CallFilter: call_filter = 140,
 
