@@ -34,7 +34,7 @@ use composable_traits::{
 use frame_support::{
 	assert_err, assert_noop, assert_ok, bounded_btree_map,
 	traits::{
-		fungibles::{Inspect, InspectHold, Mutate},
+		fungibles::{Inspect, Mutate},
 		tokens::nonfungibles::InspectEnumerable,
 		TryCollect,
 	},
@@ -1380,7 +1380,11 @@ fn claim_with_insufficient_pot_funds() {
 
 		// bob claims their whole amount, which will be some portion of the unlocked rewards
 		Test::assert_extrinsic_event(
-			Pallet::<Test>::claim(Origin::signed(BOB), STAKING_FNFT_COLLECTION_ID, bob_stake_id),
+			Pallet::<Test>::claim(
+				RuntimeOrigin::signed(BOB),
+				STAKING_FNFT_COLLECTION_ID,
+				bob_stake_id,
+			),
 			crate::Event::<Test>::Claimed {
 				owner: BOB,
 				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
@@ -1389,7 +1393,11 @@ fn claim_with_insufficient_pot_funds() {
 		);
 
 		Test::assert_extrinsic_event(
-			Pallet::<Test>::claim(Origin::signed(DAVE), STAKING_FNFT_COLLECTION_ID, dave_stake_id),
+			Pallet::<Test>::claim(
+				RuntimeOrigin::signed(DAVE),
+				STAKING_FNFT_COLLECTION_ID,
+				dave_stake_id,
+			),
 			crate::Event::<Test>::Claimed {
 				owner: DAVE,
 				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
