@@ -1,10 +1,7 @@
 use crate::*;
 
 use composable_traits::xcm::assets::XcmAssetLocation;
-use frame_support::{
-	parameter_types,
-	traits::{Everything, GenesisBuild},
-};
+use frame_support::{parameter_types, traits::Everything};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
 use sp_core::H256;
@@ -173,27 +170,10 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 }
 
-pub const BALANCES: [(AccountId, Balance); 4] =
-	[(ALICE, 1000), (BOB, 1000), (CHARLIE, 1000), (DARWIN, 1000)];
-
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	let genesis = pallet_balances::GenesisConfig::<Test> { balances: Vec::from(BALANCES) };
-	genesis.assimilate_storage(&mut t).unwrap();
-	t.into()
+	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }
 
 pub fn new_test_ext_multi_currency() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
-
-	let balances: Vec<(AccountId, AssetId, Balance)> =
-		vec![(ALICE, ASSET_1, 1000), (BOB, ASSET_2, 1000)];
-
-	orml_tokens::GenesisConfig::<Test> { balances }
-		.assimilate_storage(&mut t)
-		.unwrap();
-
-	let mut ext = sp_io::TestExternalities::new(t);
-	ext.execute_with(|| System::set_block_number(1));
-	ext
+	frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }
