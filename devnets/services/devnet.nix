@@ -1,6 +1,6 @@
-{ pkgs, devnet, ports }: {
+{ pkgs, devnet, ports, devnetTools }: {
   image = {
-    contents = [ pkgs.coreutils devnet ];
+    contents = [ devnet ] ++ devnetTools.withBaseContainerTools;
     enableRecommendedContents = true;
   };
   service = {
@@ -11,4 +11,3 @@
     stop_signal = "SIGINT";
   };
 }
-

@@ -1,7 +1,22 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }: {
     _module.args.devnetTools = rec {
+      withDockerInDocker = with pkgs; [ docker docker-buildx docker-compose ];
+      withUserContainerTools = with pkgs; [
+        acl
+        direnv
+        home-manager
+        cachix
+        curl
+        websocat
+      ];
+      withBaseContainerTools = with pkgs; [ bash coreutils procps ];
+      withDevNetContainerTools = with pkgs;
+        [ bottom findutils gawk gnugrep less nettools nix ]
+        ++ withBaseContainerTools ++ withUserContainerTools;
 
+      getScript = script:
+        "${pkgs.lib.getBin script}/bin/${pkgs.lib.getName script}";
       mk-devnet = { lib, writeTextFile, writeShellApplication
         , useGlobalChainSpec ? true, polkadot-launch, composable-node
         , polkadot-node, chain-spec, network-config-path ?
@@ -56,8 +71,7 @@
           tag = "latest";
           copyToRoot = pkgs.buildEnv {
             name = "image-root";
-            paths = [ devNet pkgs.curl pkgs.websocat pkgs.glibc.bin ]
-              ++ container-tools;
+            paths = [ devNet pkgs.glibc.bin ] ++ container-tools;
             pathsToLink = [ "/bin" ];
           };
           config = {

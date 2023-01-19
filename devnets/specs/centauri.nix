@@ -1,4 +1,4 @@
-{ pkgs, devnet-1, devnet-2, ... }: {
+{ pkgs, devnet-1, devnet-2, devnetTools, ... }: {
   modules = [
     (let
       configPathSource = "/tmp/config.toml";
@@ -39,7 +39,7 @@
       toService = devnetConfig: {
         name = devnetConfig.containerName;
         value = mkComposableContainer (import ../services/devnet.nix {
-          inherit pkgs;
+          inherit pkgs devnetTools;
           devnet = devnetConfig.devnet;
           ports = map (port: {
             host = port;
