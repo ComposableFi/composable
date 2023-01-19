@@ -43,8 +43,9 @@
         ./inputs/paritytech/statemine.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/polkadot-launch.nix
-        ./inputs/paritytech/zombienet.nix
+        ./inputs/paritytech/zombienet/flake-module.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
+        ./inputs/bifrost-finance/bifrost/flake-module.nix
 
         # The things we use within flake parts to build packages, apps, devShells, and devnets. 
         ./tools/pkgs.nix # _module.args.pkgs
@@ -80,7 +81,7 @@
         ./flake/nixops-config.nix
         ./flake/overlays.nix
         ./flake/release.nix
-        ./inputs/bifrost-finance/bifrost/flake-module.nix
+        ./flake/zombienet.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];

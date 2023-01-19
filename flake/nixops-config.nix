@@ -1,4 +1,4 @@
-{ self, withSystem, ... }: {
+{ self, withSystem, devnetTools, ... }: {
   flake = {
     nixopsConfigurations = withSystem "x86_64-linux"
       ({ config, self', inputs', pkgs, devnetTools, ... }:
