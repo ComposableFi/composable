@@ -10,29 +10,26 @@ use alloc::{
 };
 use cosmwasm_vm::{
 	cosmwasm_std::{
-		Addr, Binary, ContractResult, Env, Event, IbcAcknowledgement, IbcChannel,
-		IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcOrder,
-		IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcTimeout,
-		MessageInfo, Response,
+		Addr, Binary, ContractResult, Env, IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg,
+		IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcPacket, IbcPacketAckMsg,
+		IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcTimeout, MessageInfo,
 	},
 	executor::{
-		cosmwasm_call, cosmwasm_call_serialize,
+		cosmwasm_call_serialize,
 		ibc::{
 			IbcChannelCloseCall, IbcChannelConnectCall, IbcChannelOpenCall, IbcPacketAckCall,
 			IbcPacketReceiveCall, IbcPacketTimeoutCall,
 		},
 		AllocateCall, AsFunctionName, CosmwasmCallInput, CosmwasmCallWithoutInfoInput,
-		DeallocateCall, DeserializeLimit, ExecuteCall, ExecutorError, HasInfo, ReadLimit, Unit,
+		DeallocateCall, DeserializeLimit, ExecutorError, HasInfo, ReadLimit, Unit,
 	},
 	has::Has,
 	input::Input,
 	memory::{ReadWriteMemory, ReadableMemoryErrorOf, WritableMemoryErrorOf},
 	system::{
-		cosmwasm_system_entrypoint_hook, cosmwasm_system_entrypoint_serialize,
-		cosmwasm_system_entrypoint_serialize_hook, CosmwasmCallVM, CosmwasmDynamicVM,
-		StargateCosmwasmCallVM,
+		cosmwasm_system_entrypoint_hook, CosmwasmCallVM, CosmwasmDynamicVM, StargateCosmwasmCallVM,
 	},
-	vm::{VMBase, VmAddressOf, VmErrorOf, VmInputOf, VmMessageCustomOf, VmOutputOf, VM},
+	vm::{VMBase, VmErrorOf, VmInputOf, VmOutputOf},
 };
 use cosmwasm_vm_wasmi::{
 	validation::CodeValidation,
@@ -289,8 +286,10 @@ impl<T: Config> Router<T> {
 	fn create(address: T::AccountIdExtended) -> Result<VmPerContract<T>, IbcError> {
 		let gas = Weight::MAX;
 		let vm = {
-			let runtime =
-				<Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let runtime = <Pallet<T>>::do_create_vm_shared(
+				gas.ref_time(),
+				InitialStorageMutability::ReadWrite,
+			);
 
 			VmPerContract { runtime, address }
 		};
@@ -610,7 +609,6 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 
-
 		let _ = Self::run::<IbcChannelCloseCall, _>(
 			&mut vm,
 			address.clone(),
@@ -639,7 +637,6 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		};
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-
 
 		let _ = Self::run::<IbcChannelCloseCall, _>(
 			&mut vm,
@@ -699,11 +696,9 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 
-
 		let _ =
 			Self::run::<IbcPacketAckCall, _>(&mut vm, address.clone(), address.clone(), &message)
 				.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
-
 
 		let _remaining = vm.gas.remaining();
 		Ok(())
@@ -836,7 +831,6 @@ impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for NoRelayer<T> {
 	) -> Result<(), ibc_primitives::Error> {
 		Err(ibc_primitives::Error::Other { msg: Some("not supported".to_string()) })
 	}
-
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn create_client(
