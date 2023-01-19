@@ -8,8 +8,9 @@
       };
 
       hyperspace-dali = let
-        src = pkgs.stdenv.mkDerivation {
-          name = "centauri-src";
+        src = pkgs.stdenv.mkDerivation rec {
+          name = "centauri";
+          pname = "${name}";
           buildInputs = [ self'.packages.dali-subxt-client ];
           src = pkgs.fetchFromGitHub {
             owner = "ComposableFi";
