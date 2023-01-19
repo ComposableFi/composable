@@ -1,7 +1,8 @@
 use crate::{
-	runtimes::wasmi::{CodeValidation, CosmwasmVM, CosmwasmVMError, CosmwasmVMShared},
+	runtimes::vm::{CodeValidation, CosmwasmVMError, CosmwasmVMShared, InitialStorageMutability},
+	types::{AccountIdOf, DefaultCosmwasmVM},
 	version::Version,
-	AccountIdOf, CodeIdToInfo, Config, ContractInfoOf, Pallet,
+	CodeIdToInfo, Config, Pallet,
 };
 use alloc::{
 	format,
@@ -31,9 +32,7 @@ use cosmwasm_vm::{
 };
 use cosmwasm_vm_wasmi::WasmiVM;
 use sp_runtime::SaturatedConversion;
-use sp_std::{marker::PhantomData, str::FromStr};
 
-use crate::runtimes::wasmi::InitialStorageMutability;
 use frame_support::{ensure, traits::Get, RuntimeDebug};
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
@@ -50,11 +49,10 @@ use ibc::{
 	},
 	signer::Signer as IbcSigner,
 };
+use sp_std::{marker::PhantomData, str::FromStr};
 
 use ibc_primitives::{HandlerMessage, IbcHandler};
 use pallet_ibc::routing::ModuleRouter as IbcModuleRouter;
-
-type VM<'a, T> = WasmiVM<CosmwasmVM<'a, T>>;
 
 const PORT_PREFIX: &str = "wasm";
 
@@ -78,7 +76,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn do_ibc_transfer(
-		vm: &mut CosmwasmVM<T>,
+		vm: &mut DefaultCosmwasmVM<T>,
 		channel_id: String,
 		to_address: String,
 		amount: cosmwasm_vm::cosmwasm_std::Coin,
@@ -115,7 +113,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn do_ibc_send_packet(
-		vm: &mut CosmwasmVM<T>,
+		vm: &mut DefaultCosmwasmVM<T>,
 		channel_id: String,
 		data: cosmwasm_vm::cosmwasm_std::Binary,
 		timeout: cosmwasm_vm::cosmwasm_std::IbcTimeout,
@@ -140,7 +138,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn do_ibc_close_channel(
-		vm: &mut CosmwasmVM<T>,
+		vm: &mut DefaultCosmwasmVM<T>,
 		channel_id: String,
 	) -> Result<(), CosmwasmVMError<T>> {
 		let channel_id = ChannelId::from_str(channel_id.as_ref())
@@ -182,16 +180,11 @@ impl ibc::core::ics26_routing::context::Acknowledgement for MapBinary {}
 struct VmPerContract<T: Config> {
 	pub runtime: CosmwasmVMShared,
 	pub address: T::AccountIdExtended,
-	pub contract_info: ContractInfoOf<T>,
 }
 
 impl<T: Config> VmPerContract<T> {
-	pub fn instance(&mut self) -> Result<VM<T>, IbcError> {
-		<Router<T>>::relayer_executor(
-			&mut self.runtime,
-			self.address.clone(),
-			self.contract_info.clone(),
-		)
+	pub fn instance(&mut self) -> Result<WasmiVM<DefaultCosmwasmVM<T>>, IbcError> {
+		<Router<T>>::relayer_executor(&mut self.runtime, self.address.clone())
 	}
 }
 
@@ -208,15 +201,13 @@ impl<T: Config> Router<T> {
 	}
 
 	fn relayer_executor(
-		vm: &mut crate::runtimes::wasmi::CosmwasmVMShared,
+		vm: &mut CosmwasmVMShared,
 		address: T::AccountIdExtended,
-		contract_info: ContractInfoOf<T>,
-	) -> Result<VM<T>, IbcError> {
+	) -> Result<WasmiVM<DefaultCosmwasmVM<T>>, IbcError> {
 		let executor = <Pallet<T>>::cosmwasm_new_vm(
 			vm,
 			<T::IbcRelayer as IbcHandlerExtended<T>>::get_relayer_account(),
 			address,
-			contract_info,
 			Default::default(),
 		)
 		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
@@ -266,16 +257,13 @@ impl<T: Config> Router<T> {
 		Ok(address)
 	}
 
-	fn create(
-		address: T::AccountIdExtended,
-		contract_info: ContractInfoOf<T>,
-	) -> Result<VmPerContract<T>, IbcError> {
+	fn create(address: T::AccountIdExtended) -> Result<VmPerContract<T>, IbcError> {
 		let gas = u64::MAX;
 		let vm = {
 			let runtime =
 				<Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 
-			VmPerContract { runtime, address, contract_info }
+			VmPerContract { runtime, address }
 		};
 		Ok(vm)
 	}
@@ -313,7 +301,6 @@ impl<T: Config> Router<T> {
 		relayer: &pallet_ibc::Signer,
 	) -> Result<sp_std::vec::Vec<u8>, IbcError> {
 		let address = Self::port_to_address(&packet.destination_port)?;
-		let contract_info = Self::to_ibc_contract(&address)?;
 
 		let message = IbcPacketReceiveMsg::new(
 			IbcPacket::new(
@@ -336,10 +323,10 @@ impl<T: Config> Router<T> {
 		);
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
+		let mut executor = Self::relayer_executor(&mut vm, address)?;
 		let (data, _) = cosmwasm_system_entrypoint_serialize::<
 			IbcPacketReceiveCall,
-			VM<T>,
+			_,
 			IbcPacketReceiveMsg,
 		>(&mut executor, &message)
 		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
@@ -379,8 +366,6 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 	) -> Result<(), IbcError> {
 		let address = Self::port_to_address(port_id)?;
 
-		let contract_info = Self::to_ibc_contract(&address)?;
-
 		let message = {
 			IbcChannelOpenMsg::OpenInit {
 				channel: IbcChannel::new(
@@ -402,11 +387,14 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			}
 		};
 
-		let mut vm = Self::create(address, contract_info)?;
+		let mut vm = Self::create(address)?;
 		let mut instance = vm.instance()?;
 		contract_to_result(
-			Self::execute::<IbcChannelOpenCall, IbcChannelOpenMsg, VM<T>>(&mut instance, message)?
-				.0,
+			Self::execute::<IbcChannelOpenCall, IbcChannelOpenMsg, WasmiVM<DefaultCosmwasmVM<T>>>(
+				&mut instance,
+				message,
+			)?
+			.0,
 		)?;
 
 		Ok(())
@@ -426,7 +414,6 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		_relayer: &pallet_ibc::Signer,
 	) -> Result<IbcVersion, IbcError> {
 		let address = Self::port_to_address(port_id)?;
-		let contract_info = Self::to_ibc_contract(&address)?;
 
 		let message = {
 			IbcChannelOpenMsg::OpenInit {
@@ -446,11 +433,14 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			}
 		};
 
-		let mut vm = Self::create(address, contract_info)?;
+		let mut vm = Self::create(address)?;
 		let mut instance = vm.instance()?;
 		let result = contract_to_result(
-			Self::execute::<IbcChannelOpenCall, IbcChannelOpenMsg, VM<T>>(&mut instance, message)?
-				.0,
+			Self::execute::<IbcChannelOpenCall, IbcChannelOpenMsg, WasmiVM<DefaultCosmwasmVM<T>>>(
+				&mut instance,
+				message,
+			)?
+			.0,
 		)?
 		.map(|x| IbcVersion::new(x.version))
 		.unwrap_or_else(|| version.clone());
@@ -471,17 +461,16 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			.channel_end(&(port_id.clone(), *channel_id))
 			.expect("callback provides only existing connection port pairs; qed");
 		let address = Self::port_to_address(port_id)?;
-		let contract_info = Self::to_ibc_contract(&address)?;
 		let message = IbcChannelConnectMsg::OpenAck {
 			channel: map_channel(port_id, channel_id, metadata)?,
 			counterparty_version: counterparty_version.to_string(),
 		};
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
+		let mut executor = Self::relayer_executor(&mut vm, address)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
 			IbcChannelConnectCall,
-			VM<T>,
+			_,
 			IbcChannelConnectMsg,
 		>(&mut executor, &message)
 		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
@@ -501,16 +490,15 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			.channel_end(&(port_id.clone(), *channel_id))
 			.expect("callback provides only existing connection port pairs; qed");
 		let address = Self::port_to_address(port_id)?;
-		let contract_info = Self::to_ibc_contract(&address)?;
 		let message = IbcChannelConnectMsg::OpenConfirm {
 			channel: map_channel(port_id, channel_id, metadata)?,
 		};
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
+		let mut executor = Self::relayer_executor(&mut vm, address)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
 			IbcChannelConnectCall,
-			VM<T>,
+			_,
 			IbcChannelConnectMsg,
 		>(&mut executor, &message)
 		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
@@ -529,7 +517,6 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			.channel_end(&(port_id.clone(), *channel_id))
 			.expect("callback provides only existing connection port pairs; qed");
 		let address = Self::port_to_address(port_id)?;
-		let contract_info = Self::to_ibc_contract(&address)?;
 		let message = IbcChannelCloseMsg::CloseInit {
 			channel: IbcChannel::new(
 				IbcEndpoint { port_id: port_id.to_string(), channel_id: channel_id.to_string() },
@@ -545,10 +532,10 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		};
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
+		let mut executor = Self::relayer_executor(&mut vm, address)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
 			IbcChannelCloseCall,
-			VM<T>,
+			_,
 			IbcChannelCloseMsg,
 		>(&mut executor, &message)
 		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
@@ -567,16 +554,15 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			.channel_end(&(port_id.clone(), *channel_id))
 			.expect("callback provides only existing connection port pairs; qed");
 		let address = Self::port_to_address(port_id)?;
-		let contract_info = Self::to_ibc_contract(&address)?;
 		let message = IbcChannelCloseMsg::CloseConfirm {
 			channel: map_channel(port_id, channel_id, metadata)?,
 		};
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
+		let mut executor = Self::relayer_executor(&mut vm, address)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
 			IbcChannelCloseCall,
-			VM<T>,
+			_,
 			IbcChannelCloseMsg,
 		>(&mut executor, &message)
 		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
@@ -605,7 +591,6 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		relayer: &pallet_ibc::Signer,
 	) -> Result<(), IbcError> {
 		let address = Self::port_to_address(&packet.source_port)?;
-		let contract_info = Self::to_ibc_contract(&address)?;
 
 		let message = IbcPacketAckMsg::new(
 			IbcAcknowledgement::new(acknowledgement.clone().into_bytes()),
@@ -630,10 +615,10 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
+		let mut executor = Self::relayer_executor(&mut vm, address)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
 			IbcPacketAckCall,
-			VM<T>,
+			WasmiVM<_>,
 			IbcPacketAckMsg,
 		>(&mut executor, &message)
 		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
@@ -649,7 +634,6 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		relayer: &pallet_ibc::Signer,
 	) -> Result<(), IbcError> {
 		let address = Self::port_to_address(&packet.source_port)?;
-		let contract_info = Self::to_ibc_contract(&address)?;
 
 		let message = IbcPacketTimeoutMsg::new(
 			IbcPacket::new(
@@ -673,10 +657,10 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		let mut executor = Self::relayer_executor(&mut vm, address, contract_info)?;
+		let mut executor = Self::relayer_executor(&mut vm, address)?;
 		let (_data, _events) = cosmwasm_system_entrypoint_serialize::<
 			IbcPacketTimeoutCall,
-			VM<T>,
+			WasmiVM<DefaultCosmwasmVM<T>>,
 			IbcPacketTimeoutMsg,
 		>(&mut executor, &message)
 		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;

@@ -1,4 +1,5 @@
-use crate::mock::*;
+use crate::{mock::*, Event};
+use composable_tests_helpers::test::helper::RuntimeTrait;
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
 
@@ -218,4 +219,69 @@ fn ed25519_batch_verify_fails_if_input_lengths_are_incorrect() {
 			&ref_public_keys
 		));
 	})
+}
+
+mod pallet_contracts {
+	use super::*;
+	use cosmwasm_vm::system::CUSTOM_CONTRACT_EVENT_PREFIX;
+	use frame_support::{assert_ok, BoundedVec};
+
+	fn make_event_type(custom_event_name: &str) -> Vec<u8> {
+		format!("{CUSTOM_CONTRACT_EVENT_PREFIX}{custom_event_name}").into()
+	}
+
+	#[test]
+	fn pallet_contracts_hook_execute() {
+		new_test_ext().execute_with(|| {
+			// This tests shows two pallets with contract hooks that currently exhibit the same
+			// behavior. The behavior does not need to be identical in practice.
+
+			// The first pallet with a contract hook
+			System::set_block_number(0xDEADBEEF);
+			let depth = 10;
+			assert_ok!(Cosmwasm::execute(
+				RuntimeOrigin::signed(MOCK_PALLET_ACCOUNT_ID_1),
+				MOCK_PALLET_CONTRACT_ADDRESS_1,
+				Default::default(),
+				100_000_000_000_000u64,
+				BoundedVec::truncate_from(vec![depth])
+			),);
+			let expected_event_contract = MOCK_PALLET_CONTRACT_ADDRESS_1;
+			let expected_event_ty = make_event_type(MOCK_CONTRACT_EVENT_TYPE_1);
+			assert_eq!(
+				Test::assert_event_with(|event: Event<Test>| match event {
+					Event::Emitted { contract, ty, .. }
+						if contract == expected_event_contract && ty == expected_event_ty =>
+						Some(()),
+					_ => None,
+				})
+				.count(),
+				// recursive, should call himself until depth reach 0
+				1 + depth as usize
+			);
+
+			// The second pallet with a contract hook
+			let depth = 20;
+			assert_ok!(Cosmwasm::execute(
+				RuntimeOrigin::signed(MOCK_PALLET_ACCOUNT_ID_2),
+				MOCK_PALLET_CONTRACT_ADDRESS_2,
+				Default::default(),
+				100_000_000_000_000u64,
+				BoundedVec::truncate_from(vec![depth])
+			),);
+			let expected_event_contract = MOCK_PALLET_CONTRACT_ADDRESS_2;
+			let expected_event_ty = make_event_type(MOCK_CONTRACT_EVENT_TYPE_2);
+			assert_eq!(
+				Test::assert_event_with(|event: Event<Test>| match event {
+					Event::Emitted { contract, ty, .. }
+						if contract == expected_event_contract && ty == expected_event_ty =>
+						Some(()),
+					_ => None,
+				})
+				.count(),
+				// recursive, should call himself until depth reach 0
+				1 + depth as usize
+			);
+		})
+	}
 }

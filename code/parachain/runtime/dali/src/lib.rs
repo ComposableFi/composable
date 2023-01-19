@@ -1175,6 +1175,7 @@ impl cosmwasm::Config for Runtime {
 	type WeightInfo = cosmwasm::weights::SubstrateWeight<Runtime>;
 	type IbcRelayerAccount = TreasuryAccount;
 	type IbcRelayer = cosmwasm::NoRelayer<Runtime>;
+	type PalletHook = ();
 }
 
 parameter_types! {
