@@ -5,8 +5,8 @@ inputs:
   message:
     description: "The comment body"
     required: true
-  tag:
-    description: "The comment identifier"
+  comment_includes:
+    description: "The comment inclusion check used for upserting"
     required: true
   github-token:
     description: "A github PAT used for authentication"
