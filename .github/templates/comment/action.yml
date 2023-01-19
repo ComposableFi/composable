@@ -21,5 +21,5 @@ runs:
       with:
         mode: upsert
         message: ${{ inputs.message}}
-        comment_tag: ${{ inputs.comment-includes}}
+        comment_includes: ${{ inputs.comment-includes }}
         GITHUB_TOKEN: ${{ inputs.github-token }}

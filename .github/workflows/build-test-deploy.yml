@@ -546,7 +546,8 @@ jobs:
         uses: "./.github/templates/comment"
         with:
           message: |
-            Pablo preview URL: ${{ steps.deploy.outputs.preview-url }}
+            ### Pablo Preview URL
+            ${{ steps.deploy.outputs.preview-url }}
           comment-includes: 'Pablo Preview URL'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -587,7 +588,8 @@ jobs:
         uses: "./.github/templates/comment"
         with:
           message: |
-            Picasso preview URL: ${{ steps.deploy.outputs.preview-url }}
+            ### Picasso Preview URL
+            ${{ steps.deploy.outputs.preview-url }}
           comment-includes: 'Picasso Preview URL'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
