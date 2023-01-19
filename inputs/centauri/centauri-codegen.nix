@@ -3,10 +3,10 @@
     packages = rec {
       centauri-codegen = let
         src = pkgs.fetchFromGitHub {
-          owner = "ComposableFi";
+          owner = "obsessed-cake";
           repo = "centauri";
-          rev = "b3be9f54d98821037fae3f2792f6a56f042fdfc1";
-          hash = "sha256-yu4YubREBYl4sJWvFpBqoymywfBbpvA8jLCoA0WNnrE=";
+          rev = "233a3fc214824e864168019b5dd676fd4b7d5208";
+          hash = "sha256-DoxJJLfZ/qywuBonYxtBWSBBP5c6XY3gvKQZWv8r13s=";
         };
       in crane.stable.buildPackage {
         name = "centauri-codegen";
