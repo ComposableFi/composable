@@ -1,20 +1,13 @@
 //! this simply maps `ibc-rs` and `cosmwasm-std` types back and forth
 
 use cosmwasm_vm::cosmwasm_std::{IbcChannel, IbcChannelOpenMsg, IbcEndpoint, IbcOrder as CwOrder};
-use ibc::{
-	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
-	core::{
-		ics04_channel::{
-			channel::{Counterparty, Order as IbcOrder},
-			error::Error as IbcError,
-			Version as IbcVersion,
-		},
-		ics24_host::identifier::{ChannelId, ConnectionId, PortId},
-		ics26_routing::context::{
-			Module as IbcModule, ModuleCallbackContext, ModuleId, ModuleOutputBuilder,
-		},
+use ibc::core::{
+	ics04_channel::{
+		channel::{Counterparty, Order as IbcOrder},
+		error::Error as IbcError,
+		Version as IbcVersion,
 	},
-	signer::Signer as IbcSigner,
+	ics24_host::identifier::{ChannelId, ConnectionId, PortId},
 };
 
 use crate::Config;
