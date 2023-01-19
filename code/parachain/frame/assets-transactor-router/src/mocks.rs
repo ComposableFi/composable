@@ -173,7 +173,3 @@ impl pallet_balances::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }
-
-pub fn new_test_ext_multi_currency() -> sp_io::TestExternalities {
-	frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
-}
