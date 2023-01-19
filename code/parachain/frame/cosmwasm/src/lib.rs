@@ -48,6 +48,7 @@ pub mod version;
 pub mod weights;
 pub use crate::ibc::NoRelayer;
 pub mod entrypoint;
+mod mapping;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
@@ -126,7 +127,6 @@ pub mod pallet {
 		Emitted { contract: AccountIdOf<T>, ty: Vec<u8>, attributes: Vec<(Vec<u8>, Vec<u8>)> },
 		Migrated { contract: AccountIdOf<T>, to: CosmwasmCodeId },
 		AdminUpdated { contract: AccountIdOf<T>, new_admin: Option<AccountIdOf<T>> },
-		IbcChannelOpen { contract: AccountIdOf<T> },
 	}
 
 	#[pallet::error]
@@ -965,9 +965,11 @@ pub mod pallet {
 			T::AssetToDenom::convert(denom).map_err(|_| Error::<T>::UnknownDenom)
 		}
 
-		/// Create a new CosmWasm VM. One instance is created per contract but all of them share the
+		/// Create a new `DefaultCosmwasmVM`. One instance is created per contract but all of them share the
 		/// same [`CosmwasmVMShared<'a, T>`] structure.
 		///
+		/// It creates instance which will execute WASM code or `hook` which routes calls to this chain runtime.
+		/// 
 		/// Prior to instantiating the VM. The depth is checked against [`T::MaxFrames`] and the
 		/// contract code is loaded from the shared state if cached. If the code is not in cache, we
 		/// check whether reinstrumentation is required and cache the code.
