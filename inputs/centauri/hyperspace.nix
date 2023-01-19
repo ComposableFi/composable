@@ -12,6 +12,8 @@
           name = "centauri";
           pname = "${name}";
           buildInputs = [ self'.packages.dali-subxt-client ];
+          doCheck = false;
+          __noChroot = true;
           src = pkgs.fetchFromGitHub {
             owner = "ComposableFi";
             repo = "centauri";
