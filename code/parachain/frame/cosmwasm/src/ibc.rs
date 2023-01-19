@@ -33,7 +33,7 @@ use cosmwasm_vm::{
 use cosmwasm_vm_wasmi::WasmiVM;
 use sp_runtime::SaturatedConversion;
 
-use frame_support::{ensure, traits::Get, weights::Weight, RuntimeDebug};
+use frame_support::{ensure, traits::Get, RuntimeDebug};
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
 	core::{
