@@ -387,7 +387,7 @@ Following sections describe the algorithms for various operations on the rewards
 ----
 start
 ->poolId,\namount(in LP/PBLO/PICA);
-:rewards_pool = readStorage(assetId);
+:rewards_pool = readStorage(poolId);
 :boosted_amount = reward_multiplier * amount;
 note right: Handle boosting as per reward_multiplier
 :new_pool_shares = boosted_amount;
@@ -513,7 +513,7 @@ start
 ->poolId\nreward_updates;
 :rewards_pool = readStorage(pool_id);
 while (reward = reward_updates.rewards.has_next) is (yes)
-    :elapsed_time = current_time - last_update_timestamp;
+    :elapsed_time = current_time - reward.last_update_timestamp;
     :assert max_reward not exceeded;
     :reward.total_rewards += rewards_pool[reward.asset_id].amount;
     :reward.total_rewards += elapsed_time * reward.reward_rate;
