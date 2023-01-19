@@ -49,19 +49,17 @@ const Transfers: NextPage = () => {
   const ksmBalance = useStore(
     (state) => state.substrateBalances.balances.picasso.ksm.free
   );
-  const isKSMAlertVisible = useMemo(
-    () =>
-      from === "picasso" &&
-      to === "statemine" &&
-      ksmBalance.lt(
-        fromChainIdUnit(
-          PICASSO_STATEMINE_KSM_TRANSFER_FEE,
-          tokens.ksm.decimals.picasso
-        )
-      ) &&
-      selectedToken === "usdt",
-    [from, to, ksmBalance, tokens.ksm.decimals.picasso, selectedToken]
-  );
+  const isKSMAlertVisible =
+    from === "picasso" &&
+    to === "statemine" &&
+    ksmBalance.lt(
+      fromChainIdUnit(
+        PICASSO_STATEMINE_KSM_TRANSFER_FEE,
+        tokens.ksm.decimals.picasso
+      )
+    ) &&
+    selectedToken === "usdt";
+
   // TODO this value can be moved to its own store subscriber
   const minValue = useMemo(() => {
     const ed = tokens[selectedToken].existentialDeposit[to];
