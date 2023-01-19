@@ -34,7 +34,11 @@ pub enum EntryPoint {
 	Execute,
 	Migrate,
 	Reply,
-	// TODO(hussein-aitlahcen): do we want to support cosmwasm sudo?
+	IbcChannelOpenCall,
+	IbcChannelConnectCall,
+	IbcChannelCloseCall,
+	IbcPacketTimeoutCall,
+	IbcPacketAckCall,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, Debug)]

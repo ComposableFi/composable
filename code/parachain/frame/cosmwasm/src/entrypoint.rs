@@ -9,7 +9,7 @@ use composable_support::abstractions::utils::increment::Increment;
 use core::marker::PhantomData;
 use cosmwasm_vm::{
 	executor::{ExecuteCall, InstantiateCall, MigrateCall, ReplyCall},
-	system::{CosmwasmCallVM, CosmwasmCodeId, CosmwasmDynamicVM, StargateCosmwasmCallVM},
+	system::CosmwasmCodeId,
 };
 
 use frame_support::ensure;
