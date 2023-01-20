@@ -4,11 +4,10 @@ on:
     branches:
       - release-*
       - main
+  pull_request_target:
   pull_request:
-    branches:
-      - main
-      - develop
-      - releases
+
+permissions: read-all
 
 env:
   # NOTE: keep in sync with docs
@@ -38,6 +37,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#devnet-initialize-script-picasso-persistent
@@ -59,6 +61,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#common-deps
@@ -79,6 +84,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#common-test-deps
@@ -96,6 +104,9 @@ jobs:
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: actionsdesk/lfs-warning@v3.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -121,6 +132,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
@@ -153,6 +167,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#cargo-fmt-check
@@ -174,6 +191,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
@@ -203,6 +223,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#taplo-check
@@ -222,6 +245,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#prettier-check
@@ -241,6 +267,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#nixfmt-check
@@ -260,6 +289,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#deadnix-check
@@ -279,6 +311,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#spell-check
@@ -314,6 +349,8 @@ jobs:
       - uses: actions/checkout@v3
         with:
           lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - run: |
           # Marker status code in case of network failure.
           STATUS_TRANSIENT_FAILURE=200
@@ -372,6 +409,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#frontend-static
@@ -391,6 +431,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#hadolint-check
@@ -411,6 +454,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#cargo-clippy-check
@@ -431,42 +477,13 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#cargo-deny-check
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-# TODO (vim): Decrease lead time until after release 3
-#  cargo-udeps-check:
-#    name: "Cargo udeps"
-#    needs: common-deps
-#    runs-on:
-      # - self-hosted
-      # - linux
-      # - x64
-      # - sre
-#    concurrency:
-#      group: ${{ github.workflow }}-cargo-udeps-check-${{ github.ref }}
-#      cancel-in-progress: true
-#    container:
-#      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-#    steps:
-#      - uses: actions/checkout@v3
-#      - run: |
-#          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-#          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-#          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-#      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-#        with:
-#          skipPush: true
-#          installCommand: |
-#            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-#            nix-channel --update
-#            nix-env -iA nixpkgs.cachix
-#          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-#          name: composable-community
-#      - run: |
-#          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#cargo-udeps-check --no-update-lock-file --show-trace -L
 
   benchmarks-check:
     name: "Benchmarks check"
@@ -483,6 +500,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#benchmarks-check
@@ -504,6 +524,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#unit-tests
@@ -527,6 +550,8 @@ jobs:
       - uses: actions/checkout@v3
         with:
           lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
       - name: Import project setting
@@ -546,7 +571,8 @@ jobs:
         uses: "./.github/templates/comment"
         with:
           message: |
-            Pablo preview URL: ${{ steps.deploy.outputs.preview-url }}
+            ### Pablo Preview URL
+            ${{ steps.deploy.outputs.preview-url }}
           comment-includes: 'Pablo Preview URL'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -568,6 +594,8 @@ jobs:
       - uses: actions/checkout@v3
         with:
           lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
       - name: Import project setting
@@ -587,47 +615,10 @@ jobs:
         uses: "./.github/templates/comment"
         with:
           message: |
-            Picasso preview URL: ${{ steps.deploy.outputs.preview-url }}
+            ### Picasso Preview URL
+            ${{ steps.deploy.outputs.preview-url }}
           comment-includes: 'Picasso Preview URL'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-# TODO (vim): Decrease lead time until after release 3
-#  unit-tests-with-coverage:
-#    name: "Unit Tests with coverage"
-#    needs: common-deps
-#    runs-on:
-#      - self-hosted
-#      - linux
-#      - x64
-#      - sre
-#    concurrency:
-#      group: ${{ github.workflow }}-unittests-with-coverage-${{ github.ref }}
-#      cancel-in-progress: true
-#    container:
-#      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-#    steps:
-#      - uses: actions/checkout@v3
-#      - run: |
-#          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-#          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-#          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-#      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-#        with:
-#          skipPush: true
-#          installCommand: |
-#            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
-#            nix-channel --update
-#            nix-env -iA nixpkgs.cachix
-#          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-#          name: composable-community
-#      - run: |
-#          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#unit-tests-with-coverage --no-update-lock-file --show-trace -L
-#      - name: Upload coverage to Codecov
-#        uses: codecov/codecov-action@v2
-#        with:
-#          token: ${{ secrets.CODECOV_TOKEN }}
-#          files: result/lcov/lcov.info
-#          fail_ci_if_error: false
 
   test-running-of-pallet-benchmarks:
     name: "Test running of pallet benchmarks"
@@ -647,6 +638,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- run .#benchmarks-once-${{ matrix.runtime }}
@@ -689,6 +683,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#composable-node
@@ -708,6 +705,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#composable-bench-node
@@ -727,6 +727,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#polkadot-node
@@ -749,6 +752,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#${{ matrix.node }}-node
@@ -768,6 +774,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#acala-node
@@ -787,6 +796,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#dali-subxt-client
@@ -806,6 +818,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#hyperspace-dali
@@ -842,6 +857,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#${{ matrix.runtime }}
@@ -872,6 +890,9 @@ jobs:
           name: ${{ env.CACHIX_COMPOSABLE }}
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: actions/setup-node@v3
         with:
           node-version: 16
@@ -912,6 +933,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#cmc-api
@@ -935,6 +959,9 @@ jobs:
       - sre
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - name: Setup jest
         uses: actions/setup-node@v3
         with:
@@ -960,6 +987,9 @@ jobs:
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -990,6 +1020,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#zombienet
@@ -1009,6 +1042,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#price-feed
@@ -1029,6 +1065,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/docker-publish"
         with:
           command: nix -- build .#devnet-container
@@ -1054,6 +1093,9 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: "./.github/templates/docker-publish"
         with:
           command: nix -- build .#bridge-devnet-dali-container
@@ -1085,6 +1127,8 @@ jobs:
         with:
           clean: false
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
@@ -1157,6 +1201,8 @@ jobs:
         with:
           clean: false
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
@@ -1199,6 +1245,9 @@ jobs:
 
 
   nix-command-pr-comments:
+    permissions:
+      pull-requests: write
+      issues: write
     runs-on:
       - self-hosted
       - linux
@@ -1208,8 +1257,10 @@ jobs:
       - check-nix
     name: "Nix command PR comments"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - name: Comment PR
         uses: "./.github/templates/comment"
         with:

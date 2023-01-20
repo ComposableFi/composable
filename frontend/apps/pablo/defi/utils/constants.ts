@@ -26,7 +26,7 @@ export const DATE_FORMAT = "DD/MM/YYYY";
 
 export const MAX_CHART_LABELS = 5;
 export const APOLLO_UPDATE_BLOCKS = 6;
-export const DEFAULT_UI_FORMAT_DECIMALS = 4;
+export const DEFAULT_UI_FORMAT_DECIMALS = 6;
 
 export const DUMMY_LAUNCH_DESCRIPTION = (
   name: string = "Picasso",

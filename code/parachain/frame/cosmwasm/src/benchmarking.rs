@@ -3,9 +3,10 @@ use crate::{
 	instrument::INSTRUCTIONS_MULTIPLIER,
 	runtimes::{
 		abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas},
-		wasmi::{CosmwasmVMCache, CosmwasmVMShared},
+		vm::{CosmwasmVMCache, CosmwasmVMShared},
 	},
-	ContractInfoOf, Pallet as Cosmwasm,
+	types::*,
+	Pallet as Cosmwasm,
 };
 use alloc::{
 	borrow::ToOwned, boxed::Box, collections::BTreeMap, format, string::String, vec, vec::Vec,
@@ -13,7 +14,6 @@ use alloc::{
 use core::{cell::SyncUnsafeCell, marker::PhantomData};
 use cosmwasm_vm::{
 	cosmwasm_std::{Coin, Reply, SubMsgResult},
-	executor::InstantiateCall,
 	system::CosmwasmContractMeta,
 };
 use cosmwasm_vm_wasmi::code_gen::{
@@ -215,7 +215,7 @@ where
 	origin
 }
 
-fn create_instantiated_contract<T>(origin: T::AccountId) -> (T::AccountId, ContractInfoOf<T>)
+fn create_instantiated_contract<T>(origin: T::AccountId) -> T::AccountId
 where
 	T: Config + pallet_balances::Config + pallet_assets::Config,
 	<T as pallet_balances::Config>::Balance: From<u128>,
@@ -229,7 +229,7 @@ where
 	Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 
 	// 3. Instantiate the contract and get the contract address
-	let contract_addr = EntryPointCaller::<InstantiateCall>::setup::<T>(
+	let contract_addr = setup_instantiate_call::<T>(
 		origin.clone(),
 		1,
 		"salt".as_bytes(),
@@ -241,9 +241,7 @@ where
 	.call(get_shared_vm(), Default::default(), b"message".to_vec().try_into().unwrap())
 	.unwrap();
 
-	let contract_info = ContractToInfo::<T>::get(&contract_addr).unwrap();
-
-	(contract_addr, contract_info)
+	contract_addr
 }
 
 fn create_coins<T>(accounts: Vec<&AccountIdOf<T>>, n: u32) -> Vec<Coin>
@@ -363,7 +361,7 @@ benchmarks! {
 	execute {
 		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
 		let origin = create_funded_account::<T>("origin");
-		let (contract, _info) = create_instantiated_contract::<T>(origin.clone());
+		let contract = create_instantiated_contract::<T>(origin.clone());
 		let message = b"{}".to_vec().try_into().unwrap();
 		let mut funds = BTreeMap::new();
 		let assets = CurrencyId::list_assets();
@@ -381,7 +379,7 @@ benchmarks! {
 
 	migrate {
 		let origin = create_funded_account::<T>("origin");
-		let (contract, _info) = create_instantiated_contract::<T>(origin.clone());
+		let contract = create_instantiated_contract::<T>(origin.clone());
 		{
 			// Upload the second contract but do not instantiate it, this will get `code_id = 2`
 			let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), 12, None).unwrap().into();
@@ -407,7 +405,7 @@ benchmarks! {
 	update_admin {
 		let origin = create_funded_account::<T>("origin");
 		let new_admin = account::<<T as Config>::AccountIdExtended>("new_admin", 0, 0xCAFEBABE);
-		let (contract, _info) = create_instantiated_contract::<T>(origin.clone());
+		let contract = create_instantiated_contract::<T>(origin.clone());
 
 	}: _(RawOrigin::Signed(origin), contract.clone(), Some(new_admin.clone()), 100_000_000u64)
 	verify {
@@ -417,40 +415,41 @@ benchmarks! {
 
 	db_read {
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
+		let contract = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_read(&mut vm.0, "hello world".as_bytes()).unwrap();
 	}
 
 	db_read_other_contract {
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info.clone(), vec![]).unwrap();
+		let contract = create_instantiated_contract::<T>(sender.clone());
+	let info = ContractToInfo::<T>::get(&contract).unwrap();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_read_other_contract(&mut vm.0, &info.trie_id, "hello world".as_bytes()).unwrap();
 	}
 
 	db_write {
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
+		let contract = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}
 
 	db_scan {
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
+		let contract = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_scan(&mut vm.0).unwrap();
 	}
 
 	db_next {
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
+		let contract = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 		let iterator = Cosmwasm::<T>::do_db_scan(&mut vm.0).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_next(&mut vm.0, iterator).unwrap();
@@ -458,8 +457,8 @@ benchmarks! {
 
 	db_remove {
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
+		let contract = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_remove(&mut vm.0, "hello".as_bytes());
@@ -482,24 +481,24 @@ benchmarks! {
 
 	set_contract_meta {
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let _ = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
+		let contract = create_instantiated_contract::<T>(sender.clone());
+		let _ = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_set_contract_meta(&contract, 1, None, "hello world".into()).unwrap()
 	}
 
 	running_contract_meta {
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
+		let contract = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_running_contract_meta(&mut vm.0)
 	}
 
 	contract_meta {
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let _ = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
+		let contract = create_instantiated_contract::<T>(sender.clone());
+		let _ = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_contract_meta(contract).unwrap();
 	}
@@ -565,10 +564,11 @@ benchmarks! {
 	continue_instantiate {
 		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
+		let contract = create_instantiated_contract::<T>(sender.clone());
+	let info = ContractToInfo::<T>::get(&contract).unwrap();
 		let meta: CosmwasmContractMeta<CosmwasmAccount<T>> = CosmwasmContractMeta { code_id: info.code_id, admin: None, label: String::from("test")};
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_continue_instantiate(&mut vm.0, meta, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
@@ -576,49 +576,49 @@ benchmarks! {
 	continue_execute {
 		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
+		let contract = create_instantiated_contract::<T>(sender.clone());
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_continue_execute(&mut vm.0, contract, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
 
 	continue_migrate {
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
+		let contract = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_continue_migrate(&mut vm.0, contract, "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
 
 	continue_query {
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
+		let contract = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_continue_query(&mut vm.0, contract, "{}".as_bytes()).unwrap();
 	}
 
 	continue_reply {
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
+		let contract = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_continue_reply(&mut vm.0, Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {}).unwrap();
 	}
 
 	query_info {
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
+		let contract = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_query_info(&mut vm.0, contract).unwrap();
 	}
 
 	query_raw {
 		let sender = create_funded_account::<T>("origin");
-		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
+		let contract = create_instantiated_contract::<T>(sender.clone());
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}: {
 		Cosmwasm::<T>::do_query_raw(&mut vm.0, contract, "hello".as_bytes()).unwrap();

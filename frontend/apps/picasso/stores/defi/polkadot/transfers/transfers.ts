@@ -1,4 +1,7 @@
-import { PICASSO_SUPPORTED_TRANSFERS } from "@/defi/config";
+import {
+  PICASSO_STATEMINE_KSM_TRANSFER_FEE,
+  PICASSO_SUPPORTED_TRANSFERS,
+} from "@/defi/config";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import BigNumber from "bignumber.js";
@@ -344,7 +347,10 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
                 }),
               }),
               fun: api.createType("XcmV1MultiassetFungibility", {
-                Fungible: api.createType("Compact<u128>", 10000000000),
+                Fungible: api.createType(
+                  "Compact<u128>",
+                  PICASSO_STATEMINE_KSM_TRANSFER_FEE
+                ),
               }),
             }),
           });

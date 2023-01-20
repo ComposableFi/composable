@@ -5,8 +5,8 @@ inputs:
   message:
     description: "The comment body"
     required: true
-  tag:
-    description: "The comment identifier"
+  comment_includes:
+    description: "The comment inclusion check used for upserting"
     required: true
   github-token:
     description: "A github PAT used for authentication"
@@ -21,5 +21,5 @@ runs:
       with:
         mode: upsert
         message: ${{ inputs.message}}
-        comment_tag: ${{ inputs.comment-includes}}
+        comment_includes: ${{ inputs.comment-includes }}
         GITHUB_TOKEN: ${{ inputs.github-token }}

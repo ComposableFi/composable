@@ -1,7 +1,5 @@
 use super::abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas};
-use crate::{
-	runtimes::abstraction::GasOutcome, weights::WeightInfo, Config, ContractInfoOf, Pallet,
-};
+use crate::{runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Config, Pallet};
 use alloc::string::String;
 use cosmwasm_vm::{
 	cosmwasm_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo},
@@ -13,17 +11,71 @@ use cosmwasm_vm::{
 	},
 	system::{CosmwasmCodeId, CosmwasmContractMeta, SystemError},
 	transaction::Transactional,
-	vm::{VMBase, VmErrorOf, VmGas},
+	vm::{VMBase, VmGas},
 };
 use cosmwasm_vm_wasmi::{
-	WasmiHostFunction, WasmiHostFunctionIndex, WasmiHostModule, WasmiInput, WasmiModule,
-	WasmiModuleExecutor, WasmiModuleName, WasmiOutput, WasmiVM, WasmiVMError,
+	WasmiContext, WasmiHost, WasmiHostFunction, WasmiHostFunctionIndex, WasmiInput, WasmiModule,
+	WasmiOutput, WasmiVM, WasmiVMError,
 };
 use frame_support::storage::ChildTriePrefixIterator;
 use parity_wasm::elements::{self, External, Internal, Module, Type, ValueType};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use wasmi::CanResume;
 use wasmi_validation::{validate_module, PlainValidator};
+
+/// Different type of contract runtimes. A contract might either be dynamically loaded or statically
+/// invoked (precompiled).
+pub enum ContractBackend {
+	/// A dynamically loaded CosmWasmbased contract. This code has previously been uploaded by a
+	/// user.
+	CosmWasm {
+		/// The wasmi module instantiated for the CosmWasm contract.
+		executing_module: WasmiModule,
+	},
+	/// A substrate pallet, which is a precompiled contract that is included in the runtime.
+	Pallet,
+}
+
+impl WasmiContext for ContractBackend {
+	fn executing_module(&self) -> Option<WasmiModule> {
+		match self {
+			ContractBackend::CosmWasm { executing_module } => Some(executing_module.clone()),
+			ContractBackend::Pallet => None,
+		}
+	}
+}
+
+impl Pointable for ContractBackend {
+	type Pointer = u32;
+}
+
+impl ReadableMemory for ContractBackend {
+	type Error = WasmiVMError;
+	fn read(&self, offset: Self::Pointer, buffer: &mut [u8]) -> Result<(), Self::Error> {
+		match self {
+			ContractBackend::CosmWasm { executing_module } => executing_module
+				.memory
+				.get_into(offset, buffer)
+				.map_err(|_| WasmiVMError::LowLevelMemoryReadError),
+			ContractBackend::Pallet => Err(WasmiVMError::NotADynamicModule),
+		}
+	}
+}
+
+impl WritableMemory for ContractBackend {
+	type Error = WasmiVMError;
+	fn write(&self, offset: Self::Pointer, buffer: &[u8]) -> Result<(), Self::Error> {
+		match self {
+			ContractBackend::CosmWasm { executing_module } => executing_module
+				.memory
+				.set(offset, buffer)
+				.map_err(|_| WasmiVMError::LowLevelMemoryWriteError),
+			ContractBackend::Pallet => Err(WasmiVMError::NotADynamicModule),
+		}
+	}
+}
+
+impl ReadWriteMemory for ContractBackend {}
 
 #[derive(Debug)]
 pub enum CosmwasmVMError<T: Config> {
@@ -105,7 +157,7 @@ pub enum InitialStorageMutability {
 /// VM shared cache
 #[derive(Clone)]
 pub struct CosmwasmVMCache {
-	/// Code cache, a mapping from a CosmWasm contract code id to the baking code.
+	/// Code cache, a mapping from an identifier to it's code.
 	pub code: BTreeMap<CosmwasmCodeId, Vec<u8>>,
 }
 
@@ -152,14 +204,9 @@ pub struct CosmwasmVM<'a, T: Config> {
 	// the lifetime would be different (lifetime of children live longer than the initial one,
 	// hence we'll face a compilation issue). This could be solved with HKT or unsafe host
 	// functions (raw pointer without lifetime).
-	/// Host functions by index.
+	/// Host functions by index. Only used by dynamically loaded contracts (wasm bytecode).
 	pub host_functions_by_index:
 		BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<CosmwasmVM<'a, T>>>,
-	/// Host functions by (module, name).
-	pub host_functions_by_name: BTreeMap<WasmiModuleName, WasmiHostModule<CosmwasmVM<'a, T>>>,
-
-	/// Currently executing Wasmi module. A.k.a. contract instance from Wasmi perspective.
-	pub executing_module: WasmiModule,
 	/// CosmWasm [`Env`] for the executing contract.
 	pub cosmwasm_env: Env,
 	/// CosmWasm [`MessageInfo`] for the executing contract.
@@ -172,6 +219,8 @@ pub struct CosmwasmVM<'a, T: Config> {
 	pub shared: &'a mut CosmwasmVMShared,
 	/// Iterator id's to corresponding keys. Keys are used to get the next key.
 	pub iterators: BTreeMap<u32, ChildTriePrefixIterator<(Vec<u8>, Vec<u8>)>>,
+	/// Actual contract runtime
+	pub contract_runtime: ContractBackend,
 }
 
 impl<'a, T: Config> Has<Env> for CosmwasmVM<'a, T> {
@@ -186,10 +235,15 @@ impl<'a, T: Config> Has<MessageInfo> for CosmwasmVM<'a, T> {
 	}
 }
 
-impl<'a, T: Config> WasmiModuleExecutor for CosmwasmVM<'a, T> {
-	fn executing_module(&self) -> WasmiModule {
-		self.executing_module.clone()
+impl<'a, T: Config> WasmiContext for CosmwasmVM<'a, T> {
+	fn executing_module(&self) -> Option<WasmiModule> {
+		self.contract_runtime.executing_module()
 	}
+}
+
+// NOTE(hussein-aitlahcen): WasmiHostFunction require the type of the VM, I'm not sure we can push
+// this in the `contract_runtime` field. If so, please advise.
+impl<'a, T: Config> WasmiHost<Self> for CosmwasmVM<'a, T> {
 	fn host_function(
 		&self,
 		index: WasmiHostFunctionIndex,
@@ -199,26 +253,22 @@ impl<'a, T: Config> WasmiModuleExecutor for CosmwasmVM<'a, T> {
 }
 
 impl<'a, T: Config> Pointable for CosmwasmVM<'a, T> {
-	type Pointer = u32;
+	type Pointer = <ContractBackend as Pointable>::Pointer;
 }
 
 impl<'a, T: Config> ReadableMemory for CosmwasmVM<'a, T> {
-	type Error = VmErrorOf<Self>;
+	type Error = <ContractBackend as ReadableMemory>::Error;
 	fn read(&self, offset: Self::Pointer, buffer: &mut [u8]) -> Result<(), Self::Error> {
-		self.executing_module
-			.memory
-			.get_into(offset, buffer)
-			.map_err(|_| WasmiVMError::LowLevelMemoryReadError.into())
+		self.contract_runtime.read(offset, buffer)?;
+		Ok(())
 	}
 }
 
 impl<'a, T: Config> WritableMemory for CosmwasmVM<'a, T> {
-	type Error = VmErrorOf<Self>;
+	type Error = <ContractBackend as WritableMemory>::Error;
 	fn write(&self, offset: Self::Pointer, buffer: &[u8]) -> Result<(), Self::Error> {
-		self.executing_module
-			.memory
-			.set(offset, buffer)
-			.map_err(|_| WasmiVMError::LowLevelMemoryWriteError.into())
+		self.contract_runtime.write(offset, buffer)?;
+		Ok(())
 	}
 }
 
