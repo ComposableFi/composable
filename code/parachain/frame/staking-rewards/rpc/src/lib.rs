@@ -7,6 +7,7 @@ use jsonrpsee::{
 	proc_macros::rpc,
 	types::{error::CallError, ErrorObject},
 };
+use pallet_staking_rewards_runtime_api::ClaimableAmountError;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
@@ -58,7 +59,7 @@ where
 		fnft_collection_id: SafeRpcWrapper<AssetId>,
 		fnft_instance_id: SafeRpcWrapper<FinancialNftInstanceId>,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<BTreeMap<AssetId, Option<Balance>>> {
+	) -> RpcResult<Result<BTreeMap<AssetId, Option<Balance>>, ClaimableAmountError>> {
 		let api = self.client.runtime_api();
 
 		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
