@@ -52,7 +52,6 @@ use ibc::{
 	},
 	signer::Signer as IbcSigner,
 };
-use sp_runtime::SaturatedConversion;
 use sp_std::{marker::PhantomData, str::FromStr};
 
 use ibc_primitives::{HandlerMessage, IbcHandler};
