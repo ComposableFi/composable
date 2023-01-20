@@ -5,10 +5,7 @@ on:
       - release-*
       - main
   pull_request_target:
-    branches:
-      - main
-      - develop
-      - releases
+  pull_request:
 
 env:
   # NOTE: keep in sync with docs
