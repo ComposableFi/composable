@@ -14,19 +14,19 @@ use cosmwasm_std::{
 	Env, Event, MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg, WasmQuery,
 };
 use cw2::set_contract_version;
-use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
+use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
 use cw_utils::ensure_from_older_version;
 use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
 use cw_xcvm_common::shared::{encode_base64, BridgeMsg};
-use cw_xcvm_utils::DefaultXCVMProgram;
+use cw_xcvm_utils::{DefaultXCVMInstruction, DefaultXCVMProgram};
 use num::Zero;
 use xcvm_core::{
-	apply_bindings, cosmwasm::*, Amount, BindingValue, BridgeSecurity, Destination, Displayed,
+	apply_bindings, cosmwasm::*, Balance, BindingValue, BridgeSecurity, Destination, Displayed,
 	Funds, NetworkId, Register,
 };
 
-type XCVMInstruction = xcvm_core::Instruction<NetworkId, Vec<u8>, CanonicalAddr, Funds>;
-type XCVMProgram = xcvm_core::Program<VecDeque<XCVMInstruction>>;
+type XCVMInstruction = DefaultXCVMInstruction;
+type XCVMProgram = DefaultXCVMProgram;
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -278,6 +278,31 @@ pub fn interpret_call(
 						AssetReference::Native { denom } => Cow::Owned(denom.into()),
 					}
 				},
+				BindingValue::AssetAmount(asset_id, balance) => {
+					let reference = external_query_lookup_asset(
+						deps.querier,
+						registry_address.clone().into(),
+						asset_id,
+					)?;
+					let amount = match reference {
+						AssetReference::Virtual { cw20_address } => apply_amount_to_cw20_balance(
+							deps,
+							&balance,
+							&cw20_address,
+							&env.contract.address,
+						)?,
+						AssetReference::Native { denom } =>
+							if balance.is_unit {
+								return Err(ContractError::InvalidBindings)
+							} else {
+								let coin = deps
+									.querier
+									.query_balance(env.contract.address.clone(), denom.clone())?;
+								balance.amount.apply(coin.amount.into())
+							},
+					};
+					Cow::Owned(format!("{}", amount).into())
+				},
 			};
 			Ok(data)
 		})?;
@@ -302,7 +327,7 @@ pub fn interpret_spawn(
 	network: NetworkId,
 	bridge_security: BridgeSecurity,
 	salt: Vec<u8>,
-	assets: Funds,
+	assets: Funds<Balance>,
 	program: XCVMProgram,
 	mut response: Response,
 ) -> Result<Response, ContractError> {
@@ -312,39 +337,33 @@ pub fn interpret_spawn(
 	let registry_address = registry_address.into_string();
 	let mut normalized_funds: Funds<Displayed<u128>> = Funds::empty();
 
-	for (asset_id, amount) in assets.0 {
-		if amount.is_zero() {
+	for (asset_id, balance) in assets.0 {
+		if balance.amount.is_zero() {
 			// We ignore zero amounts
 			continue
 		}
 
 		let reference =
 			external_query_lookup_asset(deps.querier, registry_address.clone(), asset_id)?;
-		let amount = {
-			let transfer_amount = match &reference {
-				AssetReference::Native { denom } => {
-					let coin =
-						deps.querier.query_balance(env.contract.address.clone(), denom.clone())?;
-					coin.amount
-				},
-				AssetReference::Virtual { cw20_address } => {
-					let rsp = deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(
-						WasmQuery::Smart {
-							contract_addr: cw20_address.clone().into_string(),
-							msg: to_binary(&Cw20QueryMsg::Balance {
-								address: env.contract.address.clone().into_string(),
-							})?,
-						},
-					))?;
-					rsp.balance
-				},
-			};
-			Amount::absolute(amount.apply(transfer_amount.into()).into())
+		let transfer_amount = match &reference {
+			AssetReference::Native { denom } => {
+				if balance.is_unit {
+					return Err(ContractError::DecimalsInNativeToken)
+				}
+				let coin =
+					deps.querier.query_balance(env.contract.address.clone(), denom.clone())?;
+				balance.amount.apply(coin.amount.into())
+			},
+			AssetReference::Virtual { cw20_address } => apply_amount_to_cw20_balance(
+				deps.as_ref(),
+				&balance,
+				cw20_address,
+				&env.contract.address,
+			)?,
 		};
 
-		if !amount.is_zero() {
+		if !transfer_amount.is_zero() {
 			let asset_id: u128 = asset_id.into();
-			let transfer_amount = amount.intercept.0;
 			normalized_funds.0.push((asset_id.into(), transfer_amount.into()));
 			response = match reference {
 				AssetReference::Native { denom } => response.add_message(BankMsg::Send {
@@ -397,7 +416,7 @@ pub fn interpret_transfer(
 	env: &Env,
 	relayer: Addr,
 	to: Destination<CanonicalAddr>,
-	assets: Funds,
+	assets: Funds<Balance>,
 	mut response: Response,
 ) -> Result<Response, ContractError> {
 	let config = CONFIG.load(deps.storage)?;
@@ -408,16 +427,19 @@ pub fn interpret_transfer(
 		Destination::Relayer => relayer.into(),
 	};
 
-	for (asset_id, amount) in assets.0 {
-		if amount.is_zero() {
+	for (asset_id, balance) in assets.0 {
+		if balance.amount.is_zero() {
 			continue
 		}
 
 		let reference = external_query_lookup_asset(deps.querier, registry_addr.clone(), asset_id)?;
 		response = match reference {
 			AssetReference::Native { denom } => {
+				if balance.is_unit {
+					return Err(ContractError::DecimalsInNativeToken)
+				}
 				let mut coin = deps.querier.query_balance(env.contract.address.clone(), denom)?;
-				coin.amount = amount.apply(coin.amount.into()).into();
+				coin.amount = balance.amount.apply(coin.amount.into()).into();
 				response.add_message(BankMsg::Send {
 					to_address: recipient.clone(),
 					amount: vec![coin],
@@ -425,15 +447,12 @@ pub fn interpret_transfer(
 			},
 			AssetReference::Virtual { cw20_address } => {
 				let contract = Cw20Contract(cw20_address.clone());
-				let rsp = deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(
-					WasmQuery::Smart {
-						contract_addr: cw20_address.into(),
-						msg: to_binary(&Cw20QueryMsg::Balance {
-							address: env.contract.address.clone().into_string(),
-						})?,
-					},
-				))?;
-				let transfer_amount = amount.apply(rsp.balance.into());
+				let transfer_amount = apply_amount_to_cw20_balance(
+					deps.as_ref(),
+					&balance,
+					&cw20_address,
+					&env.contract.address,
+				)?;
 				response.add_message(contract.call(Cw20ExecuteMsg::Transfer {
 					recipient: recipient.clone(),
 					amount: transfer_amount.into(),
@@ -489,4 +508,38 @@ fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 	let response = msg.result.into_result().map_err(StdError::generic_err)?;
 	RESULT_REGISTER.save(deps.storage, &Ok(response.clone()))?;
 	Ok(Response::default())
+}
+
+/// Calculates and returns the actual balance to process
+///
+/// * `balance`: Balance to be transformed into the actual balance
+/// * `cw20_address`: Address of the corresponding cw20 contract
+/// * `self_address`: This interpreter's address
+fn apply_amount_to_cw20_balance<A: Into<String> + Clone>(
+	deps: Deps,
+	balance: &Balance,
+	cw20_address: A,
+	self_address: A,
+) -> Result<u128, ContractError> {
+	let balance_response =
+		deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(WasmQuery::Smart {
+			contract_addr: cw20_address.clone().into(),
+			msg: to_binary(&Cw20QueryMsg::Balance { address: self_address.into() })?,
+		}))?;
+
+	let processed_amount = if balance.is_unit {
+		// If the balance is unit, we need to take `decimals` into account.
+		let token_info =
+			deps.querier.query::<TokenInfoResponse>(&QueryRequest::Wasm(WasmQuery::Smart {
+				contract_addr: cw20_address.into(),
+				msg: to_binary(&Cw20QueryMsg::TokenInfo {})?,
+			}))?;
+		balance
+			.amount
+			.apply_with_decimals(token_info.decimals, balance_response.balance.into())
+	} else {
+		balance.amount.apply(balance_response.balance.into())
+	};
+
+	Ok(processed_amount)
 }

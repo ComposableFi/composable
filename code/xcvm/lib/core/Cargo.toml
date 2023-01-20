@@ -7,7 +7,7 @@ version = "0.1.0"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
-cosmwasm-std = { version = "1.0.0", optional = true }
+cosmwasm-std = "1.0.0"
 cw-storage-plus = { version = "0.14.0", optional = true }
 fixed = { version = "1.15", default-features = false }
 num = { version = "0.4", default-features = false }
@@ -29,5 +29,5 @@ default = []
 # Although `JsonSchema` is only supported with `std`, let's not enable
 # `std` with `cosmwasm` automatically. `cosmwasm` can be used in `no_std`
 # environments as well without the need of `JsonSchema`.
-cosmwasm = ["cosmwasm-std", "cw-storage-plus"]
+cosmwasm = ["cw-storage-plus"]
 std = ["dep:schemars"]
