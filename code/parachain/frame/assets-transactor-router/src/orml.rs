@@ -107,7 +107,7 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 			.map(|_| ())
 		} else {
 			route_asset_type! {
-				deposit(currency_id, who, amount)
+				withdraw(currency_id, who, amount)
 			}
 		}
 	}
