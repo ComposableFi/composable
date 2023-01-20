@@ -2,13 +2,13 @@ import { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { ApiPromise } from "@polkadot/api";
 import { decodeAddress, encodeAddress } from "@polkadot/util-crypto";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import {
-  fetchClaimableRewards,
   fetchClaimedRewards,
-  findAssociatedByAccount,
+  fetchClaimableRewards,
   findAssociation,
   isAssociatedAccountSameAsConnectedAccount,
+  findAssociatedByAccount,
 } from "./crowdloanRewards";
 import {
   CrowdloanAssociation,
@@ -119,7 +119,7 @@ export const useCrowdloanRewardsClaimableRewards = (
       await api.query.crowdloanRewards.vestingTimeStart();
 
     if (startTimestampOption.isNone) {
-      return new BigNumber(0);
+      return new BigNumber(0)
     }
 
     const startTimestamp = new BigNumber(startTimestampOption.toString());
@@ -161,16 +161,11 @@ export const useCrowdloanRewardsClaimableRewards = (
       (isEthAccountEligible || isPicassoAccountEligible)
     ) {
       const rewardsCodec = await api.query.crowdloanRewards.rewards(
-        isEthAccountEligible
-          ? {
-              Ethereum: ethAccount,
-            }
-          : {
-              RelayChain: encodeAddress(
-                decodeAddress(picassoAccount),
-                SUBSTRATE_NETWORKS.kusama.ss58Format
-              ),
-            }
+        isEthAccountEligible ? {
+          Ethereum: ethAccount
+        } : {
+          RelayChain: encodeAddress(decodeAddress(picassoAccount), SUBSTRATE_NETWORKS.kusama.ss58Format)
+        }
       );
       const rewards = rewardsCodec.toJSON() as {
         vestingPeriod: number;
@@ -184,16 +179,14 @@ export const useCrowdloanRewardsClaimableRewards = (
 
       const vestingPoint = now.minus(startTimestamp);
       if (vestingPoint.gt(rewards.vestingPeriod)) {
-        return fromChainIdUnit(BigInt(rewards.total));
+        return fromChainIdUnit(BigInt(rewards.total))
       } else {
         const upfront = totalRewards.times(initialPayment);
         const vestingWindow = vestingPoint.minus(vestingPoint.mod(vestingStep));
-        const vested = new BigNumber(
-          fromChainIdUnit(BigInt(rewards.total))
-        ).minus(upfront);
-        return upfront
-          .plus(vested.times(vestingWindow.div(rewards.vestingPeriod)))
-          .dp(4);
+        const vested = new BigNumber(fromChainIdUnit(BigInt(rewards.total))).minus(upfront);
+        return upfront.plus(
+          vested.times(vestingWindow.div(rewards.vestingPeriod))
+        ).dp(4)
       }
     }
     return new BigNumber(0);
@@ -332,41 +325,30 @@ export const useCrowdloanRewardsEthereumAddressAssociatedAccount = (
  * @param {ApiPromise} api API object
  * @returns {boolean}
  */
-export const useCrowdloanRewardsHasStarted = (
-  api?: ApiPromise
-): {
-  hasStarted: boolean;
-  timeStart: number;
-  timeElapsed: number;
-} => {
+export const useCrowdloanRewardsHasStarted = (api?: ApiPromise): boolean => {
   const [hasStarted, setHasStarted] = useState(false);
-  const [timeStart, setTimeStart] = useState(0);
-  const [timeElapsed, setTimeElapsed] = useState(0);
 
   useEffect(() => {
     if (api) {
       api.query.crowdloanRewards.vestingTimeStart((timeStart) => {
         const bn = new BigNumber(timeStart.value.toString()); // converting to string and then BN (type safe)
-        setHasStarted(bn.dp(0).toNumber() < Date.now());
-        setTimeStart(bn.dp(0).toNumber());
-        setTimeElapsed(Date.now() - bn.dp(0).toNumber());
+        setHasStarted(bn.toNumber() < Date.now());
       });
     }
   }, [api]);
 
-  return {
-    hasStarted,
-    timeStart,
-    timeElapsed,
-  };
+  return hasStarted;
 };
 
 export const useCrowdloanRewardsStepGivenConnectedAccounts = (
   selectedPicassoAccount: string | undefined,
-  selectedEthereumAccount: string | undefined,
-  isEthAccountEligible: boolean,
-  isPicassoAccountEligible: boolean
+  selectedEthereumAccount: string | undefined
 ): CrowdloanStep => {
+  const { isEthAccountEligible, isPicassoAccountEligible } =
+    useCrowdloanRewardsEligibility(
+      selectedEthereumAccount,
+      selectedPicassoAccount
+    );
   const { onChainAssociations } = useCrowdloanRewardsSlice();
 
   return useMemo(() => {
