@@ -1598,15 +1598,18 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_staking_rewards_runtime_api::StakingRewardsRuntimeApi<Block, CurrencyId, FinancialNftInstanceId, Balance> for Runtime {
+	impl staking_rewards_runtime_api::StakingRewardsRuntimeApi<Block, CurrencyId, FinancialNftInstanceId, Balance> for Runtime {
 		fn get_claimable_amount(
 			fnft_collection_id: SafeRpcWrapper<CurrencyId>,
 			fnft_instance_id: SafeRpcWrapper<FinancialNftInstanceId>,
-		) -> BTreeMap<CurrencyId, Option<Balance>> {
+		) -> Result<
+			BTreeMap<CurrencyId, Balance>,
+			staking_rewards_runtime_api::ClaimableAmountError
+		> {
 			StakingRewards::get_claimable_amount(
 				fnft_collection_id.0,
 				fnft_instance_id.0,
-			).unwrap_or(BTreeMap::new())
+			)
 		}
 	}
 

@@ -2,10 +2,9 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::unnecessary_mut_passed)]
 
-use codec::Codec;
+use codec::{Codec, Decode, Encode};
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use sp_std::collections::btree_map::BTreeMap;
-
 
 // Staking Rewards Runtime API declaration. Implemented for each runtime at
 // `runtime/<runtime-name>/src/lib.rs`.
@@ -19,6 +18,13 @@ sp_api::decl_runtime_apis! {
 		fn get_claimable_amount(
 			fnft_collection_id: SafeRpcWrapper<AssetId>,
 			fnft_instance_id: SafeRpcWrapper<FinancialNftInstanceId>,
-		) -> BTreeMap<AssetId, Option<Balance>>;
+		) -> Result<BTreeMap<AssetId, Balance>, ClaimableAmountError>;
 	}
+}
+
+#[derive(Encode, Decode)]
+pub enum ClaimableAmountError {
+	ArithmeticError(sp_runtime::ArithmeticError),
+	StakeNotFound,
+	RewardsPoolNotFound,
 }

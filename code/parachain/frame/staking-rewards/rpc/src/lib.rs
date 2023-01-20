@@ -7,16 +7,16 @@ use jsonrpsee::{
 	proc_macros::rpc,
 	types::{error::CallError, ErrorObject},
 };
-use pallet_staking_rewards_runtime_api::StakingRewardsRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use sp_std::{cmp::Ord, collections::btree_map::BTreeMap, sync::Arc};
+use staking_rewards_runtime_api::StakingRewardsRuntimeApi;
 
 #[rpc(client, server)]
 pub trait StakingRewardsApi<BlockHash, AssetId, FinancialNftInstanceId, Balance>
 where
-AssetId: FromStr + Display + Ord,
+	AssetId: FromStr + Display + Ord,
 	FinancialNftInstanceId: FromStr + Display,
 	Balance: FromStr + Display,
 {

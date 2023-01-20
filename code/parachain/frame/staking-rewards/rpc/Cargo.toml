@@ -2,7 +2,7 @@
 authors = ["Composable Developers"]
 edition = "2021"
 homepage = "https://composable.finance"
-name = "pallet-staking-rewards-rpc"
+name = "staking-rewards-rpc"
 rust-version = "1.56"
 version = "1.0.0"
 
@@ -19,7 +19,7 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 # local
 composable-support = { path = "../../composable-support" }
 composable-traits = { path = "../../composable-traits" }
-pallet-staking-rewards-runtime-api = { path = "../runtime-api" }
+staking-rewards-runtime-api = { path = "../runtime-api" }
 
 # SCALE
 codec = { default-features = false, features = [

@@ -6,7 +6,6 @@ use cumulus_primitives_core::CollectCollationInfo;
 use ibc_rpc::{IbcApiServer, IbcRpcHandler};
 use lending_rpc::{Lending, LendingApiServer};
 use pablo_rpc::{Pablo, PabloApiServer};
-use pallet_staking_rewards_rpc::{StakingRewards, StakingRewardsApiServer};
 use pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi;
 use sp_api::{ApiExt, Metadata, StateBackend};
 use sp_block_builder::BlockBuilder;
@@ -15,6 +14,7 @@ use sp_offchain::OffchainWorkerApi;
 use sp_runtime::traits::BlakeTwo256;
 use sp_session::SessionKeys;
 use sp_transaction_pool::runtime_api::TaggedTransactionQueue;
+use staking_rewards_rpc::{StakingRewards, StakingRewardsApiServer};
 use substrate_frame_rpc_system::AccountNonceApi;
 
 /// Consider this a trait alias.
@@ -138,6 +138,24 @@ macro_rules! define_trait {
 }
 
 define_trait! {
+	mod staking_rewards {
+		pub trait ExtendWithStakingRewardsApi {
+			fn extend_with_staking_rewards_api(io, deps);
+		}
+
+		#[cfg(feature = "composable")]
+		impl for composable_runtime {}
+
+		impl for picasso_runtime {}
+
+		#[cfg(feature = "dali")]
+		impl for dali_runtime {
+			fn (io, deps) {
+				io.merge(Assets::new(deps.client).into_rpc())
+			}
+		}
+	}
+
 	mod assets {
 		pub trait ExtendWithAssetsApi {
 			fn extend_with_assets_api(io, deps);
@@ -232,7 +250,7 @@ define_trait! {
 
 	mod cosmwasm {
 		pub trait ExtendWithCosmwasmApi {
-			fn extend_with_cosmwasm_api(io, deps) ;
+			fn extend_with_cosmwasm_api(io, deps);
 		}
 
 		#[cfg(feature = "composable")]

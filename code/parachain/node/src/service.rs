@@ -21,7 +21,8 @@ use crate::{
 	runtime::{
 		assets::ExtendWithAssetsApi, cosmwasm::ExtendWithCosmwasmApi,
 		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
-		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
+		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+		staking_rewards::ExtendWithStakingRewardsApi, BaseHostRuntimeApis,
 	},
 };
 use sc_client_api::StateBackendFor;
@@ -278,6 +279,7 @@ where
 	RuntimeApi:
 		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>
+		+ ExtendWithStakingRewardsApi<RuntimeApi, Executor>
 		+ ExtendWithAssetsApi<RuntimeApi, Executor>
 		+ ExtendWithCrowdloanRewardsApi<RuntimeApi, Executor>
 		+ ExtendWithPabloApi<RuntimeApi, Executor>

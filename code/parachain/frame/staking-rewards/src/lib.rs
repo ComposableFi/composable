@@ -71,7 +71,9 @@ use frame_support::{
 	},
 	BoundedBTreeMap,
 };
-use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+use runtime_api::ClaimableAmountError;
+use sp_runtime::ArithmeticError;
+use sp_std::collections::btree_map::BTreeMap;
 
 use crate::prelude::*;
 
@@ -1805,7 +1807,7 @@ pub(crate) fn claim_of_stake<T: Config>(
 	share_asset_id: &<T as Config>::AssetId,
 	reward: &Reward<T::Balance>,
 	reward_asset_id: &<T as Config>::AssetId,
-) -> Result<T::Balance, DispatchError> {
+) -> Result<T::Balance, ArithmeticError> {
 	let total_shares: T::Balance =
 		<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(*share_asset_id);
 
@@ -1835,20 +1837,23 @@ impl<T: Config> Pallet<T> {
 	/// otherwise returns BTreeMap (key: reward_asset_id, val: Option<Balance>)
 	/// if claim_of_stake returns an error for a reward, then val is None
 	pub fn get_claimable_amount(
-		fnft_collection_id: <T as Config>::AssetId,
-		fnft_instance_id: <T as Config>::FinancialNftInstanceId,
-	) -> Result<BTreeMap<<T as Config>::AssetId, Option<<T as Config>::Balance>>, DispatchError> {
+		fnft_collection_id: T::AssetId,
+		fnft_instance_id: T::FinancialNftInstanceId,
+	) -> Result<BTreeMap<T::AssetId, T::Balance>, ClaimableAmountError> {
+		let stake = Stakes::<T>::try_get(fnft_collection_id, fnft_instance_id)
+			.map_err(|_| ClaimableAmountError::StakeNotFound)?;
 
-		let mut stake = Stakes::<T>::try_get(fnft_collection_id, fnft_instance_id)
-					.map_err(|_| pallet::Error::<T>::StakeNotFound)?;
+		let rewards_pool = RewardPools::<T>::try_get(stake.reward_pool_id)
+			.map_err(|_| ClaimableAmountError::RewardsPoolNotFound)?;
 
-		let mut rewards_pool = RewardPools::<T>::try_get(stake.reward_pool_id)
-					.map_err(|_| pallet::Error::<T>::RewardsPoolNotFound)?;
-
-		let mut res: BTreeMap<<T as Config>::AssetId, Option<<T as Config>::Balance>> = BTreeMap::new();
-		for (reward_asset_id, reward) in &rewards_pool.rewards {
-			res.insert(*reward_asset_id, claim_of_stake::<T>(&stake, &rewards_pool.share_asset_id, &reward, &reward_asset_id).ok());
-		}
-		Ok(res)
+		rewards_pool
+			.rewards
+			.into_iter()
+			.map(|(reward_asset_id, reward)| {
+				claim_of_stake::<T>(&stake, &rewards_pool.share_asset_id, &reward, &reward_asset_id)
+					.map(|claim| (reward_asset_id, claim))
+					.map_err(ClaimableAmountError::ArithmeticError)
+			})
+			.collect::<Result<BTreeMap<_, _>, _>>()
 	}
 }
