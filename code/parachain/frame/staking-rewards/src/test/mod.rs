@@ -44,7 +44,7 @@ use orml_traits::MultiCurrency;
 use proptest::prelude::*;
 use sp_arithmetic::{fixed_point::FixedU64, Perbill, Permill};
 use sp_core::sr25519::Public;
-use sp_runtime::{traits::One, PerThing};
+use sp_runtime::{traits::One, FixedPointNumber, PerThing};
 use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 
 use self::prelude::init_logger;
@@ -2131,8 +2131,10 @@ fn btree_map<K: Ord, V, Max: sp_runtime::traits::Get<u32>>(
 }
 
 #[test]
-fn zero_penalty_early_unlock() {
+fn pbl_295() {
 	new_test_ext().execute_with(|| {
+		init_logger();
+
 		next_block::<StakingRewards, Test>();
 
 		create_rewards_pool_and_assert::<Test>(RewardRateBasedIncentive {
@@ -2140,35 +2142,80 @@ fn zero_penalty_early_unlock() {
 			asset_id: PICA::ID,
 			start_block: 3,
 			reward_configs: bounded_btree_map! {
-				BTC::ID => RewardConfig { reward_rate: RewardRate::per_second(0_u128) }
+				USDT::ID => RewardConfig { reward_rate: RewardRate::per_second(PICA::units(1)) }
 			},
 			lock: LockConfig {
 				duration_multipliers: bounded_btree_map! {
-					// 0 => FixedU64::one().try_into_validated().expect("1 >= 1")
-					ONE_HOUR => FixedU64::one().try_into_validated().expect("1 >= 1")
+					0 => FixedU64::from_inner(1_000_000_000).try_into_validated().expect(">= 1"),
+					12 => FixedU64::from_inner(1_250_000_000).try_into_validated().expect(">= 1"),
+					600 => FixedU64::from_inner(1_500_000_000).try_into_validated().expect(">= 1"),
+					1200 => FixedU64::from_inner(2_000_000_000).try_into_validated().expect(">= 1"),
 				}
 				.into(),
-				unlock_penalty: Perbill::zero(),
+				unlock_penalty: Perbill::from_percent(10),
 			},
 			share_asset_id: XPICA::ID,
 			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-			minimum_staking_amount: 100_000,
+			minimum_staking_amount: 10_000,
 		});
 
-		mint_assets([ALICE], [BTC::ID], BTC::units(100));
-		add_to_rewards_pot_and_assert::<Test>(ALICE, PICA::ID, BTC::ID, BTC::units(100), false);
+		mint_assets([BOB], [USDT::ID], USDT::units(100_000_000_001));
+		add_to_rewards_pot_and_assert::<Test>(
+			BOB,
+			PICA::ID,
+			USDT::ID,
+			USDT::units(100_000_000_000),
+			false,
+		);
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		mint_assets([BOB], [PICA::ID], PICA::units(10));
-		let stake_id = stake_and_assert::<Test>(BOB, PICA::ID, PICA::units(1), ONE_HOUR);
+		Test::assert_event(crate::Event::<Test>::RewardPoolStarted { pool_id: PICA::ID });
 
-		next_block::<StakingRewards, Test>();
+		process_and_progress_blocks::<StakingRewards, Test>(10);
 
-		unstake_and_assert::<Test>(BOB, STAKING_FNFT_COLLECTION_ID, stake_id, true);
+		mint_assets([CHARLIE], [PICA::ID], PICA::units(1_001));
+		let charlie_id = stake_and_assert::<Test>(CHARLIE, PICA::ID, PICA::units(1_000), 0);
+		mint_assets([DAVE], [PICA::ID], PICA::units(1_001));
+		let dave_id = stake_and_assert::<Test>(DAVE, PICA::ID, PICA::units(1_000), 0);
+
+		process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		StakingRewards::claim(RuntimeOrigin::signed(DAVE), STAKING_FNFT_COLLECTION_ID, dave_id)
+			.unwrap();
+
+		process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		StakingRewards::claim(
+			RuntimeOrigin::signed(CHARLIE),
+			STAKING_FNFT_COLLECTION_ID,
+			charlie_id,
+		)
+		.unwrap();
+
+		process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		let charlie_new = split_and_assert::<Test>(
+			CHARLIE,
+			STAKING_FNFT_COLLECTION_ID,
+			charlie_id,
+			Permill::from_percent(50).try_into_validated().unwrap(),
+		);
+
+		process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		unstake_and_assert::<Test>(DAVE, STAKING_FNFT_COLLECTION_ID, dave_id, false);
+
+		process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		StakingRewards::claim(
+			RuntimeOrigin::signed(CHARLIE),
+			STAKING_FNFT_COLLECTION_ID,
+			charlie_id,
+		)
+		.unwrap();
 	})
 }
-
 #[test]
 fn zero_penalty_no_multiplier_doesnt_slash() {
 	new_test_ext().execute_with(|| {
