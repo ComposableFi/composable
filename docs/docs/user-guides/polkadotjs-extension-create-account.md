@@ -13,14 +13,14 @@ Click this link to download the extension for your preferred browser
 
 Once downloaded and installed, you will see this screen.
 
-![add_account](./add-account.png)
+![add_account](./images-polkadotjs-extension-create-account/add-account.png)
 
 1. Click “Understood, let me continue”
 
 To avoid the extension minimizing or canceling the account creation if you navigate outside it, 
 you can open it in a new window.
 
-![extension_windowed](./extension-windowed.png)
+![extension_windowed](./images-polkadotjs-extension-create-account/extension-windowed.png)
 
 1. Navigate to the ⚙️ dropdown menu
 2. Click “Open in new window”
@@ -28,6 +28,8 @@ you can open it in a new window.
 ## Create a new account
 
 Once you have accepted the terms and conditions, you will be greeted by the extension window asking you to create an account.
+
+![create_new_account](./images-polkadotjs-extension-create-account/create-new-account.png)
 
 1. Click on “+” in the top right corner
 2. Next, click on "Create new account"
@@ -41,7 +43,7 @@ and we recommend you to keep your passphrase safe using a password manager of yo
 Please DO NOT share your passphrase with anyone. 
 Your seed grants full access to ALL funds stored in that account and all accounts derived from it.
 
-![mnemonic_seed](./mnemonic-seed-polkadotjs.png)
+![mnemonic_seed](./images-polkadotjs-extension-create-account/mnemonic-seed-polkadotjs.png)
 
 1. Once you have secured your passphrase, check the corresponding box
 2. Click "Next Step"
@@ -50,7 +52,7 @@ Your seed grants full access to ALL funds stored in that account and all account
 
 On the next page, fill in the form as follows:
 
-![account_credentials](./account-credentials.png)
+![account_credentials](./images-polkadotjs-extension-create-account/account-credentials.png)
 
 1. In this case, we simply choose to use it on any DotSama chain for ease of use.
    You can select the network you will use with the account.
@@ -72,7 +74,7 @@ To use the complete feature set of Picasso, a wallet needs to be connected.
 You can use the Polkadot.js account we just created or a Talisman account. 
 Please read our guide on [how to make a Talisman account](./talisman-create-account.md) for Picasso.
 
-![picasso_homepage](./picasso-homepage.png)
+![picasso_frontpage](./images-polkadotjs-extension-create-account/frontpage.png)
 
 1. Click "Wallets" in the top right corner
 2. Click "Polkadot"
@@ -81,11 +83,11 @@ Please read our guide on [how to make a Talisman account](./talisman-create-acco
 You will be prompted to allow Picasso access to your account's addresses. 
 Make sure it identifies as Picasso and its origin "app.picasso.xyz"
 
-![picasso_access_request](./picasso-access-request.png)
+![picasso_access_request](./images-polkadotjs-extension-create-account/access-request.png)
 
 1. Click "Yes, allow this application access"
 
-![choose_your_wallet](./choose-your-wallet.png)
+![choose_your_wallet](./images-polkadotjs-extension-create-account/choose-your-wallet.png)
 
 On the following page, you will see all the wallets associated with the connected account. 
 If you create/derive more wallets in the future, they will show up here.
