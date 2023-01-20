@@ -7,6 +7,8 @@ on:
   pull_request_target:
   pull_request:
 
+permissions: read-all
+
 env:
   # NOTE: keep in sync with docs
   NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
