@@ -5,8 +5,8 @@
         src = pkgs.fetchFromGitHub {
           owner = "obsessed-cake";
           repo = "centauri";
-          rev = "83d7cffce6032cc12ac44fd718798069dd966c45";
-          hash = "sha256-nnhMKuy4fTr04aZXwVw74gnNi1X/+baqkmMtymZeRZY=";
+          rev = "fa7d5d33125fba9aa48c5e581ec72a543abef25b";
+          hash = "sha256-3S0HsFLxWHGXGW8QQD0qD3CWMMZ9vvYYZRdMJ9bYSSE=";
         };
       in crane.stable.buildPackage {
         name = "centauri-codegen";
