@@ -1243,6 +1243,9 @@ jobs:
 
 
   nix-command-pr-comments:
+    permissions:
+      pull-requests: write
+      issues: write
     runs-on:
       - self-hosted
       - linux
