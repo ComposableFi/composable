@@ -573,8 +573,8 @@ jobs:
           message: |
             ### Pablo Preview URL
             ${{ steps.deploy.outputs.preview-url }}
-          comment-includes: 'Pablo Preview URL'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment_tag: 'Pablo Preview URL'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   deploy-picasso-preview:
     name: "Deploy Picasso Preview"
@@ -617,8 +617,8 @@ jobs:
           message: |
             ### Picasso Preview URL
             ${{ steps.deploy.outputs.preview-url }}
-          comment-includes: 'Picasso Preview URL'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment_tag: 'Picasso Preview URL'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   test-running-of-pallet-benchmarks:
     name: "Test running of pallet benchmarks"
@@ -1299,5 +1299,5 @@ jobs:
             _NOTE: You can swap `devnet-dali` in the command above with any Nix package_
             _For more info on how to use Nix, check out our [Nix docs](https://docs.composable.finance/nix.html)_
             Note that the initial build may take about one hour if it has not been cached by our CI yet. Once it is cached, builds should take about one minute. We currently do not provide build caches for ARM machines such as M1 Macs, but building on ARM is supported.
-          tag: 'Nix commands for this PR'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment_tag: 'Nix commands for this PR'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
