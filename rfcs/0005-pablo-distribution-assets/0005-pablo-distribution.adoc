@@ -18,14 +18,9 @@ This document proposes the Pablo distribution(token and pool trading fees) mecha
 
 === PBLO Token Initial Distribution
 
-According to the tokenomics design the Pablo is supposed to be distributed as follows,
+**NOTE**: PBLO token does not have a set release date and its details are not finalized.
 
-* Ecosystem fund - x
-* Farming rewards - y
-* LBP Auction - z
-* ...
 
-TODO fill above with details from the original sheet.
 
 The farming rewards are incentives for liquidity provider(LP)s who stake their LP tokens for Pablo pools. How much reward is allocated as incentive for each pool is to be decided by governance.
 
@@ -140,7 +135,7 @@ g -up-> UC12
 
 === Financial NFT Requirements
 
-. Each staked position MUST be represented as a https://todo.link[fNFT].
+. Each staked position MUST be represented as a https://github.com/ComposableFi/composable/blob/main/rfcs/0006-financial-nft.md[fNFT].
 . Owning a PBLO staked position fNFT(xPBLO) MUST allow voting for protocol governance based on the xPBLO granted.
 . Each staked position plus its rewards MUST be transferable by transferring the ownership of its NFT including the voting rights.
 
@@ -192,19 +187,14 @@ TODO: What to do for part of protocol fees that should be transferred to treasur
 
 === Pallet-Pablo
 
-In order to 1. support LP staking 2. LP trading fee distribution and 3. PBLO staking reward using trading fees, following changes are proposed for https://github.com/ComposableFi/composable/tree/main/frame/pablo[Pallet-Pablo].
+In order to 1. support LP staking 2. LP trading fee distribution and 3. PBLO staking reward using trading fees, following changes are proposed for https://github.com/ComposableFi/composable/tree/main/code/parachain/frame/pablo[Pallet-Pablo].
 
 [#_feeconfig]
 ==== FeeConfig
 
 Each pool in Pablo defines a fee percentage to be charged for each trade.Except for LBPs other pools also define an owner fee that is a percentage out of the main trading fee. The `FeeConfig` is a new abstraction over all fees that could be charged on a pool to allow for extension. At this time a 100% of the owner fee should be defined as a new field `protocol_fee`.
 
-[source,rust]
-----
-include::../../frame/composable-traits/src/dex.rs[lines=166..177]
-----
-
-*Existing code must be modified to use this data structure*.
+https://github.com/ComposableFi/composable/blob/abf9b87c57856b4e83aac66eaca2734bd2d99044/code/parachain/frame/composable-traits/src/dex.rs#L189[FeeConfig]
 
 Given this,
 ----
@@ -240,6 +230,10 @@ For large pool sizes of stem:[sum l_m] (steady state) this effect is negligible,
 
 But if required this effect can be negated by increasing the trading fee by a stem:[delta a_n] while at the same time subtracting it from the total fees paid out already to liquidity providers. Refer <<_trading_fee_inflation_to_avoid_dilution_of_lps>>.
 
+==== PBLO Staker Pool Creation
+When creating new Pablo pool, the creator should have option to create a PBLO staking pool.
+This newly created staking pool will receive rewards from trading fees from Pablo pool as mention in section 5.2.4
+
 [#_pblo_staker_trading_fee_distribution]
 ==== PBLO Staker Trading Fee Distribution
 
@@ -264,11 +258,10 @@ keep_alive=false
 stop
 ----
 
-Will it need a change in https://github.com/ComposableFi/composable/blob/main/frame/composable-traits/src/staking_rewards.rs#L96[this] ?
 
 === Pallet Staking Rewards - LP/PICA/PBLO/Other Token Staking Reward Pools
 
-This section covers how the staking rewards are distributed using the https://github.com/ComposableFi/composable/tree/main/frame/staking-rewards[staking rewards pallet].
+This section covers how the staking rewards are distributed using the https://github.com/ComposableFi/composable/tree/main/code/parachain/frame/staking-rewards[staking rewards pallet].
 
 ==== Analysis of Reward Calculations
 
@@ -376,24 +369,15 @@ As this method uses a reward pooling based approach to calculate the rewards for
 
 Staking rewards pallet already uses the following data structure representing a staking position,
 
-[source,rust]
-----
-include::../../frame/composable-traits/src/staking/mod.rs[lines=135..150]
-----
+https://github.com/ComposableFi/composable/blob/abf9b87c57856b4e83aac66eaca2734bd2d99044/code/parachain/frame/composable-traits/src/staking/mod.rs#L210[Stake]
 
 Which is referred to in the algorithms in the following sections.
 
 Now in order to allow redeeming the above staking position, following data structures is to be tracked in the staking rewards pallet,
 
-[source,rust]
-----
-include::../../frame/composable-traits/src/staking/mod.rs[lines=20..43]
-----
+https://github.com/ComposableFi/composable/blob/abf9b87c57856b4e83aac66eaca2734bd2d99044/code/parachain/frame/composable-traits/src/staking/mod.rs#L20[Reward]
 
-[source,rust]
-----
-include::../../frame/composable-traits/src/staking/mod.rs[lines=64..88]
-----
+https://github.com/ComposableFi/composable/blob/abf9b87c57856b4e83aac66eaca2734bd2d99044/code/parachain/frame/composable-traits/src/staking/mod.rs#L113[RewardPool]
 
 Following sections describe the algorithms for various operations on the rewards pool based on these data structures.
 
@@ -402,14 +386,14 @@ Following sections describe the algorithms for various operations on the rewards
 [plantuml,images/staking,png]
 ----
 start
-->assetId,\namount(in LP/PBLO/PICA);
-:rewards_pool = readStorage(assetId);
+->poolId,\namount(in LP/PBLO/PICA);
+:rewards_pool = readStorage(poolId);
 :boosted_amount = reward_multiplier * amount;
 note right: Handle boosting as per reward_multiplier
 :new_pool_shares = boosted_amount;
 :new_position = Stake {
-asset: assetId,
-share: boosted_amount,
+reward_pool_id: pool_id,
+share: new_pool_shares,
 stake: amount,
 // ....
 };
@@ -417,14 +401,14 @@ while (reward = rewards_pool.rewards.has_next) is (yes)
     :inflation = reward.total_rewards * new_pool_shares /\nrewards_pool.total_shares;
     :reward.total_rewards += inflation;
     :reward.total_inflation += inflation;
-    :new_position.reductions[reward.asset_id] += inflation;
+    :new_position.reductions[reward.asset_id] = inflation;
 endwhile (no)
 :rewards_pool.total_shares += boosted_amount;
-:mint fnft;
 :transfer stake to fnft account and lock;
 :mint shares into to fnft account and lock;
-:save(new_position);
+:mint fnft;
 :save(rewards_pool);
+:save(new_position);
 stop
 ----
 
@@ -433,9 +417,9 @@ stop
 [plantuml,images/extend-position,png]
 ----
 start
-->positionId,assetId,\namount(in LP/PBLO/PICA)\ntime;
-:rewards_pool = readStorage(assetId);
-:new_pool_shares = amount;
+->positionId,\namount(in LP/PBLO/PICA)\ntime;
+:rewards_pool = readStorage(positionId);
+:new_pool_shares = reward_multiplier * amount;
 :new_position = StakingNFT{
 asset: assetId,
 share: amount,
@@ -454,8 +438,8 @@ endwhile (no)
 note right: as per section 5.3.1.4
 :transfer extended stake to fnft account and lock;
 :mint shares into to fnft account and lock;
-:save(merged_position);
 :save(rewards_pool);
+:save(merged_position);
 stop
 ----
 
@@ -464,7 +448,7 @@ stop
 [plantuml,images/split-position,png]
 ----
 start
-->assetId\npositionId\nratio;
+->positionId\nratio;
 :position = readStorage(positionId);
 :splits = split(position, ratio);
 note right: as per section 5.3.1.5
@@ -480,10 +464,10 @@ stop
 [plantuml,images/unstake,png]
 ----
 start
-->assetId\npositionId;
-:rewards_pool = readStorage(assetId);
+->positionId;
+:rewards_pool = readStorage(positionId);
 :position = readStorage(positionId);
-:penalty = reward_pool.lock.unlock_penalty;
+:penalty = reward_pool.lock.unlock_penalty * position.stake;
 while (reward = rewards_pool.rewards.has_next) is (yes)
     :claim = reward.total_rewards * position.shares /\nrewards_pool.total_shares - position.reductions[reward.asset_id];
     note right: as per section 5.3.1.2
@@ -526,16 +510,16 @@ end
 [plantuml,images/update-reward-pool,png]
 ----
 start
-->assetId\nreward_update\nlast_update_timestamp;
-:elapsed_time = current_time - last_update_timestamp;
-:rewards_pool = readStorage(assetId);
-while (reward = reward_update.rewards.has_next) is (yes)
+->poolId\nreward_updates;
+:rewards_pool = readStorage(pool_id);
+while (reward = reward_updates.rewards.has_next) is (yes)
+    :elapsed_time = current_time - reward.last_update_timestamp;
     :assert max_reward not exceeded;
     :reward.total_rewards += rewards_pool[reward.asset_id].amount;
     :reward.total_rewards += elapsed_time * reward.reward_rate;
-    :reward.reward_rate = reward_update[reward.asset_id].rate;
+    :reward.reward_rate = reward_update[reward.asset_id].reward_rate;
+    :reward.last_update_timestamp = current_time;
 endwhile (no)
-:last_update_timestamp = current_time;
 :save(rewards_pool);
 stop
 ----
@@ -560,26 +544,26 @@ while (assetId = stake_pools.has_next) is (yes)
         :reward.total_rewards += new_reward;
         note left
             In case not having enough funds
-            this would fail. But it would recover
-            once the funds are available.
+            the pool will pause. it will resume
+            once there are enough funds available
+            to accumulate again.
         endnote
+        :reward.last_updated_timestamp = current_time;
     endwhile (no)
     :save(rewards_pool);
 endwhile (no)
-:last_update_timestamp = current_time;
+
 stop
 ----
-
-NOTE: Check if the transactions correctly work for hooks.
 
 ==== Claim
 
 [plantuml,images/claim,png]
 ----
 start
-->assetId\npositionId;
+->poolId\npositionId;
 :position = readStorage(positionId);
-:rewards_pool = readStorage(assetId);
+:rewards_pool = readStorage(poolId);
 while (reward = rewards_pool.rewards.has_next) is (yes)
     :claim = reward.total_rewards * position.shares /\nrewards_pool.total_shares - position.reductions[reward.asset_id];
     note right: as per section 5.3.1.2
