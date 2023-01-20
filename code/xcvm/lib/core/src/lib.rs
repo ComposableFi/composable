@@ -38,18 +38,23 @@ where
 	}
 
 	#[inline]
-	pub fn transfer(mut self, to: Destination<Account>, assets: Assets) -> Self {
-		self.instructions.push_back(Instruction::Transfer { to, assets });
+	pub fn transfer(
+		mut self,
+		to: impl Into<Destination<Account>>,
+		assets: impl Into<Assets>,
+	) -> Self {
+		self.instructions
+			.push_back(Instruction::Transfer { to: to.into(), assets: assets.into() });
 		self
 	}
 
 	#[inline]
-	pub fn spawn<SpawningNetwork, FinalNetwork, E, F>(
+	pub fn spawn<SpawningNetwork, E, FinalNetwork, F>(
 		self,
-		tag: Vec<u8>,
-		salt: Vec<u8>,
-		bridge_security: BridgeSecurity,
-		assets: Assets,
+		tag: impl Into<Vec<u8>>,
+		salt: impl Into<Vec<u8>>,
+		bridge_security: impl Into<BridgeSecurity>,
+		assets: impl Into<Assets>,
 		f: F,
 	) -> Result<ProgramBuilder<FinalNetwork, Account, Assets>, E>
 	where
@@ -65,11 +70,12 @@ where
 		let mut builder =
 			ProgramBuilder { tag: self.tag, instructions: self.instructions, _marker: PhantomData };
 		builder.instructions.push_back(Instruction::Spawn {
-			bridge_security,
-			salt,
-			assets,
+			bridge_security: bridge_security.into(),
+			salt: salt.into(),
+			assets: assets.into(),
 			network: SpawningNetwork::ID,
-			program: f(ProgramBuilder::<SpawningNetwork, Account, Assets>::new(tag))?.build(),
+			program: f(ProgramBuilder::<SpawningNetwork, Account, Assets>::new(tag.into()))?
+				.build(),
 		});
 		Ok(builder)
 	}
@@ -153,9 +159,9 @@ mod tests {
 		let program = || -> Result<_, ProgramBuildError> {
 			Ok(ProgramBuilder::<Picasso, (), Funds>::new("Main program".as_bytes().to_vec())
 				.call(DummyProtocol1)?
-				.spawn::<Ethereum, _, ProgramBuildError, _>(
-					Default::default(),
-					Default::default(),
+				.spawn::<Ethereum, ProgramBuildError, _, _>(
+					Vec::default(),
+					Vec::default(),
 					BridgeSecurity::Deterministic,
 					Funds::empty(),
 					|child| {

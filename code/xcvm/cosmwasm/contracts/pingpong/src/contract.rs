@@ -41,8 +41,8 @@ fn make_program<T: Network<EncodedCall = Vec<u8>>, U: Network<EncodedCall = Vec<
 	remote_address: UserId,
 	msg: ExecuteMsg,
 ) -> Result<DefaultXCVMProgram, ContractError> {
-	Ok(ProgramBuilder::<T, CanonicalAddr, Funds<Balance>>::new("PING".as_bytes().to_vec())
-		.spawn::<_, U, (), _>(
+	Ok(ProgramBuilder::<T, CanonicalAddr, Funds>::new("PING".as_bytes().to_vec())
+		.spawn::<U, (), _, _>(
 			"PONG".as_bytes().to_vec(),
 			vec![0x01, 0x02, 0x03],
 			BridgeSecurity::Deterministic,

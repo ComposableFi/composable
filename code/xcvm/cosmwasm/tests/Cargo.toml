@@ -1,0 +1,30 @@
+[package]
+authors = ["Composable Developers"]
+homepage = "https://composable.finance"
+name = "xcvm-tests"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+
+[dev-dependencies]
+cosmwasm-std = { version = "1.0.0", features = ["ibc3"] }
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "2d8dc26b37b0b004184655ddd018d5404fabcd5d" }
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "2d8dc26b37b0b004184655ddd018d5404fabcd5d" }
+cosmwasm-orchestrate = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "2d8dc26b37b0b004184655ddd018d5404fabcd5d" }
+cw-xcvm-asset-registry = { path = "../contracts/asset-registry" }
+cw-xcvm-gateway = { path = "../contracts/gateway" }
+cw-xcvm-interpreter = { path = "../contracts/interpreter" }
+cw-xcvm-router = { path = "../contracts/router" }
+cw-xcvm-pingpong = { path = "../contracts/pingpong" }
+cw-xcvm-common = { path = "../contracts/common" }
+xcvm-core = { path = "../../lib/core" }
+
+log = { version = "0.4" }
+env_logger = { version = "0.10" }
+tokio = { version = "1.22", features = [ "rt", "macros" ] }
+cw20 = { version = "0.16" }
+cw20-base = { version = "0.16", features = ["library"] }
+hex = { version = "0.4" }
+serde_json = { version = "1.0" }
+serde = { version = "1.0" }

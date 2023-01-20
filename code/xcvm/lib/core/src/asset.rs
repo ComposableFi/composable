@@ -97,6 +97,7 @@ impl Asset for USDC {
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
+  Default,
 	Copy,
 	Clone,
 	PartialEq,
@@ -170,34 +171,34 @@ pub struct Amount {
 }
 
 impl Amount {
-	#[inline]
-	pub fn new(intercept: u128, slope: u128) -> Self {
+	pub const fn new(intercept: u128, slope: u128) -> Self {
 		Self { intercept: Displayed(intercept), slope: Displayed(slope) }
 	}
 
 	/// An absolute amount
-	#[inline]
-	pub fn absolute(value: u128) -> Self {
+	pub const fn absolute(value: u128) -> Self {
 		Self { intercept: Displayed(value), slope: Displayed(0) }
 	}
 
-	/// A ratio amount, expressed in u128 parts (x / u128::MAX)
-	#[inline]
-	pub fn ratio(parts: u128) -> Self {
+	/// A ratio amount, expressed in u128 parts (x / MAX_PARTS)
+	pub const fn ratio(parts: u128) -> Self {
 		Self { intercept: Displayed(0), slope: Displayed(parts) }
 	}
 
 	/// Helper function to see if the amount is absolute
-	#[inline]
-	pub fn is_absolute(&self) -> bool {
+	pub const fn is_absolute(&self) -> bool {
 		self.slope.0 == 0
 	}
 
 	/// Helper function to see if the amount is ratio
-	#[inline]
-	pub fn is_ratio(&self) -> bool {
+	pub const fn is_ratio(&self) -> bool {
 		self.intercept.0 == 0
 	}
+
+  /// Everything mean that we move 100% of whats left.
+  pub const fn everything() -> Self {
+    Self::ratio(MAX_PARTS)
+  }
 }
 
 impl Add for Amount {
@@ -268,7 +269,7 @@ impl Amount {
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+	Default, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
 #[repr(transparent)]
 pub struct Funds<T = Amount>(pub Vec<(AssetId, T)>);
