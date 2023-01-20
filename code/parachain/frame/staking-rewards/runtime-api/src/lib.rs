@@ -23,7 +23,7 @@ sp_api::decl_runtime_apis! {
 }
 
 #[derive(Encode, Decode)]
-#[cfg_attr(feature = "std", derive(serde::Serialize))]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum ClaimableAmountError {
 	ArithmeticError(sp_runtime::ArithmeticError),
 	StakeNotFound,

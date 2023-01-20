@@ -151,7 +151,7 @@ define_trait! {
 		#[cfg(feature = "dali")]
 		impl for dali_runtime {
 			fn (io, deps) {
-				io.merge(Assets::new(deps.client).into_rpc())
+				io.merge(StakingRewards::new(deps.client).into_rpc())
 			}
 		}
 	}
