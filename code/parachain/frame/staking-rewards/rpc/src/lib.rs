@@ -7,12 +7,11 @@ use jsonrpsee::{
 	proc_macros::rpc,
 	types::{error::CallError, ErrorObject},
 };
-use pallet_staking_rewards_runtime_api::ClaimableAmountError;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use sp_std::{cmp::Ord, collections::btree_map::BTreeMap, sync::Arc};
-use staking_rewards_runtime_api::StakingRewardsRuntimeApi;
+use staking_rewards_runtime_api::{ClaimableAmountError, StakingRewardsRuntimeApi};
 
 #[rpc(client, server)]
 pub trait StakingRewardsApi<BlockHash, AssetId, FinancialNftInstanceId, Balance>
@@ -27,7 +26,7 @@ where
 		fnft_collection_id: SafeRpcWrapper<AssetId>,
 		fnft_instance_id: SafeRpcWrapper<FinancialNftInstanceId>,
 		at: Option<BlockHash>,
-	) -> RpcResult<BTreeMap<AssetId, Option<Balance>>>;
+	) -> RpcResult<Result<BTreeMap<AssetId, Balance>, ClaimableAmountError>>;
 }
 
 pub struct StakingRewards<C, Block> {
@@ -59,7 +58,7 @@ where
 		fnft_collection_id: SafeRpcWrapper<AssetId>,
 		fnft_instance_id: SafeRpcWrapper<FinancialNftInstanceId>,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Result<BTreeMap<AssetId, Option<Balance>>, ClaimableAmountError>> {
+	) -> RpcResult<Result<BTreeMap<AssetId, Balance>, ClaimableAmountError>> {
 		let api = self.client.runtime_api();
 
 		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));

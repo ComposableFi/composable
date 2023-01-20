@@ -17,9 +17,10 @@ composable-support = { path = "../../composable-support", default-features = fal
 sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+serde = { version = "1", optional = true }
 
 
 # REVIEW: Does the runtime API need features?
 [features]
 default = ["std"]
-std = ["sp-api/std", "composable-support/std"]
+std = ["sp-api/std", "composable-support/std", "serde"]
