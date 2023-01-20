@@ -32,6 +32,9 @@ import { usePendingExtrinsic } from "substrate-react";
 import { InfoOutlined } from "@mui/icons-material";
 import { pipe } from "fp-ts/function";
 import { option } from "fp-ts";
+import { TransferKSMAlert } from "@/components/Molecules";
+import { PICASSO_STATEMINE_KSM_TRANSFER_FEE } from "@/defi/config";
+import { fromChainIdUnit } from "shared";
 
 const Transfers: NextPage = () => {
   const { setAmount, from, balance, transfer, to, isDirty } = useTransfer();
@@ -43,6 +46,19 @@ const Transfers: NextPage = () => {
   const fee = useStore((state) => state.transfers.fee);
   const selectedToken = useStore((state) => state.transfers.selectedToken);
   const destFee = getDestChainFee(from, to, tokens, selectedToken);
+  const ksmBalance = useStore(
+    (state) => state.substrateBalances.balances.picasso.ksm.free
+  );
+  const isKSMAlertVisible =
+    from === "picasso" &&
+    to === "statemine" &&
+    ksmBalance.lt(
+      fromChainIdUnit(
+        PICASSO_STATEMINE_KSM_TRANSFER_FEE,
+        tokens.ksm.decimals.picasso
+      )
+    ) &&
+    selectedToken === "usdt";
 
   // TODO this value can be moved to its own store subscriber
   const minValue = useMemo(() => {
@@ -146,6 +162,11 @@ const Transfers: NextPage = () => {
         <Grid item {...gridItemStyle("1.5rem")}>
           <TransferRecipientDropdown />
         </Grid>
+        {isKSMAlertVisible ? (
+          <Grid item {...gridItemStyle("1.5rem")}>
+            <TransferKSMAlert />
+          </Grid>
+        ) : null}
         <Grid item {...gridItemStyle("1.5rem")}>
           <TransferFeeDisplay />
         </Grid>
