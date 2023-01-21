@@ -9,7 +9,7 @@
 
       hyperspace-dali = let
         src = pkgs.stdenv.mkDerivation rec {
-          name = "centauri";
+          name = "centauri-src";
           pname = "${name}";
           buildInputs = [ self'.packages.dali-subxt-client ];
           src = pkgs.fetchFromGitHub {
@@ -27,24 +27,14 @@
         };
       in crane.stable.buildPackage rec {
         name = "hyperspace-dali";
-        pname = "${name}";
-        cargoArtifacts = crane.stable.buildDepsOnly {
-          inherit src;
-          doCheck = false;
-          cargoExtraArgs = "-p hyperspace --features dali";
-          cargoTestCommand = "";
-          BuildInputs = [ pkgs.protobuf ];
-          PROTOC = "${pkgs.protobuf}/bin/protoc";
-          PROTOC_INCLUDE = "${pkgs.protobuf}/include";
-          PROTOC_NO_VENDOR = "1";
-        };
+        pname = "hyperspace";
         inherit src;
         BuildInputs = [ pkgs.protobuf ];
         PROTOC = "${pkgs.protobuf}/bin/protoc";
         PROTOC_INCLUDE = "${pkgs.protobuf}/include";
         PROTOC_NO_VENDOR = "1";
         doCheck = false;
-        cargoExtraArgs = "-p hyperspace --features dali";
+        cargoExtraArgs = "--features dali";
         cargoTestCommand = "";
         meta = { mainProgram = "hyperspace"; };
       };
