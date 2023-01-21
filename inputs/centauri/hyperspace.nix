@@ -20,9 +20,12 @@
           };
           installPhase = ''
             mkdir $out
-            cp -a $src/. $out/
+            cp --recursive  $src/. $out/
+            ls
+            ls $out
             chmod u+w $out/utils/subxt/generated/src/{parachain.rs,relaychain.rs}
             cp ${self'.packages.dali-subxt-client}/* $out/utils/subxt/generated/src/
+            echo "Life for Ayr!!!!!"
           '';
         };
       in crane.nightly.buildPackage rec {
