@@ -25,8 +25,9 @@
             cp ${self'.packages.dali-subxt-client}/* $out/utils/subxt/generated/src/
           '';
         };
-      in crane.stable.buildPackage {
+      in crane.stable.buildPackage rec {
         name = "hyperspace-dali";
+        pname = "${name}";
         cargoArtifacts = crane.stable.buildDepsOnly {
           inherit src;
           doCheck = false;
