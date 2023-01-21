@@ -18,12 +18,15 @@
             rev = "fa7d5d33125fba9aa48c5e581ec72a543abef25b";
             hash = "sha256-3S0HsFLxWHGXGW8QQD0qD3CWMMZ9vvYYZRdMJ9bYSSE=";
           };
+          patchPhase = "";
           installPhase = ''
             mkdir $out
-            cp -a $src/. $out/
+            cp --archive $src/. $out/
             chmod u+w $out/utils/subxt/generated/src/{parachain.rs,relaychain.rs}
             cp ${self'.packages.dali-subxt-client}/* $out/utils/subxt/generated/src/
           '';
+          dontFixup =true;
+          dontStrip = true;
         };
       in crane.stable.buildPackage rec {
         name = "hyperspace-dali";
