@@ -71,7 +71,6 @@ rust-toolchain.toml @ComposableFi/nix @ComposableFi/core
 composablejs/ @ComposableFi/parachain
 
 ## Dev stuff
-
 rfcs/ @ComposableFi/developers
 docs/ @ComposableFi/developers @ComposableFi/technical-writers @0xbrainjar2
 scripts/ @ComposableFi/developers @ComposableFi/nix
@@ -83,7 +82,10 @@ scripts/oracle-setup @ComposableFi/parachain
 
 ## Repository 
 README.md @ComposableFi/technical-writers @ComposableFi/core
-SECURITY.md @ComposableFi/security
+SECURITY.md @ComposableFi/core
 REVIEWERS.md @ComposableFi/core
 ARCHITECTURE.md @ComposableFi/core
 LICENSE @ComposableFi/technical-writers @ComposableFi/core
+
+## Frontend 
+/frontend/ @ComposableFi/fe
