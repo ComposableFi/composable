@@ -6,7 +6,8 @@ on:
       - main
   pull_request_target:
 
-permissions: read-all
+permissions: 
+  pull-requests: write
 
 env:
   # NOTE: keep in sync with docs
