@@ -5,7 +5,6 @@ on:
       - release-*
       - main
   pull_request_target:
-  pull_request:
 
 permissions: read-all
 
