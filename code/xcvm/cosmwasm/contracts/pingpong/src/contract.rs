@@ -16,7 +16,7 @@ use cw_utils::ensure_from_older_version;
 use cw_xcvm_utils::DefaultXCVMProgram;
 use xcvm_core::{
 	cosmwasm::{FlatCosmosMsg, FlatWasmMsg},
-	BridgeSecurity, Funds, Juno, Network, Picasso, ProgramBuilder, UserId, UserOrigin,
+	Balance, BridgeSecurity, Funds, Juno, Network, Picasso, ProgramBuilder, UserId, UserOrigin,
 };
 
 const CONTRACT_NAME: &str = "composable:xcvm-pingpong";
@@ -41,12 +41,12 @@ fn make_program<T: Network<EncodedCall = Vec<u8>>, U: Network<EncodedCall = Vec<
 	remote_address: UserId,
 	msg: ExecuteMsg,
 ) -> Result<DefaultXCVMProgram, ContractError> {
-	Ok(ProgramBuilder::<T, CanonicalAddr, Funds>::new("PING".as_bytes().to_vec())
+	Ok(ProgramBuilder::<T, CanonicalAddr, Funds<Balance>>::new("PING".as_bytes().to_vec())
 		.spawn::<_, U, (), _>(
 			"PONG".as_bytes().to_vec(),
 			vec![0x01, 0x02, 0x03],
 			BridgeSecurity::Deterministic,
-			Funds::empty(),
+			Funds::<Balance>::empty(),
 			|child| {
 				Ok(child.call_raw(
 					serde_json::to_vec(&FlatCosmosMsg::Wasm(FlatWasmMsg::<ExecuteMsg>::Execute {

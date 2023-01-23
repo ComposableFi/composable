@@ -142,6 +142,7 @@ fnft
 fnfts
 fontconfig
 fontname
+frontpage
 freetype
 fsevenm
 FSIZE
@@ -324,6 +325,7 @@ registryaddr
 rekt
 remappings
 resourcemonitor
+reqwest
 revhash
 rewardaccumulationhook
 rewardtrackerstore

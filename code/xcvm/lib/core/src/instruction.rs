@@ -1,4 +1,4 @@
-use crate::{AssetId, BridgeSecurity, Program};
+use crate::{AssetId, Balance, BridgeSecurity, Program};
 use alloc::{
 	borrow::Cow,
 	collections::{BTreeMap, VecDeque},
@@ -9,12 +9,13 @@ use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum BindingValue {
 	Register(Register),
 	/// Asset's address
 	Asset(AssetId),
+	AssetAmount(AssetId, Balance),
 }
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]

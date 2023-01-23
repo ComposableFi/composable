@@ -349,6 +349,20 @@ const sidebars = {
                         'products/cosmwasm-orchestrate/tutorial-dex'
                     ]
                 },
+                {
+                    type: 'category',
+                    label: 'Cosmwasm CLI',
+                    link: {
+                        type: 'doc',
+                        id: 'developer-guides/ccw'
+                    },
+                    collapsible: true,
+                    collapsed: true,
+                    items: [
+                        'developer-guides/ccw/new-project',
+                        'developer-guides/ccw/walkthrough'
+                    ]
+                },
                 'developer-guides/oracle-set-up-guide',
                 'developer-guides/collator-set-up-guide',
             ],
