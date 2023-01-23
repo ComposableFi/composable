@@ -20,8 +20,8 @@ use crate::{
 	rpc,
 	runtime::{
 		assets::ExtendWithAssetsApi, cosmwasm::ExtendWithCosmwasmApi,
-		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, lending::ExtendWithLendingApi,
-		pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
+		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
+		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
 	},
 };
 use sc_client_api::StateBackendFor;
@@ -282,7 +282,8 @@ where
 		+ ExtendWithCrowdloanRewardsApi<RuntimeApi, Executor>
 		+ ExtendWithPabloApi<RuntimeApi, Executor>
 		+ ExtendWithLendingApi<RuntimeApi, Executor>
-		+ ExtendWithCosmwasmApi<RuntimeApi, Executor>,
+		+ ExtendWithCosmwasmApi<RuntimeApi, Executor>
+		+ ExtendWithIbcApi<RuntimeApi, Executor>,
 	StateBackendFor<FullBackend, OpaqueBlock>: StateBackend<BlakeTwo256>,
 	Executor: NativeExecutionDispatch + 'static,
 {

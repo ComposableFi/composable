@@ -361,7 +361,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		channel_id: &ChannelId,
 		counterparty: &Counterparty,
 		version: &IbcVersion,
-		_relayer: &pallet_ibc::Signer,
+		_relayer: &IbcSigner,
 		// weight_limit: Weight, https://github.com/ComposableFi/centauri/issues/129
 	) -> Result<(), IbcError> {
 		let address = Self::port_to_address(port_id)?;
@@ -411,7 +411,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		counterparty: &Counterparty,
 		version: &IbcVersion,
 		_counterparty_version: &IbcVersion,
-		_relayer: &pallet_ibc::Signer,
+		_relayer: &IbcSigner,
 	) -> Result<IbcVersion, IbcError> {
 		let address = Self::port_to_address(port_id)?;
 
@@ -455,7 +455,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		port_id: &PortId,
 		channel_id: &ChannelId,
 		counterparty_version: &IbcVersion,
-		_relayer: &pallet_ibc::Signer,
+		_relayer: &IbcSigner,
 	) -> Result<(), IbcError> {
 		let metadata = ctx
 			.channel_end(&(port_id.clone(), *channel_id))
@@ -484,7 +484,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
-		_relayer: &pallet_ibc::Signer,
+		_relayer: &IbcSigner,
 	) -> Result<(), IbcError> {
 		let metadata = ctx
 			.channel_end(&(port_id.clone(), *channel_id))
@@ -511,7 +511,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
-		_relayer: &pallet_ibc::Signer,
+		_relayer: &IbcSigner,
 	) -> Result<(), IbcError> {
 		let metadata = ctx
 			.channel_end(&(port_id.clone(), *channel_id))
@@ -548,7 +548,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
-		_relayer: &pallet_ibc::Signer,
+		_relayer: &IbcSigner,
 	) -> Result<(), IbcError> {
 		let metadata = ctx
 			.channel_end(&(port_id.clone(), *channel_id))

@@ -2,7 +2,7 @@
 , restartPolicy }: {
   service = {
     image =
-      "composablefi/composable-centauri:d8fdb31227a221a794f86c5bba4a8127cf8e71d5";
+      "composablefi/hyperspace-dali:3ec1c34048981c399e6df4ee02cc0a6ce0320b25";
     restart = restartPolicy;
     volumes = [{
       type = "bind";
