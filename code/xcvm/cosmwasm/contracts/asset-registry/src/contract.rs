@@ -67,8 +67,8 @@ pub fn handle_register_asset(
 	Ok(Response::new().add_event(
 		Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX)
 			.add_attribute("action", "register")
-			.add_attribute("asset_id", format!("{:?}", asset_id))
-			.add_attribute("reference", format!("{:?}", reference)),
+			.add_attribute("asset_id", format!("{}", asset_id.0 .0 .0))
+			.add_attribute("denom", reference.denom()),
 	))
 }
 
@@ -80,7 +80,7 @@ pub fn handle_unregister_asset(
 	Ok(Response::new().add_event(
 		Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX)
 			.add_attribute("action", "unregister")
-			.add_attribute("asset_id", format!("{:?}", asset_id)),
+			.add_attribute("asset_id", format!("{}", asset_id.0 .0 .0)),
 	))
 }
 

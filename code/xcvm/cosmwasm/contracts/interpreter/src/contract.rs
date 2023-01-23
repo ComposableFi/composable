@@ -121,14 +121,18 @@ fn initiate_execution(
 	// that executed a program.
 	RELAYER_REGISTER.save(deps.storage, &relayer)?;
 
-	Ok(Response::default().add_submessage(SubMsg::reply_on_error(
-		wasm_execute(
-			env.contract.address,
-			&ExecuteMsg::ExecuteStep { relayer, program },
-			Default::default(),
-		)?,
-		SELF_CALL_ID,
-	)))
+	Ok(Response::default()
+		.add_event(
+			Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.start"),
+		)
+		.add_submessage(SubMsg::reply_on_error(
+			wasm_execute(
+				env.contract.address,
+				&ExecuteMsg::ExecuteStep { relayer, program },
+				Default::default(),
+			)?,
+			SELF_CALL_ID,
+		)))
 }
 
 /// Add owners who can execute entrypoints other than `ExecuteStep`
@@ -137,8 +141,7 @@ fn add_owners(
 	deps: DepsMut,
 	owners: Vec<Addr>,
 ) -> Result<Response, ContractError> {
-	let mut event =
-		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.added");
+	let mut event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.add");
 	for owner in owners {
 		event = event.add_attribute("owner", format!("{}", owner));
 		OWNERS.save(deps.storage, owner, &())?;
@@ -150,7 +153,7 @@ fn add_owners(
 /// Beware that emptying the set of owners result in a tombstoned interpreter.
 fn remove_owners(_: Authenticated, deps: DepsMut, owners: Vec<Addr>) -> Response {
 	let mut event =
-		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.removed");
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.remove");
 	for owner in owners {
 		event = event.add_attribute("owner", format!("{}", owner));
 		OWNERS.remove(deps.storage, owner);
@@ -223,7 +226,8 @@ pub fn handle_execute_step(
 
 	IP_REGISTER.save(deps.storage, &ip)?;
 
-	let mut event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "executed");
+	let mut event =
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.success");
 	if program.tag.len() >= 3 {
 		event = event.add_attribute(
 			"tag",
@@ -495,11 +499,11 @@ fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 			// Save the result that is returned from the sub-interpreter
 			// this way, only the `RESULT_REGISTER` is persisted. All
 			// other state changes are reverted.
-			RESULT_REGISTER.save(deps.storage, &Err(e))?;
+			RESULT_REGISTER.save(deps.storage, &Err(e.clone()))?;
 			// Ip register should be incremented by one
 			let ip_register = IP_REGISTER.load(deps.storage)?;
 			IP_REGISTER.save(deps.storage, &(ip_register + 1))?;
-			Ok(Response::default())
+			Ok(Response::default().add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.failure").add_attribute("reason", e.to_string())))
 		}
 	}
 }

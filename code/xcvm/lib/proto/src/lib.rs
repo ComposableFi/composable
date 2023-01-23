@@ -7,7 +7,7 @@ use core::fmt::Display;
 use alloc::{collections::VecDeque, format, vec::Vec};
 use fixed::{types::extra::U16, FixedU128};
 use prost::{DecodeError, Message};
-use xcvm_core::{Amount, Destination, Displayed, Funds, NetworkId, MAX_PARTS};
+use xcvm_core::{Amount, Destination, Displayed, Funds, NetworkId};
 
 include!(concat!(env!("OUT_DIR"), "/interpreter.rs"));
 
@@ -440,11 +440,26 @@ impl TryFrom<Balance> for xcvm_core::Balance {
 		let balance_type = balance.balance_type.ok_or(())?;
 
 		match balance_type {
-			balance::BalanceType::Ratio(ratio) =>
-				Ok(xcvm_core::Balance::new(ratio.try_into()?, false)),
+			balance::BalanceType::Ratio(Ratio { nominator, denominator }) => {
+				let nominator = nominator.ok_or(())?;
+				let denominator = denominator.ok_or(())?;
+				Ok(Amount::ratio(calc_nom(nominator.into(), denominator.into(), Self::MAX_PARTS)))
+			},
 			balance::BalanceType::Absolute(Absolute { value }) => {
 				let value = value.ok_or(())?;
-				Ok(xcvm_core::Balance::new(Amount::absolute(value.into()), false))
+				Ok(Amount::absolute(value.into()))
+			},
+			balance::BalanceType::Unit(Unit { integer, ratio }) => {
+				let integer = integer.ok_or(())?;
+				let ratio = ratio.ok_or(())?;
+				Ok(Amount::new(
+					integer.into(),
+					calc_nom(
+						ratio.nominator.ok_or(())?.into(),
+						ratio.denominator.ok_or(())?.into(),
+						Amount::MAX_PARTS,
+					),
+				))
 			},
 			balance::BalanceType::Unit(unit) => unit.try_into(),
 		}

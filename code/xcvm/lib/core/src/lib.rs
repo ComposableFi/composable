@@ -32,12 +32,10 @@ where
 	CurrentNetwork: Network,
 	CurrentNetwork::EncodedCall: Into<Vec<u8>>,
 {
-	#[inline]
-	pub fn new(tag: Vec<u8>) -> Self {
-		ProgramBuilder { tag, instructions: VecDeque::new(), _marker: PhantomData }
+	pub fn new(tag: impl Into<Vec<u8>>) -> Self {
+		ProgramBuilder { tag: tag.into(), instructions: VecDeque::new(), _marker: PhantomData }
 	}
 
-	#[inline]
 	pub fn transfer(
 		mut self,
 		to: impl Into<Destination<Account>>,
@@ -48,7 +46,6 @@ where
 		self
 	}
 
-	#[inline]
 	pub fn spawn<SpawningNetwork, E, FinalNetwork, F>(
 		self,
 		tag: impl Into<Vec<u8>>,
@@ -80,14 +77,12 @@ where
 		Ok(builder)
 	}
 
-	#[inline]
 	pub fn call_raw(mut self, encoded: CurrentNetwork::EncodedCall) -> Self {
 		self.instructions
 			.push_back(Instruction::Call { bindings: Vec::new(), encoded: encoded.into() });
 		self
 	}
 
-	#[inline]
 	pub fn call<T>(self, protocol: T) -> Result<Self, T::Error>
 	where
 		T: Protocol<CurrentNetwork>,
@@ -95,7 +90,6 @@ where
 		protocol.serialize().map(|encoded_call| self.call_raw(encoded_call))
 	}
 
-	#[inline]
 	pub fn build(self) -> Program<VecDeque<Instruction<NetworkId, Vec<u8>, Account, Assets>>> {
 		Program { tag: self.tag, instructions: self.instructions }
 	}
