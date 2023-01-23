@@ -33,7 +33,11 @@
 	clippy::disallowed_types
 )]
 
-#[cfg(any(test, feature = "runtime-benchmarks"))]
+#[cfg(any(
+	test,
+	all(not(feature = "std"), feature = "runtime-benchmarks", target_family = "wasm")
+))]
+#[cfg_attr(not(test), no_std)]
 mod benchmarking;
 
 #[cfg(test)]
