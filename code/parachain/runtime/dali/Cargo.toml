@@ -17,7 +17,7 @@ normal = [
   "currency-factory",
   "oracle",
   "vault",
-  "assets",
+  "assets-transactor-router",
   "governance-registry",
   "call-filter",
   "orml-unknown-tokens",
@@ -67,7 +67,8 @@ treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/s
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 
 # local modules
-assets = { package = "pallet-assets", path = "../../frame/assets", default-features = false }
+# assets = { package = "pallet-assets", path = "../../frame/assets", default-features = false }
+assets-transactor-router = { package = "pallet-assets-transactor-router", path = "../../frame/assets-transactor-router", default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = "../../frame/assets-registry", default-features = false }
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
@@ -158,8 +159,6 @@ local-integration-tests = []
 # NOTE: keep sorted
 runtime-benchmarks = [
   "assets-registry/runtime-benchmarks",
-  "assets/runtime-benchmarks",
-  "assets/runtime-benchmarks",
   "balances/runtime-benchmarks",
   "balances/runtime-benchmarks",
   "bonded-finance/runtime-benchmarks",
@@ -198,7 +197,6 @@ runtime-benchmarks = [
   "vault/runtime-benchmarks",
   "vesting/runtime-benchmarks",
   "xcm-builder/runtime-benchmarks",
-  "assets/runtime-benchmarks",
   "bonded-finance/runtime-benchmarks",
   "dutch-auction/runtime-benchmarks",
   "mosaic/runtime-benchmarks",
@@ -216,8 +214,7 @@ runtime-benchmarks = [
 std = [
   "assets-registry/std",
   "assets-runtime-api/std",
-  "assets/std",
-  "assets/std",
+  "assets-transactor-router/std",
   "aura/std",
   "authorship/std",
   "balances/std",

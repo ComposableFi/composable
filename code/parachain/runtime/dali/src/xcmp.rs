@@ -38,7 +38,7 @@ parameter_types! {
 	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 	pub AssetsPalletLocation: MultiLocation =
-		PalletInstance(<super::Assets as PalletInfoAccess>::index() as u8).into();
+		PalletInstance(<super::AssetsTransactorRouter as PalletInfoAccess>::index() as u8).into();
 }
 
 pub type Barrier = (
@@ -110,7 +110,7 @@ pub struct StaticAssetsMap;
 impl XcmpAssets for StaticAssetsMap {}
 
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
-	crate::Assets,
+	crate::AssetsTransactorRouter,
 	UnknownTokens,
 	IsNativeConcrete<CurrencyId, AssetsIdConverter>,
 	AccountId,
@@ -139,7 +139,7 @@ type AssetsIdConverter =
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
 	PriceConverter<AssetsRegistry>,
-	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
+	ToTreasury<AssetsIdConverter, crate::AssetsTransactorRouter, TreasuryAccount>,
 	WeightToFeeConverter,
 >;
 
@@ -184,7 +184,7 @@ impl<
 }
 
 pub type CaptureAssetTrap = CaptureDropAssets<
-	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
+	ToTreasury<AssetsIdConverter, crate::AssetsTransactorRouter, TreasuryAccount>,
 	PriceConverter<AssetsRegistry>,
 	AssetsIdConverter,
 >;
