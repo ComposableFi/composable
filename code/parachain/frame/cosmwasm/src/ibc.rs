@@ -10,7 +10,8 @@ use alloc::{
 };
 use cosmwasm_vm::{
 	cosmwasm_std::{
-		Addr, Binary, ContractResult, Env, IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg,
+		Addr, Attribute as CosmwasmEventAttribute, Binary, ContractResult, Env,
+		Event as CosmwasmEvent, IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg,
 		IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcPacket, IbcPacketAckMsg,
 		IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcTimeout, MessageInfo,
 	},
@@ -57,7 +58,11 @@ use sp_std::{marker::PhantomData, str::FromStr};
 use ibc_primitives::{HandlerMessage, IbcHandler};
 use pallet_ibc::routing::ModuleRouter as IbcModuleRouter;
 
-use crate::mapping::*;
+use crate::{
+	mapping::*,
+	pallet_hook::PalletHook,
+	types::EntryPoint::{self, *},
+};
 
 const PORT_PREFIX: &str = "wasm";
 
@@ -315,6 +320,7 @@ impl<T: Config> Router<T> {
 			.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))
 	}
 
+	/// executes IBC entrypoint on behalf of relayer
 	pub fn run<I, M>(
 		shared: &mut CosmwasmVMShared,
 		relayer: AccountIdOf<T>,
@@ -329,22 +335,21 @@ impl<T: Config> Router<T> {
 		I: AsFunctionName + AsEntryName,
 		M: serde::Serialize,
 	{
-		use cosmwasm_vm::cosmwasm_std::{
-			Attribute as CosmwasmEventAttribute, Event as CosmwasmEvent,
-		};
-
-		use crate::pallet_hook::PalletHook;
-
 		<Pallet<T>>::cosmwasm_call(shared, relayer, contract.clone(), Default::default(), |vm| {
 			cosmwasm_system_entrypoint_hook::<I, _>(vm, Default::default(), |vm, _| {
 				match vm.0.contract_runtime {
 					ContractBackend::CosmWasm { .. } =>
-						cosmwasm_call_serialize::<I, _, M>(vm, &message).map(Into::into),
+						cosmwasm_call_serialize::<I, _, M>(vm, message).map(Into::into),
 					ContractBackend::Pallet => T::PalletHook::execute(
 						vm,
 						I::ENTRY,
 						serde_json::to_vec(&message)
-							.expect("serde of predefined internal messages always works")
+							.map_err(|e| {
+								<CosmwasmVMError<T>>::Ibc(format!(
+									"failed to serialize IBC message {:?}",
+									e
+								))
+							})?
 							.as_ref(),
 					),
 				}
@@ -396,13 +401,9 @@ impl<T: Config> Router<T> {
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 
-		let data = Self::run::<IbcPacketReceiveCall, _>(
-			&mut vm,
-			address.clone(),
-			address.clone(),
-			&message,
-		)
-		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
+		let data =
+			Self::run::<IbcPacketReceiveCall, _>(&mut vm, address.clone(), address, &message)
+				.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 
 		let _remaining = vm.gas.remaining();
 		Ok(data.expect("there is always data from contract; qed").0)
@@ -410,31 +411,31 @@ impl<T: Config> Router<T> {
 }
 
 pub trait AsEntryName {
-	const ENTRY: crate::types::EntryPoint;
+	const ENTRY: EntryPoint;
 }
 
 impl AsEntryName for IbcChannelOpenCall {
-	const ENTRY: crate::types::EntryPoint = crate::types::EntryPoint::IbcChannelOpenCall;
+	const ENTRY: EntryPoint = IbcChannelOpen;
 }
 
 impl AsEntryName for IbcPacketReceiveCall {
-	const ENTRY: crate::types::EntryPoint = crate::types::EntryPoint::IbcChannelOpenCall;
+	const ENTRY: EntryPoint = IbcChannelOpen;
 }
 
 impl AsEntryName for IbcChannelConnectCall {
-	const ENTRY: crate::types::EntryPoint = crate::types::EntryPoint::IbcChannelConnectCall;
+	const ENTRY: EntryPoint = IbcChannelConnect;
 }
 
 impl AsEntryName for IbcChannelCloseCall {
-	const ENTRY: crate::types::EntryPoint = crate::types::EntryPoint::IbcChannelCloseCall;
+	const ENTRY: EntryPoint = IbcChannelClose;
 }
 
 impl AsEntryName for IbcPacketTimeoutCall {
-	const ENTRY: crate::types::EntryPoint = crate::types::EntryPoint::IbcPacketTimeoutCall;
+	const ENTRY: EntryPoint = IbcPacketTimeout;
 }
 
 impl AsEntryName for IbcPacketAckCall {
-	const ENTRY: crate::types::EntryPoint = crate::types::EntryPoint::IbcPacketAckCall;
+	const ENTRY: EntryPoint = IbcPacketAck;
 }
 
 impl<T: Config + Send + Sync> IbcModule for Router<T> {
@@ -541,13 +542,8 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 
-		let _ = Self::run::<IbcChannelConnectCall, _>(
-			&mut vm,
-			address.clone(),
-			address.clone(),
-			&message,
-		)
-		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
+		let _ = Self::run::<IbcChannelConnectCall, _>(&mut vm, address.clone(), address, &message)
+			.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 
 		Ok(())
 	}
@@ -569,13 +565,8 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		};
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-		let _ = Self::run::<IbcChannelConnectCall, _>(
-			&mut vm,
-			address.clone(),
-			address.clone(),
-			&message,
-		)
-		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
+		let _ = Self::run::<IbcChannelConnectCall, _>(&mut vm, address.clone(), address, &message)
+			.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 
 		Ok(())
 	}
@@ -608,13 +599,8 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 
-		let _ = Self::run::<IbcChannelCloseCall, _>(
-			&mut vm,
-			address.clone(),
-			address.clone(),
-			&message,
-		)
-		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
+		let _ = Self::run::<IbcChannelCloseCall, _>(&mut vm, address.clone(), address, &message)
+			.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 
 		Ok(())
 	}
@@ -637,13 +623,8 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 
-		let _ = Self::run::<IbcChannelCloseCall, _>(
-			&mut vm,
-			address.clone(),
-			address.clone(),
-			&message,
-		)
-		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
+		let _ = Self::run::<IbcChannelCloseCall, _>(&mut vm, address.clone(), address, &message)
+			.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 
 		Ok(())
 	}
@@ -695,9 +676,8 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 
-		let _ =
-			Self::run::<IbcPacketAckCall, _>(&mut vm, address.clone(), address.clone(), &message)
-				.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
+		let _ = Self::run::<IbcPacketAckCall, _>(&mut vm, address.clone(), address, &message)
+			.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 
 		let _remaining = vm.gas.remaining();
 		Ok(())
@@ -735,13 +715,8 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 
-		let _ = Self::run::<IbcPacketTimeoutCall, _>(
-			&mut vm,
-			address.clone(),
-			address.clone(),
-			&message,
-		)
-		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
+		let _ = Self::run::<IbcPacketTimeoutCall, _>(&mut vm, address.clone(), address, &message)
+			.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 
 		let _remaining = vm.gas.remaining();
 		Ok(())
