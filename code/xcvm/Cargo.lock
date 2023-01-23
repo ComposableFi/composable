@@ -198,7 +198,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-orchestrate"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=2d8dc26b37b0b004184655ddd018d5404fabcd5d#2d8dc26b37b0b004184655ddd018d5404fabcd5d"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=82a1b358e85022aa124c772db0ffd58c29b7f1a7#82a1b358e85022aa124c772db0ffd58c29b7f1a7"
 dependencies = [
  "async-trait",
  "base64",
@@ -262,10 +262,11 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=2d8dc26b37b0b004184655ddd018d5404fabcd5d#2d8dc26b37b0b004184655ddd018d5404fabcd5d"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=82a1b358e85022aa124c772db0ffd58c29b7f1a7#82a1b358e85022aa124c772db0ffd58c29b7f1a7"
 dependencies = [
  "cosmwasm-std",
  "log",
+ "num",
  "serde",
  "serde_json",
 ]
@@ -273,7 +274,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=2d8dc26b37b0b004184655ddd018d5404fabcd5d#2d8dc26b37b0b004184655ddd018d5404fabcd5d"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=82a1b358e85022aa124c772db0ffd58c29b7f1a7#82a1b358e85022aa124c772db0ffd58c29b7f1a7"
 dependencies = [
  "cosmwasm-std",
  "cosmwasm-vm",
@@ -284,6 +285,7 @@ dependencies = [
  "serde_json",
  "wasm-instrument",
  "wasmi",
+ "wasmi-validation",
 ]
 
 [[package]]

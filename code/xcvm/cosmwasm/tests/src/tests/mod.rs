@@ -1,1 +1,2 @@
-mod types;
+mod framework;
+mod suite;

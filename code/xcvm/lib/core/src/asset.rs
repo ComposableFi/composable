@@ -77,6 +77,7 @@ pub type Assets = (InvalidAsset, (PICA, (ETH, (USDT, (USDC, ())))));
 /// Type implement network must be part of [`Networks`], otherwise invalid.
 pub trait Asset {
 	const ID: AssetId;
+  const DECIMALS: u8 = 12;
 }
 
 impl Asset for PICA {
@@ -93,6 +94,26 @@ impl Asset for USDT {
 
 impl Asset for USDC {
 	const ID: AssetId = AssetId(Displayed(<Assets as IndexOf<Self, _>>::INDEX as u128));
+}
+
+pub trait AssetSymbol {
+  const SYMBOL: &'static str;
+}
+
+impl AssetSymbol for PICA  {
+    const SYMBOL: &'static str = "PICA";
+}
+
+impl AssetSymbol for ETH  {
+  const SYMBOL: &'static str = "ETH";
+}
+
+impl AssetSymbol for USDT  {
+  const SYMBOL: &'static str = "USDT";
+}
+
+impl AssetSymbol for USDC  {
+  const SYMBOL: &'static str = "USDC";
 }
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]

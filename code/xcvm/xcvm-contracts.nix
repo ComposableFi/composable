@@ -29,20 +29,26 @@
             xcvm-contract-router
             xcvm-contract-interpreter
             xcvm-contract-gateway
-            xcvm-contract-pingpong
           ];
         };
-        xcvm-tests = crane.nightly.buildPackage (systemCommonRust.common-attrs
+        xcvm-deps = crane.nightly.buildDepsOnly (systemCommonRust.common-attrs
           // {
             src = systemCommonRust.mkRustSrc ./.;
+          });
+        xcvm-tests = crane.nightly.cargoBuild (systemCommonRust.common-attrs
+          // {
+            src = systemCommonRust.mkRustSrc ./.;
+            cargoArtifacts = xcvm-deps;
             cargoBuildCommand = "cargo test --release -p xcvm-tests";
-            CW_XCVM_ASSET_REGISTRY = "${xcvm-contracts}/lib/cw_xcvm_asset_registry.wasm";
-            CW_XCVM_INTERPRETER = "${xcvm-contracts}/lib/cw_xcvm_interpreter.wasm";
+            CW_XCVM_ASSET_REGISTRY =
+              "${xcvm-contracts}/lib/cw_xcvm_asset_registry.wasm";
+            CW_XCVM_INTERPRETER =
+              "${xcvm-contracts}/lib/cw_xcvm_interpreter.wasm";
             CW_XCVM_ROUTER = "${xcvm-contracts}/lib/cw_xcvm_router.wasm";
             CW_XCVM_GATEWAY = "${xcvm-contracts}/lib/cw_xcvm_gateway.wasm";
-            CW_XCVM_PINGPONG = "${xcvm-contracts}/lib/cw_xcvm_pingpong.wasm";
             CW20 = pkgs.fetchurl {
-              url = "https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm";
+              url =
+                "https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm";
               hash = "sha256-nClak9UDPLdALVnN7e9yVKafnKUO7RAYDFO7sxwAXpI=";
             };
           });
