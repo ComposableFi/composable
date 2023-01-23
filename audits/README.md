@@ -5,48 +5,27 @@ The related code audits are provided for context.
 
 ## Audits:
 
-1. [Halborn Audit - 29.02.2021](./halborn/audit01-assets-bondedFinance-dutchAuction-oracle-vesting-dexRouter-mosaic.pdf)
-
-    Pallets:
-   - Assets
-   - Bonded Finance
-   - Dutch Auction
-   - Oracle
-   - Vesting
-   - Dex-Router
-   - Mosaic
+[Halborn Audit - Main Pallets - 29.02.2021](./halborn/audit01-assets-bondedFinance-dutchAuction-oracle-vesting-dexRouter-mosaic.pdf)
    
-2. [Halborn Audit - 30.07.2022](./halborn/audit03-pallets-pabloV2.pdf)
+[Halborn Audit - Pablo - 30.07.2022](./halborn/audit03-pallets-pabloV2.pdf)
 
-    Pallets:
-   - Pablo
+[Halborn Audit - Vesting - 23.08.2022](./halborn/audit04-vesting-pallet.pdf)
 
-3. [Halborn Audit - 23.08.2022](./halborn/audit04-vesting-pallet.pdf)
+[Halborn Audit - Democracy - 19.09.2022](./halborn/audit05-democracy-Pallet.pdf)
 
-    Pallets: 
-   - Vesting
+[Halborn Audit - BYOG - 26.09.2022](./halborn/audit06-byoGas.pdf)
 
-4. [Halborn Audit - 19.09.2022](./halborn/audit05-democracy-Pallet.pdf)
+[Halborn Audit - IBC - 10.10.2022](./halborn/audit07-ibc-pallet.pdf)
 
-    Pallets: 
-   - Democracy
+[Halborn Audit - Staking Rewards & fNFT- 10.10.2022](./halborn/audit08-pallets-stakingRewards-fnft.pdf)
 
-5. [Halborn Audit - 26.09.2022](./halborn/audit06-byoGas.pdf)
+[Halborn Audit - Grandpa Light Client Bridge 03.10.2022](./halborn/audit10-grandpa-light-client-bridge.pdf)
 
-    Pallets:
-   - BYOG (Bring your own Gas)
+[Halborn Audit - Pablo Refactored 29.11.2022](./halborn/audit09-pablo-refactored.pdf)
 
-6. [Halborn Audit - 10.10.2022](./halborn/audit07-ibc-pallet.pdf)
 
-   Pallet:
-   - IBC (Inter-Blockchain-Communication)
 
-7. [Halborn Audit - 10.10.2022](./halborn/audit08-pallets-stakingRewards-fnft.pdf)
 
-   Pallets:
-   - Staking Rewards
-   - fNFT
-   
 ## Post-Mortems
 
 - [Picasso Block Production Halt code fix](post-mortems/picasso-block-production-halt-code-fix/README.md)
