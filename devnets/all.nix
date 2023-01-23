@@ -20,7 +20,7 @@
       # Centauri Persistent Devnet
       devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
         (import ./specs/centauri.nix {
-          inherit pkgs devnetTools;
+          inherit pkgs devnetTools packages;
           devnet-1 = devnet-dali-centauri-1;
           devnet-2 = devnet-dali-centauri-2;
         });

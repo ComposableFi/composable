@@ -1,4 +1,4 @@
-{ pkgs, devnet-1, devnet-2, devnetTools, ... }: {
+{ pkgs, devnet-1, devnet-2, devnetTools, packages, ... }: {
   modules = [
     (let
       configPathSource = "/tmp/config.toml";
@@ -59,7 +59,8 @@
               name = "hyperspace-create-clients";
               execCommands =
                 [ "create-clients" "--config" configPathContainer ];
-              inherit configPathSource configPathContainer;
+              inherit configPathSource configPathContainer pkgs packages
+                devnetTools;
               dependsOn = { };
               # for the first process in the dependency chain we set a restart policy so that it
               # restarts on failure. This is because the chain can be still unavailable (takes longer)
@@ -79,7 +80,8 @@
                 "--delay-period"
                 "0"
               ];
-              inherit configPathSource configPathContainer;
+              inherit configPathSource configPathContainer pkgs packages
+                devnetTools;
               dependsOn = dependsOnCreateClient;
               restartPolicy = "no";
             }) [ network-name network-name-2 ];
@@ -98,7 +100,8 @@
                 "--order"
                 "unordered"
               ];
-              inherit configPathSource configPathContainer;
+              inherit configPathSource configPathContainer pkgs packages
+                devnetTools;
               dependsOn = dependsOnCreateConnection;
               restartPolicy = "no";
             }) [ network-name network-name-2 ];
@@ -107,7 +110,8 @@
             (import ../services/centauri.nix {
               name = "hyperspace-relay";
               execCommands = [ "relay" "--config" configPathContainer ];
-              inherit configPathSource configPathContainer;
+              inherit configPathSource configPathContainer pkgs packages
+                devnetTools;
               dependsOn = dependsOnCreateConnection;
               # safely restart on failure due to connectivity loss for instance
               restartPolicy = "on-failure";
