@@ -34,11 +34,11 @@ pub enum EntryPoint {
 	Execute,
 	Migrate,
 	Reply,
-	IbcChannelOpenCall,
-	IbcChannelConnectCall,
-	IbcChannelCloseCall,
-	IbcPacketTimeoutCall,
-	IbcPacketAckCall,
+	IbcChannelOpen,
+	IbcChannelConnect,
+	IbcChannelClose,
+	IbcPacketTimeout,
+	IbcPacketAck,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, Debug)]
