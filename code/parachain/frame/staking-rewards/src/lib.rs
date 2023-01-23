@@ -37,7 +37,6 @@
 	test,
 	all(not(feature = "std"), feature = "runtime-benchmarks", target_family = "wasm")
 ))]
-#[cfg_attr(not(test), no_std)]
 mod benchmarking;
 
 #[cfg(test)]
