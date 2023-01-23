@@ -823,26 +823,13 @@ impl assets_registry::Config for Runtime {
 	type AssetSymbolMaxChars = AssetSymbolMaxChars;
 }
 
-// impl assets::Config for Runtime {
-// 	type NativeAssetId = NativeAssetId;
-// 	type GenerateCurrencyId = CurrencyFactory;
-// 	type AssetId = CurrencyId;
-// 	type Balance = Balance;
-// 	type NativeCurrency = Balances;
-// 	type MultiCurrency = Tokens;
-// 	type WeightInfo = ();
-// 	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
-// 	type GovernanceRegistry = GovernanceRegistry;
-// 	type CurrencyValidator = ValidateCurrencyId;
-// }
-
 impl assets_transactor_router::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type NativeCurrency = Balances;
 	type LocalTransactor = Tokens;
-	// TODO(connor): Use second instance
+	// NOTE(connor): Use second instance in future
 	type ForeignTransactor = Tokens;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
@@ -1330,18 +1317,6 @@ impl pallet_ibc_ping::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type IbcHandler = Ibc;
 }
-
-// TODO(RFC-0013): Configure Each Instance of pallet-assets
-// pub type ForeignAssetsInstance = ();
-// pub type LocalAssetsInstance = pallet_assets::Instance1;
-//
-// impl pallet_assets::Config<ForeignAssetsInstance> for Runtime {
-// 	...
-// }
-//
-// impl pallet_assets::Config<LocalAssetsInstance> for Runtime {
-// 	...
-// }
 
 construct_runtime!(
 	pub enum Runtime where

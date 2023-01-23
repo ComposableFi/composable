@@ -174,6 +174,7 @@ fn get_foreign_assets_list_should_work() {
 		.unwrap();
 		let ratio = rational!(42 / 123);
 		let decimals = 3;
+		let id = u128::from_be_bytes(sp_core::blake2_128(&location.encode()));
 
 		let foreign_assets = AssetsRegistry::get_foreign_assets_list();
 
@@ -194,7 +195,7 @@ fn get_foreign_assets_list_should_work() {
 			foreign_assets,
 			vec![Asset {
 				name: None,
-				id: 12884901886,
+				id,
 				decimals: 3,
 				ratio: Some(ratio),
 				foreign_id: Some(XcmAssetLocation::new(MultiLocation {

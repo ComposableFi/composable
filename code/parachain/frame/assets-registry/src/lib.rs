@@ -507,8 +507,10 @@ pub mod pallet {
 						symbol: metadata.symbol.to_vec(),
 						decimals: metadata.decimals,
 					});
+					Some(())
+				} else {
+					None
 				}
-				None
 			})
 			.ok_or_else(|| Error::<T>::AssetNotFound.into())
 		}

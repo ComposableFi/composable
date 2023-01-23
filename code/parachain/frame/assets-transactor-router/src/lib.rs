@@ -81,8 +81,8 @@ mod mocks;
 #[cfg(test)]
 mod tests;
 
-// #[cfg(any(feature = "runtime-benchmarks", test))]
-// mod benchmarking;
+#[cfg(any(feature = "runtime-benchmarks", test))]
+mod benchmarking;
 pub mod weights;
 
 macro_rules! route {
