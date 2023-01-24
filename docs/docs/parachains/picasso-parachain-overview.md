@@ -10,6 +10,7 @@ and its proprietary technology stack.
 [Picasso]: http://picasso.xyz
 [$PICA]: ./picasso/tokenomics.md
 
+![picasso_diagram](./picasso/picasso-diagram.png)
 Picasso houses a suite of modular and interoperable Substrate pallets:
 
 - [Pablo] - DEX: serving as a cross-chain liquidity hub on Picasso
