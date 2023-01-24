@@ -21,8 +21,8 @@ use cw_xcvm_common::shared::{encode_base64, BridgeMsg};
 use cw_xcvm_utils::{DefaultXCVMInstruction, DefaultXCVMProgram};
 use num::Zero;
 use xcvm_core::{
-	apply_bindings, cosmwasm::*, Balance, BindingValue, BridgeSecurity, Destination, Displayed,
-	Funds, NetworkId, Register,
+	apply_bindings, cosmwasm::*, Balance, Amount, BindingValue, BridgeSecurity, Destination, Displayed,
+	Funds, Instruction, NetworkId, Register,
 };
 
 type XCVMInstruction = DefaultXCVMInstruction;
@@ -175,67 +175,49 @@ pub fn handle_execute_step(
 	relayer: Addr,
 	program: XCVMProgram,
 ) -> Result<Response, ContractError> {
-	let mut response = Response::new();
-	let instruction_len = program.instructions.len();
-	let mut instruction_iter = program.instructions.into_iter().enumerate();
-	let mut ip = IP_REGISTER.load(deps.storage)?;
-	while let Some((index, instruction)) = instruction_iter.next() {
-		response = match instruction {
-			XCVMInstruction::Call { bindings, encoded } => {
-				if index >= instruction_len - 1 {
-					// If the call is the final instruction, do not yield execution
-					interpret_call(deps.as_ref(), &env, bindings, encoded, ip as usize, response)?
-				} else {
-					// If the call is not the final instruction:
-					// 1. interpret the call: this will add the call to the response's
-					//    submessages.
-					// 2. yield the execution by adding a call to the interpreter with the
-					//    rest of the instructions as XCVM program. This will make sure that
-					//    previous call instruction will run first, then the rest of the program
-					//    will run.
-					let response =
-						interpret_call(deps.as_ref(), &env, bindings, encoded, index, response)?;
-					let instructions: VecDeque<XCVMInstruction> =
-						instruction_iter.map(|(_, instr)| instr).collect();
-					let program = XCVMProgram { tag: program.tag, instructions };
-					IP_REGISTER.save(deps.storage, &ip)?;
-					return Ok(response.add_message(wasm_execute(
-						env.contract.address,
-						&ExecuteMsg::ExecuteStep { relayer: relayer.clone(), program },
-						vec![],
-					)?))
-				}
-			},
-			XCVMInstruction::Spawn { network, bridge_security, salt, assets, program } =>
-				interpret_spawn(
-					&deps,
-					&env,
-					network,
-					bridge_security,
-					salt,
-					assets,
-					program,
-					response,
-				)?,
-			XCVMInstruction::Transfer { to, assets } =>
-				interpret_transfer(&mut deps, &env, relayer.clone(), to, assets, response)?,
-			instr => return Err(ContractError::InstructionNotSupported(format!("{:?}", instr))),
-		};
-		ip += 1;
+	let mut instruction_iter = program.instructions.into_iter();
+	match instruction_iter.next() {
+		Some(instruction) => {
+			let response = match instruction {
+				Instruction::Transfer { to, assets } =>
+					interpret_transfer(&mut deps, &env, relayer.clone(), to, assets),
+				Instruction::Call { bindings, encoded } =>
+					interpret_call(deps.as_ref(), &env, bindings, encoded),
+				Instruction::Spawn { network, bridge_security, salt, assets, program } =>
+					interpret_spawn(
+						&mut deps,
+						&env,
+						network,
+						bridge_security,
+						salt,
+						assets,
+						program,
+					),
+				// TODO(hussein-aitlahcen)
+				Instruction::Query { .. } => Ok(Response::default()),
+			}?;
+			IP_REGISTER.update::<_, ContractError>(deps.storage, |x| Ok(x + 1))?;
+			let next_program =
+				XCVMProgram { tag: program.tag.clone(), instructions: instruction_iter.collect() };
+			Ok::<_, ContractError>(response.add_message(wasm_execute(
+				env.contract.address,
+				&ExecuteMsg::ExecuteStep { relayer, program: next_program },
+				vec![],
+			)?))
+		},
+		None => {
+			let mut event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
+				.add_attribute("action", "execution.success");
+			if program.tag.len() >= 3 {
+				event = event.add_attribute(
+					"tag",
+					core::str::from_utf8(&program.tag)
+						.map_err(|_| ContractError::InvalidProgramTag)?,
+				);
+			}
+			Ok(Response::default().add_event(event))
+		},
 	}
-
-	IP_REGISTER.save(deps.storage, &ip)?;
-
-	let mut event =
-		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.success");
-	if program.tag.len() >= 3 {
-		event = event.add_attribute(
-			"tag",
-			core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
-		);
-	}
-
-	Ok(response.add_event(event))
 }
 
 /// Interpret the `Call` instruction
@@ -248,8 +230,6 @@ pub fn interpret_call(
 	env: &Env,
 	bindings: Vec<(u32, BindingValue)>,
 	payload: Vec<u8>,
-	_ip: usize,
-	response: Response,
 ) -> Result<Response, ContractError> {
 	// We don't know the type of the payload, so we use `serde_json::Value`
 	let flat_cosmos_msg: FlatCosmosMsg<serde_json::Value> = if !bindings.is_empty() {
@@ -320,7 +300,7 @@ pub fn interpret_call(
 
 	let cosmos_msg: CosmosMsg =
 		flat_cosmos_msg.try_into().map_err(|_| ContractError::DataSerializationError)?;
-	Ok(response
+	Ok(Response::default()
 		.add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("instruction", "call"))
 		.add_submessage(SubMsg::reply_on_success(cosmos_msg, CALL_ID)))
 }
@@ -333,7 +313,6 @@ pub fn interpret_spawn(
 	salt: Vec<u8>,
 	assets: Funds<Balance>,
 	program: XCVMProgram,
-	mut response: Response,
 ) -> Result<Response, ContractError> {
 	let Config { interpreter_origin, registry_address, router_address, .. } =
 		CONFIG.load(deps.storage)?;
@@ -411,7 +390,8 @@ pub fn interpret_spawn(
 					"origin_user_id",
 					serde_json_wasm::to_string(&interpreter_origin.user_origin.user_id)
 						.map_err(|_| ContractError::DataSerializationError)?,
-				),
+				)
+				.add_attribute("networ_id", format!("{}", network)),
 		))
 }
 
@@ -421,7 +401,6 @@ pub fn interpret_transfer(
 	relayer: Addr,
 	to: Destination<CanonicalAddr>,
 	assets: Funds<Balance>,
-	mut response: Response,
 ) -> Result<Response, ContractError> {
 	let config = CONFIG.load(deps.storage)?;
 	let registry_addr = config.registry_address.into_string();
@@ -431,8 +410,10 @@ pub fn interpret_transfer(
 		Destination::Relayer => relayer.into(),
 	};
 
-	for (asset_id, balance) in assets.0 {
-		if balance.amount.is_zero() {
+	let mut response = Response::default();
+
+   for (asset_id, balance) in assets.0 {
+    if balance.amount.is_zero() {
 			continue
 		}
 

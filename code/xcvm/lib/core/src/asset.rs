@@ -2,6 +2,7 @@ use crate::abstraction::IndexOf;
 use alloc::{string::ToString, vec::Vec};
 use codec::{Decode, Encode};
 use core::ops::Add;
+use cosmwasm_std::{ConversionOverflowError, StdError, Uint128, Uint256};
 use fixed::{types::extra::U16, FixedU128};
 use num::Zero;
 use scale_info::TypeInfo;
@@ -226,20 +227,25 @@ impl Amount {
 	}
 
 	/// Apply the amount to a value
-	pub fn apply(&self, value: u128) -> u128 {
+	pub fn apply(&self, value: u128) -> Result<u128, ()> {
+		if value == 0 {
+			return Ok(0)
+		}
 		let amount = if self.slope.0 == 0 {
 			self.intercept.0
 		} else {
-			FixedU128::<U16>::wrapping_from_num(value)
-				.saturating_sub(FixedU128::<U16>::wrapping_from_num(self.intercept.0))
-				.saturating_mul(
-					FixedU128::<U16>::wrapping_from_num(self.slope.0)
-						.saturating_div(FixedU128::<U16>::wrapping_from_num(Self::MAX_PARTS)),
-				)
-				.wrapping_to_num::<u128>()
-				.saturating_add(self.intercept.0)
+			if self.slope.0 == Self::MAX_PARTS {
+				value
+			} else {
+				let value =
+					Uint256::from(value).checked_sub(self.intercept.0.into()).map_err(|_| ())?;
+				let value =
+					value.checked_multiply_ratio(self.slope.0, Self::MAX_PARTS).map_err(|_| ())?;
+				let value = Uint128::try_from(value).map_err(|_| ())?.u128();
+				value
+			}
 		};
-		u128::min(value, amount)
+		Ok(u128::min(value, amount))
 	}
 
 	/// `f(x) = a + b * 10 ^ decimals where a = intercept, b = slope / MAX_PARTS`

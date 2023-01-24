@@ -242,11 +242,18 @@ pub fn ibc_packet_receive(
 			XCVM_GATEWAY_BATCH_REPLY_ID,
 		))
 	})();
+	let response = IbcReceiveResponse::default()
+		.add_event(Event::new(XCVM_GATEWAY_EVENT_PREFIX).add_attribute("action", "receive"));
 	match batch {
-		Ok(batch) => Ok(IbcReceiveResponse::default()
-			.set_ack(XCVMAck::OK.into_vec())
-			.add_submessage(batch)),
-		Err(_) => Ok(IbcReceiveResponse::default().set_ack(XCVMAck::KO.into_vec())),
+		Ok(batch) => Ok(response.set_ack(XCVMAck::OK.into_vec()).add_submessage(batch)),
+		Err(e) => Ok(response
+			.add_event(
+				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
+					.add_attribute("action", "receive")
+					.add_attribute("result", "failure")
+					.add_attribute("reason", format!("{}", e)),
+			)
+			.set_ack(XCVMAck::KO.into_vec())),
 	}
 }
 
@@ -278,7 +285,13 @@ pub fn ibc_packet_ack(
 		},
 		_ => Err(ContractError::InvalidAck),
 	}?;
-	Ok(IbcBasicResponse::default().add_messages(messages))
+	Ok(IbcBasicResponse::default()
+		.add_event(
+			Event::new(XCVM_GATEWAY_EVENT_PREFIX)
+				.add_attribute("action", "ack")
+				.add_attribute("ack", format!("{}", ack.value())),
+		)
+		.add_messages(messages))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -303,8 +316,21 @@ pub fn ibc_packet_timeout(
 
 pub fn handle_batch_reply(msg: Reply) -> Result<Response, ContractError> {
 	match msg.result {
-		SubMsgResult::Ok(_) => Ok(Response::default().set_data(XCVMAck::OK.into_vec())),
-		SubMsgResult::Err(_) => Ok(Response::default().set_data(XCVMAck::KO.into_vec())),
+		SubMsgResult::Ok(_) => Ok(Response::default()
+			.add_event(
+				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
+					.add_attribute("action", "receive")
+					.add_attribute("result", "success"),
+			)
+			.set_data(XCVMAck::OK.into_vec())),
+		SubMsgResult::Err(e) => Ok(Response::default()
+			.add_event(
+				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
+					.add_attribute("action", "receive")
+					.add_attribute("result", "failure")
+					.add_attribute("reason", format!("{}", e)),
+			)
+			.set_data(XCVMAck::KO.into_vec())),
 	}
 }
 
@@ -409,37 +435,39 @@ pub fn handle_bridge(
 	match security {
 		// Only allow deterministic over IBC here
 		BridgeSecurity::Deterministic => {
-			let channel_id = IBC_NETWORK_CHANNEL.load(deps.storage, network_id)?;
+			let channel_id = IBC_NETWORK_CHANNEL
+				.load(deps.storage, network_id)
+				.map_err(|_| ContractError::UnknownChannel)?;
 			let packet = DefaultXCVMPacket {
 				interpreter: interpreter.as_bytes().to_vec(),
 				user_origin: interpreter_origin.user_origin,
-				salt,
+				salt: salt.clone(),
 				program,
 				assets,
 			};
-			Ok(Response::default()
-				.add_event(
-					Event::new(XCVM_GATEWAY_EVENT_PREFIX)
-						.add_attribute("action", "bridge")
-						.add_attribute("network_id", format!("{network_id}"))
-						.add_attribute("salt", format!("{}", Binary::from(packet.salt.clone())))
-						.add_attribute(
-							"program",
-							serde_json_wasm::to_string(&packet.program)
-								.map_err(|_| ContractError::FailedToSerialize)?,
-						)
-						.add_attribute(
-							"assets",
-							serde_json_wasm::to_string(&packet.assets)
-								.map_err(|_| ContractError::FailedToSerialize)?,
-						),
+			let mut event = Event::new(XCVM_GATEWAY_EVENT_PREFIX)
+				.add_attribute("action", "bridge")
+				.add_attribute("network_id", format!("{network_id}"))
+				.add_attribute(
+					"assets",
+					serde_json_wasm::to_string(&packet.assets)
+						.map_err(|_| ContractError::FailedToSerialize)?,
 				)
-				.add_message(IbcMsg::SendPacket {
-					channel_id,
-					data: Binary::from(packet.encode()),
-					// TODO: should be a parameter or configuration
-					timeout: IbcTimeout::with_block(IbcTimeoutBlock { revision: 0, height: 10000 }),
-				}))
+				.add_attribute(
+					"program",
+					serde_json_wasm::to_string(&packet.program)
+						.map_err(|_| ContractError::FailedToSerialize)?,
+				);
+			if salt.len() >= 3 {
+				event =
+					event.add_attribute("salt", format!("{}", Binary::from(packet.salt.clone())));
+			}
+			Ok(Response::default().add_event(event).add_message(IbcMsg::SendPacket {
+				channel_id,
+				data: Binary::from(packet.encode()),
+				// TODO: should be a parameter or configuration
+				timeout: IbcTimeout::with_block(IbcTimeoutBlock { revision: 0, height: 10000 }),
+			}))
 		},
 		_ => Err(ContractError::UnsupportedBridgeSecurity),
 	}

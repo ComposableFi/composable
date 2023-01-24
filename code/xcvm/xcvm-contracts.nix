@@ -51,6 +51,7 @@
                 "https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm";
               hash = "sha256-nClak9UDPLdALVnN7e9yVKafnKUO7RAYDFO7sxwAXpI=";
             };
+            RUST_LOG = "debug";
           });
       };
     };

@@ -14,6 +14,9 @@ impl XCVMAck {
 	pub fn into_vec(self) -> Vec<u8> {
 		self.into()
 	}
+	pub fn value(self) -> u8 {
+		self.0
+	}
 }
 
 impl From<XCVMAck> for Vec<u8> {
