@@ -1,6 +1,5 @@
 use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::dex::PriceAggregate;
 use core::{fmt::Display, str::FromStr};
 use jsonrpsee::{
 	core::{Error as RpcError, RpcResult},
@@ -21,7 +20,7 @@ where
 	Balance: FromStr + Display,
 {
 	#[method(name = "stakingRewards_getClaimableAmount")]
-	fn get_claimable_amount(
+	fn claimable_amount(
 		&self,
 		fnft_collection_id: SafeRpcWrapper<AssetId>,
 		fnft_instance_id: SafeRpcWrapper<FinancialNftInstanceId>,
@@ -53,7 +52,7 @@ where
 	C: HeaderBackend<Block>,
 	C::Api: StakingRewardsRuntimeApi<Block, AssetId, FinancialNftInstanceId, Balance>,
 {
-	fn get_claimable_amount(
+	fn claimable_amount(
 		&self,
 		fnft_collection_id: SafeRpcWrapper<AssetId>,
 		fnft_instance_id: SafeRpcWrapper<FinancialNftInstanceId>,
@@ -64,8 +63,7 @@ where
 		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 
 		// calling ../../runtime-api
-		let runtime_api_result =
-			api.get_claimable_amount(&at, fnft_collection_id, fnft_instance_id);
+		let runtime_api_result = api.claimable_amount(&at, fnft_collection_id, fnft_instance_id);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,

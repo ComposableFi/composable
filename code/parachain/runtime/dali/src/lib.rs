@@ -1599,14 +1599,14 @@ impl_runtime_apis! {
 	}
 
 	impl staking_rewards_runtime_api::StakingRewardsRuntimeApi<Block, CurrencyId, FinancialNftInstanceId, Balance> for Runtime {
-		fn get_claimable_amount(
+		fn claimable_amount(
 			fnft_collection_id: SafeRpcWrapper<CurrencyId>,
 			fnft_instance_id: SafeRpcWrapper<FinancialNftInstanceId>,
 		) -> Result<
 			BTreeMap<CurrencyId, Balance>,
 			staking_rewards_runtime_api::ClaimableAmountError
 		> {
-			StakingRewards::get_claimable_amount(
+			StakingRewards::claimable_amount(
 				fnft_collection_id.0,
 				fnft_instance_id.0,
 			)

@@ -65,7 +65,6 @@ std = [
   "pallet-proxy/std",
   "composable-tests-helpers/std",
   "frame-benchmarking/std",
-  # "runtime-api/std"
 ]
 
 runtime-benchmarks = [

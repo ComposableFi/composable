@@ -1836,7 +1836,7 @@ impl<T: Config> Pallet<T> {
 	/// returns error if stake or rewardpool is not found
 	/// otherwise returns BTreeMap (key: reward_asset_id, val: Option<Balance>)
 	/// if claim_of_stake returns an error for a reward, then val is None
-	pub fn get_claimable_amount(
+	pub fn claimable_amount(
 		fnft_collection_id: T::AssetId,
 		fnft_instance_id: T::FinancialNftInstanceId,
 	) -> Result<BTreeMap<T::AssetId, T::Balance>, ClaimableAmountError> {

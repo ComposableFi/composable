@@ -15,7 +15,7 @@ sp_api::decl_runtime_apis! {
 		FinancialNftInstanceId: Codec,
 		Balance: Codec,
 	{
-		fn get_claimable_amount(
+		fn claimable_amount(
 			fnft_collection_id: SafeRpcWrapper<AssetId>,
 			fnft_instance_id: SafeRpcWrapper<FinancialNftInstanceId>,
 		) -> Result<BTreeMap<AssetId, Balance>, ClaimableAmountError>;
