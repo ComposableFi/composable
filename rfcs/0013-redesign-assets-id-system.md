@@ -78,7 +78,7 @@ Within our consensus system, we have two primary types of currency mintable and
 non-mintable. Mintable assets tend to be purely local in their scope and 
 function while non-mintable assets tend to come into our consensus system 
 externally (via XCM). To ensure no overlap in function between these assets,
-they each should belong to their own instance of pallet-assets.
+they each should belong to their own instance of an assets' pallet.
 
 When also considering pallet-balances for our native asset, it becomes clear 
 that some amount of assisted routing will be necessary. While routing between 
@@ -91,7 +91,7 @@ will, in some instances, interact within the same scope (i.e. Pablo).
 Our current asset router (also called pallet-assets, to be renamed to assets 
 manager) already completes the more trivial routing. To conduct the non-trivial 
 routing, we can depend on asset-registry to inform us if an asset belongs to 
-the mintable or non-mintable pallet-assets instance.
+the mintable or non-mintable assets' pallet instance.
 
 ## Adapted Asset Registry
 
@@ -109,6 +109,11 @@ To-Do comments for these tasks will be added in the Dali
 runtime.
 
 ## Declare Two pallet-asset Instances
+
+**NOTE:** Currently, moving away from `orml-tokens` is not practical. Given 
+`orml-tokens` does not support multiple instances, the two separate instances 
+cannot be fully realized. Instead, the transactor will act as though it has two
+configured instances, but will point each to the same instance of `orml-tokens`.
 
 A great reference for what it looks like to have two instances of pallet-assets 
 can be found within the `PureStake/moonbeam` repository. Within the Moonbeam 
@@ -133,12 +138,6 @@ functionality provided by the interface makes it insufficient for our solution.
 Therefore, implementing additional traits not found in orml-tokens on our 
 routing layer is instead more ideal, especially since user balances are already 
 on chain.
-
-**Steps:**
-* Import & Declare orml-tokens
-  * We must then declare two instances within our `construct_runtime!` macro.
-
-* Configure Each Instance of orml-tokens
 
 ## Update Assets Registry
 
@@ -266,6 +265,217 @@ The data-migration may be handled in two main tasks:
 
 <!-- TODO This should provide more clear details and will in the future -->
 
+# Quality Assurance
+
+This section contains notes that may be relevant for QA when inspecting these 
+changes.
+
+## Things to Test
+
+* Asset ID Creation
+
+  With these changes come a mostly automated way to create asset IDs. There will
+  be two primary routes for creating assets:
+
+  * Local Assets
+
+    Local assets will consist of two sets of 8 bytes. The first 8 bytes are the
+    protocol controlled identifier that should represent the protocol that 
+    created the asset. The second 8 bytes are an asset identifier that is unique
+    to the asset in the scope of the protocol (this is normally a nonce).
+
+  * Foreign Assets
+
+    Foreign assets have an ID determined my a hashing of their Muli-Location
+
+  With these changes, we need to ensure that these two forms of creating IDs 
+  will not contain collisions
+
+* Asset Transactions
+
+  Asset transfers should not have any side effects on accounts or assets not 
+  included in a transaction
+
+* Asset Creation / Registration is Permissioned
+
+  Only root/governance should be able to new create assets
+
+# Integrations / FE
+
+This section contains notes that may be relevant to integrating the new 
+interface
+
+## Assets Registry Changes
+
+### Events
+
+* `AssetUpdated`
+
+  The `AssetUpdated` event has been replaced by the 3 events 
+  `AssetLocationUpdated`, `AssetRatioUpdated`, and `AssetMetadataUpdated`. The 
+  new events have the following structure:
+
+  ```rust
+  AssetLocationUpdated {
+	  asset_id: T::LocalAssetId,
+		location: T::ForeignAssetId,
+  }
+
+  AssetRatioUpdated {
+		asset_id: T::LocalAssetId,
+	  ratio: Option<Rational>,
+	}
+
+  AssetMetadataUpdated {
+		asset_id: T::LocalAssetId,
+		name: Vec<u8>,
+		symbol: Vec<u8>,
+		decimals: u8,
+	}
+  ```
+
+* `AssetRegistered`
+
+  The `AssetRegistered` event has several new fields. Its new structure is as 
+  follows:
+
+  ```rust
+  AssetRegistered {
+		asset_id: T::LocalAssetId,
+		location: T::ForeignAssetId,
+		decimals: Option<Exponent>,
+		location: Option<T::ForeignAssetId>,
+		name: Vec<u8>,
+		symbol: Vec<u8>,
+		decimals: u8,
+		ratio: Option<Rational>,
+	}
+  ```
+
+### Call
+
+* `register_asset`
+
+  The `register_asset` extrinsic has a new signature. Notably, it now returns a 
+  `DispatchResult` and contains fields for all asset data. The signature is as 
+  follows:
+
+  ```rust
+  pub fn register_asset(
+    origin: OriginFor<T>,
+    local_or_foreign: LocalOrForeignAssetId<T::LocalAssetId, ForeignAssetId>,
+    ratio: Option<Rational>,
+    name: Vec<u8>,
+    symbol: Vec<u8>,
+    decimals: Exponent,
+  ) -> DispatchResult;
+  ```
+
+  The `LocalOrForeignAssetId` enum is defined as follows:
+
+  ```rust
+  pub enum LocalOrForeignAssetId<LocalAssetId, ForeignAssetId> {
+  	Local(LocalAssetId),
+  	Foreign(ForeignAssetId),
+  }
+  ```
+
+* `update_asset`
+
+  The `update_asset` extrinsic has been removed in favor of less monolithic 
+  update functions. They have the following signatures:
+
+  ```rust
+  pub fn update_asset_location(
+    origin: OriginFor<T>,
+    asset_id: T::LocalAssetId,
+    location: T::ForeignAssetId,
+  ) -> DispatchResultWithPostInfo;
+
+  pub fn update_asset_ratio(
+		origin: OriginFor<T>,
+		asset_id: T::LocalAssetId,
+		ratio: Option<Rational>,
+	) -> DispatchResult
+
+  pub fn update_asset_metadata(
+		origin: OriginFor<T>,
+		asset_id: T::LocalAssetId,
+		name: Option<Vec<u8>>,
+		symbol: Option<Vec<u8>>,
+		decimals: Option<u8>,
+	) -> DispatchResult
+  ```
+
+### Storage
+
+* `LocalToForeign`
+
+  The storage item queried by `from_local_asset(local_asset_id)` now only 
+  returns the foreign asset ID instead of all metadata and ID.
+
+* `Metadata`
+
+  A new storage item queried by `metadata(local_asset_id)` returns a structure 
+  containing asset metadata. The structure is as follows:
+
+  ```rust
+  pub struct AssetMetadata<BoundedName, BoundedSymbol> {
+  	/// Name of the asset.
+  	pub name: BoundedName,
+  	/// Symbol of the asset.
+  	pub symbol: BoundedSymbol,
+  	/// The number of decimals this asset uses to represent one unit.
+  	pub decimals: u8,
+  }
+  ```
+
+## Assets Transactor Router (Assets Manager)
+
+The assets transactor router is nearly identical to the old `pallet-assets` that
+we used to use for routing between `pallet-balances` and `orml-tokens`. Only the
+differences in the Call/extrinsic functions will be noted here.
+
+### Call
+
+* `mint_initialize`
+
+  The extrinsic `mint_initialize` now requires asset metadata to be created. The
+  function signature is as follows:
+
+  ```rust
+  pub fn mint_initialize(
+		origin: OriginFor<T>,
+		protocol_id: [u8; 8],
+		nonce: u64,
+		name: Vec<u8>,
+		symbol: Vec<u8>,
+		decimals: u8,
+		ratio: Option<Rational64>,
+		amount: T::Balance,
+		dest: <T::Lookup as StaticLookup>::Source,
+	) -> DispatchResult;
+  ```
+
+* `mint_initialize_with_governance`
+
+  This extrinsic also now requires asset metadata. Its signature is as follows:
+
+  ```rust
+  pub fn mint_initialize_with_governance(
+		origin: OriginFor<T>,
+		protocol_id: [u8; 8],
+		nonce: u64,
+		name: Vec<u8>,
+		symbol: Vec<u8>,
+		decimals: u8,
+		ratio: Option<Rational64>,
+		amount: T::Balance,
+		governance_origin: <T::Lookup as StaticLookup>::Source,
+		dest: <T::Lookup as StaticLookup>::Source,
+	) -> DispatchResult
+  ```
+ 
 # Glossary
 
 * **Multi-Location** - A way to identify a single asset in the scope of multiple
