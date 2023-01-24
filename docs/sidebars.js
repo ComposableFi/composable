@@ -267,16 +267,17 @@ const sidebars = {
                     label: 'Transactions and Trading',
                     link: {
                         type: 'generated-index',
-                        slug: 'transactions and trading'
+                        slug: 'transactions-and-trading'
                     },
                     collapsible: true,
                     items: [
                         'user-guides/claim-rewards-guide',
+                        'user-guides/how-to-provide-liquidity',
                         `user-guides/transfer-usdt-statemine-picasso`,
-                        'user-guides/how-to-trade-pica-on-pablo',
-                    ]
+                    ],
                 },
-                'user-guides/polkassembly-picasso-governance'
+
+                'user-guides/polkassembly-picasso-governance',
             ]
         },
         {
