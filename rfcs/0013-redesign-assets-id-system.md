@@ -134,7 +134,7 @@ Therefore, implementing additional traits not found in orml-tokens on our
 routing layer is instead more ideal, especially since user balances are already 
 on chain.
 
-**Steps**:
+**Steps:**
 * Import & Declare orml-tokens
   * We must then declare two instances within our `construct_runtime!` macro.
 
@@ -152,7 +152,7 @@ To be responsible for registering both foreign and local assets, assets-registry
 will need access to the creation functionality of both instances of 
 pallet-assets.
 
-**Steps**:
+**Steps:**
 
 * Provide configuration item for asset creation to assets-registry
 
@@ -164,7 +164,7 @@ To accomplish this, minimal storage modifications will be required. The current
 pallet storage items do not need to be altered, but several new ones will need 
 to be created.
 
-**Steps**:
+**Steps:**
 
 * Add a nonce storage item that will be used for generating foreign asset IDs
 
@@ -179,34 +179,51 @@ assets.
 To enable this, instead of only passing a multi-location, we switch to an enum 
 of either multi-location or local ID.
 
-### Asset ID Creation
-
-To assist in the routing between both instances of pallet-assets, we can 
-dedicate the first 8 bytes to either a pallet ID or other information that 
-determines the source of the asset. The remaining 8 bytes of the asset ID can 
-be the nonce provided by the source.
-
-To create a hash from the nonce, `sp_core::hashing::blake2_64` can be used
-
-**Steps**:
-
-* Provide assets registry with either our previously described local asset ID
-or a multi-location
-
-* If assets registry receives a multi-location, hash the multilocation to create
-a new ID
-
 ## Create Assets Transactor Router (Assets Manager)
 
-Assets Manager will mostly be a migration of the current pallet-assets that we 
-created to route between pallet-balances and orml-tokens. The primary difference 
-being that assets-manager will also need to handle routing between our two 
-instances of orml-tokens as well as pallet-balances.
+Assets Manager will be a migration of the current pallet-assets that we created 
+to route between pallet-balances and orml-tokens. The primary difference being 
+that assets-manager will also need to handle routing between our two instances 
+of orml-tokens as well as pallet-balances.
 
 As stated in the design, we can depend on information provided by Assets 
 Registry to route between our two instances of pallet-assets. 
 
-**Steps**:
+**Dependency Graph of the New Assets System:**
+
+```mermaid
+classDiagram
+    AssetsTransactorRouter <|-- AssetsRegistry
+    AssetsTransactorRouter <|-- Balances
+    AssetsTransactorRouter <|-- LocalAssetsTransactor
+    AssetsTransactorRouter <|-- ForeignAssetsTransactor
+    AssetsTransactorRouter : frame_support.traits.tokens.fungible.*
+    AssetsTransactorRouter : .. .currency.*
+    AssetsTransactorRouter : .. .fungibles.*
+    AssetsTransactorRouter : orml_traits.currency.MultiCurrency*
+    class AssetsRegistry{
+      composable_traits.assets.AssetTypeInspect
+      .. .AssetRatioInspect
+      .. .MutateMetadata
+      .. .InspectRegistryMetadata
+      composable_traits.xcm.assets.RemoteAssetRegistryMutate
+      .. RemoteAssetRegistryInspect
+    }
+    class Balances{
+      frame_support.traits.tokens.currency.*
+      .. .fungible.*
+    }
+    class LocalAssetsTransactor{
+      orml_traits.currency.MultiCurrency*
+      frame_support.traits.tokens.fungibles.*
+    }
+    class ForeignAssetsTransactor{
+      orml_traits.currency.MultiCurrency*
+      frame_support.traits.tokens.fungibles.*
+    }
+```
+
+**Steps:**
 
 * Rename our `pallet-assets` to `pallet-assets-manager`
 
@@ -218,6 +235,23 @@ Registry to route between our two instances of pallet-assets.
 pallet-assets
 
 * Provide assets-manager as the XCM Asset Transactor
+
+### Asset ID Creation
+
+To assist in the routing between both instances of pallet-assets, we can 
+dedicate the first 8 bytes to either a pallet ID or other information that 
+determines the source of the asset. The remaining 8 bytes of the asset ID can 
+be the nonce provided by the source.
+
+To create a hash from the nonce, `sp_core::hashing::blake2_64` can be used
+
+**Steps:**
+
+* Provide assets registry with either our previously described local asset ID
+or a multi-location
+
+* If assets registry receives a multi-location, hash the multilocation to create
+a new ID
 
 ## Migrate Hard-Coded Assets
 
