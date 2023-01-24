@@ -68,7 +68,7 @@ In addition, the following activities are prohibited by this program:
 - Attacks requiring access to leaked keys/credentials
 - Attacks requiring access to privileged addresses (governance, strategist)
 - Any testing with pricing oracles or third party smart contracts
-- Attempting phishing or other social engineering attacks against our employees and/or customers
+- Attempting phishing or other social engineering attacks against our personnel and/or customers
 - Any testing with third party systems and applications (e.g. browser extensions) as well as websites (e.g. SSO 
   providers, advertising networks)
 - Any denial of service attacks
