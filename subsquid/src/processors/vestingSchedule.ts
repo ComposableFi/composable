@@ -134,7 +134,7 @@ export function updatedClaimedAmount(
   if (vestingSchedule.schedule.alreadyClaimed === vestingSchedule.totalAmount) {
     vestingSchedule.fullyClaimed = true;
   }
-  vestingSchedule.blockId = ctx.block.id;
+  vestingSchedule.blockId = ctx.block.hash;
 }
 
 /**

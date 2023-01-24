@@ -59,7 +59,7 @@ export async function getOrCreateAccount(
 
   account.id = accId;
   account.eventId = ctx.event.id;
-  account.blockId = ctx.block.id;
+  account.blockId = ctx.block.hash;
 
   await ctx.store.save(account);
 
@@ -336,7 +336,7 @@ export async function getSpotPrice(
       : await ctx.store.findOne(PabloPoolAsset, { where: baseWhere });
 
     const quoteWhere = {
-      assetId: baseAssetId,
+      assetId: quoteAssetId,
       pool: {
         id: poolId
       }

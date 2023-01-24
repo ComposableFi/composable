@@ -105,7 +105,7 @@ export function updateBondOffer(
   const { nbOfBonds } = getNewBondEvent(event);
 
   stored.totalPurchased += nbOfBonds;
-  stored.blockId = ctx.block.id;
+  stored.blockId = ctx.block.hash;
 }
 
 /**
@@ -143,7 +143,7 @@ export async function processNewBondEvent(ctx: EventHandlerContext<Store>): Prom
  */
 export function cancelBondOffer(ctx: EventHandlerContext<Store>, stored: BondedFinanceBondOffer): void {
   stored.cancelled = true;
-  stored.blockId = ctx.block.id;
+  stored.blockId = ctx.block.hash;
 }
 
 /**

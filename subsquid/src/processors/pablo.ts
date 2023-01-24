@@ -10,6 +10,7 @@ import {
 } from "../types/events";
 import {
   EventType,
+  HistoricalLockedValue,
   HistoricalVolume,
   LockedSource,
   PabloAssetWeight,
@@ -26,8 +27,7 @@ import {
   getOrCreatePabloAsset,
   saveAccountAndEvent,
   saveActivity,
-  saveEvent,
-  storeHistoricalLockedValue
+  saveEvent
 } from "../dbHelper";
 
 interface PoolCreatedEvent {
@@ -203,18 +203,30 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
   pool.timestamp = new Date(ctx.block.timestamp);
   pool.transactionCount += 1;
   pool.lpIssued += mintedLp;
-  pool.blockId = ctx.block.id;
+  pool.blockId = ctx.block.hash;
 
   // Update or create assets
   for (const [assetId, amount] of assetAmounts) {
     const asset = await getOrCreatePabloAsset(ctx, pool, assetId.toString());
 
     asset.totalLiquidity += amount;
-    asset.blockId = ctx.block.id;
+    asset.blockId = ctx.block.hash;
 
     await ctx.store.save(asset);
 
-    await storeHistoricalLockedValue(ctx, [[assetId.toString(), amount]], LockedSource.Pablo, pool.id);
+    const historicalLockedValue = new HistoricalLockedValue({
+      id: randomUUID(),
+      event,
+      amount,
+      accumulatedAmount: asset.totalLiquidity,
+      timestamp: new Date(ctx.block.timestamp),
+      source: LockedSource.Pablo,
+      assetId: assetId.toString(),
+      sourceEntityId: pool.id,
+      blockId: ctx.block.hash
+    });
+
+    await ctx.store.save(historicalLockedValue);
   }
 
   const pabloTransaction = new PabloTransaction({
@@ -255,18 +267,30 @@ export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Stor
   pool.eventId = ctx.event.id;
   pool.timestamp = new Date(ctx.block.timestamp);
   pool.transactionCount += 1;
-  pool.blockId = ctx.block.id;
+  pool.blockId = ctx.block.hash;
 
   // Update or create assets
   for (const [assetId, amount] of assetAmounts) {
     const asset = await getOrCreatePabloAsset(ctx, pool, assetId.toString());
 
     asset.totalLiquidity -= amount;
-    asset.blockId = ctx.block.id;
+    asset.blockId = ctx.block.hash;
 
     await ctx.store.save(asset);
 
-    await storeHistoricalLockedValue(ctx, [[assetId.toString(), -amount]], LockedSource.Pablo, pool.id);
+    const historicalLockedValue = new HistoricalLockedValue({
+      id: randomUUID(),
+      event,
+      amount: -amount,
+      accumulatedAmount: asset.totalLiquidity,
+      timestamp: new Date(ctx.block.timestamp),
+      source: LockedSource.Pablo,
+      assetId: assetId.toString(),
+      sourceEntityId: pool.id,
+      blockId: ctx.block.hash
+    });
+
+    await ctx.store.save(historicalLockedValue);
   }
 
   const pabloTransaction = new PabloTransaction({
@@ -313,7 +337,7 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
   pool.eventId = ctx.event.id;
   pool.timestamp = new Date(ctx.block.timestamp);
   pool.transactionCount += 1;
-  pool.blockId = ctx.block.id;
+  pool.blockId = ctx.block.hash;
 
   const baseAsset = await getOrCreatePabloAsset(ctx, pool, baseAssetId.toString());
 
@@ -321,25 +345,43 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
 
   baseAsset.totalVolume += baseAmount;
   baseAsset.totalLiquidity -= baseAmount;
-  baseAsset.blockId = ctx.block.id;
+  baseAsset.blockId = ctx.block.hash;
 
   await ctx.store.save(baseAsset);
 
+  const baseHistoricalLockedValue = new HistoricalLockedValue({
+    id: randomUUID(),
+    event,
+    amount: -baseAmount,
+    accumulatedAmount: baseAsset.totalLiquidity,
+    timestamp: new Date(ctx.block.timestamp),
+    source: LockedSource.Pablo,
+    assetId: baseAssetId.toString(),
+    sourceEntityId: pool.id,
+    blockId: ctx.block.hash
+  });
+
+  await ctx.store.save(baseHistoricalLockedValue);
+
   quoteAsset.totalVolume += quoteAmount;
   quoteAsset.totalLiquidity += quoteAmount;
-  quoteAsset.blockId = ctx.block.id;
+  quoteAsset.blockId = ctx.block.hash;
 
   await ctx.store.save(quoteAsset);
 
-  await storeHistoricalLockedValue(
-    ctx,
-    [
-      [baseAssetId.toString(), -baseAmount],
-      [quoteAssetId.toString(), quoteAmount]
-    ],
-    LockedSource.Pablo,
-    pool.id
-  );
+  const quoteHistoricalLockedValue = new HistoricalLockedValue({
+    id: randomUUID(),
+    event,
+    amount: quoteAmount,
+    accumulatedAmount: quoteAsset.totalLiquidity,
+    timestamp: new Date(ctx.block.timestamp),
+    source: LockedSource.Pablo,
+    assetId: quoteAssetId.toString(),
+    sourceEntityId: pool.id,
+    blockId: ctx.block.hash
+  });
+
+  await ctx.store.save(quoteHistoricalLockedValue);
 
   const pabloTransaction = new PabloTransaction({
     id: ctx.event.id,
