@@ -1642,6 +1642,8 @@ dependencies = [
  "pallet-assets",
  "pallet-crowdloan-rewards",
  "pallet-ibc",
+ "pallet-staking-rewards-rpc",
+ "pallet-staking-rewards-runtime-api",
  "pallet-transaction-payment-rpc 4.0.0-dev",
  "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev",
  "parity-scale-codec",
@@ -3252,6 +3254,7 @@ dependencies = [
  "pallet-scheduler",
  "pallet-session",
  "pallet-staking-rewards",
+ "pallet-staking-rewards-runtime-api",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment 4.0.0-dev",
@@ -9220,6 +9223,33 @@ dependencies = [
  "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+]
+
+[[package]]
+name = "pallet-staking-rewards-rpc"
+version = "1.0.0"
+dependencies = [
+ "composable-support",
+ "composable-traits",
+ "jsonrpsee 0.15.1",
+ "pallet-staking-rewards-runtime-api",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+]
+
+[[package]]
+name = "pallet-staking-rewards-runtime-api"
+version = "1.0.0"
+dependencies = [
+ "composable-support",
+ "composable-traits",
+ "parity-scale-codec",
+ "sp-api",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
 ]
 

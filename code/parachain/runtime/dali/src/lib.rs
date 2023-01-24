@@ -1598,6 +1598,18 @@ impl_runtime_apis! {
 		}
 	}
 
+	impl pallet_staking_rewards_runtime_api::StakingRewardsRuntimeApi<Block, CurrencyId, FinancialNftInstanceId, Balance> for Runtime {
+		fn get_claimable_amount(
+			fnft_collection_id: SafeRpcWrapper<CurrencyId>,
+			fnft_instance_id: SafeRpcWrapper<FinancialNftInstanceId>,
+		) -> BTreeMap<CurrencyId, Option<Balance>> {
+			StakingRewards::get_claimable_amount(
+				fnft_collection_id.0,
+				fnft_instance_id.0,
+			).unwrap_or(BTreeMap::new())
+		}
+	}
+
 	impl cosmwasm_runtime_api::CosmwasmRuntimeApi<Block, AccountId, CurrencyId, Balance, Vec<u8>> for Runtime {
 		fn query(
 			contract: AccountId,

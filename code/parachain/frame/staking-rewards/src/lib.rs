@@ -71,6 +71,7 @@ use frame_support::{
 	},
 	BoundedBTreeMap,
 };
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 use crate::prelude::*;
 
@@ -1827,4 +1828,27 @@ pub(crate) fn claim_of_stake<T: Config>(
 	};
 
 	Ok(claim)
+}
+
+impl<T: Config> Pallet<T> {
+	/// returns error if stake or rewardpool is not found
+	/// otherwise returns BTreeMap (key: reward_asset_id, val: Option<Balance>)
+	/// if claim_of_stake returns an error for a reward, then val is None
+	pub fn get_claimable_amount(
+		fnft_collection_id: <T as Config>::AssetId,
+		fnft_instance_id: <T as Config>::FinancialNftInstanceId,
+	) -> Result<BTreeMap<<T as Config>::AssetId, Option<<T as Config>::Balance>>, DispatchError> {
+
+		let mut stake = Stakes::<T>::try_get(fnft_collection_id, fnft_instance_id)
+					.map_err(|_| pallet::Error::<T>::StakeNotFound)?;
+
+		let mut rewards_pool = RewardPools::<T>::try_get(stake.reward_pool_id)
+					.map_err(|_| pallet::Error::<T>::RewardsPoolNotFound)?;
+
+		let mut res: BTreeMap<<T as Config>::AssetId, Option<<T as Config>::Balance>> = BTreeMap::new();
+		for (reward_asset_id, reward) in &rewards_pool.rewards {
+			res.insert(*reward_asset_id, claim_of_stake::<T>(&stake, &rewards_pool.share_asset_id, &reward, &reward_asset_id).ok());
+		}
+		Ok(res)
+	}
 }

@@ -37,6 +37,8 @@ lending-rpc = { path = "../frame/lending/rpc" }
 lending-runtime-api = { path = "../frame/lending/runtime-api" }
 pablo-rpc = { path = "../frame/pablo/rpc" }
 pablo-runtime-api = { path = "../frame/pablo/runtime-api" }
+pallet-staking-rewards-rpc = { path = "../frame/staking-rewards/rpc" }
+pallet-staking-rewards-runtime-api = { path = "../frame/staking-rewards/runtime-api" }
 pallet-transaction-payment-rpc = { path = "../frame/transaction-payment/rpc" }
 pallet-transaction-payment-rpc-runtime-api = { path = "../frame/transaction-payment/rpc/runtime-api" }
 

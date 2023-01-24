@@ -6,6 +6,7 @@ use cumulus_primitives_core::CollectCollationInfo;
 use ibc_rpc::{IbcApiServer, IbcRpcHandler};
 use lending_rpc::{Lending, LendingApiServer};
 use pablo_rpc::{Pablo, PabloApiServer};
+use pallet_staking_rewards_rpc::{StakingRewards, StakingRewardsApiServer};
 use pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi;
 use sp_api::{ApiExt, Metadata, StateBackend};
 use sp_block_builder::BlockBuilder;
