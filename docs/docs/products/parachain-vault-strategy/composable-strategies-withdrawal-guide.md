@@ -1,10 +1,14 @@
 # Composable Strategies Withdrawal Process
 
+:::info
+
 Composable Strategies has officially been deprecated, 
 and the front-end and its peripheral services have been taken offline in 2023. 
 All funds remain safe within their respective Ethereum smart contract vaults and can still be manually withdrawn
 via Etherscan by the account holders by following the guide on this page. 
 Additionally, if you need further assistance, feel free to contact our community managers on Discord.
+
+:::
 
 GENERIC WITHDRAW of **TOKEN  ( = DAI, USDC, USDT)**
 
@@ -71,7 +75,7 @@ In the second field called path (address[]) you need to enter the first the addr
 
 ![ethPerFarm_getAmountsOut](images-composable-strategies-withdrawal-guide/ethPerFarm-getAmountsOut.png)
 
-The second value after comma is the input value for field 5.b
+The value after the decimal point is the input value for field 5.b
 
 5. c) To get the tokensPerEth
 
@@ -83,7 +87,7 @@ In the second field called path (address[]) you need to enter the first the cont
 
 ![tokensPerEth_getAmountsOut](images-composable-strategies-withdrawal-guide/tokensPerEth-getAmountsOut.png)
 
-The second value after comma is the input value for field 5.c
+The value after the decimal point is the input value for field 5.c
 With all the above data filled in just press WRITE and be sign with Metmask wallet.  
 
 Be careful we do recommend to set Gas limit to at least 1.5 mil as this is going to be a complex Tx.
@@ -91,7 +95,11 @@ Check to have enough funds to execute it.
 
 ![confirm_transaction](images-composable-strategies-withdrawal-guide/confirm-transaction.png)
 
-*** NOTE if your metmask displays the message seen in the image below
+:::danger
+
+If your metmask displays the message seen in the image below
 You need to check all the above data as some input data is wrong and tx will fail automatically. 
+
+:::
 
 ![troubleshoot_transaction](images-composable-strategies-withdrawal-guide/troubleshoot-transaction.png)
