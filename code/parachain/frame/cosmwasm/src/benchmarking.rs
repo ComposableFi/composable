@@ -238,7 +238,7 @@ where
 		"message".as_bytes(),
 	)
 	.unwrap()
-	.call(get_shared_vm(), Default::default(), b"message".to_vec().try_into().unwrap())
+	.top_level_call(get_shared_vm(), Default::default(), b"message".to_vec().try_into().unwrap())
 	.unwrap();
 
 	contract_addr
@@ -550,7 +550,7 @@ benchmarks! {
 		let signature = ED25519_SIGNATURE.as_slice();
 		let public_key = ED25519_PUBLIC_KEY.as_slice();
 	}: {
-		Cosmwasm::<T>::do_ed25519_verify(&message, &signature, &public_key)
+		Cosmwasm::<T>::do_ed25519_verify(message, signature, public_key)
 	}
 
 	ed25519_batch_verify {
@@ -602,7 +602,7 @@ benchmarks! {
 	continue_reply {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_continue_reply(&mut vm.0, Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {}).unwrap();
 	}
