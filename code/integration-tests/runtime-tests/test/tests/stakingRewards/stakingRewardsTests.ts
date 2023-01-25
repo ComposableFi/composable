@@ -35,6 +35,68 @@ import BigNumber from "bignumber.js";
 
 /**
  * Staking Rewards Pallet Tests
+ *
+ * Index:
+ *
+ * before:
+ * - Variable setup
+ * - Registering asset IDs in currency factory
+ * - Minting assets
+ *
+ * Tests:
+ * 1.1 I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with a single reward asset.
+ * 1.2 I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with multiple reward assets.
+ * 1.3 I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with a single duration preset.
+ * 1.6 I can, as sudo, create a new Stakign Rewards pool for any arbitrary asset ID with zero time locks.
+ * 1.7 I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with zero penalty locks.
+ *
+ * 2.1 I can, as pool owner, add rewardsto staking rewards pool pot #1.1.
+ * 2.2 Any user can add all reward assets to another stakign rewards pool with multiple reward pots #1.2.
+ * 2.3 Any user can add rewards to multiple staking pool at once
+ *
+ * 3.1 I can stake in the newly created rewards pool #1.1.
+ *
+ * 4.1 I can claim from the arbitrary asset pool created in #1.1 using the stake from #3.1 during the lock period.
+ * // ToDo: Lock Period!
+ *
+ * 3.2 Another user can stake in the newly created rewards pool #1.1.
+ * 3.3 I can stake in the newly created rewards pool #1.2.
+ * 3.4 I can stake in the newly preconfigured PICA pool.
+ * // ToDo: on-chain pool rewards configuration.
+ * 3.5 I can stake in the preconfigured PBLO pool.
+ * // ToDo: on-chain pool rewards configuration.
+ * 3.6 I can stake in the newly created LP token pool #1.5.
+ * 3.7 I can stake in the newly created pool #1.6 with 0 time locks.
+ *
+ * 4.2 I can claim from the arbitrary asset pool #1.1 using the stake from #3.2 during the lock period.
+ * 4.3 I can claim from the arbitrary asset pool #1.2 using the stake from #3.3 after the lock period has ended.
+ * 4.4 I can claim from the PICA pool using my stake from #3.34 after the lock period has ended.
+ * // ToDo: on-chain pool rewards configuration.
+ * 4.5 I can claim from the PBLO pool using my stake from #3.5 after the lock period has ended.
+ * // ToDo: on-chain pool rewards configuration.
+ * 4.6 I can claim from the LP token pool using my stake from #3.6 after the lock period has ended.
+ * // ToDo: on-chain LP token reward pools.
+ * 4.7 I can claim from the 0 time lock pool using my stake from #3.7
+ * 4.8 I can claim from the 0 unlock penalty pool using my stake from #3.8.
+ *
+ * 5.1 I can extend the stake amount in pool #1.1 using the stake from #3.3
+ * 5.2 I can extend the lock time in pool #1.1 using the stake from #3.1.
+ *
+ * 6.1 I can split my staking position into 2 seperate positions.
+ * 6.2 I can split my already split position again.
+ *
+ * 7.1 I can unstake my staking position before my lock period has ended and get slashed.
+ * 7.2  I can unstake my staking position after the lock period has ended without getting slashed.
+ * 7.3 I can unstake my staking position from the PICA pool after the lock period has ended.
+ * // ToDo: on-chain pool configuration.
+ * 7.4 I can unstake my staking position from the PBLO pool after the lock period has ended.
+ * // ToDo: on-chain pool configuration.
+ * 7.5 I can unstake my staking position from the LP token pool after the lock period has ended.
+ * // ToDo; on-chain LP token reward pool.
+ * 7.6 I can unstake my staking position from the 0 time lock pool w/o getting slashed.
+ * 7.7 I can unstake my position from the 0 unlock penalty pool w/o getting slashed.
+ * 7.8 I can unstake all split positions.
+ *
  */
 describe("tx.stakingRewards Tests", function() {
   if (!testConfiguration.enabledTests.query.enabled) return;
@@ -349,7 +411,6 @@ describe("tx.stakingRewards Tests", function() {
         stakingPoolId1,
         resultOwner,
         walletPoolOwner.publicKey,
-        [api.createType("u128", POOL_11_REWARD_ASSET_ID)],
         startBlock,
         endBlock,
         api.createType("u128", shareAssetId),
@@ -360,6 +421,7 @@ describe("tx.stakingRewards Tests", function() {
 
     it("1.2  I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with multiple reward assets.", async function() {
       this.timeout(2 * 60 * 1000);
+
       // Parameters
       const currentBlockNumber = await api.query.system.number();
       const startBlock = api.createType("u32", currentBlockNumber.addn(4));
@@ -441,11 +503,6 @@ describe("tx.stakingRewards Tests", function() {
         stakingPoolId2,
         resultOwner,
         walletPoolOwner.publicKey,
-        [
-          api.createType("u128", POOL_12_REWARD_ASSET_ID_3),
-          api.createType("u128", POOL_12_REWARD_ASSET_ID_2),
-          api.createType("u128", POOL_13_REWARD_ASSET_ID)
-        ],
         startBlock,
         endBlock,
         api.createType("u128", shareAssetId),
@@ -523,7 +580,6 @@ describe("tx.stakingRewards Tests", function() {
         stakingPoolId3,
         resultOwner,
         walletPoolOwner.publicKey,
-        [api.createType("u128", POOL_13_REWARD_ASSET_ID)],
         startBlock,
         endBlock,
         api.createType("u128", shareAssetId),
@@ -598,7 +654,6 @@ describe("tx.stakingRewards Tests", function() {
         stakingPoolId6,
         resultOwner,
         walletPoolOwner.publicKey,
-        [api.createType("u128", POOL_16_REWARD_ASSET_ID)],
         startBlock,
         endBlock,
         api.createType("u128", shareAssetId),
@@ -669,7 +724,6 @@ describe("tx.stakingRewards Tests", function() {
         stakingPoolId7,
         resultOwner,
         walletPoolOwner.publicKey,
-        [api.createType("u128", POOL_17_REWARD_ASSET_ID)],
         startBlock,
         endBlock,
         api.createType("u128", shareAssetId),

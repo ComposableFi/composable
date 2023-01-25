@@ -18,7 +18,6 @@ export async function verifyPoolCreationUsingQuery(
   stakingPoolId: u128,
   resultOwner: AccountId32,
   walletPoolOwner: Uint8Array,
-  rewardAssetIDs: u128[],
   startBlock: u32,
   endBlock: u32,
   shareAssetId: u128,
