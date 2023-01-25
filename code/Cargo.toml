@@ -42,9 +42,9 @@ members = [
   "parachain/runtime/composable",
   "parachain/runtime/composable-wasm",
   "utils/common",
-  "utils/price-feed",
+  # "utils/price-feed",
   "utils/collator-sidecar",
-  "utils/composable-subxt",
+  # "utils/composable-subxt",
   # TODO(hussein): do we completely remove this?
   # "simnode/simnode-tests",
   # "simnode/common",

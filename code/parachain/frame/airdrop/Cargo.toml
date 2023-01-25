@@ -57,7 +57,7 @@ multihash = { version = "0.16.2", default-features = false, features = [
   "sha2",
   "sha3",
 ] }
-p256 = { version = "0.12", default-features = false, features = [
+p256 = { version = "0.11", default-features = false, features = [
   "ecdsa",
   "ecdsa-core",
 ] }
@@ -82,6 +82,7 @@ std = [
   "sp-arithmetic/std",
   "scale-info/std",
   "serde/std",
+  "frame-benchmarking/std",
 ]
 
 runtime-benchmarks = [
