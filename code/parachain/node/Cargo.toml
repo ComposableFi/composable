@@ -129,6 +129,7 @@ dali = ["dali-runtime"]
 default = []
 ocw = []
 runtime-benchmarks = [
+  "polkadot-cli/runtime-benchmarks",
   "polkadot-service/runtime-benchmarks",
   "picasso-runtime/runtime-benchmarks",
   "composable-runtime/runtime-benchmarks",
