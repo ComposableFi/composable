@@ -40,8 +40,8 @@ pablo-runtime-api = { path = "../frame/pablo/runtime-api" }
 pallet-transaction-payment-rpc = { path = "../frame/transaction-payment/rpc" }
 pallet-transaction-payment-rpc-runtime-api = { path = "../frame/transaction-payment/rpc/runtime-api" }
 
-ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev = "6989e572f961f43ad0e68da066daabb238bbbcb0" }
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "6989e572f961f43ad0e68da066daabb238bbbcb0" }
+ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev = "8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2" }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2" }
 
 # FRAME Dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
