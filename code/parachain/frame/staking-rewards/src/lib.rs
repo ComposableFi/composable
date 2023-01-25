@@ -1,4 +1,5 @@
 //! Implements staking rewards protocol.
+// #![cfg_attr(not(feature = "std"), target_arch = "wasm32")] // ideally
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(
 	not(test),
@@ -33,10 +34,13 @@
 	clippy::disallowed_types
 )]
 
-#[cfg(any(
-	test,
-	all(not(feature = "std"), feature = "runtime-benchmarks", target_family = "wasm")
-))]
+// TODO(benluelo): This is how we should feature gate benchmarks, doesn't work right now though
+// unfortunately
+// #[cfg(any(
+// 	test,
+// 	all(not(feature = "std"), feature = "runtime-benchmarks", target_family = "wasm")
+// ))]
+#[cfg(any(test, feature = "runtime-benchmarks"))]
 mod benchmarking;
 
 #[cfg(test)]
