@@ -335,7 +335,7 @@ impl multisig::Config for Runtime {
 	type DepositFactor = DepositFactor;
 	type RuntimeEvent = RuntimeEvent;
 	type MaxSignatories = MaxSignatories;
-	type WeightInfo = weights::multisig::WeightInfo<Runtime>;
+	type WeightInfo = multisig::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -598,6 +598,18 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 	}
 }
 
+pub struct CurrencyHooks;
+impl orml_traits::currency::MutationHooks<AccountId, CurrencyId, Balance> for CurrencyHooks {
+	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
+	type OnSlash = ();
+	type PreDeposit = ();
+	type PostDeposit = ();
+	type PreTransfer = ();
+	type PostTransfer = ();
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
+}
+
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -606,16 +618,11 @@ impl orml_tokens::Config for Runtime {
 	type CurrencyId = CurrencyId;
 	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
 	type ExistentialDeposits = MultiExistentialDeposits;
-	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
-	type OnSlash = ();
-	type OnTransfer = ();
-	type OnDeposit = ();
+	type CurrencyHooks = CurrencyHooks;
 }
 
 parameter_types! {
@@ -634,13 +641,11 @@ impl scheduler::Config for Runtime {
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type PreimageProvider = Preimage;
-	type NoPreimagePostponement = NoPreimagePostponement;
-	type WeightInfo = weights::scheduler::WeightInfo<Runtime>;
+	type Preimages = Preimage;
+	type WeightInfo = scheduler::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
-	pub const PreimageMaxSize: u32 = 4096 * 1024;
 	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
 }
 
@@ -649,7 +654,6 @@ impl preimage::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRoot<AccountId>;
-	type MaxSize = PreimageMaxSize;
 	type BaseDeposit = PreimageBaseDeposit;
 	type ByteDeposit = PreimageByteDeposit;
 }

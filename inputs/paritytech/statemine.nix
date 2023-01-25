@@ -3,7 +3,7 @@
     , systemCommonRust, ... }: {
       packages = {
         statemine-node = let
-          branch = "polkadot-v0.9.30";
+          branch = "polkadot-v0.9.33";
           paritytech-cumulus = pkgs.fetchFromGitHub {
             repo = "cumulus";
             owner = "paritytech";
@@ -12,7 +12,7 @@
           };
         in pkgs.stdenv.mkDerivation (rec {
           name = "cumulus-v${version}";
-          version = "0.9.30";
+          version = "0.9.33";
           pname = "polkadot-parachain";
           src = paritytech-cumulus;
           doCheck = false;

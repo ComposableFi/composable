@@ -2,7 +2,7 @@
 pub mod balances;
 pub mod collator_selection;
 pub mod collective;
-pub mod democracy;
+// pub mod democracy;
 pub mod frame_system;
 pub mod indices;
 pub mod membership;

@@ -89,7 +89,7 @@ impl<T: Ord, S: Get<u32>> TryFrom<BoundedSortedVec<T, S>> for BoundedVec<T, S> {
 
 	#[inline]
 	fn try_from(x: BoundedSortedVec<T, S>) -> Result<Self, Self::Error> {
-		BoundedVec::try_from(x.0.into_inner())
+		BoundedVec::try_from(x.0.into_inner()).map_err(|_| ())
 	}
 }
 
