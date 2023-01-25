@@ -1,4 +1,5 @@
 //! Implements staking rewards protocol.
+// #![cfg_attr(not(feature = "std"), target_arch = "wasm32")] // ideally
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(
 	not(test),
@@ -33,6 +34,12 @@
 	clippy::disallowed_types
 )]
 
+// TODO(benluelo): This is how we should feature gate benchmarks, doesn't work right now though
+// unfortunately
+// #[cfg(any(
+// 	test,
+// 	all(not(feature = "std"), feature = "runtime-benchmarks", target_family = "wasm")
+// ))]
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 mod benchmarking;
 
@@ -648,7 +655,10 @@ pub mod pallet {
 						Error::<T>::RewardsPoolAlreadyExists
 					);
 
-					ensure!(lock.duration_presets.len() > 0, Error::<T>::NoDurationPresetsProvided);
+					ensure!(
+						lock.duration_multipliers.has_at_least_one_valid_duration(),
+						Error::<T>::NoDurationPresetsProvided
+					);
 
 					let now_seconds = T::UnixTime::now().as_secs();
 
@@ -857,8 +867,8 @@ pub mod pallet {
 					// creation.
 					let reward_multiplier = rewards_pool
 						.lock
-						.duration_presets
-						.get(&stake.lock.duration)
+						.duration_multipliers
+						.multiplier(stake.lock.duration)
 						.copied()
 						.defensive_unwrap_or_else(|| {
 							FixedU64::one().try_into_validated().expect("1 is >= 1")
@@ -1326,7 +1336,7 @@ pub mod pallet {
 			rewards_pool: &RewardPoolOf<T>,
 			duration_preset: DurationSeconds,
 		) -> Option<Validated<FixedU64, GeOne>> {
-			rewards_pool.lock.duration_presets.get(&duration_preset).cloned()
+			rewards_pool.lock.duration_multipliers.multiplier(duration_preset).cloned()
 		}
 
 		pub(crate) fn boosted_amount(

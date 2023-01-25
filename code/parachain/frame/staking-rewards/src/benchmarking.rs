@@ -7,7 +7,9 @@ use composable_tests_helpers::test::helper::RuntimeTrait;
 // use composable_tests_helpers::test::helper::assert_extrinsic_event_with;
 use composable_traits::{
 	staking::{
-		lock::LockConfig, RewardConfig, RewardPoolConfiguration::RewardRateBasedIncentive,
+		lock::{DurationMultipliers, LockConfig},
+		RewardConfig,
+		RewardPoolConfiguration::RewardRateBasedIncentive,
 		RewardRate, RewardUpdate,
 	},
 	time::{ONE_HOUR, ONE_MINUTE},
@@ -49,13 +51,20 @@ fn get_reward_pool<T: Config>(
 
 fn lock_config<T: Config>() -> LockConfig<T::MaxStakingDurationPresets> {
 	LockConfig {
-		duration_presets: [
-			(ONE_HOUR, FixedU64::from_rational(101, 100).try_into_validated().expect(">= 1")), /* 1% */
-			(ONE_MINUTE, FixedU64::from_rational(1_001, 1_000).try_into_validated().expect(">= 1")), /* 0.1% */
-		]
-		.into_iter()
-		.try_collect()
-		.unwrap(),
+		duration_multipliers: DurationMultipliers::Presets(
+			[
+				// 1%
+				(ONE_HOUR, FixedU64::from_rational(101, 100).try_into_validated().expect(">= 1")),
+				// 0.1%
+				(
+					ONE_MINUTE,
+					FixedU64::from_rational(1_001, 1_000).try_into_validated().expect(">= 1"),
+				),
+			]
+			.into_iter()
+			.try_collect()
+			.unwrap(),
+		),
 		unlock_penalty: Perbill::from_percent(5),
 	}
 }

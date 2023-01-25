@@ -71,5 +71,5 @@ runtime-benchmarks = [
   "frame-system/runtime-benchmarks",
   "frame-support/runtime-benchmarks",
   "frame-benchmarking",
-  "composable-tests-helpers",
+  "composable-tests-helpers/runtime-benchmarks",
 ]
