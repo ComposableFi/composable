@@ -1,6 +1,6 @@
 use super::abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas};
 use crate::{runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Config, Pallet};
-use alloc::string::String;
+use alloc::{borrow::ToOwned, string::String};
 use cosmwasm_vm::{
 	cosmwasm_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo},
 	executor::ExecutorError,
@@ -490,7 +490,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 
 	fn addr_validate(&mut self, input: &str) -> Result<Result<(), Self::Error>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "addr_validate");
-		match Pallet::<T>::do_addr_validate(input.into()) {
+		match Pallet::<T>::do_addr_validate(input.to_owned()) {
 			Ok(_) => Ok(Ok(())),
 			Err(e) => Ok(Err(e)),
 		}
@@ -501,7 +501,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		input: &str,
 	) -> Result<Result<Self::CanonicalAddress, Self::Error>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "addr_canonicalize");
-		let account = match Pallet::<T>::do_addr_canonicalize(input.into()) {
+		let account = match Pallet::<T>::do_addr_canonicalize(input.to_owned()) {
 			Ok(account) => account,
 			Err(e) => return Ok(Err(e)),
 		};
