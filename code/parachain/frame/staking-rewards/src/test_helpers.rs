@@ -462,16 +462,6 @@ pub fn split_and_assert<Runtime>(
 ) -> FinancialNftInstanceIdOf<Runtime>
 where
 	Runtime: crate::Config + RuntimeTrait<crate::Event<Runtime>>,
-	<Runtime as frame_system::Config>::RuntimeEvent: Parameter
-		+ Member
-		+ Debug
-		+ Clone
-		+ TryInto<crate::Event<Runtime>>
-		+ From<crate::Event<Runtime>>,
-	<<Runtime as frame_system::Config>::RuntimeEvent as TryInto<crate::Event<Runtime>>>::Error:
-		Debug,
-	<Runtime as frame_system::Config>::RuntimeOrigin:
-		OriginTrait<AccountId = <Runtime as frame_system::Config>::AccountId>,
 {
 	let existing_stake_before_split =
 		Stakes::<Runtime>::get(fnft_collection_id, fnft_instance_id).unwrap();
@@ -698,5 +688,145 @@ pub(crate) fn create_rewards_pool_and_assert<Runtime>(
 			// TODO(benluelo): Add storage checks/ assertions
 		),
 		_ => unimplemented!("unimplemented pool configuration"),
+	}
+}
+
+pub fn claim_and_assert<Runtime>(
+	owner: AccountIdOf<Runtime>,
+	fnft_collection_id: AssetIdOf<Runtime>,
+	fnft_instance_id: FinancialNftInstanceIdOf<Runtime>,
+) where
+	Runtime: crate::Config + RuntimeTrait<crate::Event<Runtime>>,
+{
+	let position_before_claim =
+		Stakes::<Runtime>::get(fnft_collection_id, fnft_instance_id).unwrap();
+
+	// let owner_staked_asset_balance_before_claim =
+	// 	Runtime::Assets::balance(position_before_claim.reward_pool_id, &owner);
+
+	let rewards_pool = Pallet::<Runtime>::pools(position_before_claim.reward_pool_id)
+		.expect("rewards_pool expected");
+
+	let pool_account_rewards_balances_before_claim = rewards_pool
+		.rewards
+		.clone()
+		.into_iter()
+		.map(|(reward_asset_id, _)| {
+			(
+				reward_asset_id,
+				Runtime::Assets::balance(
+					reward_asset_id,
+					&Pallet::<Runtime>::pool_account_id(&position_before_claim.reward_pool_id),
+				),
+			)
+		})
+		.collect::<BTreeMap<_, _>>();
+
+	let owner_rewards_balances_before_claim = rewards_pool
+		.rewards
+		.clone()
+		.into_iter()
+		.map(|(reward_asset_id, _)| {
+			(reward_asset_id, Runtime::Assets::balance(reward_asset_id, &owner))
+		})
+		.collect::<BTreeMap<_, _>>();
+
+	let expected_claims = rewards_pool
+		.rewards
+		.clone()
+		.into_iter()
+		.map(|(reward_asset_id, _)| {
+			(
+				reward_asset_id,
+				claim_of_stake::<Runtime>(
+					&position_before_claim,
+					&rewards_pool.share_asset_id,
+					&rewards_pool.rewards[&reward_asset_id],
+					&reward_asset_id,
+				)
+				.unwrap(),
+			)
+		})
+		.collect::<BTreeMap<_, _>>();
+
+	Runtime::assert_extrinsic_event_with(
+		Pallet::<Runtime>::claim(
+			OriginFor::<Runtime>::signed(owner.clone()),
+			fnft_collection_id,
+			fnft_instance_id,
+		),
+		|event| match event {
+			crate::Event::Claimed {
+				owner: event_owner,
+				fnft_collection_id: event_fnft_collection_id,
+				fnft_instance_id: event_fnft_instance_id,
+			} => {
+				assert_eq!(
+					fnft_collection_id, event_fnft_collection_id,
+					"event should emit the provided fnft collection id"
+				);
+				assert_eq!(
+					fnft_instance_id, event_fnft_instance_id,
+					"event should emit the provided fnft instance id"
+				);
+
+				assert_eq!(
+					owner, event_owner,
+					"event owner should be the owner of the position that was d"
+				);
+
+				Some(())
+			},
+			_ => None,
+		},
+	);
+
+	// consistency check
+	assert_eq!(
+		position_before_claim.reductions.keys().collect::<BTreeSet<_>>(),
+		rewards_pool.rewards.keys().collect::<BTreeSet<_>>()
+	);
+
+	// assert that every reward asset is rewarded as expected
+	for (reward_asset_id, reward) in &rewards_pool.rewards {
+		// do this before unstaking
+		let expected_claim = expected_claims[reward_asset_id];
+
+		// Check pool account's balance
+		assert_eq!(
+			Runtime::Assets::balance(
+				*reward_asset_id,
+				&Pallet::<Runtime>::pool_account_id(&position_before_claim.reward_pool_id)
+			),
+			pool_account_rewards_balances_before_claim[reward_asset_id].sub(expected_claim),
+			r#"
+pool account's reward asset balance after unstaking was not as expected.
+staked asset id: {staked_asset:?}
+fnft instance id: {fnft_instance_id:?}
+reward asset id: {reward_asset_id:?}
+expected claim: {expected_claim:?}
+"#,
+			staked_asset = position_before_claim.reward_pool_id,
+		);
+
+		// everything past this point is checked/ accounted for when checking the staked asset; see
+		// comment above for more information
+		if reward_asset_id == &position_before_claim.reward_pool_id {
+			continue
+		}
+
+		// Check owner's balance
+		assert_eq!(
+			Runtime::Assets::balance(*reward_asset_id, &owner),
+			owner_rewards_balances_before_claim[reward_asset_id].add(expected_claim),
+			r#"
+owner's reward asset balance after unstaking was not as expected.
+staked asset id: {staked_asset:?}
+fnft instance id: {fnft_instance_id:?}
+reward asset id: {reward_asset_id:?}
+expected claim amount: {expected_claim:?}
+"#,
+			staked_asset = position_before_claim.reward_pool_id,
+		);
 	}
 }

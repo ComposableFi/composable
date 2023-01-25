@@ -8,8 +8,8 @@ use crate::{
 	runtime::*,
 	test::prelude::{MINIMUM_STAKING_AMOUNT, STAKING_FNFT_COLLECTION_ID},
 	test_helpers::{
-		add_to_rewards_pot_and_assert, create_rewards_pool_and_assert, split_and_assert,
-		stake_and_assert, unstake_and_assert,
+		add_to_rewards_pot_and_assert, claim_and_assert, create_rewards_pool_and_assert,
+		split_and_assert, stake_and_assert, unstake_and_assert,
 	},
 	FinancialNftInstanceIdOf, Pallet, RewardPoolConfigurationOf, RewardPools, Stakes,
 };
@@ -34,7 +34,7 @@ use composable_traits::{
 use frame_support::{
 	assert_err, assert_noop, assert_ok, bounded_btree_map,
 	traits::{
-		fungibles::{Inspect, Mutate},
+		fungibles::{Inspect, InspectHold, Mutate},
 		tokens::nonfungibles::InspectEnumerable,
 		TryCollect,
 	},
@@ -2137,12 +2137,37 @@ fn pbl_295() {
 
 		next_block::<StakingRewards, Test>();
 
+		fn pot_balance() {
+			let pot_account = crate::Pallet::<Test>::pool_account_id(&PICA::ID);
+
+			let balance_on_hold =
+				<Test as crate::Config>::Assets::balance_on_hold(USDT::ID, &pot_account);
+			let balance = <Test as crate::Config>::Assets::balance(USDT::ID, &pot_account);
+
+			tracing::warn!(?balance);
+			tracing::warn!(?balance_on_hold);
+			tracing::warn!(available_balance = ?balance - balance_on_hold);
+		}
+
+		fn claimable_amount(fnft_id: u64) {
+			let pool = RewardPools::<Test>::get(PICA::ID).unwrap();
+
+			let amount = claim_of_stake::<Test>(
+				&Stakes::<Test>::get(STAKING_FNFT_COLLECTION_ID, fnft_id).unwrap(),
+				&pool.share_asset_id,
+				&pool.rewards[&USDT::ID],
+				&USDT::ID,
+			);
+
+			tracing::warn!(fnft_id, ?amount);
+		}
+
 		create_rewards_pool_and_assert::<Test>(RewardRateBasedIncentive {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 3,
 			reward_configs: bounded_btree_map! {
-				USDT::ID => RewardConfig { reward_rate: RewardRate::per_second(PICA::units(1)) }
+				USDT::ID => RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1) / 1_000) }
 			},
 			lock: LockConfig {
 				duration_multipliers: bounded_btree_map! {
@@ -2160,13 +2185,8 @@ fn pbl_295() {
 		});
 
 		mint_assets([BOB], [USDT::ID], USDT::units(100_000_000_001));
-		add_to_rewards_pot_and_assert::<Test>(
-			BOB,
-			PICA::ID,
-			USDT::ID,
-			USDT::units(100_000_000_000),
-			false,
-		);
+		add_to_rewards_pot_and_assert::<Test>(BOB, PICA::ID, USDT::ID, USDT::units(1), false);
+		pot_balance();
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
@@ -2175,23 +2195,28 @@ fn pbl_295() {
 		process_and_progress_blocks::<StakingRewards, Test>(10);
 
 		mint_assets([CHARLIE], [PICA::ID], PICA::units(1_001));
-		let charlie_id = stake_and_assert::<Test>(CHARLIE, PICA::ID, PICA::units(1_000), 0);
+		// let charlie_id_first_stake_in_pool =
+		// 	stake_and_assert::<Test>(CHARLIE, PICA::ID, PICA::units(1) / 100_000, 0);
+		let charlie_id = stake_and_assert::<Test>(CHARLIE, PICA::ID, PICA::units(1) / 100_000, 0);
 		mint_assets([DAVE], [PICA::ID], PICA::units(1_001));
-		let dave_id = stake_and_assert::<Test>(DAVE, PICA::ID, PICA::units(1_000), 0);
+		let dave_id = stake_and_assert::<Test>(DAVE, PICA::ID, PICA::units(1) / 100_000, 0);
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
 		StakingRewards::claim(RuntimeOrigin::signed(DAVE), STAKING_FNFT_COLLECTION_ID, dave_id)
 			.unwrap();
+		pot_balance();
+
+		claimable_amount(charlie_id);
+		claimable_amount(dave_id);
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		StakingRewards::claim(
-			RuntimeOrigin::signed(CHARLIE),
-			STAKING_FNFT_COLLECTION_ID,
-			charlie_id,
-		)
-		.unwrap();
+		claim_and_assert::<Test>(CHARLIE, STAKING_FNFT_COLLECTION_ID, charlie_id);
+		pot_balance();
+
+		claimable_amount(charlie_id);
+		claimable_amount(dave_id);
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
@@ -2202,18 +2227,33 @@ fn pbl_295() {
 			Permill::from_percent(50).try_into_validated().unwrap(),
 		);
 
+		// let dave_new = split_and_assert::<Test>(
+		// 	DAVE,
+		// 	STAKING_FNFT_COLLECTION_ID,
+		// 	dave_id,
+		// 	Permill::from_percent(50).try_into_validated().unwrap(),
+		// );
+
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
 		unstake_and_assert::<Test>(DAVE, STAKING_FNFT_COLLECTION_ID, dave_id, false);
+		pot_balance();
+
+		claimable_amount(charlie_id);
+		claimable_amount(charlie_new);
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		StakingRewards::claim(
-			RuntimeOrigin::signed(CHARLIE),
-			STAKING_FNFT_COLLECTION_ID,
-			charlie_id,
-		)
-		.unwrap();
+		claim_and_assert::<Test>(CHARLIE, STAKING_FNFT_COLLECTION_ID, charlie_id);
+		pot_balance();
+
+		claimable_amount(charlie_id);
+		claimable_amount(charlie_new);
+
+		// process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		// claim_and_assert::<Test>(CHARLIE, STAKING_FNFT_COLLECTION_ID, charlie_id);
+		// pot_balance();
 	})
 }
 #[test]

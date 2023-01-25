@@ -23,7 +23,7 @@ pub(crate) fn init_logger() {
 	// tracing_subscriber::filter::LevelFilter
 	let subscriber = Registry::default().with(HierarchicalLayer::new(2));
 
-	let filter = LevelFilter::INFO;
+	let filter = LevelFilter::DEBUG;
 
 	let subscriber = filter.with_subscriber(subscriber);
 

@@ -789,6 +789,8 @@ pub mod pallet {
 			let fnft_account =
 				T::FinancialNft::asset_account(&fnft_collection_id, &fnft_instance_id);
 
+			tracing::debug!(reductions = ?&reductions);
+
 			let new_position = StakeOf::<T> {
 				reward_pool_id: *pool_id,
 				stake: amount,
@@ -943,16 +945,14 @@ pub mod pallet {
 			let is_early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
 				T::UnixTime::now().as_secs();
 
-			// TODO(benluelo): No need to return the staked asset id here, it's the same as
-			// stake.reward_pool_id
-			let (asset_id, share_asset_id) =
+			let share_asset_id =
 				RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
 					let rewards_pool =
 						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
 					Self::collect_rewards(rewards_pool, &mut stake, who)?;
 
-					Ok::<_, DispatchError>((stake.reward_pool_id, rewards_pool.share_asset_id))
+					Ok::<_, DispatchError>(rewards_pool.share_asset_id)
 				})?;
 
 			// REVIEW(benluelo): Make this logic a method on Stake
@@ -965,10 +965,10 @@ pub mod pallet {
 			let fnft_asset_account =
 				T::FinancialNft::asset_account(fnft_collection_id, fnft_instance_id);
 
-			T::Assets::remove_lock(T::LockId::get(), asset_id, &fnft_asset_account)?;
+			T::Assets::remove_lock(T::LockId::get(), stake.reward_pool_id, &fnft_asset_account)?;
 			T::Assets::remove_lock(T::LockId::get(), share_asset_id, &fnft_asset_account)?;
 			T::Assets::transfer(
-				asset_id,
+				stake.reward_pool_id,
 				&fnft_asset_account,
 				who,
 				staked_amount_returned_to_staker,
@@ -1005,6 +1005,10 @@ pub mod pallet {
 				fnft_instance_id: *fnft_instance_id,
 				slash: is_early_unlock.then(|| stake.lock.unlock_penalty.mul_floor(stake.stake)),
 			});
+
+			tracing::debug!(
+				reward = ?RewardPools::<T>::get(stake.reward_pool_id).expect("lksdjfk").rewards.into_inner().pop_first()
+			);
 
 			Ok(())
 		}
@@ -1218,6 +1222,11 @@ pub mod pallet {
 				false, // not a user account, doesn't need to be kept alive
 			)?;
 
+			let unlocked_amount_after_transfer =
+				T::Assets::balance_on_hold(asset_id, existing_fnft_asset_account);
+
+			assert_eq!(T::Balance::zero(), unlocked_amount_after_transfer);
+
 			// lock assets on new account
 			T::Assets::set_lock(
 				T::LockId::get(),
@@ -1270,10 +1279,9 @@ pub mod pallet {
 				// rewards
 				let claim = sp_std::cmp::min(
 					claim,
-					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
+					reward.total_rewards.defensive_saturating_sub(reward.claimed_rewards),
 				);
 
-				// REVIEW(benluelo): Should the claimed_rewards include the slashed amount?
 				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
 
 				// REVIEW(benluelo): Expected behaviour if none?
@@ -1294,7 +1302,7 @@ pub mod pallet {
 			Ok(claimed_amounts)
 		}
 
-		pub(crate) fn pool_account_id(pool_id: &T::AssetId) -> T::AccountId {
+		pub fn pool_account_id(pool_id: &T::AssetId) -> T::AccountId {
 			T::PalletId::get().into_sub_account_truncating(pool_id)
 		}
 
@@ -1725,6 +1733,8 @@ pub(crate) fn accumulate_reward<T: Config>(
 		.checked_mul(reward_rate_amount)
 		.expect("should not fail; see above for proof; qed;");
 
+	tracing::debug!(newly_accumulated_rewards);
+
 	let Some(new_total_rewards) = newly_accumulated_rewards
 		.get()
 		.checked_add(reward.total_rewards.into())
@@ -1732,7 +1742,7 @@ pub(crate) fn accumulate_reward<T: Config>(
 			return RewardAccumulationCalculationOutcome::Overflow;
 		};
 
-	tracing::debug!(new_total_rewards = new_total_rewards);
+	tracing::debug!(new_total_rewards);
 
 	// `u64::MAX` in seconds is roughly 584.9 billion years in the future, so saturating at that
 	// should be ok; we should never reach a case where the timestamp overflows that. Use defensive
@@ -1772,7 +1782,12 @@ pub(crate) enum RewardAccumulationCalculationOutcome {
 
 #[instrument(
 	skip(stake, reward),
-	fields(?reward.total_rewards, ?stake.share),
+	fields(
+		?reward.total_rewards,
+		?reward.claimed_rewards,
+		?reward.total_dilution_adjustment,
+		?stake.share
+	),
 )]
 pub(crate) fn claim_of_stake<T: Config>(
 	stake: &StakeOf<T>,
@@ -1783,7 +1798,7 @@ pub(crate) fn claim_of_stake<T: Config>(
 	let total_shares: T::Balance =
 		<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(*share_asset_id);
 
-	tracing::debug!(total_shares = <T::Balance as Into<u128>>::into(total_shares));
+	tracing::debug!(?total_shares);
 
 	let claim = if total_shares.is_zero() {
 		T::Balance::zero()
@@ -1795,15 +1810,14 @@ pub(crate) fn claim_of_stake<T: Config>(
 		// Perbill::from_rational(stake.share, total_issuance)
 		// 	.mul_floor(reward.total_rewards)
 		// 	.safe_sub(&inflation)?;
-		tracing::debug!(inflation = <T::Balance as Into<u128>>::into(inflation),);
+		tracing::debug!(?inflation);
 
-		let claim = reward
-			.total_rewards
+		let claim = (reward.total_rewards - reward.claimed_rewards)
 			.safe_mul(&stake.share)?
 			.safe_div(&total_shares)?
 			.safe_sub(&inflation)?;
 
-		tracing::debug!(claim = <T::Balance as Into<u128>>::into(claim));
+		tracing::debug!(?claim);
 
 		claim
 	};
