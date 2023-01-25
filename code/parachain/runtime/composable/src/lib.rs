@@ -627,7 +627,7 @@ impl scheduler::Config for Runtime {
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type Preimages = Preimage;
-	type WeightInfo = scheduler::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::scheduler::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -889,6 +889,7 @@ mod benches {
 		[scheduler, Scheduler]
 		[collective, Council]
 		[utility, Utility]
+	[democracy, Democracy]
 	);
 }
 

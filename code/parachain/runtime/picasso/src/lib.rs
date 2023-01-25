@@ -335,7 +335,7 @@ impl multisig::Config for Runtime {
 	type DepositFactor = DepositFactor;
 	type RuntimeEvent = RuntimeEvent;
 	type MaxSignatories = MaxSignatories;
-	type WeightInfo = multisig::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::multisig::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -642,7 +642,7 @@ impl scheduler::Config for Runtime {
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type Preimages = Preimage;
-	type WeightInfo = scheduler::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::scheduler::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -934,6 +934,7 @@ mod benches {
 		[vesting, Vesting]
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
+	[democracy, Democracy]
 	);
 }
 
