@@ -59,7 +59,7 @@ fn test_reward_update_calculation() {
 			false,
 		);
 
-		// the expected total_rewards amount for each block surpassed
+		// the expected unlocked balance for each block surpassed
 		let expected = [
 			(1, PICA::units(12)),
 			(2, PICA::units(24)),
@@ -99,8 +99,12 @@ fn test_reward_update_calculation() {
 				));
 			}
 
+			let pool_account = Pallet::<Test>::pool_account_id(&PICA::ID);
+			let available_rewards =
+				<Test as crate::Config>::Assets::balance(PICA::ID, &pool_account);
+
 			assert_eq!(
-				reward.total_rewards, expected_total_rewards,
+				available_rewards, expected_total_rewards,
 				"blocks surpassed: {block_number}"
 			);
 		}
@@ -198,7 +202,6 @@ fn test_accumulate_rewards_pool_empty_refill() {
 			pool_asset_id: A::ID,
 			pool_rewards: &[PoolRewards {
 				reward_asset_id: A::ID,
-				expected_total_rewards: A_A_REWARD_RATE * block_seconds(4),
 				expected_locked_balance: A_A_AMOUNT_TO_ADD_TO_REWARDS_POT -
 					A_A_REWARD_RATE * block_seconds(4),
 				expected_unlocked_balance: A_A_REWARD_RATE * block_seconds(4),
@@ -214,7 +217,6 @@ fn test_accumulate_rewards_pool_empty_refill() {
 			pool_asset_id: A::ID,
 			pool_rewards: &[PoolRewards {
 				reward_asset_id: A::ID,
-				expected_total_rewards: A_A_AMOUNT_TO_ADD_TO_REWARDS_POT,
 				expected_locked_balance: 0,
 				expected_unlocked_balance: A_A_AMOUNT_TO_ADD_TO_REWARDS_POT,
 			}],
@@ -341,8 +343,6 @@ fn test_accumulate_rewards_hook() {
 					pool_rewards: &[
 						PoolRewards {
 							reward_asset_id: A::ID,
-							expected_total_rewards: A_A_REWARD_RATE *
-								block_seconds(current_block - STARTING_BLOCK),
 							expected_locked_balance: A_A_INITIAL_AMOUNT -
 								(A_A_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
 							expected_unlocked_balance: A_A_REWARD_RATE *
@@ -350,8 +350,6 @@ fn test_accumulate_rewards_hook() {
 						},
 						PoolRewards {
 							reward_asset_id: B::ID,
-							expected_total_rewards: A_B_REWARD_RATE *
-								block_seconds(current_block - STARTING_BLOCK),
 							expected_locked_balance: A_B_INITIAL_AMOUNT -
 								(A_B_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
 							expected_unlocked_balance: A_B_REWARD_RATE *
@@ -365,8 +363,6 @@ fn test_accumulate_rewards_hook() {
 					pool_rewards: &[
 						PoolRewards {
 							reward_asset_id: D::ID,
-							expected_total_rewards: C_D_REWARD_RATE *
-								block_seconds(current_block - STARTING_BLOCK),
 							expected_locked_balance: C_D_INITIAL_AMOUNT -
 								(C_D_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
 							expected_unlocked_balance: C_D_REWARD_RATE *
@@ -374,8 +370,6 @@ fn test_accumulate_rewards_hook() {
 						},
 						PoolRewards {
 							reward_asset_id: E::ID,
-							expected_total_rewards: C_E_REWARD_RATE *
-								block_seconds(current_block - STARTING_BLOCK),
 							expected_locked_balance: C_E_INITIAL_AMOUNT -
 								(C_E_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
 							expected_unlocked_balance: C_E_REWARD_RATE *
@@ -398,8 +392,6 @@ fn test_accumulate_rewards_hook() {
 					pool_rewards: &[
 						PoolRewards {
 							reward_asset_id: A::ID,
-							expected_total_rewards: A_A_REWARD_RATE *
-								block_seconds(current_block - STARTING_BLOCK),
 							expected_locked_balance: A_A_INITIAL_AMOUNT -
 								(A_A_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
 							expected_unlocked_balance: A_A_REWARD_RATE *
@@ -407,8 +399,6 @@ fn test_accumulate_rewards_hook() {
 						},
 						PoolRewards {
 							reward_asset_id: B::ID,
-							expected_total_rewards: A_B_REWARD_RATE *
-								block_seconds(current_block - STARTING_BLOCK),
 							expected_locked_balance: A_B_INITIAL_AMOUNT -
 								(A_B_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
 							expected_unlocked_balance: A_B_REWARD_RATE *
@@ -422,8 +412,6 @@ fn test_accumulate_rewards_hook() {
 					pool_rewards: &[
 						PoolRewards {
 							reward_asset_id: D::ID,
-							expected_total_rewards: C_D_REWARD_RATE *
-								block_seconds(current_block - STARTING_BLOCK),
 							expected_locked_balance: C_D_INITIAL_AMOUNT -
 								(C_D_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
 							expected_unlocked_balance: C_D_REWARD_RATE *
@@ -431,8 +419,6 @@ fn test_accumulate_rewards_hook() {
 						},
 						PoolRewards {
 							reward_asset_id: E::ID,
-							expected_total_rewards: C_E_REWARD_RATE *
-								block_seconds(current_block - STARTING_BLOCK),
 							expected_locked_balance: C_E_INITIAL_AMOUNT -
 								(C_E_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
 							expected_unlocked_balance: C_E_REWARD_RATE *
@@ -455,8 +441,6 @@ fn test_accumulate_rewards_hook() {
 					pool_rewards: &[
 						PoolRewards {
 							reward_asset_id: A::ID,
-							expected_total_rewards: A_A_REWARD_RATE *
-								block_seconds(current_block - STARTING_BLOCK),
 							expected_locked_balance: A_A_INITIAL_AMOUNT -
 								(A_A_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
 							expected_unlocked_balance: A_A_REWARD_RATE *
@@ -464,8 +448,6 @@ fn test_accumulate_rewards_hook() {
 						},
 						PoolRewards {
 							reward_asset_id: B::ID,
-							expected_total_rewards: A_B_REWARD_RATE *
-								block_seconds(current_block - STARTING_BLOCK),
 							expected_locked_balance: A_B_INITIAL_AMOUNT -
 								(A_B_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
 							expected_unlocked_balance: A_B_REWARD_RATE *
@@ -479,8 +461,6 @@ fn test_accumulate_rewards_hook() {
 					pool_rewards: &[
 						PoolRewards {
 							reward_asset_id: D::ID,
-							expected_total_rewards: C_D_REWARD_RATE *
-								block_seconds(current_block - STARTING_BLOCK),
 							expected_locked_balance: C_D_INITIAL_AMOUNT -
 								(C_D_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
 							expected_unlocked_balance: C_D_REWARD_RATE *
@@ -488,7 +468,6 @@ fn test_accumulate_rewards_hook() {
 						},
 						PoolRewards {
 							reward_asset_id: E::ID,
-							expected_total_rewards: C_E_INITIAL_AMOUNT,
 							expected_locked_balance: 0,
 							expected_unlocked_balance: C_E_INITIAL_AMOUNT,
 						},
@@ -510,8 +489,6 @@ fn test_accumulate_rewards_hook() {
 					pool_rewards: &[
 						PoolRewards {
 							reward_asset_id: A::ID,
-							expected_total_rewards: A_A_REWARD_RATE *
-								block_seconds(current_block - STARTING_BLOCK),
 							expected_locked_balance: A_A_INITIAL_AMOUNT -
 								(A_A_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
 							expected_unlocked_balance: A_A_REWARD_RATE *
@@ -519,8 +496,6 @@ fn test_accumulate_rewards_hook() {
 						},
 						PoolRewards {
 							reward_asset_id: B::ID,
-							expected_total_rewards: A_B_REWARD_RATE *
-								block_seconds(current_block - STARTING_BLOCK),
 							expected_locked_balance: A_B_INITIAL_AMOUNT -
 								(A_B_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
 							expected_unlocked_balance: A_B_REWARD_RATE *
@@ -534,13 +509,11 @@ fn test_accumulate_rewards_hook() {
 					pool_rewards: &[
 						PoolRewards {
 							reward_asset_id: D::ID,
-							expected_total_rewards: C_D_INITIAL_AMOUNT,
 							expected_locked_balance: 0,
 							expected_unlocked_balance: C_D_INITIAL_AMOUNT,
 						},
 						PoolRewards {
 							reward_asset_id: E::ID,
-							expected_total_rewards: C_E_INITIAL_AMOUNT,
 							expected_locked_balance: 0,
 							expected_unlocked_balance: C_E_INITIAL_AMOUNT,
 						},
@@ -577,8 +550,6 @@ fn test_accumulate_rewards_hook() {
 					pool_rewards: &[
 						PoolRewards {
 							reward_asset_id: A::ID,
-							expected_total_rewards: A_A_REWARD_RATE *
-								block_seconds(current_block - STARTING_BLOCK),
 							expected_locked_balance: A_A_INITIAL_AMOUNT -
 								(A_A_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
 							expected_unlocked_balance: A_A_REWARD_RATE *
@@ -586,7 +557,6 @@ fn test_accumulate_rewards_hook() {
 						},
 						PoolRewards {
 							reward_asset_id: B::ID,
-							expected_total_rewards: A_B_INITIAL_AMOUNT,
 							expected_locked_balance: 0,
 							expected_unlocked_balance: A_B_INITIAL_AMOUNT,
 						},
@@ -598,13 +568,11 @@ fn test_accumulate_rewards_hook() {
 					pool_rewards: &[
 						PoolRewards {
 							reward_asset_id: D::ID,
-							expected_total_rewards: C_D_INITIAL_AMOUNT,
 							expected_locked_balance: 0,
 							expected_unlocked_balance: C_D_INITIAL_AMOUNT,
 						},
 						PoolRewards {
 							reward_asset_id: E::ID,
-							expected_total_rewards: C_E_INITIAL_AMOUNT,
 							expected_locked_balance: 0,
 							expected_unlocked_balance: C_E_INITIAL_AMOUNT,
 						},
@@ -615,7 +583,6 @@ fn test_accumulate_rewards_hook() {
 					pool_asset_id: F::ID,
 					pool_rewards: &[PoolRewards {
 						reward_asset_id: F::ID,
-						expected_total_rewards: 0,
 						expected_locked_balance: 0,
 						expected_unlocked_balance: 0,
 					}],
@@ -636,13 +603,11 @@ fn test_accumulate_rewards_hook() {
 					pool_rewards: &[
 						PoolRewards {
 							reward_asset_id: A::ID,
-							expected_total_rewards: A_A_INITIAL_AMOUNT,
 							expected_locked_balance: 0,
 							expected_unlocked_balance: A_A_INITIAL_AMOUNT,
 						},
 						PoolRewards {
 							reward_asset_id: B::ID,
-							expected_total_rewards: A_B_INITIAL_AMOUNT,
 							expected_locked_balance: 0,
 							expected_unlocked_balance: A_B_INITIAL_AMOUNT,
 						},
@@ -654,13 +619,11 @@ fn test_accumulate_rewards_hook() {
 					pool_rewards: &[
 						PoolRewards {
 							reward_asset_id: D::ID,
-							expected_total_rewards: C_D_INITIAL_AMOUNT,
 							expected_locked_balance: 0,
 							expected_unlocked_balance: C_D_INITIAL_AMOUNT,
 						},
 						PoolRewards {
 							reward_asset_id: E::ID,
-							expected_total_rewards: C_E_INITIAL_AMOUNT,
 							expected_locked_balance: 0,
 							expected_unlocked_balance: C_E_INITIAL_AMOUNT,
 						},
@@ -671,7 +634,6 @@ fn test_accumulate_rewards_hook() {
 					pool_asset_id: F::ID,
 					pool_rewards: &[PoolRewards {
 						reward_asset_id: F::ID,
-						expected_total_rewards: 0,
 						expected_locked_balance: 0,
 						expected_unlocked_balance: 0,
 					}],
@@ -767,14 +729,11 @@ fn test_pause_in_reward_accumulation_hook() {
 				pool_rewards: &[
 					PoolRewards {
 						reward_asset_id: A::ID,
-						expected_total_rewards: A_A_FIRST_FUND_AMOUNT,
 						expected_locked_balance: 0,
 						expected_unlocked_balance: A_A_FIRST_FUND_AMOUNT,
 					},
 					PoolRewards {
 						reward_asset_id: B::ID,
-						expected_total_rewards: A_B_REWARD_RATE *
-							block_seconds(current_block - POOL_STARTING_BLOCK),
 						expected_locked_balance: A_B_FIRST_FUND_AMOUNT -
 							(A_B_REWARD_RATE *
 								block_seconds(current_block - POOL_STARTING_BLOCK)),
@@ -796,13 +755,11 @@ fn test_pause_in_reward_accumulation_hook() {
 				pool_rewards: &[
 					PoolRewards {
 						reward_asset_id: A::ID,
-						expected_total_rewards: A_A_FIRST_FUND_AMOUNT,
 						expected_locked_balance: 0,
 						expected_unlocked_balance: A_A_FIRST_FUND_AMOUNT,
 					},
 					PoolRewards {
 						reward_asset_id: B::ID,
-						expected_total_rewards: A_B_FIRST_FUND_AMOUNT,
 						expected_locked_balance: 0,
 						expected_unlocked_balance: A_B_FIRST_FUND_AMOUNT,
 					},
@@ -848,14 +805,11 @@ fn test_pause_in_reward_accumulation_hook() {
 				pool_rewards: &[
 					PoolRewards {
 						reward_asset_id: A::ID,
-						expected_total_rewards: A_A_FIRST_FUND_AMOUNT,
 						expected_locked_balance: 0,
 						expected_unlocked_balance: A_A_FIRST_FUND_AMOUNT,
 					},
 					PoolRewards {
 						reward_asset_id: B::ID,
-						expected_total_rewards: A_B_FIRST_FUND_AMOUNT +
-							A_B_REWARD_RATE * block_seconds(10),
 						expected_locked_balance: A_B_SECOND_FUND_AMOUNT -
 							A_B_REWARD_RATE * block_seconds(10),
 						expected_unlocked_balance: A_B_FIRST_FUND_AMOUNT +
@@ -877,13 +831,11 @@ fn test_pause_in_reward_accumulation_hook() {
 				pool_rewards: &[
 					PoolRewards {
 						reward_asset_id: A::ID,
-						expected_total_rewards: A_A_FIRST_FUND_AMOUNT,
 						expected_locked_balance: 0,
 						expected_unlocked_balance: A_A_FIRST_FUND_AMOUNT,
 					},
 					PoolRewards {
 						reward_asset_id: B::ID,
-						expected_total_rewards: A_B_FIRST_FUND_AMOUNT + A_B_SECOND_FUND_AMOUNT,
 						expected_locked_balance: 0,
 						expected_unlocked_balance: A_B_FIRST_FUND_AMOUNT + A_B_SECOND_FUND_AMOUNT,
 					},
@@ -953,12 +905,8 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 
 		let pool_account = StakingRewards::pool_account_id(pool_asset_id);
 
-		for PoolRewards {
-			reward_asset_id,
-			expected_total_rewards,
-			expected_locked_balance,
-			expected_unlocked_balance,
-		} in *pool_rewards
+		for PoolRewards { reward_asset_id, expected_locked_balance, expected_unlocked_balance } in
+			*pool_rewards
 		{
 			let actual_locked_balance = <<Test as crate::Config>::Assets as InspectHold<
 				<Test as frame_system::Config>::AccountId,
@@ -970,16 +918,6 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 			let reward = pool.rewards.remove(reward_asset_id).expect(&format!(
 				"reward asset {reward_asset_id} not present in pool {pool_asset_id}"
 			));
-
-			assert_eq!(
-				&reward.total_rewards,
-				expected_total_rewards,
-				r#"
-error at pool {pool_asset_id}, asset {reward_asset_id}: unexpected total_rewards:
-	expected: {expected_total_rewards}
-	found:    {found_total_rewards}"#,
-				found_total_rewards = reward.total_rewards
-			);
 
 			assert!(
 				&actual_locked_balance == expected_locked_balance,
@@ -1016,7 +954,6 @@ pub(crate) struct CheckRewards<'a> {
 
 pub(crate) struct PoolRewards {
 	pub(crate) reward_asset_id: u128,
-	pub(crate) expected_total_rewards: u128,
 	pub(crate) expected_locked_balance: u128,
 	pub(crate) expected_unlocked_balance: u128,
 }

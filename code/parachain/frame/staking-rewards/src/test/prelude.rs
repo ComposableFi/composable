@@ -1,3 +1,5 @@
+use std::sync::Once;
+
 pub use crate::prelude::*;
 
 use composable_tests_helpers::test::block::MILLISECS_PER_BLOCK;
@@ -20,14 +22,18 @@ pub(crate) const STAKING_FNFT_COLLECTION_ID: CurrencyId = 1;
 pub(crate) const MINIMUM_STAKING_AMOUNT: u128 = 10_000;
 
 pub(crate) fn init_logger() {
-	// tracing_subscriber::filter::LevelFilter
-	let subscriber = Registry::default().with(HierarchicalLayer::new(2));
+	static LOGGER: Once = Once::new();
 
-	let filter = LevelFilter::DEBUG;
+	LOGGER.call_once(|| {
+		// tracing_subscriber::filter::LevelFilter
+		let subscriber = Registry::default().with(HierarchicalLayer::new(2));
 
-	let subscriber = filter.with_subscriber(subscriber);
+		let filter = LevelFilter::DEBUG;
 
-	tracing::subscriber::set_global_default(subscriber).unwrap();
+		let subscriber = filter.with_subscriber(subscriber);
+
+		tracing::subscriber::set_global_default(subscriber).unwrap();
+	});
 
 	// let _ = tracing_subscriber::fmt()
 	// 	.compact()

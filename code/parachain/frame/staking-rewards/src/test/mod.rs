@@ -44,7 +44,7 @@ use orml_traits::MultiCurrency;
 use proptest::prelude::*;
 use sp_arithmetic::{fixed_point::FixedU64, Perbill, Permill};
 use sp_core::sr25519::Public;
-use sp_runtime::{traits::One, FixedPointNumber, PerThing};
+use sp_runtime::{traits::One, PerThing};
 use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 
 use self::prelude::init_logger;
@@ -644,13 +644,15 @@ mod extend {
 		Pallet, Stakes,
 	};
 
-	use super::new_test_ext;
+	use super::{new_test_ext, prelude::init_logger};
 
 	#[allow(non_camel_case_types)]
 	type STAKED_ASSET = Currency<1337, 12>;
 
 	#[test]
 	fn with_additional_stake() {
+		init_logger();
+
 		new_test_ext().execute_with(|| {
 			process_and_progress_blocks::<StakingRewards, Test>(1);
 
@@ -1369,13 +1371,11 @@ fn extend_should_not_allow_non_owner() {
 	let non_owner = BOB;
 	let amount = 100_500;
 	let duration_preset = ONE_HOUR;
-	let total_rewards = 100;
 
 	with_stake(
 		staker,
 		amount,
 		duration_preset,
-		total_rewards,
 		false,
 		|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 			assert_noop!(
@@ -1438,13 +1438,11 @@ fn split_should_not_allow_non_owner() {
 	let non_owner = BOB;
 	let amount = 100_500;
 	let duration_preset = ONE_HOUR;
-	let total_rewards = 100;
 
 	with_stake(
 		staker,
 		amount,
 		duration_preset,
-		total_rewards,
 		false,
 		|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 			assert_noop!(
@@ -1509,13 +1507,11 @@ mod claim {
 		let non_owner = BOB;
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
-		let total_rewards = 100;
 
 		with_stake(
 			staker,
 			amount,
 			duration_preset,
-			total_rewards,
 			false,
 			|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 				assert_noop!(
@@ -1531,14 +1527,12 @@ mod claim {
 		let staker = ALICE;
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
-		let total_rewards = 100;
 		let claim = 100;
 
 		with_stake(
 			staker,
 			amount,
 			duration_preset,
-			total_rewards,
 			true,
 			|pool_id, _unlock_penalty, _stake_duration, staked_asset_id| {
 				let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
@@ -1566,14 +1560,12 @@ mod claim {
 		let staker = ALICE;
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
-		let total_rewards = 100;
 		let claim = 100;
 
 		with_stake(
 			staker,
 			amount,
 			duration_preset,
-			total_rewards,
 			true,
 			|pool_id, _unlock_penalty, _stake_duration, staked_asset_id| {
 				let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
@@ -1681,14 +1673,12 @@ mod claim {
 		let staker = ALICE;
 		let amount = 100_500;
 		let duration_preset = ONE_HOUR;
-		let total_rewards = 100;
 		let claim = 100;
 
 		with_stake(
 			staker,
 			amount,
 			duration_preset,
-			total_rewards,
 			true,
 			|pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 				assert_ok!(StakingRewards::claim(RuntimeOrigin::signed(staker), 1, 0));
@@ -1989,7 +1979,6 @@ fn with_stake<R>(
 	staker: Public,
 	amount: u128,
 	duration: DurationSeconds,
-	total_rewards: u128,
 	should_claim: bool,
 	execute: impl FnOnce(u128, Perbill, u64, u128) -> R,
 ) -> R {
@@ -2004,13 +1993,8 @@ fn with_stake<R>(
 		let rewards_pool =
 			StakingRewards::pools(staked_asset_id).expect("rewards_pool expected. QED");
 
-		mint_assets(
-			[staker, StakingRewards::pool_account_id(&staked_asset_id)],
-			rewards_pool.rewards.keys().copied().chain([staked_asset_id]),
-			amount.saturating_mul(2),
-		);
-
-		update_total_rewards_and_total_shares_in_rewards_pool(staked_asset_id, total_rewards);
+		mint_assets([CHARLIE], rewards_pool.rewards.keys().copied(), amount.saturating_mul(2));
+		mint_assets([staker], [PICA::ID], amount.saturating_mul(2));
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 		let fnft_instance_id = stake_and_assert::<Test>(staker, PICA::ID, amount, duration);
@@ -2112,16 +2096,6 @@ fn balance(asset_id: u128, account: &Public) -> u128 {
 	<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(
 		asset_id, account,
 	)
-}
-
-fn update_total_rewards_and_total_shares_in_rewards_pool(pool_id: u128, total_rewards: u128) {
-	let mut rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
-	let mut inner_rewards = rewards_pool.rewards.into_inner();
-	for (_asset_id, reward) in inner_rewards.iter_mut() {
-		reward.total_rewards += total_rewards;
-	}
-	rewards_pool.rewards = inner_rewards.try_into().expect("rewards expected");
-	RewardPools::<Test>::insert(pool_id, rewards_pool);
 }
 
 fn btree_map<K: Ord, V, Max: sp_runtime::traits::Get<u32>>(

@@ -18,11 +18,6 @@ pub mod math;
 /// TODO refer to the relevant section in the design doc.
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 pub struct Reward<Balance> {
-	/// Total rewards including inflation for adjusting for new stakers joining the pool. All
-	/// stakers in a pool are eligible to receive a part of this value based on their share of the
-	/// pool.
-	pub total_rewards: Balance,
-
 	/// Already claimed rewards by stakers by unstaking.
 	pub claimed_rewards: Balance,
 
@@ -94,7 +89,6 @@ pub struct RewardUpdate<Balance> {
 impl<Balance: Zero> Reward<Balance> {
 	pub fn from_config(reward_config: RewardConfig<Balance>, now_seconds: u64) -> Reward<Balance> {
 		Reward {
-			total_rewards: Zero::zero(),
 			claimed_rewards: Zero::zero(),
 			total_dilution_adjustment: Zero::zero(),
 			reward_rate: reward_config.reward_rate,

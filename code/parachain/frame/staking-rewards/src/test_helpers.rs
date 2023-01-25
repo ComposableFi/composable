@@ -2,7 +2,7 @@
 
 use core::{
 	fmt::Debug,
-	ops::{Add, Div, Mul, Sub},
+	ops::{Add, Sub},
 };
 
 use crate::{
@@ -189,6 +189,24 @@ pub fn unstake_and_assert<Runtime>(
 			(
 				reward_asset_id,
 				Runtime::Assets::balance(reward_asset_id, &Runtime::TreasuryAccount::get()),
+			)
+		})
+		.collect::<BTreeMap<_, _>>();
+
+	let expected_claims = rewards_pool
+		.rewards
+		.clone()
+		.into_iter()
+		.map(|(reward_asset_id, _)| {
+			(
+				reward_asset_id,
+				claim_of_stake::<Runtime>(
+					&position_before_unstake,
+					&rewards_pool.share_asset_id,
+					&rewards_pool.rewards[&reward_asset_id],
+					&reward_asset_id,
+				)
+				.unwrap(),
 			)
 		})
 		.collect::<BTreeMap<_, _>>();
@@ -386,21 +404,7 @@ staked amount: {staked_amount:?}
 
 	// assert that every reward asset is rewarded (and possibly slashed) as expected
 	for (reward_asset_id, reward) in &rewards_pool.rewards {
-		let expected_claim = if total_shares_before_unstake.is_zero() {
-			Runtime::Balance::zero()
-		} else {
-			let inflation = position_before_unstake
-				.reductions
-				.get(reward_asset_id)
-				.cloned()
-				.unwrap_or_else(Zero::zero);
-
-			reward
-				.total_rewards
-				.mul(position_before_unstake.share)
-				.div(total_shares_before_unstake)
-				.sub(inflation)
-		};
+		let expected_claim = expected_claims[reward_asset_id];
 
 		// Check pool account's balance
 		assert_eq!(

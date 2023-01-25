@@ -75,7 +75,6 @@ fn test_update_reward_pool() {
 			pool_asset_id: PICA::ID,
 			pool_rewards: &[PoolRewards {
 				reward_asset_id: USDT::ID,
-				expected_total_rewards: (INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)),
 				expected_locked_balance: INITIAL_AMOUNT -
 					(INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)),
 				expected_unlocked_balance: (INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)),
@@ -114,8 +113,6 @@ fn test_update_reward_pool() {
 			pool_asset_id: PICA::ID,
 			pool_rewards: &[PoolRewards {
 				reward_asset_id: USDT::ID,
-				expected_total_rewards: (INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)) +
-					(UPDATED_REWARD_RATE_AMOUNT * block_seconds(1)),
 				expected_locked_balance: INITIAL_AMOUNT -
 					((INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)) +
 						(UPDATED_REWARD_RATE_AMOUNT * block_seconds(1))),
@@ -131,8 +128,6 @@ fn test_update_reward_pool() {
 			pool_asset_id: PICA::ID,
 			pool_rewards: &[PoolRewards {
 				reward_asset_id: USDT::ID,
-				expected_total_rewards: (INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)) +
-					(UPDATED_REWARD_RATE_AMOUNT * block_seconds(11)),
 				expected_locked_balance: INITIAL_AMOUNT -
 					((INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)) +
 						(UPDATED_REWARD_RATE_AMOUNT * block_seconds(11))),
