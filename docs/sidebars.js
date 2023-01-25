@@ -273,6 +273,7 @@ const sidebars = {
                     items: [
                         'user-guides/claim-rewards-guide',
                         'user-guides/how-to-provide-liquidity',
+                        'user-guides/how-to-trade-pica-on-pablo',
                         `user-guides/transfer-usdt-statemine-picasso`,
                     ],
                 },
