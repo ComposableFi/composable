@@ -19,7 +19,7 @@ where
 	FinancialNftInstanceId: FromStr + Display,
 	Balance: FromStr + Display,
 {
-	#[method(name = "stakingRewards_getClaimableAmount")]
+	#[method(name = "stakingRewards_claimableAmount")]
 	fn claimable_amount(
 		&self,
 		fnft_collection_id: SafeRpcWrapper<AssetId>,
