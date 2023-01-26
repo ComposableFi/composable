@@ -47,7 +47,7 @@
         ./inputs/Wasmswap/wasmswap-contracts.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
 
-        # The things we use within flake parts to build packages, apps, devShells, and devnets. 
+        # The things we use within flake parts to build packages, apps, devShells, and devnets.
         ./tools/pkgs.nix # _module.args.pkgs
         ./tools/devnet-tools.nix # _module.args.devnetTools
         ./tools/rust.nix # _module.args.rust
