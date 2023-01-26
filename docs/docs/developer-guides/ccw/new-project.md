@@ -1,5 +1,19 @@
 # Getting Started with CosmWasm
 
+## Installing `ccw`
+
+Clone the [repository](https://github.com/ComposableFi/cw-toolkit), then run:
+
+```
+# Clone the repo
+git clone https://github.com/ComposableFi/cw-toolkit
+
+# Install the ccw binary
+cargo install --path ./cw-toolkit/cli
+```
+
+## Generate a template project
+
 Apart from interacting with `pallet-cosmwasm`, you can also create a base CosmWasm project that you can work upon.
 
 Before running the command, you need to install `cargo-generate`. Because the command we run generates a new project
