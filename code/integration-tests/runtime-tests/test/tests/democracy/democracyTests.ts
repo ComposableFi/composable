@@ -10,6 +10,7 @@ import BN from "bn.js";
 import { before } from "mocha";
 import { PalletDemocracyPreimageStatus } from "@composable/types/interfaces";
 import { Option } from "@polkadot/types-codec";
+import {} from "@polkadot/types/lookup";
 
 /**
  * Democracy Test Suite
@@ -201,7 +202,7 @@ describe("Democracy Tests", function () {
         api,
         testWallet3,
         api.events.democracy.Seconded.is,
-        api.tx.democracy.second(proposalId1, secondsUpperBound)
+        api.tx.democracy.second(proposalId1)
       );
       expect(resultSeconder.toString()).to.be.equal(api.createType("AccountId32", testWallet3.publicKey).toString());
       expect(resultPropIndex).to.be.bignumber.equal(new BN(proposalId1));
@@ -279,7 +280,7 @@ describe("Democracy Tests", function () {
         api,
         testWallet3,
         api.events.democracy.Seconded.is,
-        api.tx.democracy.second(proposalId, 1)
+        api.tx.democracy.second(proposalId)
       ).catch(function (e) {
         expect(e.toString()).to.contain("democracy.ProposalMissing");
       });
