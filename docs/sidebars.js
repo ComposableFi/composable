@@ -438,9 +438,8 @@ const sidebars = {
             collapsible: true,
             collapsed: true,
             items:[
-                'faqs/disclaimer-disclosure-pica-token',
+                'faqs/disclaimers-disclosures-for-composable-tokens',
                 'faqs/risk-factors',
-                'faqs/legal-disclaimer-disclosures',
                 'faqs/terms-of-use',
             ]
         }
