@@ -3,6 +3,7 @@ queue_rules:
     allow_inplace_checks: false
     conditions:
       - -title~="#wip"
+    merge_method: squash  
 
 pull_request_rules:
   - name: Automatic merge on approval
@@ -11,14 +12,10 @@ pull_request_rules:
       - base=main
       - -title~="#wip"
       - check-success=Effect gate, automatically merged if passed
+      - branch-protection-review-decision=APPROVED
     actions:
       queue:
         name: default
-      # Squash merge the commits to keep the history clean while also allowing easier cherry-picks of features for release.
-      merge:
-        method: squash
-      squash:
-        commit_message: title+body
 
   # Any files in Picasso must be reviewed and approved by more than 3 reviewers plus core group
   - name: Automatic merge on approval (Picasso Runtime)
@@ -29,12 +26,9 @@ pull_request_rules:
           - "#review-threads-unresolved=0"
       - base=main
       - files~=^code\/parachain\/runtime\/picasso\/
+      - branch-protection-review-decision=APPROVED
+
     actions:
       queue:
         priority: high
         name: default
-      # Squash merge the commits to keep the history clean while also allowing easier cherry-picks of features for release.
-      merge:
-        method: squash
-      squash:
-        commit_message: title+body
