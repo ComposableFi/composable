@@ -295,7 +295,7 @@ benchmarks! {
 		<Pallet<T>>::stake(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)?;
 	}: _(OriginFor::<T>::signed(staker.clone()), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into())
 	verify {
-		assert_last_event::<T>(Event::Claimed { owner: staker, fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(), fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(), claimed_amount: reward_config::<T>(r).into_inner().into_keys().map(|x| (x, 0.into())).collect::<BTreeMap<_,_>>()  }.into());
+		assert_last_event::<T>(Event::Claimed { owner: staker, fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(), fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(), claimed_amounts: reward_config::<T>(r).into_inner().into_keys().map(|x| (x, 0.into())).collect::<BTreeMap<_,_>>()  }.into());
 	}
 
 	add_to_rewards_pot {

@@ -167,8 +167,7 @@ pub mod pallet {
 			fnft_collection_id: T::AssetId,
 			/// FNFT Instance Id
 			fnft_instance_id: T::FinancialNftInstanceId,
-			// Claimed amount map<reward id, amount>
-			claimed_amount: BTreeMap<T::AssetId, T::Balance>,
+			claimed_amounts: BTreeMap<T::AssetId, T::Balance>,
 		},
 		StakeAmountExtended {
 			/// FNFT Collection Id
@@ -1141,7 +1140,7 @@ pub mod pallet {
 				owner: who.clone(),
 				fnft_collection_id: *fnft_collection_id,
 				fnft_instance_id: *fnft_instance_id,
-				claimed_amount: claimed_amounts,
+				claimed_amounts,
 			});
 
 			Ok(())
@@ -1241,7 +1240,7 @@ pub mod pallet {
 			stake: &mut StakeOf<T>,
 			owner: &T::AccountId,
 		) -> Result<BTreeMap<T::AssetId, T::Balance>, DispatchError> {
-			let mut claimed_amount = BTreeMap::new();
+			let mut claimed_amounts = BTreeMap::new();
 			for (reward_asset_id, reward) in &mut rewards_pool.rewards {
 				let claim = claim_of_stake::<T>(
 					stake,
@@ -1271,10 +1270,10 @@ pub mod pallet {
 					claim,
 					false, // pallet account doesn't need to be kept alive
 				)?;
-				claimed_amount.insert(*reward_asset_id, claim);
+				claimed_amounts.insert(*reward_asset_id, claim);
 			}
 
-			Ok(claimed_amount)
+			Ok(claimed_amounts)
 		}
 
 		pub(crate) fn pool_account_id(pool_id: &T::AssetId) -> T::AccountId {
