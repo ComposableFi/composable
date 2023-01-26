@@ -20,6 +20,7 @@ use frame_support::{
 };
 use sp_arithmetic::fixed_point::FixedU64;
 use sp_runtime::Perbill;
+use sp_std::collections::btree_map::BTreeMap;
 
 use crate::{
 	runtime::{
@@ -217,6 +218,7 @@ fn update_accumulates_properly() {
 				owner: CHARLIE,
 				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
 				fnft_instance_id: stake_id,
+				claimed_amount: BTreeMap::from([(USDT::ID, USDT::units(1) / 1000 * 6)]),
 			},
 		);
 

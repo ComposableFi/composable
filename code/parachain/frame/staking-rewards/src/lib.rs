@@ -119,7 +119,7 @@ pub mod pallet {
 		traits::{AccountIdConversion, BlockNumberProvider, One},
 		ArithmeticError, PerThing,
 	};
-	use sp_std::{fmt::Debug, ops::Mul, vec, vec::Vec};
+	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec, vec::Vec};
 
 	use crate::{
 		accumulate_rewards_hook, add_to_rewards_pot, claim_of_stake, prelude::*,
@@ -167,6 +167,8 @@ pub mod pallet {
 			fnft_collection_id: T::AssetId,
 			/// FNFT Instance Id
 			fnft_instance_id: T::FinancialNftInstanceId,
+			// Claimed amount map<reward id, amount>
+			claimed_amount: BTreeMap<T::AssetId, T::Balance>,
 		},
 		StakeAmountExtended {
 			/// FNFT Collection Id
@@ -210,13 +212,6 @@ pub mod pallet {
 			pool_id: T::AssetId,
 			asset_id: T::AssetId,
 			amount: T::Balance,
-		},
-		UnstakeRewardSlashed {
-			pool_id: T::AssetId,
-			owner: AccountIdOf<T>,
-			fnft_instance_id: FinancialNftInstanceIdOf<T>,
-			reward_asset_id: T::AssetId,
-			amount_slashed: T::Balance,
 		},
 		RewardPoolPaused {
 			pool_id: T::AssetId,
@@ -789,7 +784,6 @@ pub mod pallet {
 
 			let (rewards, reductions) =
 				Self::compute_rewards_and_reductions(awarded_shares, &rewards_pool)?;
-
 			rewards_pool.rewards = rewards;
 
 			let fnft_collection_id = rewards_pool.financial_nft_asset_id;
@@ -956,14 +950,7 @@ pub mod pallet {
 					let rewards_pool =
 						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-					Self::collect_rewards(
-						stake.reward_pool_id,
-						rewards_pool,
-						fnft_instance_id,
-						&mut stake,
-						who,
-						is_early_unlock,
-					)?;
+					Self::collect_rewards(rewards_pool, &mut stake, who)?;
 
 					Ok::<_, DispatchError>((stake.reward_pool_id, rewards_pool.share_asset_id))
 				})?;
@@ -1139,29 +1126,22 @@ pub mod pallet {
 			who: &Self::AccountId,
 			(fnft_collection_id, fnft_instance_id): &Self::PositionId,
 		) -> DispatchResult {
-			Stakes::<T>::try_mutate(fnft_collection_id, fnft_instance_id, |stake| {
-				let stake = stake.as_mut().ok_or(Error::<T>::StakeNotFound)?;
-				RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
-					let rewards_pool =
-						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
+			let claimed_amounts =
+				Stakes::<T>::try_mutate(fnft_collection_id, fnft_instance_id, |stake| {
+					let stake = stake.as_mut().ok_or(Error::<T>::StakeNotFound)?;
+					RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
+						let rewards_pool =
+							rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-					Self::collect_rewards(
-						stake.reward_pool_id,
-						rewards_pool,
-						fnft_instance_id,
-						stake,
-						who,
-						false, // claims aren't penalized
-					)?;
-
-					Ok::<_, DispatchError>(())
-				})
-			})?;
+						Self::collect_rewards(rewards_pool, stake, who)
+					})
+				})?;
 
 			Self::deposit_event(Event::<T>::Claimed {
 				owner: who.clone(),
 				fnft_collection_id: *fnft_collection_id,
 				fnft_instance_id: *fnft_instance_id,
+				claimed_amount: claimed_amounts,
 			});
 
 			Ok(())
@@ -1257,13 +1237,11 @@ pub mod pallet {
 		// smaller functions that can then be used in both claim and unstake.
 		// NOTE: Low priority, this is currently working, just not optimal
 		pub(crate) fn collect_rewards(
-			pool_id: T::AssetId,
 			rewards_pool: &mut RewardPoolOf<T>,
-			fnft_instance_id: &T::FinancialNftInstanceId,
 			stake: &mut StakeOf<T>,
 			owner: &T::AccountId,
-			penalize_for_early_unlock: bool,
-		) -> Result<(), DispatchError> {
+		) -> Result<BTreeMap<T::AssetId, T::Balance>, DispatchError> {
+			let mut claimed_amount = BTreeMap::new();
 			for (reward_asset_id, reward) in &mut rewards_pool.rewards {
 				let claim = claim_of_stake::<T>(
 					stake,
@@ -1271,42 +1249,15 @@ pub mod pallet {
 					reward,
 					reward_asset_id,
 				)?;
-
-				let possibly_slashed_claim = if penalize_for_early_unlock {
-					let amount_slashed = stake.lock.unlock_penalty.mul_floor(claim);
-
-					Self::deposit_event(Event::<T>::UnstakeRewardSlashed {
-						owner: owner.clone(),
-						pool_id,
-						fnft_instance_id: *fnft_instance_id,
-						reward_asset_id: *reward_asset_id,
-						amount_slashed,
-					});
-
-					T::Assets::transfer(
-						*reward_asset_id,
-						&Self::pool_account_id(&stake.reward_pool_id),
-						&T::TreasuryAccount::get(),
-						amount_slashed,
-						false, // pallet account doesn't need to be kept alive
-					)?;
-
-					// SAFETY: amount_slashed is <= claim as is shown above
-					claim.defensive_saturating_sub(amount_slashed)
-				} else {
-					claim
-				};
-
 				// REVIEW(benluelo): Review logic/ calculations regarding total_rewards & claimed
 				// rewards
-				let possibly_slashed_claim = sp_std::cmp::min(
-					possibly_slashed_claim,
+				let claim = sp_std::cmp::min(
+					claim,
 					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
 				);
 
 				// REVIEW(benluelo): Should the claimed_rewards include the slashed amount?
-				reward.claimed_rewards =
-					reward.claimed_rewards.safe_add(&possibly_slashed_claim)?;
+				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
 
 				// REVIEW(benluelo): Expected behaviour if none?
 				if let Some(inflation) = stake.reductions.get_mut(reward_asset_id) {
@@ -1317,12 +1268,13 @@ pub mod pallet {
 					*reward_asset_id,
 					&Self::pool_account_id(&stake.reward_pool_id),
 					owner,
-					possibly_slashed_claim,
+					claim,
 					false, // pallet account doesn't need to be kept alive
 				)?;
+				claimed_amount.insert(*reward_asset_id, claim);
 			}
 
-			Ok(())
+			Ok(claimed_amount)
 		}
 
 		pub(crate) fn pool_account_id(pool_id: &T::AssetId) -> T::AccountId {
@@ -1710,7 +1662,6 @@ pub(crate) fn accumulate_reward<T: Config>(
 			// if no periods have been surpassed, short-circuit
 			return RewardAccumulationCalculationOutcome::Success
 		};
-
 	let total_locked_rewards: u128 = T::Assets::balance_on_hold(asset_id, pool_account).into();
 	log::info!("total_locked_rewards = {total_locked_rewards}");
 
@@ -1818,7 +1769,6 @@ pub(crate) fn claim_of_stake<T: Config>(
 		// Perbill::from_rational(stake.share, total_issuance)
 		// 	.mul_floor(reward.total_rewards)
 		// 	.safe_sub(&inflation)?;
-
 		reward
 			.total_rewards
 			.safe_mul(&stake.share)?
