@@ -39,7 +39,7 @@ pub struct BlockchainTransaction {
 	pub gas: u64,
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCVMDeploymentEvents {
 	pub registry_data: Option<Binary>,
 	pub registry_events: Vec<Event>,
@@ -47,6 +47,7 @@ pub struct XCVMDeploymentEvents {
 	pub gateway_events: Vec<Event>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCVMRegisterAssetEvents {
 	pub asset_data: Option<Binary>,
 	pub asset_events: Vec<Event>,
@@ -239,7 +240,7 @@ impl TestVM<()> {
 			tx.transaction.clone(),
 			tx.info.clone(),
 			tx.gas,
-			cw_xcvm_asset_registry::msg::InstantiateMsg {},
+			cw_xcvm_asset_registry::msg::InstantiateMsg { admin: tx.info.sender.clone().into() },
 		)?;
 		// The gateway deploy the router under the hood.
 		let (gateway_address, (gateway_data, gateway_events)) =
@@ -317,7 +318,7 @@ impl<T> TestVM<XCVMState<T>> {
 				transaction: tx.transaction.clone(),
 				contract: ContractInfo { address: self.xcvm_state.registry.clone().into() },
 			},
-			MessageInfo { sender: tx.info.sender, funds: Default::default() },
+			tx.info,
 			tx.gas,
 			cw_xcvm_asset_registry::msg::ExecuteMsg::RegisterAsset {
 				asset_id: A::ID.into(),

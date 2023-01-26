@@ -8,4 +8,7 @@ pub enum ContractError {
 
 	#[error("Error during parsing asset id")]
 	CannotParseAssetId,
+
+	#[error("Caller is not authenticated to take the action")]
+	NotAuthorized,
 }

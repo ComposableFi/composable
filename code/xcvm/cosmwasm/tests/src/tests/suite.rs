@@ -13,12 +13,19 @@ use cw_xcvm_gateway::contract::{XCVM_GATEWAY_EVENT_PREFIX, XCVM_GATEWAY_IBC_VERS
 use cw_xcvm_interpreter::contract::XCVM_INTERPRETER_EVENT_PREFIX;
 use cw_xcvm_router::contract::XCVM_ROUTER_EVENT_PREFIX;
 use cw_xcvm_utils::{DefaultXCVMProgram, Salt};
-use proptest::proptest;
+use proptest::{prelude::any, prop_assume, prop_compose, proptest};
 use std::assert_matches::assert_matches;
 use xcvm_core::{
 	Amount, Asset, AssetId, AssetSymbol, BridgeSecurity, Destination, Funds, Juno, Network,
 	Picasso, ProgramBuilder, ETH, PICA, USDC, USDT,
 };
+
+prop_compose! {
+	fn account()
+		(bytes in any::<[u8; 32]>()) -> Account {
+			Account::unchecked(SubstrateAddressHandler::addr_generate([&bytes[..]]).expect("impossible; qed;"))
+		}
+}
 
 #[macro_export]
 macro_rules! assert_ok(
@@ -127,84 +134,17 @@ impl<T, S> CrossChainScenario<T, S> {
 		let tx = self.mk_tx_counterparty(self.admin_counterparty.clone());
 		xcvm_deploy_asset::<A, T>(&mut self.vm_counterparty, tx, initial_balances)
 	}
-
-	// fn crosschain(
-	// 	&mut self,
-	// 	relayer: Account,
-	// 	relayer_counterparty: Account,
-	// 	program_sender: Account,
-	// 	program: DefaultXCVMProgram,
-	// 	assets_to_transfer: &[(AssetId, u128)],
-	// 	allowance_expiration: Option<Expiration>,
-	// ) -> Result<(), TestError> {
-	// 	let channel_id = "ibc:in-memory:picasso-juno";
-	// 	let connection_id = "ibc:connection:0";
-	// 	let version = XCVM_GATEWAY_IBC_VERSION;
-	// 	let mut ibc_network = InMemoryIbcNetworkChannel::connect(
-	// 		&mut self.vm,
-	// 		&mut self.vm_counterparty,
-	// 		channel_id,
-	// 		connection_id,
-	// 		version,
-	// 		IbcOrder::Unordered,
-	// 		mk_tx(relayer.clone()),
-	// 		mk_tx(relayer_counterparty.clone()),
-	// 		mk_tx(self.admin.clone()),
-	// 		mk_tx(self.admin_counterparty.clone()),
-	// 		u64::MAX,
-	// 	)?;
-	// 	let (data, events) = self.vm.dispatch_program_with_allowance(
-	// 		mk_tx(program_sender.clone()),
-	// 		[],
-	// 		program,
-	// 		assets_to_transfer.iter().copied().collect::<Vec<_>>(),
-	// 		allowance_expiration,
-	// 	)?;
-	// 	ibc_network.relay(
-	// 		&mut self.vm,
-	// 		&mut self.vm_counterparty,
-	// 		mk_tx(relayer.clone()),
-	// 		mk_tx(relayer_counterparty.clone()),
-	// 		u64::MAX,
-	// 	)?;
-	// 	assert_eq!(data, None);
-	// 	xcvm_assert_prefixed_event(
-	// 		events.iter(),
-	// 		XCVM_ROUTER_EVENT_PREFIX,
-	// 		"action",
-	// 		"route.create",
-	// 	);
-	// 	xcvm_assert_prefixed_event(
-	// 		events.iter(),
-	// 		XCVM_ROUTER_EVENT_PREFIX,
-	// 		"action",
-	// 		"route.execute",
-	// 	);
-	// 	xcvm_assert_prefixed_event(
-	// 		events.iter(),
-	// 		XCVM_INTERPRETER_EVENT_PREFIX,
-	// 		"action",
-	// 		"execution.start",
-	// 	);
-	// 	xcvm_assert_prefixed_event(
-	// 		events.iter(),
-	// 		XCVM_INTERPRETER_EVENT_PREFIX,
-	// 		"action",
-	// 		"execution.success",
-	// 	);
-	// 	Ok(())
-	// }
 }
 
 impl<T> CrossChainScenario<T, Disconnected> {
-	fn new<N: Network, M: Network>(
+	fn new<M: Network, N: Network>(
 		block: BlockInfo,
 		block_counterparty: BlockInfo,
 		admin: Account,
 		admin_counterparty: Account,
 	) -> Self {
-		let (vm, events) = create_base_xcvm_vm::<N, T>(mk_tx_raw(block.clone(), admin.clone()));
-		let (vm_counterparty, events_counterparty) = create_base_xcvm_vm::<M, T>(mk_tx_raw(
+		let (vm, events) = create_base_xcvm_vm::<M, T>(mk_tx_raw(block.clone(), admin.clone()));
+		let (vm_counterparty, events_counterparty) = create_base_xcvm_vm::<N, T>(mk_tx_raw(
 			block_counterparty.clone(),
 			admin_counterparty.clone(),
 		));
@@ -365,16 +305,13 @@ fn create_base_xcvm_vm<N: Network, T>(
 		.expect("Must be able to deploy XCVM contracts.")
 }
 
-fn create_ready_xcvm_network<N: Network, M: Network, T>(
+fn create_ready_xcvm_network<M: Network, N: Network, T>(
 	block: BlockInfo,
 	block_counterparty: BlockInfo,
 	admin: Account,
 	admin_counterparty: Account,
 	relayer: Account,
 	relayer_counterparty: Account,
-	channel_id: impl Into<String>,
-	connection_id: impl Into<String>,
-	ordering: IbcOrder,
 	pica_balances: impl IntoIterator<Item = Cw20Coin>,
 	eth_balances: impl IntoIterator<Item = Cw20Coin>,
 	usdt_balances: impl IntoIterator<Item = Cw20Coin>,
@@ -383,8 +320,11 @@ fn create_ready_xcvm_network<N: Network, M: Network, T>(
 	eth_balances_counterparty: impl IntoIterator<Item = Cw20Coin>,
 	usdt_balances_counterparty: impl IntoIterator<Item = Cw20Coin>,
 	usdc_balances_counterparty: impl IntoIterator<Item = Cw20Coin>,
+	channel_id: impl Into<String>,
+	connection_id: impl Into<String>,
+	ordering: IbcOrder,
 ) -> Result<CrossChainScenario<XCVMState<T>, Connected>, TestError> {
-	let mut network = CrossChainScenario::<XCVMState<T>, _>::new::<N, M>(
+	let mut network = CrossChainScenario::<XCVMState<T>, _>::new::<M, N>(
 		block,
 		block_counterparty,
 		admin,
@@ -447,36 +387,6 @@ fn assert_event<'a>(
 	);
 }
 
-#[test]
-fn test_deploy() {
-	let admin = Account::unchecked("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY");
-	let tx = mk_tx(admin);
-	let (_, events) = create_vm::<Picasso>()
-		.deploy_xcvm::<()>(tx)
-		.expect("Must be able to deploy XCVM contracts.");
-	assert_eq!(events.registry_data, None);
-	assert_eq!(events.gateway_data, None);
-	xcvm_assert_prefixed_event(
-		events.registry_events.iter(),
-		XCVM_ASSET_REGISTRY_EVENT_PREFIX,
-		"action",
-		"instantiated",
-	);
-	// The gateway must deploy the router.
-	xcvm_assert_prefixed_event(
-		events.gateway_events.iter(),
-		XCVM_ROUTER_EVENT_PREFIX,
-		"action",
-		"instantiated",
-	);
-	xcvm_assert_prefixed_event(
-		events.gateway_events.iter(),
-		XCVM_GATEWAY_EVENT_PREFIX,
-		"action",
-		"instantiated",
-	);
-}
-
 fn xcvm_deploy_asset<A: Asset + AssetSymbol, T>(
 	vm: &mut TestVM<XCVMState<T>>,
 	tx: BlockchainTransaction,
@@ -512,78 +422,62 @@ fn xcvm_deploy_asset<A: Asset + AssetSymbol, T>(
 	);
 }
 
-#[test]
-fn test_deploy_and_register_assets() {
-	let admin = Account::unchecked("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY");
-	let tx = mk_tx(admin);
-	let (mut vm, _) = create_base_xcvm_vm::<Picasso, ()>(tx.clone());
-	xcvm_deploy_asset::<PICA, _>(&mut vm, tx.clone(), []);
-	xcvm_deploy_asset::<ETH, _>(&mut vm, tx.clone(), []);
-	xcvm_deploy_asset::<USDT, _>(&mut vm, tx.clone(), []);
-	xcvm_deploy_asset::<USDC, _>(&mut vm, tx, []);
-}
-
-fn simple_singlechain_xcvm_transfer(transfer_amount: u128) {
-	let admin = Account::unchecked("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY");
-	let admin_counterparty = Account::unchecked("5ES7Ks2P3i7ZadGdmCQq8LYyHrXLZKYXT66d6M6uU7h1Wmas");
-	let relayer = Account::unchecked("5CSmbF3AUmspWJvjCm9LCJVwuQ1tZ2h4K5jwKPW51TXWb7H3");
-	let relayer_counterparty =
-		Account::unchecked("5CSR38vJcmiTc53kZrv36SFfxXd17SHgH6amp2H5HNgcBen7");
-	let alice = Account::unchecked("5CSbGnoocQgFVJ9JfdeN5VArEB1XjqPfYxoSgEWuUjznuxTK");
-	let bob = Account::unchecked("5ELSofPZUw6u2JUWsi7dQRkmR8HkT1LUFQvkTQdrcjEi3nbS");
-	let block = BlockInfo {
-		height: 1_000_000,
-		time: Timestamp::from_seconds(1_000_000),
-		chain_id: "PICASSO-MEMNET".into(),
-	};
-	let block_counterparty = BlockInfo {
-		height: 12_000_000,
-		time: Timestamp::from_seconds(1_000_000),
-		chain_id: "JUNO-MEMNET".into(),
-	};
-	let mut network = create_ready_xcvm_network::<Picasso, Juno, ()>(
+fn xcvm_crosschain_operation<M: Network, N: Network, T>(
+  block: BlockInfo,
+  block_counterparty: BlockInfo,
+  admin: Account,
+  admin_counterparty: Account,
+	relayer: Account,
+	relayer_counterparty: Account,
+	pica_balances: impl IntoIterator<Item = Cw20Coin>,
+	eth_balances: impl IntoIterator<Item = Cw20Coin>,
+	usdt_balances: impl IntoIterator<Item = Cw20Coin>,
+	usdc_balances: impl IntoIterator<Item = Cw20Coin>,
+	pica_balances_counterparty: impl IntoIterator<Item = Cw20Coin>,
+	eth_balances_counterparty: impl IntoIterator<Item = Cw20Coin>,
+	usdt_balances_counterparty: impl IntoIterator<Item = Cw20Coin>,
+	usdc_balances_counterparty: impl IntoIterator<Item = Cw20Coin>,
+  channel_id: impl Into<String>,
+  connection_id: impl Into<String>,
+  order: IbcOrder,
+  sender: Account,
+	program: DefaultXCVMProgram,
+	salt: impl Into<Salt>,
+	assets: impl IntoIterator<Item = (AssetId, u128)>,
+	allowance_expiration: Option<Expiration>,
+) -> Result<(CrossChainScenario<XCVMState<T>, Connected>, CrossChainDispatchResult), TestError> {
+	let mut network = create_ready_xcvm_network::<M, N, T>(
 		block,
 		block_counterparty,
 		admin,
 		admin_counterparty,
 		relayer.clone(),
 		relayer_counterparty.clone(),
-		"ibc:in-memory",
-		"ibc:connection:0",
-		IbcOrder::Unordered,
-		[Cw20Coin { address: alice.clone().into(), amount: transfer_amount.into() }],
-		[],
-		[],
-		[],
-		[],
-		[],
-		[],
-		[],
+		pica_balances,
+		eth_balances,
+		usdt_balances,
+		usdc_balances,
+		pica_balances_counterparty,
+		eth_balances_counterparty,
+		usdt_balances_counterparty,
+		usdc_balances_counterparty,
+    channel_id,
+    connection_id,
+    order,
 	)
 	.expect("Must be able to create an XCVM network.");
-	let assets_to_transfer = [(PICA::ID, transfer_amount)];
-	let program = ProgramBuilder::<Picasso, CanonicalAddr, Funds>::new([])
-		.transfer(Destination::Account(to_canonical(bob.clone())), assets_to_transfer)
-		.build();
 	let CrossChainDispatchResult { dispatch_data, dispatch_events, relay_data, relay_events } =
 		network
 			.dispatch_and_relay(
 				relayer,
 				relayer_counterparty,
-				alice.clone(),
+				sender,
 				program,
-				[],
-				assets_to_transfer,
-				None,
+				salt,
+				assets,
+				allowance_expiration,
 			)
-			.expect("Must be able to transfer assets via XCVM");
-  // We don't do cross-chain operation, nothing must happen from the relayer POV.
-  assert_eq!(relay_data, Vec::default());
-  assert_eq!(relay_events, Vec::default());
-
-  // We don't dispatch any information in the data field.
-	assert_eq!(dispatch_data, None);
-
+			.expect("Must be able to dispatch XCVM program.");
 	xcvm_assert_prefixed_event(
 		dispatch_events.iter(),
 		XCVM_ROUTER_EVENT_PREFIX,
@@ -608,256 +502,206 @@ fn simple_singlechain_xcvm_transfer(transfer_amount: u128) {
 		"action",
 		"execution.success",
 	);
-	assert_eq!(
-		network.vm.balance_of::<PICA>(mk_tx(alice.clone()), alice.clone()),
-		Ok(cw20::BalanceResponse { balance: 0_u128.into() })
-	);
-	assert_eq!(
-		network.vm.balance_of::<PICA>(mk_tx(bob.clone()), bob.clone()),
-		Ok(cw20::BalanceResponse { balance: transfer_amount.into() })
-	);
+	Ok((
+		network,
+		CrossChainDispatchResult { dispatch_data, dispatch_events, relay_data, relay_events },
+	))
 }
 
-// fn xcvm_crosschain_operation(
-// 	vm: &mut TestVM<XCVMState<()>>,
-// 	vm_counterparty: &mut TestVM<XCVMState<()>>,
-// 	admin: Account,
-// 	admin_counterparty: Account,
-// 	relayer: Account,
-// 	relayer_counterparty: Account,
-// 	alice: Account,
-// 	bob: Account,
-// 	program: DefaultXCVMProgram,
-// 	assets_to_transfer: &[(AssetId, u128)],
-// 	allowance_expiration: Expiration,
-// ) -> Result<(), TestError> {
-// 	let channel_id = "ibc:in-memory:picasso-juno";
-// 	let connection_id = "ibc:connection:0";
-// 	let version = XCVM_GATEWAY_IBC_VERSION;
-// 	let mut ibc_network = InMemoryIbcNetworkChannel::connect(
-// 		vm,
-// 		vm_counterparty,
-// 		channel_id,
-// 		connection_id,
-// 		version,
-// 		IbcOrder::Unordered,
-// 		mk_tx(relayer.clone()),
-// 		mk_tx(relayer_counterparty.clone()),
-// 		mk_tx(admin),
-// 		mk_tx(admin_counterparty),
-// 		u64::MAX,
-// 	)?;
-// 	let (data, events) = vm.dispatch_program_with_allowance(
-// 		mk_tx(alice.clone()),
-// 		[],
-// 		program,
-// 		assets_to_transfer.iter().copied().collect::<Vec<_>>(),
-// 		None,
-// 	)?;
-// 	ibc_network.relay(
-// 		vm,
-// 		vm_counterparty,
-// 		mk_tx(relayer.clone()),
-// 		mk_tx(relayer_counterparty.clone()),
-// 		u64::MAX,
-// 	)?;
-// 	assert_eq!(data, None);
-// 	xcvm_assert_prefixed_event(events.iter(), XCVM_ROUTER_EVENT_PREFIX, "action", "route.create");
-// 	xcvm_assert_prefixed_event(events.iter(), XCVM_ROUTER_EVENT_PREFIX, "action", "route.execute");
-// 	xcvm_assert_prefixed_event(
-// 		events.iter(),
-// 		XCVM_INTERPRETER_EVENT_PREFIX,
-// 		"action",
-// 		"execution.start",
-// 	);
-// 	xcvm_assert_prefixed_event(
-// 		events.iter(),
-// 		XCVM_INTERPRETER_EVENT_PREFIX,
-// 		"action",
-// 		"execution.success",
-// 	);
-// 	Ok(())
-// }
-
-// fn xcvm_crosschain_transfer(
-// 	vm: &mut TestVM<XCVMState<()>>,
-// 	vm_counterparty: &mut TestVM<XCVMState<()>>,
-// 	admin: Account,
-// 	admin_counterparty: Account,
-// 	relayer: Account,
-// 	relayer_counterparty: Account,
-// 	alice: Account,
-// 	bob: Account,
-// 	transfer_amount: u128,
-// ) -> Result<(), TestError> {
-// 	assert_eq!(
-// 		vm.balance_of::<PICA>(mk_tx(alice.clone()), alice.clone()),
-// 		Ok(cw20::BalanceResponse { balance: transfer_amount.into() })
-// 	);
-// 	assert_eq!(
-// 		vm_counterparty.balance_of::<PICA>(mk_tx(bob.clone()), bob.clone()),
-// 		Ok(cw20::BalanceResponse { balance: 0_u128.into() })
-// 	);
-// 	assert_eq!(
-// 		vm.token_info::<PICA>(mk_tx(alice.clone()))
-// 			.expect("Must be able to query for asset info.")
-// 			.total_supply
-// 			.u128(),
-// 		transfer_amount
-// 	);
-// 	assert_eq!(
-// 		vm_counterparty
-// 			.token_info::<PICA>(mk_tx(alice.clone()))
-// 			.expect("Must be able to query for asset info.")
-// 			.total_supply
-// 			.u128(),
-// 		0_u128
-// 	);
-// 	let channel_id = "ibc:in-memory:picasso-juno";
-// 	let connection_id = "ibc:connection:0";
-// 	let version = XCVM_GATEWAY_IBC_VERSION;
-// 	let mut ibc_network = InMemoryIbcNetworkChannel::connect(
-// 		vm,
-// 		vm_counterparty,
-// 		channel_id,
-// 		connection_id,
-// 		version,
-// 		IbcOrder::Unordered,
-// 		mk_tx(relayer.clone()),
-// 		mk_tx(relayer_counterparty.clone()),
-// 		mk_tx(admin),
-// 		mk_tx(admin_counterparty),
-// 		u64::MAX,
-// 	)?;
-// 	let assets_to_transfer = [(PICA::ID, transfer_amount)];
-// 	let program = ProgramBuilder::<Picasso, CanonicalAddr, Funds>::new([])
-// 		.spawn::<Juno, (), _, _>(
-// 			"PHONE",
-// 			[],
-// 			BridgeSecurity::Deterministic,
-// 			[(PICA::ID, Amount::everything())],
-// 			|juno_program| {
-// 				juno_program
-// 					.transfer(
-// 						Destination::Account(to_canonical(bob.clone())),
-// 						[(PICA::ID, Amount::ratio(Amount::MAX_PARTS / 2))],
-// 					)
-// 					.spawn::<Picasso, (), _, _>(
-// 						"HOME",
-// 						[],
-// 						BridgeSecurity::Deterministic,
-// 						[(PICA::ID, Amount::everything())],
-// 						|picasso_program| {
-// 							Ok(picasso_program
-// 								.transfer(Destination::Relayer, [(PICA::ID, Amount::everything())]))
-// 						},
-// 					)
-// 			},
-// 		)
-// 		.expect("Must be able to create XCVM program.")
-// 		.build();
-// 	let (data, events) = vm.dispatch_program_with_allowance(
-// 		mk_tx(alice.clone()),
-// 		[],
-// 		program,
-// 		assets_to_transfer,
-// 		None,
-// 	)?;
-// 	ibc_network.relay(
-// 		vm,
-// 		vm_counterparty,
-// 		mk_tx(relayer.clone()),
-// 		mk_tx(relayer_counterparty.clone()),
-// 		u64::MAX,
-// 	)?;
-// 	assert_eq!(data, None);
-// 	xcvm_assert_prefixed_event(events.iter(), XCVM_ROUTER_EVENT_PREFIX, "action", "route.create");
-// 	xcvm_assert_prefixed_event(events.iter(), XCVM_ROUTER_EVENT_PREFIX, "action", "route.execute");
-// 	xcvm_assert_prefixed_event(
-// 		events.iter(),
-// 		XCVM_INTERPRETER_EVENT_PREFIX,
-// 		"action",
-// 		"execution.start",
-// 	);
-// 	xcvm_assert_prefixed_event(
-// 		events.iter(),
-// 		XCVM_INTERPRETER_EVENT_PREFIX,
-// 		"action",
-// 		"execution.success",
-// 	);
-// 	assert_eq!(
-// 		vm.balance_of::<PICA>(mk_tx(alice.clone()), alice.clone()),
-// 		Ok(cw20::BalanceResponse { balance: 0_u128.into() })
-// 	);
-// 	assert_ok!(almost_eq(
-// 		vm_counterparty
-// 			.balance_of::<PICA>(mk_tx(bob.clone()), bob.clone())
-// 			.unwrap()
-// 			.balance
-// 			.u128(),
-// 		transfer_amount / 2,
-// 		1
-// 	));
-// 	assert_ok!(almost_eq(
-// 		vm.balance_of::<PICA>(mk_tx(relayer.clone()), relayer_counterparty.clone())
-// 			.unwrap()
-// 			.balance
-// 			.u128(),
-// 		transfer_amount / 2,
-// 		1
-// 	));
-// 	let supply = vm
-// 		.token_info::<PICA>(mk_tx(alice.clone()))
-// 		.expect("Must be able to query for asset info.")
-// 		.total_supply
-// 		.u128();
-// 	let supply_counterparty = vm_counterparty
-// 		.token_info::<PICA>(mk_tx(alice.clone()))
-// 		.expect("Must be able to query for asset info.")
-// 		.total_supply
-// 		.u128();
-// 	assert_eq!(supply + supply_counterparty, transfer_amount);
-// 	Ok(())
-// }
-
-// fn xcvm_crosschain_transfer_ok(transfer_amount: u128) {
-// 	let admin_picasso = Account::unchecked("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY");
-// 	let admin_juno = Account::unchecked("5CS3GHP2SKycDJWpEziHrqYQU8L62kVFmM5CDKYDipRv9XAc");
-// 	let relayer_picasso = Account::unchecked("5CSmbF3AUmspWJvjCm9LCJVwuQ1tZ2h4K5jwKPW51TXWb7H3");
-// 	let relayer_juno = Account::unchecked("5CSR38vJcmiTc53kZrv36SFfxXd17SHgH6amp2H5HNgcBen7");
-// 	let alice = Account::unchecked("5CSbGnoocQgFVJ9JfdeN5VArEB1XjqPfYxoSgEWuUjznuxTK");
-// 	let bob = Account::unchecked("5ELSofPZUw6u2JUWsi7dQRkmR8HkT1LUFQvkTQdrcjEi3nbS");
-// 	let mut vm_picasso = create_xcvm_vm::<Picasso, ()>(
-// 		mk_tx(admin_picasso.clone()),
-// 		[Cw20Coin { address: alice.clone().into(), amount: transfer_amount.into() }],
-// 		[],
-// 		[],
-// 		[],
-// 	);
-// 	let mut vm_juno = create_xcvm_vm::<Juno, ()>(mk_tx(admin_juno.clone()), [], [], [], []);
-// 	assert_ok!(xcvm_crosschain_transfer(
-// 		&mut vm_picasso,
-// 		&mut vm_juno,
-// 		admin_picasso,
-// 		admin_juno,
-// 		relayer_picasso,
-// 		relayer_juno,
-// 		alice,
-// 		bob,
-// 		transfer_amount,
-// 	));
-// }
-
-mod property {
+mod base {
 	use super::*;
+	use crate::tests::framework::XCVMRegisterAssetEvents;
+	use cosmwasm_orchestrate::vm::VmError;
+	use cosmwasm_vm::system::SystemError;
+	use cosmwasm_vm_wasmi::WasmiVMError;
+
+	fn deploy(admin: Account) {
+		let tx = mk_tx(admin);
+		let (_, events) = create_vm::<Picasso>()
+			.deploy_xcvm::<()>(tx)
+			.expect("Must be able to deploy XCVM contracts.");
+		assert_eq!(events.registry_data, None);
+		assert_eq!(events.gateway_data, None);
+		xcvm_assert_prefixed_event(
+			events.registry_events.iter(),
+			XCVM_ASSET_REGISTRY_EVENT_PREFIX,
+			"action",
+			"instantiated",
+		);
+		// The gateway must deploy the router.
+		xcvm_assert_prefixed_event(
+			events.gateway_events.iter(),
+			XCVM_ROUTER_EVENT_PREFIX,
+			"action",
+			"instantiated",
+		);
+		xcvm_assert_prefixed_event(
+			events.gateway_events.iter(),
+			XCVM_GATEWAY_EVENT_PREFIX,
+			"action",
+			"instantiated",
+		);
+	}
+
+	fn deploy_and_register_assets<A: Asset + AssetSymbol>(
+		admin: Account,
+		arbitrary_sender: Account,
+	) -> Result<(Account, XCVMRegisterAssetEvents), TestError> {
+		let tx = mk_tx(admin);
+		let tx_arbitrary = mk_tx(arbitrary_sender);
+		let (mut vm, _) = create_base_xcvm_vm::<Picasso, ()>(tx.clone());
+		let gateway = vm.xcvm_state.gateway.clone();
+		vm.deploy_asset::<A>(
+			tx_arbitrary,
+			[],
+			Some(MinterResponse { minter: gateway.into(), cap: None }),
+		)
+	}
+
+	fn arbitrary_user_cannot_register_asset(admin: Account, arbitrary_sender: Account) {
+		assert_eq!(
+			deploy_and_register_assets::<PICA>(admin, arbitrary_sender),
+			Err(TestError::Vm(VmError::VMError(WasmiVMError::SystemError(
+				SystemError::ContractExecutionFailure(
+					"Caller is not authenticated to take the action".into()
+				)
+			))))
+		);
+	}
+
+	fn admin_can_register_asset(admin: Account) {
+		assert_ok!(deploy_and_register_assets::<PICA>(admin.clone(), admin.clone()));
+	}
+
+	proptest! {
+		#[test]
+		fn test_deploy(admin in account()) {
+		  deploy(admin)
+		}
+
+		#[test]
+		fn test_arbitrary_user_cannot_register_asset(admin in account(), arbitrary_sender in account()) {
+		  prop_assume!(admin != arbitrary_sender);
+	  arbitrary_user_cannot_register_asset(admin, arbitrary_sender);
+		}
+
+		#[test]
+		fn test_admin_can_register_asset(admin in account()) {
+	  admin_can_register_asset(admin)
+		}
+	}
+}
+
+mod single_chain {
+	use super::*;
+
+	fn simple_singlechain_xcvm_transfer(
+		admin: Account,
+		admin_counterparty: Account,
+		relayer: Account,
+		relayer_counterparty: Account,
+		alice: Account,
+		bob: Account,
+		transfer_amount: u128,
+	) {
+		let block = BlockInfo {
+			height: 1_000_000,
+			time: Timestamp::from_seconds(1_000_000),
+			chain_id: "PICASSO-MEMNET".into(),
+		};
+		let block_counterparty = BlockInfo {
+			height: 12_000_000,
+			time: Timestamp::from_seconds(1_000_000),
+			chain_id: "JUNO-MEMNET".into(),
+		};
+		let mut network = create_ready_xcvm_network::<Picasso, Juno, ()>(
+			block,
+			block_counterparty,
+			admin,
+			admin_counterparty,
+			relayer.clone(),
+			relayer_counterparty.clone(),
+			[Cw20Coin { address: alice.clone().into(), amount: transfer_amount.into() }],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			"ibc:in-memory",
+			"ibc:connection:0",
+			IbcOrder::Unordered,
+		)
+		.expect("Must be able to create an XCVM network.");
+		let assets_to_transfer = [(PICA::ID, transfer_amount)];
+		let program = ProgramBuilder::<Picasso, CanonicalAddr, Funds>::new([])
+			.transfer(Destination::Account(to_canonical(bob.clone())), assets_to_transfer)
+			.build();
+		let CrossChainDispatchResult { dispatch_data, dispatch_events, relay_data, relay_events } =
+			network
+				.dispatch_and_relay(
+					relayer,
+					relayer_counterparty,
+					alice.clone(),
+					program,
+					[],
+					assets_to_transfer,
+					None,
+				)
+				.expect("Must be able to transfer assets via XCVM");
+		// We don't do cross-chain operation, nothing must happen from the relayer POV.
+		assert_eq!(relay_data, Vec::default());
+		assert_eq!(relay_events, Vec::default());
+
+		// We don't dispatch any information in the data field.
+		assert_eq!(dispatch_data, None);
+
+		xcvm_assert_prefixed_event(
+			dispatch_events.iter(),
+			XCVM_ROUTER_EVENT_PREFIX,
+			"action",
+			"route.create",
+		);
+		xcvm_assert_prefixed_event(
+			dispatch_events.iter(),
+			XCVM_ROUTER_EVENT_PREFIX,
+			"action",
+			"route.execute",
+		);
+		xcvm_assert_prefixed_event(
+			dispatch_events.iter(),
+			XCVM_INTERPRETER_EVENT_PREFIX,
+			"action",
+			"execution.start",
+		);
+		xcvm_assert_prefixed_event(
+			dispatch_events.iter(),
+			XCVM_INTERPRETER_EVENT_PREFIX,
+			"action",
+			"execution.success",
+		);
+		assert_eq!(
+			network.vm.balance_of::<PICA>(mk_tx(alice.clone()), alice.clone()),
+			Ok(cw20::BalanceResponse { balance: 0_u128.into() })
+		);
+		assert_eq!(
+			network.vm.balance_of::<PICA>(mk_tx(bob.clone()), bob.clone()),
+			Ok(cw20::BalanceResponse { balance: transfer_amount.into() })
+		);
+	}
+
 	proptest! {
 	  #[test]
-	  fn test_simple_singlechain_xcvm_transfer(transfer_amount in 0u128..u128::MAX) {
-		  simple_singlechain_xcvm_transfer(transfer_amount);
+	  fn test_simple_singlechain_xcvm_transfer(
+		  admin in account(),
+		  admin_counterparty in account(),
+		  relayer in account(),
+		  relayer_counterparty in account(),
+		  alice in account(),
+		  bob in account(),
+		  transfer_amount in 0u128..u128::MAX) {
+		  simple_singlechain_xcvm_transfer(admin, admin_counterparty, relayer, relayer_counterparty, alice, bob, transfer_amount);
 	  }
-	  // #[test]
-	  // fn test_xcvm_crosschain_transfer_ok(transfer_amount in 0u128..u128::MAX) {
-		//   xcvm_crosschain_transfer_ok(transfer_amount)
-	  // }
 	}
 }
