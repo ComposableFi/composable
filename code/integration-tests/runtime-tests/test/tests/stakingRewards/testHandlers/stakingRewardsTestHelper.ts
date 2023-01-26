@@ -215,14 +215,14 @@ export function getClaimOfStake(
   if (totalShareAssetIssuance.eqn(0)) {
     return new BN(0);
   } else {
-    const a = stakeInfo.reductions.toJSON();
-    const b = a[rewardAssetId.toString()];
+    const stakeReductions = stakeInfo.reductions.toJSON();
+    const stakeReductionsForAsset = stakeReductions[rewardAssetId.toString()];
     let inflation: BN;
     if (veryFirstClaim)
       inflation = new BN(0);
     else {
-      // @ts-ignore
-      inflation = new BN((Number(b.toString())));// * Number(Pica(1).toString())).toString());
+      if (stakeReductionsForAsset == undefined) throw new Error("Reduction for asset ID was undefined!");
+      inflation = new BN((Number(stakeReductionsForAsset.toString())));
     }
     debugger;
     let totalRewards: u128 | undefined = undefined;

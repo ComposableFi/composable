@@ -10,7 +10,7 @@ import {
   ComposableTraitsStakingStake,
   CustomRpcBalance
 } from "@composable/types/interfaces";
-import { Option, u128, u32, u64, Vec } from "@polkadot/types-codec";
+import { Option, u128, u64, Vec } from "@polkadot/types-codec";
 import BN from "bn.js";
 import { before } from "mocha";
 import { mintAssetsToWallet, Pica } from "@composable/utils/mintingHelper";
@@ -47,11 +47,11 @@ import BigNumber from "bignumber.js";
  * 1.1 I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with a single reward asset.
  * 1.2 I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with multiple reward assets.
  * 1.3 I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with a single duration preset.
- * 1.6 I can, as sudo, create a new Stakign Rewards pool for any arbitrary asset ID with zero time locks.
+ * 1.6 I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with zero time locks.
  * 1.7 I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with zero penalty locks.
  *
- * 2.1 I can, as pool owner, add rewardsto staking rewards pool pot #1.1.
- * 2.2 Any user can add all reward assets to another stakign rewards pool with multiple reward pots #1.2.
+ * 2.1 I can, as pool owner, add rewards to staking rewards pool pot #1.1.
+ * 2.2 Any user can add all reward assets to another staking rewards pool with multiple reward pots #1.2.
  * 2.3 Any user can add rewards to multiple staking pool at once
  *
  * 3.1 I can stake in the newly created rewards pool #1.1.
@@ -82,7 +82,7 @@ import BigNumber from "bignumber.js";
  * 5.1 I can extend the stake amount in pool #1.1 using the stake from #3.3
  * 5.2 I can extend the lock time in pool #1.1 using the stake from #3.1.
  *
- * 6.1 I can split my staking position into 2 seperate positions.
+ * 6.1 I can split my staking position into 2 separate positions.
  * 6.2 I can split my already split position again.
  *
  * 7.1 I can unstake my staking position before my lock period has ended and get slashed.
@@ -129,9 +129,6 @@ describe("tx.stakingRewards Tests", function() {
 
   const inflations: BigNumber[] = [];
   let blockNumAtStake31: number, blockNumAtStake32: number, blockNumAtStake37: number, blockNumAtStake38: number;
-
-
-  let pool_11_start_block: u32;
 
   const POOL_11_BASE_ASSET_ID = 10000;
   const POOL_11_SHARE_ASSET_ID = 10000001;
@@ -380,7 +377,9 @@ describe("tx.stakingRewards Tests", function() {
             }
           }),
           lock: {
-            durationPresets: durationPreset,
+            durationMultipliers: {
+              Presets: durationPreset
+            },
             unlockPenalty: unlockPenalty
           },
           shareAssetId: shareAssetId,
@@ -467,7 +466,9 @@ describe("tx.stakingRewards Tests", function() {
             }
           }),
           lock: {
-            durationPresets: durationPreset,
+            durationMultipliers: {
+              Presets: durationPreset
+            },
             unlockPenalty: unlockPenalty
           },
           shareAssetId: shareAssetId,
@@ -544,7 +545,9 @@ describe("tx.stakingRewards Tests", function() {
             }
           }),
           lock: {
-            durationPresets: durationPreset,
+            durationMultipliers: {
+              Presets: durationPreset
+            },
             unlockPenalty: unlockPenalty
           },
           shareAssetId: shareAssetId,
@@ -607,10 +610,6 @@ describe("tx.stakingRewards Tests", function() {
       const financialNftAssetId = 60000002;
       const minimumStakingAmount = Pica(1);
       // Creating pool config parameter
-      const lock = api.createType("ComposableTraitsStakingLockLockConfig", {
-        durationPresets: durationPreset,
-        unlockPenalty: unlockPenalty
-      });
       const poolConfig = api.createType("ComposableTraitsStakingRewardPoolConfiguration", {
         RewardRateBasedIncentive: {
           owner: walletPoolOwner.publicKey,
@@ -626,7 +625,12 @@ describe("tx.stakingRewards Tests", function() {
               }
             }
           }),
-          lock: lock,
+          lock: {
+            durationMultipliers: {
+              Presets: durationPreset
+            },
+            unlockPenalty: unlockPenalty
+          },
           shareAssetId: shareAssetId,
           financialNftAssetId: financialNftAssetId,
           minimumStakingAmount: minimumStakingAmount
@@ -677,10 +681,6 @@ describe("tx.stakingRewards Tests", function() {
       const financialNftAssetId = 70000002;
       const minimumStakingAmount = Pica(1);
       // Creating pool config parameter
-      const lock = api.createType("ComposableTraitsStakingLockLockConfig", {
-        durationPresets: durationPreset,
-        unlockPenalty: unlockPenalty
-      });
       const poolConfig = api.createType("ComposableTraitsStakingRewardPoolConfiguration", {
         RewardRateBasedIncentive: {
           owner: walletPoolOwner.publicKey,
@@ -696,7 +696,12 @@ describe("tx.stakingRewards Tests", function() {
               }
             }
           }),
-          lock: lock,
+          lock: {
+            durationMultipliers: {
+              Presets: durationPreset
+            },
+            unlockPenalty: unlockPenalty
+          },
           shareAssetId: shareAssetId,
           financialNftAssetId: financialNftAssetId,
           minimumStakingAmount: minimumStakingAmount
@@ -781,7 +786,7 @@ describe("tx.stakingRewards Tests", function() {
       // Transaction
       const transactions: SubmittableExtrinsic<"promise">[] = [];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const walletBalanceFunctions:Promise<CustomRpcBalance>[] = [];
+      const walletBalanceFunctions: Promise<CustomRpcBalance>[] = [];
       assetIds.forEach(function(asset) {
         transactions.push(api.tx.stakingRewards.addToRewardsPot(poolId, asset, amount, keepAlive));
         walletBalanceFunctions.push(api.rpc.assets.balanceOf(asset.toString(), walletRewardAdder.publicKey));
@@ -842,8 +847,8 @@ describe("tx.stakingRewards Tests", function() {
       this.timeout(5 * 60 * 1000);
 
       const currentBlockNumber = (await api.query.system.number());
-      if (currentBlockNumber.lt(pool_11_start_block))
-        await waitForBlocks(api, Number(pool_11_start_block.sub(currentBlockNumber).toString()));
+      if (currentBlockNumber.lt(new BN(pool11startBlock.toString())))
+        await waitForBlocks(api, Number(pool11startBlock - currentBlockNumber.toNumber()));
 
 
       // Parameters
