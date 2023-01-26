@@ -46,11 +46,10 @@
             cargoExtraArgs = "--all --check --verbose";
           });
 
-        cargo-clippy-check = crane.nightly.cargoBuild
+        cargo-clippy-check = crane.nightly.cargoClippy
           (systemCommonRust.common-attrs // {
             cargoArtifacts = self'.packages.common-deps-nightly;
-            cargoBuildCommand = "cargo clippy";
-            cargoExtraArgs = "--all-targets --tests -- -D warnings";
+            cargoClippyExtraArgs = "--all-targets --tests -- -D warnings";
           });
 
         cargo-deny-check = crane.nightly.cargoBuild
