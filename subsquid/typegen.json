@@ -1,7 +1,7 @@
 {
   "outDir": "src/types",
-  "chainVersions": "daliDevVersions.jsonl",
-  "specVersions": "daliDevVersions.jsonl",
+  "chainVersions": "picassoVersions.jsonl",
+  "specVersions": "picassoVersions.jsonl",
   "typesBundle": "kusama",
   "events": [
     "Pablo.PoolCreated",
