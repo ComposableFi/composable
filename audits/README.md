@@ -21,7 +21,7 @@ The related code audits are provided for context.
 
 [Halborn Audit - Staking Rewards & fNFT- 10.10.2022](./halborn/audit20221010-pallets-stakingRewards-fnft.pdf)
 
-[Halborn Audit - Pablo Refactored 29.11.2022](./halborn/audit20221129-pallet-pablo-refactored.pdf)
+[Halborn Audit - Pablo Refactoring 29.11.2022](./halborn/audit20221129-pallet-pablo-refactoring.pdf)
 
 ## Post-Mortems
 
