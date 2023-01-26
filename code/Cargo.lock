@@ -1687,6 +1687,8 @@ dependencies = [
  "sp-timestamp",
  "sp-transaction-pool",
  "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "staking-rewards-rpc",
+ "staking-rewards-runtime-api",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
@@ -3280,6 +3282,7 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "sp-transaction-pool",
  "sp-version",
+ "staking-rewards-runtime-api",
  "xcm",
  "xcm-builder",
  "xcm-executor",
@@ -9223,6 +9226,7 @@ dependencies = [
  "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "staking-rewards-runtime-api",
 ]
 
 [[package]]
@@ -15363,6 +15367,34 @@ name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
+
+[[package]]
+name = "staking-rewards-rpc"
+version = "1.0.0"
+dependencies = [
+ "composable-support",
+ "composable-traits",
+ "jsonrpsee 0.15.1",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "staking-rewards-runtime-api",
+]
+
+[[package]]
+name = "staking-rewards-runtime-api"
+version = "1.0.0"
+dependencies = [
+ "composable-support",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+]
 
 [[package]]
 name = "standback"
