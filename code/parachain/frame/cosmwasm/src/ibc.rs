@@ -1,14 +1,12 @@
 use crate::{
-	runtimes::vm::{CodeValidation, CosmwasmVMError, CosmwasmVMShared, InitialStorageMutability},
+	runtimes::vm::{CosmwasmVMError, CosmwasmVMShared, InitialStorageMutability},
 	types::{AccountIdOf, DefaultCosmwasmVM},
-	version::Version,
 	CodeIdToInfo, Config, Pallet,
 };
 use alloc::{
 	format,
 	string::{String, ToString},
 };
-
 use cosmwasm_vm::{
 	cosmwasm_std::{
 		Addr, ContractResult, Env, IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg,
@@ -30,9 +28,11 @@ use cosmwasm_vm::{
 	system::cosmwasm_system_entrypoint_serialize,
 	vm::{VMBase, VmErrorOf, VmInputOf, VmOutputOf},
 };
-use cosmwasm_vm_wasmi::WasmiVM;
-use sp_runtime::SaturatedConversion;
-
+use cosmwasm_vm_wasmi::{
+	validation::CodeValidation,
+	version::{Version, Version1x},
+	WasmiVM,
+};
 use frame_support::{ensure, traits::Get, RuntimeDebug};
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
@@ -49,6 +49,7 @@ use ibc::{
 	},
 	signer::Signer as IbcSigner,
 };
+use sp_runtime::SaturatedConversion;
 use sp_std::{marker::PhantomData, str::FromStr};
 
 use ibc_primitives::{HandlerMessage, IbcHandler};
@@ -70,7 +71,7 @@ impl<T: Config> Pallet<T> {
 	/// Check whether a contract export the mandatory IBC functions and is consequently IBC capable.
 	pub(crate) fn do_check_ibc_capability(module: &parity_wasm::elements::Module) -> bool {
 		CodeValidation::new(module)
-			.validate_exports(Version::<T>::IBC_EXPORTS)
+			.validate_exports(Version1x::IBC_EXPORTS)
 			.map(|_| true)
 			.unwrap_or(false)
 	}
