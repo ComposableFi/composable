@@ -1378,6 +1378,10 @@ fn claim_with_insufficient_pot_funds() {
 				owner: BOB,
 				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
 				fnft_instance_id: bob_stake_id,
+				// after first 10 blocks Bob gets 10*6*10_000 USDT of rewards.
+				// after Dave stakes, there are 600_000 more rewards accumulated after next 10
+				// blocks These rewards are split equally because they have the same shares amount
+				claimed_amounts: [(USDT::ID, 900_000)].into_iter().collect(),
 			},
 		);
 
@@ -1391,6 +1395,7 @@ fn claim_with_insufficient_pot_funds() {
 				owner: DAVE,
 				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
 				fnft_instance_id: dave_stake_id,
+				claimed_amounts: [(USDT::ID, 300_000)].into_iter().collect(),
 			},
 		);
 
@@ -1685,7 +1690,6 @@ mod claim {
 			stake_and_assert::<Test>(ALICE, staked_asset_id, AMOUNT, DURATION);
 
 			assert_eq!(balance(staked_asset_id, &ALICE), PICA::units(100_000_000) - AMOUNT);
-
 			// first staker should have 0 reductions
 			assert_eq!(
 				Stakes::<Test>::get(1, 0)
@@ -1697,7 +1701,13 @@ mod claim {
 
 			Test::assert_extrinsic_event(
 				StakingRewards::claim(RuntimeOrigin::signed(ALICE), 1, 0),
-				crate::Event::Claimed { owner: ALICE, fnft_collection_id: 1, fnft_instance_id: 0 },
+				crate::Event::Claimed {
+					owner: ALICE,
+					fnft_collection_id: 1,
+					fnft_instance_id: 0,
+					// 60 because 6000 miliseconds per block, default reward rate is 10 per 1 second
+					claimed_amounts: [(USDT::ID, 60)].into_iter().collect(),
+				},
 			);
 
 			let stake = Stakes::<Test>::get(1, 0).expect("expected stake. QED");
@@ -1733,6 +1743,7 @@ mod claim {
 					owner: staker,
 					fnft_collection_id: 1,
 					fnft_instance_id: 0,
+					claimed_amounts: [(USDT::ID, 0)].into_iter().collect(),
 				}));
 
 				let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");

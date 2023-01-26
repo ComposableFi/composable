@@ -217,6 +217,7 @@ fn update_accumulates_properly() {
 				owner: CHARLIE,
 				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
 				fnft_instance_id: stake_id,
+				claimed_amounts: [(USDT::ID, USDT::units(1) / 1_000 * 6)].into_iter().collect(),
 			},
 		);
 
