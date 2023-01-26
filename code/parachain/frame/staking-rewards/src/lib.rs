@@ -1416,7 +1416,6 @@ pub mod pallet {
 					},
 					None => {
 						let reward = Reward {
-							claimed_rewards: Zero::zero(),
 							total_dilution_adjustment: T::Balance::zero(),
 							reward_rate: RewardRate {
 								amount: T::Balance::zero(),
@@ -1786,7 +1785,6 @@ pub(crate) enum RewardAccumulationCalculationOutcome {
 	skip(stake, reward),
 	fields(
 		// ?reward.total_rewards,
-		?reward.claimed_rewards,
 		?reward.total_dilution_adjustment,
 		?stake.share
 	),
