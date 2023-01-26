@@ -1028,27 +1028,28 @@ jobs:
           command: nix -- build .#zombienet
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-  package-price-feed:
-    needs: common-deps
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: packagepricefeed-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#price-feed
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  # FIXME(hussein): enable when price feed is upgraded and actually usefull
+  # package-price-feed:
+  #   needs: common-deps
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: packagepricefeed-${{ github.event.pull_request.title }}
+  #     cancel-in-progress: true
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         persist-credentials: false
+  #     - uses: "./.github/templates/watch-exec"
+  #       with:
+  #         command: nix -- build .#price-feed
+  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   composable-sandbox-container-publish:
     needs:

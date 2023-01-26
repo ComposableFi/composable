@@ -3778,9 +3778,9 @@ dependencies = [
 
 [[package]]
 name = "fixed"
-version = "1.22.0"
+version = "1.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad45f1b686656281ac6a3b7eaf487be0e9e69fe4678f8497c84beb5f0fab7dae"
+checksum = "b2e55932f129b8e8582d2099dd43f67c9e641a9369280fac04ac97c47ba1564e"
 dependencies = [
  "az",
  "bytemuck",
@@ -8884,9 +8884,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec"
-version = "3.2.2"
+version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7ab01d0f889e957861bc65888d5ccbe82c158d0270136ba46820d43837cdf72"
+checksum = "c3840933452adf7b3b9145e27086a5a3376c619dca1a21b1e5a5af0d54979bed"
 dependencies = [
  "arrayvec 0.7.2",
  "bitvec",
