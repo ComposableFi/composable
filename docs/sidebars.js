@@ -234,8 +234,9 @@ const sidebars = {
                     collapsible: true,
                     collapsed: true,
                     items: [
-                        'products/parachain-vault-strategy/vault-process-in-detail/vault-process-in-detail',
-                        'products/parachain-vault-strategy/contracts-technical-details/contracts-technical-details',
+                        'products/parachain-vault-strategy/composable-strategies-withdrawal-guide',
+                        'products/parachain-vault-strategy/vault-process-in-detail',
+                        'products/parachain-vault-strategy/contracts-technical-details',
                     ],
                 }
             ]
