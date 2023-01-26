@@ -28,10 +28,7 @@ use crate::{
 	},
 	test::{
 		default_lock_config, mint_assets, new_test_ext,
-		prelude::{
-			block_seconds, init_logger, MINIMUM_STAKING_AMOUNT, ONE_YEAR_OF_BLOCKS,
-			STAKING_FNFT_COLLECTION_ID,
-		},
+		prelude::{block_seconds, init_logger, MINIMUM_STAKING_AMOUNT, STAKING_FNFT_COLLECTION_ID},
 		test_reward_accumulation_hook::{check_rewards, CheckRewards, PoolRewards},
 	},
 	test_helpers::{
@@ -55,7 +52,6 @@ fn test_update_reward_pool() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: ONE_YEAR_OF_BLOCKS + 1,
 			reward_configs: [(
 				USDT::ID,
 				RewardConfig { reward_rate: RewardRate::per_second(INITIAL_REWARD_RATE_AMOUNT) },
@@ -161,7 +157,6 @@ fn update_accumulates_properly() {
 					owner: ALICE,
 					asset_id: PICA::ID,
 					start_block: 50,
-					end_block: 100_000,
 					reward_configs: bounded_btree_map! {
 						USDT::ID => RewardConfig {
 							reward_rate: reward_rate.clone(),
@@ -186,11 +181,7 @@ fn update_accumulates_properly() {
 					minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 				},
 			),
-			crate::Event::<Test>::RewardPoolCreated {
-				pool_id: PICA::ID,
-				owner: ALICE,
-				end_block: 100_000,
-			},
+			crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE },
 		);
 
 		process_and_progress_blocks::<StakingRewards, Test>(10);

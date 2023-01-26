@@ -135,8 +135,6 @@ pub mod pallet {
 			pool_id: T::AssetId,
 			/// Owner of the pool.
 			owner: T::AccountId,
-			/// End block
-			end_block: T::BlockNumber,
 		},
 		/// Pool with specified id `T::AssetId` has started accumulating rewards.
 		RewardPoolStarted {
@@ -248,8 +246,6 @@ pub mod pallet {
 		TooManyRewardAssetTypes,
 		/// Invalid start block number provided for creating a pool.
 		StartBlockMustBeAfterCurrentBlock,
-		/// Invalid end block number provided for creating a pool.
-		EndBlockMustBeAfterStartBlock,
 		/// Unimplemented reward pool type.
 		UnimplementedRewardPoolConfiguration,
 		/// Rewards pool not found.
@@ -631,7 +627,6 @@ pub mod pallet {
 					asset_id: pool_asset,
 					reward_configs: initial_reward_config,
 					start_block,
-					end_block,
 					lock,
 					share_asset_id,
 					financial_nft_asset_id,
@@ -642,13 +637,12 @@ pub mod pallet {
 					ensure!(!share_asset_id.is_zero(), Error::<T>::InvalidAssetId);
 					ensure!(!financial_nft_asset_id.is_zero(), Error::<T>::InvalidAssetId);
 
-					// now < start_block < end_block
+					// now < start_block
 					ensure!(
 						// Exclusively greater than to prevent errors/attacks
 						start_block > frame_system::Pallet::<T>::current_block_number(),
 						Error::<T>::StartBlockMustBeAfterCurrentBlock
 					);
-					ensure!(end_block > start_block, Error::<T>::EndBlockMustBeAfterStartBlock);
 
 					ensure!(
 						!RewardPools::<T>::contains_key(pool_asset),
@@ -704,7 +698,6 @@ pub mod pallet {
 							rewards,
 							claimed_shares: T::Balance::zero(),
 							start_block,
-							end_block,
 							lock,
 							share_asset_id,
 							financial_nft_asset_id,
@@ -717,7 +710,6 @@ pub mod pallet {
 					Self::deposit_event(Event::<T>::RewardPoolCreated {
 						pool_id: pool_asset,
 						owner,
-						end_block,
 					});
 
 					Ok(pool_asset)

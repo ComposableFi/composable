@@ -40,7 +40,6 @@ fn get_reward_pool<T: Config>(
 		owner,
 		asset_id: BASE_ASSET_ID.into(),
 		start_block: 2_u128.saturated_into(),
-		end_block: 5_u128.saturated_into(),
 		reward_configs: reward_config::<T>(reward_count),
 		lock: lock_config::<T>(),
 		share_asset_id: X_ASSET_ID.into(),
@@ -102,10 +101,9 @@ benchmarks! {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
 		let owner: T::AccountId = account("owner", 0, 0);
 		let pool_id = BASE_ASSET_ID.into();
-		let end_block = 5_u128.saturated_into();
 	}: _(OriginFor::<T>::root(), get_reward_pool::<T>(owner.clone(), r))
 	verify {
-		assert_last_event::<T>(Event::RewardPoolCreated { pool_id, owner, end_block }.into());
+		assert_last_event::<T>(Event::RewardPoolCreated { pool_id, owner }.into());
 	}
 
 	stake {
@@ -238,7 +236,6 @@ benchmarks! {
 			owner: user,
 			asset_id: pool_asset_id,
 			start_block: 2_u128.saturated_into(),
-			end_block: 5_u128.saturated_into(),
 			reward_configs: [(reward_asset_id, reward_config)]
 				.into_iter()
 				.try_collect()

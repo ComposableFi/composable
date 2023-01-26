@@ -44,7 +44,6 @@ fn test_reward_update_calculation() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: ONE_YEAR_OF_BLOCKS * 10 + 1,
 			reward_configs: [(PICA::ID, reward_config)].into_iter().try_collect().unwrap(),
 			lock: default_lock_config(),
 			share_asset_id: XPICA::ID,
@@ -152,7 +151,6 @@ fn test_accumulate_rewards_pool_empty_refill() {
 			owner: ALICE,
 			asset_id: A::ID,
 			start_block: current_block + 1,
-			end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
 			reward_configs: [(
 				A::ID,
 				RewardConfig { reward_rate: RewardRate::per_second(A_A_REWARD_RATE) },
@@ -265,7 +263,6 @@ fn test_accumulate_rewards_hook() {
 			owner: ALICE,
 			asset_id: ALICES_POOL_ID,
 			start_block: current_block + 1,
-			end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
 			reward_configs: [
 				(A::ID, RewardConfig { reward_rate: RewardRate::per_second(A_A_REWARD_RATE) }),
 				(B::ID, RewardConfig { reward_rate: RewardRate::per_second(A_B_REWARD_RATE) }),
@@ -303,7 +300,6 @@ fn test_accumulate_rewards_hook() {
 			owner: BOB,
 			asset_id: BOBS_POOL_ID,
 			start_block: current_block + 1,
-			end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
 			reward_configs: [
 				(D::ID, RewardConfig { reward_rate: RewardRate::per_second(C_D_REWARD_RATE) }),
 				(E::ID, RewardConfig { reward_rate: RewardRate::per_second(C_E_REWARD_RATE) }),
@@ -561,7 +557,6 @@ fn test_accumulate_rewards_hook() {
 			owner: CHARLIE,
 			asset_id: F::ID,
 			start_block: current_block + 1,
-			end_block: current_block + ONE_YEAR_OF_BLOCKS + 1,
 			reward_configs: [(F::ID, RewardConfig { reward_rate: RewardRate::per_second(0_u128) })]
 				.into_iter()
 				.try_collect()
@@ -725,7 +720,6 @@ fn test_pause_in_reward_accumulation_hook() {
 			owner: ALICE,
 			asset_id: ALICES_POOL_ID,
 			start_block: POOL_STARTING_BLOCK,
-			end_block: POOL_STARTING_BLOCK + ONE_YEAR_OF_BLOCKS,
 			reward_configs: bounded_btree_map! {
 				A::ID => RewardConfig {
 					reward_rate: RewardRate::per_second(A_A_REWARD_RATE)
