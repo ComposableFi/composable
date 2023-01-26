@@ -16,7 +16,7 @@ they are slashed. Specific API methods are as follows:
   based on the amount of blocks back that this is, 
   calling this will trigger a price fetch from the oracle on the given asset ID
   - From the pallet you can pass through an account and pay for your applications oracle updates (see cookbook)
-- prices(asset_id: u64) -> Price<BlockNumber>
+- `prices(asset_id: u64) -> Price<BlockNumber>`
   - Price {price: u64, block: BlockNumber}
   - This will return the price and the block number the price was set at for the asset_id
   - This is replaced when a new price comes in
