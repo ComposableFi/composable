@@ -46,7 +46,6 @@ pub mod pallet_hook;
 pub mod runtimes;
 pub mod types;
 pub mod utils;
-pub mod version;
 pub mod weights;
 pub use crate::ibc::NoRelayer;
 pub mod entrypoint;
@@ -67,12 +66,11 @@ use crate::{
 	runtimes::{
 		abstraction::{CosmwasmAccount, Gas, VMPallet},
 		vm::{
-			CodeValidation, ContractBackend, CosmwasmVM, CosmwasmVMCache, CosmwasmVMError,
-			CosmwasmVMShared, InitialStorageMutability, ValidationError,
+			ContractBackend, CosmwasmVM, CosmwasmVMCache, CosmwasmVMError, CosmwasmVMShared,
+			InitialStorageMutability,
 		},
 	},
 	types::*,
-	version::Version,
 };
 use alloc::{
 	collections::{btree_map::Entry, BTreeMap},
@@ -90,7 +88,12 @@ use cosmwasm_vm::{
 	executor::{cosmwasm_call, QueryCall, QueryResponse},
 	system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
 };
-use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
+use cosmwasm_vm_wasmi::{
+	host_functions, new_wasmi_vm,
+	validation::{CodeValidation, ValidationError},
+	version::{Version, Version1x},
+	WasmiImportResolver, WasmiVM,
+};
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, PostDispatchInfo},
 	pallet_prelude::*,
@@ -101,6 +104,7 @@ use frame_support::{
 	},
 	StorageHasher,
 };
+use wasmi_validation::PlainValidator;
 
 use sp_runtime::traits::{Hash, SaturatedConversion};
 use sp_std::vec::Vec;
@@ -784,16 +788,16 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn do_validate_code(module: &parity_wasm::elements::Module) -> Result<(), Error<T>> {
 		let validation: Result<(), ValidationError> = (|| {
 			let _ = CodeValidation::new(module)
-				.validate_base()?
+				.validate_module::<PlainValidator>(())?
 				.validate_memory_limit()?
 				.validate_table_size_limit(T::CodeTableSizeLimit::get())?
 				.validate_global_variable_limit(T::CodeGlobalVariableLimit::get())?
 				.validate_parameter_limit(T::CodeParameterLimit::get())?
 				.validate_br_table_size_limit(T::CodeBranchTableSizeLimit::get())?
 				.validate_no_floating_types()?
-				.validate_exports(Version::<T>::EXPORTS)?
+				.validate_exports(Version1x::EXPORTS)?
 				// env.gas is banned as injected by instrumentation
-				.validate_imports(&[(Version::<T>::ENV_MODULE, Version::<T>::ENV_GAS)])?;
+				.validate_imports(&[(Version1x::ENV_MODULE, Version1x::ENV_GAS)])?;
 			Ok(())
 		})();
 		validation.map_err(|e| {
@@ -809,7 +813,7 @@ impl<T: Config> Pallet<T> {
 		Self::do_validate_code(&module)?;
 		let instrumented_module = gas_and_stack_instrumentation(
 			module,
-			Version::<T>::ENV_MODULE,
+			Version1x::ENV_MODULE,
 			T::CodeStackLimit::get(),
 			&T::WasmCostRules::get(),
 		);
