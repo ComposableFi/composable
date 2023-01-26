@@ -63,7 +63,6 @@
         ./code/integration-tests/runtime-tests/runtime-tests.nix
         ./code/runtimes.nix
         ./code/xcvm/xcvm-contracts.nix
-        ./code/utils/composable-subxt/subxt.nix
         ./code/utils/price-feed/price-feed.nix
         ./docs/docs.nix
         ./frontend/frontend.nix

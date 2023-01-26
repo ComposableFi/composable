@@ -45,7 +45,6 @@ members = [
   # FIXME(hussein): this package is outdated and broken
   # "utils/price-feed",
   "utils/collator-sidecar",
-  # "utils/composable-subxt",
   # TODO(hussein): do we completely remove this?
   # "simnode/simnode-tests",
   # "simnode/common",
