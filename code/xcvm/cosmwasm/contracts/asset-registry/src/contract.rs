@@ -69,25 +69,33 @@ pub fn handle_register_asset(
 	asset_id: AssetKey,
 	reference: AssetReference,
 ) -> Result<Response, ContractError> {
-	ASSETS.save(deps.storage, asset_id, &reference)?;
-	Ok(Response::new().add_event(
-		Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX)
-			.add_attribute("action", "register")
-			.add_attribute("asset_id", format!("{}", asset_id.0 .0 .0))
-			.add_attribute("denom", reference.denom()),
-	))
+	if !ASSETS.has(deps.storage, asset_id) {
+		ASSETS.save(deps.storage, asset_id, &reference)?;
+		Ok(Response::new().add_event(
+			Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX)
+				.add_attribute("action", "register")
+				.add_attribute("asset_id", format!("{}", asset_id.0 .0 .0))
+				.add_attribute("denom", reference.denom()),
+		))
+	} else {
+		Err(ContractError::AlreadyRegistered)
+	}
 }
 
 pub fn handle_unregister_asset(
 	deps: DepsMut,
 	asset_id: AssetKey,
 ) -> Result<Response, ContractError> {
-	ASSETS.remove(deps.storage, asset_id);
-	Ok(Response::new().add_event(
-		Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX)
-			.add_attribute("action", "unregister")
-			.add_attribute("asset_id", format!("{}", asset_id.0 .0 .0)),
-	))
+	if ASSETS.has(deps.storage, asset_id) {
+		ASSETS.remove(deps.storage, asset_id);
+		Ok(Response::new().add_event(
+			Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX)
+				.add_attribute("action", "unregister")
+				.add_attribute("asset_id", format!("{}", asset_id.0 .0 .0)),
+		))
+	} else {
+		Err(ContractError::NotRegistered)
+	}
 }
 
 pub fn query_lookup(deps: Deps, asset_id: AssetKey) -> StdResult<LookupResponse> {
