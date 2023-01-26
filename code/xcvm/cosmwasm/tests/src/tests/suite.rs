@@ -423,10 +423,10 @@ fn xcvm_deploy_asset<A: Asset + AssetSymbol, T>(
 }
 
 fn xcvm_crosschain_operation<M: Network, N: Network, T>(
-  block: BlockInfo,
-  block_counterparty: BlockInfo,
-  admin: Account,
-  admin_counterparty: Account,
+	block: BlockInfo,
+	block_counterparty: BlockInfo,
+	admin: Account,
+	admin_counterparty: Account,
 	relayer: Account,
 	relayer_counterparty: Account,
 	pica_balances: impl IntoIterator<Item = Cw20Coin>,
@@ -437,10 +437,10 @@ fn xcvm_crosschain_operation<M: Network, N: Network, T>(
 	eth_balances_counterparty: impl IntoIterator<Item = Cw20Coin>,
 	usdt_balances_counterparty: impl IntoIterator<Item = Cw20Coin>,
 	usdc_balances_counterparty: impl IntoIterator<Item = Cw20Coin>,
-  channel_id: impl Into<String>,
-  connection_id: impl Into<String>,
-  order: IbcOrder,
-  sender: Account,
+	channel_id: impl Into<String>,
+	connection_id: impl Into<String>,
+	order: IbcOrder,
+	sender: Account,
 	program: DefaultXCVMProgram,
 	salt: impl Into<Salt>,
 	assets: impl IntoIterator<Item = (AssetId, u128)>,
@@ -461,9 +461,9 @@ fn xcvm_crosschain_operation<M: Network, N: Network, T>(
 		eth_balances_counterparty,
 		usdt_balances_counterparty,
 		usdc_balances_counterparty,
-    channel_id,
-    connection_id,
-    order,
+		channel_id,
+		connection_id,
+		order,
 	)
 	.expect("Must be able to create an XCVM network.");
 	let CrossChainDispatchResult { dispatch_data, dispatch_events, relay_data, relay_events } =
@@ -580,14 +580,14 @@ mod base {
 		}
 
 		#[test]
-		fn test_arbitrary_user_cannot_register_asset(admin in account(), arbitrary_sender in account()) {
+		fn test_asset_registry_arbitrary_user_cannot_register_asset(admin in account(), arbitrary_sender in account()) {
 		  prop_assume!(admin != arbitrary_sender);
-	  arbitrary_user_cannot_register_asset(admin, arbitrary_sender);
+		  arbitrary_user_cannot_register_asset(admin, arbitrary_sender);
 		}
 
 		#[test]
-		fn test_admin_can_register_asset(admin in account()) {
-	  admin_can_register_asset(admin)
+		fn test_asset_registry_admin_can_register_asset(admin in account()) {
+		  admin_can_register_asset(admin)
 		}
 	}
 }
