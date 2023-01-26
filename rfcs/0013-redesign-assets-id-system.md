@@ -332,6 +332,11 @@ interface
 		symbol: Vec<u8>,
 		decimals: u8,
 	}
+ 
+	ExistentialDepositUpdated {
+		asset_id: T::LocalAssetId,
+		existential_deposit: T::Balance,
+	}
   ```
 
 * `AssetRegistered`
@@ -340,16 +345,15 @@ interface
   follows:
 
   ```rust
-  AssetRegistered {
-		asset_id: T::LocalAssetId,
-		location: T::ForeignAssetId,
-		decimals: Option<Exponent>,
-		location: Option<T::ForeignAssetId>,
-		name: Vec<u8>,
-		symbol: Vec<u8>,
-		decimals: u8,
-		ratio: Option<Rational>,
-	}
+		AssetRegistered {
+			asset_id: T::LocalAssetId,
+			location: Option<T::ForeignAssetId>,
+			name: Vec<u8>,
+			symbol: Vec<u8>,
+			decimals: u8,
+			ratio: Option<Rational>,
+			existential_deposit: T::Balance,
+		}
   ```
 
 ### Call
@@ -362,13 +366,14 @@ interface
 
   ```rust
   pub fn register_asset(
-    origin: OriginFor<T>,
-    local_or_foreign: LocalOrForeignAssetId<T::LocalAssetId, ForeignAssetId>,
-    ratio: Option<Rational>,
-    name: Vec<u8>,
-    symbol: Vec<u8>,
-    decimals: Exponent,
-  ) -> DispatchResult;
+			origin: OriginFor<T>,
+			local_or_foreign: LocalOrForeignAssetId<T::LocalAssetId, T::ForeignAssetId>,
+			ratio: Option<Rational>,
+			name: Vec<u8>,
+			symbol: Vec<u8>,
+			decimals: Exponent,
+			existential_deposit: T::Balance,
+		) -> DispatchResult
   ```
 
   The `LocalOrForeignAssetId` enum is defined as follows:
@@ -390,7 +395,7 @@ interface
     origin: OriginFor<T>,
     asset_id: T::LocalAssetId,
     location: T::ForeignAssetId,
-  ) -> DispatchResultWithPostInfo;
+  ) -> DispatchResultWithPostInfo
 
   pub fn update_asset_ratio(
 		origin: OriginFor<T>,
@@ -405,6 +410,12 @@ interface
 		symbol: Option<Vec<u8>>,
 		decimals: Option<u8>,
 	) -> DispatchResult
+
+  pub fn update_existential_deposit(
+		origin: OriginFor<T>,
+		asset_id: T::LocalAssetId,
+		existential_deposit: T::Balance,
+	) -> DispatchResult  
   ```
 
 ### Storage
@@ -430,6 +441,11 @@ interface
   }
   ```
 
+* `ExistentialDeposit`
+
+  A new storage item queried by `existential_deposit(local_asset_id)` returns 
+  the existential deposit of an asset
+
 ## Assets Transactor Router (Assets Manager)
 
 The assets transactor router is nearly identical to the old `pallet-assets` that
@@ -446,12 +462,12 @@ differences in the Call/extrinsic functions will be noted here.
   ```rust
   pub fn mint_initialize(
 		origin: OriginFor<T>,
-		protocol_id: [u8; 8],
-		nonce: u64,
+    asset_id: T::AssetId,
 		name: Vec<u8>,
 		symbol: Vec<u8>,
 		decimals: u8,
 		ratio: Option<Rational64>,
+    existential_deposit: T::Balance,
 		amount: T::Balance,
 		dest: <T::Lookup as StaticLookup>::Source,
 	) -> DispatchResult;
@@ -464,12 +480,12 @@ differences in the Call/extrinsic functions will be noted here.
   ```rust
   pub fn mint_initialize_with_governance(
 		origin: OriginFor<T>,
-		protocol_id: [u8; 8],
-		nonce: u64,
+    asset_id: T::AssetId,
 		name: Vec<u8>,
 		symbol: Vec<u8>,
 		decimals: u8,
 		ratio: Option<Rational64>,
+    existential_deposit: T::Balance,
 		amount: T::Balance,
 		governance_origin: <T::Lookup as StaticLookup>::Source,
 		dest: <T::Lookup as StaticLookup>::Source,

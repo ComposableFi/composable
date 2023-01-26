@@ -198,12 +198,12 @@ mod mint_initialize {
 			assert_eq!(Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT), 0);
 			assert_ok!(Pallet::<Test>::mint_initialize(
 				RuntimeOrigin::root(),
-				prototcol_id,
-				nonce,
+				asset_id,
 				b"test_asset".to_vec(),
 				b"TASS".to_vec(),
 				12,
 				None,
+				0,
 				TRANSFER_AMOUNT,
 				TO_ACCOUNT,
 			));
@@ -224,12 +224,12 @@ mod mint_initialize_with_governance {
 			assert_eq!(Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT), 0);
 			assert_ok!(Pallet::<Test>::mint_initialize_with_governance(
 				RuntimeOrigin::root(),
-				prototcol_id,
-				nonce,
+				asset_id,
 				b"test_asset".to_vec(),
 				b"TASS".to_vec(),
 				12,
 				None,
+				0,
 				TRANSFER_AMOUNT,
 				TO_ACCOUNT,
 				TO_ACCOUNT,

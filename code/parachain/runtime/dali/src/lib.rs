@@ -64,7 +64,7 @@ use composable_traits::{
 	xcm::assets::RemoteAssetRegistryInspect,
 };
 use cosmwasm::instrument::CostRules;
-use primitives::currency::{CurrencyId, ValidateCurrencyId};
+use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -99,7 +99,7 @@ use codec::Encode;
 use common::fees::WellKnownForeignToNativePriceConverter;
 use composable_traits::{
 	account_proxy::{AccountProxyWrapper, ProxyType},
-	currency::{CurrencyFactory as CurrencyFactoryT, RangeId, Rational64},
+	currency::{CurrencyFactory as CurrencyFactoryT, RangeId},
 	fnft::FnftAccountProxyType,
 	xcm::assets::{RemoteAssetRegistryMutate, XcmAssetLocation},
 };
@@ -835,7 +835,7 @@ impl assets_transactor_router::Config for Runtime {
 	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type GovernanceRegistry = GovernanceRegistry;
 	type AssetLocation = composable_traits::xcm::assets::XcmAssetLocation;
-	type AssetLookup = AssetsRegistry;
+	type AssetsRegistry = AssetsRegistry;
 }
 
 parameter_types! {

@@ -146,7 +146,7 @@ impl<T: Config> MultiLockableCurrency<T::AccountId> for Pallet<T> {
 			<<T as Config>::NativeCurrency>::set_lock(lock_id, who, amount, WithdrawReasons::all());
 			Ok(())
 		} else {
-			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
+			match <T::AssetsRegistry as AssetTypeInspect>::inspect(&currency_id) {
 				AssetType::Foreign =>
 					<<T as Config>::ForeignTransactor>::set_lock(lock_id, currency_id, who, amount),
 				AssetType::Local =>
@@ -170,7 +170,7 @@ impl<T: Config> MultiLockableCurrency<T::AccountId> for Pallet<T> {
 			);
 			Ok(())
 		} else {
-			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
+			match <T::AssetsRegistry as AssetTypeInspect>::inspect(&currency_id) {
 				AssetType::Foreign => <<T as Config>::ForeignTransactor>::extend_lock(
 					lock_id,
 					currency_id,
@@ -192,7 +192,7 @@ impl<T: Config> MultiLockableCurrency<T::AccountId> for Pallet<T> {
 			<<T as Config>::NativeCurrency>::remove_lock(lock_id, who);
 			Ok(())
 		} else {
-			match <T::AssetLookup as AssetTypeInspect>::inspect(&currency_id) {
+			match <T::AssetsRegistry as AssetTypeInspect>::inspect(&currency_id) {
 				AssetType::Foreign =>
 					<<T as Config>::ForeignTransactor>::remove_lock(lock_id, currency_id, who),
 				AssetType::Local =>

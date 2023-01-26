@@ -99,6 +99,7 @@ pub trait RemoteAssetRegistryMutate {
 		name: Vec<u8>,
 		symbol: Vec<u8>,
 		decimals: u8,
+		existential_deposit: Self::Balance,
 	) -> DispatchResult;
 
 	/// Set asset native location.
@@ -122,6 +123,11 @@ pub trait RemoteAssetRegistryMutate {
 
 	/// allows change  ratio of how much remote assets is needed for unit of native
 	fn update_ratio(asset_id: Self::AssetId, ratio: Option<Rational64>) -> DispatchResult;
+
+	fn update_existential_deposit(
+		asset_id: Self::AssetId,
+		existential_deposit: Self::Balance,
+	) -> DispatchResult;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]

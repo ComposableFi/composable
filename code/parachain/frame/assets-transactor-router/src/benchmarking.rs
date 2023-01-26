@@ -74,25 +74,25 @@ benchmarks! {
 	mint_initialize {
 		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
 		let amount: T::Balance = TRANSFER_AMOUNT.into();
-		let protocol_id = *b"benchmar";
-		let nonce = 1;
+		let asset_id = T::AssetId::from(100);
 		let name = b"Bench Coin".to_vec();
 		let symbol = b"BCNR".to_vec();
 		let decimals = 12;
 		let ratio = None;
-	}: _(RawOrigin::Root, protocol_id, nonce, name, symbol, decimals, ratio, amount, dest)
+		let ed = T::Balance::from(0_u32);
+	}: _(RawOrigin::Root, asset_id, name, symbol, decimals, ratio, ed, amount, dest)
 
 	mint_initialize_with_governance {
 		let governance = T::Lookup::unlookup(TO_ACCOUNT.into());
 		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
 		let amount: T::Balance = TRANSFER_AMOUNT.into();
-		let protocol_id = *b"benchmar";
-		let nonce = 1;
+		let asset_id = T::AssetId::from(100);
 		let name = b"Bench Coin".to_vec();
 		let symbol = b"BCNR".to_vec();
 		let decimals = 12;
 		let ratio = None;
-	}: _(RawOrigin::Root, protocol_id, nonce, name, symbol, decimals, ratio, amount, governance, dest)
+		let ed = T::Balance::from(0_u32);
+	}: _(RawOrigin::Root, asset_id, name, symbol, decimals, ratio, ed, amount, governance, dest)
 
 	mint_into {
 		let asset_id: T::AssetId = ASSET_ID.into();

@@ -28,7 +28,8 @@ fn set_metadata() {
 			Some(rational!(42 / 123)),
 			b"Kusama".to_vec(),
 			b"KSM".to_vec(),
-			4
+			4,
+			0,
 		));
 		let asset_id = System::events()
 			.iter()
@@ -40,10 +41,11 @@ fn set_metadata() {
 					symbol: _,
 					ratio: _,
 					decimals: _,
+					existential_deposit: _,
 				}) => Some(asset_id),
 				_ => None,
 			})
-			.unwrap();
+			.expect("Asset registration event emmited");
 		assert_eq!(
 			<AssetsRegistry as RemoteAssetRegistryInspect>::asset_to_remote(asset_id),
 			Some(XcmAssetLocation::RELAY_NATIVE)
@@ -69,7 +71,7 @@ fn register_asset() {
 		let location = <Runtime as crate::Config>::ForeignAssetId::decode(
 			&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..],
 		)
-		.unwrap();
+		.expect("Location bytes translate to foreign ID bytes");
 		let ratio = rational!(42 / 123);
 		let decimals = 3;
 
@@ -81,9 +83,11 @@ fn register_asset() {
 			Some(ratio),
 			b"Kusama".to_vec(),
 			b"KSM".to_vec(),
-			decimals
+			decimals,
+			0
 		));
-		let local_asset_id = AssetsRegistry::from_foreign_asset(location.clone()).unwrap();
+		let local_asset_id =
+			AssetsRegistry::from_foreign_asset(location.clone()).expect("Asset exists");
 		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), Some(location.clone()));
 
 		assert_noop!(
@@ -93,7 +97,8 @@ fn register_asset() {
 				Some(ratio),
 				b"Kusama".to_vec(),
 				b"KSM".to_vec(),
-				decimals
+				decimals,
+				0
 			),
 			Error::<Runtime>::ForeignAssetAlreadyRegistered
 		);
@@ -108,7 +113,7 @@ fn update_asset() {
 		let location = <Runtime as crate::Config>::ForeignAssetId::decode(
 			&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..],
 		)
-		.unwrap();
+		.expect("Location bytes translate to foreign ID bytes");
 		let ratio = rational!(42 / 123);
 		let decimals = 3;
 
@@ -118,10 +123,12 @@ fn update_asset() {
 			Some(ratio),
 			b"Kusama".to_vec(),
 			b"KSM".to_vec(),
-			decimals
+			decimals,
+			0
 		));
 
-		let local_asset_id = AssetsRegistry::from_foreign_asset(location.clone()).unwrap();
+		let local_asset_id =
+			AssetsRegistry::from_foreign_asset(location.clone()).expect("Asset exists");
 		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), Some(location.clone()));
 		assert_eq!(AssetsRegistry::asset_ratio(local_asset_id), Some(ratio));
 
@@ -171,7 +178,7 @@ fn get_foreign_assets_list_should_work() {
 		let location = <Runtime as crate::Config>::ForeignAssetId::decode(
 			&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..],
 		)
-		.unwrap();
+		.expect("Location bytes translate to foreign ID bytes");
 		let ratio = rational!(42 / 123);
 		let decimals = 3;
 		let id = u128::from_be_bytes(sp_core::blake2_128(&location.encode()));
@@ -186,7 +193,8 @@ fn get_foreign_assets_list_should_work() {
 			Some(ratio),
 			b"Kusama".to_vec(),
 			b"KSM".to_vec(),
-			decimals
+			decimals,
+			0
 		));
 
 		let foreign_assets = AssetsRegistry::get_foreign_assets_list();

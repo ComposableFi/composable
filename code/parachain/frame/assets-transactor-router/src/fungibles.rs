@@ -20,15 +20,15 @@ use crate::{route, Config, Pallet};
 
 impl<T: Config> fungibles::metadata::Inspect<T::AccountId> for Pallet<T> {
 	fn name(asset: Self::AssetId) -> Vec<u8> {
-		<T::AssetLookup as InspectRegistryMetadata>::asset_name(&asset).unwrap_or_default()
+		<T::AssetsRegistry as InspectRegistryMetadata>::asset_name(&asset).unwrap_or_default()
 	}
 
 	fn symbol(asset: Self::AssetId) -> Vec<u8> {
-		<T::AssetLookup as InspectRegistryMetadata>::symbol(&asset).unwrap_or_default()
+		<T::AssetsRegistry as InspectRegistryMetadata>::symbol(&asset).unwrap_or_default()
 	}
 
 	fn decimals(asset: Self::AssetId) -> u8 {
-		<T::AssetLookup as InspectRegistryMetadata>::decimals(&asset).unwrap_or_default()
+		<T::AssetsRegistry as InspectRegistryMetadata>::decimals(&asset).unwrap_or_default()
 	}
 }
 
@@ -40,7 +40,7 @@ impl<T: Config> fungibles::metadata::Mutate<T::AccountId> for Pallet<T> {
 		symbol: Vec<u8>,
 		decimals: u8,
 	) -> DispatchResult {
-		<T::AssetLookup as MutateRegistryMetadata>::set_metadata(&asset, name, symbol, decimals)
+		<T::AssetsRegistry as MutateRegistryMetadata>::set_metadata(&asset, name, symbol, decimals)
 	}
 }
 

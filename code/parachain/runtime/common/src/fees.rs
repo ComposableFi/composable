@@ -5,6 +5,7 @@ use composable_traits::{
 	rational,
 };
 
+use composable_traits::currency::AssetExistentialDepositInspect;
 use frame_support::{
 	traits::ConstU128,
 	weights::{
@@ -47,11 +48,16 @@ pub fn multi_existential_deposits<AssetsRegistry>(_currency_id: &CurrencyId) -> 
 }
 
 #[cfg(not(feature = "runtime-benchmarks"))]
-pub fn multi_existential_deposits<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>(
+pub fn multi_existential_deposits<
+	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
+		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>,
+>(
 	currency_id: &CurrencyId,
 ) -> Balance {
-	PriceConverter::<AssetsRegistry>::to_asset_balance(NATIVE_EXISTENTIAL_DEPOSIT, *currency_id)
-		.unwrap_or(Balance::MAX)
+	AssetsRegistry::existential_deposit(*currency_id).unwrap_or_else(|_| {
+		PriceConverter::<AssetsRegistry>::to_asset_balance(NATIVE_EXISTENTIAL_DEPOSIT, *currency_id)
+			.unwrap_or(Balance::MAX)
+	})
 }
 
 pub struct PriceConverter<AssetsRegistry>(PhantomData<AssetsRegistry>);
@@ -130,6 +136,10 @@ mod commons_sense {
 	struct Dummy {}
 	impl AssetRatioInspect for Dummy {
 		type AssetId = CurrencyId;
+	}
+	impl AssetExistentialDepositInspect for Dummy {
+		type AssetId = CurrencyId;
+		type Balance = Balance;
 	}
 
 	#[cfg(not(feature = "runtime-benchmarks"))]

@@ -29,7 +29,8 @@ benchmarks! {
 		let name = b"Kusama".to_vec();
 		let symbol = b"KSM".to_vec();
 		let decimals = 3;
-	}: _(RawOrigin::Root, location, Some(ratio), name, symbol, decimals)
+		let ed = T::Balance::from(0);
+	}: _(RawOrigin::Root, location, Some(ratio), name, symbol, decimals, ed)
 
 	update_asset_location {
 		let location_base = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
@@ -39,6 +40,7 @@ benchmarks! {
 		let name = b"Kusama".to_vec();
 		let symbol = b"KSM".to_vec();
 		let decimals = 3;
+		let ed = T::Balance::from(0);
 
 		AssetsRegistry::<T>::register_asset(
 			RawOrigin::Root.into(),
@@ -46,7 +48,8 @@ benchmarks! {
 			Some(ratio),
 			name,
 			symbol,
-			decimals
+			decimals,
+			ed,
 		)
 		.expect("Asset details are non-duplicate and valid");
 
@@ -62,6 +65,7 @@ benchmarks! {
 		let name = b"Kusama".to_vec();
 		let symbol = b"KSM".to_vec();
 		let decimals = 3;
+		let ed = T::Balance::from(0);
 
 		AssetsRegistry::<T>::register_asset(
 			RawOrigin::Root.into(),
@@ -69,7 +73,8 @@ benchmarks! {
 			Some(ratio),
 			name,
 			symbol,
-			decimals
+			decimals,
+			ed,
 		)
 		.expect("Asset details are non-duplicate and valid");
 
@@ -85,6 +90,7 @@ benchmarks! {
 		let name = b"Kusama".to_vec();
 		let symbol = b"KSM".to_vec();
 		let decimals = 3;
+		let ed = T::Balance::from(0);
 
 		AssetsRegistry::<T>::register_asset(
 			RawOrigin::Root.into(),
@@ -92,7 +98,8 @@ benchmarks! {
 			Some(ratio),
 			name,
 			symbol,
-			decimals
+			decimals,
+			ed,
 		)
 		.expect("Asset details are non-duplicate and valid");
 

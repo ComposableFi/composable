@@ -103,7 +103,7 @@ macro_rules! route_asset_type {
 	(
 		$fn:ident($asset:ident $(, $arg:ident)* $(,)?)
 	) => {
-		match <T::AssetLookup as composable_traits::assets::AssetTypeInspect>::inspect(&$asset) {
+		match <T::AssetsRegistry as composable_traits::assets::AssetTypeInspect>::inspect(&$asset) {
 			composable_traits::assets::AssetType::Foreign => {
 				<<T as Config>::ForeignTransactor>::$fn($asset, $($arg),*)
 			}
@@ -210,11 +210,13 @@ pub mod pallet {
 		/// origin of admin of this pallet
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
-		// will be assets-registry
-		type AssetLookup: AssetTypeInspect<AssetId = Self::AssetId>
+		/// Assets registry
+		/// Maintains general info about any given asset
+		type AssetsRegistry: AssetTypeInspect<AssetId = Self::AssetId>
 			+ RemoteAssetRegistryMutate<
 				AssetId = Self::AssetId,
 				AssetNativeLocation = Self::AssetLocation,
+				Balance = Self::Balance,
 			> + InspectRegistryMetadata<AssetId = Self::AssetId>
 			+ MutateRegistryMetadata<AssetId = Self::AssetId>;
 
@@ -376,64 +378,70 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Creates a new asset, minting `amount` of funds into the `dest` account. Intended to be
-		/// used for creating wrapped assets, not associated with any project.
+		/// Creates a new asset, minting `amount` of funds into the `dest` account.
+		///
+		/// Intended to be used for creating wrapped assets, not associated with any project.
 		#[pallet::weight(T::WeightInfo::mint_initialize())]
 		pub fn mint_initialize(
 			origin: OriginFor<T>,
-			protocol_id: [u8; 8],
-			nonce: u64,
+			asset_id: T::AssetId,
 			name: Vec<u8>,
 			symbol: Vec<u8>,
 			decimals: u8,
 			ratio: Option<Rational64>,
+			existential_deposit: T::Balance,
 			#[pallet::compact] amount: T::Balance,
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
 			ensure_root(origin)?;
-			let id = <Self as CreateAsset>::create_local_asset(
-				protocol_id.try_into().expect(""),
-				nonce,
+
+			T::AssetsRegistry::register_asset(
+				asset_id,
+				None,
+				ratio,
 				name,
 				symbol,
 				decimals,
-				ratio,
+				existential_deposit,
 			)?;
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as fungibles::Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
+			<Self as fungibles::Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
 			Ok(())
 		}
 
-		/// Creates a new asset, minting `amount` of funds into the `dest` account. The `dest`
-		/// account can use the democracy pallet to mint further assets, or if the governance_origin
-		/// is set to an owned account, using signed transactions. In general the
+		/// Creates a new local asset, minting `amount` of funds into the `dest` account.
+		///
+		/// The `dest` account can use the democracy pallet to mint further assets, or if the
+		/// governance_origin is set to an owned account, using signed transactions. In general the
 		/// `governance_origin` should be generated from the pallet id.
 		#[pallet::weight(T::WeightInfo::mint_initialize())]
 		pub fn mint_initialize_with_governance(
 			origin: OriginFor<T>,
-			protocol_id: [u8; 8],
-			nonce: u64,
+			asset_id: T::AssetId,
 			name: Vec<u8>,
 			symbol: Vec<u8>,
 			decimals: u8,
 			ratio: Option<Rational64>,
+			existential_deposit: T::Balance,
 			#[pallet::compact] amount: T::Balance,
 			governance_origin: <T::Lookup as StaticLookup>::Source,
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
 			ensure_root(origin)?;
-			let id = <Self as CreateAsset>::create_local_asset(
-				protocol_id,
-				nonce,
+
+			T::AssetsRegistry::register_asset(
+				asset_id,
+				None,
+				ratio,
 				name,
 				symbol,
 				decimals,
-				ratio,
+				existential_deposit,
 			)?;
 			let governance_origin = T::Lookup::lookup(governance_origin)?;
-			T::GovernanceRegistry::set(id, SignedRawOrigin::Signed(governance_origin));
+			T::GovernanceRegistry::set(asset_id, SignedRawOrigin::Signed(governance_origin));
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as fungibles::Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
+			<Self as fungibles::Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
 			Ok(())
 		}
 
@@ -503,6 +511,7 @@ pub mod pallet {
 	impl<T: Config> CreateAsset for Pallet<T> {
 		type LocalAssetId = T::AssetId;
 		type ForeignAssetId = T::AssetLocation;
+		type Balance = T::Balance;
 
 		fn create_local_asset(
 			protocol_id: [u8; 8],
@@ -511,6 +520,7 @@ pub mod pallet {
 			symbol: Vec<u8>,
 			decimals: u8,
 			ratio: Option<Rational64>,
+			existential_deposit: Self::Balance,
 		) -> Result<Self::LocalAssetId, DispatchError> {
 			let bytes = protocol_id
 				.into_iter()
@@ -520,7 +530,15 @@ pub mod pallet {
 				.expect("[u8; 8] + bytes(u64) = [u8; 16]");
 			let asset_id = Self::LocalAssetId::from(u128::from_le_bytes(bytes));
 
-			T::AssetLookup::register_asset(asset_id, None, ratio, name, symbol, decimals)?;
+			T::AssetsRegistry::register_asset(
+				asset_id,
+				None,
+				ratio,
+				name,
+				symbol,
+				decimals,
+				existential_deposit,
+			)?;
 
 			Ok(asset_id)
 		}
@@ -531,18 +549,20 @@ pub mod pallet {
 			symbol: Vec<u8>,
 			decimals: u8,
 			ratio: Option<Rational64>,
+			existential_deposit: Self::Balance,
 		) -> Result<Self::LocalAssetId, DispatchError> {
 			let asset_id = Self::LocalAssetId::from(u128::from_be_bytes(sp_core::blake2_128(
 				&foreign_asset_id.encode(),
 			)));
 
-			T::AssetLookup::register_asset(
+			T::AssetsRegistry::register_asset(
 				asset_id,
 				Some(foreign_asset_id),
 				ratio,
 				name,
 				symbol,
 				decimals,
+				existential_deposit,
 			)?;
 
 			Ok(asset_id)

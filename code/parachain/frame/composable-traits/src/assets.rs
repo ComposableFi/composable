@@ -103,8 +103,11 @@ pub enum LocalOrForeignAssetId<LocalAssetId, ForeignAssetId> {
 pub trait CreateAsset {
 	type LocalAssetId;
 	type ForeignAssetId;
+	type Balance;
 
 	/// Create a local asset
+	///
+	/// If `Ok`, returns the ID of the newly created asset.
 	///
 	/// # Parameters
 	/// * `protocol_id` - The unique ID of the protocol that owns this asset (often a `PalletId`)
@@ -113,6 +116,7 @@ pub trait CreateAsset {
 	/// * `name` - Name of the asset
 	/// * `symbol` - Symbol of the asset
 	/// * `decimals` - The number of decimals this asset uses to represent one unit
+	/// * `existential_deposit` - The minimum balance for an account to be stored on chain
 	fn create_local_asset(
 		protocol_id: [u8; 8],
 		nonce: u64,
@@ -120,20 +124,25 @@ pub trait CreateAsset {
 		symbol: Vec<u8>,
 		decimals: u8,
 		ratio: Option<Rational64>,
+		existential_deposit: Self::Balance,
 	) -> Result<Self::LocalAssetId, DispatchError>;
 
 	/// Create a foreign asset
+	///
+	/// If `Ok`, returns the ID of the newly created asset.
 	///
 	/// # Parameters
 	/// * `foreign_asset_id` - Foreign asset ID or relative location
 	/// * `name` - Name of the asset
 	/// * `symbol` - Symbol of the asset
 	/// * `decimals` - The number of decimals this asset uses to represent one unit
+	/// * `existential_deposit` - The minimum balance for an account to be stored on chain
 	fn create_foreign_asset(
 		foreign_asset_id: Self::ForeignAssetId,
 		name: Vec<u8>,
 		symbol: Vec<u8>,
 		decimals: u8,
 		ratio: Option<Rational64>,
+		existential_deposit: Self::Balance,
 	) -> Result<Self::LocalAssetId, DispatchError>;
 }

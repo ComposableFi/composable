@@ -72,7 +72,7 @@ impl Config for Test {
 	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type AssetLookup = AssetsRegistry;
+	type AssetsRegistry = AssetsRegistry;
 }
 
 parameter_types! {
