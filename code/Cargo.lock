@@ -2099,10 +2099,11 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=08a9e5cd977b06855699e4e587746ff4f706dca2#08a9e5cd977b06855699e4e587746ff4f706dca2"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=82a1b358e85022aa124c772db0ffd58c29b7f1a7#82a1b358e85022aa124c772db0ffd58c29b7f1a7"
 dependencies = [
  "cosmwasm-std 1.1.6",
  "log 0.4.17",
+ "num",
  "serde",
  "serde_json",
 ]
@@ -2110,7 +2111,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=08a9e5cd977b06855699e4e587746ff4f706dca2#08a9e5cd977b06855699e4e587746ff4f706dca2"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=82a1b358e85022aa124c772db0ffd58c29b7f1a7#82a1b358e85022aa124c772db0ffd58c29b7f1a7"
 dependencies = [
  "cosmwasm-std 1.1.6",
  "cosmwasm-vm",
@@ -2121,6 +2122,7 @@ dependencies = [
  "serde_json",
  "wasm-instrument 0.2.0",
  "wasmi 0.11.0",
+ "wasmi-validation 0.4.1",
 ]
 
 [[package]]
