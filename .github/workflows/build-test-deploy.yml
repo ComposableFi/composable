@@ -129,7 +129,7 @@ jobs:
       group: ${{ github.workflow }}-check-nix-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -164,7 +164,7 @@ jobs:
       group: ${{ github.workflow }}-cargo-fmt-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
