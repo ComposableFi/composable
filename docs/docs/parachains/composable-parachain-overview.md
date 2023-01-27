@@ -2,7 +2,7 @@
 
 ## What is the Composable Parachain?
 
-The Composable parachain will be deployed on the Polkadot network, 
+The Composable parachain is deployed on the Polkadot network, 
 which itself serves as a crucial basis to underpin our infrastructure for modular and interoperable functionality. 
 As the Composable Parachain continues to develop and reaches its full potential, 
 all our infrastructure and associated projects will benefit from its advanced functionality. 
@@ -99,7 +99,7 @@ enabling them to launch other unique solutions with native interoperability and 
 We envision that in the long-term our Composable parachain will facilitate larger volume transfers 
 as the higher security environment and institutional scale throughput of Polkadot will be perfectly suited,
 while the inherent synergies between Composable and Picasso will ensure 
-optimal volume flow and liquidity distribution furthermore bolstered and facilitated by [Pablo].
+optimal volume flow and liquidity distribution furthermore bolstered and facilitated by Pablo.
 
 [Picasso]: ./picasso-parachain-overview.md
 [vault creation]: ../products/cubic-overview.md
