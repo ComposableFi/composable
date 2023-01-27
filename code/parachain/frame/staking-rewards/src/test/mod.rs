@@ -84,7 +84,6 @@ fn duration_presets_minimum_is_1() {
 				owner: ALICE,
 				asset_id: PICA::ID,
 				start_block: 2,
-				end_block: 5,
 				reward_configs: default_reward_config(),
 				lock: LockConfig {
 					duration_multipliers: bounded_btree_map! {
@@ -113,7 +112,6 @@ fn zero_length_duration_preset_works() {
 				owner: ALICE,
 				asset_id: PICA::ID,
 				start_block: 2,
-				end_block: 5,
 				reward_configs: default_reward_config(),
 				lock: LockConfig {
 					duration_multipliers: bounded_btree_map! {
@@ -131,32 +129,6 @@ fn zero_length_duration_preset_works() {
 }
 
 #[test]
-fn test_create_reward_pool_invalid_end_block() {
-	new_test_ext().execute_with(|| {
-		System::set_block_number(1);
-
-		assert_err!(
-			StakingRewards::create_reward_pool(
-				RuntimeOrigin::root(),
-				RewardRateBasedIncentive {
-					owner: ALICE,
-					asset_id: PICA::ID,
-					// end block can't be before the current block
-					start_block: 2,
-					end_block: 0,
-					reward_configs: default_reward_config(),
-					lock: default_lock_config(),
-					share_asset_id: XPICA::ID,
-					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-					minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
-				}
-			),
-			crate::Error::<Test>::EndBlockMustBeAfterStartBlock
-		);
-	});
-}
-
-#[test]
 fn create_staking_reward_pool_should_fail_when_pool_asset_id_is_zero() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -169,7 +141,6 @@ fn create_staking_reward_pool_should_fail_when_pool_asset_id_is_zero() {
 					asset_id: 0,
 					// end block can't be before the current block
 					start_block: 2,
-					end_block: 0,
 					reward_configs: default_reward_config(),
 					lock: default_lock_config(),
 					share_asset_id: XPICA::ID,
@@ -194,7 +165,6 @@ fn create_staking_reward_pool_should_fail_when_slashed_amount_is_less_than_exist
 					owner: ALICE,
 					asset_id: PICA::ID,
 					start_block: 2,
-					end_block: 5,
 					reward_configs: default_reward_config(),
 					lock: LockConfig {
 						duration_multipliers: bounded_btree_map! {
@@ -233,7 +203,6 @@ fn create_staking_reward_pool_should_fail_when_slashed_minimum_amount_is_less_th
 					owner: ALICE,
 					asset_id: PICA::ID,
 					start_block: 2,
-					end_block: 5,
 					reward_configs: default_reward_config(),
 					lock: LockConfig {
 						duration_multipliers: bounded_btree_map! {
@@ -272,7 +241,6 @@ fn create_staking_reward_pool_should_fail_when_share_asset_id_is_zero() {
 					asset_id: PICA::ID,
 					// end block can't be before the current block
 					start_block: 2,
-					end_block: 0,
 					reward_configs: default_reward_config(),
 					lock: default_lock_config(),
 					share_asset_id: 0,
@@ -298,7 +266,6 @@ fn create_staking_reward_pool_should_fail_when_fnft_collection_asset_id_is_zero(
 					asset_id: PICA::ID,
 					// end block can't be before the current block
 					start_block: 2,
-					end_block: 0,
 					reward_configs: default_reward_config(),
 					lock: default_lock_config(),
 					share_asset_id: XPICA::ID,
@@ -387,7 +354,6 @@ fn split_should_fail_if_any_amount_is_less_than_minimum() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: 5,
 			reward_configs: default_reward_config(),
 			lock: default_lock_config(),
 			share_asset_id: XPICA::ID,
@@ -462,7 +428,6 @@ fn split_doesnt_cause_loss_in_assets() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: 5,
 			reward_configs: default_reward_config(),
 			lock: default_lock_config(),
 			share_asset_id: XPICA::ID,
@@ -696,7 +661,6 @@ mod extend {
 					owner: ALICE,
 					asset_id: STAKED_ASSET::ID,
 					start_block: current_block_number + 1,
-					end_block: current_block_number + 100_001,
 					reward_configs: btree_map([(
 						USDT::ID,
 						RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1)) },
@@ -818,7 +782,6 @@ mod extend {
 					owner: ALICE,
 					asset_id: STAKED_ASSET::ID,
 					start_block: current_block_number + 1,
-					end_block: current_block_number + 100_001,
 					reward_configs: btree_map([(
 						USDT::ID,
 						RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1)) },
@@ -1137,7 +1100,6 @@ fn test_split_position() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: 5,
 			reward_configs: default_reward_config(),
 			lock: default_lock_config(),
 			share_asset_id: XPICA::ID,
@@ -1147,11 +1109,7 @@ fn test_split_position() {
 
 		Test::assert_extrinsic_event(
 			StakingRewards::create_reward_pool(RuntimeOrigin::root(), pool_init_config),
-			crate::Event::<Test>::RewardPoolCreated {
-				pool_id: PICA::ID,
-				owner: ALICE,
-				end_block: 5,
-			},
+			crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE },
 		);
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
@@ -1213,7 +1171,6 @@ fn split_positions_accrue_same_as_original_position() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: 100_000,
 			reward_configs: [(
 				USDT::ID,
 				RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1)) },
@@ -1317,7 +1274,6 @@ fn claim_with_insufficient_pot_funds() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 10,
-			end_block: 100_000,
 			reward_configs: bounded_btree_map! {
 				// 0.01 USDT/second
 				USDT::ID => RewardConfig {
@@ -1439,7 +1395,6 @@ fn unstake_should_not_allow_non_owner() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: 100,
 			reward_configs: default_reward_config(),
 			lock: default_lock_config(),
 			share_asset_id: XPICA::ID,
@@ -1509,7 +1464,6 @@ fn unstake_should_work() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: 100_000,
 			reward_configs: [(
 				USDT::ID,
 				RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1)) },
@@ -1771,7 +1725,6 @@ fn duration_presets_are_required() {
 					owner: ALICE,
 					asset_id: PICA::ID,
 					start_block: 2,
-					end_block: 5,
 					reward_configs: default_reward_config(),
 					lock: LockConfig {
 						duration_multipliers: BoundedBTreeMap::new().into(),
@@ -2091,7 +2044,6 @@ fn create_default_reward_pool() {
 				owner: ALICE,
 				asset_id: PICA::ID,
 				start_block: 2,
-				end_block: 5,
 				reward_configs: default_reward_config(),
 				lock: default_lock_config(),
 				share_asset_id: XPICA::ID,
@@ -2099,7 +2051,7 @@ fn create_default_reward_pool() {
 				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 			},
 		),
-		crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE, end_block: 5 },
+		crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE },
 	);
 }
 
@@ -2109,7 +2061,6 @@ fn get_default_reward_pool() -> RewardPoolConfigurationOf<Test> {
 		owner: ALICE,
 		asset_id: PICA::ID,
 		start_block: 2,
-		end_block: 5,
 		reward_configs: default_reward_config(),
 		lock: default_lock_config(),
 		share_asset_id: XPICA::ID,
@@ -2188,7 +2139,6 @@ fn zero_penalty_early_unlock() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 3,
-			end_block: 100_000,
 			reward_configs: bounded_btree_map! {
 				BTC::ID => RewardConfig { reward_rate: RewardRate::per_second(0_u128) }
 			},
@@ -2228,7 +2178,6 @@ fn zero_penalty_no_multiplier_doesnt_slash() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 3,
-			end_block: 100_000,
 			reward_configs: bounded_btree_map! {
 				BTC::ID => RewardConfig { reward_rate: RewardRate::per_second(0_u128) }
 			},
