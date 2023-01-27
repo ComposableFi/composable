@@ -25,7 +25,7 @@ use cosmwasm_vm::{
 	},
 	has::Has,
 	input::Input,
-	memory::{ReadWriteMemory, ReadableMemoryErrorOf, WritableMemoryErrorOf},
+	memory::{ReadWriteMemory, ReadableMemoryErrorOf, WritableMemoryErrorOf, PointerOf},
 	system::{
 		cosmwasm_system_entrypoint_hook, CosmwasmCallVM, CosmwasmDynamicVM, StargateCosmwasmCallVM,
 	},
@@ -218,11 +218,15 @@ impl<T: Config> VmPerContract<T> {
 	}
 }
 
-use cosmwasm_vm::system::HasEvent;
 use cosmwasm_vm::system::CosmwasmBaseVM;
-pub trait CosmwasmCallVMAny<I> = CosmwasmBaseVM
+pub trait CosmwasmCallVMSingle<I> = CosmwasmBaseVM
 where
-    I: Input + HasInfo + HasEvent;
+    I: Input + HasInfo,
+	for<'x> Unit: TryFrom<VmOutputOf<'x, Self>, Error = VmErrorOf<Self>>,
+    for<'x> VmInputOf<'x, Self>: TryFrom<AllocateCall<PointerOf<Self>>, Error = VmErrorOf<Self>> +
+	TryFrom<DeallocateCall<PointerOf<Self>>, Error = VmErrorOf<Self>>
+        + TryFrom<CosmwasmCallInput<'x, PointerOf<Self>, I>, Error = VmErrorOf<Self>>
+        + TryFrom<CosmwasmCallWithoutInfoInput<'x, PointerOf<Self>, I>, Error = VmErrorOf<Self>>;
 
 impl<T: Config> Router<T> {
 	fn port_to_address(port_id: &PortId) -> Result<<T as Config>::AccountIdExtended, IbcError> {
@@ -321,6 +325,59 @@ impl<T: Config> Router<T> {
 	{
 		cosmwasm_call_serialize::<I, V, M>(vm, &message)
 			.map_err(|err| IbcError::implementation_specific(format!("execute failed {:?}", err)))
+	}
+
+
+	pub fn exxxx<I, M>(
+		shared: &mut CosmwasmVMShared,
+		relayer: AccountIdOf<T>,
+		contract: AccountIdOf<T>,
+		message: &M,
+	) -> Result<(), CosmwasmVMError<T>>
+	where
+		for<'x> WasmiVM<DefaultCosmwasmVM<'x, T>>:
+			CosmwasmCallVMSingle<I> 
+			//+ CosmwasmDynamicVM<I>
+			 +
+			  StargateCosmwasmCallVM,
+		for<'x> VmErrorOf<WasmiVM<DefaultCosmwasmVM<'x, T>>>:
+			From<CosmwasmVMError<T>> + Into<CosmwasmVMError<T>>,
+		I: Input + AsFunctionName + AsEntryName,
+		I::Output: serde::de::DeserializeOwned + ReadLimit + DeserializeLimit,
+		M: serde::Serialize,
+	{
+		<Pallet<T>>::sub_level_dispatch(
+			shared,
+			relayer,
+			contract.clone(),
+			Default::default(),
+			|vm| {
+				match vm.0.contract_runtime {
+					ContractBackend::CosmWasm { .. } =>
+					//todo!(),
+					{
+							cosmwasm_call_serialize::<I, _, M>(vm, message);
+			
+						todo!();
+					},
+						ContractBackend::Pallet => 
+					todo!(),	
+						
+						// T::PalletHook::execute(
+						// vm,
+						// I::ENTRY,
+						// serde_json::to_vec(&message)
+						// 	.map_err(|e| {
+						// 		<CosmwasmVMError<T>>::Ibc(format!(
+						// 			"failed to serialize IBC message {:?}",
+						// 			e
+						// 		))
+						// 	})?
+						// 	.as_ref(),
+					
+				}
+			},
+		).map_err(Into::into)
 	}
 
 	/// executes IBC entrypoint on behalf of relayer
@@ -471,18 +528,21 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			version,
 			connection_hops,
 		)?;
-		let mut vm = Self::create(address)?;
 		
-		let mut instance = vm.instance()?;
+		let gas = u64::MAX;
+		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 
-		contract_to_result(
-			Self::execute::<IbcChannelOpenCall, IbcChannelOpenMsg, WasmiVM<DefaultCosmwasmVM<T>>>(
-				&mut instance,
-				message,
-			)?
-			.0,
-		)?;
-		todo!("qwe");
+		let _ = Self::exxxx::<IbcChannelOpenCall, _>(&mut vm, address.clone(), address, &message)
+		.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
+
+		// contract_to_result(
+		// 	Self::execute::<IbcChannelOpenCall, IbcChannelOpenMsg, WasmiVM<DefaultCosmwasmVM<T>>>(
+		// 		&mut instance,
+		// 		message,
+		// 	)?
+		// 	.0,
+		// )?;
+		//todo!("qwe");
 		Ok(())
 	}
 
