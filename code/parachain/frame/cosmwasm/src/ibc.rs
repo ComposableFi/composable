@@ -218,6 +218,12 @@ impl<T: Config> VmPerContract<T> {
 	}
 }
 
+use cosmwasm_vm::system::HasEvent;
+use cosmwasm_vm::system::CosmwasmBaseVM;
+pub trait CosmwasmCallVMAny<I> = CosmwasmBaseVM
+where
+    I: Input + HasInfo + HasEvent;
+
 impl<T: Config> Router<T> {
 	fn port_to_address(port_id: &PortId) -> Result<<T as Config>::AccountIdExtended, IbcError> {
 		let address_part = Self::parse_address_part(port_id)?;
@@ -314,7 +320,7 @@ impl<T: Config> Router<T> {
 			From<ReadableMemoryErrorOf<V>> + From<WritableMemoryErrorOf<V>> + From<ExecutorError>,
 	{
 		cosmwasm_call_serialize::<I, V, M>(vm, &message)
-			.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))
+			.map_err(|err| IbcError::implementation_specific(format!("execute failed {:?}", err)))
 	}
 
 	/// executes IBC entrypoint on behalf of relayer
@@ -466,7 +472,9 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			connection_hops,
 		)?;
 		let mut vm = Self::create(address)?;
+		
 		let mut instance = vm.instance()?;
+
 		contract_to_result(
 			Self::execute::<IbcChannelOpenCall, IbcChannelOpenMsg, WasmiVM<DefaultCosmwasmVM<T>>>(
 				&mut instance,
@@ -474,6 +482,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			)?
 			.0,
 		)?;
+		todo!("qwe");
 		Ok(())
 	}
 

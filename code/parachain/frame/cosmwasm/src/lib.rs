@@ -1,5 +1,6 @@
 #![recursion_limit = "256"]
 #![feature(sync_unsafe_cell)]
+#![feature(trait_alias)]
 #![cfg_attr(
 	not(test),
 	deny(
@@ -1020,6 +1021,7 @@ impl<T: Config> Pallet<T> {
 				contract_runtime: ContractBackend::Pallet,
 			}))
 		}
+		todo!("fuck");
 
 		// Else, the contract is not a pallet. We continue with the normal wasmi vm creation
 		// process:
