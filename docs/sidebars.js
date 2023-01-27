@@ -155,6 +155,7 @@ const sidebars = {
                     collapsed: true,
                     items: [
                         'products/apollo/apollo-how-it-works',
+                        'products/apollo/technical-details',
                         'products/apollo/apollo-deployment'
                     ],
                 },
