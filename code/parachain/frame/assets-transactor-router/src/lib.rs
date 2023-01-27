@@ -1,7 +1,7 @@
-//! # Assets Pallet
+//! # Assets Transactor Router Pallet
 //!
-//! The Assets pallet provides implementation of common currency traits
-//! (e.g. from [`orml`](https://docs.rs/orml-traits) or `frame_support`)
+//! The Transactor Router provides implementations of common currency traits
+//! (e.g. from [`orml`](https://docs.rs/orml-traits) and `frame_support`)
 //! and functionality for handling transfers and minting.
 //!
 //! - [`Config`]
@@ -25,15 +25,11 @@
 //! The Assets pallet provides implementations for the following traits:
 //!
 //! - [`Currency`](frame_support::traits::Currency):
-//!  Functions for dealing with a fungible assets system.
+//! - [`LockableCurrency`](frame_support::traits::tokens::currency::LockableCurrency)
 //! - [`ReservableCurrency`](frame_support::traits::ReservableCurrency):
-//!  Functions for dealing with assets that can be reserved from an account.
 //! - [`MultiCurrency`](orml_traits::MultiCurrency):
-//!  Abstraction over a fungible multi-currency system.
 //! - [`MultiLockableCurrency`](orml_traits::MultiLockableCurrency):
-//!  A fungible multi-currency system whose accounts can have liquidity restrictions.
 //! - [`MultiReservableCurrency`](orml_traits::MultiReservableCurrency):
-//!  A fungible multi-currency system where funds can be reserved from the user.
 //!
 //! ## Interface
 //!
@@ -49,7 +45,7 @@
 //! - `mint_initialize_with_governance`
 //! - `mint_into`
 //! - `burn_from`
-//
+
 // we start lag behind useful traits:
 // TODO: implement fungibles::Balanced like orml Tokens do
 // TODO: implement tokens::NamedReservableCurrency like orml Tokens do
@@ -381,6 +377,7 @@ pub mod pallet {
 		/// Creates a new asset, minting `amount` of funds into the `dest` account.
 		///
 		/// Intended to be used for creating wrapped assets, not associated with any project.
+		#[allow(clippy::too_many_arguments)]
 		#[pallet::weight(T::WeightInfo::mint_initialize())]
 		pub fn mint_initialize(
 			origin: OriginFor<T>,
@@ -414,6 +411,7 @@ pub mod pallet {
 		/// The `dest` account can use the democracy pallet to mint further assets, or if the
 		/// governance_origin is set to an owned account, using signed transactions. In general the
 		/// `governance_origin` should be generated from the pallet id.
+		#[allow(clippy::too_many_arguments)]
 		#[pallet::weight(T::WeightInfo::mint_initialize())]
 		pub fn mint_initialize_with_governance(
 			origin: OriginFor<T>,
