@@ -66,7 +66,7 @@
 
         ci = pkgs.mkShell {
           buildInputs = [ pkgs-working-nixops.nixops_unstable ];
-          NIX_PATH = "nixpkgs=${pkgs.path}";
+          NIX_PATH = "nixpkgs=${pkgs-working-nixops.path}";
         };
       };
     };
