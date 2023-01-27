@@ -1021,7 +1021,6 @@ impl<T: Config> Pallet<T> {
 				contract_runtime: ContractBackend::Pallet,
 			}))
 		}
-		todo!("fuck");
 
 		// Else, the contract is not a pallet. We continue with the normal wasmi vm creation
 		// process:

@@ -57,3 +57,36 @@ pub fn to_cosmwasm_timestamp(
 ) -> cosmwasm_vm::cosmwasm_std::Timestamp {
 	cosmwasm_vm::cosmwasm_std::Timestamp::from_nanos(timestamp.nanoseconds())
 }
+
+pub fn ibc_open_try_to_cw_open<T: Config + Send + Sync>(
+	channel_id: &ChannelId,
+	port_id: &PortId,
+	counterparty: &Counterparty,
+	order: IbcOrder,
+	version: &IbcVersion,
+	connection_hops: &[ConnectionId],
+) -> Result<IbcChannelOpenMsg, IbcError> {
+	let message = {
+		IbcChannelOpenMsg::OpenInit {
+			channel: IbcChannel::new(
+				IbcEndpoint { channel_id: channel_id.to_string(), port_id: port_id.to_string() },
+				IbcEndpoint {
+					port_id: counterparty.port_id.to_string(),
+					channel_id: counterparty
+						.channel_id
+						.expect(
+							"one may not have OpenTry without remote channel id by protocol; qed",
+						)
+						.to_string(),
+				},
+				map_order(order)?,
+				version.to_string(),
+				connection_hops
+					.get(0)
+					.expect("by spec there is at least one connection; qed")
+					.to_string(),
+			),
+		}
+	};
+	Ok(message)
+}
