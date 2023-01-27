@@ -9,8 +9,7 @@
       ];
     };
     # remove me when the `nixops_unstable` works again on the latest unstable
-    _module.args.pkgs-working-nixops = import self.inputs.nixpkgs-working-nixops {
-      inherit system;
-    };
+    _module.args.pkgs-working-nixops =
+      import self.inputs.nixpkgs-working-nixops { inherit system; };
   };
 }
