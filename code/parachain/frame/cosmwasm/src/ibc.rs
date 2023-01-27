@@ -1,7 +1,6 @@
 use crate::{
-	runtimes::vm::{CosmwasmVMError, CosmwasmVMShared, InitialStorageMutability},
-	types::{AccountIdOf, DefaultCosmwasmVM, ContractMessageOf},
-	version::Version,
+	runtimes::vm::{ContractBackend, CosmwasmVMError, CosmwasmVMShared, InitialStorageMutability},
+	types::{AccountIdOf, DefaultCosmwasmVM},
 	CodeIdToInfo, Config, Pallet,
 };
 use alloc::{
@@ -53,6 +52,7 @@ use ibc::{
 	},
 	signer::Signer as IbcSigner,
 };
+use sp_runtime::SaturatedConversion;
 use sp_std::{marker::PhantomData, str::FromStr};
 
 use ibc_primitives::{HandlerMessage, IbcHandler};
@@ -288,12 +288,9 @@ impl<T: Config> Router<T> {
 	}
 
 	fn create(address: T::AccountIdExtended) -> Result<VmPerContract<T>, IbcError> {
-		let gas = Weight::MAX;
 		let vm = {
-			let runtime = <Pallet<T>>::do_create_vm_shared(
-				gas.ref_time(),
-				InitialStorageMutability::ReadWrite,
-			);
+			let runtime =
+				<Pallet<T>>::do_create_vm_shared(u64::MAX, InitialStorageMutability::ReadWrite);
 
 			VmPerContract { runtime, address }
 		};
@@ -335,27 +332,33 @@ impl<T: Config> Router<T> {
 		I: AsFunctionName + AsEntryName,
 		M: serde::Serialize,
 	{
-		<Pallet<T>>::cosmwasm_call(shared, relayer, contract.clone(), Default::default(), |vm| {
-			cosmwasm_system_entrypoint_hook::<I, _>(vm, Default::default(), |vm, _| {
-				match vm.0.contract_runtime {
-					ContractBackend::CosmWasm { .. } =>
-						cosmwasm_call_serialize::<I, _, M>(vm, message).map(Into::into),
-					ContractBackend::Pallet => T::PalletHook::execute(
-						vm,
-						I::ENTRY,
-						serde_json::to_vec(&message)
-							.map_err(|e| {
-								<CosmwasmVMError<T>>::Ibc(format!(
-									"failed to serialize IBC message {:?}",
-									e
-								))
-							})?
-							.as_ref(),
-					),
-				}
-			})
-			.map_err(Into::into)
-		})
+		<Pallet<T>>::sub_level_dispatch(
+			shared,
+			relayer,
+			contract.clone(),
+			Default::default(),
+			|vm| {
+				cosmwasm_system_entrypoint_hook::<I, _>(vm, Default::default(), |vm, _| {
+					match vm.0.contract_runtime {
+						ContractBackend::CosmWasm { .. } =>
+							cosmwasm_call_serialize::<I, _, M>(vm, message).map(Into::into),
+						ContractBackend::Pallet => T::PalletHook::execute(
+							vm,
+							I::ENTRY,
+							serde_json::to_vec(&message)
+								.map_err(|e| {
+									<CosmwasmVMError<T>>::Ibc(format!(
+										"failed to serialize IBC message {:?}",
+										e
+									))
+								})?
+								.as_ref(),
+						),
+					}
+				})
+				.map_err(Into::into)
+			},
+		)
 		.map(|(data, events)| {
 			for CosmwasmEvent { ty, attributes, .. } in events {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::Emitted {
