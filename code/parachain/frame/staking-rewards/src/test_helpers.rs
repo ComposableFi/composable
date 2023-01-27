@@ -687,7 +687,6 @@ pub(crate) fn create_rewards_pool_and_assert<Runtime>(
 			owner,
 			asset_id,
 			start_block: _,
-			end_block,
 			reward_configs: _,
 			lock: _,
 			share_asset_id: _,
@@ -695,7 +694,7 @@ pub(crate) fn create_rewards_pool_and_assert<Runtime>(
 			minimum_staking_amount: _,
 		} => Runtime::assert_extrinsic_event(
 			Pallet::<Runtime>::create_reward_pool(OriginFor::<Runtime>::root(), reward_config),
-			crate::Event::<Runtime>::RewardPoolCreated { pool_id: asset_id, owner, end_block },
+			crate::Event::<Runtime>::RewardPoolCreated { pool_id: asset_id, owner },
 			// TODO(benluelo): Add storage checks/ assertions
 		),
 		_ => unimplemented!("unimplemented pool configuration"),

@@ -15,8 +15,6 @@ pub(crate) const fn block_seconds(amount_of_blocks: u64) -> u128 {
 	((MILLISECS_PER_BLOCK / 1_000) * amount_of_blocks) as u128
 }
 
-pub(crate) const ONE_YEAR_OF_BLOCKS: u64 = 60 * 60 * 24 * 365 / (block_seconds(1) as u64);
-
 /// Mock ID for staking fNFT collection
 pub(crate) const STAKING_FNFT_COLLECTION_ID: CurrencyId = 1;
 
