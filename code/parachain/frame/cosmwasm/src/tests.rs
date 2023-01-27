@@ -470,7 +470,7 @@ mod pallet_contracts {
 			let mut ibc = Router::<T>::default();
 			let module_id = ModuleId::from_str("cosmwasm").unwrap();
 			let ibc = ibc.get_route_mut(&module_id).unwrap();
-			ibc.on_chan_open_init(
+			assert_ok!(ibc.on_chan_open_init(
 				&Test::default(),
 				&mut ModuleOutputBuilder::new(),
 				Order::Ordered,
@@ -487,8 +487,7 @@ mod pallet_contracts {
 				&Counterparty { port_id: <_>::default(), channel_id: Some(<_>::default()) },
 				&<_>::default(),
 				&Signer::from_str("42").unwrap(),
-			)
-			.unwrap();
+			));
 		});
 	}
 }

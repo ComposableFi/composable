@@ -343,7 +343,10 @@ impl PalletHook<Test> for MockHook {
 		VmErrorOf<WasmiVM<CosmwasmVM<'a, Test>>>,
 	> {
 		match entrypoint {
-			EntryPoint::IbcChannelOpen => todo!("IbcChannelOpen"),
+			EntryPoint::IbcChannelOpen => match *vm.0.contract_address.as_ref() {
+				MOCK_PALLET_IBC_CONTRACT_ADDRESS => Ok(ContractResult::Ok(Response::new())),
+				_ => Ok(ContractResult::Err("IBC not supported".into())),
+			},
 			EntryPoint::IbcChannelConnect => todo!("IbcChannelConnect"),
 			EntryPoint::IbcChannelClose => todo!("IbcChannelClose"),
 			EntryPoint::IbcPacketTimeout => todo!("IbcPacketTimeout"),
