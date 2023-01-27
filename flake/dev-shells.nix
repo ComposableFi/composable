@@ -1,5 +1,5 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, systemCommonRust, ... }: {
+  perSystem = { config, self', inputs', pkgs, pkgs-working-nixops, system, systemCommonRust, ... }: {
     devShells = rec {
       minimal = pkgs.mkShell {
         buildInputs = with pkgs;
@@ -60,7 +60,7 @@
       });
 
       ci = pkgs.mkShell {
-        buildInputs = [ pkgs.nixopsUnstable ];
+        buildInputs = [ pkgs-working-nixops.nixops_unstable ];
         NIX_PATH = "nixpkgs=${pkgs.path}";
       };
     };

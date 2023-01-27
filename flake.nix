@@ -4,6 +4,8 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # remove me when the `nixops_unstable` works again on the latest unstable
+    nixpkgs-working-nixops.url = "github:NixOS/nixpkgs/34c5293a71ffdb2fe054eb5288adc1882c1eb0b1/";
     flake-parts.url = "github:hercules-ci/flake-parts";
     flake-utils.url = "github:numtide/flake-utils";
     npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
