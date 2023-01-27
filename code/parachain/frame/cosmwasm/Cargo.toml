@@ -13,12 +13,12 @@ version = "3.0.0"
 
 [dependencies]
 composable-support = { path = "../composable-support", default-features = false }
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "82a1b358e85022aa124c772db0ffd58c29b7f1a7", default-features = false, features = [
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "0d62e2a0115ccd3b49397d594503dc04b4f31d95", default-features = false, features = [
   "ibc3",
   "iterator",
   "stargate",
 ] }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "82a1b358e85022aa124c772db0ffd58c29b7f1a7", default-features = false, features = [
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "0d62e2a0115ccd3b49397d594503dc04b4f31d95", default-features = false, features = [
   "iterator",
   "stargate",
 ] }
@@ -58,7 +58,8 @@ sp-io = { default-features = false, git = "https://github.com/paritytech/substra
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 wasm-instrument = { version = "0.2", default-features = false }
-wasmi = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
+# wasmi = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
+wasmi = { version = "0.22", default-features = false }
 wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
 
 [dev-dependencies]
