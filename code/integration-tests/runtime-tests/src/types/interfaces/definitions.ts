@@ -6,3 +6,4 @@ export { default as pablo } from "./pablo/definitions";
 export { default as currencyFactory } from "./currencyFactory/definitions";
 export { default as democracy } from "./democracy/definitions";
 export { default as vesting } from './vesting/definitions';
+export { default as system } from "./system/definitions";
