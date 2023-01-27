@@ -1,7 +1,7 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
     packages = rec {
-      hyperspace-config = pkgs.writeText "config.json" ''
+      hyperspace-config = pkgs.writeText "config.toml" ''
         [chain_a]
         type = "parachain"
         name = "picasso_1"
