@@ -38,7 +38,7 @@ Table of Contents
                 class="image"><img src="0005-pablo-distribution-assets/images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>)
                 reward would
                 be,](#5311-when-adding-a-new-staker-n1-existing-stakers-reward-would-be)
-            -   [5.3.1.2. When removing a staker(Claim/Unstake) from the pool the above
+            -   [5.3.1.2. When removing .into()a staker(Claim/Unstake) from the pool the above
                 addition step has to be
                 reverted](#5312-when-removing-a-stakerclaimunstake-from-the-pool-the-above-addition-step-has-to-be-reverted)
             -   [5.3.1.3. When adding a new reward to the pool the
@@ -85,7 +85,7 @@ discussions about the subject.
 are not finalized.
 
 
-The farming rewards are incentives for liquidity provider(LP)s who stake
+The farming rewards are incentives for liquidity providers (LPs) who stake
 their LP tokens for Pablo pools. How much reward is allocated as
 incentive for each pool is to be decided by governance.
 
@@ -99,14 +99,12 @@ the staked `PICA` and `PBLO` to earn these yields which increases the
 value of the ecosystem overall by increasing the desirability of the
 staked assets.
 
-At the time of writing Pablo has the following fee parameters other than
-for liquidity bootstrapping pools(LBP) which do not charge fees,
+At the time of writing Pablo has the following fee parameters:
 
-1.  LP Fee - A percentage of the trading fee that is distributed to
-    liquidity providers based on the number of liquidity provider(LP)
-    tokens they minted at the time of providing the liquidity.
+1.  **LP Fee** - A percentage of the trading fee that is distributed to
+    liquidity providers based on the number of LP tokens they recieved when they originally provided liquidity.
 
-2.  Pool Owner Fee - A percentage of the trading fee that is distributed
+2.  **Pool Owner Fee** - A percentage of the trading fee that is distributed
     to the pool owner.
 
 #### 2.2.1. LP Fee Distribution
