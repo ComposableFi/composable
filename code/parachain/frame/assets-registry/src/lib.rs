@@ -34,10 +34,10 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_traits::{
 		assets::{
-			Asset, AssetMetadata, AssetType, AssetTypeInspect, InspectRegistryMetadata,
+			Asset, AssetInfo, AssetMetadata, AssetType, AssetTypeInspect, InspectRegistryMetadata,
 			LocalOrForeignAssetId, MutateRegistryMetadata,
 		},
-		currency::{AssetExistentialDepositInspect, BalanceLike, Exponent, ForeignByNative},
+		currency::{AssetExistentialDepositInspect, BalanceLike, ForeignByNative},
 		xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
 	};
 	use cumulus_primitives_core::ParaId;
@@ -244,11 +244,7 @@ pub mod pallet {
 		pub fn register_asset(
 			origin: OriginFor<T>,
 			local_or_foreign: LocalOrForeignAssetId<T::LocalAssetId, T::ForeignAssetId>,
-			ratio: Option<Rational>,
-			name: Vec<u8>,
-			symbol: Vec<u8>,
-			decimals: Exponent,
-			existential_deposit: T::Balance,
+			asset_info: AssetInfo<T::Balance>,
 		) -> DispatchResult {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
 
@@ -269,15 +265,7 @@ pub mod pallet {
 				);
 			}
 
-			<Self as RemoteAssetRegistryMutate>::register_asset(
-				asset_id,
-				location,
-				ratio,
-				name,
-				symbol,
-				decimals,
-				existential_deposit,
-			)?;
+			<Self as RemoteAssetRegistryMutate>::register_asset(asset_id, location, asset_info)?;
 			Ok(())
 		}
 
@@ -388,33 +376,29 @@ pub mod pallet {
 		fn register_asset(
 			asset_id: Self::AssetId,
 			location: Option<Self::AssetNativeLocation>,
-			ratio: Option<Rational>,
-			name: Vec<u8>,
-			symbol: Vec<u8>,
-			decimals: u8,
-			existential_deposit: Self::Balance,
+			asset_info: AssetInfo<Self::Balance>,
 		) -> DispatchResult {
 			if let Some(location) = location.clone() {
 				Self::set_reserve_location(asset_id, location)?;
 			}
 
-			Self::update_ratio(asset_id, ratio)?;
+			Self::update_ratio(asset_id, asset_info.ratio)?;
 			<Self as MutateRegistryMetadata>::set_metadata(
 				&asset_id,
-				name.clone(),
-				symbol.clone(),
-				decimals,
+				asset_info.name.clone(),
+				asset_info.symbol.clone(),
+				asset_info.decimals,
 			)?;
-			ExistentialDeposit::<T>::set(asset_id, Some(existential_deposit));
+			ExistentialDeposit::<T>::set(asset_id, Some(asset_info.existential_deposit));
 
 			Self::deposit_event(Event::<T>::AssetRegistered {
 				asset_id,
 				location,
-				name,
-				symbol,
-				decimals,
-				ratio,
-				existential_deposit,
+				name: asset_info.name,
+				symbol: asset_info.symbol,
+				decimals: asset_info.decimals,
+				ratio: asset_info.ratio,
+				existential_deposit: asset_info.existential_deposit,
 			});
 			Ok(())
 		}

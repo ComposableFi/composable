@@ -118,8 +118,11 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use codec::FullCodec;
 	use composable_traits::{
-		assets::{AssetTypeInspect, CreateAsset, InspectRegistryMetadata, MutateRegistryMetadata},
-		currency::{AssetIdLike, BalanceLike, Rational64},
+		assets::{
+			AssetInfo, AssetTypeInspect, CreateAsset, InspectRegistryMetadata,
+			MutateRegistryMetadata,
+		},
+		currency::{AssetIdLike, BalanceLike},
 		governance::{GovernanceRegistry, SignedRawOrigin},
 		xcm::assets::RemoteAssetRegistryMutate,
 	};
@@ -377,30 +380,17 @@ pub mod pallet {
 		/// Creates a new asset, minting `amount` of funds into the `dest` account.
 		///
 		/// Intended to be used for creating wrapped assets, not associated with any project.
-		#[allow(clippy::too_many_arguments)]
 		#[pallet::weight(T::WeightInfo::mint_initialize())]
 		pub fn mint_initialize(
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
-			name: Vec<u8>,
-			symbol: Vec<u8>,
-			decimals: u8,
-			ratio: Option<Rational64>,
-			existential_deposit: T::Balance,
+			asset_info: AssetInfo<T::Balance>,
 			#[pallet::compact] amount: T::Balance,
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
-			T::AssetsRegistry::register_asset(
-				asset_id,
-				None,
-				ratio,
-				name,
-				symbol,
-				decimals,
-				existential_deposit,
-			)?;
+			T::AssetsRegistry::register_asset(asset_id, None, asset_info)?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as fungibles::Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
 			Ok(())
@@ -411,31 +401,18 @@ pub mod pallet {
 		/// The `dest` account can use the democracy pallet to mint further assets, or if the
 		/// governance_origin is set to an owned account, using signed transactions. In general the
 		/// `governance_origin` should be generated from the pallet id.
-		#[allow(clippy::too_many_arguments)]
 		#[pallet::weight(T::WeightInfo::mint_initialize())]
 		pub fn mint_initialize_with_governance(
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
-			name: Vec<u8>,
-			symbol: Vec<u8>,
-			decimals: u8,
-			ratio: Option<Rational64>,
-			existential_deposit: T::Balance,
+			asset_info: AssetInfo<T::Balance>,
 			#[pallet::compact] amount: T::Balance,
 			governance_origin: <T::Lookup as StaticLookup>::Source,
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
-			T::AssetsRegistry::register_asset(
-				asset_id,
-				None,
-				ratio,
-				name,
-				symbol,
-				decimals,
-				existential_deposit,
-			)?;
+			T::AssetsRegistry::register_asset(asset_id, None, asset_info)?;
 			let governance_origin = T::Lookup::lookup(governance_origin)?;
 			T::GovernanceRegistry::set(asset_id, SignedRawOrigin::Signed(governance_origin));
 			let dest = T::Lookup::lookup(dest)?;
@@ -514,11 +491,7 @@ pub mod pallet {
 		fn create_local_asset(
 			protocol_id: [u8; 8],
 			nonce: u64,
-			name: Vec<u8>,
-			symbol: Vec<u8>,
-			decimals: u8,
-			ratio: Option<Rational64>,
-			existential_deposit: Self::Balance,
+			asset_info: AssetInfo<T::Balance>,
 		) -> Result<Self::LocalAssetId, DispatchError> {
 			let bytes = protocol_id
 				.into_iter()
@@ -528,40 +501,20 @@ pub mod pallet {
 				.expect("[u8; 8] + bytes(u64) = [u8; 16]");
 			let asset_id = Self::LocalAssetId::from(u128::from_le_bytes(bytes));
 
-			T::AssetsRegistry::register_asset(
-				asset_id,
-				None,
-				ratio,
-				name,
-				symbol,
-				decimals,
-				existential_deposit,
-			)?;
+			T::AssetsRegistry::register_asset(asset_id, None, asset_info)?;
 
 			Ok(asset_id)
 		}
 
 		fn create_foreign_asset(
 			foreign_asset_id: Self::ForeignAssetId,
-			name: Vec<u8>,
-			symbol: Vec<u8>,
-			decimals: u8,
-			ratio: Option<Rational64>,
-			existential_deposit: Self::Balance,
+			asset_info: AssetInfo<T::Balance>,
 		) -> Result<Self::LocalAssetId, DispatchError> {
 			let asset_id = Self::LocalAssetId::from(u128::from_be_bytes(sp_core::blake2_128(
 				&foreign_asset_id.encode(),
 			)));
 
-			T::AssetsRegistry::register_asset(
-				asset_id,
-				Some(foreign_asset_id),
-				ratio,
-				name,
-				symbol,
-				decimals,
-				existential_deposit,
-			)?;
+			T::AssetsRegistry::register_asset(asset_id, Some(foreign_asset_id), asset_info)?;
 
 			Ok(asset_id)
 		}

@@ -1,6 +1,7 @@
 use super::*;
 
 use crate::Pallet as Assets;
+use composable_traits::assets::AssetInfo;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::{fungible::Mutate as NativeMutate, fungibles::Mutate};
 use frame_system::{Config as SystemConfig, RawOrigin};
@@ -75,24 +76,28 @@ benchmarks! {
 		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
 		let amount: T::Balance = TRANSFER_AMOUNT.into();
 		let asset_id = T::AssetId::from(100);
-		let name = b"Bench Coin".to_vec();
-		let symbol = b"BCNR".to_vec();
-		let decimals = 12;
-		let ratio = None;
-		let ed = T::Balance::from(0_u32);
-	}: _(RawOrigin::Root, asset_id, name, symbol, decimals, ratio, ed, amount, dest)
+		let asset_info = AssetInfo {
+			name: b"Bench Coin".to_vec(),
+			symbol: b"BCNR".to_vec(),
+			decimals: 12,
+			ratio: None,
+			existential_deposit: T::Balance::from(0_u32),
+		};
+	}: _(RawOrigin::Root, asset_id, asset_info, amount, dest)
 
 	mint_initialize_with_governance {
 		let governance = T::Lookup::unlookup(TO_ACCOUNT.into());
 		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
 		let amount: T::Balance = TRANSFER_AMOUNT.into();
 		let asset_id = T::AssetId::from(100);
-		let name = b"Bench Coin".to_vec();
-		let symbol = b"BCNR".to_vec();
-		let decimals = 12;
-		let ratio = None;
-		let ed = T::Balance::from(0_u32);
-	}: _(RawOrigin::Root, asset_id, name, symbol, decimals, ratio, ed, amount, governance, dest)
+		let asset_info = AssetInfo {
+			name: b"Bench Coin".to_vec(),
+			symbol: b"BCNR".to_vec(),
+			decimals: 12,
+			ratio: None,
+			existential_deposit: T::Balance::from(0_u32),
+		};
+	}: _(RawOrigin::Root, asset_id, asset_info, amount, governance, dest)
 
 	mint_into {
 		let asset_id: T::AssetId = ASSET_ID.into();

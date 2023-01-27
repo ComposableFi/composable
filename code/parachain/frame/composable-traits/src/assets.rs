@@ -36,6 +36,21 @@ pub struct Asset<Balance, ForeignId> {
 	pub existential_deposit: Balance,
 }
 
+#[derive(Decode, Encode, Debug, Clone, PartialEq, Eq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct AssetInfo<Balance> {
+	/// Name of the asset.
+	pub name: Vec<u8>,
+	/// Symbol of the asset.
+	pub symbol: Vec<u8>,
+	/// The number of decimals this asset uses to represent one unit.
+	pub decimals: u8,
+	/// The minimum balance of the asset for an account to be stored on chain.
+	pub existential_deposit: Balance,
+	/// The ratio of 1 native asset to 1 of this asset. Only used for BYOG assets.
+	pub ratio: Option<Rational64>,
+}
+
 pub trait AssetTypeInspect {
 	type AssetId;
 
@@ -113,18 +128,11 @@ pub trait CreateAsset {
 	/// * `protocol_id` - The unique ID of the protocol that owns this asset (often a `PalletId`)
 	/// * `nonce` - A nonce controlled by the owning protocol that uniquely identifies the asset in
 	///   the scope of the protocol
-	/// * `name` - Name of the asset
-	/// * `symbol` - Symbol of the asset
-	/// * `decimals` - The number of decimals this asset uses to represent one unit
-	/// * `existential_deposit` - The minimum balance for an account to be stored on chain
+	/// * `asset_info` - Structure containing relevant information to register the asset
 	fn create_local_asset(
 		protocol_id: [u8; 8],
 		nonce: u64,
-		name: Vec<u8>,
-		symbol: Vec<u8>,
-		decimals: u8,
-		ratio: Option<Rational64>,
-		existential_deposit: Self::Balance,
+		asset_info: AssetInfo<Self::Balance>,
 	) -> Result<Self::LocalAssetId, DispatchError>;
 
 	/// Create a foreign asset
@@ -133,16 +141,9 @@ pub trait CreateAsset {
 	///
 	/// # Parameters
 	/// * `foreign_asset_id` - Foreign asset ID or relative location
-	/// * `name` - Name of the asset
-	/// * `symbol` - Symbol of the asset
-	/// * `decimals` - The number of decimals this asset uses to represent one unit
-	/// * `existential_deposit` - The minimum balance for an account to be stored on chain
+	/// * `asset_info` - Structure containing relevant information to register the asset
 	fn create_foreign_asset(
 		foreign_asset_id: Self::ForeignAssetId,
-		name: Vec<u8>,
-		symbol: Vec<u8>,
-		decimals: u8,
-		ratio: Option<Rational64>,
-		existential_deposit: Self::Balance,
+		asset_info: AssetInfo<Self::Balance>,
 	) -> Result<Self::LocalAssetId, DispatchError>;
 }

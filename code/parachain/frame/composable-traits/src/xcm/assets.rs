@@ -1,4 +1,5 @@
 //! Interfaces to managed assets
+use crate::assets::AssetInfo;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{dispatch::DispatchResult, pallet_prelude::ConstU32, WeakBoundedVec};
 use polkadot_parachain::primitives::Id;
@@ -95,11 +96,7 @@ pub trait RemoteAssetRegistryMutate {
 	fn register_asset(
 		asset_id: Self::AssetId,
 		location: Option<Self::AssetNativeLocation>,
-		ratio: Option<Rational64>,
-		name: Vec<u8>,
-		symbol: Vec<u8>,
-		decimals: u8,
-		existential_deposit: Self::Balance,
+		asset_info: AssetInfo<Self::Balance>,
 	) -> DispatchResult;
 
 	/// Set asset native location.

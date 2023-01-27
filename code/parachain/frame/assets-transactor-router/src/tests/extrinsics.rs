@@ -1,4 +1,5 @@
 use crate::*;
+use composable_traits::assets::AssetInfo;
 use frame_support::{assert_noop, assert_ok};
 use mocks::{new_test_ext, GovernanceRegistry, RuntimeOrigin, Test};
 use orml_traits::MultiCurrency;
@@ -187,6 +188,7 @@ mod transfer_all_native {
 }
 
 mod mint_initialize {
+
 	use super::*;
 
 	#[test]
@@ -194,16 +196,19 @@ mod mint_initialize {
 		let prototcol_id = *b"unittest";
 		let nonce = 0;
 		let asset_id = create_asset_id(prototcol_id, nonce);
+		let asset_info = AssetInfo {
+			name: b"test_asset".to_vec(),
+			symbol: b"TASS".to_vec(),
+			decimals: 12,
+			ratio: None,
+			existential_deposit: 0,
+		};
 		new_test_ext().execute_with(|| {
 			assert_eq!(Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT), 0);
 			assert_ok!(Pallet::<Test>::mint_initialize(
 				RuntimeOrigin::root(),
 				asset_id,
-				b"test_asset".to_vec(),
-				b"TASS".to_vec(),
-				12,
-				None,
-				0,
+				asset_info,
 				TRANSFER_AMOUNT,
 				TO_ACCOUNT,
 			));
@@ -220,16 +225,19 @@ mod mint_initialize_with_governance {
 		let prototcol_id = *b"unittest";
 		let nonce = 0;
 		let asset_id = create_asset_id(prototcol_id, nonce);
+		let asset_info = AssetInfo {
+			name: b"test_asset".to_vec(),
+			symbol: b"TASS".to_vec(),
+			decimals: 12,
+			ratio: None,
+			existential_deposit: 0,
+		};
 		new_test_ext().execute_with(|| {
 			assert_eq!(Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT), 0);
 			assert_ok!(Pallet::<Test>::mint_initialize_with_governance(
 				RuntimeOrigin::root(),
 				asset_id,
-				b"test_asset".to_vec(),
-				b"TASS".to_vec(),
-				12,
-				None,
-				0,
+				asset_info,
 				TRANSFER_AMOUNT,
 				TO_ACCOUNT,
 				TO_ACCOUNT,

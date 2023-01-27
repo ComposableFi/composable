@@ -8,7 +8,10 @@ use crate::{self as pallet_assets_registry};
 use crate::Pallet as AssetsRegistry;
 use codec::{Decode, Encode};
 use composable_traits::{
-	assets::LocalOrForeignAssetId, currency::Rational64, rational, xcm::assets::XcmAssetLocation,
+	assets::{AssetInfo, LocalOrForeignAssetId},
+	currency::Rational64,
+	rational,
+	xcm::assets::XcmAssetLocation,
 };
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
@@ -25,31 +28,31 @@ benchmarks! {
 		let location = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
 			.expect("Asset location is foreign ID");
 		let location = LocalOrForeignAssetId::Foreign(location);
-		let ratio = rational!(42 / 123);
-		let name = b"Kusama".to_vec();
-		let symbol = b"KSM".to_vec();
-		let decimals = 3;
-		let ed = T::Balance::from(0);
-	}: _(RawOrigin::Root, location, Some(ratio), name, symbol, decimals, ed)
+		let asset_info = AssetInfo {
+			name: b"Kusama".to_vec(),
+			symbol: b"KSM".to_vec(),
+			decimals: 3,
+			existential_deposit: T::Balance::from(0),
+			ratio: Some(rational!(42 / 123)),
+		};
+	}: _(RawOrigin::Root, location, asset_info)
 
 	update_asset_location {
 		let location_base = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
 			.expect("Asset location is foreign ID");
 		let location = LocalOrForeignAssetId::Foreign(location_base.clone());
-		let ratio = rational!(42 / 123);
-		let name = b"Kusama".to_vec();
-		let symbol = b"KSM".to_vec();
-		let decimals = 3;
-		let ed = T::Balance::from(0);
+		let asset_info = AssetInfo {
+			name: b"Kusama".to_vec(),
+			symbol: b"KSM".to_vec(),
+			decimals: 3,
+			existential_deposit: T::Balance::from(0),
+			ratio: Some(rational!(42 / 123)),
+		};
 
 		AssetsRegistry::<T>::register_asset(
 			RawOrigin::Root.into(),
 			location,
-			Some(ratio),
-			name,
-			symbol,
-			decimals,
-			ed,
+			asset_info,
 		)
 		.expect("Asset details are non-duplicate and valid");
 
@@ -61,20 +64,18 @@ benchmarks! {
 		let location_base = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
 			.expect("Asset location is foreign ID");
 		let location = LocalOrForeignAssetId::Foreign(location_base.clone());
-		let ratio = rational!(42 / 123);
-		let name = b"Kusama".to_vec();
-		let symbol = b"KSM".to_vec();
-		let decimals = 3;
-		let ed = T::Balance::from(0);
+		let asset_info = AssetInfo {
+			name: b"Kusama".to_vec(),
+			symbol: b"KSM".to_vec(),
+			decimals: 3,
+			existential_deposit: T::Balance::from(0),
+			ratio: Some(rational!(42 / 123)),
+		};
 
 		AssetsRegistry::<T>::register_asset(
 			RawOrigin::Root.into(),
 			location,
-			Some(ratio),
-			name,
-			symbol,
-			decimals,
-			ed,
+			asset_info,
 		)
 		.expect("Asset details are non-duplicate and valid");
 
@@ -86,20 +87,18 @@ benchmarks! {
 		let location_base = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
 			.expect("Asset location is foreign ID");
 		let location = LocalOrForeignAssetId::Foreign(location_base.clone());
-		let ratio = rational!(42 / 123);
-		let name = b"Kusama".to_vec();
-		let symbol = b"KSM".to_vec();
-		let decimals = 3;
-		let ed = T::Balance::from(0);
+		let asset_info = AssetInfo {
+			name: b"Kusama".to_vec(),
+			symbol: b"KSM".to_vec(),
+			decimals: 3,
+			existential_deposit: T::Balance::from(0),
+			ratio: Some(rational!(42 / 123)),
+		};
 
 		AssetsRegistry::<T>::register_asset(
 			RawOrigin::Root.into(),
 			location,
-			Some(ratio),
-			name,
-			symbol,
-			decimals,
-			ed,
+			asset_info,
 		)
 		.expect("Asset details are non-duplicate and valid");
 
