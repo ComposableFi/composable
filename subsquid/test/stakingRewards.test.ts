@@ -8,7 +8,7 @@ import {
   createRewardPool,
   createStakingPosition,
   updateStakingPositionAmount,
-  splitStakingPosition,
+  splitStakingPosition
 } from "../src/processors/stakingRewards";
 
 /**
@@ -34,7 +34,7 @@ function assertStakingPosition(
   eventId: string,
   eventType: EventType,
   duration: bigint,
-  rewardMultiplier: number
+  rewardMultiplier: bigint
 ) {
   expect(position.fnftCollectionId).to.equal(fnftCollectionId);
   expect(position.fnftInstanceId).to.equal(fnftInstanceId);
@@ -43,10 +43,7 @@ function assertStakingPosition(
   expect(position.amount).to.equal(amount);
   expect(position.event.id).to.equal(eventId);
   expect(position.event.eventType).to.equal(eventType);
-  if (position.endTimestamp)
-    expect(position.endTimestamp).to.equal(
-      position.startTimestamp + 1_000n * duration
-    );
+  if (position.endTimestamp) expect(position.endTimestamp).to.equal(position.startTimestamp + 1_000n * duration);
   expect(position.duration).to.equal(duration);
   expect(position.source).to.equal(LockedSource.StakingRewards);
   expect(position.rewardMultiplier).to.equal(rewardMultiplier);
@@ -58,7 +55,10 @@ const createMockEvent = (eventId: string, eventType: EventType) =>
     accountId: BOB,
     eventType,
     blockNumber: 1n,
-    timestamp: 123n,
+    timestamp: new Date(123),
+    txHash: "0xabc",
+    success: true,
+    failReason: undefined
   });
 
 describe("Staking rewards", () => {
@@ -85,23 +85,12 @@ describe("Staking rewards", () => {
       BOB,
       123n,
       10n,
-      456,
+      456n,
       createMockEvent("event-id", EventType.STAKING_REWARDS_STAKED),
       1662133770000n
     );
 
-    assertStakingPosition(
-      position,
-      "1",
-      "2",
-      "3",
-      BOB,
-      123n,
-      "event-id",
-      EventType.STAKING_REWARDS_STAKED,
-      10n,
-      456
-    );
+    assertStakingPosition(position, "1", "2", "3", BOB, 123n, "event-id", EventType.STAKING_REWARDS_STAKED, 10n, 456n);
   });
 
   it("Should split StakingPosition", () => {
@@ -112,7 +101,7 @@ describe("Staking rewards", () => {
       BOB,
       123n,
       10n,
-      456,
+      456n,
       createMockEvent("event-id", EventType.STAKING_REWARDS_SPLIT_POSITION),
       1662133770000n
     );
@@ -134,7 +123,7 @@ describe("Staking rewards", () => {
       "event-id",
       EventType.STAKING_REWARDS_SPLIT_POSITION,
       10n,
-      456
+      456n
     );
     assertStakingPosition(
       newPosition,
@@ -146,7 +135,7 @@ describe("Staking rewards", () => {
       "new-event-id",
       EventType.STAKING_REWARDS_SPLIT_POSITION,
       10n,
-      456
+      456n
     );
   });
 
@@ -158,20 +147,14 @@ describe("Staking rewards", () => {
       BOB,
       123n,
       10n,
-      456,
-      createMockEvent(
-        "event-id",
-        EventType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED
-      ),
+      456n,
+      createMockEvent("event-id", EventType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED),
       1662133770000n
     );
     updateStakingPositionAmount(
       position,
       150n,
-      createMockEvent(
-        "new-event-id",
-        EventType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED
-      )
+      createMockEvent("new-event-id", EventType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED)
     );
 
     assertStakingPosition(
@@ -184,7 +167,7 @@ describe("Staking rewards", () => {
       "new-event-id",
       EventType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED,
       10n,
-      456
+      456n
     );
   });
 });

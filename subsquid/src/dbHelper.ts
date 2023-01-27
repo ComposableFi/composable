@@ -85,7 +85,10 @@ export async function saveEvent(ctx: EventHandlerContext<Store>, eventType: Even
     eventType,
     blockNumber: BigInt(ctx.block.height),
     timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash
+    blockId: ctx.block.hash,
+    txHash: ctx.event.extrinsic?.hash,
+    success: ctx.event.extrinsic?.success,
+    failReason: typeof ctx.event.extrinsic?.error === "string" ? ctx.event.extrinsic.error : undefined
   });
 
   // Store event
