@@ -155,6 +155,7 @@ const sidebars = {
                     collapsed: true,
                     items: [
                         'products/apollo/apollo-how-it-works',
+                        'products/apollo/technical-details',
                         'products/apollo/apollo-deployment'
                     ],
                 },
@@ -199,14 +200,11 @@ const sidebars = {
                     collapsible: true,
                     collapsed: true,
                     items: [
+                        'products/mosaic/mosaic-withdrawal-guide',
                         'products/mosaic/dynamic-fee-model',
                         'products/mosaic/liquidity-forecasting',
                         'products/mosaic/passive-liquidity-rebalancing',
                         'products/mosaic/active-liquidity-management',
-                        'products/mosaic/single-sided-staking',
-                        'products/mosaic/additional-use-cases',
-                        'products/mosaic/mosaic-integrations',
-                        'products/mosaic/mosaic-pallet',
                         'products/mosaic/mosaic-phase1-result',
                         {
                             type: 'category',
