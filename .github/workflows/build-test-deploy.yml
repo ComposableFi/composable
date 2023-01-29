@@ -356,7 +356,7 @@ jobs:
           STATUS_TRANSIENT_FAILURE=200
           # Maximum retries in case of network failures.
           RETRIES=5
-          CMD="cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static  --no-update-lock-file --show-trace -L 2> >(tee -a $LOG_FILE >&2)"
+          CMD="cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static --http1.1 --no-update-lock-file --show-trace -L 2> >(tee -a $LOG_FILE >&2)"
           # Marker that a network error occurred.
           BAD="HTTP error 200 ('')"
           LOG_FILE=/tmp/out.log
@@ -1144,7 +1144,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{  env.CACHIX_COMPOSABLE }}
       - run: |
-          nix run .#devnet-integration-tests
+          nix run .#devnet-integration-tests --http1.1
 
   effects-gate:
       name: "Effect gate, automatically merged if passed"
