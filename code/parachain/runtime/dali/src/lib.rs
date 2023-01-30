@@ -1390,11 +1390,6 @@ construct_runtime!(
 		// depends on fNFT being initialized before it.
 		Fnft: pallet_fnft = 67,
 		StakingRewards: pallet_staking_rewards = 68,
-		// TODO(RFC-0013): Import & Declare pallet-assets
-		// We must then declare two instances within our `construct_runtime!` macro.
-		// NOTE(connor): May need to consider putting these before other pallets.
-		// ForeignAssets = 69,
-		// LocalAssets = 70,
 
 		CallFilter: call_filter = 140,
 

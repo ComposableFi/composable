@@ -48,9 +48,8 @@ frame_support::construct_runtime! {
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
-
-		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
-		Assets: pallet_assets::{Pallet, Call, Storage},
+		AssetsRegistry: pallet_assets_registry,
+		Assets: pallet_assets_transactor_router,
 		DutchAuction: pallet_dutch_auction::{Pallet, Call, Storage, Event<T>},
 		Liquidations: pallet_liquidations::{Pallet, Call, Storage, Event<T>},
 	}
@@ -153,25 +152,35 @@ ord_parameter_types! {
 	pub const RootAccount: AccountId = ALICE;
 }
 
-impl pallet_assets::Config for Runtime {
-	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = LpTokenFactory;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
-	type WeightInfo = ();
-	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
-	type GovernanceRegistry = GovernanceRegistry;
-	type CurrencyValidator = ValidateCurrencyId;
+parameter_types! {
+	pub const AssetNameMaxChars: u32 = 32;
+	pub const AssetSymbolMaxChars: u32 = 16;
 }
 
-impl pallet_currency_factory::Config for Runtime {
+impl pallet_assets_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type AssetId = CurrencyId;
-	type AddOrigin = EnsureRoot<AccountId>;
-	type Balance = Balance;
+	type LocalAssetId = CurrencyId;
+	type ForeignAssetId = XcmAssetLocation;
+	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
+	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
+	type Balance = Balance;
+	type AssetSymbolMaxChars = AssetSymbolMaxChars;
+	type AssetNameMaxChars = AssetNameMaxChars;
+}
+
+impl pallet_assets_transactor_router::Config for Runtime {
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type NativeAssetId = NativeAssetId;
+	type NativeTransactor = Balances;
+	type LocalTransactor = Tokens;
+	type ForeignTransactor = Tokens;
+	type GovernanceRegistry = GovernanceRegistry;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type AssetLocation = XcmAssetLocation;
+	type AssetsRegistry = AssetsRegistry;
 }
 
 parameter_types! {

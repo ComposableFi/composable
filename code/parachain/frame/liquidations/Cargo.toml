@@ -33,7 +33,8 @@ composable-support = { path = "../composable-support", default-features = false 
 composable-traits = { path = "../composable-traits", default-features = false }
 log = "0.4"
 orml-tokens = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30" }
-pallet-assets = { default-features = false, path = "../assets" }
+pallet-assets-transactor-router = { default-features = false, path = "../assets-transactor-router" }
+pallet-assets-registry = { default-features = false, path = "../assets-registry" }
 pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 pallet-dutch-auction = { default-features = false, path = "../dutch-auction" }
 
@@ -50,7 +51,7 @@ frame-benchmarking = { default-features = false, git = "https://github.com/parit
 hex-literal = { version = "0.3.3" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30" }
-pallet-assets = { path = "../assets" }
+pallet-assets-transactor-router = { path = "../assets-transactor-router" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 pallet-currency-factory = { path = "../currency-factory" }
 pallet-dutch-auction = { path = "../dutch-auction" }
@@ -82,6 +83,6 @@ runtime-benchmarks = [
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
-  "pallet-assets/runtime-benchmarks",
+  "pallet-assets-transactor-router/runtime-benchmarks",
   "pallet-dutch-auction/runtime-benchmarks",
 ]

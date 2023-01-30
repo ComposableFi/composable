@@ -3,7 +3,10 @@ use core::marker::PhantomData;
 use crate::*;
 
 use crate::instrument::CostRules;
-use composable_traits::currency::{CurrencyFactory, RangeId};
+use composable_traits::{
+	currency::{CurrencyFactory, RangeId},
+	xcm::assets::XcmAssetLocation,
+};
 use frame_support::{
 	pallet_prelude::ConstU32,
 	parameter_types,
@@ -37,7 +40,8 @@ frame_support::construct_runtime!(
 		System: frame_system,
 		Cosmwasm: crate,
 		Balances: pallet_balances,
-		Assets: pallet_assets,
+		AssetsRegistry: pallet_assets_registry,
+		Assets: pallet_assets_transactor_router,
 		Timestamp: pallet_timestamp,
 		GovernanceRegistry: governance_registry,
 		Tokens: orml_tokens,
@@ -148,17 +152,35 @@ impl CurrencyFactory for CurrencyIdGenerator {
 	}
 }
 
-impl pallet_assets::Config for Test {
+parameter_types! {
+	pub const AssetNameMaxChars: u32 = 32;
+	pub const AssetSymbolMaxChars: u32 = 16;
+}
+
+impl pallet_assets_registry::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type LocalAssetId = CurrencyId;
+	type ForeignAssetId = XcmAssetLocation;
+	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
+	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
+	type Balance = Balance;
+	type AssetSymbolMaxChars = AssetSymbolMaxChars;
+	type AssetNameMaxChars = AssetNameMaxChars;
+}
+
+impl pallet_assets_transactor_router::Config for Test {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = CurrencyIdGenerator;
-	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
+	type NativeTransactor = Balances;
+	type LocalTransactor = Tokens;
+	type ForeignTransactor = Tokens;
 	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type CurrencyValidator = ValidateCurrencyId;
+	type AssetLocation = XcmAssetLocation;
+	type AssetsRegistry = AssetsRegistry;
 }
 
 impl pallet_timestamp::Config for Test {

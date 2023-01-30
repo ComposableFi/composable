@@ -199,7 +199,9 @@ fn create_unary_instruction_set<I: NumericInstruction>(
 	vec![I::get(), binary_instr, Instruction::Drop]
 }
 
-fn create_funded_account<T: Config + pallet_balances::Config + pallet_assets::Config>(
+fn create_funded_account<
+	T: Config + pallet_balances::Config + pallet_assets_transactor_router::Config,
+>(
 	key: &'static str,
 ) -> <T as Config>::AccountIdExtended
 where
@@ -217,7 +219,7 @@ where
 
 fn create_instantiated_contract<T>(origin: T::AccountId) -> (T::AccountId, ContractInfoOf<T>)
 where
-	T: Config + pallet_balances::Config + pallet_assets::Config,
+	T: Config + pallet_balances::Config + pallet_assets_transactor_router::Config,
 	<T as pallet_balances::Config>::Balance: From<u128>,
 {
 	// 1. Generate a wasm code
@@ -248,22 +250,22 @@ where
 
 fn create_coins<T>(accounts: Vec<&AccountIdOf<T>>, n: u32) -> Vec<Coin>
 where
-	T: Config + pallet_balances::Config + pallet_assets::Config,
+	T: Config + pallet_balances::Config + pallet_assets_transactor_router::Config,
 	<T as Config>::Balance: From<u128>,
 	<T as Config>::AssetId: From<u128>,
 	<T as pallet_balances::Config>::Balance: From<u128>,
-	<T as pallet_assets::Config>::Balance: From<u128>,
-	<T as pallet_assets::Config>::AssetId: From<u128>,
-	<T as pallet_assets::Config>::NativeCurrency: fungible::Mutate<<T as pallet::Config>::AccountIdExtended>
+	<T as pallet_assets_transactor_router::Config>::Balance: From<u128>,
+	<T as pallet_assets_transactor_router::Config>::AssetId: From<u128>,
+	<T as pallet_assets_transactor_router::Config>::NativeTransactor: fungible::Mutate<<T as pallet::Config>::AccountIdExtended>
 		+ fungible::Inspect<
 			<T as pallet::Config>::AccountIdExtended,
-			Balance = <T as pallet_assets::Config>::Balance,
+			Balance = <T as pallet_assets_transactor_router::Config>::Balance,
 		>,
-	<T as pallet_assets::Config>::MultiCurrency: fungibles::Mutate<<T as pallet::Config>::AccountIdExtended>
+	<T as pallet_assets_transactor_router::Config>::LocalTransactor: fungibles::Mutate<<T as pallet::Config>::AccountIdExtended>
 		+ fungibles::Inspect<
 			<T as pallet::Config>::AccountIdExtended,
-			Balance = <T as pallet_assets::Config>::Balance,
-			AssetId = <T as pallet_assets::Config>::AssetId,
+			Balance = <T as pallet_assets_transactor_router::Config>::Balance,
+			AssetId = <T as pallet_assets_transactor_router::Config>::AssetId,
 		>,
 {
 	let mut funds: Vec<Coin> = Vec::new();
@@ -272,7 +274,7 @@ where
 		let currency_id = assets[i as usize].id;
 		// We need to fund all accounts first
 		for account in &accounts {
-			<pallet_assets::Pallet<T> as Mutate<T::AccountId>>::mint_into(
+			<pallet_assets_transactor_router::Pallet<T> as Mutate<T::AccountId>>::mint_into(
 				currency_id.into(),
 				account,
 				10_000_000_000_000_000_000u128.into(),
@@ -290,22 +292,22 @@ where
 benchmarks! {
 	where_clause {
 		where
-			T: pallet_balances::Config + pallet_assets::Config<AssetId = CurrencyId>,
+			T: pallet_balances::Config + pallet_assets_transactor_router::Config<AssetId = CurrencyId>,
 			<T as Config>::Balance: From<u128>,
 			<T as Config>::AssetId: From<u128>,
 			<T as pallet_balances::Config>::Balance: From<u128>,
-			<T as pallet_assets::Config>::Balance: From<u128>,
-			<T as pallet_assets::Config>::AssetId: From<u128>,
-			<T as pallet_assets::Config>::NativeCurrency: fungible::Mutate<<T as pallet::Config>::AccountIdExtended>
+			<T as pallet_assets_transactor_router::Config>::Balance: From<u128>,
+			<T as pallet_assets_transactor_router::Config>::AssetId: From<u128>,
+			<T as pallet_assets_transactor_router::Config>::NativeTransactor: fungible::Mutate<<T as pallet::Config>::AccountIdExtended>
 				+ fungible::Inspect<
 					<T as pallet::Config>::AccountIdExtended,
-					Balance = <T as pallet_assets::Config>::Balance,
+					Balance = <T as pallet_assets_transactor_router::Config>::Balance,
 				>,
-			<T as pallet_assets::Config>::MultiCurrency: fungibles::Mutate<<T as pallet::Config>::AccountIdExtended>
+			<T as pallet_assets_transactor_router::Config>::LocalTransactor: fungibles::Mutate<<T as pallet::Config>::AccountIdExtended>
 				+ fungibles::Inspect<
 					<T as pallet::Config>::AccountIdExtended,
-					Balance = <T as pallet_assets::Config>::Balance,
-					AssetId = <T as pallet_assets::Config>::AssetId,
+					Balance = <T as pallet_assets_transactor_router::Config>::Balance,
+					AssetId = <T as pallet_assets_transactor_router::Config>::AssetId,
 				>,
 	}
 
@@ -329,7 +331,7 @@ benchmarks! {
 		let assets = CurrencyId::list_assets();
 		for i in 0..n {
 			let currency_id = assets[i as usize].id;
-			<pallet_assets::Pallet<T> as Mutate<T::AccountId>>::mint_into(
+			<pallet_assets_transactor_router::Pallet<T> as Mutate<T::AccountId>>::mint_into(
 				currency_id.into(),
 				&origin,
 				10_000_000_000_000_000_000u128.into(),
@@ -369,7 +371,7 @@ benchmarks! {
 		let assets = CurrencyId::list_assets();
 		for i in 0..n {
 			let currency_id = assets[i as usize].id;
-			<pallet_assets::Pallet<T> as Mutate<T::AccountId>>::mint_into(
+			<pallet_assets_transactor_router::Pallet<T> as Mutate<T::AccountId>>::mint_into(
 				currency_id.into(),
 				&origin,
 				10_000_000_000_000_000_000u128.into(),
@@ -551,7 +553,7 @@ benchmarks! {
 		let signature = ED25519_SIGNATURE.as_slice();
 		let public_key = ED25519_PUBLIC_KEY.as_slice();
 	}: {
-		Cosmwasm::<T>::do_ed25519_verify(&message, &signature, &public_key)
+		Cosmwasm::<T>::do_ed25519_verify(message, signature, public_key)
 	}
 
 	ed25519_batch_verify {
@@ -602,7 +604,7 @@ benchmarks! {
 	continue_reply {
 		let sender = create_funded_account::<T>("origin");
 		let (contract, info) = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), info, vec![]).unwrap();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, info, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_continue_reply(&mut vm.0, Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {}).unwrap();
 	}

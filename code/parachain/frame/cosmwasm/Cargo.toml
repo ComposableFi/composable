@@ -34,7 +34,8 @@ lazy_static = { version = "1.4.0", optional = true, default-features = false, fe
 libsecp256k1 = { version = "0.7.0", default-features = false }
 
 log = { version = "0.4.14", default-features = false }
-pallet-assets = { default-features = false, path = "../assets" }
+pallet-assets-transactor-router = { default-features = false, path = "../assets-transactor-router" }
+pallet-assets-registry = { default-features = false , path = "../assets-registry" }
 pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "f0d44fe83c078b2d9fb040337c8152f037ba817d", default-features = false }
 parity-wasm = { version = "0.45.0", default-features = false }
