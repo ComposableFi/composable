@@ -1144,7 +1144,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{  env.CACHIX_COMPOSABLE }}
       - run: |
-          nix run .#devnet-integration-tests --http1.1
+          nix run .#devnet-integration-tests --no-http2
 
   effects-gate:
       name: "Effect gate, automatically merged if passed"
