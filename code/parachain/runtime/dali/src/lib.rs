@@ -827,7 +827,7 @@ impl assets_transactor_router::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
-	type NativeCurrency = Balances;
+	type NativeTransactor = Balances;
 	type LocalTransactor = Tokens;
 	// NOTE(connor): Use second instance in future
 	type ForeignTransactor = Tokens;

@@ -182,7 +182,7 @@ of either multi-location or local ID.
 
 Assets Manager will be a migration of the current pallet-assets that we created 
 to route between pallet-balances and orml-tokens. The primary difference being 
-that assets-manager will also need to handle routing between our two instances 
+that assets-transactor-router will also need to handle routing between our two instances 
 of orml-tokens as well as pallet-balances.
 
 As stated in the design, we can depend on information provided by Assets 
@@ -224,7 +224,7 @@ classDiagram
 
 **Steps:**
 
-* Rename our `pallet-assets` to `pallet-assets-manager`
+* Rename our `pallet-assets` to `pallet-assets-transactor-router`
 
 * Add routes for both instances to existing functions
 
@@ -233,7 +233,7 @@ classDiagram
 * Use a call filter to block calls into the individual instances of 
 pallet-assets
 
-* Provide assets-manager as the XCM Asset Transactor
+* Provide assets-transactor-router as the XCM Asset Transactor
 
 ### Asset ID Creation
 
@@ -366,14 +366,10 @@ interface
 
   ```rust
   pub fn register_asset(
-			origin: OriginFor<T>,
-			local_or_foreign: LocalOrForeignAssetId<T::LocalAssetId, T::ForeignAssetId>,
-			ratio: Option<Rational>,
-			name: Vec<u8>,
-			symbol: Vec<u8>,
-			decimals: Exponent,
-			existential_deposit: T::Balance,
-		) -> DispatchResult
+		origin: OriginFor<T>,
+		local_or_foreign: LocalOrForeignAssetId<T::LocalAssetId, T::ForeignAssetId>,
+    asset_info: AssetInfo<T::Balance>,
+	) -> DispatchResult
   ```
 
   The `LocalOrForeignAssetId` enum is defined as follows:
@@ -387,8 +383,9 @@ interface
 
 * `update_asset`
 
-  The `update_asset` extrinsic has been removed in favor of less monolithic 
-  update functions. They have the following signatures:
+  The `update_asset` extrinsic has been modified to take a monolithic update 
+  structure for asset information. The asset location still has its own route 
+  for being updated:
 
   ```rust
   pub fn update_asset_location(
@@ -397,25 +394,29 @@ interface
     location: T::ForeignAssetId,
   ) -> DispatchResultWithPostInfo
 
-  pub fn update_asset_ratio(
+  pub fn update_asset(
 		origin: OriginFor<T>,
 		asset_id: T::LocalAssetId,
-		ratio: Option<Rational>,
+    asset_info: AssetInfoUpdate<T::Balance>
 	) -> DispatchResult
+  ```
 
-  pub fn update_asset_metadata(
-		origin: OriginFor<T>,
-		asset_id: T::LocalAssetId,
-		name: Option<Vec<u8>>,
-		symbol: Option<Vec<u8>>,
-		decimals: Option<u8>,
-	) -> DispatchResult
+  The `AssetInfoUpdate` struct is detailed below:
 
-  pub fn update_existential_deposit(
-		origin: OriginFor<T>,
-		asset_id: T::LocalAssetId,
-		existential_deposit: T::Balance,
-	) -> DispatchResult  
+  ```rust
+  pub struct AssetInfoUpdate<Balance> {
+  	/// Name of the asset.
+  	pub name: Option<Vec<u8>>,
+  	/// Symbol of the asset.
+  	pub symbol: Option<Vec<u8>>,
+  	/// The number of decimals this asset uses to represent one unit.
+  	pub decimals: Option<u8>,
+  	/// The minimum balance of the asset for an account to be stored on chain.
+  	pub existential_deposit: Option<Balance>,
+  	/// The ratio of 1 native asset to 1 of this asset. Only used for BYOG assets. Set to
+  	/// `Some(None)` to prevent payment in this asset, only transferring.
+  	pub ratio: Option<Option<Rational64>>,
+  }
   ```
 
 ### Storage
@@ -463,11 +464,7 @@ differences in the Call/extrinsic functions will be noted here.
   pub fn mint_initialize(
 		origin: OriginFor<T>,
     asset_id: T::AssetId,
-		name: Vec<u8>,
-		symbol: Vec<u8>,
-		decimals: u8,
-		ratio: Option<Rational64>,
-    existential_deposit: T::Balance,
+    asset_info: AssetInfo<T::Balance>,
 		amount: T::Balance,
 		dest: <T::Lookup as StaticLookup>::Source,
 	) -> DispatchResult;
@@ -481,11 +478,7 @@ differences in the Call/extrinsic functions will be noted here.
   pub fn mint_initialize_with_governance(
 		origin: OriginFor<T>,
     asset_id: T::AssetId,
-		name: Vec<u8>,
-		symbol: Vec<u8>,
-		decimals: u8,
-		ratio: Option<Rational64>,
-    existential_deposit: T::Balance,
+    asset_info: AssetInfo<T::Balance>,
 		amount: T::Balance,
 		governance_origin: <T::Lookup as StaticLookup>::Source,
 		dest: <T::Lookup as StaticLookup>::Source,

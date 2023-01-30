@@ -37,10 +37,10 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if currency_id == T::NativeAssetId::get() {
-			let new_balance = <<T as Config>::NativeCurrency>::free_balance(who)
+			let new_balance = <<T as Config>::NativeTransactor>::free_balance(who)
 				.checked_sub(&amount)
 				.ok_or(DispatchError::Arithmetic(ArithmeticError::Underflow))?;
-			<<T as Config>::NativeCurrency>::ensure_can_withdraw(
+			<<T as Config>::NativeTransactor>::ensure_can_withdraw(
 				who,
 				amount,
 				WithdrawReasons::all(),
@@ -60,7 +60,7 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if currency_id == T::NativeAssetId::get() {
-			<<T as Config>::NativeCurrency>::transfer(
+			<<T as Config>::NativeTransactor>::transfer(
 				from,
 				to,
 				amount,
@@ -81,7 +81,7 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 		if currency_id == T::NativeAssetId::get() {
 			// Drop the imbalance, causing the total issuance to increase, in accordance with the
 			// MultiCurrency trait.
-			<<T as Config>::NativeCurrency>::deposit_creating(who, amount);
+			<<T as Config>::NativeTransactor>::deposit_creating(who, amount);
 			Ok(())
 		} else {
 			route_asset_type! {
@@ -98,7 +98,7 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 		if currency_id == T::NativeAssetId::get() {
 			// Drop the imbalance, causing the total issuance to decrease, in accordance with the
 			// MultiCurrency trait.
-			<<T as Config>::NativeCurrency>::withdraw(
+			<<T as Config>::NativeTransactor>::withdraw(
 				who,
 				amount,
 				WithdrawReasons::all(),
@@ -124,7 +124,7 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
 		if currency_id == T::NativeAssetId::get() {
 			// Drop the imbalance, causing the total issuance to decrease, in accordance with the
 			// MultiCurrency trait.
-			<<T as Config>::NativeCurrency>::slash(who, amount).1
+			<<T as Config>::NativeTransactor>::slash(who, amount).1
 		} else {
 			route_asset_type! {
 				slash(currency_id, who, amount)
@@ -143,7 +143,12 @@ impl<T: Config> MultiLockableCurrency<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if currency_id == T::NativeAssetId::get() {
-			<<T as Config>::NativeCurrency>::set_lock(lock_id, who, amount, WithdrawReasons::all());
+			<<T as Config>::NativeTransactor>::set_lock(
+				lock_id,
+				who,
+				amount,
+				WithdrawReasons::all(),
+			);
 			Ok(())
 		} else {
 			match <T::AssetsRegistry as AssetTypeInspect>::inspect(&currency_id) {
@@ -162,7 +167,7 @@ impl<T: Config> MultiLockableCurrency<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if currency_id == T::NativeAssetId::get() {
-			<<T as Config>::NativeCurrency>::extend_lock(
+			<<T as Config>::NativeTransactor>::extend_lock(
 				lock_id,
 				who,
 				amount,
@@ -189,7 +194,7 @@ impl<T: Config> MultiLockableCurrency<T::AccountId> for Pallet<T> {
 		who: &T::AccountId,
 	) -> DispatchResult {
 		if currency_id == T::NativeAssetId::get() {
-			<<T as Config>::NativeCurrency>::remove_lock(lock_id, who);
+			<<T as Config>::NativeTransactor>::remove_lock(lock_id, who);
 			Ok(())
 		} else {
 			match <T::AssetsRegistry as AssetTypeInspect>::inspect(&currency_id) {
@@ -219,7 +224,7 @@ impl<T: Config> MultiReservableCurrency<T::AccountId> for Pallet<T> {
 		if currency_id == T::NativeAssetId::get() {
 			// Drop the negative imbalance, causing the total issuance to be reduced, in accordance
 			// with `MultiReservableCurrency`.
-			<<T as Config>::NativeCurrency>::slash_reserved(who, amount).1
+			<<T as Config>::NativeTransactor>::slash_reserved(who, amount).1
 		} else {
 			route_asset_type! {
 				slash_reserved(currency_id, who, amount)

@@ -1,13 +1,12 @@
 use crate::mocks::{AccountId, ALICE, BOB};
 use frame_support::{assert_noop, assert_ok};
-use mocks::{new_test_ext, GovernanceRegistry, RuntimeOrigin, Test};
-use sp_runtime::DispatchError;
+use mocks::{new_test_ext, Test};
 
 use crate::*;
 
 mod currency {
 	use frame_support::traits::{
-		tokens::currency::Currency, ExistenceRequirement, Imbalance, WithdrawReasons,
+		tokens::currency::Currency, ExistenceRequirement, WithdrawReasons,
 	};
 
 	use super::*;
@@ -41,7 +40,7 @@ mod currency {
 		}
 	}
 
-	mod totatl_issuance {
+	mod total_issuance {
 		use super::*;
 
 		#[test]

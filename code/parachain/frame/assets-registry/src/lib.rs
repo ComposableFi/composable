@@ -207,7 +207,7 @@ pub mod pallet {
 		///
 		/// * `asset_info` - Information to register the asset with, see [`AssetInfo`]
 		///
-		/// # Emmits
+		/// # Emits
 		/// * `AssetRegistered`
 		#[pallet::weight(<T as Config>::WeightInfo::register_asset())]
 		pub fn register_asset(
@@ -240,7 +240,7 @@ pub mod pallet {
 
 		/// Update the location of a foreign asset.
 		///
-		/// Emmits:
+		/// Emits:
 		/// * `AssetLocationUpdated`
 		#[pallet::weight(<T as Config>::WeightInfo::update_asset_location())]
 		pub fn update_asset_location(
@@ -255,7 +255,7 @@ pub mod pallet {
 
 		/// Update stored asset information.
 		///
-		/// Emmits:
+		/// Emits:
 		/// * `AssetUpdated`
 		#[pallet::weight(<T as Config>::WeightInfo::update_asset())]
 		pub fn update_asset(

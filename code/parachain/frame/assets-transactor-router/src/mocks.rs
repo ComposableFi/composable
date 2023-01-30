@@ -20,18 +20,11 @@ pub type Balance = u64;
 
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
-pub const CHARLIE: AccountId = 3;
-pub const DARWIN: AccountId = 4;
-
-pub const ACCOUNT_FREE_START: AccountId = CHARLIE + 1;
 
 pub const MINIMUM_BALANCE: Balance = 1;
 
 #[allow(dead_code)]
 pub const INVALID: AssetId = 0;
-pub const ASSET_1: AssetId = 1;
-pub const ASSET_2: AssetId = 2;
-pub const ASSET_FREE_START: AssetId = ASSET_2 + 1;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -65,7 +58,7 @@ impl Config for Test {
 	type AssetLocation = XcmAssetLocation;
 	type Balance = Balance;
 	type NativeAssetId = NativeAssetId;
-	type NativeCurrency = Balances;
+	type NativeTransactor = Balances;
 	type LocalTransactor = Tokens;
 	// TODO(connor): Use second instance of `Tokens`
 	type ForeignTransactor = Tokens;
@@ -171,5 +164,8 @@ impl pallet_balances::Config for Test {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.expect("able to construct mock storage")
+		.into()
 }

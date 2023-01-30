@@ -87,7 +87,7 @@ macro_rules! route {
 	) => {
 		fn $fn($asset: $asset_ty, $($arg:$ty),*) $(-> $ret)? {
 			if T::AssetId::from($asset.into()) == <T::NativeAssetId as frame_support::traits::Get<_>>::get() {
-				<<T as Config>::NativeCurrency>::$fn($($arg),*)
+				<<T as Config>::NativeTransactor>::$fn($($arg),*)
 			} else {
 				crate::route_asset_type! { $fn($asset, $($arg),*) }
 			}
@@ -192,7 +192,7 @@ pub mod pallet {
 			>;
 
 		// TODO(benluelo): Move trait bounds here, rename to NativeTransactor
-		type NativeCurrency: fungible::Inspect<Self::AccountId, Balance = Self::Balance>
+		type NativeTransactor: fungible::Inspect<Self::AccountId, Balance = Self::Balance>
 			+ fungible::Transfer<Self::AccountId>
 			+ fungible::Mutate<Self::AccountId>
 			+ fungible::Unbalanced<Self::AccountId>
