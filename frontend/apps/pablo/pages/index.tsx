@@ -6,6 +6,7 @@ import { useDotSamaContext } from "substrate-react";
 import { ConnectWalletFeaturedBox } from "@/components/Organisms/ConnectWalletFeaturedBox";
 import { WalletBreakdownBox } from "@/components/Organisms/overview/WalletBreakdownBox";
 import { LiquidityProvidersBox } from "@/components/Organisms/overview/LiquidityProvidersBox";
+import { TVLChart } from "@/components/Organisms/overview/TVLChart";
 import { VolumeChart } from "@/components/Organisms/overview/VolumeChart";
 import { PoolLayout } from "@/components/Templates/pools/PoolLayout";
 
@@ -36,7 +37,10 @@ const Home: NextPage = () => {
               <Statistics />
             </Grid>
             <Grid container spacing={8}>
-              <Grid item xs={12} mt={4}>
+              <Grid item xs={12} md={6} mt={8}>
+                <TVLChart />
+              </Grid>
+              <Grid item xs={12} md={6} mt={8}>
                 <VolumeChart />
               </Grid>
             </Grid>

@@ -92,7 +92,9 @@ export const VolumeChart = ({}) => {
           data: chartSeries,
           height: 330,
           shorthandLabel: "Change",
-          labelFormat: (n: number) => n.toFixed(),
+          labelFormat: (n: number) => {
+            return `$${n.toFixed(2)}`;
+          },
           color: theme.palette.featured.main,
         }}
         onIntervalChange={onIntervalChange}

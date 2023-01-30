@@ -93,7 +93,9 @@ export const TVLChart = () => {
           data: chartSeries,
           height: 330,
           shorthandLabel: "Change",
-          labelFormat: (n: number) => n.toFixed(),
+          labelFormat: (n: number) => {
+            return `$${n.toFixed(2)}`;
+          },
           color: theme.palette.featured.main,
         }}
         intervals={intervals.map((interval) => interval.symbol)}
