@@ -1168,6 +1168,8 @@ fn test_split_position() {
 
 #[test]
 fn split_positions_accrue_same_as_original_position() {
+	init_logger();
+
 	fn create_pool_and_stake() -> FinancialNftInstanceIdOf<Test> {
 		create_rewards_pool_and_assert::<Test>(RewardRateBasedIncentive {
 			owner: ALICE,
@@ -1558,45 +1560,87 @@ mod claim {
 	#[test]
 	fn should_not_allow_for_double_claim() {
 		let staker = ALICE;
-		let amount = 100_500;
+		let amount = 100_500_u128;
 		let duration_preset = ONE_HOUR;
-		let claim = 100;
 
-		with_stake(
-			staker,
-			amount,
-			duration_preset,
-			true,
-			|pool_id, _unlock_penalty, _stake_duration, staked_asset_id| {
-				let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
+		new_test_ext().execute_with(|| {
+			init_logger();
 
-				// First claim
-				assert_ok!(StakingRewards::claim(RuntimeOrigin::signed(staker), 1, 0));
-				// Ensure no change in staked asset
-				assert_eq!(balance(staked_asset_id, &staker), amount);
-				// Ensure change in reward asset
-				for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
-					assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim);
-					assert_eq!(
-						balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
-						amount * 2 - claim
-					);
-				}
+			process_and_progress_blocks::<StakingRewards, Test>(1);
 
-				// Second claim, should not change balance
-				assert_ok!(StakingRewards::claim(RuntimeOrigin::signed(staker), 1, 0));
-				// Ensure no change in staked asset
-				assert_eq!(balance(staked_asset_id, &staker), amount);
-				// Ensure no change in reward asset
-				for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
-					assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim);
-					assert_eq!(
-						balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
-						amount * 2 - claim
-					);
-				}
-			},
-		);
+			StakingRewards::create_reward_pool(RuntimeOrigin::root(), get_default_reward_pool())
+				.unwrap();
+
+			mint_assets([CHARLIE], [USDT::ID], USDT::units(100));
+			StakingRewards::add_to_rewards_pot(
+				RuntimeOrigin::signed(CHARLIE),
+				PICA::ID,
+				USDT::ID,
+				USDT::units(100),
+				false,
+			)
+			.unwrap();
+
+			process_and_progress_blocks::<StakingRewards, Test>(10);
+
+			let staked_asset_id = PICA::ID;
+			let rewards_pool =
+				StakingRewards::pools(staked_asset_id).expect("rewards_pool expected. QED");
+
+			mint_assets([CHARLIE], [USDT::ID], amount.saturating_mul(2));
+			mint_assets([staker], [PICA::ID], amount.saturating_mul(2));
+
+			process_and_progress_blocks::<StakingRewards, Test>(1);
+			let fnft_instance_id =
+				stake_and_assert::<Test>(staker, PICA::ID, amount, duration_preset);
+
+			assert_eq!(balance(staked_asset_id, &staker), amount);
+
+			let stake = StakingRewards::stakes(1, 0).expect("stake expected. QED");
+
+			let claim = claim_of_stake::<Test>(
+				&stake,
+				&rewards_pool.share_asset_id,
+				&rewards_pool.rewards[&USDT::ID],
+				&USDT::ID,
+			)
+			.unwrap();
+
+			let rewards_pool =
+				StakingRewards::pools(staked_asset_id).expect("rewards_pool expected");
+
+			// First claim
+			assert_ok!(StakingRewards::claim(
+				RuntimeOrigin::signed(staker),
+				STAKING_FNFT_COLLECTION_ID,
+				fnft_instance_id,
+			));
+
+			// Ensure no change in staked asset
+			assert_eq!(balance(staked_asset_id, &staker), amount);
+
+			// Ensure change in reward asset
+			// is only USDT
+			assert_eq!(balance(USDT::ID, &staker), claim);
+			assert_eq!(
+				balance(USDT::ID, &StakingRewards::pool_account_id(&staked_asset_id)),
+				USDT::units(100) - claim
+			);
+
+			// Second claim, should not change balance
+			assert_ok!(StakingRewards::claim(RuntimeOrigin::signed(staker), 1, 0));
+
+			// Ensure no change in staked asset
+			assert_eq!(balance(staked_asset_id, &staker), amount);
+
+			// Ensure change in reward asset
+			// is only USDT
+			assert_eq!(balance(USDT::ID, &staker), claim);
+			assert_eq!(
+				balance(USDT::ID, &StakingRewards::pool_account_id(&staked_asset_id)),
+				USDT::units(100) - claim
+			);
+		});
 	}
 
 	#[test]

@@ -85,7 +85,7 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 
 	use composable_support::{
-		math::safe::{SafeAdd, SafeDiv, SafeMul},
+		math::safe::SafeAdd,
 		validation::{validators::GeOne, TryIntoValidated, Validated},
 	};
 	use composable_traits::{
@@ -123,7 +123,7 @@ pub mod pallet {
 		traits::{AccountIdConversion, BlockNumberProvider, One},
 		ArithmeticError, PerThing,
 	};
-	use sp_std::{fmt::Debug, ops::Mul, vec, vec::Vec};
+	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec, vec::Vec};
 	use tracing::instrument;
 
 	use crate::{
@@ -779,20 +779,40 @@ pub mod pallet {
 
 			let awarded_shares = Self::boosted_amount(reward_multiplier, amount)?;
 
-			let (rewards, reductions) = Self::compute_rewards_and_reductions(
-				awarded_shares,
-				&rewards_pool,
-				&Pallet::<T>::pool_account_id(pool_id),
-			)?;
+			let total_shares: T::Balance =
+				<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(
+					rewards_pool.share_asset_id,
+				);
 
-			rewards_pool.rewards = rewards;
+			let mut reductions = BoundedBTreeMap::new();
+			for (asset_id, reward) in &mut rewards_pool.rewards {
+				// the first stake in a pool has no reductions
+				let inflation =
+					if let Some(total_shares) = core::num::NonZeroU128::new(total_shares.into()) {
+						Pallet::<T>::reductions_for_shares(
+							pool_id,
+							asset_id,
+							&awarded_shares,
+							&total_shares,
+						)?
+					} else {
+						T::Balance::zero()
+					};
+
+				reward.total_dilution_adjustment =
+					reward.total_dilution_adjustment.safe_add(&inflation)?;
+
+				reductions
+					.try_insert(*asset_id, inflation)
+					.expect("stake.reductions and pool.rewards have the same bound; qed;");
+			}
 
 			let fnft_collection_id = rewards_pool.financial_nft_asset_id;
 			let fnft_instance_id = T::FinancialNft::get_next_nft_id(&fnft_collection_id)?;
 			let fnft_account =
 				T::FinancialNft::asset_account(&fnft_collection_id, &fnft_instance_id);
 
-			tracing::debug!(reductions = ?&reductions);
+			tracing::debug!(?reductions);
 
 			let new_position = StakeOf::<T> {
 				reward_pool_id: *pool_id,
@@ -874,21 +894,18 @@ pub mod pallet {
 
 					let new_shares = Self::boosted_amount(reward_multiplier, amount)?;
 
-					let total_shares = T::Assets::total_issuance(rewards_pool.share_asset_id);
-
-					let pool_account = Self::pool_account_id(&stake.reward_pool_id);
+					let total_shares = core::num::NonZeroU128::new(
+						T::Assets::total_issuance(rewards_pool.share_asset_id).into(),
+					)
+					.expect("extending an existing stake implies existing shares; qed;");
 
 					for (reward_asset_id, reward) in &mut rewards_pool.rewards {
-						let new_inflation = if total_shares.is_zero() {
-							T::Balance::zero()
-						} else {
-							<T::Assets as orml_traits::MultiCurrency<_>>::free_balance(
-								*reward_asset_id,
-								&pool_account,
-							)
-							.safe_mul(&new_shares)?
-							.safe_div(&total_shares)?
-						};
+						let new_inflation = Pallet::<T>::reductions_for_shares(
+							&stake.reward_pool_id,
+							reward_asset_id,
+							&new_shares,
+							&total_shares,
+						)?;
 
 						reward.total_dilution_adjustment =
 							reward.total_dilution_adjustment.safe_add(&new_inflation)?;
@@ -1228,13 +1245,16 @@ pub mod pallet {
 				existing_fnft_asset_account,
 				new_fnft_asset_account,
 				new_account_amount,
-				false, // not a user account, doesn't need to be kept alive
+				// This parameter shouldn't matter, since we validate that the amounts are >= ED
+				// after splitting
+				false,
 			)?;
 
-			let unlocked_amount_after_transfer =
-				T::Assets::balance_on_hold(asset_id, existing_fnft_asset_account);
-
-			assert_eq!(T::Balance::zero(), unlocked_amount_after_transfer);
+			debug_assert_eq!(
+				T::Assets::balance_on_hold(asset_id, existing_fnft_asset_account),
+				T::Balance::zero(),
+				"existing fnft account should have no unlocked balance after transferring the split amount"
+			);
 
 			// lock assets on new account
 			T::Assets::set_lock(
@@ -1251,14 +1271,8 @@ pub mod pallet {
 		///
 		/// # Params
 		/// * `pool_id` - Pool identifier
-		/// * `mut rewards_pool` - Rewards pool to update
+		/// * `rewards_pool` - Rewards pool to update
 		/// * `stake` - Stake position
-		/// * `early_unlock` - If there should be an early unlock penalty
-		/// * `keep_alive` - If the transaction should be kept alive
-		// TODO(benluelo): This function does too much - while claim and unstake have similar
-		// functionality, I don't think this is the best abstraction of that. Refactor to have
-		// smaller functions that can then be used in both claim and unstake.
-		// NOTE: Low priority, this is currently working, just not optimal
 		#[instrument(fields(%owner), skip(rewards_pool, stake))]
 		pub(crate) fn collect_rewards(
 			rewards_pool: &mut RewardPoolOf<T>,
@@ -1266,16 +1280,9 @@ pub mod pallet {
 			owner: &T::AccountId,
 		) -> Result<BTreeMap<T::AssetId, T::Balance>, DispatchError> {
 			let mut claimed_amounts = BTreeMap::new();
+
 			for (reward_asset_id, reward) in &mut rewards_pool.rewards {
 				tracing::debug!(?reward_asset_id);
-
-				let free_balance =
-					<T::Assets as orml_traits::MultiCurrency<T::AccountId>>::free_balance(
-						*reward_asset_id,
-						&Self::pool_account_id(&stake.reward_pool_id),
-					);
-
-				tracing::debug!(?free_balance);
 
 				let claim = claim_of_stake::<T>(
 					stake,
@@ -1284,18 +1291,13 @@ pub mod pallet {
 					reward_asset_id,
 				)?;
 
-				// REVIEW(benluelo): Review logic/ calculations regarding total_rewards & claimed
-				// rewards
-				let claim = sp_std::cmp::min(
-					claim,
-					reward.total_rewards.defensive_saturating_sub(reward.claimed_rewards),
-				);
-
-				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
+				// reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
 
 				// REVIEW(benluelo): Expected behaviour if none?
 				if let Some(inflation) = stake.reductions.get_mut(reward_asset_id) {
 					*inflation += claim;
+				} else {
+					defensive!("stake.reductions and rewards_pool.rewards are out of sync");
 				}
 
 				T::Assets::transfer(
@@ -1305,6 +1307,10 @@ pub mod pallet {
 					claim,
 					false, // pallet account doesn't need to be kept alive
 				)?;
+
+				reward.total_dilution_adjustment =
+					reward.total_dilution_adjustment.safe_add(&claim)?;
+
 				claimed_amounts.insert(*reward_asset_id, claim);
 			}
 
@@ -1330,59 +1336,6 @@ pub mod pallet {
 			amount: T::Balance,
 		) -> Result<T::Balance, ArithmeticError> {
 			reward_multiplier.checked_mul_int(amount).ok_or(ArithmeticError::Overflow)
-		}
-
-		#[instrument(skip(rewards_pool))]
-		fn compute_rewards_and_reductions(
-			shares: T::Balance,
-			rewards_pool: &RewardPoolOf<T>,
-			pool_account: &T::AccountId,
-		) -> Result<
-			(
-				BoundedBTreeMap<T::AssetId, Reward<T::Balance>, T::MaxRewardConfigsPerPool>,
-				BoundedBTreeMap<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>,
-			),
-			DispatchError,
-		> {
-			let mut reductions = BoundedBTreeMap::new();
-			let mut rewards_btree_map = BoundedBTreeMap::new();
-
-			let total_shares: T::Balance =
-				<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(
-					rewards_pool.share_asset_id,
-				);
-
-			for (asset_id, reward) in rewards_pool.rewards.iter() {
-				let inflation = if total_shares.is_zero() {
-					T::Balance::zero()
-				} else {
-					<T::Assets as orml_traits::MultiCurrency<_>>::free_balance(
-						*asset_id,
-						pool_account,
-					)
-					.safe_mul(&shares)?
-					.safe_div(&total_shares)?
-				};
-
-				let new_total_dilution_adjustment =
-					reward.total_dilution_adjustment.safe_add(&inflation)?;
-
-				rewards_btree_map
-					.try_insert(
-						*asset_id,
-						Reward {
-							total_dilution_adjustment: new_total_dilution_adjustment,
-							..reward.clone()
-						},
-					)
-					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
-
-				reductions
-					.try_insert(*asset_id, inflation)
-					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
-			}
-
-			Ok((rewards_btree_map, reductions))
 		}
 	}
 
@@ -1443,6 +1396,7 @@ pub mod pallet {
 		}
 	}
 }
+
 /// Accumulates the rewards in a pool, if the pot isn't empty. Emits the relevant events
 /// after accumulation. See [`accumulate_reward`] for more information about how the
 /// accumulation calculation is done.
@@ -1462,8 +1416,6 @@ pub(crate) fn reward_accumulation_hook_reward_update_calculation<T: Config>(
 		return
 	}
 
-	// log::debug!("accumulating rewards for pool {pool_id:?}, asset {reward_asset_id:?}");
-
 	match accumulate_reward::<T>(reward_asset_id, reward, &pool_account, now_seconds) {
 		RewardAccumulationCalculationOutcome::Success => {
 			// tracing::debug!("accumulation successful");
@@ -1475,13 +1427,6 @@ pub(crate) fn reward_accumulation_hook_reward_update_calculation<T: Config>(
 				error: RewardAccumulationHookError::BackToTheFuture,
 			});
 		},
-		// RewardAccumulationCalculationOutcome::Overflow => {
-		// 	Pallet::<T>::deposit_event(Event::<T>::RewardAccumulationHookError {
-		// 		pool_id,
-		// 		asset_id: reward_asset_id,
-		// 		error: RewardAccumulationHookError::Overflow,
-		// 	});
-		// },
 		RewardAccumulationCalculationOutcome::RewardsPotEmpty => {
 			tracing::debug!("accumulation successful, but pot is now empty");
 			// The event only needs to be emitted once, since there's no need to notify that
@@ -1535,26 +1480,28 @@ fn accumulate_pool_rewards<T: Config>(
 	now_seconds: u64,
 ) -> Weight {
 	// If reward pool has not started, do not accumulate rewards or adjust weight
-	Weight::from_ref_time(match reward_pool.start_block.cmp(&current_block) {
+	match reward_pool.start_block.cmp(&current_block) {
 		// start block < current -> accumulate normally
-		Ordering::Less =>
-			(&mut reward_pool.rewards)
-				.into_iter()
-				.fold(0_u64, |mut acc, (asset_id, reward)| {
-					reward_accumulation_hook_reward_update_calculation::<T>(
-						pool_id,
-						*asset_id,
-						reward,
-						now_seconds,
-					);
+		Ordering::Less => (&mut reward_pool.rewards).into_iter().fold(
+			Weight::zero(),
+			|acc, (asset_id, reward)| {
+				reward_accumulation_hook_reward_update_calculation::<T>(
+					pool_id,
+					*asset_id,
+					reward,
+					now_seconds,
+				);
 
-					acc = acc.defensive_saturating_add(
-						T::WeightInfo::reward_accumulation_hook_reward_update_calculation()
-							.ref_time(),
-					);
+				// `Weight` doesn't implement CheckedMul (even though it has a checked_mul method?)
+				// so it doesn't implement `DefensiveSaturating`.
 
-					acc
-				}),
+				let calculation_weight =
+					T::WeightInfo::reward_accumulation_hook_reward_update_calculation();
+
+				acc.checked_add(&calculation_weight)
+					.defensive_unwrap_or_else(|| acc.saturating_add(calculation_weight))
+			},
+		),
 		// start block == current -> accumulation starts now, but the effects won't be seen until
 		// the next block; set all of the reward's last updated timestamp to `now` so that reward
 		// accumulation starts from this point in time, not when the pool was created. Also notify
@@ -1566,11 +1513,11 @@ fn accumulate_pool_rewards<T: Config>(
 
 			Pallet::<T>::deposit_event(Event::RewardPoolStarted { pool_id });
 
-			0
+			Weight::zero()
 		},
 		// start block > current -> don't accumulate, do nothing
-		Ordering::Greater => 0,
-	})
+		Ordering::Greater => Weight::zero(),
+	}
 }
 
 #[instrument(fields(%who))]
@@ -1603,7 +1550,7 @@ fn add_to_rewards_pot<T: Config>(
 		// useful if the chain that QA uses is compiled with debug assertions enabled.
 		//
 		// REVIEW(benluelo): This could be averted if we stored the timestamp in the
-		// `RewardsPotIsEmpty` storage, making it into a "reward pool state" representatatio
+		// `RewardsPotIsEmpty` storage, making it into a "reward pool state" representatation
 		// instead.
 		if RewardsPotIsEmpty::<T>::contains_key(pool_id, asset_id) &&
 			T::Assets::balance_on_hold(asset_id, &pool_account) >=
@@ -1777,8 +1724,6 @@ pub(crate) enum RewardAccumulationCalculationOutcome {
 	/// The rewards pot (held balance) for this pool is empty or doesn't have enough held balance
 	/// to release for one period.
 	RewardsPotEmpty,
-	// /// Accumulating rewards for an account overflowed.
-	// Overflow,
 }
 
 #[instrument(
@@ -1800,43 +1745,51 @@ pub(crate) fn claim_of_stake<T: Config>(
 
 	tracing::debug!(?total_shares);
 
+	// REVIEW(benluelo): This should be impossible, since claiming a stake implies the existence of
+	// shares.
 	let claim = if total_shares.is_zero() {
 		T::Balance::zero()
 	} else {
-		let inflation = stake.reductions.get(reward_asset_id).cloned().unwrap_or_else(Zero::zero);
+		let unlocked_balance =
+			Pallet::<T>::unlocked_rewards(&stake.reward_pool_id, reward_asset_id);
 
-		let pool_account = Pallet::<T>::pool_account_id(&stake.reward_pool_id);
-		let unlocked_balance = <T::Assets as orml_traits::MultiCurrency<_>>::free_balance(
-			*reward_asset_id,
-			&pool_account,
-		);
+		if unlocked_balance.is_zero() {
+			T::Balance::zero()
+		} else {
+			let reductions = stake
+				.reductions
+				.get(reward_asset_id)
+				.cloned()
+				// It's currently not possible to add assets to the pool after pool creation, so
+				// this should never be hit; defensive in case it is.
+				.defensive_unwrap_or_else(Zero::zero);
 
-		tracing::debug!(?unlocked_balance);
+			tracing::debug!(?unlocked_balance);
 
-		// REVIEW(benluelo): Review expected rounding behaviour, possibly switching to the following
-		// implementation (or something similar):
-		// Perbill::from_rational(stake.share, total_issuance)
-		// 	.mul_floor(reward.total_rewards)
-		// 	.safe_sub(&inflation)?;
-		tracing::debug!(?inflation);
+			// REVIEW(benluelo): Review expected rounding behaviour, possibly switching to the
+			// following implementation (or something similar):
+			// Perbill::from_rational(stake.share, total_issuance)
+			// 	.mul_floor(reward.total_rewards)
+			// 	.safe_sub(&inflation)?;
 
-		let claim = unlocked_balance
-			.safe_mul(&stake.share)?
-			.safe_div(&total_shares)?
-			.safe_sub(&inflation)?;
+			tracing::debug!(?reductions);
 
-		tracing::debug!(?claim);
+			// unsure what to do here
+			let claim = unlocked_balance
+				.safe_mul(&stake.share)?
+				.safe_div(&total_shares)?
+				.safe_sub(&reductions)?;
 
-		claim
+			tracing::debug!(?claim);
+
+			claim
+		}
 	};
 
 	Ok(claim)
 }
 
 impl<T: Config> Pallet<T> {
-	/// returns error if stake or rewardpool is not found
-	/// otherwise returns BTreeMap (key: reward_asset_id, val: Option<Balance>)
-	/// if claim_of_stake returns an error for a reward, then val is None
 	pub fn claimable_amount(
 		fnft_collection_id: T::AssetId,
 		fnft_instance_id: T::FinancialNftInstanceId,
@@ -1856,5 +1809,24 @@ impl<T: Config> Pallet<T> {
 					.map_err(ClaimableAmountError::ArithmeticError)
 			})
 			.collect::<Result<BTreeMap<_, _>, _>>()
+	}
+
+	/// Retrieve the free balance of `asset_id` in `pool_id`'s rewards pot.
+	fn unlocked_rewards(pool_id: &T::AssetId, asset_id: &T::AssetId) -> T::Balance {
+		<T::Assets as orml_traits::MultiCurrency<_>>::free_balance(
+			*asset_id,
+			&Pallet::<T>::pool_account_id(pool_id),
+		)
+	}
+
+	fn reductions_for_shares(
+		pool_id: &T::AssetId,
+		asset_id: &T::AssetId,
+		shares: &T::Balance,
+		total_shares: &core::num::NonZeroU128,
+	) -> Result<T::Balance, ArithmeticError> {
+		Pallet::<T>::unlocked_rewards(pool_id, asset_id)
+			.safe_mul(shares)?
+			.safe_div(&total_shares.get().into())
 	}
 }

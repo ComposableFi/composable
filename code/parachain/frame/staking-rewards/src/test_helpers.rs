@@ -764,6 +764,7 @@ pub fn claim_and_assert<Runtime>(
 				owner: event_owner,
 				fnft_collection_id: event_fnft_collection_id,
 				fnft_instance_id: event_fnft_instance_id,
+				claimed_amounts,
 			} => {
 				assert_eq!(
 					fnft_collection_id, event_fnft_collection_id,
