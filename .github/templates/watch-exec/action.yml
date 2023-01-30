@@ -49,7 +49,7 @@ runs:
         STATUS_TRANSIENT_FAILURE=200
         # Maximum retries in case of network failures.
         RETRIES=5               
-        CMD="cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community ${{ inputs.command }} --no-http2 --no-update-lock-file --show-trace -L 2> >(tee -a $LOG_FILE >&2)" 
+        CMD="cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community ${{ inputs.command }} --no-update-lock-file --show-trace -L 2> >(tee -a $LOG_FILE >&2)" 
         # Marker that a network error occurred.
         BAD="HTTP error 200 ('')"  
         LOG_FILE=/tmp/out.log
