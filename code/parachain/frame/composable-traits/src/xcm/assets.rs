@@ -1,5 +1,5 @@
 //! Interfaces to managed assets
-use crate::assets::AssetInfo;
+use crate::assets::{AssetInfo, AssetInfoUpdate};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{dispatch::DispatchResult, pallet_prelude::ConstU32, WeakBoundedVec};
 use polkadot_parachain::primitives::Id;
@@ -9,10 +9,7 @@ use serde::{Deserialize, Serialize};
 use sp_std::vec::Vec;
 use xcm::latest::MultiLocation;
 
-use crate::{
-	assets::Asset,
-	currency::{Exponent, Rational64},
-};
+use crate::{assets::Asset, currency::Exponent};
 
 /// works only with concrete assets
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
@@ -99,6 +96,11 @@ pub trait RemoteAssetRegistryMutate {
 		asset_info: AssetInfo<Self::Balance>,
 	) -> DispatchResult;
 
+	fn update_asset(
+		asset_id: Self::AssetId,
+		asset_info: AssetInfoUpdate<Self::Balance>,
+	) -> DispatchResult;
+
 	/// Set asset native location.
 	///
 	/// Adds mapping between native location and local asset id and vice versa.
@@ -116,14 +118,6 @@ pub trait RemoteAssetRegistryMutate {
 	fn set_reserve_location(
 		asset_id: Self::AssetId,
 		location: Self::AssetNativeLocation,
-	) -> DispatchResult;
-
-	/// allows change  ratio of how much remote assets is needed for unit of native
-	fn update_ratio(asset_id: Self::AssetId, ratio: Option<Rational64>) -> DispatchResult;
-
-	fn update_existential_deposit(
-		asset_id: Self::AssetId,
-		existential_deposit: Self::Balance,
 	) -> DispatchResult;
 }
 

@@ -40,11 +40,7 @@ fn set_metadata() {
 				RuntimeEvent::AssetsRegistry(crate::Event::<Runtime>::AssetRegistered {
 					asset_id,
 					location: _,
-					name: _,
-					symbol: _,
-					ratio: _,
-					decimals: _,
-					existential_deposit: _,
+					asset_info: _,
 				}) => Some(asset_id),
 				_ => None,
 			})
@@ -206,7 +202,7 @@ fn get_foreign_assets_list_should_work() {
 			vec![Asset {
 				name: None,
 				id,
-				decimals: 3,
+				decimals: 4,
 				ratio: Some(rational!(42 / 123)),
 				foreign_id: Some(XcmAssetLocation::new(MultiLocation {
 					parents: 1,

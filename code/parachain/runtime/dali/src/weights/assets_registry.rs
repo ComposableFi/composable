@@ -52,19 +52,7 @@ impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().writes(3_u64))
     }
 
-	fn update_asset_ratio() -> Weight {
-		Weight::from_ref_time(49_298_000_u64)
-			.saturating_add(T::DbWeight::get().reads(1_u64))
-			.saturating_add(T::DbWeight::get().writes(3_u64))
-    }
-
-	fn update_asset_metadata() -> Weight {
-		Weight::from_ref_time(49_298_000_u64)
-			.saturating_add(T::DbWeight::get().reads(1_u64))
-			.saturating_add(T::DbWeight::get().writes(3_u64))
-    }
-
-	fn update_existential_deposit() -> Weight {
+	fn update_asset() -> Weight {
 		Weight::from_ref_time(49_298_000_u64)
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(3_u64))

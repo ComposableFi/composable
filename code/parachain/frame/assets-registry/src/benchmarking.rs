@@ -8,7 +8,7 @@ use crate::{self as pallet_assets_registry};
 use crate::Pallet as AssetsRegistry;
 use codec::{Decode, Encode};
 use composable_traits::{
-	assets::{AssetInfo, LocalOrForeignAssetId},
+	assets::{AssetInfo, AssetInfoUpdate, LocalOrForeignAssetId},
 	currency::Rational64,
 	rational,
 	xcm::assets::XcmAssetLocation,
@@ -60,7 +60,7 @@ benchmarks! {
 			.expect("Asset exists");
 	}: _(RawOrigin::Root, local_asset_id, location_base)
 
-	update_asset_ratio {
+	update_asset {
 		let location_base = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
 			.expect("Asset location is foreign ID");
 		let location = LocalOrForeignAssetId::Foreign(location_base.clone());
@@ -79,34 +79,17 @@ benchmarks! {
 		)
 		.expect("Asset details are non-duplicate and valid");
 
-		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location_base)
-			.expect("Asset exists");
-	}: _(RawOrigin::Root, local_asset_id, Some(rational!(420 / 8008)))
-
-	update_asset_metadata {
-		let location_base = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
-			.expect("Asset location is foreign ID");
-		let location = LocalOrForeignAssetId::Foreign(location_base.clone());
-		let asset_info = AssetInfo {
-			name: b"Kusama".to_vec(),
-			symbol: b"KSM".to_vec(),
-			decimals: 3,
-			existential_deposit: T::Balance::from(0),
-			ratio: Some(rational!(42 / 123)),
+		let asset_info_update = AssetInfoUpdate {
+			name: Some(b"Cooler Kusama".to_vec()),
+			symbol: Some(b"CKSM".to_vec()),
+			decimals: Some(12),
+			existential_deposit: Some(T::Balance::from(0)),
+			ratio: Some(None),
 		};
 
-		AssetsRegistry::<T>::register_asset(
-			RawOrigin::Root.into(),
-			location,
-			asset_info,
-		)
-		.expect("Asset details are non-duplicate and valid");
-
 		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location_base)
 			.expect("Asset exists");
-		let name = b"Cooler Kusama".to_vec();
-		let symbol = b"CKSM".to_vec();
-	}: _(RawOrigin::Root, local_asset_id, Some(name), Some(symbol), Some(18))
+	}: _(RawOrigin::Root, local_asset_id, asset_info_update)
 
 	set_min_fee {
 		let target_parachain_id = 100_u32.into();

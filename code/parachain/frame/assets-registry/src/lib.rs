@@ -34,8 +34,8 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_traits::{
 		assets::{
-			Asset, AssetInfo, AssetMetadata, AssetType, AssetTypeInspect, InspectRegistryMetadata,
-			LocalOrForeignAssetId, MutateRegistryMetadata,
+			Asset, AssetInfo, AssetInfoUpdate, AssetMetadata, AssetType, AssetTypeInspect,
+			InspectRegistryMetadata, LocalOrForeignAssetId, MutateRegistryMetadata,
 		},
 		currency::{AssetExistentialDepositInspect, BalanceLike, ForeignByNative},
 		xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
@@ -173,34 +173,20 @@ pub mod pallet {
 		AssetRegistered {
 			asset_id: T::LocalAssetId,
 			location: Option<T::ForeignAssetId>,
-			name: Vec<u8>,
-			symbol: Vec<u8>,
-			decimals: u8,
-			ratio: Option<Rational>,
-			existential_deposit: T::Balance,
+			asset_info: AssetInfo<T::Balance>,
+		},
+		AssetUpdated {
+			asset_id: T::LocalAssetId,
+			asset_info: AssetInfoUpdate<T::Balance>,
 		},
 		AssetLocationUpdated {
 			asset_id: T::LocalAssetId,
 			location: T::ForeignAssetId,
 		},
-		AssetRatioUpdated {
-			asset_id: T::LocalAssetId,
-			ratio: Option<Rational>,
-		},
-		AssetMetadataUpdated {
-			asset_id: T::LocalAssetId,
-			name: Vec<u8>,
-			symbol: Vec<u8>,
-			decimals: u8,
-		},
 		MinFeeUpdated {
 			target_parachain_id: ParaId,
 			foreign_asset_id: T::ForeignAssetId,
 			amount: Option<T::Balance>,
-		},
-		ExistentialDepositUpdated {
-			asset_id: T::LocalAssetId,
-			existential_deposit: T::Balance,
 		},
 	}
 
@@ -217,26 +203,9 @@ pub mod pallet {
 		///
 		/// # Parameters:
 		///
-		/// * `location` - Foreign asset location, use `None` when registering local assets
+		/// * `local_or_foreign` - Foreign asset location or unused local asset ID
 		///
-		/// * `ratio` -
-		/// Allows `bring you own gas` fees.
-		/// Set to `None` to prevent payment in this asset, only transferring.
-		/// Setting to some will NOT start minting tokens with specified ratio.
-		///
-		/// ```python
-		///  ratio = foreign_token / native_token
-		///  amount_of_foreign_asset = amount_of_native_asset * ratio
-		/// ```
-		///
-		/// * `name` - Name of the asset
-		///
-		/// * symbol - Symbol of the asset
-		///
-		/// * decimals - The number of decimals this asset uses to represent one unit
-		///
-		/// * existential_deposit - The minimum balance of an asset for the balance to be stored on
-		///   chain
+		/// * `asset_info` - Information to register the asset with, see [`AssetInfo`]
 		///
 		/// # Emmits
 		/// * `AssetRegistered`
@@ -284,58 +253,18 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Update the ratio of an asset.
+		/// Update stored asset information.
 		///
 		/// Emmits:
-		/// * `AssetRatioUpdated`
-		#[pallet::weight(<T as Config>::WeightInfo::update_asset_ratio())]
-		pub fn update_asset_ratio(
+		/// * `AssetUpdated`
+		#[pallet::weight(<T as Config>::WeightInfo::update_asset())]
+		pub fn update_asset(
 			origin: OriginFor<T>,
 			asset_id: T::LocalAssetId,
-			ratio: Option<Rational>,
+			asset_info: AssetInfoUpdate<T::Balance>,
 		) -> DispatchResult {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
-			Self::update_ratio(asset_id, ratio)?;
-			Ok(())
-		}
-
-		/// Update the metadata of an asset.
-		///
-		/// All metadata feilds are optional, only those provided as `Some` will be updated, the
-		/// rest will be unchanged.
-		///
-		/// # Parameters:
-		/// * `name` - Name of the asset
-		/// * symbol - Symbol of the asset
-		/// * decimals - The number of decimals this asset uses to represent one unit
-		///
-		/// Emmits:
-		/// * `AssetMetadataUpdated`
-		#[pallet::weight(<T as Config>::WeightInfo::update_asset_metadata())]
-		pub fn update_asset_metadata(
-			origin: OriginFor<T>,
-			asset_id: T::LocalAssetId,
-			name: Option<Vec<u8>>,
-			symbol: Option<Vec<u8>>,
-			decimals: Option<u8>,
-		) -> DispatchResult {
-			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
-			<Self as MutateRegistryMetadata>::update_metadata(&asset_id, name, symbol, decimals)?;
-			Ok(())
-		}
-
-		#[pallet::weight(<T as Config>::WeightInfo::update_existential_deposit())]
-		pub fn update_existential_deposit(
-			origin: OriginFor<T>,
-			asset_id: T::LocalAssetId,
-			existential_deposit: T::Balance,
-		) -> DispatchResult {
-			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
-			<Self as RemoteAssetRegistryMutate>::update_existential_deposit(
-				asset_id,
-				existential_deposit,
-			)?;
-			Ok(())
+			<Self as RemoteAssetRegistryMutate>::update_asset(asset_id, asset_info)
 		}
 
 		/// Minimal amount of `foreign_asset_id` required to send message to other network.
@@ -382,7 +311,7 @@ pub mod pallet {
 				Self::set_reserve_location(asset_id, location)?;
 			}
 
-			Self::update_ratio(asset_id, asset_info.ratio)?;
+			AssetRatio::<T>::set(asset_id, asset_info.ratio);
 			<Self as MutateRegistryMetadata>::set_metadata(
 				&asset_id,
 				asset_info.name.clone(),
@@ -391,15 +320,7 @@ pub mod pallet {
 			)?;
 			ExistentialDeposit::<T>::set(asset_id, Some(asset_info.existential_deposit));
 
-			Self::deposit_event(Event::<T>::AssetRegistered {
-				asset_id,
-				location,
-				name: asset_info.name,
-				symbol: asset_info.symbol,
-				decimals: asset_info.decimals,
-				ratio: asset_info.ratio,
-				existential_deposit: asset_info.existential_deposit,
-			});
+			Self::deposit_event(Event::<T>::AssetRegistered { asset_id, location, asset_info });
 			Ok(())
 		}
 
@@ -413,18 +334,27 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn update_ratio(asset_id: Self::AssetId, ratio: Option<Rational>) -> DispatchResult {
-			AssetRatio::<T>::mutate_exists(asset_id, |x| *x = ratio);
-			Self::deposit_event(Event::AssetRatioUpdated { asset_id, ratio });
-			Ok(())
-		}
-
-		fn update_existential_deposit(
+		fn update_asset(
 			asset_id: Self::AssetId,
-			existential_deposit: Self::Balance,
+			asset_info: AssetInfoUpdate<Self::Balance>,
 		) -> DispatchResult {
-			ExistentialDeposit::<T>::set(asset_id, Some(existential_deposit));
-			Self::deposit_event(Event::ExistentialDepositUpdated { asset_id, existential_deposit });
+			Self::update_metadata(
+				&asset_id,
+				asset_info.name.clone(),
+				asset_info.symbol.clone(),
+				asset_info.decimals,
+			)?;
+
+			if let Some(ed) = asset_info.existential_deposit {
+				ExistentialDeposit::<T>::set(asset_id, Some(ed));
+			}
+
+			if let Some(ratio) = asset_info.ratio {
+				AssetRatio::<T>::set(asset_id, ratio);
+			}
+
+			Self::deposit_event(Event::AssetUpdated { asset_id, asset_info });
+
 			Ok(())
 		}
 	}
@@ -544,12 +474,6 @@ pub mod pallet {
 					let decimals = decimals.unwrap_or(metadata.decimals);
 
 					*metadata = AssetMetadata { name, symbol, decimals };
-					Self::deposit_event(Event::AssetMetadataUpdated {
-						asset_id: *asset_id,
-						name: metadata.name.to_vec(),
-						symbol: metadata.symbol.to_vec(),
-						decimals: metadata.decimals,
-					});
 					Some(())
 				} else {
 					None

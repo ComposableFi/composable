@@ -36,6 +36,7 @@ pub struct Asset<Balance, ForeignId> {
 	pub existential_deposit: Balance,
 }
 
+/// Struct containing the information used to create an asset
 #[derive(Decode, Encode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct AssetInfo<Balance> {
@@ -47,8 +48,28 @@ pub struct AssetInfo<Balance> {
 	pub decimals: u8,
 	/// The minimum balance of the asset for an account to be stored on chain.
 	pub existential_deposit: Balance,
-	/// The ratio of 1 native asset to 1 of this asset. Only used for BYOG assets.
+	/// The ratio of 1 native asset to 1 of this asset. Only used for BYOG assets. Set to `None` to
+	/// prevent payment in this asset, only transferring.
 	pub ratio: Option<Rational64>,
+}
+
+/// Stuct for updating the stored information for an asset.
+///
+/// All fields are wrapped by an `Option`. Only fiels with an outter `Some` should be updated.
+#[derive(Decode, Encode, Debug, Clone, PartialEq, Eq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct AssetInfoUpdate<Balance> {
+	/// Name of the asset.
+	pub name: Option<Vec<u8>>,
+	/// Symbol of the asset.
+	pub symbol: Option<Vec<u8>>,
+	/// The number of decimals this asset uses to represent one unit.
+	pub decimals: Option<u8>,
+	/// The minimum balance of the asset for an account to be stored on chain.
+	pub existential_deposit: Option<Balance>,
+	/// The ratio of 1 native asset to 1 of this asset. Only used for BYOG assets. Set to
+	/// `Some(None)` to prevent payment in this asset, only transferring.
+	pub ratio: Option<Option<Rational64>>,
 }
 
 pub trait AssetTypeInspect {
