@@ -1184,6 +1184,8 @@ jobs:
         - run: echo "Goblins allow your work to see the light"
 
   check-devnet:
+      env:
+        NIXPKGS_ALLOW_INSECURE: 1
       needs:
         - cache-devnet-all-dev-local
       runs-on:
