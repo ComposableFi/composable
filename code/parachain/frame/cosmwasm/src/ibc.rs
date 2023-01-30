@@ -1,12 +1,10 @@
 use crate::{
+	prelude::*,
 	runtimes::vm::{ContractBackend, CosmwasmVMError, CosmwasmVMShared, InitialStorageMutability},
 	types::{AccountIdOf, DefaultCosmwasmVM},
 	CodeIdToInfo, Config, Pallet,
 };
-use alloc::{
-	format,
-	string::{String, ToString},
-};
+
 use cosmwasm_vm::{
 	cosmwasm_std::{
 		Addr, Attribute as CosmwasmEventAttribute, Binary, Event as CosmwasmEvent,
@@ -567,7 +565,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 			channel: IbcChannel::new(
 				IbcEndpoint { port_id: port_id.to_string(), channel_id: channel_id.to_string() },
 				map_endpoint(&metadata),
-				map_order(metadata.ordering)?,
+				map_order(metadata.ordering),
 				metadata.version.to_string(),
 				metadata
 					.connection_hops
@@ -711,7 +709,7 @@ fn map_channel(
 	Ok(IbcChannel::new(
 		IbcEndpoint { port_id: port_id.to_string(), channel_id: channel_id.to_string() },
 		map_endpoint(&metadata),
-		map_order(metadata.ordering)?,
+		map_order(metadata.ordering),
 		metadata.version.to_string(),
 		metadata
 			.connection_hops

@@ -10,7 +10,8 @@ use ibc::core::{
 	ics24_host::identifier::{ChannelId, ConnectionId, PortId},
 };
 
-use crate::Config;
+use crate::{prelude::*, Config};
+
 pub fn ibc_to_cw_channel_open<T: Config + Send + Sync>(
 	channel_id: &ChannelId,
 	port_id: &PortId,
@@ -26,7 +27,7 @@ pub fn ibc_to_cw_channel_open<T: Config + Send + Sync>(
 				port_id: counterparty.port_id.to_string(),
 				channel_id: counterparty.channel_id.expect("channel").to_string(),
 			},
-			map_order(order)?,
+			map_order(order),
 			version.to_string(),
 			connection_hops
 				.get(0)
@@ -36,10 +37,10 @@ pub fn ibc_to_cw_channel_open<T: Config + Send + Sync>(
 	})
 }
 
-pub fn map_order(order: IbcOrder) -> Result<CwOrder, IbcError> {
+pub fn map_order(order: IbcOrder) -> CwOrder {
 	match order {
-		IbcOrder::Unordered => Ok(CwOrder::Unordered),
-		IbcOrder::Ordered => Ok(CwOrder::Ordered),
+		IbcOrder::Unordered => CwOrder::Unordered,
+		IbcOrder::Ordered => CwOrder::Ordered,
 	}
 }
 
@@ -79,7 +80,7 @@ pub fn ibc_open_try_to_cw_open<T: Config + Send + Sync>(
 						)
 						.to_string(),
 				},
-				map_order(order)?,
+				map_order(order),
 				version.to_string(),
 				connection_hops
 					.get(0)
