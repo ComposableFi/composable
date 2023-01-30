@@ -193,7 +193,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		AssetNotFound,
-		ForeignAssetAlreadyRegistered,
+		AssetAlreadyRegistered,
 		StringExceedsMaxLength,
 	}
 
@@ -230,7 +230,7 @@ pub mod pallet {
 			if let Some(location) = location.clone() {
 				ensure!(
 					!ForeignToLocal::<T>::contains_key(&location),
-					Error::<T>::ForeignAssetAlreadyRegistered
+					Error::<T>::AssetAlreadyRegistered
 				);
 			}
 
@@ -307,6 +307,10 @@ pub mod pallet {
 			location: Option<Self::AssetNativeLocation>,
 			asset_info: AssetInfo<Self::Balance>,
 		) -> DispatchResult {
+			if Metadata::<T>::contains_key(asset_id) {
+				return Err(Error::<T>::AssetAlreadyRegistered.into())
+			}
+
 			if let Some(location) = location.clone() {
 				Self::set_reserve_location(asset_id, location)?;
 			}

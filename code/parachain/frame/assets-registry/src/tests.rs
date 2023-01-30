@@ -96,7 +96,7 @@ fn register_asset() {
 				LocalOrForeignAssetId::Foreign(location),
 				asset_info,
 			),
-			Error::<Runtime>::ForeignAssetAlreadyRegistered
+			Error::<Runtime>::AssetAlreadyRegistered
 		);
 	})
 }
