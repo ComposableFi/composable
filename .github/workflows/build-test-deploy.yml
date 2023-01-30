@@ -1233,9 +1233,9 @@ jobs:
           if gsutil -q stat $NIXOPS_STATE_URL/$NIXOPS_STATE;
           then
             gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
-            nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --dry-run --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
+            nix develop .#ci --impure --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- deploy --dry-run --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
           else
-            nix develop .#ci --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --dry-run --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
+            nix develop .#ci --impure --show-trace -L --command cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nixops -- create --dry-run --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0 --include composable-devnet-dali-dev composable-devnet-picasso-dev
           fi
 
         env:
