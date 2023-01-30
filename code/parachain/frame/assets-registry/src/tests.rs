@@ -1,7 +1,7 @@
 use crate::{prelude::*, runtime::*, Error};
 use codec::{Decode, Encode};
 use composable_traits::{
-	assets::{Asset, AssetInfo, LocalOrForeignAssetId},
+	assets::{Asset, AssetInfo, AssetInfoUpdate, LocalOrForeignAssetId},
 	currency::Rational64,
 	rational,
 	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
@@ -101,9 +101,7 @@ fn register_asset() {
 	})
 }
 
-// TODO(connor): Test various update methods
 #[test]
-#[ignore = "Must test other update methods"]
 fn update_asset() {
 	new_test_ext().execute_with(|| {
 		let location = <Runtime as crate::Config>::ForeignAssetId::decode(
@@ -129,15 +127,22 @@ fn update_asset() {
 		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), Some(location.clone()));
 		assert_eq!(AssetsRegistry::asset_ratio(local_asset_id), Some(rational!(42 / 123)));
 
-		let _new_decimals = 12;
+		let new_decimals = 12;
 		let new_ratio = rational!(100500 / 666);
-		// assert_ok!(AssetsRegistry::update_asset(
-		// RuntimeOrigin::root(),
-		// 	local_asset_id,
-		// 	location.clone(),
-		// 	new_ratio,
-		// 	Some(new_decimals)
-		// ));
+
+		let asset_info_update = AssetInfoUpdate {
+			name: None,
+			symbol: None,
+			decimals: Some(new_decimals),
+			ratio: Some(Some(new_ratio)),
+			existential_deposit: None,
+		};
+
+		assert_ok!(AssetsRegistry::update_asset(
+			RuntimeOrigin::root(),
+			local_asset_id,
+			asset_info_update,
+		));
 		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), Some(location));
 		assert_eq!(AssetsRegistry::asset_ratio(local_asset_id), Some(new_ratio));
 	})
