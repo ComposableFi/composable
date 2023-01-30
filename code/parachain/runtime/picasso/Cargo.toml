@@ -129,6 +129,13 @@ orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-m
 orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30", default-features = false }
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.30", default-features = false }
 
+# IBC support
+ibc = { git = "https://github.com/ComposableFi/centauri", rev = "f0d44fe83c078b2d9fb040337c8152f037ba817d", default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "f0d44fe83c078b2d9fb040337c8152f037ba817d", default-features = false }
+ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev = "f0d44fe83c078b2d9fb040337c8152f037ba817d", default-features = false }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "f0d44fe83c078b2d9fb040337c8152f037ba817d", default-features = false }
+pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "f0d44fe83c078b2d9fb040337c8152f037ba817d", default-features = false }
+
 [features]
 builtin-wasm = []
 default = ["std"]
@@ -167,6 +174,8 @@ runtime-benchmarks = [
   "asset-tx-payment/runtime-benchmarks",
   "proxy/runtime-benchmarks",
   "pablo/runtime-benchmarks",
+  "pallet-ibc/runtime-benchmarks",
+
 ]
 std = [
   "codec/std",
@@ -237,7 +246,12 @@ std = [
   "assets-runtime-api/std",
   "crowdloan-rewards-runtime-api/std",
   "asset-tx-payment/std",
+  "ibc/std",
+  "pallet-ibc/std",
   "proxy/std",
   "pablo/std",
   "pablo-runtime-api/std",
+  "pallet-ibc-ping/std",
+  "ibc-primitives/std",
+  "ibc-runtime-api/std",
 ]
