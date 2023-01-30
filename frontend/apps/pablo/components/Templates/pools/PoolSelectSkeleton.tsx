@@ -1,4 +1,3 @@
-import Default from "@/components/Templates/Default";
 import { Link, PageTitle } from "@/components";
 import { Box, Container, Grid, Skeleton, Typography } from "@mui/material";
 
@@ -13,33 +12,31 @@ const breadcrumbs = [
 
 export const PoolSelectSkeleton = () => {
   return (
-    <Default breadcrumbs={breadcrumbs}>
-      <Container maxWidth="lg">
-        <Box display="flex" flexDirection="column" alignItems="center" mb={8}>
-          <PageTitle
-            title={"..."}
-            subtitle="Earn tokens while adding liquidity."
+    <Container maxWidth="lg">
+      <Box display="flex" flexDirection="column" alignItems="center" mb={8}>
+        <PageTitle
+          title={"..."}
+          subtitle="Earn tokens while adding liquidity."
+        />
+      </Box>
+      <Grid container gap={4}>
+        <Grid item xs={12} md={6}>
+          <Skeleton
+            variant="rectangular"
+            sx={{
+              height: "450px",
+            }}
           />
-        </Box>
-        <Grid container gap={4}>
-          <Grid item xs={12} md={6}>
-            <Skeleton
-              variant="rectangular"
-              sx={{
-                height: "450px",
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Skeleton
-              variant="rectangular"
-              sx={{
-                height: "450px",
-              }}
-            />
-          </Grid>
         </Grid>
-      </Container>
-    </Default>
+        <Grid item xs={12} md={6}>
+          <Skeleton
+            variant="rectangular"
+            sx={{
+              height: "450px",
+            }}
+          />
+        </Grid>
+      </Grid>
+    </Container>
   );
 };

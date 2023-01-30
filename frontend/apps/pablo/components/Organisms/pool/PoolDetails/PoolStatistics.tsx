@@ -11,10 +11,7 @@ import { PoolDetailsProps } from "./index";
 import { FC, ReactElement, useEffect, useState } from "react";
 import { usePoolRatio } from "@/defi/hooks/pools/usePoolRatio";
 import useStore from "@/store/useStore";
-import {
-  fetchPabloDailyForPool,
-  PabloDaily,
-} from "@/defi/subsquid/pools/queries";
+import { fetchPabloDailyForPool } from "@/defi/subsquid/pools/queries";
 import { usePicaPriceDiscovery } from "@/defi/hooks/overview/usePicaPriceDiscovery";
 import { flow, pipe } from "fp-ts/function";
 import * as TE from "fp-ts/TaskEither";
@@ -28,7 +25,11 @@ const usePoolDailyStats = (poolId: string) => {
     (store) => store.substrateTokens.hasFetchedTokens
   );
   const hasFetchedPools = useStore((store) => store.pools.isLoaded);
-  const [stats, setStats] = useState<Omit<PabloDaily, "assetId">>({
+  const [stats, setStats] = useState<{
+    fees: string;
+    transactions: string;
+    volume: string;
+  }>({
     fees: "0",
     transactions: "0",
     volume: "0",
@@ -49,24 +50,21 @@ const usePoolDailyStats = (poolId: string) => {
       task().then(
         flow(
           E.matchW(
-            (e) => setStats(e.pabloDaily),
+            (e) => null,
             (a) => {
-              const parser = parseLockedValue(getTokenById, picaPrice);
-              const volume = pipe(
-                parser(new BigNumber(0), {
-                  assetId: a.pabloDaily.assetId,
-                  amount: a.pabloDaily.volume,
-                }),
-                (v) => v.toFormat(2)
-              );
+              const volume = a.pabloDaily.volume
+                .reduce(
+                  parseLockedValue(getTokenById, picaPrice),
+                  new BigNumber(0)
+                )
+                .toFormat(2);
 
-              const fees = pipe(
-                parser(new BigNumber(0), {
-                  assetId: a.pabloDaily.assetId,
-                  amount: a.pabloDaily.fees,
-                }),
-                (v) => v.toFormat(2)
-              );
+              const fees = a.pabloDaily.fees
+                .reduce(
+                  parseLockedValue(getTokenById, picaPrice),
+                  new BigNumber(0)
+                )
+                .toFormat(2);
 
               const transactions = humanBalance(a.pabloDaily.transactions);
 
@@ -138,7 +136,7 @@ const LoadingBox: FC<{
 };
 
 export const PoolStatistics: FC<PoolDetailsProps> = ({ pool, ...boxProps }) => {
-  const { poolTVL } = usePoolRatio(pool);
+  const { poolTVL } = usePoolRatio(pool.poolId.toString());
   const { stats, isLoading } = usePoolDailyStats(pool.poolId.toString());
   return (
     <Box {...boxProps}>

@@ -53,7 +53,7 @@ export const PoolLiquidityPanel: FC<PoolDetailsProps> = ({
   const lpTokens = useStore((store) => store.ownedLiquidity.tokens);
   const isPoolsLoaded = useStore((store) => store.pools.isLoaded);
   const totalIssued = useStore((store) => store.pools.totalIssued);
-  const { userTVL, lpRatio } = usePoolRatio(pool);
+  const { userTVL, lpRatio } = usePoolRatio(pool.poolId.toString());
   const poolId = pool.poolId.toString();
 
   const handleAddLiquidity = () => {

@@ -1,23 +1,43 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { GetStatsReturn } from "../../utils/pablo/pools/stats";
 import { getPoolVolume, getStats } from "../../utils/pablo/pools/stats";
 import useStore from "@/store/useStore";
-import { PoolConfig } from "@/store/pools/types";
 import BigNumber from "bignumber.js";
 import { getOraclePrice } from "@/store/oracle/slice";
+import { pipe } from "fp-ts/lib/function";
+import * as O from "fp-ts/lib/Option";
 
-export const usePoolRatio = (pool: PoolConfig) => {
+export const usePoolRatio = (poolId: string) => {
   const userOwnedLiquidity = useStore((store) => store.ownedLiquidity.tokens);
-  const balance = userOwnedLiquidity[pool.config.lpToken]?.balance ?? {
-    free: new BigNumber(0),
-    locked: new BigNumber(0),
-  };
+  const pool = useStore(
+    useCallback(
+      (store) => {
+        return pipe(store.pools.getPoolById(poolId), O.toNullable);
+      },
+      [poolId]
+    )
+  );
+  const balance = useMemo(() => {
+    if (!pool) {
+      return {
+        free: new BigNumber(0),
+        locked: new BigNumber(0),
+      };
+    }
+    if (pool && !userOwnedLiquidity[pool.config.lpToken]) {
+      return {
+        free: new BigNumber(0),
+        locked: new BigNumber(0),
+      };
+    }
+    return userOwnedLiquidity[pool.config.lpToken].balance;
+  }, [pool, userOwnedLiquidity]);
   const poolAmount = useStore((store) => store.pools.poolAmount);
   const isTokensLoaded = useStore(
     (store) => store.substrateTokens.hasFetchedTokens
   );
   const poolTVL = useMemo(() => {
-    if (!poolAmount || !isTokensLoaded) {
+    if (!poolAmount || !isTokensLoaded || !pool) {
       return new BigNumber(0);
     }
     const [assetOne, assetTwo] = pool.config.assets;
@@ -40,22 +60,28 @@ export const usePoolRatio = (pool: PoolConfig) => {
     }
 
     return new BigNumber(amountOne).multipliedBy(priceOne.multipliedBy(2));
-  }, [pool.config.assets, pool.poolId, poolAmount, isTokensLoaded]);
-
+  }, [isTokensLoaded, pool, poolAmount]);
   const [stats, setStats] = useState<GetStatsReturn>(null);
   const totalIssued = useStore((store) => store.pools.totalIssued);
   const poolVolume = getPoolVolume(stats);
-  const poolRatio =
-    balance.free
-      .div(totalIssued[pool.poolId.toString()])
-      .multipliedBy(100)
-      .toNumber() || 0;
-
-  useEffect(() => {
+  const poolRatio = useMemo(() => {
+    return pool
+      ? balance.free
+          .div(totalIssued[pool.poolId.toString()])
+          .multipliedBy(100)
+          .toNumber() || 0
+      : 0;
+  }, [balance.free, pool, totalIssued]);
+  const setPoolStat = useCallback(() => {
+    if (!pool || !stats) return;
     getStats(pool).then((result) => {
       setStats(result);
     });
-  }, [pool]);
+  }, [stats, pool]);
+
+  useEffect(() => {
+    setPoolStat();
+  }, [setPoolStat]);
 
   return {
     lpRatio: poolRatio,

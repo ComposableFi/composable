@@ -96,17 +96,29 @@ const queryPabloDaily = (poolId: string) => `
 query pablo24hStatsForPool {
   pabloDaily(params: {poolId: "${poolId}"}) {
     assetId
-    fees
+    fees {
+      amount
+      assetId
+    }
     transactions
-    volume
+    volume {
+      amount
+      assetId
+    }
   }
 }
 `;
 export type PabloDaily = {
-  fees: string;
+  fees: {
+    amount: string;
+    assetId: string;
+  }[];
   assetId: string;
   transactions: string;
-  volume: string;
+  volume: {
+    amount: string;
+    assetId: string;
+  }[];
 };
 
 export function fetchPabloDailyForPool(poolId: string) {
@@ -119,10 +131,10 @@ export function fetchPabloDailyForPool(poolId: string) {
         ),
       () => ({
         pabloDaily: {
-          fees: "0",
+          fees: [],
           transactions: "0",
           assetId: "1",
-          volume: "0",
+          volume: [],
         } as PabloDaily,
       })
     );
@@ -144,17 +156,21 @@ export function fetchPabloTVLChartForPool(poolId: string, range: Range) {
 
 export type PabloPoolTVLChart = {
   pabloTVL: {
-    assetId: string;
     date: string;
-    totalValueLocked: string;
+    lockedValues: {
+      assetId: string;
+      amount: string;
+    }[];
   }[];
 };
 
 const queryPabloPoolTVLChart = (poolId: string, range: Range) => ` 
 query totalValueLockedChartForPool {
   pabloTVL(params: {range: "${range}", poolId: "${poolId}"}) {
-    assetId
-    totalValueLocked
+    lockedValues {
+      amount
+      assetId
+    }
     date
   }
 }

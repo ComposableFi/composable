@@ -157,7 +157,7 @@ const OwnedLiquidityPoolRow: FC<OwnedLiquidityRowProps> = ({
     locked: new BigNumber(0),
   };
 
-  const { userVolume, userTVL } = usePoolRatio(pool);
+  const { userVolume, userTVL } = usePoolRatio(pool.poolId.toString());
   if (!userLiquidity[pool.config.lpToken]) {
     return <TableRow></TableRow>;
   }

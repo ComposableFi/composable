@@ -14,7 +14,7 @@ const LiquidityPoolRow = ({
 }) => {
   const isLoaded = useStore((store) => store.substrateTokens.hasFetchedTokens);
   const assets = liquidityPool.config.assets;
-  const { poolTVL } = usePoolRatio(liquidityPool);
+  const { poolTVL } = usePoolRatio(liquidityPool.poolId.toString());
   const poolVolume = usePoolTotalVolume(liquidityPool);
 
   if (isLoaded) {

@@ -1,5 +1,5 @@
 import { DEFI_CONFIG } from "@/defi/config";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import useStore from "@/store/useStore";
 import { flow, pipe } from "fp-ts/function";
 import * as TE from "fp-ts/TaskEither";
@@ -12,7 +12,9 @@ import BigNumber from "bignumber.js";
 import { Range } from "@/defi/subsquid/overview";
 
 export const usePoolTvlChart = (poolId: string) => {
-  const getTokenById = useStore((store) => store.substrateTokens.getTokenById);
+  const getTokenById = useStore(
+    useCallback((store) => store.substrateTokens.getTokenById, [])
+  );
   const hasFetchedTokens = useStore(
     (store) => store.substrateTokens.hasFetchedTokens
   );
@@ -24,9 +26,10 @@ export const usePoolTvlChart = (poolId: string) => {
     DEFI_CONFIG.swapChartIntervals[0]
   );
   const picaPrice = usePicaPriceDiscovery();
+  const picaInString = picaPrice.toString();
 
   useEffect(() => {
-    if (hasFetchedTokens && hasFetchedPools && picaPrice.gt(0)) {
+    if (hasFetchedTokens && hasFetchedPools && Number(picaInString) > 0) {
       const task = pipe(
         TE.fromIO(() => setIsLoading(true)),
         TE.chain(
@@ -44,14 +47,11 @@ export const usePoolTvlChart = (poolId: string) => {
                 A.fromArray(a.pabloTVL),
                 A.map((item) => {
                   const date = Date.parse(item.date);
-                  const value = parseLockedValue(getTokenById, picaPrice)(
-                    new BigNumber(0),
-                    {
-                      assetId: item.assetId,
-                      amount: item.totalValueLocked,
-                    }
+                  const volume = item.lockedValues.reduce(
+                    parseLockedValue(getTokenById, new BigNumber(picaInString)),
+                    new BigNumber(0)
                   );
-                  return [date, value.toNumber()] as const;
+                  return [date, volume.toNumber()] as const;
                 }),
                 A.toArray
               );
@@ -63,7 +63,7 @@ export const usePoolTvlChart = (poolId: string) => {
       );
     }
   }, [
-    picaPrice,
+    picaInString,
     hasFetchedTokens,
     hasFetchedPools,
     selectedInterval,

@@ -1,17 +1,19 @@
 import useStore from "@/store/useStore";
 import { usePoolSpotPrice } from "@/defi/hooks/pools/usePoolSpotPrice";
 import { getOraclePrice } from "@/store/oracle/slice";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import BigNumber from "bignumber.js";
-import { PoolConfig } from "@/store/pools/types";
 import { Asset } from "shared";
 
 export const usePicaPriceDiscovery = () => {
-  const pools = useStore((store) => store.pools.config);
-  const [picaPrice, setPicaPrice] = useState(new BigNumber(0));
-  const [picaUSDTPool, setPicaUSDTPool] = useState<PoolConfig | undefined>(
-    undefined
+  const picaUSDTPool = useStore(
+    useCallback((store) => {
+      return store.pools.config.find((pool) =>
+        pool.config.assets.some((asset) => asset.getSymbol() === "PICA")
+      );
+    }, [])
   );
+  const [picaPrice, setPicaPrice] = useState(new BigNumber(0));
   let [pica, usdt] = picaUSDTPool?.config.assets ?? [
     new Asset("", "", "", "pica"),
     new Asset("", "", "", "pica"), // This is intentionally set as invalid.
@@ -22,16 +24,6 @@ export const usePicaPriceDiscovery = () => {
   }
 
   const { spotPrice } = usePoolSpotPrice(picaUSDTPool, [pica, usdt]);
-
-  useEffect(() => {
-    const found = pools.find((pool) =>
-      pool.config.assets.some((asset) => asset.getSymbol() === "PICA")
-    );
-
-    if (found) {
-      setPicaUSDTPool(found);
-    }
-  }, [pools]);
 
   useEffect(() => {
     const usdtPrice = getOraclePrice("USDT", "coingecko", "usd");
