@@ -25,6 +25,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 #![allow(trivial_numeric_casts)]
+#![allow(clippy::unnecessary_cast)]
 #![allow(non_snake_case)]
 
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
