@@ -74,5 +74,8 @@ pub fn genesis_config(
 		tokens: Default::default(),
 		transaction_payment: Default::default(),
 		vesting: Default::default(),
+		ibc: dali_runtime::IbcConfig {
+			assets: vec![AssetConfig { id: CurrencyId::from(1), denom: b"UNIT".to_vec() }],
+		},
 	}
 }
