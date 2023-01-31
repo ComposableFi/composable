@@ -1365,7 +1365,6 @@ construct_runtime!(
 		AssetsRegistry: assets_registry = 55,
 		GovernanceRegistry: governance_registry = 56,
 		// Assets: assets = 57,
-		AssetsTransactorRouter: assets_transactor_router = 57,
 		CrowdloanRewards: crowdloan_rewards = 58,
 		Vesting: vesting = 59,
 		BondedFinance: bonded_finance = 60,
@@ -1379,6 +1378,7 @@ construct_runtime!(
 		// depends on fNFT being initialized before it.
 		Fnft: pallet_fnft = 67,
 		StakingRewards: pallet_staking_rewards = 68,
+		AssetsTransactorRouter: assets_transactor_router = 69,
 
 		CallFilter: call_filter = 140,
 
