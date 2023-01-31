@@ -1,4 +1,4 @@
-import { Box, BoxProps, Grid, useTheme } from "@mui/material";
+import { Box, BoxProps, Grid } from "@mui/material";
 import { PoolTVLChart, TabItem, TabPanel, Tabs } from "@/components";
 import { FC, SyntheticEvent, useState } from "react";
 import { PoolStatistics } from "./PoolStatistics";
@@ -32,7 +32,6 @@ export const PoolDetails: FC<PoolDetailsProps> = ({ pool, ...boxProps }) => {
   const handleTabChange = (_: SyntheticEvent, newValue: number) => {
     setTab(newValue);
   };
-  const theme = useTheme();
 
   return (
     <Box {...boxProps}>
