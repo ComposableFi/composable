@@ -83,10 +83,11 @@ runs:
             if [[ $STATUS_CODE -eq 0 ]] ; then
               break
             fi
-            
-            if [[ $STATUS_CODE -ne 0 ]] || [[ $STATUS_CODE -ne $STATUS_TRANSIENT_FAILURE ]] ; then
+
+            if [[ $STATUS_CODE -ne 0 ]] && [[ $STATUS_CODE -ne $STATUS_TRANSIENT_FAILURE ]] ; then
                 break
             fi
+            
             ((try=try+1))
         done
 
