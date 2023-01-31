@@ -23,6 +23,16 @@ env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
+  check-privilege:
+    name: "Privilege Check"
+    if: ${{ github.event_name == "pull_request_target" || contains(github.event.pull_request.labels.*.name, 'privileged') }}
+    concurrency:
+      group: ${{ github.workflow }}-composablejs-${{ github.event.pull_request.title }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest  
+    steps:
+      - run: echo "I am priviliged by goblins"
+
   composablejs:
     name: "Composable JS"
     concurrency:
