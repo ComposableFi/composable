@@ -16,6 +16,11 @@ permissions:
   pull-requests: write
 
 env:
+  # NOTE: keep in sync with docs
+  NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
+  NIX_CONTAINER_IMAGE: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install
+
   CACHIX_COMPOSABLE: composable-community
   CACHIX_COMPRESSION_LEVEL: 3
 
@@ -26,7 +31,7 @@ env:
 jobs:
   check-privilege:
     name: "Privilege Check"
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.repository_owner != 'composable') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'privileged')) }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.repository_owner != 'ComposableFi') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'privileged')) }}
     concurrency:
       group: ${{ github.workflow }}-composablejs-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -1295,4 +1300,3 @@ jobs:
             Note that the initial build may take about one hour if it has not been cached by our CI yet. Once it is cached, builds should take about one minute. We currently do not provide build caches for ARM machines such as M1 Macs, but building on ARM is supported.
           comment_tag: 'Nix commands for this PR'
           github_token: ${{ secrets.GITHUB_TOKEN }}       
-
