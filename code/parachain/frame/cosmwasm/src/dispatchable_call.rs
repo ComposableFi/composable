@@ -8,7 +8,7 @@ use alloc::vec::Vec;
 
 use core::marker::PhantomData;
 use cosmwasm_vm::{
-	cosmwasm_std::{Binary, Coin, Event as CosmwasmEvent},
+	cosmwasm_std::Coin,
 	executor::{cosmwasm_call, AsFunctionName},
 	system::{
 		cosmwasm_system_entrypoint_hook, cosmwasm_system_run_hook, CosmwasmCallVM,
@@ -30,11 +30,13 @@ pub struct DispatchableCall<I, O, T: Config> {
 /// Dispatch state for all `Input`s
 impl<I, O, T: Config> DispatchableCall<I, O, T> {
 	/// Start a cosmwasm transaction by calling an entrypoint.
+	/// This is used for running the top level messages and will return output O
+	/// when succesful.
 	///
 	/// * `shared` - Shared state of the Cosmwasm VM.
 	/// * `funds` - Funds to be transferred before execution.
 	/// * `message` - Message to be passed to the entrypoint.
-	pub(crate) fn call(
+	pub(crate) fn top_level_call(
 		self,
 		shared: &mut CosmwasmVMShared,
 		funds: FundsOf<T>,
@@ -47,40 +49,23 @@ impl<I, O, T: Config> DispatchableCall<I, O, T> {
 			From<CosmwasmVMError<T>> + Into<CosmwasmVMError<T>>,
 		I: AsFunctionName,
 	{
-		let entrypoint = self.entrypoint;
-		self.call_internal(shared, funds, |vm| {
-			cosmwasm_system_entrypoint_hook::<I, _>(vm, &message, |vm, message| {
-				match vm.0.contract_runtime {
-					ContractBackend::CosmWasm { .. } =>
-						cosmwasm_call::<I, _>(vm, message).map(Into::into),
-					ContractBackend::Pallet => T::PalletHook::execute(vm, entrypoint, message),
-				}
-			})
-			.map_err(Into::into)
-		})
-	}
-
-	fn call_internal<F>(
-		self,
-		shared: &mut CosmwasmVMShared,
-		funds: FundsOf<T>,
-		message: F,
-	) -> Result<O, CosmwasmVMError<T>>
-	where
-		for<'x> WasmiVM<DefaultCosmwasmVM<'x, T>>:
-			CosmwasmCallVM<I> + CosmwasmDynamicVM<I> + StargateCosmwasmCallVM,
-		for<'x> VmErrorOf<WasmiVM<DefaultCosmwasmVM<'x, T>>>: Into<CosmwasmVMError<T>>,
-		F: for<'x> FnOnce(
-			&'x mut WasmiVM<DefaultCosmwasmVM<'x, T>>,
-		) -> Result<(Option<Binary>, Vec<CosmwasmEvent>), CosmwasmVMError<T>>,
-	{
-		Pallet::<T>::do_extrinsic_dispatch(
+		Pallet::<T>::top_level_dispatch(
 			shared,
 			self.entrypoint,
 			self.sender,
 			self.contract,
 			funds,
-			|vm| message(vm).map_err(Into::into),
+			|vm| {
+				cosmwasm_system_entrypoint_hook::<I, _>(vm, &message, |vm, message| {
+					match vm.0.contract_runtime {
+						ContractBackend::CosmWasm { .. } =>
+							cosmwasm_call::<I, _>(vm, message).map(Into::into),
+						ContractBackend::Pallet =>
+							T::PalletHook::execute(vm, self.entrypoint, message),
+					}
+				})
+				.map_err(Into::into)
+			},
 		)?;
 		Ok(self.output)
 	}
@@ -92,7 +77,7 @@ impl<I, O, T: Config> DispatchableCall<I, O, T> {
 	/// * `funds` - Funds to be transferred before execution.
 	/// * `message` - Message to be passed to the entrypoint.
 	/// * `event_handler` - Event handler that is passed by the VM.
-	pub(crate) fn continue_run(
+	pub(crate) fn sub_call(
 		self,
 		shared: &mut CosmwasmVMShared,
 		funds: Vec<Coin>,
@@ -107,7 +92,7 @@ impl<I, O, T: Config> DispatchableCall<I, O, T> {
 	{
 		// Call `cosmwasm_call` to transfer funds and create the vm instance before
 		// calling the callback.
-		Pallet::<T>::cosmwasm_call(
+		Pallet::<T>::sub_level_dispatch(
 			shared,
 			self.sender,
 			self.contract,

@@ -19,7 +19,7 @@ use frame_support::{
 	BoundedBTreeMap,
 };
 use sp_arithmetic::fixed_point::FixedU64;
-use sp_runtime::{FixedPointNumber, Perbill};
+use sp_runtime::Perbill;
 
 use crate::{
 	runtime::{
@@ -28,10 +28,7 @@ use crate::{
 	},
 	test::{
 		default_lock_config, mint_assets, new_test_ext,
-		prelude::{
-			block_seconds, init_logger, MINIMUM_STAKING_AMOUNT, ONE_YEAR_OF_BLOCKS,
-			STAKING_FNFT_COLLECTION_ID,
-		},
+		prelude::{block_seconds, init_logger, MINIMUM_STAKING_AMOUNT, STAKING_FNFT_COLLECTION_ID},
 		test_reward_accumulation_hook::{check_rewards, CheckRewards, PoolRewards},
 	},
 	test_helpers::{
@@ -55,7 +52,6 @@ fn test_update_reward_pool() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: ONE_YEAR_OF_BLOCKS + 1,
 			reward_configs: [(
 				USDT::ID,
 				RewardConfig { reward_rate: RewardRate::per_second(INITIAL_REWARD_RATE_AMOUNT) },
@@ -161,14 +157,13 @@ fn update_accumulates_properly() {
 					owner: ALICE,
 					asset_id: PICA::ID,
 					start_block: 50,
-					end_block: 100_000,
 					reward_configs: bounded_btree_map! {
 						USDT::ID => RewardConfig {
 							reward_rate: reward_rate.clone(),
 						},
 					},
 					lock: LockConfig {
-						duration_presets: bounded_btree_map! {
+						duration_multipliers: bounded_btree_map! {
 							// 1%
 							ONE_HOUR => FixedU64::from_rational(101, 100)
 								.try_into_validated()
@@ -177,7 +172,8 @@ fn update_accumulates_properly() {
 							ONE_MINUTE => FixedU64::from_rational(1_001, 1_000)
 								.try_into_validated()
 								.expect(">= 1"),
-						},
+						}
+						.into(),
 						unlock_penalty: Perbill::from_percent(5),
 					},
 					share_asset_id: XPICA::ID,
@@ -185,11 +181,7 @@ fn update_accumulates_properly() {
 					minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 				},
 			),
-			crate::Event::<Test>::RewardPoolCreated {
-				pool_id: PICA::ID,
-				owner: ALICE,
-				end_block: 100_000,
-			},
+			crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE },
 		);
 
 		process_and_progress_blocks::<StakingRewards, Test>(10);
@@ -216,6 +208,7 @@ fn update_accumulates_properly() {
 				owner: CHARLIE,
 				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
 				fnft_instance_id: stake_id,
+				claimed_amounts: [(USDT::ID, USDT::units(1) / 1_000 * 6)].into_iter().collect(),
 			},
 		);
 

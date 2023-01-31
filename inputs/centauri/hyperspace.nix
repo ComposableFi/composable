@@ -25,7 +25,7 @@
             chmod u+w $out/utils/subxt/generated/src/{parachain.rs,relaychain.rs}
             cp ${self'.packages.dali-subxt-client}/* $out/utils/subxt/generated/src/
           '';
-          dontFixup =true;
+          dontFixup = true;
           dontStrip = true;
         };
       in crane.stable.buildPackage rec {

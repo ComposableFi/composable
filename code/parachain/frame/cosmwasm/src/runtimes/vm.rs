@@ -1,6 +1,6 @@
 use super::abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas};
 use crate::{runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Config, Pallet};
-use alloc::string::String;
+use alloc::{borrow::ToOwned, string::String};
 use cosmwasm_vm::{
 	cosmwasm_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo},
 	executor::ExecutorError,
@@ -18,10 +18,8 @@ use cosmwasm_vm_wasmi::{
 	WasmiOutput, WasmiVM, WasmiVMError,
 };
 use frame_support::storage::ChildTriePrefixIterator;
-use parity_wasm::elements::{self, External, Internal, Module, Type, ValueType};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use wasmi::CanResume;
-use wasmi_validation::{validate_module, PlainValidator};
 
 /// Different type of contract runtimes. A contract might either be dynamically loaded or statically
 /// invoked (precompiled).
@@ -490,7 +488,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 
 	fn addr_validate(&mut self, input: &str) -> Result<Result<(), Self::Error>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "addr_validate");
-		match Pallet::<T>::do_addr_validate(input.into()) {
+		match Pallet::<T>::do_addr_validate(input.to_owned()) {
 			Ok(_) => Ok(Ok(())),
 			Err(e) => Ok(Err(e)),
 		}
@@ -501,7 +499,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		input: &str,
 	) -> Result<Result<Self::CanonicalAddress, Self::Error>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "addr_canonicalize");
-		let account = match Pallet::<T>::do_addr_canonicalize(input.into()) {
+		let account = match Pallet::<T>::do_addr_canonicalize(input.to_owned()) {
 			Ok(account) => account,
 			Err(e) => return Ok(Err(e)),
 		};
@@ -672,221 +670,5 @@ impl<'a, T: Config> Transactional for CosmwasmVM<'a, T> {
 	fn transaction_rollback(&mut self) -> Result<(), Self::Error> {
 		sp_io::storage::rollback_transaction();
 		Ok(())
-	}
-}
-
-#[derive(Debug)]
-pub enum ValidationError {
-	Validation(wasmi_validation::Error),
-	ExportMustBeAFunction(&'static str),
-	EntryPointPointToImport(&'static str),
-	ExportDoesNotExists(&'static str),
-	ExportWithoutSignature(&'static str),
-	ExportWithWrongSignature {
-		export_name: &'static str,
-		expected_signature: Vec<ValueType>,
-		actual_signature: Vec<ValueType>,
-	},
-	MissingMandatoryExport(&'static str),
-	CannotImportTable,
-	CannotImportGlobal,
-	CannotImportMemory,
-	ImportWithoutSignature,
-	ImportIsBanned(&'static str, &'static str),
-	MustDeclareOneInternalMemory,
-	MustDeclareOneTable,
-	TableExceedLimit,
-	BrTableExceedLimit,
-	GlobalsExceedLimit,
-	GlobalFloatingPoint,
-	LocalFloatingPoint,
-	ParamFloatingPoint,
-	FunctionParameterExceedLimit,
-}
-
-#[derive(PartialEq, Eq)]
-pub enum ExportRequirement {
-	Mandatory,
-	Optional,
-}
-
-pub struct CodeValidation<'a>(&'a Module);
-impl<'a> CodeValidation<'a> {
-	pub fn new(module: &'a Module) -> Self {
-		CodeValidation(module)
-	}
-	pub fn validate_base(self) -> Result<Self, ValidationError> {
-		validate_module::<PlainValidator>(self.0, ()).map_err(ValidationError::Validation)?;
-		Ok(self)
-	}
-	pub fn validate_exports(
-		self,
-		expected_exports: &[(ExportRequirement, &'static str, &'static [ValueType])],
-	) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		let types = module.type_section().map(|ts| ts.types()).unwrap_or(&[]);
-		let export_entries = module.export_section().map(|is| is.entries()).unwrap_or(&[]);
-		let func_entries = module.function_section().map(|fs| fs.entries()).unwrap_or(&[]);
-		let fn_space_offset = module
-			.import_section()
-			.map(|is| is.entries())
-			.unwrap_or(&[])
-			.iter()
-			.filter(|entry| matches!(*entry.external(), External::Function(_)))
-			.count();
-		for (requirement, name, signature) in expected_exports {
-			match (requirement, export_entries.iter().find(|e| &e.field() == name)) {
-				(_, Some(export)) => {
-					let fn_idx = match export.internal() {
-						Internal::Function(ref fn_idx) => Ok(*fn_idx),
-						_ => Err(ValidationError::ExportMustBeAFunction(name)),
-					}?;
-					let fn_idx = match fn_idx.checked_sub(fn_space_offset as u32) {
-						Some(fn_idx) => Ok(fn_idx),
-						None => Err(ValidationError::EntryPointPointToImport(name)),
-					}?;
-					let func_ty_idx = func_entries
-						.get(fn_idx as usize)
-						.ok_or(ValidationError::ExportDoesNotExists(name))?
-						.type_ref();
-					let Type::Function(ref func_ty) = types
-						.get(func_ty_idx as usize)
-						.ok_or(ValidationError::ExportWithoutSignature(name))?;
-					if signature != &func_ty.params() {
-						return Err(ValidationError::ExportWithWrongSignature {
-							export_name: name,
-							expected_signature: signature.to_vec(),
-							actual_signature: func_ty.params().to_vec(),
-						})
-					}
-				},
-				(ExportRequirement::Mandatory, None) =>
-					return Err(ValidationError::MissingMandatoryExport(name)),
-				(ExportRequirement::Optional, None) => {},
-			}
-		}
-		Ok(self)
-	}
-	pub fn validate_imports(
-		self,
-		import_banlist: &[(&'static str, &'static str)],
-	) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		let types = module.type_section().map(|ts| ts.types()).unwrap_or(&[]);
-		let import_entries = module.import_section().map(|is| is.entries()).unwrap_or(&[]);
-		for import in import_entries {
-			let type_idx = match import.external() {
-				External::Table(_) => Err(ValidationError::CannotImportTable),
-				External::Global(_) => Err(ValidationError::CannotImportGlobal),
-				External::Memory(_) => Err(ValidationError::CannotImportMemory),
-				External::Function(ref type_idx) => Ok(type_idx),
-			}?;
-			let import_name = import.field();
-			let import_module = import.module();
-			let Type::Function(_) =
-				types.get(*type_idx as usize).ok_or(ValidationError::ImportWithoutSignature)?;
-			if let Some((m, f)) =
-				import_banlist.iter().find(|(m, f)| m == &import_module && f == &import_name)
-			{
-				return Err(ValidationError::ImportIsBanned(m, f))
-			}
-		}
-		Ok(self)
-	}
-	pub fn validate_memory_limit(self) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		if module.memory_section().map_or(false, |ms| ms.entries().len() != 1) {
-			Err(ValidationError::MustDeclareOneInternalMemory)
-		} else {
-			Ok(self)
-		}
-	}
-	pub fn validate_table_size_limit(self, limit: u32) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		if let Some(table_section) = module.table_section() {
-			if table_section.entries().len() > 1 {
-				return Err(ValidationError::MustDeclareOneTable)
-			}
-			if let Some(table_type) = table_section.entries().first() {
-				if table_type.limits().initial() > limit {
-					return Err(ValidationError::TableExceedLimit)
-				}
-			}
-		}
-		Ok(self)
-	}
-	pub fn validate_br_table_size_limit(self, limit: u32) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		if let Some(code_section) = module.code_section() {
-			for instr in code_section.bodies().iter().flat_map(|body| body.code().elements()) {
-				use self::elements::Instruction::BrTable;
-				if let BrTable(table) = instr {
-					if table.table.len() > limit as usize {
-						return Err(ValidationError::BrTableExceedLimit)
-					}
-				}
-			}
-		};
-		Ok(self)
-	}
-	pub fn validate_global_variable_limit(self, limit: u32) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		if let Some(global_section) = module.global_section() {
-			if global_section.entries().len() > limit as usize {
-				return Err(ValidationError::GlobalsExceedLimit)
-			}
-		}
-		Ok(self)
-	}
-	pub fn validate_no_floating_types(self) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		if let Some(global_section) = module.global_section() {
-			for global in global_section.entries() {
-				match global.global_type().content_type() {
-					ValueType::F32 | ValueType::F64 =>
-						return Err(ValidationError::GlobalFloatingPoint),
-					_ => {},
-				}
-			}
-		}
-		if let Some(code_section) = module.code_section() {
-			for func_body in code_section.bodies() {
-				for local in func_body.locals() {
-					match local.value_type() {
-						ValueType::F32 | ValueType::F64 =>
-							return Err(ValidationError::LocalFloatingPoint),
-						_ => {},
-					}
-				}
-			}
-		}
-		if let Some(type_section) = module.type_section() {
-			for wasm_type in type_section.types() {
-				match wasm_type {
-					Type::Function(func_type) => {
-						let return_type = func_type.results().get(0);
-						for value_type in func_type.params().iter().chain(return_type) {
-							match value_type {
-								ValueType::F32 | ValueType::F64 =>
-									return Err(ValidationError::ParamFloatingPoint),
-								_ => {},
-							}
-						}
-					},
-				}
-			}
-		}
-		Ok(self)
-	}
-	pub fn validate_parameter_limit(self, limit: u32) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		if let Some(type_section) = module.type_section() {
-			for Type::Function(func) in type_section.types() {
-				if func.params().len() > limit as usize {
-					return Err(ValidationError::FunctionParameterExceedLimit)
-				}
-			}
-		}
-		Ok(self)
 	}
 }

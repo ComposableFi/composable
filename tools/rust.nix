@@ -46,21 +46,19 @@
             cargoExtraArgs = "--all --check --verbose";
           });
 
-        cargo-clippy-check = crane.nightly.cargoBuild
+        cargo-clippy-check = crane.nightly.cargoClippy
           (systemCommonRust.common-attrs // {
             cargoArtifacts = self'.packages.common-deps-nightly;
-            cargoBuildCommand = "cargo clippy";
-            cargoExtraArgs = "--all-targets --tests -- -D warnings";
+            cargoClippyExtraArgs = "--all-targets --tests -- -D warnings";
           });
 
-        cargo-deny-check = crane.nightly.cargoBuild
-          (systemCommonRust.common-attrs // {
-            buildInputs = with pkgs; [ cargo-deny ];
-            cargoArtifacts = self'.packages.common-deps;
-            cargoBuildCommand = "cargo deny";
-            cargoExtraArgs =
-              "--manifest-path ./parachain/frame/composable-support/Cargo.toml check ban";
-          });
+        cargo-deny-check = crane.nightly.mkCargoDerivation {
+          buildInputs = with pkgs; [ cargo-deny ];
+          src = ../code;
+          cargoArtifacts = self'.packages.common-deps;
+          buildPhaseCargoCommand =
+            "cargo-deny --manifest-path ./parachain/frame/composable-support/Cargo.toml check bans";
+        };
 
         cargo-udeps-check = crane.nightly.cargoBuild
           (systemCommonRust.common-attrs // {

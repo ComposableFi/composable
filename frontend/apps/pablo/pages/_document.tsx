@@ -67,43 +67,6 @@ export default class MyDocument extends Document {
           <meta property="og:url" content={config.appUrl} />
           <meta property="og:image" content="/pwa/192x192.png" />
 
-          {/* Apple Splash screen */}
-          <link
-            rel="apple-touch-startup-image"
-            href="/pwa/2048x2732.png"
-            sizes="2048x2732"
-          />
-          <link
-            rel="apple-touch-startup-image"
-            href="/pwa/1668x2048.png"
-            sizes="1668x2224"
-          />
-          <link
-            rel="apple-touch-startup-image"
-            href="/pwa/1536x2048.png"
-            sizes="1536x2048"
-          />
-          <link
-            rel="apple-touch-startup-image"
-            href="/pwa/1125x2436.png"
-            sizes="1125x2436"
-          />
-          <link
-            rel="apple-touch-startup-image"
-            href="/pwa/1242x2208.png"
-            sizes="1242x2208"
-          />
-          <link
-            rel="apple-touch-startup-image"
-            href="/pwa/750x1334.png"
-            sizes="750x1334"
-          />
-          <link
-            rel="apple-touch-startup-image"
-            href="/pwa/640x1136.png"
-            sizes="640x1136"
-          />
-
           {/* PWA primary color */}
           <meta name="theme-color" content={theme.palette.primary.main} />
           <link rel="shortcut icon" href="/pwa/favicon.ico" />

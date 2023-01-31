@@ -5,6 +5,36 @@ In this walkthrough, we will upload and interact with `cw20_base` contract. We w
 * Instantiate the contract.
 * Execute a transfer.
 
+## Installing `ccw`
+
+Clone the [repository](https://github.com/ComposableFi/cw-toolkit), then run:
+
+```
+# Clone the repo
+git clone https://github.com/ComposableFi/cw-toolkit
+
+# Install the ccw binary
+cargo install --path ./cw-toolkit/cli
+```
+
+## Installing `nix` (for running the chain locally)
+
+We are using Nix to set up and start our local development environment. So check out our 
+[Nix installation page](https://docs.composable.finance/nix/install) to install Nix.
+
+Then start the development environment by running:
+
+```
+nix run "github:ComposableFi/composable#dali-devnet"
+```
+
+This will take time at first but since it is cached, it will be almost instant afterward. But note your node will be rebuilt
+if the commit hash changes so if you don't want that, you can always use a specific commit hash:
+
+```
+nix run "github:ComposableFi/composable/d2845fc731bc3ee418a17cf528336d50f4b39924#dali-devnet"
+```
+
 ## Running `pallet-cosmwasm` in local
 
 You can run our devnet locally following this guide: https://docs.composable.finance/nix.
@@ -26,6 +56,13 @@ Output:
         - Code ID: 1
 ```
 
+## Getting JSON output instead of plain text
+
+Sometimes it is easy to get the output in JSON for to automize the process. You can do that by using `--output-type` parameter.
+
+```sh
+ccw substrate --output-type json COMMAND
+```
 
 ## Instantiating the contract
 

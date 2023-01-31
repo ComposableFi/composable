@@ -7,7 +7,9 @@ use composable_tests_helpers::test::helper::RuntimeTrait;
 // use composable_tests_helpers::test::helper::assert_extrinsic_event_with;
 use composable_traits::{
 	staking::{
-		lock::LockConfig, RewardConfig, RewardPoolConfiguration::RewardRateBasedIncentive,
+		lock::{DurationMultipliers, LockConfig},
+		RewardConfig,
+		RewardPoolConfiguration::RewardRateBasedIncentive,
 		RewardRate, RewardUpdate,
 	},
 	time::{ONE_HOUR, ONE_MINUTE},
@@ -38,7 +40,6 @@ fn get_reward_pool<T: Config>(
 		owner,
 		asset_id: BASE_ASSET_ID.into(),
 		start_block: 2_u128.saturated_into(),
-		end_block: 5_u128.saturated_into(),
 		reward_configs: reward_config::<T>(reward_count),
 		lock: lock_config::<T>(),
 		share_asset_id: X_ASSET_ID.into(),
@@ -49,13 +50,20 @@ fn get_reward_pool<T: Config>(
 
 fn lock_config<T: Config>() -> LockConfig<T::MaxStakingDurationPresets> {
 	LockConfig {
-		duration_presets: [
-			(ONE_HOUR, FixedU64::from_rational(101, 100).try_into_validated().expect(">= 1")), /* 1% */
-			(ONE_MINUTE, FixedU64::from_rational(1_001, 1_000).try_into_validated().expect(">= 1")), /* 0.1% */
-		]
-		.into_iter()
-		.try_collect()
-		.unwrap(),
+		duration_multipliers: DurationMultipliers::Presets(
+			[
+				// 1%
+				(ONE_HOUR, FixedU64::from_rational(101, 100).try_into_validated().expect(">= 1")),
+				// 0.1%
+				(
+					ONE_MINUTE,
+					FixedU64::from_rational(1_001, 1_000).try_into_validated().expect(">= 1"),
+				),
+			]
+			.into_iter()
+			.try_collect()
+			.unwrap(),
+		),
 		unlock_penalty: Perbill::from_percent(5),
 	}
 }
@@ -93,10 +101,9 @@ benchmarks! {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
 		let owner: T::AccountId = account("owner", 0, 0);
 		let pool_id = BASE_ASSET_ID.into();
-		let end_block = 5_u128.saturated_into();
 	}: _(OriginFor::<T>::root(), get_reward_pool::<T>(owner.clone(), r))
 	verify {
-		assert_last_event::<T>(Event::RewardPoolCreated { pool_id, owner, end_block }.into());
+		assert_last_event::<T>(Event::RewardPoolCreated { pool_id, owner }.into());
 	}
 
 	stake {
@@ -229,7 +236,6 @@ benchmarks! {
 			owner: user,
 			asset_id: pool_asset_id,
 			start_block: 2_u128.saturated_into(),
-			end_block: 5_u128.saturated_into(),
 			reward_configs: [(reward_asset_id, reward_config)]
 				.into_iter()
 				.try_collect()
@@ -286,7 +292,7 @@ benchmarks! {
 		<Pallet<T>>::stake(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)?;
 	}: _(OriginFor::<T>::signed(staker.clone()), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into())
 	verify {
-		assert_last_event::<T>(Event::Claimed { owner: staker, fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(), fnft_instance_id: FNFT_INSTANCE_ID_BASE.into() }.into());
+		assert_last_event::<T>(Event::Claimed { owner: staker, fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(), fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(), claimed_amounts: reward_config::<T>(r).into_inner().into_keys().map(|x| (x, 0.into())).collect::<BTreeMap<_,_>>()  }.into());
 	}
 
 	add_to_rewards_pot {

@@ -39,3 +39,5 @@ std = [
   "composable-support/std",
   "pallet-timestamp/std",
 ]
+
+runtime-benchmarks = ["pallet-timestamp/runtime-benchmarks"]

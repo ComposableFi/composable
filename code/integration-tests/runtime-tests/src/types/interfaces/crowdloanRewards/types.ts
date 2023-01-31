@@ -199,35 +199,6 @@ export interface FrameSupportWeightsPerDispatchClassU64 extends Null {}
 /** @name FrameSupportWeightsRuntimeDbWeight */
 export interface FrameSupportWeightsRuntimeDbWeight extends Null {}
 
-/** @name FrameSystemAccountInfo */
-export interface FrameSystemAccountInfo extends Struct {
-  readonly nonce: Null;
-  readonly consumers: Null;
-  readonly providers: Null;
-  readonly sufficients: Null;
-  readonly data: {
-    readonly free: u128;
-    readonly reserved: u128;
-    readonly miscFrozen: u128;
-    readonly feeFrozen: u128;
-  } & Struct;
-}
-
-/** @name FrameSystemEventRecord */
-export interface FrameSystemEventRecord extends Null {}
-
-/** @name FrameSystemLastRuntimeUpgradeInfo */
-export interface FrameSystemLastRuntimeUpgradeInfo extends Null {}
-
-/** @name FrameSystemLimitsBlockLength */
-export interface FrameSystemLimitsBlockLength extends Null {}
-
-/** @name FrameSystemLimitsBlockWeights */
-export interface FrameSystemLimitsBlockWeights extends Null {}
-
-/** @name FrameSystemPhase */
-export interface FrameSystemPhase extends Null {}
-
 /** @name IbcTraitOpenChannelParams */
 export interface IbcTraitOpenChannelParams extends Null {}
 
