@@ -15,6 +15,7 @@ use frame_support::{
 		DepositConsequence, WithdrawConsequence,
 	},
 };
+use sp_std::vec::Vec;
 
 use crate::{route, Config, Pallet};
 
