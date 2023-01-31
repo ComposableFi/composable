@@ -705,7 +705,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "beefy-light-client-primitives",
  "beefy-primitives",
@@ -728,7 +728,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "beefy-primitives",
  "ckb-merkle-mountain-range 0.3.2",
@@ -736,6 +736,7 @@ dependencies = [
  "light-client-common",
  "parity-scale-codec",
  "rs_merkle",
+ "serde",
  "sp-core",
  "sp-mmr-primitives",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.33)",
@@ -3795,18 +3796,6 @@ dependencies = [
 
 [[package]]
 name = "fixed-hash"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfcf0ed7fe52a17a03854ec54a9f76d6d84508d1c0e66bc1793301c73fc8493c"
-dependencies = [
- "byteorder",
- "rand 0.8.5",
- "rustc-hex",
- "static_assertions",
-]
-
-[[package]]
-name = "fixed-hash"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "835c052cb0c08c1acf6ffd71c022172e18723949c8282f2b9f27efbc51e64534"
@@ -4501,7 +4490,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -4522,7 +4511,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-verifier"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "anyhow",
  "finality-grandpa",
@@ -4531,7 +4520,6 @@ dependencies = [
  "hash-db",
  "light-client-common",
  "parity-scale-codec",
- "primitive-types 0.11.1",
  "sp-core",
  "sp-finality-grandpa",
  "sp-io",
@@ -4893,7 +4881,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "derive_more",
  "flex-error",
@@ -4902,14 +4890,13 @@ dependencies = [
  "ics23",
  "num-traits",
  "parity-scale-codec",
- "primitive-types 0.12.1",
+ "primitive-types",
  "prost",
  "safe-regex",
  "scale-info",
  "serde",
  "serde_derive",
  "serde_json",
- "sp-core",
  "subtle-encoding",
  "tendermint",
  "tendermint-proto",
@@ -4921,7 +4908,7 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.3.0",
@@ -4933,7 +4920,7 @@ dependencies = [
 [[package]]
 name = "ibc-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "base58",
  "blake2",
@@ -4957,7 +4944,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "base64 0.13.1",
  "bytes",
@@ -4969,7 +4956,7 @@ dependencies = [
 [[package]]
 name = "ibc-rpc"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "frame-system",
  "hex-literal",
@@ -4996,7 +4983,7 @@ dependencies = [
 [[package]]
 name = "ibc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "ibc-primitives",
  "pallet-ibc",
@@ -5008,7 +4995,7 @@ dependencies = [
 [[package]]
 name = "ics07-tendermint"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "bytes",
  "flex-error",
@@ -5028,7 +5015,7 @@ dependencies = [
 [[package]]
 name = "ics10-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -5039,7 +5026,6 @@ dependencies = [
  "ibc-proto",
  "light-client-common",
  "parity-scale-codec",
- "primitive-types 0.11.1",
  "prost",
  "prost-build",
  "prost-types",
@@ -5055,7 +5041,7 @@ dependencies = [
 [[package]]
 name = "ics11-beefy"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "anyhow",
  "beefy-light-client",
@@ -5067,7 +5053,6 @@ dependencies = [
  "ibc-proto",
  "light-client-common",
  "parity-scale-codec",
- "primitive-types 0.11.1",
  "prost",
  "prost-build",
  "prost-types",
@@ -6214,14 +6199,13 @@ dependencies = [
 [[package]]
 name = "light-client-common"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "anyhow",
  "derive_more",
  "hash-db",
  "ibc",
  "parity-scale-codec",
- "primitive-types 0.11.1",
  "serde",
  "sp-core",
  "sp-storage 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.33)",
@@ -7874,7 +7858,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "beefy-light-client-primitives",
  "cumulus-primitives-core",
@@ -7920,7 +7904,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc-ping"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8932,7 +8916,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "parity-util-mem-derive",
  "parking_lot 0.12.1",
- "primitive-types 0.12.1",
+ "primitive-types",
  "smallvec",
  "winapi",
 ]
@@ -10599,22 +10583,11 @@ dependencies = [
 
 [[package]]
 name = "primitive-types"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e28720988bff275df1f51b171e1b2a18c30d194c4d2b61defdacecd625a5d94a"
-dependencies = [
- "fixed-hash 0.7.0",
- "impl-codec",
- "uint",
-]
-
-[[package]]
-name = "primitive-types"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f3486ccba82358b11a77516035647c34ba167dfa53312630de83b12bd4f3d66"
 dependencies = [
- "fixed-hash 0.8.0",
+ "fixed-hash",
  "impl-codec",
  "impl-serde 0.4.0",
  "scale-info",
@@ -13223,7 +13196,7 @@ dependencies = [
 [[package]]
 name = "simple-iavl"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2#8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2"
+source = "git+https://github.com/ComposableFi/centauri?rev=223705564957acc509cf5a4b9f33665b2eab5f4a#223705564957acc509cf5a4b9f33665b2eab5f4a"
 dependencies = [
  "bytes",
  "ics23",
@@ -13572,7 +13545,7 @@ dependencies = [
  "num-traits",
  "parity-scale-codec",
  "parking_lot 0.12.1",
- "primitive-types 0.12.1",
+ "primitive-types",
  "rand 0.7.3",
  "regex",
  "scale-info",
@@ -13847,7 +13820,7 @@ dependencies = [
  "bytes",
  "impl-trait-for-tuples",
  "parity-scale-codec",
- "primitive-types 0.12.1",
+ "primitive-types",
  "sp-externalities",
  "sp-runtime-interface-proc-macro",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.33)",

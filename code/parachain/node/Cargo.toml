@@ -42,8 +42,8 @@ staking-rewards-runtime-api = { path = "../frame/staking-rewards/runtime-api" }
 pallet-transaction-payment-rpc = { path = "../frame/transaction-payment/rpc" }
 pallet-transaction-payment-rpc-runtime-api = { path = "../frame/transaction-payment/rpc/runtime-api" }
 
-ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev = "8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2" }
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "8f9c9f981c8ff1246a62b0670d2ede0e7e4ce0f2" }
+ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev = "223705564957acc509cf5a4b9f33665b2eab5f4a" }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "223705564957acc509cf5a4b9f33665b2eab5f4a" }
 
 # FRAME Dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
