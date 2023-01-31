@@ -53,7 +53,7 @@ jobs:
       - x64
       - sre
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -78,7 +78,7 @@ jobs:
       - x64
       - sre
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -102,7 +102,7 @@ jobs:
       - x64
       - sre
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -152,7 +152,7 @@ jobs:
       group: ${{ github.workflow }}-check-nix-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -189,7 +189,7 @@ jobs:
       group: ${{ github.workflow }}-cargo-fmt-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -214,7 +214,7 @@ jobs:
       group: ${{ github.workflow }}-check-nix-long-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -248,7 +248,7 @@ jobs:
       group: ${{ github.workflow }}-taplo-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -272,7 +272,7 @@ jobs:
       group: ${{ github.workflow }}-prettier-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -296,7 +296,7 @@ jobs:
       group: ${{ github.workflow }}-nixfmt-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -320,7 +320,7 @@ jobs:
       group: ${{ github.workflow }}-deadnix-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -344,7 +344,7 @@ jobs:
       group: ${{ github.workflow }}-spell-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -369,7 +369,7 @@ jobs:
       group: ${{ github.workflow }}-docs-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
@@ -446,7 +446,7 @@ jobs:
       group: ${{ github.workflow }}-frontend-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -470,7 +470,7 @@ jobs:
       group: ${{ github.workflow }}-hadolint-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -495,7 +495,7 @@ jobs:
       group: ${{ github.workflow }}-cargo-clippy-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -520,7 +520,7 @@ jobs:
       group: ${{ github.workflow }}-cargo-deny-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -545,7 +545,7 @@ jobs:
       group: ${{ github.workflow }}-benchmarks-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -570,7 +570,7 @@ jobs:
       group: ${{ github.workflow }}-unittests-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -690,7 +690,7 @@ jobs:
       matrix:
         runtime: [dali, picasso, composable]
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -715,7 +715,7 @@ jobs:
       group: ${{ github.workflow }}-package-composable-node-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -739,7 +739,7 @@ jobs:
       group: ${{ github.workflow }}-package-composable-bench-node-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -763,7 +763,7 @@ jobs:
       group: ${{ github.workflow }}-package-polkadot-node-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -790,7 +790,7 @@ jobs:
       group: ${{ github.workflow }}-package-${{ matrix.node }}-node-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -814,7 +814,7 @@ jobs:
       group: ${{ github.workflow }}-package-acala-node-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -838,7 +838,7 @@ jobs:
       group: ${{ github.workflow }}-package-dali-subxt-client-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -862,7 +862,7 @@ jobs:
       group: ${{ github.workflow }}-package-hyperspace-dali-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -902,7 +902,7 @@ jobs:
       cancel-in-progress: true
     continue-on-error: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -924,7 +924,7 @@ jobs:
       - x64
       - sre
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
@@ -981,7 +981,7 @@ jobs:
       cancel-in-progress: true
     continue-on-error: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -1073,7 +1073,7 @@ jobs:
       group: ${{ github.workflow }}-package-zombienet-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -1097,7 +1097,7 @@ jobs:
       group: packagepricefeed-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -1121,7 +1121,7 @@ jobs:
       group: ${{ github.workflow }}-composable-sandbox-container-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -1150,7 +1150,7 @@ jobs:
       group: ${{ github.workflow }}-composable-bridge-devnet-container-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - uses: actions/checkout@v3
         with:
@@ -1182,7 +1182,7 @@ jobs:
         group: ${{ github.workflow }}-devnet-integration-tests-${{ github.event.pull_request.title }}
         cancel-in-progress: true
       container:
-        image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+        image: nixos/nix:2.13.2
       steps:
       - uses: actions/checkout@v3
         with:
