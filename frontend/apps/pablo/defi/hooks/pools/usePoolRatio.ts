@@ -65,11 +65,11 @@ export const usePoolRatio = (poolId: string) => {
   const totalIssued = useStore((store) => store.pools.totalIssued);
   const poolVolume = getPoolVolume(stats);
   const poolRatio = useMemo(() => {
-    return pool
+    return pool && totalIssued[pool.poolId.toString()]?.gt(0)
       ? balance.free
           .div(totalIssued[pool.poolId.toString()])
           .multipliedBy(100)
-          .toNumber() || 0
+          .toNumber()
       : 0;
   }, [balance.free, pool, totalIssued]);
   const setPoolStat = useCallback(() => {
