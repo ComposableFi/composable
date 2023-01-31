@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest  
     steps:
       - run: |
-          echo "I am priviliged by goblins"
+          echo "I am priviliged by goblins. Running using the ${{ github.event_name }} mode."
 
   composablejs:
     name: "Composable JS"
