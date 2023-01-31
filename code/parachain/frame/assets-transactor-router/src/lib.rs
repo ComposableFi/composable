@@ -246,7 +246,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			asset: T::AssetId,
 			dest: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] amount: T::Balance,
+			amount: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let source = ensure_signed(origin)?;
@@ -270,7 +270,7 @@ pub mod pallet {
 		pub fn transfer_native(
 			origin: OriginFor<T>,
 			dest: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] value: T::Balance,
+			value: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let source = ensure_signed(origin)?;
@@ -292,7 +292,7 @@ pub mod pallet {
 			asset: T::AssetId,
 			source: <T::Lookup as StaticLookup>::Source,
 			dest: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] value: T::Balance,
+			value: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			ensure_root(origin)?;
@@ -314,7 +314,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			source: <T::Lookup as StaticLookup>::Source,
 			dest: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] value: T::Balance,
+			value: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			ensure_root(origin)?;
@@ -385,7 +385,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
 			asset_info: AssetInfo<T::Balance>,
-			#[pallet::compact] amount: T::Balance,
+			amount: T::Balance,
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
 			ensure_root(origin)?;
@@ -406,7 +406,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
 			asset_info: AssetInfo<T::Balance>,
-			#[pallet::compact] amount: T::Balance,
+			amount: T::Balance,
 			governance_origin: <T::Lookup as StaticLookup>::Source,
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
@@ -426,7 +426,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
 			dest: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] amount: T::Balance,
+			amount: T::Balance,
 		) -> DispatchResult {
 			Pallet::<T>::ensure_admin_or_governance(origin, &asset_id)?;
 			let dest = T::Lookup::lookup(dest)?;
@@ -440,7 +440,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
 			dest: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] amount: T::Balance,
+			amount: T::Balance,
 		) -> DispatchResult {
 			Pallet::<T>::ensure_admin_or_governance(origin, &asset_id)?;
 			let dest = T::Lookup::lookup(dest)?;
