@@ -237,8 +237,8 @@ jobs:
 
   matrix-check:
     strategy:
+      fail-fast: false
       matrix:
-        fail-fast: false
         check: [taplo-check, prettier-check]
     name: "Matrix Check"
     needs: 
