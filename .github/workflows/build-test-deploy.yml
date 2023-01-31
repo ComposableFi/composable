@@ -16,11 +16,6 @@ permissions:
   pull-requests: write
 
 env:
-  # NOTE: keep in sync with docs
-  NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
-  NIX_CONTAINER_IMAGE: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-  NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install
-
   CACHIX_COMPOSABLE: composable-community
   CACHIX_COMPRESSION_LEVEL: 3
 
