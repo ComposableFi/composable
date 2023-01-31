@@ -198,13 +198,12 @@ jobs:
     name: "Check nix long"
     needs:
       - check-privilege
+      - check-nix
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
-    needs:
-      - check-nix
     concurrency:
       group: ${{ github.workflow }}-check-nix-long-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -878,8 +877,6 @@ jobs:
 
   cache-devnet-all-dev-local:
     name: "Cache devnet all dev local"
-    needs:
-      - check-privilege
     strategy:
       matrix:
         runtime: [devnet-dali-complete, devnet-picasso-complete, devnet-dali, devnet-centauri]
@@ -888,6 +885,7 @@ jobs:
       - package-acala-node
       - package-parachain-node
       - package-composable-node
+      - check-privilege
     runs-on:
       - self-hosted
       - linux
