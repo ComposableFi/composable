@@ -510,9 +510,9 @@ pub mod pallet {
 			foreign_asset_id: Self::ForeignAssetId,
 			asset_info: AssetInfo<T::Balance>,
 		) -> Result<Self::LocalAssetId, DispatchError> {
-			let asset_id = Self::LocalAssetId::from(u128::from_be_bytes(sp_core::blake2_128(
-				&foreign_asset_id.encode(),
-			)));
+			let asset_id = Self::LocalAssetId::from(u128::from_be_bytes(
+				sp_core::hashing::blake2_128(&foreign_asset_id.encode()),
+			));
 
 			T::AssetsRegistry::register_asset(asset_id, Some(foreign_asset_id), asset_info)?;
 

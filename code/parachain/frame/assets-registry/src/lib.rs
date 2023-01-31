@@ -220,7 +220,7 @@ pub mod pallet {
 			let (asset_id, location) = match local_or_foreign {
 				LocalOrForeignAssetId::Local(asset_id) => (asset_id, None),
 				LocalOrForeignAssetId::Foreign(location) => (
-					T::LocalAssetId::from(u128::from_be_bytes(sp_core::blake2_128(
+					T::LocalAssetId::from(u128::from_be_bytes(sp_io::hashing::blake2_128(
 						&location.encode(),
 					))),
 					Some(location),
