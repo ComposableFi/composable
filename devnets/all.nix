@@ -1,24 +1,6 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, devnetTools, ... }: {
-    packages = let
-      packages = self'.packages;
-
-      # for containers which are intended for testing, debug and development (including running isolated runtime)
-      docker-in-docker = with pkgs; [ docker docker-buildx docker-compose ];
-      containers-tools-minimal = with pkgs; [ acl direnv home-manager cachix ];
-      container-tools = with pkgs;
-        [
-          bash
-          bottom
-          coreutils
-          findutils
-          gawk
-          gnugrep
-          less
-          nettools
-          nix
-          procps
-        ] ++ containers-tools-minimal;
+    packages = let packages = self'.packages;
     in rec {
       # Dali devnet
       devnet-dali-centauri-1 = (pkgs.callPackage devnetTools.mk-devnet {
@@ -38,7 +20,7 @@
       # Centauri Persistent Devnet
       devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
         (import ./specs/centauri.nix {
-          inherit pkgs;
+          inherit pkgs devnetTools packages;
           devnet-1 = devnet-dali-centauri-1;
           devnet-2 = devnet-dali-centauri-2;
         });
@@ -63,21 +45,21 @@
       }).script;
 
       devnet-container = devnetTools.mk-devnet-container {
-        inherit container-tools;
+        container-tools = devnetTools.withDevNetContainerTools;
         containerName = "composable-devnet-container";
         devNet = packages.zombienet-rococo-local-dali-dev;
       };
 
       # Dali Bridge devnet container
       bridge-devnet-dali-container = devnetTools.mk-devnet-container {
-        inherit container-tools;
+        container-tools = devnetTools.withDevNetContainerTools;
         containerName = "composable-bridge-devnet-container";
         devNet = packages.bridge-devnet-dali;
       };
 
       # Dali Bridge devnet container with mmr-polkadot
       bridge-mmr-devnet-dali-container = devnetTools.mk-devnet-container {
-        inherit container-tools;
+        container-tools = devnetTools.withDevNetContainerTools;
         containerName = "composable-bridge-mmr-devnet-container";
         devNet = packages.bridge-mmr-devnet-dali;
       };
@@ -172,7 +154,7 @@
 
       devnet = pkgs.composable.mkDevnetProgram "devnet-default"
         (import ./specs/default.nix {
-          inherit pkgs;
+          inherit pkgs devnetTools;
           price-feed = packages.price-feed;
           devnet = packages.devnet-dali-complete;
           frontend = packages.frontend-static;
@@ -180,14 +162,14 @@
 
       devnet-xcvm = pkgs.composable.mkDevnetProgram "devnet-xcvm"
         (import ./specs/xcvm.nix {
-          inherit pkgs;
+          inherit pkgs devnetTools;
           devnet-dali = packages.zombienet-rococo-local-dali-dev;
         });
 
       devnet-dali-persistent =
         pkgs.composable.mkDevnetProgram "devnet-dali-persistent"
         (import ./specs/default.nix {
-          inherit pkgs;
+          inherit pkgs devnetTools;
           price-feed = packages.price-feed;
           devnet = packages.devnet-dali-complete;
           frontend = packages.frontend-static-persistent;
@@ -201,26 +183,6 @@
           devnet = packages.devnet-picasso-complete;
           frontend = packages.frontend-static-picasso-persistent;
         });
-
-      kusama-picasso-karura-devnet = let
-        config = (pkgs.callPackage
-          ../scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
-            polkadot-bin = packages.polkadot-node;
-            composable-bin = packages.composable-node;
-            acala-bin = packages.acala-node;
-          }).result;
-        config-file = pkgs.writeTextFile {
-          name = "kusama-local-picasso-dev-karura-dev.json";
-          text = "${builtins.toJSON config}";
-        };
-      in pkgs.writeShellApplication {
-        name = "kusama-picasso-karura";
-        text = ''
-          cat ${config-file}
-          rm -rf /tmp/polkadot-launch
-          ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-        '';
-      };
     };
   };
 }

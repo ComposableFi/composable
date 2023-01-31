@@ -168,18 +168,6 @@ export default {
     ComposableTraitsXcmAssetsXcmAssetLocation: "Null",
     SpTrieStorageProof: "Null",
     ComposableTraitsXcmAssetsForeignMetadata: "Null",
-    FrameSystemAccountInfo: {
-      nonce: "Null",
-      consumers: "Null",
-      providers: "Null",
-      sufficients: "Null",
-      data: {
-        free: "u128",
-        reserved: "u128",
-        miscFrozen: "u128",
-        feeFrozen: "u128"
-      }
-    },
     PalletIbcPingSendPingParams: "Null",
     IbcTraitOpenChannelParams: "Null",
     PalletIbcConnectionParams: "Null",
@@ -217,13 +205,8 @@ export default {
     SpRuntimeDispatchError: "Null",
     SpRuntimeHeader: "Null",
     SpVersionRuntimeVersion: "Null",
-    FrameSystemLimitsBlockWeights: "Null",
-    FrameSystemLimitsBlockLength: "Null",
     FrameSupportWeightsRuntimeDbWeight: "Null",
     PalletCollectiveVotes: "Null",
-    FrameSystemLastRuntimeUpgradeInfo: "Null",
-    FrameSystemPhase: "Null",
-    FrameSystemEventRecord: "Null",
     SpRuntimeDigest: "Null",
     FrameSupportWeightsPerDispatchClassU64: "Null",
     SpCoreCryptoKeyTypeId: "Null",

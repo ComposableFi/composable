@@ -21,6 +21,22 @@ interface VestingScheduleAddedEvent {
  * @param event
  */
 function getVestingScheduleAddedEvent(event: VestingVestingScheduleAddedEvent): VestingScheduleAddedEvent {
+  if (event.isV1000) {
+    // Should never be reached
+    const { asset, schedule, from, to } = event.asV1000;
+    return {
+      asset,
+      schedule: {
+        ...schedule,
+        vestingScheduleId: 0n,
+        alreadyClaimed: 0n
+      },
+      from,
+      to,
+      scheduleAmount: 0n,
+      vestingScheduleId: 0n
+    };
+  }
   return event.asV10002;
 }
 
@@ -115,6 +131,19 @@ interface VestingScheduleClaimedEvent {
  * @param event
  */
 function getVestingScheduleClaimedEvent(event: VestingClaimedEvent): VestingScheduleClaimedEvent {
+  if (event.isV1000) {
+    // Should never be reached
+    const { asset, lockedAmount, who } = event.asV1000;
+    return {
+      asset,
+      lockedAmount,
+      who,
+      claimedAmountPerSchedule: [],
+      vestingScheduleIds: {
+        __kind: "All"
+      }
+    };
+  }
   return event.asV10002;
 }
 
@@ -134,7 +163,7 @@ export function updatedClaimedAmount(
   if (vestingSchedule.schedule.alreadyClaimed === vestingSchedule.totalAmount) {
     vestingSchedule.fullyClaimed = true;
   }
-  vestingSchedule.blockId = ctx.block.id;
+  vestingSchedule.blockId = ctx.block.hash;
 }
 
 /**

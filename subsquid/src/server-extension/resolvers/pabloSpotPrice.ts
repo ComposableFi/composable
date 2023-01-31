@@ -1,6 +1,5 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { PabloSwap } from "../../model";
 import { getSpotPrice } from "../../dbHelper";
 
 @ObjectType()

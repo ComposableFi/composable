@@ -16,21 +16,21 @@ Meaning if you have used Polkassembly in the past you will still need to complet
 1. Visit https://picasso.polkassembly.io/
 2. Click sign up in the top right corner
 
-![polkassembly_overview](./polkassembly-overview.png)
+![polkassembly_overview](./images-polkassembly-picasso-governance/overview.png)
 
 3. Click sign-up with Web3 address
 
-![polkassembly_sign_up](./polkassembly-sign-up.png)
+![polkassembly_sign_up](./images-polkassembly-picasso-governance/sign-up.png)
 
 4. Choose the account you would like to participate with and click sign-up
 
-![polkassembly_choose_account](./polkassembly-choose-account.png)
+![polkassembly_choose_account](./images-polkassembly-picasso-governance/choose-account.png)
 
 5. Once your account has been created you can sign in by clicking on the login button and entering your details.
 
 6. When signed in, you can view all of the latest discussions, proposals, referenda, and upcoming events on Picasso.
 
-![polkassembly_logged_in](./polkassembly-logged-in.png)
+![polkassembly_logged_in](./images-polkassembly-picasso-governance/logged-in.png)
 
 ## Participating in governance
 

@@ -160,12 +160,6 @@ parameter_types! {
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
 	pub const MaxStakingDurationPresets: u32 = 10;
 	pub const MaxRewardConfigsPerPool: u32 = 10;
-	pub const PicaAssetId : CurrencyId = 1;
-	pub const PbloAssetId : CurrencyId = 2;
-	pub const XPicaAssetId: CurrencyId = 101;
-	pub const XPbloAssetId: CurrencyId = 102;
-	pub const PicaStakeFinancialNftCollectionId: CurrencyId = 1001;
-	pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1001;
 	// REVIEW(benluelo): Use a better value for this?
 	pub const TreasuryAccountId: AccountId = 123_456_789_u128;
 }
@@ -185,12 +179,6 @@ impl pallet_staking_rewards::Config for Test {
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
-	type PicaAssetId = PicaAssetId;
-	type XPicaAssetId = XPicaAssetId;
-	type PbloAssetId = PbloAssetId;
-	type XPbloAssetId = XPbloAssetId;
-	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
-	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type WeightInfo = ();
 	type LockId = StakingRewardsLockId;
 	type TreasuryAccount = TreasuryAccountId;
@@ -223,10 +211,8 @@ impl pablo::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut storage =
-		frame_system::GenesisConfig::default().build_storage::<Test>().expect("success");
-	pallet_staking_rewards::GenesisConfig::<Test>::default()
-		.assimilate_storage(&mut storage)
-		.expect("success");
-	storage.into()
+	frame_system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.expect("success")
+		.into()
 }

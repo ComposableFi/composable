@@ -82,7 +82,7 @@ export const endpointPresets: EndpointPresets = {
       "https://persistent.picasso.devnets.composablefinance.ninja/subsquid/graphql",
   },
   mainnet: {
-    picasso: "wss://picasso-rpc.composable.finance",
+    picasso: "wss://picasso-rpc-lb.composablenodes.tech",
     karura: "wss://karura-rpc-0.aca-api.network",
     kusama: "wss://kusama-rpc.polkadot.io",
     statemine: "wss://statemine-rpc.polkadot.io",

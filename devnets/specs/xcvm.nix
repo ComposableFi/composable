@@ -1,4 +1,4 @@
-{ pkgs, devnet-dali, ... }: {
+{ pkgs, devnet-dali, devnetTools, ... }: {
   modules = [
     (let
       db-container-name = "db";
@@ -200,7 +200,7 @@
           # ============== POLKADOT ==============
           "${dali-container-name}" = mk-composable-container
             (import ../services/devnet.nix {
-              inherit pkgs;
+              inherit pkgs devnetTools;
               devnet = devnet-dali;
               ports = [
                 {

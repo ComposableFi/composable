@@ -25,7 +25,7 @@ interface PriceChangedEvent {
 export function updateAsset(ctx: EventHandlerContext<Store>, asset: Asset, price: bigint): void {
   asset.eventId = ctx.event.id;
   asset.price = price;
-  asset.blockId = ctx.block.id;
+  asset.blockId = ctx.block.hash;
 }
 
 /**

@@ -21,6 +21,7 @@ in {
         "--rpc-external"
         "--ws-external"
         "--rpc-methods=Unsafe"
+        "--enable-offchain-indexing=true"
       ];
     };
     parachains = [{

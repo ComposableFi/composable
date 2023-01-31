@@ -4,6 +4,9 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # remove me when the `nixops_unstable` works again on the latest unstable
+    nixpkgs-working-nixops.url =
+      "github:NixOS/nixpkgs/34c5293a71ffdb2fe054eb5288adc1882c1eb0b1/";
     flake-parts.url = "github:hercules-ci/flake-parts";
     flake-utils.url = "github:numtide/flake-utils";
     npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
@@ -43,8 +46,9 @@
         ./inputs/paritytech/statemine.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/polkadot-launch.nix
-        ./inputs/paritytech/zombienet.nix
+        ./inputs/paritytech/zombienet/flake-module.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
+        ./inputs/bifrost-finance/bifrost/flake-module.nix
 
         # The things we use within flake parts to build packages, apps, devShells, and devnets. 
         ./tools/pkgs.nix # _module.args.pkgs
@@ -80,7 +84,7 @@
         ./flake/nixops-config.nix
         ./flake/overlays.nix
         ./flake/release.nix
-        ./inputs/bifrost-finance/bifrost/flake-module.nix
+        ./flake/zombienet.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];

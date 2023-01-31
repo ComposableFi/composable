@@ -1631,6 +1631,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "hex",
+ "ibc-rpc",
  "jsonrpsee 0.15.1",
  "lending-rpc",
  "lending-runtime-api",
@@ -1686,6 +1687,8 @@ dependencies = [
  "sp-timestamp",
  "sp-transaction-pool",
  "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "staking-rewards-rpc",
+ "staking-rewards-runtime-api",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
@@ -2098,11 +2101,11 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=336110d3d211514487214c7ace267279d09cedba#336110d3d211514487214c7ace267279d09cedba"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=82a1b358e85022aa124c772db0ffd58c29b7f1a7#82a1b358e85022aa124c772db0ffd58c29b7f1a7"
 dependencies = [
  "cosmwasm-std 1.1.6",
- "either",
  "log 0.4.17",
+ "num",
  "serde",
  "serde_json",
 ]
@@ -2110,7 +2113,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=336110d3d211514487214c7ace267279d09cedba#336110d3d211514487214c7ace267279d09cedba"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=82a1b358e85022aa124c772db0ffd58c29b7f1a7#82a1b358e85022aa124c772db0ffd58c29b7f1a7"
 dependencies = [
  "cosmwasm-std 1.1.6",
  "cosmwasm-vm",
@@ -2121,6 +2124,7 @@ dependencies = [
  "serde_json",
  "wasm-instrument 0.2.0",
  "wasmi 0.11.0",
+ "wasmi-validation 0.4.1",
 ]
 
 [[package]]
@@ -3278,6 +3282,7 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "sp-transaction-pool",
  "sp-version",
+ "staking-rewards-runtime-api",
  "xcm",
  "xcm-builder",
  "xcm-executor",
@@ -5178,6 +5183,33 @@ dependencies = [
  "bytes 1.3.0",
  "prost 0.11.6",
  "serde",
+ "tendermint-proto",
+]
+
+[[package]]
+name = "ibc-rpc"
+version = "0.1.0"
+source = "git+https://github.com/ComposableFi/centauri?rev=f0d44fe83c078b2d9fb040337c8152f037ba817d#f0d44fe83c078b2d9fb040337c8152f037ba817d"
+dependencies = [
+ "frame-system",
+ "hex-literal",
+ "ibc",
+ "ibc-derive",
+ "ibc-primitives",
+ "ibc-proto",
+ "ibc-runtime-api",
+ "jsonrpsee 0.15.1",
+ "pallet-ibc",
+ "parity-scale-codec",
+ "sc-chain-spec",
+ "sc-client-api",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "tendermint-proto",
 ]
 
@@ -8258,6 +8290,7 @@ name = "pallet-cosmwasm"
 version = "1.0.0"
 dependencies = [
  "composable-support",
+ "composable-tests-helpers",
  "composable-traits",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
@@ -8295,7 +8328,7 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "wasm-instrument 0.2.0",
  "wasmi 0.11.0",
- "wasmi-validation 0.4.1 (git+https://github.com/ComposableFi/wasmi?rev=cd8c0c775a1d197a35ff3d5c7d6cded3d476411b)",
+ "wasmi-validation 0.4.1",
 ]
 
 [[package]]
@@ -9223,6 +9256,7 @@ dependencies = [
  "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "staking-rewards-runtime-api",
 ]
 
 [[package]]
@@ -15365,6 +15399,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
+name = "staking-rewards-rpc"
+version = "1.0.0"
+dependencies = [
+ "composable-support",
+ "composable-traits",
+ "jsonrpsee 0.15.1",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "staking-rewards-runtime-api",
+]
+
+[[package]]
+name = "staking-rewards-runtime-api"
+version = "1.0.0"
+dependencies = [
+ "composable-support",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
+]
+
+[[package]]
 name = "standback"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -16515,7 +16577,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.11.2",
+ "parking_lot 0.9.0",
  "regex",
  "serde",
  "serde_json",
@@ -16726,7 +16788,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if 1.0.0",
  "digest 0.10.6",
- "rand 0.8.5",
+ "rand 0.6.5",
  "static_assertions",
 ]
 
@@ -17162,7 +17224,7 @@ dependencies = [
  "num-rational 0.2.4",
  "num-traits",
  "parity-wasm 0.42.2",
- "wasmi-validation 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wasmi-validation 0.4.0",
 ]
 
 [[package]]
@@ -17171,7 +17233,7 @@ version = "0.11.0"
 source = "git+https://github.com/ComposableFi/wasmi?rev=cd8c0c775a1d197a35ff3d5c7d6cded3d476411b#cd8c0c775a1d197a35ff3d5c7d6cded3d476411b"
 dependencies = [
  "parity-wasm 0.45.0",
- "wasmi-validation 0.4.1 (git+https://github.com/ComposableFi/wasmi?rev=cd8c0c775a1d197a35ff3d5c7d6cded3d476411b)",
+ "wasmi-validation 0.4.1",
  "wasmi_core 0.1.0",
 ]
 
@@ -17188,9 +17250,9 @@ dependencies = [
 
 [[package]]
 name = "wasmi-validation"
-version = "0.4.1"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "165343ecd6c018fc09ebcae280752702c9a2ef3e6f8d02f1cfcbdb53ef6d7937"
+checksum = "a2eb8e860796d8be48efef530b60eebf84e74a88bce107374fffb0da97d504b8"
 dependencies = [
  "parity-wasm 0.42.2",
 ]

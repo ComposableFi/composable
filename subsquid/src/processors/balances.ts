@@ -22,15 +22,15 @@ interface WithdrawEvent {
 }
 
 function getTransferEvent(event: BalancesTransferEvent): TransferEvent {
-  return event.asV10002;
+  return event.asV200;
 }
 
 function getWithdrawEvent(event: BalancesWithdrawEvent): DepositEvent {
-  return event.asV10002;
+  return event.asV200;
 }
 
 function getDepositEvent(event: BalancesDepositEvent): WithdrawEvent {
-  return event.asV10002;
+  return event.asV200;
 }
 
 /**
@@ -42,7 +42,6 @@ function getDepositEvent(event: BalancesDepositEvent): WithdrawEvent {
  * @param ctx
  */
 export async function processTransferEvent(ctx: EventHandlerContext<Store>): Promise<void> {
-  console.log("Process transfer");
   const event = new BalancesTransferEvent(ctx);
   const transferEvent = getTransferEvent(event);
   const from = encodeAccount(transferEvent.from);
@@ -59,7 +58,6 @@ export async function processTransferEvent(ctx: EventHandlerContext<Store>): Pro
  * @param ctx
  */
 export async function processWithdrawEvent(ctx: EventHandlerContext<Store>): Promise<void> {
-  console.log("Process withdraw");
   const evt = new BalancesWithdrawEvent(ctx);
   const event = getWithdrawEvent(evt);
   const who = encodeAccount(event.who);
@@ -75,7 +73,6 @@ export async function processWithdrawEvent(ctx: EventHandlerContext<Store>): Pro
  * @param ctx
  */
 export async function processDepositEvent(ctx: EventHandlerContext<Store>): Promise<void> {
-  console.log("Process deposit");
   const evt = new BalancesDepositEvent(ctx);
   const event = getDepositEvent(evt);
   const who = encodeAccount(event.who);

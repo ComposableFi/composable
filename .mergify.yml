@@ -1,0 +1,38 @@
+queue_rules:
+  - name: default
+    allow_inplace_checks: false
+    conditions:
+      - -title~="#wip"
+    merge_method: squash  
+    draft_bot_account: g-la-d-os
+    merge_bot_account: g-la-d-os
+    update_bot_account: g-la-d-os
+    batch_size: 4
+
+pull_request_rules:
+  - name: Automatic merge on approval
+    conditions:
+      - "#approved-reviews-by>=2"
+      - base=main
+      - -title~="#wip"
+      - check-success=Effect gate, automatically merged if passed
+      - branch-protection-review-decision=APPROVED
+    actions:
+      queue:
+        name: default
+
+  # Any files in Picasso must be reviewed and approved by more than 3 reviewers plus core group
+  - name: Automatic merge on approval (Picasso Runtime)
+    conditions:
+      - and:
+          - "#approved-reviews-by>=3"
+          - approved-reviews-by=@ComposableFi/core
+          - "#review-threads-unresolved=0"
+      - base=main
+      - files~=^code\/parachain\/runtime\/picasso\/
+      - branch-protection-review-decision=APPROVED
+
+    actions:
+      queue:
+        priority: high
+        name: default

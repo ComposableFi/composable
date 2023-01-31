@@ -11,7 +11,7 @@ use crate::{
 		add_to_rewards_pot_and_assert, create_rewards_pool_and_assert, split_and_assert,
 		stake_and_assert, unstake_and_assert,
 	},
-	FinancialNftInstanceIdOf, RewardPoolConfigurationOf, RewardPools, Stakes,
+	FinancialNftInstanceIdOf, Pallet, RewardPoolConfigurationOf, RewardPools, Stakes,
 };
 
 use composable_support::validation::TryIntoValidated;
@@ -32,7 +32,7 @@ use composable_traits::{
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
 use frame_support::{
-	assert_err, assert_noop, assert_ok,
+	assert_err, assert_noop, assert_ok, bounded_btree_map,
 	traits::{
 		fungibles::{Inspect, Mutate},
 		tokens::nonfungibles::InspectEnumerable,
@@ -40,11 +40,14 @@ use frame_support::{
 	},
 	BoundedBTreeMap,
 };
+use orml_traits::MultiCurrency;
 use proptest::prelude::*;
 use sp_arithmetic::{fixed_point::FixedU64, Perbill, Permill};
 use sp_core::sr25519::Public;
 use sp_runtime::{traits::One, PerThing};
 use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
+
+use self::prelude::init_logger;
 
 pub(crate) mod prelude;
 
@@ -81,18 +84,13 @@ fn duration_presets_minimum_is_1() {
 				owner: ALICE,
 				asset_id: PICA::ID,
 				start_block: 2,
-				end_block: 5,
 				reward_configs: default_reward_config(),
 				lock: LockConfig {
-					duration_presets: [
-						(
-							ONE_MINUTE,
-							FixedU64::from_rational(110, 100).try_into_validated().expect(">= 1")
-						), // 0.1%
-					]
-					.into_iter()
-					.try_collect()
-					.unwrap(),
+					duration_multipliers: bounded_btree_map! {
+						// 0.1%
+						ONE_MINUTE => FixedU64::from_rational(110, 100).try_into_validated().expect(">= 1"),
+					}
+					.into(),
 					unlock_penalty: Perbill::from_percent(5),
 				},
 				share_asset_id: XPICA::ID,
@@ -114,13 +112,12 @@ fn zero_length_duration_preset_works() {
 				owner: ALICE,
 				asset_id: PICA::ID,
 				start_block: 2,
-				end_block: 5,
 				reward_configs: default_reward_config(),
 				lock: LockConfig {
-					duration_presets: [(0, FixedU64::one().try_into_validated().expect(">= 1")),]
-						.into_iter()
-						.try_collect()
-						.unwrap(),
+					duration_multipliers: bounded_btree_map! {
+						0 => FixedU64::one().try_into_validated().expect(">= 1"),
+					}
+					.into(),
 					unlock_penalty: Perbill::from_percent(5),
 				},
 				share_asset_id: XPICA::ID,
@@ -128,32 +125,6 @@ fn zero_length_duration_preset_works() {
 				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 			},
 		));
-	});
-}
-
-#[test]
-fn test_create_reward_pool_invalid_end_block() {
-	new_test_ext().execute_with(|| {
-		System::set_block_number(1);
-
-		assert_err!(
-			StakingRewards::create_reward_pool(
-				RuntimeOrigin::root(),
-				RewardRateBasedIncentive {
-					owner: ALICE,
-					asset_id: PICA::ID,
-					// end block can't be before the current block
-					start_block: 2,
-					end_block: 0,
-					reward_configs: default_reward_config(),
-					lock: default_lock_config(),
-					share_asset_id: XPICA::ID,
-					financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-					minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
-				}
-			),
-			crate::Error::<Test>::EndBlockMustBeAfterStartBlock
-		);
 	});
 }
 
@@ -170,7 +141,6 @@ fn create_staking_reward_pool_should_fail_when_pool_asset_id_is_zero() {
 					asset_id: 0,
 					// end block can't be before the current block
 					start_block: 2,
-					end_block: 0,
 					reward_configs: default_reward_config(),
 					lock: default_lock_config(),
 					share_asset_id: XPICA::ID,
@@ -195,26 +165,19 @@ fn create_staking_reward_pool_should_fail_when_slashed_amount_is_less_than_exist
 					owner: ALICE,
 					asset_id: PICA::ID,
 					start_block: 2,
-					end_block: 5,
 					reward_configs: default_reward_config(),
 					lock: LockConfig {
-						duration_presets: [
-							(
-								ONE_HOUR,
-								FixedU64::from_rational(101, 100)
-									.try_into_validated()
-									.expect(">= 1")
-							), // 1%
-							(
-								ONE_MINUTE,
-								FixedU64::from_rational(1_001, 1_000)
-									.try_into_validated()
-									.expect(">= 1")
-							), // 0.1%
-						]
-						.into_iter()
-						.try_collect()
-						.unwrap(),
+						duration_multipliers: bounded_btree_map! {
+							// 1%
+							ONE_HOUR => FixedU64::from_rational(101, 100)
+								.try_into_validated()
+								.expect(">= 1"),
+							// 0.1%
+							ONE_MINUTE => FixedU64::from_rational(1_001, 1_000)
+								.try_into_validated()
+								.expect(">= 1"),
+						}
+						.into(),
 						unlock_penalty: Perbill::from_percent(99),
 					},
 					share_asset_id: XPICA::ID,
@@ -240,26 +203,19 @@ fn create_staking_reward_pool_should_fail_when_slashed_minimum_amount_is_less_th
 					owner: ALICE,
 					asset_id: PICA::ID,
 					start_block: 2,
-					end_block: 5,
 					reward_configs: default_reward_config(),
 					lock: LockConfig {
-						duration_presets: [
-							(
-								ONE_HOUR,
-								FixedU64::from_rational(101, 100)
-									.try_into_validated()
-									.expect("valid reward multiplier")
-							), // 1%
-							(
-								ONE_MINUTE,
-								FixedU64::from_rational(11, 10)
-									.try_into_validated()
-									.expect("valid reward multiplier")
-							), // 0.1%
-						]
-						.into_iter()
-						.try_collect()
-						.unwrap(),
+						duration_multipliers: bounded_btree_map! {
+							// 1%
+							ONE_HOUR => FixedU64::from_rational(101, 100)
+								.try_into_validated()
+								.expect(">= 1"),
+							// 0.1%
+							ONE_MINUTE => FixedU64::from_rational(1_001, 1_000)
+								.try_into_validated()
+								.expect(">= 1"),
+						}
+						.into(),
 						unlock_penalty: Perbill::from_percent(60),
 					},
 					share_asset_id: XPICA::ID,
@@ -285,7 +241,6 @@ fn create_staking_reward_pool_should_fail_when_share_asset_id_is_zero() {
 					asset_id: PICA::ID,
 					// end block can't be before the current block
 					start_block: 2,
-					end_block: 0,
 					reward_configs: default_reward_config(),
 					lock: default_lock_config(),
 					share_asset_id: 0,
@@ -311,7 +266,6 @@ fn create_staking_reward_pool_should_fail_when_fnft_collection_asset_id_is_zero(
 					asset_id: PICA::ID,
 					// end block can't be before the current block
 					start_block: 2,
-					end_block: 0,
 					reward_configs: default_reward_config(),
 					lock: default_lock_config(),
 					share_asset_id: XPICA::ID,
@@ -400,7 +354,6 @@ fn split_should_fail_if_any_amount_is_less_than_minimum() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: 5,
 			reward_configs: default_reward_config(),
 			lock: default_lock_config(),
 			share_asset_id: XPICA::ID,
@@ -475,7 +428,6 @@ fn split_doesnt_cause_loss_in_assets() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: 5,
 			reward_configs: default_reward_config(),
 			lock: default_lock_config(),
 			share_asset_id: XPICA::ID,
@@ -675,7 +627,7 @@ mod extend {
 		},
 		time::{ONE_HOUR, ONE_MINUTE},
 	};
-	use frame_support::traits::UnixTime;
+	use frame_support::{bounded_btree_map, traits::UnixTime};
 	use sp_arithmetic::fixed_point::FixedU64;
 	use sp_runtime::Perbill;
 
@@ -709,26 +661,22 @@ mod extend {
 					owner: ALICE,
 					asset_id: STAKED_ASSET::ID,
 					start_block: current_block_number + 1,
-					end_block: current_block_number + 100_001,
 					reward_configs: btree_map([(
 						USDT::ID,
 						RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1)) },
 					)]),
 					lock: LockConfig {
-						duration_presets: btree_map([
-							(
-								ONE_MINUTE,
-								FixedU64::from_rational(1_001, 1_000)
-									.try_into_validated()
-									.expect(">= 1"),
-							), /* 1% */
-							(
-								ONE_HOUR,
-								FixedU64::from_rational(101, 100)
-									.try_into_validated()
-									.expect(">= 1"),
-							), /* 0.1% */
-						]),
+						duration_multipliers: bounded_btree_map! {
+							// 1%
+							ONE_HOUR => FixedU64::from_rational(101, 100)
+								.try_into_validated()
+								.expect(">= 1"),
+							// 0.1%
+							ONE_MINUTE => FixedU64::from_rational(1_001, 1_000)
+								.try_into_validated()
+								.expect(">= 1"),
+						}
+						.into(),
 						unlock_penalty: Perbill::from_percent(5),
 					},
 					share_asset_id: XPICA::ID,
@@ -797,7 +745,12 @@ mod extend {
 					reward_pool_id: STAKED_ASSET::ID,
 					stake: staked_amount + extended_amount,
 					share: Pallet::<Test>::boosted_amount(
-						rewards_pool.lock.duration_presets[&ONE_MINUTE],
+						rewards_pool
+							.lock
+							.duration_multipliers
+							.multiplier(ONE_MINUTE)
+							.copied()
+							.unwrap(),
 						staked_amount + extended_amount
 					)
 					.expect("boosted amount calculation should not fail"),
@@ -829,26 +782,22 @@ mod extend {
 					owner: ALICE,
 					asset_id: STAKED_ASSET::ID,
 					start_block: current_block_number + 1,
-					end_block: current_block_number + 100_001,
 					reward_configs: btree_map([(
 						USDT::ID,
 						RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1)) },
 					)]),
 					lock: LockConfig {
-						duration_presets: btree_map([
-							(
-								ONE_MINUTE,
-								FixedU64::from_rational(1_001, 1_000)
-									.try_into_validated()
-									.expect(">= 1"),
-							), /* 1% */
-							(
-								ONE_HOUR,
-								FixedU64::from_rational(101, 100)
-									.try_into_validated()
-									.expect(">= 1"),
-							), /* 0.1% */
-						]),
+						duration_multipliers: bounded_btree_map! {
+							// 1%
+							ONE_HOUR => FixedU64::from_rational(101, 100)
+								.try_into_validated()
+								.expect(">= 1"),
+							// 0.1%
+							ONE_MINUTE => FixedU64::from_rational(1_001, 1_000)
+								.try_into_validated()
+								.expect(">= 1"),
+						}
+						.into(),
 						unlock_penalty: Perbill::from_percent(5),
 					},
 					share_asset_id: XPICA::ID,
@@ -912,7 +861,12 @@ mod extend {
 					reward_pool_id: STAKED_ASSET::ID,
 					stake: staked_amount + extended_amount,
 					share: Pallet::<Test>::boosted_amount(
-						rewards_pool.lock.duration_presets[&ONE_MINUTE],
+						rewards_pool
+							.lock
+							.duration_multipliers
+							.multiplier(ONE_MINUTE)
+							.copied()
+							.unwrap(),
 						staked_amount + extended_amount
 					)
 					.expect("boosted amount calculation should not fail"),
@@ -1146,7 +1100,6 @@ fn test_split_position() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: 5,
 			reward_configs: default_reward_config(),
 			lock: default_lock_config(),
 			share_asset_id: XPICA::ID,
@@ -1156,11 +1109,7 @@ fn test_split_position() {
 
 		Test::assert_extrinsic_event(
 			StakingRewards::create_reward_pool(RuntimeOrigin::root(), pool_init_config),
-			crate::Event::<Test>::RewardPoolCreated {
-				pool_id: PICA::ID,
-				owner: ALICE,
-				end_block: 5,
-			},
+			crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE },
 		);
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
@@ -1222,7 +1171,6 @@ fn split_positions_accrue_same_as_original_position() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: 100_000,
 			reward_configs: [(
 				USDT::ID,
 				RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1)) },
@@ -1315,6 +1263,104 @@ fn split_positions_accrue_same_as_original_position() {
 	assert_eq!(accrued_with_split, accrued_without_split)
 }
 
+#[test]
+fn claim_with_insufficient_pot_funds() {
+	init_logger();
+
+	new_test_ext().execute_with(|| {
+		next_block::<Pallet<Test>, Test>();
+
+		create_rewards_pool_and_assert::<Test>(RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: PICA::ID,
+			start_block: 10,
+			reward_configs: bounded_btree_map! {
+				// 0.01 USDT/second
+				USDT::ID => RewardConfig {
+					reward_rate: RewardRate::per_second(USDT::units(1)/ 100)
+				}
+			},
+			lock: LockConfig {
+				duration_multipliers: bounded_btree_map! {
+					ONE_HOUR => FixedU64::from_rational(101, 100).try_into_validated().expect(">= 1"), /* 1% */
+					ONE_MINUTE => FixedU64::from_rational(1_001, 1_000).try_into_validated().expect(">= 1"), /* 0.1% */
+				}
+				.into(),
+				unlock_penalty: Perbill::from_percent(5),
+			},
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+		});
+
+		// add 2 USDT to the pot (200 periods, 83.3̅ blocks (84 full blocks)
+		mint_assets([CHARLIE], [USDT::ID], USDT::units(2));
+		add_to_rewards_pot_and_assert::<Test>(
+			CHARLIE,
+			PICA::ID,
+			USDT::ID,
+			USDT::units(2),
+			// should NOT emit the `resume` event since the pot is being funded before the pool
+			// starts
+			false,
+		);
+
+		// run until the pool starts
+		process_and_progress_blocks::<Pallet<Test>, Test>(9);
+
+		Test::assert_event(crate::Event::<Test>::RewardPoolStarted { pool_id: PICA::ID });
+
+		// bob gets 10 blocks of rewards to himself, then dave stakes
+		// they both then get 10 blocks of rewards split between them
+
+		mint_assets([BOB], [PICA::ID], PICA::units(100));
+		let bob_stake_id = stake_and_assert::<Test>(BOB, PICA::ID, PICA::units(10), ONE_MINUTE);
+
+		process_and_progress_blocks::<Pallet<Test>, Test>(10);
+
+		mint_assets([DAVE], [PICA::ID], PICA::units(100));
+		let dave_stake_id = stake_and_assert::<Test>(DAVE, PICA::ID, PICA::units(10), ONE_MINUTE);
+
+		process_and_progress_blocks::<Pallet<Test>, Test>(10);
+
+		// bob claims their whole amount, which will be some portion of the unlocked rewards
+		Test::assert_extrinsic_event(
+			Pallet::<Test>::claim(
+				RuntimeOrigin::signed(BOB),
+				STAKING_FNFT_COLLECTION_ID,
+				bob_stake_id,
+			),
+			crate::Event::<Test>::Claimed {
+				owner: BOB,
+				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
+				fnft_instance_id: bob_stake_id,
+				// after first 10 blocks Bob gets 10*6*10_000 USDT of rewards.
+				// after Dave stakes, there are 600_000 more rewards accumulated after next 10
+				// blocks These rewards are split equally because they have the same shares amount
+				claimed_amounts: [(USDT::ID, 900_000)].into_iter().collect(),
+			},
+		);
+
+		Test::assert_extrinsic_event(
+			Pallet::<Test>::claim(
+				RuntimeOrigin::signed(DAVE),
+				STAKING_FNFT_COLLECTION_ID,
+				dave_stake_id,
+			),
+			crate::Event::<Test>::Claimed {
+				owner: DAVE,
+				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
+				fnft_instance_id: dave_stake_id,
+				claimed_amounts: [(USDT::ID, 300_000)].into_iter().collect(),
+			},
+		);
+
+		let pool_account = Pallet::<Test>::pool_account_id(&PICA::ID);
+
+		assert_eq!(Tokens::free_balance(USDT::ID, &pool_account), 0)
+	})
+}
+
 // TODO(connor): Move unit tests for functions to one (or more) modules per function
 
 #[test]
@@ -1349,7 +1395,6 @@ fn unstake_should_not_allow_non_owner() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: 100,
 			reward_configs: default_reward_config(),
 			lock: default_lock_config(),
 			share_asset_id: XPICA::ID,
@@ -1419,7 +1464,6 @@ fn unstake_should_work() {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			start_block: 2,
-			end_block: 100_000,
 			reward_configs: [(
 				USDT::ID,
 				RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1)) },
@@ -1600,7 +1644,6 @@ mod claim {
 			stake_and_assert::<Test>(ALICE, staked_asset_id, AMOUNT, DURATION);
 
 			assert_eq!(balance(staked_asset_id, &ALICE), PICA::units(100_000_000) - AMOUNT);
-
 			// first staker should have 0 reductions
 			assert_eq!(
 				Stakes::<Test>::get(1, 0)
@@ -1612,7 +1655,13 @@ mod claim {
 
 			Test::assert_extrinsic_event(
 				StakingRewards::claim(RuntimeOrigin::signed(ALICE), 1, 0),
-				crate::Event::Claimed { owner: ALICE, fnft_collection_id: 1, fnft_instance_id: 0 },
+				crate::Event::Claimed {
+					owner: ALICE,
+					fnft_collection_id: 1,
+					fnft_instance_id: 0,
+					// 60 because 6000 miliseconds per block, default reward rate is 10 per 1 second
+					claimed_amounts: [(USDT::ID, 60)].into_iter().collect(),
+				},
 			);
 
 			let stake = Stakes::<Test>::get(1, 0).expect("expected stake. QED");
@@ -1648,6 +1697,7 @@ mod claim {
 					owner: staker,
 					fnft_collection_id: 1,
 					fnft_instance_id: 0,
+					claimed_amounts: [(USDT::ID, 0)].into_iter().collect(),
 				}));
 
 				let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
@@ -1675,10 +1725,9 @@ fn duration_presets_are_required() {
 					owner: ALICE,
 					asset_id: PICA::ID,
 					start_block: 2,
-					end_block: 5,
 					reward_configs: default_reward_config(),
 					lock: LockConfig {
-						duration_presets: BoundedBTreeMap::new(),
+						duration_multipliers: BoundedBTreeMap::new().into(),
 						unlock_penalty: Perbill::from_percent(5),
 					},
 					share_asset_id: XPICA::ID,
@@ -1995,7 +2044,6 @@ fn create_default_reward_pool() {
 				owner: ALICE,
 				asset_id: PICA::ID,
 				start_block: 2,
-				end_block: 5,
 				reward_configs: default_reward_config(),
 				lock: default_lock_config(),
 				share_asset_id: XPICA::ID,
@@ -2003,7 +2051,7 @@ fn create_default_reward_pool() {
 				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 			},
 		),
-		crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE, end_block: 5 },
+		crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE },
 	);
 }
 
@@ -2013,7 +2061,6 @@ fn get_default_reward_pool() -> RewardPoolConfigurationOf<Test> {
 		owner: ALICE,
 		asset_id: PICA::ID,
 		start_block: 2,
-		end_block: 5,
 		reward_configs: default_reward_config(),
 		lock: default_lock_config(),
 		share_asset_id: XPICA::ID,
@@ -2024,22 +2071,25 @@ fn get_default_reward_pool() -> RewardPoolConfigurationOf<Test> {
 
 fn default_lock_config() -> LockConfig<MaxStakingDurationPresets> {
 	LockConfig {
-		duration_presets: [
-			(ONE_HOUR, FixedU64::from_rational(101, 100).try_into_validated().expect(">= 1")), /* 1% */
-			(ONE_MINUTE, FixedU64::from_rational(1_001, 1_000).try_into_validated().expect(">= 1")), /* 0.1% */
-		]
-		.into_iter()
-		.try_collect()
-		.unwrap(),
+		duration_multipliers: bounded_btree_map! {
+			// 1%
+			ONE_HOUR => FixedU64::from_rational(101, 100)
+				.try_into_validated()
+				.expect(">= 1"),
+			// 0.1%
+			ONE_MINUTE => FixedU64::from_rational(1_001, 1_000)
+				.try_into_validated()
+				.expect(">= 1"),
+		}
+		.into(),
 		unlock_penalty: Perbill::from_percent(5),
 	}
 }
 
 fn default_reward_config() -> BoundedBTreeMap<u128, RewardConfig<u128>, MaxRewardConfigsPerPool> {
-	[(USDT::ID, RewardConfig { reward_rate: RewardRate::per_second(10_u128) })]
-		.into_iter()
-		.try_collect()
-		.unwrap()
+	bounded_btree_map! {
+		USDT::ID => RewardConfig { reward_rate: RewardRate::per_second(10_u128) }
+	}
 }
 
 fn mint_assets(
@@ -2078,4 +2128,86 @@ fn btree_map<K: Ord, V, Max: sp_runtime::traits::Get<u32>>(
 	iter: impl IntoIterator<Item = (K, V)>,
 ) -> BoundedBTreeMap<K, V, Max> {
 	iter.into_iter().collect::<BTreeMap<K, V>>().try_into().unwrap()
+}
+
+#[test]
+fn zero_penalty_early_unlock() {
+	new_test_ext().execute_with(|| {
+		next_block::<StakingRewards, Test>();
+
+		create_rewards_pool_and_assert::<Test>(RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: PICA::ID,
+			start_block: 3,
+			reward_configs: bounded_btree_map! {
+				BTC::ID => RewardConfig { reward_rate: RewardRate::per_second(0_u128) }
+			},
+			lock: LockConfig {
+				duration_multipliers: bounded_btree_map! {
+					// 0 => FixedU64::one().try_into_validated().expect("1 >= 1")
+					ONE_HOUR => FixedU64::one().try_into_validated().expect("1 >= 1")
+				}
+				.into(),
+				unlock_penalty: Perbill::zero(),
+			},
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: 100_000,
+		});
+
+		mint_assets([ALICE], [BTC::ID], BTC::units(100));
+		add_to_rewards_pot_and_assert::<Test>(ALICE, PICA::ID, BTC::ID, BTC::units(100), false);
+
+		process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		mint_assets([BOB], [PICA::ID], PICA::units(10));
+		let stake_id = stake_and_assert::<Test>(BOB, PICA::ID, PICA::units(1), ONE_HOUR);
+
+		next_block::<StakingRewards, Test>();
+
+		unstake_and_assert::<Test>(BOB, STAKING_FNFT_COLLECTION_ID, stake_id, true);
+	})
+}
+
+#[test]
+fn zero_penalty_no_multiplier_doesnt_slash() {
+	new_test_ext().execute_with(|| {
+		next_block::<StakingRewards, Test>();
+
+		create_rewards_pool_and_assert::<Test>(RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: PICA::ID,
+			start_block: 3,
+			reward_configs: bounded_btree_map! {
+				BTC::ID => RewardConfig { reward_rate: RewardRate::per_second(0_u128) }
+			},
+			lock: LockConfig {
+				duration_multipliers: bounded_btree_map! {
+					0 => FixedU64::one().try_into_validated().expect("1 >= 1")
+				}
+				.into(),
+				unlock_penalty: Perbill::zero(),
+			},
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: 100_000,
+		});
+
+		mint_assets([ALICE], [BTC::ID], BTC::units(100));
+		add_to_rewards_pot_and_assert::<Test>(ALICE, PICA::ID, BTC::ID, BTC::units(100), false);
+
+		process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		mint_assets([BOB], [PICA::ID], PICA::units(10));
+		let stake_id = stake_and_assert::<Test>(BOB, PICA::ID, PICA::units(1), 0);
+
+		next_block::<StakingRewards, Test>();
+
+		unstake_and_assert::<Test>(
+			BOB,
+			STAKING_FNFT_COLLECTION_ID,
+			stake_id,
+			false, // shouldn't be an early unlock since the lock period is 0
+		);
+	})
 }

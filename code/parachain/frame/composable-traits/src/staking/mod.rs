@@ -129,9 +129,6 @@ pub struct RewardPool<
 	/// Pool will start adding rewards to the pool at this block number.
 	pub start_block: BlockNumber,
 
-	/// Pool would stop adding rewards to pool at this block number.
-	pub end_block: BlockNumber,
-
 	// possible lock config for this pool
 	pub lock: LockConfig<MaxDurationPresets>,
 
@@ -184,8 +181,6 @@ pub enum RewardPoolConfiguration<
 		asset_id: AssetId,
 		/// Pool will start adding rewards to the pool at this block number.
 		start_block: BlockNumber,
-		/// Pool would stop adding rewards to pool at this block number.
-		end_block: BlockNumber,
 		/// initial reward configuration for this pool
 		reward_configs: BoundedBTreeMap<AssetId, RewardConfig<Balance>, MaxRewardConfigs>,
 		// possible lock config for this reward

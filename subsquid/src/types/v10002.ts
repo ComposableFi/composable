@@ -5,19 +5,6 @@ export interface XcmAssetLocation {
     interior: V1Junctions
 }
 
-export interface CurrencyPair {
-    base: bigint
-    quote: bigint
-}
-
-export interface Fee {
-    fee: bigint
-    lpFee: bigint
-    ownerFee: bigint
-    protocolFee: bigint
-    assetId: bigint
-}
-
 export type VestingScheduleIdSet = VestingScheduleIdSet_All | VestingScheduleIdSet_One | VestingScheduleIdSet_Many
 
 export interface VestingScheduleIdSet_All {

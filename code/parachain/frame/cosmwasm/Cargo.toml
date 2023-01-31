@@ -13,12 +13,12 @@ version = "3.0.0"
 
 [dependencies]
 composable-support = { path = "../composable-support", default-features = false }
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "336110d3d211514487214c7ace267279d09cedba", default-features = false, features = [
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "82a1b358e85022aa124c772db0ffd58c29b7f1a7", default-features = false, features = [
   "ibc3",
   "iterator",
   "stargate",
 ] }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "336110d3d211514487214c7ace267279d09cedba", default-features = false, features = [
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "82a1b358e85022aa124c772db0ffd58c29b7f1a7", default-features = false, features = [
   "iterator",
   "stargate",
 ] }
@@ -62,8 +62,8 @@ wasm-instrument = { version = "0.2", default-features = false }
 wasmi = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
 wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
 
-
 [dev-dependencies]
+composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 lazy_static = { version = "1.4.0", default-features = false, features = [
@@ -77,7 +77,6 @@ rand = { version = "0.8.5", default-features = false, features = [
   "alloc",
   "small_rng",
 ] }
-
 
 [features]
 default = ["std"]

@@ -52,6 +52,9 @@ pub enum ContractError {
 	#[error("Address is invalid")]
 	InvalidAddress,
 
+	#[error("Native token doesn't support `decimals`")]
+	DecimalsInNativeToken,
+
 	#[error("Unsupported")]
 	Unsupported,
 }

@@ -43,7 +43,7 @@ where
 	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
-	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	Packet::decode(buffer)
 		.map_err(DecodingFailure::Protobuf)
@@ -57,7 +57,7 @@ where
 	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
-	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	Program::decode(buffer)
 		.map_err(DecodingFailure::Protobuf)
@@ -70,7 +70,7 @@ where
 	TNetwork: Into<u32>,
 	TAbiEncoded: Into<Vec<u8>>,
 	TAccount: Into<Vec<u8>>,
-	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	fn encode(self) -> Vec<u8> {
 		Packet::encode_to_vec(&self.into())
@@ -107,7 +107,7 @@ where
 	TNetwork: Into<u32>,
 	TAbiEncoded: Into<Vec<u8>>,
 	TAccount: Into<Vec<u8>>,
-	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	fn from(value: XCVMPacket<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
 		Packet {
@@ -126,7 +126,7 @@ where
 	TNetwork: Into<u32>,
 	TAbiEncoded: Into<Vec<u8>>,
 	TAccount: Into<Vec<u8>>,
-	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	fn encode(self) -> Vec<u8> {
 		Program::encode_to_vec(&self.into())
@@ -171,7 +171,7 @@ where
 	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
-	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	type Error = ();
 
@@ -198,7 +198,7 @@ where
 	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
-	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	type Error = ();
 
@@ -216,7 +216,7 @@ where
 	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
-	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	type Error = ();
 
@@ -235,7 +235,7 @@ where
 	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
-	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	type Error = ();
 
@@ -250,7 +250,7 @@ where
 	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
-	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	type Error = ();
 
@@ -272,7 +272,7 @@ where
 	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
-	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	type Error = ();
 
@@ -321,7 +321,11 @@ impl TryFrom<binding_value::Type> for xcvm_core::BindingValue {
 				xcvm_core::BindingValue::Register(xcvm_core::Register::Result),
 			binding_value::Type::IpRegister(_) =>
 				xcvm_core::BindingValue::Register(xcvm_core::Register::Ip),
-			binding_value::Type::AssetAmount(_) => todo!(),
+			binding_value::Type::AssetAmount(AssetAmount { asset_id, balance }) =>
+				xcvm_core::BindingValue::AssetAmount(
+					asset_id.ok_or(())?.try_into()?,
+					balance.ok_or(())?.try_into()?,
+				),
 			binding_value::Type::AssetId(asset_id) =>
 				xcvm_core::BindingValue::Asset(asset_id.try_into()?),
 		})
@@ -334,7 +338,7 @@ where
 	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
-	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	type Error = ();
 
@@ -377,7 +381,7 @@ where
 	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
-	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: From<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	type Error = ();
 
@@ -410,7 +414,7 @@ where
 	}
 }
 
-impl TryFrom<Asset> for (xcvm_core::AssetId, Amount) {
+impl TryFrom<Asset> for (xcvm_core::AssetId, xcvm_core::Balance) {
 	type Error = ();
 
 	fn try_from(asset: Asset) -> core::result::Result<Self, Self::Error> {
@@ -429,70 +433,79 @@ impl TryFrom<AssetId> for xcvm_core::AssetId {
 	}
 }
 
-impl TryFrom<Balance> for Amount {
+impl TryFrom<Balance> for xcvm_core::Balance {
 	type Error = ();
 
 	fn try_from(balance: Balance) -> core::result::Result<Self, Self::Error> {
 		let balance_type = balance.balance_type.ok_or(())?;
-		let wrap = |num: u128| -> FixedU128<U16> { FixedU128::wrapping_from_num(num) };
-		// TODO(aeryz): This can be a helper function in SDK so that users won't
-		// necessarily need to know how the ratio is handled in our SDK
-		// Calculates `x` in the following equation: nom / denom = x / max
-		let calc_nom = |nom: u128, denom: u128, max: u128| -> u128 {
-			wrap(nom)
-				.saturating_div(wrap(denom))
-				.saturating_mul(wrap(max))
-				.wrapping_to_num::<u128>()
-		};
+
 		match balance_type {
-			balance::BalanceType::Ratio(Ratio { nominator, denominator }) => {
-				let nominator = nominator.ok_or(())?;
-				let denominator = denominator.ok_or(())?;
-				Ok(Amount::ratio(calc_nom(nominator.into(), denominator.into(), MAX_PARTS)))
-			},
+			balance::BalanceType::Ratio(ratio) =>
+				Ok(xcvm_core::Balance::new(ratio.try_into()?, false)),
 			balance::BalanceType::Absolute(Absolute { value }) => {
 				let value = value.ok_or(())?;
-				Ok(Amount::absolute(value.into()))
+				Ok(xcvm_core::Balance::new(Amount::absolute(value.into()), false))
 			},
-			balance::BalanceType::Unit(Unit { integer, ratio }) => {
-				let integer = integer.ok_or(())?;
-				let ratio = ratio.ok_or(())?;
-				Ok(Amount::new(
-					integer.into(),
-					calc_nom(
-						ratio.nominator.ok_or(())?.into(),
-						ratio.denominator.ok_or(())?.into(),
-						MAX_PARTS,
-					),
-				))
-			},
+			balance::BalanceType::Unit(unit) => unit.try_into(),
 		}
 	}
 }
 
+impl TryFrom<Ratio> for Amount {
+	type Error = ();
+
+	fn try_from(ratio: Ratio) -> core::result::Result<Self, Self::Error> {
+		let nominator = ratio.nominator.ok_or(())?;
+		let denominator = ratio.denominator.ok_or(())?;
+		Ok(Amount::ratio(calc_nom(nominator.into(), denominator.into(), MAX_PARTS)))
+	}
+}
+
+impl TryFrom<Unit> for xcvm_core::Balance {
+	type Error = ();
+
+	fn try_from(unit: Unit) -> core::result::Result<Self, Self::Error> {
+		let integer = unit.integer.ok_or(())?;
+		let ratio = unit.ratio.ok_or(())?;
+		Ok(xcvm_core::Balance::new(
+			Amount::new(
+				integer.into(),
+				calc_nom(
+					ratio.nominator.ok_or(())?.into(),
+					ratio.denominator.ok_or(())?.into(),
+					MAX_PARTS,
+				),
+			),
+			true,
+		))
+	}
+}
 // XCVM types to Protobuf conversion
 
-impl From<Amount> for Balance {
-	fn from(amount: Amount) -> Self {
+impl From<xcvm_core::Balance> for Balance {
+	fn from(balance: xcvm_core::Balance) -> Self {
 		// Note that although functionally nothing changes, there is no guarantee of getting the
 		// same protobuf when you convert protobuf to XCVM types and convert back again. Because
 		// `intercept = 0 & ratio = 0` is always converted to `Absolute`. But this can be also
 		// expressed with `Ratio` and `Unit` as well. Also, since the ratio is expanded to use
 		// denominator `MAX_PARTS`, it also won't be the same.
-		let balance_type = if amount.is_absolute() {
-			balance::BalanceType::Absolute(Absolute { value: Some(amount.intercept.0.into()) })
-		} else if amount.is_ratio() {
-			balance::BalanceType::Ratio(Ratio {
-				nominator: Some(amount.slope.0.into()),
-				denominator: Some(MAX_PARTS.into()),
-			})
-		} else {
+
+		let balance_type = if balance.is_unit {
 			balance::BalanceType::Unit(Unit {
-				integer: Some(amount.intercept.0.into()),
+				integer: Some(balance.amount.intercept.0.into()),
 				ratio: Some(Ratio {
-					nominator: Some(amount.slope.0.into()),
+					nominator: Some(balance.amount.slope.0.into()),
 					denominator: Some(MAX_PARTS.into()),
 				}),
+			})
+		} else if balance.amount.is_absolute() {
+			balance::BalanceType::Absolute(Absolute {
+				value: Some(balance.amount.intercept.0.into()),
+			})
+		} else {
+			balance::BalanceType::Ratio(Ratio {
+				nominator: Some(balance.amount.slope.0.into()),
+				denominator: Some(MAX_PARTS.into()),
 			})
 		};
 		Balance { balance_type: Some(balance_type) }
@@ -505,8 +518,8 @@ impl From<xcvm_core::AssetId> for AssetId {
 	}
 }
 
-impl From<(xcvm_core::AssetId, xcvm_core::Amount)> for Asset {
-	fn from((asset_id, amount): (xcvm_core::AssetId, xcvm_core::Amount)) -> Self {
+impl From<(xcvm_core::AssetId, xcvm_core::Balance)> for Asset {
+	fn from((asset_id, amount): (xcvm_core::AssetId, xcvm_core::Balance)) -> Self {
 		Asset { asset_id: Some(asset_id.into()), balance: Some(amount.into()) }
 	}
 }
@@ -524,6 +537,11 @@ impl From<xcvm_core::BindingValue> for binding_value::Type {
 				binding_value::Type::Self_(Self_ { self_: 0 }),
 			xcvm_core::BindingValue::Asset(asset_id) =>
 				binding_value::Type::AssetId(asset_id.into()),
+			xcvm_core::BindingValue::AssetAmount(asset_id, balance) =>
+				binding_value::Type::AssetAmount(AssetAmount {
+					asset_id: Some(asset_id.into()),
+					balance: Some(balance.into()),
+				}),
 		}
 	}
 }
@@ -565,7 +583,7 @@ where
 	TNetwork: Into<u32>,
 	TAbiEncoded: Into<Vec<u8>>,
 	TAccount: Into<Vec<u8>>,
-	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	fn from(instruction: xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
 		match instruction {
@@ -604,7 +622,7 @@ where
 	TNetwork: Into<u32>,
 	TAbiEncoded: Into<Vec<u8>>,
 	TAccount: Into<Vec<u8>>,
-	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	fn from(instruction: xcvm_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
 		Instruction { instruction: Some(instruction.into()) }
@@ -617,7 +635,7 @@ where
 	TNetwork: Into<u32>,
 	TAbiEncoded: Into<Vec<u8>>,
 	TAccount: Into<Vec<u8>>,
-	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Amount)>>,
+	TAssets: Into<Vec<(xcvm_core::AssetId, xcvm_core::Balance)>>,
 {
 	fn from(program: XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
 		Program {
@@ -627,6 +645,17 @@ where
 			}),
 		}
 	}
+}
+
+// TODO(aeryz): This can be a helper function in SDK so that users won't
+// necessarily need to know how the ratio is handled in our SDK
+// Calculates `x` in the following equation: nom / denom = x / max
+fn calc_nom(nom: u128, denom: u128, max: u128) -> u128 {
+	let wrap = |num: u128| -> FixedU128<U16> { FixedU128::wrapping_from_num(num) };
+	wrap(nom)
+		.saturating_div(wrap(denom))
+		.saturating_mul(wrap(max))
+		.wrapping_to_num::<u128>()
 }
 
 #[cfg(test)]
@@ -642,16 +671,15 @@ mod tests {
 				denominator: Some(5u128.into()),
 			})),
 		};
-		let amount: Amount = balance.try_into().unwrap();
-		assert_eq!(amount.intercept, Displayed(0));
+		let xcvm_balance: xcvm_core::Balance = balance.try_into().unwrap();
+		assert_eq!(xcvm_balance.amount.intercept, Displayed(0));
 
 		let wrap = |num: u128| -> FixedU128<U16> { FixedU128::wrapping_from_num(num) };
 		assert_eq!(
 			wrap(3).saturating_div(wrap(5)),
-			wrap(amount.slope.0).saturating_div(wrap(MAX_PARTS))
+			wrap(xcvm_balance.amount.slope.0).saturating_div(wrap(MAX_PARTS))
 		)
 	}
-
 	#[test]
 	fn u128_from_uint128_works() {
 		let real_value = 1231231231231231233123123123123123_u128;

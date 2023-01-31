@@ -4,7 +4,8 @@ Here you'll find topics to introduce you to many technical blockchain concepts. 
 
 ## Expectations
 
-If you're being onboarded right now as an employee of Composable finance, we expect you to have a good understanding of the following topics after finishing your onboarding:
+If you're being onboarded into the team of Composable finance,
+we expect you to have a good understanding of the following topics after finishing your onboarding:
 
 - Consensus and blockchain
 - Smart contracts

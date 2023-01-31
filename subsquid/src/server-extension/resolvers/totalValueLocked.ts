@@ -1,5 +1,6 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
+import { LessThan } from "typeorm";
 import { HistoricalLockedValue, LockedSource } from "../../model";
 import { getRange } from "./common";
 import { PicassoTVL } from "./picassoOverviewStats";
@@ -58,21 +59,38 @@ export class TotalValueLockedResolver {
           .getRawMany()
       ).map(row => row.assetId);
 
-      for (const assetId of assetIds) {
-        for (const timestamp of timestamps) {
-          const time = timestamp.toISOString();
-          const row = await manager
-            .getRepository(HistoricalLockedValue)
-            .createQueryBuilder()
-            .select(`'${time}'`, "date")
-            .addSelect("asset_id", "assetId")
-            .addSelect(`coalesce(tvl('${time}', '${lockedSource}', '${assetId}'), 0)`, "totalValueLocked")
-            .getRawOne();
+      const entityIds: string[] = (
+        await manager
+          .getRepository(HistoricalLockedValue)
+          .createQueryBuilder("value")
+          .select("value.sourceEntityId", "sourceEntityId")
+          .where("value.source = :source", { source: lockedSource })
+          .groupBy("value.sourceEntityId")
+          .getRawMany()
+      ).map(row => row.sourceEntityId);
 
-          lockedValues[time] = {
-            ...(lockedValues[time] ?? {}),
-            [assetId]: (lockedValues?.[time]?.[assetId] || 0n) + BigInt(row.totalValueLocked)
-          };
+      for (const assetId of assetIds) {
+        for (const entityId of entityIds) {
+          for (const timestamp of timestamps) {
+            const time = timestamp.toISOString();
+
+            const historicalLockedValue = await manager.getRepository(HistoricalLockedValue).findOne({
+              where: {
+                timestamp: LessThan(new Date(time)),
+                source: lockedSource,
+                assetId,
+                sourceEntityId: entityId
+              },
+              order: {
+                timestamp: "DESC"
+              }
+            });
+
+            lockedValues[time] = {
+              ...(lockedValues[time] ?? {}),
+              [assetId]: (lockedValues?.[time]?.[assetId] || 0n) + (historicalLockedValue?.accumulatedAmount || 0n)
+            };
+          }
         }
       }
     }

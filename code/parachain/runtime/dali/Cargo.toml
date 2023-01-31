@@ -107,6 +107,7 @@ cosmwasm-runtime-api = { path = "../../frame/cosmwasm/runtime-api", default-feat
 crowdloan-rewards-runtime-api = { path = "../../frame/crowdloan-rewards/runtime-api", default-features = false }
 lending-runtime-api = { path = "../../frame/lending/runtime-api", default-features = false }
 pablo-runtime-api = { path = "../../frame/pablo/runtime-api", default-features = false }
+staking-rewards-runtime-api = { path = "../../frame/staking-rewards/runtime-api", default-features = false }
 
 # Used for runtime benchmarking
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
@@ -258,6 +259,7 @@ std = [
   "orml-xcm-support/std",
   "orml-xtokens/std",
   "pablo-runtime-api/std",
+  "staking-rewards-runtime-api/std",
   "pablo/std",
   "proxy/std",
   "pallet-staking-rewards/std",
