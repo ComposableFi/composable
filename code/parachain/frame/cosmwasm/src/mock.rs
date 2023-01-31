@@ -41,6 +41,13 @@ type Balance = u128;
 type AccountId = AccountId32;
 type Amount = i128;
 
+#[allow(clippy::derivable_impls)]
+impl Default for Test {
+	fn default() -> Self {
+		Self {}
+	}
+}
+
 frame_support::construct_runtime!(
 	pub enum Test where
 		Block = Block,
@@ -280,6 +287,8 @@ pub struct MockHook;
 pub const MOCK_PALLET_CONTRACT_ADDRESS_1: AccountIdOf<Test> = AccountId32::new([u8::MAX; 32]);
 pub const MOCK_PALLET_CONTRACT_ADDRESS_2: AccountIdOf<Test> = AccountId32::new([120u8; 32]);
 
+pub const MOCK_PALLET_IBC_CONTRACT_ADDRESS: AccountIdOf<Test> = AccountId32::new([42; 32]);
+
 pub const MOCK_CONTRACT_EVENT_TYPE_1: &str = "magic";
 pub const MOCK_CONTRACT_EVENT_TYPE_2: &str = "magic but it is blue";
 pub const MOCK_QUERY_JS: &str = "It's JavaScript, What Did You Expect";
@@ -312,70 +321,89 @@ impl PalletHook<Test> for MockHook {
 				false,
 				"pallet-mock-2".as_bytes().to_vec().try_into().unwrap_or_default(),
 			)),
+			MOCK_PALLET_IBC_CONTRACT_ADDRESS => Some(PalletContractCodeInfo::new(
+				MOCK_PALLET_IBC_CONTRACT_ADDRESS,
+				true,
+				"MOCK_PALLET_IBC_CONTRACT_ADDRESS"
+					.as_bytes()
+					.to_vec()
+					.try_into()
+					.unwrap_or_default(),
+			)),
 			_ => None,
 		}
 	}
 
 	fn execute<'a>(
 		vm: &mut WasmiVM<CosmwasmVM<'a, Test>>,
-		_entrypoint: EntryPoint,
+		entrypoint: EntryPoint,
 		message: &[u8],
 	) -> Result<
 		ContractResult<Response<<WasmiVM<CosmwasmVM<'a, Test>> as VMBase>::MessageCustom>>,
 		VmErrorOf<WasmiVM<CosmwasmVM<'a, Test>>>,
 	> {
-		match *vm.0.contract_address.as_ref() {
-			MOCK_PALLET_CONTRACT_ADDRESS_1 => {
-				vm.charge(VmGas::Instrumentation { metered: 1 })?;
-				let mut response = Response::new()
-					.add_event(CosmwasmEvent::new(MOCK_CONTRACT_EVENT_TYPE_1))
-					.set_data(0xDEADC0DE_u32.to_le_bytes());
-				let depth = message.first().copied().unwrap_or(0);
-				if depth > 0 {
-					response = response.add_submessage(SubMsg::new(WasmMsg::Execute {
-						contract_addr: AccountToAddr::convert(MOCK_PALLET_CONTRACT_ADDRESS_1),
-						msg: vec![depth - 1].into(),
-						funds: Default::default(),
-					}));
-				}
-				match vm
-					.continue_query(
-						CosmwasmAccount::new(MOCK_PALLET_CONTRACT_ADDRESS_1),
-						Default::default(),
-					)?
-					.into()
-				{
-					ContractResult::Err(x) if x == MOCK_QUERY_JS =>
-						Ok(ContractResult::Ok(response)),
-					_ => Ok(ContractResult::Err("JavaScript must fail".into())),
-				}
+		match entrypoint {
+			EntryPoint::IbcChannelOpen => match *vm.0.contract_address.as_ref() {
+				MOCK_PALLET_IBC_CONTRACT_ADDRESS => Ok(ContractResult::Ok(Response::new())),
+				_ => Ok(ContractResult::Err("IBC not supported".into())),
 			},
-			MOCK_PALLET_CONTRACT_ADDRESS_2 => {
-				vm.charge(VmGas::Instrumentation { metered: 1 })?;
-				let mut response = Response::new()
-					.add_event(CosmwasmEvent::new(MOCK_CONTRACT_EVENT_TYPE_2))
-					.set_data(0xDEADC0DE_u32.to_le_bytes());
-				let depth = message.first().copied().unwrap_or(0);
-				if depth > 0 {
-					response = response.add_submessage(SubMsg::new(WasmMsg::Execute {
-						contract_addr: AccountToAddr::convert(MOCK_PALLET_CONTRACT_ADDRESS_2),
-						msg: vec![depth - 1].into(),
-						funds: Default::default(),
-					}));
-				}
-				match vm
-					.continue_query(
-						CosmwasmAccount::new(MOCK_PALLET_CONTRACT_ADDRESS_2),
-						Default::default(),
-					)?
-					.into()
-				{
-					ContractResult::Err(x) if x == MOCK_QUERY_JS =>
-						Ok(ContractResult::Ok(response)),
-					_ => Ok(ContractResult::Err("JavaScript must fail".into())),
-				}
+			EntryPoint::IbcChannelConnect => todo!("IbcChannelConnect"),
+			EntryPoint::IbcChannelClose => todo!("IbcChannelClose"),
+			EntryPoint::IbcPacketTimeout => todo!("IbcPacketTimeout"),
+			EntryPoint::IbcPacketAck => todo!("IbcPacketAck"),
+			_ => match *vm.0.contract_address.as_ref() {
+				MOCK_PALLET_CONTRACT_ADDRESS_1 => {
+					vm.charge(VmGas::Instrumentation { metered: 1 })?;
+					let mut response = Response::new()
+						.add_event(CosmwasmEvent::new(MOCK_CONTRACT_EVENT_TYPE_1))
+						.set_data(0xDEADC0DE_u32.to_le_bytes());
+					let depth = message.first().copied().unwrap_or(0);
+					if depth > 0 {
+						response = response.add_submessage(SubMsg::new(WasmMsg::Execute {
+							contract_addr: AccountToAddr::convert(MOCK_PALLET_CONTRACT_ADDRESS_1),
+							msg: vec![depth - 1].into(),
+							funds: Default::default(),
+						}));
+					}
+					match vm
+						.continue_query(
+							CosmwasmAccount::new(MOCK_PALLET_CONTRACT_ADDRESS_1),
+							Default::default(),
+						)?
+						.into()
+					{
+						ContractResult::Err(x) if x == MOCK_QUERY_JS =>
+							Ok(ContractResult::Ok(response)),
+						_ => Ok(ContractResult::Err("JavaScript must fail".into())),
+					}
+				},
+				MOCK_PALLET_CONTRACT_ADDRESS_2 => {
+					vm.charge(VmGas::Instrumentation { metered: 1 })?;
+					let mut response = Response::new()
+						.add_event(CosmwasmEvent::new(MOCK_CONTRACT_EVENT_TYPE_2))
+						.set_data(0xDEADC0DE_u32.to_le_bytes());
+					let depth = message.first().copied().unwrap_or(0);
+					if depth > 0 {
+						response = response.add_submessage(SubMsg::new(WasmMsg::Execute {
+							contract_addr: AccountToAddr::convert(MOCK_PALLET_CONTRACT_ADDRESS_2),
+							msg: vec![depth - 1].into(),
+							funds: Default::default(),
+						}));
+					}
+					match vm
+						.continue_query(
+							CosmwasmAccount::new(MOCK_PALLET_CONTRACT_ADDRESS_2),
+							Default::default(),
+						)?
+						.into()
+					{
+						ContractResult::Err(x) if x == MOCK_QUERY_JS =>
+							Ok(ContractResult::Ok(response)),
+						_ => Ok(ContractResult::Err("JavaScript must fail".into())),
+					}
+				},
+				_ => Err(CosmwasmVMError::Unsupported), // Should be impossible
 			},
-			_ => Err(CosmwasmVMError::Unsupported), // Should be impossible
 		}
 	}
 
