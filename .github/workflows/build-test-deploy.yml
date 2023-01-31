@@ -4,13 +4,7 @@ on:
     branches:
       - release-*
       - main
-  # Grants PRs from forks access to read-only secrets, mainly to access our cache.    
   pull_request_target:
-  
-  # Is used for PRs that affect workflow files, which need to run in the repo itself 
-  # instead of the fork.
-  pull_request:
-    types: [ labeled ]
 
 permissions: 
   pull-requests: write
@@ -29,15 +23,6 @@ env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
-  check-privilege:
-    name: "Privilege Check"
-    if: ${{ github.event_name == "pull_request_target" || contains(github.event.pull_request.labels.*.name, 'privileged') }}
-    concurrency:
-      group: ${{ github.workflow }}-composablejs-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    steps:
-      run: echo "I am priviliged by goblins"
-
   composablejs:
     name: "Composable JS"
     concurrency:
@@ -48,8 +33,6 @@ jobs:
       - linux
       - x64
       - sre
-    needs: 
-      - check-privilege  
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -66,7 +49,6 @@ jobs:
     name: "Common dependencies"
     needs:
       - check-nix
-      - check-privilege
     concurrency:
       group: ${{ github.workflow }}-common-deps-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -90,7 +72,6 @@ jobs:
   build-common-test-deps:
     needs:
       - check-nix
-      - check-privilege
     concurrency:
       group: ${{ github.workflow }}-build-common-test-deps-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -112,8 +93,6 @@ jobs:
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   check-lfs:
-    needs: 
-      - check-privilege
     continue-on-error: false
     runs-on:
       - self-hosted
@@ -140,8 +119,7 @@ jobs:
 
   check-nix:
     name: "Check nix"
-    needs:
-      - check-privilege
+    continue-on-error: false
     runs-on:
       - self-hosted
       - linux
@@ -177,8 +155,6 @@ jobs:
 
   cargo-fmt-check:
     name: "Cargo fmt check"
-    needs: 
-      - check-privilege
     runs-on:
       - self-hosted
       - linux
@@ -208,7 +184,6 @@ jobs:
       - sre
     needs:
       - check-nix
-      - check-privilege
     concurrency:
       group: ${{ github.workflow }}-check-nix-long-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -236,8 +211,6 @@ jobs:
 
   taplo-check:
     name: "Taplo check"
-    needs:
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -260,8 +233,6 @@ jobs:
 
   prettier-check:
     name: "Prettier check"
-    needs: 
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -284,8 +255,6 @@ jobs:
 
   nixfmt-check:
     name: "Nixfmt check"
-    needs: 
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -308,8 +277,6 @@ jobs:
 
   deadnix-check:
     name: "Deadnix check"
-    needs: 
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -332,8 +299,6 @@ jobs:
 
   spell-check:
     name: "Spelling check"
-    needs: 
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -357,8 +322,6 @@ jobs:
   # This isn't templated, since checkout needs to happen before templating occurs.
   docs-check:
     name: "Docs check"
-    needs: 
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -434,8 +397,6 @@ jobs:
 
   frontend-check:
     name: "Frontend check"
-    needs: 
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -458,8 +419,6 @@ jobs:
 
   hadolint-check:
     name: "Dockerfiles check"
-    needs: 
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -482,9 +441,7 @@ jobs:
 
   cargo-clippy-check:
     name: "Cargo clippy check"
-    needs: 
-      - common-deps 
-      - check-privilege    
+    needs: common-deps
     runs-on:
       - self-hosted
       - linux
@@ -506,10 +463,8 @@ jobs:
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   cargo-deny-check:
-    name: "Cargo deny check"    
-    needs: 
-      - common-deps
-      - check-privilege
+    name: "Cargo deny check"
+    needs: common-deps
     runs-on:
       - self-hosted
       - linux
@@ -532,9 +487,7 @@ jobs:
 
   benchmarks-check:
     name: "Benchmarks check"
-    needs: 
-      - common-deps
-      - check-privilege
+    needs: common-deps
     runs-on:
       - self-hosted
       - linux
@@ -559,7 +512,6 @@ jobs:
     name: "Unit Tests"
     needs:
       - build-common-test-deps
-      - check-privilege
     runs-on:
       - self-hosted
       - linux
@@ -582,8 +534,6 @@ jobs:
 
   deploy-pablo-preview:
     name: "Deploy Pablo Preview"
-    needs: 
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -628,8 +578,6 @@ jobs:
 
   deploy-picasso-preview:
     name: "Deploy Picasso Preview"
-    needs: 
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -674,9 +622,7 @@ jobs:
 
   test-running-of-pallet-benchmarks:
     name: "Test running of pallet benchmarks"
-    needs: 
-      - package-composable-bench-node
-      - check-privilege
+    needs: package-composable-bench-node
     runs-on:
       - self-hosted
       - linux
@@ -700,11 +646,31 @@ jobs:
           command: nix -- run .#benchmarks-once-${{ matrix.runtime }}
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
+  # local-integration-tests:
+  #   name: "Local integration tests"
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: local-integration-tests-${{ matrix.runtime }}-${{ github.event.pull_request.title }}
+  #     cancel-in-progress: true
+  #   strategy:
+  #     matrix:
+  #       runtime: [dali, picasso]
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: "./.github/templates/watch-exec"
+  #       with:
+  #         command: nix -- build .#check-${{ matrix.runtime }}-integration-tests
+  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
   package-composable-node:
     name: "Package Composable node"
-    needs: 
-      - common-deps
-      - check-privilege
+    needs: common-deps
     runs-on:
       - self-hosted
       - linux
@@ -727,8 +693,6 @@ jobs:
 
   package-composable-bench-node:
     name: "Package Composable bench node"
-    needs: 
-      - check-privilege
     runs-on:
       - self-hosted
       - linux
@@ -751,8 +715,6 @@ jobs:
 
   package-polkadot-node:
     name: "Package Polkadot node"
-    needs: 
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -775,8 +737,6 @@ jobs:
 
   package-parachain-node:
     name: "Package Statemine node"
-    needs: 
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -802,8 +762,6 @@ jobs:
 
   package-acala-node:
     name: "Package Acala node"
-    needs: 
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -826,8 +784,6 @@ jobs:
 
   package-dali-subxt-client:
     name: "Package Dali subxt client"
-    needs: 
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -850,8 +806,6 @@ jobs:
 
   package-hyperspace-dali:
     name: "Package Hyperspace"
-    needs: 
-      - check-privilege    
     runs-on:
       - self-hosted
       - linux
@@ -890,7 +844,6 @@ jobs:
       - package-acala-node
       - package-parachain-node
       - package-composable-node
-      - check-privilege
     runs-on:
       - self-hosted
       - linux
@@ -915,8 +868,6 @@ jobs:
   lint-test-frontend:
     # Legacy because these should be nixified.
     name: Legacy Frontend Checks
-    needs: 
-      - check-privilege
     runs-on:
       - self-hosted
       - linux
@@ -969,7 +920,6 @@ jobs:
     name: "Package CMC API"
     needs:
       - common-deps
-      - check-privilege
     runs-on:
       - self-hosted
       - linux
@@ -1002,8 +952,6 @@ jobs:
   # TODO: nixify these test steps, and add me to subsquid-processor
   test-subsquid:
     name: Test Subquid
-    needs: 
-      - check-privilege
     runs-on:
       - self-hosted
       - linux
@@ -1029,7 +977,6 @@ jobs:
     name: "Package Subsquid Processor"
     needs:
       - test-subsquid
-      - check-privilege
     runs-on:
       - self-hosted
       - linux
@@ -1060,9 +1007,7 @@ jobs:
           push: ${{ github.event_name == 'push' && github.event.pull_request.title_name == 'main' }}
 
   package-zombienet:
-    needs: 
-      - common-deps
-      - check-privilege
+    needs: common-deps
     runs-on:
       - self-hosted
       - linux
@@ -1084,9 +1029,7 @@ jobs:
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   package-price-feed:
-    needs: 
-      - common-deps
-      - check-privilege
+    needs: common-deps
     runs-on:
       - self-hosted
       - linux
@@ -1110,7 +1053,6 @@ jobs:
   composable-sandbox-container-publish:
     needs:
       - effects-gate
-      - check-privilege
     runs-on:
       - self-hosted
       - linux
@@ -1139,7 +1081,6 @@ jobs:
     name: "Docker composable-bridge-devnet"
     needs:
       - effects-gate
-      - check-privilege
     runs-on:
       - self-hosted
       - linux
@@ -1170,7 +1111,6 @@ jobs:
         - package-polkadot-node
         - package-composable-node
         - check-nix
-        - check-privilege 
       runs-on:
       - self-hosted
       - linux
@@ -1245,7 +1185,6 @@ jobs:
 
   check-devnet:
       needs:
-        - check-privilege
         - cache-devnet-all-dev-local
       runs-on:
       - self-hosted
@@ -1315,7 +1254,6 @@ jobs:
       - x64
       - sre
     needs:
-      - check-privilege
       - check-nix
     name: "Nix command PR comments"
     steps:
