@@ -1115,7 +1115,6 @@ jobs:
   composable-sandbox-container-publish:
     needs:
       - effects-gate
-      - check-privilege
     runs-on:
       - self-hosted
       - linux
@@ -1144,7 +1143,6 @@ jobs:
     name: "Docker composable-bridge-devnet"
     needs:
       - effects-gate
-      - check-privilege
     runs-on:
       - self-hosted
       - linux
@@ -1219,6 +1217,7 @@ jobs:
       - x64
       - sre
       needs:
+        - check-privilege
         - check-lfs
         - check-nix
         - devnet-integration-tests
