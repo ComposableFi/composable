@@ -33,7 +33,7 @@ jobs:
     name: "Privilege Check"
     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.repository_owner != 'ComposableFi') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'privileged')) }}
     concurrency:
-      group: ${{ github.workflow }}-check-privilege-${{ github.event.pull_request.title }}
+      group: ${{ github.workflow }}-composablejs-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     runs-on: ubuntu-latest  
     steps:
@@ -235,8 +235,12 @@ jobs:
           chmod +x ./.github/workflows/check-nix-long.sh
           source ./.github/workflows/check-nix-long.sh
 
-  taplo-check:
-    name: "Taplo check"
+  matrix-check:
+    strategy:
+      matrix:
+        fail-fast: false
+        check: [taplo-check, prettier-check]
+    name: "Matrix Check"
     needs: 
       - check-privilege
     runs-on:
@@ -245,7 +249,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow }}-taplo-check-${{ github.event.pull_request.title }}
+      group: ${{ github.workflow }}-${{ matrix.check }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -256,7 +260,7 @@ jobs:
           persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#taplo-check
+          command: nix -- build .#${{ matrix.check }}
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   prettier-check:
