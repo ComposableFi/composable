@@ -39,6 +39,12 @@ type PabloAssetWeight @entity {
   blockId: String!
 }
 
+enum PabloTx {
+  ADD_LIQUIDITY
+  REMOVE_LIQUIDITY
+  SWAP
+}
+
 type PabloTransaction @entity {
   id: ID!
   pool: PabloPool! @index
@@ -46,6 +52,11 @@ type PabloTransaction @entity {
   timestamp: DateTime! @index
   "Last updated block id"
   blockId: String!
+  event: Event! @index
+  txType: PabloTx!
+  swap: PabloSwap
+  liquidityAdded: PabloLiquidityAdded
+  liquidityRemoved: PabloLiquidityRemoved
 }
 
 type PabloPoolAsset @entity {
@@ -244,6 +255,29 @@ type PabloSwap @entity {
   blockId: String!
 }
 
+type PabloAmount {
+  assetId: String!
+  amount: BigInt!
+}
+
+type PabloLiquidityAdded @entity {
+  id: ID!
+  event: Event!
+  pool: PabloPool! @index
+  timestamp: DateTime! @index
+  blockId: String!
+  amounts: [PabloAmount!]!
+}
+
+type PabloLiquidityRemoved @entity {
+  id: ID!
+  event: Event!
+  pool: PabloPool! @index
+  timestamp: DateTime! @index
+  blockId: String!
+  amounts: [PabloAmount!]!
+}
+
 type CurrentLockedValue
   @entity
   @index(fields: ["assetId", "source"], unique: true) {
@@ -289,4 +323,7 @@ type Event @entity {
   activities: [Activity!] @derivedFrom(field: "event")
   "Last updated block id"
   blockId: String!
+  txHash: String
+  success: Boolean
+  failReason: String
 }
