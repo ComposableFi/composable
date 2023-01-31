@@ -2,7 +2,7 @@ import { Field, FieldResolver, ObjectType, Query, Resolver, ResolverInterface } 
 import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
 import { PabloPoolAsset, PabloSwap } from "../../model";
-import { DAY_IN_MS } from "./common";
+import { DAY_IN_MS } from "../../constants";
 import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()

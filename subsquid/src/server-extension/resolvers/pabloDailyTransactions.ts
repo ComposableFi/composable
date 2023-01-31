@@ -2,7 +2,7 @@ import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql
 import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
 import { PabloTransaction } from "../../model";
-import { DAY_IN_MS } from "./common";
+import { DAY_IN_MS } from "../../constants";
 import { PoolAmount } from "./pabloDaily";
 
 @ObjectType()

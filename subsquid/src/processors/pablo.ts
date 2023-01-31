@@ -1,6 +1,7 @@
 import { Store } from "@subsquid/typeorm-store";
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { randomUUID } from "crypto";
+import { ApiPromise, WsProvider } from "@polkadot/api";
 import {
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
@@ -28,25 +29,41 @@ import { divideBigInts, encodeAccount } from "../utils";
 import {
   getLatestPoolByPoolId,
   getOrCreateHistoricalAssetPrice,
+  getOrCreateFeeApr,
   getOrCreatePabloAsset,
+  getOrCreatePabloLpToken,
   saveAccountAndEvent,
   saveActivity,
   saveEvent
 } from "../dbHelper";
+import { chain } from "../config";
 
 interface PoolCreatedEvent {
   owner: Uint8Array;
   poolId: bigint;
   assetWeights: [bigint, number][];
+  lpTokenId: string;
 }
 
-function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
+async function getPoolCreatedEvent(event: PabloPoolCreatedEvent): Promise<PoolCreatedEvent> {
   const { owner, poolId, assetWeights } = event.asV10005;
-  return {
+
+  const wsProvider = new WsProvider(chain());
+  const api = await ApiPromise.create({ provider: wsProvider });
+
+  // TODO: get lpTokenId from the event
+  // This is a temporary solution, and does not affect performance as there are only 3 pools created
+  const pool = (await api.query.pablo.pools(poolId))?.toJSON();
+
+  // @ts-ignore
+  const lpTokenId = pool?.dualAssetConstantProduct?.lpToken;
+
+  return Promise.resolve({
     owner,
     poolId,
-    assetWeights
-  };
+    assetWeights,
+    lpTokenId
+  });
 }
 
 interface LiquidityAddedEvent {
@@ -107,12 +124,14 @@ function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
 export async function processPoolCreatedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {
   console.debug("processing PoolCreatedEvent", ctx.event.id);
   const pabloPoolCreatedEvent = new PabloPoolCreatedEvent(ctx);
-  const poolCreatedEvent = getPoolCreatedEvent(pabloPoolCreatedEvent);
+  const poolCreatedEvent = await getPoolCreatedEvent(pabloPoolCreatedEvent);
   const owner = encodeAccount(poolCreatedEvent.owner);
-  const { poolId, assetWeights } = poolCreatedEvent;
+  const { poolId, assetWeights, lpTokenId } = poolCreatedEvent;
 
   // Create and save event
   await saveEvent(ctx, EventType.CREATE_POOL);
+
+  const lpToken = await getOrCreatePabloLpToken(ctx, poolId.toString(), lpTokenId);
 
   // Create pool
   const pool = new PabloPool({
@@ -121,7 +140,7 @@ export async function processPoolCreatedEvent(ctx: EventHandlerContext<Store, { 
     owner,
     // Note: when we add more pool types, we can get this from the chain -> api.query.pablo.pool(poolId)
     poolType: PabloPoolType.DualAssetConstantProduct,
-    lpIssued: BigInt(0),
+    lpToken,
     transactionCount: 0,
     timestamp: new Date(ctx.block.timestamp),
     blockId: ctx.block.hash,
@@ -152,8 +171,16 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
   const who = encodeAccount(liquidityAddedEvent.who);
   const { poolId, assetAmounts, mintedLp } = liquidityAddedEvent;
 
-  // Get the latest pool
-  const pool = await getLatestPoolByPoolId(ctx.store, poolId);
+  const pool = await ctx.store.get(PabloPool, {
+    where: {
+      id: poolId.toString()
+    },
+    relations: {
+      poolAssets: true,
+      poolAssetWeights: true,
+      lpToken: true
+    }
+  });
 
   if (!pool) {
     console.error("Pool not found");
@@ -170,10 +197,14 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
   pool.eventId = ctx.event.id;
   pool.timestamp = new Date(ctx.block.timestamp);
   pool.transactionCount += 1;
-  pool.lpIssued += mintedLp;
   pool.blockId = ctx.block.hash;
 
   await ctx.store.save(pool);
+  const { lpToken } = pool;
+
+  lpToken.totalIssued += mintedLp;
+
+  await ctx.store.save(lpToken);
 
   // Update or create assets
   for (const [assetId, amount] of assetAmounts) {
@@ -224,6 +255,9 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
   });
 
   await ctx.store.save(pabloTransaction);
+
+  // Calculate and update APR
+  await getOrCreateFeeApr(ctx, pool, undefined, new Date(ctx.block.timestamp), event);
 }
 
 export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {
@@ -233,8 +267,16 @@ export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Stor
   const who = encodeAccount(liquidityRemovedEvent.who);
   const { poolId, assetAmounts } = liquidityRemovedEvent;
 
-  // Get the latest pool
-  const pool = await getLatestPoolByPoolId(ctx.store, poolId);
+  const pool = await ctx.store.get(PabloPool, {
+    where: {
+      id: poolId.toString()
+    },
+    relations: {
+      poolAssets: true,
+      poolAssetWeights: true,
+      lpToken: true
+    }
+  });
 
   if (!pool) {
     console.error("Pool not found");
@@ -304,6 +346,9 @@ export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Stor
   });
 
   await ctx.store.save(pabloTransaction);
+
+  // Calculate and update APR
+  await getOrCreateFeeApr(ctx, pool, undefined, new Date(ctx.block.timestamp), event);
 }
 
 export async function processSwappedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {
@@ -506,4 +551,7 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
   await ctx.store.save(historicalVolumeQuoteAsset);
   await getOrCreateHistoricalAssetPrice(ctx, baseAssetId.toString(), ctx.block.timestamp);
   await getOrCreateHistoricalAssetPrice(ctx, quoteAssetId.toString(), ctx.block.timestamp);
+
+  // Calculate and update APR
+  await getOrCreateFeeApr(ctx, pool, undefined, new Date(ctx.block.timestamp), event);
 }

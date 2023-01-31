@@ -2,7 +2,8 @@ import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql
 import type { EntityManager } from "typeorm";
 import { LessThan, MoreThan, And } from "typeorm";
 import { PabloSwap } from "../../model";
-import { DAY_IN_MS, getVolumeRange } from "./common";
+import { getVolumeRange } from "./common";
+import { DAY_IN_MS } from "../../constants";
 import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()

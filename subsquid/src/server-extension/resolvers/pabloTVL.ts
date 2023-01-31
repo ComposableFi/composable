@@ -1,10 +1,10 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { LessThan } from "typeorm";
-import { HistoricalLockedValue, LockedSource, PabloPool, PabloPoolAsset } from "../../model";
+import { HistoricalLockedValue, LockedSource, PabloPool } from "../../model";
 import { getRange } from "./common";
 import { PicassoTVL } from "./picassoOverviewStats";
-import { getCurrentAssetPrices, getOrCreateHistoricalAssetPrice } from "../../dbHelper";
+import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 export class PabloTVL {
