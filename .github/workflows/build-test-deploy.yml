@@ -263,30 +263,6 @@ jobs:
           command: nix -- build .#${{ matrix.check }}
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-  prettier-check:
-    name: "Prettier check"
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-prettier-check-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#prettier-check
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
   nixfmt-check:
     name: "Nixfmt check"
     needs:
@@ -1236,7 +1212,6 @@ jobs:
         - cargo-deny-check
         - cargo-fmt-check
         - matrix-check
-        - prettier-check
         - benchmarks-check
         - spell-check
         - docs-check
