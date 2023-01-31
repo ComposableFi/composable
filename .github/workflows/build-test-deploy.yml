@@ -25,7 +25,7 @@ env:
 jobs:
   check-privilege:
     name: "Privilege Check"
-    if: ${{ github.event_name == 'pull_request_target' || contains(github.event.pull_request.labels.*.name, 'privileged') }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request_target' || contains(github.event.pull_request.labels.*.name, 'privileged') }}
     concurrency:
       group: ${{ github.workflow }}-composablejs-${{ github.event.pull_request.title }}
       cancel-in-progress: true
