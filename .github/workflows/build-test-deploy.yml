@@ -1235,7 +1235,7 @@ jobs:
         - cargo-clippy-check
         - cargo-deny-check
         - cargo-fmt-check
-        - taplo-check
+        - matrix-check
         - prettier-check
         - benchmarks-check
         - spell-check
