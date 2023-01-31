@@ -33,7 +33,7 @@ jobs:
     name: "Privilege Check"
     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.repository_owner != 'ComposableFi') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'privileged')) }}
     concurrency:
-      group: ${{ github.workflow }}-composablejs-${{ github.event.pull_request.title }}
+      group: ${{ github.workflow }}-check-privilege-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     runs-on: ubuntu-latest  
     steps:
