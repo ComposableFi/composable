@@ -1221,7 +1221,6 @@ jobs:
         # - local-integration-tests
 
         - unit-tests
-        - check-devnet
         - check-nix-long
         # TODO (vim): Decrease lead time until after release 3
         #- cargo-udeps-check
