@@ -52,6 +52,7 @@ runs:
         INPUTS_COMMAND="${{ inputs.command }}"        
         CACHIX="cachix watch-exec --jobs 16 --compression-level ${CACHIX_COMPRESSION_LEVEL?} composable-community"
         HAPPY_CMD="${CACHIX?} ${INPUTS_COMMAND?} --no-update-lock-file --show-trace -L 2> >(tee --append $LOG_FILE >&2)" 
+        SLOW_CMD="${CACHIX?} ${INPUTS_COMMAND?} --no-update-lock-file --show-trace --fallback -L 2> >(tee --append $LOG_FILE >&2)" 
         
         printf "will try execute '${HAPPY_CMD?}'"
 
@@ -73,9 +74,16 @@ runs:
         try=0
         while [[ "${try?}" -le "${RETRIES?}" ]]; do
             if [[ "${try?}" -eq "${RETRIES?}" ]] ; then
-                exit 1
-            fi
+                eval "${SLOW_CMD?}"
+                STATUS_CODE=$?
+                break
+            fi     
+                   
             run
+            if [[ $STATUS_CODE -eq 0 ]] ; then
+              break
+            fi
+            
             if [[ $STATUS_CODE -ne 0 ]] || [[ $STATUS_CODE -ne $STATUS_TRANSIENT_FAILURE ]] ; then
                 break
             fi
