@@ -74,6 +74,7 @@ runs:
         try=0
         while [[ "${try?}" -le "${RETRIES?}" ]]; do
             if [[ "${try?}" -eq "${RETRIES?}" ]] ; then
+                printf "will try execute '${SLOW_CMD?}'"
                 eval "${SLOW_CMD?}"
                 STATUS_CODE=$?
                 break
