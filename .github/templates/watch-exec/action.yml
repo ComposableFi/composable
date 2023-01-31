@@ -49,13 +49,18 @@ runs:
         STATUS_TRANSIENT_FAILURE=200
         # Maximum retries in case of network failures.
         RETRIES=5               
-        CMD="cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community ${{ inputs.command }} --no-update-lock-file --show-trace -L 2> >(tee -a $LOG_FILE >&2)" 
+        INPUTS_COMMAND="${{ inputs.command }}"        
+        CACHIX="cachix watch-exec --jobs 16 --compression-level ${CACHIX_COMPRESSION_LEVEL?} composable-community"
+        HAPPY_CMD="${CACHIX?} ${INPUTS_COMMAND?} --no-update-lock-file --show-trace -L 2> >(tee --append $LOG_FILE >&2)" 
+        
+        printf "will try execute '${HAPPY_CMD?}'"
+
         # Marker that a network error occurred.
         BAD="HTTP error 200 ('')"  
         LOG_FILE=/tmp/out.log
 
         function run() {
-            eval "${CMD?}"
+            eval "${HAPPY_CMD?}"
             STATUS_CODE=$?
             if [[ $STATUS_CODE -ne 0 ]] ; then
                 C=$(grep -c "HTTP error 200" $LOG_FILE)
