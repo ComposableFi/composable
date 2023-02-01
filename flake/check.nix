@@ -38,7 +38,7 @@
           devnet-dali-complete
           devnet-picasso-complete
           devnet-dali
-          devnet-centauri
+          # devnet-centauri # disabled because this is not properly nixified
           # hyperspace-dali
 
           # needs to be pushed to docker
