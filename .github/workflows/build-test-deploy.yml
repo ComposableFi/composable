@@ -146,7 +146,7 @@ jobs:
     runs-on:
       - self-hosted
       - linux
-      - x64
+      - x64-monster
       - sre
     concurrency:
       group: ${{ github.workflow }}-all-ci-packages-${{ github.event.pull_request.title }}

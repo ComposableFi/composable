@@ -16,7 +16,7 @@
           nixfmt-check
           deadnix-check
           spell-check
-          docs-static # todo: deployment
+          # docs-static # todo: deployment, temporarily disabled because of LFS
           frontend-static
           hadolint-check
           benchmarks-check
