@@ -31,7 +31,7 @@
           zombienet
           price-feed
           # devnet-container # errored in ci
-          bridge-devnet-dali-container
+          # bridge-devnet-dali-container
           devnet-initialize-script-picasso-persistent
 
           # not needed as part of effects-gate
