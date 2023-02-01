@@ -1,6 +1,6 @@
 name: "Release Subsquid Production Image"
 env:
-  SUBSQUID_IMAGE_RELESE_TAGS: ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest,${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:{{ github.event.pull_request.head.sha }},v0.0.1
+  SUBSQUID_IMAGE_RELEASE_TAGS: ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest,${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:{{ github.event.pull_request.head.sha }},v0.0.1
 on:
   push:
     tags:
