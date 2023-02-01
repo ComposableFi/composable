@@ -30,7 +30,7 @@
           dali-subxt-client
           zombienet
           price-feed
-          devnet-container
+          # devnet-container # errored in ci
           bridge-devnet-dali-container
           devnet-initialize-script-picasso-persistent
 
