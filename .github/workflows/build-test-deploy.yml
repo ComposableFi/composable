@@ -6,7 +6,7 @@ on:
       - main
 
   # For regular PRs.    
-  pull_request_target:
+#   pull_request_target:
 
   # For PRs that need to run in the monorepo context.
   pull_request:
