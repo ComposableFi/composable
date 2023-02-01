@@ -21,7 +21,6 @@ env:
   DOCKER_REGISTRY_NAME: composablefi
   # weird, next is implicit dependency of docker action
   DOCKER_USER_OPTION: '$UID:$GID'
-  SUBSQUID_IMAGE_TAGS: ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest,${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:{{ github.event.pull_request.head.sha }}
 
 jobs:
   check-privilege:
@@ -1053,7 +1052,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
-          tags: ${{ env.SUBSQUID_IMAGE_TAGS }}
+          tags: $${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest,${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:{{ github.event.pull_request.head.sha }}
           context: subsquid
           push: ${{ github.event_name == 'push' && github.event.pull_request.title_name == 'main' }}
 
