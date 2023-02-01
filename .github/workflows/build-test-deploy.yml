@@ -30,7 +30,7 @@ env:
 jobs:
   check-privilege:
     name: "Privilege Check"
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.repository_owner != 'ComposableFi') || (github.event_name == 'pull_request' && github.repository_owner == 'ComposableFi') }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request_target.head.repo.owner != 'ComposableFi') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner == 'ComposableFi') }}
     concurrency:
       group: ${{ github.workflow }}-composablejs-${{ github.event.pull_request.title }}
       cancel-in-progress: true
