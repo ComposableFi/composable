@@ -222,9 +222,23 @@ fn ed25519_batch_verify_fails_if_input_lengths_are_incorrect() {
 }
 
 mod pallet_contracts {
+	use core::str::FromStr;
+
+	use crate::{ibc::Router, Pallet};
+
 	use super::*;
 	use cosmwasm_vm::system::CUSTOM_CONTRACT_EVENT_PREFIX;
 	use frame_support::{assert_ok, BoundedVec};
+	use ibc::core::{
+		ics03_connection::context::ConnectionReader,
+		ics04_channel::{
+			channel::{Counterparty, Order},
+			context::ChannelReader,
+		},
+		ics24_host::identifier::{ConnectionId, PortId},
+		ics26_routing::context::{ModuleCallbackContext, ModuleId, ModuleOutputBuilder},
+	};
+	use pallet_ibc::{routing::ModuleRouter, Signer};
 
 	fn make_event_type(custom_event_name: &str) -> Vec<u8> {
 		format!("{CUSTOM_CONTRACT_EVENT_PREFIX}{custom_event_name}").into()
@@ -283,5 +297,197 @@ mod pallet_contracts {
 				1 + depth as usize
 			);
 		})
+	}
+
+	impl ConnectionReader for Test {
+		fn minimum_delay_period(&self) -> core::time::Duration {
+			unimplemented!()
+		}
+
+		fn connection_end(
+			&self,
+			_conn_id: &ibc::core::ics24_host::identifier::ConnectionId,
+		) -> Result<
+			ibc::core::ics03_connection::connection::ConnectionEnd,
+			ibc::core::ics03_connection::error::Error,
+		> {
+			unimplemented!()
+		}
+
+		fn host_oldest_height(&self) -> ibc::Height {
+			unimplemented!()
+		}
+
+		fn commitment_prefix(&self) -> ibc::core::ics23_commitment::commitment::CommitmentPrefix {
+			unimplemented!()
+		}
+
+		fn connection_counter(&self) -> Result<u64, ibc::core::ics03_connection::error::Error> {
+			unimplemented!()
+		}
+	}
+
+	impl ChannelReader for Test {
+		fn channel_end(
+			&self,
+			_port_channel_id: &(
+				ibc::core::ics24_host::identifier::PortId,
+				ibc::core::ics24_host::identifier::ChannelId,
+			),
+		) -> Result<
+			ibc::core::ics04_channel::channel::ChannelEnd,
+			ibc::core::ics04_channel::error::Error,
+		> {
+			unimplemented!()
+		}
+
+		fn connection_channels(
+			&self,
+			_cid: &ibc::core::ics24_host::identifier::ConnectionId,
+		) -> Result<
+			Vec<(
+				ibc::core::ics24_host::identifier::PortId,
+				ibc::core::ics24_host::identifier::ChannelId,
+			)>,
+			ibc::core::ics04_channel::error::Error,
+		> {
+			unimplemented!()
+		}
+
+		fn get_next_sequence_send(
+			&self,
+			_port_channel_id: &(
+				ibc::core::ics24_host::identifier::PortId,
+				ibc::core::ics24_host::identifier::ChannelId,
+			),
+		) -> Result<
+			ibc::core::ics04_channel::packet::Sequence,
+			ibc::core::ics04_channel::error::Error,
+		> {
+			unimplemented!()
+		}
+
+		fn get_next_sequence_recv(
+			&self,
+			_port_channel_id: &(
+				ibc::core::ics24_host::identifier::PortId,
+				ibc::core::ics24_host::identifier::ChannelId,
+			),
+		) -> Result<
+			ibc::core::ics04_channel::packet::Sequence,
+			ibc::core::ics04_channel::error::Error,
+		> {
+			unimplemented!()
+		}
+
+		fn get_next_sequence_ack(
+			&self,
+			_port_channel_id: &(
+				ibc::core::ics24_host::identifier::PortId,
+				ibc::core::ics24_host::identifier::ChannelId,
+			),
+		) -> Result<
+			ibc::core::ics04_channel::packet::Sequence,
+			ibc::core::ics04_channel::error::Error,
+		> {
+			unimplemented!()
+		}
+
+		fn get_packet_commitment(
+			&self,
+			_key: &(
+				ibc::core::ics24_host::identifier::PortId,
+				ibc::core::ics24_host::identifier::ChannelId,
+				ibc::core::ics04_channel::packet::Sequence,
+			),
+		) -> Result<
+			ibc::core::ics04_channel::commitment::PacketCommitment,
+			ibc::core::ics04_channel::error::Error,
+		> {
+			unimplemented!()
+		}
+
+		fn get_packet_receipt(
+			&self,
+			_key: &(
+				ibc::core::ics24_host::identifier::PortId,
+				ibc::core::ics24_host::identifier::ChannelId,
+				ibc::core::ics04_channel::packet::Sequence,
+			),
+		) -> Result<ibc::core::ics04_channel::packet::Receipt, ibc::core::ics04_channel::error::Error>
+		{
+			unimplemented!()
+		}
+
+		fn get_packet_acknowledgement(
+			&self,
+			_key: &(
+				ibc::core::ics24_host::identifier::PortId,
+				ibc::core::ics24_host::identifier::ChannelId,
+				ibc::core::ics04_channel::packet::Sequence,
+			),
+		) -> Result<
+			ibc::core::ics04_channel::commitment::AcknowledgementCommitment,
+			ibc::core::ics04_channel::error::Error,
+		> {
+			unimplemented!()
+		}
+
+		fn hash(&self, _value: Vec<u8>) -> Vec<u8> {
+			unimplemented!()
+		}
+
+		fn client_update_time(
+			&self,
+			_client_id: &ibc::core::ics24_host::identifier::ClientId,
+			_height: ibc::Height,
+		) -> Result<ibc::timestamp::Timestamp, ibc::core::ics04_channel::error::Error> {
+			unimplemented!()
+		}
+
+		fn client_update_height(
+			&self,
+			_client_id: &ibc::core::ics24_host::identifier::ClientId,
+			_height: ibc::Height,
+		) -> Result<ibc::Height, ibc::core::ics04_channel::error::Error> {
+			unimplemented!()
+		}
+
+		fn channel_counter(&self) -> Result<u64, ibc::core::ics04_channel::error::Error> {
+			unimplemented!()
+		}
+
+		fn max_expected_time_per_block(&self) -> core::time::Duration {
+			unimplemented!()
+		}
+	}
+	impl ModuleCallbackContext for Test {}
+
+	#[test]
+	fn open_channel_ceremony() {
+		type T = Test;
+		new_test_ext().execute_with(|| {
+			let mut ibc = Router::<T>::default();
+			let module_id = ModuleId::from_str("cosmwasm").unwrap();
+			let ibc = ibc.get_route_mut(&module_id).unwrap();
+			assert_ok!(ibc.on_chan_open_init(
+				&Test::default(),
+				&mut ModuleOutputBuilder::new(),
+				Order::Ordered,
+				&[ConnectionId::new(42)],
+				&PortId::from_str(
+					format!(
+						"wasm.{}",
+						Pallet::<Test>::account_to_cosmwasm_addr(MOCK_PALLET_IBC_CONTRACT_ADDRESS)
+					)
+					.as_str(),
+				)
+				.unwrap(),
+				&<_>::default(),
+				&Counterparty { port_id: <_>::default(), channel_id: Some(<_>::default()) },
+				&<_>::default(),
+				&Signer::from_str("42").unwrap(),
+			));
+		});
 	}
 }
