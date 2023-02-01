@@ -38,6 +38,7 @@ pub enum EntryPoint {
 	IbcChannelConnect,
 	IbcChannelClose,
 	IbcPacketTimeout,
+	IbcPacketReceive,
 	IbcPacketAck,
 }
 
