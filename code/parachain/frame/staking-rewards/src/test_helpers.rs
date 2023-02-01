@@ -696,8 +696,15 @@ pub(crate) fn create_rewards_pool_and_assert<Runtime>(
 			financial_nft_asset_id: _,
 			minimum_staking_amount: _,
 		} => Runtime::assert_extrinsic_event(
-			Pallet::<Runtime>::create_reward_pool(OriginFor::<Runtime>::root(), reward_config),
-			crate::Event::<Runtime>::RewardPoolCreated { pool_id: asset_id, owner },
+			Pallet::<Runtime>::create_reward_pool(
+				OriginFor::<Runtime>::root(),
+				reward_config.clone(),
+			),
+			crate::Event::<Runtime>::RewardPoolCreated {
+				pool_id: asset_id,
+				owner,
+				pool_config: reward_config,
+			},
 			// TODO(benluelo): Add storage checks/ assertions
 		),
 		_ => unimplemented!("unimplemented pool configuration"),
