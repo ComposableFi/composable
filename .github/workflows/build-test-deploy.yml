@@ -30,11 +30,11 @@ env:
 jobs:
   check-privilege:
     name: "Privilege Check"
-#     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request_target.head.repo.owner != 'ComposableFi') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner == 'ComposableFi') }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}
     runs-on: ubuntu-latest  
     steps:
       - run: |
-          echo "I am priviliged by goblins on repository id ${{ github.event.pull_request.head.repo.id }}" 
+          echo "I am priviliged by goblins on repository id ${{ github.event.pull_request.head.repo.id }} ${{ github.event.pull_request_target.head.repo.id }}" 
       
 
   composablejs:
