@@ -2,7 +2,13 @@
   perSystem = { config, self', inputs', pkgs, system, devnetTools, ... }: {
     packages = let packages = self'.packages;
     in rec {
-      # Centauri Persistent Devnet
+
+      centauri-prepare = pkgs.writeText "hyperspace.sh" ''
+        nix build .#hyperspace-config
+        mv result config.toml && cp config.toml /tmp    
+        nix run .#devnet-centauri --option sandbox relaxed        
+      '';
+
       devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
         (import ./specs/centauri.nix {
           inherit pkgs devnetTools packages;
