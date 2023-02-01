@@ -4,6 +4,7 @@ use std::{sync::Arc, time::Duration};
 use common::OpaqueBlock;
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
+use cumulus_client_consensus_common::ParachainBlockImport;
 use cumulus_client_network::BlockAnnounceValidator;
 use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
@@ -11,7 +12,7 @@ use cumulus_client_service::{
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
-use cumulus_relay_chain_rpc_interface::{create_client_and_start_worker, RelayChainRpcInterface};
+use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 use polkadot_service::CollatorPair;
 use sc_network_common::service::NetworkBlock;
 // Substrate Imports
@@ -152,7 +153,11 @@ pub fn new_partial<RuntimeApi, Executor>(
 		(),
 		sc_consensus::DefaultImportQueue<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
 		sc_transaction_pool::FullPool<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
-		(Option<Telemetry>, Option<TelemetryWorkerHandle>),
+		(
+			Option<Telemetry>,
+			Option<TelemetryWorkerHandle>,
+			ParachainBlockImport<Arc<FullClient<RuntimeApi, Executor>>>,
+		),
 	>,
 	sc_service::Error,
 >
@@ -206,7 +211,7 @@ where
 		client.clone(),
 	);
 
-	let import_queue = parachain_build_import_queue(
+	let (import_queue, parachain_block_import) = parachain_build_import_queue(
 		client.clone(),
 		config,
 		telemetry.as_ref().map(|telemetry| telemetry.handle()),
@@ -221,7 +226,7 @@ where
 		task_manager,
 		transaction_pool,
 		select_chain: (),
-		other: (telemetry, telemetry_worker_handle),
+		other: (telemetry, telemetry_worker_handle, parachain_block_import),
 	};
 
 	Ok(params)
@@ -312,7 +317,7 @@ where
 		}
 	}
 
-	let (mut telemetry, telemetry_worker_handle) = params.other;
+	let (mut telemetry, telemetry_worker_handle, parachain_block_import) = params.other;
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
@@ -443,7 +448,7 @@ where
 							Ok((slot, time, parachain_inherent))
 						}
 					},
-					block_import: client.clone(),
+					block_import: parachain_block_import,
 					para_client: client.clone(),
 					backoff_authoring_blocks,
 					sync_oracle: network,
@@ -484,7 +489,6 @@ where
 			relay_chain_interface,
 			relay_chain_slot_duration,
 			import_queue,
-			collator_options,
 		};
 
 		start_full_node(params)?;
@@ -503,7 +507,10 @@ pub fn parachain_build_import_queue<RuntimeApi, Executor>(
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 ) -> Result<
-	sc_consensus::DefaultImportQueue<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
+	(
+		sc_consensus::DefaultImportQueue<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
+		ParachainBlockImport<Arc<FullClient<RuntimeApi, Executor>>>,
+	),
 	sc_service::Error,
 >
 where
@@ -514,6 +521,7 @@ where
 	>,
 	Executor: NativeExecutionDispatch + 'static,
 {
+	let block_import = ParachainBlockImport::new(client.clone());
 	let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 	cumulus_client_consensus_aura::import_queue::<
 		sp_consensus_aura::sr25519::AuthorityPair,
@@ -523,7 +531,7 @@ where
 		_,
 		_,
 	>(cumulus_client_consensus_aura::ImportQueueParams {
-		block_import: client.clone(),
+		block_import: block_import.clone(),
 		client,
 		create_inherent_data_providers: move |_, _| async move {
 			let time = sp_timestamp::InherentDataProvider::from_system_time();
@@ -540,6 +548,7 @@ where
 		spawner: &task_manager.spawn_essential_handle(),
 		telemetry,
 	})
+	.map(|shared| (shared, block_import))
 	.map_err(Into::into)
 }
 
@@ -551,10 +560,8 @@ async fn build_relay_chain_interface(
 	collator_options: CollatorOptions,
 ) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
 	match collator_options.relay_chain_rpc_url {
-		Some(relay_chain_url) => {
-			let client = create_client_and_start_worker(relay_chain_url, task_manager).await?;
-			Ok((Arc::new(RelayChainRpcInterface::new(client)) as Arc<_>, None))
-		},
+		Some(relay_chain_url) =>
+			build_minimal_relay_chain_node(polkadot_config, task_manager, relay_chain_url).await,
 		None => build_inprocess_relay_chain(
 			polkadot_config,
 			parachain_config,

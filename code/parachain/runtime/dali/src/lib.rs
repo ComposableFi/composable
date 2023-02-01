@@ -617,6 +617,18 @@ parameter_types! {
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
+pub struct CurrencyHooks;
+impl orml_traits::currency::MutationHooks<AccountId, CurrencyId, Balance> for CurrencyHooks {
+	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
+	type OnSlash = ();
+	type PreDeposit = ();
+	type PostDeposit = ();
+	type PreTransfer = ();
+	type PostTransfer = ();
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
+}
+
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -625,16 +637,11 @@ impl orml_tokens::Config for Runtime {
 	type CurrencyId = CurrencyId;
 	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
 	type ExistentialDeposits = MultiExistentialDeposits;
-	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
-	type OnSlash = ();
-	type OnTransfer = ();
-	type OnDeposit = ();
+	type CurrencyHooks = CurrencyHooks;
 }
 
 parameter_types! {
@@ -672,9 +679,8 @@ impl scheduler::Config for Runtime {
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type PreimageProvider = Preimage;
-	type NoPreimagePostponement = NoPreimagePostponement;
-	type WeightInfo = scheduler::weights::SubstrateWeight<Runtime>;
+	type Preimages = Preimage;
+	type WeightInfo = weights::scheduler::WeightInfo<Runtime>;
 }
 
 impl utility::Config for Runtime {
@@ -761,7 +767,6 @@ impl preimage::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRoot<AccountId>;
-	type MaxSize = PreimageMaxSize;
 	type BaseDeposit = PreimageBaseDeposit;
 	type ByteDeposit = PreimageByteDeposit;
 }

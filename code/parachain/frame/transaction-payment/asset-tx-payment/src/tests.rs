@@ -33,7 +33,6 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup, SaturatedConversion, StaticLookup},
 };
-use std::cell::RefCell;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 type Block = frame_system::mocking::MockBlock<Runtime>;
@@ -59,8 +58,8 @@ frame_support::construct_runtime!(
 const CALL: &<Runtime as frame_system::Config>::RuntimeCall =
 	&RuntimeCall::Balances(BalancesCall::transfer { dest: 2, value: 69 });
 
-thread_local! {
-	static EXTRINSIC_BASE_WEIGHT: RefCell<u64> = RefCell::new(0);
+parameter_types! {
+	static ExtrinsicBaseWeight: Weight = Weight::zero();
 }
 
 pub struct BlockWeights;
@@ -69,11 +68,10 @@ impl Get<frame_system::limits::BlockWeights> for BlockWeights {
 		frame_system::limits::BlockWeights::builder()
 			.base_block(Weight::zero())
 			.for_class(DispatchClass::all(), |weights| {
-				weights.base_extrinsic =
-					Weight::from_ref_time(EXTRINSIC_BASE_WEIGHT.with(|v| *v.borrow()));
+				weights.base_extrinsic = ExtrinsicBaseWeight::get().into();
 			})
 			.for_class(DispatchClass::non_mandatory(), |weights| {
-				weights.max_total = Some(Weight::from_ref_time(1024));
+				weights.max_total = Weight::from_ref_time(1024).set_proof_size(u64::MAX).into();
 			})
 			.build_or_panic()
 	}
@@ -167,6 +165,18 @@ orml_traits::parameter_type_with_key! {
 
 type Amount = i128;
 
+pub struct CurrencyHooks;
+impl orml_traits::currency::MutationHooks<AccountId, AssetId, Balance> for CurrencyHooks {
+	type OnDust = ();
+	type OnSlash = ();
+	type PreDeposit = ();
+	type PostDeposit = ();
+	type PreTransfer = ();
+	type PostTransfer = ();
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
+}
+
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -175,16 +185,11 @@ impl orml_tokens::Config for Runtime {
 	type CurrencyId = AssetId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = ();
 	type MaxLocks = MaxLocks;
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = frame_support::traits::Everything;
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
-	type OnSlash = ();
-	type OnDeposit = ();
-	type OnTransfer = ();
+	type CurrencyHooks = CurrencyHooks;
 }
 
 pub struct HardcodedAuthor;
@@ -260,7 +265,7 @@ impl ExtBuilder {
 		self
 	}
 	fn set_constants(&self) {
-		EXTRINSIC_BASE_WEIGHT.with(|v| *v.borrow_mut() = self.base_weight);
+		ExtrinsicBaseWeight::mutate(|v| *v = Weight::from_ref_time(self.base_weight));
 		TRANSACTION_BYTE_FEE.with(|v| *v.borrow_mut() = self.byte_fee);
 		WEIGHT_TO_FEE.with(|v| *v.borrow_mut() = self.weight_to_fee);
 	}

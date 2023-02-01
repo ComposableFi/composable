@@ -130,7 +130,7 @@ mod commons_sense {
 	#[test]
 	fn reasonable_fee() {
 		let converted = WeightToFeeConverter::weight_to_fee(&WEIGHT_PER_SECOND);
-		assert_eq!(converted, 1_158_775_406_000);
+		assert_eq!(converted, 1_010_366_358_000);
 	}
 
 	struct Dummy {}

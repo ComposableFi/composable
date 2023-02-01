@@ -75,7 +75,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       ExistingVestingSchedule: AugmentedError<ApiType>;
       /**
-       * Balance too low to send value
+       * Balance too low to send value.
        **/
       InsufficientBalance: AugmentedError<ApiType>;
       /**
@@ -182,7 +182,6 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     cosmwasm: {
-      ChargeGas: AugmentedError<ApiType>;
       CodeAlreadyExists: AugmentedError<ApiType>;
       CodeDecoding: AugmentedError<ApiType>;
       CodeEncoding: AugmentedError<ApiType>;
@@ -193,6 +192,7 @@ declare module '@polkadot/api-base/types/errors' {
       ContractHasNoInfo: AugmentedError<ApiType>;
       ContractNotFound: AugmentedError<ApiType>;
       ContractTrapped: AugmentedError<ApiType>;
+      FailedToSerialize: AugmentedError<ApiType>;
       Ibc: AugmentedError<ApiType>;
       Instrumentation: AugmentedError<ApiType>;
       InstrumentedCodeIsTooBig: AugmentedError<ApiType>;
@@ -202,8 +202,8 @@ declare module '@polkadot/api-base/types/errors' {
       NonceOverflow: AugmentedError<ApiType>;
       NotAuthorized: AugmentedError<ApiType>;
       NotEnoughFundsForUpload: AugmentedError<ApiType>;
+      OutOfGas: AugmentedError<ApiType>;
       RefcountOverflow: AugmentedError<ApiType>;
-      RefundGas: AugmentedError<ApiType>;
       SignatureVerificationError: AugmentedError<ApiType>;
       StackOverflow: AugmentedError<ApiType>;
       TransferFailed: AugmentedError<ApiType>;
@@ -292,6 +292,10 @@ declare module '@polkadot/api-base/types/errors' {
       NotInitialized: AugmentedError<ApiType>;
       RewardsNotFunded: AugmentedError<ApiType>;
       /**
+       * Returned by `delete` if the provided expected reward mismatches the actual reward.
+       **/
+      UnexpectedRewardAmount: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
@@ -323,17 +327,9 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       AlreadyVetoed: AugmentedError<ApiType>;
       /**
-       * Preimage already noted
-       **/
-      DuplicatePreimage: AugmentedError<ApiType>;
-      /**
        * Proposal already made
        **/
       DuplicateProposal: AugmentedError<ApiType>;
-      /**
-       * Imminent
-       **/
-      Imminent: AugmentedError<ApiType>;
       /**
        * The instant referendum origin is currently disallowed.
        **/
@@ -371,10 +367,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotDelegating: AugmentedError<ApiType>;
       /**
-       * Not imminent
-       **/
-      NotImminent: AugmentedError<ApiType>;
-      /**
        * Next external proposal not simple majority
        **/
       NotSimpleMajority: AugmentedError<ApiType>;
@@ -382,14 +374,6 @@ declare module '@polkadot/api-base/types/errors' {
        * The given account did not vote on the referendum.
        **/
       NotVoter: AugmentedError<ApiType>;
-      /**
-       * Invalid preimage
-       **/
-      PreimageInvalid: AugmentedError<ApiType>;
-      /**
-       * Preimage not found
-       **/
-      PreimageMissing: AugmentedError<ApiType>;
       /**
        * Proposal still blacklisted
        **/
@@ -403,13 +387,9 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       ReferendumInvalid: AugmentedError<ApiType>;
       /**
-       * Too early
+       * Maximum number of items reached.
        **/
-      TooEarly: AugmentedError<ApiType>;
-      /**
-       * Maximum number of proposals reached.
-       **/
-      TooManyProposals: AugmentedError<ApiType>;
+      TooMany: AugmentedError<ApiType>;
       /**
        * Value too low
        **/
@@ -520,6 +500,154 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    ibc: {
+      /**
+       * Failed to derive channel escrow address
+       **/
+      ChannelEscrowAddress: AugmentedError<ApiType>;
+      /**
+       * Error opening channel
+       **/
+      ChannelInitError: AugmentedError<ApiType>;
+      /**
+       * Channel not found
+       **/
+      ChannelNotFound: AugmentedError<ApiType>;
+      /**
+       * Error Freezing client
+       **/
+      ClientFreezeFailed: AugmentedError<ApiType>;
+      /**
+       * Client state not found
+       **/
+      ClientStateNotFound: AugmentedError<ApiType>;
+      /**
+       * Client update time and height not found
+       **/
+      ClientUpdateNotFound: AugmentedError<ApiType>;
+      /**
+       * Connection not found
+       **/
+      ConnectionNotFound: AugmentedError<ApiType>;
+      /**
+       * Client consensus state not found for height
+       **/
+      ConsensusStateNotFound: AugmentedError<ApiType>;
+      /**
+       * Error decoding some type
+       **/
+      DecodingError: AugmentedError<ApiType>;
+      /**
+       * Error encoding some type
+       **/
+      EncodingError: AugmentedError<ApiType>;
+      /**
+       * Unable to get client revision number
+       **/
+      FailedToGetRevisionNumber: AugmentedError<ApiType>;
+      /**
+       * Invalid amount
+       **/
+      InvalidAmount: AugmentedError<ApiType>;
+      /**
+       * Invalid asset id
+       **/
+      InvalidAssetId: AugmentedError<ApiType>;
+      /**
+       * Invalid channel id
+       **/
+      InvalidChannelId: AugmentedError<ApiType>;
+      /**
+       * Invalid Ibc denom
+       **/
+      InvalidIbcDenom: AugmentedError<ApiType>;
+      /**
+       * Invalid message for extrinsic
+       **/
+      InvalidMessageType: AugmentedError<ApiType>;
+      /**
+       * Invalid params passed
+       **/
+      InvalidParams: AugmentedError<ApiType>;
+      /**
+       * Invalid port id
+       **/
+      InvalidPortId: AugmentedError<ApiType>;
+      /**
+       * Invalid route
+       **/
+      InvalidRoute: AugmentedError<ApiType>;
+      /**
+       * Invalid timestamp
+       **/
+      InvalidTimestamp: AugmentedError<ApiType>;
+      /**
+       * Other forms of errors
+       **/
+      Other: AugmentedError<ApiType>;
+      /**
+       * Packet Acknowledgment wasn't found
+       **/
+      PacketAcknowledgmentNotFound: AugmentedError<ApiType>;
+      /**
+       * Packet commitment wasn't found
+       **/
+      PacketCommitmentNotFound: AugmentedError<ApiType>;
+      /**
+       * Packet receipt wasn't found
+       **/
+      PacketReceiptNotFound: AugmentedError<ApiType>;
+      /**
+       * Error processing ibc messages
+       **/
+      ProcessingError: AugmentedError<ApiType>;
+      /**
+       * Error generating trie proof
+       **/
+      ProofGenerationError: AugmentedError<ApiType>;
+      /**
+       * Error constructing packet
+       **/
+      SendPacketError: AugmentedError<ApiType>;
+      /**
+       * Latest height and timestamp for a client not found
+       **/
+      TimestampAndHeightNotFound: AugmentedError<ApiType>;
+      /**
+       * The interchain token transfer was not successfully initiated
+       **/
+      TransferFailed: AugmentedError<ApiType>;
+      /**
+       * Error Decoding utf8 bytes
+       **/
+      Utf8Error: AugmentedError<ApiType>;
+      /**
+       * Error writing acknowledgement to storage
+       **/
+      WriteAckError: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    ibcPing: {
+      /**
+       * Error opening channel
+       **/
+      ChannelInitError: AugmentedError<ApiType>;
+      /**
+       * Invalid params passed
+       **/
+      InvalidParams: AugmentedError<ApiType>;
+      /**
+       * Error registering packet
+       **/
+      PacketSendError: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     identity: {
       /**
        * Account ID is already named.
@@ -546,9 +674,17 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       InvalidTarget: AugmentedError<ApiType>;
       /**
+       * The provided judgement was for a different identity.
+       **/
+      JudgementForDifferentIdentity: AugmentedError<ApiType>;
+      /**
        * Judgement given.
        **/
       JudgementGiven: AugmentedError<ApiType>;
+      /**
+       * Error that occurs when there is an issue paying for judgement.
+       **/
+      JudgementPaymentFailed: AugmentedError<ApiType>;
       /**
        * No identity found.
        **/
@@ -923,16 +1059,35 @@ declare module '@polkadot/api-base/types/errors' {
       AmpFactorMustBeGreaterThanZero: AugmentedError<ApiType>;
       AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
       AssetNotFound: AugmentedError<ApiType>;
+      /**
+       * Cannot buy an asset with itself.
+       **/
+      CannotBuyAssetWithItself: AugmentedError<ApiType>;
       CannotRespectMinimumRequested: AugmentedError<ApiType>;
+      /**
+       * Cannot swap an asset with itself.
+       **/
+      CannotSwapSameAsset: AugmentedError<ApiType>;
+      IncorrectAssetAmounts: AugmentedError<ApiType>;
+      InitialDepositCannotBeZero: AugmentedError<ApiType>;
+      InitialDepositMustContainAllAssets: AugmentedError<ApiType>;
       InvalidAmount: AugmentedError<ApiType>;
       InvalidAsset: AugmentedError<ApiType>;
       InvalidFees: AugmentedError<ApiType>;
       InvalidPair: AugmentedError<ApiType>;
       InvalidSaleState: AugmentedError<ApiType>;
+      /**
+       * The `min_amounts` map passed to `remove_liquidity` must contain at least one asset.
+       **/
+      MinAmountsMustContainAtLeastOneAsset: AugmentedError<ApiType>;
       MissingAmount: AugmentedError<ApiType>;
       MissingMinExpectedAmount: AugmentedError<ApiType>;
       MoreThanTwoAssetsNotYetSupported: AugmentedError<ApiType>;
       MustBeOwner: AugmentedError<ApiType>;
+      /**
+       * The `assets` map passed to `add_liquidity` must contain at least one asset.
+       **/
+      MustDepositMinimumOneAsset: AugmentedError<ApiType>;
       NoLpTokenForLbp: AugmentedError<ApiType>;
       NotEnoughLiquidity: AugmentedError<ApiType>;
       NotEnoughLpToken: AugmentedError<ApiType>;
@@ -940,6 +1095,7 @@ declare module '@polkadot/api-base/types/errors' {
       PairMismatch: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
       StakingPoolConfigError: AugmentedError<ApiType>;
+      UnsupportedOperation: AugmentedError<ApiType>;
       WeightsMustBeNonZero: AugmentedError<ApiType>;
       WeightsMustSumToOne: AugmentedError<ApiType>;
       /**
@@ -1010,7 +1166,7 @@ declare module '@polkadot/api-base/types/errors' {
       /**
        * Preimage is too large to store on-chain.
        **/
-      TooLarge: AugmentedError<ApiType>;
+      TooBig: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -1120,6 +1276,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Failed to schedule a call
        **/
       FailedToSchedule: AugmentedError<ApiType>;
+      /**
+       * Attempt to use a non-named function on a named task.
+       **/
+      Named: AugmentedError<ApiType>;
       /**
        * Cannot find the scheduled call.
        **/
