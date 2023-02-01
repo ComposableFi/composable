@@ -67,7 +67,7 @@ fn test_max_liquidation_batch_size_exceeded() {
 			borrowers.push(account_id);
 		}
 
-		let borrowers = TestBoundedVec::try_from(borrowers);
+		let borrowers = TestBoundedVec::try_from(borrowers).map_err(|_| ());
 		// TryFrom implementation for BoundedVec emits () as error
 		assert_err!(borrowers, ());
 	})

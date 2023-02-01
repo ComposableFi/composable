@@ -50,7 +50,7 @@
         ./inputs/Wasmswap/wasmswap-contracts.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
 
-        # The things we use within flake parts to build packages, apps, devShells, and devnets. 
+        # The things we use within flake parts to build packages, apps, devShells, and devnets.
         ./tools/pkgs.nix # _module.args.pkgs
         ./tools/devnet-tools.nix # _module.args.devnetTools
         ./tools/rust.nix # _module.args.rust
@@ -66,7 +66,6 @@
         ./code/integration-tests/runtime-tests/runtime-tests.nix
         ./code/runtimes.nix
         ./code/xcvm/xcvm-contracts.nix
-        ./code/utils/composable-subxt/subxt.nix
         ./code/utils/price-feed/price-feed.nix
         ./docs/docs.nix
         ./frontend/frontend.nix
