@@ -142,7 +142,6 @@ jobs:
   
   all-ci-packages:
     needs: 
-      - common-deps
       - check-privilege
     runs-on:
       - self-hosted
