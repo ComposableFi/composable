@@ -6,7 +6,7 @@ on:
       - main
 
   # For regular PRs.    
-#   pull_request_target:
+  pull_request_target:
 
   # For PRs that need to run in the monorepo context.
   pull_request:
@@ -31,13 +31,11 @@ jobs:
   check-privilege:
     name: "Privilege Check"
 #     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request_target.head.repo.owner != 'ComposableFi') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner == 'ComposableFi') }}
-    concurrency:
-      group: ${{ github.workflow }}-composablejs-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
     runs-on: ubuntu-latest  
     steps:
       - run: |
-          echo "I am priviliged by goblins. Running using the ${{ github.event_name }} mode on repository id ${{ github.event.pull_request_target.head.repo.id }}"
+          echo "I am priviliged by goblins on repository id ${{ github.event.pull_request.head.repo.id }}" 
+      
 
   composablejs:
     name: "Composable JS"
