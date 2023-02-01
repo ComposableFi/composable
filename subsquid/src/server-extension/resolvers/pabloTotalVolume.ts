@@ -2,7 +2,7 @@ import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql
 import type { EntityManager } from "typeorm";
 import { LessThan, MoreThan, And } from "typeorm";
 import { PabloSwap } from "../../model";
-import { getRange, DAY_IN_MS } from "./common";
+import { getRange, DAY_IN_MS, getVolumeRange } from "./common";
 
 @ObjectType()
 class AssetIdAmount {
@@ -46,7 +46,7 @@ export class PabloTotalVolumeResolver {
 
     const manager = await this.tx();
 
-    const timestamps = getRange(range);
+    const timestamps = getVolumeRange(range);
     // Map timestamp to volume
     const volumes: Record<string, AssetIdAmount[]> = {};
 
@@ -57,7 +57,7 @@ export class PabloTotalVolumeResolver {
         where: {
           timestamp: And(
             LessThan(new Date(timestamp.getTime())),
-            MoreThan(new Date(timestamp.getTime() - (range === "year" ? 30 : 1) * DAY_IN_MS))
+            MoreThan(new Date(timestamp.getTime() - (range === "year" ? 7 : 1) * DAY_IN_MS))
           )
         }
       });
