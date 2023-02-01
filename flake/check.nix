@@ -29,7 +29,7 @@
           acala-node
           dali-subxt-client
           zombienet
-          price-feed
+          # price-feed # errored in ci
           # devnet-container # errored in ci
           # bridge-devnet-dali-container
           devnet-initialize-script-picasso-persistent
