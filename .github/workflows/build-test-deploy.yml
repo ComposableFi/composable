@@ -113,6 +113,8 @@ jobs:
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   check-lfs:
+    needs:
+      - check-privilege
     continue-on-error: false
     runs-on:
       - self-hosted
