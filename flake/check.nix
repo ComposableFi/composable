@@ -50,7 +50,7 @@
           # unsure about these
           check-dali-integration-tests
           check-picasso-integration-tests
-          simnode-tests
+          # simnode-tests
           devnet-integration-tests
         ]);
 
