@@ -76,7 +76,8 @@
               openssl
             ];
             cargoArtifacts = self'.packages.common-deps-nightly;
-            cargoBuildCommand = "cargo udeps";
+            buildPhase = "cargo udeps";
+            installPhase = "mkdir -p $out";
             cargoExtraArgs =
               "--workspace --exclude local-integration-tests --all-features";
           });
@@ -95,8 +96,9 @@
             cargoArtifacts = self'.packages.common-test-deps;
             # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
             # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-            cargoBuildCommand =
+            buildPhase =
               "cargo test --workspace --release --locked --verbose --exclude local-integration-tests";
+            installPhase = "mkdir -p $out";
           });
 
         unit-tests-with-coverage = crane.nightly.cargoBuild
@@ -106,7 +108,7 @@
             cargoArtifacts = self'.packages.common-deps-nightly;
             # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
             # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-            cargoBuildCommand = "cargo llvm-cov";
+            buildPhase = "cargo llvm-cov";
             cargoExtraArgs =
               "--workspace --release --locked --verbose --lcov --output-path lcov.info";
             installPhase = ''
