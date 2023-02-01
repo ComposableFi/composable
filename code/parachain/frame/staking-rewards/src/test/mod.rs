@@ -2261,7 +2261,7 @@ fn pbl_295() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		// === 5. Claim by Charlie (can claim half the rewards in the pool as per shares)
+		// === 6. Claim by Charlie (can claim half the rewards in the pool as per shares)
 		assert_eq!(pot_balance_available(), rewards_for_blocks(2));
 		assert_eq!(claimable_amount(dave_id), rewards_for_blocks(2) / 2);
 		assert_eq!(claimable_amount(charlie_id), rewards_for_blocks(2) / 2);
@@ -2277,7 +2277,7 @@ fn pbl_295() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		// === 6. Split by Dave 50/50
+		// === 7. Split by Dave 50/50
 		assert_eq!(pot_balance_available(), rewards_for_blocks(2) + rewards_for_blocks(2) / 2);
 		assert_eq!(claimable_amount(dave_id), rewards_for_blocks(2));
 		assert_eq!(claimable_amount(charlie_id), rewards_for_blocks(2) / 2);
@@ -2294,7 +2294,7 @@ fn pbl_295() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		// === 7. Unstake by Dave of first stake
+		// === 8. Unstake by Dave of first stake
 		assert_eq!(
 			pot_balance_available(),
 			rewards_for_blocks(2) + rewards_for_blocks(2) / 2 + rewards_for_blocks(2)
