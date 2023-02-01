@@ -165,11 +165,11 @@ parameter_type_with_key! {
 }
 
 parameter_types! {
-	pub const RelayChainId: RelayChain = RelayChain::Rococo;
+	pub const RelayChainId: RelayChain = RelayChain::Kusama;
 	pub const SpamProtectionDeposit: Balance = 1_000_000_000_000;
 	pub const MinimumConnectionDelay: u64 = 0;
 	// how much block hashes to keep
-	pub const BlockHashCount: BlockNumber = 250;
+	pub const BlockHashCount: BlockNumber = 256;
 	pub const Version: RuntimeVersion = VERSION;
 	// 5mb with 25% of that reserved for system extrinsics.
 	pub RuntimeBlockLength: BlockLength =
@@ -219,14 +219,13 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 	type Error = DispatchError;
 
 	fn from_denom_to_asset_id(denom: &String) -> Result<CurrencyId, Self::Error> {
-		let denom_bytes = denom.as_bytes().to_vec();
-		if let Some(id) = IbcDenoms::<Runtime>::get(&denom_bytes) {
+		if let Some(id) = IbcDenoms::<Runtime>::get(denom.as_bytes()) {
 			return Ok(id)
 		}
 
 		let asset_id =
 			<currency_factory::Pallet<Runtime> as CurrencyFactoryT>::create(RangeId::IBC_ASSETS)?;
-
+		let denom_bytes = denom.as_bytes();
 		IbcDenoms::<Runtime>::insert(denom_bytes.clone(), asset_id);
 		IbcAssetIds::<Runtime>::insert(asset_id, denom_bytes);
 
@@ -245,7 +244,15 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 	}
 
 	fn from_asset_id_to_denom(id: CurrencyId) -> Option<String> {
-		IbcAssetIds::<Runtime>::get(id).and_then(|denom| String::from_utf8(denom).ok())
+		IbcAssetIds::<Runtime>::get(id).and_then(|denom| {
+			String::from_utf8(denom)
+				// TODO: replace this for `inspect_err` when it's available as a stable feature?
+				.map_err(|e| {
+					log::error!("Invalid encoding for asset id {} - err = {:?}", id, e);
+					e
+				})
+				.ok()
+		})
 	}
 
 	fn ibc_assets(start_key: Option<Either<CurrencyId, u32>>, limit: u64) -> IbcAssets<CurrencyId> {
@@ -262,7 +269,7 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 		let maybe_currency_id = iterator.next().map(|(id, ..)| id);
 		IbcAssets {
 			denoms,
-			total_count: IbcAssetIds::<Runtime>::count() as u64,
+			total_count: IbcAssetIds::<Runtime>::count().into(),
 			next_id: maybe_currency_id,
 		}
 	}
@@ -1484,7 +1491,7 @@ impl pallet_ibc::Config for Runtime {
 	type ParaId = parachain_info::Pallet<Runtime>;
 	type RelayChain = RelayChainId;
 	type WeightInfo = ();
-	type AdminOrigin = EnsureRoot<AccountId>;
+	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type SentryOrigin = EnsureRoot<AccountId>;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 }
