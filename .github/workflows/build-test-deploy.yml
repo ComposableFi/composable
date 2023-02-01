@@ -37,79 +37,6 @@ jobs:
           echo "I am priviliged by goblins on repository id ${{ github.event.pull_request.head.repo.id }} ${{ github.event.pull_request_target.head.repo.id }}" 
       
 
-  composablejs:
-    name: "Composable JS"
-    needs:
-      - check-privilege
-    concurrency:
-      group: ${{ github.workflow }}-composablejs-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#devnet-initialize-script-picasso-persistent
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  common-deps:
-    name: "Common dependencies"
-    needs:
-      - check-nix
-      - check-privilege
-    concurrency:
-      group: ${{ github.workflow }}-common-deps-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#common-deps
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  build-common-test-deps:
-    needs:
-      - check-nix
-      - check-privilege
-    concurrency:
-      group: ${{ github.workflow }}-build-common-test-deps-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#common-test-deps
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
   check-lfs:
     needs:
       - check-privilege
@@ -175,29 +102,6 @@ jobs:
           nix show-config
           nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
 
-  cargo-fmt-check:
-    name: "Cargo fmt check"
-    needs: 
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-cargo-fmt-check-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#cargo-fmt-check
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   check-nix-long:
     name: "Check nix long"
@@ -234,9 +138,11 @@ jobs:
           chmod +x ./.github/workflows/check-nix-long.sh
           source ./.github/workflows/check-nix-long.sh
 
-  taplo-check:
-    name: "Taplo check"
+
+  
+  all-ci-packages:
     needs: 
+      - common-deps
       - check-privilege
     runs-on:
       - self-hosted
@@ -244,7 +150,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow }}-taplo-check-${{ github.event.pull_request.title }}
+      group: ${{ github.workflow }}-all-ci-packages-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -255,842 +161,389 @@ jobs:
           persist-credentials: false
       - uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#taplo-check
+          command: nix -- build .#all-ci-packages
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  prettier-check:
-    name: "Prettier check"
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-prettier-check-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#prettier-check
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  nixfmt-check:
-    name: "Nixfmt check"
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-nixfmt-check-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#nixfmt-check
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  deadnix-check:
-    name: "Deadnix check"
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-deadnix-check-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#deadnix-check
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  spell-check:
-    name: "Spelling check"
-    needs: 
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-spell-check-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#spell-check
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
   # This isn't templated, since checkout needs to happen before templating occurs.
-  docs-check:
-    name: "Docs check"
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-docs-check-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-        shell: "bash"
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs
-          name: ${{ env.CACHIX_COMPOSABLE }}
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - uses: actions/checkout@v3
-        with:
-          lfs: true
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - run: |
-          # Marker status code in case of network failure.
-          STATUS_TRANSIENT_FAILURE=200
-          # Maximum retries in case of network failures.
-          RETRIES=5
-          CMD="cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static  --no-update-lock-file --show-trace -L 2> >(tee -a $LOG_FILE >&2)"
-          # Marker that a network error occurred.
-          BAD="HTTP error 200 ('')"
-          LOG_FILE=/tmp/out.log
+  # docs-check:
+  #   name: "Docs check"
+  #   needs:
+  #     - check-privilege
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: ${{ github.workflow }}-docs-check-${{ github.event.pull_request.title }}
+  #     cancel-in-progress: true
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - run: |
+  #         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+  #         echo "sandbox = relaxed" >> /etc/nix/nix.conf
+  #         echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+  #       shell: "bash"
+  #     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+  #       with:
+  #         installCommand: |
+  #           nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+  #           nix-channel --update
+  #           nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs
+  #         name: ${{ env.CACHIX_COMPOSABLE }}
+  #         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         lfs: true
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         persist-credentials: false
+  #     - run: |
+  #         # Marker status code in case of network failure.
+  #         STATUS_TRANSIENT_FAILURE=200
+  #         # Maximum retries in case of network failures.
+  #         RETRIES=5
+  #         CMD="cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#docs-static  --no-update-lock-file --show-trace -L 2> >(tee -a $LOG_FILE >&2)"
+  #         # Marker that a network error occurred.
+  #         BAD="HTTP error 200 ('')"
+  #         LOG_FILE=/tmp/out.log
 
-          function run() {
-              eval "${CMD?}"
-              STATUS_CODE=$?
-              if [[ $STATUS_CODE -ne 0 ]] ; then
-                  C=$(grep -c "HTTP error 200" $LOG_FILE)
-                  if [[ $C -gt 0 ]]; then
-                      STATUS_CODE=$STATUS_TRANSIENT_FAILURE
-                  fi
-              fi
-          }
+  #         function run() {
+  #             eval "${CMD?}"
+  #             STATUS_CODE=$?
+  #             if [[ $STATUS_CODE -ne 0 ]] ; then
+  #                 C=$(grep -c "HTTP error 200" $LOG_FILE)
+  #                 if [[ $C -gt 0 ]]; then
+  #                     STATUS_CODE=$STATUS_TRANSIENT_FAILURE
+  #                 fi
+  #             fi
+  #         }
 
-          try=0
-          while [[ "${try?}" -le "${RETRIES?}" ]]; do
-              if [[ "${try?}" -eq "${RETRIES?}" ]] ; then
-                  exit 1
-              fi
-              run
-              if [[ $STATUS_CODE -ne 0 ]] || [[ $STATUS_CODE -ne $STATUS_TRANSIENT_FAILURE ]] ; then
-                  break
-              fi
-              ((try=try+1))
-          done
+  #         try=0
+  #         while [[ "${try?}" -le "${RETRIES?}" ]]; do
+  #             if [[ "${try?}" -eq "${RETRIES?}" ]] ; then
+  #                 exit 1
+  #             fi
+  #             run
+  #             if [[ $STATUS_CODE -ne 0 ]] || [[ $STATUS_CODE -ne $STATUS_TRANSIENT_FAILURE ]] ; then
+  #                 break
+  #             fi
+  #             ((try=try+1))
+  #         done
 
-          exit $((STATUS_CODE))
-        shell: "bash"
-        working-directory: ./docs
-      - uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DOCS_COMPOSABLE_FINANCE }}
-          projectId: composable-docs
-          entrypoint: docs/
-          channelId: ${{ github.event_name == 'push' && github.ref_name == 'main' && 'live' }}
+  #         exit $((STATUS_CODE))
+  #       shell: "bash"
+  #       working-directory: ./docs
+  #     - uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
+  #       with:
+  #         repoToken: ${{ secrets.GITHUB_TOKEN }}
+  #         firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DOCS_COMPOSABLE_FINANCE }}
+  #         projectId: composable-docs
+  #         entrypoint: docs/
+  #         channelId: ${{ github.event_name == 'push' && github.event.pull_request.title_name == 'main' && 'live' }}
 
-  frontend-check:
-    name: "Frontend check"
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-frontend-check-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#frontend-static
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  # deploy-pablo-preview:
+  #   name: "Deploy Pablo Preview"
+  #   needs:
+  #     - check-privilege
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   container:
+  #     image: node:latest
+  #   steps:
+  #     - run: |
+  #         apt-get update
+  #         apt-get install -y curl git
+  #         curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+  #         apt-get install git-lfs
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         lfs: true
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         persist-credentials: false
+  #     - name: Install Vercel CLI
+  #       run: npm install --global vercel@latest
+  #     - name: Import project setting
+  #       run: |
+  #         mkdir -p .vercel
+  #         echo '${{ secrets.PABLO_PROJ_JSON }}' >> .vercel/project.json
+  #     - name: Pull Vercel Environment Information
+  #       run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+  #     - name: Build Project Artifacts
+  #       run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+  #     - name: Deploy Project Artifacts to Vercel
+  #       run: |
+  #         PREVIEW_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+  #         echo "preview-url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
+  #       id: deploy
+  #     - name: Comment PR
+  #       uses: "./.github/templates/comment"
+  #       with:
+  #         message: |
+  #           ### Pablo Preview URL
+  #           ${{ steps.deploy.outputs.preview-url }}
+  #         comment_tag: 'Pablo Preview URL'
+  #         github_token: ${{ secrets.GITHUB_TOKEN }}
 
-  hadolint-check:
-    name: "Dockerfiles check"
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-hadolint-check-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#hadolint-check
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  # deploy-picasso-preview:
+  #   name: "Deploy Picasso Preview"
+  #   needs:
+  #     - check-privilege
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   container:
+  #     image: node:latest
+  #   steps:
+  #     - run: |
+  #         apt-get update
+  #         apt-get install -y curl git
+  #         curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+  #         apt-get install git-lfs
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         lfs: true
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         persist-credentials: false
+  #     - name: Install Vercel CLI
+  #       run: npm install --global vercel@latest
+  #     - name: Import project setting
+  #       run: |
+  #         mkdir -p .vercel
+  #         echo '${{ secrets.PICASSO_PROJ_JSON }}' >> .vercel/project.json
+  #     - name: Pull Vercel Environment Information
+  #       run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+  #     - name: Build Project Artifacts
+  #       run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+  #     - name: Deploy Project Artifacts to Vercel
+  #       run: |
+  #          PREVIEW_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+  #          echo "preview-url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
+  #       id: deploy
+  #     - name: Comment PR
+  #       uses: "./.github/templates/comment"
+  #       with:
+  #         message: |
+  #           ### Picasso Preview URL
+  #           ${{ steps.deploy.outputs.preview-url }}
+  #         comment_tag: 'Picasso Preview URL'
+  #         github_token: ${{ secrets.GITHUB_TOKEN }}
 
-  cargo-clippy-check:
-    name: "Cargo clippy check"
-    needs: 
-      - common-deps
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-cargo-clippy-check-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#cargo-clippy-check
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  # test-running-of-pallet-benchmarks:
+  #   name: "Test running of pallet benchmarks"
+  #   needs: 
+  #     - package-composable-bench-node
+  #     - check-privilege
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: ${{ github.workflow }}-test-running-of-pallet-benchmarks-${{ matrix.runtime }}-${{ github.event.pull_request.title }}
+  #     cancel-in-progress: true
+  #   strategy:
+  #     matrix:
+  #       runtime: [dali, picasso, composable]
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         persist-credentials: false
+  #     - uses: "./.github/templates/watch-exec"
+  #       with:
+  #         command: nix -- run .#benchmarks-once-${{ matrix.runtime }}
+  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-  cargo-deny-check:
-    name: "Cargo deny check"
-    needs: 
-      - common-deps
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-cargo-deny-check-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#cargo-deny-check
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  # package-hyperspace-dali:
+  #   name: "Package Hyperspace"
+  #   needs:
+  #     - check-privilege
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: ${{ github.workflow }}-package-hyperspace-dali-${{ github.event.pull_request.title }}
+  #     cancel-in-progress: true
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         persist-credentials: false
+  #     - uses: "./.github/templates/watch-exec"
+  #       with:
+  #         command: nix -- build .#hyperspace-dali
+  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  #     - uses: "./.github/templates/docker-publish"
+  #       with:
+  #         command: nix -- build .#hyperspace-dali-container
+  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  #         username: ${{ secrets.DOCKER_HUB_USERNAME }}
+  #         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+  #         name: hyperspace-dali
+  #         artifact: hyperspace-dali:latest
 
-  benchmarks-check:
-    name: "Benchmarks check"
-    needs: 
-      - common-deps
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-benchmarks-check-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#benchmarks-check
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-  unit-tests:
-    name: "Unit Tests"
-    needs:
-      - build-common-test-deps
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-unittests-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#unit-tests
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  # lint-test-frontend:
+  #   # Legacy because these should be nixified.
+  #   name: Legacy Frontend Checks
+  #   needs: 
+  #     - check-privilege
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - run: |
+  #         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+  #         echo "sandbox = relaxed" >> /etc/nix/nix.conf
+  #         echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+  #       shell: "bash"
+  #     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+  #       with:
+  #         installCommand: |
+  #           nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+  #           nix-channel --update
+  #           nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs nixpkgs.yarn
+  #         name: ${{ env.CACHIX_COMPOSABLE }}
+  #         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         persist-credentials: false
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 16
+  #         always-auth: true
+  #         registry-url: 'https://registry.npmjs.org'
+  #     - run: yarn install --ignore-scripts
+  #       env:
+  #         CI: true
+  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  #       working-directory: frontend
+  #     - name: Lint Pablo
+  #       run: yarn --filter=pablo lint
+  #       working-directory: frontend
+  #     - name: Test Pablo
+  #       run: yarn --filter=pablo test
+  #       working-directory: frontend
+  #     - name: Lint Picasso
+  #       run: yarn --filter=picasso lint
+  #       working-directory: frontend
+  #     - name: Test Picasso
+  #       run: yarn --filter=picasso test
+  #       working-directory: frontend
 
-  deploy-pablo-preview:
-    name: "Deploy Pablo Preview"
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    container:
-      image: node:latest
-    steps:
-      - run: |
-          apt-get update
-          apt-get install -y curl git
-          curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
-          apt-get install git-lfs
-      - uses: actions/checkout@v3
-        with:
-          lfs: true
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-      - name: Import project setting
-        run: |
-          mkdir -p .vercel
-          echo '${{ secrets.PABLO_PROJ_JSON }}' >> .vercel/project.json
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Build Project Artifacts
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Deploy Project Artifacts to Vercel
-        run: |
-          PREVIEW_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
-          echo "preview-url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
-        id: deploy
-      - name: Comment PR
-        uses: "./.github/templates/comment"
-        with:
-          message: |
-            ### Pablo Preview URL
-            ${{ steps.deploy.outputs.preview-url }}
-          comment_tag: 'Pablo Preview URL'
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-  deploy-picasso-preview:
-    name: "Deploy Picasso Preview"
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    container:
-      image: node:latest
-    steps:
-      - run: |
-          apt-get update
-          apt-get install -y curl git
-          curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
-          apt-get install git-lfs
-      - uses: actions/checkout@v3
-        with:
-          lfs: true
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-      - name: Import project setting
-        run: |
-          mkdir -p .vercel
-          echo '${{ secrets.PICASSO_PROJ_JSON }}' >> .vercel/project.json
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Build Project Artifacts
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Deploy Project Artifacts to Vercel
-        run: |
-           PREVIEW_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
-           echo "preview-url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
-        id: deploy
-      - name: Comment PR
-        uses: "./.github/templates/comment"
-        with:
-          message: |
-            ### Picasso Preview URL
-            ${{ steps.deploy.outputs.preview-url }}
-          comment_tag: 'Picasso Preview URL'
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-  test-running-of-pallet-benchmarks:
-    name: "Test running of pallet benchmarks"
-    needs: 
-      - package-composable-bench-node
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-test-running-of-pallet-benchmarks-${{ matrix.runtime }}-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    strategy:
-      matrix:
-        runtime: [dali, picasso, composable]
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- run .#benchmarks-once-${{ matrix.runtime }}
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  package-composable-node:
-    name: "Package Composable node"
-    needs: 
-       - common-deps
-       - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-package-composable-node-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#composable-node
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  package-composable-bench-node:
-    name: "Package Composable bench node"
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-package-composable-bench-node-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#composable-bench-node
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  package-polkadot-node:
-    name: "Package Polkadot node"
-    needs: 
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-package-polkadot-node-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#polkadot-node
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  package-parachain-node:
-    name: "Package Statemine node"
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    strategy:
-      matrix:
-          node: [statemine, bifrost]
-    concurrency:
-      group: ${{ github.workflow }}-package-${{ matrix.node }}-node-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#${{ matrix.node }}-node
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  package-acala-node:
-    name: "Package Acala node"
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-package-acala-node-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#acala-node
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  package-dali-subxt-client:
-    name: "Package Dali subxt client"
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-package-dali-subxt-client-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#dali-subxt-client
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  package-hyperspace-dali:
-    name: "Package Hyperspace"
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-package-hyperspace-dali-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#hyperspace-dali
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - uses: "./.github/templates/docker-publish"
-        with:
-          command: nix -- build .#hyperspace-dali-container
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: hyperspace-dali
-          artifact: hyperspace-dali:latest
-
-  cache-devnet-all-dev-local:
-    name: "Cache devnet all dev local"
-    strategy:
-      matrix:
-        runtime: [devnet-dali-complete, devnet-picasso-complete, devnet-dali, devnet-centauri]
-    needs:
-      - package-polkadot-node
-      - package-acala-node
-      - package-parachain-node
-      - package-composable-node
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-cache-devnet-all-dev-local-${{ matrix.runtime }}-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    continue-on-error: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#${{ matrix.runtime }}
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  lint-test-frontend:
-    # Legacy because these should be nixified.
-    name: Legacy Frontend Checks
-    needs: 
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-        shell: "bash"
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs nixpkgs.yarn
-          name: ${{ env.CACHIX_COMPOSABLE }}
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-          always-auth: true
-          registry-url: 'https://registry.npmjs.org'
-      - run: yarn install --ignore-scripts
-        env:
-          CI: true
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        working-directory: frontend
-      - name: Lint Pablo
-        run: yarn --filter=pablo lint
-        working-directory: frontend
-      - name: Test Pablo
-        run: yarn --filter=pablo test
-        working-directory: frontend
-      - name: Lint Picasso
-        run: yarn --filter=picasso lint
-        working-directory: frontend
-      - name: Test Picasso
-        run: yarn --filter=picasso test
-        working-directory: frontend
-
-  cmc-api:
-    name: "Package CMC API"
-    needs:
-      - common-deps
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-build-cmc-api-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    continue-on-error: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#cmc-api
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - uses: "./.github/templates/docker-publish"
-        with:
-          command: nix -- build .#cmc-api-image
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: cmc-api-server
-          artifact: cmc-api:latest
+  # cmc-api:
+  #   name: "Package CMC API"
+  #   needs:
+  #     - common-deps
+  #     - check-privilege
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: ${{ github.workflow }}-build-cmc-api-${{ github.event.pull_request.title }}
+  #     cancel-in-progress: true
+  #   continue-on-error: true
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         persist-credentials: false
+  #     - uses: "./.github/templates/watch-exec"
+  #       with:
+  #         command: nix -- build .#cmc-api
+  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  #     - uses: "./.github/templates/docker-publish"
+  #       with:
+  #         command: nix -- build .#cmc-api-image
+  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  #         username: ${{ secrets.DOCKER_HUB_USERNAME }}
+  #         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+  #         name: cmc-api-server
+  #         artifact: cmc-api:latest
 
   # TODO: nixify these test steps, and add me to subsquid-processor
-  test-subsquid:
-    name: Test Subquid
-    needs:
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - name: Setup jest
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-      - name: Install dependencies
-        run: npm ci
-        working-directory: subsquid
-      - name: Run tests
-        run: npm run test
-        working-directory: subsquid
+  # test-subsquid:
+  #   name: Test Subquid
+  #   needs:
+  #     - check-privilege
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         persist-credentials: false
+  #     - name: Setup jest
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 16
+  #     - name: Install dependencies
+  #       run: npm ci
+  #       working-directory: subsquid
+  #     - name: Run tests
+  #       run: npm run test
+  #       working-directory: subsquid
 
-  subsquid-processor:
-    name: "Package Subsquid Processor"
-    needs:
-      - test-subsquid
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-package-subsquid-processor-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - name: Log INFO commit sha
-        run: |
-          echo "GITHUB_SHA=${GITHUB_SHA} github.sha=${{ github.sha }}"
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          tags: |
-            ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest
-            ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:${{ github.sha }}
-          context: subsquid
-          push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-
-  package-zombienet:
-    needs: 
-      - common-deps
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-package-zombienet-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#zombienet
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-  # FIXME(hussein): enable when price feed is upgraded and actually usefull
-  # package-price-feed:
-  #   needs: common-deps
+  # subsquid-processor:
+  #   name: "Package Subsquid Processor"
+  #   needs:
+  #     - test-subsquid
+  #     - check-privilege
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: ${{ github.workflow }}-package-subsquid-processor-${{ github.event.pull_request.title }}
+  #     cancel-in-progress: true
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         persist-credentials: false
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v2
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v2
+  #     - name: Login to Docker Hub
+  #       uses: docker/login-action@v2
+  #       with:
+  #         username: ${{ secrets.DOCKER_HUB_USERNAME }}
+  #         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+  #     - name: Build and push
+  #       uses: docker/build-push-action@v3
+  #       with:
+  #         tags: ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest,${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:${{ vars.GITHUB_SHA }}
+  #         context: subsquid
+  #         push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+  # composable-sandbox-container-publish:
+  #   needs:
+  #     - effects-gate
+  #     - check-privilege
   #   runs-on:
   #     - self-hosted
   #     - linux
@@ -1111,75 +564,76 @@ jobs:
   #         command: nix -- build .#price-feed
   #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-  composable-sandbox-container-publish:
-    needs:
-      - effects-gate
-      - check-privilege
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-composable-sandbox-container-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: "./.github/templates/docker-publish"
-        with:
-          command: nix -- build .#devnet-container
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: composable-sandbox
-          artifact: composable-devnet-container:latest
+  # composable-bridge-devnet-container-publish:
+  #   name: "Docker composable-bridge-devnet"
+  #   needs:
+  #     - effects-gate
+  #     - check-privilege
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: ${{ github.workflow }}-composable-bridge-devnet-container-${{ github.event.pull_request.title }}
+  #     cancel-in-progress: true
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         persist-credentials: false
+  #     - uses: "./.github/templates/docker-publish"
+  #       with:
+  #         command: nix -- build .#bridge-devnet-dali-container
+  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  #         username: ${{ secrets.DOCKER_HUB_USERNAME }}
+  #         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+  #         name: composable-bridge-devnet
+  #         artifact: composable-bridge-devnet-container
 
-  devnet-integration-tests:
-      name: "Devnet integration tests"
-      needs:
-        - package-polkadot-node
-        - package-composable-node
-        - check-nix
-        - check-privilege
-      runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-      timeout-minutes: 120
-      concurrency:
-        group: ${{ github.workflow }}-devnet-integration-tests-${{ github.event.pull_request.title }}
-        cancel-in-progress: true
-      container:
-        image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-      steps:
-      - uses: actions/checkout@v3
-        with:
-          clean: false
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-        shell: "bash"
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix nixpkgs.nodejs
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: ${{  env.CACHIX_COMPOSABLE }}
-      - run: |
-          nix run .#devnet-integration-tests
+  # devnet-integration-tests:
+  #     name: "Devnet integration tests"
+  #     needs:
+  #       - package-polkadot-node
+  #       - package-composable-node
+  #       - check-nix
+  #       - check-privilege
+  #     runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #     timeout-minutes: 120
+  #     concurrency:
+  #       group: ${{ github.workflow }}-devnet-integration-tests-${{ github.event.pull_request.title }}
+  #       cancel-in-progress: true
+  #     container:
+  #       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #     steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         clean: false
+  #         fetch-depth: 0
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         persist-credentials: false
+  #     - run: |
+  #         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+  #         echo "sandbox = relaxed" >> /etc/nix/nix.conf
+  #         echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+  #       shell: "bash"
+  #     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+  #       with:
+  #         skipPush: true
+  #         installCommand: |
+  #           nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+  #           nix-channel --update
+  #           nix-env -iA nixpkgs.cachix nixpkgs.nodejs
+  #         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  #         name: ${{  env.CACHIX_COMPOSABLE }}
+  #     - run: |
+  #         nix run .#devnet-integration-tests
 
   effects-gate:
       name: "Effect gate, automatically merged if passed"
@@ -1191,31 +645,13 @@ jobs:
       needs:
         - check-lfs
         - check-nix
-        # FIXUP(hussein): broken
-        # - devnet-integration-tests
-        - package-polkadot-node
-        - package-composable-node
-        - test-running-of-pallet-benchmarks
+        - check-nix-long
+        - all-ci-packages
+        # - test-running-of-pallet-benchmarks
         # FIXUP(hussein): reenable once v0.9.30 -> v0.9.33
         # - local-integration-tests
 
-        - unit-tests
-        - check-nix-long
-        # TODO (vim): Decrease lead time until after release 3
-        #- cargo-udeps-check
-        - nixfmt-check
-        - cargo-clippy-check
-        - cargo-deny-check
-        - cargo-fmt-check
-        - taplo-check
-        # FIXUP(hussein): we don't have a prettier job for /code/runtime-tests/integration-tests?
-        # - prettier-check
-        - benchmarks-check
-        - spell-check
-        - docs-check
-        - hadolint-check
-        - frontend-check
-        - lint-test-frontend
+        # - lint-test-frontend
       steps:
         - run: echo "Goblins allow your work to see the light"
 
