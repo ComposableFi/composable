@@ -3,21 +3,90 @@ import Default from "@/components/Templates/Default";
 import { usePicassoProvider } from "substrate-react";
 import { subscribeRewardPools } from "@/stores/defi/polkadot/stakingRewards/subscribeRewardPools";
 import { useStore } from "@/stores/root";
-import { Skeleton } from "@mui/material";
+import { Box, Grid, Skeleton } from "@mui/material";
+import { StakingPageHeading } from "@/components/Organisms/Staking/StakingPageHeading";
+import { useSubscribeStakingPositions } from "@/defi/polkadot/hooks/stakingRewards/useSubscribeStakingPositions";
+import { subscribePortfolio } from "@/stores/defi/polkadot/stakingRewards/subscribePortfolio";
 
+const sxProps = {
+  mt: 20,
+};
 export const StakingLayout: FC = ({ children }) => {
+  useSubscribeStakingPositions();
   const { parachainApi } = usePicassoProvider();
   const isLoaded = useStore((store) => store.isRewardPoolLoaded);
   useEffect(() => {
     return subscribeRewardPools(parachainApi);
   }, [parachainApi]);
+  useEffect(() => {
+    return subscribePortfolio(parachainApi);
+  }, [parachainApi]);
 
-  if (!isLoaded) {
+  if (!isLoaded || !parachainApi) {
     return (
       <Default>
-        <Skeleton variant="rounded" width="100%" height="300px" />
+        <Box flexGrow={1} sx={{ mx: "auto" }} maxWidth={1032} mt={9}>
+          <StakingPageHeading />
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            width="100%"
+          >
+            <Grid container spacing={2} maxWidth="lg">
+              <Grid item xs={12} sm={6}>
+                <Skeleton
+                  variant="rounded"
+                  width="100%"
+                  height="100%"
+                  sx={sxProps}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Skeleton
+                  variant="rounded"
+                  width="100%"
+                  height="100%"
+                  sx={sxProps}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Skeleton
+                  variant="rounded"
+                  width="100%"
+                  height="100%"
+                  sx={sxProps}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Skeleton
+                  variant="rounded"
+                  width="100%"
+                  height="100%"
+                  sx={sxProps}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Skeleton
+                  variant="rounded"
+                  width="100%"
+                  height="300px"
+                  sx={sxProps}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        </Box>
       </Default>
     );
   }
-  return <Default>{children}</Default>;
+
+  return (
+    <Default>
+      <Box flexGrow={1} sx={{ mx: "auto" }} maxWidth={1032} mt={9}>
+        <StakingPageHeading />
+        {children}
+      </Box>
+    </Default>
+  );
 };

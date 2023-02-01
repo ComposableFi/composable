@@ -29,7 +29,7 @@ export interface ComposableTraitsDexStakingRewardPool extends Null {}
 /** @name PalletPabloPoolConfiguration */
 export interface PalletPabloPoolConfiguration extends Enum {
   readonly isStableSwap: boolean;
-  readonly asStableSwap: {
+  readonly asStableSwap: {arn
     readonly owner: AccountId32;
     readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
     readonly amplification_coefficient: u16;

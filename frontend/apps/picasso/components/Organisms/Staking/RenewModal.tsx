@@ -9,11 +9,11 @@ import {
   toChainIdUnit,
 } from "shared";
 import { DurationOption } from "@/defi/polkadot/pallets/StakingRewards";
-import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
+import { useStakingRewards } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewards";
 import BigNumber from "bignumber.js";
 import { useStore } from "@/stores/root";
 import { usePicassoAccount } from "@/defi/polkadot/hooks";
-import { useExecutor, useSigner } from "substrate-react";
+import { useExecutor, usePicassoProvider, useSigner } from "substrate-react";
 import { SnackbarKey, useSnackbar } from "notistack";
 
 export const RenewModal: FC<{
@@ -30,7 +30,8 @@ export const RenewModal: FC<{
     ({ substrateBalances }) => substrateBalances.balances.picasso.pica.free
   );
   const [extendAmount, setExtendAmount] = useState<BigNumber>(new BigNumber(0));
-  const { parachainApi, stakingPortfolio, refresh } = useStakingRewards();
+  const { parachainApi } = usePicassoProvider();
+  const { stakingPortfolio } = useStakingRewards();
   const [isValid, setValid] = useState(true);
   const [fnftCollectionId, fnftInstanceId] = selectedToken;
   const account = usePicassoAccount();
@@ -78,7 +79,6 @@ export const RenewModal: FC<{
               persist: true,
               url: subscanExtrinsicLink("picasso", txHash),
             });
-            refresh();
             onClose();
           },
           (errorMessage: string) => {
@@ -101,7 +101,6 @@ export const RenewModal: FC<{
       executor,
       signer
     );
-    refresh();
     onClose();
   };
 

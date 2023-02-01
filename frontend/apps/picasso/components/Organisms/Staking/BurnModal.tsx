@@ -6,7 +6,7 @@ import { callbackGate, formatNumber, subscanExtrinsicLink } from "shared";
 import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import { useExecutor, usePicassoProvider, useSigner } from "substrate-react";
 import { SnackbarKey, useSnackbar } from "notistack";
-import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
+import { useStakingRewards } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewards";
 import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
 
 export const BurnModal: FC<{
@@ -18,7 +18,7 @@ export const BurnModal: FC<{
   const account = usePicassoAccount();
   const executor = useExecutor();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-  const { stakingPortfolio, refresh } = useStakingRewards();
+  const { stakingPortfolio } = useStakingRewards();
   const [fnftCollectionId, fnftInstanceId] = selectedToken;
   const signer = useSigner();
 
@@ -47,7 +47,6 @@ export const BurnModal: FC<{
               persist: true,
               url: subscanExtrinsicLink("picasso", txHash),
             });
-            refresh();
             onClose();
           },
           (errorMessage: string) => {

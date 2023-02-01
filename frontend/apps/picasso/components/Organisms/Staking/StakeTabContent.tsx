@@ -2,7 +2,7 @@ import { FC, useCallback, useEffect } from "react";
 import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import { useSnackbar } from "notistack";
 import { stake } from "@/defi/polkadot/pallets/StakingRewards";
-import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
+import { useStakingRewards } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewards";
 import { Executor, useSigner } from "substrate-react";
 import {
   subscribeStakeFormValidation,

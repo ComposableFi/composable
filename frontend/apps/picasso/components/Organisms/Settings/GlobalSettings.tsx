@@ -1,7 +1,7 @@
 import { TokenId } from "tokens";
 import { SettingsModal } from "@/components/Organisms/Settings/SettingsModal";
 import { usePicassoAccount } from "@/defi/polkadot/hooks";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { GasFeeDropdown } from "../GasFeeDropdown";
 import { usePicassoProvider } from "substrate-react";
 
@@ -11,13 +11,13 @@ export const GlobalSettings = () => {
   const picassoProvider = usePicassoProvider();
   const targetFeeItem = useRef<TokenId>("pica");
 
-  const setTargetFeeItem = (feeItem: TokenId) => {
+  const setTargetFeeItem = useCallback((feeItem: TokenId) => {
     targetFeeItem.current = feeItem;
-  };
+  }, []);
 
-  const toggleSettingsModal = () => {
+  const toggleSettingsModal = useCallback(() => {
     setSettingsModal((s) => !s);
-  };
+  }, []);
 
   if (picassoProvider.apiStatus !== "connected" && !account) {
     return null;

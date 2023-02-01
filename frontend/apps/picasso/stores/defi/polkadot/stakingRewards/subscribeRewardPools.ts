@@ -14,16 +14,22 @@ export const subscribeRewardPools = (parachainApi: ApiPromise | undefined) =>
       pica: store.substrateTokens.tokens.pica,
     }),
     ({ isTokensLoaded, pica }) => {
+      function parseRequirements() {
+        return pipe(
+          O.Do,
+          O.bind(
+            "isLoaded",
+            O.fromPredicate(() => isTokensLoaded)
+          ),
+          O.bind("assetId", () =>
+            O.fromNullable(pica.chainId.picasso?.toString())
+          ),
+          O.bind("api", () => O.fromNullable(parachainApi))
+        );
+      }
+
       const task = pipe(
-        O.Do,
-        O.bind(
-          "isLoaded",
-          O.fromPredicate(() => isTokensLoaded)
-        ),
-        O.bind("assetId", () =>
-          O.fromNullable(pica.chainId.picasso?.toString())
-        ),
-        O.bind("api", () => O.fromNullable(parachainApi)),
+        parseRequirements(),
         O.map(({ api, assetId }) =>
           pipe(
             tryFetchRewardPool(api, assetId),
@@ -36,7 +42,23 @@ export const subscribeRewardPools = (parachainApi: ApiPromise | undefined) =>
 
       pipe(
         task,
-        O.map((t) => t().then(flow(E.fold(console.error, console.log))))
+        O.map((t) =>
+          t().then(
+            flow(
+              E.fold(
+                (e) => {
+                  console.error(e);
+                  useStore.setState((state) => {
+                    state.isRewardPoolLoaded = true;
+                  });
+                },
+                () => {
+                  console.log("Staking rewards loaded.");
+                }
+              )
+            )
+          )
+        )
       );
     },
     {

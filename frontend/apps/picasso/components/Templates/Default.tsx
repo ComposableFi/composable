@@ -23,25 +23,22 @@ type DefaultLayoutProps = {
   breadcrumbs?: ReactNode[];
 };
 
-export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
-  const { children, breadcrumbs } = props;
-  const [mobileOpen, setMobileOpen] = useState(false);
+function Sidebar(props: {
+  drawerWidth: number;
+  breadcrumbs: React.ReactNode[] | undefined;
+}) {
   const theme = useTheme();
-  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
-  const drawerWidth = isTablet ? 240 : 320;
-
+  const [mobileOpen, setMobileOpen] = useState(false);
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
-
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      <CssBaseline />
+    <>
       <AppBar
         position="fixed"
         sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
+          width: { md: `calc(100% - ${props.drawerWidth}px)` },
+          ml: { md: `${props.drawerWidth}px` },
           px: {
             xs: "0",
             md: theme.spacing(3),
@@ -72,16 +69,16 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
             <PolkadotConnect />
             <ExternalLinksDropdown />
           </Box>
-          {breadcrumbs && (
+          {props.breadcrumbs && (
             <Breadcrumbs separator="›" aria-label="breadcrumb">
-              {breadcrumbs}
+              {props.breadcrumbs}
             </Breadcrumbs>
           )}
         </Toolbar>
       </AppBar>
       <Box
         component="nav"
-        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
+        sx={{ width: { md: props.drawerWidth }, flexShrink: { md: 0 } }}
         aria-label="mailbox folders"
       >
         <Drawer
@@ -101,7 +98,7 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
             },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
-              width: drawerWidth,
+              width: props.drawerWidth,
               padding: "0rem",
             },
           }}
@@ -114,7 +111,7 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
             display: { sm: "none", md: "block", xs: "none" },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
-              width: drawerWidth,
+              width: props.drawerWidth,
               padding: 0,
             },
           }}
@@ -123,6 +120,20 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
           <NavBar />
         </Drawer>
       </Box>
+    </>
+  );
+}
+
+export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
+  const { children, breadcrumbs } = props;
+  const theme = useTheme();
+  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
+  const drawerWidth = isTablet ? 240 : 320;
+
+  return (
+    <Box sx={{ display: "flex", minHeight: "100vh" }}>
+      <CssBaseline />
+      <Sidebar drawerWidth={drawerWidth} breadcrumbs={breadcrumbs} />
       <Box
         component="main"
         sx={{

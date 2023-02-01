@@ -36,9 +36,9 @@ export type StakingRewardsSlice = {
   };
   setRewardPool: (assetId: string, pool: RewardPool) => void;
   stakingPositions: StakingPosition[];
-  isStakingPositionsLoadingState: boolean;
+  isStakingPositionsLoading: boolean;
   setStakingPositions: (positions: StakingPosition[]) => void;
-  setStakingPositionLoadingState: (k: boolean) => void;
+  setStakingPositionLoading: (k: boolean) => void;
   stakingPortfolio: StakingPortfolio;
   setStakingPortfolio: (value: StakingPortfolio) => void;
 };
@@ -61,7 +61,7 @@ const initialState = {
     },
   },
   stakingPositions: [],
-  isStakingPositionsLoadingState: false,
+  isStakingPositionsLoading: false,
   stakingPortfolio: [],
 };
 
@@ -76,9 +76,9 @@ export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (
 
       return state;
     }),
-  setStakingPositionLoadingState: (status: boolean) =>
+  setStakingPositionLoading: (status: boolean) =>
     set((state) => {
-      state.isStakingPositionsLoadingState = status;
+      state.isStakingPositionsLoading = status;
     }),
   setStakingPositions: (positions) =>
     set((state) => {

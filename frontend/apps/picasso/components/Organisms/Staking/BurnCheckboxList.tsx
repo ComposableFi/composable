@@ -7,14 +7,14 @@ import {
   useTheme,
 } from "@mui/material";
 import { AlertBox, TokenAsset } from "@/components";
-import { callbackGate, humanBalance } from "shared";
+import { humanBalance } from "shared";
 import { WarningAmberRounded } from "@mui/icons-material";
-import { FC, useCallback, useEffect, useMemo } from "react";
-import { useStakingRewards } from "@/defi/polkadot/hooks/useStakingRewards";
-import { subscribeAssetPrice } from "@/defi/polkadot/pallets/Oracle";
+import { FC } from "react";
+import { useStakingRewards } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewards";
 import { useStore } from "@/stores/root";
 import BigNumber from "bignumber.js";
 import { PortfolioItem } from "@/stores/defi/polkadot/stakingRewards/slice";
+import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
 
 const BurnCheckboxItem = ({
   portfolioItem,
@@ -90,49 +90,43 @@ export const BurnCheckboxList: FC<{
   onSelectUnstakeToken,
   unstakeTokenId,
 }) => {
-  const { stakingPortfolio, parachainApi } = useStakingRewards();
-  const subscribePriceCallback = useCallback(
-    (assetId: string) =>
-      callbackGate(
-        (api, id) => subscribeAssetPrice(api.createType("CurrencyId", id), api),
-        parachainApi,
-        assetId
-      ),
-    [parachainApi]
-  );
-
-  useEffect(() => {
-    const unsub = stakingPortfolio.map((portfolio) =>
-      subscribePriceCallback(portfolio.assetId)
-    );
-
-    return () => {
-      unsub.forEach(
-        (unsubscribeFunction) =>
-          typeof unsubscribeFunction === "function" && unsubscribeFunction?.()
-      );
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stakingPortfolio]);
+  const { stakingPortfolio } = useStakingRewards();
+  // TODO: Price fetch for assets was used from oracle, needs to change to coingecko
+  // const subscribePriceCallback = useCallback(
+  //   (assetId: string) =>
+  //     callbackGate(
+  //       (api, id) => subscribeAssetPrice(api.createType("CurrencyId", id), api),
+  //       parachainApi,
+  //       assetId
+  //     ),
+  //   [parachainApi]
+  // );
+  //
+  // useEffect(() => {
+  //   const unsub = stakingPortfolio.map((portfolio) =>
+  //     subscribePriceCallback(portfolio.assetId)
+  //   );
+  //
+  //   return () => {
+  //     unsub.forEach(
+  //       (unsubscribeFunction) =>
+  //         typeof unsubscribeFunction === "function" && unsubscribeFunction?.()
+  //     );
+  //   };
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [stakingPortfolio]);
 
   const isSelected =
     unstakeTokenId[0].length > 0 && unstakeTokenId[1].length > 0;
+  const [fnftCollectionId, fnftInstanceId] = unstakeTokenId;
 
-  const isExpired = useMemo(() => {
-    const portfolioItem = stakingPortfolio.find(
-      (portfolio) =>
-        portfolio.collectionId === unstakeTokenId[0] &&
-        portfolio.instanceId === unstakeTokenId[1]
-    );
-    if (portfolioItem && isSelected) {
-      const endDate = new Date(Number(portfolioItem.endTimestamp.toString()));
-      const now = new Date();
+  const currentPortfolio = Object.values(stakingPortfolio).find(
+    (portfolio) =>
+      portfolio.collectionId === fnftCollectionId &&
+      portfolio.instanceId === fnftInstanceId
+  );
 
-      return endDate.getTime() - now.getTime() < 0;
-    }
-
-    return false;
-  }, [stakingPortfolio, isSelected, unstakeTokenId]);
+  const { isExpired } = useExpiredPortfolio(currentPortfolio);
 
   const shouldShowSlashWarning = isSelected && !isExpired;
 
@@ -140,6 +134,7 @@ export const BurnCheckboxList: FC<{
     <Stack gap={4} marginTop={9}>
       {stakingPortfolio.map((portfolioItem) => (
         <BurnCheckboxItem
+          key={portfolioItem.id}
           portfolioItem={portfolioItem}
           selectedToken={unstakeTokenId}
           onSelectUnstakeToken={onSelectUnstakeToken}

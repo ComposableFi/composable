@@ -9,7 +9,10 @@ import {
   toChainIdUnit,
   unwrapNumberOrHex,
 } from "shared";
-import { RewardPool } from "@/stores/defi/polkadot/stakingRewards/slice";
+import {
+  PortfolioItem,
+  RewardPool,
+} from "@/stores/defi/polkadot/stakingRewards/slice";
 import { Executor } from "substrate-react";
 import { AnyComponentMap, EnqueueSnackbar, SnackbarKey } from "notistack";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
@@ -17,6 +20,7 @@ import { Signer } from "@polkadot/api/types";
 import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/TaskEither";
 import { tryCatch } from "fp-ts/TaskEither";
+import { StakingPosition } from "@/apollo/queries/stakingPositions";
 
 export async function fetchStakingRewardPosition(
   api: ApiPromise,
@@ -65,6 +69,62 @@ export function transformRewardPool(rewardPoolsWrapped: any): RewardPool {
       rewardPoolsWrapped.minimumStakingAmount.toString()
     ),
   } as unknown as RewardPool;
+}
+
+export function transformStakingPortfolio(
+  position: StakingPosition,
+  result: any,
+  rewardPools: {
+    [assetId: string]: RewardPool;
+  },
+  assetId: string
+): PortfolioItem {
+  // TODO: fix type in here.
+  return {
+    collectionId: position.fnftCollectionId,
+    instanceId: position.fnftInstanceId,
+    assetId: position.assetId,
+    endTimestamp: position.endTimestamp,
+    id: position.id,
+    unlockPenalty: fromPerbill(rewardPools[assetId].lock.unlockPenalty),
+    multiplier: rewardPools[assetId].lock.durationPresets[result.lock.duration],
+    share: fromChainIdUnit(unwrapNumberOrHex(result.share)),
+    stake: fromChainIdUnit(unwrapNumberOrHex(result.stake)),
+  };
+}
+
+export function tryFetchStakePortfolio(
+  api: ApiPromise,
+  position: StakingPosition,
+  rewardPools: { [assetId: string]: RewardPool },
+  assetId: string
+) {
+  const getStakePortfolio = tryCatch(
+    () =>
+      api.query.stakingRewards.stakes(
+        api.createType("u128", position.fnftCollectionId),
+        api.createType("u64", position.fnftInstanceId)
+      ),
+    () =>
+      new Error(
+        `Could not fetch stakes for Position ${position.fnftCollectionId}:${position.fnftInstanceId}`
+      )
+  );
+  return pipe(
+    getStakePortfolio,
+    TE.chainW((stakingPortfolio) =>
+      stakingPortfolio.isSome
+        ? TE.right(
+            transformStakingPortfolio(
+              position,
+              stakingPortfolio.toJSON(),
+              rewardPools,
+              assetId
+            )
+          )
+        : TE.left(new Error("Empty staking portfolio"))
+    )
+  );
 }
 
 export function tryFetchRewardPool(
