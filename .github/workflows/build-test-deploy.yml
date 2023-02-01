@@ -10,7 +10,6 @@ on:
 
   # For PRs that need to run in the monorepo context.
   pull_request:
-    types: [ labeled ]
 
 permissions: 
   pull-requests: write
@@ -31,7 +30,7 @@ env:
 jobs:
   check-privilege:
     name: "Privilege Check"
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.repository_owner != 'ComposableFi') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'privileged')) }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.repository_owner != 'ComposableFi') || (github.event_name == 'pull_request' && github.repository_owner == 'ComposableFi') }}
     concurrency:
       group: ${{ github.workflow }}-composablejs-${{ github.event.pull_request.title }}
       cancel-in-progress: true
