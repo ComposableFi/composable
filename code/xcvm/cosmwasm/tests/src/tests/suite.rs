@@ -593,6 +593,8 @@ mod base {
 }
 
 mod single_chain {
+	use xcvm_core::Balance;
+
 	use super::*;
 
 	fn simple_singlechain_xcvm_transfer(
@@ -635,7 +637,7 @@ mod single_chain {
 		)
 		.expect("Must be able to create an XCVM network.");
 		let assets_to_transfer = [(PICA::ID, transfer_amount)];
-		let program = ProgramBuilder::<Picasso, CanonicalAddr, Funds>::new([])
+		let program = ProgramBuilder::<Picasso, CanonicalAddr, Funds<Balance>>::new([])
 			.transfer(Destination::Account(to_canonical(bob.clone())), assets_to_transfer)
 			.build();
 		let CrossChainDispatchResult { dispatch_data, dispatch_events, relay_data, relay_events } =
@@ -692,6 +694,7 @@ mod single_chain {
 	}
 
 	proptest! {
+
 	  #[test]
 	  fn test_simple_singlechain_xcvm_transfer(
 		  admin in account(),

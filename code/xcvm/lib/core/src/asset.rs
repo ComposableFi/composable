@@ -181,6 +181,12 @@ impl Balance {
 	}
 }
 
+impl From<u128> for Balance {
+	fn from(value: u128) -> Self {
+		Balance { amount: Amount::absolute(value), is_unit: false }
+	}
+}
+
 pub const MAX_PARTS: u128 = 1000000000000000000;
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -226,12 +232,12 @@ impl Amount {
 		Self::ratio(Self::MAX_PARTS)
 	}
 
-	/// Apply the amount to a value
+	/// `f(x) = a(x - b) + b where a = slope / MAX_PARTS, b = intercept`
 	pub fn apply(&self, value: u128) -> Result<u128, ()> {
-		if value == 0 {
+		if value.is_zero() {
 			return Ok(0)
 		}
-		let amount = if self.slope.0 == 0 {
+		let amount = if self.slope.0.is_zero() {
 			self.intercept.0
 		} else {
 			if self.slope.0 == Self::MAX_PARTS {
@@ -241,6 +247,7 @@ impl Amount {
 					Uint256::from(value).checked_sub(self.intercept.0.into()).map_err(|_| ())?;
 				let value =
 					value.checked_multiply_ratio(self.slope.0, Self::MAX_PARTS).map_err(|_| ())?;
+				let value = value.checked_add(self.intercept.0.into()).map_err(|_| ())?;
 				let value = Uint128::try_from(value).map_err(|_| ())?.u128();
 				value
 			}
@@ -248,17 +255,34 @@ impl Amount {
 		Ok(u128::min(value, amount))
 	}
 
-	/// `f(x) = a + b * 10 ^ decimals where a = intercept, b = slope / MAX_PARTS`
-	pub fn apply_with_decimals(&self, decimals: u8, value: u128) -> u128 {
-		let amount = FixedU128::<U16>::wrapping_from_num(self.intercept.0)
-			.saturating_add(
-				FixedU128::<U16>::wrapping_from_num(self.slope.0)
-					.saturating_div(FixedU128::<U16>::wrapping_from_num(MAX_PARTS)),
-			)
-			.saturating_mul(FixedU128::<U16>::wrapping_from_num(10_u128.pow(decimals as u32)))
-			.wrapping_to_num::<u128>();
-
-		u128::min(value, amount)
+	/// `f(x) = (a + b) * 10 ^ decimals where a = intercept, b = slope / MAX_PARTS`
+	pub fn apply_with_decimals(&self, decimals: u8, value: u128) -> Result<u128, ()> {
+		if value.is_zero() {
+			return Ok(0)
+		}
+		let unit = 10_u128.checked_pow(decimals as u32).ok_or(())?;
+		let amount = if self.slope.0.is_zero() {
+			self.intercept.0.checked_mul(unit).ok_or(())?
+		} else {
+			if self.slope.0 == Self::MAX_PARTS {
+				value
+			} else {
+				let value = Uint256::from(self.intercept.0);
+				let value = value
+					.checked_add(
+						Uint256::one()
+							.checked_multiply_ratio(self.slope.0, Self::MAX_PARTS)
+							.map_err(|_| ())?,
+					)
+					.map_err(|_| ())?;
+				let value = value
+					.checked_mul(Uint256::from(10_u128.pow(decimals as u32)))
+					.map_err(|_| ())?;
+				let value = Uint128::try_from(value).map_err(|_| ())?.u128();
+				value
+			}
+		};
+		Ok(u128::min(value, amount))
 	}
 }
 
@@ -288,7 +312,6 @@ impl From<u128> for Amount {
 	fn from(x: u128) -> Self {
 		Self::absolute(x)
 	}
-
 }
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]

@@ -21,8 +21,8 @@ use cw_xcvm_common::shared::{encode_base64, BridgeMsg};
 use cw_xcvm_utils::{DefaultXCVMInstruction, DefaultXCVMProgram};
 use num::Zero;
 use xcvm_core::{
-	apply_bindings, cosmwasm::*, Balance, Amount, BindingValue, BridgeSecurity, Destination, Displayed,
-	Funds, Instruction, NetworkId, Register,
+	apply_bindings, cosmwasm::*, Amount, Balance, BindingValue, BridgeSecurity, Destination,
+	Displayed, Funds, Instruction, NetworkId, Register,
 };
 
 type XCVMInstruction = DefaultXCVMInstruction;
@@ -274,7 +274,7 @@ pub fn interpret_call(
 							&balance,
 							&cw20_address,
 							&env.contract.address,
-						)?,
+						),
 						AssetReference::Native { denom } =>
 							if balance.is_unit {
 								return Err(ContractError::InvalidBindings)
@@ -282,9 +282,12 @@ pub fn interpret_call(
 								let coin = deps
 									.querier
 									.query_balance(env.contract.address.clone(), denom.clone())?;
-								balance.amount.apply(coin.amount.into())
+								balance
+									.amount
+									.apply(coin.amount.into())
+									.map_err(|_| ContractError::ArithmeticError)
 							},
-					};
+					}?;
 					Cow::Owned(format!("{}", amount).into())
 				},
 			};
@@ -320,6 +323,7 @@ pub fn interpret_spawn(
 	let registry_address = registry_address.into_string();
 	let mut normalized_funds: Funds<Displayed<u128>> = Funds::empty();
 
+	let mut response = Response::default();
 	for (asset_id, balance) in assets.0 {
 		if balance.amount.is_zero() {
 			// We ignore zero amounts
@@ -335,15 +339,18 @@ pub fn interpret_spawn(
 				}
 				let coin =
 					deps.querier.query_balance(env.contract.address.clone(), denom.clone())?;
-				balance.amount.apply(coin.amount.into())
+				balance
+					.amount
+					.apply(coin.amount.into())
+					.map_err(|_| ContractError::ArithmeticError)
 			},
 			AssetReference::Virtual { cw20_address } => apply_amount_to_cw20_balance(
 				deps.as_ref(),
 				&balance,
 				cw20_address,
 				&env.contract.address,
-			)?,
-		};
+			),
+		}?;
 
 		if !transfer_amount.is_zero() {
 			let asset_id: u128 = asset_id.into();
@@ -412,8 +419,8 @@ pub fn interpret_transfer(
 
 	let mut response = Response::default();
 
-   for (asset_id, balance) in assets.0 {
-    if balance.amount.is_zero() {
+	for (asset_id, balance) in assets.0 {
+		if balance.amount.is_zero() {
 			continue
 		}
 
@@ -424,7 +431,7 @@ pub fn interpret_transfer(
 					return Err(ContractError::DecimalsInNativeToken)
 				}
 				let mut coin = deps.querier.query_balance(env.contract.address.clone(), denom)?;
-				coin.amount = balance.amount.apply(coin.amount.into()).into();
+				coin.amount = balance.amount.apply(coin.amount.into())?.into();
 				response.add_message(BankMsg::Send {
 					to_address: recipient.clone(),
 					amount: vec![coin],
@@ -524,7 +531,7 @@ fn apply_amount_to_cw20_balance<A: Into<String> + Clone>(
 			.apply_with_decimals(token_info.decimals, balance_response.balance.into())
 	} else {
 		balance.amount.apply(balance_response.balance.into())
-	};
+	}?;
 
 	Ok(processed_amount)
 }

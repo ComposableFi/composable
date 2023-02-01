@@ -39,7 +39,8 @@
           // {
             src = systemCommonRust.mkRustSrc ./.;
             cargoArtifacts = xcvm-deps;
-            cargoBuildCommand = "cargo test --release -p xcvm-tests";
+            buildPhase = "cargo test --release -p xcvm-tests";
+            installPhase = "mkdir -p $out";
             CW_XCVM_ASSET_REGISTRY =
               "${xcvm-contracts}/lib/cw_xcvm_asset_registry.wasm";
             CW_XCVM_INTERPRETER =

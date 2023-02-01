@@ -13,8 +13,8 @@ pub enum ContractError {
 	NotAuthorized,
 
 	#[error("The asset is already registered. Please unregister it first")]
-  AlreadyRegistered,
+	AlreadyRegistered,
 
 	#[error("The asset is not registered")]
-  NotRegistered,
+	NotRegistered,
 }
