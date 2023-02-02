@@ -1,6 +1,6 @@
 name: "Release Subsquid Production Image"
 env:
-  SUBSQUID_IMAGE_RELEASE_TAGS: ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest,${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:{{ github.event.pull_request.head.sha }},v0.0.1
+  SUBSQUID_IMAGE_RELEASE_TAGS: ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest,${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:{{ github.event.push.after }},v0.0.1
 on:
   push:
     tags:
@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.push.after }}
           persist-credentials: false
       - name: Setup jest
         uses: actions/setup-node@v3
@@ -32,7 +32,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.push.after }}
           persist-credentials: false
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
