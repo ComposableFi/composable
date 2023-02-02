@@ -19,7 +19,7 @@ use cosmwasm_vm::{
 	},
 	vm::{VMBase, VmErrorOf, VmGas},
 };
-use cosmwasm_vm_wasmi::WasmiVM;
+use cosmwasm_vm_wasmi::OwnedWasmiVM;
 use frame_support::{
 	pallet_prelude::ConstU32,
 	parameter_types,
@@ -364,15 +364,15 @@ impl PalletHook<Test> for MockHook {
 	}
 
 	fn execute<'a>(
-		vm: &mut WasmiVM<CosmwasmVM<'a, Test>>,
+		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, Test>>,
 		entrypoint: EntryPoint,
 		message: &[u8],
 	) -> Result<
-		ContractResult<Response<<WasmiVM<CosmwasmVM<'a, Test>> as VMBase>::MessageCustom>>,
-		VmErrorOf<WasmiVM<CosmwasmVM<'a, Test>>>,
+		ContractResult<Response<<OwnedWasmiVM<CosmwasmVM<'a, Test>> as VMBase>::MessageCustom>>,
+		VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Test>>>,
 	> {
 		match entrypoint {
-			EntryPoint::IbcChannelOpen => match *vm.0.contract_address.as_ref() {
+			EntryPoint::IbcChannelOpen => match *vm.0.data().contract_address.as_ref() {
 				MOCK_PALLET_IBC_CONTRACT_ADDRESS => Ok(ContractResult::Ok(Response::new())),
 				_ => Ok(ContractResult::Err("IBC not supported".into())),
 			},
@@ -380,7 +380,7 @@ impl PalletHook<Test> for MockHook {
 			EntryPoint::IbcChannelClose => todo!("IbcChannelClose"),
 			EntryPoint::IbcPacketTimeout => todo!("IbcPacketTimeout"),
 			EntryPoint::IbcPacketAck => todo!("IbcPacketAck"),
-			_ => match *vm.0.contract_address.as_ref() {
+			_ => match *vm.0.data().contract_address.as_ref() {
 				MOCK_PALLET_CONTRACT_ADDRESS_1 => {
 					vm.charge(VmGas::Instrumentation { metered: 1 })?;
 					let mut response = Response::new()
@@ -437,10 +437,10 @@ impl PalletHook<Test> for MockHook {
 	}
 
 	fn query<'a>(
-		vm: &mut WasmiVM<CosmwasmVM<'a, Test>>,
+		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, Test>>,
 		_message: &[u8],
-	) -> Result<ContractResult<QueryResponse>, VmErrorOf<WasmiVM<CosmwasmVM<'a, Test>>>> {
-		match *vm.0.contract_address.as_ref() {
+	) -> Result<ContractResult<QueryResponse>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Test>>>> {
+		match *vm.0.data().contract_address.as_ref() {
 			MOCK_PALLET_CONTRACT_ADDRESS_1 | MOCK_PALLET_CONTRACT_ADDRESS_2 =>
 				Ok(ContractResult::Err(MOCK_QUERY_JS.into())),
 			_ => Err(CosmwasmVMError::Unsupported), // Should be impossible
