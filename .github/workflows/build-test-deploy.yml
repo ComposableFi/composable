@@ -163,7 +163,7 @@ jobs:
       - name: Add tools needed for checkout
         run: |  
           nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs nixpkgs.tree
+          nix-env -iA cachix git-lfs nodejs tree
       - uses: actions/checkout@v3
         with:
           lfs: true
