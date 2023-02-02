@@ -1,25 +1,22 @@
 use super::abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas};
 use crate::{runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Config, Pallet};
 use alloc::{borrow::ToOwned, string::String};
+use core::marker::{Send, Sync};
 use cosmwasm_vm::{
 	cosmwasm_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo},
 	executor::ExecutorError,
 	has::Has,
-	memory::{
-		MemoryReadError, MemoryWriteError, Pointable, ReadWriteMemory, ReadableMemory,
-		WritableMemory,
-	},
+	memory::{MemoryReadError, MemoryWriteError},
 	system::{CosmwasmCodeId, CosmwasmContractMeta, SystemError},
 	transaction::Transactional,
 	vm::{VMBase, VmGas},
 };
 use cosmwasm_vm_wasmi::{
-	WasmiContext, WasmiHost, WasmiHostFunction, WasmiHostFunctionIndex, WasmiInput, WasmiModule,
-	WasmiOutput, WasmiVM, WasmiVMError,
+	OwnedWasmiVM, WasmiContext, WasmiInput, WasmiModule, WasmiOutput, WasmiVMError,
 };
 use frame_support::storage::ChildTriePrefixIterator;
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
-use wasmi::CanResume;
+use wasmi::{core::HostError, Instance, Memory};
 
 /// Different type of contract runtimes. A contract might either be dynamically loaded or statically
 /// invoked (precompiled).
@@ -28,7 +25,7 @@ pub enum ContractBackend {
 	/// user.
 	CosmWasm {
 		/// The wasmi module instantiated for the CosmWasm contract.
-		executing_module: WasmiModule,
+		executing_module: Option<WasmiModule>,
 	},
 	/// A substrate pallet, which is a precompiled contract that is included in the runtime.
 	Pallet,
@@ -37,43 +34,16 @@ pub enum ContractBackend {
 impl WasmiContext for ContractBackend {
 	fn executing_module(&self) -> Option<WasmiModule> {
 		match self {
-			ContractBackend::CosmWasm { executing_module } => Some(executing_module.clone()),
+			ContractBackend::CosmWasm { executing_module } => executing_module.clone(),
 			ContractBackend::Pallet => None,
 		}
 	}
-}
 
-impl Pointable for ContractBackend {
-	type Pointer = u32;
-}
-
-impl ReadableMemory for ContractBackend {
-	type Error = WasmiVMError;
-	fn read(&self, offset: Self::Pointer, buffer: &mut [u8]) -> Result<(), Self::Error> {
-		match self {
-			ContractBackend::CosmWasm { executing_module } => executing_module
-				.memory
-				.get_into(offset, buffer)
-				.map_err(|_| WasmiVMError::LowLevelMemoryReadError),
-			ContractBackend::Pallet => Err(WasmiVMError::NotADynamicModule),
-		}
+	fn set_wasmi_context(&mut self, instance: Instance, memory: Memory) {
+		*self =
+			ContractBackend::CosmWasm { executing_module: Some(WasmiModule { instance, memory }) };
 	}
 }
-
-impl WritableMemory for ContractBackend {
-	type Error = WasmiVMError;
-	fn write(&self, offset: Self::Pointer, buffer: &[u8]) -> Result<(), Self::Error> {
-		match self {
-			ContractBackend::CosmWasm { executing_module } => executing_module
-				.memory
-				.set(offset, buffer)
-				.map_err(|_| WasmiVMError::LowLevelMemoryWriteError),
-			ContractBackend::Pallet => Err(WasmiVMError::NotADynamicModule),
-		}
-	}
-}
-
-impl ReadWriteMemory for ContractBackend {}
 
 #[derive(Debug)]
 pub enum CosmwasmVMError<T: Config> {
@@ -87,6 +57,11 @@ pub enum CosmwasmVMError<T: Config> {
 	Unsupported,
 	Rpc(String),
 	Ibc(String),
+}
+
+impl<T: Config + core::marker::Send + core::marker::Sync + 'static> HostError
+	for CosmwasmVMError<T>
+{
 }
 
 impl<T: Config> core::fmt::Display for CosmwasmVMError<T> {
@@ -134,12 +109,6 @@ impl<T: Config> From<MemoryReadError> for CosmwasmVMError<T> {
 impl<T: Config> From<MemoryWriteError> for CosmwasmVMError<T> {
 	fn from(e: MemoryWriteError) -> Self {
 		Self::VirtualMachine(e.into())
-	}
-}
-
-impl<T: Config> CanResume for CosmwasmVMError<T> {
-	fn can_resume(&self) -> bool {
-		false
 	}
 }
 
@@ -196,15 +165,6 @@ impl CosmwasmVMShared {
 /// This structure hold the state for a single contract.
 /// Note that all [`CosmwasmVM`] share the same [`CosmWasmVMShared`] structure.
 pub struct CosmwasmVM<'a, T: Config> {
-	// NOTE(hussein-aitlahcen): would be nice to move the host functions to the shared structure.
-	// but we can't do it, otherwise we introduce a dependency do the lifetime `'a` here. This
-	// lifetime is used by the host function and when reusing the shared structure for sub-calls,
-	// the lifetime would be different (lifetime of children live longer than the initial one,
-	// hence we'll face a compilation issue). This could be solved with HKT or unsafe host
-	// functions (raw pointer without lifetime).
-	/// Host functions by index. Only used by dynamically loaded contracts (wasm bytecode).
-	pub host_functions_by_index:
-		BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<CosmwasmVM<'a, T>>>,
 	/// CosmWasm [`Env`] for the executing contract.
 	pub cosmwasm_env: Env,
 	/// CosmWasm [`MessageInfo`] for the executing contract.
@@ -237,40 +197,11 @@ impl<'a, T: Config> WasmiContext for CosmwasmVM<'a, T> {
 	fn executing_module(&self) -> Option<WasmiModule> {
 		self.contract_runtime.executing_module()
 	}
-}
 
-// NOTE(hussein-aitlahcen): WasmiHostFunction require the type of the VM, I'm not sure we can push
-// this in the `contract_runtime` field. If so, please advise.
-impl<'a, T: Config> WasmiHost<Self> for CosmwasmVM<'a, T> {
-	fn host_function(
-		&self,
-		index: WasmiHostFunctionIndex,
-	) -> Option<&WasmiHostFunction<CosmwasmVM<'a, T>>> {
-		self.host_functions_by_index.get(&index)
+	fn set_wasmi_context(&mut self, instance: Instance, memory: Memory) {
+		self.contract_runtime.set_wasmi_context(instance, memory)
 	}
 }
-
-impl<'a, T: Config> Pointable for CosmwasmVM<'a, T> {
-	type Pointer = <ContractBackend as Pointable>::Pointer;
-}
-
-impl<'a, T: Config> ReadableMemory for CosmwasmVM<'a, T> {
-	type Error = <ContractBackend as ReadableMemory>::Error;
-	fn read(&self, offset: Self::Pointer, buffer: &mut [u8]) -> Result<(), Self::Error> {
-		self.contract_runtime.read(offset, buffer)?;
-		Ok(())
-	}
-}
-
-impl<'a, T: Config> WritableMemory for CosmwasmVM<'a, T> {
-	type Error = <ContractBackend as WritableMemory>::Error;
-	fn write(&self, offset: Self::Pointer, buffer: &[u8]) -> Result<(), Self::Error> {
-		self.contract_runtime.write(offset, buffer)?;
-		Ok(())
-	}
-}
-
-impl<'a, T: Config> ReadWriteMemory for CosmwasmVM<'a, T> {}
 
 impl<'a, T: Config> CosmwasmVM<'a, T> {
 	pub fn charge_raw(&mut self, gas: u64) -> Result<(), <Self as VMBase>::Error> {
@@ -281,9 +212,9 @@ impl<'a, T: Config> CosmwasmVM<'a, T> {
 	}
 }
 
-impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
-	type Input<'x> = WasmiInput<'x, WasmiVM<Self>>;
-	type Output<'x> = WasmiOutput<'x, WasmiVM<Self>>;
+impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
+	type Input<'x> = WasmiInput<OwnedWasmiVM<Self>>;
+	type Output<'x> = WasmiOutput<OwnedWasmiVM<Self>>;
 	type QueryCustom = Empty;
 	type MessageCustom = Empty;
 	type ContractMeta = CosmwasmContractMeta<CosmwasmAccount<T>>;

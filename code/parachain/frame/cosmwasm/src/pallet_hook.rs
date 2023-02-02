@@ -3,7 +3,7 @@ use cosmwasm_vm::{
 	cosmwasm_std::{ContractResult, QueryResponse, Response},
 	vm::{VMBase, VmErrorOf},
 };
-use cosmwasm_vm_wasmi::WasmiVM;
+use cosmwasm_vm_wasmi::OwnedWasmiVM;
 
 /// A hook for pallets into the VM. Used to call substrate pallets from a CosmWasm contract.
 pub trait PalletHook<T: Config> {
@@ -21,19 +21,19 @@ pub trait PalletHook<T: Config> {
 
 	/// Hook into a contract call.
 	fn execute<'a>(
-		vm: &mut WasmiVM<CosmwasmVM<'a, T>>,
+		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, T>>,
 		entrypoint: EntryPoint,
 		message: &[u8],
 	) -> Result<
-		ContractResult<Response<<WasmiVM<CosmwasmVM<'a, T>> as VMBase>::MessageCustom>>,
-		VmErrorOf<WasmiVM<CosmwasmVM<'a, T>>>,
+		ContractResult<Response<<OwnedWasmiVM<CosmwasmVM<'a, T>> as VMBase>::MessageCustom>>,
+		VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, T>>>,
 	>;
 
 	/// Hook into a contract query.
 	fn query<'a>(
-		vm: &mut WasmiVM<CosmwasmVM<'a, T>>,
+		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, T>>,
 		message: &[u8],
-	) -> Result<ContractResult<QueryResponse>, VmErrorOf<WasmiVM<CosmwasmVM<'a, T>>>>;
+	) -> Result<ContractResult<QueryResponse>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, T>>>>;
 }
 
 /// Default implementation, acting as identity (unhooked).
@@ -52,21 +52,21 @@ impl<T: Config> PalletHook<T> for () {
 	}
 
 	fn execute<'a>(
-		_vm: &mut WasmiVM<CosmwasmVM<'a, T>>,
+		_vm: &mut OwnedWasmiVM<CosmwasmVM<'a, T>>,
 		_entrypoint: EntryPoint,
 		_message: &[u8],
 	) -> Result<
-		ContractResult<Response<<WasmiVM<CosmwasmVM<'a, T>> as VMBase>::MessageCustom>>,
-		VmErrorOf<WasmiVM<CosmwasmVM<'a, T>>>,
+		ContractResult<Response<<OwnedWasmiVM<CosmwasmVM<'a, T>> as VMBase>::MessageCustom>>,
+		VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, T>>>,
 	>
 where {
 		Err(Error::<T>::Unsupported.into())
 	}
 
 	fn query<'a>(
-		_vm: &mut WasmiVM<CosmwasmVM<'a, T>>,
+		_vm: &mut OwnedWasmiVM<CosmwasmVM<'a, T>>,
 		_: &[u8],
-	) -> Result<ContractResult<QueryResponse>, VmErrorOf<WasmiVM<CosmwasmVM<'a, T>>>> {
+	) -> Result<ContractResult<QueryResponse>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, T>>>> {
 		Err(Error::<T>::Unsupported.into())
 	}
 }
