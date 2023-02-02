@@ -29,23 +29,25 @@
           acala-node
           dali-subxt-client
           zombienet
-          # price-feed # errored in ci
-          # devnet-container # errored in ci
-          # bridge-devnet-dali-container
           devnet-initialize-script-picasso-persistent
-
-          # not needed as part of effects-gate
           devnet-dali-complete
           devnet-picasso-complete
           devnet-dali
-          # devnet-centauri # disabled because this is not properly nixified
+
+          # disabled because this is not properly nixified
+
+          # devnet-centauri 
           # hyperspace-dali
+          # devnet-container # errored in ci
+          # bridge-devnet-dali-container 
 
           # needs to be pushed to docker
           cmc-api
           cmc-api-image
 
-          # TODO: benchmarks-once-dali, benchmarks-once-picasso, benchmarks-once-composable
+          check-dali-benchmarks-ci
+          check-picasso-benchmarks-ci
+          check-composable-benchmarks-ci
 
           # unsure about these
           check-dali-integration-tests
