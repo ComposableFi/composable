@@ -51,8 +51,8 @@ runs:
         RETRIES=5               
         INPUTS_COMMAND="${{ inputs.command }}"        
         CACHIX="cachix watch-exec --jobs 16 --compression-level ${CACHIX_COMPRESSION_LEVEL?} composable-community"
-        HAPPY_CMD="${CACHIX?} ${INPUTS_COMMAND?} --no-update-lock-file --show-trace -L 2> >(tee --append $LOG_FILE >&2)" 
-        SLOW_CMD="${CACHIX?} ${INPUTS_COMMAND?} --no-update-lock-file --show-trace --fallback -L 2> >(tee --append $LOG_FILE >&2)" 
+        HAPPY_CMD="${CACHIX?} ${INPUTS_COMMAND?} --no-http2 --no-update-lock-file --show-trace -L 2> >(tee --append $LOG_FILE >&2)" 
+        SLOW_CMD="${CACHIX?} ${INPUTS_COMMAND?} --no-http2 --no-update-lock-file --show-trace --fallback -L 2> >(tee --append $LOG_FILE >&2)" 
         
         printf "will try execute '${HAPPY_CMD?}'"
 
