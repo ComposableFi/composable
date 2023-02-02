@@ -7,7 +7,7 @@ on:
       - 'subsquid-processor-v[0-9]+\.[0-9]+\.[0-9]+'  # e.g. subsquid-processor-v0.0.1
 
 jobs:
-  test-subsquid:
+  test-build-publish-subsquid:
     name: Test Subquid
     runs-on:
       - self-hosted
@@ -29,21 +29,8 @@ jobs:
       - name: Run tests
         run: npm run test
         working-directory: subsquid
-
-  subsquid-processor:
-    name: "Package Subsquid Processor"
-    needs:
-      - test-subsquid
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-package-subsquid-processor-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    steps:
-      - uses: actions/checkout@v3
+      - name: checkout
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
@@ -56,9 +43,9 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      - name: Build and push
+      - name: Build and push Subsquid Processor
         uses: docker/build-push-action@v3
         with:
           tags: ${{ env.SUBSQUID_IMAGE_RELESE_TAGS }}
           context: subsquid
-          push: ${{ github.event_name == 'push' && github.event.pull_request.title_name == 'main' }}
+          push: true
