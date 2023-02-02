@@ -154,16 +154,15 @@ jobs:
         with:
           install_url: https://releases.nixos.org/nix/nix-2.13.2/install
           nix_path: nixpkgs=channel:nixos-22.11 #TODO: change?
+      - name: Add tools needed for checkout
+        run: |  
+          nix-env -iA cachix git-lfs nodejs tree
       - name: Set up Cachix
         uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
         with:
           skipPush: true
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
-      - name: Add tools needed for checkout
-        run: |  
-          nix-channel --update
-          nix-env -iA cachix git-lfs nodejs tree
       - uses: actions/checkout@v3
         with:
           lfs: true
