@@ -151,14 +151,17 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-all-ci-packages-${{ github.event.pull_request.title }}
       cancel-in-progress: true
-    container:
-      image: nixos/nix:2.13.2
     steps:
-      - name: Enable LFS
-        run: |
-          nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-          nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs
+      - name: Set up Nix with cachix
+        uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
       - uses: actions/checkout@v3
         with:
           lfs: true
