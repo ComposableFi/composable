@@ -245,7 +245,7 @@ pub fn ibc_packet_receive(
 	let response = IbcReceiveResponse::default()
 		.add_event(Event::new(XCVM_GATEWAY_EVENT_PREFIX).add_attribute("action", "receive"));
 	match batch {
-		Ok(batch) => Ok(response.set_ack(XCVMAck::OK.into_vec()).add_submessage(batch)),
+		Ok(batch) => Ok(response.set_ack(XCVMAck::OK).add_submessage(batch)),
 		Err(e) => Ok(response
 			.add_event(
 				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
@@ -253,7 +253,7 @@ pub fn ibc_packet_receive(
 					.add_attribute("result", "failure")
 					.add_attribute("reason", format!("{}", e)),
 			)
-			.set_ack(XCVMAck::KO.into_vec())),
+			.set_ack(XCVMAck::KO)),
 	}
 }
 
@@ -322,7 +322,7 @@ pub fn handle_batch_reply(msg: Reply) -> Result<Response, ContractError> {
 					.add_attribute("action", "receive")
 					.add_attribute("result", "success"),
 			)
-			.set_data(XCVMAck::OK.into_vec())),
+			.set_data(XCVMAck::OK)),
 		SubMsgResult::Err(e) => Ok(Response::default()
 			.add_event(
 				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
@@ -330,7 +330,7 @@ pub fn handle_batch_reply(msg: Reply) -> Result<Response, ContractError> {
 					.add_attribute("result", "failure")
 					.add_attribute("reason", format!("{}", e)),
 			)
-			.set_data(XCVMAck::KO.into_vec())),
+			.set_data(XCVMAck::KO)),
 	}
 }
 

@@ -1,6 +1,7 @@
 use crate::{Displayed, Funds, UserOrigin};
 use alloc::{vec, vec::Vec};
 use codec::{Decode, Encode};
+use cosmwasm_std::Binary;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 
@@ -17,6 +18,12 @@ impl XCVMAck {
 	pub fn value(self) -> u8 {
 		self.0
 	}
+}
+
+impl From<XCVMAck> for Binary {
+    fn from(value: XCVMAck) -> Self {
+      Binary::from(value.into_vec())
+    }
 }
 
 impl From<XCVMAck> for Vec<u8> {
