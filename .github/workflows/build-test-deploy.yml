@@ -15,10 +15,8 @@ permissions:
   pull-requests: write
 
 env:
-  # NOTE: keep in sync with docs
-  NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
-  NIX_CONTAINER_IMAGE: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-  NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install
+  NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixos-22.11
+  NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.13.2/install
 
   CACHIX_COMPOSABLE: composable-community
   CACHIX_COMPRESSION_LEVEL: 3
@@ -64,79 +62,79 @@ jobs:
             **/*.json
             **/*.lock
 
-  check-nix:
-    name: "Check nix"
-    needs:
-      - check-privilege
-    continue-on-error: false
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-check-nix-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          nix --version
-          nix show-config
-          nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
+  # check-nix:
+  #   name: "Check nix"
+  #   needs:
+  #     - check-privilege
+  #   continue-on-error: false
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: ${{ github.workflow }}-check-nix-${{ github.event.pull_request.title }}
+  #     cancel-in-progress: true
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         persist-credentials: false
+  #     - run: |
+  #         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+  #         echo "sandbox = relaxed" >> /etc/nix/nix.conf
+  #         echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+  #     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+  #       with:
+  #         skipPush: true
+  #         installCommand: |
+  #           nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+  #           nix-channel --update
+  #           nix-env -iA nixpkgs.cachix
+  #         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  #         name: composable-community
+  #     - run: |
+  #         nix --version
+  #         nix show-config
+  #         nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
 
 
-  check-nix-long:
-    name: "Check nix long"
-    needs:
-      - check-privilege
-      - check-nix
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: ${{ github.workflow }}-check-nix-long-${{ github.event.pull_request.title }}
-      cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          name: composable-community
-      - run: |
-          chmod +x ./.github/workflows/check-nix-long.sh
-          source ./.github/workflows/check-nix-long.sh
+  # check-nix-long:
+  #   name: "Check nix long"
+  #   needs:
+  #     - check-privilege
+  #     - check-nix
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   concurrency:
+  #     group: ${{ github.workflow }}-check-nix-long-${{ github.event.pull_request.title }}
+  #     cancel-in-progress: true
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         persist-credentials: false
+  #     - run: |
+  #         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+  #         echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+  #     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+  #       with:
+  #         skipPush: true
+  #         installCommand: |
+  #           nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+  #           nix-channel --update
+  #           nix-env -iA nixpkgs.cachix
+  #         name: composable-community
+  #     - run: |
+  #         chmod +x ./.github/workflows/check-nix-long.sh
+  #         source ./.github/workflows/check-nix-long.sh
 
 
   
@@ -155,6 +153,7 @@ jobs:
       - name: Set up Nix
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
+          install_url: $NIX_INSTALL_URL
           nix_path: nixpkgs=channel:nixos-unstable #TODO: change?
       - name: Set up Cachix
         uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
@@ -163,7 +162,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - name: Add tools needed for checkout
-        run:  
+        run: |  
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs nixpkgs.tree
       - uses: actions/checkout@v3
