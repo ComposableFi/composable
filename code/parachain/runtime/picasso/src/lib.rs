@@ -96,8 +96,9 @@ use ibc::core::{
 	ics26_routing::context::{Module, ModuleId},
 };
 use pallet_ibc::{
-	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
-	IbcDenoms,
+	light_client_common::RelayChain,
+	routing::{ModuleRouter, NoneRouter},
+	DenomToAssetId, IbcAssetIds, IbcAssets, IbcDenoms,
 };
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -194,23 +195,6 @@ parameter_types! {
 		.build_or_panic();
 
 	pub const SS58Prefix: u8 = 49;
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Default)]
-pub struct Router {}
-
-impl ModuleRouter for Router {
-	fn get_route_mut(&mut self, _module_id: &ModuleId) -> Option<&mut dyn Module> {
-		None
-	}
-
-	fn has_route(_module_id: &ModuleId) -> bool {
-		false
-	}
-
-	fn lookup_module_by_port(_port_id: &PortId) -> Option<ModuleId> {
-		None
-	}
 }
 
 pub struct IbcDenomToAssetIdConversion;
@@ -1491,7 +1475,7 @@ impl pallet_ibc::Config for Runtime {
 	type AccountIdConversion = ibc_primitives::IbcAccount<AccountId>;
 	type Fungibles = Assets;
 	type ExpectedBlockTime = ExpectedBlockTime;
-	type Router = Router;
+	type Router = NoneRouter;
 	type MinimumConnectionDelay = MinimumConnectionDelay;
 	type ParaId = parachain_info::Pallet<Runtime>;
 	type RelayChain = RelayChainId;
