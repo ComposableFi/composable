@@ -80,6 +80,7 @@ Polkadot maps `XCM(1, Here)` to `XCM(0, Here)` to Native asset.
 
 
 
+
 ## How `assets routs` are created
 
 Here will be used `Governance` to as body which does `operations`. 
@@ -92,22 +93,21 @@ Act of governance can be executing storage update on behalf of some `admin` or u
 
 **Composable**
 
-Governance defines bimap of `XcmAsset(1, Here)` to 42. 
+Governance defines mapping of `XcmAsset(1, Here)` to 42. That can be monotinic number or hash of XcmAsset 
 
 Governance opens channel to `IBC picasso` and gets well known `portOnA/channelOnA/` prefix.
 
 Governance makes DOT asset payable (it has ratio to PICA to pay fees for incoming transaction and messages). Actually this is also bimap.
 
-Governance makes DOT bimap to symbol name `DOT <-> 42`
+Governance makes DOT bimap to metadata name (not used for fees or transfers)
 
 **Picasso**
 
-Governance make bimaps of `portOnA/channelOnA/42` to `42`.
+Governance ensres bimap of `portOnA/channelOnA/42` to `55`. In case of number we can gover it to be 42. In case of hash it will eother.
 
 Governance makes DOT bimap to symbol name `ibcDOT <-> 42`
 
-Governance makes DOT payable.
-
+Governance makes DOT bimap to metadata name (not used for fees or transfers)
 
 
 
@@ -120,3 +120,6 @@ Governance makes DOT payable.
 https://github.com/CosmWasm/cw-plus/blob/main/packages/cw20/src/denom.rs
 
 https://github.com/paritytech/xcm-format
+
+
+https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
