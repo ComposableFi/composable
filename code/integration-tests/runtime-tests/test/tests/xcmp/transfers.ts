@@ -176,7 +176,7 @@ describe("[SHORT][LAUNCH] tx.xcmp Tests", function () {
       });
 
       // Set dest weight
-      const destWeight = relayChainApiClient.createType("u64", 4000000000); // > 4000000000
+      const destWeight = relayChainApiClient.createType("XcmV2WeightLimit", { Limited: relayChainApiClient.createType("u64", 4000000000) }); // > 4000000000
 
       const transactorWalletBalanceBeforeTransaction = new BN(
         (await api.rpc.assets.balanceOf(ksmAssetID, walletAlice.publicKey)).toString()

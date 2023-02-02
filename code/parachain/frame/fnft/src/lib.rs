@@ -274,6 +274,11 @@ pub mod pallet {
 	}
 
 	impl<T: Config> InspectEnumerable<T::AccountId> for Pallet<T> {
+		type CollectionsIterator = Box<dyn Iterator<Item = Self::CollectionId>>;
+		type ItemsIterator = Box<dyn Iterator<Item = Self::ItemId>>;
+		type OwnedIterator = Box<dyn Iterator<Item = (Self::CollectionId, Self::ItemId)>>;
+		type OwnedInCollectionIterator = Box<dyn Iterator<Item = Self::ItemId>>;
+
 		/// Returns an iterator of the collections in existence.
 		///
 		/// NOTE: iterating this list invokes a storage read per item.

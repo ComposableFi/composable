@@ -1,6 +1,37 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
     packages = rec {
+      hyperspace-config = pkgs.writeText "config.toml" ''
+        [chain_a]
+        type = "parachain"
+        name = "picasso_1"
+        para_id = 2087
+        parachain_rpc_url = "ws://devnet-1:9988"
+        relay_chain_rpc_url = "ws://devnet-1:9944"
+        channel_whitelist = []
+        commitment_prefix = "0x6962632f"
+        private_key = "//Alice"
+        ss58_version = 49
+        finality_protocol = "Grandpa"
+        key_type = "sr25519"
+
+        [chain_b]
+        type = "parachain"
+        name = "picasso_2"
+        para_id = 2087
+        parachain_rpc_url = "ws://devnet-2:29988"
+        relay_chain_rpc_url = "ws://devnet-2:29944"
+        channel_whitelist = []
+        commitment_prefix = "0x6962632f"
+        private_key = "//Alice"
+        ss58_version = 49
+        finality_protocol = "Grandpa"
+        key_type = "sr25519"
+
+        [core]
+        prometheus_endpoint = "https://127.0.0.1"
+      '';
+
       hyperspace-dali-container = pkgs.dockerTools.buildImage {
         tag = "latest";
         name = "hyperspace-dali";

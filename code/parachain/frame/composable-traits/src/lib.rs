@@ -13,9 +13,9 @@
 // TODO: make `deny`
 #![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![warn(bad_style, trivial_numeric_casts)]
 // TODO: make `deny`
 #![warn(
-	bad_style,
 	bare_trait_objects,
 	improper_ctypes,
 	non_shorthand_field_patterns,
@@ -30,7 +30,6 @@
 	unused_parens,
 	while_true,
 	trivial_casts,
-	trivial_numeric_casts,
 	unused_extern_crates
 )]
 #![allow(incomplete_features)]
