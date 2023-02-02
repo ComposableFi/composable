@@ -73,7 +73,9 @@ export function getVolumeRange(range: string): Date[] {
   const dates: Date[] = [];
   const now = new Date();
 
-  if (range === "month") {
+  if (range === "now") {
+    dates.push(now);
+  } else if (range === "month") {
     for (let day = -30; day <= 0; day += 1) {
       dates.push(new Date(now.getFullYear(), now.getMonth(), now.getDate() + day, 0));
     }
@@ -82,10 +84,8 @@ export function getVolumeRange(range: string): Date[] {
       dates.push(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7 * week, 0));
     }
   } else {
-    throw new Error("Invalid range. It should be 'month' or 'year'.");
+    throw new Error("Invalid range. It should be 'now', 'month' or 'year'.");
   }
-
-  dates.push(now);
 
   return dates;
 }
