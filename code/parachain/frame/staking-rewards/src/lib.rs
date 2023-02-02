@@ -989,8 +989,16 @@ pub mod pallet {
 					false, // pallet account, doesn't need to be kept alive
 				)?;
 			}
-			// burn the shares
-			T::Assets::burn_from(share_asset_id, &fnft_asset_account, stake.share)?;
+			// transfer the shares to pool account (not burning to avoid affecting pool share
+			// calculation(share/total_issuance) for other stakes)
+			T::Assets::transfer(
+				share_asset_id,
+				&fnft_asset_account,
+				&Self::pool_account_id(&stake.reward_pool_id),
+				stake.share,
+				false,
+			)?;
+			// burn NFT
 			T::FinancialNft::burn(fnft_collection_id, fnft_instance_id, Some(who))?;
 
 			Self::deposit_event(Event::<T>::Unstaked {
