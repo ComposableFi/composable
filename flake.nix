@@ -4,6 +4,9 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # remove me when the `nixops_unstable` works again on the latest unstable
+    nixpkgs-working-nixops.url =
+      "github:NixOS/nixpkgs/34c5293a71ffdb2fe054eb5288adc1882c1eb0b1/";
     flake-parts.url = "github:hercules-ci/flake-parts";
     flake-utils.url = "github:numtide/flake-utils";
     npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
@@ -47,7 +50,7 @@
         ./inputs/Wasmswap/wasmswap-contracts.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
 
-        # The things we use within flake parts to build packages, apps, devShells, and devnets. 
+        # The things we use within flake parts to build packages, apps, devShells, and devnets.
         ./tools/pkgs.nix # _module.args.pkgs
         ./tools/devnet-tools.nix # _module.args.devnetTools
         ./tools/rust.nix # _module.args.rust
@@ -63,7 +66,6 @@
         ./code/integration-tests/runtime-tests/runtime-tests.nix
         ./code/runtimes.nix
         ./code/xcvm/xcvm-contracts.nix
-        ./code/utils/composable-subxt/subxt.nix
         ./code/utils/price-feed/price-feed.nix
         ./docs/docs.nix
         ./frontend/frontend.nix

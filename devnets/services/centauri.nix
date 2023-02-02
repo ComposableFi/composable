@@ -1,8 +1,11 @@
 { name, execCommands, configPathSource, configPathContainer, dependsOn
-, restartPolicy }: {
+, restartPolicy, pkgs, packages, devnetTools }: {
+  image = {
+    contents = [ packages.hyperspace-dali ]
+      ++ devnetTools.withBaseContainerTools;
+    enableRecommendedContents = true;
+  };
   service = {
-    image =
-      "composablefi/composable-centauri:d8fdb31227a221a794f86c5bba4a8127cf8e71d5";
     restart = restartPolicy;
     volumes = [{
       type = "bind";
@@ -10,6 +13,7 @@
       target = configPathContainer;
     }];
     environment = { RUST_LOG = "info"; };
+    entrypoint = "${pkgs.lib.meta.getExe packages.hyperspace-dali}";
     command = execCommands;
     # should only be added if it's null
     depends_on = dependsOn;

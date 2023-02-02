@@ -11,7 +11,7 @@ use crate::{
 use alloc::{
 	borrow::ToOwned, boxed::Box, collections::BTreeMap, format, string::String, vec, vec::Vec,
 };
-use core::{cell::SyncUnsafeCell, marker::PhantomData};
+use core::cell::SyncUnsafeCell;
 use cosmwasm_vm::{
 	cosmwasm_std::{Coin, Reply, SubMsgResult},
 	system::CosmwasmContractMeta,
@@ -31,6 +31,7 @@ use sha3::Keccak256;
 use wasm_instrument::parity_wasm::elements::{
 	BlockType, BrTableData, Instruction, Instructions, ValueType,
 };
+use wasmi::{AsContext, AsContextMut};
 
 const SECP256K1_MESSAGE_HEX: &str = "5c868fedb8026979ebd26f1ba07c27eedf4ff6d10443505a96ecaf21ba8c4f0937b3cd23ffdc3dd429d4cd1905fb8dbcceeff1350020e18b58d2ba70887baa3a9b783ad30d3fbf210331cdd7df8d77defa398cdacdfc2e359c7ba4cae46bb74401deb417f8b912a1aa966aeeba9c39c7dd22479ae2b30719dca2f2206c5eb4b7";
 const SECP256K1_SIGNATURE_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
@@ -98,7 +99,7 @@ fn get_shared_vm() -> &'static mut CosmwasmVMShared {
 fn create_wasm_module_with_fns(
 	mut functions: Vec<(Function, Option<u32>)>,
 	table: Option<Table>,
-) -> wasmi::ModuleRef {
+) -> (wasmi::Store<()>, wasmi::Instance) {
 	for (func, repeat) in &mut functions {
 		let mut instructions: Vec<Instruction> = match repeat {
 			Some(repeat) => (0..*repeat * INSTRUCTIONS_MULTIPLIER)
@@ -118,20 +119,31 @@ fn create_wasm_module_with_fns(
 	.unwrap()
 	.try_into()
 	.unwrap();
-	let wasmi_module = wasmi::Module::from_buffer(wasm_module.code).unwrap();
-	let not_started_module_ref =
-		wasmi::ModuleInstance::new(&wasmi_module, &wasmi::ImportsBuilder::default()).unwrap();
-	not_started_module_ref
-		.run_start(&mut wasmi::NopExternals(PhantomData::<wasmi::Error>))
-		.unwrap()
+
+	let engine = wasmi::Engine::default();
+	let module = wasmi::Module::new(&engine, wasm_module.code.as_slice()).unwrap();
+
+	let mut store = wasmi::Store::new(&engine, ());
+	let linker = <wasmi::Linker<()>>::new();
+
+	let instance = linker.instantiate(&mut store, &module).unwrap().start(&mut store).unwrap();
+
+	(store, instance)
 }
 
-fn create_wasm_module(instructions: Vec<Instruction>, repeat: u32) -> wasmi::ModuleRef {
+fn create_wasm_module(
+	instructions: Vec<Instruction>,
+	repeat: u32,
+) -> (wasmi::Store<()>, wasmi::Instance) {
 	create_wasm_module_fn(Instruction::Nop, |_| instructions.clone(), repeat)
 }
 
 /// Create a CosmWasm module with additional instructions
-fn create_wasm_module_fn<F>(instr: Instruction, instr_fn: F, repeat: u32) -> wasmi::ModuleRef
+fn create_wasm_module_fn<F>(
+	instr: Instruction,
+	instr_fn: F,
+	repeat: u32,
+) -> (wasmi::Store<()>, wasmi::Instance)
 where
 	F: Fn(Instruction) -> Vec<Instruction>,
 {
@@ -147,17 +159,27 @@ where
 	.unwrap()
 	.try_into()
 	.unwrap();
-	let wasmi_module = wasmi::Module::from_buffer(wasm_module.code).unwrap();
-	let not_started_module_ref =
-		wasmi::ModuleInstance::new(&wasmi_module, &wasmi::ImportsBuilder::default()).unwrap();
-	not_started_module_ref
-		.run_start(&mut wasmi::NopExternals(PhantomData::<wasmi::Error>))
-		.unwrap()
+
+	let engine = wasmi::Engine::default();
+	let module = wasmi::Module::new(&engine, wasm_module.code.as_slice()).unwrap();
+
+	let mut store = wasmi::Store::new(&engine, ());
+	let linker = <wasmi::Linker<()>>::new();
+
+	let instance = linker.instantiate(&mut store, &module).unwrap().start(&mut store).unwrap();
+
+	(store, instance)
 }
 
-fn wasm_invoke(module: &mut wasmi::ModuleRef) {
-	module
-		.invoke_export(FN_NAME, &[], &mut wasmi::NopExternals(PhantomData::<wasmi::Error>))
+// Note that the overhead of `get_export` and `call` is not important here
+// because we are substracting the time it takes to execute N instruction
+// from N-1 instruction. So this will eliminate the function call overheads.
+fn wasm_invoke(mut store: wasmi::Store<()>, instance: wasmi::Instance) {
+	instance
+		.get_export(store.as_context(), FN_NAME)
+		.and_then(wasmi::Extern::into_func)
+		.unwrap()
+		.call(store.as_context_mut(), &[], &mut [])
 		.unwrap();
 }
 
@@ -238,7 +260,7 @@ where
 		"message".as_bytes(),
 	)
 	.unwrap()
-	.call(get_shared_vm(), Default::default(), b"message".to_vec().try_into().unwrap())
+	.top_level_call(get_shared_vm(), Default::default(), b"message".to_vec().try_into().unwrap())
 	.unwrap();
 
 	contract_addr
@@ -418,7 +440,7 @@ benchmarks! {
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_read(&mut vm.0, "hello world".as_bytes()).unwrap();
+		Cosmwasm::<T>::do_db_read(vm.0.data_mut(), "hello world".as_bytes()).unwrap();
 	}
 
 	db_read_other_contract {
@@ -427,7 +449,7 @@ benchmarks! {
 	let info = ContractToInfo::<T>::get(&contract).unwrap();
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_read_other_contract(&mut vm.0, &info.trie_id, "hello world".as_bytes()).unwrap();
+		Cosmwasm::<T>::do_db_read_other_contract(vm.0.data_mut(), &info.trie_id, "hello world".as_bytes()).unwrap();
 	}
 
 	db_write {
@@ -435,7 +457,7 @@ benchmarks! {
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
+		Cosmwasm::<T>::do_db_write(vm.0.data_mut(), "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}
 
 	db_scan {
@@ -443,25 +465,25 @@ benchmarks! {
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_scan(&mut vm.0).unwrap();
+		Cosmwasm::<T>::do_db_scan(vm.0.data_mut()).unwrap();
 	}
 
 	db_next {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
-		let iterator = Cosmwasm::<T>::do_db_scan(&mut vm.0).unwrap();
+		let iterator = Cosmwasm::<T>::do_db_scan(vm.0.data_mut()).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_next(&mut vm.0, iterator).unwrap();
+		Cosmwasm::<T>::do_db_next(vm.0.data_mut(), iterator).unwrap();
 	}
 
 	db_remove {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
-		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
+		Cosmwasm::<T>::do_db_write(vm.0.data_mut(), "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}: {
-		Cosmwasm::<T>::do_db_remove(&mut vm.0, "hello".as_bytes());
+		Cosmwasm::<T>::do_db_remove(vm.0.data_mut(), "hello".as_bytes());
 	}
 
 	balance {
@@ -492,7 +514,7 @@ benchmarks! {
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_running_contract_meta(&mut vm.0)
+		Cosmwasm::<T>::do_running_contract_meta(vm.0.data_mut())
 	}
 
 	contract_meta {
@@ -550,7 +572,7 @@ benchmarks! {
 		let signature = ED25519_SIGNATURE.as_slice();
 		let public_key = ED25519_PUBLIC_KEY.as_slice();
 	}: {
-		Cosmwasm::<T>::do_ed25519_verify(&message, &signature, &public_key)
+		Cosmwasm::<T>::do_ed25519_verify(message, signature, public_key)
 	}
 
 	ed25519_batch_verify {
@@ -570,7 +592,7 @@ benchmarks! {
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_instantiate(&mut vm.0, meta, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
+		Cosmwasm::<T>::do_continue_instantiate(vm.0.data_mut(), meta, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
 
 	continue_execute {
@@ -580,7 +602,7 @@ benchmarks! {
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_execute(&mut vm.0, contract, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
+		Cosmwasm::<T>::do_continue_execute(vm.0.data_mut(), contract, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
 
 	continue_migrate {
@@ -588,7 +610,7 @@ benchmarks! {
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_migrate(&mut vm.0, contract, "{}".as_bytes(), &mut |_event| {}).unwrap();
+		Cosmwasm::<T>::do_continue_migrate(vm.0.data_mut(), contract, "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
 
 	continue_query {
@@ -596,15 +618,15 @@ benchmarks! {
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_query(&mut vm.0, contract, "{}".as_bytes()).unwrap();
+		Cosmwasm::<T>::do_continue_query(vm.0.data_mut(), contract, "{}".as_bytes()).unwrap();
 	}
 
 	continue_reply {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_reply(&mut vm.0, Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {}).unwrap();
+		Cosmwasm::<T>::do_continue_reply(vm.0.data_mut(), Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {}).unwrap();
 	}
 
 	query_info {
@@ -612,381 +634,381 @@ benchmarks! {
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_query_info(&mut vm.0, contract).unwrap();
+		Cosmwasm::<T>::do_query_info(vm.0.data_mut(), contract).unwrap();
 	}
 
 	query_raw {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
-		Cosmwasm::<T>::do_db_write(&mut vm.0, "hello".as_bytes(), "world".as_bytes()).unwrap();
+		Cosmwasm::<T>::do_db_write(vm.0.data_mut(), "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}: {
-		Cosmwasm::<T>::do_query_raw(&mut vm.0, contract, "hello".as_bytes()).unwrap();
+		Cosmwasm::<T>::do_query_raw(vm.0.data_mut(), contract, "hello".as_bytes()).unwrap();
 	}
 
 	// For `I64Const` and `Drop`. This will be also used to calculate the cost of an empty function call and additional
 	// instructions.
 	instruction_I64Const {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module(vec![Instruction::I64Const(99), Instruction::Drop], r);
+		let (store, instance)= create_wasm_module(vec![Instruction::I64Const(99), Instruction::Drop], r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Const {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module(vec![Instruction::F64Const(99), Instruction::Drop], r);
+		let (store, instance) = create_wasm_module(vec![Instruction::F64Const(99), Instruction::Drop], r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Load {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module(vec![Instruction::I32Const(0), Instruction::I64Load(0, 0), Instruction::Drop], r);
+		let (store, instance) = create_wasm_module(vec![Instruction::I32Const(0), Instruction::I64Load(0, 0), Instruction::Drop], r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Load {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module(vec![Instruction::I32Const(0), Instruction::F64Load(0, 0), Instruction::Drop], r);
+		let (store, instance) = create_wasm_module(vec![Instruction::I32Const(0), Instruction::F64Load(0, 0), Instruction::Drop], r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Store {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module(vec![Instruction::I32Const(0), Instruction::I64Const(99), Instruction::I64Store(0, 0)], r);
+		let (store, instance) = create_wasm_module(vec![Instruction::I32Const(0), Instruction::I64Const(99), Instruction::I64Store(0, 0)], r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Store {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module(vec![Instruction::I32Const(0), Instruction::F64Const(99), Instruction::F64Store(0, 0)], r);
+		let (store, instance) = create_wasm_module(vec![Instruction::I32Const(0), Instruction::F64Const(99), Instruction::F64Store(0, 0)], r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Eq {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64Eq, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64Eq, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Eqz {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64Eqz, create_unary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64Eqz, create_unary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Ne {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64Ne, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64Ne, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64LtS {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64LtS, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64LtS, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64GtS {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64GtS, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64GtS, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64LeS {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64LeS, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64LeS, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64GeS {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64GeS, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64GeS, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Clz {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64Clz, create_unary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64Clz, create_unary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Ctz {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64Ctz, create_unary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64Ctz, create_unary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Popcnt {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64Popcnt, create_unary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64Popcnt, create_unary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Add {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64Add, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64Add, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Sub {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64Sub, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64Sub, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Mul {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64Mul, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64Mul, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64DivS {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64DivS, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64DivS, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64DivU {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64DivU, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64DivU, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64RemS {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64RemS, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64RemS, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64And {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64And, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64And, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Or {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64Or, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64Or, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Xor {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64Xor, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64Xor, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Shl {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64Shl, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64Shl, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64ShrS {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64ShrS, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64ShrS, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Rotl {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64Rotl, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64Rotl, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64Rotr {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64Rotr, create_binary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64Rotr, create_binary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I64ExtendSI32 {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I64ExtendSI32, create_unary_instruction_set::<i32>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I64ExtendSI32, create_unary_instruction_set::<i32>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_I32WrapI64 {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::I32WrapI64, create_unary_instruction_set::<i64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::I32WrapI64, create_unary_instruction_set::<i64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Eq {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Eq, create_binary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Eq, create_binary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Ne {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Ne, create_binary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Ne, create_binary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Lt {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Lt, create_binary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Lt, create_binary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Gt {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Gt, create_binary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Gt, create_binary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Le {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Le, create_binary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Le, create_binary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Ge {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Ge, create_binary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Ge, create_binary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Abs {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Abs, create_unary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Abs, create_unary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Neg {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Neg, create_unary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Neg, create_unary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Ceil {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Ceil, create_unary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Ceil, create_unary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Floor {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Floor, create_unary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Floor, create_unary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Trunc {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Trunc, create_unary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Trunc, create_unary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Nearest {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Nearest, create_unary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Nearest, create_unary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Sqrt {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Sqrt, create_unary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Sqrt, create_unary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Add {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Add, create_binary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Add, create_binary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Sub {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Sub, create_binary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Sub, create_binary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Mul {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Mul, create_binary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Mul, create_binary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Div {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Div, create_binary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Div, create_binary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Min {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Min, create_binary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Min, create_binary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Max {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Max, create_binary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Max, create_binary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	instruction_F64Copysign {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_fn(Instruction::F64Copysign, create_binary_instruction_set::<f64>, r);
+		let (store, instance) = create_wasm_module_fn(Instruction::F64Copysign, create_binary_instruction_set::<f64>, r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// n_extra_instrs = 4
 	instruction_Select {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module(vec![
+		let (store, instance) = create_wasm_module(vec![
 			Instruction::I32Const(99),
 			Instruction::I32Const(55),
 			Instruction::I32Const(0),
@@ -994,71 +1016,71 @@ benchmarks! {
 			Instruction::Drop
 		], r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// n_extra_instrs = 2
 	instruction_If {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module(vec![
+		let (store, instance) = create_wasm_module(vec![
 			Instruction::I32Const(99),
 			Instruction::If(BlockType::NoResult),
 			Instruction::End,
 		], r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// n_extra_instrs = 0 (`if` instruction will be subtracted from this)
 	instruction_Else {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module(vec![
+		let (store, instance) = create_wasm_module(vec![
 			Instruction::I32Const(99),
 			Instruction::If(BlockType::NoResult),
 			Instruction::Else,
 			Instruction::End,
 		], r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// n_extra_instrs = 1
 	instruction_GetLocal {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_with_fns(vec![(
+		let (store, instance) = create_wasm_module_with_fns(vec![(
 			FunctionBuilder::new(FN_NAME)
 				.local(1, ValueType::I32)
 				.instructions(vec![Instruction::GetLocal(0), Instruction::Drop])
 				.build(),
 			Some(r))], None);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// n_extra_instrs = 1
 	instruction_SetLocal {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_with_fns(vec![(
+		let (store, instance) = create_wasm_module_with_fns(vec![(
 			FunctionBuilder::new(FN_NAME)
 				.local(1, ValueType::I32)
 				.instructions(vec![Instruction::I32Const(99), Instruction::SetLocal(0)])
 				.build(),
 			Some(r))], None);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// n_extra_instrs = 2
 	instruction_TeeLocal {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_with_fns(vec![(
+		let (store, instance) = create_wasm_module_with_fns(vec![(
 			FunctionBuilder::new(FN_NAME)
 				.local(1, ValueType::I32)
 				.instructions(vec![Instruction::I32Const(99), Instruction::TeeLocal(0), Instruction::Drop])
 				.build(),
 			None)], None);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// TODO(aeryz): We depend on the existence of the global variable that is used internally by code generator.
@@ -1066,81 +1088,81 @@ benchmarks! {
 	// n_extra_instrs = 1
 	instruction_GetGlobal {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_with_fns(vec![(
+		let (store, instance) = create_wasm_module_with_fns(vec![(
 			FunctionBuilder::new(FN_NAME)
 				.local(1, ValueType::I32)
 				.instructions(vec![Instruction::GetGlobal(0), Instruction::Drop])
 				.build(),
 			None)], None);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// n_extra_instrs = 2
 	instruction_SetGlobal {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_with_fns(vec![(
+		let (store, instance) = create_wasm_module_with_fns(vec![(
 			FunctionBuilder::new(FN_NAME)
 				.local(1, ValueType::I32)
 				.instructions(vec![Instruction::I32Const(99), Instruction::SetGlobal(0)])
 				.build(),
 			None)], None);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// n_extra_instrs = 1
 	instruction_CurrentMemory {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module(vec![
+		let (store, instance) = create_wasm_module(vec![
 			Instruction::CurrentMemory(0),
 			Instruction::Drop,
 		], r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// n_extra_instrs = 2
 	instruction_GrowMemory {
 		let r in 0..3;
-		let mut module = create_wasm_module(vec![
+		let (store, instance) = create_wasm_module(vec![
 			Instruction::I32Const(1),
 			Instruction::GrowMemory(0),
 			Instruction::Drop,
 		], r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// n_extra_instrs = 0
 	instruction_Br {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module(vec![
+		let (store, instance) = create_wasm_module(vec![
 			Instruction::Block(BlockType::NoResult),
 			Instruction::Br(0),
 			Instruction::End
 		], r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// n_extra_instrs = 1
 	instruction_BrIf {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module(vec![
+		let (store, instance) = create_wasm_module(vec![
 			Instruction::Block(BlockType::NoResult),
 			Instruction::I32Const(1),
 			Instruction::Br(0),
 			Instruction::End
 		], r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// n_extra_instrs = 1
 	instruction_BrTable {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module(vec![
+		let (store, instance) = create_wasm_module(vec![
 			Instruction::Block(BlockType::NoResult),
 			Instruction::I32Const(0),
 			Instruction::BrTable(Box::new(BrTableData {
@@ -1150,13 +1172,13 @@ benchmarks! {
 			Instruction::End
 		], r);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// n_extra_instrs = 1
 	instruction_BrTable_per_elem {
 		let s in 1..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module(vec![
+		let (store, instance) = create_wasm_module(vec![
 			Instruction::Block(BlockType::NoResult),
 			Instruction::I32Const(0),
 			Instruction::BrTable(Box::new(BrTableData {
@@ -1166,13 +1188,13 @@ benchmarks! {
 			Instruction::End
 		], 1);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// n_extra_instrs = 2
 	instruction_Call {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_with_fns(vec![
+		let (store, instance) = create_wasm_module_with_fns(vec![
 			(FunctionBuilder::new("garbage")
 				.instructions(vec![Instruction::I32Const(99), Instruction::Drop])
 				.build(), None),
@@ -1181,7 +1203,7 @@ benchmarks! {
 				.build(),
 			Some(r))], None);
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 
 	// CallIndirect(u8, u32) calls a function through a table. That's why it is indirect.
@@ -1200,7 +1222,7 @@ benchmarks! {
 	// n_extra_instrs = 3
 	instruction_CallIndirect {
 		let r in 0..INSTRUCTIONS_SAMPLE_COUNT;
-		let mut module = create_wasm_module_with_fns(vec![
+		let (store, instance) = create_wasm_module_with_fns(vec![
 			(FunctionBuilder::new("garbage")
 				.instructions(vec![Instruction::I32Const(99), Instruction::Drop])
 				.build(), None),
@@ -1209,7 +1231,7 @@ benchmarks! {
 				.build(), Some(r))
 			], Some(Table::fill(EXTRA_FN_INDEX, 1)));
 	}: {
-		wasm_invoke(&mut module);
+		wasm_invoke(store, instance);
 	}
 }
 

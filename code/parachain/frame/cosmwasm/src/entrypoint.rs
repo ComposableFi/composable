@@ -104,14 +104,14 @@ pub(crate) fn setup_migrate_call<T: Config>(
 	// This is the case for sub-message execution where `migrate` is
 	// called by the VM.
 	if contract_info.code_id != new_code_id {
-		Pallet::<T>::cosmwasm_call(
+		Pallet::<T>::sub_level_dispatch(
 			shared,
 			migrator.clone(),
 			contract.clone(),
 			Default::default(),
-			|vm| {
+			|mut vm| {
 				cosmwasm_vm::system::migrate(
-					vm,
+					&mut vm,
 					CosmwasmAccount::new(migrator.clone()),
 					CosmwasmAccount::new(contract.clone()),
 					new_code_id,
@@ -120,11 +120,6 @@ pub(crate) fn setup_migrate_call<T: Config>(
 		)
 		.map_err(|_| Error::<T>::NotAuthorized)?;
 	}
-
-	Pallet::<T>::deposit_event(Event::<T>::Migrated {
-		contract: contract.clone(),
-		to: new_code_id,
-	});
 
 	Ok(DispatchableCall {
 		sender: migrator,

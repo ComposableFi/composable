@@ -6,27 +6,27 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "polkadot-v0.9.30" }
-substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "polkadot-v0.9.30" }
+simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "polkadot-v0.9.33" }
+substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "polkadot-v0.9.33" }
 
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.30" }
-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-
-
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.33" }
+system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 
 
-parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.30" }
-polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.30" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+
+
+parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.33" }
+polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.33" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 
 common = { path = "../../parachain/runtime/common" }
 composable-runtime = { path = "../../parachain/runtime/composable" }
@@ -41,7 +41,7 @@ simnode-common = { path = "../common" }
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 hex = "0.4.3"
 num-traits = "0.2.14"
-sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 
 [features]
 builtin-wasm = [

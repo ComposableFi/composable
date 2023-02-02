@@ -155,6 +155,7 @@ const sidebars = {
                     collapsed: true,
                     items: [
                         'products/apollo/apollo-how-it-works',
+                        'products/apollo/technical-details',
                         'products/apollo/apollo-deployment'
                     ],
                 },
@@ -199,14 +200,11 @@ const sidebars = {
                     collapsible: true,
                     collapsed: true,
                     items: [
+                        'products/mosaic/mosaic-withdrawal-guide',
                         'products/mosaic/dynamic-fee-model',
                         'products/mosaic/liquidity-forecasting',
                         'products/mosaic/passive-liquidity-rebalancing',
                         'products/mosaic/active-liquidity-management',
-                        'products/mosaic/single-sided-staking',
-                        'products/mosaic/additional-use-cases',
-                        'products/mosaic/mosaic-integrations',
-                        'products/mosaic/mosaic-pallet',
                         'products/mosaic/mosaic-phase1-result',
                         {
                             type: 'category',
@@ -234,8 +232,9 @@ const sidebars = {
                     collapsible: true,
                     collapsed: true,
                     items: [
-                        'products/parachain-vault-strategy/vault-process-in-detail/vault-process-in-detail',
-                        'products/parachain-vault-strategy/contracts-technical-details/contracts-technical-details',
+                        'products/parachain-vault-strategy/composable-strategies-withdrawal-guide',
+                        'products/parachain-vault-strategy/vault-process-in-detail',
+                        'products/parachain-vault-strategy/contracts-technical-details',
                     ],
                 }
             ]
@@ -260,10 +259,24 @@ const sidebars = {
                     items: [
                         'user-guides/polkadotjs-extension-create-account',
                         'user-guides/talisman-create-account',
+                    ],
+                },
+                {
+                    type: 'category',
+                    label: 'Transactions and Trading',
+                    link: {
+                        type: 'generated-index',
+                        slug: 'transactions-and-trading'
+                    },
+                    collapsible: true,
+                    items: [
+                        'user-guides/claim-rewards-guide',
+                        'user-guides/how-to-provide-liquidity',
+                        'user-guides/how-to-trade-pica-on-pablo',
                         `user-guides/transfer-usdt-statemine-picasso`,
                     ],
                 },
-                'user-guides/claim-rewards-guide',
+
                 'user-guides/polkassembly-picasso-governance',
             ]
         },
@@ -423,9 +436,8 @@ const sidebars = {
             collapsible: true,
             collapsed: true,
             items:[
-                'faqs/disclaimer-disclosure-pica-token',
+                'faqs/disclaimers-disclosures-for-composable-tokens',
                 'faqs/risk-factors',
-                'faqs/legal-disclaimer-disclosures',
                 'faqs/terms-of-use',
             ]
         }

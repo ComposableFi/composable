@@ -15,18 +15,31 @@ import { PabloFee, PabloPool, PabloSwap, PabloTransaction } from "../../model";
 import { DAY_IN_MS } from "./common";
 
 @ObjectType()
-export class PabloDaily {
+export class PoolAmount {
   @Field(() => String, { nullable: false })
   assetId!: string;
 
   @Field(() => BigInt, { nullable: false })
-  volume!: bigint;
+  amount!: bigint;
+
+  constructor(props: PoolAmount) {
+    Object.assign(this, props);
+  }
+}
+
+@ObjectType()
+export class PabloDaily {
+  @Field(() => String, { nullable: false })
+  assetId!: string;
+
+  @Field(() => [PoolAmount], { nullable: false })
+  volume!: PoolAmount[];
 
   @Field(() => BigInt, { nullable: false })
   transactions!: bigint;
 
-  @Field(() => BigInt, { nullable: false })
-  fees!: bigint;
+  @Field(() => [PoolAmount], { nullable: false })
+  fees!: PoolAmount[];
 
   @Field(() => String, { nullable: false })
   poolId!: string;
@@ -47,7 +60,7 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
   constructor(private tx: () => Promise<EntityManager>) {}
 
   @FieldResolver({ name: "volume", defaultValue: 0n })
-  async volume(@Root() daily: PabloDaily): Promise<bigint> {
+  async volume(@Root() daily: PabloDaily): Promise<PoolAmount[]> {
     const manager = await this.tx();
 
     const latestSwaps = await manager.getRepository(PabloSwap).find({
@@ -59,11 +72,20 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
       }
     });
 
-    const totalSwap = latestSwaps.reduce((acc, swap) => {
-      return acc + 2n * swap.baseAssetAmount;
-    }, 0n);
+    const swapsMap = latestSwaps.reduce<Record<string, bigint>>((acc, swap) => {
+      acc[swap.quoteAssetId] = (acc[swap.quoteAssetId] || 0n) + swap.quoteAssetAmount;
+      return acc;
+    }, {});
 
-    return Promise.resolve(totalSwap);
+    const totalVolumes = Object.keys(swapsMap).map(
+      assetId =>
+        new PoolAmount({
+          assetId,
+          amount: swapsMap[assetId]
+        })
+    );
+
+    return Promise.resolve(totalVolumes);
   }
 
   @FieldResolver({ name: "transactions", defaultValue: 0n })
@@ -83,7 +105,7 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
   }
 
   @FieldResolver({ name: "fees", defaultValue: 0n })
-  async fees(@Root() daily: PabloDaily): Promise<bigint> {
+  async fees(@Root() daily: PabloDaily): Promise<PoolAmount[]> {
     const manager = await this.tx();
 
     const latestFees = await manager.getRepository(PabloFee).find({
@@ -93,9 +115,18 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
       }
     });
 
-    const totalFees = latestFees.reduce((acc, fee) => {
-      return acc + fee.fee;
-    }, 0n);
+    const feesMap = latestFees.reduce<Record<string, bigint>>((acc, fee) => {
+      acc[fee.assetId] = (acc[fee.assetId] || 0n) + fee.fee;
+      return acc;
+    }, {});
+
+    const totalFees = Object.keys(feesMap).map(
+      assetId =>
+        new PoolAmount({
+          assetId,
+          amount: feesMap[assetId]
+        })
+    );
 
     return Promise.resolve(totalFees);
   }
@@ -124,9 +155,9 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
       new PabloDaily({
         poolId: input.poolId,
         assetId: "",
-        volume: 0n,
+        volume: [],
         transactions: 0n,
-        fees: 0n
+        fees: []
       })
     );
   }

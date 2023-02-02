@@ -46,21 +46,19 @@
             cargoExtraArgs = "--all --check --verbose";
           });
 
-        cargo-clippy-check = crane.nightly.cargoBuild
+        cargo-clippy-check = crane.nightly.cargoClippy
           (systemCommonRust.common-attrs // {
             cargoArtifacts = self'.packages.common-deps-nightly;
-            cargoBuildCommand = "cargo clippy";
-            cargoExtraArgs = "--all-targets --tests -- -D warnings";
+            cargoClippyExtraArgs = "--all-targets --tests -- -D warnings";
           });
 
-        cargo-deny-check = crane.nightly.cargoBuild
-          (systemCommonRust.common-attrs // {
-            buildInputs = with pkgs; [ cargo-deny ];
-            cargoArtifacts = self'.packages.common-deps;
-            cargoBuildCommand = "cargo deny";
-            cargoExtraArgs =
-              "--manifest-path ./parachain/frame/composable-support/Cargo.toml check ban";
-          });
+        cargo-deny-check = crane.nightly.mkCargoDerivation {
+          buildInputs = with pkgs; [ cargo-deny ];
+          src = ../code;
+          cargoArtifacts = self'.packages.common-deps;
+          buildPhaseCargoCommand =
+            "cargo-deny --manifest-path ./parachain/frame/composable-support/Cargo.toml check bans";
+        };
 
         cargo-udeps-check = crane.nightly.cargoBuild
           (systemCommonRust.common-attrs // {
@@ -78,7 +76,8 @@
               openssl
             ];
             cargoArtifacts = self'.packages.common-deps-nightly;
-            cargoBuildCommand = "cargo udeps";
+            buildPhase = "cargo udeps";
+            installPhase = "mkdir -p $out";
             cargoExtraArgs =
               "--workspace --exclude local-integration-tests --all-features";
           });
@@ -97,8 +96,9 @@
             cargoArtifacts = self'.packages.common-test-deps;
             # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
             # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-            cargoBuildCommand =
+            buildPhase =
               "cargo test --workspace --release --locked --verbose --exclude local-integration-tests";
+            installPhase = "mkdir -p $out";
           });
 
         unit-tests-with-coverage = crane.nightly.cargoBuild
@@ -108,7 +108,7 @@
             cargoArtifacts = self'.packages.common-deps-nightly;
             # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
             # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-            cargoBuildCommand = "cargo llvm-cov";
+            buildPhase = "cargo llvm-cov";
             cargoExtraArgs =
               "--workspace --release --locked --verbose --lcov --output-path lcov.info";
             installPhase = ''

@@ -33,27 +33,6 @@ AS $$
           timestamp > date_trunc('day', current_timestamp) - $1 * $2 * interval '1 day' - $2 * interval '1 day'
 $$;
 
--- Get the latest total value locked previous to a given hour
-CREATE OR REPLACE FUNCTION hourly_total_value_locked (
-  hours_ago INT,
-  source VARCHAR(30),
-  source_entity_id VARCHAR(30)
-)
-RETURNS bigint
-LANGUAGE SQL
-IMMUTABLE
-AS $$
-    SELECT
-        COALESCE(accumulated_amount, 0)
-    FROM historical_locked_value
-    WHERE
-        timestamp < date_trunc('hour', current_timestamp) - $1 * interval '1 hour'
-    AND historical_locked_value.source = $2
-    AND historical_locked_value.source_entity_id = $3
-    ORDER BY timestamp DESC
-    LIMIT 1
-$$;
-
 -- Get the latest total volume previous to a given hour
 CREATE OR REPLACE FUNCTION hourly_total_volume (
   hours_ago INT

@@ -2,7 +2,7 @@ import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { hexToU8a } from "@polkadot/util";
-import { EntityManager } from "typeorm";
+import { EntityManager, LessThan } from "typeorm";
 import { divideBigInts, encodeAccount } from "./utils";
 import {
   Account,
@@ -59,7 +59,7 @@ export async function getOrCreateAccount(
 
   account.id = accId;
   account.eventId = ctx.event.id;
-  account.blockId = ctx.block.id;
+  account.blockId = ctx.block.hash;
 
   await ctx.store.save(account);
 
@@ -165,11 +165,10 @@ export async function storeHistoricalLockedValue(
   source: LockedSource,
   sourceEntityId: string
 ): Promise<void> {
-  const event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
+  let event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
 
   if (!event) {
-    // no-op
-    return;
+    event = await saveEvent(ctx, EventType.SWAP);
   }
 
   for (const [assetId, amount] of amountsLocked) {
@@ -178,8 +177,11 @@ export async function storeHistoricalLockedValue(
         await ctx.store.findOne(HistoricalLockedValue, {
           where: {
             source,
-            assetId: assetId.toString(),
+            assetId,
             sourceEntityId
+          },
+          order: {
+            timestamp: "DESC"
           }
         })
       )?.accumulatedAmount || 0n;
@@ -243,11 +245,14 @@ export async function getOrCreatePabloAsset(
 
 export async function getSpotPrice(
   ctx: EventHandlerContext<Store> | EntityManager,
-  baseAssetId: string,
   quoteAssetId: string,
-  poolId: string
+  baseAssetId: string,
+  poolId: string,
+  timestamp?: number
 ): Promise<number> {
   const isRepository = ctx instanceof EntityManager;
+
+  const time = timestamp || new Date().getTime();
 
   const swap1 = isRepository
     ? await ctx.getRepository(PabloSwap).findOne({
@@ -256,7 +261,11 @@ export async function getSpotPrice(
           quoteAssetId,
           pool: {
             id: poolId
-          }
+          },
+          timestamp: LessThan(new Date(time))
+        },
+        order: {
+          timestamp: "DESC"
         }
       })
     : await ctx.store.get(PabloSwap, {
@@ -265,7 +274,11 @@ export async function getSpotPrice(
           quoteAssetId,
           pool: {
             id: poolId
-          }
+          },
+          timestamp: LessThan(new Date(time))
+        },
+        order: {
+          timestamp: "DESC"
         }
       });
 
@@ -276,7 +289,11 @@ export async function getSpotPrice(
           quoteAssetId: baseAssetId,
           pool: {
             id: poolId
-          }
+          },
+          timestamp: LessThan(new Date(time))
+        },
+        order: {
+          timestamp: "DESC"
         }
       })
     : await ctx.store.get(PabloSwap, {
@@ -285,7 +302,11 @@ export async function getSpotPrice(
           quoteAssetId: baseAssetId,
           pool: {
             id: poolId
-          }
+          },
+          timestamp: LessThan(new Date(time))
+        },
+        order: {
+          timestamp: "DESC"
         }
       });
 
@@ -315,7 +336,7 @@ export async function getSpotPrice(
       : await ctx.store.findOne(PabloPoolAsset, { where: baseWhere });
 
     const quoteWhere = {
-      assetId: baseAssetId,
+      assetId: quoteAssetId,
       pool: {
         id: poolId
       }
@@ -345,7 +366,10 @@ export async function getSpotPrice(
     const weightRatio =
       baseAssetWeight?.weight && quoteAssetWeight?.weight ? baseAssetWeight.weight / quoteAssetWeight.weight : 1;
 
-    return divideBigInts(quoteAsset.totalLiquidity, baseAsset.totalLiquidity) * weightRatio;
+    const quoteTotalLiquidity = (quoteAssetId === "130" ? 1_000_000n : 1n) * quoteAsset.totalLiquidity;
+    const baseTotalLiquidity = (baseAssetId === "130" ? 1_000_000n : 1n) * baseAsset.totalLiquidity;
+
+    return divideBigInts(quoteTotalLiquidity, baseTotalLiquidity) * weightRatio;
   }
 
   return baseAssetId === swap.baseAssetId ? Number(swap.spotPrice) : 1 / Number(swap.spotPrice);

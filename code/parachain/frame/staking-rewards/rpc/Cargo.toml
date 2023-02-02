@@ -1,0 +1,33 @@
+[package]
+authors = ["Composable Developers"]
+edition = "2021"
+homepage = "https://composable.finance"
+name = "staking-rewards-rpc"
+rust-version = "1.56"
+version = "1.0.0"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+# substrate primitives
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+
+# local
+composable-support = { path = "../../composable-support" }
+composable-traits = { path = "../../composable-traits" }
+staking-rewards-runtime-api = { path = "../runtime-api" }
+
+# SCALE
+codec = { default-features = false, features = [
+  "derive",
+], package = "parity-scale-codec", version = "3.0.0" }
+scale-info = { version = "2.1.1", default-features = false, features = [
+  "derive",
+] }
+
+# rpc
+jsonrpsee = { version = "0.15.1", features = ["server", "macros"] }

@@ -5,7 +5,8 @@
 // this is required to allow for ambient/previous definitions
 import '@polkadot/api-base/types/consts';
 
-import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, PalletCosmwasmInstrumentCostRules, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@composable/types/interfaces/crowdloanRewards';
+import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, PalletCosmwasmInstrumentCostRules, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@composable/types/interfaces/crowdloanRewards';
+import type { FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights } from '@composable/types/interfaces/system';
 import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
 import type { Bytes, Option, Text, U8aFixed, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
@@ -215,11 +216,6 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       cooloffPeriod: u32 & AugmentedConst<ApiType>;
       /**
-       * Runtime unique identifier for locking currency.
-       * May be equivalent to PalletId.
-       **/
-      democracyId: U8aFixed & AugmentedConst<ApiType>;
-      /**
        * The period between a proposal being approved and enacted.
        * 
        * It should generally be a little more than the unstake period to ensure that
@@ -242,6 +238,14 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       launchPeriod: u32 & AugmentedConst<ApiType>;
       /**
+       * The maximum number of items which can be blacklisted.
+       **/
+      maxBlacklisted: u32 & AugmentedConst<ApiType>;
+      /**
+       * The maximum number of deposits a public proposal may have at any time.
+       **/
+      maxDeposits: u32 & AugmentedConst<ApiType>;
+      /**
        * The maximum number of public proposals that can exist at any time.
        **/
       maxProposals: u32 & AugmentedConst<ApiType>;
@@ -256,10 +260,6 @@ declare module '@polkadot/api-base/types/consts' {
        * The minimum amount to be used as a deposit for a public referendum proposal.
        **/
       minimumDeposit: u128 & AugmentedConst<ApiType>;
-      /**
-       * The amount of balance that must be deposited per byte of preimage stored.
-       **/
-      preimageByteDeposit: u128 & AugmentedConst<ApiType>;
       /**
        * The minimum period of vote locking.
        * 
@@ -300,6 +300,29 @@ declare module '@polkadot/api-base/types/consts' {
     };
     fnft: {
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    ibc: {
+      /**
+       * Expected block time in milliseconds
+       **/
+      expectedBlockTime: u64 & AugmentedConst<ApiType>;
+      /**
+       * Minimum connection delay period in seconds for ibc connections that can be created or
+       * accepted. Ensure that this is non-zero in production as it's a critical vulnerability.
+       **/
+      minimumConnectionDelay: u64 & AugmentedConst<ApiType>;
+      /**
+       * The native asset id, this will use the `NativeCurrency` for all operations.
+       **/
+      nativeAssetId: u128 & AugmentedConst<ApiType>;
+      /**
+       * Amount to be reserved for client and connection creation
+       **/
+      spamProtectionDeposit: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -425,7 +448,7 @@ declare module '@polkadot/api-base/types/consts' {
       /**
        * The maximum amount of signatories allowed in the multisig.
        **/
-      maxSignatories: u16 & AugmentedConst<ApiType>;
+      maxSignatories: u32 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -443,16 +466,7 @@ declare module '@polkadot/api-base/types/consts' {
       [key: string]: Codec;
     };
     pablo: {
-      msPerBlock: u32 & AugmentedConst<ApiType>;
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
-      /**
-       * AssetId of the PBLO asset
-       **/
-      pbloAssetId: u128 & AugmentedConst<ApiType>;
-      /**
-       * AssetId of the PICA asset
-       **/
-      picaAssetId: u128 & AugmentedConst<ApiType>;
       /**
        * The interval between TWAP computations.
        **/
@@ -507,13 +521,11 @@ declare module '@polkadot/api-base/types/consts' {
     };
     scheduler: {
       /**
-       * The maximum weight that may be scheduled per block for any dispatchables of less
-       * priority than `schedule::HARD_DEADLINE`.
+       * The maximum weight that may be scheduled per block for any dispatchables.
        **/
-      maximumWeight: u64 & AugmentedConst<ApiType>;
+      maximumWeight: SpWeightsWeightV2Weight & AugmentedConst<ApiType>;
       /**
        * The maximum number of scheduled calls in the queue for a single block.
-       * Not strictly enforced, but used for weight estimation.
        **/
       maxScheduledPerBlock: u32 & AugmentedConst<ApiType>;
       /**
@@ -532,17 +544,11 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       maxStakingDurationPresets: u32 & AugmentedConst<ApiType>;
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
-      pbloAssetId: u128 & AugmentedConst<ApiType>;
-      pbloStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
-      picaAssetId: u128 & AugmentedConst<ApiType>;
-      picaStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
       /**
        * the size of batch to take each time trying to release rewards
        **/
       releaseRewardsPoolsBatchSize: u8 & AugmentedConst<ApiType>;
       treasuryAccount: AccountId32 & AugmentedConst<ApiType>;
-      xPbloAssetId: u128 & AugmentedConst<ApiType>;
-      xPicaAssetId: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -564,9 +570,9 @@ declare module '@polkadot/api-base/types/consts' {
       /**
        * The weight of runtime database operations the runtime can invoke.
        **/
-      dbWeight: FrameSupportWeightsRuntimeDbWeight & AugmentedConst<ApiType>;
+      dbWeight: SpWeightsRuntimeDbWeight & AugmentedConst<ApiType>;
       /**
-       * The designated SS85 prefix of this chain.
+       * The designated SS58 prefix of this chain.
        * 
        * This replaces the "ss58Format" property declared in the chain spec. Reason is
        * that the runtime should know about the prefix in order to make use of it as

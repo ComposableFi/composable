@@ -16,7 +16,7 @@ runs:
   using: "composite"
   steps:
     - name: Comment PR
-      if: ${{ github.event_name == 'pull_request' }}
+      if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
       uses: thollander/actions-comment-pull-request@v2
       with:
         mode: upsert

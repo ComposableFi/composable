@@ -132,6 +132,18 @@ parameter_types! {
 	  pub MaxLocks: u32 = 64;
 }
 
+pub struct CurrencyHooks;
+impl orml_traits::currency::MutationHooks<AccountId, MockCurrencyId, Balance> for CurrencyHooks {
+	type OnDust = ();
+	type OnSlash = ();
+	type PreDeposit = ();
+	type PostDeposit = ();
+	type PreTransfer = ();
+	type PostTransfer = ();
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
+}
+
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -140,16 +152,11 @@ impl orml_tokens::Config for Runtime {
 	type CurrencyId = MockCurrencyId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = ();
 	type MaxLocks = MaxLocks;
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
-	type OnSlash = ();
-	type OnDeposit = ();
-	type OnTransfer = ();
+	type CurrencyHooks = CurrencyHooks;
 }
 
 parameter_types! {

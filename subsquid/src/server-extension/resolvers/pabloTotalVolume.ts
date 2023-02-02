@@ -63,7 +63,6 @@ export class PabloTotalVolumeResolver {
       });
 
       const currVolumes = swaps.reduce<Record<string, bigint>>((acc, swap) => {
-        acc[swap.baseAssetId] = (acc[swap.baseAssetId] || 0n) + swap.baseAssetAmount;
         acc[swap.quoteAssetId] = (acc[swap.quoteAssetId] || 0n) + swap.quoteAssetAmount;
         return acc;
       }, {});

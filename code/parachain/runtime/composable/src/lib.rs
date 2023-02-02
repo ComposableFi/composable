@@ -50,7 +50,7 @@ use sp_version::RuntimeVersion;
 use codec::Encode;
 pub use frame_support::{
 	construct_runtime,
-	pallet_prelude::DispatchClass,
+	pallet_prelude::*,
 	parameter_types,
 	traits::{
 		Contains, EitherOfDiverse, Everything, KeyOwnerProofSystem, LockIdentifier, Nothing,
@@ -520,6 +520,18 @@ parameter_types! {
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
+pub struct CurrencyHooks;
+impl orml_traits::currency::MutationHooks<AccountId, CurrencyId, Balance> for CurrencyHooks {
+	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
+	type OnSlash = ();
+	type PreDeposit = ();
+	type PostDeposit = ();
+	type PreTransfer = ();
+	type PostTransfer = ();
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
+}
+
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -528,16 +540,11 @@ impl orml_tokens::Config for Runtime {
 	type CurrencyId = CurrencyId;
 	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
-	type OnSlash = ();
-	type OnDeposit = ();
-	type OnTransfer = ();
+	type CurrencyHooks = CurrencyHooks;
 }
 
 parameter_types! {
@@ -619,9 +626,8 @@ impl scheduler::Config for Runtime {
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type PreimageProvider = Preimage;
-	type NoPreimagePostponement = NoPreimagePostponement;
-	type WeightInfo = scheduler::weights::SubstrateWeight<Runtime>;
+	type Preimages = Preimage;
+	type WeightInfo = weights::scheduler::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -634,7 +640,6 @@ impl preimage::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRoot<AccountId>;
-	type MaxSize = PreimageMaxSize;
 	type BaseDeposit = PreimageBaseDeposit;
 	type ByteDeposit = PreimageByteDeposit;
 }
@@ -678,7 +683,6 @@ parameter_types! {
 }
 
 impl democracy::Config for Runtime {
-	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type EnactmentPeriod = EnactmentPeriod;
@@ -701,7 +705,6 @@ impl democracy::Config for Runtime {
 	type BlacklistOrigin = EnsureRootOrHalfCouncil;
 	type CancelProposalOrigin = EnsureRootOrHalfCouncil;
 	type VetoOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
-	type OperationalPreimageOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
 	type Slash = Treasury;
 
 	type CooloffPeriod = CooloffPeriod;
@@ -709,9 +712,12 @@ impl democracy::Config for Runtime {
 	type MaxVotes = MaxVotes;
 	type PalletsOrigin = OriginCaller;
 
-	type PreimageByteDeposit = PreimageByteDeposit;
+	type Preimages = Preimage;
+	type MaxDeposits = ConstU32<100>;
+	type MaxBlacklisted = ConstU32<100>;
+
 	type Scheduler = Scheduler;
-	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
+	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -842,10 +848,10 @@ pub type UncheckedExtrinsic =
 	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 
 // Migration for scheduler pallet to move from a plain RuntimeCall to a CallOrHash.
-pub struct SchedulerMigrationV3;
-impl OnRuntimeUpgrade for SchedulerMigrationV3 {
+pub struct SchedulerMigrationV1toV4;
+impl OnRuntimeUpgrade for SchedulerMigrationV1toV4 {
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		Scheduler::migrate_v2_to_v3()
+		Scheduler::migrate_v1_to_v4()
 	}
 }
 /// Executive: handles dispatch to the various modules.
@@ -855,7 +861,12 @@ pub type Executive = executive::Executive<
 	system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	SchedulerMigrationV3,
+	(
+		SchedulerMigrationV1toV4,
+		preimage::migration::v1::Migration<Runtime>,
+		scheduler::migration::v3::MigrateToV4<Runtime>,
+		democracy::migrations::v1::Migration<Runtime>,
+	),
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -878,6 +889,7 @@ mod benches {
 		[scheduler, Scheduler]
 		[collective, Council]
 		[utility, Utility]
+	[democracy, Democracy]
 	);
 }
 

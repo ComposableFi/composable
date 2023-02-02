@@ -12,6 +12,19 @@ build-images: build-processor-image
 serve:
 	@npx squid-graphql-server --subscriptions
 
+rebuild-graphql:
+	make build-images
+	docker-compose stop graphql-server
+	docker-compose rm --force graphql-server
+	docker-compose create graphql-server
+	docker-compose start graphql-server
+
+restart:
+	make down
+	docker volume rm -f $(docker volume ls)
+	make build-images
+	make up
+
 
 migrate:
 	@npx squid-typeorm-migration apply
@@ -39,21 +52,12 @@ down:
 
 
 explore:
-	rm -f daliDevVersions.jsonl
-	npx squid-substrate-metadata-explorer --chain ws://127.0.0.1:9988 --out daliDevVersions.jsonl
+	npx squid-substrate-metadata-explorer --chain wss://picasso-rpc-lb.composablenodes.tech --out picassoVersions.jsonl
 
 
 sqlinit:
 	npm run build && node lib/helperInit.js
 
-
-rebuild:
-	make down
-	rm -f -r lib
-	rm -rf db/migrations/*.js
-	make up
-	npx squid-typeorm-migration generate
-	make migrate
 
 
 .PHONY: build serve process migrate codegen typegen up down explore rebuild

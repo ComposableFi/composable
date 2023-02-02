@@ -100,7 +100,7 @@ export async function processAssetUpdatedEvent(ctx: EventHandlerContext<Store>):
 
   asset.decimals = decimals;
   asset.eventId = ctx.event.id;
-  asset.blockId = ctx.block.id;
+  asset.blockId = ctx.block.hash;
 
   await ctx.store.save(asset);
 }

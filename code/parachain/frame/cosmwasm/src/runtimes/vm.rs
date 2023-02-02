@@ -1,27 +1,22 @@
 use super::abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas};
 use crate::{runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Config, Pallet};
-use alloc::string::String;
+use alloc::{borrow::ToOwned, string::String};
+use core::marker::{Send, Sync};
 use cosmwasm_vm::{
 	cosmwasm_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo},
 	executor::ExecutorError,
 	has::Has,
-	memory::{
-		MemoryReadError, MemoryWriteError, Pointable, ReadWriteMemory, ReadableMemory,
-		WritableMemory,
-	},
+	memory::{MemoryReadError, MemoryWriteError},
 	system::{CosmwasmCodeId, CosmwasmContractMeta, SystemError},
 	transaction::Transactional,
 	vm::{VMBase, VmGas},
 };
 use cosmwasm_vm_wasmi::{
-	WasmiContext, WasmiHost, WasmiHostFunction, WasmiHostFunctionIndex, WasmiInput, WasmiModule,
-	WasmiOutput, WasmiVM, WasmiVMError,
+	OwnedWasmiVM, WasmiContext, WasmiInput, WasmiModule, WasmiOutput, WasmiVMError,
 };
 use frame_support::storage::ChildTriePrefixIterator;
-use parity_wasm::elements::{self, External, Internal, Module, Type, ValueType};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
-use wasmi::CanResume;
-use wasmi_validation::{validate_module, PlainValidator};
+use wasmi::{core::HostError, Instance, Memory};
 
 /// Different type of contract runtimes. A contract might either be dynamically loaded or statically
 /// invoked (precompiled).
@@ -30,7 +25,7 @@ pub enum ContractBackend {
 	/// user.
 	CosmWasm {
 		/// The wasmi module instantiated for the CosmWasm contract.
-		executing_module: WasmiModule,
+		executing_module: Option<WasmiModule>,
 	},
 	/// A substrate pallet, which is a precompiled contract that is included in the runtime.
 	Pallet,
@@ -39,43 +34,16 @@ pub enum ContractBackend {
 impl WasmiContext for ContractBackend {
 	fn executing_module(&self) -> Option<WasmiModule> {
 		match self {
-			ContractBackend::CosmWasm { executing_module } => Some(executing_module.clone()),
+			ContractBackend::CosmWasm { executing_module } => executing_module.clone(),
 			ContractBackend::Pallet => None,
 		}
 	}
-}
 
-impl Pointable for ContractBackend {
-	type Pointer = u32;
-}
-
-impl ReadableMemory for ContractBackend {
-	type Error = WasmiVMError;
-	fn read(&self, offset: Self::Pointer, buffer: &mut [u8]) -> Result<(), Self::Error> {
-		match self {
-			ContractBackend::CosmWasm { executing_module } => executing_module
-				.memory
-				.get_into(offset, buffer)
-				.map_err(|_| WasmiVMError::LowLevelMemoryReadError),
-			ContractBackend::Pallet => Err(WasmiVMError::NotADynamicModule),
-		}
+	fn set_wasmi_context(&mut self, instance: Instance, memory: Memory) {
+		*self =
+			ContractBackend::CosmWasm { executing_module: Some(WasmiModule { instance, memory }) };
 	}
 }
-
-impl WritableMemory for ContractBackend {
-	type Error = WasmiVMError;
-	fn write(&self, offset: Self::Pointer, buffer: &[u8]) -> Result<(), Self::Error> {
-		match self {
-			ContractBackend::CosmWasm { executing_module } => executing_module
-				.memory
-				.set(offset, buffer)
-				.map_err(|_| WasmiVMError::LowLevelMemoryWriteError),
-			ContractBackend::Pallet => Err(WasmiVMError::NotADynamicModule),
-		}
-	}
-}
-
-impl ReadWriteMemory for ContractBackend {}
 
 #[derive(Debug)]
 pub enum CosmwasmVMError<T: Config> {
@@ -89,6 +57,11 @@ pub enum CosmwasmVMError<T: Config> {
 	Unsupported,
 	Rpc(String),
 	Ibc(String),
+}
+
+impl<T: Config + core::marker::Send + core::marker::Sync + 'static> HostError
+	for CosmwasmVMError<T>
+{
 }
 
 impl<T: Config> core::fmt::Display for CosmwasmVMError<T> {
@@ -136,12 +109,6 @@ impl<T: Config> From<MemoryReadError> for CosmwasmVMError<T> {
 impl<T: Config> From<MemoryWriteError> for CosmwasmVMError<T> {
 	fn from(e: MemoryWriteError) -> Self {
 		Self::VirtualMachine(e.into())
-	}
-}
-
-impl<T: Config> CanResume for CosmwasmVMError<T> {
-	fn can_resume(&self) -> bool {
-		false
 	}
 }
 
@@ -198,15 +165,6 @@ impl CosmwasmVMShared {
 /// This structure hold the state for a single contract.
 /// Note that all [`CosmwasmVM`] share the same [`CosmWasmVMShared`] structure.
 pub struct CosmwasmVM<'a, T: Config> {
-	// NOTE(hussein-aitlahcen): would be nice to move the host functions to the shared structure.
-	// but we can't do it, otherwise we introduce a dependency do the lifetime `'a` here. This
-	// lifetime is used by the host function and when reusing the shared structure for sub-calls,
-	// the lifetime would be different (lifetime of children live longer than the initial one,
-	// hence we'll face a compilation issue). This could be solved with HKT or unsafe host
-	// functions (raw pointer without lifetime).
-	/// Host functions by index. Only used by dynamically loaded contracts (wasm bytecode).
-	pub host_functions_by_index:
-		BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<CosmwasmVM<'a, T>>>,
 	/// CosmWasm [`Env`] for the executing contract.
 	pub cosmwasm_env: Env,
 	/// CosmWasm [`MessageInfo`] for the executing contract.
@@ -239,40 +197,11 @@ impl<'a, T: Config> WasmiContext for CosmwasmVM<'a, T> {
 	fn executing_module(&self) -> Option<WasmiModule> {
 		self.contract_runtime.executing_module()
 	}
-}
 
-// NOTE(hussein-aitlahcen): WasmiHostFunction require the type of the VM, I'm not sure we can push
-// this in the `contract_runtime` field. If so, please advise.
-impl<'a, T: Config> WasmiHost<Self> for CosmwasmVM<'a, T> {
-	fn host_function(
-		&self,
-		index: WasmiHostFunctionIndex,
-	) -> Option<&WasmiHostFunction<CosmwasmVM<'a, T>>> {
-		self.host_functions_by_index.get(&index)
+	fn set_wasmi_context(&mut self, instance: Instance, memory: Memory) {
+		self.contract_runtime.set_wasmi_context(instance, memory)
 	}
 }
-
-impl<'a, T: Config> Pointable for CosmwasmVM<'a, T> {
-	type Pointer = <ContractBackend as Pointable>::Pointer;
-}
-
-impl<'a, T: Config> ReadableMemory for CosmwasmVM<'a, T> {
-	type Error = <ContractBackend as ReadableMemory>::Error;
-	fn read(&self, offset: Self::Pointer, buffer: &mut [u8]) -> Result<(), Self::Error> {
-		self.contract_runtime.read(offset, buffer)?;
-		Ok(())
-	}
-}
-
-impl<'a, T: Config> WritableMemory for CosmwasmVM<'a, T> {
-	type Error = <ContractBackend as WritableMemory>::Error;
-	fn write(&self, offset: Self::Pointer, buffer: &[u8]) -> Result<(), Self::Error> {
-		self.contract_runtime.write(offset, buffer)?;
-		Ok(())
-	}
-}
-
-impl<'a, T: Config> ReadWriteMemory for CosmwasmVM<'a, T> {}
 
 impl<'a, T: Config> CosmwasmVM<'a, T> {
 	pub fn charge_raw(&mut self, gas: u64) -> Result<(), <Self as VMBase>::Error> {
@@ -283,9 +212,9 @@ impl<'a, T: Config> CosmwasmVM<'a, T> {
 	}
 }
 
-impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
-	type Input<'x> = WasmiInput<'x, WasmiVM<Self>>;
-	type Output<'x> = WasmiOutput<'x, WasmiVM<Self>>;
+impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
+	type Input<'x> = WasmiInput<OwnedWasmiVM<Self>>;
+	type Output<'x> = WasmiOutput<OwnedWasmiVM<Self>>;
 	type QueryCustom = Empty;
 	type MessageCustom = Empty;
 	type ContractMeta = CosmwasmContractMeta<CosmwasmAccount<T>>;
@@ -490,7 +419,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 
 	fn addr_validate(&mut self, input: &str) -> Result<Result<(), Self::Error>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "addr_validate");
-		match Pallet::<T>::do_addr_validate(input.into()) {
+		match Pallet::<T>::do_addr_validate(input.to_owned()) {
 			Ok(_) => Ok(Ok(())),
 			Err(e) => Ok(Err(e)),
 		}
@@ -501,7 +430,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		input: &str,
 	) -> Result<Result<Self::CanonicalAddress, Self::Error>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "addr_canonicalize");
-		let account = match Pallet::<T>::do_addr_canonicalize(input.into()) {
+		let account = match Pallet::<T>::do_addr_canonicalize(input.to_owned()) {
 			Ok(account) => account,
 			Err(e) => return Ok(Err(e)),
 		};
@@ -672,221 +601,5 @@ impl<'a, T: Config> Transactional for CosmwasmVM<'a, T> {
 	fn transaction_rollback(&mut self) -> Result<(), Self::Error> {
 		sp_io::storage::rollback_transaction();
 		Ok(())
-	}
-}
-
-#[derive(Debug)]
-pub enum ValidationError {
-	Validation(wasmi_validation::Error),
-	ExportMustBeAFunction(&'static str),
-	EntryPointPointToImport(&'static str),
-	ExportDoesNotExists(&'static str),
-	ExportWithoutSignature(&'static str),
-	ExportWithWrongSignature {
-		export_name: &'static str,
-		expected_signature: Vec<ValueType>,
-		actual_signature: Vec<ValueType>,
-	},
-	MissingMandatoryExport(&'static str),
-	CannotImportTable,
-	CannotImportGlobal,
-	CannotImportMemory,
-	ImportWithoutSignature,
-	ImportIsBanned(&'static str, &'static str),
-	MustDeclareOneInternalMemory,
-	MustDeclareOneTable,
-	TableExceedLimit,
-	BrTableExceedLimit,
-	GlobalsExceedLimit,
-	GlobalFloatingPoint,
-	LocalFloatingPoint,
-	ParamFloatingPoint,
-	FunctionParameterExceedLimit,
-}
-
-#[derive(PartialEq, Eq)]
-pub enum ExportRequirement {
-	Mandatory,
-	Optional,
-}
-
-pub struct CodeValidation<'a>(&'a Module);
-impl<'a> CodeValidation<'a> {
-	pub fn new(module: &'a Module) -> Self {
-		CodeValidation(module)
-	}
-	pub fn validate_base(self) -> Result<Self, ValidationError> {
-		validate_module::<PlainValidator>(self.0, ()).map_err(ValidationError::Validation)?;
-		Ok(self)
-	}
-	pub fn validate_exports(
-		self,
-		expected_exports: &[(ExportRequirement, &'static str, &'static [ValueType])],
-	) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		let types = module.type_section().map(|ts| ts.types()).unwrap_or(&[]);
-		let export_entries = module.export_section().map(|is| is.entries()).unwrap_or(&[]);
-		let func_entries = module.function_section().map(|fs| fs.entries()).unwrap_or(&[]);
-		let fn_space_offset = module
-			.import_section()
-			.map(|is| is.entries())
-			.unwrap_or(&[])
-			.iter()
-			.filter(|entry| matches!(*entry.external(), External::Function(_)))
-			.count();
-		for (requirement, name, signature) in expected_exports {
-			match (requirement, export_entries.iter().find(|e| &e.field() == name)) {
-				(_, Some(export)) => {
-					let fn_idx = match export.internal() {
-						Internal::Function(ref fn_idx) => Ok(*fn_idx),
-						_ => Err(ValidationError::ExportMustBeAFunction(name)),
-					}?;
-					let fn_idx = match fn_idx.checked_sub(fn_space_offset as u32) {
-						Some(fn_idx) => Ok(fn_idx),
-						None => Err(ValidationError::EntryPointPointToImport(name)),
-					}?;
-					let func_ty_idx = func_entries
-						.get(fn_idx as usize)
-						.ok_or(ValidationError::ExportDoesNotExists(name))?
-						.type_ref();
-					let Type::Function(ref func_ty) = types
-						.get(func_ty_idx as usize)
-						.ok_or(ValidationError::ExportWithoutSignature(name))?;
-					if signature != &func_ty.params() {
-						return Err(ValidationError::ExportWithWrongSignature {
-							export_name: name,
-							expected_signature: signature.to_vec(),
-							actual_signature: func_ty.params().to_vec(),
-						})
-					}
-				},
-				(ExportRequirement::Mandatory, None) =>
-					return Err(ValidationError::MissingMandatoryExport(name)),
-				(ExportRequirement::Optional, None) => {},
-			}
-		}
-		Ok(self)
-	}
-	pub fn validate_imports(
-		self,
-		import_banlist: &[(&'static str, &'static str)],
-	) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		let types = module.type_section().map(|ts| ts.types()).unwrap_or(&[]);
-		let import_entries = module.import_section().map(|is| is.entries()).unwrap_or(&[]);
-		for import in import_entries {
-			let type_idx = match import.external() {
-				External::Table(_) => Err(ValidationError::CannotImportTable),
-				External::Global(_) => Err(ValidationError::CannotImportGlobal),
-				External::Memory(_) => Err(ValidationError::CannotImportMemory),
-				External::Function(ref type_idx) => Ok(type_idx),
-			}?;
-			let import_name = import.field();
-			let import_module = import.module();
-			let Type::Function(_) =
-				types.get(*type_idx as usize).ok_or(ValidationError::ImportWithoutSignature)?;
-			if let Some((m, f)) =
-				import_banlist.iter().find(|(m, f)| m == &import_module && f == &import_name)
-			{
-				return Err(ValidationError::ImportIsBanned(m, f))
-			}
-		}
-		Ok(self)
-	}
-	pub fn validate_memory_limit(self) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		if module.memory_section().map_or(false, |ms| ms.entries().len() != 1) {
-			Err(ValidationError::MustDeclareOneInternalMemory)
-		} else {
-			Ok(self)
-		}
-	}
-	pub fn validate_table_size_limit(self, limit: u32) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		if let Some(table_section) = module.table_section() {
-			if table_section.entries().len() > 1 {
-				return Err(ValidationError::MustDeclareOneTable)
-			}
-			if let Some(table_type) = table_section.entries().first() {
-				if table_type.limits().initial() > limit {
-					return Err(ValidationError::TableExceedLimit)
-				}
-			}
-		}
-		Ok(self)
-	}
-	pub fn validate_br_table_size_limit(self, limit: u32) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		if let Some(code_section) = module.code_section() {
-			for instr in code_section.bodies().iter().flat_map(|body| body.code().elements()) {
-				use self::elements::Instruction::BrTable;
-				if let BrTable(table) = instr {
-					if table.table.len() > limit as usize {
-						return Err(ValidationError::BrTableExceedLimit)
-					}
-				}
-			}
-		};
-		Ok(self)
-	}
-	pub fn validate_global_variable_limit(self, limit: u32) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		if let Some(global_section) = module.global_section() {
-			if global_section.entries().len() > limit as usize {
-				return Err(ValidationError::GlobalsExceedLimit)
-			}
-		}
-		Ok(self)
-	}
-	pub fn validate_no_floating_types(self) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		if let Some(global_section) = module.global_section() {
-			for global in global_section.entries() {
-				match global.global_type().content_type() {
-					ValueType::F32 | ValueType::F64 =>
-						return Err(ValidationError::GlobalFloatingPoint),
-					_ => {},
-				}
-			}
-		}
-		if let Some(code_section) = module.code_section() {
-			for func_body in code_section.bodies() {
-				for local in func_body.locals() {
-					match local.value_type() {
-						ValueType::F32 | ValueType::F64 =>
-							return Err(ValidationError::LocalFloatingPoint),
-						_ => {},
-					}
-				}
-			}
-		}
-		if let Some(type_section) = module.type_section() {
-			for wasm_type in type_section.types() {
-				match wasm_type {
-					Type::Function(func_type) => {
-						let return_type = func_type.results().get(0);
-						for value_type in func_type.params().iter().chain(return_type) {
-							match value_type {
-								ValueType::F32 | ValueType::F64 =>
-									return Err(ValidationError::ParamFloatingPoint),
-								_ => {},
-							}
-						}
-					},
-				}
-			}
-		}
-		Ok(self)
-	}
-	pub fn validate_parameter_limit(self, limit: u32) -> Result<Self, ValidationError> {
-		let CodeValidation(module) = self;
-		if let Some(type_section) = module.type_section() {
-			for Type::Function(func) in type_section.types() {
-				if func.params().len() > limit as usize {
-					return Err(ValidationError::FunctionParameterExceedLimit)
-				}
-			}
-		}
-		Ok(self)
 	}
 }
