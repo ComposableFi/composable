@@ -624,25 +624,25 @@ jobs:
   #     - run: |
   #         nix run .#devnet-integration-tests
 
-  effects-gate:
-      name: "Effect gate, automatically merged if passed"
-      runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-      needs:
-        - check-lfs
-        - check-nix
-        - check-nix-long
-        - all-ci-packages
-        # - test-running-of-pallet-benchmarks
-        # FIXUP(hussein): reenable once v0.9.30 -> v0.9.33
-        # - local-integration-tests
+  # effects-gate:
+  #     name: "Effect gate, automatically merged if passed"
+  #     runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #     needs:
+  #       - check-lfs
+  #       - check-nix
+  #       - check-nix-long
+  #       - all-ci-packages
+  #       # - test-running-of-pallet-benchmarks
+  #       # FIXUP(hussein): reenable once v0.9.30 -> v0.9.33
+  #       # - local-integration-tests
 
-        # - lint-test-frontend
-      steps:
-        - run: echo "Goblins allow your work to see the light"
+  #       # - lint-test-frontend
+  #     steps:
+  #       - run: echo "Goblins allow your work to see the light"
 
   nix-command-pr-comments:
     permissions:
