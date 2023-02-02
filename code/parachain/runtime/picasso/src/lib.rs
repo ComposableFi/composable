@@ -237,8 +237,8 @@ impl randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
-	pub const AssetNameMaxChars: u32 = 32;
-	pub const AssetSymbolMaxChars: u32 = 16;
+	pub const AssetNameMaxChars: u32 = 64;
+	pub const AssetSymbolMaxChars: u32 = 32;
 }
 
 impl assets_registry::Config for Runtime {
