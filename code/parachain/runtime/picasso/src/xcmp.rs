@@ -1,8 +1,5 @@
 use super::*;
-use common::{
-	fees::{PriceConverter, WeightToFeeConverter},
-	xcmp::*,
-};
+use common::{fees::WeightToFeeConverter, xcmp::*};
 use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
 use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
@@ -114,7 +111,7 @@ type AssetsIdConverter =
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
-	PriceConverter<AssetsRegistry>,
+	AssetsRegistry,
 	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
 	WeightToFeeConverter,
 >;
@@ -156,7 +153,7 @@ impl<
 
 pub type CaptureAssetTrap = CaptureDropAssets<
 	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
-	PriceConverter<AssetsRegistry>,
+	AssetsRegistry,
 	AssetsIdConverter,
 >;
 

@@ -1,9 +1,5 @@
 use crate::{prelude::*, Balance};
-use composable_support::math::safe::safe_multiply_by_rational;
-use composable_traits::{
-	currency::{AssetRatioInspect, Rational64},
-	rational,
-};
+use composable_traits::currency::AssetRatioInspect;
 
 use composable_traits::currency::AssetExistentialDepositInspect;
 use frame_support::{
@@ -15,7 +11,6 @@ use frame_support::{
 };
 use primitives::currency::CurrencyId;
 use sp_runtime::Perbill;
-use sp_std::marker::PhantomData;
 
 pub const NATIVE_EXISTENTIAL_DEPOSIT: NativeBalance = 100_000_000_000;
 pub type NativeExistentialDeposit = ConstU128<NATIVE_EXISTENTIAL_DEPOSIT>;
@@ -50,17 +45,16 @@ pub fn multi_existential_deposits<AssetsRegistry>(_currency_id: &CurrencyId) -> 
 #[cfg(not(feature = "runtime-benchmarks"))]
 pub fn multi_existential_deposits<
 	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
-		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>,
+		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>
+		+ BalanceConversion<NativeBalance, CurrencyId, Balance>,
 >(
 	currency_id: &CurrencyId,
 ) -> Balance {
 	AssetsRegistry::existential_deposit(*currency_id).unwrap_or_else(|_| {
-		PriceConverter::<AssetsRegistry>::to_asset_balance(NATIVE_EXISTENTIAL_DEPOSIT, *currency_id)
+		AssetsRegistry::to_asset_balance(NATIVE_EXISTENTIAL_DEPOSIT, *currency_id)
 			.unwrap_or(Balance::MAX)
 	})
 }
-
-pub struct PriceConverter<AssetsRegistry>(PhantomData<AssetsRegistry>);
 
 pub mod cross_chain_errors {
 	pub const ASSET_PRICE_NOT_FOUND: &str = "Asset price not found";
@@ -68,60 +62,10 @@ pub mod cross_chain_errors {
 		"Amount of asset is more than max possible";
 }
 
-pub struct WellKnownForeignToNativePriceConverter;
-
-impl WellKnownForeignToNativePriceConverter {
-	pub fn get_ratio(asset_id: CurrencyId) -> Option<Rational64> {
-		match asset_id {
-			CurrencyId::KSM => Some(rational!(375 / 1_000_000)),
-			CurrencyId::ibcDOT => Some(rational!(2143 / 1_000_000)),
-			CurrencyId::USDT | CurrencyId::USDC => Some(rational!(15 / 1_000_000_000)),
-			CurrencyId::kUSD => Some(rational!(15 / 1_000)),
-			CurrencyId::PICA => Some(rational!(1 / 1)),
-			CurrencyId::PBLO => Some(rational!(1 / 1)),
-			CurrencyId::KSM_USDT_LPT => Some(rational!(1 / 1_000_000_000)),
-			CurrencyId::PICA_USDT_LPT => Some(rational!(1 / 1_000_000_000)),
-			CurrencyId::PICA_KSM_LPT => Some(rational!(1 / 1_000_000_000)),
-			_ => None,
-		}
-	}
-
-	pub fn existential_deposit(asset_id: CurrencyId) -> Option<Balance> {
-		Self::to_asset_balance(NATIVE_EXISTENTIAL_DEPOSIT, asset_id)
-	}
-
-	pub fn to_asset_balance(balance: NativeBalance, asset_id: CurrencyId) -> Option<Balance> {
-		Self::get_ratio(asset_id).and_then(|ratio| {
-			safe_multiply_by_rational(balance, ratio.n.into(), ratio.d.into()).ok()
-		})
-	}
-}
-
 pub type NativeBalance = Balance;
-
-impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>
-	frame_support::traits::tokens::BalanceConversion<NativeBalance, CurrencyId, Balance>
-	for PriceConverter<AssetsRegistry>
-{
-	type Error = sp_runtime::DispatchError;
-
-	fn to_asset_balance(
-		native_amount: NativeBalance,
-		asset_id: CurrencyId,
-	) -> Result<Balance, Self::Error> {
-		AssetsRegistry::get_ratio(asset_id)
-			.and_then(|x| safe_multiply_by_rational(native_amount, x.n().into(), x.d().into()).ok())
-			.or_else(|| {
-				WellKnownForeignToNativePriceConverter::to_asset_balance(native_amount, asset_id)
-			})
-			.ok_or(DispatchError::Other(cross_chain_errors::ASSET_PRICE_NOT_FOUND))
-	}
-}
 
 #[cfg(test)]
 mod commons_sense {
-	use crate::fees::WellKnownForeignToNativePriceConverter;
-
 	use super::*;
 	use composable_traits::currency::AssetRatioInspect;
 	use frame_support::weights::{constants::WEIGHT_PER_SECOND, WeightToFee};
@@ -140,29 +84,5 @@ mod commons_sense {
 	impl AssetExistentialDepositInspect for Dummy {
 		type AssetId = CurrencyId;
 		type Balance = Balance;
-	}
-
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	#[test]
-	fn usdt() {
-		let converted_static = WellKnownForeignToNativePriceConverter::to_asset_balance(
-			1_000_000_000,
-			CurrencyId::USDT,
-		)
-		.unwrap();
-		let converted_dynamic =
-			PriceConverter::<Dummy>::to_asset_balance(1_000_000_000, CurrencyId::USDT).unwrap();
-		assert_eq!(converted_static, converted_dynamic);
-		assert_eq!(converted_static, 15);
-	}
-
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	#[test]
-	fn ksm() {
-		let converted_static =
-			WellKnownForeignToNativePriceConverter::existential_deposit(CurrencyId::KSM).unwrap();
-		let converted_dynamic = multi_existential_deposits::<Dummy>(&CurrencyId::KSM);
-		assert_eq!(converted_static, converted_dynamic);
-		assert_eq!(converted_static, 37500000);
 	}
 }

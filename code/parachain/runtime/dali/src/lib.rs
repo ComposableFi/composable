@@ -44,9 +44,7 @@ use orml_traits::{parameter_type_with_key, LockIdentifier};
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
-	fees::{
-		multi_existential_deposits, NativeExistentialDeposit, PriceConverter, WeightToFeeConverter,
-	},
+	fees::{multi_existential_deposits, NativeExistentialDeposit, WeightToFeeConverter},
 	governance::native::{
 		EnsureRootOrHalfNativeCouncil, EnsureRootOrOneThirdNativeTechnical, NativeTreasury,
 	},
@@ -59,6 +57,7 @@ use common::{
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
+	currency::AssetRatioInspect,
 	defi::Rate,
 	dex::{Amm, PriceAggregate},
 	xcm::assets::RemoteAssetRegistryInspect,
@@ -96,7 +95,6 @@ pub use frame_support::{
 };
 
 use codec::Encode;
-use common::fees::WellKnownForeignToNativePriceConverter;
 use composable_traits::{
 	account_proxy::{AccountProxyWrapper, ProxyType},
 	currency::{CurrencyFactory as CurrencyFactoryT, RangeId},
@@ -377,10 +375,8 @@ impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrD
 
 impl asset_tx_payment::Config for Runtime {
 	type Fungibles = Tokens;
-	type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
-		PriceConverter<AssetsRegistry>,
-		TransferToTreasuryOrDrop,
-	>;
+	type OnChargeAssetTransaction =
+		asset_tx_payment::FungiblesAdapter<AssetsRegistry, TransferToTreasuryOrDrop>;
 
 	type UseUserConfiguration = ConstBool<true>;
 
@@ -394,7 +390,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type Lock = AssetsTransactorRouter;
 
-	type BalanceConverter = PriceConverter<AssetsRegistry>;
+	type BalanceConverter = AssetsRegistry;
 }
 
 impl sudo::Config for Runtime {
@@ -1505,7 +1501,7 @@ impl_runtime_apis! {
 			// Hardcoded assets
 			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
 				// Add hardcoded ratio and ED for well known assets
-				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
+				asset.ratio = <AssetsRegistry as AssetRatioInspect>::get_ratio(CurrencyId(asset.id));
 				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry>(&asset.id.into());
 				asset
 			}).collect::<Vec<_>>();
