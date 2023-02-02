@@ -86,7 +86,6 @@ parameter_types! {
 }
 
 impl democracy::Config for Runtime {
-	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type EnactmentPeriod = EnactmentPeriod;
@@ -111,7 +110,6 @@ impl democracy::Config for Runtime {
 	type BlacklistOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type CancelProposalOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type VetoOrigin = EnsureNativeTechnicalMember;
-	type OperationalPreimageOrigin = EnsureNativeCouncilMember;
 	type Slash = Treasury;
 
 	type CooloffPeriod = CooloffPeriod;
@@ -119,9 +117,12 @@ impl democracy::Config for Runtime {
 	type MaxVotes = MaxVotes;
 	type PalletsOrigin = OriginCaller;
 
-	type PreimageByteDeposit = PreimageByteDeposit;
+	type Preimages = Preimage;
+	type MaxDeposits = ConstU32<100>;
+	type MaxBlacklisted = ConstU32<100>;
+
 	type Scheduler = Scheduler;
-	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
+	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -151,7 +152,7 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type Burn = Burn;
 	type MaxApprovals = MaxApprovals;
 	type BurnDestination = ();
-	type WeightInfo = weights::treasury::WeightInfo<Runtime>;
+	type WeightInfo = treasury::weights::SubstrateWeight<Runtime>;
 	// TODO: add bounties?
 	type SpendFunds = ();
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;

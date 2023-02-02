@@ -109,9 +109,9 @@ pub(crate) fn setup_migrate_call<T: Config>(
 			migrator.clone(),
 			contract.clone(),
 			Default::default(),
-			|vm| {
+			|mut vm| {
 				cosmwasm_vm::system::migrate(
-					vm,
+					&mut vm,
 					CosmwasmAccount::new(migrator.clone()),
 					CosmwasmAccount::new(contract.clone()),
 					new_code_id,

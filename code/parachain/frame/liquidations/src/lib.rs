@@ -252,7 +252,7 @@ pub mod pallet {
 			configuration: Vec<Self::LiquidationStrategyId>,
 		) -> Result<T::OrderId, DispatchError> {
 			let configuration = BoundedVec::try_from(configuration)
-				.map_err(|()| Error::<T>::InvalidLiquidationStrategiesVector)?;
+				.map_err(|_| Error::<T>::InvalidLiquidationStrategiesVector)?;
 			Self::do_liquidate(from_to, order, configuration)
 		}
 	}
@@ -267,7 +267,7 @@ pub mod pallet {
 			if configuration.is_empty() {
 				configuration
 					.try_push(DefaultStrategyIndex::<T>::get())
-					.map_err(|()| Error::<T>::InvalidLiquidationStrategiesVector)?;
+					.map_err(|_| Error::<T>::InvalidLiquidationStrategiesVector)?;
 			};
 			for id in configuration {
 				let configuration = Strategies::<T>::get(id);
