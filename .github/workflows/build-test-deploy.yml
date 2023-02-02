@@ -156,6 +156,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
       - uses: "./.github/templates/watch-exec"

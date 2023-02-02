@@ -4,8 +4,8 @@
       all-ci-packages = pkgs.linkFarmFromDrvs "all-ci-packages"
         (with self'.packages; [
           # TODO: I think these can be removed since they are dependencies of the other derivations
-          common-deps
-          common-test-deps
+          # common-deps
+          # common-test-deps
 
           cargo-fmt-check
           cargo-clippy-check
@@ -16,7 +16,7 @@
           nixfmt-check
           deadnix-check
           spell-check
-          # docs-static # todo: deployment, temporarily disabled because of LFS
+          docs-static # todo: deployment
           frontend-static
           hadolint-check
           benchmarks-check
