@@ -30,7 +30,7 @@ use cosmwasm_vm::{
 use cosmwasm_vm_wasmi::{
 	validation::CodeValidation,
 	version::{Version, Version1x},
-	WasmiVM,
+	OwnedWasmiVM,
 };
 use frame_support::{ensure, traits::Get, RuntimeDebug};
 use ibc::{
@@ -48,11 +48,10 @@ use ibc::{
 	},
 	signer::Signer as IbcSigner,
 };
-use sp_runtime::SaturatedConversion;
-use sp_std::{marker::PhantomData, str::FromStr};
-
 use ibc_primitives::{HandlerMessage, IbcHandler};
 use pallet_ibc::routing::ModuleRouter as IbcModuleRouter;
+use sp_runtime::SaturatedConversion;
+use sp_std::{marker::PhantomData, str::FromStr};
 
 use crate::{
 	mapping::*,
@@ -275,25 +274,23 @@ impl<T: Config> Router<T> {
 		message: &M,
 	) -> Result<(), CosmwasmVMError<T>>
 	where
-		for<'x> WasmiVM<DefaultCosmwasmVM<'x, T>>: CosmwasmCallVMSingle<I>
+		for<'x> OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>: CosmwasmCallVMSingle<I>
 			//+ CosmwasmDynamicVM<I>
 			+ StargateCosmwasmCallVM,
-		for<'x> VmErrorOf<WasmiVM<DefaultCosmwasmVM<'x, T>>>:
+		for<'x> VmErrorOf<OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>>:
 			From<CosmwasmVMError<T>> + Into<CosmwasmVMError<T>>,
 		I: Input + AsFunctionName + AsEntryName,
 		I::Output: serde::de::DeserializeOwned + ReadLimit + DeserializeLimit,
 		M: serde::Serialize,
 	{
-		<Pallet<T>>::sub_level_dispatch(
-			shared,
-			relayer,
-			contract,
-			Default::default(),
-			|vm| match vm.0.contract_runtime {
+		<Pallet<T>>::sub_level_dispatch(shared, relayer, contract, Default::default(), |mut vm| {
+			match vm.0.data().contract_runtime {
 				ContractBackend::CosmWasm { .. } =>
-					cosmwasm_call_serialize::<I, _, M>(vm, message).map_err(Into::into).map(|_| ()),
+					cosmwasm_call_serialize::<I, _, M>(&mut vm, message)
+						.map_err(Into::into)
+						.map(|_| ()),
 				ContractBackend::Pallet => T::PalletHook::execute(
-					vm,
+					&mut vm,
 					I::ENTRY,
 					serde_json::to_vec(&message)
 						.map_err(|e| {
@@ -306,8 +303,8 @@ impl<T: Config> Router<T> {
 				)
 				.map(|_| ())
 				.map_err(Into::into),
-			},
-		)
+			}
+		})
 		.map_err(Into::into)
 	}
 
@@ -319,9 +316,9 @@ impl<T: Config> Router<T> {
 		message: &M,
 	) -> Result<Option<Binary>, CosmwasmVMError<T>>
 	where
-		for<'x> WasmiVM<DefaultCosmwasmVM<'x, T>>:
+		for<'x> OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>:
 			CosmwasmCallVM<I> + CosmwasmDynamicVM<I> + StargateCosmwasmCallVM,
-		for<'x> VmErrorOf<WasmiVM<DefaultCosmwasmVM<'x, T>>>:
+		for<'x> VmErrorOf<OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>>:
 			From<CosmwasmVMError<T>> + Into<CosmwasmVMError<T>>,
 		I: AsFunctionName + AsEntryName,
 		M: serde::Serialize,
@@ -331,9 +328,9 @@ impl<T: Config> Router<T> {
 			relayer,
 			contract.clone(),
 			Default::default(),
-			|vm| {
-				cosmwasm_system_entrypoint_hook::<I, _>(vm, Default::default(), |vm, _| {
-					match vm.0.contract_runtime {
+			|mut vm| {
+				cosmwasm_system_entrypoint_hook::<I, _>(&mut vm, Default::default(), |vm, _| {
+					match vm.0.data().contract_runtime {
 						ContractBackend::CosmWasm { .. } =>
 							cosmwasm_call_serialize::<I, _, M>(vm, message).map(Into::into),
 						ContractBackend::Pallet => T::PalletHook::execute(
@@ -397,7 +394,6 @@ impl<T: Config> Router<T> {
 		);
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-
 		let data =
 			Self::run::<IbcPacketReceiveCall, _>(&mut vm, address.clone(), address, &message)
 				.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
@@ -653,7 +649,6 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 
 		let gas = u64::MAX;
 		let mut vm = <Pallet<T>>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-
 		let _ = Self::run::<IbcPacketAckCall, _>(&mut vm, address.clone(), address, &message)
 			.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 
