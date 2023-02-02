@@ -329,7 +329,7 @@ impl From<u128> for Amount {
 	Deserialize,
 )]
 #[repr(transparent)]
-pub struct Funds<T = Amount>(pub Vec<(AssetId, T)>);
+pub struct Funds<T = Balance>(pub Vec<(AssetId, T)>);
 
 impl<T> IntoIterator for Funds<T> {
 	type Item = <Vec<(AssetId, T)> as IntoIterator>::Item;
