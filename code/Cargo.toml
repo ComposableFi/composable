@@ -45,9 +45,6 @@ members = [
   # FIXME(hussein): this package is outdated and broken
   # "utils/price-feed",
   "utils/collator-sidecar",
-  # TODO(hussein): do we completely remove this?
-  # "simnode/simnode-tests",
-  # "simnode/common",
   "utils/wasm-optimizer",
   "xcvm/lib/*",
   "xcvm/cosmwasm/contracts/*",
