@@ -653,8 +653,6 @@ jobs:
       - linux
       - x64
       - sre
-    needs:
-      - check-nix
     name: "Nix command PR comments"
     steps:
       - uses: actions/checkout@v3
