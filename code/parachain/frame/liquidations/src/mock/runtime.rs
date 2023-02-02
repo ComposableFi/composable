@@ -11,10 +11,9 @@ use frame_support::{
 	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 	PalletId,
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
+use frame_system::EnsureRoot;
 use hex_literal::hex;
 use orml_traits::parameter_type_with_key;
-use primitives::currency::ValidateCurrencyId;
 use smallvec::smallvec;
 use sp_core::{
 	sr25519::{Public, Signature},
@@ -22,7 +21,7 @@ use sp_core::{
 };
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
+	traits::{BlakeTwo256, ConvertInto, IdentifyAccount, IdentityLookup, Verify},
 	Perbill,
 };
 use xcm::latest::SendXcm;
@@ -174,6 +173,7 @@ impl pallet_assets_registry::Config for Runtime {
 	type Balance = Balance;
 	type AssetSymbolMaxChars = AssetSymbolMaxChars;
 	type AssetNameMaxChars = AssetNameMaxChars;
+	type Convert = ConvertInto;
 }
 
 impl pallet_assets_transactor_router::Config for Runtime {

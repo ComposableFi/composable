@@ -7,7 +7,7 @@ use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup, Zero},
+	traits::{BlakeTwo256, ConvertInto, IdentityLookup, Zero},
 };
 use system::EnsureRoot;
 
@@ -16,7 +16,7 @@ pub type Block = frame_system::mocking::MockBlock<Test>;
 pub type AccountId = u128;
 pub type AssetId = u128;
 pub type Amount = i128;
-pub type Balance = u64;
+pub type Balance = u128;
 
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
@@ -83,6 +83,7 @@ impl assets_registry::Config for Test {
 	type Balance = Balance;
 	type AssetSymbolMaxChars = AssetSymbolMaxChars;
 	type AssetNameMaxChars = AssetNameMaxChars;
+	type Convert = ConvertInto;
 }
 
 parameter_types! {
@@ -145,7 +146,7 @@ impl system::Config for Test {
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = pallet_balances::AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();

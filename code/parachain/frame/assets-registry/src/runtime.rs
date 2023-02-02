@@ -2,17 +2,17 @@ use crate::{self as pallet_assets_registry, weights::SubstrateWeight};
 use composable_traits::xcm::assets::XcmAssetLocation;
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{EnsureOneOf, Everything},
+	traits::{EitherOfDiverse, Everything},
 };
 use frame_system::{self as system, EnsureRoot, EnsureSignedBy};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 };
 
 pub type AccountId = u32;
-type Balance = u64;
+type Balance = u128;
 type Block = frame_system::mocking::MockBlock<Runtime>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 
@@ -79,20 +79,24 @@ impl pallet_assets_registry::Config for Runtime {
 	type LocalAssetId = AssetId;
 	type Balance = Balance;
 	type ForeignAssetId = XcmAssetLocation;
-	type UpdateAssetRegistryOrigin = EnsureOneOf<
+	type UpdateAssetRegistryOrigin = EitherOfDiverse<
 		EnsureSignedBy<RootAccount, AccountId>, // for tests
 		EnsureRoot<AccountId>,                  // for benchmarks
 	>;
-	type ParachainOrGovernanceOrigin = EnsureOneOf<
+	type ParachainOrGovernanceOrigin = EitherOfDiverse<
 		EnsureSignedBy<RootAccount, AccountId>, // for tests
 		EnsureRoot<AccountId>,                  // for benchmarks
 	>;
 	type WeightInfo = SubstrateWeight<Self>;
 	type AssetNameMaxChars = AssetNameMaxChars;
 	type AssetSymbolMaxChars = AssetSymbolMaxChars;
+	type Convert = ConvertInto;
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Runtime>().unwrap().into()
+	system::GenesisConfig::default()
+		.build_storage::<Runtime>()
+		.expect("Storage is valid")
+		.into()
 }

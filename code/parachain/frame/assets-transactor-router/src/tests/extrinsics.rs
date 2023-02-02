@@ -1,14 +1,14 @@
 use crate::*;
 use composable_traits::assets::AssetInfo;
 use frame_support::{assert_noop, assert_ok};
-use mocks::{new_test_ext, GovernanceRegistry, RuntimeOrigin, Test};
+use mocks::{new_test_ext, Balance, GovernanceRegistry, RuntimeOrigin, Test};
 use orml_traits::MultiCurrency;
 use sp_runtime::DispatchError;
 
 const FROM_ACCOUNT: u128 = 1;
 const TO_ACCOUNT: u128 = 2;
-const INIT_AMOUNT: u64 = 1000;
-const TRANSFER_AMOUNT: u64 = 500;
+const INIT_AMOUNT: Balance = 1000;
+const TRANSFER_AMOUNT: Balance = 500;
 
 fn create_asset_id(protocol_id: [u8; 8], nonce: u64) -> u128 {
 	let bytes = protocol_id

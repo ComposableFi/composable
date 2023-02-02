@@ -32,6 +32,7 @@ pub mod pallet {
 	use crate::prelude::*;
 	pub use crate::weights::WeightInfo;
 	use codec::FullCodec;
+	use composable_support::math::safe::safe_multiply_by_rational;
 	use composable_traits::{
 		assets::{
 			Asset, AssetInfo, AssetInfoUpdate, AssetMetadata, AssetType, AssetTypeInspect,
@@ -42,11 +43,14 @@ pub mod pallet {
 	};
 	use cumulus_primitives_core::ParaId;
 	use frame_support::{
-		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin, BoundedVec,
-		Twox128,
+		dispatch::DispatchResultWithPostInfo,
+		pallet_prelude::*,
+		traits::{tokens::BalanceConversion, EnsureOrigin},
+		BoundedVec, Twox128,
 	};
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
+	use sp_runtime::traits::Convert;
 	use sp_std::{fmt::Debug, str, vec::Vec};
 
 	/// The module configuration trait.
@@ -96,6 +100,9 @@ pub mod pallet {
 		/// Maximum number of characters allowed in an asset name
 		#[pallet::constant]
 		type AssetNameMaxChars: Get<u32>;
+
+		/// An isomorphism: Balance<->u128
+		type Convert: Convert<u128, Self::Balance> + Convert<Self::Balance, u128>;
 	}
 
 	#[pallet::pallet]
@@ -495,6 +502,23 @@ pub mod pallet {
 				AssetType::Foreign
 			} else {
 				AssetType::Local
+			}
+		}
+	}
+
+	impl<T: Config> BalanceConversion<T::Balance, T::LocalAssetId, T::Balance> for Pallet<T> {
+		type Error = DispatchError;
+
+		fn to_asset_balance(
+			native_amount: T::Balance,
+			asset_id: T::LocalAssetId,
+		) -> Result<T::Balance, Self::Error> {
+			let native_amount = T::Convert::convert(native_amount);
+			if let Some(ratio) = Self::get_ratio(asset_id) {
+				Ok(safe_multiply_by_rational(native_amount, ratio.n().into(), ratio.d().into())
+					.map(T::Convert::convert)?)
+			} else {
+				Err(Error::<T>::AssetNotFound.into())
 			}
 		}
 	}

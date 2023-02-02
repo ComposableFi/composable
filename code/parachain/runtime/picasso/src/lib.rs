@@ -57,7 +57,9 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
+	traits::{
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
+	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -251,6 +253,7 @@ impl assets_registry::Config for Runtime {
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 	type AssetNameMaxChars = AssetNameMaxChars;
 	type AssetSymbolMaxChars = AssetSymbolMaxChars;
+	type Convert = ConvertInto;
 }
 
 parameter_types! {

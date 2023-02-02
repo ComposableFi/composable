@@ -7241,6 +7241,7 @@ dependencies = [
 name = "pallet-assets-registry"
 version = "1.0.0"
 dependencies = [
+ "composable-support",
  "composable-traits",
  "cumulus-primitives-core",
  "frame-benchmarking",

@@ -33,7 +33,7 @@ use primitives::currency::CurrencyId;
 use sp_core::H256;
 use sp_runtime::{
 	generic,
-	traits::{AccountIdConversion, BlakeTwo256, Convert, IdentityLookup},
+	traits::{AccountIdConversion, BlakeTwo256, Convert, ConvertInto, IdentityLookup},
 	AccountId32, DispatchError,
 };
 
@@ -194,6 +194,7 @@ impl pallet_assets_registry::Config for Test {
 	type Balance = Balance;
 	type AssetSymbolMaxChars = AssetSymbolMaxChars;
 	type AssetNameMaxChars = AssetNameMaxChars;
+	type Convert = ConvertInto;
 }
 
 impl pallet_assets_transactor_router::Config for Test {

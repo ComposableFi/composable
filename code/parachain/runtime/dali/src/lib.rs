@@ -826,6 +826,7 @@ impl assets_registry::Config for Runtime {
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 	type AssetNameMaxChars = AssetNameMaxChars;
 	type AssetSymbolMaxChars = AssetSymbolMaxChars;
+	type Convert = ConvertInto;
 }
 
 impl assets_transactor_router::Config for Runtime {
