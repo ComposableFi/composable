@@ -5,7 +5,7 @@
 
       centauri-prepare = pkgs.writeText "hyperspace.sh" ''
         nix build .#hyperspace-config
-        mv result config.toml && cp config.toml /tmp    
+        mv result /tmp/config.toml    
         nix run .#devnet-centauri --option sandbox relaxed        
       '';
 
