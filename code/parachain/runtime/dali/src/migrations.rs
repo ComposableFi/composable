@@ -440,6 +440,42 @@ pub mod hard_coded_assets {
 
 				new_test_ext().execute_with(|| {
 					add_assets_to_storage(assets);
+					assert_eq!(
+						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(1)),
+						Some("Picasso".as_bytes().to_vec())
+					);
+					assert_eq!(
+						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(4)),
+						Some("Kusama".as_bytes().to_vec())
+					);
+					assert_eq!(
+						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(105)),
+						Some("Kusama Tether LPT".as_bytes().to_vec())
+					);
+					assert_eq!(
+						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(106)),
+						Some("Picasso Tether LPT".as_bytes().to_vec())
+					);
+					assert_eq!(
+						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(107)),
+						Some("Picasso Kusama LPT".as_bytes().to_vec())
+					);
+					assert_eq!(
+						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(129)),
+						Some("Karura Dollar".as_bytes().to_vec())
+					);
+					assert_eq!(
+						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(130)),
+						Some("Tether".as_bytes().to_vec())
+					);
+					assert_eq!(
+						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(5)),
+						Some("Pablo Token".as_bytes().to_vec())
+					);
+					assert_eq!(
+						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(6)),
+						Some("IBC DOT".as_bytes().to_vec())
+					);
 				})
 			}
 		}
