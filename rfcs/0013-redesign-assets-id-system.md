@@ -254,14 +254,15 @@ a new ID
 
 ## Migrate Hard-Coded Assets
 
-The data-migration may be handled in two main tasks:
+A migration should ensure that asset IDs with balances already stored on chain 
+are not changed and that pre-existing location <-> local ID bindings are 
+respected.
+
+The data-migration may be handled as follows:
 
 * Append new storage elements to assets-registry
-  * Add nonce
-  * Add ticker-number to existing tokens
+  * Add metadata to existing tokens
   * Create entries for local assets not previously found in assets-registry
-
-* Migrate existing orml-tokens storage to appropriate instances of orml-tokens
 
 <!-- TODO This should provide more clear details and will in the future -->
 

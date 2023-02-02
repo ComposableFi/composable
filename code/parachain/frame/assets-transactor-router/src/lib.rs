@@ -493,6 +493,8 @@ pub mod pallet {
 			nonce: u64,
 			asset_info: AssetInfo<T::Balance>,
 		) -> Result<Self::LocalAssetId, DispatchError> {
+			// NOTE: Asset ID generation rational found here:
+			// https://github.com/PoisonPhang/composable-poison-fork/blob/INIT-13/rfcs/0013-redesign-assets-id-system.md#local-asset-id-generation
 			let bytes = protocol_id
 				.into_iter()
 				.chain(nonce.to_le_bytes())
