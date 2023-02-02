@@ -152,10 +152,13 @@ jobs:
       group: ${{ github.workflow }}-all-ci-packages-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: nixos/nix:2.13.2
     steps:
       - name: Enable LFS
-        run: nix-shell -p git-lfs
+        run: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs
       - uses: actions/checkout@v3
         with:
           lfs: true
