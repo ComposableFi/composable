@@ -282,7 +282,8 @@ pub mod pallet {
 
 		/// A way to convert from our native account to cosmwasm `Addr`.
 		type AccountToAddr: Convert<AccountIdOf<Self>, String>
-			+ Convert<String, Result<AccountIdOf<Self>, ()>>;
+			+ Convert<String, Result<AccountIdOf<Self>, ()>>
+			+ Convert<Vec<u8>, Result<AccountIdOf<Self>, ()>>;
 
 		/// Type of an account balance.
 		type Balance: Balance + Into<u128>;
