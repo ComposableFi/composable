@@ -1,16 +1,13 @@
 import BigNumber from "bignumber.js";
 import { alpha, Box, Slider, Typography, useTheme } from "@mui/material";
-import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
-import {
-  calculateStakingPeriodAPR,
-  formatDurationOption,
-} from "@/defi/polkadot/pallets/StakingRewards";
-import { pipe } from "fp-ts/function";
-import * as O from "fp-ts/Option";
+import { calculateStakingPeriodAPR } from "@/defi/polkadot/pallets/StakingRewards";
 import { RewardPool } from "@/stores/defi/polkadot/stakingRewards/slice";
 
 type LockPeriodInputProps = {
-  options: any;
+  options: {
+    label: string;
+    value: number;
+  }[];
   picaRewardPool: RewardPool;
   duration: any;
   onNone: () => BigNumber;
@@ -37,18 +34,24 @@ export function LockPeriodInput({
   onChange,
 }: LockPeriodInputProps) {
   const theme = useTheme();
+  const selectedDuration = options.find(
+    (option) => option.value === Number(duration)
+  );
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <TextWithTooltip tooltip={"Select lock period"}>
-          Select lock period (multiplier)
-        </TextWithTooltip>
+        <Typography
+          variant="body2"
+          color={alpha(theme.palette.common.white, 0.6)}
+        >
+          Select lock period
+        </Typography>
         <Box display="flex" justifyContent="flex-end" alignItems="center">
           <Typography
             variant="body2"
             color={alpha(theme.palette.common.white, 0.6)}
           >
-            APR
+            ~APR
           </Typography>
         </Box>
       </Box>
@@ -60,21 +63,13 @@ export function LockPeriodInput({
             alignItems="center"
           >
             <Typography variant="h6">
-              {picaRewardPool.lock.durationPresets &&
-                formatDurationOption(
-                  duration,
-                  pipe(
-                    picaRewardPool.lock.durationPresets[duration.toString()],
-                    O.fromNullable,
-                    O.fold(onNone, onSome)
-                  )
-                )}
+              {selectedDuration?.label ?? "Select a lock period"}
             </Typography>
             <Typography
               variant="subtitle1"
               color={theme.palette.featured.lemon}
             >
-              ≈%
+              %
               {calculateStakingPeriodAPR(
                 duration,
                 picaRewardPool.lock.durationPresets
@@ -84,7 +79,10 @@ export function LockPeriodInput({
 
           {hasRewardPools ? (
             <Slider
-              marks={options}
+              marks={structuredClone(options).map((option) => {
+                option.label = "";
+                return option;
+              })}
               name="duration-presets"
               aria-labelledby="lock-period-slider"
               step={null}

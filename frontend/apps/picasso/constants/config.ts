@@ -1,6 +1,7 @@
 import { NetworkId } from "@/constants/types";
 import { ParachainId, SubstrateNetworkId } from "shared";
 import { TokenId } from "tokens";
+import BigNumber from "bignumber.js";
 
 const config = {
   governanceUrl: "https://picasso.polkassembly.io/",
@@ -157,6 +158,91 @@ const config = {
     },
   },
   defaultNetworkId: "picasso" as ParachainId,
+  stakingRewards: {
+    demoMode: true,
+    durationPresetOptions: [
+      {
+        label: "No lock date",
+        value: 0,
+      },
+      {
+        label: "2 weeks",
+        value: 604800 * 2,
+      },
+      {
+        label: "1 month",
+        value: 604800 * 4,
+      },
+      {
+        label: "1 month and 2 weeks",
+        value: 604800 * 6,
+      },
+      {
+        label: "2 months",
+        value: 604800 * 8,
+      },
+      {
+        label: "2 months and 2 weeks",
+        value: 604800 * 10,
+      },
+      {
+        label: "3 months",
+        value: 604800 * 12,
+      },
+      {
+        label: "3 months and 2 weeks",
+        value: 604800 * 14,
+      },
+      {
+        label: "4 months",
+        value: 604800 * 16,
+      },
+      {
+        label: "4 months and 2 weeks",
+        value: 604800 * 18,
+      },
+      {
+        label: "5 months",
+        value: 604800 * 20,
+      },
+      {
+        label: "5 months and 2 weeks",
+        value: 604800 * 22,
+      },
+      {
+        label: "6 months",
+        value: 604800 * 24,
+      },
+    ],
+    picaRewardPools: {
+      owner: "",
+      assetId: "1",
+      totalShares: new BigNumber(10000000),
+      claimedShares: new BigNumber(100),
+      endBlock: new BigNumber(10000),
+      lock: {
+        durationPresets: {
+          "0": "1000000000",
+          "1209600": "1100000000",
+          "2419200": "1200000000",
+          "3628800": "1250000000",
+          "4838400": "1300000000",
+          "6048000": "1350000000",
+          "7257600": "1400000000",
+          "8467200": "1500000000",
+          "9676800": "1600000000",
+          "10886400": "1700000000",
+          "12096000": "1800000000",
+          "13305600": "1900000000",
+          "14515200": "2000000000",
+        },
+        unlockPenalty: "500000000",
+      },
+      shareAssetId: "1001",
+      financialNftAssetId: "2001",
+      minimumStakingAmount: new BigNumber(10),
+    },
+  },
 };
 
 export default config;

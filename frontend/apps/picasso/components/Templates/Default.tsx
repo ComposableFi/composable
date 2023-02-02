@@ -8,16 +8,11 @@ import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import { NavBar } from "../Molecules";
-import {
-  alpha,
-  Breadcrumbs,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
+import { alpha, Breadcrumbs, Typography, useMediaQuery, useTheme, } from "@mui/material";
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { GlobalSettings } from "../Organisms/Settings/GlobalSettings";
 import { ExternalLinksDropdown } from "@/components/Molecules/ExternalLinksDropdown";
+import { useConnectedEndpoint } from "@/defi/polkadot/hooks/useConnectedEndpoint";
 
 type DefaultLayoutProps = {
   breadcrumbs?: ReactNode[];
@@ -129,7 +124,7 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
   const theme = useTheme();
   const isTablet = useMediaQuery(theme.breakpoints.down("md"));
   const drawerWidth = isTablet ? 240 : 320;
-
+  const connectedEndpoint = useConnectedEndpoint();
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
       <CssBaseline />
@@ -165,7 +160,7 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
           }}
         >
           <Typography variant="caption">
-            {process.env.WEBSITE_VERSION}
+            {connectedEndpoint}
           </Typography>
         </Box>
       </Box>

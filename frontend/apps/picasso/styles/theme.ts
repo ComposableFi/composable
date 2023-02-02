@@ -786,6 +786,22 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
         },
       },
     },
+    MuiSlider: {
+      styleOverrides: {
+        thumb: {
+          backgroundColor: brandPalette.primary.light,
+        },
+        mark: {
+          width: "2px",
+          height: "2px",
+          borderRadius: "50%",
+          background: alpha(brandPalette.common.white, 0.6),
+        },
+        rail: {
+          backgroundColor: brandPalette.primary.light,
+        },
+      },
+    },
     MuiMenu: {
       styleOverrides: {
         list: {

@@ -10,7 +10,6 @@ import {
 } from "@mui/material";
 import { FC } from "react";
 import { TokenAsset } from "@/components";
-import BigNumber from "bignumber.js";
 
 const boxStyles = (theme: Theme) => ({
   display: "flex",
@@ -24,40 +23,41 @@ const boxStyles = (theme: Theme) => ({
 export const ClaimableRewards: FC<{
   onClaimButtonClick: () => void;
 }> = ({ onClaimButtonClick }) => {
-  const pica = new BigNumber(0);
-  const angl = new BigNumber(0);
-  const pablo = new BigNumber(0);
-
   const theme = useTheme();
+  const claimable = "23,309 PICA";
+  const usdValue = "(~$34,567)";
 
   return (
     <Paper sx={{ padding: theme.spacing(6) }}>
       <Stack gap={6}>
-        <Typography variant="h6">Claimable Rewards</Typography>
+        <Typography variant="h6">Claimable $PICA Rewards</Typography>
         <Box
           display="flex"
           alignItems="center"
           justifyContent="space-between"
           width="100%"
-          gap={2}
+          sx={{
+            p: 4,
+            borderRadius: 1,
+            border: `1px solid ${alpha(
+              theme.palette.common.white,
+              theme.custom.opacity.light
+            )}`,
+          }}
         >
-          <Box sx={boxStyles} gap={2} width="100%">
-            <div>
-              <TokenAsset tokenId={"pica"} label="PICA" />
-            </div>
-            <Typography variant="body2">{pica.toFixed()}</Typography>
+          <Box>
+            <TokenAsset tokenId={"pica"} label="PICA" />
           </Box>
-          <Box sx={boxStyles} gap={2} width="100%">
-            <div>
-              <TokenAsset tokenId={"pblo"} label="PBLO" />
-            </div>
-            <Typography variant="body2">{pablo.toFixed()}</Typography>
-          </Box>
-          <Box sx={boxStyles} gap={2} width="100%">
-            <div>
-              <TokenAsset tokenId={"angl"} label="ANGL" />
-            </div>
-            <Typography variant="body2">{angl.toFixed()}</Typography>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Typography variant="body2">{claimable}</Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: alpha(theme.palette.common.white, 0.6),
+              }}
+            >
+              {usdValue}
+            </Typography>
           </Box>
         </Box>
         <Button
@@ -66,7 +66,7 @@ export const ClaimableRewards: FC<{
           fullWidth
           onClick={onClaimButtonClick}
         >
-          Claim all
+          Claim rewards
         </Button>
       </Stack>
     </Paper>

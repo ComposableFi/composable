@@ -1,9 +1,9 @@
-import { FC, useCallback, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import { useSnackbar } from "notistack";
 import { stake } from "@/defi/polkadot/pallets/StakingRewards";
 import { useStakingRewards } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewards";
-import { Executor, useSigner } from "substrate-react";
+import { useExecutor, usePicassoProvider, useSigner } from "substrate-react";
 import {
   subscribeStakeFormValidation,
   useStakeForm,
@@ -16,23 +16,15 @@ import {
 import { pipe } from "fp-ts/lib/function";
 import * as O from "fp-ts/Option";
 import BigNumber from "bignumber.js";
-import { ApiPromise } from "@polkadot/api";
 import { StakeForm } from "@/components/Organisms/Staking/StakeForm";
 
-type StakeTabContentProps = {
-  executor: Executor;
-  parachainApi: ApiPromise;
-};
-
-export const StakeTabContent: FC<StakeTabContentProps> = ({
-  executor,
-  parachainApi,
-}) => {
+export const StakeTabContent = () => {
   const { isFormValid, lockPeriod, setLockPeriod, amount, setAmount } =
     useStakeForm((state) => state);
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const { hasRewardPools, picaRewardPool, balance, pica } = useStakingRewards();
-
+  const executor = useExecutor();
+  const { parachainApi } = usePicassoProvider();
   const account = usePicassoAccount();
   const signer = useSigner();
   const options = getOptions(hasRewardPools, picaRewardPool);
@@ -42,10 +34,12 @@ export const StakeTabContent: FC<StakeTabContentProps> = ({
     pipe(
       O.Do,
       O.bind("assetId", () => O.fromNullable(pica.chainId.picasso?.toNumber())),
-      O.map(({ assetId }) =>
+      O.bind("api", () => O.fromNullable(parachainApi)),
+      O.bind("exec", () => O.fromNullable(executor)),
+      O.map(({ assetId, api, exec }) =>
         stake({
-          executor,
-          parachainApi,
+          executor: exec,
+          parachainApi: api,
           account,
           assetId,
           lockablePICA: amount,
@@ -68,11 +62,12 @@ export const StakeTabContent: FC<StakeTabContentProps> = ({
     signer,
   ]);
 
-  const setValidation = () => {};
+  const setValidation = () => {}; // TODO: Implement validation for this or remove
 
   useEffect(() => {
     return subscribeStakeFormValidation();
   }, []);
+
   return (
     <StakeForm
       amount={balance}

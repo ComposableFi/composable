@@ -27,7 +27,6 @@ export type PortfolioItem = {
   stake: BigNumber;
   unlockPenalty: BigNumber;
 };
-export type PortfolioTuple = [string, string, PortfolioItem];
 export type StakingPortfolio = Array<PortfolioItem>;
 export type StakingRewardsSlice = {
   isRewardPoolLoaded: boolean;

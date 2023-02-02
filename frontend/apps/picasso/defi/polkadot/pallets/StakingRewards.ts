@@ -4,7 +4,6 @@ import {
   callbackGate,
   fromChainIdUnit,
   fromPerbill,
-  humanDateDiff,
   subscanExtrinsicLink,
   toChainIdUnit,
   unwrapNumberOrHex,
@@ -21,6 +20,9 @@ import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/TaskEither";
 import { tryCatch } from "fp-ts/TaskEither";
 import { StakingPosition } from "@/apollo/queries/stakingPositions";
+import config from "@/constants/config";
+import { ComposableTraitsStakingRewardPool } from "@/../../packages/defi-interfaces";
+import { Option } from "@polkadot/types-codec";
 
 export async function fetchStakingRewardPosition(
   api: ApiPromise,
@@ -132,7 +134,15 @@ export function tryFetchRewardPool(
   assetId: string | number
 ): TE.TaskEither<Error, RewardPool> {
   const getRewardPools = tryCatch(
-    () => api.query.stakingRewards.rewardPools(api.createType("u128", assetId)),
+    () =>
+      config.stakingRewards.demoMode
+        ? new Promise((resolve) =>
+            resolve({
+              isSome: true,
+              toJSON: () => config.stakingRewards.picaRewardPools,
+            } as unknown as Promise<Option<ComposableTraitsStakingRewardPool>>)
+          )
+        : api.query.stakingRewards.rewardPools(api.createType("u128", assetId)),
     () => new Error("Could not query reward pools")
   );
 
@@ -144,14 +154,6 @@ export function tryFetchRewardPool(
         : TE.left(new Error("Empty result from reward pool"))
     )
   );
-}
-
-export function formatDurationOption(duration: string, multiplier: BigNumber) {
-  const future = new Date();
-  future.setSeconds(future.getSeconds() + parseInt(duration));
-  const [diff, label] = humanDateDiff(new Date(), future);
-
-  return `${diff} ${label} (${multiplier.toFixed(2).toString()}%)`;
 }
 
 export type DurationOption = {
@@ -182,8 +184,8 @@ export function stake({
   closeSnackbar,
   signer,
 }: {
-  executor: Executor | undefined;
-  parachainApi: ApiPromise | undefined;
+  executor: Executor;
+  parachainApi: ApiPromise;
   account: InjectedAccountWithMeta | undefined;
   assetId: number;
   lockablePICA: BigNumber;
@@ -243,13 +245,6 @@ export function calculateStakingPeriodAPR(
     [key in string]: BigNumber;
   }
 ) {
-  if (!lockPeriod) {
-    return 0;
-  }
-  const SECONDS_IN_YEAR = 31536000;
-  const APR = durationPresets[lockPeriod].multipliedBy(
-    SECONDS_IN_YEAR / Number(lockPeriod)
-  );
-
-  return APR.toFixed(2);
+  console.log("Implement APR");
+  return "0";
 }

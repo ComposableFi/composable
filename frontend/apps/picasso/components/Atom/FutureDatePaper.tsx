@@ -6,6 +6,7 @@ export const FutureDatePaper: FC<{
 }> = ({ duration }) => {
   const date = useMemo(() => {
     if (!duration) return null;
+    if (duration === "0") return "No lock period";
     const now = new Date();
     const target = (() =>
       new Date(now.setSeconds(now.getSeconds() + parseInt(duration))))();

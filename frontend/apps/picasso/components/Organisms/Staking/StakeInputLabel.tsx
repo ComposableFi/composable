@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 import { Token } from "tokens";
 import { AssetRatio, formatNumber, SubstrateNetworkId } from "shared";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 
 export function StakeInputLabel(props: {
   amount: BigNumber;
@@ -17,6 +17,7 @@ export function StakeInputLabel(props: {
     existentialDeposit: Record<SubstrateNetworkId, BigNumber | null>;
   };
 }) {
+  const theme = useTheme();
   return (
     <Box
       display="flex"
@@ -24,12 +25,12 @@ export function StakeInputLabel(props: {
       justifyContent="space-between"
       alignItems="center"
     >
-      <Typography variant="inputLabel">Amount to lock</Typography>
+      <Typography variant="inputLabel">Enter amount to lock</Typography>
       <Box display="flex" gap={1}>
-        <Typography variant="inputLabel" color="text.secondary">
+        <Typography variant="inputLabel">
           Balance:
         </Typography>
-        <Typography variant="inputLabel">
+        <Typography variant="body2" fontSize="1rem">
           {formatNumber(props.amount)}&nbsp;
           {props.pica.symbol}
         </Typography>

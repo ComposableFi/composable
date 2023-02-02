@@ -1,42 +1,34 @@
-import { Box, Grid, Stack, Theme, Typography } from "@mui/material";
-import { FeaturedBox } from "@/components";
+import { Box, Grid, Stack, Typography } from "@mui/material";
 import Image from "next/image";
 import { FC } from "react";
+import { StakingHighlights } from "@/components/Organisms/Staking/StakingHighlights";
 
 interface StakingDisconnectedParams {
   gridSize: { xs: number };
-  theme: Theme;
 }
 
 export const StakingDisconnected: FC<StakingDisconnectedParams> = ({
   gridSize,
-  theme,
 }) => (
-  <Grid container spacing={8} marginTop={6}>
-    <Grid item {...gridSize}>
-      <FeaturedBox
-        sx={{
-          padding: theme.spacing(6, 0),
-        }}
-        title={"Connect wallet"}
-        textBelow="To start staking, wallet needs to be connected."
-      />
+  <>
+    <StakingHighlights />
+    <Grid container marginTop={6} spacing={9}>
+      <Grid item {...gridSize}>
+        <Box>
+          <Stack>
+            <Image
+              style={{ mixBlendMode: "luminosity" }}
+              src="/static/Rocket.svg"
+              width={200}
+              height={200}
+              alt="rocket orbiting the moon"
+            />
+            <Typography variant="h6" textAlign="center" color="text.secondary">
+              Connect you wallet and start earning.
+            </Typography>
+          </Stack>
+        </Box>
+      </Grid>
     </Grid>
-    <Grid item {...gridSize}>
-      <Box>
-        <Stack>
-          <Image
-            style={{ mixBlendMode: "luminosity" }}
-            src="/static/Rocket.svg"
-            width={200}
-            height={200}
-            alt="rocket orbiting the moon"
-          />
-          <Typography variant="h6" textAlign="center" color="text.secondary">
-            Connect to stake your assets.
-          </Typography>
-        </Stack>
-      </Box>
-    </Grid>
-  </Grid>
+  </>
 );

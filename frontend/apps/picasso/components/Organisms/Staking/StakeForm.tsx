@@ -3,7 +3,6 @@ import { Button, Stack, Typography, useTheme } from "@mui/material";
 import { StakeInputLabel } from "@/components/Organisms/Staking/StakeInputLabel";
 import { AlertBox, BigNumberInput } from "@/components";
 import { LockPeriodInput } from "@/components/Organisms/Staking/LockPeriodInput";
-import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { FutureDatePaper } from "@/components/Atom/FutureDatePaper";
 import { WarningAmberRounded } from "@mui/icons-material";
 
@@ -49,6 +48,7 @@ export function StakeForm({
   formValid,
 }: StakeFormProps) {
   const theme = useTheme();
+  const shouldShowWarning = duration !== "0";
   return (
     <Stack sx={{ marginTop: theme.spacing(9) }} gap={4}>
       <Stack gap={1.5}>
@@ -59,6 +59,13 @@ export function StakeForm({
           maxValue={amount}
           value={value}
           tokenId={pica.id}
+          InputProps={{
+            sx: {
+              "& .MuiOutlinedInput-input": {
+                textAlign: "center"
+              }
+            }
+          }}
           maxDecimals={pica.decimals.picasso ?? undefined}
         />
       </Stack>
@@ -74,14 +81,19 @@ export function StakeForm({
         max={max}
         onChange={onChange}
       />
-      <TextWithTooltip tooltip="Unlock date">Unlock date</TextWithTooltip>
+      <Typography variant="body2">Unlock date</Typography>
       <FutureDatePaper duration={duration} />
-      <AlertBox status="warning" icon={<WarningAmberRounded color="warning" />}>
-        <Typography variant="body2">Warning</Typography>
-        <Typography variant="inputLabel" color="text.secondary">
-          Your {pica.symbol} will be locked until the expiry date.
-        </Typography>
-      </AlertBox>
+      {shouldShowWarning && (
+        <AlertBox
+          status="warning"
+          icon={<WarningAmberRounded color="warning" />}
+        >
+          <Typography variant="body2">Warning</Typography>
+          <Typography variant="inputLabel" color="text.secondary">
+            Your {pica.symbol} will be locked until the expiry date.
+          </Typography>
+        </AlertBox>
+      )}
       <Button
         fullWidth
         onClick={onClick}
@@ -89,7 +101,7 @@ export function StakeForm({
         color="primary"
         disabled={!formValid}
       >
-        <Typography variant="button">Lock and mint</Typography>
+        <Typography variant="button">Stake and mint</Typography>
       </Button>
     </Stack>
   );

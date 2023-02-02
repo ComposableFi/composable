@@ -34,7 +34,7 @@ export const StakingLayout: FC = ({ children }) => {
             width="100%"
           >
             <Grid container spacing={2} maxWidth="lg">
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <Skeleton
                   variant="rounded"
                   width="100%"
@@ -42,7 +42,7 @@ export const StakingLayout: FC = ({ children }) => {
                   sx={sxProps}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <Skeleton
                   variant="rounded"
                   width="100%"
@@ -50,15 +50,7 @@ export const StakingLayout: FC = ({ children }) => {
                   sx={sxProps}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <Skeleton
-                  variant="rounded"
-                  width="100%"
-                  height="100%"
-                  sx={sxProps}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <Skeleton
                   variant="rounded"
                   width="100%"
@@ -70,7 +62,7 @@ export const StakingLayout: FC = ({ children }) => {
                 <Skeleton
                   variant="rounded"
                   width="100%"
-                  height="300px"
+                  height="600px"
                   sx={sxProps}
                 />
               </Grid>

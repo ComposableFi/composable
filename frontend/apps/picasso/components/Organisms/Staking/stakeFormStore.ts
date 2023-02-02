@@ -22,7 +22,7 @@ export const useStakeForm = create<StakeFormData & StakeFormActions>()(
       subscribeWithSelector((set, get) => ({
         isFormDirty: false,
         isFormValid: true,
-        lockPeriod: "",
+        lockPeriod: "0",
         amount: new BigNumber(0),
         setLockPeriod: (lockPeriod: string) => {
           set((state) => {

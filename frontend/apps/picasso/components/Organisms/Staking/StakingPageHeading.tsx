@@ -1,8 +1,7 @@
 import { PageTitle } from "@/components";
-import { Grid, useTheme } from "@mui/material";
+import { Grid } from "@mui/material";
 
 export const StakingPageHeading = () => {
-  const theme = useTheme();
   return (
     <Grid container>
       <Grid item xs={12}>

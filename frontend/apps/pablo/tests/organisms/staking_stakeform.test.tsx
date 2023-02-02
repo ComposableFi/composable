@@ -7,8 +7,8 @@ const { Default } = composeStories(stories);
 test("renders Staking/StakeForm with default args", () => {
   render(<Default />);
 
-  expect(screen.queryAllByText("Amount to lock")).toBeTruthy();
-  expect(screen.queryAllByText("Select lock period (multiplier)")).toBeTruthy();
+  expect(screen.queryAllByText("Enter amount to stake")).toBeTruthy();
+  expect(screen.queryAllByText("Select lock period")).toBeTruthy();
   expect(screen.queryAllByText("Unlock date")).toBeTruthy();
   expect(screen.queryAllByText("Stake and mint")).toBeTruthy();
 });
