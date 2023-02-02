@@ -146,7 +146,7 @@ pub mod pallet {
 
 	/// Metadata of an asset
 	#[pallet::storage]
-	#[pallet::getter(fn decimals)]
+	#[pallet::getter(fn metadata)]
 	pub type Metadata<T: Config> = StorageMap<
 		_,
 		Twox128,
