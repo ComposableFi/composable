@@ -21,9 +21,9 @@ impl XCVMAck {
 }
 
 impl From<XCVMAck> for Binary {
-    fn from(value: XCVMAck) -> Self {
-      Binary::from(value.into_vec())
-    }
+	fn from(value: XCVMAck) -> Self {
+		Binary::from(value.into_vec())
+	}
 }
 
 impl From<XCVMAck> for Vec<u8> {

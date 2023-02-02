@@ -16,16 +16,9 @@ use cw_xcvm_utils::{DefaultXCVMProgram, Salt};
 use proptest::{prelude::any, prop_assume, prop_compose, proptest};
 use std::assert_matches::assert_matches;
 use xcvm_core::{
-	Amount, Asset, AssetId, AssetSymbol, BridgeSecurity, Destination, Funds, Juno, Network,
+	Asset, AssetId, AssetSymbol, Balance, BridgeSecurity, Destination, Funds, Juno, Network,
 	Picasso, ProgramBuilder, ETH, PICA, USDC, USDT,
 };
-
-prop_compose! {
-	fn account()
-		(bytes in any::<[u8; 32]>()) -> Account {
-			Account::unchecked(SubstrateAddressHandler::addr_generate([&bytes[..]]).expect("impossible; qed;"))
-		}
-}
 
 #[macro_export]
 macro_rules! assert_ok(
@@ -36,6 +29,13 @@ macro_rules! assert_ok(
     }
   };
 );
+
+prop_compose! {
+	fn account()
+		(bytes in any::<[u8; 32]>()) -> Account {
+			Account::unchecked(SubstrateAddressHandler::addr_generate([&bytes[..]]).expect("impossible; qed;"))
+		}
+}
 
 fn almost_eq(x: u128, y: u128, epsilon: u128) -> Result<(), (u128, u128)> {
 	let delta = i128::abs(x as i128 - y as i128);
@@ -422,92 +422,6 @@ fn xcvm_deploy_asset<A: Asset + AssetSymbol, T>(
 	);
 }
 
-fn xcvm_crosschain_operation<M: Network, N: Network, T>(
-	block: BlockInfo,
-	block_counterparty: BlockInfo,
-	admin: Account,
-	admin_counterparty: Account,
-	relayer: Account,
-	relayer_counterparty: Account,
-	pica_balances: impl IntoIterator<Item = Cw20Coin>,
-	eth_balances: impl IntoIterator<Item = Cw20Coin>,
-	usdt_balances: impl IntoIterator<Item = Cw20Coin>,
-	usdc_balances: impl IntoIterator<Item = Cw20Coin>,
-	pica_balances_counterparty: impl IntoIterator<Item = Cw20Coin>,
-	eth_balances_counterparty: impl IntoIterator<Item = Cw20Coin>,
-	usdt_balances_counterparty: impl IntoIterator<Item = Cw20Coin>,
-	usdc_balances_counterparty: impl IntoIterator<Item = Cw20Coin>,
-	channel_id: impl Into<String>,
-	connection_id: impl Into<String>,
-	order: IbcOrder,
-	sender: Account,
-	program: DefaultXCVMProgram,
-	salt: impl Into<Salt>,
-	assets: impl IntoIterator<Item = (AssetId, u128)>,
-	allowance_expiration: Option<Expiration>,
-) -> Result<(CrossChainScenario<XCVMState<T>, Connected>, CrossChainDispatchResult), TestError> {
-	let mut network = create_ready_xcvm_network::<M, N, T>(
-		block,
-		block_counterparty,
-		admin,
-		admin_counterparty,
-		relayer.clone(),
-		relayer_counterparty.clone(),
-		pica_balances,
-		eth_balances,
-		usdt_balances,
-		usdc_balances,
-		pica_balances_counterparty,
-		eth_balances_counterparty,
-		usdt_balances_counterparty,
-		usdc_balances_counterparty,
-		channel_id,
-		connection_id,
-		order,
-	)
-	.expect("Must be able to create an XCVM network.");
-	let CrossChainDispatchResult { dispatch_data, dispatch_events, relay_data, relay_events } =
-		network
-			.dispatch_and_relay(
-				relayer,
-				relayer_counterparty,
-				sender,
-				program,
-				salt,
-				assets,
-				allowance_expiration,
-			)
-			.expect("Must be able to dispatch XCVM program.");
-	xcvm_assert_prefixed_event(
-		dispatch_events.iter(),
-		XCVM_ROUTER_EVENT_PREFIX,
-		"action",
-		"route.create",
-	);
-	xcvm_assert_prefixed_event(
-		dispatch_events.iter(),
-		XCVM_ROUTER_EVENT_PREFIX,
-		"action",
-		"route.execute",
-	);
-	xcvm_assert_prefixed_event(
-		dispatch_events.iter(),
-		XCVM_INTERPRETER_EVENT_PREFIX,
-		"action",
-		"execution.start",
-	);
-	xcvm_assert_prefixed_event(
-		dispatch_events.iter(),
-		XCVM_INTERPRETER_EVENT_PREFIX,
-		"action",
-		"execution.success",
-	);
-	Ok((
-		network,
-		CrossChainDispatchResult { dispatch_data, dispatch_events, relay_data, relay_events },
-	))
-}
-
 mod base {
 	use super::*;
 	use crate::tests::framework::XCVMRegisterAssetEvents;
@@ -593,8 +507,6 @@ mod base {
 }
 
 mod single_chain {
-	use xcvm_core::Balance;
-
 	use super::*;
 
 	fn simple_singlechain_xcvm_transfer(
@@ -659,6 +571,7 @@ mod single_chain {
 		// We don't dispatch any information in the data field.
 		assert_eq!(dispatch_data, None);
 
+		// Ensure the mandatory events are present.
 		xcvm_assert_prefixed_event(
 			dispatch_events.iter(),
 			XCVM_ROUTER_EVENT_PREFIX,
@@ -694,7 +607,6 @@ mod single_chain {
 	}
 
 	proptest! {
-
 	  #[test]
 	  fn test_simple_singlechain_xcvm_transfer(
 		  admin in account(),
@@ -705,6 +617,137 @@ mod single_chain {
 		  bob in account(),
 		  transfer_amount in 0u128..u128::MAX) {
 		  simple_singlechain_xcvm_transfer(admin, admin_counterparty, relayer, relayer_counterparty, alice, bob, transfer_amount);
+	  }
+	}
+}
+
+mod cross_chain {
+	use cosmwasm_std::Uint128;
+	use xcvm_core::XCVMAck;
+
+	use super::*;
+
+	fn simple_crosschain_xcvm_transfer(
+		admin: Account,
+		admin_counterparty: Account,
+		relayer: Account,
+		relayer_counterparty: Account,
+		alice: Account,
+		bob: Account,
+		transfer_amount: u128,
+	) {
+		let block = BlockInfo {
+			height: 1_000_000,
+			time: Timestamp::from_seconds(1_000_000),
+			chain_id: "PICASSO-MEMNET".into(),
+		};
+		let block_counterparty = BlockInfo {
+			height: 12_000_000,
+			time: Timestamp::from_seconds(1_000_000),
+			chain_id: "JUNO-MEMNET".into(),
+		};
+		let mut network = create_ready_xcvm_network::<Picasso, Juno, ()>(
+			block,
+			block_counterparty,
+			admin,
+			admin_counterparty,
+			relayer.clone(),
+			relayer_counterparty.clone(),
+			[Cw20Coin { address: alice.clone().into(), amount: transfer_amount.into() }],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			"ibc:in-memory",
+			"ibc:connection:0",
+			IbcOrder::Unordered,
+		)
+		.expect("Must be able to create an XCVM network.");
+		let assets_to_transfer = [(PICA::ID, transfer_amount)];
+		let program = ProgramBuilder::<Picasso, CanonicalAddr, Funds<Balance>>::new([])
+			.spawn::<Juno, (), _, _>(
+				[],
+				[],
+				BridgeSecurity::Deterministic,
+				assets_to_transfer,
+				|juno_program| {
+					Ok(juno_program.transfer(
+						Destination::Account(to_canonical(bob.clone())),
+						assets_to_transfer,
+					))
+				},
+			)
+			.expect("Must be able to build an XCVM program.")
+			.build();
+		let CrossChainDispatchResult { dispatch_data, dispatch_events, relay_data, relay_events } =
+			network
+				.dispatch_and_relay(
+					relayer,
+					relayer_counterparty,
+					alice.clone(),
+					program,
+					[],
+					assets_to_transfer,
+					None,
+				)
+				.expect("Must be able to transfer assets via XCVM");
+
+		// Source chain, both alice and bob have 0 tokens.
+		assert_eq!(
+			network.vm.balance_of::<PICA>(network.mk_tx(alice.clone()), alice.clone()),
+			Ok(cw20::BalanceResponse { balance: 0u128.into() })
+		);
+		assert_eq!(
+			network.vm.balance_of::<PICA>(network.mk_tx(bob.clone()), bob.clone()),
+			Ok(cw20::BalanceResponse { balance: 0u128.into() })
+		);
+
+		// Destination, alice has 0 tokens and bob has the transferred amount.
+		assert_eq!(
+			network
+				.vm_counterparty
+				.balance_of::<PICA>(network.mk_tx_counterparty(alice.clone()), alice.clone()),
+			Ok(cw20::BalanceResponse { balance: 0u128.into() })
+		);
+		assert_eq!(
+			network
+				.vm_counterparty
+				.balance_of::<PICA>(network.mk_tx_counterparty(bob.clone()), bob.clone()),
+			Ok(cw20::BalanceResponse { balance: transfer_amount.into() })
+		);
+
+		// The supply moved from the source chain to the destination chain.
+		assert_matches!(network.vm.token_info::<PICA>(network.mk_tx(alice.clone())), Ok(cw20::TokenInfoResponse {
+      total_supply,
+      ..
+    }) if total_supply == Uint128::zero());
+		assert_matches!(network.vm_counterparty.token_info::<PICA>(network.mk_tx_counterparty(alice.clone())), Ok(cw20::TokenInfoResponse {
+      total_supply,
+      ..
+    }) if total_supply == Uint128::from(transfer_amount));
+
+		// The relayer must obtain a successful ack on the destination, and nothing on the source
+		// after relaying the ack itself.
+		assert_eq!(relay_data, vec![Some(XCVMAck::OK.into()), None]);
+
+		// We don't dispatch any information in the data field.
+		assert_eq!(dispatch_data, None);
+	}
+
+	proptest! {
+	  #[test]
+	  fn test_simple_crosschain_xcvm_transfer(
+		  admin in account(),
+		  admin_counterparty in account(),
+		  relayer in account(),
+		  relayer_counterparty in account(),
+		  alice in account(),
+		  bob in account(),
+		  transfer_amount in 0u128..u128::MAX) {
+		  simple_crosschain_xcvm_transfer(admin, admin_counterparty, relayer, relayer_counterparty, alice, bob, transfer_amount);
 	  }
 	}
 }
