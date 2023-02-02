@@ -7,7 +7,7 @@
   };
   service = {
     restart = restartPolicy;
-    environment = { RUST_LOG = "info"; };
+    environment = { RUST_LOG = "debug"; };
     entrypoint = "${pkgs.lib.meta.getExe packages.hyperspace-dali}";
     command = execCommands;
     volumes = [{
