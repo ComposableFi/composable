@@ -156,9 +156,9 @@ jobs:
     steps:
       - name: Enable LFS
         run: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs
+          nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs
       - uses: actions/checkout@v3
         with:
           lfs: true
