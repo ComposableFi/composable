@@ -44,10 +44,10 @@
           pname = "${name}";
           buildInputs = [ self'.packages.dali-subxt-client ];
           src = pkgs.fetchFromGitHub {
-            owner = "obsessed-cake";
+            owner = "ComposableFi";
             repo = "centauri";
-            rev = "fa7d5d33125fba9aa48c5e581ec72a543abef25b";
-            hash = "sha256-3S0HsFLxWHGXGW8QQD0qD3CWMMZ9vvYYZRdMJ9bYSSE=";
+            rev = "9b3d6db98d7fc32d716cb851e9ac7e3c197a7b54";
+            hash = "sha256-OCeJkTcINQV21du/56gxzq5MG9yFY1TM+6d2Y3/zsBE=";
           };
           patchPhase = "";
           installPhase = ''
