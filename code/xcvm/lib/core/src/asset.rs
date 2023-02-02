@@ -175,8 +175,7 @@ pub struct Balance {
 }
 
 impl Balance {
-	#[inline]
-	pub fn new(amount: Amount, is_unit: bool) -> Self {
+	pub const fn new(amount: Amount, is_unit: bool) -> Self {
 		Self { amount, is_unit }
 	}
 }
