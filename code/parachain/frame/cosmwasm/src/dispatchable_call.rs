@@ -5,7 +5,6 @@ use crate::{
 	Config, Pallet,
 };
 use alloc::vec::Vec;
-
 use core::marker::PhantomData;
 use cosmwasm_vm::{
 	cosmwasm_std::Coin,
@@ -16,7 +15,8 @@ use cosmwasm_vm::{
 	},
 	vm::VmErrorOf,
 };
-use cosmwasm_vm_wasmi::WasmiVM;
+use cosmwasm_vm_wasmi::OwnedWasmiVM;
+use wasmi::AsContext;
 
 /// Generic ready-to-call state for all input types
 pub struct DispatchableCall<I, O, T: Config> {
@@ -43,9 +43,9 @@ impl<I, O, T: Config> DispatchableCall<I, O, T> {
 		message: ContractMessageOf<T>,
 	) -> Result<O, CosmwasmVMError<T>>
 	where
-		for<'x> WasmiVM<DefaultCosmwasmVM<'x, T>>:
+		for<'x> OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>:
 			CosmwasmCallVM<I> + CosmwasmDynamicVM<I> + StargateCosmwasmCallVM,
-		for<'x> VmErrorOf<WasmiVM<DefaultCosmwasmVM<'x, T>>>:
+		for<'x> VmErrorOf<OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>>:
 			From<CosmwasmVMError<T>> + Into<CosmwasmVMError<T>>,
 		I: AsFunctionName,
 	{
@@ -55,9 +55,9 @@ impl<I, O, T: Config> DispatchableCall<I, O, T> {
 			self.sender,
 			self.contract,
 			funds,
-			|vm| {
-				cosmwasm_system_entrypoint_hook::<I, _>(vm, &message, |vm, message| {
-					match vm.0.contract_runtime {
+			|mut vm| {
+				cosmwasm_system_entrypoint_hook::<I, _>(&mut vm, &message, |vm, message| {
+					match vm.0.as_context().data().contract_runtime {
 						ContractBackend::CosmWasm { .. } =>
 							cosmwasm_call::<I, _>(vm, message).map(Into::into),
 						ContractBackend::Pallet =>
@@ -85,9 +85,9 @@ impl<I, O, T: Config> DispatchableCall<I, O, T> {
 		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
 	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>>
 	where
-		for<'x> WasmiVM<DefaultCosmwasmVM<'x, T>>:
+		for<'x> OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>:
 			CosmwasmCallVM<I> + CosmwasmDynamicVM<I> + StargateCosmwasmCallVM,
-		for<'x> VmErrorOf<WasmiVM<DefaultCosmwasmVM<'x, T>>>:
+		for<'x> VmErrorOf<OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>>:
 			From<CosmwasmVMError<T>> + Into<CosmwasmVMError<T>>,
 	{
 		// Call `cosmwasm_call` to transfer funds and create the vm instance before
@@ -100,14 +100,14 @@ impl<I, O, T: Config> DispatchableCall<I, O, T> {
 			// `cosmwasm_system_run` is called instead of `cosmwasm_system_entrypoint` here
 			// because here, we want to continue running the transaction with the given
 			// entrypoint
-			|vm| {
-				cosmwasm_system_run_hook::<I, _>(vm, message, event_handler, |vm, message| match vm
-					.0
-					.contract_runtime
-				{
-					ContractBackend::CosmWasm { .. } =>
-						cosmwasm_call::<I, _>(vm, message).map(Into::into),
-					ContractBackend::Pallet => T::PalletHook::execute(vm, self.entrypoint, message),
+			|mut vm| {
+				cosmwasm_system_run_hook::<I, _>(&mut vm, message, event_handler, |vm, message| {
+					match vm.0.as_context().data().contract_runtime {
+						ContractBackend::CosmWasm { .. } =>
+							cosmwasm_call::<I, _>(vm, message).map(Into::into),
+						ContractBackend::Pallet =>
+							T::PalletHook::execute(vm, self.entrypoint, message),
+					}
 				})
 				.map_err(Into::into)
 			},
