@@ -19,6 +19,6 @@ pub const CONFIG: Item<Config> = Item::new("config");
 pub const OWNERS: Map<Addr, ()> = Map::new("owners");
 
 // Registers
-pub const IP_REGISTER: Item<u32> = Item::new("ip_register");
+pub const IP_REGISTER: Item<u16> = Item::new("ip_register");
 pub const RESULT_REGISTER: Item<Result<SubMsgResponse, String>> = Item::new("result_register");
 pub const RELAYER_REGISTER: Item<Addr> = Item::new("relayer_register");
