@@ -177,7 +177,7 @@ pub mod hard_coded_assets {
 				AssetCreationInput::new_asset(
 					CurrencyId(105),
 					None,
-					"Kusama Tether LPT".as_bytes().to_vec(),
+					"KSM USDT LPT".as_bytes().to_vec(),
 					"KSM_USDT_LPT".as_bytes().to_vec(),
 					12,
 					100,
@@ -186,7 +186,7 @@ pub mod hard_coded_assets {
 				AssetCreationInput::new_asset(
 					CurrencyId(106),
 					None,
-					"Picasso Tether LPT".as_bytes().to_vec(),
+					"PICA USDT LPT".as_bytes().to_vec(),
 					"PICA_USDT_LPT".as_bytes().to_vec(),
 					12,
 					100,
@@ -195,7 +195,7 @@ pub mod hard_coded_assets {
 				AssetCreationInput::new_asset(
 					CurrencyId(107),
 					None,
-					"Picasso Kusama LPT".as_bytes().to_vec(),
+					"PICA KSM LPT".as_bytes().to_vec(),
 					"PICA_KSM_LPT".as_bytes().to_vec(),
 					12,
 					100,
@@ -241,7 +241,7 @@ pub mod hard_coded_assets {
 						parents: 0,
 						interior: X1(GeneralIndex(5)),
 					})),
-					"Pablo Token".as_bytes().to_vec(),
+					"PBLO".as_bytes().to_vec(),
 					"PBLO".as_bytes().to_vec(),
 					12,
 					100_000_000_000,
@@ -250,7 +250,7 @@ pub mod hard_coded_assets {
 				AssetCreationInput::new_asset(
 					CurrencyId(6),
 					None,
-					"IBC DOT".as_bytes().to_vec(),
+					"ibcDOT".as_bytes().to_vec(),
 					"ibcDOT".as_bytes().to_vec(),
 					12,
 					214_300_000,
@@ -357,7 +357,7 @@ pub mod hard_coded_assets {
 					AssetCreationInput::new_asset(
 						CurrencyId(105),
 						None,
-						"Kusama Tether LPT".as_bytes().to_vec(),
+						"KSM USDT LPT".as_bytes().to_vec(),
 						"KSM_USDT_LPT".as_bytes().to_vec(),
 						12,
 						100,
@@ -366,7 +366,7 @@ pub mod hard_coded_assets {
 					AssetCreationInput::new_asset(
 						CurrencyId(106),
 						None,
-						"Picasso Tether LPT".as_bytes().to_vec(),
+						"PICA USDT LPT".as_bytes().to_vec(),
 						"PICA_USDT_LPT".as_bytes().to_vec(),
 						12,
 						100,
@@ -375,7 +375,7 @@ pub mod hard_coded_assets {
 					AssetCreationInput::new_asset(
 						CurrencyId(107),
 						None,
-						"Picasso Kusama LPT".as_bytes().to_vec(),
+						"PICA KSM LPT".as_bytes().to_vec(),
 						"PICA_KSM_LPT".as_bytes().to_vec(),
 						12,
 						100,
@@ -421,7 +421,7 @@ pub mod hard_coded_assets {
 							parents: 0,
 							interior: X1(GeneralIndex(5)),
 						})),
-						"Pablo Token".as_bytes().to_vec(),
+						"PBLO".as_bytes().to_vec(),
 						"PBLO".as_bytes().to_vec(),
 						12,
 						100_000_000_000,
@@ -430,7 +430,7 @@ pub mod hard_coded_assets {
 					AssetCreationInput::new_asset(
 						CurrencyId(6),
 						None,
-						"IBC DOT".as_bytes().to_vec(),
+						"ibcDOT".as_bytes().to_vec(),
 						"ibcDOT".as_bytes().to_vec(),
 						12,
 						214_300_000,
@@ -450,15 +450,15 @@ pub mod hard_coded_assets {
 					);
 					assert_eq!(
 						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(105)),
-						Some("Kusama Tether LPT".as_bytes().to_vec())
+						Some("KSM USDT LPT".as_bytes().to_vec())
 					);
 					assert_eq!(
 						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(106)),
-						Some("Picasso Tether LPT".as_bytes().to_vec())
+						Some("PICA USDT LPT".as_bytes().to_vec())
 					);
 					assert_eq!(
 						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(107)),
-						Some("Picasso Kusama LPT".as_bytes().to_vec())
+						Some("PICA KSM LPT".as_bytes().to_vec())
 					);
 					assert_eq!(
 						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(129)),
@@ -470,11 +470,11 @@ pub mod hard_coded_assets {
 					);
 					assert_eq!(
 						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(5)),
-						Some("Pablo Token".as_bytes().to_vec())
+						Some("PBLO".as_bytes().to_vec())
 					);
 					assert_eq!(
 						<AssetsRegistry as InspectRegistryMetadata>::asset_name(&CurrencyId(6)),
-						Some("IBC DOT".as_bytes().to_vec())
+						Some("ibcDOT".as_bytes().to_vec())
 					);
 				})
 			}
