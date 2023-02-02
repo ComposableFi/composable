@@ -163,7 +163,9 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - name: Add tools needed for checkout
-        run:  nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs
+        run:  
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs nixpkgs.tree
       - uses: actions/checkout@v3
         with:
           lfs: true
