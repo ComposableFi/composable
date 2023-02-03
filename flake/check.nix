@@ -29,12 +29,12 @@
           devnet-dali-complete
           devnet-picasso-complete
           devnet-dali
-          devnet-container # errored in ci, running now as test
           check-dali-benchmarks-ci
           check-picasso-benchmarks-ci
           check-composable-benchmarks-ci
           cmc-api
           cmc-api-image # TODO(cor): needs to be pushed to docker
+          # devnet-container # errored in ci, our runners need the `kvm` feature in order to build this
 
           # unsure about these
           check-dali-integration-tests
