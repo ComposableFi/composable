@@ -89,7 +89,6 @@ jobs:
       - name: Set up Cachix
         uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
         with:
-          skipPush: true
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
       - name: Add tools needed for non-nix steps
@@ -136,7 +135,6 @@ jobs:
       - name: Set up Cachix
         uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
         with:
-          skipPush: true
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
       - name: Add tools needed for non-nix steps
