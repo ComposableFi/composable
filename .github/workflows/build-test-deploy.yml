@@ -150,7 +150,7 @@ jobs:
       - ${{ matrix.arch }}
       - sre
     concurrency:
-      group: ${{ github.workflow }}-all-ci-packages-${{ github.event.pull_request.title }}
+      group: ${{ github.workflow }}-all-ci-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:
       - name: Set up Nix
