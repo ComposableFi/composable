@@ -46,7 +46,10 @@
           # devnet-centauri 
           hyperspace-dali
           hyperspace-dali-image
-          # bridge-devnet-dali-container 
+
+          devnet-dali-image
+          devnet-dali-bridge-image
+          devnet-dali-bridge-mmr-image          
         ]);
 
       check = let

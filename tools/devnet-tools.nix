@@ -57,7 +57,7 @@
       mk-devnet-container = { containerName, devNet, container-tools }:
         pkgs.lib.trace "Run Dali runtime on Composable node"
         pkgs.dockerTools.buildImage {
-          name = containerName;
+          inherit name;
           tag = "latest";
           copyToRoot = pkgs.buildEnv {
             name = "image-root";
