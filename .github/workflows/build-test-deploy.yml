@@ -1056,8 +1056,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           tags: |
-            ${DOCKER_REGISTRY_NAME}/subsquid-processor:latest
-            ${DOCKER_REGISTRY_NAME}/subsquid-processor:${GITHUB_SHA}
+            ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest,${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:${{ github.sha }}
           context: subsquid
           push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
 
