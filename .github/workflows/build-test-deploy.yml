@@ -139,12 +139,15 @@ jobs:
 
   
   all-ci-packages:
+    strategy:
+      matrix:
+        arch: [x64, arm]
     needs: 
       - check-privilege
     runs-on:
       - self-hosted
       - linux
-      - x64
+      - ${{ matrix.arch }}
       - sre
     concurrency:
       group: ${{ github.workflow }}-all-ci-packages-${{ github.event.pull_request.title }}
@@ -165,7 +168,7 @@ jobs:
         run: |  
           nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.nodejs
+          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git-lfs
       - uses: actions/checkout@v3
         with:
           lfs: true
