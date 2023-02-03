@@ -161,46 +161,6 @@ jobs:
         run: |
           ls result
           tree result -L 3
-      - name: Publish cmc-api to docker hub
-        uses: "./.github/templates/docker-publish"
-        with:
-          image_path: result/docker-image-cmc-api.tar.gz
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: cmc-api
-          artifact: cmc-api:latest
-      - name: Publish devnet-dali to docker hub
-        uses: "./.github/templates/docker-publish"
-        with:
-          image_path: result/docker-image-devnet-dali.tar.gz
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: devnet-dali
-          artifact: devnet-dali:latest
-      - name: Publish devnet-dali-bridge to docker hub
-        uses: "./.github/templates/docker-publish"
-        with:
-          image_path: result/docker-image-devnet-dali-bridge.tar.gz
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: devnet-dali-bridge
-          artifact: devnet-dali-bridge:latest
-      - name: Publish devnet-dali-bridge-mmr to docker hub
-        uses: "./.github/templates/docker-publish"
-        with:
-          image_path: result/docker-image-devnet-dali-bridge-mmr.tar.gz
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: devnet-dali-bridge-mmr
-          artifact: devnet-dali-bridge-mmr:latest
-      - name: Publish hyperspace-dali to docker hub
-        uses: "./.github/templates/docker-publish"
-        with:
-          image_path: result/docker-image-hyperspace-dali.tar.gz
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: hyperspace-dali
-          artifact: hyperspace-dali:latest
 
   effects-gate:
       name: "Effect gate, automatically merged if passed"
