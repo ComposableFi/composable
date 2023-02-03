@@ -104,7 +104,15 @@ C. *IBC-ICS20 prefixed denomination(LocalIdOnBAsString) -> IBC-ICS20 prefixed de
 
 `NOTE: Invariant is that foreign asset has can have 1 remote location, but mapped as local to all other bridges`
 
-D. * XcmLocation( < LocalIdOnC as here> ) -> XcmLocation( < LocalIdOnC prefixed with route from Origin > ) -> LocalIdOnD*
+D. *XcmLocation( < LocalIdOnC as here> ) -> XcmLocation( < LocalIdOnC prefixed with route from Origin > ) -> LocalIdOnD*
+
+#### Others
+
+Just list we can expand as reasonable to run in future:
+
+1. *A - IBC - B - XCM - C - IBC - D*
+
+2. *A - IBC - B - IBC - C - IBC - D*
 
 
 ## How `assets routes` are created
@@ -135,11 +143,13 @@ Governance makes DOT bimap to metadata name (not used for fees or transfers)
 
 
 
-## Refrences
+## References
 
 [ICS20: Fungible Token Transfer](https://github.com/cosmos/ibc/tree/main/spec/app/ics-020-fungible-token-transfer)
 
 [CW20 Spec: Fungible Tokens](https://github.com/CosmWasm/cw-plus/blob/main/packages/cw20/README.md)
+
+[RFC013](../../../rfcs/0013-redesign-assets-id-system.md)
 
 https://github.com/CosmWasm/cw-plus/blob/main/packages/cw20/src/denom.rs
 
