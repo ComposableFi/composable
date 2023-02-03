@@ -1308,7 +1308,7 @@ impl<T: Config> Pallet<T> {
 			.sub_call(vm.shared, Default::default(), message, event_handler)
 	}
 
-	pub(crate) fn do_query_info(
+	pub(crate) fn do_query_contract_info(
 		vm: &mut DefaultCosmwasmVM<T>,
 		address: AccountIdOf<T>,
 	) -> Result<ContractInfoResponse, CosmwasmVMError<T>> {
@@ -1334,7 +1334,9 @@ impl<T: Config> Pallet<T> {
 		};
 
 		let creator = CosmwasmAccount::<T>::new(contract_info.instantiator.clone());
-		let mut contract_info_response = ContractInfoResponse::new(contract_info.code_id, creator);
+		let mut contract_info_response = ContractInfoResponse::default();
+		contract_info_response.code_id = contract_info.code_id;
+		contract_info_response.creator = creator.into();
 		contract_info_response.admin =
 			contract_info.admin.map(|admin| CosmwasmAccount::<T>::new(admin).into());
 		contract_info_response.pinned = pinned;

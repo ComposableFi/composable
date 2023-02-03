@@ -1875,8 +1875,8 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "1.1.6"
-source = "git+https://github.com/ComposableFi/cosmwasm?rev=21351cc1ced863b9af7c8a69f923036bc919b3b1#21351cc1ced863b9af7c8a69f923036bc919b3b1"
+version = "1.2.0"
+source = "git+https://github.com/ComposableFi/cosmwasm?rev=34af48221c90e6818fe341d6d5b15116dfeab671#34af48221c90e6818fe341d6d5b15116dfeab671"
 dependencies = [
  "syn 1.0.107",
 ]
@@ -1906,21 +1906,22 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "1.1.6"
-source = "git+https://github.com/ComposableFi/cosmwasm?rev=21351cc1ced863b9af7c8a69f923036bc919b3b1#21351cc1ced863b9af7c8a69f923036bc919b3b1"
+version = "1.2.0"
+source = "git+https://github.com/ComposableFi/cosmwasm?rev=34af48221c90e6818fe341d6d5b15116dfeab671#34af48221c90e6818fe341d6d5b15116dfeab671"
 dependencies = [
  "base64 0.13.1",
  "cosmwasm-derive",
  "derivative",
  "hex",
  "serde",
+ "sha2 0.10.6",
  "uint",
 ]
 
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=0d62e2a0115ccd3b49397d594503dc04b4f31d95#0d62e2a0115ccd3b49397d594503dc04b4f31d95"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=60d0ab41ffc1513553ffc52ef1ec3d876d30fb21#60d0ab41ffc1513553ffc52ef1ec3d876d30fb21"
 dependencies = [
  "cosmwasm-std",
  "log",
@@ -1932,7 +1933,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=0d62e2a0115ccd3b49397d594503dc04b4f31d95#0d62e2a0115ccd3b49397d594503dc04b4f31d95"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=60d0ab41ffc1513553ffc52ef1ec3d876d30fb21#60d0ab41ffc1513553ffc52ef1ec3d876d30fb21"
 dependencies = [
  "cosmwasm-std",
  "cosmwasm-vm",

@@ -629,12 +629,12 @@ benchmarks! {
 		Cosmwasm::<T>::do_continue_reply(vm.0.data_mut(), Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {}).unwrap();
 	}
 
-	query_info {
+	query_contract_info {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_query_info(vm.0.data_mut(), contract).unwrap();
+		Cosmwasm::<T>::do_query_contract_info(vm.0.data_mut(), contract).unwrap();
 	}
 
 	query_raw {

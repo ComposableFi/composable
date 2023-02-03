@@ -61,7 +61,7 @@ pub trait WeightInfo {
 	fn continue_migrate() -> Weight;
 	fn continue_query() -> Weight;
 	fn continue_reply() -> Weight;
-	fn query_info() -> Weight;
+	fn query_contract_info() -> Weight;
 	fn query_raw() -> Weight;
 	fn instruction_I64Const(r: u32, ) -> Weight;
 	fn instruction_F64Const(r: u32, ) -> Weight;
@@ -335,7 +335,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:0)
-	fn query_info() -> Weight {
+	fn query_contract_info() -> Weight {
 		Weight::from_ref_time(12_252_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
@@ -951,7 +951,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:0)
-	fn query_info() -> Weight {
+	fn query_contract_info() -> Weight {
 		Weight::from_ref_time(12_252_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}

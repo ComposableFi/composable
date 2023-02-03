@@ -375,9 +375,12 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		Err(CosmwasmVMError::Unsupported)
 	}
 
-	fn query_info(&mut self, address: Self::Address) -> Result<ContractInfoResponse, Self::Error> {
-		log::debug!(target: "runtime::contracts", "query_info");
-		Pallet::<T>::do_query_info(self, address.into_inner())
+	fn query_contract_info(
+		&mut self,
+		address: Self::Address,
+	) -> Result<ContractInfoResponse, Self::Error> {
+		log::debug!(target: "runtime::contracts", "query_contract_info");
+		Pallet::<T>::do_query_contract_info(self, address.into_inner())
 	}
 
 	fn debug(&mut self, message: Vec<u8>) -> Result<(), Self::Error> {
@@ -477,7 +480,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 			VmGas::ContinueQuery => T::WeightInfo::continue_query().ref_time(),
 			VmGas::ContinueReply => T::WeightInfo::continue_reply().ref_time(),
 			VmGas::QueryRaw => T::WeightInfo::query_raw().ref_time(),
-			VmGas::QueryInfo => T::WeightInfo::query_info().ref_time(),
+			VmGas::QueryContractInfo => T::WeightInfo::query_contract_info().ref_time(),
 			_ => 1_u64,
 			// NOTE: **Operations that require no charge**: Debug,
 			// NOTE: **Unsupported operations**:
