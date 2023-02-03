@@ -1059,13 +1059,13 @@ jobs:
       - name: Build and push
         env:
           SUBSQUID_IMAGE_TAG_SHA: ${{ github.sha }}
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           tags: |
             ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest
+            ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:debug-tag
             ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:${SUBSQUID_IMAGE_TAG_SHA}
             ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:${{ github.sha }}
-            ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:debug-tag
           context: subsquid
           push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
 
