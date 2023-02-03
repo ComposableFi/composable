@@ -125,23 +125,27 @@ Governance should allow such assets explicitly.
 
 **Composable**
 
-Governance defines mapping of `XcmAsset(1, Here)` to `2`. That can be monotinic number or hash of XcmAsset 
 
-Governance opens channel to `IBC picasso` and gets well known `portOnA/channelOnA/` prefix.
+Governance defines prefix of *XcmLocation(parents = 1, junctions = Here)* to as well known. 
 
-Governance makes DOT asset payable (it has ratio to PICA to pay fees for incoming transaction and messages). Actually this is also bimap.
+Governance opens channel to *IBC Picasso* and gets well known *transfer/channel-0/* prefix.
 
-Governance makes DOT bimap to metadata name (not used for fees or transfers)
+Above are "handshakes".
+
+
+Governance defines bimapping of *XcmLocation(parents = 1, junctions = Here)* to *2*. 
+
+Governance makes *2* asset as payable(defines conversion ratio to Native). 
+
+Governance makes *DOT* bimap to metadata (not used for fees or transfers). But used in user experience. 
 
 **Picasso**
 
-Governance ensres bimap of `portOnA/channelOnA/42` to `55`. In case of number we can gover it to be 42. In case of hash it will eother.
+Governance defines bimap *portOnComposable/channelOnComposable/2* to *1002*.
 
-Governance makes DOT bimap to symbol name `ibcDOT <-> 42`
+Governance makes *DOT* bimap to metadata (not used for fees or transfers). But used in user experience. 
 
-Governance makes DOT bimap to metadata name (not used for fees or transfers)
-
-
+`NOTE: DOT symbol may or may be not different value`
 
 ## References
 
@@ -162,3 +166,5 @@ https://github.com/cosmos/cosmos-sdk/blob/main/types/coin.go
 https://ibc.cosmos.network/main/architecture/adr-001-coin-source-tracing.html
 
 https://github.com/CosmWasm/cosmwasm/blob/main/packages/std/src/coin.rs
+
+https://media.githubusercontent.com/media/cosmos/ibc/old/papers/2020-05/build/paper.pdf
