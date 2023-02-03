@@ -1052,10 +1052,14 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Log INFO commit SHA
+        run: echo "GITHUB_SHA=${GITHUB_SHA}"
       - name: Build and push
+        env:
+          SUBSQUID_IMAGE_TAG_SHA: ${{ github.sha }}
         uses: docker/build-push-action@v3
         with:
-          tags: ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest,${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:${{ github.sha }}
+          tags: ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest,${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:${SUBSQUID_IMAGE_TAG_SHA}
           context: subsquid
           push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
 
