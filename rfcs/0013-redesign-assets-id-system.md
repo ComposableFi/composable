@@ -427,21 +427,18 @@ interface
   The storage item queried by `from_local_asset(local_asset_id)` now only 
   returns the foreign asset ID instead of all metadata and ID.
 
-* `Metadata`
+* `AssetName`
 
-  A new storage item queried by `metadata(local_asset_id)` returns a structure 
-  containing asset metadata. The structure is as follows:
+  New storage item, queried by `asset_name(local_asset_id)`
 
-  ```rust
-  pub struct AssetMetadata<BoundedName, BoundedSymbol> {
-  	/// Name of the asset.
-  	pub name: BoundedName,
-  	/// Symbol of the asset.
-  	pub symbol: BoundedSymbol,
-  	/// The number of decimals this asset uses to represent one unit.
-  	pub decimals: u8,
-  }
-  ```
+  
+* `AssetSymbol`
+
+  New storage item, queried by `asset_symbol(local_asset_id)`
+
+* `AssetDecimals`
+
+  New storage item, queried by `asset_decimals(local_asset_id)`
 
 * `ExistentialDeposit`
 
