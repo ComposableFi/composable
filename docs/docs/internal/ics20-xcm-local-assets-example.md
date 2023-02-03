@@ -1,28 +1,19 @@
 # Overview
 
-Purpose of this document to show simple ICS 20 and XCM transfers flow.
+Purpose of this document to show simple IC-ICS20 and XCM transfers flows.
 
-Assets identfiers and encodings describrd on each chain.
+Describes assets identifiers on each chain and asset creation allowance scenarios.
+.
+## How assets are transferred?
 
-Also permissions to create assets and create payable assets described.
+Underlying mechanics ensure correctness of transfers. 
 
-The goal of the document to align people around how assets should be handled and monitored in relevant imlementations.
+All transfers map on the wire(remote, foreign) asset identifiers to local. 
 
-Exact events and exact account derivations are specified elsewehre.
+Will start from specific examples and go to more near reach multihop generalized examples.
 
-
-
-## Legend
-
-XCM, ICS20, IBC are defined elsewhere.
-
-Coin,  fungible asset, token are used interchably in this docuent and actually in relevat specfiicaiton.
-
-## How assets are transfed?
-
-We start from transfers, only asset idenfiers as they will be finally are relevant. 
-
-How assets are created and permissioned is next section.
+Assets transfers require allowance to be transferred and stored on accounts. 
+So we touch governance and fees too.
 
 ### Specific examples of transfer
 
@@ -40,16 +31,19 @@ Upon receive we have `Sender = Location(1, Here)` and asset to be `X = XCM(0, He
 
 XCM asset is prefixed with sender prefix, and we get `X = XCM(1, Here)`.
 
-After that `xcm-to-id` is called, and we get `DOT = 42`.
+After that `xcm-to-id` is called, and we get `DOT = 2`.
 
-One composable asset is mapped to `transfer/channel-0/42` and send via `pallet-ibc` `transfer` method. 
+One composable asset is mapped to `transfer/channel-0/2` and send via `pallet-ibc` `transfer` method. 
 
+`NOTE: assets map local assets representation to string without /. Remaining part is managed by opened IBC channel/port`.  
+
+`NOTE: see how Xcm()
 
 **Picasso**
 
-Upon receive of ICS20 transfer of `transfer/channel-0/42` asset, it maps it to its own `DOT = 42`. 
+Upon receive of ICS20 transfer of `transfer/channel-0/2` asset, it maps it to its own `DOT = 1002`. 
 
-`NOTE: we use same asset id for convenience. There is no reason why ID should be the same`
+`NOTE: we use number asset id for convenience. There is no reason why ids should be such. Also we user different numbers on both chains, while could make same`
 
 
 ### DOT from Picasso to Polkadot
@@ -57,16 +51,18 @@ Upon receive of ICS20 transfer of `transfer/channel-0/42` asset, it maps it to i
 
 **Picasso**
 
-User calls `pallet-ibc` `transfer` with asset `DOT = 42`.
+User calls `pallet-ibc` `transfer` with asset `DOT = 1002`.
 
-Asset is prefixed to became `transfer/channel-0/42` and send to `Composable`
+Asset is mapped prefixed to became `transfer/channel-0/2` and send to `Composable`
+
+`NOTE: see that we map 1002 to whole 'transfer/channel-0/2' string representation, so 1002 should be idenfified to be IBC remote`
 
 
 **Composable**
 
-Asset prefix removed to form `/42`. And mapped to `DOT = 42`
+Asset prefix removed to form `2`string. And mapped to `DOT = 2`
 
-`42` is mapped to `XCM(1, Here)` location.
+`2` is mapped to `XCM(1, Here)` location.
 
 XCM sent.
 
@@ -79,21 +75,17 @@ Polkadot maps `XCM(1, Here)` to `XCM(0, Here)` to Native asset.
 
 
 
+## How `assets routes` are created
 
+Currently ICS20 allows to send only 1 asset which are allowed to pay fee for storage(ED) on destination.
 
-## How `assets routs` are created
-
-Here will be used `Governance` to as body which does `operations`. 
-
-Act of governance can be executing storage update on behalf of some `admin` or upgrading `runtime` with hardcoded assets metadata.
-
-
+Governance should allow such assets explicitly.
 
 ### For DOT
 
 **Composable**
 
-Governance defines mapping of `XcmAsset(1, Here)` to 42. That can be monotinic number or hash of XcmAsset 
+Governance defines mapping of `XcmAsset(1, Here)` to `2`. That can be monotinic number or hash of XcmAsset 
 
 Governance opens channel to `IBC picasso` and gets well known `portOnA/channelOnA/` prefix.
 
@@ -121,5 +113,8 @@ https://github.com/CosmWasm/cw-plus/blob/main/packages/cw20/src/denom.rs
 
 https://github.com/paritytech/xcm-format
 
-
 https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
+
+https://github.com/cosmos/cosmos-sdk/blob/main/types/coin.go
+
+https://ibc.cosmos.network/main/architecture/adr-001-coin-source-tracing.html
