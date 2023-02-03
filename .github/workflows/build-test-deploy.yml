@@ -1043,6 +1043,9 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
+      - name: Log INFO commit SHA info
+        run: |
+          echo "GITHUB_SHA=${GITHUB_SHA} github.sha=${{ github.sha }}"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -1052,9 +1055,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      - name: Log INFO commit SHA info
-        run: |
-          echo GITHUB_SHA=${GITHUB_SHA} github.sha=${{ github.sha }}
       - name: Build and push
         env:
           SUBSQUID_IMAGE_TAG_SHA: ${{ github.sha }}
