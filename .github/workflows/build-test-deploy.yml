@@ -1036,7 +1036,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow }}-package-subsquid-processor-${{ github.event.pull_request.title }}
+      group: ${{ github.workflow }}-package-subsquid-processor-${{ github.event.pull_request_target.title }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
