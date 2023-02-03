@@ -221,6 +221,49 @@ fn ed25519_batch_verify_fails_if_input_lengths_are_incorrect() {
 	})
 }
 
+#[test]
+fn ss58_address_format_is_supported_correctly() {
+	new_test_ext().execute_with(|| {
+		let valid_ss58_addresses = [
+			(
+				"5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL",
+				"d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+			),
+			(
+				"5txRkPpGeTRJyZ96t5aSxLKaQDa32ZY21rq8MDHaN7dLGCBe",
+				"10dbdfc9a706a4cf96b9e9dfb25384a2cf25faeaddabd4c98079f8360bc4ad46",
+			),
+			(
+				"5uawZPfyfP9hdowPJbeiR2GMSZatLq3b9wpWc6yWjSLeakgh",
+				"2cb50f2480175397eb320e637fc56be1939e18fb2b326eab5fdeaad9d43ffc74",
+			),
+			(
+				"5umjqLRoE5wrXUGyedwbATZjj1SukRC9eh8qGJPpVx47bUam",
+				"34f149d3a32ff2afe4daee3f4c917b90a73b88ee84a2666b477cdd67d6c5d17b",
+			),
+		];
+		for (ss58_addr, hex_addr) in valid_ss58_addresses {
+			// ss58 string to AccountId works
+			let lhs = Cosmwasm::cosmwasm_addr_to_account(ss58_addr.into()).unwrap();
+			// address binary to canonical AccountId works
+			let binary_addr = hex::decode(hex_addr).unwrap();
+			let rhs = Cosmwasm::canonical_addr_to_account(binary_addr.into()).unwrap();
+			assert_eq!(lhs, rhs);
+		}
+
+		let not_valid_ss58_addresses = [
+			// length is correct but with some garbage string
+			"5yasdX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL",
+			// total garbage
+			"someaddr",
+		];
+
+		for garbage_addr in not_valid_ss58_addresses {
+			assert!(Cosmwasm::cosmwasm_addr_to_account(garbage_addr.into()).is_err());
+		}
+	})
+}
+
 mod pallet_contracts {
 	use core::str::FromStr;
 

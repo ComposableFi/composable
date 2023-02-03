@@ -94,7 +94,6 @@ transaction-payment = { package = "pallet-transaction-payment", path = "../../fr
 
 # cosmwasm support
 cosmwasm = { package = "pallet-cosmwasm", path = "../../frame/cosmwasm", default-features = false }
-hex = { version = "0.4.0", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.33" }
@@ -242,7 +241,6 @@ std = [
   "democracy/std",
   "dex-router/std",
   "dutch-auction/std",
-  "hex/std",
   "executive/std",
   "frame-support/std",
   "frame-system/std",
