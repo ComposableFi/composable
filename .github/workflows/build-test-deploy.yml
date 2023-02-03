@@ -29,7 +29,7 @@ env:
 
 jobs:
   check-privilege:
-    name: "Privilege Check"
+    name: "Privilege check"
     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}
     runs-on: ubuntu-latest  
     steps:
@@ -38,6 +38,7 @@ jobs:
       
 
   check-lfs:
+    name: LFS check
     needs:
       - check-privilege
     continue-on-error: false
@@ -64,83 +65,44 @@ jobs:
             **/*.json
             **/*.lock
 
-  # check-nix:
-  #   name: "Check nix"
-  #   needs:
-  #     - check-privilege
-  #   continue-on-error: false
-  #   runs-on:
-  #     - self-hosted
-  #     - linux
-  #     - x64
-  #     - sre
-  #   concurrency:
-  #     group: ${{ github.workflow }}-check-nix-${{ github.event.pull_request.title }}
-  #     cancel-in-progress: true
-  #   container:
-  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #       with:
-  #         ref: ${{ github.event.pull_request.head.sha }}
-  #         persist-credentials: false
-  #     - run: |
-  #         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-  #         echo "sandbox = relaxed" >> /etc/nix/nix.conf
-  #         echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-  #     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-  #       with:
-  #         skipPush: true
-  #         installCommand: |
-  #           nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-  #           nix-channel --update
-  #           nix-env -iA nixpkgs.cachix
-  #         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-  #         name: composable-community
-  #     - run: |
-  #         nix --version
-  #         nix show-config
-  #         nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
-
-
-  # check-nix-long:
-  #   name: "Check nix long"
-  #   needs:
-  #     - check-privilege
-  #     - check-nix
-  #   runs-on:
-  #     - self-hosted
-  #     - linux
-  #     - x64
-  #     - sre
-  #   concurrency:
-  #     group: ${{ github.workflow }}-check-nix-long-${{ github.event.pull_request.title }}
-  #     cancel-in-progress: true
-  #   container:
-  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #       with:
-  #         ref: ${{ github.event.pull_request.head.sha }}
-  #         persist-credentials: false
-  #     - run: |
-  #         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-  #         echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-  #     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-  #       with:
-  #         skipPush: true
-  #         installCommand: |
-  #           nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-  #           nix-channel --update
-  #           nix-env -iA nixpkgs.cachix
-  #         name: composable-community
-  #     - run: |
-  #         chmod +x ./.github/workflows/check-nix-long.sh
-  #         source ./.github/workflows/check-nix-long.sh
+  nix-flake-check:
+    name: "Nix flake check"
+    needs:
+      - check-privilege
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-nix-flake-check-${{ github.event.pull_request.title }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          name: composable-community
+      - run: |
+          chmod +x ./.github/workflows/nix-flake-check.sh
+          source ./.github/workflows/nix-flake-check.sh
 
 
   
   all-ci-packages:
+    name: Build all CI packages
     strategy:
       matrix:
         arch: [x64, x64-monster, arm]
@@ -179,6 +141,11 @@ jobs:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
+      - name: Nix flake show
+        run: |
+          nix --version
+          nix show-config
+          nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
       - name: Build all-ci-packages 
         uses: "./.github/templates/watch-exec"
         with:
