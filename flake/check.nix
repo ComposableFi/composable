@@ -33,8 +33,7 @@
           check-picasso-benchmarks-ci
           check-composable-benchmarks-ci
           cmc-api
-          cmc-api-image # TODO(cor): needs to be pushed to docker
-          devnet-container # errored in ci, our runners need the `kvm` feature in order to build this
+          cmc-api-image
 
           # unsure about these
           check-dali-integration-tests
