@@ -25,6 +25,7 @@ runs:
         echo "sandbox = relaxed" >> /etc/nix/nix.conf
         echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
         echo "system-features = kvm" >> /etc/nix/nix.conf
+        echo "http2 = false" >> /etc/nix/nix.conf
       shell: "bash"
     - uses: docker/login-action@v1
       with:
