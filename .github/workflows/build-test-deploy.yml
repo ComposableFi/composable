@@ -16,6 +16,8 @@ permissions:
 
 env:
   NIX_VERSION: nix-2.13.2
+  # we do not need to pin this more than this, as the actual packages will be built by another pinned channel defined in our flake's inputs. 
+  # This channel is just used for installing tools that are used by other steps, like git-lfs.
   NIXPKGS_CHANNEL: nixos-22.11
   
   CACHIX_COMPOSABLE: composable-community
@@ -157,7 +159,7 @@ jobs:
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
           install_url: https://releases.nixos.org/nix/${{ env.NIX_VERSION }}/install
-          nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }} #TODO: change?
+          nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
           extra_nix_config: |
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
@@ -651,58 +653,3 @@ jobs:
   #     steps:
   #       - run: echo "Goblins allow your work to see the light"
 
-  nix-command-pr-comments:
-    permissions:
-      pull-requests: write
-      issues: write
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    name: "Nix command PR comments"
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - name: Comment PR
-        uses: "./.github/templates/comment"
-        with:
-          message: |
-            ### Nix commands for this PR
-            **NOTE: You can also run our Nix commands in Docker. See the bottom of this comment.**
-            #### Make sure you have setup the Composable community cache:
-            _(you only need to run it once on your machine)_
-            ```bash
-            nix-shell -p cachix --command "cachix use composable-community"
-            ```
-            #### Show all possible apps, shells and packages:
-            ```
-            nix flake show "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }} --allow-import-from-derivation
-            ```
-            #### Run the Composable node alone:
-            ```bash
-            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#composable-node" -L
-            ```
-            #### Spin up a local devnet:
-            ```bash
-            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet" -L --option sandbox relaxed --show-trace
-            ```
-            #### Spin up a local XCVM devnet:
-            ```bash
-            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-xcvm" -L
-            ```
-            ### View the docs:
-            ```bash
-            nix run ".#docs-server"
-            ```
-            ### Run this without Nix in Docker.
-            ```bash
-            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run github:ComposableFi/Composable/${{ github.event.pull_request.head.sha }}#devnet-dali -L --extra-experimental-features nix-command --extra-experimental-features flakes"
-            ```
-            _NOTE: You can swap `devnet-dali` in the command above with any Nix package_
-            _For more info on how to use Nix, check out our [Nix docs](https://docs.composable.finance/nix.html)_
-            Note that the initial build may take about one hour if it has not been cached by our CI yet. Once it is cached, builds should take about one minute. We currently do not provide build caches for ARM machines such as M1 Macs, but building on ARM is supported.
-          comment_tag: 'Nix commands for this PR'
-          github_token: ${{ secrets.GITHUB_TOKEN }}       
