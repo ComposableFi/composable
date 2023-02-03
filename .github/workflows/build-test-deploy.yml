@@ -167,11 +167,11 @@ jobs:
           skipPush: true
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
-      - name: Add tools needed for checkout
+      - name: Add tools needed for non-nix steps
         run: |  
           nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git-lfs
+          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git-lfs nixpkgs.tree
       - uses: actions/checkout@v3
         with:
           lfs: true
@@ -184,7 +184,7 @@ jobs:
           token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: |
           ls result
-          nix-shell -p tree --command "tree result -L 3"
+          tree result -L 3
   # This isn't templated, since checkout needs to happen before templating occurs.
   # docs-check:
   #   name: "Docs check"
