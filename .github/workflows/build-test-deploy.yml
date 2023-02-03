@@ -1057,7 +1057,7 @@ jobs:
         with:
           tags: ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest,${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:${GITHUB_SHA}
           context: subsquid
-          push: ${{ github.event_name == 'push' && github.event.pull_request.title_name == 'main' }}
+          push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
 
   package-zombienet:
     needs: 
