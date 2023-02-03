@@ -1,0 +1,44 @@
+name: Install Nix
+description: Installs Nix, configures Cachix, and brings required tools into env for checkout.
+
+inputs:
+  nix_version:
+    description: The version of Nix that should be installed
+    default: nix-2.13.2
+    required: false
+  nixpkgs_channel:
+    description: The nixpkgs channel that should be used
+    # we do not need to pin this more than this, as the actual packages will be built by another pinned channel defined in our flake's inputs. 
+    # This channel is just used for installing tools that are used by other steps, like git-lfs.
+    default: nixos-22.11
+    requied: false
+  cachix_name:
+    description: Cachix cache name
+    default: composable-community
+    required: false
+  cachix_token:
+    description: Cachix auth token
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Nix
+      uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
+      with:
+        install_url: https://releases.nixos.org/nix/${{ inputs.nix_version }}/install
+        nix_path: nixpkgs=channel:${{ inputs.nixpkgs_channel }}
+        extra_nix_config: |
+          sandbox = relaxed
+          narinfo-cache-negative-ttl = 0      
+    - name: Set up Cachix
+      uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
+      with:
+        skipPush: true
+        authToken: "${{ inputs.cachix_token }}"
+        name: ${{ inputs.cachix_name }}
+    - name: Add tools needed for non-nix steps
+      run: |  
+        nix-channel --add https://nixos.org/channels/${{ inputs.nixpkgs_channel }} nixpkgs
+        nix-channel --update
+        nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker

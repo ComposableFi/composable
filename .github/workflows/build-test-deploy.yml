@@ -15,12 +15,6 @@ permissions:
   pull-requests: write
 
 env:
-  NIX_VERSION: nix-2.13.2
-  # we do not need to pin this more than this, as the actual packages will be built by another pinned channel defined in our flake's inputs. 
-  # This channel is just used for installing tools that are used by other steps, like git-lfs.
-  NIXPKGS_CHANNEL: nixos-22.11
-  
-  CACHIX_COMPOSABLE: composable-community
   CACHIX_COMPRESSION_LEVEL: 3
 
   DOCKER_REGISTRY_NAME: composablefi
@@ -77,29 +71,13 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-nix-flake-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
-      - uses: actions/checkout@v3
+      - uses: "./.github/templates/install-nix"
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          name: composable-community
+          cachix_token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: |
           chmod +x ./.github/workflows/nix-flake-check.sh
           source ./.github/workflows/nix-flake-check.sh
-
-
   
   all-ci-packages:
     name: Build all CI packages
@@ -117,25 +95,9 @@ jobs:
       group: ${{ github.workflow }}-all-ci-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:
-      - name: Set up Nix
-        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
+      - uses: "./.github/templates/install-nix"
         with:
-          install_url: https://releases.nixos.org/nix/${{ env.NIX_VERSION }}/install
-          nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
-          extra_nix_config: |
-            sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
-      - name: Set up Cachix
-        uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
-        with:
-          skipPush: true
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: ${{ env.CACHIX_COMPOSABLE }}
-      - name: Add tools needed for non-nix steps
-        run: |  
-          nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
-          nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker
+          cachix_token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - uses: actions/checkout@v3
         with:
           lfs: true
@@ -150,7 +112,6 @@ jobs:
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-ci-packages
-          token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: |
           ls result
           tree result -L 3
