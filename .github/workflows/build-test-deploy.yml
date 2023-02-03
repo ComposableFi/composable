@@ -25,7 +25,7 @@ env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
-  check-privilege:
+  privilege-check:
     name: "Privilege check"
     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}
     runs-on: ubuntu-latest  
@@ -34,10 +34,10 @@ jobs:
           echo "I am priviliged by goblins on repository id ${{ github.event.pull_request.head.repo.id }} ${{ github.event.pull_request_target.head.repo.id }}" 
       
 
-  check-lfs:
+  lfs-check:
     name: LFS check
     needs:
-      - check-privilege
+      - privilege-check
     continue-on-error: false
     runs-on:
       - self-hosted
@@ -65,7 +65,7 @@ jobs:
   nix-flake-check:
     name: "Nix flake check"
     needs:
-      - check-privilege
+      - privilege-check
     runs-on:
       - self-hosted
       - linux
@@ -105,13 +105,14 @@ jobs:
           chmod +x ./.github/workflows/nix-flake-check.sh
           source ./.github/workflows/nix-flake-check.sh
   
-  all-ci-packages:
+  build-packages:
     name: Build packages
     strategy:
       matrix:
-        arch: [x64, x64-monster, arm]
+        arch: [x64-monster, arm]
     needs: 
-      - check-privilege
+      - privilege-check
+      - lfs-check
     runs-on:
       - self-hosted
       - linux
@@ -371,127 +372,6 @@ jobs:
   #         comment_tag: 'Picasso Preview URL'
   #         github_token: ${{ secrets.GITHUB_TOKEN }}
 
-
-  # package-hyperspace-dali:
-  #   name: "Package Hyperspace"
-  #   needs:
-  #     - check-privilege
-  #   runs-on:
-  #     - self-hosted
-  #     - linux
-  #     - x64
-  #     - sre
-  #   concurrency:
-  #     group: ${{ github.workflow }}-package-hyperspace-dali-${{ github.event.pull_request.title }}
-  #     cancel-in-progress: true
-  #   container:
-  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #       with:
-  #         ref: ${{ github.event.pull_request.head.sha }}
-  #         persist-credentials: false
-  #     - uses: "./.github/templates/watch-exec"
-  #       with:
-  #         command: nix -- build .#hyperspace-dali
-  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-  #     - uses: "./.github/templates/docker-publish"
-  #       with:
-  #         command: nix -- build .#hyperspace-dali-container
-  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-  #         username: ${{ secrets.DOCKER_HUB_USERNAME }}
-  #         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-  #         name: hyperspace-dali
-  #         artifact: hyperspace-dali:latest
-
-
-  # lint-test-frontend:
-  #   # Legacy because these should be nixified.
-  #   name: Legacy Frontend Checks
-  #   needs: 
-  #     - check-privilege
-  #   runs-on:
-  #     - self-hosted
-  #     - linux
-  #     - x64
-  #     - sre
-  #   container:
-  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-  #   steps:
-  #     - run: |
-  #         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-  #         echo "sandbox = relaxed" >> /etc/nix/nix.conf
-  #         echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-  #       shell: "bash"
-  #     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-  #       with:
-  #         installCommand: |
-  #           nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-  #           nix-channel --update
-  #           nix-env -iA nixpkgs.cachix nixpkgs.git-lfs nixpkgs.nodejs nixpkgs.yarn
-  #         name: ${{ env.CACHIX_COMPOSABLE }}
-  #         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-  #     - uses: actions/checkout@v3
-  #       with:
-  #         ref: ${{ github.event.pull_request.head.sha }}
-  #         persist-credentials: false
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: 16
-  #         always-auth: true
-  #         registry-url: 'https://registry.npmjs.org'
-  #     - run: yarn install --ignore-scripts
-  #       env:
-  #         CI: true
-  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-  #       working-directory: frontend
-  #     - name: Lint Pablo
-  #       run: yarn --filter=pablo lint
-  #       working-directory: frontend
-  #     - name: Test Pablo
-  #       run: yarn --filter=pablo test
-  #       working-directory: frontend
-  #     - name: Lint Picasso
-  #       run: yarn --filter=picasso lint
-  #       working-directory: frontend
-  #     - name: Test Picasso
-  #       run: yarn --filter=picasso test
-  #       working-directory: frontend
-
-  # cmc-api:
-  #   name: "Package CMC API"
-  #   needs:
-  #     - common-deps
-  #     - check-privilege
-  #   runs-on:
-  #     - self-hosted
-  #     - linux
-  #     - x64
-  #     - sre
-  #   concurrency:
-  #     group: ${{ github.workflow }}-build-cmc-api-${{ github.event.pull_request.title }}
-  #     cancel-in-progress: true
-  #   continue-on-error: true
-  #   container:
-  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #       with:
-  #         ref: ${{ github.event.pull_request.head.sha }}
-  #         persist-credentials: false
-  #     - uses: "./.github/templates/watch-exec"
-  #       with:
-  #         command: nix -- build .#cmc-api
-  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-  #     - uses: "./.github/templates/docker-publish"
-  #       with:
-  #         command: nix -- build .#cmc-api-image
-  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-  #         username: ${{ secrets.DOCKER_HUB_USERNAME }}
-  #         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-  #         name: cmc-api-server
-  #         artifact: cmc-api:latest
-
   # TODO: nixify these test steps, and add me to subsquid-processor
   # test-subsquid:
   #   name: Test Subquid
@@ -551,59 +431,6 @@ jobs:
   #         tags: ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest,${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:${{ vars.GITHUB_SHA }}
   #         context: subsquid
   #         push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-  # composable-sandbox-container-publish:
-  #   needs:
-  #     - effects-gate
-  #     - check-privilege
-  #   runs-on:
-  #     - self-hosted
-  #     - linux
-  #     - x64
-  #     - sre
-  #   concurrency:
-  #     group: packagepricefeed-${{ github.event.pull_request.title }}
-  #     cancel-in-progress: true
-  #   container:
-  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #       with:
-  #         ref: ${{ github.event.pull_request.head.sha }}
-  #         persist-credentials: false
-  #     - uses: "./.github/templates/watch-exec"
-  #       with:
-  #         command: nix -- build .#price-feed
-  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-  #         push: ${{ github.event_name == 'push' && github.event.pull_request.title_name == 'main' }}
-
-  # composable-bridge-devnet-container-publish:
-  #   name: "Docker composable-bridge-devnet"
-  #   needs:
-  #     - effects-gate
-  #     - check-privilege
-  #   runs-on:
-  #     - self-hosted
-  #     - linux
-  #     - x64
-  #     - sre
-  #   concurrency:
-  #     group: ${{ github.workflow }}-composable-bridge-devnet-container-${{ github.event.pull_request.title }}
-  #     cancel-in-progress: true
-  #   container:
-  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #       with:
-  #         ref: ${{ github.event.pull_request.head.sha }}
-  #         persist-credentials: false
-  #     - uses: "./.github/templates/docker-publish"
-  #       with:
-  #         command: nix -- build .#bridge-devnet-dali-container
-  #         token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-  #         username: ${{ secrets.DOCKER_HUB_USERNAME }}
-  #         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-  #         name: composable-bridge-devnet
-  #         artifact: composable-bridge-devnet-container
 
   # devnet-integration-tests:
   #     name: "Devnet integration tests"
@@ -647,23 +474,18 @@ jobs:
   #     - run: |
   #         nix run .#devnet-integration-tests
 
-  # effects-gate:
-  #     name: "Effect gate, automatically merged if passed"
-  #     runs-on:
-  #     - self-hosted
-  #     - linux
-  #     - x64
-  #     - sre
-  #     needs:
-  #       - check-lfs
-  #       - check-nix
-  #       - check-nix-long
-  #       - all-ci-packages
-  #       # - test-running-of-pallet-benchmarks
-  #       # FIXUP(hussein): reenable once v0.9.30 -> v0.9.33
-  #       # - local-integration-tests
-
-  #       # - lint-test-frontend
-  #     steps:
-  #       - run: echo "Goblins allow your work to see the light"
+  effects-gate:
+      name: "Effect gate, automatically merged if passed"
+      runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+      needs:
+        - build-packages
+        # - test-running-of-pallet-benchmarks
+        # FIXUP(hussein): reenable once v0.9.30 -> v0.9.33
+        # - local-integration-tests
+      steps:
+        - run: echo "Goblins allow your work to see the light"
 
