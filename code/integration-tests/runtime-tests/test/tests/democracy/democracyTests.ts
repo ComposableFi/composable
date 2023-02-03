@@ -61,7 +61,7 @@ import {} from "@polkadot/types/lookup";
  * - vetoExternal(proposalHash)
  * - vote(refIndex, vote)
  */
-describe("[SHORT] Democracy Tests", function () {
+describe.only("[SHORT] Democracy Tests", function () {
   if (!testConfiguration.enabledTests.query.enabled) return;
   this.timeout(2 * 60 * 1000);
   this.retries(0);
@@ -176,7 +176,7 @@ describe("[SHORT] Democracy Tests", function () {
       await sendAndWaitForSuccess(
         apis[0],
         testWallets[0],
-        apis[0].events.democracy.PreimageNoted.is,
+        apis[0].events.democracy.Preimage.Noted.is,
         apis[0].tx.democracy.notePreimage(proposalHashOne)
       )
         .catch(e => {
@@ -361,7 +361,7 @@ describe("[SHORT] Democracy Tests", function () {
       });
 
       it("Council members can close the Council proposal after reaching threshold", async function () {
-        const weightBound = 103_534_000;
+        const weightBound = apis[0].createType('SpWeightsWeightV2Weight', 103_534_000);
         const lengthBound = 34;
         const {
           data: [resultProposalHash, resultAmountYes, resultAmountNo]
@@ -435,7 +435,7 @@ describe("[SHORT] Democracy Tests", function () {
       });
 
       it("Technical Council members can close the Council proposal after reaching threshold", async function () {
-        const weightBound = 386_442_000;
+        const weightBound = apis[0].createType('SpWeightsWeightV2Weight', 386_442_000);
         const lengthBound = 42;
         const {
           data: [resultProposalHash, resultAmountYes, resultAmountNo]
