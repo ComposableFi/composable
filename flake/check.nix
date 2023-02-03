@@ -41,7 +41,6 @@
           check-picasso-integration-tests
           devnet-integration-tests
 
-
           # TODO(cor): filter these out on arm, but build them on x64
           # disabled because this is not properly nixified
           # devnet-centauri 
