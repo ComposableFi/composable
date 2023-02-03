@@ -31,7 +31,7 @@ runs:
 
         docker load --input ${{ inputs.image_path }}
 
-        SHA256=$(sha256sum ./result | cut --delimiter " " --fields 1)
+        SHA256=$(sha256sum ${{ inputs.image_path }} | cut --delimiter " " --fields 1)
         COMMIT_SHA=$(git rev-parse HEAD)
         CONTAINER_NAME=${{ inputs.name }}
         TEMP_CONTAINER_NAME=${{ inputs.artifact }}
