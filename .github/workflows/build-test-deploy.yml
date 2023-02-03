@@ -1052,8 +1052,8 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      - name: Log INFO commit SHA
-        run: echo "GITHUB_SHA=${GITHUB_SHA}"
+      - name: Log INFO commit SHA info
+        run: echo GITHUB_SHA=${GITHUB_SHA} github.sha=${{ github.sha }}
       - name: Build and push
         env:
           SUBSQUID_IMAGE_TAG_SHA: ${{ github.sha }}
