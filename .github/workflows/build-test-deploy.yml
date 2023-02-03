@@ -75,6 +75,7 @@ jobs:
       group: ${{ github.workflow }}-nix-flake-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:
+      # This isn't templated, since checkout needs to happen before templating occurs.
       - name: Set up Nix
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
@@ -83,6 +84,7 @@ jobs:
           extra_nix_config: |
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
+            system-features = kvm
       - name: Set up Cachix
         uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
         with:
@@ -119,6 +121,7 @@ jobs:
       group: ${{ github.workflow }}-all-ci-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:
+      # This isn't templated, since checkout needs to happen before templating occurs.
       - name: Set up Nix
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
@@ -127,6 +130,7 @@ jobs:
           extra_nix_config: |
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
+            system-features = kvm
       - name: Set up Cachix
         uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
         with:
@@ -155,6 +159,15 @@ jobs:
       - run: |
           ls result
           tree result -L 3
+      - name: Publish cmc-api-image to docker hub
+        uses: "./.github/templates/docker-publish"
+        with:
+          image_path: result/cmc-api-image
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          name: cmc-api-server
+          artifact: cmc-api:latest
+      
   # This isn't templated, since checkout needs to happen before templating occurs.
   # docs-check:
   #   name: "Docs check"
