@@ -43,15 +43,19 @@ After that *xcm-to-local(X)* is called, and we get *DOT = 2*.
 
 `NOTE: 2 is just number for simplicity, real implementation of local asset id may be hash`
 
-One *pallet-ibc* maps *DOT* to *transfer/channel-0/2* and sends via `transfer` call.
+One *pallet-ibc* maps *DOT* to *2* string and sends via `transfer` call.
 
 `NOTE: 2 is mapped to string by *assets* system of chain. Simples case *to_string* call`
 
-`NOTE: well known *transfer* is *IBC Port*, and *channel-0* is *IBC Channel* with counter` 
+`NOTE: so DOT asset has remote in *xcm assets*, but for *pallet-ibc* transfer it is like local`
 
 **Picasso**
 
-Upon receive of ICS20 transfer of *transfer/channel-0/2* asset, *assets* maps it to its own *DOT = 1002*. 
+Upon receive of ICS20 transfer of *2*  *pallet-ibc* maps to *transfer/channel-0/2* asset, and then *pallet-ibc* asks *assets* maps it to its local *DOT = 1002*. 
+
+`NOTE: well known *transfer* is *IBC Source Port on Composable*, and *channel-0* is *IBC Source Channel on Composable*(with counter)`
+
+`NOTE: So we can know before send, what prefix would be just after opening channel` 
 
 `NOTE: we could map to same number for convenience, so DOT could be 2 on both chains`
 
@@ -63,26 +67,44 @@ Let transfer back.
 
 User calls *pallet-ibc* *transfer* with asset *DOT = 1002*.
 
-Asset is mapped prefixed to became `transfer/channel-0/2` and send to `Composable`
+`DOT` local asset is mapped to became *transfer/channel-0/2* and sent via IBC.
 
-`NOTE: see that we map 1002 to whole 'transfer/channel-0/2' string representation, so 1002 should be idenfified to be IBC remote`
-
+`NOTE: so you see we mapping local asset to IBC asset here`
 
 **Composable**
 
-Asset prefix removed to form `2`string. And mapped to `DOT = 2`
+Asset prefix removed by *pallet-ibc* to form *2* string. And mapped to `DOT = 2` by *assets* *parse*.
 
-`2` is mapped to `XCM(1, Here)` location.
+`2` is mapped to `XcmLocation(parents = 1, junctions = Here)` remote location by *assets*.
 
 XCM sent.
 
 **Polkadot**
 
-Polkadot maps `XCM(1, Here)` to `XCM(0, Here)` to Native asset.
+Polkadot maps ` XcmLocation(parents = 1, junctions = Here)` to ` XcmLocation(parents = 0, junctions = Here)` to Native, zero(0) asset.
+
+### Generalization
+
+We have chains *A*, *B*, *C*, *D*.
+
+#### Topology *A - XCM - B - IBC - C - XCM - D*
 
 
-### Generalisation
+Real world, Polkadot -> Composable -> Picasso -> Moonbeam.
 
+**Forward**
+
+A. *XcmLocation(< as it is here>)*
+
+B. *XcmLocation(< as it sent by A>) -> XcmLocation(< as it is for Here to route to A>) -> LocalIdOnB -> LocalIdOnBAsString -> IBC-ICS20 prefixed denomination(LocalIdOnBAsString)*
+
+C. *IBC-ICS20 prefixed denomination(LocalIdOnBAsString) -> IBC-ICS20 prefixed denomination(sourcePortOnB/sourceChannelOnB/LocalIdOnBAsString) -> LocalIdOnC -> XcmLocation( < LocalIdOnC as here> )*
+
+`NOTE: See how asset above also it is foreign because from B, but on bridge switch it became `local` and mapped to XCM remote`
+
+`NOTE: Invariant is that foreign asset has can have 1 remote location, but mapped as local to all other bridges`
+
+D. * XcmLocation( < LocalIdOnC as here> ) -> XcmLocation( < LocalIdOnC prefixed with route from Origin > ) -> LocalIdOnD*
 
 
 ## How `assets routes` are created
