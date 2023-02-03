@@ -1,6 +1,6 @@
 # Overview
 
-Purpose of this document to show simple IC-ICS20 and XCM transfers flows.
+Purpose of this document to show simple IBC-ICS20 and XCM transfers flows.
 
 Describes assets identifiers on each chain and asset creation allowance scenarios.
 .
@@ -17,41 +17,51 @@ So we touch governance and fees too.
 
 ### Specific examples of transfer
 
+**Each bold** section outlines separate consensus.
+
 #### DOT from Polkadot to Picasso
+
+Let transfer forward.
 
 **Polkadot**
 
+We send *Native*, zero(0) asset encoded as *DOT = XcmLocation(parents = 0, junctions = Here)*.
 
-We send Native, 0 asset encoded as `DOT = XCM(0, Here)`.
+`NOTE: We use *DOT* symbol in this text, on chain it is never used for transfers, it is just for us to maintain flow`
 
 **Composable**
 
+Upon receive we have *Sender = XcmLocation(parents = 1, junctions = Here)* and asset to be *X = XcmLocation(parents = 0, junctions = Here)*.
 
-Upon receive we have `Sender = Location(1, Here)` and asset to be `X = XCM(0, Here)`.
+`NOTE: We use X, as X is not yet known to be DOT`
 
-XCM asset is prefixed with sender prefix, and we get `X = XCM(1, Here)`.
+*pallet-xcm* prefixes asset with sender, and we get *X = XcmLocation(parents = 1, junctions = Here)*.
 
-After that `xcm-to-id` is called, and we get `DOT = 2`.
+`NOTE: *pallet-xcm* is really [several pallets and configs](./xcmp/xcmp.runtime.dot)
 
-One composable asset is mapped to `transfer/channel-0/2` and send via `pallet-ibc` `transfer` method. 
+After that *xcm-to-local(X)* is called, and we get *DOT = 2*.
 
-`NOTE: assets map local assets representation to string without /. Remaining part is managed by opened IBC channel/port`.  
+`NOTE: 2 is just number for simplicity, real implementation of local asset id may be hash`
 
-`NOTE: see how Xcm()
+One *pallet-ibc* maps *DOT* to *transfer/channel-0/2* and sends via `transfer` call.
+
+`NOTE: 2 is mapped to string by *assets* system of chain. Simples case *to_string* call`
+
+`NOTE: well known *transfer* is *IBC Port*, and *channel-0* is *IBC Channel* with counter` 
 
 **Picasso**
 
-Upon receive of ICS20 transfer of `transfer/channel-0/2` asset, it maps it to its own `DOT = 1002`. 
+Upon receive of ICS20 transfer of *transfer/channel-0/2* asset, *assets* maps it to its own *DOT = 1002*. 
 
-`NOTE: we use number asset id for convenience. There is no reason why ids should be such. Also we user different numbers on both chains, while could make same`
-
+`NOTE: we could map to same number for convenience, so DOT could be 2 on both chains`
 
 ### DOT from Picasso to Polkadot
 
+Let transfer back.
 
 **Picasso**
 
-User calls `pallet-ibc` `transfer` with asset `DOT = 1002`.
+User calls *pallet-ibc* *transfer* with asset *DOT = 1002*.
 
 Asset is mapped prefixed to became `transfer/channel-0/2` and send to `Composable`
 
@@ -118,3 +128,5 @@ https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
 https://github.com/cosmos/cosmos-sdk/blob/main/types/coin.go
 
 https://ibc.cosmos.network/main/architecture/adr-001-coin-source-tracing.html
+
+https://github.com/CosmWasm/cosmwasm/blob/main/packages/std/src/coin.rs
