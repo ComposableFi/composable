@@ -15,8 +15,9 @@ permissions:
   pull-requests: write
 
 env:
-  # NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.13.2/install
-
+  NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.13.2/install
+  NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixos-22.11
+  
   CACHIX_COMPOSABLE: composable-community
   CACHIX_COMPRESSION_LEVEL: 3
 
@@ -152,17 +153,19 @@ jobs:
       - name: Set up Nix
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
-          install_url: https://releases.nixos.org/nix/nix-2.13.2/install
+          install_url: ${{ env.NIX_INSTALL_SCRIPT }}
           nix_path: nixpkgs=channel:nixos-22.11 #TODO: change?
-      - name: Add tools needed for checkout
-        run: |  
-          nix-env -iA cachix git-lfs nodejs tree
       - name: Set up Cachix
         uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
         with:
           skipPush: true
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
+      - name: Add tools needed for checkout
+        run: |  
+          nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix nixpkgs.nodejs
       - uses: actions/checkout@v3
         with:
           lfs: true
