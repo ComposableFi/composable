@@ -22,8 +22,8 @@ fn negative_get_metadata() {
 fn set_metadata() {
 	new_test_ext().execute_with(|| {
 		let asset_info = AssetInfo {
-			name: b"Kusama".to_vec(),
-			symbol: b"KSM".to_vec(),
+			name: None,
+			symbol: None,
 			decimals: 4,
 			existential_deposit: 0,
 			ratio: Some(rational!(42 / 123)),
@@ -72,8 +72,8 @@ fn register_asset() {
 		)
 		.expect("Location bytes translate to foreign ID bytes");
 		let asset_info = AssetInfo {
-			name: b"Kusama".to_vec(),
-			symbol: b"KSM".to_vec(),
+			name: None,
+			symbol: None,
 			decimals: 4,
 			existential_deposit: 0,
 			ratio: Some(rational!(42 / 123)),
@@ -109,8 +109,8 @@ fn update_asset() {
 		)
 		.expect("Location bytes translate to foreign ID bytes");
 		let asset_info = AssetInfo {
-			name: b"Kusama".to_vec(),
-			symbol: b"KSM".to_vec(),
+			name: None,
+			symbol: None,
 			decimals: 4,
 			existential_deposit: 0,
 			ratio: Some(rational!(42 / 123)),
@@ -182,8 +182,8 @@ fn get_foreign_assets_list_should_work() {
 		)
 		.expect("Location bytes translate to foreign ID bytes");
 		let asset_info = AssetInfo {
-			name: b"Kusama".to_vec(),
-			symbol: b"KSM".to_vec(),
+			name: None,
+			symbol: None,
 			decimals: 4,
 			existential_deposit: 0,
 			ratio: Some(rational!(42 / 123)),

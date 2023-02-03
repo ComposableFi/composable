@@ -35,8 +35,9 @@ pub mod pallet {
 	use composable_support::math::safe::safe_multiply_by_rational;
 	use composable_traits::{
 		assets::{
-			Asset, AssetInfo, AssetInfoUpdate, AssetMetadata, AssetType, AssetTypeInspect,
-			InspectRegistryMetadata, LocalOrForeignAssetId, MutateRegistryMetadata,
+			Asset, AssetInfo, AssetInfoUpdate, AssetType, AssetTypeInspect, BiBoundedAssetName,
+			BiBoundedAssetSymbol, InspectRegistryMetadata, LocalOrForeignAssetId,
+			MutateRegistryMetadata,
 		},
 		currency::{AssetExistentialDepositInspect, BalanceLike, ForeignByNative},
 		xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
@@ -46,7 +47,7 @@ pub mod pallet {
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
 		traits::{tokens::BalanceConversion, EnsureOrigin},
-		BoundedVec, Twox128,
+		Twox128,
 	};
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
@@ -93,14 +94,6 @@ pub mod pallet {
 
 		type Balance: BalanceLike;
 
-		/// Maximum number of characters allowed in an asset symbol
-		#[pallet::constant]
-		type AssetSymbolMaxChars: Get<u32>;
-
-		/// Maximum number of characters allowed in an asset name
-		#[pallet::constant]
-		type AssetNameMaxChars: Get<u32>;
-
 		/// An isomorphism: Balance<->u128
 		type Convert: Convert<u128, Self::Balance> + Convert<Self::Balance, u128>;
 	}
@@ -144,16 +137,23 @@ pub mod pallet {
 	pub type ExistentialDeposit<T: Config> =
 		StorageMap<_, Twox128, T::LocalAssetId, T::Balance, OptionQuery>;
 
-	/// Metadata of an asset
+	/// Name of an asset
 	#[pallet::storage]
-	#[pallet::getter(fn metadata)]
-	pub type Metadata<T: Config> = StorageMap<
-		_,
-		Twox128,
-		T::LocalAssetId,
-		AssetMetadata<BoundedVec<u8, T::AssetNameMaxChars>, BoundedVec<u8, T::AssetSymbolMaxChars>>,
-		OptionQuery,
-	>;
+	#[pallet::getter(fn asset_name)]
+	pub type AssetName<T: Config> =
+		StorageMap<_, Twox128, T::LocalAssetId, BiBoundedAssetName, OptionQuery>;
+
+	/// Symbol of an asset
+	#[pallet::storage]
+	#[pallet::getter(fn asset_symbol)]
+	pub type AssetSymbol<T: Config> =
+		StorageMap<_, Twox128, T::LocalAssetId, BiBoundedAssetSymbol, OptionQuery>;
+
+	/// Decimals of an asset
+	#[pallet::storage]
+	#[pallet::getter(fn asset_decimals)]
+	pub type AssetDecimals<T: Config> =
+		StorageMap<_, Twox128, T::LocalAssetId, Exponent, OptionQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config>(sp_std::marker::PhantomData<T>);
@@ -314,7 +314,7 @@ pub mod pallet {
 			location: Option<Self::AssetNativeLocation>,
 			asset_info: AssetInfo<Self::Balance>,
 		) -> DispatchResult {
-			if Metadata::<T>::contains_key(asset_id) {
+			if ExistentialDeposit::<T>::contains_key(asset_id) {
 				return Err(Error::<T>::AssetAlreadyRegistered.into())
 			}
 
@@ -433,64 +433,50 @@ pub mod pallet {
 		type AssetId = T::LocalAssetId;
 
 		fn asset_name(asset_id: &Self::AssetId) -> Option<Vec<u8>> {
-			Metadata::<T>::get(asset_id).map(|metadata| metadata.name.to_vec())
+			AssetName::<T>::get(asset_id).map(|name| name.as_vec().to_owned())
 		}
 
 		fn symbol(asset_id: &Self::AssetId) -> Option<Vec<u8>> {
-			Metadata::<T>::get(asset_id).map(|metadata| metadata.symbol.to_vec())
+			AssetSymbol::<T>::get(asset_id).map(|symbol| symbol.as_vec().to_owned())
 		}
 
 		fn decimals(asset_id: &Self::AssetId) -> Option<u8> {
-			Metadata::<T>::get(asset_id).map(|metadata| metadata.decimals)
+			AssetDecimals::<T>::get(asset_id)
 		}
 	}
 
 	impl<T: Config> MutateRegistryMetadata for Pallet<T> {
 		type AssetId = T::LocalAssetId;
-		type BoundedName = BoundedVec<u8, T::AssetNameMaxChars>;
-		type BoundedSymbol = BoundedVec<u8, T::AssetSymbolMaxChars>;
 
 		fn set_metadata(
 			asset_id: &Self::AssetId,
-			name: Vec<u8>,
-			symbol: Vec<u8>,
+			name: Option<BiBoundedAssetName>,
+			symbol: Option<BiBoundedAssetSymbol>,
 			decimals: u8,
 		) -> DispatchResult {
-			let name = Self::BoundedName::try_from(name)
-				.map_err(|_| Error::<T>::StringExceedsMaxLength)?;
-			let symbol = Self::BoundedSymbol::try_from(symbol)
-				.map_err(|_| Error::<T>::StringExceedsMaxLength)?;
-			Metadata::<T>::insert(asset_id, AssetMetadata { name, symbol, decimals });
+			AssetName::<T>::set(asset_id, name);
+			AssetSymbol::<T>::set(asset_id, symbol);
+			AssetDecimals::<T>::insert(asset_id, decimals);
 			Ok(())
 		}
 
 		fn update_metadata(
 			asset_id: &Self::AssetId,
-			name: Option<Vec<u8>>,
-			symbol: Option<Vec<u8>>,
+			name: Option<Option<BiBoundedAssetName>>,
+			symbol: Option<Option<BiBoundedAssetSymbol>>,
 			decimals: Option<u8>,
 		) -> DispatchResult {
-			let name = name
-				.map(BoundedVec::<u8, T::AssetNameMaxChars>::try_from)
-				.transpose()
-				.map_err(|_| Error::<T>::StringExceedsMaxLength)?;
-			let symbol = symbol
-				.map(BoundedVec::<u8, T::AssetSymbolMaxChars>::try_from)
-				.transpose()
-				.map_err(|_| Error::<T>::StringExceedsMaxLength)?;
-			Metadata::<T>::mutate_exists(asset_id, |metadata| {
-				if let Some(metadata) = metadata {
-					let name = name.unwrap_or(metadata.clone().name);
-					let symbol = symbol.unwrap_or(metadata.clone().symbol);
-					let decimals = decimals.unwrap_or(metadata.decimals);
+			if let Some(name) = name {
+				AssetName::<T>::set(asset_id, name);
+			}
+			if let Some(symbol) = symbol {
+				AssetSymbol::<T>::set(asset_id, symbol);
+			}
+			if let Some(decimals) = decimals {
+				AssetDecimals::<T>::insert(asset_id, decimals);
+			}
 
-					*metadata = AssetMetadata { name, symbol, decimals };
-					Some(())
-				} else {
-					None
-				}
-			})
-			.ok_or_else(|| Error::<T>::AssetNotFound.into())
+			Ok(())
 		}
 	}
 

@@ -2,7 +2,9 @@
 //!
 //! All of these implementations route to the NativeTransactor.
 
-use composable_traits::assets::{InspectRegistryMetadata, MutateRegistryMetadata};
+use composable_traits::assets::{
+	BiBoundedAssetName, BiBoundedAssetSymbol, InspectRegistryMetadata, MutateRegistryMetadata,
+};
 use frame_support::{
 	pallet_prelude::*,
 	traits::tokens::{
@@ -41,6 +43,9 @@ impl<T: Config> fungibles::metadata::Mutate<T::AccountId> for Pallet<T> {
 		symbol: Vec<u8>,
 		decimals: u8,
 	) -> DispatchResult {
+		let name = BiBoundedAssetName::from_vec(name).ok();
+		let symbol = BiBoundedAssetSymbol::from_vec(symbol).ok();
+
 		<T::AssetsRegistry as MutateRegistryMetadata>::set_metadata(&asset, name, symbol, decimals)
 	}
 }

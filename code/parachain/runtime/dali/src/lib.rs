@@ -807,11 +807,6 @@ impl currency_factory::Config for Runtime {
 	type Balance = Balance;
 }
 
-parameter_types! {
-	pub const AssetNameMaxChars: u32 = 64;
-	pub const AssetSymbolMaxChars: u32 = 32;
-}
-
 impl assets_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = CurrencyId;
@@ -820,8 +815,6 @@ impl assets_registry::Config for Runtime {
 	type ParachainOrGovernanceOrigin = EnsureRootOrHalfNativeCouncil;
 	type Balance = Balance;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
-	type AssetNameMaxChars = AssetNameMaxChars;
-	type AssetSymbolMaxChars = AssetSymbolMaxChars;
 	type Convert = ConvertInto;
 }
 

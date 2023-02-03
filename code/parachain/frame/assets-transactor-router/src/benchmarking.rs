@@ -77,8 +77,8 @@ benchmarks! {
 		let amount: T::Balance = TRANSFER_AMOUNT.into();
 		let asset_id = T::AssetId::from(100);
 		let asset_info = AssetInfo {
-			name: b"Bench Coin".to_vec(),
-			symbol: b"BCNR".to_vec(),
+			name: None,
+			symbol: None,
 			decimals: 12,
 			ratio: None,
 			existential_deposit: T::Balance::from(0_u32),
@@ -91,8 +91,8 @@ benchmarks! {
 		let amount: T::Balance = TRANSFER_AMOUNT.into();
 		let asset_id = T::AssetId::from(100);
 		let asset_info = AssetInfo {
-			name: b"Bench Coin".to_vec(),
-			symbol: b"BCNR".to_vec(),
+			name: None,
+			symbol: None,
 			decimals: 12,
 			ratio: None,
 			existential_deposit: T::Balance::from(0_u32),

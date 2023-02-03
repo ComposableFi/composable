@@ -179,11 +179,6 @@ impl CurrencyFactory for CurrencyIdGenerator {
 	}
 }
 
-parameter_types! {
-	pub const AssetNameMaxChars: u32 = 32;
-	pub const AssetSymbolMaxChars: u32 = 16;
-}
-
 impl pallet_assets_registry::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = CurrencyId;
@@ -192,8 +187,6 @@ impl pallet_assets_registry::Config for Test {
 	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
 	type Balance = Balance;
-	type AssetSymbolMaxChars = AssetSymbolMaxChars;
-	type AssetNameMaxChars = AssetNameMaxChars;
 	type Convert = ConvertInto;
 }
 

@@ -9,6 +9,12 @@ use crate::currency::{Exponent, Rational64};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
+pub const ASSET_METADATA_NAME_LENGTH: usize = 64;
+pub const ASSET_METADATA_SYMBOL_LENGTH: usize = 16;
+
+pub type BiBoundedAssetName = BiBoundedVec<u8, 1, ASSET_METADATA_NAME_LENGTH>;
+pub type BiBoundedAssetSymbol = BiBoundedVec<u8, 1, ASSET_METADATA_SYMBOL_LENGTH>;
+
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct BasicAssetMetadata {
@@ -41,9 +47,9 @@ pub struct Asset<Balance, ForeignId> {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct AssetInfo<Balance> {
 	/// Name of the asset.
-	pub name: Vec<u8>,
+	pub name: Option<BiBoundedAssetName>,
 	/// Symbol of the asset.
-	pub symbol: Vec<u8>,
+	pub symbol: Option<BiBoundedAssetSymbol>,
 	/// The number of decimals this asset uses to represent one unit.
 	pub decimals: u8,
 	/// The minimum balance of the asset for an account to be stored on chain.
@@ -60,9 +66,9 @@ pub struct AssetInfo<Balance> {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct AssetInfoUpdate<Balance> {
 	/// Name of the asset.
-	pub name: Option<Vec<u8>>,
+	pub name: Option<Option<BiBoundedAssetName>>,
 	/// Symbol of the asset.
-	pub symbol: Option<Vec<u8>>,
+	pub symbol: Option<Option<BiBoundedAssetSymbol>>,
 	/// The number of decimals this asset uses to represent one unit.
 	pub decimals: Option<u8>,
 	/// The minimum balance of the asset for an account to be stored on chain.
@@ -96,38 +102,29 @@ pub trait InspectRegistryMetadata {
 
 pub trait MutateRegistryMetadata {
 	type AssetId;
-	type BoundedName;
-	type BoundedSymbol;
 
 	/// Sets the metadata of an asset
+	///
+	/// `name` & `symbol` have an wrapping `Option`, setting this to `None`
+	/// will set it to none in storage.
 	fn set_metadata(
 		asset_id: &Self::AssetId,
-		name: Vec<u8>,
-		symbol: Vec<u8>,
+		name: Option<BiBoundedAssetName>,
+		symbol: Option<BiBoundedAssetSymbol>,
 		decimals: u8,
 	) -> DispatchResult;
 
 	/// Update the metadata of an asset.
 	///
 	/// All metadata feilds are optional, only those provided as `Some` will be updated, the
-	/// rest will be unchanged.
+	/// rest will be unchanged. `name` & `symbol` have an inner `Option`, setting this to `None`
+	/// will set it to none in storage.
 	fn update_metadata(
 		asset_id: &Self::AssetId,
-		name: Option<Vec<u8>>,
-		symbol: Option<Vec<u8>>,
+		name: Option<Option<BiBoundedAssetName>>,
+		symbol: Option<Option<BiBoundedAssetSymbol>>,
 		decimals: Option<u8>,
 	) -> DispatchResult;
-}
-
-/// Structure to represent basic asset metadata such as: name, symbol, decimals.
-#[derive(Clone, Encode, Decode, Eq, PartialEq, Default, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct AssetMetadata<BoundedName, BoundedSymbol> {
-	/// Name of the asset.
-	pub name: BoundedName,
-	/// Symbol of the asset.
-	pub symbol: BoundedSymbol,
-	/// The number of decimals this asset uses to represent one unit.
-	pub decimals: u8,
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]

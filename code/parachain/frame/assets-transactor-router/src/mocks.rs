@@ -68,11 +68,6 @@ impl Config for Test {
 	type AssetsRegistry = AssetsRegistry;
 }
 
-parameter_types! {
-	pub const AssetSymbolMaxChars: u32 = 16;
-	pub const AssetNameMaxChars: u32 = 32;
-}
-
 impl assets_registry::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = AssetId;
@@ -81,8 +76,6 @@ impl assets_registry::Config for Test {
 	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
 	type Balance = Balance;
-	type AssetSymbolMaxChars = AssetSymbolMaxChars;
-	type AssetNameMaxChars = AssetNameMaxChars;
 	type Convert = ConvertInto;
 }
 

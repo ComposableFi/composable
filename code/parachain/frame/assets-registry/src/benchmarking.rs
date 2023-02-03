@@ -8,7 +8,9 @@ use crate::{self as pallet_assets_registry};
 use crate::Pallet as AssetsRegistry;
 use codec::{Decode, Encode};
 use composable_traits::{
-	assets::{AssetInfo, AssetInfoUpdate, LocalOrForeignAssetId},
+	assets::{
+		AssetInfo, AssetInfoUpdate, BiBoundedAssetName, BiBoundedAssetSymbol, LocalOrForeignAssetId,
+	},
 	currency::Rational64,
 	rational,
 	xcm::assets::XcmAssetLocation,
@@ -29,8 +31,8 @@ benchmarks! {
 			.expect("Asset location is foreign ID");
 		let location = LocalOrForeignAssetId::Foreign(location);
 		let asset_info = AssetInfo {
-			name: b"Kusama".to_vec(),
-			symbol: b"KSM".to_vec(),
+			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
+			symbol: Some(BiBoundedAssetSymbol::from_vec(b"KSM".to_vec()).expect("String is within bounds")),
 			decimals: 3,
 			existential_deposit: T::Balance::from(0),
 			ratio: Some(rational!(42 / 123)),
@@ -42,8 +44,8 @@ benchmarks! {
 			.expect("Asset location is foreign ID");
 		let location = LocalOrForeignAssetId::Foreign(location_base.clone());
 		let asset_info = AssetInfo {
-			name: b"Kusama".to_vec(),
-			symbol: b"KSM".to_vec(),
+			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
+			symbol: Some(BiBoundedAssetSymbol::from_vec(b"KSM".to_vec()).expect("String is within bounds")),
 			decimals: 3,
 			existential_deposit: T::Balance::from(0),
 			ratio: Some(rational!(42 / 123)),
@@ -65,8 +67,8 @@ benchmarks! {
 			.expect("Asset location is foreign ID");
 		let location = LocalOrForeignAssetId::Foreign(location_base.clone());
 		let asset_info = AssetInfo {
-			name: b"Kusama".to_vec(),
-			symbol: b"KSM".to_vec(),
+			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
+			symbol: Some(BiBoundedAssetSymbol::from_vec(b"KSM".to_vec()).expect("String is within bounds")),
 			decimals: 3,
 			existential_deposit: T::Balance::from(0),
 			ratio: Some(rational!(42 / 123)),
@@ -80,8 +82,8 @@ benchmarks! {
 		.expect("Asset details are non-duplicate and valid");
 
 		let asset_info_update = AssetInfoUpdate {
-			name: Some(b"Cooler Kusama".to_vec()),
-			symbol: Some(b"CKSM".to_vec()),
+			name: Some(Some(BiBoundedAssetName::from_vec(b"Cooler Kusama".to_vec()).expect("String is within bounds"))),
+			symbol: Some(Some(BiBoundedAssetSymbol::from_vec(b"CKSM".to_vec()).expect("String is within bounds"))),
 			decimals: Some(12),
 			existential_deposit: Some(T::Balance::from(0)),
 			ratio: Some(None),

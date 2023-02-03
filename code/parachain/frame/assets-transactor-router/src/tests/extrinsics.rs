@@ -197,8 +197,8 @@ mod mint_initialize {
 		let nonce = 0;
 		let asset_id = create_asset_id(prototcol_id, nonce);
 		let asset_info = AssetInfo {
-			name: b"test_asset".to_vec(),
-			symbol: b"TASS".to_vec(),
+			name: None,
+			symbol: None,
 			decimals: 12,
 			ratio: None,
 			existential_deposit: 0,
@@ -226,8 +226,8 @@ mod mint_initialize_with_governance {
 		let nonce = 0;
 		let asset_id = create_asset_id(prototcol_id, nonce);
 		let asset_info = AssetInfo {
-			name: b"test_asset".to_vec(),
-			symbol: b"TASS".to_vec(),
+			name: None,
+			symbol: None,
 			decimals: 12,
 			ratio: None,
 			existential_deposit: 0,
