@@ -163,7 +163,7 @@ jobs:
       - name: Publish cmc-api-image to docker hub
         uses: "./.github/templates/docker-publish"
         with:
-          image_path: result/cmc-api-image
+          image_path: result/docker-image-cmc-api.tar.gz
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: cmc-api-server

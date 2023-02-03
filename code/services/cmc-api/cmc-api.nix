@@ -15,7 +15,7 @@
 
         cmc-api-image = pkgs.dockerTools.buildImage {
           tag = "latest";
-          name = "cmc-api-image";
+          name = "cmc-api";
           config = { Entrypoint = [ "${cmc-api}/bin/cmc-api" ]; };
         };
       };
