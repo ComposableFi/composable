@@ -176,8 +176,8 @@ describe.only("[SHORT] Democracy Tests", function () {
       await sendAndWaitForSuccess(
         apis[0],
         testWallets[0],
-        apis[0].events.democracy.Preimage.Noted.is,
-        apis[0].tx.democracy.notePreimage(proposalHashOne)
+        apis[0].events.preimage.Noted.is,
+        apis[0].tx.preimage.notePreimage(proposalHashOne)
       )
         .catch(e => {
           if (e.message.includes("Preimage already noted")) {
@@ -186,13 +186,10 @@ describe.only("[SHORT] Democracy Tests", function () {
           }
           return e;
         })
-        .then(async function ({ data: [resultProposalHash, resultWho] }) {
+        .then(async function ({ data: [resultProposalHash] }) {
           await waitForBlocks(apis[0]);
-          expect(resultWho.toString()).to.be.equal(
-            apis[0].createType("AccountId32", testWallets[0].publicKey).toString()
-          );
           const preImageResult = <Option<PalletDemocracyPreimageStatus>>(
-            await apis[0].query.democracy.preimages(resultProposalHash)
+            await apis[0].query.preimage.statusFor(resultProposalHash)
           );
           expect(preImageResult.unwrapOr("NO_PREIMAGE")).to.be.not.be.equal("NO_PREIMAGE");
         });
@@ -202,13 +199,16 @@ describe.only("[SHORT] Democracy Tests", function () {
   describe("democracy.propose", function () {
     it("A user can propose a previously submitted preimage", async function () {
       const propCountBefore = await apis[0].query.democracy.publicPropCount();
+      const proposal = apis[0].createType("FrameSupportPreimagesBounded", {
+        Legacy: proposalHashOne
+      });
       const {
         data: [result]
       } = await sendAndWaitForSuccess(
         apis[0],
         testWallets[1],
         apis[0].events.democracy.Proposed.is,
-        apis[0].tx.democracy.propose(proposalHashOne, Pica(100))
+        apis[0].tx.democracy.propose(proposal, Pica(100))
       );
       const propCountAfter = await apis[0].query.democracy.publicPropCount();
       expect(propCountAfter).to.be.bignumber.equal(propCountBefore.addn(1));
@@ -264,11 +264,14 @@ describe.only("[SHORT] Democracy Tests", function () {
       );
       expect(result.isOk).to.be.true;
 
+      const proposal = apis[0].createType("FrameSupportPreimagesBounded", {
+        Legacy: proposalToBlackList
+      });
       const resultTest = await sendAndWaitForSuccess(
         apis[0],
         testWallets[2],
         apis[0].events.democracy.Proposed.is,
-        apis[0].tx.democracy.propose(proposalToBlackList, 999_999_999_999_999_999n)
+        apis[0].tx.democracy.propose(proposal, 999_999_999_999_999_999n)
       ).catch(e => {
         return e;
       });
@@ -278,13 +281,16 @@ describe.only("[SHORT] Democracy Tests", function () {
 
   describe("democracy.cancel", function () {
     it("Sudo can cancel certain proposals", async function () {
+      const proposal = apis[0].createType("FrameSupportPreimagesBounded", {
+        Legacy: proposalHashOne
+      });
       const {
         data: [proposalId]
       } = await sendAndWaitForSuccess(
         apis[0],
         testWallets[0],
         apis[0].events.democracy.Proposed.is,
-        apis[0].tx.democracy.propose(proposalHashOne, Pica(100))
+        apis[0].tx.democracy.propose(proposal, Pica(100))
       );
       expect(proposalId).to.not.be.an("Error");
       const {
@@ -316,17 +322,16 @@ describe.only("[SHORT] Democracy Tests", function () {
       it("The Council members can propose a external majority proposal", async function () {
         const threshold = councilMembers.length - 2;
         const lengthBound = 36;
+        const proposal = apis[0].createType("FrameSupportPreimagesBounded", {
+          Legacy: proposalHashTwo
+        });
         const {
           data: [resultAccount, resultProposalIndex, resultProposalHash, resultThreshold]
         } = await sendAndWaitForSuccess(
           apis[0],
           councilMembers[0],
           apis[0].events.council.Proposed.is,
-          apis[0].tx.council.propose(
-            threshold,
-            apis[0].tx.democracy.externalProposeMajority(proposalHashTwo),
-            lengthBound
-          )
+          apis[0].tx.council.propose(threshold, apis[0].tx.democracy.externalProposeMajority(proposal), lengthBound)
         );
         councilProposalIndex = resultProposalIndex.toNumber();
         councilProposalHash = resultProposalHash.toString();
@@ -361,8 +366,11 @@ describe.only("[SHORT] Democracy Tests", function () {
       });
 
       it("Council members can close the Council proposal after reaching threshold", async function () {
-        const weightBound = apis[0].createType('SpWeightsWeightV2Weight', 103_534_000);
-        const lengthBound = 34;
+        const weightBound = apis[0].createType("SpWeightsWeightV2Weight", {
+          refTime: apis[0].createType("Compact<u64>", 810558787),
+          proofSize: apis[0].createType("Compact<u64>", 40)
+        });
+        const lengthBound = 43;
         const {
           data: [resultProposalHash, resultAmountYes, resultAmountNo]
         } = await sendAndWaitForSuccess(
@@ -398,6 +406,7 @@ describe.only("[SHORT] Democracy Tests", function () {
               lengthBound
             )
           );
+          proposalId2 = resultProposalIndex.toNumber();
           technicalProposalIndex = resultProposalIndex.toNumber();
           technicalProposalHash = resultProposalHash.toString();
           expect(resultAccount.toString()).to.be.equal(
@@ -435,7 +444,10 @@ describe.only("[SHORT] Democracy Tests", function () {
       });
 
       it("Technical Council members can close the Council proposal after reaching threshold", async function () {
-        const weightBound = apis[0].createType('SpWeightsWeightV2Weight', 386_442_000);
+        const weightBound = apis[0].createType("SpWeightsWeightV2Weight", {
+          refTime: apis[0].createType("Compact<u64>", 810558787),
+          proofSize: apis[0].createType("Compact<u64>", 40)
+        });
         const lengthBound = 42;
         const {
           data: [resultProposalHash, resultAmountYes, resultAmountNo]
