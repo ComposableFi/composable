@@ -27,7 +27,7 @@ pub(crate) fn setup_instantiate_call<T: Config>(
 	let code_hash = CodeIdToInfo::<T>::get(code_id)
 		.ok_or(Error::<T>::CodeNotFound)?
 		.pristine_code_hash;
-	let contract = Pallet::<T>::derive_contract_address(&instantiator, salt, code_hash, message);
+	let contract = Pallet::<T>::derive_contract_address(&instantiator, salt, &code_hash, message)?;
 	// Make sure that contract address does not already exist
 	ensure!(Pallet::<T>::contract_exists(&contract).is_err(), Error::<T>::ContractAlreadyExists);
 	let nonce = CurrentNonce::<T>::increment().map_err(|_| Error::<T>::NonceOverflow)?;

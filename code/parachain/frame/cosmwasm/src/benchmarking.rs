@@ -364,7 +364,7 @@ benchmarks! {
 		// Make sure contract address is derived correctly
 		let code_hash = CodeIdToInfo::<T>::get(1).unwrap().pristine_code_hash;
 		let contract_addr =
-			Pallet::<T>::derive_contract_address(&origin, &salt, code_hash, &message);
+			Pallet::<T>::derive_contract_address(&origin, &salt, &code_hash, &message).unwrap();
 		// Make sure trie_id is derived correctly
 		let nonce = CurrentNonce::<T>::get();
 		let trie_id = Pallet::<T>::derive_contract_trie_id(&contract_addr, nonce);

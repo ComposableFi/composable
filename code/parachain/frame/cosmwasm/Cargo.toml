@@ -17,10 +17,12 @@ cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "60d0
   "ibc3",
   "iterator",
   "stargate",
+  "cosmwasm_1_2"
 ] }
 cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "60d0ab41ffc1513553ffc52ef1ec3d876d30fb21", default-features = false, features = [
   "iterator",
   "stargate",
+  "cosmwasm_1_2"
 ] }
 frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", optional = true }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }

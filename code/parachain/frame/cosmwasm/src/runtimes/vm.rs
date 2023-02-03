@@ -3,7 +3,7 @@ use crate::{runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Co
 use alloc::{borrow::ToOwned, string::String};
 use core::marker::{Send, Sync};
 use cosmwasm_vm::{
-	cosmwasm_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo},
+	cosmwasm_std::{CodeInfoResponse, Coin, ContractInfoResponse, Empty, Env, MessageInfo},
 	executor::ExecutorError,
 	has::Has,
 	memory::{MemoryReadError, MemoryWriteError},
@@ -311,6 +311,17 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 			.map(|r| (self.contract_address.clone(), r))
 	}
 
+	fn continue_instantiate2(
+		&mut self,
+		contract_meta: Self::ContractMeta,
+		funds: Vec<Coin>,
+		salt: &[u8],
+		message: &[u8],
+		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
+	) -> Result<(Self::Address, Option<cosmwasm_vm::cosmwasm_std::Binary>), Self::Error> {
+		todo!()
+	}
+
 	fn continue_migrate(
 		&mut self,
 		address: Self::Address,
@@ -375,12 +386,23 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		Err(CosmwasmVMError::Unsupported)
 	}
 
+	fn supply(&mut self, denom: String) -> Result<Coin, Self::Error> {
+		todo!()
+	}
+
 	fn query_contract_info(
 		&mut self,
 		address: Self::Address,
 	) -> Result<ContractInfoResponse, Self::Error> {
 		log::debug!(target: "runtime::contracts", "query_contract_info");
 		Pallet::<T>::do_query_contract_info(self, address.into_inner())
+	}
+
+	fn query_code_info(
+		&mut self,
+		code_id: u64, // TODO(aeryz): CosmwasmCodeId
+	) -> Result<CodeInfoResponse, Self::Error> {
+		todo!()
 	}
 
 	fn debug(&mut self, message: Vec<u8>) -> Result<(), Self::Error> {

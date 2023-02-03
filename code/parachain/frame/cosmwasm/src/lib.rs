@@ -106,7 +106,7 @@ use frame_support::{
 	},
 	StorageHasher,
 };
-use sp_runtime::traits::{Hash, SaturatedConversion};
+use sp_runtime::traits::SaturatedConversion;
 use sp_std::vec::Vec;
 use wasmi::AsContext;
 use wasmi_validation::PlainValidator;
@@ -144,7 +144,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Uploaded { code_hash: CodeHashOf<T>, code_id: CosmwasmCodeId },
+		Uploaded { code_hash: [u8; 32], code_id: CosmwasmCodeId },
 		Instantiated { contract: AccountIdOf<T>, info: ContractInfoOf<T> },
 		Executed { contract: AccountIdOf<T>, entrypoint: EntryPoint, data: Option<Vec<u8>> },
 		ExecutionFailed { contract: AccountIdOf<T>, entrypoint: EntryPoint, error: Vec<u8> },
@@ -184,6 +184,8 @@ pub mod pallet {
 		Ibc,
 		FailedToSerialize,
 		OutOfGas,
+		InvalidSalt,
+		InvalidAccount,
 	}
 
 	#[pallet::config]
@@ -354,8 +356,7 @@ pub mod pallet {
 
 	/// A mapping between a code hash and it's unique ID.
 	#[pallet::storage]
-	pub(crate) type CodeHashToId<T: Config> =
-		StorageMap<_, Identity, CodeHashOf<T>, CosmwasmCodeId>;
+	pub(crate) type CodeHashToId<T: Config> = StorageMap<_, Identity, [u8; 32], CosmwasmCodeId>;
 
 	/// This is a **monotonic** counter incremented on contract instantiation.
 	/// The purpose of this nonce is just to make sure that contract trie are unique.
@@ -408,7 +409,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::instantiate(funds.len() as u32).saturating_add(Weight::from_ref_time(*gas)))]
 		pub fn instantiate(
 			origin: OriginFor<T>,
-			code_identifier: CodeIdentifier<T>,
+			code_identifier: CodeIdentifier,
 			salt: ContractSaltOf<T>,
 			admin: Option<AccountIdOf<T>>,
 			label: ContractLabelOf<T>,
@@ -483,7 +484,7 @@ pub mod pallet {
 		pub fn migrate(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
-			new_code_identifier: CodeIdentifier<T>,
+			new_code_identifier: CodeIdentifier,
 			gas: u64,
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
@@ -742,7 +743,7 @@ impl<T: Config> Pallet<T> {
 						.map_err(|_| Error::<T>::CodeNotFound)?;
 					let deposit = code.len().saturating_mul(T::CodeStorageByteDeposit::get() as _);
 					let _ = T::NativeAsset::unreserve(&code_info.creator, deposit.saturated_into());
-					let code_hash = T::Hashing::hash(&code);
+					let code_hash = sp_core::hashing::sha2_256(&code);
 					PristineCode::<T>::remove(info.code_id);
 					InstrumentedCode::<T>::remove(info.code_id);
 					CodeHashToId::<T>::remove(code_hash);
@@ -877,7 +878,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn do_upload(who: &AccountIdOf<T>, code: ContractCodeOf<T>) -> DispatchResult {
-		let code_hash = T::Hashing::hash(&code);
+		let code_hash = sp_core::hashing::sha2_256(&code);
 		ensure!(!CodeHashToId::<T>::contains_key(code_hash), Error::<T>::CodeAlreadyExists);
 		let deposit = code.len().saturating_mul(T::CodeStorageByteDeposit::get() as _);
 		// TODO: release this when the code is destroyed, a.k.a. refcount => 0 after a contract
@@ -909,7 +910,7 @@ impl<T: Config> Pallet<T> {
 	fn do_instantiate(
 		shared: &mut CosmwasmVMShared,
 		who: AccountIdOf<T>,
-		code_identifier: CodeIdentifier<T>,
+		code_identifier: CodeIdentifier,
 		salt: ContractSaltOf<T>,
 		admin: Option<AccountIdOf<T>>,
 		label: ContractLabelOf<T>,
@@ -940,7 +941,7 @@ impl<T: Config> Pallet<T> {
 		shared: &mut CosmwasmVMShared,
 		who: AccountIdOf<T>,
 		contract: AccountIdOf<T>,
-		new_code_identifier: CodeIdentifier<T>,
+		new_code_identifier: CodeIdentifier,
 		message: ContractMessageOf<T>,
 	) -> Result<(), CosmwasmVMError<T>> {
 		let new_code_id = match new_code_identifier {
@@ -1257,7 +1258,7 @@ impl<T: Config> Pallet<T> {
 		setup_instantiate_call(
 			vm.contract_address.clone().into_inner(),
 			code_id,
-			&[],
+			b"salt",
 			admin.map(|admin| admin.into_inner()),
 			label,
 			message,
