@@ -30,7 +30,8 @@ runs:
         nix_path: nixpkgs=channel:${{ inputs.nixpkgs_channel }}
         extra_nix_config: |
           sandbox = relaxed
-          narinfo-cache-negative-ttl = 0      
+          narinfo-cache-negative-ttl = 0
+          http2 = false
     - name: Set up Cachix
       uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
       with:
