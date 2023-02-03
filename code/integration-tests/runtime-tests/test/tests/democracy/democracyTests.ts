@@ -61,7 +61,7 @@ import {} from "@polkadot/types/lookup";
  * - vetoExternal(proposalHash)
  * - vote(refIndex, vote)
  */
-describe.only("[SHORT] Democracy Tests", function () {
+describe("[SHORT] Democracy Tests", function () {
   if (!testConfiguration.enabledTests.query.enabled) return;
   this.timeout(2 * 60 * 1000);
   this.retries(0);
