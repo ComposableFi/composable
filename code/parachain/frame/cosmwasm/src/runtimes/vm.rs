@@ -307,8 +307,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
 	) -> Result<(Self::Address, Option<cosmwasm_vm::cosmwasm_std::Binary>), Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_instantiate");
-		Pallet::<T>::do_continue_instantiate(self, contract_meta, funds, message, event_handler)
-			.map(|r| (self.contract_address.clone(), r))
+		self.continue_instantiate2(contract_meta, funds, b"salt", message, event_handler)
 	}
 
 	fn continue_instantiate2(
@@ -319,7 +318,16 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		message: &[u8],
 		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
 	) -> Result<(Self::Address, Option<cosmwasm_vm::cosmwasm_std::Binary>), Self::Error> {
-		todo!()
+		log::debug!(target: "runtime::contracts", "continue_instantiate2");
+		Pallet::<T>::do_continue_instantiate(
+			self,
+			contract_meta,
+			funds,
+			salt,
+			message,
+			event_handler,
+		)
+		.map(|r| (self.contract_address.clone(), r))
 	}
 
 	fn continue_migrate(

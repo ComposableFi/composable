@@ -1247,6 +1247,7 @@ impl<T: Config> Pallet<T> {
 		vm: &'a mut DefaultCosmwasmVM<T>,
 		CosmwasmContractMeta { code_id, admin, label }: CosmwasmContractMeta<CosmwasmAccount<T>>,
 		funds: Vec<Coin>,
+		salt: &[u8],
 		message: &[u8],
 		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
 	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
@@ -1258,7 +1259,7 @@ impl<T: Config> Pallet<T> {
 		setup_instantiate_call(
 			vm.contract_address.clone().into_inner(),
 			code_id,
-			b"salt",
+			salt,
 			admin.map(|admin| admin.into_inner()),
 			label,
 			message,

@@ -592,7 +592,7 @@ benchmarks! {
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_instantiate(vm.0.data_mut(), meta, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
+		Cosmwasm::<T>::do_continue_instantiate(vm.0.data_mut(), meta, funds, b"salt", "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
 
 	continue_execute {
