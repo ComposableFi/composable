@@ -34,7 +34,7 @@
           check-composable-benchmarks-ci
           cmc-api
           cmc-api-image # TODO(cor): needs to be pushed to docker
-          # devnet-container # errored in ci, our runners need the `kvm` feature in order to build this
+          devnet-container # errored in ci, our runners need the `kvm` feature in order to build this
 
           # unsure about these
           check-dali-integration-tests
@@ -44,7 +44,8 @@
           # TODO(cor): filter these out on arm, but build them on x64
           # disabled because this is not properly nixified
           # devnet-centauri 
-          # hyperspace-dali
+          hyperspace-dali
+          hyperspace-dali-image
           # bridge-devnet-dali-container 
         ]);
 
