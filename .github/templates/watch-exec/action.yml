@@ -34,15 +34,15 @@ runs:
     #     echo "sandbox = ${{ inputs.nix-sandbox }}" >> /etc/nix/nix.conf
     #     echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
     #   shell: "bash"
-    - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-      with:
-        skipPush: "${{ inputs.skipPush }}"
-        installCommand: |
-          nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-          nix-channel --update
-          nix-env -iA nixpkgs.cachix ${{ inputs.nix-env }}
-        name: ${{  env.CACHIX_COMPOSABLE }}
-        authToken: "${{ inputs.token }}"
+    # - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+    #   with:
+    #     skipPush: "${{ inputs.skipPush }}"
+    #     installCommand: |
+    #       nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+    #       nix-channel --update
+    #       nix-env -iA nixpkgs.cachix ${{ inputs.nix-env }}
+    #     name: ${{  env.CACHIX_COMPOSABLE }}
+    #     authToken: "${{ inputs.token }}"
     - run: |
         ${{ inputs.pre-run }}
         # Marker status code in case of network failure.

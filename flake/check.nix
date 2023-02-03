@@ -3,10 +3,6 @@
     packages = {
       all-ci-packages = pkgs.linkFarmFromDrvs "all-ci-packages"
         (with self'.packages; [
-          # TODO: I think these can be removed since they are dependencies of the other derivations
-          # common-deps
-          # common-test-deps
-
           cargo-fmt-check
           cargo-clippy-check
           cargo-deny-check
@@ -16,7 +12,7 @@
           nixfmt-check
           deadnix-check
           spell-check
-          docs-static # todo: deployment
+          docs-static # TODO(cor): deployment
           frontend-static
           hadolint-check
           benchmarks-check
@@ -33,26 +29,24 @@
           devnet-dali-complete
           devnet-picasso-complete
           devnet-dali
-
-          # disabled because this is not properly nixified
-
-          # devnet-centauri 
-          # hyperspace-dali
-          # devnet-container # errored in ci
-          # bridge-devnet-dali-container 
-
-          # needs to be pushed to docker
-          cmc-api
-          cmc-api-image
-
+          devnet-container # errored in ci, running now as test
           check-dali-benchmarks-ci
           check-picasso-benchmarks-ci
           check-composable-benchmarks-ci
+          cmc-api
+          cmc-api-image # TODO(cor): needs to be pushed to docker
 
           # unsure about these
           check-dali-integration-tests
           check-picasso-integration-tests
           devnet-integration-tests
+
+
+          # TODO(cor): filter these out on arm, but build them on x64
+          # disabled because this is not properly nixified
+          # devnet-centauri 
+          # hyperspace-dali
+          # bridge-devnet-dali-container 
         ]);
 
       check = let

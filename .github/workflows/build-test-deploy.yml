@@ -168,12 +168,12 @@ jobs:
         with:
           skipPush: true
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
+          name: ${{ env.CACHIX_COMPOSABLE }}
       - name: Add tools needed for non-nix steps
         run: |  
           nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git-lfs nixpkgs.tree
+          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker
       - uses: actions/checkout@v3
         with:
           lfs: true
