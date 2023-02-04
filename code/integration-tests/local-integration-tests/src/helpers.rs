@@ -67,7 +67,7 @@ pub fn mint_relay_native_on_parachain(amount: Balance, to: &AccountId, para_id: 
 		use kusama_runtime::*;
 		let _ = <Balances as frame_support::traits::Currency<_>>::deposit_creating(to, amount);
 		XcmPallet::reserve_transfer_assets(
-			Origin::signed(to.to_owned()),
+			RuntimeOrigin::signed(to.to_owned()),
 			Box::new(Parachain(para_id).into().into()),
 			Box::new(
 				Junction::AccountId32 { id: to.to_owned().into(), network: NetworkId::Any }
@@ -87,7 +87,7 @@ pub fn mint_relay_native_on_common_good(amount: Balance, to: &AccountId, para_id
 		use kusama_runtime::*;
 		let _ = <Balances as frame_support::traits::Currency<_>>::deposit_creating(to, amount);
 		XcmPallet::teleport_assets(
-			Origin::signed(to.to_owned()),
+			RuntimeOrigin::signed(to.to_owned()),
 			Box::new(Parachain(para_id).into().into()),
 			Box::new(
 				Junction::AccountId32 { id: to.to_owned().into(), network: NetworkId::Any }

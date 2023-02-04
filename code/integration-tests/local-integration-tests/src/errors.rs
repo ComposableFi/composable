@@ -38,7 +38,7 @@ fn transfer_native_from_relay_enough_for_fee_but_not_enough_for_ed_ends_up_in_tr
 		)
 		.unwrap();
 		assert_ok!(XcmPallet::reserve_transfer_assets(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			Box::new(Parachain(THIS_PARA_ID).into().into()),
 			Box::new(Junction::AccountId32 { id: receiver, network: NetworkId::Any }.into().into()),
 			Box::new((Here, under_ed).into()),
@@ -72,7 +72,7 @@ fn transfer_relay_native_to_non_existing_chain_by_local_id() {
 		use this_runtime::*;
 		let _before = Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = XTokens::transfer(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			CurrencyId::KSM,
 			transfer_amount,
 			Box::new(
@@ -85,7 +85,7 @@ fn transfer_relay_native_to_non_existing_chain_by_local_id() {
 				)
 				.into(),
 			),
-			limit,
+			Limited(limit),
 		);
 
 		assert_ok!(transferred);
@@ -102,7 +102,7 @@ fn transfer_non_existing_asset_by_local_id() {
 		use this_runtime::*;
 		let _before = Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = XTokens::transfer(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			CurrencyId(100500),
 			transfer_amount,
 			Box::new(
@@ -115,7 +115,7 @@ fn transfer_non_existing_asset_by_local_id() {
 				)
 				.into(),
 			),
-			limit,
+			Limited(limit),
 		);
 
 		assert!(matches!(transferred, Err(DispatchError::Module(ModuleError { .. }))));
@@ -161,7 +161,7 @@ fn cannot_reserver_transfer_assets_when_fee_and_non_fee_has_different_origin() {
 
 		let _before = Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = XTokens::transfer_multiasset_with_fee(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			Box::new(VersionedMultiAsset::V1(MultiAsset {
 				fun: Fungible(transfer_amount),
 				id: AssetId::Concrete(MultiLocation::new(
@@ -186,7 +186,7 @@ fn cannot_reserver_transfer_assets_when_fee_and_non_fee_has_different_origin() {
 				)
 				.into(),
 			),
-			limit,
+			Limited(limit),
 		);
 
 		assert!(matches!(transferred, Err(DispatchError::Module(ModuleError { .. }))));
@@ -220,7 +220,7 @@ fn transfer_existing_asset_but_with_relevant_outgoing_fee_by_local_id() {
 
 		let _before = Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = XTokens::transfer(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			CurrencyId(100500),
 			transfer_amount,
 			Box::new(
@@ -233,7 +233,7 @@ fn transfer_existing_asset_but_with_relevant_outgoing_fee_by_local_id() {
 				)
 				.into(),
 			),
-			limit,
+			Limited(limit),
 		);
 
 		assert_ok!(transferred);
@@ -279,7 +279,7 @@ fn cannot_transfer_away_if_min_fee_is_not_defined() {
 
 		let _before = Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = XTokens::transfer_multicurrencies(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			vec![
 				(CurrencyId(100500), transfer_amount),
 				(CurrencyId::RELAY_NATIVE, transfer_amount),
@@ -295,7 +295,7 @@ fn cannot_transfer_away_if_min_fee_is_not_defined() {
 				)
 				.into(),
 			),
-			limit,
+			Limited(limit),
 		);
 
 		assert!(matches!(transferred, Err(DispatchError::Module(ModuleError { .. }))));
@@ -329,7 +329,7 @@ fn cannot_reserve_transfer_assets_from_self() {
 
 		let _before = Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = XTokens::transfer(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			CurrencyId(100500),
 			transfer_amount,
 			Box::new(
@@ -342,7 +342,7 @@ fn cannot_reserve_transfer_assets_from_self() {
 				)
 				.into(),
 			),
-			limit,
+			Limited(limit),
 		);
 
 		assert!(matches!(transferred, Err(DispatchError::Module(ModuleError { .. }))));
