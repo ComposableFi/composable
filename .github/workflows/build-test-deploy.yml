@@ -28,7 +28,7 @@ env:
 jobs:
   privilege-check:
     name: "Privilege check"
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != $COMPOSABLE_REPO_ID) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == $COMPOSABLE_REPO_ID) }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != vars.COMPOSABLE_REPO_ID) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == vars.COMPOSABLE_REPO_ID) }}
     runs-on: ubuntu-latest  
     steps:
       - run: |
