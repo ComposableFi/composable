@@ -34,18 +34,12 @@
           check-composable-benchmarks-ci
           cmc-api
           cmc-api-image
-
-          # unsure about these
           check-dali-integration-tests
           check-picasso-integration-tests
           devnet-integration-tests
-
-          # TODO(cor): filter these out on arm, but build them on x64
-          # disabled because this is not properly nixified
-          # devnet-centauri 
+          devnet-centauri 
           hyperspace-dali
           hyperspace-dali-image
-
           devnet-dali-image
           devnet-dali-bridge-image
           devnet-dali-bridge-mmr-image
