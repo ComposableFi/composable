@@ -375,11 +375,7 @@ jobs:
       - privilege-check
       - lfs-check
       - all-packages
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-devnet-integration-tests-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
