@@ -374,7 +374,7 @@ impl PalletHook<Test> for MockHook {
 			EntryPoint::IbcChannelClose => Err(CosmwasmVMError::Unsupported),
 			EntryPoint::IbcPacketTimeout => Err(CosmwasmVMError::Unsupported),
 			EntryPoint::IbcPacketAck => Err(CosmwasmVMError::Unsupported),
-			EntryPoint::IbcPacketReceive => match *vm.0.contract_address.as_ref() {
+			EntryPoint::IbcPacketReceive => match *vm.0.data().contract_address.as_ref() {
 				MOCK_PALLET_IBC_CONTRACT_ADDRESS => match message {
 					&[1, 2, 3] => {
 						System::remark_with_event(
@@ -489,11 +489,11 @@ impl PalletHook<Test> for MockHook {
 	}
 
 	fn run<'a>(
-		vm: &mut WasmiVM<CosmwasmVM<'a, Test>>,
+		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, Test>>,
 		_entrypoint: EntryPoint,
 		_message: &[u8],
-	) -> Result<Vec<u8>, VmErrorOf<WasmiVM<CosmwasmVM<'a, Test>>>> {
-		match *vm.0.contract_address.as_ref() {
+	) -> Result<Vec<u8>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Test>>>> {
+		match *vm.0.data().contract_address.as_ref() {
 			MOCK_PALLET_IBC_CONTRACT_ADDRESS =>
 				Ok(serde_json::to_vec(&ContractResult::Ok(Ibc3ChannelOpenResponse {
 					version: "42".to_string(),

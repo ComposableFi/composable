@@ -30,10 +30,10 @@ pub trait PalletHook<T: Config> {
 	>;
 
 	fn run<'a>(
-		vm: &mut WasmiVM<CosmwasmVM<'a, T>>,
+		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, T>>,
 		entrypoint: EntryPoint,
 		message: &[u8],
-	) -> Result<Vec<u8>, VmErrorOf<WasmiVM<CosmwasmVM<'a, T>>>>;
+	) -> Result<Vec<u8>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, T>>>>;
 
 	/// Hook into a contract query.
 	fn query<'a>(
@@ -77,10 +77,10 @@ where {
 	}
 
 	fn run<'a>(
-		_vm: &mut WasmiVM<CosmwasmVM<'a, T>>,
+		_vm: &mut OwnedWasmiVM<CosmwasmVM<'a, T>>,
 		_entrypoint: EntryPoint,
 		_message: &[u8],
-	) -> Result<Vec<u8>, VmErrorOf<WasmiVM<CosmwasmVM<'a, T>>>> {
+	) -> Result<Vec<u8>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, T>>>> {
 		Err(Error::<T>::Unsupported.into())
 	}
 }

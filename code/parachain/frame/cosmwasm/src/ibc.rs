@@ -274,7 +274,8 @@ impl<T: Config> Router<T> {
 		message: &M,
 	) -> Result<I::Output, CosmwasmVMError<T>>
 	where
-		for<'x> OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>: CosmwasmCallVMSingle<I> + StargateCosmwasmCallVM,
+		for<'x> OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>:
+			CosmwasmCallVMSingle<I> + StargateCosmwasmCallVM,
 		for<'x> VmErrorOf<OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>>:
 			From<CosmwasmVMError<T>> + Into<CosmwasmVMError<T>>,
 		I: Input + AsFunctionName + AsEntryName,
@@ -302,8 +303,8 @@ impl<T: Config> Router<T> {
 					serde_json::from_slice(&result)
 						.map_err(|x| CosmwasmVMError::<T>::Ibc(format!("{}", x)))
 				},
-			},
-		)
+			}
+		})
 	}
 
 	/// executes IBC entrypoint on behalf of relayer
