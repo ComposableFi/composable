@@ -40,11 +40,7 @@ jobs:
     needs:
       - privilege-check
     continue-on-error: false
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-check-lfs-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -67,11 +63,7 @@ jobs:
     name: "Nix flake check"
     needs:
       - privilege-check
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-nix-flake-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -106,8 +98,8 @@ jobs:
           chmod +x ./.github/workflows/nix-flake-check.sh
           source ./.github/workflows/nix-flake-check.sh
   
-  build-packages:
-    name: Build packages
+  all-packages:
+    name: Build all packages
     strategy:
       matrix:
         arch: [x64-monster, arm]
@@ -173,7 +165,7 @@ jobs:
       needs:
         - privilege-check
         - lfs-check
-        - build-packages
+        - all-packages
       steps:
         - run: echo "Goblins allow your work to see the light"
 
@@ -286,7 +278,7 @@ jobs:
     needs:
       - privilege-check
       - lfs-check
-      - build-packages
+      - all-packages
     runs-on:
       - self-hosted
       - linux
@@ -334,7 +326,7 @@ jobs:
     needs:
       - privilege-check
       - lfs-check
-      - build-packages
+      - all-packages
     runs-on:
       - self-hosted
       - linux
@@ -382,7 +374,7 @@ jobs:
     needs: 
       - privilege-check
       - lfs-check
-      - build-packages
+      - all-packages
     runs-on:
       - self-hosted
       - linux
