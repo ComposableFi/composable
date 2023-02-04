@@ -19,7 +19,6 @@ env:
   NIXPKGS_CHANNEL: nixos-22.11
   CACHIX_COMPRESSION_LEVEL: 3
   CACHIX_NAME: composable-community
-  COMPOSABLE_REPO_ID: 383289760
 
   DOCKER_REGISTRY_NAME: composablefi
   # weird, next is implicit dependency of docker action
@@ -28,7 +27,7 @@ env:
 jobs:
   privilege-check:
     name: "Privilege check"
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != vars.COMPOSABLE_REPO_ID) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == vars.COMPOSABLE_REPO_ID) }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}
     runs-on: ubuntu-latest  
     steps:
       - run: |
