@@ -99,6 +99,7 @@ pub mod pallet {
 				Inspect as NativeInspect, Mutate as NativeMutate, Transfer as NativeTransfer,
 			},
 			fungibles::{Inspect, Mutate, Transfer},
+			tokens::BalanceConversion,
 			EnsureOrigin,
 		},
 	};
@@ -106,7 +107,7 @@ pub mod pallet {
 	use num_traits::Zero;
 	use orml_traits::GetByKey;
 	use primitives::currency::ValidateCurrencyId;
-	use sp_runtime::{DispatchError, FixedPointOperand};
+	use sp_runtime::{traits::Convert, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -1136,6 +1137,64 @@ pub mod pallet {
 				}
 				false
 			}
+		}
+
+		// Type alias for `frame_system`'s account id.
+		type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+		// This pallet's asset id and balance type.
+		type AssetIdOf<T> = <T as Config>::AssetId;
+		type AssetBalanceOf<T> = <T as Config>::Balance;
+		// Generic fungible balance type.
+		type BalanceOf<F, T> = <F as frame_support::traits::fungible::Inspect<AccountIdOf<T>>>::Balance;
+
+		/// Possible errors when converting between external and asset balances.
+		#[derive(Eq, PartialEq, Copy, Clone, RuntimeDebug, Encode, Decode)]
+		pub enum ConversionError {
+			/// The external minimum balance must not be zero.
+			MinBalanceZero,
+			/// The asset is not present in storage.
+			AssetMissing,
+			/// The asset is not sufficient and thus does not have a reliable `min_balance` so it cannot be
+			/// converted.
+			AssetNotSufficient,
+		}
+
+		/// Converts a balance value into an asset balance based on the ratio between the fungible's
+		/// minimum balance and the minimum asset balance.
+		pub struct BalanceToAssetBalance<F, T, CON, I = ()>(PhantomData<(F, T, CON, I)>);
+		impl<F, T, CON, I> BalanceConversion<BalanceOf<F, T>, AssetIdOf<T>, AssetBalanceOf<T>> 
+			for BalanceToAssetBalance<F, T, CON, I>
+		where
+			F: NativeInspect<AccountIdOf<T>>,
+			T: Config,
+			I: 'static,
+			CON: Convert<BalanceOf<F, T>, AssetBalanceOf<T>>,
+			BalanceOf<F, T>: FixedPointOperand + Zero,
+			AssetBalanceOf<T>: FixedPointOperand + Zero,
+		{
+			type Error = ConversionError;
+
+			/// Convert the given balance value into an asset balance based on the ratio between the
+			/// fungible's minimum balance and the minimum asset balance.
+			/// 
+			/// Will return `Err` if the asset is not found, not sufficient or the fungible's minimum
+			/// balance is zero.
+			fn to_asset_balance(
+				balance: BalanceOf<F, T>, 
+				asset_id: AssetIdOf<T>, 
+			) -> Result<AssetBalanceOf<T>, ConversionError> {
+				ensure!(
+					asset_id == T::NativeAssetId::get() || valid_asset_id::<T>(asset_id).is_some(),
+					ConversionError::AssetMissing
+				);
+				let min_balance = CON::convert(F::minimum_balance());
+				// make sure we don't divide by zero
+				ensure!(!min_balance.is_zero(), ConversionError::MinBalanceZero);
+				let balance = CON::convert(balance);
+				// balance / min_balance
+				Ok(FixedU128::saturating_from_rational(1, min_balance)
+					.saturating_mul_int(balance))
+			}   
 		}
 	}
 }
