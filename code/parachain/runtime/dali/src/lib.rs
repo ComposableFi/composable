@@ -85,6 +85,7 @@ pub use frame_support::{
 	pallet_prelude::DispatchClass,
 	parameter_types,
 	traits::{
+		fungibles::CreditOf,
 		ConstBool, Contains, Everything, Get, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo,
 	},
 	weights::{
@@ -351,6 +352,7 @@ parameter_types! {
 	/// This value is currently only used by pallet-transaction-payment as an assertion that the
 	/// next multiplier is always > min value.
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
+	pub MaximumMultiplier: Multiplier = Bounded::max_value();
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
@@ -362,7 +364,7 @@ impl transaction_payment::Config for Runtime {
 	type WeightToFee = WeightToFeeConverter;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate =
-		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier, MaximumMultiplier>;
 }
 
 /// Struct implementing `asset_tx_payment::HandleCredit` that determines the behavior when fees are
@@ -375,27 +377,48 @@ impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrD
 	}
 }
 
-impl asset_tx_payment::Config for Runtime {
-	type Fungibles = Tokens;
-	type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
-		PriceConverter<AssetsRegistry>,
-		TransferToTreasuryOrDrop,
-	>;
-
-	type UseUserConfiguration = ConstBool<true>;
-
-	type WeightInfo = weights::asset_tx_payment::WeightInfo<Runtime>;
-
-	type ConfigurationOrigin = EnsureRootOrHalfNativeCouncil;
-
-	type ConfigurationExistentialDeposit = NativeExistentialDeposit;
-
-	type PayableCall = RuntimeCall;
-
-	type Lock = Assets;
-
-	type BalanceConverter = PriceConverter<AssetsRegistry>;
+/// A `HandleCredit` implementation that naively transfers the fees to the block author.
+/// Will drop and burn the assets in case the transfer fails.
+pub struct CreditToBlockAuthor;
+impl asset_tx_payment::HandleCredit<AccountId, Assets> for CreditToBlockAuthor {
+    fn handle_credit(credit: CreditOf<AccountId, Assets>) {
+        if let Some(author) = pallet_authorship::Pallet::<Runtime>::author() {
+            // Drop the result which will trigger the `OnDrop` of the imbalance in case of error.
+            let _ = Assets::resolve(&author, credit);
+        }
+    }   
 }
+
+impl asset_tx_payment::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Fungibles = Assets;
+    type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
+        assets::BalanceToAssetBalance<Balances, Runtime, ConvertInto>,
+        CreditToBlockAuthor,
+    >;   
+}
+
+// impl asset_tx_payment::Config for Runtime {
+// 	type Fungibles = Tokens;
+// 	type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
+// 		PriceConverter<AssetsRegistry>,
+// 		TransferToTreasuryOrDrop,
+// 	>;
+
+// 	type UseUserConfiguration = ConstBool<true>;
+
+// 	type WeightInfo = weights::asset_tx_payment::WeightInfo<Runtime>;
+
+// 	type ConfigurationOrigin = EnsureRootOrHalfNativeCouncil;
+
+// 	type ConfigurationExistentialDeposit = NativeExistentialDeposit;
+
+// 	type PayableCall = RuntimeCall;
+
+// 	type Lock = Assets;
+
+// 	type BalanceConverter = PriceConverter<AssetsRegistry>;
+// }
 
 impl sudo::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
