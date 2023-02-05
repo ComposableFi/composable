@@ -39,19 +39,16 @@ use sp_std::prelude::*;
 
 use codec::{Decode, Encode};
 use frame_support::{
-	dispatch::{DispatchInfo, DispatchResult, GetDispatchInfo, PostDispatchInfo},
-	pallet_prelude::*,
+	dispatch::{DispatchInfo, DispatchResult, PostDispatchInfo},
 	traits::{
 		tokens::{
-			fungibles::{Balanced, CreditOf, Inspect, MutateHold},
-			BalanceConversion, WithdrawConsequence,
+			fungibles::{Balanced, CreditOf, Inspect},
+			WithdrawConsequence,
 		},
-		Get, IsSubType, IsType,
+		IsType,
 	},
 	DefaultNoBound,
 };
-use frame_system::pallet_prelude::*;
-
 use pallet_transaction_payment::OnChargeTransaction;
 use scale_info::TypeInfo;
 use sp_runtime::{
@@ -65,21 +62,8 @@ use sp_runtime::{
 #[cfg(test)]
 mod tests;
 
-mod benchmarking;
-
 mod payment;
-pub mod weights;
 pub use payment::*;
-pub use weights::*;
-
-// Default implementation for [`BalanceConversion`].
-pub struct OneToOneBalanceConversion;
-impl<Balance, AssetId> BalanceConversion<Balance, AssetId, Balance> for OneToOneBalanceConversion {
-	type Error = DispatchError;
-	fn to_asset_balance(balance: Balance, _asset_id: AssetId) -> Result<Balance, Self::Error> {
-		Ok(balance)
-	}
-}
 
 // Type aliases used for interaction with `OnChargeTransaction`.
 pub(crate) type OnChargeTransactionOf<T> =
@@ -128,100 +112,29 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_transaction_payment::Config {
+		/// The overarching event type.
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// The fungibles instance used to pay for transactions in assets.
 		type Fungibles: Balanced<Self::AccountId>;
-
 		/// The actual transaction charging logic that charges the fees.
 		type OnChargeAssetTransaction: OnChargeAssetTransaction<Self>;
-
-		/// where to allow configuring default asset per user
-		#[pallet::constant]
-		type UseUserConfiguration: Get<bool>;
-
-		type WeightInfo: WeightInfo;
-
-		/// origin allowed to reset payment asset for any account
-		type ConfigurationOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
-		/// Amount native assets to lock of ED.
-		type ConfigurationExistentialDeposit: Get<BalanceOf<Self>>;
-
-		type PayableCall: Parameter
-			+ From<frame_system::Call<Self>>
-			+ Dispatchable<
-				RuntimeOrigin = Self::RuntimeOrigin,
-				PostInfo = PostDispatchInfo,
-				Info = DispatchInfo,
-			> + GetDispatchInfo
-			+ IsSubType<Call<Self>>
-			+ IsType<<Self as frame_system::Config>::RuntimeCall>;
-
-		type Lock: MutateHold<
-			Self::AccountId,
-			AssetId = ChargeAssetIdOf<Self>,
-			Balance = ChargeAssetBalanceOf<Self>,
-		>;
-
-		/// To covert ED to other asset amount.
-		type BalanceConverter: BalanceConversion<
-			BalanceOf<Self>,
-			ChargeAssetIdOf<Self>,
-			ChargeAssetBalanceOf<Self>,
-		>;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	/// Stores default payment asset of user with ED locked.
-	#[pallet::storage]
-	#[pallet::getter(fn payment_assets)]
-	pub type PaymentAssets<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::AccountId,
-		(ChargeAssetIdOf<T>, ChargeAssetBalanceOf<T>),
-		OptionQuery,
-	>;
-
-	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-		/// Sets or resets payment asset.
-		///
-		/// If `asset_id` is `None`, then native asset is used.
-		/// Else new asset is configured and ED is on hold.
-		#[pallet::weight(T::WeightInfo::set_payment_asset())]
-		pub fn set_payment_asset(
-			origin: OriginFor<T>,
-			payer: T::AccountId,
+	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		/// A transaction fee `actual_fee`, of which `tip` was added to the minimum inclusion fee,
+		/// has been paid by `who` in an asset `asset_id`.
+		AssetTxFeePaid {
+			who: T::AccountId,
+			actual_fee: BalanceOf<T>,
+			tip: BalanceOf<T>,
 			asset_id: Option<ChargeAssetIdOf<T>>,
-		) -> DispatchResult {
-			// either configuration origin or owner of configuration
-			if let Err(origin) = T::ConfigurationOrigin::try_origin(origin) {
-				let who = ensure_signed(origin)?;
-				ensure!(who == payer, DispatchError::BadOrigin,)
-			};
-
-			// clean previous configuration
-			if let Some((asset_id, ed)) = <PaymentAssets<T>>::get(&payer) {
-				T::Lock::release(asset_id, &payer, ed, true)?;
-				<PaymentAssets<T>>::remove(&payer);
-			}
-
-			// configure new payment asset and hold some ed
-			if let Some(asset_id) = asset_id {
-				let ed = T::BalanceConverter::to_asset_balance(
-					T::ConfigurationExistentialDeposit::get(),
-					asset_id,
-				)
-				.map_err(|_| DispatchError::Other("Cannot convert ED to asset balance"))?;
-				T::Lock::hold(asset_id, &payer, ed)?;
-				<PaymentAssets<T>>::insert(payer, (asset_id, ed));
-			}
-
-			Ok(())
-		}
+		},
 	}
 }
 
@@ -259,13 +172,12 @@ where
 		call: &T::RuntimeCall,
 		info: &DispatchInfoOf<T::RuntimeCall>,
 		len: usize,
-		asset_id: Option<ChargeAssetIdOf<T>>,
 	) -> Result<(BalanceOf<T>, InitialPayment<T>), TransactionValidityError> {
 		let fee = pallet_transaction_payment::Pallet::<T>::compute_fee(len as u32, info, self.tip);
 		debug_assert!(self.tip <= fee, "tip should be included in the computed fee");
 		if fee.is_zero() {
 			Ok((fee, InitialPayment::Nothing))
-		} else if let Some(asset_id) = asset_id {
+		} else if let Some(asset_id) = self.asset_id {
 			T::OnChargeAssetTransaction::withdraw_fee(
 				who,
 				call,
@@ -281,29 +193,6 @@ where
 			)
 			.map(|i| (fee, InitialPayment::Native(i)))
 			.map_err(|_| -> TransactionValidityError { InvalidTransaction::Payment.into() })
-		}
-	}
-
-	/// Get payment asset for this transaction.
-	///
-	/// Will pick asset id in next order:
-	/// - defined in extra
-	/// - defined in well known call
-	/// - defined in configuration
-	/// - native
-	fn get_payment_asset(
-		&self,
-		who: &T::AccountId,
-		call: &T::RuntimeCall,
-	) -> Option<ChargeAssetIdOf<T>> {
-		if self.asset_id.is_some() || !<T as Config>::UseUserConfiguration::get() {
-			return self.asset_id
-		}
-
-		let call = <T as Config>::PayableCall::from_ref(call);
-		match call.is_sub_type() {
-			Some(Call::set_payment_asset { asset_id, .. }) => asset_id.to_owned(),
-			_ => <PaymentAssets<T>>::get(who).map(|x| x.0),
 		}
 	}
 }
@@ -338,6 +227,8 @@ where
 		Self::AccountId,
 		// imbalance resulting from withdrawing the fee
 		InitialPayment<T>,
+		// asset_id for the transaction payment
+		Option<ChargeAssetIdOf<T>>,
 	);
 
 	fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> {
@@ -352,8 +243,7 @@ where
 		len: usize,
 	) -> TransactionValidity {
 		use pallet_transaction_payment::ChargeTransactionPayment;
-		let asset_id = self.get_payment_asset(who, call);
-		let (fee, _) = self.withdraw_fee(who, call, info, len, asset_id)?;
+		let (fee, _) = self.withdraw_fee(who, call, info, len)?;
 		let priority = ChargeTransactionPayment::<T>::get_priority(info, len, self.tip, fee);
 		Ok(ValidTransaction { priority, ..Default::default() })
 	}
@@ -365,9 +255,8 @@ where
 		info: &DispatchInfoOf<Self::Call>,
 		len: usize,
 	) -> Result<Self::Pre, TransactionValidityError> {
-		let asset_id = self.get_payment_asset(who, call);
-		let (_fee, initial_payment) = self.withdraw_fee(who, call, info, len, asset_id)?;
-		Ok((self.tip, who.clone(), initial_payment))
+		let (_fee, initial_payment) = self.withdraw_fee(who, call, info, len)?;
+		Ok((self.tip, who.clone(), initial_payment, self.asset_id))
 	}
 
 	fn post_dispatch(
@@ -377,7 +266,7 @@ where
 		len: usize,
 		result: &DispatchResult,
 	) -> Result<(), TransactionValidityError> {
-		if let Some((tip, who, initial_payment)) = pre {
+		if let Some((tip, who, initial_payment, asset_id)) = pre {
 			match initial_payment {
 				InitialPayment::Native(already_withdrawn) => {
 					pallet_transaction_payment::ChargeTransactionPayment::<T>::post_dispatch(
@@ -400,6 +289,12 @@ where
 						tip.into(),
 						already_withdrawn.into(),
 					)?;
+					Pallet::<T>::deposit_event(Event::<T>::AssetTxFeePaid {
+						who,
+						actual_fee,
+						tip,
+						asset_id,
+					});
 				},
 				InitialPayment::Nothing => {
 					// `actual_fee` should be zero here for any signed extrinsic. It would be

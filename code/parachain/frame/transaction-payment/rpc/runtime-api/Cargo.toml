@@ -19,6 +19,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 pallet-transaction-payment = { version = "4.0.0-dev", default-features = false, path = "../../../transaction-payment" }
 sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-weights = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 
 [features]
 default = ["std"]
@@ -27,4 +28,5 @@ std = [
   "pallet-transaction-payment/std",
   "sp-api/std",
   "sp-runtime/std",
+  "sp-weights/std",
 ]

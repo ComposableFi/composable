@@ -20,7 +20,7 @@
 //! This pallet provides the basic logic needed to pay the absolute minimum amount needed for a
 //! transaction to be included. This includes:
 //!   - _base fee_: This is the minimum amount a user pays for a transaction. It is declared
-//!   as a base _weight_ in the runtime and converted to a fee using `WeightToFee`.
+//! 	as a base _weight_ in the runtime and converted to a fee using `WeightToFee`.
 //!   - _weight fee_: A fee proportional to amount of weight a transaction consumes.
 //!   - _length fee_: A fee proportional to the encoded length of the transaction.
 //!   - _tip_: An optional tip. Tip increases the priority of the transaction, giving it a higher
@@ -36,7 +36,7 @@
 //!   ```
 //!
 //!   - `targeted_fee_adjustment`: This is a multiplier that can tune the final fee based on
-//!   the congestion of the network.
+//! 	the congestion of the network.
 //!
 //! Additionally, this pallet allows one to configure:
 //!   - The mapping between one unit of weight to one unit of fee via [`Config::WeightToFee`].
@@ -88,15 +88,15 @@ type BalanceOf<T> = <<T as Config>::OnChargeTransaction as OnChargeTransaction<T
 /// system pallet.
 ///
 /// given:
-///   s = previous block weight
-///   s'= ideal block weight
-///   m = maximum block weight
-///     diff = (s - s')/m
-///     v = 0.00001
-///     t1 = (v * diff)
-///     t2 = (v * diff)^2 / 2
-///   then:
-///   next_multiplier = prev_multiplier * (1 + t1 + t2)
+/// 	s = previous block weight
+/// 	s'= ideal block weight
+/// 	m = maximum block weight
+/// 		diff = (s - s')/m
+/// 		v = 0.00001
+/// 		t1 = (v * diff)
+/// 		t2 = (v * diff)^2 / 2
+/// 	then:
+/// 	next_multiplier = prev_multiplier * (1 + t1 + t2)
 ///
 /// Where `(s', v)` must be given as the `Get` implementation of the `T` generic type. Moreover, `M`
 /// must provide the minimum allowed value for the multiplier. Note that a runtime should ensure
@@ -127,12 +127,14 @@ type BalanceOf<T> = <<T as Config>::OnChargeTransaction as OnChargeTransaction<T
 ///
 /// More info can be found at:
 /// <https://research.web3.foundation/en/latest/polkadot/overview/2-token-economics.html>
-pub struct TargetedFeeAdjustment<T, S, V, M>(sp_std::marker::PhantomData<(T, S, V, M)>);
+pub struct TargetedFeeAdjustment<T, S, V, M, X>(sp_std::marker::PhantomData<(T, S, V, M, X)>);
 
 /// Something that can convert the current multiplier to the next one.
 pub trait MultiplierUpdate: Convert<Multiplier, Multiplier> {
-	/// Minimum multiplier
+	/// Minimum multiplier. Any outcome of the `convert` function should be at least this.
 	fn min() -> Multiplier;
+	/// Maximum multiplier. Any outcome of the `convert` function should be less or equal this.
+	fn max() -> Multiplier;
 	/// Target block saturation level
 	fn target() -> Perquintill;
 	/// Variability factor
@@ -143,6 +145,9 @@ impl MultiplierUpdate for () {
 	fn min() -> Multiplier {
 		Default::default()
 	}
+	fn max() -> Multiplier {
+		<Multiplier as sp_runtime::traits::Bounded>::max_value()
+	}
 	fn target() -> Perquintill {
 		Default::default()
 	}
@@ -151,15 +156,19 @@ impl MultiplierUpdate for () {
 	}
 }
 
-impl<T, S, V, M> MultiplierUpdate for TargetedFeeAdjustment<T, S, V, M>
+impl<T, S, V, M, X> MultiplierUpdate for TargetedFeeAdjustment<T, S, V, M, X>
 where
 	T: frame_system::Config,
 	S: Get<Perquintill>,
 	V: Get<Multiplier>,
 	M: Get<Multiplier>,
+	X: Get<Multiplier>,
 {
 	fn min() -> Multiplier {
 		M::get()
+	}
+	fn max() -> Multiplier {
+		X::get()
 	}
 	fn target() -> Perquintill {
 		S::get()
@@ -169,18 +178,20 @@ where
 	}
 }
 
-impl<T, S, V, M> Convert<Multiplier, Multiplier> for TargetedFeeAdjustment<T, S, V, M>
+impl<T, S, V, M, X> Convert<Multiplier, Multiplier> for TargetedFeeAdjustment<T, S, V, M, X>
 where
 	T: frame_system::Config,
 	S: Get<Perquintill>,
 	V: Get<Multiplier>,
 	M: Get<Multiplier>,
+	X: Get<Multiplier>,
 {
 	fn convert(previous: Multiplier) -> Multiplier {
 		// Defensive only. The multiplier in storage should always be at most positive. Nonetheless
 		// we recover here in case of errors, because any value below this would be stale and can
 		// never change.
 		let min_multiplier = M::get();
+		let max_multiplier = X::get();
 		let previous = previous.max(min_multiplier);
 
 		let weights = T::BlockWeights::get();
@@ -217,11 +228,11 @@ where
 
 		if positive {
 			let excess = first_term.saturating_add(second_term).saturating_mul(previous);
-			previous.saturating_add(excess).max(min_multiplier)
+			previous.saturating_add(excess).clamp(min_multiplier, max_multiplier)
 		} else {
 			// Defensive-only: first_term > second_term. Safe subtraction.
 			let negative = first_term.saturating_sub(second_term).saturating_mul(previous);
-			previous.saturating_sub(negative).max(min_multiplier)
+			previous.saturating_sub(negative).clamp(min_multiplier, max_multiplier)
 		}
 	}
 }
@@ -231,6 +242,9 @@ pub struct ConstFeeMultiplier<M: Get<Multiplier>>(sp_std::marker::PhantomData<M>
 
 impl<M: Get<Multiplier>> MultiplierUpdate for ConstFeeMultiplier<M> {
 	fn min() -> Multiplier {
+		M::get()
+	}
+	fn max() -> Multiplier {
 		M::get()
 	}
 	fn target() -> Perquintill {
@@ -333,12 +347,10 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn next_fee_multiplier)]
-	#[allow(clippy::disallowed_types)]
 	pub type NextFeeMultiplier<T: Config> =
 		StorageValue<_, Multiplier, ValueQuery, NextFeeMultiplierOnEmpty>;
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
 	pub(super) type StorageVersion<T: Config> = StorageValue<_, Releases, ValueQuery>;
 
 	#[pallet::genesis_config]
@@ -384,15 +396,15 @@ pub mod pallet {
 			assert!(
 				<Multiplier as sp_runtime::traits::Bounded>::max_value() >=
 					Multiplier::checked_from_integer::<u128>(
-						T::BlockWeights::get().max_block.ref_time().try_into().unwrap_or(0)
+						T::BlockWeights::get().max_block.ref_time().try_into().unwrap()
 					)
-					.unwrap_or_else(FixedU128::zero),
+					.unwrap(),
 			);
 
 			let target = T::FeeMultiplierUpdate::target() *
 				T::BlockWeights::get().get(DispatchClass::Normal).max_total.expect(
 					"Setting `max_total` for `Normal` dispatch class is not compatible with \
-          `transaction-payment` pallet.",
+					`transaction-payment` pallet.",
 				);
 			// add 1 percent;
 			let addition = target / 100;
@@ -417,8 +429,8 @@ pub mod pallet {
 				assert!(
 					next > min_value,
 					"The minimum bound of the multiplier is too low. When \
-          block saturation is more than target by 1% and multiplier is minimal then \
-          the multiplier doesn't increase."
+					block saturation is more than target by 1% and multiplier is minimal then \
+					the multiplier doesn't increase."
 				);
 			});
 		}
@@ -646,7 +658,7 @@ where
 		Self(fee)
 	}
 
-	/// Returns the tip as being choosen by the transaction sender.
+	/// Returns the tip as being chosen by the transaction sender.
 	pub fn tip(&self) -> BalanceOf<T> {
 		self.0
 	}
