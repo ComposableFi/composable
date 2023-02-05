@@ -6,17 +6,17 @@ Describes assets identifiers on each chain and asset allowance scenarios(governa
 
 > This is not RFC and not initiative. 
 
-> It devoted to help shared understanding on how things work according protocolss. 
+> It devoted to help shared understanding on how things work according protocols. 
 
 ## How assets are transferred?
 
-Underlying mechanics ensure correctness of transfers. 
+Underlying mechanics ensure correctness of transfers, see references for details. Not discussed here. 
 
-All transfers map `on the wire` (remote, foreign) asset identifiers to `local`.
+All transfers map `on the wire` (remote, foreign) asset identifiers to and from `local`. 
 
 `NOTE: This text uses remote to number mapping as explainer. Hashes for transfers would work too` 
-
-Will start from specific examples and go to more near reach multihop generalized examples.
+`
+Will start from specific examples and go to more real  multihop generalized examples.
 
 Assets transfers require allowance to be transferred and stored on accounts. 
 So we touch governance for basic "fees".
@@ -31,7 +31,7 @@ Let transfer forward.
 
 **Polkadot**
 
-We send *Native*, zero(0) asset encoded as *DOT = XcmLocation(parents = 0, junctions = Here)*.
+We send *Native*, zero(0) asset configured as *DOT = XcmLocation(parents = 0, junctions = Here)*.
 
 `NOTE: We use *DOT* symbol in this text, on chain it is never used for transfers, it is just for us to describe flow`
 
@@ -39,33 +39,33 @@ We send *Native*, zero(0) asset encoded as *DOT = XcmLocation(parents = 0, junct
 
 Upon receive we have *Sender = XcmLocation(parents = 1, junctions = Here)* and asset to be *X = XcmLocation(parents = 0, junctions = Here)*.
 
-`NOTE: We use X, as X is not yet known to be DOT`
+`NOTE: We use *X*, as *X* is not yet known to be *DOT* `
 
 *pallet-xcm* prefixes asset with sender, and we get *X = XcmLocation(parents = 1, junctions = Here)*.
 
 `NOTE: *pallet-xcm* is really [several pallets and configs](./xcmp/xcmp.runtime.dot)
 
-After that *assets* maps *X* to *DOT = 2*.
+After that *assets configuration* maps *X* to *DOT = 2*.
 
-`NOTE: 2 is just number for simplicity, real implementation of local asset id may be hash`.
+`NOTE: *2*is just number for simplicity`.
 
-After *assets* upon callback from *pallet-ibc* map *DOT* to *2* string. 
+`NOTE: *assets configuration* can be implemented several ways, possible examples shown later`
 
-*pallet-ibc* sends assets ICS20 `transfer` with *2* as *denomination*.
+*pallet-ibc* calls *assets configuration* to map *2* number to *2* string. 
 
-`NOTE: so DOT asset has XCM remote location in *assets*, but for *pallet-ibc* transfer happens if asset is local`
+`NOTE: so *DOT* asset has XCM remote location in *assets configuration*, but for *pallet-ibc* transfer happens if asset is local`
 
 **Picasso**
 
-Upon receive of ICS20 transfer of *2*  *pallet-ibc* maps it to *transfer/channel-0/2* asset, and then *pallet-ibc* asks *assets* map to map prefixed denomination to local *DOT = 1002*. 
+Upon receive of ICS20 transfer of *2*,  *pallet-ibc* maps it to *transfer/channel-0/2* asset, and then *pallet-ibc* asks *assets configuration*  to map prefixed denomination to local *DOT = 1002*. 
 
 `NOTE: well known *transfer* is *IBC Source Port on Composable*, and *channel-0* is *IBC Source Channel on Composable*(with counter)`
 
 `NOTE: We have to open channels and setup mapping before send` 
 
-`NOTE: We could map to same number for convenience, so DOT could be 2 on both chains`
+`NOTE: We could map to same number for convenience, so *DOT* could be *2* on both chains`
 
-Done.
+**Done**.
 
 ### DOT from Picasso to Polkadot
 
@@ -81,7 +81,7 @@ We call *pallet-ibc* *transfer* with asset *DOT = 1002*.
 
 **Composable**
 
-Asset prefix removed by *pallet-ibc* to form *2* string. And mapped to *DOT = 2* by *assets*.
+Asset prefix removed by *pallet-ibc* to form *2* string. And mapped to *DOT = 2* by *assets configuration*.
 
 *2* is mapped to *XcmLocation(parents = 1, junctions = Here)* remote location by *assets*.
 
@@ -91,7 +91,7 @@ XCM sent.
 
 `pallet-xcm` maps ` XcmLocation(parents = 1, junctions = Here)` to ` XcmLocation(parents = 0, junctions = Here)` to Native, zero(0) asset.
 
-Done.
+**Done**.
 
 ### Generalization
 
@@ -113,13 +113,9 @@ C. *IBC-ICS20 prefixed denomination(LocalIdOnBAsString) -> IBC-ICS20 prefixed de
 
 `NOTE: Invariant is that foreign asset has can have one and only one remote location, but configured as "local" when sent to other channels.`
 
-> If chain is source of asset then prefix is done by IBC/XCM configs/pallets before sent as configured.
-
-> If chain is sink of asset then mapping is done by assets Registry/Router
-
 D. *XcmLocation( < LocalIdOnC as here> ) -> XcmLocation( < LocalIdOnC prefixed with route from Origin > ) -> LocalIdOnD*
 
-> Local asset has no remote location (None), foreign asset has one and only one remote location.
+> Local asset has no true remote location (None), foreign asset has one and only one remote location.
 
 #### Try other transfer flows
 
@@ -133,9 +129,10 @@ Multihop IBC and XCM are supported.
 
 ### Some possible user experiences
 
-In case of PBLO. On Picasso is 100. So it is Local asset. When sent via IBC to other chain, it will get IBC prefix, app can show ibcPBLO because of that. 
+In case of PBLO. On Picasso is *100*. So it is Local asset. When sent via IBC to other chain, it will get IBC prefix mapping, app can show *ibcPBLO* because of that. 
 
-In case of USDT, USDT from Statemine can be show as xcmUSDT(because it is common good parachain prefix). USDT from Cosmos can be ibcUSDT. Later, when there would be IBC/XCM to ETH, new *assets* module to be created which classifies not only bridge, but prefix(channel) used.
+In case of USDT, USDT from Statemine can be show as xcmUSDT(because it is common good parachain prefix). USDT from Cosmos can be ibcUSDT. 
+Later, when there would be IBC/XCM to ETH, new *assets* module to be created which classifies not only bridge, but prefix(channel) used.
 
 `NOTE: XCVM/CW to be defined in some other document later, likely that would be own bridge type`
 
@@ -144,6 +141,7 @@ In case of USDT, USDT from Statemine can be show as xcmUSDT(because it is common
 Currently ICS20 allows to send only 1 asset which are allowed to pay fee for storage(ED) on destination.
 
 Governance should allow such assets explicitly.
+
 
 ### For DOT from Polkadot to Picasso 
 
@@ -168,60 +166,28 @@ Governance defines bimap *portOnComposable/channelOnComposable/2* to *1002*.
 
 Governance makes *DOT* bimap to metadata (not used for fees or transfers). But used in user experience. 
 
-`NOTE: DOT symbol may or may be not different value. It can be prefixed ibc depending if there is *remote* IBC mapping for it`
+`NOTE: DOT symbol may or may be not different value. It can be prefixed *ibc() depending if there is *remote* IBC mapping for it`
 
 `NOTE: multihop infrastructure for user can be built on top later` 
 
-## On local and on the wire encoding
+### On local and remote difference regarding expected configuration
 
+#### Foreign asset
+Has well known remote prefix (like XCM origin or IBC port), suffix part is fully controlled by counterparty and may vary.
+When received is usually minted, and when send back to origin is usually burnt. 
+`NOTE: If send downward or to sibling bridge, start acting as local asset for that end, but still yet on this chain identifies as foreign`
+`NOTE: In future when IBC will support transfer of multiple assets and we will support non sufficient assets, 
+may consider define prefix and wildcard to avoid storing big one to on map and become more permissonless`
 
-### Number maps
+#### Local asset 
+Does not have remote IBC or XCM location which indicates that it was bridged. 
+May have some convetion how to form prefix and well known suffix when sent sibling or downward by bridges.
+The convetion usually idenfifies local consesus protocol/pallet/contract which *governs* asset.
+Is escrowed on sent, does not allows transer back more than escrowed.
 
+#### Teleport assets
+Considers some foreign and local assets to be equivalent. Likely should be separate asset configuration.
 
-```
-32 <-> (parent = 1, pallet = 50, general = 42) # Relay XCM
-
-44 <-> portOnA/challeOnA/77 # IBC-ICS20
-
-7 <-> 7 # Local can be mapped to local  
-```
-
-Requires to check map each time and load if from cache (and may be transfer as data for validation).
-
-Can provide nice numbers for important assets and make numbers same on different chains.
-
-### Hash
-
-```
-hash(canonicalize(parent = 1, pallet = 50, general = 42)) <-> parent = 1, pallet = 50, key = jsdaSaaE123lasd # Relay XCM
-
-hash(portOnA/challeOnA/jsdaSaaE123lasd) <-> portOnA/challeOnA/jsdaSaaE123lasd # IBC-ICS20
-
-pseudo_hash(7) <-> 7 # Local can be mapped to local  
-```
-
-Avoids half reads of storage read by using computation.
-
-In best case if hashes are same size but out of curve, can be blended with public keys of contracts.
-
-In bad case can conflict with other hashes or public keys.
-
-
-### Hash and canonical path
-
-```
-hash(canonicalize(parent = 1, pallet = 50, general = 42)) <-> parent = 1, pallet = 50, key = jsdaSaaE123lasd # Relay XCM
-
-hash(portOnA/challeOnA/canonicalize(parent = 1, pallet = 50, general = 42)) <-> portOnA/challeOnA/canonicalize(parent = 1, pallet = 50, general = 42) # IBC-ICS20
-
-pseudo_hash(7) <-> 7 # Local can be mapped to local  
-```
-
-Largest payload on wire.
-
-Allows nicer user experience. 
-
-Hardest to define and maintain.
 
 ## References
 

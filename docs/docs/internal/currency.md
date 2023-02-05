@@ -80,14 +80,8 @@ Imagine Acala transfer prices are several time more of Moonbeam. In this case  A
 
 ### Remote currency identifiers
 
-Any remote currency has a bidirectional map from and to local.
-Bidirectional mapping allows sending the number of tokens from and to local consensus.
 
-Remote currencies usually have their respective bridge identifiers attached in the format "kind/network(chain)". 
-
-**Example**
-
-You may find example in XCM and XCVM documentation.
+If currency origin was bridge from other chain, it would have [local identifier to mapped to remote](./ibc-ics20-xcm-assets-transfer-examples.md) 
 
 ## Native currencies and gas fees
 
