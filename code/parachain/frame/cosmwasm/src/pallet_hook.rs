@@ -1,4 +1,4 @@
-use crate::{runtimes::vm::CosmwasmVM, types::*, Config, Error};
+use crate::{prelude::*, runtimes::vm::CosmwasmVM, types::*, Config, Error};
 use cosmwasm_vm::{
 	cosmwasm_std::{ContractResult, QueryResponse, Response},
 	vm::{VMBase, VmErrorOf},

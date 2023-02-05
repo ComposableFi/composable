@@ -287,19 +287,15 @@ impl<T: Config> Router<T> {
 				ContractBackend::CosmWasm { .. } =>
 					cosmwasm_call_serialize::<I, _, M>(&mut vm, message).map_err(Into::into),
 				ContractBackend::Pallet => {
-					let result = T::PalletHook::run(
-						&mut vm,
-						I::ENTRY,
-						serde_json::to_vec(&message)
-							.map_err(|e| {
-								<CosmwasmVMError<T>>::Ibc(format!(
-									"failed to serialize IBC message {:?}",
-									e
-								))
-							})?
-							.as_ref(),
-					)
-					.map_err(Into::into)?;
+					let msg = serde_json::to_vec(&message).map_err(|e| {
+						<CosmwasmVMError<T>>::Ibc(format!(
+							"failed to serialize IBC message {:?}",
+							e
+						))
+					})?;
+					let result = T::PalletHook::run(&mut vm, I::ENTRY, &msg).map_err(|x| {
+						CosmwasmVMError::<T>::Ibc(format!("failed to execute IBC callback {:?}", x))
+					})?;
 					serde_json::from_slice(&result)
 						.map_err(|x| CosmwasmVMError::<T>::Ibc(format!("{}", x)))
 				},
