@@ -85,8 +85,8 @@ pub use frame_support::{
 	pallet_prelude::DispatchClass,
 	parameter_types,
 	traits::{
-		fungibles::CreditOf,
-		ConstBool, Contains, Everything, Get, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo,
+		fungibles::CreditOf, ConstBool, Contains, Everything, Get, KeyOwnerProofSystem, Nothing,
+		Randomness, StorageInfo,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -363,8 +363,13 @@ impl transaction_payment::Config for Runtime {
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFeeConverter;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-	type FeeMultiplierUpdate =
-		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier, MaximumMultiplier>;
+	type FeeMultiplierUpdate = TargetedFeeAdjustment<
+		Self,
+		TargetBlockFullness,
+		AdjustmentVariable,
+		MinimumMultiplier,
+		MaximumMultiplier,
+	>;
 }
 
 /// Struct implementing `asset_tx_payment::HandleCredit` that determines the behavior when fees are
@@ -381,21 +386,21 @@ impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrD
 /// Will drop and burn the assets in case the transfer fails.
 pub struct CreditToBlockAuthor;
 impl asset_tx_payment::HandleCredit<AccountId, Assets> for CreditToBlockAuthor {
-    fn handle_credit(credit: CreditOf<AccountId, Assets>) {
-        if let Some(author) = pallet_authorship::Pallet::<Runtime>::author() {
-            // Drop the result which will trigger the `OnDrop` of the imbalance in case of error.
-            let _ = Assets::resolve(&author, credit);
-        }
-    }   
+	fn handle_credit(credit: CreditOf<AccountId, Assets>) {
+		if let Some(author) = pallet_authorship::Pallet::<Runtime>::author() {
+			// Drop the result which will trigger the `OnDrop` of the imbalance in case of error.
+			let _ = Assets::resolve(&author, credit);
+		}
+	}
 }
 
 impl asset_tx_payment::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type Fungibles = Assets;
-    type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
-        assets::BalanceToAssetBalance<Balances, Runtime, ConvertInto>,
-        CreditToBlockAuthor,
-    >;   
+	type RuntimeEvent = RuntimeEvent;
+	type Fungibles = Assets;
+	type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
+		assets::BalanceToAssetBalance<Balances, Runtime, ConvertInto>,
+		CreditToBlockAuthor,
+	>;
 }
 
 // impl asset_tx_payment::Config for Runtime {
