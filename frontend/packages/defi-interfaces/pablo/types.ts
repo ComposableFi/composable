@@ -5,14 +5,10 @@ import type {
   ComposableTraitsDefiCurrencyPairCurrencyId,
   CustomRpcBalance,
   CustomRpcCurrencyId,
-  SafeRpcWrapper,
+  SafeRpcWrapper
 } from "../common";
 import type { Enum, Null, Struct, u128, u16 } from "@polkadot/types-codec";
-import type {
-  AccountId32,
-  BlockNumber,
-  Permill,
-} from "@polkadot/types/interfaces/runtime";
+import type { AccountId32, BlockNumber, Permill } from "@polkadot/types/interfaces/runtime";
 
 /** @name ComposableTraitsDexFee */
 export interface ComposableTraitsDexFee extends Struct {
@@ -29,7 +25,7 @@ export interface ComposableTraitsDexStakingRewardPool extends Null {}
 /** @name PalletPabloPoolConfiguration */
 export interface PalletPabloPoolConfiguration extends Enum {
   readonly isStableSwap: boolean;
-  readonly asStableSwap: {arn
+  readonly asStableSwap: {
     readonly owner: AccountId32;
     readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
     readonly amplification_coefficient: u16;

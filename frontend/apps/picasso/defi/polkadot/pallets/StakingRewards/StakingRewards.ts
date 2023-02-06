@@ -109,6 +109,15 @@ export function tryFetchStakePortfolio(
   );
 }
 
+async function getMockPortfolio(): Promise<
+  Option<ComposableTraitsStakingRewardPool>
+> {
+  return {
+    isSome: true,
+    toJSON: () => config.stakingRewards.picaRewardPools,
+  } as unknown as Option<ComposableTraitsStakingRewardPool>;
+}
+
 export function tryFetchRewardPool(
   api: ApiPromise,
   assetId: string | number
@@ -116,12 +125,7 @@ export function tryFetchRewardPool(
   const getRewardPools = tryCatch(
     () =>
       config.stakingRewards.demoMode
-        ? new Promise((resolve) =>
-            resolve({
-              isSome: true,
-              toJSON: () => config.stakingRewards.picaRewardPools,
-            } as unknown as Promise<Option<ComposableTraitsStakingRewardPool>>)
-          )
+        ? getMockPortfolio()
         : api.query.stakingRewards.rewardPools(api.createType("u128", assetId)),
     () => new Error("Could not query reward pools")
   );

@@ -21,7 +21,9 @@ function extractOptions(
       const balance = balances[from][currentValue.id].free;
 
       // only include allowed assets
-      if (!config.transferAssetList[from][to].includes(currentValue.id)) {
+      if (
+        !config.transfers.transferAssetList[from][to].includes(currentValue.id)
+      ) {
         return previousValue;
       }
 

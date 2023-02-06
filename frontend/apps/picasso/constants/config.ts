@@ -3,6 +3,9 @@ import { ParachainId, SubstrateNetworkId } from "shared";
 import { TokenId } from "tokens";
 import BigNumber from "bignumber.js";
 
+export const getNetwork = (networkId: NetworkId) =>
+  config.evm.networks[networkId];
+
 const config = {
   governanceUrl: "https://picasso.polkassembly.io/",
   twitterUrl: "https://twitter.com/picasso_network",
@@ -268,7 +271,5 @@ const config = {
     ],
   },
 };
-export default config;
 
-export const getNetwork = (networkId: NetworkId) =>
-  config.evm.networks[networkId];
+export default config;

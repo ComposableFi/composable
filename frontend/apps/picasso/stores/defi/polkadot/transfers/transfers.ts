@@ -70,7 +70,7 @@ const networks = Object.keys(SUBSTRATE_NETWORKS)
     networkId: networkId as SubstrateNetworkId,
   }))
   .filter(({ networkId }) =>
-    config.picassoSupportedTransfers.includes(networkId)
+    config.transfers.picassoSupportedTransfers.includes(networkId)
   );
 
 const initialState: TransfersState = {
