@@ -262,7 +262,7 @@ const config = {
         id: "132",
         multiplier: new BigNumber(0.01),
         share: new BigNumber(4321),
-        stake: new BigNumber(1231),
+        stake: new BigNumber(12231),
         unlockPenalty: new BigNumber(0.5),
       },
     ],

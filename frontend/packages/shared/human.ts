@@ -34,28 +34,9 @@ export function humanDate(date: number, option: number = SHORT_HUMAN_DATE) {
   ].join(" ");
 }
 
-export function humanDateDiff(date1: Date, date2: Date) {
-  const diff: number = date2.getTime() - date1.getTime();
-  const SECONDS_IN_DAY = 86400;
-  const SECONDS_IN_WEEK = SECONDS_IN_DAY * 7;
-  const SECONDS_IN_MONTH = SECONDS_IN_DAY * 30;
-  const SECONDS_IN_YEAR = SECONDS_IN_MONTH * 12;
+export function humanDateDiff(date: Date) {
+  const diff: number = date.getTime() - new Date().getTime();
+  const formatter = new Intl.RelativeTimeFormat("en");
 
-  const target = diff / 1000; // calculate in seconds;
-
-  if (target >= SECONDS_IN_YEAR) {
-    const result = Math.trunc(target / SECONDS_IN_YEAR);
-    return [result, `year${result > 1 ? "s" : ""}`];
-  } else if (target >= SECONDS_IN_MONTH) {
-    const result = Math.trunc(target / SECONDS_IN_MONTH);
-    return [result, `month${result > 1 ? "s" : ""}`];
-  } else if (target >= SECONDS_IN_WEEK) {
-    const result = Math.trunc(target / SECONDS_IN_WEEK);
-    return [result, `week${result > 1 ? "s" : ""}`];
-  } else if (target >= SECONDS_IN_DAY) {
-    const result = Math.trunc(target / SECONDS_IN_DAY);
-    return [result, `day${result > 1 ? "s" : ""}`];
-  } else {
-    return [0, "day"];
-  }
+  return formatter.format(Math.ceil(diff / 86400_000), "days");
 }
