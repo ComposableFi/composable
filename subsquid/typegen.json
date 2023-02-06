@@ -1,7 +1,7 @@
 {
   "outDir": "src/types",
-  "chainVersions": "picassoVersions.jsonl",
-  "specVersions": "picassoVersions.jsonl",
+  "chainVersions": "daliDevVersions.jsonl",
+  "specVersions": "daliDevVersions.jsonl",
   "typesBundle": "kusama",
   "events": [
     "Pablo.PoolCreated",
@@ -19,7 +19,13 @@
     "Vesting.Claimed",
     "Vesting.VestingSchedulesUpdated",
     "AssetsRegistry.AssetRegistered",
-    "AssetsRegistry.AssetUpdated"
+    "AssetsRegistry.AssetUpdated",
+    "StakingRewards.RewardPoolCreated",
+    "StakingRewards.SplitPosition",
+    "StakingRewards.StakeAmountExtended",
+    "StakingRewards.Staked",
+    "StakingRewards.Unstaked",
+    "StakingRewards.RewardPoolUpdated"
   ],
   "calls": []
 }

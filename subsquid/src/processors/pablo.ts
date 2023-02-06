@@ -23,7 +23,7 @@ import {
   PabloTransaction,
   PabloTx
 } from "../model";
-import { Fee } from "../types/v10005";
+import { Fee } from "../types/picassoV10005";
 import { divideBigInts, encodeAccount } from "../utils";
 import {
   getLatestPoolByPoolId,
@@ -41,7 +41,7 @@ interface PoolCreatedEvent {
 }
 
 function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
-  const { owner, poolId, assetWeights } = event.asV10005;
+  const { owner, poolId, assetWeights } = event.asPicassoV10005;
   return {
     owner,
     poolId,
@@ -57,7 +57,7 @@ interface LiquidityAddedEvent {
 }
 
 function getLiquidityAddedEvent(event: PabloLiquidityAddedEvent): LiquidityAddedEvent {
-  const { who, poolId, assetAmounts, mintedLp } = event.asV10005;
+  const { who, poolId, assetAmounts, mintedLp } = event.asPicassoV10005;
   return {
     who,
     poolId,
@@ -73,7 +73,7 @@ interface LiquidityRemovedEvent {
 }
 
 function getLiquidityRemovedEvent(event: PabloLiquidityRemovedEvent): LiquidityRemovedEvent {
-  const { who, poolId, assetAmounts } = event.asV10005;
+  const { who, poolId, assetAmounts } = event.asPicassoV10005;
   return {
     who,
     poolId,
@@ -92,7 +92,7 @@ interface SwappedEvent {
 }
 
 function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
-  const { who, poolId, baseAsset, baseAmount, quoteAsset, quoteAmount, fee } = event.asV10005;
+  const { who, poolId, baseAsset, baseAmount, quoteAsset, quoteAmount, fee } = event.asPicassoV10005;
   return {
     who,
     poolId,

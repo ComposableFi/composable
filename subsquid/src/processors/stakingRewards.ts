@@ -3,19 +3,22 @@ import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import {
   StakingRewardsRewardPoolCreatedEvent,
+  StakingRewardsRewardPoolUpdatedEvent,
   StakingRewardsSplitPositionEvent,
   StakingRewardsStakeAmountExtendedEvent,
   StakingRewardsStakedEvent,
   StakingRewardsUnstakedEvent
 } from "../types/events";
-import { saveAccountAndEvent, storeCurrentLockedValue, storeHistoricalLockedValue } from "../dbHelper";
-import { Event, EventType, LockedSource, RewardPool, StakingPosition } from "../model";
+import { RewardPoolConfiguration } from "../types/v10005";
+import { saveAccountAndEvent, storeHistoricalLockedValue } from "../dbHelper";
+import { Event, EventType, LockedSource, Reward, RewardPool, RewardRatePeriod, StakingPosition } from "../model";
 import { encodeAccount } from "../utils";
+import * as v10005 from "subsquid/types/v10005";
 
 interface RewardPoolCreatedEvent {
   poolId: bigint;
   owner: Uint8Array;
-  endBlock: number;
+  poolConfig: RewardPoolConfiguration;
 }
 
 interface StakedEvent {
@@ -46,14 +49,19 @@ interface SplitPositionEvent {
   positions: [bigint, bigint, bigint][]; // [collectionId, instanceId, balance]
 }
 
+interface RewardPoolUpdatedEvent {
+  poolId: bigint;
+  rewardUpdates: [bigint, v10005.RewardUpdate][];
+}
+
 function getRewardPoolCreatedEvent(event: StakingRewardsRewardPoolCreatedEvent): RewardPoolCreatedEvent {
-  const { poolId, owner, endBlock } = event.asV10003;
-  return { poolId, owner, endBlock };
+  const { poolId, owner, poolConfig } = event.asV10005;
+  return { poolId, owner, poolConfig };
 }
 
 function getStakedEvent(event: StakingRewardsStakedEvent): StakedEvent {
   const { poolId, owner, amount, durationPreset, fnftCollectionId, fnftInstanceId, rewardMultiplier, keepAlive } =
-    event.asV10003;
+    event.asV10005;
   return {
     poolId,
     owner,
@@ -67,30 +75,38 @@ function getStakedEvent(event: StakingRewardsStakedEvent): StakedEvent {
 }
 
 function getUnstakedEvent(event: StakingRewardsUnstakedEvent): UnstakedEvent {
-  const { owner, fnftCollectionId, fnftInstanceId, slash } = event.asV10003;
+  const { owner, fnftCollectionId, fnftInstanceId, slash } = event.asV10005;
   return { owner, fnftCollectionId, fnftInstanceId, slash };
 }
 
 function getStakeAmountExtendedEvent(event: StakingRewardsStakeAmountExtendedEvent): StakeAmountExtendedEvent {
-  const { fnftCollectionId, fnftInstanceId, amount } = event.asV10003;
+  const { fnftCollectionId, fnftInstanceId, amount } = event.asV10005;
   return { fnftCollectionId, fnftInstanceId, amount };
 }
 
 function getSplitPositionEvent(event: StakingRewardsSplitPositionEvent): SplitPositionEvent {
-  const { positions } = event.asV10003;
+  const { positions } = event.asV10005;
   return { positions };
 }
 
-export function createRewardPool(eventId: string, poolId: bigint): RewardPool {
+function getRewardPoolUpdatedEvent(event: StakingRewardsRewardPoolUpdatedEvent): RewardPoolUpdatedEvent {
+  const { poolId, rewardUpdates } = event.asV10005;
+  return { poolId, rewardUpdates };
+}
+
+export function createRewardPool(ctx: EventHandlerContext<Store>, event: Event, poolId: bigint): RewardPool {
   return new RewardPool({
-    id: randomUUID(),
-    eventId,
-    poolId: poolId.toString()
+    id: poolId.toString(),
+    event,
+    // Asset ID is used as pool ID on the pallet
+    assetId: poolId.toString(),
+    blockId: ctx.block.hash
   });
 }
 
 /**
  * Create new StakingPosition.
+ * @param rewardPool
  * @param fnftCollectionId
  * @param fnftInstanceId
  * @param assetId
@@ -102,6 +118,7 @@ export function createRewardPool(eventId: string, poolId: bigint): RewardPool {
  * @param startTimestamp
  */
 export function createStakingPosition(
+  rewardPool: RewardPool,
   fnftCollectionId: bigint,
   fnftInstanceId: bigint,
   assetId: string,
@@ -117,6 +134,7 @@ export function createStakingPosition(
     event,
     fnftCollectionId: fnftCollectionId.toString(),
     fnftInstanceId: fnftInstanceId.toString(),
+    rewardPool,
     owner,
     amount,
     startTimestamp,
@@ -124,19 +142,9 @@ export function createStakingPosition(
     endTimestamp: BigInt(startTimestamp + BigInt(duration * 1_000n)),
     rewardMultiplier,
     assetId,
-    source: LockedSource.StakingRewards
+    source: LockedSource.StakingRewards,
+    removed: false
   });
-}
-
-/**
- * Update position's amount in place.
- * @param position
- * @param newAmount
- * @param event
- */
-export function updateStakingPositionAmount(position: StakingPosition, newAmount: bigint, event: Event): void {
-  position.amount = newAmount;
-  position.event = event;
 }
 
 /**
@@ -169,7 +177,9 @@ export function splitStakingPosition(
     endTimestamp: position.endTimestamp,
     rewardMultiplier: position.rewardMultiplier,
     assetId: position.assetId,
-    source: LockedSource.StakingRewards
+    source: LockedSource.StakingRewards,
+    rewardPool: position.rewardPool,
+    removed: false
   });
 }
 
@@ -181,17 +191,27 @@ export function splitStakingPosition(
  */
 export async function processRewardPoolCreatedEvent(ctx: EventHandlerContext<Store>): Promise<void> {
   console.log("Processing `StakingRewards.RewardPoolCreated`");
-  const evt = new StakingRewardsRewardPoolCreatedEvent(ctx);
-  const event = getRewardPoolCreatedEvent(evt);
-  const owner = encodeAccount(event.owner);
+  const evt = getRewardPoolCreatedEvent(new StakingRewardsRewardPoolCreatedEvent(ctx));
+  const owner = encodeAccount(evt.owner);
 
-  const { poolId } = event;
+  const { poolId, poolConfig } = evt;
 
-  const stakingPool = createRewardPool(ctx.event.id, poolId);
+  const { event } = await saveAccountAndEvent(ctx, EventType.STAKING_REWARDS_REWARD_POOL_CREATED, owner);
 
-  await ctx.store.save(stakingPool);
+  const rewardPool = createRewardPool(ctx, event, poolId);
 
-  await saveAccountAndEvent(ctx, EventType.STAKING_REWARDS_REWARD_POOL_CREATED, owner);
+  await ctx.store.save(rewardPool);
+
+  for (const [rewardAssetId, config] of poolConfig.rewardConfigs) {
+    const reward = new Reward({
+      id: rewardAssetId.toString(),
+      rewardPool,
+      rewardRatePeriod: RewardRatePeriod.PER_SECOND,
+      rewardRateAmount: config.rewardRate.amount
+    });
+
+    await ctx.store.save(reward);
+  }
 }
 
 /**
@@ -206,13 +226,21 @@ export async function processStakedEvent(ctx: EventHandlerContext<Store>): Promi
   const stakedEvent = getStakedEvent(evt);
   const owner = encodeAccount(stakedEvent.owner);
   const { poolId, fnftCollectionId, fnftInstanceId, amount, durationPreset, rewardMultiplier } = stakedEvent;
+  const assetId = poolId.toString(); // assetId is used as poolId on the staking pallet
+
+  const rewardPool = await ctx.store.get(RewardPool, poolId.toString());
+
+  if (!rewardPool) {
+    throw new Error(`Reward pool ${poolId} not found`);
+  }
 
   const { event } = await saveAccountAndEvent(ctx, EventType.STAKING_REWARDS_STAKED, owner);
 
   const stakingPosition = createStakingPosition(
+    rewardPool,
     fnftCollectionId,
     fnftInstanceId,
-    poolId.toString(), // assetId is used as poolId on the staking pallet
+    assetId,
     owner,
     amount,
     durationPreset,
@@ -221,21 +249,7 @@ export async function processStakedEvent(ctx: EventHandlerContext<Store>): Promi
     BigInt(ctx.block.timestamp)
   );
 
-  await storeHistoricalLockedValue(
-    ctx,
-    {
-      [poolId.toString()]: amount
-    },
-    LockedSource.StakingRewards
-  );
-
-  await storeCurrentLockedValue(
-    ctx,
-    {
-      [poolId.toString()]: amount
-    },
-    LockedSource.StakingRewards
-  );
+  await storeHistoricalLockedValue(ctx, [[assetId, amount]], LockedSource.StakingRewards, poolId.toString());
 
   await ctx.store.save(stakingPosition);
 }
@@ -273,24 +287,15 @@ export async function processStakeAmountExtendedEvent(ctx: EventHandlerContext<S
     stakingPosition.owner
   );
 
-  updateStakingPositionAmount(stakingPosition, stakingPosition.amount + amount, event);
-
+  stakingPosition.event = event;
+  stakingPosition.amount += amount;
   await ctx.store.save(stakingPosition);
 
   await storeHistoricalLockedValue(
     ctx,
-    {
-      [stakingPosition.assetId]: amount
-    },
-    LockedSource.StakingRewards
-  );
-
-  await storeCurrentLockedValue(
-    ctx,
-    {
-      [stakingPosition.assetId]: amount
-    },
-    LockedSource.StakingRewards
+    [[stakingPosition.assetId, amount]],
+    LockedSource.StakingRewards,
+    stakingPosition.assetId // assetId is used as poolId on the staking pallet
   );
 }
 
@@ -320,28 +325,17 @@ export async function processUnstakedEvent(ctx: EventHandlerContext<Store>): Pro
     return;
   }
 
-  const unstakedAmount = BigInt(position.amount) - BigInt(slash || 0);
-
   const { event } = await saveAccountAndEvent(ctx, EventType.STAKING_REWARDS_UNSTAKE, encodeAccount(owner));
 
-  updateStakingPositionAmount(position, position.amount - unstakedAmount, event);
-
+  position.event = event;
+  position.removed = true;
   await ctx.store.save(position);
 
   await storeHistoricalLockedValue(
     ctx,
-    {
-      [position.assetId]: -unstakedAmount
-    },
-    LockedSource.StakingRewards
-  );
-
-  await storeCurrentLockedValue(
-    ctx,
-    {
-      [position.assetId]: -unstakedAmount
-    },
-    LockedSource.StakingRewards
+    [[position.assetId, -position.amount]],
+    LockedSource.StakingRewards,
+    position.assetId // assetId is used as poolId on the staking pallet
   );
 }
 
@@ -386,6 +380,32 @@ export async function processSplitPositionEvent(ctx: EventHandlerContext<Store>)
 
   await ctx.store.save(position);
   await ctx.store.save(newPosition);
+}
 
-  // TODO: add data about new positions
+/**
+ * Process `StakingRewards.RewardPoolUpdated` event.
+ *  - Update config for existing rewards.
+ * @param ctx
+ */
+export async function processRewardPoolUpdatedEvent(ctx: EventHandlerContext<Store>): Promise<void> {
+  console.log("Processing `StakingRewards.RewardPoolUpdated`");
+  const evt = new StakingRewardsRewardPoolUpdatedEvent(ctx);
+  const rewardPoolUpdatedEvent = getRewardPoolUpdatedEvent(evt);
+  const { poolId, rewardUpdates } = rewardPoolUpdatedEvent;
+
+  for (const [assetId, update] of rewardUpdates) {
+    const reward = await ctx.store.get(Reward, {
+      where: {
+        id: assetId.toString(),
+        rewardPool: {
+          id: poolId.toString()
+        }
+      }
+    });
+
+    if (reward) {
+      reward.rewardRateAmount = update.rewardRate.amount;
+      await ctx.store.save(reward);
+    }
+  }
 }

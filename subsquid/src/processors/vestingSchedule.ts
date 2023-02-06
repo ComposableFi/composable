@@ -1,7 +1,7 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
-import { VestingSchedule as VestingScheduleType, VestingScheduleIdSet } from "../types/v10002";
+import { VestingSchedule as VestingScheduleType, VestingScheduleIdSet } from "../types/picassoV10002";
 import { EventType, LockedSource, Schedule, ScheduleWindow, VestingSchedule } from "../model";
 import { VestingClaimedEvent, VestingVestingScheduleAddedEvent } from "../types/events";
 import { encodeAccount } from "../utils";
@@ -21,9 +21,9 @@ interface VestingScheduleAddedEvent {
  * @param event
  */
 function getVestingScheduleAddedEvent(event: VestingVestingScheduleAddedEvent): VestingScheduleAddedEvent {
-  if (event.isV1000) {
+  if (event.isPicassoV1000) {
     // Should never be reached
-    const { asset, schedule, from, to } = event.asV1000;
+    const { asset, schedule, from, to } = event.asPicassoV1000;
     return {
       asset,
       schedule: {
@@ -37,7 +37,7 @@ function getVestingScheduleAddedEvent(event: VestingVestingScheduleAddedEvent): 
       vestingScheduleId: 0n
     };
   }
-  return event.asV10002;
+  return event.asPicassoV10002;
 }
 
 /**
@@ -131,9 +131,9 @@ interface VestingScheduleClaimedEvent {
  * @param event
  */
 function getVestingScheduleClaimedEvent(event: VestingClaimedEvent): VestingScheduleClaimedEvent {
-  if (event.isV1000) {
+  if (event.isPicassoV1000) {
     // Should never be reached
-    const { asset, lockedAmount, who } = event.asV1000;
+    const { asset, lockedAmount, who } = event.asPicassoV1000;
     return {
       asset,
       lockedAmount,
@@ -144,7 +144,7 @@ function getVestingScheduleClaimedEvent(event: VestingClaimedEvent): VestingSche
       }
     };
   }
-  return event.asV10002;
+  return event.asPicassoV10002;
 }
 
 /**

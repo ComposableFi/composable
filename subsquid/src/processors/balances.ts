@@ -22,15 +22,15 @@ interface WithdrawEvent {
 }
 
 function getTransferEvent(event: BalancesTransferEvent): TransferEvent {
-  return event.asV200;
+  return event.asPicassoV200;
 }
 
 function getWithdrawEvent(event: BalancesWithdrawEvent): DepositEvent {
-  return event.asV200;
+  return event.asPicassoV200;
 }
 
 function getDepositEvent(event: BalancesDepositEvent): WithdrawEvent {
-  return event.asV200;
+  return event.asPicassoV200;
 }
 
 /**

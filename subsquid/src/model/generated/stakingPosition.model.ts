@@ -1,5 +1,6 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, OneToOne as OneToOne_, Index as Index_, JoinColumn as JoinColumn_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_, OneToOne as OneToOne_, JoinColumn as JoinColumn_} from "typeorm"
 import * as marshal from "./marshal"
+import {RewardPool} from "./rewardPool.model"
 import {Event} from "./event.model"
 import {LockedSource} from "./_lockedSource"
 
@@ -12,6 +13,10 @@ export class StakingPosition {
 
     @PrimaryColumn_()
     id!: string
+
+    @Index_()
+    @ManyToOne_(() => RewardPool, {nullable: true})
+    rewardPool!: RewardPool
 
     @Index_({unique: true})
     @OneToOne_(() => Event, {nullable: false})
@@ -52,4 +57,7 @@ export class StakingPosition {
 
     @Column_("varchar", {length: 16, nullable: false})
     source!: LockedSource
+
+    @Column_("bool", {nullable: false})
+    removed!: boolean
 }

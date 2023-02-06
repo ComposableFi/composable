@@ -3,16 +3,9 @@ import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { instance, mock, when } from "ts-mockito";
 import { BondedFinanceBondOffer } from "../src/model";
-import {
-  BondedFinanceNewBondEvent,
-  BondedFinanceNewOfferEvent,
-} from "../src/types/events";
+import { BondedFinanceNewBondEvent, BondedFinanceNewOfferEvent } from "../src/types/events";
 import { BOB, createAccount, createCtx } from "../src/utils";
-import {
-  cancelBondOffer,
-  getNewBondOffer,
-  updateBondOffer,
-} from "../src/processors/bondedFinance";
+import { cancelBondOffer, getNewBondOffer, updateBondOffer } from "../src/processors/bondedFinance";
 
 const WHO = createAccount();
 const BOB_ADDRESS = createAccount();
@@ -21,9 +14,9 @@ function createNewOfferEvent(offerId: string) {
   let eventMock = mock(BondedFinanceNewOfferEvent);
   let evt = {
     offerId: BigInt(offerId),
-    beneficiary: BOB_ADDRESS,
+    beneficiary: BOB_ADDRESS
   };
-  when(eventMock.asV1400).thenReturn(evt);
+  when(eventMock.asPicassoV1400).thenReturn(evt);
 
   let event = instance(eventMock);
 
@@ -35,9 +28,9 @@ function createNewBondEvent(offerId: string, nbOfBonds: bigint) {
   let evt = {
     offerId: BigInt(offerId),
     who: WHO,
-    nbOfBonds,
+    nbOfBonds
   };
-  when(eventMock.asV1000).thenReturn(evt);
+  when(eventMock.asPicassoV1000).thenReturn(evt);
 
   let event = instance(eventMock);
 
@@ -98,7 +91,7 @@ describe("Bonded finance Tests", () => {
       offerId: "1",
       totalPurchased: 10n,
       beneficiary: BOB,
-      cancelled: false,
+      cancelled: false
     });
 
     updateBondOffer(ctx, bondOffer, event1);
@@ -115,7 +108,7 @@ describe("Bonded finance Tests", () => {
       offerId: "1",
       totalPurchased: 10n,
       beneficiary: BOB,
-      cancelled: false,
+      cancelled: false
     });
 
     assertBondedFinanceBondOffer(bondOffer, "1", "1", 10n, BOB, false);

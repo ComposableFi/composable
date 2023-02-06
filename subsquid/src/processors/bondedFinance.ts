@@ -29,14 +29,14 @@ interface OfferCancelledEvent {
  * @param event
  */
 export function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEvent {
-  if (event.isV1000) {
-    const { offerId } = event.asV1000;
+  if (event.isPicassoV1000) {
+    const { offerId } = event.asPicassoV1000;
     return {
       offerId,
       beneficiary: new Uint8Array()
     };
   }
-  return event.asV1400;
+  return event.asPicassoV1400;
 }
 
 /**
@@ -44,7 +44,7 @@ export function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEve
  * @param event
  */
 export function getNewBondEvent(event: BondedFinanceNewBondEvent): NewBondEvent {
-  const { offerId, nbOfBonds } = event.asV1000;
+  const { offerId, nbOfBonds } = event.asPicassoV1000;
   return { offerId, nbOfBonds };
 }
 
@@ -53,7 +53,7 @@ export function getNewBondEvent(event: BondedFinanceNewBondEvent): NewBondEvent 
  * @param event
  */
 export function getOfferCancelledEvent(event: BondedFinanceOfferCancelledEvent): OfferCancelledEvent {
-  return event.asV1000;
+  return event.asPicassoV1000;
 }
 
 /**

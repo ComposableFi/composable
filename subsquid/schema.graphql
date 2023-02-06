@@ -163,10 +163,24 @@ type HistoricalAssetPrice @entity {
 
 type RewardPool @entity {
   id: ID!
-  eventId: String! @index
-  poolId: String! @index
+  event: Event! @unique @index
+  assetId: String! @index
   "Last updated block id"
   blockId: String!
+  stakingPositions: [StakingPosition!] @derivedFrom(field: "rewardPool")
+  rewards: [Reward!] @derivedFrom(field: "rewardPool")
+}
+
+enum RewardRatePeriod {
+  PER_SECOND
+}
+
+type Reward @entity {
+  # Asset ID
+  id: ID!
+  rewardPool: RewardPool! @index
+  rewardRatePeriod: RewardRatePeriod!
+  rewardRateAmount: BigInt!
 }
 
 enum LockedSource {
@@ -180,6 +194,7 @@ type StakingPosition
   @entity
   @index(fields: ["fnftCollectionId", "fnftInstanceId"], unique: true) {
   id: ID!
+  rewardPool: RewardPool! @index
   event: Event! @unique @index
   "Unique identifier for the position on chain"
   fnftCollectionId: String! @index
@@ -192,6 +207,7 @@ type StakingPosition
   endTimestamp: BigInt
   rewardMultiplier: BigInt!
   source: LockedSource!
+  removed: Boolean!
 }
 
 type HistoricalLockedValue @entity {

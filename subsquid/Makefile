@@ -20,11 +20,26 @@ rebuild-graphql:
 	docker-compose start graphql-server
 	docker-compose start processor
 
-restart:
+
+rebuild-graphql-local:
+	make build-images
+	docker-compose -f docker-compose-dev.yml stop graphql-server
+	docker-compose -f docker-compose-dev.yml rm --force graphql-server
+	docker-compose -f docker-compose-dev.yml create graphql-server
+	docker-compose -f docker-compose-dev.yml start graphql-server
+
+start:
 	make down
-	docker volume rm -f $(docker volume ls)
+	docker volume rm -f $$(docker volume ls)
 	make build-images
 	make up
+
+
+start-local:
+	make down-local
+	docker volume rm -f $$(docker volume ls)
+	make build-images
+	make up-local
 
 
 migrate:
@@ -45,11 +60,15 @@ up:
 
 
 up-local:
-	docker compose up db ingest gateway explorer squid-db -d
+	@docker-compose -f docker-compose-dev.yml up -d
 
 
 down:
 	@docker-compose down
+
+
+down-local:
+	@docker-compose -f docker-compose-dev.yml down
 
 
 explore:

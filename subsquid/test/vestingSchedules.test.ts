@@ -3,26 +3,10 @@ import { Store } from "@subsquid/typeorm-store";
 import { anything, instance, mock, when } from "ts-mockito";
 import { expect } from "chai";
 import { Schedule, ScheduleWindow, VestingSchedule } from "../src/model";
-import {
-  BOB,
-  CHARLIE,
-  createAccount,
-  createCtx,
-  encodeAccount,
-} from "../src/utils";
-import {
-  createSchedule,
-  createVestingSchedule,
-  updatedClaimedAmount,
-} from "../src/processors/vestingSchedule";
-import {
-  VestingSchedule as VestingScheduleType,
-  VestingScheduleIdSet,
-} from "../src/types/v10002";
-import {
-  VestingClaimedEvent,
-  VestingVestingScheduleAddedEvent,
-} from "../src/types/events";
+import { BOB, CHARLIE, createAccount, createCtx, encodeAccount } from "../src/utils";
+import { createSchedule, createVestingSchedule, updatedClaimedAmount } from "../src/processors/vestingSchedule";
+import { VestingSchedule as VestingScheduleType, VestingScheduleIdSet } from "../src/types/picassoV10002";
+import { VestingClaimedEvent, VestingVestingScheduleAddedEvent } from "../src/types/events";
 
 const MOCK_ADDRESS_FROM = createAccount();
 const MOCK_ADDRESS_TO = createAccount();
@@ -32,11 +16,11 @@ const MOCK_VESTING_SCHEDULE_BLOCK_NUMBER_BASED: VestingScheduleType = {
   window: {
     start: 1,
     period: 10,
-    __kind: "BlockNumberBased",
+    __kind: "BlockNumberBased"
   },
   periodCount: 1,
   perPeriod: 100n,
-  alreadyClaimed: 10n,
+  alreadyClaimed: 10n
 };
 
 const MOCK_VESTING_SCHEDULE_MOMENT_BASED: VestingScheduleType = {
@@ -44,17 +28,14 @@ const MOCK_VESTING_SCHEDULE_MOMENT_BASED: VestingScheduleType = {
   window: {
     start: 1n,
     period: 10n,
-    __kind: "MomentBased",
+    __kind: "MomentBased"
   },
   periodCount: 1,
   perPeriod: 100n,
-  alreadyClaimed: 20n,
+  alreadyClaimed: 20n
 };
 
-const createMockVestingSchedule = (
-  scheduleId: bigint,
-  assetId: string
-): VestingSchedule =>
+const createMockVestingSchedule = (scheduleId: bigint, assetId: string): VestingSchedule =>
   new VestingSchedule({
     id: "123",
     scheduleId,
@@ -68,14 +49,14 @@ const createMockVestingSchedule = (
       window: new ScheduleWindow({
         start: 1n,
         period: 10n,
-        kind: "BlockNumberBased",
+        kind: "BlockNumberBased"
       }),
       periodCount: 1n,
       perPeriod: 100n,
-      alreadyClaimed: 0n,
+      alreadyClaimed: 0n
     }),
     totalAmount: 100n,
-    fullyClaimed: false,
+    fullyClaimed: false
   });
 
 /**
@@ -113,26 +94,14 @@ function assertVestingSchedule(
   expect(vestingSchedule.totalAmount).to.equal(scheduleAmount);
   if (eventId) expect(vestingSchedule.eventId).to.equal(eventId);
   if (schedule) {
-    expect(vestingSchedule.schedule.window.period).to.equal(
-      BigInt(schedule.window.period)
-    );
-    expect(vestingSchedule.schedule.window.start).to.equal(
-      BigInt(schedule.window.start)
-    );
-    expect(vestingSchedule.schedule.window.kind).to.equal(
-      schedule.window.__kind
-    );
+    expect(vestingSchedule.schedule.window.period).to.equal(BigInt(schedule.window.period));
+    expect(vestingSchedule.schedule.window.start).to.equal(BigInt(schedule.window.start));
+    expect(vestingSchedule.schedule.window.kind).to.equal(schedule.window.__kind);
 
-    expect(vestingSchedule.schedule.periodCount).to.equal(
-      BigInt(schedule.periodCount)
-    );
+    expect(vestingSchedule.schedule.periodCount).to.equal(BigInt(schedule.periodCount));
     expect(vestingSchedule.schedule.perPeriod).to.equal(schedule.perPeriod);
-    expect(vestingSchedule.schedule.vestingScheduleId).to.equal(
-      schedule.vestingScheduleId
-    );
-    expect(vestingSchedule.schedule.alreadyClaimed).to.equal(
-      schedule.alreadyClaimed
-    );
+    expect(vestingSchedule.schedule.vestingScheduleId).to.equal(schedule.vestingScheduleId);
+    expect(vestingSchedule.schedule.alreadyClaimed).to.equal(schedule.alreadyClaimed);
   }
 }
 
@@ -151,10 +120,10 @@ function createVestingScheduleAddedEvent(
     schedule,
     vestingScheduleId: schedule.vestingScheduleId,
     alreadyClaimed: schedule.vestingScheduleId,
-    scheduleAmount,
+    scheduleAmount
   };
 
-  when(eventMock.asV10002).thenReturn(evt);
+  when(eventMock.asPicassoV10002).thenReturn(evt);
 
   const event = instance(eventMock);
 
@@ -174,10 +143,10 @@ function createVestingScheduleClaimedEvent(
     asset,
     vestingScheduleIds,
     lockedAmount,
-    claimedAmountPerSchedule,
+    claimedAmountPerSchedule
   };
 
-  when(eventMock.asV10002).thenReturn(evt);
+  when(eventMock.asPicassoV10002).thenReturn(evt);
 
   const event = instance(eventMock);
 
@@ -195,18 +164,14 @@ describe("Vesting schedule added", () => {
     vestingSchedulesStored = [];
 
     // Stub store.get() to return the vesting schedules in the database
-    when(storeMock.get<VestingSchedule>(VestingSchedule, anything())).thenCall(
-      () => {
-        return Promise.resolve(vestingSchedulesStored);
-      }
-    );
+    when(storeMock.get<VestingSchedule>(VestingSchedule, anything())).thenCall(() => {
+      return Promise.resolve(vestingSchedulesStored);
+    });
 
     // Stub store.save() to update the vesting schedules in the database
-    when(storeMock.save<VestingSchedule>(anything())).thenCall(
-      (vestingSchedule) => {
-        vestingSchedulesStored.push(vestingSchedule);
-      }
-    );
+    when(storeMock.save<VestingSchedule>(anything())).thenCall(vestingSchedule => {
+      vestingSchedulesStored.push(vestingSchedule);
+    });
   });
 
   it("Should add block number based vesting schedule events", () => {
@@ -260,36 +225,19 @@ describe("Vesting schedule added", () => {
   });
 
   it("Should update all claimed schedules", () => {
-    const { event } = createVestingScheduleClaimedEvent(
-      MOCK_ADDRESS_FROM,
-      5n,
-      { __kind: "All" },
-      50n,
-      [
-        [1n, 50n],
-        [2n, 10n],
-      ]
-    );
+    const { event } = createVestingScheduleClaimedEvent(MOCK_ADDRESS_FROM, 5n, { __kind: "All" }, 50n, [
+      [1n, 50n],
+      [2n, 10n]
+    ]);
 
-    const { claimedAmountPerSchedule } = event.asV10002;
+    const { claimedAmountPerSchedule } = event.asPicassoV10002;
 
     for (let i = 0; i < claimedAmountPerSchedule.length; i += 1) {
       const [id, amount] = claimedAmountPerSchedule[i];
 
       const vestingSchedule = createMockVestingSchedule(id, "1");
 
-      assertVestingSchedule(
-        vestingSchedule,
-        BOB,
-        CHARLIE,
-        "1",
-        BigInt(id),
-        BigInt(0),
-        false,
-        100n,
-        "456",
-        undefined
-      );
+      assertVestingSchedule(vestingSchedule, BOB, CHARLIE, "1", BigInt(id), BigInt(0), false, 100n, "456", undefined);
 
       updatedClaimedAmount(ctx, vestingSchedule, amount);
 
@@ -309,45 +257,19 @@ describe("Vesting schedule added", () => {
   });
 
   it("Should fully claim schedule", () => {
-    const { event } = createVestingScheduleClaimedEvent(
-      MOCK_ADDRESS_FROM,
-      5n,
-      { __kind: "One", value: 3n },
-      100n,
-      [[3n, 100n]]
-    );
+    const { event } = createVestingScheduleClaimedEvent(MOCK_ADDRESS_FROM, 5n, { __kind: "One", value: 3n }, 100n, [
+      [3n, 100n]
+    ]);
 
-    const { claimedAmountPerSchedule } = event.asV10002;
+    const { claimedAmountPerSchedule } = event.asPicassoV10002;
     const [id, amount] = claimedAmountPerSchedule[0];
 
     const vestingSchedule = createMockVestingSchedule(id, "1");
 
-    assertVestingSchedule(
-      vestingSchedule,
-      BOB,
-      CHARLIE,
-      "1",
-      BigInt(id),
-      BigInt(0),
-      false,
-      100n,
-      "456",
-      undefined
-    );
+    assertVestingSchedule(vestingSchedule, BOB, CHARLIE, "1", BigInt(id), BigInt(0), false, 100n, "456", undefined);
 
     updatedClaimedAmount(ctx, vestingSchedule, amount);
 
-    assertVestingSchedule(
-      vestingSchedule,
-      BOB,
-      CHARLIE,
-      "1",
-      BigInt(id),
-      BigInt(amount),
-      true,
-      100n,
-      "456",
-      undefined
-    );
+    assertVestingSchedule(vestingSchedule, BOB, CHARLIE, "1", BigInt(id), BigInt(amount), true, 100n, "456", undefined);
   });
 });

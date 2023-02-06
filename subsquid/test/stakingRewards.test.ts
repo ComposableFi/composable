@@ -4,12 +4,7 @@ import { mock } from "ts-mockito";
 import { expect } from "chai";
 import { Event, EventType, LockedSource, StakingPosition } from "../src/model";
 import { BOB, createCtx } from "../src/utils";
-import {
-  createRewardPool,
-  createStakingPosition,
-  updateStakingPositionAmount,
-  splitStakingPosition
-} from "../src/processors/stakingRewards";
+import { createRewardPool, createStakingPosition, splitStakingPosition } from "../src/processors/stakingRewards";
 
 /**
  * Check if StakingPosition has expected values.
@@ -71,14 +66,25 @@ describe("Staking rewards", () => {
   });
 
   it("Should create RewardPool", () => {
-    const rewardPool = createRewardPool("event-id", 1n);
+    const rewardPool = createRewardPool(
+      ctx,
+      createMockEvent("event-1", EventType.STAKING_REWARDS_REWARD_POOL_CREATED),
+      1n
+    );
 
-    expect(rewardPool.eventId).to.equal("event-id");
-    expect(rewardPool.poolId).to.equal("1");
+    expect(rewardPool.event.id).to.equal("event-1");
+    expect(rewardPool.assetId).to.equal("1");
   });
 
   it("Should create StakingPosition", () => {
+    const rewardPool = createRewardPool(
+      ctx,
+      createMockEvent("event-1", EventType.STAKING_REWARDS_REWARD_POOL_CREATED),
+      1n
+    );
+
     const position = createStakingPosition(
+      rewardPool,
       1n,
       2n,
       "3",
@@ -94,7 +100,13 @@ describe("Staking rewards", () => {
   });
 
   it("Should split StakingPosition", () => {
+    const rewardPool = createRewardPool(
+      ctx,
+      createMockEvent("event-1", EventType.STAKING_REWARDS_REWARD_POOL_CREATED),
+      1n
+    );
     const position = createStakingPosition(
+      rewardPool,
       1n,
       2n,
       "3",
@@ -134,38 +146,6 @@ describe("Staking rewards", () => {
       50n,
       "new-event-id",
       EventType.STAKING_REWARDS_SPLIT_POSITION,
-      10n,
-      456n
-    );
-  });
-
-  it("Should extend StakingPosition", () => {
-    const position = createStakingPosition(
-      1n,
-      2n,
-      "3",
-      BOB,
-      123n,
-      10n,
-      456n,
-      createMockEvent("event-id", EventType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED),
-      1662133770000n
-    );
-    updateStakingPositionAmount(
-      position,
-      150n,
-      createMockEvent("new-event-id", EventType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED)
-    );
-
-    assertStakingPosition(
-      position,
-      "1",
-      "2",
-      "3",
-      BOB,
-      150n,
-      "new-event-id",
-      EventType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED,
       10n,
       456n
     );
