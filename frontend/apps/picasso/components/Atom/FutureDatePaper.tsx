@@ -12,9 +12,9 @@ export const FutureDatePaper: FC<{
       new Date(now.setSeconds(now.getSeconds() + parseInt(duration))))();
     return (
       target.getDate().toString().padStart(2, "0") +
-      "." +
+      "/" +
       (target.getMonth() + 1).toString().padStart(2, "0") +
-      "." +
+      "/" +
       target.getFullYear()
     );
   }, [duration]);

@@ -24,26 +24,6 @@ import config from "@/constants/config";
 import { ComposableTraitsStakingRewardPool } from "@/../../packages/defi-interfaces";
 import { Option } from "@polkadot/types-codec";
 
-export async function fetchStakingRewardPosition(
-  api: ApiPromise,
-  fnftCollectionId: BigNumber,
-  setter: (position: any) => void
-) {
-  const result: any = await api.query.stakingRewards.stakes(
-    api.createType("u128", fnftCollectionId.toString()),
-    null
-  );
-
-  if (result.isSome) {
-    const data: any = result.toJSON();
-    setter({
-      unlockPenalty: unwrapNumberOrHex(data.lock.unlockPenalty),
-      share: fromChainIdUnit(unwrapNumberOrHex(data.share)),
-      stake: fromChainIdUnit(unwrapNumberOrHex(data.stake)),
-    });
-  }
-}
-
 export function transformRewardPool(rewardPoolsWrapped: any): RewardPool {
   return {
     owner: rewardPoolsWrapped.owner,
@@ -86,7 +66,7 @@ export function transformStakingPortfolio(
     collectionId: position.fnftCollectionId,
     instanceId: position.fnftInstanceId,
     assetId: position.assetId,
-    endTimestamp: position.endTimestamp,
+    endTimestamp: position.endTimestamp.toString(),
     id: position.id,
     unlockPenalty: fromPerbill(rewardPools[assetId].lock.unlockPenalty),
     multiplier: rewardPools[assetId].lock.durationPresets[result.lock.duration],

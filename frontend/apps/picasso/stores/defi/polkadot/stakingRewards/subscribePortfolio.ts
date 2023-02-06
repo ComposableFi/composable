@@ -5,6 +5,7 @@ import { flow, pipe } from "fp-ts/function";
 import * as A from "fp-ts/lib/ReadonlyArray";
 import * as E from "fp-ts/lib/Either";
 import { tryFetchStakePortfolio } from "@/defi/polkadot/pallets/StakingRewards";
+import config from "@/constants/config";
 
 export function subscribePortfolio(api: ApiPromise | undefined) {
   return useStore.subscribe(
@@ -50,6 +51,13 @@ export function subscribePortfolio(api: ApiPromise | undefined) {
           )
         )
       );
+
+      // TODO: Just for testing UI, remove before production
+      if (config.stakingRewards.demoMode) {
+        useStore.setState((state) => {
+          state.stakingPortfolio = config.stakingRewards.picaPortfolios;
+        });
+      }
     }
   );
 }

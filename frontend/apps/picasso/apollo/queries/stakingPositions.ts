@@ -3,7 +3,7 @@ import { gql } from "@apollo/client";
 export interface StakingPosition {
   amount: BigInt;
   assetId: string;
-  endTimestamp: BigInt;
+  endTimestamp: string;
   fnftCollectionId: string;
   fnftInstanceId: string;
   id: string;
@@ -17,18 +17,20 @@ export interface StakingPositions {
 }
 
 export const GET_STAKING_POSITIONS = gql`
-    query stakingPositionsByOwner($accountId: String) {
-        stakingPositions(orderBy: fnftCollectionId_ASC, where: {owner_eq: $accountId}) {
-            amount
-            assetId
-            endTimestamp
-            fnftCollectionId
-            fnftInstanceId
-            id
-            owner
-            source
-            startTimestamp
-        }
+  query stakingPositionsByOwner($accountId: String) {
+    stakingPositions(
+      orderBy: fnftCollectionId_ASC
+      where: { owner_eq: $accountId }
+    ) {
+      amount
+      assetId
+      endTimestamp
+      fnftCollectionId
+      fnftInstanceId
+      id
+      owner
+      source
+      startTimestamp
     }
-
+  }
 `;

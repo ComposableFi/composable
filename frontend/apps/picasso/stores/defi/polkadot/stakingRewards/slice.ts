@@ -20,7 +20,7 @@ export type PortfolioItem = {
   instanceId: string;
   collectionId: string;
   assetId: string;
-  endTimestamp: BigInt;
+  endTimestamp: string;
   id: string;
   multiplier: BigNumber;
   share: BigNumber;

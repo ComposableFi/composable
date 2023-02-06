@@ -242,9 +242,32 @@ const config = {
       financialNftAssetId: "2001",
       minimumStakingAmount: new BigNumber(10),
     },
+    picaPortfolios: [
+      {
+        instanceId: "1",
+        collectionId: "1001",
+        assetId: "2001",
+        endTimestamp: "1675348134561",
+        id: "3",
+        multiplier: new BigNumber(0.01),
+        share: new BigNumber(1234),
+        stake: new BigNumber(1231),
+        unlockPenalty: new BigNumber(0.5),
+      },
+      {
+        instanceId: "123",
+        collectionId: "1001",
+        assetId: "2001",
+        endTimestamp: "1695348134561",
+        id: "132",
+        multiplier: new BigNumber(0.01),
+        share: new BigNumber(4321),
+        stake: new BigNumber(1231),
+        unlockPenalty: new BigNumber(0.5),
+      },
+    ],
   },
 };
-
 export default config;
 
 export const getNetwork = (networkId: NetworkId) =>

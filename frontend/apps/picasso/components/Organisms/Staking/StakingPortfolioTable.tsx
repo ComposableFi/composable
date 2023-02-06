@@ -8,14 +8,16 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Typography,
   useTheme,
 } from "@mui/material";
 import { TokenAsset } from "@/components";
-import { humanBalance } from "shared";
 import { Add } from "@mui/icons-material";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { RenewModal } from "@/components/Organisms/Staking/RenewModal";
 import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
+import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscovery";
+import { getPicassoTokenById } from "@/stores/defi/polkadot/tokens/utils";
 
 export const PortfolioRow = ({
   portfolio,
@@ -25,31 +27,70 @@ export const PortfolioRow = ({
   onSelectToken: (collectionId: string, instanceId: string) => void;
 }) => {
   const theme = useTheme();
-  const { isExpired, portfolioDate } = useExpiredPortfolio(portfolio);
+  const { isExpired, expiredDate } = useExpiredPortfolio(portfolio);
+  const picaPrice = usePicaPriceDiscovery();
+  const price = useMemo(() => {
+    if (picaPrice.gte(0)) {
+      const stakedPrice = portfolio.stake.multipliedBy(picaPrice);
+
+      return `(~$${stakedPrice.toFormat(2)})`;
+    }
+
+    return "";
+  }, [picaPrice, portfolio.stake]);
+  const asset = useMemo(
+    () => getPicassoTokenById(portfolio.collectionId),
+    [portfolio.collectionId]
+  );
+
+  if (!asset) {
+    throw new Error("No asset found");
+    return null;
+  }
+
   return (
     <TableRow>
       <TableCell>
-        <TokenAsset tokenId={"pica"} label={`fNFT ${portfolio.instanceId}`} />
+        <TokenAsset
+          tokenId={asset.id}
+          label={`${asset.symbol} ${portfolio.instanceId}`}
+        />
       </TableCell>
-      <TableCell>{humanBalance(portfolio.stake)}</TableCell>
-      <TableCell>{portfolioDate}</TableCell>
-      <TableCell>{`${portfolio.multiplier.toFixed(2)}%`}</TableCell>
-      <TableCell>≈{portfolio.share.toFixed(2)}</TableCell>
+      <TableCell size="medium">
+        <Box display="flex" gap={1}>
+          <Typography variant="body2" color="text.primary">
+            {portfolio.stake.toFormat()} $PICA
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {price}
+          </Typography>
+        </Box>
+      </TableCell>
+      <TableCell>{expiredDate}</TableCell>
       <TableCell>
-        {!isExpired && (
-          <Button
-            variant="outlined"
-            size="small"
-            sx={{
-              minWidth: theme.spacing(6),
-            }}
-            onClick={() => {
-              onSelectToken(portfolio.collectionId, portfolio.instanceId);
-            }}
-          >
-            <Add />
-          </Button>
-        )}
+        <Typography
+          variant="body2"
+          color={isExpired ? "warning.main" : "success.main"}
+        >
+          {`${portfolio.multiplier.toFixed(2)}%`}
+        </Typography>
+      </TableCell>
+      <TableCell>
+        <Button
+          variant="outlined"
+          size="small"
+          sx={{
+            minWidth: theme.spacing(5),
+            width: theme.spacing(5),
+            height: theme.spacing(5),
+            padding: 0,
+          }}
+          onClick={() => {
+            onSelectToken(portfolio.collectionId, portfolio.instanceId);
+          }}
+        >
+          <Add />
+        </Button>
       </TableCell>
     </TableRow>
   );
@@ -71,11 +112,10 @@ export const StakingPortfolioTable = ({
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>fNFT ID</TableCell>
-              <TableCell>Locked PICA</TableCell>
-              <TableCell>Expiry Date</TableCell>
-              <TableCell>Multiplier</TableCell>
-              <TableCell>Your xPICA</TableCell>
+              <TableCell>fNFTID</TableCell>
+              <TableCell>Locked $PICA</TableCell>
+              <TableCell>Locked until</TableCell>
+              <TableCell>APR</TableCell>
               <TableCell></TableCell>
             </TableRow>
           </TableHead>

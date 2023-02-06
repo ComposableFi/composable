@@ -110,7 +110,7 @@ export const RenewModal: FC<{
     <Modal open={open} dismissible onClose={onClose} maxWidth="md">
       <Stack gap={4}>
         <Typography variant="h5" textAlign="center" marginBottom={4}>
-          Renew staking period
+          Add to staking period
         </Typography>
         <Stack gap={1.5}>
           <TextWithTooltip

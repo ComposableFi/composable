@@ -370,10 +370,11 @@ const switchOverrides: Partial<OverridesStyleRules> = {
 const chipOverrides: Partial<OverridesStyleRules> = {
   styleOverrides: {
     root: {
-      padding: "0.4rem",
-      borderRadius: "0.5rem",
+      padding: theme.spacing(1, 1.5),
+      borderRadius: "0.75rem",
       fontFamily: '"Be Vietnam Pro"',
-      fontSize: "1rem",
+      fontSize: "1.125rem",
+      height: theme.spacing(5),
       backgroundColor: "rgba(255, 133, 0, 0.1)",
       color: brandPalette.warning.main,
       "& .MuiChip-icon": {
@@ -392,9 +393,13 @@ const chipOverrides: Partial<OverridesStyleRules> = {
         color: brandPalette.error.main,
       },
       "&.MuiChip-colorWarning": {
-        backgroundColor: "rgba(197, 154, 4, 0.3)",
+        backgroundColor: "rgba(197, 154, 4, 0.1)",
         color: brandPalette.warning.main,
       },
+    },
+    label: {
+      padding: 0,
+      display: "block",
     },
   },
 };
@@ -585,7 +590,7 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           },
         },
         outlined: {
-          border: `1px solid ${brandPalette.primary.main}`,
+          border: `1px solid ${brandPalette.primary.light}`,
           "& img": {
             mixBlendMode: "luminosity",
           },

@@ -1,6 +1,6 @@
 import { PortfolioItem } from "@/stores/defi/polkadot/stakingRewards/slice";
 import { useMemo } from "react";
-import { Typography } from "@mui/material";
+import { Chip } from "@mui/material";
 import { Falsy, formatDate } from "shared";
 
 export const useExpiredPortfolio = (portfolio: PortfolioItem | Falsy) => {
@@ -12,21 +12,17 @@ export const useExpiredPortfolio = (portfolio: PortfolioItem | Falsy) => {
     return endDate.getTime() - now.getTime() < 0;
   }, [portfolio]);
 
-  const portfolioDate = useMemo(() => {
+  const expiredDate = useMemo(() => {
     if (!portfolio) return null;
     const endDate = new Date(Number(portfolio?.endTimestamp.toString()));
     if (isExpired) {
-      return (
-        <Typography color="error" variant="body2">
-          Expired
-        </Typography>
-      );
+      return <Chip color="warning" label="No lock period" />;
     }
-    return <Typography variant="body2">{formatDate(endDate)}</Typography>;
+    return <Chip color="success" label={formatDate(endDate)} />;
   }, [isExpired, portfolio]);
 
   return {
     isExpired,
-    portfolioDate,
+    expiredDate,
   };
 };

@@ -9,12 +9,12 @@ import {
 import { AlertBox, TokenAsset } from "@/components";
 import { humanBalance } from "shared";
 import { WarningAmberRounded } from "@mui/icons-material";
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import { useStakingRewards } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewards";
-import { useStore } from "@/stores/root";
-import BigNumber from "bignumber.js";
 import { PortfolioItem } from "@/stores/defi/polkadot/stakingRewards/slice";
 import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
+import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscovery";
+import { getPicassoTokenById } from "@/stores/defi/polkadot/tokens/utils";
 
 const BurnCheckboxItem = ({
   portfolioItem,
@@ -26,14 +26,16 @@ const BurnCheckboxItem = ({
   onSelectUnstakeToken: (collectionId: string, instanceId: string) => void;
 }) => {
   const theme = useTheme();
-  const pair = `fNFT ${portfolioItem.instanceId}`;
-  const prices = useStore((state) => state.oracle.prices);
-  const fnftPrice = new BigNumber(portfolioItem.stake).multipliedBy(
-    new BigNumber(
-      prices[Number(portfolioItem.assetId)]?.price.toString() ?? "0"
-    )
-  );
+  const token = useMemo(() => {
+    return getPicassoTokenById(portfolioItem.collectionId);
+  }, [portfolioItem.collectionId]);
+  const picaPrice = usePicaPriceDiscovery();
+  const fnftPrice = useMemo(() => {
+    return picaPrice.multipliedBy(portfolioItem.stake);
+  }, [picaPrice, portfolioItem.stake]);
 
+  if (!token) return null;
+  const label = `${token?.symbol} ${portfolioItem.instanceId}`;
   return (
     <div key={portfolioItem.id}>
       <Button
@@ -63,7 +65,7 @@ const BurnCheckboxItem = ({
                 selectedToken[1] == portfolioItem.instanceId
               }
             />
-            <TokenAsset tokenId={"pica"} label={pair} />
+            <TokenAsset tokenId={token.id} label={label} />
           </Stack>
           <Stack direction="row" gap={1}>
             <Typography variant="body2">
@@ -91,30 +93,6 @@ export const BurnCheckboxList: FC<{
   unstakeTokenId,
 }) => {
   const { stakingPortfolio } = useStakingRewards();
-  // TODO: Price fetch for assets was used from oracle, needs to change to coingecko
-  // const subscribePriceCallback = useCallback(
-  //   (assetId: string) =>
-  //     callbackGate(
-  //       (api, id) => subscribeAssetPrice(api.createType("CurrencyId", id), api),
-  //       parachainApi,
-  //       assetId
-  //     ),
-  //   [parachainApi]
-  // );
-  //
-  // useEffect(() => {
-  //   const unsub = stakingPortfolio.map((portfolio) =>
-  //     subscribePriceCallback(portfolio.assetId)
-  //   );
-  //
-  //   return () => {
-  //     unsub.forEach(
-  //       (unsubscribeFunction) =>
-  //         typeof unsubscribeFunction === "function" && unsubscribeFunction?.()
-  //     );
-  //   };
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [stakingPortfolio]);
 
   const isSelected =
     unstakeTokenId[0].length > 0 && unstakeTokenId[1].length > 0;

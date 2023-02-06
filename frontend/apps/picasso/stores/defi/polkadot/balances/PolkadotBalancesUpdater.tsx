@@ -53,6 +53,7 @@ const PolkadotBalancesUpdater = () => {
     if (parachainProviders.picasso.parachainApi) {
       picassoAssetsList(parachainProviders.picasso.parachainApi).then(
         (picaAssetMetadataList) => {
+          console.dir(JSON.parse(JSON.stringify(picaAssetMetadataList)));
           updateTokens(picaAssetMetadataList, [], null);
         }
       );
