@@ -145,10 +145,10 @@ jobs:
           nix show-config
           NIX_DEBUG_COMMAND="" && [[ $ACTIONS_RUNNER_DEBUG = "true" ]] && NIX_DEBUG_COMMAND='--print-build-logs --debug --show-trace --verbose'
           nix flake show --allow-import-from-derivation --fallback --keep-failed ${NIX_DEBUG_COMMAND}
-      - name: Build all-ci-packages 
+      - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-ci-packages
+          command: nix -- build .#all
       - name: List built results 
         run: |
           ls result
@@ -264,10 +264,10 @@ jobs:
           nix --version
           nix show-config
           nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
-      - name: Build all-ci-packages 
+      - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-ci-packages
+          command: nix -- build .#all
       - name: List built results 
         run: |
           ls result
@@ -288,22 +288,6 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: devnet-dali
           artifact: devnet-dali:latest
-      - name: Publish devnet-dali-bridge to docker hub
-        uses: "./.github/templates/docker-publish"
-        with:
-          image_path: result/docker-image-devnet-dali-bridge.tar.gz
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: devnet-dali-bridge
-          artifact: devnet-dali-bridge:latest
-      - name: Publish devnet-dali-bridge-mmr to docker hub
-        uses: "./.github/templates/docker-publish"
-        with:
-          image_path: result/docker-image-devnet-dali-bridge-mmr.tar.gz
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: devnet-dali-bridge-mmr
-          artifact: devnet-dali-bridge-mmr:latest
       - name: Publish hyperspace-dali to docker hub
         uses: "./.github/templates/docker-publish"
         with:
@@ -457,10 +441,10 @@ jobs:
           nix --version
           nix show-config
           nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
-      - name: Build all-ci-packages 
+      - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-ci-packages
+          command: nix -- build .#all
       - name: List built results 
         run: |
           ls result

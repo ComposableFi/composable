@@ -1,48 +1,46 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }: {
     packages = {
-      all-ci-packages = pkgs.linkFarmFromDrvs "all-ci-packages"
+      all = pkgs.linkFarmFromDrvs "all-ci-packages"
         (with self'.packages;
           [
-            cargo-fmt-check
+            acala-node
+            benchmarks-check
+            bifrost-node
             cargo-clippy-check
             cargo-deny-check
+            cargo-fmt-check
             cargo-udeps-check
-            taplo-check
-            prettier-check
-            nixfmt-check
+            check-composable-benchmarks-ci
+            check-dali-benchmarks-ci
+            check-dali-integration-tests
+            check-picasso-benchmarks-ci
+            check-picasso-integration-tests
+            cmc-api
+            cmc-api-image
+            composable-bench-node
+            composable-node
+            dali-subxt-client
             deadnix-check
-            spell-check
+            devnet-dali
+            devnet-dali-complete
+            devnet-dali-image
+            devnet-initialize-script-picasso-persistent
+            devnet-integration-tests
+            devnet-picasso-complete
             docs-static
             frontend-static
             hadolint-check
-            benchmarks-check
-            unit-tests
-            composable-node
-            composable-bench-node
-            polkadot-node
-            statemine-node
-            bifrost-node
-            acala-node
-            dali-subxt-client
-            zombienet
-            devnet-initialize-script-picasso-persistent
-            devnet-dali-complete
-            devnet-picasso-complete
-            devnet-dali
-            check-dali-benchmarks-ci
-            check-picasso-benchmarks-ci
-            check-composable-benchmarks-ci
-            cmc-api
-            cmc-api-image
-            check-dali-integration-tests
-            check-picasso-integration-tests
-            devnet-integration-tests
             hyperspace-dali
             hyperspace-dali-image
-            devnet-dali-image
-            devnet-dali-bridge-image
-            devnet-dali-bridge-mmr-image
+            nixfmt-check
+            polkadot-node
+            prettier-check
+            spell-check
+            statemine-node
+            taplo-check
+            unit-tests
+            zombienet
           ] ++ (if system == "x86_64-linux" then
             [ devnet-centauri ]
           else
