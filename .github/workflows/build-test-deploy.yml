@@ -473,7 +473,7 @@ jobs:
         run: |  
           nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils nixpkgs.gnumake
+          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils nixpkgs.gnumake nixpkgs.python311
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
