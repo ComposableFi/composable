@@ -422,19 +422,6 @@ jobs:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-      - name: Nix flake show
-        run: |
-          nix --version
-          nix show-config
-          nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
-      - name: Build all packages 
-        uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#all
-      - name: List built results 
-        run: |
-          ls result
-          tree result -L 3
       - name: Devnet integration tests
         run: |
           nix run .#devnet-integration-tests
