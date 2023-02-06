@@ -83,9 +83,9 @@ use alloc::{
 use composable_support::abstractions::utils::increment::Increment;
 use cosmwasm_vm::{
 	cosmwasm_std::{
-		Addr, Attribute as CosmwasmEventAttribute, Binary as CosmwasmBinary, BlockInfo, Coin,
-		ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env, Event as CosmwasmEvent,
-		MessageInfo, Timestamp, TransactionInfo,
+		Addr, Attribute as CosmwasmEventAttribute, Binary as CosmwasmBinary, BlockInfo,
+		CodeInfoResponse, Coin, ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env,
+		Event as CosmwasmEvent, MessageInfo, Timestamp, TransactionInfo,
 	},
 	executor::{cosmwasm_call, QueryCall, QueryResponse},
 	system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
@@ -743,10 +743,9 @@ impl<T: Config> Pallet<T> {
 						.map_err(|_| Error::<T>::CodeNotFound)?;
 					let deposit = code.len().saturating_mul(T::CodeStorageByteDeposit::get() as _);
 					let _ = T::NativeAsset::unreserve(&code_info.creator, deposit.saturated_into());
-					let code_hash = sp_core::hashing::sha2_256(&code);
 					PristineCode::<T>::remove(info.code_id);
 					InstrumentedCode::<T>::remove(info.code_id);
-					CodeHashToId::<T>::remove(code_hash);
+					CodeHashToId::<T>::remove(code_info.pristine_code_hash);
 					// Code is unused after this point, so it can be removed
 					*entry = None;
 				}
@@ -1227,6 +1226,11 @@ impl<T: Config> Pallet<T> {
 		Ok(T::Assets::balance(asset, account).into())
 	}
 
+	pub(crate) fn do_supply(denom: String) -> Result<u128, Error<T>> {
+		let asset = Self::cosmwasm_asset_to_native_asset(denom)?;
+		Ok(T::Assets::total_issuance(asset).into())
+	}
+
 	/// Execute a transfer of funds between two accounts.
 	pub(crate) fn do_transfer(
 		from: &AccountIdOf<T>,
@@ -1344,6 +1348,15 @@ impl<T: Config> Pallet<T> {
 		contract_info_response.pinned = pinned;
 		contract_info_response.ibc_port = ibc_port;
 		Ok(contract_info_response)
+	}
+
+	pub(crate) fn do_query_code_info(code_id: u64) -> Result<CodeInfoResponse, CosmwasmVMError<T>> {
+		let code_info = CodeIdToInfo::<T>::get(code_id).ok_or(Error::<T>::CodeNotFound)?;
+		let mut code_info_response = CodeInfoResponse::default();
+		code_info_response.code_id = code_id;
+		code_info_response.creator = Pallet::<T>::account_to_cosmwasm_addr(code_info.creator);
+		code_info_response.checksum = code_info.pristine_code_hash.as_ref().into();
+		Ok(code_info_response)
 	}
 
 	pub(crate) fn do_continue_query<'a>(

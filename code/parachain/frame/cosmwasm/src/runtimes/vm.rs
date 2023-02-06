@@ -395,7 +395,8 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 	}
 
 	fn supply(&mut self, denom: String) -> Result<Coin, Self::Error> {
-		todo!()
+		let amount = Pallet::<T>::do_supply(denom.clone())?;
+		Ok(Coin { denom, amount: amount.into() })
 	}
 
 	fn query_contract_info(
@@ -410,7 +411,8 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		code_id: u64, // TODO(aeryz): CosmwasmCodeId
 	) -> Result<CodeInfoResponse, Self::Error> {
-		todo!()
+		log::debug!(target: "runtime::contracts", "query_code_info");
+		Pallet::<T>::do_query_code_info(code_id)
 	}
 
 	fn debug(&mut self, message: Vec<u8>) -> Result<(), Self::Error> {
