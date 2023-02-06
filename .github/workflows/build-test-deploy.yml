@@ -144,7 +144,8 @@ jobs:
         run: |
           nix --version
           nix show-config
-          nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
+          nix flake show --allow-import-from-derivation --fallback --keep-failed ${{ vars.ACTIONS_RUNNER_DEBUG && '--show-trace --debug --print-build-logs' || ' ' }}
+        # Ugly conditional syntax above ^ https://github.com/actions/runner/issues/409#issuecomment-752775072
       - name: Build all-ci-packages 
         uses: "./.github/templates/watch-exec"
         with:
@@ -430,7 +431,7 @@ jobs:
   test-subsquid:
     name: Test Subquid [FLAKY]
     needs:
-      - privilege-check
+      - lfs-check
     runs-on:
       - self-hosted
       - linux

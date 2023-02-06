@@ -12,6 +12,7 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # Ugly conditional syntax below v https://github.com/actions/runner/issues/409#issuecomment-752775072
     - run: |
         # Marker status code in case of network failure.
         STATUS_TRANSIENT_FAILURE=200
@@ -19,8 +20,8 @@ runs:
         RETRIES=5               
         INPUTS_COMMAND="${{ inputs.command }}"        
         CACHIX="cachix watch-exec --jobs 16 --compression-level ${CACHIX_COMPRESSION_LEVEL?} composable-community"
-        HAPPY_CMD="${CACHIX?} ${INPUTS_COMMAND?} --no-http2 --no-update-lock-file --show-trace -L 2> >(tee --append $LOG_FILE >&2)" 
-        SLOW_CMD="${CACHIX?} ${INPUTS_COMMAND?} --no-http2 --no-update-lock-file --show-trace --fallback -L 2> >(tee --append $LOG_FILE >&2)" 
+        HAPPY_CMD="${CACHIX?} ${INPUTS_COMMAND?} --no-http2 --no-update-lock-file ${{ vars.ACTIONS_RUNNER_DEBUG && '--show-trace --debug --print-build-logs' || ' ' }} -L 2> >(tee --append $LOG_FILE >&2)" 
+        SLOW_CMD="${CACHIX?} ${INPUTS_COMMAND?} --no-http2 --no-update-lock-file --show-trace --fallback -L 2 ${{ vars.ACTIONS_RUNNER_DEBUG && '--show-trace --debug --print-build-logs' || ' ' }} > >(tee --append $LOG_FILE >&2)" 
         
         printf "will try execute '${HAPPY_CMD?}'"
 
