@@ -53,6 +53,12 @@ impl<T: Config> Pallet<T> {
 		ContractToInfo::<T>::get(contract).ok_or(Error::<T>::ContractNotFound)
 	}
 
+	pub(crate) fn canonical_addr_to_account(
+		canonical: Vec<u8>,
+	) -> Result<AccountIdOf<T>, <T as VMPallet>::VmError> {
+		T::AccountToAddr::convert(canonical).map_err(|()| CosmwasmVMError::AccountConversionFailure)
+	}
+
 	/// Try to convert from a CosmWasm address to a native AccountId.
 	pub(crate) fn cosmwasm_addr_to_account(
 		cosmwasm_addr: String,

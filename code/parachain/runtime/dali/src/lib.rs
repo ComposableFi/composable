@@ -34,7 +34,7 @@ mod versions;
 mod weights;
 pub mod xcmp;
 
-use alloc::string::String;
+use alloc::string::{String, ToString};
 use core::str::FromStr;
 pub use versions::*;
 
@@ -1092,29 +1092,37 @@ parameter_types! {
 /// Native <-> Cosmwasm account mapping
 /// TODO(hussein-aitlahcen): Probably nicer to have SS58 representation here.
 pub struct AccountToAddr;
+
 impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		match a.strip_prefix("0x") {
-			Some(account_id) => Ok(<[u8; 32]>::try_from(hex::decode(account_id).map_err(|_| ())?)
-				.map_err(|_| ())?
-				.into()),
-			_ => Err(()),
-		}
+		let account =
+			ibc_primitives::runtime_interface::ss58_to_account_id_32(&a).map_err(|_| ())?;
+		Ok(account.into())
 	}
 }
+
 impl Convert<AccountId, alloc::string::String> for AccountToAddr {
 	fn convert(a: AccountId) -> alloc::string::String {
-		alloc::format!("0x{}", hex::encode(a))
+		let account = ibc_primitives::runtime_interface::account_id_to_ss58(a.into(), 49);
+		String::from_utf8_lossy(account.as_slice()).to_string()
+	}
+}
+
+impl Convert<Vec<u8>, Result<AccountId, ()>> for AccountToAddr {
+	fn convert(a: Vec<u8>) -> Result<AccountId, ()> {
+		Ok(<[u8; 32]>::try_from(a).map_err(|_| ())?.into())
 	}
 }
 
 /// Native <-> Cosmwasm asset mapping
 pub struct AssetToDenom;
+
 impl Convert<alloc::string::String, Result<CurrencyId, ()>> for AssetToDenom {
 	fn convert(currency_id: alloc::string::String) -> Result<CurrencyId, ()> {
 		core::str::FromStr::from_str(&currency_id).map_err(|_| ())
 	}
 }
+
 impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
 	fn convert(CurrencyId(currency_id): CurrencyId) -> alloc::string::String {
 		alloc::format!("{}", currency_id)

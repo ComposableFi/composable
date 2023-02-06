@@ -18,15 +18,19 @@ in with prelude; rec {
 
   mkBidirectionalChannel = a: b: (mkChannel a b) ++ (mkChannel b a);
 
-  mkCollator = { name ? "alice", command, rpc_port ? null, ws_port ? null }:
+  mkCollator = { name ? "alice", command, rpc_port ? null, ws_port ? null
+    , rust_log_add ? "" }:
     {
       command = command;
-      args =
-        [ "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write" ];
+      args = [
+        "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"
+        "--enable-offchain-indexing=true"
+      ];
       env = [{
         name = "RUST_LOG";
         value =
-          "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace";
+          "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,"
+          + (if rust_log_add != null then rust_log_add else "");
       }];
       name = name;
       validator = true;
@@ -34,13 +38,12 @@ in with prelude; rec {
     // optionalAttrs (ws_port != null) { inherit ws_port; };
 
   mkParachain = { command, rpc_port ? 32200, ws_port ? 9988, chain ? "dali-dev"
-    , names ? default-node-names, collators ? 2, id ? 2087 }:
+    , names ? default-node-names, collators ? 2, id ? 2087, rust_log_add ? null
+    }:
     let
-      generated = lib.lists.zipListsWith (_increment: name:
-        mkCollator {
-          inherit command;
-          inherit name;
-        }) (lib.lists.range 0 (collators - 1)) (builtins.tail names);
+      generated = lib.lists.zipListsWith
+        (_increment: name: mkCollator { inherit command name rust_log_add; })
+        (lib.lists.range 0 (collators - 1)) (builtins.tail names);
 
     in {
       add_to_genesis = true;
@@ -49,9 +52,7 @@ in with prelude; rec {
       id = id;
       collators = [
         (mkCollator {
-          inherit command;
-          inherit rpc_port;
-          inherit ws_port;
+          inherit command rust_log_add rpc_port ws_port;
           name = builtins.head names;
         })
       ] ++ generated;
