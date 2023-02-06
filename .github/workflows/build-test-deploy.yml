@@ -101,15 +101,13 @@ jobs:
     name: Build all packages
     strategy:
       matrix:
-        arch: [x64-monster, arm]
+        arch: [x64, arm]
     needs: 
       - privilege-check
       - lfs-check
     runs-on:
       - self-hosted
-      - linux
-      - ${{ matrix.arch }}
-      - sre
+      - ${{ matrix.arch }}-monster
     concurrency:
       group: ${{ github.workflow }}-build-all-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -158,9 +156,7 @@ jobs:
       name: "Effect gate, automatically merged if passed"
       runs-on:
       - self-hosted
-      - linux
       - x64
-      - sre
       needs:
         - privilege-check
         - lfs-check
@@ -221,14 +217,12 @@ jobs:
     name: Push docker images
     strategy:
       matrix:
-        arch: [x64-monster, arm]
+        arch: [x64, arm]
     needs: 
       - effects-gate
     runs-on:
       - self-hosted
-      - linux
       - ${{ matrix.arch }}
-      - sre
     concurrency:
       group: ${{ github.workflow }}-push-docker-images-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -308,9 +302,7 @@ jobs:
       - all-packages
     runs-on:
       - self-hosted
-      - linux
       - x64
-      - sre
     container:
       image: node:latest
     steps:
@@ -354,9 +346,7 @@ jobs:
       - all-packages
     runs-on:
       - self-hosted
-      - linux
       - x64
-      - sre
     container:
       image: node:latest
     steps:
@@ -403,9 +393,7 @@ jobs:
         arch: [x64, arm]
     runs-on:
       - self-hosted
-      - linux
       - ${{ matrix.arch }}
-      - sre
     concurrency:
       group: ${{ github.workflow }}-devnet-integration-tests-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -463,9 +451,7 @@ jobs:
         arch: [x64, arm]
     runs-on:
       - self-hosted
-      - linux
       - ${{ matrix.arch }}
-      - sre
     concurrency:
       group: ${{ github.workflow }}-test-subsquid-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -494,9 +480,7 @@ jobs:
         arch: [x64, arm]
     runs-on:
       - self-hosted
-      - linux
       - ${{ matrix.arch }}
-      - sre
     concurrency:
       group: ${{ github.workflow }}-package-subsquid-processor-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
