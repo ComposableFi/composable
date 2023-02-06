@@ -10,7 +10,6 @@
           --chain="${chainspec}" \
           --execution=wasm \
           --wasm-execution=compiled \
-          --wasm-instantiation-strategy=legacy-instance-reuse \
           --pallet="*" \
           --extrinsic="*" \
           --steps=2 \
@@ -23,7 +22,6 @@
           --chain="${chain}-dev" \
           --execution=wasm \
           --wasm-execution=compiled \
-          --wasm-instantiation-strategy=legacy-instance-reuse \
           --pallet="*" \
           --extrinsic="*" \
           --steps=${builtins.toString steps} \
