@@ -26,16 +26,8 @@
           default = let nixpkgs = self.inputs.nixpkgs;
           in import ../devnets/devnet.nix {
             inherit nixpkgs gce-input domainSuffix certificateEmail;
-            devnet-dali = pkgs.callPackage devnetTools.mk-devnet {
-              inherit (self'.packages)
-                polkadot-launch composable-node polkadot-node;
-              chain-spec = "dali-dev";
-            };
-            devnet-picasso = pkgs.callPackage devnetTools.mk-devnet {
-              inherit (self'.packages)
-                polkadot-launch composable-node polkadot-node;
-              chain-spec = "picasso-dev";
-            };
+            devnet-dali = self'.packages.devnet-dali;
+            devnet-picasso = self'.packages.devnet-picasso;
             docs = self'.packages.docs-static;
             rev = builtins.getEnv "DEPLOY_REVISION";
           };

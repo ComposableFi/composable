@@ -16,11 +16,7 @@
           devnet-b = packages.zombienet-dali-centauri-b;
         });
 
-      # Picasso devnet
-      devnet-picasso = (pkgs.callPackage devnetTools.mk-devnet {
-        inherit (packages) polkadot-launch composable-node polkadot-node;
-        chain-spec = "picasso-dev";
-      }).script;
+      devnet-picasso = self'.packages.zombienet-rococo-local-picasso-dev;
 
       devnet-container = devnetTools.mk-devnet-container {
         container-tools = devnetTools.withDevNetContainerTools;
