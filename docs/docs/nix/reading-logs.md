@@ -4,7 +4,7 @@ Reading CI logs may be a bit confusing if you are not yet used to how Nix builds
 
 One of Nix goals is to **never build the same thing twice**. It works like this for each package:
 
-1. Create the `derivation`, which is a pure function from inputs (the source code + all dependencies) to an output (example: the `composable-node` binary).
+1. Create the **derivation**, which is a pure function from inputs (the source code + all dependencies) to an output (example: the `composable-node` binary).
 2. Get the **hash** of this derivation.
 3. Look at our **cache servers**. Have we already built a derivation with this hash?
   - If we have already built this, we **copy the result from the cache server**.
