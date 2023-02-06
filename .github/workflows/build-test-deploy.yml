@@ -315,7 +315,7 @@ jobs:
       
 
   # NOTE: Everything below this line is not built deterministically and therefore considered flaky.
-  # Flaky jobs are not included in the effects gate
+  # [FLAKY] jobs are not included in the effects gate
 
 
   deploy-pablo-preview:
