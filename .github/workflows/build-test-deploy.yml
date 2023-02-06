@@ -187,8 +187,6 @@ jobs:
       matrix:
         arch: [x64-monster, arm]
     needs: 
-      - privilege-check
-      - lfs-check
       - effects-gate
     runs-on:
       - self-hosted
@@ -287,8 +285,6 @@ jobs:
   deploy-pablo-preview:
     name: "Deploy Pablo Preview [FLAKY]"
     needs:
-      - privilege-check
-      - lfs-check
       - all-packages
     runs-on:
       - self-hosted
@@ -335,8 +331,6 @@ jobs:
   deploy-picasso-preview:
     name: "Deploy Picasso Preview [FLAKY]"
     needs:
-      - privilege-check
-      - lfs-check
       - all-packages
     runs-on:
       - self-hosted
@@ -383,8 +377,6 @@ jobs:
   devnet-integration-tests:
     name: Devnet integration tests [FLAKY]
     needs: 
-      - privilege-check
-      - lfs-check
       - all-packages
     runs-on: ubuntu-latest
     concurrency:
@@ -438,7 +430,7 @@ jobs:
   test-subsquid:
     name: Test Subquid [FLAKY]
     needs:
-      - check-privilege
+      - privilege-check
     runs-on:
       - self-hosted
       - linux
@@ -464,7 +456,6 @@ jobs:
     name: Package Subsquid Processor [FLAKY]
     needs:
       - test-subsquid
-      - check-privilege
     runs-on:
       - self-hosted
       - linux
