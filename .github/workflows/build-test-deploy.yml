@@ -41,7 +41,7 @@ jobs:
     continue-on-error: false
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.workflow }}-check-lfs-${{ github.event.pull_request.title }}
+      group: ${{ github.workflow }}-lfs-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
@@ -111,7 +111,7 @@ jobs:
       - ${{ matrix.arch }}
       - sre
     concurrency:
-      group: ${{ github.workflow }}-all-ci-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
+      group: ${{ github.workflow }}-build-all-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:
       - name: Set up Nix
@@ -414,7 +414,14 @@ jobs:
     name: Devnet integration tests [FLAKY]
     needs: 
       - all-packages
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [x64, arm]
+    runs-on:
+      - self-hosted
+      - linux
+      - ${{ matrix.arch }}
+      - sre
     concurrency:
       group: ${{ github.workflow }}-devnet-integration-tests-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -467,11 +474,17 @@ jobs:
     name: Test Subquid [FLAKY]
     needs:
       - lfs-check
+    strategy:
+      matrix:
+        arch: [x64, arm]
     runs-on:
       - self-hosted
       - linux
-      - x64
+      - ${{ matrix.arch }}
       - sre
+    concurrency:
+      group: ${{ github.workflow }}-test-subsquid-${{ matrix.arch }}-${{ github.event.pull_request.title }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
         with:
@@ -488,17 +501,20 @@ jobs:
         run: npm run test
         working-directory: subsquid
 
-  subsquid-processor:
+  package-subsquid-processor:
     name: Package Subsquid Processor [FLAKY]
     needs:
       - test-subsquid
+    strategy:
+      matrix:
+        arch: [x64, arm]
     runs-on:
       - self-hosted
       - linux
-      - x64
+      - ${{ matrix.arch }}
       - sre
     concurrency:
-      group: ${{ github.workflow }}-package-subsquid-processor-${{ github.event.pull_request.title }}
+      group: ${{ github.workflow }}-package-subsquid-processor-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3

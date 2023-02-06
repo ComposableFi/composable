@@ -21,7 +21,7 @@ runs:
         CACHIX="cachix watch-exec --jobs 16 --compression-level ${CACHIX_COMPRESSION_LEVEL?} composable-community"
         NIX_DEBUG_COMMAND="" && [[ $ACTIONS_RUNNER_DEBUG = "true" ]] && NIX_DEBUG_COMMAND='--print-build-logs --debug --show-trace --verbose'
         HAPPY_CMD="${CACHIX?} ${INPUTS_COMMAND?} --no-http2 --no-update-lock-file ${NIX_DEBUG_COMMAND} -L 2> >(tee --append $LOG_FILE >&2)" 
-        SLOW_CMD="${CACHIX?} ${INPUTS_COMMAND?} --no-http2 --no-update-lock-file --show-trace --fallback -L 2 ${{ vars.ACTIONS_RUNNER_DEBUG && '--show-trace --debug --print-build-logs' || ' ' }} > >(tee --append $LOG_FILE >&2)" 
+        SLOW_CMD="${CACHIX?} ${INPUTS_COMMAND?} --no-http2 --no-update-lock-file --show-trace --fallback -L 2 ${NIX_DEBUG_COMMAND} > >(tee --append $LOG_FILE >&2)" 
         
         printf "will try execute '${HAPPY_CMD?}'"
 
