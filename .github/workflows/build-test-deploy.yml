@@ -153,7 +153,19 @@ jobs:
         run: |
           ls result
           tree result -L 3
-
+      - name: Test push docs
+        uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#docs-static
+          working-directory: ./docs
+      - uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DOCS_COMPOSABLE_FINANCE }}
+          projectId: composable-docs
+          entrypoint: docs/
+          channelId: ${{ github.event_name == 'push' && github.ref_name == 'main' && 'live' }}
+  
   effects-gate:
       name: "Effect gate, automatically merged if passed"
       runs-on:
