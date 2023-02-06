@@ -24,7 +24,7 @@ impl<T: Config> Pallet<T> {
 			return Err(Error::<T>::InvalidSalt)
 		}
 
-		let module_hash = sp_core::hashing::sha2_256(b"module");
+		let module_hash = sp_io::hashing::sha2_256(b"module");
 
 		let mut key = Vec::<u8>::from(module_hash);
 		key.extend_from_slice(b"wasm\0");
@@ -37,7 +37,7 @@ impl<T: Config> Pallet<T> {
 		key.extend_from_slice(&(message.len() as u64).to_be_bytes());
 		key.extend_from_slice(message);
 
-		let address = sp_core::hashing::sha2_256(&key).into();
+		let address = sp_io::hashing::sha2_256(&key).into();
 		Pallet::<T>::canonical_addr_to_account(address).map_err(|_| Error::<T>::InvalidAccount)
 	}
 

@@ -513,6 +513,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 			VmGas::ContinueReply => T::WeightInfo::continue_reply().ref_time(),
 			VmGas::QueryRaw => T::WeightInfo::query_raw().ref_time(),
 			VmGas::QueryContractInfo => T::WeightInfo::query_contract_info().ref_time(),
+			VmGas::QueryCodeInfo => T::WeightInfo::query_code_info().ref_time(),
 			_ => 1_u64,
 			// NOTE: **Operations that require no charge**: Debug,
 			// NOTE: **Unsupported operations**:

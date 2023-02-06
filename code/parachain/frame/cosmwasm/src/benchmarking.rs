@@ -637,6 +637,13 @@ benchmarks! {
 		Cosmwasm::<T>::do_query_contract_info(vm.0.data_mut(), contract).unwrap();
 	}
 
+	query_code_info {
+		let sender = create_funded_account::<T>("origin");
+		let _ = create_instantiated_contract::<T>(sender);
+	}: {
+		Cosmwasm::<T>::do_query_code_info(1).unwrap();
+	}
+
 	query_raw {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
