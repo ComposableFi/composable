@@ -7,6 +7,7 @@ import { Box, Grid, Skeleton } from "@mui/material";
 import { StakingPageHeading } from "@/components/Organisms/Staking/StakingPageHeading";
 import { useSubscribeStakingPositions } from "@/defi/polkadot/hooks/stakingRewards/useSubscribeStakingPositions";
 import { subscribePortfolio } from "@/stores/defi/polkadot/stakingRewards/subscribePortfolio";
+import { subscribeClaimableRewards } from "@/stores/defi/polkadot/stakingRewards/subscribeClaimableRewards";
 
 const sxProps = {
   mt: 20,
@@ -15,11 +16,22 @@ export const StakingLayout: FC = ({ children }) => {
   useSubscribeStakingPositions();
   const { parachainApi } = usePicassoProvider();
   const isLoaded = useStore((store) => store.isRewardPoolLoaded);
+  
+  // subscribeRewardPools
   useEffect(() => {
     return subscribeRewardPools(parachainApi);
   }, [parachainApi]);
+  // subscribePortfolio
   useEffect(() => {
     return subscribePortfolio(parachainApi);
+  }, [parachainApi]);
+  // subscribeClaimableRewards
+  useEffect(() => {
+    const unsub = subscribeClaimableRewards(parachainApi);
+
+    return () => {
+      unsub?.then((f) => f?.());
+    };
   }, [parachainApi]);
 
   if (!isLoaded || !parachainApi) {

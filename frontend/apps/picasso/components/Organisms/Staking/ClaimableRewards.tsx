@@ -4,35 +4,57 @@ import {
   Button,
   Paper,
   Stack,
-  Theme,
   Typography,
   useTheme,
 } from "@mui/material";
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import { TokenAsset } from "@/components";
-
-const boxStyles = (theme: Theme) => ({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "flex-start",
-  border: `1px solid ${alpha(theme.palette.common.white, 0.3)}`,
-  padding: theme.spacing(3),
-  borderRadius: `${theme.shape.borderRadius}px`,
-});
+import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscovery";
+import { useStore } from "@/stores/root";
+import BigNumber from "bignumber.js";
+import { useStakingRewards } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewards";
 
 export const ClaimableRewards: FC<{
   onClaimButtonClick: () => void;
 }> = ({ onClaimButtonClick }) => {
   const theme = useTheme();
-  const claimable = "23,309 PICA";
-  const usdValue = "(~$34,567)";
+  const picaPrice = usePicaPriceDiscovery();
+  const picaToken = useStore((store) => store.substrateTokens.tokens.pica);
+  const allClaimable = useStore((store) => store.claimableRewards);
+  const { stakingPortfolio } = useStakingRewards();
+  const hasClaimable = useMemo(() => {
+    return Object.values(stakingPortfolio).length > 0;
+  }, [stakingPortfolio]);
+  const claimableAmount = useMemo(() => {
+    return Object.values(allClaimable).reduce((acc, currentInstance) => {
+      return acc.plus(
+        currentInstance.reduce((balances, currentAsset) => {
+          if (currentAsset.assetId === "1") {
+            return balances.plus(currentAsset.balance);
+          }
+          return balances;
+        }, new BigNumber(0))
+      );
+    }, new BigNumber(0));
+  }, [allClaimable]);
+
+  const claimable = `${claimableAmount.toFormat(0)} ${picaToken.symbol}`;
+  const usdValue = `(~$${claimableAmount
+    .multipliedBy(picaPrice)
+    .toFormat(picaToken.decimalsToDisplay)})`;
+
+  if (!hasClaimable) {
+    return null;
+  }
 
   return (
     <Paper sx={{ padding: theme.spacing(6) }}>
       <Stack gap={6}>
-        <Typography variant="h6">Claimable $PICA Rewards</Typography>
-        <Box
-          display="flex"
+        <Typography variant="h6">
+          Claimable ${picaToken.symbol} Rewards
+        </Typography>
+        <Stack
+          direction="row"
           alignItems="center"
           justifyContent="space-between"
           width="100%"
@@ -46,7 +68,7 @@ export const ClaimableRewards: FC<{
           }}
         >
           <Box>
-            <TokenAsset tokenId={"pica"} label="PICA" />
+            <TokenAsset tokenId={picaToken.id} label={picaToken.symbol} />
           </Box>
           <Box display="flex" alignItems="center" gap={1}>
             <Typography variant="body2">{claimable}</Typography>
@@ -59,9 +81,9 @@ export const ClaimableRewards: FC<{
               {usdValue}
             </Typography>
           </Box>
-        </Box>
+        </Stack>
         <Button
-          variant="outlined"
+          variant="contained"
           color="primary"
           fullWidth
           onClick={onClaimButtonClick}

@@ -40,9 +40,20 @@ export type StakingRewardsSlice = {
   setStakingPositionLoading: (k: boolean) => void;
   stakingPortfolio: StakingPortfolio;
   setStakingPortfolio: (value: StakingPortfolio) => void;
+  setClaimableRewards: (key: string, reward: ClaimableReward) => void;
+  resetClaimableRewards: () => void;
+  claimableRewards: ClaimableRewards;
+  isClaimableLoading: boolean;
+};
+
+export type ClaimableReward = { assetId: string; balance: BigNumber };
+export type ClaimableRewards = {
+  [key in string]: ClaimableReward[];
 };
 const initialState = {
   isRewardPoolLoaded: false,
+  isStakingPositionsLoading: false,
+  isClaimableLoading: false,
   rewardPools: {
     "1": {
       owner: "",
@@ -60,12 +71,13 @@ const initialState = {
     },
   },
   stakingPositions: [],
-  isStakingPositionsLoading: false,
   stakingPortfolio: [],
+  claimableRewards: {},
 };
 
 export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (
-  set
+  set,
+  get
 ) => ({
   ...initialState,
   setRewardPool: (assetId: string, pool: RewardPool) =>
@@ -87,4 +99,27 @@ export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (
     set((state) => {
       state.stakingPortfolio = portfolio;
     }),
+
+  setClaimableRewards: (
+    key: string,
+    reward: {
+      assetId: string;
+      balance: BigNumber;
+    }
+  ) =>
+    set((state) => {
+      state.isClaimableLoading = false;
+      if (Array.isArray(state.claimableRewards[key])) {
+        state.claimableRewards[key] = [...get().claimableRewards[key], reward];
+      }
+
+      state.claimableRewards[key] = [reward];
+    }),
+
+  resetClaimableRewards: () => {
+    set((state) => {
+      state.claimableRewards = {};
+      state.isClaimableLoading = true;
+    });
+  },
 });

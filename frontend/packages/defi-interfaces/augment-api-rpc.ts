@@ -24,7 +24,7 @@ import type {
   u64,
   Vec
 } from "@polkadot/types-codec";
-import { BTreeMap, u128 } from "@polkadot/types-codec";
+import { BTreeMap, Result, u128 } from "@polkadot/types-codec";
 import type { AnyNumber } from "@polkadot/types-codec/types";
 import type { ExtrinsicOrHash, ExtrinsicStatus } from "@polkadot/types/interfaces/author";
 import type { EpochAuthorship } from "@polkadot/types/interfaces/babe";
@@ -96,6 +96,7 @@ import type {
 } from "@polkadot/types/interfaces/system";
 import type { IExtrinsic, Observable } from "@polkadot/types/types";
 import { Asset } from "./assets";
+import { ClaimableAmountError } from "./stakingRewards/types";
 
 export type __AugmentedRpc = AugmentedRpc<() => unknown>;
 
@@ -933,6 +934,16 @@ declare module "@polkadot/rpc-core/types/jsonrpc" {
        * Retrieves the list of RPC methods that are exposed by the node
        **/
       methods: AugmentedRpc<() => Observable<RpcMethods>>;
+    };
+    stakingRewards: {
+      claimableAmount: AugmentedRpc<
+        (
+          fnft_collection_id: u128 | string | Uint8Array,
+          fnft_instance_id: u64 | string
+        ) => Observable<
+          Result<BTreeMap<AssetId, Balance>, ClaimableAmountError>
+        >
+      >;
     };
     syncstate: {
       /**

@@ -1,6 +1,7 @@
 {
   "extends": "tsconfig/nextjs.json",
   "compilerOptions": {
+    "target": "ES2017",
     "allowJs": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,

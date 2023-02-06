@@ -27,7 +27,7 @@ import type {
   u8,
   U8aFixed,
   Vec,
-  WrapperKeepOpaque,
+  WrapperKeepOpaque
 } from "@polkadot/types-codec";
 import type { INumber, ITuple } from "@polkadot/types-codec/types";
 import type { Vote } from "@polkadot/types/interfaces/elections";
@@ -39,7 +39,7 @@ import type {
   Perbill,
   Percent,
   Permill,
-  Perquintill,
+  Perquintill
 } from "@polkadot/types/interfaces/runtime";
 import type { Event } from "@polkadot/types/interfaces/system";
 
