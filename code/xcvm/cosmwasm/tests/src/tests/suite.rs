@@ -682,18 +682,17 @@ mod cross_chain {
 			)
 			.expect("Must be able to build an XCVM program.")
 			.build();
-		let CrossChainDispatchResult { dispatch_data, dispatch_events, relay_data, relay_events } =
-			network
-				.dispatch_and_relay(
-					relayer,
-					relayer_counterparty,
-					alice.clone(),
-					program,
-					[],
-					assets_to_transfer,
-					None,
-				)
-				.expect("Must be able to transfer assets via XCVM");
+		let CrossChainDispatchResult { dispatch_data, relay_data, .. } = network
+			.dispatch_and_relay(
+				relayer,
+				relayer_counterparty,
+				alice.clone(),
+				program,
+				[],
+				assets_to_transfer,
+				None,
+			)
+			.expect("Must be able to transfer assets via XCVM");
 
 		// Source chain, both alice and bob have 0 tokens.
 		assert_eq!(

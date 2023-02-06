@@ -73,7 +73,7 @@ pub fn execute(
 	let token = ensure_owner(deps.as_ref(), &env.contract.address, info.sender.clone())?;
 	match msg {
 		ExecuteMsg::Execute { relayer, program } =>
-			initiate_execution(token, env, relayer, program),
+			initiate_execution(token, deps, env, relayer, program),
 
 		// ExecuteStep should be called by interpreter itself
 		ExecuteMsg::ExecuteStep { step } =>
@@ -108,10 +108,13 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, Con
 /// executed a program if any.
 fn initiate_execution(
 	_: Authenticated,
+	deps: DepsMut,
 	env: Env,
 	relayer: Addr,
 	program: DefaultXCVMProgram,
 ) -> Result<Response, ContractError> {
+	// Reset instruction pointer to zero.
+	IP_REGISTER.save(deps.storage, &0)?;
 	Ok(Response::default()
 		.add_event(
 			Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.start"),
