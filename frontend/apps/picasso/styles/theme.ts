@@ -551,13 +551,22 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     MuiDialog: {
       styleOverrides: {
         paper: {
-          backgroundColor: "rgba(7, 1, 5, 0.8)",
-          backgroundImage:
-            "linear-gradient(180deg, rgba(12, 6, 0, 0.8) 0%, rgba(21, 11, 0, 0.8) 82.99%)",
+          backgroundColor: "transparent",
+          backgroundImage: "none",
           boxShadow: "none",
         },
       },
     },
+    MuiBackdrop: {
+      styleOverrides: {
+        root: {
+          backdropFilter: "blur(16px)",
+          background:
+            "linear-gradient(180deg, rgba(12, 6, 0, 0.8) 0%, rgba(21, 11, 0, 0.8) 82.99%)",
+        },
+      },
+    },
+
     MuiPaper: {
       styleOverrides: {
         root: {
