@@ -195,7 +195,7 @@ Considers some foreign and local assets to be equivalent. Likely should be separ
 
 [CW20 Spec: Fungible Tokens](https://github.com/CosmWasm/cw-plus/blob/main/packages/cw20/README.md)
 
-[RFC013](../../../rfcs/0013-redesign-assets-id-system.md)
+[RFC013](https://github.com/ComposableFi/composable/pull/2954)
 
 https://github.com/CosmWasm/cw-plus/blob/main/packages/cw20/src/denom.rs
 
