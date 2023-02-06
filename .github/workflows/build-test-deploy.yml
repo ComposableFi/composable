@@ -259,7 +259,7 @@ jobs:
       - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all
+          command: nix -- build .#docker-images-to-push
       - name: List built results 
         run: |
           ls result

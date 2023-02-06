@@ -44,6 +44,13 @@
           [ devnet-centauri ]
         else
           [ ])); # TODO: get this list from system-filter
+
+      docker-images-to-push = pkgs.linkFarmFromDrvs "docker-images-to-push"
+        (with self'.packages; [
+          cmc-api-image
+          devnet-dali-image
+          hyperspace-dali-image
+        ]);
     };
   };
 }
