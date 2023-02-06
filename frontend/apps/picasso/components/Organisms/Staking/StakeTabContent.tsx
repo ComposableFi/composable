@@ -15,7 +15,6 @@ import {
 } from "@/components/Organisms/Staking/utils";
 import { pipe } from "fp-ts/lib/function";
 import * as O from "fp-ts/Option";
-import BigNumber from "bignumber.js";
 import { StakeForm } from "@/components/Organisms/Staking/StakeForm";
 
 export const StakeTabContent = () => {
@@ -78,8 +77,6 @@ export const StakeTabContent = () => {
       options={options}
       picaRewardPool={picaRewardPool}
       duration={lockPeriod}
-      onNone={() => new BigNumber(0)}
-      onSome={(x) => x}
       hasRewardPools={hasRewardPools}
       min={minDuration}
       max={maxDuration}

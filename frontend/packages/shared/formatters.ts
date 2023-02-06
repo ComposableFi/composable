@@ -18,12 +18,7 @@ export const dateFromNumber = (timestamp: number | BigInt) => {
 };
 
 export const formatDate = (date: Date) => {
-  return `${date
-    .getDate()
-    .toString()
-    .padStart(2, "0")}/${(date.getMonth() + 1)
-    .toString()
-    .padStart(2, "0")}/${date.getFullYear()}`;
+  return date.toLocaleDateString();
 };
 
 export const formatNumberWithSymbol = (
@@ -36,17 +31,17 @@ export const formatNumberWithSymbol = (
   return formatted.startsWith("-") && symbolEnd
     ? formatted.substring(0, 1) + symbol + formatted.substring(1) + symbolEnd
     : formatted.startsWith("-")
-      ? formatted.substring(0, 1) + symbol + formatted.substring(1)
-      : symbolEnd
-        ? symbol + formatted + symbolEnd
-        : symbol + formatted;
+    ? formatted.substring(0, 1) + symbol + formatted.substring(1)
+    : symbolEnd
+    ? symbol + formatted + symbolEnd
+    : symbol + formatted;
 };
 
 export const formatNumberCompact = (amount: number) => {
   return `${Intl.NumberFormat("en", {
     notation: "compact",
     minimumFractionDigits: 0,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   }).format(amount)}`;
 };
 
@@ -57,7 +52,7 @@ export const formatNumberCompactWithToken = (
   return `${Intl.NumberFormat("en", {
     notation: "compact",
     minimumFractionDigits: 0,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   }).format(amount)} ${TOKENS[tokenId].symbol}`;
 };
 
@@ -67,6 +62,6 @@ export const formatNumberCompactWithSymbol = (
 ) => {
   return `${symbol}${Intl.NumberFormat("en", {
     notation: "compact",
-    minimumFractionDigits: 0
+    minimumFractionDigits: 0,
   }).format(amount)}`;
 };

@@ -29,7 +29,7 @@ export const PortfolioRow = ({
   const theme = useTheme();
   const { isExpired, expiredDate } = useExpiredPortfolio(portfolio);
   const picaPrice = usePicaPriceDiscovery();
-  const price = useMemo(() => {
+  const stakedPrice = useMemo(() => {
     if (picaPrice.gte(0)) {
       const stakedPrice = portfolio.stake.multipliedBy(picaPrice);
 
@@ -44,7 +44,6 @@ export const PortfolioRow = ({
   );
 
   if (!asset) {
-    throw new Error("No asset found");
     return null;
   }
 
@@ -62,7 +61,7 @@ export const PortfolioRow = ({
             {portfolio.stake.toFormat()} $PICA
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {price}
+            {stakedPrice}
           </Typography>
         </Box>
       </TableCell>

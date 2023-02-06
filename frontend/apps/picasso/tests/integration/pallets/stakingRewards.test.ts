@@ -1,8 +1,4 @@
-import {
-  fetchRewardPools,
-  formatDurationOption,
-  transformRewardPool,
-} from "@/defi/polkadot/pallets/StakingRewards";
+import { transformRewardPool } from "@/defi/polkadot/pallets/StakingRewards";
 import BigNumber from "bignumber.js";
 import { ApiPromise } from "@polkadot/api";
 
@@ -32,7 +28,7 @@ describe("Staking reward integration", () => {
   it("transformRewardPool()", () => {
     const output = transformRewardPool(rewardPool);
 
-    expect(output.totalShares).toEqual(new BigNumber(1_0000_0000_000));
+    expect(output.totalSh ares).toEqual(new BigNumber(1_0000_0000_000));
     expect(output.endBlock).toEqual(new BigNumber(0));
   });
   it("fetchRewardPools()", async () => {

@@ -51,8 +51,8 @@ const theme = createTheme({
 
 export const brandPalette = {
   primary: {
-    main: "#FF8500",
-    light: "#F15700",
+    main: "#F15700",
+    light: "#FF8500",
     dark: "#0C0600",
   },
   secondary: {
@@ -278,7 +278,7 @@ const buttonOverrides: Partial<OverridesStyleRules> = {
       },
     },
     containedPrimary: {
-      backgroundColor: brandPalette.primary.light,
+      backgroundColor: brandPalette.primary.main,
       "&:hover": {
         backgroundColor: brandPalette.secondary.main,
       },
@@ -288,11 +288,11 @@ const buttonOverrides: Partial<OverridesStyleRules> = {
       },
     },
     outlinedPrimary: {
-      borderColor: brandPalette.primary.light,
+      borderColor: brandPalette.primary.main,
       color: brandPalette.common.white,
       "&:hover": {
         backgroundColor: alpha(brandPalette.primary.main, 0.15),
-        borderColor: brandPalette.primary.light,
+        borderColor: brandPalette.primary.main,
       },
       "&:disabled": {
         borderColor: "#372B1E",
@@ -300,9 +300,9 @@ const buttonOverrides: Partial<OverridesStyleRules> = {
       },
     },
     textPrimary: {
-      color: brandPalette.primary.light,
+      color: brandPalette.primary.main,
       "&:hover": {
-        backgroundColor: alpha(brandPalette.primary.light, 0.05),
+        backgroundColor: alpha(brandPalette.primary.main, 0.05),
       },
       "&:disabled": {
         color: "#372B1E",
@@ -327,8 +327,8 @@ const switchOverrides: Partial<OverridesStyleRules> = {
           "& + .MuiSwitch-track": {
             backgroundColor:
               theme.palette.mode === "dark"
-                ? brandPalette.primary.light
-                : brandPalette.primary.light,
+                ? brandPalette.primary.main
+                : brandPalette.primary.main,
             opacity: 1,
             border: 0,
           },
@@ -590,7 +590,7 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           },
         },
         outlined: {
-          border: `1px solid ${brandPalette.primary.light}`,
+          border: `1px solid ${brandPalette.primary.main}`,
           "& img": {
             mixBlendMode: "luminosity",
           },
@@ -601,7 +601,7 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
       styleOverrides: {
         root: {
           "& .MuiTabs-indicator": {
-            backgroundColor: brandPalette.primary.light,
+            backgroundColor: brandPalette.primary.main,
           },
         },
       },
@@ -634,7 +634,7 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           },
           "&.Mui-selected": {
             color: brandPalette.common.white,
-            borderBottom: `2px solid ${brandPalette.primary.light}`,
+            borderBottom: `2px solid ${brandPalette.primary.main}`,
           },
           "&.Mui-disabled": {
             color: brandPalette.common.white,
@@ -671,10 +671,10 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     MuiLink: {
       styleOverrides: {
         root: {
-          color: brandPalette.primary.light,
+          color: brandPalette.primary.main,
           "&:hover": {
             color: alpha(
-              brandPalette.primary.light,
+              brandPalette.primary.main,
               customThemeOptions.custom.opacity.darker
             ),
           },
@@ -794,7 +794,7 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     MuiSlider: {
       styleOverrides: {
         thumb: {
-          backgroundColor: brandPalette.primary.light,
+          backgroundColor: brandPalette.primary.main,
         },
         mark: {
           width: "2px",
@@ -803,7 +803,10 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           background: alpha(brandPalette.common.white, 0.6),
         },
         rail: {
-          backgroundColor: brandPalette.primary.light,
+          backgroundColor: brandPalette.primary.main,
+        },
+        track: {
+          color: brandPalette.primary.main,
         },
       },
     },

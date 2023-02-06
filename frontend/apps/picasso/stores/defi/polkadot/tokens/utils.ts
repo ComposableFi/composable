@@ -4,6 +4,6 @@ export function getPicassoTokenById(assetId: string) {
   const tokens = useStore.getState().substrateTokens.tokens;
 
   return Object.values(tokens).find(
-    (token) => token.chainId.toString() === assetId
+    (token) => String(token.chainId.picasso) === assetId
   );
 }

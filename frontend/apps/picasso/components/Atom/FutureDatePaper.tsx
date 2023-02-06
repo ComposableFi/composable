@@ -1,30 +1,27 @@
 import { FC, useMemo } from "react";
-import { Paper, Typography } from "@mui/material";
+import { Paper, PaperProps, Typography, TypographyProps } from "@mui/material";
+import { formatDate } from "shared";
 
 export const FutureDatePaper: FC<{
   duration: string;
-}> = ({ duration }) => {
+  TextProps?: TypographyProps;
+  PaperProps?: PaperProps;
+  previousDate?: Date;
+}> = ({ duration, TextProps, PaperProps, previousDate }) => {
   const date = useMemo(() => {
     if (!duration) return null;
     if (duration === "0") return "No lock period";
-    const now = new Date();
-    const target = (() =>
-      new Date(now.setSeconds(now.getSeconds() + parseInt(duration))))();
-    return (
-      target.getDate().toString().padStart(2, "0") +
-      "/" +
-      (target.getMonth() + 1).toString().padStart(2, "0") +
-      "/" +
-      target.getFullYear()
-    );
-  }, [duration]);
+    const now = previousDate || new Date();
+    return formatDate(new Date(now.getTime() + Number(duration) * 1000));
+  }, [duration, previousDate]);
 
   return (
-    <Paper>
+    <Paper {...PaperProps}>
       <Typography
         variant="body2"
         textAlign="center"
         color={date ? "text.primary" : "text.secondary"}
+        {...TextProps}
       >
         {date ?? "Select lock time"}
       </Typography>

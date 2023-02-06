@@ -1,5 +1,11 @@
-import BigNumber from "bignumber.js";
-import { alpha, Box, Slider, Typography, useTheme } from "@mui/material";
+import {
+  alpha,
+  Slider,
+  Stack,
+  Typography,
+  TypographyProps,
+  useTheme,
+} from "@mui/material";
 import { calculateStakingPeriodAPR } from "@/defi/polkadot/pallets/StakingRewards";
 import { RewardPool } from "@/stores/defi/polkadot/stakingRewards/slice";
 
@@ -10,8 +16,6 @@ type LockPeriodInputProps = {
   }[];
   picaRewardPool: RewardPool;
   duration: any;
-  onNone: () => BigNumber;
-  onSome: (x: BigNumber) => BigNumber;
   hasRewardPools: boolean;
   min: number;
   max: number;
@@ -20,18 +24,20 @@ type LockPeriodInputProps = {
     value: number | number[],
     activeThumb: number
   ) => any;
+  label?: string;
+  LabelProps?: TypographyProps;
 };
 
 export function LockPeriodInput({
   options,
   picaRewardPool,
   duration,
-  onNone,
-  onSome,
   hasRewardPools,
   min,
   max,
   onChange,
+  label,
+  LabelProps,
 }: LockPeriodInputProps) {
   const theme = useTheme();
   const selectedDuration = options.find(
@@ -39,26 +45,30 @@ export function LockPeriodInput({
   );
   return (
     <>
-      <Box display="flex" justifyContent="space-between" alignItems="center">
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+      >
+        <Typography
+          variant="body2"
+          color={alpha(theme.palette.common.white, 0.6)}
+          {...LabelProps}
+        >
+          {label || "Select lock period"}
+        </Typography>
         <Typography
           variant="body2"
           color={alpha(theme.palette.common.white, 0.6)}
         >
-          Select lock period
+          ~APR
         </Typography>
-        <Box display="flex" justifyContent="flex-end" alignItems="center">
-          <Typography
-            variant="body2"
-            color={alpha(theme.palette.common.white, 0.6)}
-          >
-            ~APR
-          </Typography>
-        </Box>
-      </Box>
+      </Stack>
       {options.length > 0 && (
         <>
-          <Box
-            display="flex"
+          <Stack
+            direction="row"
             justifyContent="space-between"
             alignItems="center"
           >
@@ -75,9 +85,9 @@ export function LockPeriodInput({
                 picaRewardPool.lock.durationPresets
               )}
             </Typography>
-          </Box>
+          </Stack>
 
-          {hasRewardPools ? (
+          {hasRewardPools && (
             <Slider
               marks={structuredClone(options).map((option) => {
                 option.label = "";
@@ -91,7 +101,7 @@ export function LockPeriodInput({
               max={max}
               onChange={onChange}
             />
-          ) : null}
+          )}
         </>
       )}
     </>

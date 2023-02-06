@@ -1,4 +1,3 @@
-import BigNumber from "bignumber.js";
 import { Button, Stack, Typography, useTheme } from "@mui/material";
 import { StakeInputLabel } from "@/components/Organisms/Staking/StakeInputLabel";
 import { AlertBox, BigNumberInput } from "@/components";
@@ -15,8 +14,6 @@ type StakeFormProps = {
   options: any;
   picaRewardPool: any;
   duration: any;
-  onNone: () => BigNumber;
-  onSome: (x: BigNumber) => BigNumber;
   hasRewardPools: boolean;
   min: number;
   max: number;
@@ -38,8 +35,6 @@ export function StakeForm({
   options,
   picaRewardPool,
   duration,
-  onNone,
-  onSome,
   hasRewardPools,
   min,
   max,
@@ -62,9 +57,9 @@ export function StakeForm({
           InputProps={{
             sx: {
               "& .MuiOutlinedInput-input": {
-                textAlign: "center"
-              }
-            }
+                textAlign: "center",
+              },
+            },
           }}
           maxDecimals={pica.decimals.picasso ?? undefined}
         />
@@ -74,8 +69,6 @@ export function StakeForm({
         options={options}
         picaRewardPool={picaRewardPool}
         duration={duration}
-        onNone={onNone}
-        onSome={onSome}
         hasRewardPools={hasRewardPools}
         min={min}
         max={max}

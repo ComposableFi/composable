@@ -1,108 +1,74 @@
-import { BigNumberInput, Modal, TokenAsset } from "@/components";
-import { FC, useState } from "react";
-import { Box, Button, Paper, Stack, Typography } from "@mui/material";
-import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
+import { Modal, TokenAsset } from "@/components";
+import { FC, useMemo, useState } from "react";
 import {
-  callbackGate,
-  formatNumber,
-  subscanExtrinsicLink,
-  toChainIdUnit,
-} from "shared";
-import { DurationOption } from "@/defi/polkadot/pallets/StakingRewards";
+  alpha,
+  Box,
+  Button,
+  Paper,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import { formatDate, formatNumber } from "shared";
 import { useStakingRewards } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewards";
-import BigNumber from "bignumber.js";
-import { useStore } from "@/stores/root";
-import { usePicassoAccount } from "@/defi/polkadot/hooks";
-import { useExecutor, usePicassoProvider, useSigner } from "substrate-react";
-import { SnackbarKey, useSnackbar } from "notistack";
+import { LockPeriodInput } from "@/components/Organisms/Staking/LockPeriodInput";
+import {
+  getMaxDuration,
+  getMinDuration,
+  getOptions,
+} from "@/components/Organisms/Staking/utils";
+import { FutureDatePaper } from "@/components/Atom/FutureDatePaper";
+import { useExtendCall } from "@/defi/polkadot/hooks/stakingRewards/useExtendCall";
+import { pipe } from "fp-ts/function";
+import * as O from "fp-ts/Option";
 
 export const RenewModal: FC<{
   open: boolean;
   onClose: () => void;
   selectedToken: [string, string];
 }> = ({ open, onClose, selectedToken }) => {
-  const [extendPeriod, setExtendPeriod] = useState<DurationOption | undefined>(
-    undefined
-  );
-  const signer = useSigner();
-  const pica = useStore(({ substrateTokens }) => substrateTokens.tokens.pica);
-  const native = useStore(
-    ({ substrateBalances }) => substrateBalances.balances.picasso.pica.free
-  );
-  const [extendAmount, setExtendAmount] = useState<BigNumber>(new BigNumber(0));
-  const { parachainApi } = usePicassoProvider();
-  const { stakingPortfolio } = useStakingRewards();
+  const theme = useTheme();
+  const { stakingPortfolio, hasRewardPools, picaRewardPool } =
+    useStakingRewards();
   const [isValid, setValid] = useState(true);
   const [fnftCollectionId, fnftInstanceId] = selectedToken;
-  const account = usePicassoAccount();
-  const executor = useExecutor();
-  const { closeSnackbar, enqueueSnackbar } = useSnackbar();
+  const [extendPeriod, setExtendPeriod] = useState("");
+
+  // FORM Related info
+  const options = getOptions(hasRewardPools, picaRewardPool);
+  const minDuration = getMinDuration(hasRewardPools, picaRewardPool);
+  const maxDuration = getMaxDuration(hasRewardPools, picaRewardPool);
+  const extendCall = useExtendCall(onClose);
+
+  const extend = () => {
+    pipe(
+      extendCall(),
+      O.map((extend) =>
+        extend(Number(extendPeriod), fnftCollectionId, fnftInstanceId)
+      )
+    );
+  };
+
+  // TODO: Refactor finding of current portfolio to a shared place
   const currentPortfolio = stakingPortfolio.find(
     (portfolio) =>
       portfolio.collectionId === fnftCollectionId &&
       portfolio.instanceId === fnftInstanceId
   );
 
+  const previousDate = useMemo(() => {
+    return currentPortfolio?.endTimestamp
+      ? new Date(Number(currentPortfolio.endTimestamp))
+      : null;
+  }, [currentPortfolio?.endTimestamp]);
+
+  const previousUnlockDate = useMemo(() => {
+    return previousDate ? formatDate(previousDate) : null;
+  }, [previousDate]);
+
   if (!currentPortfolio) {
     return null;
   }
-  const handleRenew = () => {
-    if (!isValid) {
-      return;
-    }
-
-    let snackbarKey: SnackbarKey | undefined;
-    callbackGate(
-      async (api, acc, executor, _signer) => {
-        await executor.execute(
-          (api.tx.stakingRewards.extend as any)(
-            selectedToken[0],
-            selectedToken[1],
-            api.createType("u128", toChainIdUnit(extendAmount).toString())
-          ),
-          acc.address,
-          api,
-          _signer,
-          (txHash: string) => {
-            snackbarKey = enqueueSnackbar("Processing transaction", {
-              variant: "info",
-              isClosable: true,
-              persist: true,
-              url: subscanExtrinsicLink("picasso", txHash),
-            });
-          },
-          (txHash: string) => {
-            closeSnackbar(snackbarKey);
-            enqueueSnackbar(`Successfully staked`, {
-              variant: "success",
-              isClosable: true,
-              persist: true,
-              url: subscanExtrinsicLink("picasso", txHash),
-            });
-            onClose();
-          },
-          (errorMessage: string) => {
-            closeSnackbar(snackbarKey);
-            enqueueSnackbar(
-              "An error occurred while processing the transaction. The process was canceled.",
-              {
-                variant: "error",
-                isClosable: true,
-                persist: true,
-                description: errorMessage,
-              }
-            );
-            onClose();
-          }
-        );
-      },
-      parachainApi,
-      account,
-      executor,
-      signer
-    );
-    onClose();
-  };
 
   const initialPicaDeposit = currentPortfolio.stake;
 
@@ -112,66 +78,96 @@ export const RenewModal: FC<{
         <Typography variant="h5" textAlign="center" marginBottom={4}>
           Add to staking period
         </Typography>
-        <Stack gap={1.5}>
-          <TextWithTooltip
-            TypographyProps={{
-              variant: "inputLabel",
-            }}
-            tooltip="Initial PICA deposit "
-          >
-            Initial PICA deposit
-          </TextWithTooltip>
-          <Paper
-            sx={{
-              position: "relative",
-            }}
-          >
-            <Box
+        <Stack gap={8}>
+          <Box>
+            <Typography variant="inputLabel">Initial PICA deposit</Typography>
+            <Paper
               sx={{
-                position: "absolute",
-                left: "1rem",
-                top: "50%",
-                transform: "translateY(-50%)",
+                position: "relative",
+                backgroundColor: alpha(theme.palette.common.white, 0.02),
               }}
             >
-              <TokenAsset tokenId={"pica"} iconOnly />
-            </Box>
-            <Typography
-              textAlign="center"
-              variant="body2"
-              color="text.secondary"
-            >
-              {formatNumber(initialPicaDeposit)}
-            </Typography>
-          </Paper>
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: "1rem",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                }}
+              >
+                <TokenAsset tokenId={"pica"} iconOnly />
+              </Box>
+              <Typography
+                textAlign="center"
+                variant="body2"
+                color="text.secondary"
+              >
+                {formatNumber(initialPicaDeposit)}
+              </Typography>
+            </Paper>
+          </Box>
+          <Box>
+            <LockPeriodInput
+              options={options}
+              picaRewardPool={picaRewardPool}
+              duration={extendPeriod}
+              hasRewardPools={hasRewardPools}
+              min={minDuration}
+              max={maxDuration}
+              onChange={(_, value) => setExtendPeriod(String(value))}
+              label="Extend your lock period by"
+              LabelProps={{
+                variant: "inputLabel",
+              }}
+            />
+          </Box>
+          <Box>
+            <Stack direction="row" gap={4}>
+              <Box
+                flexGrow={1}
+                display="flex"
+                flexDirection={"column"}
+                gap={1.5}
+              >
+                <Typography variant="inputLabel">
+                  Previous unlock date
+                </Typography>
+                <Paper
+                  sx={{
+                    backgroundColor: alpha(theme.palette.common.white, 0.02),
+                    color: theme.palette.text.secondary,
+                    textAlign: "center",
+                  }}
+                >
+                  {previousUnlockDate}
+                </Paper>
+              </Box>
+              <Box
+                flexGrow={1}
+                display="flex"
+                flexDirection={"column"}
+                gap={1.5}
+              >
+                <Typography variant="inputLabel">New unlock date</Typography>
+                <FutureDatePaper
+                  duration={extendPeriod}
+                  previousDate={previousDate ?? undefined}
+                  PaperProps={{
+                    sx: {
+                      backgroundColor: alpha(theme.palette.common.white, 0.02),
+                    },
+                  }}
+                />
+              </Box>
+            </Stack>
+          </Box>
         </Stack>
-        <Box>
-          <TextWithTooltip
-            tooltip={"This amount will be added to your current stake"}
-          >
-            Enter Amount
-          </TextWithTooltip>
-          <BigNumberInput
-            buttonLabel={"Max"}
-            ButtonProps={{
-              onClick: () => {
-                setExtendAmount(native);
-              },
-            }}
-            isValid={setValid}
-            setter={setExtendAmount}
-            maxValue={native}
-            value={extendAmount}
-            tokenId={pica.id}
-            maxDecimals={12}
-          />
-        </Box>
         <Button
-          disabled={extendAmount.eq(0) || !isValid}
+          disabled={extendPeriod === "" || extendPeriod === "0" || !isValid}
           variant="contained"
           color="primary"
           fullWidth
-          onClick={handleRenew}
+          onClick={extend}
         >
           Add stake to period
         </Button>
