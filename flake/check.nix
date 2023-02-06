@@ -2,48 +2,51 @@
   perSystem = { config, self', inputs', pkgs, system, ... }: {
     packages = {
       all-ci-packages = pkgs.linkFarmFromDrvs "all-ci-packages"
-        (with self'.packages; [
-          cargo-fmt-check
-          cargo-clippy-check
-          cargo-deny-check
-          cargo-udeps-check
-          taplo-check
-          prettier-check
-          nixfmt-check
-          deadnix-check
-          spell-check
-          docs-static # TODO(cor): deployment
-          frontend-static
-          hadolint-check
-          benchmarks-check
-          unit-tests
-          composable-node
-          composable-bench-node
-          polkadot-node
-          statemine-node
-          bifrost-node
-          acala-node
-          dali-subxt-client
-          zombienet
-          devnet-initialize-script-picasso-persistent
-          devnet-dali-complete
-          devnet-picasso-complete
-          devnet-dali
-          check-dali-benchmarks-ci
-          check-picasso-benchmarks-ci
-          check-composable-benchmarks-ci
-          cmc-api
-          cmc-api-image
-          check-dali-integration-tests
-          check-picasso-integration-tests
-          devnet-integration-tests
-          devnet-centauri 
-          hyperspace-dali
-          hyperspace-dali-image
-          devnet-dali-image
-          devnet-dali-bridge-image
-          devnet-dali-bridge-mmr-image
-        ]);
+        (with self'.packages;
+          [
+            cargo-fmt-check
+            cargo-clippy-check
+            cargo-deny-check
+            cargo-udeps-check
+            taplo-check
+            prettier-check
+            nixfmt-check
+            deadnix-check
+            spell-check
+            docs-static
+            frontend-static
+            hadolint-check
+            benchmarks-check
+            unit-tests
+            composable-node
+            composable-bench-node
+            polkadot-node
+            statemine-node
+            bifrost-node
+            acala-node
+            dali-subxt-client
+            zombienet
+            devnet-initialize-script-picasso-persistent
+            devnet-dali-complete
+            devnet-picasso-complete
+            devnet-dali
+            check-dali-benchmarks-ci
+            check-picasso-benchmarks-ci
+            check-composable-benchmarks-ci
+            cmc-api
+            cmc-api-image
+            check-dali-integration-tests
+            check-picasso-integration-tests
+            devnet-integration-tests
+            hyperspace-dali
+            hyperspace-dali-image
+            devnet-dali-image
+            devnet-dali-bridge-image
+            devnet-dali-bridge-mmr-image
+          ] ++ (if system == "x86_64-linux" then
+            [ devnet-centauri ]
+          else
+            [ ])); # TODO: get this list from system-filter
 
       check = let
         # The order of these checks can still be improved.
