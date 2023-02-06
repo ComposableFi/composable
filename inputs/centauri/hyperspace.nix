@@ -34,7 +34,7 @@
           prometheus_endpoint = "https://127.0.0.1"
         '';
 
-        hyperspace-dali-container = pkgs.dockerTools.buildImage {
+        hyperspace-dali-image = pkgs.dockerTools.buildImage {
           tag = "latest";
           name = "hyperspace-dali";
           config = { Entrypoint = [ "${hyperspace-dali}/bin/hyperspace" ]; };
