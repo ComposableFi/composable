@@ -36,7 +36,7 @@ export async function verifyPoolCreationUsingQuery(
     expect(reward.claimedRewards).to.be.bignumber.equal(new BN(0));
     expect(reward.totalDilutionAdjustment).to.be.bignumber.equal(new BN(0));
   });
-  // Verifying the amount of claimed shares, according to the query, is 0.
+  // Verifying the number of claimed shares, according to the query, is 0.
   expect(poolInfo.unwrap().claimedShares).to.be.bignumber.equal(new BN(0));
   // Verifying the startBlock & endBlock, as reported by the query, is equal to what we set it to.
   expect(poolInfo.unwrap().startBlock).to.be.bignumber.equal(startBlock);
@@ -55,12 +55,17 @@ export async function verifyPoolPotAddition(
   assetId: number,
   amount: bigint | number | string | BN,
   walletPoolOwner: KeyringPair,
-  walletBalanceBefore: CustomRpcBalance
+  walletBalanceBefore: CustomRpcBalance,
+  poolRewardAssetBalanceBefore: BN
 ) {
   // Querying `rewardsPotIsEmpty` now should report `None` type.
   const poolInfo = <Option<Null>>await api.query.stakingRewards.rewardsPotIsEmpty(stakingPoolId, assetId);
   expect(poolInfo.isNone).to.be.true;
-
+  const poolInfoAfter = <Option<ComposableTraitsStakingRewardPool>>await api.query.stakingRewards.rewardPools(stakingPoolId);
+  const poolAmountAfter = poolInfoAfter.unwrap().rewards.toJSON()[assetId.toString()];
+  // @ts-ignore
+  expect(new BN(poolAmountAfter.toString())).to.be.bignumber
+    .equal(poolRewardAssetBalanceBefore)
   let txFeeAdjustment = 0;
   // If we added PICA, we won't have the exact amount subtracted due to tx fees.
   if (assetId === 1) txFeeAdjustment = 200_000_000_000;
@@ -170,6 +175,7 @@ export async function verifyPositionSplitting(
   // expect(stakeInfo1After.unwrap().share).to.be.bignumber.closeTo(expectedShareAmount1, shareRange1);
   expect(stakeInfo2After.unwrap().stake).to.be.bignumber.closeTo(expectedStakeAmount2, stakeRange2);
   // expect(stakeInfo2After.unwrap().share).to.be.bignumber.closeTo(expectedShareAmount2, shareRange2);
+  debugger;
 }
 
 export async function verifyPositionUnstaking(
@@ -183,7 +189,7 @@ export async function verifyPositionUnstaking(
   slashed = false,
   slashAmount = api.createType("u128", 0)
 ) {
-  // Expecting wallets stake to return nothing.
+  // Expecting wallets' stake to return nothing.
   const stakeInfoAfter = await api.query.stakingRewards.stakes(fNFTCollectionId, fNFTInstanceId).catch(function(e) {
     return e;
   });
@@ -241,12 +247,12 @@ export function getClaimOfStake(
 
 export function getStakeReduction(
   totalShareAssetIssuance: BigNumber,
-  totalRewards:BigNumber,
+  totalRewards: BigNumber,
   amountShares: BigNumber
 ) {
   return totalRewards.multipliedBy(amountShares)
-    .dividedBy(totalShareAssetIssuance)//.multipliedBy(BigNumber(10).pow(3))
-    // .plus(BigNumber(adj.toString()));
+    .dividedBy(totalShareAssetIssuance);//.multipliedBy(BigNumber(10).pow(3))
+  // .plus(BigNumber(adj.toString()));
 }
 
 
