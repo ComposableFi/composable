@@ -54,7 +54,7 @@
           };
         };
 
-      mk-devnet-container = { containerName, devNet, container-tools }:
+      buildDevnetImage = { name, devNet, container-tools }:
         pkgs.lib.trace "Run Dali runtime on Composable node"
         pkgs.dockerTools.buildImage {
           inherit name;
