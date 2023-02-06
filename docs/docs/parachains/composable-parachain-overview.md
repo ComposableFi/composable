@@ -2,78 +2,107 @@
 
 ## What is the Composable Parachain?
 
-The Composable Parachain is a Polkadot parachain bolstered by the Polkadot relay chain and thus, leverages Polkadot’s 
-value proposition for the Composable ecosystem. As such, the Composable Parachain is highly secure, robust and efficient
-and can handle institutional scale throughput. The Composable Parachain provides a solution to several issues that 
-currently plague the industry. Instead of splintered cross-chain communication hubs, Composable brings a clear pathway 
-for adaptive and scalable cross-chain communication across new and existing ecosystems. 
+The Composable parachain is deployed on the Polkadot network, 
+which itself serves as a crucial basis to underpin our infrastructure for modular and interoperable functionality. 
+As the Composable Parachain continues to develop and reaches its full potential, 
+all our infrastructure and associated projects will benefit from its advanced functionality. 
+As a Polkadot parachain, 
+the Composable Parachain leverages Polkadot's value proposition as it builds out its vastly connected ecosystem. 
+As such, the Composable Parachain will be highly secure, robust, 
+and efficient and will be able to handle institutional scale throughput.
 
+The Composable Parachain will provide solutions to several issues that currently plague DeFi as an industry.
+Instead of splintered cross-chain communication hubs, 
+Composable brings a clear pathway for adaptive and scalable cross-chain communication across new and existing DeFi ecosystems.
 
 ## What is the vision for the Composable Parachain?
 
-Polkadot itself serves as a critical basis to underpin our infrastructure and its modular composability. To facilitate 
-cross-ecosystem communication, a higher security environment is necessary to ensure such transfers and communication are
-not only issued from a source, but also passed on to a routing layer that allows for a decentralized pathfinding 
-methodology. In short, the part of our infrastructure that provides an accessibility layer to access our infrastructure 
-and is the unification of isolated pieces that comprise our holistic approach to cross-chain communication requires the 
-high-security model that comes with Polkadot parachains.
+Composable Finance is dedicated to improving the accessibility, quality, transparency, 
+efficiency, and security of decentralized finance (DeFi): **Any Money, Any Chain, Anywhere.** 
+We aim to achieve this by pioneering innovative Web3 user experiences in a trustless, non-custodial, 
+and decentralized manner. 
+Composable's technology stack enables and combines key services across different DeFi ecosystems and protocols, 
+such as [Ethereum], [Polkadot], [Kusama], [Cosmos], and [NEAR].
 
-Polkadot offers plug-and-play security, allowing Composable to focus on building its ecosystem and leaving the security 
-to Polkadot’s validators. By leveraging parachains we do not have to recruit our validators for security, which gives us
-more excellent finality guarantees and lowers the risk of cross-chain transaction failures.
+[Ethereum]: https://ethereum.org/en/
+[Polkadot]: https://polkadot.network/
+[Kusama]: https://kusama.network/
+[Cosmos]: https://cosmos.network/
+[NEAR]: https://near.org/
 
-The enhanced security through the Polkadot offering enables developers within the Composable ecosystem to support 
-enterprises, governments and TradFi organisations with a seamless gateway to DeFi. Users and developers can thus do more
-than just move their assets around between different applications on different chains that they select. By specifying 
-their end goals, users and developers utilize our infrastructure that orchestrates the most efficient pathway 
-irrespective of chain or application. This is designed to result in the maximization of yield, and the most efficient 
-deployment of functions across suitable ecosystems.
+### Polkadot
 
-The XCVM is Composable’s native cross-chain smart contract framework. It enables triggering smart contract calls that 
-can exist across different ecosystems without replicating protocols or building new ones for specific chains. The 
-Composable Routing Layer selects the optimal route for asset transfer between a source and destination.
-We are also exploring the possibility of the XCVM becoming a rollup-based environment on a substrate-based chain which 
-would be the first of its kind. For example, a contract would be deployed on the spree module of the XCVM but then 
-executing the transaction in a zk-rollup-based execution environment.
+Polkadot itself serves as a critical basis to underpin our infrastructure and its modular composability. 
+To facilitate cross-ecosystem communication, 
+a higher security environment is necessary to ensure such transfers and communication are not only issued from a source
+but also passed on to a routing layer that allows for a decentralized pathfinding methodology.
 
-The Composable Parachain does not use a traditional bridge. Instead, Mosaic serves as a liquidity and transfer 
-availability layer that is able to facilitate asset transfer between chains and layers, irrespective of size, in a safe 
-and secure manner. Mosaic accomplishes this through a process of forecasting, and dynamic liquidity re-balancing. Mosaic
-is designed to be the first EVM \<\> Substrate bridge to support the transfer of assets across several ecosystems whilst 
-avoiding failures in cross-chain transactions. 
+In short, the part of our infrastructure 
+that provides an accessibility layer to access our infrastructure and is the unification of isolated pieces 
+that comprise our holistic approach to cross-chain communication requires the high-security model 
+that comes with Polkadot parachains.
 
-The Composable Parachain will also integrate Centauri, our Substrate–IBC bridge to support cross-ecosystem communication
-between IBC-enabled blockchains and the Dotsama ecosystem.
+### Security
 
+Polkadot offers plug-and-play security, 
+allowing Composable to focus on building its ecosystem and leaving the security to Polkadot’s validators. 
+By leveraging parachains we do not have to recruit our validators for security, 
+which gives us more excellent finality guarantees and lowers the risk of cross-chain transaction failures.
 
-![composable_parachain_architecture](./composable-parachain-architecture.jpg)
+The enhanced security through the Polkadot offering enables developers within the Composable ecosystem 
+to support enterprises, governments, and TradFi organizations with a seamless gateway to DeFi. 
+Users and developers can thus do more than just move their assets around between different applications on different chains
+that they select.
+By specifying their end goals, users and developers utilize our infrastructure 
+that orchestrates the most efficient pathway irrespective of chain or application. 
+This is designed to result in the maximization of yield, 
+and the most efficient deployment of functions across suitable ecosystems.
 
+### The Cross-chain Virtual Machine (XCVM)
+
+Composable’s Cross-chain Virtual Machine [(XCVM)] will be able to leverage the pallets from Picasso and Composable to 
+facilitate the creation of non-custodial, natively cross-chain smart contracts. The XCVM serves as a top-layer orchestration layer, capable of calling into existing applications and pallets across multiple ecosystems asynchronously. XCVM applications will be deployable from any ecosystem housing the necessary satellite contracts and interpreter instances.
+
+[(XCVM)]: ../products/xcvm.md
+
+### Centauri - Composable’s trustless bridging solution
+
+The Composable Parachain will also integrate [Centauri], 
+our trustless bridge that implements and expands the inter-blockchain communication (IBC) protocol, 
+to support cross-ecosystem communication between IBC-enabled blockchains, 
+DotSama, and other ecosystems such as Ethereum and NEAR Protocol.
+
+[Centauri]: ../products/centauri-overview.md
 
 ## How the Composable Parachain synergizes with Picasso?
 
-Within the Composable ecosystem, we have established a parachain on Kusama, known as Picasso and on Polkadot, known as 
-Composable Parachain. The idea for a dual-parachain narrative came about when we realized crypto networks are designed 
-without a stable launch process. As such they rely on testnets for stability and performance testing. In the case of the
-DotSama ecosystem, Kusama is treated as such a testnet even though its capabilities and potential span beyond simply 
-being a testnet for Polkadot. 
+After securing both parachains, 
+we explored and developed strategies to leverage Polkadot while leveraging its canary network, Kusama. 
+The idea for a dual-parachain narrative came 
+about when we realized crypto networks are designed without a stable launch process. 
+As such, they rely on testnets for stability and performance testing. 
+In the case of the DotSama ecosystem, Kusama is treated as such a testnet 
+even though its capabilities and potential span beyond simply being a testnet for Polkadot.
 
-As the canary network of the Composable Parachain, Picasso serves as the development and deployment hub for modular 
-dApps. Developers on Picasso can leverage our 
-[interoperable infrastructure](https://medium.com/composable-finance/understanding-composables-modularly-interoperable-infrastructure-e3986fa58d21) 
-to streamline the development process while Composable Labs provides grants and technical support to further enable 
-aspiring founders to launch innovative pallets on Picasso. As such, Picasso acts as a springboard for the development 
-and deployment of pallets that are natively cross-chain. 
+Furthermore, parachains of the Kusama network, such as Picasso, harness their unique value propositions. 
+They provide the DotSama ecosystem with a novel incentivized framework 
+that can be leveraged with the right strategy to expedite innovation. 
+We identified valuable synergies between the two chains and believe that our strategy increases efficiency 
+and unlocks the further potential of technology that is deployed across our ecosystem.
 
-Identical pallets on the two separate chains will communicate with one another using IBC or XCM depending on which is 
-available at the time and has the most efficient performance. As a result, both parachains will remain up-to-date and 
-consistent with one another in real-time enabling seamless communication and transaction matching between pallets across
-networks. This new dual parachain approach means users can operate the parachains in concert with one another, resulting
-in maximized efficiency instead of any redundant use of pallets. 
+Primary pallets are first built on [Picasso] and serve core functions necessary for any DeFi ecosystem to succeed, 
+such as [vault creation], [oracle services], and [trustless bridging infrastructure]. 
+These core pallets can, via governance, graduate to the Composable parachain. 
+Additionally, DeFi developers can utilize these primary pallets to enhance their products, 
+enabling them to launch other unique solutions with native interoperability and modularity in mind.
 
-We designed our strategy to allow pallets, builders, and ultimately end-users, to leverage both parachains 
-simultaneously to ensure the stability and increased efficiency of cross-chain functions. This new dual parachain 
-approach means users can operate the parachains in concert with one another, resulting in maximized efficiency instead 
-of any redundant use of pallets. Thus, Composable becomes the **contract chain**, and Picasso the **pallets chain**.  
-The combination of available liquidity from the Polkadot and Kusama ecosystems would greatly increase the earning power 
-of users within the Composable and Picasso networks. This would also, in theory, increase the capital efficiency of both
-parachains.
+We envision that in the long-term our Composable parachain will facilitate larger volume transfers 
+as the higher security environment and institutional scale throughput of Polkadot will be perfectly suited,
+while the inherent synergies between Composable and Picasso will ensure 
+optimal volume flow and liquidity distribution furthermore bolstered and facilitated by Pablo.
+
+[Picasso]: ./picasso-parachain-overview.md
+[vault creation]: ../products/cubic-overview.md
+[oracle services]: ../products/apollo-overview.md
+[trustless bridging infrastructure]: ../products/centauri-overview.md
+[Pablo]: ../products/pablo-overview.md
