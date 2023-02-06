@@ -15,7 +15,8 @@ pub struct Config {
 /// The interpreter configuration.
 pub const CONFIG: Item<Config> = Item::new("config");
 
-/// List of owners able to execute programs on our behalf. Be aware that only `trusted` address must be added.
+/// List of owners able to execute programs on our behalf. Be aware that only `trusted` address must
+/// be added.
 pub const OWNERS: Map<Addr, ()> = Map::new("owners");
 
 /// This register hold the latest program instruction (index) executed.
