@@ -61,7 +61,8 @@ the Continuous Integration (CI) pipeline and test them in a straightforward mann
 we have abstracted the process of using CosmWasm and made it accessible through a browser. 
 This allows developers to easily upload their smart contracts and instantly test them, 
 saving time and reducing the overhead of interacting with a blockchain. 
-Read our introductory thread and watch a preview of the [CosmWasm VM smart contract tooling interface].
+
+Read our introductory thread for a preview of the [CosmWasm VM smart contract tooling interface].
 
 [CosmWasm-Orchestrate]: https://github.com/ComposableFi/cosmwasm-vm/tree/main/orchestrate
 [Smart Contract Interface]: https://tools.xcvm.dev/
