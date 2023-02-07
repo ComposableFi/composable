@@ -46,8 +46,6 @@ members = [
   # "utils/price-feed",
   "utils/collator-sidecar",
   "utils/wasm-optimizer",
-  "xcvm/lib/*",
-  "xcvm/cosmwasm/contracts/*",
 ]
 resolver = "2"
 
@@ -69,9 +67,6 @@ opt-level = "s"
 overflow-checks = true
 panic = "abort"
 rpath = false
-
-[patch.crates-io]
-serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
 
 [patch."https://github.com/paritytech/substrate"]
 beefy-gadget = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.33" }

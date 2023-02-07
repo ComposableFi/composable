@@ -1,8 +1,7 @@
 [package]
 authors = ["Composable Developers"]
-description = "XCVM Ping Pong"
+description = "XCVM Ping Pong contract"
 edition = "2021"
-license = "Apache-2.0"
 name = "cw-xcvm-pingpong"
 repository = "https://github.com/ComposableFi/composable"
 version = "0.1.0"
@@ -11,7 +10,6 @@ version = "0.1.0"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-# use library feature to disable all instantiate/execute/query exports
 library = []
 
 [dependencies]

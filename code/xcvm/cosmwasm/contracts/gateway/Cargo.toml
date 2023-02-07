@@ -1,7 +1,9 @@
 [package]
 authors = ["Composable Developers"]
+description = "XCVM Gateway contract"
 edition = "2021"
 name = "cw-xcvm-gateway"
+repository = "https://github.com/ComposableFi/composable"
 version = "0.1.0"
 
 [lib]

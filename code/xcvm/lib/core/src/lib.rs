@@ -32,24 +32,26 @@ where
 	CurrentNetwork: Network,
 	CurrentNetwork::EncodedCall: Into<Vec<u8>>,
 {
-	#[inline]
-	pub fn new(tag: Vec<u8>) -> Self {
-		ProgramBuilder { tag, instructions: VecDeque::new(), _marker: PhantomData }
+	pub fn new(tag: impl Into<Vec<u8>>) -> Self {
+		ProgramBuilder { tag: tag.into(), instructions: VecDeque::new(), _marker: PhantomData }
 	}
 
-	#[inline]
-	pub fn transfer(mut self, to: Destination<Account>, assets: Assets) -> Self {
-		self.instructions.push_back(Instruction::Transfer { to, assets });
+	pub fn transfer(
+		mut self,
+		to: impl Into<Destination<Account>>,
+		assets: impl Into<Assets>,
+	) -> Self {
+		self.instructions
+			.push_back(Instruction::Transfer { to: to.into(), assets: assets.into() });
 		self
 	}
 
-	#[inline]
-	pub fn spawn<SpawningNetwork, FinalNetwork, E, F>(
+	pub fn spawn<SpawningNetwork, E, FinalNetwork, F>(
 		self,
-		tag: Vec<u8>,
-		salt: Vec<u8>,
-		bridge_security: BridgeSecurity,
-		assets: Assets,
+		tag: impl Into<Vec<u8>>,
+		salt: impl Into<Vec<u8>>,
+		bridge_security: impl Into<BridgeSecurity>,
+		assets: impl Into<Assets>,
 		f: F,
 	) -> Result<ProgramBuilder<FinalNetwork, Account, Assets>, E>
 	where
@@ -65,23 +67,22 @@ where
 		let mut builder =
 			ProgramBuilder { tag: self.tag, instructions: self.instructions, _marker: PhantomData };
 		builder.instructions.push_back(Instruction::Spawn {
-			bridge_security,
-			salt,
-			assets,
+			bridge_security: bridge_security.into(),
+			salt: salt.into(),
+			assets: assets.into(),
 			network: SpawningNetwork::ID,
-			program: f(ProgramBuilder::<SpawningNetwork, Account, Assets>::new(tag))?.build(),
+			program: f(ProgramBuilder::<SpawningNetwork, Account, Assets>::new(tag.into()))?
+				.build(),
 		});
 		Ok(builder)
 	}
 
-	#[inline]
 	pub fn call_raw(mut self, encoded: CurrentNetwork::EncodedCall) -> Self {
 		self.instructions
 			.push_back(Instruction::Call { bindings: Vec::new(), encoded: encoded.into() });
 		self
 	}
 
-	#[inline]
 	pub fn call<T>(self, protocol: T) -> Result<Self, T::Error>
 	where
 		T: Protocol<CurrentNetwork>,
@@ -89,7 +90,6 @@ where
 		protocol.serialize().map(|encoded_call| self.call_raw(encoded_call))
 	}
 
-	#[inline]
 	pub fn build(self) -> Program<VecDeque<Instruction<NetworkId, Vec<u8>, Account, Assets>>> {
 		Program { tag: self.tag, instructions: self.instructions }
 	}
@@ -153,9 +153,9 @@ mod tests {
 		let program = || -> Result<_, ProgramBuildError> {
 			Ok(ProgramBuilder::<Picasso, (), Funds>::new("Main program".as_bytes().to_vec())
 				.call(DummyProtocol1)?
-				.spawn::<Ethereum, _, ProgramBuildError, _>(
-					Default::default(),
-					Default::default(),
+				.spawn::<Ethereum, ProgramBuildError, _, _>(
+					Vec::default(),
+					Vec::default(),
 					BridgeSecurity::Deterministic,
 					Funds::empty(),
 					|child| {
