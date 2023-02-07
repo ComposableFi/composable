@@ -386,10 +386,11 @@ impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrD
 /// Will drop and burn the assets in case the transfer fails.
 pub struct CreditToBlockAuthor;
 impl asset_tx_payment::HandleCredit<AccountId, Assets> for CreditToBlockAuthor {
-	fn handle_credit(credit: CreditOf<AccountId, Assets>) {
-		if let Some(author) = authorship::Pallet::<Runtime>::author() {
+	fn handle_credit(_credit: CreditOf<AccountId, Assets>) {
+		if let Some(_author) = authorship::Pallet::<Runtime>::author() {
+			// TODO: implement `frame_support::traits::tokens::fungibles::Balanced` for `Assets`
 			// Drop the result which will trigger the `OnDrop` of the imbalance in case of error.
-			let _ = Assets::resolve(&author, credit);
+			// let _ = Assets::resolve(&author, credit);
 		}
 	}
 }
