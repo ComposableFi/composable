@@ -10,7 +10,6 @@
           --chain="${chainspec}" \
           --execution=wasm \
           --wasm-execution=compiled \
-          --wasm-instantiation-strategy=legacy-instance-reuse \
           --pallet="*" \
           --extrinsic="*" \
           --steps=2 \
@@ -23,7 +22,6 @@
           --chain="${chain}-dev" \
           --execution=wasm \
           --wasm-execution=compiled \
-          --wasm-instantiation-strategy=legacy-instance-reuse \
           --pallet="*" \
           --extrinsic="*" \
           --steps=${builtins.toString steps} \
@@ -31,15 +29,36 @@
           --output=code/parachain/runtime/${chain}/src/weights
         '';
 
+      mkBenchmarksCiPackage = name: package:
+        pkgs.stdenv.mkDerivation {
+          inherit name;
+          src = ./.;
+          installPhase = ''
+            mkdir -p $out
+            cd $out
+            ${pkgs.lib.meta.getExe package} > benchmark-logs.txt
+          '';
+        };
+
     in {
-      packages = {
+      packages = rec {
         check-dali-dev-benchmarks = benchmarks-run-once "dali-dev";
         check-picasso-dev-benchmarks = benchmarks-run-once "picasso-dev";
         check-composable-dev-benchmarks = benchmarks-run-once "composable-dev";
+
+        check-dali-benchmarks-ci =
+          mkBenchmarksCiPackage "check-dali-benchmarks-ci"
+          check-dali-dev-benchmarks;
+        check-picasso-benchmarks-ci =
+          mkBenchmarksCiPackage "check-picasso-benchmarks-ci"
+          check-picasso-dev-benchmarks;
+        check-composable-benchmarks-ci =
+          mkBenchmarksCiPackage "check-composable-benchmarks-ci"
+          check-composable-dev-benchmarks;
       };
       apps = let flake-utils = self.inputs.flake-utils;
       in {
-        # TODO: move list of chains out of here and do fold
+        # TODO: move list of chains out of here and do map
         benchmarks-once-composable =
           flake-utils.lib.mkApp { drv = benchmarks-run-once "composable-dev"; };
         benchmarks-once-dali =

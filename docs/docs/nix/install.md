@@ -59,6 +59,13 @@ In your Nix system config (`/etc/nixos/configuration.nix` by default), configure
     extraOptions = ''
       experimental-features = nix-command flakes
     '';
+    sandbox = "relaxed";
+    substituters = [ 
+      "https://composable-community.cachix.org/" 
+    ];
+    trusted-public-keys = [
+      "composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8="
+    ];  
   };
 }
 ```

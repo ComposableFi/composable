@@ -147,6 +147,8 @@ pub mod pallet {
 			pool_id: T::AssetId,
 			/// Owner of the pool.
 			owner: T::AccountId,
+			/// Reward pool configuration.
+			pool_config: RewardPoolConfigurationOf<T>,
 		},
 		/// Pool with specified id `T::AssetId` has started accumulating rewards.
 		RewardPoolStarted {
@@ -216,6 +218,8 @@ pub mod pallet {
 		},
 		RewardPoolUpdated {
 			pool_id: T::AssetId,
+			/// Reward pool configuration.
+			reward_updates: BTreeMap<T::AssetId, RewardUpdate<BalanceOf<T>>>,
 		},
 		RewardsPotIncreased {
 			pool_id: T::AssetId,
@@ -635,7 +639,7 @@ pub mod pallet {
 		fn create_staking_pool(
 			pool_config: RewardPoolConfigurationOf<T>,
 		) -> Result<Self::RewardPoolId, DispatchError> {
-			match pool_config {
+			match pool_config.clone() {
 				RewardRateBasedIncentive {
 					owner,
 					asset_id: pool_asset,
@@ -726,6 +730,7 @@ pub mod pallet {
 					Self::deposit_event(Event::<T>::RewardPoolCreated {
 						pool_id: pool_asset,
 						owner,
+						pool_config,
 					});
 
 					Ok(pool_asset)
@@ -1634,6 +1639,8 @@ fn update_rewards_pool<T: Config>(
 
 		let now_seconds = T::UnixTime::now().as_secs();
 
+		let mut updates = BTreeMap::<T::AssetId, RewardUpdate<BalanceOf<T>>>::new();
+
 		for (asset_id, update) in reward_updates {
 			let reward = pool.rewards.get_mut(&asset_id).ok_or(Error::<T>::RewardAssetNotFound)?;
 
@@ -1644,10 +1651,15 @@ fn update_rewards_pool<T: Config>(
 				now_seconds,
 			);
 
-			reward.reward_rate = update.reward_rate;
+			reward.reward_rate = update.reward_rate.clone();
+
+			updates.insert(asset_id, update.clone());
 		}
 
-		Pallet::<T>::deposit_event(Event::<T>::RewardPoolUpdated { pool_id });
+		Pallet::<T>::deposit_event(Event::<T>::RewardPoolUpdated {
+			pool_id,
+			reward_updates: updates,
+		});
 
 		Ok(())
 	})

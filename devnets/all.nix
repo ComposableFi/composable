@@ -22,9 +22,9 @@
         chain-spec = "picasso-dev";
       }).script;
 
-      devnet-container = devnetTools.mk-devnet-container {
+      devnet-dali-image = devnetTools.buildDevnetImage {
+        name = "devnet-dali";
         container-tools = devnetTools.withDevNetContainerTools;
-        containerName = "composable-devnet-container";
         devNet = packages.zombienet-rococo-local-dali-dev;
       };
 

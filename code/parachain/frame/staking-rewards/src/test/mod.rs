@@ -1062,8 +1062,12 @@ fn test_split_position() {
 		};
 
 		Test::assert_extrinsic_event(
-			StakingRewards::create_reward_pool(RuntimeOrigin::root(), pool_init_config),
-			crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE },
+			StakingRewards::create_reward_pool(RuntimeOrigin::root(), pool_init_config.clone()),
+			crate::Event::<Test>::RewardPoolCreated {
+				pool_id: PICA::ID,
+				owner: ALICE,
+				pool_config: pool_init_config,
+			},
 		);
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
@@ -2093,19 +2097,18 @@ fn with_stake<R>(
 }
 
 fn create_default_reward_pool() {
+	let pool_config = RewardRateBasedIncentive {
+		owner: ALICE,
+		asset_id: PICA::ID,
+		start_block: 2,
+		reward_configs: default_reward_config(),
+		lock: default_lock_config(),
+		minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+	};
+
 	Test::assert_extrinsic_event(
-		StakingRewards::create_reward_pool(
-			RuntimeOrigin::root(),
-			RewardRateBasedIncentive {
-				owner: ALICE,
-				asset_id: PICA::ID,
-				start_block: 2,
-				reward_configs: default_reward_config(),
-				lock: default_lock_config(),
-				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
-			},
-		),
-		crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE },
+		StakingRewards::create_reward_pool(RuntimeOrigin::root(), pool_config.clone()),
+		crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE, pool_config },
 	);
 }
 

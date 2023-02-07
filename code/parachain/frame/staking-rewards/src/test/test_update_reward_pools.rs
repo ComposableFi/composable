@@ -90,8 +90,15 @@ fn test_update_reward_pool() {
 		.unwrap();
 
 		Test::assert_extrinsic_event(
-			StakingRewards::update_rewards_pool(RuntimeOrigin::root(), PICA::ID, reward_updates),
-			crate::Event::RewardPoolUpdated { pool_id: PICA::ID },
+			StakingRewards::update_rewards_pool(
+				RuntimeOrigin::root(),
+				PICA::ID,
+				reward_updates.clone(),
+			),
+			crate::Event::RewardPoolUpdated {
+				pool_id: PICA::ID,
+				reward_updates: reward_updates.into(),
+			},
 		);
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
@@ -149,36 +156,39 @@ fn update_accumulates_properly() {
 
 		let reward_rate = RewardRate::per_second(USDT::units(1) / 1_000);
 
-		Test::assert_extrinsic_event(
-			StakingRewards::create_reward_pool(
-				RuntimeOrigin::root(),
-				RewardPoolConfiguration::RewardRateBasedIncentive {
-					owner: ALICE,
-					asset_id: PICA::ID,
-					start_block: 50,
-					reward_configs: bounded_btree_map! {
-						USDT::ID => RewardConfig {
-							reward_rate: reward_rate.clone(),
-						},
-					},
-					lock: LockConfig {
-						duration_multipliers: bounded_btree_map! {
-							// 1%
-							ONE_HOUR => FixedU64::from_rational(101, 100)
-								.try_into_validated()
-								.expect(">= 1"),
-							// 0.1%
-							ONE_MINUTE => FixedU64::from_rational(1_001, 1_000)
-								.try_into_validated()
-								.expect(">= 1"),
-						}
-						.into(),
-						unlock_penalty: Perbill::from_percent(5),
-					},
-					minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+		let pool_config = RewardPoolConfiguration::RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: PICA::ID,
+			start_block: 50,
+			reward_configs: bounded_btree_map! {
+				USDT::ID => RewardConfig {
+					reward_rate: reward_rate.clone(),
 				},
-			),
-			crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE },
+			},
+			lock: LockConfig {
+				duration_multipliers: bounded_btree_map! {
+					// 1%
+					ONE_HOUR => FixedU64::from_rational(101, 100)
+						.try_into_validated()
+						.expect(">= 1"),
+					// 0.1%
+					ONE_MINUTE => FixedU64::from_rational(1_001, 1_000)
+						.try_into_validated()
+						.expect(">= 1"),
+				}
+				.into(),
+				unlock_penalty: Perbill::from_percent(5),
+			},
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+		};
+
+		Test::assert_extrinsic_event(
+			StakingRewards::create_reward_pool(RuntimeOrigin::root(), pool_config.clone()),
+			crate::Event::<Test>::RewardPoolCreated {
+				pool_id: PICA::ID,
+				owner: ALICE,
+				pool_config,
+			},
 		);
 
 		process_and_progress_blocks::<StakingRewards, Test>(10);

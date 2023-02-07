@@ -366,7 +366,7 @@ benchmarks! {
 		// Make sure contract address is derived correctly
 		let code_hash = CodeIdToInfo::<T>::get(1).unwrap().pristine_code_hash;
 		let contract_addr =
-			Pallet::<T>::derive_contract_address(&origin, &salt, code_hash, &message);
+			Pallet::<T>::derive_contract_address(&origin, &salt, &code_hash, &message).unwrap();
 		// Make sure trie_id is derived correctly
 		let nonce = CurrentNonce::<T>::get();
 		let trie_id = Pallet::<T>::derive_contract_trie_id(&contract_addr, nonce);
@@ -594,7 +594,7 @@ benchmarks! {
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_instantiate(vm.0.data_mut(), meta, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
+		Cosmwasm::<T>::do_continue_instantiate(vm.0.data_mut(), meta, funds, b"salt", "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
 
 	continue_execute {
@@ -631,12 +631,19 @@ benchmarks! {
 		Cosmwasm::<T>::do_continue_reply(vm.0.data_mut(), Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {}).unwrap();
 	}
 
-	query_info {
+	query_contract_info {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_query_info(vm.0.data_mut(), contract).unwrap();
+		Cosmwasm::<T>::do_query_contract_info(vm.0.data_mut(), contract).unwrap();
+	}
+
+	query_code_info {
+		let sender = create_funded_account::<T>("origin");
+		let _ = create_instantiated_contract::<T>(sender);
+	}: {
+		Cosmwasm::<T>::do_query_code_info(1).unwrap();
 	}
 
 	query_raw {

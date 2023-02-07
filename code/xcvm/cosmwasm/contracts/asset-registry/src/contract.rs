@@ -3,7 +3,7 @@ use crate::{
 	msg::{
 		AssetKey, AssetReference, ExecuteMsg, InstantiateMsg, LookupResponse, MigrateMsg, QueryMsg,
 	},
-	state::ASSETS,
+	state::{ADMIN, ASSETS},
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -23,9 +23,11 @@ pub fn instantiate(
 	deps: DepsMut,
 	_env: Env,
 	_info: MessageInfo,
-	_msg: InstantiateMsg,
+	msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+	let admin = deps.api.addr_validate(&msg.admin)?;
+	ADMIN.save(deps.storage, &admin)?;
 	Ok(Response::default().add_event(
 		Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX).add_attribute("action", "instantiated"),
 	))
@@ -35,13 +37,17 @@ pub fn instantiate(
 pub fn execute(
 	deps: DepsMut,
 	_env: Env,
-	_info: MessageInfo,
+	info: MessageInfo,
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-	match msg {
-		ExecuteMsg::RegisterAsset { asset_id, reference } =>
-			handle_register_asset(deps, asset_id, reference),
-		ExecuteMsg::UnregisterAsset { asset_id } => handle_unregister_asset(deps, asset_id),
+	if info.sender == ADMIN.load(deps.storage)? {
+		match msg {
+			ExecuteMsg::RegisterAsset { asset_id, reference } =>
+				handle_register_asset(deps, asset_id, reference),
+			ExecuteMsg::UnregisterAsset { asset_id } => handle_unregister_asset(deps, asset_id),
+		}
+	} else {
+		Err(ContractError::NotAuthorized)
 	}
 }
 
@@ -63,25 +69,33 @@ pub fn handle_register_asset(
 	asset_id: AssetKey,
 	reference: AssetReference,
 ) -> Result<Response, ContractError> {
-	ASSETS.save(deps.storage, asset_id, &reference)?;
-	Ok(Response::new().add_event(
-		Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX)
-			.add_attribute("action", "register")
-			.add_attribute("asset_id", format!("{:?}", asset_id))
-			.add_attribute("reference", format!("{:?}", reference)),
-	))
+	if !ASSETS.has(deps.storage, asset_id) {
+		ASSETS.save(deps.storage, asset_id, &reference)?;
+		Ok(Response::new().add_event(
+			Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX)
+				.add_attribute("action", "register")
+				.add_attribute("asset_id", format!("{}", asset_id.0 .0 .0))
+				.add_attribute("denom", reference.denom()),
+		))
+	} else {
+		Err(ContractError::AlreadyRegistered)
+	}
 }
 
 pub fn handle_unregister_asset(
 	deps: DepsMut,
 	asset_id: AssetKey,
 ) -> Result<Response, ContractError> {
-	ASSETS.remove(deps.storage, asset_id);
-	Ok(Response::new().add_event(
-		Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX)
-			.add_attribute("action", "unregister")
-			.add_attribute("asset_id", format!("{:?}", asset_id)),
-	))
+	if ASSETS.has(deps.storage, asset_id) {
+		ASSETS.remove(deps.storage, asset_id);
+		Ok(Response::new().add_event(
+			Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX)
+				.add_attribute("action", "unregister")
+				.add_attribute("asset_id", format!("{}", asset_id.0 .0 .0)),
+		))
+	} else {
+		Err(ContractError::NotRegistered)
+	}
 }
 
 pub fn query_lookup(deps: Deps, asset_id: AssetKey) -> StdResult<LookupResponse> {
@@ -118,8 +132,9 @@ mod tests {
 	fn proper_instantiation() {
 		let mut deps = mock_dependencies();
 
-		let msg = InstantiateMsg {};
-		let info = mock_info("sender", &vec![]);
+		let sender = "sender";
+		let msg = InstantiateMsg { admin: sender.into() };
+		let info = mock_info(sender, &vec![]);
 
 		let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 		assert_eq!(0, res.messages.len());
@@ -129,8 +144,9 @@ mod tests {
 	fn register_unregister_assets() {
 		let mut deps = mock_dependencies();
 
-		let msg = InstantiateMsg {};
-		let info = mock_info("sender", &vec![]);
+		let sender = "sender";
+		let msg = InstantiateMsg { admin: sender.into() };
+		let info = mock_info(sender, &vec![]);
 
 		let _ = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
@@ -210,8 +226,9 @@ mod tests {
 	fn query_assets() {
 		let mut deps = mock_dependencies();
 
-		let msg = InstantiateMsg {};
-		let info = mock_info("sender", &vec![]);
+		let sender = "sender";
+		let msg = InstantiateMsg { admin: sender.into() };
+		let info = mock_info(sender, &vec![]);
 
 		let _ = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 

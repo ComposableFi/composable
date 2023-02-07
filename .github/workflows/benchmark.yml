@@ -17,9 +17,7 @@ jobs:
     name: Update benchmarks weights
     runs-on:
       - self-hosted
-      - linux
-      - x64
-      - bmark
+      - x64-cute
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     concurrency:

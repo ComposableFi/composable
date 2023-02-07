@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = ["lib/*", "cosmwasm/tests", "cosmwasm/contracts/*"]
+
+[profile.production]
+inherits = "release"
+lto = true
+
+[profile.cosmwasm-contracts]
+codegen-units = 1
+debug = false
+debug-assertions = false
+inherits = "production"
+opt-level = "s"
+overflow-checks = true
+panic = "abort"
+rpath = false
+
+[patch.crates-io]
+cosmwasm-std = { git = "https://github.com/ComposableFi/cosmwasm", rev = "21351cc1ced863b9af7c8a69f923036bc919b3b1" }

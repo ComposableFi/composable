@@ -10,14 +10,7 @@ pub trait PalletHook<T: Config> {
 	/// Return hardcoded contract informations for a precompiled contract.
 	fn info(
 		contract_address: &AccountIdOf<T>,
-	) -> Option<
-		PalletContractCodeInfo<
-			AccountIdOf<T>,
-			CodeHashOf<T>,
-			ContractLabelOf<T>,
-			ContractTrieIdOf<T>,
-		>,
-	>;
+	) -> Option<PalletContractCodeInfo<AccountIdOf<T>, ContractLabelOf<T>, ContractTrieIdOf<T>>>;
 
 	/// Hook into a contract call.
 	fn execute<'a>(
@@ -40,14 +33,7 @@ pub trait PalletHook<T: Config> {
 impl<T: Config> PalletHook<T> for () {
 	fn info(
 		_: &AccountIdOf<T>,
-	) -> Option<
-		PalletContractCodeInfo<
-			AccountIdOf<T>,
-			CodeHashOf<T>,
-			ContractLabelOf<T>,
-			ContractTrieIdOf<T>,
-		>,
-	> {
+	) -> Option<PalletContractCodeInfo<AccountIdOf<T>, ContractLabelOf<T>, ContractTrieIdOf<T>>> {
 		None
 	}
 
@@ -71,15 +57,14 @@ where {
 	}
 }
 
-impl<AccountId, Hash, Label, TrieId> PalletContractCodeInfo<AccountId, Hash, Label, TrieId>
+impl<AccountId, Label, TrieId> PalletContractCodeInfo<AccountId, Label, TrieId>
 where
 	AccountId: Clone,
-	Hash: Default,
 	TrieId: Default,
 {
 	pub fn new(account_id: AccountId, ibc_capable: bool, label: Label) -> Self {
 		PalletContractCodeInfo {
-			code: CodeInfo::<AccountId, Hash> {
+			code: CodeInfo::<AccountId> {
 				// When this is used for an actual Pallet, we would use the Pallet's AccountId
 				creator: account_id.clone(),
 				// Not applicable to Pallet, so we use default()
