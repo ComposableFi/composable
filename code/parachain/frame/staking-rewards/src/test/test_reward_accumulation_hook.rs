@@ -46,8 +46,6 @@ fn test_reward_update_calculation() {
 			start_block: 2,
 			reward_configs: [(PICA::ID, reward_config)].into_iter().try_collect().unwrap(),
 			lock: default_lock_config(),
-			share_asset_id: XPICA::ID,
-			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 		});
 
@@ -159,8 +157,6 @@ fn test_accumulate_rewards_pool_empty_refill() {
 			.try_collect()
 			.unwrap(),
 			lock: default_lock_config(),
-			share_asset_id: XA::ID,
-			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 		});
 
@@ -271,8 +267,6 @@ fn test_accumulate_rewards_hook() {
 			.try_collect()
 			.unwrap(),
 			lock: default_lock_config(),
-			share_asset_id: XA::ID,
-			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 		});
 
@@ -308,8 +302,6 @@ fn test_accumulate_rewards_hook() {
 			.try_collect()
 			.unwrap(),
 			lock: default_lock_config(),
-			share_asset_id: XC::ID,
-			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 1,
 			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 		});
 
@@ -562,8 +554,6 @@ fn test_accumulate_rewards_hook() {
 				.try_collect()
 				.unwrap(),
 			lock: default_lock_config(),
-			share_asset_id: XF::ID,
-			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 2,
 			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 		});
 
@@ -729,8 +719,6 @@ fn test_pause_in_reward_accumulation_hook() {
 				},
 			},
 			lock: default_lock_config(),
-			share_asset_id: XA::ID,
-			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
 		});
 
@@ -960,9 +948,10 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 			expected_unlocked_balance,
 		} in *pool_rewards
 		{
-			let actual_locked_balance = <<Test as crate::Config>::Assets as InspectHold<
-				<Test as frame_system::Config>::AccountId,
-			>>::balance_on_hold(*reward_asset_id, &pool_account);
+			let actual_locked_balance =
+				<<Test as crate::Config>::AssetsTransactor as InspectHold<
+					<Test as frame_system::Config>::AccountId,
+				>>::balance_on_hold(*reward_asset_id, &pool_account);
 
 			let actual_unlocked_balance =
 				balance(*reward_asset_id, &pool_account) - actual_locked_balance;

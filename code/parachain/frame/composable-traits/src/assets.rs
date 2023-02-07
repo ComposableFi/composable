@@ -1,4 +1,6 @@
 //! Interfaces to managed assets
+use core::marker::PhantomData;
+
 use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::collections::vec::bounded::BiBoundedVec;
 use scale_info::TypeInfo;
@@ -164,4 +166,32 @@ pub trait CreateAsset {
 		foreign_asset_id: Self::ForeignAssetId,
 		asset_info: AssetInfo<Self::Balance>,
 	) -> Result<Self::LocalAssetId, DispatchError>;
+}
+
+/// Used temporarily while the Picasso runtime is migrated to the new Asset Transactor Router
+pub struct DummyAssetCreator<LocalAssetId, ForeignAssetId, Balance> {
+	_phantom_data: (PhantomData<LocalAssetId>, PhantomData<ForeignAssetId>, PhantomData<Balance>),
+}
+
+impl<LocalAssetId, ForeignAssetId, Balance> CreateAsset
+	for DummyAssetCreator<LocalAssetId, ForeignAssetId, Balance>
+{
+	type LocalAssetId = LocalAssetId;
+	type ForeignAssetId = ForeignAssetId;
+	type Balance = Balance;
+
+	fn create_local_asset(
+		_protocol_id: [u8; 8],
+		_nonce: u64,
+		_asset_info: AssetInfo<Self::Balance>,
+	) -> Result<Self::LocalAssetId, DispatchError> {
+		Err(DispatchError::Other("TODO: Implement non-dummy in runtime!"))
+	}
+
+	fn create_foreign_asset(
+		_foreign_asset_id: Self::ForeignAssetId,
+		_asset_info: AssetInfo<Self::Balance>,
+	) -> Result<Self::LocalAssetId, DispatchError> {
+		Err(DispatchError::Other("TODO: Implement non-dummy in runtime!"))
+	}
 }

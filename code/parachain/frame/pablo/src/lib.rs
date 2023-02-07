@@ -63,7 +63,7 @@ pub mod pallet {
 		math::safe::{SafeArithmetic, SafeSub},
 	};
 	use composable_traits::{
-		currency::{CurrencyFactory, LocalAssets},
+		assets::CreateAsset,
 		defi::{CurrencyPair, Rate},
 		dex::{Amm, BasicPoolInfo, Fee, PriceAggregate},
 	};
@@ -82,7 +82,12 @@ pub mod pallet {
 	use composable_maths::dex::{
 		constant_product::compute_redeemed_for_lp, price::compute_initial_price_cumulative,
 	};
+	use composable_support::abstractions::{
+		nonce::Nonce,
+		utils::{increment::SafeIncrement, start_at::OneInit},
+	};
 	use composable_traits::{
+		assets::AssetInfo,
 		currency::BalanceLike,
 		dex::{AssetAmount, FeeConfig, SwapResult},
 	};
@@ -250,10 +255,7 @@ pub mod pallet {
 		type Convert: Convert<u128, BalanceOf<Self>> + Convert<BalanceOf<Self>, u128>;
 
 		/// Factory to create new lp-token.
-		type CurrencyFactory: CurrencyFactory<
-			AssetId = <Self as Config>::AssetId,
-			Balance = Self::Balance,
-		>;
+		type LPTokenFactory: CreateAsset<LocalAssetId = Self::AssetId, Balance = Self::Balance>;
 
 		/// Dependency allowing this pallet to transfer funds from one account to another.
 		type Assets: Transfer<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
@@ -277,9 +279,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
-		/// Used for spot price calculation for LBP
-		type LocalAssets: LocalAssets<AssetIdOf<Self>>;
-
 		/// Required origin for pool creation.
 		type PoolCreationOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
@@ -294,6 +293,8 @@ pub mod pallet {
 		type TWAPInterval: Get<MomentOf<Self>>;
 
 		type WeightInfo: WeightInfo;
+
+		type LPTokenExistentialDeposit: Get<Self::Balance>;
 	}
 
 	#[pallet::pallet]
@@ -325,6 +326,10 @@ pub mod pallet {
 	#[pallet::unbounded]
 	pub type PriceCumulativeState<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::PoolId, PriceCumulativeStateOf<T>, OptionQuery>;
+
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)] // Allow for `ValueQuery` because of nonce
+	pub type LPTNonce<T: Config> = StorageValue<_, u64, ValueQuery, Nonce<OneInit, SafeIncrement>>;
 
 	pub(crate) enum PriceRatio {
 		Swapped,
@@ -967,6 +972,21 @@ pub mod pallet {
 			// TODO (vim): Return a BuyResult type
 			Ok(SwapResult::new(out_asset.asset_id, out_asset.amount, fees.asset_id, fees.fee))
 		}
+	}
+
+	pub(crate) fn create_lpt_asset<T: Config>(nonce: u64) -> Result<T::AssetId, DispatchError> {
+		dbg!(nonce);
+		T::LPTokenFactory::create_local_asset(
+			T::PalletId::get().0,
+			nonce,
+			AssetInfo {
+				name: None,
+				symbol: None,
+				decimals: 12,
+				existential_deposit: T::LPTokenExistentialDeposit::get(),
+				ratio: None,
+			},
+		)
 	}
 
 	/// Retrieve the price(s) from the given pool calculated for the given `base_asset_id`

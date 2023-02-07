@@ -2,6 +2,7 @@ use composable_tests_helpers::test::currency::PICA;
 use composable_traits::{
 	account_proxy::ProxyType,
 	governance::{GovernanceRegistry, SignedRawOrigin},
+	xcm::assets::XcmAssetLocation,
 };
 use frame_support::pallet_prelude::*;
 use sp_core::{
@@ -15,12 +16,12 @@ use frame_support::{
 	traits::{Everything, InstanceFilter},
 	PalletId,
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
+use frame_system::EnsureRoot;
 use orml_traits::{parameter_type_with_key, GetByKey, LockIdentifier};
 use sp_core::sr25519;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
+	traits::{BlakeTwo256, ConvertInto, IdentifyAccount, IdentityLookup, Verify},
 };
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
@@ -60,9 +61,9 @@ frame_support::construct_runtime!(
 		System: frame_system,
 		Balances: pallet_balances,
 		Timestamp: pallet_timestamp,
-		CurrencyFactory: pallet_currency_factory,
 		Tokens: orml_tokens,
-		Assets: pallet_assets,
+		Assets: pallet_assets_transactor_router,
+		AssetsRegistry: pallet_assets_registry,
 		FinancialNft: pallet_fnft,
 		Proxy: pallet_proxy,
 		StakingRewards: crate,
@@ -130,14 +131,6 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-impl pallet_currency_factory::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type AssetId = CurrencyId;
-	type AddOrigin = EnsureRoot<AccountId>;
-	type Balance = Balance;
-	type WeightInfo = ();
-}
-
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
 		5
@@ -195,17 +188,29 @@ parameter_types! {
 	pub const NativeAssetId: CurrencyId = PICA::ID;
 }
 
-impl pallet_assets::Config for Test {
-	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = CurrencyFactory;
+impl pallet_assets_registry::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type LocalAssetId = CurrencyId;
+	type ForeignAssetId = XcmAssetLocation;
+	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
+	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
+	type Balance = Balance;
+	type Convert = ConvertInto;
+}
+
+impl pallet_assets_transactor_router::Config for Test {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
-	type WeightInfo = ();
-	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
+	type NativeAssetId = NativeAssetId;
+	type NativeTransactor = Balances;
+	type LocalTransactor = Tokens;
+	type ForeignTransactor = Tokens;
 	type GovernanceRegistry = NoopRegistry;
-	type CurrencyValidator = primitives::currency::ValidateCurrencyId;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type AssetLocation = XcmAssetLocation;
+	type AssetsRegistry = AssetsRegistry;
 }
 
 parameter_types! {
@@ -254,6 +259,7 @@ parameter_types! {
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
 	// REVIEW(benluelo): Use a better value for this?
 	pub const TreasuryAccountId: AccountId = sr25519::Public([10_u8; 32]);
+	pub const ShareAssetExistentialDeposit: Balance = 10_000;
 }
 
 impl crate::Config for Test {
@@ -262,8 +268,6 @@ impl crate::Config for Test {
 	type AssetId = CurrencyId;
 	type FinancialNft = FinancialNft;
 	type FinancialNftInstanceId = FinancialNftInstanceId;
-	type CurrencyFactory = CurrencyFactory;
-	type Assets = Assets;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
 	type PalletId = StakingRewardsPalletId;
@@ -273,9 +277,10 @@ impl crate::Config for Test {
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
-
+	type AssetsTransactor = Assets;
 	type LockId = StakingRewardsLockId;
 	type TreasuryAccount = TreasuryAccountId;
+	type ShareAssetExistentialDeposit = ShareAssetExistentialDeposit;
 }
 
 impl InstanceFilter<RuntimeCall> for ProxyType {

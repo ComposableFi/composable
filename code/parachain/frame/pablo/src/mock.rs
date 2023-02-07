@@ -2,15 +2,17 @@
 
 use crate as pablo;
 use composable_tests_helpers::test::currency;
+use composable_traits::{
+	governance::{GovernanceRegistry, SignedRawOrigin},
+	xcm::assets::XcmAssetLocation,
+};
 use frame_support::{
-	ord_parameter_types,
-	pallet_prelude::GenesisBuild,
-	parameter_types,
+	ord_parameter_types, parameter_types,
 	traits::{EitherOfDiverse, Everything},
 	PalletId,
 };
 use frame_system::{self as system, EnsureRoot, EnsureSignedBy};
-use orml_traits::{parameter_type_with_key, LockIdentifier};
+use orml_traits::{parameter_type_with_key, GetByKey, LockIdentifier};
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
@@ -43,19 +45,29 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>},
-		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
+		Balances: pallet_balances,
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		AssetsRegistry: pallet_assets_registry,
+		AssetsTransactor: pallet_assets_transactor_router,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		StakingRewards: pallet_staking_rewards::{Pallet, Storage, Call, Event<T>},
 	}
 );
 
-impl pallet_currency_factory::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type AssetId = CurrencyId;
-	type AddOrigin = EnsureRoot<AccountId>;
+parameter_types! {
+	pub const ExistentialDeposit: u64 = 1;
+}
+
+impl pallet_balances::Config for Test {
+	type MaxLocks = ();
 	type Balance = Balance;
+	type DustRemoval = ();
+	type RuntimeEvent = RuntimeEvent;
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = System;
 	type WeightInfo = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 }
 
 parameter_types! {
@@ -94,7 +106,7 @@ impl system::Config for Test {
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = ();
+	type AccountData = pallet_balances::AccountData<u128>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -162,6 +174,20 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+pub struct NoopRegistry;
+
+impl<AssetId, AccountId> GovernanceRegistry<AssetId, AccountId> for NoopRegistry {
+	fn set(_k: AssetId, _value: SignedRawOrigin<AccountId>) {}
+}
+
+impl<AssetId> GetByKey<AssetId, Result<SignedRawOrigin<u128>, sp_runtime::DispatchError>>
+	for NoopRegistry
+{
+	fn get(_k: &AssetId) -> Result<SignedRawOrigin<u128>, sp_runtime::DispatchError> {
+		Ok(SignedRawOrigin::Root)
+	}
+}
+
 parameter_types! {
 	pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
@@ -169,6 +195,33 @@ parameter_types! {
 	pub const MaxRewardConfigsPerPool: u32 = 10;
 	// REVIEW(benluelo): Use a better value for this?
 	pub const TreasuryAccountId: AccountId = 123_456_789_u128;
+	pub const ShareAssetExistentialDeposit: Balance = 10_000;
+	pub const NativeAssetId: AssetId = 1;
+}
+
+impl pallet_assets_registry::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type LocalAssetId = AssetId;
+	type ForeignAssetId = XcmAssetLocation;
+	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
+	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
+	type Balance = Balance;
+	type Convert = ConvertInto;
+}
+
+impl pallet_assets_transactor_router::Config for Test {
+	type AssetId = AssetId;
+	type Balance = Balance;
+	type NativeAssetId = NativeAssetId;
+	type NativeTransactor = Balances;
+	type LocalTransactor = Tokens;
+	type ForeignTransactor = Tokens;
+	type GovernanceRegistry = NoopRegistry;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type AssetLocation = XcmAssetLocation;
+	type AssetsRegistry = AssetsRegistry;
 }
 
 impl pallet_staking_rewards::Config for Test {
@@ -177,8 +230,6 @@ impl pallet_staking_rewards::Config for Test {
 	type AssetId = CurrencyId;
 	type FinancialNft = pablo::mock_fnft::MockFnft;
 	type FinancialNftInstanceId = u64;
-	type CurrencyFactory = LpTokenFactory;
-	type Assets = Tokens;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
 	type PalletId = StakingRewardsPalletId;
@@ -190,22 +241,24 @@ impl pallet_staking_rewards::Config for Test {
 	type LockId = StakingRewardsLockId;
 	type TreasuryAccount = TreasuryAccountId;
 	type ExistentialDeposits = ExistentialDeposits;
+	type AssetsTransactor = AssetsTransactor;
+	type ShareAssetExistentialDeposit = ShareAssetExistentialDeposit;
 }
 
 ord_parameter_types! {
 	pub const RootAccount: AccountId = ALICE;
+	pub const LPTokenED: Balance = 10_000;
 }
 
 impl pablo::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type AssetId = AssetId;
 	type Balance = Balance;
-	type CurrencyFactory = LpTokenFactory;
+	type LPTokenFactory = AssetsTransactor;
 	type Assets = Tokens;
 	type Convert = ConvertInto;
 	type PoolId = PoolId;
 	type PalletId = TestPalletID;
-	type LocalAssets = LpTokenFactory;
 	type PoolCreationOrigin = EitherOfDiverse<
 		EnsureSignedBy<RootAccount, AccountId>, // for tests
 		EnsureRoot<AccountId>,                  // for benchmarks
@@ -214,6 +267,7 @@ impl pablo::Config for Test {
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = ();
+	type LPTokenExistentialDeposit = LPTokenED;
 }
 
 // Build genesis storage according to the mock runtime.

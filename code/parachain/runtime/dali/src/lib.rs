@@ -867,14 +867,13 @@ parameter_types! {
 	pub const MaxStakingDurationPresets : u32 = 10;
 	pub const MaxRewardConfigsPerPool : u32 = 10;
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
+	pub const ShareAssetExistentialDeposit: Balance = 10_000;
 }
 
 impl pallet_staking_rewards::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type AssetId = CurrencyId;
-	type Assets = AssetsTransactorRouter;
-	type CurrencyFactory = CurrencyFactory;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
 	type PalletId = StakingRewardsPalletId;
@@ -888,6 +887,8 @@ impl pallet_staking_rewards::Config for Runtime {
 	type LockId = StakingRewardsLockId;
 	type TreasuryAccount = TreasuryAccount;
 	type ExistentialDeposits = MultiExistentialDeposits;
+	type AssetsTransactor = AssetsTransactorRouter;
+	type ShareAssetExistentialDeposit = ShareAssetExistentialDeposit;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -1044,8 +1045,9 @@ impl lending::Config for Runtime {
 }
 
 parameter_types! {
-  pub PabloId: PalletId = PalletId(*b"pall_pab");
-  pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
+	pub PabloId: PalletId = PalletId(*b"pall_pab");
+	pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
+	pub const LPTokenEd: Balance = 10_000;
 }
 
 impl pablo::Config for Runtime {
@@ -1053,17 +1055,17 @@ impl pablo::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type Convert = ConvertInto;
-	type CurrencyFactory = CurrencyFactory;
 	type Assets = AssetsTransactorRouter;
+	type LPTokenFactory = AssetsTransactorRouter;
 	type PoolId = PoolId;
 	type PalletId = PabloId;
-	type LocalAssets = CurrencyFactory;
 	type PoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	// TODO: consider making it is own origin
 	type EnableTwapOrigin = EnsureRootOrHalfNativeCouncil;
 	type TWAPInterval = TWAPInterval;
 	type Time = Timestamp;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
+	type LPTokenExistentialDeposit = LPTokenEd;
 }
 
 parameter_types! {

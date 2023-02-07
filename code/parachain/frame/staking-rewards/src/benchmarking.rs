@@ -28,8 +28,6 @@ use crate::test_helpers::stake_and_assert;
 
 // PICA as configured in the Test runtime (./frame/staking-rewards/src/test/runtime.rs)
 pub const BASE_ASSET_ID: u128 = 42;
-pub const X_ASSET_ID: u128 = 142;
-pub const STAKING_FNFT_COLLECTION_ID: u128 = 1042;
 pub const FNFT_INSTANCE_ID_BASE: u64 = 0;
 
 fn get_reward_pool<T: Config>(
@@ -42,8 +40,6 @@ fn get_reward_pool<T: Config>(
 		start_block: 2_u128.saturated_into(),
 		reward_configs: reward_config::<T>(reward_count),
 		lock: lock_config::<T>(),
-		share_asset_id: X_ASSET_ID.into(),
-		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID.into(),
 		minimum_staking_amount: 10_000_u128.into(),
 	}
 }
@@ -118,7 +114,10 @@ benchmarks! {
 
 		frame_system::Pallet::<T>::set_block_number(1.into());
 		<Pallet<T>>::create_reward_pool(OriginFor::<T>::root(), get_reward_pool::<T>(pool_owner, r))?;
-		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into())?;
+		<T::AssetsTransactor as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into())?;
+		let fnft_collection_id = RewardPools::<T>::get(asset_id)
+			.expect("Pool exists")
+			.financial_nft_asset_id;
 
 		frame_system::Pallet::<T>::set_block_number(2.into());
 	}: _(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)
@@ -129,7 +128,7 @@ benchmarks! {
 				owner: staker,
 				amount,
 				duration_preset,
-				fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
+				fnft_collection_id,
 				fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(),
 				reward_multiplier,
 				keep_alive
@@ -148,15 +147,18 @@ benchmarks! {
 
 		frame_system::Pallet::<T>::set_block_number(1.into());
 		<Pallet<T>>::create_reward_pool(OriginFor::<T>::root(), get_reward_pool::<T>(pool_owner, r))?;
-		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 3.into()).expect("an asset minting expected");
+		<T::AssetsTransactor as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 3.into()).expect("an asset minting expected");
+		let fnft_collection_id = RewardPools::<T>::get(asset_id)
+			.expect("Pool exists")
+			.financial_nft_asset_id;
 
 		frame_system::Pallet::<T>::set_block_number(2.into());
 		<Pallet<T>>::stake(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)?;
-	}: _(OriginFor::<T>::signed(staker), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into(), amount)
+	}: _(OriginFor::<T>::signed(staker), fnft_collection_id, FNFT_INSTANCE_ID_BASE.into(), amount)
 	verify {
 		assert_last_event::<T>(
 			Event::StakeAmountExtended {
-				fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
+				fnft_collection_id,
 				fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(),
 				amount
 			}.into()
@@ -174,16 +176,19 @@ benchmarks! {
 
 		frame_system::Pallet::<T>::set_block_number(1.into());
 		<Pallet<T>>::create_reward_pool(OriginFor::<T>::root(), get_reward_pool::<T>(pool_owner, r))?;
-		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into())?;
+		<T::AssetsTransactor as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into())?;
+		let fnft_collection_id = RewardPools::<T>::get(asset_id)
+			.expect("Pool exists")
+			.financial_nft_asset_id;
 
 		frame_system::Pallet::<T>::set_block_number(2.into());
 		<Pallet<T>>::stake(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)?;
-	}: _(OriginFor::<T>::signed(staker.clone()), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into())
+	}: _(OriginFor::<T>::signed(staker.clone()), fnft_collection_id, FNFT_INSTANCE_ID_BASE.into())
 	verify {
 		assert_last_event::<T>(
 			Event::Unstaked {
 				owner: staker,
-				fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
+				fnft_collection_id,
 				fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(),
 				slash: Some(Perbill::from_percent(5).mul_ceil(amount))
 			}.into(),
@@ -202,12 +207,15 @@ benchmarks! {
 
 		frame_system::Pallet::<T>::set_block_number(frame_system::Pallet::<T>::current_block_number() + T::BlockNumber::one());
 
-		<T::Assets as Mutate<T::AccountId>>::mint_into(
+		<T::AssetsTransactor as Mutate<T::AccountId>>::mint_into(
 			BASE_ASSET_ID.into(),
 			&user,
 			100_000_000_000.into(),
 		).expect("minting should succeed");
 
+		let fnft_collection_id = RewardPools::<T>::get(T::AssetId::from(BASE_ASSET_ID))
+			.expect("Pool exists")
+			.financial_nft_asset_id;
 		let instance_id = stake_and_assert::<T>(
 			user.clone(),
 			BASE_ASSET_ID.into(),
@@ -217,9 +225,9 @@ benchmarks! {
 
 		let ratio = Permill::from_rational(1_u32, 7_u32)
 			.try_into_validated()
-			.unwrap();
+			.expect("Rational is valid");
 
-	}: _(OriginFor::<T>::signed(user), STAKING_FNFT_COLLECTION_ID.into(), instance_id, ratio)
+	}: _(OriginFor::<T>::signed(user), fnft_collection_id, instance_id, ratio)
 
 	reward_accumulation_hook_reward_update_calculation {
 		let now = T::UnixTime::now().as_secs();
@@ -241,14 +249,12 @@ benchmarks! {
 				.try_collect()
 				.unwrap(),
 			lock: lock_config::<T>(),
-			share_asset_id: 1000.into(),
-			financial_nft_asset_id: 2000.into(),
 			minimum_staking_amount: 10_000.into(),
 		}).unwrap();
 
 		let now = now + seconds_per_block;
 
-		let mut reward = RewardPools::<T>::get(&pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
+		let mut reward = RewardPools::<T>::get(pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
 	}: {
 		crate::reward_accumulation_hook_reward_update_calculation::<T>(pool_id, reward_asset_id,&mut reward, now);
 	}
@@ -261,7 +267,7 @@ benchmarks! {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
 		frame_system::Pallet::<T>::set_block_number(1.into());
 		let user: T::AccountId = account("user", 0, 0);
-		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(get_reward_pool::<T>(user.clone(), r)).unwrap();
+		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(get_reward_pool::<T>(user, r)).unwrap();
 
 		let updates = (0..r).map(|r| (
 			((r as u128) + BASE_ASSET_ID).into(),
@@ -286,13 +292,16 @@ benchmarks! {
 
 		frame_system::Pallet::<T>::set_block_number(1.into());
 		<Pallet<T>>::create_reward_pool(OriginFor::<T>::root(), get_reward_pool::<T>(pool_owner, r))?;
-		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into())?;
+		<T::AssetsTransactor as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into())?;
+		let fnft_collection_id = RewardPools::<T>::get(asset_id)
+			.expect("Pool exists")
+			.financial_nft_asset_id;
 
 		frame_system::Pallet::<T>::set_block_number(2.into());
 		<Pallet<T>>::stake(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)?;
-	}: _(OriginFor::<T>::signed(staker.clone()), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into())
+	}: _(OriginFor::<T>::signed(staker.clone()), fnft_collection_id, FNFT_INSTANCE_ID_BASE.into())
 	verify {
-		assert_last_event::<T>(Event::Claimed { owner: staker, fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(), fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(), claimed_amounts: reward_config::<T>(r).into_inner().into_keys().map(|x| (x, 0.into())).collect::<BTreeMap<_,_>>()  }.into());
+		assert_last_event::<T>(Event::Claimed { owner: staker, fnft_collection_id, fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(), claimed_amounts: reward_config::<T>(r).into_inner().into_keys().map(|x| (x, 0.into())).collect::<BTreeMap<_,_>>()  }.into());
 	}
 
 	add_to_rewards_pot {
@@ -303,7 +312,7 @@ benchmarks! {
 
 		let user: T::AccountId = account("user", 0, 0);
 		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(get_reward_pool::<T>(user.clone(), 1)).unwrap();
-		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &user, amount * 2.into())?;
+		<T::AssetsTransactor as Mutate<T::AccountId>>::mint_into(asset_id, &user, amount * 2.into())?;
 
 	}: _(OriginFor::<T>::signed(user), pool_id,  asset_id, amount, true)
 

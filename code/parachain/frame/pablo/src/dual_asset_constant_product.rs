@@ -1,4 +1,6 @@
-use crate::{AssetIdOf, Config, Error, PoolConfiguration, PoolCount, Pools};
+use crate::{
+	create_lpt_asset, AssetIdOf, Config, Error, LPTNonce, PoolConfiguration, PoolCount, Pools,
+};
 use composable_maths::dex::{
 	constant_product::{
 		compute_deposit_lp, compute_first_deposit_lp, compute_in_given_out, compute_out_given_in,
@@ -6,13 +8,13 @@ use composable_maths::dex::{
 	},
 	PoolWeightMathExt,
 };
-use composable_support::{collections::vec::bounded::BiBoundedVec, math::safe::SafeAdd};
-use composable_traits::{
-	currency::{CurrencyFactory, RangeId},
-	dex::{
-		normalize_asset_deposit_infos_to_min_ratio, AssetAmount, AssetDepositInfo,
-		AssetDepositNormalizationError, BasicPoolInfo, Fee, FeeConfig,
-	},
+use composable_support::{
+	abstractions::utils::increment::Increment, collections::vec::bounded::BiBoundedVec,
+	math::safe::SafeAdd,
+};
+use composable_traits::dex::{
+	normalize_asset_deposit_infos_to_min_ratio, AssetAmount, AssetDepositInfo,
+	AssetDepositNormalizationError, BasicPoolInfo, Fee, FeeConfig,
 };
 use frame_support::{
 	pallet_prelude::*,
@@ -47,28 +49,37 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		);
 		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
 
-		// NOTE: Will fully move away from CF at a later date. For now, all pools used in production
-		// should be created with a supplied LPT via Pablo's `do_create_pool` function.
-		let lp_token = lp_token_id.unwrap_or(T::CurrencyFactory::create(RangeId::LP_TOKENS)?);
-
 		// Add new pool
 		let pool_id =
 			PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {
 				let pool_id = *pool_count;
-				Pools::<T>::insert(
-					pool_id,
-					PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo {
-						owner: who.clone(),
-						assets_weights,
-						lp_token,
-						fee_config,
-					}),
-				);
+				match lp_token_id {
+					Some(lp_token) => Pools::<T>::insert(
+						pool_id,
+						PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo {
+							owner: who.clone(),
+							assets_weights,
+							lp_token,
+							fee_config,
+						}),
+					),
+					None => Pools::<T>::insert(
+						pool_id,
+						PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo {
+							owner: who.clone(),
+							assets_weights,
+							lp_token: create_lpt_asset::<T>(
+								LPTNonce::<T>::increment().expect("Does not exceed u64::MAX"),
+							)?,
+							fee_config,
+						}),
+					),
+				};
 				*pool_count = pool_id.safe_add(&T::PoolId::one())?;
 				Ok(pool_id)
 			})?;
 
-		Ok(pool_id)
+		Ok(dbg!(pool_id))
 	}
 
 	/// WARNING! This is not a cheap function to call; it does (at least) one storage read per asset

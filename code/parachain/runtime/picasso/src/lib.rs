@@ -43,10 +43,10 @@ use common::{
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
-	assets::Asset,
+	assets::{Asset, DummyAssetCreator},
 	currency::AssetRatioInspect,
 	dex::{Amm, PriceAggregate},
-	xcm::assets::RemoteAssetRegistryInspect,
+	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 use governance::*;
 use prelude::*;
@@ -253,6 +253,7 @@ impl assets_registry::Config for Runtime {
 parameter_types! {
 	pub PabloPalletId: PalletId = PalletId(*b"pal_pblo");
 	pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
+	pub LPTokenExistentialDeposit: Balance = 10_000;
 }
 
 impl pablo::Config for Runtime {
@@ -260,16 +261,17 @@ impl pablo::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type Convert = sp_runtime::traits::ConvertInto;
-	type CurrencyFactory = CurrencyFactory;
 	type Assets = Assets;
+	// TODO(Connor): Won't impact current pools, must implement new assts system
+	type LPTokenFactory = DummyAssetCreator<CurrencyId, XcmAssetLocation, Balance>;
 	type PoolId = PoolId;
 	type PalletId = PabloPalletId;
-	type LocalAssets = CurrencyFactory;
 	type PoolCreationOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type EnableTwapOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
+	type LPTokenExistentialDeposit = LPTokenExistentialDeposit;
 }
 
 impl assets::Config for Runtime {
