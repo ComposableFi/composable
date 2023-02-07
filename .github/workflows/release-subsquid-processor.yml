@@ -1,0 +1,51 @@
+name: "Release Subsquid Production Image"
+env:
+  SUBSQUID_IMAGE_RELEASE_TAGS: ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest,${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:${GITHUB_SHA}
+on:
+  push:
+    tags:
+      - 'subsquid-processor-v[0-9]+\.[0-9]+\.[0-9]+'  # e.g. subsquid-processor-v0.0.1
+
+jobs:
+  test-build-publish-subsquid:
+    name: Test Subquid
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${GITHUB_SHA}
+          persist-credentials: false
+      - name: Setup jest
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install dependencies
+        run: npm ci
+        working-directory: subsquid
+      - name: Run tests
+        run: npm run test
+        working-directory: subsquid
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${GITHUB_SHA}
+          persist-credentials: false
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Build and push Subsquid Processor
+        uses: docker/build-push-action@v3
+        with:
+          tags: ${{ env.SUBSQUID_IMAGE_RELESE_TAGS }}
+          context: subsquid
+          push: true

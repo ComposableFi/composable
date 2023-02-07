@@ -7,15 +7,13 @@
   };
   service = {
     restart = restartPolicy;
-    volumes = [{
-      type = "bind";
-      source = configPathSource;
-      target = configPathContainer;
-    }];
-    environment = { RUST_LOG = "info"; };
+    environment = { RUST_LOG = "debug"; };
     entrypoint = "${pkgs.lib.meta.getExe packages.hyperspace-dali}";
     command = execCommands;
-    # should only be added if it's null
-    depends_on = dependsOn;
-  };
+    volumes = [{
+      source = configPathSource;
+      target = configPathContainer;
+      type = "bind";
+    }];
+  } // pkgs.lib.optionalAttrs (dependsOn != null) { depends_on = dependsOn; };
 }
