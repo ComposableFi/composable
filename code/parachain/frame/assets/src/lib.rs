@@ -111,6 +111,8 @@ pub mod pallet {
 		traits::Convert, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128,
 	};
 
+	pub use fungibles::BalanceToAssetBalance;
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// currency id
