@@ -24,7 +24,7 @@ export const StakingDisconnected: FC<StakingDisconnectedParams> = ({
               alt="rocket orbiting the moon"
             />
             <Typography variant="h6" textAlign="center" color="text.secondary">
-              Connect you wallet and start earning.
+              Connect your wallet and start earning.
             </Typography>
           </Stack>
         </Box>
