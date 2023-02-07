@@ -17,9 +17,7 @@ jobs:
     name: "Build runtime"
     runs-on:
       - self-hosted
-      - linux
-      - x64
-      - sre
+      - x64-cute
     concurrency:
       group: build-runtime-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
@@ -58,9 +56,7 @@ jobs:
     name: "Build Composable node (runtimeless)"
     runs-on:
       - self-hosted
-      - linux
-      - x64
-      - sre
+      - x64-cute
     concurrency:
       group: build-composable-node-${{ github.ref }}
       cancel-in-progress: true
@@ -96,9 +92,7 @@ jobs:
     name: "Release"
     runs-on:
       - self-hosted
-      - linux
-      - x64
-      - sre
+      - x64-cute
     needs:
       - build-runtime
       - build-composable-node

@@ -11,9 +11,7 @@ jobs:
     name: Test Subquid
     runs-on:
       - self-hosted
-      - linux
-      - x64
-      - sre
+      - x64-cute
     steps:
       - uses: actions/checkout@v3
         with:

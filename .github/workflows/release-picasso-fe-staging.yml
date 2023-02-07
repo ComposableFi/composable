@@ -11,9 +11,7 @@ jobs:
   Deploy-Staging:
     runs-on:
       - self-hosted
-      - linux
-      - x64
-      - sre
+      - x64-cute
     container:
       image: node:latest
     steps:
