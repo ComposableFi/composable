@@ -8,6 +8,21 @@ use serde::{Deserialize, Serialize};
 use xcvm_core::{InterpreterOrigin, Register};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct Step {
+	/// The relayer that initially dispatched our program.
+	pub relayer: Addr,
+	/// The current instruction pointer in the program.
+	/// Note that the [`Step::program`] instructions are poped when executed, we can't rely on this
+	/// instruction pointer to index into the instructions. In fact, this pointer tells us how many
+	/// instructions we already consumed.
+	pub instruction_pointer: u16,
+	/// The next instructions to execute (actual program).
+	pub program: DefaultXCVMProgram,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct InstantiateMsg {
 	/// Address of the gateway.
 	pub gateway_address: String,
@@ -28,7 +43,7 @@ pub enum ExecuteMsg {
 	/// The existence of this message is to allow the execution of the `Call` instruction. Once we
 	/// hit a call, the program queue the call and queue itself after it to ensure that the side
 	/// effect of the call has been executed.
-	ExecuteStep { relayer: Addr, program: DefaultXCVMProgram },
+	ExecuteStep { step: Step },
 	/// Add owners of this contract
 	AddOwners { owners: Vec<Addr> },
 	/// Remove owners from the contract
@@ -36,6 +51,7 @@ pub enum ExecuteMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct MigrateMsg {
 	/// Owners to be added to the list of owners which acts more like a recovery in case all of the
 	/// owners are erased accidentally
@@ -43,6 +59,7 @@ pub struct MigrateMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
 	/// Get a specific register
 	Register(Register),

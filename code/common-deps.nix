@@ -3,7 +3,7 @@
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }: {
       _module.args.systemCommonRust = rec {
 
-        rustSrc = pkgs.lib.cleanSourceWith {
+        mkRustSrc = path: pkgs.lib.cleanSourceWith {
           filter = pkgs.lib.cleanSourceFilter;
           src = pkgs.lib.cleanSourceWith {
             filter = let
@@ -25,10 +25,12 @@
                   || (isREADME name type) || (isJSON name type)
                   || (isProto name type));
             in pkgs.nix-gitignore.gitignoreFilterPure customFilter
-            [ ../.gitignore ] ./.;
-            src = ./.;
+            [ ../.gitignore ] path;
+            src = path;
           };
         };
+
+        rustSrc = mkRustSrc ./.;
 
         substrate-attrs = {
           LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
