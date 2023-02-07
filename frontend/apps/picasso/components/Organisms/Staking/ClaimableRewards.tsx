@@ -1,22 +1,13 @@
-import {
-  alpha,
-  Box,
-  Button,
-  Paper,
-  Stack,
-  Typography,
-  useTheme,
-} from "@mui/material";
-import { FC, useMemo } from "react";
+import { alpha, Box, Paper, Stack, Typography, useTheme } from "@mui/material";
+import { useMemo } from "react";
 import { TokenAsset } from "@/components";
 import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscovery";
 import { useStore } from "@/stores/root";
 import BigNumber from "bignumber.js";
 import { useStakingRewards } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewards";
+import { ClaimButton } from "./ClaimButton";
 
-export const ClaimableRewards: FC<{
-  onClaimButtonClick: () => void;
-}> = ({ onClaimButtonClick }) => {
+export const ClaimableRewards = () => {
   const theme = useTheme();
   const picaPrice = usePicaPriceDiscovery();
   const picaToken = useStore((store) => store.substrateTokens.tokens.pica);
@@ -37,7 +28,6 @@ export const ClaimableRewards: FC<{
       );
     }, new BigNumber(0));
   }, [allClaimable]);
-
   const claimable = `${claimableAmount.toFormat(0)} ${picaToken.symbol}`;
   const usdValue = `(~$${claimableAmount
     .multipliedBy(picaPrice)
@@ -82,14 +72,7 @@ export const ClaimableRewards: FC<{
             </Typography>
           </Box>
         </Stack>
-        <Button
-          variant="contained"
-          color="primary"
-          fullWidth
-          onClick={onClaimButtonClick}
-        >
-          Claim rewards
-        </Button>
+        <ClaimButton />
       </Stack>
     </Paper>
   );

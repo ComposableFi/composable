@@ -15,6 +15,7 @@ type StakeTab = typeof STAKE_TAB[StakeKey];
 
 export const StakeFormSection = () => {
   const [stakeTab, setStakeTab] = useState<StakeTab>(STAKE_TAB.STAKE);
+
   return (
     <Grid container mt={9}>
       <Grid item xs={12}>
@@ -27,7 +28,7 @@ export const StakeFormSection = () => {
         {stakeTab === STAKE_TAB.UNSTAKE && <BurnUnstakeTabContent />}
       </Grid>
       <Grid item xs={12} marginTop={9}>
-        <ClaimableRewards onClaimButtonClick={() => {} /* TODO: */} />
+        <ClaimableRewards />
       </Grid>
     </Grid>
   );

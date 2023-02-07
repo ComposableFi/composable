@@ -18,7 +18,6 @@ import BaseUpdater from "@/updaters/BaseUpdater";
 import * as definitions from "defi-interfaces/definitions";
 import { SnackbarProvider } from "notistack";
 import { ThemeResponsiveSnackbar } from "@/components";
-import { SNACKBAR_TIMEOUT_DURATION } from "@/constants";
 import { getEnvironment } from "shared/endpoints";
 
 const rpc = Object.keys(definitions)
