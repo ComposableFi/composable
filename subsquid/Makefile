@@ -7,7 +7,7 @@ build:
 build-processor-image:
 	@docker build . -t squid-processor
 
-build-images: build-processor-image 
+build-images: build-processor-image
 
 serve:
 	@npx squid-graphql-server --subscriptions
@@ -18,6 +18,7 @@ rebuild-graphql:
 	docker-compose rm --force graphql-server
 	docker-compose create graphql-server
 	docker-compose start graphql-server
+	docker-compose start processor
 
 restart:
 	make down
