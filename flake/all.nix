@@ -27,6 +27,8 @@
           devnet-initialize-script-picasso-persistent
           devnet-integration-tests
           devnet-picasso-complete
+          docs-dev
+          docs-server
           docs-static
           frontend-static
           hadolint-check
