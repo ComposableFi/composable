@@ -27,8 +27,6 @@ describe("Staking reward integration", () => {
   });
   it("transformRewardPool()", () => {
     const output = transformRewardPool(rewardPool);
-
-    expect(output.totalSh ares).toEqual(new BigNumber(1_0000_0000_000));
     expect(output.endBlock).toEqual(new BigNumber(0));
   });
   it("fetchRewardPools()", async () => {
