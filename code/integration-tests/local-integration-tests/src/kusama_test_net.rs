@@ -194,33 +194,34 @@ pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	externalities
 }
 
-// pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
-// 	let parachain_id = parachain_id.into();
-// 	use statemine_runtime::{Runtime, System};
-// 	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
-// 	balances::GenesisConfig::<Runtime> {
-// 		balances: vec![
-// 			// remove ALICE when all tests refactored
-// 			(AccountId::from(ALICE), ALICE_PARACHAIN_BALANCE),
-// 			(AccountId::from(alice()), ALICE_PARACHAIN_BALANCE),
-// 		],
-// 	}
-// 	.assimilate_storage(&mut storage)
-// 	.unwrap();
+#[cfg(feature = "statemine")]
+pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
+	let parachain_id = parachain_id.into();
+	use statemine_runtime::{Runtime, System};
+	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+	balances::GenesisConfig::<Runtime> {
+		balances: vec![
+			// remove ALICE when all tests refactored
+			(AccountId::from(ALICE), ALICE_PARACHAIN_BALANCE),
+			(AccountId::from(alice()), ALICE_PARACHAIN_BALANCE),
+		],
+	}
+	.assimilate_storage(&mut storage)
+	.unwrap();
 
-// 	<parachain_info::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
-// 		&parachain_info::GenesisConfig { parachain_id },
-// 		&mut storage,
-// 	)
-// 	.unwrap();
+	<parachain_info::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
+		&parachain_info::GenesisConfig { parachain_id },
+		&mut storage,
+	)
+	.unwrap();
 
-// 	<pallet_xcm::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
-// 		&pallet_xcm::GenesisConfig { safe_xcm_version: Some(XCM_VERSION) },
-// 		&mut storage,
-// 	)
-// 	.unwrap();
+	<pallet_xcm::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
+		&pallet_xcm::GenesisConfig { safe_xcm_version: Some(XCM_VERSION) },
+		&mut storage,
+	)
+	.unwrap();
 
-// 	let mut externalities = sp_io::TestExternalities::new(storage);
-// 	externalities.execute_with(|| System::set_block_number(1));
-// 	externalities
-// }
+	let mut externalities = sp_io::TestExternalities::new(storage);
+	externalities.execute_with(|| System::set_block_number(1));
+	externalities
+}
