@@ -103,7 +103,7 @@ benchmarks! {
 		let pool_id = BASE_ASSET_ID.into();
 	}: _(OriginFor::<T>::root(), get_reward_pool::<T>(owner.clone(), r))
 	verify {
-		assert_last_event::<T>(Event::RewardPoolCreated { pool_id, owner }.into());
+		assert_last_event::<T>(Event::RewardPoolCreated { pool_id, owner: owner.clone(), pool_config: get_reward_pool::<T>(owner.clone(), r) }.into());
 	}
 
 	stake {
