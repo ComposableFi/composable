@@ -1921,7 +1921,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=b928cca332f99d983831572c964d7afd11b7ab42#b928cca332f99d983831572c964d7afd11b7ab42"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=890b1906198acdc9074586bbfc6380bdef5b778f#890b1906198acdc9074586bbfc6380bdef5b778f"
 dependencies = [
  "cosmwasm-std",
  "log",
@@ -1933,7 +1933,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=b928cca332f99d983831572c964d7afd11b7ab42#b928cca332f99d983831572c964d7afd11b7ab42"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=890b1906198acdc9074586bbfc6380bdef5b778f#890b1906198acdc9074586bbfc6380bdef5b778f"
 dependencies = [
  "cosmwasm-std",
  "cosmwasm-vm",
