@@ -1198,7 +1198,7 @@ pub mod pallet {
 				let balance = CON::convert(balance);
 
 				// TODO: use `balance * ed / min_balance`
-				// balance / min_balance
+				// balance * 1 / min_balance
 				Ok(FixedU128::saturating_from_rational(1, min_balance).saturating_mul_int(balance))
 			}
 		}
