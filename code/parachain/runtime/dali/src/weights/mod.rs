@@ -1,5 +1,4 @@
 #![allow(clippy::unnecessary_cast)]
-pub mod asset_tx_payment;
 pub mod assets_registry;
 pub mod balances;
 pub mod bonded_finance;

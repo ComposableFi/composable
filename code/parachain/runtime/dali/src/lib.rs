@@ -387,7 +387,7 @@ impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrD
 pub struct CreditToBlockAuthor;
 impl asset_tx_payment::HandleCredit<AccountId, Assets> for CreditToBlockAuthor {
 	fn handle_credit(credit: CreditOf<AccountId, Assets>) {
-		if let Some(author) = pallet_authorship::Pallet::<Runtime>::author() {
+		if let Some(author) = authorship::Pallet::<Runtime>::author() {
 			// Drop the result which will trigger the `OnDrop` of the imbalance in case of error.
 			let _ = Assets::resolve(&author, credit);
 		}
