@@ -317,12 +317,7 @@ impl PalletHook<Test> for MockHook {
 	fn info(
 		contract_address: &AccountIdOf<Test>,
 	) -> Option<
-		PalletContractCodeInfo<
-			AccountIdOf<Test>,
-			CodeHashOf<Test>,
-			ContractLabelOf<Test>,
-			ContractTrieIdOf<Test>,
-		>,
+		PalletContractCodeInfo<AccountIdOf<Test>, ContractLabelOf<Test>, ContractTrieIdOf<Test>>,
 	> {
 		match *contract_address {
 			MOCK_PALLET_CONTRACT_ADDRESS_1 => Some(PalletContractCodeInfo::new(

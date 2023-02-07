@@ -1,6 +1,6 @@
 use alloc::{string::String, vec::Vec};
 use cosmwasm_vm::{cosmwasm_std::Coin, system::CosmwasmContractMeta};
-use sp_core::{crypto::UncheckedFrom, storage::ChildInfo};
+use sp_core::storage::ChildInfo;
 use sp_runtime::traits::{Convert, Hash};
 
 use crate::{
@@ -8,28 +8,37 @@ use crate::{
 		abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, VMPallet},
 		vm::CosmwasmVMError,
 	},
-	types::{AccountIdOf, AssetIdOf, BalanceOf, CodeHashOf, ContractInfoOf, ContractTrieIdOf},
+	types::{AccountIdOf, AssetIdOf, BalanceOf, ContractInfoOf, ContractTrieIdOf},
 	Config, ContractToInfo, Error, Pallet,
 };
 
 // TODO(cor): move these out of the `impl` as they do not refer to `self` or `Self`.
 impl<T: Config> Pallet<T> {
-	/// Deterministic contract address computation, similar to https://eips.ethereum.org/EIPS/eip-1014.
 	pub(crate) fn derive_contract_address(
-		instantiator: &AccountIdOf<T>,
+		creator: &AccountIdOf<T>,
 		salt: &[u8],
-		code_hash: CodeHashOf<T>,
+		code_hash: &[u8],
 		message: &[u8],
-	) -> AccountIdOf<T> {
-		let data: Vec<_> = instantiator
-			.as_ref()
-			.iter()
-			.chain(salt)
-			.chain(code_hash.as_ref())
-			.chain(T::Hashing::hash(message).as_ref())
-			.cloned()
-			.collect();
-		UncheckedFrom::unchecked_from(T::Hashing::hash(&data))
+	) -> Result<AccountIdOf<T>, Error<T>> {
+		if salt.is_empty() || salt.len() > 64 {
+			return Err(Error::<T>::InvalidSalt)
+		}
+
+		let module_hash = sp_io::hashing::sha2_256(b"module");
+
+		let mut key = Vec::<u8>::from(module_hash);
+		key.extend_from_slice(b"wasm\0");
+		key.extend_from_slice(&(code_hash.len() as u64).to_be_bytes());
+		key.extend_from_slice(code_hash);
+		key.extend_from_slice(&(creator.as_ref().len() as u64).to_be_bytes());
+		key.extend_from_slice(creator.as_ref());
+		key.extend_from_slice(&(salt.len() as u64).to_be_bytes());
+		key.extend_from_slice(salt);
+		key.extend_from_slice(&(message.len() as u64).to_be_bytes());
+		key.extend_from_slice(message);
+
+		let address = sp_io::hashing::sha2_256(&key).into();
+		Pallet::<T>::canonical_addr_to_account(address).map_err(|_| Error::<T>::InvalidAccount)
 	}
 
 	/// Deterministic contract trie id generation.
