@@ -975,7 +975,6 @@ pub mod pallet {
 	}
 
 	pub(crate) fn create_lpt_asset<T: Config>(nonce: u64) -> Result<T::AssetId, DispatchError> {
-		dbg!(nonce);
 		T::LPTokenFactory::create_local_asset(
 			T::PalletId::get().0,
 			nonce,

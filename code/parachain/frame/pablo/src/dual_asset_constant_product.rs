@@ -79,7 +79,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 				Ok(pool_id)
 			})?;
 
-		Ok(dbg!(pool_id))
+		Ok(pool_id)
 	}
 
 	/// WARNING! This is not a cheap function to call; it does (at least) one storage read per asset

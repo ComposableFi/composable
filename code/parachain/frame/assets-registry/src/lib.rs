@@ -52,7 +52,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
 	use sp_runtime::traits::Convert;
-	use sp_std::{fmt::Debug, str, vec::Vec};
+	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec::Vec};
 
 	/// The module configuration trait.
 	#[pallet::config]
