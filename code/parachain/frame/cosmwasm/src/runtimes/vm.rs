@@ -409,7 +409,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 
 	fn query_code_info(
 		&mut self,
-		code_id: u64, // TODO(aeryz): CosmwasmCodeId
+		code_id: CosmwasmCodeId,
 	) -> Result<CodeInfoResponse, Self::Error> {
 		log::debug!(target: "runtime::contracts", "query_code_info");
 		Pallet::<T>::do_query_code_info(code_id)
