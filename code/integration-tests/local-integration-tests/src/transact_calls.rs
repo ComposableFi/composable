@@ -14,7 +14,8 @@ use xcm_emulator::TestExt;
 #[macro_export]
 macro_rules! match_this_event {
 	($event:expr, $pattern_type: ident, $pattern_value: pat) => {
-		if let EventRecord { event: this_runtime::Event::$pattern_type(inner), .. } = $event {
+		if let EventRecord { event: this_runtime::RuntimeEvent::$pattern_type(inner), .. } = $event
+		{
 			if let $pattern_value = inner {
 				true
 			} else {
@@ -45,11 +46,12 @@ fn dex() {
 	);
 
 	// this can be generated from scale by third parties
-	let sell =
-		this_runtime::Call::Liquidations(liquidations::Call::<this_runtime::Runtime>::sell {
+	let sell = this_runtime::RuntimeCall::Liquidations(
+		liquidations::Call::<this_runtime::Runtime>::sell {
 			order: order.clone(),
 			configuration: Default::default(),
-		});
+		},
+	);
 	let binary_sell =
 		composable_traits::liquidation::XcmLiquidation::new(63, 1, order.clone(), vec![]);
 
@@ -86,7 +88,7 @@ fn dex() {
 
 	This::execute_with(|| {
 		let result = this_runtime::Liquidations::sell(
-			this_runtime::Origin::signed(user.clone()),
+			this_runtime::RuntimeOrigin::signed(user.clone()),
 			order.clone(),
 			vec![],
 		);

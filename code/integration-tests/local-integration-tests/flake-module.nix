@@ -17,6 +17,22 @@
           checkIntegrationTests { chainName = "dali"; };
         check-picasso-integration-tests =
           checkIntegrationTests { chainName = "picasso"; };
+
+        local-integration-tests =
+          pkgs.writeShellScriptBin "local-integration-tests" ''
+            cd code
+            RUST_BACKTRACE=full \
+            SKIP_WASM_BUILD=1 \
+            RUST_LOG=trace,bdd=trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace,xcm=trace \
+            cargo +nightly test --package local-integration-tests --features=local-integration-tests,picasso,  --no-default-features -- --nocapture --test-threads=1
+          '';
       };
+
+      apps = {
+        local-integration-tests = self.inputs.flake-utils.lib.mkApp {
+          drv = self'.packages.local-integration-tests;
+        };
+      };
+
     };
 }
