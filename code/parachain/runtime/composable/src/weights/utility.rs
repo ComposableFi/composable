@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `ff4a2df521a1`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `8d66d9145640`, CPU: `Intel(R) Xeon(R) CPU @ 3.10GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("composable-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
+// /nix/store/9gdd70pyc12n9i1v6gx99rhz8q2n67z0-composable/bin/composable
 // benchmark
 // pallet
 // --chain=composable-dev
@@ -31,31 +31,31 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 	/// The range of component `c` is `[0, 1000]`.
 	fn batch(c: u32, ) -> Weight {
-		// Minimum execution time: 31_194 nanoseconds.
-		Weight::from_ref_time(3_756_606 as u64)
-			// Standard Error: 39_973
-			.saturating_add(Weight::from_ref_time(10_934_830 as u64).saturating_mul(c as u64))
+		// Minimum execution time: 21_533 nanoseconds.
+		Weight::from_ref_time(22_000_000 as u64)
+			// Standard Error: 29_998
+			.saturating_add(Weight::from_ref_time(8_014_035 as u64).saturating_mul(c as u64))
 	}
 	fn as_derivative() -> Weight {
-		// Minimum execution time: 17_966 nanoseconds.
-		Weight::from_ref_time(18_806_000 as u64)
+		// Minimum execution time: 14_722 nanoseconds.
+		Weight::from_ref_time(15_460_000 as u64)
 	}
 	/// The range of component `c` is `[0, 1000]`.
 	fn batch_all(c: u32, ) -> Weight {
-		// Minimum execution time: 31_106 nanoseconds.
-		Weight::from_ref_time(106_378_061 as u64)
-			// Standard Error: 15_850
-			.saturating_add(Weight::from_ref_time(11_152_541 as u64).saturating_mul(c as u64))
+		// Minimum execution time: 24_563 nanoseconds.
+		Weight::from_ref_time(25_402_877 as u64)
+			// Standard Error: 33_940
+			.saturating_add(Weight::from_ref_time(7_925_773 as u64).saturating_mul(c as u64))
 	}
 	fn dispatch_as() -> Weight {
-		// Minimum execution time: 37_145 nanoseconds.
-		Weight::from_ref_time(38_621_000 as u64)
+		// Minimum execution time: 25_959 nanoseconds.
+		Weight::from_ref_time(26_798_000 as u64)
 	}
 	/// The range of component `c` is `[0, 1000]`.
 	fn force_batch(c: u32, ) -> Weight {
-		// Minimum execution time: 30_562 nanoseconds.
-		Weight::from_ref_time(60_826_911 as u64)
-			// Standard Error: 33_741
-			.saturating_add(Weight::from_ref_time(10_882_043 as u64).saturating_mul(c as u64))
+		// Minimum execution time: 21_774 nanoseconds.
+		Weight::from_ref_time(123_077_373 as u64)
+			// Standard Error: 38_653
+			.saturating_add(Weight::from_ref_time(7_448_812 as u64).saturating_mul(c as u64))
 	}
 }
