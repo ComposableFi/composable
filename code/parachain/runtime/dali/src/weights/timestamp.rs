@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `51c0f1a4ed3e`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -32,13 +32,13 @@ impl<T: frame_system::Config> timestamp::WeightInfo for WeightInfo<T> {
 	// Storage: Timestamp Now (r:1 w:1)
 	// Storage: Aura CurrentSlot (r:1 w:0)
 	fn set() -> Weight {
-		// Minimum execution time: 26_726 nanoseconds.
-		Weight::from_ref_time(28_946_000 as u64)
+		// Minimum execution time: 30_600 nanoseconds.
+		Weight::from_ref_time(33_449_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	fn on_finalize() -> Weight {
-		// Minimum execution time: 11_358 nanoseconds.
-		Weight::from_ref_time(11_861_000 as u64)
+		// Minimum execution time: 14_240 nanoseconds.
+		Weight::from_ref_time(14_735_000 as u64)
 	}
 }

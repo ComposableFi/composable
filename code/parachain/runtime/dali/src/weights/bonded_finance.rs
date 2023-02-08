@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `51c0f1a4ed3e`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -34,8 +34,8 @@ impl<T: frame_system::Config> bonded_finance::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: BondedFinance BondOffers (r:0 w:1)
 	fn offer() -> Weight {
-		// Minimum execution time: 178_137 nanoseconds.
-		Weight::from_ref_time(184_499_000 as u64)
+		// Minimum execution time: 192_454 nanoseconds.
+		Weight::from_ref_time(195_779_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
@@ -46,16 +46,16 @@ impl<T: frame_system::Config> bonded_finance::WeightInfo for WeightInfo<T> {
 	// Storage: Vesting VestingSchedules (r:2 w:2)
 	// Storage: Tokens Locks (r:2 w:2)
 	fn bond() -> Weight {
-		// Minimum execution time: 377_679 nanoseconds.
-		Weight::from_ref_time(387_610_000 as u64)
+		// Minimum execution time: 408_397 nanoseconds.
+		Weight::from_ref_time(418_873_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(12 as u64))
 			.saturating_add(T::DbWeight::get().writes(12 as u64))
 	}
 	// Storage: BondedFinance BondOffers (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn cancel() -> Weight {
-		// Minimum execution time: 108_595 nanoseconds.
-		Weight::from_ref_time(116_507_000 as u64)
+		// Minimum execution time: 119_562 nanoseconds.
+		Weight::from_ref_time(125_968_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}

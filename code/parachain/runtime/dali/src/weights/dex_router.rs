@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `51c0f1a4ed3e`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -32,8 +32,8 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: Pablo Pools (r:4 w:0)
 	// Storage: DexRouter DexRoutes (r:2 w:1)
 	fn update_route() -> Weight {
-		// Minimum execution time: 103_337 nanoseconds.
-		Weight::from_ref_time(117_017_000 as u64)
+		// Minimum execution time: 116_335 nanoseconds.
+		Weight::from_ref_time(118_062_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(6 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -43,8 +43,8 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:4 w:0)
 	// Storage: Pablo PriceCumulativeState (r:4 w:4)
 	fn swap() -> Weight {
-		// Minimum execution time: 583_939 nanoseconds.
-		Weight::from_ref_time(602_561_000 as u64)
+		// Minimum execution time: 634_049 nanoseconds.
+		Weight::from_ref_time(645_089_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(27 as u64))
 			.saturating_add(T::DbWeight::get().writes(17 as u64))
 	}
@@ -54,8 +54,8 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:4 w:0)
 	// Storage: Pablo PriceCumulativeState (r:4 w:4)
 	fn buy() -> Weight {
-		// Minimum execution time: 635_466 nanoseconds.
-		Weight::from_ref_time(657_218_000 as u64)
+		// Minimum execution time: 703_591 nanoseconds.
+		Weight::from_ref_time(717_894_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(26 as u64))
 			.saturating_add(T::DbWeight::get().writes(17 as u64))
 	}
@@ -66,8 +66,8 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn add_liquidity() -> Weight {
-		// Minimum execution time: 312_887 nanoseconds.
-		Weight::from_ref_time(326_264_000 as u64)
+		// Minimum execution time: 348_846 nanoseconds.
+		Weight::from_ref_time(352_547_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(10 as u64))
 			.saturating_add(T::DbWeight::get().writes(8 as u64))
 	}
@@ -77,8 +77,8 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:3 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn remove_liquidity() -> Weight {
-		// Minimum execution time: 160_125 nanoseconds.
-		Weight::from_ref_time(162_810_000 as u64)
+		// Minimum execution time: 174_654 nanoseconds.
+		Weight::from_ref_time(176_942_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(7 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}

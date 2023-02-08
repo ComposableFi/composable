@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `51c0f1a4ed3e`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -35,10 +35,10 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	// Storage: Council Prime (r:0 w:1)
 	/// The range of component `m` is `[1, 99]`.
 	fn add_member(m: u32, ) -> Weight {
-		// Minimum execution time: 54_639 nanoseconds.
-		Weight::from_ref_time(58_299_561 as u64)
-			// Standard Error: 7_040
-			.saturating_add(Weight::from_ref_time(182_734 as u64).saturating_mul(m as u64))
+		// Minimum execution time: 62_240 nanoseconds.
+		Weight::from_ref_time(66_031_917 as u64)
+			// Standard Error: 7_260
+			.saturating_add(Weight::from_ref_time(180_866 as u64).saturating_mul(m as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -49,10 +49,10 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	// Storage: Council Prime (r:0 w:1)
 	/// The range of component `m` is `[2, 100]`.
 	fn remove_member(m: u32, ) -> Weight {
-		// Minimum execution time: 60_562 nanoseconds.
-		Weight::from_ref_time(64_919_429 as u64)
-			// Standard Error: 6_649
-			.saturating_add(Weight::from_ref_time(171_509 as u64).saturating_mul(m as u64))
+		// Minimum execution time: 68_600 nanoseconds.
+		Weight::from_ref_time(74_272_124 as u64)
+			// Standard Error: 10_184
+			.saturating_add(Weight::from_ref_time(152_643 as u64).saturating_mul(m as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -63,10 +63,10 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	// Storage: Council Prime (r:0 w:1)
 	/// The range of component `m` is `[2, 100]`.
 	fn swap_member(m: u32, ) -> Weight {
-		// Minimum execution time: 62_299 nanoseconds.
-		Weight::from_ref_time(64_285_583 as u64)
-			// Standard Error: 6_734
-			.saturating_add(Weight::from_ref_time(215_110 as u64).saturating_mul(m as u64))
+		// Minimum execution time: 69_037 nanoseconds.
+		Weight::from_ref_time(73_454_294 as u64)
+			// Standard Error: 8_826
+			.saturating_add(Weight::from_ref_time(192_951 as u64).saturating_mul(m as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -77,10 +77,10 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	// Storage: Council Prime (r:0 w:1)
 	/// The range of component `m` is `[1, 100]`.
 	fn reset_member(m: u32, ) -> Weight {
-		// Minimum execution time: 60_129 nanoseconds.
-		Weight::from_ref_time(66_342_403 as u64)
-			// Standard Error: 9_047
-			.saturating_add(Weight::from_ref_time(398_697 as u64).saturating_mul(m as u64))
+		// Minimum execution time: 68_559 nanoseconds.
+		Weight::from_ref_time(74_296_304 as u64)
+			// Standard Error: 10_754
+			.saturating_add(Weight::from_ref_time(405_231 as u64).saturating_mul(m as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -91,10 +91,10 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	// Storage: Council Prime (r:0 w:1)
 	/// The range of component `m` is `[1, 100]`.
 	fn change_key(m: u32, ) -> Weight {
-		// Minimum execution time: 61_824 nanoseconds.
-		Weight::from_ref_time(66_382_825 as u64)
-			// Standard Error: 6_295
-			.saturating_add(Weight::from_ref_time(206_481 as u64).saturating_mul(m as u64))
+		// Minimum execution time: 70_736 nanoseconds.
+		Weight::from_ref_time(76_236_792 as u64)
+			// Standard Error: 8_424
+			.saturating_add(Weight::from_ref_time(186_762 as u64).saturating_mul(m as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
@@ -103,10 +103,10 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	// Storage: Council Prime (r:0 w:1)
 	/// The range of component `m` is `[1, 100]`.
 	fn set_prime(m: u32, ) -> Weight {
-		// Minimum execution time: 25_938 nanoseconds.
-		Weight::from_ref_time(28_135_165 as u64)
-			// Standard Error: 3_795
-			.saturating_add(Weight::from_ref_time(50_904 as u64).saturating_mul(m as u64))
+		// Minimum execution time: 29_579 nanoseconds.
+		Weight::from_ref_time(31_007_639 as u64)
+			// Standard Error: 3_544
+			.saturating_add(Weight::from_ref_time(62_386 as u64).saturating_mul(m as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -114,10 +114,10 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	// Storage: Council Prime (r:0 w:1)
 	/// The range of component `m` is `[1, 100]`.
 	fn clear_prime(m: u32, ) -> Weight {
-		// Minimum execution time: 14_713 nanoseconds.
-		Weight::from_ref_time(15_934_383 as u64)
-			// Standard Error: 2_105
-			.saturating_add(Weight::from_ref_time(2_192 as u64).saturating_mul(m as u64))
+		// Minimum execution time: 17_021 nanoseconds.
+		Weight::from_ref_time(19_029_597 as u64)
+			// Standard Error: 4_076
+			.saturating_add(Weight::from_ref_time(6_342 as u64).saturating_mul(m as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 }

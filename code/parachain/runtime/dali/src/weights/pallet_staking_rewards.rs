@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `51c0f1a4ed3e`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -34,10 +34,10 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: Fnft Collection (r:1 w:1)
 	/// The range of component `r` is `[1, 10]`.
 	fn create_reward_pool(r: u32, ) -> Weight {
-		// Minimum execution time: 88_800 nanoseconds.
-		Weight::from_ref_time(90_928_829 as u64)
-			// Standard Error: 86_924
-			.saturating_add(Weight::from_ref_time(1_664_169 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 99_512 nanoseconds.
+		Weight::from_ref_time(103_234_071 as u64)
+			// Standard Error: 77_811
+			.saturating_add(Weight::from_ref_time(1_172_885 as u64).saturating_mul(r as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -55,10 +55,10 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: StakingRewards Stakes (r:0 w:1)
 	/// The range of component `r` is `[1, 10]`.
 	fn stake(r: u32, ) -> Weight {
-		// Minimum execution time: 332_667 nanoseconds.
-		Weight::from_ref_time(345_468_863 as u64)
-			// Standard Error: 201_986
-			.saturating_add(Weight::from_ref_time(1_980_276 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 356_412 nanoseconds.
+		Weight::from_ref_time(366_626_088 as u64)
+			// Standard Error: 133_798
+			.saturating_add(Weight::from_ref_time(2_147_404 as u64).saturating_mul(r as u64))
 			.saturating_add(T::DbWeight::get().reads(15 as u64))
 			.saturating_add(T::DbWeight::get().writes(13 as u64))
 	}
@@ -71,10 +71,10 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: Timestamp Now (r:1 w:0)
 	/// The range of component `r` is `[1, 10]`.
 	fn extend(r: u32, ) -> Weight {
-		// Minimum execution time: 245_780 nanoseconds.
-		Weight::from_ref_time(253_513_905 as u64)
-			// Standard Error: 114_397
-			.saturating_add(Weight::from_ref_time(1_753_498 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 267_787 nanoseconds.
+		Weight::from_ref_time(273_523_642 as u64)
+			// Standard Error: 128_250
+			.saturating_add(Weight::from_ref_time(2_039_940 as u64).saturating_mul(r as u64))
 			.saturating_add(T::DbWeight::get().reads(11 as u64))
 			.saturating_add(T::DbWeight::get().writes(8 as u64))
 	}
@@ -89,10 +89,10 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: Fnft OwnerInstances (r:1 w:1)
 	/// The range of component `r` is `[1, 10]`.
 	fn unstake(r: u32, ) -> Weight {
-		// Minimum execution time: 356_926 nanoseconds.
-		Weight::from_ref_time(366_313_877 as u64)
-			// Standard Error: 156_345
-			.saturating_add(Weight::from_ref_time(4_461_136 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 383_962 nanoseconds.
+		Weight::from_ref_time(397_679_624 as u64)
+			// Standard Error: 209_697
+			.saturating_add(Weight::from_ref_time(4_553_653 as u64).saturating_mul(r as u64))
 			.saturating_add(T::DbWeight::get().reads(16 as u64))
 			.saturating_add(T::DbWeight::get().writes(14 as u64))
 	}
@@ -108,25 +108,25 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: System Account (r:2 w:1)
 	/// The range of component `r` is `[1, 10]`.
 	fn split(r: u32, ) -> Weight {
-		// Minimum execution time: 413_661 nanoseconds.
-		Weight::from_ref_time(431_542_985 as u64)
-			// Standard Error: 256_807
-			.saturating_add(Weight::from_ref_time(1_575_375 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 443_774 nanoseconds.
+		Weight::from_ref_time(457_358_487 as u64)
+			// Standard Error: 162_305
+			.saturating_add(Weight::from_ref_time(2_191_864 as u64).saturating_mul(r as u64))
 			.saturating_add(T::DbWeight::get().reads(18 as u64))
 			.saturating_add(T::DbWeight::get().writes(15 as u64))
 	}
 	// Storage: StakingRewards RewardsPotIsEmpty (r:1 w:1)
 	// Storage: System Account (r:1 w:0)
 	fn reward_accumulation_hook_reward_update_calculation() -> Weight {
-		// Minimum execution time: 64_972 nanoseconds.
-		Weight::from_ref_time(71_809_000 as u64)
+		// Minimum execution time: 75_141 nanoseconds.
+		Weight::from_ref_time(76_557_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	fn unix_time_now() -> Weight {
-		// Minimum execution time: 6_747 nanoseconds.
-		Weight::from_ref_time(6_975_000 as u64)
+		// Minimum execution time: 8_220 nanoseconds.
+		Weight::from_ref_time(8_897_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: StakingRewards RewardPools (r:1 w:1)
@@ -134,10 +134,10 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: StakingRewards RewardsPotIsEmpty (r:1 w:0)
 	/// The range of component `r` is `[1, 10]`.
 	fn update_rewards_pool(r: u32, ) -> Weight {
-		// Minimum execution time: 84_703 nanoseconds.
-		Weight::from_ref_time(74_576_588 as u64)
-			// Standard Error: 653_528
-			.saturating_add(Weight::from_ref_time(17_014_065 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 98_779 nanoseconds.
+		Weight::from_ref_time(93_005_559 as u64)
+			// Standard Error: 311_596
+			.saturating_add(Weight::from_ref_time(14_658_227 as u64).saturating_mul(r as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(r as u64)))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
@@ -148,10 +148,10 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: Tokens TotalIssuance (r:1 w:0)
 	/// The range of component `r` is `[1, 10]`.
 	fn claim(r: u32, ) -> Weight {
-		// Minimum execution time: 104_320 nanoseconds.
-		Weight::from_ref_time(104_032_524 as u64)
-			// Standard Error: 128_202
-			.saturating_add(Weight::from_ref_time(5_283_151 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 115_867 nanoseconds.
+		Weight::from_ref_time(118_018_204 as u64)
+			// Standard Error: 80_285
+			.saturating_add(Weight::from_ref_time(4_538_483 as u64).saturating_mul(r as u64))
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -160,8 +160,8 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: System Account (r:1 w:1)
 	// Storage: StakingRewards RewardsPotIsEmpty (r:1 w:0)
 	fn add_to_rewards_pot() -> Weight {
-		// Minimum execution time: 148_098 nanoseconds.
-		Weight::from_ref_time(150_043_000 as u64)
+		// Minimum execution time: 160_783 nanoseconds.
+		Weight::from_ref_time(165_247_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}

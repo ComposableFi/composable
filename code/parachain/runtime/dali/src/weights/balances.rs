@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `51c0f1a4ed3e`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -31,50 +31,50 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> balances::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:2 w:2)
 	fn transfer() -> Weight {
-		// Minimum execution time: 137_600 nanoseconds.
-		Weight::from_ref_time(142_210_000 as u64)
+		// Minimum execution time: 150_255 nanoseconds.
+		Weight::from_ref_time(160_977_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: System Account (r:1 w:1)
 	fn transfer_keep_alive() -> Weight {
-		// Minimum execution time: 90_403 nanoseconds.
-		Weight::from_ref_time(93_673_000 as u64)
+		// Minimum execution time: 98_979 nanoseconds.
+		Weight::from_ref_time(101_589_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: System Account (r:1 w:1)
 	fn set_balance_creating() -> Weight {
-		// Minimum execution time: 63_680 nanoseconds.
-		Weight::from_ref_time(65_304_000 as u64)
+		// Minimum execution time: 73_947 nanoseconds.
+		Weight::from_ref_time(75_577_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: System Account (r:1 w:1)
 	fn set_balance_killing() -> Weight {
-		// Minimum execution time: 73_268 nanoseconds.
-		Weight::from_ref_time(76_543_000 as u64)
+		// Minimum execution time: 82_096 nanoseconds.
+		Weight::from_ref_time(84_744_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: System Account (r:3 w:3)
 	fn force_transfer() -> Weight {
-		// Minimum execution time: 151_655 nanoseconds.
-		Weight::from_ref_time(160_636_000 as u64)
+		// Minimum execution time: 149_636 nanoseconds.
+		Weight::from_ref_time(151_350_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: System Account (r:1 w:1)
 	fn transfer_all() -> Weight {
-		// Minimum execution time: 113_845 nanoseconds.
-		Weight::from_ref_time(119_202_000 as u64)
+		// Minimum execution time: 114_150 nanoseconds.
+		Weight::from_ref_time(116_004_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: System Account (r:1 w:1)
 	fn force_unreserve() -> Weight {
-		// Minimum execution time: 55_991 nanoseconds.
-		Weight::from_ref_time(57_873_000 as u64)
+		// Minimum execution time: 64_797 nanoseconds.
+		Weight::from_ref_time(70_165_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}

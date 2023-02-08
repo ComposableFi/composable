@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `51c0f1a4ed3e`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -32,8 +32,8 @@ impl<T: frame_system::Config> liquidations::WeightInfo for WeightInfo<T> {
 	// Storage: Liquidations StrategyIndex (r:1 w:1)
 	// Storage: Liquidations Strategies (r:0 w:1)
 	fn add_liquidation_strategy() -> Weight {
-		// Minimum execution time: 20_997 nanoseconds.
-		Weight::from_ref_time(22_356_000 as u64)
+		// Minimum execution time: 25_649 nanoseconds.
+		Weight::from_ref_time(28_072_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -45,10 +45,10 @@ impl<T: frame_system::Config> liquidations::WeightInfo for WeightInfo<T> {
 	// Storage: DutchAuction SellOrders (r:0 w:1)
 	/// The range of component `x` is `[1, 9]`.
 	fn sell(x: u32, ) -> Weight {
-		// Minimum execution time: 157_560 nanoseconds.
-		Weight::from_ref_time(161_423_741 as u64)
-			// Standard Error: 84_958
-			.saturating_add(Weight::from_ref_time(2_504_272 as u64).saturating_mul(x as u64))
+		// Minimum execution time: 171_751 nanoseconds.
+		Weight::from_ref_time(176_376_335 as u64)
+			// Standard Error: 111_369
+			.saturating_add(Weight::from_ref_time(2_810_697 as u64).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(x as u64)))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))

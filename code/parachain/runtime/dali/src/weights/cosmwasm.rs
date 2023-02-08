@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `51c0f1a4ed3e`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -37,10 +37,10 @@ impl<T: frame_system::Config> cosmwasm::WeightInfo for WeightInfo<T> {
 	// Storage: Cosmwasm CodeIdToInfo (r:0 w:1)
 	/// The range of component `n` is `[1, 514288]`.
 	fn upload(n: u32, ) -> Weight {
-		// Minimum execution time: 766_641 nanoseconds.
-		Weight::from_ref_time(944_403_413 as u64)
-			// Standard Error: 194
-			.saturating_add(Weight::from_ref_time(165_995 as u64).saturating_mul(n as u64))
+		// Minimum execution time: 767_717 nanoseconds.
+		Weight::from_ref_time(759_805_442 as u64)
+			// Standard Error: 163
+			.saturating_add(Weight::from_ref_time(159_625 as u64).saturating_mul(n as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
@@ -54,10 +54,10 @@ impl<T: frame_system::Config> cosmwasm::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 23]`.
 	fn instantiate(n: u32, ) -> Weight {
-		// Minimum execution time: 521_595 nanoseconds.
-		Weight::from_ref_time(568_380_993 as u64)
-			// Standard Error: 195_336
-			.saturating_add(Weight::from_ref_time(52_721_091 as u64).saturating_mul(n as u64))
+		// Minimum execution time: 519_336 nanoseconds.
+		Weight::from_ref_time(581_766_081 as u64)
+			// Standard Error: 206_705
+			.saturating_add(Weight::from_ref_time(52_251_870 as u64).saturating_mul(n as u64))
 			.saturating_add(T::DbWeight::get().reads(6 as u64))
 			.saturating_add(T::DbWeight::get().reads((2 as u64).saturating_mul(n as u64)))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
@@ -72,10 +72,10 @@ impl<T: frame_system::Config> cosmwasm::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 23]`.
 	fn execute(n: u32, ) -> Weight {
-		// Minimum execution time: 473_785 nanoseconds.
-		Weight::from_ref_time(528_759_370 as u64)
-			// Standard Error: 194_850
-			.saturating_add(Weight::from_ref_time(50_383_902 as u64).saturating_mul(n as u64))
+		// Minimum execution time: 475_469 nanoseconds.
+		Weight::from_ref_time(526_041_906 as u64)
+			// Standard Error: 181_235
+			.saturating_add(Weight::from_ref_time(52_000_684 as u64).saturating_mul(n as u64))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().reads((2 as u64).saturating_mul(n as u64)))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
@@ -90,8 +90,8 @@ impl<T: frame_system::Config> cosmwasm::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Cosmwasm CodeHashToId (r:0 w:1)
 	fn migrate() -> Weight {
-		// Minimum execution time: 915_394 nanoseconds.
-		Weight::from_ref_time(948_395_000 as u64)
+		// Minimum execution time: 911_748 nanoseconds.
+		Weight::from_ref_time(925_645_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(9 as u64))
 			.saturating_add(T::DbWeight::get().writes(7 as u64))
 	}
@@ -101,107 +101,107 @@ impl<T: frame_system::Config> cosmwasm::WeightInfo for WeightInfo<T> {
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	fn update_admin() -> Weight {
-		// Minimum execution time: 458_212 nanoseconds.
-		Weight::from_ref_time(483_167_000 as u64)
+		// Minimum execution time: 444_955 nanoseconds.
+		Weight::from_ref_time(460_615_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: unknown [0xe9a804b2e527fd3601d2ffc0bb023cd668656c6c6f20776f726c64] (r:1 w:0)
 	fn db_read() -> Weight {
-		// Minimum execution time: 28_247 nanoseconds.
-		Weight::from_ref_time(29_927_000 as u64)
+		// Minimum execution time: 30_954 nanoseconds.
+		Weight::from_ref_time(31_377_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: unknown [0xe9a804b2e527fd3601d2ffc0bb023cd668656c6c6f20776f726c64] (r:1 w:0)
 	fn db_read_other_contract() -> Weight {
-		// Minimum execution time: 28_324 nanoseconds.
-		Weight::from_ref_time(28_774_000 as u64)
+		// Minimum execution time: 31_021 nanoseconds.
+		Weight::from_ref_time(31_806_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:1)
 	fn db_write() -> Weight {
-		// Minimum execution time: 29_571 nanoseconds.
-		Weight::from_ref_time(31_540_000 as u64)
+		// Minimum execution time: 31_697 nanoseconds.
+		Weight::from_ref_time(32_666_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	fn db_scan() -> Weight {
-		// Minimum execution time: 7_402 nanoseconds.
-		Weight::from_ref_time(7_772_000 as u64)
+		// Minimum execution time: 7_434 nanoseconds.
+		Weight::from_ref_time(7_651_000 as u64)
 	}
 	// Storage: unknown [0x] (r:1 w:0)
 	fn db_next() -> Weight {
-		// Minimum execution time: 57_363 nanoseconds.
-		Weight::from_ref_time(62_230_000 as u64)
+		// Minimum execution time: 68_479 nanoseconds.
+		Weight::from_ref_time(72_405_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:0 w:1)
 	fn db_remove() -> Weight {
-		// Minimum execution time: 12_867 nanoseconds.
-		Weight::from_ref_time(13_255_000 as u64)
+		// Minimum execution time: 13_878 nanoseconds.
+		Weight::from_ref_time(14_147_000 as u64)
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Tokens Accounts (r:1 w:0)
 	fn balance() -> Weight {
-		// Minimum execution time: 10_331 nanoseconds.
-		Weight::from_ref_time(10_963_000 as u64)
+		// Minimum execution time: 12_533 nanoseconds.
+		Weight::from_ref_time(13_842_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: System Account (r:2 w:2)
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 23]`.
 	fn transfer(n: u32, ) -> Weight {
-		// Minimum execution time: 564 nanoseconds.
-		Weight::from_ref_time(34_333_947 as u64)
-			// Standard Error: 239_409
-			.saturating_add(Weight::from_ref_time(46_579_510 as u64).saturating_mul(n as u64))
+		// Minimum execution time: 649 nanoseconds.
+		Weight::from_ref_time(47_491_776 as u64)
+			// Standard Error: 156_472
+			.saturating_add(Weight::from_ref_time(47_109_627 as u64).saturating_mul(n as u64))
 			.saturating_add(T::DbWeight::get().reads((2 as u64).saturating_mul(n as u64)))
 			.saturating_add(T::DbWeight::get().writes((2 as u64).saturating_mul(n as u64)))
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
 	fn set_contract_meta() -> Weight {
-		// Minimum execution time: 25_711 nanoseconds.
-		Weight::from_ref_time(26_565_000 as u64)
+		// Minimum execution time: 27_007 nanoseconds.
+		Weight::from_ref_time(27_830_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	fn running_contract_meta() -> Weight {
-		// Minimum execution time: 6_633 nanoseconds.
-		Weight::from_ref_time(6_995_000 as u64)
+		// Minimum execution time: 6_986 nanoseconds.
+		Weight::from_ref_time(7_188_000 as u64)
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn contract_meta() -> Weight {
-		// Minimum execution time: 20_692 nanoseconds.
-		Weight::from_ref_time(21_289_000 as u64)
+		// Minimum execution time: 21_622 nanoseconds.
+		Weight::from_ref_time(23_053_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	fn addr_validate() -> Weight {
-		// Minimum execution time: 4_994 nanoseconds.
-		Weight::from_ref_time(5_115_000 as u64)
+		// Minimum execution time: 5_368 nanoseconds.
+		Weight::from_ref_time(5_464_000 as u64)
 	}
 	fn addr_canonicalize() -> Weight {
-		// Minimum execution time: 5_100 nanoseconds.
-		Weight::from_ref_time(5_200_000 as u64)
+		// Minimum execution time: 5_561 nanoseconds.
+		Weight::from_ref_time(5_722_000 as u64)
 	}
 	fn addr_humanize() -> Weight {
-		// Minimum execution time: 415 nanoseconds.
-		Weight::from_ref_time(476_000 as u64)
+		// Minimum execution time: 503 nanoseconds.
+		Weight::from_ref_time(581_000 as u64)
 	}
 	fn secp256k1_recover_pubkey() -> Weight {
-		// Minimum execution time: 56_291 nanoseconds.
-		Weight::from_ref_time(58_731_000 as u64)
+		// Minimum execution time: 62_187 nanoseconds.
+		Weight::from_ref_time(63_268_000 as u64)
 	}
 	fn secp256k1_verify() -> Weight {
-		// Minimum execution time: 56_113 nanoseconds.
-		Weight::from_ref_time(56_666_000 as u64)
+		// Minimum execution time: 61_744 nanoseconds.
+		Weight::from_ref_time(63_486_000 as u64)
 	}
 	fn ed25519_verify() -> Weight {
-		// Minimum execution time: 80_334 nanoseconds.
-		Weight::from_ref_time(83_933_000 as u64)
+		// Minimum execution time: 83_394 nanoseconds.
+		Weight::from_ref_time(83_540_000 as u64)
 	}
 	fn ed25519_batch_verify() -> Weight {
-		// Minimum execution time: 231_281 nanoseconds.
-		Weight::from_ref_time(288_870_000 as u64)
+		// Minimum execution time: 265_033 nanoseconds.
+		Weight::from_ref_time(304_417_000 as u64)
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
@@ -212,10 +212,10 @@ impl<T: frame_system::Config> cosmwasm::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 23]`.
 	fn continue_instantiate(n: u32, ) -> Weight {
-		// Minimum execution time: 438_191 nanoseconds.
-		Weight::from_ref_time(493_094_326 as u64)
-			// Standard Error: 165_444
-			.saturating_add(Weight::from_ref_time(47_428_208 as u64).saturating_mul(n as u64))
+		// Minimum execution time: 434_682 nanoseconds.
+		Weight::from_ref_time(490_618_429 as u64)
+			// Standard Error: 134_252
+			.saturating_add(Weight::from_ref_time(49_121_526 as u64).saturating_mul(n as u64))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().reads((2 as u64).saturating_mul(n as u64)))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
@@ -226,516 +226,518 @@ impl<T: frame_system::Config> cosmwasm::WeightInfo for WeightInfo<T> {
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	/// The range of component `n` is `[0, 23]`.
 	fn continue_execute(n: u32, ) -> Weight {
-		// Minimum execution time: 386_738 nanoseconds.
-		Weight::from_ref_time(404_429_510 as u64)
-			// Standard Error: 74_272
-			.saturating_add(Weight::from_ref_time(2_308_127 as u64).saturating_mul(n as u64))
+		// Minimum execution time: 386_727 nanoseconds.
+		Weight::from_ref_time(400_511_467 as u64)
+			// Standard Error: 67_879
+			.saturating_add(Weight::from_ref_time(2_096_047 as u64).saturating_mul(n as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	fn continue_migrate() -> Weight {
-		// Minimum execution time: 395_585 nanoseconds.
-		Weight::from_ref_time(403_371_000 as u64)
+		// Minimum execution time: 388_201 nanoseconds.
+		Weight::from_ref_time(393_472_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn continue_query() -> Weight {
-		// Minimum execution time: 367_186 nanoseconds.
-		Weight::from_ref_time(375_316_000 as u64)
+		// Minimum execution time: 362_934 nanoseconds.
+		Weight::from_ref_time(375_002_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn continue_reply() -> Weight {
-		// Minimum execution time: 385_642 nanoseconds.
-		Weight::from_ref_time(393_183_000 as u64)
+		// Minimum execution time: 381_647 nanoseconds.
+		Weight::from_ref_time(395_788_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:0)
 	fn query_contract_info() -> Weight {
-		// Minimum execution time: 39_117 nanoseconds.
-		Weight::from_ref_time(41_661_000 as u64)
+		// Minimum execution time: 40_513 nanoseconds.
+		Weight::from_ref_time(41_329_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:0)
 	fn query_code_info() -> Weight {
-		// Minimum execution time: 27_430 nanoseconds.
-		Weight::from_ref_time(28_180_000 as u64)
+		// Minimum execution time: 29_552 nanoseconds.
+		Weight::from_ref_time(30_140_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:0)
 	fn query_raw() -> Weight {
-		// Minimum execution time: 44_934 nanoseconds.
-		Weight::from_ref_time(47_097_000 as u64)
+		// Minimum execution time: 49_375 nanoseconds.
+		Weight::from_ref_time(50_254_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Const(r: u32, ) -> Weight {
-		// Minimum execution time: 5_285 nanoseconds.
-		Weight::from_ref_time(6_110_499 as u64)
-			// Standard Error: 6_465
-			.saturating_add(Weight::from_ref_time(1_416_618 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_254 nanoseconds.
+		Weight::from_ref_time(7_078_870 as u64)
+			// Standard Error: 5_565
+			.saturating_add(Weight::from_ref_time(1_465_211 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Const(r: u32, ) -> Weight {
-		// Minimum execution time: 5_351 nanoseconds.
-		Weight::from_ref_time(6_006_858 as u64)
-			// Standard Error: 5_607
-			.saturating_add(Weight::from_ref_time(1_421_180 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_217 nanoseconds.
+		Weight::from_ref_time(6_699_704 as u64)
+			// Standard Error: 6_337
+			.saturating_add(Weight::from_ref_time(1_481_954 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Load(r: u32, ) -> Weight {
-		// Minimum execution time: 5_764 nanoseconds.
-		Weight::from_ref_time(5_835_482 as u64)
-			// Standard Error: 11_516
-			.saturating_add(Weight::from_ref_time(2_760_588 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_280 nanoseconds.
+		Weight::from_ref_time(6_703_230 as u64)
+			// Standard Error: 8_968
+			.saturating_add(Weight::from_ref_time(2_719_230 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Load(r: u32, ) -> Weight {
-		// Minimum execution time: 5_411 nanoseconds.
-		Weight::from_ref_time(5_774_229 as u64)
-			// Standard Error: 10_378
-			.saturating_add(Weight::from_ref_time(2_762_745 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_237 nanoseconds.
+		Weight::from_ref_time(7_105_540 as u64)
+			// Standard Error: 11_645
+			.saturating_add(Weight::from_ref_time(2_723_535 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Store(r: u32, ) -> Weight {
-		// Minimum execution time: 5_532 nanoseconds.
-		Weight::from_ref_time(5_358_036 as u64)
-			// Standard Error: 11_788
-			.saturating_add(Weight::from_ref_time(4_449_199 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_456 nanoseconds.
+		Weight::from_ref_time(7_774_087 as u64)
+			// Standard Error: 27_442
+			.saturating_add(Weight::from_ref_time(4_715_431 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Store(r: u32, ) -> Weight {
-		// Minimum execution time: 5_420 nanoseconds.
-		Weight::from_ref_time(5_303_445 as u64)
-			// Standard Error: 13_217
-			.saturating_add(Weight::from_ref_time(4_489_446 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_213 nanoseconds.
+		Weight::from_ref_time(6_837_421 as u64)
+			// Standard Error: 25_571
+			.saturating_add(Weight::from_ref_time(4_756_566 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Eq(r: u32, ) -> Weight {
-		// Minimum execution time: 5_706 nanoseconds.
-		Weight::from_ref_time(5_545_341 as u64)
-			// Standard Error: 14_461
-			.saturating_add(Weight::from_ref_time(3_474_063 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_232 nanoseconds.
+		Weight::from_ref_time(6_907_648 as u64)
+			// Standard Error: 12_021
+			.saturating_add(Weight::from_ref_time(3_463_949 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Eqz(r: u32, ) -> Weight {
-		// Minimum execution time: 5_648 nanoseconds.
-		Weight::from_ref_time(6_116_226 as u64)
-			// Standard Error: 9_198
-			.saturating_add(Weight::from_ref_time(2_516_321 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_156 nanoseconds.
+		Weight::from_ref_time(6_995_859 as u64)
+			// Standard Error: 8_395
+			.saturating_add(Weight::from_ref_time(2_422_250 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Ne(r: u32, ) -> Weight {
-		// Minimum execution time: 5_376 nanoseconds.
-		Weight::from_ref_time(5_278_876 as u64)
-			// Standard Error: 9_077
-			.saturating_add(Weight::from_ref_time(3_440_745 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 5_982 nanoseconds.
+		Weight::from_ref_time(7_256_016 as u64)
+			// Standard Error: 9_600
+			.saturating_add(Weight::from_ref_time(3_442_118 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64LtS(r: u32, ) -> Weight {
-		// Minimum execution time: 5_766 nanoseconds.
-		Weight::from_ref_time(4_989_098 as u64)
-			// Standard Error: 12_306
-			.saturating_add(Weight::from_ref_time(3_482_299 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_079 nanoseconds.
+		Weight::from_ref_time(6_686_347 as u64)
+			// Standard Error: 10_967
+			.saturating_add(Weight::from_ref_time(3_476_157 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64GtS(r: u32, ) -> Weight {
-		// Minimum execution time: 5_602 nanoseconds.
-		Weight::from_ref_time(5_594_401 as u64)
-			// Standard Error: 11_592
-			.saturating_add(Weight::from_ref_time(3_435_671 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_145 nanoseconds.
+		Weight::from_ref_time(6_542_842 as u64)
+			// Standard Error: 11_509
+			.saturating_add(Weight::from_ref_time(3_483_971 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64LeS(r: u32, ) -> Weight {
-		// Minimum execution time: 5_598 nanoseconds.
-		Weight::from_ref_time(5_543_425 as u64)
-			// Standard Error: 10_634
-			.saturating_add(Weight::from_ref_time(3_426_317 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_125 nanoseconds.
+		Weight::from_ref_time(7_135_388 as u64)
+			// Standard Error: 10_285
+			.saturating_add(Weight::from_ref_time(3_458_390 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64GeS(r: u32, ) -> Weight {
-		// Minimum execution time: 5_760 nanoseconds.
-		Weight::from_ref_time(5_628_274 as u64)
-			// Standard Error: 16_628
-			.saturating_add(Weight::from_ref_time(3_464_603 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_342 nanoseconds.
+		Weight::from_ref_time(7_336_458 as u64)
+			// Standard Error: 9_781
+			.saturating_add(Weight::from_ref_time(3_451_440 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Clz(r: u32, ) -> Weight {
-		// Minimum execution time: 5_647 nanoseconds.
-		Weight::from_ref_time(6_463_325 as u64)
-			// Standard Error: 10_618
-			.saturating_add(Weight::from_ref_time(2_500_567 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_473 nanoseconds.
+		Weight::from_ref_time(7_201_728 as u64)
+			// Standard Error: 11_781
+			.saturating_add(Weight::from_ref_time(2_455_025 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Ctz(r: u32, ) -> Weight {
-		// Minimum execution time: 5_737 nanoseconds.
-		Weight::from_ref_time(5_910_507 as u64)
-			// Standard Error: 7_975
-			.saturating_add(Weight::from_ref_time(2_516_138 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_379 nanoseconds.
+		Weight::from_ref_time(7_148_810 as u64)
+			// Standard Error: 10_124
+			.saturating_add(Weight::from_ref_time(2_454_429 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Popcnt(r: u32, ) -> Weight {
-		// Minimum execution time: 5_632 nanoseconds.
-		Weight::from_ref_time(6_270_325 as u64)
-			// Standard Error: 8_467
-			.saturating_add(Weight::from_ref_time(2_498_752 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_240 nanoseconds.
+		Weight::from_ref_time(6_767_854 as u64)
+			// Standard Error: 10_041
+			.saturating_add(Weight::from_ref_time(2_469_284 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Add(r: u32, ) -> Weight {
-		// Minimum execution time: 5_736 nanoseconds.
-		Weight::from_ref_time(5_566_234 as u64)
-			// Standard Error: 10_680
-			.saturating_add(Weight::from_ref_time(3_486_731 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_314 nanoseconds.
+		Weight::from_ref_time(7_023_777 as u64)
+			// Standard Error: 7_634
+			.saturating_add(Weight::from_ref_time(3_424_494 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Sub(r: u32, ) -> Weight {
-		// Minimum execution time: 5_358 nanoseconds.
-		Weight::from_ref_time(5_887_839 as u64)
-			// Standard Error: 11_258
-			.saturating_add(Weight::from_ref_time(3_477_382 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_580 nanoseconds.
+		Weight::from_ref_time(7_072_796 as u64)
+			// Standard Error: 9_869
+			.saturating_add(Weight::from_ref_time(3_429_179 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Mul(r: u32, ) -> Weight {
-		// Minimum execution time: 5_664 nanoseconds.
-		Weight::from_ref_time(5_046_316 as u64)
-			// Standard Error: 11_325
-			.saturating_add(Weight::from_ref_time(3_520_990 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_216 nanoseconds.
+		Weight::from_ref_time(7_333_946 as u64)
+			// Standard Error: 9_209
+			.saturating_add(Weight::from_ref_time(3_418_971 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64DivS(r: u32, ) -> Weight {
-		// Minimum execution time: 5_694 nanoseconds.
-		Weight::from_ref_time(6_016_343 as u64)
-			// Standard Error: 16_404
-			.saturating_add(Weight::from_ref_time(4_464_813 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_254 nanoseconds.
+		Weight::from_ref_time(7_673_985 as u64)
+			// Standard Error: 14_812
+			.saturating_add(Weight::from_ref_time(4_450_214 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64DivU(r: u32, ) -> Weight {
-		// Minimum execution time: 5_500 nanoseconds.
-		Weight::from_ref_time(5_061_444 as u64)
-			// Standard Error: 11_837
-			.saturating_add(Weight::from_ref_time(3_863_216 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_091 nanoseconds.
+		Weight::from_ref_time(8_219_488 as u64)
+			// Standard Error: 44_152
+			.saturating_add(Weight::from_ref_time(3_852_303 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64RemS(r: u32, ) -> Weight {
-		// Minimum execution time: 5_574 nanoseconds.
-		Weight::from_ref_time(6_029_624 as u64)
-			// Standard Error: 13_365
-			.saturating_add(Weight::from_ref_time(4_363_426 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_166 nanoseconds.
+		Weight::from_ref_time(7_187_363 as u64)
+			// Standard Error: 13_360
+			.saturating_add(Weight::from_ref_time(4_389_457 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64And(r: u32, ) -> Weight {
-		// Minimum execution time: 5_402 nanoseconds.
-		Weight::from_ref_time(5_622_103 as u64)
-			// Standard Error: 11_307
-			.saturating_add(Weight::from_ref_time(3_491_543 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_443 nanoseconds.
+		Weight::from_ref_time(7_570_947 as u64)
+			// Standard Error: 13_373
+			.saturating_add(Weight::from_ref_time(3_436_985 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Or(r: u32, ) -> Weight {
-		// Minimum execution time: 5_543 nanoseconds.
-		Weight::from_ref_time(5_196_485 as u64)
-			// Standard Error: 11_096
-			.saturating_add(Weight::from_ref_time(3_499_379 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_326 nanoseconds.
+		Weight::from_ref_time(7_574_041 as u64)
+			// Standard Error: 13_881
+			.saturating_add(Weight::from_ref_time(3_431_718 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Xor(r: u32, ) -> Weight {
-		// Minimum execution time: 5_558 nanoseconds.
-		Weight::from_ref_time(6_099_750 as u64)
-			// Standard Error: 10_694
-			.saturating_add(Weight::from_ref_time(3_475_055 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_213 nanoseconds.
+		Weight::from_ref_time(7_598_036 as u64)
+			// Standard Error: 11_387
+			.saturating_add(Weight::from_ref_time(3_423_539 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Shl(r: u32, ) -> Weight {
-		// Minimum execution time: 5_759 nanoseconds.
-		Weight::from_ref_time(5_249_314 as u64)
-			// Standard Error: 14_503
-			.saturating_add(Weight::from_ref_time(3_462_900 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_307 nanoseconds.
+		Weight::from_ref_time(7_051_613 as u64)
+			// Standard Error: 13_520
+			.saturating_add(Weight::from_ref_time(3_456_853 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64ShrS(r: u32, ) -> Weight {
-		// Minimum execution time: 5_565 nanoseconds.
-		Weight::from_ref_time(5_491_477 as u64)
-			// Standard Error: 11_849
-			.saturating_add(Weight::from_ref_time(3_447_033 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 5_938 nanoseconds.
+		Weight::from_ref_time(7_341_808 as u64)
+			// Standard Error: 9_751
+			.saturating_add(Weight::from_ref_time(3_425_374 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Rotl(r: u32, ) -> Weight {
-		// Minimum execution time: 5_697 nanoseconds.
-		Weight::from_ref_time(5_798_189 as u64)
-			// Standard Error: 11_782
-			.saturating_add(Weight::from_ref_time(3_419_815 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_355 nanoseconds.
+		Weight::from_ref_time(7_216_535 as u64)
+			// Standard Error: 10_832
+			.saturating_add(Weight::from_ref_time(3_442_507 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Rotr(r: u32, ) -> Weight {
-		// Minimum execution time: 5_586 nanoseconds.
-		Weight::from_ref_time(5_657_162 as u64)
-			// Standard Error: 9_735
-			.saturating_add(Weight::from_ref_time(3_428_730 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_415 nanoseconds.
+		Weight::from_ref_time(7_057_165 as u64)
+			// Standard Error: 9_028
+			.saturating_add(Weight::from_ref_time(3_431_225 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64ExtendSI32(r: u32, ) -> Weight {
-		// Minimum execution time: 5_760 nanoseconds.
-		Weight::from_ref_time(5_751_882 as u64)
-			// Standard Error: 9_665
-			.saturating_add(Weight::from_ref_time(2_534_868 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 5_957 nanoseconds.
+		Weight::from_ref_time(6_625_683 as u64)
+			// Standard Error: 8_407
+			.saturating_add(Weight::from_ref_time(2_448_162 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I32WrapI64(r: u32, ) -> Weight {
-		// Minimum execution time: 5_553 nanoseconds.
-		Weight::from_ref_time(5_717_496 as u64)
-			// Standard Error: 11_894
-			.saturating_add(Weight::from_ref_time(2_523_795 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_413 nanoseconds.
+		Weight::from_ref_time(6_929_291 as u64)
+			// Standard Error: 9_735
+			.saturating_add(Weight::from_ref_time(2_500_601 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Eq(r: u32, ) -> Weight {
-		// Minimum execution time: 5_580 nanoseconds.
-		Weight::from_ref_time(6_301_305 as u64)
-			// Standard Error: 10_680
-			.saturating_add(Weight::from_ref_time(3_443_398 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_124 nanoseconds.
+		Weight::from_ref_time(6_260_253 as u64)
+			// Standard Error: 11_007
+			.saturating_add(Weight::from_ref_time(3_427_373 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Ne(r: u32, ) -> Weight {
-		// Minimum execution time: 5_772 nanoseconds.
-		Weight::from_ref_time(5_390_041 as u64)
-			// Standard Error: 12_238
-			.saturating_add(Weight::from_ref_time(3_460_000 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_104 nanoseconds.
+		Weight::from_ref_time(6_459_115 as u64)
+			// Standard Error: 10_120
+			.saturating_add(Weight::from_ref_time(3_424_199 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Lt(r: u32, ) -> Weight {
-		// Minimum execution time: 6_073 nanoseconds.
-		Weight::from_ref_time(5_353_295 as u64)
-			// Standard Error: 11_400
-			.saturating_add(Weight::from_ref_time(3_450_742 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_147 nanoseconds.
+		Weight::from_ref_time(6_966_810 as u64)
+			// Standard Error: 9_415
+			.saturating_add(Weight::from_ref_time(3_410_245 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Gt(r: u32, ) -> Weight {
-		// Minimum execution time: 6_013 nanoseconds.
-		Weight::from_ref_time(5_583_796 as u64)
-			// Standard Error: 9_824
-			.saturating_add(Weight::from_ref_time(3_415_881 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_128 nanoseconds.
+		Weight::from_ref_time(6_847_643 as u64)
+			// Standard Error: 11_627
+			.saturating_add(Weight::from_ref_time(3_429_491 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Le(r: u32, ) -> Weight {
-		// Minimum execution time: 5_676 nanoseconds.
-		Weight::from_ref_time(5_595_087 as u64)
-			// Standard Error: 10_637
-			.saturating_add(Weight::from_ref_time(3_489_471 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_203 nanoseconds.
+		Weight::from_ref_time(7_747_854 as u64)
+			// Standard Error: 11_104
+			.saturating_add(Weight::from_ref_time(3_400_585 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Ge(r: u32, ) -> Weight {
-		// Minimum execution time: 5_592 nanoseconds.
-		Weight::from_ref_time(5_908_777 as u64)
-			// Standard Error: 10_046
-			.saturating_add(Weight::from_ref_time(3_474_161 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_210 nanoseconds.
+		Weight::from_ref_time(7_185_978 as u64)
+			// Standard Error: 10_091
+			.saturating_add(Weight::from_ref_time(3_418_107 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Abs(r: u32, ) -> Weight {
-		// Minimum execution time: 5_583 nanoseconds.
-		Weight::from_ref_time(6_144_027 as u64)
-			// Standard Error: 9_151
-			.saturating_add(Weight::from_ref_time(2_505_154 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_040 nanoseconds.
+		Weight::from_ref_time(7_057_805 as u64)
+			// Standard Error: 6_351
+			.saturating_add(Weight::from_ref_time(2_403_265 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Neg(r: u32, ) -> Weight {
-		// Minimum execution time: 5_864 nanoseconds.
-		Weight::from_ref_time(6_533_755 as u64)
-			// Standard Error: 11_443
-			.saturating_add(Weight::from_ref_time(2_479_982 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_237 nanoseconds.
+		Weight::from_ref_time(7_295_362 as u64)
+			// Standard Error: 6_776
+			.saturating_add(Weight::from_ref_time(2_473_379 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Ceil(r: u32, ) -> Weight {
-		// Minimum execution time: 5_492 nanoseconds.
-		Weight::from_ref_time(5_831_485 as u64)
-			// Standard Error: 9_674
-			.saturating_add(Weight::from_ref_time(2_498_417 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_316 nanoseconds.
+		Weight::from_ref_time(7_231_870 as u64)
+			// Standard Error: 11_303
+			.saturating_add(Weight::from_ref_time(2_401_565 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Floor(r: u32, ) -> Weight {
-		// Minimum execution time: 5_630 nanoseconds.
-		Weight::from_ref_time(5_478_597 as u64)
-			// Standard Error: 9_227
-			.saturating_add(Weight::from_ref_time(2_505_358 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_239 nanoseconds.
+		Weight::from_ref_time(7_474_968 as u64)
+			// Standard Error: 10_921
+			.saturating_add(Weight::from_ref_time(2_399_300 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Trunc(r: u32, ) -> Weight {
-		// Minimum execution time: 5_802 nanoseconds.
-		Weight::from_ref_time(5_921_694 as u64)
-			// Standard Error: 11_719
-			.saturating_add(Weight::from_ref_time(2_492_360 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_219 nanoseconds.
+		Weight::from_ref_time(7_350_498 as u64)
+			// Standard Error: 9_020
+			.saturating_add(Weight::from_ref_time(2_433_899 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Nearest(r: u32, ) -> Weight {
-		// Minimum execution time: 5_923 nanoseconds.
-		Weight::from_ref_time(6_858_680 as u64)
-			// Standard Error: 9_698
-			.saturating_add(Weight::from_ref_time(2_652_455 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_457 nanoseconds.
+		Weight::from_ref_time(7_713_675 as u64)
+			// Standard Error: 11_038
+			.saturating_add(Weight::from_ref_time(2_877_506 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Sqrt(r: u32, ) -> Weight {
-		// Minimum execution time: 5_927 nanoseconds.
-		Weight::from_ref_time(6_569_343 as u64)
-			// Standard Error: 8_752
-			.saturating_add(Weight::from_ref_time(2_569_271 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_365 nanoseconds.
+		Weight::from_ref_time(7_220_355 as u64)
+			// Standard Error: 12_873
+			.saturating_add(Weight::from_ref_time(2_633_821 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Add(r: u32, ) -> Weight {
-		// Minimum execution time: 5_890 nanoseconds.
-		Weight::from_ref_time(5_673_970 as u64)
-			// Standard Error: 10_890
-			.saturating_add(Weight::from_ref_time(3_428_118 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_207 nanoseconds.
+		Weight::from_ref_time(6_966_345 as u64)
+			// Standard Error: 10_923
+			.saturating_add(Weight::from_ref_time(3_439_820 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Sub(r: u32, ) -> Weight {
-		// Minimum execution time: 5_492 nanoseconds.
-		Weight::from_ref_time(5_827_329 as u64)
-			// Standard Error: 11_193
-			.saturating_add(Weight::from_ref_time(3_413_172 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_371 nanoseconds.
+		Weight::from_ref_time(6_704_698 as u64)
+			// Standard Error: 11_456
+			.saturating_add(Weight::from_ref_time(3_477_870 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Mul(r: u32, ) -> Weight {
-		// Minimum execution time: 5_671 nanoseconds.
-		Weight::from_ref_time(5_420_470 as u64)
-			// Standard Error: 12_363
-			.saturating_add(Weight::from_ref_time(3_441_064 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_287 nanoseconds.
+		Weight::from_ref_time(6_731_335 as u64)
+			// Standard Error: 11_690
+			.saturating_add(Weight::from_ref_time(3_468_948 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Div(r: u32, ) -> Weight {
-		// Minimum execution time: 5_662 nanoseconds.
-		Weight::from_ref_time(5_702_503 as u64)
-			// Standard Error: 10_607
-			.saturating_add(Weight::from_ref_time(3_437_610 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_155 nanoseconds.
+		Weight::from_ref_time(6_819_898 as u64)
+			// Standard Error: 10_308
+			.saturating_add(Weight::from_ref_time(3_447_581 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Min(r: u32, ) -> Weight {
-		// Minimum execution time: 5_443 nanoseconds.
-		Weight::from_ref_time(5_699_057 as u64)
-			// Standard Error: 11_089
-			.saturating_add(Weight::from_ref_time(3_517_133 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_180 nanoseconds.
+		Weight::from_ref_time(7_336_218 as u64)
+			// Standard Error: 11_526
+			.saturating_add(Weight::from_ref_time(3_365_332 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Max(r: u32, ) -> Weight {
-		// Minimum execution time: 5_423 nanoseconds.
-		Weight::from_ref_time(6_186_053 as u64)
-			// Standard Error: 10_211
-			.saturating_add(Weight::from_ref_time(3_486_877 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_225 nanoseconds.
+		Weight::from_ref_time(6_947_814 as u64)
+			// Standard Error: 11_631
+			.saturating_add(Weight::from_ref_time(3_389_018 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Copysign(r: u32, ) -> Weight {
-		// Minimum execution time: 5_492 nanoseconds.
-		Weight::from_ref_time(5_818_703 as u64)
-			// Standard Error: 10_532
-			.saturating_add(Weight::from_ref_time(3_414_175 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_407 nanoseconds.
+		Weight::from_ref_time(6_685_306 as u64)
+			// Standard Error: 11_265
+			.saturating_add(Weight::from_ref_time(3_461_377 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_Select(r: u32, ) -> Weight {
-		// Minimum execution time: 5_486 nanoseconds.
-		Weight::from_ref_time(6_049_549 as u64)
-			// Standard Error: 11_700
-			.saturating_add(Weight::from_ref_time(4_428_784 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_120 nanoseconds.
+		Weight::from_ref_time(6_837_420 as u64)
+			// Standard Error: 16_368
+			.saturating_add(Weight::from_ref_time(4_545_628 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_If(r: u32, ) -> Weight {
-		// Minimum execution time: 5_546 nanoseconds.
-		Weight::from_ref_time(6_065_378 as u64)
-			// Standard Error: 6_518
-			.saturating_add(Weight::from_ref_time(1_991_117 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_201 nanoseconds.
+		Weight::from_ref_time(6_797_612 as u64)
+			// Standard Error: 4_511
+			.saturating_add(Weight::from_ref_time(1_917_922 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_Else(r: u32, ) -> Weight {
-		// Minimum execution time: 5_310 nanoseconds.
-		Weight::from_ref_time(5_567_928 as u64)
-			// Standard Error: 10_671
-			.saturating_add(Weight::from_ref_time(3_077_227 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_328 nanoseconds.
+		Weight::from_ref_time(7_211_411 as u64)
+			// Standard Error: 9_292
+			.saturating_add(Weight::from_ref_time(2_892_581 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_GetLocal(r: u32, ) -> Weight {
-		// Minimum execution time: 5_621 nanoseconds.
-		Weight::from_ref_time(6_115_707 as u64)
-			// Standard Error: 4_794
-			.saturating_add(Weight::from_ref_time(1_511_446 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_048 nanoseconds.
+		Weight::from_ref_time(7_118_640 as u64)
+			// Standard Error: 4_834
+			.saturating_add(Weight::from_ref_time(1_430_207 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_SetLocal(r: u32, ) -> Weight {
-		// Minimum execution time: 5_512 nanoseconds.
-		Weight::from_ref_time(5_929_955 as u64)
-			// Standard Error: 6_706
-			.saturating_add(Weight::from_ref_time(1_868_902 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_181 nanoseconds.
+		Weight::from_ref_time(7_609_381 as u64)
+			// Standard Error: 6_029
+			.saturating_add(Weight::from_ref_time(1_750_420 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_TeeLocal(_r: u32, ) -> Weight {
-		// Minimum execution time: 5_483 nanoseconds.
-		Weight::from_ref_time(6_065_449 as u64)
+		// Minimum execution time: 6_236 nanoseconds.
+		Weight::from_ref_time(6_919_481 as u64)
 	}
 	/// The range of component `r` is `[0, 50]`.
-	fn instruction_GetGlobal(_r: u32, ) -> Weight {
-		// Minimum execution time: 5_460 nanoseconds.
-		Weight::from_ref_time(6_052_359 as u64)
+	fn instruction_GetGlobal(r: u32, ) -> Weight {
+		// Minimum execution time: 6_225 nanoseconds.
+		Weight::from_ref_time(6_845_799 as u64)
+			// Standard Error: 910
+			.saturating_add(Weight::from_ref_time(106 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_SetGlobal(_r: u32, ) -> Weight {
-		// Minimum execution time: 5_447 nanoseconds.
-		Weight::from_ref_time(6_255_963 as u64)
+		// Minimum execution time: 6_165 nanoseconds.
+		Weight::from_ref_time(6_943_652 as u64)
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_CurrentMemory(r: u32, ) -> Weight {
-		// Minimum execution time: 5_338 nanoseconds.
-		Weight::from_ref_time(6_196_091 as u64)
-			// Standard Error: 7_060
-			.saturating_add(Weight::from_ref_time(1_945_632 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_325 nanoseconds.
+		Weight::from_ref_time(6_983_418 as u64)
+			// Standard Error: 8_108
+			.saturating_add(Weight::from_ref_time(2_035_966 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 3]`.
 	fn instruction_GrowMemory(r: u32, ) -> Weight {
-		// Minimum execution time: 5_318 nanoseconds.
-		Weight::from_ref_time(5_599_000 as u64)
-			// Standard Error: 21_675_680
-			.saturating_add(Weight::from_ref_time(3_585_535_182 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_076 nanoseconds.
+		Weight::from_ref_time(6_425_000 as u64)
+			// Standard Error: 18_247_338
+			.saturating_add(Weight::from_ref_time(2_578_109_378 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_Br(r: u32, ) -> Weight {
-		// Minimum execution time: 5_444 nanoseconds.
-		Weight::from_ref_time(5_886_837 as u64)
-			// Standard Error: 4_640
-			.saturating_add(Weight::from_ref_time(1_035_190 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_406 nanoseconds.
+		Weight::from_ref_time(7_280_907 as u64)
+			// Standard Error: 5_742
+			.saturating_add(Weight::from_ref_time(926_007 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_BrIf(r: u32, ) -> Weight {
-		// Minimum execution time: 5_318 nanoseconds.
-		Weight::from_ref_time(5_781_460 as u64)
-			// Standard Error: 6_208
-			.saturating_add(Weight::from_ref_time(1_992_057 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_095 nanoseconds.
+		Weight::from_ref_time(6_789_220 as u64)
+			// Standard Error: 8_157
+			.saturating_add(Weight::from_ref_time(1_897_864 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_BrTable(r: u32, ) -> Weight {
-		// Minimum execution time: 5_347 nanoseconds.
-		Weight::from_ref_time(4_564_760 as u64)
-			// Standard Error: 11_798
-			.saturating_add(Weight::from_ref_time(2_843_680 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_232 nanoseconds.
+		Weight::from_ref_time(7_134_436 as u64)
+			// Standard Error: 9_932
+			.saturating_add(Weight::from_ref_time(2_533_105 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `s` is `[1, 50]`.
 	fn instruction_BrTable_per_elem(s: u32, ) -> Weight {
-		// Minimum execution time: 8_204 nanoseconds.
-		Weight::from_ref_time(8_689_121 as u64)
-			// Standard Error: 1_827
-			.saturating_add(Weight::from_ref_time(20_534 as u64).saturating_mul(s as u64))
+		// Minimum execution time: 8_928 nanoseconds.
+		Weight::from_ref_time(9_646_162 as u64)
+			// Standard Error: 1_860
+			.saturating_add(Weight::from_ref_time(9_965 as u64).saturating_mul(s as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_Call(r: u32, ) -> Weight {
-		// Minimum execution time: 5_898 nanoseconds.
-		Weight::from_ref_time(7_924_861 as u64)
-			// Standard Error: 25_301
-			.saturating_add(Weight::from_ref_time(13_470_930 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_391 nanoseconds.
+		Weight::from_ref_time(7_743_380 as u64)
+			// Standard Error: 24_903
+			.saturating_add(Weight::from_ref_time(13_320_007 as u64).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_CallIndirect(r: u32, ) -> Weight {
-		// Minimum execution time: 5_953 nanoseconds.
-		Weight::from_ref_time(6_458_067 as u64)
-			// Standard Error: 24_723
-			.saturating_add(Weight::from_ref_time(15_936_878 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 6_918 nanoseconds.
+		Weight::from_ref_time(7_915_610 as u64)
+			// Standard Error: 24_868
+			.saturating_add(Weight::from_ref_time(15_875_800 as u64).saturating_mul(r as u64))
 	}
 }

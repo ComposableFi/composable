@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `51c0f1a4ed3e`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -34,8 +34,8 @@ impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 	// Storage: AssetsRegistry AssetRatio (r:1 w:1)
 	// Storage: AssetsRegistry LocalToForeign (r:0 w:1)
 	fn register_asset() -> Weight {
-		// Minimum execution time: 67_555 nanoseconds.
-		Weight::from_ref_time(69_627_000 as u64)
+		// Minimum execution time: 76_935 nanoseconds.
+		Weight::from_ref_time(79_060_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
@@ -43,15 +43,15 @@ impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 	// Storage: AssetsRegistry LocalToForeign (r:0 w:1)
 	// Storage: AssetsRegistry ForeignToLocal (r:0 w:1)
 	fn update_asset() -> Weight {
-		// Minimum execution time: 52_434 nanoseconds.
-		Weight::from_ref_time(53_493_000 as u64)
+		// Minimum execution time: 60_808 nanoseconds.
+		Weight::from_ref_time(63_690_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: AssetsRegistry MinFeeAmounts (r:1 w:1)
 	fn set_min_fee() -> Weight {
-		// Minimum execution time: 44_769 nanoseconds.
-		Weight::from_ref_time(45_566_000 as u64)
+		// Minimum execution time: 51_775 nanoseconds.
+		Weight::from_ref_time(52_688_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}

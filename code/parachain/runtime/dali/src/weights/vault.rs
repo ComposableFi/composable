@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `51c0f1a4ed3e`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -35,8 +35,8 @@ impl<T: frame_system::Config> vault::WeightInfo for WeightInfo<T> {
 	// Storage: Vault LpTokensToVaults (r:0 w:1)
 	// Storage: Vault Vaults (r:0 w:1)
 	fn create() -> Weight {
-		// Minimum execution time: 187_401 nanoseconds.
-		Weight::from_ref_time(196_360_000 as u64)
+		// Minimum execution time: 204_911 nanoseconds.
+		Weight::from_ref_time(209_290_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
@@ -46,8 +46,8 @@ impl<T: frame_system::Config> vault::WeightInfo for WeightInfo<T> {
 	// Storage: Vault CapitalStructure (r:2 w:0)
 	// Storage: System Account (r:1 w:1)
 	fn deposit() -> Weight {
-		// Minimum execution time: 200_586 nanoseconds.
-		Weight::from_ref_time(209_528_000 as u64)
+		// Minimum execution time: 224_163 nanoseconds.
+		Weight::from_ref_time(228_808_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(9 as u64))
 			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
@@ -56,38 +56,38 @@ impl<T: frame_system::Config> vault::WeightInfo for WeightInfo<T> {
 	// Storage: Vault CapitalStructure (r:2 w:0)
 	// Storage: Tokens TotalIssuance (r:2 w:1)
 	fn withdraw() -> Weight {
-		// Minimum execution time: 180_771 nanoseconds.
-		Weight::from_ref_time(183_659_000 as u64)
+		// Minimum execution time: 199_219 nanoseconds.
+		Weight::from_ref_time(213_157_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(8 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 	// Storage: Vault Vaults (r:1 w:1)
 	fn emergency_shutdown() -> Weight {
-		// Minimum execution time: 52_433 nanoseconds.
-		Weight::from_ref_time(55_119_000 as u64)
+		// Minimum execution time: 58_041 nanoseconds.
+		Weight::from_ref_time(59_958_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Vault Vaults (r:1 w:1)
 	fn start_() -> Weight {
-		// Minimum execution time: 50_849 nanoseconds.
-		Weight::from_ref_time(52_912_000 as u64)
+		// Minimum execution time: 57_991 nanoseconds.
+		Weight::from_ref_time(59_620_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Vault Vaults (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn add_surcharge() -> Weight {
-		// Minimum execution time: 113_895 nanoseconds.
-		Weight::from_ref_time(122_158_000 as u64)
+		// Minimum execution time: 123_087 nanoseconds.
+		Weight::from_ref_time(124_899_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Vault Vaults (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn claim_surcharge() -> Weight {
-		// Minimum execution time: 108_063 nanoseconds.
-		Weight::from_ref_time(110_380_000 as u64)
+		// Minimum execution time: 117_380 nanoseconds.
+		Weight::from_ref_time(120_808_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -95,8 +95,8 @@ impl<T: frame_system::Config> vault::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:0)
 	// Storage: Vault LpTokensToVaults (r:0 w:1)
 	fn delete_tombstoned() -> Weight {
-		// Minimum execution time: 51_310 nanoseconds.
-		Weight::from_ref_time(53_739_000 as u64)
+		// Minimum execution time: 58_812 nanoseconds.
+		Weight::from_ref_time(60_116_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
