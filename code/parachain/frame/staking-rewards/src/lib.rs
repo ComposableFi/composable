@@ -697,7 +697,7 @@ pub mod pallet {
 						RewardPool {
 							owner: owner.clone(),
 							rewards,
-							claimed_shares: T::Balance::zero(),
+							unstaked_shares: T::Balance::zero(),
 							start_block,
 							lock,
 							share_asset_id,
@@ -811,6 +811,7 @@ pub mod pallet {
 
 			// Move staked funds into fNFT asset account & lock the assets
 			Self::transfer_stake(who, amount, *pool_id, &fnft_account, keep_alive)?;
+			// TODO only mint if unstaked_shares is not enough to cover the new shares
 			Self::mint_shares(rewards_pool.share_asset_id, awarded_shares, &fnft_account)?;
 
 			// Mint the fNFT
@@ -909,6 +910,7 @@ pub mod pallet {
 						keep_alive,
 					)?;
 					// only mint the new shares
+					// TODO only mint if unstaked_shares is not enough to cover the new shares
 					Self::mint_shares(
 						rewards_pool.share_asset_id,
 						new_shares,
@@ -951,6 +953,7 @@ pub mod pallet {
 
 					Self::collect_rewards(rewards_pool, &mut stake, who)?;
 
+					rewards_pool.unstaked_shares = rewards_pool.unstaked_shares.safe_add(&stake.share)?;
 					Ok::<_, DispatchError>((stake.reward_pool_id, rewards_pool.share_asset_id))
 				})?;
 
@@ -1745,6 +1748,7 @@ pub(crate) fn accumulate_reward<T: Config>(
 	)
 	.expect("funds should be available to release; see above for proof; qed;");
 
+	// TODO add the amount earned by the unstaked_shares back to the pool for the epoch
 	reward.total_rewards = new_total_rewards.into();
 	reward.last_updated_timestamp = last_updated_timestamp;
 
