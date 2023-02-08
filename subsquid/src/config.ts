@@ -27,10 +27,11 @@ export const archive = (): string => {
 
 export const firstBlock = (): number => {
   const relayChain = chain();
-  if (relayChain.toLowerCase().includes("picasso")) {
+  if (!process.env.START_BLOCK) {
     // Start from a block close to this runtime upgrade from Picasso
     // https://picasso.subscan.io/extrinsic/0xc875c8916e23c119f1d4202914dd0f28304aff62e46b0d51fed9b34e0aa30d9c
-    return 1_227_000;
+    return relayChain === "wss://picasso-rpc-lb.composablenodes.tech" ? 1_227_000 : 0;
   }
-  return 0;
+
+  return Number(process.env.START_BLOCK);
 };
