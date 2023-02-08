@@ -191,7 +191,6 @@ parameter_types! {
 	pub const MaxRewardConfigsPerPool: u32 = 10;
 	// TODO(benluelo): Use a better value here?
 	pub const TreasuryAccountId: AccountId = 123_456_789_u128;
-	pub const ShareAssetExistentialDeposit: Balance = 10_000;
 }
 
 impl pallet_assets_registry::Config for Test {
@@ -237,7 +236,6 @@ impl pallet_staking_rewards::Config for Test {
 	type TreasuryAccount = TreasuryAccountId;
 	type ExistentialDeposits = ExistentialDeposits;
 	type AssetsTransactor = AssetsTransactor;
-	type ShareAssetExistentialDeposit = ShareAssetExistentialDeposit;
 }
 
 parameter_types! {

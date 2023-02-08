@@ -867,7 +867,6 @@ parameter_types! {
 	pub const MaxStakingDurationPresets : u32 = 10;
 	pub const MaxRewardConfigsPerPool : u32 = 10;
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
-	pub const ShareAssetExistentialDeposit: Balance = 10_000;
 }
 
 impl pallet_staking_rewards::Config for Runtime {
@@ -888,7 +887,6 @@ impl pallet_staking_rewards::Config for Runtime {
 	type TreasuryAccount = TreasuryAccount;
 	type ExistentialDeposits = MultiExistentialDeposits;
 	type AssetsTransactor = AssetsTransactorRouter;
-	type ShareAssetExistentialDeposit = ShareAssetExistentialDeposit;
 }
 
 /// The calls we permit to be executed by extrinsics

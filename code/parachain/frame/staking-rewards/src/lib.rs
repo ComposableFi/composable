@@ -399,10 +399,6 @@ pub mod pallet {
 		type TreasuryAccount: Get<Self::AccountId>;
 
 		type ExistentialDeposits: GetByKey<Self::AssetId, Self::Balance>;
-
-		/// The default existential deposit for newly created share tokens
-		#[pallet::constant]
-		type ShareAssetExistentialDeposit: Get<Self::Balance>;
 	}
 
 	/// Abstraction over RewardPoolConfiguration type
@@ -1837,7 +1833,7 @@ impl<T: Config> Pallet<T> {
 				name: None,
 				symbol: None,
 				decimals: 12,
-				existential_deposit: T::ShareAssetExistentialDeposit::get(),
+				existential_deposit: T::Balance::zero(),
 				ratio: None,
 			},
 		)

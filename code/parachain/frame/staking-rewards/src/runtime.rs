@@ -259,7 +259,6 @@ parameter_types! {
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
 	// REVIEW(benluelo): Use a better value for this?
 	pub const TreasuryAccountId: AccountId = sr25519::Public([10_u8; 32]);
-	pub const ShareAssetExistentialDeposit: Balance = 10_000;
 }
 
 impl crate::Config for Test {
@@ -280,7 +279,6 @@ impl crate::Config for Test {
 	type AssetsTransactor = Assets;
 	type LockId = StakingRewardsLockId;
 	type TreasuryAccount = TreasuryAccountId;
-	type ShareAssetExistentialDeposit = ShareAssetExistentialDeposit;
 }
 
 impl InstanceFilter<RuntimeCall> for ProxyType {
