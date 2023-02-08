@@ -704,7 +704,9 @@ pub mod pallet {
 					let share_asset_id = Self::register_protocol_asset(
 						ShareAssetNonce::<T>::increment().expect("Does not exceed `u64::MAX`"),
 					)?;
-					// NOTE: Collection ID can safely be set to the ID of the share asset
+					// NOTE: Collection ID can safely be set to the ID of the share asset becase
+					// they exists within different scopes. fNFT Collection IDs are not tracked by
+					// the asset registry.
 					let financial_nft_asset_id = share_asset_id;
 
 					RewardPools::<T>::insert(
