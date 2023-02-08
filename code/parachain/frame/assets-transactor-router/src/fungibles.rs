@@ -46,7 +46,12 @@ impl<T: Config> fungibles::metadata::Mutate<T::AccountId> for Pallet<T> {
 		let name = BiBoundedAssetName::from_vec(name).ok();
 		let symbol = BiBoundedAssetSymbol::from_vec(symbol).ok();
 
-		<T::AssetsRegistry as MutateRegistryMetadata>::set_metadata(&asset, name, symbol, decimals)
+		<T::AssetsRegistry as MutateRegistryMetadata>::set_metadata(
+			&asset,
+			name,
+			symbol,
+			Some(decimals),
+		)
 	}
 }
 

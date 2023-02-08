@@ -1834,7 +1834,7 @@ impl<T: Config> Pallet<T> {
 			AssetInfo {
 				name: None,
 				symbol: None,
-				decimals: 12,
+				decimals: Some(12),
 				existential_deposit: T::Balance::zero(),
 				ratio: None,
 			},

@@ -7,7 +7,10 @@ use scale_info::TypeInfo;
 use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::vec::Vec;
 
-use crate::currency::{Exponent, Rational64};
+use crate::{
+	currency::{Exponent, Rational64},
+	storage::UpdateValue,
+};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
@@ -53,7 +56,7 @@ pub struct AssetInfo<Balance> {
 	/// Symbol of the asset.
 	pub symbol: Option<BiBoundedAssetSymbol>,
 	/// The number of decimals this asset uses to represent one unit.
-	pub decimals: u8,
+	pub decimals: Option<u8>,
 	/// The minimum balance of the asset for an account to be stored on chain.
 	pub existential_deposit: Balance,
 	/// The ratio of 1 native asset to 1 of this asset. Only used for BYOG assets. Set to `None` to
@@ -63,21 +66,22 @@ pub struct AssetInfo<Balance> {
 
 /// Stuct for updating the stored information for an asset.
 ///
-/// All fields are wrapped by an `Option`. Only fiels with an outter `Some` should be updated.
+/// All fields are wrapped by an [`UpdateValue`]. Only fields with an outter [`UpdateValue::Set`]
+/// should be updated.
 #[derive(Decode, Encode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct AssetInfoUpdate<Balance> {
 	/// Name of the asset.
-	pub name: Option<Option<BiBoundedAssetName>>,
+	pub name: UpdateValue<Option<BiBoundedAssetName>>,
 	/// Symbol of the asset.
-	pub symbol: Option<Option<BiBoundedAssetSymbol>>,
+	pub symbol: UpdateValue<Option<BiBoundedAssetSymbol>>,
 	/// The number of decimals this asset uses to represent one unit.
-	pub decimals: Option<u8>,
+	pub decimals: UpdateValue<Option<u8>>,
 	/// The minimum balance of the asset for an account to be stored on chain.
-	pub existential_deposit: Option<Balance>,
+	pub existential_deposit: UpdateValue<Balance>,
 	/// The ratio of 1 native asset to 1 of this asset. Only used for BYOG assets. Set to
 	/// `Some(None)` to prevent payment in this asset, only transferring.
-	pub ratio: Option<Option<Rational64>>,
+	pub ratio: UpdateValue<Option<Rational64>>,
 }
 
 pub trait AssetTypeInspect {
@@ -113,7 +117,7 @@ pub trait MutateRegistryMetadata {
 		asset_id: &Self::AssetId,
 		name: Option<BiBoundedAssetName>,
 		symbol: Option<BiBoundedAssetSymbol>,
-		decimals: u8,
+		decimals: Option<u8>,
 	) -> DispatchResult;
 
 	/// Update the metadata of an asset.
@@ -123,9 +127,9 @@ pub trait MutateRegistryMetadata {
 	/// will set it to none in storage.
 	fn update_metadata(
 		asset_id: &Self::AssetId,
-		name: Option<Option<BiBoundedAssetName>>,
-		symbol: Option<Option<BiBoundedAssetSymbol>>,
-		decimals: Option<u8>,
+		name: UpdateValue<Option<BiBoundedAssetName>>,
+		symbol: UpdateValue<Option<BiBoundedAssetSymbol>>,
+		decimals: UpdateValue<Option<u8>>,
 	) -> DispatchResult;
 }
 

@@ -4,6 +4,7 @@ use composable_traits::{
 	assets::{Asset, AssetInfo, AssetInfoUpdate, LocalOrForeignAssetId},
 	currency::Rational64,
 	rational,
+	storage::UpdateValue,
 	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 use frame_support::{assert_noop, assert_ok};
@@ -24,7 +25,7 @@ fn set_metadata() {
 		let asset_info = AssetInfo {
 			name: None,
 			symbol: None,
-			decimals: 4,
+			decimals: Some(4),
 			existential_deposit: 0,
 			ratio: Some(rational!(42 / 123)),
 		};
@@ -74,7 +75,7 @@ fn register_asset() {
 		let asset_info = AssetInfo {
 			name: None,
 			symbol: None,
-			decimals: 4,
+			decimals: Some(4),
 			existential_deposit: 0,
 			ratio: Some(rational!(42 / 123)),
 		};
@@ -111,7 +112,7 @@ fn update_asset() {
 		let asset_info = AssetInfo {
 			name: None,
 			symbol: None,
-			decimals: 4,
+			decimals: Some(4),
 			existential_deposit: 0,
 			ratio: Some(rational!(42 / 123)),
 		};
@@ -131,11 +132,11 @@ fn update_asset() {
 		let new_ratio = rational!(100500 / 666);
 
 		let asset_info_update = AssetInfoUpdate {
-			name: None,
-			symbol: None,
-			decimals: Some(new_decimals),
-			ratio: Some(Some(new_ratio)),
-			existential_deposit: None,
+			name: UpdateValue::DoNotSet,
+			symbol: UpdateValue::DoNotSet,
+			decimals: UpdateValue::Set(Some(new_decimals)),
+			ratio: UpdateValue::Set(Some(new_ratio)),
+			existential_deposit: UpdateValue::DoNotSet,
 		};
 
 		assert_ok!(AssetsRegistry::update_asset(
@@ -184,7 +185,7 @@ fn get_foreign_assets_list_should_work() {
 		let asset_info = AssetInfo {
 			name: None,
 			symbol: None,
-			decimals: 4,
+			decimals: Some(4),
 			existential_deposit: 0,
 			ratio: Some(rational!(42 / 123)),
 		};

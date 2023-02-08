@@ -981,7 +981,7 @@ pub mod pallet {
 			AssetInfo {
 				name: None,
 				symbol: None,
-				decimals: 12,
+				decimals: Some(12),
 				existential_deposit: T::LPTokenExistentialDeposit::get(),
 				ratio: None,
 			},

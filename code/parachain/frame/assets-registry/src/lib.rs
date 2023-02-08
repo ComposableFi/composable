@@ -40,6 +40,7 @@ pub mod pallet {
 			MutateRegistryMetadata,
 		},
 		currency::{AssetExistentialDepositInspect, BalanceLike, ForeignByNative},
+		storage::UpdateValue,
 		xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
 	};
 	use cumulus_primitives_core::ParaId;
@@ -353,14 +354,14 @@ pub mod pallet {
 				&asset_id,
 				asset_info.name.clone(),
 				asset_info.symbol.clone(),
-				asset_info.decimals,
+				asset_info.decimals.clone(),
 			)?;
 
-			if let Some(ed) = asset_info.existential_deposit {
+			if let UpdateValue::Set(ed) = asset_info.existential_deposit {
 				ExistentialDeposit::<T>::set(asset_id, Some(ed));
 			}
 
-			if let Some(ratio) = asset_info.ratio {
+			if let UpdateValue::Set(ratio) = asset_info.ratio {
 				AssetRatio::<T>::set(asset_id, ratio);
 			}
 
@@ -452,28 +453,28 @@ pub mod pallet {
 			asset_id: &Self::AssetId,
 			name: Option<BiBoundedAssetName>,
 			symbol: Option<BiBoundedAssetSymbol>,
-			decimals: u8,
+			decimals: Option<u8>,
 		) -> DispatchResult {
 			AssetName::<T>::set(asset_id, name);
 			AssetSymbol::<T>::set(asset_id, symbol);
-			AssetDecimals::<T>::insert(asset_id, decimals);
+			AssetDecimals::<T>::set(asset_id, decimals);
 			Ok(())
 		}
 
 		fn update_metadata(
 			asset_id: &Self::AssetId,
-			name: Option<Option<BiBoundedAssetName>>,
-			symbol: Option<Option<BiBoundedAssetSymbol>>,
-			decimals: Option<u8>,
+			name: UpdateValue<Option<BiBoundedAssetName>>,
+			symbol: UpdateValue<Option<BiBoundedAssetSymbol>>,
+			decimals: UpdateValue<Option<u8>>,
 		) -> DispatchResult {
-			if let Some(name) = name {
+			if let UpdateValue::Set(name) = name {
 				AssetName::<T>::set(asset_id, name);
 			}
-			if let Some(symbol) = symbol {
+			if let UpdateValue::Set(symbol) = symbol {
 				AssetSymbol::<T>::set(asset_id, symbol);
 			}
-			if let Some(decimals) = decimals {
-				AssetDecimals::<T>::insert(asset_id, decimals);
+			if let UpdateValue::Set(decimals) = decimals {
+				AssetDecimals::<T>::set(asset_id, decimals);
 			}
 
 			Ok(())

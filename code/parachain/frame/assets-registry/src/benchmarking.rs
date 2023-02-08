@@ -13,6 +13,7 @@ use composable_traits::{
 	},
 	currency::Rational64,
 	rational,
+	storage::UpdateValue,
 	xcm::assets::XcmAssetLocation,
 };
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
@@ -33,7 +34,7 @@ benchmarks! {
 		let asset_info = AssetInfo {
 			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
 			symbol: Some(BiBoundedAssetSymbol::from_vec(b"KSM".to_vec()).expect("String is within bounds")),
-			decimals: 3,
+			decimals: Some(3),
 			existential_deposit: T::Balance::from(0),
 			ratio: Some(rational!(42 / 123)),
 		};
@@ -46,7 +47,7 @@ benchmarks! {
 		let asset_info = AssetInfo {
 			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
 			symbol: Some(BiBoundedAssetSymbol::from_vec(b"KSM".to_vec()).expect("String is within bounds")),
-			decimals: 3,
+			decimals: Some(3),
 			existential_deposit: T::Balance::from(0),
 			ratio: Some(rational!(42 / 123)),
 		};
@@ -69,7 +70,7 @@ benchmarks! {
 		let asset_info = AssetInfo {
 			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
 			symbol: Some(BiBoundedAssetSymbol::from_vec(b"KSM".to_vec()).expect("String is within bounds")),
-			decimals: 3,
+			decimals: Some(3),
 			existential_deposit: T::Balance::from(0),
 			ratio: Some(rational!(42 / 123)),
 		};
@@ -82,11 +83,11 @@ benchmarks! {
 		.expect("Asset details are non-duplicate and valid");
 
 		let asset_info_update = AssetInfoUpdate {
-			name: Some(Some(BiBoundedAssetName::from_vec(b"Cooler Kusama".to_vec()).expect("String is within bounds"))),
-			symbol: Some(Some(BiBoundedAssetSymbol::from_vec(b"CKSM".to_vec()).expect("String is within bounds"))),
-			decimals: Some(12),
-			existential_deposit: Some(T::Balance::from(0)),
-			ratio: Some(None),
+			name: UpdateValue::Set(Some(BiBoundedAssetName::from_vec(b"Cooler Kusama".to_vec()).expect("String is within bounds"))),
+			symbol: UpdateValue::Set(Some(BiBoundedAssetSymbol::from_vec(b"CKSM".to_vec()).expect("String is within bounds"))),
+			decimals: UpdateValue::Set(Some(12)),
+			existential_deposit: UpdateValue::Set(T::Balance::from(0)),
+			ratio: UpdateValue::Set(None),
 		};
 
 		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location_base)

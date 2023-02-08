@@ -199,7 +199,7 @@ mod mint_initialize {
 		let asset_info = AssetInfo {
 			name: None,
 			symbol: None,
-			decimals: 12,
+			decimals: Some(12),
 			ratio: None,
 			existential_deposit: 0,
 		};
@@ -228,7 +228,7 @@ mod mint_initialize_with_governance {
 		let asset_info = AssetInfo {
 			name: None,
 			symbol: None,
-			decimals: 12,
+			decimals: Some(12),
 			ratio: None,
 			existential_deposit: 0,
 		};

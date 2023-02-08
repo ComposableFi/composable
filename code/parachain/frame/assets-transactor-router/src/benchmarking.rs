@@ -79,7 +79,7 @@ benchmarks! {
 		let asset_info = AssetInfo {
 			name: None,
 			symbol: None,
-			decimals: 12,
+			decimals: Some(12),
 			ratio: None,
 			existential_deposit: T::Balance::from(0_u32),
 		};
@@ -93,7 +93,7 @@ benchmarks! {
 		let asset_info = AssetInfo {
 			name: None,
 			symbol: None,
-			decimals: 12,
+			decimals: Some(12),
 			ratio: None,
 			existential_deposit: T::Balance::from(0_u32),
 		};
