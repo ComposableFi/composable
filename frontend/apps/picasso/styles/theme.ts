@@ -2,6 +2,7 @@ import { alpha, createTheme, PaletteMode, ThemeOptions } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { OverridesStyleRules } from "@mui/material/styles/overrides";
 import { Shadows } from "@mui/material/styles/shadows";
+import { CSSProperties } from "react";
 
 declare module "@mui/material/styles" {
   interface Theme {
@@ -38,13 +39,24 @@ declare module "@mui/material/styles" {
     };
     common: CommonColors;
   }
+
+  interface TypographyVariants {
+    body3: CSSProperties;
+  }
+
+  // allow configuration using `createTheme`
+  interface TypographyVariantsOptions {
+    body3?: CSSProperties;
+  }
 }
 
 declare module "@mui/material/Typography" {
   interface TypographyPropsVariantOverrides {
     inputLabel: true;
+    body3: true;
   }
 }
+
 const theme = createTheme({
   shadows: Array(25).fill("none") as Shadows,
 });
@@ -202,6 +214,15 @@ const brandTypography = {
     fontWeight: "normal",
     [theme.breakpoints.down("sm")]: {
       fontSize: "1rem",
+    },
+  },
+  body3: {
+    fontFamily: '"Be Vietnam Pro"',
+    lineHeight: "140%",
+    fontSize: "0.875rem",
+    fontWeight: "normal",
+    [theme.breakpoints.down("sm")]: {
+      fontSize: "0.75rem",
     },
   },
   button: {

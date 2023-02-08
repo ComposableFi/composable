@@ -1,12 +1,12 @@
 import { FC, MouseEvent, useState } from "react";
 import {
   alpha,
-  Box,
   Button,
   ListItemIcon,
   ListItemText,
   Menu,
   MenuItem,
+  Stack,
   Typography,
   useTheme,
 } from "@mui/material";
@@ -32,12 +32,14 @@ export const ExternalLinksDropdown: FC = () => {
   return (
     <>
       <Button
-        variant="outlined"
-        color="primary"
+        variant="contained"
         onClick={handleClick}
         aria-controls={open ? "basic-menu" : undefined}
         aria-haspopup="true"
         aria-expanded={open ? "true" : undefined}
+        sx={{
+          backgroundColor: alpha(theme.palette.primary.main, 0.1),
+        }}
       >
         <MoreHoriz />
       </Button>
@@ -82,7 +84,7 @@ export const ExternalLinksDropdown: FC = () => {
               width: "100%",
             }}
           >
-            <Box display="flex">
+            <Stack direction="row">
               <ListItemIcon>
                 <Image
                   src={"/icons/announcement.svg"}
@@ -92,7 +94,7 @@ export const ExternalLinksDropdown: FC = () => {
                 />
               </ListItemIcon>
               <ListItemText>Request a feature</ListItemText>
-            </Box>
+            </Stack>
             <Typography
               component="div"
               color="text.secondary"
@@ -115,7 +117,7 @@ export const ExternalLinksDropdown: FC = () => {
               width: "100%",
             }}
           >
-            <Box display="flex">
+            <Stack direction="row">
               <ListItemIcon>
                 <Image
                   src={"/icons/Discord.svg"}
@@ -125,7 +127,7 @@ export const ExternalLinksDropdown: FC = () => {
                 />
               </ListItemIcon>
               <ListItemText>Discord</ListItemText>
-            </Box>
+            </Stack>
           </Link>
         </MenuItem>
         <MenuItem sx={menuItemStyles} disableRipple>
@@ -139,7 +141,7 @@ export const ExternalLinksDropdown: FC = () => {
               width: "100%",
             }}
           >
-            <Box display="flex">
+            <Stack direction="row">
               <ListItemIcon>
                 <Image
                   src={"/icons/Twitter.svg"}
@@ -149,7 +151,7 @@ export const ExternalLinksDropdown: FC = () => {
                 />
               </ListItemIcon>
               <ListItemText>Twitter</ListItemText>
-            </Box>
+            </Stack>
           </Link>
         </MenuItem>
         <MenuItem sx={menuItemStyles} disableRipple>
@@ -163,7 +165,7 @@ export const ExternalLinksDropdown: FC = () => {
               width: "100%",
             }}
           >
-            <Box display="flex">
+            <Stack direction="row">
               <ListItemIcon>
                 <Image
                   src={"/icons/Medium.svg"}
@@ -173,7 +175,22 @@ export const ExternalLinksDropdown: FC = () => {
                 />
               </ListItemIcon>
               <ListItemText>Medium</ListItemText>
-            </Box>
+            </Stack>
+          </Link>
+        </MenuItem>
+        <MenuItem sx={menuItemStyles} disableRipple>
+          <Link
+            href="/terms-of-use"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "100%",
+            }}
+          >
+            <Stack direction="row">
+              <ListItemText>Terms of use</ListItemText>
+            </Stack>
           </Link>
         </MenuItem>
       </Menu>
