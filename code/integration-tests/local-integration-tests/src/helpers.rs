@@ -50,7 +50,7 @@ pub fn assert_above_deposit<AssetsRegistry: AssetRatioInspect<AssetId = Currency
 	amount: Balance,
 ) -> Balance {
 	assert!(
-		PriceConverter::<AssetsRegistry>::to_asset_balance(NATIVE_EXISTENTIAL_DEPOSIT, asset_id,)
+		PriceConverter::<AssetsRegistry, this_runtime::WellKnownForeignToNativePriceConverter>::to_asset_balance(NATIVE_EXISTENTIAL_DEPOSIT, asset_id,)
 			.unwrap() <= amount
 	);
 	amount

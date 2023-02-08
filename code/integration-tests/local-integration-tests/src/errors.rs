@@ -14,7 +14,10 @@ pub fn under_existential_deposit<AssetsRegistry: AssetRatioInspect<AssetId = Cur
 	asset_id: LocalAssetId,
 	_instruction_count: usize,
 ) -> Balance {
-	let ed = multi_existential_deposits::<AssetsRegistry>(&asset_id);
+	let ed = multi_existential_deposits::<
+		AssetsRegistry,
+		this_runtime::WellKnownForeignToNativePriceConverter,
+	>(&asset_id);
 	assert_gt!(ed, Balance::one());
 	ed - Balance::one()
 }

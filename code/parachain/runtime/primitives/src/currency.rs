@@ -179,7 +179,11 @@ impl CurrencyId {
 			})
 		);
 
-		pub const ibcDOT: CurrencyId = CurrencyId(6, None);
+		/// DOT from Composable on Picasso over IBC
+		pub const ibcxcDOT: CurrencyId = CurrencyId(6, None);
+
+		// DOT from Polkadot on Composable
+		pub const xcDOT: CurrencyId = CurrencyId(7, None);
 
 		pub const KSM_USDT_LPT: CurrencyId = CurrencyId(105, None);
 		pub const PICA_USDT_LPT: CurrencyId = CurrencyId(106, None);

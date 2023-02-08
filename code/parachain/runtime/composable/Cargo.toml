@@ -119,6 +119,8 @@ orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-m
 orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36", default-features = false }
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36", default-features = false }
 
+parachains-common = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.33" }
+
 [features]
 builtin-wasm = []
 default = ["std"]
@@ -215,4 +217,5 @@ std = [
   "transaction-payment-rpc-runtime-api/std",
   "assets-runtime-api/std",
   "crowdloan-rewards-runtime-api/std",
+  "parachains-common/std",
 ]
