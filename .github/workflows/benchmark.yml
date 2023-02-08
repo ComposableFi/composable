@@ -73,16 +73,25 @@ jobs:
       - name: Change some files
         run: echo 'test commit' >> Test.md
 
-      - name: Push generated weights
-        uses: EndBug/add-and-commit@v9
+      - name: Commit changes to README.md file
+        run: git commit -m "this is bot" README.md
         env:
-          GITHUB_TOKEN: ${{ secrets.GLADOS_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.OSLASH_BOT_GITHUB_TOKEN }}
           GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
           GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
-        with:
-          add: "."
-          message: "chore(benchmarking): update ${{ matrix.runtime }} benchmarking weights"
-          push: "true"
-          new_branch: ${{ steps.branch-name.outputs.current_branch }}
+
+#      - name: Push generated weights
+#        uses: EndBug/add-and-commit@v9
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GLADOS_GITHUB_TOKEN }}
+#          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
+#          GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
+#          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
+#          GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
+#        with:
+#          add: "code/parachain/runtime"
+#          message: "chore(benchmarking): update ${{ matrix.runtime }} benchmarking weights"
+#          push: "true"
+#          new_branch: ${{ steps.branch-name.outputs.current_branch }}
