@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `ed7dfeff0e09`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `71c3c488af10`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("picasso-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=picasso-dev
@@ -32,13 +32,13 @@ impl<T: frame_system::Config> timestamp::WeightInfo for WeightInfo<T> {
 	// Storage: Timestamp Now (r:1 w:1)
 	// Storage: Aura CurrentSlot (r:1 w:0)
 	fn set() -> Weight {
-		// Minimum execution time: 26_051 nanoseconds.
-		Weight::from_ref_time(27_297_000 as u64)
+		// Minimum execution time: 26_467 nanoseconds.
+		Weight::from_ref_time(27_380_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	fn on_finalize() -> Weight {
-		// Minimum execution time: 13_194 nanoseconds.
-		Weight::from_ref_time(13_476_000 as u64)
+		// Minimum execution time: 11_493 nanoseconds.
+		Weight::from_ref_time(12_136_000 as u64)
 	}
 }

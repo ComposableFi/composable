@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `ed7dfeff0e09`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `71c3c488af10`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("picasso-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=picasso-dev
@@ -34,8 +34,8 @@ impl<T: frame_system::Config> bonded_finance::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: BondedFinance BondOffers (r:0 w:1)
 	fn offer() -> Weight {
-		// Minimum execution time: 171_976 nanoseconds.
-		Weight::from_ref_time(174_682_000 as u64)
+		// Minimum execution time: 176_459 nanoseconds.
+		Weight::from_ref_time(180_894_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
@@ -46,16 +46,16 @@ impl<T: frame_system::Config> bonded_finance::WeightInfo for WeightInfo<T> {
 	// Storage: Vesting VestingSchedules (r:2 w:2)
 	// Storage: Tokens Locks (r:2 w:2)
 	fn bond() -> Weight {
-		// Minimum execution time: 373_997 nanoseconds.
-		Weight::from_ref_time(383_458_000 as u64)
+		// Minimum execution time: 378_925 nanoseconds.
+		Weight::from_ref_time(393_630_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(12 as u64))
 			.saturating_add(T::DbWeight::get().writes(12 as u64))
 	}
 	// Storage: BondedFinance BondOffers (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn cancel() -> Weight {
-		// Minimum execution time: 107_849 nanoseconds.
-		Weight::from_ref_time(110_109_000 as u64)
+		// Minimum execution time: 107_840 nanoseconds.
+		Weight::from_ref_time(113_544_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}

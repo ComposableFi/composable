@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `ed7dfeff0e09`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `71c3c488af10`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("picasso-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=picasso-dev
@@ -35,10 +35,10 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	/// The range of component `s` is `[1, 128]`.
 	fn claim(s: u32, ) -> Weight {
-		// Minimum execution time: 111_829 nanoseconds.
-		Weight::from_ref_time(122_102_390 as u64)
-			// Standard Error: 20_637
-			.saturating_add(Weight::from_ref_time(4_959_240 as u64).saturating_mul(s as u64))
+		// Minimum execution time: 109_751 nanoseconds.
+		Weight::from_ref_time(118_718_936 as u64)
+			// Standard Error: 20_226
+			.saturating_add(Weight::from_ref_time(5_054_667 as u64).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -48,8 +48,8 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:2 w:1)
 	// Storage: Tokens Locks (r:1 w:1)
 	fn vested_transfer() -> Weight {
-		// Minimum execution time: 164_190 nanoseconds.
-		Weight::from_ref_time(170_923_000 as u64)
+		// Minimum execution time: 167_012 nanoseconds.
+		Weight::from_ref_time(176_393_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(7 as u64))
 			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
@@ -60,10 +60,10 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: Vesting VestingScheduleNonce (r:1 w:1)
 	/// The range of component `s` is `[0, 128]`.
 	fn update_vesting_schedules(s: u32, ) -> Weight {
-		// Minimum execution time: 95_489 nanoseconds.
-		Weight::from_ref_time(112_421_273 as u64)
-			// Standard Error: 18_042
-			.saturating_add(Weight::from_ref_time(2_996_059 as u64).saturating_mul(s as u64))
+		// Minimum execution time: 95_794 nanoseconds.
+		Weight::from_ref_time(114_771_783 as u64)
+			// Standard Error: 16_828
+			.saturating_add(Weight::from_ref_time(2_913_248 as u64).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
@@ -73,10 +73,10 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	/// The range of component `s` is `[1, 128]`.
 	fn claim_for(s: u32, ) -> Weight {
-		// Minimum execution time: 108_966 nanoseconds.
-		Weight::from_ref_time(120_825_799 as u64)
-			// Standard Error: 24_394
-			.saturating_add(Weight::from_ref_time(4_492_184 as u64).saturating_mul(s as u64))
+		// Minimum execution time: 109_131 nanoseconds.
+		Weight::from_ref_time(114_339_343 as u64)
+			// Standard Error: 16_382
+			.saturating_add(Weight::from_ref_time(4_474_880 as u64).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
