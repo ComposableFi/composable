@@ -74,12 +74,12 @@ jobs:
         uses: EndBug/add-and-commit@v9
         env:
           GITHUB_TOKEN: ${{ secrets.GLADOS_GITHUB_TOKEN }}
-          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
-          GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
-          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
-          GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
         with:
           add: "code/parachain/runtime"
           message: "chore(benchmarking): update ${{ matrix.runtime }} benchmarking weights"
           push: "true"
+          committer_name: ${{ steps.import-gpg.outputs.name }}
+          committer_email: ${{ steps.import-gpg.outputs.email }}
+          author_name: ${{ steps.import-gpg.outputs.name }}
+          author_email: ${{ steps.import-gpg.outputs.email }}
           new_branch: ${{ steps.branch-name.outputs.current_branch }}
