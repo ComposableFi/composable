@@ -82,7 +82,7 @@ jobs:
           GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
         with:
-          add: "code/parachain/runtime"
+          add: "."
           message: "chore(benchmarking): update ${{ matrix.runtime }} benchmarking weights"
           push: "true"
           new_branch: ${{ steps.branch-name.outputs.current_branch }}
