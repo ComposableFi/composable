@@ -65,6 +65,29 @@ To create a local asset ID, we can form a full asset ID from the combination of
 the assets' namespace (pallet or protocol) and a nonce/key provided by that 
 namespace.
 
+### Examples
+
+* An asset created by Staking Rewards for share assets
+
+```
+ProtocolId = 'pallstak'
+Nonce      = 1_u64
+
+AssetId    = from_bytes(ProtocolId.as_bytes() + Nonce.as_bytes())
+           = 26184337747597877616
+```
+
+* Non-protocol asset
+
+```
+// Abstracted from user input
+ProtocolId = 'nonproto'
+Nonce      = 1_u64
+
+AssetId    = from_bytes(ProtocolId.as_bytes() + Nonce.as_bytes())
+           = 8031166572811677550
+```
+
 ## Foreign Asset ID Generation
 
 Foreign assets should always be created with a provided, and unique, relative 
