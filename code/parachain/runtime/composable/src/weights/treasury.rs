@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `2d691eeb71e8`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `ff4a2df521a1`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("composable-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=composable-dev
@@ -30,22 +30,22 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> treasury::WeightInfo for WeightInfo<T> {
 	fn spend() -> Weight {
-		// Minimum execution time: 478 nanoseconds.
-		Weight::from_ref_time(591_000 as u64)
+		// Minimum execution time: 540 nanoseconds.
+		Weight::from_ref_time(567_000 as u64)
 	}
 	// Storage: Treasury ProposalCount (r:1 w:1)
 	// Storage: Treasury Proposals (r:0 w:1)
 	fn propose_spend() -> Weight {
-		// Minimum execution time: 71_811 nanoseconds.
-		Weight::from_ref_time(73_665_000 as u64)
+		// Minimum execution time: 73_719 nanoseconds.
+		Weight::from_ref_time(75_832_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Treasury Proposals (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn reject_proposal() -> Weight {
-		// Minimum execution time: 102_633 nanoseconds.
-		Weight::from_ref_time(106_608_000 as u64)
+		// Minimum execution time: 104_485 nanoseconds.
+		Weight::from_ref_time(107_330_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -53,17 +53,17 @@ impl<T: frame_system::Config> treasury::WeightInfo for WeightInfo<T> {
 	// Storage: Treasury Approvals (r:1 w:1)
 	/// The range of component `p` is `[0, 29]`.
 	fn approve_proposal(p: u32, ) -> Weight {
-		// Minimum execution time: 27_181 nanoseconds.
-		Weight::from_ref_time(32_063_260 as u64)
-			// Standard Error: 16_382
-			.saturating_add(Weight::from_ref_time(647_350 as u64).saturating_mul(p as u64))
+		// Minimum execution time: 28_120 nanoseconds.
+		Weight::from_ref_time(33_408_122 as u64)
+			// Standard Error: 21_827
+			.saturating_add(Weight::from_ref_time(668_888 as u64).saturating_mul(p as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Treasury Approvals (r:1 w:1)
 	fn remove_approval() -> Weight {
-		// Minimum execution time: 23_216 nanoseconds.
-		Weight::from_ref_time(23_730_000 as u64)
+		// Minimum execution time: 23_304 nanoseconds.
+		Weight::from_ref_time(23_643_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -72,10 +72,10 @@ impl<T: frame_system::Config> treasury::WeightInfo for WeightInfo<T> {
 	// Storage: Treasury Proposals (r:1 w:1)
 	/// The range of component `p` is `[0, 30]`.
 	fn on_initialize_proposals(p: u32, ) -> Weight {
-		// Minimum execution time: 63_844 nanoseconds.
-		Weight::from_ref_time(92_497_634 as u64)
-			// Standard Error: 108_852
-			.saturating_add(Weight::from_ref_time(73_669_050 as u64).saturating_mul(p as u64))
+		// Minimum execution time: 65_214 nanoseconds.
+		Weight::from_ref_time(102_923_108 as u64)
+			// Standard Error: 193_087
+			.saturating_add(Weight::from_ref_time(76_113_961 as u64).saturating_mul(p as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().reads((3 as u64).saturating_mul(p as u64)))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))

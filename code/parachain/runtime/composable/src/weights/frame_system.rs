@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `2d691eeb71e8`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `ff4a2df521a1`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("composable-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/k90wdfhxs42v27wx2ddzxqfwcladfk40-composable/bin/composable
+// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
 // benchmark
 // pallet
 // --chain=composable-dev
@@ -31,51 +31,51 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> frame_system::WeightInfo for WeightInfo<T> {
 	/// The range of component `b` is `[0, 3932160]`.
 	fn remark(b: u32, ) -> Weight {
-		// Minimum execution time: 9_827 nanoseconds.
-		Weight::from_ref_time(10_074_000 as u64)
-			// Standard Error: 1
-			.saturating_add(Weight::from_ref_time(731 as u64).saturating_mul(b as u64))
+		// Minimum execution time: 10_602 nanoseconds.
+		Weight::from_ref_time(10_722_000 as u64)
+			// Standard Error: 0
+			.saturating_add(Weight::from_ref_time(707 as u64).saturating_mul(b as u64))
 	}
 	/// The range of component `b` is `[0, 3932160]`.
 	fn remark_with_event(b: u32, ) -> Weight {
-		// Minimum execution time: 30_780 nanoseconds.
-		Weight::from_ref_time(31_307_000 as u64)
-			// Standard Error: 7
-			.saturating_add(Weight::from_ref_time(2_850 as u64).saturating_mul(b as u64))
+		// Minimum execution time: 32_638 nanoseconds.
+		Weight::from_ref_time(33_248_000 as u64)
+			// Standard Error: 5
+			.saturating_add(Weight::from_ref_time(2_694 as u64).saturating_mul(b as u64))
 	}
 	// Storage: System Digest (r:1 w:1)
 	// Storage: unknown [0x3a686561707061676573] (r:0 w:1)
 	fn set_heap_pages() -> Weight {
-		// Minimum execution time: 20_405 nanoseconds.
-		Weight::from_ref_time(21_025_000 as u64)
+		// Minimum execution time: 21_164 nanoseconds.
+		Weight::from_ref_time(22_461_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Skipped Metadata (r:0 w:0)
 	/// The range of component `i` is `[0, 1000]`.
 	fn set_storage(i: u32, ) -> Weight {
-		// Minimum execution time: 9_677 nanoseconds.
-		Weight::from_ref_time(10_105_000 as u64)
-			// Standard Error: 3_552
-			.saturating_add(Weight::from_ref_time(1_688_402 as u64).saturating_mul(i as u64))
+		// Minimum execution time: 10_644 nanoseconds.
+		Weight::from_ref_time(10_671_000 as u64)
+			// Standard Error: 2_507
+			.saturating_add(Weight::from_ref_time(1_649_368 as u64).saturating_mul(i as u64))
 			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(i as u64)))
 	}
 	// Storage: Skipped Metadata (r:0 w:0)
 	/// The range of component `i` is `[0, 1000]`.
 	fn kill_storage(i: u32, ) -> Weight {
-		// Minimum execution time: 10_087 nanoseconds.
-		Weight::from_ref_time(10_836_000 as u64)
-			// Standard Error: 3_203
-			.saturating_add(Weight::from_ref_time(1_356_613 as u64).saturating_mul(i as u64))
+		// Minimum execution time: 10_551 nanoseconds.
+		Weight::from_ref_time(11_102_000 as u64)
+			// Standard Error: 2_612
+			.saturating_add(Weight::from_ref_time(1_287_847 as u64).saturating_mul(i as u64))
 			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(i as u64)))
 	}
 	// Storage: Skipped Metadata (r:0 w:0)
 	/// The range of component `p` is `[0, 1000]`.
 	fn kill_prefix(p: u32, ) -> Weight {
-		// Minimum execution time: 13_938 nanoseconds.
-		Weight::from_ref_time(14_101_000 as u64)
-			// Standard Error: 6_011
-			.saturating_add(Weight::from_ref_time(2_546_125 as u64).saturating_mul(p as u64))
+		// Minimum execution time: 14_904 nanoseconds.
+		Weight::from_ref_time(15_354_000 as u64)
+			// Standard Error: 4_149
+			.saturating_add(Weight::from_ref_time(2_388_208 as u64).saturating_mul(p as u64))
 			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(p as u64)))
 	}
 }
