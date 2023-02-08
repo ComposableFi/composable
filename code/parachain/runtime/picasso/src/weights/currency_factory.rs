@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `71c3c488af10`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `5a3b4d6e5166`, CPU: `Intel(R) Xeon(R) CPU @ 3.10GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("picasso-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
+// /nix/store/9gdd70pyc12n9i1v6gx99rhz8q2n67z0-composable/bin/composable
 // benchmark
 // pallet
 // --chain=picasso-dev
@@ -31,15 +31,15 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> currency_factory::WeightInfo for WeightInfo<T> {
 	// Storage: CurrencyFactory AssetIdRanges (r:1 w:1)
 	fn add_range() -> Weight {
-		// Minimum execution time: 43_936 nanoseconds.
-		Weight::from_ref_time(45_548_000 as u64)
+		// Minimum execution time: 31_035 nanoseconds.
+		Weight::from_ref_time(34_008_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: CurrencyFactory AssetMetadata (r:0 w:1)
 	fn set_metadata() -> Weight {
-		// Minimum execution time: 14_445 nanoseconds.
-		Weight::from_ref_time(15_077_000 as u64)
+		// Minimum execution time: 10_571 nanoseconds.
+		Weight::from_ref_time(10_882_000 as u64)
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 }

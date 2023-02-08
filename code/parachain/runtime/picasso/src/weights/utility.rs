@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `71c3c488af10`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `5a3b4d6e5166`, CPU: `Intel(R) Xeon(R) CPU @ 3.10GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("picasso-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
+// /nix/store/9gdd70pyc12n9i1v6gx99rhz8q2n67z0-composable/bin/composable
 // benchmark
 // pallet
 // --chain=picasso-dev
@@ -32,38 +32,38 @@ impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	/// The range of component `c` is `[0, 1000]`.
 	fn batch(c: u32, ) -> Weight {
-		// Minimum execution time: 32_962 nanoseconds.
-		Weight::from_ref_time(63_280_799 as u64)
-			// Standard Error: 25_662
-			.saturating_add(Weight::from_ref_time(14_223_196 as u64).saturating_mul(c as u64))
+		// Minimum execution time: 24_148 nanoseconds.
+		Weight::from_ref_time(53_844_938 as u64)
+			// Standard Error: 4_176
+			.saturating_add(Weight::from_ref_time(9_810_855 as u64).saturating_mul(c as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn as_derivative() -> Weight {
-		// Minimum execution time: 26_558 nanoseconds.
-		Weight::from_ref_time(27_113_000 as u64)
+		// Minimum execution time: 18_896 nanoseconds.
+		Weight::from_ref_time(19_283_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	/// The range of component `c` is `[0, 1000]`.
 	fn batch_all(c: u32, ) -> Weight {
-		// Minimum execution time: 34_036 nanoseconds.
-		Weight::from_ref_time(34_593_000 as u64)
-			// Standard Error: 28_821
-			.saturating_add(Weight::from_ref_time(14_931_586 as u64).saturating_mul(c as u64))
+		// Minimum execution time: 23_957 nanoseconds.
+		Weight::from_ref_time(44_797_689 as u64)
+			// Standard Error: 4_896
+			.saturating_add(Weight::from_ref_time(10_252_985 as u64).saturating_mul(c as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	fn dispatch_as() -> Weight {
-		// Minimum execution time: 40_122 nanoseconds.
-		Weight::from_ref_time(41_895_000 as u64)
+		// Minimum execution time: 27_941 nanoseconds.
+		Weight::from_ref_time(28_605_000 as u64)
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	/// The range of component `c` is `[0, 1000]`.
 	fn force_batch(c: u32, ) -> Weight {
-		// Minimum execution time: 34_053 nanoseconds.
-		Weight::from_ref_time(60_140_267 as u64)
-			// Standard Error: 24_296
-			.saturating_add(Weight::from_ref_time(14_181_393 as u64).saturating_mul(c as u64))
+		// Minimum execution time: 23_778 nanoseconds.
+		Weight::from_ref_time(43_981_892 as u64)
+			// Standard Error: 4_710
+			.saturating_add(Weight::from_ref_time(9_873_633 as u64).saturating_mul(c as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 }
