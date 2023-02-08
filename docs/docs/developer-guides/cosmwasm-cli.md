@@ -11,7 +11,7 @@ You can create a base CosmWasm project that you can work on.
 ccw new --name get-started --description "Get started with CosmWasm"
 ```
 
-See [here](./ccw/new-project.md) for more.
+See [here](./cosmwasm/new-project.md) for more.
 
 ## Upload a CosmWasm contract
 
@@ -59,4 +59,4 @@ ccw substrate -n alice tx upload --url https://github.com/CosmWasm/cw-plus/relea
 
 ## Interact with a contract
 
-For examples of interacting with the contract, go to the [walkthrough](./ccw/walkthrough.md).
+For examples of interacting with the contract, go to the [walkthrough](./cosmwasm/walkthrough.md).
