@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `05551ac21fb8`, CPU: `Intel(R) Xeon(R) CPU @ 3.10GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
+// /nix/store/9gdd70pyc12n9i1v6gx99rhz8q2n67z0-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -31,8 +31,8 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: DutchAuction Configurations (r:0 w:1)
 	fn add_configuration() -> Weight {
-		// Minimum execution time: 44_977 nanoseconds.
-		Weight::from_ref_time(47_133_000 as u64)
+		// Minimum execution time: 27_289 nanoseconds.
+		Weight::from_ref_time(28_036_000 as u64)
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: DutchAuction OrdersIndex (r:1 w:1)
@@ -41,8 +41,8 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: DutchAuction SellOrders (r:0 w:1)
 	fn ask() -> Weight {
-		// Minimum execution time: 144_914 nanoseconds.
-		Weight::from_ref_time(146_878_000 as u64)
+		// Minimum execution time: 92_656 nanoseconds.
+		Weight::from_ref_time(95_711_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
@@ -51,8 +51,8 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: DutchAuction Takes (r:1 w:1)
 	fn take() -> Weight {
-		// Minimum execution time: 99_206 nanoseconds.
-		Weight::from_ref_time(100_858_000 as u64)
+		// Minimum execution time: 60_500 nanoseconds.
+		Weight::from_ref_time(62_250_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -60,8 +60,8 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn liquidate() -> Weight {
-		// Minimum execution time: 133_449 nanoseconds.
-		Weight::from_ref_time(138_623_000 as u64)
+		// Minimum execution time: 85_331 nanoseconds.
+		Weight::from_ref_time(86_628_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -73,8 +73,8 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: DutchAuction LocalOrderIdToRemote (r:0 w:1)
 	// Storage: DutchAuction SellOrders (r:0 w:1)
 	fn xcm_sell() -> Weight {
-		// Minimum execution time: 164_049 nanoseconds.
-		Weight::from_ref_time(180_942_000 as u64)
+		// Minimum execution time: 104_555 nanoseconds.
+		Weight::from_ref_time(105_430_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
@@ -83,8 +83,8 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: DutchAuction LocalOrderIdToRemote (r:1 w:1)
 	fn known_overhead_for_on_finalize() -> Weight {
-		// Minimum execution time: 138_450 nanoseconds.
-		Weight::from_ref_time(140_361_000 as u64)
+		// Minimum execution time: 84_876 nanoseconds.
+		Weight::from_ref_time(87_483_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(6 as u64))
 			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}

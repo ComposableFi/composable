@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `05551ac21fb8`, CPU: `Intel(R) Xeon(R) CPU @ 3.10GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
+// /nix/store/9gdd70pyc12n9i1v6gx99rhz8q2n67z0-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -33,8 +33,8 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: Pablo PoolCount (r:1 w:1)
 	// Storage: Pablo Pools (r:0 w:1)
 	fn create() -> Weight {
-		// Minimum execution time: 74_675 nanoseconds.
-		Weight::from_ref_time(78_199_000 as u64)
+		// Minimum execution time: 46_532 nanoseconds.
+		Weight::from_ref_time(48_193_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -44,8 +44,8 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn add_liquidity() -> Weight {
-		// Minimum execution time: 363_449 nanoseconds.
-		Weight::from_ref_time(375_661_000 as u64)
+		// Minimum execution time: 246_057 nanoseconds.
+		Weight::from_ref_time(253_143_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(9 as u64))
 			.saturating_add(T::DbWeight::get().writes(8 as u64))
 	}
@@ -55,8 +55,8 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:0)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn remove_liquidity() -> Weight {
-		// Minimum execution time: 235_429 nanoseconds.
-		Weight::from_ref_time(239_709_000 as u64)
+		// Minimum execution time: 151_492 nanoseconds.
+		Weight::from_ref_time(154_075_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(9 as u64))
 			.saturating_add(T::DbWeight::get().writes(7 as u64))
 	}
@@ -65,8 +65,8 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:2 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn buy() -> Weight {
-		// Minimum execution time: 200_798 nanoseconds.
-		Weight::from_ref_time(207_170_000 as u64)
+		// Minimum execution time: 133_506 nanoseconds.
+		Weight::from_ref_time(139_106_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(8 as u64))
 			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
@@ -75,8 +75,8 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:2 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn swap() -> Weight {
-		// Minimum execution time: 209_329 nanoseconds.
-		Weight::from_ref_time(222_966_000 as u64)
+		// Minimum execution time: 134_190 nanoseconds.
+		Weight::from_ref_time(136_102_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(8 as u64))
 			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
@@ -84,8 +84,8 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: Pablo PoolCount (r:1 w:1)
 	// Storage: Pablo Pools (r:0 w:1)
 	fn do_create_pool() -> Weight {
-		// Minimum execution time: 68_173 nanoseconds.
-		Weight::from_ref_time(69_405_000 as u64)
+		// Minimum execution time: 41_923 nanoseconds.
+		Weight::from_ref_time(42_966_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}

@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `05551ac21fb8`, CPU: `Intel(R) Xeon(R) CPU @ 3.10GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
+// /nix/store/9gdd70pyc12n9i1v6gx99rhz8q2n67z0-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -32,10 +32,10 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity Registrars (r:1 w:1)
 	/// The range of component `r` is `[1, 7]`.
 	fn add_registrar(r: u32, ) -> Weight {
-		// Minimum execution time: 52_946 nanoseconds.
-		Weight::from_ref_time(55_349_279 as u64)
-			// Standard Error: 65_730
-			.saturating_add(Weight::from_ref_time(913_326 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 32_574 nanoseconds.
+		Weight::from_ref_time(33_158_334 as u64)
+			// Standard Error: 15_992
+			.saturating_add(Weight::from_ref_time(713_332 as u64).saturating_mul(r as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -43,12 +43,12 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	/// The range of component `r` is `[1, 8]`.
 	/// The range of component `x` is `[0, 32]`.
 	fn set_identity(r: u32, x: u32, ) -> Weight {
-		// Minimum execution time: 76_187 nanoseconds.
-		Weight::from_ref_time(97_061_557 as u64)
-			// Standard Error: 121_750
-			.saturating_add(Weight::from_ref_time(907_343 as u64).saturating_mul(r as u64))
-			// Standard Error: 27_921
-			.saturating_add(Weight::from_ref_time(1_269_163 as u64).saturating_mul(x as u64))
+		// Minimum execution time: 48_389 nanoseconds.
+		Weight::from_ref_time(62_839_249 as u64)
+			// Standard Error: 71_324
+			.saturating_add(Weight::from_ref_time(607_869 as u64).saturating_mul(r as u64))
+			// Standard Error: 16_356
+			.saturating_add(Weight::from_ref_time(847_586 as u64).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -57,10 +57,10 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity SuperOf (r:1 w:1)
 	/// The range of component `s` is `[0, 32]`.
 	fn set_subs_new(s: u32, ) -> Weight {
-		// Minimum execution time: 33_703 nanoseconds.
-		Weight::from_ref_time(82_350_499 as u64)
-			// Standard Error: 71_565
-			.saturating_add(Weight::from_ref_time(7_301_660 as u64).saturating_mul(s as u64))
+		// Minimum execution time: 20_490 nanoseconds.
+		Weight::from_ref_time(49_425_213 as u64)
+			// Standard Error: 39_970
+			.saturating_add(Weight::from_ref_time(5_128_542 as u64).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(s as u64)))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
@@ -71,10 +71,10 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity SuperOf (r:0 w:1)
 	/// The range of component `p` is `[0, 32]`.
 	fn set_subs_old(p: u32, ) -> Weight {
-		// Minimum execution time: 33_292 nanoseconds.
-		Weight::from_ref_time(83_131_815 as u64)
-			// Standard Error: 70_682
-			.saturating_add(Weight::from_ref_time(3_331_909 as u64).saturating_mul(p as u64))
+		// Minimum execution time: 20_265 nanoseconds.
+		Weight::from_ref_time(50_128_142 as u64)
+			// Standard Error: 41_547
+			.saturating_add(Weight::from_ref_time(2_336_245 as u64).saturating_mul(p as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(p as u64)))
@@ -86,14 +86,14 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	/// The range of component `s` is `[0, 32]`.
 	/// The range of component `x` is `[0, 32]`.
 	fn clear_identity(r: u32, s: u32, x: u32, ) -> Weight {
-		// Minimum execution time: 119_893 nanoseconds.
-		Weight::from_ref_time(108_784_903 as u64)
-			// Standard Error: 98_431
-			.saturating_add(Weight::from_ref_time(618_575 as u64).saturating_mul(r as u64))
-			// Standard Error: 22_588
-			.saturating_add(Weight::from_ref_time(2_923_277 as u64).saturating_mul(s as u64))
-			// Standard Error: 22_588
-			.saturating_add(Weight::from_ref_time(499_535 as u64).saturating_mul(x as u64))
+		// Minimum execution time: 77_065 nanoseconds.
+		Weight::from_ref_time(67_392_948 as u64)
+			// Standard Error: 38_772
+			.saturating_add(Weight::from_ref_time(296_159 as u64).saturating_mul(r as u64))
+			// Standard Error: 8_897
+			.saturating_add(Weight::from_ref_time(2_060_494 as u64).saturating_mul(s as u64))
+			// Standard Error: 8_897
+			.saturating_add(Weight::from_ref_time(395_423 as u64).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(s as u64)))
@@ -103,12 +103,12 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	/// The range of component `r` is `[1, 8]`.
 	/// The range of component `x` is `[0, 32]`.
 	fn request_judgement(r: u32, x: u32, ) -> Weight {
-		// Minimum execution time: 109_187 nanoseconds.
-		Weight::from_ref_time(107_652_166 as u64)
-			// Standard Error: 91_979
-			.saturating_add(Weight::from_ref_time(812_300 as u64).saturating_mul(r as u64))
-			// Standard Error: 21_093
-			.saturating_add(Weight::from_ref_time(1_176_164 as u64).saturating_mul(x as u64))
+		// Minimum execution time: 69_213 nanoseconds.
+		Weight::from_ref_time(66_119_343 as u64)
+			// Standard Error: 31_419
+			.saturating_add(Weight::from_ref_time(689_543 as u64).saturating_mul(r as u64))
+			// Standard Error: 7_205
+			.saturating_add(Weight::from_ref_time(821_961 as u64).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -116,42 +116,42 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	/// The range of component `r` is `[1, 8]`.
 	/// The range of component `x` is `[0, 32]`.
 	fn cancel_request(r: u32, x: u32, ) -> Weight {
-		// Minimum execution time: 100_180 nanoseconds.
-		Weight::from_ref_time(98_991_134 as u64)
-			// Standard Error: 82_845
-			.saturating_add(Weight::from_ref_time(618_383 as u64).saturating_mul(r as u64))
-			// Standard Error: 18_998
-			.saturating_add(Weight::from_ref_time(1_178_411 as u64).saturating_mul(x as u64))
+		// Minimum execution time: 63_281 nanoseconds.
+		Weight::from_ref_time(62_420_300 as u64)
+			// Standard Error: 28_833
+			.saturating_add(Weight::from_ref_time(431_906 as u64).saturating_mul(r as u64))
+			// Standard Error: 6_612
+			.saturating_add(Weight::from_ref_time(813_330 as u64).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Identity Registrars (r:1 w:1)
 	/// The range of component `r` is `[1, 7]`.
 	fn set_fee(r: u32, ) -> Weight {
-		// Minimum execution time: 30_190 nanoseconds.
-		Weight::from_ref_time(30_463_176 as u64)
-			// Standard Error: 24_557
-			.saturating_add(Weight::from_ref_time(994_670 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 18_138 nanoseconds.
+		Weight::from_ref_time(18_218_174 as u64)
+			// Standard Error: 10_016
+			.saturating_add(Weight::from_ref_time(587_440 as u64).saturating_mul(r as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Identity Registrars (r:1 w:1)
 	/// The range of component `r` is `[1, 7]`.
 	fn set_account_id(r: u32, ) -> Weight {
-		// Minimum execution time: 30_864 nanoseconds.
-		Weight::from_ref_time(32_294_942 as u64)
-			// Standard Error: 26_926
-			.saturating_add(Weight::from_ref_time(679_778 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 18_250 nanoseconds.
+		Weight::from_ref_time(18_600_890 as u64)
+			// Standard Error: 9_400
+			.saturating_add(Weight::from_ref_time(547_749 as u64).saturating_mul(r as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Identity Registrars (r:1 w:1)
 	/// The range of component `r` is `[1, 7]`.
 	fn set_fields(r: u32, ) -> Weight {
-		// Minimum execution time: 29_875 nanoseconds.
-		Weight::from_ref_time(31_364_959 as u64)
-			// Standard Error: 26_477
-			.saturating_add(Weight::from_ref_time(802_175 as u64).saturating_mul(r as u64))
+		// Minimum execution time: 17_927 nanoseconds.
+		Weight::from_ref_time(18_224_225 as u64)
+			// Standard Error: 11_674
+			.saturating_add(Weight::from_ref_time(600_392 as u64).saturating_mul(r as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -160,12 +160,12 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	/// The range of component `r` is `[1, 7]`.
 	/// The range of component `x` is `[0, 32]`.
 	fn provide_judgement(r: u32, x: u32, ) -> Weight {
-		// Minimum execution time: 83_427 nanoseconds.
-		Weight::from_ref_time(82_028_337 as u64)
-			// Standard Error: 95_086
-			.saturating_add(Weight::from_ref_time(653_310 as u64).saturating_mul(r as u64))
-			// Standard Error: 19_150
-			.saturating_add(Weight::from_ref_time(1_761_689 as u64).saturating_mul(x as u64))
+		// Minimum execution time: 51_354 nanoseconds.
+		Weight::from_ref_time(51_411_462 as u64)
+			// Standard Error: 34_990
+			.saturating_add(Weight::from_ref_time(296_969 as u64).saturating_mul(r as u64))
+			// Standard Error: 7_047
+			.saturating_add(Weight::from_ref_time(1_268_532 as u64).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -176,13 +176,15 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	/// The range of component `r` is `[1, 8]`.
 	/// The range of component `s` is `[0, 32]`.
 	/// The range of component `x` is `[0, 32]`.
-	fn kill_identity(_r: u32, s: u32, x: u32, ) -> Weight {
-		// Minimum execution time: 151_737 nanoseconds.
-		Weight::from_ref_time(147_393_836 as u64)
-			// Standard Error: 28_295
-			.saturating_add(Weight::from_ref_time(2_996_969 as u64).saturating_mul(s as u64))
-			// Standard Error: 28_295
-			.saturating_add(Weight::from_ref_time(449_253 as u64).saturating_mul(x as u64))
+	fn kill_identity(r: u32, s: u32, x: u32, ) -> Weight {
+		// Minimum execution time: 99_649 nanoseconds.
+		Weight::from_ref_time(90_273_328 as u64)
+			// Standard Error: 51_368
+			.saturating_add(Weight::from_ref_time(116_013 as u64).saturating_mul(r as u64))
+			// Standard Error: 11_788
+			.saturating_add(Weight::from_ref_time(2_070_016 as u64).saturating_mul(s as u64))
+			// Standard Error: 11_788
+			.saturating_add(Weight::from_ref_time(413_900 as u64).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(s as u64)))
@@ -192,10 +194,10 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity SubsOf (r:1 w:1)
 	/// The range of component `s` is `[0, 31]`.
 	fn add_sub(s: u32, ) -> Weight {
-		// Minimum execution time: 98_264 nanoseconds.
-		Weight::from_ref_time(111_425_592 as u64)
-			// Standard Error: 35_182
-			.saturating_add(Weight::from_ref_time(394_639 as u64).saturating_mul(s as u64))
+		// Minimum execution time: 62_720 nanoseconds.
+		Weight::from_ref_time(69_484_456 as u64)
+			// Standard Error: 11_841
+			.saturating_add(Weight::from_ref_time(348_863 as u64).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -203,10 +205,10 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity SuperOf (r:1 w:1)
 	/// The range of component `s` is `[1, 32]`.
 	fn rename_sub(s: u32, ) -> Weight {
-		// Minimum execution time: 42_880 nanoseconds.
-		Weight::from_ref_time(46_732_561 as u64)
-			// Standard Error: 15_339
-			.saturating_add(Weight::from_ref_time(279_811 as u64).saturating_mul(s as u64))
+		// Minimum execution time: 26_448 nanoseconds.
+		Weight::from_ref_time(28_687_180 as u64)
+			// Standard Error: 5_526
+			.saturating_add(Weight::from_ref_time(181_081 as u64).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -215,10 +217,10 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity SubsOf (r:1 w:1)
 	/// The range of component `s` is `[1, 32]`.
 	fn remove_sub(s: u32, ) -> Weight {
-		// Minimum execution time: 106_161 nanoseconds.
-		Weight::from_ref_time(114_723_140 as u64)
-			// Standard Error: 34_329
-			.saturating_add(Weight::from_ref_time(417_317 as u64).saturating_mul(s as u64))
+		// Minimum execution time: 67_035 nanoseconds.
+		Weight::from_ref_time(70_865_227 as u64)
+			// Standard Error: 13_487
+			.saturating_add(Weight::from_ref_time(356_267 as u64).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -226,10 +228,10 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity SubsOf (r:1 w:1)
 	/// The range of component `s` is `[0, 31]`.
 	fn quit_sub(s: u32, ) -> Weight {
-		// Minimum execution time: 77_505 nanoseconds.
-		Weight::from_ref_time(82_452_608 as u64)
-			// Standard Error: 24_806
-			.saturating_add(Weight::from_ref_time(490_064 as u64).saturating_mul(s as u64))
+		// Minimum execution time: 48_059 nanoseconds.
+		Weight::from_ref_time(50_854_633 as u64)
+			// Standard Error: 7_779
+			.saturating_add(Weight::from_ref_time(350_435 as u64).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}

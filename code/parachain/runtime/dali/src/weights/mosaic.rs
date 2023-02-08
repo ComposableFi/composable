@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `05551ac21fb8`, CPU: `Intel(R) Xeon(R) CPU @ 3.10GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
+// /nix/store/9gdd70pyc12n9i1v6gx99rhz8q2n67z0-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -31,29 +31,29 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic Relayer (r:0 w:1)
 	fn set_relayer() -> Weight {
-		// Minimum execution time: 47_456 nanoseconds.
-		Weight::from_ref_time(49_884_000 as u64)
+		// Minimum execution time: 28_784 nanoseconds.
+		Weight::from_ref_time(29_697_000 as u64)
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Mosaic Relayer (r:1 w:1)
 	fn rotate_relayer() -> Weight {
-		// Minimum execution time: 56_414 nanoseconds.
-		Weight::from_ref_time(59_727_000 as u64)
+		// Minimum execution time: 34_651 nanoseconds.
+		Weight::from_ref_time(35_749_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Mosaic Relayer (r:1 w:0)
 	// Storage: Mosaic NetworkInfos (r:0 w:1)
 	fn set_network() -> Weight {
-		// Minimum execution time: 57_594 nanoseconds.
-		Weight::from_ref_time(59_588_000 as u64)
+		// Minimum execution time: 36_234 nanoseconds.
+		Weight::from_ref_time(37_453_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Mosaic AssetsInfo (r:1 w:1)
 	fn set_budget() -> Weight {
-		// Minimum execution time: 54_770 nanoseconds.
-		Weight::from_ref_time(56_134_000 as u64)
+		// Minimum execution time: 34_384 nanoseconds.
+		Weight::from_ref_time(34_924_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -65,8 +65,8 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic OutgoingTransactions (r:1 w:1)
 	// Storage: Mosaic Nonce (r:1 w:1)
 	fn transfer_to() -> Weight {
-		// Minimum execution time: 171_385 nanoseconds.
-		Weight::from_ref_time(176_573_000 as u64)
+		// Minimum execution time: 110_919 nanoseconds.
+		Weight::from_ref_time(112_881_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(8 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
@@ -75,16 +75,16 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic OutgoingTransactions (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn accept_transfer() -> Weight {
-		// Minimum execution time: 132_244 nanoseconds.
-		Weight::from_ref_time(135_850_000 as u64)
+		// Minimum execution time: 85_046 nanoseconds.
+		Weight::from_ref_time(85_965_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Mosaic OutgoingTransactions (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn claim_stale_to() -> Weight {
-		// Minimum execution time: 142_262 nanoseconds.
-		Weight::from_ref_time(158_585_000 as u64)
+		// Minimum execution time: 91_311 nanoseconds.
+		Weight::from_ref_time(95_044_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -94,15 +94,15 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Mosaic IncomingTransactions (r:1 w:1)
 	fn timelocked_mint() -> Weight {
-		// Minimum execution time: 145_356 nanoseconds.
-		Weight::from_ref_time(155_446_000 as u64)
+		// Minimum execution time: 93_252 nanoseconds.
+		Weight::from_ref_time(94_577_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Mosaic TimeLockPeriod (r:0 w:1)
 	fn set_timelock_duration() -> Weight {
-		// Minimum execution time: 18_436 nanoseconds.
-		Weight::from_ref_time(18_998_000 as u64)
+		// Minimum execution time: 10_977 nanoseconds.
+		Weight::from_ref_time(11_435_000 as u64)
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Mosaic Relayer (r:1 w:0)
@@ -110,16 +110,16 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic IncomingTransactions (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn rescind_timelocked_mint() -> Weight {
-		// Minimum execution time: 131_197 nanoseconds.
-		Weight::from_ref_time(143_397_000 as u64)
+		// Minimum execution time: 83_656 nanoseconds.
+		Weight::from_ref_time(84_825_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Mosaic IncomingTransactions (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn claim_to() -> Weight {
-		// Minimum execution time: 141_102 nanoseconds.
-		Weight::from_ref_time(148_972_000 as u64)
+		// Minimum execution time: 91_796 nanoseconds.
+		Weight::from_ref_time(95_794_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -127,22 +127,22 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic LocalToRemoteAsset (r:1 w:1)
 	// Storage: Mosaic RemoteToLocalAsset (r:0 w:1)
 	fn update_asset_mapping() -> Weight {
-		// Minimum execution time: 68_957 nanoseconds.
-		Weight::from_ref_time(70_862_000 as u64)
+		// Minimum execution time: 42_972 nanoseconds.
+		Weight::from_ref_time(44_472_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Mosaic RemoteAmmWhitelist (r:1 w:1)
 	fn add_remote_amm_id() -> Weight {
-		// Minimum execution time: 28_330 nanoseconds.
-		Weight::from_ref_time(29_539_000 as u64)
+		// Minimum execution time: 17_736 nanoseconds.
+		Weight::from_ref_time(18_149_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Mosaic RemoteAmmWhitelist (r:1 w:1)
 	fn remove_remote_amm_id() -> Weight {
-		// Minimum execution time: 31_494 nanoseconds.
-		Weight::from_ref_time(33_173_000 as u64)
+		// Minimum execution time: 19_739 nanoseconds.
+		Weight::from_ref_time(20_068_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}

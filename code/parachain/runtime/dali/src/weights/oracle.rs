@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `05551ac21fb8`, CPU: `Intel(R) Xeon(R) CPU @ 3.10GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
+// /nix/store/9gdd70pyc12n9i1v6gx99rhz8q2n67z0-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -33,16 +33,16 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle RewardTrackerStore (r:1 w:1)
 	// Storage: Oracle AssetsInfo (r:1 w:1)
 	fn add_asset_and_info() -> Weight {
-		// Minimum execution time: 63_294 nanoseconds.
-		Weight::from_ref_time(65_919_000 as u64)
+		// Minimum execution time: 38_752 nanoseconds.
+		Weight::from_ref_time(40_136_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: Oracle RewardTrackerStore (r:1 w:1)
 	fn adjust_rewards() -> Weight {
-		// Minimum execution time: 55_633 nanoseconds.
-		Weight::from_ref_time(57_535_000 as u64)
+		// Minimum execution time: 33_560 nanoseconds.
+		Weight::from_ref_time(34_380_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -50,8 +50,8 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle SignerToController (r:1 w:1)
 	// Storage: Oracle OracleStake (r:1 w:1)
 	fn set_signer() -> Weight {
-		// Minimum execution time: 160_372 nanoseconds.
-		Weight::from_ref_time(166_624_000 as u64)
+		// Minimum execution time: 104_127 nanoseconds.
+		Weight::from_ref_time(105_923_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -59,8 +59,8 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle OracleStake (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn add_stake() -> Weight {
-		// Minimum execution time: 143_738 nanoseconds.
-		Weight::from_ref_time(145_613_000 as u64)
+		// Minimum execution time: 93_274 nanoseconds.
+		Weight::from_ref_time(96_057_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -68,8 +68,8 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle OracleStake (r:1 w:1)
 	// Storage: Oracle DeclaredWithdraws (r:0 w:1)
 	fn remove_stake() -> Weight {
-		// Minimum execution time: 66_938 nanoseconds.
-		Weight::from_ref_time(69_106_000 as u64)
+		// Minimum execution time: 41_643 nanoseconds.
+		Weight::from_ref_time(43_037_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -78,8 +78,8 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:0)
 	// Storage: Oracle SignerToController (r:0 w:1)
 	fn reclaim_stake() -> Weight {
-		// Minimum execution time: 77_622 nanoseconds.
-		Weight::from_ref_time(79_637_000 as u64)
+		// Minimum execution time: 49_921 nanoseconds.
+		Weight::from_ref_time(56_429_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -90,10 +90,10 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle PrePrices (r:1 w:1)
 	/// The range of component `p` is `[1, 25]`.
 	fn submit_price(p: u32, ) -> Weight {
-		// Minimum execution time: 88_219 nanoseconds.
-		Weight::from_ref_time(92_277_476 as u64)
-			// Standard Error: 29_461
-			.saturating_add(Weight::from_ref_time(432_894 as u64).saturating_mul(p as u64))
+		// Minimum execution time: 55_454 nanoseconds.
+		Weight::from_ref_time(57_534_899 as u64)
+			// Standard Error: 8_407
+			.saturating_add(Weight::from_ref_time(240_726 as u64).saturating_mul(p as u64))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -101,10 +101,10 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle AnswerInTransit (r:1 w:1)
 	/// The range of component `p` is `[1, 25]`.
 	fn update_pre_prices(p: u32, ) -> Weight {
-		// Minimum execution time: 25_409 nanoseconds.
-		Weight::from_ref_time(26_407_342 as u64)
-			// Standard Error: 12_926
-			.saturating_add(Weight::from_ref_time(308_564 as u64).saturating_mul(p as u64))
+		// Minimum execution time: 15_237 nanoseconds.
+		Weight::from_ref_time(15_692_666 as u64)
+			// Standard Error: 3_577
+			.saturating_add(Weight::from_ref_time(210_272 as u64).saturating_mul(p as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -116,10 +116,10 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle PrePrices (r:0 w:1)
 	/// The range of component `p` is `[1, 25]`.
 	fn update_price(p: u32, ) -> Weight {
-		// Minimum execution time: 59_315 nanoseconds.
-		Weight::from_ref_time(62_384_969 as u64)
-			// Standard Error: 144_163
-			.saturating_add(Weight::from_ref_time(5_852_901 as u64).saturating_mul(p as u64))
+		// Minimum execution time: 34_927 nanoseconds.
+		Weight::from_ref_time(37_562_805 as u64)
+			// Standard Error: 72_085
+			.saturating_add(Weight::from_ref_time(3_718_664 as u64).saturating_mul(p as u64))
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}

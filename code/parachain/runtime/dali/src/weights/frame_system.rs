@@ -3,11 +3,11 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-08, STEPS: `50`, REPEAT: 10, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `78ebec2363af`, CPU: `Intel(R) Xeon(R) CPU @ 2.20GHz`
+//! HOSTNAME: `05551ac21fb8`, CPU: `Intel(R) Xeon(R) CPU @ 3.10GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dali-dev"), DB CACHE: 1024
 
 // Executed Command:
-// /nix/store/z1s3w1l7y8l7kz077971f11vy9ih4pq2-composable/bin/composable
+// /nix/store/9gdd70pyc12n9i1v6gx99rhz8q2n67z0-composable/bin/composable
 // benchmark
 // pallet
 // --chain=dali-dev
@@ -31,51 +31,51 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> frame_system::WeightInfo for WeightInfo<T> {
 	/// The range of component `b` is `[0, 3932160]`.
 	fn remark(b: u32, ) -> Weight {
-		// Minimum execution time: 14_961 nanoseconds.
-		Weight::from_ref_time(22_800_017 as u64)
-			// Standard Error: 1
-			.saturating_add(Weight::from_ref_time(625 as u64).saturating_mul(b as u64))
+		// Minimum execution time: 7_970 nanoseconds.
+		Weight::from_ref_time(7_114_131 as u64)
+			// Standard Error: 0
+			.saturating_add(Weight::from_ref_time(559 as u64).saturating_mul(b as u64))
 	}
 	/// The range of component `b` is `[0, 3932160]`.
 	fn remark_with_event(b: u32, ) -> Weight {
-		// Minimum execution time: 42_873 nanoseconds.
-		Weight::from_ref_time(44_235_000 as u64)
-			// Standard Error: 3
-			.saturating_add(Weight::from_ref_time(2_479 as u64).saturating_mul(b as u64))
+		// Minimum execution time: 25_435 nanoseconds.
+		Weight::from_ref_time(13_573_254 as u64)
+			// Standard Error: 1
+			.saturating_add(Weight::from_ref_time(1_859 as u64).saturating_mul(b as u64))
 	}
 	// Storage: System Digest (r:1 w:1)
 	// Storage: unknown [0x3a686561707061676573] (r:0 w:1)
 	fn set_heap_pages() -> Weight {
-		// Minimum execution time: 30_025 nanoseconds.
-		Weight::from_ref_time(30_768_000 as u64)
+		// Minimum execution time: 16_768 nanoseconds.
+		Weight::from_ref_time(18_373_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Skipped Metadata (r:0 w:0)
 	/// The range of component `i` is `[0, 1000]`.
 	fn set_storage(i: u32, ) -> Weight {
-		// Minimum execution time: 13_795 nanoseconds.
-		Weight::from_ref_time(14_054_000 as u64)
-			// Standard Error: 3_411
-			.saturating_add(Weight::from_ref_time(1_686_467 as u64).saturating_mul(i as u64))
+		// Minimum execution time: 7_875 nanoseconds.
+		Weight::from_ref_time(7_995_000 as u64)
+			// Standard Error: 1_288
+			.saturating_add(Weight::from_ref_time(1_152_226 as u64).saturating_mul(i as u64))
 			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(i as u64)))
 	}
 	// Storage: Skipped Metadata (r:0 w:0)
 	/// The range of component `i` is `[0, 1000]`.
 	fn kill_storage(i: u32, ) -> Weight {
-		// Minimum execution time: 13_750 nanoseconds.
-		Weight::from_ref_time(13_977_000 as u64)
-			// Standard Error: 3_222
-			.saturating_add(Weight::from_ref_time(1_344_008 as u64).saturating_mul(i as u64))
+		// Minimum execution time: 7_873 nanoseconds.
+		Weight::from_ref_time(8_004_000 as u64)
+			// Standard Error: 1_349
+			.saturating_add(Weight::from_ref_time(880_123 as u64).saturating_mul(i as u64))
 			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(i as u64)))
 	}
 	// Storage: Skipped Metadata (r:0 w:0)
 	/// The range of component `p` is `[0, 1000]`.
 	fn kill_prefix(p: u32, ) -> Weight {
-		// Minimum execution time: 19_546 nanoseconds.
-		Weight::from_ref_time(20_605_000 as u64)
-			// Standard Error: 4_850
-			.saturating_add(Weight::from_ref_time(2_399_033 as u64).saturating_mul(p as u64))
+		// Minimum execution time: 10_998 nanoseconds.
+		Weight::from_ref_time(11_127_000 as u64)
+			// Standard Error: 2_170
+			.saturating_add(Weight::from_ref_time(1_604_948 as u64).saturating_mul(p as u64))
 			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(p as u64)))
 	}
 }
