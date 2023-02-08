@@ -69,6 +69,7 @@ mod relaychain;
 #[cfg(test)]
 mod transact_calls;
 
+#[cfg(feature = "statemine")]
 #[cfg(test)]
 mod common_goods_assets;
 #[cfg(test)]

@@ -31,7 +31,7 @@ members = [
   "services/cmc-api",
   "parachain/frame/*",
   # TODO(hussein): let's upgrade them in v0.9.33
-  # "integration-tests/local-integration-tests",
+  "integration-tests/local-integration-tests",
   "parachain/node",
   "parachain/runtime/common",
   "parachain/runtime/primitives",
