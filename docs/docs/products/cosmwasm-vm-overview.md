@@ -32,7 +32,7 @@ that will play a significant role in the future of DeFi.
 
 ## Overview of Components
 
-The components of CosmWasm on Picasso can be divided into three components: 
+CosmWasm on Picasso can be divided into three components: 
 
 - **CosmWasm VM:** An abstract engine that enables other applications to run CosmWasm programs. 
     Pallet CosmWasm is an application of the CosmWasm VM.
