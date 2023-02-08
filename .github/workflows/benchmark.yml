@@ -47,9 +47,9 @@ jobs:
             nix-channel --update
             nix-env -iA nixpkgs.cachix nixpkgs.gnupg
 
-#      - name: Generate weights
-#        run: |
-#          nix run .#benchmarks-generate-${{ matrix.runtime }} -L
+      - name: Generate weights
+        run: |
+          nix run .#benchmarks-generate-${{ matrix.runtime }} -L
 
       - name: Get branch name
         id: branch-name
@@ -70,28 +70,16 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
 
-      - name: Change some files
-        run: echo 'test commit' >> Test.md
-
-      - name: Commit changes to README.md file
-        run: git commit -m "this is bot" README.md
+      - name: Push generated weights
+        uses: EndBug/add-and-commit@v9
         env:
-          GITHUB_TOKEN: ${{ secrets.OSLASH_BOT_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GLADOS_GITHUB_TOKEN }}
           GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
           GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
-
-#      - name: Push generated weights
-#        uses: EndBug/add-and-commit@v9
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GLADOS_GITHUB_TOKEN }}
-#          GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
-#          GIT_AUTHOR_EMAIL: ${{ steps.import-gpg.outputs.email }}
-#          GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
-#          GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
-#        with:
-#          add: "code/parachain/runtime"
-#          message: "chore(benchmarking): update ${{ matrix.runtime }} benchmarking weights"
-#          push: "true"
-#          new_branch: ${{ steps.branch-name.outputs.current_branch }}
+        with:
+          add: "code/parachain/runtime"
+          message: "chore(benchmarking): update ${{ matrix.runtime }} benchmarking weights"
+          push: "true"
+          new_branch: ${{ steps.branch-name.outputs.current_branch }}
