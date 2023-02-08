@@ -45,7 +45,7 @@ jobs:
           installCommand: |
             nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
-            nix-env -iA nixpkgs.cachix
+            nix-env -iA nixpkgs.cachix nixpkgs.gnupg
 
       - name: Generate weights
         run: |
