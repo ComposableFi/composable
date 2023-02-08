@@ -8,13 +8,13 @@ Acala has four asset classifications:
 * Native
 
 Acala has separate registration processes for each of these within their Asset 
-Registry pallet. Of interest to is are the foreign and native asset registration
+Registry pallet. Of interest to us are the foreign and native asset registration
 process.
 
 #### Foreign Assets
 
 Foreign assets are registered with a `MultiLocation` and `AssetMetadata`. The 
-`MultiLocation` then mapped to a `ForeignAssetId` that is determined by a nonce. 
+`MultiLocation` is then mapped to a `ForeignAssetId` that is determined by a nonce. 
 A mapping of `ForeignAssetId` to `MultiLocation` is also created so that either 
 can be used to look up the other. The provided metadata provides the assets 
 name, symbol, decimals, and minimum balance. The Metadata is indexed by the 

@@ -170,7 +170,7 @@ pub trait CreateAsset {
 
 /// Used temporarily while the Picasso runtime is migrated to the new Asset Transactor Router
 pub struct DummyAssetCreator<LocalAssetId, ForeignAssetId, Balance> {
-	_phantom_data: (PhantomData<LocalAssetId>, PhantomData<ForeignAssetId>, PhantomData<Balance>),
+	_phantom_data: PhantomData<(LocalAssetId, ForeignAssetId, Balance)>
 }
 
 impl<LocalAssetId: Default, ForeignAssetId, Balance> CreateAsset
