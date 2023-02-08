@@ -173,7 +173,7 @@ pub struct DummyAssetCreator<LocalAssetId, ForeignAssetId, Balance> {
 	_phantom_data: (PhantomData<LocalAssetId>, PhantomData<ForeignAssetId>, PhantomData<Balance>),
 }
 
-impl<LocalAssetId, ForeignAssetId, Balance> CreateAsset
+impl<LocalAssetId: Default, ForeignAssetId, Balance> CreateAsset
 	for DummyAssetCreator<LocalAssetId, ForeignAssetId, Balance>
 {
 	type LocalAssetId = LocalAssetId;
@@ -185,13 +185,13 @@ impl<LocalAssetId, ForeignAssetId, Balance> CreateAsset
 		_nonce: u64,
 		_asset_info: AssetInfo<Self::Balance>,
 	) -> Result<Self::LocalAssetId, DispatchError> {
-		Err(DispatchError::Other("TODO: Implement non-dummy in runtime!"))
+		Ok(Self::LocalAssetId::default())
 	}
 
 	fn create_foreign_asset(
 		_foreign_asset_id: Self::ForeignAssetId,
 		_asset_info: AssetInfo<Self::Balance>,
 	) -> Result<Self::LocalAssetId, DispatchError> {
-		Err(DispatchError::Other("TODO: Implement non-dummy in runtime!"))
+		Ok(Self::LocalAssetId::default())
 	}
 }
