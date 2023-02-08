@@ -333,7 +333,7 @@ stem:[x_(n+1) = (P_(old) + P_(old).S_(n+1)/(sum S_n) + r.delta t).S_(n+1)/(sum S
 
 stem:[x_(n+1) = r.delta t.S_(n+1)/(sum S_(n+1))]
 
-Therefore, the adjustment made above for the total reward pool works as expected for claims for the all the stakers. As this relationship holds for any number of stakers the total reward pool need not be adjusted when making a claim. However, if the staker is completely removed(unstaked) from the pool, the adjustment needs to be made as total shares of the pool is now reduced. However, to keep the pool calculations working for existing claims (with recursive new staker adjustment), keeping the total number of shares monotonically increasing is necessary. This can be achieved by making an adjustment to the total rewards per each epoch as follows,
+Therefore, the adjustment made above for the total reward pool works as expected for claims for the all the stakers. As this relationship holds for any number of stakers the total reward pool need not be adjusted when making a claim. However, if the staker is completely removed(unstaked) from the pool, the adjustment needs to be made as total shares of the pool is now reduced. However, to keep the pool calculations working for existing claims (with recursive new staker adjustment), keeping the total number of shares monotonically increasing is also necessary. Both requirements can be resolved by making an adjustment to the total rewards per each epoch as follows,
 
 stem:[P_(current) = P + rt + r(t - t_(removed)).S_(removed)/(sum S_n)]
 
