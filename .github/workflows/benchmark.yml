@@ -61,7 +61,7 @@ jobs:
           git config --global --add safe.directory /__w/composable/composable
 
       - name: Import bot's GPG key for signing commits
-        id: import-glados-gpg
+        id: gpg
         uses: crazy-max/ghaction-import-gpg@v4
         with:
           gpg_private_key: ${{ secrets.GLADOS_GPG_PRIVATE_KEY }}
@@ -78,8 +78,8 @@ jobs:
           add: "code/parachain/runtime"
           message: "chore(benchmarking): update ${{ matrix.runtime }} benchmarking weights"
           push: "true"
-          committer_name: ${{ steps.import-gpg.outputs.name }}
-          committer_email: ${{ steps.import-gpg.outputs.email }}
-          author_name: ${{ steps.import-gpg.outputs.name }}
-          author_email: ${{ steps.import-gpg.outputs.email }}
+          committer_name: ${{ steps.gpg.outputs.name }}
+          committer_email: ${{ steps.gpg.outputs.email }}
+          author_name: ${{ steps.gpg.outputs.name }}
+          author_email: ${{ steps.gpg.outputs.email }}
           new_branch: ${{ steps.branch-name.outputs.current_branch }}
