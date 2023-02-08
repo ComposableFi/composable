@@ -27,11 +27,6 @@ const ED25519_PUBLIC_KEY2_HEX: &str =
 	"3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
 
 #[test]
-fn works() {
-	new_test_ext().execute_with(|| {})
-}
-
-#[test]
 fn secp256k1_verify_verifies() {
 	new_test_ext().execute_with(|| {
 		let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
