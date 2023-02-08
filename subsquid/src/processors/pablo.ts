@@ -27,6 +27,7 @@ import { Fee } from "../types/v10005";
 import { divideBigInts, encodeAccount } from "../utils";
 import {
   getLatestPoolByPoolId,
+  getOrCreateAssetPrice,
   getOrCreatePabloAsset,
   saveAccountAndEvent,
   saveActivity,
@@ -196,6 +197,8 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
     });
 
     await ctx.store.save(historicalLockedValue);
+
+    await getOrCreateAssetPrice(ctx, assetId.toString(), ctx.block.timestamp);
   }
 
   const pabloLiquidityAdded = new PabloLiquidityAdded({
@@ -274,6 +277,8 @@ export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Stor
     });
 
     await ctx.store.save(historicalLockedValue);
+
+    await getOrCreateAssetPrice(ctx, assetId.toString(), ctx.block.timestamp);
   }
 
   const pabloLiquidityRemoved = new PabloLiquidityRemoved({
@@ -499,4 +504,6 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
 
   await ctx.store.save(historicalVolumeBaseAsset);
   await ctx.store.save(historicalVolumeQuoteAsset);
+  await getOrCreateAssetPrice(ctx, baseAssetId.toString(), ctx.block.timestamp);
+  await getOrCreateAssetPrice(ctx, quoteAssetId.toString(), ctx.block.timestamp);
 }
