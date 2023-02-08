@@ -262,7 +262,7 @@ impl pablo::Config for Runtime {
 	type Balance = Balance;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type Assets = Assets;
-	// TODO(Connor): Won't impact current pools, must implement new assts system
+	// TODO(Connor): Won't impact current pools since this is only required for pool creation, must implement new assts system before any more pools are created
 	type LPTokenFactory = DummyAssetCreator<CurrencyId, XcmAssetLocation, Balance>;
 	type PoolId = PoolId;
 	type PalletId = PabloPalletId;
