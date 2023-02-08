@@ -3,6 +3,7 @@ import { useStore } from "@/stores/root";
 import BigNumber from "bignumber.js";
 import config from "@/constants/config";
 import { getClaimable } from "@/defi/polkadot/pallets/StakingRewards/rpc";
+import { isPalletSupported } from "shared";
 
 let count = 0;
 
@@ -13,7 +14,11 @@ function getRewardKey(collectionId: string, instanceId: string) {
 
 async function updateClaimableAmount(api: ApiPromise) {
   const stakingPortfolio = useStore.getState().stakingPortfolio;
-  if (stakingPortfolio.length === 0) return;
+  if (
+    stakingPortfolio.length === 0 ||
+    !isPalletSupported(api)("StakingRewards")
+  )
+    return;
   // Reset because we are fetching a new claimable for all assets.
   useStore.getState().resetClaimableRewards();
   let list = [];

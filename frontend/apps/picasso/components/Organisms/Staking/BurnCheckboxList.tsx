@@ -17,6 +17,7 @@ import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscove
 import { getPicassoTokenById } from "@/stores/defi/polkadot/tokens/utils";
 import { StakeRemainingRelativeDate } from "@/components/Organisms/Staking/StakeRemainingRelativeDate";
 import { TokenWithUSD } from "@/components/Organisms/Staking/TokenWithUSD";
+import { useStore } from "@/stores/root";
 
 const BurnCheckboxItem = ({
   portfolio,
@@ -31,12 +32,11 @@ const BurnCheckboxItem = ({
   const token = useMemo(() => {
     return getPicassoTokenById(portfolio.collectionId);
   }, [portfolio.collectionId]);
+  const picaToken = useStore((store) => store.substrateTokens.tokens.pica);
   const picaPrice = usePicaPriceDiscovery();
   const stakedPrice = useMemo(() => {
     if (picaPrice.gte(0)) {
-      const stakedPrice = portfolio.stake.multipliedBy(picaPrice);
-
-      return `(~$${stakedPrice.toFormat(2)})`;
+      return portfolio.stake.multipliedBy(picaPrice).toFormat(2);
     }
 
     return "";
@@ -74,7 +74,7 @@ const BurnCheckboxItem = ({
           </Stack>
           <Stack direction="row" gap={2} alignItems="center">
             <TokenWithUSD
-              symbol={"$PICA"}
+              symbol={picaToken.symbol}
               amount={portfolio.stake.toFormat()}
               price={stakedPrice}
             />
@@ -96,9 +96,8 @@ export const BurnCheckboxList: FC<{
 }> = ({ openBurnModal, onSelectUnstakeToken, unstakeTokenId }) => {
   const theme = useTheme();
   const { stakingPortfolio } = useStakingRewards();
-  const isSelected =
-    unstakeTokenId[0].length > 0 && unstakeTokenId[1].length > 0;
   const [fnftCollectionId, fnftInstanceId] = unstakeTokenId;
+  const isSelected = Boolean(fnftCollectionId) && Boolean(fnftInstanceId);
   const currentPortfolio = Object.values(stakingPortfolio).find(
     (portfolio) =>
       portfolio.collectionId === fnftCollectionId &&
@@ -111,7 +110,9 @@ export const BurnCheckboxList: FC<{
     !fnftCollectionId ||
     !isSelected ||
     (shouldShowSlashWarning ? !agreed : false);
-
+  const penaltyPercent = `${
+    currentPortfolio?.unlockPenalty.multipliedBy(100).toString() ?? 0
+  }%`;
   return (
     <Stack gap={4} marginTop={9}>
       {stakingPortfolio.map((portfolioItem) => (
@@ -128,10 +129,12 @@ export const BurnCheckboxList: FC<{
             status="warning"
             icon={<WarningAmberRounded color="warning" />}
           >
-            <Typography variant="body2">50% withdraw fee warning</Typography>
+            <Typography variant="body2">
+              {penaltyPercent} withdraw fee warning
+            </Typography>
             <Typography variant="inputLabel" color="text.secondary">
-              If you withdraw locked fNFTs you will pay a 50% fee on your
-              initial deposit.
+              If you withdraw locked fNFTs you will pay a {penaltyPercent} fee
+              on your initial deposit.
             </Typography>
           </AlertBox>
           <Stack
@@ -146,7 +149,7 @@ export const BurnCheckboxList: FC<{
           >
             <Checkbox checked={agreed} onChange={(_, v) => setAgreed(v)} />
             <Typography variant="body2">
-              I understand I will pay a 50% withdraw fee
+              I understand I will pay a {penaltyPercent} withdraw fee
             </Typography>
           </Stack>
         </>

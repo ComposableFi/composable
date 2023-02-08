@@ -15,7 +15,7 @@ export const TokenWithUSD = ({
         {amount} {symbol}
       </Typography>
       <Typography variant="body2" color="text.secondary">
-        {price}
+        (~${price})
       </Typography>
     </Stack>
   );

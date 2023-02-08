@@ -26,7 +26,7 @@ const tokenIds = [
   "ausd",
   "kusd",
   "xpblo", // Cspell:ignore xpblo
-  "xpica", // Cspell:ignore xpblo
+  "xpica", // Cspell:ignore xpica
 ] as const; // important
 
 export const TOKEN_IDS = tokenIds;
@@ -99,7 +99,7 @@ export const TOKENS: { [key in TokenId]: Token } = {
     // Cspell:ignore xpica
     id: "xpica", // Cspell:ignore xpica
     icon: "/tokens/xpica.svg",
-    symbol: "xPICA", // Cspell:ignore XPICA
+    symbol: "xPICA", // Cspell:ignore xPICA
     decimalsToDisplay: 4,
     coinGeckoId: null,
   },

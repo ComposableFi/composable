@@ -6,6 +6,7 @@ import { useStore } from "@/stores/root";
 import BigNumber from "bignumber.js";
 import { useStakingRewards } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewards";
 import { ClaimButton } from "./ClaimButton";
+import { TokenWithUSD } from "@/components/Organisms/Staking/TokenWithUSD";
 
 export const ClaimableRewards = () => {
   const theme = useTheme();
@@ -28,10 +29,8 @@ export const ClaimableRewards = () => {
       );
     }, new BigNumber(0));
   }, [allClaimable]);
-  const claimable = `${claimableAmount.toFormat(0)} ${picaToken.symbol}`;
-  const usdValue = `(~$${claimableAmount
-    .multipliedBy(picaPrice)
-    .toFormat(picaToken.decimalsToDisplay)})`;
+  const claimable = claimableAmount.toFormat(0);
+  const usdValue = claimableAmount.multipliedBy(picaPrice).toFormat(2);
 
   if (!hasClaimable) {
     return null;
@@ -61,15 +60,11 @@ export const ClaimableRewards = () => {
             <TokenAsset tokenId={picaToken.id} label={picaToken.symbol} />
           </Box>
           <Box display="flex" alignItems="center" gap={1}>
-            <Typography variant="body2">{claimable}</Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                color: alpha(theme.palette.common.white, 0.6),
-              }}
-            >
-              {usdValue}
-            </Typography>
+            <TokenWithUSD
+              symbol={picaToken.symbol}
+              amount={claimable}
+              price={usdValue}
+            />
           </Box>
         </Stack>
         <ClaimButton />
