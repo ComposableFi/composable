@@ -14,7 +14,6 @@ use cosmwasm_vm::{
 use cosmwasm_vm_wasmi::{
 	OwnedWasmiVM, WasmiContext, WasmiInput, WasmiModule, WasmiOutput, WasmiVMError,
 };
-use frame_support::storage::ChildTriePrefixIterator;
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use wasmi::{core::HostError, Instance, Memory};
 
@@ -176,7 +175,8 @@ pub struct CosmwasmVM<'a, T: Config> {
 	/// State shared across all contracts within a single transaction.
 	pub shared: &'a mut CosmwasmVMShared,
 	/// Iterator id's to corresponding keys. Keys are used to get the next key.
-	pub iterators: BTreeMap<u32, ChildTriePrefixIterator<(Vec<u8>, Vec<u8>)>>,
+	// pub iterators: BTreeMap<u32, ChildTriePrefixIterator<(Vec<u8>, Vec<u8>)>>,
+	pub iterators: BTreeMap<u32, Vec<u8>>,
 	/// Actual contract runtime
 	pub contract_runtime: ContractBackend,
 }

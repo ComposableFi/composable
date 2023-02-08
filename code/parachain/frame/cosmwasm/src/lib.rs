@@ -99,12 +99,12 @@ use cosmwasm_vm_wasmi::{
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, PostDispatchInfo},
 	pallet_prelude::*,
-	storage::{child::ChildInfo, ChildTriePrefixIterator},
+	storage::child::ChildInfo,
 	traits::{
 		fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
 		Get, ReservableCurrency, UnixTime,
 	},
-	StorageHasher,
+	ReversibleStorageHasher, StorageHasher,
 };
 use sp_runtime::traits::SaturatedConversion;
 use sp_std::vec::Vec;
@@ -179,6 +179,7 @@ pub mod pallet {
 		SignatureVerificationError,
 		IteratorIdOverflow,
 		IteratorNotFound,
+		IteratorValueNotFound,
 		NotAuthorized,
 		Unsupported,
 		Ibc,
@@ -1143,7 +1144,7 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn do_db_write_gas(trie_id: &ContractTrieIdOf<T>, key: &[u8], value: &[u8]) -> u64 {
 		Self::with_db_entry(trie_id, key, |child_trie, entry| {
 			let bytes_to_write = match storage::child::len(&child_trie, &entry) {
-				Some(current_len) => current_len.saturating_sub(value.len() as _),
+				Some(current_len) => (value.len() as u32).saturating_sub(current_len),
 				None => value.len() as u32,
 			};
 			u64::from(bytes_to_write).saturating_mul(T::ContractStorageByteWritePrice::get().into())
@@ -1168,14 +1169,8 @@ impl<T: Config> Pallet<T> {
 	/// Create an empty iterator.
 	pub(crate) fn do_db_scan(vm: &mut DefaultCosmwasmVM<T>) -> Result<u32, CosmwasmVMError<T>> {
 		let iterator_id = vm.iterators.len() as u32;
-		let child_info = Self::contract_child_trie(vm.contract_info.trie_id.as_ref());
-		vm.iterators.insert(
-			iterator_id,
-			ChildTriePrefixIterator::<_>::with_prefix_over_key::<Blake2_128Concat>(
-				&child_info,
-				&[],
-			),
-		);
+		// let child_info = Self::contract_child_trie(vm.contract_info.trie_id.as_ref());
+		vm.iterators.insert(iterator_id, Vec::new());
 		Ok(iterator_id)
 	}
 
@@ -1187,19 +1182,20 @@ impl<T: Config> Pallet<T> {
 	) -> Result<Option<(Vec<u8>, Vec<u8>)>, CosmwasmVMError<T>> {
 		// Get the next value from the vm's iterators, based on the iterator id.
 		// Error if the iterator with id [`iterator_id`]
-		let next = vm
-			.iterators
-			.get_mut(&iterator_id)
-			.map(|iter| iter.next())
-			.ok_or(Error::<T>::IteratorNotFound)?;
-
-		// If there is a next db entry, charge the gas cost of the read.
-		if let Some((key, _)) = &next {
-			let price = Self::do_db_read_gas(&vm.contract_info.trie_id, key);
-			vm.charge_raw(price)?;
+		let child_info = Self::contract_child_trie(vm.contract_info.trie_id.as_ref());
+		let key_entry = vm.iterators.get_mut(&iterator_id).ok_or(Error::<T>::IteratorNotFound)?;
+		match sp_io::default_child_storage::next_key(child_info.storage_key(), key_entry) {
+			Some(key) => {
+				let reversed_key = Blake2_128Concat::reverse(&key).to_vec();
+				*key_entry = key;
+				Ok(Some((
+					reversed_key.clone(),
+					Self::do_db_read(vm, reversed_key.as_slice())?
+						.ok_or(Error::<T>::IteratorValueNotFound)?,
+				)))
+			},
+			None => Ok(None),
 		}
-
-		Ok(next)
 	}
 
 	/// Remove an entry from the executing contract, no gas is charged for this operation.
