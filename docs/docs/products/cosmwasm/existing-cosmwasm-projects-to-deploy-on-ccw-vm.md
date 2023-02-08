@@ -21,4 +21,4 @@ Developers can test the deployment of their projects on Picasso through a standa
 that interacts with Pallet CosmWasm. At Composable, we utilize Nix to reproducibly build all necessary packages. 
 **To get started testing out CW contracts on the ccw-vm, check out our guide [here].** 
 
-[here]: https://docs.composable.finance/developer-guides/ccw/walkthrough
+[here]: ../../developer-guides/cosmwasm/walkthrough
