@@ -5,7 +5,7 @@ import { StakingPosition } from "@/apollo/queries/stakingPositions";
 export type RewardPool = {
   owner: string;
   claimedShares: BigNumber;
-  endBlock: BigNumber;
+  // endBlock: BigNumber;
   lock: {
     durationPresets: {
       [key in string]: BigNumber;

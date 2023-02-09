@@ -162,7 +162,7 @@ const config = {
   },
   defaultNetworkId: "picasso" as ParachainId,
   stakingRewards: {
-    demoMode: true,
+    demoMode: false,
     durationPresetOptions: [
       {
         label: "No lock date",

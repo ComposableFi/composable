@@ -25,6 +25,7 @@ import { ComposableTraitsStakingRewardPool } from "@/../../packages/defi-interfa
 import { Option } from "@polkadot/types-codec";
 
 export function transformRewardPool(rewardPoolsWrapped: any): RewardPool {
+  console.log(rewardPoolsWrapped);
   return {
     owner: rewardPoolsWrapped.owner,
     // assetId: rewardPoolsWrapped.assetId.toString(), assetId is removed
@@ -33,11 +34,11 @@ export function transformRewardPool(rewardPoolsWrapped: any): RewardPool {
     claimedShares: unwrapNumberOrHex(
       rewardPoolsWrapped.claimedShares.toString()
     ),
-    endBlock: unwrapNumberOrHex(rewardPoolsWrapped.endBlock.toString()),
+    // endBlock: unwrapNumberOrHex(rewardPoolsWrapped.endBlock.toString()),
     lock: {
-      ...rewardPoolsWrapped.lock,
+      unlockPenalty: rewardPoolsWrapped.lock.unlockPenalty,
       durationPresets: Object.fromEntries(
-        Object.entries(rewardPoolsWrapped.lock.durationPresets).map(
+        Object.entries(rewardPoolsWrapped.lock.durationMultipliers.presets).map(
           ([duration, multiplier]) => [
             duration,
             fromPerbill(multiplier as string),
