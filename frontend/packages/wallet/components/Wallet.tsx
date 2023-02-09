@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import { FC, ReactNode, useEffect, useState } from "react";
 import { ConnectionStatus } from "./ConnectionStatus";
 import { ConnectionModal } from "./ConnectionModal";
 import { WalletViewModal } from "./WalletViewModal";
@@ -38,6 +38,7 @@ export type WalletProps = {
     locked: BigNumber;
   };
   hideEth?: boolean;
+  Disclaimer?: ReactNode;
 };
 
 export const Wallet: FC<WalletProps> = ({
@@ -58,6 +59,7 @@ export const Wallet: FC<WalletProps> = ({
   connectedWalletTransactions,
   ethereumConnectorInUse,
   hideEth,
+  Disclaimer,
 }) => {
   const label =
     isEthereumWalletActive || polkadotExtensionStatus === "connected"
@@ -133,6 +135,7 @@ export const Wallet: FC<WalletProps> = ({
         selectedPolkadotAccount={selectedPolkadotAccount}
         onDisconnectEthereum={onDisconnectEthereum}
         onSelectPolkadotAccount={onSelectPolkadotAccount}
+        Disclaimer={Disclaimer}
       />
 
       <WalletViewModal

@@ -80,6 +80,7 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
   setWalletConnectStep,
   blockchainNetworksSupported,
   isOpenConnectionModal,
+  Disclaimer,
 }) => {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
@@ -95,8 +96,8 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
           networkId === NetworkId.Ethereum
             ? setWalletConnectStep(WalletConnectStep.SelectEthereumWallet)
             : polkadotExtensionStatus === "connected"
-            ? setWalletConnectStep(WalletConnectStep.SelectDotsamaAccount)
-            : setWalletConnectStep(WalletConnectStep.SelectedDotsamaWallet);
+              ? setWalletConnectStep(WalletConnectStep.SelectDotsamaAccount)
+              : setWalletConnectStep(WalletConnectStep.SelectedDotsamaWallet);
         }}
       />
     ));
@@ -214,6 +215,7 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
           />
         ) : null}
 
+
         {/* Polkadot Steps */}
         {/* We connection is needed */}
         {polkadotExtensionStatus !== "connected" &&
@@ -244,6 +246,9 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
             closeConnectionModal={closeConnectionModal}
           />
         ) : null}
+        {WalletConnectStep.SelectDotsamaAccount !== walletConnectStep
+          ? Disclaimer
+          : null}
       </Box>
     </Modal>
   );

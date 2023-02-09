@@ -2,6 +2,7 @@ import { ApiPromise } from "@polkadot/api";
 import { DEFI_CONFIG } from "./config";
 import type { Signer as InjectedSigner } from "@polkadot/api/types";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
+
 export type TokenId = typeof DEFI_CONFIG.tokenIds[number];
 export type ParachainId = typeof DEFI_CONFIG.parachainIds[number];
 export type RelayChainId = typeof DEFI_CONFIG.relayChainIds[number];
@@ -12,7 +13,7 @@ export type SubstrateChainApiStatus = "initializing" | "failed" | "connected";
 
 export enum SupportedWalletId {
   Talisman = "talisman",
-  Polkadotjs = "polkadot-js"
+  Polkadotjs = "polkadot-js",
 }
 
 export type DotSamaExtensionStatus =
@@ -36,18 +37,24 @@ export interface RelaychainApi extends SubstrateChainApi {
   chainId: RelayChainId;
 }
 
-export type ConnectedAccounts = Record<RelayChainId | ParachainId, InjectedAccountWithMeta[]>;
+export type ConnectedAccounts = Record<
+  RelayChainId | ParachainId,
+  InjectedAccountWithMeta[]
+>;
 
 export interface DotSamaContext {
   signer: InjectedSigner | undefined;
   parachainProviders: { [chainId in ParachainId]: ParachainApi };
   relaychainProviders: { [chainId in RelayChainId]: RelaychainApi };
   extensionStatus: DotSamaExtensionStatus;
-  activate?: (walletId?: SupportedWalletId, selectedDefaultAccount?: boolean) => Promise<any[] | undefined>;
+  activate?: (
+    walletId?: SupportedWalletId,
+    selectedDefaultAccount?: boolean
+  ) => Promise<any[] | undefined>;
   deactivate?: () => Promise<void>;
   selectedAccount: number;
   setSelectedAccount?: (account: number) => void;
-  connectedAccounts: ConnectedAccounts
+  connectedAccounts: ConnectedAccounts;
 }
 
 export interface SubstrateNetwork {

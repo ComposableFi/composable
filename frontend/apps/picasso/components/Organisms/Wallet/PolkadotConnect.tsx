@@ -1,5 +1,5 @@
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
-import { useTheme } from "@mui/material";
+import { Stack, Typography, useTheme } from "@mui/material";
 import {
   SupportedWalletId,
   useConnectedAccounts,
@@ -12,6 +12,7 @@ import { NetworkId, Wallet } from "wallet";
 import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import { useStore } from "@/stores/root";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
+import { Link } from "@/components";
 
 const BLOCKCHAIN_NETWORKS_SUPPORTED = [
   {
@@ -103,6 +104,20 @@ export const PolkadotConnect: React.FC<{}> = () => {
           setSelectedAccount(index);
         }
       }}
+      Disclaimer={
+        <Stack mt={2}>
+          <Typography variant="body3" textAlign="center">
+            By connecting a wallet, you agree to our{" "}
+            <Link href="/terms-of-use" variant="body3">
+              Terms of Services
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy-policy" variant="body3">
+              Privacy Policy
+            </Link>
+          </Typography>
+        </Stack>
+      }
     />
   );
 };

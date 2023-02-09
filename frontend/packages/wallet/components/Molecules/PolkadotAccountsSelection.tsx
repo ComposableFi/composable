@@ -38,32 +38,16 @@ export const PolkadotAccountsSelection = ({
           <PolkadotAccountListItem
             key={account.address}
             account={account}
-            onSelect={setSelectedActiveAccount}
+            onSelect={(account) => {
+              onSelect(account);
+              closeConnectionModal();
+            }}
             isSelected={
               selectedActiveAccount?.address === account.address ?? false
             }
           />
         ))}
       </Box>
-
-      <Button
-        onClick={() => {
-          if (selectedActiveAccount) {
-            onSelect(selectedActiveAccount);
-            closeConnectionModal();
-          }
-        }}
-        sx={{ marginTop: theme.spacing(2) }}
-        fullWidth
-        variant="contained"
-        disabled={
-          selectedAccount &&
-          selectedActiveAccount &&
-          selectedAccount.address === selectedActiveAccount.address
-        }
-      >
-        Confirm Account
-      </Button>
       <Button
         onClick={async () => {
           if (disconnectWallet) {
