@@ -98,7 +98,7 @@ import BigNumber from "bignumber.js";
  * 7.8 I can unstake all split positions.
  *
  */
-describe("tx.stakingRewards Tests", function() {
+describe("[SHORT] Staking Rewards Pallet", function() {
   if (!testConfiguration.enabledTests.query.enabled) return;
   this.retries(0);
   this.timeout(2 * 60 * 1000);
@@ -340,8 +340,7 @@ describe("tx.stakingRewards Tests", function() {
   });
 
   describe("1. Creation of reward pools.", function() {
-    it("1.1  [SHORT] I can, as sudo, create a new Staking Rewards pool, for any arbitrary asset ID, with a single reward asset.", async function() {
-      this.timeout(2 * 60 * 1000);
+    it("1.1  I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with a single reward asset.", async function() {
       // Parameters
       const currentBlockNumber = await api.query.system.number();
       const startBlock = api.createType("u32", currentBlockNumber.addn(4));
@@ -419,8 +418,6 @@ describe("tx.stakingRewards Tests", function() {
     });
 
     it("1.2  I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with multiple reward assets.", async function() {
-      this.timeout(2 * 60 * 1000);
-
       // Parameters
       const currentBlockNumber = await api.query.system.number();
       const startBlock = api.createType("u32", currentBlockNumber.addn(4));
@@ -514,7 +511,6 @@ describe("tx.stakingRewards Tests", function() {
     ;
 
     it("1.3  I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with single duration preset.", async function() {
-      this.timeout(2 * 60 * 1000);
       // Parameters
       const currentBlockNumber = await api.query.system.number();
       const startBlock = api.createType("u32", currentBlockNumber.addn(4));
@@ -596,7 +592,6 @@ describe("tx.stakingRewards Tests", function() {
     it("1.5  I can create a Pablo pool using sudo & an LP token pool will get automatically created.");
 
     it("1.6  I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with zero time locks.", async function() {
-      this.timeout(2 * 60 * 1000);
       // Parameters
       const currentBlockNumber = await api.query.system.number();
       const startBlock = api.createType("u32", currentBlockNumber.addn(4));
@@ -667,7 +662,6 @@ describe("tx.stakingRewards Tests", function() {
     });
 
     it("1.7  I can, as sudo, create a new Staking Rewards pool for any arbitrary asset ID with zero penalty locks.", async function() {
-      this.timeout(2 * 60 * 1000);
       // Parameters
       const currentBlockNumber = await api.query.system.number();
       const startBlock = api.createType("u32", currentBlockNumber.addn(4));
@@ -741,8 +735,6 @@ describe("tx.stakingRewards Tests", function() {
 
   describe("2. Adding rewards to pool pots.", function() {
     it("2.1  [SHORT] I can, as pool owner, add rewards to staking rewards pool pot #1.1.", async function() {
-      this.timeout(2 * 60 * 1000);
-
       // Parameters
       const poolId = stakingPoolId1;
       const assetId = POOL_11_REWARD_ASSET_ID;
@@ -771,7 +763,7 @@ describe("tx.stakingRewards Tests", function() {
       expect(new BN(assetId)).to.be.bignumber.equal(resultAssetId);
       // Verifying the added amount, reported by the event, is equal to the amount we added.
       expect(new BN(amount.toString())).to.be.bignumber.equal(resultAmount);
-debugger;
+      debugger;
       await verifyPoolPotAddition(
         api,
         poolId,
@@ -780,13 +772,11 @@ debugger;
         walletPoolOwner,
         walletBalanceBefore,
         // @ts-ignore
-        new BN(poolRewardAmountBefore['totalRewards'].toString())
+        new BN(poolRewardAmountBefore["totalRewards"].toString())
       );
     });
 
     it("2.4  [SHORT] Any user can add funds to a pool whose reward pot is not empty.", async function() {
-      this.timeout(2 * 60 * 1000);
-
       // Parameters
       const poolId = stakingPoolId1;
       const assetId = POOL_11_REWARD_ASSET_ID;
@@ -830,8 +820,6 @@ debugger;
     });
 
     it("2.2  Any user can add all reward assets to another staking rewards pool with multiple reward pots #1.2.", async function() {
-      this.timeout(2 * 60 * 1000);
-
       // Parameters
       const poolId = stakingPoolId2;
       const assetIds = [POOL_12_REWARD_ASSET_ID_1, POOL_12_REWARD_ASSET_ID_2, POOL_12_REWARD_ASSET_ID_3];
@@ -867,15 +855,14 @@ debugger;
 
       // Verification
       // @ts-ignore
-      await verifyPoolPotAddition(api, poolId, assetIds[0], amount, walletRewardAdder, walletBalancesBefore[0],new BN(poolRewardAmountsBefore[0].toString()));
+      await verifyPoolPotAddition(api, poolId, assetIds[0], amount, walletRewardAdder, walletBalancesBefore[0], new BN(poolRewardAmountsBefore[0].toString()));
       // @ts-ignore
-      await verifyPoolPotAddition(api, poolId, assetIds[1], amount, walletRewardAdder, walletBalancesBefore[1],new BN(poolRewardAmountsBefore[1].toString()));
+      await verifyPoolPotAddition(api, poolId, assetIds[1], amount, walletRewardAdder, walletBalancesBefore[1], new BN(poolRewardAmountsBefore[1].toString()));
       // @ts-ignore
       await verifyPoolPotAddition(api, poolId, assetIds[2], amount, walletRewardAdder, walletBalancesBefore[2], new BN(poolRewardAmountsBefore[2].toString()));
     });
 
     it("2.3  Any user can add rewards to multiple staking pools at once.", async function() {
-      this.timeout(2 * 60 * 1000);
       // Parameters
       const poolIds = [stakingPoolId3, stakingPoolId6, stakingPoolId7];
       const assetIds = [POOL_13_REWARD_ASSET_ID, POOL_16_REWARD_ASSET_ID, POOL_17_REWARD_ASSET_ID];
@@ -916,11 +903,11 @@ debugger;
       // Verification
       await Promise.all([
         // @ts-ignore
-        verifyPoolPotAddition(api, poolIds[0], assetIds[0], amount, walletRewardAdder, walletBalancesBefore[0],new BN(poolRewardAmountsBefore[0].toString())),
+        verifyPoolPotAddition(api, poolIds[0], assetIds[0], amount, walletRewardAdder, walletBalancesBefore[0], new BN(poolRewardAmountsBefore[0].toString())),
         // @ts-ignore
-        verifyPoolPotAddition(api, poolIds[1], assetIds[1], amount, walletRewardAdder, walletBalancesBefore[1],new BN(poolRewardAmountsBefore[1].toString())),
+        verifyPoolPotAddition(api, poolIds[1], assetIds[1], amount, walletRewardAdder, walletBalancesBefore[1], new BN(poolRewardAmountsBefore[1].toString())),
         // @ts-ignore
-        verifyPoolPotAddition(api, poolIds[2], assetIds[2], amount, walletRewardAdder, walletBalancesBefore[2],new BN(poolRewardAmountsBefore[2].toString()))
+        verifyPoolPotAddition(api, poolIds[2], assetIds[2], amount, walletRewardAdder, walletBalancesBefore[2], new BN(poolRewardAmountsBefore[2].toString()))
       ]);
 
     });
@@ -928,12 +915,9 @@ debugger;
 
   describe("3. Staking in the pools", function() {
     it("3.1  [SHORT] I can stake in the newly created rewards pool #1.1", async function() {
-      this.timeout(5 * 60 * 1000);
-
       const currentBlockNumber = (await api.query.system.number());
       if (currentBlockNumber.lt(new BN(pool11startBlock.toString())))
         await waitForBlocks(api, Number(pool11startBlock - currentBlockNumber.toNumber()));
-
 
       // Parameters
       const userFundsBefore = await api.rpc.assets.balanceOf(POOL_11_BASE_ASSET_ID.toString(), walletStaker.publicKey);
@@ -1010,7 +994,6 @@ debugger;
 
   describe("4. Claiming from staked positions pt. 1", function() {
     it("4.1  [SHORT] I can claim from the arbitrary asset pool in #1.1 using the stake from #3.1, during the lock period.", async function() {
-      this.timeout(5 * 60 * 1000);
       // Get funds before transaction
       const userFundsBefore = await api.rpc.assets.balanceOf(
         POOL_11_REWARD_ASSET_ID.toString(),
@@ -1099,7 +1082,6 @@ debugger;
 
   describe("3. Staking in the pools pt. 2", function() {
     it("3.2  Another user can stake in the newly created rewards pool #1.1", async function() {
-      this.timeout(2 * 60 * 1000);
       // Getting funds before
       const userFundsBefore = await api.rpc.assets.balanceOf(POOL_11_BASE_ASSET_ID.toString(), walletStaker2.publicKey);
       // Parameters
@@ -1182,7 +1164,6 @@ debugger;
     });
 
     it("3.3 I can stake in the newly created rewards pool #1.2", async function() {
-      this.timeout(2 * 60 * 1000);
       // Getting funds before transaction
       const userFundsBefore = await api.rpc.assets.balanceOf(POOL_12_BASE_ASSET_ID.toString(), walletStaker.publicKey);
       // Parameters
@@ -1247,7 +1228,6 @@ debugger;
     });
 
     it("3.4  I can stake in the preconfigured PICA pool", async function() {
-      this.timeout(2 * 60 * 1000);
       this.skip();
       // ToDo: Fix when preconfigured pools have their rewards configuration!
       throw new Error("Pre- configured pools don't have any reward configuration yet!");
@@ -1297,7 +1277,6 @@ debugger;
     });
 
     it("3.5  I can stake in the preconfigured PBLO pool", async function() {
-      this.timeout(2 * 60 * 1000);
       this.skip();
 
       // ToDo: Fix when preconfigured pools have their rewards configuration!
@@ -1356,7 +1335,6 @@ debugger;
     });
 
     it("3.6  I can stake in the created LP token pool #1.5.", async function() {
-      this.timeout(2 * 60 * 1000);
 
       // ToDo: Buggy!
       // Ticket: https://app.clickup.com/t/32009xc
@@ -1422,7 +1400,6 @@ debugger;
     });
 
     it("3.7  I can stake in the newly created pool with 0 time locks. #1.6", async function() {
-      this.timeout(2 * 60 * 1000);
       // Get funds before transaction
       const userFundsBefore = await api.rpc.assets.balanceOf(POOL_16_BASE_ASSET_ID.toString(), walletStaker.publicKey);
       // Parameters
@@ -1489,7 +1466,6 @@ debugger;
     });
 
     it("3.8  I can stake in the newly created pool with 0 unlock penalty. #1.7", async function() {
-      this.timeout(2 * 60 * 1000);
       // Get funds before transaction
       const userFundsBefore = await api.rpc.assets.balanceOf(POOL_17_BASE_ASSET_ID.toString(), walletStaker.publicKey);
       // Parameters
@@ -1558,7 +1534,6 @@ debugger;
 
   describe("4. Claiming from staked positions.", function() {
     it("4.2  I can claim from the arbitrary asset pool in #1.1 using the stake from #3.2, during the lock period.", async function() {
-      this.timeout(2 * 60 * 1000);
       // Get funds before transaction
       const userFundsBefore = await api.rpc.assets.balanceOf(
         POOL_11_REWARD_ASSET_ID.toString(),
@@ -1648,7 +1623,6 @@ debugger;
 
     // ToDo: Add actual test
     it("4.3  I can claim from the arbitrary asset pool in #1.2 using the stake from #3.3 after the lock period has ended.", async function() {
-      this.timeout(5 * 60 * 1000);
       // Get funds before transaction
       const userFundsBefore = await api.rpc.assets.balanceOf(
         POOL_11_REWARD_ASSET_ID.toString(),
@@ -1739,7 +1713,6 @@ debugger;
     });
 
     it("4.4  I can claim from the PICA pool using my stake in #3.4, after the lock period has ended.", async function() {
-      this.timeout(2 * 60 * 1000);
       this.skip();
 
       // ToDo: Fix when preconfigured pools have their rewards configuration!
@@ -1812,7 +1785,6 @@ debugger;
     });
 
     it("4.5  I can claim from the PBLO pool using my stake in #3.5, after the lock period has ended.", async function() {
-      this.timeout(2 * 60 * 1000);
       this.skip();
       // ToDo: Fix when preconfigured pools have their rewards configuration!
       throw new Error("Pre- configured pools don't have any reward configuration yet!");
@@ -1871,7 +1843,6 @@ debugger;
     });
 
     it("4.6  I can claim from the LP token pool using my stake in #3.6, after the lock period has ended.", async function() {
-      this.timeout(2 * 60 * 1000);
 
       // LP staking does not seem to work!
       // Please see test 3.6 for further information!
@@ -1932,7 +1903,6 @@ debugger;
     });
 
     it("4.7  I can claim from the 0 time lock pool using my stake in #3.7", async function() {
-      this.timeout(2 * 60 * 1000);
       // Get funds before transaction
       const userFundsBefore = await api.rpc.assets.balanceOf(
         POOL_16_REWARD_ASSET_ID.toString(),
@@ -2000,7 +1970,6 @@ debugger;
     });
 
     it("4.8  I can claim from the 0 unlock penalty pool using my stake in #3.8.", async function() {
-      this.timeout(2 * 60 * 1000);
       // Get funds before transaction
       const userFundsBefore = await api.rpc.assets.balanceOf(
         POOL_17_REWARD_ASSET_ID.toString(),
@@ -2070,7 +2039,6 @@ debugger;
 
   describe("5. Extending existing positions.", function() {
     it("5.1  [SHORT] I can extend the staked amount in pool #1.1 using the stake from #3.3", async function() {
-      this.timeout(2 * 60 * 1000);
       // Querying stake
       const stakeInfoBefore = <Option<ComposableTraitsStakingStake>>(
         await api.query.stakingRewards.stakes(fNFTCollectionId3, fNFTInstanceId3)
@@ -2112,7 +2080,6 @@ debugger;
 
     it.skip("5.2  I can extend the lock time in pool #1.1 using the stake from #3.1", async function() {
       // ToDo: Enable when lock time extension works!
-      this.timeout(2 * 60 * 1000);
       // Querying stake
       const stakeInfoBefore = <Option<ComposableTraitsStakingStake>>(
         await api.query.stakingRewards.stakes(fNFTCollectionId3, fNFTInstanceId3)
@@ -2155,7 +2122,6 @@ debugger;
 
   describe("6. Splitting existing positions.", function() {
     it("6.1  [SHORT] I can split my staking position into 2 separate positions", async function() {
-      this.timeout(2 * 60 * 1000);
       const stakeInfoBefore = await api.query.stakingRewards.stakes(fNFTCollectionId3, fNFTInstanceId3);
 
       // Transaction
@@ -2184,8 +2150,6 @@ debugger;
     });
 
     it("6.2  I can split my already split position again", async function() {
-      this.timeout(2 * 60 * 1000);
-
       // ToDo: Buggy!
       // Ticket: https://app.clickup.com/t/3200cuw
 
@@ -2220,7 +2184,6 @@ debugger;
 
   describe("7. Unstaking positions.", function() {
     it("7.1  I can unstake my staking position before my lock period has ended and get slashed.", async function() {
-      this.timeout(2 * 60 * 1000);
       // Getting user funds before
       const userFundsBefore = await api.rpc.assets.balanceOf(POOL_11_BASE_ASSET_ID.toString(), walletStaker2.publicKey);
       const stakeAmount = Pica(1_000);
@@ -2262,8 +2225,6 @@ debugger;
     });
 
     it("7.2  [SHORT] I can unstake my staking position after the locking period has ended without getting slashed.", async function() {
-      this.timeout(4 * 60 * 1000);
-
       // ToDo: Bugged!
       // Ticket: https://app.clickup.com/t/3200gvc
 
@@ -2303,7 +2264,6 @@ debugger;
     });
 
     it("7.3  I can unstake my staking position from PICA pool after the locking period has ended without getting slashed.", async function() {
-      this.timeout(4 * 60 * 1000);
       this.skip();
       // ToDo: Fix when preconfigured pools have their rewards configuration!
       throw new Error("Pre- configured pools don't have any reward configuration yet!");
@@ -2334,7 +2294,6 @@ debugger;
     });
 
     it("7.4  I can unstake my staking position from PBLO pool after the locking period has ended without getting slashed.", async function() {
-      this.timeout(4 * 60 * 1000);
       this.skip();
       // ToDo: Fix when preconfigured pools have their rewards configuration!
       throw new Error("Pre- configured pools don't have any reward configuration yet!");
@@ -2373,7 +2332,6 @@ debugger;
     });
 
     it("7.5  I can unstake my staking position from the LP token pool after the locking period has ended without getting slashed.", async function() {
-      this.timeout(4 * 60 * 1000);
       this.skip();
       // ToDo: LP Token staking does not seem to work!
       // Check 3.6 for further information.
@@ -2412,7 +2370,6 @@ debugger;
     });
 
     it("7.6  I can unstake my staking position from the 0 time lock pool without getting slashed.", async function() {
-      this.timeout(4 * 60 * 1000);
       // Getting funds before
       const userFundsBefore = await api.rpc.assets.balanceOf(POOL_16_BASE_ASSET_ID.toString(), walletStaker.publicKey);
       // Parameters
@@ -2448,7 +2405,6 @@ debugger;
     });
 
     it("7.7  I can unstake my position from the 0 unlock penalty pool without getting slashed.", async function() {
-      this.timeout(4 * 60 * 1000);
       // Getting funds before
       const userFundsBefore = await api.rpc.assets.balanceOf(POOL_17_BASE_ASSET_ID.toString(), walletStaker.publicKey);
       // Parameters
@@ -2485,7 +2441,6 @@ debugger;
     });
 
     it("7.8  I can unstake all split positions.", async function() {
-      this.timeout(4 * 60 * 1000);
       // Getting funds before
       const userFundsBefore = await api.rpc.assets.balanceOf(
         POOL_11_BASE_ASSET_ID.toString(),
