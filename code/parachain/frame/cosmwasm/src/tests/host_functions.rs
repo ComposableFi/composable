@@ -3,27 +3,31 @@
 use crate::{
 	mock::*,
 	runtimes::{
-		abstraction::Gas,
+		abstraction::{CosmwasmAccount, Gas},
 		vm::{CosmwasmVMCache, CosmwasmVMShared},
 	},
 	setup_instantiate_call,
 	types::DefaultCosmwasmVM,
 	weights::WeightInfo,
-	Config,
+	CodeHashToId, CodeIdToInfo, CodeInfoOf, Config, InstrumentedCode, PristineCode,
 };
 use alloc::collections::BTreeSet;
-use cosmwasm_vm::{cosmwasm_std::Order, vm::VMBase};
+use cosmwasm_vm::{
+	cosmwasm_std::{CodeInfoResponse, ContractInfoResponse, Order},
+	system::CosmwasmContractMeta,
+	vm::VMBase,
+};
 use cosmwasm_vm_wasmi::{code_gen, OwnedWasmiVM};
 use frame_benchmarking::account;
 use frame_support::traits::fungible;
 use sp_runtime::AccountId32;
 
 fn initialize() {
-	use std::sync::Once;
-	static INIT: Once = Once::new();
-	INIT.call_once(|| {
-		env_logger::init();
-	});
+	// use std::sync::Once;
+	// static INIT: Once = Once::new();
+	// INIT.call_once(|| {
+	// 	env_logger::init();
+	// });
 }
 
 fn create_vm() -> CosmwasmVMShared {
@@ -59,7 +63,7 @@ fn create_instantiated_contract(vm: &mut CosmwasmVMShared, origin: AccountId32) 
 		1,
 		"salt".as_bytes(),
 		Some(origin),
-		vec![0x41_u8].try_into().unwrap(),
+		b"label-1".to_vec().try_into().unwrap(),
 		"message".as_bytes(),
 	)
 	.unwrap()
@@ -305,7 +309,207 @@ fn set_contract_meta() {
 	new_test_ext().execute_with(|| {
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
+		let contract_1 =
+			CosmwasmAccount::new(create_instantiated_contract(&mut shared_vm, origin.clone()));
+
+		let contract_2 = CosmwasmAccount::new(
+			setup_instantiate_call::<Test>(
+				origin.clone(),
+				1,
+				b"salt2",
+				Some(origin.clone()),
+				vec![0x41_u8].try_into().unwrap(),
+				"message".as_bytes(),
+			)
+			.unwrap()
+			.top_level_call(
+				&mut shared_vm,
+				Default::default(),
+				b"message".to_vec().try_into().unwrap(),
+			)
+			.unwrap(),
+		);
+
+		let wasm_module: code_gen::WasmModule =
+			code_gen::ModuleDefinition::new(Default::default(), 20, None).unwrap().into();
+		// 2. Properly upload the code (so that the necessary storage items are modified)
+		Cosmwasm::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
+
+		let mut vm = Cosmwasm::cosmwasm_new_vm(
+			&mut shared_vm,
+			origin.clone(),
+			contract_1.clone().into_inner(),
+			vec![],
+		)
+		.unwrap();
+
+		let mut contract_meta_1 = vm.contract_meta(contract_1.clone()).unwrap();
+
+		contract_meta_1.code_id = 2;
+		contract_meta_1.admin = Some(contract_2.clone());
+		contract_meta_1.label = "new-label-1".into();
+
+		// 1. Charges gas properly.
+		let gas = current_gas(&mut vm);
+		vm.set_contract_meta(contract_1.clone(), contract_meta_1.clone()).unwrap();
+		assert_eq!(
+			charged_gas(&mut vm, gas),
+			<Test as Config>::WeightInfo::set_contract_meta().ref_time()
+		);
+
+		// 2. Only refcount is changed since the old code id has still reference,
+		// old code should still be present.
+		let code_info_1 = CodeIdToInfo::<Test>::get(1).unwrap();
+		assert_eq!(code_info_1.refcount, 1);
+		let code_info_2 = CodeIdToInfo::<Test>::get(2).unwrap();
+		assert_eq!(code_info_2.refcount, 1);
+
+		// 3. Sets the meta fields correctly.
+		assert_eq!(vm.contract_meta(contract_1.clone()).unwrap(), contract_meta_1);
+
+		// 4. When `code_id` is not changed, don't touch to refcount
+		vm.set_contract_meta(contract_1, contract_meta_1.clone()).unwrap();
+		let code_info_2 = CodeIdToInfo::<Test>::get(2).unwrap();
+		assert_eq!(code_info_2.refcount, 1);
+
+		let code_1 = PristineCode::<Test>::get(1).unwrap();
+		let reserved_balance = <Test as Config>::NativeAsset::reserved_balance(&origin);
+
+		// 5. `code_id 1` is not referenced anymore so it is removed.
+		vm.set_contract_meta(contract_2, contract_meta_1).unwrap();
+		assert!(!CodeIdToInfo::<Test>::contains_key(1));
+		assert!(!PristineCode::<Test>::contains_key(1));
+		assert!(!InstrumentedCode::<Test>::contains_key(1));
+		assert!(!CodeHashToId::<Test>::contains_key(code_info_1.pristine_code_hash));
+
+		// 6. Reserved balance is unreserved since code 1 is now removed.
+		assert_eq!(
+			reserved_balance - <Test as Config>::NativeAsset::reserved_balance(&origin),
+			code_1.len() as u128 * <Test as Config>::CodeStorageByteDeposit::get() as u128
+		);
+	})
+}
+
+#[test]
+fn running_contract_meta() {
+	new_test_ext().execute_with(|| {
+		let mut shared_vm = create_vm();
+		let origin = create_funded_account("origin");
+		let contract_1 = create_instantiated_contract(&mut shared_vm, origin.clone());
+		let contract_2 = setup_instantiate_call::<Test>(
+			contract_1.clone(),
+			1,
+			b"salt2",
+			Some(contract_1.clone()),
+			b"label-2".to_vec().try_into().unwrap(),
+			"message".as_bytes(),
+		)
+		.unwrap()
+		.top_level_call(&mut shared_vm, Default::default(), b"message".to_vec().try_into().unwrap())
+		.unwrap();
+
+		let mut vm =
+			Cosmwasm::cosmwasm_new_vm(&mut shared_vm, origin.clone(), contract_1.clone(), vec![])
+				.unwrap();
+
+		let contract_meta_1 = CosmwasmContractMeta {
+			code_id: 1,
+			admin: Some(CosmwasmAccount::new(origin.clone())),
+			label: "label-1".into(),
+		};
+		let gas = current_gas(&mut vm);
+
+		// 1. Returns the executed contract's data, not the latest one.
+		assert_eq!(vm.running_contract_meta().unwrap(), contract_meta_1);
+
+		// 2. Charges gas properly.
+		assert_eq!(
+			charged_gas(&mut vm, gas),
+			<Test as Config>::WeightInfo::contract_meta().ref_time()
+		);
+
+		let gas = current_gas(&mut vm);
+
+		// 3. `contract_meta` returns the correct data.
+		assert_eq!(
+			vm.contract_meta(CosmwasmAccount::new(contract_2)).unwrap(),
+			CosmwasmContractMeta {
+				code_id: 1,
+				admin: Some(CosmwasmAccount::new(contract_1)),
+				label: "label-2".into()
+			}
+		);
+
+		// 4. `contract_meta` charges gas properly.
+		assert_eq!(
+			charged_gas(&mut vm, gas),
+			<Test as Config>::WeightInfo::contract_meta().ref_time()
+		);
+
+		// 5. `contract_meta` returns `Err` for non-existing contract.
+		assert!(vm.contract_meta(CosmwasmAccount::new(origin)).is_err());
+	})
+}
+
+#[test]
+fn query_contract_info() {
+	new_test_ext().execute_with(|| {
+		let mut shared_vm = create_vm();
+		let origin = create_funded_account("origin");
 		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());
-		let mut vm = Cosmwasm::cosmwasm_new_vm(&mut shared_vm, origin, contract, vec![]).unwrap();
+		let mut vm =
+			Cosmwasm::cosmwasm_new_vm(&mut shared_vm, origin.clone(), contract.clone(), vec![])
+				.unwrap();
+		let contract_info = Cosmwasm::contract_info(&contract).unwrap();
+
+		// 1. Charges gas properly.
+		let gas = current_gas(&mut vm);
+		let contract_info_response =
+			vm.query_contract_info(CosmwasmAccount::new(contract)).unwrap();
+		assert_eq!(
+			charged_gas(&mut vm, gas),
+			<Test as Config>::WeightInfo::query_contract_info().ref_time()
+		);
+
+		let mut expected_response = ContractInfoResponse::default();
+		expected_response.code_id = contract_info.code_id;
+		expected_response.creator = CosmwasmAccount::<Test>::new(origin.clone()).into();
+		expected_response.admin = Some(CosmwasmAccount::<Test>::new(origin).into());
+		// it should be pinned since it is already instantiated
+		expected_response.pinned = true;
+		expected_response.ibc_port = None;
+
+		// 2. Response is correct.
+		assert_eq!(contract_info_response, expected_response);
+
+		// TODO(aeryz): Have a case with ibc capable = true
+	})
+}
+
+#[test]
+fn query_code_info() {
+	new_test_ext().execute_with(|| {
+		let mut shared_vm = create_vm();
+		let origin = create_funded_account("origin");
+		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());
+		let mut vm =
+			Cosmwasm::cosmwasm_new_vm(&mut shared_vm, origin.clone(), contract, vec![]).unwrap();
+
+		// 1. Charges gas properly;
+		let gas = current_gas(&mut vm);
+		let code_info_response = vm.query_code_info(1).unwrap();
+		assert_eq!(
+			charged_gas(&mut vm, gas),
+			<Test as Config>::WeightInfo::query_code_info().ref_time(),
+		);
+
+		let mut expected_response = CodeInfoResponse::default();
+		expected_response.code_id = 1;
+		expected_response.creator = CosmwasmAccount::<Test>::new(origin).into();
+		let CodeInfoOf::<Test> { pristine_code_hash, .. } = CodeIdToInfo::<Test>::get(1).unwrap();
+		expected_response.checksum = pristine_code_hash.as_ref().into();
+
+		// 2. Response is correct.
+		assert_eq!(code_info_response, expected_response);
 	})
 }

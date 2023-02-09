@@ -46,7 +46,6 @@ pub trait WeightInfo {
 	fn balance() -> Weight;
 	fn transfer(n: u32, ) -> Weight;
 	fn set_contract_meta() -> Weight;
-	fn running_contract_meta() -> Weight;
 	fn contract_meta() -> Weight;
 	fn addr_validate() -> Weight;
 	fn addr_canonicalize() -> Weight;
@@ -256,9 +255,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_ref_time(13_892_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
-	}
-	fn running_contract_meta() -> Weight {
-		Weight::from_ref_time(3_340_000 as u64)
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn contract_meta() -> Weight {
@@ -873,9 +869,6 @@ impl WeightInfo for () {
 		Weight::from_ref_time(13_892_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
-	}
-	fn running_contract_meta() -> Weight {
-		Weight::from_ref_time(3_340_000 as u64)
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn contract_meta() -> Weight {

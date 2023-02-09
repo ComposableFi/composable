@@ -503,6 +503,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 			VmGas::AddrCanonicalize => T::WeightInfo::addr_canonicalize().ref_time(),
 			VmGas::AddrHumanize => T::WeightInfo::addr_humanize().ref_time(),
 			VmGas::GetContractMeta => T::WeightInfo::contract_meta().ref_time(),
+			VmGas::SetContractMeta => T::WeightInfo::set_contract_meta().ref_time(),
 			VmGas::Transfer { nb_of_coins } => T::WeightInfo::transfer(nb_of_coins).ref_time(),
 			VmGas::ContinueExecute { nb_of_coins } =>
 				T::WeightInfo::continue_execute(nb_of_coins).ref_time(),

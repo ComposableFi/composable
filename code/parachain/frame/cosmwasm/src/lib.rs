@@ -881,8 +881,6 @@ impl<T: Config> Pallet<T> {
 		let code_hash = sp_io::hashing::sha2_256(&code);
 		ensure!(!CodeHashToId::<T>::contains_key(code_hash), Error::<T>::CodeAlreadyExists);
 		let deposit = code.len().saturating_mul(T::CodeStorageByteDeposit::get() as _);
-		// TODO: release this when the code is destroyed, a.k.a. refcount => 0 after a contract
-		// migration for instance.
 		T::NativeAsset::reserve(who, deposit.saturated_into())
 			.map_err(|_| Error::<T>::NotEnoughFundsForUpload)?;
 		let module = Self::do_load_module(&code)?;
