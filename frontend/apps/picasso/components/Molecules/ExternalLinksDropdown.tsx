@@ -10,7 +10,12 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { MoreHoriz, OpenInNew } from "@mui/icons-material";
+import {
+  GradingTwoTone,
+  MoreHoriz,
+  OpenInNew,
+  Policy,
+} from "@mui/icons-material";
 import Image from "next/image";
 import { Link } from "@/components";
 import config from "@/constants/config";
@@ -189,7 +194,28 @@ export const ExternalLinksDropdown: FC = () => {
             }}
           >
             <Stack direction="row">
+              <ListItemIcon>
+                <GradingTwoTone />
+              </ListItemIcon>
               <ListItemText>Terms of use</ListItemText>
+            </Stack>
+          </Link>
+        </MenuItem>
+        <MenuItem sx={menuItemStyles} disableRipple>
+          <Link
+            href="/privacy-policy"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "100%",
+            }}
+          >
+            <Stack direction="row">
+              <ListItemIcon>
+                <Policy />
+              </ListItemIcon>
+              <ListItemText>Privacy policy</ListItemText>
             </Stack>
           </Link>
         </MenuItem>

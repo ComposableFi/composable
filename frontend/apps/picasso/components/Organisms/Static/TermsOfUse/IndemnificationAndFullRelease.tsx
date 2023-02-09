@@ -9,8 +9,8 @@ export const IndemnificationAndFullRelease = () => (
       liabilities, costs, and expenses arising from: (a) your access and use of
       the Site; (b) your violation of any term or condition of these Terms, the
       right of any third party, or any other applicable law, rule, or
-      regulation; and (c) any other party's access and use of the Site with your
-      assistance or using any device or account that you own or control.
+      regulation; and (c) any other party&apos;s access and use of the Site with
+      your assistance or using any device or account that you own or control.
     </NormalText>
     <NormalText>
       You likewise expressly agree that you assume all risks in connection with
