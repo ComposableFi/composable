@@ -5,12 +5,12 @@ use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 
 /// Semantic abstraction of `Option` for updating storage items in monolithic interfaces where not
-/// all fields need updated.
+/// all fields need to be updated.
 #[derive(Decode, Encode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum UpdateValue<T> {
 	/// Value will **not** be set/updated - will remain the same.
-	DoNotSet,
+	Ignore,
 	/// Value will be set/updated - will be changed.
 	Set(T),
 }
@@ -37,7 +37,7 @@ impl<T> UpdateValue<T> {
 	{
 		match self {
 			UpdateValue::Set(x) => x,
-			UpdateValue::DoNotSet => Default::default(),
+			UpdateValue::Ignore => Default::default(),
 		}
 	}
 }
@@ -46,13 +46,13 @@ impl<T> From<Option<T>> for UpdateValue<T> {
 	fn from(value: Option<T>) -> Self {
 		match value {
 			Some(x) => UpdateValue::Set(x),
-			None => UpdateValue::DoNotSet,
+			None => UpdateValue::Ignore,
 		}
 	}
 }
 
 impl<T> const Default for UpdateValue<T> {
 	fn default() -> Self {
-		Self::DoNotSet
+		Self::Ignore
 	}
 }

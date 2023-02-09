@@ -132,11 +132,11 @@ fn update_asset() {
 		let new_ratio = rational!(100500 / 666);
 
 		let asset_info_update = AssetInfoUpdate {
-			name: UpdateValue::DoNotSet,
-			symbol: UpdateValue::DoNotSet,
+			name: UpdateValue::Ignore,
+			symbol: UpdateValue::Ignore,
 			decimals: UpdateValue::Set(Some(new_decimals)),
 			ratio: UpdateValue::Set(Some(new_ratio)),
-			existential_deposit: UpdateValue::DoNotSet,
+			existential_deposit: UpdateValue::Ignore,
 		};
 
 		assert_ok!(AssetsRegistry::update_asset(
