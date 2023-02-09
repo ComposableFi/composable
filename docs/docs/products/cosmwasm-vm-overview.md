@@ -64,6 +64,7 @@ saving time and reducing the overhead of interacting with a blockchain.
 
 Read our introductory thread for a preview of the [CosmWasm VM smart contract tooling interface].
 
+[Github issues]: https://github.com/ComposableFi/composable/issues
 [CosmWasm-Orchestrate]: https://github.com/ComposableFi/cosmwasm-vm/tree/main/orchestrate
 [Smart Contract Interface]: https://tools.xcvm.dev/
 [CosmWasm VM smart contract interface]: https://twitter.com/ComposableFin/status/1600538100282761216?s=20&t=NkUt9w8mush_wmMpkph7xw
