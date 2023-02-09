@@ -439,7 +439,7 @@ export async function getOrCreateAssetPrice(
       }
     } catch (e) {
       console.log(e);
-      console.info(`Could not get price for asset ${assetId}. Using previous value instead.`);
+      console.info(`Could not get price for asset ${assetId}. Trying with previous value instead.`);
 
       const options = {
         where: {
@@ -458,7 +458,7 @@ export async function getOrCreateAssetPrice(
       if (assetPrice) {
         price = assetPrice.price;
       } else {
-        console.error(`Could not get price for asset ${assetId}.`);
+        console.error(`Could not get price for asset ${assetId}. Ignoring.`);
       }
     }
   }
