@@ -1,6 +1,8 @@
 import { Field, FieldResolver, ObjectType, Query, Resolver, ResolverInterface } from "type-graphql";
 import type { EntityManager } from "typeorm";
+import { DAY_IN_MS } from "./common";
 import { Event, Account, Activity, HistoricalLockedValue } from "../../model";
+import { getOrCreateAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 export class PicassoTVL {
@@ -9,6 +11,13 @@ export class PicassoTVL {
 
   @Field(() => BigInt, { nullable: false })
   amount!: bigint;
+
+  @Field(() => Number, { nullable: true })
+  price?: number;
+
+  constructor(props: PicassoTVL) {
+    Object.assign(this, props);
+  }
 }
 
 @ObjectType()
@@ -49,12 +58,15 @@ export class PicassoOverviewStatsResolver implements ResolverInterface<PicassoOv
 
     const tvlList: PicassoTVL[] = [];
 
-    Object.keys(totalValueLocked).forEach(assetId => {
-      const tvl = new PicassoTVL();
-      tvl.assetId = assetId;
-      tvl.amount = totalValueLocked[assetId];
+    for (const [assetId, amount] of Object.entries(totalValueLocked)) {
+      const price = await getOrCreateAssetPrice(manager, assetId, new Date().getTime());
+      const tvl = new PicassoTVL({
+        assetId,
+        amount,
+        price
+      });
       tvlList.push(tvl);
-    });
+    }
 
     return Promise.resolve(tvlList);
   }
@@ -72,32 +84,23 @@ export class PicassoOverviewStatsResolver implements ResolverInterface<PicassoOv
   async accountHoldersCount(): Promise<number> {
     const manager = await this.tx();
 
-    const accounts: { accounts_count: number }[] = await manager.getRepository(Account).query(
-      `
-        SELECT
-          count(*) as accounts_count
-        FROM account
-        LIMIT 1
-      `
-    );
+    const count = await manager.getRepository(Account).count();
 
-    return Promise.resolve(accounts?.[0]?.accounts_count || 0);
+    return Promise.resolve(count);
   }
 
   @FieldResolver({ name: "activeUsers", defaultValue: 0 })
   async activeUsersCount(): Promise<number> {
     const manager = await this.tx();
 
-    const activeUsers: { active_users_count: number }[] = await manager.getRepository(Activity).query(
-      `
-        SELECT
-          count(distinct account_id) as active_users_count
-        FROM activity
-        WHERE timestamp > current_timestamp - interval '1 day'
-      `
-    );
+    const { count } = await manager
+      .getRepository(Activity)
+      .createQueryBuilder()
+      .select("COUNT(DISTINCT(account_id))", "count")
+      .where(`timestamp > :timestamp`, { timestamp: new Date(new Date().getTime() - DAY_IN_MS) })
+      .getRawOne();
 
-    return Promise.resolve(activeUsers?.[0]?.active_users_count || 0);
+    return Promise.resolve(count || 0);
   }
 
   @Query(() => PicassoOverviewStats)

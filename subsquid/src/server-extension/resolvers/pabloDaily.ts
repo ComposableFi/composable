@@ -13,6 +13,7 @@ import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
 import { PabloFee, PabloPool, PabloSwap, PabloTransaction } from "../../model";
 import { DAY_IN_MS } from "./common";
+import { getOrCreateAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 export class PoolAmount {
@@ -21,6 +22,9 @@ export class PoolAmount {
 
   @Field(() => BigInt, { nullable: false })
   amount!: bigint;
+
+  @Field(() => Number, { nullable: true })
+  price?: number;
 
   constructor(props: PoolAmount) {
     Object.assign(this, props);
@@ -77,13 +81,18 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
       return acc;
     }, {});
 
-    const totalVolumes = Object.keys(swapsMap).map(
-      assetId =>
+    const totalVolumes: Array<PoolAmount> = [];
+
+    for (const assetId of Object.keys(swapsMap)) {
+      const price = await getOrCreateAssetPrice(manager, assetId, new Date().getTime());
+      totalVolumes.push(
         new PoolAmount({
           assetId,
-          amount: swapsMap[assetId]
+          amount: swapsMap[assetId],
+          price
         })
-    );
+      );
+    }
 
     return Promise.resolve(totalVolumes);
   }
@@ -120,13 +129,18 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
       return acc;
     }, {});
 
-    const totalFees = Object.keys(feesMap).map(
-      assetId =>
+    const totalFees: Array<PoolAmount> = [];
+
+    for (const assetId of Object.keys(feesMap)) {
+      const price = await getOrCreateAssetPrice(manager, assetId, new Date().getTime());
+      totalFees.push(
         new PoolAmount({
           assetId,
-          amount: feesMap[assetId]
+          amount: feesMap[assetId],
+          price
         })
-    );
+      );
+    }
 
     return Promise.resolve(totalFees);
   }

@@ -1,6 +1,5 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, Index as Index_, ManyToOne as ManyToOne_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, Index as Index_} from "typeorm"
 import * as marshal from "./marshal"
-import {Asset} from "./asset.model"
 import {Currency} from "./_currency"
 
 @Entity_()
@@ -13,21 +12,14 @@ export class HistoricalAssetPrice {
     id!: string
 
     /**
-     * ID of the event associated with this activity
-     */
-    @Index_()
-    @Column_("text", {nullable: false})
-    eventId!: string
-
-    /**
      * ID of the asset
      */
     @Index_()
-    @ManyToOne_(() => Asset, {nullable: true})
-    asset!: Asset
+    @Column_("text", {nullable: false})
+    assetId!: string
 
-    @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-    price!: bigint
+    @Column_("numeric", {transformer: marshal.floatTransformer, nullable: false})
+    price!: number
 
     @Index_()
     @Column_("timestamp with time zone", {nullable: false})
@@ -35,10 +27,4 @@ export class HistoricalAssetPrice {
 
     @Column_("varchar", {length: 3, nullable: false})
     currency!: Currency
-
-    /**
-     * Last updated block id
-     */
-    @Column_("text", {nullable: false})
-    blockId!: string
 }

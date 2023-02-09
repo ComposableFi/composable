@@ -1,8 +1,9 @@
 import { Field, FieldResolver, ObjectType, Query, Resolver, ResolverInterface } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
-import { Account, PabloPoolAsset, PabloSwap } from "../../model";
+import { PabloPoolAsset, PabloSwap } from "../../model";
 import { DAY_IN_MS } from "./common";
+import { getOrCreateAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 class TVL {
@@ -11,6 +12,9 @@ class TVL {
 
   @Field(() => BigInt, { nullable: false })
   amount!: bigint;
+
+  @Field(() => Number, { nullable: true })
+  price?: number;
 
   constructor(props: TVL) {
     Object.assign(this, props);
@@ -56,13 +60,12 @@ export class PabloOverviewStatsResolver implements ResolverInterface<PabloOvervi
       return acc;
     }, {});
 
-    const tvlList = Object.keys(totalValueLocked).map(
-      assetId =>
-        new TVL({
-          assetId,
-          amount: totalValueLocked[assetId]
-        })
-    );
+    const tvlList: Array<TVL> = [];
+
+    for (const assetId of Object.keys(totalValueLocked)) {
+      const price = await getOrCreateAssetPrice(manager, assetId, new Date().getTime());
+      tvlList.push(new TVL({ assetId, amount: totalValueLocked[assetId], price }));
+    }
 
     return Promise.resolve(tvlList);
   }
@@ -80,32 +83,16 @@ export class PabloOverviewStatsResolver implements ResolverInterface<PabloOvervi
   async averageLockMultiplier(): Promise<number> {
     const manager = await this.tx();
 
-    const averageLockMultiplier: { average_reward_multiplier: number }[] = await manager.getRepository(Account).query(
-      `
-        SELECT
-            avg(reward_multiplier) as average_reward_multiplier
-        FROM staking_position
-        WHERE asset_id = '5'
-      `
-    );
-
-    return Promise.resolve(averageLockMultiplier?.[0]?.average_reward_multiplier || 0);
+    // TODO: implement
+    return Promise.resolve(0);
   }
 
   @FieldResolver({ name: "averageLockTime", defaultValue: 0 })
   async averageLockTime(): Promise<number> {
     const manager = await this.tx();
 
-    const averageDuration: { average_duration: number }[] = await manager.getRepository(Account).query(
-      `
-        SELECT
-            avg(duration) as average_duration
-        FROM staking_position
-        WHERE asset_id = '5'
-      `
-    );
-
-    return Promise.resolve(averageDuration?.[0]?.average_duration || 0);
+    // TODO: implement
+    return Promise.resolve(0);
   }
 
   @FieldResolver({ name: "dailyVolume" })
@@ -123,13 +110,12 @@ export class PabloOverviewStatsResolver implements ResolverInterface<PabloOvervi
       return acc;
     }, {});
 
-    const tvlList = Object.keys(volumes).map(
-      assetId =>
-        new TVL({
-          assetId,
-          amount: volumes[assetId]
-        })
-    );
+    const tvlList: Array<TVL> = [];
+
+    for (const assetId of Object.keys(volumes)) {
+      const price = await getOrCreateAssetPrice(manager, assetId, new Date().getTime());
+      tvlList.push(new TVL({ assetId, amount: volumes[assetId], price }));
+    }
 
     return Promise.resolve(tvlList);
   }
