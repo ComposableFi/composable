@@ -3,7 +3,10 @@ import { StakeInputLabel } from "@/components/Organisms/Staking/StakeInputLabel"
 import { AlertBox, BigNumberInput } from "@/components";
 import { LockPeriodInput } from "@/components/Organisms/Staking/LockPeriodInput";
 import { FutureDatePaper } from "@/components/Atom/FutureDatePaper";
-import { WarningAmberRounded } from "@mui/icons-material";
+import { InfoOutlined } from "@mui/icons-material";
+import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
+import { formatDate } from "shared";
+import { useMemo } from "react";
 
 type StakeFormProps = {
   amount: any;
@@ -77,15 +80,7 @@ export function StakeForm({
       <Typography variant="body2">Unlock date</Typography>
       <FutureDatePaper duration={duration} />
       {shouldShowWarning && (
-        <AlertBox
-          status="warning"
-          icon={<WarningAmberRounded color="warning" />}
-        >
-          <Typography variant="body2">Warning</Typography>
-          <Typography variant="inputLabel" color="text.secondary">
-            Your {pica.symbol} will be locked until the expiry date.
-          </Typography>
-        </AlertBox>
+        <PICALockedWarning duration={duration} token={pica} />
       )}
       <Button
         fullWidth
@@ -99,3 +94,31 @@ export function StakeForm({
     </Stack>
   );
 }
+
+const PICALockedWarning = ({
+  token,
+  duration,
+}: {
+  token: TokenMetadata;
+  duration: string;
+}) => {
+  const { date, days } = useMemo(() => {
+    const now = new Date();
+    const date = new Date(now.getTime() + Number(duration) * 1000);
+    const formatted = formatDate(date);
+    const days = (date.getTime() - new Date().getTime()) / 86400_000;
+    return {
+      days,
+      date: formatted,
+    };
+  }, [duration]);
+
+  return (
+    <AlertBox status="info" icon={<InfoOutlined color="info" />}>
+      <Typography variant="body2">You are locking ${token.symbol}</Typography>
+      <Typography variant="inputLabel" color="text.secondary">
+        Your ${token.symbol} will be locked for {days} days until {date}
+      </Typography>
+    </AlertBox>
+  );
+};
