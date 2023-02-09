@@ -3,6 +3,7 @@ import type { EntityManager } from "typeorm";
 import { LessThan, MoreThan, And } from "typeorm";
 import { PabloSwap } from "../../model";
 import { DAY_IN_MS, getVolumeRange } from "./common";
+import { getOrCreateAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 class AssetIdAmount {
@@ -11,6 +12,9 @@ class AssetIdAmount {
 
   @Field(() => BigInt, { nullable: false })
   amount!: bigint;
+
+  @Field(() => Number, { nullable: true })
+  price?: number;
 
   constructor(props: AssetIdAmount) {
     Object.assign(this, props);
@@ -77,13 +81,19 @@ export class PabloTotalVolumeResolver {
         return acc;
       }, {});
 
-      volumes[time] = Object.keys(currVolumes).map(
-        assetId =>
+      volumes[time] = [];
+
+      for (const assetId of Object.keys(currVolumes)) {
+        const price = await getOrCreateAssetPrice(manager, assetId, timestamp.getTime());
+
+        volumes[time].push(
           new AssetIdAmount({
-            assetId,
-            amount: currVolumes[assetId]
+            assetId: assetId.toString(),
+            amount: currVolumes[assetId.toString()],
+            price
           })
-      );
+        );
+      }
     }
 
     return Object.keys(volumes).map(date => {
