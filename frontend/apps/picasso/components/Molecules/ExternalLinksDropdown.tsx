@@ -10,7 +10,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { MoreHoriz, OpenInNew } from "@mui/icons-material";
+import { FeedbackTwoTone, MoreHoriz, OpenInNew } from "@mui/icons-material";
 import Image from "next/image";
 import { Link } from "@/components";
 import config from "@/constants/config";
@@ -71,6 +71,24 @@ export const ExternalLinksDropdown: FC = () => {
           },
         }}
       >
+        <MenuItem sx={menuItemStyles} disableRipple>
+          <Link
+            href="/feedback"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "100%",
+            }}
+          >
+            <Box display="flex">
+              <ListItemIcon>
+                <FeedbackTwoTone />
+              </ListItemIcon>
+              <ListItemText>Give us Feedback</ListItemText>
+            </Box>
+          </Link>
+        </MenuItem>
         <MenuItem sx={menuItemStyles} disableRipple>
           <Link
             href={config.governanceUrl}
