@@ -18,6 +18,7 @@ use composable_traits::{
 };
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
+use sp_runtime::traits::Zero;
 use sp_std::prelude::*;
 
 benchmarks! {
@@ -35,7 +36,7 @@ benchmarks! {
 			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
 			symbol: Some(BiBoundedAssetSymbol::from_vec(b"KSM".to_vec()).expect("String is within bounds")),
 			decimals: Some(3),
-			existential_deposit: T::Balance::from(0),
+			existential_deposit: T::Balance::zero(),
 			ratio: Some(rational!(42 / 123)),
 		};
 	}: _(RawOrigin::Root, location, asset_info)
@@ -48,7 +49,7 @@ benchmarks! {
 			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
 			symbol: Some(BiBoundedAssetSymbol::from_vec(b"KSM".to_vec()).expect("String is within bounds")),
 			decimals: Some(3),
-			existential_deposit: T::Balance::from(0),
+			existential_deposit: T::Balance::zero(),
 			ratio: Some(rational!(42 / 123)),
 		};
 
@@ -71,7 +72,7 @@ benchmarks! {
 			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
 			symbol: Some(BiBoundedAssetSymbol::from_vec(b"KSM".to_vec()).expect("String is within bounds")),
 			decimals: Some(3),
-			existential_deposit: T::Balance::from(0),
+			existential_deposit: T::Balance::zero(),
 			ratio: Some(rational!(42 / 123)),
 		};
 
@@ -86,7 +87,7 @@ benchmarks! {
 			name: UpdateValue::Set(Some(BiBoundedAssetName::from_vec(b"Cooler Kusama".to_vec()).expect("String is within bounds"))),
 			symbol: UpdateValue::Set(Some(BiBoundedAssetSymbol::from_vec(b"CKSM".to_vec()).expect("String is within bounds"))),
 			decimals: UpdateValue::Set(Some(12)),
-			existential_deposit: UpdateValue::Set(T::Balance::from(0)),
+			existential_deposit: UpdateValue::Set(T::Balance::zero()),
 			ratio: UpdateValue::Set(None),
 		};
 
