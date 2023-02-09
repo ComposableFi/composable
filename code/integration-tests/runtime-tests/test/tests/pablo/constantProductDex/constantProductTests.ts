@@ -114,7 +114,6 @@ async function verifyBuySwapOperation(
       BigNumber(5),
       BigNumber(5)
     );
-
     expect(resultBaseAmount).to.be.bignumber.equal(
       new BN(expectedAmount.toFixed(0, 1)) // Sub fee?
     );
@@ -177,6 +176,9 @@ describe("[SHORT] Pablo: Constant Product Test Suite", function () {
     walletLpProvider2 = devWalletFerdie.derive("/test/pablo/lp/provider/2");
     walletLpProvider3 = devWalletFerdie.derive("/test/pablo/lp/provider/3");
     walletTrader1 = devWalletFerdie.derive("/test/pablo/trader/1");
+
+    // hardCodedPool1.poolWalletAddress = (await api.query.pablo.pools(0)).unwrap().asDualAssetConstantProduct.owner.toString();
+    // hardCodedPool1.poolWalletAddress = (await api.query.pablo.pools(1)).unwrap().asDualAssetConstantProduct.owner.toString();
   });
 
   before("Minting assets", async function () {
@@ -411,7 +413,6 @@ describe("[SHORT] Pablo: Constant Product Test Suite", function () {
         hardCodedPool1.poolWalletAddress,
         hardCodedPool1.quoteAssetId
       );
-
       expect(baseAssetFundsCurrentlyInPoolsAfter.free).to.be.bignumber.equal(
         baseAssetFundsCurrentlyInPoolsBefore.free.add(new BN(ksmAmount.toString()))
       );
@@ -1139,6 +1140,7 @@ describe("[SHORT] Pablo: Constant Product Test Suite", function () {
       );
       expect(resultWho.toString()).to.be.equal(api.createType("AccountId32", walletLpProvider2.publicKey).toString());
       expect(resultPoolId).to.be.bignumber.equal(new BN(hardCodedPool1.poolId));
+      debugger;
       // @ts-ignore
       expect(resultAssetsAmount.toPrimitive()[4]).to.be.equal(expectedAmountReturnedFunds["assets"].toPrimitive()[4]);
       // @ts-ignore
@@ -1189,6 +1191,7 @@ describe("[SHORT] Pablo: Constant Product Test Suite", function () {
       );
       expect(resultWho.toString()).to.be.equal(api.createType("AccountId32", walletLpProvider1.publicKey).toString());
       expect(resultPoolId).to.be.bignumber.equal(new BN(hardCodedPool1.poolId));
+      debugger;
       // @ts-ignore
       expect(expectedReturnAmount["assets"].toPrimitive()[4]).to.be.equal(resultAssetsAmount.toPrimitive()[4]);
       // @ts-ignore
@@ -1255,6 +1258,7 @@ describe("[SHORT] Pablo: Constant Product Test Suite", function () {
       // ToDo
       expect(resultWho.toString()).to.be.equal(api.createType("AccountId32", walletLpProvider1.publicKey).toString());
       expect(resultPoolId).to.be.bignumber.equal(new BN(hardCodedPool1.poolId.toString()));
+      debugger;
       // @ts-ignore
       expect(expectedReturnAmount["assets"].toPrimitive()[4]).to.be.equal(resultAssetsAmount.toPrimitive()[4]);
       // @ts-ignore
