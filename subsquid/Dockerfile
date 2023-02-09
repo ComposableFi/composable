@@ -31,4 +31,4 @@ COPY --from=builder /squid/dbInit.sql dbInit.sql
 COPY scripts scripts
 COPY schema.graphql .
 
-ENTRYPOINT ["sh", "/squid/scripts/init.sh"]
+ENTRYPOINT ["/squid/scripts/init.sh"]
