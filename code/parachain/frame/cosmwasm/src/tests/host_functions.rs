@@ -13,13 +13,14 @@ use crate::{
 };
 use alloc::collections::BTreeSet;
 use cosmwasm_vm::{
-	cosmwasm_std::{CodeInfoResponse, ContractInfoResponse, Order},
+	cosmwasm_std::{CodeInfoResponse, Coin, ContractInfoResponse, Order},
 	system::CosmwasmContractMeta,
 	vm::VMBase,
 };
 use cosmwasm_vm_wasmi::{code_gen, OwnedWasmiVM};
 use frame_benchmarking::account;
-use frame_support::traits::fungible;
+use frame_support::traits::{fungible, fungibles::Mutate};
+use primitives::currency::CurrencyId;
 use sp_runtime::AccountId32;
 
 fn initialize() {
@@ -37,6 +38,28 @@ fn create_vm() -> CosmwasmVMShared {
 		gas: Gas::new(64, u64::MAX),
 		cache: CosmwasmVMCache { code: Default::default() },
 	}
+}
+
+fn create_coins(accounts: Vec<&AccountId32>) -> Vec<Coin> {
+	let mut funds: Vec<Coin> = Vec::new();
+	let assets = CurrencyId::list_assets();
+	for asset in assets {
+		let currency_id = asset.id;
+		// We need to fund all accounts first
+		for account in &accounts {
+			<pallet_assets::Pallet<Test> as Mutate<AccountId32>>::mint_into(
+				currency_id.into(),
+				account,
+				10_000_000_000_000_000_000u128.into(),
+			)
+			.unwrap();
+		}
+		funds.push(Cosmwasm::native_asset_to_cosmwasm_asset(
+			currency_id.into(),
+			10_000_000_000_000_000_000u128.into(),
+		));
+	}
+	funds
 }
 
 fn create_funded_account(key: &'static str) -> AccountId32 {
@@ -511,5 +534,82 @@ fn query_code_info() {
 
 		// 2. Response is correct.
 		assert_eq!(code_info_response, expected_response);
+	})
+}
+
+#[test]
+fn transfer_balance_supply() {
+	new_test_ext().execute_with(|| {
+		let mut shared_vm = create_vm();
+		let origin = create_funded_account("origin");
+		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());
+		let mut vm =
+			Cosmwasm::cosmwasm_new_vm(&mut shared_vm, origin, contract.clone(), vec![]).unwrap();
+
+		let account_for_supply = account::<AccountId32>("supply", 0, 0xAAAAAAAA);
+		let mut coins = create_coins(vec![&contract, &account_for_supply]);
+
+		let initial_balances = [coins[0].amount, coins[1].amount, coins[2].amount];
+
+		coins[0].amount = 929392_u128.into();
+		coins[1].amount = 243242_u128.into();
+		coins[2].amount = 123242232327_u128.into();
+
+		let destination_account =
+			CosmwasmAccount::new(account::<AccountId32>("dest", 0, 0xDEADBEEF));
+		let contract = CosmwasmAccount::new(contract);
+
+		// 1. Charges gas properly.
+		let gas = current_gas(&mut vm);
+		vm.transfer(&destination_account, &coins[0..2]).unwrap();
+		assert_eq!(charged_gas(&mut vm, gas), <Test as Config>::WeightInfo::transfer(2).ref_time(),);
+
+		// 2. Charges gas properly
+		let gas = current_gas(&mut vm);
+		vm.transfer_from(&contract, &destination_account, &coins[2..3]).unwrap();
+		assert_eq!(charged_gas(&mut vm, gas), <Test as Config>::WeightInfo::transfer(1).ref_time(),);
+
+		// 3. Balances are deducted from the contract and balance works.
+		let gas = current_gas(&mut vm);
+		for (index, initial_balance) in initial_balances.iter().enumerate() {
+			assert_eq!(
+				vm.balance(&contract, coins[index].denom.clone()).unwrap(),
+				Coin {
+					denom: coins[index].denom.clone(),
+					amount: *initial_balance - coins[index].amount
+				},
+			);
+		}
+
+		// 4. Charges gas properly.
+		assert_eq!(
+			charged_gas(&mut vm, gas),
+			initial_balances.len() as u64 * <Test as Config>::WeightInfo::balance().ref_time(),
+		);
+
+		// 5. Balances are added to the destination account.
+		for coin in &coins[0..initial_balances.len()] {
+			assert_eq!(vm.balance(&destination_account, coin.denom.clone()).unwrap(), *coin);
+		}
+
+		// 6. Zero balance does not return error but returns zero.
+		assert_eq!(
+			vm.balance(&destination_account, coins[initial_balances.len() + 1].denom.clone())
+				.unwrap(),
+			Coin { denom: coins[initial_balances.len() + 1].denom.clone(), amount: 0_u128.into() }
+		);
+
+		// 7. Supply is correct.
+		assert_eq!(
+			vm.supply(coins[1].denom.clone()).unwrap(),
+			Coin {
+				denom: coins[1].denom.clone(),
+				amount: initial_balances[1].checked_mul(2_u128.into()).unwrap()
+			}
+		);
+
+		// 8. Transfer more than the balance fails.
+		coins[0].amount = initial_balances[0].checked_add(10000_u128.into()).unwrap();
+		assert!(vm.transfer(&destination_account, &coins[0..1]).is_err())
 	})
 }
