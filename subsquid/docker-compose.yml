@@ -82,6 +82,7 @@ services:
       GQL_PORT: 4350
       SUBSQUID_ARCHIVE_URI: "https://subsquid-archive.composablenodes.tech/graphql"
       RELAYCHAIN_URI: "wss://picasso-rpc-lb.composablenodes.tech"
+      START_BLOCK: "1270000" # https://picasso.subscan.io/extrinsic/0xc875c8916e23c119f1d4202914dd0f28304aff62e46b0d51fed9b34e0aa30d9c
   #      RELAYCHAIN_URI: "ws://host.docker.internal:9988"
 
   graphql-server:

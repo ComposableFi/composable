@@ -148,34 +148,17 @@ type Activity @entity {
   blockId: String!
 }
 
-type Asset @entity {
-  "ID of the asset"
-  id: ID!
-  "ID of the event that added the last price"
-  eventId: String! @index
-  "Latest price in USD"
-  price: BigInt!
-  decimals: Int
-  historicalPrices: [HistoricalAssetPrice!] @derivedFrom(field: "asset")
-  "Last updated block id"
-  blockId: String!
-}
-
 enum Currency {
   USD
 }
 
 type HistoricalAssetPrice @entity {
   id: ID!
-  "ID of the event associated with this activity"
-  eventId: String! @index
   "ID of the asset"
-  asset: Asset!
-  price: BigInt!
+  assetId: String! @index
+  price: Float!
   timestamp: DateTime! @index
   currency: Currency!
-  "Last updated block id"
-  blockId: String!
 }
 
 type RewardPool @entity {

@@ -559,7 +559,7 @@ version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9dbcf61bed07d554bd5c225cd07bc41b793eab63e79c6f0ceac7e1aed2f1c670"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.4.0",
  "proc-macro2 1.0.50",
  "quote 1.0.23",
  "syn 1.0.107",
@@ -1069,9 +1069,9 @@ checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
 
 [[package]]
 name = "bytes"
-version = "1.4.0"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89b2fd2a0dcf38d7971e2194b6b6eebab45ae01067456a7fd93d5547a61b70be"
+checksum = "dfb24e866b15a1af2a1b663f10c6b6b8f397a84aadb828f12e5b289ec23a3a3c"
 dependencies = [
  "serde",
 ]
@@ -1317,7 +1317,7 @@ version = "3.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea0c8bce528c4be4da13ea6fead8965e95b6073585a2f05204bd8f4119f82a65"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.4.0",
  "proc-macro-error",
  "proc-macro2 1.0.50",
  "quote 1.0.23",
@@ -1330,7 +1330,7 @@ version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "684a277d672e91966334af371f1a7b5833f9aa00b07c84e92fbce95e00208ce8"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.4.0",
  "proc-macro-error",
  "proc-macro2 1.0.50",
  "quote 1.0.23",
@@ -1539,7 +1539,7 @@ dependencies = [
  "once_cell",
  "pablo-rpc",
  "pablo-runtime-api",
- "pallet-assets",
+ "pallet-assets 1.0.0",
  "pallet-crowdloan-rewards",
  "pallet-ibc",
  "pallet-transaction-payment-rpc 4.0.0-dev",
@@ -1624,7 +1624,7 @@ dependencies = [
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
- "pallet-assets",
+ "pallet-assets 1.0.0",
  "pallet-assets-registry",
  "pallet-aura",
  "pallet-authorship",
@@ -2847,7 +2847,8 @@ dependencies = [
  "orml-xcm-support",
  "orml-xtokens",
  "pablo-runtime-api",
- "pallet-asset-tx-payment",
+ "pallet-asset-tx-payment 4.0.0-dev",
+ "pallet-assets 1.0.0",
  "pallet-assets-registry",
  "pallet-assets-transactor-router",
  "pallet-aura",
@@ -3254,7 +3255,7 @@ version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c9720bba047d567ffc8a3cba48bf19126600e249ab7f128e9233e6376976a116"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.4.0",
  "proc-macro2 1.0.50",
  "quote 1.0.23",
  "syn 1.0.107",
@@ -4345,9 +4346,9 @@ dependencies = [
 
 [[package]]
 name = "heck"
-version = "0.4.1"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
+checksum = "2540771e65fc8cb83cd6e8a237f70c319bd5c29f78ed1084ba5d50eeac86f7f9"
 
 [[package]]
 name = "hermit-abi"
@@ -5776,7 +5777,7 @@ version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a0eddc4497a8b5a506013c40e8189864f9c3a00db2b25671f428ae9007f3ba32"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.4.0",
  "quote 1.0.23",
  "syn 1.0.107",
 ]
@@ -5996,6 +5997,99 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c50092e40e0ccd1bf2015a10333fde0502ff95b832b0895dc1ca0d7ac6c52f6"
 dependencies = [
  "paste 0.1.18",
+]
+
+[[package]]
+name = "local-integration-tests"
+version = "0.1.0"
+dependencies = [
+ "base58",
+ "common",
+ "composable-tests-helpers",
+ "composable-traits",
+ "cumulus-pallet-aura-ext",
+ "cumulus-pallet-dmp-queue",
+ "cumulus-pallet-parachain-system",
+ "cumulus-pallet-session-benchmarking",
+ "cumulus-pallet-xcm",
+ "cumulus-pallet-xcmp-queue",
+ "cumulus-primitives-core",
+ "cumulus-primitives-timestamp",
+ "cumulus-primitives-utility",
+ "dali-runtime",
+ "env_logger 0.10.0",
+ "frame-benchmarking",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "frame-system-benchmarking",
+ "frame-system-rpc-runtime-api",
+ "hex",
+ "hex-literal",
+ "kusama-runtime",
+ "more-asserts",
+ "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "orml-unknown-tokens",
+ "orml-xtokens",
+ "pallet-assets 1.0.0",
+ "pallet-assets 4.0.0-dev",
+ "pallet-assets-registry",
+ "pallet-aura",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-call-filter",
+ "pallet-collator-selection",
+ "pallet-collective",
+ "pallet-currency-factory",
+ "pallet-democracy",
+ "pallet-governance-registry",
+ "pallet-indices",
+ "pallet-liquidations",
+ "pallet-membership",
+ "pallet-oracle",
+ "pallet-randomness-collective-flip",
+ "pallet-scheduler",
+ "pallet-session",
+ "pallet-sudo",
+ "pallet-timestamp",
+ "pallet-transaction-payment 4.0.0-dev",
+ "pallet-treasury",
+ "pallet-utility",
+ "pallet-vault",
+ "pallet-xcm",
+ "parachain-info",
+ "parachains-common",
+ "parity-scale-codec",
+ "paste 1.0.11",
+ "picasso-runtime",
+ "polkadot-core-primitives",
+ "polkadot-parachain",
+ "polkadot-primitives",
+ "polkadot-runtime",
+ "polkadot-runtime-parachains",
+ "primitives",
+ "rococo-runtime",
+ "scale-info",
+ "smallvec",
+ "sp-api",
+ "sp-block-builder",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-keyring",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
+ "sp-transaction-pool",
+ "sp-version",
+ "xcm",
+ "xcm-builder",
+ "xcm-emulator",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -6258,6 +6352,12 @@ dependencies = [
  "quote 1.0.23",
  "syn 1.0.107",
 ]
+
+[[package]]
+name = "more-asserts"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fafa6961cabd9c63bcd77a45d7e3b7f3b552b70417831fb0f56db717e72407e"
 
 [[package]]
 name = "multiaddr"
@@ -6926,6 +7026,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-asset-tx-payment"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.33#2dff067e9f7f6f3cc4dbfdaaa97753eccc407689"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
+]
+
+[[package]]
 name = "pallet-assets"
 version = "1.0.0"
 dependencies = [
@@ -6948,6 +7065,20 @@ dependencies = [
  "sp-arithmetic",
  "sp-core",
  "sp-io",
+ "sp-runtime",
+ "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
+]
+
+[[package]]
+name = "pallet-assets"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.33#2dff067e9f7f6f3cc4dbfdaaa97753eccc407689"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime",
  "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
 ]
@@ -7302,8 +7433,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
- "pallet-assets-registry",
- "pallet-assets-transactor-router",
+ "pallet-assets 1.0.0",
  "pallet-balances",
  "pallet-governance-registry",
  "pallet-ibc",
@@ -7439,7 +7569,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
- "pallet-assets",
+ "pallet-assets 1.0.0",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-timestamp",
@@ -7743,7 +7873,7 @@ dependencies = [
  "once_cell",
  "orml-tokens",
  "orml-traits",
- "pallet-assets",
+ "pallet-assets 1.0.0",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-dutch-auction",
@@ -7784,8 +7914,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
- "pallet-assets-registry",
- "pallet-assets-transactor-router",
+ "pallet-assets 1.0.0",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-dutch-auction",
@@ -8280,9 +8409,7 @@ dependencies = [
  "log",
  "orml-tokens",
  "orml-traits",
- "pallet-assets",
- "pallet-assets-registry",
- "pallet-assets-transactor-router",
+ "pallet-assets 1.0.0",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-fnft",
@@ -8613,6 +8740,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "parachains-common"
+version = "1.0.0"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.33#27721d794ee63aae42317a7eeda21595dd3200d9"
+dependencies = [
+ "cumulus-primitives-utility",
+ "frame-support",
+ "frame-system",
+ "pallet-asset-tx-payment 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.33)",
+ "pallet-assets 4.0.0-dev",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-collator-selection",
+ "parity-scale-codec",
+ "polkadot-primitives",
+ "scale-info",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
+ "substrate-wasm-builder",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
 name = "parity-db"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8920,8 +9073,8 @@ dependencies = [
  "orml-xcm-support",
  "orml-xtokens",
  "pablo-runtime-api",
- "pallet-asset-tx-payment",
- "pallet-assets",
+ "pallet-asset-tx-payment 4.0.0-dev",
+ "pallet-assets 1.0.0",
  "pallet-assets-registry",
  "pallet-aura",
  "pallet-authorship",
@@ -10537,7 +10690,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3f8ad728fb08fe212df3c05169e940fbb6d9d16a877ddde14644a983ba2012e"
 dependencies = [
  "bytes",
- "heck 0.4.1",
+ "heck 0.4.0",
  "itertools",
  "lazy_static",
  "log",
@@ -13039,9 +13192,9 @@ checksum = "5e9f0ab6ef7eb7353d9119c170a436d1bf248eea575ac42d19d12f4e34130831"
 
 [[package]]
 name = "snow"
-version = "0.9.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12ba5f4d4ff12bdb6a169ed51b7c48c0e0ac4b0b4b31012b2571e97d78d3201d"
+checksum = "774d05a3edae07ce6d68ea6984f3c05e9bba8927e3dd591e3b479e5b03213d0d"
 dependencies = [
  "aes-gcm 0.9.4",
  "blake2",
@@ -14084,7 +14237,7 @@ version = "0.24.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e385be0d24f186b4ce2f9982191e7101bb737312ad61c1f2f984f34bcf85d59"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.4.0",
  "proc-macro2 1.0.50",
  "quote 1.0.23",
  "rustversion",
@@ -14251,9 +14404,9 @@ dependencies = [
 
 [[package]]
 name = "sync_wrapper"
-version = "0.1.2"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2047c6ded9c721764247e62cd3b03c09ffc529b2ba5b10ec482ae507a4a70160"
+checksum = "20518fe4a4c9acf048008599e464deb21beeae3d3578418951a189c235a7a9a8"
 
 [[package]]
 name = "synstructure"
@@ -15045,9 +15198,9 @@ dependencies = [
 
 [[package]]
 name = "unicode-segmentation"
-version = "1.10.1"
+version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1dd624098567895118886609431a7c3b8f516e41d30e0643f03d94592a147e36"
+checksum = "0fdbf052a0783de01e944a6ce7a8cb939e295b1e7be835a1112c3b9a7f047a5a"
 
 [[package]]
 name = "unicode-width"
@@ -16051,6 +16204,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "xcm-emulator"
+version = "0.1.0"
+source = "git+https://github.com/shaunxw/xcm-simulator?rev=c62dbf8e247c03d9797dbf3f1886f74973f2b22a#c62dbf8e247c03d9797dbf3f1886f74973f2b22a"
+dependencies = [
+ "cumulus-pallet-dmp-queue",
+ "cumulus-pallet-parachain-system",
+ "cumulus-pallet-xcmp-queue",
+ "cumulus-primitives-core",
+ "cumulus-primitives-parachain-inherent",
+ "cumulus-test-relay-sproof-builder",
+ "frame-support",
+ "frame-system",
+ "parachain-info",
+ "parity-scale-codec",
+ "paste 1.0.11",
+ "polkadot-primitives",
+ "polkadot-runtime-parachains",
+ "quote 1.0.23",
+ "sp-arithmetic",
+ "sp-io",
+ "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
 name = "xcm-executor"
 version = "0.9.33"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.33#c7d6c21242fc654f6f069e12c00951484dff334d"
@@ -16147,9 +16326,9 @@ dependencies = [
 
 [[package]]
 name = "zstd-sys"
-version = "2.0.6+zstd.1.5.2"
+version = "2.0.5+zstd.1.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68a3f9792c0c3dc6c165840a75f47ae1f4da402c2d006881129579f6597e801b"
+checksum = "edc50ffce891ad571e9f9afe5039c4837bede781ac4bb13052ed7ae695518596"
 dependencies = [
  "cc",
  "libc",

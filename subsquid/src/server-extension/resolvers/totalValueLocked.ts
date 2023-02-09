@@ -4,6 +4,7 @@ import { LessThan } from "typeorm";
 import { HistoricalLockedValue, LockedSource } from "../../model";
 import { getRange } from "./common";
 import { PicassoTVL } from "./picassoOverviewStats";
+import { getOrCreateAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 export class TotalValueLocked {
@@ -95,16 +96,24 @@ export class TotalValueLockedResolver {
       }
     }
 
-    return Object.keys(lockedValues).map(date => {
-      const tvl: PicassoTVL[] = [];
-      for (const assetId in lockedValues[date]) {
-        tvl.push({ assetId, amount: lockedValues[date][assetId] });
-      }
+    const totalValueLocked: TotalValueLocked[] = [];
 
-      return new TotalValueLocked({
-        date,
+    for (const time of Object.keys(lockedValues)) {
+      const tvl: PicassoTVL[] = [];
+      for (const assetId of Object.keys(lockedValues[time])) {
+        const price = await getOrCreateAssetPrice(manager, assetId, new Date(time).getTime());
+        tvl.push({
+          assetId,
+          amount: lockedValues[time][assetId],
+          price
+        });
+      }
+      totalValueLocked.push({
+        date: time,
         lockedValues: tvl
       });
-    });
+    }
+
+    return totalValueLocked;
   }
 }
