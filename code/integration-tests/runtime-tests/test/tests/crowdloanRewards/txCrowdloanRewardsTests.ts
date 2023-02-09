@@ -12,7 +12,7 @@ import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 import { sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import BN from "bn.js";
-import { Wallet } from "ethers";
+import { HDNodeWallet, Wallet } from "ethers";
 import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 
 const AMOUNT_CONTRIBUTOR_WALLETS = 11;
@@ -30,7 +30,7 @@ describe("[SHORT] CrowdloanRewards Tests", function () {
   let contributorsRewardAmount: BN;
 
   let contributorRewardWallets: KeyringPair[];
-  let ethContributorWallets: Wallet[];
+  let ethContributorWallets: HDNodeWallet[];
   let notContributor: KeyringPair;
 
   before("Setting up tests", async function () {
@@ -267,15 +267,7 @@ describe("[SHORT] CrowdloanRewards Tests", function () {
     );
 
     // Verification
-    await TxCrowdloanRewardsTests.verifyEthAssociation(
-      api,
-      resultRemoteAccount,
-      resultRewardAccount,
-      wallet,
-      TEST_WALLET_PICA_REWARD_AMOUNT,
-      INITIAL_ASSOCIATE_CLAIM_PERCENT,
-      ethWallet
-    );
+    await TxCrowdloanRewardsTests.verifyEthAssociation(api, resultRemoteAccount, resultRewardAccount, wallet, TEST_WALLET_PICA_REWARD_AMOUNT, INITIAL_ASSOCIATE_CLAIM_PERCENT, ethWallet);
   });
 
   it("1.10  When claiming after transferring all initial funds from the account (#1.11), the newly claimed balance will be locked.", async function () {
@@ -399,15 +391,7 @@ describe("[SHORT] CrowdloanRewards Tests", function () {
     );
 
     // Verification
-    await TxCrowdloanRewardsTests.verifyEthAssociation(
-      api,
-      resultRemoteAccount,
-      resultRewardAccount,
-      wallet,
-      TEST_WALLET_PICA_REWARD_AMOUNT,
-      INITIAL_ASSOCIATE_CLAIM_PERCENT,
-      ethWallet
-    );
+    await TxCrowdloanRewardsTests.verifyEthAssociation(api, resultRemoteAccount, resultRewardAccount, wallet, TEST_WALLET_PICA_REWARD_AMOUNT, INITIAL_ASSOCIATE_CLAIM_PERCENT, ethWallet);
     // One test claim for good measurement.
     const {
       data: [result]

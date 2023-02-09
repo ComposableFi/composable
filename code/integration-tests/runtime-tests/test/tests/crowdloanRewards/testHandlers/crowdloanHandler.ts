@@ -8,7 +8,7 @@ import { expect } from "chai";
 import { ApiPromise } from "@polkadot/api";
 import BN from "bn.js";
 import { AccountId32 } from "@polkadot/types/interfaces";
-import { ethers, Wallet } from "ethers";
+import { ethers, HDNodeWallet, Wallet } from "ethers";
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -81,7 +81,7 @@ export class TxCrowdloanRewardsTests {
     api: ApiPromise,
     sudoKey: KeyringPair,
     testWallets: KeyringPair[],
-    ethContributors: Wallet[],
+    ethContributors: HDNodeWallet[],
     testWalletShareAmountPICA: BN,
     vestingPeriod: number | bigint | BN,
     shortVestingTimeWalletIndices: number[] | undefined = undefined
@@ -246,7 +246,7 @@ export class TxCrowdloanRewardsTests {
     rewardAccount: KeyringPair,
     testWalletRewardSum: BN,
     initialAssociateClaimPercent: number,
-    ethContributorWallet: Wallet
+    ethContributorWallet: HDNodeWallet
   ) {
     const remoteAccountObject = api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
       Ethereum: ethContributorWallet.address
