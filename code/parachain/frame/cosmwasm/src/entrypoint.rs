@@ -22,12 +22,11 @@ pub(crate) fn setup_instantiate_call<T: Config>(
 	salt: &[u8],
 	admin: Option<AccountIdOf<T>>,
 	label: ContractLabelOf<T>,
-	message: &[u8],
 ) -> Result<DispatchableCall<InstantiateCall, AccountIdOf<T>, T>, Error<T>> {
 	let code_hash = CodeIdToInfo::<T>::get(code_id)
 		.ok_or(Error::<T>::CodeNotFound)?
 		.pristine_code_hash;
-	let contract = Pallet::<T>::derive_contract_address(&instantiator, salt, &code_hash, message)?;
+	let contract = Pallet::<T>::derive_contract_address(&instantiator, salt, &code_hash, b"")?;
 	// Make sure that contract address does not already exist
 	ensure!(Pallet::<T>::contract_exists(&contract).is_err(), Error::<T>::ContractAlreadyExists);
 	let nonce = CurrentNonce::<T>::increment().map_err(|_| Error::<T>::NonceOverflow)?;
@@ -41,6 +40,7 @@ pub(crate) fn setup_instantiate_call<T: Config>(
 			code_info.refcount.checked_add(1).ok_or(Error::<T>::RefcountOverflow)?;
 		Ok(())
 	})?;
+	log::debug!(target: "runtime::contracts", "ADDRESS: {:?}", contract);
 	Pallet::<T>::deposit_event(Event::<T>::Instantiated {
 		contract: contract.clone(),
 		info: contract_info,

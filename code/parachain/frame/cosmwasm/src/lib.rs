@@ -581,7 +581,7 @@ pub fn instantiate<T: Config>(
 		.try_into()
 		.map_err(|_| CosmwasmVMError::Rpc(String::from("'message' is too large")))?;
 	let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-	setup_instantiate_call(instantiator, code_id, &salt, admin, label, &message)?.top_level_call(
+	setup_instantiate_call(instantiator, code_id, &salt, admin, label)?.top_level_call(
 		&mut shared,
 		funds,
 		message,
@@ -920,7 +920,7 @@ impl<T: Config> Pallet<T> {
 			CodeIdentifier::CodeHash(code_hash) =>
 				CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
 		};
-		setup_instantiate_call(who, code_id, &salt, admin, label, &message)?
+		setup_instantiate_call(who, code_id, &salt, admin, label)?
 			.top_level_call(shared, funds, message)
 			.map(|_| ())
 	}
@@ -1260,7 +1260,6 @@ impl<T: Config> Pallet<T> {
 			salt,
 			admin.map(|admin| admin.into_inner()),
 			label,
-			message,
 		)?
 		.sub_call(vm.shared, funds, message, event_handler)
 	}

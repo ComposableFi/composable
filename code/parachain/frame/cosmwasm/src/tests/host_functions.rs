@@ -23,7 +23,7 @@ use frame_support::traits::{fungible, fungibles::Mutate};
 use primitives::currency::CurrencyId;
 use sp_runtime::AccountId32;
 
-fn initialize() {
+pub fn initialize() {
 	// use std::sync::Once;
 	// static INIT: Once = Once::new();
 	// INIT.call_once(|| {
@@ -31,7 +31,7 @@ fn initialize() {
 	// });
 }
 
-fn create_vm() -> CosmwasmVMShared {
+pub fn create_vm() -> CosmwasmVMShared {
 	CosmwasmVMShared {
 		storage_readonly_depth: 0,
 		depth: 0,
@@ -40,7 +40,7 @@ fn create_vm() -> CosmwasmVMShared {
 	}
 }
 
-fn create_coins(accounts: Vec<&AccountId32>) -> Vec<Coin> {
+pub fn create_coins(accounts: Vec<&AccountId32>) -> Vec<Coin> {
 	let mut funds: Vec<Coin> = Vec::new();
 	let assets = CurrencyId::list_assets();
 	for asset in assets {
@@ -62,7 +62,7 @@ fn create_coins(accounts: Vec<&AccountId32>) -> Vec<Coin> {
 	funds
 }
 
-fn create_funded_account(key: &'static str) -> AccountId32 {
+pub fn create_funded_account(key: &'static str) -> AccountId32 {
 	let origin = account(key, 0, 0xCAFEBABE);
 
 	<pallet_balances::Pallet<Test> as fungible::Mutate<AccountId32>>::mint_into(
@@ -73,7 +73,7 @@ fn create_funded_account(key: &'static str) -> AccountId32 {
 	origin
 }
 
-fn create_instantiated_contract(vm: &mut CosmwasmVMShared, origin: AccountId32) -> AccountId32 {
+pub fn create_instantiated_contract(vm: &mut CosmwasmVMShared, origin: AccountId32) -> AccountId32 {
 	// 1. Generate a wasm code
 	let wasm_module: code_gen::WasmModule =
 		code_gen::ModuleDefinition::new(Default::default(), 10, None).unwrap().into();
@@ -87,7 +87,6 @@ fn create_instantiated_contract(vm: &mut CosmwasmVMShared, origin: AccountId32) 
 		"salt".as_bytes(),
 		Some(origin),
 		b"label-1".to_vec().try_into().unwrap(),
-		"message".as_bytes(),
 	)
 	.unwrap()
 	.top_level_call(vm, Default::default(), b"message".to_vec().try_into().unwrap())
@@ -96,11 +95,12 @@ fn create_instantiated_contract(vm: &mut CosmwasmVMShared, origin: AccountId32) 
 	contract_addr
 }
 
-fn current_gas(vm: &mut OwnedWasmiVM<DefaultCosmwasmVM<Test>>) -> u64 {
+pub fn current_gas(vm: &mut OwnedWasmiVM<DefaultCosmwasmVM<Test>>) -> u64 {
 	vm.0.data().shared.gas.remaining()
 }
 
 fn charged_gas(vm: &mut OwnedWasmiVM<DefaultCosmwasmVM<Test>>, previous_gas: u64) -> u64 {
+	// 2. Properly upload the code (so that the necessary storage items are modified)
 	previous_gas - current_gas(vm)
 }
 
@@ -342,7 +342,6 @@ fn set_contract_meta() {
 				b"salt2",
 				Some(origin.clone()),
 				vec![0x41_u8].try_into().unwrap(),
-				"message".as_bytes(),
 			)
 			.unwrap()
 			.top_level_call(
@@ -425,7 +424,6 @@ fn running_contract_meta() {
 			b"salt2",
 			Some(contract_1.clone()),
 			b"label-2".to_vec().try_into().unwrap(),
-			"message".as_bytes(),
 		)
 		.unwrap()
 		.top_level_call(&mut shared_vm, Default::default(), b"message".to_vec().try_into().unwrap())
