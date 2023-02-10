@@ -1,7 +1,7 @@
 import { FC } from "react";
-import { StakingHighlights } from "@/components/Organisms/Staking/StakingHighlights";
-import { StakingPortfolio } from "@/components/Organisms/Staking/StakingPortfolio";
-import { StakeFormSection } from "@/components/Organisms/Staking/StakeFormSection";
+import { StakingPortfolio } from "./StakingPortfolio";
+import { StakeFormSection } from "./StakeFormSection";
+import { StakingHighlights } from "./StakingHighlights";
 
 type StakingConnectedProps = {};
 

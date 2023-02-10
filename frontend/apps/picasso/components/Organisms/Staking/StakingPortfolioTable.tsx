@@ -38,12 +38,10 @@ export const PortfolioRow = ({
 
     return "";
   }, [picaPrice, portfolio.stake]);
-  const asset = useMemo(
-    () => getPicassoTokenById(portfolio.collectionId),
-    [portfolio.collectionId]
-  );
+  const shareAsset = getPicassoTokenById(portfolio.shareAssetId);
+  const rewardAsset = getPicassoTokenById(portfolio.assetId);
 
-  if (!asset) {
+  if (!shareAsset || !rewardAsset) {
     return null;
   }
 
@@ -51,14 +49,14 @@ export const PortfolioRow = ({
     <TableRow>
       <TableCell>
         <TokenAsset
-          tokenId={asset.id}
-          label={`${asset.symbol} ${portfolio.instanceId}`}
+          tokenId={shareAsset.id}
+          label={`${shareAsset.symbol} ${portfolio.instanceId}`}
         />
       </TableCell>
       <TableCell size="medium">
         <Box display="flex" gap={1}>
           <Typography variant="body2" color="text.primary">
-            {portfolio.stake.toFormat()} $PICA
+            {portfolio.stake.toFormat()} ${rewardAsset.symbol}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {stakedPrice}
@@ -71,7 +69,7 @@ export const PortfolioRow = ({
           variant="body2"
           color={isExpired ? "warning.main" : "success.main"}
         >
-          {`${portfolio.multiplier.toFixed(2)}%`}
+          {`${portfolio.multiplier.div(100).toFixed(1)}X`}
         </Typography>
       </TableCell>
       <TableCell>
@@ -114,14 +112,14 @@ export const StakingPortfolioTable = ({
               <TableCell>fNFTID</TableCell>
               <TableCell>Locked $PICA</TableCell>
               <TableCell>Locked until</TableCell>
-              <TableCell>APR</TableCell>
+              <TableCell>Multiplier</TableCell>
               <TableCell></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {stakingPortfolio.map((portfolio) => (
               <PortfolioRow
-                key={portfolio.id}
+                key={`${portfolio.collectionId}-${portfolio.instanceId}`}
                 portfolio={portfolio}
                 onSelectToken={(collectionId, instanceId) => {
                   setSelectedToken([collectionId, instanceId]);

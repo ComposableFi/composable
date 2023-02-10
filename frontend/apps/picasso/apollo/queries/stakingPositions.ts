@@ -20,7 +20,7 @@ export const GET_STAKING_POSITIONS = gql`
   query stakingPositionsByOwner($accountId: String) {
     stakingPositions(
       orderBy: fnftCollectionId_ASC
-      where: { owner_eq: $accountId }
+      where: { owner_eq: $accountId, removed_eq: false }
     ) {
       amount
       assetId
@@ -31,6 +31,7 @@ export const GET_STAKING_POSITIONS = gql`
       owner
       source
       startTimestamp
+      removed
     }
   }
 `;

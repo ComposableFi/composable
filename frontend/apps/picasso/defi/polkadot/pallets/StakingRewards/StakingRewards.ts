@@ -74,6 +74,7 @@ export function transformStakingPortfolio(
     multiplier: rewardPools[assetId].lock.durationPresets[result.lock.duration],
     share: fromChainIdUnit(unwrapNumberOrHex(result.share)),
     stake: fromChainIdUnit(unwrapNumberOrHex(result.stake)),
+    shareAssetId: rewardPools[assetId].shareAssetId.toString(),
   };
 }
 

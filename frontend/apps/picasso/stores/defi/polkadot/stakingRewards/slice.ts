@@ -41,6 +41,8 @@ export type PortfolioItem = {
   share: BigNumber;
   stake: BigNumber;
   unlockPenalty: BigNumber;
+
+  shareAssetId: string;
 };
 export type StakingPortfolio = Array<PortfolioItem>;
 export type StakingRewardsSlice = {

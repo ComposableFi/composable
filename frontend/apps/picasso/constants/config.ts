@@ -247,9 +247,10 @@ const config = {
     },
     picaPortfolios: [
       {
+        assetId: "1",
         instanceId: "1",
-        collectionId: "1001",
-        assetId: "2001",
+        shareAssetId: "1001",
+        collectionId: "2001",
         endTimestamp: "1675348134561",
         id: "3",
         multiplier: new BigNumber(0.01),
@@ -258,9 +259,10 @@ const config = {
         unlockPenalty: new BigNumber(0.5),
       },
       {
+        assetId: "1",
         instanceId: "123",
-        collectionId: "1001",
-        assetId: "2001",
+        shareAssetId: "1001",
+        collectionId: "2001",
         endTimestamp: "1695348134561",
         id: "132",
         multiplier: new BigNumber(0.01),

@@ -30,7 +30,7 @@ const BurnCheckboxItem = ({
 }) => {
   const theme = useTheme();
   const token = useMemo(() => {
-    return getPicassoTokenById(portfolio.collectionId);
+    return getPicassoTokenById(portfolio.shareAssetId);
   }, [portfolio.collectionId]);
   const picaToken = useStore((store) => store.substrateTokens.tokens.pica);
   const picaPrice = usePicaPriceDiscovery();

@@ -14,7 +14,7 @@ export function useSubscribeStakingPositions() {
     variables: {
       accountId: account?.address,
     },
-    pollInterval: 30000,
+    pollInterval: 10000,
   });
 
   const setStakingPositions = useStore(

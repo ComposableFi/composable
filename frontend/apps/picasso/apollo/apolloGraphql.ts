@@ -3,5 +3,15 @@ import { getEnvironment } from "shared/endpoints";
 
 export const client = new ApolloClient({
   uri: getEnvironment("subsquid"),
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          stakingPositions: {
+            merge: false,
+          },
+        },
+      },
+    },
+  }),
 });

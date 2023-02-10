@@ -10,18 +10,20 @@ import config from "@/constants/config";
 export function subscribePortfolio(api: ApiPromise | undefined) {
   return useStore.subscribe(
     (state) => ({
-      isStakingPositionsLoading: state.isStakingPositionsLoading,
+      stakingPositions: state.stakingPositions,
     }),
-    async ({ isStakingPositionsLoading }) => {
-      if (!api || isStakingPositionsLoading) return;
-
-      const stakingPositions = useStore.getState().stakingPositions;
+    async ({ stakingPositions }) => {
+      if (!api) return;
       const rewardPools = useStore.getState().rewardPools;
       const picaAssetId = pipe(
         useStore.getState().substrateTokens.tokens.pica.chainId.picasso,
         O.fromNullable,
         O.map((s) => s.toString())
       );
+
+      useStore.setState((state) => {
+        state.stakingPortfolio = [];
+      });
 
       pipe(
         picaAssetId,
@@ -58,6 +60,9 @@ export function subscribePortfolio(api: ApiPromise | undefined) {
           state.stakingPortfolio = config.stakingRewards.picaPortfolios;
         });
       }
+    },
+    {
+      equalityFn: (a, b) => a.stakingPositions === b.stakingPositions,
     }
   );
 }
