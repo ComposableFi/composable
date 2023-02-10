@@ -219,7 +219,7 @@ jobs:
     name: Push docker images
     strategy:
       matrix:
-        arch: [x64-cute, arm-cute]
+        arch: [x64-cute] # TODO: add arm-cute and figure out pushing multi-arch imgaes to dockerhub
     needs: 
       - effects-gate
     runs-on:
@@ -437,7 +437,7 @@ jobs:
       - lfs-check
     strategy:
       matrix:
-        arch: [x64-cute, arm-cute]
+        arch: [x64-cute] # TODO: add arm-cute and figure out pushing multi-arch imgaes to dockerhub
     runs-on:
       - self-hosted
       - ${{ matrix.arch }}
@@ -486,7 +486,7 @@ jobs:
       - test-subsquid
     strategy:
       matrix:
-        arch: [x64-cute, arm-cute]
+        arch: [x64-cute] # TODO: add arm-cute and figure out pushing multi-arch imgaes to dockerhub
     runs-on:
       - self-hosted
       - ${{ matrix.arch }}
