@@ -4,6 +4,7 @@ import { LessThan } from "typeorm";
 import { HistoricalLockedValue, LockedSource, PabloPool } from "../../model";
 import { getRange } from "./common";
 import { PicassoTVL } from "./picassoOverviewStats";
+import { getOrCreateAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 export class PabloTVL {
@@ -85,16 +86,18 @@ export class PabloTVLResolver {
       }
     }
 
-    return Object.keys(lockedValues).map(date => {
+    const pabloTVL: Array<PabloTVL> = [];
+
+    for (const date of Object.keys(lockedValues)) {
       const tvl: PicassoTVL[] = [];
-      for (const assetId in lockedValues[date]) {
-        tvl.push({ assetId, amount: lockedValues[date][assetId] });
+      for (const assetId of Object.keys(lockedValues[date])) {
+        const price = await getOrCreateAssetPrice(manager, assetId, new Date(date).getTime());
+        tvl.push({ assetId, amount: lockedValues[date][assetId], price });
       }
 
-      return new PabloTVL({
-        date,
-        lockedValues: tvl
-      });
-    });
+      pabloTVL.push(new PabloTVL({ date, lockedValues: tvl }));
+    }
+
+    return pabloTVL;
   }
 }
