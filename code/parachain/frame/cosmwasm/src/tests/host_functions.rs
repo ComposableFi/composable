@@ -1,15 +1,10 @@
 #![allow(clippy::disallowed_methods)]
 
+use super::helpers::*;
 use crate::{
-	mock::*,
-	runtimes::{
-		abstraction::{CosmwasmAccount, Gas},
-		vm::{CosmwasmVMCache, CosmwasmVMShared},
-	},
-	setup_instantiate_call,
-	types::DefaultCosmwasmVM,
-	weights::WeightInfo,
-	CodeHashToId, CodeIdToInfo, CodeInfoOf, Config, InstrumentedCode, PristineCode,
+	mock::*, runtimes::abstraction::CosmwasmAccount, setup_instantiate_call,
+	types::DefaultCosmwasmVM, weights::WeightInfo, CodeHashToId, CodeIdToInfo, CodeInfoOf, Config,
+	InstrumentedCode, PristineCode,
 };
 use alloc::collections::BTreeSet;
 use cosmwasm_vm::{
@@ -19,81 +14,7 @@ use cosmwasm_vm::{
 };
 use cosmwasm_vm_wasmi::{code_gen, OwnedWasmiVM};
 use frame_benchmarking::account;
-use frame_support::traits::{fungible, fungibles::Mutate};
-use primitives::currency::CurrencyId;
 use sp_runtime::AccountId32;
-
-pub fn initialize() {
-	// use std::sync::Once;
-	// static INIT: Once = Once::new();
-	// INIT.call_once(|| {
-	// 	env_logger::init();
-	// });
-}
-
-pub fn create_vm() -> CosmwasmVMShared {
-	CosmwasmVMShared {
-		storage_readonly_depth: 0,
-		depth: 0,
-		gas: Gas::new(64, u64::MAX),
-		cache: CosmwasmVMCache { code: Default::default() },
-	}
-}
-
-pub fn create_coins(accounts: Vec<&AccountId32>) -> Vec<Coin> {
-	let mut funds: Vec<Coin> = Vec::new();
-	let assets = CurrencyId::list_assets();
-	for asset in assets {
-		let currency_id = asset.id;
-		// We need to fund all accounts first
-		for account in &accounts {
-			<pallet_assets::Pallet<Test> as Mutate<AccountId32>>::mint_into(
-				currency_id.into(),
-				account,
-				10_000_000_000_000_000_000u128.into(),
-			)
-			.unwrap();
-		}
-		funds.push(Cosmwasm::native_asset_to_cosmwasm_asset(
-			currency_id.into(),
-			10_000_000_000_000_000_000u128.into(),
-		));
-	}
-	funds
-}
-
-pub fn create_funded_account(key: &'static str) -> AccountId32 {
-	let origin = account(key, 0, 0xCAFEBABE);
-
-	<pallet_balances::Pallet<Test> as fungible::Mutate<AccountId32>>::mint_into(
-		&origin,
-		10_000_000_000_000_u128,
-	)
-	.unwrap();
-	origin
-}
-
-pub fn create_instantiated_contract(vm: &mut CosmwasmVMShared, origin: AccountId32) -> AccountId32 {
-	// 1. Generate a wasm code
-	let wasm_module: code_gen::WasmModule =
-		code_gen::ModuleDefinition::new(Default::default(), 10, None).unwrap().into();
-	// 2. Properly upload the code (so that the necessary storage items are modified)
-	Cosmwasm::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
-
-	// 3. Instantiate the contract and get the contract address
-	let contract_addr = setup_instantiate_call::<Test>(
-		origin.clone(),
-		1,
-		"salt".as_bytes(),
-		Some(origin),
-		b"label-1".to_vec().try_into().unwrap(),
-	)
-	.unwrap()
-	.top_level_call(vm, Default::default(), b"message".to_vec().try_into().unwrap())
-	.unwrap();
-
-	contract_addr
-}
 
 pub fn current_gas(vm: &mut OwnedWasmiVM<DefaultCosmwasmVM<Test>>) -> u64 {
 	vm.0.data().shared.gas.remaining()
@@ -221,7 +142,6 @@ fn db_remove() {
 #[test]
 fn db_scan_next() {
 	new_test_ext().execute_with(|| {
-		initialize();
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());

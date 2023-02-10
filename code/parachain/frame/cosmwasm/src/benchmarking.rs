@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_methods)]
+
 use super::*;
 use crate::{
 	instrument::INSTRUCTIONS_MULTIPLIER,

@@ -103,6 +103,7 @@ pub(crate) fn setup_migrate_call<T: Config>(
 	// If the migrate already happened, no need to do that again.
 	// This is the case for sub-message execution where `migrate` is
 	// called by the VM.
+	log::info!("MIGRATOR IS: {:?}", migrator);
 	if call_migrate {
 		Pallet::<T>::sub_level_dispatch(
 			shared,
