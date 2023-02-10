@@ -18,7 +18,7 @@ pub mod picasso;
 
 const DEFAULT_PARACHAIN_ID: u32 = 2087;
 
-static PARACHAIN_ID: Lazy<ParaId> = Lazy::new(|| {
+pub static PARACHAIN_ID: Lazy<ParaId> = Lazy::new(|| {
 	ParaId::new(
 		std::env::var("PARACHAIN_ID")
 			.unwrap_or_else(|_| DEFAULT_PARACHAIN_ID.to_string())
@@ -96,7 +96,7 @@ pub fn composable() -> composable::ChainSpec {
 }
 
 // chain spec for single node environments
-pub fn picasso_dev() -> picasso::ChainSpec {
+pub fn picasso_dev(parachain_id: ParaId) -> picasso::ChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PICA".into());
 	properties.insert("tokenDecimals".into(), CurrencyId::decimals().into());
@@ -120,7 +120,7 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 					),
 				],
 				dev_accounts(),
-				*PARACHAIN_ID,
+				parachain_id,
 				common::fees::NATIVE_EXISTENTIAL_DEPOSIT,
 				picasso_runtime::governance::TreasuryAccount::get(),
 			)
@@ -130,10 +130,7 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions {
-			relay_chain: "rococo_local_testnet".into(),
-			para_id: u32::from(*PARACHAIN_ID),
-		},
+		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(parachain_id) },
 	)
 }
 

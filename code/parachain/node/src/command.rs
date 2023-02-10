@@ -26,7 +26,7 @@ use crate::{
 };
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::BenchmarkCmd;
-use log::info;
+use log;
 use picasso_runtime::Block;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
@@ -36,28 +36,30 @@ use sc_service::config::{BasePath, PrometheusConfig};
 use sp_runtime::traits::AccountIdConversion;
 use std::net::SocketAddr;
 
+// cumulus has very good matcher to evolve into
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
+	log::info!("Loading chain spec: {}", id);
 	Ok(match id {
-		// Must define the default chain here because `export-genesis-state` command
-		// does not support `--chain` and `--parachain-id` arguments simultaneously.
-		// Dali (Rococo Relay)
 		#[cfg(feature = "dali")]
 		"dali-rococo" => Box::new(chain_spec::dali_rococo()),
-		"picasso-dev" => Box::new(chain_spec::picasso_dev()),
+		"picasso-dev" => Box::new(chain_spec::picasso_dev(*chain_spec::PARACHAIN_ID)),
 		#[cfg(feature = "composable")]
 		"composable-dev" => Box::new(chain_spec::composable_dev()),
-		// Picasso (Kusama Relay)
-		"picasso" => Box::new(chain_spec::picasso()),
-		// Composable (Westend Relay)
+		"picasso-kusama" | "picasso" => Box::new(chain_spec::picasso()),
 		#[cfg(feature = "composable")]
 		"composable-westend" => Box::new(chain_spec::composable_westend()),
-
-		#[cfg(feature = "dali")]
-		id if id.contains("dali") => Box::new(chain_spec::dali_dev(id)),
-
-		// Composable (Polkadot Relay)
 		#[cfg(feature = "composable")]
-		"" | "composable" => Box::new(chain_spec::composable()),
+		"" | "composable-polkadot" | "composable" => Box::new(chain_spec::composable()),
+		#[cfg(feature = "composable")]
+		path if path.contains("/composable-") && path.ends_with(".json") => Box::new(
+			chain_spec::composable::ChainSpec::from_json_file(std::path::PathBuf::from(path))?,
+		),
+		#[cfg(feature = "dali")]
+		path if path.contains("/dali-") && path.ends_with(".json") =>
+			Box::new(chain_spec::dali::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
+		#[cfg(feature = "dali")]
+		id if id.starts_with("dali") => Box::new(chain_spec::dali_dev(id)),
+
 		path => Box::new(chain_spec::picasso::ChainSpec::from_json_file(
 			std::path::PathBuf::from(path),
 		)?),
@@ -340,9 +342,12 @@ pub fn run() -> Result<()> {
 					SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, tokio_handle)
 						.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
-				info!("Parachain id: {:?}", id);
-				info!("Parachain Account: {}", parachain_account);
-				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
+				log::info!("Parachain id: {:?}", id);
+				log::info!("Parachain Account: {}", parachain_account);
+				log::info!(
+					"Is collating: {}",
+					if config.role.is_authority() { "yes" } else { "no" }
+				);
 
 				Ok(crate::service::start_node(config, polkadot_config, collator_options, id)
 					.await?)

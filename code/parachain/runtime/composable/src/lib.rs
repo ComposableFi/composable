@@ -16,7 +16,6 @@
 #![recursion_limit = "256"]
 
 // Make the WASM binary available
-// TODO: XCMP/governance/.. setups here are outdated
 #[cfg(all(feature = "std", feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("COMPOSABLE_RUNTIME")));
 #[cfg(not(feature = "builtin-wasm"))]
