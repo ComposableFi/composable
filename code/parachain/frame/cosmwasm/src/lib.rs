@@ -948,7 +948,7 @@ impl<T: Config> Pallet<T> {
 				CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
 		};
 
-		setup_migrate_call(shared, who, contract, new_code_id)?.top_level_call(
+		setup_migrate_call(shared, who, contract, new_code_id, true)?.top_level_call(
 			shared,
 			Default::default(),
 			message,
@@ -1303,8 +1303,14 @@ impl<T: Config> Pallet<T> {
 		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
 	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
 		let CosmwasmContractMeta { code_id, .. } = Self::do_running_contract_meta(vm);
-		setup_migrate_call(vm.shared, vm.contract_address.clone().into_inner(), contract, code_id)?
-			.sub_call(vm.shared, Default::default(), message, event_handler)
+		setup_migrate_call(
+			vm.shared,
+			vm.contract_address.clone().into_inner(),
+			contract,
+			code_id,
+			false,
+		)?
+		.sub_call(vm.shared, Default::default(), message, event_handler)
 	}
 
 	pub(crate) fn do_query_contract_info(

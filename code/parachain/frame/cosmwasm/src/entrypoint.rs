@@ -26,7 +26,7 @@ pub(crate) fn setup_instantiate_call<T: Config>(
 	let code_hash = CodeIdToInfo::<T>::get(code_id)
 		.ok_or(Error::<T>::CodeNotFound)?
 		.pristine_code_hash;
-	let contract = Pallet::<T>::derive_contract_address(&instantiator, salt, &code_hash, b"")?;
+	let contract = Pallet::<T>::derive_contract_address(&instantiator, salt, &code_hash)?;
 	// Make sure that contract address does not already exist
 	ensure!(Pallet::<T>::contract_exists(&contract).is_err(), Error::<T>::ContractAlreadyExists);
 	let nonce = CurrentNonce::<T>::increment().map_err(|_| Error::<T>::NonceOverflow)?;
@@ -98,12 +98,12 @@ pub(crate) fn setup_migrate_call<T: Config>(
 	migrator: AccountIdOf<T>,
 	contract: AccountIdOf<T>,
 	new_code_id: CosmwasmCodeId,
+	call_migrate: bool,
 ) -> Result<DispatchableCall<MigrateCall, (), T>, Error<T>> {
-	let contract_info = Pallet::<T>::contract_info(&contract)?;
 	// If the migrate already happened, no need to do that again.
 	// This is the case for sub-message execution where `migrate` is
 	// called by the VM.
-	if contract_info.code_id != new_code_id {
+	if call_migrate {
 		Pallet::<T>::sub_level_dispatch(
 			shared,
 			migrator.clone(),

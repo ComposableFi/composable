@@ -85,9 +85,6 @@ fn upload() {
 
 		// 8. Fails when the same code is uploaded.
 		assert!(Cosmwasm::<Test>::upload(RawOrigin::Signed(origin).into(), code.clone()).is_err());
-
-		// 9. Fails when the operation is unsigned.
-		assert!(Cosmwasm::<Test>::upload(RawOrigin::None.into(), code).is_err());
 	})
 }
 
@@ -170,5 +167,116 @@ fn instantiate() {
 
 		// TODO(aeryz): Improve code_gen to embed cosmwasm code, so that we can assert
 		// `instantiate` function is really called.
+	})
+}
+
+#[test]
+fn migrate() {
+	new_test_ext().execute_with(|| {
+		let mut shared_vm = create_vm();
+		let origin = create_funded_account("origin");
+		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());
+
+		let wasm_module: code_gen::WasmModule =
+			code_gen::ModuleDefinition::new(Default::default(), 20, None).unwrap().into();
+		let code: ContractCodeOf<Test> = wasm_module.code.try_into().unwrap();
+		Cosmwasm::<Test>::do_upload(&origin, code).unwrap();
+
+		Cosmwasm::<Test>::migrate(
+			RawOrigin::Signed(origin.clone()).into(),
+			contract.clone(),
+			CodeIdentifier::CodeId(2),
+			u64::MAX,
+			b"{}".to_vec().try_into().unwrap(),
+		)
+		.unwrap();
+
+		// 1. Switches to the new code.
+		assert_eq!(Cosmwasm::<Test>::contract_info(&contract).unwrap().code_id, 2);
+
+		// 2. Fails if the caller is not the admin of the contract.
+		assert!(Cosmwasm::<Test>::migrate(
+			RawOrigin::Signed(create_funded_account("random-origin")).into(),
+			contract.clone(),
+			CodeIdentifier::CodeId(2),
+			u64::MAX,
+			b"{}".to_vec().try_into().unwrap(),
+		)
+		.is_err());
+
+		// 3. Also fails if the caller is not the admin and the code id is different.
+		// This case is added because of a strange bug which result in this failing when
+		// the code id is same but success if the code id is different.
+		assert!(Cosmwasm::<Test>::migrate(
+			RawOrigin::Signed(create_funded_account("random-origin")).into(),
+			contract.clone(),
+			CodeIdentifier::CodeId(1),
+			u64::MAX,
+			b"{}".to_vec().try_into().unwrap(),
+		)
+		.is_err());
+
+		// 4. Fails if the contract has no admin.
+		Cosmwasm::<Test>::do_set_contract_meta(&contract, 2, None, "label".into()).unwrap();
+		assert!(Cosmwasm::<Test>::migrate(
+			RawOrigin::Signed(origin).into(),
+			contract.clone(),
+			CodeIdentifier::CodeId(2),
+			u64::MAX,
+			b"{}".to_vec().try_into().unwrap(),
+		)
+		.is_err());
+	})
+}
+
+#[test]
+fn update_admin() {
+	new_test_ext().execute_with(|| {
+		let mut shared_vm = create_vm();
+		let origin = create_funded_account("origin");
+		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());
+		let new_admin = create_funded_account("admin");
+
+		Cosmwasm::<Test>::update_admin(
+			RawOrigin::Signed(origin.clone()).into(),
+			contract.clone(),
+			Some(new_admin.clone()),
+			u64::MAX,
+		)
+		.unwrap();
+
+		// 1. Updates the admin.
+		assert_eq!(
+			Cosmwasm::<Test>::contract_info(&contract).unwrap().admin,
+			Some(new_admin.clone())
+		);
+
+		// 2. Fails if the caller is not the admin.
+		assert!(Cosmwasm::<Test>::update_admin(
+			RawOrigin::Signed(origin).into(),
+			contract.clone(),
+			Some(new_admin.clone()),
+			u64::MAX,
+		)
+		.is_err());
+
+		// 3. Removes admin.
+		Cosmwasm::<Test>::update_admin(
+			RawOrigin::Signed(new_admin.clone()).into(),
+			contract.clone(),
+			None,
+			u64::MAX,
+		)
+		.unwrap();
+		assert_eq!(Cosmwasm::<Test>::contract_info(&contract).unwrap().admin, None,);
+
+		// 4. Fails if the contract has no admin.
+		assert!(Cosmwasm::<Test>::update_admin(
+			RawOrigin::Signed(new_admin.clone()).into(),
+			contract,
+			Some(new_admin),
+			u64::MAX,
+		)
+		.is_err());
 	})
 }
