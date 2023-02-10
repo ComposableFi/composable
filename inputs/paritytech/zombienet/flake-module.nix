@@ -34,7 +34,6 @@
           cp . $out --recursive
         '';
         # https://app.clickup.com/t/3w8y83f
-        # cannot use fix because of https://github.com/serokell/nix-npm-buildpackage/pull/54#issuecomment-1254908364
         __noChroot = true;
       };
 
