@@ -40,7 +40,6 @@ pub(crate) fn setup_instantiate_call<T: Config>(
 			code_info.refcount.checked_add(1).ok_or(Error::<T>::RefcountOverflow)?;
 		Ok(())
 	})?;
-	log::debug!(target: "runtime::contracts", "ADDRESS: {:?}", contract);
 	Pallet::<T>::deposit_event(Event::<T>::Instantiated {
 		contract: contract.clone(),
 		info: contract_info,
@@ -103,7 +102,6 @@ pub(crate) fn setup_migrate_call<T: Config>(
 	// If the migrate already happened, no need to do that again.
 	// This is the case for sub-message execution where `migrate` is
 	// called by the VM.
-	log::info!("MIGRATOR IS: {:?}", migrator);
 	if call_migrate {
 		Pallet::<T>::sub_level_dispatch(
 			shared,

@@ -7391,7 +7391,6 @@ dependencies = [
  "composable-traits",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
- "env_logger 0.9.3",
  "frame-benchmarking",
  "frame-support",
  "frame-system",

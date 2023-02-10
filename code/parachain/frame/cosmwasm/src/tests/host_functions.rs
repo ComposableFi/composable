@@ -2,9 +2,8 @@
 
 use super::helpers::*;
 use crate::{
-	mock::*, runtimes::abstraction::CosmwasmAccount, setup_instantiate_call,
-	types::DefaultCosmwasmVM, weights::WeightInfo, CodeHashToId, CodeIdToInfo, CodeInfoOf, Config,
-	InstrumentedCode, PristineCode,
+	mock::*, runtimes::abstraction::CosmwasmAccount, weights::WeightInfo, CodeHashToId,
+	CodeIdToInfo, CodeInfoOf, Config, InstrumentedCode, PristineCode,
 };
 use alloc::collections::BTreeSet;
 use cosmwasm_vm::{
@@ -12,23 +11,10 @@ use cosmwasm_vm::{
 	system::CosmwasmContractMeta,
 	vm::VMBase,
 };
-use cosmwasm_vm_wasmi::{code_gen, OwnedWasmiVM};
+use cosmwasm_vm_wasmi::code_gen;
 use frame_benchmarking::account;
 use sp_runtime::AccountId32;
 
-pub fn current_gas(vm: &mut OwnedWasmiVM<DefaultCosmwasmVM<Test>>) -> u64 {
-	vm.0.data().shared.gas.remaining()
-}
-
-fn charged_gas(vm: &mut OwnedWasmiVM<DefaultCosmwasmVM<Test>>, previous_gas: u64) -> u64 {
-	// 2. Properly upload the code (so that the necessary storage items are modified)
-	previous_gas - current_gas(vm)
-}
-
-/// 1. Existing value is read.
-/// 2. Charges `weight(db_read) + (len(bytes) * ContractStorageByteReadPrice)`.
-/// 3. Read for a non-existing value returns `None`.
-/// 4. If `db_read` returns `None`, charges `weight(db_read)`.
 #[test]
 fn db_read() {
 	new_test_ext().execute_with(|| {
@@ -42,18 +28,22 @@ fn db_read() {
 		let mut vm = Cosmwasm::cosmwasm_new_vm(&mut shared_vm, origin, contract, vec![]).unwrap();
 		vm.db_write(key.clone(), value.clone()).unwrap();
 		let mut gas = current_gas(&mut vm);
-		// 1
+
+		// 1. Existing value is read.
 		assert_eq!(vm.db_read(key).unwrap(), Some(value.clone()));
-		// 2
+
+		// 3. Charges `weight(db_read) + (len(bytes) * ContractStorageByteReadPrice)`.
 		assert_eq!(
 			charged_gas(&mut vm, gas),
 			<Test as Config>::ContractStorageByteReadPrice::get() as u64 * value.len() as u64 +
 				<Test as Config>::WeightInfo::db_read().ref_time()
 		);
-		// 3
+
+		// 3. Read for a non-existing value returns `None`.
 		gas = current_gas(&mut vm);
 		assert_eq!(vm.db_read(b"garbage".to_vec()).unwrap(), None);
-		// 4
+
+		// 4. If `db_read` returns `None`, charges `weight(db_read)`.
 		assert_eq!(charged_gas(&mut vm, gas), <Test as Config>::WeightInfo::db_read().ref_time())
 	})
 }
@@ -131,7 +121,7 @@ fn db_remove() {
 		assert_eq!(vm.db_read(key.clone()).unwrap(), None);
 
 		// 3. Non-existent value removal does not fail.
-		// assert!(vm.db_remove(key.clone()).is_ok());
+		assert!(vm.db_remove(key.clone()).is_ok());
 
 		// 4. Fails to remove if the VM is read-only.
 		vm.0.data_mut().shared.push_readonly();
@@ -255,26 +245,18 @@ fn set_contract_meta() {
 		let contract_1 =
 			CosmwasmAccount::new(create_instantiated_contract(&mut shared_vm, origin.clone()));
 
-		let contract_2 = CosmwasmAccount::new(
-			setup_instantiate_call::<Test>(
-				origin.clone(),
-				1,
-				b"salt2",
-				Some(origin.clone()),
-				vec![0x41_u8].try_into().unwrap(),
-			)
-			.unwrap()
-			.top_level_call(
-				&mut shared_vm,
-				Default::default(),
-				b"message".to_vec().try_into().unwrap(),
-			)
-			.unwrap(),
-		);
+		let contract_2 = CosmwasmAccount::new(instantiate_contract(
+			&mut shared_vm,
+			1,
+			origin.clone(),
+			b"different-salt",
+			None,
+			b"label",
+		));
 
 		let wasm_module: code_gen::WasmModule =
 			code_gen::ModuleDefinition::new(Default::default(), 20, None).unwrap().into();
-		// 2. Properly upload the code (so that the necessary storage items are modified)
+		// 1. Properly upload the code (so that the necessary storage items are modified)
 		Cosmwasm::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 
 		let mut vm = Cosmwasm::cosmwasm_new_vm(
@@ -291,7 +273,7 @@ fn set_contract_meta() {
 		contract_meta_1.admin = Some(contract_2.clone());
 		contract_meta_1.label = "new-label-1".into();
 
-		// 1. Charges gas properly.
+		// 2. Charges gas properly.
 		let gas = current_gas(&mut vm);
 		vm.set_contract_meta(contract_1.clone(), contract_meta_1.clone()).unwrap();
 		assert_eq!(
@@ -299,17 +281,17 @@ fn set_contract_meta() {
 			<Test as Config>::WeightInfo::set_contract_meta().ref_time()
 		);
 
-		// 2. Only refcount is changed since the old code id has still reference,
+		// 3. Only refcount is changed since the old code id has still reference,
 		// old code should still be present.
 		let code_info_1 = CodeIdToInfo::<Test>::get(1).unwrap();
 		assert_eq!(code_info_1.refcount, 1);
 		let code_info_2 = CodeIdToInfo::<Test>::get(2).unwrap();
 		assert_eq!(code_info_2.refcount, 1);
 
-		// 3. Sets the meta fields correctly.
+		// 4. Sets the meta fields correctly.
 		assert_eq!(vm.contract_meta(contract_1.clone()).unwrap(), contract_meta_1);
 
-		// 4. When `code_id` is not changed, don't touch to refcount
+		// 5. When `code_id` is not changed, don't touch to refcount
 		vm.set_contract_meta(contract_1, contract_meta_1.clone()).unwrap();
 		let code_info_2 = CodeIdToInfo::<Test>::get(2).unwrap();
 		assert_eq!(code_info_2.refcount, 1);
@@ -317,14 +299,14 @@ fn set_contract_meta() {
 		let code_1 = PristineCode::<Test>::get(1).unwrap();
 		let reserved_balance = <Test as Config>::NativeAsset::reserved_balance(&origin);
 
-		// 5. `code_id 1` is not referenced anymore so it is removed.
+		// 6. `code_id 1` is not referenced anymore so it is removed.
 		vm.set_contract_meta(contract_2, contract_meta_1).unwrap();
 		assert!(!CodeIdToInfo::<Test>::contains_key(1));
 		assert!(!PristineCode::<Test>::contains_key(1));
 		assert!(!InstrumentedCode::<Test>::contains_key(1));
 		assert!(!CodeHashToId::<Test>::contains_key(code_info_1.pristine_code_hash));
 
-		// 6. Reserved balance is unreserved since code 1 is now removed.
+		// 7. Reserved balance is unreserved since code 1 is now removed.
 		assert_eq!(
 			reserved_balance - <Test as Config>::NativeAsset::reserved_balance(&origin),
 			code_1.len() as u128 * <Test as Config>::CodeStorageByteDeposit::get() as u128
@@ -338,16 +320,14 @@ fn running_contract_meta() {
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract_1 = create_instantiated_contract(&mut shared_vm, origin.clone());
-		let contract_2 = setup_instantiate_call::<Test>(
-			contract_1.clone(),
+		let contract_2 = instantiate_contract(
+			&mut shared_vm,
 			1,
-			b"salt2",
-			Some(contract_1.clone()),
-			b"label-2".to_vec().try_into().unwrap(),
-		)
-		.unwrap()
-		.top_level_call(&mut shared_vm, Default::default(), b"message".to_vec().try_into().unwrap())
-		.unwrap();
+			contract_1.clone(),
+			b"different-salt",
+			None,
+			b"label-2",
+		);
 
 		let mut vm =
 			Cosmwasm::cosmwasm_new_vm(&mut shared_vm, origin.clone(), contract_1.clone(), vec![])
@@ -374,11 +354,7 @@ fn running_contract_meta() {
 		// 3. `contract_meta` returns the correct data.
 		assert_eq!(
 			vm.contract_meta(CosmwasmAccount::new(contract_2)).unwrap(),
-			CosmwasmContractMeta {
-				code_id: 1,
-				admin: Some(CosmwasmAccount::new(contract_1)),
-				label: "label-2".into()
-			}
+			CosmwasmContractMeta { code_id: 1, admin: None, label: "label-2".into() }
 		);
 
 		// 4. `contract_meta` charges gas properly.

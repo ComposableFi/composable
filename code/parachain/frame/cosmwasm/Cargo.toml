@@ -62,7 +62,6 @@ wasmi = { version = "0.22", default-features = false }
 wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
 
 [dev-dependencies]
-env_logger = "*"
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }

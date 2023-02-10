@@ -1,16 +1,24 @@
 #![allow(clippy::disallowed_methods)]
 
 use crate::{
-	mock::*, setup_instantiate_call, CosmwasmVMCache, CosmwasmVMShared, CurrentCodeId, FundsOf,
-	Gas, Pallet as Cosmwasm,
+	mock::*, setup_instantiate_call, CosmwasmVMCache, CosmwasmVMShared, CurrentCodeId,
+	DefaultCosmwasmVM, FundsOf, Gas, Pallet as Cosmwasm,
 };
 use alloc::collections::BTreeMap;
 use cosmwasm_vm::cosmwasm_std::{Coin, ContractResult, Empty, Response};
-use cosmwasm_vm_wasmi::code_gen;
+use cosmwasm_vm_wasmi::{code_gen, OwnedWasmiVM};
 use frame_benchmarking::account;
 use frame_support::traits::{fungible, fungibles::Mutate};
 use primitives::currency::CurrencyId;
 use sp_runtime::AccountId32;
+
+pub fn current_gas(vm: &mut OwnedWasmiVM<DefaultCosmwasmVM<Test>>) -> u64 {
+	vm.0.data().shared.gas.remaining()
+}
+
+pub fn charged_gas(vm: &mut OwnedWasmiVM<DefaultCosmwasmVM<Test>>, previous_gas: u64) -> u64 {
+	previous_gas - current_gas(vm)
+}
 
 pub fn create_vm() -> CosmwasmVMShared {
 	CosmwasmVMShared {
@@ -110,4 +118,18 @@ pub fn create_instantiated_contract_with_response<C: Fn(AccountId32)>(
 
 pub fn create_instantiated_contract(vm: &mut CosmwasmVMShared, origin: AccountId32) -> AccountId32 {
 	create_instantiated_contract_with_response(vm, origin, Response::default(), |_| {}).unwrap()
+}
+
+pub fn instantiate_contract(
+	vm: &mut CosmwasmVMShared,
+	code_id: u64,
+	origin: AccountId32,
+	salt: &[u8],
+	admin: Option<AccountId32>,
+	label: &[u8],
+) -> AccountId32 {
+	setup_instantiate_call::<Test>(origin, code_id, salt, admin, label.to_vec().try_into().unwrap())
+		.unwrap()
+		.top_level_call(vm, Default::default(), b"message".to_vec().try_into().unwrap())
+		.unwrap()
 }
