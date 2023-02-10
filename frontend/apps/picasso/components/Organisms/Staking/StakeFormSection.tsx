@@ -1,10 +1,10 @@
 import { Grid } from "@mui/material";
 import { Tabs } from "@/components";
-import { TAB_ITEMS } from "@/components/Organisms/Staking/constants";
 import { StakeTabContent } from "@/components/Organisms/Staking/StakeTabContent";
 import { BurnUnstakeTabContent } from "@/components/Organisms/Staking/BurnUnstakeTabContent";
 import { ClaimableRewards } from "@/components/Organisms/Staking/ClaimableRewards";
 import { useState } from "react";
+import { useStore } from "@/stores/root";
 
 const STAKE_TAB = {
   STAKE: 0,
@@ -15,12 +15,22 @@ type StakeTab = typeof STAKE_TAB[StakeKey];
 
 export const StakeFormSection = () => {
   const [stakeTab, setStakeTab] = useState<StakeTab>(STAKE_TAB.STAKE);
+  const hasPortfolio = useStore((store) => store.stakingPortfolio.length > 0);
+  const tabItems = [
+    {
+      label: "Stake and mint",
+    },
+    {
+      label: "Burn and unstake",
+      disabled: !hasPortfolio,
+    },
+  ];
 
   return (
     <Grid container mt={9}>
       <Grid item xs={12}>
         <Tabs
-          items={TAB_ITEMS}
+          items={tabItems}
           value={stakeTab}
           onChange={(_e, target: number) => setStakeTab(target as StakeTab)}
         />
