@@ -43,8 +43,6 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		// Dali (Rococo Relay)
 		#[cfg(feature = "dali")]
 		"dali-rococo" => Box::new(chain_spec::dali_rococo()),
-		#[cfg(feature = "dali")]
-		id if id.contains("dali") => Box::new(chain_spec::dali_dev(id)),
 		"picasso-dev" => Box::new(chain_spec::picasso_dev()),
 		#[cfg(feature = "composable")]
 		"composable-dev" => Box::new(chain_spec::composable_dev()),
@@ -53,6 +51,10 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		// Composable (Westend Relay)
 		#[cfg(feature = "composable")]
 		"composable-westend" => Box::new(chain_spec::composable_westend()),
+
+		#[cfg(feature = "dali")]
+		id if id.contains("dali") => Box::new(chain_spec::dali_dev(id)),
+
 		// Composable (Polkadot Relay)
 		#[cfg(feature = "composable")]
 		"" | "composable" => Box::new(chain_spec::composable()),

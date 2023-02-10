@@ -146,15 +146,6 @@
           };
           type = "app";
         };
-
-        zombienet-rococo-local-dali-dev = {
-          type = "app";
-          program = self'.packages.zombienet-rococo-local-dali-dev;
-        };
-        zombienet-rococo-local-picasso-dev = {
-          type = "app";
-          program = self'.packages.zombienet-rococo-local-picasso-dev;
-        };
       };
     };
 }
