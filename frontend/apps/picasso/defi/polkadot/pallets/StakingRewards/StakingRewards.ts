@@ -23,6 +23,8 @@ import { StakingPosition } from "@/apollo/queries/stakingPositions";
 import config from "@/constants/config";
 import { ComposableTraitsStakingRewardPool } from "@/../../packages/defi-interfaces";
 import { Option } from "@polkadot/types-codec";
+import { useStore } from "@/stores/root";
+import { useStakeForm } from "@/components/Organisms/Staking/stakeFormStore";
 
 export function transformRewardPool(rewardPoolsWrapped: any): RewardPool {
   console.log(rewardPoolsWrapped);
@@ -62,7 +64,6 @@ export function transformStakingPortfolio(
   },
   assetId: string
 ): PortfolioItem {
-  // TODO: fix type in here.
   return {
     collectionId: position.fnftCollectionId,
     instanceId: position.fnftInstanceId,
@@ -74,6 +75,14 @@ export function transformStakingPortfolio(
     share: fromChainIdUnit(unwrapNumberOrHex(result.share)),
     stake: fromChainIdUnit(unwrapNumberOrHex(result.stake)),
   };
+}
+
+export function tryFetchStakes(api: ApiPromise, fnftCollectionId: string) {
+  const getStakes = tryCatch(
+    () => api.query.stakingRewards.stakes.entries(fnftCollectionId),
+    () => "0"
+  );
+  return pipe(getStakes);
 }
 
 export function tryFetchStakePortfolio(
@@ -225,11 +234,23 @@ export function stake({
 }
 
 export function calculateStakingPeriodAPR(
-  lockPeriod: string,
-  durationPresets: {
-    [key in string]: BigNumber;
-  }
+  rewardPool: RewardPool,
+  assetId: string,
+  multiplier: number
 ) {
-  console.log("Implement APR");
-  return "0";
+  // rewards per sec * (365* 24* 60* 60) / pool’s shares
+  const SECONDS_IN_YEAR = 365 * 24 * 60 * 60;
+  const currentAmount = useStakeForm.getState().amount;
+  const rewardsPerSec = rewardPool.rewards[assetId].rewardRate.amount;
+  const poolShare = new BigNumber(useStore.getState().maximumPicaShares);
+  const myShare = currentAmount.multipliedBy(multiplier);
+  const apr = new BigNumber(fromChainIdUnit(rewardsPerSec.toString()))
+    .multipliedBy(SECONDS_IN_YEAR)
+    .div(myShare.plus(poolShare));
+
+  if (apr.isNaN() || !apr.isFinite()) {
+    return "0";
+  }
+
+  return apr.toFormat(2);
 }

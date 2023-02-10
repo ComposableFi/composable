@@ -1,9 +1,10 @@
 import { Stack } from "@mui/material";
 import { HighlightBox } from "@/components/Organisms/Staking/HighlightBox";
 import { FC } from "react";
+import { useStore } from "@/stores/root";
 
 export const StakingHighlights: FC = () => {
-  const totalPicaDeposited = "20,325,651";
+  const totalPicaDeposited = useStore((state) => state.maximumPicaStaked);
   const maximumXPICAAPR = "265%";
   const averageLockTime = "0";
 
@@ -16,7 +17,7 @@ export const StakingHighlights: FC = () => {
       />
       <HighlightBox
         title={"Total $PICA deposited"}
-        value={totalPicaDeposited}
+        value={totalPicaDeposited.toFormat()}
         flexGrow={1}
       />
       <HighlightBox

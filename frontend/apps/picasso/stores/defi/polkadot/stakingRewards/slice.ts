@@ -1,6 +1,7 @@
 import BigNumber from "bignumber.js";
 import { StoreSlice } from "@/stores/types";
 import { StakingPosition } from "@/apollo/queries/stakingPositions";
+import { u128 } from "@polkadot/types-codec";
 
 export type RewardPool = {
   owner: string;
@@ -15,6 +16,20 @@ export type RewardPool = {
   shareAssetId: string;
   financialNftAssetId: string;
   minimumStakingAmount: BigNumber;
+
+  rewards: {
+    [key: string]: {
+      // KEY is the assetId of reward
+      totalRewards: u128;
+      claimedRewards: u128;
+      totalDilutionAdjustment: u128;
+      rewardRate: {
+        period: "PerSecond";
+        amount: u128;
+      };
+      lastUpdatedTimeStamp: string;
+    };
+  };
 };
 export type PortfolioItem = {
   instanceId: string;
@@ -44,8 +59,12 @@ export type StakingRewardsSlice = {
   resetClaimableRewards: () => void;
   claimableRewards: ClaimableRewards;
   isClaimableLoading: boolean;
-};
+  maximumPicaStaked: BigNumber;
+  setMaxPICAStakes: (v: BigNumber) => void;
 
+  maximumPicaShares: BigNumber;
+  setMaxPICAShares: (v: BigNumber) => void;
+};
 export type ClaimableReward = { assetId: string; balance: BigNumber };
 export type ClaimableRewards = {
   [key in string]: ClaimableReward[];
@@ -68,11 +87,14 @@ const initialState = {
       shareAssetId: "",
       financialNftAssetId: "",
       minimumStakingAmount: new BigNumber(0),
+      rewards: {},
     },
   },
   stakingPositions: [],
   stakingPortfolio: [],
   claimableRewards: {},
+  maximumPicaStaked: new BigNumber(0),
+  maximumPicaShares: new BigNumber(0),
 };
 
 export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (
@@ -120,6 +142,18 @@ export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (
     set((state) => {
       state.claimableRewards = {};
       state.isClaimableLoading = true;
+    });
+  },
+
+  setMaxPICAStakes: (v: BigNumber) => {
+    set((state) => {
+      state.maximumPicaStaked = v;
+    });
+  },
+
+  setMaxPICAShares: (v: BigNumber) => {
+    set((state) => {
+      state.maximumPicaShares = v;
     });
   },
 });

@@ -10,6 +10,7 @@ import {
 import { calculateStakingPeriodAPR } from "@/defi/polkadot/pallets/StakingRewards";
 import { RewardPool } from "@/stores/defi/polkadot/stakingRewards/slice";
 import { useMemo } from "react";
+import { useStore } from "@/stores/root";
 
 type LockPeriodInputProps = {
   options: {
@@ -54,6 +55,7 @@ export function LockPeriodInput({
     if (!durationConfig) return 1;
     return durationConfig[1].div(100).toNumber();
   }, [picaRewardPool.lock.durationPresets, selectedDuration]);
+
   return (
     <Box>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -64,18 +66,18 @@ export function LockPeriodInput({
         >
           {label || "Select lock period"}
         </Typography>
-        <Stack direction="row" gap={1}>
+        <Stack direction="row" gap={2}>
           <Typography
             variant="body2"
             color={alpha(theme.palette.common.white, 0.6)}
-            sx={{ width: "93px", ml: "-1ch" }}
+            sx={{ minWidth: "93px", ml: "-1ch" }}
           >
             ~APR
           </Typography>
           <Typography
             variant="body2"
             color={alpha(theme.palette.common.white, 0.6)}
-            sx={{ width: "93px" }}
+            sx={{ minWidth: "93px" }}
           >
             Multiplier
           </Typography>
@@ -91,23 +93,15 @@ export function LockPeriodInput({
             <Typography variant="h6">
               {selectedDuration?.label ?? "Select a lock period"}
             </Typography>
-            <Stack direction="row" gap={1}>
+            <Stack direction="row" gap={2}>
+              <APRPercent
+                picaRewardPool={picaRewardPool}
+                multiplier={multiplier}
+              />
               <Typography
                 variant="subtitle1"
                 color={theme.palette.featured.lemon}
-                sx={{ width: "93px" }}
-                textAlign="start"
-              >
-                %
-                {calculateStakingPeriodAPR(
-                  duration,
-                  picaRewardPool.lock.durationPresets
-                )}
-              </Typography>
-              <Typography
-                variant="subtitle1"
-                color={theme.palette.featured.lemon}
-                sx={{ width: "93px" }}
+                sx={{ minWidth: "93px" }}
                 textAlign="start"
               >
                 {multiplier}X
@@ -135,3 +129,32 @@ export function LockPeriodInput({
     </Box>
   );
 }
+
+const APRPercent = ({
+  picaRewardPool,
+  multiplier,
+}: {
+  picaRewardPool: RewardPool;
+  multiplier: number;
+}) => {
+  const theme = useTheme();
+  const picaAssetId = useStore(
+    (store) =>
+      store.substrateTokens.tokens.pica.chainId.picasso?.toString() ?? "1"
+  );
+  const apr = useMemo(
+    () => calculateStakingPeriodAPR(picaRewardPool, picaAssetId, multiplier),
+    [multiplier, picaAssetId, picaRewardPool]
+  );
+
+  return (
+    <Typography
+      variant="subtitle1"
+      color={theme.palette.featured.lemon}
+      sx={{ minWidth: "93px" }}
+      textAlign="start"
+    >
+      %{apr}
+    </Typography>
+  );
+};

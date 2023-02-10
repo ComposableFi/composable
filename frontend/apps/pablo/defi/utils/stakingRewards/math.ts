@@ -1,5 +1,7 @@
-import { StakingRewardPool } from "@/defi/types/stakingRewards";
-import { RewardPoolRewardRatePeriod } from "@/defi/types/stakingRewards";
+import {
+  RewardPoolRewardRatePeriod,
+  StakingRewardPool,
+} from "@/defi/types/stakingRewards";
 import BigNumber from "bignumber.js";
 
 export function convertRewardRatePeriod(
