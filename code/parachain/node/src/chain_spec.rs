@@ -130,7 +130,10 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(*PARACHAIN_ID) },
+		Extensions {
+			relay_chain: "rococo_local_testnet".into(),
+			para_id: u32::from(*PARACHAIN_ID),
+		},
 	)
 }
 
@@ -215,7 +218,10 @@ pub fn composable_dev() -> composable::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "westend_local_testnet".into(), para_id: u32::from(*PARACHAIN_ID) },
+		Extensions {
+			relay_chain: "westend_local_testnet".into(),
+			para_id: u32::from(*PARACHAIN_ID),
+		},
 	)
 }
 

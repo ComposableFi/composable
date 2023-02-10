@@ -43,7 +43,7 @@ in with prelude; rec {
     let
       generated = lib.lists.zipListsWith
         (_increment: name: mkCollator { inherit command name rust_log_add; })
-        (lib.lists.range 0 (collators - 1)) (builtins.tail names);
+        (lib.lists.range 0 (collators - 2)) (builtins.tail names);
 
     in {
       add_to_genesis = true;

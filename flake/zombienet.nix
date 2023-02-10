@@ -22,7 +22,7 @@
               command = pkgs.lib.meta.getExe self'.packages.composable-node;
               inherit chain;
               id = para-id;
-              collators = 3;
+              collators = 2;
             } // (pkgs.lib.optionalAttrs (chain != null) { inherit chain; })
               // (pkgs.lib.optionalAttrs (rust_log_add != null) {
                 inherit rust_log_add;
@@ -60,7 +60,7 @@
                 command = pkgs.lib.meta.getExe self'.packages.acala-node;
                 chain = "karura-dev";
                 id = 2000;
-                collators = 0;
+                collators = 1;
                 ws_port = 9999;
                 rpc_port = 32210;
               }
