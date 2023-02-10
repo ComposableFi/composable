@@ -7,6 +7,8 @@ import { InfoOutlined } from "@mui/icons-material";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { formatDate } from "shared";
 import { useMemo } from "react";
+import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
+import config from "@/constants/config";
 
 type StakeFormProps = {
   amount: any;
@@ -47,6 +49,13 @@ export function StakeForm({
 }: StakeFormProps) {
   const theme = useTheme();
   const shouldShowWarning = duration !== "0";
+  const account = useSelectedAccount(config.defaultNetworkId);
+  const isPendingStake = usePendingExtrinsic(
+    "stake",
+    "stakingRewards",
+    account?.address ?? "-"
+  );
+
   return (
     <Stack sx={{ marginTop: theme.spacing(9) }} gap={4}>
       <Stack gap={1.5}>
@@ -65,6 +74,7 @@ export function StakeForm({
             },
           }}
           maxDecimals={pica.decimals.picasso ?? undefined}
+          disabled={isPendingStake}
         />
       </Stack>
       {/*  Radiobutton groups*/}
@@ -76,21 +86,14 @@ export function StakeForm({
         min={min}
         max={max}
         onChange={onChange}
+        disabled={isPendingStake}
       />
       <Typography variant="body2">Unlock date</Typography>
       <FutureDatePaper duration={duration} />
       {shouldShowWarning && (
         <PICALockedWarning duration={duration} token={pica} />
       )}
-      <Button
-        fullWidth
-        onClick={onClick}
-        variant="contained"
-        color="primary"
-        disabled={!formValid}
-      >
-        <Typography variant="button">Stake and mint</Typography>
-      </Button>
+      <StakeButton disabled={!formValid || isPendingStake} onClick={onClick} />
     </Stack>
   );
 }
@@ -120,5 +123,27 @@ const PICALockedWarning = ({
         Your ${token.symbol} will be locked for {days} days until {date}
       </Typography>
     </AlertBox>
+  );
+};
+
+const StakeButton = ({
+  disabled,
+  onClick,
+}: {
+  disabled: boolean;
+  onClick: () => void;
+}) => {
+
+
+  return (
+    <Button
+      fullWidth
+      onClick={onClick}
+      variant="contained"
+      color="primary"
+      disabled={disabled}
+    >
+      <Typography variant="button">Stake and mint</Typography>
+    </Button>
   );
 };

@@ -215,6 +215,10 @@ export function stake({
               url: subscanExtrinsicLink("picasso", txHash),
             }
           );
+          useStakeForm.setState((state) => {
+            state.amount = new BigNumber(0);
+            state.lockPeriod = "0";
+          });
         },
         (errorMessage: string) => {
           closeSnackbar(snackbarKey);

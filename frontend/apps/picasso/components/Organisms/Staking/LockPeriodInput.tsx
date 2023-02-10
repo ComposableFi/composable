@@ -29,6 +29,7 @@ type LockPeriodInputProps = {
   ) => any;
   label?: string;
   LabelProps?: TypographyProps;
+  disabled?: boolean;
 };
 
 export function LockPeriodInput({
@@ -41,6 +42,7 @@ export function LockPeriodInput({
   onChange,
   label,
   LabelProps,
+  disabled,
 }: LockPeriodInputProps) {
   const theme = useTheme();
   const selectedDuration = options.find(
@@ -122,6 +124,7 @@ export function LockPeriodInput({
               min={min}
               max={max}
               onChange={onChange}
+              disabled={disabled}
             />
           )}
         </>

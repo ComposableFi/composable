@@ -4,7 +4,12 @@ import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { FC, useMemo } from "react";
 import { callbackGate, formatNumber, subscanExtrinsicLink } from "shared";
 import { usePicassoAccount } from "@/defi/polkadot/hooks";
-import { useExecutor, usePicassoProvider, useSigner } from "substrate-react";
+import {
+  useExecutor,
+  usePendingExtrinsic,
+  usePicassoProvider,
+  useSigner,
+} from "substrate-react";
 import { SnackbarKey, useSnackbar } from "notistack";
 import { useStakingRewards } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewards";
 import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
@@ -21,6 +26,11 @@ export const BurnModal: FC<{
   const { stakingPortfolio } = useStakingRewards();
   const [fnftCollectionId, fnftInstanceId] = selectedToken;
   const signer = useSigner();
+  const isPendingBurn = usePendingExtrinsic(
+    "unstake",
+    "stakingRewards",
+    account?.address ?? "-"
+  );
 
   const handleBurnUnstake = () => {
     let snackbarKey: SnackbarKey | undefined;
@@ -176,6 +186,7 @@ export const BurnModal: FC<{
           color="primary"
           fullWidth
           onClick={handleBurnUnstake}
+          disabled={isPendingBurn}
         >
           Burn and unstake
         </Button>
