@@ -2180,7 +2180,7 @@ fn pbl_295() {
 
 		next_block::<StakingRewards, Test>();
 
-		// === Utility functions
+		// Utility functions
 		fn pot_balance_available() -> Balance {
 			let pot_account = crate::Pallet::<Test>::pool_account_id(&PICA::ID);
 
@@ -2188,9 +2188,11 @@ fn pbl_295() {
 				<Test as crate::Config>::Assets::balance_on_hold(USDT::ID, &pot_account);
 			let balance = <Test as crate::Config>::Assets::balance(USDT::ID, &pot_account);
 			let available = balance - balance_on_hold;
-			println!(
+			tracing::info!(
 				"Pot balance: {} (available: {}, on hold: {})",
-				balance, available, balance_on_hold
+				balance,
+				available,
+				balance_on_hold
 			);
 			available
 		}
@@ -2205,13 +2207,13 @@ fn pbl_295() {
 				&USDT::ID,
 			)
 			.unwrap();
-			println!("Claimable amount: {}", amount);
+			tracing::info!("Claimable amount: {}", amount);
 			amount
 		}
 		let reward_rate = USDT::units(1) / 1_000;
 		let rewards_for_blocks = |blocks: u64| -> Balance { reward_rate * block_seconds(blocks) };
 
-		// === 1. Create rewards pool
+		// 1. Create rewards pool
 		create_rewards_pool_and_assert::<Test>(RewardRateBasedIncentive {
 			owner: ALICE,
 			asset_id: PICA::ID,
@@ -2234,7 +2236,7 @@ fn pbl_295() {
 			minimum_staking_amount: 10_000,
 		});
 
-		// === 2. Add funds (USD) to rewards pot
+		// 2. Add funds (USD) to rewards pot
 		mint_assets([BOB], [USDT::ID], USDT::units(100_000_000_001));
 		add_to_rewards_pot_and_assert::<Test>(BOB, PICA::ID, USDT::ID, USDT::units(1), false);
 		assert_eq!(pot_balance_available(), USDT::units(0));
@@ -2243,16 +2245,16 @@ fn pbl_295() {
 		process_and_progress_blocks::<StakingRewards, Test>(10);
 		assert_eq!(pot_balance_available(), rewards_for_blocks(10));
 
-		// === 3. Stake by Dave 1000 PICA
+		// 3. Stake by Dave 1000 PICA
 		mint_assets([DAVE], [PICA::ID], PICA::units(1_001));
 		let dave_id = stake_and_assert::<Test>(DAVE, PICA::ID, PICA::units(1) / 100_000, 0);
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		// === 4. Stake by Charlie 1000 PICA
+		// 4. Stake by Charlie 1000 PICA
 		mint_assets([CHARLIE], [PICA::ID], PICA::units(1_001));
 		let charlie_id = stake_and_assert::<Test>(CHARLIE, PICA::ID, PICA::units(1) / 100_000, 0);
 
-		// === 5. Claim by Dave
+		// 5. Claim by Dave
 		assert_eq!(pot_balance_available(), rewards_for_blocks(12));
 		assert_eq!(claimable_amount(dave_id), rewards_for_blocks(12));
 		assert_eq!(claimable_amount(charlie_id), 0);
@@ -2264,7 +2266,7 @@ fn pbl_295() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		// === 6. Claim by Charlie (can claim half the rewards in the pool as per shares)
+		// 6. Claim by Charlie (can claim half the rewards in the pool as per shares)
 		assert_eq!(pot_balance_available(), rewards_for_blocks(2));
 		assert_eq!(claimable_amount(dave_id), rewards_for_blocks(2) / 2);
 		assert_eq!(claimable_amount(charlie_id), rewards_for_blocks(2) / 2);
@@ -2280,7 +2282,7 @@ fn pbl_295() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		// === 7. Split by Dave 50/50
+		// 7. Split by Dave 50/50
 		assert_eq!(pot_balance_available(), rewards_for_blocks(2) + rewards_for_blocks(2) / 2);
 		assert_eq!(claimable_amount(dave_id), rewards_for_blocks(2));
 		assert_eq!(claimable_amount(charlie_id), rewards_for_blocks(2) / 2);
@@ -2297,7 +2299,7 @@ fn pbl_295() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		// === 8. Unstake by Dave of first stake
+		// 8. Unstake by Dave of first stake
 		assert_eq!(
 			pot_balance_available(),
 			rewards_for_blocks(2) + rewards_for_blocks(2) / 2 + rewards_for_blocks(2)
@@ -2351,11 +2353,8 @@ fn pbl_295() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		// === 9. Claim by Dave of second stake
-		assert_eq!(
-			pot_balance_available(),
-			rewards_for_blocks(2)
-		);
+		// 9. Claim by Dave of second stake
+		assert_eq!(pot_balance_available(), rewards_for_blocks(2));
 		assert_eq!(
 			claimable_amount(dave_new),
 			// gets their normal share as well their share of daves unstaked stake reward
