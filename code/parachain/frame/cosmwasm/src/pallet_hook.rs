@@ -1,4 +1,4 @@
-use crate::{runtimes::vm::CosmwasmVM, types::*, Config, Error};
+use crate::{prelude::*, runtimes::vm::CosmwasmVM, types::*, Config, Error};
 use cosmwasm_vm::{
 	cosmwasm_std::{ContractResult, QueryResponse, Response},
 	vm::{VMBase, VmErrorOf},
@@ -21,6 +21,12 @@ pub trait PalletHook<T: Config> {
 		ContractResult<Response<<OwnedWasmiVM<CosmwasmVM<'a, T>> as VMBase>::MessageCustom>>,
 		VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, T>>>,
 	>;
+
+	fn run<'a>(
+		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, T>>,
+		entrypoint: EntryPoint,
+		message: &[u8],
+	) -> Result<Vec<u8>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, T>>>>;
 
 	/// Hook into a contract query.
 	fn query<'a>(
@@ -53,6 +59,14 @@ where {
 		_vm: &mut OwnedWasmiVM<CosmwasmVM<'a, T>>,
 		_: &[u8],
 	) -> Result<ContractResult<QueryResponse>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, T>>>> {
+		Err(Error::<T>::Unsupported.into())
+	}
+
+	fn run<'a>(
+		_vm: &mut OwnedWasmiVM<CosmwasmVM<'a, T>>,
+		_entrypoint: EntryPoint,
+		_message: &[u8],
+	) -> Result<Vec<u8>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, T>>>> {
 		Err(Error::<T>::Unsupported.into())
 	}
 }

@@ -277,6 +277,7 @@ mod pallet_contracts {
 		ics04_channel::{
 			channel::{Counterparty, Order},
 			context::ChannelReader,
+			packet::Packet,
 		},
 		ics24_host::identifier::{ConnectionId, PortId},
 		ics26_routing::context::{ModuleCallbackContext, ModuleId, ModuleOutputBuilder},
@@ -381,7 +382,12 @@ mod pallet_contracts {
 			ibc::core::ics04_channel::channel::ChannelEnd,
 			ibc::core::ics04_channel::error::Error,
 		> {
-			unimplemented!()
+			Ok(ibc::core::ics04_channel::channel::ChannelEnd {
+				remote: Counterparty { port_id: <_>::default(), channel_id: Some(<_>::default()) },
+				connection_hops: [ConnectionId::default(); 1].to_vec(),
+				version: <_>::default(),
+				..ibc::core::ics04_channel::channel::ChannelEnd::default()
+			})
 		}
 
 		fn connection_channels(
@@ -508,9 +514,8 @@ mod pallet_contracts {
 
 	#[test]
 	fn open_channel_ceremony() {
-		type T = Test;
 		new_test_ext().execute_with(|| {
-			let mut ibc = Router::<T>::default();
+			let mut ibc = Router::<Test>::default();
 			let module_id = ModuleId::from_str("cosmwasm").unwrap();
 			let ibc = ibc.get_route_mut(&module_id).unwrap();
 			assert_ok!(ibc.on_chan_open_init(
@@ -530,6 +535,76 @@ mod pallet_contracts {
 				&Counterparty { port_id: <_>::default(), channel_id: Some(<_>::default()) },
 				&<_>::default(),
 				&Signer::from_str("42").unwrap(),
+			));
+		});
+	}
+
+	#[test]
+	fn ibc_calls_and_callbacks() {
+		new_test_ext().execute_with(|| {
+			let mut ibc = Router::<Test>::default();
+			let module_id = ModuleId::from_str("cosmwasm").unwrap();
+			let ibc = ibc.get_route_mut(&module_id).unwrap();
+			let ctx = &Test::default();
+			let output = &mut ModuleOutputBuilder::new();
+			let relayer = &Signer::from_str("42").unwrap();
+			ibc.on_chan_open_init(
+				ctx,
+				output,
+				Order::Ordered,
+				&[ConnectionId::new(42)],
+				&PortId::from_str(
+					format!(
+						"wasm.{}",
+						Pallet::<Test>::account_to_cosmwasm_addr(MOCK_PALLET_IBC_CONTRACT_ADDRESS)
+					)
+					.as_str(),
+				)
+				.unwrap(),
+				&<_>::default(),
+				&Counterparty { port_id: <_>::default(), channel_id: Some(<_>::default()) },
+				&<_>::default(),
+				&Signer::from_str("42").unwrap(),
+			)
+			.unwrap();
+
+			let port_id = &PortId::from_str(
+				format!(
+					"wasm.{}",
+					Pallet::<Test>::account_to_cosmwasm_addr(MOCK_PALLET_IBC_CONTRACT_ADDRESS)
+				)
+				.as_str(),
+			)
+			.unwrap();
+
+			assert_ok!(ibc.on_chan_open_try(
+				&Test::default(),
+				&mut ModuleOutputBuilder::new(),
+				Order::Ordered,
+				&[ConnectionId::new(42)],
+				port_id,
+				&<_>::default(),
+				&Counterparty { port_id: <_>::default(), channel_id: Some(<_>::default()) },
+				&<_>::default(),
+				&<_>::default(),
+				&Signer::from_str("42").unwrap(),
+			));
+
+			assert_ok!(ibc.on_chan_open_confirm(ctx, output, port_id, &<_>::default(), relayer));
+
+			assert_ok!(ibc.on_recv_packet(
+				ctx,
+				output,
+				&Packet {
+					sequence: 42.into(),
+					source_port: port_id.clone(),
+					source_channel: <_>::default(),
+					destination_port: port_id.clone(),
+					destination_channel: <_>::default(),
+					data: [42; 1].to_vec(),
+					..Packet::default()
+				},
+				relayer,
 			));
 		});
 	}
