@@ -10,9 +10,11 @@ use crate::{
 };
 use composable_traits::currency::{CurrencyFactory, RangeId};
 use core::marker::PhantomData;
+
 use cosmwasm_vm::{
 	cosmwasm_std::{
-		ContractResult, Event as CosmwasmEvent, QueryResponse, Response, SubMsg, WasmMsg,
+		ContractResult, Event as CosmwasmEvent, Ibc3ChannelOpenResponse, IbcMsg, IbcTimeout,
+		QueryResponse, Response, SubMsg, WasmMsg,
 	},
 	vm::{VMBase, VmErrorOf, VmGas},
 };
@@ -265,7 +267,14 @@ impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for IbcLoopback<T> {
 	fn handle_message(
 		_msg: ibc_primitives::HandlerMessage<AccountIdOf<T>>,
 	) -> Result<(), ibc_primitives::Error> {
-		todo!("loopback")
+		System::remark_with_event(
+			frame_system::Origin::<Test>::Signed(MOCK_PALLET_IBC_CONTRACT_ADDRESS).into(),
+			b"ibc->cw->ibc".to_vec(),
+		)
+		.unwrap();
+		// here we should call the cw contract, so it goes to area of emulation of ibc pallet, may
+		// be next pr
+		Ok(())
 	}
 
 	fn latest_height_and_timestamp(
@@ -302,6 +311,7 @@ pub const MOCK_PALLET_CONTRACT_ADDRESS_1: AccountIdOf<Test> = AccountId32::new([
 pub const MOCK_PALLET_CONTRACT_ADDRESS_2: AccountIdOf<Test> = AccountId32::new([120u8; 32]);
 
 pub const MOCK_PALLET_IBC_CONTRACT_ADDRESS: AccountIdOf<Test> = AccountId32::new([42; 32]);
+pub const MOCK_CONTRACT_IBC_EVENT_TYPE_1: &str = "ibc-magic";
 
 pub const MOCK_CONTRACT_EVENT_TYPE_1: &str = "magic";
 pub const MOCK_CONTRACT_EVENT_TYPE_2: &str = "magic but it is blue";
@@ -352,15 +362,61 @@ impl PalletHook<Test> for MockHook {
 		VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Test>>>,
 	> {
 		match entrypoint {
-			EntryPoint::IbcChannelOpen => match *vm.0.data().contract_address.as_ref() {
+			EntryPoint::IbcChannelConnect => match *vm.0.data().contract_address.as_ref() {
 				MOCK_PALLET_IBC_CONTRACT_ADDRESS => Ok(ContractResult::Ok(Response::new())),
-				_ => Ok(ContractResult::Err("IBC not supported".into())),
+				_ => Err(CosmwasmVMError::Unsupported),
 			},
-			EntryPoint::IbcChannelConnect => todo!("IbcChannelConnect"),
-			EntryPoint::IbcChannelClose => todo!("IbcChannelClose"),
-			EntryPoint::IbcPacketTimeout => todo!("IbcPacketTimeout"),
-			EntryPoint::IbcPacketAck => todo!("IbcPacketAck"),
+			EntryPoint::IbcChannelClose => Err(CosmwasmVMError::Unsupported),
+			EntryPoint::IbcPacketTimeout => Err(CosmwasmVMError::Unsupported),
+			EntryPoint::IbcPacketAck => Err(CosmwasmVMError::Unsupported),
+			EntryPoint::IbcPacketReceive => match *vm.0.data().contract_address.as_ref() {
+				MOCK_PALLET_IBC_CONTRACT_ADDRESS => match message {
+					&[1, 2, 3] => {
+						System::remark_with_event(
+							frame_system::Origin::<Test>::Signed(MOCK_PALLET_IBC_CONTRACT_ADDRESS)
+								.into(),
+							b"ibc->cw->ibc->cw".to_vec(),
+						)
+						.unwrap();
+						Ok(ContractResult::Ok(
+							Response::new().add_event(CosmwasmEvent::new("cw-ibc-cw-ibc-cw")),
+						))
+					},
+
+					_ => {
+						let response = Response::new()
+							.add_event(CosmwasmEvent::new(MOCK_CONTRACT_IBC_EVENT_TYPE_1))
+							.add_message(WasmMsg::Execute {
+								contract_addr: AccountToAddr::convert(
+									MOCK_PALLET_IBC_CONTRACT_ADDRESS,
+								),
+								msg: cosmwasm_vm::cosmwasm_std::Binary("42".as_bytes().to_vec()),
+								funds: Default::default(),
+							})
+							.add_message(IbcMsg::SendPacket {
+								channel_id: "channel-0".to_string(),
+								data: [1, 2, 3].into(),
+								timeout: IbcTimeout::with_timestamp(
+									cosmwasm_vm::cosmwasm_std::Timestamp::from_nanos(0),
+								),
+							})
+							.set_data(0x666_u32.to_le_bytes());
+
+						Ok(ContractResult::Ok(response))
+					},
+				},
+				_ => Err(CosmwasmVMError::Unsupported),
+			},
 			_ => match *vm.0.data().contract_address.as_ref() {
+				MOCK_PALLET_IBC_CONTRACT_ADDRESS => {
+					System::remark_with_event(
+						frame_system::Origin::<Test>::Signed(MOCK_PALLET_IBC_CONTRACT_ADDRESS)
+							.into(),
+						b"ibc->cw".to_vec(),
+					)
+					.unwrap();
+					Ok(ContractResult::Ok(Response::new()))
+				},
 				MOCK_PALLET_CONTRACT_ADDRESS_1 => {
 					vm.charge(VmGas::Instrumentation { metered: 1 })?;
 					let mut response = Response::new()
@@ -424,6 +480,21 @@ impl PalletHook<Test> for MockHook {
 			MOCK_PALLET_CONTRACT_ADDRESS_1 | MOCK_PALLET_CONTRACT_ADDRESS_2 =>
 				Ok(ContractResult::Err(MOCK_QUERY_JS.into())),
 			_ => Err(CosmwasmVMError::Unsupported), // Should be impossible
+		}
+	}
+
+	fn run<'a>(
+		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, Test>>,
+		_entrypoint: EntryPoint,
+		_message: &[u8],
+	) -> Result<Vec<u8>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Test>>>> {
+		match *vm.0.data().contract_address.as_ref() {
+			MOCK_PALLET_IBC_CONTRACT_ADDRESS =>
+				Ok(serde_json::to_vec(&ContractResult::Ok(Ibc3ChannelOpenResponse {
+					version: "42".to_string(),
+				}))
+				.unwrap()),
+			_ => Err(CosmwasmVMError::Unsupported),
 		}
 	}
 }
