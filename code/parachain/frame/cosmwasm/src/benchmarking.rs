@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_methods)]
+
 use super::*;
 use crate::{
 	instrument::INSTRUCTIONS_MULTIPLIER,
@@ -257,7 +259,6 @@ where
 		"salt".as_bytes(),
 		Some(origin),
 		vec![0x41_u8].try_into().unwrap(),
-		"message".as_bytes(),
 	)
 	.unwrap()
 	.top_level_call(get_shared_vm(), Default::default(), b"message".to_vec().try_into().unwrap())
@@ -364,7 +365,7 @@ benchmarks! {
 		// Make sure contract address is derived correctly
 		let code_hash = CodeIdToInfo::<T>::get(1).unwrap().pristine_code_hash;
 		let contract_addr =
-			Pallet::<T>::derive_contract_address(&origin, &salt, &code_hash, &message).unwrap();
+			Pallet::<T>::derive_contract_address(&origin, &salt, &code_hash).unwrap();
 		// Make sure trie_id is derived correctly
 		let nonce = CurrentNonce::<T>::get();
 		let trie_id = Pallet::<T>::derive_contract_trie_id(&contract_addr, nonce);
@@ -429,7 +430,7 @@ benchmarks! {
 		let new_admin = account::<<T as Config>::AccountIdExtended>("new_admin", 0, 0xCAFEBABE);
 		let contract = create_instantiated_contract::<T>(origin.clone());
 
-	}: _(RawOrigin::Signed(origin), contract.clone(), Some(new_admin.clone()), 100_000_000u64)
+	}: _(RawOrigin::Signed(origin), contract.clone(), Some(new_admin.clone()), 1_000_000_000_000u64)
 	verify {
 		// Make sure contract points to the new code
 		assert_eq!(ContractToInfo::<T>::get(&contract).unwrap().admin, Some(new_admin));
