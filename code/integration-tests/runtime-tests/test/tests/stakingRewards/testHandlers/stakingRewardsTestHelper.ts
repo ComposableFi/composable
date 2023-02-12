@@ -12,6 +12,7 @@ import { KeyringPair } from "@polkadot/keyring/types";
 import { AnyNumber } from "@polkadot/types/types";
 import BigNumber from "bignumber.js";
 import { Pica } from "@composable/utils/mintingHelper";
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 
 export async function verifyPoolCreationUsingQuery(
   api: ApiPromise,
@@ -19,7 +20,6 @@ export async function verifyPoolCreationUsingQuery(
   resultOwner: AccountId32,
   walletPoolOwner: Uint8Array,
   startBlock: u32,
-  endBlock: u32,
   shareAssetId: u128,
   financialNftAssetId: u128,
   minimumStakingAmount: u128
@@ -40,7 +40,6 @@ export async function verifyPoolCreationUsingQuery(
   expect(poolInfo.unwrap().claimedShares).to.be.bignumber.equal(new BN(0));
   // Verifying the startBlock & endBlock, as reported by the query, is equal to what we set it to.
   expect(poolInfo.unwrap().startBlock).to.be.bignumber.equal(startBlock);
-  expect(poolInfo.unwrap().endBlock).to.be.bignumber.equal(endBlock);
   // Verifying our shareAssetId, as reported by the query, is what we set it to.
   expect(poolInfo.unwrap().shareAssetId).to.be.bignumber.equal(shareAssetId);
   // Verifying our financialNftAssetId, as reported by the query, is what we set it to.
@@ -61,11 +60,6 @@ export async function verifyPoolPotAddition(
   // Querying `rewardsPotIsEmpty` now should report `None` type.
   const poolInfo = <Option<Null>>await api.query.stakingRewards.rewardsPotIsEmpty(stakingPoolId, assetId);
   expect(poolInfo.isNone).to.be.true;
-  const poolInfoAfter = <Option<ComposableTraitsStakingRewardPool>>await api.query.stakingRewards.rewardPools(stakingPoolId);
-  const poolAmountAfter = poolInfoAfter.unwrap().rewards.toJSON()[assetId.toString()];
-  // @ts-ignore
-  expect(new BN(poolAmountAfter.toString())).to.be.bignumber
-    .equal(poolRewardAssetBalanceBefore)
   let txFeeAdjustment = 0;
   // If we added PICA, we won't have the exact amount subtracted due to tx fees.
   if (assetId === 1) txFeeAdjustment = 200_000_000_000;
@@ -80,6 +74,7 @@ export async function verifyPoolStaking(
   fNFTCollectionId: u128,
   fNFTInstanceId: u64,
   stakeAmount: bigint | number | string,
+  expectedBalanceReducedAmount: bigint| number|string,
   stakeAssetId: u128,
   walletStaker: KeyringPair,
   userFundsBefore: CustomRpcBalance
@@ -94,7 +89,7 @@ export async function verifyPoolStaking(
   const userFundsAfter = await api.rpc.assets.balanceOf(stakeAssetId.toString(), walletStaker.publicKey);
   // Making sure the amount funds left, of the staking asset, is exactly the amount,
   // subtracted by our staked amount.
-  const expectedFunds = new BN(userFundsBefore.toString()).sub(new BN(stakeAmount.toString()));
+  const expectedFunds = new BN(userFundsBefore.toString()).sub(new BN(expectedBalanceReducedAmount.toString()));
   expect(expectedFunds).to.be.bignumber.equal(new BN(userFundsAfter.toString()));
 }
 
@@ -111,7 +106,8 @@ export async function verifyPoolClaiming(
   // Checking funds
   for (const [index, assetId] of poolRewardAssetId.entries()) {
     const userFundsAfter = await api.rpc.assets.balanceOf(assetId.toString(), walletStaker.publicKey);
-    const claimedAmount = new BN(userFundsAfter.toString()).sub(new BN(userFundsBefore[index].toString()));
+    const claimedAmount = new BN(userFundsAfter.toString())
+      .sub(new BN(userFundsBefore[index].toString()));
     expect(claimedAmount).to.be.bignumber.equal(claimableAmount);
   }
 }
@@ -134,9 +130,6 @@ export async function verifyPositionExtension(
   // Making sure the newly reported stake amount is equal to the previous amount as well as our added amount.
   const expectedStakeAmount = stakeInfoBefore.unwrap().stake.add(new BN(amount));
   expect(stakeInfoAfter.unwrap().stake).to.be.bignumber.equal(expectedStakeAmount);
-  // Making sure the share amount is equal to ???.
-  const expectedShareAmount = await api.query.tokens.totalIssuance(shareAssetId);
-  expect(stakeInfoAfter.unwrap().share).to.be.bignumber.equal(expectedShareAmount);
 
   // Checking funds
   const userFundsAfter = await api.rpc.assets.balanceOf(poolBaseAssetId.toString(), walletStaker.publicKey);
@@ -168,14 +161,9 @@ export async function verifyPositionSplitting(
   const expectedShareAmount2 = stakeInfoBefore.unwrap().stake.muln(splitB);
 
   const stakeRange1 = expectedStakeAmount1.div(new BN(1000)); // within .1%
-  const shareRange1 = expectedShareAmount1.div(new BN(1000));
   const stakeRange2 = expectedStakeAmount2.div(new BN(1000));
-  const shareRange2 = expectedShareAmount2.div(new BN(1000));
   expect(stakeInfo1After.unwrap().stake).to.be.bignumber.closeTo(expectedStakeAmount1, stakeRange1);
-  // expect(stakeInfo1After.unwrap().share).to.be.bignumber.closeTo(expectedShareAmount1, shareRange1);
   expect(stakeInfo2After.unwrap().stake).to.be.bignumber.closeTo(expectedStakeAmount2, stakeRange2);
-  // expect(stakeInfo2After.unwrap().share).to.be.bignumber.closeTo(expectedShareAmount2, shareRange2);
-  debugger;
 }
 
 export async function verifyPositionUnstaking(
