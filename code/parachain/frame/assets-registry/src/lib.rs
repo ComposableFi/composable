@@ -36,8 +36,7 @@ pub mod pallet {
 	use composable_traits::{
 		assets::{
 			Asset, AssetInfo, AssetInfoUpdate, AssetType, AssetTypeInspect, BiBoundedAssetName,
-			BiBoundedAssetSymbol, InspectRegistryMetadata, LocalOrForeignAssetId,
-			MutateRegistryMetadata,
+			BiBoundedAssetSymbol, GenerateAssetId, InspectRegistryMetadata, MutateRegistryMetadata,
 		},
 		currency::{AssetExistentialDepositInspect, BalanceLike, ForeignByNative},
 		storage::UpdateValue,
@@ -220,20 +219,19 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::register_asset())]
 		pub fn register_asset(
 			origin: OriginFor<T>,
-			local_or_foreign: LocalOrForeignAssetId<T::LocalAssetId, T::ForeignAssetId>,
+			protocol_id: [u8; 8],
+			nonce: u64,
+			location: Option<T::ForeignAssetId>,
 			asset_info: AssetInfo<T::Balance>,
 		) -> DispatchResult {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
 
-			let (asset_id, location) = match local_or_foreign {
-				LocalOrForeignAssetId::Local(asset_id) => (asset_id, None),
-				LocalOrForeignAssetId::Foreign(location) => (
-					T::LocalAssetId::from(u128::from_be_bytes(sp_io::hashing::blake2_128(
-						&location.encode(),
-					))),
-					Some(location),
-				),
-			};
+			let asset_id = Self::generate_asset_id(protocol_id, nonce);
+
+			ensure!(
+				!ExistentialDeposit::<T>::contains_key(asset_id),
+				Error::<T>::AssetAlreadyRegistered
+			);
 
 			if let Some(location) = location.clone() {
 				ensure!(
@@ -507,6 +505,23 @@ pub mod pallet {
 			} else {
 				Err(Error::<T>::AssetNotFound.into())
 			}
+		}
+	}
+
+	impl<T: Config> GenerateAssetId for Pallet<T> {
+		type AssetId = T::LocalAssetId;
+
+		fn generate_asset_id(protocol_id: [u8; 8], nonce: u64) -> Self::AssetId {
+			// NOTE: Asset ID generation rational found here:
+			// https://github.com/PoisonPhang/composable-poison-fork/blob/INIT-13/rfcs/0013-redesign-assets-id-system.md#local-asset-id-generation
+			let bytes = protocol_id
+				.into_iter()
+				.chain(nonce.to_le_bytes())
+				.collect::<Vec<u8>>()
+				.try_into()
+				.expect("[u8; 8] + bytes(u64) = [u8; 16]");
+
+			Self::AssetId::from(u128::from_le_bytes(bytes))
 		}
 	}
 }

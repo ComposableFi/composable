@@ -119,7 +119,7 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_traits::{
 		assets::{
-			AssetInfo, AssetTypeInspect, CreateAsset, InspectRegistryMetadata,
+			AssetInfo, AssetTypeInspect, CreateAsset, GenerateAssetId, InspectRegistryMetadata,
 			MutateRegistryMetadata,
 		},
 		currency::{AssetIdLike, BalanceLike},
@@ -137,7 +137,7 @@ pub mod pallet {
 	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 	use orml_traits::{GetByKey, MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
 	use sp_runtime::{DispatchError, FixedPointOperand};
-	use sp_std::{fmt::Debug, str, vec::Vec};
+	use sp_std::{fmt::Debug, str};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -217,7 +217,8 @@ pub mod pallet {
 				AssetNativeLocation = Self::AssetLocation,
 				Balance = Self::Balance,
 			> + InspectRegistryMetadata<AssetId = Self::AssetId>
-			+ MutateRegistryMetadata<AssetId = Self::AssetId>;
+			+ MutateRegistryMetadata<AssetId = Self::AssetId>
+			+ GenerateAssetId<AssetId = Self::AssetId>;
 
 		type WeightInfo: WeightInfo;
 	}
@@ -493,15 +494,7 @@ pub mod pallet {
 			nonce: u64,
 			asset_info: AssetInfo<T::Balance>,
 		) -> Result<Self::LocalAssetId, DispatchError> {
-			// NOTE: Asset ID generation rational found here:
-			// https://github.com/PoisonPhang/composable-poison-fork/blob/INIT-13/rfcs/0013-redesign-assets-id-system.md#local-asset-id-generation
-			let bytes = protocol_id
-				.into_iter()
-				.chain(nonce.to_le_bytes())
-				.collect::<Vec<u8>>()
-				.try_into()
-				.expect("[u8; 8] + bytes(u64) = [u8; 16]");
-			let asset_id = Self::LocalAssetId::from(u128::from_le_bytes(bytes));
+			let asset_id = T::AssetsRegistry::generate_asset_id(protocol_id, nonce);
 
 			T::AssetsRegistry::register_asset(asset_id, None, asset_info)?;
 
@@ -509,12 +502,12 @@ pub mod pallet {
 		}
 
 		fn create_foreign_asset(
-			foreign_asset_id: Self::ForeignAssetId,
+			protocol_id: [u8; 8],
+			nonce: u64,
 			asset_info: AssetInfo<T::Balance>,
+			foreign_asset_id: Self::ForeignAssetId,
 		) -> Result<Self::LocalAssetId, DispatchError> {
-			let asset_id = Self::LocalAssetId::from(u128::from_be_bytes(
-				sp_io::hashing::blake2_128(&foreign_asset_id.encode()),
-			));
+			let asset_id = T::AssetsRegistry::generate_asset_id(protocol_id, nonce);
 
 			T::AssetsRegistry::register_asset(asset_id, Some(foreign_asset_id), asset_info)?;
 

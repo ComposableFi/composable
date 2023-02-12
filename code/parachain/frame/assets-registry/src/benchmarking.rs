@@ -8,9 +8,7 @@ use crate::{self as pallet_assets_registry};
 use crate::Pallet as AssetsRegistry;
 use codec::{Decode, Encode};
 use composable_traits::{
-	assets::{
-		AssetInfo, AssetInfoUpdate, BiBoundedAssetName, BiBoundedAssetSymbol, LocalOrForeignAssetId,
-	},
+	assets::{AssetInfo, AssetInfoUpdate, BiBoundedAssetName, BiBoundedAssetSymbol},
 	currency::Rational64,
 	rational,
 	storage::UpdateValue,
@@ -31,7 +29,8 @@ benchmarks! {
 	register_asset {
 		let location = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
 			.expect("Asset location is foreign ID");
-		let location = LocalOrForeignAssetId::Foreign(location);
+		let protocol_id = *b"benchmar";
+		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
 			symbol: Some(BiBoundedAssetSymbol::from_vec(b"KSM".to_vec()).expect("String is within bounds")),
@@ -39,12 +38,13 @@ benchmarks! {
 			existential_deposit: T::Balance::zero(),
 			ratio: Some(rational!(42 / 123)),
 		};
-	}: _(RawOrigin::Root, location, asset_info)
+	}: _(RawOrigin::Root, protocol_id, nonce, Some(location), asset_info)
 
 	update_asset_location {
-		let location_base = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
+		let location = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
 			.expect("Asset location is foreign ID");
-		let location = LocalOrForeignAssetId::Foreign(location_base.clone());
+		let protocol_id = *b"benchmar";
+		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
 			symbol: Some(BiBoundedAssetSymbol::from_vec(b"KSM".to_vec()).expect("String is within bounds")),
@@ -55,19 +55,22 @@ benchmarks! {
 
 		AssetsRegistry::<T>::register_asset(
 			RawOrigin::Root.into(),
-			location,
+			protocol_id,
+			nonce,
+			Some(location.clone()),
 			asset_info,
 		)
 		.expect("Asset details are non-duplicate and valid");
 
-		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location_base.clone())
+		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location.clone())
 			.expect("Asset exists");
-	}: _(RawOrigin::Root, local_asset_id, location_base)
+	}: _(RawOrigin::Root, local_asset_id, location)
 
 	update_asset {
-		let location_base = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
+		let location = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
 			.expect("Asset location is foreign ID");
-		let location = LocalOrForeignAssetId::Foreign(location_base.clone());
+		let protocol_id = *b"benchmar";
+		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
 			symbol: Some(BiBoundedAssetSymbol::from_vec(b"KSM".to_vec()).expect("String is within bounds")),
@@ -78,7 +81,9 @@ benchmarks! {
 
 		AssetsRegistry::<T>::register_asset(
 			RawOrigin::Root.into(),
-			location,
+			protocol_id,
+			nonce,
+			Some(location.clone()),
 			asset_info,
 		)
 		.expect("Asset details are non-duplicate and valid");
@@ -91,7 +96,7 @@ benchmarks! {
 			ratio: UpdateValue::Set(None),
 		};
 
-		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location_base)
+		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location)
 			.expect("Asset exists");
 	}: _(RawOrigin::Root, local_asset_id, asset_info_update)
 

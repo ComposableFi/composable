@@ -1,7 +1,7 @@
 use crate::{prelude::*, runtime::*, Error};
 use codec::{Decode, Encode};
 use composable_traits::{
-	assets::{Asset, AssetInfo, AssetInfoUpdate, LocalOrForeignAssetId},
+	assets::{Asset, AssetInfo, AssetInfoUpdate, GenerateAssetId},
 	currency::Rational64,
 	rational,
 	storage::UpdateValue,
@@ -22,6 +22,8 @@ fn negative_get_metadata() {
 #[test]
 fn set_metadata() {
 	new_test_ext().execute_with(|| {
+		let protocol_id = *b"AssTests";
+		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: None,
 			symbol: None,
@@ -32,7 +34,9 @@ fn set_metadata() {
 		System::set_block_number(1);
 		assert_ok!(AssetsRegistry::register_asset(
 			RawOrigin::Root.into(),
-			LocalOrForeignAssetId::Foreign(XcmAssetLocation::RELAY_NATIVE),
+			protocol_id,
+			nonce,
+			Some(XcmAssetLocation::RELAY_NATIVE),
 			asset_info,
 		));
 		let asset_id = System::events()
@@ -72,6 +76,8 @@ fn register_asset() {
 			&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..],
 		)
 		.expect("Location bytes translate to foreign ID bytes");
+		let protocol_id = *b"AssTests";
+		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: None,
 			symbol: None,
@@ -84,7 +90,9 @@ fn register_asset() {
 
 		assert_ok!(AssetsRegistry::register_asset(
 			RuntimeOrigin::root(),
-			LocalOrForeignAssetId::Foreign(location.clone()),
+			protocol_id,
+			nonce,
+			Some(location.clone()),
 			asset_info.clone(),
 		));
 		let local_asset_id =
@@ -94,7 +102,9 @@ fn register_asset() {
 		assert_noop!(
 			AssetsRegistry::register_asset(
 				RuntimeOrigin::root(),
-				LocalOrForeignAssetId::Foreign(location),
+				protocol_id,
+				nonce,
+				Some(location),
 				asset_info,
 			),
 			Error::<Runtime>::AssetAlreadyRegistered
@@ -109,6 +119,8 @@ fn update_asset() {
 			&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..],
 		)
 		.expect("Location bytes translate to foreign ID bytes");
+		let protocol_id = *b"AssTests";
+		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: None,
 			symbol: None,
@@ -119,7 +131,9 @@ fn update_asset() {
 
 		assert_ok!(AssetsRegistry::register_asset(
 			RuntimeOrigin::root(),
-			LocalOrForeignAssetId::Foreign(location.clone()),
+			protocol_id,
+			nonce,
+			Some(location.clone()),
 			asset_info,
 		));
 
@@ -178,10 +192,10 @@ fn set_min_fee() {
 #[test]
 fn get_foreign_assets_list_should_work() {
 	new_test_ext().execute_with(|| {
-		let location = <Runtime as crate::Config>::ForeignAssetId::decode(
-			&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..],
-		)
-		.expect("Location bytes translate to foreign ID bytes");
+		let location =
+			XcmAssetLocation::new(MultiLocation { parents: 1, interior: Junctions::Here });
+		let protocol_id = *b"AssTests";
+		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: None,
 			symbol: None,
@@ -189,7 +203,7 @@ fn get_foreign_assets_list_should_work() {
 			existential_deposit: 0,
 			ratio: Some(rational!(42 / 123)),
 		};
-		let id = u128::from_be_bytes(sp_core::blake2_128(&location.encode()));
+		let id = AssetsRegistry::generate_asset_id(protocol_id, nonce);
 
 		let foreign_assets = AssetsRegistry::get_foreign_assets_list();
 
@@ -197,7 +211,9 @@ fn get_foreign_assets_list_should_work() {
 
 		assert_ok!(AssetsRegistry::register_asset(
 			RuntimeOrigin::root(),
-			LocalOrForeignAssetId::Foreign(location),
+			protocol_id,
+			nonce,
+			Some(location),
 			asset_info,
 		));
 

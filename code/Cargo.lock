@@ -1539,7 +1539,7 @@ dependencies = [
  "once_cell",
  "pablo-rpc",
  "pablo-runtime-api",
- "pallet-assets 1.0.0",
+ "pallet-assets",
  "pallet-crowdloan-rewards",
  "pallet-ibc",
  "pallet-transaction-payment-rpc 4.0.0-dev",
@@ -1624,7 +1624,7 @@ dependencies = [
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
- "pallet-assets 1.0.0",
+ "pallet-assets",
  "pallet-assets-registry",
  "pallet-aura",
  "pallet-authorship",
@@ -2847,7 +2847,7 @@ dependencies = [
  "orml-xcm-support",
  "orml-xtokens",
  "pablo-runtime-api",
- "pallet-asset-tx-payment 4.0.0-dev",
+ "pallet-asset-tx-payment",
  "pallet-assets-registry",
  "pallet-assets-transactor-router",
  "pallet-aura",
@@ -5999,99 +5999,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "local-integration-tests"
-version = "0.1.0"
-dependencies = [
- "base58",
- "common",
- "composable-tests-helpers",
- "composable-traits",
- "cumulus-pallet-aura-ext",
- "cumulus-pallet-dmp-queue",
- "cumulus-pallet-parachain-system",
- "cumulus-pallet-session-benchmarking",
- "cumulus-pallet-xcm",
- "cumulus-pallet-xcmp-queue",
- "cumulus-primitives-core",
- "cumulus-primitives-timestamp",
- "cumulus-primitives-utility",
- "dali-runtime",
- "env_logger 0.10.0",
- "frame-benchmarking",
- "frame-executive",
- "frame-support",
- "frame-system",
- "frame-system-benchmarking",
- "frame-system-rpc-runtime-api",
- "hex",
- "hex-literal",
- "kusama-runtime",
- "more-asserts",
- "num-traits",
- "orml-tokens",
- "orml-traits",
- "orml-unknown-tokens",
- "orml-xtokens",
- "pallet-assets 1.0.0",
- "pallet-assets 4.0.0-dev",
- "pallet-assets-registry",
- "pallet-aura",
- "pallet-authorship",
- "pallet-balances",
- "pallet-call-filter",
- "pallet-collator-selection",
- "pallet-collective",
- "pallet-currency-factory",
- "pallet-democracy",
- "pallet-governance-registry",
- "pallet-indices",
- "pallet-liquidations",
- "pallet-membership",
- "pallet-oracle",
- "pallet-randomness-collective-flip",
- "pallet-scheduler",
- "pallet-session",
- "pallet-sudo",
- "pallet-timestamp",
- "pallet-transaction-payment 4.0.0-dev",
- "pallet-treasury",
- "pallet-utility",
- "pallet-vault",
- "pallet-xcm",
- "parachain-info",
- "parachains-common",
- "parity-scale-codec",
- "paste 1.0.11",
- "picasso-runtime",
- "polkadot-core-primitives",
- "polkadot-parachain",
- "polkadot-primitives",
- "polkadot-runtime",
- "polkadot-runtime-parachains",
- "primitives",
- "rococo-runtime",
- "scale-info",
- "smallvec",
- "sp-api",
- "sp-block-builder",
- "sp-consensus-aura",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-keyring",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
- "sp-transaction-pool",
- "sp-version",
- "xcm",
- "xcm-builder",
- "xcm-emulator",
- "xcm-executor",
-]
-
-[[package]]
 name = "lock_api"
 version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6351,12 +6258,6 @@ dependencies = [
  "quote 1.0.23",
  "syn 1.0.107",
 ]
-
-[[package]]
-name = "more-asserts"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fafa6961cabd9c63bcd77a45d7e3b7f3b552b70417831fb0f56db717e72407e"
 
 [[package]]
 name = "multiaddr"
@@ -7025,23 +6926,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-asset-tx-payment"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.33#2dff067e9f7f6f3cc4dbfdaaa97753eccc407689"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
-]
-
-[[package]]
 name = "pallet-assets"
 version = "1.0.0"
 dependencies = [
@@ -7064,20 +6948,6 @@ dependencies = [
  "sp-arithmetic",
  "sp-core",
  "sp-io",
- "sp-runtime",
- "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
-]
-
-[[package]]
-name = "pallet-assets"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.33#2dff067e9f7f6f3cc4dbfdaaa97753eccc407689"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
  "sp-runtime",
  "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
 ]
@@ -7569,7 +7439,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
- "pallet-assets 1.0.0",
+ "pallet-assets",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-timestamp",
@@ -7873,7 +7743,7 @@ dependencies = [
  "once_cell",
  "orml-tokens",
  "orml-traits",
- "pallet-assets 1.0.0",
+ "pallet-assets",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-dutch-auction",
@@ -8410,7 +8280,7 @@ dependencies = [
  "log",
  "orml-tokens",
  "orml-traits",
- "pallet-assets 1.0.0",
+ "pallet-assets",
  "pallet-assets-registry",
  "pallet-assets-transactor-router",
  "pallet-balances",
@@ -8743,32 +8613,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "parachains-common"
-version = "1.0.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.33#27721d794ee63aae42317a7eeda21595dd3200d9"
-dependencies = [
- "cumulus-primitives-utility",
- "frame-support",
- "frame-system",
- "pallet-asset-tx-payment 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.33)",
- "pallet-assets 4.0.0-dev",
- "pallet-authorship",
- "pallet-balances",
- "pallet-collator-selection",
- "parity-scale-codec",
- "polkadot-primitives",
- "scale-info",
- "sp-consensus-aura",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
- "substrate-wasm-builder",
- "xcm",
- "xcm-executor",
-]
-
-[[package]]
 name = "parity-db"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9076,8 +8920,8 @@ dependencies = [
  "orml-xcm-support",
  "orml-xtokens",
  "pablo-runtime-api",
- "pallet-asset-tx-payment 4.0.0-dev",
- "pallet-assets 1.0.0",
+ "pallet-asset-tx-payment",
+ "pallet-assets",
  "pallet-assets-registry",
  "pallet-aura",
  "pallet-authorship",
@@ -16201,32 +16045,6 @@ dependencies = [
  "sp-arithmetic",
  "sp-io",
  "sp-runtime",
- "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
- "xcm",
- "xcm-executor",
-]
-
-[[package]]
-name = "xcm-emulator"
-version = "0.1.0"
-source = "git+https://github.com/shaunxw/xcm-simulator?rev=c62dbf8e247c03d9797dbf3f1886f74973f2b22a#c62dbf8e247c03d9797dbf3f1886f74973f2b22a"
-dependencies = [
- "cumulus-pallet-dmp-queue",
- "cumulus-pallet-parachain-system",
- "cumulus-pallet-xcmp-queue",
- "cumulus-primitives-core",
- "cumulus-primitives-parachain-inherent",
- "cumulus-test-relay-sproof-builder",
- "frame-support",
- "frame-system",
- "parachain-info",
- "parity-scale-codec",
- "paste 1.0.11",
- "polkadot-primitives",
- "polkadot-runtime-parachains",
- "quote 1.0.23",
- "sp-arithmetic",
- "sp-io",
  "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
  "xcm",
  "xcm-executor",
