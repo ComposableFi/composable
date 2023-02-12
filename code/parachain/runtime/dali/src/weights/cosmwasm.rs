@@ -165,10 +165,6 @@ impl<T: frame_system::Config> cosmwasm::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
-	fn running_contract_meta() -> Weight {
-		// Minimum execution time: 5_063 nanoseconds.
-		Weight::from_ref_time(5_304_000 as u64)
-	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn contract_meta() -> Weight {
 		// Minimum execution time: 13_955 nanoseconds.
