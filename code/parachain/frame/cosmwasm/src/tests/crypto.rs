@@ -1,5 +1,4 @@
-use crate::{mock::*, Event};
-use composable_tests_helpers::test::helper::RuntimeTrait;
+use crate::mock::*;
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
 
