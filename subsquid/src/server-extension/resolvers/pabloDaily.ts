@@ -13,7 +13,7 @@ import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
 import { PabloFee, PabloPool, PabloSwap, PabloTransaction } from "../../model";
 import { DAY_IN_MS } from "./common";
-import { getOrCreateAssetPrice } from "../../dbHelper";
+import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 export class PoolAmount {
@@ -84,7 +84,7 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
     const totalVolumes: Array<PoolAmount> = [];
 
     for (const assetId of Object.keys(swapsMap)) {
-      const price = await getOrCreateAssetPrice(manager, assetId, new Date().getTime());
+      const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime());
       totalVolumes.push(
         new PoolAmount({
           assetId,
@@ -132,7 +132,7 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
     const totalFees: Array<PoolAmount> = [];
 
     for (const assetId of Object.keys(feesMap)) {
-      const price = await getOrCreateAssetPrice(manager, assetId, new Date().getTime());
+      const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime());
       totalFees.push(
         new PoolAmount({
           assetId,
