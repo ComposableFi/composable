@@ -43,10 +43,6 @@ import type {
   ComposableTraitsLendingUpdateInput,
   ComposableTraitsOraclePrice,
   ComposableTraitsOracleRewardTracker,
-  ComposableTraitsStakingRewardPool,
-  ComposableTraitsStakingRewardPoolConfiguration,
-  ComposableTraitsStakingRewardUpdate,
-  ComposableTraitsStakingStake,
   ComposableTraitsTimeTimeReleaseFunction,
   ComposableTraitsVaultVaultConfig,
   ComposableTraitsXcmAssetsForeignMetadata,
@@ -132,7 +128,6 @@ import type {
   PalletSchedulerReleases,
   PalletSchedulerScheduledV2,
   PalletSchedulerScheduledV3,
-  PalletStakingRewardsRewardAccumulationHookError,
   PalletTransactionPaymentReleases,
   PalletTreasuryProposal,
   PalletVaultModelsStrategyOverview,
@@ -1315,7 +1310,14 @@ import type {
   XcmV2,
   XcmVersion
 } from "@polkadot/types/interfaces/xcm";
-import { ClaimableAmountError } from "./stakingRewards";
+import {
+  ClaimableAmountError,
+  ComposableTraitsStakingRewardPool,
+  ComposableTraitsStakingRewardPoolConfiguration,
+  ComposableTraitsStakingRewardUpdate,
+  ComposableTraitsStakingStake,
+  PalletStakingRewardsRewardAccumulationHookError
+} from "./stakingRewards";
 
 declare module "@polkadot/types/types/registry" {
   export interface InterfaceTypes {

@@ -19,7 +19,7 @@ import { Signer } from "@polkadot/api/types";
 import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/TaskEither";
 import { tryCatch } from "fp-ts/TaskEither";
-import { StakingPosition } from "@/apollo/queries/stakingPositions";
+import { StakingPosition } from "@/apollo/queries/stakingRewards/stakingPositions";
 import config from "@/constants/config";
 import { ComposableTraitsStakingRewardPool } from "@/../../packages/defi-interfaces";
 import { Option } from "@polkadot/types-codec";

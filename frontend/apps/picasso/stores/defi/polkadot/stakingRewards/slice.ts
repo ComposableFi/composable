@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 import { StoreSlice } from "@/stores/types";
-import { StakingPosition } from "@/apollo/queries/stakingPositions";
+import { StakingPosition } from "@/apollo/queries/stakingRewards/stakingPositions";
 import { u128 } from "@polkadot/types-codec";
 
 export type RewardPool = {

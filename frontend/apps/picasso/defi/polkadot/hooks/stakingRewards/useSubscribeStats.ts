@@ -2,7 +2,7 @@ import { useStakingRewardsStats } from "@/apollo/hooks/useStakingRewardsStats";
 import { useStore } from "@/stores/root";
 import { useEffect } from "react";
 import { fromChainIdUnit } from "shared";
-import { StakingRewardsStats } from "@/apollo/queries/stakingRewardsStats";
+import { StakingRewardsStats } from "@/apollo/queries/stakingRewards/stakingRewardsStats";
 
 function setStakingStats(data: StakingRewardsStats) {
   useStore.setState((state) => {

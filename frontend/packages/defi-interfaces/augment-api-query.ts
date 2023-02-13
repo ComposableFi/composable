@@ -18,8 +18,6 @@ import type {
   ComposableTraitsLendingMarketConfig,
   ComposableTraitsOraclePrice,
   ComposableTraitsOracleRewardTracker,
-  ComposableTraitsStakingRewardPool,
-  ComposableTraitsStakingStake,
   ComposableTraitsTimeTimeReleaseFunction,
   ComposableTraitsXcmAssetsForeignMetadata,
   ComposableTraitsXcmAssetsXcmAssetLocation,
@@ -78,7 +76,7 @@ import type {
   SpRuntimeDigest,
   SpTrieStorageProof,
   XcmV1MultiLocation,
-  XcmVersionedMultiLocation,
+  XcmVersionedMultiLocation
 } from "./crowdloanRewards";
 import type { PalletCurrencyFactoryRanges } from "./currencyFactory";
 import type {
@@ -87,19 +85,15 @@ import type {
   PalletDemocracyReleases,
   PalletDemocracyVoteThreshold,
   PalletDemocracyVoteVoting,
-  PalletPreimageRequestStatus,
+  PalletPreimageRequestStatus
 } from "./democracy";
 import type {
   PalletPabloPoolConfiguration,
   PalletPabloPriceCumulative,
-  PalletPabloTimeWeightedAveragePrice,
+  PalletPabloTimeWeightedAveragePrice
 } from "./pablo";
 import type { ComposableTraitsVestingVestingSchedule } from "./vesting";
-import type {
-  ApiTypes,
-  AugmentedQuery,
-  QueryableStorageEntry,
-} from "@polkadot/api-base/types";
+import type { ApiTypes, AugmentedQuery, QueryableStorageEntry } from "@polkadot/api-base/types";
 import type { Data } from "@polkadot/types";
 import type {
   bool,
@@ -114,15 +108,12 @@ import type {
   u64,
   U8aFixed,
   Vec,
-  WrapperKeepOpaque,
+  WrapperKeepOpaque
 } from "@polkadot/types-codec";
 import type { AnyNumber, ITuple } from "@polkadot/types-codec/types";
-import type {
-  AccountId32,
-  Call,
-  H256,
-} from "@polkadot/types/interfaces/runtime";
+import type { AccountId32, Call, H256 } from "@polkadot/types/interfaces/runtime";
 import type { Observable } from "@polkadot/types/types";
+import { ComposableTraitsStakingRewardPool, ComposableTraitsStakingStake } from "./stakingRewards";
 
 export type __AugmentedQuery<ApiType extends ApiTypes> = AugmentedQuery<
   ApiType,

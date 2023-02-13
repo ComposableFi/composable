@@ -1,4 +1,7 @@
-import { ActiveUsers, GET_ACTIVE_USERS } from "@/apollo/queries/activeUsers";
+import {
+  ActiveUsers,
+  GET_ACTIVE_USERS,
+} from "@/apollo/queries/stats/activeUsers";
 import { Chart } from "@/components";
 import { ChartLoadingSkeleton } from "@/components/Organisms/Stats/ChartLoadingSkeleton";
 import { useQuery } from "@apollo/client";
@@ -43,7 +46,6 @@ export const DailyActiveUsersChart: FC = () => {
   if (loading) {
     return <ChartLoadingSkeleton />;
   }
-
 
   if (error) {
     return <>{"error:" + error}</>;

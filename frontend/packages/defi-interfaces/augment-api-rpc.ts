@@ -940,7 +940,9 @@ declare module "@polkadot/rpc-core/types/jsonrpc" {
         (
           fnft_collection_id: CustomRpcCurrencyId | string,
           fnft_instance_id: CustomRpcInstanceId | string
-        ) => Result<BTreeMap<AssetId, Balance>, ClaimableAmountError>
+        ) => Observable<
+          Result<BTreeMap<AssetId, Balance>, ClaimableAmountError>
+        >
       >;
     };
     syncstate: {

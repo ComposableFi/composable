@@ -26,7 +26,6 @@ import type {
   PalletMosaicDecayBudgetPenaltyDecayer,
   PalletMosaicNetworkInfo,
   PalletMultisigTimepoint,
-  PalletStakingRewardsRewardAccumulationHookError,
   SpRuntimeDispatchError,
   XcmV1MultiAsset,
   XcmV1MultiassetMultiAssets,
@@ -36,14 +35,11 @@ import type {
   XcmV2TraitsOutcome,
   XcmV2Xcm,
   XcmVersionedMultiAssets,
-  XcmVersionedMultiLocation,
+  XcmVersionedMultiLocation
 } from "./crowdloanRewards";
 import type { PalletDemocracyVoteThreshold } from "./democracy";
 import type { ComposableTraitsDexFee } from "./pablo";
-import type {
-  ComposableTraitsVestingVestingSchedule,
-  ComposableTraitsVestingVestingScheduleIdSet,
-} from "./vesting";
+import type { ComposableTraitsVestingVestingSchedule, ComposableTraitsVestingVestingScheduleIdSet } from "./vesting";
 import type { ApiTypes, AugmentedEvent } from "@polkadot/api-base/types";
 import type {
   bool,
@@ -59,14 +55,11 @@ import type {
   u64,
   u8,
   U8aFixed,
-  Vec,
+  Vec
 } from "@polkadot/types-codec";
 import type { ITuple } from "@polkadot/types-codec/types";
-import type {
-  AccountId32,
-  H256,
-  Percent,
-} from "@polkadot/types/interfaces/runtime";
+import type { AccountId32, H256, Percent } from "@polkadot/types/interfaces/runtime";
+import { PalletStakingRewardsRewardAccumulationHookError } from "./stakingRewards";
 
 export type __AugmentedEvent<ApiType extends ApiTypes> =
   AugmentedEvent<ApiType>;

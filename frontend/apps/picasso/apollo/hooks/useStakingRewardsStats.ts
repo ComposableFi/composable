@@ -2,7 +2,7 @@ import { useQuery } from "@apollo/client";
 import {
   GET_STAKING_REWARDS_STATS,
   StakingRewardsStats,
-} from "@/apollo/queries/stakingRewardsStats";
+} from "@/apollo/queries/stakingRewards/stakingRewardsStats";
 
 export function useStakingRewardsStats() {
   const { data, loading } = useQuery<StakingRewardsStats>(

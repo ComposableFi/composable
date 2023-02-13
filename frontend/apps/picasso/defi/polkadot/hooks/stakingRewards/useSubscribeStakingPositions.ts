@@ -3,7 +3,7 @@ import { useQuery } from "@apollo/client";
 import {
   GET_STAKING_POSITIONS,
   StakingPositions,
-} from "@/apollo/queries/stakingPositions";
+} from "@/apollo/queries/stakingRewards/stakingPositions";
 import config from "@/constants/config";
 import { useCallback, useEffect } from "react";
 import { useStore } from "@/stores/root";

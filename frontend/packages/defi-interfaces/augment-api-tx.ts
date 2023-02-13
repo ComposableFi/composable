@@ -8,7 +8,7 @@ import "@polkadot/api-base/types/submittable";
 import type {
   ComposableTraitsDefiCurrencyPairCurrencyId,
   ComposableTraitsDefiSellCurrencyId,
-  ComposableTraitsXcmXcmSellRequest,
+  ComposableTraitsXcmXcmSellRequest
 } from "./common";
 import type {
   CommonMosaicRemoteAssetId,
@@ -23,8 +23,6 @@ import type {
   ComposableTraitsLendingCreateInput,
   ComposableTraitsLendingRepayStrategy,
   ComposableTraitsLendingUpdateInput,
-  ComposableTraitsStakingRewardPoolConfiguration,
-  ComposableTraitsStakingRewardUpdate,
   ComposableTraitsTimeTimeReleaseFunction,
   ComposableTraitsVaultVaultConfig,
   ComposableTraitsXcmAssetsXcmAssetLocation,
@@ -51,18 +49,18 @@ import type {
   XcmVersionedMultiAsset,
   XcmVersionedMultiAssets,
   XcmVersionedMultiLocation,
-  XcmVersionedXcm,
+  XcmVersionedXcm
 } from "./crowdloanRewards";
 import type { PalletPabloPoolInitConfiguration } from "./pablo";
 import type {
   ComposableTraitsVestingVestingScheduleIdSet,
-  ComposableTraitsVestingVestingScheduleInfo,
+  ComposableTraitsVestingVestingScheduleInfo
 } from "./vesting";
 import type {
   ApiTypes,
   AugmentedSubmittable,
   SubmittableExtrinsic,
-  SubmittableExtrinsicFunction,
+  SubmittableExtrinsicFunction
 } from "@polkadot/api-base/types";
 import type { Data } from "@polkadot/types";
 import type {
@@ -78,7 +76,7 @@ import type {
   u8,
   U8aFixed,
   Vec,
-  WrapperKeepOpaque,
+  WrapperKeepOpaque
 } from "@polkadot/types-codec";
 import type { AnyNumber, IMethod, ITuple } from "@polkadot/types-codec/types";
 import type {
@@ -88,8 +86,9 @@ import type {
   MultiAddress,
   Perbill,
   Percent,
-  Permill,
+  Permill
 } from "@polkadot/types/interfaces/runtime";
+import { ComposableTraitsStakingRewardPoolConfiguration, ComposableTraitsStakingRewardUpdate } from "./stakingRewards";
 
 export type __AugmentedSubmittable = AugmentedSubmittable<() => unknown>;
 export type __SubmittableExtrinsic<ApiType extends ApiTypes> =

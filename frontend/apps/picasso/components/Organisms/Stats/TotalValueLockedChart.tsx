@@ -14,7 +14,7 @@ import { Chart } from "@/components";
 import {
   GET_TOTAL_VALUE_LOCKED,
   TotalValueLocked,
-} from "@/apollo/queries/totalValueLocked";
+} from "@/apollo/queries/stats/totalValueLocked";
 import { ChartLoadingSkeleton } from "@/components/Organisms/Stats/ChartLoadingSkeleton";
 import { changeCalculator } from "@/components/Organisms/Stats/utils";
 import * as O from "fp-ts/Option";

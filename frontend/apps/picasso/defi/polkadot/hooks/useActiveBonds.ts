@@ -3,7 +3,7 @@ import { ApiPromise } from "@polkadot/api";
 import { useStore } from "@/stores/root";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 import { useQuery } from "@apollo/client";
-import { GET_VESTING_SCHEDULE_BY_ADDRESS } from "@/apollo/queries/vestingSchedule";
+import { GET_VESTING_SCHEDULE_BY_ADDRESS } from "@/apollo/queries/bonds/vestingSchedule";
 import BigNumber from "bignumber.js";
 import { stringToU8a, u8aToHex } from "@polkadot/util";
 import { unwrapNumberOrHex } from "shared";
