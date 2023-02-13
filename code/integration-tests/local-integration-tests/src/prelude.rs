@@ -17,7 +17,6 @@ pub use frame_support::{
 	traits::{
 		fungible::Inspect, fungibles::Inspect as FungiblesInspect, tokens::BalanceConversion,
 	},
-	weights::constants::WEIGHT_PER_MILLIS,
 	RuntimeDebug,
 };
 pub use frame_system::RawOrigin;
