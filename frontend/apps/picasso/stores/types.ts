@@ -6,7 +6,6 @@ import {
   PoolSlice,
   StakingRewardsSlice,
   StatsApolloSlice,
-  StatsOverviewSlice,
   StatsTelemetrySlice,
   SubstrateBalancesSlice,
   TokensSlice,
@@ -30,7 +29,6 @@ export type AllSlices = PolkadotSlice &
   TokensSlice &
   TransfersSlice &
   StatsApolloSlice &
-  StatsOverviewSlice &
   StatsTelemetrySlice &
   SubstrateBalancesSlice &
   BondsSlice &

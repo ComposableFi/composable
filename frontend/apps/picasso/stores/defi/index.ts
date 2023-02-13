@@ -10,9 +10,6 @@ export type { PolkadotSlice } from "./polkadot";
 export { createStatsApolloSlice } from "./stats/apollo";
 export type { StatsApolloSlice } from "./stats/apollo";
 
-export { createStatsOverviewSlice } from "./stats/overview";
-export type { StatsOverviewSlice } from "./stats/overview";
-
 export { createStatsTelemetrySlice } from "./stats/telemetry";
 export type { StatsTelemetrySlice } from "./stats/telemetry";
 
