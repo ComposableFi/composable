@@ -31,7 +31,7 @@ const BurnCheckboxItem = ({
   const theme = useTheme();
   const token = useMemo(() => {
     return getPicassoTokenById(portfolio.shareAssetId);
-  }, [portfolio.collectionId]);
+  }, [portfolio.shareAssetId]);
   const picaToken = useStore((store) => store.substrateTokens.tokens.pica);
   const picaPrice = usePicaPriceDiscovery();
   const stakedPrice = useMemo(() => {
@@ -110,9 +110,7 @@ export const BurnCheckboxList: FC<{
     !fnftCollectionId ||
     !isSelected ||
     (shouldShowSlashWarning ? !agreed : false);
-  const penaltyPercent = `${
-    currentPortfolio?.unlockPenalty.multipliedBy(100).toString() ?? 0
-  }%`;
+  const penaltyPercent = `${currentPortfolio?.unlockPenalty.toString() ?? 0}%`;
   return (
     <Stack gap={4} marginTop={9}>
       {stakingPortfolio.map((portfolioItem) => (

@@ -8,13 +8,15 @@ import { StakingPageHeading } from "@/components/Organisms/Staking/StakingPageHe
 import { useSubscribeStakingPositions } from "@/defi/polkadot/hooks/stakingRewards/useSubscribeStakingPositions";
 import { subscribePortfolio } from "@/stores/defi/polkadot/stakingRewards/subscribePortfolio";
 import { subscribeClaimableRewards } from "@/stores/defi/polkadot/stakingRewards/subscribeClaimableRewards";
-import { subscribeMaximumPICAStaked } from "@/stores/defi/polkadot/stakingRewards/subscribeMaximumPICAStaked";
+import { useSubscribeStats } from "@/defi/polkadot/hooks/stakingRewards/useSubscribeStats";
+import { subscribeMaxPicaShares } from "@/stores/defi/polkadot/stakingRewards/subscribeMaxPICAShare";
 
 const sxProps = {
   mt: 20,
 };
 export const StakingLayout: FC = ({ children }) => {
   useSubscribeStakingPositions();
+  useSubscribeStats();
   const { parachainApi } = usePicassoProvider();
   const isLoaded = useStore((store) => store.isRewardPoolLoaded);
 
@@ -36,12 +38,12 @@ export const StakingLayout: FC = ({ children }) => {
   }, [parachainApi]);
 
   useEffect(() => {
-    const unsub = subscribeMaximumPICAStaked(parachainApi);
+    const unsub = subscribeMaxPicaShares(parachainApi);
 
     return () => {
       unsub();
-    }
-  }, [parachainApi])
+    };
+  }, [parachainApi]);
 
   if (!isLoaded || !parachainApi) {
     return (

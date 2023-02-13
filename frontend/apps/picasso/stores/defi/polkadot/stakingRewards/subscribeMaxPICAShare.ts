@@ -30,7 +30,8 @@ function sumAllShares(
     .reduce((acc, cur) => acc.plus(cur), new BigNumber(0));
 }
 
-export function subscribeMaximumPICAStaked(api: ApiPromise | undefined) {
+// This also should be replaced with a subsquid query.
+export function subscribeMaxPicaShares(api: ApiPromise | undefined) {
   return useStore.subscribe(
     (state) => state.substrateTokens.isLoaded,
     (isLoaded) => {
@@ -47,10 +48,8 @@ export function subscribeMaximumPICAStaked(api: ApiPromise | undefined) {
           call().then(
             flow(
               E.bindTo("stakes"),
-              E.bind("maxStakes", ({ stakes }) => E.of(sumAllStakes(stakes))),
               E.bind("maxShares", ({ stakes }) => E.of(sumAllShares(stakes))),
-              E.map(({ maxShares, maxStakes }) => {
-                useStore.getState().setMaxPICAStakes(maxStakes);
+              E.map(({ maxShares }) => {
                 useStore.getState().setMaxPICAShares(maxShares);
               })
             )

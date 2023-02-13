@@ -66,6 +66,7 @@ export type StakingRewardsSlice = {
 
   maximumPicaShares: BigNumber;
   setMaxPICAShares: (v: BigNumber) => void;
+  averageStakingLockTime: string;
 };
 export type ClaimableReward = { assetId: string; balance: BigNumber };
 export type ClaimableRewards = {
@@ -97,6 +98,7 @@ const initialState = {
   claimableRewards: {},
   maximumPicaStaked: new BigNumber(0),
   maximumPicaShares: new BigNumber(0),
+  averageStakingLockTime: "0 days",
 };
 
 export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (
