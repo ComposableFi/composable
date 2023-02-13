@@ -1,5 +1,21 @@
 export default {
-  rpc: {},
+  rpc: {
+    claimableAmount: {
+      description:
+        "Get the claimable amount for the given fnftCollection and instanceId",
+      params: [
+        {
+          name: "fnftCollectionId",
+          type: "CustomRpcCurrencyId",
+        },
+        {
+          name: "fnftInstanceId",
+          type: "CustomRpcInstanceId",
+        },
+      ],
+      type: "Result<BTreeMap<AssetId, Balance>, ClaimableAmountError>",
+    },
+  },
   types: {
     ComposableTraitsStakingRewardPool: {
       owner: "AccountId32",
@@ -45,5 +61,6 @@ export default {
       lock: "ComposableTraitsStakingLockLockConfig",
     },
     PalletStakingRewardsRewardAccumulationHookError: "Null",
+    ClaimableAmountError: {},
   },
 };

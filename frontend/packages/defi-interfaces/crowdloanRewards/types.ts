@@ -3,13 +3,11 @@
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId, CurrencyId } from "../common";
 import type { bool, Enum, Null, Struct, u128, u32, u64 } from "@polkadot/types-codec";
-import { BTreeMap, u16 } from "@polkadot/types-codec";
 import type { ITuple } from "@polkadot/types-codec/types";
 import type { EthereumAccountId } from "@polkadot/types/interfaces/eth";
 import type { EcdsaSignature, MultiSignature } from "@polkadot/types/interfaces/extrinsics";
 import type { ParachainInherentData, PersistedValidationData } from "@polkadot/types/interfaces/parachains";
-import type { AccountId, AccountId32, AssetId, Balance, Permill } from "@polkadot/types/interfaces/runtime";
-import { ComposableTraitsStakingLockLockConfig } from "../stakingRewards";
+import type { AccountId32, Balance, Permill } from "@polkadot/types/interfaces/runtime";
 
 /** @name CommonMosaicRemoteAssetId */
 export interface CommonMosaicRemoteAssetId extends Null {}
@@ -122,25 +120,6 @@ export interface ComposableTraitsOraclePrice extends Null {}
 
 /** @name ComposableTraitsOracleRewardTracker */
 export interface ComposableTraitsOracleRewardTracker extends Null {}
-
-/** @name ComposableTraitsStakingRewardPool */
-export interface ComposableTraitsStakingRewardPool extends Null {}
-
-/** @name ComposableTraitsStakingRewardPoolConfiguration */
-export interface ComposableTraitsStakingRewardPoolConfiguration extends Null {}
-
-/** @name ComposableTraitsStakingRewardUpdate */
-export interface ComposableTraitsStakingRewardUpdate extends Null {}
-
-/** @name ComposableTraitsStakingStake */
-export interface ComposableTraitsStakingStake extends Struct {
-  readonly owner: AccountId;
-  readonly rewardPoolId: u16;
-  readonly stake: Balance;
-  readonly share: Balance;
-  readonly reductions: BTreeMap<AssetId, Balance>;
-  readonly lock: ComposableTraitsStakingLockLockConfig;
-}
 
 /** @name ComposableTraitsTimeTimeReleaseFunction */
 export interface ComposableTraitsTimeTimeReleaseFunction extends Null {}
@@ -448,9 +427,6 @@ export interface PalletSchedulerScheduledV2 extends Null {}
 
 /** @name PalletSchedulerScheduledV3 */
 export interface PalletSchedulerScheduledV3 extends Null {}
-
-/** @name PalletStakingRewardsRewardAccumulationHookError */
-export interface PalletStakingRewardsRewardAccumulationHookError extends Null {}
 
 /** @name PalletTransactionPaymentReleases */
 export interface PalletTransactionPaymentReleases extends Null {}

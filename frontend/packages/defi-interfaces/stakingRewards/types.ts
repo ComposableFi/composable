@@ -3,6 +3,7 @@
 
 import type { BTreeMap, Null, Struct, u128, u16, u32, u64 } from "@polkadot/types-codec";
 import type { AccountId, AccountId32, AssetId, Balance, FixedU64, Perbill } from "@polkadot/types/interfaces/runtime";
+import { Codec } from "@polkadot/types-codec/types";
 
 /** @name ComposableTraitsStakingLockLockConfig */
 export interface ComposableTraitsStakingLockLockConfig extends Struct {
@@ -61,5 +62,11 @@ export interface ComposableTraitsStakingStake extends Struct {
 
 /** @name PalletStakingRewardsRewardAccumulationHookError */
 export interface PalletStakingRewardsRewardAccumulationHookError extends Null {}
+
+export interface ClaimableAmountError extends Codec {
+  readonly isArithmetic: boolean;
+  readonly isStakeNotFound: boolean;
+  readonly isRewardsPoolNotFound: boolean;
+}
 
 export type PHANTOM_STAKINGREWARDS = "stakingRewards";

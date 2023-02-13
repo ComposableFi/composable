@@ -3,13 +3,11 @@ import { useStore } from "@/stores/root";
 import BigNumber from "bignumber.js";
 import config from "@/constants/config";
 import { getClaimable } from "@/defi/polkadot/pallets/StakingRewards/rpc";
-import { isPalletSupported } from "shared";
+import { fromChainIdUnit, isPalletSupported } from "shared";
+import { getPicassoTokenById } from "@/stores/defi/polkadot/tokens/utils";
+import { getRewardKey } from "@/defi/polkadot/pallets/StakingRewards";
 
 let count = 0;
-
-function getRewardKey(collectionId: string, instanceId: string) {
-  return [collectionId, instanceId].join("::");
-}
 
 async function updateClaimableAmount(api: ApiPromise) {
   const stakingPortfolio = useStore.getState().stakingPortfolio;
@@ -22,7 +20,6 @@ async function updateClaimableAmount(api: ApiPromise) {
   }
 
   // Reset because we are fetching a new claimable for all assets.
-  useStore.getState().resetClaimableRewards();
   let list = [];
 
   for (const item of stakingPortfolio) {
@@ -34,17 +31,23 @@ async function updateClaimableAmount(api: ApiPromise) {
 
   for (const claimable of claimableList) {
     if (claimable.result.isOk) {
-      useStore.setState((state) => {
-        state.claimableRewards[rewardKey] = [];
-      });
       const rewardKey = getRewardKey(
         claimable.collectionId,
         claimable.instanceId
       );
+
+      useStore.setState((state) => {
+        state.claimableRewards[rewardKey] = [];
+      });
+
       for (let [assetId, balance] of claimable.result.asOk.entries()) {
+        const asset = getPicassoTokenById(assetId.toString());
         useStore.getState().setClaimableRewards(rewardKey, {
           assetId: assetId.toString(),
-          balance: new BigNumber(balance.toString()),
+          balance: fromChainIdUnit(
+            balance.toString(),
+            asset?.decimals.picasso ?? 12
+          ),
         });
       }
     }

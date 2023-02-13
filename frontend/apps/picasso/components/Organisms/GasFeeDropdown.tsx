@@ -188,7 +188,7 @@ export const GasFeeDropdown: FC<Props> = ({
     );
   }, [picassoProvider.parachainApi, account, setFeeItem, tokens]);
 
-  return (
+  return options.length > 0 ? (
     <Select
       options={options}
       value={feeItem}
@@ -255,5 +255,5 @@ export const GasFeeDropdown: FC<Props> = ({
         ),
       }}
     />
-  );
+  ) : null;
 };

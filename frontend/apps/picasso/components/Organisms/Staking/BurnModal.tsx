@@ -13,6 +13,8 @@ import {
 import { SnackbarKey, useSnackbar } from "notistack";
 import { useStakingRewards } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewards";
 import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
+import { useStore } from "@/stores/root";
+import { getRewardKey } from "@/defi/polkadot/pallets/StakingRewards";
 
 export const BurnModal: FC<{
   open: boolean;
@@ -51,6 +53,11 @@ export const BurnModal: FC<{
           },
           (txHash: string) => {
             closeSnackbar(snackbarKey);
+            const rewardKey = getRewardKey(...selectedToken);
+
+            useStore.setState((state) => {
+              state.claimableRewards[rewardKey] = [];
+            });
             enqueueSnackbar(`Successfully claimed`, {
               variant: "success",
               isClosable: true,
