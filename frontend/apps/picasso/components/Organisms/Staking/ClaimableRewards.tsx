@@ -43,7 +43,7 @@ export const ClaimableRewards = () => {
           <Box display="flex" alignItems="center" gap={1}>
             <TokenWithUSD
               symbol={picaToken.symbol}
-              amount={claimable.toFormat(0)}
+              amount={claimable.toFormat(4)}
               price={usdValue}
             />
           </Box>

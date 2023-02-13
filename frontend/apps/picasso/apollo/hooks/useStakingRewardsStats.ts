@@ -9,7 +9,7 @@ export function useStakingRewardsStats() {
     GET_STAKING_REWARDS_STATS,
     {
       pollInterval: 30000,
-      fetchPolicy: "cache-first",
+      fetchPolicy: "cache-and-network",
     }
   );
 

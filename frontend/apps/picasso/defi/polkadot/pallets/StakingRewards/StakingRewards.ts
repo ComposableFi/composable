@@ -248,9 +248,10 @@ export function calculateStakingPeriodAPR(
   const myShare = amount.multipliedBy(multiplier);
   const rewardsPerSec = rewardPool.rewards[assetId].rewardRate.amount;
   const poolShare = useStore.getState().maximumPicaShares;
-  const apr = new BigNumber(fromChainIdUnit(rewardsPerSec.toString()))
+  const apr = fromChainIdUnit(rewardsPerSec.toString())
     .multipliedBy(SECONDS_IN_YEAR)
-    .div(myShare.plus(poolShare).multipliedBy(100));
+    .div(myShare.plus(poolShare))
+    .multipliedBy(100);
 
   if (apr.isNaN() || !apr.isFinite()) {
     return "0";

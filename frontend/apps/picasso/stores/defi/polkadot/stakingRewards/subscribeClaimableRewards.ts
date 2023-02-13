@@ -6,6 +6,7 @@ import { getClaimable } from "@/defi/polkadot/pallets/StakingRewards/rpc";
 import { fromChainIdUnit, isPalletSupported } from "shared";
 import { getPicassoTokenById } from "@/stores/defi/polkadot/tokens/utils";
 import { getFnftKey } from "@/defi/polkadot/pallets/StakingRewards";
+import { ClaimableRewards } from "@/stores/defi/polkadot/stakingRewards/slice";
 
 let count = 0;
 
@@ -16,6 +17,9 @@ async function updateClaimableAmount(api: ApiPromise) {
     !isPalletSupported(api)("StakingRewards") ||
     !api.rpc.stakingRewards
   ) {
+    useStore.setState((state) => {
+      state.claimableRewards = {};
+    });
     return;
   }
 
@@ -28,6 +32,7 @@ async function updateClaimableAmount(api: ApiPromise) {
   }
 
   const claimableList = await Promise.all(list);
+  const draftState: ClaimableRewards = {};
 
   for (const claimable of claimableList) {
     if (claimable.result.isOk) {
@@ -36,22 +41,26 @@ async function updateClaimableAmount(api: ApiPromise) {
         claimable.instanceId
       );
 
-      useStore.setState((state) => {
-        state.claimableRewards[rewardKey] = [];
-      });
-
       for (let [assetId, balance] of claimable.result.asOk.entries()) {
         const asset = getPicassoTokenById(assetId.toString());
-        useStore.getState().setClaimableRewards(rewardKey, {
+        const reward = {
           assetId: assetId.toString(),
           balance: fromChainIdUnit(
             balance.toString(),
             asset?.decimals.picasso ?? 12
           ),
-        });
+        };
+
+        draftState[rewardKey] = Array.isArray(draftState[rewardKey])
+          ? [...draftState[rewardKey], reward]
+          : [reward];
       }
     }
   }
+
+  useStore.setState((state) => {
+    state.claimableRewards = draftState;
+  });
 
   // TODO: Below should be removed once claimable RPC is working with real data
   if (config.stakingRewards.demoMode) {

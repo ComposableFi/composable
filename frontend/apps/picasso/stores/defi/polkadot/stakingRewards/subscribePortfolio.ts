@@ -17,12 +17,17 @@ export function subscribePortfolio(api: ApiPromise | undefined) {
     }),
     async ({ stakingPositions }) => {
       if (!api) return;
+      console.log("[stakingPortfolio]: Fetching...");
       const rewardPools = useStore.getState().rewardPools;
       const picaAssetId = pipe(
         useStore.getState().substrateTokens.tokens.pica.chainId.picasso,
         O.fromNullable,
         O.map((s) => s.toString())
       );
+
+      useStore.setState((state) => {
+        state.stakingPortfolio = new Map();
+      });
 
       pipe(
         picaAssetId,
