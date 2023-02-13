@@ -3,7 +3,7 @@ import type { EntityManager } from "typeorm";
 import { LessThan, MoreThan, And } from "typeorm";
 import { PabloSwap } from "../../model";
 import { DAY_IN_MS, getVolumeRange } from "./common";
-import { getOrCreateAssetPrice } from "../../dbHelper";
+import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 class AssetIdAmount {
@@ -84,7 +84,7 @@ export class PabloTotalVolumeResolver {
       volumes[time] = [];
 
       for (const assetId of Object.keys(currVolumes)) {
-        const price = await getOrCreateAssetPrice(manager, assetId, timestamp.getTime());
+        const price = await getOrCreateHistoricalAssetPrice(manager, assetId, timestamp.getTime());
 
         volumes[time].push(
           new AssetIdAmount({

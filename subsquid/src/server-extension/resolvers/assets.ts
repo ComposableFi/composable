@@ -1,6 +1,6 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { getOrCreateAssetPrice } from "../../dbHelper";
+import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 export class AssetInfo {
@@ -34,7 +34,7 @@ export class AssetsResolver {
 
     const manager = await this.tx();
 
-    const price = await getOrCreateAssetPrice(manager, assetId, new Date(date || new Date()).getTime());
+    const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date(date || new Date()).getTime());
 
     return {
       assetId,
