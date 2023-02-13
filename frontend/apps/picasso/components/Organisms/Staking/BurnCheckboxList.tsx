@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { AlertBox, TokenAsset } from "@/components";
 import { WarningAmberRounded } from "@mui/icons-material";
-import { FC, useMemo, useState } from "react";
+import { FC, useMemo } from "react";
 import { useStakingRewards } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewards";
 import { PortfolioItem } from "@/stores/defi/polkadot/stakingRewards/slice";
 import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
@@ -103,7 +103,8 @@ export const BurnCheckboxList: FC<{
     getFnftKey(fnftCollectionId, fnftInstanceId)
   );
   const { isExpired } = useExpiredPortfolio(currentPortfolio);
-  const [agreed, setAgreed] = useState(false);
+  const agreed = useStore((store) => store.ui.stakingRewards.agreedSlash);
+  const setAgreed = useStore((store) => store.ui.setAgreedSlash);
   const shouldShowSlashWarning = isSelected && !isExpired;
   const shouldDisableButton =
     !fnftCollectionId ||

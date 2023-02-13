@@ -11,6 +11,8 @@ interface UIState {
   isClaimedStablecoin: boolean;
   stakingRewards: {
     stakeTab: number;
+    isBurnModalOpen: boolean;
+    agreedSlash: boolean;
   };
 }
 
@@ -25,6 +27,8 @@ const initialState: UIState = {
   isClaimedStablecoin: false,
   stakingRewards: {
     stakeTab: 0,
+    isBurnModalOpen: false,
+    agreedSlash: false,
   },
 };
 
@@ -41,6 +45,8 @@ export interface UISlice {
     setIsClaimedKSM: (isClaimedKSM: boolean) => void;
     setIsClaimedStablecoin: (isClaimedStablecoin: boolean) => void;
     setStakingTab: (tabIndex: number) => void;
+    setBurnModalState: (state: boolean) => void;
+    setAgreedSlash: (agreed: boolean) => void;
   };
 }
 
@@ -111,6 +117,16 @@ export const createUISlice: StoreSlice<UISlice> = (set) => ({
     setStakingTab: (tabIndex: number) => {
       set((state) => {
         state.ui.stakingRewards.stakeTab = tabIndex;
+      });
+    },
+    setBurnModalState: (modalState: boolean) => {
+      set((state) => {
+        state.ui.stakingRewards.isBurnModalOpen = modalState;
+      });
+    },
+    setAgreedSlash: (agreed: boolean) => {
+      set((state) => {
+        state.ui.stakingRewards.agreedSlash = agreed;
       });
     },
   },

@@ -63,9 +63,7 @@ export const StakeTabContent = () => {
 
   const setValidation = () => {}; // TODO: Implement validation for this or remove
 
-  useEffect(() => {
-    return subscribeStakeFormValidation();
-  }, []);
+  useEffect(() => subscribeStakeFormValidation(), []);
 
   return (
     <StakeForm

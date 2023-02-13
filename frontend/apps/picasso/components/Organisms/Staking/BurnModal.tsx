@@ -58,6 +58,7 @@ export const BurnModal: FC<{
               state.claimableRewards[fnftKey] = [];
               state.stakingPortfolio.delete(fnftKey);
               state.stakingPositions.delete(fnftKey);
+              state.ui.setAgreedSlash(false);
             });
             enqueueSnackbar(`Successfully claimed`, {
               variant: "success",

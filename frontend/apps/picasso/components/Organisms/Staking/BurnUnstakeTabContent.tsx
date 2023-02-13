@@ -2,13 +2,17 @@ import { BurnCheckboxList } from "@/components/Organisms/Staking/BurnCheckboxLis
 import { BurnModal } from "@/components/Organisms/Staking/BurnModal";
 import { Box } from "@mui/material";
 import { FC, useState } from "react";
+import { useStore } from "@/stores/root";
 
 export const BurnUnstakeTabContent: FC = () => {
   const [selectedToken, setSelectedToken] = useState<[string, string]>([
     "",
     "",
   ]);
-  const [isBurnModalOpen, setIsBurnModalOpen] = useState<boolean>(false);
+  const isBurnModalOpen = useStore(
+    (state) => state.ui.stakingRewards.isBurnModalOpen
+  );
+  const setIsBurnModalOpen = useStore((state) => state.ui.setBurnModalState);
 
   return (
     <Box>
