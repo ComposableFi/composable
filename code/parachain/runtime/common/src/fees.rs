@@ -118,12 +118,13 @@ mod commons_sense {
 
 	use super::*;
 	use composable_traits::currency::AssetRatioInspect;
-	use frame_support::weights::{constants::WEIGHT_PER_SECOND, WeightToFee};
+	use frame_support::weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight, WeightToFee};
 	use primitives::currency::CurrencyId;
 
 	#[test]
 	fn reasonable_fee() {
-		let converted = WeightToFeeConverter::weight_to_fee(&WEIGHT_PER_SECOND);
+		let converted =
+			WeightToFeeConverter::weight_to_fee(&Weight::from_ref_time(WEIGHT_REF_TIME_PER_SECOND));
 		assert_eq!(converted, 1_010_366_358_000);
 	}
 

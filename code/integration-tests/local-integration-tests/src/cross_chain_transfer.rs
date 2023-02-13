@@ -13,7 +13,7 @@ use frame_system::RawOrigin;
 use num_traits::Zero;
 use orml_traits::currency::MultiCurrency;
 
-use frame_support::{assert_ok, log, weights::constants::WEIGHT_PER_MILLIS};
+use frame_support::{assert_ok, log, weights::constants::WEIGHT_REF_TIME_PER_MILLIS};
 use primitives::currency::*;
 use sp_runtime::{assert_eq_error_rate, traits::AccountIdConversion, MultiAddress};
 use xcm::latest::prelude::*;
@@ -333,7 +333,7 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 
 	let alice_ksm_transfer_amount = 1_000_000_000_000;
 	let alice_remaining = alice_this_original - alice_ksm_transfer_amount;
-	let weight_to_pay = 4 * WEIGHT_PER_MILLIS.ref_time();
+	let weight_to_pay = 4 * WEIGHT_REF_TIME_PER_MILLIS;
 
 	let this_on_sibling = Sibling::execute_with(|| {
 		use sibling_runtime::*;
