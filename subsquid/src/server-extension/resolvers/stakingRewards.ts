@@ -74,7 +74,7 @@ export class StakingRewardsStatsResolver implements ResolverInterface<StakingRew
     });
 
     const shares = stakingPositions.reduce<bigint>((acc, position) => {
-      return acc + position.rewardMultiplier * position.amount;
+      return acc + (position.rewardMultiplier * position.amount) / 1_000_000_000n;
     }, 0n);
 
     return Promise.resolve(shares);
