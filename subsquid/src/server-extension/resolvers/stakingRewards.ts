@@ -19,6 +19,9 @@ export class StakingRewardsStats {
   totalValueLocked!: bigint;
 
   @Field(() => BigInt, { nullable: false })
+  shares!: bigint;
+
+  @Field(() => BigInt, { nullable: false })
   averageLockDuration!: bigint;
 
   @Field(() => String, { nullable: false })
@@ -58,6 +61,25 @@ export class StakingRewardsStatsResolver implements ResolverInterface<StakingRew
     return Promise.resolve(tvl);
   }
 
+  @FieldResolver({ name: "shares", defaultValue: 0 })
+  async shares(@Root() daily: StakingRewardsStats): Promise<bigint> {
+    const { poolId } = daily;
+    const manager = await this.tx();
+
+    const stakingPositions = await manager.find(StakingPosition, {
+      where: {
+        assetId: poolId,
+        removed: false
+      }
+    });
+
+    const shares = stakingPositions.reduce<bigint>((acc, position) => {
+      return acc + position.rewardMultiplier * position.amount;
+    }, 0n);
+
+    return Promise.resolve(shares);
+  }
+
   @FieldResolver({ name: "averageLockDuration", defaultValue: 0 })
   async averageLockDuration(@Root() daily: StakingRewardsStats): Promise<bigint> {
     const { poolId } = daily;
@@ -93,6 +115,7 @@ export class StakingRewardsStatsResolver implements ResolverInterface<StakingRew
       new StakingRewardsStats({
         poolId,
         totalValueLocked: 0n,
+        shares: 0n,
         averageLockDuration: 0n
       })
     );
