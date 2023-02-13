@@ -8,17 +8,19 @@ import { isPalletSupported } from "shared";
 let count = 0;
 
 function getRewardKey(collectionId: string, instanceId: string) {
-  const rewardKey = [collectionId, instanceId].join("::");
-  return rewardKey;
+  return [collectionId, instanceId].join("::");
 }
 
 async function updateClaimableAmount(api: ApiPromise) {
   const stakingPortfolio = useStore.getState().stakingPortfolio;
   if (
     stakingPortfolio.length === 0 ||
-    !isPalletSupported(api)("StakingRewards")
-  )
+    !isPalletSupported(api)("StakingRewards") ||
+    !api.rpc.stakingRewards
+  ) {
     return;
+  }
+
   // Reset because we are fetching a new claimable for all assets.
   useStore.getState().resetClaimableRewards();
   let list = [];
@@ -26,14 +28,6 @@ async function updateClaimableAmount(api: ApiPromise) {
   for (const item of stakingPortfolio) {
     const { collectionId, instanceId } = item;
     list.push(getClaimable(api, collectionId, instanceId));
-  }
-
-  // TODO: Below should be removed once claimable RPC is working with real data
-  if (config.stakingRewards.demoMode) {
-    useStore.getState().setClaimableRewards("1001::123", {
-      assetId: "1",
-      balance: BigNumber(count++),
-    });
   }
 
   const claimableList = await Promise.all(list);
@@ -54,6 +48,14 @@ async function updateClaimableAmount(api: ApiPromise) {
         });
       }
     }
+  }
+
+  // TODO: Below should be removed once claimable RPC is working with real data
+  if (config.stakingRewards.demoMode) {
+    useStore.getState().setClaimableRewards("1001::123", {
+      assetId: "1",
+      balance: BigNumber(count++),
+    });
   }
 }
 

@@ -27,7 +27,6 @@ import { useStore } from "@/stores/root";
 import { useStakeForm } from "@/components/Organisms/Staking/stakeFormStore";
 
 export function transformRewardPool(rewardPoolsWrapped: any): RewardPool {
-  console.log(rewardPoolsWrapped);
   return {
     owner: rewardPoolsWrapped.owner,
     // assetId: rewardPoolsWrapped.assetId.toString(), assetId is removed
