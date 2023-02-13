@@ -3,7 +3,6 @@ import { useStore } from "@/stores/root";
 export const useStakingRewards = () => {
   const pica = useStore(({ substrateTokens }) => substrateTokens.tokens.pica);
   const rewardPools = useStore((store) => store.rewardPools);
-  const stakingPositions = useStore((store) => store.stakingPositions);
   const stakingPortfolio = useStore((store) => store.stakingPortfolio);
   const isStakingPositionsLoadingState = useStore(
     (store) => store.isStakingPositionsLoading
@@ -22,7 +21,6 @@ export const useStakingRewards = () => {
     pica,
     assetId,
     stakingPortfolio,
-    stakingPositions,
     hasRewardPools,
     isPositionsLoading: isStakingPositionsLoadingState,
   };

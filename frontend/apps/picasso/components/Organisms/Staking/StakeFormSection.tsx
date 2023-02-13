@@ -3,7 +3,6 @@ import { Tabs } from "@/components";
 import { StakeTabContent } from "@/components/Organisms/Staking/StakeTabContent";
 import { BurnUnstakeTabContent } from "@/components/Organisms/Staking/BurnUnstakeTabContent";
 import { ClaimableRewards } from "@/components/Organisms/Staking/ClaimableRewards";
-import { useState } from "react";
 import { useStore } from "@/stores/root";
 
 const STAKE_TAB = {
@@ -14,8 +13,11 @@ type StakeKey = keyof typeof STAKE_TAB;
 type StakeTab = typeof STAKE_TAB[StakeKey];
 
 export const StakeFormSection = () => {
-  const [stakeTab, setStakeTab] = useState<StakeTab>(STAKE_TAB.STAKE);
-  const hasPortfolio = useStore((store) => store.stakingPortfolio.length > 0);
+  const stakeTab = useStore((store) => store.ui.stakingRewards.stakeTab);
+  const setStakingTab = useStore((store) => store.ui.setStakingTab);
+  const hasPortfolio = useStore((store) =>
+    Boolean(store.stakingPortfolio.size)
+  );
   const tabItems = [
     {
       label: "Stake and mint",
@@ -32,7 +34,7 @@ export const StakeFormSection = () => {
         <Tabs
           items={tabItems}
           value={stakeTab}
-          onChange={(_e, target: number) => setStakeTab(target as StakeTab)}
+          onChange={(_e, target: number) => setStakingTab(target as StakeTab)}
         />
         {stakeTab === STAKE_TAB.STAKE && <StakeTabContent />}
         {stakeTab === STAKE_TAB.UNSTAKE && <BurnUnstakeTabContent />}

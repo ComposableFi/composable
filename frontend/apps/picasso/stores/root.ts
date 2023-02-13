@@ -17,6 +17,9 @@ import {
 import { AllSlices } from "./types";
 import { immer } from "zustand/middleware/immer";
 import { devtools, subscribeWithSelector } from "zustand/middleware";
+import { enableMapSet } from "immer";
+
+enableMapSet();
 
 export const useStore = create<AllSlices>()(
   subscribeWithSelector(

@@ -7,7 +7,7 @@ import { StakingPortfolioTable } from "@/components/Organisms/Staking/StakingPor
 export const StakingPortfolio: FC = () => {
   const theme = useTheme();
   const { stakingPortfolio, isPositionsLoading } = useStakingRewards();
-  const hasPortfolio = Object.values(stakingPortfolio).length > 0;
+  const hasPortfolio = Boolean(stakingPortfolio.size);
 
   if (isPositionsLoading) {
     return <StakingPortfolioLoadingState />;

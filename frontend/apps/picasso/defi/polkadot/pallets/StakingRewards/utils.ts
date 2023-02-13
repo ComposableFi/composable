@@ -1,3 +1,3 @@
-export function getRewardKey(collectionId: string, instanceId: string) {
+export function getFnftKey(collectionId: string, instanceId: string) {
   return [collectionId, instanceId].join("::");
 }

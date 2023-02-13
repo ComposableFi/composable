@@ -4,7 +4,10 @@ import * as O from "fp-ts/lib/Option";
 import { flow, pipe } from "fp-ts/function";
 import * as A from "fp-ts/lib/ReadonlyArray";
 import * as E from "fp-ts/lib/Either";
-import { tryFetchStakePortfolio } from "@/defi/polkadot/pallets/StakingRewards";
+import {
+  getFnftKey,
+  tryFetchStakePortfolio,
+} from "@/defi/polkadot/pallets/StakingRewards";
 import config from "@/constants/config";
 
 export function subscribePortfolio(api: ApiPromise | undefined) {
@@ -21,16 +24,12 @@ export function subscribePortfolio(api: ApiPromise | undefined) {
         O.map((s) => s.toString())
       );
 
-      useStore.setState((state) => {
-        state.stakingPortfolio = [];
-      });
-
       pipe(
         picaAssetId,
         O.map((assetId) =>
           pipe(
-            stakingPositions,
-            A.map((position) =>
+            Array.from(stakingPositions.entries()),
+            A.map(([_, position]) =>
               tryFetchStakePortfolio(api, position, rewardPools, assetId)
             ),
             A.map((t) =>
@@ -40,10 +39,10 @@ export function subscribePortfolio(api: ApiPromise | undefined) {
                     () => console.error("Could not fetch portfolio"),
                     (item) => {
                       useStore.setState((state) => {
-                        state.stakingPortfolio = [
-                          ...state.stakingPortfolio,
-                          item,
-                        ];
+                        state.stakingPortfolio.set(
+                          getFnftKey(item.collectionId, item.instanceId),
+                          item
+                        );
                       });
                     }
                   )
@@ -57,7 +56,12 @@ export function subscribePortfolio(api: ApiPromise | undefined) {
       // TODO: Just for testing UI, remove before production
       if (config.stakingRewards.demoMode) {
         useStore.setState((state) => {
-          state.stakingPortfolio = config.stakingRewards.picaPortfolios;
+          state.stakingPortfolio = new Map(
+            config.stakingRewards.picaPortfolios.map((item) => [
+              getFnftKey(item.collectionId, item.instanceId),
+              item,
+            ])
+          );
         });
       }
     },

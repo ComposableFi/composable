@@ -18,6 +18,7 @@ import { getPicassoTokenById } from "@/stores/defi/polkadot/tokens/utils";
 import { StakeRemainingRelativeDate } from "@/components/Organisms/Staking/StakeRemainingRelativeDate";
 import { TokenWithUSD } from "@/components/Organisms/Staking/TokenWithUSD";
 import { useStore } from "@/stores/root";
+import { getFnftKey } from "@/defi/polkadot/pallets/StakingRewards";
 
 const BurnCheckboxItem = ({
   portfolio,
@@ -98,10 +99,8 @@ export const BurnCheckboxList: FC<{
   const { stakingPortfolio } = useStakingRewards();
   const [fnftCollectionId, fnftInstanceId] = unstakeTokenId;
   const isSelected = Boolean(fnftCollectionId) && Boolean(fnftInstanceId);
-  const currentPortfolio = Object.values(stakingPortfolio).find(
-    (portfolio) =>
-      portfolio.collectionId === fnftCollectionId &&
-      portfolio.instanceId === fnftInstanceId
+  const currentPortfolio = stakingPortfolio.get(
+    getFnftKey(fnftCollectionId, fnftInstanceId)
   );
   const { isExpired } = useExpiredPortfolio(currentPortfolio);
   const [agreed, setAgreed] = useState(false);
@@ -111,11 +110,12 @@ export const BurnCheckboxList: FC<{
     !isSelected ||
     (shouldShowSlashWarning ? !agreed : false);
   const penaltyPercent = `${currentPortfolio?.unlockPenalty.toString() ?? 0}%`;
+
   return (
     <Stack gap={4} marginTop={9}>
-      {stakingPortfolio.map((portfolioItem) => (
+      {Array.from(stakingPortfolio.entries()).map(([key, portfolioItem]) => (
         <BurnCheckboxItem
-          key={portfolioItem.id}
+          key={key}
           portfolio={portfolioItem}
           selectedToken={unstakeTokenId}
           onSelectUnstakeToken={onSelectUnstakeToken}

@@ -1,4 +1,7 @@
-import { PortfolioItem } from "@/stores/defi/polkadot/stakingRewards/slice";
+import {
+  PortfolioItem,
+  StakingPortfolio,
+} from "@/stores/defi/polkadot/stakingRewards/slice";
 import {
   Box,
   Button,
@@ -96,7 +99,7 @@ export const PortfolioRow = ({
 export const StakingPortfolioTable = ({
   stakingPortfolio,
 }: {
-  stakingPortfolio: Array<PortfolioItem>;
+  stakingPortfolio: StakingPortfolio;
 }) => {
   const [selectedToken, setSelectedToken] = useState<[string, string]>([
     "",
@@ -117,9 +120,9 @@ export const StakingPortfolioTable = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {stakingPortfolio.map((portfolio) => (
+            {Array.from(stakingPortfolio.entries()).map(([key, portfolio]) => (
               <PortfolioRow
-                key={`${portfolio.collectionId}-${portfolio.instanceId}`}
+                key={key}
                 portfolio={portfolio}
                 onSelectToken={(collectionId, instanceId) => {
                   setSelectedToken([collectionId, instanceId]);

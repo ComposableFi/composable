@@ -9,6 +9,9 @@ interface UIState {
   isClaimingStablecoin: boolean;
   isClaimedKSM: boolean;
   isClaimedStablecoin: boolean;
+  stakingRewards: {
+    stakeTab: number;
+  };
 }
 
 const initialState: UIState = {
@@ -19,7 +22,10 @@ const initialState: UIState = {
   isClaimingStablecoin: false,
   isClaimingKSM: false,
   isClaimedKSM: false,
-  isClaimedStablecoin: false
+  isClaimedStablecoin: false,
+  stakingRewards: {
+    stakeTab: 0,
+  },
 };
 
 export interface UISlice {
@@ -34,6 +40,7 @@ export interface UISlice {
     closeStablecoinClaimModal: () => void;
     setIsClaimedKSM: (isClaimedKSM: boolean) => void;
     setIsClaimedStablecoin: (isClaimedStablecoin: boolean) => void;
+    setStakingTab: (tabIndex: number) => void;
   };
 }
 
@@ -100,6 +107,11 @@ export const createUISlice: StoreSlice<UISlice> = (set) => ({
         state.ui.isClaimedStablecoin = isClaimedStablecoin;
         return state;
       });
-    }
-  }
+    },
+    setStakingTab: (tabIndex: number) => {
+      set((state) => {
+        state.ui.stakingRewards.stakeTab = tabIndex;
+      });
+    },
+  },
 });

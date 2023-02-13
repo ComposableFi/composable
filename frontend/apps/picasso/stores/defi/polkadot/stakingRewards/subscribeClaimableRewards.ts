@@ -5,14 +5,14 @@ import config from "@/constants/config";
 import { getClaimable } from "@/defi/polkadot/pallets/StakingRewards/rpc";
 import { fromChainIdUnit, isPalletSupported } from "shared";
 import { getPicassoTokenById } from "@/stores/defi/polkadot/tokens/utils";
-import { getRewardKey } from "@/defi/polkadot/pallets/StakingRewards";
+import { getFnftKey } from "@/defi/polkadot/pallets/StakingRewards";
 
 let count = 0;
 
 async function updateClaimableAmount(api: ApiPromise) {
   const stakingPortfolio = useStore.getState().stakingPortfolio;
   if (
-    stakingPortfolio.length === 0 ||
+    stakingPortfolio.size === 0 ||
     !isPalletSupported(api)("StakingRewards") ||
     !api.rpc.stakingRewards
   ) {
@@ -22,7 +22,7 @@ async function updateClaimableAmount(api: ApiPromise) {
   // Reset because we are fetching a new claimable for all assets.
   let list = [];
 
-  for (const item of stakingPortfolio) {
+  for (const [_, item] of stakingPortfolio.entries()) {
     const { collectionId, instanceId } = item;
     list.push(getClaimable(api, collectionId, instanceId));
   }
@@ -31,7 +31,7 @@ async function updateClaimableAmount(api: ApiPromise) {
 
   for (const claimable of claimableList) {
     if (claimable.result.isOk) {
-      const rewardKey = getRewardKey(
+      const rewardKey = getFnftKey(
         claimable.collectionId,
         claimable.instanceId
       );

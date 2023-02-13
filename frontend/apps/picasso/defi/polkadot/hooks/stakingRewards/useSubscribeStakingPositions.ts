@@ -7,6 +7,7 @@ import {
 import config from "@/constants/config";
 import { useCallback, useEffect } from "react";
 import { useStore } from "@/stores/root";
+import { getFnftKey } from "@/defi/polkadot/pallets/StakingRewards";
 
 export function useSubscribeStakingPositions() {
   const account = useSelectedAccount(config.defaultNetworkId);
@@ -26,7 +27,14 @@ export function useSubscribeStakingPositions() {
 
   useEffect(() => {
     if (data) {
-      setStakingPositions(data.stakingPositions);
+      setStakingPositions(
+        new Map(
+          data.stakingPositions.map((item) => [
+            getFnftKey(item.fnftCollectionId, item.fnftInstanceId),
+            item,
+          ])
+        )
+      );
     }
   }, [data, setStakingPositions]);
 

@@ -21,6 +21,7 @@ import { FutureDatePaper } from "@/components/Atom/FutureDatePaper";
 import { useExtendCall } from "@/defi/polkadot/hooks/stakingRewards/useExtendCall";
 import { pipe } from "fp-ts/function";
 import * as O from "fp-ts/Option";
+import { getFnftKey } from "@/defi/polkadot/pallets/StakingRewards";
 
 export const RenewModal: FC<{
   open: boolean;
@@ -49,11 +50,8 @@ export const RenewModal: FC<{
     );
   };
 
-  // TODO: Refactor finding of current portfolio to a shared place
-  const currentPortfolio = stakingPortfolio.find(
-    (portfolio) =>
-      portfolio.collectionId === fnftCollectionId &&
-      portfolio.instanceId === fnftInstanceId
+  const currentPortfolio = stakingPortfolio.get(
+    getFnftKey(fnftCollectionId, fnftInstanceId)
   );
 
   const previousDate = useMemo(() => {

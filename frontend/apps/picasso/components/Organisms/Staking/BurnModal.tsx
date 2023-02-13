@@ -14,7 +14,7 @@ import { SnackbarKey, useSnackbar } from "notistack";
 import { useStakingRewards } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewards";
 import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
 import { useStore } from "@/stores/root";
-import { getRewardKey } from "@/defi/polkadot/pallets/StakingRewards";
+import { getFnftKey } from "@/defi/polkadot/pallets/StakingRewards";
 
 export const BurnModal: FC<{
   open: boolean;
@@ -53,10 +53,11 @@ export const BurnModal: FC<{
           },
           (txHash: string) => {
             closeSnackbar(snackbarKey);
-            const rewardKey = getRewardKey(...selectedToken);
-
             useStore.setState((state) => {
-              state.claimableRewards[rewardKey] = [];
+              const fnftKey = getFnftKey(...selectedToken);
+              state.claimableRewards[fnftKey] = [];
+              state.stakingPortfolio.delete(fnftKey);
+              state.stakingPositions.delete(fnftKey);
             });
             enqueueSnackbar(`Successfully claimed`, {
               variant: "success",
@@ -64,6 +65,7 @@ export const BurnModal: FC<{
               persist: true,
               url: subscanExtrinsicLink("picasso", txHash),
             });
+            useStore.getState().ui.setStakingTab(0);
             onClose();
           },
           (errorMessage: string) => {
@@ -88,10 +90,8 @@ export const BurnModal: FC<{
     );
   };
 
-  const currentPortfolio = Object.values(stakingPortfolio).find(
-    (portfolio) =>
-      portfolio.collectionId === fnftCollectionId &&
-      portfolio.instanceId === fnftInstanceId
+  const currentPortfolio = stakingPortfolio.get(
+    getFnftKey(fnftCollectionId, fnftInstanceId)
   );
   const { isExpired } = useExpiredPortfolio(currentPortfolio);
 

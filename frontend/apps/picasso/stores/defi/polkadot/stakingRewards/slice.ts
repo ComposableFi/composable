@@ -44,19 +44,18 @@ export type PortfolioItem = {
 
   shareAssetId: string;
 };
-export type StakingPortfolio = Array<PortfolioItem>;
+export type StakingPortfolio = Map<string, PortfolioItem>;
 export type StakingRewardsSlice = {
   isRewardPoolLoaded: boolean;
   rewardPools: {
     [key in string]: RewardPool;
   };
   setRewardPool: (assetId: string, pool: RewardPool) => void;
-  stakingPositions: StakingPosition[];
+  stakingPositions: Map<string, StakingPosition>;
   isStakingPositionsLoading: boolean;
-  setStakingPositions: (positions: StakingPosition[]) => void;
+  setStakingPositions: (positions: Map<string, StakingPosition>) => void;
   setStakingPositionLoading: (k: boolean) => void;
   stakingPortfolio: StakingPortfolio;
-  setStakingPortfolio: (value: StakingPortfolio) => void;
   setClaimableRewards: (key: string, reward: ClaimableReward) => void;
   resetClaimableRewards: () => void;
   claimableRewards: ClaimableRewards;
@@ -93,8 +92,8 @@ const initialState = {
       rewards: {},
     },
   },
-  stakingPositions: [],
-  stakingPortfolio: [],
+  stakingPositions: new Map(),
+  stakingPortfolio: new Map(),
   claimableRewards: {},
   maximumPicaStaked: new BigNumber(0),
   maximumPicaShares: new BigNumber(0),
@@ -120,10 +119,6 @@ export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (
   setStakingPositions: (positions) =>
     set((state) => {
       state.stakingPositions = positions;
-    }),
-  setStakingPortfolio: (portfolio) =>
-    set((state) => {
-      state.stakingPortfolio = portfolio;
     }),
 
   setClaimableRewards: (
