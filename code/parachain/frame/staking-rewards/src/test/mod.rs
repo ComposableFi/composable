@@ -721,11 +721,12 @@ mod extend {
 			process_and_progress_blocks::<StakingRewards, Test>(10);
 
 			Test::assert_extrinsic_event(
-				StakingRewards::extend(
+				StakingRewards::increase_staked_amount(
 					RuntimeOrigin::signed(BOB),
 					STAKING_FNFT_COLLECTION_ID,
 					fnft_instance_id,
 					extended_amount,
+					true,
 				),
 				crate::Event::<Test>::StakeAmountExtended {
 					fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
@@ -837,11 +838,12 @@ mod extend {
 			process_and_progress_blocks::<StakingRewards, Test>(10);
 
 			Test::assert_extrinsic_event(
-				StakingRewards::extend(
+				StakingRewards::increase_staked_amount(
 					RuntimeOrigin::signed(BOB),
 					STAKING_FNFT_COLLECTION_ID,
 					fnft_instance_id,
 					extended_amount,
+					true,
 				),
 				crate::Event::<Test>::StakeAmountExtended {
 					fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
@@ -1385,7 +1387,13 @@ fn extend_should_not_allow_non_owner() {
 		false,
 		|_pool_id, _unlock_penalty, _stake_duration, _staked_asset_id| {
 			assert_noop!(
-				StakingRewards::extend(RuntimeOrigin::signed(non_owner), 1, 0, 1_000),
+				StakingRewards::increase_staked_amount(
+					RuntimeOrigin::signed(non_owner),
+					1,
+					0,
+					1_000,
+					true
+				),
 				crate::Error::<Test>::OnlyStakeOwnerCanInteractWithStake
 			);
 		},
@@ -1970,11 +1978,12 @@ mod extend_proptests {
 				let original_fnft_instance_id =
 					stake_and_assert::<Test>(staker, pool_id, staking_amount, duration_preset);
 
-				prop_assert_ok!(StakingRewards::extend(
+				prop_assert_ok!(StakingRewards::increase_staked_amount(
 					owner,
 					STAKING_FNFT_COLLECTION_ID,
 					original_fnft_instance_id,
 					amount,
+					true,
 				));
 
 				Ok(())

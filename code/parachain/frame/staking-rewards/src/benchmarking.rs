@@ -137,7 +137,7 @@ benchmarks! {
 		);
 	}
 
-	extend {
+	increase_staked_amount {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
 		let asset_id = BASE_ASSET_ID.into();
 		let amount = 100_500_u128.into();
@@ -152,7 +152,7 @@ benchmarks! {
 
 		frame_system::Pallet::<T>::set_block_number(2.into());
 		<Pallet<T>>::stake(OriginFor::<T>::signed(staker.clone()), asset_id, amount, duration_preset)?;
-	}: _(OriginFor::<T>::signed(staker), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into(), amount)
+	}: _(OriginFor::<T>::signed(staker), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into(), amount, true)
 	verify {
 		assert_last_event::<T>(
 			Event::StakeAmountExtended {

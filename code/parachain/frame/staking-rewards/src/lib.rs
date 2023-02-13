@@ -497,13 +497,14 @@ pub mod pallet {
 		/// Extend an existing stake.
 		///
 		/// Emits `StakeExtended` when successful.
-		#[pallet::weight(T::WeightInfo::extend(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::weight(T::WeightInfo::increase_staked_amount(T::MaxRewardConfigsPerPool::get()))]
 		#[pallet::call_index(3)]
-		pub fn extend(
+		pub fn increase_staked_amount(
 			origin: OriginFor<T>,
 			fnft_collection_id: T::AssetId,
 			fnft_instance_id: T::FinancialNftInstanceId,
 			amount: T::Balance,
+			keep_alive: bool,
 		) -> DispatchResult {
 			let who = Self::ensure_stake_owner(
 				ensure_signed(origin)?,
@@ -511,10 +512,7 @@ pub mod pallet {
 				&fnft_instance_id,
 			)?;
 
-			// TODO(benluelo): This needs to be passed in through the extrinsic
-			let keep_alive = true;
-
-			<Self as Staking>::extend(
+			<Self as Staking>::increase_staked_amount(
 				&who,
 				(fnft_collection_id, fnft_instance_id),
 				amount,
@@ -845,7 +843,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		fn extend(
+		fn increase_staked_amount(
 			who: &Self::AccountId,
 			(fnft_collection_id, fnft_instance_id): Self::PositionId,
 			amount: Self::Balance,

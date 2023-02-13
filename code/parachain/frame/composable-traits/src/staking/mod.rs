@@ -287,7 +287,7 @@ pub trait Staking {
 	) -> Result<Self::PositionId, DispatchError>;
 
 	/// Extend the stake of an existing position.
-	fn extend(
+	fn increase_staked_amount(
 		who: &Self::AccountId,
 		position: Self::PositionId,
 		amount: Self::Balance,
