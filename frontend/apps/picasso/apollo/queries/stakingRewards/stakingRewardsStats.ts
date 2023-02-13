@@ -4,6 +4,7 @@ export interface StakingRewardsStats {
   stakingRewardsStats: {
     averageLockDuration: string;
     totalValueLocked: string;
+    shares: string;
   };
 }
 
@@ -12,6 +13,7 @@ export const GET_STAKING_REWARDS_STATS = gql`
     stakingRewardsStats(params: { poolId: "1" }) {
       averageLockDuration
       totalValueLocked
+      shares
     }
   }
 `;

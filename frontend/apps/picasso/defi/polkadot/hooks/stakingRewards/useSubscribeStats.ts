@@ -12,6 +12,8 @@ function setStakingStats(data: StakingRewardsStats) {
     state.averageStakingLockTime = `${Math.floor(
       Number(data.stakingRewardsStats.averageLockDuration) / 86400
     )} days`;
+
+    state.maximumPicaShares = fromChainIdUnit(data.stakingRewardsStats.shares);
   });
 }
 

@@ -9,7 +9,6 @@ import { useSubscribeStakingPositions } from "@/defi/polkadot/hooks/stakingRewar
 import { subscribePortfolio } from "@/stores/defi/polkadot/stakingRewards/subscribePortfolio";
 import { subscribeClaimableRewards } from "@/stores/defi/polkadot/stakingRewards/subscribeClaimableRewards";
 import { useSubscribeStats } from "@/defi/polkadot/hooks/stakingRewards/useSubscribeStats";
-import { subscribeMaxPicaShares } from "@/stores/defi/polkadot/stakingRewards/subscribeMaxPICAShare";
 
 const sxProps = {
   mt: 20,
@@ -34,14 +33,6 @@ export const StakingLayout: FC = ({ children }) => {
 
     return () => {
       unsub?.then((f) => f?.());
-    };
-  }, [parachainApi]);
-
-  useEffect(() => {
-    const unsub = subscribeMaxPicaShares(parachainApi);
-
-    return () => {
-      unsub();
     };
   }, [parachainApi]);
 
