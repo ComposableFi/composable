@@ -64,8 +64,6 @@ export function getRange(range: string): Date[] {
     throw new Error("Invalid range. It should be 'day', 'week', 'month' or 'year'.");
   }
 
-  dates.push(now);
-
   return dates;
 }
 

@@ -60,7 +60,6 @@ type PabloTransaction @entity {
 }
 
 type PabloPoolAsset @entity {
-  "Asset ID"
   id: ID!
   assetId: String!
   pool: PabloPool! @index

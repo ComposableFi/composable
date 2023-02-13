@@ -3,7 +3,7 @@ import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { hexToU8a } from "@polkadot/util";
 import { EntityManager, LessThan } from "typeorm";
-import { divideBigInts, encodeAccount, getCoingeckoPrice } from "./utils";
+import { divideBigInts, encodeAccount, getHistoricalCoingeckoPrice } from "./utils";
 import {
   Account,
   Activity,
@@ -386,7 +386,7 @@ export async function getSpotPrice(
  * @param assetId
  * @param timestamp
  */
-export async function getOrCreateAssetPrice(
+export async function getOrCreateHistoricalAssetPrice(
   ctx: EventHandlerContext<Store> | EntityManager,
   assetId: string,
   timestamp: number
@@ -415,7 +415,7 @@ export async function getOrCreateAssetPrice(
       // If asset is PICA, use swap price from KSM/PICA pool
       const assetIdToQuery = assetId === "1" ? "4" : (assetId as "4" | "130");
 
-      price = await getCoingeckoPrice(assetIdToQuery, date);
+      price = await getHistoricalCoingeckoPrice(assetIdToQuery, date);
 
       // If asset is PICA, use swap price
       if (assetId === "1") {

@@ -50,7 +50,7 @@ export function divideBigInts(a: bigint, b: bigint): number {
   return quote.div(base).toNumber();
 }
 
-export async function getCoingeckoPrice(assetId: "4" | "130", date?: Date): Promise<number> {
+export async function getHistoricalCoingeckoPrice(assetId: "4" | "130", date?: Date): Promise<number> {
   let time = new Date();
   if (date && isInstance(date, Date)) {
     time = date;
