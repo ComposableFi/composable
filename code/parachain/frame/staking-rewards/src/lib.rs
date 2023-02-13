@@ -1752,16 +1752,24 @@ pub(crate) fn accumulate_reward<T: Config>(
 		.checked_mul(reward_rate_amount)
 		.expect("should not fail; see above for proof; qed;");
 
-	let newly_accumulated_rewards_adjusted_for_unstaked_shares =
-		multiply_by_rational_with_rounding(
+	let unstaked_shares_adjustment = if total_shares.is_zero() {
+		Zero::zero()
+	} else {
+		let Some(value) = multiply_by_rational_with_rounding(
 			newly_accumulated_rewards.get(),
 			unstaked_shares.into(),
 			total_shares.into(),
 			Rounding::Down,
-		)
-		.and_then(|x| x.checked_add(reward.total_rewards.into()));
+		) else {
+			return RewardAccumulationCalculationOutcome::Overflow;
+		};
 
-	let Some(new_total_rewards) = newly_accumulated_rewards_adjusted_for_unstaked_shares
+		value
+	};
+
+	let Some(new_total_rewards) = newly_accumulated_rewards
+		.checked_add(unstaked_shares_adjustment)
+		.and_then(|x| x.checked_add(reward.total_rewards.into()))
 		else {
 			return RewardAccumulationCalculationOutcome::Overflow;
 		};
@@ -1786,7 +1794,7 @@ pub(crate) fn accumulate_reward<T: Config>(
 	.expect("funds should be available to release; see above for proof; qed;");
 
 	// TODO add the amount earned by the unstaked_shares back to the pool for the epoch
-	reward.total_rewards = new_total_rewards.into();
+	reward.total_rewards = new_total_rewards.get().into();
 	reward.last_updated_timestamp = last_updated_timestamp;
 
 	RewardAccumulationCalculationOutcome::Success

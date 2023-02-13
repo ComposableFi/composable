@@ -2188,7 +2188,7 @@ fn pbl_295() {
 				<Test as crate::Config>::Assets::balance_on_hold(USDT::ID, &pot_account);
 			let balance = <Test as crate::Config>::Assets::balance(USDT::ID, &pot_account);
 			let available = balance - balance_on_hold;
-			tracing::info!(
+			log::info!(
 				"Pot balance: {} (available: {}, on hold: {})",
 				balance,
 				available,
@@ -2207,7 +2207,7 @@ fn pbl_295() {
 				&USDT::ID,
 			)
 			.unwrap();
-			tracing::info!("Claimable amount: {}", amount);
+			log::info!("Claimable amount: {}", amount);
 			amount
 		}
 		let reward_rate = USDT::units(1) / 1_000;
