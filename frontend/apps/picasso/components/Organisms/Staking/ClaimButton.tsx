@@ -10,6 +10,8 @@ import config from "@/constants/config";
 import { claimAllPicaRewards } from "@/defi/polkadot/pallets/StakingRewards/claim";
 import { subscanExtrinsicLink } from "shared";
 import { Button, CircularProgress } from "@mui/material";
+import { getClaimableAmount } from "@/stores/defi/polkadot/stakingRewards/accessor";
+import { useStore } from "@/stores/root";
 
 export const ClaimButton = () => {
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
@@ -23,6 +25,7 @@ export const ClaimButton = () => {
     "utility",
     account?.address ?? "-"
   );
+  const claimable = useStore(getClaimableAmount);
   const onClaimButtonClick = () => {
     let snackBarKey: SnackbarKey | undefined = undefined;
     claimAllPicaRewards(
@@ -64,7 +67,7 @@ export const ClaimButton = () => {
       variant="contained"
       color="primary"
       fullWidth
-      disabled={isClaiming}
+      disabled={isClaiming || claimable.eq(0)}
       onClick={onClaimButtonClick}
       sx={{
         display: "flex",
