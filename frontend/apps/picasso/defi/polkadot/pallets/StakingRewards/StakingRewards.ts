@@ -241,17 +241,17 @@ export function stake({
 export function calculateStakingPeriodAPR(
   rewardPool: RewardPool,
   assetId: string,
-  multiplier: number
+  multiplier: number,
+  amount: BigNumber
 ) {
   // rewards per sec * (365* 24* 60* 60) / pool’s shares
   const SECONDS_IN_YEAR = 365 * 24 * 60 * 60;
-  const currentAmount = useStakeForm.getState().amount;
+  const myShare = amount.multipliedBy(multiplier);
   const rewardsPerSec = rewardPool.rewards[assetId].rewardRate.amount;
-  const poolShare = new BigNumber(useStore.getState().maximumPicaShares);
-  const myShare = currentAmount.multipliedBy(multiplier);
+  const poolShare = useStore.getState().maximumPicaShares;
   const apr = new BigNumber(fromChainIdUnit(rewardsPerSec.toString()))
     .multipliedBy(SECONDS_IN_YEAR)
-    .div(myShare.plus(poolShare));
+    .div(myShare.plus(poolShare).multipliedBy(100));
 
   if (apr.isNaN() || !apr.isFinite()) {
     return "0";

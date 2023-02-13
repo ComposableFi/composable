@@ -11,6 +11,7 @@ import { calculateStakingPeriodAPR } from "@/defi/polkadot/pallets/StakingReward
 import { RewardPool } from "@/stores/defi/polkadot/stakingRewards/slice";
 import { useMemo } from "react";
 import { useStore } from "@/stores/root";
+import { useStakeForm } from "@/components/Organisms/Staking/stakeFormStore";
 
 type LockPeriodInputProps = {
   options: {
@@ -141,13 +142,20 @@ const APRPercent = ({
   multiplier: number;
 }) => {
   const theme = useTheme();
+  const amount = useStakeForm((state) => state.amount);
   const picaAssetId = useStore(
     (store) =>
       store.substrateTokens.tokens.pica.chainId.picasso?.toString() ?? "1"
   );
   const apr = useMemo(
-    () => calculateStakingPeriodAPR(picaRewardPool, picaAssetId, multiplier),
-    [multiplier, picaAssetId, picaRewardPool]
+    () =>
+      calculateStakingPeriodAPR(
+        picaRewardPool,
+        picaAssetId,
+        multiplier,
+        amount
+      ),
+    [multiplier, picaAssetId, picaRewardPool, amount]
   );
 
   return (
