@@ -2,7 +2,6 @@
 
 use super::{helpers::*, *};
 use crate::{
-	mock::*,
 	types::{CodeInfoOf, ContractCodeOf, ContractLabelOf},
 	CodeHashToId, CodeIdToInfo, CodeIdentifier, Config, CosmwasmAccount, CurrentCodeId,
 	InstrumentedCode, Pallet as Cosmwasm, PristineCode, INSTRUMENTATION_VERSION,

@@ -1921,7 +1921,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=97bc30cd9549f073eed943cd30e85255ff8bb4b4#97bc30cd9549f073eed943cd30e85255ff8bb4b4"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=c2a4fe2c764710c0db15c571135bc37619a289d5#c2a4fe2c764710c0db15c571135bc37619a289d5"
 dependencies = [
  "cosmwasm-std",
  "log",
@@ -1933,7 +1933,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=97bc30cd9549f073eed943cd30e85255ff8bb4b4#97bc30cd9549f073eed943cd30e85255ff8bb4b4"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=c2a4fe2c764710c0db15c571135bc37619a289d5#c2a4fe2c764710c0db15c571135bc37619a289d5"
 dependencies = [
  "cosmwasm-std",
  "cosmwasm-vm",
@@ -1943,8 +1943,8 @@ dependencies = [
  "serde",
  "serde_json",
  "wasm-instrument 0.2.0",
- "wasmi 0.22.0",
- "wasmi-validation 0.4.1",
+ "wasmi 0.26.0",
+ "wasmi-validation",
 ]
 
 [[package]]
@@ -7423,8 +7423,8 @@ dependencies = [
  "sp-runtime",
  "sp-std 4.0.0 (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.33)",
  "wasm-instrument 0.2.0",
- "wasmi 0.22.0",
- "wasmi-validation 0.4.1",
+ "wasmi 0.26.0",
+ "wasmi-validation",
 ]
 
 [[package]]
@@ -15506,28 +15506,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06c326c93fbf86419608361a2c925a31754cf109da1b8b55737070b4d6669422"
 dependencies = [
  "parity-wasm 0.45.0",
- "wasmi-validation 0.5.0",
+ "wasmi-validation",
  "wasmi_core 0.2.1",
 ]
 
 [[package]]
 name = "wasmi"
-version = "0.22.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8d1c97b30ae00ad9380eb1de4fa28651622ec80ece02bab625f45058e600416"
+checksum = "c8ad19edb5ccf561b5a01c9e37bd1ff38b2c2443c778aa2ff65e993205189c33"
 dependencies = [
  "spin 0.9.4",
  "wasmi_arena",
- "wasmi_core 0.7.0",
+ "wasmi_core 0.11.0",
  "wasmparser-nostd",
-]
-
-[[package]]
-name = "wasmi-validation"
-version = "0.4.1"
-source = "git+https://github.com/ComposableFi/wasmi?rev=cd8c0c775a1d197a35ff3d5c7d6cded3d476411b#cd8c0c775a1d197a35ff3d5c7d6cded3d476411b"
-dependencies = [
- "parity-wasm 0.45.0",
 ]
 
 [[package]]
@@ -15541,9 +15533,9 @@ dependencies = [
 
 [[package]]
 name = "wasmi_arena"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf5581c09dbb8d5c8b0b219c840db487d0ebc2decff86ab0f658bf7f598d0efc"
+checksum = "401c1f35e413fac1846d4843745589d9ec678977ab35a384db8ae7830525d468"
 
 [[package]]
 name = "wasmi_core"
@@ -15560,13 +15552,14 @@ dependencies = [
 
 [[package]]
 name = "wasmi_core"
-version = "0.7.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd07f4aac41a8d5e5a7fabd8dc908fe9ba2182431ebaf968ef210aaf4fe9917e"
+checksum = "2a2bde97906bbc49ad61184db16e5c905e946e747f6febd09b583fc321d70af0"
 dependencies = [
  "downcast-rs",
  "libm 0.2.6",
  "num-traits",
+ "paste 1.0.11",
 ]
 
 [[package]]
@@ -15580,9 +15573,9 @@ dependencies = [
 
 [[package]]
 name = "wasmparser-nostd"
-version = "0.91.0"
+version = "0.100.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c37f310b5a62bfd5ae7c0f1d8e6f98af16a5d6d84ba764e9c36439ec14e318b"
+checksum = "9157cab83003221bfd385833ab587a039f5d6fa7304854042ba358a3b09e0724"
 dependencies = [
  "indexmap-nostd",
 ]
