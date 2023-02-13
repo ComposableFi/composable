@@ -33,7 +33,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		fee_config: FeeConfig,
 		assets_weights: BoundedBTreeMap<T::AssetId, Permill, ConstU32<2>>,
 		lp_token_id: Option<AssetIdOf<T>>,
-	) -> Result<T::PoolId, DispatchError> {
+	) -> Result<(T::PoolId, AssetIdOf<T>), DispatchError> {
 		ensure!(assets_weights.len() == 2, Error::<T>::InvalidPair);
 		ensure!(assets_weights.values().non_zero_weights(), Error::<T>::WeightsMustBeNonZero);
 		ensure!(
@@ -68,7 +68,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 				Ok(pool_id)
 			})?;
 
-		Ok(pool_id)
+		Ok((pool_id, lp_token))
 	}
 
 	/// WARNING! This is not a cheap function to call; it does (at least) one storage read per asset
