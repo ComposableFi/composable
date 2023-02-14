@@ -118,12 +118,7 @@ polkadot-primitives = { git = "https://github.com/paritytech/polkadot", default-
 polkadot-runtime = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
 polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
 rococo-runtime = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
-# cumulus depends on substrate https://github.com/paritytech/cumulus/blob/27721d794ee63aae42317a7eeda21595dd3200d9/Cargo.lock#L5282
-# via https://github.com/paritytech/substrate?branch=polkadot-v0.9.36#2dff067e9f7f6f3cc4dbfdaaa97753eccc407689
-# cumulus does https://github.com/paritytech/cumulus/blob/27721d794ee63aae42317a7eeda21595dd3200d9/parachains/runtimes/assets/statemine/src/weights/pallet_assets.rs#L64
-# but there is no that methods in https://github.com/paritytech/substrate/blob/2dff067e9f7f6f3cc4dbfdaaa97753eccc407689/frame/assets/src/weights.rs#L49
-# build of 9.33 borked because of that
-# statemine-runtime = { git = "https://github.com/paritytech/cumulus", default-features = false,  branch = "polkadot-v0.9.36" , optional = true }
+statemine-runtime = { git = "https://github.com/paritytech/cumulus", default-features = false,  branch = "polkadot-v0.9.36" , optional = true }
 xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "64d8822f6ebc1af50092677a80a9bdb74860e9a9", default-features = false }
 
 dali-runtime = { package = "dali-runtime", path = "../../parachain/runtime/dali", default-features = false, optional = true }
