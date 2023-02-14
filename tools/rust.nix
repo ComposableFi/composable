@@ -49,7 +49,7 @@
         cargo-clippy-check = crane.nightly.cargoClippy
           (systemCommonRust.common-attrs // {
             cargoArtifacts = self'.packages.common-deps-nightly;
-            cargoClippyExtraArgs = "--all-targets --tests -- -D warnings";
+            cargoClippyExtraArgs = "--all-targets --tests -- -D warnings -A deprecated";
           });
 
         cargo-deny-check = crane.nightly.mkCargoDerivation {

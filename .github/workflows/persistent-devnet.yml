@@ -24,9 +24,7 @@ jobs:
     name: "Cache"
     runs-on:
       - self-hosted
-      - linux
-      - x64
-      - sre
+      - x64-cute
     concurrency:
        group: cache-${{ matrix.package }}
        cancel-in-progress: true
@@ -62,9 +60,7 @@ jobs:
     name: "Deploy Persistent Devnet"
     runs-on:
       - self-hosted
-      - linux
-      - x64
-      - sre
+      - x64-cute
     concurrency:
       group: nix-deploy-devnet-persistent
       cancel-in-progress: false

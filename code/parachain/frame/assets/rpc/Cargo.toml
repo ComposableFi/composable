@@ -11,10 +11,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # substrate primitives
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 
 # local
 assets-runtime-api = { path = "../runtime-api" }
@@ -30,4 +30,4 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 ] }
 
 # rpc
-jsonrpsee = { version = "0.15.1", features = ["server", "macros"] }
+jsonrpsee = { version = "0.16.2", features = ["server", "macros"] }

@@ -3,10 +3,10 @@ extern crate alloc;
 use crate::{
 	authenticate::{ensure_owner, Authenticated},
 	error::ContractError,
-	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
+	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, Step},
 	state::{Config, CONFIG, IP_REGISTER, OWNERS, RELAYER_REGISTER, RESULT_REGISTER},
 };
-use alloc::{borrow::Cow, collections::VecDeque};
+use alloc::borrow::Cow;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -18,14 +18,13 @@ use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInf
 use cw_utils::ensure_from_older_version;
 use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
 use cw_xcvm_common::shared::{encode_base64, BridgeMsg};
-use cw_xcvm_utils::{DefaultXCVMInstruction, DefaultXCVMProgram};
+use cw_xcvm_utils::DefaultXCVMProgram;
 use num::Zero;
 use xcvm_core::{
 	apply_bindings, cosmwasm::*, Balance, BindingValue, BridgeSecurity, Destination, Displayed,
-	Funds, NetworkId, Register,
+	Funds, Instruction, NetworkId, Register,
 };
 
-type XCVMInstruction = DefaultXCVMInstruction;
 type XCVMProgram = DefaultXCVMProgram;
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
@@ -77,12 +76,12 @@ pub fn execute(
 			initiate_execution(token, deps, env, relayer, program),
 
 		// ExecuteStep should be called by interpreter itself
-		ExecuteMsg::ExecuteStep { relayer, program } =>
+		ExecuteMsg::ExecuteStep { step } =>
 			if env.contract.address != info.sender {
 				Err(ContractError::NotSelf)
 			} else {
-				// Encore self ownership in this token
-				handle_execute_step(token, deps, env, relayer, program)
+				// Self ownership in this token
+				handle_execute_step(token, deps, env, step)
 			},
 
 		ExecuteMsg::AddOwners { owners } => add_owners(token, deps, owners),
@@ -116,19 +115,20 @@ fn initiate_execution(
 ) -> Result<Response, ContractError> {
 	// Reset instruction pointer to zero.
 	IP_REGISTER.save(deps.storage, &0)?;
-
-	// Set the new relayer, note that the relayer that is in the register is always the last relayer
-	// that executed a program.
-	RELAYER_REGISTER.save(deps.storage, &relayer)?;
-
-	Ok(Response::default().add_submessage(SubMsg::reply_on_error(
-		wasm_execute(
-			env.contract.address,
-			&ExecuteMsg::ExecuteStep { relayer, program },
-			Default::default(),
-		)?,
-		SELF_CALL_ID,
-	)))
+	Ok(Response::default()
+		.add_event(
+			Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.start"),
+		)
+		.add_submessage(SubMsg::reply_on_error(
+			wasm_execute(
+				env.contract.address,
+				&ExecuteMsg::ExecuteStep {
+					step: Step { relayer, instruction_pointer: 0, program },
+				},
+				Default::default(),
+			)?,
+			SELF_CALL_ID,
+		)))
 }
 
 /// Add owners who can execute entrypoints other than `ExecuteStep`
@@ -137,8 +137,7 @@ fn add_owners(
 	deps: DepsMut,
 	owners: Vec<Addr>,
 ) -> Result<Response, ContractError> {
-	let mut event =
-		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.added");
+	let mut event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.add");
 	for owner in owners {
 		event = event.add_attribute("owner", format!("{}", owner));
 		OWNERS.save(deps.storage, owner, &())?;
@@ -150,7 +149,7 @@ fn add_owners(
 /// Beware that emptying the set of owners result in a tombstoned interpreter.
 fn remove_owners(_: Authenticated, deps: DepsMut, owners: Vec<Addr>) -> Response {
 	let mut event =
-		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.removed");
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.remove");
 	for owner in owners {
 		event = event.add_attribute("owner", format!("{}", owner));
 		OWNERS.remove(deps.storage, owner);
@@ -169,69 +168,70 @@ pub fn handle_execute_step(
 	_: Authenticated,
 	mut deps: DepsMut,
 	env: Env,
-	relayer: Addr,
-	program: XCVMProgram,
+	Step { relayer, instruction_pointer, program }: Step,
 ) -> Result<Response, ContractError> {
-	let mut response = Response::new();
-	let instruction_len = program.instructions.len();
-	let mut instruction_iter = program.instructions.into_iter().enumerate();
-	let mut ip = IP_REGISTER.load(deps.storage)?;
-	while let Some((index, instruction)) = instruction_iter.next() {
-		response = match instruction {
-			XCVMInstruction::Call { bindings, encoded } => {
-				if index >= instruction_len - 1 {
-					// If the call is the final instruction, do not yield execution
-					interpret_call(deps.as_ref(), &env, bindings, encoded, ip as usize, response)?
-				} else {
-					// If the call is not the final instruction:
-					// 1. interpret the call: this will add the call to the response's
-					//    submessages.
-					// 2. yield the execution by adding a call to the interpreter with the
-					//    rest of the instructions as XCVM program. This will make sure that
-					//    previous call instruction will run first, then the rest of the program
-					//    will run.
-					let response =
-						interpret_call(deps.as_ref(), &env, bindings, encoded, index, response)?;
-					let instructions: VecDeque<XCVMInstruction> =
-						instruction_iter.map(|(_, instr)| instr).collect();
-					let program = XCVMProgram { tag: program.tag, instructions };
-					IP_REGISTER.save(deps.storage, &ip)?;
-					return Ok(response.add_message(wasm_execute(
-						env.contract.address,
-						&ExecuteMsg::ExecuteStep { relayer: relayer.clone(), program },
-						vec![],
-					)?))
-				}
-			},
-			XCVMInstruction::Spawn { network, bridge_security, salt, assets, program } =>
-				interpret_spawn(
-					&deps,
+	let mut instruction_iter = program.instructions.into_iter();
+	match instruction_iter.next() {
+		Some(instruction) => {
+			let response = match instruction {
+				Instruction::Transfer { to, assets } =>
+					interpret_transfer(&mut deps, &env, &relayer, to, assets),
+				Instruction::Call { bindings, encoded } => interpret_call(
+					deps.as_ref(),
 					&env,
-					network,
-					bridge_security,
-					salt,
-					assets,
-					program,
-					response,
-				)?,
-			XCVMInstruction::Transfer { to, assets } =>
-				interpret_transfer(&mut deps, &env, relayer.clone(), to, assets, response)?,
-			instr => return Err(ContractError::InstructionNotSupported(format!("{:?}", instr))),
-		};
-		ip += 1;
+					bindings,
+					encoded,
+					instruction_pointer,
+					&relayer,
+				),
+				Instruction::Spawn { network, bridge_security, salt, assets, program } =>
+					interpret_spawn(
+						&mut deps,
+						&env,
+						network,
+						bridge_security,
+						salt,
+						assets,
+						program,
+					),
+				// TODO(hussein-aitlahcen)
+				Instruction::Query { .. } => Ok(Response::default()),
+			}?;
+			// Save the intermediate IP so that if the execution fails, we can recover at which
+			// instruction it happened.
+			IP_REGISTER.update::<_, ContractError>(deps.storage, |x| Ok(x + 1))?;
+			let next_instruction_pointer = instruction_pointer + 1;
+			let next_program =
+				XCVMProgram { tag: program.tag.clone(), instructions: instruction_iter.collect() };
+			Ok(response.add_message(wasm_execute(
+				env.contract.address,
+				&ExecuteMsg::ExecuteStep {
+					step: Step {
+						relayer,
+						instruction_pointer: next_instruction_pointer,
+						program: next_program,
+					},
+				},
+				Default::default(),
+			)?))
+		},
+		None => {
+			// We subtract because of the extra loop to reach the empty instructions case.
+			IP_REGISTER.save(deps.storage, &instruction_pointer.saturating_sub(1))?;
+			// We save the relayer that executed the last program.
+			RELAYER_REGISTER.save(deps.storage, &relayer)?;
+			let mut event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
+				.add_attribute("action", "execution.success");
+			if program.tag.len() >= 3 {
+				event = event.add_attribute(
+					"tag",
+					core::str::from_utf8(&program.tag)
+						.map_err(|_| ContractError::InvalidProgramTag)?,
+				);
+			}
+			Ok(Response::default().add_event(event))
+		},
 	}
-
-	IP_REGISTER.save(deps.storage, &ip)?;
-
-	let mut event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "executed");
-	if program.tag.len() >= 3 {
-		event = event.add_attribute(
-			"tag",
-			core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
-		);
-	}
-
-	Ok(response.add_event(event))
 }
 
 /// Interpret the `Call` instruction
@@ -244,8 +244,8 @@ pub fn interpret_call(
 	env: &Env,
 	bindings: Vec<(u32, BindingValue)>,
 	payload: Vec<u8>,
-	_ip: usize,
-	response: Response,
+	instruction_pointer: u16,
+	relayer: &Addr,
 ) -> Result<Response, ContractError> {
 	// We don't know the type of the payload, so we use `serde_json::Value`
 	let flat_cosmos_msg: FlatCosmosMsg<serde_json::Value> = if !bindings.is_empty() {
@@ -257,9 +257,9 @@ pub fn interpret_call(
 		apply_bindings(payload, bindings, &mut formatted_call, |binding| {
 			let data = match binding {
 				BindingValue::Register(Register::Ip) =>
-					Cow::Owned(format!("{}", IP_REGISTER.load(deps.storage)?).into()),
+					Cow::Owned(format!("{}", instruction_pointer).into()),
 				BindingValue::Register(Register::Relayer) =>
-					Cow::Owned(format!("{}", RELAYER_REGISTER.load(deps.storage)?).into()),
+					Cow::Owned(format!("{}", relayer.clone()).into()),
 				BindingValue::Register(Register::This) =>
 					Cow::Borrowed(env.contract.address.as_bytes()),
 				BindingValue::Register(Register::Result) => Cow::Owned(
@@ -290,7 +290,7 @@ pub fn interpret_call(
 							&balance,
 							&cw20_address,
 							&env.contract.address,
-						)?,
+						),
 						AssetReference::Native { denom } =>
 							if balance.is_unit {
 								return Err(ContractError::InvalidBindings)
@@ -298,9 +298,12 @@ pub fn interpret_call(
 								let coin = deps
 									.querier
 									.query_balance(env.contract.address.clone(), denom.clone())?;
-								balance.amount.apply(coin.amount.into())
+								balance
+									.amount
+									.apply(coin.amount.into())
+									.map_err(|_| ContractError::ArithmeticError)
 							},
-					};
+					}?;
 					Cow::Owned(format!("{}", amount).into())
 				},
 			};
@@ -316,20 +319,19 @@ pub fn interpret_call(
 
 	let cosmos_msg: CosmosMsg =
 		flat_cosmos_msg.try_into().map_err(|_| ContractError::DataSerializationError)?;
-	Ok(response
+	Ok(Response::default()
 		.add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("instruction", "call"))
 		.add_submessage(SubMsg::reply_on_success(cosmos_msg, CALL_ID)))
 }
 
 pub fn interpret_spawn(
-	deps: &DepsMut,
+	deps: &mut DepsMut,
 	env: &Env,
 	network: NetworkId,
 	bridge_security: BridgeSecurity,
 	salt: Vec<u8>,
 	assets: Funds<Balance>,
 	program: XCVMProgram,
-	mut response: Response,
 ) -> Result<Response, ContractError> {
 	let Config { interpreter_origin, registry_address, router_address, .. } =
 		CONFIG.load(deps.storage)?;
@@ -337,6 +339,7 @@ pub fn interpret_spawn(
 	let registry_address = registry_address.into_string();
 	let mut normalized_funds: Funds<Displayed<u128>> = Funds::empty();
 
+	let mut response = Response::default();
 	for (asset_id, balance) in assets.0 {
 		if balance.amount.is_zero() {
 			// We ignore zero amounts
@@ -352,15 +355,18 @@ pub fn interpret_spawn(
 				}
 				let coin =
 					deps.querier.query_balance(env.contract.address.clone(), denom.clone())?;
-				balance.amount.apply(coin.amount.into())
+				balance
+					.amount
+					.apply(coin.amount.into())
+					.map_err(|_| ContractError::ArithmeticError)
 			},
 			AssetReference::Virtual { cw20_address } => apply_amount_to_cw20_balance(
 				deps.as_ref(),
 				&balance,
 				cw20_address,
 				&env.contract.address,
-			)?,
-		};
+			),
+		}?;
 
 		if !transfer_amount.is_zero() {
 			let asset_id: u128 = asset_id.into();
@@ -407,17 +413,17 @@ pub fn interpret_spawn(
 					"origin_user_id",
 					serde_json_wasm::to_string(&interpreter_origin.user_origin.user_id)
 						.map_err(|_| ContractError::DataSerializationError)?,
-				),
+				)
+				.add_attribute("networ_id", format!("{}", network)),
 		))
 }
 
 pub fn interpret_transfer(
 	deps: &mut DepsMut,
 	env: &Env,
-	relayer: Addr,
+	relayer: &Addr,
 	to: Destination<CanonicalAddr>,
 	assets: Funds<Balance>,
-	mut response: Response,
 ) -> Result<Response, ContractError> {
 	let config = CONFIG.load(deps.storage)?;
 	let registry_addr = config.registry_address.into_string();
@@ -427,6 +433,7 @@ pub fn interpret_transfer(
 		Destination::Relayer => relayer.into(),
 	};
 
+	let mut response = Response::default();
 	for (asset_id, balance) in assets.0 {
 		if balance.amount.is_zero() {
 			continue
@@ -439,7 +446,7 @@ pub fn interpret_transfer(
 					return Err(ContractError::DecimalsInNativeToken)
 				}
 				let mut coin = deps.querier.query_balance(env.contract.address.clone(), denom)?;
-				coin.amount = balance.amount.apply(coin.amount.into()).into();
+				coin.amount = balance.amount.apply(coin.amount.into())?.into();
 				response.add_message(BankMsg::Send {
 					to_address: recipient.clone(),
 					amount: vec![coin],
@@ -495,11 +502,9 @@ fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 			// Save the result that is returned from the sub-interpreter
 			// this way, only the `RESULT_REGISTER` is persisted. All
 			// other state changes are reverted.
-			RESULT_REGISTER.save(deps.storage, &Err(e))?;
-			// Ip register should be incremented by one
+			RESULT_REGISTER.save(deps.storage, &Err(e.clone()))?;
 			let ip_register = IP_REGISTER.load(deps.storage)?;
-			IP_REGISTER.save(deps.storage, &(ip_register + 1))?;
-			Ok(Response::default())
+			Ok(Response::default().add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.failure").add_attribute("reason", e.to_string())).add_attribute("ip", format!("{}", ip_register)))
 		}
 	}
 }
@@ -539,7 +544,7 @@ fn apply_amount_to_cw20_balance<A: Into<String> + Clone>(
 			.apply_with_decimals(token_info.decimals, balance_response.balance.into())
 	} else {
 		balance.amount.apply(balance_response.balance.into())
-	};
+	}?;
 
 	Ok(processed_amount)
 }

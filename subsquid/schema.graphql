@@ -39,6 +39,12 @@ type PabloAssetWeight @entity {
   blockId: String!
 }
 
+enum PabloTx {
+  ADD_LIQUIDITY
+  REMOVE_LIQUIDITY
+  SWAP
+}
+
 type PabloTransaction @entity {
   id: ID!
   pool: PabloPool! @index
@@ -46,10 +52,14 @@ type PabloTransaction @entity {
   timestamp: DateTime! @index
   "Last updated block id"
   blockId: String!
+  event: Event! @index
+  txType: PabloTx!
+  swap: PabloSwap
+  liquidityAdded: PabloLiquidityAdded
+  liquidityRemoved: PabloLiquidityRemoved
 }
 
 type PabloPoolAsset @entity {
-  "Asset ID"
   id: ID!
   assetId: String!
   pool: PabloPool! @index
@@ -137,34 +147,17 @@ type Activity @entity {
   blockId: String!
 }
 
-type Asset @entity {
-  "ID of the asset"
-  id: ID!
-  "ID of the event that added the last price"
-  eventId: String! @index
-  "Latest price in USD"
-  price: BigInt!
-  decimals: Int
-  historicalPrices: [HistoricalAssetPrice!] @derivedFrom(field: "asset")
-  "Last updated block id"
-  blockId: String!
-}
-
 enum Currency {
   USD
 }
 
 type HistoricalAssetPrice @entity {
   id: ID!
-  "ID of the event associated with this activity"
-  eventId: String! @index
   "ID of the asset"
-  asset: Asset!
-  price: BigInt!
+  assetId: String! @index
+  price: Float!
   timestamp: DateTime! @index
   currency: Currency!
-  "Last updated block id"
-  blockId: String!
 }
 
 type RewardPool @entity {
@@ -244,6 +237,29 @@ type PabloSwap @entity {
   blockId: String!
 }
 
+type PabloAmount {
+  assetId: String!
+  amount: BigInt!
+}
+
+type PabloLiquidityAdded @entity {
+  id: ID!
+  event: Event!
+  pool: PabloPool! @index
+  timestamp: DateTime! @index
+  blockId: String!
+  amounts: [PabloAmount!]!
+}
+
+type PabloLiquidityRemoved @entity {
+  id: ID!
+  event: Event!
+  pool: PabloPool! @index
+  timestamp: DateTime! @index
+  blockId: String!
+  amounts: [PabloAmount!]!
+}
+
 type CurrentLockedValue
   @entity
   @index(fields: ["assetId", "source"], unique: true) {
@@ -289,4 +305,7 @@ type Event @entity {
   activities: [Activity!] @derivedFrom(field: "event")
   "Last updated block id"
   blockId: String!
+  txHash: String
+  success: Boolean
+  failReason: String
 }

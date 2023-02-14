@@ -36,6 +36,7 @@
     "class-validator": "^0.13.2",
     "dotenv": "^16.0.2",
     "graphql": "^15.8.0",
+    "node-fetch": "^2.6.9",
     "pg": "^8.7.3",
     "ts-mockito": "^2.6.1",
     "type-graphql": "^1.2.0-rc.1"

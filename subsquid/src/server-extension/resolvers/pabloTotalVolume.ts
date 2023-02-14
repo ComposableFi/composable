@@ -2,7 +2,8 @@ import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql
 import type { EntityManager } from "typeorm";
 import { LessThan, MoreThan, And } from "typeorm";
 import { PabloSwap } from "../../model";
-import { getRange, DAY_IN_MS } from "./common";
+import { DAY_IN_MS, getVolumeRange } from "./common";
+import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 class AssetIdAmount {
@@ -11,6 +12,9 @@ class AssetIdAmount {
 
   @Field(() => BigInt, { nullable: false })
   amount!: bigint;
+
+  @Field(() => Number, { nullable: true })
+  price?: number;
 
   constructor(props: AssetIdAmount) {
     Object.assign(this, props);
@@ -34,6 +38,9 @@ export class PabloTotalVolume {
 export class PabloTotalVolumeInput {
   @Field(() => String, { nullable: false })
   range!: string;
+
+  @Field(() => String, { nullable: true })
+  poolId!: string;
 }
 
 @Resolver()
@@ -42,11 +49,11 @@ export class PabloTotalVolumeResolver {
 
   @Query(() => [PabloTotalVolume])
   async pabloTotalVolume(@Arg("params", { validate: true }) input: PabloTotalVolumeInput): Promise<PabloTotalVolume[]> {
-    const { range } = input;
+    const { range, poolId } = input;
 
     const manager = await this.tx();
 
-    const timestamps = getRange(range);
+    const timestamps = getVolumeRange(range);
     // Map timestamp to volume
     const volumes: Record<string, AssetIdAmount[]> = {};
 
@@ -57,8 +64,15 @@ export class PabloTotalVolumeResolver {
         where: {
           timestamp: And(
             LessThan(new Date(timestamp.getTime())),
-            MoreThan(new Date(timestamp.getTime() - (range === "year" ? 30 : 1) * DAY_IN_MS))
-          )
+            MoreThan(new Date(timestamp.getTime() - (range === "year" ? 7 : 1) * DAY_IN_MS))
+          ),
+          ...(poolId
+            ? {
+                pool: {
+                  id: poolId
+                }
+              }
+            : {})
         }
       });
 
@@ -67,13 +81,19 @@ export class PabloTotalVolumeResolver {
         return acc;
       }, {});
 
-      volumes[time] = Object.keys(currVolumes).map(
-        assetId =>
+      volumes[time] = [];
+
+      for (const assetId of Object.keys(currVolumes)) {
+        const price = await getOrCreateHistoricalAssetPrice(manager, assetId, timestamp.getTime());
+
+        volumes[time].push(
           new AssetIdAmount({
-            assetId,
-            amount: currVolumes[assetId]
+            assetId: assetId.toString(),
+            amount: currVolumes[assetId.toString()],
+            price
           })
-      );
+        );
+      }
     }
 
     return Object.keys(volumes).map(date => {

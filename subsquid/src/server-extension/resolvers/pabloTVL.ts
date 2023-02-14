@@ -1,9 +1,10 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { LessThan } from "typeorm";
-import { HistoricalLockedValue, LockedSource, PabloPool } from "../../model";
+import { HistoricalLockedValue, LockedSource, PabloPool, PabloPoolAsset } from "../../model";
 import { getRange } from "./common";
 import { PicassoTVL } from "./picassoOverviewStats";
+import { getCurrentAssetPrices, getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 export class PabloTVL {
@@ -59,11 +60,11 @@ export class PabloTVLResolver {
       };
     }, {});
 
+    const { quoteAssetId, poolAssets } = pool;
+    const baseAssetId = poolAssets.map(({ assetId }) => assetId).find(assetId => assetId !== quoteAssetId)!;
+
     for (const timestamp of timestamps) {
       const time = timestamp.toISOString();
-
-      const { quoteAssetId, poolAssets } = pool;
-      const baseAssetId = poolAssets.map(({ assetId }) => assetId).find(assetId => assetId !== quoteAssetId)!;
 
       for (const assetId of [quoteAssetId, baseAssetId]) {
         const historicalLockedValue = await manager.getRepository(HistoricalLockedValue).findOne({
@@ -85,16 +86,18 @@ export class PabloTVLResolver {
       }
     }
 
-    return Object.keys(lockedValues).map(date => {
+    const pabloTVL: Array<PabloTVL> = [];
+
+    for (const date of Object.keys(lockedValues)) {
       const tvl: PicassoTVL[] = [];
-      for (const assetId in lockedValues[date]) {
-        tvl.push({ assetId, amount: lockedValues[date][assetId] });
+      for (const assetId of Object.keys(lockedValues[date])) {
+        const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date(date).getTime());
+        tvl.push({ assetId, amount: lockedValues[date][assetId], price });
       }
 
-      return new PabloTVL({
-        date,
-        lockedValues: tvl
-      });
-    });
+      pabloTVL.push(new PabloTVL({ date, lockedValues: tvl }));
+    }
+
+    return pabloTVL;
   }
 }

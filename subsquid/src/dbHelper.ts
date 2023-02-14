@@ -3,12 +3,14 @@ import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { hexToU8a } from "@polkadot/util";
 import { EntityManager, LessThan } from "typeorm";
-import { divideBigInts, encodeAccount } from "./utils";
+import { divideBigInts, encodeAccount, getHistoricalCoingeckoPrice } from "./utils";
 import {
   Account,
   Activity,
+  Currency,
   Event,
   EventType,
+  HistoricalAssetPrice,
   HistoricalLockedValue,
   LockedSource,
   PabloAssetWeight,
@@ -85,7 +87,10 @@ export async function saveEvent(ctx: EventHandlerContext<Store>, eventType: Even
     eventType,
     blockNumber: BigInt(ctx.block.height),
     timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash
+    blockId: ctx.block.hash,
+    txHash: ctx.event.extrinsic?.hash,
+    success: ctx.event.extrinsic?.success,
+    failReason: typeof ctx.event.extrinsic?.error === "string" ? ctx.event.extrinsic.error : undefined
   });
 
   // Store event
@@ -373,4 +378,90 @@ export async function getSpotPrice(
   }
 
   return baseAssetId === swap.baseAssetId ? Number(swap.spotPrice) : 1 / Number(swap.spotPrice);
+}
+
+/**
+ * Gets historical price from DB, or from Coingecko if it doesn't exist.
+ * @param ctx
+ * @param assetId
+ * @param timestamp
+ */
+export async function getOrCreateHistoricalAssetPrice(
+  ctx: EventHandlerContext<Store> | EntityManager,
+  assetId: string,
+  timestamp: number
+): Promise<number | undefined> {
+  const isRepository = ctx instanceof EntityManager;
+
+  const time = new Date(timestamp);
+  const date = new Date(time.getFullYear(), time.getMonth(), time.getDate());
+
+  // Look for the price in the DB
+  const where = {
+    assetId,
+    timestamp: date
+  };
+  let assetPrice = isRepository
+    ? await ctx.getRepository(HistoricalAssetPrice).findOne({ where })
+    : await ctx.store.findOne(HistoricalAssetPrice, {
+        where
+      });
+
+  let price = assetPrice?.price;
+
+  // If no price available, get it from the API and update DB
+  if (!price) {
+    try {
+      // If asset is PICA, use swap price from KSM/PICA pool
+      const assetIdToQuery = assetId === "1" ? "4" : (assetId as "4" | "130");
+
+      price = await getHistoricalCoingeckoPrice(assetIdToQuery, date);
+
+      // If asset is PICA, use swap price
+      if (assetId === "1") {
+        const picaSpotPrice = await getSpotPrice(ctx, "1", "4", "2", timestamp);
+        price /= picaSpotPrice;
+      }
+
+      // Create new price entry
+      assetPrice = new HistoricalAssetPrice({
+        id: randomUUID(),
+        assetId: assetId.toString(),
+        price,
+        timestamp: date,
+        currency: Currency.USD
+      });
+
+      if (isRepository) {
+        await ctx.getRepository(HistoricalAssetPrice).save(assetPrice);
+      } else {
+        await ctx.store.save(assetPrice);
+      }
+    } catch (e) {
+      console.log(e);
+      console.info(`Could not get price for asset ${assetId}. Trying with previous value instead.`);
+
+      const options = {
+        where: {
+          assetId,
+          timestamp: LessThan(date)
+        },
+        sort: {
+          timestamp: "DESC"
+        }
+      };
+
+      assetPrice = isRepository
+        ? await ctx.getRepository(HistoricalAssetPrice).findOne(options)
+        : await ctx.store.findOne(HistoricalAssetPrice, options);
+
+      if (assetPrice) {
+        price = assetPrice.price;
+      } else {
+        console.error(`Could not get price for asset ${assetId}. Ignoring.`);
+      }
+    }
+  }
+
+  return price;
 }

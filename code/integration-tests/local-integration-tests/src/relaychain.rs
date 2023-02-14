@@ -14,7 +14,7 @@ mod kusama {
 	/// - debt: the weight limit used to process the `call`.
 	#[allow(dead_code)] // for future use in cross chain tests
 	pub fn finalize_call_into_xcm_message<T: Config>(
-		call: relay_runtime::Call,
+		call: relay_runtime::RuntimeCall,
 		extra_fee: Balance,
 		weight: Weight,
 		parachain: ParaId,
@@ -28,7 +28,7 @@ mod kusama {
 			BuyExecution { fees: asset, weight_limit: Unlimited },
 			Transact {
 				origin_type: OriginKind::SovereignAccount,
-				require_weight_at_most: weight,
+				require_weight_at_most: weight.ref_time(),
 				call: call.encode().into(),
 			},
 			DepositAsset {

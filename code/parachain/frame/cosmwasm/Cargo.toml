@@ -13,21 +13,21 @@ version = "3.0.0"
 
 [dependencies]
 composable-support = { path = "../composable-support", default-features = false }
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "0d62e2a0115ccd3b49397d594503dc04b4f31d95", default-features = false, features = [
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "c2a4fe2c764710c0db15c571135bc37619a289d5", default-features = false, features = [
   "ibc3",
   "iterator",
   "stargate",
 ] }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "0d62e2a0115ccd3b49397d594503dc04b4f31d95", default-features = false, features = [
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "c2a4fe2c764710c0db15c571135bc37619a289d5", default-features = false, features = [
   "iterator",
   "stargate",
 ] }
-frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33", optional = true }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", optional = true }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "223705564957acc509cf5a4b9f33665b2eab5f4a", default-features = false }
-ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "223705564957acc509cf5a4b9f33665b2eab5f4a", default-features = false, optional = false }
+ibc = { git = "https://github.com/ComposableFi/centauri", rev = "7433cd9c3e0e6f28f7bfc42ba5e60f5fabd2ccb2", default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "7433cd9c3e0e6f28f7bfc42ba5e60f5fabd2ccb2", default-features = false, optional = false }
 lazy_static = { version = "1.4.0", optional = true, default-features = false, features = [
   "spin_no_std",
 ] }
@@ -35,8 +35,8 @@ libsecp256k1 = { version = "0.7.0", default-features = false }
 
 log = { version = "0.4.14", default-features = false }
 pallet-assets = { default-features = false, path = "../assets" }
-pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "223705564957acc509cf5a4b9f33665b2eab5f4a", default-features = false }
+pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "7433cd9c3e0e6f28f7bfc42ba5e60f5fabd2ccb2", default-features = false }
 parity-wasm = { version = "0.45.0", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
 rand = { version = "0.8.5", optional = true, default-features = false, features = [
@@ -52,14 +52,14 @@ serde_json = { version = "1.0.82", default-features = false, features = [
 ] }
 sha2 = { version = "0.10", default-features = false }
 sha3 = { version = "0.10", default-features = false }
-sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 wasm-instrument = { version = "0.2", default-features = false }
-wasmi = { version = "0.22", default-features = false }
-wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
+wasmi = { version = "0.26", default-features = false }
+wasmi-validation = { version = "0.5", default-features = false }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
@@ -69,9 +69,9 @@ lazy_static = { version = "1.4.0", default-features = false, features = [
   "spin_no_std",
 ] }
 num-traits = { version = "0.2.14", default-features = false }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.33" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.33" }
-pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36" }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 rand = { version = "0.8.5", default-features = false, features = [
   "alloc",
   "small_rng",

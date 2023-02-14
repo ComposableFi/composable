@@ -121,7 +121,8 @@ const sidebars = {
                                 type: 'generated-index',
                                 slug: 'use-cases'
                             },
-                            collapsible: false,
+                            collapsible: true,
+                            collapsed: true,
                             items: [
                                 'products/xcvm/use-cases/swap',
                             ]
@@ -142,6 +143,20 @@ const sidebars = {
                         'products/centauri/merkle-mountain-ranges',
                         'products/centauri/cosmos11-BEEFY-COSMOS-IBC-light-client',
                         'products/centauri/expanding-ibc-protocol'
+                    ],
+                },
+                {
+                    type: 'category',
+                    label: 'CosmWasm',
+                    link: {
+                        type: 'doc',
+                        id: 'products/cosmwasm-vm-overview'
+                    },
+                    collapsible: true,
+                    collapsed: true,
+                    items: [
+                        'products/cosmwasm/existing-cosmwasm-projects-to-deploy-on-ccw-vm',
+                        'products/cosmwasm/syngery-with-centauri-and-xcvm',
                     ],
                 },
                 {
@@ -304,6 +319,7 @@ const sidebars = {
                         'nix/run-packages',
                         'nix/development-environments',
                         'nix/running-checks',
+                        'nix/reading-logs',
                         'nix/defining-your-own-packages',
                         'nix/composing-services-with-arion',
                         'nix/editing-docs',
@@ -330,16 +346,20 @@ const sidebars = {
                             },
                             collapsible: true,
                             collapsed: false,
-                            items: ['codespaces/book', 'codespaces/substrate', 'codespaces/frontend', 'codespaces/runtime-tests'],
+                            items: [
+                                'codespaces/book',
+                                'codespaces/substrate',
+                                'codespaces/frontend',
+                                'codespaces/runtime-tests'],
                         },
                     ],
                 },
                 {
                     type: 'category',
-                    label: 'CosmWasm Orchestrate',
+                    label: 'Cosmwasm Orchestrate',
                     link: {
                         type: 'doc',
-                        id: 'products/cosmwasm-orchestrate'
+                        id: 'developer-guides/cosmwasm-orchestrate',
                     },
                     collapsible: true,
                     collapsed: true,
@@ -349,17 +369,18 @@ const sidebars = {
                             label: 'Concepts',
                             link: {
                                 type: 'doc',
-                                id: 'products/cosmwasm-orchestrate/concepts/concepts'
+                                id: 'developer-guides/cosmwasm/cw-orchestrate/concepts/concepts',
                             },
                             collapsible: true,
                             collapsed: true,
-                            items: [
-                                'products/cosmwasm-orchestrate/concepts/direct-dispatch',
-                                'products/cosmwasm-orchestrate/concepts/address-handlers',
-                                'products/cosmwasm-orchestrate/concepts/custom-handler',
-                            ]
+                            items:[
+                                'developer-guides/cosmwasm/cw-orchestrate/concepts/direct-dispatch',
+                                'developer-guides/cosmwasm/cw-orchestrate/concepts/address-handlers',
+                                'developer-guides/cosmwasm/cw-orchestrate/concepts/custom-handler',
+
+                            ],
                         },
-                        'products/cosmwasm-orchestrate/tutorial-dex'
+                        'developer-guides/cosmwasm/cw-orchestrate/tutorial-dex',
                     ]
                 },
                 {
@@ -367,13 +388,13 @@ const sidebars = {
                     label: 'Cosmwasm CLI',
                     link: {
                         type: 'doc',
-                        id: 'developer-guides/ccw'
+                        id: 'developer-guides/cosmwasm-cli'
                     },
                     collapsible: true,
                     collapsed: true,
                     items: [
-                        'developer-guides/ccw/new-project',
-                        'developer-guides/ccw/walkthrough'
+                        'developer-guides/cosmwasm/new-project',
+                        'developer-guides/cosmwasm/walkthrough',
                     ]
                 },
                 'developer-guides/oracle-set-up-guide',

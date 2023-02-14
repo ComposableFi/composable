@@ -47,4 +47,13 @@ export class Event {
      */
     @Column_("text", {nullable: false})
     blockId!: string
+
+    @Column_("text", {nullable: true})
+    txHash!: string | undefined | null
+
+    @Column_("bool", {nullable: true})
+    success!: boolean | undefined | null
+
+    @Column_("text", {nullable: true})
+    failReason!: string | undefined | null
 }

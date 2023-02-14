@@ -32,7 +32,6 @@
       makeComposableNode = f:
         crane.nightly.buildPackage (f (systemCommonRust.common-attrs // {
           name = "composable";
-
           cargoArtifacts = self'.packages.common-deps;
           cargoBuildCommand =
             "cargo build --release --package composable --features=builtin-wasm";
@@ -42,7 +41,7 @@
             "${self'.packages.picasso-runtime}/lib/runtime.optimized.wasm";
           COMPOSABLE_RUNTIME =
             "${self'.packages.composable-runtime}/lib/runtime.optimized.wasm";
-          installPhase = ''
+          installPhaseCommand = ''
             mkdir -p $out/bin
             cp target/release/composable $out/bin/composable
           '';
@@ -73,7 +72,7 @@
               "${self'.packages.picasso-bench-runtime}/lib/runtime.optimized.wasm";
             COMPOSABLE_RUNTIME =
               "${self'.packages.composable-bench-runtime}/lib/runtime.optimized.wasm";
-            installPhase = ''
+            installPhaseCommand = ''
               mkdir -p $out/bin
               cp target/release/composable $out/bin/composable
             '';

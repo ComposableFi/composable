@@ -1,23 +1,15 @@
 [package]
 authors = ["Composable Developers"]
-description = "XCVM interpreter contract"
+description = "XCVM Interpreter contract"
 edition = "2021"
-license = "Apache-2.0"
 name = "cw-xcvm-interpreter"
 repository = "https://github.com/ComposableFi/composable"
 version = "0.1.0"
-
-exclude = [
-  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
-  "xcvm-interpreter.wasm",
-  "hash.txt",
-]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [features]
-# use library feature to disable all instantiate/execute/query exports
 library = []
 
 [dependencies]
