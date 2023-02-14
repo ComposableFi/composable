@@ -3,17 +3,8 @@ use common::{fees::WeightToFeeConverter, xcmp::*};
 use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
 use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
-	construct_runtime, log, match_types, parameter_types,
-	traits::{
-		Contains, Everything, KeyOwnerProofSystem, Nothing, OriginTrait, PalletInfoAccess,
-		Randomness, StorageInfo,
-	},
-	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
-		IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
-		WeightToFeePolynomial,
-	},
-	PalletId,
+	log, parameter_types,
+	traits::{Everything, Nothing, OriginTrait},
 };
 use orml_traits::{
 	location::{AbsoluteReserveProvider, RelativeReserveProvider},
@@ -240,10 +231,6 @@ impl xcm_executor::Config for XcmConfig {
 }
 
 parameter_type_with_key! {
-	// 1. use configured pessimistic asset min fee for target chain / asset pair
-	// 2. use built int
-	// 3. allow to transfer anyway (let not lock assets on our chain for now)
-	// until XCM v4
 	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {
 		#[allow(clippy::match_ref_pats)] // false positive
 		#[allow(clippy::match_single_binding)]
