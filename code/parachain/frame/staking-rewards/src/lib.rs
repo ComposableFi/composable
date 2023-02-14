@@ -1307,7 +1307,7 @@ pub mod pallet {
 			rewards_pool: &RewardPoolOf<T>,
 			duration_preset: DurationSeconds,
 		) -> Option<Validated<FixedU64, GeOne>> {
-			rewards_pool.lock.duration_multipliers.multiplier(duration_preset).cloned()
+			rewards_pool.lock.duration_multipliers.multiplier(duration_preset).copied()
 		}
 
 		pub(crate) fn boosted_amount(
@@ -1832,7 +1832,7 @@ pub(crate) fn claim_of_stake<T: Config>(
 	let claim = if total_shares.is_zero() {
 		T::Balance::zero()
 	} else {
-		let inflation = stake.reductions.get(reward_asset_id).cloned().unwrap_or_else(Zero::zero);
+		let inflation = stake.reductions.get(reward_asset_id).copied().unwrap_or_else(Zero::zero);
 
 		// REVIEW(benluelo): Review expected rounding behaviour, possibly switching to the following
 		// implementation (or something similar):
