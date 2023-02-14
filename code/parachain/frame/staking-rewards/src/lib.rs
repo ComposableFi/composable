@@ -57,7 +57,10 @@ pub mod prelude;
 pub mod weights;
 
 use composable_support::math::safe::{SafeDiv, SafeMul, SafeSub};
-use composable_traits::staking::{Reward, RewardUpdate};
+use composable_traits::{
+	staking::{Reward, RewardUpdate},
+	time::DurationSeconds,
+};
 use core::{
 	cmp,
 	cmp::Ordering,
@@ -86,6 +89,7 @@ pub use pallet::*;
 pub mod pallet {
 	pub use crate::weights::WeightInfo;
 
+	use crate::{claim_of_stake, with_stake_and_rewards_pool};
 	use composable_support::{
 		math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
 		validation::{validators::GeOne, TryIntoValidated, Validated},
@@ -128,7 +132,7 @@ pub mod pallet {
 	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec, vec::Vec};
 
 	use crate::{
-		accumulate_rewards_hook, add_to_rewards_pot, claim_of_stake, prelude::*,
+		accumulate_rewards_hook, add_to_rewards_pot, do_extend_stake_duration, prelude::*,
 		update_rewards_pool, validation::ValidSplitRatio,
 	};
 
@@ -789,9 +793,16 @@ pub mod pallet {
 
 			let awarded_shares = Self::boosted_amount(reward_multiplier, amount)?;
 
-			let (rewards, reductions) =
-				Self::compute_rewards_and_reductions(awarded_shares, &rewards_pool)?;
-			rewards_pool.rewards = rewards;
+			let reductions = Self::compute_reductions(awarded_shares, &rewards_pool)?;
+
+			for (reward_asset_id, reward) in &mut rewards_pool.rewards {
+				let inflation =
+					reductions.get(reward_asset_id).copied().defensive_unwrap_or_else(Zero::zero);
+
+				reward.total_rewards = reward.total_rewards.safe_add(&inflation)?;
+				reward.total_dilution_adjustment =
+					reward.total_dilution_adjustment.safe_add(&inflation)?;
+			}
 
 			let fnft_collection_id = rewards_pool.financial_nft_asset_id;
 			let fnft_instance_id = T::FinancialNft::get_next_nft_id(&fnft_collection_id)?;
@@ -849,13 +860,10 @@ pub mod pallet {
 			amount: Self::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
-			Stakes::<T>::try_mutate(fnft_collection_id, fnft_instance_id, |maybe_stake| {
-				let stake = maybe_stake.as_mut().ok_or(Error::<T>::StakeNotFound)?;
-
-				RewardPools::<T>::try_mutate(stake.reward_pool_id, |maybe_rewards_pool| {
-					let rewards_pool =
-						maybe_rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
-
+			with_stake_and_rewards_pool::<T, (), DispatchError>(
+				&fnft_collection_id,
+				&fnft_instance_id,
+				|stake, rewards_pool| {
 					ensure!(
 						matches!(
 							T::Assets::can_withdraw(stake.reward_pool_id, who, amount),
@@ -936,8 +944,22 @@ pub mod pallet {
 					stake.lock.started_at = T::UnixTime::now().as_secs();
 
 					Ok(())
-				})
-			})
+				},
+			)
+		}
+
+		#[transactional]
+		fn extend_stake_duration(
+			who: &Self::AccountId,
+			(fnft_collection_id, fnft_instance_id): Self::PositionId,
+			duration_preset: DurationSeconds,
+		) -> DispatchResult {
+			do_extend_stake_duration::<T>(
+				who,
+				fnft_collection_id,
+				fnft_instance_id,
+				duration_preset,
+			)
 		}
 
 		#[transactional]
@@ -954,14 +976,20 @@ pub mod pallet {
 
 			// TODO(benluelo): No need to return the staked asset id here, it's the same as
 			// stake.reward_pool_id
-			let (asset_id, share_asset_id) =
+			let share_asset_id =
 				RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
 					let rewards_pool =
 						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-					Self::collect_rewards(rewards_pool, &mut stake, who)?;
+					Self::collect_rewards(
+						who,
+						fnft_collection_id,
+						fnft_instance_id,
+						&mut stake,
+						rewards_pool,
+					)?;
 
-					Ok::<_, DispatchError>((stake.reward_pool_id, rewards_pool.share_asset_id))
+					Ok::<_, DispatchError>(rewards_pool.share_asset_id)
 				})?;
 
 			// REVIEW(benluelo): Make this logic a method on Stake
@@ -974,10 +1002,10 @@ pub mod pallet {
 			let fnft_asset_account =
 				T::FinancialNft::asset_account(fnft_collection_id, fnft_instance_id);
 
-			T::Assets::remove_lock(T::LockId::get(), asset_id, &fnft_asset_account)?;
+			T::Assets::remove_lock(T::LockId::get(), stake.reward_pool_id, &fnft_asset_account)?;
 			T::Assets::remove_lock(T::LockId::get(), share_asset_id, &fnft_asset_account)?;
 			T::Assets::transfer(
-				asset_id,
+				stake.reward_pool_id,
 				&fnft_asset_account,
 				who,
 				staked_amount_returned_to_staker,
@@ -1143,25 +1171,19 @@ pub mod pallet {
 			who: &Self::AccountId,
 			(fnft_collection_id, fnft_instance_id): &Self::PositionId,
 		) -> DispatchResult {
-			let claimed_amounts =
-				Stakes::<T>::try_mutate(fnft_collection_id, fnft_instance_id, |stake| {
-					let stake = stake.as_mut().ok_or(Error::<T>::StakeNotFound)?;
-					RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
-						let rewards_pool =
-							rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
-
-						Self::collect_rewards(rewards_pool, stake, who)
-					})
-				})?;
-
-			Self::deposit_event(Event::<T>::Claimed {
-				owner: who.clone(),
-				fnft_collection_id: *fnft_collection_id,
-				fnft_instance_id: *fnft_instance_id,
-				claimed_amounts,
-			});
-
-			Ok(())
+			with_stake_and_rewards_pool::<T, (), _>(
+				fnft_collection_id,
+				fnft_instance_id,
+				|stake, rewards_pool| {
+					Self::collect_rewards(
+						who,
+						fnft_collection_id,
+						fnft_instance_id,
+						stake,
+						rewards_pool,
+					)
+				},
+			)
 		}
 	}
 
@@ -1249,16 +1271,15 @@ pub mod pallet {
 		/// * `stake` - Stake position
 		/// * `early_unlock` - If there should be an early unlock penalty
 		/// * `keep_alive` - If the transaction should be kept alive
-		// TODO(benluelo): This function does too much - while claim and unstake have similar
-		// functionality, I don't think this is the best abstraction of that. Refactor to have
-		// smaller functions that can then be used in both claim and unstake.
-		// NOTE: Low priority, this is currently working, just not optimal
 		pub(crate) fn collect_rewards(
-			rewards_pool: &mut RewardPoolOf<T>,
-			stake: &mut StakeOf<T>,
 			owner: &T::AccountId,
-		) -> Result<BTreeMap<T::AssetId, T::Balance>, DispatchError> {
+			fnft_collection_id: &T::AssetId,
+			fnft_instance_id: &T::FinancialNftInstanceId,
+			stake: &mut StakeOf<T>,
+			rewards_pool: &mut RewardPoolOf<T>,
+		) -> DispatchResult {
 			let mut claimed_amounts = BTreeMap::new();
+
 			for (reward_asset_id, reward) in &mut rewards_pool.rewards {
 				let claim = claim_of_stake::<T>(
 					stake,
@@ -1266,6 +1287,7 @@ pub mod pallet {
 					reward,
 					reward_asset_id,
 				)?;
+
 				// REVIEW(benluelo): Review logic/ calculations regarding total_rewards & claimed
 				// rewards
 				let claim = sp_std::cmp::min(
@@ -1283,15 +1305,23 @@ pub mod pallet {
 
 				T::Assets::transfer(
 					*reward_asset_id,
-					&Self::pool_account_id(&stake.reward_pool_id),
+					&Pallet::<T>::pool_account_id(&stake.reward_pool_id),
 					owner,
 					claim,
 					false, // pallet account doesn't need to be kept alive
 				)?;
+
 				claimed_amounts.insert(*reward_asset_id, claim);
 			}
 
-			Ok(claimed_amounts)
+			Self::deposit_event(Event::<T>::Claimed {
+				owner: owner.clone(),
+				fnft_collection_id: *fnft_collection_id,
+				fnft_instance_id: *fnft_instance_id,
+				claimed_amounts,
+			});
+
+			Ok(())
 		}
 
 		pub(crate) fn pool_account_id(pool_id: &T::AssetId) -> T::AccountId {
@@ -1315,52 +1345,27 @@ pub mod pallet {
 			reward_multiplier.checked_mul_int(amount).ok_or(ArithmeticError::Overflow)
 		}
 
-		fn compute_rewards_and_reductions(
+		fn compute_reductions(
 			shares: T::Balance,
 			rewards_pool: &RewardPoolOf<T>,
 		) -> Result<
-			(
-				BoundedBTreeMap<T::AssetId, Reward<T::Balance>, T::MaxRewardConfigsPerPool>,
-				BoundedBTreeMap<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>,
-			),
+			BoundedBTreeMap<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>,
 			DispatchError,
 		> {
-			let mut reductions = BoundedBTreeMap::new();
-			let mut rewards_btree_map = BoundedBTreeMap::new();
-
 			let total_shares: T::Balance =
 				<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(
 					rewards_pool.share_asset_id,
 				);
 
-			for (asset_id, reward) in rewards_pool.rewards.iter() {
+			rewards_pool.rewards.clone().try_map(|(_reward_asset_id, reward)| {
 				let inflation = if total_shares.is_zero() {
 					T::Balance::zero()
 				} else {
 					reward.total_rewards.safe_mul(&shares)?.safe_div(&total_shares)?
 				};
 
-				let new_total_rewards = reward.total_rewards.safe_add(&inflation)?;
-				let new_total_dilution_adjustment =
-					reward.total_dilution_adjustment.safe_add(&inflation)?;
-
-				rewards_btree_map
-					.try_insert(
-						*asset_id,
-						Reward {
-							total_rewards: new_total_rewards,
-							total_dilution_adjustment: new_total_dilution_adjustment,
-							..reward.clone()
-						},
-					)
-					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
-
-				reductions
-					.try_insert(*asset_id, inflation)
-					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
-			}
-
-			Ok((rewards_btree_map, reductions))
+				Ok(inflation)
+			})
 		}
 	}
 
@@ -1904,4 +1909,43 @@ impl<T: Config> Pallet<T> {
 
 		Ok(())
 	}
+}
+
+fn do_extend_stake_duration<T: Config>(
+	who: &T::AccountId,
+	fnft_collection_id: T::AssetId,
+	fnft_instance_id: T::FinancialNftInstanceId,
+	duration: DurationSeconds,
+) -> DispatchResult {
+	// unstake (no penalty) and then restake with new duration
+	with_stake_and_rewards_pool::<T, _, _>(
+		&fnft_collection_id,
+		&fnft_instance_id,
+		|stake, rewards_pool| {
+			Pallet::<T>::collect_rewards(
+				who,
+				&fnft_collection_id,
+				&fnft_instance_id,
+				stake,
+				rewards_pool,
+			)?;
+
+			Ok::<_, DispatchError>(())
+		},
+	)
+}
+
+fn with_stake_and_rewards_pool<T: Config, R, E: Into<DispatchError>>(
+	fnft_collection_id: &T::AssetId,
+	fnft_instance_id: &T::FinancialNftInstanceId,
+	f: impl FnOnce(&mut StakeOf<T>, &mut RewardPoolOf<T>) -> Result<R, E>,
+) -> Result<R, DispatchError> {
+	Stakes::<T>::try_mutate(fnft_collection_id, fnft_instance_id, |stake| {
+		let stake = stake.as_mut().ok_or(Error::<T>::StakeNotFound)?;
+		RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
+			let rewards_pool = rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
+
+			f(stake, rewards_pool).map_err(Into::into)
+		})
+	})
 }

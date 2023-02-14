@@ -294,6 +294,13 @@ pub trait Staking {
 		keep_alive: bool,
 	) -> DispatchResult;
 
+	/// Extend the stake of an existing position.
+	fn extend_stake_duration(
+		who: &Self::AccountId,
+		position: Self::PositionId,
+		duration: DurationSeconds,
+	) -> DispatchResult;
+
 	/// Unstake an actual staked position, represented by a NFT.
 	///
 	/// Arguments
