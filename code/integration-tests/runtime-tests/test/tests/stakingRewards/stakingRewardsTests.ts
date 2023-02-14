@@ -193,8 +193,10 @@ describe("[SHORT] Staking Rewards Pallet", function() {
 
   const POOL_18_BASE_ASSET_ID = 80000;
   const POOL_18_SHARE_ASSET_ID = 80000001;
-  const POOL_18_REWARD_RATE = Pica(1_000_000);
-  const POOL_18_REWARD_ASSET_ID = 80001;
+  let POOL_18_REWARD_RATE = Pica(1_000);
+  const POOL_18_REWARD_ASSET_ID_1 = 80001;
+  const POOL_18_REWARD_ASSET_ID_2 = 80002;
+  const POOL_18_REWARD_ASSET_ID_3 = 80003;
 
   const POOL_64_BASE_ASSET_ID = 640000;
   const POOL_64_SHARE_ASSET_ID = 640000001;
@@ -353,7 +355,15 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         parents: 0,
         interior: "Here"
       }, { n: 1, d: 1 }, 12)),
-      api.tx.sudo.sudo(api.tx.assetsRegistry.updateAsset(POOL_18_REWARD_ASSET_ID, {
+      api.tx.sudo.sudo(api.tx.assetsRegistry.updateAsset(POOL_18_REWARD_ASSET_ID_1, {
+        parents: 0,
+        interior: "Here"
+      }, { n: 1, d: 1 }, 12)),
+      api.tx.sudo.sudo(api.tx.assetsRegistry.updateAsset(POOL_18_REWARD_ASSET_ID_2, {
+        parents: 0,
+        interior: "Here"
+      }, { n: 1, d: 1 }, 12)),
+      api.tx.sudo.sudo(api.tx.assetsRegistry.updateAsset(POOL_18_REWARD_ASSET_ID_3, {
         parents: 0,
         interior: "Here"
       }, { n: 1, d: 1 }, 12)),
@@ -414,7 +424,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
       sudoKey,
       [
         PICA_ASSET_ID, POOL_11_REWARD_ASSET_ID, POOL_12_REWARD_ASSET_ID_1, POOL_12_REWARD_ASSET_ID_2, POOL_12_REWARD_ASSET_ID_3, POOL_13_REWARD_ASSET_ID,
-        POOL_14_REWARD_ASSET_ID, POOL_16_REWARD_ASSET_ID, POOL_17_REWARD_ASSET_ID, POOL_18_REWARD_ASSET_ID, POOL_64_REWARD_ASSET_ID, POOL_65_REWARD_ASSET_ID, POOL_66_REWARD_ASSET_ID],
+        POOL_14_REWARD_ASSET_ID, POOL_16_REWARD_ASSET_ID, POOL_17_REWARD_ASSET_ID, POOL_18_REWARD_ASSET_ID_1, POOL_64_REWARD_ASSET_ID, POOL_65_REWARD_ASSET_ID, POOL_66_REWARD_ASSET_ID],
       Pica(100_000_000_000_000_000)
     );
   });
@@ -661,8 +671,6 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         api.createType("u128", minimumStakingAmount)
       );
     });
-
-    it("1.4  I can, using governance, create a new Staking Rewards pool for any arbitrary asset ID.");
 
     it("1.5  I can create a Pablo pool using sudo & an LP token pool will get automatically created.");
 
@@ -924,6 +932,8 @@ describe("[SHORT] Staking Rewards Pallet", function() {
       const poolInfoBefore = <Option<ComposableTraitsStakingRewardPool>>await api.query.stakingRewards.rewardPools(poolId);
       const poolRewardAmountBefore = poolInfoBefore.unwrap().rewards.toJSON()[assetId.toString()];
       const poolRewardStateBefore = await api.query.stakingRewards.rewardsPotIsEmpty(poolId, assetId);
+      console.debug(`isEmpty ${poolRewardStateBefore.toString()}`);
+
       // expect(poolRewardStateBefore.isNone).to.be.false; // ToDo: ?
       // Transaction
       const {
@@ -1096,9 +1106,6 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         const assetId = POOL_11_REWARD_ASSET_ID;
         const amount = Pica(100_000_000_000);
         const keepAlive = true;
-        const walletBalanceBefore = await api.rpc.assets.balanceOf(assetId.toString(), walletRewardAdder.publicKey);
-        const poolInfoBefore = <Option<ComposableTraitsStakingRewardPool>>await api.query.stakingRewards.rewardPools(poolId);
-        const poolRewardAmountBefore = poolInfoBefore.unwrap().rewards.toJSON()[assetId.toString()];
 
         const poolRewardStateBefore = await api.query.stakingRewards.rewardsPotIsEmpty(poolId, assetId);
         expect(poolRewardStateBefore.isNone).to.be.true;
@@ -1166,7 +1173,6 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         api.tx.stakingRewards.stake(stakingPoolId1, stakeAmount, durationPreset)
       );
 
-
       blockNumAtStake31 = Number((await api.query.system.number()).toString());
 
       const stakeInfo = await api.query.stakingRewards.stakes(resultFNFTCollectionId, resultFNFTInstanceId);
@@ -1213,7 +1219,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
       );
     });
 
-    it("3.12  I can stake in a newly created pool before funds have been added. (#1.18)", async function() {
+    it("3.12  I can stake in a newly created pool before funds have been added. (#1.8)", async function() {
       const currentBlockNumber = (await api.query.system.number());
       if (currentBlockNumber.lt(new BN(pool18startBlock.toString())))
         await waitForBlocks(api, Number(pool18startBlock - currentBlockNumber.toNumber()));
@@ -1278,8 +1284,8 @@ describe("[SHORT] Staking Rewards Pallet", function() {
       async function() {
         // Parameters
         const poolId = stakingPoolId8;
-        const assetId = POOL_18_REWARD_ASSET_ID;
-        const amount = Pica(100_000_000_000);
+        const assetId = POOL_18_REWARD_ASSET_ID_1;
+        const amount = Pica(250_000); // We'll empty this pool in the tests!
         const keepAlive = true;
         const walletBalanceBefore = await api.rpc.assets.balanceOf(assetId.toString(), walletRewardAdder.publicKey);
 
@@ -1297,7 +1303,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
           api.tx.stakingRewards.addToRewardsPot(poolId, assetId, amount, keepAlive)
         );
 
-        blockNumAtFundsAddition3_12 = Number((await api.query.system.number()).toString());
+        blockNumAtFundsAddition3_12 = Number((await api.query.system.number()).toString()) + 1; // Pool starts one block later!
         // Verification
         // Verifying the poolId, reported by the event, is correct.
         expect(poolId).to.be.bignumber.equal(resultPoolId);
@@ -1315,7 +1321,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
           getStakeReduction(
             BigNumber(totalShareAssetIssuance.toString()),
             // @ts-ignore
-            BigNumber(poolInfo.unwrap().rewards.toJSON()[POOL_18_REWARD_ASSET_ID.toString()].totalRewards.toString()),
+            BigNumber(poolInfo.unwrap().rewards.toJSON()[POOL_18_REWARD_ASSET_ID_1.toString()].totalRewards.toString()),
             BigNumber(stakeInfo.unwrap().share.toString())
           ).toString()
         ));
@@ -1415,7 +1421,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         [POOL_11_REWARD_ASSET_ID],
         walletStaker,
         [userFundsBefore],
-        api.createType("u128", verifAmt4th.toString())
+        [api.createType("u128", verifAmt4th.toString())]
       );
     });
   });
@@ -1849,7 +1855,6 @@ describe("[SHORT] Staking Rewards Pallet", function() {
       const stakingPoolId = stakingPoolId1;
 
       // Getting stake info before transaction, to calculate claimable amount.
-
       const stakeInfoBefore = <Option<ComposableTraitsStakingStake>>(
         await api.query.stakingRewards.stakes(fNFTCollectionId, fNFTInstanceId)
       );
@@ -1920,26 +1925,39 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         [POOL_11_REWARD_ASSET_ID],
         walletStaker2,
         [userFundsBefore],
-        api.createType("u128", verifAmt.toString())
+        [api.createType("u128", verifAmt.toString())]
       );
     });
 
     it("4.3  I can claim from the arbitrary asset pool in #1.2 using the stakes from #3.3.", async function() {
       // Get funds before transaction
-      const userFundsBefore = Promise.all([
-        api.query.tokens.accounts(
-          walletStaker.publicKey,
-          POOL_12_REWARD_ASSET_ID_1.toString()
+      const userFundsBefore = await Promise.all([
+        api.rpc.assets.balanceOf(
+          POOL_12_REWARD_ASSET_ID_1.toString(),
+          walletStaker.publicKey
         ),
-        api.query.tokens.accounts(
-          walletStaker.publicKey,
-          POOL_12_REWARD_ASSET_ID_2.toString()
+        api.rpc.assets.balanceOf(
+          POOL_12_REWARD_ASSET_ID_2.toString(),
+          walletStaker.publicKey
         ),
-        api.query.tokens.accounts(
-          walletStaker.publicKey,
-          POOL_12_REWARD_ASSET_ID_3.toString()
+        api.rpc.assets.balanceOf(
+          POOL_12_REWARD_ASSET_ID_3.toString(),
+          walletStaker.publicKey
         )
       ]);
+
+      const userFundsBeforeA1 = await api.query.tokens.accounts(
+        walletStaker.publicKey,
+        POOL_12_REWARD_ASSET_ID_1.toString()
+      );
+      const userFundsBeforeA2 = await api.query.tokens.accounts(
+        walletStaker.publicKey,
+        POOL_12_REWARD_ASSET_ID_2.toString()
+      );
+      const userFundsBeforeA3 = await api.query.tokens.accounts(
+        walletStaker.publicKey,
+        POOL_12_REWARD_ASSET_ID_3.toString()
+      );
 
       // Setting Parameters
       const fNFTCollectionId = fNFTCollectionId3;
@@ -1955,30 +1973,9 @@ describe("[SHORT] Staking Rewards Pallet", function() {
       );
       // Getting total issuance of the defined share asset, used for claimable amount calculation.
       const totalShareAssetIssuance = await api.query.tokens.totalIssuance(POOL_12_SHARE_ASSET_ID);
-      inflationStake33_1 = BigNumber(
-        getStakeReduction(
-          BigNumber(totalShareAssetIssuance.toString()),
-          // @ts-ignore
-          BigNumber(poolInfo.unwrap().rewards.toJSON()[POOL_12_REWARD_ASSET_ID_1.toString()].totalRewards.toString()),
-          BigNumber(stakeInfoBefore.unwrap().share.toString())
-        ).toString()
-      );
-      inflationStake33_2 = BigNumber(
-        getStakeReduction(
-          BigNumber(totalShareAssetIssuance.toString()),
-          // @ts-ignore
-          BigNumber(poolInfo.unwrap().rewards.toJSON()[POOL_12_REWARD_ASSET_ID_2.toString()].totalRewards.toString()),
-          BigNumber(stakeInfoBefore.unwrap().share.toString())
-        ).toString()
-      );
-      inflationStake33_3 = BigNumber(
-        getStakeReduction(
-          BigNumber(totalShareAssetIssuance.toString()),
-          // @ts-ignore
-          BigNumber(poolInfo.unwrap().rewards.toJSON()[POOL_12_REWARD_ASSET_ID_3.toString()].totalRewards.toString()),
-          BigNumber(stakeInfoBefore.unwrap().share.toString())
-        ).toString()
-      );
+      console.debug(`inf1 bef ${inflationStake33_1.toString()}`);
+      console.debug(`inf2 bef ${inflationStake33_2.toString()}`);
+      console.debug(`inf3 bef ${inflationStake33_3.toString()}`);
 
       const stakerSharePart = await getNthStakerSharesPart(
         api,
@@ -1991,22 +1988,22 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         stakerSharePart,
         blockNumAtStake33,
         BigNumber(POOL_12_REWARD_RATE_1.toString())
-      ));
+      )).plus(inflationStake33_1);
       const verifAmt_2 = (await getNthStakerRewardAlternativeTry4BasedBlocktime(
         api,
         stakerSharePart,
         blockNumAtStake33,
         BigNumber(POOL_12_REWARD_RATE_2.toString())
-      ));
+      )).plus(inflationStake33_2);
       const verifAmt_3 = (await getNthStakerRewardAlternativeTry4BasedBlocktime(
         api,
         stakerSharePart,
         blockNumAtStake33,
         BigNumber(POOL_12_REWARD_RATE_3.toString())
-      ));
-      console.debug(`verifAmt4 ${verifAmt_1.toString()}`);
-      console.debug(`verifAmt4 ${verifAmt_2.toString()}`);
-      console.debug(`verifAmt4 ${verifAmt_3.toString()}`);
+      )).plus(inflationStake33_3);
+      console.debug(`verifAmt ${verifAmt_1}`);
+      console.debug(`verifAmt ${verifAmt_2}`);
+      console.debug(`verifAmt ${verifAmt_3}`);
 
       // Transaction
       const {
@@ -2048,6 +2045,25 @@ describe("[SHORT] Staking Rewards Pallet", function() {
           BigNumber(stakeInfoBefore.unwrap().share.toString())
         ).toString()
       );
+      console.debug(`inf1 aft ${inflationStake33_1.toString()}`);
+      console.debug(`inf2 aft ${inflationStake33_2.toString()}`);
+      console.debug(`inf3 aft ${inflationStake33_3.toString()}`);
+
+      const userFundsAfterA1 = await api.query.tokens.accounts(
+        walletStaker.publicKey,
+        POOL_12_REWARD_ASSET_ID_1.toString()
+      );
+      const userFundsAfterA2 = await api.query.tokens.accounts(
+        walletStaker.publicKey,
+        POOL_12_REWARD_ASSET_ID_2.toString()
+      );
+      const userFundsAfterA3 = await api.query.tokens.accounts(
+        walletStaker.publicKey,
+        POOL_12_REWARD_ASSET_ID_3.toString()
+      );
+      console.debug(`cA1 ${BigNumber(userFundsAfterA1.free.toString()).minus(BigNumber(userFundsBeforeA1.free.toString()))}`);
+      console.debug(`cA2 ${BigNumber(userFundsAfterA2.free.toString()).minus(BigNumber(userFundsBeforeA2.free.toString()))}`);
+      console.debug(`cA3 ${BigNumber(userFundsAfterA3.free.toString()).minus(BigNumber(userFundsBeforeA3.free.toString()))}`);
 
       await verifyPoolClaiming(
         api,
@@ -2055,8 +2071,12 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         fNFTInstanceId,
         [POOL_12_REWARD_ASSET_ID_1, POOL_12_REWARD_ASSET_ID_2, POOL_12_REWARD_ASSET_ID_3],
         walletStaker,
-        [userFundsBefore[0], userFundsBefore[1], userFundsBefore[2]],
-        api.createType("u128", verifAmt_1.toFixed(0))
+        userFundsBefore,
+        [
+          api.createType("u128", verifAmt_1.toFixed(0, 1)),
+          api.createType("u128", verifAmt_2.toFixed(0, 1)),
+          api.createType("u128", verifAmt_3.toFixed(0, 1))
+        ]
       );
     });
 
@@ -2186,7 +2206,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         [PBLO_ASSET_ID],
         walletStaker,
         [userFundsBefore],
-        api.createType("u128", claimableAmount)
+        [api.createType("u128", claimableAmount)]
       );
     });
 
@@ -2246,7 +2266,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         [pool15LpTokenId], // ToDo: Check!
         walletStaker,
         [userFundsBefore],
-        api.createType("u128", claimableAmount)
+        [api.createType("u128", claimableAmount)]
       );
     });
 
@@ -2313,7 +2333,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         [POOL_16_REWARD_ASSET_ID],
         walletStaker,
         [userFundsBefore],
-        api.createType("u128", verifAmt4th.toString())
+        [api.createType("u128", verifAmt4th.toString())]
       );
     });
 
@@ -2361,7 +2381,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         api.events.stakingRewards.Claimed.is,
         api.tx.stakingRewards.claim(fNFTCollectionId, fNFTInstanceId)
       );
-
+      blockNumAtStake38 = Number((await api.query.system.number()).toString());
       const userFundsAfterA = await api.query.tokens.accounts(
         walletStaker.publicKey,
         POOL_17_REWARD_ASSET_ID.toString()
@@ -2380,7 +2400,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         [POOL_17_REWARD_ASSET_ID],
         walletStaker,
         [userFundsBefore],
-        api.createType("u128", verifAmt4th.toString())
+        [api.createType("u128", verifAmt4th.toString())]
       );
     });
 
@@ -2389,8 +2409,13 @@ describe("[SHORT] Staking Rewards Pallet", function() {
       async function() {
         // Get funds before transaction
         const userFundsBefore = await api.rpc.assets.balanceOf(
-          POOL_18_REWARD_ASSET_ID.toString(),
+          POOL_18_REWARD_ASSET_ID_1.toString(),
           walletStaker.publicKey
+        );
+
+        const userFundsBeforeA = await api.query.tokens.accounts(
+          walletStaker.publicKey,
+          POOL_18_REWARD_ASSET_ID_1.toString()
         );
         // Setting Parameters
         const fNFTCollectionId = fNFTCollectionId12;
@@ -2400,6 +2425,13 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         const stakeInfoBefore = <Option<ComposableTraitsStakingStake>>(
           await api.query.stakingRewards.stakes(fNFTCollectionId, fNFTInstanceId)
         );
+        // Getting pool info before transaction, to calculate the claimable amount.
+        const poolInfo = <Option<ComposableTraitsStakingRewardPool>>(
+          await api.query.stakingRewards.rewardPools(stakingPoolId8)
+        );
+
+        // Getting total issuance of the defined share asset, used for claimable amount calculation.
+        const totalShareAssetIssuance = await api.query.tokens.totalIssuance(POOL_11_SHARE_ASSET_ID);
         const stakerSharePart = await getNthStakerSharesPart(
           api,
           POOL_18_SHARE_ASSET_ID,
@@ -2413,7 +2445,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
           stakerSharePart,
           blockNumAtFundsAddition3_12,
           BigNumber(POOL_18_REWARD_RATE.toString())
-        )).plus(BigNumber(inflationStake312.toFixed()));
+        )).plus(BigNumber(inflationStake312.toString()));
         console.debug(`verifAmt4 ${verifAmt.toString()}`);
 
         // Transaction
@@ -2426,24 +2458,32 @@ describe("[SHORT] Staking Rewards Pallet", function() {
           api.tx.stakingRewards.claim(fNFTCollectionId, fNFTInstanceId)
         );
 
-        const userFundsAfterA = await api.query.tokens.accounts(
-          walletStaker.publicKey,
-          POOL_18_REWARD_ASSET_ID.toString()
-        );
-
         // Verification
         expect(resultOwner.toString()).to.be.equal(api.createType("AccountId32", walletStaker.publicKey).toString());
         expect(resultFNFTCollectionId.toString()).to.equal(fNFTCollectionId.toString());
         expect(resultFNFTInstanceId.toString()).to.equal(fNFTInstanceId.toString());
 
+        inflationStake312 = (BigNumber(
+          getStakeReduction(
+            BigNumber(totalShareAssetIssuance.toString()),
+            // @ts-ignore
+            BigNumber(poolInfo.unwrap().rewards.toJSON()[POOL_18_REWARD_ASSET_ID_1.toString()].totalRewards.toString()),
+            BigNumber(stakeInfoBefore.unwrap().share.toString())
+          ).toString()
+        ));
+        const userFundsAfterA = await api.query.tokens.accounts(
+          walletStaker.publicKey,
+          POOL_18_REWARD_ASSET_ID_1.toString()
+        );
+        console.debug(`cA ${BigNumber(userFundsAfterA.free.toString()).minus(BigNumber(userFundsBeforeA.free.toString()))}`);
         await verifyPoolClaiming(
           api,
           fNFTCollectionId,
           fNFTInstanceId,
-          [POOL_18_REWARD_ASSET_ID],
+          [POOL_18_REWARD_ASSET_ID_1],
           walletStaker,
           [userFundsBefore],
-          api.createType("u128", verifAmt.toString())
+          [api.createType("u128", verifAmt.toFixed(0))]
         );
       });
   });
@@ -2683,7 +2723,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
     });
   });
 
-  describe("7. Unstaking positions.", function() {
+  describe("7. Unstaking positions pt. 1.", function() {
     it("7.1  I can unstake my staking position before my lock period has ended and get slashed.", async function() {
       const userFundsBefore = await api.rpc.assets.balanceOf(POOL_11_BASE_ASSET_ID.toString(), walletStaker2.publicKey);
       const stakeAmount = Pica(1_000);
@@ -3011,20 +3051,81 @@ describe("[SHORT] Staking Rewards Pallet", function() {
       );
     });
   });
+  describe("8. Updating staking rewards pools pt.1.", function() {
+    let testUpdatePoolId: number;
+    // Emptying pool.
+    before(async function() {
+      const fNFTCollectionId = fNFTCollectionId12;
+      const fNFTInstanceId = fNFTInstanceId12;
+      await sendAndWaitForSuccess(
+        api,
+        walletStaker,
+        api.events.stakingRewards.Claimed.is,
+        api.tx.stakingRewards.claim(fNFTCollectionId, fNFTInstanceId)
+      );
+    });
 
+    it("8.1  I can, as sudo, edit the rewards per second for a reward asset while the pool is paused.",
+      async function() {
+        // Setting Parameters
+        const fNFTCollectionId = fNFTCollectionId12;
+        const fNFTInstanceId = fNFTInstanceId12;
+        // Get funds before transaction
+        const userFundsBefore = await api.rpc.assets.balanceOf(
+          POOL_18_REWARD_ASSET_ID_1.toString(),
+          walletStaker.publicKey
+        );
+        const userFundsBeforeA = await api.query.tokens.accounts(
+          walletStaker.publicKey,
+          POOL_18_REWARD_ASSET_ID_1.toString()
+        );
+        const newRewardRate = Pica(10);
+        POOL_18_REWARD_RATE = newRewardRate;
+        const newRewardConfiguration = api.createType("BTreeMap<u128, ComposableTraitsStakingRewardUpdate>", {
+          // Reward Asset ID
+          "80001": {
+            rewardRate: {
+              period: "PerSecond",
+              amount: newRewardRate
+            }
+          }
+        });
+        const { data: [resultPoolId] } = await sendAndWaitForSuccess(
+          api,
+          sudoKey,
+          api.events.stakingRewards.RewardPoolUpdated.is,
+          api.tx.sudo.sudo(api.tx.stakingRewards.updateRewardsPool(stakingPoolId8, newRewardConfiguration))
+        );
+        expect(resultPoolId).to.be.bignumber.equal(stakingPoolId8);
+      });
+  });
+
+  let blockNumAt26Update: number;
   describe("2. Adding rewards to pool pots. pt. 3", function() {
+    this.timeout(6 * 60 * 1000);
+    before(async function() {
+      // Emptying pool by a final claim and waiting a few blocks for the pool to pause.
+      await sendAndWaitForSuccess(
+        api,
+        walletStaker,
+        api.events.stakingRewards.Claimed.is,
+        api.tx.stakingRewards.claim(fNFTCollectionId12, fNFTInstanceId12)
+      );
+    });
+
     it("2.6  I can add rewards to a staking rewards pool that previously depleted.",
       async function() {
         // Parameters
         const poolId = stakingPoolId8;
-        const assetId = POOL_18_REWARD_ASSET_ID;
-        const amount = Pica(100_000_000_000);
+        const assetId = POOL_18_REWARD_ASSET_ID_1;
+        const amount = Pica(100_000_000);
         const keepAlive = true;
         const walletBalanceBefore = await api.rpc.assets.balanceOf(assetId.toString(), walletRewardAdder.publicKey);
 
         const poolInfoBefore = <Option<ComposableTraitsStakingRewardPool>>await api.query.stakingRewards.rewardPools(poolId);
-        const poolRewardAmountBefore = poolInfoBefore.unwrap().rewards.toJSON()[assetId.toString()];
+        const poolRewardAmountBefore = poolInfoBefore.unwrap().rewards.toHuman()[assetId];
         const poolRewardStateBefore = await api.query.stakingRewards.rewardsPotIsEmpty(poolId, assetId);
+        console.debug(`isEmpty ${poolRewardStateBefore.toString()}`);
         // expect(poolRewardStateBefore.isNone).to.be.false; // ToDo?
         // Transaction
         const {
@@ -3035,6 +3136,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
           api.events.stakingRewards.RewardsPotIncreased.is,
           api.tx.stakingRewards.addToRewardsPot(poolId, assetId, amount, keepAlive)
         );
+        blockNumAt26Update = Number((await api.query.system.number()).toString()) + 1;
 
         // Verification
         // Verifying the poolId, reported by the event, is correct.
@@ -3051,22 +3153,23 @@ describe("[SHORT] Staking Rewards Pallet", function() {
           walletRewardAdder,
           walletBalanceBefore,
           // @ts-ignore
-          new BN(poolRewardAmountBefore["totalRewards"].toString())
+          new BN(poolRewardAmountBefore["totalRewards"].replaceAll(",", ""))
+          // new BN(parseInt(poolRewardAmountBefore["totalRewards"].toString().replace('0x', ''), 16).toString())
         );
       });
   });
 
   describe("3. Staking in the pools pt. 3", function() {
-    it("3.13  I can stake in a pool with multiple reward asset IDs which is depleted.",
+    it("3.12  I can stake in a pool with multiple reward asset IDs which is depleted.",
       async function() {
         // Getting funds before transaction
         const userFundsBefore = await api.rpc.assets.balanceOf(POOL_12_BASE_ASSET_ID.toString(), walletStaker.publicKey);
         // Parameters
         const durationPreset1 = 600;
-        const durationPreset2 = 1200;
         const stakeAmount = Pica(100);
-        // Transaction
 
+        // ToDo: Depl!
+        // Transaction
         const {
           data: [
             resultPoolId,
@@ -3078,32 +3181,22 @@ describe("[SHORT] Staking Rewards Pallet", function() {
             resultRewardMultiplier,
             resultKeepAlive
           ]
-        } = await sendWithBatchAndWaitForSuccess(
+        } = await sendAndWaitForSuccess(
           api,
           walletStaker,
           api.events.stakingRewards.Staked.is,
-          [
-            api.tx.stakingRewards.stake(stakingPoolId2, stakeAmount, durationPreset1),
-            api.tx.stakingRewards.stake(stakingPoolId2, stakeAmount, durationPreset2)
-          ],
+          api.tx.stakingRewards.stake(stakingPoolId2, stakeAmount, durationPreset1),
           false
         );
 
         // Verification
-        // Verifying the poolId, reported by the event, is reported correctly.
         expect(resultPoolId).to.be.bignumber.equal(stakingPoolId2);
-        // Verifying the stake owner, reported by the event, is reported correctly.
         expect(resultOwnerAccountId.toString()).to.be.equal(
           api.createType("AccountId32", walletStaker.publicKey).toString()
         );
-        // Verifying the amount, reported by the event, is correct.
         expect(resultAmount.toString()).to.equal(stakeAmount.toString());
-        // Verifying the durationPreset equals our requested durationPreset.
         expect(resultDurationPreset.toString()).to.equal(durationPreset1.toString());
-        // Verifying the keepAlive parameter, reported by the event, is correct.
         expect(resultKeepAlive);
-        fNFTCollectionId3 = resultFNFTCollectionId;
-        fNFTInstanceId3 = resultFNFTInstanceId;
         const stakeInfo = await api.query.stakingRewards.stakes(resultFNFTCollectionId, resultFNFTInstanceId);
         const poolInfo = <Option<ComposableTraitsStakingRewardPool>>(
           await api.query.stakingRewards.rewardPools(stakingPoolId2)
@@ -3135,10 +3228,10 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         ));
         await verifyPoolStaking(
           api,
-          fNFTCollectionId3,
-          fNFTInstanceId3,
+          resultFNFTCollectionId,
+          resultFNFTInstanceId,
           (stakeAmount).toString(),
-          (stakeAmount * BigInt(2)).toString(),
+          (stakeAmount).toString(),
           stakingPoolId2,
           walletStaker,
           userFundsBefore
@@ -3151,12 +3244,12 @@ describe("[SHORT] Staking Rewards Pallet", function() {
       async function() {
         // Get funds before transaction
         const userFundsBefore = await api.rpc.assets.balanceOf(
-          POOL_18_REWARD_ASSET_ID.toString(),
+          POOL_18_REWARD_ASSET_ID_1.toString(),
           walletStaker.publicKey
         );
         const userFundsBeforeA = await api.query.tokens.accounts(
           walletStaker.publicKey,
-          POOL_18_REWARD_ASSET_ID.toString()
+          POOL_18_REWARD_ASSET_ID_1.toString()
         );
 
         // Setting Parameters
@@ -3173,14 +3266,14 @@ describe("[SHORT] Staking Rewards Pallet", function() {
         );
         // Getting total issuance of the defined share asset, used for claimable amount calculation.
         const totalShareAssetIssuance = await api.query.tokens.totalIssuance(POOL_18_SHARE_ASSET_ID);
-        inflationStake38 = BigNumber(
-          getStakeReduction(
-            BigNumber(totalShareAssetIssuance.toString()),
-            // @ts-ignore
-            BigNumber(poolInfo.unwrap().rewards.toJSON()[POOL_18_REWARD_ASSET_ID.toString()].totalRewards.toString()),
-            BigNumber(stakeInfoBefore.unwrap().share.toString())
-          ).toString()
-        );
+        // inflationStake38 = BigNumber(
+        //   getStakeReduction(
+        //     BigNumber(totalShareAssetIssuance.toString()),
+        //     // @ts-ignore
+        //     BigNumber(poolInfo.unwrap().rewards.toJSON()[POOL_18_REWARD_ASSET_ID_1.toString()].totalRewards.toString()),
+        //     BigNumber(stakeInfoBefore.unwrap().share.toString())
+        //   ).toString()
+        // );
 
         const stakerSharePart = await getNthStakerSharesPart(
           api,
@@ -3188,13 +3281,22 @@ describe("[SHORT] Staking Rewards Pallet", function() {
           BigNumber(stakeInfoBefore.unwrap().share.toString()));
         console.debug(`getNthStakerSharesPart ${stakerSharePart.toString()}`);
         // Calculating claimable amount.
-        const verifAmt = (await getNthStakerRewardAlternativeTry4BasedBlocktime(
+        const verifAmtAlt = (await getNthStakerRewardAlternativeTry4BasedBlocktime(
           api,
           stakerSharePart,
           blockNumAtStake38,
           BigNumber(POOL_18_REWARD_RATE.toString())
+        )).plus(inflationStake38);
+        const verifAmt = (await getNthStakerRewardAlternativeTry4BasedBlocktime(
+          api,
+          stakerSharePart,
+          blockNumAt26Update,
+          BigNumber(POOL_18_REWARD_RATE.toString())
         ));
         console.debug(`verifAmt4 ${verifAmt.toString()}`);
+        console.debug(`verifAmtAlt ${verifAmtAlt.toString()}`);
+        console.debug(`inf ${inflationStake38.toString()}`);
+        console.debug(`verifAmt4 - inf ${verifAmt.minus(inflationStake38).toString()}`);
 
         // Transaction
         const {
@@ -3213,7 +3315,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
 
         const userFundsAfterA = await api.query.tokens.accounts(
           walletStaker.publicKey,
-          POOL_18_REWARD_ASSET_ID.toString()
+          POOL_18_REWARD_ASSET_ID_1.toString()
         );
         console.debug(`cA ${BigNumber(userFundsAfterA.free.toString()).minus(BigNumber(userFundsBeforeA.free.toString()))}`);
 
@@ -3221,7 +3323,7 @@ describe("[SHORT] Staking Rewards Pallet", function() {
           getStakeReduction(
             BigNumber(totalShareAssetIssuance.toString()),
             // @ts-ignore
-            BigNumber(poolInfo.unwrap().rewards.toJSON()[POOL_18_REWARD_ASSET_ID.toString()].totalRewards.toString()),
+            BigNumber(poolInfo.unwrap().rewards.toJSON()[POOL_18_REWARD_ASSET_ID_1.toString()].totalRewards.toString()),
             BigNumber(stakeInfoBefore.unwrap().share.toString())
           ).toString()
         );
@@ -3231,11 +3333,104 @@ describe("[SHORT] Staking Rewards Pallet", function() {
           api,
           fNFTCollectionId,
           fNFTInstanceId,
-          [POOL_18_REWARD_ASSET_ID],
+          [POOL_18_REWARD_ASSET_ID_1],
           walletStaker,
           [userFundsBefore],
-          api.createType("u128", verifAmt.toString())
+          [api.createType("u128", verifAmt.toFixed(0))]
         );
       });
+  });
+
+  describe("8. Updating staking rewards pools pt.2.", function() {
+
+    it("8.2  I can modify more than a single reward asset ID.");
+  });
+
+
+  describe("7. Unstaking positions pt. 2.", function() {
+    this.timeout(4 * 60 * 1000);
+    let api2: ApiPromise;
+    let fNFTCollectionId79: number;
+    let fNFTInstanceId79: number;
+    before(async function() {
+      // Getting 2nd connection for simultaneous transaction.
+      const { newClient } = await getNewConnection();
+      api2 = newClient;
+
+      // Creating 2nd stake.
+      const {
+        data: [
+          resultPoolId,
+          resultOwnerAccountId,
+          resultAmount,
+          resultDurationPreset,
+          resultFNFTCollectionId,
+          resultFNFTInstanceId,
+          resultRewardMultiplier,
+          resultKeepAlive
+        ]
+      } = await sendAndWaitForSuccess(
+        api,
+        walletStaker2,
+        api.events.stakingRewards.Staked.is,
+        api.tx.stakingRewards.stake(stakingPoolId8, Pica(100), 0),
+        false
+      );
+      fNFTCollectionId79 = resultFNFTCollectionId.toNumber();
+      fNFTInstanceId79 = resultFNFTInstanceId.toNumber();
+    });
+
+    after(async function() {
+      await api2.disconnect();
+    })
+
+    it("7.9  Me and someone else can simultaneously unstake our positions.", async function() {
+      const userFundsBefore1 = await api.rpc.assets.balanceOf(POOL_18_BASE_ASSET_ID.toString(), walletStaker.publicKey);
+      const userFundsBefore2 = await api.rpc.assets.balanceOf(POOL_18_BASE_ASSET_ID.toString(), walletStaker2.publicKey);
+      const stakeAmount1 = Pica(1_000);
+      const stakeAmount2 = Pica(100);
+      const [
+        {
+          data: [resultStakeOwner, resultFNFTCollectionId, resultFNFTInstanceId, resultSlash]
+        },
+        {
+          data: [result2StakeOwner, result2FNFTCollectionId, result2FNFTInstanceId, result2Slash]
+        }
+      ] = await Promise.all([
+        sendAndWaitForSuccess(
+          api,
+          walletStaker,
+          api.events.stakingRewards.Unstaked.is,
+          api.tx.stakingRewards.unstake(fNFTCollectionId12, fNFTInstanceId12)
+        ), sendAndWaitForSuccess(
+          api2,
+          walletStaker2,
+          api.events.stakingRewards.Unstaked.is,
+          api.tx.stakingRewards.unstake(fNFTCollectionId79, fNFTInstanceId79)
+        )]);
+
+      await verifyPositionUnstaking(
+        api,
+        fNFTCollectionId12,
+        fNFTInstanceId12,
+        POOL_18_BASE_ASSET_ID,
+        walletStaker,
+        userFundsBefore1,
+        stakeAmount1.toString()
+        // true,
+        // resultSlash.unwrap()
+      );
+      await verifyPositionUnstaking(
+        api2,
+        api.createType("u128", fNFTCollectionId79),
+        api.createType("u64", fNFTInstanceId79),
+        POOL_18_BASE_ASSET_ID,
+        walletStaker2,
+        userFundsBefore2,
+        stakeAmount2.toString()
+        // true,
+        // resultSlash.unwrap()
+      );
+    });
   });
 });

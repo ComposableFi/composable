@@ -100,7 +100,7 @@ export async function verifyPoolClaiming(
   poolRewardAssetId: AnyNumber[] | u128[] | number[],
   walletStaker: KeyringPair,
   userFundsBefore: CustomRpcBalance[],
-  claimableAmount: u128
+  claimableAmount: u128[]
 ) {
   // ToDo: claim = reward.total_shares * position.shares / rewards_pool.total_shares - position.reductions['asset_id']
   // Checking funds
@@ -108,7 +108,7 @@ export async function verifyPoolClaiming(
     const userFundsAfter = await api.rpc.assets.balanceOf(assetId.toString(), walletStaker.publicKey);
     const claimedAmount = new BN(userFundsAfter.toString())
       .sub(new BN(userFundsBefore[index].toString()));
-    expect(claimedAmount).to.be.bignumber.equal(claimableAmount);
+    expect(claimedAmount).to.be.bignumber.equal(claimableAmount[index]);
   }
 }
 
