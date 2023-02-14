@@ -1,6 +1,6 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, Index as Index_, OneToMany as OneToMany_} from "typeorm"
-import * as marshal from "./marshal"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, Index as Index_, ManyToOne as ManyToOne_, OneToMany as OneToMany_} from "typeorm"
 import {PabloPoolType} from "./_pabloPoolType"
+import {PabloLpToken} from "./pabloLpToken.model"
 import {PabloPoolAsset} from "./pabloPoolAsset.model"
 import {PabloAssetWeight} from "./pabloAssetWeight.model"
 
@@ -29,14 +29,15 @@ export class PabloPool {
     @Column_("varchar", {length: 24, nullable: false})
     poolType!: PabloPoolType
 
-    @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-    lpIssued!: bigint
+    @Index_()
+    @ManyToOne_(() => PabloLpToken, {nullable: true})
+    lpToken!: PabloLpToken
 
     @Column_("int4", {nullable: false})
     transactionCount!: number
 
     /**
-     * Timestamp of the block in which this activity occurred
+     * Timestamp of the block in which this was last updated
      */
     @Index_()
     @Column_("timestamp with time zone", {nullable: false})

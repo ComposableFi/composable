@@ -9,7 +9,7 @@ import {
   StakingRewardsUnstakedEvent
 } from "../types/events";
 import { saveAccountAndEvent, storeCurrentLockedValue, storeHistoricalLockedValue } from "../dbHelper";
-import { Event, EventType, LockedSource, RewardPool, StakingPosition } from "../model";
+import { Event, EventType, LockedSource, StakingRewardsPool, StakingPosition } from "../model";
 import { encodeAccount } from "../utils";
 
 interface RewardPoolCreatedEvent {
@@ -82,7 +82,7 @@ function getSplitPositionEvent(event: StakingRewardsSplitPositionEvent): SplitPo
 }
 
 export function createRewardPool(eventId: string, poolId: bigint): RewardPool {
-  return new RewardPool({
+  return new StakingRewardsPool({
     id: randomUUID(),
     eventId,
     poolId: poolId.toString()
