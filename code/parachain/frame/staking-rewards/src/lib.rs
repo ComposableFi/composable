@@ -465,6 +465,7 @@ pub mod pallet {
 		/// Emits `RewardPoolCreated` event when successful.
 		#[pallet::weight(T::WeightInfo::create_reward_pool(T::MaxRewardConfigsPerPool::get()))]
 		#[transactional]
+		#[pallet::call_index(1)]
 		pub fn create_reward_pool(
 			origin: OriginFor<T>,
 			pool_config: RewardPoolConfigurationOf<T>,
@@ -478,6 +479,7 @@ pub mod pallet {
 		///
 		/// Emits `Staked` when successful.
 		#[pallet::weight(T::WeightInfo::stake(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(2)]
 		pub fn stake(
 			origin: OriginFor<T>,
 			pool_id: T::AssetId,
@@ -496,6 +498,7 @@ pub mod pallet {
 		///
 		/// Emits `StakeExtended` when successful.
 		#[pallet::weight(T::WeightInfo::extend(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(3)]
 		pub fn extend(
 			origin: OriginFor<T>,
 			fnft_collection_id: T::AssetId,
@@ -525,6 +528,7 @@ pub mod pallet {
 		///
 		/// Emits `Unstaked` when successful.
 		#[pallet::weight(T::WeightInfo::unstake(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(4)]
 		pub fn unstake(
 			origin: OriginFor<T>,
 			fnft_collection_id: T::AssetId,
@@ -545,6 +549,7 @@ pub mod pallet {
 		///
 		/// Emits `SplitPosition` when successful.
 		#[pallet::weight(T::WeightInfo::split(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(5)]
 		pub fn split(
 			origin: OriginFor<T>,
 			fnft_collection_id: T::AssetId,
@@ -564,6 +569,7 @@ pub mod pallet {
 		///
 		/// Emits `RewardPoolUpdated` when successful.
 		#[pallet::weight(T::WeightInfo::update_rewards_pool(reward_updates.len() as u32))]
+		#[pallet::call_index(6)]
 		pub fn update_rewards_pool(
 			origin: OriginFor<T>,
 			pool_id: T::AssetId,
@@ -581,6 +587,7 @@ pub mod pallet {
 		///
 		/// Emits `Claimed` when successful.
 		#[pallet::weight(T::WeightInfo::claim(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(7)]
 		pub fn claim(
 			origin: OriginFor<T>,
 			fnft_collection_id: T::AssetId,
@@ -600,6 +607,7 @@ pub mod pallet {
 		///
 		/// Emits `RewardsPotIncreased` when successful.
 		#[pallet::weight(T::WeightInfo::add_to_rewards_pot())]
+		#[pallet::call_index(8)]
 		pub fn add_to_rewards_pot(
 			origin: OriginFor<T>,
 			pool_id: T::AssetId,
