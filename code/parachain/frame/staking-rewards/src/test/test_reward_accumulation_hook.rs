@@ -3,12 +3,15 @@
 use crate::{
 	reward_accumulation_hook_reward_update_calculation,
 	test_helpers::{add_to_rewards_pot_and_assert, create_rewards_pool_and_assert},
-	RewardAccumulationHookError, RewardsPotIsEmpty,
+	AccountIdOf, RewardAccumulationHookError, RewardsPotIsEmpty,
 };
 use composable_tests_helpers::test::{block::process_and_progress_blocks, helper::RuntimeTrait};
 use frame_support::{
 	bounded_btree_map,
-	traits::{fungibles::InspectHold, TryCollect, UnixTime},
+	traits::{
+		fungibles::{self, InspectHold},
+		TryCollect, UnixTime,
+	},
 };
 
 use crate::test::prelude::*;
@@ -67,12 +70,15 @@ fn test_reward_update_calculation() {
 			(4, PICA::units(48)),
 		];
 
-		let mut reward = RewardPools::<Test>::get(PICA::ID)
-			.unwrap()
-			.rewards
-			.get(&PICA::ID)
-			.unwrap()
-			.clone();
+		let reward_pool = RewardPools::<Test>::get(PICA::ID).unwrap();
+		let mut reward = reward_pool.rewards.get(&PICA::ID).unwrap().clone();
+
+		let pool_account = Pallet::<Test>::pool_account_id(&PICA::ID);
+		let unstaked_shares =
+			<Test as crate::Config>::Assets::balance(reward_pool.share_asset_id, &pool_account);
+		let total_shares = <<Test as crate::Config>::Assets as fungibles::Inspect<
+			AccountIdOf<Test>,
+		>>::total_issuance(reward_pool.share_asset_id);
 
 		for (block_number, expected_total_rewards) in expected {
 			// to clear events
@@ -82,6 +88,8 @@ fn test_reward_update_calculation() {
 				PICA::ID,
 				PICA::ID,
 				&mut reward,
+				unstaked_shares,
+				total_shares,
 				now.safe_add(&block_seconds(block_number).try_into().unwrap()).unwrap(),
 			);
 
@@ -111,6 +119,8 @@ fn test_reward_update_calculation() {
 			PICA::ID,
 			PICA::ID,
 			&mut reward,
+			unstaked_shares,
+			total_shares,
 			now.safe_add(&block_seconds(current_block_number).try_into().unwrap()).unwrap(),
 		);
 
