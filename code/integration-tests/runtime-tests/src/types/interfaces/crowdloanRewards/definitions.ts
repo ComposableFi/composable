@@ -229,5 +229,17 @@ export default {
     FrameSupportPalletId: "Null",
     ComposableTraitsCurrencyRational64: "Null",
     PalletCosmwasmInstrumentCostRules: "Null",
+    SpWeightsWeightV2Weight: "Null",
+    SpWeightsRuntimeDbWeight: "Null",
+    FrameSupportDispatchDispatchInfo: "Null",
+    FrameSupportPreimagesBounded: "Null",
+    IbcCoreIcs02ClientHeight: "Null",
+    PalletIbcPalletParams: "Null",
+    PalletProxyProxyDefinition: "Null",
+    PalletProxyAnnouncement: "Null",
+    PalletSchedulerScheduled: "Null",
+    FrameSupportDispatchPerDispatchClassWeight: "Null",
+    PalletIbcTransferParams: "Null",
+    PalletIbcUpgradeParams: "Null",
   }
 };
