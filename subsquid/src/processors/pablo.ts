@@ -1,7 +1,6 @@
 import { Store } from "@subsquid/typeorm-store";
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { randomUUID } from "crypto";
-import { ApiPromise, WsProvider } from "@polkadot/api";
 import {
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
@@ -48,15 +47,9 @@ interface PoolCreatedEvent {
 async function getPoolCreatedEvent(event: PabloPoolCreatedEvent): Promise<PoolCreatedEvent> {
   const { owner, poolId, assetWeights } = event.asV10005;
 
-  const wsProvider = new WsProvider(chain());
-  const api = await ApiPromise.create({ provider: wsProvider });
-
   // TODO: get lpTokenId from the event
-  // This is a temporary solution, and does not affect performance as there are only 3 pools created
-  const pool = (await api.query.pablo.pools(poolId))?.toJSON();
-
-  // @ts-ignore
-  const lpTokenId = pool?.dualAssetConstantProduct?.lpToken;
+  // This is a temporary solution, and will be replaced by event data when runtime is upgraded
+  const lpTokenId = (105 + Number(poolId)).toString();
 
   return Promise.resolve({
     owner,
