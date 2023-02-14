@@ -12,8 +12,6 @@
 		clippy::panic
 	)
 )]
-#![warn(clippy::pedantic)]
-#![allow(clippy::used_underscore_binding)]
 #![deny(
 	bad_style,
 	bare_trait_objects,
