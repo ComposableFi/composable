@@ -5,16 +5,12 @@ import { useStore } from "@/stores/root";
 
 export const StakingHighlights: FC = () => {
   const totalPicaDeposited = useStore((state) => state.maximumPicaStaked);
-  const maximumXPICAAPR = "265%";
+  const maximumXPICAAPR = "~";
   const averageLockDuration = useStore((state) => state.averageStakingLockTime);
 
   return (
     <Stack direction="row" spacing={2} mt={9}>
-      <HighlightBox
-        flexGrow={1}
-        title={"Maximum xPICA APR"}
-        value={maximumXPICAAPR}
-      />
+      <HighlightBox flexGrow={1} title={"xPICA APR"} value={maximumXPICAAPR} />
       <HighlightBox
         title={"Total $PICA deposited"}
         value={totalPicaDeposited.toFormat()}

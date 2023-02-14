@@ -94,7 +94,13 @@ export const BurnCheckboxList: FC<{
     fnftInstanceId: string
   ) => void;
   unstakeTokenId: [string, string];
-}> = ({ openBurnModal, onSelectUnstakeToken, unstakeTokenId }) => {
+  openSplitModal: () => void;
+}> = ({
+  openBurnModal,
+  openSplitModal,
+  onSelectUnstakeToken,
+  unstakeTokenId,
+}) => {
   const theme = useTheme();
   const { stakingPortfolio } = useStakingRewards();
   const [fnftCollectionId, fnftInstanceId] = unstakeTokenId;
@@ -110,6 +116,7 @@ export const BurnCheckboxList: FC<{
     !fnftCollectionId ||
     !isSelected ||
     (shouldShowSlashWarning ? !agreed : false);
+  const shouldDisableSplit = !isSelected;
   const penaltyPercent = `${currentPortfolio?.unlockPenalty.toString() ?? 0}%`;
 
   return (
@@ -171,6 +178,15 @@ export const BurnCheckboxList: FC<{
           onClick={openBurnModal}
         >
           Burn and unstake
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          fullWidth
+          disabled={shouldDisableSplit}
+          onClick={openSplitModal}
+        >
+          Split
         </Button>
       </Box>
     </Stack>
