@@ -3,6 +3,11 @@
     packages = let packages = self'.packages;
     in rec {
 
+      centauri-configure-and-run = pkgs.writeText "hyperspace.sh" ''
+        cp ${self'.packages.hyperspace-config}/config.toml /tmp/config.toml    
+        ${pkgs.lib.meta.getExe devnet-centauri}       
+      '';
+
       devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
         (import ./specs/centauri.nix {
           inherit pkgs devnetTools packages;
@@ -116,7 +121,7 @@
       devnet-picasso-persistent =
         pkgs.composable.mkDevnetProgram "devnet-picasso-persistent"
         (import ./specs/default.nix {
-          inherit pkgs;
+          inherit pkgs devnetTools;
           price-feed = packages.price-feed;
           devnet = packages.devnet-picasso-complete;
           frontend = packages.frontend-static-picasso-persistent;

@@ -4,18 +4,11 @@
       centauri-src = pkgs.fetchFromGitHub {
         owner = "ComposableFi";
         repo = "centauri";
-        rev = "ac6895f76419e941e44967ac075ad10767180c78";
-        hash = "sha256-3S0HsFLxWHGXGW8QQD0qD3CWMMZ9vvYYZRdMJ9bYSSE=";
+        rev = "94bf87a44694b04917a7ab735487c8f87a64737d";
+        hash = "sha256-tG4WLAUtQ2iaaS4t/Condj6B1FDa/5VDoRwyBsJDfr4=";
       };
     in {
       packages = rec {
-        centauri-configure-and-run = pkgs.writeText "hyperspace.sh" ''
-          cp ${hyperspace-config}/config.toml /tmp/config.toml    
-          ${
-            pkgs.lib.meta.getExe self'.packages.devnet-centauri
-          } --option sandbox relaxed       
-        '';
-
         centauri-codegen = crane.stable.buildPackage {
           name = "centauri-codegen";
           cargoArtifacts = crane.stable.buildDepsOnly {
