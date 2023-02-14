@@ -1,8 +1,35 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, crane, ... }:
-
-    {
+    let
+      src = pkgs.fetchFromGitHub {
+        owner = "ComposableFi";
+        repo = "centauri";
+        rev = "fa7d5d33125fba9aa48c5e581ec72a543abef25b";
+        hash = "sha256-3S0HsFLxWHGXGW8QQD0qD3CWMMZ1vvYYZRdMJ9bYSSE=";
+      };
+    in {
       packages = rec {
+        centauri-prepare = pkgs.writeText "hyperspace.sh" ''
+          nix build .#hyperspace-config
+          mv result /tmp/config.toml    
+          ${pkgs.lib.meta.getExe self'.packages.devnet-centauri} --option sandbox relaxed        
+        '';
+
+        centauri-codegen = crane.stable.buildPackage {
+          name = "centauri-codegen";
+          cargoArtifacts = crane.stable.buildDepsOnly {
+            inherit src;
+            doCheck = false;
+            cargoExtraArgs = "-p codegen";
+            cargoTestCommand = "";
+          };
+          inherit src;
+          doCheck = false;
+          cargoExtraArgs = "-p codegen";
+          cargoTestCommand = "";
+          meta = { mainProgram = "codegen"; };
+        };
+
         hyperspace-config = pkgs.writeText "config.toml" ''
           [chain_a]
           type = "parachain"
@@ -45,12 +72,7 @@
             name = "centauri";
             pname = "${name}";
             buildInputs = [ self'.packages.dali-subxt-client ];
-            src = pkgs.fetchFromGitHub {
-              owner = "obsessed-cake";
-              repo = "centauri";
-              rev = "fa7d5d33125fba9aa48c5e581ec72a543abef25b";
-              hash = "sha256-3S0HsFLxWHGXGW8QQD0qD3CWMMZ9vvYYZRdMJ9bYSSE=";
-            };
+            inherit src;
             patchPhase = "";
             installPhase = ''
               mkdir $out

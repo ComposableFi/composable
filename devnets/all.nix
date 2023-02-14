@@ -3,12 +3,6 @@
     packages = let packages = self'.packages;
     in rec {
 
-      centauri-prepare = pkgs.writeText "hyperspace.sh" ''
-        nix build .#hyperspace-config
-        mv result /tmp/config.toml    
-        nix run .#devnet-centauri --option sandbox relaxed        
-      '';
-
       devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
         (import ./specs/centauri.nix {
           inherit pkgs devnetTools packages;
