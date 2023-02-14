@@ -38,8 +38,6 @@ export function getStartAndStep(range: string): {
   };
 }
 
-export const DAY_IN_MS = 24 * 60 * 60 * 1000;
-
 export function getRange(range: string): Date[] {
   const dates: Date[] = [];
   const now = new Date();

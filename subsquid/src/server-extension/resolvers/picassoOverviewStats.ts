@@ -1,6 +1,6 @@
 import { Field, FieldResolver, ObjectType, Query, Resolver, ResolverInterface } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { DAY_IN_MS } from "./common";
+import { DAY_IN_MS } from "../../constants";
 import { Event, Account, Activity, HistoricalLockedValue } from "../../model";
 import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
