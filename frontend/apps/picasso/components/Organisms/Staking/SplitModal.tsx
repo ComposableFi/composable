@@ -48,10 +48,7 @@ export const SplitModal: FC<{
     callbackGate(
       async (api, acc, exec, _signer) => {
         await exec.execute(
-          api.tx.stakingRewards.split(
-            ...selectedToken,
-            api.createType("Permill", ratio)
-          ),
+          api.tx.stakingRewards.split(...selectedToken, ratio * 10000),
           acc.address,
           api,
           _signer,
@@ -132,7 +129,7 @@ export const SplitModal: FC<{
               TypographyProps={{
                 variant: "inputLabel",
               }}
-              tooltip="Withdrawable PICA"
+              tooltip="The initial staked PICA amount"
             >
               Initial PICA deposit
             </TextWithTooltip>

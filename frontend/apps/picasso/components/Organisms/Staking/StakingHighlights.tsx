@@ -5,7 +5,7 @@ import { useStore } from "@/stores/root";
 
 export const StakingHighlights: FC = () => {
   const totalPicaDeposited = useStore((state) => state.maximumPicaStaked);
-  const maximumXPICAAPR = "~";
+  const maximumXPICAAPR = useStore((state) => state.xPICAAPR);
   const averageLockDuration = useStore((state) => state.averageStakingLockTime);
 
   return (

@@ -9,10 +9,10 @@ function setStakingStats(data: StakingRewardsStats) {
     state.maximumPicaStaked = fromChainIdUnit(
       data.stakingRewardsStats.totalValueLocked
     );
-    state.averageStakingLockTime = `${Math.floor(
+    const days = Math.floor(
       Number(data.stakingRewardsStats.averageLockDuration) / 86400
-    )} days`;
-
+    );
+    state.averageStakingLockTime = `${days} ${days > 1 ? "days" : "day"}`;
     state.maximumPicaShares = fromChainIdUnit(data.stakingRewardsStats.shares);
   });
 }
