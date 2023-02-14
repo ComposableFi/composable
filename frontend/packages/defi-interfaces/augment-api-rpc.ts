@@ -5,7 +5,7 @@
 // this is required to allow for ambient/previous definitions
 import "@polkadot/rpc-core/types/jsonrpc";
 
-import type { CurrencyId, CustomRpcBalance, CustomRpcCurrencyId, CustomRpcInstanceId } from "./common";
+import type { CurrencyId, CustomRpcBalance, CustomRpcCurrencyId, CustomRpcInstanceId, SafeRpcWrapper } from "./common";
 import type { PalletPabloPoolId, PalletPabloPriceAggregate } from "./pablo";
 import type { AugmentedRpc } from "@polkadot/rpc-core/types";
 import type { StorageKey } from "@polkadot/types";
@@ -96,7 +96,6 @@ import type {
 } from "@polkadot/types/interfaces/system";
 import type { IExtrinsic, Observable } from "@polkadot/types/types";
 import { Asset } from "./assets";
-import { ClaimableAmountError } from "./stakingRewards";
 
 export type __AugmentedRpc = AugmentedRpc<() => unknown>;
 
@@ -941,7 +940,7 @@ declare module "@polkadot/rpc-core/types/jsonrpc" {
           fnft_collection_id: CustomRpcCurrencyId | string,
           fnft_instance_id: CustomRpcInstanceId | string
         ) => Observable<
-          Result<BTreeMap<AssetId, Balance>, ClaimableAmountError>
+          Result<BTreeMap<AssetId, CustomRpcBalance>, SafeRpcWrapper>
         >
       >;
     };

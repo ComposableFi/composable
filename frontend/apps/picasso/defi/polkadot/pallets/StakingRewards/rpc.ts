@@ -5,14 +5,12 @@ export async function getClaimable(
   collectionId: string,
   instanceId: string
 ) {
-  const result = await api.rpc.stakingRewards.claimableAmount(
-    collectionId,
-    instanceId
-  );
-
-  return {
-    result,
-    collectionId,
-    instanceId,
-  };
+  try {
+    return await api.rpc.stakingRewards.claimableAmount(
+      collectionId,
+      instanceId
+    );
+  } catch (e) {
+    return null;
+  }
 }

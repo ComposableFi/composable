@@ -13,7 +13,7 @@ export default {
           type: "CustomRpcInstanceId",
         },
       ],
-      type: "Result<BTreeMap<AssetId, Balance>, ClaimableAmountError>",
+      type: "Result<BTreeMap<AssetId, CustomRpcBalance>, SafeRpcWrapper>",
     },
   },
   types: {
@@ -61,6 +61,6 @@ export default {
       lock: "ComposableTraitsStakingLockLockConfig",
     },
     PalletStakingRewardsRewardAccumulationHookError: "Null",
-    ClaimableAmountError: {},
+    ClaimableAmountError: "SafeRpcWrapper",
   },
 };

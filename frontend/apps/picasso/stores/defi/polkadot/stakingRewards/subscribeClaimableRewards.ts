@@ -28,7 +28,10 @@ async function updateClaimableAmount(api: ApiPromise) {
 
   for (const [_, item] of stakingPortfolio.entries()) {
     const { collectionId, instanceId } = item;
-    list.push(getClaimable(api, collectionId, instanceId));
+    const result = await getClaimable(api, collectionId, instanceId)
+    if (result) {
+      list.push({ result, collectionId, instanceId })
+    }
   }
 
   const claimableList = await Promise.all(list);

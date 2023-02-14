@@ -81,7 +81,7 @@ export class Executor implements TransactionExecutor {
         unsub();
       }
 
-      if (txResult.isFinalized) {
+      if (txResult.isInBlock) {
         this.onFinalized(txHash);
 
         if (onTxFinalized) {

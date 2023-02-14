@@ -75,8 +75,11 @@ export const ClaimButton = () => {
         gap: 1,
       }}
     >
-      {isClaiming && <CircularProgress variant="indeterminate" size={24} />}
-      Claim rewards
+      {isClaiming ? (
+        <CircularProgress variant="indeterminate" size={24} />
+      ) : (
+        "Claim rewards"
+      )}
     </Button>
   );
 };

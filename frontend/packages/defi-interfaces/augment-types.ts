@@ -1311,7 +1311,6 @@ import type {
   XcmVersion
 } from "@polkadot/types/interfaces/xcm";
 import {
-  ClaimableAmountError,
   ComposableTraitsStakingRewardPool,
   ComposableTraitsStakingRewardPoolConfiguration,
   ComposableTraitsStakingRewardUpdate,
@@ -1459,7 +1458,7 @@ declare module "@polkadot/types/types/registry" {
     ChangesTrieConfiguration: ChangesTrieConfiguration;
     ChangesTrieSignal: ChangesTrieSignal;
     CheckInherentsResult: CheckInherentsResult;
-    ClaimableAmountError: ClaimableAmountError;
+    ClaimableAmountError: SafeRpcWrapper;
     ClassDetails: ClassDetails;
     ClassId: ClassId;
     ClassMetadata: ClassMetadata;

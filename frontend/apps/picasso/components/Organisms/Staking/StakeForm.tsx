@@ -1,4 +1,10 @@
-import { Button, Stack, Typography, useTheme } from "@mui/material";
+import {
+  Button,
+  CircularProgress,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import { StakeInputLabel } from "@/components/Organisms/Staking/StakeInputLabel";
 import { AlertBox, BigNumberInput } from "@/components";
 import { LockPeriodInput } from "@/components/Organisms/Staking/LockPeriodInput";
@@ -6,7 +12,7 @@ import { FutureDatePaper } from "@/components/Atom/FutureDatePaper";
 import { InfoOutlined } from "@mui/icons-material";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { formatDate } from "shared";
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
 import config from "@/constants/config";
 
@@ -99,6 +105,7 @@ export function StakeForm({
           isPendingStake ||
           picaRewardPool.minimumStakingAmount.gt(value)
         }
+        isPendingStake={isPendingStake}
         onClick={onClick}
       />
     </Stack>
@@ -136,8 +143,10 @@ const PICALockedWarning = ({
 const StakeButton = ({
   disabled,
   onClick,
+  isPendingStake,
 }: {
   disabled: boolean;
+  isPendingStake: boolean;
   onClick: () => void;
 }) => {
   return (
@@ -148,7 +157,11 @@ const StakeButton = ({
       color="primary"
       disabled={disabled}
     >
-      <Typography variant="button">Stake and mint</Typography>
+      {isPendingStake ? (
+        <CircularProgress variant="indeterminate" size={24} />
+      ) : (
+        <Typography variant="button">Stake and mint</Typography>
+      )}
     </Button>
   );
 };

@@ -13,8 +13,8 @@ interface UIState {
     stakeTab: number;
     isBurnModalOpen: boolean;
     agreedSlash: boolean;
-    isSplitModalOpen: boolean;
     ratio: number;
+    shouldUnstakeAll: boolean;
   };
 }
 
@@ -31,8 +31,8 @@ const initialState: UIState = {
     stakeTab: 0,
     isBurnModalOpen: false,
     agreedSlash: false,
-    isSplitModalOpen: false,
     ratio: 50,
+    shouldUnstakeAll: false,
   },
 };
 
@@ -51,8 +51,8 @@ export interface UISlice {
     setStakingTab: (tabIndex: number) => void;
     setBurnModalState: (state: boolean) => void;
     setAgreedSlash: (agreed: boolean) => void;
-    setSplitModalState: (state: boolean) => void;
     setRatio: (ratio: number) => void;
+    setUnstakeAll: (value: boolean) => void;
   };
 }
 
@@ -130,11 +130,6 @@ export const createUISlice: StoreSlice<UISlice> = (set) => ({
         state.ui.stakingRewards.isBurnModalOpen = modalState;
       });
     },
-    setSplitModalState: (modalState: boolean) => {
-      set((state) => {
-        state.ui.stakingRewards.isSplitModalOpen = modalState;
-      });
-    },
     setAgreedSlash: (agreed: boolean) => {
       set((state) => {
         state.ui.stakingRewards.agreedSlash = agreed;
@@ -143,6 +138,11 @@ export const createUISlice: StoreSlice<UISlice> = (set) => ({
     setRatio: (ratio: number) => {
       set((state) => {
         state.ui.stakingRewards.ratio = ratio;
+      });
+    },
+    setUnstakeAll: (value: boolean) => {
+      set((state) => {
+        state.ui.stakingRewards.shouldUnstakeAll = value;
       });
     },
   },
