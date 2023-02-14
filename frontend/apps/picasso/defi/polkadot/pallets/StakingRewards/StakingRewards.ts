@@ -205,15 +205,13 @@ export function stake({
         },
         (txHash: string) => {
           closeSnackbar(snackbarKey);
-          enqueueSnackbar(
-            `Successfully staked ${lockablePICA.toFixed().toString()} PICA`,
-            {
-              variant: "success",
-              isClosable: true,
-              persist: true,
-              url: subscanExtrinsicLink("picasso", txHash),
-            }
-          );
+          enqueueSnackbar("Transaction successful", {
+            description: `Stake and mint confirmed`,
+            variant: "success",
+            isClosable: true,
+            persist: true,
+            url: subscanExtrinsicLink("picasso", txHash),
+          });
           useStakeForm.setState((state) => {
             state.amount = new BigNumber(0);
             state.lockPeriod = "0";

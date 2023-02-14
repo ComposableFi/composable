@@ -316,32 +316,36 @@ const UnstakeButtonSection = ({
     callbackGate(
       async (api, acc, exec, _signer) => {
         const eventHandlers = {
-          onReady: (message: string) => (txHash: string) => {
-            snackbarKey = enqueueSnackbar(message, {
-              variant: "info",
-              isClosable: true,
-              persist: true,
-              url: subscanExtrinsicLink("picasso", txHash),
-            });
-          },
-          onFinalize: (message: string) => (txHash: string) => {
-            closeSnackbar(snackbarKey);
-            useStore.setState((state) => {
-              const fnftKey = getFnftKey(...selectedToken);
-              state.claimableRewards[fnftKey] = [];
-              state.stakingPortfolio.delete(fnftKey);
-              state.stakingPositions.delete(fnftKey);
-              state.ui.setAgreedSlash(false);
-            });
-            enqueueSnackbar(message, {
-              variant: "success",
-              isClosable: true,
-              persist: true,
-              url: subscanExtrinsicLink("picasso", txHash),
-            });
-            useStore.getState().ui.setStakingTab(0);
-            onClose();
-          },
+          onReady:
+            (message: string, description?: string) => (txHash: string) => {
+              snackbarKey = enqueueSnackbar(message, {
+                description,
+                variant: "info",
+                isClosable: true,
+                persist: true,
+                url: subscanExtrinsicLink("picasso", txHash),
+              });
+            },
+          onFinalize:
+            (message: string, description?: string) => (txHash: string) => {
+              closeSnackbar(snackbarKey);
+              useStore.setState((state) => {
+                const fnftKey = getFnftKey(...selectedToken);
+                state.claimableRewards[fnftKey] = [];
+                state.stakingPortfolio.delete(fnftKey);
+                state.stakingPositions.delete(fnftKey);
+                state.ui.setAgreedSlash(false);
+              });
+              enqueueSnackbar(message, {
+                description,
+                variant: "success",
+                isClosable: true,
+                persist: true,
+                url: subscanExtrinsicLink("picasso", txHash),
+              });
+              useStore.getState().ui.setStakingTab(0);
+              onClose();
+            },
           onError: (errorMessage: string) => {
             closeSnackbar(snackbarKey);
             enqueueSnackbar(
@@ -364,9 +368,13 @@ const UnstakeButtonSection = ({
             api,
             _signer,
             eventHandlers.onReady(
+              "Processing unstake",
               `Unstaking ${shareAsset.symbol}  ${selectedToken[1]}`
             ),
-            eventHandlers.onFinalize(`Successfully unstaked`),
+            eventHandlers.onFinalize(
+              `Unstake complete`,
+              `Successfully unstaked ${shareAsset.symbol}  ${selectedToken[1]}`
+            ),
             eventHandlers.onError
           );
         } else {
@@ -380,9 +388,13 @@ const UnstakeButtonSection = ({
             api,
             _signer,
             eventHandlers.onReady(
+              "Processing partial unstake",
               `Unstaking ${ratio}% of ${shareAsset.symbol} ${selectedToken[1]}`
             ),
-            eventHandlers.onFinalize(`Successfully unstaked.`),
+            eventHandlers.onFinalize(
+              `Successfully unstaked.`,
+              `Unstaked ${ratio}% of ${shareAsset.symbol} ${selectedToken[1]}`
+            ),
             eventHandlers.onError
           );
         }

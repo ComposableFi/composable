@@ -1,4 +1,4 @@
-import { Box, Typography, useTheme } from "@mui/material";
+import { Stack, Typography, useTheme } from "@mui/material";
 import { FC } from "react";
 
 export const Message: FC<{ title?: string; description?: string }> = ({
@@ -7,25 +7,23 @@ export const Message: FC<{ title?: string; description?: string }> = ({
 }) => {
   const theme = useTheme();
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "start",
-        justifyContent: "flex-start",
-        gap: "0.5rem",
-      }}
-    >
-      <Typography variant="body2" color={theme.palette.common.white}>
+    <Stack gap={1}>
+      <Typography
+        variant="body2"
+        color={theme.palette.common.white}
+        sx={{
+          lineHeight: 1,
+        }}
+      >
         {title}
       </Typography>
       <Typography
-        variant="body2"
-        sx={{ lineHeight: 0.5 }}
+        variant="inputLabel"
+        sx={{ lineHeight: 1 }}
         color={theme.palette.common.white}
       >
         {description}
       </Typography>
-    </Box>
+    </Stack>
   );
 };

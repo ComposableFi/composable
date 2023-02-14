@@ -35,7 +35,6 @@ const ThemeResponsiveSnackbarComp = forwardRef<
   const linearProgressRef = useRef(null);
   const theme = useTheme();
   const [paused, setPaused] = useState<boolean>(false);
-
   const handleSnackbarClose = useCallback(() => {
     closeSnackbar(id);
   }, [closeSnackbar, id]);
@@ -50,10 +49,10 @@ const ThemeResponsiveSnackbarComp = forwardRef<
         variant="filled"
         severity={variant as AlertColor}
         iconMapping={{
-          success: <CheckCircleOutline fontSize="inherit" />,
-          warning: <ErrorOutline fontSize="inherit" />,
-          error: <ErrorOutline fontSize="inherit" />,
-          info: <ErrorOutline fontSize="inherit" />,
+          success: <CheckCircleOutline fontSize="inherit" color="success" />,
+          warning: <ErrorOutline fontSize="inherit" color="warning" />,
+          error: <ErrorOutline fontSize="inherit" color="error" />,
+          info: <ErrorOutline fontSize="inherit" color="info" />,
         }}
         action={
           <MessageAction
@@ -65,6 +64,10 @@ const ThemeResponsiveSnackbarComp = forwardRef<
         }
         sx={{
           overflow: "hidden",
+          minWidth: {
+            xs: "100%",
+            lg: "1032px",
+          },
         }}
       >
         <Box

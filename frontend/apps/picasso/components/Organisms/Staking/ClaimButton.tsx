@@ -35,6 +35,7 @@ export const ClaimButton = () => {
       account?.address,
       (txHash) => {
         snackBarKey = enqueueSnackbar(`Claiming rewards`, {
+          description: "Processing information on chain.",
           variant: "info",
           isClosable: true,
           persist: true,
@@ -45,7 +46,7 @@ export const ClaimButton = () => {
         closeSnackbar(snackBarKey);
         snackBarKey = enqueueSnackbar(`Claiming rewards`, {
           description: "Successfully claimed rewards.",
-          variant: "info",
+          variant: "success",
           isClosable: true,
           persist: true,
           url: subscanExtrinsicLink("picasso", txHash),

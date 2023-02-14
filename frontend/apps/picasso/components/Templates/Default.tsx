@@ -8,7 +8,13 @@ import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import { NavBar } from "../Molecules";
-import { alpha, Breadcrumbs, Typography, useMediaQuery, useTheme, } from "@mui/material";
+import {
+  alpha,
+  Breadcrumbs,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { GlobalSettings } from "../Organisms/Settings/GlobalSettings";
 import { ExternalLinksDropdown } from "@/components/Molecules/ExternalLinksDropdown";
@@ -159,9 +165,7 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
             height: theme.spacing(2),
           }}
         >
-          <Typography variant="caption">
-            {connectedEndpoint}
-          </Typography>
+          <Typography variant="caption">{connectedEndpoint}</Typography>
         </Box>
       </Box>
     </Box>
