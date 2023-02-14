@@ -10,6 +10,7 @@ import { subscribePortfolio } from "@/stores/defi/polkadot/stakingRewards/subscr
 import { subscribeClaimableRewards } from "@/stores/defi/polkadot/stakingRewards/subscribeClaimableRewards";
 import { useSubscribeStats } from "@/defi/polkadot/hooks/stakingRewards/useSubscribeStats";
 import { subscribeXPicaAPR } from "@/stores/defi/polkadot/stakingRewards/subscribeXPicaAPR";
+import { useStakingRewardsNotifications } from "@/defi/polkadot/hooks/stakingRewards/useStakingRewardsNotifications";
 
 const sxProps = {
   mt: 20,
@@ -17,6 +18,7 @@ const sxProps = {
 export const StakingLayout: FC = ({ children }) => {
   useSubscribeStakingPositions();
   useSubscribeStats();
+  useStakingRewardsNotifications();
   const { parachainApi } = usePicassoProvider();
   const isLoaded = useStore((store) => store.isRewardPoolLoaded);
 

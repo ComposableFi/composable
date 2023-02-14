@@ -67,7 +67,7 @@ export function transformStakingPortfolio(
     collectionId: position.fnftCollectionId,
     instanceId: position.fnftInstanceId,
     assetId: position.assetId,
-    endTimestamp: position.endTimestamp.toString(),
+    endTimestamp: position.endTimestamp,
     id: position.id,
     unlockPenalty: fromPerbill(rewardPools[assetId].lock.unlockPenalty),
     multiplier: rewardPools[assetId].lock.durationPresets[result.lock.duration],
@@ -158,7 +158,8 @@ function onReady(
   enqueueSnackbar: EnqueueSnackbar<AnyComponentMap>
 ): (txHash: string) => string | number {
   return (txHash: string) => {
-    return enqueueSnackbar("Processing stake on the chain", {
+    return enqueueSnackbar("Stake and mint", {
+      description: "Confirming transaction on chain",
       variant: "info",
       isClosable: true,
       persist: true,

@@ -10,6 +10,7 @@ export function subscribeXPicaAPR() {
     ({ tvl, rewardPool }) => {
       const rewardsPerSec = rewardPool?.rewards?.[1]?.rewardRate?.amount;
       if (!tvl || !rewardsPerSec) return;
+      if (tvl.eq(0)) return;
 
       const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
       useStore.setState((state) => {
