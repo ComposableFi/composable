@@ -248,7 +248,7 @@ benchmarks! {
 
 		let now = now + seconds_per_block;
 
-		let reward_pool = RewardPools::<T>::get(&pool_id).unwrap();
+		let reward_pool = RewardPools::<T>::get(pool_id).unwrap();
 
 		let mut reward = reward_pool.rewards.get(&reward_asset_id).unwrap().clone();
 
@@ -275,7 +275,7 @@ benchmarks! {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
 		frame_system::Pallet::<T>::set_block_number(1.into());
 		let user: T::AccountId = account("user", 0, 0);
-		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(get_reward_pool::<T>(user.clone(), r)).unwrap();
+		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(get_reward_pool::<T>(user, r)).unwrap();
 
 		let updates = (0..r).map(|r| (
 			((r as u128) + BASE_ASSET_ID).into(),
