@@ -1,29 +1,30 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, crane, ... }:
     let
-      src = pkgs.fetchFromGitHub {
+      centauri-src = pkgs.fetchFromGitHub {
         owner = "ComposableFi";
         repo = "centauri";
-        rev = "fa7d5d33125fba9aa48c5e581ec72a543abef25b";
-        hash = "sha256-3S0HsFLxWHGXGW8QQD0qD3CWMMZ1vvYYZRdMJ9bYSSE=";
+        rev = "ac6895f76419e941e44967ac075ad10767180c78";
+        hash = "sha256-3S0HsFLxWHGXGW8QQD0qD3CWMMZ9vvYYZRdMJ9bYSSE=";
       };
     in {
       packages = rec {
-        centauri-prepare = pkgs.writeText "hyperspace.sh" ''
-          nix build .#hyperspace-config
-          mv result /tmp/config.toml    
-          ${pkgs.lib.meta.getExe self'.packages.devnet-centauri} --option sandbox relaxed        
+        centauri-configure-and-run = pkgs.writeText "hyperspace.sh" ''
+          cp ${hyperspace-config}/config.toml /tmp/config.toml    
+          ${
+            pkgs.lib.meta.getExe self'.packages.devnet-centauri
+          } --option sandbox relaxed       
         '';
 
         centauri-codegen = crane.stable.buildPackage {
           name = "centauri-codegen";
           cargoArtifacts = crane.stable.buildDepsOnly {
-            inherit src;
+            src = centauri-src;
             doCheck = false;
             cargoExtraArgs = "-p codegen";
             cargoTestCommand = "";
           };
-          inherit src;
+          src = centauri-src;
           doCheck = false;
           cargoExtraArgs = "-p codegen";
           cargoTestCommand = "";
@@ -72,7 +73,7 @@
             name = "centauri";
             pname = "${name}";
             buildInputs = [ self'.packages.dali-subxt-client ];
-            inherit src;
+            src = centauri-src;
             patchPhase = "";
             installPhase = ''
               mkdir $out
@@ -87,7 +88,7 @@
           name = "hyperspace-dali";
           pname = "${name}";
           cargoArtifacts = crane.stable.buildDepsOnly {
-            inherit src;
+            src = centauri-src;
             doCheck = false;
             cargoExtraArgs = "-p hyperspace --features dali";
             cargoTestCommand = "";
@@ -96,7 +97,7 @@
             PROTOC_INCLUDE = "${pkgs.protobuf}/include";
             PROTOC_NO_VENDOR = "1";
           };
-          inherit src;
+          src = centauri-src;
           BuildInputs = [ pkgs.protobuf ];
           PROTOC = "${pkgs.protobuf}/bin/protoc";
           PROTOC_INCLUDE = "${pkgs.protobuf}/include";
