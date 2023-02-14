@@ -618,7 +618,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			add_to_rewards_pot::<T>(who, pool_id, asset_id, amount, keep_alive)
+			add_to_rewards_pot::<T>(&who, pool_id, asset_id, amount, keep_alive)
 		}
 	}
 
@@ -1578,7 +1578,7 @@ fn accumulate_pool_rewards<T: Config>(
 }
 
 fn add_to_rewards_pot<T: Config>(
-	who: T::AccountId,
+	who: &T::AccountId,
 	pool_id: T::AssetId,
 	asset_id: T::AssetId,
 	amount: T::Balance,
@@ -1591,7 +1591,7 @@ fn add_to_rewards_pot<T: Config>(
 
 		let pool_account = Pallet::<T>::pool_account_id(&pool_id);
 
-		T::Assets::transfer(asset_id, &who, &pool_account, amount, keep_alive)?;
+		T::Assets::transfer(asset_id, who, &pool_account, amount, keep_alive)?;
 		T::Assets::hold(asset_id, &pool_account, amount)?;
 
 		Pallet::<T>::deposit_event(Event::<T>::RewardsPotIncreased { pool_id, asset_id, amount });
