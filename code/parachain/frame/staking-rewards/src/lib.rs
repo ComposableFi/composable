@@ -1793,7 +1793,6 @@ pub(crate) fn accumulate_reward<T: Config>(
 	)
 	.expect("funds should be available to release; see above for proof; qed;");
 
-	// TODO add the amount earned by the unstaked_shares back to the pool for the epoch
 	reward.total_rewards = new_total_rewards.get().into();
 	reward.last_updated_timestamp = last_updated_timestamp;
 
@@ -1890,7 +1889,7 @@ impl<T: Config> Pallet<T> {
 			&pool_account,
 			fnft_account,
 			amount_to_transfer,
-			false,
+			true,
 		)?;
 
 		Ok(())

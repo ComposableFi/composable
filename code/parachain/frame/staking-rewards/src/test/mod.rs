@@ -2358,13 +2358,11 @@ fn pbl_295() {
 		assert_eq!(
 			claimable_amount(dave_new),
 			// gets their normal share as well their share of daves unstaked stake reward
-			// TODO adjust as per error expected
 			rewards_for_blocks(2) / 4 + rewards_for_blocks(2) / 16
 		);
 		assert_eq!(
 			claimable_amount(charlie_id),
 			// gets their normal share as well their share of daves unstaked stake reward
-			// TODO adjust as per error expected
 			rewards_for_blocks(2) / 2 + rewards_for_blocks(2) / 8
 		);
 	})
