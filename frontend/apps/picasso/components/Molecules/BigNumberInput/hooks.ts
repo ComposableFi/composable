@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { BigNumber } from "bignumber.js";
 import { fromChainIdUnit, toChainIdUnit } from "shared";
 
 const FLOAT_NUMBER: RegExp = /^\d+(\.\d+)?$/;
+const ALLOWED_INPUT: RegExp = /^\d*\.?\d*$/;
 
 type UseValidationType = {
   initialValue: BigNumber;
@@ -18,6 +19,7 @@ export function useValidation({
   const [valid, setValid] = React.useState<boolean>(true);
   const [stringValue, setStringValue] = React.useState("");
   const [value, setValue] = React.useState<BigNumber>(initialValue);
+  const isDirty = useMemo(() => !initialValue.eq(value), [value, initialValue]);
 
   React.useEffect(() => {
     if (!value.eq(new BigNumber(stringValue))) {
@@ -80,7 +82,7 @@ export function useValidation({
       setStringValue(eventValue);
       setValid(true);
       setValue(bignr);
-    } else {
+    } else if (eventValue.match(ALLOWED_INPUT)) {
       setStringValue(eventValue);
       setValid(false);
     }
@@ -92,5 +94,6 @@ export function useValidation({
     bignrValue: value,
     validate,
     setValue,
+    isDirty,
   };
 }

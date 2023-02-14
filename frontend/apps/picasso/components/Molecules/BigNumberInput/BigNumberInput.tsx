@@ -24,7 +24,7 @@ export const BigNumberInput: FC<BigNumberInputProps> = ({
 }) => {
   const theme = useTheme();
   const maxDec = maxDecimals ? maxDecimals : 18;
-  const { bignrValue, stringValue, hasError, validate, setValue } =
+  const { isDirty, bignrValue, stringValue, hasError, validate, setValue } =
     useValidation({
       initialValue: value,
       maxDec,
@@ -36,6 +36,7 @@ export const BigNumberInput: FC<BigNumberInputProps> = ({
 
     isValid?.(!hasError);
   };
+  const shouldShowValidationError = !disabled && hasError && isDirty;
 
   useEffect(() => {
     if (hasError) {
@@ -58,7 +59,7 @@ export const BigNumberInput: FC<BigNumberInputProps> = ({
         onChange={handleChange}
         disabled={disabled}
       />
-      {!disabled && hasError && (
+      {shouldShowValidationError && (
         <Typography
           sx={{ color: theme.palette.error.main, mt: 2 }}
           variant="subtitle1"

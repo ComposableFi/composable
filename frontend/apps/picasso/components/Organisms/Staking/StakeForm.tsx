@@ -93,7 +93,14 @@ export function StakeForm({
       {shouldShowWarning && (
         <PICALockedWarning duration={duration} token={pica} />
       )}
-      <StakeButton disabled={!formValid || isPendingStake} onClick={onClick} />
+      <StakeButton
+        disabled={
+          !formValid ||
+          isPendingStake ||
+          picaRewardPool.minimumStakingAmount.gt(value)
+        }
+        onClick={onClick}
+      />
     </Stack>
   );
 }
@@ -133,8 +140,6 @@ const StakeButton = ({
   disabled: boolean;
   onClick: () => void;
 }) => {
-
-
   return (
     <Button
       fullWidth

@@ -139,7 +139,7 @@ export const BurnModal: FC<{
               TypographyProps={{
                 variant: "inputLabel",
               }}
-              tooltip="Withdrawable PICA"
+              tooltip="Staked PICA that is not locked up and can be unstaked"
             >
               Withdrawable PICA
             </TextWithTooltip>
@@ -164,7 +164,7 @@ export const BurnModal: FC<{
               TypographyProps={{
                 variant: "inputLabel",
               }}
-              tooltip="Withdrawable PICA"
+              tooltip="The initial staked PICA amount"
             >
               Initial PICA deposit
             </TextWithTooltip>
