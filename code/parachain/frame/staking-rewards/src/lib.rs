@@ -12,6 +12,8 @@
 		clippy::panic
 	)
 )]
+#![warn(clippy::pedantic)]
+#![allow(clippy::used_underscore_binding)]
 #![deny(
 	bad_style,
 	bare_trait_objects,
@@ -1850,9 +1852,13 @@ pub(crate) fn claim_of_stake<T: Config>(
 }
 
 impl<T: Config> Pallet<T> {
-	/// returns error if stake or rewardpool is not found
-	/// otherwise returns BTreeMap (key: reward_asset_id, val: Option<Balance>)
-	/// if claim_of_stake returns an error for a reward, then val is None
+	/// Calculates the claimable amount(s) for a staked position, calling [`claim_of_stake`] for
+	/// each asset in the pool.
+	///
+	/// # Errors
+	///
+	/// Returns an error if either the `Stake` or the `RewardPool` could not be found, or if there
+	/// is an arithmetic error when calculating the claim.
 	pub fn claimable_amount(
 		fnft_collection_id: T::AssetId,
 		fnft_instance_id: T::FinancialNftInstanceId,
