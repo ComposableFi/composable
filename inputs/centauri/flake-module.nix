@@ -7,6 +7,7 @@
         rev = "94bf87a44694b04917a7ab735487c8f87a64737d";
         hash = "sha256-tG4WLAUtQ2iaaS4t/Condj6B1FDa/5VDoRwyBsJDfr4=";
       };
+
     in {
       packages = rec {
         centauri-codegen = crane.stable.buildPackage {
@@ -62,7 +63,7 @@
         };
 
         hyperspace-dali = let
-          src = pkgs.stdenv.mkDerivation rec {
+          patched-src = pkgs.stdenv.mkDerivation rec {
             name = "centauri";
             pname = "${name}";
             buildInputs = [ self'.packages.dali-subxt-client ];
@@ -81,7 +82,7 @@
           name = "hyperspace-dali";
           pname = "${name}";
           cargoArtifacts = crane.stable.buildDepsOnly {
-            src = centauri-src;
+            src = patched-src;
             doCheck = false;
             cargoExtraArgs = "-p hyperspace --features dali";
             cargoTestCommand = "";
