@@ -250,21 +250,21 @@ pub fn run() -> Result<()> {
 							let partials = new_partial::<
 								picasso_runtime::RuntimeApi,
 								PicassoExecutor,
-							>(&config)?;
+							>(&config, Option::None)?;
 							cmd.run(partials.client)
 						},
 						#[cfg(feature = "dali")]
 						id if id.contains("dali") => {
 							let partials =
-								new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(&config)?;
+								new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(&config, Option::None)?;
 							cmd.run(partials.client)
 						},
 						#[cfg(feature = "composable")]
 						id if id.contains("composable") => {
 							let partials = new_partial::<
 								composable_runtime::RuntimeApi,
-								ComposableExecutor,
-							>(&config)?;
+								ComposableExecutor
+							>(&config, Option::None)?;
 							cmd.run(partials.client)
 						},
 						id => panic!("Unknown Chain: {}", id),

@@ -17,16 +17,12 @@ use polkadot_service::CollatorPair;
 use sc_consensus::ImportQueue;
 use sc_network_common::service::NetworkBlock;
 // Substrate Imports
-use crate::{
-	client::{Client, FullBackend, FullClient},
-	rpc,
-	runtime::{
-		assets::ExtendWithAssetsApi, cosmwasm::ExtendWithCosmwasmApi,
-		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
-		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
-		staking_rewards::ExtendWithStakingRewardsApi, BaseHostRuntimeApis,
-	},
-};
+use crate::{chain_spec, client::{Client, FullBackend, FullClient}, rpc, runtime::{
+	assets::ExtendWithAssetsApi, cosmwasm::ExtendWithCosmwasmApi,
+	crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
+	lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+	staking_rewards::ExtendWithStakingRewardsApi, BaseHostRuntimeApis,
+}};
 use sc_client_api::StateBackendFor;
 use sc_executor::NativeExecutionDispatch;
 use sc_service::{Configuration, PartialComponents, TaskManager};
@@ -111,7 +107,7 @@ pub fn new_chain_ops(
 		#[cfg(feature = "composable")]
 		chain if chain.contains("composable") => {
 			let components =
-				new_partial::<composable_runtime::RuntimeApi, ComposableExecutor>(config)?;
+				new_partial::<composable_runtime::RuntimeApi, ComposableExecutor>(config, Some(chain_spec::composable::DALEK_END_BLOCK))?;
 			(
 				Arc::new(Client::from(components.client)),
 				components.backend,
@@ -121,7 +117,7 @@ pub fn new_chain_ops(
 		},
 		#[cfg(feature = "dali")]
 		chain if chain.contains("dali") => {
-			let components = new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(config)?;
+			let components = new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(config, Option::None)?;
 			(
 				Arc::new(Client::from(components.client)),
 				components.backend,
@@ -130,7 +126,7 @@ pub fn new_chain_ops(
 			)
 		},
 		chain if chain.contains("picasso") => {
-			let components = new_partial::<picasso_runtime::RuntimeApi, PicassoExecutor>(config)?;
+			let components = new_partial::<picasso_runtime::RuntimeApi, PicassoExecutor>(config, Some(chain_spec::picasso::DALEK_END_BLOCK))?;
 			(
 				Arc::new(Client::from(components.client)),
 				components.backend,
@@ -147,6 +143,8 @@ pub fn new_chain_ops(
 #[allow(clippy::type_complexity)]
 pub fn new_partial<RuntimeApi, Executor>(
 	config: &Configuration,
+	// The block number until ed25519-dalek should be used for signature verification.
+	dalek_end_block: Option<u32>,
 ) -> Result<
 	PartialComponents<
 		FullClient<RuntimeApi, Executor>,
@@ -197,6 +195,10 @@ where
 		)?;
 	let client = Arc::new(client);
 
+	use sc_client_api::ExecutorProvider;
+	client.execution_extensions().set_extensions_factory(
+		sc_client_api::execution_extensions::ExtensionBeforeBlock::<crate::client::Block, sp_io::UseDalekExt>::new(dalek_end_block.unwrap_or(0))
+	);
 	let telemetry_worker_handle = telemetry.as_ref().map(|(worker, _)| worker.handle());
 
 	let telemetry = telemetry.map(|(worker, telemetry)| {
@@ -247,7 +249,7 @@ pub async fn start_node(
 			chain if chain.contains("composable") => crate::service::start_node_impl::<
 				composable_runtime::RuntimeApi,
 				ComposableExecutor,
-			>(config, polkadot_config, collator_options, id)
+			>(config, polkadot_config, collator_options, id,Some(chain_spec::composable::DALEK_END_BLOCK))
 			.await?,
 			#[cfg(feature = "dali")]
 			chain if chain.contains("dali") =>
@@ -256,6 +258,7 @@ pub async fn start_node(
 					polkadot_config,
 					collator_options,
 					id,
+					Option::None,
 				)
 				.await?,
 			chain if chain.contains("picasso") =>
@@ -264,6 +267,7 @@ pub async fn start_node(
 					polkadot_config,
 					collator_options,
 					id,
+					Some(chain_spec::picasso::DALEK_END_BLOCK),
 				)
 				.await?,
 			_ => panic!("Unknown chain_id: {}", config.chain_spec.id()),
@@ -281,6 +285,8 @@ async fn start_node_impl<RuntimeApi, Executor>(
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
 	id: ParaId,
+	// The block number until ed25519-dalek should be used for signature verification.
+	dalek_end_block: Option<u32>,
 ) -> sc_service::error::Result<TaskManager>
 where
 	RuntimeApi:
@@ -298,7 +304,7 @@ where
 {
 	let parachain_config = prepare_node_config(parachain_config);
 
-	let params = new_partial::<RuntimeApi, Executor>(&parachain_config)?;
+	let params = new_partial::<RuntimeApi, Executor>(&parachain_config, dalek_end_block)?;
 
 	#[cfg(feature = "ocw")]
 	{
