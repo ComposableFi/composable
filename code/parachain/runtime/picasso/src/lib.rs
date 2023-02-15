@@ -93,14 +93,9 @@ pub use frame_support::{
 };
 use frame_system as system;
 pub use governance::TreasuryAccount;
-use ibc::core::{
-	ics24_host::identifier::PortId,
-	ics26_routing::context::{Module, ModuleId},
-};
 use pallet_ibc::{
-	light_client_common::RelayChain,
-	routing::{ModuleRouter, NoneRouter},
-	DenomToAssetId, IbcAssetIds, IbcAssets, IbcDenoms,
+	light_client_common::RelayChain, routing::NoneRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
+	IbcDenoms,
 };
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -1484,4 +1479,16 @@ impl pallet_ibc::Config for Runtime {
 	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type SentryOrigin = EnsureRoot<AccountId>;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
+	type Whitelist = PicassoWhiteList;
+	type HandleMemo = ();
+	type MemoMessage = String; // TODO: enable it properly - check with David
+}
+
+// TODO: add the proper whitelist here - check with Dzmitry
+pub struct PicassoWhiteList {}
+
+impl Contains<AccountId> for PicassoWhiteList {
+	fn contains(_account_id: &AccountId) -> bool {
+		true
+	}
 }

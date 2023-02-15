@@ -142,11 +142,11 @@ orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-modu
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36", default-features = false }
 
 # IBC support
-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "7433cd9c3e0e6f28f7bfc42ba5e60f5fabd2ccb2", default-features = false }
-ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "7433cd9c3e0e6f28f7bfc42ba5e60f5fabd2ccb2", default-features = false }
-ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev = "7433cd9c3e0e6f28f7bfc42ba5e60f5fabd2ccb2", default-features = false }
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "7433cd9c3e0e6f28f7bfc42ba5e60f5fabd2ccb2", default-features = false }
-pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "7433cd9c3e0e6f28f7bfc42ba5e60f5fabd2ccb2", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/centauri", rev = "51d0deccd7441854b3c38b1034eeb7427bee96e0", default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "51d0deccd7441854b3c38b1034eeb7427bee96e0", default-features = false }
+ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev = "51d0deccd7441854b3c38b1034eeb7427bee96e0", default-features = false }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "51d0deccd7441854b3c38b1034eeb7427bee96e0", default-features = false }
+pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "51d0deccd7441854b3c38b1034eeb7427bee96e0", default-features = false }
 
 [dev-dependencies]
 frame-benchmarking = { package = "frame-benchmarking", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
