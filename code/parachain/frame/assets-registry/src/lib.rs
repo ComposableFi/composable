@@ -229,18 +229,6 @@ pub mod pallet {
 
 			let asset_id = Self::generate_asset_id(protocol_id, nonce);
 
-			ensure!(
-				!ExistentialDeposit::<T>::contains_key(asset_id),
-				Error::<T>::AssetAlreadyRegistered
-			);
-
-			if let Some(location) = location.clone() {
-				ensure!(
-					!ForeignToLocal::<T>::contains_key(&location),
-					Error::<T>::AssetAlreadyRegistered
-				);
-			}
-
 			<Self as RemoteAssetRegistryMutate>::register_asset(asset_id, location, asset_info)?;
 			Ok(())
 		}
@@ -317,11 +305,16 @@ pub mod pallet {
 			location: Option<Self::AssetNativeLocation>,
 			asset_info: AssetInfo<Self::Balance>,
 		) -> DispatchResult {
-			if ExistentialDeposit::<T>::contains_key(asset_id) {
-				return Err(Error::<T>::AssetAlreadyRegistered.into())
-			}
+			ensure!(
+				!ExistentialDeposit::<T>::contains_key(asset_id),
+				Error::<T>::AssetAlreadyRegistered
+			);
 
 			if let Some(location) = location.clone() {
+				ensure!(
+					!ForeignToLocal::<T>::contains_key(&location),
+					Error::<T>::AssetAlreadyRegistered
+				);
 				Self::set_reserve_location(asset_id, location)?;
 			}
 
