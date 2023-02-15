@@ -280,8 +280,9 @@ pub fn run() -> Result<()> {
 				#[cfg(feature = "runtime-benchmarks")]
 				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| match config.chain_spec.id() {
 					id if id.contains("picasso") => {
-						let partials =
-							new_partial::<picasso_runtime::RuntimeApi, PicassoExecutor>(&config, None)?;
+						let partials = new_partial::<picasso_runtime::RuntimeApi, PicassoExecutor>(
+							&config, None,
+						)?;
 						let db = partials.backend.expose_db();
 						let storage = partials.backend.expose_storage();
 						cmd.run(config, partials.client, db, storage)
