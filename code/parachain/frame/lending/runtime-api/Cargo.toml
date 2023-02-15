@@ -15,7 +15,7 @@ codec = { default-features = false, features = [
 ], package = "parity-scale-codec", version = "3.0.0" }
 composable-support = { path = "../../composable-support", default-features = false }
 composable-traits = { path = "../../composable-traits", default-features = false }
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 
 [features]
 default = ["std"]

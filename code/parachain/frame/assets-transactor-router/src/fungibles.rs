@@ -19,7 +19,7 @@ use frame_support::{
 };
 use sp_std::vec::Vec;
 
-use crate::{route, Config, Pallet};
+use crate::{route, route_asset_type, Config, Pallet};
 
 impl<T: Config> fungibles::metadata::Inspect<T::AccountId> for Pallet<T> {
 	fn name(asset: Self::AssetId) -> Vec<u8> {
@@ -191,6 +191,16 @@ impl<T: Config> Mutate<T::AccountId> for Pallet<T> {
 impl<T: Config> Inspect<T::AccountId> for Pallet<T> {
 	type AssetId = T::AssetId;
 	type Balance = T::Balance;
+
+	fn asset_exists(asset: Self::AssetId) -> bool {
+		if asset == T::NativeAssetId::get() {
+			true
+		} else {
+			route_asset_type! {
+				asset_exists(asset)
+			}
+		}
+	}
 
 	route! {
 		fn total_issuance(asset: Self::AssetId) -> Self::Balance;

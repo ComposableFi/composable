@@ -18,13 +18,13 @@ impl<T: Config> Pallet<T> {
 		creator: &AccountIdOf<T>,
 		salt: &[u8],
 		code_hash: &[u8],
-		message: &[u8],
 	) -> Result<AccountIdOf<T>, Error<T>> {
 		if salt.is_empty() || salt.len() > 64 {
 			return Err(Error::<T>::InvalidSalt)
 		}
 
 		let module_hash = sp_io::hashing::sha2_256(b"module");
+		let message = b"";
 
 		let mut key = Vec::<u8>::from(module_hash);
 		key.extend_from_slice(b"wasm\0");

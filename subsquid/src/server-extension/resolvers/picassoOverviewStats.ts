@@ -1,8 +1,8 @@
 import { Field, FieldResolver, ObjectType, Query, Resolver, ResolverInterface } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { DAY_IN_MS } from "./common";
+import { DAY_IN_MS } from "../../constants";
 import { Event, Account, Activity, HistoricalLockedValue } from "../../model";
-import { getOrCreateAssetPrice } from "../../dbHelper";
+import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 export class PicassoTVL {
@@ -59,7 +59,7 @@ export class PicassoOverviewStatsResolver implements ResolverInterface<PicassoOv
     const tvlList: PicassoTVL[] = [];
 
     for (const [assetId, amount] of Object.entries(totalValueLocked)) {
-      const price = await getOrCreateAssetPrice(manager, assetId, new Date().getTime());
+      const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime());
       const tvl = new PicassoTVL({
         assetId,
         amount,

@@ -141,6 +141,8 @@ pub mod pallet {
 			owner: T::AccountId,
 			// Pool assets
 			asset_weights: BTreeMap<T::AssetId, Permill>,
+			/// LP token ID
+			lp_token_id: T::AssetId,
 		},
 		/// Liquidity added into the pool `T::PoolId`.
 		LiquidityAdded {
@@ -507,21 +509,22 @@ pub mod pallet {
 			init_config: PoolInitConfigurationOf<T>,
 			lp_token_id: Option<AssetIdOf<T>>,
 		) -> Result<T::PoolId, DispatchError> {
-			let (owner, pool_id, assets_weights) = match init_config {
+			let (owner, pool_id, assets_weights, lp_token) = match init_config {
 				PoolInitConfiguration::DualAssetConstantProduct { owner, fee, assets_weights } => {
-					let pool_id = DualAssetConstantProduct::<T>::do_create_pool(
+					let (pool_id, lp_token) = DualAssetConstantProduct::<T>::do_create_pool(
 						&owner,
 						FeeConfig::default_from(fee),
 						assets_weights.clone(),
 						lp_token_id,
 					)?;
-					(owner, pool_id, assets_weights)
+					(owner, pool_id, assets_weights, lp_token)
 				},
 			};
 			Self::deposit_event(Event::<T>::PoolCreated {
 				owner,
 				pool_id,
 				asset_weights: assets_weights.into_inner(),
+				lp_token_id: lp_token,
 			});
 			Ok(pool_id)
 		}

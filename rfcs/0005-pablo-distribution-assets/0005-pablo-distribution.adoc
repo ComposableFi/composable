@@ -333,7 +333,29 @@ stem:[x_(n+1) = (P_(old) + P_(old).S_(n+1)/(sum S_n) + r.delta t).S_(n+1)/(sum S
 
 stem:[x_(n+1) = r.delta t.S_(n+1)/(sum S_(n+1))]
 
-Therefore, the adjustment made above for the total reward pool works as expected for claims for the all the stakers. As this relationship holds for any number of stakers the total reward pool need not be adjusted when removing a staker.
+Therefore, the adjustment made above for the total reward pool works as expected for claims for the all the stakers. As this relationship holds for any number of stakers the total reward pool need not be adjusted when making a claim. However, if the staker is completely removed(unstaked) from the pool, the adjustment needs to be made as total shares of the pool is now reduced. However, to keep the pool calculations working for existing claims (with recursive new staker adjustment), keeping the total number of shares monotonically increasing is also necessary. Both requirements can be resolved by making an adjustment to the total rewards per each epoch as follows,
+
+stem:[P_(current) = P + rt + r(t - t_(removed)).S_(removed)/(sum S_n)]
+
+stem:[t_(removed)] is the time at which the staker was removed from the pool. stem:[S_(removed)] is the share of the staker at the time of removal. This can be generalized so that the reward pool may track a removed number of shares at any given epoch and adjust the total reward pool accordingly.
+
+This adjustment would cause a slight error for claims per staker. Calculating for a new epoch for an existing staker, correct claim is,
+
+stem:[x_n = r.delta t.S_n/(sum S_n - S_(removed))]
+
+However, the claim with adjustment would be,
+
+stem:[x_n^' = r.delta t.S_n/(sum S_n) + r.delta t.S_(removed)/(sum S_n).S_n/(sum S_n)]
+
+The difference/error is,
+
+stem:[x_n - x_n^' = r.delta t.S_n/(sum S_n - S_(removed)).S_(removed)^2/(sum S_n)^2]
+
+stem:[x_n - x_n^' = x_n.S_(removed)^2/(sum S_n)^2]
+
+For large number of total shares, this error is negligible as it reduces exponentially. It can also be argued that this is just a redistribution of the rewards earned by pool for unstaked shares to existing stakers and the error is irrelevant.
+
+stem:[S_(removed)] can be further reduced by re-issuing those shares to new stakers, reducing the error even further.
 
 ===== When adding a new reward to the pool the calculations remain the same other than increasing the reward pool as follows,
 
@@ -391,6 +413,12 @@ start
 :boosted_amount = reward_multiplier * amount;
 note right: Handle boosting as per reward_multiplier
 :new_pool_shares = boosted_amount;
+:mint(new_pool_shares - rewards_pool.unstaked_shares);
+note left
+    mint new_shares if unstaked_shares
+    is not enough to
+    cover the new stake
+endnote
 :new_position = Stake {
 reward_pool_id: pool_id,
 share: new_pool_shares,
@@ -420,6 +448,12 @@ start
 ->positionId,\namount(in LP/PBLO/PICA)\ntime;
 :rewards_pool = readStorage(positionId);
 :new_pool_shares = reward_multiplier * amount;
+:mint(new_pool_shares - rewards_pool.unstaked_shares);
+note left
+    mint new_shares if unstaked_shares
+    is not enough to
+    cover the new stake
+endnote
 :new_position = StakingNFT{
 asset: assetId,
 share: amount,
@@ -478,7 +512,7 @@ endwhile (no)
 :transfer stake from fnft account to nft owner;
 :burn fnft with the shares;
 :remove(position);
-:rewards_pool.claimed_shares += position.shares;
+:rewards_pool.unstaked_shares += position.shares;
 :save(rewards_pool);
 stop
 ----
@@ -547,6 +581,11 @@ while (assetId = stake_pools.has_next) is (yes)
             the pool will pause. it will resume
             once there are enough funds available
             to accumulate again.
+        endnote
+        :reward.total_rewards += new_reward * unstaked_shares /\nrewards_pool.total_shares;
+        note left
+            Add rewards of unstaked shares
+            back to the pool
         endnote
         :reward.last_updated_timestamp = current_time;
     endwhile (no)

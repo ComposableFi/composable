@@ -75,7 +75,10 @@ use frame_support::{
 	BoundedBTreeMap,
 };
 use runtime_api::ClaimableAmountError;
-use sp_runtime::ArithmeticError;
+use sp_runtime::{
+	helpers_128bit::multiply_by_rational_with_rounding, traits::CheckedSub, ArithmeticError,
+	Rounding,
+};
 use sp_std::collections::btree_map::BTreeMap;
 
 use crate::prelude::*;
@@ -475,6 +478,7 @@ pub mod pallet {
 		/// Emits `RewardPoolCreated` event when successful.
 		#[pallet::weight(T::WeightInfo::create_reward_pool(T::MaxRewardConfigsPerPool::get()))]
 		#[transactional]
+		#[pallet::call_index(1)]
 		pub fn create_reward_pool(
 			origin: OriginFor<T>,
 			pool_config: RewardPoolConfigurationOf<T>,
@@ -488,6 +492,7 @@ pub mod pallet {
 		///
 		/// Emits `Staked` when successful.
 		#[pallet::weight(T::WeightInfo::stake(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(2)]
 		pub fn stake(
 			origin: OriginFor<T>,
 			pool_id: T::AssetId,
@@ -506,6 +511,7 @@ pub mod pallet {
 		///
 		/// Emits `StakeExtended` when successful.
 		#[pallet::weight(T::WeightInfo::extend(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(3)]
 		pub fn extend(
 			origin: OriginFor<T>,
 			fnft_collection_id: T::AssetId,
@@ -535,6 +541,7 @@ pub mod pallet {
 		///
 		/// Emits `Unstaked` when successful.
 		#[pallet::weight(T::WeightInfo::unstake(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(4)]
 		pub fn unstake(
 			origin: OriginFor<T>,
 			fnft_collection_id: T::AssetId,
@@ -555,6 +562,7 @@ pub mod pallet {
 		///
 		/// Emits `SplitPosition` when successful.
 		#[pallet::weight(T::WeightInfo::split(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(5)]
 		pub fn split(
 			origin: OriginFor<T>,
 			fnft_collection_id: T::AssetId,
@@ -574,6 +582,7 @@ pub mod pallet {
 		///
 		/// Emits `RewardPoolUpdated` when successful.
 		#[pallet::weight(T::WeightInfo::update_rewards_pool(reward_updates.len() as u32))]
+		#[pallet::call_index(6)]
 		pub fn update_rewards_pool(
 			origin: OriginFor<T>,
 			pool_id: T::AssetId,
@@ -591,6 +600,7 @@ pub mod pallet {
 		///
 		/// Emits `Claimed` when successful.
 		#[pallet::weight(T::WeightInfo::claim(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(7)]
 		pub fn claim(
 			origin: OriginFor<T>,
 			fnft_collection_id: T::AssetId,
@@ -610,6 +620,7 @@ pub mod pallet {
 		///
 		/// Emits `RewardsPotIncreased` when successful.
 		#[pallet::weight(T::WeightInfo::add_to_rewards_pot())]
+		#[pallet::call_index(8)]
 		pub fn add_to_rewards_pot(
 			origin: OriginFor<T>,
 			pool_id: T::AssetId,
@@ -618,7 +629,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			add_to_rewards_pot::<T>(who, pool_id, asset_id, amount, keep_alive)
+			add_to_rewards_pot::<T>(&who, pool_id, asset_id, amount, keep_alive)
 		}
 	}
 
@@ -692,7 +703,7 @@ pub mod pallet {
 						Error::<T>::SlashedAmountTooLow
 					);
 
-					// TODO: Replace into_iter with iter_mut once it's available
+					// TODO(benluelo): Replace into_iter with iter_mut once it's available
 					let rewards = initial_reward_config
 						.into_iter()
 						.map(|(asset_id, reward_config)| {
@@ -714,7 +725,6 @@ pub mod pallet {
 						RewardPool {
 							owner: owner.clone(),
 							rewards,
-							claimed_shares: T::Balance::zero(),
 							start_block,
 							lock,
 							share_asset_id,
@@ -828,7 +838,8 @@ pub mod pallet {
 
 			// Move staked funds into fNFT asset account & lock the assets
 			Self::transfer_stake(who, amount, *pool_id, &fnft_account, keep_alive)?;
-			Self::mint_shares(rewards_pool.share_asset_id, awarded_shares, &fnft_account)?;
+
+			Self::allocate_shares(pool_id, &fnft_account, &rewards_pool, awarded_shares)?;
 
 			// Mint the fNFT
 			T::FinancialNft::mint_into(&fnft_collection_id, &fnft_instance_id, who)?;
@@ -926,11 +937,12 @@ pub mod pallet {
 						&fnft_asset_account,
 						keep_alive,
 					)?;
-					// only mint the new shares
-					Self::mint_shares(
-						rewards_pool.share_asset_id,
-						new_shares,
+
+					Self::allocate_shares(
+						&stake.reward_pool_id,
 						&fnft_asset_account,
+						rewards_pool,
+						new_shares,
 					)?;
 
 					Self::deposit_event(Event::<T>::StakeAmountExtended {
@@ -1190,7 +1202,7 @@ pub mod pallet {
 		}
 
 		/// Mint share tokens into fNFT asst account & lock the assets
-		fn mint_shares(
+		pub(crate) fn mint_shares(
 			share_asset_id: AssetIdOf<T>,
 			awarded_shares: <T as Config>::Balance,
 			fnft_account: &AccountIdOf<T>,
@@ -1322,7 +1334,7 @@ pub mod pallet {
 			rewards_pool: &RewardPoolOf<T>,
 			duration_preset: DurationSeconds,
 		) -> Option<Validated<FixedU64, GeOne>> {
-			rewards_pool.lock.duration_multipliers.multiplier(duration_preset).cloned()
+			rewards_pool.lock.duration_multipliers.multiplier(duration_preset).copied()
 		}
 
 		pub(crate) fn boosted_amount(
@@ -1452,10 +1464,10 @@ pub(crate) fn reward_accumulation_hook_reward_update_calculation<T: Config>(
 	pool_id: T::AssetId,
 	reward_asset_id: T::AssetId,
 	reward: &mut Reward<T::Balance>,
+	unstaked_shares: T::Balance,
+	total_shares: T::Balance,
 	now_seconds: u64,
 ) {
-	let pool_account = Pallet::<T>::pool_account_id(&pool_id);
-
 	log::info!("calculating rewards for pool {pool_id:?}, asset {reward_asset_id:?}");
 
 	// no need to calculate if the pot is empty, this will be unset if and when enough funds
@@ -1469,7 +1481,16 @@ pub(crate) fn reward_accumulation_hook_reward_update_calculation<T: Config>(
 
 	log::info!("accumulating rewards for pool {pool_id:?}, asset {reward_asset_id:?}");
 
-	match accumulate_reward::<T>(reward_asset_id, reward, &pool_account, now_seconds) {
+	let pool_account = Pallet::<T>::pool_account_id(&pool_id);
+
+	match accumulate_reward::<T>(
+		reward_asset_id,
+		reward,
+		&pool_account,
+		unstaked_shares,
+		total_shares,
+		now_seconds,
+	) {
 		RewardAccumulationCalculationOutcome::Success => {
 			log::info!("accumulation successful");
 		},
@@ -1537,6 +1558,17 @@ fn accumulate_pool_rewards<T: Config>(
 	current_block: T::BlockNumber,
 	now_seconds: u64,
 ) -> Weight {
+	// TODO(benluelo): Benchmark this
+
+	let pool_account = Pallet::<T>::pool_account_id(&pool_id);
+
+	let unstaked_shares: T::Balance =
+		T::AssetsTransactor::balance(reward_pool.share_asset_id, &pool_account);
+	let total_shares: T::Balance =
+		<T::AssetsTransactor as FungiblesInspect<T::AccountId>>::total_issuance(
+			reward_pool.share_asset_id,
+		);
+
 	// If reward pool has not started, do not accumulate rewards or adjust weight
 	Weight::from_ref_time(match reward_pool.start_block.cmp(&current_block) {
 		// start block < current -> accumulate normally
@@ -1548,6 +1580,8 @@ fn accumulate_pool_rewards<T: Config>(
 						pool_id,
 						*asset_id,
 						reward,
+						unstaked_shares,
+						total_shares,
 						now_seconds,
 					);
 
@@ -1577,7 +1611,7 @@ fn accumulate_pool_rewards<T: Config>(
 }
 
 fn add_to_rewards_pot<T: Config>(
-	who: T::AccountId,
+	who: &T::AccountId,
 	pool_id: T::AssetId,
 	asset_id: T::AssetId,
 	amount: T::Balance,
@@ -1590,7 +1624,7 @@ fn add_to_rewards_pot<T: Config>(
 
 		let pool_account = Pallet::<T>::pool_account_id(&pool_id);
 
-		T::AssetsTransactor::transfer(asset_id, &who, &pool_account, amount, keep_alive)?;
+		T::AssetsTransactor::transfer(asset_id, who, &pool_account, amount, keep_alive)?;
 		T::AssetsTransactor::hold(asset_id, &pool_account, amount)?;
 
 		Pallet::<T>::deposit_event(Event::<T>::RewardsPotIncreased { pool_id, asset_id, amount });
@@ -1635,6 +1669,15 @@ fn update_rewards_pool<T: Config>(
 	RewardPools::<T>::try_mutate(pool_id, |pool| {
 		let pool = pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
+		let pool_account = Pallet::<T>::pool_account_id(&pool_id);
+
+		let unstaked_shares: T::Balance =
+			T::AssetsTransactor::balance(pool.share_asset_id, &pool_account);
+		let total_shares: T::Balance =
+			<T::AssetsTransactor as FungiblesInspect<T::AccountId>>::total_issuance(
+				pool.share_asset_id,
+			);
+
 		let now_seconds = T::UnixTime::now().as_secs();
 
 		let mut updates = BTreeMap::<T::AssetId, RewardUpdate<BalanceOf<T>>>::new();
@@ -1646,6 +1689,8 @@ fn update_rewards_pool<T: Config>(
 				pool_id,
 				asset_id,
 				reward,
+				unstaked_shares,
+				total_shares,
 				now_seconds,
 			);
 
@@ -1676,6 +1721,8 @@ pub(crate) fn accumulate_reward<T: Config>(
 	asset_id: T::AssetId,
 	reward: &mut Reward<T::Balance>,
 	pool_account: &T::AccountId,
+	unstaked_shares: T::Balance,
+	total_shares: T::Balance,
 	now_seconds: u64,
 ) -> RewardAccumulationCalculationOutcome {
 	// TODO(benluelo): Refactor the calculations here into a separate function to make it easier to
@@ -1752,9 +1799,24 @@ pub(crate) fn accumulate_reward<T: Config>(
 		.checked_mul(reward_rate_amount)
 		.expect("should not fail; see above for proof; qed;");
 
+	let unstaked_shares_adjustment = if total_shares.is_zero() {
+		Zero::zero()
+	} else {
+		let Some(value) = multiply_by_rational_with_rounding(
+			newly_accumulated_rewards.get(),
+			unstaked_shares.into(),
+			total_shares.into(),
+			Rounding::Down,
+		) else {
+			return RewardAccumulationCalculationOutcome::Overflow;
+		};
+
+		value
+	};
+
 	let Some(new_total_rewards) = newly_accumulated_rewards
-		.get()
-		.checked_add(reward.total_rewards.into())
+		.checked_add(unstaked_shares_adjustment)
+		.and_then(|x| x.checked_add(reward.total_rewards.into()))
 		else {
 			return RewardAccumulationCalculationOutcome::Overflow;
 		};
@@ -1778,7 +1840,7 @@ pub(crate) fn accumulate_reward<T: Config>(
 	)
 	.expect("funds should be available to release; see above for proof; qed;");
 
-	reward.total_rewards = new_total_rewards.into();
+	reward.total_rewards = new_total_rewards.get().into();
 	reward.last_updated_timestamp = last_updated_timestamp;
 
 	RewardAccumulationCalculationOutcome::Success
@@ -1809,7 +1871,7 @@ pub(crate) fn claim_of_stake<T: Config>(
 	let claim = if total_shares.is_zero() {
 		T::Balance::zero()
 	} else {
-		let inflation = stake.reductions.get(reward_asset_id).cloned().unwrap_or_else(Zero::zero);
+		let inflation = stake.reductions.get(reward_asset_id).copied().unwrap_or_else(Zero::zero);
 
 		// REVIEW(benluelo): Review expected rounding behaviour, possibly switching to the following
 		// implementation (or something similar):
@@ -1827,6 +1889,7 @@ pub(crate) fn claim_of_stake<T: Config>(
 }
 
 impl<T: Config> Pallet<T> {
+	/// Registers a new asset within the namespace of this protocol
 	pub fn register_protocol_asset(nonce: u64) -> Result<T::AssetId, DispatchError> {
 		T::AssetsTransactor::create_local_asset(
 			T::PalletId::get().0,
@@ -1841,9 +1904,13 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	/// returns error if stake or rewardpool is not found
-	/// otherwise returns BTreeMap (key: reward_asset_id, val: Option<Balance>)
-	/// if claim_of_stake returns an error for a reward, then val is None
+	/// Calculates the claimable amount(s) for a staked position, calling [`claim_of_stake`] for
+	/// each asset in the pool.
+	///
+	/// # Errors
+	///
+	/// Returns an error if either the `Stake` or the `RewardPool` could not be found, or if there
+	/// is an arithmetic error when calculating the claim.
 	pub fn claimable_amount(
 		fnft_collection_id: T::AssetId,
 		fnft_instance_id: T::FinancialNftInstanceId,
@@ -1863,5 +1930,35 @@ impl<T: Config> Pallet<T> {
 					.map_err(ClaimableAmountError::ArithmeticError)
 			})
 			.collect::<Result<BTreeMap<_, _>, _>>()
+	}
+
+	fn allocate_shares(
+		pool_id: &AssetIdOf<T>,
+		fnft_account: &AccountIdOf<T>,
+		rewards_pool: &RewardPoolOf<T>,
+		awarded_shares: T::Balance,
+	) -> DispatchResult {
+		let pool_account = Self::pool_account_id(pool_id);
+
+		let unstaked_shares =
+			T::AssetsTransactor::balance(rewards_pool.share_asset_id, &pool_account);
+
+		let amount_to_transfer = match awarded_shares.checked_sub(&unstaked_shares) {
+			Some(amount_to_mint) => {
+				Self::mint_shares(rewards_pool.share_asset_id, amount_to_mint, fnft_account)?;
+				awarded_shares.defensive_saturating_sub(amount_to_mint)
+			},
+			None => awarded_shares,
+		};
+
+		T::AssetsTransactor::transfer(
+			rewards_pool.share_asset_id,
+			&pool_account,
+			fnft_account,
+			amount_to_transfer,
+			true,
+		)?;
+
+		Ok(())
 	}
 }

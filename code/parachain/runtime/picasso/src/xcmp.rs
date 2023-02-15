@@ -1,3 +1,5 @@
+use crate::fees::FinalPriceConverter;
+
 use super::*;
 use common::{fees::WeightToFeeConverter, xcmp::*};
 use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
@@ -111,7 +113,7 @@ type AssetsIdConverter =
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
-	AssetsRegistry,
+	FinalPriceConverter,
 	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
 	WeightToFeeConverter,
 >;
@@ -153,7 +155,7 @@ impl<
 
 pub type CaptureAssetTrap = CaptureDropAssets<
 	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
-	AssetsRegistry,
+	FinalPriceConverter,
 	AssetsIdConverter,
 >;
 

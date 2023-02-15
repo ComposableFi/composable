@@ -35,7 +35,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		fee_config: FeeConfig,
 		assets_weights: BoundedBTreeMap<T::AssetId, Permill, ConstU32<2>>,
 		lp_token_id: Option<AssetIdOf<T>>,
-	) -> Result<T::PoolId, DispatchError> {
+	) -> Result<(T::PoolId, AssetIdOf<T>), DispatchError> {
 		ensure!(assets_weights.len() == 2, Error::<T>::InvalidPair);
 		ensure!(assets_weights.values().non_zero_weights(), Error::<T>::WeightsMustBeNonZero);
 		ensure!(
@@ -50,36 +50,44 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
 
 		// Add new pool
-		let pool_id =
-			PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {
+		let (pool_id, lp_token) = PoolCount::<T>::try_mutate(
+			|pool_count| -> Result<(T::PoolId, T::AssetId), DispatchError> {
 				let pool_id = *pool_count;
-				match lp_token_id {
-					Some(lp_token) => Pools::<T>::insert(
-						pool_id,
-						PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo {
-							owner: who.clone(),
-							assets_weights,
-							lp_token,
-							fee_config,
-						}),
-					),
-					None => Pools::<T>::insert(
-						pool_id,
-						PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo {
-							owner: who.clone(),
-							assets_weights,
-							lp_token: create_lpt_asset::<T>(
-								LPTNonce::<T>::increment().expect("Does not exceed u64::MAX"),
-							)?,
-							fee_config,
-						}),
-					),
+				let lp_token = match lp_token_id {
+					Some(lp_token) => {
+						Pools::<T>::insert(
+							pool_id,
+							PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo {
+								owner: who.clone(),
+								assets_weights,
+								lp_token,
+								fee_config,
+							}),
+						);
+						lp_token
+					},
+					None => {
+						let lp_token = create_lpt_asset::<T>(
+							LPTNonce::<T>::increment().expect("Does not exceed u64::MAX"),
+						)?;
+						Pools::<T>::insert(
+							pool_id,
+							PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo {
+								owner: who.clone(),
+								assets_weights,
+								lp_token,
+								fee_config,
+							}),
+						);
+						lp_token
+					},
 				};
 				*pool_count = pool_id.safe_add(&T::PoolId::one())?;
-				Ok(pool_id)
-			})?;
+				Ok((pool_id, lp_token))
+			},
+		)?;
 
-		Ok(pool_id)
+		Ok((pool_id, lp_token))
 	}
 
 	/// WARNING! This is not a cheap function to call; it does (at least) one storage read per asset

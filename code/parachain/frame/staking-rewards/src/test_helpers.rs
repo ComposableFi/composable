@@ -60,7 +60,7 @@ pub(crate) fn add_to_rewards_pot_and_assert<Runtime>(
 		let resume_event = events.pop().expect("expected event to be emitted").event;
 		assert_eq!(resume_event, expected_resume_event.into());
 	} else {
-		Runtime::assert_no_event(expected_resume_event)
+		Runtime::assert_no_event(expected_resume_event);
 	}
 
 	let increased_event = events.pop().expect("expected event to be emitted").event;
@@ -216,7 +216,7 @@ pub fn unstake_and_assert<Runtime>(
 						"slash was not the expected amount"
 					);
 				} else {
-					assert_eq!(slash, None, "unstake was not expected to be slashed")
+					assert_eq!(slash, None, "unstake was not expected to be slashed");
 				}
 
 				assert_eq!(
@@ -401,7 +401,7 @@ staked amount: {staked_amount:?}
 			let inflation = position_before_unstake
 				.reductions
 				.get(reward_asset_id)
-				.cloned()
+				.copied()
 				.unwrap_or_else(Zero::zero);
 
 			reward

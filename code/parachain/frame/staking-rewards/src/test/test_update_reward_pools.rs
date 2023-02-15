@@ -40,14 +40,14 @@ use crate::{
 #[test]
 fn test_update_reward_pool() {
 	new_test_ext().execute_with(|| {
-		init_logger();
-
-		process_and_progress_blocks::<StakingRewards, Test>(1);
-
 		const INITIAL_AMOUNT: u128 = PICA::units(100);
 
 		const INITIAL_REWARD_RATE_AMOUNT: u128 = 10;
 		const UPDATED_REWARD_RATE_AMOUNT: u128 = 5;
+
+		init_logger();
+
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		create_rewards_pool_and_assert::<Test>(RewardPoolConfiguration::RewardRateBasedIncentive {
 			owner: ALICE,
@@ -146,7 +146,7 @@ fn test_update_reward_pool() {
 					(UPDATED_REWARD_RATE_AMOUNT * block_seconds(11)),
 			}],
 		}]);
-	})
+	});
 }
 
 #[test]
@@ -224,5 +224,5 @@ fn update_accumulates_properly() {
 		let expected = dbg!(reward_rate).amount.mul(block_seconds(1));
 
 		assert_eq!(expected, claimed);
-	})
+	});
 }

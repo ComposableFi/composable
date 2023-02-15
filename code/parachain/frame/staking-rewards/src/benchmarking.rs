@@ -254,9 +254,23 @@ benchmarks! {
 
 		let now = now + seconds_per_block;
 
-		let mut reward = RewardPools::<T>::get(pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
+		let reward_pool = RewardPools::<T>::get(pool_id).unwrap();
+
+		let mut reward = reward_pool.rewards.get(&reward_asset_id).unwrap().clone();
+
+		let pool_account = Pallet::<T>::pool_account_id(&pool_asset_id);
+		let unstaked_shares = T::AssetsTransactor::balance(reward_pool.share_asset_id, &pool_account);
+		let total_shares: T::Balance =
+			<T::AssetsTransactor as FungiblesInspect<T::AccountId>>::total_issuance(reward_pool.share_asset_id);
 	}: {
-		crate::reward_accumulation_hook_reward_update_calculation::<T>(pool_id, reward_asset_id,&mut reward, now);
+		crate::reward_accumulation_hook_reward_update_calculation::<T>(
+			pool_id,
+			reward_asset_id,
+			&mut reward,
+			unstaked_shares,
+			total_shares,
+			now
+		);
 	}
 
 	unix_time_now {}: {

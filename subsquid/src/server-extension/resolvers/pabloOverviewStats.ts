@@ -2,8 +2,8 @@ import { Field, FieldResolver, ObjectType, Query, Resolver, ResolverInterface } 
 import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
 import { PabloPoolAsset, PabloSwap } from "../../model";
-import { DAY_IN_MS } from "./common";
-import { getOrCreateAssetPrice } from "../../dbHelper";
+import { DAY_IN_MS } from "../../constants";
+import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 class TVL {
@@ -63,7 +63,7 @@ export class PabloOverviewStatsResolver implements ResolverInterface<PabloOvervi
     const tvlList: Array<TVL> = [];
 
     for (const assetId of Object.keys(totalValueLocked)) {
-      const price = await getOrCreateAssetPrice(manager, assetId, new Date().getTime());
+      const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime());
       tvlList.push(new TVL({ assetId, amount: totalValueLocked[assetId], price }));
     }
 
@@ -113,7 +113,7 @@ export class PabloOverviewStatsResolver implements ResolverInterface<PabloOvervi
     const tvlList: Array<TVL> = [];
 
     for (const assetId of Object.keys(volumes)) {
-      const price = await getOrCreateAssetPrice(manager, assetId, new Date().getTime());
+      const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime());
       tvlList.push(new TVL({ assetId, amount: volumes[assetId], price }));
     }
 

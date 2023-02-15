@@ -1,8 +1,46 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, crane, ... }:
+    let
+      centauri-src = pkgs.fetchFromGitHub {
+        owner = "ComposableFi";
+        repo = "centauri";
+        rev = "94bf87a44694b04917a7ab735487c8f87a64737d";
+        hash = "sha256-tG4WLAUtQ2iaaS4t/Condj6B1FDa/5VDoRwyBsJDfr4=";
+      };
 
-    {
+    in {
       packages = rec {
+        centauri-patched-src = pkgs.stdenv.mkDerivation rec {
+          name = "centauri";
+          pname = "${name}";
+          buildInputs = [ self'.packages.dali-subxt-client ];
+          src = centauri-src;
+          patchPhase = "";
+          installPhase = ''
+            mkdir $out
+            cp --archive $src/. $out/
+            chmod u+w $out/utils/subxt/generated/src/{parachain.rs,relaychain.rs}
+            cp ${self'.packages.dali-subxt-client}/* $out/utils/subxt/generated/src/
+          '';
+          dontFixup = true;
+          dontStrip = true;
+        };
+
+        centauri-codegen = crane.stable.buildPackage {
+          name = "centauri-codegen";
+          cargoArtifacts = crane.stable.buildDepsOnly {
+            src = centauri-src;
+            doCheck = false;
+            cargoExtraArgs = "-p codegen";
+            cargoTestCommand = "";
+          };
+          src = centauri-src;
+          doCheck = false;
+          cargoExtraArgs = "-p codegen";
+          cargoTestCommand = "";
+          meta = { mainProgram = "codegen"; };
+        };
+
         hyperspace-config = pkgs.writeText "config.toml" ''
           [chain_a]
           type = "parachain"
@@ -40,32 +78,11 @@
           config = { Entrypoint = [ "${hyperspace-dali}/bin/hyperspace" ]; };
         };
 
-        hyperspace-dali = let
-          src = pkgs.stdenv.mkDerivation rec {
-            name = "centauri";
-            pname = "${name}";
-            buildInputs = [ self'.packages.dali-subxt-client ];
-            src = pkgs.fetchFromGitHub {
-              owner = "obsessed-cake";
-              repo = "centauri";
-              rev = "fa7d5d33125fba9aa48c5e581ec72a543abef25b";
-              hash = "sha256-3S0HsFLxWHGXGW8QQD0qD3CWMMZ9vvYYZRdMJ9bYSSE=";
-            };
-            patchPhase = "";
-            installPhase = ''
-              mkdir $out
-              cp --archive $src/. $out/
-              chmod u+w $out/utils/subxt/generated/src/{parachain.rs,relaychain.rs}
-              cp ${self'.packages.dali-subxt-client}/* $out/utils/subxt/generated/src/
-            '';
-            dontFixup = true;
-            dontStrip = true;
-          };
-        in crane.stable.buildPackage rec {
+        hyperspace-dali = crane.stable.buildPackage rec {
           name = "hyperspace-dali";
           pname = "${name}";
           cargoArtifacts = crane.stable.buildDepsOnly {
-            inherit src;
+            src = centauri-patched-src;
             doCheck = false;
             cargoExtraArgs = "-p hyperspace --features dali";
             cargoTestCommand = "";
@@ -74,7 +91,7 @@
             PROTOC_INCLUDE = "${pkgs.protobuf}/include";
             PROTOC_NO_VENDOR = "1";
           };
-          inherit src;
+          src = centauri-patched-src;
           BuildInputs = [ pkgs.protobuf ];
           PROTOC = "${pkgs.protobuf}/bin/protoc";
           PROTOC_INCLUDE = "${pkgs.protobuf}/include";
