@@ -1,6 +1,5 @@
 {
   "outDir": "src/types",
-  "chainVersions": "picassoVersions.jsonl",
   "specVersions": "picassoVersions.jsonl",
   "typesBundle": "kusama",
   "events": [

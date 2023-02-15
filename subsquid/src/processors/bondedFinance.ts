@@ -1,11 +1,10 @@
-import { EventHandlerContext } from "@subsquid/substrate-processor";
-import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import {
   BondedFinanceNewBondEvent,
   BondedFinanceNewOfferEvent,
   BondedFinanceOfferCancelledEvent
 } from "../types/events";
+import { Context, EventItem, Block } from "../processorTypes";
 import { BondedFinanceBondOffer, EventType } from "../model";
 import { saveAccountAndEvent } from "../dbHelper";
 import { encodeAccount } from "../utils";
@@ -57,28 +56,6 @@ export function getOfferCancelledEvent(event: BondedFinanceOfferCancelledEvent):
 }
 
 /**
- * Based on the event, return a new BondedFinanceBondOffer.
- * @param ctx
- * @param event
- */
-export function getNewBondOffer(
-  ctx: EventHandlerContext<Store>,
-  event: BondedFinanceNewOfferEvent
-): BondedFinanceBondOffer {
-  const { offerId, beneficiary } = getNewOfferEvent(event);
-
-  return new BondedFinanceBondOffer({
-    id: randomUUID(),
-    eventId: ctx.event.id,
-    offerId: offerId.toString(),
-    totalPurchased: BigInt(0),
-    beneficiary: encodeAccount(beneficiary),
-    cancelled: false,
-    blockId: ctx.block.hash
-  });
-}
-
-/**
  * Handle `bondedFinances.NewOffer` event.
  *   - Create BondedFinanceBondOffer.
  *   - Create/update Account who deposits funds.
@@ -86,33 +63,26 @@ export function getNewBondOffer(
  *   - Create Activity.
  * @param ctx
  */
-export async function processNewOfferEvent(ctx: EventHandlerContext<Store>): Promise<void> {
+export async function processNewOfferEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
   console.log("Process NewOffer");
   // TODO: check why not triggered
-  const event = new BondedFinanceNewOfferEvent(ctx);
+  const event = new BondedFinanceNewOfferEvent(ctx, eventItem.event);
 
-  const newOffer = getNewBondOffer(ctx, event);
+  const { offerId, beneficiary } = getNewOfferEvent(event);
+
+  const newOffer = new BondedFinanceBondOffer({
+    id: randomUUID(),
+    eventId: eventItem.event.id,
+    offerId: offerId.toString(),
+    totalPurchased: BigInt(0),
+    beneficiary: encodeAccount(beneficiary),
+    cancelled: false,
+    blockId: block.header.hash
+  });
 
   await ctx.store.save(newOffer);
 
-  await saveAccountAndEvent(ctx, EventType.BONDED_FINANCE_NEW_OFFER);
-}
-
-/**
- * Based on the event, update the BondedFinanceBondOffer.
- * @param ctx
- * @param stored
- * @param event
- */
-export function updateBondOffer(
-  ctx: EventHandlerContext<Store>,
-  stored: BondedFinanceBondOffer,
-  event: BondedFinanceNewBondEvent
-): void {
-  const { nbOfBonds } = getNewBondEvent(event);
-
-  stored.totalPurchased += nbOfBonds;
-  stored.blockId = ctx.block.hash;
+  await saveAccountAndEvent(ctx, block, eventItem, EventType.BONDED_FINANCE_NEW_OFFER);
 }
 
 /**
@@ -120,10 +90,10 @@ export function updateBondOffer(
  * - Update database with new bond information.
  * @param ctx
  */
-export async function processNewBondEvent(ctx: EventHandlerContext<Store>): Promise<void> {
+export async function processNewBondEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
   console.log("Process NewBond");
-  const event = new BondedFinanceNewBondEvent(ctx);
-  const { offerId } = getNewBondEvent(event);
+  const event = new BondedFinanceNewBondEvent(ctx, eventItem.event);
+  const { offerId, nbOfBonds } = getNewBondEvent(event);
 
   // Get stored information (when possible) about the bond offer.
   const stored = await ctx.store.get(BondedFinanceBondOffer, {
@@ -134,23 +104,12 @@ export async function processNewBondEvent(ctx: EventHandlerContext<Store>): Prom
     return;
   }
 
-  // If offerId is already stored, add to total amount purchased.
-  updateBondOffer(ctx, stored, event);
+  stored.totalPurchased += nbOfBonds;
+  stored.blockId = block.header.hash;
 
   await ctx.store.save(stored);
 
-  await saveAccountAndEvent(ctx, EventType.BONDED_FINANCE_NEW_BOND);
-}
-
-/**
- * Cancel the bond offer.
- *  - Set `cancelled` to true.
- * @param ctx
- * @param stored
- */
-export function cancelBondOffer(ctx: EventHandlerContext<Store>, stored: BondedFinanceBondOffer): void {
-  stored.cancelled = true;
-  stored.blockId = ctx.block.hash;
+  await saveAccountAndEvent(ctx, block, eventItem, EventType.BONDED_FINANCE_NEW_BOND);
 }
 
 /**
@@ -158,9 +117,9 @@ export function cancelBondOffer(ctx: EventHandlerContext<Store>, stored: BondedF
  *  - Set bond offer as `cancelled`
  * @param ctx
  */
-export async function processOfferCancelledEvent(ctx: EventHandlerContext<Store>): Promise<void> {
+export async function processOfferCancelledEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
   console.log("Process OfferCancelled");
-  const event = new BondedFinanceOfferCancelledEvent(ctx);
+  const event = new BondedFinanceOfferCancelledEvent(ctx, eventItem.event);
   const { offerId } = getOfferCancelledEvent(event);
 
   // Get stored information (when possible) about the bond offer.
@@ -173,10 +132,11 @@ export async function processOfferCancelledEvent(ctx: EventHandlerContext<Store>
   }
 
   // Set bond offer as `cancelled`.
-  cancelBondOffer(ctx, stored);
+  stored.cancelled = true;
+  stored.blockId = block.header.hash;
 
   // Save bond offer.
   await ctx.store.save(stored);
 
-  await saveAccountAndEvent(ctx, EventType.BONDED_FINANCE_OFFER_CANCELLED);
+  await saveAccountAndEvent(ctx, block, eventItem, EventType.BONDED_FINANCE_OFFER_CANCELLED);
 }

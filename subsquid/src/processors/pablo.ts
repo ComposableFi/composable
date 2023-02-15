@@ -1,5 +1,3 @@
-import { Store } from "@subsquid/typeorm-store";
-import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { randomUUID } from "crypto";
 import {
   PabloLiquidityAddedEvent,
@@ -7,6 +5,7 @@ import {
   PabloPoolCreatedEvent,
   PabloSwappedEvent
 } from "../types/events";
+import { Context, EventItem, Block } from "../processorTypes";
 import {
   EventType,
   HistoricalLockedValue,
@@ -35,7 +34,6 @@ import {
   saveActivity,
   saveEvent
 } from "../dbHelper";
-import { chain } from "../config";
 
 interface PoolCreatedEvent {
   owner: Uint8Array;
@@ -122,29 +120,29 @@ function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
   };
 }
 
-export async function processPoolCreatedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {
-  console.debug("processing PoolCreatedEvent", ctx.event.id);
-  const pabloPoolCreatedEvent = new PabloPoolCreatedEvent(ctx);
+export async function processPoolCreatedEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  console.debug("processing PoolCreatedEvent", eventItem.event.id);
+  const pabloPoolCreatedEvent = new PabloPoolCreatedEvent(ctx, eventItem.event);
   const poolCreatedEvent = await getPoolCreatedEvent(pabloPoolCreatedEvent);
   const owner = encodeAccount(poolCreatedEvent.owner);
   const { poolId, assetWeights, lpTokenId } = poolCreatedEvent;
 
   // Create and save event
-  await saveEvent(ctx, EventType.CREATE_POOL);
+  await saveEvent(ctx, block, eventItem, EventType.CREATE_POOL);
 
-  const lpToken = await getOrCreatePabloLpToken(ctx, poolId.toString(), lpTokenId);
+  const lpToken = await getOrCreatePabloLpToken(ctx, block, poolId.toString(), lpTokenId);
 
   // Create pool
   const pool = new PabloPool({
     id: poolId.toString(),
-    eventId: ctx.event.id,
+    eventId: eventItem.event.id,
     owner,
     // Note: when we add more pool types, we can get this from the chain -> api.query.pablo.pool(poolId)
     poolType: PabloPoolType.DualAssetConstantProduct,
     lpToken,
     transactionCount: 0,
-    timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash,
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash,
     quoteAssetId: assetWeights[0][0].toString()
   });
 
@@ -158,16 +156,16 @@ export async function processPoolCreatedEvent(ctx: EventHandlerContext<Store, { 
       pool,
       assetId: assetId.toString(),
       weight: weight / 1_000_000,
-      blockId: ctx.block.hash
+      blockId: block.header.hash
     });
 
     await ctx.store.save(pabloAssetWeight);
   }
 }
 
-export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {
-  console.debug("processing LiquidityAddedEvent", ctx.event.id);
-  const pabloLiquidityAddedEvent = new PabloLiquidityAddedEvent(ctx);
+export async function processLiquidityAddedEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  console.debug("processing LiquidityAddedEvent", eventItem.event.id);
+  const pabloLiquidityAddedEvent = new PabloLiquidityAddedEvent(ctx, eventItem.event);
   const liquidityAddedEvent = getLiquidityAddedEvent(pabloLiquidityAddedEvent);
   const who = encodeAccount(liquidityAddedEvent.who);
   const { poolId, assetAmounts, mintedLp } = liquidityAddedEvent;
@@ -189,16 +187,16 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
   }
 
   // Create and save event
-  const { event } = await saveAccountAndEvent(ctx, EventType.ADD_LIQUIDITY, who);
+  const { event } = await saveAccountAndEvent(ctx, block, eventItem, EventType.ADD_LIQUIDITY, who);
 
   // Create and save activity
-  await saveActivity(ctx, event, who);
+  await saveActivity(ctx, block, event, who);
 
   // Update pool
-  pool.eventId = ctx.event.id;
-  pool.timestamp = new Date(ctx.block.timestamp);
+  pool.eventId = eventItem.event.id;
+  pool.timestamp = new Date(block.header.timestamp);
   pool.transactionCount += 1;
-  pool.blockId = ctx.block.hash;
+  pool.blockId = block.header.hash;
 
   await ctx.store.save(pool);
   const { lpToken } = pool;
@@ -209,10 +207,10 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
 
   // Update or create assets
   for (const [assetId, amount] of assetAmounts) {
-    const asset = await getOrCreatePabloAsset(ctx, pool, assetId.toString());
+    const asset = await getOrCreatePabloAsset(ctx, block, pool, assetId.toString());
 
     asset.totalLiquidity += amount;
-    asset.blockId = ctx.block.hash;
+    asset.blockId = block.header.hash;
 
     await ctx.store.save(asset);
 
@@ -221,22 +219,22 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
       event,
       amount,
       accumulatedAmount: asset.totalLiquidity,
-      timestamp: new Date(ctx.block.timestamp),
+      timestamp: new Date(block.header.timestamp),
       source: LockedSource.Pablo,
       assetId: assetId.toString(),
       sourceEntityId: pool.id,
-      blockId: ctx.block.hash
+      blockId: block.header.hash
     });
 
     await ctx.store.save(historicalLockedValue);
 
-    await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), ctx.block.timestamp);
+    await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
   }
 
   const amounts: Array<PabloAmount> = [];
 
   for (const [assetId, amount] of assetAmounts) {
-    const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), ctx.block.timestamp);
+    const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
     if (price) {
       const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
       amounts.push(pabloAmount);
@@ -244,22 +242,22 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
   }
 
   const pabloLiquidityAdded = new PabloLiquidityAdded({
-    id: ctx.event.id,
+    id: eventItem.event.id,
     event,
     pool,
-    timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash,
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash,
     amounts
   });
 
   await ctx.store.save(pabloLiquidityAdded);
 
   const pabloTransaction = new PabloTransaction({
-    id: ctx.event.id,
+    id: eventItem.event.id,
     pool,
     account: who,
-    timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash,
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash,
     event,
     liquidityAdded: pabloLiquidityAdded,
     txType: PabloTx.ADD_LIQUIDITY
@@ -268,12 +266,12 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
   await ctx.store.save(pabloTransaction);
 
   // Calculate and update APR
-  await getOrCreateFeeApr(ctx, pool, undefined, new Date(ctx.block.timestamp), event);
+  await getOrCreateFeeApr(ctx, pool, undefined, new Date(block.header.timestamp), block, event);
 }
 
-export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {
-  console.debug("processing LiquidityRemovedEvent", ctx.event.id);
-  const pabloLiquidityRemovedEvent = new PabloLiquidityRemovedEvent(ctx);
+export async function processLiquidityRemovedEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  console.debug("processing LiquidityRemovedEvent", eventItem.event.id);
+  const pabloLiquidityRemovedEvent = new PabloLiquidityRemovedEvent(ctx, eventItem.event);
   const liquidityRemovedEvent = getLiquidityRemovedEvent(pabloLiquidityRemovedEvent);
   const who = encodeAccount(liquidityRemovedEvent.who);
   const { poolId, assetAmounts } = liquidityRemovedEvent;
@@ -295,25 +293,25 @@ export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Stor
   }
 
   // Create and save account and event
-  const { event } = await saveAccountAndEvent(ctx, EventType.REMOVE_LIQUIDITY, who);
+  const { event } = await saveAccountAndEvent(ctx, block, eventItem, EventType.REMOVE_LIQUIDITY, who);
 
   // Create and save activity
-  await saveActivity(ctx, event, who);
+  await saveActivity(ctx, block, event, who);
 
   // Update pool
-  pool.eventId = ctx.event.id;
-  pool.timestamp = new Date(ctx.block.timestamp);
+  pool.eventId = eventItem.event.id;
+  pool.timestamp = new Date(block.header.timestamp);
   pool.transactionCount += 1;
-  pool.blockId = ctx.block.hash;
+  pool.blockId = block.header.hash;
 
   await ctx.store.save(pool);
 
   // Update or create assets
   for (const [assetId, amount] of assetAmounts) {
-    const asset = await getOrCreatePabloAsset(ctx, pool, assetId.toString());
+    const asset = await getOrCreatePabloAsset(ctx, block, pool, assetId.toString());
 
     asset.totalLiquidity -= amount;
-    asset.blockId = ctx.block.hash;
+    asset.blockId = block.header.hash;
 
     await ctx.store.save(asset);
 
@@ -322,22 +320,22 @@ export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Stor
       event,
       amount: -amount,
       accumulatedAmount: asset.totalLiquidity,
-      timestamp: new Date(ctx.block.timestamp),
+      timestamp: new Date(block.header.timestamp),
       source: LockedSource.Pablo,
       assetId: assetId.toString(),
       sourceEntityId: pool.id,
-      blockId: ctx.block.hash
+      blockId: block.header.hash
     });
 
     await ctx.store.save(historicalLockedValue);
 
-    await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), ctx.block.timestamp);
+    await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
   }
 
   const amounts: Array<PabloAmount> = [];
 
   for (const [assetId, amount] of assetAmounts) {
-    const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), ctx.block.timestamp);
+    const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
     if (price) {
       const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
       amounts.push(pabloAmount);
@@ -345,22 +343,22 @@ export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Stor
   }
 
   const pabloLiquidityRemoved = new PabloLiquidityRemoved({
-    id: ctx.event.id,
+    id: eventItem.event.id,
     event,
     pool,
-    timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash,
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash,
     amounts
   });
 
   await ctx.store.save(pabloLiquidityRemoved);
 
   const pabloTransaction = new PabloTransaction({
-    id: ctx.event.id,
+    id: eventItem.event.id,
     pool,
     account: who,
-    timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash,
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash,
     event,
     liquidityRemoved: pabloLiquidityRemoved,
     txType: PabloTx.REMOVE_LIQUIDITY
@@ -369,12 +367,12 @@ export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Stor
   await ctx.store.save(pabloTransaction);
 
   // Calculate and update APR
-  await getOrCreateFeeApr(ctx, pool, undefined, new Date(ctx.block.timestamp), event);
+  await getOrCreateFeeApr(ctx, pool, undefined, new Date(block.header.timestamp), block, event);
 }
 
-export async function processSwappedEvent(ctx: EventHandlerContext<Store, { event: true }>): Promise<void> {
-  console.debug("processing SwappedEvent", ctx.event.id);
-  const pabloSwappedEvent = new PabloSwappedEvent(ctx);
+export async function processSwappedEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  console.debug("processing SwappedEvent", eventItem.event.id);
+  const pabloSwappedEvent = new PabloSwappedEvent(ctx, eventItem.event);
   const swappedEvent = getSwappedEvent(pabloSwappedEvent);
   const who = encodeAccount(swappedEvent.who);
   const { poolId, fee, baseAsset: baseAssetId, baseAmount, quoteAsset: quoteAssetId, quoteAmount } = swappedEvent;
@@ -394,26 +392,26 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
   }
 
   // Create and save account and event
-  const { event } = await saveAccountAndEvent(ctx, EventType.SWAP, who);
+  const { event } = await saveAccountAndEvent(ctx, block, eventItem, EventType.SWAP, who);
 
   // Create and save activity
-  await saveActivity(ctx, event, who);
+  await saveActivity(ctx, block, event, who);
 
   // Update pool
-  pool.eventId = ctx.event.id;
-  pool.timestamp = new Date(ctx.block.timestamp);
+  pool.eventId = eventItem.event.id;
+  pool.timestamp = new Date(block.header.timestamp);
   pool.transactionCount += 1;
-  pool.blockId = ctx.block.hash;
+  pool.blockId = block.header.hash;
 
   await ctx.store.save(pool);
 
-  const baseAsset = await getOrCreatePabloAsset(ctx, pool, baseAssetId.toString());
+  const baseAsset = await getOrCreatePabloAsset(ctx, block, pool, baseAssetId.toString());
 
-  const quoteAsset = await getOrCreatePabloAsset(ctx, pool, quoteAssetId.toString());
+  const quoteAsset = await getOrCreatePabloAsset(ctx, block, pool, quoteAssetId.toString());
 
   baseAsset.totalVolume += baseAmount;
   baseAsset.totalLiquidity = baseAsset.totalLiquidity - baseAmount > 0n ? baseAsset.totalLiquidity - baseAmount : 0n;
-  baseAsset.blockId = ctx.block.hash;
+  baseAsset.blockId = block.header.hash;
 
   await ctx.store.save(baseAsset);
 
@@ -422,18 +420,18 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
     event,
     amount: -baseAmount,
     accumulatedAmount: baseAsset.totalLiquidity,
-    timestamp: new Date(ctx.block.timestamp),
+    timestamp: new Date(block.header.timestamp),
     source: LockedSource.Pablo,
     assetId: baseAssetId.toString(),
     sourceEntityId: pool.id,
-    blockId: ctx.block.hash
+    blockId: block.header.hash
   });
 
   await ctx.store.save(baseHistoricalLockedValue);
 
   quoteAsset.totalVolume += quoteAmount;
   quoteAsset.totalLiquidity += quoteAmount;
-  quoteAsset.blockId = ctx.block.hash;
+  quoteAsset.blockId = block.header.hash;
 
   await ctx.store.save(quoteAsset);
 
@@ -442,11 +440,11 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
     event,
     amount: quoteAmount,
     accumulatedAmount: quoteAsset.totalLiquidity,
-    timestamp: new Date(ctx.block.timestamp),
+    timestamp: new Date(block.header.timestamp),
     source: LockedSource.Pablo,
     assetId: quoteAssetId.toString(),
     sourceEntityId: pool.id,
-    blockId: ctx.block.hash
+    blockId: block.header.hash
   });
 
   await ctx.store.save(quoteHistoricalLockedValue);
@@ -468,7 +466,7 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
   const spotPrice = divideBigInts(normalizedQuoteAmount, normalizedBaseAmount) * weightRatio;
 
   const pabloFee = new PabloFee({
-    id: ctx.event.id,
+    id: eventItem.event.id,
     event,
     pool,
     assetId: fee.assetId.toString(),
@@ -477,8 +475,8 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
     lpFee: fee.lpFee,
     ownerFee: fee.ownerFee,
     protocolFee: fee.protocolFee,
-    timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash
   });
 
   await ctx.store.save(pabloFee);
@@ -493,18 +491,18 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
     quoteAssetAmount: quoteAmount,
     spotPrice: spotPrice.toString(),
     fee: pabloFee,
-    timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash
   });
 
   await ctx.store.save(pabloSwap);
 
   const pabloTransaction = new PabloTransaction({
-    id: ctx.event.id,
+    id: eventItem.event.id,
     pool,
     account: who,
-    timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash,
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash,
     event,
     swap: pabloSwap,
     txType: PabloTx.SWAP
@@ -551,9 +549,9 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
     accumulatedAmount: latestBaseAssetVolume + baseAmount,
     assetId: baseAssetId.toString(),
     pool,
-    timestamp: new Date(ctx.block.timestamp),
+    timestamp: new Date(block.header.timestamp),
     source: LockedSource.Pablo,
-    blockId: ctx.block.hash
+    blockId: block.header.hash
   });
 
   const historicalVolumeQuoteAsset = new HistoricalVolume({
@@ -563,16 +561,16 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
     accumulatedAmount: latestQuoteAssetVolume + quoteAmount,
     assetId: quoteAssetId.toString(),
     pool,
-    timestamp: new Date(ctx.block.timestamp),
+    timestamp: new Date(block.header.timestamp),
     source: LockedSource.Pablo,
-    blockId: ctx.block.hash
+    blockId: block.header.hash
   });
 
   await ctx.store.save(historicalVolumeBaseAsset);
   await ctx.store.save(historicalVolumeQuoteAsset);
-  await getOrCreateHistoricalAssetPrice(ctx, baseAssetId.toString(), ctx.block.timestamp);
-  await getOrCreateHistoricalAssetPrice(ctx, quoteAssetId.toString(), ctx.block.timestamp);
+  await getOrCreateHistoricalAssetPrice(ctx, baseAssetId.toString(), block.header.timestamp);
+  await getOrCreateHistoricalAssetPrice(ctx, quoteAssetId.toString(), block.header.timestamp);
 
   // Calculate and update APR
-  await getOrCreateFeeApr(ctx, pool, undefined, new Date(ctx.block.timestamp), event);
+  await getOrCreateFeeApr(ctx, pool, undefined, new Date(block.header.timestamp), block, event);
 }

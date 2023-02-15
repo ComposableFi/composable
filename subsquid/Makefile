@@ -22,7 +22,7 @@ rebuild-graphql:
 
 restart:
 	make down
-	docker volume rm -f $(docker volume ls)
+	docker volume rm -f $$(docker volume ls)
 	make build-images
 	make up
 
