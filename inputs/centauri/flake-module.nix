@@ -10,6 +10,22 @@
 
     in {
       packages = rec {
+        centauri-patched-src = pkgs.stdenv.mkDerivation rec {
+          name = "centauri";
+          pname = "${name}";
+          buildInputs = [ self'.packages.dali-subxt-client ];
+          src = centauri-src;
+          patchPhase = "";
+          installPhase = ''
+            mkdir $out
+            cp --archive $src/. $out/
+            chmod u+w $out/utils/subxt/generated/src/{parachain.rs,relaychain.rs}
+            cp ${self'.packages.dali-subxt-client}/* $out/utils/subxt/generated/src/
+          '';
+          dontFixup = true;
+          dontStrip = true;
+        };
+
         centauri-codegen = crane.stable.buildPackage {
           name = "centauri-codegen";
           cargoArtifacts = crane.stable.buildDepsOnly {
@@ -62,27 +78,11 @@
           config = { Entrypoint = [ "${hyperspace-dali}/bin/hyperspace" ]; };
         };
 
-        hyperspace-dali = let
-          patched-src = pkgs.stdenv.mkDerivation rec {
-            name = "centauri";
-            pname = "${name}";
-            buildInputs = [ self'.packages.dali-subxt-client ];
-            src = centauri-src;
-            patchPhase = "";
-            installPhase = ''
-              mkdir $out
-              cp --archive $src/. $out/
-              chmod u+w $out/utils/subxt/generated/src/{parachain.rs,relaychain.rs}
-              cp ${self'.packages.dali-subxt-client}/* $out/utils/subxt/generated/src/
-            '';
-            dontFixup = true;
-            dontStrip = true;
-          };
-        in crane.stable.buildPackage rec {
+        hyperspace-dali = crane.stable.buildPackage rec {
           name = "hyperspace-dali";
           pname = "${name}";
           cargoArtifacts = crane.stable.buildDepsOnly {
-            src = patched-src;
+            src = centauri-patched-src;
             doCheck = false;
             cargoExtraArgs = "-p hyperspace --features dali";
             cargoTestCommand = "";
@@ -91,7 +91,7 @@
             PROTOC_INCLUDE = "${pkgs.protobuf}/include";
             PROTOC_NO_VENDOR = "1";
           };
-          src = centauri-src;
+          src = centauri-patched-src;
           BuildInputs = [ pkgs.protobuf ];
           PROTOC = "${pkgs.protobuf}/bin/protoc";
           PROTOC_INCLUDE = "${pkgs.protobuf}/include";
