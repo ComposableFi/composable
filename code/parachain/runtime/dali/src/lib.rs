@@ -1309,6 +1309,18 @@ impl pallet_ibc::Config for Runtime {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type SentryOrigin = EnsureRoot<AccountId>;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
+	type Whitelist = DaliWhiteList;
+	type HandleMemo = ();
+	type MemoMessage = String; // TODO: enable it properly - check with David
+}
+
+// TODO: add the proper whitelist here - check with Dzmitry
+pub struct DaliWhiteList {}
+
+impl Contains<AccountId> for DaliWhiteList {
+	fn contains(_account_id: &AccountId) -> bool {
+		true
+	}
 }
 
 impl pallet_ibc_ping::Config for Runtime {

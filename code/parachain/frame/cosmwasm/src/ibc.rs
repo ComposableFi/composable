@@ -131,6 +131,7 @@ impl<T: Config> Pallet<T> {
 			},
 			to: IbcSigner::from_str(to_address.as_ref())
 				.map_err(|_| <CosmwasmVMError<T>>::Ibc("bad ".to_string()))?,
+			memo: "".to_string()
 		};
 
 		T::IbcRelayer::handle_message(msg)
