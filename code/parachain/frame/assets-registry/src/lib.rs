@@ -216,6 +216,7 @@ pub mod pallet {
 		///
 		/// # Emits
 		/// * `AssetRegistered`
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::register_asset())]
 		pub fn register_asset(
 			origin: OriginFor<T>,
@@ -248,6 +249,7 @@ pub mod pallet {
 		///
 		/// Emits:
 		/// * `AssetLocationUpdated`
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::update_asset_location())]
 		pub fn update_asset_location(
 			origin: OriginFor<T>,
@@ -263,6 +265,7 @@ pub mod pallet {
 		///
 		/// Emits:
 		/// * `AssetUpdated`
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::update_asset())]
 		pub fn update_asset(
 			origin: OriginFor<T>,
@@ -282,6 +285,7 @@ pub mod pallet {
 		/// If None, than it is well known cannot pay with that asset on target_parachain_id.
 		/// If Some(0), than price can be anything greater or equal to zero.
 		/// If Some(MAX), than actually it forbids transfers.
+		#[pallet::call_index(4)]
 		#[pallet::weight(<T as Config>::WeightInfo::set_min_fee())]
 		pub fn set_min_fee(
 			origin: OriginFor<T>,
