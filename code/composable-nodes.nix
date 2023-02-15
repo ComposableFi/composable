@@ -20,9 +20,14 @@
             isRust = name: type:
               type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
             customFilter = name: type:
-              ((isCargo name type) || (isRust name type) || (isDir name type)
-                || (isREADME name type) || (isJSON name type)
-                || (isProto name type));
+              builtins.any (fun: fun name type) [
+                isCargo
+                isRust
+                isDir
+                isREADME
+                isJSON
+                isProto
+              ];
           in pkgs.nix-gitignore.gitignoreFilterPure customFilter
           [ ../.gitignore ] ./.;
           src = ./.;
@@ -32,7 +37,6 @@
       makeComposableNode = f:
         crane.nightly.buildPackage (f (systemCommonRust.common-attrs // {
           name = "composable";
-
           cargoArtifacts = self'.packages.common-deps;
           cargoBuildCommand =
             "cargo build --release --package composable --features=builtin-wasm";
@@ -42,7 +46,7 @@
             "${self'.packages.picasso-runtime}/lib/runtime.optimized.wasm";
           COMPOSABLE_RUNTIME =
             "${self'.packages.composable-runtime}/lib/runtime.optimized.wasm";
-          installPhase = ''
+          installPhaseCommand = ''
             mkdir -p $out/bin
             cp target/release/composable $out/bin/composable
           '';
@@ -73,7 +77,7 @@
               "${self'.packages.picasso-bench-runtime}/lib/runtime.optimized.wasm";
             COMPOSABLE_RUNTIME =
               "${self'.packages.composable-bench-runtime}/lib/runtime.optimized.wasm";
-            installPhase = ''
+            installPhaseCommand = ''
               mkdir -p $out/bin
               cp target/release/composable $out/bin/composable
             '';

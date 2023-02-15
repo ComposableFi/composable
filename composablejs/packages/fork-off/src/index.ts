@@ -42,7 +42,7 @@ const polkadotPath = path.join(__dirname, "../data", fileNames.polkadot);
 const originalChain = "picasso";
 const forkChain = "picasso-dev";
 const parachainId = 2087;
-const endpoint = "wss://picasso-rpc.composable.finance";
+const endpoint = process.env.PICASSO_WS_RPC || "wss://picasso-rpc.composable.finance";
 
 const provider = new WsProvider(endpoint);
 

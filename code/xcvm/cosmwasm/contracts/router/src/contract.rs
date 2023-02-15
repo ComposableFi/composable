@@ -261,14 +261,20 @@ fn handle_execute_program(
 			let response =
 				send_funds_to_interpreter(deps.as_ref(), interpreter_address.clone(), assets)?;
 			let wasm_msg = wasm_execute(
-				interpreter_address,
+				interpreter_address.clone(),
 				&cw_xcvm_interpreter::msg::ExecuteMsg::Execute {
 					relayer: call_origin.relayer().clone(),
 					program,
 				},
 				vec![],
 			)?;
-			Ok(response.add_message(wasm_msg))
+			Ok(response
+				.add_event(
+					Event::new(XCVM_ROUTER_EVENT_PREFIX)
+						.add_attribute("action", "route.execute")
+						.add_attribute("interpreter", interpreter_address.into_string()),
+				)
+				.add_message(wasm_msg))
 		},
 		_ => {
 			// There is no interpreter, so the bridge security must be at least `Deterministic`
@@ -315,6 +321,9 @@ fn handle_execute_program(
 			)?
 			.into();
 			Ok(Response::new()
+				.add_event(
+					Event::new(XCVM_ROUTER_EVENT_PREFIX).add_attribute("action", "route.create"),
+				)
 				.add_submessage(interpreter_instantiate_submessage)
 				.add_message(self_call_message))
 		},

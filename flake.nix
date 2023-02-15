@@ -35,38 +35,37 @@
       imports = [
         # External `inputs` that the authors did not nixify themselves
         ./inputs/AcalaNetwork/acala.nix
+        ./inputs/bifrost-finance/bifrost/flake-module.nix
         ./inputs/centauri/centauri-codegen.nix
         ./inputs/centauri/hyperspace.nix
         ./inputs/chevdor/subwasm.nix
         ./inputs/composable/dali-subxt-client.nix
+        ./inputs/CosmosContracts/juno.nix
         ./inputs/cosmos/cosmwasm.nix
         ./inputs/cosmos/gex.nix
-        ./inputs/CosmosContracts/juno.nix
         ./inputs/CosmWasm/wasmvm.nix
-        ./inputs/paritytech/statemine.nix
-        ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/polkadot-launch.nix
+        ./inputs/paritytech/polkadot.nix
+        ./inputs/paritytech/statemine.nix
         ./inputs/paritytech/zombienet/flake-module.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
-        ./inputs/bifrost-finance/bifrost/flake-module.nix
 
         # The things we use within flake parts to build packages, apps, devShells, and devnets.
-        ./tools/pkgs.nix # _module.args.pkgs
-        ./tools/devnet-tools.nix # _module.args.devnetTools
-        ./tools/rust.nix # _module.args.rust
         ./tools/cargo-tools.nix # _module.args.cargoTools
+        ./tools/devnet-tools.nix # _module.args.devnetTools
+        ./tools/pkgs.nix # _module.args.pkgs
+        ./tools/rust.nix # _module.args.rust
 
         # our own packages
-        ./code/services/cmc-api/cmc-api.nix
         ./code/benchmarks.nix
         ./code/common-deps.nix
         ./code/composable-nodes.nix
         ./code/integration-tests/local-integration-tests/flake-module.nix
-        ./code/simnode-tests.nix
         ./code/integration-tests/runtime-tests/runtime-tests.nix
         ./code/runtimes.nix
-        ./code/xcvm/xcvm-contracts.nix
+        ./code/services/cmc-api/cmc-api.nix
         ./code/utils/price-feed/price-feed.nix
+        ./code/xcvm/xcvm-contracts.nix
         ./docs/docs.nix
         ./frontend/frontend.nix
 
@@ -75,6 +74,7 @@
         ./devnets/all.nix
 
         # Everything that is not an input, tool, package, or devnet, but still part of the final flake
+        ./flake/all.nix
         ./flake/check.nix
         ./flake/dev-shells.nix
         ./flake/docker.nix

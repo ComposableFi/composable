@@ -14,6 +14,7 @@ use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 use polkadot_service::CollatorPair;
+use sc_consensus::ImportQueue;
 use sc_network_common::service::NetworkBlock;
 // Substrate Imports
 use crate::{
@@ -156,7 +157,7 @@ pub fn new_partial<RuntimeApi, Executor>(
 		(
 			Option<Telemetry>,
 			Option<TelemetryWorkerHandle>,
-			ParachainBlockImport<Arc<FullClient<RuntimeApi, Executor>>>,
+			ParachainBlockImport<OpaqueBlock, Arc<FullClient<RuntimeApi, Executor>>, FullBackend>,
 		),
 	>,
 	sc_service::Error,
@@ -212,6 +213,7 @@ where
 	);
 
 	let (import_queue, parachain_block_import) = parachain_build_import_queue(
+		backend.clone(),
 		client.clone(),
 		config,
 		telemetry.as_ref().map(|telemetry| telemetry.handle()),
@@ -342,14 +344,14 @@ where
 	let validator = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
-	let import_queue = cumulus_client_service::SharedImportQueue::new(params.import_queue);
+	let import_queue_service = params.import_queue.service();
 	let (network, system_rpc_tx, tx_handler_controller, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
-			import_queue: import_queue.clone(),
+			import_queue: params.import_queue,
 			warp_sync: None,
 			block_announce_validator_builder: Some(Box::new(|_| {
 				Box::new(block_announce_validator)
@@ -474,7 +476,7 @@ where
 			task_manager: &mut task_manager,
 			spawner,
 			parachain_consensus,
-			import_queue,
+			import_queue: import_queue_service,
 			collator_key: collator_key.expect("Command line arguments do not allow this. qed"),
 			relay_chain_slot_duration,
 		};
@@ -488,7 +490,7 @@ where
 			para_id: id,
 			relay_chain_interface,
 			relay_chain_slot_duration,
-			import_queue,
+			import_queue: import_queue_service,
 		};
 
 		start_full_node(params)?;
@@ -502,6 +504,7 @@ where
 /// Build the import queue for the the parachain runtime.
 #[allow(clippy::type_complexity)]
 pub fn parachain_build_import_queue<RuntimeApi, Executor>(
+	backend: Arc<FullBackend>,
 	client: Arc<FullClient<RuntimeApi, Executor>>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
@@ -509,7 +512,7 @@ pub fn parachain_build_import_queue<RuntimeApi, Executor>(
 ) -> Result<
 	(
 		sc_consensus::DefaultImportQueue<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
-		ParachainBlockImport<Arc<FullClient<RuntimeApi, Executor>>>,
+		ParachainBlockImport<OpaqueBlock, Arc<FullClient<RuntimeApi, Executor>>, FullBackend>,
 	),
 	sc_service::Error,
 >
@@ -521,7 +524,7 @@ where
 	>,
 	Executor: NativeExecutionDispatch + 'static,
 {
-	let block_import = ParachainBlockImport::new(client.clone());
+	let block_import = ParachainBlockImport::new(client.clone(), backend);
 	let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 	cumulus_client_consensus_aura::import_queue::<
 		sp_consensus_aura::sr25519::AuthorityPair,
@@ -559,15 +562,20 @@ async fn build_relay_chain_interface(
 	task_manager: &mut TaskManager,
 	collator_options: CollatorOptions,
 ) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
-	match collator_options.relay_chain_rpc_url {
-		Some(relay_chain_url) =>
-			build_minimal_relay_chain_node(polkadot_config, task_manager, relay_chain_url).await,
-		None => build_inprocess_relay_chain(
+	if !collator_options.relay_chain_rpc_urls.is_empty() {
+		build_minimal_relay_chain_node(
+			polkadot_config,
+			task_manager,
+			collator_options.relay_chain_rpc_urls,
+		)
+		.await
+	} else {
+		build_inprocess_relay_chain(
 			polkadot_config,
 			parachain_config,
 			telemetry_worker_handle,
 			task_manager,
 			None,
-		),
+		)
 	}
 }

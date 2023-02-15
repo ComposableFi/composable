@@ -17,7 +17,6 @@ pub use frame_support::{
 	traits::{
 		fungible::Inspect, fungibles::Inspect as FungiblesInspect, tokens::BalanceConversion,
 	},
-	weights::constants::WEIGHT_PER_MILLIS,
 	RuntimeDebug,
 };
 pub use frame_system::RawOrigin;
@@ -41,19 +40,20 @@ pub use more_asserts::*;
 pub type XcmCurrency<Consensus, const ID: u128, const EXPONENT: u8 = 12> =
 	composable_tests_helpers::test::currency::ComposableCurrency<Consensus, ID, EXPONENT>;
 
+#[cfg(feature = "statemine")]
 pub type USDT = XcmCurrency<statemine_runtime::Runtime, 1984, 6>;
 
 #[allow(non_camel_case_types)]
 pub type xUSDT = XcmCurrency<this_runtime::Runtime, 1984, 6>;
 
-pub type STABLE = XcmCurrency<statemine_runtime::Runtime, 666, 3>;
+pub type STABLE = XcmCurrency<this_runtime::Runtime, 666, 3>;
 pub type PICA = XcmCurrency<this_runtime::Runtime, 1, 12>;
-pub type KSM = XcmCurrency<statemine_runtime::Runtime, 1, 12>;
+pub type KSM = XcmCurrency<relay_runtime::Runtime, 1, 12>;
 
 #[allow(non_camel_case_types)]
 pub type RELAY_NATIVE = KSM;
 
-pub type SHIB = XcmCurrency<statemine_runtime::Runtime, 100500, 12>;
+pub type SHIB = XcmCurrency<this_runtime::Runtime, 100500, 12>;
 
 // <= what we may think users are ok
 pub const ORDER_OF_FEE_ESTIMATE_ERROR: u128 = 10;
@@ -87,3 +87,5 @@ pub use picasso_runtime as sibling_runtime;
 
 #[cfg(feature = "picasso")]
 pub use picasso_runtime::{MaxInstructions, UnitWeightCost, Weight, XcmConfig};
+
+pub const DEFAULT_SENDER_WEIGHT_LIMIT: WeightLimit = Limited(1_000_000_000);

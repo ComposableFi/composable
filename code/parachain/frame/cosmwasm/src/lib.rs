@@ -83,9 +83,9 @@ use alloc::{
 use composable_support::abstractions::utils::increment::Increment;
 use cosmwasm_vm::{
 	cosmwasm_std::{
-		Addr, Attribute as CosmwasmEventAttribute, Binary as CosmwasmBinary, BlockInfo, Coin,
-		ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env, Event as CosmwasmEvent,
-		MessageInfo, Timestamp, TransactionInfo,
+		Addr, Attribute as CosmwasmEventAttribute, Binary as CosmwasmBinary, BlockInfo,
+		CodeInfoResponse, Coin, ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env,
+		Event as CosmwasmEvent, MessageInfo, Timestamp, TransactionInfo,
 	},
 	executor::{cosmwasm_call, QueryCall, QueryResponse},
 	system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
@@ -99,14 +99,14 @@ use cosmwasm_vm_wasmi::{
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, PostDispatchInfo},
 	pallet_prelude::*,
-	storage::{child::ChildInfo, ChildTriePrefixIterator},
+	storage::child::ChildInfo,
 	traits::{
 		fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
 		Get, ReservableCurrency, UnixTime,
 	},
-	StorageHasher,
+	ReversibleStorageHasher, StorageHasher,
 };
-use sp_runtime::traits::{Hash, SaturatedConversion};
+use sp_runtime::traits::SaturatedConversion;
 use sp_std::vec::Vec;
 use wasmi::AsContext;
 use wasmi_validation::PlainValidator;
@@ -144,7 +144,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Uploaded { code_hash: CodeHashOf<T>, code_id: CosmwasmCodeId },
+		Uploaded { code_hash: [u8; 32], code_id: CosmwasmCodeId },
 		Instantiated { contract: AccountIdOf<T>, info: ContractInfoOf<T> },
 		Executed { contract: AccountIdOf<T>, entrypoint: EntryPoint, data: Option<Vec<u8>> },
 		ExecutionFailed { contract: AccountIdOf<T>, entrypoint: EntryPoint, error: Vec<u8> },
@@ -179,11 +179,14 @@ pub mod pallet {
 		SignatureVerificationError,
 		IteratorIdOverflow,
 		IteratorNotFound,
+		IteratorValueNotFound,
 		NotAuthorized,
 		Unsupported,
 		Ibc,
 		FailedToSerialize,
 		OutOfGas,
+		InvalidSalt,
+		InvalidAccount,
 	}
 
 	#[pallet::config]
@@ -282,7 +285,8 @@ pub mod pallet {
 
 		/// A way to convert from our native account to cosmwasm `Addr`.
 		type AccountToAddr: Convert<AccountIdOf<Self>, String>
-			+ Convert<String, Result<AccountIdOf<Self>, ()>>;
+			+ Convert<String, Result<AccountIdOf<Self>, ()>>
+			+ Convert<Vec<u8>, Result<AccountIdOf<Self>, ()>>;
 
 		/// Type of an account balance.
 		type Balance: Balance + Into<u128>;
@@ -353,8 +357,7 @@ pub mod pallet {
 
 	/// A mapping between a code hash and it's unique ID.
 	#[pallet::storage]
-	pub(crate) type CodeHashToId<T: Config> =
-		StorageMap<_, Identity, CodeHashOf<T>, CosmwasmCodeId>;
+	pub(crate) type CodeHashToId<T: Config> = StorageMap<_, Identity, [u8; 32], CosmwasmCodeId>;
 
 	/// This is a **monotonic** counter incremented on contract instantiation.
 	/// The purpose of this nonce is just to make sure that contract trie are unique.
@@ -407,7 +410,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::instantiate(funds.len() as u32).saturating_add(Weight::from_ref_time(*gas)))]
 		pub fn instantiate(
 			origin: OriginFor<T>,
-			code_identifier: CodeIdentifier<T>,
+			code_identifier: CodeIdentifier,
 			salt: ContractSaltOf<T>,
 			admin: Option<AccountIdOf<T>>,
 			label: ContractLabelOf<T>,
@@ -482,7 +485,7 @@ pub mod pallet {
 		pub fn migrate(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
-			new_code_identifier: CodeIdentifier<T>,
+			new_code_identifier: CodeIdentifier,
 			gas: u64,
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
@@ -578,7 +581,7 @@ pub fn instantiate<T: Config>(
 		.try_into()
 		.map_err(|_| CosmwasmVMError::Rpc(String::from("'message' is too large")))?;
 	let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
-	setup_instantiate_call(instantiator, code_id, &salt, admin, label, &message)?.top_level_call(
+	setup_instantiate_call(instantiator, code_id, &salt, admin, label)?.top_level_call(
 		&mut shared,
 		funds,
 		message,
@@ -741,10 +744,9 @@ impl<T: Config> Pallet<T> {
 						.map_err(|_| Error::<T>::CodeNotFound)?;
 					let deposit = code.len().saturating_mul(T::CodeStorageByteDeposit::get() as _);
 					let _ = T::NativeAsset::unreserve(&code_info.creator, deposit.saturated_into());
-					let code_hash = T::Hashing::hash(&code);
 					PristineCode::<T>::remove(info.code_id);
 					InstrumentedCode::<T>::remove(info.code_id);
-					CodeHashToId::<T>::remove(code_hash);
+					CodeHashToId::<T>::remove(code_info.pristine_code_hash);
 					// Code is unused after this point, so it can be removed
 					*entry = None;
 				}
@@ -876,11 +878,9 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn do_upload(who: &AccountIdOf<T>, code: ContractCodeOf<T>) -> DispatchResult {
-		let code_hash = T::Hashing::hash(&code);
+		let code_hash = sp_io::hashing::sha2_256(&code);
 		ensure!(!CodeHashToId::<T>::contains_key(code_hash), Error::<T>::CodeAlreadyExists);
 		let deposit = code.len().saturating_mul(T::CodeStorageByteDeposit::get() as _);
-		// TODO: release this when the code is destroyed, a.k.a. refcount => 0 after a contract
-		// migration for instance.
 		T::NativeAsset::reserve(who, deposit.saturated_into())
 			.map_err(|_| Error::<T>::NotEnoughFundsForUpload)?;
 		let module = Self::do_load_module(&code)?;
@@ -908,7 +908,7 @@ impl<T: Config> Pallet<T> {
 	fn do_instantiate(
 		shared: &mut CosmwasmVMShared,
 		who: AccountIdOf<T>,
-		code_identifier: CodeIdentifier<T>,
+		code_identifier: CodeIdentifier,
 		salt: ContractSaltOf<T>,
 		admin: Option<AccountIdOf<T>>,
 		label: ContractLabelOf<T>,
@@ -920,7 +920,7 @@ impl<T: Config> Pallet<T> {
 			CodeIdentifier::CodeHash(code_hash) =>
 				CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
 		};
-		setup_instantiate_call(who, code_id, &salt, admin, label, &message)?
+		setup_instantiate_call(who, code_id, &salt, admin, label)?
 			.top_level_call(shared, funds, message)
 			.map(|_| ())
 	}
@@ -939,7 +939,7 @@ impl<T: Config> Pallet<T> {
 		shared: &mut CosmwasmVMShared,
 		who: AccountIdOf<T>,
 		contract: AccountIdOf<T>,
-		new_code_identifier: CodeIdentifier<T>,
+		new_code_identifier: CodeIdentifier,
 		message: ContractMessageOf<T>,
 	) -> Result<(), CosmwasmVMError<T>> {
 		let new_code_id = match new_code_identifier {
@@ -948,7 +948,7 @@ impl<T: Config> Pallet<T> {
 				CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
 		};
 
-		setup_migrate_call(shared, who, contract, new_code_id)?.top_level_call(
+		setup_migrate_call(shared, who, contract, new_code_id, true)?.top_level_call(
 			shared,
 			Default::default(),
 			message,
@@ -1142,7 +1142,7 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn do_db_write_gas(trie_id: &ContractTrieIdOf<T>, key: &[u8], value: &[u8]) -> u64 {
 		Self::with_db_entry(trie_id, key, |child_trie, entry| {
 			let bytes_to_write = match storage::child::len(&child_trie, &entry) {
-				Some(current_len) => current_len.saturating_sub(value.len() as _),
+				Some(current_len) => (value.len() as u32).saturating_sub(current_len),
 				None => value.len() as u32,
 			};
 			u64::from(bytes_to_write).saturating_mul(T::ContractStorageByteWritePrice::get().into())
@@ -1167,14 +1167,8 @@ impl<T: Config> Pallet<T> {
 	/// Create an empty iterator.
 	pub(crate) fn do_db_scan(vm: &mut DefaultCosmwasmVM<T>) -> Result<u32, CosmwasmVMError<T>> {
 		let iterator_id = vm.iterators.len() as u32;
-		let child_info = Self::contract_child_trie(vm.contract_info.trie_id.as_ref());
-		vm.iterators.insert(
-			iterator_id,
-			ChildTriePrefixIterator::<_>::with_prefix_over_key::<Blake2_128Concat>(
-				&child_info,
-				&[],
-			),
-		);
+		// let child_info = Self::contract_child_trie(vm.contract_info.trie_id.as_ref());
+		vm.iterators.insert(iterator_id, Vec::new());
 		Ok(iterator_id)
 	}
 
@@ -1186,19 +1180,20 @@ impl<T: Config> Pallet<T> {
 	) -> Result<Option<(Vec<u8>, Vec<u8>)>, CosmwasmVMError<T>> {
 		// Get the next value from the vm's iterators, based on the iterator id.
 		// Error if the iterator with id [`iterator_id`]
-		let next = vm
-			.iterators
-			.get_mut(&iterator_id)
-			.map(|iter| iter.next())
-			.ok_or(Error::<T>::IteratorNotFound)?;
-
-		// If there is a next db entry, charge the gas cost of the read.
-		if let Some((key, _)) = &next {
-			let price = Self::do_db_read_gas(&vm.contract_info.trie_id, key);
-			vm.charge_raw(price)?;
+		let child_info = Self::contract_child_trie(vm.contract_info.trie_id.as_ref());
+		let key_entry = vm.iterators.get_mut(&iterator_id).ok_or(Error::<T>::IteratorNotFound)?;
+		match sp_io::default_child_storage::next_key(child_info.storage_key(), key_entry) {
+			Some(key) => {
+				let reversed_key = Blake2_128Concat::reverse(&key).to_vec();
+				*key_entry = key;
+				Ok(Some((
+					reversed_key.clone(),
+					Self::do_db_read(vm, reversed_key.as_slice())?
+						.ok_or(Error::<T>::IteratorValueNotFound)?,
+				)))
+			},
+			None => Ok(None),
 		}
-
-		Ok(next)
 	}
 
 	/// Remove an entry from the executing contract, no gas is charged for this operation.
@@ -1225,6 +1220,11 @@ impl<T: Config> Pallet<T> {
 		Ok(T::Assets::balance(asset, account).into())
 	}
 
+	pub(crate) fn do_supply(denom: String) -> Result<u128, Error<T>> {
+		let asset = Self::cosmwasm_asset_to_native_asset(denom)?;
+		Ok(T::Assets::total_issuance(asset).into())
+	}
+
 	/// Execute a transfer of funds between two accounts.
 	pub(crate) fn do_transfer(
 		from: &AccountIdOf<T>,
@@ -1245,6 +1245,7 @@ impl<T: Config> Pallet<T> {
 		vm: &'a mut DefaultCosmwasmVM<T>,
 		CosmwasmContractMeta { code_id, admin, label }: CosmwasmContractMeta<CosmwasmAccount<T>>,
 		funds: Vec<Coin>,
+		salt: &[u8],
 		message: &[u8],
 		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
 	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
@@ -1256,10 +1257,9 @@ impl<T: Config> Pallet<T> {
 		setup_instantiate_call(
 			vm.contract_address.clone().into_inner(),
 			code_id,
-			&[],
+			salt,
 			admin.map(|admin| admin.into_inner()),
 			label,
-			message,
 		)?
 		.sub_call(vm.shared, funds, message, event_handler)
 	}
@@ -1303,11 +1303,17 @@ impl<T: Config> Pallet<T> {
 		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
 	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
 		let CosmwasmContractMeta { code_id, .. } = Self::do_running_contract_meta(vm);
-		setup_migrate_call(vm.shared, vm.contract_address.clone().into_inner(), contract, code_id)?
-			.sub_call(vm.shared, Default::default(), message, event_handler)
+		setup_migrate_call(
+			vm.shared,
+			vm.contract_address.clone().into_inner(),
+			contract,
+			code_id,
+			false,
+		)?
+		.sub_call(vm.shared, Default::default(), message, event_handler)
 	}
 
-	pub(crate) fn do_query_info(
+	pub(crate) fn do_query_contract_info(
 		vm: &mut DefaultCosmwasmVM<T>,
 		address: AccountIdOf<T>,
 	) -> Result<ContractInfoResponse, CosmwasmVMError<T>> {
@@ -1333,12 +1339,23 @@ impl<T: Config> Pallet<T> {
 		};
 
 		let creator = CosmwasmAccount::<T>::new(contract_info.instantiator.clone());
-		let mut contract_info_response = ContractInfoResponse::new(contract_info.code_id, creator);
+		let mut contract_info_response = ContractInfoResponse::default();
+		contract_info_response.code_id = contract_info.code_id;
+		contract_info_response.creator = creator.into();
 		contract_info_response.admin =
 			contract_info.admin.map(|admin| CosmwasmAccount::<T>::new(admin).into());
 		contract_info_response.pinned = pinned;
 		contract_info_response.ibc_port = ibc_port;
 		Ok(contract_info_response)
+	}
+
+	pub(crate) fn do_query_code_info(code_id: u64) -> Result<CodeInfoResponse, CosmwasmVMError<T>> {
+		let code_info = CodeIdToInfo::<T>::get(code_id).ok_or(Error::<T>::CodeNotFound)?;
+		let mut code_info_response = CodeInfoResponse::default();
+		code_info_response.code_id = code_id;
+		code_info_response.creator = Pallet::<T>::account_to_cosmwasm_addr(code_info.creator);
+		code_info_response.checksum = code_info.pristine_code_hash.as_ref().into();
+		Ok(code_info_response)
 	}
 
 	pub(crate) fn do_continue_query<'a>(

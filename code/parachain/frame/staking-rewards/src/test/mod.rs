@@ -21,6 +21,7 @@ use composable_tests_helpers::test::{
 	helper::RuntimeTrait,
 };
 
+use crate::test::prelude::block_seconds;
 use composable_traits::{
 	fnft::{FinancialNft as FinancialNftT, FinancialNftProtocol},
 	staking::{
@@ -34,7 +35,7 @@ use composable_traits::{
 use frame_support::{
 	assert_err, assert_noop, assert_ok, bounded_btree_map,
 	traits::{
-		fungibles::{Inspect, Mutate},
+		fungibles::{Inspect, InspectHold, Mutate},
 		tokens::nonfungibles::InspectEnumerable,
 		TryCollect,
 	},
@@ -1108,8 +1109,12 @@ fn test_split_position() {
 		};
 
 		Test::assert_extrinsic_event(
-			StakingRewards::create_reward_pool(RuntimeOrigin::root(), pool_init_config),
-			crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE },
+			StakingRewards::create_reward_pool(RuntimeOrigin::root(), pool_init_config.clone()),
+			crate::Event::<Test>::RewardPoolCreated {
+				pool_id: PICA::ID,
+				owner: ALICE,
+				pool_config: pool_init_config,
+			},
 		);
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
@@ -2037,21 +2042,20 @@ fn with_stake<R>(
 }
 
 fn create_default_reward_pool() {
+	let pool_config = RewardRateBasedIncentive {
+		owner: ALICE,
+		asset_id: PICA::ID,
+		start_block: 2,
+		reward_configs: default_reward_config(),
+		lock: default_lock_config(),
+		share_asset_id: XPICA::ID,
+		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+		minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+	};
+
 	Test::assert_extrinsic_event(
-		StakingRewards::create_reward_pool(
-			RuntimeOrigin::root(),
-			RewardRateBasedIncentive {
-				owner: ALICE,
-				asset_id: PICA::ID,
-				start_block: 2,
-				reward_configs: default_reward_config(),
-				lock: default_lock_config(),
-				share_asset_id: XPICA::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
-			},
-		),
-		crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE },
+		StakingRewards::create_reward_pool(RuntimeOrigin::root(), pool_config.clone()),
+		crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE, pool_config },
 	);
 }
 
@@ -2166,6 +2170,201 @@ fn zero_penalty_early_unlock() {
 		next_block::<StakingRewards, Test>();
 
 		unstake_and_assert::<Test>(BOB, STAKING_FNFT_COLLECTION_ID, stake_id, true);
+	})
+}
+
+#[test]
+fn pbl_295() {
+	new_test_ext().execute_with(|| {
+		init_logger();
+
+		next_block::<StakingRewards, Test>();
+
+		// Utility functions
+		fn pot_balance_available() -> Balance {
+			let pot_account = crate::Pallet::<Test>::pool_account_id(&PICA::ID);
+
+			let balance_on_hold =
+				<Test as crate::Config>::Assets::balance_on_hold(USDT::ID, &pot_account);
+			let balance = <Test as crate::Config>::Assets::balance(USDT::ID, &pot_account);
+			let available = balance - balance_on_hold;
+			log::info!(
+				"Pot balance: {} (available: {}, on hold: {})",
+				balance,
+				available,
+				balance_on_hold
+			);
+			available
+		}
+
+		fn claimable_amount(fnft_id: u64) -> Balance {
+			let pool = RewardPools::<Test>::get(PICA::ID).unwrap();
+
+			let amount = claim_of_stake::<Test>(
+				&Stakes::<Test>::get(STAKING_FNFT_COLLECTION_ID, fnft_id).unwrap(),
+				&pool.share_asset_id,
+				&pool.rewards[&USDT::ID],
+				&USDT::ID,
+			)
+			.unwrap();
+			log::info!("Claimable amount: {}", amount);
+			amount
+		}
+		let reward_rate = USDT::units(1) / 1_000;
+		let rewards_for_blocks = |blocks: u64| -> Balance { reward_rate * block_seconds(blocks) };
+
+		// 1. Create rewards pool
+		create_rewards_pool_and_assert::<Test>(RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: PICA::ID,
+			start_block: 5,
+			reward_configs: bounded_btree_map! {
+				USDT::ID => RewardConfig { reward_rate: RewardRate::per_second(reward_rate) }
+			},
+			lock: LockConfig {
+				duration_multipliers: bounded_btree_map! {
+					0 => FixedU64::from_inner(1_000_000_000).try_into_validated().expect(">= 1"),
+					12 => FixedU64::from_inner(1_250_000_000).try_into_validated().expect(">= 1"),
+					600 => FixedU64::from_inner(1_500_000_000).try_into_validated().expect(">= 1"),
+					1200 => FixedU64::from_inner(2_000_000_000).try_into_validated().expect(">= 1"),
+				}
+				.into(),
+				unlock_penalty: Perbill::from_percent(10),
+			},
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: 10_000,
+		});
+
+		// 2. Add funds (USD) to rewards pot
+		mint_assets([BOB], [USDT::ID], USDT::units(100_000_000_001));
+		add_to_rewards_pot_and_assert::<Test>(BOB, PICA::ID, USDT::ID, USDT::units(1), false);
+		assert_eq!(pot_balance_available(), USDT::units(0));
+		process_and_progress_blocks::<StakingRewards, Test>(4);
+		Test::assert_event(crate::Event::<Test>::RewardPoolStarted { pool_id: PICA::ID });
+		process_and_progress_blocks::<StakingRewards, Test>(10);
+		assert_eq!(pot_balance_available(), rewards_for_blocks(10));
+
+		// 3. Stake by Dave 1000 PICA
+		mint_assets([DAVE], [PICA::ID], PICA::units(1_001));
+		let dave_id = stake_and_assert::<Test>(DAVE, PICA::ID, PICA::units(1) / 100_000, 0);
+		process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		// 4. Stake by Charlie 1000 PICA
+		mint_assets([CHARLIE], [PICA::ID], PICA::units(1_001));
+		let charlie_id = stake_and_assert::<Test>(CHARLIE, PICA::ID, PICA::units(1) / 100_000, 0);
+
+		// 5. Claim by Dave
+		assert_eq!(pot_balance_available(), rewards_for_blocks(12));
+		assert_eq!(claimable_amount(dave_id), rewards_for_blocks(12));
+		assert_eq!(claimable_amount(charlie_id), 0);
+		StakingRewards::claim(RuntimeOrigin::signed(DAVE), STAKING_FNFT_COLLECTION_ID, dave_id)
+			.unwrap();
+		assert_eq!(pot_balance_available(), 0);
+		assert_eq!(claimable_amount(dave_id), 0);
+		assert_eq!(claimable_amount(charlie_id), 0);
+
+		process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		// 6. Claim by Charlie (can claim half the rewards in the pool as per shares)
+		assert_eq!(pot_balance_available(), rewards_for_blocks(2));
+		assert_eq!(claimable_amount(dave_id), rewards_for_blocks(2) / 2);
+		assert_eq!(claimable_amount(charlie_id), rewards_for_blocks(2) / 2);
+		StakingRewards::claim(
+			RuntimeOrigin::signed(CHARLIE),
+			STAKING_FNFT_COLLECTION_ID,
+			charlie_id,
+		)
+		.unwrap();
+		assert_eq!(pot_balance_available(), rewards_for_blocks(2) / 2);
+		assert_eq!(claimable_amount(dave_id), rewards_for_blocks(2) / 2);
+		assert_eq!(claimable_amount(charlie_id), 0);
+
+		process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		// 7. Split by Dave 50/50
+		assert_eq!(pot_balance_available(), rewards_for_blocks(2) + rewards_for_blocks(2) / 2);
+		assert_eq!(claimable_amount(dave_id), rewards_for_blocks(2));
+		assert_eq!(claimable_amount(charlie_id), rewards_for_blocks(2) / 2);
+		let dave_new = split_and_assert::<Test>(
+			DAVE,
+			STAKING_FNFT_COLLECTION_ID,
+			dave_id,
+			Permill::from_percent(50).try_into_validated().unwrap(),
+		);
+		assert_eq!(pot_balance_available(), rewards_for_blocks(2) + rewards_for_blocks(2) / 2);
+		assert_eq!(claimable_amount(dave_id), rewards_for_blocks(2) / 2);
+		assert_eq!(claimable_amount(dave_new), rewards_for_blocks(2) / 2);
+		assert_eq!(claimable_amount(charlie_id), rewards_for_blocks(2) / 2);
+
+		process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		// 8. Unstake by Dave of first stake
+		assert_eq!(
+			pot_balance_available(),
+			rewards_for_blocks(2) + rewards_for_blocks(2) / 2 + rewards_for_blocks(2)
+		);
+		assert_eq!(
+			claimable_amount(dave_id),
+			rewards_for_blocks(2) / 2 + rewards_for_blocks(2) / 4
+		);
+		assert_eq!(
+			claimable_amount(dave_new),
+			rewards_for_blocks(2) / 2 + rewards_for_blocks(2) / 4
+		);
+		assert_eq!(
+			claimable_amount(charlie_id),
+			rewards_for_blocks(2) / 2 + rewards_for_blocks(2) / 2
+		);
+		unstake_and_assert::<Test>(DAVE, STAKING_FNFT_COLLECTION_ID, dave_id, false);
+		assert_eq!(
+			pot_balance_available(),
+			rewards_for_blocks(2) + rewards_for_blocks(2) - rewards_for_blocks(2) / 4
+		);
+		assert_eq!(
+			claimable_amount(dave_new),
+			rewards_for_blocks(2) / 2 + rewards_for_blocks(2) / 4
+		);
+		assert_eq!(
+			claimable_amount(charlie_id),
+			rewards_for_blocks(2) / 2 + rewards_for_blocks(2) / 2
+		);
+
+		// Dave can still claim (bugfixed)
+		assert_ok!(StakingRewards::claim(
+			RuntimeOrigin::signed(DAVE),
+			STAKING_FNFT_COLLECTION_ID,
+			dave_new
+		));
+		assert_eq!(claimable_amount(dave_new), 0);
+		assert_eq!(
+			claimable_amount(charlie_id),
+			rewards_for_blocks(2) / 2 + rewards_for_blocks(2) / 2
+		);
+
+		// Charlie can still claim (bugfixed)
+		assert_ok!(StakingRewards::claim(
+			RuntimeOrigin::signed(CHARLIE),
+			STAKING_FNFT_COLLECTION_ID,
+			charlie_id
+		));
+		assert_eq!(claimable_amount(dave_new), 0);
+		assert_eq!(claimable_amount(charlie_id), 0);
+
+		process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		// 9. Claim by Dave of second stake
+		assert_eq!(pot_balance_available(), rewards_for_blocks(2));
+		assert_eq!(
+			claimable_amount(dave_new),
+			// gets their normal share as well their share of daves unstaked stake reward
+			rewards_for_blocks(2) / 4 + rewards_for_blocks(2) / 16
+		);
+		assert_eq!(
+			claimable_amount(charlie_id),
+			// gets their normal share as well their share of daves unstaked stake reward
+			rewards_for_blocks(2) / 2 + rewards_for_blocks(2) / 8
+		);
 	})
 }
 

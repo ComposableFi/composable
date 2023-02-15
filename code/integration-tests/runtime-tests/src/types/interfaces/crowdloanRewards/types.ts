@@ -178,8 +178,17 @@ export interface DaliRuntimeOpaqueSessionKeys extends Null {}
 /** @name DaliRuntimeOriginCaller */
 export interface DaliRuntimeOriginCaller extends Null {}
 
+/** @name FrameSupportDispatchDispatchInfo */
+export interface FrameSupportDispatchDispatchInfo extends Null {}
+
+/** @name FrameSupportDispatchPerDispatchClassWeight */
+export interface FrameSupportDispatchPerDispatchClassWeight extends Null {}
+
 /** @name FrameSupportPalletId */
 export interface FrameSupportPalletId extends Null {}
+
+/** @name FrameSupportPreimagesBounded */
+export interface FrameSupportPreimagesBounded extends Null {}
 
 /** @name FrameSupportScheduleLookupError */
 export interface FrameSupportScheduleLookupError extends Null {}
@@ -198,6 +207,9 @@ export interface FrameSupportWeightsPerDispatchClassU64 extends Null {}
 
 /** @name FrameSupportWeightsRuntimeDbWeight */
 export interface FrameSupportWeightsRuntimeDbWeight extends Null {}
+
+/** @name IbcCoreIcs02ClientHeight */
+export interface IbcCoreIcs02ClientHeight extends Null {}
 
 /** @name IbcTraitOpenChannelParams */
 export interface IbcTraitOpenChannelParams extends Null {}
@@ -327,8 +339,17 @@ export interface PalletIbcEventsIbcEvent extends Null {}
 /** @name PalletIbcIbcConsensusState */
 export interface PalletIbcIbcConsensusState extends Null {}
 
+/** @name PalletIbcPalletParams */
+export interface PalletIbcPalletParams extends Null {}
+
 /** @name PalletIbcPingSendPingParams */
 export interface PalletIbcPingSendPingParams extends Null {}
+
+/** @name PalletIbcTransferParams */
+export interface PalletIbcTransferParams extends Null {}
+
+/** @name PalletIbcUpgradeParams */
+export interface PalletIbcUpgradeParams extends Null {}
 
 /** @name PalletIdentityBitFlags */
 export interface PalletIdentityBitFlags extends Null {}
@@ -398,8 +419,17 @@ export interface PalletOracleWithdraw extends Struct {
   readonly unlockBlock: u32;
 }
 
+/** @name PalletProxyAnnouncement */
+export interface PalletProxyAnnouncement extends Null {}
+
+/** @name PalletProxyProxyDefinition */
+export interface PalletProxyProxyDefinition extends Null {}
+
 /** @name PalletSchedulerReleases */
 export interface PalletSchedulerReleases extends Null {}
+
+/** @name PalletSchedulerScheduled */
+export interface PalletSchedulerScheduled extends Null {}
 
 /** @name PalletSchedulerScheduledV2 */
 export interface PalletSchedulerScheduledV2 extends Null {}
@@ -469,6 +499,12 @@ export interface SpTrieStorageProof extends Null {}
 
 /** @name SpVersionRuntimeVersion */
 export interface SpVersionRuntimeVersion extends Null {}
+
+/** @name SpWeightsRuntimeDbWeight */
+export interface SpWeightsRuntimeDbWeight extends Null {}
+
+/** @name SpWeightsWeightV2Weight */
+export interface SpWeightsWeightV2Weight extends Null {}
 
 /** @name XcmV1MultiAsset */
 export interface XcmV1MultiAsset extends Null {}

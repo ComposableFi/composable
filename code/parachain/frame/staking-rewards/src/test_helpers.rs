@@ -155,20 +155,17 @@ pub fn unstake_and_assert<Runtime>(
 	let rewards_pool = Pallet::<Runtime>::pools(position_before_unstake.reward_pool_id)
 		.expect("rewards_pool expected");
 
-	let total_shares_before_unstake = Runtime::Assets::total_issuance(rewards_pool.share_asset_id);
+	let total_shares = Runtime::Assets::total_issuance(rewards_pool.share_asset_id);
+	let pool_account = Pallet::<Runtime>::pool_account_id(&position_before_unstake.reward_pool_id);
+	let pool_account_shares_balance_before_unstake =
+		Runtime::Assets::balance(rewards_pool.share_asset_id, &pool_account);
 
 	let pool_account_rewards_balances_before_unstake = rewards_pool
 		.rewards
 		.clone()
 		.into_iter()
 		.map(|(reward_asset_id, _)| {
-			(
-				reward_asset_id,
-				Runtime::Assets::balance(
-					reward_asset_id,
-					&Pallet::<Runtime>::pool_account_id(&position_before_unstake.reward_pool_id),
-				),
-			)
+			(reward_asset_id, Runtime::Assets::balance(reward_asset_id, &pool_account))
 		})
 		.collect::<BTreeMap<_, _>>();
 
@@ -238,7 +235,16 @@ pub fn unstake_and_assert<Runtime>(
 			_ => None,
 		},
 	);
-
+	assert_eq!(
+		total_shares,
+		Runtime::Assets::total_issuance(rewards_pool.share_asset_id),
+		"Total pool shares must not change after unstaking"
+	);
+	assert_eq!(
+		position_before_unstake.share + pool_account_shares_balance_before_unstake,
+		Runtime::Assets::balance(rewards_pool.share_asset_id, &pool_account),
+		"Pool account shares must increase after unstaking"
+	);
 	assert!(
 		Stakes::<Runtime>::get(fnft_collection_id, fnft_instance_id).is_none(),
 		"staked position should not exist after successfully unstaking"
@@ -386,7 +392,7 @@ staked amount: {staked_amount:?}
 
 	// assert that every reward asset is rewarded (and possibly slashed) as expected
 	for (reward_asset_id, reward) in &rewards_pool.rewards {
-		let expected_claim = if total_shares_before_unstake.is_zero() {
+		let expected_claim = if total_shares.is_zero() {
 			Runtime::Balance::zero()
 		} else {
 			let inflation = position_before_unstake
@@ -398,16 +404,13 @@ staked amount: {staked_amount:?}
 			reward
 				.total_rewards
 				.mul(position_before_unstake.share)
-				.div(total_shares_before_unstake)
+				.div(total_shares)
 				.sub(inflation)
 		};
 
 		// Check pool account's balance
 		assert_eq!(
-			Runtime::Assets::balance(
-				*reward_asset_id,
-				&Pallet::<Runtime>::pool_account_id(&position_before_unstake.reward_pool_id)
-			),
+			Runtime::Assets::balance(*reward_asset_id, &pool_account),
 			pool_account_rewards_balances_before_unstake[reward_asset_id].sub(expected_claim),
 			r#"
 pool account's reward asset balance after unstaking was not as expected.
@@ -693,8 +696,15 @@ pub(crate) fn create_rewards_pool_and_assert<Runtime>(
 			financial_nft_asset_id: _,
 			minimum_staking_amount: _,
 		} => Runtime::assert_extrinsic_event(
-			Pallet::<Runtime>::create_reward_pool(OriginFor::<Runtime>::root(), reward_config),
-			crate::Event::<Runtime>::RewardPoolCreated { pool_id: asset_id, owner },
+			Pallet::<Runtime>::create_reward_pool(
+				OriginFor::<Runtime>::root(),
+				reward_config.clone(),
+			),
+			crate::Event::<Runtime>::RewardPoolCreated {
+				pool_id: asset_id,
+				owner,
+				pool_config: reward_config,
+			},
 			// TODO(benluelo): Add storage checks/ assertions
 		),
 		_ => unimplemented!("unimplemented pool configuration"),

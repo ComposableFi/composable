@@ -1,13 +1,16 @@
 //! Setup of Picasso running as if it is on Kusama relay
 use common::{AccountId, Balance};
 use cumulus_primitives_core::ParaId;
-
 use frame_support::traits::GenesisBuild;
 use polkadot_primitives::v2::{BlockNumber, MAX_CODE_SIZE, MAX_POV_SIZE};
 use polkadot_runtime_parachains::configuration::HostConfiguration;
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
 use xcm_emulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain, XCM_VERSION};
+
+#[allow(unused_imports)]
+// that is because some chains upgraded to V3 host and some not, even in Parity owned repos
+use polkadot_primitives::runtime_api::runtime_decl_for_ParachainHost::ParachainHostV3;
 
 use crate::prelude::*;
 pub const PICA: Balance = 1_000_000_000_000;
@@ -16,10 +19,11 @@ pub const PICA: Balance = 1_000_000_000_000;
 pub const THIS_PARA_ID: u32 = 2000;
 pub const SIBLING_PARA_ID: u32 = 3000;
 
+#[cfg(feature = "statemine")]
 decl_test_parachain! {
 	pub struct Statemine {
 		Runtime = statemine_runtime::Runtime,
-		Origin = statemine_runtime::Origin,
+		RuntimeOrigin = statemine_runtime::RuntimeOrigin,
 		XcmpMessageHandler = statemine_runtime::XcmpQueue,
 		DmpMessageHandler = statemine_runtime::DmpQueue,
 		new_ext = para_ext(topology::statemine::ID),
@@ -29,7 +33,7 @@ decl_test_parachain! {
 decl_test_parachain! {
 	pub struct This {
 		Runtime = this_runtime::Runtime,
-		Origin = this_runtime::Origin,
+		RuntimeOrigin = this_runtime::RuntimeOrigin,
 		XcmpMessageHandler = this_runtime::XcmpQueue,
 		DmpMessageHandler = this_runtime::DmpQueue,
 		new_ext = picasso_ext(THIS_PARA_ID),
@@ -41,7 +45,7 @@ decl_test_parachain! {
 decl_test_parachain! {
 	pub struct Sibling {
 		Runtime = sibling_runtime::Runtime,
-		Origin = sibling_runtime::Origin,
+		RuntimeOrigin = sibling_runtime::RuntimeOrigin,
 		XcmpMessageHandler = sibling_runtime::XcmpQueue,
 		DmpMessageHandler = sibling_runtime::DmpQueue,
 		new_ext = picasso_ext(SIBLING_PARA_ID),
@@ -56,6 +60,19 @@ decl_test_relay_chain! {
 	}
 }
 
+#[cfg(not(feature = "statemine"))]
+decl_test_network! {
+	pub struct KusamaNetwork {
+		relay_chain = KusamaRelay,
+		parachains = vec![
+
+			(2000, This),
+			(3000, Sibling),
+		],
+	}
+}
+
+#[cfg(feature = "statemine")]
 decl_test_network! {
 	pub struct KusamaNetwork {
 		relay_chain = KusamaRelay,
@@ -82,7 +99,7 @@ fn default_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
 		max_upward_queue_count: 8,
 		max_upward_queue_size: 1024 * 1024,
 		max_downward_message_size: 1024,
-		ump_service_total_weight: 4 * 1_000_000_000,
+		ump_service_total_weight: Weight::from_ref_time(4 * 1_000_000_000),
 		max_upward_message_size: 50 * 1024,
 		max_upward_message_num_per_candidate: 5,
 		hrmp_sender_deposit: 0,
@@ -177,6 +194,7 @@ pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	externalities
 }
 
+#[cfg(feature = "statemine")]
 pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	let parachain_id = parachain_id.into();
 	use statemine_runtime::{Runtime, System};

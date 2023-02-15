@@ -13,7 +13,7 @@ use frame_system::RawOrigin;
 use num_traits::Zero;
 use orml_traits::currency::MultiCurrency;
 
-use frame_support::{assert_ok, log, weights::constants::WEIGHT_PER_MILLIS};
+use frame_support::{assert_ok, log, weights::constants::WEIGHT_REF_TIME_PER_MILLIS};
 use primitives::currency::*;
 use sp_runtime::{assert_eq_error_rate, traits::AccountIdConversion, MultiAddress};
 use xcm::latest::prelude::*;
@@ -59,7 +59,7 @@ fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
 			balance,
 		);
 		let result = XcmPallet::reserve_transfer_assets(
-			Origin::signed(from.into()),
+			RuntimeOrigin::signed(from.into()),
 			Box::new(Parachain(destination).into().into()),
 			Box::new(Junction::AccountId32 { id: to, network: NetworkId::Any }.into().into()),
 			Box::new((Here, balance).into()),
@@ -74,7 +74,7 @@ fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
 		assert_eq_error_rate!(new_balance, before + balance, (UnitWeightCost::get() * 10) as u128);
 		assert!(!this_runtime::System::events()
 			.iter()
-			.any(|r| { matches!(r.event, this_runtime::Event::XTokens(_)) }));
+			.any(|r| { matches!(r.event, this_runtime::RuntimeEvent::XTokens(_)) }));
 	});
 }
 
@@ -106,7 +106,7 @@ fn transfer_this_native_to_sibling_overridden() {
 		let before = Balances::balance(&sibling_account(SIBLING_PARA_ID));
 		let alice_before = Balances::balance(&alice().into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
 				1,
 				X1(Parachain(SIBLING_PARA_ID))
@@ -153,7 +153,7 @@ fn transfer_non_native_reserve_asset_from_this_to_sibling() {
 		assert_ok!(Assets::deposit(CurrencyId::PBLO, &alice().into(), 10 * PICA));
 		let _before = Assets::free_balance(CurrencyId::PBLO, &alice().into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
 				1,
 				X1(Parachain(SIBLING_PARA_ID))
@@ -199,7 +199,7 @@ fn transfer_non_native_reserve_asset_from_this_to_sibling_by_local_id_overridden
 		let _before = Assets::free_balance(CurrencyId::PBLO, &alice().into());
 
 		assert_ok!(XTokens::transfer(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			CurrencyId::PBLO,
 			3 * PICA,
 			Box::new(
@@ -212,7 +212,7 @@ fn transfer_non_native_reserve_asset_from_this_to_sibling_by_local_id_overridden
 				)
 				.into()
 			),
-			399_600_000_000
+			DEFAULT_SENDER_WEIGHT_LIMIT,
 		));
 
 		let after = Assets::free_balance(CurrencyId::PBLO, &alice().into());
@@ -234,17 +234,15 @@ fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 		log::info!(target: "bdd", "Remote PICA registered on sibling");
 		use sibling_runtime::*;
 		let root = frame_system::RawOrigin::Root;
-		let location =
-			XcmAssetLocation::new(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))).into());
+		let location = XcmAssetLocation::new(MultiLocation::new(1, X1(Parachain(THIS_PARA_ID))));
 		AssetsRegistry::register_asset(root.into(), location.clone(), Rational64::one(), None)
 			.unwrap();
 		System::events()
 			.iter()
 			.find_map(|x| match x.event {
-				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
-					asset_id,
-					..
-				}) => Some(asset_id),
+				RuntimeEvent::AssetsRegistry(
+					assets_registry::Event::<Runtime>::AssetRegistered { asset_id, .. },
+				) => Some(asset_id),
 				_ => None,
 			})
 			.unwrap()
@@ -258,7 +256,7 @@ fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 		);
 
 		assert_ok!(XTokens::transfer(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			CurrencyId::PICA,
 			100_000_000_000_000,
 			Box::new(
@@ -271,7 +269,7 @@ fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 				)
 				.into()
 			),
-			399_600_000_000
+			DEFAULT_SENDER_WEIGHT_LIMIT
 		));
 		log::info!(target: "bdd", "Alice transferred PICA from this to her on sibling");
 	});
@@ -279,7 +277,7 @@ fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 	Sibling::execute_with(|| {
 		use sibling_runtime::*;
 		assert_ok!(XTokens::transfer(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			remote_this_asset_id,
 			1_000,
 			Box::new(
@@ -292,7 +290,7 @@ fn this_native_transferred_from_sibling_to_native_is_not_enough() {
 				)
 				.into()
 			),
-			399_600_000_000
+			Limited(399_600_000_000)
 		),);
 		log::info!(target: "bdd", "Alice sent too few PICA from sibling to Bob on this");
 	});
@@ -335,7 +333,7 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 
 	let alice_ksm_transfer_amount = 1_000_000_000_000;
 	let alice_remaining = alice_this_original - alice_ksm_transfer_amount;
-	let weight_to_pay = 4 * WEIGHT_PER_MILLIS;
+	let weight_to_pay = 4 * WEIGHT_REF_TIME_PER_MILLIS;
 
 	let this_on_sibling = Sibling::execute_with(|| {
 		use sibling_runtime::*;
@@ -363,7 +361,7 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 		log::info!(target: "bdd", "When Alice sends from this to Bob on sibling");
 		use this_runtime::*;
 		assert_ok!(XTokens::transfer(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			CurrencyId::KSM,
 			alice_ksm_transfer_amount,
 			Box::new(
@@ -376,7 +374,7 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 				)
 				.into()
 			),
-			weight_to_pay,
+			Limited(weight_to_pay),
 		));
 
 		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &alice().into()), alice_remaining);
@@ -412,7 +410,7 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 
 		log::info!(target: "bdd", "Then Bob on sibling sends relay native to Alice on this");
 		assert_ok!(XTokens::transfer(
-			Origin::signed(bob().into()),
+			RuntimeOrigin::signed(bob().into()),
 			CurrencyId::KSM,
 			new_bob_on_sibling,
 			Box::new(
@@ -425,7 +423,7 @@ fn transfer_relay_native_from_this_to_sibling_by_local_id() {
 				)
 				.into()
 			),
-			1_000_000_000,
+			DEFAULT_SENDER_WEIGHT_LIMIT,
 		));
 
 		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &sibling_account(THIS_PARA_ID)), 0);
@@ -504,7 +502,7 @@ fn one_chain_cannot_print_relay_native_reserve_tokens_on_us() {
 	This::execute_with(|| {
 		use this_runtime::*;
 		assert_ok!(XTokens::transfer(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			CurrencyId::KSM,
 			alice_from_amount,
 			Box::new(
@@ -517,7 +515,7 @@ fn one_chain_cannot_print_relay_native_reserve_tokens_on_us() {
 				)
 				.into()
 			),
-			weight_to_pay,
+			Limited(weight_to_pay),
 		));
 	});
 
@@ -557,10 +555,12 @@ fn xcm_transfer_execution_barrier_trader_works() {
 		assert!(this_runtime::System::events().iter().any(|r| {
 			matches!(
 				r.event,
-				this_runtime::Event::DmpQueue(cumulus_pallet_dmp_queue::Event::ExecutedDownward {
-					message_id: _,
-					outcome: Outcome::Error(XcmError::Barrier)
-				})
+				this_runtime::RuntimeEvent::DmpQueue(
+					cumulus_pallet_dmp_queue::Event::ExecutedDownward {
+						message_id: _,
+						outcome: Outcome::Error(XcmError::Barrier)
+					}
+				)
 			)
 		}));
 	});
@@ -571,7 +571,7 @@ fn xcm_transfer_execution_barrier_trader_works() {
 	// pass. other situation when `weight_limit` is `Unlimited` or large than `xcm_weight`, then
 	// it's ok.
 	let expect_weight_limit = UnitWeightCost::get() * (MaxInstructions::get() as u64) * 100;
-	let message = Xcm::<this_runtime::Call>(vec![
+	let message = Xcm::<this_runtime::RuntimeCall>(vec![
 		ReserveAssetDeposited((Parent, tiny).into()),
 		BuyExecution { fees: (Parent, tiny).into(), weight_limit: Limited(100) },
 		DepositAsset { assets: All.into(), max_assets: 1, beneficiary: Here.into() },
@@ -587,7 +587,7 @@ fn xcm_transfer_execution_barrier_trader_works() {
 
 	// all situation fulfilled, execute success
 	let total = (unit_instruction_weight * MaxInstructions::get() as u64) as u128;
-	let message = Xcm::<this_runtime::Call>(vec![
+	let message = Xcm::<this_runtime::RuntimeCall>(vec![
 		ReserveAssetDeposited((Parent, total).into()),
 		BuyExecution { fees: (Parent, total).into(), weight_limit: Limited(expect_weight_limit) },
 		DepositAsset { assets: All.into(), max_assets: 1, beneficiary: Here.into() },
@@ -606,7 +606,7 @@ fn xcm_transfer_execution_barrier_trader_works() {
 fn payment_with_foreign_asset_under_fee_reports_required() {
 	let ksm_minimal_amount = 1;
 	let weight_limit = this_runtime::xcmp::xcm_fee_estimator(2 + 1);
-	let message = Xcm::<this_runtime::Call>(vec![
+	let message = Xcm::<this_runtime::RuntimeCall>(vec![
 		ReserveAssetDeposited((Parent, ksm_minimal_amount).into()),
 		BuyExecution {
 			fees: (Parent, ksm_minimal_amount).into(),
@@ -647,12 +647,12 @@ fn unspent_xcm_fee_is_returned_correctly() {
 		use relay_runtime::*;
 
 		assert_ok!(Balances::transfer(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			MultiAddress::Id(some_account.clone()),
 			charlie_on_kusama_amount,
 		));
 		assert_ok!(Balances::transfer(
-			Origin::signed(alice().into()),
+			RuntimeOrigin::signed(alice().into()),
 			MultiAddress::Id(parachain_account.clone()),
 			parachain_on_kusama_amount,
 		));
@@ -669,12 +669,13 @@ fn unspent_xcm_fee_is_returned_correctly() {
 	let payment_into_holder = transfer_in_transact_amount;
 	let weight_limit = 10_000_000_000;
 	This::execute_with(|| {
-		let transfer_call = relay_runtime::Call::Balances(relay_runtime::BalancesCall::transfer {
-			dest: <relay_runtime::Runtime as frame_system::Config>::Lookup::unlookup(
-				AccountId::from(bob()),
-			),
-			value: transfer_in_transact_amount,
-		});
+		let transfer_call =
+			relay_runtime::RuntimeCall::Balances(relay_runtime::BalancesCall::transfer {
+				dest: <relay_runtime::Runtime as frame_system::Config>::Lookup::unlookup(
+					AccountId::from(bob()),
+				),
+				value: transfer_in_transact_amount,
+			});
 
 		let asset = MultiAsset {
 			id: Concrete(MultiLocation::here()),
@@ -712,18 +713,19 @@ fn unspent_xcm_fee_is_returned_correctly() {
 	This::execute_with(|| {
 		log::info!("============ THIS");
 		use this_runtime::*;
-		let transfer_call =
-			relay_runtime::Call::Balances(relay_runtime::BalancesCall::transfer_keep_alive {
+		let transfer_call = relay_runtime::RuntimeCall::Balances(
+			relay_runtime::BalancesCall::transfer_keep_alive {
 				dest: <relay_runtime::Runtime as frame_system::Config>::Lookup::unlookup(
 					some_account.clone(),
 				),
 				value: transfer_in_transact_amount,
-			});
+			},
+		);
 
 		let finalized_call = crate::relaychain::finalize_call_into_xcm_message::<Runtime>(
 			transfer_call,
 			payment_into_holder,
-			weight_limit,
+			Weight::from_ref_time(weight_limit),
 			this_runtime::ParachainInfo::parachain_id(),
 		);
 
@@ -869,7 +871,7 @@ fn trap_assets_lower_than_existential_deposit_works() {
 		assert_eq!(
 			System::events().iter().find(|r| matches!(
 				r.event,
-				this_runtime::Event::RelayerXcm(pallet_xcm::Event::AssetsTrapped(_, _, _))
+				this_runtime::RuntimeEvent::RelayerXcm(pallet_xcm::Event::AssetsTrapped(_, _, _))
 			)),
 			None
 		);
@@ -968,7 +970,7 @@ fn sibling_trap_assets_works() {
 		assert_eq!(
 			System::events().iter().find(|r| matches!(
 				r.event,
-				this_runtime::Event::RelayerXcm(pallet_xcm::Event::AssetsTrapped(_, _, _))
+				this_runtime::RuntimeEvent::RelayerXcm(pallet_xcm::Event::AssetsTrapped(_, _, _))
 			)),
 			None // non of assets trapped by hash, because all are known
 		);
@@ -1039,11 +1041,13 @@ fn sibling_shib_to_transfer() {
 		System::events()
 			.iter()
 			.find_map(|x| match x.event {
-				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
-					asset_id,
-					location: _,
-					decimals: _,
-				}) => Some(asset_id),
+				RuntimeEvent::AssetsRegistry(
+					assets_registry::Event::<Runtime>::AssetRegistered {
+						asset_id,
+						location: _,
+						decimals: _,
+					},
+				) => Some(asset_id),
 				_ => None,
 			})
 			.expect("Map exists; QED")
@@ -1052,7 +1056,7 @@ fn sibling_shib_to_transfer() {
 	Sibling::execute_with(|| {
 		log::info!(target: "bdd", "When Bob transfers some {:?} SHIB from sibling to Dali", transfer_amount);
 		use sibling_runtime::*;
-		let origin = Origin::signed(bob().into());
+		let origin = RuntimeOrigin::signed(bob().into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
 			origin,
 			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
@@ -1164,11 +1168,13 @@ fn transfer_unknown_token_from_known_origin_ends_up_in_unknown_tokens() {
 		System::events()
 			.iter()
 			.find_map(|x| match x.event {
-				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
-					asset_id,
-					location: _,
-					decimals: _,
-				}) => Some(asset_id),
+				RuntimeEvent::AssetsRegistry(
+					assets_registry::Event::<Runtime>::AssetRegistered {
+						asset_id,
+						location: _,
+						decimals: _,
+					},
+				) => Some(asset_id),
 				_ => None,
 			})
 			.expect("Map exists; QED")
@@ -1182,7 +1188,7 @@ fn transfer_unknown_token_from_known_origin_ends_up_in_unknown_tokens() {
 	Sibling::execute_with(|| {
 		log::info!(target: "bdd", "When Bob transfers some known asset (as fee) and unknown asset");
 		use sibling_runtime::*;
-		let origin = Origin::signed(bob().into());
+		let origin = RuntimeOrigin::signed(bob().into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
 			origin,
 			Box::new(VersionedMultiLocation::V1(MultiLocation::new(

@@ -18,9 +18,9 @@ type PabloPool @entity {
   eventId: ID!
   owner: String! @index
   poolType: PabloPoolType!
-  lpIssued: BigInt!
+  lpToken: PabloLpToken!
   transactionCount: Int!
-  "Timestamp of the block in which this activity occurred"
+  "Timestamp of the block in which this was last updated"
   timestamp: DateTime! @index
   poolAssets: [PabloPoolAsset!] @derivedFrom(field: "pool")
   poolAssetWeights: [PabloAssetWeight!] @derivedFrom(field: "pool")
@@ -28,6 +28,17 @@ type PabloPool @entity {
   blockId: String!
   "Asset to be used as reference when calculating the pool's TVL"
   quoteAssetId: String!
+}
+
+type PabloLpToken @entity {
+  "LP token ID"
+  id: ID!
+  totalIssued: BigInt!
+  poolId: String! @index
+  "Last updated block id"
+  blockId: String!
+  "Timestamp of the block in which this was last updated"
+  timestamp: DateTime! @index
 }
 
 type PabloAssetWeight @entity {
@@ -39,6 +50,12 @@ type PabloAssetWeight @entity {
   blockId: String!
 }
 
+enum PabloTx {
+  ADD_LIQUIDITY
+  REMOVE_LIQUIDITY
+  SWAP
+}
+
 type PabloTransaction @entity {
   id: ID!
   pool: PabloPool! @index
@@ -46,10 +63,14 @@ type PabloTransaction @entity {
   timestamp: DateTime! @index
   "Last updated block id"
   blockId: String!
+  event: Event! @index
+  txType: PabloTx!
+  swap: PabloSwap
+  liquidityAdded: PabloLiquidityAdded
+  liquidityRemoved: PabloLiquidityRemoved
 }
 
 type PabloPoolAsset @entity {
-  "Asset ID"
   id: ID!
   assetId: String!
   pool: PabloPool! @index
@@ -137,42 +158,37 @@ type Activity @entity {
   blockId: String!
 }
 
-type Asset @entity {
-  "ID of the asset"
-  id: ID!
-  "ID of the event that added the last price"
-  eventId: String! @index
-  "Latest price in USD"
-  price: BigInt!
-  decimals: Int
-  historicalPrices: [HistoricalAssetPrice!] @derivedFrom(field: "asset")
-  "Last updated block id"
-  blockId: String!
-}
-
 enum Currency {
   USD
 }
 
 type HistoricalAssetPrice @entity {
   id: ID!
-  "ID of the event associated with this activity"
-  eventId: String! @index
   "ID of the asset"
-  asset: Asset!
-  price: BigInt!
+  assetId: String! @index
+  price: Float!
   timestamp: DateTime! @index
   currency: Currency!
-  "Last updated block id"
-  blockId: String!
 }
 
-type RewardPool @entity {
+enum RewardRatePeriod {
+  PerSecond
+}
+
+type StakingRewardsPool @entity {
   id: ID!
   eventId: String! @index
   poolId: String! @index
   "Last updated block id"
   blockId: String!
+  owner: String! @index
+  assetId: String! @index
+  shareAssetId: String! @index
+  financialNftAssetId: String! @index
+  minimumStakingAmount: BigInt!
+  startBlock: Int!
+  rewardRatePeriod: RewardRatePeriod!
+  rewardRateAmount: BigInt!
 }
 
 enum LockedSource {
@@ -229,6 +245,26 @@ type HistoricalVolume @entity {
   blockId: String!
 }
 
+type HistoricalPabloFeeApr @entity {
+  id: ID!
+  event: Event! @index
+  pool: PabloPool! @index
+  tradingFee: Float!
+  timestamp: DateTime! @index
+  "Last updated block id"
+  blockId: String!
+}
+
+type HistoricalStakingApr @entity {
+  id: ID!
+  event: Event! @index
+  assetId: String! @index
+  stakingApr: Float!
+  timestamp: DateTime! @index
+  "Last updated block id"
+  blockId: String!
+}
+
 type PabloSwap @entity {
   id: ID!
   event: Event!
@@ -242,6 +278,29 @@ type PabloSwap @entity {
   timestamp: DateTime! @index
   "Last updated block id"
   blockId: String!
+}
+
+type PabloAmount {
+  assetId: String!
+  amount: BigInt!
+}
+
+type PabloLiquidityAdded @entity {
+  id: ID!
+  event: Event!
+  pool: PabloPool! @index
+  timestamp: DateTime! @index
+  blockId: String!
+  amounts: [PabloAmount!]!
+}
+
+type PabloLiquidityRemoved @entity {
+  id: ID!
+  event: Event!
+  pool: PabloPool! @index
+  timestamp: DateTime! @index
+  blockId: String!
+  amounts: [PabloAmount!]!
 }
 
 type CurrentLockedValue
@@ -289,4 +348,7 @@ type Event @entity {
   activities: [Activity!] @derivedFrom(field: "event")
   "Last updated block id"
   blockId: String!
+  txHash: String
+  success: Boolean
+  failReason: String
 }

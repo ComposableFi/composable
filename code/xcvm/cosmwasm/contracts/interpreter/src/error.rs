@@ -57,4 +57,7 @@ pub enum ContractError {
 
 	#[error("Unsupported")]
 	Unsupported,
+
+	#[error("An error occured while doing arithmetic operations.")]
+	ArithmeticError,
 }

@@ -33,7 +33,7 @@ fn transfer_native_from_relay_chain_to_statemine() {
 	KusamaRelay::execute_with(|| {
 		use relay_runtime::*;
 		assert_ok!(XcmPallet::teleport_assets(
-			Origin::signed(ALICE.into()),
+			RuntimeOrigin::signed(ALICE.into()),
 			Box::new(Parachain(topology::common_good_assets::ID).into().into()),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new((Here, amount).into()),
@@ -59,7 +59,7 @@ fn transfer_native_from_statemine_to_this() {
 	KusamaRelay::execute_with(|| {
 		use relay_runtime::*;
 		assert_ok!(XcmPallet::teleport_assets(
-			Origin::signed(ALICE.into()),
+			RuntimeOrigin::signed(ALICE.into()),
 			Box::new(Parachain(topology::common_good_assets::ID).into().into()),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
 			Box::new((Here, amount).into()),
@@ -70,7 +70,7 @@ fn transfer_native_from_statemine_to_this() {
 	let bob_balance = Statemine::execute_with(|| {
 		use statemine_runtime::*;
 		let bob_balance = Balances::balance(&AccountId::from(BOB));
-		let origin = Origin::signed(BOB.into());
+		let origin = RuntimeOrigin::signed(BOB.into());
 
 		assert_ok!(PolkadotXcm::reserve_transfer_assets(
 			origin,
@@ -117,7 +117,7 @@ fn transfer_usdt_from_statemine_to_this() {
 		.unwrap();
 		log::info!(target: "bdd", "	and Bob has a lot USDT on Statemine");
 		Assets::mint(
-			Origin::signed(ALICE.into()),
+			RuntimeOrigin::signed(ALICE.into()),
 			statemine_asset_id as u32,
 			MultiAddress::Id(BOB.into()),
 			total_issuance,
@@ -128,7 +128,7 @@ fn transfer_usdt_from_statemine_to_this() {
 	Statemine::execute_with(|| {
 		log::info!(target: "bdd", "When Bob transfers some {:?} USDT from Statemine to Dali", usdt_transfer_amount);
 		use statemine_runtime::*;
-		let origin = Origin::signed(BOB.into());
+		let origin = RuntimeOrigin::signed(BOB.into());
 		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
 			origin,
 			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
@@ -185,7 +185,7 @@ fn rockmine_shib_to_dali_transfer() {
 		.unwrap();
 		log::info!(target: "bdd", "	and Bob has a lot SHIB on Statemine");
 		Assets::mint(
-			Origin::signed(ALICE.into()),
+			RuntimeOrigin::signed(ALICE.into()),
 			statemine_asset_id,
 			MultiAddress::Id(BOB.into()),
 			total_issuance,
@@ -215,11 +215,13 @@ fn rockmine_shib_to_dali_transfer() {
 		System::events()
 			.iter()
 			.find_map(|x| match x.event {
-				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
-					asset_id,
-					location: _,
-					decimals: _,
-				}) => Some(asset_id),
+				RuntimeEvent::AssetsRegistry(
+					assets_registry::Event::<Runtime>::AssetRegistered {
+						asset_id,
+						location: _,
+						decimals: _,
+					},
+				) => Some(asset_id),
 				_ => None,
 			})
 			.unwrap()
@@ -229,7 +231,7 @@ fn rockmine_shib_to_dali_transfer() {
 	Statemine::execute_with(|| {
 		log::info!(target: "bdd", "When Bob transfers some {:?} SHIB from Statemine to Dali", transfer_amount);
 		use statemine_runtime::*;
-		let origin = Origin::signed(BOB.into());
+		let origin = RuntimeOrigin::signed(BOB.into());
 		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
 			origin,
 			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
@@ -285,7 +287,7 @@ fn rockmine_stable_to_dali_transfer() {
 		.unwrap();
 		log::info!(target: "bdd", "	and Bob has a lot STABLE on Statemine");
 		Assets::mint(
-			Origin::signed(ALICE.into()),
+			RuntimeOrigin::signed(ALICE.into()),
 			statemine_asset_id,
 			MultiAddress::Id(BOB.into()),
 			total_issuance,
@@ -317,11 +319,13 @@ fn rockmine_stable_to_dali_transfer() {
 		System::events()
 			.iter()
 			.find_map(|x| match x.event {
-				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
-					asset_id,
-					location: _,
-					decimals: _,
-				}) => Some(asset_id),
+				RuntimeEvent::AssetsRegistry(
+					assets_registry::Event::<Runtime>::AssetRegistered {
+						asset_id,
+						location: _,
+						decimals: _,
+					},
+				) => Some(asset_id),
 				_ => None,
 			})
 			.unwrap()
@@ -330,7 +334,7 @@ fn rockmine_stable_to_dali_transfer() {
 	Statemine::execute_with(|| {
 		log::info!(target: "bdd", "When Bob transfers some {:?} STABLE from Statemine to Dali", transfer_amount);
 		use statemine_runtime::*;
-		let origin = Origin::signed(BOB.into());
+		let origin = RuntimeOrigin::signed(BOB.into());
 		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
 			origin,
 			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
@@ -453,7 +457,7 @@ fn bob_has_statemine_asset_on_this_and_transfers_it_to_reserve(
 		assert!(relay_native_asset_amount != 0);
 		log::info!(target: "bdd", "Bob sending Statemine to reserve chain to his account");
 		let error = XTokens::transfer_multicurrencies(
-			Origin::signed(BOB.into()),
+			RuntimeOrigin::signed(BOB.into()),
 			vec![
 				(CurrencyId::RELAY_NATIVE, relay_native_asset_amount),
 				(foreign_asset_id_on_this, UNIT),
@@ -496,7 +500,7 @@ fn bob_has_statemine_asset_on_this_and_transfers_it_to_reserve(
 		.unwrap();
 
 		XTokens::transfer_multicurrencies(
-			Origin::signed(BOB.into()),
+			RuntimeOrigin::signed(BOB.into()),
 			vec![
 				(CurrencyId::RELAY_NATIVE, relay_native_asset_amount),
 				(foreign_asset_id_on_this, UNIT),
@@ -538,7 +542,7 @@ fn statemine_setup_assets(
 ) {
 	use statemine_runtime::*;
 	Statemine::execute_with(|| {
-		let origin = Origin::signed(ALICE.into());
+		let origin = RuntimeOrigin::signed(ALICE.into());
 		Balances::make_free_balance_be(&ALICE.into(), native_for_alice);
 		Balances::make_free_balance_be(&BOB.into(), native_for_bob);
 
@@ -581,7 +585,7 @@ fn statemine_side(this_parachain_account_init_amount: u128, statemine_asset_id: 
 
 	Statemine::execute_with(|| {
 		log::info!(target: "bdd", "Alice transfers Statemine asset to Bob on This chain");
-		let origin = Origin::signed(ALICE.into());
+		let origin = RuntimeOrigin::signed(ALICE.into());
 
 		assert_ok!(PolkadotXcm::reserve_transfer_assets(
 			origin,
@@ -623,11 +627,13 @@ fn register_statemine_asset(remote_asset_id: CommonAssetId, ratio: Rational64) -
 		System::events()
 			.iter()
 			.find_map(|x| match x.event {
-				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
-					asset_id,
-					location: _,
-					decimals: _,
-				}) => Some(asset_id),
+				RuntimeEvent::AssetsRegistry(
+					assets_registry::Event::<Runtime>::AssetRegistered {
+						asset_id,
+						location: _,
+						decimals: _,
+					},
+				) => Some(asset_id),
 				_ => None,
 			})
 			.unwrap()
@@ -700,7 +706,7 @@ fn cannot_reserve_transfer_from_two_consensuses_in_one_message() {
 			CurrencyId::RELAY_NATIVE,
 			&AccountId::from(bob()),
 		);
-		let origin = Origin::signed(bob().into());
+		let origin = RuntimeOrigin::signed(bob().into());
 		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
 			origin,
 			Box::new(VersionedMultiLocation::V1(MultiLocation::new(

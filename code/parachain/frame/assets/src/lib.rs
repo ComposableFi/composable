@@ -1108,6 +1108,10 @@ pub mod pallet {
 				}
 				WithdrawConsequence::UnknownAsset
 			}
+
+			fn asset_exists(asset: Self::AssetId) -> bool {
+				valid_asset_id::<T>(asset).is_some()
+			}
 		}
 
 		impl<T: Config> InspectHold<T::AccountId> for Pallet<T>

@@ -24,9 +24,9 @@ impl<T: Config> From<CosmwasmAccount<T>> for CanonicalCosmwasmAccount<T> {
 impl<T: Config + VMPallet> TryFrom<Vec<u8>> for CanonicalCosmwasmAccount<T> {
 	type Error = T::VmError;
 	fn try_from(source: Vec<u8>) -> Result<Self, Self::Error> {
-		Ok(CanonicalCosmwasmAccount(CosmwasmAccount::try_from(
-			String::from_utf8_lossy(&source).into_owned(),
-		)?))
+		Ok(CanonicalCosmwasmAccount(CosmwasmAccount::new(Pallet::<T>::canonical_addr_to_account(
+			source,
+		)?)))
 	}
 }
 
@@ -38,7 +38,7 @@ impl<T: Config> Into<CanonicalAddr> for CanonicalCosmwasmAccount<T> {
 	}
 }
 
-#[derive(Clone, Debug, Encode, TypeInfo)]
+#[derive(Clone, Debug, Encode, TypeInfo, PartialEq)]
 pub struct CosmwasmAccount<T: Config>(PhantomData<T>, AccountIdOf<T>);
 
 impl<T: Config> CosmwasmAccount<T> {

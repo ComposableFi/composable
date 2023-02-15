@@ -1,4 +1,4 @@
-use crate::{runtimes::vm::CosmwasmVM, types::*, Config, Error};
+use crate::{prelude::*, runtimes::vm::CosmwasmVM, types::*, Config, Error};
 use cosmwasm_vm::{
 	cosmwasm_std::{ContractResult, QueryResponse, Response},
 	vm::{VMBase, VmErrorOf},
@@ -10,14 +10,7 @@ pub trait PalletHook<T: Config> {
 	/// Return hardcoded contract informations for a precompiled contract.
 	fn info(
 		contract_address: &AccountIdOf<T>,
-	) -> Option<
-		PalletContractCodeInfo<
-			AccountIdOf<T>,
-			CodeHashOf<T>,
-			ContractLabelOf<T>,
-			ContractTrieIdOf<T>,
-		>,
-	>;
+	) -> Option<PalletContractCodeInfo<AccountIdOf<T>, ContractLabelOf<T>, ContractTrieIdOf<T>>>;
 
 	/// Hook into a contract call.
 	fn execute<'a>(
@@ -28,6 +21,12 @@ pub trait PalletHook<T: Config> {
 		ContractResult<Response<<OwnedWasmiVM<CosmwasmVM<'a, T>> as VMBase>::MessageCustom>>,
 		VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, T>>>,
 	>;
+
+	fn run<'a>(
+		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, T>>,
+		entrypoint: EntryPoint,
+		message: &[u8],
+	) -> Result<Vec<u8>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, T>>>>;
 
 	/// Hook into a contract query.
 	fn query<'a>(
@@ -40,14 +39,7 @@ pub trait PalletHook<T: Config> {
 impl<T: Config> PalletHook<T> for () {
 	fn info(
 		_: &AccountIdOf<T>,
-	) -> Option<
-		PalletContractCodeInfo<
-			AccountIdOf<T>,
-			CodeHashOf<T>,
-			ContractLabelOf<T>,
-			ContractTrieIdOf<T>,
-		>,
-	> {
+	) -> Option<PalletContractCodeInfo<AccountIdOf<T>, ContractLabelOf<T>, ContractTrieIdOf<T>>> {
 		None
 	}
 
@@ -69,17 +61,24 @@ where {
 	) -> Result<ContractResult<QueryResponse>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, T>>>> {
 		Err(Error::<T>::Unsupported.into())
 	}
+
+	fn run<'a>(
+		_vm: &mut OwnedWasmiVM<CosmwasmVM<'a, T>>,
+		_entrypoint: EntryPoint,
+		_message: &[u8],
+	) -> Result<Vec<u8>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, T>>>> {
+		Err(Error::<T>::Unsupported.into())
+	}
 }
 
-impl<AccountId, Hash, Label, TrieId> PalletContractCodeInfo<AccountId, Hash, Label, TrieId>
+impl<AccountId, Label, TrieId> PalletContractCodeInfo<AccountId, Label, TrieId>
 where
 	AccountId: Clone,
-	Hash: Default,
 	TrieId: Default,
 {
 	pub fn new(account_id: AccountId, ibc_capable: bool, label: Label) -> Self {
 		PalletContractCodeInfo {
-			code: CodeInfo::<AccountId, Hash> {
+			code: CodeInfo::<AccountId> {
 				// When this is used for an actual Pallet, we would use the Pallet's AccountId
 				creator: account_id.clone(),
 				// Not applicable to Pallet, so we use default()

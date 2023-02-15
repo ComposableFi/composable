@@ -29,11 +29,11 @@ fn updated_assets_registry_works_well_for_ratios() {
 		.unwrap();
 		assert_eq!(
 			1000,
-			<PriceConverter<AssetsRegistry>>::to_asset_balance(100, CurrencyId(42)).unwrap()
+			<PriceConverter<AssetsRegistry, this_runtime::WellKnownForeignToNativePriceConverter>>::to_asset_balance(100, CurrencyId(42)).unwrap()
 		);
 		assert_eq!(
 			10,
-			<PriceConverter<AssetsRegistry>>::to_asset_balance(100, CurrencyId(123)).unwrap()
+			<PriceConverter<AssetsRegistry, this_runtime::WellKnownForeignToNativePriceConverter>>::to_asset_balance(100, CurrencyId(123)).unwrap()
 		);
 	});
 }
@@ -53,17 +53,19 @@ fn registered_assets_with_smaller_than_native_price() {
 		let asset_id = System::events()
 			.iter()
 			.find_map(|x| match x.event {
-				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
-					asset_id,
-					location: _,
-					decimals: _,
-				}) => Some(asset_id),
+				RuntimeEvent::AssetsRegistry(
+					assets_registry::Event::<Runtime>::AssetRegistered {
+						asset_id,
+						location: _,
+						decimals: _,
+					},
+				) => Some(asset_id),
 				_ => None,
 			})
 			.unwrap();
 		assert_eq!(
 			1000,
-			<PriceConverter<AssetsRegistry>>::to_asset_balance(100, asset_id).unwrap()
+			<PriceConverter<AssetsRegistry, this_runtime::WellKnownForeignToNativePriceConverter>>::to_asset_balance(100, asset_id).unwrap()
 		);
 	});
 }
@@ -83,14 +85,16 @@ fn registered_assets_with_larger_than_native_price() {
 		let asset_id = System::events()
 			.iter()
 			.find_map(|x| match x.event {
-				Event::AssetsRegistry(assets_registry::Event::<Runtime>::AssetRegistered {
-					asset_id,
-					location: _,
-					decimals: _,
-				}) => Some(asset_id),
+				RuntimeEvent::AssetsRegistry(
+					assets_registry::Event::<Runtime>::AssetRegistered {
+						asset_id,
+						location: _,
+						decimals: _,
+					},
+				) => Some(asset_id),
 				_ => None,
 			})
 			.unwrap();
-		assert_eq!(10, <PriceConverter<AssetsRegistry>>::to_asset_balance(100, asset_id).unwrap());
+		assert_eq!(10, <PriceConverter<AssetsRegistry,this_runtime::WellKnownForeignToNativePriceConverter>>::to_asset_balance(100, asset_id).unwrap());
 	});
 }

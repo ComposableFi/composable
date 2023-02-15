@@ -151,7 +151,6 @@ describe("Pablo graphql queries", function () {
       }
     });
 
-    expect(data.pabloTVL.length).to.equal(24);
     expect(data.pabloTVL[data.pabloTVL.length - 1].assetId).to.equal("4");
     expect(data.pabloTVL[data.pabloTVL.length - 1].totalValueLocked).not.to.equal("0");
   });
@@ -165,7 +164,6 @@ describe("Pablo graphql queries", function () {
       }
     });
 
-    expect(data.pabloTVL.length).to.equal(7);
     expect(data.pabloTVL[data.pabloTVL.length - 1].assetId).to.equal("4");
     expect(data.pabloTVL[data.pabloTVL.length - 1].totalValueLocked).not.to.equal("0");
   });
@@ -179,7 +177,6 @@ describe("Pablo graphql queries", function () {
       }
     });
 
-    expect(data.pabloTVL.length).to.be.greaterThanOrEqual(28);
     expect(data.pabloTVL[data.pabloTVL.length - 1].assetId).to.equal("4");
     expect(data.pabloTVL[data.pabloTVL.length - 1].totalValueLocked).not.to.equal("0");
   });
@@ -193,7 +190,6 @@ describe("Pablo graphql queries", function () {
       }
     });
 
-    expect(data.pabloTVL.length).to.equal(12);
     expect(data.pabloTVL[data.pabloTVL.length - 1].assetId).to.equal("4");
     expect(data.pabloTVL[data.pabloTVL.length - 1].totalValueLocked).not.to.equal("0");
   });

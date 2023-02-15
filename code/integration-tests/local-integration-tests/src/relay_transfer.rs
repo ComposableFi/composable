@@ -101,7 +101,7 @@ fn transfer_from_relay_native_from_this_to_relay_chain_by_local_id() {
 	This::execute_with(|| {
 		let before = this_runtime::Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = this_runtime::XTokens::transfer(
-			this_runtime::Origin::signed(alice().into()),
+			this_runtime::RuntimeOrigin::signed(alice().into()),
 			CurrencyId::KSM,
 			transfer_amount,
 			Box::new(
@@ -111,7 +111,7 @@ fn transfer_from_relay_native_from_this_to_relay_chain_by_local_id() {
 				)
 				.into(),
 			),
-			limit,
+			Limited(limit),
 		);
 
 		assert_ok!(transferred);
