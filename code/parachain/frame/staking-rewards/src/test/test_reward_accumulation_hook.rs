@@ -93,7 +93,8 @@ fn test_reward_update_calculation() {
 				now.safe_add(&block_seconds(block_number).try_into().unwrap()).unwrap(),
 			);
 
-			println!("blocks surpassed: {}", block_number);
+			println!("blocks surpassed: {block_number}");
+
 			for error in [
 				RewardAccumulationHookError::BackToTheFuture,
 				RewardAccumulationHookError::Overflow,
@@ -129,14 +130,12 @@ fn test_reward_update_calculation() {
 			pool_id: PICA::ID,
 			asset_id: PICA::ID,
 		});
-	})
+	});
 }
 
 #[test]
 fn test_accumulate_rewards_pool_empty_refill() {
 	new_test_ext().execute_with(|| {
-		init_logger();
-
 		type A = Currency<97, 12>;
 		type XA = Currency<1097, 12>;
 		type B = Currency<98, 12>;
@@ -147,13 +146,15 @@ fn test_accumulate_rewards_pool_empty_refill() {
 		type F = Currency<102, 12>;
 		type XF = Currency<1102, 12>;
 
-		let mut current_block = System::block_number();
-
-		progress_to_block(10, &mut current_block);
-
 		// 2 A per second
 		const A_A_REWARD_RATE: u128 = A::units(2);
 		const A_A_AMOUNT_TO_ADD_TO_REWARDS_POT: u128 = A_A_REWARD_RATE * block_seconds(4);
+
+		init_logger();
+
+		let mut current_block = System::block_number();
+
+		progress_to_block(10, &mut current_block);
 
 		mint_assets([ALICE], [A::ID], A::units(10_000));
 
@@ -239,13 +240,7 @@ fn test_accumulate_rewards_pool_empty_refill() {
 #[ignore = "this is a very large test that tests functionality tested more succinctly in other tests; slated for removal"]
 fn test_accumulate_rewards_hook() {
 	new_test_ext().execute_with(|| {
-		init_logger();
-
 		const STARTING_BLOCK: u64 = 10;
-
-		let mut current_block = System::block_number();
-
-		progress_to_block(STARTING_BLOCK, &mut current_block);
 
 		// 0.000_002 A per second
 		// initial amount will be fully rewarded after 50_000 seconds (8334 blocks)
@@ -268,6 +263,12 @@ fn test_accumulate_rewards_hook() {
 		const C_E_INITIAL_AMOUNT: u128 = A::units(10);
 
 		const ALICES_POOL_ID: u128 = A::ID;
+
+		init_logger();
+
+		let mut current_block = System::block_number();
+
+		progress_to_block(STARTING_BLOCK, &mut current_block);
 
 		create_rewards_pool_and_assert::<Test>(RewardPoolConfiguration::RewardRateBasedIncentive {
 			owner: ALICE,
@@ -697,12 +698,6 @@ fn test_accumulate_rewards_hook() {
 #[test]
 fn test_pause_in_reward_accumulation_hook() {
 	new_test_ext().execute_with(|| {
-		init_logger();
-
-		const POOL_STARTING_BLOCK: u64 = 10;
-
-		let mut current_block = System::block_number();
-
 		// 0.000_002 A per second
 		const A_A_REWARD_RATE: u128 = A::units(2) / 1_000_000;
 		// fund the pot with 100 blocks worth of rewards
@@ -720,6 +715,12 @@ fn test_pause_in_reward_accumulation_hook() {
 		const A_B_PAUSED_BLOCKS: u64 = 50;
 
 		const ALICES_POOL_ID: u128 = A::ID;
+
+		const POOL_STARTING_BLOCK: u64 = 10;
+
+		init_logger();
+
+		let mut current_block = System::block_number();
 
 		progress_to_block(1, &mut current_block);
 

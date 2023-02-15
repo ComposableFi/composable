@@ -465,6 +465,7 @@ pub mod pallet {
 		/// Emits `RewardPoolCreated` event when successful.
 		#[pallet::weight(T::WeightInfo::create_reward_pool(T::MaxRewardConfigsPerPool::get()))]
 		#[transactional]
+		#[pallet::call_index(1)]
 		pub fn create_reward_pool(
 			origin: OriginFor<T>,
 			pool_config: RewardPoolConfigurationOf<T>,
@@ -478,6 +479,7 @@ pub mod pallet {
 		///
 		/// Emits `Staked` when successful.
 		#[pallet::weight(T::WeightInfo::stake(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(2)]
 		pub fn stake(
 			origin: OriginFor<T>,
 			pool_id: T::AssetId,
@@ -496,6 +498,7 @@ pub mod pallet {
 		///
 		/// Emits `StakeExtended` when successful.
 		#[pallet::weight(T::WeightInfo::extend(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(3)]
 		pub fn extend(
 			origin: OriginFor<T>,
 			fnft_collection_id: T::AssetId,
@@ -525,6 +528,7 @@ pub mod pallet {
 		///
 		/// Emits `Unstaked` when successful.
 		#[pallet::weight(T::WeightInfo::unstake(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(4)]
 		pub fn unstake(
 			origin: OriginFor<T>,
 			fnft_collection_id: T::AssetId,
@@ -545,6 +549,7 @@ pub mod pallet {
 		///
 		/// Emits `SplitPosition` when successful.
 		#[pallet::weight(T::WeightInfo::split(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(5)]
 		pub fn split(
 			origin: OriginFor<T>,
 			fnft_collection_id: T::AssetId,
@@ -564,6 +569,7 @@ pub mod pallet {
 		///
 		/// Emits `RewardPoolUpdated` when successful.
 		#[pallet::weight(T::WeightInfo::update_rewards_pool(reward_updates.len() as u32))]
+		#[pallet::call_index(6)]
 		pub fn update_rewards_pool(
 			origin: OriginFor<T>,
 			pool_id: T::AssetId,
@@ -581,6 +587,7 @@ pub mod pallet {
 		///
 		/// Emits `Claimed` when successful.
 		#[pallet::weight(T::WeightInfo::claim(T::MaxRewardConfigsPerPool::get()))]
+		#[pallet::call_index(7)]
 		pub fn claim(
 			origin: OriginFor<T>,
 			fnft_collection_id: T::AssetId,
@@ -600,6 +607,7 @@ pub mod pallet {
 		///
 		/// Emits `RewardsPotIncreased` when successful.
 		#[pallet::weight(T::WeightInfo::add_to_rewards_pot())]
+		#[pallet::call_index(8)]
 		pub fn add_to_rewards_pot(
 			origin: OriginFor<T>,
 			pool_id: T::AssetId,
@@ -608,7 +616,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			add_to_rewards_pot::<T>(who, pool_id, asset_id, amount, keep_alive)
+			add_to_rewards_pot::<T>(&who, pool_id, asset_id, amount, keep_alive)
 		}
 	}
 
@@ -1299,7 +1307,7 @@ pub mod pallet {
 			rewards_pool: &RewardPoolOf<T>,
 			duration_preset: DurationSeconds,
 		) -> Option<Validated<FixedU64, GeOne>> {
-			rewards_pool.lock.duration_multipliers.multiplier(duration_preset).cloned()
+			rewards_pool.lock.duration_multipliers.multiplier(duration_preset).copied()
 		}
 
 		pub(crate) fn boosted_amount(
@@ -1568,7 +1576,7 @@ fn accumulate_pool_rewards<T: Config>(
 }
 
 fn add_to_rewards_pot<T: Config>(
-	who: T::AccountId,
+	who: &T::AccountId,
 	pool_id: T::AssetId,
 	asset_id: T::AssetId,
 	amount: T::Balance,
@@ -1581,7 +1589,7 @@ fn add_to_rewards_pot<T: Config>(
 
 		let pool_account = Pallet::<T>::pool_account_id(&pool_id);
 
-		T::Assets::transfer(asset_id, &who, &pool_account, amount, keep_alive)?;
+		T::Assets::transfer(asset_id, who, &pool_account, amount, keep_alive)?;
 		T::Assets::hold(asset_id, &pool_account, amount)?;
 
 		Pallet::<T>::deposit_event(Event::<T>::RewardsPotIncreased { pool_id, asset_id, amount });
@@ -1824,7 +1832,7 @@ pub(crate) fn claim_of_stake<T: Config>(
 	let claim = if total_shares.is_zero() {
 		T::Balance::zero()
 	} else {
-		let inflation = stake.reductions.get(reward_asset_id).cloned().unwrap_or_else(Zero::zero);
+		let inflation = stake.reductions.get(reward_asset_id).copied().unwrap_or_else(Zero::zero);
 
 		// REVIEW(benluelo): Review expected rounding behaviour, possibly switching to the following
 		// implementation (or something similar):
@@ -1842,9 +1850,13 @@ pub(crate) fn claim_of_stake<T: Config>(
 }
 
 impl<T: Config> Pallet<T> {
-	/// returns error if stake or rewardpool is not found
-	/// otherwise returns BTreeMap (key: reward_asset_id, val: Option<Balance>)
-	/// if claim_of_stake returns an error for a reward, then val is None
+	/// Calculates the claimable amount(s) for a staked position, calling [`claim_of_stake`] for
+	/// each asset in the pool.
+	///
+	/// # Errors
+	///
+	/// Returns an error if either the `Stake` or the `RewardPool` could not be found, or if there
+	/// is an arithmetic error when calculating the claim.
 	pub fn claimable_amount(
 		fnft_collection_id: T::AssetId,
 		fnft_instance_id: T::FinancialNftInstanceId,
