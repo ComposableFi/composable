@@ -20,7 +20,7 @@
 
         local-integration-tests = pkgs.writeShellApplication {
           name = "local-integration-tests";
-          runtimeInputs = [ self'.packages.rust-nightly  ];
+          runtimeInputs = [ self'.packages.rust-nightly ];
           text = ''
             cd code
             RUST_BACKTRACE=full \
