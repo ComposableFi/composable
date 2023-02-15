@@ -255,15 +255,17 @@ pub fn run() -> Result<()> {
 						},
 						#[cfg(feature = "dali")]
 						id if id.contains("dali") => {
-							let partials =
-								new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(&config, Option::None)?;
+							let partials = new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(
+								&config,
+								Option::None,
+							)?;
 							cmd.run(partials.client)
 						},
 						#[cfg(feature = "composable")]
 						id if id.contains("composable") => {
 							let partials = new_partial::<
 								composable_runtime::RuntimeApi,
-								ComposableExecutor
+								ComposableExecutor,
 							>(&config, Option::None)?;
 							cmd.run(partials.client)
 						},

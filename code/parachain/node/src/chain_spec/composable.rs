@@ -3,7 +3,8 @@ use composable_runtime::GenesisConfig;
 
 use super::{Extensions, ParaId};
 
-// The block number until ed25519-dalek should be used for signature verification. Decided at 1_393_300
+// The block number until ed25519-dalek should be used for signature verification. Decided at
+// 1_393_300
 pub const DALEK_END_BLOCK: u32 = 1_681_300;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.

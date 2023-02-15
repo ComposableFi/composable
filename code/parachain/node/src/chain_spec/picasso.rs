@@ -3,7 +3,8 @@ use picasso_runtime::GenesisConfig;
 
 use super::{Extensions, ParaId};
 
-// The block number until ed25519-dalek should be used for signature verification. Decided at 1_788_000
+// The block number until ed25519-dalek should be used for signature verification. Decided at
+// 1_788_000
 pub const DALEK_END_BLOCK: u32 = 2_076_000;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.

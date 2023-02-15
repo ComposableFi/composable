@@ -17,12 +17,17 @@ use polkadot_service::CollatorPair;
 use sc_consensus::ImportQueue;
 use sc_network_common::service::NetworkBlock;
 // Substrate Imports
-use crate::{chain_spec, client::{Client, FullBackend, FullClient}, rpc, runtime::{
-	assets::ExtendWithAssetsApi, cosmwasm::ExtendWithCosmwasmApi,
-	crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
-	lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
-	staking_rewards::ExtendWithStakingRewardsApi, BaseHostRuntimeApis,
-}};
+use crate::{
+	chain_spec,
+	client::{Client, FullBackend, FullClient},
+	rpc,
+	runtime::{
+		assets::ExtendWithAssetsApi, cosmwasm::ExtendWithCosmwasmApi,
+		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
+		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+		staking_rewards::ExtendWithStakingRewardsApi, BaseHostRuntimeApis,
+	},
+};
 use sc_client_api::StateBackendFor;
 use sc_executor::NativeExecutionDispatch;
 use sc_service::{Configuration, PartialComponents, TaskManager};
@@ -106,8 +111,10 @@ pub fn new_chain_ops(
 	let components = match config.chain_spec.id() {
 		#[cfg(feature = "composable")]
 		chain if chain.contains("composable") => {
-			let components =
-				new_partial::<composable_runtime::RuntimeApi, ComposableExecutor>(config, Some(chain_spec::composable::DALEK_END_BLOCK))?;
+			let components = new_partial::<composable_runtime::RuntimeApi, ComposableExecutor>(
+				config,
+				Some(chain_spec::composable::DALEK_END_BLOCK),
+			)?;
 			(
 				Arc::new(Client::from(components.client)),
 				components.backend,
@@ -117,7 +124,8 @@ pub fn new_chain_ops(
 		},
 		#[cfg(feature = "dali")]
 		chain if chain.contains("dali") => {
-			let components = new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(config, Option::None)?;
+			let components =
+				new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(config, Option::None)?;
 			(
 				Arc::new(Client::from(components.client)),
 				components.backend,
@@ -126,7 +134,10 @@ pub fn new_chain_ops(
 			)
 		},
 		chain if chain.contains("picasso") => {
-			let components = new_partial::<picasso_runtime::RuntimeApi, PicassoExecutor>(config, Some(chain_spec::picasso::DALEK_END_BLOCK))?;
+			let components = new_partial::<picasso_runtime::RuntimeApi, PicassoExecutor>(
+				config,
+				Some(chain_spec::picasso::DALEK_END_BLOCK),
+			)?;
 			(
 				Arc::new(Client::from(components.client)),
 				components.backend,
@@ -197,7 +208,10 @@ where
 
 	use sc_client_api::ExecutorProvider;
 	client.execution_extensions().set_extensions_factory(
-		sc_client_api::execution_extensions::ExtensionBeforeBlock::<crate::client::Block, sp_io::UseDalekExt>::new(dalek_end_block.unwrap_or(0))
+		sc_client_api::execution_extensions::ExtensionBeforeBlock::<
+			crate::client::Block,
+			sp_io::UseDalekExt,
+		>::new(dalek_end_block.unwrap_or(0)),
 	);
 	let telemetry_worker_handle = telemetry.as_ref().map(|(worker, _)| worker.handle());
 
@@ -243,35 +257,38 @@ pub async fn start_node(
 	collator_options: CollatorOptions,
 	id: ParaId,
 ) -> sc_service::error::Result<TaskManager> {
-	let task_manager =
-		match config.chain_spec.id() {
-			#[cfg(feature = "composable")]
-			chain if chain.contains("composable") => crate::service::start_node_impl::<
-				composable_runtime::RuntimeApi,
-				ComposableExecutor,
-			>(config, polkadot_config, collator_options, id,Some(chain_spec::composable::DALEK_END_BLOCK))
+	let task_manager = match config.chain_spec.id() {
+		#[cfg(feature = "composable")]
+		chain if chain.contains("composable") =>
+			crate::service::start_node_impl::<composable_runtime::RuntimeApi, ComposableExecutor>(
+				config,
+				polkadot_config,
+				collator_options,
+				id,
+				Some(chain_spec::composable::DALEK_END_BLOCK),
+			)
 			.await?,
-			#[cfg(feature = "dali")]
-			chain if chain.contains("dali") =>
-				crate::service::start_node_impl::<dali_runtime::RuntimeApi, DaliExecutor>(
-					config,
-					polkadot_config,
-					collator_options,
-					id,
-					Option::None,
-				)
-				.await?,
-			chain if chain.contains("picasso") =>
-				crate::service::start_node_impl::<picasso_runtime::RuntimeApi, PicassoExecutor>(
-					config,
-					polkadot_config,
-					collator_options,
-					id,
-					Some(chain_spec::picasso::DALEK_END_BLOCK),
-				)
-				.await?,
-			_ => panic!("Unknown chain_id: {}", config.chain_spec.id()),
-		};
+		#[cfg(feature = "dali")]
+		chain if chain.contains("dali") =>
+			crate::service::start_node_impl::<dali_runtime::RuntimeApi, DaliExecutor>(
+				config,
+				polkadot_config,
+				collator_options,
+				id,
+				Option::None,
+			)
+			.await?,
+		chain if chain.contains("picasso") =>
+			crate::service::start_node_impl::<picasso_runtime::RuntimeApi, PicassoExecutor>(
+				config,
+				polkadot_config,
+				collator_options,
+				id,
+				Some(chain_spec::picasso::DALEK_END_BLOCK),
+			)
+			.await?,
+		_ => panic!("Unknown chain_id: {}", config.chain_spec.id()),
+	};
 
 	Ok(task_manager)
 }
