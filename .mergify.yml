@@ -36,3 +36,18 @@ pull_request_rules:
       queue:
         priority: high
         name: default
+  # Reduce reviewers for subsquid since QA tests it vigorously anyway
+  - name: Automatic merge on approval (Subsquid)
+    conditions:
+      - and:
+          - "#approved-reviews-by>=1"
+          - approved-reviews-by=@ComposableFi/blockchain-integrations
+          - "#review-threads-unresolved=0"
+      - base=main
+      - files~=^subsquid\/
+      - branch-protection-review-decision=APPROVED
+
+    actions:
+      queue:
+        priority: high
+        name: default
