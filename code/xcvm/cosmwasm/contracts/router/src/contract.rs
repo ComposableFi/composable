@@ -17,7 +17,7 @@ use cw_utils::ensure_from_older_version;
 use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
 use cw_xcvm_common::{
 	router::ExecuteMsg,
-	shared::{decode_base64, BridgeMsg},
+	shared::{decode_base64, parse_instantiated_contract_address, BridgeMsg},
 };
 use cw_xcvm_interpreter::contract::{
 	XCVM_INTERPRETER_EVENT_DATA_ORIGIN, XCVM_INTERPRETER_EVENT_PREFIX,
@@ -146,7 +146,7 @@ fn transfer_from_user(
 				transfers.push(Cw20Contract(cw20_address).call(Cw20ExecuteMsg::TransferFrom {
 					owner: user.to_string(),
 					recipient: self_address.to_string(),
-					amount: amount.clone().into(),
+					amount: (*amount).into(),
 				})?),
 		}
 	}
@@ -175,13 +175,13 @@ fn handle_bridge_forward(
 			match reference {
 				AssetReference::Native { denom } => Ok(BankMsg::Send {
 					to_address: config.gateway_address.clone().into(),
-					amount: vec![Coin { denom, amount: amount.clone().into() }],
+					amount: vec![Coin { denom, amount: (*amount).into() }],
 				}
 				.into()),
 				AssetReference::Virtual { cw20_address } =>
 					Cw20Contract(cw20_address).call(Cw20ExecuteMsg::Transfer {
 						recipient: config.gateway_address.clone().into(),
-						amount: amount.clone().into(),
+						amount: (*amount).into(),
 					}),
 			}
 		})
@@ -209,18 +209,11 @@ fn handle_set_interpreter_security(
 	// call to the router that does it for him.
 	ensure_interpreter(&deps, &info.sender, interpreter_origin.clone())?;
 
-	match INTERPRETERS.load(deps.storage, interpreter_origin.clone()) {
-		Ok(Interpreter { address, .. }) => INTERPRETERS.save(
-			deps.storage,
-			interpreter_origin.clone(),
-			&Interpreter { address, security },
-		),
-		Err(_) => INTERPRETERS.save(
-			deps.storage,
-			interpreter_origin.clone(),
-			&Interpreter { address: None, security },
-		),
-	}?;
+	INTERPRETERS.update::<_, ContractError>(
+		deps.storage,
+		interpreter_origin.clone(),
+		|interpreter| Ok(Interpreter { address: interpreter.and_then(|i| i.address), security }),
+	)?;
 
 	Ok(Response::default().add_event(
 		Event::new(XCVM_ROUTER_EVENT_PREFIX)
@@ -312,7 +305,7 @@ fn handle_execute_program(
 			let self_call_message: CosmosMsg = wasm_execute(
 				env.contract.address,
 				&ExecuteMsg::ExecuteProgramPrivileged {
-					call_origin: call_origin.clone(),
+					call_origin,
 					salt: interpreter_origin.salt,
 					program,
 					assets,
@@ -379,23 +372,7 @@ pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
 
 fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 	let response = msg.result.into_result().map_err(StdError::generic_err)?;
-	let interpreter_address = {
-		// Catch the default `instantiate` event which contains `_contract_address` attribute that
-		// has the instantiated contract's address
-		let instantiate_event = response
-			.events
-			.iter()
-			.find(|event| event.ty == "instantiate")
-			.ok_or(StdError::not_found("instantiate event not found"))?;
-		deps.api.addr_validate(
-			&instantiate_event
-				.attributes
-				.iter()
-				.find(|attr| &attr.key == "_contract_address")
-				.ok_or(StdError::not_found("_contract_address attribute not found"))?
-				.value,
-		)?
-	};
+	let interpreter_address = parse_instantiated_contract_address(deps.as_ref(), &response.events)?;
 
 	let interpreter_origin = {
 		// Interpreter provides `network_id, user_id` pair as an event for the router to know which
@@ -404,34 +381,29 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 			.events
 			.iter()
 			.find(|event| event.ty.starts_with(&format!("wasm-{}", XCVM_INTERPRETER_EVENT_PREFIX)))
-			.ok_or(StdError::not_found("interpreter event not found"))?;
+			.ok_or_else(|| StdError::not_found("interpreter event not found"))?;
 
 		decode_base64::<_, InterpreterOrigin>(
 			interpreter_event
 				.attributes
 				.iter()
-				.find(|attr| &attr.key == XCVM_INTERPRETER_EVENT_DATA_ORIGIN)
-				.ok_or(StdError::not_found("no data is returned from 'xcvm_interpreter'"))?
+				.find(|attr| attr.key == XCVM_INTERPRETER_EVENT_DATA_ORIGIN)
+				.ok_or_else(|| StdError::not_found("no data is returned from 'xcvm_interpreter'"))?
 				.value
 				.as_str(),
 		)?
 	};
 
-	match INTERPRETERS.load(deps.storage, interpreter_origin.clone()) {
-		Ok(Interpreter { security, .. }) => INTERPRETERS.save(
-			deps.storage,
-			interpreter_origin,
-			&Interpreter { address: Some(interpreter_address), security },
-		)?,
-		Err(_) => INTERPRETERS.save(
-			deps.storage,
-			interpreter_origin,
-			&Interpreter {
-				security: BridgeSecurity::Deterministic,
-				address: Some(interpreter_address),
-			},
-		)?,
-	}
+	// Interpreter security cannot be set prior to instantiation for now, and it is set to
+	// `Deterministic` by default.
+	INTERPRETERS.save(
+		deps.storage,
+		interpreter_origin,
+		&Interpreter {
+			address: Some(interpreter_address),
+			security: BridgeSecurity::Deterministic,
+		},
+	)?;
 
 	Ok(Response::new())
 }

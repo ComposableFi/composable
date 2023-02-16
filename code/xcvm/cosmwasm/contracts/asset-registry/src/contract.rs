@@ -8,8 +8,8 @@ use crate::{
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	to_binary, Binary, Deps, DepsMut, Env, Event, MessageInfo, QuerierWrapper, Response, StdResult,
-	WasmQuery,
+	to_binary, Addr, Binary, Deps, DepsMut, Env, Event, MessageInfo, QuerierWrapper, Response,
+	StdResult, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw_utils::ensure_from_older_version;
@@ -40,14 +40,11 @@ pub fn execute(
 	info: MessageInfo,
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-	if info.sender == ADMIN.load(deps.storage)? {
-		match msg {
-			ExecuteMsg::RegisterAsset { asset_id, reference } =>
-				handle_register_asset(deps, asset_id, reference),
-			ExecuteMsg::UnregisterAsset { asset_id } => handle_unregister_asset(deps, asset_id),
-		}
-	} else {
-		Err(ContractError::NotAuthorized)
+	ensure_admin(deps.as_ref(), &info.sender)?;
+	match msg {
+		ExecuteMsg::RegisterAsset { asset_id, reference } =>
+			handle_register_asset(deps, asset_id, reference),
+		ExecuteMsg::UnregisterAsset { asset_id } => handle_unregister_asset(deps, asset_id),
 	}
 }
 
@@ -119,7 +116,16 @@ pub fn external_query_lookup_asset(
 		.map(|response| response.reference)
 }
 
+fn ensure_admin(deps: Deps, sender: &Addr) -> Result<(), ContractError> {
+	if *sender == ADMIN.load(deps.storage)? {
+		Ok(())
+	} else {
+		Err(ContractError::NotAuthorized)
+	}
+}
+
 #[cfg(test)]
+#[allow(clippy::disallowed_methods)]
 mod tests {
 	use super::*;
 	use cosmwasm_std::{
@@ -134,7 +140,7 @@ mod tests {
 
 		let sender = "sender";
 		let msg = InstantiateMsg { admin: sender.into() };
-		let info = mock_info(sender, &vec![]);
+		let info = mock_info(sender, &[]);
 
 		let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 		assert_eq!(0, res.messages.len());
@@ -146,7 +152,7 @@ mod tests {
 
 		let sender = "sender";
 		let msg = InstantiateMsg { admin: sender.into() };
-		let info = mock_info(sender, &vec![]);
+		let info = mock_info(sender, &[]);
 
 		let _ = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
@@ -201,7 +207,7 @@ mod tests {
 		let _ = execute(
 			deps.as_mut(),
 			mock_env(),
-			info.clone(),
+			info,
 			ExecuteMsg::RegisterAsset { asset_id: 4.into(), reference: addr4.clone() },
 		)
 		.unwrap();
@@ -213,13 +219,7 @@ mod tests {
 		assert_eq!(ASSETS.load(&deps.storage, 4.into()).unwrap(), addr4);
 
 		// Finally make sure that there are two elements in the assets storage
-		assert_eq!(
-			ASSETS
-				.keys(&deps.storage, None, None, Order::Ascending)
-				.collect::<Vec<_>>()
-				.len(),
-			2
-		);
+		assert_eq!(ASSETS.keys(&deps.storage, None, None, Order::Ascending).count(), 2);
 	}
 
 	#[test]
@@ -228,7 +228,7 @@ mod tests {
 
 		let sender = "sender";
 		let msg = InstantiateMsg { admin: sender.into() };
-		let info = mock_info(sender, &vec![]);
+		let info = mock_info(sender, &[]);
 
 		let _ = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
@@ -237,7 +237,7 @@ mod tests {
 		let _ = execute(
 			deps.as_mut(),
 			mock_env(),
-			info.clone(),
+			info,
 			ExecuteMsg::RegisterAsset { asset_id, reference: addr1.clone() },
 		)
 		.unwrap();

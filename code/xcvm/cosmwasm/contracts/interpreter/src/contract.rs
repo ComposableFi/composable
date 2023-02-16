@@ -202,7 +202,7 @@ pub fn handle_execute_step(
 			IP_REGISTER.update::<_, ContractError>(deps.storage, |x| Ok(x + 1))?;
 			let next_instruction_pointer = instruction_pointer + 1;
 			let next_program =
-				XCVMProgram { tag: program.tag.clone(), instructions: instruction_iter.collect() };
+				XCVMProgram { tag: program.tag, instructions: instruction_iter.collect() };
 			Ok(response.add_message(wasm_execute(
 				env.contract.address,
 				&ExecuteMsg::ExecuteStep {
@@ -297,7 +297,7 @@ pub fn interpret_call(
 							} else {
 								let coin = deps
 									.querier
-									.query_balance(env.contract.address.clone(), denom.clone())?;
+									.query_balance(env.contract.address.clone(), denom)?;
 								balance
 									.amount
 									.apply(coin.amount.into())
@@ -414,7 +414,7 @@ pub fn interpret_spawn(
 					serde_json_wasm::to_string(&interpreter_origin.user_origin.user_id)
 						.map_err(|_| ContractError::DataSerializationError)?,
 				)
-				.add_attribute("networ_id", format!("{}", network)),
+				.add_attribute("network_id", format!("{}", network)),
 		))
 }
 
@@ -504,14 +504,14 @@ fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 			// other state changes are reverted.
 			RESULT_REGISTER.save(deps.storage, &Err(e.clone()))?;
 			let ip_register = IP_REGISTER.load(deps.storage)?;
-			Ok(Response::default().add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.failure").add_attribute("reason", e.to_string())).add_attribute("ip", format!("{}", ip_register)))
+			Ok(Response::default().add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.failure").add_attribute("reason", e)).add_attribute("ip", format!("{}", ip_register)))
 		}
 	}
 }
 
 fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 	let response = msg.result.into_result().map_err(StdError::generic_err)?;
-	RESULT_REGISTER.save(deps.storage, &Ok(response.clone()))?;
+	RESULT_REGISTER.save(deps.storage, &Ok(response))?;
 	Ok(Response::default())
 }
 

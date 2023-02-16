@@ -29,8 +29,8 @@ pub enum ExecuteMsg {
 		/// The interpreter is funded prior to execution
 		assets: Funds<Displayed<u128>>,
 	},
-	/// Set a certain bridge security requirement for a specific interpreter even it hasn't
-	/// instantiated yet
+	/// Set the bridge security of the interpreter. Only callable by the
+	/// interpreter.
 	SetInterpreterSecurity {
 		/// The interpreter origin we initiate this call for.
 		interpreter_origin: InterpreterOrigin,

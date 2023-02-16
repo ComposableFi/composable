@@ -287,7 +287,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::<()>::Bank(send_msg.clone())).map_err(|_| ())?;
+			serde_json::to_string(&FlatCosmosMsg::<()>::Bank(send_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 

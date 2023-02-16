@@ -22,7 +22,10 @@ use cw2::set_contract_version;
 use cw20::Cw20ExecuteMsg;
 use cw_utils::ensure_from_older_version;
 use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
-use cw_xcvm_common::{gateway::ExecuteMsg, shared::BridgeMsg};
+use cw_xcvm_common::{
+	gateway::ExecuteMsg,
+	shared::{parse_instantiated_contract_address, BridgeMsg},
+};
 use cw_xcvm_utils::{DefaultXCVMPacket, DefaultXCVMProgram};
 use xcvm_core::{
 	BridgeProtocol, BridgeSecurity, CallOrigin, Displayed, Funds, InterpreterOrigin, NetworkId,
@@ -184,13 +187,11 @@ pub fn ibc_channel_close(
 	msg: IbcChannelCloseMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
 	let channel = msg.channel();
-	match IBC_CHANNEL_NETWORK.load(deps.storage, channel.endpoint.channel_id.clone()) {
-		Ok(channel_network) => {
-			IBC_CHANNEL_NETWORK.remove(deps.storage, channel.endpoint.channel_id.clone());
-			IBC_NETWORK_CHANNEL.remove(deps.storage, channel_network);
-		},
-		// Nothing to do, the channel might have never been registered to a network.
-		Err(_) => {},
+	if let Ok(channel_network) =
+		IBC_CHANNEL_NETWORK.load(deps.storage, channel.endpoint.channel_id.clone())
+	{
+		IBC_CHANNEL_NETWORK.remove(deps.storage, channel.endpoint.channel_id.clone());
+		IBC_NETWORK_CHANNEL.remove(deps.storage, channel_network);
 	}
 	IBC_CHANNEL_INFO.remove(deps.storage, channel.endpoint.channel_id.clone());
 	// TODO: are all the in flight packets timed out in this case? if not, we need to unescrow
@@ -328,7 +329,7 @@ pub fn handle_batch_reply(msg: Reply) -> Result<Response, ContractError> {
 				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
 					.add_attribute("action", "receive")
 					.add_attribute("result", "failure")
-					.add_attribute("reason", format!("{}", e)),
+					.add_attribute("reason", e),
 			)
 			.set_data(XCVMAck::KO)),
 	}
@@ -420,6 +421,7 @@ fn unescrow_assets(
 		.collect::<Result<Vec<_>, _>>()
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn handle_bridge(
 	deps: DepsMut,
 	info: MessageInfo,
@@ -475,21 +477,7 @@ pub fn handle_bridge(
 
 fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> Result<Response, ContractError> {
 	let response = msg.result.into_result().map_err(StdError::generic_err)?;
-	let router_address = {
-		let instantiate_event = response
-			.events
-			.iter()
-			.find(|event| event.ty == "instantiate")
-			.ok_or(StdError::not_found("instantiate event not found"))?;
-		deps.api.addr_validate(
-			&instantiate_event
-				.attributes
-				.iter()
-				.find(|attr| &attr.key == "_contract_address")
-				.ok_or(StdError::not_found("_contract_address attribute not found"))?
-				.value,
-		)?
-	};
+	let router_address = parse_instantiated_contract_address(deps.as_ref(), &response.events)?;
 	ROUTER.save(deps.storage, &router_address)?;
 	Ok(Response::default())
 }
