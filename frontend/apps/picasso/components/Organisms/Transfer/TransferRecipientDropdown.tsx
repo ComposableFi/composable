@@ -17,6 +17,7 @@ function attachNetworkIconToItems(network: "kusama" | "picasso") {
     });
   };
 }
+
 function prependEmpty(
   items: Array<{
     disabled?: boolean;
@@ -35,6 +36,7 @@ function prependEmpty(
     ...items,
   ];
 }
+
 function composeOptions(
   items: Array<{ address: string; name: string; icon: string }>
 ): Array<{ value: string; label: string; icon: string }> {

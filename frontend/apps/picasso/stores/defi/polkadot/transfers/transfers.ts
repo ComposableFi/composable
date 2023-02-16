@@ -359,7 +359,7 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
             get().transfers.multiAsset,
             fee,
             get().transfers.destinationMultiLocation,
-            api.createType("u64", 90000000000)
+            "Unlimited"
           );
         }
 
@@ -368,7 +368,7 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
           get().transfers.multiAsset,
           get().transfers.getTransferAmount(api),
           get().transfers.destinationMultiLocation,
-          destWeight,
+          "Unlimited",
         ];
         return transferExtrinsic(...args) as SubmittableExtrinsic<"promise">;
       } catch {
