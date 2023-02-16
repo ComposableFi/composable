@@ -34,7 +34,6 @@
           cp . $out --recursive
         '';
         # https://app.clickup.com/t/3w8y83f
-        # cannot use fix because of https://github.com/serokell/nix-npm-buildpackage/pull/54#issuecomment-1254908364
         __noChroot = true;
       };
 
@@ -48,7 +47,11 @@
           inherit name;
           runtimeInputs = [ pkgs.nodejs paritytech-zombienet ] ++ runtimeDeps;
           text = ''
-            export DEBUG="zombie*"
+            ACTIONS_RUNNER_DEBUG=''${ACTIONS_RUNNER_DEBUG:-false} 
+            LEVEL=''${1:-error}
+            if [[ $LEVEL = "debug" ]] || [[ $ACTIONS_RUNNER_DEBUG = 'true' ]] ;then
+              export DEBUG="zombie*"
+            fi
             if [[ -d /tmp ]];
             then 
               echo "using /tmp"
