@@ -155,6 +155,42 @@ found {event:#?}"#
 		assert_eq!(event_record.event, event.into());
 	}
 
+	/// Asserts that the outcome of an extrinsic is `Ok`, and that the specified events are emitted
+	/// in the order they're provided. Note that since events are appended to the end of their
+	/// storage, the list may seem "backwards"; later events are further down the list.
+	///
+	/// # Example
+	///
+	/// ```rust,ignore
+	/// assert_extrinsic_event::<Runtime>(
+	///     Pallet::extrinsic(),
+	///     [
+	///         pallet::Event::<Runtime>::SomethingHappenedFirst {
+	///             ..
+	///         },
+	///         pallet::Event::<Runtime>::SomethingElseHappenedLater {
+	///             ..
+	///         },
+	///     ],
+	/// );
+	fn assert_extrinsic_events<T, E>(
+		result: sp_std::result::Result<T, E>,
+		events: impl IntoIterator<Item = PalletEvent>,
+	) where
+		T: Debug,
+		E: Into<DispatchError> + Debug,
+	{
+		assert_ok!(result);
+
+		dbg!(frame_system::Pallet::<Self>::events());
+
+		let emitted_pallet_events = Self::pallet_events();
+
+		for (found, expected) in emitted_pallet_events.zip(events) {
+			assert_eq!(expected, found);
+		}
+	}
+
 	/// Asserts that the outcome of an extrinsic is `Ok`, and that the last event is the specified
 	/// event.
 	///

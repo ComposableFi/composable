@@ -2425,6 +2425,8 @@ fn zero_penalty_no_multiplier_doesnt_slash() {
 #[test]
 fn extend_duration_works() {
 	new_test_ext().execute_with(|| {
+		init_logger();
+
 		next_block::<StakingRewards, Test>();
 
 		create_rewards_pool_and_assert::<Test>(RewardRateBasedIncentive {
@@ -2447,8 +2449,8 @@ fn extend_duration_works() {
 			minimum_staking_amount: 100_000,
 		});
 
-		mint_assets([ALICE], [BTC::ID], BTC::units(100));
-		add_to_rewards_pot_and_assert::<Test>(ALICE, PICA::ID, BTC::ID, BTC::units(100), false);
+		mint_assets([ALICE], [BTC::ID], BTC::units(100_000));
+		add_to_rewards_pot_and_assert::<Test>(ALICE, PICA::ID, BTC::ID, BTC::units(100_000), false);
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
@@ -2459,18 +2461,28 @@ fn extend_duration_works() {
 		process_and_progress_blocks::<StakingRewards, Test>(5);
 
 		// extend to 2 minutes staked duration, keeping the same multiplier
-		Test::assert_extrinsic_event(
+		Test::assert_extrinsic_events(
 			StakingRewards::extend_stake_duration(
 				RuntimeOrigin::signed(BOB),
 				STAKING_FNFT_COLLECTION_ID,
 				stake_id,
 				StakeDurationExtendAmount::Duration { seconds: ONE_MINUTE },
 			),
-			crate::Event::<Test>::StakeDurationExtended {
-				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
-				fnft_instance_id: stake_id,
-				additional_duration: ONE_MINUTE,
-			},
+			[
+				crate::Event::<Test>::Claimed {
+					owner: BOB,
+					fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
+					fnft_instance_id: stake_id,
+					claimed_amounts: [(BTC::ID, BTC::units(1) * block_seconds(5))]
+						.into_iter()
+						.collect(),
+				},
+				crate::Event::<Test>::StakeDurationExtended {
+					fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
+					fnft_instance_id: stake_id,
+					additional_duration: ONE_MINUTE,
+				},
+			],
 		);
 
 		// half a minute in blocks
@@ -2489,7 +2501,9 @@ fn extend_duration_works() {
 				owner: BOB,
 				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
 				fnft_instance_id: stake_id,
-				claimed_amounts: BTreeMap::new(),
+				claimed_amounts: [(BTC::ID, BTC::units(1) * block_seconds(15))]
+					.into_iter()
+					.collect(),
 			},
 		);
 	});

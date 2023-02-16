@@ -1856,6 +1856,10 @@ pub(crate) fn claim_of_stake<T: Config>(
 	} else {
 		let inflation = stake.reductions.get(reward_asset_id).copied().unwrap_or_else(Zero::zero);
 
+		dbg!(stake.share);
+		dbg!(total_shares);
+		dbg!(inflation);
+
 		// REVIEW(benluelo): Review expected rounding behaviour, possibly switching to the following
 		// implementation (or something similar):
 		// Perbill::from_rational(stake.share, total_issuance)
