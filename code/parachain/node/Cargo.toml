@@ -4,7 +4,7 @@ build = "build.rs"
 edition = "2021"
 homepage = "https://composable.finance"
 name = "composable-node"
-version = "2.10005.0"
+version = "2.10009.0"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
