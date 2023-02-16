@@ -1829,10 +1829,18 @@ pub(crate) fn claim_of_stake<T: Config>(
 	let total_shares: T::Balance =
 		<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(*share_asset_id);
 
+	log::info!("total_shares = {total_shares:?}");
+
 	let claim = if total_shares.is_zero() {
 		T::Balance::zero()
 	} else {
-		let inflation = stake.reductions.get(reward_asset_id).copied().unwrap_or_else(Zero::zero);
+		let inflation = stake
+			.reductions
+			.get(reward_asset_id)
+			.copied()
+			.defensive_unwrap_or_else(Zero::zero);
+
+		log::info!("inflation = {inflation:?}");
 
 		// REVIEW(benluelo): Review expected rounding behaviour, possibly switching to the following
 		// implementation (or something similar):

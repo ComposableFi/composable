@@ -36,6 +36,7 @@ where
 	>,
 	<Runtime as frame_system::Config>::Hash: From<[u8; 32]>,
 {
+	log::info!(target: "block", "progressing {} blocks", blocks_to_process);
 	(0..blocks_to_process).for_each(|_| {
 		next_block::<Pallet, Runtime>();
 		cb();

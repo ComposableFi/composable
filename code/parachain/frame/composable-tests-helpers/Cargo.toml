@@ -9,6 +9,8 @@ version = "1.0.0"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+log = { version = "0.4", default-features = false }
+
 composable-support = { default-features = false, path = "../composable-support" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
@@ -31,6 +33,7 @@ version = "3.0.0"
 default = ["std"]
 std = [
   "serde",
+  "log/std",
   "codec/std",
   "sp-runtime/std",
   "scale-info/std",
