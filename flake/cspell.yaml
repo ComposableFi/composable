@@ -78,7 +78,6 @@ ignorePaths:
   - "code/utils/price-feed/src/feed/composable_api.rs"
   - "code/xcvm/diagrams"
   - "subsquid/db/migrations"
-  - "scripts/polkadot-launch/initialization/src/interfaces/"
   - "scripts/github/picasso/"
   - "frame/airdrop/index.html"
   - "code/integration-tests/local-integration-tests/README.md"

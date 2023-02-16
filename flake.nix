@@ -43,7 +43,6 @@
         ./inputs/cosmos/cosmwasm.nix
         ./inputs/cosmos/gex.nix
         ./inputs/CosmWasm/wasmvm.nix
-        ./inputs/paritytech/polkadot-launch.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/statemine.nix
         ./inputs/paritytech/zombienet/flake-module.nix

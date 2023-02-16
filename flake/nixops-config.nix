@@ -1,7 +1,8 @@
-{ self, withSystem, devnetTools, ... }: {
+{ self, withSystem, inputs, lib, options, flake-parts-lib, specialArgs, config
+}: {
   flake = {
     nixopsConfigurations = withSystem "x86_64-linux"
-      ({ config, self', inputs', pkgs, devnetTools, ... }:
+      ({ config, self', inputs', pkgs, devnetTools, this, ... }:
         let
           getStringEnvOrDefault = name: default:
             if (builtins.getEnv name) != "" then
@@ -25,17 +26,9 @@
         in {
           default = let nixpkgs = self.inputs.nixpkgs;
           in import ../devnets/devnet.nix {
-            inherit nixpkgs gce-input domainSuffix certificateEmail;
-            devnet-dali = pkgs.callPackage devnetTools.mk-devnet {
-              inherit (self'.packages)
-                polkadot-launch composable-node polkadot-node;
-              chain-spec = "dali-dev";
-            };
-            devnet-picasso = pkgs.callPackage devnetTools.mk-devnet {
-              inherit (self'.packages)
-                polkadot-launch composable-node polkadot-node;
-              chain-spec = "picasso-dev";
-            };
+            inherit nixpkgs gce-input domainSuffix certificateEmail pkgs;
+            devnet-dali = this.dali-dev-ops;
+            devnet-picasso = this.picasso-dev-ops;
             docs = self'.packages.docs-static;
             rev = builtins.getEnv "DEPLOY_REVISION";
           };
