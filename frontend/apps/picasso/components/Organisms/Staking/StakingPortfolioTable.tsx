@@ -4,7 +4,6 @@ import {
 } from "@/stores/defi/polkadot/stakingRewards/slice";
 import {
   Box,
-  Button,
   Table,
   TableBody,
   TableCell,
@@ -12,24 +11,14 @@ import {
   TableHead,
   TableRow,
   Typography,
-  useTheme,
 } from "@mui/material";
 import { TokenAsset } from "@/components";
-import { Add } from "@mui/icons-material";
-import { useMemo, useState } from "react";
-import { RenewModal } from "@/components/Organisms/Staking/RenewModal";
+import { useMemo } from "react";
 import { useExpiredPortfolio } from "@/components/Organisms/Staking/useExpiredPortfolio";
 import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscovery";
 import { getPicassoTokenById } from "@/stores/defi/polkadot/tokens/utils";
 
-export const PortfolioRow = ({
-  portfolio,
-  onSelectToken,
-}: {
-  portfolio: PortfolioItem;
-  onSelectToken: (collectionId: string, instanceId: string) => void;
-}) => {
-  const theme = useTheme();
+export const PortfolioRow = ({ portfolio }: { portfolio: PortfolioItem }) => {
   const { isExpired, expiredDate } = useExpiredPortfolio(portfolio);
   const picaPrice = usePicaPriceDiscovery();
   const stakedPrice = useMemo(() => {
@@ -75,23 +64,6 @@ export const PortfolioRow = ({
           {`${portfolio.multiplier.div(100).toFixed(1)}X`}
         </Typography>
       </TableCell>
-      <TableCell>
-        <Button
-          variant="outlined"
-          size="small"
-          sx={{
-            minWidth: theme.spacing(5),
-            width: theme.spacing(5),
-            height: theme.spacing(5),
-            padding: 0,
-          }}
-          onClick={() => {
-            onSelectToken(portfolio.collectionId, portfolio.instanceId);
-          }}
-        >
-          <Add />
-        </Button>
-      </TableCell>
     </TableRow>
   );
 };
@@ -101,43 +73,23 @@ export const StakingPortfolioTable = ({
 }: {
   stakingPortfolio: StakingPortfolio;
 }) => {
-  const [selectedToken, setSelectedToken] = useState<[string, string]>([
-    "",
-    "",
-  ]);
-  const [isRenewModalOpen, setIsRenewModalOpen] = useState<boolean>(false);
   return (
-    <>
-      <TableContainer component={Box}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>fNFTID</TableCell>
-              <TableCell>Locked $PICA</TableCell>
-              <TableCell>Locked until</TableCell>
-              <TableCell>Multiplier</TableCell>
-              <TableCell></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {Array.from(stakingPortfolio.entries()).map(([key, portfolio]) => (
-              <PortfolioRow
-                key={key}
-                portfolio={portfolio}
-                onSelectToken={(collectionId, instanceId) => {
-                  setSelectedToken([collectionId, instanceId]);
-                  setIsRenewModalOpen(true);
-                }}
-              />
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <RenewModal
-        open={isRenewModalOpen}
-        selectedToken={selectedToken}
-        onClose={() => setIsRenewModalOpen(false)}
-      />
-    </>
+    <TableContainer component={Box}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>fNFTID</TableCell>
+            <TableCell>Locked $PICA</TableCell>
+            <TableCell>Locked until</TableCell>
+            <TableCell>Multiplier</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {Array.from(stakingPortfolio.entries()).map(([key, portfolio]) => (
+            <PortfolioRow key={key} portfolio={portfolio} />
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };
