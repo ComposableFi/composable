@@ -19,9 +19,9 @@ import config from "@/constants/config";
 type StakeFormProps = {
   amount: any;
   pica: any;
-  valid: () => void;
   setter: any;
   value: any;
+  errorMsg: string;
   options: any;
   picaRewardPool: any;
   duration: any;
@@ -40,9 +40,9 @@ type StakeFormProps = {
 export function StakeForm({
   amount,
   pica,
-  valid,
   setter,
   value,
+  errorMsg,
   options,
   picaRewardPool,
   duration,
@@ -67,7 +67,6 @@ export function StakeForm({
       <Stack gap={1.5}>
         <StakeInputLabel amount={amount} pica={pica} />
         <BigNumberInput
-          isValid={valid}
           setter={setter}
           maxValue={amount}
           value={value}
@@ -82,6 +81,11 @@ export function StakeForm({
           maxDecimals={pica.decimals.picasso ?? undefined}
           disabled={isPendingStake}
         />
+        {errorMsg.length > 0 && (
+          <Typography variant="caption" color="error">
+            {errorMsg}
+          </Typography>
+        )}
       </Stack>
       {/*  Radiobutton groups*/}
       <LockPeriodInput

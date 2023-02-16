@@ -18,8 +18,14 @@ import * as O from "fp-ts/Option";
 import { StakeForm } from "@/components/Organisms/Staking/StakeForm";
 
 export const StakeTabContent = () => {
-  const { isFormValid, lockPeriod, setLockPeriod, amount, setAmount } =
-    useStakeForm((state) => state);
+  const {
+    isFormValid,
+    lockPeriod,
+    setLockPeriod,
+    amount,
+    setAmount,
+    validationMessage,
+  } = useStakeForm((state) => state);
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const { hasRewardPools, picaRewardPool, balance, pica } = useStakingRewards();
   const executor = useExecutor();
@@ -69,9 +75,9 @@ export const StakeTabContent = () => {
     <StakeForm
       amount={balance}
       pica={pica}
-      valid={setValidation}
       setter={setAmount}
       value={amount}
+      errorMsg={validationMessage}
       options={options}
       picaRewardPool={picaRewardPool}
       duration={lockPeriod}

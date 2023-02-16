@@ -10,6 +10,7 @@ type BigNumberInputProps = InputProps & {
   setter: (value: BigNumber) => any;
   maxDecimals?: number;
   maxValue: BigNumber;
+  errorMsg?: string;
   onChange?: (value: BigNumber) => any;
 };
 
@@ -19,6 +20,7 @@ export const BigNumberInput: FC<BigNumberInputProps> = ({
   setter,
   maxDecimals,
   maxValue,
+  errorMsg,
   disabled = false,
   ...restInputProps
 }) => {
@@ -64,7 +66,7 @@ export const BigNumberInput: FC<BigNumberInputProps> = ({
           sx={{ color: theme.palette.error.main, mt: 2 }}
           variant="subtitle1"
         >
-          Please insert a correct amount
+          {errorMsg ? errorMsg : "Please insert a correct amount"}
         </Typography>
       )}
     </>
