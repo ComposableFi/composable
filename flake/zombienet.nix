@@ -14,7 +14,7 @@
         , para-id ? 2087 }:
         mkZombienet {
           relaychain = relaychainBase
-            // (pkgs.lib.optionalAttrs (chain != null) {
+            // (pkgs.lib.optionalAttrs (relay_ws_port != null) {
               ws_port = relay_ws_port;
             });
           parachains = [

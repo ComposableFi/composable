@@ -47,7 +47,11 @@
           inherit name;
           runtimeInputs = [ pkgs.nodejs paritytech-zombienet ] ++ runtimeDeps;
           text = ''
-            export DEBUG="zombie*"
+            ACTIONS_RUNNER_DEBUG=''${ACTIONS_RUNNER_DEBUG:-false} 
+            LEVEL=''${1:-error}
+            if [[ $LEVEL = "debug" ]] || [[ $ACTIONS_RUNNER_DEBUG = 'true' ]] ;then
+              export DEBUG="zombie*"
+            fi
             if [[ -d /tmp ]];
             then 
               echo "using /tmp"
