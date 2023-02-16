@@ -2,6 +2,7 @@ import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { hexToU8a } from "@polkadot/util";
+import { RequestInfo, RequestInit } from "node-fetch";
 import BigNumber from "bignumber.js";
 import { EntityManager, LessThan, MoreThan } from "typeorm";
 import { divideBigInts, encodeAccount, getHistoricalCoingeckoPrice } from "./utils";
@@ -24,6 +25,9 @@ import {
   StakingRewardsPool
 } from "./model";
 import { DAY_IN_MS } from "./constants";
+
+const fetch = (url: RequestInfo, init?: RequestInit) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(url, init));
 
 export async function getLatestPoolByPoolId(store: Store, poolId: bigint): Promise<PabloPool | undefined> {
   return store.get<PabloPool>(PabloPool, {
@@ -474,6 +478,30 @@ export async function getOrCreateHistoricalAssetPrice(
   }
 
   return price;
+}
+
+/**
+ * Gets current prices from Coingecko
+ * @param ctx
+ */
+export async function getCurrentAssetPrices(
+  ctx: EventHandlerContext<Store> | EntityManager
+): Promise<Record<string, number> | undefined> {
+  const endpoint = "https://api.coingecko.com/api/v3/simple/price?ids=tether%2Ckusama&vs_currencies=usd";
+
+  const res = await fetch(endpoint);
+  if (!res.ok) {
+    throw new Error("Failed to fetch prices from coingecko");
+  }
+  const json: { kusama: { usd: number }; tether: { usd: number } } = await res.json();
+
+  const picaKsmSpotPrice = await getSpotPrice(ctx, "1", "4", "2");
+
+  return {
+    "1": json.kusama.usd / picaKsmSpotPrice,
+    "4": json.kusama.usd,
+    "130": json.tether.usd
+  };
 }
 
 export async function getNormalizedPoolTVL(
