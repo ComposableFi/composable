@@ -68,7 +68,33 @@
           };
         in zombieTools.writeZombienetShellApplication name config;
 
+      dali-dev-config =
+        zombienet-rococo-local-composable-config { chain = "dali-dev"; };
+
+      zombienet-rococo-local-dali-dev =
+        zombieTools.writeZombienetShellApplication
+        "zombienet-rococo-local-dali-dev" dali-dev-config;
+
+      dali-dev-ops = (zombieTools.zombienet-to-ops dali-dev-config) // {
+        script = zombienet-rococo-local-dali-dev;
+        chain-spec = "dali-dev";
+      };
+
+      picasso-dev-ops = (zombieTools.zombienet-to-ops picasso-dev-config) // {
+        script = zombienet-rococo-local-picasso-dev;
+        chain-spec = "picasso-dev";
+      };
+
+      picasso-dev-config =
+        zombienet-rococo-local-composable-config { chain = "picasso-dev"; };
+
+      zombienet-rococo-local-picasso-dev =
+        zombieTools.writeZombienetShellApplication
+        "zombienet-rococo-local-picasso-dev" picasso-dev-config;
+
     in with prelude; {
+      _module.args.this = rec { inherit picasso-dev-ops dali-dev-ops; };
+
       packages = rec {
         default = devnet-dali;
         devnet-dali = zombienet-rococo-local-dali-dev;
@@ -80,15 +106,8 @@
         zombienet-picasso-complete =
           mk-zombienet-all "devnet-picasso-complete" "picasso-dev";
 
-        zombienet-rococo-local-dali-dev =
-          zombieTools.writeZombienetShellApplication
-          "zombienet-rococo-local-dali-dev"
-          (zombienet-rococo-local-composable-config { });
-
-        zombienet-rococo-local-picasso-dev =
-          zombieTools.writeZombienetShellApplication
-          "zombienet-rococo-local-picasso-dev"
-          (zombienet-rococo-local-composable-config { chain = "picasso-dev"; });
+        inherit zombienet-rococo-local-dali-dev
+          zombienet-rococo-local-picasso-dev;
 
         zombienet-rococo-local-composable-dev =
           zombieTools.writeZombienetShellApplication
