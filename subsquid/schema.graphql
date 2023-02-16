@@ -283,6 +283,7 @@ type PabloSwap @entity {
 type PabloAmount {
   assetId: String!
   amount: BigInt!
+  price: Float!
 }
 
 type PabloLiquidityAdded @entity {
