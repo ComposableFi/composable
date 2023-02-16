@@ -140,7 +140,7 @@ impl RemoteAssetRegistryInspect for SetupAfterRfc13 {
 
 	fn asset_to_remote(
 		_asset_id: Self::AssetId,
-	) -> std::option::Option<composable_traits::xcm::assets::XcmAssetLocation> {
+	) -> Option<composable_traits::xcm::assets::XcmAssetLocation> {
 		None
 	}
 
