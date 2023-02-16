@@ -5,7 +5,6 @@ import {
   useSigner,
 } from "substrate-react";
 import { DEFAULT_NETWORK_ID, toChainUnits } from "@/defi/utils";
-import _ from "lodash";
 import { useCallback } from "react";
 import BigNumber from "bignumber.js";
 import { useSnackbar } from "notistack";
@@ -58,7 +57,7 @@ export function useStake({ poolId, amount, durationPreset }: StakeProps) {
 
       if (parachainApi && selectedAccount) {
         /**
-         * To update UI with latest stake 
+         * To update UI with latest stake
          * positions delay intentionally added
          * as subsquid doesn't process the event
          * immediately it receives, can be shortened

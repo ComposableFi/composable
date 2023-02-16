@@ -2,6 +2,7 @@ import BigNumber from "bignumber.js";
 import { StoreSlice } from "@/stores/types";
 import { StakingPosition } from "@/apollo/queries/stakingRewards/stakingPositions";
 import { u128 } from "@polkadot/types-codec";
+import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 
 export type RewardPool = {
   owner: string;
@@ -66,6 +67,10 @@ export type StakingRewardsSlice = {
   setMaxPICAShares: (v: BigNumber) => void;
   averageStakingLockTime: string;
   xPICAAPR: string;
+  stakingFee: {
+    assetId: TokenMetadata["id"];
+    fee: BigNumber;
+  };
 };
 export type ClaimableReward = { assetId: string; balance: BigNumber };
 export type ClaimableRewards = {
@@ -99,6 +104,10 @@ const initialState = {
   maximumPicaShares: new BigNumber(0),
   averageStakingLockTime: "0 days",
   xPICAAPR: "~",
+  stakingFee: {
+    assetId: "pica" as TokenMetadata["id"],
+    fee: new BigNumber(0),
+  },
 };
 
 export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (

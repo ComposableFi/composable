@@ -47,7 +47,7 @@ function aggregateRewards(time: Date) {
     const shouldShowNotification =
       getDiffInMinutes(time, when) > MINUTES_IN_WEEK;
 
-    if (shouldShowNotification) {
+    if (shouldShowNotification && claimableRewards[key]) {
       const picaRewards = claimableRewards[key]
         .filter((item) => item.assetId === "1")
         .reduce((acc, cur) => acc.plus(cur.balance), new BigNumber(0));
