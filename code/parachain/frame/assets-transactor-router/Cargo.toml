@@ -28,7 +28,7 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 # local
 composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
-assets-registry ={ package = "pallet-assets-registry", path = "../assets-registry", default-features = false }
+assets-registry = { package = "pallet-assets-registry", path = "../assets-registry", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
 
 # misc
