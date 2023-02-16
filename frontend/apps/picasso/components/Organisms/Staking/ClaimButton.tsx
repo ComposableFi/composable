@@ -12,6 +12,7 @@ import { subscanExtrinsicLink } from "shared";
 import { Button, CircularProgress } from "@mui/material";
 import { getClaimableAmount } from "@/stores/defi/polkadot/stakingRewards/accessor";
 import { useStore } from "@/stores/root";
+import RpcError from "@polkadot/rpc-provider/coder/error";
 
 export const ClaimButton = () => {
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
@@ -28,39 +29,52 @@ export const ClaimButton = () => {
   const claimable = useStore(getClaimableAmount);
   const onClaimButtonClick = () => {
     let snackBarKey: SnackbarKey | undefined = undefined;
-    claimAllPicaRewards(
-      parachainApi,
-      executor,
-      signer,
-      account?.address,
-      (txHash) => {
-        snackBarKey = enqueueSnackbar(`Claiming rewards`, {
-          description: "Processing information on chain.",
-          variant: "info",
-          isClosable: true,
-          persist: true,
-          url: subscanExtrinsicLink("picasso", txHash),
-        });
-      },
-      (txHash) => {
-        closeSnackbar(snackBarKey);
-        snackBarKey = enqueueSnackbar(`Claiming rewards`, {
-          description: "Successfully claimed rewards.",
-          variant: "success",
-          isClosable: true,
-          persist: true,
-          url: subscanExtrinsicLink("picasso", txHash),
-        });
-      },
-      (e) => {
-        closeSnackbar(snackBarKey);
-        snackBarKey = enqueueSnackbar(e, {
+    try {
+      claimAllPicaRewards(
+        parachainApi,
+        executor,
+        signer,
+        account?.address,
+        (txHash) => {
+          snackBarKey = enqueueSnackbar(`Claiming rewards`, {
+            description: "Processing information on chain.",
+            variant: "info",
+            isClosable: true,
+            persist: true,
+            url: subscanExtrinsicLink("picasso", txHash),
+          });
+        },
+        (txHash) => {
+          closeSnackbar(snackBarKey);
+          snackBarKey = enqueueSnackbar(`Claiming rewards`, {
+            description: "Successfully claimed rewards.",
+            variant: "success",
+            isClosable: true,
+            persist: true,
+            url: subscanExtrinsicLink("picasso", txHash),
+          });
+        },
+        (e) => {
+          closeSnackbar(snackBarKey);
+          snackBarKey = enqueueSnackbar(e, {
+            variant: "error",
+            isClosable: true,
+            persist: true,
+          });
+        }
+      );
+    } catch (e) {
+      if (e instanceof RpcError) {
+        enqueueSnackbar(e.name, {
+          description: e.message,
           variant: "error",
           isClosable: true,
           persist: true,
         });
+      } else {
+        console.error("Nope,", typeof e);
       }
-    );
+    }
   };
 
   return (

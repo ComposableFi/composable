@@ -13,7 +13,7 @@ export const StakingHighlights: FC = () => {
       <HighlightBox flexGrow={1} title={"xPICA APR"} value={maximumXPICAAPR} />
       <HighlightBox
         title={"Total $PICA deposited"}
-        value={totalPicaDeposited.toFormat()}
+        value={totalPicaDeposited.toFormat(0)}
         flexGrow={1}
       />
       <HighlightBox

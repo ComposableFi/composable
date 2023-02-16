@@ -1,19 +1,17 @@
 import { Modal, TokenAsset } from "@/components";
 import {
+  alpha,
   Box,
   Button,
-  Checkbox,
   CircularProgress,
-  FormControlLabel,
-  FormGroup,
   Paper,
   Slider,
   Stack,
   Typography,
+  useTheme,
 } from "@mui/material";
-import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import React, { FC, useMemo } from "react";
-import { callbackGate, formatNumber, subscanExtrinsicLink } from "shared";
+import { callbackGate, subscanExtrinsicLink } from "shared";
 import { usePicassoAccount } from "@/defi/polkadot/hooks";
 import {
   useExecutor,
@@ -30,35 +28,21 @@ import { getPicassoTokenById } from "@/stores/defi/polkadot/tokens/utils";
 import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 import { PortfolioItem } from "@/stores/defi/polkadot/stakingRewards/slice";
 import BigNumber from "bignumber.js";
+import { TokenWithUSD } from "@/components/Organisms/Staking/TokenWithUSD";
+import { StakeRemainingRelativeDate } from "@/components/Organisms/Staking/StakeRemainingRelativeDate";
+import { usePicaPriceDiscovery } from "@/defi/polkadot/hooks/usePicaPriceDiscovery";
 
 export const BurnModal: FC<{
   open: boolean;
   onClose: () => void;
   selectedToken: [string, string];
 }> = ({ open, onClose, selectedToken }) => {
-  const { stakingPortfolio } = useStakingRewards();
-  const shouldUnstakeAll = useStore(
-    (store) => store.ui.stakingRewards.shouldUnstakeAll
-  );
+  const { stakingPortfolio, pica } = useStakingRewards();
   const [fnftCollectionId, fnftInstanceId] = selectedToken;
 
   const currentPortfolio = stakingPortfolio.get(
     getFnftKey(fnftCollectionId, fnftInstanceId)
   );
-  const { isExpired } = useExpiredPortfolio(currentPortfolio);
-
-  const withdrawablePica = useMemo(() => {
-    if (!currentPortfolio) return 0;
-
-    if (!isExpired) {
-      return currentPortfolio.stake.minus(
-        currentPortfolio.unlockPenalty
-          .dividedBy(100)
-          .multipliedBy(currentPortfolio.stake)
-      );
-    }
-    return currentPortfolio.stake;
-  }, [currentPortfolio, isExpired]);
 
   if (selectedToken.join("").length === 0 || !currentPortfolio) {
     return null;
@@ -66,85 +50,23 @@ export const BurnModal: FC<{
   const shareAsset = getPicassoTokenById(currentPortfolio.shareAssetId);
   const initialPICA = currentPortfolio.stake;
 
+  if (!shareAsset) return null;
+
   return (
     <Modal open={open} dismissible onClose={onClose} maxWidth="md">
       <Stack gap={4}>
         <Typography variant="h5" textAlign="center" marginBottom={4}>
           Burn and unstake your position
         </Typography>
-        {shouldUnstakeAll && (
-          <Box
-            sx={{
-              flexDirection: {
-                sm: "column",
-                md: "row",
-              },
-            }}
-            display="flex"
-            width="100%"
-            alignItems="flex-start"
-            justifyContent="space-between"
-            gap={4}
-          >
-            <Stack gap={1.5} width="100%">
-              <TextWithTooltip
-                TypographyProps={{
-                  variant: "inputLabel",
-                }}
-                tooltip="Staked PICA that is not locked up and can be unstaked"
-              >
-                Withdrawable PICA
-              </TextWithTooltip>
-              <Paper sx={{ position: "relative" }}>
-                <Box
-                  sx={{
-                    position: "absolute",
-                    left: "1rem",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                  }}
-                >
-                  <TokenAsset tokenId={"pica"} iconOnly />
-                </Box>
-                <Typography variant="body2" textAlign="center">
-                  {withdrawablePica.toFixed()}
-                </Typography>
-              </Paper>
-            </Stack>
-            <Stack gap={1.5} width="100%">
-              <TextWithTooltip
-                TypographyProps={{
-                  variant: "inputLabel",
-                }}
-                tooltip="The initial staked PICA amount"
-              >
-                Initial PICA deposit
-              </TextWithTooltip>
-              <Paper sx={{ position: "relative" }}>
-                <Box
-                  sx={{
-                    position: "absolute",
-                    left: "1rem",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                  }}
-                >
-                  <TokenAsset tokenId={"pica"} iconOnly />
-                </Box>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  textAlign="center"
-                >
-                  {formatNumber(initialPICA)}
-                </Typography>
-              </Paper>
-            </Stack>
-          </Box>
-        )}
+        <CurrentPosition
+          xToken={shareAsset}
+          xTokenLabel={`${shareAsset.symbol} ${currentPortfolio.instanceId}`}
+          picaToken={pica}
+          portfolio={currentPortfolio}
+          stakedPrice={initialPICA}
+        />
         {shareAsset && (
           <PartialUnstakeSection
-            shareAsset={shareAsset}
             currentPortfolio={currentPortfolio}
             initialPICA={initialPICA}
           />
@@ -162,19 +84,14 @@ export const BurnModal: FC<{
 };
 
 const PartialUnstakeSection = ({
-  shareAsset,
   currentPortfolio,
   initialPICA,
 }: {
-  shareAsset: TokenMetadata;
   currentPortfolio: PortfolioItem;
   initialPICA: BigNumber;
 }) => {
-  const shouldUnstakeAll = useStore(
-    (store) => store.ui.stakingRewards.shouldUnstakeAll
-  );
-  const setUnstakeAll = useStore((store) => store.ui.setUnstakeAll);
-  const handleChange = (_: any, v: boolean) => setUnstakeAll(v);
+  const { pica } = useStakingRewards();
+  const picaPrice = usePicaPriceDiscovery();
   const ratio = useStore((store) => store.ui.stakingRewards.ratio);
   const setRatio = useStore((store) => store.ui.setRatio);
   const { isExpired } = useExpiredPortfolio(currentPortfolio);
@@ -184,97 +101,53 @@ const PartialUnstakeSection = ({
     const shouldHavePenalty = !isExpired && !currentPortfolio.multiplier.eq(1);
     return shouldHavePenalty
       ? postRatioAmount.minus(
-          currentPortfolio.unlockPenalty
-            .dividedBy(100)
-            .multipliedBy(postRatioAmount)
-        )
+        currentPortfolio.unlockPenalty
+          .dividedBy(100)
+          .multipliedBy(postRatioAmount)
+      )
       : postRatioAmount;
   }, [currentPortfolio, initialPICA, isExpired, ratio]);
+  const withdrawalPrice = partialWithdrawalAmount.multipliedBy(picaPrice);
 
   return (
     <Stack gap={4}>
-      {!shouldUnstakeAll && (
-        <>
-          <Stack gap={2}>
-            <TextWithTooltip
-              TypographyProps={{
-                variant: "inputLabel",
-              }}
-              tooltip="A portion of the fnft will be unstaked"
-            >
-              Withdrawal:
-            </TextWithTooltip>
-            <Slider
-              disabled={shouldUnstakeAll}
-              min={1}
-              max={99}
-              value={ratio}
-              onChange={(_, v) => {
-                if (typeof v === "number") setRatio(v);
-              }}
-              valueLabelFormat={(value) => {
-                return `${value}%`;
-              }}
-              valueLabelDisplay="on"
-            />
-          </Stack>
-          <Stack direction="row" gap={2} width="100%">
-            <Paper
-              sx={{
-                width: "100%",
-              }}
-            >
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-              >
-                <Typography variant="body2">
-                  <TokenAsset
-                    tokenId={shareAsset.id}
-                    label={`${shareAsset.symbol} ${currentPortfolio.instanceId}`}
-                  />
-                </Typography>
-                <Typography variant="inputLabel">
-                  {initialPICA
-                    .multipliedBy(100 - ratio)
-                    .div(100)
-                    .toFormat()}{" "}
-                  PICA
-                </Typography>
-              </Stack>
-            </Paper>
-            <Paper
-              sx={{
-                width: "100%",
-              }}
-            >
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-              >
-                <Typography variant="body2">Unstake amount:</Typography>
-                <Typography variant="inputLabel">
-                  {`${partialWithdrawalAmount.toFormat()} PICA`}
-                </Typography>
-              </Stack>
-            </Paper>
-          </Stack>
-        </>
-      )}
-      <FormGroup>
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={shouldUnstakeAll}
-              value={shouldUnstakeAll}
-              onChange={handleChange}
-            />
-          }
-          label="Unstake all"
+      <Stack gap={2}>
+        <Typography variant="inputLabel">
+          Select how much you would like to withdraw
+        </Typography>
+        <Typography variant="h6">{ratio}%</Typography>
+        <Slider
+          min={0}
+          max={100}
+          value={ratio}
+          onChange={(_, v) => {
+            if (typeof v === "number") setRatio(v);
+          }}
+          valueLabelFormat={(value) => {
+            return `${value}%`;
+          }}
+          valueLabelDisplay="off"
         />
-      </FormGroup>
+      </Stack>
+      <Stack direction="row" gap={2} width="100%">
+        <Stack gap={1.5} width="100%">
+          <Typography variant="inputLabel">Amount you are unstaking</Typography>
+          <Paper
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <TokenAsset tokenId={"pica"} iconOnly sx={{ width: "inherit" }} />
+            <TokenWithUSD
+              symbol={pica.symbol}
+              amount={partialWithdrawalAmount.toFormat(4)}
+              price={withdrawalPrice.toFormat(2)}
+            />
+          </Paper>
+        </Stack>
+      </Stack>
     </Stack>
   );
 };
@@ -303,13 +176,9 @@ const UnstakeButtonSection = ({
     "utility",
     account?.address ?? "-"
   );
-  const shouldUnstakeAll = useStore(
-    (store) => store.ui.stakingRewards.shouldUnstakeAll
-  );
   const ratio = useStore((store) => store.ui.stakingRewards.ratio);
-  const buttonLabel = shouldUnstakeAll
-    ? "Burn and unstake"
-    : "Partially unstake";
+  const shouldUnstakeAll = ratio === 100;
+  const buttonLabel = shouldUnstakeAll ? "Unstake all" : "Partially unstake";
 
   const handleFormSubmit = () => {
     let snackbarKey: SnackbarKey | undefined;
@@ -361,43 +230,50 @@ const UnstakeButtonSection = ({
           },
         };
 
-        if (shouldUnstakeAll) {
-          await exec.execute(
-            api.tx.stakingRewards.unstake(...selectedToken),
-            acc.address,
-            api,
-            _signer,
-            eventHandlers.onReady(
-              "Processing unstake",
-              `Unstaking ${shareAsset.symbol}  ${selectedToken[1]}`
-            ),
-            eventHandlers.onFinalize(
-              `Unstake complete`,
-              `Successfully unstaked ${shareAsset.symbol}  ${selectedToken[1]}`
-            ),
-            eventHandlers.onError
-          );
-        } else {
-          // Apply partial unstaking
-          await exec.execute(
-            api.tx.utility.batch([
-              api.tx.stakingRewards.split(...selectedToken, ratio * 10000),
+        try {
+          if (shouldUnstakeAll) {
+            await exec.execute(
               api.tx.stakingRewards.unstake(...selectedToken),
-            ]),
-            acc.address,
-            api,
-            _signer,
-            eventHandlers.onReady(
-              "Processing partial unstake",
-              `Unstaking ${ratio}% of ${shareAsset.symbol} ${selectedToken[1]}`
-            ),
-            eventHandlers.onFinalize(
-              `Successfully unstaked.`,
-              `Unstaked ${ratio}% of ${shareAsset.symbol} ${selectedToken[1]}`
-            ),
-            eventHandlers.onError
-          );
+              acc.address,
+              api,
+              _signer,
+              eventHandlers.onReady(
+                "Processing unstake",
+                `Unstaking ${shareAsset.symbol}  ${selectedToken[1]}`
+              ),
+              eventHandlers.onFinalize(
+                `Unstake complete`,
+                `Successfully unstaked ${shareAsset.symbol}  ${selectedToken[1]}`
+              ),
+              eventHandlers.onError
+            );
+          } else {
+            // Apply partial unstaking
+            await exec.execute(
+              api.tx.utility.batch([
+                api.tx.stakingRewards.split(...selectedToken, ratio * 10000),
+                api.tx.stakingRewards.unstake(...selectedToken),
+              ]),
+              acc.address,
+              api,
+              _signer,
+              eventHandlers.onReady(
+                "Processing partial unstake",
+                `Unstaking ${ratio}% of ${shareAsset.symbol} ${selectedToken[1]}`
+              ),
+              eventHandlers.onFinalize(
+                `Successfully unstaked.`,
+                `Unstaked ${ratio}% of ${shareAsset.symbol} ${selectedToken[1]}`
+              ),
+              eventHandlers.onError
+            );
+          }
+        } catch (e) {
+          if (e instanceof Error) {
+            eventHandlers.onError(e.message);
+          }
         }
+
       },
       parachainApi,
       account,
@@ -411,7 +287,7 @@ const UnstakeButtonSection = ({
       color="primary"
       fullWidth
       onClick={handleFormSubmit}
-      disabled={isPendingBurn || isPendingPartialUnstake}
+      disabled={isPendingBurn || isPendingPartialUnstake || ratio === 0}
     >
       {isPendingBurn || isPendingPartialUnstake ? (
         <CircularProgress variant="indeterminate" size={24} />
@@ -419,5 +295,53 @@ const UnstakeButtonSection = ({
         buttonLabel
       )}
     </Button>
+  );
+};
+
+const CurrentPosition = ({
+  xToken,
+  xTokenLabel,
+  picaToken,
+  portfolio,
+  stakedPrice,
+}: {
+  xToken: TokenMetadata;
+  xTokenLabel: string;
+  picaToken: TokenMetadata;
+  portfolio: PortfolioItem;
+  stakedPrice: BigNumber;
+}) => {
+  const theme = useTheme();
+  return (
+    <Stack gap={1.5}>
+      <Typography variant="inputLabel">Current position</Typography>
+      <Box
+        sx={{
+          padding: theme.spacing(1.5, 2),
+          height: "auto",
+          borderRadius: `${theme.shape.borderRadius}px`,
+          border: `2px solid ${alpha(theme.palette.common.white, 0.3)}`,
+        }}
+      >
+        <Stack
+          width="100%"
+          justifyContent="space-between"
+          alignItems="center"
+          direction="row"
+        >
+          <Stack direction="row" gap={1}>
+            <TokenAsset tokenId={xToken.id} label={xTokenLabel} />
+          </Stack>
+          <Stack direction="row" gap={2} alignItems="center">
+            <TokenWithUSD
+              symbol={picaToken.symbol}
+              amount={portfolio.stake.toFormat()}
+              price={stakedPrice.toFormat(2)}
+            />
+            <StakeRemainingRelativeDate portfolio={portfolio} />
+          </Stack>
+        </Stack>
+      </Box>
+    </Stack>
   );
 };

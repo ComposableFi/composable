@@ -28,20 +28,23 @@ export async function claimAllPicaRewards(
         O.fromPredicate((txs) => txs.length > 0)
       )
     ),
-    O.map(({ context, txs }) => {
-      context.executor.execute(
-        context.api.tx.utility.batch(txs),
-        context.address,
-        context.api,
-        context.signer,
-        onReady,
-        onFinalize,
-        onError
-      );
-    }),
-    O.getOrElse(() =>
-      console.log("Claim did not executed because not all params are ready")
-    )
+    O.map(async ({ context, txs }) => {
+      try {
+        await context.executor.execute(
+          context.api.tx.utility.batch(txs),
+          context.address,
+          context.api,
+          context.signer,
+          onReady,
+          onFinalize,
+          onError
+        );
+      } catch (e) {
+        if (e instanceof Error) {
+          onError(e.message);
+        }
+      }
+    })
   );
 }
 

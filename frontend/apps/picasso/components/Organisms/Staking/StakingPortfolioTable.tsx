@@ -59,7 +59,7 @@ export const PortfolioRow = ({
       <TableCell size="medium">
         <Box display="flex" gap={1}>
           <Typography variant="body2" color="text.primary">
-            {portfolio.stake.toFormat()} ${rewardAsset.symbol}
+            {portfolio.stake.toFormat(4)} ${rewardAsset.symbol}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {stakedPrice}

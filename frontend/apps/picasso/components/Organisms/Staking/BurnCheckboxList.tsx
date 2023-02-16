@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Collapse,
   Stack,
   Typography,
   useTheme,
@@ -44,6 +45,9 @@ const BurnCheckboxItem = ({
   }, [picaPrice, portfolio.stake]);
 
   if (!token) return null;
+  const isChecked =
+    selectedToken[0] == portfolio.collectionId &&
+    selectedToken[1] == portfolio.instanceId;
   const label = `${token?.symbol} ${portfolio.instanceId}`;
   return (
     <div key={portfolio.id}>
@@ -56,6 +60,12 @@ const BurnCheckboxItem = ({
         sx={{
           padding: theme.spacing(1.5, 2),
           height: "auto",
+          backgroundColor: isChecked
+            ? alpha(theme.palette.primary.light, 0.04)
+            : "inherit",
+          borderColor: isChecked
+            ? theme.palette.primary.main
+            : alpha(theme.palette.common.white, 0.3),
         }}
       >
         <Stack
@@ -65,12 +75,7 @@ const BurnCheckboxItem = ({
           direction="row"
         >
           <Stack direction="row" gap={1}>
-            <Checkbox
-              checked={
-                selectedToken[0] == portfolio.collectionId &&
-                selectedToken[1] == portfolio.instanceId
-              }
-            />
+            <Checkbox checked={isChecked} />
             <TokenAsset tokenId={token.id} label={label} />
           </Stack>
           <Stack direction="row" gap={2} alignItems="center">
@@ -95,7 +100,6 @@ export const BurnCheckboxList: FC<{
   ) => void;
   unstakeTokenId: [string, string];
 }> = ({ openBurnModal, onSelectUnstakeToken, unstakeTokenId }) => {
-  const theme = useTheme();
   const { stakingPortfolio } = useStakingRewards();
   const [fnftCollectionId, fnftInstanceId] = unstakeTokenId;
   const isSelected = Boolean(fnftCollectionId) && Boolean(fnftInstanceId);
@@ -103,13 +107,9 @@ export const BurnCheckboxList: FC<{
     getFnftKey(fnftCollectionId, fnftInstanceId)
   );
   const { isExpired } = useExpiredPortfolio(currentPortfolio);
-  const agreed = useStore((store) => store.ui.stakingRewards.agreedSlash);
-  const setAgreed = useStore((store) => store.ui.setAgreedSlash);
   const shouldShowSlashWarning = isSelected && !isExpired;
-  const shouldDisableButton =
-    !fnftCollectionId ||
-    !isSelected ||
-    (shouldShowSlashWarning ? !agreed : false);
+  const shouldDisableButton = !fnftCollectionId || !isSelected;
+
   const penaltyPercent = `${currentPortfolio?.unlockPenalty.toString() ?? 0}%`;
 
   return (
@@ -122,37 +122,20 @@ export const BurnCheckboxList: FC<{
           onSelectUnstakeToken={onSelectUnstakeToken}
         />
       ))}
-      {shouldShowSlashWarning && (
-        <>
-          <AlertBox
-            status="warning"
-            icon={<WarningAmberRounded color="warning" />}
-          >
-            <Typography variant="body2">
-              {penaltyPercent} withdraw fee warning
-            </Typography>
-            <Typography variant="inputLabel" color="text.secondary">
-              If you withdraw locked fNFTs you will pay a {penaltyPercent} fee
-              on your initial deposit.
-            </Typography>
-          </AlertBox>
-          <Stack
-            direction="row"
-            alignItems="center"
-            sx={{
-              p: theme.spacing(3),
-              borderRadius: `${theme.shape.borderRadius}px `,
-              backgroundColor: alpha(theme.palette.common.white, 0.02),
-            }}
-            gap={1}
-          >
-            <Checkbox checked={agreed} onChange={(_, v) => setAgreed(v)} />
-            <Typography variant="body2">
-              I understand I will pay a {penaltyPercent} withdraw fee
-            </Typography>
-          </Stack>
-        </>
-      )}
+      <Collapse in={shouldShowSlashWarning}>
+        <AlertBox
+          status="warning"
+          icon={<WarningAmberRounded color="warning" />}
+        >
+          <Typography variant="body2">
+            {penaltyPercent} withdraw fee warning
+          </Typography>
+          <Typography variant="inputLabel" color="text.secondary">
+            If you withdraw locked fNFTs you will pay a {penaltyPercent} fee on
+            your initial deposit.
+          </Typography>
+        </AlertBox>
+      </Collapse>
       <Box
         gap={2}
         sx={{
