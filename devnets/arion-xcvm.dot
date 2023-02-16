@@ -40,7 +40,7 @@ digraph arion_xcvm {
     ibc_test -> sibling [label = "configure"; style = dotted;];
 
     zombient  -> Dali [label = "configure"; style = dotted;];
-    zombient  [shape = hexagon;label = "polka-launcher";];    
+    zombient  [shape = hexagon;label = "zombienet";];    
     zombient -> sibling [label = "configure"; style = dotted;];
     zombient -> Rococo [label = "configure"; style = dotted;];
 }

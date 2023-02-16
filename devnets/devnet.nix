@@ -1,4 +1,4 @@
-{ nixpkgs, devnet-dali, devnet-picasso, gce-input, docs, rev, domainSuffix
+{ nixpkgs, pkgs, devnet-dali, devnet-picasso, gce-input, docs, rev, domainSuffix
 , certificateEmail }:
 let
   region = "europe-central2-c";
@@ -126,7 +126,7 @@ let
 in builtins.foldl' (machines: devnet:
   let
     machine = import ./devnet-gce.nix {
-      inherit region certificateEmail gce-input devnet docs;
+      inherit region certificateEmail gce-input devnet docs pkgs;
       disk-size = 200;
       machine-name = "composable-devnet-${devnet.chain-spec}";
       domain = let prefix = nixpkgs.lib.removeSuffix "-dev" devnet.chain-spec;

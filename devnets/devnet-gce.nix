@@ -1,4 +1,4 @@
-{ region, gce-input, docs, devnet, disk-size, machine-name, domain
+{ pkgs, region, gce-input, docs, devnet, disk-size, machine-name, domain
 , certificateEmail, extra-gce ? (_args: { }), extra-services ? (_args: { })
 , extra-nginx-root ? (_args: { }), extra-nginx ? (_args: { })
 , extra-nginx-virtual ? (_args: { }), extra-nginx-hosts ? (_args: { }) }: {
@@ -41,7 +41,7 @@
         serviceConfig = {
           Type = "simple";
           User = "root";
-          ExecStart = "${devnet.script}/bin/run-devnet-${devnet.chain-spec}";
+          ExecStart = "${pkgs.lib.meta.getExe devnet.script}";
           Restart = "always";
           RuntimeMaxSec = "86400"; # 1 day lease period for rococo, restart it
         };
