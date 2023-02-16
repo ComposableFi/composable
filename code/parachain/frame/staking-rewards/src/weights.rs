@@ -11,6 +11,7 @@ pub trait WeightInfo {
 	fn update_rewards_pool(r: u32) -> Weight;
 	fn claim(r: u32) -> Weight;
 	fn add_to_rewards_pot() -> Weight;
+	fn extend_stake_duration() -> Weight;
 }
 
 impl WeightInfo for () {
@@ -51,6 +52,10 @@ impl WeightInfo for () {
 	}
 
 	fn add_to_rewards_pot() -> Weight {
+		Weight::from_ref_time(10_000)
+	}
+
+	fn extend_stake_duration() -> Weight {
 		Weight::from_ref_time(10_000)
 	}
 }

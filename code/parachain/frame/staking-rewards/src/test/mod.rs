@@ -28,7 +28,7 @@ use composable_traits::{
 		lock::{Lock, LockConfig},
 		ProtocolStaking, RewardConfig,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
-		RewardRate, Stake,
+		RewardRate, Stake, StakeDurationExtendAmount,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -498,7 +498,10 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		assert_eq!(Stakes::<Test>::iter_prefix_values(PICA::ID).count(), 1);
 
 		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
-		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, duration_preset)
+		let reward_multiplier = rewards_pool
+			.lock
+			.duration_multipliers
+			.multiplier(duration_preset)
 			.expect("reward_multiplier expected");
 		let inflation = 0;
 		let reductions = rewards_pool
@@ -518,6 +521,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 				reductions,
 				lock: Lock {
 					started_at: 12,
+					reward_multiplier,
 					duration: duration_preset,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
@@ -582,7 +586,10 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		stake_and_assert::<Test>(ALICE, PICA::ID, AMOUNT, DURATION_PRESET);
 
 		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
-		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, DURATION_PRESET)
+		let reward_multiplier = rewards_pool
+			.lock
+			.duration_multipliers
+			.multiplier(DURATION_PRESET)
 			.expect("reward_multiplier expected");
 		let _ = StakingRewards::boosted_amount(reward_multiplier, AMOUNT)
 			.expect("boosted amount should not overflow");
@@ -604,6 +611,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 				reductions,
 				lock: Lock {
 					started_at: 12,
+					reward_multiplier,
 					duration: DURATION_PRESET,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
@@ -728,7 +736,7 @@ mod extend {
 					extended_amount,
 					true,
 				),
-				crate::Event::<Test>::StakeAmountExtended {
+				crate::Event::<Test>::StakeAmountIncreased {
 					fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
 					fnft_instance_id,
 					amount: extended_amount,
@@ -748,12 +756,7 @@ mod extend {
 					reward_pool_id: STAKED_ASSET::ID,
 					stake: staked_amount + extended_amount,
 					share: Pallet::<Test>::boosted_amount(
-						rewards_pool
-							.lock
-							.duration_multipliers
-							.multiplier(ONE_MINUTE)
-							.copied()
-							.unwrap(),
+						stake_after_extend.lock.reward_multiplier,
 						staked_amount + extended_amount
 					)
 					.expect("boosted amount calculation should not fail"),
@@ -765,6 +768,7 @@ mod extend {
 					lock: Lock {
 						started_at: <<Test as crate::Config>::UnixTime as UnixTime>::now()
 							.as_secs(),
+						reward_multiplier: stake_after_extend.lock.reward_multiplier,
 						duration: ONE_MINUTE,
 						unlock_penalty: rewards_pool.lock.unlock_penalty
 					}
@@ -845,7 +849,7 @@ mod extend {
 					extended_amount,
 					true,
 				),
-				crate::Event::<Test>::StakeAmountExtended {
+				crate::Event::<Test>::StakeAmountIncreased {
 					fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
 					fnft_instance_id,
 					amount: extended_amount,
@@ -865,12 +869,7 @@ mod extend {
 					reward_pool_id: STAKED_ASSET::ID,
 					stake: staked_amount + extended_amount,
 					share: Pallet::<Test>::boosted_amount(
-						rewards_pool
-							.lock
-							.duration_multipliers
-							.multiplier(ONE_MINUTE)
-							.copied()
-							.unwrap(),
+						stake_after_extend.lock.reward_multiplier,
 						staked_amount + extended_amount
 					)
 					.expect("boosted amount calculation should not fail"),
@@ -881,7 +880,8 @@ mod extend {
 						started_at: <<Test as crate::Config>::UnixTime as UnixTime>::now()
 							.as_secs(),
 						duration: ONE_MINUTE,
-						unlock_penalty: rewards_pool.lock.unlock_penalty
+						unlock_penalty: rewards_pool.lock.unlock_penalty,
+						reward_multiplier: stake_after_extend.lock.reward_multiplier,
 					}
 				}
 			);
@@ -2418,6 +2418,79 @@ fn zero_penalty_no_multiplier_doesnt_slash() {
 			STAKING_FNFT_COLLECTION_ID,
 			stake_id,
 			false, // shouldn't be an early unlock since the lock period is 0
+		);
+	});
+}
+
+#[test]
+fn extend_duration_works() {
+	new_test_ext().execute_with(|| {
+		next_block::<StakingRewards, Test>();
+
+		create_rewards_pool_and_assert::<Test>(RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: PICA::ID,
+			start_block: 3,
+			reward_configs: bounded_btree_map! {
+				BTC::ID => RewardConfig { reward_rate: RewardRate::per_second(BTC::units(1)) }
+			},
+			lock: LockConfig {
+				duration_multipliers: bounded_btree_map! {
+					ONE_MINUTE => FixedU64::from_rational(11, 10).try_into_validated().expect("1.1 >= 1"),
+					ONE_HOUR => FixedU64::from_rational(15, 10).try_into_validated().expect("1.5 >= 1"),
+				}
+				.into(),
+				unlock_penalty: Perbill::from_rational::<u32>(1, 2),
+			},
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: 100_000,
+		});
+
+		mint_assets([ALICE], [BTC::ID], BTC::units(100));
+		add_to_rewards_pot_and_assert::<Test>(ALICE, PICA::ID, BTC::ID, BTC::units(100), false);
+
+		process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		mint_assets([BOB], [PICA::ID], PICA::units(10));
+		let stake_id = stake_and_assert::<Test>(BOB, PICA::ID, PICA::units(1), ONE_MINUTE);
+
+		// half a minute in blocks
+		process_and_progress_blocks::<StakingRewards, Test>(5);
+
+		// extend to 2 minutes staked duration, keeping the same multiplier
+		Test::assert_extrinsic_event(
+			StakingRewards::extend_stake_duration(
+				RuntimeOrigin::signed(BOB),
+				STAKING_FNFT_COLLECTION_ID,
+				stake_id,
+				StakeDurationExtendAmount::Duration { seconds: ONE_MINUTE },
+			),
+			crate::Event::<Test>::StakeDurationExtended {
+				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
+				fnft_instance_id: stake_id,
+				additional_duration: ONE_MINUTE,
+			},
+		);
+
+		// half a minute in blocks
+		process_and_progress_blocks::<StakingRewards, Test>(5);
+
+		// TODO(benluelo): Assert that the stake multiplier isn't set by the (yet to be implemented)
+		// off-chain worker
+
+		// full minute in blocks
+		process_and_progress_blocks::<StakingRewards, Test>(10);
+
+		// should be 2 minutes worth of rewards
+		Test::assert_extrinsic_event(
+			StakingRewards::claim(RuntimeOrigin::signed(BOB), STAKING_FNFT_COLLECTION_ID, stake_id),
+			crate::Event::<Test>::Claimed {
+				owner: BOB,
+				fnft_collection_id: STAKING_FNFT_COLLECTION_ID,
+				fnft_instance_id: stake_id,
+				claimed_amounts: BTreeMap::new(),
+			},
 		);
 	});
 }

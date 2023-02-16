@@ -155,7 +155,7 @@ benchmarks! {
 	}: _(OriginFor::<T>::signed(staker), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into(), amount, true)
 	verify {
 		assert_last_event::<T>(
-			Event::StakeAmountExtended {
+			Event::StakeAmountIncreased {
 				fnft_collection_id: STAKING_FNFT_COLLECTION_ID.into(),
 				fnft_instance_id: FNFT_INSTANCE_ID_BASE.into(),
 				amount
@@ -248,7 +248,7 @@ benchmarks! {
 
 		let now = now + seconds_per_block;
 
-		let reward_pool = RewardPools::<T>::get(pool_id).unwrap();
+		let reward_pool = RewardPools::<T>::get(&pool_id).unwrap();
 
 		let mut reward = reward_pool.rewards.get(&reward_asset_id).unwrap().clone();
 

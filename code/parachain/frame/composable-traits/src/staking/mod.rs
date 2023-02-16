@@ -298,7 +298,7 @@ pub trait Staking {
 	fn extend_stake_duration(
 		who: &Self::AccountId,
 		position: Self::PositionId,
-		duration: DurationSeconds,
+		duration: StakeDurationExtendAmount,
 	) -> DispatchResult;
 
 	/// Unstake an actual staked position, represented by a NFT.
@@ -323,4 +323,14 @@ pub trait Staking {
 	/// * `who` - the account to transfer the final claimed rewards to.
 	/// * `position` - The uniquely identifying NFT from which we will compute the rewards.
 	fn claim(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult;
+}
+
+/// How much to extend a stake's duration by, used by [`Staking::extend_stake_duration`].
+#[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
+pub enum StakeDurationExtendAmount {
+	/// Extend the stake duration by the amount provided.
+	Duration { seconds: u64 },
+	/// Extend the stake to the maximum time allowed by the pool. This may be an unsupported
+	/// operation if the reward pool has an unbounded staking duration.
+	Maximum,
 }

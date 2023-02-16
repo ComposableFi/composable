@@ -1,9 +1,11 @@
 use codec::{Decode, Encode};
 use composable_support::validation::{validators::GeOne, Validated};
-use frame_support::{dispatch::DispatchResult, pallet_prelude::*, BoundedBTreeMap};
+use frame_support::{
+	dispatch::DispatchResult, pallet_prelude::*, traits::DefensiveSaturating, BoundedBTreeMap,
+};
 use scale_info::TypeInfo;
 use sp_arithmetic::fixed_point::FixedU64;
-use sp_runtime::Perbill;
+use sp_runtime::{ArithmeticError, Perbill};
 
 use core::fmt::Debug;
 
@@ -48,9 +50,9 @@ impl<MaxDurationPresets: Get<u32>>
 impl<MaxDurationPresets: Get<u32>> DurationMultipliers<MaxDurationPresets> {
 	/// Get the multiplier for the given duration, if it's valid for this type of
 	/// [`DurationMultiplier`].
-	pub fn multiplier(&self, duration: DurationSeconds) -> Option<&Validated<FixedU64, GeOne>> {
+	pub fn multiplier(&self, duration: DurationSeconds) -> Option<Validated<FixedU64, GeOne>> {
 		match self {
-			DurationMultipliers::Presets(presets) => presets.get(&duration),
+			DurationMultipliers::Presets(presets) => presets.get(&duration).copied(),
 		}
 	}
 
@@ -60,6 +62,17 @@ impl<MaxDurationPresets: Get<u32>> DurationMultipliers<MaxDurationPresets> {
 			DurationMultipliers::Presets(presets) => presets.len() > 0,
 		}
 	}
+
+	/// Get the maximum stake duration allowed by this duration configuration. Returns [`None`] if
+	/// the stake durations are unbounded.
+	// TODO(benluelo): We need to verify that the duration presets are valid (i.e at least one
+	// duration provided)
+	pub fn max_duration(&self) -> Option<u64> {
+		match self {
+			DurationMultipliers::Presets(presets) =>
+				presets.last_key_value().map(|(k, _)| k).copied(),
+		}
+	}
 }
 
 /// staking typed fNFT, usually can be mapped to raw fNFT storage type
@@ -67,10 +80,28 @@ impl<MaxDurationPresets: Get<u32>> DurationMultipliers<MaxDurationPresets> {
 pub struct Lock {
 	/// The date at which this NFT was minted or to which lock was extended too.
 	pub started_at: Timestamp,
+
+	/// The reward multiplier of this stake.
+	pub reward_multiplier: Validated<FixedU64, GeOne>,
+
 	/// The duration for which this NFT stake was locked.
 	pub duration: DurationSeconds,
 
 	pub unlock_penalty: Perbill,
+}
+
+impl Lock {
+	/// Get the duration remaining for this lock. Returns [`None`] if the lock duration is
+	/// completed.
+	///
+	/// NOTE: This function uses [`DefensiveSaturating::defensive_saturating_add`] to add
+	/// `self.started_at` and `self.duration`. This should only be hit for a poorly configured
+	/// [`Lock`].
+	// REVIEW(benluelo): Maybe make this a method on `Stake`, and make the `lock` field on that
+	// struct `Validated`?
+	pub fn duration_remaining(&self, now: DurationSeconds) -> Option<DurationSeconds> {
+		self.started_at.defensive_saturating_add(self.duration).checked_sub(now)
+	}
 }
 
 pub trait Locking {

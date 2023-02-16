@@ -57,10 +57,7 @@ pub mod prelude;
 pub mod weights;
 
 use composable_support::math::safe::{SafeDiv, SafeMul, SafeSub};
-use composable_traits::{
-	staking::{Reward, RewardUpdate},
-	time::DurationSeconds,
-};
+use composable_traits::staking::{Reward, RewardUpdate};
 use core::{
 	cmp,
 	cmp::Ordering,
@@ -92,7 +89,7 @@ pub mod pallet {
 	use crate::{claim_of_stake, with_stake_and_rewards_pool};
 	use composable_support::{
 		math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
-		validation::{validators::GeOne, TryIntoValidated, Validated},
+		validation::{validators::GeOne, Validated},
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
@@ -126,7 +123,7 @@ pub mod pallet {
 		Permill,
 	};
 	use sp_runtime::{
-		traits::{AccountIdConversion, BlockNumberProvider, One},
+		traits::{AccountIdConversion, BlockNumberProvider},
 		ArithmeticError, PerThing,
 	};
 	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec, vec::Vec};
@@ -179,13 +176,21 @@ pub mod pallet {
 			fnft_instance_id: T::FinancialNftInstanceId,
 			claimed_amounts: BTreeMap<T::AssetId, T::Balance>,
 		},
-		StakeAmountExtended {
+		StakeAmountIncreased {
 			/// FNFT Collection Id
 			fnft_collection_id: T::AssetId,
 			/// FNFT Instance Id
 			fnft_instance_id: T::FinancialNftInstanceId,
-			/// Extended amount
+			/// The additional amount that was added to the stake
 			amount: T::Balance,
+		},
+		StakeDurationExtended {
+			/// FNFT Collection Id
+			fnft_collection_id: T::AssetId,
+			/// FNFT Instance Id
+			fnft_instance_id: T::FinancialNftInstanceId,
+			/// The additional amount that was added to the stake
+			additional_duration: DurationSeconds,
 		},
 		Unstaked {
 			/// Owner of the stake.
@@ -290,6 +295,12 @@ pub mod pallet {
 		StakedAmountTooLowAfterSplit,
 		/// Some operation resulted in an arithmetic overflow.
 		ArithmeticError,
+		/// Attempted to extend to the max duration of a pool that has unbounded stake duration.
+		PoolStakeDurationIsUnbounded,
+		/// Attempted to extend past the max duration allowed by a pool.
+		CannotExtendPastMaxDuration,
+		/// The stake's stake duration is completed and it cannot be extended.
+		CannotExtendCompletedStake,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -620,6 +631,32 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			add_to_rewards_pot::<T>(&who, pool_id, asset_id, amount, keep_alive)
 		}
+
+		/// Extend an existing stake's duration.
+		///
+		/// Emits `StakeDurationExtended` when successful.
+		#[pallet::weight(T::WeightInfo::extend_stake_duration())]
+		#[pallet::call_index(9)]
+		pub fn extend_stake_duration(
+			origin: OriginFor<T>,
+			fnft_collection_id: T::AssetId,
+			fnft_instance_id: T::FinancialNftInstanceId,
+			duration: StakeDurationExtendAmount,
+		) -> DispatchResult {
+			let who = Self::ensure_stake_owner(
+				ensure_signed(origin)?,
+				&fnft_collection_id,
+				&fnft_instance_id,
+			)?;
+
+			<Self as Staking>::extend_stake_duration(
+				&who,
+				(fnft_collection_id, fnft_instance_id),
+				duration,
+			)?;
+
+			Ok(())
+		}
 	}
 
 	impl<T: Config> ManageStaking for Pallet<T> {
@@ -780,7 +817,10 @@ pub mod pallet {
 				Error::<T>::RewardsPoolHasNotStarted
 			);
 
-			let reward_multiplier = Self::reward_multiplier(&rewards_pool, duration_preset)
+			let reward_multiplier = rewards_pool
+				.lock
+				.duration_multipliers
+				.multiplier(duration_preset)
 				.ok_or(Error::<T>::DurationPresetNotFound)?;
 
 			ensure!(
@@ -817,6 +857,7 @@ pub mod pallet {
 				lock: lock::Lock {
 					started_at: T::UnixTime::now().as_secs(),
 					duration: duration_preset,
+					reward_multiplier,
 					// NOTE: Currently, the early unlock penalty for all stakes in a pool are the
 					// same as the pool's penalty *at the time of staking*. This value is duplicated
 					// to keep the stake's penalty independent from the reward pool's penalty,
@@ -846,7 +887,7 @@ pub mod pallet {
 				duration_preset,
 				fnft_instance_id,
 				fnft_collection_id,
-				reward_multiplier: *reward_multiplier,
+				reward_multiplier: reward_multiplier.value(),
 				keep_alive,
 			});
 
@@ -872,19 +913,7 @@ pub mod pallet {
 						Error::<T>::NotEnoughAssets
 					);
 
-					// SAFETY: The duration preset on an existing stake should be valid in the
-					// pool since it's currently not possible to modify the presets after pool
-					// creation.
-					let reward_multiplier = rewards_pool
-						.lock
-						.duration_multipliers
-						.multiplier(stake.lock.duration)
-						.copied()
-						.defensive_unwrap_or_else(|| {
-							FixedU64::one().try_into_validated().expect("1 is >= 1")
-						});
-
-					let new_shares = Self::boosted_amount(reward_multiplier, amount)?;
+					let new_shares = Self::boosted_amount(stake.lock.reward_multiplier, amount)?;
 
 					let total_shares = T::Assets::total_issuance(rewards_pool.share_asset_id);
 
@@ -933,7 +962,7 @@ pub mod pallet {
 						new_shares,
 					)?;
 
-					Self::deposit_event(Event::<T>::StakeAmountExtended {
+					Self::deposit_event(Event::<T>::StakeAmountIncreased {
 						amount,
 						fnft_collection_id,
 						fnft_instance_id,
@@ -952,7 +981,7 @@ pub mod pallet {
 		fn extend_stake_duration(
 			who: &Self::AccountId,
 			(fnft_collection_id, fnft_instance_id): Self::PositionId,
-			duration_preset: DurationSeconds,
+			duration_preset: StakeDurationExtendAmount,
 		) -> DispatchResult {
 			do_extend_stake_duration::<T>(
 				who,
@@ -1326,16 +1355,6 @@ pub mod pallet {
 
 		pub(crate) fn pool_account_id(pool_id: &T::AssetId) -> T::AccountId {
 			T::PalletId::get().into_sub_account_truncating(pool_id)
-		}
-
-		// TODO(benluelo): Rename to 'reward_multiplier_of' and return a Result<&_, Error<T>>
-		// (remove the clone as well)
-		// REVIEW(benluelo): Does this function provide anything meaningful?
-		pub(crate) fn reward_multiplier(
-			rewards_pool: &RewardPoolOf<T>,
-			duration_preset: DurationSeconds,
-		) -> Option<Validated<FixedU64, GeOne>> {
-			rewards_pool.lock.duration_multipliers.multiplier(duration_preset).copied()
 		}
 
 		pub(crate) fn boosted_amount(
@@ -1915,10 +1934,10 @@ fn do_extend_stake_duration<T: Config>(
 	who: &T::AccountId,
 	fnft_collection_id: T::AssetId,
 	fnft_instance_id: T::FinancialNftInstanceId,
-	duration: DurationSeconds,
+	duration: StakeDurationExtendAmount,
 ) -> DispatchResult {
 	// unstake (no penalty) and then restake with new duration
-	with_stake_and_rewards_pool::<T, _, _>(
+	with_stake_and_rewards_pool::<T, (), DispatchError>(
 		&fnft_collection_id,
 		&fnft_instance_id,
 		|stake, rewards_pool| {
@@ -1930,7 +1949,54 @@ fn do_extend_stake_duration<T: Config>(
 				rewards_pool,
 			)?;
 
-			Ok::<_, DispatchError>(())
+			let now = T::UnixTime::now().as_secs();
+			let maybe_max_duration = rewards_pool.lock.duration_multipliers.max_duration();
+
+			debug_assert!(
+				maybe_max_duration.is_some(),
+				"reward pools should always have a max duration with the current configurations"
+			);
+
+			let amount_to_extend_by = match duration {
+				StakeDurationExtendAmount::Duration { seconds } => match maybe_max_duration {
+					Some(max_duration) => {
+						let duration_remaining = stake
+							.lock
+							.duration_remaining(now)
+							.ok_or(Error::<T>::CannotExtendCompletedStake)?;
+						ensure!(
+							duration_remaining.safe_add(&seconds)? <= max_duration,
+							Error::<T>::CannotExtendPastMaxDuration
+						);
+						seconds
+					},
+					None => seconds,
+				},
+				StakeDurationExtendAmount::Maximum => {
+					let duration_remaining = stake
+						.lock
+						.duration_remaining(now)
+						.ok_or(Error::<T>::CannotExtendCompletedStake)?;
+
+					maybe_max_duration
+						// NOTE(benluelo): We shouldn't hit this error since current pools have
+						// bounded stake duration.
+						.ok_or(Error::<T>::PoolStakeDurationIsUnbounded)?
+						// SAFETY: `duration_remaining` is known to not be the remaining duration of
+						// an uncompleted stake, and is therefore <= `maybe_max_duration`.
+						.defensive_saturating_sub(duration_remaining)
+				},
+			};
+
+			stake.lock.duration = stake.lock.duration.safe_add(&amount_to_extend_by)?;
+
+			Pallet::<T>::deposit_event(Event::StakeDurationExtended {
+				fnft_collection_id,
+				fnft_instance_id,
+				additional_duration: amount_to_extend_by,
+			});
+
+			Ok(())
 		},
 	)
 }
