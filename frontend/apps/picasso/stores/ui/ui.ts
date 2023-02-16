@@ -14,7 +14,6 @@ interface UIState {
     isBurnModalOpen: boolean;
     agreedSlash: boolean;
     ratio: number;
-    shouldUnstakeAll: boolean;
   };
 }
 
@@ -32,7 +31,6 @@ const initialState: UIState = {
     isBurnModalOpen: false,
     agreedSlash: false,
     ratio: 50,
-    shouldUnstakeAll: false,
   },
 };
 
@@ -52,7 +50,6 @@ export interface UISlice {
     setBurnModalState: (state: boolean) => void;
     setAgreedSlash: (agreed: boolean) => void;
     setRatio: (ratio: number) => void;
-    setUnstakeAll: (value: boolean) => void;
   };
 }
 
@@ -138,11 +135,6 @@ export const createUISlice: StoreSlice<UISlice> = (set) => ({
     setRatio: (ratio: number) => {
       set((state) => {
         state.ui.stakingRewards.ratio = ratio;
-      });
-    },
-    setUnstakeAll: (value: boolean) => {
-      set((state) => {
-        state.ui.stakingRewards.shouldUnstakeAll = value;
       });
     },
   },

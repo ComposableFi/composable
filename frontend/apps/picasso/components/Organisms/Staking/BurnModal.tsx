@@ -101,10 +101,10 @@ const PartialUnstakeSection = ({
     const shouldHavePenalty = !isExpired && !currentPortfolio.multiplier.eq(1);
     return shouldHavePenalty
       ? postRatioAmount.minus(
-        currentPortfolio.unlockPenalty
-          .dividedBy(100)
-          .multipliedBy(postRatioAmount)
-      )
+          currentPortfolio.unlockPenalty
+            .dividedBy(100)
+            .multipliedBy(postRatioAmount)
+        )
       : postRatioAmount;
   }, [currentPortfolio, initialPICA, isExpired, ratio]);
   const withdrawalPrice = partialWithdrawalAmount.multipliedBy(picaPrice);
@@ -273,7 +273,6 @@ const UnstakeButtonSection = ({
             eventHandlers.onError(e.message);
           }
         }
-
       },
       parachainApi,
       account,
