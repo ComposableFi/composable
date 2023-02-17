@@ -24,6 +24,8 @@ export type TokenMetadata = Token & {
 
 type TokensState = {
   tokens: Record<TokenId, TokenMetadata>;
+  tokensLoaded: Record<Exclude<SubstrateNetworkId, "karura">, boolean>;
+
   isLoaded: boolean;
 };
 
@@ -56,6 +58,11 @@ const initialState = {
       },
     };
   }, {} as Record<TokenId, TokenMetadata>),
+  tokensLoaded: {
+    statemine: false,
+    kusama: false,
+    picasso: false,
+  },
   isLoaded: false,
 };
 
@@ -75,6 +82,7 @@ export interface TokensSlice {
 export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
   substrateTokens: {
     tokens: initialState.tokens,
+    tokensLoaded: initialState.tokensLoaded,
     isLoaded: initialState.isLoaded,
     updateTokens: (
       picassoList,
@@ -83,7 +91,7 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
       kusamaAssetMetadata
     ) => {
       set((state) => {
-        if (statemineList) {
+        if (statemineList && statemineList.length > 0) {
           statemineList.forEach((listItem) => {
             if (listItem.id === "1984" || listItem.id === "ksm") {
               const token =
@@ -97,9 +105,10 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
               token.existentialDeposit.statemine = listItem.existentialDeposit;
             }
           });
+          state.substrateTokens.tokensLoaded.statemine = true;
         }
-        
-        if (picassoList) {
+
+        if (picassoList && picassoList.length > 0) {
           picassoList.forEach((listItem) => {
             /**
              * Here identifier is in lower case
@@ -116,8 +125,9 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
               token.ratio.picasso = listItem.ratio;
             }
           });
+          state.substrateTokens.tokensLoaded.picasso = true;
         }
-        
+
         // karuraList.forEach(listItem => {
         //   /**
         //    * Here identifier is in lower case
@@ -142,22 +152,15 @@ export const createTokensSlice: StoreSlice<TokensSlice> = (set) => ({
         // If more tokens are imported, this needs a dedicated function
         if (kusamaAssetMetadata) {
           state.substrateTokens.tokens.ksm.decimals.kusama =
-          kusamaAssetMetadata.decimals;
+            kusamaAssetMetadata.decimals;
 
           state.substrateTokens.tokens.ksm.chainId.kusama =
-          kusamaAssetMetadata.chainId;
-          
+            kusamaAssetMetadata.chainId;
+
           state.substrateTokens.tokens.ksm.existentialDeposit.kusama =
-          kusamaAssetMetadata.existentialDeposit;
-        }
+            kusamaAssetMetadata.existentialDeposit;
 
-
-        // TODO : enable this condition when karura is supported
-        // if (picassoList.length + karuraList.length > 0) {
-        //   state.substrateTokens.isLoaded = true;
-        // }
-        if (picassoList && picassoList.length > 0) {
-          state.substrateTokens.isLoaded = true;
+          state.substrateTokens.tokensLoaded.kusama = true;
         }
       });
     },
