@@ -2502,3 +2502,86 @@ fn stake_unstake_stake_check_locked() {
 		assert_eq!(charlie_fnft_free, charlie_fnft_frozen);
 	});
 }
+
+#[test]
+fn pbl_507() {
+	#[allow(non_camel_case_types)]
+	type STAKED_ASSET = Currency<1337, 12>;
+	new_test_ext().execute_with(|| {
+		init_logger();
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+
+		let current_block_number = frame_system::Pallet::<Test>::block_number();
+		assert_eq!(<<Test as Config>::Assets as Inspect<AccountId>>::minimum_balance(USDT::ID), 5);
+		assert_eq!(<<Test as Config>::Assets as Inspect<AccountId>>::minimum_balance(XPICA::ID), 0);
+
+		create_rewards_pool_and_assert::<Test>(RewardPoolConfiguration::RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: STAKED_ASSET::ID,
+			start_block: current_block_number + 1,
+			reward_configs: btree_map([(
+				USDT::ID,
+				RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1)) },
+			)]),
+			lock: LockConfig {
+				duration_multipliers: bounded_btree_map! {
+					// 1%
+					ONE_HOUR => FixedU64::from_rational(101, 100)
+						.try_into_validated()
+						.expect(">= 1"),
+					// 0.1%
+					ONE_MINUTE => FixedU64::from_rational(1_001, 1_000)
+						.try_into_validated()
+						.expect(">= 1"),
+				}
+				.into(),
+				unlock_penalty: Perbill::from_percent(5),
+			},
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+		});
+
+		mint_assets([ALICE], [USDT::ID], USDT::units(100_000));
+		add_to_rewards_pot_and_assert::<Test>(
+			ALICE,
+			STAKED_ASSET::ID,
+			USDT::ID,
+			USDT::units(100_000),
+			// should NOT emit the `resumed` event since the pot was funded before the pool
+			// started
+			false,
+		);
+
+		// progress to the start block
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+
+		Test::assert_event(crate::Event::<Test>::RewardPoolStarted { pool_id: STAKED_ASSET::ID });
+
+		let staked_amount = STAKED_ASSET::units(5);
+		let extended_amount = STAKED_ASSET::units(6);
+		let existential_deposit = 1_000_u128;
+
+		mint_assets(
+			[BOB],
+			[STAKED_ASSET::ID],
+			staked_amount + extended_amount + existential_deposit,
+		);
+
+		let fnft_instance_id_1 =
+			stake_and_assert::<Test>(BOB, STAKED_ASSET::ID, staked_amount, ONE_MINUTE);
+
+		process_and_progress_blocks::<StakingRewards, Test>(30);
+		unstake_and_assert::<Test>(BOB, STAKING_FNFT_COLLECTION_ID, fnft_instance_id_1, false);
+
+		let staked_amount = STAKED_ASSET::units(5);
+		let extended_amount = STAKED_ASSET::units(6);
+		let existential_deposit = 1_000_u128;
+		mint_assets(
+			[CHARLIE],
+			[STAKED_ASSET::ID],
+			staked_amount + extended_amount + existential_deposit,
+		);
+		stake_and_assert::<Test>(CHARLIE, STAKED_ASSET::ID, staked_amount, ONE_MINUTE);
+	});
+}
