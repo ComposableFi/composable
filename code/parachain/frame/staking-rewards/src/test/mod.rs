@@ -11,13 +11,13 @@ use crate::{
 		add_to_rewards_pot_and_assert, create_rewards_pool_and_assert, split_and_assert,
 		stake_and_assert, unstake_and_assert,
 	},
-	FinancialNftInstanceIdOf, Pallet, RewardPoolConfigurationOf, RewardPools, Stakes,
+	Config, FinancialNftInstanceIdOf, Pallet, RewardPoolConfigurationOf, RewardPools, Stakes,
 };
 
 use composable_support::validation::TryIntoValidated;
 use composable_tests_helpers::test::{
 	block::{next_block, process_and_progress_blocks, process_and_progress_blocks_with},
-	currency::{BTC, PICA, USDT, XPICA},
+	currency::{Currency, BTC, PICA, USDT, XPICA},
 	helper::RuntimeTrait,
 };
 
@@ -27,7 +27,7 @@ use composable_traits::{
 	staking::{
 		lock::{Lock, LockConfig},
 		ProtocolStaking, RewardConfig,
-		RewardPoolConfiguration::RewardRateBasedIncentive,
+		RewardPoolConfiguration::{self, RewardRateBasedIncentive},
 		RewardRate, Stake,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
@@ -2410,5 +2410,95 @@ fn zero_penalty_no_multiplier_doesnt_slash() {
 			stake_id,
 			false, // shouldn't be an early unlock since the lock period is 0
 		);
+	});
+}
+
+#[test]
+fn stake_unstake_stake_check_locked() {
+	#[allow(non_camel_case_types)]
+	type STAKED_ASSET = Currency<1337, 12>;
+	new_test_ext().execute_with(|| {
+		init_logger();
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+
+		let current_block_number = frame_system::Pallet::<Test>::block_number();
+
+		create_rewards_pool_and_assert::<Test>(RewardPoolConfiguration::RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: STAKED_ASSET::ID,
+			start_block: current_block_number + 1,
+			reward_configs: btree_map([(
+				USDT::ID,
+				RewardConfig { reward_rate: RewardRate::per_second(USDT::units(1)) },
+			)]),
+			lock: LockConfig {
+				duration_multipliers: bounded_btree_map! {
+					// 1%
+					ONE_HOUR => FixedU64::from_rational(101, 100)
+						.try_into_validated()
+						.expect(">= 1"),
+					// 0.1%
+					ONE_MINUTE => FixedU64::from_rational(1_001, 1_000)
+						.try_into_validated()
+						.expect(">= 1"),
+				}
+				.into(),
+				unlock_penalty: Perbill::from_percent(5),
+			},
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+			minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+		});
+
+		mint_assets([ALICE], [USDT::ID], USDT::units(100_000));
+		add_to_rewards_pot_and_assert::<Test>(
+			ALICE,
+			STAKED_ASSET::ID,
+			USDT::ID,
+			USDT::units(100_000),
+			// should NOT emit the `resumed` event since the pot was funded before the pool
+			// started
+			false,
+		);
+
+		// progress to the start block
+		process_and_progress_blocks::<StakingRewards, Test>(1);
+
+		Test::assert_event(crate::Event::<Test>::RewardPoolStarted { pool_id: STAKED_ASSET::ID });
+
+		let staked_amount_bob = STAKED_ASSET::units(20);
+		let existential_deposit_bob = STAKED_ASSET::units(5);
+		mint_assets([BOB], [STAKED_ASSET::ID], staked_amount_bob + existential_deposit_bob);
+
+		let fnft_instance_id_bob =
+			stake_and_assert::<Test>(BOB, STAKED_ASSET::ID, staked_amount_bob, ONE_MINUTE);
+		process_and_progress_blocks::<StakingRewards, Test>(11);
+		unstake_and_assert::<Test>(BOB, STAKING_FNFT_COLLECTION_ID, fnft_instance_id_bob, false);
+		// ED is 5 so new staked should be at least 5 less than the previous one
+		let staked_amount_charlie = STAKED_ASSET::units(10);
+		let existential_deposit_charlie = STAKED_ASSET::units(5);
+		mint_assets(
+			[CHARLIE],
+			[STAKED_ASSET::ID],
+			staked_amount_charlie + existential_deposit_charlie,
+		);
+		let fnft_instance_id_charlie =
+			stake_and_assert::<Test>(CHARLIE, STAKED_ASSET::ID, staked_amount_charlie, ONE_MINUTE);
+		let fnft_account_charlie = <Test as Config>::FinancialNft::asset_account(
+			&STAKING_FNFT_COLLECTION_ID,
+			&fnft_instance_id_charlie,
+		);
+		let charlie_fnft_free = <Test as pallet_assets::Config>::MultiCurrency::accounts(
+			fnft_account_charlie,
+			XPICA::ID,
+		)
+		.free;
+		let charlie_fnft_frozen = <Test as pallet_assets::Config>::MultiCurrency::accounts(
+			fnft_account_charlie,
+			XPICA::ID,
+		)
+		.frozen;
+
+		assert_eq!(charlie_fnft_free, charlie_fnft_frozen);
 	});
 }

@@ -1,4 +1,4 @@
-use composable_tests_helpers::test::currency::PICA;
+use composable_tests_helpers::test::currency::{PICA, XPICA};
 use composable_traits::{
 	account_proxy::ProxyType,
 	governance::{GovernanceRegistry, SignedRawOrigin},
@@ -139,8 +139,12 @@ impl pallet_currency_factory::Config for Test {
 }
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		5
+	pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+		if *currency_id == XPICA::ID {
+			0
+		} else {
+			5
+			}
 	};
 }
 

@@ -66,11 +66,12 @@ use core::{
 };
 use frame_support::{
 	traits::{
-		fungibles::{Inspect as FungiblesInspect, InspectHold, MutateHold, Transfer},
+		fungibles::{Inspect as FungiblesInspect, InspectHold, Mutate, MutateHold, Transfer},
 		Defensive, DefensiveSaturating, UnixTime,
 	},
 	BoundedBTreeMap,
 };
+use orml_traits::MultiLockableCurrency;
 use runtime_api::ClaimableAmountError;
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational_with_rounding, traits::CheckedSub, ArithmeticError,
@@ -1179,17 +1180,6 @@ pub mod pallet {
 			T::Assets::set_lock(T::LockId::get(), staked_asset_id, fnft_account, amount)
 		}
 
-		/// Mint share tokens into fNFT asst account & lock the assets
-		pub(crate) fn mint_shares(
-			share_asset_id: AssetIdOf<T>,
-			awarded_shares: <T as Config>::Balance,
-			fnft_account: &AccountIdOf<T>,
-		) -> DispatchResult {
-			T::Assets::mint_into(share_asset_id, fnft_account, awarded_shares)?;
-			T::Assets::set_lock(T::LockId::get(), share_asset_id, fnft_account, awarded_shares)?;
-			Ok(())
-		}
-
 		/// Ensure `who` is the owner of the fNFT associated with a stake
 		///
 		/// # Errors
@@ -1890,7 +1880,7 @@ impl<T: Config> Pallet<T> {
 
 		let amount_to_transfer = match awarded_shares.checked_sub(&unstaked_shares) {
 			Some(amount_to_mint) => {
-				Self::mint_shares(rewards_pool.share_asset_id, amount_to_mint, fnft_account)?;
+				T::Assets::mint_into(rewards_pool.share_asset_id, fnft_account, amount_to_mint)?;
 				awarded_shares.defensive_saturating_sub(amount_to_mint)
 			},
 			None => awarded_shares,
@@ -1902,6 +1892,13 @@ impl<T: Config> Pallet<T> {
 			fnft_account,
 			amount_to_transfer,
 			true,
+		)?;
+
+		T::Assets::set_lock(
+			T::LockId::get(),
+			rewards_pool.share_asset_id,
+			fnft_account,
+			awarded_shares,
 		)?;
 
 		Ok(())
