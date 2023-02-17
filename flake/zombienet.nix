@@ -11,7 +11,7 @@
       zombienet-rococo-local-composable-config = with prelude;
         { chain ? "dali-dev", ws_port ? null, rpc_port ? null
         , relay_ws_port ? null, relay_rpc_port ? null, rust_log_add ? null
-        , para-id ? 2087 }:
+        , para-id ? 2087, command ? self'.packages.composable-node}:
         mkZombienet {
           relaychain = relaychainBase
             // (pkgs.lib.optionalAttrs (relay_ws_port != null) {
@@ -19,7 +19,7 @@
             });
           parachains = [
             ({
-              command = pkgs.lib.meta.getExe self'.packages.composable-node;
+              command = pkgs.lib.meta.getExe command;
               inherit chain;
               id = para-id;
               collators = 2;

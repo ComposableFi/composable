@@ -58,6 +58,8 @@
 
         composable-node = makeComposableNode (node: node);
 
+        composable-node-dali = makeComposableNode (node: builtins.removeAttrs node ["PICASSO_RUNTIME" "COMPOSABLE_RUNTIME"]);
+
         composable-node-release = makeComposableNode (node:
           node // {
             SUBSTRATE_CLI_GIT_COMMIT_HASH = if self ? rev then
