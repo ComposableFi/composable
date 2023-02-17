@@ -1,6 +1,7 @@
 import {
   Button,
   CircularProgress,
+  Collapse,
   Stack,
   Typography,
   useTheme,
@@ -104,9 +105,9 @@ export function StakeForm({
       />
       <Typography variant="body2">Unlock date</Typography>
       <FutureDatePaper duration={duration} />
-      {shouldShowWarning && (
+      <Collapse in={shouldShowWarning}>
         <PICALockedWarning duration={duration} token={pica} />
-      )}
+      </Collapse>
       <StakeButton
         disabled={
           !formValid ||
