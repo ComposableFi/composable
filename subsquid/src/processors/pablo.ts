@@ -408,7 +408,7 @@ export async function processSwappedEvent(ctx: EventHandlerContext<Store, { even
   const quoteAsset = await getOrCreatePabloAsset(ctx, pool, quoteAssetId.toString());
 
   baseAsset.totalVolume += baseAmount;
-  baseAsset.totalLiquidity -= baseAmount;
+  baseAsset.totalLiquidity = baseAsset.totalLiquidity - baseAmount > 0n ? baseAsset.totalLiquidity - baseAmount : 0n;
   baseAsset.blockId = ctx.block.hash;
 
   await ctx.store.save(baseAsset);

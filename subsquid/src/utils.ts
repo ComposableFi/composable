@@ -10,6 +10,24 @@ import { isInstance } from "class-validator";
 const fetch = (url: RequestInfo, init?: RequestInit) =>
   import("node-fetch").then(({ default: fetch }) => fetch(url, init));
 
+const fetchRetry = async (url: RequestInfo, init?: RequestInit, retries = 5): Promise<any> => {
+  return fetch(url, init)
+    .then(async res => {
+      if (res.ok) {
+        return res.json();
+      }
+      if (retries > 0) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log("Retrying...", url);
+        return fetchRetry(url, init, retries - 1);
+      }
+      throw new Error(res.statusText);
+    })
+    .catch(err => {
+      throw new Error(err);
+    });
+};
+
 export const BOB = "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6";
 export const CHARLIE = "5wr4XcyxyJYQb71PbSPxhqujKnsS9UAydBhSypGvFgh2QXBa";
 
@@ -80,12 +98,15 @@ export async function getHistoricalCoingeckoPrice(assetId: "4" | "130", date?: D
   }
 
   const endpoint = `https://api.coingecko.com/api/v3/coins/${coinId}/history?date=${queryDate}&localization=en`;
-  const res = await fetch(endpoint);
-  if (!res.ok) {
-    throw new Error("Failed to fetch price from coingecko");
+  try {
+    const res: { market_data: { current_price: { usd: number } } } = await fetchRetry(endpoint);
+    if (res) {
+      const price = res.market_data?.current_price?.usd;
+      return price;
+    }
+  } catch {
+    console.log("error fetching", endpoint);
   }
-  const json: { market_data: { current_price: { usd: number } } } = await res.json();
-  const price = json?.market_data?.current_price?.usd;
 
-  return price;
+  throw new Error("Failed to fetch historical price");
 }
