@@ -80,6 +80,10 @@ export function StakeForm({
           }}
           maxDecimals={pica.decimals.picasso ?? undefined}
           disabled={isPendingStake}
+          buttonLabel="Max"
+          ButtonProps={{
+            onClick: () => setter(amount),
+          }}
         />
         {errorMsg.length > 0 && (
           <Typography variant="caption" color="error">
