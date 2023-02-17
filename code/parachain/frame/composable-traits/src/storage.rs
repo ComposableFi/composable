@@ -24,8 +24,8 @@ impl<T> UpdateValue<T> {
 	///
 	/// # Examples
 	///
-	/// ```
-	/// let x: UpdateValue<u32> = DoNotSet;
+	/// ```ignore
+	/// let x: UpdateValue<u32> = Ignore;
 	/// let y: UpdateValue<u32> = Set(12);
 	///
 	/// assert_eq!(x.unwrap_or_default(), 0);
