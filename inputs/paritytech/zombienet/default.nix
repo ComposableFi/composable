@@ -43,7 +43,7 @@ in with prelude; rec {
     let
       generated = lib.lists.zipListsWith
         (_increment: name: mkCollator { inherit command name rust_log_add; })
-        (lib.lists.range 0 (collators - 1)) (builtins.tail names);
+        (lib.lists.range 0 (collators - 2)) (builtins.tail names);
 
     in {
       add_to_genesis = true;
@@ -85,8 +85,7 @@ in with prelude; rec {
         (_increment: name: mkRelaychainNode { name = prefixName name; })
         (lib.lists.range 0 (count - 1)) (builtins.tail names);
       bootstrap = mkRelaychainNode {
-        ws_port = 9944;
-        rpc_port = 30444;
+        inherit ws_port rpc_port;
         name = prefixName "alice";
       };
     in [ bootstrap ] ++ generated;
@@ -110,12 +109,7 @@ in with prelude; rec {
           };
         };
       };
-      nodes = mkRelaychainNodes {
-        inherit rpc_port;
-        inherit ws_port;
-        inherit count;
-        inherit chain;
-      };
+      nodes = mkRelaychainNodes { inherit rpc_port ws_port count chain; };
     };
   mkSettings = {
     node_spawn_timeout = 120;

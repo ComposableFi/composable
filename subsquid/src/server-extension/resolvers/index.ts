@@ -10,6 +10,7 @@ import { PabloDailyResolver } from "./pabloDaily";
 import { PabloTVLResolver } from "./pabloTVL";
 import { PabloTotalVolumeResolver } from "./pabloTotalVolume";
 import { PabloSpotPriceChartResolver } from "./pabloSpotPriceChart";
+import { PabloDailyTransactionsResolver } from "./pabloDailyTransactions";
 
 export {
   ActiveUsersResolver,
@@ -23,5 +24,6 @@ export {
   PabloDailyResolver,
   PabloTVLResolver,
   PabloTotalVolumeResolver,
-  PabloSpotPriceChartResolver
+  PabloSpotPriceChartResolver,
+  PabloDailyTransactionsResolver
 };

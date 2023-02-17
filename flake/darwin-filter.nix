@@ -27,7 +27,6 @@ let
     "frontend-static-firebase"
     "picasso-bench-runtime"
     "picasso-runtime"
-    "polkadot-launch"
     "polkadot-node"
     "price-feed"
     "rust-nightly"

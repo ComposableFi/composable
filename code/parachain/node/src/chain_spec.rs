@@ -16,15 +16,14 @@ pub mod dali;
 
 pub mod picasso;
 
-const DEFAULT_PARA_ID: u32 = 2087;
+const DEFAULT_PARACHAIN_ID: u32 = 2087;
 
-// Parachain ID.
-static PARA_ID: Lazy<ParaId> = Lazy::new(|| {
+pub static PARACHAIN_ID: Lazy<ParaId> = Lazy::new(|| {
 	ParaId::new(
-		std::env::var("COMPOSABLE_PARA_ID")
-			.unwrap_or_else(|_| DEFAULT_PARA_ID.to_string())
+		std::env::var("PARACHAIN_ID")
+			.unwrap_or_else(|_| DEFAULT_PARACHAIN_ID.to_string())
 			.parse::<u32>()
-			.unwrap_or(DEFAULT_PARA_ID),
+			.unwrap_or(DEFAULT_PARACHAIN_ID),
 	)
 });
 
@@ -97,7 +96,7 @@ pub fn composable() -> composable::ChainSpec {
 }
 
 // chain spec for single node environments
-pub fn picasso_dev() -> picasso::ChainSpec {
+pub fn picasso_dev(parachain_id: ParaId) -> picasso::ChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PICA".into());
 	properties.insert("tokenDecimals".into(), CurrencyId::decimals().into());
@@ -119,13 +118,9 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 						account_id_from_seed::<sr25519::Public>("Bob"),
 						get_collator_keys_from_seed("Bob"),
 					),
-					(
-						account_id_from_seed::<sr25519::Public>("Charlie"),
-						get_collator_keys_from_seed("Charlie"),
-					),
 				],
 				dev_accounts(),
-				*PARA_ID,
+				parachain_id,
 				common::fees::NATIVE_EXISTENTIAL_DEPOSIT,
 				picasso_runtime::governance::TreasuryAccount::get(),
 			)
@@ -135,7 +130,7 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(*PARA_ID) },
+		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(parachain_id) },
 	)
 }
 
@@ -146,7 +141,7 @@ pub fn dali_dev(id: &str) -> dali::ChainSpec {
 		"dev" => None,
 		number => number.parse::<u32>().ok().map(ParaId::from),
 	};
-	let para_id = para_id.unwrap_or(*PARA_ID);
+	let para_id = para_id.unwrap_or(*PARACHAIN_ID);
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "DALI".into());
 	properties.insert("tokenDecimals".into(), CurrencyId::decimals().into());
@@ -167,10 +162,6 @@ pub fn dali_dev(id: &str) -> dali::ChainSpec {
 					(
 						account_id_from_seed::<sr25519::Public>("Bob"),
 						get_collator_keys_from_seed("Bob"),
-					),
-					(
-						account_id_from_seed::<sr25519::Public>("Charlie"),
-						get_collator_keys_from_seed("Charlie"),
 					),
 				],
 				dev_accounts(),
@@ -212,13 +203,9 @@ pub fn composable_dev() -> composable::ChainSpec {
 						account_id_from_seed::<sr25519::Public>("Bob"),
 						get_collator_keys_from_seed("Bob"),
 					),
-					(
-						account_id_from_seed::<sr25519::Public>("Charlie"),
-						get_collator_keys_from_seed("Charlie"),
-					),
 				],
 				dev_accounts(),
-				*PARA_ID,
+				*PARACHAIN_ID,
 				composable_runtime::ExistentialDeposit::get(),
 				composable_runtime::TreasuryAccount::get(),
 			)
@@ -228,7 +215,10 @@ pub fn composable_dev() -> composable::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "westend_local_testnet".into(), para_id: u32::from(*PARA_ID) },
+		Extensions {
+			relay_chain: "westend_local_testnet".into(),
+			para_id: u32::from(*PARACHAIN_ID),
+		},
 	)
 }
 

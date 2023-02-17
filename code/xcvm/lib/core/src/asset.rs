@@ -2,7 +2,7 @@ use crate::abstraction::IndexOf;
 use alloc::{string::ToString, vec::Vec};
 use codec::{Decode, Encode};
 use core::ops::Add;
-use fixed::{types::extra::U16, FixedU128};
+use cosmwasm_std::{Uint128, Uint256};
 use num::Zero;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -19,6 +19,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 	PartialOrd,
 	Ord,
 	Debug,
+	Hash,
 	Encode,
 	Decode,
 	TypeInfo,
@@ -77,6 +78,7 @@ pub type Assets = (InvalidAsset, (PICA, (ETH, (USDT, (USDC, ())))));
 /// Type implement network must be part of [`Networks`], otherwise invalid.
 pub trait Asset {
 	const ID: AssetId;
+	const DECIMALS: u8 = 12;
 }
 
 impl Asset for PICA {
@@ -95,14 +97,36 @@ impl Asset for USDC {
 	const ID: AssetId = AssetId(Displayed(<Assets as IndexOf<Self, _>>::INDEX as u128));
 }
 
+pub trait AssetSymbol {
+	const SYMBOL: &'static str;
+}
+
+impl AssetSymbol for PICA {
+	const SYMBOL: &'static str = "PICA";
+}
+
+impl AssetSymbol for ETH {
+	const SYMBOL: &'static str = "ETH";
+}
+
+impl AssetSymbol for USDT {
+	const SYMBOL: &'static str = "USDT";
+}
+
+impl AssetSymbol for USDC {
+	const SYMBOL: &'static str = "USDC";
+}
+
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
+	Default,
 	Copy,
 	Clone,
 	PartialEq,
 	Eq,
 	PartialOrd,
 	Ord,
+	Hash,
 	Debug,
 	Encode,
 	Decode,
@@ -150,9 +174,14 @@ pub struct Balance {
 }
 
 impl Balance {
-	#[inline]
-	pub fn new(amount: Amount, is_unit: bool) -> Self {
+	pub const fn new(amount: Amount, is_unit: bool) -> Self {
 		Self { amount, is_unit }
+	}
+}
+
+impl From<u128> for Balance {
+	fn from(value: u128) -> Self {
+		Balance { amount: Amount::absolute(value), is_unit: false }
 	}
 }
 
@@ -170,40 +199,94 @@ pub struct Amount {
 }
 
 impl Amount {
-	#[inline]
-	pub fn new(intercept: u128, slope: u128) -> Self {
+	pub const MAX_PARTS: u128 = 1000000000000000000;
+
+	pub const fn new(intercept: u128, slope: u128) -> Self {
 		Self { intercept: Displayed(intercept), slope: Displayed(slope) }
 	}
 
 	/// An absolute amount
-	#[inline]
-	pub fn absolute(value: u128) -> Self {
+	pub const fn absolute(value: u128) -> Self {
 		Self { intercept: Displayed(value), slope: Displayed(0) }
 	}
 
-	/// A ratio amount, expressed in u128 parts (x / u128::MAX)
-	#[inline]
-	pub fn ratio(parts: u128) -> Self {
+	/// A ratio amount, expressed in u128 parts (x / MAX_PARTS)
+	pub const fn ratio(parts: u128) -> Self {
 		Self { intercept: Displayed(0), slope: Displayed(parts) }
 	}
 
 	/// Helper function to see if the amount is absolute
-	#[inline]
-	pub fn is_absolute(&self) -> bool {
+	pub const fn is_absolute(&self) -> bool {
 		self.slope.0 == 0
 	}
 
 	/// Helper function to see if the amount is ratio
-	#[inline]
-	pub fn is_ratio(&self) -> bool {
+	pub const fn is_ratio(&self) -> bool {
 		self.intercept.0 == 0
+	}
+
+	/// Everything mean that we move 100% of whats left.
+	pub const fn everything() -> Self {
+		Self::ratio(Self::MAX_PARTS)
+	}
+
+	/// `f(x) = a(x - b) + b where a = slope / MAX_PARTS, b = intercept`
+	pub fn apply(&self, value: u128) -> Result<u128, ()> {
+		if value.is_zero() {
+			return Ok(0)
+		}
+		let amount = if self.slope.0.is_zero() {
+			self.intercept.0
+		} else {
+			if self.slope.0 == Self::MAX_PARTS {
+				value
+			} else {
+				let value =
+					Uint256::from(value).checked_sub(self.intercept.0.into()).map_err(|_| ())?;
+				let value =
+					value.checked_multiply_ratio(self.slope.0, Self::MAX_PARTS).map_err(|_| ())?;
+				let value = value.checked_add(self.intercept.0.into()).map_err(|_| ())?;
+				let value = Uint128::try_from(value).map_err(|_| ())?.u128();
+				value
+			}
+		};
+		Ok(u128::min(value, amount))
+	}
+
+	/// `f(x) = (a + b) * 10 ^ decimals where a = intercept, b = slope / MAX_PARTS`
+	pub fn apply_with_decimals(&self, decimals: u8, value: u128) -> Result<u128, ()> {
+		if value.is_zero() {
+			return Ok(0)
+		}
+		let unit = 10_u128.checked_pow(decimals as u32).ok_or(())?;
+		let amount = if self.slope.0.is_zero() {
+			self.intercept.0.checked_mul(unit).ok_or(())?
+		} else {
+			if self.slope.0 == Self::MAX_PARTS {
+				value
+			} else {
+				let value = Uint256::from(self.intercept.0);
+				let value = value
+					.checked_add(
+						Uint256::one()
+							.checked_multiply_ratio(self.slope.0, Self::MAX_PARTS)
+							.map_err(|_| ())?,
+					)
+					.map_err(|_| ())?;
+				let value = value
+					.checked_mul(Uint256::from(10_u128.pow(decimals as u32)))
+					.map_err(|_| ())?;
+				let value = Uint128::try_from(value).map_err(|_| ())?.u128();
+				value
+			}
+		};
+		Ok(u128::min(value, amount))
 	}
 }
 
 impl Add for Amount {
 	type Output = Self;
 
-	#[inline]
 	fn add(self, Self { intercept: Displayed(i_1), slope: Displayed(s_1) }: Self) -> Self::Output {
 		let Self { intercept: Displayed(i_0), slope: Displayed(s_0) } = self;
 		Self {
@@ -214,64 +297,38 @@ impl Add for Amount {
 }
 
 impl Zero for Amount {
-	#[inline]
 	fn zero() -> Self {
 		Self { intercept: Displayed(0), slope: Displayed(0) }
 	}
 
-	#[inline]
 	fn is_zero(&self) -> bool {
 		self == &Self::zero()
 	}
 }
 
 impl From<u128> for Amount {
-	#[inline]
 	fn from(x: u128) -> Self {
-		Self { intercept: Displayed(x), slope: Displayed(0) }
-	}
-}
-
-impl Amount {
-	/// `f(x) = a(x - b) + b where a = slope / MAX_PARTS, b = intercept`
-	#[inline]
-	pub fn apply(&self, value: u128) -> u128 {
-		let amount = if self.slope.0 == 0 {
-			self.intercept.0
-		} else {
-			FixedU128::<U16>::wrapping_from_num(value)
-				.saturating_sub(FixedU128::<U16>::wrapping_from_num(self.intercept.0))
-				.saturating_mul(
-					FixedU128::<U16>::wrapping_from_num(self.slope.0)
-						.saturating_div(FixedU128::<U16>::wrapping_from_num(MAX_PARTS)),
-				)
-				.wrapping_to_num::<u128>()
-				.saturating_add(self.intercept.0)
-		};
-		u128::min(value, amount)
-	}
-
-	/// `f(x) = a + b * 10 ^ decimals where a = intercept, b = slope / MAX_PARTS`
-	#[inline]
-	pub fn apply_with_decimals(&self, decimals: u8, value: u128) -> u128 {
-		let amount = FixedU128::<U16>::wrapping_from_num(self.intercept.0)
-			.saturating_add(
-				FixedU128::<U16>::wrapping_from_num(self.slope.0)
-					.saturating_div(FixedU128::<U16>::wrapping_from_num(MAX_PARTS)),
-			)
-			.saturating_mul(FixedU128::<U16>::wrapping_from_num(10_u128.pow(decimals as u32)))
-			.wrapping_to_num::<u128>();
-
-		u128::min(value, amount)
+		Self::absolute(x)
 	}
 }
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+	Default,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Debug,
+	Encode,
+	Decode,
+	TypeInfo,
+	Serialize,
+	Deserialize,
 )]
 #[repr(transparent)]
-pub struct Funds<T = Amount>(pub Vec<(AssetId, T)>);
+pub struct Funds<T = Balance>(pub Vec<(AssetId, T)>);
 
 impl<T> IntoIterator for Funds<T> {
 	type Item = <Vec<(AssetId, T)> as IntoIterator>::Item;
@@ -282,7 +339,6 @@ impl<T> IntoIterator for Funds<T> {
 }
 
 impl<T> Funds<T> {
-	#[inline]
 	pub fn empty() -> Self {
 		Funds(Vec::new())
 	}
@@ -293,7 +349,6 @@ where
 	U: Into<AssetId>,
 	V: Into<T>,
 {
-	#[inline]
 	fn from(assets: Vec<(U, V)>) -> Self {
 		Funds(
 			assets
@@ -316,14 +371,12 @@ where
 }
 
 impl<T> From<Funds<T>> for Vec<(AssetId, T)> {
-	#[inline]
 	fn from(Funds(assets): Funds<T>) -> Self {
 		assets
 	}
 }
 
 impl<T> From<Funds<T>> for Vec<(u128, T)> {
-	#[inline]
 	fn from(Funds(assets): Funds<T>) -> Self {
 		assets
 			.into_iter()

@@ -20,7 +20,6 @@ export const subscribeMultiAsset = async (allProviders: {
       existentialDeposit: store.transfers.existentialDeposit,
     }),
     ({ selectedToken, from, to, amount }) => {
-      console.log(amount.toString());
       const api = allProviders[from].parachainApi;
       if (!api) return;
       const amountToTransfer = useStore

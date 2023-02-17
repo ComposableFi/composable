@@ -17,7 +17,10 @@ permissions:
 env:
   NIX_VERSION: nix-2.13.2
   NIXPKGS_CHANNEL: nixos-22.11
-  CACHIX_COMPRESSION_LEVEL: 3
+  CACHIX_COMPRESSION_LEVEL: 16
+  CACHIX_JOBS: 8
+  CACHIX_COMPRESSION_METHOD: zstd
+
   CACHIX_NAME: composable-community
 
   DOCKER_REGISTRY_NAME: composablefi
@@ -122,6 +125,7 @@ jobs:
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
             http2 = false
+
       - name: Set up Cachix
         uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
         with:
@@ -215,7 +219,7 @@ jobs:
     name: Push docker images
     strategy:
       matrix:
-        arch: [x64-cute, arm-cute]
+        arch: [x64-cute] # TODO: add arm-cute and figure out pushing multi-arch imgaes to dockerhub
     needs: 
       - effects-gate
     runs-on:
@@ -433,7 +437,7 @@ jobs:
       - lfs-check
     strategy:
       matrix:
-        arch: [x64-cute, arm-cute]
+        arch: [x64-cute] # TODO: add arm-cute and figure out pushing multi-arch imgaes to dockerhub
     runs-on:
       - self-hosted
       - ${{ matrix.arch }}
@@ -482,7 +486,7 @@ jobs:
       - test-subsquid
     strategy:
       matrix:
-        arch: [x64-cute, arm-cute]
+        arch: [x64-cute] # TODO: add arm-cute and figure out pushing multi-arch imgaes to dockerhub
     runs-on:
       - self-hosted
       - ${{ matrix.arch }}

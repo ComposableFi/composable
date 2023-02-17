@@ -103,7 +103,7 @@ benchmarks! {
 		let pool_id = BASE_ASSET_ID.into();
 	}: _(OriginFor::<T>::root(), get_reward_pool::<T>(owner.clone(), r))
 	verify {
-		assert_last_event::<T>(Event::RewardPoolCreated { pool_id, owner }.into());
+		assert_last_event::<T>(Event::RewardPoolCreated { pool_id, owner: owner.clone(), pool_config: get_reward_pool::<T>(owner.clone(), r) }.into());
 	}
 
 	stake {
@@ -248,9 +248,23 @@ benchmarks! {
 
 		let now = now + seconds_per_block;
 
-		let mut reward = RewardPools::<T>::get(&pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
+		let reward_pool = RewardPools::<T>::get(pool_id).unwrap();
+
+		let mut reward = reward_pool.rewards.get(&reward_asset_id).unwrap().clone();
+
+		let pool_account = Pallet::<T>::pool_account_id(&pool_asset_id);
+		let unstaked_shares = T::Assets::balance(reward_pool.share_asset_id, &pool_account);
+		let total_shares: T::Balance =
+			<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(reward_pool.share_asset_id);
 	}: {
-		crate::reward_accumulation_hook_reward_update_calculation::<T>(pool_id, reward_asset_id,&mut reward, now);
+		crate::reward_accumulation_hook_reward_update_calculation::<T>(
+			pool_id,
+			reward_asset_id,
+			&mut reward,
+			unstaked_shares,
+			total_shares,
+			now
+		);
 	}
 
 	unix_time_now {}: {
@@ -261,7 +275,7 @@ benchmarks! {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
 		frame_system::Pallet::<T>::set_block_number(1.into());
 		let user: T::AccountId = account("user", 0, 0);
-		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(get_reward_pool::<T>(user.clone(), r)).unwrap();
+		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(get_reward_pool::<T>(user, r)).unwrap();
 
 		let updates = (0..r).map(|r| (
 			((r as u128) + BASE_ASSET_ID).into(),

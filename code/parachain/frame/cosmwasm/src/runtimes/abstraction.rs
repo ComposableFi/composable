@@ -38,7 +38,7 @@ impl<T: Config> Into<CanonicalAddr> for CanonicalCosmwasmAccount<T> {
 	}
 }
 
-#[derive(Clone, Debug, Encode, TypeInfo)]
+#[derive(Clone, Debug, Encode, TypeInfo, PartialEq)]
 pub struct CosmwasmAccount<T: Config>(PhantomData<T>, AccountIdOf<T>);
 
 impl<T: Config> CosmwasmAccount<T> {

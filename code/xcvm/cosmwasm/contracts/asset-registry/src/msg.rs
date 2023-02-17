@@ -6,7 +6,7 @@ use xcvm_core::AssetId;
 
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
 #[repr(transparent)]
-pub struct AssetKey(AssetId);
+pub struct AssetKey(pub AssetId);
 
 impl From<u128> for AssetKey {
 	fn from(x: u128) -> Self {
@@ -59,7 +59,9 @@ impl AssetReference {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InstantiateMsg {}
+pub struct InstantiateMsg {
+	pub admin: String,
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

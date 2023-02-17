@@ -38,8 +38,6 @@ export function getStartAndStep(range: string): {
   };
 }
 
-export const DAY_IN_MS = 24 * 60 * 60 * 1000;
-
 export function getRange(range: string): Date[] {
   const dates: Date[] = [];
   const now = new Date();
@@ -63,8 +61,6 @@ export function getRange(range: string): Date[] {
   } else {
     throw new Error("Invalid range. It should be 'day', 'week', 'month' or 'year'.");
   }
-
-  dates.push(now);
 
   return dates;
 }

@@ -5,7 +5,7 @@
 //! work. Example, use several hours, instead of several days.
 #![cfg_attr(
 	not(test),
-	warn(
+	deny(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -27,6 +27,7 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 extern crate alloc;
 
+mod fees;
 mod governance;
 mod migrations;
 mod prelude;
@@ -40,13 +41,13 @@ pub use versions::*;
 
 use lending::MarketId;
 use orml_traits::{parameter_type_with_key, LockIdentifier};
-// TODO: consider moving this to shared runtime
+
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
+pub use crate::fees::WellKnownForeignToNativePriceConverter;
+
 use common::{
-	fees::{
-		multi_existential_deposits, NativeExistentialDeposit, PriceConverter, WeightToFeeConverter,
-	},
+	fees::{multi_existential_deposits, NativeExistentialDeposit, WeightToFeeConverter},
 	governance::native::{
 		EnsureRootOrHalfNativeCouncil, EnsureRootOrOneThirdNativeTechnical, NativeTreasury,
 	},
@@ -88,15 +89,15 @@ pub use frame_support::{
 		ConstBool, Contains, Everything, Get, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo,
 	},
 	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
+		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
 		IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
 	PalletId, StorageValue,
 };
 
+use crate::fees::FinalPriceConverter;
 use codec::Encode;
-use common::fees::WellKnownForeignToNativePriceConverter;
 use composable_traits::{
 	account_proxy::{AccountProxyWrapper, ProxyType},
 	currency::{CurrencyFactory as CurrencyFactoryT, RangeId, Rational64},
@@ -158,7 +159,7 @@ pub mod opaque {
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
 	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
-		multi_existential_deposits::<AssetsRegistry>(currency_id)
+		multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(currency_id)
 	};
 }
 
@@ -377,10 +378,8 @@ impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrD
 
 impl asset_tx_payment::Config for Runtime {
 	type Fungibles = Tokens;
-	type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
-		PriceConverter<AssetsRegistry>,
-		TransferToTreasuryOrDrop,
-	>;
+	type OnChargeAssetTransaction =
+		asset_tx_payment::FungiblesAdapter<FinalPriceConverter, TransferToTreasuryOrDrop>;
 
 	type UseUserConfiguration = ConstBool<true>;
 
@@ -394,7 +393,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type Lock = Assets;
 
-	type BalanceConverter = PriceConverter<AssetsRegistry>;
+	type BalanceConverter = FinalPriceConverter;
 }
 
 impl sudo::Config for Runtime {
@@ -1288,6 +1287,25 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 	}
 }
 
+#[derive(
+	Debug, codec::Encode, Clone, codec::Decode, PartialEq, Eq, scale_info::TypeInfo, Default,
+)]
+pub struct MemoMessage;
+
+impl alloc::string::ToString for MemoMessage {
+	fn to_string(&self) -> String {
+		Default::default()
+	}
+}
+
+impl core::str::FromStr for MemoMessage {
+	type Err = ();
+
+	fn from_str(_s: &str) -> Result<Self, Self::Err> {
+		Ok(Default::default())
+	}
+}
+
 impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type RuntimeEvent = RuntimeEvent;
@@ -1310,6 +1328,8 @@ impl pallet_ibc::Config for Runtime {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type SentryOrigin = EnsureRoot<AccountId>;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
+	type HandleMemo = ();
+	type MemoMessage = MemoMessage;
 }
 
 impl pallet_ibc_ping::Config for Runtime {
@@ -1506,10 +1526,11 @@ impl_runtime_apis! {
 
 		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {
 			// Hardcoded assets
+			use common::fees::ForeignToNativePriceConverter;
 			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
 				// Add hardcoded ratio and ED for well known assets
 				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
-				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry>(&asset.id.into());
+				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
 				asset
 			}).collect::<Vec<_>>();
 			// Assets from the assets-registry pallet
@@ -1527,7 +1548,7 @@ impl_runtime_apis! {
 						asset.ratio = foreign_asset.ratio;
 					}
 				} else {
-					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry>(&foreign_asset.id.into());
+					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&foreign_asset.id.into());
 					acc.push(foreign_asset.clone())
 				}
 				acc

@@ -2,20 +2,32 @@ import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { hexToU8a } from "@polkadot/util";
-import { EntityManager, LessThan } from "typeorm";
-import { divideBigInts, encodeAccount } from "./utils";
+import { RequestInfo, RequestInit } from "node-fetch";
+import BigNumber from "bignumber.js";
+import { EntityManager, LessThan, MoreThan } from "typeorm";
+import { divideBigInts, encodeAccount, getHistoricalCoingeckoPrice } from "./utils";
 import {
   Account,
   Activity,
+  Currency,
   Event,
   EventType,
+  HistoricalAssetPrice,
   HistoricalLockedValue,
+  HistoricalPabloFeeApr,
+  HistoricalStakingApr,
   LockedSource,
   PabloAssetWeight,
+  PabloLpToken,
   PabloPool,
   PabloPoolAsset,
-  PabloSwap
+  PabloSwap,
+  StakingRewardsPool
 } from "./model";
+import { DAY_IN_MS } from "./constants";
+
+const fetch = (url: RequestInfo, init?: RequestInit) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(url, init));
 
 export async function getLatestPoolByPoolId(store: Store, poolId: bigint): Promise<PabloPool | undefined> {
   return store.get<PabloPool>(PabloPool, {
@@ -85,7 +97,10 @@ export async function saveEvent(ctx: EventHandlerContext<Store>, eventType: Even
     eventType,
     blockNumber: BigInt(ctx.block.height),
     timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash
+    blockId: ctx.block.hash,
+    txHash: ctx.event.extrinsic?.hash,
+    success: ctx.event.extrinsic?.success,
+    failReason: typeof ctx.event.extrinsic?.error === "string" ? ctx.event.extrinsic.error : undefined
   });
 
   // Store event
@@ -250,6 +265,10 @@ export async function getSpotPrice(
   poolId: string,
   timestamp?: number
 ): Promise<number> {
+  if (quoteAssetId === baseAssetId) {
+    return 1;
+  }
+
   const isRepository = ctx instanceof EntityManager;
 
   const time = timestamp || new Date().getTime();
@@ -373,4 +392,289 @@ export async function getSpotPrice(
   }
 
   return baseAssetId === swap.baseAssetId ? Number(swap.spotPrice) : 1 / Number(swap.spotPrice);
+}
+
+/**
+ * Gets historical price from DB, or from Coingecko if it doesn't exist.
+ * @param ctx
+ * @param assetId
+ * @param timestamp
+ */
+export async function getOrCreateHistoricalAssetPrice(
+  ctx: EventHandlerContext<Store> | EntityManager,
+  assetId: string,
+  timestamp: number
+): Promise<number | undefined> {
+  const isRepository = ctx instanceof EntityManager;
+
+  const time = new Date(timestamp);
+  const date = new Date(time.getFullYear(), time.getMonth(), time.getDate());
+
+  // Look for the price in the DB
+  const where = {
+    assetId,
+    timestamp: date
+  };
+  let assetPrice = isRepository
+    ? await ctx.getRepository(HistoricalAssetPrice).findOne({ where })
+    : await ctx.store.findOne(HistoricalAssetPrice, {
+        where
+      });
+
+  let price = assetPrice?.price;
+
+  // If no price available, get it from the API and update DB
+  if (!price) {
+    try {
+      // If asset is PICA, use swap price from KSM/PICA pool
+      const assetIdToQuery = assetId === "1" ? "4" : (assetId as "4" | "130");
+
+      price = await getHistoricalCoingeckoPrice(assetIdToQuery, date);
+
+      // If asset is PICA, use swap price
+      if (assetId === "1") {
+        const picaSpotPrice = await getSpotPrice(ctx, "1", "4", "2", timestamp);
+        price /= picaSpotPrice;
+      }
+
+      // Create new price entry
+      assetPrice = new HistoricalAssetPrice({
+        id: randomUUID(),
+        assetId: assetId.toString(),
+        price,
+        timestamp: date,
+        currency: Currency.USD
+      });
+
+      if (isRepository) {
+        await ctx.getRepository(HistoricalAssetPrice).save(assetPrice);
+      } else {
+        await ctx.store.save(assetPrice);
+      }
+    } catch (e) {
+      console.log(e);
+      console.info(`Could not get price for asset ${assetId}. Trying with previous value instead.`);
+
+      const options = {
+        where: {
+          assetId,
+          timestamp: LessThan(date)
+        },
+        sort: {
+          timestamp: "DESC"
+        }
+      };
+
+      assetPrice = isRepository
+        ? await ctx.getRepository(HistoricalAssetPrice).findOne(options)
+        : await ctx.store.findOne(HistoricalAssetPrice, options);
+
+      if (assetPrice) {
+        price = assetPrice.price;
+      } else {
+        console.error(`Could not get price for asset ${assetId}. Ignoring.`);
+      }
+    }
+  }
+
+  return price;
+}
+
+/**
+ * Gets current prices from Coingecko
+ * @param ctx
+ */
+export async function getCurrentAssetPrices(
+  ctx: EventHandlerContext<Store> | EntityManager
+): Promise<Record<string, number> | undefined> {
+  const endpoint = "https://api.coingecko.com/api/v3/simple/price?ids=tether%2Ckusama&vs_currencies=usd";
+
+  const res = await fetch(endpoint);
+  if (!res.ok) {
+    throw new Error("Failed to fetch prices from coingecko");
+  }
+  const json: { kusama: { usd: number }; tether: { usd: number } } = await res.json();
+
+  const picaKsmSpotPrice = await getSpotPrice(ctx, "1", "4", "2");
+
+  return {
+    "1": json.kusama.usd / picaKsmSpotPrice,
+    "4": json.kusama.usd,
+    "130": json.tether.usd
+  };
+}
+
+export async function getNormalizedPoolTVL(
+  ctx: EventHandlerContext<Store> | EntityManager,
+  poolId: string
+): Promise<bigint> {
+  const isRepository = ctx instanceof EntityManager;
+
+  const poolOptions = {
+    where: {
+      id: poolId
+    },
+    relations: {
+      poolAssets: true
+    }
+  };
+
+  const pool = isRepository
+    ? await ctx.getRepository(PabloPool).findOne(poolOptions)
+    : await ctx.store.get(PabloPool, poolOptions);
+
+  if (!pool) {
+    throw new Error("Pool not found");
+  }
+
+  const { poolAssets, quoteAssetId } = pool;
+
+  let normalizedTvl = 0n;
+
+  for (const asset of poolAssets) {
+    const assetPrice = BigNumber(await getSpotPrice(ctx, quoteAssetId, asset.assetId, poolId));
+    const assetTVL = BigInt(BigNumber(asset.totalLiquidity.toString()).multipliedBy(assetPrice).toFixed(0));
+    normalizedTvl += assetTVL;
+  }
+
+  return Promise.resolve(normalizedTvl);
+}
+
+/**
+ * Get LP Token by id If it doesn't exist, create it.
+ * @param ctx
+ * @param poolId
+ * @param lpTokenId
+ */
+export async function getOrCreatePabloLpToken(
+  ctx: EventHandlerContext<Store>,
+  poolId: string,
+  lpTokenId: string
+): Promise<PabloLpToken> {
+  let lpToken = await ctx.store.get(PabloLpToken, {
+    where: {
+      id: lpTokenId,
+      poolId
+    }
+  });
+  if (!lpToken) {
+    lpToken = new PabloLpToken({
+      id: lpTokenId,
+      totalIssued: 0n,
+      poolId,
+      blockId: ctx.block.hash,
+      timestamp: new Date(ctx.block.timestamp)
+    });
+    await ctx.store.save(lpToken);
+  }
+  return Promise.resolve(lpToken);
+}
+
+export async function getOrCreateFeeApr(
+  ctx: EventHandlerContext<Store> | EntityManager,
+  pool: PabloPool,
+  swapFee = 0.003,
+  timestamp = new Date(),
+  event?: Event
+): Promise<number> {
+  const isRepository = ctx instanceof EntityManager;
+
+  const { quoteAssetId } = pool;
+
+  const options = {
+    where: {
+      pool: {
+        id: pool.id
+      },
+      timestamp: MoreThan(new Date(timestamp.getTime() - DAY_IN_MS))
+    }
+  };
+
+  const latestSwaps = isRepository
+    ? await ctx.getRepository(PabloSwap).find(options)
+    : await ctx.store.find(PabloSwap, options);
+
+  const dailyVolume = latestSwaps.reduce((acc, swap) => {
+    if (swap.baseAssetId === quoteAssetId) {
+      return acc + swap.baseAssetAmount;
+    }
+    if (swap.quoteAssetId === quoteAssetId) {
+      return acc + swap.quoteAssetAmount;
+    }
+    return acc;
+  }, 0n);
+
+  const normalizedTvl = await getNormalizedPoolTVL(ctx, pool.id);
+
+  if (normalizedTvl === 0n) {
+    console.error(`TVL for pool ${pool.id} is 0. Ignoring.`);
+    return 0;
+  }
+
+  const tradingFee = BigNumber(dailyVolume.toString())
+    .multipliedBy(BigNumber(swapFee))
+    .multipliedBy(365)
+    .dividedBy(normalizedTvl.toString())
+    .toNumber();
+
+  if (!isRepository && event) {
+    const historicalFeeApr = new HistoricalPabloFeeApr({
+      id: randomUUID(),
+      event,
+      pool,
+      timestamp: new Date(ctx.block.timestamp),
+      blockId: ctx.block.hash,
+      tradingFee
+    });
+
+    await ctx.store.save(historicalFeeApr);
+  }
+
+  return tradingFee;
+}
+
+export async function getOrCreateStakingApr(
+  ctx: EventHandlerContext<Store> | EntityManager,
+  pool: PabloPool,
+  timestamp = new Date(),
+  event?: Event
+): Promise<number> {
+  const isRepository = ctx instanceof EntityManager;
+
+  const { lpToken } = pool;
+
+  const options = {
+    where: {
+      assetId: lpToken.id
+    }
+  };
+  const rewardsPool = isRepository
+    ? await ctx.getRepository(StakingRewardsPool).findOne(options)
+    : await ctx.store.get(StakingRewardsPool, options);
+
+  if (!rewardsPool) {
+    throw new Error("No rewards pool found for this pool's LP token");
+  }
+
+  const normalizedTvl = await getNormalizedPoolTVL(ctx, pool.id);
+
+  const stakingApr = BigNumber(rewardsPool.rewardRateAmount.toString())
+    .multipliedBy(365 * 24 * 60 * 60)
+    .dividedBy(normalizedTvl.toString())
+    .toNumber();
+
+  if (!isRepository && event) {
+    const historicalStakingApr = new HistoricalStakingApr({
+      id: randomUUID(),
+      event,
+      assetId: lpToken.id,
+      stakingApr,
+      timestamp: new Date(ctx.block.timestamp),
+      blockId: ctx.block.hash
+    });
+
+    await ctx.store.save(historicalStakingApr);
+  }
+
+  return stakingApr;
 }

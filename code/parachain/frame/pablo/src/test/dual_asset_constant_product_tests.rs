@@ -48,7 +48,7 @@ fn create_pool(
 	// TODO(benluelo): why is this set here
 	System::set_block_number(1);
 	let asset_weights = dual_asset_pool_weights(base_asset, Permill::from_percent(50), quote_asset);
-	let actual_pool_id = DACP::<Test>::do_create_pool(
+	let (actual_pool_id, _) = DACP::<Test>::do_create_pool(
 		&ALICE,
 		FeeConfig {
 			fee_rate: lp_fee,

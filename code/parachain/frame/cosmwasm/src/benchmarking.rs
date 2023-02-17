@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_methods)]
+
 use super::*;
 use crate::{
 	instrument::INSTRUCTIONS_MULTIPLIER,
@@ -257,7 +259,6 @@ where
 		"salt".as_bytes(),
 		Some(origin),
 		vec![0x41_u8].try_into().unwrap(),
-		"message".as_bytes(),
 	)
 	.unwrap()
 	.top_level_call(get_shared_vm(), Default::default(), b"message".to_vec().try_into().unwrap())
@@ -364,7 +365,7 @@ benchmarks! {
 		// Make sure contract address is derived correctly
 		let code_hash = CodeIdToInfo::<T>::get(1).unwrap().pristine_code_hash;
 		let contract_addr =
-			Pallet::<T>::derive_contract_address(&origin, &salt, code_hash, &message);
+			Pallet::<T>::derive_contract_address(&origin, &salt, &code_hash).unwrap();
 		// Make sure trie_id is derived correctly
 		let nonce = CurrentNonce::<T>::get();
 		let trie_id = Pallet::<T>::derive_contract_trie_id(&contract_addr, nonce);
@@ -429,7 +430,7 @@ benchmarks! {
 		let new_admin = account::<<T as Config>::AccountIdExtended>("new_admin", 0, 0xCAFEBABE);
 		let contract = create_instantiated_contract::<T>(origin.clone());
 
-	}: _(RawOrigin::Signed(origin), contract.clone(), Some(new_admin.clone()), 100_000_000u64)
+	}: _(RawOrigin::Signed(origin), contract.clone(), Some(new_admin.clone()), 1_000_000_000_000u64)
 	verify {
 		// Make sure contract points to the new code
 		assert_eq!(ContractToInfo::<T>::get(&contract).unwrap().admin, Some(new_admin));
@@ -592,7 +593,7 @@ benchmarks! {
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_continue_instantiate(vm.0.data_mut(), meta, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
+		Cosmwasm::<T>::do_continue_instantiate(vm.0.data_mut(), meta, funds, b"salt", "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
 
 	continue_execute {
@@ -629,12 +630,19 @@ benchmarks! {
 		Cosmwasm::<T>::do_continue_reply(vm.0.data_mut(), Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {}).unwrap();
 	}
 
-	query_info {
+	query_contract_info {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
 	}: {
-		Cosmwasm::<T>::do_query_info(vm.0.data_mut(), contract).unwrap();
+		Cosmwasm::<T>::do_query_contract_info(vm.0.data_mut(), contract).unwrap();
+	}
+
+	query_code_info {
+		let sender = create_funded_account::<T>("origin");
+		let _ = create_instantiated_contract::<T>(sender);
+	}: {
+		Cosmwasm::<T>::do_query_code_info(1).unwrap();
 	}
 
 	query_raw {

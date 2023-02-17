@@ -303,8 +303,9 @@ fn stake_should_fail_before_start_of_rewards_pool() {
 #[test]
 fn stake_in_case_of_low_balance_should_not_work() {
 	new_test_ext().execute_with(|| {
-		process_and_progress_blocks::<StakingRewards, Test>(1);
 		const AMOUNT: u128 = 100_500_u128;
+
+		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		create_default_reward_pool();
 
@@ -457,7 +458,7 @@ fn split_doesnt_cause_loss_in_assets() {
 			original_fnft_instance_id,
 			ratio.try_into_validated().unwrap(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -1109,8 +1110,12 @@ fn test_split_position() {
 		};
 
 		Test::assert_extrinsic_event(
-			StakingRewards::create_reward_pool(RuntimeOrigin::root(), pool_init_config),
-			crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE },
+			StakingRewards::create_reward_pool(RuntimeOrigin::root(), pool_init_config.clone()),
+			crate::Event::<Test>::RewardPoolCreated {
+				pool_id: PICA::ID,
+				owner: ALICE,
+				pool_config: pool_init_config,
+			},
 		);
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
@@ -1261,7 +1266,7 @@ fn split_positions_accrue_same_as_original_position() {
 		Tokens::balance(USDT::ID, &ALICE)
 	});
 
-	assert_eq!(accrued_with_split, accrued_without_split)
+	assert_eq!(accrued_with_split, accrued_without_split);
 }
 
 #[test]
@@ -1358,8 +1363,8 @@ fn claim_with_insufficient_pot_funds() {
 
 		let pool_account = Pallet::<Test>::pool_account_id(&PICA::ID);
 
-		assert_eq!(Tokens::free_balance(USDT::ID, &pool_account), 0)
-	})
+		assert_eq!(Tokens::free_balance(USDT::ID, &pool_account), 0);
+	});
 }
 
 // TODO(connor): Move unit tests for functions to one (or more) modules per function
@@ -1384,7 +1389,7 @@ fn extend_should_not_allow_non_owner() {
 				crate::Error::<Test>::OnlyStakeOwnerCanInteractWithStake
 			);
 		},
-	)
+	);
 }
 
 #[test]
@@ -1430,7 +1435,7 @@ fn unstake_should_not_allow_non_owner() {
 			),
 			crate::Error::<Test>::OnlyStakeOwnerCanInteractWithStake
 		);
-	})
+	});
 }
 
 #[test]
@@ -1453,7 +1458,7 @@ fn split_should_not_allow_non_owner() {
 				crate::Error::<Test>::OnlyStakeOwnerCanInteractWithStake
 			);
 		},
-	)
+	);
 }
 
 #[test]
@@ -1497,7 +1502,7 @@ fn unstake_should_work() {
 		process_and_progress_blocks::<crate::Pallet<Test>, Test>(100);
 
 		unstake_and_assert::<Test>(BOB, STAKING_FNFT_COLLECTION_ID, fnft_instance_id, true);
-	})
+	});
 }
 mod claim {
 	use crate::test::prelude::init_logger;
@@ -1524,7 +1529,7 @@ mod claim {
 					crate::Error::<Test>::OnlyStakeOwnerCanInteractWithStake
 				);
 			},
-		)
+		);
 	}
 
 	#[test]
@@ -2038,21 +2043,20 @@ fn with_stake<R>(
 }
 
 fn create_default_reward_pool() {
+	let pool_config = RewardRateBasedIncentive {
+		owner: ALICE,
+		asset_id: PICA::ID,
+		start_block: 2,
+		reward_configs: default_reward_config(),
+		lock: default_lock_config(),
+		share_asset_id: XPICA::ID,
+		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+		minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
+	};
+
 	Test::assert_extrinsic_event(
-		StakingRewards::create_reward_pool(
-			RuntimeOrigin::root(),
-			RewardRateBasedIncentive {
-				owner: ALICE,
-				asset_id: PICA::ID,
-				start_block: 2,
-				reward_configs: default_reward_config(),
-				lock: default_lock_config(),
-				share_asset_id: XPICA::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-				minimum_staking_amount: MINIMUM_STAKING_AMOUNT,
-			},
-		),
-		crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE },
+		StakingRewards::create_reward_pool(RuntimeOrigin::root(), pool_config.clone()),
+		crate::Event::<Test>::RewardPoolCreated { pool_id: PICA::ID, owner: ALICE, pool_config },
 	);
 }
 
@@ -2118,7 +2122,7 @@ fn balance(asset_id: u128, account: &Public) -> u128 {
 fn update_total_rewards_and_total_shares_in_rewards_pool(pool_id: u128, total_rewards: u128) {
 	let mut rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 	let mut inner_rewards = rewards_pool.rewards.into_inner();
-	for (_asset_id, reward) in inner_rewards.iter_mut() {
+	for (_asset_id, reward) in &mut inner_rewards {
 		reward.total_rewards += total_rewards;
 	}
 	rewards_pool.rewards = inner_rewards.try_into().expect("rewards expected");
@@ -2167,17 +2171,13 @@ fn zero_penalty_early_unlock() {
 		next_block::<StakingRewards, Test>();
 
 		unstake_and_assert::<Test>(BOB, STAKING_FNFT_COLLECTION_ID, stake_id, true);
-	})
+	});
 }
 
 #[test]
 fn pbl_295() {
 	new_test_ext().execute_with(|| {
-		init_logger();
-
-		next_block::<StakingRewards, Test>();
-
-		// === Utility functions
+		// Utility functions
 		fn pot_balance_available() -> Balance {
 			let pot_account = crate::Pallet::<Test>::pool_account_id(&PICA::ID);
 
@@ -2185,9 +2185,11 @@ fn pbl_295() {
 				<Test as crate::Config>::Assets::balance_on_hold(USDT::ID, &pot_account);
 			let balance = <Test as crate::Config>::Assets::balance(USDT::ID, &pot_account);
 			let available = balance - balance_on_hold;
-			println!(
+			log::info!(
 				"Pot balance: {} (available: {}, on hold: {})",
-				balance, available, balance_on_hold
+				balance,
+				available,
+				balance_on_hold
 			);
 			available
 		}
@@ -2202,13 +2204,18 @@ fn pbl_295() {
 				&USDT::ID,
 			)
 			.unwrap();
-			println!("Claimable amount: {}", amount);
+			log::info!("Claimable amount: {}", amount);
 			amount
 		}
+
+		init_logger();
+
+		next_block::<StakingRewards, Test>();
+
 		let reward_rate = USDT::units(1) / 1_000;
 		let rewards_for_blocks = |blocks: u64| -> Balance { reward_rate * block_seconds(blocks) };
 
-		// === 1. Create rewards pool
+		// 1. Create rewards pool
 		create_rewards_pool_and_assert::<Test>(RewardRateBasedIncentive {
 			owner: ALICE,
 			asset_id: PICA::ID,
@@ -2231,7 +2238,7 @@ fn pbl_295() {
 			minimum_staking_amount: 10_000,
 		});
 
-		// === 2. Add funds (USD) to rewards pot
+		// 2. Add funds (USD) to rewards pot
 		mint_assets([BOB], [USDT::ID], USDT::units(100_000_000_001));
 		add_to_rewards_pot_and_assert::<Test>(BOB, PICA::ID, USDT::ID, USDT::units(1), false);
 		assert_eq!(pot_balance_available(), USDT::units(0));
@@ -2240,16 +2247,16 @@ fn pbl_295() {
 		process_and_progress_blocks::<StakingRewards, Test>(10);
 		assert_eq!(pot_balance_available(), rewards_for_blocks(10));
 
-		// === 3. Stake by Dave 1000 PICA
+		// 3. Stake by Dave 1000 PICA
 		mint_assets([DAVE], [PICA::ID], PICA::units(1_001));
 		let dave_id = stake_and_assert::<Test>(DAVE, PICA::ID, PICA::units(1) / 100_000, 0);
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		// === 4. Stake by Charlie 1000 PICA
+		// 4. Stake by Charlie 1000 PICA
 		mint_assets([CHARLIE], [PICA::ID], PICA::units(1_001));
 		let charlie_id = stake_and_assert::<Test>(CHARLIE, PICA::ID, PICA::units(1) / 100_000, 0);
 
-		// === 5. Claim by Dave
+		// 5. Claim by Dave
 		assert_eq!(pot_balance_available(), rewards_for_blocks(12));
 		assert_eq!(claimable_amount(dave_id), rewards_for_blocks(12));
 		assert_eq!(claimable_amount(charlie_id), 0);
@@ -2261,7 +2268,7 @@ fn pbl_295() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		// === 6. Claim by Charlie (can claim half the rewards in the pool as per shares)
+		// 6. Claim by Charlie (can claim half the rewards in the pool as per shares)
 		assert_eq!(pot_balance_available(), rewards_for_blocks(2));
 		assert_eq!(claimable_amount(dave_id), rewards_for_blocks(2) / 2);
 		assert_eq!(claimable_amount(charlie_id), rewards_for_blocks(2) / 2);
@@ -2277,7 +2284,7 @@ fn pbl_295() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		// === 7. Split by Dave 50/50
+		// 7. Split by Dave 50/50
 		assert_eq!(pot_balance_available(), rewards_for_blocks(2) + rewards_for_blocks(2) / 2);
 		assert_eq!(claimable_amount(dave_id), rewards_for_blocks(2));
 		assert_eq!(claimable_amount(charlie_id), rewards_for_blocks(2) / 2);
@@ -2294,7 +2301,7 @@ fn pbl_295() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(2);
 
-		// === 8. Unstake by Dave of first stake
+		// 8. Unstake by Dave of first stake
 		assert_eq!(
 			pot_balance_available(),
 			rewards_for_blocks(2) + rewards_for_blocks(2) / 2 + rewards_for_blocks(2)
@@ -2345,7 +2352,22 @@ fn pbl_295() {
 		));
 		assert_eq!(claimable_amount(dave_new), 0);
 		assert_eq!(claimable_amount(charlie_id), 0);
-	})
+
+		process_and_progress_blocks::<StakingRewards, Test>(2);
+
+		// 9. Claim by Dave of second stake
+		assert_eq!(pot_balance_available(), rewards_for_blocks(2));
+		assert_eq!(
+			claimable_amount(dave_new),
+			// gets their normal share as well their share of daves unstaked stake reward
+			rewards_for_blocks(2) / 4 + rewards_for_blocks(2) / 16
+		);
+		assert_eq!(
+			claimable_amount(charlie_id),
+			// gets their normal share as well their share of daves unstaked stake reward
+			rewards_for_blocks(2) / 2 + rewards_for_blocks(2) / 8
+		);
+	});
 }
 
 #[test]
@@ -2388,5 +2410,5 @@ fn zero_penalty_no_multiplier_doesnt_slash() {
 			stake_id,
 			false, // shouldn't be an early unlock since the lock period is 0
 		);
-	})
+	});
 }

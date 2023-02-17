@@ -12,6 +12,5 @@ export const usePicassoAccount: () => InjectedAccountWithMeta | undefined = ():
     : undefined;
 };
 
-export * from "../../../../../packages/substrate-react/src/dotsama/hooks/useBlockInterval";
 export * from "./useExistentialDeposit";
 export * from "./useTransfer";

@@ -56,7 +56,7 @@ fn initiate_withdraw_of_this_native_to_relay_with_no_reserve_errors_locally() {
 #[test]
 fn send_remark() {
 	simtest();
-	let remark = this_runtime::Call::System(
+	let remark = this_runtime::RuntimeCall::System(
 		frame_system::Call::<this_runtime::Runtime>::remark_with_event { remark: vec![1, 2, 3] },
 	);
 	let execution = (UnitWeightCost::get() * 5) as u128;
@@ -77,10 +77,10 @@ fn send_remark() {
 	});
 
 	Sibling::execute_with(|| {
-		use sibling_runtime::{Event, System};
+		use sibling_runtime::{RuntimeEvent, System};
 		assert!(System::events().iter().any(|r| matches!(
 			r.event,
-			Event::System(frame_system::Event::Remarked { sender: _, hash: _ })
+			RuntimeEvent::System(frame_system::Event::Remarked { sender: _, hash: _ })
 		)));
 	});
 }
@@ -115,13 +115,13 @@ fn this_withdraws_and_deposit_back_on_relay() {
 fn relay_chain_subscribe_version_notify_of_para_chain() {
 	KusamaRelay::execute_with(|| {
 		let r = pallet_xcm::Pallet::<relay_runtime::Runtime>::force_subscribe_version_notify(
-			relay_runtime::Origin::root(),
+			relay_runtime::RuntimeOrigin::root(),
 			Box::new(Parachain(THIS_PARA_ID).into().into()),
 		);
 		assert_ok!(r);
 	});
 	KusamaRelay::execute_with(|| {
-		relay_runtime::System::assert_has_event(relay_runtime::Event::XcmPallet(
+		relay_runtime::System::assert_has_event(relay_runtime::RuntimeEvent::XcmPallet(
 			pallet_xcm::Event::SupportedVersionChanged(
 				MultiLocation { parents: 0, interior: X1(Parachain(THIS_PARA_ID)) },
 				2,
@@ -135,13 +135,13 @@ fn relay_chain_subscribe_version_notify_of_para_chain() {
 fn para_chain_subscribe_version_notify_of_relay_chain() {
 	This::execute_with(|| {
 		let r = pallet_xcm::Pallet::<this_runtime::Runtime>::force_subscribe_version_notify(
-			this_runtime::Origin::root(),
+			this_runtime::RuntimeOrigin::root(),
 			Box::new(Parent.into()),
 		);
 		assert_ok!(r);
 	});
 	This::execute_with(|| {
-		this_runtime::System::assert_has_event(this_runtime::Event::RelayerXcm(
+		this_runtime::System::assert_has_event(this_runtime::RuntimeEvent::RelayerXcm(
 			pallet_xcm::Event::SupportedVersionChanged(
 				MultiLocation { parents: 1, interior: Here },
 				2,
@@ -155,7 +155,7 @@ fn para_chain_subscribe_version_notify_of_sibling_chain() {
 	simtest();
 	This::execute_with(|| {
 		let r = pallet_xcm::Pallet::<this_runtime::Runtime>::force_subscribe_version_notify(
-			this_runtime::Origin::root(),
+			this_runtime::RuntimeOrigin::root(),
 			Box::new((Parent, Parachain(SIBLING_PARA_ID)).into()),
 		);
 		assert_ok!(r);
@@ -163,17 +163,17 @@ fn para_chain_subscribe_version_notify_of_sibling_chain() {
 	This::execute_with(|| {
 		assert!(this_runtime::System::events().iter().any(|r| matches!(
 			r.event,
-			this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent {
-				message_hash: Some(_)
-			})
+			this_runtime::RuntimeEvent::XcmpQueue(
+				cumulus_pallet_xcmp_queue::Event::XcmpMessageSent { message_hash: Some(_) }
+			)
 		)));
 	});
 	Sibling::execute_with(|| {
 		assert!(sibling_runtime::System::events().iter().any(|r| matches!(
 			r.event,
-			this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent {
-				message_hash: Some(_)
-			}) | this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::Success {
+			this_runtime::RuntimeEvent::XcmpQueue(
+				cumulus_pallet_xcmp_queue::Event::XcmpMessageSent { message_hash: Some(_) }
+			) | this_runtime::RuntimeEvent::XcmpQueue(cumulus_pallet_xcmp_queue::Event::Success {
 				message_hash: Some(_),
 				weight: _
 			})

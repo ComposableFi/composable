@@ -5,7 +5,15 @@
 // this is required to allow for ambient/previous definitions
 import '@polkadot/api-base/types/consts';
 
-import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, PalletCosmwasmInstrumentCostRules, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@composable/types/interfaces/crowdloanRewards';
+import type {
+  FrameSupportPalletId,
+  FrameSupportWeightsRuntimeDbWeight,
+  SpWeightsWeightV2Weight,
+  PalletCosmwasmInstrumentCostRules,
+  SpVersionRuntimeVersion,
+  XcmV1MultiLocation,
+  SpWeightsRuntimeDbWeight
+} from '@composable/types/interfaces/crowdloanRewards';
 import type { FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights } from '@composable/types/interfaces/system';
 import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
 import type { Bytes, Option, Text, U8aFixed, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';

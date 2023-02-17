@@ -2,7 +2,9 @@ import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql
 import type { EntityManager } from "typeorm";
 import { LessThan, MoreThan, And } from "typeorm";
 import { PabloSwap } from "../../model";
-import { DAY_IN_MS, getVolumeRange } from "./common";
+import { getVolumeRange } from "./common";
+import { DAY_IN_MS } from "../../constants";
+import { getCurrentAssetPrices, getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 class AssetIdAmount {
@@ -11,6 +13,9 @@ class AssetIdAmount {
 
   @Field(() => BigInt, { nullable: false })
   amount!: bigint;
+
+  @Field(() => Number, { nullable: true })
+  price?: number;
 
   constructor(props: AssetIdAmount) {
     Object.assign(this, props);
@@ -77,13 +82,27 @@ export class PabloTotalVolumeResolver {
         return acc;
       }, {});
 
-      volumes[time] = Object.keys(currVolumes).map(
-        assetId =>
+      volumes[time] = [];
+
+      let prices: Record<string, number> | undefined;
+
+      if (range === "now") {
+        prices = await getCurrentAssetPrices(manager);
+      }
+
+      for (const assetId of Object.keys(currVolumes)) {
+        const price = prices?.[assetId]
+          ? prices[assetId]
+          : await getOrCreateHistoricalAssetPrice(manager, assetId, timestamp.getTime());
+
+        volumes[time].push(
           new AssetIdAmount({
-            assetId,
-            amount: currVolumes[assetId]
+            assetId: assetId.toString(),
+            amount: currVolumes[assetId.toString()],
+            price
           })
-      );
+        );
+      }
     }
 
     return Object.keys(volumes).map(date => {

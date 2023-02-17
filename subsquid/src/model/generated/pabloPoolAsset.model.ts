@@ -8,9 +8,6 @@ export class PabloPoolAsset {
         Object.assign(this, props)
     }
 
-    /**
-     * Asset ID
-     */
     @PrimaryColumn_()
     id!: string
 

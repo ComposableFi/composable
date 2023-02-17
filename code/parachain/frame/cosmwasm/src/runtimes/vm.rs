@@ -3,7 +3,7 @@ use crate::{runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Co
 use alloc::{borrow::ToOwned, string::String};
 use core::marker::{Send, Sync};
 use cosmwasm_vm::{
-	cosmwasm_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo},
+	cosmwasm_std::{CodeInfoResponse, Coin, ContractInfoResponse, Empty, Env, MessageInfo},
 	executor::ExecutorError,
 	has::Has,
 	memory::{MemoryReadError, MemoryWriteError},
@@ -14,7 +14,6 @@ use cosmwasm_vm::{
 use cosmwasm_vm_wasmi::{
 	OwnedWasmiVM, WasmiContext, WasmiInput, WasmiModule, WasmiOutput, WasmiVMError,
 };
-use frame_support::storage::ChildTriePrefixIterator;
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use wasmi::{core::HostError, Instance, Memory};
 
@@ -176,7 +175,7 @@ pub struct CosmwasmVM<'a, T: Config> {
 	/// State shared across all contracts within a single transaction.
 	pub shared: &'a mut CosmwasmVMShared,
 	/// Iterator id's to corresponding keys. Keys are used to get the next key.
-	pub iterators: BTreeMap<u32, ChildTriePrefixIterator<(Vec<u8>, Vec<u8>)>>,
+	pub iterators: BTreeMap<u32, Vec<u8>>,
 	/// Actual contract runtime
 	pub contract_runtime: ContractBackend,
 }
@@ -307,8 +306,27 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
 	) -> Result<(Self::Address, Option<cosmwasm_vm::cosmwasm_std::Binary>), Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_instantiate");
-		Pallet::<T>::do_continue_instantiate(self, contract_meta, funds, message, event_handler)
-			.map(|r| (self.contract_address.clone(), r))
+		self.continue_instantiate2(contract_meta, funds, b"salt", message, event_handler)
+	}
+
+	fn continue_instantiate2(
+		&mut self,
+		contract_meta: Self::ContractMeta,
+		funds: Vec<Coin>,
+		salt: &[u8],
+		message: &[u8],
+		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
+	) -> Result<(Self::Address, Option<cosmwasm_vm::cosmwasm_std::Binary>), Self::Error> {
+		log::debug!(target: "runtime::contracts", "continue_instantiate2");
+		Pallet::<T>::do_continue_instantiate(
+			self,
+			contract_meta,
+			funds,
+			salt,
+			message,
+			event_handler,
+		)
+		.map(|r| (self.contract_address.clone(), r))
 	}
 
 	fn continue_migrate(
@@ -375,9 +393,25 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		Err(CosmwasmVMError::Unsupported)
 	}
 
-	fn query_info(&mut self, address: Self::Address) -> Result<ContractInfoResponse, Self::Error> {
-		log::debug!(target: "runtime::contracts", "query_info");
-		Pallet::<T>::do_query_info(self, address.into_inner())
+	fn supply(&mut self, denom: String) -> Result<Coin, Self::Error> {
+		let amount = Pallet::<T>::do_supply(denom.clone())?;
+		Ok(Coin { denom, amount: amount.into() })
+	}
+
+	fn query_contract_info(
+		&mut self,
+		address: Self::Address,
+	) -> Result<ContractInfoResponse, Self::Error> {
+		log::debug!(target: "runtime::contracts", "query_contract_info");
+		Pallet::<T>::do_query_contract_info(self, address.into_inner())
+	}
+
+	fn query_code_info(
+		&mut self,
+		code_id: CosmwasmCodeId,
+	) -> Result<CodeInfoResponse, Self::Error> {
+		log::debug!(target: "runtime::contracts", "query_code_info");
+		Pallet::<T>::do_query_code_info(code_id)
 	}
 
 	fn debug(&mut self, message: Vec<u8>) -> Result<(), Self::Error> {
@@ -468,6 +502,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 			VmGas::AddrCanonicalize => T::WeightInfo::addr_canonicalize().ref_time(),
 			VmGas::AddrHumanize => T::WeightInfo::addr_humanize().ref_time(),
 			VmGas::GetContractMeta => T::WeightInfo::contract_meta().ref_time(),
+			VmGas::SetContractMeta => T::WeightInfo::set_contract_meta().ref_time(),
 			VmGas::Transfer { nb_of_coins } => T::WeightInfo::transfer(nb_of_coins).ref_time(),
 			VmGas::ContinueExecute { nb_of_coins } =>
 				T::WeightInfo::continue_execute(nb_of_coins).ref_time(),
@@ -477,7 +512,8 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 			VmGas::ContinueQuery => T::WeightInfo::continue_query().ref_time(),
 			VmGas::ContinueReply => T::WeightInfo::continue_reply().ref_time(),
 			VmGas::QueryRaw => T::WeightInfo::query_raw().ref_time(),
-			VmGas::QueryInfo => T::WeightInfo::query_info().ref_time(),
+			VmGas::QueryContractInfo => T::WeightInfo::query_contract_info().ref_time(),
+			VmGas::QueryCodeInfo => T::WeightInfo::query_code_info().ref_time(),
 			_ => 1_u64,
 			// NOTE: **Operations that require no charge**: Debug,
 			// NOTE: **Unsupported operations**:
