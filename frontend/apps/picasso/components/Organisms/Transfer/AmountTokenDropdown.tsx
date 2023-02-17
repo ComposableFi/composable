@@ -13,7 +13,6 @@ import { Typography } from "@mui/material";
 import { calculateTransferAmount } from "@/defi/polkadot/pallets/Transfer";
 import { useTransfer } from "@/defi/polkadot/hooks";
 import BigNumber from "bignumber.js";
-import { FEE_MULTIPLIER } from "shared/defi/constants";
 
 export const AmountTokenDropdown: FC<{
   disabled: boolean;
@@ -41,7 +40,7 @@ export const AmountTokenDropdown: FC<{
   const feeToken = useStore((state) => state.transfers.feeToken);
   const sourceGas = useMemo(() => {
     return {
-      fee: fee.partialFee.multipliedBy(FEE_MULTIPLIER),
+      fee: fee.partialFee,
       token: feeToken,
     };
   }, [fee.partialFee, feeToken]);

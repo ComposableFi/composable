@@ -24,10 +24,6 @@ import {
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import BigNumber from "bignumber.js";
-import {
-  DESTINATION_FEE_MULTIPLIER,
-  FEE_MULTIPLIER,
-} from "shared/defi/constants";
 import { usePendingExtrinsic } from "substrate-react";
 import { InfoOutlined } from "@mui/icons-material";
 import { pipe } from "fp-ts/function";
@@ -64,7 +60,7 @@ const Transfers: NextPage = () => {
   const minValue = useMemo(() => {
     const ed = tokens[selectedToken].existentialDeposit[to];
     return pipe(
-      destFee?.fee?.multipliedBy(DESTINATION_FEE_MULTIPLIER),
+      destFee?.fee,
       option.fromNullable,
       option.chain((fee) =>
         pipe(
@@ -126,7 +122,7 @@ const Transfers: NextPage = () => {
 
   const hasEnoughGasFee = useMemo(() => {
     const feeBalance = getBalance(feeTokenId.id, from);
-    return feeBalance.free.gte(fee.partialFee.multipliedBy(FEE_MULTIPLIER));
+    return feeBalance.free.gte(fee.partialFee);
   }, [fee.partialFee, feeTokenId.id, from, getBalance]);
 
   useEffect(() => {

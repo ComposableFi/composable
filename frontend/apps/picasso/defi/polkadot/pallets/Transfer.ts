@@ -7,6 +7,7 @@ import BigNumber from "bignumber.js";
 import { fromChainIdUnit, toChainIdUnit } from "shared";
 import { ParachainId, RelayChainId } from "substrate-react";
 import { TokenId } from "tokens";
+import { DESTINATION_FEE_MULTIPLIER } from "shared/defi/constants";
 
 export function getAmountToTransfer({
   balance,
@@ -120,16 +121,24 @@ export function getDestChainFee(
     case "kusama=>picasso":
       if (selectedToken === "ksm") {
         return {
-          fee: fromChainIdUnit(new BigNumber("7536750")),
+          fee: fromChainIdUnit(new BigNumber("7536750")).multipliedBy(
+            DESTINATION_FEE_MULTIPLIER
+          ),
           token: tokens.ksm,
         };
       }
       break;
     case "karura=>picasso":
       const fee: BigNumber | undefined = {
-        kusd: fromChainIdUnit(new BigNumber("927020325")),
-        kar: fromChainIdUnit(new BigNumber("927020325")),
-        ksm: fromChainIdUnit(new BigNumber("927020325")),
+        kusd: fromChainIdUnit(new BigNumber("927020325")).multipliedBy(
+          DESTINATION_FEE_MULTIPLIER
+        ),
+        kar: fromChainIdUnit(new BigNumber("927020325")).multipliedBy(
+          DESTINATION_FEE_MULTIPLIER
+        ),
+        ksm: fromChainIdUnit(new BigNumber("927020325")).multipliedBy(
+          DESTINATION_FEE_MULTIPLIER
+        ),
       }[selectedToken as string];
 
       return {
@@ -139,7 +148,9 @@ export function getDestChainFee(
     case "picasso=>karura":
       if (selectedToken === "kusd") {
         return {
-          fee: fromChainIdUnit(new BigNumber("74592000000")),
+          fee: fromChainIdUnit(new BigNumber("74592000000")).multipliedBy(
+            DESTINATION_FEE_MULTIPLIER
+          ),
           token: tokens.kusd,
         };
       }
@@ -147,7 +158,9 @@ export function getDestChainFee(
     case "picasso=>kusama":
       if (selectedToken === "ksm") {
         return {
-          fee: fromChainIdUnit(new BigNumber("115232479")),
+          fee: fromChainIdUnit(new BigNumber("115232479")).multipliedBy(
+            DESTINATION_FEE_MULTIPLIER
+          ),
           token: tokens.ksm,
         };
       }
@@ -158,7 +171,7 @@ export function getDestChainFee(
           fee: fromChainIdUnit(
             new BigNumber(13),
             tokens.usdt.decimals.statemine
-          ),
+          ).multipliedBy(DESTINATION_FEE_MULTIPLIER),
           token: tokens.usdt,
         };
       }
@@ -168,7 +181,7 @@ export function getDestChainFee(
           fee: fromChainIdUnit(
             new BigNumber(347632),
             tokens.ksm.decimals.statemine
-          ),
+          ).multipliedBy(DESTINATION_FEE_MULTIPLIER),
           token: tokens.ksm,
         };
       }
@@ -179,7 +192,7 @@ export function getDestChainFee(
           fee: fromChainIdUnit(
             new BigNumber(600000000),
             tokens.ksm.decimals.statemine
-          ),
+          ).multipliedBy(DESTINATION_FEE_MULTIPLIER),
           token: tokens.ksm,
         };
       }
@@ -189,7 +202,7 @@ export function getDestChainFee(
           fee: fromChainIdUnit(
             new BigNumber(15450332),
             tokens.ksm.decimals.statemine
-          ),
+          ).multipliedBy(DESTINATION_FEE_MULTIPLIER),
           token: tokens.ksm,
         };
       }

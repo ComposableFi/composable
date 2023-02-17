@@ -7,6 +7,7 @@ import BigNumber from "bignumber.js";
 import { AssetRatio } from "@/defi/polkadot/pallets/Assets";
 import { pipe } from "fp-ts/function";
 import { option } from "fp-ts";
+import { FEE_MULTIPLIER } from "shared/defi/constants";
 
 function getFeeInToken(
   partialFee: BigNumber,
@@ -18,8 +19,8 @@ function getFeeInToken(
     option.fromNullable,
     option.map((r) => partialFee.multipliedBy(r.n).div(r.d)),
     option.fold(
-      () => partialFee,
-      (fee) => fee
+      () => partialFee.multipliedBy(FEE_MULTIPLIER),
+      (fee) => fee.multipliedBy(FEE_MULTIPLIER)
     )
   );
 }
@@ -64,28 +65,22 @@ export const subscribeTransactionFee = async (
       try {
         const info = await executor.paymentInfo(call, walletAddress, signer);
         const partialFee = new BigNumber(info.partialFee.toString());
+        const decimals =
+          from === "picasso" ? selectedToken.decimals[from] ?? 12 : 12;
 
         useStore.getState().transfers.updateFee({
           class: info.class.toString(),
           partialFee: fromChainIdUnit(
             getFeeInToken(partialFee, from, selectedToken.ratio[from]),
-            selectedToken.decimals[from] ?? 12
+            decimals
           ),
           weight: unwrapNumberOrHex(info.weight.toString()),
-        } as {
-          class: string;
-          partialFee: BigNumber;
-          weight: BigNumber;
         });
       } catch (e) {
         useStore.getState().transfers.updateFee({
           class: "",
           partialFee: new BigNumber(0),
           weight: new BigNumber(0),
-        } as {
-          class: string;
-          partialFee: BigNumber;
-          weight: BigNumber;
         });
       }
     },
