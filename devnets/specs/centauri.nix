@@ -77,8 +77,8 @@
               ];
               inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
-              dependsOn = { };
-              restartPolicy = "on-failure";
+              dependsOn = dependsOnCreateClient;
+              restartPolicy = "no";
             }) [ network-name network-name-2 ];
 
           "hyperspace-create-channels" = mkComposableContainer
@@ -97,8 +97,8 @@
               ];
               inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
-              dependsOn = { };
-              restartPolicy = "on-failure";
+              dependsOn = dependsOnCreateConnection;
+              restartPolicy = "no";
             }) [ network-name network-name-2 ];
 
           "hyperspace-relay" = mkComposableContainer
@@ -107,7 +107,7 @@
               execCommands = [ "relay" "--config" configPathContainer ];
               inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
-              dependsOn = { };
+              dependsOn = dependsOnCreateClient;
               restartPolicy = "on-failure";
             }) [ network-name network-name-2 ];
         };

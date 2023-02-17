@@ -108,14 +108,20 @@ where
 				Some(format!("{:?}", e)),
 			))
 		})?;
-		api.query_info(&at, uxt, encoded_len).map_err(|e| {
-			CallError::Custom(ErrorObject::owned(
-				Error::RuntimeError.into(),
-				"Unable to query dispatch info.",
-				Some(e.to_string()),
-			))
-			.into()
-		}).map(|x| RuntimeDispatchInfo { weight: x.weight.ref_time(), class: x.class, partial_fee: x.partial_fee })
+		api.query_info(&at, uxt, encoded_len)
+			.map_err(|e| {
+				CallError::Custom(ErrorObject::owned(
+					Error::RuntimeError.into(),
+					"Unable to query dispatch info.",
+					Some(e.to_string()),
+				))
+				.into()
+			})
+			.map(|x| RuntimeDispatchInfo {
+				weight: x.weight.ref_time(),
+				class: x.class,
+				partial_fee: x.partial_fee,
+			})
 	}
 
 	fn query_fee_details(

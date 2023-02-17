@@ -1,0 +1,42 @@
+warning: Git tree '/home/dz/github.com/ComposableFi/composable' is dirty
+Container composable-devnet-a-1  Recreate
+Container composable-hyperspace-relay-1  Recreate
+Container composable-hyperspace-create-channels-1  Recreate
+Container composable-hyperspace-create-connection-1  Recreate
+Container composable-devnet-b-1  Recreate
+Container composable-hyperspace-create-clients-1  Recreate
+Container composable-hyperspace-create-channels-1  Recreated
+Container composable-hyperspace-create-connection-1  Recreated
+Container composable-hyperspace-relay-1  Recreated
+Container composable-hyperspace-create-clients-1  Recreated
+Container composable-devnet-b-1  Recreated
+Container composable-devnet-a-1  Recreated
+[36;1mcomposable-hyperspace-relay-1              | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [172.18.0.5:9944], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[36;1mcomposable-hyperspace-relay-1              | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Failed to connect to sockaddr: 172.18.0.5:9944
+[36;1mcomposable-hyperspace-relay-1              | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[36;1mcomposable-hyperspace-relay-1              | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[36;1mcomposable-hyperspace-relay-1              | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[36;1mcomposable-hyperspace-relay-1              | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[36;1mcomposable-hyperspace-relay-1              | [0mError: Rpc Error Transport(Error when opening the TCP socket: Connection refused (os error 111))
+[32mcomposable-hyperspace-create-channels-1    | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [172.18.0.5:9944], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[32mcomposable-hyperspace-create-channels-1    | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Failed to connect to sockaddr: 172.18.0.5:9944
+[32mcomposable-hyperspace-create-channels-1    | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[32mcomposable-hyperspace-create-channels-1    | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[32mcomposable-hyperspace-create-channels-1    | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[32mcomposable-hyperspace-create-channels-1    | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[32mcomposable-hyperspace-create-channels-1    | [0mError: Rpc Error Transport(Error when opening the TCP socket: Connection refused (os error 111))
+[34mcomposable-hyperspace-create-connection-1  | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [172.18.0.5:9944], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[34mcomposable-hyperspace-create-connection-1  | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Failed to connect to sockaddr: 172.18.0.5:9944
+[34mcomposable-hyperspace-create-connection-1  | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[34mcomposable-hyperspace-create-connection-1  | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[34mcomposable-hyperspace-create-connection-1  | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[34mcomposable-hyperspace-create-connection-1  | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[34mcomposable-hyperspace-create-connection-1  | [0mError: Rpc Error Transport(Error when opening the TCP socket: Connection refused (os error 111))
+[35mcomposable-hyperspace-create-clients-1     | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [172.18.0.5:9944], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[35mcomposable-hyperspace-create-clients-1     | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Failed to connect to sockaddr: 172.18.0.5:9944
+[35mcomposable-hyperspace-create-clients-1     | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[35mcomposable-hyperspace-create-clients-1     | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[35mcomposable-hyperspace-create-clients-1     | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[35mcomposable-hyperspace-create-clients-1     | [0m[2023-02-17T20:43:27Z DEBUG jsonrpsee_client_transport::ws] Connecting to target: Target { sockaddrs: [], host: "devnet-a", host_header: "devnet-a:9944", _mode: Plain, path_and_query: "/" }
+[35mcomposable-hyperspace-create-clients-1     | [0mError: Rpc Error Transport(Error when opening the TCP socket: Connection refused (os error 111))
+Error response from daemon: No such container: 92f47518c1657e85650845b9854e8d39da453a3ba31392945d2b37343eb37a0b

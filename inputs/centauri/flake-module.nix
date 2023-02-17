@@ -7,7 +7,46 @@
         rev = "94bf87a44694b04917a7ab735487c8f87a64737d";
         hash = "sha256-tG4WLAUtQ2iaaS4t/Condj6B1FDa/5VDoRwyBsJDfr4=";
       };
+      hyperspace-client-template = {
+        chain_a = {
+          channel_whitelist = [ ];
+          client_id = "10-grandpa-0";
+          commitment_prefix = "0x6962632f";
+          finality_protocol = "Grandpa";
+          key_type = "sr25519";
+          name = "picasso_1";
+          para_id = 2087;
+          parachain_rpc_url = "ws://devnet-a:9988";
+          private_key = "//Alice";
+          relay_chain_rpc_url = "ws://devnet-a:9944";
+          ss58_version = 49;
+          type = "parachain";
+        };
+        chain_b = {
+          channel_whitelist = [ ];
+          client_id = "10-grandpa-0";
+          commitment_prefix = "0x6962632f";
+          finality_protocol = "Grandpa";
+          key_type = "sr25519";
+          name = "picasso_2";
+          para_id = 2087;
+          parachain_rpc_url = "ws://devnet-b:29988";
+          private_key = "//Alice";
+          relay_chain_rpc_url = "ws://devnet-b:29944";
+          ss58_version = 49;
+          type = "parachain";
+        };
+        core = { prometheus_endpoint = "https://127.0.0.1"; };
+      };
 
+      hyperspace-connection-template = hyperspace-client-template // {
+        chain_a = hyperspace-client-template.chain_a // {
+          connection_id = "connection-0";
+        };
+        chain_b = hyperspace-client-template.chain_b // {
+          connection_id = "connection-0";
+        };
+      };
     in {
       packages = rec {
         centauri-codegen = crane.stable.buildPackage {
@@ -59,47 +98,6 @@
           '';
           dontFixup = true;
           dontStrip = true;
-        };
-
-        hyperspace-client-template = {
-          chain_a = {
-            channel_whitelist = [ ];
-            client_id = "10-grandpa-0";
-            commitment_prefix = "0x6962632f";
-            finality_protocol = "Grandpa";
-            key_type = "sr25519";
-            name = "picasso_1";
-            para_id = 2087;
-            parachain_rpc_url = "ws://devnet-a:9988";
-            private_key = "//Alice";
-            relay_chain_rpc_url = "ws://devnet-a:9944";
-            ss58_version = 49;
-            type = "parachain";
-          };
-          chain_b = {
-            channel_whitelist = [ ];
-            client_id = "10-grandpa-0";
-            commitment_prefix = "0x6962632f";
-            finality_protocol = "Grandpa";
-            key_type = "sr25519";
-            name = "picasso_2";
-            para_id = 2087;
-            parachain_rpc_url = "ws://devnet-b:29988";
-            private_key = "//Alice";
-            relay_chain_rpc_url = "ws://devnet-b:29944";
-            ss58_version = 49;
-            type = "parachain";
-          };
-          core = { prometheus_endpoint = "https://127.0.0.1"; };
-        };
-
-        hyperspace-connection-template = hyperspace-client-template // {
-          chain_a = hyperspace-client-template.chain_a // {
-            connection_id = "connection-0";
-          };
-          chain_b = hyperspace-client-template.chain_b // {
-            connection_id = "connection-0";
-          };
         };
 
         hyperspace-config = pkgs.writeText "config.toml"
