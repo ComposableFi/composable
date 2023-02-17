@@ -27,6 +27,7 @@
       url = "github:NixOS/bundlers";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-std.url = "github:chessai/nix-std";
   };
 
   outputs = inputs@{ self, nixpkgs, flake-parts, ... }:

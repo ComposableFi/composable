@@ -61,36 +61,49 @@
           dontStrip = true;
         };
 
-        hyperspace-config = pkgs.writeText "config.toml" ''
-          [chain_a]
-          type = "parachain"
-          name = "picasso_1"
-          para_id = 2087
-          parachain_rpc_url = "ws://devnet-a:9988"
-          relay_chain_rpc_url = "ws://devnet-a:9944"
-          channel_whitelist = []
-          commitment_prefix = "0x6962632f"
-          private_key = "//Alice"
-          ss58_version = 49
-          finality_protocol = "Grandpa"
-          key_type = "sr25519"
+        hyperspace-client-template = {
+          chain_a = {
+            channel_whitelist = [ ];
+            client_id = "10-grandpa-0";
+            commitment_prefix = "0x6962632f";
+            finality_protocol = "Grandpa";
+            key_type = "sr25519";
+            name = "picasso_1";
+            para_id = 2087;
+            parachain_rpc_url = "ws://devnet-a:9988";
+            private_key = "//Alice";
+            relay_chain_rpc_url = "ws://devnet-a:9944";
+            ss58_version = 49;
+            type = "parachain";
+          };
+          chain_b = {
+            channel_whitelist = [ ];
+            client_id = "10-grandpa-0";
+            commitment_prefix = "0x6962632f";
+            finality_protocol = "Grandpa";
+            key_type = "sr25519";
+            name = "picasso_2";
+            para_id = 2087;
+            parachain_rpc_url = "ws://devnet-b:29988";
+            private_key = "//Alice";
+            relay_chain_rpc_url = "ws://devnet-b:29944";
+            ss58_version = 49;
+            type = "parachain";
+          };
+          core = { prometheus_endpoint = "https://127.0.0.1"; };
+        };
 
-          [chain_b]
-          type = "parachain"
-          name = "picasso_2"
-          para_id = 2087
-          parachain_rpc_url = "ws://devnet-b:29988"
-          relay_chain_rpc_url = "ws://devnet-b:29944"
-          channel_whitelist = []
-          commitment_prefix = "0x6962632f"
-          private_key = "//Alice"
-          ss58_version = 49
-          finality_protocol = "Grandpa"
-          key_type = "sr25519"
+        hyperspace-connection-template = hyperspace-client-template // {
+          chain_a = hyperspace-client-template.chain_a // {
+            connection_id = "connection-0";
+          };
+          chain_b = hyperspace-client-template.chain_b // {
+            connection_id = "connection-0";
+          };
+        };
 
-          [core]
-          prometheus_endpoint = "https://127.0.0.1"
-        '';
+        hyperspace-config = pkgs.writeText "config.toml"
+          (self.inputs.nix-std.lib.serde.toTOML hyperspace-connection-template);
 
         hyperspace-dali-image = pkgs.dockerTools.buildImage {
           tag = "latest";

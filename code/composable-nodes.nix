@@ -59,7 +59,7 @@
         composable-node = makeComposableNode (node: node);
 
         composable-node-dali = makeComposableNode (node:
-          node // {          
+          node // {
             PICASSO_RUNTIME = node.DALI_RUNTIME;
             COMPOSABLE_RUNTIME = node.DALI_RUNTIME;
           });

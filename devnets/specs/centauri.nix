@@ -77,7 +77,7 @@
               ];
               inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
-              dependsOn = {};
+              dependsOn = { };
               restartPolicy = "on-failure";
             }) [ network-name network-name-2 ];
 
@@ -97,7 +97,7 @@
               ];
               inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
-              dependsOn = {};
+              dependsOn = { };
               restartPolicy = "on-failure";
             }) [ network-name network-name-2 ];
 
@@ -107,7 +107,7 @@
               execCommands = [ "relay" "--config" configPathContainer ];
               inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
-              dependsOn = {};
+              dependsOn = { };
               restartPolicy = "on-failure";
             }) [ network-name network-name-2 ];
         };

@@ -109,9 +109,7 @@ in with prelude; rec {
           };
         };
       };
-      nodes = mkRelaychainNodes {
-        inherit rpc_port ws_port count chain;
-      };
+      nodes = mkRelaychainNodes { inherit rpc_port ws_port count chain; };
     };
   mkSettings = {
     node_spawn_timeout = 120;
