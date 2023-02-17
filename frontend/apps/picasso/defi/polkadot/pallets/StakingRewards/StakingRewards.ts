@@ -192,42 +192,53 @@ export function stake({
   return callbackGate(
     async (executor, api, account, _signer) => {
       let snackbarKey: SnackbarKey | undefined;
-      await executor.execute(
-        api.tx.stakingRewards.stake(
-          assetId.toString(),
-          api.createType("u128", toChainIdUnit(lockablePICA).toString()),
-          api.createType("u64", lockPeriod.toString())
-        ),
-        account.address,
-        api,
-        _signer,
-        (txHash) => {
-          snackbarKey = onReady(enqueueSnackbar)(txHash);
-        },
-        (txHash: string) => {
-          closeSnackbar(snackbarKey);
-          enqueueSnackbar("Transaction successful", {
-            description: `Stake and mint confirmed`,
-            variant: "success",
-            isClosable: true,
-            persist: true,
-            url: subscanExtrinsicLink("picasso", txHash),
-          });
-          useStakeForm.setState((state) => {
-            state.amount = new BigNumber(0);
-            state.lockPeriod = "0";
-          });
-        },
-        (errorMessage: string) => {
-          closeSnackbar(snackbarKey);
+      try {
+        await executor.execute(
+          api.tx.stakingRewards.stake(
+            assetId.toString(),
+            api.createType("u128", toChainIdUnit(lockablePICA).toString()),
+            api.createType("u64", lockPeriod.toString())
+          ),
+          account.address,
+          api,
+          _signer,
+          (txHash) => {
+            snackbarKey = onReady(enqueueSnackbar)(txHash);
+          },
+          (txHash: string) => {
+            closeSnackbar(snackbarKey);
+            enqueueSnackbar("Transaction successful", {
+              description: `Stake and mint confirmed`,
+              variant: "success",
+              isClosable: true,
+              persist: true,
+              url: subscanExtrinsicLink("picasso", txHash),
+            });
+            useStakeForm.setState((state) => {
+              state.amount = new BigNumber(0);
+              state.lockPeriod = "0";
+            });
+          },
+          (errorMessage: string) => {
+            closeSnackbar(snackbarKey);
+            enqueueSnackbar("An error occurred while processing transaction", {
+              variant: "error",
+              isClosable: true,
+              persist: true,
+              description: errorMessage,
+            });
+          }
+        );
+      } catch (e) {
+        if (e instanceof Error) {
           enqueueSnackbar("An error occurred while processing transaction", {
+            description: e.message,
             variant: "error",
             isClosable: true,
             persist: true,
-            description: errorMessage,
           });
         }
-      );
+      }
     },
     executor,
     parachainApi,
