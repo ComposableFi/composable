@@ -58,7 +58,11 @@
 
         composable-node = makeComposableNode (node: node);
 
-        composable-node-dali = makeComposableNode (node: builtins.removeAttrs node ["PICASSO_RUNTIME" "COMPOSABLE_RUNTIME"]);
+        composable-node-dali = makeComposableNode (node:
+          node // {          
+            PICASSO_RUNTIME = node.DALI_RUNTIME;
+            COMPOSABLE_RUNTIME = node.DALI_RUNTIME;
+          });
 
         composable-node-release = makeComposableNode (node:
           node // {

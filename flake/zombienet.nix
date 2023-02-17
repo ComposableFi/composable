@@ -69,7 +69,7 @@
         in zombieTools.writeZombienetShellApplication name config;
 
       dali-dev-config =
-        zombienet-rococo-local-composable-config { chain = "dali-dev"; };
+        zombienet-rococo-local-composable-config { chain = "dali-dev"; command = self'.packages.composable-node; };
 
       zombienet-rococo-local-dali-dev =
         zombieTools.writeZombienetShellApplication
@@ -86,7 +86,7 @@
       };
 
       picasso-dev-config =
-        zombienet-rococo-local-composable-config { chain = "picasso-dev"; };
+        zombienet-rococo-local-composable-config { chain = "picasso-dev"; command = self'.packages.composable-node-dali; };
 
       zombienet-rococo-local-picasso-dev =
         zombieTools.writeZombienetShellApplication
@@ -121,6 +121,7 @@
           (zombienet-rococo-local-composable-config {
             rust_log_add =
               "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
+              command = self'.packages.composable-node-dali;
           });
 
         zombienet-dali-centauri-b =
@@ -132,6 +133,7 @@
             relay_rpc_port = 31445;
             rust_log_add =
               "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
+            command = self'.packages.composable-node-dali;
           });
       };
 

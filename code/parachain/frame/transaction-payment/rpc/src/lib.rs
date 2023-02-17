@@ -115,7 +115,7 @@ where
 				Some(e.to_string()),
 			))
 			.into()
-		}).ref_time()
+		}).map(|x| RuntimeDispatchInfo { weight: x.weight.ref_time(), class: x.class, partial_fee: x.partial_fee })
 	}
 
 	fn query_fee_details(

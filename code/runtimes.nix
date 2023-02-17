@@ -54,11 +54,12 @@
         in pkgs.stdenv.mkDerivation {
           name = "${runtime.name}-optimized";
           phases = [ "installPhase" ];
+          nativeBuildInputs = [ pkgs.binaryen ];
           installPhase = ''
-            mkdir -p $out/lib
-            ${self'.packages.wasm-optimizer}/bin/wasm-optimizer \
-            --input ${runtime}/lib/${name}_runtime.wasm \
-            --output $out/lib/runtime.optimized.wasm
+            mkdir --parents $out/lib
+            # https://github.com/paritytech/substrate/blob/30cb4d10b3118d1b3aa5b2ae7fa8429b2c4f28de/utils/wasm-builder/src/wasm_project.rs#L694
+            wasm-opt ${runtime}/lib/${name}_runtime.wasm -o $out/lib/runtime.optimized.wasm -Os --strip-dwarf --debuginfo --mvp-features            
+            ${self'.packages.subwasm}/bin/subwasm compress $out/lib/runtime.optimized.wasm $out/lib/runtime.optimized.wasm
           '';
         };
 
