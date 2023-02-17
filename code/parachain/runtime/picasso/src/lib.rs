@@ -48,7 +48,6 @@ use common::{
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::{Asset, DummyAssetCreator},
-	currency::AssetRatioInspect,
 	dex::{Amm, PriceAggregate},
 	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };

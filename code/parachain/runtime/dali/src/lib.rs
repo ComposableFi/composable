@@ -60,7 +60,6 @@ use common::{
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
-	currency::AssetRatioInspect,
 	defi::Rate,
 	dex::{Amm, PriceAggregate},
 	xcm::assets::RemoteAssetRegistryInspect,
