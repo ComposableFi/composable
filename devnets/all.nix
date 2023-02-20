@@ -2,11 +2,13 @@
   perSystem = { config, self', inputs', pkgs, system, devnetTools, ... }: {
     packages = let packages = self'.packages;
     in rec {
-
-      centauri-configure-and-run = pkgs.writeText "hyperspace.sh" ''
-        cp ${self'.packages.hyperspace-config}/config.toml /tmp/config.toml    
-        ${pkgs.lib.meta.getExe devnet-centauri}       
-      '';
+      centauri-configure-and-run = pkgs.writeShellApplication rec {
+        name = "centauri-configure-and-run";
+        text = ''
+          cp --force ${self'.packages.hyperspace-config} /tmp/config.toml  
+          ${pkgs.lib.meta.getExe devnet-centauri}       
+        '';
+      };
 
       devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
         (import ./specs/centauri.nix {

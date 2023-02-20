@@ -14,6 +14,11 @@
           condition = "service_completed_successfully";
         };
       };
+      dependsOnCreateChannels = {
+        hyperspace-create-channels = {
+          condition = "service_completed_successfully";
+        };
+      };
       devnetConfigs = [
         {
           containerName = "devnet-a";
@@ -107,8 +112,7 @@
               execCommands = [ "relay" "--config" configPathContainer ];
               inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
-              dependsOn = dependsOnCreateConnection;
-              # safely restart on failure due to connectivity loss for instance
+              dependsOn = dependsOnCreateChannels;
               restartPolicy = "on-failure";
             }) [ network-name network-name-2 ];
         };
