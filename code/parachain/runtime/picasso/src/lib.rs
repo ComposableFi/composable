@@ -23,6 +23,7 @@ pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("PICASSO_RUNT
 #[cfg(not(feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
+mod fees;
 pub mod governance;
 mod migrations;
 mod prelude;
@@ -30,13 +31,13 @@ mod weights;
 
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
+use fees::FinalPriceConverter;
 pub use xcmp::XcmConfig;
 
+pub use crate::fees::WellKnownForeignToNativePriceConverter;
+
 use common::{
-	fees::{
-		multi_existential_deposits, NativeExistentialDeposit, PriceConverter, WeightToFeeConverter,
-		WellKnownForeignToNativePriceConverter,
-	},
+	fees::{multi_existential_deposits, NativeExistentialDeposit, WeightToFeeConverter},
 	governance::native::*,
 	rewards::StakingPot,
 	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
@@ -50,6 +51,7 @@ use composable_traits::{
 	dex::{Amm, PriceAggregate},
 	xcm::assets::RemoteAssetRegistryInspect,
 };
+
 use governance::*;
 use prelude::*;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
@@ -145,7 +147,7 @@ use orml_traits::{parameter_type_with_key, LockIdentifier};
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
 	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
-		multi_existential_deposits::<AssetsRegistry>(currency_id)
+		multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(currency_id)
 	};
 }
 
@@ -415,10 +417,8 @@ impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrD
 
 impl asset_tx_payment::Config for Runtime {
 	type Fungibles = Tokens;
-	type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
-		PriceConverter<AssetsRegistry>,
-		TransferToTreasuryOrDrop,
-	>;
+	type OnChargeAssetTransaction =
+		asset_tx_payment::FungiblesAdapter<FinalPriceConverter, TransferToTreasuryOrDrop>;
 
 	type UseUserConfiguration = ConstBool<true>;
 
@@ -432,7 +432,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type Lock = Assets;
 
-	type BalanceConverter = PriceConverter<AssetsRegistry>;
+	type BalanceConverter = FinalPriceConverter;
 }
 
 impl sudo::Config for Runtime {
@@ -946,10 +946,11 @@ impl_runtime_apis! {
 
 		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {
 			// Hardcoded assets
+			use common::fees::ForeignToNativePriceConverter;
 			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
 				// Add hardcoded ratio and ED for well known assets
 				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
-				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry>(&asset.id.into());
+				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
 				asset
 			}).collect::<Vec<_>>();
 
@@ -965,7 +966,7 @@ impl_runtime_apis! {
 					asset.foreign_id = foreign_asset.foreign_id.clone();
 					asset.ratio = foreign_asset.ratio;
 				} else {
-					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry>(&foreign_asset.id.into());
+					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&foreign_asset.id.into());
 					acc.push(foreign_asset.clone())
 				}
 				acc

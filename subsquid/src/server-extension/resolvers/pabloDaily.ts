@@ -11,9 +11,9 @@ import {
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
-import { PabloFee, PabloPool, PabloSwap, PabloTransaction } from "../../model";
-import { DAY_IN_MS } from "./common";
-import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
+import { HistoricalPabloFeeApr, HistoricalStakingApr, PabloFee, PabloPool, PabloSwap, PabloTransaction, RewardRatePeriod, StakingRewardsPool } from "../../model";
+import { DAY_IN_MS } from "../../constants";
+import { getOrCreateHistoricalAssetPrice, getNormalizedPoolTVL, getOrCreateFeeApr } from "../../dbHelper";
 
 @ObjectType()
 export class PoolAmount {
@@ -36,6 +36,9 @@ export class PabloDaily {
   @Field(() => String, { nullable: false })
   assetId!: string;
 
+  @Field(() => Number, { nullable: false })
+  swapFee!: number;
+
   @Field(() => [PoolAmount], { nullable: false })
   volume!: PoolAmount[];
 
@@ -48,6 +51,12 @@ export class PabloDaily {
   @Field(() => String, { nullable: false })
   poolId!: string;
 
+  @Field(() => Number, { nullable: false })
+  tradingFeeApr!: number;
+
+  @Field(() => Number, { nullable: false })
+  stakingApr!: number;
+
   constructor(props: Partial<PabloDaily>) {
     Object.assign(this, props);
   }
@@ -57,6 +66,40 @@ export class PabloDaily {
 export class PabloDailyInput {
   @Field(() => String, { nullable: false })
   poolId!: string;
+
+  @Field(() => Number, { nullable: true })
+  swapFee?: number;
+}
+
+async function dailyVolume(manager: EntityManager, poolId: string): Promise<PoolAmount[]> {
+  const latestSwaps = await manager.getRepository(PabloSwap).find({
+    where: {
+      timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS)),
+      pool: {
+        id: poolId
+      }
+    }
+  });
+
+  const swapsMap = latestSwaps.reduce<Record<string, bigint>>((acc, swap) => {
+    acc[swap.quoteAssetId] = (acc[swap.quoteAssetId] || 0n) + swap.quoteAssetAmount;
+    return acc;
+  }, {});
+
+  const totalVolumes: Array<PoolAmount> = [];
+
+  for (const assetId of Object.keys(swapsMap)) {
+    const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime());
+    totalVolumes.push(
+      new PoolAmount({
+        assetId,
+        amount: swapsMap[assetId],
+        price
+      })
+    );
+  }
+
+  return totalVolumes;
 }
 
 @Resolver(() => PabloDaily)
@@ -67,34 +110,9 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
   async volume(@Root() daily: PabloDaily): Promise<PoolAmount[]> {
     const manager = await this.tx();
 
-    const latestSwaps = await manager.getRepository(PabloSwap).find({
-      where: {
-        timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS)),
-        pool: {
-          id: daily.poolId
-        }
-      }
-    });
+    const volume = await dailyVolume(manager, daily.poolId);
 
-    const swapsMap = latestSwaps.reduce<Record<string, bigint>>((acc, swap) => {
-      acc[swap.quoteAssetId] = (acc[swap.quoteAssetId] || 0n) + swap.quoteAssetAmount;
-      return acc;
-    }, {});
-
-    const totalVolumes: Array<PoolAmount> = [];
-
-    for (const assetId of Object.keys(swapsMap)) {
-      const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime());
-      totalVolumes.push(
-        new PoolAmount({
-          assetId,
-          amount: swapsMap[assetId],
-          price
-        })
-      );
-    }
-
-    return Promise.resolve(totalVolumes);
+    return Promise.resolve(volume);
   }
 
   @FieldResolver({ name: "transactions", defaultValue: 0n })
@@ -162,16 +180,73 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
     return Promise.resolve(pool.quoteAssetId);
   }
 
+  @FieldResolver({ name: "tradingFeeApr" })
+  async tradingFeeApr(@Root() daily: PabloDaily): Promise<number> {
+    const { poolId, swapFee } = daily;
+    const manager = await this.tx();
+
+    const pool = await manager.getRepository(PabloPool).findOne({
+      where: {
+        id: poolId
+      }
+    });
+
+    if (!pool) {
+      throw new Error(`Pool ${poolId} not found`);
+    }
+
+    const tradingFee = await getOrCreateFeeApr(manager, pool, swapFee);
+
+    return Promise.resolve(tradingFee);
+  }
+
+  @FieldResolver({ name: "stakingApr" })
+  async stakingApr(@Root() daily: PabloDaily): Promise<number> {
+    const { poolId } = daily;
+    const manager = await this.tx();
+
+    const pabloPool = await manager.getRepository(PabloPool).findOne({
+      where: {
+        id: poolId
+      },
+      relations: {
+        lpToken: true
+      }
+    });
+
+    if (!pabloPool) {
+      throw new Error(`Pool ${poolId} not found`);
+    }
+
+    const latestApr = await manager.getRepository(HistoricalStakingApr).findOne({
+      where: {
+        assetId: pabloPool.lpToken.id
+      },
+      order: {
+        timestamp: "DESC"
+      }
+    });
+
+    if (!latestApr) {
+      throw new Error(`No staking APR found for pool ${poolId}`);
+    }
+
+    return Promise.resolve(latestApr.stakingApr);
+  }
+
   @Query(() => PabloDaily)
   async pabloDaily(@Arg("params", { validate: true }) input: PabloDailyInput): Promise<PabloDaily> {
     // Default values
     return Promise.resolve(
       new PabloDaily({
         poolId: input.poolId,
+        swapFee: input.swapFee || 0.003,
         assetId: "",
         volume: [],
         transactions: 0n,
-        fees: []
+        fees: [],
+        tradingFeeApr: 0,
+        stakingApr: 0
       })
     );
   }

@@ -29,7 +29,7 @@ export const usePicassoAccounts = (): InjectedAccountWithMeta[] => {
 };
 
 export const useKusamaAccounts = (): InjectedAccountWithMeta[] => {
-  const accounts = useConnectedAccounts("karura");
+  const accounts = useConnectedAccounts("kusama");
   return accounts;
 };
 

@@ -116,6 +116,7 @@ impl<T: Config> Pallet<T> {
 
 		let msg = HandlerMessage::<AccountIdOf<T>>::Transfer {
 			channel_id,
+			memo: <_>::default(),
 			coin: PrefixedCoin {
 				// TODO: Amount from centauri should not have a From<u64> instance.
 				// https://app.clickup.com/t/20465559/XCVM-241?comment=1190198806

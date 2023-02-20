@@ -2,8 +2,9 @@ import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql
 import type { EntityManager } from "typeorm";
 import { LessThan, MoreThan, And } from "typeorm";
 import { PabloSwap } from "../../model";
-import { DAY_IN_MS, getVolumeRange } from "./common";
-import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
+import { getVolumeRange } from "./common";
+import { DAY_IN_MS } from "../../constants";
+import { getCurrentAssetPrices, getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 class AssetIdAmount {
@@ -83,8 +84,16 @@ export class PabloTotalVolumeResolver {
 
       volumes[time] = [];
 
+      let prices: Record<string, number> | undefined;
+
+      if (range === "now") {
+        prices = await getCurrentAssetPrices(manager);
+      }
+
       for (const assetId of Object.keys(currVolumes)) {
-        const price = await getOrCreateHistoricalAssetPrice(manager, assetId, timestamp.getTime());
+        const price = prices?.[assetId]
+          ? prices[assetId]
+          : await getOrCreateHistoricalAssetPrice(manager, assetId, timestamp.getTime());
 
         volumes[time].push(
           new AssetIdAmount({

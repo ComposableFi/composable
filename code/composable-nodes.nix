@@ -20,9 +20,14 @@
             isRust = name: type:
               type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
             customFilter = name: type:
-              ((isCargo name type) || (isRust name type) || (isDir name type)
-                || (isREADME name type) || (isJSON name type)
-                || (isProto name type));
+              builtins.any (fun: fun name type) [
+                isCargo
+                isRust
+                isDir
+                isREADME
+                isJSON
+                isProto
+              ];
           in pkgs.nix-gitignore.gitignoreFilterPure customFilter
           [ ../.gitignore ] ./.;
           src = ./.;
@@ -34,7 +39,7 @@
           name = "composable";
           cargoArtifacts = self'.packages.common-deps;
           cargoBuildCommand =
-            "cargo build --release --package composable --features=builtin-wasm";
+            "cargo build --release --package composable --features=builtin-wasm,composable";
           DALI_RUNTIME =
             "${self'.packages.dali-runtime}/lib/runtime.optimized.wasm";
           PICASSO_RUNTIME =
@@ -52,6 +57,12 @@
       packages = rec {
 
         composable-node = makeComposableNode (node: node);
+
+        composable-node-dali = makeComposableNode (node:
+          node // {
+            PICASSO_RUNTIME = node.DALI_RUNTIME;
+            COMPOSABLE_RUNTIME = node.DALI_RUNTIME;
+          });
 
         composable-node-release = makeComposableNode (node:
           node // {

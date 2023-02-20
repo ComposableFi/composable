@@ -63,6 +63,13 @@ pub trait AssetRatioInspect {
 	}
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Unit<T>(PhantomData<T>);
+
+impl<T> AssetRatioInspect for Unit<T> {
+	type AssetId = T;
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
 pub struct RangeId(u32);
 
