@@ -6,8 +6,6 @@ import { TokenMetadata } from "@/stores/defi/polkadot/tokens/slice";
 
 export type RewardPool = {
   owner: string;
-  claimedShares: BigNumber;
-  // endBlock: BigNumber;
   lock: {
     durationPresets: {
       [key in string]: BigNumber;
@@ -85,7 +83,6 @@ const initialState = {
       owner: "",
       assetId: "1",
       totalShares: new BigNumber(0),
-      claimedShares: new BigNumber(0),
       endBlock: new BigNumber(0),
       lock: {
         durationPresets: {},

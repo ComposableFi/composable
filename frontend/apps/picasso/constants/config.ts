@@ -221,7 +221,6 @@ const config = {
       owner: "",
       assetId: "1",
       totalShares: new BigNumber(10000000),
-      claimedShares: new BigNumber(100),
       endBlock: new BigNumber(10000),
       lock: {
         durationPresets: {

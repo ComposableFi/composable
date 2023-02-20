@@ -29,13 +29,7 @@ import { useStakeForm } from "@/components/Organisms/Staking/stakeFormStore";
 export function transformRewardPool(rewardPoolsWrapped: any): RewardPool {
   return {
     owner: rewardPoolsWrapped.owner,
-    // assetId: rewardPoolsWrapped.assetId.toString(), assetId is removed
     rewards: rewardPoolsWrapped.rewards,
-    // totalShares: unwrapNumberOrHex(rewardPoolsWrapped.totalShares.toString()), total shares is removed
-    claimedShares: unwrapNumberOrHex(
-      rewardPoolsWrapped.claimedShares.toString()
-    ),
-    // endBlock: unwrapNumberOrHex(rewardPoolsWrapped.endBlock.toString()),
     lock: {
       unlockPenalty: rewardPoolsWrapped.lock.unlockPenalty,
       durationPresets: Object.fromEntries(

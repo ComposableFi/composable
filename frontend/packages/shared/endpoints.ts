@@ -57,7 +57,7 @@ export const endpointPresets: EndpointPresets = {
     picasso: "ws://127.0.0.1:9988",
     karura: "ws://127.0.0.1:9999",
     kusama: "ws://127.0.0.1:9944",
-    statemine: "ws://127.0.0.1:10009",
+    statemine: "ws://127.0.0.1:10008",
     subsquid: "http://localhost:4350/graphql",
   },
   dali: {
