@@ -5,7 +5,7 @@
         owner = "bifrost-finance";
         repo = "bifrost";
         rev = "5f4bf0c8decd8e59cca007fda1dc3364f7cd4245";
-        hash = "sha256-E7mLS9kQOwQJxvYd8cfEu5yd6J0U+n/2ZKXui4DayPA=";
+        hash = "sha256-E7mLS9kQOwQJxvYd8cfEu5yd1J0U+n/2ZKXui4DayPA=";
       };
       prelude = {
         inherit (pkgs) lib;
@@ -18,7 +18,6 @@
           pname = "bifrost";
           src = bifrost-src;
           doCheck = false;
-          # https://app.clickup.com/t/20465559/NX-53
           __noChroot = true;
           buildInputs = with pkgs; [ openssl zstd ];
           configurePhase = ''

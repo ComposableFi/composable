@@ -2,10 +2,10 @@
   perSystem = { config, self', inputs', pkgs, system, devnetTools, ... }:
     let
       paritytech-zombienet-src = pkgs.fetchFromGitHub {
-        owner = "dzmitry-lahoda-forks";
+        owner = "paritytech";
         repo = "zombienet";
-        rev = "b9f089eb55a7cb1d4c12575b8323cb9b9fab4a60";
-        hash = "sha256-EC6XKbcI+Is0RGlmC8WGjPqiFh9Ulf3bXDoVihtYqsU=";
+        rev = "v1.3.34";
+        hash = "sha256-EC6XKbcI+Is0RGlmC1sWGjPqiFh9Ulf3bXDoVihtYqsU=";
       };
       paritytech-zombienet = pkgs.stdenv.mkDerivation {
         name = "zombienet";
