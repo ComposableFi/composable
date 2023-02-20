@@ -1,6 +1,6 @@
 { lib }:
 let
-  nonArmPackages = [  ];
+  nonArmPackages = [ ];
 
   packages = [
     "acala-node"
