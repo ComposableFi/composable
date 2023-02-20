@@ -14,12 +14,14 @@ export const useSelectedAccount = (
   const selected = connectedAccounts[parachainId][selectedAccount];
 
   // Use this address instead.
-  const asWallet = localStorage.getItem("wallet-as");
-  if (asWallet) {
-    return {
-      ...selected,
-      address: asWallet,
-    };
+  if (typeof window !== "undefined") {
+    const asWallet = localStorage.getItem("wallet-as");
+    if (asWallet) {
+      return {
+        ...selected,
+        address: asWallet,
+      };
+    }
   }
 
   return selectedAccount !== -1

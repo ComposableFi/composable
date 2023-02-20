@@ -14,15 +14,17 @@ export const useConnectedAccounts = (
 
   if (connectedAccounts[parachainId].length > 0) {
     const [first, ...rest] = connectedAccounts[parachainId];
-    const asWallet = localStorage.getItem("wallet-as");
-    if (asWallet) {
-      return [
-        {
-          ...first,
-          address: asWallet,
-        },
-        ...rest,
-      ];
+    if (typeof window !== "undefined") {
+      const asWallet = localStorage.getItem("wallet-as");
+      if (asWallet) {
+        return [
+          {
+            ...first,
+            address: asWallet,
+          },
+          ...rest,
+        ];
+      }
     }
 
     return [first, ...rest];
