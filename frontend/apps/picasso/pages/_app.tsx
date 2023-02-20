@@ -22,6 +22,7 @@ import * as React from "react";
 import { hotjar } from "react-hotjar";
 import { getEnvironment } from "shared/endpoints";
 import { DotSamaContextProvider, ExecutorProvider } from "substrate-react";
+import { Analytics } from "@/components/Organisms/Analytics";
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
 
@@ -152,6 +153,7 @@ export default function MyApp(props: MyAppProps) {
                 >
                   <ExecutorProvider>
                     <Component {...pageProps} />
+                    <Analytics />
                   </ExecutorProvider>
                 </SnackbarProvider>
               </ApolloProvider>

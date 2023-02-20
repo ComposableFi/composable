@@ -1,5 +1,5 @@
 import * as React from "react";
-import { FC, ReactNode, useState } from "react";
+import { FC, ReactNode, useCallback, useEffect, useState } from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -18,12 +18,15 @@ import {
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { GlobalSettings } from "../Organisms/Settings/GlobalSettings";
 import { ExternalLinksDropdown } from "@/components/Molecules/ExternalLinksDropdown";
+import { useRouter } from "next/router";
+import { pageView } from "@/utils/Analytics/track";
 
 type DefaultLayoutProps = {
   breadcrumbs?: ReactNode[];
 };
 
 export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
+  useRouteChange();
   const { children, breadcrumbs } = props;
   const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useTheme();
@@ -163,3 +166,19 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
 };
 
 export default DefaultLayout;
+
+const useRouteChange = () => {
+  const router = useRouter();
+
+  const onRouteChangeComplete = useCallback(() => {
+    pageView(router.asPath);
+  }, [router.asPath]);
+
+  useEffect(() => {
+    router.events.on("routeChangeComplete", onRouteChangeComplete);
+
+    return () => {
+      router.events.off("routeChangeComplete", onRouteChangeComplete);
+    };
+  }, [onRouteChangeComplete, router.events]);
+};
