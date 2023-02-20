@@ -1,6 +1,7 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { LessThan, MoreThan, And } from "typeorm";
+import { IsEnum, IsString } from "class-validator";
 import { PabloSwap } from "../../model";
 import { getVolumeRange } from "./common";
 import { DAY_IN_MS } from "../../constants";
@@ -38,9 +39,11 @@ export class PabloTotalVolume {
 @InputType()
 export class PabloTotalVolumeInput {
   @Field(() => String, { nullable: false })
+  @IsEnum(["now", "month", "year"])
   range!: string;
 
   @Field(() => String, { nullable: true })
+  @IsString()
   poolId!: string;
 }
 

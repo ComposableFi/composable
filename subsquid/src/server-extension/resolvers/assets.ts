@@ -1,5 +1,6 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
+import { IsDateString, IsString } from "class-validator";
 import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()
@@ -18,9 +19,11 @@ export class AssetInfo {
 @InputType()
 export class AssetsInput {
   @Field(() => String, { nullable: false })
+  @IsString()
   assetId!: string;
 
   @Field(() => String, { nullable: true })
+  @IsDateString()
   date?: string;
 }
 

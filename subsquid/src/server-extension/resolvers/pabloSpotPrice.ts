@@ -1,5 +1,6 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
+import { IsString } from "class-validator";
 import { getSpotPrice } from "../../dbHelper";
 
 @ObjectType()
@@ -15,12 +16,15 @@ export class PabloSpotPrice {
 @InputType()
 export class PabloSpotPriceInput {
   @Field(() => String, { nullable: false })
+  @IsString()
   baseAssetId!: string;
 
   @Field(() => String, { nullable: false })
+  @IsString()
   quoteAssetId!: string;
 
   @Field(() => String, { nullable: false })
+  @IsString()
   poolId!: string;
 }
 

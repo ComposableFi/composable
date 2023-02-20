@@ -45,17 +45,25 @@ interface PoolCreatedEvent {
 }
 
 async function getPoolCreatedEvent(event: PabloPoolCreatedEvent): Promise<PoolCreatedEvent> {
-  const { owner, poolId, assetWeights } = event.asV10005;
+  if (event.isV10005) {
+    const { owner, poolId, assetWeights } = event.asV10005;
+    // TODO: get lpTokenId from the event
+    // This is a temporary solution, and will be replaced by event data when runtime is upgraded
+    const lpTokenId = (105 + Number(poolId)).toString();
 
-  // TODO: get lpTokenId from the event
-  // This is a temporary solution, and will be replaced by event data when runtime is upgraded
-  const lpTokenId = (105 + Number(poolId)).toString();
-
+    return Promise.resolve({
+      owner,
+      poolId,
+      assetWeights,
+      lpTokenId
+    });
+  }
+  const { owner, poolId, assetWeights, lpTokenId } = event.asV10009;
   return Promise.resolve({
     owner,
     poolId,
     assetWeights,
-    lpTokenId
+    lpTokenId: lpTokenId.toString()
   });
 }
 

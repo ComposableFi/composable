@@ -1,6 +1,7 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { LessThan } from "typeorm";
+import { IsEnum, IsString } from "class-validator";
 import { HistoricalLockedValue, LockedSource, PabloPool } from "../../model";
 import { getRange } from "./common";
 import { PicassoTVL } from "./picassoOverviewStats";
@@ -22,9 +23,11 @@ export class PabloTVL {
 @InputType()
 export class PabloTVLInput {
   @Field(() => String, { nullable: false })
+  @IsEnum(["day", "week", "month", "year"])
   range!: string;
 
   @Field(() => String, { nullable: true })
+  @IsString()
   poolId?: string;
 }
 
