@@ -20,6 +20,7 @@
         composable-node
         dali-subxt-client
         deadnix-check
+        devnet-centauri
         devnet-dali
         devnet-dali-complete
         devnet-dali-image
@@ -37,11 +38,10 @@
         prettier-check
         spell-check
         statemine-node
+        subwasm
         taplo-check
         unit-tests
         zombienet
-        subwasm
-        devnet-centauri
       ]);
 
       docker-images-to-push = pkgs.linkFarmFromDrvs "docker-images-to-push"

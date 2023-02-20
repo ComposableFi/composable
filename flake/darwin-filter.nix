@@ -1,6 +1,6 @@
 { lib }:
 let
-  nonArmPackages = [ "devnet-centauri" ];
+  nonArmPackages = [  ];
 
   packages = [
     "acala-node"
@@ -41,6 +41,7 @@ let
     "cargo-fmt-check"
     "cargo-llvm-cov"
     "cargo-udeps-check"
+    "devnet-centauri"
   ];
 
   devShells = [ "minimal" "default" ];
