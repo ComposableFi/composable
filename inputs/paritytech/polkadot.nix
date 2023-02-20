@@ -6,8 +6,12 @@
         { name, version, repo, owner, rev, hash, cargoSha256 }:
         pkgs.rustPlatform.buildRustPackage rec {
           inherit name version cargoSha256;
-
-          src = pkgs.fetchFromGitHub { inherit repo owner rev hash; };
+          src = pkgs.fetchgit {
+            url = "https://github.com/${owner}/${repo}.git";
+            inherit rev;
+            sha256 = hash;
+            fetchSubmodules = false;
+          };
 
           meta = { mainProgram = "polkadot"; };
 
@@ -31,14 +35,14 @@
         };
     in {
       packages = {
-        polkadot-node = let rev = "v0.9.36";
+        polkadot-node = let version = "v0.9.36";
         in buildPolkadotNode rec {
           name = "polkadot-node";
-          version = rev;
+          inherit version;
           repo = "polkadot";
           owner = "paritytech";
-          inherit rev;
-          hash = "sha256-O0zAoqvLAwiVuR4IpTS9bFHRSo6H1QsKCQofBZsZnWU";
+          rev = "refs/tags/${version}";
+          hash = "sha256-x2IEIHxH8Hg+jFIpnPrTsqISEAZHFuXhJD+H1S+G3nk=";
           cargoSha256 = "sha256-sXkOP3rITPHvQX2bzTdySgmKcbGJqzj1vAme21lZQDA=";
         };
       };

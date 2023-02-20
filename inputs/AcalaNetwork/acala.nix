@@ -3,11 +3,13 @@
   perSystem =
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }: {
       packages = {
-        acala-node = pkgs.stdenv.mkDerivation {
+        acala-node = let version = "release-karura-2.12.0";
+        in pkgs.stdenv.mkDerivation {
           name = "acala";
+          version = version;
           src = pkgs.fetchgit {
             url = "https://github.com/AcalaNetwork/Acala.git";
-            rev = "0.9.37";
+            rev = "refs/heads/${version}";
             sha256 = "sha256-l0vQphfyE0FWISPbu3WvFMifM7mj071kXksntGAXS9k=";
             fetchSubmodules = true;
           };

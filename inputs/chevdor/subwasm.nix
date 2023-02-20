@@ -2,10 +2,11 @@
   perSystem = { config, self', inputs', pkgs, system, crane, ... }: {
     packages = rec {
       subwasm = let
+        version = "v0.19.0";
         src = pkgs.fetchFromGitHub {
           owner = "chevdor";
           repo = "subwasm";
-          rev = "v0.19.0";
+          rev = "refs/tags/${version}";
           hash = "sha256-Zo/wB1W3qp1cI+O0hAv0GfQ7tKXABboPY16ZNhyxmlk=";
         };
       in crane.stable.buildPackage {
@@ -15,7 +16,7 @@
           doCheck = false;
           cargoTestCommand = "";
         };
-        inherit src;
+        inherit src version;
         doCheck = false;
         cargoTestCommand = "";
         meta = { mainProgram = "subwasm"; };

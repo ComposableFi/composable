@@ -40,7 +40,7 @@
         taplo-check
         unit-tests
         zombienet
-        subwasm        
+        subwasm
         devnet-centauri
       ]);
 

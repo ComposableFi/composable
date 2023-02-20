@@ -1,11 +1,12 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }:
     let
+      version = "bifrost-v0.9.69";
       bifrost-src = pkgs.fetchFromGitHub {
         owner = "bifrost-finance";
         repo = "bifrost";
-        rev = "5f4bf0c8decd8e59cca007fda1dc3364f7cd4245";
-        hash = "sha256-E7mLS9kQOwQJxvYd8cfEu5yd1J0U+n/2ZKXui4DayPA=";
+        rev = "refs/tags/${version}";
+        hash = "sha256-3et1mMGVnBlHxZofPo7a1l8BSz1C4D3P86eRoIDGzxY=";
       };
       prelude = {
         inherit (pkgs) lib;
@@ -16,6 +17,7 @@
         bifrost-node = pkgs.stdenv.mkDerivation (rec {
           name = "bifrost";
           pname = "bifrost";
+          inherit version;
           src = bifrost-src;
           doCheck = false;
           __noChroot = true;

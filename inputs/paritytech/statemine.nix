@@ -2,17 +2,18 @@
   perSystem = { config, self', inputs', pkgs, lib, system, crane
     , systemCommonRust, ... }: {
       packages = {
-        statemine-node = let rev = "release-parachains-v9360";
+        statemine-node = let version = "release-parachains-v9360";
         in pkgs.stdenv.mkDerivation (rec {
           name = "statemine-node";
-          version = rev;
+          inherit version;
           pname = "polkadot-parachain";
-          src = pkgs.fetchFromGitHub {
-            repo = "cumulus";
-            owner = "paritytech";
-            inherit rev;
-            hash = "sha256-ExCLnAoheU7auCUnqXN1vfrwTfv2pfF2+bq1Ktii1i0=";
+          src = pkgs.fetchgit {
+            url = "https://github.com/paritytech/cumulus.git";
+            rev = "refs/heads/${version}";
+            sha256 = "sha256-Ue3NkPiZxAKDvEIA5Q06lOS64eu6Mxp9iTDzPr1KYm4=";
+            fetchSubmodules = false;
           };
+
           doCheck = false;
           __noChroot = true;
           buildInputs = with pkgs; [ openssl zstd ];

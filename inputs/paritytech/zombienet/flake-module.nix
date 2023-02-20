@@ -1,14 +1,16 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, devnetTools, ... }:
     let
-      paritytech-zombienet-src = pkgs.fetchFromGitHub {
-        owner = "paritytech";
-        repo = "zombienet";
-        rev = "v1.3.34";
-        hash = "sha256-EC6XKbcI+Is0RGlmC1sWGjPqiFh9Ulf3bXDoVihtYqsU=";
+      version = "v1.3.34";
+      paritytech-zombienet-src = pkgs.fetchgit {
+        url = "https://github.com/paritytech/zombienet.git";
+        rev = "refs/tags/${version}";
+        sha256 = "sha256-69kOjoVAldz39h0MBzO0o19RtoWeNavCWg/JjqCf2fE=";
+        fetchSubmodules = true;
       };
       paritytech-zombienet = pkgs.stdenv.mkDerivation {
         name = "zombienet";
+        inherit version;
         src = "${paritytech-zombienet-src}/javascript";
         buildInputs = with pkgs; [ nodejs ];
         nativeBuildInputs = with pkgs;
