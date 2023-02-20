@@ -150,7 +150,7 @@ jobs:
       - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all
+          command: nix -- build .#all --keep-going
       - name: List built results 
         run: |
           ls result
