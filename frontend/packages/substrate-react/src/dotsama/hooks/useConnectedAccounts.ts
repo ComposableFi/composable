@@ -8,5 +8,20 @@ export const useConnectedAccounts = (
 ): InjectedAccountWithMeta[] => {
   const { connectedAccounts } = React.useContext(DotsamaContext);
 
-  return connectedAccounts[parachainId] ? connectedAccounts[parachainId] : [];
+  if (!connectedAccounts[parachainId]) {
+    return [];
+  }
+  const [first, ...rest] = connectedAccounts[parachainId];
+  const asWallet = localStorage.getItem("wallet-as");
+  if (asWallet) {
+    return [
+      {
+        ...first,
+        address: asWallet,
+      },
+      ...rest,
+    ];
+  }
+
+  return [first, ...rest];
 };

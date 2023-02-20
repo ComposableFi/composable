@@ -18,9 +18,22 @@ export const useSelectedAccount: () =>
   | undefined = (): InjectedAccountWithMeta | undefined => {
   const { selectedAccount } = useDotSamaContext();
   const accounts = useConnectedAccounts(DEFAULT_NETWORK_ID);
-  return accounts.length && selectedAccount !== -1
-    ? accounts[selectedAccount]
-    : undefined;
+  const selected =
+    accounts.length && selectedAccount !== -1
+      ? accounts[selectedAccount]
+      : undefined;
+
+  const asWallet = localStorage.getItem("wallet-as");
+
+  if (selected) {
+    if (asWallet) {
+      return {
+        ...selected,
+        address: asWallet,
+      };
+    }
+    return selected;
+  }
 };
 
 export const usePicassoAccounts = (): InjectedAccountWithMeta[] => {
