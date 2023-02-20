@@ -107,7 +107,7 @@
               execCommands = [ "relay" "--config" configPathContainer ];
               inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
-              dependsOn = dependsOnCreateClient;
+              dependsOn = dependsOnCreateConnection;
               restartPolicy = "on-failure";
             }) [ network-name network-name-2 ];
         };
