@@ -1,18 +1,12 @@
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { usePicassoAccounts, usePicassoProvider } from "@/defi/polkadot/hooks";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { useBlockchainProvider } from "bi-lib";
 import { fromPerbill } from "shared";
 import { encodeAddress } from "@polkadot/util-crypto";
 import { DEFAULT_EVM_ID } from "@/defi/polkadot/constants";
-import {
-  fetchAssociations,
-  fetchContributionAndRewardsFromJSON,
-} from "./crowdloanRewards";
-import {
-  CrowdloanContributionRecord,
-  setCrowdloanRewardsState,
-} from "./crowdloanRewards.slice";
+import { fetchAssociations, fetchContributionAndRewardsFromJSON } from "./crowdloanRewards";
+import { CrowdloanContributionRecord, setCrowdloanRewardsState } from "./crowdloanRewards.slice";
 // Import static JSON files
 // import rewardsAndContributions from "@/defi/polkadot/constants/pica-rewards-contributions.json";
 // import rewardsAndContributionsDev from "@/defi/polkadot/constants/pica-rewards-contributions-dev.json";
@@ -166,18 +160,20 @@ const CrowdloanRewardsUpdater = () => {
       return fetchContributionAndRewardsFromJSON(ksmAddress);
     });
 
-    Promise.all(contributions).then((ksmContributions) => {
-      setCrowdloanRewardsState({
-        kusamaContributions: ksmContributions.reduce((agg, curr) => {
-          return {
-            ...agg,
-            ...curr,
-          };
-        }, {} as CrowdloanContributionRecord),
+    Promise.all(contributions)
+      .then((ksmContributions) => {
+        setCrowdloanRewardsState({
+          kusamaContributions: ksmContributions.reduce((agg, curr) => {
+            return {
+              ...agg,
+              ...curr,
+            };
+          }, {} as CrowdloanContributionRecord),
+        });
+      })
+      .catch((err) => {
+        console.log(`Possible JSON import error`);
       });
-    }).catch((err) => {
-      console.log(`Possible JSON import error`);
-    });
   }, [accounts]);
   /**
    * update contributions from the static JSON
@@ -186,15 +182,15 @@ const CrowdloanRewardsUpdater = () => {
   useEffect(() => {
     if (!account) return;
 
-    fetchContributionAndRewardsFromJSON(account.toLocaleLowerCase()).then(
-      (contributions) => {
+    fetchContributionAndRewardsFromJSON(account.toLocaleLowerCase())
+      .then((contributions) => {
         setCrowdloanRewardsState({
           ethereumContributions: contributions,
         });
-      }
-    ).catch((err) => {
-      console.log(`Possible JSON import error`);
-    });
+      })
+      .catch((err) => {
+        console.log(`Possible JSON import error`);
+      });
   }, [account]);
 
   return null;
