@@ -7,7 +7,7 @@
           owner = "chevdor";
           repo = "subwasm";
           rev = "refs/tags/${version}";
-          hash = "sha256-Zo/wB1W3qp1cI+O0hAv0GfQ7tKXABboPY16ZNhyxmlk=";
+          hash = "sha256-DCPpGn0CrngmDP1QuK+Y9hffoD04yS+FenjQ5d/f49U=";
         };
       in crane.stable.buildPackage {
         name = "subwasm";
