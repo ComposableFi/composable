@@ -10,7 +10,7 @@
           src = pkgs.fetchgit {
             url = "https://github.com/AcalaNetwork/Acala.git";
             rev = "refs/heads/${version}";
-            sha256 = "sha256-l0vQphfyE0FWISPbu3WvFMifM7mj071kXksntGAXS9k=";
+            sha256 = "sha256-wJQ5L+qqW0XXRoPNElD4Fe7hrvth+APpNQa9CG+SL8I=";
             fetchSubmodules = true;
           };
           installPhase = ''
