@@ -490,47 +490,61 @@ export async function getCurrentAssetPrices(
 
   let currentPrices: Record<string, number> = {};
 
-  for (const assetId of ["1", "4", "130"]) {
-    const now = new Date();
-    // Round time to the nearest minute
-    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
+  const now = new Date();
+  // Round time to the nearest minute
+  const date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
+
+  const assetIds = ["1", "4", "130"];
+
+  let missingPrices = false;
+
+  // Check if all prices are in DB
+  for (const assetId of assetIds) {
     // Search for price in DB
     const where = {
       assetId,
       timestamp: date
     };
-    let assetPrice = isRepository
+    const assetPrice = isRepository
       ? await ctx.getRepository(HistoricalAssetPrice).findOne({ where })
       : await ctx.store.findOne(HistoricalAssetPrice, { where });
 
-    if (!assetPrice) {
-      if (!currentPrices[assetId]) {
-        // If price does not exist in DB and has not been fetched yet, fetch it from Coingecko
-        const endpoint = "https://api.coingecko.com/api/v3/simple/price?ids=tether%2Ckusama&vs_currencies=usd";
-        const res = await fetch(endpoint);
-        if (!res.ok) {
-          throw new Error("Failed to fetch prices from coingecko");
-        }
-        const json: { kusama: { usd: number }; tether: { usd: number } } = await res.json();
+    // If any price is missing, flag it and break
+    if (assetPrice?.price === undefined) {
+      missingPrices = true;
+      break;
+    } else {
+      currentPrices[assetId] = assetPrice.price;
+    }
+  }
 
-        // Get PICA/KSM spot price
-        const picaKsmSpotPrice = await getSpotPrice(ctx, "1", "4", "2");
+  // If any price is missing, get all from Coingecko and update DB
+  if (missingPrices) {
+    const endpoint = "https://api.coingecko.com/api/v3/simple/price?ids=tether%2Ckusama&vs_currencies=usd";
+    const res = await fetch(endpoint);
+    if (!res.ok) {
+      throw new Error("Failed to fetch prices from coingecko");
+    }
+    const json: { kusama: { usd: number }; tether: { usd: number } } = await res.json();
 
-        currentPrices = {
-          "1": json.kusama.usd / picaKsmSpotPrice, // Use PICA/KSM spot price to get PICA/USD price
-          "4": json.kusama.usd,
-          "130": json.tether.usd
-        };
-      }
+    // Get PICA/KSM spot price
+    const picaKsmSpotPrice = await getSpotPrice(ctx, "1", "4", "2");
 
-      // Save price in DB
-      assetPrice = new HistoricalAssetPrice({
+    currentPrices = {
+      "1": json.kusama.usd / picaKsmSpotPrice, // Use PICA/KSM spot price to get PICA/USD price
+      "4": json.kusama.usd,
+      "130": json.tether.usd
+    };
+
+    for (const assetId of assetIds) {
+      const assetPrice = new HistoricalAssetPrice({
         id: randomUUID(),
         assetId,
         price: currentPrices[assetId],
         timestamp: date,
         currency: Currency.USD
       });
+
       if (isRepository) {
         await ctx.getRepository(HistoricalAssetPrice).save(assetPrice);
       } else {
