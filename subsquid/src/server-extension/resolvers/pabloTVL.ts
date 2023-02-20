@@ -24,8 +24,8 @@ export class PabloTVLInput {
   @Field(() => String, { nullable: false })
   range!: string;
 
-  @Field(() => String, { nullable: false })
-  poolId!: string;
+  @Field(() => String, { nullable: true })
+  poolId?: string;
 }
 
 @Resolver()
@@ -38,8 +38,8 @@ export class PabloTVLResolver {
 
     const manager = await this.tx();
 
-    const pool = await manager.getRepository(PabloPool).findOne({
-      where: { id: poolId.toString() },
+    const pools = await manager.getRepository(PabloPool).find({
+      ...(poolId ? { where: { id: poolId.toString() } } : {}),
       order: { timestamp: "DESC" },
       relations: {
         poolAssets: true,
@@ -47,8 +47,8 @@ export class PabloTVLResolver {
       }
     });
 
-    if (!pool) {
-      throw new Error(`Pool with id ${poolId} not found`);
+    if (!pools.length) {
+      throw new Error(`Pool/s not found`);
     }
 
     const timestamps = getRange(range);
@@ -60,29 +60,31 @@ export class PabloTVLResolver {
       };
     }, {});
 
-    const { quoteAssetId, poolAssets } = pool;
-    const baseAssetId = poolAssets.map(({ assetId }) => assetId).find(assetId => assetId !== quoteAssetId)!;
+    for (const pool of pools) {
+      const { quoteAssetId, poolAssets } = pool;
+      const baseAssetId = poolAssets.map(({ assetId }) => assetId).find(assetId => assetId !== quoteAssetId)!;
 
-    for (const timestamp of timestamps) {
-      const time = timestamp.toISOString();
+      for (const timestamp of timestamps) {
+        const time = timestamp.toISOString();
 
-      for (const assetId of [quoteAssetId, baseAssetId]) {
-        const historicalLockedValue = await manager.getRepository(HistoricalLockedValue).findOne({
-          where: {
-            timestamp: LessThan(new Date(time)),
-            source: LockedSource.Pablo,
-            assetId,
-            sourceEntityId: poolId
-          },
-          order: {
-            timestamp: "DESC"
-          }
-        });
+        for (const assetId of [quoteAssetId, baseAssetId]) {
+          const historicalLockedValue = await manager.getRepository(HistoricalLockedValue).findOne({
+            where: {
+              timestamp: LessThan(new Date(time)),
+              source: LockedSource.Pablo,
+              assetId,
+              sourceEntityId: pool.id
+            },
+            order: {
+              timestamp: "DESC"
+            }
+          });
 
-        lockedValues[time] = {
-          ...(lockedValues[time] ?? {}),
-          [assetId]: (lockedValues?.[time]?.[assetId] || 0n) + (historicalLockedValue?.accumulatedAmount || 0n)
-        };
+          lockedValues[time] = {
+            ...(lockedValues[time] ?? {}),
+            [assetId]: (lockedValues?.[time]?.[assetId] || 0n) + (historicalLockedValue?.accumulatedAmount || 0n)
+          };
+        }
       }
     }
 
