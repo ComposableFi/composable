@@ -392,6 +392,21 @@
         "type": "github"
       }
     },
+    "nix-std": {
+      "locked": {
+        "lastModified": 1671250799,
+        "narHash": "sha256-uPIakP98gOf6504NtrAb2/0O0BgRRXNShM0PTV8z+T0=",
+        "owner": "chessai",
+        "repo": "nix-std",
+        "rev": "b300fd6dfeae8cc331c7d8cde0e81b404d50d40c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "chessai",
+        "repo": "nix-std",
+        "type": "github"
+      }
+    },
     "nix-utils": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -565,6 +580,7 @@
         "flake-parts": "flake-parts_2",
         "flake-utils": "flake-utils_3",
         "helix": "helix",
+        "nix-std": "nix-std",
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-working-nixops": "nixpkgs-working-nixops",
         "npm-buildpackage": "npm-buildpackage",

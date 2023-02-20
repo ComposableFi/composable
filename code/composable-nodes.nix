@@ -58,6 +58,12 @@
 
         composable-node = makeComposableNode (node: node);
 
+        composable-node-dali = makeComposableNode (node:
+          node // {
+            PICASSO_RUNTIME = node.DALI_RUNTIME;
+            COMPOSABLE_RUNTIME = node.DALI_RUNTIME;
+          });
+
         composable-node-release = makeComposableNode (node:
           node // {
             SUBSTRATE_CLI_GIT_COMMIT_HASH = if self ? rev then
