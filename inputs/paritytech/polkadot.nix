@@ -43,7 +43,7 @@
           owner = "paritytech";
           rev = "refs/tags/${version}";
           hash = "sha256-x2IEIHxH8Hg+jFIpnPrTsqISEAZHFuXhJD+H1S+G3nk=";
-          cargoSha256 = "sha256-sXkOP3rITPHvQX2bzTdySgmKcbGJqzj1vAme21lZQDA=";
+          cargoSha256 = "sha256-6/94Uj6MG8VRnV4/yvEwUXdZBCEDSFUgqPTDcK7kiss=";
         };
       };
     };
