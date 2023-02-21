@@ -94,17 +94,6 @@
           (systemCommonRust.common-bench-attrs // { });
         common-test-deps = crane.nightly.buildDepsOnly
           (systemCommonRust.common-test-deps-attrs // { });
-
-        wasm-optimizer = crane.stable.buildPackage
-          (systemCommonRust.common-attrs // {
-            cargoCheckCommand = "true";
-            pname = "wasm-optimizer";
-            cargoArtifacts = common-deps;
-            cargoBuildCommand =
-              "cargo build --release --package wasm-optimizer";
-            version = "0.1.0";
-            # NOTE: we copy more then needed, but tht is simpler to setup, we depend on substrate for sure so
-          });
       };
 
     };
