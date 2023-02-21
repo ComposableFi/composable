@@ -35,7 +35,6 @@ let
     "subwasm"
     "hadolint-check"
     "gex"
-    "wasm-optimizer"
     "cargo-deny-check"
     "cargo-clippy-check"
     "cargo-fmt-check"

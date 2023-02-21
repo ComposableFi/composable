@@ -16,7 +16,6 @@ pub mod indices;
 pub mod lending;
 pub mod liquidations;
 pub mod membership;
-pub mod mosaic;
 pub mod multisig;
 pub mod oracle;
 pub mod pablo;
