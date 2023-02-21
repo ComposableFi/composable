@@ -41,10 +41,7 @@ members = [
   "parachain/runtime/composable",
   "parachain/runtime/composable-wasm",
   "utils/common",
-  # FIXME(hussein): this package is outdated and broken
-  # "utils/price-feed",
-  "utils/collator-sidecar",
-  "utils/wasm-optimizer",
+  "utils/collator-sidecar",  
 ]
 resolver = "2"
 

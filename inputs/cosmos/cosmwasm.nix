@@ -20,7 +20,7 @@
       cosmwasm = pkgs.mkShell {
         buildInputs = with self'.packages; [
           subwasm
-          wasm-optimizer
+          pkgs.binaryen
           cosmwasm-check
           junod
         ];

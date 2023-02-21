@@ -53,7 +53,7 @@ use common::{
 	},
 	rewards::StakingPot,
 	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
-	FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment, MosaicRemoteAssetId,
+	FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment,
 	PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
 	MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -975,27 +975,6 @@ impl dutch_auction::Config for Runtime {
 	type XcmSender = XcmRouter;
 }
 
-parameter_types! {
-	pub const MosaicId: PalletId = PalletId(*b"plmosaic");
-	pub const MinimumTTL: BlockNumber = 10;
-	pub const MinimumTimeLockPeriod: BlockNumber = 20;
-}
-
-impl mosaic::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type PalletId = MosaicId;
-	type Assets = Assets;
-	type MinimumTTL = MinimumTTL;
-	type MinimumTimeLockPeriod = MinimumTimeLockPeriod;
-	type BudgetPenaltyDecayer = mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
-	type NetworkId = u32;
-	type RemoteAssetId = MosaicRemoteAssetId;
-	type ControlOrigin = EnsureRootOrHalfNativeCouncil;
-	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
-	type RemoteAmmId = u128; // TODO: Swap to U256?
-	type AmmMinimumAmountOut = u128;
-}
-
 pub type LiquidationStrategyId = u32;
 pub type OrderId = u128;
 
@@ -1399,7 +1378,7 @@ construct_runtime!(
 		Vesting: vesting = 59,
 		BondedFinance: bonded_finance = 60,
 		DutchAuction: dutch_auction = 61,
-		Mosaic: mosaic = 62,
+		
 		Liquidations: liquidations = 63,
 		Lending: lending = 64,
 		Pablo: pablo = 65,
@@ -1477,7 +1456,6 @@ mod benches {
 			[oracle, Oracle]
 			[dutch_auction, DutchAuction]
 			[currency_factory, CurrencyFactory]
-			[mosaic, Mosaic]
 			[liquidations, Liquidations]
 			[bonded_finance, BondedFinance]
 		// TODO(hussein): broken as of v0.9.30

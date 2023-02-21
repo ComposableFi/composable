@@ -28,9 +28,6 @@ pub use types::*;
 
 /// Common types of statemint and statemine and dali and picasso and composable.
 mod types {
-	use codec::{Decode, Encode, MaxEncodedLen};
-	use core::fmt::Debug;
-	use scale_info::TypeInfo;
 	use sp_runtime::traits::{IdentifyAccount, Verify};
 
 	// todo move it into more shared directory so it can be shared with
@@ -87,17 +84,6 @@ mod types {
 
 	/// Opaque block
 	pub type OpaqueBlock = sp_runtime::generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
-
-	#[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, MaxEncodedLen, TypeInfo)]
-	pub enum MosaicRemoteAssetId {
-		EthereumTokenAddress([u8; 20]),
-	}
-
-	impl From<[u8; 20]> for MosaicRemoteAssetId {
-		fn from(x: [u8; 20]) -> Self {
-			MosaicRemoteAssetId::EthereumTokenAddress(x)
-		}
-	}
 
 	pub type NftInstanceId = u128;
 
