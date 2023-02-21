@@ -7,14 +7,7 @@ export function ga(token: string) {
       ReactGA.initialize(token);
     },
     async track(event: GeneralEvent) {
-      const payload = {
-        category: event.category,
-        action: event.action,
-        label: event.name,
-        nonInteraction: event.nonInteraction,
-      };
-
-      ReactGA.event(payload);
+      ReactGA.event(event);
     },
 
     async pageView(event: PageViewEvent) {

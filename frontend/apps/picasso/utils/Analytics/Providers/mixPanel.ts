@@ -7,8 +7,8 @@ export function mixPanel(token: string) {
       mixpanel.init(token);
     },
     async track(event: GeneralEvent) {
-      const { name, ...rest } = event;
-      mixpanel.track(name, rest);
+      const { category, ...rest } = event;
+      mixpanel.track(category, rest);
     },
 
     async pageView(event: PageViewEvent) {

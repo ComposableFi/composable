@@ -58,6 +58,7 @@ const manager = {
     return shouldProcess;
   },
 };
+
 Object.freeze(manager);
 
 export { manager };

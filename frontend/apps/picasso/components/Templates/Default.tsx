@@ -1,13 +1,6 @@
-import * as React from "react";
-import { FC, ReactNode, useCallback, useEffect, useState } from "react";
-import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
-import Drawer from "@mui/material/Drawer";
-import IconButton from "@mui/material/IconButton";
+import { ExternalLinksDropdown } from "@/components/Molecules/ExternalLinksDropdown";
+import { pageView } from "@/utils/Analytics";
 import MenuIcon from "@mui/icons-material/Menu";
-import Toolbar from "@mui/material/Toolbar";
-import { NavBar } from "../Molecules";
 import {
   alpha,
   Breadcrumbs,
@@ -15,11 +8,18 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
-import { GlobalSettings } from "../Organisms/Settings/GlobalSettings";
-import { ExternalLinksDropdown } from "@/components/Molecules/ExternalLinksDropdown";
+import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import CssBaseline from "@mui/material/CssBaseline";
+import Drawer from "@mui/material/Drawer";
+import IconButton from "@mui/material/IconButton";
+import Toolbar from "@mui/material/Toolbar";
 import { useRouter } from "next/router";
-import { pageView } from "@/utils/Analytics/track";
+import * as React from "react";
+import { FC, ReactNode, useCallback, useEffect, useState } from "react";
+import { NavBar } from "../Molecules";
+import { GlobalSettings } from "../Organisms/Settings/GlobalSettings";
+import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 
 type DefaultLayoutProps = {
   breadcrumbs?: ReactNode[];
