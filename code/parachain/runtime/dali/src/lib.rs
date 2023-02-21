@@ -53,9 +53,9 @@ use common::{
 	},
 	rewards::StakingPot,
 	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
-	FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment,
-	PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
-	MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment, PoolId, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
@@ -1378,7 +1378,7 @@ construct_runtime!(
 		Vesting: vesting = 59,
 		BondedFinance: bonded_finance = 60,
 		DutchAuction: dutch_auction = 61,
-		
+
 		Liquidations: liquidations = 63,
 		Lending: lending = 64,
 		Pablo: pablo = 65,
