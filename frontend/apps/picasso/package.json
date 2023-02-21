@@ -42,6 +42,7 @@
     "bn.js": "^5.2.0",
     "coingecko": "*",
     "contentful": "^9.1.5",
+    "cookies-next": "^2.1.1",
     "endpoints": "*",
     "fp-ts": "^2.13.1",
     "graphql": "^16.5.0",

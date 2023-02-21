@@ -7,6 +7,10 @@ const config = {
   analytics: {
     mixpanelToken: process.env.NEXT_PUBLIC_MIXPANEL_TOKEN || "",
     gaToken: process.env.NEXT_PUBLIC_GA_TOKEN || "",
+    allowedDomain:
+      typeof location !== "undefined"
+        ? new URL(location.href).hostname
+        : "*.picasso.xyz",
   },
 } as const;
 
