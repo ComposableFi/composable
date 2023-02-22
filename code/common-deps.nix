@@ -3,32 +3,39 @@
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }: {
       _module.args.systemCommonRust = rec {
 
-        mkRustSrc = path: pkgs.lib.cleanSourceWith {
-          filter = pkgs.lib.cleanSourceFilter;
-          src = pkgs.lib.cleanSourceWith {
-            filter = let
-              isProto = name: type:
-                type == "regular" && pkgs.lib.strings.hasSuffix ".proto" name;
-              isJSON = name: type:
-                type == "regular" && pkgs.lib.strings.hasSuffix ".json" name;
-              isREADME = name: type:
-                type == "regular"
-                && pkgs.lib.strings.hasSuffix "README.md" name;
-              isDir = name: type: type == "directory";
-              isCargo = name: type:
-                type == "regular" && pkgs.lib.strings.hasSuffix ".toml" name
-                || type == "regular" && pkgs.lib.strings.hasSuffix ".lock" name;
-              isRust = name: type:
-                type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
-              customFilter = name: type:
-                ((isCargo name type) || (isRust name type) || (isDir name type)
-                  || (isREADME name type) || (isJSON name type)
-                  || (isProto name type));
-            in pkgs.nix-gitignore.gitignoreFilterPure customFilter
-            [ ../.gitignore ] path;
-            src = path;
+        mkRustSrc = path:
+          pkgs.lib.cleanSourceWith {
+            filter = pkgs.lib.cleanSourceFilter;
+            src = pkgs.lib.cleanSourceWith {
+              filter = let
+                isProto = name: type:
+                  type == "regular" && pkgs.lib.strings.hasSuffix ".proto" name;
+                isJSON = name: type:
+                  type == "regular" && pkgs.lib.strings.hasSuffix ".json" name;
+                isREADME = name: type:
+                  type == "regular"
+                  && pkgs.lib.strings.hasSuffix "README.md" name;
+                isDir = name: type: type == "directory";
+                isCargo = name: type:
+                  type == "regular" && pkgs.lib.strings.hasSuffix ".toml" name
+                  || type == "regular"
+                  && pkgs.lib.strings.hasSuffix ".lock" name;
+                isRust = name: type:
+                  type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
+                customFilter = name: type:
+                  builtins.any (fun: fun name type) [
+                    isCargo
+                    isRust
+                    isDir
+                    isREADME
+                    isJSON
+                    isProto
+                  ];
+              in pkgs.nix-gitignore.gitignoreFilterPure customFilter
+              [ ../.gitignore ] path;
+              src = path;
+            };
           };
-        };
 
         rustSrc = mkRustSrc ./.;
 
@@ -87,17 +94,6 @@
           (systemCommonRust.common-bench-attrs // { });
         common-test-deps = crane.nightly.buildDepsOnly
           (systemCommonRust.common-test-deps-attrs // { });
-
-        wasm-optimizer = crane.stable.buildPackage
-          (systemCommonRust.common-attrs // {
-            cargoCheckCommand = "true";
-            pname = "wasm-optimizer";
-            cargoArtifacts = common-deps;
-            cargoBuildCommand =
-              "cargo build --release --package wasm-optimizer";
-            version = "0.1.0";
-            # NOTE: we copy more then needed, but tht is simpler to setup, we depend on substrate for sure so
-          });
       };
 
     };

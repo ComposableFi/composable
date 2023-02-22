@@ -84,73 +84,10 @@ nvm use v16.15.0 && \
 npm install --global yarn
 ```
 
-**Setup Polkalaunch script**
-
-Run the following commands:
-
-Getting binaries
+**Run devnet**
 
 ```bash
-cd ~/ && git clone --depth 1 --branch v2.2.1 https://github.com/ComposableFi/composable.git && \
-cd composable
-```
-
-```bash
-wget -P ./target/release https://github.com/ComposableFi/composable/releases/download/v2.2.1/composable && \
-chmod u+x ./target/release/composable
-```
-
-```bash
-cd ~/
-wget -P ./polkadot/target/release https://github.com/paritytech/polkadot/releases/download/v0.9.18/polkadot && \
-chmod u+x ./polkadot/target/release/polkadot
-```
-
-Installing dependencies
-
-```bash
-# install project
-cd ~/composable/scripts/polkadot-launch
-yarn install 
-```
-
-To start your local composable chain
-
-```bash
-yarn composable
-```
-
-Once it’s done you would see something like this in the terminal
-
-
-```markdown
-ubuntu@oracle-test:~/composable/scripts/polkadot-launch$ yarn composable
-yarn run v1.22.18
-$ rm -rf /tmp/polkadot-launch && polkadot-launch composable.json
-
-🧹 Resolving parachain id...
-2022-05-23 10:11:09 Building chain spec    
-  ✓ Read parachain id for ../../target/release/composable: 2000
-2022-05-23 10:11:10 Building chain spec    
-
-🧹 Starting with a fresh authority set...
-  👤 Added Genesis Authority alice
-  👤  Added Genesis Authority bob
-  👤  Added Genesis Authority charlie
-  👤  Added Genesis Authority dave
-  👤  Added Genesis Authority ferdie
-```
-
-Followed by: 
-
-```markdown
-Starting a Collator for parachain 2000: 5Ec4AhPUwPeyTFyuhGuBbD224mY85LKLMSqSSo33JYWCazU4, Collator port : 31300 wsPort : 9996 rpcPort : undefined
-Added --charlie
-Added --force-authoring
-Added --chain=dali-dev
-Added  to parachain
-Added --execution=wasm to collator
-🚀 POLKADOT LAUNCH COMPLETE 🚀
+nix run .#devnet-picasso
 ```
 
 This means your node has started.

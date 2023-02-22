@@ -83,7 +83,7 @@ impl From<Error> for i32 {
 
 #[async_trait]
 impl<C, Block, Balance>
-	TransactionPaymentApiServer<<Block as BlockT>::Hash, RuntimeDispatchInfo<Balance>>
+	TransactionPaymentApiServer<<Block as BlockT>::Hash, RuntimeDispatchInfo<Balance, u64>>
 	for TransactionPayment<C, Block>
 where
 	Block: BlockT,
@@ -95,7 +95,7 @@ where
 		&self,
 		encoded_xt: Bytes,
 		at: Option<Block::Hash>,
-	) -> RpcResult<RuntimeDispatchInfo<Balance>> {
+	) -> RpcResult<RuntimeDispatchInfo<Balance, u64>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 
@@ -108,14 +108,20 @@ where
 				Some(format!("{:?}", e)),
 			))
 		})?;
-		api.query_info(&at, uxt, encoded_len).map_err(|e| {
-			CallError::Custom(ErrorObject::owned(
-				Error::RuntimeError.into(),
-				"Unable to query dispatch info.",
-				Some(e.to_string()),
-			))
-			.into()
-		})
+		api.query_info(&at, uxt, encoded_len)
+			.map_err(|e| {
+				CallError::Custom(ErrorObject::owned(
+					Error::RuntimeError.into(),
+					"Unable to query dispatch info.",
+					Some(e.to_string()),
+				))
+				.into()
+			})
+			.map(|x| RuntimeDispatchInfo {
+				weight: x.weight.ref_time(),
+				class: x.class,
+				partial_fee: x.partial_fee,
+			})
 	}
 
 	fn query_fee_details(

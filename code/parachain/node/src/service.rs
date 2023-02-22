@@ -14,9 +14,11 @@ use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 use polkadot_service::CollatorPair;
+use sc_consensus::ImportQueue;
 use sc_network_common::service::NetworkBlock;
 // Substrate Imports
 use crate::{
+	chain_spec,
 	client::{Client, FullBackend, FullClient},
 	rpc,
 	runtime::{
@@ -109,8 +111,10 @@ pub fn new_chain_ops(
 	let components = match config.chain_spec.id() {
 		#[cfg(feature = "composable")]
 		chain if chain.contains("composable") => {
-			let components =
-				new_partial::<composable_runtime::RuntimeApi, ComposableExecutor>(config)?;
+			let components = new_partial::<composable_runtime::RuntimeApi, ComposableExecutor>(
+				config,
+				Some(chain_spec::composable::DALEK_END_BLOCK),
+			)?;
 			(
 				Arc::new(Client::from(components.client)),
 				components.backend,
@@ -120,7 +124,8 @@ pub fn new_chain_ops(
 		},
 		#[cfg(feature = "dali")]
 		chain if chain.contains("dali") => {
-			let components = new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(config)?;
+			let components =
+				new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(config, Option::None)?;
 			(
 				Arc::new(Client::from(components.client)),
 				components.backend,
@@ -129,7 +134,10 @@ pub fn new_chain_ops(
 			)
 		},
 		chain if chain.contains("picasso") => {
-			let components = new_partial::<picasso_runtime::RuntimeApi, PicassoExecutor>(config)?;
+			let components = new_partial::<picasso_runtime::RuntimeApi, PicassoExecutor>(
+				config,
+				Some(chain_spec::picasso::DALEK_END_BLOCK),
+			)?;
 			(
 				Arc::new(Client::from(components.client)),
 				components.backend,
@@ -146,6 +154,8 @@ pub fn new_chain_ops(
 #[allow(clippy::type_complexity)]
 pub fn new_partial<RuntimeApi, Executor>(
 	config: &Configuration,
+	// The block number until ed25519-dalek should be used for signature verification.
+	dalek_end_block: Option<u32>,
 ) -> Result<
 	PartialComponents<
 		FullClient<RuntimeApi, Executor>,
@@ -156,7 +166,7 @@ pub fn new_partial<RuntimeApi, Executor>(
 		(
 			Option<Telemetry>,
 			Option<TelemetryWorkerHandle>,
-			ParachainBlockImport<Arc<FullClient<RuntimeApi, Executor>>>,
+			ParachainBlockImport<OpaqueBlock, Arc<FullClient<RuntimeApi, Executor>>, FullBackend>,
 		),
 	>,
 	sc_service::Error,
@@ -196,6 +206,13 @@ where
 		)?;
 	let client = Arc::new(client);
 
+	use sc_client_api::ExecutorProvider;
+	client.execution_extensions().set_extensions_factory(
+		sc_client_api::execution_extensions::ExtensionBeforeBlock::<
+			crate::client::Block,
+			sp_io::UseDalekExt,
+		>::new(dalek_end_block.unwrap_or(0)),
+	);
 	let telemetry_worker_handle = telemetry.as_ref().map(|(worker, _)| worker.handle());
 
 	let telemetry = telemetry.map(|(worker, telemetry)| {
@@ -212,6 +229,7 @@ where
 	);
 
 	let (import_queue, parachain_block_import) = parachain_build_import_queue(
+		backend.clone(),
 		client.clone(),
 		config,
 		telemetry.as_ref().map(|telemetry| telemetry.handle()),
@@ -239,33 +257,38 @@ pub async fn start_node(
 	collator_options: CollatorOptions,
 	id: ParaId,
 ) -> sc_service::error::Result<TaskManager> {
-	let task_manager =
-		match config.chain_spec.id() {
-			#[cfg(feature = "composable")]
-			chain if chain.contains("composable") => crate::service::start_node_impl::<
-				composable_runtime::RuntimeApi,
-				ComposableExecutor,
-			>(config, polkadot_config, collator_options, id)
+	let task_manager = match config.chain_spec.id() {
+		#[cfg(feature = "composable")]
+		chain if chain.contains("composable") =>
+			crate::service::start_node_impl::<composable_runtime::RuntimeApi, ComposableExecutor>(
+				config,
+				polkadot_config,
+				collator_options,
+				id,
+				Some(chain_spec::composable::DALEK_END_BLOCK),
+			)
 			.await?,
-			#[cfg(feature = "dali")]
-			chain if chain.contains("dali") =>
-				crate::service::start_node_impl::<dali_runtime::RuntimeApi, DaliExecutor>(
-					config,
-					polkadot_config,
-					collator_options,
-					id,
-				)
-				.await?,
-			chain if chain.contains("picasso") =>
-				crate::service::start_node_impl::<picasso_runtime::RuntimeApi, PicassoExecutor>(
-					config,
-					polkadot_config,
-					collator_options,
-					id,
-				)
-				.await?,
-			_ => panic!("Unknown chain_id: {}", config.chain_spec.id()),
-		};
+		#[cfg(feature = "dali")]
+		chain if chain.contains("dali") =>
+			crate::service::start_node_impl::<dali_runtime::RuntimeApi, DaliExecutor>(
+				config,
+				polkadot_config,
+				collator_options,
+				id,
+				Option::None,
+			)
+			.await?,
+		chain if chain.contains("picasso") =>
+			crate::service::start_node_impl::<picasso_runtime::RuntimeApi, PicassoExecutor>(
+				config,
+				polkadot_config,
+				collator_options,
+				id,
+				Some(chain_spec::picasso::DALEK_END_BLOCK),
+			)
+			.await?,
+		_ => panic!("Unknown chain_id: {}", config.chain_spec.id()),
+	};
 
 	Ok(task_manager)
 }
@@ -279,6 +302,8 @@ async fn start_node_impl<RuntimeApi, Executor>(
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
 	id: ParaId,
+	// The block number until ed25519-dalek should be used for signature verification.
+	dalek_end_block: Option<u32>,
 ) -> sc_service::error::Result<TaskManager>
 where
 	RuntimeApi:
@@ -296,7 +321,7 @@ where
 {
 	let parachain_config = prepare_node_config(parachain_config);
 
-	let params = new_partial::<RuntimeApi, Executor>(&parachain_config)?;
+	let params = new_partial::<RuntimeApi, Executor>(&parachain_config, dalek_end_block)?;
 
 	#[cfg(feature = "ocw")]
 	{
@@ -342,14 +367,14 @@ where
 	let validator = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
-	let import_queue = cumulus_client_service::SharedImportQueue::new(params.import_queue);
+	let import_queue_service = params.import_queue.service();
 	let (network, system_rpc_tx, tx_handler_controller, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
-			import_queue: import_queue.clone(),
+			import_queue: params.import_queue,
 			warp_sync: None,
 			block_announce_validator_builder: Some(Box::new(|_| {
 				Box::new(block_announce_validator)
@@ -474,7 +499,7 @@ where
 			task_manager: &mut task_manager,
 			spawner,
 			parachain_consensus,
-			import_queue,
+			import_queue: import_queue_service,
 			collator_key: collator_key.expect("Command line arguments do not allow this. qed"),
 			relay_chain_slot_duration,
 		};
@@ -488,7 +513,7 @@ where
 			para_id: id,
 			relay_chain_interface,
 			relay_chain_slot_duration,
-			import_queue,
+			import_queue: import_queue_service,
 		};
 
 		start_full_node(params)?;
@@ -502,6 +527,7 @@ where
 /// Build the import queue for the the parachain runtime.
 #[allow(clippy::type_complexity)]
 pub fn parachain_build_import_queue<RuntimeApi, Executor>(
+	backend: Arc<FullBackend>,
 	client: Arc<FullClient<RuntimeApi, Executor>>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
@@ -509,7 +535,7 @@ pub fn parachain_build_import_queue<RuntimeApi, Executor>(
 ) -> Result<
 	(
 		sc_consensus::DefaultImportQueue<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
-		ParachainBlockImport<Arc<FullClient<RuntimeApi, Executor>>>,
+		ParachainBlockImport<OpaqueBlock, Arc<FullClient<RuntimeApi, Executor>>, FullBackend>,
 	),
 	sc_service::Error,
 >
@@ -521,7 +547,7 @@ where
 	>,
 	Executor: NativeExecutionDispatch + 'static,
 {
-	let block_import = ParachainBlockImport::new(client.clone());
+	let block_import = ParachainBlockImport::new(client.clone(), backend);
 	let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 	cumulus_client_consensus_aura::import_queue::<
 		sp_consensus_aura::sr25519::AuthorityPair,
@@ -559,15 +585,20 @@ async fn build_relay_chain_interface(
 	task_manager: &mut TaskManager,
 	collator_options: CollatorOptions,
 ) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
-	match collator_options.relay_chain_rpc_url {
-		Some(relay_chain_url) =>
-			build_minimal_relay_chain_node(polkadot_config, task_manager, relay_chain_url).await,
-		None => build_inprocess_relay_chain(
+	if !collator_options.relay_chain_rpc_urls.is_empty() {
+		build_minimal_relay_chain_node(
+			polkadot_config,
+			task_manager,
+			collator_options.relay_chain_rpc_urls,
+		)
+		.await
+	} else {
+		build_inprocess_relay_chain(
 			polkadot_config,
 			parachain_config,
 			telemetry_worker_handle,
 			task_manager,
 			None,
-		),
+		)
 	}
 }

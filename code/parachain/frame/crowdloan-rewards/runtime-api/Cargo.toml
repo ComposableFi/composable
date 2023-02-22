@@ -14,7 +14,7 @@ codec = { default-features = false, features = [
   "derive",
 ], package = "parity-scale-codec", version = "3.0.0" }
 composable-support = { path = "../../composable-support", default-features = false }
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 
 
 # REVIEW: Does the runtime API need features?

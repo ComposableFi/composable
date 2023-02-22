@@ -7,7 +7,7 @@ use crate::{
 
 use cosmwasm_vm::{
 	cosmwasm_std::{
-		Addr, Attribute as CosmwasmEventAttribute, Binary, Event as CosmwasmEvent,
+		Addr, Attribute as CosmwasmEventAttribute, Binary, ContractResult, Event as CosmwasmEvent,
 		IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcEndpoint,
 		IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcTimeout,
 	},
@@ -116,6 +116,7 @@ impl<T: Config> Pallet<T> {
 
 		let msg = HandlerMessage::<AccountIdOf<T>>::Transfer {
 			channel_id,
+			memo: <_>::default(),
 			coin: PrefixedCoin {
 				// TODO: Amount from centauri should not have a From<u64> instance.
 				// https://app.clickup.com/t/20465559/XCVM-241?comment=1190198806
@@ -272,11 +273,10 @@ impl<T: Config> Router<T> {
 		relayer: AccountIdOf<T>,
 		contract: AccountIdOf<T>,
 		message: &M,
-	) -> Result<(), CosmwasmVMError<T>>
+	) -> Result<I::Output, CosmwasmVMError<T>>
 	where
-		for<'x> OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>: CosmwasmCallVMSingle<I>
-			//+ CosmwasmDynamicVM<I>
-			+ StargateCosmwasmCallVM,
+		for<'x> OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>:
+			CosmwasmCallVMSingle<I> + StargateCosmwasmCallVM,
 		for<'x> VmErrorOf<OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>>:
 			From<CosmwasmVMError<T>> + Into<CosmwasmVMError<T>>,
 		I: Input + AsFunctionName + AsEntryName,
@@ -286,26 +286,22 @@ impl<T: Config> Router<T> {
 		<Pallet<T>>::sub_level_dispatch(shared, relayer, contract, Default::default(), |mut vm| {
 			match vm.0.data().contract_runtime {
 				ContractBackend::CosmWasm { .. } =>
-					cosmwasm_call_serialize::<I, _, M>(&mut vm, message)
-						.map_err(Into::into)
-						.map(|_| ()),
-				ContractBackend::Pallet => T::PalletHook::execute(
-					&mut vm,
-					I::ENTRY,
-					serde_json::to_vec(&message)
-						.map_err(|e| {
-							<CosmwasmVMError<T>>::Ibc(format!(
-								"failed to serialize IBC message {:?}",
-								e
-							))
-						})?
-						.as_ref(),
-				)
-				.map(|_| ())
-				.map_err(Into::into),
+					cosmwasm_call_serialize::<I, _, M>(&mut vm, message).map_err(Into::into),
+				ContractBackend::Pallet => {
+					let msg = serde_json::to_vec(&message).map_err(|e| {
+						<CosmwasmVMError<T>>::Ibc(format!(
+							"failed to serialize IBC message {:?}",
+							e
+						))
+					})?;
+					let result = T::PalletHook::run(&mut vm, I::ENTRY, &msg).map_err(|x| {
+						CosmwasmVMError::<T>::Ibc(format!("failed to execute IBC callback {:?}", x))
+					})?;
+					serde_json::from_slice(&result)
+						.map_err(|x| CosmwasmVMError::<T>::Ibc(format!("{}", x)))
+				},
 			}
 		})
-		.map_err(Into::into)
 	}
 
 	/// executes IBC entrypoint on behalf of relayer
@@ -412,7 +408,7 @@ impl AsEntryName for IbcChannelOpenCall {
 }
 
 impl AsEntryName for IbcPacketReceiveCall {
-	const ENTRY: EntryPoint = IbcChannelOpen;
+	const ENTRY: EntryPoint = IbcPacketReceive;
 }
 
 impl AsEntryName for IbcChannelConnectCall {
@@ -458,7 +454,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let mut vm =
 			<Pallet<T>>::do_create_vm_shared(u64::MAX, InitialStorageMutability::ReadWrite);
 
-		Self::execute::<IbcChannelOpenCall, _>(&mut vm, address.clone(), address, &message)
+		let _ = Self::execute::<IbcChannelOpenCall, _>(&mut vm, address.clone(), address, &message)
 			.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
 		Ok(())
 	}
@@ -490,10 +486,18 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		let mut vm =
 			<Pallet<T>>::do_create_vm_shared(u64::MAX, InitialStorageMutability::ReadWrite);
 
-		Self::execute::<IbcChannelOpenCall, _>(&mut vm, address.clone(), address, &message)
-			.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?;
+		let result =
+			Self::execute::<IbcChannelOpenCall, _>(&mut vm, address.clone(), address, &message)
+				.map_err(|err| IbcError::implementation_specific(format!("{:?}", err)))?
+				.0;
 
-		Ok(version.clone())
+		match result {
+			ContractResult::Ok(Some(ok)) =>
+				Ok(IbcVersion::from_str(&ok.version).expect("infallible")),
+			ContractResult::Ok(None) => Ok(version.clone()),
+			ContractResult::Err(err) =>
+				Err(IbcError::implementation_specific(format!("{:?}", err))),
+		}
 	}
 
 	fn on_chan_open_ack(

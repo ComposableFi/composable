@@ -7,7 +7,9 @@ The related code audits are provided for context.
 
 [Halborn Audit - Main Pallets - 29.02.2021](./halborn/audit20210229-pallets-core.pdf)
    
-[Halborn Audit - Pablo - 30.07.2022](./halborn/audit20220730-pallets-pabloV2.pdf)
+[Halborn Audit - Pablo V2 - 30.07.2022](./halborn/audit20220730-pallets-pabloV2.pdf)
+
+[Halborn Audit - Democracy, Currency Factory & Crowdloan Rewards - 08.08.2022](./halborn/audit20220808-pallets-democracy-currencyFactory-crowdloanRewards.pdf)
 
 [Halborn Audit - Vesting - 23.08.2022](./halborn/audit20220823-pallet-vesting.pdf)
 

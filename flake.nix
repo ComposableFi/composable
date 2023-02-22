@@ -27,6 +27,7 @@
       url = "github:NixOS/bundlers";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-std.url = "github:chessai/nix-std";
   };
 
   outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
@@ -36,15 +37,13 @@
         # External `inputs` that the authors did not nixify themselves
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
-        ./inputs/centauri/centauri-codegen.nix
-        ./inputs/centauri/hyperspace.nix
+        ./inputs/centauri/flake-module.nix
         ./inputs/chevdor/subwasm.nix
-        ./inputs/composable/dali-subxt-client.nix
+        ./flake/subxt.nix
         ./inputs/CosmosContracts/juno.nix
         ./inputs/cosmos/cosmwasm.nix
         ./inputs/cosmos/gex.nix
         ./inputs/CosmWasm/wasmvm.nix
-        ./inputs/paritytech/polkadot-launch.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/statemine.nix
         ./inputs/paritytech/zombienet/flake-module.nix

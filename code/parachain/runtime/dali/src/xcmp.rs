@@ -1,6 +1,7 @@
 use super::*;
+use crate::fees::FinalPriceConverter;
 use common::{
-	fees::{PriceConverter, WeightToFeeConverter},
+	fees::WeightToFeeConverter,
 	governance::native::{EnsureRootOrHalfNativeTechnical, NativeCouncilCollective},
 	xcmp::*,
 };
@@ -138,7 +139,7 @@ type AssetsIdConverter =
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
-	PriceConverter<AssetsRegistry>,
+	FinalPriceConverter,
 	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
 	WeightToFeeConverter,
 >;
@@ -185,7 +186,7 @@ impl<
 
 pub type CaptureAssetTrap = CaptureDropAssets<
 	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
-	PriceConverter<AssetsRegistry>,
+	FinalPriceConverter,
 	AssetsIdConverter,
 >;
 

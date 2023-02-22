@@ -28,9 +28,6 @@ pub use types::*;
 
 /// Common types of statemint and statemine and dali and picasso and composable.
 mod types {
-	use codec::{Decode, Encode, MaxEncodedLen};
-	use core::fmt::Debug;
-	use scale_info::TypeInfo;
 	use sp_runtime::traits::{IdentifyAccount, Verify};
 
 	// todo move it into more shared directory so it can be shared with
@@ -88,17 +85,6 @@ mod types {
 	/// Opaque block
 	pub type OpaqueBlock = sp_runtime::generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
 
-	#[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, MaxEncodedLen, TypeInfo)]
-	pub enum MosaicRemoteAssetId {
-		EthereumTokenAddress([u8; 20]),
-	}
-
-	impl From<[u8; 20]> for MosaicRemoteAssetId {
-		fn from(x: [u8; 20]) -> Self {
-			MosaicRemoteAssetId::EthereumTokenAddress(x)
-		}
-	}
-
 	pub type NftInstanceId = u128;
 
 	pub type PositionId = u128;
@@ -109,7 +95,7 @@ mod types {
 /// Common constants of statemint and statemine
 mod constants {
 	use super::types::BlockNumber;
-	use frame_support::weights::{constants::WEIGHT_PER_SECOND, Weight};
+	use frame_support::weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight};
 	use sp_runtime::Perbill;
 
 	/// This determines the average expected block time that we are targeting. Blocks will be
@@ -134,10 +120,11 @@ mod constants {
 	/// Operational  extrinsics.
 	pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
-	/// We allow for 2 seconds of compute with a 6 second average block time.
-	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND
-		.saturating_div(2)
-		.set_proof_size(polkadot_primitives::v2::MAX_POV_SIZE as u64);
+	/// We allow for 0.5 seconds of compute with a 12 second average block time.
+	pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
+		WEIGHT_REF_TIME_PER_SECOND.saturating_div(2),
+		polkadot_primitives::v2::MAX_POV_SIZE as u64,
+	);
 }
 
 parameter_types! {

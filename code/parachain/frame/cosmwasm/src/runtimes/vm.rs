@@ -14,7 +14,6 @@ use cosmwasm_vm::{
 use cosmwasm_vm_wasmi::{
 	OwnedWasmiVM, WasmiContext, WasmiInput, WasmiModule, WasmiOutput, WasmiVMError,
 };
-use frame_support::storage::ChildTriePrefixIterator;
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use wasmi::{core::HostError, Instance, Memory};
 
@@ -176,7 +175,7 @@ pub struct CosmwasmVM<'a, T: Config> {
 	/// State shared across all contracts within a single transaction.
 	pub shared: &'a mut CosmwasmVMShared,
 	/// Iterator id's to corresponding keys. Keys are used to get the next key.
-	pub iterators: BTreeMap<u32, ChildTriePrefixIterator<(Vec<u8>, Vec<u8>)>>,
+	pub iterators: BTreeMap<u32, Vec<u8>>,
 	/// Actual contract runtime
 	pub contract_runtime: ContractBackend,
 }
@@ -503,6 +502,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 			VmGas::AddrCanonicalize => T::WeightInfo::addr_canonicalize().ref_time(),
 			VmGas::AddrHumanize => T::WeightInfo::addr_humanize().ref_time(),
 			VmGas::GetContractMeta => T::WeightInfo::contract_meta().ref_time(),
+			VmGas::SetContractMeta => T::WeightInfo::set_contract_meta().ref_time(),
 			VmGas::Transfer { nb_of_coins } => T::WeightInfo::transfer(nb_of_coins).ref_time(),
 			VmGas::ContinueExecute { nb_of_coins } =>
 				T::WeightInfo::continue_execute(nb_of_coins).ref_time(),

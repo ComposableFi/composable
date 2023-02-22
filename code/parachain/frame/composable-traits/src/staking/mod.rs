@@ -123,9 +123,6 @@ pub struct RewardPool<
 	/// rewards accumulated
 	pub rewards: BoundedBTreeMap<AssetId, Reward<Balance>, MaxRewards>,
 
-	/// Already claimed shares by stakers by unstaking
-	pub claimed_shares: Balance,
-
 	/// Pool will start adding rewards to the pool at this block number.
 	pub start_block: BlockNumber,
 

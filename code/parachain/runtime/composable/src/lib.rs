@@ -1,6 +1,6 @@
 #![cfg_attr(
 	not(test),
-	warn(
+	deny(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -10,18 +10,19 @@
 		// clippy::panic
 	)
 )]
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
 // Make the WASM binary available
-// TODO: XCMP/governance/.. setups here are outdated
 #[cfg(all(feature = "std", feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("COMPOSABLE_RUNTIME")));
 #[cfg(not(feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
+mod fees;
+mod prelude;
 mod weights;
 mod xcmp;
 
@@ -57,7 +58,7 @@ pub use frame_support::{
 		Randomness, StorageInfo,
 	},
 	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
+		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
 		IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
@@ -81,6 +82,7 @@ pub type EnsureRootOrHalfCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 2>,
 >;
+pub use crate::fees::WellKnownForeignToNativePriceConverter;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -115,7 +117,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 10_005,
+	spec_version: 10_009,
 	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -816,6 +818,8 @@ construct_runtime!(
 		RelayerXcm: pallet_xcm = 41,
 		CumulusXcm: cumulus_pallet_xcm = 42,
 		DmpQueue: cumulus_pallet_dmp_queue = 43,
+		XTokens: orml_xtokens = 44,
+		UnknownTokens: orml_unknown_tokens = 45,
 
 		Tokens: orml_tokens = 52,
 

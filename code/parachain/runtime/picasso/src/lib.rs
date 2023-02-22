@@ -23,6 +23,7 @@ pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("PICASSO_RUNT
 #[cfg(not(feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
+mod fees;
 pub mod governance;
 mod migrations;
 mod prelude;
@@ -30,13 +31,13 @@ mod weights;
 
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
+use fees::FinalPriceConverter;
 pub use xcmp::XcmConfig;
 
+pub use crate::fees::WellKnownForeignToNativePriceConverter;
+
 use common::{
-	fees::{
-		multi_existential_deposits, NativeExistentialDeposit, PriceConverter, WeightToFeeConverter,
-		WellKnownForeignToNativePriceConverter,
-	},
+	fees::{multi_existential_deposits, NativeExistentialDeposit, WeightToFeeConverter},
 	governance::native::*,
 	rewards::StakingPot,
 	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
@@ -50,6 +51,7 @@ use composable_traits::{
 	dex::{Amm, PriceAggregate},
 	xcm::assets::RemoteAssetRegistryInspect,
 };
+
 use governance::*;
 use prelude::*;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
@@ -77,7 +79,7 @@ pub use frame_support::{
 		Nothing, Randomness, StorageInfo,
 	},
 	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
+		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
 		ConstantMultiplier, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
@@ -127,7 +129,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 10_005,
+	spec_version: 10_009,
 	impl_version: 2,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -145,7 +147,7 @@ use orml_traits::{parameter_type_with_key, LockIdentifier};
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
 	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
-		multi_existential_deposits::<AssetsRegistry>(currency_id)
+		multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(currency_id)
 	};
 }
 
@@ -415,10 +417,8 @@ impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrD
 
 impl asset_tx_payment::Config for Runtime {
 	type Fungibles = Tokens;
-	type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
-		PriceConverter<AssetsRegistry>,
-		TransferToTreasuryOrDrop,
-	>;
+	type OnChargeAssetTransaction =
+		asset_tx_payment::FungiblesAdapter<FinalPriceConverter, TransferToTreasuryOrDrop>;
 
 	type UseUserConfiguration = ConstBool<true>;
 
@@ -432,7 +432,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type Lock = Assets;
 
-	type BalanceConverter = PriceConverter<AssetsRegistry>;
+	type BalanceConverter = FinalPriceConverter;
 }
 
 impl sudo::Config for Runtime {
@@ -946,10 +946,11 @@ impl_runtime_apis! {
 
 		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {
 			// Hardcoded assets
+			use common::fees::ForeignToNativePriceConverter;
 			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
 				// Add hardcoded ratio and ED for well known assets
 				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
-				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry>(&asset.id.into());
+				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
 				asset
 			}).collect::<Vec<_>>();
 
@@ -965,7 +966,7 @@ impl_runtime_apis! {
 					asset.foreign_id = foreign_asset.foreign_id.clone();
 					asset.ratio = foreign_asset.ratio;
 				} else {
-					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry>(&foreign_asset.id.into());
+					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&foreign_asset.id.into());
 					acc.push(foreign_asset.clone())
 				}
 				acc

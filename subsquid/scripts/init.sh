@@ -10,9 +10,6 @@ main() {
     export TRIGGER_REPROCESSING=false
   fi
 
-  msg="subsquid-processor image version is"
-  log INFO "${msg} $(yq '.services.processor.image'  docker-compose.yml)"
-
   log INFO "Running db migration"
   npx squid-typeorm-migration apply || log DIE "DB migration step failed"
 

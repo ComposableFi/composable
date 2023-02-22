@@ -6,7 +6,40 @@
 import '@polkadot/api-base/types/events';
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId } from '@composable/types/interfaces/common';
-import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsAccountProxyProxyType, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsLendingUpdateInput, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsXcmAssetsXcmAssetLocation, FrameSupportTokensMiscBalanceStatus, PalletCosmwasmContractInfo, PalletCosmwasmEntryPoint, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyVoteAccountVote, PalletDutchAuctionSellOrder, PalletIbcErrorsIbcError, PalletIbcEventsIbcEvent, PalletMosaicAmmSwapInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, PalletMultisigTimepoint, PalletStakingRewardsRewardAccumulationHookError, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@composable/types/interfaces/crowdloanRewards';
+import type {
+  CommonMosaicRemoteAssetId,
+  ComposableSupportEthereumAddress,
+  ComposableTraitsAccountProxyProxyType,
+  ComposableTraitsCallFilterCallFilterEntry,
+  ComposableTraitsLendingUpdateInput,
+  ComposableTraitsTimeTimeReleaseFunction,
+  ComposableTraitsXcmAssetsXcmAssetLocation,
+  FrameSupportTokensMiscBalanceStatus,
+  PalletCosmwasmContractInfo,
+  PalletCosmwasmEntryPoint,
+  PalletCrowdloanRewardsModelsRemoteAccount,
+  PalletDemocracyVoteAccountVote,
+  PalletDutchAuctionSellOrder,
+  PalletIbcErrorsIbcError,
+  PalletIbcEventsIbcEvent,
+  PalletMosaicAmmSwapInfo,
+  PalletMosaicDecayBudgetPenaltyDecayer,
+  PalletMosaicNetworkInfo,
+  PalletMultisigTimepoint,
+  PalletStakingRewardsRewardAccumulationHookError,
+  SpRuntimeDispatchError,
+  XcmV1MultiAsset,
+  XcmV1MultiLocation,
+  XcmV1MultiassetMultiAssets,
+  XcmV2Response,
+  XcmV2TraitsError,
+  XcmV2TraitsOutcome,
+  XcmV2Xcm,
+  XcmVersionedMultiAssets,
+  XcmVersionedMultiLocation,
+  SpWeightsWeightV2Weight,
+  FrameSupportDispatchDispatchInfo
+} from '@composable/types/interfaces/crowdloanRewards';
 import type { PalletDemocracyVoteThreshold } from '@composable/types/interfaces/democracy';
 import type { ComposableTraitsDexFee } from '@composable/types/interfaces/pablo';
 import type { ComposableTraitsVestingVestingSchedule, ComposableTraitsVestingVestingScheduleIdSet } from '@composable/types/interfaces/vesting';

@@ -4,6 +4,7 @@ import { LessThan } from "typeorm";
 import { HistoricalLockedValue, LockedSource, PabloPool } from "../../model";
 import { getRange } from "./common";
 import { PicassoTVL } from "./picassoOverviewStats";
+import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 export class PabloTVL {
@@ -23,8 +24,8 @@ export class PabloTVLInput {
   @Field(() => String, { nullable: false })
   range!: string;
 
-  @Field(() => String, { nullable: false })
-  poolId!: string;
+  @Field(() => String, { nullable: true })
+  poolId?: string;
 }
 
 @Resolver()
@@ -37,8 +38,8 @@ export class PabloTVLResolver {
 
     const manager = await this.tx();
 
-    const pool = await manager.getRepository(PabloPool).findOne({
-      where: { id: poolId.toString() },
+    const pools = await manager.getRepository(PabloPool).find({
+      ...(poolId ? { where: { id: poolId.toString() } } : {}),
       order: { timestamp: "DESC" },
       relations: {
         poolAssets: true,
@@ -46,8 +47,8 @@ export class PabloTVLResolver {
       }
     });
 
-    if (!pool) {
-      throw new Error(`Pool with id ${poolId} not found`);
+    if (!pools.length) {
+      throw new Error(`Pool/s not found`);
     }
 
     const timestamps = getRange(range);
@@ -59,42 +60,46 @@ export class PabloTVLResolver {
       };
     }, {});
 
-    for (const timestamp of timestamps) {
-      const time = timestamp.toISOString();
-
+    for (const pool of pools) {
       const { quoteAssetId, poolAssets } = pool;
       const baseAssetId = poolAssets.map(({ assetId }) => assetId).find(assetId => assetId !== quoteAssetId)!;
 
-      for (const assetId of [quoteAssetId, baseAssetId]) {
-        const historicalLockedValue = await manager.getRepository(HistoricalLockedValue).findOne({
-          where: {
-            timestamp: LessThan(new Date(time)),
-            source: LockedSource.Pablo,
-            assetId,
-            sourceEntityId: poolId
-          },
-          order: {
-            timestamp: "DESC"
-          }
-        });
+      for (const timestamp of timestamps) {
+        const time = timestamp.toISOString();
 
-        lockedValues[time] = {
-          ...(lockedValues[time] ?? {}),
-          [assetId]: (lockedValues?.[time]?.[assetId] || 0n) + (historicalLockedValue?.accumulatedAmount || 0n)
-        };
+        for (const assetId of [quoteAssetId, baseAssetId]) {
+          const historicalLockedValue = await manager.getRepository(HistoricalLockedValue).findOne({
+            where: {
+              timestamp: LessThan(new Date(time)),
+              source: LockedSource.Pablo,
+              assetId,
+              sourceEntityId: pool.id
+            },
+            order: {
+              timestamp: "DESC"
+            }
+          });
+
+          lockedValues[time] = {
+            ...(lockedValues[time] ?? {}),
+            [assetId]: (lockedValues?.[time]?.[assetId] || 0n) + (historicalLockedValue?.accumulatedAmount || 0n)
+          };
+        }
       }
     }
 
-    return Object.keys(lockedValues).map(date => {
+    const pabloTVL: Array<PabloTVL> = [];
+
+    for (const date of Object.keys(lockedValues)) {
       const tvl: PicassoTVL[] = [];
-      for (const assetId in lockedValues[date]) {
-        tvl.push({ assetId, amount: lockedValues[date][assetId] });
+      for (const assetId of Object.keys(lockedValues[date])) {
+        const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date(date).getTime());
+        tvl.push({ assetId, amount: lockedValues[date][assetId], price });
       }
 
-      return new PabloTVL({
-        date,
-        lockedValues: tvl
-      });
-    });
+      pabloTVL.push(new PabloTVL({ date, lockedValues: tvl }));
+    }
+
+    return pabloTVL;
   }
 }

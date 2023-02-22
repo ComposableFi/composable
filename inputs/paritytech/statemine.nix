@@ -2,16 +2,18 @@
   perSystem = { config, self', inputs', pkgs, lib, system, crane
     , systemCommonRust, ... }: {
       packages = {
-        statemine-node = pkgs.stdenv.mkDerivation (rec {
-          name = "cumulus-v${version}";
-          version = "0.9.33";
+        statemine-node = let version = "release-parachains-v9360";
+        in pkgs.stdenv.mkDerivation (rec {
+          name = "statemine-node";
+          inherit version;
           pname = "polkadot-parachain";
-          src = pkgs.fetchFromGitHub {
-            repo = "cumulus";
-            owner = "paritytech";
-            rev = "release-parachains-v9330";
-            hash = "sha256-ExCLnAoheU7auCUnqXN1vfrwTfv2pfF2+bq1Ktii7i0=";
+          src = pkgs.fetchgit {
+            url = "https://github.com/paritytech/cumulus.git";
+            rev = "refs/heads/${version}";
+            sha256 = "sha256-Ue3NkPiZxAKDvEIA5Q06lOS64eu6Mxp9iTDzPr1KYm4=";
+            fetchSubmodules = false;
           };
+
           doCheck = false;
           __noChroot = true;
           buildInputs = with pkgs; [ openssl zstd ];
@@ -26,7 +28,7 @@
           installPhase = ''
             mkdir --parents $out/bin && mv ./target/release/polkadot-parachain $out/bin
           '';
-          # substrate-attrs-node-with-attrs
+
           nativeBuildInputs = with pkgs;
             [ self'.packages.rust-nightly clang pkg-config ]
             ++ lib.optional stdenv.isDarwin (with darwin.apple_sdk.frameworks; [

@@ -21,6 +21,7 @@ COPY package-lock.json .
 RUN npm ci
 
 FROM node AS squid
+RUN apk --no-cache add postgresql-client
 WORKDIR /squid
 COPY --from=deps /squid/package.json .
 COPY --from=deps /squid/package-lock.json .
