@@ -2,10 +2,10 @@ import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { hexToU8a } from "@polkadot/util";
-import { RequestInfo, RequestInit } from "node-fetch";
 import BigNumber from "bignumber.js";
 import { EntityManager, LessThan, MoreThan } from "typeorm";
-import { divideBigInts, encodeAccount, getHistoricalCoingeckoPrice } from "./utils";
+import { isInstance } from "class-validator";
+import { divideBigInts, encodeAccount, fetch, fetchRetry } from "./utils";
 import {
   Account,
   Activity,
@@ -24,10 +24,7 @@ import {
   PabloSwap,
   StakingRewardsPool
 } from "./model";
-import { DAY_IN_MS } from "./constants";
-
-const fetch = (url: RequestInfo, init?: RequestInit) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(url, init));
+import { AssetId, AssetInfo, assetList, CoingeckoPrices, DAY_IN_MS } from "./constants";
 
 export async function getLatestPoolByPoolId(store: Store, poolId: bigint): Promise<PabloPool | undefined> {
   return store.get<PabloPool>(PabloPool, {
@@ -405,6 +402,11 @@ export async function getOrCreateHistoricalAssetPrice(
   assetId: string,
   timestamp: number
 ): Promise<number | undefined> {
+  const assetInfo = assetList.find(asset => asset.assetId === assetId);
+  if (!assetInfo) {
+    throw new Error(`Asset with id ${assetId} not found.`);
+  }
+
   const isRepository = ctx instanceof EntityManager;
 
   const time = new Date(timestamp);
@@ -426,16 +428,7 @@ export async function getOrCreateHistoricalAssetPrice(
   // If no price available, get it from the API and update DB
   if (price === undefined) {
     try {
-      // If asset is PICA, use swap price from KSM/PICA pool
-      const assetIdToQuery = assetId === "1" ? "4" : (assetId as "4" | "130");
-
-      price = await getHistoricalCoingeckoPrice(assetIdToQuery, date);
-
-      // If asset is PICA, use swap price
-      if (assetId === "1") {
-        const picaSpotPrice = await getSpotPrice(ctx, "1", "4", "2", timestamp);
-        price /= picaSpotPrice;
-      }
+      price = await getHistoricalCoingeckoPrice(ctx, assetInfo, date);
 
       // Create new price entry
       assetPrice = new HistoricalAssetPrice({
@@ -488,18 +481,16 @@ export async function getCurrentAssetPrices(
 ): Promise<Record<string, number> | undefined> {
   const isRepository = ctx instanceof EntityManager;
 
-  let currentPrices: Record<string, number> = {};
-
   const now = new Date();
   // Round time to the nearest minute
   const date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
 
-  const assetIds = ["1", "4", "130"];
+  const currentPrices: { [K in AssetId]?: number } = {};
 
   let missingPrices = false;
 
   // Check if all prices are in DB
-  for (const assetId of assetIds) {
+  for (const { assetId } of assetList.values()) {
     // Search for price in DB
     const where = {
       assetId,
@@ -520,27 +511,30 @@ export async function getCurrentAssetPrices(
 
   // If any price is missing, get all from Coingecko and update DB
   if (missingPrices) {
-    const endpoint = "https://api.coingecko.com/api/v3/simple/price?ids=tether%2Ckusama&vs_currencies=usd";
-    const res = await fetch(endpoint);
-    if (!res.ok) {
-      throw new Error("Failed to fetch prices from coingecko");
+    const queryIds = assetList
+      .map(({ coingeckoId }) => coingeckoId)
+      .filter(Boolean)
+      .join("%2C");
+    const endpoint = `https://api.coingecko.com/api/v3/simple/price?ids=${queryIds}&vs_currencies=usd`;
+    const res = await fetch<CoingeckoPrices>(endpoint);
+
+    for (const { assetId, coingeckoId, spotPriceBaseAsset } of assetList.values()) {
+      // For prices obtained from Coingecko, store them directly
+      if (coingeckoId) {
+        currentPrices[assetId] = res[coingeckoId].usd;
+      } else if (spotPriceBaseAsset) {
+        // For prices obtained from swap, get the spot price and store it
+        const spotPrice = await getSpotPrice(ctx, assetId, spotPriceBaseAsset.assetId, spotPriceBaseAsset.poolId);
+        currentPrices[assetId] = res[spotPriceBaseAsset.coingeckoId].usd / spotPrice;
+      }
     }
-    const json: { kusama: { usd: number }; tether: { usd: number } } = await res.json();
 
-    // Get PICA/KSM spot price
-    const picaKsmSpotPrice = await getSpotPrice(ctx, "1", "4", "2");
-
-    currentPrices = {
-      "1": json.kusama.usd / picaKsmSpotPrice, // Use PICA/KSM spot price to get PICA/USD price
-      "4": json.kusama.usd,
-      "130": json.tether.usd
-    };
-
-    for (const assetId of assetIds) {
+    // Store all current prices in DB
+    for (const [assetId, price] of Object.entries(currentPrices)) {
       const assetPrice = new HistoricalAssetPrice({
         id: randomUUID(),
         assetId,
-        price: currentPrices[assetId],
+        price,
         timestamp: date,
         currency: Currency.USD
       });
@@ -697,7 +691,11 @@ export async function getOrCreateStakingApr(
 
   const options = {
     where: {
-      assetId: lpToken.id
+      assetId: lpToken.id,
+      timestamp: LessThan(new Date(timestamp.getTime()))
+    },
+    sort: {
+      timestamp: "DESC"
     }
   };
   const rewardsPool = isRepository
@@ -729,4 +727,50 @@ export async function getOrCreateStakingApr(
   }
 
   return stakingApr;
+}
+
+export async function getHistoricalCoingeckoPrice(
+  ctx: EventHandlerContext<Store> | EntityManager,
+  assetInfo: AssetInfo,
+  date?: Date
+): Promise<number> {
+  let time = new Date();
+  if (date && isInstance(date, Date)) {
+    time = date;
+  } else if (date) {
+    time = new Date(date);
+  }
+
+  const month = time.getMonth() + 1;
+  const day = time.getDate();
+  const year = time.getFullYear();
+
+  const queryDate = `${day < 10 ? "0" : ""}${day}-${month < 10 ? "0" : ""}${month}-${year}`;
+
+  let coinId: string;
+  let spotPrice: number | undefined;
+  if (assetInfo.coingeckoId) {
+    coinId = assetInfo.coingeckoId;
+  } else if (assetInfo.spotPriceBaseAsset) {
+    coinId = assetInfo.spotPriceBaseAsset.coingeckoId;
+    spotPrice = await getSpotPrice(ctx, "1", "4", "2", time.getTime());
+  } else {
+    throw new Error("No Coingecko ID found");
+  }
+
+  const endpoint = `https://api.coingecko.com/api/v3/coins/${coinId}/history?date=${queryDate}&localization=en`;
+  try {
+    const res = await fetchRetry<{ market_data: { current_price: { usd: number } } }>(endpoint);
+    if (res) {
+      let price = res.market_data?.current_price?.usd;
+      if (spotPrice) {
+        price /= spotPrice;
+      }
+      return price;
+    }
+  } catch {
+    console.log("error fetching", endpoint);
+  }
+
+  throw new Error("Failed to fetch historical price");
 }

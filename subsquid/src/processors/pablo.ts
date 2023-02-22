@@ -237,8 +237,10 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext<Store,
 
   for (const [assetId, amount] of assetAmounts) {
     const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), ctx.block.timestamp);
-    const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
-    amounts.push(pabloAmount);
+    if (price) {
+      const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
+      amounts.push(pabloAmount);
+    }
   }
 
   const pabloLiquidityAdded = new PabloLiquidityAdded({
@@ -336,8 +338,10 @@ export async function processLiquidityRemovedEvent(ctx: EventHandlerContext<Stor
 
   for (const [assetId, amount] of assetAmounts) {
     const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), ctx.block.timestamp);
-    const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
-    amounts.push(pabloAmount);
+    if (price) {
+      const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
+      amounts.push(pabloAmount);
+    }
   }
 
   const pabloLiquidityRemoved = new PabloLiquidityRemoved({

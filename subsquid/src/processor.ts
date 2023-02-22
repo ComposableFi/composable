@@ -18,9 +18,9 @@ const chainConnectionString = chain();
 const archiveConnectionString = archive();
 
 processor.setBlockRange({
-  from: firstBlock()
+  // from: firstBlock()
   // Pool creation events
-  // from: 1407898
+  from: 1407898
   // Swap events
   // from: 1444112
 });
@@ -65,12 +65,6 @@ processor.addEventHandler("BondedFinance.OfferCancelled", processOfferCancelledE
 processor.addEventHandler("Vesting.VestingScheduleAdded", processVestingScheduleAddedEvent);
 
 processor.addEventHandler("Vesting.Claimed", processVestingClaimedEvent);
-
-processor.addEventHandler("*", async ctx => {
-  // console.log(ctx.event.name);
-  // console.log(ctx.event.extrinsic);
-  // console.log(ctx.event.extrinsic?.success);
-});
 
 // processor.addEventHandler(
 //   "StakingRewards.RewardPoolCreated",
