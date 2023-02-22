@@ -756,7 +756,7 @@ export async function getHistoricalCoingeckoPrice(
     spotPrice = await getSpotPrice(
       ctx,
       assetInfo.assetId,
-      assetInfo.spotPriceBaseAsset.coingeckoId,
+      assetInfo.spotPriceBaseAsset.assetId,
       assetInfo.spotPriceBaseAsset.poolId,
       time.getTime()
     );
