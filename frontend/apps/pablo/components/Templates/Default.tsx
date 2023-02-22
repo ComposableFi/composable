@@ -71,8 +71,8 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
         <AppBar
           position="fixed"
           sx={{
-            width: { md: `calc(100% - ${drawerWidth}px)` },
-            ml: { md: `${drawerWidth}px` },
+            width: { xs: "100%", md: `calc(100% - ${drawerWidth}px)` },
+            ml: { xs: 0, md: `${drawerWidth}px` },
             px: {
               xs: "0",
               md: theme.spacing(3),
@@ -167,7 +167,7 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
             [theme.breakpoints.down("sm")]: {
               padding: theme.spacing(3),
             },
-            width: { sm: `calc(100% - ${drawerWidth}px)` },
+            width: { xs: "100%", lg: `calc(100% - ${drawerWidth}px)` },
             marginTop: theme.spacing(20),
             overflow: "hidden",
           }}

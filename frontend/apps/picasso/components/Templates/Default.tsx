@@ -1,13 +1,5 @@
-import * as React from "react";
-import { FC, ReactNode, useState } from "react";
-import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
-import Drawer from "@mui/material/Drawer";
-import IconButton from "@mui/material/IconButton";
+import { ExternalLinksDropdown } from "@/components/Molecules/ExternalLinksDropdown";
 import MenuIcon from "@mui/icons-material/Menu";
-import Toolbar from "@mui/material/Toolbar";
-import { NavBar } from "../Molecules";
 import {
   alpha,
   Breadcrumbs,
@@ -15,9 +7,17 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
+import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import CssBaseline from "@mui/material/CssBaseline";
+import Drawer from "@mui/material/Drawer";
+import IconButton from "@mui/material/IconButton";
+import Toolbar from "@mui/material/Toolbar";
+import * as React from "react";
+import { FC, ReactNode, useState } from "react";
+import { NavBar } from "../Molecules";
 import { GlobalSettings } from "../Organisms/Settings/GlobalSettings";
-import { ExternalLinksDropdown } from "@/components/Molecules/ExternalLinksDropdown";
+import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 
 type DefaultLayoutProps = {
   breadcrumbs?: ReactNode[];
@@ -40,7 +40,10 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
       <AppBar
         position="fixed"
         sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
+          width: {
+            lg: `calc(100% - ${drawerWidth}px)`,
+            xs: "100%",
+          },
           ml: { md: `${drawerWidth}px` },
           px: {
             xs: "0",
@@ -127,7 +130,7 @@ export const DefaultLayout: FC<DefaultLayoutProps> = (props) => {
         component="main"
         sx={{
           p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          width: { xs: "100%", lg: `calc(100% - ${drawerWidth}px)` },
           background: theme.palette.primary.dark,
           display: "flex",
           flexDirection: "column",
