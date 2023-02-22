@@ -753,7 +753,13 @@ export async function getHistoricalCoingeckoPrice(
     coinId = assetInfo.coingeckoId;
   } else if (assetInfo.spotPriceBaseAsset) {
     coinId = assetInfo.spotPriceBaseAsset.coingeckoId;
-    spotPrice = await getSpotPrice(ctx, "1", "4", "2", time.getTime());
+    spotPrice = await getSpotPrice(
+      ctx,
+      assetInfo.assetId,
+      assetInfo.spotPriceBaseAsset.coingeckoId,
+      assetInfo.spotPriceBaseAsset.poolId,
+      time.getTime()
+    );
   } else {
     throw new Error("No Coingecko ID found");
   }
