@@ -1,6 +1,7 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { LessThan } from "typeorm";
+import { IsEnum } from "class-validator";
 import { HistoricalLockedValue, LockedSource } from "../../model";
 import { getRange } from "./common";
 import { PicassoTVL } from "./picassoOverviewStats";
@@ -22,9 +23,11 @@ export class TotalValueLocked {
 @InputType()
 export class TotalValueLockedInput {
   @Field(() => String, { nullable: false })
+  @IsEnum(["day", "week", "month", "year"])
   range!: string;
 
   @Field(() => String, { nullable: true })
+  @IsEnum(["Pablo", "StakingRewards"])
   source?: LockedSource;
 }
 
