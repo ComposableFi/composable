@@ -4,7 +4,7 @@ import { hexToU8a } from "@polkadot/util";
 import BigNumber from "bignumber.js";
 import { EntityManager, LessThan, MoreThan } from "typeorm";
 import { isInstance } from "class-validator";
-import { divideBigInts, encodeAccount, fetch, fetchRetry } from "./utils";
+import { divideBigInts, encodeAccount, fetch, fetchRetry, getAccountFromSignature } from "./utils";
 import {
   Account,
   Activity,
@@ -55,7 +55,7 @@ export async function getOrCreateAccount(
   eventItem: EventItem,
   accountId?: string
 ): Promise<Account | undefined> {
-  const accId = accountId || eventItem.event.extrinsic?.signature?.address;
+  const accId = accountId || getAccountFromSignature(eventItem.event.extrinsic?.signature);
 
   if (!accId) {
     // no-op
@@ -94,9 +94,7 @@ export async function saveEvent(
   eventItem: EventItem,
   eventType: EventType
 ): Promise<Event> {
-  const accountId: string = eventItem.event.extrinsic?.signature?.address.value
-    ? encodeAccount(hexToU8a(eventItem.event.extrinsic?.signature?.address.value))
-    : eventItem.event.extrinsic?.signature?.address;
+  const accountId = getAccountFromSignature(eventItem.event.extrinsic?.signature);
 
   // Create event
   const newEvent = new Event({

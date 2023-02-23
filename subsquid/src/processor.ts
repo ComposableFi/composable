@@ -13,15 +13,10 @@ import {
 import { processDepositEvent, processTransferEvent, processWithdrawEvent } from "./processors/balances";
 import { processVestingClaimedEvent, processVestingScheduleAddedEvent } from "./processors/vestingSchedule";
 import { processNewBondEvent, processNewOfferEvent, processOfferCancelledEvent } from "./processors/bondedFinance";
-import { PabloAddLiquidityCall, PabloBuyCall, PabloRemoveLiquidityCall, PabloSwapCall } from "./types/calls";
+import { PabloAddLiquidityCall, PabloRemoveLiquidityCall, PabloSwapCall } from "./types/calls";
 
 const provider = new WsProvider("wss://rpc.composablenodes.tech");
 const api = new ApiPromise({ provider });
-
-// const asd = api.findError("0x02000000");
-//{ error: '0x02000000', index: 6 } }
-
-// console.log({ asd });
 
 processor.run(new TypeormDatabase(), async (ctx: Context) => {
   for (const block of ctx.blocks) {
@@ -40,11 +35,11 @@ processor.run(new TypeormDatabase(), async (ctx: Context) => {
         } else if (item.name === "Pablo.PoolCreated") {
           await processPoolCreatedEvent(ctx, block, item);
         } else if (item.name === "Pablo.LiquidityAdded") {
-          // await processLiquidityAddedEvent(ctx, block, item);
+          await processLiquidityAddedEvent(ctx, block, item);
         } else if (item.name === "Pablo.LiquidityRemoved") {
-          // await processLiquidityRemovedEvent(ctx, block, item);
+          await processLiquidityRemovedEvent(ctx, block, item);
         } else if (item.name === "Pablo.Swapped") {
-          // await processSwappedEvent(ctx, block, item);
+          await processSwappedEvent(ctx, block, item);
         } else if (item.name === "BondedFinance.NewOffer") {
           await processNewOfferEvent(ctx, block, item);
         } else if (item.name === "BondedFinance.NewBond") {
@@ -52,21 +47,18 @@ processor.run(new TypeormDatabase(), async (ctx: Context) => {
         } else if (item.name === "BondedFinance.OfferCancelled") {
           await processOfferCancelledEvent(ctx, block, item);
         }
-      } else if (item.kind === "call") {
+      } else if (item.kind === "call" && !item.call.success) {
         if (item.name === "Pablo.add_liquidity") {
           const call = new PabloAddLiquidityCall(ctx, item.call);
           await processAddLiquidityCallError(ctx, block, item, call);
         } else if (item.name === "Pablo.remove_liquidity") {
           const call = new PabloRemoveLiquidityCall(ctx, item.call);
-          console.log(call.asV10005);
           await processRemoveLiquidityCallError(ctx, block, item, call);
         } else if (item.name === "Pablo.swap") {
           const call = new PabloSwapCall(ctx, item.call);
           await processSwapCallError(ctx, block, item, call);
         } else if (item.name === "Pablo.buy") {
-          const call = new PabloBuyCall(ctx, item.call);
-          console.log("PABLO BUY");
-          console.log(call.asV10005);
+          // TODO
         }
       }
     }

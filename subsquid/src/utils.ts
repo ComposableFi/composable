@@ -1,11 +1,23 @@
 import * as ss58 from "@subsquid/ss58";
 import BigNumber from "bignumber.js";
 import { RequestInfo, RequestInit } from "node-fetch";
-
-export const BOB = "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6";
+import { SubstrateExtrinsicSignature } from "@subsquid/substrate-processor";
+import { decodeAddress } from "@polkadot/util-crypto";
 
 export function encodeAccount(account: Uint8Array): string {
   return ss58.codec("picasso").encode(account);
+}
+
+export function getAccountFromSignature(signature: SubstrateExtrinsicSignature | undefined): string | undefined {
+  const signatureValue = signature?.address?.value || signature?.address;
+  try {
+    if (typeof signatureValue === "string") {
+      return encodeAccount(decodeAddress(signatureValue));
+    }
+    return "";
+  } catch {
+    return "";
+  }
 }
 
 // Get amount without decimals

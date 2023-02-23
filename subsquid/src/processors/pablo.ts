@@ -23,7 +23,7 @@ import {
   PabloTx
 } from "../model";
 import { Fee } from "../types/v10005";
-import { divideBigInts, encodeAccount } from "../utils";
+import { divideBigInts, encodeAccount, getAccountFromSignature } from "../utils";
 import {
   getLatestPoolByPoolId,
   getOrCreateHistoricalAssetPrice,
@@ -35,6 +35,8 @@ import {
   saveEvent
 } from "../dbHelper";
 import { PabloAddLiquidityCall, PabloBuyCall, PabloRemoveLiquidityCall, PabloSwapCall } from "../types/calls";
+import { SubstrateExtrinsicSignature } from "@subsquid/substrate-processor";
+import { decodeAddress } from "@polkadot/util-crypto";
 
 interface PoolCreatedEvent {
   owner: Uint8Array;
@@ -236,10 +238,8 @@ export async function processLiquidityAddedEvent(ctx: Context, block: Block, eve
 
   for (const [assetId, amount] of assetAmounts) {
     const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
-    if (price) {
-      const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
-      amounts.push(pabloAmount);
-    }
+    const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price: price || 0 });
+    amounts.push(pabloAmount);
   }
 
   const pabloLiquidityAdded = new PabloLiquidityAdded({
@@ -340,10 +340,8 @@ export async function processLiquidityRemovedEvent(ctx: Context, block: Block, e
 
   for (const [assetId, amount] of assetAmounts) {
     const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
-    if (price) {
-      const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
-      amounts.push(pabloAmount);
-    }
+    const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price: price || 0 });
+    amounts.push(pabloAmount);
   }
 
   const pabloLiquidityRemoved = new PabloLiquidityRemoved({
@@ -649,6 +647,8 @@ export async function processAddLiquidityCallError(
 ): Promise<void> {
   console.debug("processing AddLiquidityCall error", item.call.id);
 
+  const account = getAccountFromSignature(item.extrinsic.signature);
+
   const pabloAddLiquidityCall = getAddLiquidityCallError(call);
   const { poolId, assets } = pabloAddLiquidityCall;
 
@@ -667,7 +667,7 @@ export async function processAddLiquidityCallError(
 
   for (const [assetId, amount] of assets) {
     const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
-    const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
+    const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price: price || 0 });
     amounts.push(pabloAmount);
   }
 
@@ -685,7 +685,7 @@ export async function processAddLiquidityCallError(
   const pabloTransaction = new PabloTransaction({
     id: item.call.id,
     pool,
-    account: "TODO: ACCOUNT HERE",
+    account,
     timestamp: new Date(block.header.timestamp),
     blockId: block.header.hash,
     liquidityAdded: pabloLiquidityAdded,
@@ -708,6 +708,8 @@ export async function processRemoveLiquidityCallError(
 ): Promise<void> {
   console.debug("processing RemoveLiquidityCall error", item.call.id);
 
+  const account = getAccountFromSignature(item.extrinsic.signature);
+
   const pabloRemoveLiquidityCall = getRemoveLiquidityCallError(call);
   const { poolId, lpAmount, minReceive } = pabloRemoveLiquidityCall;
 
@@ -726,7 +728,7 @@ export async function processRemoveLiquidityCallError(
 
   for (const [assetId, amount] of minReceive) {
     const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
-    const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
+    const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price: price || 0 });
     amounts.push(pabloAmount);
   }
 
@@ -745,7 +747,7 @@ export async function processRemoveLiquidityCallError(
   const pabloTransaction = new PabloTransaction({
     id: item.call.id,
     pool,
-    account: "TODO: ACCOUNT HERE",
+    account,
     timestamp: new Date(block.header.timestamp),
     blockId: block.header.hash,
     liquidityRemoved: pabloLiquidityRemoved,
@@ -766,6 +768,10 @@ export async function processSwapCallError(
   item: CallItem,
   call: PabloSwapCall
 ): Promise<void> {
+  console.debug("processing SwapCall error", item.call.id);
+
+  const account = getAccountFromSignature(item.extrinsic.signature);
+
   const pabloSwapCall = getSwapCallError(call);
   const { poolId, baseAssetId, baseAmount, quoteAssetId, quoteAmount } = pabloSwapCall;
 
@@ -818,7 +824,7 @@ export async function processSwapCallError(
   const pabloTransaction = new PabloTransaction({
     id: item.call.id,
     pool,
-    account: "TODO: ACCOUNT HERE",
+    account,
     timestamp: new Date(block.header.timestamp),
     blockId: block.header.hash,
     swap: pabloSwap,
