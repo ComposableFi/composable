@@ -69,7 +69,7 @@ type PabloTransaction @entity {
   liquidityAdded: PabloLiquidityAdded
   liquidityRemoved: PabloLiquidityRemoved
   success: Boolean!
-  failReason: String
+  error: CallError
 }
 
 type PabloPoolAsset @entity {
@@ -200,9 +200,7 @@ enum LockedSource {
   VestingSchedules
 }
 
-type StakingPosition
-  @entity
-  @index(fields: ["fnftCollectionId", "fnftInstanceId"], unique: true) {
+type StakingPosition @entity @index(fields: ["fnftCollectionId", "fnftInstanceId"], unique: true) {
   id: ID!
   event: Event! @unique @index
   "Unique identifier for the position on chain"
@@ -310,9 +308,7 @@ type PabloLiquidityRemoved @entity {
   success: Boolean!
 }
 
-type CurrentLockedValue
-  @entity
-  @index(fields: ["assetId", "source"], unique: true) {
+type CurrentLockedValue @entity @index(fields: ["assetId", "source"], unique: true) {
   id: ID!
   assetId: String! @index
   event: Event! @index
@@ -356,6 +352,11 @@ type Event @entity {
   "Last updated block id"
   blockId: String!
   txHash: String
-  success: Boolean
-  failReason: String
+}
+
+type CallError @entity {
+  id: ID!
+  section: String!
+  name: String!
+  description: String
 }

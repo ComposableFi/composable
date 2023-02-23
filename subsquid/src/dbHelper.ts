@@ -1,13 +1,14 @@
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
-import { hexToU8a } from "@polkadot/util";
+import { ApiPromise, WsProvider } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { EntityManager, LessThan, MoreThan } from "typeorm";
 import { isInstance } from "class-validator";
-import { divideBigInts, encodeAccount, fetch, fetchRetry, getAccountFromSignature } from "./utils";
+import { divideBigInts, fetch, fetchRetry, getAccountFromSignature } from "./utils";
 import {
   Account,
   Activity,
+  CallError,
   Currency,
   Event,
   EventType,
@@ -25,6 +26,9 @@ import {
 } from "./model";
 import { Block, Context, EventItem } from "./processorTypes";
 import { AssetId, AssetInfo, assetList, CoingeckoPrices, DAY_IN_MS } from "./constants";
+
+const provider = new WsProvider("wss://rpc.composablenodes.tech");
+const api = new ApiPromise({ provider });
 
 export async function getLatestPoolByPoolId(store: Store, poolId: bigint): Promise<PabloPool | undefined> {
   return store.get<PabloPool>(PabloPool, {
@@ -104,9 +108,7 @@ export async function saveEvent(
     blockNumber: BigInt(block.header.height),
     timestamp: new Date(block.header.timestamp),
     blockId: block.header.hash,
-    txHash: eventItem.event.extrinsic?.hash,
-    success: eventItem.event.extrinsic?.success,
-    failReason: typeof eventItem.event.extrinsic?.error === "string" ? eventItem.event.extrinsic.error : undefined
+    txHash: eventItem.event.extrinsic?.hash
   });
 
   // Store event
@@ -803,4 +805,34 @@ export async function getHistoricalCoingeckoPrice(
   }
 
   throw new Error("Failed to fetch historical price");
+}
+
+export async function getOrCreateCallError(ctx: Context, err: any): Promise<CallError | null> {
+  try {
+    const value: { error: string; index: number } = err?.value;
+    const errorCode = parseInt(value.error.slice(0, 4), 16);
+    const res = api.findError(new Uint8Array([value.index, errorCode]));
+
+    let callError = await ctx.store.findOne<CallError>(CallError, {
+      where: {
+        section: res.section,
+        name: res.name
+      }
+    });
+
+    if (!callError) {
+      callError = new CallError({
+        id: `${res.section}-${res.name}`,
+        section: res.section,
+        name: res.name,
+        description: res.docs?.[0] || undefined
+      });
+
+      await ctx.store.save(callError);
+    }
+
+    return callError;
+  } catch {
+    return null;
+  }
 }

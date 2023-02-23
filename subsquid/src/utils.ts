@@ -8,7 +8,7 @@ export function encodeAccount(account: Uint8Array): string {
   return ss58.codec("picasso").encode(account);
 }
 
-export function getAccountFromSignature(signature: SubstrateExtrinsicSignature | undefined): string | undefined {
+export function getAccountFromSignature(signature: SubstrateExtrinsicSignature | undefined): string {
   const signatureValue = signature?.address?.value || signature?.address;
   try {
     if (typeof signatureValue === "string") {

@@ -51,6 +51,9 @@ export class PabloDailyTx {
   @Field(() => String, { nullable: true })
   failReason?: string;
 
+  @Field(() => String, { nullable: true })
+  failDescription?: string;
+
   @Field(() => String, { nullable: false })
   txType!: string;
 
@@ -108,7 +111,8 @@ export class PabloDailyTransactionsResolver {
           fee: true
         },
         liquidityAdded: true,
-        liquidityRemoved: true
+        liquidityRemoved: true,
+        error: true
       }
     });
 
@@ -116,7 +120,8 @@ export class PabloDailyTransactionsResolver {
       return new PabloDailyTx({
         timestamp: tx.timestamp.getTime(),
         txHash: tx.event?.txHash || "",
-        failReason: tx.failReason || undefined,
+        failReason: tx.error?.name || undefined,
+        failDescription: tx.error?.description || undefined,
         txType: tx.txType,
         success: tx.success,
         poolId: tx.pool.id,

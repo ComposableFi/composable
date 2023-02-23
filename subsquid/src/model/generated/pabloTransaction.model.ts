@@ -5,6 +5,7 @@ import {PabloTx} from "./_pabloTx"
 import {PabloSwap} from "./pabloSwap.model"
 import {PabloLiquidityAdded} from "./pabloLiquidityAdded.model"
 import {PabloLiquidityRemoved} from "./pabloLiquidityRemoved.model"
+import {CallError} from "./callError.model"
 
 @Entity_()
 export class PabloTransaction {
@@ -55,6 +56,7 @@ export class PabloTransaction {
     @Column_("bool", {nullable: false})
     success!: boolean
 
-    @Column_("text", {nullable: true})
-    failReason!: string | undefined | null
+    @Index_()
+    @ManyToOne_(() => CallError, {nullable: true})
+    error!: CallError | undefined | null
 }

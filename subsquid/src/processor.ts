@@ -1,5 +1,4 @@
 import { TypeormDatabase } from "@subsquid/typeorm-store";
-import { ApiPromise, WsProvider } from "@polkadot/api";
 import { processor, Context } from "./processorTypes";
 import {
   processLiquidityAddedEvent,
@@ -14,9 +13,6 @@ import { processDepositEvent, processTransferEvent, processWithdrawEvent } from 
 import { processVestingClaimedEvent, processVestingScheduleAddedEvent } from "./processors/vestingSchedule";
 import { processNewBondEvent, processNewOfferEvent, processOfferCancelledEvent } from "./processors/bondedFinance";
 import { PabloAddLiquidityCall, PabloRemoveLiquidityCall, PabloSwapCall } from "./types/calls";
-
-const provider = new WsProvider("wss://rpc.composablenodes.tech");
-const api = new ApiPromise({ provider });
 
 processor.run(new TypeormDatabase(), async (ctx: Context) => {
   for (const block of ctx.blocks) {

@@ -1,5 +1,5 @@
-module.exports = class Data1677149859257 {
-    name = 'Data1677149859257'
+module.exports = class Data1677168497766 {
+    name = 'Data1677168497766'
 
     async up(db) {
         await db.query(`CREATE TABLE "account" ("id" character varying NOT NULL, "event_id" text NOT NULL, "block_id" text NOT NULL, CONSTRAINT "PK_54115ee388cdb6d86bb4bf5b2ea" PRIMARY KEY ("id"))`)
@@ -19,7 +19,7 @@ module.exports = class Data1677149859257 {
         await db.query(`CREATE INDEX "IDX_c2c1e9fdda754a6bf7f664d7e0" ON "activity" ("event_id") `)
         await db.query(`CREATE INDEX "IDX_96c7c848eec1feba0bc66b4519" ON "activity" ("account_id") `)
         await db.query(`CREATE INDEX "IDX_1ed07d94b85322141135c8de3e" ON "activity" ("timestamp") `)
-        await db.query(`CREATE TABLE "event" ("id" character varying NOT NULL, "account_id" text, "event_type" character varying(43) NOT NULL, "block_number" numeric NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "block_id" text NOT NULL, "tx_hash" text, "success" boolean, "fail_reason" text, CONSTRAINT "PK_30c2f3bbaf6d34a55f8ae6e4614" PRIMARY KEY ("id"))`)
+        await db.query(`CREATE TABLE "event" ("id" character varying NOT NULL, "account_id" text, "event_type" character varying(43) NOT NULL, "block_number" numeric NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "block_id" text NOT NULL, "tx_hash" text, CONSTRAINT "PK_30c2f3bbaf6d34a55f8ae6e4614" PRIMARY KEY ("id"))`)
         await db.query(`CREATE INDEX "IDX_77b76886d64fa0304db94dd4d9" ON "event" ("account_id") `)
         await db.query(`CREATE INDEX "IDX_a8a7fbbbb0d8305cd81eda6ac8" ON "event" ("block_number") `)
         await db.query(`CREATE INDEX "IDX_2c15918ff289396205521c5f3c" ON "event" ("timestamp") `)
@@ -44,7 +44,8 @@ module.exports = class Data1677149859257 {
         await db.query(`CREATE INDEX "IDX_99cd30a53612c12da96ba255f9" ON "pablo_liquidity_removed" ("event_id") `)
         await db.query(`CREATE INDEX "IDX_cc8c8c14f2ee44a3c73e18fd9b" ON "pablo_liquidity_removed" ("pool_id") `)
         await db.query(`CREATE INDEX "IDX_b823763f594c476d25eb851bb6" ON "pablo_liquidity_removed" ("timestamp") `)
-        await db.query(`CREATE TABLE "pablo_transaction" ("id" character varying NOT NULL, "account" text NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "block_id" text NOT NULL, "tx_type" character varying(16) NOT NULL, "success" boolean NOT NULL, "fail_reason" text, "pool_id" character varying, "event_id" character varying, "swap_id" character varying, "liquidity_added_id" character varying, "liquidity_removed_id" character varying, CONSTRAINT "PK_8b040ecc6da14a71ef547ae2ae6" PRIMARY KEY ("id"))`)
+        await db.query(`CREATE TABLE "call_error" ("id" character varying NOT NULL, "section" text NOT NULL, "name" text NOT NULL, "description" text, CONSTRAINT "PK_affc71deffe966f273665110823" PRIMARY KEY ("id"))`)
+        await db.query(`CREATE TABLE "pablo_transaction" ("id" character varying NOT NULL, "account" text NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "block_id" text NOT NULL, "tx_type" character varying(16) NOT NULL, "success" boolean NOT NULL, "pool_id" character varying, "event_id" character varying, "swap_id" character varying, "liquidity_added_id" character varying, "liquidity_removed_id" character varying, "error_id" character varying, CONSTRAINT "PK_8b040ecc6da14a71ef547ae2ae6" PRIMARY KEY ("id"))`)
         await db.query(`CREATE INDEX "IDX_969a927080f5b6c81b79b40cd8" ON "pablo_transaction" ("pool_id") `)
         await db.query(`CREATE INDEX "IDX_126f5e07c560f23355c16a3f27" ON "pablo_transaction" ("account") `)
         await db.query(`CREATE INDEX "IDX_521c4ea4ac07c98f74d2a70423" ON "pablo_transaction" ("timestamp") `)
@@ -52,6 +53,7 @@ module.exports = class Data1677149859257 {
         await db.query(`CREATE INDEX "IDX_efc2b9a858fe9c1b2fce95b744" ON "pablo_transaction" ("swap_id") `)
         await db.query(`CREATE INDEX "IDX_a75c0addf49ff4854cd1d391ac" ON "pablo_transaction" ("liquidity_added_id") `)
         await db.query(`CREATE INDEX "IDX_8581db5407f7bcc89bbb90769f" ON "pablo_transaction" ("liquidity_removed_id") `)
+        await db.query(`CREATE INDEX "IDX_4701e87e9934c82b413511dc0b" ON "pablo_transaction" ("error_id") `)
         await db.query(`CREATE TABLE "bonded_finance_bond_offer" ("id" character varying NOT NULL, "event_id" text NOT NULL, "offer_id" text NOT NULL, "total_purchased" numeric NOT NULL, "beneficiary" text NOT NULL, "cancelled" boolean NOT NULL, "block_id" text NOT NULL, CONSTRAINT "PK_1a7a97e3d57a4ac842dc2ef48ba" PRIMARY KEY ("id"))`)
         await db.query(`CREATE INDEX "IDX_932377f288f9b8ae200c9ed313" ON "bonded_finance_bond_offer" ("event_id") `)
         await db.query(`CREATE INDEX "IDX_733dd0609e90b935c61877da93" ON "bonded_finance_bond_offer" ("offer_id") `)
@@ -113,6 +115,7 @@ module.exports = class Data1677149859257 {
         await db.query(`ALTER TABLE "pablo_transaction" ADD CONSTRAINT "FK_efc2b9a858fe9c1b2fce95b7440" FOREIGN KEY ("swap_id") REFERENCES "pablo_swap"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
         await db.query(`ALTER TABLE "pablo_transaction" ADD CONSTRAINT "FK_a75c0addf49ff4854cd1d391ac7" FOREIGN KEY ("liquidity_added_id") REFERENCES "pablo_liquidity_added"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
         await db.query(`ALTER TABLE "pablo_transaction" ADD CONSTRAINT "FK_8581db5407f7bcc89bbb90769f9" FOREIGN KEY ("liquidity_removed_id") REFERENCES "pablo_liquidity_removed"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
+        await db.query(`ALTER TABLE "pablo_transaction" ADD CONSTRAINT "FK_4701e87e9934c82b413511dc0bc" FOREIGN KEY ("error_id") REFERENCES "call_error"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
         await db.query(`ALTER TABLE "staking_position" ADD CONSTRAINT "FK_3e2e1b465d89dbb2736e70fe5f1" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
         await db.query(`ALTER TABLE "historical_locked_value" ADD CONSTRAINT "FK_e16f52796ccae0d99cb8d6e4040" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
         await db.query(`ALTER TABLE "historical_volume" ADD CONSTRAINT "FK_eceb392fe7bbe48cb21e1d8b5a5" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
@@ -166,6 +169,7 @@ module.exports = class Data1677149859257 {
         await db.query(`DROP INDEX "public"."IDX_99cd30a53612c12da96ba255f9"`)
         await db.query(`DROP INDEX "public"."IDX_cc8c8c14f2ee44a3c73e18fd9b"`)
         await db.query(`DROP INDEX "public"."IDX_b823763f594c476d25eb851bb6"`)
+        await db.query(`DROP TABLE "call_error"`)
         await db.query(`DROP TABLE "pablo_transaction"`)
         await db.query(`DROP INDEX "public"."IDX_969a927080f5b6c81b79b40cd8"`)
         await db.query(`DROP INDEX "public"."IDX_126f5e07c560f23355c16a3f27"`)
@@ -174,6 +178,7 @@ module.exports = class Data1677149859257 {
         await db.query(`DROP INDEX "public"."IDX_efc2b9a858fe9c1b2fce95b744"`)
         await db.query(`DROP INDEX "public"."IDX_a75c0addf49ff4854cd1d391ac"`)
         await db.query(`DROP INDEX "public"."IDX_8581db5407f7bcc89bbb90769f"`)
+        await db.query(`DROP INDEX "public"."IDX_4701e87e9934c82b413511dc0b"`)
         await db.query(`DROP TABLE "bonded_finance_bond_offer"`)
         await db.query(`DROP INDEX "public"."IDX_932377f288f9b8ae200c9ed313"`)
         await db.query(`DROP INDEX "public"."IDX_733dd0609e90b935c61877da93"`)
@@ -235,6 +240,7 @@ module.exports = class Data1677149859257 {
         await db.query(`ALTER TABLE "pablo_transaction" DROP CONSTRAINT "FK_efc2b9a858fe9c1b2fce95b7440"`)
         await db.query(`ALTER TABLE "pablo_transaction" DROP CONSTRAINT "FK_a75c0addf49ff4854cd1d391ac7"`)
         await db.query(`ALTER TABLE "pablo_transaction" DROP CONSTRAINT "FK_8581db5407f7bcc89bbb90769f9"`)
+        await db.query(`ALTER TABLE "pablo_transaction" DROP CONSTRAINT "FK_4701e87e9934c82b413511dc0bc"`)
         await db.query(`ALTER TABLE "staking_position" DROP CONSTRAINT "FK_3e2e1b465d89dbb2736e70fe5f1"`)
         await db.query(`ALTER TABLE "historical_locked_value" DROP CONSTRAINT "FK_e16f52796ccae0d99cb8d6e4040"`)
         await db.query(`ALTER TABLE "historical_volume" DROP CONSTRAINT "FK_eceb392fe7bbe48cb21e1d8b5a5"`)

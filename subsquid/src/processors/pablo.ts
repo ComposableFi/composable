@@ -32,11 +32,10 @@ import {
   getOrCreatePabloLpToken,
   saveAccountAndEvent,
   saveActivity,
-  saveEvent
+  saveEvent,
+  getOrCreateCallError
 } from "../dbHelper";
-import { PabloAddLiquidityCall, PabloBuyCall, PabloRemoveLiquidityCall, PabloSwapCall } from "../types/calls";
-import { SubstrateExtrinsicSignature } from "@subsquid/substrate-processor";
-import { decodeAddress } from "@polkadot/util-crypto";
+import { PabloAddLiquidityCall, PabloRemoveLiquidityCall, PabloSwapCall } from "../types/calls";
 
 interface PoolCreatedEvent {
   owner: Uint8Array;
@@ -264,7 +263,7 @@ export async function processLiquidityAddedEvent(ctx: Context, block: Block, eve
     liquidityAdded: pabloLiquidityAdded,
     txType: PabloTx.ADD_LIQUIDITY,
     success: true,
-    failReason: null
+    error: null
   });
 
   await ctx.store.save(pabloTransaction);
@@ -366,7 +365,7 @@ export async function processLiquidityRemovedEvent(ctx: Context, block: Block, e
     liquidityRemoved: pabloLiquidityRemoved,
     txType: PabloTx.REMOVE_LIQUIDITY,
     success: true,
-    failReason: null
+    error: null
   });
 
   await ctx.store.save(pabloTransaction);
@@ -513,7 +512,7 @@ export async function processSwappedEvent(ctx: Context, block: Block, eventItem:
     swap: pabloSwap,
     txType: PabloTx.SWAP,
     success: true,
-    failReason: null
+    error: null
   });
 
   await ctx.store.save(pabloTransaction);
@@ -648,6 +647,7 @@ export async function processAddLiquidityCallError(
   console.debug("processing AddLiquidityCall error", item.call.id);
 
   const account = getAccountFromSignature(item.extrinsic.signature);
+  const errorCall = await getOrCreateCallError(ctx, item.call.error);
 
   const pabloAddLiquidityCall = getAddLiquidityCallError(call);
   const { poolId, assets } = pabloAddLiquidityCall;
@@ -691,7 +691,7 @@ export async function processAddLiquidityCallError(
     liquidityAdded: pabloLiquidityAdded,
     txType: PabloTx.ADD_LIQUIDITY,
     success: false,
-    failReason: "TODO: FAIL REASON HERE"
+    error: errorCall
   });
 
   await ctx.store.save(pabloTransaction);
@@ -709,6 +709,7 @@ export async function processRemoveLiquidityCallError(
   console.debug("processing RemoveLiquidityCall error", item.call.id);
 
   const account = getAccountFromSignature(item.extrinsic.signature);
+  const errorCall = await getOrCreateCallError(ctx, item.call.error);
 
   const pabloRemoveLiquidityCall = getRemoveLiquidityCallError(call);
   const { poolId, lpAmount, minReceive } = pabloRemoveLiquidityCall;
@@ -753,7 +754,7 @@ export async function processRemoveLiquidityCallError(
     liquidityRemoved: pabloLiquidityRemoved,
     txType: PabloTx.REMOVE_LIQUIDITY,
     success: false,
-    failReason: "TODO: FAIL REASON HERE"
+    error: errorCall
   });
 
   await ctx.store.save(pabloTransaction);
@@ -771,6 +772,7 @@ export async function processSwapCallError(
   console.debug("processing SwapCall error", item.call.id);
 
   const account = getAccountFromSignature(item.extrinsic.signature);
+  const errorCall = await getOrCreateCallError(ctx, item.call.error);
 
   const pabloSwapCall = getSwapCallError(call);
   const { poolId, baseAssetId, baseAmount, quoteAssetId, quoteAmount } = pabloSwapCall;
@@ -830,7 +832,7 @@ export async function processSwapCallError(
     swap: pabloSwap,
     txType: PabloTx.SWAP,
     success: false,
-    failReason: "TODO: FAIL REASON HERE"
+    error: errorCall
   });
 
   await ctx.store.save(pabloTransaction);
