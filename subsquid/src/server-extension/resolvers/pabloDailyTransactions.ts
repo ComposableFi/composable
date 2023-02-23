@@ -1,6 +1,7 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
+import { IsString } from "class-validator";
 import { PabloTransaction } from "../../model";
 import { DAY_IN_MS } from "../../constants";
 import { PoolAmount } from "./pabloDaily";
@@ -77,6 +78,7 @@ export class PabloDailyTransactions {
 @InputType()
 export class PabloDailyTransactionsInput {
   @Field(() => String, { nullable: false })
+  @IsString()
   address!: string;
 }
 

@@ -9,11 +9,12 @@ import {
   ResolverInterface,
   Root
 } from "type-graphql";
+import { IsNumber, IsPositive, IsString } from "class-validator";
 import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
-import { HistoricalPabloFeeApr, HistoricalStakingApr, PabloFee, PabloPool, PabloSwap, PabloTransaction, RewardRatePeriod, StakingRewardsPool } from "../../model";
+import { HistoricalStakingApr, PabloFee, PabloPool, PabloSwap, PabloTransaction } from "../../model";
 import { DAY_IN_MS } from "../../constants";
-import { getOrCreateHistoricalAssetPrice, getNormalizedPoolTVL, getOrCreateFeeApr } from "../../dbHelper";
+import { getOrCreateHistoricalAssetPrice, getOrCreateFeeApr } from "../../dbHelper";
 
 @ObjectType()
 export class PoolAmount {
@@ -65,9 +66,12 @@ export class PabloDaily {
 @InputType()
 export class PabloDailyInput {
   @Field(() => String, { nullable: false })
+  @IsString()
   poolId!: string;
 
   @Field(() => Number, { nullable: true })
+  @IsNumber()
+  @IsPositive()
   swapFee?: number;
 }
 
