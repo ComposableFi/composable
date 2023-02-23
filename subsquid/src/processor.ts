@@ -18,11 +18,7 @@ const chainConnectionString = chain();
 const archiveConnectionString = archive();
 
 processor.setBlockRange({
-  // from: firstBlock()
-  // Pool creation events
-  from: 1407898
-  // Swap events
-  // from: 1444112
+  from: firstBlock()
 });
 
 console.log(`Chain ${chainConnectionString}`);
