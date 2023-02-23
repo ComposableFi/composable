@@ -63,11 +63,13 @@ type PabloTransaction @entity {
   timestamp: DateTime! @index
   "Last updated block id"
   blockId: String!
-  event: Event! @index
+  event: Event @index
   txType: PabloTx!
   swap: PabloSwap
   liquidityAdded: PabloLiquidityAdded
   liquidityRemoved: PabloLiquidityRemoved
+  success: Boolean!
+  failReason: String
 }
 
 type PabloPoolAsset @entity {
@@ -267,7 +269,7 @@ type HistoricalStakingApr @entity {
 
 type PabloSwap @entity {
   id: ID!
-  event: Event!
+  event: Event
   pool: PabloPool! @index
   baseAssetId: String! @index
   baseAssetAmount: BigInt!
@@ -278,6 +280,7 @@ type PabloSwap @entity {
   timestamp: DateTime! @index
   "Last updated block id"
   blockId: String!
+  success: Boolean!
 }
 
 type PabloAmount {
@@ -288,20 +291,23 @@ type PabloAmount {
 
 type PabloLiquidityAdded @entity {
   id: ID!
-  event: Event!
+  event: Event
   pool: PabloPool! @index
   timestamp: DateTime! @index
   blockId: String!
   amounts: [PabloAmount!]!
+  success: Boolean!
 }
 
 type PabloLiquidityRemoved @entity {
   id: ID!
-  event: Event!
+  event: Event
   pool: PabloPool! @index
   timestamp: DateTime! @index
   blockId: String!
+  lpAmount: BigInt
   amounts: [PabloAmount!]!
+  success: Boolean!
 }
 
 type CurrentLockedValue

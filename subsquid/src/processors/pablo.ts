@@ -5,7 +5,7 @@ import {
   PabloPoolCreatedEvent,
   PabloSwappedEvent
 } from "../types/events";
-import { Context, EventItem, Block } from "../processorTypes";
+import { Context, EventItem, Block, CallItem } from "../processorTypes";
 import {
   EventType,
   HistoricalLockedValue,
@@ -34,6 +34,7 @@ import {
   saveActivity,
   saveEvent
 } from "../dbHelper";
+import { PabloAddLiquidityCall, PabloBuyCall, PabloRemoveLiquidityCall, PabloSwapCall } from "../types/calls";
 
 interface PoolCreatedEvent {
   owner: Uint8Array;
@@ -247,7 +248,8 @@ export async function processLiquidityAddedEvent(ctx: Context, block: Block, eve
     pool,
     timestamp: new Date(block.header.timestamp),
     blockId: block.header.hash,
-    amounts
+    amounts,
+    success: true
   });
 
   await ctx.store.save(pabloLiquidityAdded);
@@ -260,7 +262,9 @@ export async function processLiquidityAddedEvent(ctx: Context, block: Block, eve
     blockId: block.header.hash,
     event,
     liquidityAdded: pabloLiquidityAdded,
-    txType: PabloTx.ADD_LIQUIDITY
+    txType: PabloTx.ADD_LIQUIDITY,
+    success: true,
+    failReason: null
   });
 
   await ctx.store.save(pabloTransaction);
@@ -348,7 +352,8 @@ export async function processLiquidityRemovedEvent(ctx: Context, block: Block, e
     pool,
     timestamp: new Date(block.header.timestamp),
     blockId: block.header.hash,
-    amounts
+    amounts,
+    success: true
   });
 
   await ctx.store.save(pabloLiquidityRemoved);
@@ -361,7 +366,9 @@ export async function processLiquidityRemovedEvent(ctx: Context, block: Block, e
     blockId: block.header.hash,
     event,
     liquidityRemoved: pabloLiquidityRemoved,
-    txType: PabloTx.REMOVE_LIQUIDITY
+    txType: PabloTx.REMOVE_LIQUIDITY,
+    success: true,
+    failReason: null
   });
 
   await ctx.store.save(pabloTransaction);
@@ -492,7 +499,8 @@ export async function processSwappedEvent(ctx: Context, block: Block, eventItem:
     spotPrice: spotPrice.toString(),
     fee: pabloFee,
     timestamp: new Date(block.header.timestamp),
-    blockId: block.header.hash
+    blockId: block.header.hash,
+    success: true
   });
 
   await ctx.store.save(pabloSwap);
@@ -505,7 +513,9 @@ export async function processSwappedEvent(ctx: Context, block: Block, eventItem:
     blockId: block.header.hash,
     event,
     swap: pabloSwap,
-    txType: PabloTx.SWAP
+    txType: PabloTx.SWAP,
+    success: true,
+    failReason: null
   });
 
   await ctx.store.save(pabloTransaction);
@@ -573,4 +583,249 @@ export async function processSwappedEvent(ctx: Context, block: Block, eventItem:
 
   // Calculate and update APR
   await getOrCreateFeeApr(ctx, pool, undefined, new Date(block.header.timestamp), block, event);
+}
+
+interface AddLiquidityCallError {
+  poolId: bigint;
+  assets: Array<[bigint, bigint]>;
+  minMintAmount: bigint;
+  keepAlive: boolean;
+}
+
+interface RemoveLiquidityCallError {
+  poolId: bigint;
+  lpAmount: bigint;
+  minReceive: Array<[bigint, bigint]>;
+}
+
+interface SwapCallError {
+  baseAssetId: string;
+  baseAmount: bigint;
+  quoteAssetId: string;
+  quoteAmount: bigint;
+  poolId: bigint;
+  keepAlive: boolean;
+}
+
+function getAddLiquidityCallError(call: PabloAddLiquidityCall): AddLiquidityCallError {
+  const { poolId, assets, minMintAmount, keepAlive } = call.asV10005;
+  return {
+    poolId,
+    assets,
+    minMintAmount,
+    keepAlive
+  };
+}
+
+function getRemoveLiquidityCallError(call: PabloRemoveLiquidityCall): RemoveLiquidityCallError {
+  const { poolId, lpAmount, minReceive } = call.asV10005;
+  return {
+    poolId,
+    lpAmount,
+    minReceive
+  };
+}
+
+function getSwapCallError(call: PabloSwapCall): SwapCallError {
+  const { inAsset, poolId, minReceive, keepAlive } = call.asV10005;
+  return {
+    baseAssetId: inAsset.assetId.toString(),
+    baseAmount: inAsset.amount,
+    quoteAssetId: minReceive.assetId.toString(),
+    quoteAmount: minReceive.amount,
+    poolId,
+    keepAlive
+  };
+}
+
+/*
+ Handle error on add_liquidity call
+ */
+export async function processAddLiquidityCallError(
+  ctx: Context,
+  block: Block,
+  item: CallItem,
+  call: PabloAddLiquidityCall
+): Promise<void> {
+  console.debug("processing AddLiquidityCall error", item.call.id);
+
+  const pabloAddLiquidityCall = getAddLiquidityCallError(call);
+  const { poolId, assets } = pabloAddLiquidityCall;
+
+  const pool = await ctx.store.get(PabloPool, {
+    where: {
+      id: poolId.toString()
+    }
+  });
+
+  if (!pool) {
+    console.error("Pool not found");
+    return;
+  }
+
+  const amounts: Array<PabloAmount> = [];
+
+  for (const [assetId, amount] of assets) {
+    const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
+    const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
+    amounts.push(pabloAmount);
+  }
+
+  const pabloLiquidityAdded = new PabloLiquidityAdded({
+    id: item.call.id,
+    pool,
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash,
+    amounts,
+    success: false
+  });
+
+  await ctx.store.save(pabloLiquidityAdded);
+
+  const pabloTransaction = new PabloTransaction({
+    id: item.call.id,
+    pool,
+    account: "TODO: ACCOUNT HERE",
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash,
+    liquidityAdded: pabloLiquidityAdded,
+    txType: PabloTx.ADD_LIQUIDITY,
+    success: false,
+    failReason: "TODO: FAIL REASON HERE"
+  });
+
+  await ctx.store.save(pabloTransaction);
+}
+
+/*
+ Handle error on remove_liquidity call
+ */
+export async function processRemoveLiquidityCallError(
+  ctx: Context,
+  block: Block,
+  item: CallItem,
+  call: PabloRemoveLiquidityCall
+): Promise<void> {
+  console.debug("processing RemoveLiquidityCall error", item.call.id);
+
+  const pabloRemoveLiquidityCall = getRemoveLiquidityCallError(call);
+  const { poolId, lpAmount, minReceive } = pabloRemoveLiquidityCall;
+
+  const pool = await ctx.store.get(PabloPool, {
+    where: {
+      id: poolId.toString()
+    }
+  });
+
+  if (!pool) {
+    console.error("Pool not found");
+    return;
+  }
+
+  const amounts: Array<PabloAmount> = [];
+
+  for (const [assetId, amount] of minReceive) {
+    const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
+    const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
+    amounts.push(pabloAmount);
+  }
+
+  const pabloLiquidityRemoved = new PabloLiquidityRemoved({
+    id: item.call.id,
+    pool,
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash,
+    amounts,
+    lpAmount,
+    success: false
+  });
+
+  await ctx.store.save(pabloLiquidityRemoved);
+
+  const pabloTransaction = new PabloTransaction({
+    id: item.call.id,
+    pool,
+    account: "TODO: ACCOUNT HERE",
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash,
+    liquidityRemoved: pabloLiquidityRemoved,
+    txType: PabloTx.REMOVE_LIQUIDITY,
+    success: false,
+    failReason: "TODO: FAIL REASON HERE"
+  });
+
+  await ctx.store.save(pabloTransaction);
+}
+
+/*
+ Handle error on swap event
+ */
+export async function processSwapCallError(
+  ctx: Context,
+  block: Block,
+  item: CallItem,
+  call: PabloSwapCall
+): Promise<void> {
+  const pabloSwapCall = getSwapCallError(call);
+  const { poolId, baseAssetId, baseAmount, quoteAssetId, quoteAmount } = pabloSwapCall;
+
+  // Get the latest pool
+  const pool = await getLatestPoolByPoolId(ctx.store, poolId);
+
+  if (!pool) {
+    console.error("Pool not found");
+    return;
+  }
+
+  const { poolType } = pool;
+
+  if (poolType !== PabloPoolType.DualAssetConstantProduct) {
+    throw new Error("Only DualAssetConstantProduct pools are currently supported.");
+  }
+
+  // Get weights
+  const baseAssetWeight = pool.poolAssetWeights.find(({ assetId }) => assetId === baseAssetId);
+  const quoteAssetWeight = pool.poolAssetWeights.find(({ assetId }) => assetId === quoteAssetId);
+
+  if (!baseAssetWeight || !quoteAssetWeight) {
+    console.error("Asset weights not found");
+    return;
+  }
+
+  const weightRatio = baseAssetWeight.weight / quoteAssetWeight.weight;
+
+  const normalizedQuoteAmount = (BigInt(quoteAssetId) === 130n ? 1_000_000n : 1n) * quoteAmount;
+  const normalizedBaseAmount = (BigInt(baseAssetId) === 130n ? 1_000_000n : 1n) * baseAmount;
+
+  const spotPrice = divideBigInts(normalizedQuoteAmount, normalizedBaseAmount) * weightRatio;
+
+  const pabloSwap = new PabloSwap({
+    id: randomUUID(),
+    pool,
+    baseAssetId: baseAssetId.toString(),
+    baseAssetAmount: baseAmount,
+    quoteAssetId: quoteAssetId.toString(),
+    quoteAssetAmount: quoteAmount,
+    spotPrice: spotPrice.toString(),
+    fee: undefined,
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash,
+    success: false
+  });
+
+  await ctx.store.save(pabloSwap);
+
+  const pabloTransaction = new PabloTransaction({
+    id: item.call.id,
+    pool,
+    account: "TODO: ACCOUNT HERE",
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash,
+    swap: pabloSwap,
+    txType: PabloTx.SWAP,
+    success: false,
+    failReason: "TODO: FAIL REASON HERE"
+  });
+
+  await ctx.store.save(pabloTransaction);
 }

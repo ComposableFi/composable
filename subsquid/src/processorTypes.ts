@@ -19,6 +19,14 @@ export const processor = new SubstrateBatchProcessor()
   })
   .setBlockRange({
     from: firstBlock()
+    // from: 1823182,
+    // from: 1720846,
+    // from: 1823114,
+    // to: 1823114
+    // from: 1448591, // remove liquidity
+    // from: 1449221, // add liquidity
+    // from: 1408311,
+    // to: 1823182
   })
   .addEvent("Pablo.PoolCreated", {
     data: { event: { extrinsic: true, args: true } }
@@ -58,7 +66,19 @@ export const processor = new SubstrateBatchProcessor()
   } as const)
   .addEvent("*", {
     data: { event: { extrinsic: true, args: true } }
-  } as const);
+  } as const)
+  .addCall("Pablo.add_liquidity", {
+    data: { call: { args: true, error: true }, extrinsic: true }
+  })
+  .addCall("Pablo.remove_liquidity", {
+    data: { call: { args: true, error: true }, extrinsic: true }
+  })
+  .addCall("Pablo.swap", {
+    data: { call: { args: true, error: true }, extrinsic: true }
+  })
+  .addCall("Pablo.buy", {
+    data: { call: { args: true, error: true }, extrinsic: true }
+  });
 
 export type Item = BatchProcessorItem<typeof processor>;
 export type EventItem = BatchProcessorEventItem<typeof processor>;

@@ -101,7 +101,8 @@ export class PabloOverviewStatsResolver implements ResolverInterface<PabloOvervi
 
     const latestSwaps = await manager.getRepository(PabloSwap).find({
       where: {
-        timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS))
+        timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS)),
+        success: true
       }
     });
 

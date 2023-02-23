@@ -20,5 +20,10 @@
     "AssetsRegistry.AssetRegistered",
     "AssetsRegistry.AssetUpdated"
   ],
-  "calls": []
+  "calls": [
+    "Pablo.add_liquidity",
+    "Pablo.remove_liquidity",
+    "Pablo.swap",
+    "Pablo.buy"
+  ]
 }

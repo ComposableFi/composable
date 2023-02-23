@@ -1,4 +1,3 @@
-import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { hexToU8a } from "@polkadot/util";
@@ -301,7 +300,8 @@ export async function getSpotPrice(
           pool: {
             id: poolId
           },
-          timestamp: LessThan(new Date(time))
+          timestamp: LessThan(new Date(time)),
+          success: true
         },
         order: {
           timestamp: "DESC"
@@ -314,7 +314,8 @@ export async function getSpotPrice(
           pool: {
             id: poolId
           },
-          timestamp: LessThan(new Date(time))
+          timestamp: LessThan(new Date(time)),
+          success: true
         },
         order: {
           timestamp: "DESC"
@@ -329,7 +330,8 @@ export async function getSpotPrice(
           pool: {
             id: poolId
           },
-          timestamp: LessThan(new Date(time))
+          timestamp: LessThan(new Date(time)),
+          success: true
         },
         order: {
           timestamp: "DESC"
@@ -342,7 +344,8 @@ export async function getSpotPrice(
           pool: {
             id: poolId
           },
-          timestamp: LessThan(new Date(time))
+          timestamp: LessThan(new Date(time)),
+          success: true
         },
         order: {
           timestamp: "DESC"
@@ -499,9 +502,7 @@ export async function getOrCreateHistoricalAssetPrice(
  * Gets current prices from DB or Coingecko
  * @param ctx
  */
-export async function getCurrentAssetPrices(
-  ctx: Context | EntityManager
-): Promise<Record<string, number> | undefined> {
+export async function getCurrentAssetPrices(ctx: Context | EntityManager): Promise<Record<string, number> | undefined> {
   const isRepository = ctx instanceof EntityManager;
 
   const now = new Date();
@@ -655,7 +656,8 @@ export async function getOrCreateFeeApr(
       pool: {
         id: pool.id
       },
-      timestamp: MoreThan(new Date(timestamp.getTime() - DAY_IN_MS))
+      timestamp: MoreThan(new Date(timestamp.getTime() - DAY_IN_MS)),
+      success: true
     }
   };
 
@@ -754,7 +756,7 @@ export async function getOrCreateStakingApr(
 }
 
 export async function getHistoricalCoingeckoPrice(
-  ctx: EventHandlerContext<Store> | EntityManager,
+  ctx: Context | EntityManager,
   assetInfo: AssetInfo,
   date?: Date
 ): Promise<number> {

@@ -35,7 +35,7 @@ export class PabloTransaction {
 
     @Index_()
     @ManyToOne_(() => Event, {nullable: true})
-    event!: Event
+    event!: Event | undefined | null
 
     @Column_("varchar", {length: 16, nullable: false})
     txType!: PabloTx
@@ -51,4 +51,10 @@ export class PabloTransaction {
     @Index_()
     @ManyToOne_(() => PabloLiquidityRemoved, {nullable: true})
     liquidityRemoved!: PabloLiquidityRemoved | undefined | null
+
+    @Column_("bool", {nullable: false})
+    success!: boolean
+
+    @Column_("text", {nullable: true})
+    failReason!: string | undefined | null
 }

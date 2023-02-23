@@ -81,7 +81,8 @@ async function dailyVolume(manager: EntityManager, poolId: string): Promise<Pool
       timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS)),
       pool: {
         id: poolId
-      }
+      },
+      success: true
     }
   });
 
@@ -126,6 +127,7 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
     const latestTransactions = await manager.getRepository(PabloTransaction).find({
       where: {
         timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS)),
+        success: true,
         pool: {
           id: daily.poolId
         }

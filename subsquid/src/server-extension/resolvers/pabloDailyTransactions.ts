@@ -115,10 +115,10 @@ export class PabloDailyTransactionsResolver {
     const transactions = dailyTransactions.map(tx => {
       return new PabloDailyTx({
         timestamp: tx.timestamp.getTime(),
-        txHash: tx.event.txHash || "",
-        failReason: tx.event.failReason || undefined,
+        txHash: tx.event?.txHash || "",
+        failReason: tx.failReason || undefined,
         txType: tx.txType,
-        success: tx.event.success || true,
+        success: tx.success,
         poolId: tx.pool.id,
         amounts: tx.liquidityAdded?.amounts || tx.liquidityRemoved?.amounts || undefined,
         swap: tx.swap
