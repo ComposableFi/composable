@@ -26,6 +26,7 @@ Members of the First Council will consist of:
 - Blas Rodriguez Irizar, Composable Principal Bridging Lead
 - 0xc0dejug, Composable Principal XCVM Lead
 - 0xslenderman, Composable Head of Design
+- Jafar Azam , Composable Developer Relations 
 - Jesse Abramowitz, Entropy Lead Software and Protocol Engineer
 - Will Pankiewicz, Parity Master of Validators
 - Tamara Frankel, D1 Ventures Founding Partner
