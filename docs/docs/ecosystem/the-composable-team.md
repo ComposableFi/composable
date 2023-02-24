@@ -37,15 +37,6 @@ You can follow Jeffrey on
 [LinkedIn](https://www.linkedin.com/in/jeffrey-smith-jd-llm-crcp-iaccp-crm-67623011/)
 and [Twitter](https://twitter.com/JeffreyAPIs).
 
-## Karel Kubat | Chief Technology Officer
-
-Karel is an early crypto advocate that has actively participated in the future of the technology both as a user and 
-a developer. Karel has worked on a range of protocols and contracts, including Privi Protocol as a Team Lead and Senior 
-Software Engineer, as well as Ethereum, NEO, Substrate, and other custom chains. As a programmer, he has extensive 
-experience in several languages, including Rust, Solidity, and Haskell. Karel joined Composable in 2021, 
-where he oversees the Research and Engineering departments with the critical responsibility of creating the technology 
-strategy behind Composable’s products. [Twitter](https://twitter.com/0xkaiserkarel)
-
 ## Zain Haider | Chief Marketing Officer
 
 With over 10 years of marketing leadership, Zain has advised a plethora of projects, led global marketing teams, 
