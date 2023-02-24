@@ -438,18 +438,25 @@ export async function getOrCreateHistoricalAssetPrice(
   const time = new Date(timestamp);
   const date = new Date(time.getFullYear(), time.getMonth(), time.getDate());
 
-  // Look for the price in the DB
+  let assetPrice: HistoricalAssetPrice | null | undefined;
+  let price: number | undefined;
+
   const where = {
     assetId,
     timestamp: date
   };
-  let assetPrice = isRepository
-    ? await ctx.getRepository(HistoricalAssetPrice).findOne({ where })
-    : await ctx.store.findOne(HistoricalAssetPrice, {
-        where
-      });
 
-  let price = assetPrice?.price;
+  try {
+    // Look for the price in the DB
+    assetPrice = isRepository
+      ? await ctx.getRepository(HistoricalAssetPrice).findOne({ where })
+      : await ctx.store.findOne(HistoricalAssetPrice, {
+          where
+        });
+    price = assetPrice?.price;
+  } catch {
+    // Ignore
+  }
 
   // If no price available, get it from the API and update DB
   if (price === undefined) {
@@ -470,7 +477,7 @@ export async function getOrCreateHistoricalAssetPrice(
       } else {
         await ctx.store.save(assetPrice);
       }
-    } catch (e) {
+    } catch {
       console.info(`Could not get price for asset ${assetId}. Trying with previous value instead.`);
 
       const options = {
