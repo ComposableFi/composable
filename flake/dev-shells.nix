@@ -17,8 +17,8 @@
           NIX_PATH = "nixpkgs=${pkgs.path}";
         };
 
-        default = minimal.overrideAttrs (base: {
-          buildInputs = base.buildInputs ++ (with pkgs; [
+        dev = minimal.overrideAttrs (base: {
+          buildInputs = base.buildInputs ++ (with pkgs self'.packages; [
             bacon
             google-cloud-sdk
             jq
@@ -43,19 +43,30 @@
             nodePackages.typescript-language-server
             git
             git-lfs
+            subwasm
+            binaryen
           ]);
         });
+
+        default = self.inputs.devenv.lib.mkShell {
+          inherit pkgs;
+          inputs = self.inputs;
+          modules = [{
+            packages = with self'.packages;
+              minimal.buildInputs ++ [ centauri-configure-and-run ];
+
+            enterShell = ''
+              hello
+            '';
+            devcontainer.enable = true;
+          }];
+        };
 
         with-helix = default.overrideAttrs (base: {
           buildInputs = base.buildInputs ++ [ inputs'.helix.packages.default ];
         });
 
-        wasm = default.overrideAttrs (base: {
-          buildInputs = base.buildInputs ++ [ pkgs.grub2 ]
-            ++ (with self'.packages; [ subwasm wasm-optimizer ]);
-        });
-
-        xcvm = wasm.overrideAttrs (base: {
+        xcvm = dev.overrideAttrs (base: {
           buildInputs = base.buildInputs
             ++ (with self'.packages; [ junod gex ]);
           shellHook = ''

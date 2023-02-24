@@ -28,6 +28,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-std.url = "github:chessai/nix-std";
+    devenv.url = "github:cachix/devenv";
   };
 
   outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
