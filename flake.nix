@@ -1,4 +1,3 @@
-# We use https://flake.parts/ in order split this flake into multiple parts.
 {
   description = "Composable Finance";
 
