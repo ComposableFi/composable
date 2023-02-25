@@ -18,34 +18,35 @@
         };
 
         dev = minimal.overrideAttrs (base: {
-          buildInputs = base.buildInputs ++ (with pkgs; with self'.packages; [
-            bacon
-            google-cloud-sdk
-            jq
-            lldb
-            llvmPackages_latest.bintools
-            llvmPackages_latest.lld
-            llvmPackages_latest.llvm
-            nix-tree
-            nixfmt
-            openssl
-            openssl.dev
-            pkg-config
-            qemu
-            rnix-lsp
-            taplo
-            xorriso
-            zlib.out
-            nix-tree
-            nixfmt
-            rnix-lsp
-            nodePackages.typescript
-            nodePackages.typescript-language-server
-            git
-            git-lfs
-            subwasm
-            binaryen
-          ]);
+          buildInputs = base.buildInputs ++ (with pkgs;
+            with self'.packages; [
+              bacon
+              google-cloud-sdk
+              jq
+              lldb
+              llvmPackages_latest.bintools
+              llvmPackages_latest.lld
+              llvmPackages_latest.llvm
+              nix-tree
+              nixfmt
+              openssl
+              openssl.dev
+              pkg-config
+              qemu
+              rnix-lsp
+              taplo
+              xorriso
+              zlib.out
+              nix-tree
+              nixfmt
+              rnix-lsp
+              nodePackages.typescript
+              nodePackages.typescript-language-server
+              git
+              git-lfs
+              subwasm
+              binaryen
+            ]);
         });
 
         default = self.inputs.devenv.lib.mkShell {
@@ -56,7 +57,7 @@
               minimal.buildInputs ++ [ centauri-configure-and-run ];
 
             enterShell = ''
-              hello
+              echo "Setting up dev environment..."
             '';
             devcontainer.enable = true;
           }];
