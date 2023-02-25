@@ -18,7 +18,7 @@
         };
 
         dev = minimal.overrideAttrs (base: {
-          buildInputs = base.buildInputs ++ (with pkgs self'.packages; [
+          buildInputs = base.buildInputs ++ (with pkgs; with self'.packages; [
             bacon
             google-cloud-sdk
             jq
@@ -62,7 +62,7 @@
           }];
         };
 
-        with-helix = default.overrideAttrs (base: {
+        with-helix = dev.overrideAttrs (base: {
           buildInputs = base.buildInputs ++ [ inputs'.helix.packages.default ];
         });
 
