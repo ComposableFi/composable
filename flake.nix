@@ -1,4 +1,3 @@
-# We use https://flake.parts/ in order split this flake into multiple parts.
 {
   description = "Composable Finance";
 
@@ -28,11 +27,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-std.url = "github:chessai/nix-std";
+    devenv.url = "github:cachix/devenv";
   };
 
   outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
-    let darwinFilter = import ./flake/darwin-filter.nix { lib = nixpkgs.lib; };
-    in darwinFilter (flake-parts.lib.mkFlake { inherit inputs; } {
+    flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         # External `inputs` that the authors did not nixify themselves
         ./inputs/AcalaNetwork/acala.nix
@@ -68,8 +67,6 @@
         ./docs/docs.nix
         ./frontend/frontend.nix
 
-        # our devnets
-        # TODO: Split into multiple files
         ./devnets/all.nix
 
         # Everything that is not an input, tool, package, or devnet, but still part of the final flake
@@ -86,5 +83,5 @@
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
-    });
+    };
 }
