@@ -17,45 +17,57 @@
           NIX_PATH = "nixpkgs=${pkgs.path}";
         };
 
-        default = minimal.overrideAttrs (base: {
-          buildInputs = base.buildInputs ++ (with pkgs; [
-            bacon
-            google-cloud-sdk
-            jq
-            lldb
-            llvmPackages_latest.bintools
-            llvmPackages_latest.lld
-            llvmPackages_latest.llvm
-            nix-tree
-            nixfmt
-            openssl
-            openssl.dev
-            pkg-config
-            qemu
-            rnix-lsp
-            taplo
-            xorriso
-            zlib.out
-            nix-tree
-            nixfmt
-            rnix-lsp
-            nodePackages.typescript
-            nodePackages.typescript-language-server
-            git
-            git-lfs
-          ]);
+        dev = minimal.overrideAttrs (base: {
+          buildInputs = base.buildInputs ++ (with pkgs;
+            with self'.packages; [
+              bacon
+              google-cloud-sdk
+              jq
+              lldb
+              llvmPackages_latest.bintools
+              llvmPackages_latest.lld
+              llvmPackages_latest.llvm
+              nix-tree
+              nixfmt
+              openssl
+              openssl.dev
+              pkg-config
+              qemu
+              rnix-lsp
+              taplo
+              xorriso
+              zlib.out
+              nix-tree
+              nixfmt
+              rnix-lsp
+              nodePackages.typescript
+              nodePackages.typescript-language-server
+              git
+              git-lfs
+              subwasm
+              binaryen
+            ]);
         });
 
-        with-helix = default.overrideAttrs (base: {
+        default = self.inputs.devenv.lib.mkShell {
+          inherit pkgs;
+          inputs = self.inputs;
+          modules = [{
+            packages = with self'.packages;
+              minimal.buildInputs ++ [ centauri-configure-and-run ];
+
+            enterShell = ''
+              echo "Setting up dev environment..."
+            '';
+            devcontainer.enable = true;
+          }];
+        };
+
+        with-helix = dev.overrideAttrs (base: {
           buildInputs = base.buildInputs ++ [ inputs'.helix.packages.default ];
         });
 
-        wasm = default.overrideAttrs (base: {
-          buildInputs = base.buildInputs ++ [ pkgs.grub2 ]
-            ++ (with self'.packages; [ subwasm wasm-optimizer ]);
-        });
-
-        xcvm = wasm.overrideAttrs (base: {
+        xcvm = dev.overrideAttrs (base: {
           buildInputs = base.buildInputs
             ++ (with self'.packages; [ junod gex ]);
           shellHook = ''

@@ -1,6 +1,8 @@
 
 # custom
 
+.devenv
+
 ## no embedded chain specs
 rococo-dev-raw.json
 rococo-local-raw.json
