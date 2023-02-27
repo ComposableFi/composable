@@ -144,8 +144,7 @@ ibc = { workspace = true, default-features = false }
 ibc-primitives = { workspace = true, default-features = false }
 ibc-runtime-api = { workspace = true, default-features = false }
 pallet-ibc = { workspace = true, default-features = false }
-
-pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "94bf87a44694b04917a7ab735487c8f87a64737d", default-features = false }
+pallet-ibc-ping = { workspace = true, default-features = false }
 
 [dev-dependencies]
 frame-benchmarking = { package = "frame-benchmarking", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
