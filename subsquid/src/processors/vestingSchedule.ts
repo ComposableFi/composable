@@ -1,11 +1,10 @@
-import { EventHandlerContext } from "@subsquid/substrate-processor";
-import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { VestingSchedule as VestingScheduleType, VestingScheduleIdSet } from "../types/v10002";
 import { EventType, LockedSource, Schedule, ScheduleWindow, VestingSchedule } from "../model";
 import { VestingClaimedEvent, VestingVestingScheduleAddedEvent } from "../types/events";
 import { encodeAccount } from "../utils";
 import { saveAccountAndEvent, storeHistoricalLockedValue } from "../dbHelper";
+import { Context, EventItem, Block } from "../processorTypes";
 
 interface VestingScheduleAddedEvent {
   from: Uint8Array;
@@ -61,57 +60,54 @@ export function createSchedule(vestingSchedule: VestingScheduleType): Schedule {
 }
 
 /**
- * Based on the event, return a new VestingSchedule.
- * @param ctx
- * @param event
- */
-export function createVestingSchedule(
-  ctx: EventHandlerContext<Store>,
-  event: VestingVestingScheduleAddedEvent
-): VestingSchedule {
-  const { from, to, asset, schedule, scheduleAmount } = getVestingScheduleAddedEvent(event);
-
-  const fromAccount = encodeAccount(from);
-  const toAccount = encodeAccount(to);
-
-  return new VestingSchedule({
-    id: randomUUID(),
-    scheduleId: schedule.vestingScheduleId,
-    from: fromAccount,
-    eventId: ctx.event.id,
-    to: toAccount,
-    assetId: asset.toString(),
-    schedule: createSchedule(schedule),
-    totalAmount: scheduleAmount,
-    fullyClaimed: false,
-    blockId: ctx.block.hash
-  });
-}
-
-/**
  * Handle `vesting.VestingScheduleAdded` event.
  *  - Create and store VestingSchedule.
  *  - Create/update account.
  *  - Create event.
  * @param ctx
+ * @param block
+ * @param eventItem
  */
-export async function processVestingScheduleAddedEvent(ctx: EventHandlerContext<Store>): Promise<void> {
-  console.log("Process VestingScheduleAdded");
-  const event = new VestingVestingScheduleAddedEvent(ctx);
+export async function processVestingScheduleAddedEvent(
+  ctx: Context,
+  block: Block,
+  eventItem: EventItem
+): Promise<void> {
+  if (eventItem.name !== "Vesting.VestingScheduleAdded") {
+    throw new Error("Unexpected event name");
+  }
+  console.log("processing VestingScheduleAdded", eventItem.event.id);
+  const event = new VestingVestingScheduleAddedEvent(ctx, eventItem.event);
 
-  const vestingSchedule = createVestingSchedule(ctx, event);
+  const { from, to, asset, schedule, scheduleAmount } = getVestingScheduleAddedEvent(event);
 
-  await saveAccountAndEvent(ctx, EventType.VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED, [
+  const fromAccount = encodeAccount(from);
+  const toAccount = encodeAccount(to);
+
+  const vestingSchedule = new VestingSchedule({
+    id: randomUUID(),
+    scheduleId: schedule.vestingScheduleId,
+    from: fromAccount,
+    eventId: eventItem.event.id,
+    to: toAccount,
+    assetId: asset.toString(),
+    schedule: createSchedule(schedule),
+    totalAmount: scheduleAmount,
+    fullyClaimed: false,
+    blockId: block.header.hash
+  });
+
+  await saveAccountAndEvent(ctx, block, eventItem, EventType.VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED, [
     vestingSchedule.from,
     vestingSchedule.to
   ]);
 
   await ctx.store.save(vestingSchedule);
 
-  const { scheduleAmount, asset } = getVestingScheduleAddedEvent(event);
-
   await storeHistoricalLockedValue(
     ctx,
+    block,
+    eventItem,
     [[asset.toString(), scheduleAmount]],
     LockedSource.VestingSchedules,
     vestingSchedule.scheduleId.toString()
@@ -148,63 +144,55 @@ function getVestingScheduleClaimedEvent(event: VestingClaimedEvent): VestingSche
 }
 
 /**
- * Update already claimed amount and set the schedule as full claimed when
- * necessary.
- * @param ctx
- * @param vestingSchedule
- * @param claimed
- */
-export function updatedClaimedAmount(
-  ctx: EventHandlerContext<Store>,
-  vestingSchedule: VestingSchedule,
-  claimed: bigint
-): void {
-  vestingSchedule.schedule.alreadyClaimed += claimed;
-  if (vestingSchedule.schedule.alreadyClaimed === vestingSchedule.totalAmount) {
-    vestingSchedule.fullyClaimed = true;
-  }
-  vestingSchedule.blockId = ctx.block.hash;
-}
-
-/**
  * Process `vesting.Claimed` event.
  *  - Update alreadyClaimed amount for each claimed schedule.
  *  - Set fullyClaimed when whole locked value has been claimed.
  * @param ctx
+ * @param block
+ * @param eventItem
  */
-export async function processVestingClaimedEvent(ctx: EventHandlerContext<Store>): Promise<void> {
-  console.log("Process Claimed");
-  const event = new VestingClaimedEvent(ctx);
+export async function processVestingClaimedEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  if (eventItem.name !== "Vesting.Claimed") {
+    throw new Error("Unexpected event name");
+  }
+  console.log("processing Claimed", eventItem.event.id);
+  const event = new VestingClaimedEvent(ctx, eventItem.event);
 
   const { who, claimedAmountPerSchedule } = getVestingScheduleClaimedEvent(event);
 
-  await saveAccountAndEvent(ctx, EventType.VESTING_SCHEDULES_CLAIMED, encodeAccount(who));
+  await saveAccountAndEvent(ctx, block, eventItem, EventType.VESTING_SCHEDULES_CLAIMED, encodeAccount(who));
 
   for (let i = 0; i < claimedAmountPerSchedule.length; i += 1) {
     const [id, amount] = claimedAmountPerSchedule[i];
 
-    const schedule: VestingSchedule | undefined = await ctx.store.get(VestingSchedule, {
+    const vestingSchedule: VestingSchedule | undefined = await ctx.store.get(VestingSchedule, {
       where: {
         scheduleId: id
       }
     });
 
-    if (!schedule) {
+    if (!vestingSchedule) {
       // no-op
       return;
     }
 
-    schedule.eventId = ctx.event.id;
+    vestingSchedule.eventId = eventItem.event.id;
+    vestingSchedule.schedule.alreadyClaimed += amount;
 
-    updatedClaimedAmount(ctx, schedule, amount);
+    if (vestingSchedule.schedule.alreadyClaimed === vestingSchedule.totalAmount) {
+      vestingSchedule.fullyClaimed = true;
+    }
+    vestingSchedule.blockId = block.header.hash;
 
-    await ctx.store.save(schedule);
+    await ctx.store.save(vestingSchedule);
 
     await storeHistoricalLockedValue(
       ctx,
-      [[schedule.assetId, -amount]],
+      block,
+      eventItem,
+      [[vestingSchedule.assetId, -amount]],
       LockedSource.VestingSchedules,
-      schedule.scheduleId.toString()
+      vestingSchedule.scheduleId.toString()
     );
   }
 }

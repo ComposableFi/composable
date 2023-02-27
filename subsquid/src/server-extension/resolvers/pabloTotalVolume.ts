@@ -70,6 +70,7 @@ export class PabloTotalVolumeResolver {
             LessThan(new Date(timestamp.getTime())),
             MoreThan(new Date(timestamp.getTime() - (range === "year" ? 7 : 1) * DAY_IN_MS))
           ),
+          success: true,
           ...(poolId
             ? {
                 pool: {

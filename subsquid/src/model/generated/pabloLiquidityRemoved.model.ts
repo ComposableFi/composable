@@ -15,7 +15,7 @@ export class PabloLiquidityRemoved {
 
     @Index_()
     @ManyToOne_(() => Event, {nullable: true})
-    event!: Event
+    event!: Event | undefined | null
 
     @Index_()
     @ManyToOne_(() => PabloPool, {nullable: true})
@@ -28,6 +28,12 @@ export class PabloLiquidityRemoved {
     @Column_("text", {nullable: false})
     blockId!: string
 
+    @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: true})
+    lpAmount!: bigint | undefined | null
+
     @Column_("jsonb", {transformer: {to: obj => obj.map((val: any) => val.toJSON()), from: obj => obj == null ? undefined : marshal.fromList(obj, val => new PabloAmount(undefined, marshal.nonNull(val)))}, nullable: false})
     amounts!: (PabloAmount)[]
+
+    @Column_("bool", {nullable: false})
+    success!: boolean
 }

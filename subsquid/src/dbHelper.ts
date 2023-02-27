@@ -1,14 +1,15 @@
-import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
-import { hexToU8a } from "@polkadot/util";
+import { ApiPromise, WsProvider } from "@polkadot/api";
+import { SubstrateExtrinsicSignature } from "@subsquid/substrate-processor";
 import BigNumber from "bignumber.js";
 import { EntityManager, LessThan, MoreThan } from "typeorm";
 import { isInstance } from "class-validator";
-import { divideBigInts, encodeAccount, fetch, fetchRetry } from "./utils";
+import { divideBigInts, fetch, fetchRetry, getAccountFromSignature } from "./utils";
 import {
   Account,
   Activity,
+  CallError,
   Currency,
   Event,
   EventType,
@@ -24,7 +25,11 @@ import {
   PabloSwap,
   StakingRewardsPool
 } from "./model";
+import { Block, Context, EventItem } from "./processorTypes";
 import { AssetId, AssetInfo, assetList, CoingeckoPrices, DAY_IN_MS } from "./constants";
+
+const provider = new WsProvider("wss://rpc.composablenodes.tech");
+const api = new ApiPromise({ provider });
 
 export async function getLatestPoolByPoolId(store: Store, poolId: bigint): Promise<PabloPool | undefined> {
   return store.get<PabloPool>(PabloPool, {
@@ -43,15 +48,23 @@ export async function getLatestPoolByPoolId(store: Store, poolId: bigint): Promi
  * When the extrinsic is not signed, it will be a noop.
  * Returns the `accountId` stored, or undefined if nothing is stored.
  * @param ctx
+ * @param block
+ * @param eventItem
  * @param accountId
  *
  * @returns string | undefined
  */
 export async function getOrCreateAccount(
-  ctx: EventHandlerContext<Store>,
+  ctx: Context,
+  block: Block,
+  eventItem: EventItem,
   accountId?: string
 ): Promise<Account | undefined> {
-  const accId = accountId || ctx.event.extrinsic?.signature?.address;
+  let signature: SubstrateExtrinsicSignature | undefined;
+  if ("extrinsic" in eventItem.event) {
+    signature = eventItem.event.extrinsic?.signature;
+  }
+  const accId = accountId || getAccountFromSignature(signature);
 
   if (!accId) {
     // no-op
@@ -67,8 +80,8 @@ export async function getOrCreateAccount(
   }
 
   account.id = accId;
-  account.eventId = ctx.event.id;
-  account.blockId = ctx.block.hash;
+  account.eventId = eventItem.event.id;
+  account.blockId = block.header.hash;
 
   await ctx.store.save(account);
 
@@ -80,45 +93,55 @@ export async function getOrCreateAccount(
  *
  * Returns the stored event id.
  * @param ctx
+ * @param block
+ * @param eventItem
  * @param eventType
  */
-export async function saveEvent(ctx: EventHandlerContext<Store>, eventType: EventType): Promise<Event> {
-  const accountId: string = ctx.event.extrinsic?.signature?.address.value
-    ? encodeAccount(hexToU8a(ctx.event.extrinsic?.signature?.address.value))
-    : ctx.event.extrinsic?.signature?.address;
+export async function saveEvent(
+  ctx: Context,
+  block: Block,
+  eventItem: EventItem,
+  eventType: EventType
+): Promise<Event> {
+  let signature: SubstrateExtrinsicSignature | undefined;
+  let txHash: string | undefined;
+  if ("extrinsic" in eventItem.event) {
+    signature = eventItem.event.extrinsic?.signature;
+    txHash = eventItem.event.extrinsic?.hash;
+  }
+  const accountId = getAccountFromSignature(signature);
 
   // Create event
-  const event = new Event({
-    id: ctx.event.id,
+  const newEvent = new Event({
+    id: eventItem.event.id,
     accountId,
     eventType,
-    blockNumber: BigInt(ctx.block.height),
-    timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash,
-    txHash: ctx.event.extrinsic?.hash,
-    success: ctx.event.extrinsic?.success,
-    failReason: typeof ctx.event.extrinsic?.error === "string" ? ctx.event.extrinsic.error : undefined
+    blockNumber: BigInt(block.header.height),
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash,
+    txHash
   });
 
   // Store event
-  await ctx.store.save(event);
+  await ctx.store.save(newEvent);
 
-  return event;
+  return newEvent;
 }
 
 /**
  * Store Activity on the database.
  * @param ctx
+ * @param block
  * @param event
  * @param accountId
  */
-export async function saveActivity(ctx: EventHandlerContext<Store>, event: Event, accountId: string): Promise<string> {
+export async function saveActivity(ctx: Context, block: Block, event: Event, accountId: string): Promise<string> {
   const activity = new Activity({
     id: randomUUID(),
     event,
     accountId,
-    timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash
   });
 
   await ctx.store.save(activity);
@@ -133,17 +156,21 @@ export async function saveActivity(ctx: EventHandlerContext<Store>, event: Event
  * signer of the underlying extrinsic.
  * If no account is created, it will NOT create any Event or Activity
  * @param ctx
+ * @param block
+ * @param eventItem
  * @param eventType
  * @param accountId
  */
 export async function saveAccountAndEvent(
-  ctx: EventHandlerContext<Store>,
+  ctx: Context,
+  block: Block,
+  eventItem: EventItem,
   eventType: EventType,
   accountId?: string | string[]
 ): Promise<{ accounts: Account[]; event: Event }> {
   const accountIds: (string | undefined)[] = typeof accountId === "string" ? [accountId] : accountId || [];
 
-  const event = await saveEvent(ctx, eventType);
+  const savedEvent = await saveEvent(ctx, block, eventItem, eventType);
 
   const accounts: Account[] = [];
 
@@ -153,34 +180,38 @@ export async function saveAccountAndEvent(
       // no-op
       return Promise.reject("Missing account id");
     }
-    const account = await getOrCreateAccount(ctx, id);
+    const account = await getOrCreateAccount(ctx, block, eventItem, id);
     if (account) {
       accounts.push(account);
-      await saveActivity(ctx, event, id);
+      await saveActivity(ctx, block, savedEvent, id);
     }
   }
 
-  return Promise.resolve({ accounts, event });
+  return Promise.resolve({ accounts, event: savedEvent });
 }
 
 /**
  * Stores a new HistoricalLockedValue with current locked amount
  * for the specified source, and for the overall locked value
  * @param ctx
+ * @param block
+ * @param eventItem
  * @param amountsLocked
  * @param source
  * @param sourceEntityId
  */
 export async function storeHistoricalLockedValue(
-  ctx: EventHandlerContext<Store>,
+  ctx: Context,
+  block: Block,
+  eventItem: EventItem,
   amountsLocked: [string, bigint][], // [assetId, amountLocked]
   source: LockedSource,
   sourceEntityId: string
 ): Promise<void> {
-  let event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
+  let event = await ctx.store.get(Event, { where: { id: eventItem.event.id } });
 
   if (!event) {
-    event = await saveEvent(ctx, EventType.SWAP);
+    event = await saveEvent(ctx, block, eventItem, EventType.SWAP);
   }
 
   for (const [assetId, amount] of amountsLocked) {
@@ -203,11 +234,11 @@ export async function storeHistoricalLockedValue(
       event,
       amount,
       accumulatedAmount: lastAccumulatedValue + amount,
-      timestamp: new Date(ctx.block.timestamp),
+      timestamp: new Date(block.header.timestamp),
       source,
       assetId,
       sourceEntityId,
-      blockId: ctx.block.hash
+      blockId: block.header.hash
     });
 
     await ctx.store.save(historicalLockedValue);
@@ -217,11 +248,13 @@ export async function storeHistoricalLockedValue(
 /**
  * Get Pablo pool asset by asset id and pool id. If it doesn't exist, create it.
  * @param ctx
+ * @param block
  * @param pool
  * @param assetId
  */
 export async function getOrCreatePabloAsset(
-  ctx: EventHandlerContext<Store>,
+  ctx: Context,
+  block: Block,
   pool: PabloPool,
   assetId: string
 ): Promise<PabloPoolAsset> {
@@ -248,7 +281,7 @@ export async function getOrCreatePabloAsset(
       pool,
       totalLiquidity: BigInt(0),
       totalVolume: BigInt(0),
-      blockId: ctx.block.hash,
+      blockId: block.header.hash,
       weight: weight?.weight || 0
     });
   }
@@ -256,7 +289,7 @@ export async function getOrCreatePabloAsset(
 }
 
 export async function getSpotPrice(
-  ctx: EventHandlerContext<Store> | EntityManager,
+  ctx: Context | EntityManager,
   quoteAssetId: string,
   baseAssetId: string,
   poolId: string,
@@ -278,7 +311,8 @@ export async function getSpotPrice(
           pool: {
             id: poolId
           },
-          timestamp: LessThan(new Date(time))
+          timestamp: LessThan(new Date(time)),
+          success: true
         },
         order: {
           timestamp: "DESC"
@@ -291,7 +325,8 @@ export async function getSpotPrice(
           pool: {
             id: poolId
           },
-          timestamp: LessThan(new Date(time))
+          timestamp: LessThan(new Date(time)),
+          success: true
         },
         order: {
           timestamp: "DESC"
@@ -306,7 +341,8 @@ export async function getSpotPrice(
           pool: {
             id: poolId
           },
-          timestamp: LessThan(new Date(time))
+          timestamp: LessThan(new Date(time)),
+          success: true
         },
         order: {
           timestamp: "DESC"
@@ -319,7 +355,8 @@ export async function getSpotPrice(
           pool: {
             id: poolId
           },
-          timestamp: LessThan(new Date(time))
+          timestamp: LessThan(new Date(time)),
+          success: true
         },
         order: {
           timestamp: "DESC"
@@ -398,7 +435,7 @@ export async function getSpotPrice(
  * @param timestamp
  */
 export async function getOrCreateHistoricalAssetPrice(
-  ctx: EventHandlerContext<Store> | EntityManager,
+  ctx: Context | EntityManager,
   assetId: string,
   timestamp: number
 ): Promise<number | undefined> {
@@ -412,18 +449,25 @@ export async function getOrCreateHistoricalAssetPrice(
   const time = new Date(timestamp);
   const date = new Date(time.getFullYear(), time.getMonth(), time.getDate());
 
-  // Look for the price in the DB
+  let assetPrice: HistoricalAssetPrice | null | undefined;
+  let price: number | undefined;
+
   const where = {
     assetId,
     timestamp: date
   };
-  let assetPrice = isRepository
-    ? await ctx.getRepository(HistoricalAssetPrice).findOne({ where })
-    : await ctx.store.findOne(HistoricalAssetPrice, {
-        where
-      });
 
-  let price = assetPrice?.price;
+  try {
+    // Look for the price in the DB
+    assetPrice = isRepository
+      ? await ctx.getRepository(HistoricalAssetPrice).findOne({ where })
+      : await ctx.store.findOne(HistoricalAssetPrice, {
+          where
+        });
+    price = assetPrice?.price;
+  } catch {
+    // Ignore
+  }
 
   // If no price available, get it from the API and update DB
   if (price === undefined) {
@@ -444,7 +488,7 @@ export async function getOrCreateHistoricalAssetPrice(
       } else {
         await ctx.store.save(assetPrice);
       }
-    } catch (e) {
+    } catch {
       console.info(`Could not get price for asset ${assetId}. Trying with previous value instead.`);
 
       const options = {
@@ -476,9 +520,7 @@ export async function getOrCreateHistoricalAssetPrice(
  * Gets current prices from DB or Coingecko
  * @param ctx
  */
-export async function getCurrentAssetPrices(
-  ctx: EventHandlerContext<Store> | EntityManager
-): Promise<Record<string, number> | undefined> {
+export async function getCurrentAssetPrices(ctx: Context | EntityManager): Promise<Record<string, number> | undefined> {
   const isRepository = ctx instanceof EntityManager;
 
   const now = new Date();
@@ -550,10 +592,7 @@ export async function getCurrentAssetPrices(
   return currentPrices;
 }
 
-export async function getNormalizedPoolTVL(
-  ctx: EventHandlerContext<Store> | EntityManager,
-  poolId: string
-): Promise<bigint> {
+export async function getNormalizedPoolTVL(ctx: Context | EntityManager, poolId: string): Promise<bigint> {
   const isRepository = ctx instanceof EntityManager;
 
   const poolOptions = {
@@ -589,11 +628,13 @@ export async function getNormalizedPoolTVL(
 /**
  * Get LP Token by id If it doesn't exist, create it.
  * @param ctx
+ * @param block
  * @param poolId
  * @param lpTokenId
  */
 export async function getOrCreatePabloLpToken(
-  ctx: EventHandlerContext<Store>,
+  ctx: Context,
+  block: Block,
   poolId: string,
   lpTokenId: string
 ): Promise<PabloLpToken> {
@@ -608,8 +649,8 @@ export async function getOrCreatePabloLpToken(
       id: lpTokenId,
       totalIssued: 0n,
       poolId,
-      blockId: ctx.block.hash,
-      timestamp: new Date(ctx.block.timestamp)
+      blockId: block.header.hash,
+      timestamp: new Date(block.header.timestamp)
     });
     await ctx.store.save(lpToken);
   }
@@ -617,10 +658,11 @@ export async function getOrCreatePabloLpToken(
 }
 
 export async function getOrCreateFeeApr(
-  ctx: EventHandlerContext<Store> | EntityManager,
+  ctx: Context | EntityManager,
   pool: PabloPool,
   swapFee = 0.003,
   timestamp = new Date(),
+  block?: Block,
   event?: Event
 ): Promise<number> {
   const isRepository = ctx instanceof EntityManager;
@@ -632,7 +674,8 @@ export async function getOrCreateFeeApr(
       pool: {
         id: pool.id
       },
-      timestamp: MoreThan(new Date(timestamp.getTime() - DAY_IN_MS))
+      timestamp: MoreThan(new Date(timestamp.getTime() - DAY_IN_MS)),
+      success: true
     }
   };
 
@@ -663,13 +706,13 @@ export async function getOrCreateFeeApr(
     .dividedBy(normalizedTvl.toString())
     .toNumber();
 
-  if (!isRepository && event) {
+  if (!isRepository && event && block) {
     const historicalFeeApr = new HistoricalPabloFeeApr({
       id: randomUUID(),
       event,
       pool,
-      timestamp: new Date(ctx.block.timestamp),
-      blockId: ctx.block.hash,
+      timestamp: new Date(block.header.timestamp),
+      blockId: block.header.hash,
       tradingFee
     });
 
@@ -680,7 +723,8 @@ export async function getOrCreateFeeApr(
 }
 
 export async function getOrCreateStakingApr(
-  ctx: EventHandlerContext<Store> | EntityManager,
+  ctx: Context | EntityManager,
+  block: Block,
   pool: PabloPool,
   timestamp = new Date(),
   event?: Event
@@ -719,8 +763,8 @@ export async function getOrCreateStakingApr(
       event,
       assetId: lpToken.id,
       stakingApr,
-      timestamp: new Date(ctx.block.timestamp),
-      blockId: ctx.block.hash
+      timestamp: new Date(block.header.timestamp),
+      blockId: block.header.hash
     });
 
     await ctx.store.save(historicalStakingApr);
@@ -730,7 +774,7 @@ export async function getOrCreateStakingApr(
 }
 
 export async function getHistoricalCoingeckoPrice(
-  ctx: EventHandlerContext<Store> | EntityManager,
+  ctx: Context | EntityManager,
   assetInfo: AssetInfo,
   date?: Date
 ): Promise<number> {
@@ -779,4 +823,34 @@ export async function getHistoricalCoingeckoPrice(
   }
 
   throw new Error("Failed to fetch historical price");
+}
+
+export async function getOrCreateCallError(ctx: Context, err: any): Promise<CallError | null> {
+  try {
+    const value: { error: string; index: number } = err?.value;
+    const errorCode = parseInt(value.error.slice(0, 4), 16);
+    const res = api.findError(new Uint8Array([value.index, errorCode]));
+
+    let callError = await ctx.store.findOne<CallError>(CallError, {
+      where: {
+        section: res.section,
+        name: res.name
+      }
+    });
+
+    if (!callError) {
+      callError = new CallError({
+        id: `${res.section}-${res.name}`,
+        section: res.section,
+        name: res.name,
+        description: res.docs?.[0] || undefined
+      });
+
+      await ctx.store.save(callError);
+    }
+
+    return callError;
+  } catch {
+    return null;
+  }
 }
