@@ -78,5 +78,12 @@ pub fn genesis_config(
 		tokens: Default::default(),
 		transaction_payment: Default::default(),
 		vesting: Default::default(),
+		ibc: picasso_runtime::IbcConfig {
+			assets: vec![pallet_ibc::pallet::AssetConfig {
+				id: primitives::currency::CurrencyId::PICA,
+				denom: b"1".to_vec(),
+			}],
+		},
+		release_collective: Default::default(),
 	}
 }

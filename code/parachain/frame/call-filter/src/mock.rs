@@ -76,7 +76,8 @@ impl Get<u32> for MaxStringSize {
 
 impl Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type UpdateOrigin = EnsureSignedBy<One, AccountId>;
+	type EnableOrigin = EnsureSignedBy<One, AccountId>;
+	type DisableOrigin = EnsureSignedBy<One, AccountId>;
 	type Hook = ();
 	type WeightInfo = ();
 	type MaxStringSize = MaxStringSize;

@@ -7245,7 +7245,6 @@ dependencies = [
 name = "pallet-call-filter"
 version = "1.0.0"
 dependencies = [
- "composable-traits",
  "frame-support",
  "frame-system",
  "pallet-balances",
@@ -8918,6 +8917,9 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "ibc",
+ "ibc-primitives",
+ "ibc-runtime-api",
  "log",
  "orml-tokens",
  "orml-traits",
@@ -8939,6 +8941,7 @@ dependencies = [
  "pallet-currency-factory",
  "pallet-democracy",
  "pallet-governance-registry",
+ "pallet-ibc",
  "pallet-identity",
  "pallet-indices",
  "pallet-membership",
