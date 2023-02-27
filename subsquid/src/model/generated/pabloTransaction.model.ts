@@ -5,6 +5,7 @@ import {PabloTx} from "./_pabloTx"
 import {PabloSwap} from "./pabloSwap.model"
 import {PabloLiquidityAdded} from "./pabloLiquidityAdded.model"
 import {PabloLiquidityRemoved} from "./pabloLiquidityRemoved.model"
+import {CallError} from "./callError.model"
 
 @Entity_()
 export class PabloTransaction {
@@ -35,7 +36,7 @@ export class PabloTransaction {
 
     @Index_()
     @ManyToOne_(() => Event, {nullable: true})
-    event!: Event
+    event!: Event | undefined | null
 
     @Column_("varchar", {length: 16, nullable: false})
     txType!: PabloTx
@@ -51,4 +52,11 @@ export class PabloTransaction {
     @Index_()
     @ManyToOne_(() => PabloLiquidityRemoved, {nullable: true})
     liquidityRemoved!: PabloLiquidityRemoved | undefined | null
+
+    @Column_("bool", {nullable: false})
+    success!: boolean
+
+    @Index_()
+    @ManyToOne_(() => CallError, {nullable: true})
+    error!: CallError | undefined | null
 }

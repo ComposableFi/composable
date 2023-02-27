@@ -14,7 +14,7 @@ import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
 import { HistoricalStakingApr, PabloFee, PabloPool, PabloSwap, PabloTransaction } from "../../model";
 import { DAY_IN_MS } from "../../constants";
-import { getOrCreateHistoricalAssetPrice, getOrCreateFeeApr } from "../../dbHelper";
+import { getOrCreateHistoricalAssetPrice, getOrCreateFeeApr, getCurrentAssetPrices } from "../../dbHelper";
 
 @ObjectType()
 export class PoolAmount {
@@ -81,7 +81,8 @@ async function dailyVolume(manager: EntityManager, poolId: string): Promise<Pool
       timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS)),
       pool: {
         id: poolId
-      }
+      },
+      success: true
     }
   });
 
@@ -92,8 +93,11 @@ async function dailyVolume(manager: EntityManager, poolId: string): Promise<Pool
 
   const totalVolumes: Array<PoolAmount> = [];
 
+  const currentPrices = await getCurrentAssetPrices(manager);
+
   for (const assetId of Object.keys(swapsMap)) {
-    const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime());
+    const price =
+      currentPrices?.[assetId] || (await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime()));
     totalVolumes.push(
       new PoolAmount({
         assetId,
@@ -126,6 +130,7 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
     const latestTransactions = await manager.getRepository(PabloTransaction).find({
       where: {
         timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS)),
+        success: true,
         pool: {
           id: daily.poolId
         }
@@ -153,8 +158,11 @@ export class PabloDailyResolver implements ResolverInterface<PabloDaily> {
 
     const totalFees: Array<PoolAmount> = [];
 
+    const currentPrices = await getCurrentAssetPrices(manager);
+
     for (const assetId of Object.keys(feesMap)) {
-      const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime());
+      const price =
+        currentPrices?.[assetId] || (await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime()));
       totalFees.push(
         new PoolAmount({
           assetId,
