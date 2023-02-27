@@ -1284,6 +1284,13 @@ impl core::str::FromStr for MemoMessage {
 	}
 }
 
+parameter_types! {
+	pub const GRANDPA: pallet_ibc::LightClientProtocol = pallet_ibc::LightClientProtocol::Grandpa;
+	pub const IbcTriePrefix : &'static [u8] = b"ibc/";
+}
+
+use frame_system::EnsureSigned;
+use pallet_ibc::Ics20RateLimiter;
 impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type RuntimeEvent = RuntimeEvent;
@@ -1292,9 +1299,8 @@ impl pallet_ibc::Config for Runtime {
 	type AssetId = CurrencyId;
 	type NativeAssetId = NativeAssetId;
 	type IbcDenomToAssetIdConversion = IbcDenomToAssetIdConversion;
-	const PALLET_PREFIX: &'static [u8] = b"ibc/";
-	const LIGHT_CLIENT_PROTOCOL: pallet_ibc::LightClientProtocol =
-		pallet_ibc::LightClientProtocol::Grandpa;
+	type PalletPrefix = IbcTriePrefix;
+	type LightClientProtocol = GRANDPA;
 	type AccountIdConversion = ibc_primitives::IbcAccount<AccountId>;
 	type Fungibles = Assets;
 	type ExpectedBlockTime = ExpectedBlockTime;
@@ -1304,10 +1310,14 @@ impl pallet_ibc::Config for Runtime {
 	type RelayChain = RelayChainId;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type SentryOrigin = EnsureRoot<AccountId>;
+	type FreezeOrigin = EnsureRoot<AccountId>;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
+	type IbcAccountId = Self::AccountId;
+	type TransferOrigin = EnsureSigned<Self::IbcAccountId>;
+	type RelayerOrigin = EnsureSigned<Self::AccountId>;
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;
+	type Ics20RateLimiter = Everything;
 }
 
 impl pallet_ibc_ping::Config for Runtime {
@@ -1775,7 +1785,7 @@ impl_runtime_apis! {
 		}
 
 		fn child_trie_key() -> Vec<u8> {
-			<Runtime as pallet_ibc::Config>::PALLET_PREFIX.to_vec()
+			<Runtime as pallet_ibc::Config>::PalletPrefix::get().to_vec()
 		}
 
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
