@@ -9,6 +9,9 @@ export function encodeAccount(account: Uint8Array): string {
 }
 
 export function getAccountFromSignature(signature: SubstrateExtrinsicSignature | undefined): string {
+  if (!signature) {
+    return "";
+  }
   const signatureValue = signature?.address?.value || signature?.address;
   try {
     if (typeof signatureValue === "string") {

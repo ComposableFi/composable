@@ -73,7 +73,10 @@ export async function processVestingScheduleAddedEvent(
   block: Block,
   eventItem: EventItem
 ): Promise<void> {
-  console.log("Process VestingScheduleAdded");
+  if (eventItem.name !== "Vesting.VestingScheduleAdded") {
+    throw new Error("Unexpected event name");
+  }
+  console.log("processing VestingScheduleAdded", eventItem.event.id);
   const event = new VestingVestingScheduleAddedEvent(ctx, eventItem.event);
 
   const { from, to, asset, schedule, scheduleAmount } = getVestingScheduleAddedEvent(event);
@@ -149,7 +152,10 @@ function getVestingScheduleClaimedEvent(event: VestingClaimedEvent): VestingSche
  * @param eventItem
  */
 export async function processVestingClaimedEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
-  console.log("Process Claimed");
+  if (eventItem.name !== "Vesting.Claimed") {
+    throw new Error("Unexpected event name");
+  }
+  console.log("processing Claimed", eventItem.event.id);
   const event = new VestingClaimedEvent(ctx, eventItem.event);
 
   const { who, claimedAmountPerSchedule } = getVestingScheduleClaimedEvent(event);

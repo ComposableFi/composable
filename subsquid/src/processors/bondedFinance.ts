@@ -66,6 +66,9 @@ export function getOfferCancelledEvent(event: BondedFinanceOfferCancelledEvent):
 export async function processNewOfferEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
   console.log("Process NewOffer");
   // TODO: check why not triggered
+  if (eventItem.name !== "BondedFinance.NewOffer") {
+    throw new Error("Invalid event name");
+  }
   const event = new BondedFinanceNewOfferEvent(ctx, eventItem.event);
 
   const { offerId, beneficiary } = getNewOfferEvent(event);
@@ -92,6 +95,9 @@ export async function processNewOfferEvent(ctx: Context, block: Block, eventItem
  */
 export async function processNewBondEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
   console.log("Process NewBond");
+  if (eventItem.name !== "BondedFinance.NewBond") {
+    throw new Error("Invalid event name");
+  }
   const event = new BondedFinanceNewBondEvent(ctx, eventItem.event);
   const { offerId, nbOfBonds } = getNewBondEvent(event);
 
@@ -119,6 +125,9 @@ export async function processNewBondEvent(ctx: Context, block: Block, eventItem:
  */
 export async function processOfferCancelledEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
   console.log("Process OfferCancelled");
+  if (eventItem.name !== "BondedFinance.OfferCancelled") {
+    throw new Error("Invalid event name");
+  }
   const event = new BondedFinanceOfferCancelledEvent(ctx, eventItem.event);
   const { offerId } = getOfferCancelledEvent(event);
 

@@ -43,6 +43,9 @@ function getDepositEvent(event: BalancesDepositEvent): WithdrawEvent {
  * @param eventItem
  */
 export async function processTransferEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  if (eventItem.name !== "Balances.Transfer") {
+    throw new Error("Invalid event name");
+  }
   const evt = new BalancesTransferEvent(ctx, eventItem.event);
   const transferEvent = getTransferEvent(evt);
   const from = encodeAccount(transferEvent.from);
@@ -61,6 +64,9 @@ export async function processTransferEvent(ctx: Context, block: Block, eventItem
  * @param eventItem
  */
 export async function processWithdrawEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  if (eventItem.name !== "Balances.Withdraw") {
+    throw new Error("Invalid event name");
+  }
   const evt = new BalancesWithdrawEvent(ctx, eventItem.event);
   const withdrawEvent = getWithdrawEvent(evt);
   const who = encodeAccount(withdrawEvent.who);
@@ -78,6 +84,9 @@ export async function processWithdrawEvent(ctx: Context, block: Block, eventItem
  * @param eventItem
  */
 export async function processDepositEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  if (eventItem.name !== "Balances.Deposit") {
+    throw new Error("Invalid event name");
+  }
   const evt = new BalancesDepositEvent(ctx, eventItem.event);
   const depositEvent = getDepositEvent(evt);
   const who = encodeAccount(depositEvent.who);

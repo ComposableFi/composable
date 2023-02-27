@@ -12,7 +12,7 @@ import {
 import { processDepositEvent, processTransferEvent, processWithdrawEvent } from "./processors/balances";
 import { processVestingClaimedEvent, processVestingScheduleAddedEvent } from "./processors/vestingSchedule";
 import { processNewBondEvent, processNewOfferEvent, processOfferCancelledEvent } from "./processors/bondedFinance";
-import { PabloAddLiquidityCall, PabloRemoveLiquidityCall, PabloSwapCall } from "./types/calls";
+import { PabloAddLiquidityCall, PabloBuyCall, PabloRemoveLiquidityCall, PabloSwapCall } from "./types/calls";
 
 processor.run(new TypeormDatabase(), async (ctx: Context) => {
   for (const block of ctx.blocks) {
@@ -53,8 +53,6 @@ processor.run(new TypeormDatabase(), async (ctx: Context) => {
         } else if (item.name === "Pablo.swap") {
           const call = new PabloSwapCall(ctx, item.call);
           await processSwapCallError(ctx, block, item, call);
-        } else if (item.name === "Pablo.buy") {
-          // TODO
         }
       }
     }

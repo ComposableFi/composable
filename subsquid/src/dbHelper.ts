@@ -1,6 +1,7 @@
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
 import { ApiPromise, WsProvider } from "@polkadot/api";
+import { SubstrateExtrinsicSignature } from "@subsquid/substrate-processor";
 import BigNumber from "bignumber.js";
 import { EntityManager, LessThan, MoreThan } from "typeorm";
 import { isInstance } from "class-validator";
@@ -59,7 +60,11 @@ export async function getOrCreateAccount(
   eventItem: EventItem,
   accountId?: string
 ): Promise<Account | undefined> {
-  const accId = accountId || getAccountFromSignature(eventItem.event.extrinsic?.signature);
+  let signature: SubstrateExtrinsicSignature | undefined;
+  if ("extrinsic" in eventItem.event) {
+    signature = eventItem.event.extrinsic?.signature;
+  }
+  const accId = accountId || getAccountFromSignature(signature);
 
   if (!accId) {
     // no-op
@@ -98,7 +103,13 @@ export async function saveEvent(
   eventItem: EventItem,
   eventType: EventType
 ): Promise<Event> {
-  const accountId = getAccountFromSignature(eventItem.event.extrinsic?.signature);
+  let signature: SubstrateExtrinsicSignature | undefined;
+  let txHash: string | undefined;
+  if ("extrinsic" in eventItem.event) {
+    signature = eventItem.event.extrinsic?.signature;
+    txHash = eventItem.event.extrinsic?.hash;
+  }
+  const accountId = getAccountFromSignature(signature);
 
   // Create event
   const newEvent = new Event({
@@ -108,7 +119,7 @@ export async function saveEvent(
     blockNumber: BigInt(block.header.height),
     timestamp: new Date(block.header.timestamp),
     blockId: block.header.hash,
-    txHash: eventItem.event.extrinsic?.hash
+    txHash
   });
 
   // Store event

@@ -123,6 +123,9 @@ function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
 }
 
 export async function processPoolCreatedEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  if (eventItem.name !== "Pablo.PoolCreated") {
+    throw new Error("Invalid event name");
+  }
   console.debug("processing PoolCreatedEvent", eventItem.event.id);
   const pabloPoolCreatedEvent = new PabloPoolCreatedEvent(ctx, eventItem.event);
   const poolCreatedEvent = await getPoolCreatedEvent(pabloPoolCreatedEvent);
@@ -166,6 +169,9 @@ export async function processPoolCreatedEvent(ctx: Context, block: Block, eventI
 }
 
 export async function processLiquidityAddedEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  if (eventItem.name !== "Pablo.LiquidityAdded") {
+    throw new Error("Invalid event name");
+  }
   console.debug("processing LiquidityAddedEvent", eventItem.event.id);
   const pabloLiquidityAddedEvent = new PabloLiquidityAddedEvent(ctx, eventItem.event);
   const liquidityAddedEvent = getLiquidityAddedEvent(pabloLiquidityAddedEvent);
@@ -273,6 +279,9 @@ export async function processLiquidityAddedEvent(ctx: Context, block: Block, eve
 }
 
 export async function processLiquidityRemovedEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  if (eventItem.name !== "Pablo.LiquidityRemoved") {
+    throw new Error("Invalid event name");
+  }
   console.debug("processing LiquidityRemovedEvent", eventItem.event.id);
   const pabloLiquidityRemovedEvent = new PabloLiquidityRemovedEvent(ctx, eventItem.event);
   const liquidityRemovedEvent = getLiquidityRemovedEvent(pabloLiquidityRemovedEvent);
@@ -375,6 +384,9 @@ export async function processLiquidityRemovedEvent(ctx: Context, block: Block, e
 }
 
 export async function processSwappedEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  if (eventItem.name !== "Pablo.Swapped") {
+    throw new Error("Invalid event name");
+  }
   console.debug("processing SwappedEvent", eventItem.event.id);
   const pabloSwappedEvent = new PabloSwappedEvent(ctx, eventItem.event);
   const swappedEvent = getSwappedEvent(pabloSwappedEvent);
@@ -644,6 +656,9 @@ export async function processAddLiquidityCallError(
   item: CallItem,
   call: PabloAddLiquidityCall
 ): Promise<void> {
+  if (item.name !== "Pablo.add_liquidity") {
+    throw new Error("Invalid call name");
+  }
   console.debug("processing AddLiquidityCall error", item.call.id);
 
   const account = getAccountFromSignature(item.extrinsic.signature);
@@ -706,6 +721,9 @@ export async function processRemoveLiquidityCallError(
   item: CallItem,
   call: PabloRemoveLiquidityCall
 ): Promise<void> {
+  if (item.name !== "Pablo.remove_liquidity") {
+    throw new Error("Invalid call name");
+  }
   console.debug("processing RemoveLiquidityCall error", item.call.id);
 
   const account = getAccountFromSignature(item.extrinsic.signature);
@@ -769,6 +787,9 @@ export async function processSwapCallError(
   item: CallItem,
   call: PabloSwapCall
 ): Promise<void> {
+  if (item.name !== "Pablo.swap") {
+    throw new Error("Invalid call name");
+  }
   console.debug("processing SwapCall error", item.call.id);
 
   const account = getAccountFromSignature(item.extrinsic.signature);
