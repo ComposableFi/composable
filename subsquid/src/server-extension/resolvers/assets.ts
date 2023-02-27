@@ -40,8 +40,7 @@ export class AssetsResolver {
     if (!date) {
       const currentPrices = await getCurrentAssetPrices(manager);
       const price =
-        currentPrices?.[assetId] ||
-        (await getOrCreateHistoricalAssetPrice(manager, assetId, new Date(date || new Date()).getTime()));
+        currentPrices?.[assetId] || (await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime()));
 
       return {
         assetId,
