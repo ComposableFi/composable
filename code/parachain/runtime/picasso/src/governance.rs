@@ -4,8 +4,6 @@ use super::*;
 use common::governance::native::*;
 use frame_support::traits::LockIdentifier;
 
-// pub type NativeDemocracy = democracy::Instance1;
-
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
 
