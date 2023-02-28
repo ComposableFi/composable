@@ -17,10 +17,9 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::Governance => matches!(
 				c,
 				RuntimeCall::Democracy(..) |
-					RuntimeCall::Council(..) |
-					RuntimeCall::TechnicalCommittee(..) |
-					RuntimeCall::Treasury(..) |
-					RuntimeCall::Utility(..)
+				RuntimeCall::Council(..) |
+				RuntimeCall::TechnicalCommittee(..) |
+				RuntimeCall::Utility(..)
 			),
 			ProxyType::CancelProxy => {
 				matches!(c, RuntimeCall::Proxy(proxy::Call::reject_announcement { .. }))
@@ -28,11 +27,11 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::Bridge => matches!(
 				c,
 				RuntimeCall::Ibc(..) |
-					RuntimeCall::CumulusXcm(..) |
-					RuntimeCall::DmpQueue(..) |
-					RuntimeCall::UnknownTokens(..) |
-					RuntimeCall::XcmpQueue(..) |
-					RuntimeCall::RelayerXcm(..)
+				RuntimeCall::CumulusXcm(..) |
+				RuntimeCall::DmpQueue(..) |
+				RuntimeCall::UnknownTokens(..) |
+				RuntimeCall::XcmpQueue(..) |
+				RuntimeCall::RelayerXcm(..)
 			),
 		}
 	}
