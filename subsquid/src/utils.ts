@@ -49,7 +49,7 @@ export const fetch = <TResponse>(url: RequestInfo, init?: RequestInit): Promise<
       });
   });
 
-export const fetchRetry = async <TResponse>(url: RequestInfo, init?: RequestInit, retries = 10): Promise<TResponse> => {
+export const fetchRetry = async <TResponse>(url: RequestInfo, init?: RequestInit, retries = 5): Promise<TResponse> => {
   return fetch<TResponse>(url, init)
     .then(res => res)
     .catch(async err => {
