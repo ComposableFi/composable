@@ -39,8 +39,8 @@ use ibc::{
 		ics04_channel::{
 			channel::{Counterparty, Order},
 			error::Error as IbcError,
-			Version as IbcVersion,
 			msgs::acknowledgement::Acknowledgement,
+			Version as IbcVersion,
 		},
 		ics24_host::identifier::{ChannelId, ConnectionId, PortId},
 		ics26_routing::context::{
@@ -426,7 +426,6 @@ impl AsEntryName for IbcPacketTimeoutCall {
 impl AsEntryName for IbcPacketAckCall {
 	const ENTRY: EntryPoint = IbcPacketAck;
 }
-
 
 impl<T: Config + Send + Sync> IbcModule for Router<T> {
 	fn on_chan_open_init(

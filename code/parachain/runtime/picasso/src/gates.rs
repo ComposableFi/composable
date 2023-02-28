@@ -1,12 +1,14 @@
-use crate::{prelude::*, weights, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, ReleaseCommittee};
+use crate::{
+	prelude::*, weights, ReleaseCommittee, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
+};
 use common::{
 	governance::native::{
 		EnsureRootOrHalfNativeTechnical, EnsureRootOrOneThirdNativeTechnical, ReleaseCollective,
 	},
-	MaxStringSize, HOURS, AccountId,
+	AccountId, MaxStringSize, HOURS,
 };
 use composable_traits::account_proxy::ProxyType;
-use frame_support::traits::{InstanceFilter, EitherOfDiverse};
+use frame_support::traits::{EitherOfDiverse, InstanceFilter};
 use frame_system::EnsureRoot;
 use sp_core::ConstU32;
 
@@ -17,9 +19,10 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::Governance => matches!(
 				c,
 				RuntimeCall::Democracy(..) |
-				RuntimeCall::Council(..) |
-				RuntimeCall::TechnicalCommittee(..) |
-				RuntimeCall::Utility(..)
+					RuntimeCall::Council(..) |
+					RuntimeCall::TechnicalCommittee(..) |
+					RuntimeCall::Treasury(..) |
+					RuntimeCall::Utility(..)
 			),
 			ProxyType::CancelProxy => {
 				matches!(c, RuntimeCall::Proxy(proxy::Call::reject_announcement { .. }))
@@ -27,11 +30,11 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::Bridge => matches!(
 				c,
 				RuntimeCall::Ibc(..) |
-				RuntimeCall::CumulusXcm(..) |
-				RuntimeCall::DmpQueue(..) |
-				RuntimeCall::UnknownTokens(..) |
-				RuntimeCall::XcmpQueue(..) |
-				RuntimeCall::RelayerXcm(..)
+					RuntimeCall::CumulusXcm(..) |
+					RuntimeCall::DmpQueue(..) |
+					RuntimeCall::UnknownTokens(..) |
+					RuntimeCall::XcmpQueue(..) |
+					RuntimeCall::RelayerXcm(..)
 			),
 		}
 	}
@@ -77,12 +80,8 @@ impl collective::Config<ReleaseCollective> for Runtime {
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 }
 
-
-pub type EnsureRootOrTwoThirds<T> = EitherOfDiverse<
-EnsureRoot<AccountId>,
-collective::EnsureProportionAtLeast<AccountId, T, 2, 3>,
->;
-
+pub type EnsureRootOrTwoThirds<T> =
+	EitherOfDiverse<EnsureRoot<AccountId>, collective::EnsureProportionAtLeast<AccountId, T, 2, 3>>;
 
 impl membership::Config<membership::Instance3> for Runtime {
 	type RuntimeEvent = RuntimeEvent;

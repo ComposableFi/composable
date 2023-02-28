@@ -803,7 +803,7 @@ construct_runtime!(
 		Democracy: democracy = 33,
 		TechnicalCommittee: collective::<Instance2> = 72,
 		TechnicalCommitteeMembership: membership::<Instance2> = 73,
-		
+
 		ReleaseCommittee: collective::<Instance3> = 74,
 		ReleaseMembership: membership::<Instance3> = 75,
 

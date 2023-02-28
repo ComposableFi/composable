@@ -8,7 +8,7 @@ use pallet_ibc::{
 };
 use sp_core::ConstU64;
 use sp_runtime::{DispatchError, Either};
-use system::{EnsureSignedBy};
+use system::EnsureSignedBy;
 
 use super::*;
 
@@ -114,14 +114,17 @@ use pallet_ibc::ics20::Ics20RateLimiter;
 
 pub struct ConstantAny;
 
-impl Ics20RateLimiter  for ConstantAny {
-    fn allow(msg: &pallet_ibc::ics20::Ics20TransferMsg, _flow_type: pallet_ibc::ics20::FlowType) -> Result<(), ()> {
-        // one DOT/PICA, so so for USDT not safe, but we do not yet do it
+impl Ics20RateLimiter for ConstantAny {
+	fn allow(
+		msg: &pallet_ibc::ics20::Ics20TransferMsg,
+		_flow_type: pallet_ibc::ics20::FlowType,
+	) -> Result<(), ()> {
+		// one DOT/PICA, so so for USDT not safe, but we do not yet do it
 		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(10_u64.pow(12)) {
 			return Ok(())
 		}
 		Err(())
-    }
+	}
 }
 
 impl pallet_ibc::Config for Runtime {
