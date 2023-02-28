@@ -1290,7 +1290,7 @@ parameter_types! {
 }
 
 use frame_system::EnsureSigned;
-use pallet_ibc::Ics20RateLimiter;
+use pallet_ibc::ics20::Ics20RateLimiter;
 impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type RuntimeEvent = RuntimeEvent;
@@ -1788,8 +1788,8 @@ impl_runtime_apis! {
 			<Runtime as pallet_ibc::Config>::PalletPrefix::get().to_vec()
 		}
 
-		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
-			Ibc::query_balance_with_address(addr).ok()
+		fn query_balance_with_address(addr: Vec<u8>, asset_id: CurrencyId) -> Option<u128> {
+			Ibc::query_balance_with_address(addr, asset_id).ok()
 		}
 
 		fn query_send_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {
