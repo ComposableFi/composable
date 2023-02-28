@@ -1,12 +1,13 @@
-use crate::{prelude::*, weights, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin};
+use crate::{prelude::*, weights, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, ReleaseCommittee};
 use common::{
 	governance::native::{
 		EnsureRootOrHalfNativeTechnical, EnsureRootOrOneThirdNativeTechnical, ReleaseCollective,
 	},
-	MaxStringSize, HOURS,
+	MaxStringSize, HOURS, AccountId,
 };
 use composable_traits::account_proxy::ProxyType;
-use frame_support::traits::InstanceFilter;
+use frame_support::traits::{InstanceFilter, EitherOfDiverse};
+use frame_system::EnsureRoot;
 use sp_core::ConstU32;
 
 impl InstanceFilter<RuntimeCall> for ProxyType {
@@ -24,6 +25,15 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::CancelProxy => {
 				matches!(c, RuntimeCall::Proxy(proxy::Call::reject_announcement { .. }))
 			},
+			ProxyType::Bridge => matches!(
+				c,
+				RuntimeCall::Ibc(..) |
+					RuntimeCall::CumulusXcm(..) |
+					RuntimeCall::DmpQueue(..) |
+					RuntimeCall::UnknownTokens(..) |
+					RuntimeCall::XcmpQueue(..) |
+					RuntimeCall::RelayerXcm(..)
+			),
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {
@@ -57,7 +67,6 @@ impl call_filter::Config for Runtime {
 	type MaxStringSize = MaxStringSize;
 }
 
-/// just existing well known form to manage list of accounts
 impl collective::Config<ReleaseCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = RuntimeCall;
@@ -67,4 +76,24 @@ impl collective::Config<ReleaseCollective> for Runtime {
 	type MaxMembers = ConstU32<100>;
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
+}
+
+
+pub type EnsureRootOrTwoThirds<T> = EitherOfDiverse<
+EnsureRoot<AccountId>,
+collective::EnsureProportionAtLeast<AccountId, T, 2, 3>,
+>;
+
+
+impl membership::Config<membership::Instance3> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AddOrigin = EnsureRootOrTwoThirds<ReleaseCollective>;
+	type RemoveOrigin = EnsureRootOrTwoThirds<ReleaseCollective>;
+	type SwapOrigin = EnsureRootOrTwoThirds<ReleaseCollective>;
+	type ResetOrigin = EnsureRootOrTwoThirds<ReleaseCollective>;
+	type PrimeOrigin = EnsureRootOrTwoThirds<ReleaseCollective>;
+	type MembershipInitialized = ReleaseCommittee;
+	type MembershipChanged = ReleaseCommittee;
+	type MaxMembers = ConstU32<100>;
+	type WeightInfo = weights::membership::WeightInfo<Runtime>;
 }

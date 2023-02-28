@@ -1290,7 +1290,7 @@ parameter_types! {
 }
 
 use frame_system::EnsureSigned;
-use pallet_ibc::ics20::Ics20RateLimiter;
+
 impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type RuntimeEvent = RuntimeEvent;

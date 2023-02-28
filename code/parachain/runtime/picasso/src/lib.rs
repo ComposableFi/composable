@@ -803,7 +803,9 @@ construct_runtime!(
 		Democracy: democracy = 33,
 		TechnicalCommittee: collective::<Instance2> = 72,
 		TechnicalCommitteeMembership: membership::<Instance2> = 73,
-		ReleaseCollective: collective::<Instance3> = 74,
+		
+		ReleaseCommittee: collective::<Instance3> = 74,
+		ReleaseMembership: membership::<Instance3> = 75,
 
 		// helpers/utilities
 		Scheduler: scheduler = 34,
@@ -1204,11 +1206,11 @@ impl_runtime_apis! {
 		}
 
 		fn child_trie_key() -> Vec<u8> {
-			<Runtime as pallet_ibc::Config>::PALLET_PREFIX.to_vec()
+			<Runtime as pallet_ibc::Config>::PalletPrefix::get().to_vec()
 		}
 
-		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
-			Ibc::query_balance_with_address(addr).ok()
+		fn query_balance_with_address(addr: Vec<u8>, asset_id:CurrencyId) -> Option<u128> {
+			Ibc::query_balance_with_address(addr, asset_id).ok()
 		}
 
 		fn query_send_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {

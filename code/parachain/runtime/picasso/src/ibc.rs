@@ -8,6 +8,7 @@ use pallet_ibc::{
 };
 use sp_core::ConstU64;
 use sp_runtime::{DispatchError, Either};
+use system::{EnsureSignedBy};
 
 use super::*;
 
@@ -104,6 +105,25 @@ impl core::str::FromStr for MemoMessage {
 	}
 }
 
+parameter_types! {
+	pub const GRANDPA: pallet_ibc::LightClientProtocol = pallet_ibc::LightClientProtocol::Grandpa;
+	pub const IbcTriePrefix : &'static [u8] = b"ibc/";
+}
+
+use pallet_ibc::ics20::Ics20RateLimiter;
+
+pub struct ConstantAny;
+
+impl Ics20RateLimiter  for ConstantAny {
+    fn allow(msg: &pallet_ibc::ics20::Ics20TransferMsg, _flow_type: pallet_ibc::ics20::FlowType) -> Result<(), ()> {
+        // one DOT/PICA, so so for USDT not safe, but we do not yet do it
+		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(10_u64.pow(12)) {
+			return Ok(())
+		}
+		Err(())
+    }
+}
+
 impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type RuntimeEvent = RuntimeEvent;
@@ -112,20 +132,23 @@ impl pallet_ibc::Config for Runtime {
 	type AssetId = CurrencyId;
 	type NativeAssetId = NativeAssetId;
 	type IbcDenomToAssetIdConversion = IbcDenomToAssetIdConversion;
-	const PALLET_PREFIX: &'static [u8] = b"ibc/";
-	const LIGHT_CLIENT_PROTOCOL: pallet_ibc::LightClientProtocol =
-		pallet_ibc::LightClientProtocol::Grandpa;
+	type PalletPrefix = IbcTriePrefix;
+	type LightClientProtocol = GRANDPA;
 	type AccountIdConversion = ibc_primitives::IbcAccount<AccountId>;
 	type Fungibles = Assets;
 	type ExpectedBlockTime = ConstU64<SLOT_DURATION>;
-	type Router = Dummy;
-	type MinimumConnectionDelay = ConstU64<0>;
+	type Router = ();
+	type MinimumConnectionDelay = ConstU64<1>;
 	type ParaId = parachain_info::Pallet<Runtime>;
 	type RelayChain = RelayChainId;
 	type WeightInfo = weights::ibc::WeightInfo<Self>;
 	type AdminOrigin = EnsureRootOrOneThirdNativeTechnical;
-	type SentryOrigin = EnsureRootOrOneThirdNativeTechnical;
+	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
+	type IbcAccountId = Self::AccountId;
+	type TransferOrigin = EnsureSignedBy<ReleaseMembership, Self::IbcAccountId>;
+	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;
+	type Ics20RateLimiter = ConstantAny;
 }
