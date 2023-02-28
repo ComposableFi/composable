@@ -473,20 +473,21 @@ export async function getOrCreateHistoricalAssetPrice(
   if (price === undefined) {
     try {
       price = await getHistoricalCoingeckoPrice(ctx, assetInfo, date);
+      if (price) {
+        // Create new price entry
+        assetPrice = new HistoricalAssetPrice({
+          id: randomUUID(),
+          assetId: assetId.toString(),
+          price,
+          timestamp: date,
+          currency: Currency.USD
+        });
 
-      // Create new price entry
-      assetPrice = new HistoricalAssetPrice({
-        id: randomUUID(),
-        assetId: assetId.toString(),
-        price,
-        timestamp: date,
-        currency: Currency.USD
-      });
-
-      if (isRepository) {
-        await ctx.getRepository(HistoricalAssetPrice).save(assetPrice);
-      } else {
-        await ctx.store.save(assetPrice);
+        if (isRepository) {
+          await ctx.getRepository(HistoricalAssetPrice).save(assetPrice);
+        } else {
+          await ctx.store.save(assetPrice);
+        }
       }
     } catch {
       console.info(`Could not get price for asset ${assetId}. Trying with previous value instead.`);
@@ -513,7 +514,7 @@ export async function getOrCreateHistoricalAssetPrice(
     }
   }
 
-  return price;
+  return price || 0;
 }
 
 /**
@@ -573,18 +574,20 @@ export async function getCurrentAssetPrices(ctx: Context | EntityManager): Promi
 
     // Store all current prices in DB
     for (const [assetId, price] of Object.entries(currentPrices)) {
-      const assetPrice = new HistoricalAssetPrice({
-        id: randomUUID(),
-        assetId,
-        price,
-        timestamp: date,
-        currency: Currency.USD
-      });
+      if (price) {
+        const assetPrice = new HistoricalAssetPrice({
+          id: randomUUID(),
+          assetId,
+          price,
+          timestamp: date,
+          currency: Currency.USD
+        });
 
-      if (isRepository) {
-        await ctx.getRepository(HistoricalAssetPrice).save(assetPrice);
-      } else {
-        await ctx.store.save(assetPrice);
+        if (isRepository) {
+          await ctx.getRepository(HistoricalAssetPrice).save(assetPrice);
+        } else {
+          await ctx.store.save(assetPrice);
+        }
       }
     }
   }
