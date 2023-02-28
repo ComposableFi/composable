@@ -52,7 +52,7 @@ use ibc::{
 use ibc_primitives::{HandlerMessage, IbcHandler};
 use pallet_ibc::routing::ModuleRouter as IbcModuleRouter;
 use sp_runtime::SaturatedConversion;
-use sp_std::{marker::PhantomData, str::FromStr};
+use sp_std::{marker::PhantomData, str::FromStr, vec, vec::Vec};
 
 use crate::{
 	mapping::*,
@@ -194,7 +194,7 @@ impl<T: Config> Default for Router<T> {
 	}
 }
 
-struct MapBinary(sp_std::vec::Vec<u8>);
+struct MapBinary(Vec<u8>);
 
 impl AsRef<[u8]> for MapBinary {
 	fn as_ref(&self) -> &[u8] {
@@ -366,7 +366,7 @@ impl<T: Config> Router<T> {
 		_output: &mut ModuleOutputBuilder,
 		packet: &ibc::core::ics04_channel::packet::Packet,
 		relayer: &pallet_ibc::Signer,
-	) -> Result<sp_std::vec::Vec<u8>, IbcError> {
+	) -> Result<Vec<u8>, IbcError> {
 		let address = Self::port_to_address(&packet.destination_port)?;
 
 		let message = IbcPacketReceiveMsg::new(
