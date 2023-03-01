@@ -22,14 +22,20 @@ pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("COMPOSABLE_R
 pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 mod fees;
+mod gates;
+mod governance;
+pub mod ibc;
 mod prelude;
 mod weights;
 mod xcmp;
+use gates::*;
+use governance::*;
 
 use common::{
-	rewards::StakingPot, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	ForeignAssetId, Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
-	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	governance::native::NativeTreasury, rewards::StakingPot, AccountId, AccountIndex, Address,
+	Amount, AuraId, Balance, BlockNumber, ForeignAssetId, Hash, Moment, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::assets::Asset;
@@ -41,7 +47,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult,
+	ApplyExtrinsicResult, Either,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -301,8 +307,6 @@ impl WeightToFeePolynomial for WeightToFee {
 	}
 }
 
-type NativeTreasury = treasury::Instance1;
-
 impl transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
@@ -550,69 +554,6 @@ impl orml_tokens::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
-	/// percentage of proposal that most be bonded by the proposer
-	pub const ProposalBond: Permill = Permill::from_percent(5);
-	// TODO: rationale?
-	pub ProposalBondMinimum: Balance = 5 * CurrencyId::unit::<Balance>();
-	pub ProposalBondMaximum: Balance = 1000 * CurrencyId::unit::<Balance>();
-	pub const SpendPeriod: BlockNumber = 7 * DAYS;
-	pub const Burn: Permill = Permill::from_percent(0);
-
-	pub const MaxApprovals: u32 = 30;
-}
-
-impl treasury::Config<NativeTreasury> for Runtime {
-	type PalletId = TreasuryPalletId;
-	type Currency = Balances;
-	type ApproveOrigin = EnsureRootOrHalfCouncil;
-	type RejectOrigin = EnsureRootOrHalfCouncil;
-	type RuntimeEvent = RuntimeEvent;
-	type OnSlash = Treasury;
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = ProposalBondMinimum;
-	type ProposalBondMaximum = ProposalBondMaximum;
-	type SpendPeriod = SpendPeriod;
-	type Burn = Burn;
-	type MaxApprovals = MaxApprovals;
-	type BurnDestination = ();
-	type WeightInfo = weights::treasury::WeightInfo<Runtime>;
-	// TODO: add bounties?
-	type SpendFunds = ();
-	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
-}
-
-parameter_types! {
-	pub const CouncilMotionDuration: BlockNumber = 7 * DAYS;
-	pub const CouncilMaxProposals: u32 = 100;
-	pub const CouncilMaxMembers: u32 = 100;
-}
-
-impl membership::Config<membership::Instance1> for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AddOrigin = EnsureRootOrHalfCouncil;
-	type RemoveOrigin = EnsureRootOrHalfCouncil;
-	type SwapOrigin = EnsureRootOrHalfCouncil;
-	type ResetOrigin = EnsureRootOrHalfCouncil;
-	type PrimeOrigin = EnsureRootOrHalfCouncil;
-	type MembershipInitialized = Council;
-	type MembershipChanged = Council;
-	type MaxMembers = CouncilMaxMembers;
-	type WeightInfo = weights::membership::WeightInfo<Runtime>;
-}
-
-impl collective::Config<CouncilInstance> for Runtime {
-	type RuntimeOrigin = RuntimeOrigin;
-	type Proposal = RuntimeCall;
-	type RuntimeEvent = RuntimeEvent;
-	type MotionDuration = CouncilMotionDuration;
-	type MaxProposals = CouncilMaxProposals;
-	type MaxMembers = CouncilMaxMembers;
-	type DefaultVote = collective::PrimeDefaultVote;
-	type WeightInfo = weights::collective::WeightInfo<Runtime>;
-}
-
-parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
 	RuntimeBlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
@@ -653,73 +594,12 @@ impl utility::Config for Runtime {
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
 }
 
-impl governance_registry::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AssetId = CurrencyId;
-	type WeightInfo = ();
-}
-
 impl currency_factory::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
 	type Balance = Balance;
-}
-
-parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
-	pub const VotingPeriod: BlockNumber = 5 * DAYS;
-	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
-
-	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
-	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
-	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
-	// TODO: prod value
-	pub PreimageByteDeposit: Balance = CurrencyId::milli();
-	pub const InstantAllowed: bool = true;
-	pub const MaxVotes: u32 = 100;
-	pub const MaxProposals: u32 = 100;
-	pub const DemocracyId: LockIdentifier = *b"democrac";
-	pub RootOrigin: RuntimeOrigin = frame_system::RawOrigin::Root.into();
-}
-
-impl democracy::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type EnactmentPeriod = EnactmentPeriod;
-	type LaunchPeriod = LaunchPeriod;
-	type VotingPeriod = VotingPeriod;
-	type VoteLockingPeriod = EnactmentPeriod;
-	type MinimumDeposit = MinimumDeposit;
-
-	// TODO: prod values
-	type ExternalOrigin = EnsureRootOrHalfCouncil;
-	type ExternalMajorityOrigin = EnsureRootOrHalfCouncil;
-	type ExternalDefaultOrigin = EnsureRootOrHalfCouncil;
-
-	type FastTrackOrigin = EnsureRootOrHalfCouncil;
-	type InstantOrigin = EnsureRootOrHalfCouncil;
-	type InstantAllowed = InstantAllowed;
-
-	type FastTrackVotingPeriod = FastTrackVotingPeriod;
-	type CancellationOrigin = EnsureRootOrHalfCouncil;
-	type BlacklistOrigin = EnsureRootOrHalfCouncil;
-	type CancelProposalOrigin = EnsureRootOrHalfCouncil;
-	type VetoOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
-	type Slash = Treasury;
-
-	type CooloffPeriod = CooloffPeriod;
-	type MaxProposals = MaxProposals;
-	type MaxVotes = MaxVotes;
-	type PalletsOrigin = OriginCaller;
-
-	type Preimages = Preimage;
-	type MaxDeposits = ConstU32<100>;
-	type MaxBlacklisted = ConstU32<100>;
-
-	type Scheduler = Scheduler;
-	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -762,22 +642,6 @@ parameter_types! {
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
 }
 
-/// The calls we permit to be executed by extrinsics
-pub struct BaseCallFilter;
-
-impl Contains<RuntimeCall> for BaseCallFilter {
-	fn contains(call: &RuntimeCall) -> bool {
-		// TODO: not up to date as whole composable setup
-		!matches!(
-			call,
-			RuntimeCall::Tokens(_) |
-				RuntimeCall::Indices(_) |
-				RuntimeCall::Democracy(_) |
-				RuntimeCall::Treasury(_)
-		)
-	}
-}
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -809,9 +673,16 @@ construct_runtime!(
 		CouncilMembership: membership::<Instance1> = 31,
 		Treasury: treasury::<Instance1> = 32,
 		Democracy: democracy = 33,
+		TechnicalCommittee: collective::<Instance2> = 72,
+		TechnicalCommitteeMembership: membership::<Instance2> = 73,
+
+		ReleaseCommittee: collective::<Instance3> = 74,
+		ReleaseMembership: membership::<Instance3> = 75,
+
 		Scheduler: scheduler = 34,
 		Utility: utility = 35,
 		Preimage: preimage = 36,
+		Proxy: pallet_proxy = 37,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
@@ -827,6 +698,11 @@ construct_runtime!(
 		CrowdloanRewards: crowdloan_rewards = 56,
 		Assets: assets = 57,
 		GovernanceRegistry: governance_registry = 58,
+
+		CallFilter: call_filter = 100,
+
+		Ibc: pallet_ibc = 190,
+
 	}
 );
 
@@ -893,7 +769,8 @@ mod benches {
 		[scheduler, Scheduler]
 		[collective, Council]
 		[utility, Utility]
-	[democracy, Democracy]
+		[democracy, Democracy]
+		[proxy, Proxy]
 	);
 }
 
@@ -1071,6 +948,142 @@ impl_runtime_apis! {
 			Ok(batches)
 		}
 	}
+
+	impl ibc_runtime_api::IbcRuntimeApi<Block, CurrencyId> for Runtime {
+		fn para_id() -> u32 {
+			<Runtime as cumulus_pallet_parachain_system::Config>::SelfParaId::get().into()
+		}
+
+		fn child_trie_key() -> Vec<u8> {
+			<Runtime as pallet_ibc::Config>::PalletPrefix::get().to_vec()
+		}
+
+		fn query_balance_with_address(addr: Vec<u8>, asset_id:CurrencyId) -> Option<u128> {
+			Ibc::query_balance_with_address(addr, asset_id).ok()
+		}
+
+		fn query_send_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {
+			Ibc::get_send_packet_info(channel_id, port_id, seqs).ok()
+		}
+
+		fn query_recv_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {
+			Ibc::get_recv_packet_info(channel_id, port_id, seqs).ok()
+		}
+
+		fn client_update_time_and_height(client_id: Vec<u8>, revision_number: u64, revision_height: u64) -> Option<(u64, u64)>{
+			Ibc::client_update_time_and_height(client_id, revision_number, revision_height).ok()
+		}
+
+		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {
+			Ibc::client(client_id).ok()
+		}
+
+		fn client_consensus_state(client_id: Vec<u8>, revision_number: u64, revision_height: u64, latest_cs: bool) -> Option<ibc_primitives::QueryConsensusStateResponse> {
+			Ibc::consensus_state(client_id, revision_number, revision_height, latest_cs).ok()
+		}
+
+		fn clients() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+			Some(Ibc::clients())
+		}
+
+		fn connection(connection_id: Vec<u8>) -> Option<ibc_primitives::QueryConnectionResponse>{
+			Ibc::connection(connection_id).ok()
+		}
+
+		fn connections() -> Option<ibc_primitives::QueryConnectionsResponse> {
+			Ibc::connections().ok()
+		}
+
+		fn connection_using_client(client_id: Vec<u8>) -> Option<Vec<ibc_primitives::IdentifiedConnection>>{
+			Ibc::connection_using_client(client_id).ok()
+		}
+
+		fn connection_handshake(client_id: Vec<u8>, connection_id: Vec<u8>) -> Option<ibc_primitives::ConnectionHandshake> {
+			Ibc::connection_handshake(client_id, connection_id).ok()
+		}
+
+		fn channel(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryChannelResponse> {
+			Ibc::channel(channel_id, port_id).ok()
+		}
+
+		fn channel_client(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::IdentifiedClientState> {
+			Ibc::channel_client(channel_id, port_id).ok()
+		}
+
+		fn connection_channels(connection_id: Vec<u8>) -> Option<ibc_primitives::QueryChannelsResponse> {
+			Ibc::connection_channels(connection_id).ok()
+		}
+
+		fn channels() -> Option<ibc_primitives::QueryChannelsResponse> {
+			Ibc::channels().ok()
+		}
+
+		fn packet_commitments(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryPacketCommitmentsResponse> {
+			Ibc::packet_commitments(channel_id, port_id).ok()
+		}
+
+		fn packet_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryPacketAcknowledgementsResponse>{
+			Ibc::packet_acknowledgements(channel_id, port_id).ok()
+		}
+
+		fn unreceived_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<u64>> {
+			Ibc::unreceived_packets(channel_id, port_id, seqs).ok()
+		}
+
+		fn unreceived_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<u64>> {
+			Ibc::unreceived_acknowledgements(channel_id, port_id, seqs).ok()
+		}
+
+		fn next_seq_recv(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryNextSequenceReceiveResponse> {
+			Ibc::next_seq_recv(channel_id, port_id).ok()
+		}
+
+		fn packet_commitment(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketCommitmentResponse> {
+			Ibc::packet_commitment(channel_id, port_id, seq).ok()
+		}
+
+		fn packet_acknowledgement(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketAcknowledgementResponse> {
+			Ibc::packet_acknowledgement(channel_id, port_id, seq).ok()
+		}
+
+		fn packet_receipt(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketReceiptResponse> {
+			Ibc::packet_receipt(channel_id, port_id, seq).ok()
+		}
+
+		fn denom_trace(asset_id: CurrencyId) -> Option<ibc_primitives::QueryDenomTraceResponse> {
+			Ibc::get_denom_trace(asset_id)
+		}
+
+		fn denom_traces(key: Option<CurrencyId>, offset: Option<u32>, limit: u64, count_total: bool) -> ibc_primitives::QueryDenomTracesResponse {
+			let key = key.map(Either::Left).or_else(|| offset.map(Either::Right));
+			Ibc::get_denom_traces(key, limit, count_total)
+		}
+
+		fn block_events(extrinsic_index: Option<u32>) -> Vec<Result<pallet_ibc::events::IbcEvent, pallet_ibc::errors::IbcError>> {
+			let mut raw_events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter();
+			if let Some(idx) = extrinsic_index {
+				raw_events.find_map(|e| {
+					let frame_system::EventRecord{ event, phase, ..} = *e;
+					match (event, phase) {
+						(RuntimeEvent::Ibc(pallet_ibc::Event::Events{ events }), frame_system::Phase::ApplyExtrinsic(index)) if index == idx => Some(events),
+						_ => None
+					}
+				}).unwrap_or_default()
+			}
+			else {
+				raw_events.filter_map(|e| {
+					let frame_system::EventRecord{ event, ..} = *e;
+
+					match event {
+						RuntimeEvent::Ibc(pallet_ibc::Event::Events{ events }) => {
+								Some(events)
+							},
+						_ => None
+					}
+				}).flatten().collect()
+			}
+		}
+	 }
 }
 
 struct CheckInherents;
