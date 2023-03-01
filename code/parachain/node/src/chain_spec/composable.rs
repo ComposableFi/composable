@@ -67,7 +67,7 @@ pub fn genesis_config(
 		council_membership: Default::default(),
 		council: Default::default(),
 		technical_committee: Default::default(),
-		technical_committee_membership: picasso_runtime::TechnicalCommitteeMembershipConfig {
+		technical_committee_membership: composable_runtime::TechnicalCommitteeMembershipConfig {
 			members: vec![root.clone()].try_into().expect("const"),
 			phantom: Default::default(),
 		},
@@ -76,13 +76,13 @@ pub fn genesis_config(
 		relayer_xcm: Default::default(),
 		tokens: Default::default(),
 		transaction_payment: Default::default(),
-		ibc: picasso_runtime::IbcConfig {
+		ibc: composable_runtime::IbcConfig {
 			assets: vec![pallet_ibc::pallet::AssetConfig {
 				id: primitives::currency::CurrencyId::LAYR,
 				denom: b"1".to_vec(),
 			}],
 		},
-		release_membership: picasso_runtime::ReleaseMembershipConfig {
+		release_membership: composable_runtime::ReleaseMembershipConfig {
 			members: vec![root].try_into().expect("const"),
 			phantom: Default::default(),
 		},
