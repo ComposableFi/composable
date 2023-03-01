@@ -702,9 +702,17 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 					RuntimeCall::Utility(..)
 			),
 			ProxyType::CancelProxy => {
-				// TODO (vim): We might not need this
 				matches!(c, RuntimeCall::Proxy(proxy::Call::reject_announcement { .. }))
 			},
+			ProxyType::Bridge => matches!(
+				c,
+				RuntimeCall::Ibc(..) |
+					RuntimeCall::CumulusXcm(..) |
+					RuntimeCall::DmpQueue(..) |
+					RuntimeCall::UnknownTokens(..) |
+					RuntimeCall::XcmpQueue(..) |
+					RuntimeCall::RelayerXcm(..)
+			),
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {

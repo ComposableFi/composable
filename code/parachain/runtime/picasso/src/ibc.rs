@@ -2,6 +2,7 @@ use ::ibc::core::{
 	ics24_host::identifier::PortId,
 	ics26_routing::context::{Module, ModuleId},
 };
+use frame_support::traits::EitherOf;
 use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
 	IbcDenoms,
@@ -149,7 +150,10 @@ impl pallet_ibc::Config for Runtime {
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
-	type TransferOrigin = EnsureSignedBy<ReleaseMembership, Self::IbcAccountId>;
+	type TransferOrigin = EitherOf<
+		EnsureSignedBy<ReleaseMembership, Self::IbcAccountId>,
+		EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>,
+	>;
 	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;
