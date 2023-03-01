@@ -62,17 +62,12 @@ impl Display for CurrencyId {
 	}
 }
 
-impl WellKnownCurrency for CurrencyId {
-	const NATIVE: CurrencyId = CurrencyId::PICA;
-	const RELAY_NATIVE: CurrencyId = CurrencyId::KSM;
-}
-
 #[macro_export]
 macro_rules! list_assets {
 	(
 		$(
 			$(#[$attr:meta])*
-			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal $(, $location:expr $(, $decimals:expr )?)? );
+			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal $(, $xcm_location:expr $(, $decimals:expr )?)? );
 		)*
 	) => {
 		$(
@@ -97,7 +92,7 @@ macro_rules! list_assets {
 		pub fn local_to_xcm_reserve(id: CurrencyId) -> Option<xcm::latest::MultiLocation> {
             match id {
 				$(
-					$( CurrencyId::$NAME => $location, )?
+					$( CurrencyId::$NAME => $xcm_location, )?
 				)*
 				_ => None,
 			}
@@ -123,7 +118,7 @@ macro_rules! list_assets {
 					let mut map = BTreeMap::new();
 					$(
 						$(
-							let xcm_id: Option<xcm::latest::MultiLocation> = $location;
+							let xcm_id: Option<xcm::latest::MultiLocation> = $xcm_location;
 							if let Some(xcm_id) = xcm_id {
 								map.insert(xcm_id.encode(), CurrencyId::$NAME);
 							}
@@ -180,10 +175,15 @@ impl CurrencyId {
 		);
 
 		/// DOT from Composable on Picasso over IBC
-		pub const ibcxcDOT: CurrencyId = CurrencyId(6, None);
+		pub const ibcDOT: CurrencyId = CurrencyId(6, None);
 
 		// DOT from Polkadot on Composable
-		pub const xcDOT: CurrencyId = CurrencyId(7, None);
+		pub const DOT: CurrencyId = CurrencyId(7, None);
+
+		pub const ibcPICA: CurrencyId = CurrencyId(
+			8,
+			None
+		);
 
 		pub const KSM_USDT_LPT: CurrencyId = CurrencyId(105, None);
 		pub const PICA_USDT_LPT: CurrencyId = CurrencyId(106, None);

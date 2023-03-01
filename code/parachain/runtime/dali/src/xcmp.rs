@@ -135,7 +135,7 @@ type IsReserveAssetLocationFilter =
 	(MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
 
 type AssetsIdConverter =
-	CurrencyIdConvert<AssetsRegistry, CurrencyId, ParachainInfo, StaticAssetsMap>;
+	CurrencyIdConvert<AssetsRegistry,  primitives::topology::Picasso, ParachainInfo, StaticAssetsMap>;
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,

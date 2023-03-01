@@ -223,8 +223,8 @@ impl<
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
 		log::trace!(target: "xcmp::convert", "converting {:?} on {:?}", &location, ThisParaId::get());
 		match location {
-			topology::relay::LOCATION => Some(CurrencyId::RELAY_NATIVE),
-			topology::this::LOCAL => Some(CurrencyId::NATIVE),
+			topology::relay::LOCATION => Some(WellKnown::RELAY_NATIVE),
+			topology::this::LOCAL => Some(WellKnown::NATIVE),
 			MultiLocation { parents, interior: X2(Parachain(id), GeneralIndex(index)) }
 				if parents == 1 && Id::from(id) == ThisParaId::get() =>
 				Some(CurrencyId(index)),

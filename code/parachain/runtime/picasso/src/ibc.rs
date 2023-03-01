@@ -31,11 +31,15 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 			return Ok(id)
 		}
 
-		// will be decided in next prs for composable <-> picasso ibc and/or pallets-assets updates
-		// merge
-		if denom == &alloc::format!("transfer/channel-0/{:}", CurrencyId::ibcxcDOT.0) {
-			IbcDenoms::<Runtime>::insert(denom_bytes, CurrencyId::ibcxcDOT);
-			return Ok(CurrencyId::ibcxcDOT)
+		
+		if denom == &alloc::format!("transfer/channel-0/{:}", CurrencyId::DOT.0) {
+			IbcDenoms::<Runtime>::insert(denom_bytes, CurrencyId::ibcDOT);
+			return Ok(CurrencyId::ibcDOT)
+		}
+
+		if denom == &alloc::format!("{:}", CurrencyId::PICA.0) {
+			IbcDenoms::<Runtime>::insert(denom_bytes, CurrencyId::PICA);
+			return Ok(CurrencyId::PICA)
 		}
 
 		Err(DispatchError::Other("IbcDenomToAssetIdConversion: denom not found"))
