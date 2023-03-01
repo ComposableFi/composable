@@ -466,7 +466,7 @@ export async function getOrCreateHistoricalAssetPrice(
         });
     price = assetPrice?.price;
   } catch {
-    // Ignore
+    // Ignore. This try/catch is needed to avoid potential errors.
   }
 
   // If no price available, get it from the API and update DB
@@ -502,13 +502,17 @@ export async function getOrCreateHistoricalAssetPrice(
         }
       };
 
-      assetPrice = isRepository
-        ? await ctx.getRepository(HistoricalAssetPrice).findOne(options)
-        : await ctx.store.findOne(HistoricalAssetPrice, options);
+      try {
+        assetPrice = isRepository
+          ? await ctx.getRepository(HistoricalAssetPrice).findOne(options)
+          : await ctx.store.findOne(HistoricalAssetPrice, options);
 
-      if (assetPrice) {
-        price = assetPrice.price;
-      } else {
+        if (assetPrice) {
+          price = assetPrice.price;
+        } else {
+          console.error(`Could not get price for asset ${assetId}. Ignoring.`);
+        }
+      } catch {
         console.error(`Could not get price for asset ${assetId}. Ignoring.`);
       }
     }
@@ -534,21 +538,26 @@ export async function getCurrentAssetPrices(ctx: Context | EntityManager): Promi
 
   // Check if all prices are in DB
   for (const { assetId } of assetList.values()) {
-    // Search for price in DB
-    const where = {
-      assetId,
-      timestamp: date
-    };
-    const assetPrice = isRepository
-      ? await ctx.getRepository(HistoricalAssetPrice).findOne({ where })
-      : await ctx.store.findOne(HistoricalAssetPrice, { where });
+    try {
+      // Search for price in DB
+      const where = {
+        assetId,
+        timestamp: date
+      };
+      const assetPrice = isRepository
+        ? await ctx.getRepository(HistoricalAssetPrice).findOne({ where })
+        : await ctx.store.findOne(HistoricalAssetPrice, { where });
 
-    // If any price is missing, flag it and break
-    if (assetPrice?.price === undefined) {
+      // If any price is missing, flag it and break
+      if (assetPrice?.price === undefined) {
+        missingPrices = true;
+        break;
+      } else {
+        currentPrices[assetId] = assetPrice.price;
+      }
+    } catch {
       missingPrices = true;
       break;
-    } else {
-      currentPrices[assetId] = assetPrice.price;
     }
   }
 
@@ -559,17 +568,21 @@ export async function getCurrentAssetPrices(ctx: Context | EntityManager): Promi
       .filter(Boolean)
       .join("%2C");
     const endpoint = `https://api.coingecko.com/api/v3/simple/price?ids=${queryIds}&vs_currencies=usd`;
-    const res = await fetch<CoingeckoPrices>(endpoint);
+    try {
+      const res = await fetch<CoingeckoPrices>(endpoint);
 
-    for (const { assetId, coingeckoId, spotPriceBaseAsset } of assetList.values()) {
-      // For prices obtained from Coingecko, store them directly
-      if (coingeckoId) {
-        currentPrices[assetId] = res[coingeckoId].usd;
-      } else if (spotPriceBaseAsset) {
-        // For prices obtained from swap, get the spot price and store it
-        const spotPrice = await getSpotPrice(ctx, assetId, spotPriceBaseAsset.assetId, spotPriceBaseAsset.poolId);
-        currentPrices[assetId] = res[spotPriceBaseAsset.coingeckoId].usd / spotPrice;
+      for (const { assetId, coingeckoId, spotPriceBaseAsset } of assetList.values()) {
+        // For prices obtained from Coingecko, store them directly
+        if (coingeckoId) {
+          currentPrices[assetId] = res[coingeckoId].usd;
+        } else if (spotPriceBaseAsset) {
+          // For prices obtained from swap, get the spot price and store it
+          const spotPrice = await getSpotPrice(ctx, assetId, spotPriceBaseAsset.assetId, spotPriceBaseAsset.poolId);
+          currentPrices[assetId] = res[spotPriceBaseAsset.coingeckoId].usd / spotPrice;
+        }
       }
+    } catch {
+      throw new Error(`Failed to fetch or parse ${endpoint}`);
     }
 
     // Store all current prices in DB
