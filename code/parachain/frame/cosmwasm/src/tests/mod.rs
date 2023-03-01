@@ -329,7 +329,7 @@ fn ibc_calls_and_callbacks() {
 		assert_ok!(ibc.on_recv_packet(
 			ctx,
 			output,
-			&Packet {
+			&mut Packet {
 				sequence: 42.into(),
 				source_port: port_id.clone(),
 				source_channel: <_>::default(),

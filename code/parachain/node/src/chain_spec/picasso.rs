@@ -40,10 +40,7 @@ pub fn genesis_config(
 			.concat(),
 		},
 		aura: Default::default(),
-		sudo: picasso_runtime::SudoConfig {
-			// Assign network admin rights.
-			key: Some(root),
-		},
+		sudo: picasso_runtime::SudoConfig { key: Some(root.clone()) },
 		indices: picasso_runtime::IndicesConfig { indices: vec![] },
 		parachain_info: picasso_runtime::ParachainInfoConfig { parachain_id: id },
 		aura_ext: Default::default(),
@@ -67,12 +64,14 @@ pub fn genesis_config(
 			..Default::default()
 		},
 		council_membership: Default::default(),
-		// council will get its members from council_membership
 		council: Default::default(),
 		democracy: Default::default(),
 		treasury: Default::default(),
 		technical_committee: Default::default(),
-		technical_committee_membership: Default::default(),
+		technical_committee_membership: picasso_runtime::TechnicalCommitteeMembershipConfig {
+			members: vec![root.clone()].try_into().expect("const"),
+			phantom: Default::default(),
+		},
 		relayer_xcm: Default::default(),
 		assets_registry: Default::default(),
 		tokens: Default::default(),
@@ -84,6 +83,10 @@ pub fn genesis_config(
 				denom: b"1".to_vec(),
 			}],
 		},
-		release_collective: Default::default(),
+		release_membership: picasso_runtime::ReleaseMembershipConfig {
+			members: vec![root].try_into().expect("const"),
+			phantom: Default::default(),
+		},
+		release_committee: Default::default(),
 	}
 }

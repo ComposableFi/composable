@@ -702,9 +702,17 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 					RuntimeCall::Utility(..)
 			),
 			ProxyType::CancelProxy => {
-				// TODO (vim): We might not need this
 				matches!(c, RuntimeCall::Proxy(proxy::Call::reject_announcement { .. }))
 			},
+			ProxyType::Bridge => matches!(
+				c,
+				RuntimeCall::Ibc(..) |
+					RuntimeCall::CumulusXcm(..) |
+					RuntimeCall::DmpQueue(..) |
+					RuntimeCall::UnknownTokens(..) |
+					RuntimeCall::XcmpQueue(..) |
+					RuntimeCall::RelayerXcm(..)
+			),
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {
@@ -1284,6 +1292,13 @@ impl core::str::FromStr for MemoMessage {
 	}
 }
 
+parameter_types! {
+	pub const GRANDPA: pallet_ibc::LightClientProtocol = pallet_ibc::LightClientProtocol::Grandpa;
+	pub const IbcTriePrefix : &'static [u8] = b"ibc/";
+}
+
+use frame_system::EnsureSigned;
+
 impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type RuntimeEvent = RuntimeEvent;
@@ -1292,9 +1307,8 @@ impl pallet_ibc::Config for Runtime {
 	type AssetId = CurrencyId;
 	type NativeAssetId = NativeAssetId;
 	type IbcDenomToAssetIdConversion = IbcDenomToAssetIdConversion;
-	const PALLET_PREFIX: &'static [u8] = b"ibc/";
-	const LIGHT_CLIENT_PROTOCOL: pallet_ibc::LightClientProtocol =
-		pallet_ibc::LightClientProtocol::Grandpa;
+	type PalletPrefix = IbcTriePrefix;
+	type LightClientProtocol = GRANDPA;
 	type AccountIdConversion = ibc_primitives::IbcAccount<AccountId>;
 	type Fungibles = Assets;
 	type ExpectedBlockTime = ExpectedBlockTime;
@@ -1304,10 +1318,14 @@ impl pallet_ibc::Config for Runtime {
 	type RelayChain = RelayChainId;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type SentryOrigin = EnsureRoot<AccountId>;
+	type FreezeOrigin = EnsureRoot<AccountId>;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
+	type IbcAccountId = Self::AccountId;
+	type TransferOrigin = EnsureSigned<Self::IbcAccountId>;
+	type RelayerOrigin = EnsureSigned<Self::AccountId>;
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;
+	type Ics20RateLimiter = Everything;
 }
 
 impl pallet_ibc_ping::Config for Runtime {
@@ -1775,11 +1793,11 @@ impl_runtime_apis! {
 		}
 
 		fn child_trie_key() -> Vec<u8> {
-			<Runtime as pallet_ibc::Config>::PALLET_PREFIX.to_vec()
+			<Runtime as pallet_ibc::Config>::PalletPrefix::get().to_vec()
 		}
 
-		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
-			Ibc::query_balance_with_address(addr).ok()
+		fn query_balance_with_address(addr: Vec<u8>, asset_id: CurrencyId) -> Option<u128> {
+			Ibc::query_balance_with_address(addr, asset_id).ok()
 		}
 
 		fn query_send_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {
