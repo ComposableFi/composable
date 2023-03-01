@@ -95,17 +95,18 @@ export class PabloTotalVolumeResolver {
       }
 
       for (const assetId of Object.keys(currVolumes)) {
-        const price = prices?.[assetId]
-          ? prices[assetId]
-          : await getOrCreateHistoricalAssetPrice(manager, assetId, timestamp.getTime());
+        if (currVolumes[assetId]) {
+          const price =
+            prices?.[assetId] || (await getOrCreateHistoricalAssetPrice(manager, assetId, timestamp.getTime()));
 
-        volumes[time].push(
-          new AssetIdAmount({
-            assetId: assetId.toString(),
-            amount: currVolumes[assetId.toString()],
-            price
-          })
-        );
+          volumes[time].push(
+            new AssetIdAmount({
+              assetId: assetId.toString(),
+              amount: currVolumes[assetId.toString()],
+              price
+            })
+          );
+        }
       }
     }
 

@@ -104,12 +104,14 @@ export class TotalValueLockedResolver {
     for (const time of Object.keys(lockedValues)) {
       const tvl: PicassoTVL[] = [];
       for (const assetId of Object.keys(lockedValues[time])) {
-        const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date(time).getTime());
-        tvl.push({
-          assetId,
-          amount: lockedValues[time][assetId],
-          price
-        });
+        if (lockedValues[time][assetId]) {
+          const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date(time).getTime());
+          tvl.push({
+            assetId,
+            amount: lockedValues[time][assetId],
+            price
+          });
+        }
       }
       totalValueLocked.push({
         date: time,

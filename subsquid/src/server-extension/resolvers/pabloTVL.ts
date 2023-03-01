@@ -96,8 +96,10 @@ export class PabloTVLResolver {
     for (const date of Object.keys(lockedValues)) {
       const tvl: PicassoTVL[] = [];
       for (const assetId of Object.keys(lockedValues[date])) {
-        const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date(date).getTime());
-        tvl.push({ assetId, amount: lockedValues[date][assetId], price });
+        if (lockedValues[date][assetId]) {
+          const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date(date).getTime());
+          tvl.push({ assetId, amount: lockedValues[date][assetId], price });
+        }
       }
 
       pabloTVL.push(new PabloTVL({ date, lockedValues: tvl }));
