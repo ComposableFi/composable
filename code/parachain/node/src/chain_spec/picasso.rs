@@ -40,9 +40,7 @@ pub fn genesis_config(
 			.concat(),
 		},
 		aura: Default::default(),
-		sudo: picasso_runtime::SudoConfig {
-			key: Some(root.clone()),
-		},
+		sudo: picasso_runtime::SudoConfig { key: Some(root.clone()) },
 		indices: picasso_runtime::IndicesConfig { indices: vec![] },
 		parachain_info: picasso_runtime::ParachainInfoConfig { parachain_id: id },
 		aura_ext: Default::default(),
@@ -71,8 +69,8 @@ pub fn genesis_config(
 		treasury: Default::default(),
 		technical_committee: Default::default(),
 		technical_committee_membership: picasso_runtime::TechnicalCommitteeMembershipConfig {
-			members : vec![root.clone()].try_into().expect("const"),
-			phantom : Default::default(),
+			members: vec![root.clone()].try_into().expect("const"),
+			phantom: Default::default(),
 		},
 		relayer_xcm: Default::default(),
 		assets_registry: Default::default(),
@@ -86,9 +84,9 @@ pub fn genesis_config(
 			}],
 		},
 		release_membership: picasso_runtime::ReleaseMembershipConfig {
-			members : vec![root].try_into().expect("const"),
-			phantom : Default::default(),
+			members: vec![root].try_into().expect("const"),
+			phantom: Default::default(),
 		},
-		release_committee :  Default::default(),
+		release_committee: Default::default(),
 	}
 }
