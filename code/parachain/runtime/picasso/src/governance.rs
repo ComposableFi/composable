@@ -151,7 +151,6 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type MaxApprovals = MaxApprovals;
 	type BurnDestination = ();
 	type WeightInfo = treasury::weights::SubstrateWeight<Runtime>;
-	// TODO: add bounties?
 	type SpendFunds = ();
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 }
