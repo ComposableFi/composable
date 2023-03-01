@@ -12,7 +12,7 @@ impl ForeignToNativePriceConverter for WellKnownForeignToNativePriceConverter {
 		match asset_id {
 			CurrencyId::DOT => Some(rational!(2143 / 1_000_000)),
 			CurrencyId::LAYR => Some(rational!(1 / 1)),
-			CurrencyId::ibcPICA => Some(rational!(1 / 1)),
+			CurrencyId::PICA => Some(rational!(1 / 1)),
 			_ => None,
 		}
 	}

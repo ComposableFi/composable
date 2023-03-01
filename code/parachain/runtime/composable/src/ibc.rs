@@ -40,8 +40,8 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 		}
 
 		if denom == &alloc::format!("transfer/channel-0/{:}", CurrencyId::PICA.0) {
-			IbcDenoms::<Runtime>::insert(denom_bytes, CurrencyId::ibcPICA);
-			return Ok(CurrencyId::ibcPICA)
+			IbcDenoms::<Runtime>::insert(denom_bytes, CurrencyId::PICA);
+			return Ok(CurrencyId::PICA)
 		}
 
 		Err(DispatchError::Other("IbcDenomToAssetIdConversion: denom not found"))

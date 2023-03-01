@@ -37,6 +37,7 @@ pub mod this {
 	}
 }
 
+use crate::currency::{CurrencyId, WellKnownCurrency};
 pub struct Picasso;
 
 impl WellKnownCurrency for Picasso {

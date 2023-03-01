@@ -278,7 +278,11 @@ fn cannot_transfer_away_if_min_fee_is_not_defined() {
 		)
 		.unwrap();
 
-		assert_ok!(Tokens::deposit(primitives::topology::Picasso::RELAY_NATIVE, &alice().into(), 2 * transfer_amount));
+		assert_ok!(Tokens::deposit(
+			primitives::topology::Picasso::RELAY_NATIVE,
+			&alice().into(),
+			2 * transfer_amount
+		));
 
 		let _before = Assets::free_balance(CurrencyId::KSM, &alice().into());
 		let transferred = XTokens::transfer_multicurrencies(

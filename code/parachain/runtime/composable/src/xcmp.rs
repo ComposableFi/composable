@@ -160,8 +160,12 @@ impl RemoteAssetRegistryInspect for SetupAfterRfc13 {
 	}
 }
 
-type AssetsIdConverter =
-	CurrencyIdConvert<SetupAfterRfc13, primitives::topology::Composable, ParachainInfo, StaticAssetsMap>;
+type AssetsIdConverter = CurrencyIdConvert<
+	SetupAfterRfc13,
+	primitives::topology::Composable,
+	ParachainInfo,
+	StaticAssetsMap,
+>;
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,

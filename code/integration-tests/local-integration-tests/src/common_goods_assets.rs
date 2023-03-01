@@ -453,7 +453,11 @@ fn bob_has_statemine_asset_on_this_and_transfers_it_to_reserve(
 			bob_statemine_asset_amount,
 			TEN - FEE_NATIVE_STATEMINE - FEE_WEIGHT_THIS
 		);
-		assert_ok!(Tokens::deposit(primitives::topology::Picasso::RELAY_NATIVE, &AccountId::from(BOB), TEN));
+		assert_ok!(Tokens::deposit(
+			primitives::topology::Picasso::RELAY_NATIVE,
+			&AccountId::from(BOB),
+			TEN
+		));
 		assert!(relay_native_asset_amount != 0);
 		log::info!(target: "bdd", "Bob sending Statemine to reserve chain to his account");
 		let error = XTokens::transfer_multicurrencies(
@@ -526,7 +530,10 @@ fn bob_has_statemine_asset_on_this_and_transfers_it_to_reserve(
 		);
 		assert_eq!(
 			TEN - relay_native_asset_amount,
-			Tokens::free_balance(primitives::topology::Picasso::RELAY_NATIVE, &AccountId::from(BOB))
+			Tokens::free_balance(
+				primitives::topology::Picasso::RELAY_NATIVE,
+				&AccountId::from(BOB)
+			)
 		);
 	});
 }

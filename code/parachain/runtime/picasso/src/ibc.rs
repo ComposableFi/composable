@@ -31,10 +31,9 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 			return Ok(id)
 		}
 
-		
 		if denom == &alloc::format!("transfer/channel-0/{:}", CurrencyId::DOT.0) {
-			IbcDenoms::<Runtime>::insert(denom_bytes, CurrencyId::ibcDOT);
-			return Ok(CurrencyId::ibcDOT)
+			IbcDenoms::<Runtime>::insert(denom_bytes, CurrencyId::DOT);
+			return Ok(CurrencyId::DOT)
 		}
 
 		if denom == &alloc::format!("{:}", CurrencyId::PICA.0) {
