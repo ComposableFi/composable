@@ -57,7 +57,7 @@ std = [
   "sp-std/std",
   "xcm/std",
   "pallet-currency-factory/std",
-  # "cumulus-primitives-core/std",
+  "cumulus-primitives-core/std",
   "frame-benchmarking/std",
 ]
 

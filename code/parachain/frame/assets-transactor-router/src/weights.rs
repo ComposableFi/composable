@@ -14,7 +14,6 @@ pub trait WeightInfo {
 	fn force_transfer_native() -> Weight;
 	fn transfer_all() -> Weight;
 	fn transfer_all_native() -> Weight;
-	fn mint_initialize() -> Weight;
 	fn set_administrator() -> Weight;
 	fn mint_into() -> Weight;
 	fn burn_from() -> Weight;
@@ -55,12 +54,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_ref_time(81_458_000)
 			.saturating_add(T::DbWeight::get().reads(4))
 			.saturating_add(T::DbWeight::get().writes(4))
-	}
-
-	fn mint_initialize() -> Weight {
-		Weight::from_ref_time(81_458_000)
-			.saturating_add(RocksDbWeight::get().reads(4))
-			.saturating_add(RocksDbWeight::get().writes(4))
 	}
 
 	fn set_administrator() -> Weight {
@@ -112,12 +105,6 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(4))
 	}
 	fn force_transfer() -> Weight {
-		Weight::from_ref_time(81_458_000)
-			.saturating_add(RocksDbWeight::get().reads(4))
-			.saturating_add(RocksDbWeight::get().writes(4))
-	}
-
-	fn mint_initialize() -> Weight {
 		Weight::from_ref_time(81_458_000)
 			.saturating_add(RocksDbWeight::get().reads(4))
 			.saturating_add(RocksDbWeight::get().writes(4))

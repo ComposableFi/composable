@@ -233,27 +233,11 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Update the location of a foreign asset.
-		///
-		/// Emits:
-		/// * `AssetLocationUpdated`
-		#[pallet::call_index(1)]
-		#[pallet::weight(<T as Config>::WeightInfo::update_asset_location())]
-		pub fn update_asset_location(
-			origin: OriginFor<T>,
-			asset_id: T::LocalAssetId,
-			location: T::ForeignAssetId,
-		) -> DispatchResultWithPostInfo {
-			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
-			Self::set_reserve_location(asset_id, location)?;
-			Ok(().into())
-		}
-
 		/// Update stored asset information.
 		///
 		/// Emits:
 		/// * `AssetUpdated`
-		#[pallet::call_index(3)]
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::update_asset())]
 		pub fn update_asset(
 			origin: OriginFor<T>,
@@ -273,7 +257,7 @@ pub mod pallet {
 		/// If None, than it is well known cannot pay with that asset on target_parachain_id.
 		/// If Some(0), than price can be anything greater or equal to zero.
 		/// If Some(MAX), than actually it forbids transfers.
-		#[pallet::call_index(4)]
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::set_min_fee())]
 		pub fn set_min_fee(
 			origin: OriginFor<T>,
@@ -345,6 +329,10 @@ pub mod pallet {
 			asset_id: Self::AssetId,
 			asset_info: AssetInfoUpdate<Self::Balance>,
 		) -> DispatchResult {
+			ensure!(
+				<Self as AssetExistentialDepositInspect>::existential_deposit(asset_id).is_ok(),
+				Error::<T>::AssetNotFound
+			);
 			Self::update_metadata(
 				&asset_id,
 				asset_info.name.clone(),
@@ -518,7 +506,7 @@ pub mod pallet {
 				.try_into()
 				.expect("[u8; 8] + bytes(u64) = [u8; 16]");
 
-			Self::AssetId::from(u128::from_le_bytes(bytes))
+			Self::AssetId::from(u128::from_be_bytes(bytes))
 		}
 	}
 }

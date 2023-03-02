@@ -55,10 +55,4 @@ impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
-
-	fn update_asset_location() -> Weight {
-		Weight::from_ref_time(48_869_000_u64)
-			.saturating_add(T::DbWeight::get().reads(1_u64))
-			.saturating_add(T::DbWeight::get().writes(3_u64))
-    }
 }

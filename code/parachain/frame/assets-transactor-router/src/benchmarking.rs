@@ -1,7 +1,6 @@
 use super::*;
 
 use crate::Pallet as Assets;
-use composable_traits::assets::AssetInfo;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::{fungible::Mutate as NativeMutate, fungibles::Mutate};
 use frame_system::{Config as SystemConfig, RawOrigin};
@@ -71,33 +70,6 @@ benchmarks! {
 		<Assets<T> as NativeMutate<T::AccountId>>::mint_into(&caller, amount)
 			.expect("always can mint in test");
 	}: _(RawOrigin::Signed(caller), dest, false)
-
-	mint_initialize {
-		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
-		let amount: T::Balance = TRANSFER_AMOUNT.into();
-		let asset_id = T::AssetId::from(100);
-		let asset_info = AssetInfo {
-			name: None,
-			symbol: None,
-			decimals: Some(12),
-			ratio: None,
-			existential_deposit: T::Balance::from(0_u32),
-		};
-	}: _(RawOrigin::Root, asset_id, asset_info, amount, dest)
-
-	mint_initialize_with_governance {
-		let governance = T::Lookup::unlookup(TO_ACCOUNT.into());
-		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
-		let amount: T::Balance = TRANSFER_AMOUNT.into();
-		let asset_id = T::AssetId::from(100);
-		let asset_info = AssetInfo {
-			name: None,
-			symbol: None,
-			decimals: Some(12),
-			ratio: None,
-			existential_deposit: T::Balance::from(0_u32),
-		};
-	}: _(RawOrigin::Root, asset_id, asset_info, amount, governance, dest)
 
 	mint_into {
 		let asset_id: T::AssetId = ASSET_ID.into();

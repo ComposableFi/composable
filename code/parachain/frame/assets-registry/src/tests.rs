@@ -164,6 +164,39 @@ fn update_asset() {
 }
 
 #[test]
+fn update_asset_without_register() {
+	new_test_ext().execute_with(|| {
+		const NONEXISTING_ASSET_ID: u128 = 1000;
+		assert_noop!(
+			<AssetsRegistry as AssetExistentialDepositInspect>::existential_deposit(
+				NONEXISTING_ASSET_ID
+			),
+			Error::<Runtime>::AssetNotFound
+		);
+
+		let new_decimals = 12;
+		let new_ratio = rational!(100500 / 666);
+
+		let asset_info_update = AssetInfoUpdate {
+			name: UpdateValue::Ignore,
+			symbol: UpdateValue::Ignore,
+			decimals: UpdateValue::Set(Some(new_decimals)),
+			ratio: UpdateValue::Set(Some(new_ratio)),
+			existential_deposit: UpdateValue::Ignore,
+		};
+
+		assert_noop!(
+			AssetsRegistry::update_asset(
+				RuntimeOrigin::root(),
+				NONEXISTING_ASSET_ID,
+				asset_info_update,
+			),
+			Error::<Runtime>::AssetNotFound
+		);
+	})
+}
+
+#[test]
 fn set_min_fee() {
 	new_test_ext().execute_with(|| {
 		let target_parachain_id = 100_u32.into();

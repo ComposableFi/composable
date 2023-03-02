@@ -41,8 +41,6 @@
 //! - `force_transfer_native`
 //! - `transfer_all`
 //! - `transfer_all_native`
-//! - `mint_initialize`
-//! - `mint_initialize_with_governance`
 //! - `mint_into`
 //! - `burn_from`
 
@@ -384,53 +382,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Creates a new asset, minting `amount` of funds into the `dest` account.
-		///
-		/// Intended to be used for creating wrapped assets, not associated with any project.
-		#[pallet::call_index(6)]
-		#[pallet::weight(T::WeightInfo::mint_initialize())]
-		pub fn mint_initialize(
-			origin: OriginFor<T>,
-			asset_id: T::AssetId,
-			asset_info: AssetInfo<T::Balance>,
-			amount: T::Balance,
-			dest: <T::Lookup as StaticLookup>::Source,
-		) -> DispatchResult {
-			ensure_root(origin)?;
-
-			T::AssetsRegistry::register_asset(asset_id, None, asset_info)?;
-			let dest = T::Lookup::lookup(dest)?;
-			<Self as fungibles::Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
-			Ok(())
-		}
-
-		/// Creates a new local asset, minting `amount` of funds into the `dest` account.
-		///
-		/// The `dest` account can use the democracy pallet to mint further assets, or if the
-		/// governance_origin is set to an owned account, using signed transactions. In general the
-		/// `governance_origin` should be generated from the pallet id.
-		#[pallet::call_index(7)]
-		#[pallet::weight(T::WeightInfo::mint_initialize())]
-		pub fn mint_initialize_with_governance(
-			origin: OriginFor<T>,
-			asset_id: T::AssetId,
-			asset_info: AssetInfo<T::Balance>,
-			amount: T::Balance,
-			governance_origin: <T::Lookup as StaticLookup>::Source,
-			dest: <T::Lookup as StaticLookup>::Source,
-		) -> DispatchResult {
-			ensure_root(origin)?;
-
-			T::AssetsRegistry::register_asset(asset_id, None, asset_info)?;
-			let governance_origin = T::Lookup::lookup(governance_origin)?;
-			T::GovernanceRegistry::set(asset_id, SignedRawOrigin::Signed(governance_origin));
-			let dest = T::Lookup::lookup(dest)?;
-			<Self as fungibles::Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
-			Ok(())
-		}
-
 		/// Mints `amount` of `asset_id` into the `dest` account.
-		#[pallet::call_index(8)]
+		#[pallet::call_index(6)]
 		#[pallet::weight(T::WeightInfo::mint_into())]
 		pub fn mint_into(
 			origin: OriginFor<T>,
@@ -445,7 +398,7 @@ pub mod pallet {
 		}
 
 		/// Burns `amount` of `asset_id` into the `dest` account.
-		#[pallet::call_index(9)]
+		#[pallet::call_index(7)]
 		#[pallet::weight(T::WeightInfo::burn_from())]
 		pub fn burn_from(
 			origin: OriginFor<T>,
