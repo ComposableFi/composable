@@ -45,8 +45,8 @@
           repo = "polkadot";
           owner = "paritytech";
           rev = "refs/tags/${version}";
-          hash = "sha256-x2IEIHxH8Hg+jFIpnPrTsqISEAZHFuXhJD+H1S+G3nk=";
-          cargoSha256 = "sha256-6/94Uj6MG8VRnV4/yvEwUXdZBCEDSFUgqPTDcK7kiss=";
+          hash = "sha256-byUC+6SQ+TgvQCXdQWIGf/BAyxitnT1q69RdyZL8AAc=";
+          cargoSha256 = "sha256-2/94Uj6MG8VRnV4/yvEwUXdZBCEDSFUgqPTDcK7kiss=";
         };
       };
     };
