@@ -41,7 +41,7 @@ pub fn genesis_config(
 			.concat(),
 		},
 		aura: Default::default(),
-		sudo: composable_runtime::SudoConfig { key: Some(root) },
+		sudo: composable_runtime::SudoConfig { key: Some(root.clone()) },
 		indices: composable_runtime::IndicesConfig { indices: vec![] },
 		parachain_info: composable_runtime::ParachainInfoConfig { parachain_id: id },
 		aura_ext: Default::default(),
