@@ -1,6 +1,9 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
+import { IsEnum } from "class-validator";
 import { Activity } from "../../model";
+import { getRange } from "./common";
+import { DAY_IN_MS } from "../../constants";
 
 @ObjectType()
 export class ActiveUsers {
@@ -18,6 +21,7 @@ export class ActiveUsers {
 @InputType()
 export class ActiveUsersInput {
   @Field(() => String, { nullable: false })
+  @IsEnum(["day", "week", "month", "year"])
   range!: string;
 }
 
@@ -35,105 +39,27 @@ export class ActiveUsersResolver {
 
     const manager = await this.tx();
 
-    let rows: { period: string; count: string }[] = [];
+    const timestamps = getRange(range);
 
-    // Hourly
-    switch (range) {
-      case "day": {
-        const startHoursAgo = 22;
+    const activeUsers: Array<ActiveUsers> = [];
 
-        rows = await manager.getRepository(Activity).query(
-          `
-          WITH range AS (
-            SELECT
-               generate_series (
-                 ${startHoursAgo},
-                 0,
-                 -1
-               ) AS hour
-          )
-          SELECT
-              date_trunc('hour', current_timestamp) - hour * interval '1 hour' as period, 
-              hourly_active_users(hour) as count
-          FROM range
-          UNION
-          SELECT 
-            current_timestamp as period,
-            count(distinct account_id)
-          FROM activity
-          WHERE
-            timestamp > current_timestamp - interval '1 day'
-          ORDER BY period;
-        `
-        );
-        break;
-      }
-      case "week":
-      case "month": {
-        const startDaysAgo = range === "week" ? 5 : 28;
+    for (const timestamp of timestamps) {
+      const { count } = await manager
+        .getRepository(Activity)
+        .createQueryBuilder()
+        .select("COUNT(DISTINCT(account_id))", "count")
+        .where(`timestamp >= :timestampFrom`, { timestampFrom: new Date(timestamp.getTime() - DAY_IN_MS) })
+        .andWhere(`timestamp < :timestampTo`, { timestampTo: new Date(timestamp.getTime()) })
+        .getRawOne();
 
-        rows = await manager.getRepository(Activity).query(
-          `
-          WITH range AS (
-            SELECT
-               generate_series (
-                 ${startDaysAgo},
-                 0,
-                 -1
-               ) AS day
-            )
-            SELECT
-                date_trunc('day', current_timestamp) - day * interval '1 day' as period,
-                daily_active_users(day, 1) as count
-            FROM range
-            UNION
-            SELECT
-                 current_timestamp as period,
-                 COUNT(DISTINCT account_id) as count
-            FROM activity
-            WHERE timestamp >= current_timestamp - interval '1 day'
-            ORDER BY period;
-        `
-        );
-        break;
-      }
-      case "year":
-      default: {
-        const startMonthsAgo = 10;
-
-        rows = await manager.getRepository(Activity).query(
-          `
-          WITH range AS (
-            SELECT
-               generate_series (
-                 ${startMonthsAgo},
-                 0,
-                 -1
-               ) AS month
-            )
-            SELECT
-                date_trunc('month', current_timestamp - month * interval '1 month') as period, 
-                daily_active_users(month, 30) as count
-            FROM range
-            UNION
-            SELECT
-                current_timestamp as period,
-                COUNT(DISTINCT account_id) as count
-            FROM activity
-            WHERE timestamp >= current_timestamp - interval '1 month'
-            ORDER BY period;
-        `
-        );
-        break;
-      }
+      activeUsers.push(
+        new ActiveUsers({
+          date: timestamp.toISOString(),
+          count: count || 0
+        })
+      );
     }
 
-    return rows.map(
-      row =>
-        new ActiveUsers({
-          date: row.period,
-          count: Number(row.count)
-        })
-    );
+    return activeUsers;
   }
 }

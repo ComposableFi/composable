@@ -20,6 +20,7 @@ pub enum ProxyType {
 	Any,
 	Governance,
 	CancelProxy,
+	Bridge,
 }
 
 impl Default for ProxyType {

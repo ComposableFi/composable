@@ -5,6 +5,8 @@ pub mod native {
 	use frame_system::EnsureRoot;
 	pub type NativeCouncilCollective = collective::Instance1;
 	pub type NativeTechnicalCollective = collective::Instance2;
+	/// Quality assurance and pre-release testing.
+	pub type ReleaseCollective = collective::Instance3;
 	pub type NativeTreasury = treasury::Instance1;
 
 	/// Origin for either root or half of PICA council

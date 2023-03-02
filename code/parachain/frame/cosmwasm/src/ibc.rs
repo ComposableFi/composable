@@ -39,6 +39,7 @@ use ibc::{
 		ics04_channel::{
 			channel::{Counterparty, Order},
 			error::Error as IbcError,
+			msgs::acknowledgement::Acknowledgement,
 			Version as IbcVersion,
 		},
 		ics24_host::identifier::{ChannelId, ConnectionId, PortId},
@@ -51,14 +52,13 @@ use ibc::{
 use ibc_primitives::{HandlerMessage, IbcHandler};
 use pallet_ibc::routing::ModuleRouter as IbcModuleRouter;
 use sp_runtime::SaturatedConversion;
-use sp_std::{marker::PhantomData, str::FromStr};
+use sp_std::{marker::PhantomData, str::FromStr, vec, vec::Vec};
 
 use crate::{
 	mapping::*,
 	pallet_hook::PalletHook,
 	types::EntryPoint::{self, *},
 };
-
 const PORT_PREFIX: &str = "wasm";
 
 trait IbcHandlerExtended<C: Config> {
@@ -194,7 +194,7 @@ impl<T: Config> Default for Router<T> {
 	}
 }
 
-struct MapBinary(sp_std::vec::Vec<u8>);
+struct MapBinary(Vec<u8>);
 
 impl AsRef<[u8]> for MapBinary {
 	fn as_ref(&self) -> &[u8] {
@@ -366,7 +366,7 @@ impl<T: Config> Router<T> {
 		_output: &mut ModuleOutputBuilder,
 		packet: &ibc::core::ics04_channel::packet::Packet,
 		relayer: &pallet_ibc::Signer,
-	) -> Result<sp_std::vec::Vec<u8>, IbcError> {
+	) -> Result<Vec<u8>, IbcError> {
 		let address = Self::port_to_address(&packet.destination_port)?;
 
 		let message = IbcPacketReceiveMsg::new(
@@ -611,11 +611,11 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		&self,
 		_ctx: &dyn ModuleCallbackContext,
 		output: &mut ModuleOutputBuilder,
-		packet: &ibc::core::ics04_channel::packet::Packet,
+		packet: &mut ibc::core::ics04_channel::packet::Packet,
 		relayer: &pallet_ibc::Signer,
-	) -> Result<(), IbcError> {
+	) -> Result<Acknowledgement, IbcError> {
 		match self.on_recv_packet_internal(output, packet, relayer) {
-			Ok(_) => Ok(()), // so unlike Go IBC impl we cannot send data in acknowledgement...
+			Ok(_) => Ok(vec![].into()),
 			Err(err) => Err(IbcError::implementation_specific(format!("{:?}", err))),
 		}
 	}
@@ -624,7 +624,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		&mut self,
 		_ctx: &dyn ModuleCallbackContext,
 		_output: &mut ModuleOutputBuilder,
-		packet: &ibc::core::ics04_channel::packet::Packet,
+		packet: &mut ibc::core::ics04_channel::packet::Packet,
 		acknowledgement: &ibc::core::ics04_channel::msgs::acknowledgement::Acknowledgement,
 		relayer: &pallet_ibc::Signer,
 	) -> Result<(), IbcError> {
@@ -664,7 +664,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 		&mut self,
 		_ctx: &dyn ModuleCallbackContext,
 		_output: &mut ModuleOutputBuilder,
-		packet: &ibc::core::ics04_channel::packet::Packet,
+		packet: &mut ibc::core::ics04_channel::packet::Packet,
 		relayer: &pallet_ibc::Signer,
 	) -> Result<(), IbcError> {
 		let address = Self::port_to_address(&packet.source_port)?;
@@ -766,13 +766,6 @@ impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for NoRelayer<T> {
 	}
 
 	fn handle_message(_msg: HandlerMessage<AccountIdOf<T>>) -> Result<(), ibc_primitives::Error> {
-		Err(ibc_primitives::Error::Other { msg: Some("not supported".to_string()) })
-	}
-
-	fn write_acknowledgement(
-		_packet: &ibc::core::ics04_channel::packet::Packet,
-		_ack: sp_std::vec::Vec<u8>,
-	) -> Result<(), ibc_primitives::Error> {
 		Err(ibc_primitives::Error::Other { msg: Some("not supported".to_string()) })
 	}
 

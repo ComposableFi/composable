@@ -1,5 +1,6 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
+import { IsEnum, IsString } from "class-validator";
 import { PabloPool } from "../../model";
 import { getRange } from "./common";
 import { getSpotPrice } from "../../dbHelper";
@@ -33,9 +34,11 @@ export class PabloSpotPriceChart {
 @InputType()
 export class PabloSpotPriceChartInput {
   @Field(() => String, { nullable: false })
+  @IsEnum(["day", "week", "month", "year"])
   range!: string;
 
   @Field(() => String, { nullable: false })
+  @IsString()
   poolId!: string;
 }
 

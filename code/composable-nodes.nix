@@ -39,7 +39,7 @@
           name = "composable";
           cargoArtifacts = self'.packages.common-deps;
           cargoBuildCommand =
-            "cargo build --release --package composable --features=builtin-wasm";
+            "cargo build --release --package composable --features=builtin-wasm,composable";
           DALI_RUNTIME =
             "${self'.packages.dali-runtime}/lib/runtime.optimized.wasm";
           PICASSO_RUNTIME =
@@ -57,6 +57,12 @@
       packages = rec {
 
         composable-node = makeComposableNode (node: node);
+
+        composable-node-dali = makeComposableNode (node:
+          node // {
+            PICASSO_RUNTIME = node.DALI_RUNTIME;
+            COMPOSABLE_RUNTIME = node.DALI_RUNTIME;
+          });
 
         composable-node-release = makeComposableNode (node:
           node // {

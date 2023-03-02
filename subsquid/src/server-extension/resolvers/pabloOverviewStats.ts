@@ -3,7 +3,7 @@ import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
 import { PabloPoolAsset, PabloSwap } from "../../model";
 import { DAY_IN_MS } from "../../constants";
-import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
+import { getCurrentAssetPrices, getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 class TVL {
@@ -62,8 +62,11 @@ export class PabloOverviewStatsResolver implements ResolverInterface<PabloOvervi
 
     const tvlList: Array<TVL> = [];
 
+    const currentPrices = await getCurrentAssetPrices(manager);
+
     for (const assetId of Object.keys(totalValueLocked)) {
-      const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime());
+      const price =
+        currentPrices?.[assetId] || (await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime()));
       tvlList.push(new TVL({ assetId, amount: totalValueLocked[assetId], price }));
     }
 
@@ -101,7 +104,8 @@ export class PabloOverviewStatsResolver implements ResolverInterface<PabloOvervi
 
     const latestSwaps = await manager.getRepository(PabloSwap).find({
       where: {
-        timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS))
+        timestamp: MoreThan(new Date(new Date().getTime() - DAY_IN_MS)),
+        success: true
       }
     });
 
@@ -112,8 +116,11 @@ export class PabloOverviewStatsResolver implements ResolverInterface<PabloOvervi
 
     const tvlList: Array<TVL> = [];
 
+    const currentPrices = await getCurrentAssetPrices(manager);
+
     for (const assetId of Object.keys(volumes)) {
-      const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime());
+      const price =
+        currentPrices?.[assetId] || (await getOrCreateHistoricalAssetPrice(manager, assetId, new Date().getTime()));
       tvlList.push(new TVL({ assetId, amount: volumes[assetId], price }));
     }
 

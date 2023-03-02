@@ -5,16 +5,16 @@
       buildPolkadotNode =
         { name, version, repo, owner, rev, hash, cargoSha256 }:
         pkgs.rustPlatform.buildRustPackage rec {
-          # HACK: break the nix sandbox so we can build the runtimes. This
-          # requires Nix to have `sandbox = relaxed` in its config.
-          # We don't really care because polkadot is only used for local devnet.
           inherit name version cargoSha256;
-
-          src = pkgs.fetchFromGitHub { inherit repo owner rev hash; };
+          src = pkgs.fetchgit {
+            url = "https://github.com/${owner}/${repo}.git";
+            inherit rev;
+            sha256 = hash;
+            fetchSubmodules = false;
+          };
 
           meta = { mainProgram = "polkadot"; };
 
-          # substrate-attrs-node-with-attrs
           __noChroot = true;
           doCheck = false;
           buildInputs = with pkgs; [ openssl zstd ];
@@ -35,24 +35,15 @@
         };
     in {
       packages = {
-        mmr-polkadot-node = buildPolkadotNode rec {
-          name = "mmr-polkadot-v${version}";
-          version = "0.9.27";
-          repo = "polkadot";
-          owner = "ComposableFi";
-          rev = "0898082540c42fb241c01fe500715369a33a80de";
-          hash = "sha256-dymuSVQXzdZe8iiMm4ykVXPIjIZd2ZcAOK7TLDGOWcU=";
-          cargoSha256 = "sha256-u/hFRxt3OTMDwONGoJ5l7whC4atgpgIQx+pthe2CJXo=";
-        };
-
-        polkadot-node = buildPolkadotNode rec {
-          name = "polkadot-v${version}";
-          version = "0.9.33";
+        polkadot-node = let version = "v0.9.36";
+        in buildPolkadotNode rec {
+          name = "polkadot-node";
+          inherit version;
           repo = "polkadot";
           owner = "paritytech";
-          rev = "v${version}";
-          hash = "sha256-O0zAoqvLAwiVuR4IpTS9bFHRSo6H6QsKCQofBZsZnWU";
-          cargoSha256 = "sha256-sXkOP3rITPHvQX2bzTdySgmKcbGJqzj0vAme21lZQDA=";
+          rev = "refs/tags/${version}";
+          hash = "sha256-x2IEIHxH8Hg+jFIpnPrTsqISEAZHFuXhJD+H1S+G3nk=";
+          cargoSha256 = "sha256-6/94Uj6MG8VRnV4/yvEwUXdZBCEDSFUgqPTDcK7kiss=";
         };
       };
     };

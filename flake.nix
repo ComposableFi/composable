@@ -1,4 +1,3 @@
-# We use https://flake.parts/ in order split this flake into multiple parts.
 {
   description = "Composable Finance";
 
@@ -27,23 +26,23 @@
       url = "github:NixOS/bundlers";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-std.url = "github:chessai/nix-std";
+    devenv.url = "github:cachix/devenv";
   };
 
   outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
-    let darwinFilter = import ./flake/darwin-filter.nix { lib = nixpkgs.lib; };
-    in darwinFilter (flake-parts.lib.mkFlake { inherit inputs; } {
+    flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         # External `inputs` that the authors did not nixify themselves
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
         ./inputs/centauri/flake-module.nix
         ./inputs/chevdor/subwasm.nix
-        ./inputs/composable/dali-subxt-client.nix
+        ./flake/subxt.nix
         ./inputs/CosmosContracts/juno.nix
         ./inputs/cosmos/cosmwasm.nix
         ./inputs/cosmos/gex.nix
         ./inputs/CosmWasm/wasmvm.nix
-        ./inputs/paritytech/polkadot-launch.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/statemine.nix
         ./inputs/paritytech/zombienet/flake-module.nix
@@ -68,8 +67,6 @@
         ./docs/docs.nix
         ./frontend/frontend.nix
 
-        # our devnets
-        # TODO: Split into multiple files
         ./devnets/all.nix
 
         # Everything that is not an input, tool, package, or devnet, but still part of the final flake
@@ -86,5 +83,5 @@
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
-    });
+    };
 }

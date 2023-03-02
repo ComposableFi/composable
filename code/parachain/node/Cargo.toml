@@ -4,7 +4,7 @@ build = "build.rs"
 edition = "2021"
 homepage = "https://composable.finance"
 name = "composable-node"
-version = "2.10005.0"
+version = "2.10009.0"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -42,8 +42,8 @@ staking-rewards-runtime-api = { path = "../frame/staking-rewards/runtime-api" }
 pallet-transaction-payment-rpc = { path = "../frame/transaction-payment/rpc" }
 pallet-transaction-payment-rpc-runtime-api = { path = "../frame/transaction-payment/rpc/runtime-api" }
 
-ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev = "94bf87a44694b04917a7ab735487c8f87a64737d" }
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "94bf87a44694b04917a7ab735487c8f87a64737d" }
+ibc-rpc = { workspace = true }
+pallet-ibc = { workspace = true }
 
 # FRAME Dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
@@ -89,6 +89,7 @@ sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 
 # Cumulus dependencies
 cumulus-client-cli = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.36" }

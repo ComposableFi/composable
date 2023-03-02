@@ -300,13 +300,6 @@ impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for IbcLoopback<T> {
 		todo!("loopback")
 	}
 
-	fn write_acknowledgement(
-		_packet: &::ibc::core::ics04_channel::packet::Packet,
-		_ack: Vec<u8>,
-	) -> Result<(), ibc_primitives::Error> {
-		todo!("loopback")
-	}
-
 	#[cfg(feature = "runtime-benchmarks")]
 	fn create_client(
 	) -> Result<::ibc::core::ics24_host::identifier::ClientId, ibc_primitives::Error> {

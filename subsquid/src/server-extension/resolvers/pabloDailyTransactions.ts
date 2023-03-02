@@ -1,6 +1,7 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { MoreThan } from "typeorm";
+import { IsString } from "class-validator";
 import { PabloTransaction } from "../../model";
 import { DAY_IN_MS } from "../../constants";
 import { PoolAmount } from "./pabloDaily";
@@ -50,6 +51,9 @@ export class PabloDailyTx {
   @Field(() => String, { nullable: true })
   failReason?: string;
 
+  @Field(() => String, { nullable: true })
+  failDescription?: string;
+
   @Field(() => String, { nullable: false })
   txType!: string;
 
@@ -77,6 +81,7 @@ export class PabloDailyTransactions {
 @InputType()
 export class PabloDailyTransactionsInput {
   @Field(() => String, { nullable: false })
+  @IsString()
   address!: string;
 }
 
@@ -106,17 +111,19 @@ export class PabloDailyTransactionsResolver {
           fee: true
         },
         liquidityAdded: true,
-        liquidityRemoved: true
+        liquidityRemoved: true,
+        error: true
       }
     });
 
     const transactions = dailyTransactions.map(tx => {
       return new PabloDailyTx({
         timestamp: tx.timestamp.getTime(),
-        txHash: tx.event.txHash || "",
-        failReason: tx.event.failReason || undefined,
+        txHash: tx.event?.txHash || "",
+        failReason: tx.error?.name || undefined,
+        failDescription: tx.error?.description || undefined,
         txType: tx.txType,
-        success: tx.event.success || true,
+        success: tx.success,
         poolId: tx.pool.id,
         amounts: tx.liquidityAdded?.amounts || tx.liquidityRemoved?.amounts || undefined,
         swap: tx.swap

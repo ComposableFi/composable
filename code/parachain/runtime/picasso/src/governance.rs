@@ -4,8 +4,6 @@ use super::*;
 use common::governance::native::*;
 use frame_support::traits::LockIdentifier;
 
-// pub type NativeDemocracy = democracy::Instance1;
-
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
 
@@ -153,7 +151,6 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type MaxApprovals = MaxApprovals;
 	type BurnDestination = ();
 	type WeightInfo = treasury::weights::SubstrateWeight<Runtime>;
-	// TODO: add bounties?
 	type SpendFunds = ();
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 }

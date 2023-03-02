@@ -1,10 +1,11 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { LessThan, MoreThan, And } from "typeorm";
+import { IsEnum, IsString } from "class-validator";
 import { PabloSwap } from "../../model";
 import { getVolumeRange } from "./common";
 import { DAY_IN_MS } from "../../constants";
-import { getOrCreateHistoricalAssetPrice } from "../../dbHelper";
+import { getCurrentAssetPrices, getOrCreateHistoricalAssetPrice } from "../../dbHelper";
 
 @ObjectType()
 class AssetIdAmount {
@@ -38,9 +39,11 @@ export class PabloTotalVolume {
 @InputType()
 export class PabloTotalVolumeInput {
   @Field(() => String, { nullable: false })
+  @IsEnum(["now", "month", "year"])
   range!: string;
 
   @Field(() => String, { nullable: true })
+  @IsString()
   poolId!: string;
 }
 
@@ -67,6 +70,7 @@ export class PabloTotalVolumeResolver {
             LessThan(new Date(timestamp.getTime())),
             MoreThan(new Date(timestamp.getTime() - (range === "year" ? 7 : 1) * DAY_IN_MS))
           ),
+          success: true,
           ...(poolId
             ? {
                 pool: {
@@ -84,16 +88,25 @@ export class PabloTotalVolumeResolver {
 
       volumes[time] = [];
 
-      for (const assetId of Object.keys(currVolumes)) {
-        const price = await getOrCreateHistoricalAssetPrice(manager, assetId, timestamp.getTime());
+      let prices: Record<string, number> | undefined;
 
-        volumes[time].push(
-          new AssetIdAmount({
-            assetId: assetId.toString(),
-            amount: currVolumes[assetId.toString()],
-            price
-          })
-        );
+      if (range === "now") {
+        prices = await getCurrentAssetPrices(manager);
+      }
+
+      for (const assetId of Object.keys(currVolumes)) {
+        if (currVolumes[assetId]) {
+          const price =
+            prices?.[assetId] || (await getOrCreateHistoricalAssetPrice(manager, assetId, timestamp.getTime()));
+
+          volumes[time].push(
+            new AssetIdAmount({
+              assetId: assetId.toString(),
+              amount: currVolumes[assetId.toString()],
+              price
+            })
+          );
+        }
       }
     }
 

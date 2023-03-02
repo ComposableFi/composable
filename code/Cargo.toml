@@ -3,7 +3,7 @@ authors = ["Composable Developers"]
 edition = "2021"
 homepage = "https://composable.finance"
 name = "composable"
-version = "2.10005.0"
+version = "2.10009.0"
 
 [[bin]]
 name = "composable"
@@ -42,10 +42,7 @@ members = [
   "parachain/runtime/composable",
   "parachain/runtime/composable-wasm",
   "utils/common",
-  # FIXME(hussein): this package is outdated and broken
-  # "utils/price-feed",
   "utils/collator-sidecar",
-  "utils/wasm-optimizer",
 ]
 resolver = "2"
 
@@ -67,6 +64,16 @@ opt-level = "s"
 overflow-checks = true
 panic = "abort"
 rpath = false
+
+
+[workspace.dependencies]
+ibc = { git = "https://github.com/ComposableFi/centauri", rev = "1bb60110fd3ec4e218cd6ae67c0c11779bf7dd42", default-features = false }
+ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev = "1bb60110fd3ec4e218cd6ae67c0c11779bf7dd42", default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "1bb60110fd3ec4e218cd6ae67c0c11779bf7dd42", default-features = false }
+ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev = "1bb60110fd3ec4e218cd6ae67c0c11779bf7dd42", default-features = false }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "1bb60110fd3ec4e218cd6ae67c0c11779bf7dd42", default-features = false }
+pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "1bb60110fd3ec4e218cd6ae67c0c11779bf7dd42", default-features = false }
+
 
 [patch."https://github.com/paritytech/substrate"]
 beefy-gadget = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }

@@ -16,7 +16,6 @@
 #![recursion_limit = "256"]
 
 // Make the WASM binary available
-// TODO: XCMP/governance/.. setups here are outdated
 #[cfg(all(feature = "std", feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("COMPOSABLE_RUNTIME")));
 #[cfg(not(feature = "builtin-wasm"))]
@@ -118,7 +117,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 10_005,
+	spec_version: 10_009,
 	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,

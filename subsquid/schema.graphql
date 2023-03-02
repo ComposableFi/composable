@@ -63,11 +63,13 @@ type PabloTransaction @entity {
   timestamp: DateTime! @index
   "Last updated block id"
   blockId: String!
-  event: Event! @index
+  event: Event @index
   txType: PabloTx!
   swap: PabloSwap
   liquidityAdded: PabloLiquidityAdded
   liquidityRemoved: PabloLiquidityRemoved
+  success: Boolean!
+  error: CallError
 }
 
 type PabloPoolAsset @entity {
@@ -198,9 +200,7 @@ enum LockedSource {
   VestingSchedules
 }
 
-type StakingPosition
-  @entity
-  @index(fields: ["fnftCollectionId", "fnftInstanceId"], unique: true) {
+type StakingPosition @entity @index(fields: ["fnftCollectionId", "fnftInstanceId"], unique: true) {
   id: ID!
   event: Event! @unique @index
   "Unique identifier for the position on chain"
@@ -267,7 +267,7 @@ type HistoricalStakingApr @entity {
 
 type PabloSwap @entity {
   id: ID!
-  event: Event!
+  event: Event
   pool: PabloPool! @index
   baseAssetId: String! @index
   baseAssetAmount: BigInt!
@@ -278,34 +278,37 @@ type PabloSwap @entity {
   timestamp: DateTime! @index
   "Last updated block id"
   blockId: String!
+  success: Boolean!
 }
 
 type PabloAmount {
   assetId: String!
   amount: BigInt!
+  price: Float!
 }
 
 type PabloLiquidityAdded @entity {
   id: ID!
-  event: Event!
+  event: Event
   pool: PabloPool! @index
   timestamp: DateTime! @index
   blockId: String!
   amounts: [PabloAmount!]!
+  success: Boolean!
 }
 
 type PabloLiquidityRemoved @entity {
   id: ID!
-  event: Event!
+  event: Event
   pool: PabloPool! @index
   timestamp: DateTime! @index
   blockId: String!
+  lpAmount: BigInt
   amounts: [PabloAmount!]!
+  success: Boolean!
 }
 
-type CurrentLockedValue
-  @entity
-  @index(fields: ["assetId", "source"], unique: true) {
+type CurrentLockedValue @entity @index(fields: ["assetId", "source"], unique: true) {
   id: ID!
   assetId: String! @index
   event: Event! @index
@@ -349,6 +352,11 @@ type Event @entity {
   "Last updated block id"
   blockId: String!
   txHash: String
-  success: Boolean
-  failReason: String
+}
+
+type CallError @entity {
+  id: ID!
+  section: String!
+  name: String!
+  description: String
 }

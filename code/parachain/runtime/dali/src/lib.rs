@@ -53,9 +53,9 @@ use common::{
 	},
 	rewards::StakingPot,
 	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
-	FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment, MosaicRemoteAssetId,
-	PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
-	MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment, PoolId, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
@@ -702,9 +702,17 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 					RuntimeCall::Utility(..)
 			),
 			ProxyType::CancelProxy => {
-				// TODO (vim): We might not need this
 				matches!(c, RuntimeCall::Proxy(proxy::Call::reject_announcement { .. }))
 			},
+			ProxyType::Bridge => matches!(
+				c,
+				RuntimeCall::Ibc(..) |
+					RuntimeCall::CumulusXcm(..) |
+					RuntimeCall::DmpQueue(..) |
+					RuntimeCall::UnknownTokens(..) |
+					RuntimeCall::XcmpQueue(..) |
+					RuntimeCall::RelayerXcm(..)
+			),
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {
@@ -893,8 +901,6 @@ impl pallet_staking_rewards::Config for Runtime {
 }
 
 /// The calls we permit to be executed by extrinsics
-// TODO(hussein-aitlahcen):
-// remove IBC pallets from the call filter once centauri is merged
 pub struct BaseCallFilter;
 impl Contains<RuntimeCall> for BaseCallFilter {
 	fn contains(call: &RuntimeCall) -> bool {
@@ -908,7 +914,8 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 
 impl call_filter::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type UpdateOrigin = EnsureRootOrOneThirdNativeTechnical;
+	type DisableOrigin = EnsureRootOrOneThirdNativeTechnical;
+	type EnableOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type Hook = ();
 	type WeightInfo = ();
 	type MaxStringSize = MaxStringSize;
@@ -974,27 +981,6 @@ impl dutch_auction::Config for Runtime {
 	type XcmOrigin = RuntimeOrigin;
 	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type XcmSender = XcmRouter;
-}
-
-parameter_types! {
-	pub const MosaicId: PalletId = PalletId(*b"plmosaic");
-	pub const MinimumTTL: BlockNumber = 10;
-	pub const MinimumTimeLockPeriod: BlockNumber = 20;
-}
-
-impl mosaic::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type PalletId = MosaicId;
-	type Assets = AssetsTransactorRouter;
-	type MinimumTTL = MinimumTTL;
-	type MinimumTimeLockPeriod = MinimumTimeLockPeriod;
-	type BudgetPenaltyDecayer = mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
-	type NetworkId = u32;
-	type RemoteAssetId = MosaicRemoteAssetId;
-	type ControlOrigin = EnsureRootOrHalfNativeCouncil;
-	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
-	type RemoteAmmId = u128; // TODO: Swap to U256?
-	type AmmMinimumAmountOut = u128;
 }
 
 pub type LiquidationStrategyId = u32;
@@ -1303,6 +1289,13 @@ impl core::str::FromStr for MemoMessage {
 	}
 }
 
+parameter_types! {
+	pub const GRANDPA: pallet_ibc::LightClientProtocol = pallet_ibc::LightClientProtocol::Grandpa;
+	pub const IbcTriePrefix : &'static [u8] = b"ibc/";
+}
+
+use frame_system::EnsureSigned;
+
 impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type RuntimeEvent = RuntimeEvent;
@@ -1311,9 +1304,8 @@ impl pallet_ibc::Config for Runtime {
 	type AssetId = CurrencyId;
 	type NativeAssetId = NativeAssetId;
 	type IbcDenomToAssetIdConversion = IbcDenomToAssetIdConversion;
-	const PALLET_PREFIX: &'static [u8] = b"ibc/";
-	const LIGHT_CLIENT_PROTOCOL: pallet_ibc::LightClientProtocol =
-		pallet_ibc::LightClientProtocol::Grandpa;
+	type PalletPrefix = IbcTriePrefix;
+	type LightClientProtocol = GRANDPA;
 	type AccountIdConversion = ibc_primitives::IbcAccount<AccountId>;
 	type Fungibles = AssetsTransactorRouter;
 	type ExpectedBlockTime = ExpectedBlockTime;
@@ -1323,10 +1315,14 @@ impl pallet_ibc::Config for Runtime {
 	type RelayChain = RelayChainId;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type SentryOrigin = EnsureRoot<AccountId>;
+	type FreezeOrigin = EnsureRoot<AccountId>;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
+	type IbcAccountId = Self::AccountId;
+	type TransferOrigin = EnsureSigned<Self::IbcAccountId>;
+	type RelayerOrigin = EnsureSigned<Self::AccountId>;
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;
+	type Ics20RateLimiter = Everything;
 }
 
 impl pallet_ibc_ping::Config for Runtime {
@@ -1396,7 +1392,7 @@ construct_runtime!(
 		Vesting: vesting = 59,
 		BondedFinance: bonded_finance = 60,
 		DutchAuction: dutch_auction = 61,
-		Mosaic: mosaic = 62,
+
 		Liquidations: liquidations = 63,
 		Lending: lending = 64,
 		Pablo: pablo = 65,
@@ -1475,7 +1471,6 @@ mod benches {
 			[oracle, Oracle]
 			[dutch_auction, DutchAuction]
 			[currency_factory, CurrencyFactory]
-			[mosaic, Mosaic]
 			[liquidations, Liquidations]
 			[bonded_finance, BondedFinance]
 		// TODO(hussein): broken as of v0.9.30
@@ -1796,11 +1791,11 @@ impl_runtime_apis! {
 		}
 
 		fn child_trie_key() -> Vec<u8> {
-			<Runtime as pallet_ibc::Config>::PALLET_PREFIX.to_vec()
+			<Runtime as pallet_ibc::Config>::PalletPrefix::get().to_vec()
 		}
 
-		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
-			Ibc::query_balance_with_address(addr).ok()
+		fn query_balance_with_address(addr: Vec<u8>, asset_id: CurrencyId) -> Option<u128> {
+			Ibc::query_balance_with_address(addr, asset_id).ok()
 		}
 
 		fn query_send_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {

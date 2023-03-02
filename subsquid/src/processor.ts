@@ -1,113 +1,60 @@
-import { SubstrateProcessor } from "@subsquid/substrate-processor";
 import { TypeormDatabase } from "@subsquid/typeorm-store";
-
-import { archive, chain, firstBlock } from "./config";
+import { processor, Context } from "./processorTypes";
 import {
   processLiquidityAddedEvent,
   processLiquidityRemovedEvent,
   processPoolCreatedEvent,
   processSwappedEvent,
+  processSwapCallError,
+  processAddLiquidityCallError,
+  processRemoveLiquidityCallError
 } from "./processors/pablo";
-import {
-  processDepositEvent,
-  processTransferEvent,
-  processWithdrawEvent,
-} from "./processors/balances";
-import {
-  processNewBondEvent,
-  processNewOfferEvent,
-  processOfferCancelledEvent,
-} from "./processors/bondedFinance";
-import {
-  processVestingClaimedEvent,
-  processVestingScheduleAddedEvent,
-} from "./processors/vestingSchedule";
+import { processDepositEvent, processTransferEvent, processWithdrawEvent } from "./processors/balances";
+import { processVestingClaimedEvent, processVestingScheduleAddedEvent } from "./processors/vestingSchedule";
+import { processNewBondEvent, processNewOfferEvent, processOfferCancelledEvent } from "./processors/bondedFinance";
+import { PabloAddLiquidityCall, PabloBuyCall, PabloRemoveLiquidityCall, PabloSwapCall } from "./types/calls";
 
-const processor = new SubstrateProcessor(new TypeormDatabase());
-
-const chainConnectionString = chain();
-const archiveConnectionString = archive();
-
-processor.setBlockRange({
-  from: firstBlock(),
+processor.run(new TypeormDatabase(), async (ctx: Context) => {
+  for (const block of ctx.blocks) {
+    for (const item of block.items) {
+      if (item.kind === "event") {
+        if (item.name === "Balances.Transfer") {
+          await processTransferEvent(ctx, block, item);
+        } else if (item.name === "Balances.Deposit") {
+          await processDepositEvent(ctx, block, item);
+        } else if (item.name === "Balances.Withdraw") {
+          await processWithdrawEvent(ctx, block, item);
+        } else if (item.name === "Vesting.VestingScheduleAdded") {
+          await processVestingScheduleAddedEvent(ctx, block, item);
+        } else if (item.name === "Vesting.Claimed") {
+          await processVestingClaimedEvent(ctx, block, item);
+        } else if (item.name === "Pablo.PoolCreated") {
+          await processPoolCreatedEvent(ctx, block, item);
+        } else if (item.name === "Pablo.LiquidityAdded") {
+          await processLiquidityAddedEvent(ctx, block, item);
+        } else if (item.name === "Pablo.LiquidityRemoved") {
+          await processLiquidityRemovedEvent(ctx, block, item);
+        } else if (item.name === "Pablo.Swapped") {
+          await processSwappedEvent(ctx, block, item);
+        } else if (item.name === "BondedFinance.NewOffer") {
+          await processNewOfferEvent(ctx, block, item);
+        } else if (item.name === "BondedFinance.NewBond") {
+          await processNewBondEvent(ctx, block, item);
+        } else if (item.name === "BondedFinance.OfferCancelled") {
+          await processOfferCancelledEvent(ctx, block, item);
+        }
+      } else if (item.kind === "call" && !item.call.success) {
+        if (item.name === "Pablo.add_liquidity") {
+          const call = new PabloAddLiquidityCall(ctx, item.call);
+          await processAddLiquidityCallError(ctx, block, item, call);
+        } else if (item.name === "Pablo.remove_liquidity") {
+          const call = new PabloRemoveLiquidityCall(ctx, item.call);
+          await processRemoveLiquidityCallError(ctx, block, item, call);
+        } else if (item.name === "Pablo.swap") {
+          const call = new PabloSwapCall(ctx, item.call);
+          await processSwapCallError(ctx, block, item, call);
+        }
+      }
+    }
+  }
 });
-
-console.log(`Chain ${chainConnectionString}`);
-console.log(`Archive ${archiveConnectionString}`);
-
-processor.setBatchSize(500);
-processor.setDataSource({
-  archive: archiveConnectionString,
-  chain: chainConnectionString,
-});
-
-processor.addEventHandler("Pablo.PoolCreated", async (ctx) => {
-  await processPoolCreatedEvent(ctx);
-});
-
-processor.addEventHandler("Pablo.LiquidityAdded", async (ctx) => {
-  await processLiquidityAddedEvent(ctx);
-});
-
-processor.addEventHandler("Pablo.LiquidityRemoved", async (ctx) => {
-  await processLiquidityRemovedEvent(ctx);
-});
-
-processor.addEventHandler("Pablo.Swapped", async (ctx) => {
-  await processSwappedEvent(ctx);
-});
-
-processor.addEventHandler("Balances.Transfer", processTransferEvent);
-
-processor.addEventHandler("Balances.Withdraw", processWithdrawEvent);
-
-processor.addEventHandler("Balances.Deposit", processDepositEvent);
-
-processor.addEventHandler("BondedFinance.NewOffer", processNewOfferEvent);
-
-processor.addEventHandler("BondedFinance.NewBond", processNewBondEvent);
-
-processor.addEventHandler(
-  "BondedFinance.OfferCancelled",
-  processOfferCancelledEvent
-);
-
-processor.addEventHandler(
-  "Vesting.VestingScheduleAdded",
-  processVestingScheduleAddedEvent
-);
-
-processor.addEventHandler("Vesting.Claimed", processVestingClaimedEvent);
-
-// processor.addEventHandler(
-//   "StakingRewards.RewardPoolCreated",
-//   processRewardPoolCreatedEvent
-// );
-//
-// processor.addEventHandler("StakingRewards.Staked", processStakedEvent);
-//
-// processor.addEventHandler(
-//   "StakingRewards.StakeAmountExtended",
-//   processStakeAmountExtendedEvent
-// );
-//
-// processor.addEventHandler("StakingRewards.Unstaked", processUnstakedEvent);
-//
-// processor.addEventHandler(
-//   "StakingRewards.SplitPosition",
-//   processSplitPositionEvent
-// );
-//
-// processor.addEventHandler("Oracle.PriceChanged", processOraclePriceChanged);
-
-// processor.addEventHandler(
-//   "AssetsRegistry.AssetRegistered",
-//   processAssetRegisteredEvent
-// );
-//
-// processor.addEventHandler(
-//   "AssetsRegistry.AssetUpdated",
-//   processAssetUpdatedEvent
-// );
-
-processor.run();

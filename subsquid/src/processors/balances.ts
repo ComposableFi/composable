@@ -1,9 +1,8 @@
-import { EventHandlerContext } from "@subsquid/substrate-processor";
-import { Store } from "@subsquid/typeorm-store";
 import { BalancesDepositEvent, BalancesTransferEvent, BalancesWithdrawEvent } from "../types/events";
 import { encodeAccount } from "../utils";
 import { saveAccountAndEvent } from "../dbHelper";
 import { EventType } from "../model";
+import { Block, Context, EventItem } from "../processorTypes";
 
 interface TransferEvent {
   from: Uint8Array;
@@ -40,14 +39,19 @@ function getDepositEvent(event: BalancesDepositEvent): WithdrawEvent {
  *   - Create Event.
  *   - Create Activity
  * @param ctx
+ * @param block
+ * @param eventItem
  */
-export async function processTransferEvent(ctx: EventHandlerContext<Store>): Promise<void> {
-  const event = new BalancesTransferEvent(ctx);
-  const transferEvent = getTransferEvent(event);
+export async function processTransferEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  if (eventItem.name !== "Balances.Transfer") {
+    throw new Error("Invalid event name");
+  }
+  const evt = new BalancesTransferEvent(ctx, eventItem.event);
+  const transferEvent = getTransferEvent(evt);
   const from = encodeAccount(transferEvent.from);
   const to = encodeAccount(transferEvent.to);
 
-  await saveAccountAndEvent(ctx, EventType.BALANCES_TRANSFER, [from, to]);
+  await saveAccountAndEvent(ctx, block, eventItem, EventType.BALANCES_TRANSFER, [from, to]);
 }
 
 /**
@@ -56,13 +60,18 @@ export async function processTransferEvent(ctx: EventHandlerContext<Store>): Pro
  *   - Create Event.
  *   - Create Activity.
  * @param ctx
+ * @param block
+ * @param eventItem
  */
-export async function processWithdrawEvent(ctx: EventHandlerContext<Store>): Promise<void> {
-  const evt = new BalancesWithdrawEvent(ctx);
-  const event = getWithdrawEvent(evt);
-  const who = encodeAccount(event.who);
+export async function processWithdrawEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  if (eventItem.name !== "Balances.Withdraw") {
+    throw new Error("Invalid event name");
+  }
+  const evt = new BalancesWithdrawEvent(ctx, eventItem.event);
+  const withdrawEvent = getWithdrawEvent(evt);
+  const who = encodeAccount(withdrawEvent.who);
 
-  await saveAccountAndEvent(ctx, EventType.BALANCES_WITHDRAW, who);
+  await saveAccountAndEvent(ctx, block, eventItem, EventType.BALANCES_WITHDRAW, who);
 }
 
 /**
@@ -71,11 +80,16 @@ export async function processWithdrawEvent(ctx: EventHandlerContext<Store>): Pro
  *   - Create Event.
  *   - Create Activity.
  * @param ctx
+ * @param block
+ * @param eventItem
  */
-export async function processDepositEvent(ctx: EventHandlerContext<Store>): Promise<void> {
-  const evt = new BalancesDepositEvent(ctx);
-  const event = getDepositEvent(evt);
-  const who = encodeAccount(event.who);
+export async function processDepositEvent(ctx: Context, block: Block, eventItem: EventItem): Promise<void> {
+  if (eventItem.name !== "Balances.Deposit") {
+    throw new Error("Invalid event name");
+  }
+  const evt = new BalancesDepositEvent(ctx, eventItem.event);
+  const depositEvent = getDepositEvent(evt);
+  const who = encodeAccount(depositEvent.who);
 
-  await saveAccountAndEvent(ctx, EventType.BALANCES_DEPOSIT, who);
+  await saveAccountAndEvent(ctx, block, eventItem, EventType.BALANCES_DEPOSIT, who);
 }

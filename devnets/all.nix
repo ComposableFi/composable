@@ -2,11 +2,13 @@
   perSystem = { config, self', inputs', pkgs, system, devnetTools, ... }: {
     packages = let packages = self'.packages;
     in rec {
-
-      centauri-configure-and-run = pkgs.writeText "hyperspace.sh" ''
-        cp ${self'.packages.hyperspace-config}/config.toml /tmp/config.toml    
-        ${pkgs.lib.meta.getExe devnet-centauri}       
-      '';
+      centauri-configure-and-run = pkgs.writeShellApplication rec {
+        name = "centauri-configure-and-run";
+        text = ''
+          cp --force ${self'.packages.hyperspace-config} /tmp/config.toml  
+          ${pkgs.lib.meta.getExe devnet-centauri}       
+        '';
+      };
 
       devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
         (import ./specs/centauri.nix {
@@ -15,62 +17,14 @@
           devnet-b = packages.zombienet-dali-centauri-b;
         });
 
-      # Picasso devnet
-      devnet-picasso = (pkgs.callPackage devnetTools.mk-devnet {
-        inherit (packages) polkadot-launch composable-node polkadot-node;
-        chain-spec = "picasso-dev";
-      }).script;
-
       devnet-dali-image = devnetTools.buildDevnetImage {
         name = "devnet-dali";
         container-tools = devnetTools.withDevNetContainerTools;
         devNet = packages.zombienet-rococo-local-dali-dev;
       };
 
-      devnet-picasso-complete = let
-        config =
-          (pkgs.callPackage ../scripts/polkadot-launch/all-dev-local.nix {
-            chainspec = "picasso-dev";
-            polkadot-bin = packages.polkadot-node;
-            composable-bin = packages.composable-node;
-            statemine-bin = packages.statemine-node;
-            acala-bin = packages.acala-node;
-          }).result;
-        config-file = pkgs.writeTextFile {
-          name = "all-dev-local.json";
-          text = "${builtins.toJSON config}";
-        };
-      in pkgs.writeShellApplication {
-        name = "devnet-picasso-complete";
-        text = ''
-          cat ${config-file}
-          rm -rf /tmp/polkadot-launch
-          ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-        '';
-      };
-
-      devnet-dali-complete = let
-        config =
-          (pkgs.callPackage ../scripts/polkadot-launch/all-dev-local.nix {
-            chainspec = "dali-dev";
-            polkadot-bin = packages.polkadot-node;
-            composable-bin = packages.composable-node;
-            statemine-bin = packages.statemine-node;
-            acala-bin = packages.acala-node;
-          }).result;
-        config-file = pkgs.writeTextFile {
-          name = "all-dev-local.json";
-          text = "${builtins.toJSON config}";
-        };
-      in pkgs.writeShellApplication {
-        name = "devnet-dali-complete";
-        text = ''
-          cat ${config-file}
-          rm -rf /tmp/polkadot-launch
-          ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-        '';
-      };
-
+      devnet-picasso-complete = packages.zombienet-picasso-complete;
+      devnet-dali-complete = packages.zombienet-dali-complete;
       devnet-initialize-script-local = devnetTools.mkDevnetInitializeScript {
         polkadotUrl = "ws://localhost:9944";
         composableUrl = "ws://localhost:9988";
