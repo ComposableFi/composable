@@ -15,3 +15,4 @@ name = "picasso_runtime"
 
 [features]
 runtime-benchmarks = ["picasso-runtime/runtime-benchmarks"]
+try-runtime = ["picasso-runtime/try-runtime"]

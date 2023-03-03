@@ -28,7 +28,8 @@ normal = [
 [dependencies]
 executive = { package = "frame-executive", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
 frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
-frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
+frame-try-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
 
 # primitives
 sp-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
@@ -148,7 +149,6 @@ runtime-benchmarks = [
   "hex-literal",
   "balances/runtime-benchmarks",
   "timestamp/runtime-benchmarks",
-  "collective/runtime-benchmarks",
   "collator-selection/runtime-benchmarks",
   "session-benchmarking/runtime-benchmarks",
   "pallet-xcm/runtime-benchmarks",
@@ -251,4 +251,24 @@ std = [
   "pallet-ibc/std",
   "ibc-primitives/std",
   "ibc-runtime-api/std",
+  "frame-try-runtime/std",
+]
+
+try-runtime = [
+	"executive/try-runtime",
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+  "collective/try-runtime",
+	"democracy/try-runtime",
+	"membership/try-runtime",
+	"multisig/try-runtime",
+	"preimage/try-runtime",
+	"proxy/try-runtime",
+	"scheduler/try-runtime",
+	"session/try-runtime",
+	"sudo/try-runtime",
+	"timestamp/try-runtime",
+	"transaction-payment/try-runtime",
+	"treasury/try-runtime",
+	"utility/try-runtime",
 ]
