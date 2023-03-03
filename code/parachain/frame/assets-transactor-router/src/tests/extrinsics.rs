@@ -17,7 +17,6 @@ fn create_asset_id(protocol_id: [u8; 8], nonce: u64) -> u128 {
 		.collect::<Vec<u8>>()
 		.try_into()
 		.expect("[u8; 8] + bytes(u64) = [u8; 16]");
-
 	u128::from_be_bytes(bytes)
 }
 
@@ -213,7 +212,7 @@ mod mint_into {
 	#[test]
 	fn should_create_local_asset_and_mint() {
 		let protocol_id = *b"unittest";
-		let nonce = 0;
+		let nonce = 1;
 		let asset_id = create_asset_id(protocol_id, nonce);
 		let asset_info = AssetInfo {
 			name: None,
