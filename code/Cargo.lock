@@ -2836,6 +2836,7 @@ dependencies = [
  "pallet-multisig",
  "pallet-oracle",
  "pallet-pablo",
+ "pallet-parachain-staking",
  "pallet-preimage",
  "pallet-proxy",
  "pallet-randomness-collective-flip",

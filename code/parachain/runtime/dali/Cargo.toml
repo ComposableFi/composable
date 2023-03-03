@@ -86,6 +86,7 @@ oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-featu
 pablo = { package = "pallet-pablo", path = "../../frame/pablo", default-features = false }
 pallet-fnft = { path = "../../frame/fnft", default-features = false }
 pallet-staking-rewards = { path = "../../frame/staking-rewards", default-features = false }
+pallet-parachain-staking = { path = "../../frame/parachain-staking", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
@@ -256,6 +257,7 @@ std = [
   "pablo/std",
   "proxy/std",
   "pallet-staking-rewards/std",
+  "pallet-parachain-staking/std",
   "parachain-info/std",
   "preimage/std",
   "primitives/std",

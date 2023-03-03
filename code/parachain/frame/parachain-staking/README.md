@@ -1,3 +1,5 @@
+Forked from https://github.com/PureStake/moonbeam/tree/a2fe39b54977290bab89bb40d9d077313cc5dc9d/pallets/parachain-staking
+
 # DPoS Pallet for Parachain Staking
 
 ## Formatting Rules

@@ -67,7 +67,7 @@ use composable_traits::{
 use cosmwasm::instrument::CostRules;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{ConstU128, crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	generic, impl_opaque_keys,
 	traits::{
@@ -108,6 +108,7 @@ use frame_support::{
 	traits::{fungibles, ConstU32, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade},
 	weights::ConstantMultiplier,
 };
+use frame_support::traits::EitherOfDiverse;
 use frame_system as system;
 use ibc::core::{
 	ics24_host::identifier::PortId,
@@ -314,6 +315,85 @@ impl timestamp::Config for Runtime {
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
+}
+
+pub struct OnNewRound;
+impl pallet_parachain_staking::OnNewRound for OnNewRound {
+	fn on_new_round(round_index: pallet_parachain_staking::RoundIndex) -> Weight {
+		//MoonbeamOrbiters::on_new_round(round_index)
+		panic!("Unimplemented")
+	}
+}
+pub struct PayoutCollatorOrOrbiterReward;
+impl pallet_parachain_staking::PayoutCollatorReward<Runtime> for PayoutCollatorOrOrbiterReward {
+	fn payout_collator_reward(
+		for_round: pallet_parachain_staking::RoundIndex,
+		collator_id: AccountId,
+		amount: Balance,
+	) -> Weight {
+		// let extra_weight = if MoonbeamOrbiters::is_orbiter(for_round, collator_id) {
+		// 	MoonbeamOrbiters::distribute_rewards(for_round, collator_id, amount)
+		// } else {
+		// 	ParachainStaking::mint_collator_reward(for_round, collator_id, amount)
+		// };
+		//
+		// <Runtime as frame_system::Config>::DbWeight::get()
+		// 	.reads(1)
+		// 	.saturating_add(extra_weight)
+		panic!("Unimplemented")
+	}
+}
+
+parameter_types! {
+	/// Minimum stake required to become a collator
+	pub const MinCollatorStk: u64 = 1000 * CurrencyId::unit::<Balance>();
+	/// Minimum stake required to be reserved to be a candidate
+	pub const MinCandidateStk: u64 = 500 * CurrencyId::unit::<Balance>();
+	/// Minimum stake required to be reserved to be a delegator
+	pub const MinDelegation: u64 = 5 * CurrencyId::unit::<Balance>();
+	/// Minimum stake required to be reserved to be a delegator
+	pub const MinDelegatorStk: u64 = 5 * CurrencyId::unit::<Balance>();
+}
+
+impl pallet_parachain_staking::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type MonetaryGovernanceOrigin = EnsureRootOrHalfNativeCouncil;
+	/// Minimum round length is 2 minutes (10 * 12 second block times)
+	type MinBlocksPerRound = ConstU32<10>;
+	/// Rounds before the collator leaving the candidates request can be executed
+	type LeaveCandidatesDelay = ConstU32<24>;
+	/// Rounds before the candidate bond increase/decrease can be executed
+	type CandidateBondLessDelay = ConstU32<24>;
+	/// Rounds before the delegator exit can be executed
+	type LeaveDelegatorsDelay = ConstU32<24>;
+	/// Rounds before the delegator revocation can be executed
+	type RevokeDelegationDelay = ConstU32<24>;
+	/// Rounds before the delegator bond increase/decrease can be executed
+	type DelegationBondLessDelay = ConstU32<24>;
+	/// Rounds before the reward is paid
+	type RewardPaymentDelay = ConstU32<2>;
+	/// Minimum collators selected per round, default at genesis and minimum forever after
+	type MinSelectedCandidates = ConstU32<8>;
+	/// Maximum top delegations per candidate
+	type MaxTopDelegationsPerCandidate = ConstU32<300>;
+	/// Maximum bottom delegations per candidate
+	type MaxBottomDelegationsPerCandidate = ConstU32<50>;
+	/// Maximum delegations per delegator
+	type MaxDelegationsPerDelegator = ConstU32<100>;
+	/// Minimum stake required to become a collator
+	type MinCollatorStk = MinCollatorStk;
+	/// Minimum stake required to be reserved to be a candidate
+	type MinCandidateStk = MinCandidateStk;
+	/// Minimum stake required to be reserved to be a delegator
+	type MinDelegation = MinDelegation;
+	/// Minimum stake required to be reserved to be a delegator
+	type MinDelegatorStk = MinDelegatorStk;
+	type BlockAuthor = ();
+	type OnCollatorPayout = ();
+	type PayoutCollatorReward = PayoutCollatorOrOrbiterReward;
+	type OnNewRound = OnNewRound;
+	type WeightInfo = pallet_parachain_staking::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1402,6 +1482,7 @@ construct_runtime!(
 		Fnft: pallet_fnft = 67,
 		StakingRewards: pallet_staking_rewards = 68,
 		AssetsTransactorRouter: assets_transactor_router = 69,
+		ParachainStaking: pallet_parachain_staking = 72,
 
 		CallFilter: call_filter = 140,
 
@@ -1494,6 +1575,7 @@ mod benches {
 			[assets_registry, AssetsRegistry]
 			[pablo, Pablo]
 			[pallet_staking_rewards, StakingRewards]
+			[pallet_parachain_staking, ParachainStaking]
 			[proxy, Proxy]
 			[dex_router, DexRouter]
 			[cosmwasm, Cosmwasm]
