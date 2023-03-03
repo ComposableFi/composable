@@ -853,12 +853,9 @@ export async function getAllHistoricalCoingeckoPrices(
   if (!assetInfo) {
     throw new Error(`Asset ${assetId} not found in asset list.`);
   }
-  let coinId: string;
-  if (assetInfo.coingeckoId) {
-    coinId = assetInfo.coingeckoId;
-  } else if (assetInfo.spotPriceBaseAsset) {
-    coinId = assetInfo.spotPriceBaseAsset.coingeckoId;
-  } else {
+
+  const coinId = assetInfo.coingeckoId || assetInfo.spotPriceBaseAsset?.coingeckoId;
+  if (!coinId) {
     throw new Error("No Coingecko ID found");
   }
 

@@ -337,7 +337,7 @@ export async function processLiquidityRemovedEvent(ctx: Context, block: Block, e
       const historicalLockedValue = new HistoricalLockedValue({
         id: randomUUID(),
         event,
-        amount: -amount,
+        amount: amount * -1n,
         accumulatedAmount: asset.totalLiquidity,
         timestamp: new Date(block.header.timestamp),
         source: LockedSource.Pablo,
@@ -439,7 +439,7 @@ export async function processSwappedEvent(ctx: Context, block: Block, eventItem:
   const baseHistoricalLockedValue = new HistoricalLockedValue({
     id: randomUUID(),
     event,
-    amount: -baseAmount,
+    amount: baseAmount * -1n,
     accumulatedAmount: baseAsset.totalLiquidity,
     timestamp: new Date(block.header.timestamp),
     source: LockedSource.Pablo,
