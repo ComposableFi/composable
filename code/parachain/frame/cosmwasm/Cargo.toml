@@ -38,6 +38,8 @@ libsecp256k1 = { version = "0.7.0", default-features = false }
 
 log = { version = "0.4.14", default-features = false }
 pallet-assets = { default-features = false, path = "../assets" }
+pallet-assets-transactor-router = { default-features = false, path = "../assets-transactor-router" }
+pallet-assets-registry = { default-features = false, path = "../assets-registry" }
 pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 parity-wasm = { version = "0.45.0", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
@@ -89,6 +91,8 @@ runtime-benchmarks = [
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
   "pallet-ibc/runtime-benchmarks",
+  "pallet-assets-transactor-router/runtime-benchmarks",
+  "pallet-assets-registry/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -108,4 +112,6 @@ std = [
   "hex/std",
   "pallet-ibc/std",
   "ibc/std",
+  "pallet-assets-transactor-router/std",
+  "pallet-assets-registry/std",
 ]

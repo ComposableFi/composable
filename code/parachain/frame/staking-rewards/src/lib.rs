@@ -57,7 +57,10 @@ pub mod prelude;
 pub mod weights;
 
 use composable_support::math::safe::{SafeDiv, SafeMul, SafeSub};
-use composable_traits::staking::{Reward, RewardUpdate};
+use composable_traits::{
+	assets::{AssetInfo, CreateAsset},
+	staking::{Reward, RewardUpdate},
+};
 use core::{
 	cmp,
 	cmp::Ordering,
@@ -87,11 +90,16 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 
 	use composable_support::{
+		abstractions::{
+			nonce::Nonce,
+			utils::{increment::SafeIncrement, start_at::OneInit},
+		},
 		math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
 		validation::{validators::GeOne, TryIntoValidated, Validated},
 	};
 	use composable_traits::{
-		currency::{BalanceLike, CurrencyFactory},
+		assets::CreateAsset,
+		currency::BalanceLike,
 		fnft::{FinancialNft, FinancialNftProtocol},
 		staking::{RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod},
 		time::DurationSeconds,
@@ -100,9 +108,9 @@ pub mod pallet {
 		defensive,
 		traits::{
 			fungibles::{
-				Inspect as FungiblesInspect, InspectHold as FungiblesInspectHold,
-				Mutate as FungiblesMutate, MutateHold as FungiblesMutateHold,
-				Transfer as FungiblesTransfer,
+				metadata::Inspect, Inspect as FungiblesInspect,
+				InspectHold as FungiblesInspectHold, Mutate as FungiblesMutate,
+				MutateHold as FungiblesMutateHold, Transfer as FungiblesTransfer,
 			},
 			tokens::{
 				nonfungibles::{
@@ -131,6 +139,7 @@ pub mod pallet {
 		accumulate_rewards_hook, add_to_rewards_pot, claim_of_stake, prelude::*,
 		update_rewards_pool, validation::ValidSplitRatio,
 	};
+	use composable_support::abstractions::utils::increment::Increment;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub fn deposit_event)]
@@ -338,10 +347,9 @@ pub mod pallet {
 			+ Into<u64>;
 
 		/// Is used to create staked asset per reward pool
-		type CurrencyFactory: CurrencyFactory<AssetId = Self::AssetId, Balance = Self::Balance>;
-
-		/// Dependency allowing this pallet to transfer funds from one account to another.
-		type Assets: FungiblesTransfer<
+		type AssetsTransactor: CreateAsset<LocalAssetId = Self::AssetId, Balance = Self::Balance>
+			+ Inspect<Self::AccountId>
+			+ FungiblesTransfer<
 				AccountIdOf<Self>,
 				Balance = BalanceOf<Self>,
 				AssetId = AssetIdOf<Self>,
@@ -449,6 +457,11 @@ pub mod pallet {
 	#[allow(clippy::disallowed_types)]
 	pub(super) type RewardsPotIsEmpty<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, T::AssetId, Blake2_128Concat, T::AssetId, ()>;
+
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
+	pub type ShareAssetNonce<T: Config> =
+		StorageValue<_, u64, ValueQuery, Nonce<OneInit, SafeIncrement>>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -640,14 +653,10 @@ pub mod pallet {
 					reward_configs: initial_reward_config,
 					start_block,
 					lock,
-					share_asset_id,
-					financial_nft_asset_id,
 					minimum_staking_amount,
 				} => {
 					// AssetIds must be greater than 0
 					ensure!(!pool_asset.is_zero(), Error::<T>::InvalidAssetId);
-					ensure!(!share_asset_id.is_zero(), Error::<T>::InvalidAssetId);
-					ensure!(!financial_nft_asset_id.is_zero(), Error::<T>::InvalidAssetId);
 
 					// now < start_block
 					ensure!(
@@ -702,6 +711,14 @@ pub mod pallet {
 						})
 						.try_collect()
 						.expect("No items were added; qed;");
+
+					let share_asset_id = Self::register_protocol_asset(
+						ShareAssetNonce::<T>::increment().expect("Does not exceed `u64::MAX`"),
+					)?;
+					// NOTE: Collection ID can safely be set to the ID of the share asset becase
+					// they exists within different scopes. fNFT Collection IDs are not tracked by
+					// the asset registry.
+					let financial_nft_asset_id = share_asset_id;
 
 					RewardPools::<T>::insert(
 						pool_asset,
@@ -783,7 +800,7 @@ pub mod pallet {
 
 			ensure!(
 				matches!(
-					T::Assets::can_withdraw(*pool_id, who, amount),
+					T::AssetsTransactor::can_withdraw(*pool_id, who, amount),
 					WithdrawConsequence::Success
 				),
 				Error::<T>::NotEnoughAssets
@@ -860,7 +877,7 @@ pub mod pallet {
 
 					ensure!(
 						matches!(
-							T::Assets::can_withdraw(stake.reward_pool_id, who, amount),
+							T::AssetsTransactor::can_withdraw(stake.reward_pool_id, who, amount),
 							WithdrawConsequence::Success
 						),
 						Error::<T>::NotEnoughAssets
@@ -880,7 +897,8 @@ pub mod pallet {
 
 					let new_shares = Self::boosted_amount(reward_multiplier, amount)?;
 
-					let total_shares = T::Assets::total_issuance(rewards_pool.share_asset_id);
+					let total_shares =
+						T::AssetsTransactor::total_issuance(rewards_pool.share_asset_id);
 
 					for (reward_asset_id, reward) in &mut rewards_pool.rewards {
 						let new_inflation = if total_shares.is_zero() {
@@ -976,9 +994,13 @@ pub mod pallet {
 			let fnft_asset_account =
 				T::FinancialNft::asset_account(fnft_collection_id, fnft_instance_id);
 
-			T::Assets::remove_lock(T::LockId::get(), asset_id, &fnft_asset_account)?;
-			T::Assets::remove_lock(T::LockId::get(), share_asset_id, &fnft_asset_account)?;
-			T::Assets::transfer(
+			T::AssetsTransactor::remove_lock(T::LockId::get(), asset_id, &fnft_asset_account)?;
+			T::AssetsTransactor::remove_lock(
+				T::LockId::get(),
+				share_asset_id,
+				&fnft_asset_account,
+			)?;
+			T::AssetsTransactor::transfer(
 				asset_id,
 				&fnft_asset_account,
 				who,
@@ -993,7 +1015,7 @@ pub mod pallet {
 				// If there is no penalty then there is nothing to burn as it will all have been
 				// transferred back to the staker. burn_from isn't a noop if the amount to burn
 				// is 0, hence the check
-				T::Assets::transfer(
+				T::AssetsTransactor::transfer(
 					stake.reward_pool_id,
 					&fnft_asset_account,
 					&T::TreasuryAccount::get(),
@@ -1008,7 +1030,7 @@ pub mod pallet {
 			}
 			// transfer the shares to pool account (not burning to avoid affecting pool share
 			// calculation(share/total_issuance) for other stakes)
-			T::Assets::transfer(
+			T::AssetsTransactor::transfer(
 				share_asset_id,
 				&fnft_asset_account,
 				&Self::pool_account_id(&stake.reward_pool_id),
@@ -1175,8 +1197,8 @@ pub mod pallet {
 			fnft_account: &AccountIdOf<T>,
 			keep_alive: bool,
 		) -> DispatchResult {
-			T::Assets::transfer(staked_asset_id, who, fnft_account, amount, keep_alive)?;
-			T::Assets::set_lock(T::LockId::get(), staked_asset_id, fnft_account, amount)
+			T::AssetsTransactor::transfer(staked_asset_id, who, fnft_account, amount, keep_alive)?;
+			T::AssetsTransactor::set_lock(T::LockId::get(), staked_asset_id, fnft_account, amount)
 		}
 
 		/// Mint share tokens into fNFT asst account & lock the assets
@@ -1185,8 +1207,13 @@ pub mod pallet {
 			awarded_shares: <T as Config>::Balance,
 			fnft_account: &AccountIdOf<T>,
 		) -> DispatchResult {
-			T::Assets::mint_into(share_asset_id, fnft_account, awarded_shares)?;
-			T::Assets::set_lock(T::LockId::get(), share_asset_id, fnft_account, awarded_shares)?;
+			T::AssetsTransactor::mint_into(share_asset_id, fnft_account, awarded_shares)?;
+			T::AssetsTransactor::set_lock(
+				T::LockId::get(),
+				share_asset_id,
+				fnft_account,
+				awarded_shares,
+			)?;
 			Ok(())
 		}
 
@@ -1215,7 +1242,7 @@ pub mod pallet {
 			existing_account_amount: T::Balance,
 			new_account_amount: T::Balance,
 		) -> DispatchResult {
-			T::Assets::set_lock(
+			T::AssetsTransactor::set_lock(
 				T::LockId::get(),
 				asset_id,
 				existing_fnft_asset_account,
@@ -1224,7 +1251,7 @@ pub mod pallet {
 
 			// transfer the amount in the new position from the existing account to the new account
 			// (this should be the total unlocked amount)
-			T::Assets::transfer(
+			T::AssetsTransactor::transfer(
 				asset_id,
 				existing_fnft_asset_account,
 				new_fnft_asset_account,
@@ -1233,7 +1260,7 @@ pub mod pallet {
 			)?;
 
 			// lock assets on new account
-			T::Assets::set_lock(
+			T::AssetsTransactor::set_lock(
 				T::LockId::get(),
 				asset_id,
 				new_fnft_asset_account,
@@ -1283,7 +1310,7 @@ pub mod pallet {
 					*inflation += claim;
 				}
 
-				T::Assets::transfer(
+				T::AssetsTransactor::transfer(
 					*reward_asset_id,
 					&Self::pool_account_id(&stake.reward_pool_id),
 					owner,
@@ -1330,10 +1357,9 @@ pub mod pallet {
 			let mut reductions = BoundedBTreeMap::new();
 			let mut rewards_btree_map = BoundedBTreeMap::new();
 
-			let total_shares: T::Balance =
-				<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(
-					rewards_pool.share_asset_id,
-				);
+			let total_shares: T::Balance = <T::AssetsTransactor as FungiblesInspect<
+				T::AccountId,
+			>>::total_issuance(rewards_pool.share_asset_id);
 
 			for (asset_id, reward) in rewards_pool.rewards.iter() {
 				let inflation = if total_shares.is_zero() {
@@ -1387,7 +1413,13 @@ pub mod pallet {
 				let pool_account_id = Self::pool_account_id(pool_id);
 
 				let do_transfer = || {
-					T::Assets::transfer(reward_currency, from, &pool_account_id, amount, keep_alive)
+					T::AssetsTransactor::transfer(
+						reward_currency,
+						from,
+						&pool_account_id,
+						amount,
+						keep_alive,
+					)
 				};
 
 				match reward_pool.rewards.get_mut(&reward_currency) {
@@ -1530,9 +1562,12 @@ fn accumulate_pool_rewards<T: Config>(
 
 	let pool_account = Pallet::<T>::pool_account_id(&pool_id);
 
-	let unstaked_shares: T::Balance = T::Assets::balance(reward_pool.share_asset_id, &pool_account);
+	let unstaked_shares: T::Balance =
+		T::AssetsTransactor::balance(reward_pool.share_asset_id, &pool_account);
 	let total_shares: T::Balance =
-		<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(reward_pool.share_asset_id);
+		<T::AssetsTransactor as FungiblesInspect<T::AccountId>>::total_issuance(
+			reward_pool.share_asset_id,
+		);
 
 	// If reward pool has not started, do not accumulate rewards or adjust weight
 	Weight::from_ref_time(match reward_pool.start_block.cmp(&current_block) {
@@ -1589,8 +1624,8 @@ fn add_to_rewards_pot<T: Config>(
 
 		let pool_account = Pallet::<T>::pool_account_id(&pool_id);
 
-		T::Assets::transfer(asset_id, who, &pool_account, amount, keep_alive)?;
-		T::Assets::hold(asset_id, &pool_account, amount)?;
+		T::AssetsTransactor::transfer(asset_id, who, &pool_account, amount, keep_alive)?;
+		T::AssetsTransactor::hold(asset_id, &pool_account, amount)?;
 
 		Pallet::<T>::deposit_event(Event::<T>::RewardsPotIncreased { pool_id, asset_id, amount });
 
@@ -1607,7 +1642,7 @@ fn add_to_rewards_pot<T: Config>(
 		// `RewardsPotIsEmpty` storage, making it into a "reward pool state" representatatio
 		// instead.
 		if RewardsPotIsEmpty::<T>::contains_key(pool_id, asset_id) &&
-			T::Assets::balance_on_hold(asset_id, &pool_account) >=
+			T::AssetsTransactor::balance_on_hold(asset_id, &pool_account) >=
 				reward
 					.reward_rate
 					.amount_per_period()
@@ -1636,9 +1671,12 @@ fn update_rewards_pool<T: Config>(
 
 		let pool_account = Pallet::<T>::pool_account_id(&pool_id);
 
-		let unstaked_shares: T::Balance = T::Assets::balance(pool.share_asset_id, &pool_account);
+		let unstaked_shares: T::Balance =
+			T::AssetsTransactor::balance(pool.share_asset_id, &pool_account);
 		let total_shares: T::Balance =
-			<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(pool.share_asset_id);
+			<T::AssetsTransactor as FungiblesInspect<T::AccountId>>::total_issuance(
+				pool.share_asset_id,
+			);
 
 		let now_seconds = T::UnixTime::now().as_secs();
 
@@ -1717,7 +1755,8 @@ pub(crate) fn accumulate_reward<T: Config>(
 			// if no periods have been surpassed, short-circuit
 			return RewardAccumulationCalculationOutcome::Success
 		};
-	let total_locked_rewards: u128 = T::Assets::balance_on_hold(asset_id, pool_account).into();
+	let total_locked_rewards: u128 =
+		T::AssetsTransactor::balance_on_hold(asset_id, pool_account).into();
 	log::info!("total_locked_rewards = {total_locked_rewards}");
 
 	// the maximum amount repayable given the reward rate.
@@ -1793,7 +1832,7 @@ pub(crate) fn accumulate_reward<T: Config>(
 		),
 	);
 
-	T::Assets::release(
+	T::AssetsTransactor::release(
 		asset_id,
 		pool_account,
 		newly_accumulated_rewards.get().into(),
@@ -1827,7 +1866,7 @@ pub(crate) fn claim_of_stake<T: Config>(
 	reward_asset_id: &<T as Config>::AssetId,
 ) -> Result<T::Balance, ArithmeticError> {
 	let total_shares: T::Balance =
-		<T::Assets as FungiblesInspect<T::AccountId>>::total_issuance(*share_asset_id);
+		<T::AssetsTransactor as FungiblesInspect<T::AccountId>>::total_issuance(*share_asset_id);
 
 	let claim = if total_shares.is_zero() {
 		T::Balance::zero()
@@ -1850,6 +1889,21 @@ pub(crate) fn claim_of_stake<T: Config>(
 }
 
 impl<T: Config> Pallet<T> {
+	/// Registers a new asset within the namespace of this protocol
+	pub fn register_protocol_asset(nonce: u64) -> Result<T::AssetId, DispatchError> {
+		T::AssetsTransactor::create_local_asset(
+			T::PalletId::get().0,
+			nonce,
+			AssetInfo {
+				name: None,
+				symbol: None,
+				decimals: Some(12),
+				existential_deposit: T::Balance::zero(),
+				ratio: None,
+			},
+		)
+	}
+
 	/// Calculates the claimable amount(s) for a staked position, calling [`claim_of_stake`] for
 	/// each asset in the pool.
 	///
@@ -1886,7 +1940,8 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let pool_account = Self::pool_account_id(pool_id);
 
-		let unstaked_shares = T::Assets::balance(rewards_pool.share_asset_id, &pool_account);
+		let unstaked_shares =
+			T::AssetsTransactor::balance(rewards_pool.share_asset_id, &pool_account);
 
 		let amount_to_transfer = match awarded_shares.checked_sub(&unstaked_shares) {
 			Some(amount_to_mint) => {
@@ -1896,7 +1951,7 @@ impl<T: Config> Pallet<T> {
 			None => awarded_shares,
 		};
 
-		T::Assets::transfer(
+		T::AssetsTransactor::transfer(
 			rewards_pool.share_asset_id,
 			&pool_account,
 			fnft_account,

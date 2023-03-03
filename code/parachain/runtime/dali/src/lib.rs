@@ -16,7 +16,7 @@
 	)
 )]
 #![cfg_attr(not(feature = "std"), no_std)]
-// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
+// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 512.
 #![recursion_limit = "512"]
 
 // Make the WASM binary available.
@@ -65,7 +65,7 @@ use composable_traits::{
 	xcm::assets::RemoteAssetRegistryInspect,
 };
 use cosmwasm::instrument::CostRules;
-use primitives::currency::{CurrencyId, ValidateCurrencyId};
+use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -100,7 +100,7 @@ use crate::fees::FinalPriceConverter;
 use codec::Encode;
 use composable_traits::{
 	account_proxy::{AccountProxyWrapper, ProxyType},
-	currency::{CurrencyFactory as CurrencyFactoryT, RangeId, Rational64},
+	currency::{CurrencyFactory as CurrencyFactoryT, RangeId},
 	fnft::FnftAccountProxyType,
 	xcm::assets::{RemoteAssetRegistryMutate, XcmAssetLocation},
 };
@@ -391,7 +391,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type PayableCall = RuntimeCall;
 
-	type Lock = Assets;
+	type Lock = AssetsTransactorRouter;
 
 	type BalanceConverter = FinalPriceConverter;
 }
@@ -735,7 +735,7 @@ parameter_types! {
 impl proxy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
-	type Currency = Assets;
+	type Currency = AssetsTransactorRouter;
 	type ProxyType = ProxyType;
 	type ProxyDepositBase = ProxyPrice;
 	type ProxyDepositFactor = ProxyPrice;
@@ -795,7 +795,7 @@ impl vault::Config for Runtime {
 	type Balance = Balance;
 	type CurrencyFactory = CurrencyFactory;
 	type AssetId = CurrencyId;
-	type Currency = Assets;
+	type Currency = AssetsTransactorRouter;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type PalletId = VaultPalletId;
 	type MaxStrategies = MaxStrategies;
@@ -821,25 +821,27 @@ impl currency_factory::Config for Runtime {
 impl assets_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = CurrencyId;
-	type CurrencyFactory = CurrencyFactory;
 	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
 	type UpdateAssetRegistryOrigin = EnsureRootOrHalfNativeCouncil;
 	type ParachainOrGovernanceOrigin = EnsureRootOrHalfNativeCouncil;
 	type Balance = Balance;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
+	type Convert = ConvertInto;
 }
 
-impl assets::Config for Runtime {
+impl assets_transactor_router::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = CurrencyFactory;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
+	type NativeTransactor = Balances;
+	type LocalTransactor = Tokens;
+	// NOTE(connor): Use second instance in future
+	type ForeignTransactor = Tokens;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type GovernanceRegistry = GovernanceRegistry;
-	type CurrencyValidator = ValidateCurrencyId;
+	type AssetLocation = composable_traits::xcm::assets::XcmAssetLocation;
+	type AssetsRegistry = AssetsRegistry;
 }
 
 parameter_types! {
@@ -855,7 +857,7 @@ parameter_types! {
 impl crowdloan_rewards::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type RewardAsset = Assets;
+	type RewardAsset = AssetsTransactorRouter;
 	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = sp_runtime::AccountId32;
@@ -882,8 +884,6 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type AssetId = CurrencyId;
-	type Assets = Assets;
-	type CurrencyFactory = CurrencyFactory;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
 	type PalletId = StakingRewardsPalletId;
@@ -897,6 +897,7 @@ impl pallet_staking_rewards::Config for Runtime {
 	type LockId = StakingRewardsLockId;
 	type TreasuryAccount = TreasuryAccount;
 	type ExistentialDeposits = MultiExistentialDeposits;
+	type AssetsTransactor = AssetsTransactorRouter;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -926,7 +927,7 @@ parameter_types! {
 }
 
 impl vesting::Config for Runtime {
-	type Currency = Assets;
+	type Currency = AssetsTransactorRouter;
 	type RuntimeEvent = RuntimeEvent;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
@@ -949,7 +950,7 @@ impl bonded_finance::Config for Runtime {
 	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type BondOfferId = BondOfferId;
 	type Convert = sp_runtime::traits::ConvertInto;
-	type Currency = Assets;
+	type Currency = AssetsTransactorRouter;
 	type RuntimeEvent = RuntimeEvent;
 	type MinReward = MinReward;
 	type NativeCurrency = Balances;
@@ -971,7 +972,7 @@ impl composable_traits::defi::DeFiComposableConfig for Runtime {
 impl dutch_auction::Config for Runtime {
 	type NativeCurrency = Balances;
 	type RuntimeEvent = RuntimeEvent;
-	type MultiCurrency = Assets;
+	type MultiCurrency = AssetsTransactorRouter;
 	type PalletId = DutchAuctionId;
 	type OrderId = u128;
 	type UnixTime = Timestamp;
@@ -1016,7 +1017,7 @@ impl lending::Config for Runtime {
 	type Vault = Vault;
 	type VaultLender = Vault;
 	type CurrencyFactory = CurrencyFactory;
-	type MultiCurrency = Assets;
+	type MultiCurrency = AssetsTransactorRouter;
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
 	type MaxMarketCount = MaxLendingCount;
@@ -1031,8 +1032,9 @@ impl lending::Config for Runtime {
 }
 
 parameter_types! {
-  pub PabloId: PalletId = PalletId(*b"pall_pab");
-  pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
+	pub PabloId: PalletId = PalletId(*b"pall_pab");
+	pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
+	pub const LPTokenEd: Balance = 10_000;
 }
 
 impl pablo::Config for Runtime {
@@ -1040,17 +1042,17 @@ impl pablo::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type Convert = ConvertInto;
-	type CurrencyFactory = CurrencyFactory;
-	type Assets = Assets;
+	type Assets = AssetsTransactorRouter;
+	type LPTokenFactory = AssetsTransactorRouter;
 	type PoolId = PoolId;
 	type PalletId = PabloId;
-	type LocalAssets = CurrencyFactory;
 	type PoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	// TODO: consider making it is own origin
 	type EnableTwapOrigin = EnsureRootOrHalfNativeCouncil;
 	type TWAPInterval = TWAPInterval;
 	type Time = Timestamp;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
+	type LPTokenExistentialDeposit = LPTokenEd;
 }
 
 parameter_types! {
@@ -1153,7 +1155,7 @@ impl cosmwasm::Config for Runtime {
 	type AssetToDenom = AssetToDenom;
 	type Balance = Balance;
 	type AssetId = CurrencyId;
-	type Assets = Assets;
+	type Assets = AssetsTransactorRouter;
 	type NativeAsset = Balances;
 	type ChainId = ChainId;
 	type MaxContractLabelSize = MaxContractLabelSize;
@@ -1239,12 +1241,7 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 			1,
 			X1(Junction::GeneralIndex(asset_id.into())),
 		));
-		assets_registry::Pallet::<Runtime>::set_reserve_location(
-			asset_id,
-			location,
-			Rational64::one(),
-			Some(12),
-		)?;
+		assets_registry::Pallet::<Runtime>::set_reserve_location(asset_id, location)?;
 
 		Ok(asset_id)
 	}
@@ -1310,7 +1307,7 @@ impl pallet_ibc::Config for Runtime {
 	type PalletPrefix = IbcTriePrefix;
 	type LightClientProtocol = GRANDPA;
 	type AccountIdConversion = ibc_primitives::IbcAccount<AccountId>;
-	type Fungibles = Assets;
+	type Fungibles = AssetsTransactorRouter;
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type Router = Router;
 	type MinimumConnectionDelay = MinimumConnectionDelay;
@@ -1390,7 +1387,7 @@ construct_runtime!(
 		Vault: vault = 54,
 		AssetsRegistry: assets_registry = 55,
 		GovernanceRegistry: governance_registry = 56,
-		Assets: assets = 57,
+		// Assets: assets = 57,
 		CrowdloanRewards: crowdloan_rewards = 58,
 		Vesting: vesting = 59,
 		BondedFinance: bonded_finance = 60,
@@ -1404,6 +1401,7 @@ construct_runtime!(
 		// depends on fNFT being initialized before it.
 		Fnft: pallet_fnft = 67,
 		StakingRewards: pallet_staking_rewards = 68,
+		AssetsTransactorRouter: assets_transactor_router = 69,
 
 		CallFilter: call_filter = 140,
 
@@ -1516,7 +1514,7 @@ impl_runtime_apis! {
 
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, ForeignAssetId> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
-			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
+			SafeRpcWrapper(<AssetsTransactorRouter as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
 		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {

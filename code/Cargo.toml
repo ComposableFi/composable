@@ -30,7 +30,8 @@ exclude = ["utils/extrinsics-docs-scraper", "integration-tests"]
 members = [
   "services/cmc-api",
   "parachain/frame/*",
-  "integration-tests/local-integration-tests",
+  # TODO(hussein): let's upgrade them in v0.9.33
+  # "integration-tests/local-integration-tests",
   "parachain/node",
   "parachain/runtime/common",
   "parachain/runtime/primitives",

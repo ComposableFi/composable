@@ -208,7 +208,7 @@ impl<
 {
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
 		WellKnownXcmpAssets::local_to_remote(id, ThisParaId::get().into())
-			.or_else(|| AssetRegistry::asset_to_remote(id).map(|x| x.location.into()))
+			.or_else(|| AssetRegistry::asset_to_remote(id).map(|x| x.into()))
 	}
 }
 

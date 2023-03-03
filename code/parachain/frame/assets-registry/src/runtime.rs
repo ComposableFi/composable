@@ -2,17 +2,17 @@ use crate::{self as pallet_assets_registry, weights::SubstrateWeight};
 use composable_traits::xcm::assets::XcmAssetLocation;
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{EnsureOneOf, Everything},
+	traits::{EitherOfDiverse, Everything},
 };
 use frame_system::{self as system, EnsureRoot, EnsureSignedBy};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 };
 
 pub type AccountId = u32;
-type Balance = u64;
+type Balance = u128;
 type Block = frame_system::mocking::MockBlock<Runtime>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 
@@ -25,27 +25,14 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		CurrencyFactory : pallet_currency_factory::{Pallet, Call, Storage, Event<T>},
-
-		AssetsRegistry: pallet_assets_registry::{Pallet, Call, Storage, Event<T>},
+		System: frame_system,
+		AssetsRegistry: pallet_assets_registry,
 	}
 );
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
-}
-
-impl pallet_currency_factory::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AssetId = AssetId;
-	type Balance = Balance;
-	type AddOrigin = EnsureOneOf<
-		EnsureSignedBy<RootAccount, AccountId>, // for tests
-		EnsureRoot<AccountId>,                  // for benchmarks
-	>;
-	type WeightInfo = pallet_currency_factory::SubstrateWeight<Self>;
 }
 
 impl system::Config for Runtime {
@@ -79,26 +66,33 @@ ord_parameter_types! {
 	pub const RootAccount: AccountId = ROOT;
 }
 
+parameter_types! {
+	pub const NativeED: Balance = 0;
+}
+
 type AssetId = u128;
 
 impl pallet_assets_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = AssetId;
 	type Balance = Balance;
-	type CurrencyFactory = CurrencyFactory;
 	type ForeignAssetId = XcmAssetLocation;
-	type UpdateAssetRegistryOrigin = EnsureOneOf<
+	type UpdateAssetRegistryOrigin = EitherOfDiverse<
 		EnsureSignedBy<RootAccount, AccountId>, // for tests
 		EnsureRoot<AccountId>,                  // for benchmarks
 	>;
-	type ParachainOrGovernanceOrigin = EnsureOneOf<
+	type ParachainOrGovernanceOrigin = EitherOfDiverse<
 		EnsureSignedBy<RootAccount, AccountId>, // for tests
 		EnsureRoot<AccountId>,                  // for benchmarks
 	>;
 	type WeightInfo = SubstrateWeight<Self>;
+	type Convert = ConvertInto;
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Runtime>().unwrap().into()
+	system::GenesisConfig::default()
+		.build_storage::<Runtime>()
+		.expect("Storage is valid")
+		.into()
 }

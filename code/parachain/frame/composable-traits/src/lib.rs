@@ -53,6 +53,7 @@ pub mod liquidation;
 pub mod oracle;
 pub mod privilege;
 pub mod staking;
+pub mod storage;
 pub mod time;
 pub mod vault;
 pub mod vesting;
