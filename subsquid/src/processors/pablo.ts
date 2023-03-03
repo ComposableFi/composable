@@ -214,37 +214,37 @@ export async function processLiquidityAddedEvent(ctx: Context, block: Block, eve
   await ctx.store.save(lpToken);
 
   // Update or create assets
-  for (const [assetId, amount] of assetAmounts) {
-    const asset = await getOrCreatePabloAsset(ctx, block, pool, assetId.toString());
-
-    asset.totalLiquidity += amount;
-    asset.blockId = block.header.hash;
-
-    await ctx.store.save(asset);
-
-    const historicalLockedValue = new HistoricalLockedValue({
-      id: randomUUID(),
-      event,
-      amount,
-      accumulatedAmount: asset.totalLiquidity,
-      timestamp: new Date(block.header.timestamp),
-      source: LockedSource.Pablo,
-      assetId: assetId.toString(),
-      sourceEntityId: pool.id,
-      blockId: block.header.hash
-    });
-
-    await ctx.store.save(historicalLockedValue);
-
-    await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
-  }
-
   const amounts: Array<PabloAmount> = [];
 
   for (const [assetId, amount] of assetAmounts) {
-    const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
-    const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price: price || 0 });
-    amounts.push(pabloAmount);
+    try {
+      const asset = await getOrCreatePabloAsset(ctx, block, pool, assetId.toString());
+
+      asset.totalLiquidity += amount;
+      asset.blockId = block.header.hash;
+
+      await ctx.store.save(asset);
+
+      const historicalLockedValue = new HistoricalLockedValue({
+        id: randomUUID(),
+        event,
+        amount,
+        accumulatedAmount: asset.totalLiquidity,
+        timestamp: new Date(block.header.timestamp),
+        source: LockedSource.Pablo,
+        assetId: assetId.toString(),
+        sourceEntityId: pool.id,
+        blockId: block.header.hash
+      });
+
+      await ctx.store.save(historicalLockedValue);
+
+      const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
+      const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
+      amounts.push(pabloAmount);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   const pabloLiquidityAdded = new PabloLiquidityAdded({
@@ -257,7 +257,11 @@ export async function processLiquidityAddedEvent(ctx: Context, block: Block, eve
     success: true
   });
 
-  await ctx.store.save(pabloLiquidityAdded);
+  try {
+    await ctx.store.save(pabloLiquidityAdded);
+  } catch (err) {
+    console.log(err);
+  }
 
   const pabloTransaction = new PabloTransaction({
     id: eventItem.event.id,
@@ -319,37 +323,38 @@ export async function processLiquidityRemovedEvent(ctx: Context, block: Block, e
   await ctx.store.save(pool);
 
   // Update or create assets
-  for (const [assetId, amount] of assetAmounts) {
-    const asset = await getOrCreatePabloAsset(ctx, block, pool, assetId.toString());
-
-    asset.totalLiquidity -= amount;
-    asset.blockId = block.header.hash;
-
-    await ctx.store.save(asset);
-
-    const historicalLockedValue = new HistoricalLockedValue({
-      id: randomUUID(),
-      event,
-      amount: -amount,
-      accumulatedAmount: asset.totalLiquidity,
-      timestamp: new Date(block.header.timestamp),
-      source: LockedSource.Pablo,
-      assetId: assetId.toString(),
-      sourceEntityId: pool.id,
-      blockId: block.header.hash
-    });
-
-    await ctx.store.save(historicalLockedValue);
-
-    await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
-  }
-
   const amounts: Array<PabloAmount> = [];
 
   for (const [assetId, amount] of assetAmounts) {
-    const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
-    const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price: price || 0 });
-    amounts.push(pabloAmount);
+    try {
+      const asset = await getOrCreatePabloAsset(ctx, block, pool, assetId.toString());
+
+      asset.totalLiquidity -= amount;
+      asset.blockId = block.header.hash;
+
+      await ctx.store.save(asset);
+
+      const historicalLockedValue = new HistoricalLockedValue({
+        id: randomUUID(),
+        event,
+        amount: -amount,
+        accumulatedAmount: asset.totalLiquidity,
+        timestamp: new Date(block.header.timestamp),
+        source: LockedSource.Pablo,
+        assetId: assetId.toString(),
+        sourceEntityId: pool.id,
+        blockId: block.header.hash
+      });
+
+      await ctx.store.save(historicalLockedValue);
+
+      const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
+
+      const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
+      amounts.push(pabloAmount);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   const pabloLiquidityRemoved = new PabloLiquidityRemoved({
@@ -587,8 +592,13 @@ export async function processSwappedEvent(ctx: Context, block: Block, eventItem:
 
   await ctx.store.save(historicalVolumeBaseAsset);
   await ctx.store.save(historicalVolumeQuoteAsset);
-  await getOrCreateHistoricalAssetPrice(ctx, baseAssetId.toString(), block.header.timestamp);
-  await getOrCreateHistoricalAssetPrice(ctx, quoteAssetId.toString(), block.header.timestamp);
+
+  try {
+    await getOrCreateHistoricalAssetPrice(ctx, baseAssetId.toString(), block.header.timestamp);
+    await getOrCreateHistoricalAssetPrice(ctx, quoteAssetId.toString(), block.header.timestamp);
+  } catch (err) {
+    console.log(err);
+  }
 
   // Calculate and update APR
   await getOrCreateFeeApr(ctx, pool, undefined, new Date(block.header.timestamp), block, event);
@@ -681,9 +691,13 @@ export async function processAddLiquidityCallError(
   const amounts: Array<PabloAmount> = [];
 
   for (const [assetId, amount] of assets) {
-    const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
-    const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price: price || 0 });
-    amounts.push(pabloAmount);
+    try {
+      const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
+      const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
+      amounts.push(pabloAmount);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   const pabloLiquidityAdded = new PabloLiquidityAdded({
@@ -746,9 +760,13 @@ export async function processRemoveLiquidityCallError(
   const amounts: Array<PabloAmount> = [];
 
   for (const [assetId, amount] of minReceive) {
-    const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
-    const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price: price || 0 });
-    amounts.push(pabloAmount);
+    try {
+      const price = await getOrCreateHistoricalAssetPrice(ctx, assetId.toString(), block.header.timestamp);
+      const pabloAmount = new PabloAmount({ assetId: assetId.toString(), amount, price });
+      amounts.push(pabloAmount);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   const pabloLiquidityRemoved = new PabloLiquidityRemoved({

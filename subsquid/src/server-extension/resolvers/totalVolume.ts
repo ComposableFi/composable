@@ -42,6 +42,9 @@ export class TotalVolumeResolver {
       const historicalVolume = await manager.getRepository(HistoricalVolume).findOne({
         where: {
           timestamp: LessThan(new Date(timestamp.getTime()))
+        },
+        order: {
+          timestamp: "DESC"
         }
       });
 
