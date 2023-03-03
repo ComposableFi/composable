@@ -178,7 +178,7 @@ export async function saveAccountAndEvent(
     const id = accountIds[index];
     if (!id) {
       // no-op
-      return Promise.reject("Missing account id");
+      return Promise.reject(new Error("Missing account id"));
     }
     const account = await getOrCreateAccount(ctx, block, eventItem, id);
     if (account) {
@@ -429,7 +429,12 @@ export async function getSpotPrice(
 }
 
 /**
- * Gets historical price from DB, or from Coingecko if it doesn't exist.
+ * Searches for HistoricalAssetPrices and returns the asset price for a given timestamp.
+ * If price does not exist, it creates it.
+ * If a base asset and pool are provided, it calculates the spot price, and uses it to
+ * calculate the actual asset price.
+ * It does not store this calculated price, as the function does not know if it is
+ * accurate for the provided timestamp (the processor might still be many blocks behind)
  * @param ctx
  * @param assetId
  * @param timestamp
@@ -438,87 +443,77 @@ export async function getOrCreateHistoricalAssetPrice(
   ctx: Context | EntityManager,
   assetId: string,
   timestamp: number
-): Promise<number | undefined> {
+): Promise<number> {
   const assetInfo = assetList.find(asset => asset.assetId === assetId);
   if (!assetInfo) {
-    throw new Error(`Asset with id ${assetId} not found.`);
+    throw new Error(`Asset ${assetId} not found.`);
   }
 
-  const isRepository = ctx instanceof EntityManager;
+  // When asset has a base asset, use it to calculate the price
+  const baseAssetId = assetInfo.spotPriceBaseAsset?.assetId;
+  const assetIdToUse = baseAssetId || assetId;
+  const poolId = assetInfo.spotPriceBaseAsset?.poolId;
 
   const time = new Date(timestamp);
+  // Use 00:00hs as date
   const date = new Date(time.getFullYear(), time.getMonth(), time.getDate());
 
-  let assetPrice: HistoricalAssetPrice | null | undefined;
   let price: number | undefined;
+
+  // Check if the price already exists
+  price = await findHistoricalAssetPrice(ctx, assetIdToUse, date);
+
+  if (price === undefined) {
+    // If price does not exist, query all prices for the given asset and store the
+    // missing ones on the DB.
+    await getAllHistoricalCoingeckoPrices(ctx, assetIdToUse);
+
+    // Retry finding the recently stored price
+    price = await findHistoricalAssetPrice(ctx, assetIdToUse, date);
+
+    if (price === undefined) {
+      throw new Error(`Cannot find asset price for ${assetIdToUse}`);
+    }
+  }
+
+  if (baseAssetId && poolId) {
+    const spotPrice = await getSpotPrice(ctx, assetId, baseAssetId, poolId, timestamp);
+    return price / spotPrice;
+  }
+
+  return price;
+}
+
+/**
+ * Looks for a historical price stored for a given assetId and timestamp.
+ * If it does not exist, returns undefined.
+ * @param ctx
+ * @param assetId
+ * @param timestamp
+ */
+export async function findHistoricalAssetPrice(
+  ctx: Context | EntityManager,
+  assetId: string,
+  timestamp: Date
+): Promise<number | undefined> {
+  const isRepository = ctx instanceof EntityManager;
 
   const where = {
     assetId,
-    timestamp: date
+    timestamp
   };
 
   try {
     // Look for the price in the DB
-    assetPrice = isRepository
+    const assetPrice = isRepository
       ? await ctx.getRepository(HistoricalAssetPrice).findOne({ where })
       : await ctx.store.findOne(HistoricalAssetPrice, {
           where
         });
-    price = assetPrice?.price;
+    return assetPrice?.price;
   } catch {
-    // Ignore. This try/catch is needed to avoid potential errors.
+    return undefined;
   }
-
-  // If no price available, get it from the API and update DB
-  if (price === undefined) {
-    try {
-      price = await getHistoricalCoingeckoPrice(ctx, assetInfo, date);
-      if (price) {
-        // Create new price entry
-        assetPrice = new HistoricalAssetPrice({
-          id: randomUUID(),
-          assetId: assetId.toString(),
-          price,
-          timestamp: date,
-          currency: Currency.USD
-        });
-
-        if (isRepository) {
-          await ctx.getRepository(HistoricalAssetPrice).save(assetPrice);
-        } else {
-          await ctx.store.save(assetPrice);
-        }
-      }
-    } catch {
-      console.info(`Could not get price for asset ${assetId}. Trying with previous value instead.`);
-
-      const options = {
-        where: {
-          assetId,
-          timestamp: LessThan(date)
-        },
-        sort: {
-          timestamp: "DESC"
-        }
-      };
-
-      try {
-        assetPrice = isRepository
-          ? await ctx.getRepository(HistoricalAssetPrice).findOne(options)
-          : await ctx.store.findOne(HistoricalAssetPrice, options);
-
-        if (assetPrice) {
-          price = assetPrice.price;
-        } else {
-          console.error(`Could not get price for asset ${assetId}. Ignoring.`);
-        }
-      } catch {
-        console.error(`Could not get price for asset ${assetId}. Ignoring.`);
-      }
-    }
-  }
-
-  return price || 0;
 }
 
 /**
@@ -529,78 +524,87 @@ export async function getCurrentAssetPrices(ctx: Context | EntityManager): Promi
   const isRepository = ctx instanceof EntityManager;
 
   const now = new Date();
-  // Round time to the nearest minute
+  // Round time to the nearest minute.
   const date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
 
+  // Current prices, that can be obtained from DB and/or Coingecko.
   const currentPrices: { [K in AssetId]?: number } = {};
+  // Prices that need to be stored. Use Set to avoid duplications when multiple
+  // assets rely on the same base asset.
+  const updatePrices: Set<AssetId> = new Set();
+  // New HistoricalAssetPrices to be stored.
+  const newHistoricalPrices: Array<HistoricalAssetPrice> = [];
 
-  let missingPrices = false;
+  // Check if all prices are in DB, and flag the missing ones for updating
+  // This includes the ones that are required to calculate the spot price for
+  // another asset.
+  for (const { assetId, spotPriceBaseAsset } of assetList.values()) {
+    // Use the asset ID of the base asset if it is provided, as this asset relies
+    // on another price to calculate its own.
+    const assetIdToUse = spotPriceBaseAsset?.assetId || assetId;
+    // Search for price in DB.
+    const price = await findHistoricalAssetPrice(ctx, assetIdToUse, date);
 
-  // Check if all prices are in DB
-  for (const { assetId } of assetList.values()) {
-    try {
-      // Search for price in DB
-      const where = {
-        assetId,
-        timestamp: date
-      };
-      const assetPrice = isRepository
-        ? await ctx.getRepository(HistoricalAssetPrice).findOne({ where })
-        : await ctx.store.findOne(HistoricalAssetPrice, { where });
-
-      // If any price is missing, flag it and break
-      if (assetPrice?.price === undefined) {
-        missingPrices = true;
-        break;
-      } else {
-        currentPrices[assetId] = assetPrice.price;
-      }
-    } catch {
-      missingPrices = true;
-      break;
+    if (price) {
+      // If price is found, keep it for returning
+      currentPrices[assetIdToUse] = price;
+    } else {
+      // If price is not found, flag it for updating
+      updatePrices.add(assetIdToUse);
     }
   }
 
-  // If any price is missing, get all from Coingecko and update DB
-  if (missingPrices) {
-    const queryIds = assetList
-      .map(({ coingeckoId }) => coingeckoId)
+  // If there are assets for updating, query Coingecko
+  if (updatePrices.size > 0) {
+    // Create query url
+    const queryIds = Array.from(updatePrices)
+      .map(assetId => assetList.find(asset => asset.assetId === assetId)?.coingeckoId)
       .filter(Boolean)
       .join("%2C");
     const endpoint = `https://api.coingecko.com/api/v3/simple/price?ids=${queryIds}&vs_currencies=usd`;
-    try {
-      const res = await fetch<CoingeckoPrices>(endpoint);
+    // Fetch from Coingecko
+    const res = await fetch<CoingeckoPrices>(endpoint);
 
-      for (const { assetId, coingeckoId, spotPriceBaseAsset } of assetList.values()) {
-        // For prices obtained from Coingecko, store them directly
-        if (coingeckoId) {
-          currentPrices[assetId] = res[coingeckoId].usd;
-        } else if (spotPriceBaseAsset) {
-          // For prices obtained from swap, get the spot price and store it
-          const spotPrice = await getSpotPrice(ctx, assetId, spotPriceBaseAsset.assetId, spotPriceBaseAsset.poolId);
-          currentPrices[assetId] = res[spotPriceBaseAsset.coingeckoId].usd / spotPrice;
-        }
+    for (const assetId of updatePrices) {
+      const assetInfo = assetList.find(asset => asset.assetId === assetId);
+      // Store prices from Coingecko in DB
+      if (assetInfo?.coingeckoId && res[assetInfo.coingeckoId].usd) {
+        // Keep price for returning
+        currentPrices[assetId] = res[assetInfo.coingeckoId].usd;
+        // Add HistoricalAssetPrice for storing in DB
+        newHistoricalPrices.push(
+          new HistoricalAssetPrice({
+            id: randomUUID(),
+            assetId,
+            price: res[assetInfo.coingeckoId].usd,
+            timestamp: date,
+            currency: Currency.USD
+          })
+        );
       }
-    } catch {
-      throw new Error(`Failed to fetch or parse ${endpoint}`);
     }
 
-    // Store all current prices in DB
-    for (const [assetId, price] of Object.entries(currentPrices)) {
-      if (price) {
-        const assetPrice = new HistoricalAssetPrice({
-          id: randomUUID(),
-          assetId,
-          price,
-          timestamp: date,
-          currency: Currency.USD
-        });
+    // Store new prices
+    if (isRepository) {
+      await ctx.getRepository(HistoricalAssetPrice).save(newHistoricalPrices);
+    } else {
+      await ctx.store.save(newHistoricalPrices);
+    }
+  }
 
-        if (isRepository) {
-          await ctx.getRepository(HistoricalAssetPrice).save(assetPrice);
-        } else {
-          await ctx.store.save(assetPrice);
-        }
+  // Get prices that require to use another asset and the spot price
+  for (const { assetId, spotPriceBaseAsset } of assetList.values()) {
+    if (spotPriceBaseAsset && !currentPrices[assetId]) {
+      const basePrice = currentPrices[spotPriceBaseAsset.assetId];
+      if (basePrice) {
+        const spotPrice = await getSpotPrice(
+          ctx,
+          assetId,
+          spotPriceBaseAsset.assetId,
+          spotPriceBaseAsset.poolId,
+          date.getTime()
+        );
+        currentPrices[assetId] = basePrice / spotPrice;
       }
     }
   }
@@ -833,6 +837,84 @@ export async function getHistoricalCoingeckoPrice(
         price /= spotPrice;
       }
       return price;
+    }
+  } catch {
+    console.log("error fetching", endpoint);
+  }
+
+  throw new Error("Failed to fetch historical price");
+}
+
+export async function getAllHistoricalCoingeckoPrices(
+  ctx: Context | EntityManager,
+  assetId: string
+): Promise<Array<[Date, number]>> {
+  const assetInfo = assetList.find(asset => asset.assetId === assetId);
+  if (!assetInfo) {
+    throw new Error(`Asset ${assetId} not found in asset list.`);
+  }
+
+  const coinId = assetInfo.coingeckoId || assetInfo.spotPriceBaseAsset?.coingeckoId;
+  if (!coinId) {
+    throw new Error("No Coingecko ID found");
+  }
+
+  const endpoint = `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=max&interval=daily`;
+  try {
+    const res = await fetchRetry<{
+      prices: [number, number][];
+      market_caps: [number, number][];
+      total_volumes: [number, number][];
+    }>(endpoint);
+    // If prices are obtained, store the missing ones on the DB
+    if (res) {
+      // Keep track of used dates to avoid duplicates
+      const duplicates: Set<string> = new Set();
+      // HistoricalAssetPrices that need to be stored
+      const missingPrices: Array<HistoricalAssetPrice> = [];
+
+      // Map prices to get proper Date values
+      const prices: Array<[Date, number]> = res.prices.map(([timestamp, price]) => {
+        const day = new Date(timestamp);
+        const date = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+        return [date, price];
+      });
+
+      for (const price of prices) {
+        try {
+          // Look for the price in the DB
+          const date = price[0];
+          const priceValue = price[1];
+
+          if (!duplicates.has(date.getTime().toString())) {
+            duplicates.add(date.getTime().toString());
+            const assetPrice = await findHistoricalAssetPrice(ctx, assetId, date);
+
+            if (assetPrice === undefined) {
+              missingPrices.push(
+                new HistoricalAssetPrice({
+                  id: randomUUID(),
+                  assetId,
+                  price: priceValue,
+                  timestamp: date,
+                  currency: Currency.USD
+                })
+              );
+            }
+          }
+        } catch (err) {
+          console.log(err);
+        }
+      }
+
+      const isRepository = ctx instanceof EntityManager;
+      if (isRepository) {
+        await ctx.getRepository(HistoricalAssetPrice).save(missingPrices);
+      } else {
+        await ctx.store.save(missingPrices);
+      }
+
+      return prices;
     }
   } catch {
     console.log("error fetching", endpoint);
