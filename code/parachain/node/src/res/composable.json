@@ -3,9 +3,8 @@
   "id": "composable",
   "chainType": "Live",
   "bootNodes": [
-    "/dns/bn1.composable.finance/tcp/30334/p2p/12D3KooWQJ3WYu14k9saNxbDuztUCYpVp76hACERgKGfVbFnQqWH",
-    "/dns/bn2.composable.finance/tcp/30334/p2p/12D3KooWMho2TyHheDYgpBQbUxB9fZb4UiRrA4t7j7UhNwRTixKz",
-    "/dns/bn3.composable.finance/tcp/30334/p2p/12D3KooWFprPa95DaCTXJHrtFcpiZgghZ6BRJeFXADyLJc8SpkcP"
+    "/dns/rpc-01.composable-network.composablenodes.tech/tcp/30334/p2p/12D3KooWQFY9WtsNWxmD7HXKXj76yk7JVm6UJhGmJE4kUftBBCii",
+    "/dns/rpc-02.composable-network.composablenodes.tech/tcp/30334/p2p/12D3KooWMt2Vgq3SsjDEoyWEmEdSLmKf3FmMeUtb2vHvRkETDRSJ"
   ],
   "telemetryEndpoints": [
     [
