@@ -501,7 +501,7 @@ pub mod pallet {
 			// https://github.com/PoisonPhang/composable-poison-fork/blob/INIT-13/rfcs/0013-redesign-assets-id-system.md#local-asset-id-generation
 			let bytes = protocol_id
 				.into_iter()
-				.chain(nonce.to_le_bytes())
+				.chain(nonce.to_be_bytes())
 				.collect::<Vec<u8>>()
 				.try_into()
 				.expect("[u8; 8] + bytes(u64) = [u8; 16]");
