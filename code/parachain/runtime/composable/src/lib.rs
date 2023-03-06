@@ -21,6 +21,8 @@ pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("COMPOSABLE_R
 #[cfg(not(feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
+extern crate alloc;
+
 mod fees;
 mod gates;
 mod governance;

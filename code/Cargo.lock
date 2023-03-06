@@ -1472,7 +1472,7 @@ dependencies = [
  "once_cell",
  "pablo-rpc",
  "pablo-runtime-api",
- "pallet-assets 1.0.0",
+ "pallet-assets",
  "pallet-crowdloan-rewards",
  "pallet-ibc",
  "pallet-transaction-payment-rpc 4.0.0-dev",
@@ -1561,7 +1561,7 @@ dependencies = [
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
- "pallet-assets 1.0.0",
+ "pallet-assets",
  "pallet-assets-registry",
  "pallet-aura",
  "pallet-authorship",
@@ -1591,7 +1591,6 @@ dependencies = [
  "pallet-vault",
  "pallet-xcm",
  "parachain-info",
- "parachains-common",
  "parity-scale-codec",
  "polkadot-parachain",
  "primitives",
@@ -2790,7 +2789,7 @@ dependencies = [
  "orml-xcm-support",
  "orml-xtokens",
  "pablo-runtime-api",
- "pallet-asset-tx-payment 4.0.0-dev",
+ "pallet-asset-tx-payment",
  "pallet-assets-registry",
  "pallet-assets-transactor-router",
  "pallet-aura",
@@ -6877,24 +6876,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-asset-tx-payment"
-version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.36#5e5da18489f8a92112695408bb4e9de506831619"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.36)",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 5.0.0",
-]
-
-[[package]]
 name = "pallet-assets"
 version = "1.0.0"
 dependencies = [
@@ -6917,21 +6898,6 @@ dependencies = [
  "sp-arithmetic",
  "sp-core",
  "sp-io",
- "sp-runtime",
- "sp-std 5.0.0",
-]
-
-[[package]]
-name = "pallet-assets"
-version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.36#5e5da18489f8a92112695408bb4e9de506831619"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
 ]
@@ -7285,7 +7251,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
- "pallet-assets 1.0.0",
+ "pallet-assets",
  "pallet-assets-registry",
  "pallet-assets-transactor-router",
  "pallet-balances",
@@ -7423,7 +7389,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
- "pallet-assets 1.0.0",
+ "pallet-assets",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-timestamp",
@@ -7712,7 +7678,7 @@ dependencies = [
  "once_cell",
  "orml-tokens",
  "orml-traits",
- "pallet-assets 1.0.0",
+ "pallet-assets",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-dutch-auction",
@@ -7753,7 +7719,7 @@ dependencies = [
  "num-traits",
  "orml-tokens",
  "orml-traits",
- "pallet-assets 1.0.0",
+ "pallet-assets",
  "pallet-assets-registry",
  "pallet-assets-transactor-router",
  "pallet-balances",
@@ -8225,7 +8191,7 @@ dependencies = [
  "log",
  "orml-tokens",
  "orml-traits",
- "pallet-assets 1.0.0",
+ "pallet-assets",
  "pallet-assets-registry",
  "pallet-assets-transactor-router",
  "pallet-balances",
@@ -8558,32 +8524,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "parachains-common"
-version = "1.0.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
-dependencies = [
- "cumulus-primitives-utility",
- "frame-support",
- "frame-system",
- "pallet-asset-tx-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.36)",
- "pallet-assets 4.0.0-dev",
- "pallet-authorship",
- "pallet-balances",
- "pallet-collator-selection",
- "parity-scale-codec",
- "polkadot-primitives",
- "scale-info",
- "sp-consensus-aura",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 5.0.0",
- "substrate-wasm-builder",
- "xcm",
- "xcm-executor",
-]
-
-[[package]]
 name = "parity-db"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8858,8 +8798,8 @@ dependencies = [
  "orml-xcm-support",
  "orml-xtokens",
  "pablo-runtime-api",
- "pallet-asset-tx-payment 4.0.0-dev",
- "pallet-assets 1.0.0",
+ "pallet-asset-tx-payment",
+ "pallet-assets",
  "pallet-assets-registry",
  "pallet-aura",
  "pallet-authorship",
@@ -16022,3 +15962,13 @@ dependencies = [
  "libc",
  "pkg-config",
 ]
+
+[[patch.unused]]
+name = "pallet-asset-tx-payment"
+version = "4.0.0-dev"
+source = "git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.36#5e5da18489f8a92112695408bb4e9de506831619"
+
+[[patch.unused]]
+name = "pallet-assets"
+version = "4.0.0-dev"
+source = "git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.36#5e5da18489f8a92112695408bb4e9de506831619"
