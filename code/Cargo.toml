@@ -95,8 +95,8 @@ frame-system = { git = "https://github.com/ComposableFi/substrate", branch = "po
 frame-system-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
 frame-system-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
 frame-try-runtime = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
-pallet-assets = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
-pallet-asset-tx-payment = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
+# pallet-assets = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
+# pallet-asset-tx-payment = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
 pallet-aura = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
 pallet-authority-discovery = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
 pallet-authorship = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }

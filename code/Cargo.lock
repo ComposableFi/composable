@@ -15962,13 +15962,3 @@ dependencies = [
  "libc",
  "pkg-config",
 ]
-
-[[patch.unused]]
-name = "pallet-asset-tx-payment"
-version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.36#5e5da18489f8a92112695408bb4e9de506831619"
-
-[[patch.unused]]
-name = "pallet-assets"
-version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.36#5e5da18489f8a92112695408bb4e9de506831619"
