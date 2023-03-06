@@ -47,6 +47,7 @@
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/statemine.nix
         ./inputs/paritytech/zombienet/flake-module.nix
+        ./inputs/remarkjs/remark.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
 
         # The things we use within flake parts to build packages, apps, devShells, and devnets.

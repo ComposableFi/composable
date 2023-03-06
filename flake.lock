@@ -559,11 +559,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1670813451,
-        "narHash": "sha256-v0IvQ35CMKtPreGlxWb1FvFUraJNZd144+MbiDwGoAA=",
+        "lastModified": 1677562139,
+        "narHash": "sha256-J39FdMjECbWGSXVHmEdyGBD2aRYGhg9bWEPf1/ZR47k=",
         "owner": "serokell",
         "repo": "nix-npm-buildpackage",
-        "rev": "ec0365cd14a3359a23b80a9e2531a09afc3488fc",
+        "rev": "d45296118cae672982f192451dd3e19fa6c2d068",
         "type": "github"
       },
       "original": {
