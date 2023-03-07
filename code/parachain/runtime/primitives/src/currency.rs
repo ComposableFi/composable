@@ -23,10 +23,10 @@ use xcm::latest::prelude::*;
 pub trait WellKnownCurrency {
 	// works well with patterns unlike impl trait `associated consts cannot be referenced in
 	// patterns`
-	const NATIVE: Self;
+	const NATIVE: CurrencyId;
 	/// usually we expect running with relay,
 	/// but if  not, than degenerative case would be this equal to `NATIVE`
-	const RELAY_NATIVE: Self;
+	const RELAY_NATIVE: CurrencyId;
 }
 
 #[derive(
@@ -62,17 +62,12 @@ impl Display for CurrencyId {
 	}
 }
 
-impl WellKnownCurrency for CurrencyId {
-	const NATIVE: CurrencyId = CurrencyId::PICA;
-	const RELAY_NATIVE: CurrencyId = CurrencyId::KSM;
-}
-
 #[macro_export]
 macro_rules! list_assets {
 	(
 		$(
 			$(#[$attr:meta])*
-			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal $(, $location:expr $(, $decimals:expr )?)? );
+			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal $(, $xcm_location:expr $(, $decimals:expr )?)? );
 		)*
 	) => {
 		$(
@@ -97,7 +92,7 @@ macro_rules! list_assets {
 		pub fn local_to_xcm_reserve(id: CurrencyId) -> Option<xcm::latest::MultiLocation> {
             match id {
 				$(
-					$( CurrencyId::$NAME => $location, )?
+					$( CurrencyId::$NAME => $xcm_location, )?
 				)*
 				_ => None,
 			}
@@ -123,7 +118,7 @@ macro_rules! list_assets {
 					let mut map = BTreeMap::new();
 					$(
 						$(
-							let xcm_id: Option<xcm::latest::MultiLocation> = $location;
+							let xcm_id: Option<xcm::latest::MultiLocation> = $xcm_location;
 							if let Some(xcm_id) = xcm_id {
 								map.insert(xcm_id.encode(), CurrencyId::$NAME);
 							}
@@ -158,12 +153,12 @@ impl CurrencyId {
 
 	list_assets! {
 		// Native Tokens (1 - 100)
-		/// Runtime native token Kusama
+		/// Native from Picasso
 		pub const PICA: CurrencyId = CurrencyId(
 			1,
 			Some(topology::this::LOCAL)
 		);
-		/// Runtime native token Polkadot
+		///  Native from Composable
 		pub const LAYR: CurrencyId = CurrencyId(2);
 
 		/// Kusama native token
@@ -171,6 +166,8 @@ impl CurrencyId {
 			4,
 			Some(MultiLocation::parent())
 		);
+
+		// From Picasso
 		pub const PBLO: CurrencyId = CurrencyId(
 			5,
 			Some(MultiLocation {
@@ -179,11 +176,8 @@ impl CurrencyId {
 			})
 		);
 
-		/// DOT from Composable on Picasso over IBC
-		pub const ibcxcDOT: CurrencyId = CurrencyId(6, None);
-
-		// DOT from Polkadot on Composable
-		pub const xcDOT: CurrencyId = CurrencyId(7, None);
+		/// DOT from Polkadot
+		pub const DOT: CurrencyId = CurrencyId(6, None);
 
 		pub const KSM_USDT_LPT: CurrencyId = CurrencyId(105, None);
 		pub const PICA_USDT_LPT: CurrencyId = CurrencyId(106, None);

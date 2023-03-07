@@ -74,6 +74,8 @@ ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev = "1bb
 pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "1bb60110fd3ec4e218cd6ae67c0c11779bf7dd42", default-features = false }
 pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "1bb60110fd3ec4e218cd6ae67c0c11779bf7dd42", default-features = false }
 
+pallet-proxy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
+
 
 [patch."https://github.com/paritytech/substrate"]
 beefy-gadget = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
@@ -93,8 +95,8 @@ frame-system = { git = "https://github.com/ComposableFi/substrate", branch = "po
 frame-system-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
 frame-system-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
 frame-try-runtime = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
-pallet-assets = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
-pallet-asset-tx-payment = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
+# pallet-assets = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
+# pallet-asset-tx-payment = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
 pallet-aura = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
 pallet-authority-discovery = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
 pallet-authorship = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
