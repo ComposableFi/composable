@@ -132,6 +132,54 @@
           cargoTestCommand = "";
           meta = { mainProgram = "hyperspace"; };
         };
+
+        hyperspace-picasso = crane.stable.buildPackage rec {
+          name = "hyperspace-picasso";
+          pname = "${name}";
+          cargoArtifacts = crane.stable.buildDepsOnly {
+            src = centauri-patched-src;
+            doCheck = false;
+            cargoExtraArgs = "--package hyperspace";
+            cargoTestCommand = "";
+            BuildInputs = [ pkgs.protobuf ];
+            PROTOC = "${pkgs.protobuf}/bin/protoc";
+            PROTOC_INCLUDE = "${pkgs.protobuf}/include";
+            PROTOC_NO_VENDOR = "1";
+          };
+          src = centauri-patched-src;
+          BuildInputs = [ pkgs.protobuf ];
+          PROTOC = "${pkgs.protobuf}/bin/protoc";
+          PROTOC_INCLUDE = "${pkgs.protobuf}/include";
+          PROTOC_NO_VENDOR = "1";
+          doCheck = false;
+          cargoExtraArgs = "--package hyperspace";
+          cargoTestCommand = "";
+          meta = { mainProgram = "hyperspace"; };
+        };
+
+        hyperspace-composable = crane.stable.buildPackage rec {
+          name = "hyperspace-composable";
+          pname = "${name}";
+          cargoArtifacts = crane.stable.buildDepsOnly {
+            src = centauri-patched-src;
+            doCheck = false;
+            cargoExtraArgs = "--package hyperspace";
+            cargoTestCommand = "";
+            BuildInputs = [ pkgs.protobuf ];
+            PROTOC = "${pkgs.protobuf}/bin/protoc";
+            PROTOC_INCLUDE = "${pkgs.protobuf}/include";
+            PROTOC_NO_VENDOR = "1";
+          };
+          src = centauri-patched-src;
+          BuildInputs = [ pkgs.protobuf ];
+          PROTOC = "${pkgs.protobuf}/bin/protoc";
+          PROTOC_INCLUDE = "${pkgs.protobuf}/include";
+          PROTOC_NO_VENDOR = "1";
+          doCheck = false;
+          cargoExtraArgs = "--package hyperspace";
+          cargoTestCommand = "";
+          meta = { mainProgram = "hyperspace"; };
+        };
       };
     };
 }

@@ -293,7 +293,22 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: hyperspace-dali
           artifact: hyperspace-dali:latest
-      
+      - name: Publish hyperspace-picasso to docker hub
+        uses: "./.github/templates/docker-publish"
+        with:
+          image_path: result/docker-image-hyperspace-picasso.tar.gz
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          name: hyperspace-picasso
+          artifact: hyperspace-picasso:latest
+      - name: Publish hyperspace-composable to docker hub
+        uses: "./.github/templates/docker-publish"
+        with:
+          image_path: result/docker-image-hyperspace-composable.tar.gz
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          name: hyperspace-composable
+          artifact: hyperspace-composable:latest
 
   # NOTE: Everything below this line is not built deterministically and therefore considered flaky.
   # [FLAKY] jobs are not included in the effects gate
