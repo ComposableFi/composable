@@ -97,10 +97,10 @@ impl democracy::Config for Runtime {
 	type InstantOrigin = EnsureRootOrHalfNativeTechnical;
 	type InstantAllowed = InstantAllowed;
 
-	#[cfg(not(feature = "rococo"))]
+	#[cfg(not(feature = "westend"))]
 	type FastTrackVotingPeriod = ConstU32<{ 3 * HOURS }>;
 
-	#[cfg(feature = "rococo")]
+	#[cfg(feature = "westend")]
 	type FastTrackVotingPeriod = ConstU32<HOURS>;
 
 	type CancellationOrigin = EnsureRootOrAllNativeTechnical;
@@ -125,7 +125,7 @@ impl democracy::Config for Runtime {
 
 parameter_types! {
 	// cspell:disable-next
-	pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
+	pub const TreasuryPalletId: PalletId = PalletId(*b"lyartrsy");
 	/// Percentage of proposal that most be bonded by the proposer.
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub ProposalBondMinimum: Balance = 5000 * CurrencyId::unit::<Balance>();

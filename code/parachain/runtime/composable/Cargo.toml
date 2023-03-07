@@ -27,7 +27,7 @@ normal = [
 [dependencies]
 executive = { package = "frame-executive", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
 frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
-frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
 
 # primitives
 sp-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
@@ -119,7 +119,13 @@ orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-m
 orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36", default-features = false }
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36", default-features = false }
 
-parachains-common = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.36" }
+ibc = { workspace = true, default-features = false }
+ibc-primitives = { workspace = true, default-features = false }
+ibc-runtime-api = { workspace = true, default-features = false }
+pallet-ibc = { workspace = true, default-features = false }
+
+pallet-proxy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
+
 
 [features]
 builtin-wasm = []
@@ -151,6 +157,8 @@ runtime-benchmarks = [
   "utility/runtime-benchmarks",
   "vault/runtime-benchmarks",
   "common/runtime-benchmarks",
+  "pallet-ibc/runtime-benchmarks",
+  "pallet-proxy/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -217,5 +225,12 @@ std = [
   "transaction-payment-rpc-runtime-api/std",
   "assets-runtime-api/std",
   "crowdloan-rewards-runtime-api/std",
-  "parachains-common/std",
+  "ibc/std",
+  "pallet-ibc/std",
+  "ibc-primitives/std",
+  "ibc-runtime-api/std",
+  "pallet-proxy/std",
+  "polkadot-parachain/std",
+  "pallet-xcm/std",
+  "composable-traits/std",
 ]
