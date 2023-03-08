@@ -1,5 +1,5 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, ... }:
+  perSystem = { config, self', inputs', pkgs, system, systemCommonRust, ... }:
     let
       version = "bifrost-v0.9.69";
       bifrost-src = pkgs.fetchFromGitHub {
@@ -34,11 +34,7 @@
             mkdir --parents $out/bin && mv ./target/release/${name} $out/bin
           '';
           nativeBuildInputs = with pkgs;
-            [ rust-nightly clang pkg-config ] ++ lib.optional stdenv.isDarwin
-            (with darwin.apple_sdk.frameworks; [
-              Security
-              SystemConfiguration
-            ]);
+            [ rust-nightly clang pkg-config ] ++ systemCommonRust.darwin-deps;
           LD_LIBRARY_PATH = lib.strings.makeLibraryPath
             (with pkgs; [ stdenv.cc.cc.lib llvmPackages.libclang.lib ]);
           LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
