@@ -15,3 +15,15 @@ pub struct Args {
    #[arg(long)]
    pub key: String,
 }
+
+#[derive(Debug, serde::Deserialize)]
+pub struct Record {
+    address: String,
+    /// unix timestamp
+    window_moment_start: u64,
+    /// unix time
+    window_moment_period: u64,
+    period_count: u16,
+    /// amount
+    per_period: u64,
+}
