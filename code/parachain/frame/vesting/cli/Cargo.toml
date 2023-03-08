@@ -5,30 +5,26 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1"
-futures = "0.3"
-jsonrpsee-ws-client = { git = "https://github.com/paritytech/jsonrpsee", tag = "v0.16.2" }
-jsonrpsee = { git = "https://github.com/paritytech/jsonrpsee", tag = "v0.16.2" }
-jsonrpsee-core = { git = "https://github.com/paritytech/jsonrpsee", tag = "v0.16.2" }
-tokio = { version = "1.16", features = ["full"] }
 tracing = "0.1.34"
-tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 tokio-stream = { version = "0.1", features = ["sync"] }
 serde_json = { version = "1.0.93" }
 serde = { version = "1.0.152" }
 console-subscriber = "0.1.8"
 
 
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
-    "derive",
-    "full",
-    "bit-vec",
-] }
-hex = "0.4.3"
+clap = { version = "4.1.8", features = ["derive"] }
 
-subxt = { git = "https://github.com/paritytech/subxt", tag = "v0.27.1", features = [
+
+tokio = { version = "1.26", features = ["rt-multi-thread", "macros", "time"] }
+futures = "0.3.26"
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "full", "bit-vec"] }
+hex = "0.4.3"
+tracing-subscriber = "0.3.11"
+
+
+subxt = { git = "https://github.com/paritytech/subxt", rev = "6d3c377c16a5e8f61dc264ebef36b8db5e593ba1", features = [
     "substrate-compat", "jsonrpsee-ws"
 ] }
-sp-keyring = "21.0.0"
-sp-core = { version = "18.0.0", default-features = false }
-sp-runtime = "21.0.0"
-clap = { version = "4.1.8", features = ["derive"] }
+sp-keyring = "18.0.0"
+sp-core = { version = "16.0.0", default-features = false }
+sp-runtime = "18.0.0"
