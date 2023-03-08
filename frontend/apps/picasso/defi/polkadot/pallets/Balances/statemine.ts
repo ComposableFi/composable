@@ -17,7 +17,7 @@ export function subscribeStatemineBalance(
       ? asset.chainId[chainId]?.toString()
       : asset.chainId[chainId];
   if (onChainId) {
-    api.query.assets.account(onChainId, address, (assetAccount: any) => {
+    return api.query.assets.account(onChainId, address, (assetAccount: any) => {
       assetAccount.isSome && asset.decimals[chainId] !== null
         ? callback({
             free: fromChainIdUnit(
