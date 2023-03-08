@@ -52,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
 		];
 		let tx = subxt::dynamic::tx("Vesting", "vested_transfer", data);
 		let signed = api.tx().create_signed(&tx, &signer, <_>::default()).await.expect("offline");
-		let result = signed.dry_run(None).await.expect("dry_run");
+		let result = signed.dry_run(None).await;
 		info!("dry_run {:?}", result);
 		let tx = api.tx().create_unsigned(&tx).expect("offline");
 		let tx = "0x".to_string() + &hex::encode(signed.into_encoded());
