@@ -654,17 +654,13 @@ impl scheduler::Config for Runtime {
 	type WeightInfo = weights::scheduler::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
-}
-
 impl preimage::Config for Runtime {
 	type WeightInfo = preimage::weights::SubstrateWeight<Runtime>;
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRoot<AccountId>;
-	type BaseDeposit = PreimageBaseDeposit;
-	type ByteDeposit = PreimageByteDeposit;
+	type BaseDeposit = ConstU128<100_000_000_000_000>;
+	type ByteDeposit = ConstU128<1_000_000_000_000>;
 }
 
 impl utility::Config for Runtime {
