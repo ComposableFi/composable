@@ -54,8 +54,9 @@ async fn main() -> anyhow::Result<()> {
 		let signed = api.tx().create_signed(&tx, &signer, <_>::default()).await.expect("offline");
 		let result = signed.dry_run(None).await.expect("dry_run");
 		info!("dry_run {:?}", result);
-		let signed = hex::encode(signed.into_encoded());
-		info!("Signed Vesting::vested_transfer `0x{:?}`", signed);
+		let tx = api.tx().create_unsigned(&tx).expect("offline");
+		let tx = "0x".to_string() + &hex::encode(signed.into_encoded());
+		info!("Signed Vesting::vested_transfer {:?}", tx);
 
 		// just for testing, do not really submit
 		// let hash = api.tx().sign_and_submit_then_watch_default(&tx, &signer).await?;
