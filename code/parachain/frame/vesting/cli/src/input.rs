@@ -1,5 +1,7 @@
 use clap::Parser;
 
+/// So it validates all vesting parameters and dry-runs on RPC node.
+/// Outputs hex encoded extrinsic to call
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
@@ -11,11 +13,16 @@ pub struct Args {
    #[arg(long)]
    pub schedule: String,
 
-   /// Private sudo key
+   /// `VestedTransferOrigin`
    #[arg(long)]
    pub key: String,
+
+   /// From
+   #[arg(long)]
+   pub from: String,
 }
 
+/// maintains high fidelity with extrinsic
 #[derive(Debug, serde::Deserialize)]
 pub struct Record {
     pub address: String,
@@ -23,7 +30,7 @@ pub struct Record {
     pub window_moment_start: u64,
     /// unix time
     pub window_moment_period: u64,
-    pub period_count: u16,
+    pub period_count: u32,
     /// amount
-    pub per_period: u64,
+    pub per_period: u128,
 }
