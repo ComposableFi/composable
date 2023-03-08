@@ -18,12 +18,12 @@ pub struct Args {
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Record {
-    address: String,
+    pub address: String,
     /// unix timestamp
-    window_moment_start: u64,
+    pub window_moment_start: u64,
     /// unix time
-    window_moment_period: u64,
-    period_count: u16,
+    pub window_moment_period: u64,
+    pub period_count: u16,
     /// amount
-    per_period: u64,
+    pub per_period: u64,
 }
