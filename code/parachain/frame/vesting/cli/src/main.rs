@@ -1,7 +1,8 @@
 mod input;
-
+mod output;
 use clap::Parser;
 use input::*;
+use output::*;
 use sp_core::Pair;
 use std::str::FromStr;
 use subxt::{dynamic::Value, tx::PairSigner, utils::AccountId32, OnlineClient, SubstrateConfig};
@@ -23,6 +24,7 @@ async fn main() -> anyhow::Result<()> {
 
 	let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;
 
+	let mut out = csv::Writer::from_writer(vec![]);
 	for record in all {
 		println!("{:?}", &record);
 
@@ -50,19 +52,45 @@ async fn main() -> anyhow::Result<()> {
 				]),
 			),
 		];
-		let tx = subxt::dynamic::tx("Vesting", "vested_transfer", data);
+		let tx_value = subxt::dynamic::tx("Vesting", "vested_transfer", data.clone());
+		let signed = api
+			.tx()
+			.create_signed(&tx_value, &signer, <_>::default())
+			.await
+			.expect("offline");
+		let result = signed.dry_run(None).await;
+		info!("dry_run {:?}", result);
+
+		let tx = api.tx().create_unsigned(&tx_value).expect("offline");
+		{
+			let tx = "0x".to_string() + &hex::encode(signed.into_encoded());
+			info!("Signed Vesting::vested_transfer {:?}", &tx);
+		}
+
+		let data = vec![
+			("call", tx_value.into_value()),
+			(
+				"weight",
+				Value::named_composite(vec![
+					("ref_time", Value::u128(0)),
+					("proof_size", Value::u128(0)),
+				]),
+			),
+		];
+		let tx = subxt::dynamic::tx("Sudo", "sudo_unchecked_weight", data);
 		let signed = api.tx().create_signed(&tx, &signer, <_>::default()).await.expect("offline");
 		let result = signed.dry_run(None).await;
 		info!("dry_run {:?}", result);
+
 		let tx = api.tx().create_unsigned(&tx).expect("offline");
 		let tx = "0x".to_string() + &hex::encode(signed.into_encoded());
-		info!("Signed Vesting::vested_transfer {:?}", tx);
-
-		// just for testing, do not really submit
-		// let hash = api.tx().sign_and_submit_then_watch_default(&tx, &signer).await?;
-		// let result = hash.wait_for_finalized_success().await.expect("block");
-		// info!("Vesting schedule_info submitted {:?}", result);
+		info!("Signed Sudo::sudoUncheckedWeight(Vesting::vested_transfer) {:?}", &tx);
+		out.serialize(OutputRecord { to: record.address, vesting_schedule_added: tx });
 	}
-
+	out.flush();
+	let out = out.into_inner().expect("table");
+	let data = String::from_utf8(out).unwrap();
+	println!("-=================================-");
+	println!("{}", data);
 	Ok(())
 }
