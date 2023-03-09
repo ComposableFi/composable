@@ -68,13 +68,15 @@ Let's take an example. Suppose we have [**Picasso**](https://picasso.xyz) and
 ]
 ```
 
+
 1. Alice submits the XCVM program and the instruction **1.** is executed,
    resulting in:
    1. the **child XCVM program**, consisting of the instructions **[1.1., 1.2.,
      1.3.]** is being submitted within an IBC packet to **Osmosis**.
    2. the funds attached to the child program, **250 PICA**, are being
-transferred to **Osmosis** using an [**ICS20
-transfer**](https://github.com/cosmos/ibc/blob/f6371ffd5de3787eb4b85f9fe77f81be4a5993a0/spec/app/ics-020-fungible-token-transfer/README.md).
+transferred to **Osmosis** using an
+   [**ICS20 transfer**](https://github.com/cosmos/ibc/blob/f6371ffd5de3787eb4b85f9fe77f81be4a5993a0/spec/app/ics-020
+   -fungible-token-transfer/README.md).
 2. An IBC relayer, listening to on-chain events, determine that relaying the IBC
   packet containing the XCVM program is profitable. It proceeds and relays both
   the funds and the packet to **Osmosis**.
