@@ -1,8 +1,11 @@
 mod input;
 mod output;
+mod prelude;
+
 use clap::Parser;
 use input::*;
 use output::*;
+use prelude::*;
 use sp_core::Pair;
 use std::str::FromStr;
 use subxt::{dynamic::Value, tx::PairSigner, utils::AccountId32, OnlineClient, SubstrateConfig};
@@ -85,9 +88,19 @@ async fn main() -> anyhow::Result<()> {
 		let tx = api.tx().create_unsigned(&tx).expect("offline");
 		let tx = "0x".to_string() + &hex::encode(signed.into_encoded());
 		info!("Signed Sudo::sudoUncheckedWeight(Vesting::vested_transfer) {:?}", &tx);
-		out.serialize(OutputRecord { to: record.address, vesting_schedule_added: tx });
+		out.serialize(OutputRecord {
+			to: record.address,
+			vesting_schedule_added: tx,
+			window_start: format!(
+				"{}",
+				OffsetDateTime::from_unix_timestamp(record.window_moment_start as i64).unwrap()
+			),
+			window_period: format!("{}", Duration::seconds(record.window_moment_period as i64)),
+			total: record.per_period * record.period_count as u128,
+		})
+		.expect("out");
 	}
-	out.flush();
+	out.flush()?;
 	let out = out.into_inner().expect("table");
 	let data = String::from_utf8(out).unwrap();
 	println!("-=================================-");

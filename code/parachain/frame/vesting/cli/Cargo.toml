@@ -17,16 +17,25 @@ clap = { version = "4.1.8", features = ["derive"] }
 
 tokio = { version = "1.26", features = ["rt-multi-thread", "macros", "time"] }
 futures = "0.3.26"
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "full", "bit-vec"] }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
+    "derive",
+    "full",
+    "bit-vec",
+] }
 hex = "0.4.3"
 tracing-subscriber = "0.3.11"
 
 
 subxt = { git = "https://github.com/paritytech/subxt", rev = "6d3c377c16a5e8f61dc264ebef36b8db5e593ba1", features = [
-    "substrate-compat", "jsonrpsee-ws"
+    "substrate-compat",
+    "jsonrpsee-ws",
 ] }
 sp-keyring = "18.0.0"
 sp-core = { version = "16.0.0", default-features = false }
 sp-runtime = "18.0.0"
 
 csv = "1.2"
+time = { version = "0.3.20", default-features = true, features = [
+    "macros",
+    "serde",
+] }
