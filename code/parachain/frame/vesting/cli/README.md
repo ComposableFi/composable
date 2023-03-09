@@ -7,5 +7,6 @@ cargo +nightly run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" a
 ```
 
 ```bash
-cargo +nightly run -- --client="ws://localhost:9988" list
-cargo +nightly run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" list
+cargo +nightly run -- --client="ws://localhost:9988" list > vestingSchedules.log
+cargo +nightly run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" list > vestingSchedules.log
+```
