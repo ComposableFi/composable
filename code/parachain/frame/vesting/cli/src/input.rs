@@ -1,14 +1,26 @@
 use clap::Parser;
 
-/// So it validates all vesting parameters and dry-runs on RPC node.
-/// Outputs hex encoded extrinsic to call
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[derive(clap::Parser, Debug)]
 pub struct Args {
 	/// WS url to node
 	#[arg(long)]
 	pub client: String,
 
+	#[command(subcommand)]
+	pub action: Action,
+}
+
+#[derive(clap::Subcommand, Debug)]
+pub enum Action {
+	Add(AddCommand),
+	List,
+}
+
+/// So it validates all vesting parameters and dry-runs on RPC node.
+/// Outputs hex encoded extrinsic to call
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+pub struct AddCommand {
 	/// Link to CSV file with schedule
 	#[arg(long)]
 	pub schedule: String,
