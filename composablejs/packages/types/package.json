@@ -1,6 +1,5 @@
 {
   "name": "@composable/types",
-  "private": false,
   "version": "0.1.0",
   "license": "Public Domain",
   "type": "commonjs",
@@ -11,8 +10,8 @@
     "gen:meta": "ts-node --skip-project ../../node_modules/.bin/polkadot-types-from-chain --package @composable/types --endpoint ws://127.0.0.1:9988 --output ./src"
   },
   "devDependencies": {
-    "@polkadot/ts": "^0.4.22",
     "@polkadot/api": "^9.10.1",
+    "@polkadot/ts": "^0.4.22",
     "@polkadot/typegen": "^9.10.1",
     "@polkadot/types": "^9.10.1",
     "@polkadot/types-augment": "^9.10.1",

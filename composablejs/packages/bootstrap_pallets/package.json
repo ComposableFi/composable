@@ -7,8 +7,9 @@
   },
   "main": "dist/index.js",
   "dependencies": {
-    "@polkadot/ts": "^0.4.22",
     "@polkadot/api": "^9.5.1",
+    "@polkadot/keyring": "^9.7.2",
+    "@polkadot/ts": "^0.4.22",
     "@polkadot/typegen": "^9.5.1",
     "@polkadot/types": "^9.5.1",
     "@polkadot/types-augment": "^9.5.1",
@@ -16,7 +17,6 @@
     "@polkadot/types-create": "^9.5.1",
     "@polkadot/types-known": "^9.5.1",
     "@polkadot/types-support": "^9.5.1",
-    "@polkadot/keyring": "^9.7.2",
     "@polkadot/util": "^9.7.2",
     "@polkadot/util-crypto": "^10.2.1",
     "bignumber.js": "^9.0.2",

@@ -1,0 +1,32 @@
+{
+  "replace": [
+    {
+      "old": "5uK9C65v4a2W2c5Bqxbj42AB8pwifZZbKJmnvYhv23PaiaPc",
+      "new": "5tfab4HLEyn3tHva7C2VWPfABVWRcMs1vf8RqQsh69WwpSQm"
+    },
+
+
+    {
+      "old": "5tfab4HLEyn3tHva7C2VWPfABVWRcMs1vf8RqQsh69WwpSQm",
+      "new": "HcKJAwUGEEvTtWNK9aJ6Jf9HAZRz3QAhF6SukH48rotD8b9"
+    },
+    {
+      "old": "5vw7BXS6J6MRH6zeKzR66XHmpjUeAJT2ss76qgg9FRUvmLcq",
+      "new": "FabWQHVbYcDoFcyU3iPE9ZZppuYTCEfbwmTRr5awfndTnn2"
+    },
+    {
+      "old": "5yUiUDBFLVazXTtLmb2sDoqmKJbBF4Q2AeVjdmA32amZpz5W",
+      "new": "GeDMtHRCtVoahScCkUmcwck5rbFpc8SrvZcnP57mgyTmEF"
+    }
+  ],
+  "modify": [
+    {
+      "publicKey": "EkmdfH2Fc6XgPgDwMjye3Nsdj27CCSi9np8Kc7zYoCL2S3G",
+      "newAmount": 0
+    },
+    {
+      "publicKey": "5uK9C65v4a2W2c5Bqxbj42AB8pwifZZbKJmnvYhv23PaiaPc",
+      "newAmount": 1337
+    }
+  ]
+}

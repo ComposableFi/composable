@@ -9,8 +9,9 @@
     "clean": "find ./src -name '*.js' -type f -delete && find ./src -name '*.js.map' -type f -delete && find ./src -name '*.d.ts' -type f -delete"
   },
   "devDependencies": {
-    "@polkadot/ts": "^0.4.22",
     "@polkadot/api": "^9.10.1",
+    "@polkadot/keyring": "^9.7.2",
+    "@polkadot/ts": "^0.4.22",
     "@polkadot/typegen": "^9.10.1",
     "@polkadot/types": "^9.10.1",
     "@polkadot/types-augment": "^9.10.1",
@@ -18,7 +19,6 @@
     "@polkadot/types-create": "^9.10.1",
     "@polkadot/types-known": "^9.10.1",
     "@polkadot/types-support": "^9.10.1",
-    "@polkadot/keyring": "^9.7.2",
     "typescript": "^4.7.4"
   }
 }

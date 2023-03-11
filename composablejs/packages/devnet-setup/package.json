@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Setup devnet",
   "main": "dist/index.js",
-  "private": false,
   "scripts": {
     "build": "tsc --build",
     "start": "npx ts-node -P tsconfig.json src/main.ts",
@@ -17,8 +16,9 @@
   ],
   "license": "Public Domain",
   "dependencies": {
-    "@polkadot/ts": "^0.4.22",
     "@polkadot/api": "^9.5.1",
+    "@polkadot/keyring": "^10.1.10",
+    "@polkadot/ts": "^0.4.22",
     "@polkadot/typegen": "^9.5.1",
     "@polkadot/types": "^9.5.1",
     "@polkadot/types-augment": "^9.5.1",
@@ -26,7 +26,6 @@
     "@polkadot/types-create": "^9.5.1",
     "@polkadot/types-known": "^9.5.1",
     "@polkadot/types-support": "^9.5.1",
-    "@polkadot/keyring": "^10.1.10",
     "@polkadot/util": "^10.1.10",
     "@polkadot/util-crypto": "^10.2.1",
     "@types/chai": "^4.3.1",

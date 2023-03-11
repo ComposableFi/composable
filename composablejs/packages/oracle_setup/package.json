@@ -3,7 +3,6 @@
   "version": "1.1.0",
   "description": "Sets up the Oracle with our Price Feed application.",
   "main": "dist/index.js",
-  "private": false,
   "scripts": {
     "start": "yarn oraclesetup",
     "build": "tsc --build",
@@ -19,8 +18,9 @@
   ],
   "license": "Public Domain",
   "dependencies": {
-    "@polkadot/ts": "^0.4.22",
     "@polkadot/api": "^9.5.1",
+    "@polkadot/keyring": "^9.7.2",
+    "@polkadot/ts": "^0.4.22",
     "@polkadot/typegen": "^9.5.1",
     "@polkadot/types": "^9.5.1",
     "@polkadot/types-augment": "^9.5.1",
@@ -28,7 +28,6 @@
     "@polkadot/types-create": "^9.5.1",
     "@polkadot/types-known": "^9.5.1",
     "@polkadot/types-support": "^9.5.1",
-    "@polkadot/keyring": "^9.7.2",
     "@polkadot/util": "^9.7.2",
     "@polkadot/util-crypto": "^10.2.1",
     "@types/chai": "^4.3.1",
