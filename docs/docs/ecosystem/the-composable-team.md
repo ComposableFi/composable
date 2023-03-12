@@ -50,24 +50,6 @@ evolving innovation.
 [LinkedIn](https://www.linkedin.com/in/zain-haider-29569523/?originalSubdomain=uk) | 
 [Twitter](https://twitter.com/zha_tweets)
 
-## Fernando Reyes | Chief Information Security Officer
-
-A cybersecurity professional by trade, Fernando brings a blue-chip background working within TradFi, DeFi, and the 
-public sector. He is a veteran of the United States Army, former National Security Agency operator, and graduate of
-MIT's Information Security & Assurance program. Serving as Chief Information Security Officer, Fernando works closely
-alongside all of Composable's business units to provide trust and confidence to our partners and participants in the 
-space.
-
-## Martina Burghi | Head of HR
-
-Martina has more than 6 years of experience in Human Resources. 
-She started her career in Human Capital and Recruitment consultancy at firms such as Deloitte. 
-Following four years of work in global tech firms, Martina spent the past three years developing and growing talent 
-across different DeFi start-ups. She holds a Psychology degree specialized in organizations. 
-As Head of HR, she brings teams together, strengthens relationships, and leverages people’s creative capacity and skill 
-sets to ensure Composable’s objectives are accomplished. 
-[Twitter](https://twitter.com/martiburghi) | [LinkedIn](https://www.linkedin.com/in/martina-burghi-314a01b2/)
-
 ## Ahmad Wehbi | Head of Growth
 
 Ahmad has 10 years of experience and spent most of his career advising institutions on strategy, operations, and 
