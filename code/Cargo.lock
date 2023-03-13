@@ -1451,7 +1451,7 @@ dependencies = [
 
 [[package]]
 name = "composable"
-version = "2.10009.0"
+version = "2.10009.1"
 dependencies = [
  "color-eyre",
  "composable-node",
