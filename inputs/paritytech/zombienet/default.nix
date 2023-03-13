@@ -19,7 +19,7 @@ in with prelude; rec {
   mkBidirectionalChannel = a: b: (mkChannel a b) ++ (mkChannel b a);
 
   mkCollator = { name ? "alice", command, rpc_port ? null, ws_port ? null
-    , rust_log_add ? "" }:
+    , rust_log_append ? "" }:
     {
       command = command;
       args = [
@@ -30,7 +30,7 @@ in with prelude; rec {
         name = "RUST_LOG";
         value =
           "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,"
-          + (if rust_log_add != null then rust_log_add else "");
+          + (if rust_log_append != null then rust_log_append else "");
       }];
       name = name;
       validator = true;
@@ -38,11 +38,11 @@ in with prelude; rec {
     // optionalAttrs (ws_port != null) { inherit ws_port; };
 
   mkParachain = { command, rpc_port ? 32200, ws_port ? 9988, chain ? "dali-dev"
-    , names ? default-node-names, collators ? 2, id ? 2087, rust_log_add ? null
+    , names ? default-node-names, collators ? 2, id ? 2087, rust_log_append ? null
     }:
     let
       generated = lib.lists.zipListsWith
-        (_increment: name: mkCollator { inherit command name rust_log_add; })
+        (_increment: name: mkCollator { inherit command name rust_log_append; })
         (lib.lists.range 0 (collators - 2)) (builtins.tail names);
 
     in {
@@ -52,7 +52,7 @@ in with prelude; rec {
       id = id;
       collators = [
         (mkCollator {
-          inherit command rust_log_add rpc_port ws_port;
+          inherit command rust_log_append rpc_port ws_port;
           name = builtins.head names;
         })
       ] ++ generated;

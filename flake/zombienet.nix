@@ -8,15 +8,32 @@
         count = 3;
       };
 
+      network-b-common-attrs =
+        {
+          ws_port = 29988;
+          rpc_port = 32201;
+          relay_ws_port = 29944;
+          relay_rpc_port = 31445;
+          rust_log_append =
+            "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
+          command = self'.packages.composable-node-dali;
+        };
+
       zombienet-rococo-local-composable-config = with prelude;
-        { chain ? "dali-dev", ws_port ? null, rpc_port ? null
-        , relay_ws_port ? null, relay_rpc_port ? null, rust_log_add ? null
-        , para-id ? 2087, command ? self'.packages.composable-node }:
+        { chain ? "dali-dev"
+        , ws_port ? null
+        , rpc_port ? null
+        , relay_ws_port ? null
+        , relay_rpc_port ? null
+        , rust_log_append ? null
+        , para-id ? 2087
+        , command ? self'.packages.composable-node
+        }:
         mkZombienet {
           relaychain = relaychainBase
             // (pkgs.lib.optionalAttrs (relay_ws_port != null) {
-              ws_port = relay_ws_port;
-            });
+            ws_port = relay_ws_port;
+          });
           parachains = [
             ({
               command = pkgs.lib.meta.getExe command;
@@ -24,13 +41,13 @@
               id = para-id;
               collators = 2;
             } // (pkgs.lib.optionalAttrs (chain != null) { inherit chain; })
-              // (pkgs.lib.optionalAttrs (rust_log_add != null) {
-                inherit rust_log_add;
-              })
-              // (pkgs.lib.optionalAttrs (ws_port != null) { inherit ws_port; })
-              // (pkgs.lib.optionalAttrs (rpc_port != null) {
-                inherit rpc_port;
-              }))
+            // (pkgs.lib.optionalAttrs (rust_log_append != null) {
+              inherit rust_log_append;
+            })
+            // (pkgs.lib.optionalAttrs (ws_port != null) { inherit ws_port; })
+            // (pkgs.lib.optionalAttrs (rpc_port != null) {
+              inherit rpc_port;
+            }))
           ];
         };
 
@@ -66,7 +83,8 @@
               }
             ];
           };
-        in zombieTools.writeZombienetShellApplication name config;
+        in
+        zombieTools.writeZombienetShellApplication name config;
 
       dali-dev-config = zombienet-rococo-local-composable-config {
         chain = "dali-dev";
@@ -75,7 +93,8 @@
 
       zombienet-rococo-local-dali-dev =
         zombieTools.writeZombienetShellApplication
-        "zombienet-rococo-local-dali-dev" dali-dev-config;
+          "zombienet-rococo-local-dali-dev"
+          dali-dev-config;
 
       dali-dev-ops = (zombieTools.zombienet-to-ops dali-dev-config) // {
         script = zombienet-rococo-local-dali-dev;
@@ -94,9 +113,11 @@
 
       zombienet-rococo-local-picasso-dev =
         zombieTools.writeZombienetShellApplication
-        "zombienet-rococo-local-picasso-dev" picasso-dev-config;
+          "zombienet-rococo-local-picasso-dev"
+          picasso-dev-config;
 
-    in with prelude; {
+    in
+    with prelude; {
       _module.args.this = rec { inherit picasso-dev-ops dali-dev-ops; };
 
       packages = rec {
@@ -115,30 +136,30 @@
 
         zombienet-rococo-local-composable-dev =
           zombieTools.writeZombienetShellApplication
-          "zombienet-rococo-local-composable-dev"
-          (zombienet-rococo-local-composable-config {
-            chain = "composable-dev";
-          });
+            "zombienet-rococo-local-composable-dev"
+            (zombienet-rococo-local-composable-config {
+              chain = "composable-dev";
+            });
 
         zombienet-dali-centauri-a =
           zombieTools.writeZombienetShellApplication "zombienet-dali-centauri-a"
-          (zombienet-rococo-local-composable-config {
-            rust_log_add =
-              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
-            command = self'.packages.composable-node-dali;
-          });
+            (zombienet-rococo-local-composable-config {
+              rust_log_append =
+                "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
+              command = self'.packages.composable-node-dali;
+            });
+
+
 
         zombienet-dali-centauri-b =
           zombieTools.writeZombienetShellApplication "zombienet-dali-centauri-b"
-          (zombienet-rococo-local-composable-config {
-            ws_port = 29988;
-            rpc_port = 32201;
-            relay_ws_port = 29944;
-            relay_rpc_port = 31445;
-            rust_log_add =
-              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
-            command = self'.packages.composable-node-dali;
-          });
+            (zombienet-rococo-local-composable-config (network-b-common-attrs // { }));
+
+        zombienet-composable-centauri-b =
+          zombieTools.writeZombienetShellApplication "zombienet-composable-centauri-b"
+            (zombienet-rococo-local-composable-config (network-b-common-attrs // {
+              chain = "composable-dev";
+            }));
       };
 
       apps = rec {
@@ -150,11 +171,6 @@
         zombienet-dali-complete = {
           type = "app";
           program = self'.packages.zombienet-dali-complete;
-        };
-
-        zombienet-dali-centauri-a = {
-          type = "app";
-          program = self'.packages.zombienet-dali-centauri-a;
         };
 
         zombienet-picasso-complete = {
