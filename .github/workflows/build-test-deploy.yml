@@ -5,13 +5,13 @@ on:
       - release-*
       - main
 
-  # For regular PRs.    
+  # For regular PRs.
   pull_request_target:
 
   # For PRs that need to run in the monorepo context.
   pull_request:
 
-permissions: 
+permissions:
   pull-requests: write
 
 env:
@@ -31,11 +31,11 @@ jobs:
   privilege-check:
     name: "Privilege check"
     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}
-    runs-on: ubuntu-latest  
+    runs-on: ubuntu-latest
     steps:
       - run: |
-          echo "I am priviliged by goblins on repository id ${{ github.event.pull_request.head.repo.id }} ${{ github.event.pull_request_target.head.repo.id }}" 
-      
+          echo "I am priviliged by goblins on repository id ${{ github.event.pull_request.head.repo.id }} ${{ github.event.pull_request_target.head.repo.id }}"
+
 
   lfs-check:
     name: LFS check
@@ -78,7 +78,7 @@ jobs:
           nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
           extra_nix_config: |
             sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
+            narinfo-cache-negative-ttl = 0
             system-features = kvm
             http2 = false
       - name: Set up Cachix
@@ -87,7 +87,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
       - name: Add tools needed for non-nix steps
-        run: |  
+        run: |
           nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker
@@ -100,13 +100,13 @@ jobs:
           export NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1
           chmod +x ./.github/workflows/nix-flake-check.sh
           source ./.github/workflows/nix-flake-check.sh
-  
+
   all-packages:
     name: Build all packages
     strategy:
       matrix:
         arch: [x64-monster, arm-monster]
-    needs: 
+    needs:
       - privilege-check
       - lfs-check
     runs-on:
@@ -123,7 +123,7 @@ jobs:
           nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
           extra_nix_config: |
             sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
+            narinfo-cache-negative-ttl = 0
             system-features = kvm
             http2 = false
 
@@ -133,7 +133,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
       - name: Add tools needed for non-nix steps
-        run: |  
+        run: |
           nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
@@ -148,15 +148,15 @@ jobs:
           nix show-config
           NIX_DEBUG_COMMAND="" && [[ $ACTIONS_RUNNER_DEBUG = "true" ]] && NIX_DEBUG_COMMAND='--print-build-logs --debug --show-trace --verbose'
           nix flake show --allow-import-from-derivation --fallback --keep-failed ${NIX_DEBUG_COMMAND}
-      - name: Build all packages 
+      - name: Build all packages
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all --keep-going
-      - name: List built results 
+      - name: List built results
         run: |
           ls result
           tree result -L 3
-  
+
   effects-gate:
       name: "Effect gate, automatically merged if passed"
       runs-on: ubuntu-latest
@@ -184,7 +184,7 @@ jobs:
           nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
           extra_nix_config: |
             sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
+            narinfo-cache-negative-ttl = 0
             system-features = kvm
             http2 = false
       - name: Set up Cachix
@@ -432,7 +432,7 @@ jobs:
 
   devnet-integration-tests:
     name: Devnet integration tests [FLAKY]
-    needs: 
+    needs:
       - all-packages
     strategy:
       matrix:
@@ -452,7 +452,7 @@ jobs:
           nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
           extra_nix_config: |
             sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
+            narinfo-cache-negative-ttl = 0
             system-features = kvm
             http2 = false
       - name: Set up Cachix
@@ -461,7 +461,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
       - name: Add tools needed for non-nix steps
-        run: |  
+        run: |
           nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils nixpkgs.gnumake nixpkgs.python311 nixpkgs.gcc
@@ -473,7 +473,7 @@ jobs:
       - name: Devnet integration tests
         run: |
           nix run .#devnet-integration-tests
-   
+
   # TODO: nixify these test steps, and add me to subsquid-processor
   test-subsquid:
     name: Test Subquid [FLAKY]
@@ -496,7 +496,7 @@ jobs:
           nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
           extra_nix_config: |
             sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
+            narinfo-cache-negative-ttl = 0
             system-features = kvm
             http2 = false
       - name: Set up Cachix
@@ -505,7 +505,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
       - name: Add tools needed for non-nix steps
-        run: |  
+        run: |
           nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils nixpkgs.gnumake nixpkgs.python311 nixpkgs.gcc
@@ -561,4 +561,4 @@ jobs:
             ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest
             ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:${{ github.sha }}
           context: subsquid
-          push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}    
+          push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
