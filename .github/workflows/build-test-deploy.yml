@@ -80,7 +80,7 @@ jobs:
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
-            http2 = false
+            
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
@@ -125,7 +125,7 @@ jobs:
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
-            http2 = false
+            
 
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
@@ -186,7 +186,7 @@ jobs:
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
-            http2 = false
+            
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
@@ -240,7 +240,7 @@ jobs:
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
-            http2 = false
+            
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
@@ -411,7 +411,7 @@ jobs:
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
-            http2 = false
+            
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
@@ -455,7 +455,7 @@ jobs:
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
-            http2 = false
+            
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
