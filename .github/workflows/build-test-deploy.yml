@@ -193,7 +193,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
       - name: Add tools needed for non-nix steps
-        run: |  
+        run: |
           nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker
@@ -221,7 +221,7 @@ jobs:
     strategy:
       matrix:
         arch: [x64-cute] # TODO: add arm-cute and figure out pushing multi-arch imgaes to dockerhub
-    needs: 
+    needs:
       - effects-gate
     runs-on:
       - self-hosted
@@ -238,7 +238,7 @@ jobs:
           nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
           extra_nix_config: |
             sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
+            narinfo-cache-negative-ttl = 0
             system-features = kvm
             http2 = false
       - name: Set up Cachix
@@ -247,7 +247,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
       - name: Add tools needed for non-nix steps
-        run: |  
+        run: |
           nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker
@@ -261,11 +261,11 @@ jobs:
           nix --version
           nix show-config
           nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
-      - name: Build all packages 
+      - name: Build all packages
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#docker-images-to-push
-      - name: List built results 
+      - name: List built results
         run: |
           ls result
           tree result -L 3
@@ -277,42 +277,70 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: cmc-api
           artifact: cmc-api:latest
-      - name: Publish devnet-dali to docker hub
+
+  push-hyperspace-docker-images:
+    name: Push docker images
+    strategy:
+      matrix:
+        runtime: [dali, picasso, composable]
+    needs:
+      - effects-gate
+    runs-on:
+      - self-hosted
+    concurrency:
+      group: ${{ github.workflow }}-push-hyperspace-docker-images-${{ matrix.runtime }}-${{ github.event.pull_request.title }}
+      cancel-in-progress: true
+    steps:
+      # This isn't templated, since checkout needs to happen before templating occurs.
+      - name: Set up Nix
+        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
+        with:
+          install_url: https://releases.nixos.org/nix/${{ env.NIX_VERSION }}/install
+          nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
+          extra_nix_config: |
+            sandbox = relaxed
+            narinfo-cache-negative-ttl = 0
+            system-features = kvm
+            http2 = false
+      - name: Set up Cachix
+        uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
+        with:
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{ env.CACHIX_NAME }}
+      - name: Add tools needed for non-nix steps
+        run: |
+          nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Nix flake show
+        run: |
+          nix --version
+          nix show-config
+          nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
+      - name: Build all packages
+        uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#docker-images-to-push
+      - name: List built results
+        run: |
+          ls result
+          tree result -L 3
+      - name: Publish hyperspace docker image to docker hub
         uses: "./.github/templates/docker-publish"
         with:
-          image_path: result/docker-image-devnet-dali.tar.gz
+          image_path: result/docker-image-hyperspace-${{ matrix.runtime }}.tar.gz
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: devnet-dali
-          artifact: devnet-dali:latest
-      - name: Publish hyperspace-dali to docker hub
-        uses: "./.github/templates/docker-publish"
-        with:
-          image_path: result/docker-image-hyperspace-dali.tar.gz
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: hyperspace-dali
-          artifact: hyperspace-dali:latest
-      - name: Publish hyperspace-picasso to docker hub
-        uses: "./.github/templates/docker-publish"
-        with:
-          image_path: result/docker-image-hyperspace-picasso.tar.gz
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: hyperspace-picasso
-          artifact: hyperspace-picasso:latest
-      - name: Publish hyperspace-composable to docker hub
-        uses: "./.github/templates/docker-publish"
-        with:
-          image_path: result/docker-image-hyperspace-composable.tar.gz
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: hyperspace-composable
-          artifact: hyperspace-composable:latest
+          name: hyperspace-${{ matrix.runtime }}
+          artifact: hyperspace-${{ matrix.runtime }}:latest
 
   # NOTE: Everything below this line is not built deterministically and therefore considered flaky.
   # [FLAKY] jobs are not included in the effects gate
-
 
   deploy-pablo-preview:
     name: "Deploy Pablo Preview [FLAKY]"
