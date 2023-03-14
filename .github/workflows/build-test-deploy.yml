@@ -279,7 +279,7 @@ jobs:
           artifact: cmc-api:latest
 
   push-hyperspace-docker-images:
-    name: Push docker images
+    name: Push Hyperspace docker images
     strategy:
       matrix:
         runtime: [dali, picasso, composable]
