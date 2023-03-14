@@ -282,13 +282,15 @@ jobs:
     name: Push Hyperspace docker images
     strategy:
       matrix:
+        arch: [x64-cute] # TODO: add arm-cute and figure out pushing multi-arch imgaes to dockerhub
         runtime: [dali, picasso, composable]
     needs:
       - effects-gate
+      - ${{ matrix.arch }}
     runs-on:
       - self-hosted
     concurrency:
-      group: ${{ github.workflow }}-push-hyperspace-docker-images-${{ matrix.runtime }}-${{ github.event.pull_request.title }}
+      group: ${{ github.workflow }}-push-hyperspace-docker-images-${{ matrix.arch }}-${{ matrix.runtime }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:
       # This isn't templated, since checkout needs to happen before templating occurs.
