@@ -147,6 +147,8 @@ ibc-runtime-api = { workspace = true, default-features = false }
 pallet-ibc = { workspace = true, default-features = false }
 pallet-ibc-ping = { workspace = true, default-features = false }
 
+log = { workspace= true , default-features = false }
+
 [dev-dependencies]
 frame-benchmarking = { package = "frame-benchmarking", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
 

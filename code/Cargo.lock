@@ -2783,6 +2783,7 @@ dependencies = [
  "ibc-primitives",
  "ibc-runtime-api",
  "lending-runtime-api",
+ "log",
  "orml-tokens",
  "orml-traits",
  "orml-unknown-tokens",

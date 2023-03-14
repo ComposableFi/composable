@@ -1226,28 +1226,28 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 	type Error = DispatchError;
 
 	fn from_denom_to_asset_id(denom: &String) -> Result<CurrencyId, Self::Error> {
+		log::error!("from_denom_to_asset_id {}", denom);
 		let denom_bytes = denom.as_bytes().to_vec();
 		if let Some(id) = IbcDenoms::<Runtime>::get(&denom_bytes) {
+			log::error!("IbcDenoms get {}", &id);
 			return Ok(id)
 		}
 
 		let asset_id =
 			<currency_factory::Pallet<Runtime> as CurrencyFactoryT>::create(RangeId::IBC_ASSETS)?;
 
+		log::error!("CurrencyFactoryT create {}", &asset_id);
 		IbcDenoms::<Runtime>::insert(denom_bytes.clone(), asset_id);
 		IbcAssetIds::<Runtime>::insert(asset_id, denom_bytes);
-
-		let location = XcmAssetLocation::new(MultiLocation::new(
-			1,
-			X1(Junction::GeneralIndex(asset_id.into())),
-		));
-		assets_registry::Pallet::<Runtime>::set_reserve_location(asset_id, location)?;
 
 		Ok(asset_id)
 	}
 
 	fn from_asset_id_to_denom(id: CurrencyId) -> Option<String> {
-		IbcAssetIds::<Runtime>::get(id).and_then(|denom| String::from_utf8(denom).ok())
+		log::error!("from_asset_id_to_denom id {}", &id);
+		let result = IbcAssetIds::<Runtime>::get(id).and_then(|denom| String::from_utf8(denom).ok());
+		log::error!("from_asset_id_to_denom result {}", &result);
+		result
 	}
 
 	fn ibc_assets(start_key: Option<Either<CurrencyId, u32>>, limit: u64) -> IbcAssets<CurrencyId> {

@@ -76,6 +76,7 @@ pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "1bb
 
 pallet-proxy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
 
+log = { version = "0.4.14", default-features = false }
 
 [patch."https://github.com/paritytech/substrate"]
 beefy-gadget = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
