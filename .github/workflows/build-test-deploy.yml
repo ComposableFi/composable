@@ -82,7 +82,7 @@ jobs:
             system-features = kvm
             http2 = false
       - name: Set up Cachix
-        uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
@@ -128,7 +128,7 @@ jobs:
             http2 = false
 
       - name: Set up Cachix
-        uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
@@ -188,7 +188,7 @@ jobs:
             system-features = kvm
             http2 = false
       - name: Set up Cachix
-        uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
@@ -242,7 +242,7 @@ jobs:
             system-features = kvm
             http2 = false
       - name: Set up Cachix
-        uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
@@ -456,7 +456,7 @@ jobs:
             system-features = kvm
             http2 = false
       - name: Set up Cachix
-        uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
@@ -500,7 +500,7 @@ jobs:
             system-features = kvm
             http2 = false
       - name: Set up Cachix
-        uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}

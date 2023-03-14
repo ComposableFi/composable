@@ -31,10 +31,7 @@
 
           nativeBuildInputs = with pkgs;
             [ self'.packages.rust-nightly clang pkg-config ]
-            ++ lib.optional stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
-              Security
-              SystemConfiguration
-            ]);
+            ++ systemCommonRust.darwin-deps;
           LD_LIBRARY_PATH = lib.strings.makeLibraryPath
             (with pkgs; [ stdenv.cc.cc.lib llvmPackages.libclang.lib ]);
           LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";

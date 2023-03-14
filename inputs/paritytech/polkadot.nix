@@ -20,11 +20,7 @@
           buildInputs = with pkgs; [ openssl zstd ];
           nativeBuildInputs = with pkgs;
             [ clang pkg-config ] ++ [ self'.packages.rust-nightly ]
-            ++ lib.optional stdenv.isDarwin
-            (with pkgs.darwin.apple_sdk.frameworks; [
-              Security
-              SystemConfiguration
-            ]);
+            ++ systemCommonRust.darwin-deps;
           LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
             pkgs.stdenv.cc.cc.lib
             pkgs.llvmPackages.libclang.lib
