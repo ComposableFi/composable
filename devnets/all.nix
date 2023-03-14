@@ -3,11 +3,11 @@
     packages =
       let packages = self'.packages;
       in rec {
-        centauri-configure-and-run = pkgs.writeShellApplication rec {
-          name = "centauri-configure-and-run";
+        centauri-configure-and-run-test = pkgs.writeShellApplication rec {
+          name = "centauri-configure-and-run-test";
           text = ''
             cp --force ${self'.packages.hyperspace-config} /tmp/config.toml  
-            ${pkgs.lib.meta.getExe devnet-centauri}       
+            ${pkgs.lib.meta.getExe devnet-centauri-test}       
           '';
         };
 
