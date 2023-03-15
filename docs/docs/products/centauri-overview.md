@@ -1,39 +1,55 @@
-# Centauri
+# Centauri (IBC)
 
-Centauri is our commitment to trustless light-client based bridging. Encompassing Centauri is the first IBC-Substrate 
-bridge built on Picasso, and marks the first connection between the DotSama and Cosmos ecosystems. 
-Centauri enables the trustless and cost-effective exchange and transfer of assets between the two ecosystems. 
-This trustlessness is achieved through light clients and finality proofs. We are connecting the IBC Protocol to chains 
-in other ecosystems that support light clients. Centauri can be leveraged by other pallets on Picasso and act as a 
-transport layer for the [Composable XCVM](./xcvm.md), facilitating cross-chain movement of 
-information and assets.
+## Trustless bridging via the IBC Protocol
 
-## How it works
+Centauri leverages and expands upon the existing Inter-Blockchain Communication Protocol (IBC) beyond Cosmos. 
+The IBC protocol previously allowed for trustless bridging between Cosmos SDK chains; 
+however, we are amongst the first to extend IBC to other ecosystems. 
+The trustless condition of Centauri is due to the fact it is:
 
-Centauri expands the reach of the IBC to Kusama and Polkadot, through the development of a new proprietary 
-iteration of the Bridge Efficiency Enabling Finality Yielder (BEEFY) developed by Parity. 
-As a result, Centauri is able to integrate light clients that track the finality of transactions between 
-Picasso and IBC-enabled chains, and are able to reach a trustless consensus on finality across two chains. 
-This is done in a manner that requires light heavy computational load, and enables decentralization. 
-As such, Centauri is both practically useful, cost-efficient, and secure.
+- built upon light clients that communicate with each other
+- updates the state of a counterparty chain
+- sends finality proofs and other types of transactions and packets that can be verified
+- able to upgrade the state of a chain through sending finality proofs.
 
-Centauri serves to bridge Picasso to blockchains and layers that have light clients installed. 
-Through Centauri, the Composable Ecosystem (and the broader DotSama ecosystem) 
-are bridged to all blockchains connected to the IBC Protocol.
+We are building an interconnected ecosystem via the IBC Protocol to chains 
+by integrating light clients that track the finality in these ecosystems on IBC. 
+There are 3 key pieces needed in order to achieve this goal:
 
-The key challenge in executing upon the goals of Centauri is to reach consensus on the finality of the two networks 
-it is connecting in a trustless manner, which guarantees the correctness and security of cross-chain bridging. 
-This is achieved with several pieces of new technology. Firstly, the light clients allow nodes to verify the blockchain 
-state without downloading the full block data, thus ensuring light computing requirements and decentralization. 
-Secondly, Merkle Mountain Ranges (MMRs) allow new block headers to be hashed in an ‘append-only’ manner, 
-which is more suited for use in consensus subsystems other than Merkle trees. Finally, the BEEFY finality gadget makes 
-use of Merkle Mountain Ranges to produce finality proofs for parachains in a more efficient way. 
-These components are highlighted in the sub sections for Centauri.
+## Pallet IBC
 
+Pallet IBC is referred to as the IBC stack for non-Cosmos chains 
+and is composed of IBC-rs and a Tendermint light client(ic07). 
+IBC-rs is an implementation of IBC in Rust, 
+which allows for IBC messages to be interpreted on Picasso(and other Substrate-based chains). 
+Together these two components enable parachain to process and interpret IBC packets.
 
-![overview_centauri_progress](./overview-centauri-progress.png)
+## GRANDPA light client
+GRANDPA is a protocol developed by Parity to verify finality proofs of parachain headers. 
+This custom light client is based on the GRANDPA protocol and complies with IBC-rs, 
+allowing us to integrate the GRANDPA client into pallet-ibc.
 
+The ICS-8 client enables light client implementations 
+written in CosmWasm to run natively on blockchains built with the Cosmos SDK. 
+This allows for a GRANDPA light client implementation on Cosmos as a CosmWasm contract 
+which can be deployed to Cosmos chains, 
+allowing blockchains in the Cosmos ecosystem to track the finality of DotSama parachains.
 
-To create the proof of concept (PoC) of Centauri, we are working with a variety of projects in the Cosmos ecosystem. 
-Then, we will hold a larger-scale launch of the bridge, serving as our fundamental IBC infrastructure for trustless 
-bridging.
+A custom-built relayer implementation allows 
+for transferring arbitrary packets between DotSama and Cosmos-based blockchains using the IBC protocol. 
+In the future we expect other relayer solutions to add support for cross-ecosystem message passing via IBC. 
+Still, for the time being, Hyperspace is the only relayer implementation with this functionality.
+
+The diagram presented here illustrates the proposed Cosmos ⬌ DotSama connection that will result 
+from the integration of all the pieces of infrastructure we are pioneering.
+
+## Hyperspace relayer implementation
+A custom-built relayer implementation allows 
+for transferring arbitrary packets between DotSama and Cosmos-based blockchains using the IBC protocol. 
+In the future we expect other relayer solutions to add support for cross-ecosystem message passing via IBC. 
+Still, for the time being, Hyperspace is the only relayer implementation with this functionality.
+
+![centauri_stack](./images-centauri/centauri-stack.png)
+
+The diagram presented here illustrates the proposed Cosmos ⬌ DotSama connection 
+that will result from the integration of all the pieces of infrastructure we are pioneering.

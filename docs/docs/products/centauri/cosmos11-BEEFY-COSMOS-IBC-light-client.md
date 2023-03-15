@@ -1,5 +1,12 @@
 # The 11-BEEFY COSMOS-IBC Light Client
 
+::: note
+
+Initially, Centauri will utilize the grandpa light client, as beefy has not yet been deployed on Kusama.
+Therefore, the content of this section pertains to Centauri v2, in which the beefy light client will be used.
+
+:::
+
 The final pieces of technology contributing to the construction of Centauri leverage [Parity](https://www.parity.io/)’s 
 Bridge Efficiency Enabling Finality Yielder (BEEFY) and its novel consensus gadget that enables DotSama to be bridged to
 additional chains via very efficient finality proofs. Parachains get their finality from the Kusama relay chain, and 
@@ -112,6 +119,3 @@ trustlessness, Composable has published a demo with
 [instructions](https://github.com/ComposableFi/ibc-go/blob/main/modules/light-clients/11-beefy/README.md) for everyone 
 to run a test to verify the operation of the light client. The draft spec is available 
 [here.](https://github.com/ComposableFi/ibc-go/blob/main/modules/light-clients/11-beefy/spec.md)
-
-Ultimately, this BEEFY implementation will set the stage for a DotSama-IBC Substrate bridge allowing for seamless 
-cross-chain communication and asset transfers between the Cosmos and Composable ecosystems.
