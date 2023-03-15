@@ -1,4 +1,4 @@
-# NEAR IBC
+# NEAR IBC Bridge
 
 Composable’s bridging team have been working in close collaboration with the NEAR team 
 to bring the necessary components for a GRANDPA light client implementation on [NEAR Protocol](https://near.org/). 
@@ -18,7 +18,7 @@ as a result of Composable establishing an IBC bridge to NEAR Protocol.
 Below you will find a diagram detailing how the same components for Centauri’s Cosmos implementation can effectively 
 be repurposed to extend functionality to new blockchains such as NEAR.
 
-![centauri_stack](./images-centauri/centauri-stack.png)
+![centauri_stack](../images-centauri/centauri-stack.png)
 Kusama ⬌ NEAR IBC bridge
 
 Ultimately, Centauri is more aptly described as the trustless bridging hub used to connect light-client-enabled blockchains.
