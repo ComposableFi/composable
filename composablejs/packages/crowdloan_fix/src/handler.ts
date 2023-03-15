@@ -52,7 +52,7 @@ export async function getContributorsToModify(api: ApiPromise) {
     const updateData = {
       RemoteAccountOf: { "RelayChain": publicKey },
       RewardAmountOf: new BN(value.toString()),
-      VestingPeriodOf: new BN(vestingPeriod )
+      VestingPeriodOf: new BN(vestingPeriod)
     };
     updates.push(updateData);
     console.info(`Updating \`${publicKey}\` with:\nAmount: ${value} | vestingPeriod: ${vestingPeriod}`);

@@ -6,7 +6,7 @@
     "baseUrl": "./",
     "paths": {
       "@composable/crowdloan_fix/*": ["./src/*"],
-      "@composable/crowdloan_fix/update_schedule": ["./src/claimConfiguration.json"],
+      "@composable/crowdloan_fix/claim_configuration": ["./src/claimConfiguration.json"],
       "@composable/utils": ["../utils/src"],
       "@composable/utils/*": ["../utils/src/*"],
       "@composable/types": ["../types/src"],

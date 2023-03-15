@@ -2,16 +2,13 @@
 import "@composable/types/augment-api";
 import "@composable/types/augment-types";
 import { getDevWallets, getNewConnection, sendUnsignedAndWaitForSuccess } from "@composable/utils";
-import *  as updateSchedule from "@composable/crowdloan_fix/update_schedule";
-import BN from "bn.js";
-import yesno from "yesno";
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { IKeyringPair } from "@polkadot/types/types";
-import { PalletCrowdloanRewardsModelsRemoteAccount } from "@composable/types";
-import { AccountId32 } from "@polkadot/types/interfaces";
-import { expect } from "chai";
+import {contributor_wallet_privateKey, reward_wallet_privateKey} from '@composable/crowdloan_fix/claim_configuration'
 
+
+const TESTNET_DEBUG_MODE = false;
 
 export const getKsmProofMessage = (api: ApiPromise, contributor: KeyringPair, contributorRewardAccount: IKeyringPair) =>
   api.createType("PalletCrowdloanRewardsModelsProof", {
@@ -31,20 +28,25 @@ const main = async () => {
   // Establish connection to the node.
   const endpoint = process.env.ENDPOINT ?? "ws://127.0.0.1:9988";
   const { newClient, newKeyring } = await getNewConnection(endpoint);
-  const {devWalletAlice} = getDevWallets(newKeyring);
-  // const contributorWallet = newKeyring.addFromMnemonic("");
-  // const rewardAccount = newKeyring.addFromMnemonic("");
-
-  const rewardWallet = devWalletAlice.derive("/test/crowdloan/contributor0");
-  const contributorWallet = devWalletAlice.derive("/test/crowdloan/contributor0/contributor");
+  let rewardWallet: KeyringPair, contributorWallet:KeyringPair;
+  if (TESTNET_DEBUG_MODE) {
+    const { devWalletAlice } = getDevWallets(newKeyring);
+    rewardWallet = devWalletAlice.derive("/test/crowdloan/contributor0");
+    contributorWallet = devWalletAlice.derive("/test/crowdloan/contributor0/contributor");
+  } else {
+    rewardWallet = newKeyring.addFromMnemonic(reward_wallet_privateKey);
+    contributorWallet = newKeyring.addFromMnemonic(contributor_wallet_privateKey);
+  }
 
   const proofMessage = getKsmProofMessage(newClient, contributorWallet, rewardWallet);
 
-  await sendUnsignedAndWaitForSuccess(
+  const { data: [resultRemoteAccount, resultRewardAccount, resultAmount] } = await sendUnsignedAndWaitForSuccess(
     newClient,
     newClient.events.crowdloanRewards.Associated.is,
     newClient.tx.crowdloanRewards.associate(rewardWallet.publicKey, proofMessage)
   );
+
+  console.info(`Contributor: ${resultRemoteAccount.toString()}\nClaimed for ${resultRewardAccount.toString()}\nThe amount of ${resultAmount.toString()}`);
 
   // Disconnecting from the node.
   console.debug("disconnecting...");

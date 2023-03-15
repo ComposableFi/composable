@@ -1,7 +1,7 @@
 {
-  "name": "@composable/crowdloan_manual_claim",
+  "name": "@composable/crowdloan_manual_associate",
   "version": "1.0.0",
-  "description": "Claims & associates wallets for Picasso crowdloan contributors.",
+  "description": "Associates & claims for a defined wallet for Picasso crowdloan contributors.",
   "main": "dist/index.js",
   "scripts": {
     "start": "yarn crowdloan_manual_claim",

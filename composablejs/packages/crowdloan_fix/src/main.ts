@@ -2,10 +2,8 @@
 import "@composable/types/augment-api";
 import "@composable/types/augment-types";
 import { getDevWallets, getNewConnection } from "@composable/utils";
-import *  as updateSchedule from "@composable/crowdloan_fix/update_schedule";
 import {
   fixCrowdloanEntry,
-  getContributorData,
   getContributorsToModify,
   getContributorsToReplace
 } from "@composable/crowdloan_fix/handler";
@@ -38,7 +36,7 @@ const main = async () => {
   console.info("Step 3. Submitting updates");
   console.info("Following updates will be submitted:");
   for (let i = 0; i < updates.length; i++) {
-    console.info("\nWallet:", updates[i].RemoteAccountOf['RelayChain'].toString(), `\nAmount: ${updates[i].RewardAmountOf.toNumber()} | Vesting Period: ${updates[i].VestingPeriodOf.toNumber()}`);
+    console.info("\nWallet:", updates[i].RemoteAccountOf["RelayChain"].toString(), `\nAmount: ${updates[i].RewardAmountOf.toNumber()} | Vesting Period: ${updates[i].VestingPeriodOf.toNumber()}`);
   }
   const ok = await yesno({ question: "Are you sure you want to continue?" });
   if (!ok)

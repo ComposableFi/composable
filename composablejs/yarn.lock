@@ -351,9 +351,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@composable/crowdloan_manual_claim@workspace:packages/crowdloan_manual_claim":
+"@composable/crowdloan_manual_claim@workspace:packages/crowdloan_manual_associate":
   version: 0.0.0-use.local
-  resolution: "@composable/crowdloan_manual_claim@workspace:packages/crowdloan_manual_claim"
+  resolution: "@composable/crowdloan_manual_claim@workspace:packages/crowdloan_manual_associate"
   dependencies:
     "@polkadot/api": 9.8.2
     "@polkadot/keyring": 10.1.12
