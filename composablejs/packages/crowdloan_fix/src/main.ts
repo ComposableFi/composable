@@ -14,7 +14,7 @@ import yesno from "yesno";
 
 
 const main = async () => {
-  console.log("Crowdloan Pallet Verifier");
+  console.log("Crowdloan Pallet Fix");
 
   console.log("Connecting...");
   // Establish connection to the node.
@@ -26,7 +26,6 @@ const main = async () => {
   let updates: { RemoteAccountOf: string, RewardAmountOf: BN, VestingPeriodOf: BN }[];
   // Here the actual magic happens
   // 1. Replace jobs
-  // ToDo: Set old wallet to 0!
   console.info("Step 1. Collecting Replacement Jobs");
   updates = await getContributorsToReplace(newClient);
 
@@ -54,7 +53,7 @@ const main = async () => {
 
 main()
   .then(() => {
-    console.log("Crowdloan data verification finished!");
+    console.log("Crowdloan data fix finished!");
     process.exit(0);
   })
   .catch(err => {

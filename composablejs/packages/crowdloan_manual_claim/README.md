@@ -1,10 +1,8 @@
-# Crowdloan Entries Fix
+# Crowdloan Manual Claim
 
-#### @composable/crowdloan_fix
+#### @composable/crowdloan_manual_claim
 
-This tool updates/removes existing crowdloan contributor entries.
-
-To remove an entry, please set the corresponding wallet's claimable amount to `0`.
+Manually associates & claims for a provided wallet.
 
 ## How to run
 
