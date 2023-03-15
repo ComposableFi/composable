@@ -1412,7 +1412,7 @@ dependencies = [
 
 [[package]]
 name = "composable"
-version = "2.10009.0"
+version = "3.10010.0"
 dependencies = [
  "color-eyre",
  "composable-node",
@@ -1437,7 +1437,7 @@ dependencies = [
 
 [[package]]
 name = "composable-node"
-version = "2.10009.0"
+version = "3.10010.0"
 dependencies = [
  "assets-rpc",
  "assets-runtime-api",
