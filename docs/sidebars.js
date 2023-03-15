@@ -142,7 +142,9 @@ const sidebars = {
                         'products/centauri/light-clients',
                         'products/centauri/merkle-mountain-ranges',
                         'products/centauri/cosmos11-BEEFY-COSMOS-IBC-light-client',
-                        'products/centauri/expanding-ibc-protocol'
+                        'products/centauri/hyperspace-relayer',
+                        'products/centauri/kusama-polkadot-bridge',
+                        'products/centauri/near-ibc-bridge',
                     ],
                 },
                 {
@@ -326,32 +328,6 @@ const sidebars = {
                         'nix/troubleshooting',
                     ],
                 },
-                {
-                    type: 'category',
-                    label: 'Codespaces',
-                    link: {
-                        type: 'doc',
-                        id: 'codespaces',
-                    },
-                    collapsible: true,
-                    collapsed: true,
-                    items: [
-                        'codespaces/getting-started',
-                        {
-                            type: 'category',
-                            label: 'Using Codespaces',
-                            link: {
-                                type: 'doc',
-                                id: 'codespaces/using-codespaces',
-                            },
-                            collapsible: true,
-                            collapsed: false,
-                            items: [
-                                'codespaces/book',
-                                'codespaces/substrate',
-                                'codespaces/frontend',
-                                'codespaces/runtime-tests'],
-                        },
                     ],
                 },
                 {
