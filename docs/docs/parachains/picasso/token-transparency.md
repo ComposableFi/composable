@@ -68,13 +68,13 @@ The following multisigs are controlled by the governance council and are activat
 These multisigs are considered non-circulating, 
 and can only be considered “circulating” if voted upon by protocol governance to become circulating.
 
-Treasury Multisig: 5wCLknMQkBGmuTQxsxYAyevpa37mMCkFLaqaYNcowsSnR7CJ 
+Treasury Multisig: 5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm 
 
-Team Tokens Multisig: 5wyQr1huDp4mKAKA95ihXRqWu8hLkqjiNib8GaKFzuEMKEk3
+Team Tokens Multisig: 5xfnDDXYPdF6W9Nwjpqxm3B4tRyURKVycBRhkXaNEUTzmThE
 
-Ecosystem Incentives Multisig : 5ytUzQtNj7vibyr79cqUENuDLNUnTsgDAJMDefhBywRTNrDU
+Ecosystem Incentives Multisig : 5upPPwmpXUp3yrgx6erAzr84BfywuhVhKCeza5MGmBY8wJCK
 
-Liquidity Programs Multisig : 5ytrBrTBma4kKfmEXGoKGMVjfyTnKgpvXaiwwCbXCbdZQK25
+Liquidity Programs Multisig : 5ys4cFxQBDs8qhkXbs9smn7yVMSmJ3QdLeqNTHfhk5QmX5Pj
 
 Treasury Pallet for accruing fees: https://polkadot.js.org/apps/#/treasury
 
