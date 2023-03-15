@@ -30,6 +30,11 @@
     devenv.url = "github:cachix/devenv";
   };
 
+  nixConfig = {
+    extra-substituters = [ "https://composable-community.cachix.org/" ];
+    extra-trusted-public-keys = [ "composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8=" ];
+  };
+
   outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
