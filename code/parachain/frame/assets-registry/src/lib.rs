@@ -135,7 +135,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn existential_deposit)]
 	pub type ExistentialDeposit<T: Config> =
-		StorageMap<_, Twox128, T::LocalAssetId, T::Balance, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, T::LocalAssetId, T::Balance, OptionQuery>;
 
 	/// Name of an asset
 	#[pallet::storage]
