@@ -25,7 +25,7 @@ sudo apt install -y git clang curl libssl-dev llvm libudev-dev
 ```sh
 #!/bin/bash
 
-RUST_C="nightly-2022-04-18"
+RUST_C="nightly-2022-11-17"
 
 curl https://sh.rustup.rs -sSf | sh -s -- -y && \
 export PATH="$PATH:$HOME/.cargo/bin" && \
@@ -39,20 +39,20 @@ rustup show
 ### Get project and build node
 
 ```sh
-git clone --depth 1 --branch v2.1.6 https://github.com/ComposableFi/composable.git && \
-cd composable && \
+git clone --depth 1 --branch release-v2.10009.1 https://github.com/ComposableFi/composable.git && \
+cd composable/code && \
 export SKIP_WASM_BUILD=1 && \
 cargo build --release
 ```
 
 ### One-liner
 ```sh
-RUST_C="nightly-2022-04-18"
-RELEASE_TAG="v2.1.6"
+RUST_C="nightly-2022-11-17"
+RELEASE_TAG="release-v2.10009.1"
 
 sudo apt install -y git clang curl libssl-dev llvm libudev-dev && \
 git clone --depth 1 --branch $RELEASE_TAG https://github.com/ComposableFi/composable.git && \
-cd composable && \
+cd composable/code && \
 curl https://sh.rustup.rs -sSf | sh -s -- -y && \
 export PATH="$PATH:$HOME/.cargo/bin" && \
 rustup toolchain uninstall $(rustup toolchain list) && \
@@ -69,12 +69,6 @@ Compiled node should be in
 ./target/release
 ```
 
-## Download Prebuilt Node
-
-```sh
-wget https://github.com/ComposableFi/composable/releases/download/v2.1.6/composable
-```
-
 ### Run as systemd service
 
 1. Put compiled binary to /usr/bin/
@@ -83,33 +77,10 @@ wget https://github.com/ComposableFi/composable/releases/download/v2.1.6/composa
 cp ./target/release/composable /usr/bin
 ```
 
-2. Create collator.service file and put following content into it. Save it with Ctrl+O
+2. Create collator.service file
 
 ```sh
-sudo nano /etc/systemd/system/collator.service
-```
-
-3. Enable and Start service
-
-```sh
-sudo systemctl enable collator.service
-sudo systemctl start collator.service
-```
-
-4. Check service status
-
-```sh
-sudo systemctl status collator.service
-```
-
-5. Check logs output
-
-```sh
-journalctl -f
-collator.service content
-```
-
-```ini
+cat <<EOF > /etc/systemd/system/collator.service
 [Unit]
 Description=Composable
 
@@ -147,6 +118,26 @@ RestartSec=120
 
 [Install]
 WantedBy=multi-user.target
+EOF
+```
+
+3. Enable and Start service
+
+```sh
+sudo systemctl enable collator.service
+sudo systemctl start collator.service
+```
+
+4. Check service status
+
+```sh
+sudo systemctl status collator.service
+```
+
+5. Check logs output
+
+```sh
+journalctl -f collator.service content
 ```
 
 ## Setup docker and docker-compose
@@ -168,7 +159,7 @@ sudo usermod -aG docker $USER # adds docker to sudo group so there's no need to 
 ### Setup docker-compose
 
 ```sh
-sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.16.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 
 sudo chmod +x /usr/local/bin/docker-compose
 ```
@@ -182,7 +173,7 @@ docker container run hello-world
 
 ### docker-compose
 
-Save the following content to docker-compose.yml and run docker-compose up -d
+Save the following content to docker-compose.yml
 
 ```yml
 version: "3.7"
@@ -192,25 +183,31 @@ services:
     image: composablefi/composable:latest
     container_name: composable_node
     volumes:
-      - ./chain-data:/chain-data
+      - ./chain-data:/data
     ports:
-      - 9833:9833
-      - 9844:9844
-      - 40333:40333
+      - 9933:9933
+      - 9944:9944
       - 30333:30333
+      - 30334:30334
     restart: unless-stopped
-    command: >
-      /usr/local/bin/сomposable
-      --collator 
-      --chain=picasso
-      --pruning=archive
-      --base-path /chain-data
-      --port 30333
-      --unsafe-ws-external
-      --unsafe-rpc-external
-      --listen-addr=/ip4/0.0.0.0/tcp/30334
-      --execution wasm
-      --
-      --execution=wasm 
-      --listen-addr=/ip4/0.0.0.0/tcp/30333
+    entrypoint:
+      - /usr/local/bin/composable
+    command:
+      - --collator
+      - --chain=picasso
+      - --pruning=archive
+      - --base-path=/data
+      - --unsafe-ws-external
+      - --unsafe-rpc-external
+      - --listen-addr=/ip4/0.0.0.0/tcp/30334
+      - --execution=wasm
+      - --
+      - --execution=wasm
+      - --listen-addr=/ip4/0.0.0.0/tcp/30333
+```
+
+and run
+
+```sh
+docker-compose up -d
 ```
