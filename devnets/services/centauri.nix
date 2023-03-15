@@ -1,5 +1,5 @@
 { name, execCommands, configPathSource, configPathContainer, dependsOn
-, restartPolicy, pkgs, packages, devnetTools }: {
+, restartPolicy, pkgs, packages, devnetTools, RUST_LOG ? "trace" }: {
   image = {
     contents = [ packages.hyperspace-dali ]
       ++ devnetTools.withBaseContainerTools;
@@ -7,7 +7,7 @@
   };
   service = {
     restart = restartPolicy;
-    environment = { RUST_LOG = "debug"; };
+    environment = { inherit RUST_LOG; };
     entrypoint = "${pkgs.lib.meta.getExe packages.hyperspace-dali}";
     command = execCommands;
     volumes = [{

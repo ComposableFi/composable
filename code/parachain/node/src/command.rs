@@ -40,20 +40,41 @@ use std::net::SocketAddr;
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	log::info!("Loading chain spec: {}", id);
 	Ok(match id {
-		#[cfg(feature = "dali")]
-		"dali-rococo" => Box::new(chain_spec::dali_rococo()),
-		"picasso-dev" => Box::new(chain_spec::picasso_dev(*chain_spec::PARACHAIN_ID)),
-		#[cfg(feature = "composable")]
-		"composable-dev" => Box::new(chain_spec::composable_dev()),
+		// local test
+		"picasso-rococo-dev" => Box::new(chain_spec::picasso_dev(*chain_spec::PARACHAIN_ID, "rococo_local_testnet")),
+		
+		// remote test
+		// "picasso-rococo" =>	
+
+		// remote prod 
 		"picasso-kusama" | "picasso" => Box::new(chain_spec::picasso()),
-		#[cfg(feature = "composable")]
+
+		// local test
+		"composable-westend-dev" => Box::new(chain_spec::composable_dev()),
+	
+		// remote test
 		"composable-westend" => Box::new(chain_spec::composable_westend()),
-		#[cfg(feature = "composable")]
-		"" | "composable-polkadot" | "composable" => Box::new(chain_spec::composable()),
-		#[cfg(feature = "composable")]
+		
+		// remote prod
+		"composable-polkadot" | "composable" => Box::new(chain_spec::composable()),
+
+
+		// picasso from path
+		path if path.contains("/picasso-") && path.ends_with(".json") => Box::new(
+			chain_spec::picasso::ChainSpec::from_json_file(std::path::PathBuf::from(path))?,
+		),
+
+		// composable from path
 		path if path.contains("/composable-") && path.ends_with(".json") => Box::new(
 			chain_spec::composable::ChainSpec::from_json_file(std::path::PathBuf::from(path))?,
 		),
+
+
+		#[cfg(feature = "dali")]
+		"dali-rococo" => Box::new(chain_spec::dali_rococo()),
+
+		// remaining below to be deleted
+
 		#[cfg(feature = "dali")]
 		path if path.contains("/dali-") && path.ends_with(".json") =>
 			Box::new(chain_spec::dali::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),

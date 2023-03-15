@@ -96,7 +96,7 @@ pub fn composable() -> composable::ChainSpec {
 }
 
 // chain spec for single node environments
-pub fn picasso_dev(parachain_id: ParaId) -> picasso::ChainSpec {
+pub fn picasso_dev(parachain_id: ParaId, relay_chain : &str) -> picasso::ChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PICA".into());
 	properties.insert("tokenDecimals".into(), CurrencyId::decimals().into());
@@ -130,7 +130,7 @@ pub fn picasso_dev(parachain_id: ParaId) -> picasso::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(parachain_id) },
+		Extensions { relay_chain : relay_chain.into(), para_id: u32::from(parachain_id) },
 	)
 }
 

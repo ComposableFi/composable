@@ -1246,7 +1246,7 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 	fn from_asset_id_to_denom(id: CurrencyId) -> Option<String> {
 		log::error!("from_asset_id_to_denom id {}", &id);
 		let result = IbcAssetIds::<Runtime>::get(id).and_then(|denom| String::from_utf8(denom).ok());
-		log::error!("from_asset_id_to_denom result {}", &result);
+		log::error!("from_asset_id_to_denom result {:?}", &result);
 		result
 	}
 
