@@ -12,14 +12,19 @@ pub struct Args {
 
 #[derive(clap::Subcommand, Debug)]
 pub enum Action {
+	/// add schedule from table
 	Add(AddCommand),
+	/// list all existing schedules
 	List,
-	Clean(CleanCommand),
+	/// Unlock schedule, so really to all vesting now
+	Unlock(UnlockCommand),
+	/// All not yet vested amount to be unlocked and transferred back to wallet
+	Delete(DeleteCommand),
 }
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
-pub struct CleanCommand {
+pub struct UnlockCommand {
 	/// Link to CSV file with schedule
 	#[arg(long)]
 	pub schedule: String,
@@ -28,6 +33,23 @@ pub struct CleanCommand {
 	#[arg(long)]
 	pub key: String,
 }
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+pub struct DeleteCommand {
+	/// Link to CSV file with schedule
+	#[arg(long)]
+	pub schedule: String,
+
+	/// `VestedTransferOrigin`
+	#[arg(long)]
+	pub key: String,
+
+	/// Where to transfer unlocked amount
+	#[arg(long)]	
+	pub to: String,
+}
+
 
 /// So it validates all vesting parameters and dry-runs on RPC node.
 /// Outputs hex encoded extrinsic to call
@@ -61,7 +83,15 @@ pub struct AddRecord {
 }
 
 #[derive(Debug, serde::Deserialize)]
-pub struct CleanRecord {
+pub struct UnlockRecord {
 	pub account: String,
 	pub vesting_schedule_id: u128,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct DeleteRecord {
+	pub account: String,
+	pub vesting_schedule_id: u128,
+	pub total: u128,
+	pub already_claimed : u128,	
 }

@@ -1,4 +1,13 @@
-# Vest
+# Overview
+
+Purpose of this tool to allow automate vesting operations.
+
+[Create vested transfer](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A8000#/extrinsics/decode/0x0201390100d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d0022123bdec5e64df1cd427e96f7e72f67c1dd25682b5503d56aeff4a606662c31010000000000000000000000000000000080df776400000000008d2700000000001800000013004cc96aec63b3030000)
+
+[Delete vested transfer](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A8000#/extrinsics/decode/0x020123020839020022123bdec5e64df1cd427e96f7e72f67c1dd25682b5503d56aeff4a606662c31010000000000000000000000000000000006020022123bdec5e64df1cd427e96f7e72f67c1dd25682b5503d56aeff4a606662c3100b8e39e87c0fec96f7d012d31a4c27b44bfb504ab359662112e4270e380c8434113004059be6f7c40030000)
+
+
+## Automated examples
 
 ```bash
 export RUST_LOG=info
@@ -13,5 +22,9 @@ cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" list > ves
 
 
 ```bash
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" clean --schedule="./test/clean.csv" --key="//Alice"
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" unlock --schedule="./test/clean.csv" --key="//Alice"
+```
+
+```bash
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" delete --schedule="./test/clean.csv" --key="//Alice" --to="5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL"
 ```
