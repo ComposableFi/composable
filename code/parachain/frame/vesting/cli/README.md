@@ -10,3 +10,8 @@ cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --sche
 cargo run -- --client="ws://localhost:9988" list > vestingSchedules.log
 cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" list > vestingSchedules.log
 ```
+
+
+```bash
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" clean --schedule="./test/clean.csv" --key="//Alice"
+```

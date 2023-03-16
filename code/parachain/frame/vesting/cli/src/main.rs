@@ -9,7 +9,7 @@ use input::*;
 use output::*;
 use prelude::*;
 use sp_core::{hexdisplay, Blake2Hasher, Pair};
-use std::str::FromStr;
+use std::{collections::HashSet, str::FromStr};
 use subxt::{dynamic::Value, tx::PairSigner, utils::AccountId32, OnlineClient, SubstrateConfig};
 use tracing::info;
 
@@ -25,19 +25,15 @@ async fn main() -> anyhow::Result<()> {
 			let csv_file: String =
 				String::from_utf8(std::fs::read(subargs.schedule).expect("file")).expect("string");
 			let mut rdr = csv::Reader::from_reader(csv_file.as_bytes());
-			let all: Vec<_> = rdr.deserialize::<Record>().map(|x| x.expect("record")).collect();
-
+			let all: Vec<_> = rdr.deserialize::<AddRecord>().map(|x| x.expect("record")).collect();
 			let key = sp_core::sr25519::Pair::from_string(&subargs.key, None).expect("secret");
-
 			let signer = PairSigner::new(key.clone());
-
 			let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;
-
 			let mut out = csv::Writer::from_writer(vec![]);
 			for record in all {
 				println!("{:?}", &record);
 
-				let address = AccountId32::from_str(&record.address).expect("address");
+				let address = AccountId32::from_str(&record.account).expect("address");
 
 				let data = vec![
 					("from", Value::unnamed_variant("Id", vec![Value::from_bytes(key.public().0)])),
@@ -76,11 +72,8 @@ async fn main() -> anyhow::Result<()> {
 				let result = signed.dry_run(None).await;
 				info!("dry_run {:?}", result);
 
-				let tx = api.tx().create_unsigned(&tx_value).expect("offline");
-				{
-					let tx = "0x".to_string() + &hex::encode(signed.into_encoded());
-					info!("Signed Vesting::vested_transfer {:?}", &tx);
-				}
+				let tx = "0x".to_string() + &hex::encode(signed.into_encoded());
+				info!("Signed Vesting::vested_transfer {:?}", &tx);
 
 				let data = vec![
 					("call", tx_value.into_value()),
@@ -98,11 +91,10 @@ async fn main() -> anyhow::Result<()> {
 				let result = signed.dry_run(None).await;
 				info!("dry_run {:?}", result);
 
-				let tx = api.tx().create_unsigned(&tx).expect("offline");
 				let tx = "0x".to_string() + &hex::encode(signed.into_encoded());
 				info!("Signed Sudo::sudoUncheckedWeight(Vesting::vested_transfer) {:?}", &tx);
 				out.serialize(OutputRecord {
-					to: record.address,
+					to: record.account,
 					vesting_schedule_added: tx,
 					window_start: format!(
 						"{}",
@@ -123,6 +115,53 @@ async fn main() -> anyhow::Result<()> {
 			let data = String::from_utf8(out).unwrap();
 			println!("-=================================-");
 			println!("{}", data);
+		},
+		Action::Clean(subargs) => {
+			let csv_file: String =
+				String::from_utf8(std::fs::read(subargs.schedule).expect("file")).expect("string");
+			let mut rdr = csv::Reader::from_reader(csv_file.as_bytes());
+			let all: Vec<_> =
+				rdr.deserialize::<CleanRecord>().map(|x| x.expect("record")).collect();
+			let key = sp_core::sr25519::Pair::from_string(&subargs.key, None).expect("secret");
+			let signer = PairSigner::new(key.clone());
+			let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;
+			let mut out = csv::Writer::from_writer(vec![]);
+			let all: HashSet<_> = all.into_iter().map(|x| x.account).collect();
+			
+			let clean: Vec<_> = all
+				.into_iter()
+				.map(|record| {
+					let address = AccountId32::from_str(&record).expect("address");
+					vec![
+						("who", Value::unnamed_variant("Id", vec![Value::from_bytes(address.0)])),
+						("asset", Value::u128(1)),
+						("vesting_schedules", Value::unnamed_composite(vec![])),
+					]
+				})
+				.map(|data| subxt::dynamic::tx("Vesting", "update_vesting_schedules", data))
+				.map(|x| x.into_value())
+				.collect();
+
+			let data = vec![("calls", clean)];
+			let tx_value = subxt::dynamic::tx("Utility", "batch", data);
+			let data = vec![
+				("call", tx_value.into_value()),
+				(
+					"weight",
+					Value::named_composite(vec![
+						("ref_time", Value::u128(0)),
+						("proof_size", Value::u128(0)),
+					]),
+				),
+			];
+			let tx = subxt::dynamic::tx("Sudo", "sudo_unchecked_weight", data);
+			let signed =
+				api.tx().create_signed(&tx, &signer, <_>::default()).await.expect("offline");
+			let result = signed.dry_run(None).await;
+			println!("dry_run {:?}", result);
+
+			let tx = "0x".to_string() + &hex::encode(signed.into_encoded());
+			println!("Signed Sudo::sudoUncheckedWeight(Vesting::update_vesting_schedules) {:?}", &tx);
 		},
 		Action::List => {
 			let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;

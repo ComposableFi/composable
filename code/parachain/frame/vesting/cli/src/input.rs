@@ -14,6 +14,19 @@ pub struct Args {
 pub enum Action {
 	Add(AddCommand),
 	List,
+	Clean(CleanCommand),
+}
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+pub struct CleanCommand {
+	/// Link to CSV file with schedule
+	#[arg(long)]
+	pub schedule: String,
+
+	/// `VestedTransferOrigin`
+	#[arg(long)]
+	pub key: String,
 }
 
 /// So it validates all vesting parameters and dry-runs on RPC node.
@@ -36,8 +49,8 @@ pub struct AddCommand {
 
 /// maintains high fidelity with extrinsic
 #[derive(Debug, serde::Deserialize)]
-pub struct Record {
-	pub address: String,
+pub struct AddRecord {
+	pub account: String,
 	/// unix timestamp
 	pub window_moment_start: u64,
 	/// unix time
@@ -45,4 +58,10 @@ pub struct Record {
 	pub period_count: u32,
 	/// amount
 	pub per_period: u128,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct CleanRecord {
+	pub account: String,
+	pub vesting_schedule_id: u128,
 }
