@@ -1,8 +1,3 @@
----
-slug: /
----
-
-
 # Introduction
 
 *Composable Finance: Composing DeFi for mass adoption*
