@@ -1,4 +1,5 @@
 #!/usr/bin/env ts-node
+//@ts-nocheck
 import "@composable/types/augment-api";
 import "@composable/types/augment-types";
 import { getDevWallets, getNewConnection } from "@composable/utils";
@@ -16,7 +17,7 @@ const main = async () => {
 
   console.log("Connecting...");
   // Establish connection to the node.
-  const endpoint = process.env.ENDPOINT ?? "ws://127.0.0.1:9988";
+  const endpoint = "wss://alice-collator.test-01.composable-ci.composablenodes.tech";
   const { newClient, newKeyring } = await getNewConnection(endpoint);
   // ToDo: Replace Alice with live wallet!
   const { devWalletAlice } = getDevWallets(newKeyring);
@@ -30,13 +31,13 @@ const main = async () => {
 
   // 2. Modification jobs
   console.info("Step 2. Collecting Modification Jobs");
-  updates = updates.concat(await getContributorsToModify(newClient));
+  // updates = updates.concat(await getContributorsToModify(newClient));
 
   // 3. Transaction
   console.info("Step 3. Submitting updates");
   console.info("Following updates will be submitted:");
   for (let i = 0; i < updates.length; i++) {
-    console.info("\nWallet:", updates[i].RemoteAccountOf["RelayChain"].toString(), `\nAmount: ${updates[i].RewardAmountOf.toNumber()} | Vesting Period: ${updates[i].VestingPeriodOf.toNumber()}`);
+    console.info("\nWallet:", updates[i].RemoteAccountOf["RelayChain"].toString(), `\nAmount: ${updates[i].RewardAmountOf.toString()} | Vesting Period: ${updates[i].VestingPeriodOf.toNumber()}`);
   }
   const ok = await yesno({ question: "Are you sure you want to continue?" });
   if (!ok)
