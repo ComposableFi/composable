@@ -242,17 +242,3 @@ This configuration will pass the key into the Composable application at startup.
 ```
 [Parachain] 🏷 Local node identity is: 12D3KooWLp9aJBC7Jury1EgBYT4prqThmKPyB1Fm2fpBPUok1tKb
 ```
-
-### Verify that the http RPC port is available
-
-```sh
-curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "rpc_methods"}' http://127.0.0.1:9933/
-```
-
-If this does not return anything, you may need to temporarily enable a few flags
-
-```
---rpc-external \
---unsafe-rpc-external \
---rpc-methods=unsafe \
-```
