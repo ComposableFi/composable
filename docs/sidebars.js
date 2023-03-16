@@ -418,11 +418,11 @@ const sidebars = {
                         type: `doc`,
                         id: `ecosystem/build-on-composable-ecosystem-development`,
                     },
-                    collapsible: false,
-                items: [
-                    'ecosystem/rfp-canonical-stablecoin-design-and-integration',
-
-                ]
+                    collapsible: true,
+                    items:[
+                        'ecosystem/rfp-canonical-stablecoin-design-and-integration',
+                        'ecosystem/rfp-centauri-explorer'
+                    ]
                 },
                 'ecosystem/composable-grants',
                 'ecosystem/business-line-development',
