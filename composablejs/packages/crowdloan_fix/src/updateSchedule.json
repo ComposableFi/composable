@@ -14,14 +14,6 @@
     }
   ],
   "modify": [
-    {
-      "publicKey": "EkmdfH2Fc6XgPgDwMjye3Nsdj27CCSi9np8Kc7zYoCL2S3G",
-      "newAmount": 0
-    },
-    {
-      "publicKey": "5yBqx5Ju1mpwomTXjxQkMivvnUvLvPtcsewBAHCZk38eyoyM",
-      "newAmount": 135812490478477066240,
-      "vestingSchedule": 29030400000
-    }
+
   ]
 }
