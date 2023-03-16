@@ -1,19 +1,19 @@
+mod client;
 mod input;
 mod output;
 mod prelude;
-mod client;
 
 use clap::Parser;
 use client::VestingSchedule;
 use input::*;
 use output::*;
 use prelude::*;
-use sp_core::Pair;
+use sp_core::{hexdisplay, Blake2Hasher, Pair};
 use std::str::FromStr;
 use subxt::{dynamic::Value, tx::PairSigner, utils::AccountId32, OnlineClient, SubstrateConfig};
 use tracing::info;
 
-use crate::client::VestingScheduleT;
+use crate::client::{VestingScheduleKeyT, VestingScheduleT};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -117,6 +117,7 @@ async fn main() -> anyhow::Result<()> {
 				})
 				.expect("out");
 			}
+
 			out.flush()?;
 			let out = out.into_inner().expect("table");
 			let data = String::from_utf8(out).unwrap();
@@ -126,25 +127,51 @@ async fn main() -> anyhow::Result<()> {
 		Action::List => {
 			let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;
 			let storage_address = subxt::dynamic::storage_root("Vesting", "VestingSchedules");
-			let mut iter = api.storage().at(None).await?.iter(storage_address, 10).await?;
-			//5f27b51b5ec208ee9cb25b55d87282439c806850c4ee3bc06ba62b096318fe381afe891bf10d66367dd9ea00f54e8e7b08c4903d780d91371231a21f5c1df49e7801f30be61711a160821b6628b69a023ba80a3778f04ebf45e806d19a05202501000000000000000000000000000000: ((((175, { "vesting_schedule_id": 175, "window": v"MomentBased"{ "start": 1685577600, "period": 2592000 }, "period_count": 24, "per_period": 33333330000000000, "already_claimed": 0 }))))
-		// 	pub type VestingSchedules<T: Config> = StorageDoubleMap<
-		// 	_,
-		// 	Blake2_128Concat,
-		// 	AccountIdOf<T>,
-		// 	Blake2_128Concat,
-		// 	AssetIdOf<T>,
-		// 	BoundedBTreeMap<T::VestingScheduleId, VestingScheduleOf<T>, T::MaxVestingSchedules>,
-		// 	ValueQuery,
-		// >;
-				
+			let mut iter = api.storage().at(None).await?.iter(storage_address, 200).await?;
 
+			let mut out = csv::Writer::from_writer(vec![]);
+			while let Some((key, vesting_schedule)) = iter.next().await? {
+				let vesting_schedule = VestingScheduleT::decode(&mut vesting_schedule.encoded())
+					.expect("scale decoded");
+				let key = VestingScheduleKeyT::decode(&mut key.0.as_ref()).expect("key decoded");
 
-			while let Some((key, vestingSchedule)) = iter.next().await? {
-				let decoded = VestingScheduleT::decode(&mut vestingSchedule.encoded()).expect("scale decoded");
-				
-				println!("{}: {:?}", hex::encode(key), decoded);
+				for (id, record) in vesting_schedule.iter() {
+					let (window_moment_start, window_moment_period) = match record.window {
+						client::VestingWindow::MomentBased { start, period } => (start, period),
+						_ => panic!("block to time"),
+					};
+					let window_start =
+						match OffsetDateTime::from_unix_timestamp(window_moment_start as i64)
+							.map(|x| format!("{}", x))
+							.map_err(|x| "#BAD_START_TME".to_string())
+						{
+							Err(x) => x,
+							Ok(x) => x,
+						};
+					out.serialize(ListRecord {
+						pubkey: hex::encode(&key.2),
+						account: key.2.to_string(),
+
+						window_start,
+						window_period: format!(
+							"{}",
+							Duration::seconds(window_moment_period as i64)
+						),
+						total: record.per_period * record.period_count as u128,
+						already_claimed: record.already_claimed,
+						per_period: record.per_period,
+						period_count: record.period_count,
+						vesting_schedule_id: record.vesting_schedule_id,
+					})
+					.expect("out");
+				}
 			}
+
+			out.flush()?;
+			let out = out.into_inner().expect("table");
+			let data = String::from_utf8(out).unwrap();
+			println!("-=================================-");
+			println!("{}", data);
 		},
 	}
 

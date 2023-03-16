@@ -1,5 +1,6 @@
 use sp_core::{ConstU16, ConstU32};
 use sp_runtime::BoundedBTreeMap;
+use subxt::utils::AccountId32;
 
 // raw types from subxt
 use crate::prelude::*;
@@ -45,8 +46,8 @@ pub enum VestingWindow<BlockNumber, Moment> {
 	},
 }
 
-pub type VestingScheduleT = BoundedBTreeMap<
-	u128,
-	VestingSchedule<u128, u32, u64, u128>,
-	ConstU32<32>,
->;
+pub type VestingScheduleT =
+	BoundedBTreeMap<u128, VestingSchedule<u128, u32, u64, u128>, ConstU32<32>>;
+
+pub type VestingScheduleKeyT = ([u8; 32], u128 , AccountId32, [u8; 32], );
+
