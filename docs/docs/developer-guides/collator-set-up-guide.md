@@ -17,7 +17,7 @@ In this step we will set up a rust compiler, toolchain and build a node.
 ### Setup required libraries
 
 ```sh
-sudo apt install -y git clang curl libssl-dev llvm libudev-dev
+sudo apt install --yes build-essential git clang curl libssl-dev llvm libudev-dev make
 ```
 
 ### Setup Rust binary and Toolchain
@@ -50,7 +50,7 @@ cargo build --release
 RUST_C="nightly-2022-11-17"
 RELEASE_TAG="release-v2.10009.1"
 
-sudo apt install -y git clang curl libssl-dev llvm libudev-dev && \
+sudo apt install --yes build-essential git clang curl libssl-dev llvm libudev-dev make && \
 git clone --depth 1 --branch $RELEASE_TAG https://github.com/ComposableFi/composable.git && \
 cd composable/code && \
 curl https://sh.rustup.rs -sSf | sh -s -- -y && \
@@ -65,8 +65,20 @@ cargo build --release
 ```
 
 Compiled node should be in
+
 ```sh
 ./target/release
+```
+
+### Generate a new node key
+
+```sh
+cd /var/lib/composable-node-key/
+sudo docker run --rm -ti -u$(id -u):$(id -g) parity/subkey generate-node-key > tmp_not_a_real_key
+echo -n "Local node identity: "
+head -n 1 tmp_not_a_real_key
+tail -n 1 tmp_not_a_real_key > not_a_real_key
+rm tmp_not_a_real_key
 ```
 
 ### Run as systemd service
@@ -93,6 +105,7 @@ ExecStart=/usr/local/bin/сomposable \
 --base-path /var/lib/composable-data/ \
 --port 30333 \
 --listen-addr=/ip4/0.0.0.0/tcp/30334 \
+--node-key-file=/var/lib/composable-node-key/node_key
 --execution wasm \
 -- \
 --execution=wasm \
@@ -180,18 +193,20 @@ version: "3.7"
 
 services:
   composable_node:
-    image: composablefi/composable:latest
+    image: composablefi/composable:${COMPOSABLE_VERSION}
     container_name: composable_node
     volumes:
       - ./chain-data:/data
+      - /var/lib/composable-node-key:/var/lib/composable-node-key
     ports:
       - 9933:9933
       - 9944:9944
       - 30333:30333
       - 30334:30334
+      - 9615:9615
     restart: unless-stopped
     entrypoint:
-      - /usr/local/bin/composable
+      - /bin/composable
     command:
       - --collator
       - --chain=picasso
@@ -200,6 +215,7 @@ services:
       - --unsafe-ws-external
       - --unsafe-rpc-external
       - --listen-addr=/ip4/0.0.0.0/tcp/30334
+      - --node-key-file=/var/lib/composable-node-key/node_key
       - --execution=wasm
       - --
       - --execution=wasm
@@ -209,5 +225,34 @@ services:
 and run
 
 ```sh
-docker-compose up -d
+echo 'COMPOSABLE_VERSION="v2.10009.0"' > environment
+docker-compose --env-file environment up -d
+```
+
+To see logs
+
+```sh
+sudo docker logs -f $(sudo docker ps | awk '/composable/ {print $1}')
+```
+
+The latest version of the application can be found at https://hub.docker.com/r/composablefi/composable/tags or https://github.com/ComposableFi/composable/releases/.
+
+This configuration will pass the key into the Composable application at startup. Verify that it is being used by checking the log for
+
+```
+[Parachain] 🏷 Local node identity is: 12D3KooWLp9aJBC7Jury1EgBYT4prqThmKPyB1Fm2fpBPUok1tKb
+```
+
+### Verify that the http RPC port is available
+
+```sh
+curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "rpc_methods"}' http://127.0.0.1:9933/
+```
+
+If this does not return anything, you may need to temporarily enable a few flags
+
+```
+--rpc-external \
+--unsafe-rpc-external \
+--rpc-methods=unsafe \
 ```
