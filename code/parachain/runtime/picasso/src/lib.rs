@@ -23,12 +23,14 @@ pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("PICASSO_RUNT
 #[cfg(not(feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
+extern crate alloc;
+
 mod fees;
 pub mod governance;
+pub mod ibc;
 mod migrations;
 mod prelude;
 mod weights;
-
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 use fees::FinalPriceConverter;
@@ -41,17 +43,19 @@ use common::{
 	governance::native::*,
 	rewards::StakingPot,
 	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
-	ForeignAssetId, Hash, MaxStringSize, Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight,
-	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	ForeignAssetId, Hash, Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
-	assets::Asset,
+	assets::{Asset, DummyAssetCreator},
 	dex::{Amm, PriceAggregate},
-	xcm::assets::RemoteAssetRegistryInspect,
+	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 
+mod gates;
+use gates::*;
 use governance::*;
 use prelude::*;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
@@ -59,9 +63,11 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
+	traits::{
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
+	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult,
+	ApplyExtrinsicResult, Either,
 };
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 #[cfg(feature = "std")]
@@ -69,14 +75,15 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 use codec::Encode;
-use frame_support::traits::{fungibles, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade};
+use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
+
 pub use frame_support::{
 	construct_runtime,
 	pallet_prelude::DispatchClass,
 	parameter_types,
 	traits::{
-		ConstBool, ConstU128, ConstU16, ConstU32, Contains, Everything, KeyOwnerProofSystem,
-		Nothing, Randomness, StorageInfo,
+		ConstBool, ConstU128, ConstU16, ConstU32, Everything, KeyOwnerProofSystem, Nothing,
+		Randomness, StorageInfo,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
@@ -142,7 +149,6 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
-use composable_traits::account_proxy::ProxyType;
 use orml_traits::{parameter_type_with_key, LockIdentifier};
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
@@ -248,13 +254,14 @@ impl assets_registry::Config for Runtime {
 	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
 	type UpdateAssetRegistryOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type ParachainOrGovernanceOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type CurrencyFactory = CurrencyFactory;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
+	type Convert = ConvertInto;
 }
 
 parameter_types! {
 	pub PabloPalletId: PalletId = PalletId(*b"pal_pblo");
 	pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
+	pub LPTokenExistentialDeposit: Balance = 10_000;
 }
 
 impl pablo::Config for Runtime {
@@ -262,16 +269,18 @@ impl pablo::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type Convert = sp_runtime::traits::ConvertInto;
-	type CurrencyFactory = CurrencyFactory;
 	type Assets = Assets;
+	// TODO(Connor): Won't impact current pools since this is only required for pool creation, must
+	// implement new assts system before any more pools are created
+	type LPTokenFactory = DummyAssetCreator<CurrencyId, XcmAssetLocation, Balance>;
 	type PoolId = PoolId;
 	type PalletId = PabloPalletId;
-	type LocalAssets = CurrencyFactory;
 	type PoolCreationOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type EnableTwapOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
+	type LPTokenExistentialDeposit = LPTokenExistentialDeposit;
 }
 
 impl assets::Config for Runtime {
@@ -683,33 +692,6 @@ parameter_types! {
 	pub const LockCrowdloanRewards: bool = true;
 }
 
-impl InstanceFilter<RuntimeCall> for ProxyType {
-	fn filter(&self, c: &RuntimeCall) -> bool {
-		match self {
-			ProxyType::Any => true,
-			ProxyType::Governance => matches!(
-				c,
-				RuntimeCall::Democracy(..) |
-					RuntimeCall::Council(..) |
-					RuntimeCall::TechnicalCommittee(..) |
-					RuntimeCall::Treasury(..) |
-					RuntimeCall::Utility(..)
-			),
-			ProxyType::CancelProxy => {
-				matches!(c, RuntimeCall::Proxy(proxy::Call::reject_announcement { .. }))
-			},
-		}
-	}
-	fn is_superset(&self, o: &Self) -> bool {
-		match (self, o) {
-			(x, y) if x == y => true,
-			(ProxyType::Any, _) => true,
-			(_, ProxyType::Any) => false,
-			_ => false,
-		}
-	}
-}
-
 parameter_types! {
 	pub MaxProxies : u32 = 4;
 	pub MaxPending : u32 = 32;
@@ -721,7 +703,7 @@ impl proxy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
 	type Currency = Assets;
-	type ProxyType = ProxyType;
+	type ProxyType = composable_traits::account_proxy::ProxyType;
 	type ProxyDepositBase = ProxyPrice;
 	type ProxyDepositFactor = ProxyPrice;
 	type MaxProxies = MaxProxies;
@@ -790,26 +772,6 @@ impl bonded_finance::Config for Runtime {
 	type WeightInfo = weights::bonded_finance::WeightInfo<Runtime>;
 }
 
-/// The calls we permit to be executed by extrinsics
-pub struct BaseCallFilter;
-impl Contains<RuntimeCall> for BaseCallFilter {
-	fn contains(call: &RuntimeCall) -> bool {
-		!(call_filter::Pallet::<Runtime>::contains(call) ||
-			matches!(
-				call,
-				RuntimeCall::Tokens(_) | RuntimeCall::Indices(_) | RuntimeCall::Treasury(_)
-			))
-	}
-}
-
-impl call_filter::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type UpdateOrigin = EnsureRootOrHalfNativeTechnical;
-	type Hook = ();
-	type WeightInfo = ();
-	type MaxStringSize = MaxStringSize;
-}
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -847,6 +809,9 @@ construct_runtime!(
 		TechnicalCommittee: collective::<Instance2> = 72,
 		TechnicalCommitteeMembership: membership::<Instance2> = 73,
 
+		ReleaseCommittee: collective::<Instance3> = 74,
+		ReleaseMembership: membership::<Instance3> = 75,
+
 		// helpers/utilities
 		Scheduler: scheduler = 34,
 		Utility: utility = 35,
@@ -872,6 +837,8 @@ construct_runtime!(
 		Pablo: pablo = 60,
 
 		CallFilter: call_filter = 100,
+
+		Ibc: pallet_ibc = 190,
 	}
 );
 
@@ -934,9 +901,40 @@ mod benches {
 		[vesting, Vesting]
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
-	[democracy, Democracy]
+		[democracy, Democracy]
+		// broken in Centauri too
+		// [ibc, Ibc]
 	);
 }
+
+struct CheckInherents;
+
+impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
+	fn check_inherents(
+		block: &Block,
+		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
+	) -> sp_inherents::CheckInherentsResult {
+		let relay_chain_slot = relay_state_proof
+			.read_slot()
+			.expect("Could not read the relay chain slot from the proof");
+
+		let inherent_data =
+			cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
+				relay_chain_slot,
+				sp_std::time::Duration::from_secs(6),
+			)
+			.create_inherent_data()
+			.expect("Could not create the timestamp inherent data");
+
+		inherent_data.check_extrinsics(block)
+	}
+}
+
+cumulus_pallet_parachain_system::register_validate_block!(
+	Runtime = Runtime,
+	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
+	CheckInherents = CheckInherents,
+);
 
 impl_runtime_apis! {
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, ForeignAssetId> for Runtime {
@@ -1206,33 +1204,140 @@ impl_runtime_apis! {
 			Ok(batches)
 		}
 	}
+
+	impl ibc_runtime_api::IbcRuntimeApi<Block, CurrencyId> for Runtime {
+		fn para_id() -> u32 {
+			<Runtime as cumulus_pallet_parachain_system::Config>::SelfParaId::get().into()
+		}
+
+		fn child_trie_key() -> Vec<u8> {
+			<Runtime as pallet_ibc::Config>::PalletPrefix::get().to_vec()
+		}
+
+		fn query_balance_with_address(addr: Vec<u8>, asset_id:CurrencyId) -> Option<u128> {
+			Ibc::query_balance_with_address(addr, asset_id).ok()
+		}
+
+		fn query_send_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {
+			Ibc::get_send_packet_info(channel_id, port_id, seqs).ok()
+		}
+
+		fn query_recv_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {
+			Ibc::get_recv_packet_info(channel_id, port_id, seqs).ok()
+		}
+
+		fn client_update_time_and_height(client_id: Vec<u8>, revision_number: u64, revision_height: u64) -> Option<(u64, u64)>{
+			Ibc::client_update_time_and_height(client_id, revision_number, revision_height).ok()
+		}
+
+		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {
+			Ibc::client(client_id).ok()
+		}
+
+		fn client_consensus_state(client_id: Vec<u8>, revision_number: u64, revision_height: u64, latest_cs: bool) -> Option<ibc_primitives::QueryConsensusStateResponse> {
+			Ibc::consensus_state(client_id, revision_number, revision_height, latest_cs).ok()
+		}
+
+		fn clients() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+			Some(Ibc::clients())
+		}
+
+		fn connection(connection_id: Vec<u8>) -> Option<ibc_primitives::QueryConnectionResponse>{
+			Ibc::connection(connection_id).ok()
+		}
+
+		fn connections() -> Option<ibc_primitives::QueryConnectionsResponse> {
+			Ibc::connections().ok()
+		}
+
+		fn connection_using_client(client_id: Vec<u8>) -> Option<Vec<ibc_primitives::IdentifiedConnection>>{
+			Ibc::connection_using_client(client_id).ok()
+		}
+
+		fn connection_handshake(client_id: Vec<u8>, connection_id: Vec<u8>) -> Option<ibc_primitives::ConnectionHandshake> {
+			Ibc::connection_handshake(client_id, connection_id).ok()
+		}
+
+		fn channel(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryChannelResponse> {
+			Ibc::channel(channel_id, port_id).ok()
+		}
+
+		fn channel_client(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::IdentifiedClientState> {
+			Ibc::channel_client(channel_id, port_id).ok()
+		}
+
+		fn connection_channels(connection_id: Vec<u8>) -> Option<ibc_primitives::QueryChannelsResponse> {
+			Ibc::connection_channels(connection_id).ok()
+		}
+
+		fn channels() -> Option<ibc_primitives::QueryChannelsResponse> {
+			Ibc::channels().ok()
+		}
+
+		fn packet_commitments(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryPacketCommitmentsResponse> {
+			Ibc::packet_commitments(channel_id, port_id).ok()
+		}
+
+		fn packet_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryPacketAcknowledgementsResponse>{
+			Ibc::packet_acknowledgements(channel_id, port_id).ok()
+		}
+
+		fn unreceived_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<u64>> {
+			Ibc::unreceived_packets(channel_id, port_id, seqs).ok()
+		}
+
+		fn unreceived_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<u64>> {
+			Ibc::unreceived_acknowledgements(channel_id, port_id, seqs).ok()
+		}
+
+		fn next_seq_recv(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryNextSequenceReceiveResponse> {
+			Ibc::next_seq_recv(channel_id, port_id).ok()
+		}
+
+		fn packet_commitment(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketCommitmentResponse> {
+			Ibc::packet_commitment(channel_id, port_id, seq).ok()
+		}
+
+		fn packet_acknowledgement(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketAcknowledgementResponse> {
+			Ibc::packet_acknowledgement(channel_id, port_id, seq).ok()
+		}
+
+		fn packet_receipt(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketReceiptResponse> {
+			Ibc::packet_receipt(channel_id, port_id, seq).ok()
+		}
+
+		fn denom_trace(asset_id: CurrencyId) -> Option<ibc_primitives::QueryDenomTraceResponse> {
+			Ibc::get_denom_trace(asset_id)
+		}
+
+		fn denom_traces(key: Option<CurrencyId>, offset: Option<u32>, limit: u64, count_total: bool) -> ibc_primitives::QueryDenomTracesResponse {
+			let key = key.map(Either::Left).or_else(|| offset.map(Either::Right));
+			Ibc::get_denom_traces(key, limit, count_total)
+		}
+
+		fn block_events(extrinsic_index: Option<u32>) -> Vec<Result<pallet_ibc::events::IbcEvent, pallet_ibc::errors::IbcError>> {
+			let mut raw_events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter();
+			if let Some(idx) = extrinsic_index {
+				raw_events.find_map(|e| {
+					let frame_system::EventRecord{ event, phase, ..} = *e;
+					match (event, phase) {
+						(RuntimeEvent::Ibc(pallet_ibc::Event::Events{ events }), frame_system::Phase::ApplyExtrinsic(index)) if index == idx => Some(events),
+						_ => None
+					}
+				}).unwrap_or_default()
+			}
+			else {
+				raw_events.filter_map(|e| {
+					let frame_system::EventRecord{ event, ..} = *e;
+
+					match event {
+						RuntimeEvent::Ibc(pallet_ibc::Event::Events{ events }) => {
+								Some(events)
+							},
+						_ => None
+					}
+				}).flatten().collect()
+			}
+		}
+	 }
 }
-
-struct CheckInherents;
-
-impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
-	fn check_inherents(
-		block: &Block,
-		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
-	) -> sp_inherents::CheckInherentsResult {
-		let relay_chain_slot = relay_state_proof
-			.read_slot()
-			.expect("Could not read the relay chain slot from the proof");
-
-		let inherent_data =
-			cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
-				relay_chain_slot,
-				sp_std::time::Duration::from_secs(6),
-			)
-			.create_inherent_data()
-			.expect("Could not create the timestamp inherent data");
-
-		inherent_data.check_extrinsics(block)
-	}
-}
-
-cumulus_pallet_parachain_system::register_validate_block!(
-	Runtime = Runtime,
-	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
-	CheckInherents = CheckInherents,
-);

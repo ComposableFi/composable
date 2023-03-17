@@ -1,7 +1,9 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
+import { LessThan } from "typeorm";
 import type { EntityManager } from "typeorm";
+import { IsEnum } from "class-validator";
 import { HistoricalVolume } from "../../model";
-import { getStartAndStep } from "./common";
+import { getVolumeRange } from "./common";
 
 @ObjectType()
 export class TotalVolume {
@@ -19,6 +21,7 @@ export class TotalVolume {
 @InputType()
 export class TotalVolumeInput {
   @Field(() => String, { nullable: false })
+  @IsEnum(["now", "month", "year"])
   range!: string;
 }
 
@@ -29,45 +32,32 @@ export class TotalVolumeResolver {
   @Query(() => [TotalVolume])
   async totalVolume(@Arg("params", { validate: true }) input: TotalVolumeInput): Promise<TotalVolume[]> {
     const { range } = input;
-
-    const { startHoursAgo, step } = getStartAndStep(range);
-
     const manager = await this.tx();
 
-    const rows: {
-      period: string;
-      total_volume: string;
-    }[] = await manager.getRepository(HistoricalVolume).query(
-      `
-        WITH range AS (
-          SELECT
-            generate_series (
-              ${startHoursAgo},
-              0,
-              ${-step}
-            ) AS hour
-          )
-        SELECT
-          date_trunc('hour', current_timestamp) - hour * interval '1 hour' as period,
-          coalesce(hourly_total_volume(hour), 0) as total_volume
-        FROM range
-        UNION
-        (SELECT
-          CURRENT_TIMESTAMP as period,
-          COALESCE(amount, 0) as total_volume
-        FROM historical_volume
-        ORDER BY period DESC
-        LIMIT 1)
-        ORDER BY period;
-      `
-    );
+    const timestamps = getVolumeRange(range);
 
-    return rows.map(
-      row =>
+    const totalVolumes: Array<TotalVolume> = [];
+
+    for (const timestamp of timestamps) {
+      const historicalVolume = await manager.getRepository(HistoricalVolume).findOne({
+        where: {
+          timestamp: LessThan(new Date(timestamp.getTime()))
+        },
+        order: {
+          timestamp: "DESC"
+        }
+      });
+
+      const accumulatedAmount = historicalVolume?.accumulatedAmount ?? 0n;
+
+      totalVolumes.push(
         new TotalVolume({
-          date: new Date(row.period).toISOString(),
-          totalVolume: BigInt(row.total_volume)
+          date: timestamp.toISOString(),
+          totalVolume: accumulatedAmount
         })
-    );
+      );
+    }
+
+    return totalVolumes;
   }
 }

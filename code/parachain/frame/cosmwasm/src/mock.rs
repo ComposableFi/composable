@@ -8,7 +8,10 @@ use crate::{
 	types::*,
 	*,
 };
-use composable_traits::currency::{CurrencyFactory, RangeId};
+use composable_traits::{
+	currency::{CurrencyFactory, RangeId},
+	xcm::assets::XcmAssetLocation,
+};
 use core::marker::PhantomData;
 
 use cosmwasm_vm::{
@@ -28,11 +31,11 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
-use primitives::currency::{CurrencyId, ValidateCurrencyId};
+use primitives::currency::CurrencyId;
 use sp_core::H256;
 use sp_runtime::{
 	generic,
-	traits::{AccountIdConversion, BlakeTwo256, Convert, IdentityLookup},
+	traits::{AccountIdConversion, BlakeTwo256, Convert, ConvertInto, IdentityLookup},
 	AccountId32, DispatchError,
 };
 
@@ -59,7 +62,8 @@ frame_support::construct_runtime!(
 		System: frame_system,
 		Cosmwasm: crate,
 		Balances: pallet_balances,
-		Assets: pallet_assets,
+		AssetsRegistry: pallet_assets_registry,
+		Assets: pallet_assets_transactor_router,
 		Timestamp: pallet_timestamp,
 		GovernanceRegistry: governance_registry,
 		Tokens: orml_tokens,
@@ -177,17 +181,29 @@ impl CurrencyFactory for CurrencyIdGenerator {
 	}
 }
 
-impl pallet_assets::Config for Test {
+impl pallet_assets_registry::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type LocalAssetId = CurrencyId;
+	type ForeignAssetId = XcmAssetLocation;
+	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
+	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
+	type Balance = Balance;
+	type Convert = ConvertInto;
+}
+
+impl pallet_assets_transactor_router::Config for Test {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = CurrencyIdGenerator;
-	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
+	type NativeTransactor = Balances;
+	type LocalTransactor = Tokens;
+	type ForeignTransactor = Tokens;
 	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type CurrencyValidator = ValidateCurrencyId;
+	type AssetLocation = XcmAssetLocation;
+	type AssetsRegistry = AssetsRegistry;
 }
 
 impl pallet_timestamp::Config for Test {
@@ -281,13 +297,6 @@ impl<T: Config> ibc_primitives::IbcHandler<AccountIdOf<T>> for IbcLoopback<T> {
 		_port_id: &::ibc::core::ics24_host::identifier::PortId,
 		_channel_id: &::ibc::core::ics24_host::identifier::ChannelId,
 	) -> Result<(::ibc::Height, ::ibc::timestamp::Timestamp), ibc_primitives::Error> {
-		todo!("loopback")
-	}
-
-	fn write_acknowledgement(
-		_packet: &::ibc::core::ics04_channel::packet::Packet,
-		_ack: Vec<u8>,
-	) -> Result<(), ibc_primitives::Error> {
 		todo!("loopback")
 	}
 

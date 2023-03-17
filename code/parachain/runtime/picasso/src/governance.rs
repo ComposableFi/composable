@@ -4,8 +4,6 @@ use super::*;
 use common::governance::native::*;
 use frame_support::traits::LockIdentifier;
 
-// pub type NativeDemocracy = democracy::Instance1;
-
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
 
@@ -63,20 +61,16 @@ impl collective::Config<NativeTechnicalMembership> for Runtime {
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 }
 
-// NOTE: this is for testing runtime to fast track
 parameter_types! {
 	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
-	// TODO: replace `FastTrackVotingPeriod` with this after some time
-	// 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
-	pub const FastTrackVotingPeriod: BlockNumber = HOURS;
 	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
 	// Note that Kusama uses 10 millis, however KSM is significantly more expensive
 	// https://github.com/paritytech/polkadot/blob/dc784f9b47e4681897cfd477b4f0760330875a87/runtime/kusama/src/lib.rs#L237
 	// so we increase it by a factor 10. This might still be on the low side.
-	pub PreimageByteDeposit: Balance = CurrencyId::milli::<u128>() * 100_u128;
+	pub PreimageByteDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -103,7 +97,11 @@ impl democracy::Config for Runtime {
 	type InstantOrigin = EnsureRootOrHalfNativeTechnical;
 	type InstantAllowed = InstantAllowed;
 
-	type FastTrackVotingPeriod = FastTrackVotingPeriod;
+	#[cfg(not(feature = "rococo"))]
+	type FastTrackVotingPeriod = ConstU32<{ 3 * HOURS }>;
+
+	#[cfg(feature = "rococo")]
+	type FastTrackVotingPeriod = ConstU32<HOURS>;
 
 	type CancellationOrigin = EnsureRootOrAllNativeTechnical;
 
@@ -153,7 +151,6 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type MaxApprovals = MaxApprovals;
 	type BurnDestination = ();
 	type WeightInfo = treasury::weights::SubstrateWeight<Runtime>;
-	// TODO: add bounties?
 	type SpendFunds = ();
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 }

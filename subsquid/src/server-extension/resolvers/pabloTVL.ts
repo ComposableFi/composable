@@ -1,6 +1,7 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { LessThan } from "typeorm";
+import { IsEnum, IsString } from "class-validator";
 import { HistoricalLockedValue, LockedSource, PabloPool } from "../../model";
 import { getRange } from "./common";
 import { PicassoTVL } from "./picassoOverviewStats";
@@ -22,9 +23,11 @@ export class PabloTVL {
 @InputType()
 export class PabloTVLInput {
   @Field(() => String, { nullable: false })
+  @IsEnum(["day", "week", "month", "year"])
   range!: string;
 
   @Field(() => String, { nullable: true })
+  @IsString()
   poolId?: string;
 }
 
@@ -93,8 +96,10 @@ export class PabloTVLResolver {
     for (const date of Object.keys(lockedValues)) {
       const tvl: PicassoTVL[] = [];
       for (const assetId of Object.keys(lockedValues[date])) {
-        const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date(date).getTime());
-        tvl.push({ assetId, amount: lockedValues[date][assetId], price });
+        if (lockedValues[date][assetId]) {
+          const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date(date).getTime());
+          tvl.push({ assetId, amount: lockedValues[date][assetId], price });
+        }
       }
 
       pabloTVL.push(new PabloTVL({ date, lockedValues: tvl }));

@@ -37,13 +37,6 @@ repository support (ARM) macOS. _However, because we use Docker in many of
 our packages, some packages will not run using this method yet as Docker is
 exclusive to Linux._
 
-:::caution
-Any package that happens to work on macOS needs to be explicitly enabled in
-`darwin-filter.nix`. A package working on macOS now is no guarantee that it
-will work on macOS in the future. You are still expected to run Linux if you
-work at Composable.
-:::
-
 
 
 ## Configuring your Nix install
@@ -60,12 +53,6 @@ In your Nix system config (`/etc/nixos/configuration.nix` by default), configure
       experimental-features = nix-command flakes
     '';
     sandbox = "relaxed";
-    substituters = [ 
-      "https://composable-community.cachix.org/" 
-    ];
-    trusted-public-keys = [
-      "composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8="
-    ];  
   };
 }
 ```

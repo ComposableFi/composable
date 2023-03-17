@@ -80,9 +80,9 @@ jobs:
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
-            http2 = false
+            
       - name: Set up Cachix
-        uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
@@ -97,6 +97,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
       - run: |
+          export NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1
           chmod +x ./.github/workflows/nix-flake-check.sh
           source ./.github/workflows/nix-flake-check.sh
   
@@ -124,10 +125,10 @@ jobs:
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
-            http2 = false
+            
 
       - name: Set up Cachix
-        uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
@@ -185,9 +186,9 @@ jobs:
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
-            http2 = false
+            
       - name: Set up Cachix
-        uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
@@ -239,9 +240,9 @@ jobs:
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
-            http2 = false
+            
       - name: Set up Cachix
-        uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
@@ -410,9 +411,9 @@ jobs:
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
-            http2 = false
+            
       - name: Set up Cachix
-        uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
@@ -454,9 +455,9 @@ jobs:
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
-            http2 = false
+            
       - name: Set up Cachix
-        uses: cachix/cachix-action@6a9a34cdd93d0ae4b4b59fd678660efb08109f2f # v12
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}

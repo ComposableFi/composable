@@ -8,11 +8,10 @@ Nix is **the only build tool** you will need at Composable. There is no need to 
 
 Nix also defines our **declarative development environments**. So you do not have to set up any packages on your machine to start developing. Instead, you only need a Nix install, and running `nix develop` in our repository.
 
-Nix provides us with a **single, uniform interface** across all products. You do not need to understand the underlying build tools for our `frontend-pablo-server` or our `devnet-dali`. You just run both of them with `nix run "#frontend-pablo-server"` and `nix run ".#devnet-dali"`.
+Nix provides us with a **single, uniform interface** across all products. You do not need to understand the underlying build tools for our `frontend-pablo-server` or our `devnet-picasso`. You just run both of them with `nix run "#frontend-pablo-server"` and `nix run ".#devnet-picasso"`.
 
 Nix also cuts your check-fix feedback-loop by **running all CI checks locally**, and provides you with helpful deterministic utilities like **formatting the entire repository with a single command**.
 
 ---
 
 Let's get started and [install Nix](./nix/install)!
-

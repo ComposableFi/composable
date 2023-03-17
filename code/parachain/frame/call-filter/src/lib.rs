@@ -9,14 +9,13 @@
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix)]
+#![deny(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
-use composable_traits::call_filter::{CallFilter, CallFilterEntry};
+mod prelude;
+mod types;
 pub use pallet::*;
-use sp_runtime::DispatchResult;
-use sp_std::prelude::*;
 use support::{
 	dispatch::{CallMetadata, GetCallMetadata},
 	pallet_prelude::*,
@@ -24,17 +23,16 @@ use support::{
 	transactional,
 };
 use system::pallet_prelude::*;
+pub use types::*;
 use weights::WeightInfo;
-
 mod mock;
 mod tests;
 mod weights;
 
 #[support::pallet]
 pub mod pallet {
-	use composable_traits::call_filter::CallFilterHook;
-
 	use super::*;
+	use prelude::*;
 
 	type CallFilterEntryOf<T> = CallFilterEntry<<T as Config>::MaxStringSize>;
 
@@ -43,8 +41,8 @@ pub mod pallet {
 		/// Overarching event type
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as system::Config>::RuntimeEvent>;
 
-		/// The origin which may set, update or remove filter.
-		type UpdateOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		type DisableOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		type EnableOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		// NOTE: can match by binary prefix which is much more efficient than string comparison.
 		#[pallet::constant]
@@ -94,13 +92,13 @@ pub mod pallet {
 		/// Disable a pallet function.
 		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must be
-		/// `UpdateOrigin`.
+		/// `DisableOrigin`.
 		///
 		/// Possibly emits a `Disabled` event.
 		#[pallet::weight(T::WeightInfo::disable())]
 		#[transactional]
 		pub fn disable(origin: OriginFor<T>, entry: CallFilterEntryOf<T>) -> DispatchResult {
-			T::UpdateOrigin::ensure_origin(origin)?;
+			T::DisableOrigin::ensure_origin(origin)?;
 			ensure!(entry.valid(), Error::<T>::InvalidString);
 			// We are not allowed to disable this pallet.
 			ensure!(
@@ -114,13 +112,13 @@ pub mod pallet {
 		/// Enable a previously disabled pallet function.
 		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must be
-		/// `UpdateOrigin`.
+		/// `EnableOrigin`.
 		///
 		/// Possibly emits an `Enabled` event.
 		#[pallet::weight(T::WeightInfo::enable())]
 		#[transactional]
 		pub fn enable(origin: OriginFor<T>, entry: CallFilterEntryOf<T>) -> DispatchResult {
-			T::UpdateOrigin::ensure_origin(origin)?;
+			T::EnableOrigin::ensure_origin(origin)?;
 			ensure!(entry.valid(), Error::<T>::InvalidString);
 			Self::do_enable(&entry)?;
 			Ok(())
@@ -142,6 +140,12 @@ pub mod pallet {
 		}
 
 		pub(crate) fn do_disable(entry: &CallFilterEntryOf<T>) -> DispatchResult {
+			if entry.pallet_name ==
+				BoundedVec::<_, T::MaxStringSize>::try_from(Self::name().as_bytes().to_vec())
+					.expect("static pallet name cannot be too long")
+			{
+				return Err(Error::<T>::CannotDisable.into())
+			}
 			if !Self::disabled(entry) {
 				T::Hook::disable_hook(entry)?;
 				DisabledCalls::<T>::insert(entry, ());

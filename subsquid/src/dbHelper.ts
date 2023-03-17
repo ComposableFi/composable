@@ -1,14 +1,15 @@
-import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Store } from "@subsquid/typeorm-store";
 import { randomUUID } from "crypto";
-import { hexToU8a } from "@polkadot/util";
-import { RequestInfo, RequestInit } from "node-fetch";
+import { ApiPromise, WsProvider } from "@polkadot/api";
+import { SubstrateExtrinsicSignature } from "@subsquid/substrate-processor";
 import BigNumber from "bignumber.js";
 import { EntityManager, LessThan, MoreThan } from "typeorm";
-import { divideBigInts, encodeAccount, getHistoricalCoingeckoPrice } from "./utils";
+import { isInstance } from "class-validator";
+import { divideBigInts, fetch, fetchRetry, getAccountFromSignature } from "./utils";
 import {
   Account,
   Activity,
+  CallError,
   Currency,
   Event,
   EventType,
@@ -24,10 +25,11 @@ import {
   PabloSwap,
   StakingRewardsPool
 } from "./model";
-import { DAY_IN_MS } from "./constants";
+import { Block, Context, EventItem } from "./processorTypes";
+import { AssetId, AssetInfo, assetList, CoingeckoPrices, DAY_IN_MS } from "./constants";
 
-const fetch = (url: RequestInfo, init?: RequestInit) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(url, init));
+const provider = new WsProvider("wss://rpc.composablenodes.tech");
+const api = new ApiPromise({ provider });
 
 export async function getLatestPoolByPoolId(store: Store, poolId: bigint): Promise<PabloPool | undefined> {
   return store.get<PabloPool>(PabloPool, {
@@ -46,15 +48,23 @@ export async function getLatestPoolByPoolId(store: Store, poolId: bigint): Promi
  * When the extrinsic is not signed, it will be a noop.
  * Returns the `accountId` stored, or undefined if nothing is stored.
  * @param ctx
+ * @param block
+ * @param eventItem
  * @param accountId
  *
  * @returns string | undefined
  */
 export async function getOrCreateAccount(
-  ctx: EventHandlerContext<Store>,
+  ctx: Context,
+  block: Block,
+  eventItem: EventItem,
   accountId?: string
 ): Promise<Account | undefined> {
-  const accId = accountId || ctx.event.extrinsic?.signature?.address;
+  let signature: SubstrateExtrinsicSignature | undefined;
+  if ("extrinsic" in eventItem.event) {
+    signature = eventItem.event.extrinsic?.signature;
+  }
+  const accId = accountId || getAccountFromSignature(signature);
 
   if (!accId) {
     // no-op
@@ -70,8 +80,8 @@ export async function getOrCreateAccount(
   }
 
   account.id = accId;
-  account.eventId = ctx.event.id;
-  account.blockId = ctx.block.hash;
+  account.eventId = eventItem.event.id;
+  account.blockId = block.header.hash;
 
   await ctx.store.save(account);
 
@@ -83,45 +93,55 @@ export async function getOrCreateAccount(
  *
  * Returns the stored event id.
  * @param ctx
+ * @param block
+ * @param eventItem
  * @param eventType
  */
-export async function saveEvent(ctx: EventHandlerContext<Store>, eventType: EventType): Promise<Event> {
-  const accountId: string = ctx.event.extrinsic?.signature?.address.value
-    ? encodeAccount(hexToU8a(ctx.event.extrinsic?.signature?.address.value))
-    : ctx.event.extrinsic?.signature?.address;
+export async function saveEvent(
+  ctx: Context,
+  block: Block,
+  eventItem: EventItem,
+  eventType: EventType
+): Promise<Event> {
+  let signature: SubstrateExtrinsicSignature | undefined;
+  let txHash: string | undefined;
+  if ("extrinsic" in eventItem.event) {
+    signature = eventItem.event.extrinsic?.signature;
+    txHash = eventItem.event.extrinsic?.hash;
+  }
+  const accountId = getAccountFromSignature(signature);
 
   // Create event
-  const event = new Event({
-    id: ctx.event.id,
+  const newEvent = new Event({
+    id: eventItem.event.id,
     accountId,
     eventType,
-    blockNumber: BigInt(ctx.block.height),
-    timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash,
-    txHash: ctx.event.extrinsic?.hash,
-    success: ctx.event.extrinsic?.success,
-    failReason: typeof ctx.event.extrinsic?.error === "string" ? ctx.event.extrinsic.error : undefined
+    blockNumber: BigInt(block.header.height),
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash,
+    txHash
   });
 
   // Store event
-  await ctx.store.save(event);
+  await ctx.store.save(newEvent);
 
-  return event;
+  return newEvent;
 }
 
 /**
  * Store Activity on the database.
  * @param ctx
+ * @param block
  * @param event
  * @param accountId
  */
-export async function saveActivity(ctx: EventHandlerContext<Store>, event: Event, accountId: string): Promise<string> {
+export async function saveActivity(ctx: Context, block: Block, event: Event, accountId: string): Promise<string> {
   const activity = new Activity({
     id: randomUUID(),
     event,
     accountId,
-    timestamp: new Date(ctx.block.timestamp),
-    blockId: ctx.block.hash
+    timestamp: new Date(block.header.timestamp),
+    blockId: block.header.hash
   });
 
   await ctx.store.save(activity);
@@ -136,17 +156,21 @@ export async function saveActivity(ctx: EventHandlerContext<Store>, event: Event
  * signer of the underlying extrinsic.
  * If no account is created, it will NOT create any Event or Activity
  * @param ctx
+ * @param block
+ * @param eventItem
  * @param eventType
  * @param accountId
  */
 export async function saveAccountAndEvent(
-  ctx: EventHandlerContext<Store>,
+  ctx: Context,
+  block: Block,
+  eventItem: EventItem,
   eventType: EventType,
   accountId?: string | string[]
 ): Promise<{ accounts: Account[]; event: Event }> {
   const accountIds: (string | undefined)[] = typeof accountId === "string" ? [accountId] : accountId || [];
 
-  const event = await saveEvent(ctx, eventType);
+  const savedEvent = await saveEvent(ctx, block, eventItem, eventType);
 
   const accounts: Account[] = [];
 
@@ -154,36 +178,40 @@ export async function saveAccountAndEvent(
     const id = accountIds[index];
     if (!id) {
       // no-op
-      return Promise.reject("Missing account id");
+      return Promise.reject(new Error("Missing account id"));
     }
-    const account = await getOrCreateAccount(ctx, id);
+    const account = await getOrCreateAccount(ctx, block, eventItem, id);
     if (account) {
       accounts.push(account);
-      await saveActivity(ctx, event, id);
+      await saveActivity(ctx, block, savedEvent, id);
     }
   }
 
-  return Promise.resolve({ accounts, event });
+  return Promise.resolve({ accounts, event: savedEvent });
 }
 
 /**
  * Stores a new HistoricalLockedValue with current locked amount
  * for the specified source, and for the overall locked value
  * @param ctx
+ * @param block
+ * @param eventItem
  * @param amountsLocked
  * @param source
  * @param sourceEntityId
  */
 export async function storeHistoricalLockedValue(
-  ctx: EventHandlerContext<Store>,
+  ctx: Context,
+  block: Block,
+  eventItem: EventItem,
   amountsLocked: [string, bigint][], // [assetId, amountLocked]
   source: LockedSource,
   sourceEntityId: string
 ): Promise<void> {
-  let event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
+  let event = await ctx.store.get(Event, { where: { id: eventItem.event.id } });
 
   if (!event) {
-    event = await saveEvent(ctx, EventType.SWAP);
+    event = await saveEvent(ctx, block, eventItem, EventType.SWAP);
   }
 
   for (const [assetId, amount] of amountsLocked) {
@@ -206,11 +234,11 @@ export async function storeHistoricalLockedValue(
       event,
       amount,
       accumulatedAmount: lastAccumulatedValue + amount,
-      timestamp: new Date(ctx.block.timestamp),
+      timestamp: new Date(block.header.timestamp),
       source,
       assetId,
       sourceEntityId,
-      blockId: ctx.block.hash
+      blockId: block.header.hash
     });
 
     await ctx.store.save(historicalLockedValue);
@@ -220,11 +248,13 @@ export async function storeHistoricalLockedValue(
 /**
  * Get Pablo pool asset by asset id and pool id. If it doesn't exist, create it.
  * @param ctx
+ * @param block
  * @param pool
  * @param assetId
  */
 export async function getOrCreatePabloAsset(
-  ctx: EventHandlerContext<Store>,
+  ctx: Context,
+  block: Block,
   pool: PabloPool,
   assetId: string
 ): Promise<PabloPoolAsset> {
@@ -251,7 +281,7 @@ export async function getOrCreatePabloAsset(
       pool,
       totalLiquidity: BigInt(0),
       totalVolume: BigInt(0),
-      blockId: ctx.block.hash,
+      blockId: block.header.hash,
       weight: weight?.weight || 0
     });
   }
@@ -259,7 +289,7 @@ export async function getOrCreatePabloAsset(
 }
 
 export async function getSpotPrice(
-  ctx: EventHandlerContext<Store> | EntityManager,
+  ctx: Context | EntityManager,
   quoteAssetId: string,
   baseAssetId: string,
   poolId: string,
@@ -281,7 +311,8 @@ export async function getSpotPrice(
           pool: {
             id: poolId
           },
-          timestamp: LessThan(new Date(time))
+          timestamp: LessThan(new Date(time)),
+          success: true
         },
         order: {
           timestamp: "DESC"
@@ -294,7 +325,8 @@ export async function getSpotPrice(
           pool: {
             id: poolId
           },
-          timestamp: LessThan(new Date(time))
+          timestamp: LessThan(new Date(time)),
+          success: true
         },
         order: {
           timestamp: "DESC"
@@ -309,7 +341,8 @@ export async function getSpotPrice(
           pool: {
             id: poolId
           },
-          timestamp: LessThan(new Date(time))
+          timestamp: LessThan(new Date(time)),
+          success: true
         },
         order: {
           timestamp: "DESC"
@@ -322,7 +355,8 @@ export async function getSpotPrice(
           pool: {
             id: poolId
           },
-          timestamp: LessThan(new Date(time))
+          timestamp: LessThan(new Date(time)),
+          success: true
         },
         order: {
           timestamp: "DESC"
@@ -395,119 +429,190 @@ export async function getSpotPrice(
 }
 
 /**
- * Gets historical price from DB, or from Coingecko if it doesn't exist.
+ * Searches for HistoricalAssetPrices and returns the asset price for a given timestamp.
+ * If price does not exist, it creates it.
+ * If a base asset and pool are provided, it calculates the spot price, and uses it to
+ * calculate the actual asset price.
+ * It does not store this calculated price, as the function does not know if it is
+ * accurate for the provided timestamp (the processor might still be many blocks behind)
  * @param ctx
  * @param assetId
  * @param timestamp
  */
 export async function getOrCreateHistoricalAssetPrice(
-  ctx: EventHandlerContext<Store> | EntityManager,
+  ctx: Context | EntityManager,
   assetId: string,
   timestamp: number
-): Promise<number | undefined> {
-  const isRepository = ctx instanceof EntityManager;
+): Promise<number> {
+  const assetInfo = assetList.find(asset => asset.assetId === assetId);
+  if (!assetInfo) {
+    throw new Error(`Asset ${assetId} not found.`);
+  }
+
+  // When asset has a base asset, use it to calculate the price
+  const baseAssetId = assetInfo.spotPriceBaseAsset?.assetId;
+  const assetIdToUse = baseAssetId || assetId;
+  const poolId = assetInfo.spotPriceBaseAsset?.poolId;
 
   const time = new Date(timestamp);
+  // Use 00:00hs as date
   const date = new Date(time.getFullYear(), time.getMonth(), time.getDate());
 
-  // Look for the price in the DB
-  const where = {
-    assetId,
-    timestamp: date
-  };
-  let assetPrice = isRepository
-    ? await ctx.getRepository(HistoricalAssetPrice).findOne({ where })
-    : await ctx.store.findOne(HistoricalAssetPrice, {
-        where
-      });
+  let price: number | undefined;
 
-  let price = assetPrice?.price;
+  // Check if the price already exists
+  price = await findHistoricalAssetPrice(ctx, assetIdToUse, date);
 
-  // If no price available, get it from the API and update DB
-  if (!price) {
-    try {
-      // If asset is PICA, use swap price from KSM/PICA pool
-      const assetIdToQuery = assetId === "1" ? "4" : (assetId as "4" | "130");
+  if (price === undefined) {
+    // If price does not exist, query all prices for the given asset and store the
+    // missing ones on the DB.
+    await getAllHistoricalCoingeckoPrices(ctx, assetIdToUse);
 
-      price = await getHistoricalCoingeckoPrice(assetIdToQuery, date);
+    // Retry finding the recently stored price
+    price = await findHistoricalAssetPrice(ctx, assetIdToUse, date);
 
-      // If asset is PICA, use swap price
-      if (assetId === "1") {
-        const picaSpotPrice = await getSpotPrice(ctx, "1", "4", "2", timestamp);
-        price /= picaSpotPrice;
-      }
-
-      // Create new price entry
-      assetPrice = new HistoricalAssetPrice({
-        id: randomUUID(),
-        assetId: assetId.toString(),
-        price,
-        timestamp: date,
-        currency: Currency.USD
-      });
-
-      if (isRepository) {
-        await ctx.getRepository(HistoricalAssetPrice).save(assetPrice);
-      } else {
-        await ctx.store.save(assetPrice);
-      }
-    } catch (e) {
-      console.log(e);
-      console.info(`Could not get price for asset ${assetId}. Trying with previous value instead.`);
-
-      const options = {
-        where: {
-          assetId,
-          timestamp: LessThan(date)
-        },
-        sort: {
-          timestamp: "DESC"
-        }
-      };
-
-      assetPrice = isRepository
-        ? await ctx.getRepository(HistoricalAssetPrice).findOne(options)
-        : await ctx.store.findOne(HistoricalAssetPrice, options);
-
-      if (assetPrice) {
-        price = assetPrice.price;
-      } else {
-        console.error(`Could not get price for asset ${assetId}. Ignoring.`);
-      }
+    if (price === undefined) {
+      throw new Error(`Cannot find asset price for ${assetIdToUse}`);
     }
+  }
+
+  if (baseAssetId && poolId) {
+    const spotPrice = await getSpotPrice(ctx, assetId, baseAssetId, poolId, timestamp);
+    return price / spotPrice;
   }
 
   return price;
 }
 
 /**
- * Gets current prices from Coingecko
+ * Looks for a historical price stored for a given assetId and timestamp.
+ * If it does not exist, returns undefined.
  * @param ctx
+ * @param assetId
+ * @param timestamp
  */
-export async function getCurrentAssetPrices(
-  ctx: EventHandlerContext<Store> | EntityManager
-): Promise<Record<string, number> | undefined> {
-  const endpoint = "https://api.coingecko.com/api/v3/simple/price?ids=tether%2Ckusama&vs_currencies=usd";
+export async function findHistoricalAssetPrice(
+  ctx: Context | EntityManager,
+  assetId: string,
+  timestamp: Date
+): Promise<number | undefined> {
+  const isRepository = ctx instanceof EntityManager;
 
-  const res = await fetch(endpoint);
-  if (!res.ok) {
-    throw new Error("Failed to fetch prices from coingecko");
-  }
-  const json: { kusama: { usd: number }; tether: { usd: number } } = await res.json();
-
-  const picaKsmSpotPrice = await getSpotPrice(ctx, "1", "4", "2");
-
-  return {
-    "1": json.kusama.usd / picaKsmSpotPrice,
-    "4": json.kusama.usd,
-    "130": json.tether.usd
+  const where = {
+    assetId,
+    timestamp
   };
+
+  try {
+    // Look for the price in the DB
+    const assetPrice = isRepository
+      ? await ctx.getRepository(HistoricalAssetPrice).findOne({ where })
+      : await ctx.store.findOne(HistoricalAssetPrice, {
+          where
+        });
+    return assetPrice?.price;
+  } catch {
+    return undefined;
+  }
 }
 
-export async function getNormalizedPoolTVL(
-  ctx: EventHandlerContext<Store> | EntityManager,
-  poolId: string
-): Promise<bigint> {
+/**
+ * Gets current prices from DB or Coingecko
+ * @param ctx
+ */
+export async function getCurrentAssetPrices(ctx: Context | EntityManager): Promise<Record<string, number> | undefined> {
+  const isRepository = ctx instanceof EntityManager;
+
+  const now = new Date();
+  // Round time to the nearest minute.
+  const date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
+
+  // Current prices, that can be obtained from DB and/or Coingecko.
+  const currentPrices: { [K in AssetId]?: number } = {};
+  // Prices that need to be stored. Use Set to avoid duplications when multiple
+  // assets rely on the same base asset.
+  const updatePrices: Set<AssetId> = new Set();
+  // New HistoricalAssetPrices to be stored.
+  const newHistoricalPrices: Array<HistoricalAssetPrice> = [];
+
+  // Check if all prices are in DB, and flag the missing ones for updating
+  // This includes the ones that are required to calculate the spot price for
+  // another asset.
+  for (const { assetId, spotPriceBaseAsset } of assetList.values()) {
+    // Use the asset ID of the base asset if it is provided, as this asset relies
+    // on another price to calculate its own.
+    const assetIdToUse = spotPriceBaseAsset?.assetId || assetId;
+    // Search for price in DB.
+    const price = await findHistoricalAssetPrice(ctx, assetIdToUse, date);
+
+    if (price) {
+      // If price is found, keep it for returning
+      currentPrices[assetIdToUse] = price;
+    } else {
+      // If price is not found, flag it for updating
+      updatePrices.add(assetIdToUse);
+    }
+  }
+
+  // If there are assets for updating, query Coingecko
+  if (updatePrices.size > 0) {
+    // Create query url
+    const queryIds = Array.from(updatePrices)
+      .map(assetId => assetList.find(asset => asset.assetId === assetId)?.coingeckoId)
+      .filter(Boolean)
+      .join("%2C");
+    const endpoint = `https://api.coingecko.com/api/v3/simple/price?ids=${queryIds}&vs_currencies=usd`;
+    // Fetch from Coingecko
+    const res = await fetch<CoingeckoPrices>(endpoint);
+
+    for (const assetId of updatePrices) {
+      const assetInfo = assetList.find(asset => asset.assetId === assetId);
+      // Store prices from Coingecko in DB
+      if (assetInfo?.coingeckoId && res[assetInfo.coingeckoId].usd) {
+        // Keep price for returning
+        currentPrices[assetId] = res[assetInfo.coingeckoId].usd;
+        // Add HistoricalAssetPrice for storing in DB
+        newHistoricalPrices.push(
+          new HistoricalAssetPrice({
+            id: randomUUID(),
+            assetId,
+            price: res[assetInfo.coingeckoId].usd,
+            timestamp: date,
+            currency: Currency.USD
+          })
+        );
+      }
+    }
+
+    // Store new prices
+    if (isRepository) {
+      await ctx.getRepository(HistoricalAssetPrice).save(newHistoricalPrices);
+    } else {
+      await ctx.store.save(newHistoricalPrices);
+    }
+  }
+
+  // Get prices that require to use another asset and the spot price
+  for (const { assetId, spotPriceBaseAsset } of assetList.values()) {
+    if (spotPriceBaseAsset && !currentPrices[assetId]) {
+      const basePrice = currentPrices[spotPriceBaseAsset.assetId];
+      if (basePrice) {
+        const spotPrice = await getSpotPrice(
+          ctx,
+          assetId,
+          spotPriceBaseAsset.assetId,
+          spotPriceBaseAsset.poolId,
+          date.getTime()
+        );
+        currentPrices[assetId] = basePrice / spotPrice;
+      }
+    }
+  }
+
+  return currentPrices;
+}
+
+export async function getNormalizedPoolTVL(ctx: Context | EntityManager, poolId: string): Promise<bigint> {
   const isRepository = ctx instanceof EntityManager;
 
   const poolOptions = {
@@ -543,11 +648,13 @@ export async function getNormalizedPoolTVL(
 /**
  * Get LP Token by id If it doesn't exist, create it.
  * @param ctx
+ * @param block
  * @param poolId
  * @param lpTokenId
  */
 export async function getOrCreatePabloLpToken(
-  ctx: EventHandlerContext<Store>,
+  ctx: Context,
+  block: Block,
   poolId: string,
   lpTokenId: string
 ): Promise<PabloLpToken> {
@@ -562,8 +669,8 @@ export async function getOrCreatePabloLpToken(
       id: lpTokenId,
       totalIssued: 0n,
       poolId,
-      blockId: ctx.block.hash,
-      timestamp: new Date(ctx.block.timestamp)
+      blockId: block.header.hash,
+      timestamp: new Date(block.header.timestamp)
     });
     await ctx.store.save(lpToken);
   }
@@ -571,10 +678,11 @@ export async function getOrCreatePabloLpToken(
 }
 
 export async function getOrCreateFeeApr(
-  ctx: EventHandlerContext<Store> | EntityManager,
+  ctx: Context | EntityManager,
   pool: PabloPool,
   swapFee = 0.003,
   timestamp = new Date(),
+  block?: Block,
   event?: Event
 ): Promise<number> {
   const isRepository = ctx instanceof EntityManager;
@@ -586,7 +694,8 @@ export async function getOrCreateFeeApr(
       pool: {
         id: pool.id
       },
-      timestamp: MoreThan(new Date(timestamp.getTime() - DAY_IN_MS))
+      timestamp: MoreThan(new Date(timestamp.getTime() - DAY_IN_MS)),
+      success: true
     }
   };
 
@@ -617,13 +726,13 @@ export async function getOrCreateFeeApr(
     .dividedBy(normalizedTvl.toString())
     .toNumber();
 
-  if (!isRepository && event) {
+  if (!isRepository && event && block) {
     const historicalFeeApr = new HistoricalPabloFeeApr({
       id: randomUUID(),
       event,
       pool,
-      timestamp: new Date(ctx.block.timestamp),
-      blockId: ctx.block.hash,
+      timestamp: new Date(block.header.timestamp),
+      blockId: block.header.hash,
       tradingFee
     });
 
@@ -634,7 +743,8 @@ export async function getOrCreateFeeApr(
 }
 
 export async function getOrCreateStakingApr(
-  ctx: EventHandlerContext<Store> | EntityManager,
+  ctx: Context | EntityManager,
+  block: Block,
   pool: PabloPool,
   timestamp = new Date(),
   event?: Event
@@ -645,7 +755,11 @@ export async function getOrCreateStakingApr(
 
   const options = {
     where: {
-      assetId: lpToken.id
+      assetId: lpToken.id,
+      timestamp: LessThan(new Date(timestamp.getTime()))
+    },
+    sort: {
+      timestamp: "DESC"
     }
   };
   const rewardsPool = isRepository
@@ -669,12 +783,172 @@ export async function getOrCreateStakingApr(
       event,
       assetId: lpToken.id,
       stakingApr,
-      timestamp: new Date(ctx.block.timestamp),
-      blockId: ctx.block.hash
+      timestamp: new Date(block.header.timestamp),
+      blockId: block.header.hash
     });
 
     await ctx.store.save(historicalStakingApr);
   }
 
   return stakingApr;
+}
+
+export async function getHistoricalCoingeckoPrice(
+  ctx: Context | EntityManager,
+  assetInfo: AssetInfo,
+  date?: Date
+): Promise<number> {
+  let time = new Date();
+  if (date && isInstance(date, Date)) {
+    time = date;
+  } else if (date) {
+    time = new Date(date);
+  }
+
+  const month = time.getMonth() + 1;
+  const day = time.getDate();
+  const year = time.getFullYear();
+
+  const queryDate = `${day < 10 ? "0" : ""}${day}-${month < 10 ? "0" : ""}${month}-${year}`;
+
+  let coinId: string;
+  let spotPrice: number | undefined;
+  if (assetInfo.coingeckoId) {
+    coinId = assetInfo.coingeckoId;
+  } else if (assetInfo.spotPriceBaseAsset) {
+    coinId = assetInfo.spotPriceBaseAsset.coingeckoId;
+    spotPrice = await getSpotPrice(
+      ctx,
+      assetInfo.assetId,
+      assetInfo.spotPriceBaseAsset.assetId,
+      assetInfo.spotPriceBaseAsset.poolId,
+      time.getTime()
+    );
+  } else {
+    throw new Error("No Coingecko ID found");
+  }
+
+  const endpoint = `https://api.coingecko.com/api/v3/coins/${coinId}/history?date=${queryDate}&localization=en`;
+  try {
+    const res = await fetchRetry<{ market_data: { current_price: { usd: number } } }>(endpoint);
+    if (res) {
+      let price = res.market_data?.current_price?.usd;
+      if (spotPrice) {
+        price /= spotPrice;
+      }
+      return price;
+    }
+  } catch {
+    console.log("error fetching", endpoint);
+  }
+
+  throw new Error("Failed to fetch historical price");
+}
+
+export async function getAllHistoricalCoingeckoPrices(
+  ctx: Context | EntityManager,
+  assetId: string
+): Promise<Array<[Date, number]>> {
+  const assetInfo = assetList.find(asset => asset.assetId === assetId);
+  if (!assetInfo) {
+    throw new Error(`Asset ${assetId} not found in asset list.`);
+  }
+
+  const coinId = assetInfo.coingeckoId || assetInfo.spotPriceBaseAsset?.coingeckoId;
+  if (!coinId) {
+    throw new Error("No Coingecko ID found");
+  }
+
+  const endpoint = `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=max&interval=daily`;
+  try {
+    const res = await fetchRetry<{
+      prices: [number, number][];
+      market_caps: [number, number][];
+      total_volumes: [number, number][];
+    }>(endpoint);
+    // If prices are obtained, store the missing ones on the DB
+    if (res) {
+      // Keep track of used dates to avoid duplicates
+      const duplicates: Set<string> = new Set();
+      // HistoricalAssetPrices that need to be stored
+      const missingPrices: Array<HistoricalAssetPrice> = [];
+
+      // Map prices to get proper Date values
+      const prices: Array<[Date, number]> = res.prices.map(([timestamp, price]) => {
+        const day = new Date(timestamp);
+        const date = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+        return [date, price];
+      });
+
+      for (const price of prices) {
+        try {
+          // Look for the price in the DB
+          const date = price[0];
+          const priceValue = price[1];
+
+          if (!duplicates.has(date.getTime().toString())) {
+            duplicates.add(date.getTime().toString());
+            const assetPrice = await findHistoricalAssetPrice(ctx, assetId, date);
+
+            if (assetPrice === undefined) {
+              missingPrices.push(
+                new HistoricalAssetPrice({
+                  id: randomUUID(),
+                  assetId,
+                  price: priceValue,
+                  timestamp: date,
+                  currency: Currency.USD
+                })
+              );
+            }
+          }
+        } catch (err) {
+          console.log(err);
+        }
+      }
+
+      const isRepository = ctx instanceof EntityManager;
+      if (isRepository) {
+        await ctx.getRepository(HistoricalAssetPrice).save(missingPrices);
+      } else {
+        await ctx.store.save(missingPrices);
+      }
+
+      return prices;
+    }
+  } catch {
+    console.log("error fetching", endpoint);
+  }
+
+  throw new Error("Failed to fetch historical price");
+}
+
+export async function getOrCreateCallError(ctx: Context, err: any): Promise<CallError | null> {
+  try {
+    const value: { error: string; index: number } = err?.value;
+    const errorCode = parseInt(value.error.slice(0, 4), 16);
+    const res = api.findError(new Uint8Array([value.index, errorCode]));
+
+    let callError = await ctx.store.findOne<CallError>(CallError, {
+      where: {
+        section: res.section,
+        name: res.name
+      }
+    });
+
+    if (!callError) {
+      callError = new CallError({
+        id: `${res.section}-${res.name}`,
+        section: res.section,
+        name: res.name,
+        description: res.docs?.[0] || undefined
+      });
+
+      await ctx.store.save(callError);
+    }
+
+    return callError;
+  } catch {
+    return null;
+  }
 }

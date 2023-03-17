@@ -7,3 +7,8 @@ export interface Fee {
     protocolFee: bigint
     assetId: bigint
 }
+
+export interface AssetAmount {
+    assetId: bigint
+    amount: bigint
+}

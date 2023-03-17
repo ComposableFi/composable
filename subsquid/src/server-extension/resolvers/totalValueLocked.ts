@@ -1,6 +1,7 @@
 import { Arg, Field, InputType, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { LessThan } from "typeorm";
+import { IsEnum } from "class-validator";
 import { HistoricalLockedValue, LockedSource } from "../../model";
 import { getRange } from "./common";
 import { PicassoTVL } from "./picassoOverviewStats";
@@ -22,9 +23,11 @@ export class TotalValueLocked {
 @InputType()
 export class TotalValueLockedInput {
   @Field(() => String, { nullable: false })
+  @IsEnum(["day", "week", "month", "year"])
   range!: string;
 
   @Field(() => String, { nullable: true })
+  @IsEnum(["Pablo", "StakingRewards"])
   source?: LockedSource;
 }
 
@@ -101,12 +104,14 @@ export class TotalValueLockedResolver {
     for (const time of Object.keys(lockedValues)) {
       const tvl: PicassoTVL[] = [];
       for (const assetId of Object.keys(lockedValues[time])) {
-        const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date(time).getTime());
-        tvl.push({
-          assetId,
-          amount: lockedValues[time][assetId],
-          price
-        });
+        if (lockedValues[time][assetId]) {
+          const price = await getOrCreateHistoricalAssetPrice(manager, assetId, new Date(time).getTime());
+          tvl.push({
+            assetId,
+            amount: lockedValues[time][assetId],
+            price
+          });
+        }
       }
       totalValueLocked.push({
         date: time,

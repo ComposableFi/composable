@@ -39,6 +39,9 @@ frame-benchmarking = { default-features = false, git = "https://github.com/parit
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36" }
 pallet-currency-factory = { path = "../currency-factory" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
+pallet-assets-registry = { path = "../assets-registry" }
+pallet-assets-transactor-router = { path = "../assets-transactor-router" }
 pallet-staking-rewards = { path = "../staking-rewards" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 proptest = { version = "1.0" }

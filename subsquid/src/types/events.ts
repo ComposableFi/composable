@@ -372,6 +372,21 @@ export class PabloPoolCreatedEvent {
         assert(this.isV10005)
         return this._chain.decodeEvent(this.event)
     }
+
+    /**
+     * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
+     */
+    get isV10009(): boolean {
+        return this._chain.getEventHash('Pablo.PoolCreated') === '24aa294c90de6ef3e05f67677774f64589c689d6ea1bcc290251568149ea328e'
+    }
+
+    /**
+     * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
+     */
+    get asV10009(): {poolId: bigint, owner: Uint8Array, assetWeights: [bigint, number][], lpTokenId: bigint} {
+        assert(this.isV10009)
+        return this._chain.decodeEvent(this.event)
+    }
 }
 
 export class PabloSwappedEvent {

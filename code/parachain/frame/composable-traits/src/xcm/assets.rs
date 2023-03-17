@@ -1,4 +1,5 @@
 //! Interfaces to managed assets
+use crate::assets::{AssetInfo, AssetInfoUpdate};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{dispatch::DispatchResult, pallet_prelude::ConstU32, WeakBoundedVec};
 use polkadot_parachain::primitives::Id;
@@ -8,13 +9,10 @@ use serde::{Deserialize, Serialize};
 use sp_std::vec::Vec;
 use xcm::latest::MultiLocation;
 
-use crate::{
-	assets::Asset,
-	currency::{Exponent, Rational64},
-};
+use crate::{assets::Asset, currency::Exponent};
 
 /// works only with concrete assets
-#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
+#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct XcmAssetLocation(
 	#[cfg_attr(feature = "std", serde(with = "MultiLocationDef"))] pub xcm::latest::MultiLocation,
@@ -66,9 +64,7 @@ pub trait RemoteAssetRegistryInspect {
 	type Balance;
 
 	/// Return reserve location for given asset.
-	fn asset_to_remote(
-		asset_id: Self::AssetId,
-	) -> Option<ForeignMetadata<Self::AssetNativeLocation>>;
+	fn asset_to_remote(asset_id: Self::AssetId) -> Option<Self::AssetNativeLocation>;
 
 	/// Return asset for given reserve location.
 	fn location_to_asset(location: Self::AssetNativeLocation) -> Option<Self::AssetId>;
@@ -94,6 +90,17 @@ pub trait RemoteAssetRegistryMutate {
 	type AssetNativeLocation;
 	type Balance;
 
+	fn register_asset(
+		asset_id: Self::AssetId,
+		location: Option<Self::AssetNativeLocation>,
+		asset_info: AssetInfo<Self::Balance>,
+	) -> DispatchResult;
+
+	fn update_asset(
+		asset_id: Self::AssetId,
+		asset_info: AssetInfoUpdate<Self::Balance>,
+	) -> DispatchResult;
+
 	/// Set asset native location.
 	///
 	/// Adds mapping between native location and local asset id and vice versa.
@@ -111,14 +118,6 @@ pub trait RemoteAssetRegistryMutate {
 	fn set_reserve_location(
 		asset_id: Self::AssetId,
 		location: Self::AssetNativeLocation,
-		ratio: Rational64,
-		decimals: Option<Exponent>,
-	) -> DispatchResult;
-
-	/// allows change  ratio of how much remote assets is needed for unit of native
-	fn update_ratio(
-		location: Self::AssetNativeLocation,
-		ratio: Option<Rational64>,
 	) -> DispatchResult;
 }
 

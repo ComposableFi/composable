@@ -1,5 +1,5 @@
 { ... }: {
-  perSystem = { self', pkgs, ... }: {
+  perSystem = { self', pkgs, systemCommonRust, ... }: {
     packages = {
       dali-subxt-client = pkgs.stdenv.mkDerivation {
         name = "dali-subxt-client";
@@ -9,6 +9,8 @@
           self'.packages.dali-runtime
           self'.packages.rococo-wasm-runtime
         ];
+        nativeBuildInputs = with pkgs;
+          [ clang ] ++ systemCommonRust.darwin-deps;
         installPhase = ''
           mkdir --parents $out
           ${pkgs.lib.meta.getExe self'.packages.centauri-codegen} \

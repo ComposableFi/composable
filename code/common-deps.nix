@@ -39,6 +39,11 @@
 
         rustSrc = mkRustSrc ./.;
 
+        darwin-deps = pkgs.lib.optional pkgs.stdenv.isDarwin (with pkgs;
+          with darwin.apple_sdk.frameworks; [
+            Security
+            SystemConfiguration
+          ]);
         substrate-attrs = {
           LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
             pkgs.stdenv.cc.cc.lib
@@ -54,11 +59,7 @@
           src = rustSrc;
           buildInputs = with pkgs; [ openssl zstd ];
           nativeBuildInputs = with pkgs;
-            [ clang openssl pkg-config ] ++ pkgs.lib.optional stdenv.isDarwin
-            (with darwin.apple_sdk.frameworks; [
-              Security
-              SystemConfiguration
-            ]);
+            [ clang openssl pkg-config ] ++ darwin-deps;
           doCheck = false;
           cargoCheckCommand = "true";
           # Don't build any wasm as we do it ourselves
@@ -70,11 +71,7 @@
           src = rustSrc;
           buildInputs = with pkgs; [ openssl zstd ];
           nativeBuildInputs = with pkgs;
-            [ clang openssl pkg-config ] ++ pkgs.lib.optional stdenv.isDarwin
-            (with darwin.apple_sdk.frameworks; [
-              Security
-              SystemConfiguration
-            ]);
+            [ clang openssl pkg-config ] ++ darwin-deps;
           doCheck = true;
           SKIP_WASM_BUILD = "1";
         };
@@ -82,9 +79,8 @@
         common-bench-attrs = common-attrs // {
           cargoExtraArgs = "--features=builtin-wasm,runtime-benchmarks";
         };
-
       };
-      # Add the npm-buildpackage overlay to the perSystem's pkgs
+
       packages = rec {
         common-deps =
           crane.nightly.buildDepsOnly (systemCommonRust.common-attrs // { });
@@ -94,17 +90,6 @@
           (systemCommonRust.common-bench-attrs // { });
         common-test-deps = crane.nightly.buildDepsOnly
           (systemCommonRust.common-test-deps-attrs // { });
-
-        wasm-optimizer = crane.stable.buildPackage
-          (systemCommonRust.common-attrs // {
-            cargoCheckCommand = "true";
-            pname = "wasm-optimizer";
-            cargoArtifacts = common-deps;
-            cargoBuildCommand =
-              "cargo build --release --package wasm-optimizer";
-            version = "0.1.0";
-            # NOTE: we copy more then needed, but tht is simpler to setup, we depend on substrate for sure so
-          });
       };
 
     };

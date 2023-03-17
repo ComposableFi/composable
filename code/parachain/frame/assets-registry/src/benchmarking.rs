@@ -2,13 +2,21 @@
 //! positive side effects
 
 use super::*;
-use crate::{self as pallet_assets_registry, prelude::*};
+use crate::{self as pallet_assets_registry};
 
 #[allow(unused_imports)]
 use crate::Pallet as AssetsRegistry;
-use composable_traits::{currency::Rational64, rational, xcm::assets::XcmAssetLocation};
+use codec::{Decode, Encode};
+use composable_traits::{
+	assets::{AssetInfo, AssetInfoUpdate, BiBoundedAssetName, BiBoundedAssetSymbol},
+	currency::Rational64,
+	rational,
+	storage::UpdateValue,
+	xcm::assets::XcmAssetLocation,
+};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
+use sp_runtime::traits::Zero;
 use sp_std::prelude::*;
 
 benchmarks! {
@@ -19,22 +27,52 @@ benchmarks! {
 	}
 
 	register_asset {
-		let location = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..]).unwrap();
-		let ratio = rational!(42 / 123);
-		let decimals = 3;
-
-	}: _(RawOrigin::Root, location, ratio, Some(decimals))
+		let location = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
+			.expect("Asset location is foreign ID");
+		let protocol_id = *b"benchmar";
+		let nonce = 1_u64;
+		let asset_info = AssetInfo {
+			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
+			symbol: Some(BiBoundedAssetSymbol::from_vec(b"KSM".to_vec()).expect("String is within bounds")),
+			decimals: Some(3),
+			existential_deposit: T::Balance::zero(),
+			ratio: Some(rational!(42 / 123)),
+		};
+	}: _(RawOrigin::Root, protocol_id, nonce, Some(location), asset_info)
 
 	update_asset {
-		let location = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..]).unwrap();
-		let ratio = rational!(42 / 123);
-		let decimals = 3;
+		let location = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
+			.expect("Asset location is foreign ID");
+		let protocol_id = *b"benchmar";
+		let nonce = 1_u64;
+		let asset_info = AssetInfo {
+			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
+			symbol: Some(BiBoundedAssetSymbol::from_vec(b"KSM".to_vec()).expect("String is within bounds")),
+			decimals: Some(3),
+			existential_deposit: T::Balance::zero(),
+			ratio: Some(rational!(42 / 123)),
+		};
 
-		AssetsRegistry::<T>::register_asset(RawOrigin::Root.into(), location.clone(), ratio, Some(decimals)).unwrap();
+		AssetsRegistry::<T>::register_asset(
+			RawOrigin::Root.into(),
+			protocol_id,
+			nonce,
+			Some(location.clone()),
+			asset_info,
+		)
+		.expect("Asset details are non-duplicate and valid");
 
-		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location.clone()).unwrap();
+		let asset_info_update = AssetInfoUpdate {
+			name: UpdateValue::Set(Some(BiBoundedAssetName::from_vec(b"Cooler Kusama".to_vec()).expect("String is within bounds"))),
+			symbol: UpdateValue::Set(Some(BiBoundedAssetSymbol::from_vec(b"CKSM".to_vec()).expect("String is within bounds"))),
+			decimals: UpdateValue::Set(Some(12)),
+			existential_deposit: UpdateValue::Set(T::Balance::zero()),
+			ratio: UpdateValue::Set(None),
+		};
 
-	}: _(RawOrigin::Root, local_asset_id, location, rational!(42 / 123), Some(3))
+		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location)
+			.expect("Asset exists");
+	}: _(RawOrigin::Root, local_asset_id, asset_info_update)
 
 	set_min_fee {
 		let target_parachain_id = 100_u32.into();

@@ -8,6 +8,7 @@ pub mod collective;
 pub mod crowdloan_rewards;
 pub mod currency_factory;
 pub mod frame_system;
+pub mod ibc;
 pub mod identity;
 pub mod indices;
 pub mod membership;

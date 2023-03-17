@@ -453,13 +453,17 @@ fn bob_has_statemine_asset_on_this_and_transfers_it_to_reserve(
 			bob_statemine_asset_amount,
 			TEN - FEE_NATIVE_STATEMINE - FEE_WEIGHT_THIS
 		);
-		assert_ok!(Tokens::deposit(CurrencyId::RELAY_NATIVE, &AccountId::from(BOB), TEN));
+		assert_ok!(Tokens::deposit(
+			primitives::topology::Picasso::RELAY_NATIVE,
+			&AccountId::from(BOB),
+			TEN
+		));
 		assert!(relay_native_asset_amount != 0);
 		log::info!(target: "bdd", "Bob sending Statemine to reserve chain to his account");
 		let error = XTokens::transfer_multicurrencies(
 			RuntimeOrigin::signed(BOB.into()),
 			vec![
-				(CurrencyId::RELAY_NATIVE, relay_native_asset_amount),
+				(primitives::topology::Picasso::RELAY_NATIVE, relay_native_asset_amount),
 				(foreign_asset_id_on_this, UNIT),
 			],
 			0,
@@ -502,7 +506,7 @@ fn bob_has_statemine_asset_on_this_and_transfers_it_to_reserve(
 		XTokens::transfer_multicurrencies(
 			RuntimeOrigin::signed(BOB.into()),
 			vec![
-				(CurrencyId::RELAY_NATIVE, relay_native_asset_amount),
+				(primitives::topology::Picasso::RELAY_NATIVE, relay_native_asset_amount),
 				(foreign_asset_id_on_this, UNIT),
 			],
 			0,
@@ -526,7 +530,10 @@ fn bob_has_statemine_asset_on_this_and_transfers_it_to_reserve(
 		);
 		assert_eq!(
 			TEN - relay_native_asset_amount,
-			Tokens::free_balance(CurrencyId::RELAY_NATIVE, &AccountId::from(BOB))
+			Tokens::free_balance(
+				primitives::topology::Picasso::RELAY_NATIVE,
+				&AccountId::from(BOB)
+			)
 		);
 	});
 }
@@ -703,7 +710,7 @@ fn cannot_reserve_transfer_from_two_consensuses_in_one_message() {
 		log::info!(target: "bdd", "When Bob transfers some {:?} SHIB from sibling to Dali", transfer_amount);
 		use sibling_runtime::*;
 		let native_before = <Tokens as FungiblesInspect<_>>::balance(
-			CurrencyId::RELAY_NATIVE,
+			primitives::topology::Picasso::RELAY_NATIVE,
 			&AccountId::from(bob()),
 		);
 		let origin = RuntimeOrigin::signed(bob().into());
@@ -725,7 +732,7 @@ fn cannot_reserve_transfer_from_two_consensuses_in_one_message() {
 		use sibling_runtime::*;
 		assert_eq!(
 			<Tokens as FungiblesInspect<_>>::balance(
-				CurrencyId::RELAY_NATIVE,
+				primitives::topology::Picasso::RELAY_NATIVE,
 				&AccountId::from(bob())
 			),
 			native_before - transfer_amount

@@ -37,15 +37,6 @@ You can follow Jeffrey on
 [LinkedIn](https://www.linkedin.com/in/jeffrey-smith-jd-llm-crcp-iaccp-crm-67623011/)
 and [Twitter](https://twitter.com/JeffreyAPIs).
 
-## Karel Kubat | Chief Technology Officer
-
-Karel is an early crypto advocate that has actively participated in the future of the technology both as a user and 
-a developer. Karel has worked on a range of protocols and contracts, including Privi Protocol as a Team Lead and Senior 
-Software Engineer, as well as Ethereum, NEO, Substrate, and other custom chains. As a programmer, he has extensive 
-experience in several languages, including Rust, Solidity, and Haskell. Karel joined Composable in 2021, 
-where he oversees the Research and Engineering departments with the critical responsibility of creating the technology 
-strategy behind Composable’s products. [Twitter](https://twitter.com/0xkaiserkarel)
-
 ## Zain Haider | Chief Marketing Officer
 
 With over 10 years of marketing leadership, Zain has advised a plethora of projects, led global marketing teams, 
@@ -58,24 +49,6 @@ In his role as Chief Marketing Officer, Zain drives the brand of Composable and 
 evolving innovation. 
 [LinkedIn](https://www.linkedin.com/in/zain-haider-29569523/?originalSubdomain=uk) | 
 [Twitter](https://twitter.com/zha_tweets)
-
-## Fernando Reyes | Chief Information Security Officer
-
-A cybersecurity professional by trade, Fernando brings a blue-chip background working within TradFi, DeFi, and the 
-public sector. He is a veteran of the United States Army, former National Security Agency operator, and graduate of
-MIT's Information Security & Assurance program. Serving as Chief Information Security Officer, Fernando works closely
-alongside all of Composable's business units to provide trust and confidence to our partners and participants in the 
-space.
-
-## Martina Burghi | Head of HR
-
-Martina has more than 6 years of experience in Human Resources. 
-She started her career in Human Capital and Recruitment consultancy at firms such as Deloitte. 
-Following four years of work in global tech firms, Martina spent the past three years developing and growing talent 
-across different DeFi start-ups. She holds a Psychology degree specialized in organizations. 
-As Head of HR, she brings teams together, strengthens relationships, and leverages people’s creative capacity and skill 
-sets to ensure Composable’s objectives are accomplished. 
-[Twitter](https://twitter.com/martiburghi) | [LinkedIn](https://www.linkedin.com/in/martina-burghi-314a01b2/)
 
 ## Ahmad Wehbi | Head of Growth
 

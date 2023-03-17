@@ -140,7 +140,7 @@ impl RemoteAssetRegistryInspect for SetupAfterRfc13 {
 
 	fn asset_to_remote(
 		_asset_id: Self::AssetId,
-	) -> Option<composable_traits::xcm::assets::ForeignMetadata<Self::AssetNativeLocation>> {
+	) -> Option<composable_traits::xcm::assets::XcmAssetLocation> {
 		None
 	}
 
@@ -160,8 +160,12 @@ impl RemoteAssetRegistryInspect for SetupAfterRfc13 {
 	}
 }
 
-type AssetsIdConverter =
-	CurrencyIdConvert<SetupAfterRfc13, CurrencyId, ParachainInfo, StaticAssetsMap>;
+type AssetsIdConverter = CurrencyIdConvert<
+	SetupAfterRfc13,
+	primitives::topology::Composable,
+	ParachainInfo,
+	StaticAssetsMap,
+>;
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,

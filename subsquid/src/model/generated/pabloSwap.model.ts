@@ -15,7 +15,7 @@ export class PabloSwap {
 
     @Index_()
     @ManyToOne_(() => Event, {nullable: true})
-    event!: Event
+    event!: Event | undefined | null
 
     @Index_()
     @ManyToOne_(() => PabloPool, {nullable: true})
@@ -51,4 +51,7 @@ export class PabloSwap {
      */
     @Column_("text", {nullable: false})
     blockId!: string
+
+    @Column_("bool", {nullable: false})
+    success!: boolean
 }

@@ -4,4 +4,4 @@
 
 ---
 
-{{#include ../../../code/parachain/frame/vesting/README.md:5:}}
+{{#include https://raw.githubusercontent.com/ComposableFi/composable/main/code/parachain/frame/vesting/README.md:5:}}

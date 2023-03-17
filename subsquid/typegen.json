@@ -1,8 +1,7 @@
 {
   "outDir": "src/types",
-  "chainVersions": "picassoVersions.jsonl",
   "specVersions": "picassoVersions.jsonl",
-  "typesBundle": "kusama",
+  "typesBundle": "picasso",
   "events": [
     "Pablo.PoolCreated",
     "Pablo.LiquidityAdded",
@@ -21,5 +20,9 @@
     "AssetsRegistry.AssetRegistered",
     "AssetsRegistry.AssetUpdated"
   ],
-  "calls": []
+  "calls": [
+    "Pablo.add_liquidity",
+    "Pablo.remove_liquidity",
+    "Pablo.swap"
+  ]
 }
