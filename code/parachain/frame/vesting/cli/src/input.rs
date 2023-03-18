@@ -15,7 +15,7 @@ pub enum Action {
 	/// add schedule from table
 	Add(AddCommand),
 	/// list all existing schedules
-	List,
+	List(ListCommand),
 	/// Unlock schedule, so really to all vesting now
 	Unlock(UnlockCommand),
 	/// All not yet vested amount to be unlocked and transferred back to wallet
@@ -32,6 +32,15 @@ pub struct UnlockCommand {
 	/// `VestedTransferOrigin`
 	#[arg(long)]
 	pub key: String,
+}
+
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+pub struct ListCommand {
+	/// Link to CSV file with schedule
+	#[arg(long)]
+	pub out: Option<String>,
 }
 
 #[derive(Parser, Debug)]

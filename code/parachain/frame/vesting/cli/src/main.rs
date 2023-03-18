@@ -5,10 +5,13 @@ mod prelude;
 
 use clap::Parser;
 use client::VestingSchedule;
+use codec::Output;
 use input::*;
 use output::*;
 use prelude::*;
 use sp_core::{hexdisplay, Blake2Hasher, Pair};
+use sp_runtime::print;
+use tokio::io::AsyncWriteExt;
 use std::{
 	collections::{HashMap, HashSet},
 	str::FromStr,
@@ -99,14 +102,15 @@ async fn main() -> anyhow::Result<()> {
 				out.serialize(OutputRecord {
 					to: record.account,
 					vesting_schedule_added: tx,
+					// in substrate unix time is in milliseconds, while in unix it is in seconds
 					window_start: format!(
 						"{}",
-						OffsetDateTime::from_unix_timestamp(record.window_moment_start as i64)
+						OffsetDateTime::from_unix_timestamp((record.window_moment_start / 1000) as i64)
 							.unwrap()
 					),
 					window_period: format!(
 						"{}",
-						Duration::seconds(record.window_moment_period as i64)
+						Duration::milliseconds(record.window_moment_period as i64)
 					),
 					total: record.per_period * record.period_count as u128,
 				})
@@ -246,7 +250,7 @@ async fn main() -> anyhow::Result<()> {
 				&tx
 			);
 		},
-		Action::List => {
+		Action::List(subargs) => {
 			let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;
 			let storage_address = subxt::dynamic::storage_root("Vesting", "VestingSchedules");
 			let mut iter = api.storage().at(None).await?.iter(storage_address, 200).await?;
@@ -263,7 +267,8 @@ async fn main() -> anyhow::Result<()> {
 						_ => panic!("block to time"),
 					};
 					let window_start =
-						match OffsetDateTime::from_unix_timestamp(window_moment_start as i64)
+						//
+						match OffsetDateTime::from_unix_timestamp((window_moment_start / 1000) as i64)
 							.map(|x| format!("{}", x))
 							.map_err(|x| "#BAD_START_TME".to_string())
 						{
@@ -277,7 +282,7 @@ async fn main() -> anyhow::Result<()> {
 						window_start,
 						window_period: format!(
 							"{}",
-							Duration::seconds(window_moment_period as i64)
+							Duration::milliseconds(window_moment_period as i64)
 						),
 						total: record.per_period * record.period_count as u128,
 						already_claimed: record.already_claimed,
@@ -291,9 +296,16 @@ async fn main() -> anyhow::Result<()> {
 
 			out.flush()?;
 			let out = out.into_inner().expect("table");
-			let data = String::from_utf8(out).unwrap();
-			println!("-=================================-");
-			println!("{}", data);
+			
+			if let Some(path) = subargs.out {
+				let mut target = std::fs::File::create(path).expect("file");
+				target.write(out.as_ref());
+			}
+			else {
+				println!("All vestings:");
+				let data = String::from_utf8(out).unwrap();
+				println!("{}", data);
+			}
 		},
 	}
 
