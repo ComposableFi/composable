@@ -242,11 +242,14 @@ async fn main() -> anyhow::Result<()> {
 			let signed =
 				api.tx().create_signed(&tx, &signer, <_>::default()).await.expect("offline");
 			let result = signed.dry_run(None).await;
-			println!("dry_run {:?}", result);
-
+			match result {
+					Ok(_) => info!("dry runned well",  ),
+					Err(_) => println!("dry_run {:?}", result),
+			}
+			
 			let tx = "0x".to_string() + &hex::encode(signed.into_encoded());
 			println!(
-				"Signed Sudo::sudoUncheckedWeight(Vesting::update_vesting_schedules) {:?}",
+				"Signed Sudo::sudoUncheckedWeight(Vesting::update_vesting_schedules+Balances::force_transfer):\n {:}",
 				&tx
 			);
 		},

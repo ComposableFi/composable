@@ -2,7 +2,7 @@
 
 Purpose of this tool to allow automate vesting operations.
 
-Millisocends.
+All operations use milliseconds. Timestamp are milliseconds Unix time.
 
 ## Operations examples
 
@@ -12,7 +12,7 @@ Millisocends.
 
 Update.
 
-[Claiming](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A8000#/extrinsics/decode/0x39000100000000000000000000000000000000)
+[Claim](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A8000#/extrinsics/decode/0x39000100000000000000000000000000000000)
 
 ## How it works?
 
@@ -28,7 +28,7 @@ cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --sche
 ```
 
 ```bash
-cargo run -- --client="ws://localhost:8000" list 
+cargo run -- --client="ws://localhost:8000" list --out=./test/list-output.csv
 cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" list --out=./test/list-output.csv
 ```
 
@@ -38,5 +38,6 @@ cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" unlock --s
 ```
 
 ```bash
+cargo run -- --client="ws://localhost:8000" delete --schedule="./test/delete-all.csv" --key="//Alice" --to="5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL"
 cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" delete --schedule="./test/delete-all.csv" --key="//Alice" --to="5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL"
 ```
