@@ -1,216 +1,142 @@
 # Collator Set-up Guide
 
 
-In this document we will cover how to set up a collator with Composable 
-Finance. There are several ways to do that.
+This guide will show you how to set up a collator for Picasso. Please follow the steps below to complete the setup.
 
-* Build node locally
+### Select (virtual) hardware
 
-* Download pre-build node from GitHub releases
+To run a collator, Composable recommends a minimum of 2 CPUs, 6 GB of memory, and 600GB of storage (will increase over time).
 
-* Run node in docker
+### Generate a new node key
 
-## Build from Source
-
-In this step we will set up a rust compiler, toolchain and build a node.
-
-### Setup required libraries
+First, you need to generate a temporary file containing both the node identity and node key.
 
 ```sh
-sudo apt install -y git clang curl libssl-dev llvm libudev-dev
+sudo docker run --rm -ti -u$(id -u):$(id -g) parity/subkey generate-node-key > /tmp/tmp_not_a_real_key
 ```
 
-### Setup Rust binary and Toolchain
+Now retrieve the node identity. It will look something like "12D3KooWLUrUPDD93kTTdk4tFDrZmYLqnT5Ch9aG9A9gj6C7pv5M".
 
 ```sh
-#!/bin/bash
-
-RUST_C="nightly-2022-04-18"
-
-curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-export PATH="$PATH:$HOME/.cargo/bin" && \
-rustup toolchain uninstall $(rustup toolchain list) && \
-rustup toolchain install $RUST_C && \
-rustup target add wasm32-unknown-unknown --toolchain $RUST_C && \
-rustup default $RUST_C && \
-rustup show
+head -1 /tmp/tmp_not_a_real_key
 ```
 
-### Get project and build node
+The following command will split the node key to a separate file ( /tmp/not_a_real_key ).
 
 ```sh
-git clone --depth 1 --branch v2.1.6 https://github.com/ComposableFi/composable.git && \
-cd composable && \
-export SKIP_WASM_BUILD=1 && \
-cargo build --release
+tail -1 /tmp/tmp_not_a_real_key >/tmp/not_a_real_key
 ```
 
-### One-liner
-```sh
-RUST_C="nightly-2022-04-18"
-RELEASE_TAG="v2.1.6"
+Copy the key file to the machine that will run the collator and place it in a safe location (In the example we use, the location is /home/composable/node-key).
 
-sudo apt install -y git clang curl libssl-dev llvm libudev-dev && \
-git clone --depth 1 --branch $RELEASE_TAG https://github.com/ComposableFi/composable.git && \
-cd composable && \
-curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-export PATH="$PATH:$HOME/.cargo/bin" && \
-rustup toolchain uninstall $(rustup toolchain list) && \
-rustup toolchain install $RUST_C && \
-rustup target add wasm32-unknown-unknown --toolchain $RUST_C && \
-rustup default $RUST_C && \
-rustup show && \
-export SKIP_WASM_BUILD=1 && \
-cargo build --release
-```
+### Run the collator
 
-Compiled node should be in
-```sh
-./target/release
-```
-
-## Download Prebuilt Node
-
-```sh
-wget https://github.com/ComposableFi/composable/releases/download/v2.1.6/composable
-```
-
-### Run as systemd service
-
-1. Put compiled binary to /usr/bin/
-
-```sh
-cp ./target/release/composable /usr/bin
-```
-
-2. Create collator.service file and put following content into it. Save it with Ctrl+O
-
-```sh
-sudo nano /etc/systemd/system/collator.service
-```
-
-3. Enable and Start service
-
-```sh
-sudo systemctl enable collator.service
-sudo systemctl start collator.service
-```
-
-4. Check service status
-
-```sh
-sudo systemctl status collator.service
-```
-
-5. Check logs output
-
-```sh
-journalctl -f
-collator.service content
-```
-
-```ini
-[Unit]
-Description=Composable
-
-[Service]
-
-ExecStart=/usr/local/bin/сomposable \
---collator \
---chain=picasso \
---pruning=archive \
---base-path /var/lib/composable-data/ \
---port 30333 \
---listen-addr=/ip4/0.0.0.0/tcp/30334 \
---execution wasm \
--- \
---execution=wasm \
---pruning=archive \
---listen-addr=/ip4/0.0.0.0/tcp/30333
-
-
-# (file size)
-LimitFSIZE=infinity
-# (cpu time)
-LimitCPU=infinity
-# (virtual memory size)
-LimitAS=infinity
-# (locked-in-memory size)
-LimitMEMLOCK=infinity
-# (open files)
-LimitNOFILE=64000
-# (processes/threads)
-LimitNPROC=64000
-
-Restart=always
-RestartSec=120
-
-[Install]
-WantedBy=multi-user.target
-```
-
-## Setup docker and docker-compose
-
-```sh 
-sudo apt install apt-transport-https ca-certificates curl gnupg-agent software-properties-common 
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-sudo apt install docker-ce docker-ce-cli containerd.io
-```
-
-### Optional Steps
-
-```sh
-sudo apt-mark hold docker-ce # prevent the Docker package from being updated, so no sudden updates and process interruption
-sudo usermod -aG docker $USER # adds docker to sudo group so there's no need to run it from root
-```
-
-### Setup docker-compose
-
-```sh
-sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-
-sudo chmod +x /usr/local/bin/docker-compose
-```
-
-### Check docker Installation
-
-```sh
-sudo systemctl status docker
-docker container run hello-world
-```
-
-### docker-compose
-
-Save the following content to docker-compose.yml and run docker-compose up -d
+Use the following Docker Compose file to run the application.
 
 ```yml
-version: "3.7"
-
 services:
   composable_node:
-    image: composablefi/composable:latest
+    image: composablefi/composable:${COMPOSABLE_VERSION}
     container_name: composable_node
     volumes:
-      - ./chain-data:/chain-data
+     - /var/lib/composable-data:/data
+     - /home/composable/node-key:/node-key
     ports:
-      - 9833:9833
-      - 9844:9844
-      - 40333:40333
-      - 30333:30333
+     - 9933:9933
+     - 9944:9944
+     - 30334:30334
+     - 30333:30333
+     - 9615:9615
     restart: unless-stopped
-    command: >
-      /usr/local/bin/сomposable
-      --collator 
-      --chain=picasso
-      --pruning=archive
-      --base-path /chain-data
-      --port 30333
-      --unsafe-ws-external
-      --unsafe-rpc-external
-      --listen-addr=/ip4/0.0.0.0/tcp/30334
-      --execution wasm
-      --
-      --execution=wasm 
-      --listen-addr=/ip4/0.0.0.0/tcp/30333
+    command:  >
+      /bin/composable ${COMPOSABLE_FLAGS}
+    networks:
+    - composable_network
+
+
+
+networks:
+  composable_network:
+    name: composable_network
+    driver: bridge
+
 ```
+
+An environment file can be used to pass in the two variables above (COMPOSABLE_FLAGS and COMPOSABLE_VERSION).  Alternatively, the values can be placed directly in the file.
+
+
+```sh
+COMPOSABLE_FLAGS="--chain=picasso --name=partner-collator --listen-addr=/ip4/0.0.0.0/tcp/30334 --prometheus-external --prometheus-port 9615 --base-path /data --execution=wasm --collator --pruning=archive --node-key-file=/node-key -- --execution=wasm --listen-addr=/ip4/0.0.0.0/tcp/30333 "
+COMPOSABLE_VERSION="v2.10009.0"
+```
+
+:::note
+Please ensure that you modify the "name" parameter to a unique value that is specific to you.
+:::
+
+With the compose information in “docker-compose.yml” and the environment information in a file called “environment”, run the following command to start the application:
+
+```sh
+sudo apt-get install -y docker-compose
+sudo docker-compose --env-file environment up -d
+```
+
+To see logs, run:
+
+```sh
+sudo docker logs -f $(sudo docker ps |grep composable|awk '{print $1}')
+```
+
+The latest version of the application can be found at [Docker hub] or [Composable's releases].
+
+[Docker hub]: https://hub.docker.com/r/composablefi/composable/tags
+[Composable's releases]: (https://github.com/ComposableFi/composable/releases/)
+
+This configuration will pass the key into the Composable application at startup. Verify that it is being used by checking the log for:
+
+```sh
+[Parachain] 🏷 Local node identity is: 12D3KooWLp9aJBC7Jury1EgBYT4prqThmKPyB1Fm2fpBPUok1tKb
+```
+
+### Verify that the node is running and catching up
+Go to [Polkadot Telemetry]. On Picasso's page, you should be able to see your node (based on the name you assigned it above), and verify that it is catching up.
+
+[Polkadot Telemetry]: (https://telemetry.polkadot.io/#list/0x6811a339673c9daa897944dcdac99c6e2939cc88245ed21951a0a3c9a2be75bc)
+
+### Verify that the http RPC port is available
+
+```sh
+curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "rpc_methods"}' http://127.0.0.1:9933/
+```
+
+If this does not return anything, you may need to temporarily enable a few flags.
+
+```sh
+--rpc-external \
+--unsafe-rpc-external \
+--rpc-methods=unsafe \
+```
+
+### Get collator session key
+
+On each new collator, run:
+
+```sh
+curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "author_rotateKeys" }' http://127.0.0.1:9933/
+```
+
+Use the resulting session key in the final step.
+
+### Link node(s) to wallet(s)
+
+On Polkadotjs, at https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/explorer. 
+
+Head to "Extrinsics" in the Developer tab. As the wallet account, run session setKeys(). Use the result from above as the Key and for the proof, enter "0x" as depicted in the example image below.
+
+![polkadotjs_collator](./polkadotjs-collator.png)
+
+:::note
+Make sure you are running your node in collator mode, then provide the Public address of your collator wallet to Composable so it can be added as an approved collator.  
+
+If you encounter difficulties during the setup process, please feel free to create a ticket on our Discord server for assistance.
+:::
