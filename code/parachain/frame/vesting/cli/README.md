@@ -2,7 +2,7 @@
 
 Purpose of this tool to allow automate vesting operations.
 
-All operations use milliseconds. Timestamp are milliseconds Unix time.
+All operations use milliseconds. Timestamp are milliseconds since [Unix Time epoch start](https://en.wikipedia.org/wiki/Unix_time).
 
 ## Operations examples
 
@@ -16,15 +16,27 @@ Update.
 
 ## How it works?
 
-It takes data from spreadsheet or just shell input, generates relevant transactions, dry runs them, and outputs data and/or extrinsic. 
-Extrinsic can be run later manually.
+It takes data from spreadsheet or just shell input, generates relevant transactions, dry runs them, and outputs spreadsheet and/or extrinsic. 
+Extrinsic can be run in Polkadotjs or via subcut. Batched or not, wrapped into sudo as neeeded.
+
+## Internals
+
+Use sting based subxt client, use default naming, but overridable. 
+On start it downloads metadata and matches strings to SCALE. 
+Code is non optimized copy pasted by implementation.
+May do additional actions (e.g. seed vested accounts with ED), but executing TXes or handling other pallets will not be part of it. 
 
 ## Automated examples
 
 ```bash
 export RUST_LOG=info
-cargo run -- --client="ws://localhost:8000" add --schedule="./test/input.csv" --key="//Alice" --from="5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL"
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add-collators.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL" 2>&1 | tee vesting.log
+```
+
+
+```bash
+cargo run -- --client="ws://localhost:8000" add --schedule="./test/add-collators.csv" --key="//Alice" --from="5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL"
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add-collators.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL" --out=./test/add-collators-output.csv
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add-collators.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL" --batch=true
 ```
 
 ```bash

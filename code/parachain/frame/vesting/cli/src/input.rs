@@ -76,10 +76,17 @@ pub struct AddCommand {
 	/// From
 	#[arg(long)]
 	pub from: String,
+	
+	#[arg(long)]
+	pub out: Option<String>,
+
+	/// whether to use `Utility.batchAll` to form one extrinsic
+	#[arg(long)]
+	pub batch: Option<bool>,
 }
 
 /// maintains high fidelity with extrinsic
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, Clone)]
 pub struct AddRecord {
 	pub account: String,
 	/// unix timestamp
@@ -91,7 +98,7 @@ pub struct AddRecord {
 	pub per_period: u128,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, Clone)]
 pub struct UnlockRecord {
 	pub account: String,
 	pub vesting_schedule_id: u128,
