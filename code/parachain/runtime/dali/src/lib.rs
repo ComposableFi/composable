@@ -59,9 +59,10 @@ use common::{
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
-	assets::Asset,
+	assets::{Asset, AssetInfo},
 	defi::Rate,
 	dex::{Amm, PriceAggregate},
+	rational,
 	xcm::assets::RemoteAssetRegistryInspect,
 };
 use cosmwasm::instrument::CostRules;
@@ -128,7 +129,6 @@ use system::{
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use xcm::{latest::MultiLocation, prelude::X1, v1::Junction};
 pub use xcmp::XcmConfig;
 
 use crate::{governance::PreimageByteDeposit, xcmp::XcmRouter};
@@ -1226,22 +1226,31 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 	type Error = DispatchError;
 
 	fn from_denom_to_asset_id(denom: &String) -> Result<CurrencyId, Self::Error> {
+		log::debug!("converting denom {} to currency id", denom);
 		let denom_bytes = denom.as_bytes().to_vec();
 		if let Some(id) = IbcDenoms::<Runtime>::get(&denom_bytes) {
+			log::debug!("converted {:} to currency id", &id);
 			return Ok(id)
 		}
 
+		// +1 nonce
 		let asset_id =
 			<currency_factory::Pallet<Runtime> as CurrencyFactoryT>::create(RangeId::IBC_ASSETS)?;
 
+		let asset_id = <assets_transactor_router::Pallet<Runtime> as composable_traits::assets::CreateAsset>
+		::create_local_asset([0;8], asset_id.0 as u64,
+			AssetInfo {
+				name: None,
+				symbol: None,
+				decimals: None,
+				// we do not have sufficient assets, nor setting zero is good
+				// so set at least some
+				existential_deposit: 10_000,
+				ratio: Some(rational!(1/1)),
+		})?;
+		log::info!("registered {:} asset id for {:} denom", &asset_id, &denom);
 		IbcDenoms::<Runtime>::insert(denom_bytes.clone(), asset_id);
 		IbcAssetIds::<Runtime>::insert(asset_id, denom_bytes);
-
-		let location = XcmAssetLocation::new(MultiLocation::new(
-			1,
-			X1(Junction::GeneralIndex(asset_id.into())),
-		));
-		assets_registry::Pallet::<Runtime>::set_reserve_location(asset_id, location)?;
 
 		Ok(asset_id)
 	}
@@ -1323,6 +1332,8 @@ impl pallet_ibc::Config for Runtime {
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;
 	type Ics20RateLimiter = Everything;
+	type IsReceiveEnabled = ConstBool<true>;
+	type IsSendEnabled = ConstBool<true>;
 }
 
 impl pallet_ibc_ping::Config for Runtime {

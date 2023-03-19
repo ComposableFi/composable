@@ -161,4 +161,6 @@ impl pallet_ibc::Config for Runtime {
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;
 	type Ics20RateLimiter = ConstantAny;
+	type IsReceiveEnabled = ConstBool<true>;
+	type IsSendEnabled = ConstBool<true>;
 }
