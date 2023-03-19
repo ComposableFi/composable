@@ -65,7 +65,7 @@ networks:
 An environment file can be used to pass in the two variables above (COMPOSABLE_FLAGS and COMPOSABLE_VERSION).  Alternatively, the values can be placed directly in the file.
 
 
-```sh
+```yaml
 COMPOSABLE_FLAGS="--chain=picasso --name=partner-collator --listen-addr=/ip4/0.0.0.0/tcp/30334 --prometheus-external --prometheus-port 9615 --base-path /data --execution=wasm --collator --pruning=archive --node-key-file=/node-key -- --execution=wasm --listen-addr=/ip4/0.0.0.0/tcp/30333 "
 COMPOSABLE_VERSION="v2.10009.0"
 ```
@@ -111,7 +111,7 @@ curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method":
 
 If this does not return anything, you may need to temporarily enable a few flags.
 
-```sh
+```yaml
 --rpc-external \
 --unsafe-rpc-external \
 --rpc-methods=unsafe \
