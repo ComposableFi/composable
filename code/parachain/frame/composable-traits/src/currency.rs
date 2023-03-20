@@ -201,7 +201,10 @@ pub trait RationalLike<const N: u64, const D: u64> {
 #[macro_export]
 macro_rules! rational {
 	($n:literal / $d: literal) => {
-		<Rational64 as composable_traits::currency::RationalLike<$n, $d>>::new()
+		<composable_traits::currency::Rational64 as composable_traits::currency::RationalLike<
+			$n,
+			$d,
+		>>::new()
 	};
 }
 

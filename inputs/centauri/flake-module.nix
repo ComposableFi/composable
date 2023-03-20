@@ -4,8 +4,8 @@
       centauri-src = pkgs.fetchFromGitHub {
         owner = "ComposableFi";
         repo = "centauri";
-        rev = "94bf87a44694b04917a7ab735487c8f87a64737d";
-        hash = "sha256-tG4WLAUtQ2iaaS4t/Condj6B1FDa/5VDoRwyBsJDfr4=";
+        rev = "c8aa82d95c817024f814c76131dba99c305fa1c4";
+        hash = "sha256-TPxZD1zvDoDozkMNCLhKqTenILlkLpg0ddtq/QWMKZc=";
       };
       hyperspace-client-template = {
         chain_a = {

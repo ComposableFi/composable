@@ -29,7 +29,7 @@ in with prelude; rec {
       env = [{
         name = "RUST_LOG";
         value =
-          "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,"
+          "info,runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,pallet_ibc=trace"
           + (if rust_log_add != null then rust_log_add else "");
       }];
       name = name;
