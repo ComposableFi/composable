@@ -9,7 +9,6 @@ use crate::Pallet as AssetsRegistry;
 use codec::{Decode, Encode};
 use composable_traits::{
 	assets::{AssetInfo, AssetInfoUpdate, BiBoundedAssetName, BiBoundedAssetSymbol},
-	currency::Rational64,
 	rational,
 	storage::UpdateValue,
 	xcm::assets::XcmAssetLocation,

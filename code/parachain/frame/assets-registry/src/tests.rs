@@ -2,7 +2,6 @@ use crate::{prelude::*, runtime::*, Error};
 use codec::{Decode, Encode};
 use composable_traits::{
 	assets::{Asset, AssetInfo, AssetInfoUpdate, GenerateAssetId},
-	currency::Rational64,
 	rational,
 	storage::UpdateValue,
 	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
