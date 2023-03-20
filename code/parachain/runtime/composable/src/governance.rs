@@ -66,11 +66,6 @@ parameter_types! {
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
-	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
-	// Note that Kusama uses 10 millis, however KSM is significantly more expensive
-	// https://github.com/paritytech/polkadot/blob/dc784f9b47e4681897cfd477b4f0760330875a87/runtime/kusama/src/lib.rs#L237
-	// so we increase it by a factor 10. This might still be on the low side.
-	pub PreimageByteDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -86,7 +81,7 @@ impl democracy::Config for Runtime {
 	type LaunchPeriod = LaunchPeriod;
 	type VotingPeriod = VotingPeriod;
 	type VoteLockingPeriod = EnactmentPeriod;
-	type MinimumDeposit = MinimumDeposit;
+	type MinimumDeposit = ConstU128<500_000_000_000_000_000>;
 	type ExternalOrigin = EnsureRootOrTwoThirdNativeCouncil;
 
 	type ExternalMajorityOrigin = EnsureRootOrMoreThenHalfNativeCouncil;
