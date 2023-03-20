@@ -2,7 +2,10 @@
   "name": "Picasso Testnet (Rococo Relay)",
   "id": "picasso",
   "chainType": "Live",
-  "bootNodes": [],
+  "bootNodes": [
+  "/dns/boot-01.picasso-rococo.composablenodes.tech/tcp/30334/p2p/12D3KooWRAFh1dyijWcRmLiMMiLxhdpLpzS4FnhB4TovYrcx9n5G",
+  "/dns/boot-02.picasso-rococo.composablenodes.tech/tcp/30334/p2p/12D3KooWCs6k74B8gho7wRgtt4G6JbjaRk1CKFA9z33fF7CxrZMB"
+  ],
   "telemetryEndpoints": null,
   "protocolId": null,
   "properties": {
