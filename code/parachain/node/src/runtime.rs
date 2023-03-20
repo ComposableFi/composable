@@ -272,7 +272,11 @@ define_trait! {
 		}
 
 		#[cfg(feature = "composable")]
-		impl for composable_runtime {}
+		impl for composable_runtime {
+			fn (io, deps) {
+				io.merge(IbcRpcHandler::new(deps.client.clone(), deps.chain_props).into_rpc())
+			}
+		}
 
 		impl for picasso_runtime {
 			fn (io, deps) {
