@@ -80,6 +80,7 @@ crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = "../../frame/
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false }
 pablo = { package = "pallet-pablo", path = "../../frame/pablo", default-features = false }
+oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 asset-tx-payment = { package = "pallet-asset-tx-payment", path = "../../frame/transaction-payment/asset-tx-payment", default-features = false }
@@ -173,6 +174,7 @@ runtime-benchmarks = [
   "asset-tx-payment/runtime-benchmarks",
   "proxy/runtime-benchmarks",
   "pablo/runtime-benchmarks",
+  "oracle/runtime-benchmarks",
   "pallet-ibc/runtime-benchmarks",
 ]
 std = [
@@ -246,6 +248,7 @@ std = [
   "asset-tx-payment/std",
   "proxy/std",
   "pablo/std",
+  "oracle/std",
   "pablo-runtime-api/std",
   "ibc/std",
   "pallet-ibc/std",
