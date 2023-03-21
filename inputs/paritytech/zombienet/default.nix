@@ -8,7 +8,8 @@ let
     map = builtins.map;
     filter = builtins.filter;
   };
-in with prelude; rec {
+in
+with prelude; rec {
   mkChannel = sender: recipient: {
     max_capacity = 8;
     max_message_size = 4096;
@@ -18,8 +19,13 @@ in with prelude; rec {
 
   mkBidirectionalChannel = a: b: (mkChannel a b) ++ (mkChannel b a);
 
-  mkCollator = { name ? "alice", command, rpc_port ? null, ws_port ? null
-    , rust_log_add ? "" }:
+  mkCollator =
+    { name ? "alice"
+    , command
+    , rpc_port ? null
+    , ws_port ? null
+    , rust_log_add ? ""
+    }:
     {
       command = command;
       args = [
@@ -29,7 +35,7 @@ in with prelude; rec {
       env = [{
         name = "RUST_LOG";
         value =
-          "info,runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,pallet_ibc=trace"
+          "info,runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,pallet_ibc=trace,"
           + (if rust_log_add != null then rust_log_add else "");
       }];
       name = name;
@@ -37,15 +43,24 @@ in with prelude; rec {
     } // optionalAttrs (rpc_port != null) { inherit rpc_port; }
     // optionalAttrs (ws_port != null) { inherit ws_port; };
 
-  mkParachain = { command, rpc_port ? 32200, ws_port ? 9988, chain ? "dali-dev"
-    , names ? default-node-names, collators ? 2, id ? 2087, rust_log_add ? null
+  mkParachain =
+    { command
+    , rpc_port ? 32200
+    , ws_port ? 9988
+    , chain ? "dali-dev"
+    , names ? default-node-names
+    , collators ? 2
+    , id ? 2087
+    , rust_log_add ? null
     }:
     let
       generated = lib.lists.zipListsWith
         (_increment: name: mkCollator { inherit command name rust_log_add; })
-        (lib.lists.range 0 (collators - 2)) (builtins.tail names);
+        (lib.lists.range 0 (collators - 2))
+        (builtins.tail names);
 
-    in {
+    in
+    {
       add_to_genesis = true;
       chain = chain;
       cumulus_based = true;
@@ -68,7 +83,8 @@ in with prelude; rec {
         recipient = ids;
       };
       unique = filter (x: x.sender != x.recipient) cross;
-    in map (pair: mkChannel pair.sender pair.recipient) unique;
+    in
+    map (pair: mkChannel pair.sender pair.recipient) unique;
 
   mkRelaychainNode = { rpc_port ? null, ws_port ? null, name }:
     {
@@ -77,18 +93,25 @@ in with prelude; rec {
     } // optionalAttrs (rpc_port != null) { inherit rpc_port; }
     // optionalAttrs (ws_port != null) { inherit ws_port; };
 
-  mkRelaychainNodes = { chain, rpc_port ? 30444, ws_port ? 9944, count ? 2
-    , names ? default-node-names }:
+  mkRelaychainNodes =
+    { chain
+    , rpc_port ? 30444
+    , ws_port ? 9944
+    , count ? 2
+    , names ? default-node-names
+    }:
     let
       prefixName = name: "${chain}-${name}";
       generated = lib.lists.zipListsWith
         (_increment: name: mkRelaychainNode { name = prefixName name; })
-        (lib.lists.range 0 (count - 1)) (builtins.tail names);
+        (lib.lists.range 0 (count - 1))
+        (builtins.tail names);
       bootstrap = mkRelaychainNode {
         inherit ws_port rpc_port;
         name = prefixName "alice";
       };
-    in [ bootstrap ] ++ generated;
+    in
+    [ bootstrap ] ++ generated;
 
   mkRelaychain =
     { chain, default_command, rpc_port ? 30444, ws_port ? 9944, count ? 2 }: {
@@ -145,7 +168,8 @@ in with prelude; rec {
         builtins.filter (e: e != null) (builtins.map ops-node collators);
       driedParachains = parachains:
         builtins.map (e: driedCollators e.collators) parachains;
-    in {
+    in
+    {
       parachain-nodes = driedParachains zombienet.parachains;
       relaychain-nodes = builtins.filter (e: e != null)
         (builtins.map ops-node zombienet.relaychain.nodes);
