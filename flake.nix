@@ -28,6 +28,11 @@
     };
     nix-std.url = "github:chessai/nix-std";
     devenv.url = "github:cachix/devenv";
+    zombienet = {
+      url =
+        "github:dzmitry-lahoda-forks/zombienet/5122c59a33c9ec3eab60e3b6d5020732836f8c95";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   nixConfig = {
