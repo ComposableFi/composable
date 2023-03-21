@@ -58,6 +58,7 @@ pub mod pallet {
 		},
 		transactional, PalletId,
 	};
+	use frame_support::traits::ExistenceRequirement;
 	use frame_system::{
 		offchain::{
 			AppCrypto, CreateSignedTransaction, SendSignedTransaction, SignedPayload, Signer,
@@ -77,6 +78,7 @@ pub mod pallet {
 		AccountId32, ArithmeticError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
 		PerThing, Percent, RuntimeDebug,
 	};
+	use sp_runtime::traits::AccountIdConversion;
 	use sp_std::{
 		borrow::ToOwned, collections::btree_set::BTreeSet, fmt::Debug, str, vec, vec::Vec,
 	};
@@ -851,7 +853,7 @@ pub mod pallet {
 							accounts.1,
 							asset_id,
 							reward_amount_per_oracle,
-						);
+						)?;
 						// track the total being rewarded
 						reward_tracker.total_already_rewarded = reward_tracker
 							.total_already_rewarded
@@ -881,12 +883,10 @@ pub mod pallet {
 			controller: T::AccountId,
 			asset_id: T::AssetId,
 			reward_amount: BalanceOf<T>,
-		) {
-			let result = T::Currency::deposit_into_existing(&controller, reward_amount);
-			if result.is_err() {
-				log::warn!("Failed to deposit {:?}", controller);
-			}
+		) -> DispatchResult {
+			T::Currency::transfer(&Self::account_id(), &controller, reward_amount, ExistenceRequirement::KeepAlive)?;
 			Self::deposit_event(Event::OracleRewarded(who, asset_id, reward_amount));
+			Ok(())
 		}
 
 		pub fn reset_reward_tracker_if_expired() {
@@ -1309,6 +1309,11 @@ pub mod pallet {
 				_ => return None,
 			};
 			Some(price.integer as u64)
+		}
+
+		/// The AccountId of this pallet.
+		pub fn account_id() -> T::AccountId {
+			T::PalletId::get().into_account_truncating()
 		}
 	}
 }
