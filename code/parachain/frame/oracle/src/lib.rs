@@ -58,7 +58,6 @@ pub mod pallet {
 		},
 		transactional, PalletId,
 	};
-	use frame_support::traits::ExistenceRequirement;
 	use frame_system::{
 		offchain::{
 			AppCrypto, CreateSignedTransaction, SendSignedTransaction, SignedPayload, Signer,
@@ -884,7 +883,7 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			reward_amount: BalanceOf<T>,
 		) -> DispatchResult {
-			T::Currency::transfer(&Self::account_id(), &controller, reward_amount, ExistenceRequirement::KeepAlive)?;
+			T::Currency::transfer(&Self::account_id(), &controller, reward_amount, KeepAlive)?;
 			Self::deposit_event(Event::OracleRewarded(who, asset_id, reward_amount));
 			Ok(())
 		}
