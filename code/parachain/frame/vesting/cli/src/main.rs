@@ -40,8 +40,9 @@ async fn main() -> anyhow::Result<()> {
 
 			let calls = all.clone().into_iter().map(|record| {
 				let address = AccountId32::from_str(&record.account).expect("address");
+				let from = AccountId32::from_str(&subargs.from).expect("address");
 				let data = vec![
-					("from", Value::unnamed_variant("Id", vec![Value::from_bytes(key.public().0)])),
+					("from", Value::unnamed_variant("Id", vec![Value::from_bytes(from.0)])),
 					(
 						"beneficiary",
 						Value::unnamed_variant("Id", vec![Value::from_bytes(address.0)]),
@@ -175,6 +176,17 @@ async fn main() -> anyhow::Result<()> {
 						window_start: record.window_start,
 					})
 					.expect("serialize");
+				}
+				out.flush()?;
+				let out = out.into_inner().expect("table");
+	
+				if let Some(path) = subargs.out {
+					let mut target = std::fs::File::create(path).expect("file");
+					target.write(out.as_ref());
+				} else {
+					println!("All vestings:");
+					let data = String::from_utf8(out).unwrap();
+					println!("{}", data);
 				}
 			}
 		},
