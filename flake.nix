@@ -28,6 +28,11 @@
     };
     nix-std.url = "github:chessai/nix-std";
     devenv.url = "github:cachix/devenv";
+    zombienet = {
+      url =
+        "github:dzmitry-lahoda-forks/zombienet/4d2eff2fd5a165aceb1fd11b218482710bd35d77";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   nixConfig = {
@@ -45,13 +50,13 @@
         ./inputs/bifrost-finance/bifrost/flake-module.nix
         ./inputs/centauri/flake-module.nix
         ./inputs/chevdor/subwasm.nix
-        ./flake/subxt.nix
-        ./inputs/CosmosContracts/juno.nix
         ./inputs/cosmos/cosmwasm.nix
         ./inputs/cosmos/gex.nix
+        ./inputs/CosmosContracts/juno.nix
         ./inputs/CosmWasm/wasmvm.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/statemine.nix
+        ./inputs/paritytech/substrate.nix
         ./inputs/paritytech/zombienet/flake-module.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
 
@@ -86,6 +91,7 @@
         ./flake/nixops-config.nix
         ./flake/overlays.nix
         ./flake/release.nix
+        ./flake/subxt.nix
         ./flake/zombienet.nix
       ];
       systems =

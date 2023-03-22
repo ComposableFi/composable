@@ -90,6 +90,12 @@ with prelude; rec {
     {
       name = name;
       validator = true;
+      env = [{
+        name = "RUST_LOG";
+        value =
+          "into,runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,wasmtime_cranelift=warn,wasm-heap=warn,"
+          + "netlink_proto=warn,libp2p_ping=warn,multistream_select=warn,trie-cache=warn,wasm_overrides=warn,libp2p_core=warn,libp2p_swarm=warn,sub-libp2p=warn,sync=warn";
+      }];
     } // optionalAttrs (rpc_port != null) { inherit rpc_port; }
     // optionalAttrs (ws_port != null) { inherit ws_port; };
 

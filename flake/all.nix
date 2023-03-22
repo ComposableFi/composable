@@ -41,7 +41,6 @@
         subwasm
         taplo-check
         unit-tests
-        zombienet
       ]);
 
       docker-images-to-push = pkgs.linkFarmFromDrvs "docker-images-to-push"

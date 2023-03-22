@@ -6,6 +6,7 @@
         self.overlays.default
         npm-buildpackage.overlays.default
         rust-overlay.overlays.default
+        zombienet.overlays.default
       ];
     };
     # remove me when the `nixops_unstable` works again on the latest unstable
