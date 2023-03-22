@@ -21,7 +21,9 @@ Tracks configurations and naming are keep close to [Parity](https://github.com/p
 | AssetsAdmin             | Assets operations which are not risk to platform  | 1K PICA            | 2h             | 2K PICA          | 3            | 1D              | 2h                   | inverse(max=100%, kink=T25% to 80%)      | inverse(max=100%, kink=T25% to 80%, min=2%) | 1h                   |
 
 ^ `Confirmation Period` is much smaller part of `Decision Period`
+
 ^^ `elapsed_time * required_amount = k`, `required_amount = k / elapsed_time` 
+
 ^^^ T25% - means that kind will happen after 25% of `Decision Period`
 
 One picture worth of 1000 tables, so flowing this table from left to right as time goes along with visual plot of support/approval curves best way to grasp the concept.
@@ -29,3 +31,5 @@ Shortly, OpenGov has protection against whales(LBP XYZ like tech), last minute d
 
 
 Up to date detailed reference and migration guide can be found [here](https://wiki.polkadot.network/docs/learn-opengov).
+
+For inspiration and background may [watch](https://www.youtube.com/watch?v=tBvxn8WfcFI) creator of technology. 
