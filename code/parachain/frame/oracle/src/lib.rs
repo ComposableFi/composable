@@ -71,13 +71,12 @@ pub mod pallet {
 	use sp_runtime::{
 		offchain::{http, Duration},
 		traits::{
-			AtLeast32Bit, AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub,
-			Saturating, UniqueSaturatedInto as _, Zero,
+			AccountIdConversion, AtLeast32Bit, AtLeast32BitUnsigned, CheckedAdd, CheckedDiv,
+			CheckedMul, CheckedSub, Saturating, UniqueSaturatedInto as _, Zero,
 		},
 		AccountId32, ArithmeticError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
 		PerThing, Percent, RuntimeDebug,
 	};
-	use sp_runtime::traits::AccountIdConversion;
 	use sp_std::{
 		borrow::ToOwned, collections::btree_set::BTreeSet, fmt::Debug, str, vec, vec::Vec,
 	};
