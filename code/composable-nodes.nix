@@ -53,7 +53,6 @@
           meta = { mainProgram = "composable"; };
         }));
     in {
-      # Add the npm-buildpackage overlay to the perSystem's pkgs
       packages = rec {
 
         composable-node = makeComposableNode (node: node);
