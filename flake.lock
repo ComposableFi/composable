@@ -891,17 +891,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1679438962,
-        "narHash": "sha256-twICxcu8UnjlBIiekelhAq76ctDYrVk3n1h66tMuC60=",
+        "lastModified": 1679481392,
+        "narHash": "sha256-hQStHcNFjzhL765LXmysv/UOZbDwl0x9hvruUh7r9c4=",
         "owner": "dzmitry-lahoda-forks",
         "repo": "zombienet",
-        "rev": "5122c59a33c9ec3eab60e3b6d5020732836f8c95",
+        "rev": "4d2eff2fd5a165aceb1fd11b218482710bd35d77",
         "type": "github"
       },
       "original": {
         "owner": "dzmitry-lahoda-forks",
         "repo": "zombienet",
-        "rev": "5122c59a33c9ec3eab60e3b6d5020732836f8c95",
+        "rev": "4d2eff2fd5a165aceb1fd11b218482710bd35d77",
         "type": "github"
       }
     }
