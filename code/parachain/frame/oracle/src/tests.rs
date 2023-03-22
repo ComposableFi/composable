@@ -1023,6 +1023,7 @@ fn test_payout_slash() {
 		reward_tracker.current_block_reward = 100;
 		reward_tracker.total_reward_weight = 82;
 		RewardTrackerStore::<Test>::set(Option::from(reward_tracker));
+		Balances::make_free_balance_be(&Oracle::account_id(), 100);
 		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_5), account_2));
 
 		let one = PrePrice { price: 79, block: 0, who: account_1 };
@@ -1044,6 +1045,7 @@ fn test_payout_slash() {
 		// doesn't panic when percent not set
 		assert_ok!(Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0, &asset_info));
 		assert_eq!(Balances::free_balance(account_1), 100);
+		assert_eq!(Balances::free_balance(Oracle::account_id()), 100);
 
 		assert_ok!(Oracle::add_asset_and_info(
 			RuntimeOrigin::signed(account_2),
@@ -1092,6 +1094,8 @@ fn test_payout_slash() {
 		assert_eq!(Oracle::oracle_stake(account_4), Some(0));
 		// treasury gets 1 from both account1 and account4's stake
 		assert_eq!(Balances::free_balance(treasury_account), 102);
+		// 18/100 of the reward goes to the oracle accounts as rewards
+		assert_eq!(Balances::free_balance(Oracle::account_id()), 82);
 
 		assert_ok!(Oracle::add_asset_and_info(
 			RuntimeOrigin::signed(account_2),
@@ -1123,6 +1127,8 @@ fn test_payout_slash() {
 		assert_eq!(Oracle::oracle_stake(account_4), Some(0));
 		assert_eq!(Balances::free_balance(treasury_account), 102);
 		assert_eq!(Balances::free_balance(account_4), 100);
+		// 36/100 of the reward goes to the oracle accounts as rewards
+		assert_eq!(Balances::free_balance(Oracle::account_id()), 64);
 	});
 }
 
@@ -1255,6 +1261,7 @@ fn halborn_test_bypass_slashing() {
 		reward_tracker.current_block_reward = 100;
 		reward_tracker.total_reward_weight = 100;
 		RewardTrackerStore::<Test>::set(Option::from(reward_tracker));
+		Balances::make_free_balance_be(&Oracle::account_id(), 100);
 
 		//assert_ok!(Oracle::set_reward_rate(RuntimeOrigin::root(), REWARD_RATE));
 		let account_1 = get_account_1();
