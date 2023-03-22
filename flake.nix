@@ -30,7 +30,7 @@
     devenv.url = "github:cachix/devenv";
     zombienet = {
       url =
-        "github:dzmitry-lahoda-forks/zombienet/5122c59a33c9ec3eab60e3b6d5020732836f8c95";
+        "github:dzmitry-lahoda-forks/zombienet/4d2eff2fd5a165aceb1fd11b218482710bd35d77";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
