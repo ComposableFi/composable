@@ -66,7 +66,7 @@ pub mod hard_coded_assets {
 		currency::AssetExistentialDepositInspect,
 		rational,
 		storage::UpdateValue,
-		xcm::assets::RemoteAssetRegistryInspect,
+		xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
 	};
 	use frame_support::{
 		traits::{GetStorageVersion, StorageVersion},
