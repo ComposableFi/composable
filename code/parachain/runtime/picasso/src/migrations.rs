@@ -327,23 +327,6 @@ pub mod hard_coded_assets {
 						},
 					},
 					AssetCreationInput {
-						asset_id: CurrencyId(5),
-						location: Some(XcmAssetLocation(MultiLocation {
-							parents: 0,
-							interior: X1(GeneralIndex(5)),
-						})),
-						asset_info: AssetInfo {
-							name: None,
-							symbol: Some(
-								BiBoundedAssetSymbol::from_vec(b"PBLO".to_vec())
-									.expect("String is within bounds"),
-							),
-							decimals: Some(12),
-							existential_deposit: 100_000_000_000,
-							ratio: Some(rational!(1 / 1)),
-						},
-					},
-					AssetCreationInput {
 						asset_id: CurrencyId(6),
 						location: None,
 						asset_info: AssetInfo {
@@ -595,23 +578,6 @@ pub mod hard_coded_assets {
 							decimals: Some(6),
 							existential_deposit: 100,
 							ratio: Some(rational!(15 / 1_000_000_000)),
-						},
-					},
-					AssetCreationInput {
-						asset_id: CurrencyId(5),
-						location: Some(XcmAssetLocation(MultiLocation {
-							parents: 0,
-							interior: X1(GeneralIndex(5)),
-						})),
-						asset_info: AssetInfo {
-							name: None,
-							symbol: Some(
-								BiBoundedAssetSymbol::from_vec(b"PBLO".to_vec())
-									.expect("String is within bounds"),
-							),
-							decimals: Some(12),
-							existential_deposit: 100_000_000_000,
-							ratio: Some(rational!(1 / 1)),
 						},
 					},
 					AssetCreationInput {
