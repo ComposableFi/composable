@@ -398,7 +398,7 @@ const sidebars = {
                     ]
                 },
                 'developer-guides/oracle-set-up-guide',
-                'developer-guides/collator-guide',
+                
                 'developer-guides/local-picasso-guide',
             ],
         },
