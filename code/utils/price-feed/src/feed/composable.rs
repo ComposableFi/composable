@@ -2,17 +2,13 @@ use super::{Feed, FeedError, FeedResult};
 use crate::{
 	asset::Asset,
 	feed::{
-		composable_api::{self, api::pablo::events::TwapUpdated},
-		Exponent, FeedIdentifier, FeedNotification, Price, TimeStamp, TimeStamped,
-		TimeStampedPrice, CHANNEL_BUFFER_SIZE,
+		composable_api::api::pablo::events::TwapUpdated, Exponent, FeedIdentifier,
+		FeedNotification, Price, TimeStamp, TimeStamped, TimeStampedPrice, CHANNEL_BUFFER_SIZE,
 	},
 };
 use futures::StreamExt;
 use std::collections::HashSet;
-use subxt::{
-	events::FilteredEventDetails, OnlineClient,
-	config::{polkadot::PolkadotExtrinsicParams, substrate::{H256, SubstrateConfig}}, runtime_api::RuntimeApi
-};
+use subxt::{OnlineClient, PolkadotConfig};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 
@@ -32,13 +28,12 @@ impl ComposableFeed {
 				FeedError::ChannelIsBroken
 			})?;
 		let api =
-			OnlineClient::from_url(composable_node_url)
+			OnlineClient::<PolkadotConfig>::from_url(composable_node_url)
 				.await
 				.map_err(|e| {
 					log::error!("{}", e);
 					FeedError::NetworkFailure
-				})?
-				.runtime_api();
+				})?;
 
 		for &(base, _quote) in assets.iter() {
 			sink.send(FeedNotification::AssetOpened {
@@ -54,20 +49,40 @@ impl ComposableFeed {
 
 		let sink = sink.clone();
 		let assets = assets.clone();
-		let api_clone = api.clone();
+
+		// Subscribe to finalized blocks.
+		let mut block_sub = api.blocks().subscribe_finalized().await.map_err(|e| {
+			log::error!("{}", e);
+			FeedError::NetworkFailure
+		})?;
+
+		// Get each finalized block as it arrives.
+		while let Some(block) = block_sub.next().await {
+			let block = block.map_err(|e| {
+				log::error!("{}", e);
+				FeedError::NetworkFailure
+			})?;
+
+			// Ask for the events for this block.
+			let events = block.events().await.map_err(|e| {
+				log::error!("{}", e);
+				FeedError::NetworkFailure
+			})?;
+
+			// Decode events
+			for event in events.iter() {
+				let event = event.map_err(|_| FeedError::CannotDecodeEvent)?;
+				let maybe_twap_updated_event =
+					event.as_event::<TwapUpdated>().map_err(|_| FeedError::CannotDecodeEvent)?;
+
+				// If TwapUpdated event is found, handle it
+				if let Some(twap_updated_event) = maybe_twap_updated_event {
+					handle_twap_updated_event(twap_updated_event, &assets, &sink).await?;
+				}
+			}
+		}
 
 		let handle = tokio::spawn(async move {
-			let mut twap_updated_events = api_clone
-				.events()
-				.subscribe()
-				.await
-				.map_err(|e| {
-					log::error!("{}", e);
-					FeedError::NetworkFailure
-				})?
-				.filter_events::<(TwapUpdated,)>()
-				.fuse();
-
 			loop {
 				tokio::select! {
 					biased;
@@ -75,12 +90,6 @@ impl ComposableFeed {
 					_ = shutdown_message.changed() => {
 						if *shutdown_message.borrow() {
 							break;
-						}
-					}
-
-					twap_updated_details = twap_updated_events.select_next_some() => {
-						if let Ok(twap_updated_details) = twap_updated_details {
-							handle_twap_updated_event(twap_updated_details, &assets, &sink).await?;
 						}
 					}
 				}
@@ -112,13 +121,12 @@ impl ComposableFeed {
 }
 
 async fn handle_twap_updated_event(
-	twap_updated_details: FilteredEventDetails<H256, TwapUpdated>,
+	twap_updated_details: TwapUpdated,
 	assets: &HashSet<(Asset, Asset)>,
 	sink: &mpsc::Sender<FeedNotification<FeedIdentifier, Asset, TimeStamped<(Price, Exponent)>>>,
 ) -> Result<(), FeedError> {
-	let event: TwapUpdated = twap_updated_details.event;
-	let (base_asset, base_price) = &event.twaps[0];
-	let (quote_asset, _) = &event.twaps[1];
+	let (base_asset, base_price) = &twap_updated_details.twaps[0];
+	let (quote_asset, _) = &twap_updated_details.twaps[1];
 	let base_asset = primitives::currency::CurrencyId(base_asset.0).try_into().map_err(|e| {
 		log::error!("{:?}", e);
 		FeedError::NetworkFailure

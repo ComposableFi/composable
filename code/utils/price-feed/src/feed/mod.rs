@@ -32,7 +32,7 @@ impl TimeStamp {
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Copy, Clone, Debug)]
 #[repr(transparent)]
-pub struct Price(pub(crate) u64);
+pub struct Price(pub(crate) u128);
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Copy, Clone, Debug)]
 #[repr(transparent)]
@@ -70,6 +70,7 @@ pub enum FeedIdentifier {
 pub enum FeedError {
 	NetworkFailure,
 	ChannelIsBroken,
+	CannotDecodeEvent,
 }
 
 /// Wrapper type used to notify the possible FeedError

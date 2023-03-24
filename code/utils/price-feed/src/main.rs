@@ -75,7 +75,14 @@ async fn main() {
 	let composable = ComposableFeed::start(
 		feed_shutdown_receiver,
 		opts.composable_node,
-		&[(Asset::PICA, Asset::USDC)].into_iter().collect(),
+		&[
+			(Asset::PICA, Asset::USDC),
+			(Asset::KSM, Asset::USDT), // Pablo Pool 0
+			(Asset::PICA, Asset::USDT), // Pablo Pool 1
+			(Asset::PICA, Asset::KSM), // Pablo Pool 2
+		]
+		.into_iter()
+		.collect(),
 	)
 	.await
 	.map_err(|e| {
