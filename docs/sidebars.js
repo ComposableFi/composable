@@ -53,7 +53,7 @@ const sidebars = {
                             },
                             collapsible: true,
                             collapsed: true,
-                            items:[
+                            items: [
                                 'parachains/picasso/token-transparency',
                                 'parachains/picasso/pica-use-cases'
                             ]
@@ -373,7 +373,7 @@ const sidebars = {
                             },
                             collapsible: true,
                             collapsed: true,
-                            items:[
+                            items: [
                                 'developer-guides/cosmwasm/cw-orchestrate/concepts/direct-dispatch',
                                 'developer-guides/cosmwasm/cw-orchestrate/concepts/address-handlers',
                                 'developer-guides/cosmwasm/cw-orchestrate/concepts/custom-handler',
@@ -399,6 +399,7 @@ const sidebars = {
                 },
                 'developer-guides/oracle-set-up-guide',
                 'developer-guides/collator-guide',
+                'developer-guides/local-picasso-guide',
             ],
         },
         {
@@ -419,10 +420,10 @@ const sidebars = {
                         id: `ecosystem/build-on-composable-ecosystem-development`,
                     },
                     collapsible: false,
-                items: [
-                    'ecosystem/rfp-canonical-stablecoin-design-and-integration',
+                    items: [
+                        'ecosystem/rfp-canonical-stablecoin-design-and-integration',
 
-                ]
+                    ]
                 },
                 'ecosystem/composable-grants',
                 'ecosystem/business-line-development',
@@ -456,7 +457,7 @@ const sidebars = {
             label: 'Legal Disclaimers and Disclosures',
             collapsible: true,
             collapsed: true,
-            items:[
+            items: [
                 'faqs/disclaimers-disclosures-for-composable-tokens',
                 'faqs/risk-factors',
                 'faqs/terms-of-use',

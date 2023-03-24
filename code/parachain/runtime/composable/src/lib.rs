@@ -44,7 +44,7 @@ use composable_traits::assets::Asset;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{crypto::KeyTypeId, ConstU128, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
@@ -577,7 +577,6 @@ impl scheduler::Config for Runtime {
 
 parameter_types! {
 	pub const PreimageMaxSize: u32 = 4096 * 1024;
-	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
 }
 
 impl preimage::Config for Runtime {
@@ -585,8 +584,8 @@ impl preimage::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRoot<AccountId>;
-	type BaseDeposit = PreimageBaseDeposit;
-	type ByteDeposit = PreimageByteDeposit;
+	type BaseDeposit = ConstU128<100_000_000_000_000>;
+	type ByteDeposit = ConstU128<1_000_000_000_000>;
 }
 
 impl utility::Config for Runtime {

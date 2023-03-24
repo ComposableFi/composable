@@ -27,7 +27,7 @@ pub mod hard_coded_assets {
 	use assets_registry::WeightInfo;
 	use composable_traits::{
 		assets::{AssetInfo, AssetInfoUpdate, BiBoundedAssetName, BiBoundedAssetSymbol},
-		currency::{AssetExistentialDepositInspect, Rational64},
+		currency::AssetExistentialDepositInspect,
 		rational,
 		storage::UpdateValue,
 		xcm::assets::RemoteAssetRegistryInspect,

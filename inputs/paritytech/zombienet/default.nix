@@ -29,8 +29,9 @@ in with prelude; rec {
       env = [{
         name = "RUST_LOG";
         value =
-          "runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,"
-          + (if rust_log_add != null then rust_log_add else "");
+          "info,runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,pallet_ibc=trace"
+          # RUST_LOG does not eats extra comma well, so fixed conditionally
+          + (if rust_log_add != null then "," + rust_log_add else "");
       }];
       name = name;
       validator = true;
@@ -74,6 +75,12 @@ in with prelude; rec {
     {
       name = name;
       validator = true;
+      env = [{
+        name = "RUST_LOG";
+        value =
+          "info,runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,wasmtime_cranelift=warn,wasm-heap=warn,"
+          + "netlink_proto=warn,libp2p_ping=warn,multistream_select=warn,trie-cache=warn,wasm_overrides=warn,libp2p_core=warn,libp2p_swarm=warn,sub-libp2p=warn,sync=warn";
+      }];
     } // optionalAttrs (rpc_port != null) { inherit rpc_port; }
     // optionalAttrs (ws_port != null) { inherit ws_port; };
 

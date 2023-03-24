@@ -136,7 +136,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 10_009,
+	spec_version: 10_011,
 	impl_version: 2,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -654,17 +654,13 @@ impl scheduler::Config for Runtime {
 	type WeightInfo = weights::scheduler::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	pub PreimageBaseDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
-}
-
 impl preimage::Config for Runtime {
 	type WeightInfo = preimage::weights::SubstrateWeight<Runtime>;
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRoot<AccountId>;
-	type BaseDeposit = PreimageBaseDeposit;
-	type ByteDeposit = PreimageByteDeposit;
+	type BaseDeposit = ConstU128<100_000_000_000_000>;
+	type ByteDeposit = ConstU128<1_000_000_000_000>;
 }
 
 impl utility::Config for Runtime {

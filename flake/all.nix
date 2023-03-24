@@ -1,6 +1,9 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }: {
     packages = {
+      all-docs = pkgs.linkFarmFromDrvs "all-ci-packages"
+        (with self'.packages; [ docs-server docs-static ]);
+
       all = pkgs.linkFarmFromDrvs "all-ci-packages" (with self'.packages; [
         acala-node
         benchmarks-check
@@ -27,8 +30,6 @@
         devnet-initialize-script-picasso-persistent
         devnet-integration-tests
         devnet-picasso-complete
-        docs-server
-        docs-static
         frontend-static
         hadolint-check
         hyperspace-dali
@@ -41,7 +42,6 @@
         subwasm
         taplo-check
         unit-tests
-        zombienet
       ]);
 
       docker-images-to-push = pkgs.linkFarmFromDrvs "docker-images-to-push"

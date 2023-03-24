@@ -89,7 +89,7 @@
 
       picasso-dev-config = zombienet-rococo-local-composable-config {
         chain = "picasso-dev";
-        command = self'.packages.composable-node-dali;
+        command = self'.packages.composable-node-picasso;
       };
 
       zombienet-rococo-local-picasso-dev =

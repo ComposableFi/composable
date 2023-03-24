@@ -28,11 +28,18 @@
     };
     nix-std.url = "github:chessai/nix-std";
     devenv.url = "github:cachix/devenv";
+    zombienet = {
+      url =
+        "github:dzmitry-lahoda-forks/zombienet/4d2eff2fd5a165aceb1fd11b218482710bd35d77";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   nixConfig = {
     extra-substituters = [ "https://composable-community.cachix.org/" ];
-    extra-trusted-public-keys = [ "composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8=" ];
+    extra-trusted-public-keys = [
+      "composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8="
+    ];
   };
 
   outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
@@ -43,13 +50,13 @@
         ./inputs/bifrost-finance/bifrost/flake-module.nix
         ./inputs/centauri/flake-module.nix
         ./inputs/chevdor/subwasm.nix
-        ./flake/subxt.nix
-        ./inputs/CosmosContracts/juno.nix
         ./inputs/cosmos/cosmwasm.nix
         ./inputs/cosmos/gex.nix
+        ./inputs/CosmosContracts/juno.nix
         ./inputs/CosmWasm/wasmvm.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/statemine.nix
+        ./inputs/paritytech/substrate.nix
         ./inputs/paritytech/zombienet/flake-module.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
 
@@ -84,6 +91,7 @@
         ./flake/nixops-config.nix
         ./flake/overlays.nix
         ./flake/release.nix
+        ./flake/subxt.nix
         ./flake/zombienet.nix
       ];
       systems =

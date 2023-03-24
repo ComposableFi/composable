@@ -47,7 +47,6 @@ pub mod pallet {
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
 		traits::{tokens::BalanceConversion, EnsureOrigin},
-		Twox128,
 	};
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
@@ -106,7 +105,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn from_local_asset)]
 	pub type LocalToForeign<T: Config> =
-		StorageMap<_, Twox128, T::LocalAssetId, T::ForeignAssetId, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, T::LocalAssetId, T::ForeignAssetId, OptionQuery>;
 
 	/// Mapping foreign asset to local asset.
 	#[pallet::storage]
@@ -129,31 +128,32 @@ pub mod pallet {
 	/// How much of asset amount is needed to pay for one unit of native token.
 	#[pallet::storage]
 	#[pallet::getter(fn asset_ratio)]
-	pub type AssetRatio<T: Config> = StorageMap<_, Twox128, T::LocalAssetId, Rational, OptionQuery>;
+	pub type AssetRatio<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::LocalAssetId, Rational, OptionQuery>;
 
 	/// The minimum balance of an asset required for the balance to be stored on chain
 	#[pallet::storage]
 	#[pallet::getter(fn existential_deposit)]
 	pub type ExistentialDeposit<T: Config> =
-		StorageMap<_, Twox128, T::LocalAssetId, T::Balance, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, T::LocalAssetId, T::Balance, OptionQuery>;
 
 	/// Name of an asset
 	#[pallet::storage]
 	#[pallet::getter(fn asset_name)]
 	pub type AssetName<T: Config> =
-		StorageMap<_, Twox128, T::LocalAssetId, BiBoundedAssetName, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, T::LocalAssetId, BiBoundedAssetName, OptionQuery>;
 
 	/// Symbol of an asset
 	#[pallet::storage]
 	#[pallet::getter(fn asset_symbol)]
 	pub type AssetSymbol<T: Config> =
-		StorageMap<_, Twox128, T::LocalAssetId, BiBoundedAssetSymbol, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, T::LocalAssetId, BiBoundedAssetSymbol, OptionQuery>;
 
 	/// Decimals of an asset
 	#[pallet::storage]
 	#[pallet::getter(fn asset_decimals)]
 	pub type AssetDecimals<T: Config> =
-		StorageMap<_, Twox128, T::LocalAssetId, Exponent, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, T::LocalAssetId, Exponent, OptionQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config>(sp_std::marker::PhantomData<T>);

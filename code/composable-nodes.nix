@@ -53,7 +53,6 @@
           meta = { mainProgram = "composable"; };
         }));
     in {
-      # Add the npm-buildpackage overlay to the perSystem's pkgs
       packages = rec {
 
         composable-node = makeComposableNode (node: node);
@@ -62,6 +61,12 @@
           node // {
             PICASSO_RUNTIME = node.DALI_RUNTIME;
             COMPOSABLE_RUNTIME = node.DALI_RUNTIME;
+          });
+
+        composable-node-picasso = makeComposableNode (node:
+          node // {
+            PICASSO_RUNTIME = node.PICASSO_RUNTIME;
+            COMPOSABLE_RUNTIME = node.COMPOSABLE_RUNTIME;
           });
 
         composable-node-release = makeComposableNode (node:
