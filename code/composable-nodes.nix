@@ -63,6 +63,12 @@
             COMPOSABLE_RUNTIME = node.DALI_RUNTIME;
           });
 
+        composable-node-picasso = makeComposableNode (node:
+          node // {
+            PICASSO_RUNTIME = node.PICASSO_RUNTIME;
+            COMPOSABLE_RUNTIME = node.COMPOSABLE_RUNTIME;
+          });
+
         composable-node-release = makeComposableNode (node:
           node // {
             SUBSTRATE_CLI_GIT_COMMIT_HASH = if self ? rev then
