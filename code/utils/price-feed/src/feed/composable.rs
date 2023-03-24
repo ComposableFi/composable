@@ -10,8 +10,8 @@ use crate::{
 use futures::StreamExt;
 use std::collections::HashSet;
 use subxt::{
-	events::FilteredEventDetails, sp_core::H256, ClientBuilder, DefaultConfig,
-	PolkadotExtrinsicParams,
+	events::FilteredEventDetails, OnlineClient,
+	config::{polkadot::PolkadotExtrinsicParams, substrate::{H256, SubstrateConfig}}, runtime_api::RuntimeApi
 };
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
@@ -32,18 +32,13 @@ impl ComposableFeed {
 				FeedError::ChannelIsBroken
 			})?;
 		let api =
-			ClientBuilder::new()
-				.set_url(composable_node_url)
-				.build()
+			OnlineClient::from_url(composable_node_url)
 				.await
 				.map_err(|e| {
 					log::error!("{}", e);
 					FeedError::NetworkFailure
 				})?
-				.to_runtime_api::<composable_api::api::RuntimeApi<
-					DefaultConfig,
-					PolkadotExtrinsicParams<DefaultConfig>,
-				>>();
+				.runtime_api();
 
 		for &(base, _quote) in assets.iter() {
 			sink.send(FeedNotification::AssetOpened {
