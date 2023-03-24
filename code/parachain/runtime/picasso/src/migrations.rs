@@ -1,8 +1,8 @@
-use frame_support::traits::{GetStorageVersion, StorageVersion};
-use hard_coded_assets::HardCodedAssetsMigration;
 use crate::{
 	migrations::pablo_picasso_init_pools::PabloPicassoInitialPoolsMigration, prelude::*, *,
 };
+use frame_support::traits::{GetStorageVersion, StorageVersion};
+use hard_coded_assets::HardCodedAssetsMigration;
 
 pub type Migrations = (
 	SchedulerMigrationV1toV4,

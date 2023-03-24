@@ -128,7 +128,8 @@ pub mod pallet {
 	/// How much of asset amount is needed to pay for one unit of native token.
 	#[pallet::storage]
 	#[pallet::getter(fn asset_ratio)]
-	pub type AssetRatio<T: Config> = StorageMap<_, Blake2_128Concat, T::LocalAssetId, Rational, OptionQuery>;
+	pub type AssetRatio<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::LocalAssetId, Rational, OptionQuery>;
 
 	/// The minimum balance of an asset required for the balance to be stored on chain
 	#[pallet::storage]
