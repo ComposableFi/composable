@@ -1,10 +1,8 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }: {
     packages = {
-      all-docs = pkgs.linkFarmFromDrvs "all-ci-packages" (with self'.packages; [
-        docs-server
-        docs-static
-      ]);
+      all-docs = pkgs.linkFarmFromDrvs "all-ci-packages"
+        (with self'.packages; [ docs-server docs-static ]);
 
       all = pkgs.linkFarmFromDrvs "all-ci-packages" (with self'.packages; [
         acala-node
