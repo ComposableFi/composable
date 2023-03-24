@@ -20,15 +20,15 @@
         } // subTools.subenv);
     in {
       packages = {
-        polkadot-node = let version = "v0.9.38";
+        polkadot-node = let version = "v0.9.37";
         in buildPolkadotNode rec {
           name = "polkadot-node";
           inherit version;
           repo = "polkadot";
           owner = "paritytech";
           rev = "refs/tags/${version}";
-          hash = "sha256-byUC+6SQ+TgvQCXdQWIGf/BAyxitnT1q69RdyZL8AAc=";
-          cargoSha256 = "sha256-BYJzMagEhXEa6rjy862ESBZW2FQXopRTyRESefa4rqo=";
+          hash = "sha256-TTi4cKqQT/2ZZ/acGvcilqTlh2D9t4cfAtQQyVZWdmg=";
+          cargoSha256 = "sha256-1/94Uj6MG8VRnV4/yvEwUXdZBCEDSFUgqPTDcK7kiss=";
         };
       };
     };
