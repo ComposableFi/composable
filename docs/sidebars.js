@@ -422,7 +422,6 @@ const sidebars = {
                     collapsible: false,
                     items: [
                         'ecosystem/rfp-canonical-stablecoin-design-and-integration',
-
                     ]
                 },
                 'ecosystem/composable-grants',
