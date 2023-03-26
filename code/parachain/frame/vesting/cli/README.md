@@ -4,6 +4,8 @@ Purpose of this tool to allow automate vesting operations.
 
 All operations use milliseconds. Timestamp are milliseconds since [Unix Time epoch start](https://en.wikipedia.org/wiki/Unix_time).
 
+Amounts are in raw values of maximal precision.
+
 ## Operations examples
 
 [Create vested transfer](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A8000#/extrinsics/decode/0x0201390100d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d0060bc49cd808f02cd36347be7274397215a17eab56c9b559d2f5f501fbc4099530100000000000000000000000000000000000c41748801000000c87e9a000000001800000013004cc96aec63b3030000)
@@ -58,9 +60,4 @@ cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" delete --s
 ```bash
 cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add-collators-emissions.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm" --out=./test/add-collators-emissions-output.csv
 cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add-collators-emissions.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm" --batch=true
-```
-
-```bash
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add-investors.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm" --out=./test/add-investors-output.csv
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add-investors.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm" --batch=true
 ```
