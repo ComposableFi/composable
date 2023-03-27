@@ -659,22 +659,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-working-nixops": {
-      "locked": {
-        "lastModified": 1665349835,
-        "narHash": "sha256-UK4urM3iN80UXQ7EaOappDzcisYIuEURFRoGQ/yPkug=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "34c5293a71ffdb2fe054eb5288adc1882c1eb0b1",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "34c5293a71ffdb2fe054eb5288adc1882c1eb0b1",
-        "type": "github"
-      }
-    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1629252929,
@@ -809,7 +793,6 @@
         "helix": "helix",
         "nix-std": "nix-std",
         "nixpkgs": "nixpkgs_5",
-        "nixpkgs-working-nixops": "nixpkgs-working-nixops",
         "npm-buildpackage": "npm-buildpackage",
         "rust-overlay": "rust-overlay_3",
         "zombienet": "zombienet"
