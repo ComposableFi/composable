@@ -70,6 +70,7 @@ pub enum FeedIdentifier {
 pub enum FeedError {
 	NetworkFailure,
 	ChannelIsBroken,
+	CannotDecodeEvent,
 }
 
 /// Wrapper type used to notify the possible FeedError
