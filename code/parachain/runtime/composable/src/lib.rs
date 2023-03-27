@@ -35,13 +35,16 @@ use gates::*;
 use governance::*;
 
 use common::{
-	governance::native::NativeTreasury, rewards::StakingPot, AccountId, AccountIndex, Address,
-	Amount, AuraId, Balance, BlockNumber, ForeignAssetId, Hash, Moment, Signature,
-	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
-	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	fees::multi_existential_deposits, governance::native::NativeTreasury, rewards::StakingPot,
+	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, ForeignAssetId, Hash,
+	Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
+	MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::{assets::Asset, xcm::assets::XcmAssetLocation};
+use composable_traits::{
+	assets::Asset,
+	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
+};
 use orml_traits::parameter_type_with_key;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
@@ -520,9 +523,9 @@ impl assets::Config for Runtime {
 }
 
 parameter_type_with_key! {
-	// TODO:
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		Zero::zero()
+	// Minimum amount an account has to hold to stay in state
+	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+		multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(currency_id)
 	};
 }
 
@@ -558,7 +561,7 @@ impl orml_tokens::Config for Runtime {
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
 	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
-	type ExistentialDeposits = ExistentialDeposits;
+	type ExistentialDeposits = MultiExistentialDeposits;
 	type MaxLocks = MaxLocks;
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
@@ -783,8 +786,34 @@ impl_runtime_apis! {
 		}
 
 		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {
-			CurrencyId::list_assets()
+			// Hardcoded assets
+			use common::fees::ForeignToNativePriceConverter;
+			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
+				// Add hardcoded ratio and ED for well known assets
+				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
+				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
+				asset
+			}).collect::<Vec<_>>();
+
+			// Assets from the assets-registry pallet
+			let foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
+
+			// Override asset data for hardcoded assets that have been manually updated, and append
+			// new assets without duplication
+			foreign_assets.into_iter().fold(assets, |mut acc, mut foreign_asset| {
+				if let Some(asset) = acc.iter_mut().find(|asset_i| asset_i.id == foreign_asset.id) {
+					// Update asset with data from assets-registry
+					asset.decimals = foreign_asset.decimals;
+					asset.foreign_id = foreign_asset.foreign_id.clone();
+					asset.ratio = foreign_asset.ratio;
+				} else {
+					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&foreign_asset.id.into());
+					acc.push(foreign_asset.clone())
+				}
+				acc
+			})
 		}
+
 	}
 
 	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {
