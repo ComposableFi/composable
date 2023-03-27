@@ -19,7 +19,7 @@ use warp::{hyper::StatusCode, reply, Filter, Rejection, Reply};
 
 #[derive(PartialEq, Eq, Serialize, Copy, Clone, Debug)]
 #[repr(transparent)]
-pub struct NormalizedPrice(u128);
+pub struct NormalizedPrice(u64);
 
 pub struct Frontend {
 	pub shutdown_trigger: oneshot::Sender<()>,
@@ -132,7 +132,7 @@ fn normalize_price(
 ) -> NormalizedPrice {
 	// NOTE(hussein-aitlahcen): we want to go from x*10^q to x*10^expected_exponent
 	let dt = expected_exponent - q;
-	let power = u128::pow(10_u128, dt.abs() as u32);
+	let power = u64::pow(10_u64, dt.abs() as u32);
 	let normalized_price = match dt.signum() {
 		0 => p,
 		1 => p * power,
@@ -201,10 +201,10 @@ mod tests {
 	fn test_get_normalized_price() {
 		let expected_exponent = Exponent(2);
 		[
-			((Price(0xCAFEBABE), Exponent(-2)), NormalizedPrice(0xCAFEBABE * u128::pow(10, 4))),
+			((Price(0xCAFEBABE), Exponent(-2)), NormalizedPrice(0xCAFEBABE * u64::pow(10, 4))),
 			((Price(0xDEADBEEF), Exponent(2)), NormalizedPrice(0xDEADBEEF)),
-			((Price(1), Exponent(0)), NormalizedPrice(u128::pow(10, 2))),
-			((Price(12), Exponent(-1)), NormalizedPrice(12 * u128::pow(10, 3))),
+			((Price(1), Exponent(0)), NormalizedPrice(u64::pow(10, 2))),
+			((Price(12), Exponent(-1)), NormalizedPrice(12 * u64::pow(10, 3))),
 			((Price(454000), Exponent(4)), NormalizedPrice(4540)),
 		]
 		.iter()

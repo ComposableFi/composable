@@ -32,7 +32,7 @@ impl TimeStamp {
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Copy, Clone, Debug)]
 #[repr(transparent)]
-pub struct Price(pub(crate) u128);
+pub struct Price(pub(crate) u64);
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Copy, Clone, Debug)]
 #[repr(transparent)]

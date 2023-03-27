@@ -81,7 +81,7 @@ impl BinanceFeed {
 							let price = str::parse::<f64>(trades.price.as_str())
 								.expect("couldn't parse price");
 							// Binance send a f64 price in USD. We normalize it to USD cent.
-							let usd_cent_price = (price * 100.0) as u128;
+							let usd_cent_price = (price * 100.0) as u64;
 							// Find back the asset from the symbol.
 							if let Some(&asset) = symbol_asset.get(&trades.symbol) {
 								// Trigger a price update in USD cent
