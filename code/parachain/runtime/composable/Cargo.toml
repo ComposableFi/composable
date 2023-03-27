@@ -65,7 +65,7 @@ utility = { package = "pallet-utility", git = "https://github.com/paritytech/sub
 
 # local modules
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
-assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false, optional = true }
+assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 common = { path = "../common", default-features = false }
 composable-support = { path = "../../frame/composable-support", default-features = false }
