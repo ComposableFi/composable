@@ -27,6 +27,7 @@ mod fees;
 mod gates;
 mod governance;
 pub mod ibc;
+mod migrations;
 mod prelude;
 mod weights;
 mod xcmp;
@@ -40,7 +41,7 @@ use common::{
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::assets::Asset;
+use composable_traits::{assets::Asset, xcm::assets::XcmAssetLocation};
 use orml_traits::parameter_type_with_key;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
@@ -222,6 +223,16 @@ impl system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+impl assets_registry::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type LocalAssetId = CurrencyId;
+	type Balance = Balance;
+	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
+	type UpdateAssetRegistryOrigin = EnsureRootOrHalfCouncil;
+	type ParachainOrGovernanceOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
+	type Convert = sp_runtime::traits::ConvertInto;
+}
 impl randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
@@ -699,6 +710,7 @@ construct_runtime!(
 		CrowdloanRewards: crowdloan_rewards = 56,
 		Assets: assets = 57,
 		GovernanceRegistry: governance_registry = 58,
+		AssetsRegistry: assets_registry = 59,
 
 		CallFilter: call_filter = 100,
 
@@ -728,13 +740,6 @@ pub type SignedExtra = (
 pub type UncheckedExtrinsic =
 	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 
-// Migration for scheduler pallet to move from a plain RuntimeCall to a CallOrHash.
-pub struct SchedulerMigrationV1toV4;
-impl OnRuntimeUpgrade for SchedulerMigrationV1toV4 {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		Scheduler::migrate_v1_to_v4()
-	}
-}
 /// Executive: handles dispatch to the various modules.
 pub type Executive = executive::Executive<
 	Runtime,
@@ -742,12 +747,7 @@ pub type Executive = executive::Executive<
 	system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(
-		SchedulerMigrationV1toV4,
-		preimage::migration::v1::Migration<Runtime>,
-		scheduler::migration::v3::MigrateToV4<Runtime>,
-		democracy::migrations::v1::Migration<Runtime>,
-	),
+	crate::migrations::Migrations,
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -772,6 +772,7 @@ mod benches {
 		[utility, Utility]
 		[democracy, Democracy]
 		[proxy, Proxy]
+		[assets_registry, AssetsRegistry]
 	);
 }
 
