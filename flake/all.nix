@@ -35,7 +35,7 @@
         hyperspace-dali
         hyperspace-dali-image
         nixfmt-check
-        polkadot-node
+        polkadot-node-on-parity-kusama
         prettier-check
         spell-check
         statemine-node

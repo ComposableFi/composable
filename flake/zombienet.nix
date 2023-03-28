@@ -4,7 +4,8 @@
       prelude = zombieTools.builder;
       relaychainBase = {
         chain = "rococo-local";
-        default_command = pkgs.lib.meta.getExe self'.packages.polkadot-node;
+        default_command =
+          pkgs.lib.meta.getExe self'.packages.polkadot-node-on-parity-kusama;
         count = 3;
       };
 

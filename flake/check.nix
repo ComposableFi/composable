@@ -29,7 +29,7 @@
           "check-picasso-integration-tests"
           "composable-node"
           "composable-bench-node"
-          "polkadot-node"
+          "polkadot-node-on-parity-kusama"
           "statemine-node"
           "bifrost-node"
           "acala-node"

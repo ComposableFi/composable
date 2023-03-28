@@ -23,7 +23,7 @@
         # current version for centauri
         polkadot-node-9370 = let version = "v0.9.37";
         in buildPolkadotNode rec {
-          name = "polkadot-node";
+          name = "polkadot-node-current";
           inherit version;
           repo = "polkadot";
           owner = "paritytech";
@@ -34,7 +34,7 @@
         # for xcmv3 release and centauri client asap they upgrade
         polkadot-node-9390 = let version = "v0.9.39";
         in buildPolkadotNode rec {
-          name = "polkadot-node";
+          name = "polkadot-node-next";
           inherit version;
           repo = "polkadot";
           owner = "paritytech";
