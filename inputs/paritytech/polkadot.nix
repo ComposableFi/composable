@@ -29,7 +29,7 @@
           owner = "paritytech";
           rev = "refs/tags/${version}";
           hash = "sha256-TTi4cKqQT/2ZZ/acGvcilqTlh2D9t4cfAtQQyVZWdmg=";
-          cargoSha256 = "sha256-3EcGLJNsbFl9ITJuVIrItp1e6weO9/NMNnMOJngsCP0=";
+          cargoSha256 = "sha256-9ljw5lG6OeB4k+w9nMxBfMsIN5YGikvYnanC8M/Dpwo=";
         };
         # for xcmv3 release and centauri client asap they upgrade
         polkadot-node-9390 = let version = "v0.9.39";
