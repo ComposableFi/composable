@@ -1,10 +1,7 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, systemCommonRust, ... }: {
-    devShells = rec {
-      minimal = pkgs.mkShell {
-        buildInputs = with pkgs;
-          [ clang nodejs python3 yarn ]
-          ++ (with self'.packages; [ rust-nightly ]);
+  perSystem = { config, self', inputs', pkgs, system, systemCommonRust, ... }:
+    let
+      env = {
         LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath
           (with pkgs; [ stdenv.cc.cc.lib llvmPackages.libclang.lib pkgs.zlib ]);
         LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
@@ -12,9 +9,35 @@
         ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
         NIX_PATH = "nixpkgs=${pkgs.path}";
       };
-
-      dev = minimal.overrideAttrs (base: {
-        buildInputs = base.buildInputs ++ (with pkgs;
+      defaultattrs = {
+        inherit pkgs;
+        inputs = self.inputs;
+        modules = [{
+          packages = with pkgs;
+            with self'.packages;
+            [
+              clang
+              nodejs
+              python3
+              yarn
+              sad
+              git
+              git-lfs
+              subwasm
+            ] ++ (with self'.packages; [ rust-nightly ]);
+          devcontainer.enable = true;
+          inherit env;
+        }];
+      };
+      cosmosattrs = defaultattrs // {
+        inputs = defaultattrs.inputs ++ (with self'.packages; [ junod gex ]);
+        enterShell = ''
+          echo "junod alice key:"
+          echo "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" | junod keys add alice --recover --keyring-backend test || true
+        '';
+      };
+      allattrs = defaultattrs // {
+        inputs = defaultattrs.inputs ++ (with pkgs;
           with self'.packages; [
             bacon
             google-cloud-sdk
@@ -38,38 +61,17 @@
             rnix-lsp
             nodePackages.typescript
             nodePackages.typescript-language-server
-            git
-            git-lfs
-            subwasm
             binaryen
+            gex
           ]);
-      });
-
-      default = self.inputs.devenv.lib.mkShell {
-        inherit pkgs;
-        inputs = self.inputs;
-        modules = [{
-          packages = with self'.packages;
-            minimal.buildInputs ++ [ centauri-configure-and-run ];
-
-          enterShell = ''
-            echo "Setting up dev environment..."
-          '';
-          devcontainer.enable = true;
-        }];
       };
 
-      with-helix = dev.overrideAttrs (base: {
-        buildInputs = base.buildInputs ++ [ inputs'.helix.packages.default ];
-      });
-
-      xcvm = dev.overrideAttrs (base: {
-        buildInputs = base.buildInputs ++ (with self'.packages; [ junod gex ]);
-        shellHook = ''
-          echo "junod alice key:"
-          echo "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" | junod keys add alice --recover --keyring-backend test || true
-        '';
-      });
+    in
+    {
+      devShells = {
+        default = self.inputs.devenv.lib.mkShell defaultattrs;
+        cosmos = self.inputs.devenv.lib.mkShell cosmosattrs;
+        all = self.inputs.devenv.lib.mkShell allattrs;
+      };
     };
-  };
 }
