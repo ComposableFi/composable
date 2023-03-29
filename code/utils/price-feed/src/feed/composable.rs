@@ -16,7 +16,7 @@ pub struct ComposableFeed;
 
 impl ComposableFeed {
 	pub async fn start(
-		mut shutdown_message: tokio::sync::watch::Receiver<bool>,
+		shutdown_message: tokio::sync::watch::Receiver<bool>,
 		composable_node_url: String,
 		assets: &HashSet<(Asset, Asset)>,
 	) -> FeedResult<Feed<FeedIdentifier, Asset, TimeStampedPrice>> {
@@ -50,48 +50,40 @@ impl ComposableFeed {
 		let sink = sink.clone();
 		let assets = assets.clone();
 
-		// Subscribe to finalized blocks.
-		let mut block_sub = api.blocks().subscribe_finalized().await.map_err(|e| {
-			log::error!("{}", e);
-			FeedError::NetworkFailure
-		})?;
-
-		// Get each finalized block as it arrives.
-		while let Some(block) = block_sub.next().await {
-			let block = block.map_err(|e| {
-				log::error!("{}", e);
-				FeedError::NetworkFailure
-			})?;
-
-			// Ask for the events for this block.
-			let events = block.events().await.map_err(|e| {
-				log::error!("{}", e);
-				FeedError::NetworkFailure
-			})?;
-
-			// Decode events
-			for event in events.iter() {
-				let event = event.map_err(|_| FeedError::CannotDecodeEvent)?;
-				let maybe_twap_updated_event =
-					event.as_event::<TwapUpdated>().map_err(|_| FeedError::CannotDecodeEvent)?;
-
-				// If TwapUpdated event is found, handle it
-				if let Some(twap_updated_event) = maybe_twap_updated_event {
-					handle_twap_updated_event(twap_updated_event, &assets, &sink).await?;
-				}
-			}
-		}
-
 		let handle = tokio::spawn(async move {
-			loop {
-				tokio::select! {
-					biased;
+			// Subscribe to finalized blocks.
+			let mut block_sub = api.blocks().subscribe_finalized().await.map_err(|e| {
+				log::error!("{}", e);
+				FeedError::NetworkFailure
+			})?;
 
-					_ = shutdown_message.changed() => {
-						if *shutdown_message.borrow() {
-							break;
-						}
+			// Get each finalized block as it arrives.
+			while let Some(block) = block_sub.next().await {
+				let block = block.map_err(|e| {
+					log::error!("{}", e);
+					FeedError::NetworkFailure
+				})?;
+
+				// Ask for the events for this block.
+				let events = block.events().await.map_err(|e| {
+					log::error!("{}", e);
+					FeedError::NetworkFailure
+				})?;
+
+				// Decode events
+				for event in events.iter() {
+					let event = event.map_err(|_| FeedError::CannotDecodeEvent)?;
+					let maybe_twap_updated_event =
+						event.as_event::<TwapUpdated>().map_err(|_| FeedError::CannotDecodeEvent)?;
+
+					// If TwapUpdated event is found, handle it
+					if let Some(twap_updated_event) = maybe_twap_updated_event {
+						handle_twap_updated_event(twap_updated_event, &assets, &sink).await?;
 					}
+				}
+
+				if *shutdown_message.borrow() {
+					break;
 				}
 			}
 
