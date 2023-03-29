@@ -28,7 +28,11 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 	type Error = DispatchError;
 
 	fn from_denom_to_asset_id(denom: &String) -> Result<CurrencyId, Self::Error> {
+		// 1. pars
+		// 2. if prefix then AR
+		// 3. else just Currency::parse
 		let denom_bytes = denom.as_bytes().to_vec();
+
 		if let Some(id) = IbcDenoms::<Runtime>::get(&denom_bytes) {
 			return Ok(id)
 		}
