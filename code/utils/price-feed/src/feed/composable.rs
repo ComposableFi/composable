@@ -73,8 +73,9 @@ impl ComposableFeed {
 				// Decode events
 				for event in events.iter() {
 					let event = event.map_err(|_| FeedError::CannotDecodeEvent)?;
-					let maybe_twap_updated_event =
-						event.as_event::<TwapUpdated>().map_err(|_| FeedError::CannotDecodeEvent)?;
+					let maybe_twap_updated_event = event
+						.as_event::<TwapUpdated>()
+						.map_err(|_| FeedError::CannotDecodeEvent)?;
 
 					// If TwapUpdated event is found, handle it
 					if let Some(twap_updated_event) = maybe_twap_updated_event {
@@ -83,7 +84,7 @@ impl ComposableFeed {
 				}
 
 				if *shutdown_message.borrow() {
-					break;
+					break
 				}
 			}
 
