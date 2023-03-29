@@ -32,8 +32,10 @@ mod migrations;
 mod prelude;
 mod weights;
 pub mod xcmp;
+pub mod version;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 use fees::FinalPriceConverter;
+use version::VERSION;
 pub use xcmp::XcmConfig;
 
 pub use crate::fees::WellKnownForeignToNativePriceConverter;
@@ -43,7 +45,7 @@ use common::{
 	governance::native::*,
 	rewards::StakingPot,
 	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
-	ForeignAssetId, Hash, Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight, Signature,
+	Hash, Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -51,8 +53,9 @@ use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::{Asset, DummyAssetCreator},
 	dex::{Amm, PriceAggregate},
-	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
+	xcm::assets::{RemoteAssetRegistryInspect},
 };
+use primitives::currency::ForeignAssetId;
 
 mod gates;
 use gates::*;
@@ -62,7 +65,7 @@ use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
+	generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
 	},
@@ -70,9 +73,7 @@ use sp_runtime::{
 	ApplyExtrinsicResult, Either,
 };
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
+
 // A few exports that help ease life for downstream crates.
 use codec::Encode;
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
@@ -124,29 +125,6 @@ pub mod opaque {
 			pub aura: Aura,
 		}
 	}
-}
-
-// To learn more about runtime versioning and what each of the following value means:
-//   https://substrate.dev/docs/en/knowledgebase/runtime/upgrades#runtime-versioning
-#[sp_version::runtime_version]
-pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("picasso"),
-	impl_name: create_runtime_str!("picasso"),
-	authoring_version: 1,
-	// The version of the runtime specification. A full node will not attempt to use its native
-	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
-	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 10_011,
-	impl_version: 2,
-	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
-	state_version: 0,
-};
-
-/// The version information used to identify this runtime when compiled natively.
-#[cfg(feature = "std")]
-pub fn native_version() -> NativeVersion {
-	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
 use orml_traits::{parameter_type_with_key, LockIdentifier};
@@ -251,7 +229,7 @@ impl assets_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = CurrencyId;
 	type Balance = Balance;
-	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
+	type ForeignAssetId = primitives::currency::ForeignAssetId;
 	type UpdateAssetRegistryOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type ParachainOrGovernanceOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
@@ -270,9 +248,7 @@ impl pablo::Config for Runtime {
 	type Balance = Balance;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type Assets = Assets;
-	// TODO(Connor): Won't impact current pools since this is only required for pool creation, must
-	// implement new assts system before any more pools are created
-	type LPTokenFactory = DummyAssetCreator<CurrencyId, XcmAssetLocation, Balance>;
+	type LPTokenFactory = DummyAssetCreator<CurrencyId, ForeignAssetId, Balance>;
 	type PoolId = PoolId;
 	type PalletId = PabloPalletId;
 	type PoolCreationOrigin = EnsureRootOrTwoThirdNativeCouncil;
@@ -946,7 +922,16 @@ impl_runtime_apis! {
 				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
 				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
 				asset
-			}).collect::<Vec<_>>();
+			}).map(|xcm| 
+			  Asset {
+				decimals : xcm.decimals,
+				existential_deposit : xcm.existential_deposit,
+				id : xcm.existential_deposit,
+				foreign_id : xcm.foreign_id.map(Into::into),
+				name : xcm.name,
+				ratio : xcm.ratio,
+			  }
+			).collect::<Vec<_>>();
 
 			// Assets from the assets-registry pallet
 			let foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();

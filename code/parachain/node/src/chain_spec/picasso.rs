@@ -1,5 +1,6 @@
 use common::{AccountId, AuraId, Balance};
 use picasso_runtime::GenesisConfig;
+use primitives::currency::ForeignAssetId;
 
 use super::{Extensions, ParaId};
 
@@ -73,7 +74,10 @@ pub fn genesis_config(
 			phantom: Default::default(),
 		},
 		relayer_xcm: Default::default(),
-		assets_registry: Default::default(),
+		assets_registry: picasso_runtime::AssetsRegistryConfig {
+			assets: primitives::topology::Picasso::assets(),
+			phantom: Default::default(),
+		},
 		tokens: Default::default(),
 		transaction_payment: Default::default(),
 		vesting: Default::default(),

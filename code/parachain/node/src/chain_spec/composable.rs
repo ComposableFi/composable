@@ -74,7 +74,10 @@ pub fn genesis_config(
 		democracy: Default::default(),
 		treasury: Default::default(),
 		relayer_xcm: Default::default(),
-		assets_registry: Default::default(),
+		assets_registry: composable_runtime::AssetsRegistryConfig {
+			assets: primitives::topology::Composable::assets(),
+			phantom: Default::default(),
+		},
 		tokens: Default::default(),
 		transaction_payment: Default::default(),
 		ibc: composable_runtime::IbcConfig {

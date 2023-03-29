@@ -1,3 +1,4 @@
+use xcm::latest::prelude::*;
 pub mod karura {
 	pub const ID: u32 = 2000;
 	pub const AUSD_KEY: [u8; 2] = [0, 129];
@@ -37,8 +38,70 @@ pub mod this {
 	}
 }
 
-use crate::currency::{CurrencyId, WellKnownCurrency};
+use core::{str::FromStr};
+
+use composable_traits::{
+	assets::{AssetInfo, BiBoundedAssetName, BiBoundedAssetSymbol},
+	rational,
+	xcm::{Balance, assets::XcmAssetLocation},
+};
+use ibc_rs_scale::{
+	applications::transfer::{PrefixedDenom as InnerPrefixedDenom, TracePrefix},
+	core::ics24_host::identifier::{ChannelId, PortId},
+};
+
+use crate::currency::{CurrencyId, ForeignAssetId, PrefixedDenom, WellKnownCurrency};
 pub struct Picasso;
+
+impl Picasso {
+	pub fn assets() -> Vec<(u64, Option<ForeignAssetId>, AssetInfo<Balance>)> {
+		let usdt = (
+			1984,
+			Some(ForeignAssetId::Xcm(XcmAssetLocation::new(MultiLocation::new(
+				1,
+				X3(
+					Parachain(statemine::ID),
+					PalletInstance(statemine::ASSETS),
+					GeneralIndex(statemine::USDT),
+				),
+			)))),
+			AssetInfo {
+				name: Some(
+					BiBoundedAssetName::from_vec(b"Statemine USDT".to_vec())
+						.expect("String is within bounds"),
+				),
+				symbol: Some(
+					BiBoundedAssetSymbol::from_vec(b"USDT".to_vec())
+						.expect("String is within bounds"),
+				),
+				decimals: Some(6),
+				existential_deposit: 10_000,
+				ratio: Some(rational!(375 / 1_000_000)),
+			},
+		);
+		let mut dot = InnerPrefixedDenom::from_str("6").expect("genesis");
+		dot.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(0)));
+		let dot = (
+			6,
+			Some(ForeignAssetId::IbcIcs20(PrefixedDenom(dot))),
+			AssetInfo {
+				name: Some(
+					BiBoundedAssetName::from_vec(b"Polkadot".to_vec())
+						.expect("String is within bounds"),
+				),
+				symbol: Some(
+					BiBoundedAssetSymbol::from_vec(b"DOT".to_vec())
+						.expect("String is within bounds"),
+				),
+				decimals: Some(12),
+				existential_deposit: 1_000_000_000,
+				ratio: Some(rational!(375 / 1_000)),
+			},
+		);
+
+		vec![usdt, dot]
+	}
+}
 
 impl WellKnownCurrency for Picasso {
 	const NATIVE: CurrencyId = CurrencyId::PICA;
@@ -46,6 +109,56 @@ impl WellKnownCurrency for Picasso {
 }
 
 pub struct Composable;
+
+impl Composable {
+	pub fn assets() -> Vec<(u64, Option<ForeignAssetId>, AssetInfo<Balance>)> {
+		let usdt = (
+			1984,
+			Some(ForeignAssetId::Xcm(XcmAssetLocation::new(MultiLocation::new(
+				1,
+				X3(
+					Parachain(statemine::ID),
+					PalletInstance(statemine::ASSETS),
+					GeneralIndex(statemine::USDT),
+				),
+			)))),
+			AssetInfo {
+				name: Some(
+					BiBoundedAssetName::from_vec(b"Statemint USDT".to_vec())
+						.expect("String is within bounds"),
+				),
+				symbol: Some(
+					BiBoundedAssetSymbol::from_vec(b"USDT".to_vec())
+						.expect("String is within bounds"),
+				),
+				decimals: Some(6),
+				existential_deposit: 10_000,
+				ratio: Some(rational!(375 / 1_000_000)),
+			},
+		);
+		let mut pica = InnerPrefixedDenom::from_str("6").expect("genesis");
+		pica.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(0)));
+		let pica = (
+			1,
+			Some(ForeignAssetId::IbcIcs20(PrefixedDenom(pica))),
+			AssetInfo {
+				name: Some(
+					BiBoundedAssetName::from_vec(b"Picasso".to_vec())
+						.expect("String is within bounds"),
+				),
+				symbol: Some(
+					BiBoundedAssetSymbol::from_vec(b"PICA".to_vec())
+						.expect("String is within bounds"),
+				),
+				decimals: Some(12),
+				existential_deposit: 1_000_000_000,
+				ratio: Some(rational!(1/1)),
+			},
+		);
+
+		vec![usdt, pica]
+	}
+}
 
 impl WellKnownCurrency for Composable {
 	const NATIVE: CurrencyId = CurrencyId::LAYR;

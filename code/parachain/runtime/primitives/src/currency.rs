@@ -1,5 +1,5 @@
 //! CurrencyId implementation
-use codec::{CompactAs, Decode, Encode, MaxEncodedLen};
+use codec::{CompactAs, Decode, Encode, EncodeLike, MaxEncodedLen, WrapperTypeEncode};
 use composable_support::validation::Validate;
 use composable_traits::{assets::Asset, currency::Exponent, xcm::assets::XcmAssetLocation};
 use core::{fmt::Display, ops::Div, str::FromStr};
@@ -7,7 +7,7 @@ use frame_support::WeakBoundedVec;
 use scale_info::TypeInfo;
 use sp_runtime::{
 	sp_std::{ops::Deref, vec::Vec},
-	RuntimeDebug,
+	DispatchError, RuntimeDebug,
 };
 
 #[cfg(feature = "std")]
@@ -446,5 +446,61 @@ mod ops {
 		fn saturating_pow(self, exp: usize) -> Self {
 			<u128 as Saturating>::saturating_pow(self.0, exp).into()
 		}
+	}
+}
+
+#[derive(Debug, Decode, Encode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum ForeignAssetId {
+	Xcm(XcmAssetLocation),
+	IbcIcs20(PrefixedDenom),
+}
+
+impl From<XcmAssetLocation> for ForeignAssetId {
+	fn from(this: XcmAssetLocation) -> Self {
+		Self::Xcm(this)
+	}
+}
+
+impl From<PrefixedDenom> for ForeignAssetId {
+	fn from(this: PrefixedDenom) -> Self {
+		Self::IbcIcs20(this)
+	}
+}
+
+type InnerDenom = ibc_rs_scale::applications::transfer::PrefixedDenom;
+
+#[derive(Debug, Decode, Clone, PartialEq, Eq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(transparent))]
+pub struct PrefixedDenom(pub InnerDenom);
+
+impl PrefixedDenom {
+	pub fn from_str(s: &str) -> Result<Self, DispatchError> {
+		InnerDenom::from_str(s)
+			.map_err(|_| DispatchError::Other("PrefixedDenom parse failed"))
+			.map(Self)
+	}
+}
+
+impl WrapperTypeEncode for PrefixedDenom {}
+impl EncodeLike for PrefixedDenom {}
+impl core::ops::Deref for PrefixedDenom {
+	type Target = InnerDenom;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
+}
+
+impl Into<InnerDenom> for PrefixedDenom {
+	fn into(self) -> InnerDenom {
+		self.0
+	}
+}
+
+impl MaxEncodedLen for PrefixedDenom {
+	fn max_encoded_len() -> usize {
+		2048
 	}
 }

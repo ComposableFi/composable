@@ -1,3 +1,4 @@
+use common::ibc::ForeignIbcIcs20Assets;
 use ::ibc::core::{
 	ics24_host::identifier::PortId,
 	ics26_routing::context::{Module, ModuleId},
@@ -5,7 +6,6 @@ use ::ibc::core::{
 use frame_support::traits::EitherOf;
 use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
-	IbcDenoms,
 };
 use sp_core::ConstU64;
 use sp_runtime::{DispatchError, Either};
@@ -26,26 +26,11 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 	type Error = DispatchError;
 
 	fn from_denom_to_asset_id(denom: &String) -> Result<CurrencyId, Self::Error> {
-		let denom_bytes = denom.as_bytes().to_vec();
-		if let Some(id) = IbcDenoms::<Runtime>::get(&denom_bytes) {
-			return Ok(id)
-		}
-
-		if denom == &alloc::format!("transfer/channel-0/{:}", CurrencyId::DOT.0) {
-			IbcDenoms::<Runtime>::insert(denom_bytes, CurrencyId::DOT);
-			return Ok(CurrencyId::DOT)
-		}
-
-		if denom == &alloc::format!("{:}", CurrencyId::PICA.0) {
-			IbcDenoms::<Runtime>::insert(denom_bytes, CurrencyId::PICA);
-			return Ok(CurrencyId::PICA)
-		}
-
-		Err(DispatchError::Other("IbcDenomToAssetIdConversion: denom not found"))
+		ForeignIbcIcs20Assets::<AssetsRegistry>::from_denom_to_asset_id(denom)
 	}
-
+	
 	fn from_asset_id_to_denom(id: CurrencyId) -> Option<String> {
-		IbcAssetIds::<Runtime>::get(id).and_then(|denom| String::from_utf8(denom).ok())
+		ForeignIbcIcs20Assets::<AssetsRegistry>::from_asset_id_to_denom(id)
 	}
 
 	fn ibc_assets(start_key: Option<Either<CurrencyId, u32>>, limit: u64) -> IbcAssets<CurrencyId> {

@@ -48,7 +48,7 @@ impl sc_executor::NativeExecutionDispatch for PicassoExecutor {
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		picasso_runtime::native_version()
+		picasso_runtime::version::native_version()
 	}
 }
 
