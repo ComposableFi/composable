@@ -18,6 +18,7 @@ use orml_xcm_support::{
 };
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
+use primitives::currency::ForeignAssetId;
 use sp_runtime::traits::Convert;
 use sp_std::marker::PhantomData;
 use xcm::latest::prelude::*;
@@ -108,12 +109,28 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 type IsReserveAssetLocationFilter =
 	(MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
 
-type AssetsIdConverter = CurrencyIdConvert<
-	AssetsRegistry,
-	primitives::topology::Picasso,
-	ParachainInfo,
-	StaticAssetsMap,
->;
+pub struct ForeignXcm;
+
+impl Convert<CurrencyId, Option<XcmAssetLocation>> for ForeignXcm {
+	fn convert(a: CurrencyId) -> Option<XcmAssetLocation> {
+		match AssetsRegistry::asset_to_remote(a) {
+			Some(ForeignAssetId::Xcm(xcm)) => Some(xcm),
+			_ => None,
+		}
+	}
+}
+
+impl Convert<XcmAssetLocation, Option<CurrencyId>> for ForeignXcm {
+	fn convert(a: XcmAssetLocation) -> Option<CurrencyId> {
+		match AssetsRegistry::location_to_asset(ForeignAssetId::Xcm(a)) {
+			Some(id) => Some(id),
+			_ => None,
+		}
+	}
+}
+
+type AssetsIdConverter =
+	CurrencyIdConvert<ForeignXcm, primitives::topology::Picasso, ParachainInfo, StaticAssetsMap>;
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
@@ -195,7 +212,7 @@ parameter_type_with_key! {
 
 		let location = XcmAssetLocation::new(location.clone());
 		if let Some(Parachain(id)) = interior {
-			if let Some(amount) = AssetsRegistry::min_xcm_fee(ParaId::from(*id), location) {
+			if let Some(amount) = AssetsRegistry::min_xcm_fee(ParaId::from(*id), location.into()) {
 				return Some(amount)
 			}
 		}

@@ -1,5 +1,5 @@
 //! CurrencyId implementation
-use codec::{CompactAs, Decode, Encode, MaxEncodedLen};
+use codec::{CompactAs, Decode, Encode, MaxEncodedLen, EncodeLike, WrapperTypeEncode};
 use composable_support::validation::Validate;
 use composable_traits::{assets::Asset, currency::Exponent, xcm::assets::XcmAssetLocation};
 use core::{fmt::Display, ops::Div, str::FromStr};
@@ -447,4 +447,55 @@ mod ops {
 			<u128 as Saturating>::saturating_pow(self.0, exp).into()
 		}
 	}
+}
+
+#[derive(Debug, Decode, Encode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum ForeignAssetId {
+	Xcm(XcmAssetLocation),
+	IbcIcs20(PrefixedDenom),
+}
+
+
+
+impl From<XcmAssetLocation> for ForeignAssetId {
+    fn from(this: XcmAssetLocation) -> Self {
+        Self::Xcm(this)
+    }
+}
+
+impl From<PrefixedDenom> for ForeignAssetId {
+    fn from(this: PrefixedDenom) -> Self {
+        Self::IbcIcs20(this)
+    }
+}
+
+
+#[derive(Debug, Decode, Clone, PartialEq, Eq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(transparent))]
+pub struct PrefixedDenom(
+	pub ibc_rs_scale::applications::transfer::PrefixedDenom,
+);
+
+impl WrapperTypeEncode for PrefixedDenom {}
+impl EncodeLike for PrefixedDenom {}
+impl core::ops::Deref for PrefixedDenom {
+    type Target = ibc_rs_scale::applications::transfer::PrefixedDenom;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Into<ibc_rs_scale::applications::transfer::PrefixedDenom> for PrefixedDenom {
+    fn into(self) -> ibc_rs_scale::applications::transfer::PrefixedDenom {
+        self.0
+    }
+}
+
+impl MaxEncodedLen for PrefixedDenom {
+    fn max_encoded_len() -> usize {
+		2048
+    }
 }

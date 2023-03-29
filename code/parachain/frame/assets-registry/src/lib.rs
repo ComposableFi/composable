@@ -80,7 +80,6 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ Debug
 			+ Clone
-			+ Default
 			+ TypeInfo
 			+ MaxEncodedLen;
 
@@ -156,22 +155,33 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, T::LocalAssetId, Exponent, OptionQuery>;
 
 	#[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config>(sp_std::marker::PhantomData<T>);
+	pub struct GenesisConfig<T: Config> {
+		pub assets: Vec<(u64, Option<T::ForeignAssetId>, AssetInfo<T::Balance>)>,
+		_marker: sp_std::marker::PhantomData<T>,
+	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self(<_>::default())
+			Self { assets: vec![], _marker: <_>::default() }
 		}
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T>
-	where
-		composable_traits::xcm::assets::XcmAssetLocation:
-			codec::EncodeLike<<T as Config>::ForeignAssetId>,
-	{
-		fn build(&self) {}
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			for (nonce, location, asset_info) in self.assets.clone() {
+				let asset_id = T::LocalAssetId::decode(
+					&mut ([0u8, 0, 0, 0, 0, 0, 0, 0], nonce).encode().as_ref(),
+				)
+				.expect("genesis is correct");
+
+				<Pallet<T> as RemoteAssetRegistryMutate>::register_asset(
+					asset_id, location, asset_info,
+				)
+				.expect("genesis is correct");
+			}
+		}
 	}
 
 	#[pallet::event]
@@ -497,8 +507,6 @@ pub mod pallet {
 		type AssetId = T::LocalAssetId;
 
 		fn generate_asset_id(protocol_id: [u8; 8], nonce: u64) -> Self::AssetId {
-			// NOTE: Asset ID generation rational found here:
-			// https://github.com/PoisonPhang/composable-poison-fork/blob/INIT-13/rfcs/0013-redesign-assets-id-system.md#local-asset-id-generation
 			let bytes = protocol_id
 				.into_iter()
 				.chain(nonce.to_be_bytes())
