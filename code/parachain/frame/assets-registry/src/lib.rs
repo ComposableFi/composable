@@ -157,13 +157,13 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub assets: Vec<(u64, Option<T::ForeignAssetId>, AssetInfo<T::Balance>)>,
-		_marker: sp_std::marker::PhantomData<T>,
+		phantom: sp_std::marker::PhantomData<T>,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { assets: vec![], _marker: <_>::default() }
+			Self { assets: vec![], phantom: <_>::default() }
 		}
 	}
 

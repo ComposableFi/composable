@@ -1,5 +1,6 @@
 use common::{AccountId, AuraId, Balance};
 use picasso_runtime::GenesisConfig;
+use primitives::currency::ForeignAssetId;
 
 use super::{Extensions, ParaId};
 
@@ -73,7 +74,35 @@ pub fn genesis_config(
 			phantom: Default::default(),
 		},
 		relayer_xcm: Default::default(),
-		assets_registry: Default::default(),
+		assets_registry: picasso_runtime::AssetsRegistryConfig {
+			assets: vec![
+				(
+					1,
+					None,
+					AssetInfo {
+						name: "Picasso",
+						symbol: "PICA",
+						decimals: Some(12),
+						existential_deposit: 100_000_000,
+						ratio: Some(rational!(1 / 1)),
+					},
+				),
+				(
+					1984,
+					Some(ForeignAssetId::Xcm(XcmAssetLocation(
+						
+					))),
+					AssetInfo {
+						name: "Statemine USDT",
+						symbol: "USDT",
+						decimals: Some(6),
+						existential_deposit: 100_000_000,
+						ratio: Some(rational!(375 / 1_000_000)),
+					},
+				),
+			],
+			phantom: Default::default(),
+		},
 		tokens: Default::default(),
 		transaction_payment: Default::default(),
 		vesting: Default::default(),
