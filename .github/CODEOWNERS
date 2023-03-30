@@ -38,8 +38,7 @@ code/Cargo.toml @ComposableFi/parachain-leads @ComposableFi/core @ComposableFi/n
 
 ## Public Gitbook
 
-book/ @ComposableFi/technical-writers
-README.md @ComposableFi/technical-writers @ComposableFi/core @ComposableFi/parachain-leads @0xbrainjar2
+README.md @ComposableFi/core @ComposableFi/parachain-leads @0xbrainjar2
 
 ## Frontend and Blockchain Integration
 frontend/ @ComposableFi/blockchain-integrations @ComposableFi/parachain-finance
