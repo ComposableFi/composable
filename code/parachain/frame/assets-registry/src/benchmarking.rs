@@ -75,7 +75,8 @@ benchmarks! {
 
 	set_min_fee {
 		let target_parachain_id = 100_u32.into();
-		let foreign_asset_id = Default::default();
+		let foreign_asset_id = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
+			.expect("Asset location is foreign ID");
 		let balance = 100_500.into();
 
 	}: _(RawOrigin::Root, target_parachain_id, foreign_asset_id, Some(balance))
