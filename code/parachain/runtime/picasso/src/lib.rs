@@ -297,6 +297,48 @@ impl assets::Config for Runtime {
 }
 
 parameter_types! {
+	pub const StakeLock: BlockNumber = 50;
+	pub const StalePrice: BlockNumber = 5;
+
+	// TODO
+	pub MinStake: Balance = 1000 * CurrencyId::unit::<Balance>();
+	pub const MaxAnswerBound: u32 = 25;
+	pub const MaxAssetsCount: u32 = 100_000;
+	pub const MaxHistory: u32 = 20;
+	pub const MaxPrePrices: u32 = 40;
+	pub const TwapWindow: u16 = 3;
+	// cspell:disable-next
+	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
+	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK as u64;
+}
+
+impl oracle::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = Balance;
+	type Currency = Balances;
+	type AssetId = CurrencyId;
+	type PriceValue = Balance;
+	type AuthorityId = oracle::crypto::BathurstStId;
+	type MinStake = MinStake;
+	type StakeLock = StakeLock;
+	type StalePrice = StalePrice;
+	type AddOracle = EnsureRootOrHalfNativeCouncil;
+	type RewardOrigin = EnsureRootOrHalfNativeCouncil;
+	type MaxAnswerBound = MaxAnswerBound;
+	type MaxAssetsCount = MaxAssetsCount;
+	type TreasuryAccount = TreasuryAccount;
+	type MaxHistory = MaxHistory;
+	type TwapWindow = TwapWindow;
+	type MaxPrePrices = MaxPrePrices;
+	type MsPerBlock = MsPerBlock;
+	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
+	type LocalAssets = CurrencyFactory;
+	type Moment = Moment;
+	type Time = Timestamp;
+	type PalletId = OraclePalletId;
+}
+
+parameter_types! {
 	// Maximum authorities/collators for aura
 	pub const MaxAuthorities: u32 = 100;
 }
@@ -831,6 +873,7 @@ construct_runtime!(
 		BondedFinance: bonded_finance = 58,
 		AssetsRegistry: assets_registry = 59,
 		Pablo: pablo = 60,
+		Oracle: oracle = 61,
 
 		CallFilter: call_filter = 100,
 
@@ -898,6 +941,7 @@ mod benches {
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
 		[democracy, Democracy]
+		[oracle, Oracle]
 		// broken in Centauri too
 		// [ibc, Ibc]
 	);
