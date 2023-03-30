@@ -129,39 +129,28 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 type IsReserveAssetLocationFilter =
 	(MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
 
-pub struct SetupAfterRfc13;
+pub struct ForeignXcm;
 
-impl RemoteAssetRegistryInspect for SetupAfterRfc13 {
-	type AssetId = CurrencyId;
-
-	type AssetNativeLocation = XcmAssetLocation;
-
-	type Balance = Balance;
-
-	fn asset_to_remote(
-		_asset_id: Self::AssetId,
-	) -> Option<composable_traits::xcm::assets::XcmAssetLocation> {
-		None
+impl Convert<CurrencyId, Option<XcmAssetLocation>> for ForeignXcm {
+	fn convert(a: CurrencyId) -> Option<XcmAssetLocation> {
+		match AssetsRegistry::asset_to_remote(a) {
+			Some(ForeignAssetId::Xcm(xcm)) => Some(xcm),
+			_ => None,
+		}
 	}
+}
 
-	fn location_to_asset(_location: Self::AssetNativeLocation) -> Option<Self::AssetId> {
-		None
-	}
-
-	fn min_xcm_fee(
-		_parachain_id: ParaId,
-		_remote_asset_id: Self::AssetNativeLocation,
-	) -> Option<Self::Balance> {
-		None
-	}
-
-	fn get_foreign_assets_list() -> Vec<Asset<Self::Balance, Self::AssetNativeLocation>> {
-		Default::default()
+impl Convert<XcmAssetLocation, Option<CurrencyId>> for ForeignXcm {
+	fn convert(a: XcmAssetLocation) -> Option<CurrencyId> {
+		match AssetsRegistry::location_to_asset(ForeignAssetId::Xcm(a)) {
+			Some(id) => Some(id),
+			_ => None,
+		}
 	}
 }
 
 type AssetsIdConverter = CurrencyIdConvert<
-	SetupAfterRfc13,
+	ForeignXcm,
 	primitives::topology::Composable,
 	ParachainInfo,
 	StaticAssetsMap,

@@ -1,6 +1,6 @@
 //! proposed shared XCM setup parameters and impl
 use crate::{fees::NativeBalance, prelude::*, AccountId, Balance};
-use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
+use composable_traits::xcm::assets::{XcmAssetLocation};
 use frame_support::{
 	dispatch::Weight,
 	log, match_types, parameter_types,
@@ -13,7 +13,7 @@ use polkadot_primitives::v2::Id;
 use primitives::currency::{CurrencyId, WellKnownCurrency};
 use sp_runtime::traits::Convert;
 use sp_std::marker::PhantomData;
-use xcm::{latest::MultiAsset, prelude::*};
+use xcm::{latest::MultiAsset,};
 use xcm_builder::*;
 use xcm_executor::{
 	traits::{FilterAssetLocation, WeightTrader},
@@ -199,7 +199,7 @@ pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId, WellK
 );
 
 impl<
-		AssetRegistry: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
+		AssetRegistry: Convert<CurrencyId, Option<XcmAssetLocation>>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
 		WellKnownXcmpAssets: XcmpAssets,
@@ -208,12 +208,12 @@ impl<
 {
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
 		WellKnownXcmpAssets::local_to_remote(id, ThisParaId::get().into())
-			.or_else(|| AssetRegistry::asset_to_remote(id).map(|x| x.into()))
+			.or_else(|| AssetRegistry::convert(id).map(|x| x.into()))
 	}
 }
 
 impl<
-		AssetsRegistry: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
+		AssetsRegistry: Convert<XcmAssetLocation, Option<CurrencyId>>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
 		WellKnownXcmpAssets: XcmpAssets,
@@ -235,7 +235,7 @@ impl<
 					Some(currency_id)
 				} else {
 					log::trace!(target: "xcmp", "using assets registry for {:?}", location);
-					let result = AssetsRegistry::location_to_asset(XcmAssetLocation(location))
+					let result = AssetsRegistry::convert(XcmAssetLocation(location))
 						.map(Into::into);
 					if let Some(result) = result {
 						log::trace!(target: "xcmp", "mapped remote to {:?} local", result);
@@ -250,7 +250,7 @@ impl<
 }
 
 impl<
-		T: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
+		T: Convert<XcmAssetLocation, Option<CurrencyId>>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
 		WellKnownXcmpAssets: XcmpAssets,
