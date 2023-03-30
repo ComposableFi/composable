@@ -47,8 +47,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 ] }
 smallvec = "1.7.0"
 
-ibc-rs-scale = { workspace = true, default-features = false, features = ["parity-scale-codec"] }
-
+ibc-rs-scale = { workspace = true, default-features = false, features = ["parity-scale-codec", "serde"] }
 
 [dev-dependencies]
 authorship = { package = "pallet-authorship", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
@@ -84,4 +83,5 @@ std = [
   "composable-support/std",
   "cumulus-pallet-xcm/std",
   "cumulus-primitives-core/std",
+  "ibc-rs-scale/std",
 ]

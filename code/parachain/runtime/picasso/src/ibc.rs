@@ -28,7 +28,7 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 	fn from_denom_to_asset_id(denom: &String) -> Result<CurrencyId, Self::Error> {
 		ForeignIbcIcs20Assets::<AssetsRegistry>::from_denom_to_asset_id(denom)
 	}
-	
+
 	fn from_asset_id_to_denom(id: CurrencyId) -> Option<String> {
 		ForeignIbcIcs20Assets::<AssetsRegistry>::from_asset_id_to_denom(id)
 	}

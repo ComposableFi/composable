@@ -2,13 +2,15 @@
 use codec::{CompactAs, Decode, Encode, EncodeLike, MaxEncodedLen, WrapperTypeEncode};
 use composable_support::validation::Validate;
 use composable_traits::{assets::Asset, currency::Exponent, xcm::assets::XcmAssetLocation};
-use core::{fmt::Display, ops::Div, str::FromStr};
+
 use frame_support::WeakBoundedVec;
 use scale_info::TypeInfo;
 use sp_runtime::{
 	sp_std::{ops::Deref, vec::Vec},
 	DispatchError, RuntimeDebug,
 };
+
+use crate::prelude::*;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -449,7 +451,7 @@ mod ops {
 	}
 }
 
-#[derive(Debug, Decode, Encode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(RuntimeDebug, Decode, Encode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum ForeignAssetId {
 	Xcm(XcmAssetLocation),

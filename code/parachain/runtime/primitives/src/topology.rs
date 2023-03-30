@@ -1,4 +1,5 @@
-use xcm::latest::prelude::*;
+use crate::prelude::*;
+
 pub mod karura {
 	pub const ID: u32 = 2000;
 	pub const AUSD_KEY: [u8; 2] = [0, 129];
@@ -11,7 +12,6 @@ pub mod statemine {
 	pub const ASSETS: u8 = common_good_assets::ASSETS;
 	pub const USDT: u128 = common_good_assets::USDT;
 }
-
 pub mod rockmine {
 	use super::common_good_assets;
 	pub const ID: u32 = common_good_assets::ID;
@@ -38,8 +38,6 @@ pub mod this {
 	}
 }
 
-use core::{str::FromStr};
-
 use composable_traits::{
 	assets::{AssetInfo, BiBoundedAssetName, BiBoundedAssetSymbol},
 	rational,
@@ -51,6 +49,7 @@ use ibc_rs_scale::{
 };
 
 use crate::currency::{CurrencyId, ForeignAssetId, PrefixedDenom, WellKnownCurrency};
+
 pub struct Picasso;
 
 impl Picasso {
