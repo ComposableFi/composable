@@ -104,7 +104,7 @@ impl SubstrateCli for Cli {
 			#[cfg(feature = "dali")]
 			chain if chain.contains("dali") => &dali_runtime::VERSION,
 			// picasso chains
-			chain if chain.contains("picasso") => &picasso_runtime::VERSION,
+			chain if chain.contains("picasso") => &picasso_runtime::version::VERSION,
 			_ => panic!("Unknown chain_id: {}", spec.id()),
 		}
 	}
