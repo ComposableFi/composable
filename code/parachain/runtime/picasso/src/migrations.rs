@@ -1,6 +1,7 @@
 use crate::{
 	migrations::pablo_picasso_init_pools::PabloPicassoInitialPoolsMigration, prelude::*, *,
 };
+use composable_traits::currency::Rational64;
 use frame_support::traits::{GetStorageVersion, StorageVersion};
 use hard_coded_assets::HardCodedAssetsMigration;
 

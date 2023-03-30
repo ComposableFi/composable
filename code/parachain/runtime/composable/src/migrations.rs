@@ -1,4 +1,5 @@
 use crate::{prelude::*, *};
+use composable_traits::currency::Rational64;
 use hard_coded_assets::HardCodedAssetsMigration;
 
 pub type Migrations = (
