@@ -27,6 +27,7 @@ mod fees;
 mod gates;
 mod governance;
 pub mod ibc;
+mod migrations;
 mod prelude;
 mod weights;
 mod xcmp;
@@ -34,13 +35,16 @@ use gates::*;
 use governance::*;
 
 use common::{
-	governance::native::NativeTreasury, rewards::StakingPot, AccountId, AccountIndex, Address,
-	Amount, AuraId, Balance, BlockNumber, ForeignAssetId, Hash, Moment, Signature,
-	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
-	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	fees::multi_existential_deposits, governance::native::NativeTreasury, rewards::StakingPot,
+	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, ForeignAssetId, Hash,
+	Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
+	MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::assets::Asset;
+use composable_traits::{
+	assets::Asset,
+	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
+};
 use orml_traits::parameter_type_with_key;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
@@ -222,6 +226,16 @@ impl system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+impl assets_registry::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type LocalAssetId = CurrencyId;
+	type Balance = Balance;
+	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
+	type UpdateAssetRegistryOrigin = EnsureRootOrHalfCouncil;
+	type ParachainOrGovernanceOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
+	type Convert = sp_runtime::traits::ConvertInto;
+}
 impl randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
@@ -509,9 +523,9 @@ impl assets::Config for Runtime {
 }
 
 parameter_type_with_key! {
-	// TODO:
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		Zero::zero()
+	// Minimum amount an account has to hold to stay in state
+	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+		multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(currency_id)
 	};
 }
 
@@ -547,7 +561,7 @@ impl orml_tokens::Config for Runtime {
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
 	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
-	type ExistentialDeposits = ExistentialDeposits;
+	type ExistentialDeposits = MultiExistentialDeposits;
 	type MaxLocks = MaxLocks;
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
@@ -634,7 +648,7 @@ impl crowdloan_rewards::Config for Runtime {
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
+	pub NativeAssetId: CurrencyId = CurrencyId::LAYR;
 	pub CreationDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
 	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::unit::<Balance>();
 	pub RentPerBlock: Balance = CurrencyId::milli::<Balance>();
@@ -699,6 +713,7 @@ construct_runtime!(
 		CrowdloanRewards: crowdloan_rewards = 56,
 		Assets: assets = 57,
 		GovernanceRegistry: governance_registry = 58,
+		AssetsRegistry: assets_registry = 59,
 
 		CallFilter: call_filter = 100,
 
@@ -728,13 +743,6 @@ pub type SignedExtra = (
 pub type UncheckedExtrinsic =
 	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 
-// Migration for scheduler pallet to move from a plain RuntimeCall to a CallOrHash.
-pub struct SchedulerMigrationV1toV4;
-impl OnRuntimeUpgrade for SchedulerMigrationV1toV4 {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		Scheduler::migrate_v1_to_v4()
-	}
-}
 /// Executive: handles dispatch to the various modules.
 pub type Executive = executive::Executive<
 	Runtime,
@@ -742,12 +750,7 @@ pub type Executive = executive::Executive<
 	system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(
-		SchedulerMigrationV1toV4,
-		preimage::migration::v1::Migration<Runtime>,
-		scheduler::migration::v3::MigrateToV4<Runtime>,
-		democracy::migrations::v1::Migration<Runtime>,
-	),
+	crate::migrations::Migrations,
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -772,6 +775,7 @@ mod benches {
 		[utility, Utility]
 		[democracy, Democracy]
 		[proxy, Proxy]
+		[assets_registry, AssetsRegistry]
 	);
 }
 
@@ -782,8 +786,34 @@ impl_runtime_apis! {
 		}
 
 		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {
-			CurrencyId::list_assets()
+			// Hardcoded assets
+			use common::fees::ForeignToNativePriceConverter;
+			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
+				// Add hardcoded ratio and ED for well known assets
+				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
+				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
+				asset
+			}).collect::<Vec<_>>();
+
+			// Assets from the assets-registry pallet
+			let foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
+
+			// Override asset data for hardcoded assets that have been manually updated, and append
+			// new assets without duplication
+			foreign_assets.into_iter().fold(assets, |mut acc, mut foreign_asset| {
+				if let Some(asset) = acc.iter_mut().find(|asset_i| asset_i.id == foreign_asset.id) {
+					// Update asset with data from assets-registry
+					asset.decimals = foreign_asset.decimals;
+					asset.foreign_id = foreign_asset.foreign_id.clone();
+					asset.ratio = foreign_asset.ratio;
+				} else {
+					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&foreign_asset.id.into());
+					acc.push(foreign_asset.clone())
+				}
+				acc
+			})
 		}
+
 	}
 
 	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {
