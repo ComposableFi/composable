@@ -1,6 +1,6 @@
+use sp_runtime::create_runtime_str;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
-use sp_runtime::create_runtime_str;
 
 use crate::prelude::*;
 

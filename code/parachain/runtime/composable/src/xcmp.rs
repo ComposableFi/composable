@@ -149,12 +149,8 @@ impl Convert<XcmAssetLocation, Option<CurrencyId>> for ForeignXcm {
 	}
 }
 
-type AssetsIdConverter = CurrencyIdConvert<
-	ForeignXcm,
-	primitives::topology::Composable,
-	ParachainInfo,
-	StaticAssetsMap,
->;
+type AssetsIdConverter =
+	CurrencyIdConvert<ForeignXcm, primitives::topology::Composable, ParachainInfo, StaticAssetsMap>;
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,

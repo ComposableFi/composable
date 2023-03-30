@@ -31,22 +31,18 @@ mod migrations;
 mod prelude;
 mod weights;
 mod xcmp;
-use gates::*;
-use governance::*;
-use primitives::currency::ForeignAssetId;
 use common::{
 	fees::multi_existential_deposits, governance::native::NativeTreasury, rewards::StakingPot,
-	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, Hash,
-	Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
-	MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, Hash, Moment,
+	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::{
-	assets::Asset,
-	xcm::assets::{RemoteAssetRegistryInspect},
-};
+use composable_traits::{assets::Asset, xcm::assets::RemoteAssetRegistryInspect};
+use gates::*;
+use governance::*;
 use orml_traits::parameter_type_with_key;
-use primitives::currency::{CurrencyId, ValidateCurrencyId};
+use primitives::currency::{CurrencyId, ForeignAssetId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, ConstU128, OpaqueMetadata};
 use sp_runtime::{
@@ -793,7 +789,7 @@ impl_runtime_apis! {
 				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
 				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
 				asset
-			}).map(|xcm| 
+			}).map(|xcm|
 				Asset {
 				  decimals : xcm.decimals,
 				  existential_deposit : xcm.existential_deposit,

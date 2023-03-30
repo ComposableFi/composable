@@ -1,8 +1,8 @@
-use common::ibc::ForeignIbcIcs20Assets;
 use ::ibc::core::{
 	ics24_host::identifier::PortId,
 	ics26_routing::context::{Module, ModuleId},
 };
+use common::ibc::ForeignIbcIcs20Assets;
 use frame_support::traits::EitherOf;
 use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,

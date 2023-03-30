@@ -1,6 +1,6 @@
 //! Interfaces to managed assets
 use crate::assets::{AssetInfo, AssetInfoUpdate};
-use codec::{Decode, Encode, MaxEncodedLen, EncodeLike};
+use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
 use frame_support::{dispatch::DispatchResult, pallet_prelude::ConstU32, WeakBoundedVec};
 use polkadot_parachain::primitives::Id;
 use scale_info::TypeInfo;
@@ -15,19 +15,17 @@ use crate::{assets::Asset, currency::Exponent};
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(transparent))]
 pub struct XcmAssetLocation(
-	#[cfg_attr(feature = "std", serde(with = "MultiLocationDef"))]
-	pub xcm::latest::MultiLocation,
+	#[cfg_attr(feature = "std", serde(with = "MultiLocationDef"))] pub xcm::latest::MultiLocation,
 );
-
 
 impl codec::WrapperTypeEncode for XcmAssetLocation {}
 impl EncodeLike for XcmAssetLocation {}
 impl core::ops::Deref for XcmAssetLocation {
-    type Target = xcm::latest::MultiLocation;
+	type Target = xcm::latest::MultiLocation;
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
 }
 
 impl XcmAssetLocation {

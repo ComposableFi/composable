@@ -1,4 +1,4 @@
-use crate::{*};
+use crate::*;
 
 pub type Migrations = (
 	SchedulerMigrationV1toV4,

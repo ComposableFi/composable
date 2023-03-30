@@ -135,7 +135,7 @@ pub struct ForeignXcm;
 
 impl Convert<CurrencyId, Option<XcmAssetLocation>> for ForeignXcm {
 	fn convert(a: CurrencyId) -> Option<XcmAssetLocation> {
-			AssetsRegistry::asset_to_remote(a)
+		AssetsRegistry::asset_to_remote(a)
 	}
 }
 
@@ -148,12 +148,8 @@ impl Convert<XcmAssetLocation, Option<CurrencyId>> for ForeignXcm {
 type IsReserveAssetLocationFilter =
 	(MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
 
-type AssetsIdConverter = CurrencyIdConvert<
-	ForeignXcm,
-	primitives::topology::Picasso,
-	ParachainInfo,
-	StaticAssetsMap,
->;
+type AssetsIdConverter =
+	CurrencyIdConvert<ForeignXcm, primitives::topology::Picasso, ParachainInfo, StaticAssetsMap>;
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,

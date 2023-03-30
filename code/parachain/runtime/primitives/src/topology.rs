@@ -41,7 +41,7 @@ pub mod this {
 use composable_traits::{
 	assets::{AssetInfo, BiBoundedAssetName, BiBoundedAssetSymbol},
 	rational,
-	xcm::{Balance, assets::XcmAssetLocation},
+	xcm::{assets::XcmAssetLocation, Balance},
 };
 use ibc_rs_scale::{
 	applications::transfer::{PrefixedDenom as InnerPrefixedDenom, TracePrefix},
@@ -151,7 +151,7 @@ impl Composable {
 				),
 				decimals: Some(12),
 				existential_deposit: 1_000_000_000,
-				ratio: Some(rational!(1/1)),
+				ratio: Some(rational!(1 / 1)),
 			},
 		);
 

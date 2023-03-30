@@ -18,10 +18,10 @@ extern crate alloc;
 
 pub mod fees;
 pub mod governance;
+pub mod ibc;
 mod prelude;
 pub mod rewards;
 pub mod xcmp;
-pub mod ibc;
 
 pub use constants::*;
 use frame_support::{parameter_types, weights::Weight};

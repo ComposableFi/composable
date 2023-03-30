@@ -30,9 +30,9 @@ pub mod governance;
 pub mod ibc;
 mod migrations;
 mod prelude;
+pub mod version;
 mod weights;
 pub mod xcmp;
-pub mod version;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 use fees::FinalPriceConverter;
 use version::VERSION;
@@ -44,16 +44,15 @@ use common::{
 	fees::{multi_existential_deposits, NativeExistentialDeposit, WeightToFeeConverter},
 	governance::native::*,
 	rewards::StakingPot,
-	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
-	Hash, Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight, Signature,
-	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
-	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, Hash,
+	Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight, Signature, AVERAGE_ON_INITIALIZE_RATIO,
+	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::{Asset, DummyAssetCreator},
 	dex::{Amm, PriceAggregate},
-	xcm::assets::{RemoteAssetRegistryInspect},
+	xcm::assets::RemoteAssetRegistryInspect,
 };
 use primitives::currency::ForeignAssetId;
 
@@ -966,7 +965,7 @@ impl_runtime_apis! {
 				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
 				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
 				asset
-			}).map(|xcm| 
+			}).map(|xcm|
 			  Asset {
 				decimals : xcm.decimals,
 				existential_deposit : xcm.existential_deposit,
