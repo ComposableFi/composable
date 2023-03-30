@@ -12,6 +12,7 @@ custom_derive! {
 		PICA,
 		USDT,
 		USDC,
+		DOT,
 	}
 }
 
@@ -31,6 +32,7 @@ lazy_static! {
 		(CurrencyId::PICA, Asset::PICA),
 		(CurrencyId::USDT, Asset::USDT),
 		(CurrencyId::USDC, Asset::USDC),
+		(CurrencyId::DOT, Asset::DOT),
 	]
 	.into_iter()
 	.collect();

@@ -5,7 +5,7 @@ version = "0.1.0"
 
 
 [dependencies]
-binance = "0.18.3"
+binance = "0.20.2"
 chrono = "0.4.19"
 clap = { version = "3.1.12", features = ["derive"] }
 custom_derive = "0.1.7"

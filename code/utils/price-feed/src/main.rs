@@ -62,7 +62,7 @@ async fn main() {
 
 	let binance = BinanceFeed::start(
 		keep_running.clone(),
-		&[Asset::KSM].into_iter().collect(),
+		&[Asset::KSM, Asset::DOT].into_iter().collect(),
 		Asset::from_str(&opts.quote_asset).expect("invalid quote asset"),
 	)
 	.await

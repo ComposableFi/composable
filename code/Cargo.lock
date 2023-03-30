@@ -764,18 +764,18 @@ dependencies = [
 
 [[package]]
 name = "binance"
-version = "0.18.4"
+version = "0.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6a061cdf5f92f4772a51317e347ac13bdf2cfc2a6345bf22491715a720ba005"
+checksum = "28404b624d565414ff446c9f91e802d6c4ec6ff244816cca01c00c04df09022f"
 dependencies = [
  "error-chain",
  "hex",
- "hmac 0.11.0",
+ "hmac 0.12.1",
  "reqwest",
  "serde",
  "serde_json",
- "sha2 0.9.9",
- "tungstenite 0.15.0",
+ "sha2 0.10.6",
+ "tungstenite 0.18.0",
  "url 2.3.1",
 ]
 
@@ -16216,26 +16216,6 @@ checksum = "7b3e06c9b9d80ed6b745c7159c40b311ad2916abb34a49e9be2653b90db0d8dd"
 
 [[package]]
 name = "tungstenite"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "983d40747bce878d2fb67d910dcb8bd3eca2b2358540c3cc1b98c027407a3ae3"
-dependencies = [
- "base64 0.13.1",
- "byteorder",
- "bytes 1.4.0",
- "http",
- "httparse",
- "log 0.4.17",
- "native-tls",
- "rand 0.8.5",
- "sha-1 0.9.8",
- "thiserror",
- "url 2.3.1",
- "utf-8",
-]
-
-[[package]]
-name = "tungstenite"
 version = "0.17.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e27992fd6a8c29ee7eef28fc78349aa244134e10ad447ce3b9f0ac0ed0fa4ce0"
@@ -16248,6 +16228,26 @@ dependencies = [
  "log 0.4.17",
  "rand 0.8.5",
  "sha-1 0.10.1",
+ "thiserror",
+ "url 2.3.1",
+ "utf-8",
+]
+
+[[package]]
+name = "tungstenite"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "30ee6ab729cd4cf0fd55218530c4522ed30b7b6081752839b68fcec8d0960788"
+dependencies = [
+ "base64 0.13.1",
+ "byteorder",
+ "bytes 1.4.0",
+ "http",
+ "httparse",
+ "log 0.4.17",
+ "native-tls",
+ "rand 0.8.5",
+ "sha1 0.10.5",
  "thiserror",
  "url 2.3.1",
  "utf-8",
