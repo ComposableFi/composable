@@ -10,6 +10,7 @@
 )]
 #![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
-
+extern crate alloc;
 pub mod currency;
 pub mod topology;
+mod prelude;

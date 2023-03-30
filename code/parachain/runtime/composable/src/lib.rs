@@ -33,17 +33,17 @@ mod weights;
 mod xcmp;
 use gates::*;
 use governance::*;
-
+use primitives::currency::ForeignAssetId;
 use common::{
 	fees::multi_existential_deposits, governance::native::NativeTreasury, rewards::StakingPot,
-	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, ForeignAssetId, Hash,
+	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, Hash,
 	Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
 	MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
-	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
+	xcm::assets::{RemoteAssetRegistryInspect},
 };
 use orml_traits::parameter_type_with_key;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
@@ -230,7 +230,7 @@ impl assets_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = CurrencyId;
 	type Balance = Balance;
-	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
+	type ForeignAssetId = ForeignAssetId;
 	type UpdateAssetRegistryOrigin = EnsureRootOrHalfCouncil;
 	type ParachainOrGovernanceOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
@@ -793,7 +793,16 @@ impl_runtime_apis! {
 				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
 				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
 				asset
-			}).collect::<Vec<_>>();
+			}).map(|xcm| 
+				Asset {
+				  decimals : xcm.decimals,
+				  existential_deposit : xcm.existential_deposit,
+				  id : xcm.existential_deposit,
+				  foreign_id : xcm.foreign_id.map(Into::into),
+				  name : xcm.name,
+				  ratio : xcm.ratio,
+				}
+			  ).collect::<Vec<_>>();
 
 			// Assets from the assets-registry pallet
 			let foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();

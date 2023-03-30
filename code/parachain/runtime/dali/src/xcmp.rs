@@ -131,11 +131,25 @@ impl FilterAssetLocation for RelayReserveFromParachain {
 	}
 }
 
+pub struct ForeignXcm;
+
+impl Convert<CurrencyId, Option<XcmAssetLocation>> for ForeignXcm {
+	fn convert(a: CurrencyId) -> Option<XcmAssetLocation> {
+			AssetsRegistry::asset_to_remote(a)
+	}
+}
+
+impl Convert<XcmAssetLocation, Option<CurrencyId>> for ForeignXcm {
+	fn convert(a: XcmAssetLocation) -> Option<CurrencyId> {
+		AssetsRegistry::location_to_asset(a)
+	}
+}
+
 type IsReserveAssetLocationFilter =
 	(MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
 
 type AssetsIdConverter = CurrencyIdConvert<
-	AssetsRegistry,
+	ForeignXcm,
 	primitives::topology::Picasso,
 	ParachainInfo,
 	StaticAssetsMap,

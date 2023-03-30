@@ -53,7 +53,7 @@ use common::{
 	},
 	rewards::StakingPot,
 	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId,
-	FinancialNftInstanceId, ForeignAssetId, Hash, MaxStringSize, Moment, PoolId, Signature,
+	FinancialNftInstanceId, Hash, MaxStringSize, Moment, PoolId, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -1523,12 +1523,12 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, ForeignAssetId> for Runtime {
+	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, XcmAssetLocation> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
 			SafeRpcWrapper(<AssetsTransactorRouter as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
-		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {
+		fn list_assets() -> Vec<Asset<Balance, XcmAssetLocation>> {
 			// Hardcoded assets
 			use common::fees::ForeignToNativePriceConverter;
 			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
