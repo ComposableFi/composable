@@ -1,6 +1,5 @@
 use common::{AccountId, AuraId, Balance};
 use picasso_runtime::GenesisConfig;
-use primitives::currency::ForeignAssetId;
 
 use super::{Extensions, ParaId};
 

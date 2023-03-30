@@ -157,7 +157,7 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub assets: sp_std::vec::Vec<(u64, Option<T::ForeignAssetId>, AssetInfo<T::Balance>)>,
-		phantom: sp_std::marker::PhantomData<T>,
+		pub phantom: sp_std::marker::PhantomData<T>,
 	}
 
 	#[cfg(feature = "std")]
