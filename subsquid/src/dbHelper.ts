@@ -566,21 +566,26 @@ export async function getCurrentAssetPrices(ctx: Context | EntityManager): Promi
     const res = await fetch<CoingeckoPrices>(endpoint);
 
     for (const assetId of updatePrices) {
-      const assetInfo = assetList.find(asset => asset.assetId === assetId);
-      // Store prices from Coingecko in DB
-      if (assetInfo?.coingeckoId && res[assetInfo.coingeckoId].usd) {
-        // Keep price for returning
-        currentPrices[assetId] = res[assetInfo.coingeckoId].usd;
-        // Add HistoricalAssetPrice for storing in DB
-        newHistoricalPrices.push(
-          new HistoricalAssetPrice({
-            id: randomUUID(),
-            assetId,
-            price: res[assetInfo.coingeckoId].usd,
-            timestamp: date,
-            currency: Currency.USD
-          })
-        );
+      try {
+        const assetInfo = assetList.find(asset => asset.assetId === assetId);
+        // Store prices from Coingecko in DB
+        if (assetInfo?.coingeckoId && res[assetInfo.coingeckoId].usd) {
+          // Keep price for returning
+          currentPrices[assetId] = res[assetInfo.coingeckoId].usd;
+          // Add HistoricalAssetPrice for storing in DB
+          newHistoricalPrices.push(
+            new HistoricalAssetPrice({
+              id: randomUUID(),
+              assetId,
+              price: res[assetInfo.coingeckoId].usd,
+              timestamp: date,
+              currency: Currency.USD
+            })
+          );
+        }
+      } catch (err) {
+        console.log(`Error getting price for ${assetId} from Coingecko or storing it in DB`);
+        console.log(err);
       }
     }
 
@@ -890,7 +895,7 @@ export async function getAllHistoricalCoingeckoPrices(
             duplicates.add(date.getTime().toString());
             const assetPrice = await findHistoricalAssetPrice(ctx, assetId, date);
 
-            if (assetPrice === undefined) {
+            if (assetPrice === undefined && priceValue) {
               missingPrices.push(
                 new HistoricalAssetPrice({
                   id: randomUUID(),
