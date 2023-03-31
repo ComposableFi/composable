@@ -1,7 +1,9 @@
+use crate::*;
 use crate::prelude::*;
 use common::fees::{ForeignToNativePriceConverter, PriceConverter};
 use composable_traits::{currency::Rational64, rational};
-
+use sp_core::ConstU8;
+use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use primitives::currency::CurrencyId;
 
 pub struct WellKnownForeignToNativePriceConverter;
@@ -41,7 +43,6 @@ parameter_types! {
 	/// This value is currently only used by pallet-transaction-payment as an assertion that the
 	/// next multiplier is always > min value.
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_u128);
-	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
 impl transaction_payment::Config for Runtime {
@@ -51,12 +52,10 @@ impl transaction_payment::Config for Runtime {
 	type WeightToFee = WeightToFeeConverter;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+	type OperationalFeeMultiplier = ConstU8<5>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 }
-
-/// Struct implementing `asset_tx_payment::HandleCredit` that determines the behavior when fees are
-/// paid in something other than the native token.
+pub type AssetsPaymentHeader = asset_tx_payment::ChargeAssetTxPayment<Runtime>;
 pub struct TransferToTreasuryOrDrop;
 impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrDrop {
 	fn handle_credit(credit: fungibles::CreditOf<AccountId, Tokens>) {
@@ -84,3 +83,5 @@ impl asset_tx_payment::Config for Runtime {
 
 	type BalanceConverter = FinalPriceConverter;
 }
+
+

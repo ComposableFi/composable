@@ -34,9 +34,9 @@ pub mod version;
 mod weights;
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
-use fees::FinalPriceConverter;
 use version::VERSION;
 pub use xcmp::XcmConfig;
+pub use fees::{FinalPriceConverter, AssetsPaymentHeader};
 
 pub use crate::fees::WellKnownForeignToNativePriceConverter;
 
@@ -101,7 +101,7 @@ use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
-use transaction_payment::{Multiplier, TargetedFeeAdjustment};
+
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -381,11 +381,7 @@ impl timestamp::Config for Runtime {
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	/// Max locks that can be placed on an account. Capped for storage
-	/// concerns.
-	pub const MaxLocks: u32 = 50;
-}
+type MaxLocks = ConstU32<50>; 
 
 impl balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
@@ -399,43 +395,6 @@ impl balances::Config for Runtime {
 	type ExistentialDeposit = NativeExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = weights::balances::WeightInfo<Runtime>;
-}
-
-
-
-/// Struct implementing `asset_tx_payment::HandleCredit` that determines the behavior when fees are
-/// paid in something other than the native token.
-pub struct TransferToTreasuryOrDrop;
-impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrDrop {
-	fn handle_credit(credit: fungibles::CreditOf<AccountId, Tokens>) {
-		let _ =
-			<Tokens as fungibles::Balanced<AccountId>>::resolve(&TreasuryAccount::get(), credit);
-	}
-}
-
-impl asset_tx_payment::Config for Runtime {
-	type Fungibles = Tokens;
-	type OnChargeAssetTransaction =
-		asset_tx_payment::FungiblesAdapter<FinalPriceConverter, TransferToTreasuryOrDrop>;
-
-	type UseUserConfiguration = ConstBool<true>;
-
-	type WeightInfo = weights::asset_tx_payment::WeightInfo<Runtime>;
-
-	type ConfigurationOrigin = EnsureRootOrTwoThirdNativeCouncil;
-
-	type ConfigurationExistentialDeposit = NativeExistentialDeposit;
-
-	type PayableCall = RuntimeCall;
-
-	type Lock = Assets;
-
-	type BalanceConverter = FinalPriceConverter;
-}
-
-impl sudo::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeCall = RuntimeCall;
 }
 
 parameter_types! {
@@ -489,7 +448,7 @@ where
 			system::CheckEra::<Runtime>::from(era),
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
-			asset_tx_payment::ChargeAssetTxPayment::<Runtime>::from(tip, None),
+			AssetsPaymentHeader::from(tip, None),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -842,7 +801,7 @@ pub type SignedExtra = (
 	system::CheckEra<Runtime>,
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
-	asset_tx_payment::ChargeAssetTxPayment<Runtime>,
+	AssetsPaymentHeader,
 );
 
 /// Unchecked extrinsic type as expected by this runtime.

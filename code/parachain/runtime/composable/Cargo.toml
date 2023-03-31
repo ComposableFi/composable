@@ -75,6 +75,7 @@ governance-registry = { package = "pallet-governance-registry", path = "../../fr
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false, optional = true }
 primitives = { path = "../primitives", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false, optional = true }
+asset-tx-payment = { package = "pallet-asset-tx-payment", path = "../../frame/transaction-payment/asset-tx-payment", default-features = false }
 transaction-payment = { package = "pallet-transaction-payment", path = "../../frame/transaction-payment", default-features = false }
 
 # Used for the node template's RPCs
@@ -159,6 +160,7 @@ runtime-benchmarks = [
   "common/runtime-benchmarks",
   "pallet-ibc/runtime-benchmarks",
   "pallet-proxy/runtime-benchmarks",
+  "asset-tx-payment/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -233,4 +235,5 @@ std = [
   "polkadot-parachain/std",
   "pallet-xcm/std",
   "composable-traits/std",
+  "asset-tx-payment/std",
 ]

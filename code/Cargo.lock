@@ -1675,6 +1675,7 @@ dependencies = [
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
+ "pallet-asset-tx-payment",
  "pallet-assets",
  "pallet-assets-registry",
  "pallet-aura",
