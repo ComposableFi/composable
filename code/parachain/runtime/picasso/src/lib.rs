@@ -401,35 +401,7 @@ impl balances::Config for Runtime {
 	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	/// 1 milli-pica/byte should be fine
-	pub TransactionByteFee: Balance = CurrencyId::milli();
 
-	// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
-	/// than this will decrease the weight and more will increase.
-	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
-	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
-	/// change the fees more rapidly. This low value causes changes to occur slowly over time.
-	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(3, 100_000);
-	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
-	/// that combined with `AdjustmentVariable`, we can recover from the minimum.
-	/// See `multiplier_can_grow_from_zero` in integration_tests.rs.
-	/// This value is currently only used by pallet-transaction-payment as an assertion that the
-	/// next multiplier is always > min value.
-	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_u128);
-	pub const OperationalFeeMultiplier: u8 = 5;
-}
-
-impl transaction_payment::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, StakingPot<Runtime, NativeTreasury>>;
-	type WeightToFee = WeightToFeeConverter;
-	type FeeMultiplierUpdate =
-		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-}
 
 /// Struct implementing `asset_tx_payment::HandleCredit` that determines the behavior when fees are
 /// paid in something other than the native token.

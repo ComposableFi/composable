@@ -19,4 +19,4 @@ impl ForeignToNativePriceConverter for WellKnownForeignToNativePriceConverter {
 }
 
 pub type FinalPriceConverter =
-	PriceConverter<Unit<CurrencyId>, WellKnownForeignToNativePriceConverter>;
+	PriceConverter<crate::AssetsRegistry, WellKnownForeignToNativePriceConverter>;
