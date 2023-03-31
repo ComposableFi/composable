@@ -8,7 +8,7 @@ use crate::{
 };
 use codec::Decode;
 use composable_support::abstractions::utils::increment::Increment;
-use composable_traits::vesting::{
+use crate::types::{
 	VestingSchedule, VestingScheduleIdSet, VestingScheduleInfo, VestingWindow::BlockNumberBased,
 };
 use frame_benchmarking::{account, benchmarks, vec, whitelisted_caller};

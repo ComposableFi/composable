@@ -56,5 +56,4 @@ pub mod staking;
 pub mod storage;
 pub mod time;
 pub mod vault;
-pub mod vesting;
 pub mod xcm;

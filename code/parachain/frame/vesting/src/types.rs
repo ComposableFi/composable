@@ -209,7 +209,7 @@ impl<
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::vesting::VestingWindow::{BlockNumberBased, MomentBased};
+	use crate::types::VestingWindow::*;
 
 	#[test]
 	fn test_is_zero_period() {

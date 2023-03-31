@@ -3,9 +3,9 @@
 #![cfg(test)]
 
 use super::*;
-use composable_traits::vesting::{
+use crate::types::{
 	VestingSchedule, VestingScheduleInfo,
-	VestingWindow::{BlockNumberBased, MomentBased},
+	VestingWindow::*,
 };
 use frame_support::{
 	assert_noop, assert_ok,
