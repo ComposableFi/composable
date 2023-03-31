@@ -1,3 +1,7 @@
+use frame_support::{
+	traits::{GetStorageVersion, StorageVersion},
+};
+
 use crate::{
 	migrations::pablo_picasso_init_pools::PabloPicassoInitialPoolsMigration, prelude::*, *,
 };
@@ -11,7 +15,9 @@ pub type Migrations = (
 	scheduler::migration::v3::MigrateToV4<Runtime>,
 	democracy::migrations::v1::Migration<Runtime>,
 	multisig::migrations::v1::MigrateToV1<Runtime>,
+	vesting::migrations::VestingV0ToV1<Runtime>,
 );
+
 
 // Migration for scheduler pallet to move from a plain Call to a CallOrHash.
 pub struct SchedulerMigrationV1toV4;

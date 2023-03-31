@@ -6,8 +6,8 @@ use super::*;
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::{
 	bonded_finance::{BondDuration, BondOffer, BondOfferReward},
-	vesting::VestingScheduleIdSet,
 };
+use pallet_vesting::VestingScheduleIdSet;
 use frame_support::{
 	error::BadOrigin,
 	traits::{
