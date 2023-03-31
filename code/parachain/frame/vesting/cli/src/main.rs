@@ -1,8 +1,10 @@
 mod input;
 mod output;
 mod prelude;
+mod client;
 
 use clap::Parser;
+use client::VestingSchedule;
 use input::*;
 use output::*;
 use prelude::*;
@@ -10,6 +12,8 @@ use sp_core::Pair;
 use std::str::FromStr;
 use subxt::{dynamic::Value, tx::PairSigner, utils::AccountId32, OnlineClient, SubstrateConfig};
 use tracing::info;
+
+use crate::client::VestingScheduleT;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -123,8 +127,23 @@ async fn main() -> anyhow::Result<()> {
 			let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;
 			let storage_address = subxt::dynamic::storage_root("Vesting", "VestingSchedules");
 			let mut iter = api.storage().at(None).await?.iter(storage_address, 10).await?;
+			//5f27b51b5ec208ee9cb25b55d87282439c806850c4ee3bc06ba62b096318fe381afe891bf10d66367dd9ea00f54e8e7b08c4903d780d91371231a21f5c1df49e7801f30be61711a160821b6628b69a023ba80a3778f04ebf45e806d19a05202501000000000000000000000000000000: ((((175, { "vesting_schedule_id": 175, "window": v"MomentBased"{ "start": 1685577600, "period": 2592000 }, "period_count": 24, "per_period": 33333330000000000, "already_claimed": 0 }))))
+		// 	pub type VestingSchedules<T: Config> = StorageDoubleMap<
+		// 	_,
+		// 	Blake2_128Concat,
+		// 	AccountIdOf<T>,
+		// 	Blake2_128Concat,
+		// 	AssetIdOf<T>,
+		// 	BoundedBTreeMap<T::VestingScheduleId, VestingScheduleOf<T>, T::MaxVestingSchedules>,
+		// 	ValueQuery,
+		// >;
+				
+
+
 			while let Some((key, vestingSchedule)) = iter.next().await? {
-				println!("{}: {}", hex::encode(key), vestingSchedule.to_value()?);
+				let decoded = VestingScheduleT::decode(&mut vestingSchedule.encoded()).expect("scale decoded");
+				
+				println!("{}: {:?}", hex::encode(key), decoded);
 			}
 		},
 	}
