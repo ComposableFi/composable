@@ -3,10 +3,7 @@
 #![cfg(test)]
 
 use super::*;
-use crate::types::{
-	VestingSchedule, VestingScheduleInfo,
-	VestingWindow::*,
-};
+use crate::types::{VestingSchedule, VestingScheduleInfo, VestingWindow::*};
 use frame_support::{
 	assert_noop, assert_ok,
 	error::BadOrigin,
@@ -14,6 +11,15 @@ use frame_support::{
 };
 use mock::{RuntimeEvent, *};
 use orml_tokens::BalanceLock;
+
+#[test]
+fn production() {
+	let input_account = "5zEddnhFgz8yyAXwMDew9SMNQveGmcEP73CThfYh6DfkQXMH";
+	let input_window_moment_start = 1685577600000;
+	let input_window_moment_period = 2592000000;
+	let input_period_count = 24;
+	let input_per_period = 266666670000000000;
+}
 
 #[test]
 fn vesting_from_chain_spec_works() {
