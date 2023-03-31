@@ -36,61 +36,13 @@ Below is a high level diagram that shows the interactions between the components
 
 ### Setting up a node in development mode
 
-For development mode, polkalaunch scripts should be used. 
 
-It sets up a local network with 4 collators with predefined keys and addresses.
-
-**Setup required prerequisites**
-
-A **Debian** based Linux system is required, we recommend Debian, Ubuntu or Linux Mint.
-
-1. Set up required packages 
-
-Run the following command:
-
-
-```bash
-sudo apt update && sudo apt install -y git clang curl libssl-dev llvm libudev-dev pkg-config wget
-```
-
-2. Setup Rust binary and Toolchain
-
-Run the following commands:
-
-
-```bash
-RUST_C="nightly-2021-11-07"
-curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-export PATH="$PATH:$HOME/.cargo/bin" && \
-rustup toolchain uninstall $(rustup toolchain list) && \
-rustup toolchain install $RUST_C && \
-rustup target add wasm32-unknown-unknown --toolchain $RUST_C && \
-rustup default $RUST_C && \
-rustup show
-```
-
-And wait for the installation process to finish.
-
-3. Setup Nodejs & Yarn 
-
-Run the following commands:
-
-```bash
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
-export NVM_DIR="$HOME/.nvm" && \
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
-nvm install v16.15.0 && \
-nvm use v16.15.0 && \
-npm install --global yarn
-```
 
 **Run devnet**
 
 ```bash
 nix run .#devnet-picasso
 ```
-
-This means your node has started.
 
 Nodes are writing logs here: 
 
@@ -145,23 +97,13 @@ By default, the prices are fetched from the
 
 ### Setup
 
-In this step, we will set up a rust compiler, a toolchain and build a node.  \
- \
-**Setup required libraries**
-
-Run the following command:
-
-```bash
-sudo apt update && sudo apt install -y git clang curl libssl-dev llvm libudev-dev pkg-config
-```
-
 **Get the project and build the price-feed**
 
 Run the following commands:
 
 ```bash
-git clone --depth 1 --branch v2.2.1 https://github.com/ComposableFi/composable.git composable-oracle && \
-cd composable-oracle && \
+git clone --depth 1 https://github.com/ComposableFi/composable.git composable-oracle && \
+cd composable-oracle/code && \
 cargo build --release --package price-feed
 ```
 
@@ -173,15 +115,17 @@ You can try running the server with  \
 RUST_LOG=debug ./target/release/price-feed
 ```
 
-The server will start indexing a list of predefined assets (hardcoded).
+The server will start indexing a list of predefined assets (hardcoded). Currently, they are `KSM` and `DOT`.
 
 To make sure the price-feed is working correctly one should go to the browser.
 
 By default, price-feed runs on localhost, port 3001. 
 
-Currently only the price for KSM is supported, which can be accessed using the following link.
+Currently only the price for KSM and DOT are supported, which can be accessed using the following links.
 
 [http://127.0.0.1:3001/price/4](http://127.0.0.1:3001/price/4)
+
+[http://127.0.0.1:3001/price/6](http://127.0.0.1:3001/price/6)
 
 
 ![price_feed_output](./oracle-set-up-guide/price-feed-output.png)
@@ -255,7 +199,7 @@ OPTIONS:
 In order for a Collator to become an Apollo Oracle, you need to make sure that you deployed a price-feed server along 
 your node. 
 
-Once you have node and price-feed setup and running, the following steps will be required to bind your price-feed to the 
+Once you have the node and price-feed running, the following steps will be required to bind your price-feed to the 
 node.
 
 These are the wallet details for the Alice developer wallet.
@@ -272,7 +216,7 @@ Mnemonic(seed): "bottom drive obey lake curtain smoke basket hold race lonely fi
 
 This describes the automated setup using our oracle initialization script.
 
-Please scroll down to part 2. For manual setup instructions.
+Please scroll down to part 2 for manual setup instructions.
 
 **Setup required libraries**
 
@@ -285,11 +229,11 @@ sudo apt update && sudo apt install -y git curl
 Installing NodeJS:
 
 ```bash
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash && \
 export NVM_DIR="$HOME/.nvm" && \
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
-nvm install v16.15.0 && \
-nvm use v16.15.0 && \
+nvm install node && \
+nvm use node && \
 npm install --global yarn
 ```
 
@@ -299,7 +243,7 @@ Getting the oracle price feed initializer:
 
 ```bash
 git clone --depth 1 https://github.com/ComposableFi/composable.git composable-oracle-initializer && \
-cd composable-oracle-initializer/scripts/oracle-setup
+cd composable-oracle-initializer/composablejs/packages/oracle_setup
 ```
 
 Setup oracle price feed initializer:
