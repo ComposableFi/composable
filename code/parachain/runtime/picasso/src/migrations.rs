@@ -1,7 +1,3 @@
-use frame_support::{
-	traits::{GetStorageVersion, StorageVersion},
-};
-
 use crate::{
 	migrations::pablo_picasso_init_pools::PabloPicassoInitialPoolsMigration, prelude::*, *,
 };
