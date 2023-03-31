@@ -21,7 +21,7 @@ There are 3 key pieces needed in order to achieve this goal:
 Pallet IBC is referred to as the IBC stack for non-Cosmos chains 
 and is composed of IBC-rs and a Tendermint light client(ic07). 
 IBC-rs is an implementation of IBC in Rust, 
-which allows for IBC messages to be interpreted on Picasso(and other Substrate-based chains). 
+which allows for IBC messages to be interpreted on Picasso (and other Substrate-based chains). 
 Together these two components enable parachain to process and interpret IBC packets.
 
 ## GRANDPA light client
