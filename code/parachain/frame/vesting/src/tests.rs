@@ -18,7 +18,7 @@ fn production() {
 	let start = 1685577600000;
 	let per_period = 266666670000000000;
 	let schedule_info = VestingScheduleInfo::<u64, u64, u64> {
-		window: MomentBased { start, period: 2592000000 },
+		window: MomentBased { start : start - 2592000000, period: 2592000000 },
 		period_count: 24,
 		per_period,
 	};

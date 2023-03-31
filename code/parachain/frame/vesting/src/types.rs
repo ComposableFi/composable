@@ -38,13 +38,13 @@ pub trait VestedTransfer {
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub enum VestingWindow<BlockNumber, Moment> {
 	MomentBased {
-		/// Vesting start
+		/// Vesting start (first claim can be maid at start + period)
 		start: Moment,
 		/// Number of moments between vest
 		period: Moment,
 	},
 	BlockNumberBased {
-		/// Vesting start
+		/// Vesting start (first claim can be maid at start + period)
 		start: BlockNumber,
 		/// Number of blocks between vest
 		period: BlockNumber,
