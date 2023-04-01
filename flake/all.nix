@@ -1,8 +1,18 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }: {
     packages = {
-      all-docs = pkgs.linkFarmFromDrvs "all-ci-packages"
+      all-docs = pkgs.linkFarmFromDrvs "all-docs"
         (with self'.packages; [ docs-server docs-static ]);
+      all-misc = pkgs.linkFarmFromDrvs "all-misc" (with self'.packages; [
+        cargo-fmt-check
+        cargo-udeps-check
+        hadolint-check
+        nixfmt-check
+        deadnix-check
+        prettier-check
+        spell-check
+        taplo-check
+      ]);
 
       all = pkgs.linkFarmFromDrvs "all-ci-packages" (with self'.packages; [
         acala-node
@@ -10,8 +20,6 @@
         bifrost-node
         cargo-clippy-check
         cargo-deny-check
-        cargo-fmt-check
-        cargo-udeps-check
         check-composable-benchmarks-ci
         check-dali-benchmarks-ci
         check-dali-integration-tests
@@ -22,7 +30,6 @@
         composable-bench-node
         composable-node
         dali-subxt-client
-        deadnix-check
         devnet-centauri
         devnet-dali
         devnet-dali-complete
@@ -31,16 +38,11 @@
         devnet-integration-tests
         devnet-picasso-complete
         frontend-static
-        hadolint-check
         hyperspace-dali
         hyperspace-dali-image
-        nixfmt-check
         polkadot-node-on-parity-kusama
-        prettier-check
-        spell-check
         statemine-node
         subwasm
-        taplo-check
         unit-tests
       ]);
 
