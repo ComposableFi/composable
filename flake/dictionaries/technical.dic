@@ -15,6 +15,7 @@ adoc
 AggrTrades
 airdropper
 alice
+allattrs
 apexcharts
 arion
 arrayify
@@ -73,6 +74,7 @@ containrrr # `containrrr/watchtower` docker image
 contentful
 coreutils
 cosm
+cosmosattrs
 Cosmoverse
 crev # cargo-crev
 crowdloaning
@@ -82,6 +84,7 @@ dalek
 dappsys
 deadnix
 deburr
+defaultattrs
 devcontainers
 devel
 devenv

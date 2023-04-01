@@ -4,10 +4,7 @@
 
 use super::*;
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
-use composable_traits::{
-	bonded_finance::{BondDuration, BondOffer, BondOfferReward},
-	vesting::VestingScheduleIdSet,
-};
+use composable_traits::bonded_finance::{BondDuration, BondOffer, BondOfferReward};
 use frame_support::{
 	error::BadOrigin,
 	traits::{
@@ -16,6 +13,7 @@ use frame_support::{
 	},
 };
 use mock::{RuntimeEvent, *};
+use pallet_vesting::VestingScheduleIdSet;
 use proptest::prelude::*;
 
 prop_compose! {

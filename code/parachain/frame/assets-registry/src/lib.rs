@@ -81,7 +81,8 @@ pub mod pallet {
 			+ Debug
 			+ Clone
 			+ TypeInfo
-			+ MaxEncodedLen;
+			+ MaxEncodedLen
+			+ Default;
 
 		type UpdateAssetRegistryOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
@@ -172,7 +173,7 @@ pub mod pallet {
 		fn build(&self) {
 			for (nonce, location, asset_info) in self.assets.clone() {
 				let asset_id = T::LocalAssetId::decode(
-					&mut ([0u8, 0, 0, 0, 0, 0, 0, 0], nonce).encode().as_ref(),
+					&mut ([0_u8, 0, 0, 0, 0, 0, 0, 0], nonce).encode().as_ref(),
 				)
 				.expect("genesis is correct");
 

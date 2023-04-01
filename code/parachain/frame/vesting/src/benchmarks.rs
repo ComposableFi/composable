@@ -3,14 +3,14 @@
 #[cfg(test)]
 use crate::Pallet as Vesting;
 use crate::{
+	types::{
+		VestingSchedule, VestingScheduleIdSet, VestingScheduleInfo, VestingWindow::BlockNumberBased,
+	},
 	AssetIdOf, BalanceOf, BlockNumberOf, Call, Config, Pallet, VestedTransfer,
 	VestingScheduleInfoOf, VestingScheduleNonce, VestingScheduleOf, Zero,
 };
 use codec::Decode;
 use composable_support::abstractions::utils::increment::Increment;
-use composable_traits::vesting::{
-	VestingSchedule, VestingScheduleIdSet, VestingScheduleInfo, VestingWindow::BlockNumberBased,
-};
 use frame_benchmarking::{account, benchmarks, vec, whitelisted_caller};
 use frame_support::traits::{fungibles::Mutate, Get};
 use frame_system::RawOrigin;
