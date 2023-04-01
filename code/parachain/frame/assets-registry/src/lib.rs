@@ -81,7 +81,8 @@ pub mod pallet {
 			+ Debug
 			+ Clone
 			+ TypeInfo
-			+ MaxEncodedLen;
+			+ MaxEncodedLen
+			+ Default;
 
 		type UpdateAssetRegistryOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 

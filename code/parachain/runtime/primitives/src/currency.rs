@@ -487,6 +487,12 @@ impl FromStr for PrefixedDenom {
 	}
 }
 
+impl Default for PrefixedDenom {
+	fn default() -> Self {
+		Self(InnerDenom::from_str("1").expect("constant"))
+	}
+}
+
 impl WrapperTypeEncode for PrefixedDenom {}
 impl EncodeLike for PrefixedDenom {}
 impl core::ops::Deref for PrefixedDenom {
