@@ -9,7 +9,7 @@ impl<T> ForeignIbcIcs20Assets<T>
 where
 	T: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = ForeignAssetId>,
 {
-	pub fn from_denom_to_asset_id(denom: &String) -> Result<CurrencyId, DispatchError> {
+	pub fn from_denom_to_asset_id(denom: &str) -> Result<CurrencyId, DispatchError> {
 		let denom = PrefixedDenom::from_str(denom)?;
 		if denom.0.trace_path.is_empty() {
 			Ok(CurrencyId(denom.0.base_denom.as_str().parse().map_err(|_| {

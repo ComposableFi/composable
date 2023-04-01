@@ -80,6 +80,7 @@ pub const VESTING_LOCK_ID: LockIdentifier = *b"compvest";
 
 #[frame_support::pallet]
 pub mod module {
+	use crate::types::*;
 	use codec::{FullCodec, MaxEncodedLen};
 	use composable_support::{
 		abstractions::{
@@ -88,7 +89,6 @@ pub mod module {
 		},
 		math::safe::SafeAdd,
 	};
-	use crate::types::*;
 	use frame_support::{traits::Time, BoundedBTreeMap};
 	use orml_traits::{MultiCurrency, MultiLockableCurrency};
 	use sp_runtime::traits::AtLeast32Bit;

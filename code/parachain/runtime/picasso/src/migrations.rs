@@ -14,7 +14,6 @@ pub type Migrations = (
 	vesting::migrations::VestingV0ToV1<Runtime>,
 );
 
-
 // Migration for scheduler pallet to move from a plain Call to a CallOrHash.
 pub struct SchedulerMigrationV1toV4;
 impl OnRuntimeUpgrade for SchedulerMigrationV1toV4 {

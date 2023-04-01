@@ -18,7 +18,7 @@ fn production() {
 	let start = 1685577600000;
 	let per_period = 266666670000000000;
 	let schedule_info = VestingScheduleInfo::<u64, u64, u64> {
-		window: MomentBased { start : start - 2592000000, period: 2592000000 },
+		window: MomentBased { start: start - 2592000000, period: 2592000000 },
 		period_count: 24,
 		per_period,
 	};
@@ -70,10 +70,10 @@ fn production() {
 				} => Some(it),
 				_ => None,
 			})
-			.unwrap().clone();
-		let amount  = claimed.get(&added).unwrap();
-		assert_eq!(*amount,per_period);
-
+			.unwrap()
+			.clone();
+		let amount = claimed.get(&added).unwrap();
+		assert_eq!(*amount, per_period);
 	});
 }
 

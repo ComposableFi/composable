@@ -67,9 +67,7 @@ pub mod pallet {
 		transactional, PalletId,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
-	use pallet_vesting::{
-		VestedTransfer, VestingScheduleInfo, VestingWindow::BlockNumberBased,
-	};
+	use pallet_vesting::{VestedTransfer, VestingScheduleInfo, VestingWindow::BlockNumberBased};
 	use scale_info::TypeInfo;
 	use sp_runtime::traits::{AccountIdConversion, BlockNumberProvider, Convert, One, Zero};
 	use sp_std::fmt::Debug;
