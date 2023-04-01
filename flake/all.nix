@@ -5,7 +5,6 @@
         (with self'.packages; [ docs-server docs-static ]);
       all-misc = pkgs.linkFarmFromDrvs "all-misc" (with self'.packages; [
         cargo-fmt-check
-        cargo-udeps-check
         hadolint-check
         nixfmt-check
         deadnix-check
