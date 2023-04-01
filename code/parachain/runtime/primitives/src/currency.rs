@@ -459,6 +459,12 @@ pub enum ForeignAssetId {
 	IbcIcs20(PrefixedDenom),
 }
 
+impl Default for ForeignAssetId {
+	fn default() -> Self {
+		Self::Xcm(XcmAssetLocation::default())
+	}
+}
+
 impl From<XcmAssetLocation> for ForeignAssetId {
 	fn from(this: XcmAssetLocation) -> Self {
 		Self::Xcm(this)
