@@ -793,7 +793,7 @@ impl_runtime_apis! {
 				Asset {
 				  decimals : xcm.decimals,
 				  existential_deposit : xcm.existential_deposit,
-				  id : xcm.existential_deposit,
+				  id : xcm.id,
 				  foreign_id : xcm.foreign_id.map(Into::into),
 				  name : xcm.name,
 				  ratio : xcm.ratio,
