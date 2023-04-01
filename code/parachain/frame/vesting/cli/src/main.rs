@@ -33,7 +33,7 @@ async fn main() -> anyhow::Result<()> {
 			let csv_file: String =
 				String::from_utf8(std::fs::read(subargs.schedule).expect("file")).expect("string");
 			let mut rdr = csv::Reader::from_reader(csv_file.as_bytes());
-			let all: Vec<_> = rdr.deserialize::<AddRecord>().map(|x| x.expect("record")).collect();
+			let all = rdr.deserialize::<AddRecord>().collect::<Result<Vec<_>, _>>().expect("records are correct");
 			let key = sp_core::sr25519::Pair::from_string(&subargs.key, None).expect("secret");
 			let signer = PairSigner::new(key.clone());
 			let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;
@@ -258,8 +258,7 @@ async fn main() -> anyhow::Result<()> {
 			}
 
 			let mut clean: Vec<_> = deletes
-				.clone()
-				.into_iter()
+				.iter()
 				.map(|record| {
 					let address = AccountId32::from_str(&record.0).expect("address");
 					vec![
@@ -275,7 +274,7 @@ async fn main() -> anyhow::Result<()> {
 			let dest = AccountId32::from_str(&subargs.to).expect("address");
 
 			let mut force: Vec<_> = deletes
-				.into_iter()
+				.iter()
 				.map(|record| {
 					let address = AccountId32::from_str(&record.0).expect("address");
 					vec![
@@ -284,7 +283,7 @@ async fn main() -> anyhow::Result<()> {
 							Value::unnamed_variant("Id", vec![Value::from_bytes(address.0)]),
 						),
 						("dest", Value::unnamed_variant("Id", vec![Value::from_bytes(dest.0)])),
-						("value", Value::u128(record.1)),
+						("value", Value::u128(*record.1)),
 					]
 				})
 				.map(|data| subxt::dynamic::tx("Balances", "force_transfer", data))
@@ -334,7 +333,7 @@ async fn main() -> anyhow::Result<()> {
 				for (id, record) in vesting_schedule.iter() {
 					let (window_moment_start, window_moment_period) = match record.window {
 						client::VestingWindow::MomentBased { start, period } => (start + period, period),
-						_ => panic!("block to time"),
+						_ => unimplemented!(),
 					};
 					let window_start = match OffsetDateTime::from_unix_timestamp(
 						(window_moment_start / 1000) as i64,
