@@ -451,6 +451,7 @@ mod ops {
 	}
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(RuntimeDebug, Decode, Encode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum ForeignAssetId {
@@ -477,8 +478,9 @@ type InnerDenom = ibc_rs_scale::applications::transfer::PrefixedDenom;
 #[cfg_attr(feature = "std", serde(transparent))]
 pub struct PrefixedDenom(pub InnerDenom);
 
-impl PrefixedDenom {
-	pub fn from_str(s: &str) -> Result<Self, DispatchError> {
+impl FromStr for PrefixedDenom {
+	type Err = DispatchError;
+	fn from_str(s: &str) -> Result<Self, DispatchError> {
 		InnerDenom::from_str(s)
 			.map_err(|_| DispatchError::Other("PrefixedDenom parse failed"))
 			.map(Self)
@@ -495,9 +497,9 @@ impl core::ops::Deref for PrefixedDenom {
 	}
 }
 
-impl Into<InnerDenom> for PrefixedDenom {
-	fn into(self) -> InnerDenom {
-		self.0
+impl From<InnerDenom> for PrefixedDenom {
+	fn from(this: InnerDenom) -> Self {
+		Self(this)
 	}
 }
 

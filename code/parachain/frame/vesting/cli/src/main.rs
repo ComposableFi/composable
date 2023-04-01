@@ -56,7 +56,7 @@ async fn main() -> anyhow::Result<()> {
 								Value::named_variant(
 									"MomentBased",
 									vec![
-										("start", Value::u128(record.window_moment_start as u128)),
+										("start", Value::u128((record.window_moment_start - record.window_moment_period) as u128)),
 										(
 											"period",
 											Value::u128(record.window_moment_period as u128),
@@ -333,7 +333,7 @@ async fn main() -> anyhow::Result<()> {
 
 				for (id, record) in vesting_schedule.iter() {
 					let (window_moment_start, window_moment_period) = match record.window {
-						client::VestingWindow::MomentBased { start, period } => (start, period),
+						client::VestingWindow::MomentBased { start, period } => (start + period, period),
 						_ => panic!("block to time"),
 					};
 					let window_start = match OffsetDateTime::from_unix_timestamp(

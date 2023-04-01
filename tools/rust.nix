@@ -50,7 +50,7 @@
           (systemCommonRust.common-attrs // {
             cargoArtifacts = self'.packages.common-deps-nightly;
             cargoClippyExtraArgs =
-              "--all-targets --tests -- -D warnings -A deprecated";
+              "--all-targets --tests -- --deny warnings --allow deprecated";
           });
 
         cargo-deny-check = crane.nightly.mkCargoDerivation {

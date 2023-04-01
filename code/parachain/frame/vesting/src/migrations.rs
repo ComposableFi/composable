@@ -1,6 +1,4 @@
-use crate::{
-	weights::WeightInfo, Config, Pallet, VestingSchedules, VestingWindow,
-};
+use crate::{weights::WeightInfo, Config, Pallet, VestingSchedules, VestingWindow};
 use frame_support::{
 	dispatch::GetStorageVersion,
 	traits::{OnRuntimeUpgrade, StorageVersion},
@@ -20,17 +18,15 @@ impl<T: Config> OnRuntimeUpgrade for VestingV0ToV1<T> {
 					let mut new_schedules = schedules.clone();
 					for (_id, schedule) in new_schedules.iter_mut() {
 						total += 1;
-						match schedule.window.clone() {
-							VestingWindow::MomentBased { start, period } => {
-								// start is start of period, not start of ability to
-								// claim					
-								schedule.window =
-									VestingWindow::MomentBased { start: start - period, period };
-							},
-							_ => (),
+						if let VestingWindow::MomentBased { start, period } =
+							schedule.window.clone()
+						{
+							// start is start of period, not start of ability to
+							// claim
+							schedule.window =
+								VestingWindow::MomentBased { start: start - period, period };
 						}
 					}
-
 					*schedules = new_schedules;
 				});
 			}
