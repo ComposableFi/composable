@@ -6,12 +6,10 @@ use crate::{self as pallet_assets_registry};
 
 #[allow(unused_imports)]
 use crate::Pallet as AssetsRegistry;
-use codec::{Decode, Encode};
 use composable_traits::{
 	assets::{AssetInfo, AssetInfoUpdate, BiBoundedAssetName, BiBoundedAssetSymbol},
 	rational,
 	storage::UpdateValue,
-	xcm::assets::XcmAssetLocation,
 };
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
@@ -26,8 +24,7 @@ benchmarks! {
 	}
 
 	register_asset {
-		let location = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
-			.expect("Asset location is foreign ID");
+		let location = Default::default();
 		let protocol_id = *b"benchmar";
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
@@ -40,8 +37,7 @@ benchmarks! {
 	}: _(RawOrigin::Root, protocol_id, nonce, Some(location), asset_info)
 
 	update_asset {
-		let location = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..])
-			.expect("Asset location is foreign ID");
+		let location : T::ForeignAssetId = Default::default();
 		let protocol_id = *b"benchmar";
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {

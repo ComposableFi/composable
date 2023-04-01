@@ -42,13 +42,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
+mod types;
 use composable_support::{
 	abstractions::utils::increment::Increment,
 	math::safe::{SafeAdd, SafeSub},
 };
-use composable_traits::vesting::{
-	VestedTransfer, VestingSchedule, VestingScheduleIdSet, VestingScheduleInfo,
-};
+pub use types::*;
+
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -72,6 +72,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub mod migrations;
 pub use module::*;
 pub use weights::WeightInfo;
 
@@ -79,6 +80,7 @@ pub const VESTING_LOCK_ID: LockIdentifier = *b"compvest";
 
 #[frame_support::pallet]
 pub mod module {
+	use crate::types::*;
 	use codec::{FullCodec, MaxEncodedLen};
 	use composable_support::{
 		abstractions::{
@@ -87,7 +89,6 @@ pub mod module {
 		},
 		math::safe::SafeAdd,
 	};
-	use composable_traits::vesting::{VestingSchedule, VestingScheduleInfo, VestingWindow};
 	use frame_support::{traits::Time, BoundedBTreeMap};
 	use orml_traits::{MultiCurrency, MultiLockableCurrency};
 	use sp_runtime::traits::AtLeast32Bit;
@@ -308,6 +309,7 @@ pub mod module {
 		/// - `vesting_schedule_ids`: The ids of the vesting schedules to be claimed
 		///
 		/// Emits `Claimed`.
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::claim(<T as Config>::MaxVestingSchedules::get() / 2))]
 		pub fn claim(
 			origin: OriginFor<T>,
@@ -335,6 +337,7 @@ pub mod module {
 		/// Emits `VestingScheduleAdded`.
 		///
 		/// NOTE: This will unlock all schedules through the current block.
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::vested_transfer())]
 		pub fn vested_transfer(
 			origin: OriginFor<T>,
@@ -360,6 +363,7 @@ pub mod module {
 		/// - `vesting_schedules`: The updated vesting schedules.
 		///
 		/// Emits `VestingSchedulesUpdated`.
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::update_vesting_schedules(vesting_schedules.len() as u32))]
 		pub fn update_vesting_schedules(
 			origin: OriginFor<T>,
@@ -386,6 +390,7 @@ pub mod module {
 		/// - `vesting_schedule_ids`: The ids of the vesting schedules to be claimed.
 		///
 		/// Emits `Claimed`.
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::claim(<T as Config>::MaxVestingSchedules::get() / 2))]
 		pub fn claim_for(
 			origin: OriginFor<T>,

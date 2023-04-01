@@ -11,16 +11,8 @@
       };
       tools = with pkgs;
         with self'.packages;
-        [
-          clang
-          nodejs
-          python3
-          yarn
-          sad
-          git
-          git-lfs
-          subwasm
-        ] ++ (with self'.packages; [ rust-nightly ]);
+        [ clang nodejs python3 yarn sad git git-lfs subwasm ]
+        ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;
         inputs = self.inputs;
@@ -74,8 +66,7 @@
           inherit env;
         }];
       };
-    in
-    {
+    in {
       devShells = {
         default = self.inputs.devenv.lib.mkShell defaultattrs;
         cosmos = self.inputs.devenv.lib.mkShell cosmosattrs;

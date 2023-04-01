@@ -246,7 +246,6 @@ pub mod pallet {
 
 	/// The timestamp at which the users are able to claim their rewards.
 	#[pallet::storage]
-	// REVIEW(connor): Can we change this getter without breaking a lot of other things?
 	#[pallet::getter(fn vesting_block_start)]
 	pub type VestingTimeStart<T: Config> = StorageValue<_, MomentOf<T>, OptionQuery>;
 
@@ -365,38 +364,6 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		/// Patch existing rewards by deleting them.
-		/// This will cause inconsistencies if a claim has already been made. Errors can be avoided
-		/// by passing the expected amount of rewards claimable.
-		///
-		/// Security:
-		/// * Should be called within a transactional context, as this may return an error but still
-		///   change
-		/// storage.
-		// pub(crate) fn do_delete(
-		// 	deletions: Vec<(RemoteAccountOf<T>, BalanceOf<T>)>,
-		// ) -> DispatchResult {
-		// 	let mut total_rewards: T::Balance = TotalRewards::<T>::get();
-		// 	let mut total_contributors: u32 = TotalContributors::<T>::get();
-
-		// 	// Get each account from deletions and remove it from the storage
-		// 	for (account, expected) in deletions {
-		// 		Rewards::<T>::mutate_exists(account, |rewards| {
-		// 			if let Some(rewards) = rewards {
-		// 				ensure!(rewards.total == expected, Error::<T>::UnexpectedRewardAmount);
-		// 				total_rewards -= rewards.total;
-		// 				total_contributors -= 1;
-		// 			}
-		// 			*rewards = None;
-		// 			Ok::<(), Error<T>>(())
-		// 		})?;
-		// 	}
-
-		// 	TotalRewards::<T>::set(total_rewards);
-		// 	TotalContributors::<T>::set(total_contributors);
-		// 	Ok(())
-		// }
-
 		/// Add new rewards to the pallet. Updates total_rewards and contributors accordingly.
 		pub fn do_add(
 			additions: Vec<(RemoteAccountOf<T>, RewardAmountOf<T>, VestingPeriodOf<T>)>,

@@ -3,17 +3,79 @@
 #![cfg(test)]
 
 use super::*;
-use composable_traits::vesting::{
-	VestingSchedule, VestingScheduleInfo,
-	VestingWindow::{BlockNumberBased, MomentBased},
-};
+use crate::types::{VestingSchedule, VestingScheduleInfo, VestingWindow::*};
 use frame_support::{
 	assert_noop, assert_ok,
 	error::BadOrigin,
 	traits::{fungibles::Mutate, TryCollect},
 };
+use frame_system::EventRecord;
 use mock::{RuntimeEvent, *};
 use orml_tokens::BalanceLock;
+
+#[test]
+fn production() {
+	let start = 1685577600000;
+	let per_period = 266666670000000000;
+	let schedule_info = VestingScheduleInfo::<u64, u64, u64> {
+		window: MomentBased { start: start - 2592000000, period: 2592000000 },
+		period_count: 24,
+		per_period,
+	};
+	let total = (schedule_info.period_count as u64) * schedule_info.per_period;
+	ExtBuilder::build().execute_with(|| {
+		System::set_block_number(1);
+		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
+		Tokens::set_balance(RuntimeOrigin::root(), ALICE, MockCurrencyId::BTC, total * 2, 0)
+			.unwrap();
+		Vesting::vested_transfer(
+			RuntimeOrigin::root(),
+			ALICE,
+			BOB,
+			MockCurrencyId::BTC,
+			schedule_info,
+		)
+		.expect("vested");
+
+		let added = System::events()
+			.iter()
+			.find_map(|e| match e {
+				EventRecord {
+					event:
+						RuntimeEvent::Vesting(crate::Event::VestingScheduleAdded {
+							vesting_schedule_id: id,
+							..
+						}),
+					..
+				} => Some(*id),
+				_ => None,
+			})
+			.unwrap();
+
+		System::set_block_number(2);
+		Timestamp::set_timestamp(start + 1);
+		Vesting::claim(RuntimeOrigin::signed(BOB), MockCurrencyId::BTC, VestingScheduleIdSet::All)
+			.unwrap();
+
+		let claimed = System::events()
+			.iter()
+			.find_map(|e| match e {
+				EventRecord {
+					event:
+						RuntimeEvent::Vesting(crate::Event::Claimed {
+							claimed_amount_per_schedule: it,
+							..
+						}),
+					..
+				} => Some(it),
+				_ => None,
+			})
+			.unwrap()
+			.clone();
+		let amount = claimed.get(&added).unwrap();
+		assert_eq!(*amount, per_period);
+	});
+}
 
 #[test]
 fn vesting_from_chain_spec_works() {

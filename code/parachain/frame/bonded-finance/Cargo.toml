@@ -31,13 +31,13 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 composable-support = { default-features = false, path = "../composable-support" }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36", default-features = false }
+pallet-vesting = { path = "../../frame/vesting", default-features = false  }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 composable-traits = { path = "../../frame/composable-traits" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-pallet-vesting = { path = "../../frame/vesting" }
 proptest = "1.0"
 proptest-derive = "0.3"
 serde = { version = "1.0.136" }
@@ -55,6 +55,7 @@ std = [
   "sp-arithmetic/std",
   "composable-traits/std",
   "scale-info/std",
+  "pallet-vesting/std",
 ]
 
 runtime-benchmarks = [

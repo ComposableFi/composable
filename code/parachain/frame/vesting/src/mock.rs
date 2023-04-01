@@ -3,7 +3,7 @@
 #![cfg(test)]
 
 use super::*;
-use composable_traits::vesting::VestingWindow::{BlockNumberBased, MomentBased};
+use crate::types::VestingWindow::{BlockNumberBased, MomentBased};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{EnsureOrigin, Everything},

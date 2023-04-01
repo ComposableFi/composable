@@ -122,10 +122,7 @@ impl Convert<CurrencyId, Option<XcmAssetLocation>> for ForeignXcm {
 
 impl Convert<XcmAssetLocation, Option<CurrencyId>> for ForeignXcm {
 	fn convert(a: XcmAssetLocation) -> Option<CurrencyId> {
-		match AssetsRegistry::location_to_asset(ForeignAssetId::Xcm(a)) {
-			Some(id) => Some(id),
-			_ => None,
-		}
+		AssetsRegistry::location_to_asset(ForeignAssetId::Xcm(a))
 	}
 }
 

@@ -1,7 +1,7 @@
 # Vesting
 
 The vesting module provides a means for a scheduled balance lock on an account.
-It utilizes the graded vesting approach, which unlocks a specific amount of balance every period of time until all 
+It utilizes the `graded vesting` approach, which unlocks a specific amount of balance every period of time until all 
 funds are unlocked.
 
 ## Overview
@@ -14,7 +14,7 @@ This pallet is a fork of the [open runtime module repo](https://github.com/open-
 ## Vesting Schedule
 
 The data structure `VestingSchedule` describes the schedule of a vesting plan:
-1. from the time of `window.start`,
+1. from the time of `window.start`, start of first period (cannot claim until first period ends)
 2. for every `window.period` amount of time,
 3. `per_period` amount of balance is unlocked, until
 4. the number of periods 'period_count' is reached.  
