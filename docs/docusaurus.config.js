@@ -10,7 +10,7 @@ const config = {
 	tagline: 'The interoperable infrastructure for Modular DeFi',
 	url: 'https://composable.finance',
 	baseUrl: '/',
-	onBrokenLinks: 'throw',
+	onBrokenLinks: 'warn',
 	onBrokenMarkdownLinks: 'warn',
 	favicon: 'img/favicon.ico',
 
