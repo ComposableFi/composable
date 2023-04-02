@@ -1,6 +1,17 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }: {
     packages = {
+
+      all-deps = pkgs.linkFarmFromDrvs "all-deps" (with self'.packages; [
+        acala-node
+        bifrost-node
+        polkadot-node-dep
+        polkadot-node-on-parity-kusama
+        polkadot-node-on-parity-polkadot
+        statemine-node
+        subwasm
+      ]);
+
       all-docs = pkgs.linkFarmFromDrvs "all-docs"
         (with self'.packages; [ docs-server docs-static ]);
       all-misc = pkgs.linkFarmFromDrvs "all-misc" (with self'.packages; [
@@ -14,9 +25,7 @@
       ]);
 
       all = pkgs.linkFarmFromDrvs "all-ci-packages" (with self'.packages; [
-        acala-node
         benchmarks-check
-        bifrost-node
         cargo-clippy-check
         cargo-deny-check
         check-composable-benchmarks-ci
@@ -28,28 +37,24 @@
         cmc-api-image
         composable-bench-node
         composable-node
-        dali-subxt-client
         devnet-centauri
-        devnet-dali
+        devnet-picasso
         devnet-dali-complete
-        devnet-dali-image
+        devnet-picasso-image
         devnet-initialize-script-picasso-persistent
         devnet-integration-tests
         devnet-picasso-complete
         frontend-static
-        hyperspace-dali
-        hyperspace-dali-image
-        polkadot-node-on-parity-kusama
-        statemine-node
-        subwasm
         unit-tests
+        hyperspace-composable-rococo-picasso-rococo
+        hyperspace-composable-rococo-picasso-rococo-image
       ]);
 
       docker-images-to-push = pkgs.linkFarmFromDrvs "docker-images-to-push"
         (with self'.packages; [
           cmc-api-image
-          devnet-dali-image
-          hyperspace-dali-image
+          hyperspace-composable-rococo-picasso-rococo-image
+          devnet-picasso-image
         ]);
     };
   };

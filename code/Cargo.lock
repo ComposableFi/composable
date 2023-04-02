@@ -715,7 +715,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "beefy-light-client-primitives",
  "ckb-merkle-mountain-range 0.3.2",
@@ -738,7 +738,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "ckb-merkle-mountain-range 0.3.2",
  "derive_more",
@@ -4420,7 +4420,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -4442,7 +4442,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-verifier"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "anyhow",
  "finality-grandpa",
@@ -4863,7 +4863,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "derive_more",
  "flex-error",
@@ -4871,6 +4871,7 @@ dependencies = [
  "ibc-derive",
  "ibc-proto 0.18.0",
  "ics23 0.8.1",
+ "log 0.4.17",
  "num-traits",
  "parity-scale-codec",
  "primitive-types",
@@ -4922,7 +4923,7 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.3.0",
@@ -4934,7 +4935,7 @@ dependencies = [
 [[package]]
 name = "ibc-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "base58",
  "blake2",
@@ -4958,7 +4959,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "base64 0.13.1",
  "bytes 1.4.0",
@@ -4988,7 +4989,7 @@ dependencies = [
 [[package]]
 name = "ibc-rpc"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "frame-system",
  "hex-literal",
@@ -5015,7 +5016,7 @@ dependencies = [
 [[package]]
 name = "ibc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "ibc-primitives",
  "pallet-ibc",
@@ -5027,7 +5028,7 @@ dependencies = [
 [[package]]
 name = "ics07-tendermint"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "bytes 1.4.0",
  "flex-error",
@@ -5047,7 +5048,7 @@ dependencies = [
 [[package]]
 name = "ics10-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -5073,7 +5074,7 @@ dependencies = [
 [[package]]
 name = "ics11-beefy"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "anyhow",
  "beefy-light-client",
@@ -6340,17 +6341,22 @@ dependencies = [
 [[package]]
 name = "light-client-common"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "anyhow",
+ "async-trait",
  "derive_more",
  "hash-db",
  "ibc 0.15.0",
+ "ibc-proto 0.18.0",
  "parity-scale-codec",
  "serde",
+ "sp-beefy",
  "sp-core 7.0.0",
+ "sp-runtime 7.0.0",
  "sp-storage 7.0.0",
  "sp-trie 7.0.0",
+ "subxt 0.26.0",
 ]
 
 [[package]]
@@ -8201,7 +8207,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "beefy-light-client-primitives",
  "cumulus-primitives-core",
@@ -8247,7 +8253,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc-ping"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -10931,7 +10937,7 @@ dependencies = [
  "signal-hook",
  "signal-hook-tokio",
  "sp-arithmetic 6.0.0",
- "subxt",
+ "subxt 0.25.0",
  "tokio",
  "tokio-stream",
  "url 1.7.2",
@@ -13740,7 +13746,7 @@ dependencies = [
 [[package]]
 name = "simple-iavl"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=c8aa82d95c817024f814c76131dba99c305fa1c4#c8aa82d95c817024f814c76131dba99c305fa1c4"
+source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "bytes 1.4.0",
  "ics23 0.8.1",
@@ -15372,8 +15378,40 @@ dependencies = [
  "sp-core 11.0.0",
  "sp-core-hashing 6.0.0",
  "sp-runtime 12.0.0",
- "subxt-macro",
- "subxt-metadata",
+ "subxt-macro 0.25.0",
+ "subxt-metadata 0.25.0",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "subxt"
+version = "0.26.0"
+source = "git+https://github.com/paritytech/subxt?rev=d92352ad739836a4100e1ef1db607acc82ed8c5a#d92352ad739836a4100e1ef1db607acc82ed8c5a"
+dependencies = [
+ "base58",
+ "blake2",
+ "derivative",
+ "frame-metadata",
+ "futures 0.3.26",
+ "getrandom 0.2.8",
+ "hex",
+ "impl-serde 0.4.0",
+ "jsonrpsee 0.16.2",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "primitive-types",
+ "scale-bits",
+ "scale-decode",
+ "scale-info",
+ "scale-value",
+ "serde",
+ "serde_json",
+ "sp-core 11.0.0",
+ "sp-core-hashing 6.0.0",
+ "sp-runtime 12.0.0",
+ "subxt-macro 0.26.0",
+ "subxt-metadata 0.26.0",
  "thiserror",
  "tracing",
 ]
@@ -15393,7 +15431,27 @@ dependencies = [
  "proc-macro2 1.0.51",
  "quote 1.0.23",
  "scale-info",
- "subxt-metadata",
+ "subxt-metadata 0.25.0",
+ "syn 1.0.107",
+ "tokio",
+]
+
+[[package]]
+name = "subxt-codegen"
+version = "0.26.0"
+source = "git+https://github.com/paritytech/subxt?rev=d92352ad739836a4100e1ef1db607acc82ed8c5a#d92352ad739836a4100e1ef1db607acc82ed8c5a"
+dependencies = [
+ "darling",
+ "frame-metadata",
+ "heck 0.4.1",
+ "hex",
+ "jsonrpsee 0.16.2",
+ "parity-scale-codec",
+ "proc-macro-error",
+ "proc-macro2 1.0.51",
+ "quote 1.0.23",
+ "scale-info",
+ "subxt-metadata 0.26.0",
  "syn 1.0.107",
  "tokio",
 ]
@@ -15405,7 +15463,18 @@ source = "git+https://github.com/paritytech/subxt?rev=2a913a3aa99a07f7acaedbbaee
 dependencies = [
  "darling",
  "proc-macro-error",
- "subxt-codegen",
+ "subxt-codegen 0.25.0",
+ "syn 1.0.107",
+]
+
+[[package]]
+name = "subxt-macro"
+version = "0.26.0"
+source = "git+https://github.com/paritytech/subxt?rev=d92352ad739836a4100e1ef1db607acc82ed8c5a#d92352ad739836a4100e1ef1db607acc82ed8c5a"
+dependencies = [
+ "darling",
+ "proc-macro-error",
+ "subxt-codegen 0.26.0",
  "syn 1.0.107",
 ]
 
@@ -15413,6 +15482,17 @@ dependencies = [
 name = "subxt-metadata"
 version = "0.25.0"
 source = "git+https://github.com/paritytech/subxt?rev=2a913a3aa99a07f7acaedbbaeed6925d34627303#2a913a3aa99a07f7acaedbbaeed6925d34627303"
+dependencies = [
+ "frame-metadata",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core-hashing 6.0.0",
+]
+
+[[package]]
+name = "subxt-metadata"
+version = "0.26.0"
+source = "git+https://github.com/paritytech/subxt?rev=d92352ad739836a4100e1ef1db607acc82ed8c5a#d92352ad739836a4100e1ef1db607acc82ed8c5a"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",

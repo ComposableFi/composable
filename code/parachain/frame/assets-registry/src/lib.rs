@@ -172,10 +172,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			for (nonce, location, asset_info) in self.assets.clone() {
-				let asset_id = T::LocalAssetId::decode(
-					&mut ([0_u8, 0, 0, 0, 0, 0, 0, 0], nonce).encode().as_ref(),
-				)
-				.expect("genesis is correct");
+				let asset_id = <Pallet<T>>::generate_asset_id([0; 8], nonce);
 
 				<Pallet<T> as RemoteAssetRegistryMutate>::register_asset(
 					asset_id, location, asset_info,

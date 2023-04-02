@@ -2,7 +2,7 @@ use ::ibc::core::{
 	ics24_host::identifier::PortId,
 	ics26_routing::context::{Module, ModuleId},
 };
-use common::ibc::ForeignIbcIcs20Assets;
+use common::ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds};
 use frame_support::traits::EitherOf;
 use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
@@ -130,7 +130,7 @@ impl pallet_ibc::Config for Runtime {
 	type Fungibles = Assets;
 	type ExpectedBlockTime = ConstU64<SLOT_DURATION>;
 	type Router = ();
-	type MinimumConnectionDelay = ConstU64<1>;
+	type MinimumConnectionDelay = MinimumConnectionDelaySeconds;
 	type ParaId = parachain_info::Pallet<Runtime>;
 	type RelayChain = RelayChainId;
 	type WeightInfo = weights::ibc::WeightInfo<Self>;
