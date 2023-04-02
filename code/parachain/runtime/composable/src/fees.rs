@@ -1,14 +1,17 @@
 use crate::*;
-use common::{fees::{PriceConverter, NativeExistentialDeposit, WeightToFeeConverter, ForeignToNativePriceConverter}, governance::native::EnsureRootOrTwoThirdNativeCouncil};
-use composable_traits::{
-	currency::{Rational64},
-	rational,
+use common::{
+	fees::{
+		ForeignToNativePriceConverter, NativeExistentialDeposit, PriceConverter,
+		WeightToFeeConverter,
+	},
+	governance::native::EnsureRootOrTwoThirdNativeCouncil,
 };
+use composable_traits::{currency::Rational64, rational};
 
 use frame_support::traits::fungibles;
 use primitives::currency::CurrencyId;
 
-use crate::{prelude::*};
+use crate::prelude::*;
 use sp_core::ConstU8;
 
 pub struct WellKnownForeignToNativePriceConverter;

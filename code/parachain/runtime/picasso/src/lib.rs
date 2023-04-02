@@ -34,9 +34,9 @@ pub mod version;
 mod weights;
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
-use version::VERSION;
+pub use fees::{AssetsPaymentHeader, FinalPriceConverter};
+use version::{Version, VERSION};
 pub use xcmp::XcmConfig;
-pub use fees::{FinalPriceConverter, AssetsPaymentHeader};
 
 pub use crate::fees::WellKnownForeignToNativePriceConverter;
 
@@ -102,7 +102,6 @@ use system::{
 	EnsureRoot,
 };
 
-
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -137,7 +136,6 @@ parameter_type_with_key! {
 parameter_types! {
 	// how much block hashes to keep
 	pub const BlockHashCount: BlockNumber = 250;
-	pub const Version: RuntimeVersion = VERSION;
 	// 5mb with 25% of that reserved for system extrinsics.
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
@@ -381,7 +379,7 @@ impl timestamp::Config for Runtime {
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
 }
 
-type MaxLocks = ConstU32<50>; 
+type MaxLocks = ConstU32<50>;
 
 impl balances::Config for Runtime {
 	type MaxLocks = MaxLocks;

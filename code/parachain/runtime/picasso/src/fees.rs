@@ -1,10 +1,9 @@
-use crate::*;
-use crate::prelude::*;
+use crate::{prelude::*, *};
 use common::fees::{ForeignToNativePriceConverter, PriceConverter};
 use composable_traits::{currency::Rational64, rational};
+use primitives::currency::CurrencyId;
 use sp_core::ConstU8;
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use primitives::currency::CurrencyId;
 
 pub struct WellKnownForeignToNativePriceConverter;
 impl ForeignToNativePriceConverter for WellKnownForeignToNativePriceConverter {
@@ -83,5 +82,3 @@ impl asset_tx_payment::Config for Runtime {
 
 	type BalanceConverter = FinalPriceConverter;
 }
-
-

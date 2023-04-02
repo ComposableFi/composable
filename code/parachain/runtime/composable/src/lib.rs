@@ -29,6 +29,7 @@ mod governance;
 pub mod ibc;
 mod migrations;
 mod prelude;
+pub mod version;
 mod weights;
 mod xcmp;
 use common::{
@@ -46,14 +47,12 @@ use primitives::currency::{CurrencyId, ForeignAssetId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, ConstU128, OpaqueMetadata};
 use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
+	generic, impl_opaque_keys,
 	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, Either,
 };
 use sp_std::prelude::*;
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 use codec::Encode;
@@ -85,6 +84,7 @@ use system::{
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
+use version::{Version, VERSION};
 pub type CouncilInstance = collective::Instance1;
 pub type EnsureRootOrHalfCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
@@ -116,33 +116,9 @@ pub mod opaque {
 	}
 }
 
-// To learn more about runtime versioning and what each of the following value means:
-//   https://substrate.dev/docs/en/knowledgebase/runtime/upgrades#runtime-versioning
-#[sp_version::runtime_version]
-pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("composable"),
-	impl_name: create_runtime_str!("composable"),
-	authoring_version: 1,
-	// The version of the runtime specification. A full node will not attempt to use its native
-	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
-	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 10_011,
-	impl_version: 3,
-	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
-	state_version: 0,
-};
-
-/// The version information used to identify this runtime when compiled natively.
-#[cfg(feature = "std")]
-pub fn native_version() -> NativeVersion {
-	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
-}
-
 parameter_types! {
 	// how much block hashes to keep
 	pub const BlockHashCount: BlockNumber = 250;
-	pub const Version: RuntimeVersion = VERSION;
 	// 5mb with 25% of that reserved for system extrinsics.
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);

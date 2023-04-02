@@ -1,4 +1,5 @@
 #![allow(clippy::unnecessary_cast)]
+pub mod asset_tx_payment;
 pub mod assets_registry;
 pub mod balances;
 pub mod collator_selection;
@@ -15,4 +16,3 @@ pub mod timestamp;
 pub mod tokens;
 pub mod treasury;
 pub mod utility;
-pub mod asset_tx_payment;
