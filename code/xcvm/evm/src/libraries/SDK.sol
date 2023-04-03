@@ -8,7 +8,6 @@ import "../interfaces/IRouter.sol";
 import "./BytesLib.sol";
 
 library SDK {
-
     using BytesLib for bytes;
 
     enum OPERATION {
@@ -55,7 +54,7 @@ library SDK {
         require(success, "decode embedded message failed");
     }
 
-    function _handleAccount(bytes memory program, uint64 pos) internal view returns (address account, uint64 newPos) {
+    function _handleAccount(bytes memory program, uint64 pos) internal pure returns (address account, uint64 newPos) {
         // read account info
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
@@ -80,7 +79,7 @@ library SDK {
         pos = _checkField(program, 2, ProtobufLib.WireType.Varint, pos);
         uint64 lowBits;
         (success, newPos, lowBits) = ProtobufLib.decode_uint64(pos, program);
-        value = uint128(highBits) * 2**64 + uint128(lowBits);
+        value = uint128(highBits) * 2 ** 64 + uint128(lowBits);
     }
 
     function _handleUnit(
@@ -102,17 +101,13 @@ library SDK {
         uint256 denominator;
         (nominator, denominator, newPos) = _handleRatio(program, pos);
         uint256 decimals = IERC20Metadata(tokenAddress).decimals();
-        amount = uint256(unit) * (10**decimals) + (nominator * (10**decimals)) / denominator;
+        amount = uint256(unit) * (10 ** decimals) + (nominator * (10 ** decimals)) / denominator;
     }
 
-    function _handleRatio(bytes memory program, uint64 pos)
-        internal pure
-        returns (
-            uint256 nominator,
-            uint256 denominator,
-            uint64 newPos
-        )
-    {
+    function _handleRatio(
+        bytes memory program,
+        uint64 pos
+    ) internal pure returns (uint256 nominator, uint256 denominator, uint64 newPos) {
         uint64 size;
         // read ratio message body
         (size, pos) = _getMessageLength(program, pos);
@@ -131,11 +126,12 @@ library SDK {
         (amount, newPos) = _handleUint128(program, pos);
     }
 
-    function _handleAssetAmount(bytes memory program, uint64 pos, address routerAddress) internal view returns (uint256 amount, uint64 newPos) {
+    function _handleAssetAmount(
+        bytes memory program,
+        uint64 pos,
+        address routerAddress
+    ) internal view returns (uint256 amount, uint64 newPos) {
         uint64 size;
-        bool success;
-        uint64 field;
-        ProtobufLib.WireType _type;
         // read balance message body
         (size, pos) = _getMessageLength(program, pos);
         pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
@@ -184,11 +180,11 @@ library SDK {
         }
     }
 
-    function _handleLocalId(bytes memory program, uint64 pos) internal pure returns(address assetAddress, uint64 newPos) {
+    function _handleLocalId(
+        bytes memory program,
+        uint64 pos
+    ) internal pure returns (address assetAddress, uint64 newPos) {
         uint64 size;
-        bool success;
-        uint64 field;
-        ProtobufLib.WireType _type;
         // read balance message body
         (size, pos) = _getMessageLength(program, pos);
         pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
@@ -197,18 +193,19 @@ library SDK {
         newPos = pos + size;
     }
 
-    function _handleGlobalId(bytes memory program, uint64 pos) internal view returns(uint128 assetId, uint64 newPos) {
+    function _handleGlobalId(bytes memory program, uint64 pos) internal pure returns (uint128 assetId, uint64 newPos) {
         uint64 size;
-        bool success;
-        uint64 field;
-        ProtobufLib.WireType _type;
         // read balance message body
         (size, pos) = _getMessageLength(program, pos);
         pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
         (assetId, newPos) = _handleUint128(program, pos);
     }
 
-    function _handleAssetId(bytes memory program, uint64 pos, address routerAddress) internal view returns (address asset, uint128 assetId, uint64 newPos) {
+    function _handleAssetId(
+        bytes memory program,
+        uint64 pos,
+        address routerAddress
+    ) internal view returns (address asset, uint128 assetId, uint64 newPos) {
         uint64 size;
         // read asset message body
         (size, pos) = _getMessageLength(program, pos);
@@ -232,15 +229,11 @@ library SDK {
         }
     }
 
-    function _handleAsset(bytes memory program, uint64 pos, address routerAddress)
-        internal view
-        returns (
-            address asset,
-            uint128 assetId,
-            uint256 amount,
-            uint64 newPos
-        )
-    {
+    function _handleAsset(
+        bytes memory program,
+        uint64 pos,
+        address routerAddress
+    ) internal view returns (address asset, uint128 assetId, uint256 amount, uint64 newPos) {
         // reading asset message
         pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
         (asset, assetId, pos) = _handleAssetId(program, pos, routerAddress);
@@ -256,13 +249,7 @@ library SDK {
         uint64 pos,
         address to,
         address routerAddress
-    )
-        internal
-        returns (
-            uint64 newPos,
-            AssetInfos memory assetInfos
-        )
-    {
+    ) internal returns (uint64 newPos, AssetInfos memory assetInfos) {
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
         uint256 totalAssetsLength = pos + size;
@@ -272,15 +259,24 @@ library SDK {
         assetInfos.amounts = new uint256[](10);
         uint256 count;
         while (pos < totalAssetsLength) {
-            (assetInfos.assetAddresses[count], assetInfos.assetIds[count], assetInfos.amounts[count], pos) = _handleAsset(program, pos, routerAddress);
+            (
+                assetInfos.assetAddresses[count],
+                assetInfos.assetIds[count],
+                assetInfos.amounts[count],
+                pos
+            ) = _handleAsset(program, pos, routerAddress);
             IERC20(assetInfos.assetAddresses[count]).transfer(to, assetInfos.amounts[count]);
             count += 1;
         }
         newPos = pos;
     }
 
-
-    function _handleTransfer(bytes memory program, uint64 pos, address relayer, address routerAddress) internal returns (uint64 newPos) {
+    function _handleTransfer(
+        bytes memory program,
+        uint64 pos,
+        address relayer,
+        address routerAddress
+    ) internal returns (uint64 newPos) {
         // reading transfer instruction
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
@@ -311,10 +307,12 @@ library SDK {
         (newPos, ) = _handleAssets(program, pos, account, routerAddress);
     }
 
-    function _handleBindingValue(bytes memory program, uint64 pos, address relayer, address routerAddress)
-        internal view
-        returns (bytes memory valueToReplace, uint64 newPos)
-    {
+    function _handleBindingValue(
+        bytes memory program,
+        uint64 pos,
+        address relayer,
+        address routerAddress
+    ) internal view returns (bytes memory valueToReplace, uint64 newPos) {
         bool success;
         uint64 size;
         ProtobufLib.WireType _type;
@@ -363,14 +361,7 @@ library SDK {
         bytes memory payload,
         address relayer,
         address routerAddress
-    )
-        internal view
-        returns (
-            uint64 position,
-            bytes memory valueToReplace,
-            uint64 newPos
-        )
-    {
+    ) internal view returns (uint64 position, bytes memory valueToReplace, uint64 newPos) {
         uint64 size;
         bool success;
         pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
@@ -387,16 +378,15 @@ library SDK {
     function _handleNetwork(bytes memory program, uint64 pos) internal pure returns (uint128 networkId, uint64 newPos) {
         // reading network
         uint64 size;
-        bool success;
         (size, pos) = _getMessageLength(program, pos);
         pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
         (networkId, newPos) = _handleUint128(program, pos);
     }
 
-    function _handleSecurity(bytes memory program, uint64 pos)
-        internal pure
-        returns (IRouter.BridgeSecurity security, uint64 newPos)
-    {
+    function _handleSecurity(
+        bytes memory program,
+        uint64 pos
+    ) internal pure returns (IRouter.BridgeSecurity security, uint64 newPos) {
         // reading network
         bool success;
         int32 value;
@@ -415,10 +405,10 @@ library SDK {
         salt = program.slice(pos, size);
     }
 
-    function _handleProgram(bytes memory program, uint64 pos)
-        internal pure
-        returns (bytes memory subProgram, uint64 newPos)
-    {
+    function _handleProgram(
+        bytes memory program,
+        uint64 pos
+    ) internal pure returns (bytes memory subProgram, uint64 newPos) {
         // reading program
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
@@ -426,8 +416,12 @@ library SDK {
         newPos = pos + size;
     }
 
-    function _handleSpawnParams(bytes memory program, uint64 pos)
-        internal pure
+    function _handleSpawnParams(
+        bytes memory program,
+        uint64 pos
+    )
+        internal
+        pure
         returns (
             uint64 newPos,
             uint256 maxPos,
@@ -457,8 +451,12 @@ library SDK {
         (spawnedProgram, newPos) = _handleProgram(program, pos);
     }
 
-    function _handleSpawn(bytes memory program, uint64 pos, address routerAddress, IRouter.Origin memory origin) internal returns (uint64 newPos) {
-
+    function _handleSpawn(
+        bytes memory program,
+        uint64 pos,
+        address routerAddress,
+        IRouter.Origin memory origin
+    ) internal returns (uint64 newPos) {
         uint256 maxPos;
         uint128 networkId;
         IRouter.BridgeSecurity security;
@@ -470,7 +468,12 @@ library SDK {
 
         AssetInfos memory assetInfos;
         if (pos < maxPos) {
-            (newPos, assetInfos) = _handleAssets(program, pos, IRouter(routerAddress).getBridge(networkId, security), routerAddress);
+            (newPos, assetInfos) = _handleAssets(
+                program,
+                pos,
+                IRouter(routerAddress).getBridge(networkId, security),
+                routerAddress
+            );
         }
         IRouter(routerAddress).emitSpawn(
             origin.account,
@@ -505,7 +508,12 @@ library SDK {
         return temp;
     }
 
-    function _handleCall(bytes memory program, uint64 pos, address relayer, address routerAddress) internal returns (uint64 newPos) {
+    function _handleCall(
+        bytes memory program,
+        uint64 pos,
+        address relayer,
+        address routerAddress
+    ) internal returns (uint64 newPos) {
         // reading call instruction
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
@@ -535,17 +543,23 @@ library SDK {
         //get the address from first bytes
         (addr) = abi.decode(payload, (address));
         finalPayload = payload.slice(32, payload.length - 32);
-        (bool succ, bytes memory result) = addr.call(finalPayload);
+        (bool succ, ) = addr.call(finalPayload);
         require(succ, "error calling target");
         newPos = pos;
     }
 
-    function interpretProgram(bytes memory program, address relayer, address routerAddress, IRouter.Origin memory origin) public {
+    function interpretProgram(
+        bytes memory program,
+        address relayer,
+        address routerAddress,
+        IRouter.Origin memory origin
+    ) public {
         // reading program tag message
         uint64 pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, 0);
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
-        bytes memory tag = program.slice(pos, size);
+        // get tag not used right now;
+        program.slice(pos, size);
         pos = pos + size;
 
         // reading program message
@@ -574,7 +588,10 @@ library SDK {
     }
 
     // ibc package specific functions
-    function _handleInterpreterOrigin(bytes memory program, uint64 pos) public pure returns(bytes memory originInterpreter, uint64 newPos) {
+    function _handleInterpreterOrigin(
+        bytes memory program,
+        uint64 pos
+    ) public pure returns (bytes memory originInterpreter, uint64 newPos) {
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
         pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
@@ -583,7 +600,10 @@ library SDK {
         newPos = pos + size;
     }
 
-    function _handleUserOrigin(bytes memory program, uint64 pos) public view returns(address account, uint128 networkId, uint64 newPos) {
+    function _handleUserOrigin(
+        bytes memory program,
+        uint64 pos
+    ) public pure returns (address account, uint128 networkId, uint64 newPos) {
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
         pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
@@ -595,183 +615,170 @@ library SDK {
     // view functions to generate xcvm bytecode using protobuf
 
     function generateUint128(uint128 n) public pure returns (bytes memory u128) {
-
         uint64 highBits = uint64(n >> 64);
         uint64 lowBits = uint64(n);
-        return abi.encodePacked(ProtobufLib.encode_key(1, 0), ProtobufLib.encode_uint64(highBits), ProtobufLib.encode_key(2, 0), ProtobufLib.encode_uint64(lowBits));
+        return
+            abi.encodePacked(
+                ProtobufLib.encode_key(1, 0),
+                ProtobufLib.encode_uint64(highBits),
+                ProtobufLib.encode_key(2, 0),
+                ProtobufLib.encode_uint64(lowBits)
+            );
     }
 
     function generateAbsolute(uint128 n) public pure returns (bytes memory absolute) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(abi.encodePacked(generateUint128(n)))
-        );
+        return
+            abi.encodePacked(
+                ProtobufLib.encode_key(1, 2),
+                ProtobufLib.encode_length_delimited(abi.encodePacked(generateUint128(n)))
+            );
     }
 
     function generateRatio(uint128 nominator, uint128 denominator) public pure returns (bytes memory ratio) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(generateUint128(nominator)),
-            ProtobufLib.encode_key(2, 2),
-            ProtobufLib.encode_length_delimited(generateUint128(denominator))
-        );
+        return
+            abi.encodePacked(
+                ProtobufLib.encode_key(1, 2),
+                ProtobufLib.encode_length_delimited(generateUint128(nominator)),
+                ProtobufLib.encode_key(2, 2),
+                ProtobufLib.encode_length_delimited(generateUint128(denominator))
+            );
     }
 
     function generateUnit(uint128 integer, bytes memory ratio) public pure returns (bytes memory unit) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(generateUint128(integer)),
-            ProtobufLib.encode_key(2, 2),
-            ProtobufLib.encode_length_delimited(ratio)
-        );
+        return
+            abi.encodePacked(
+                ProtobufLib.encode_key(1, 2),
+                ProtobufLib.encode_length_delimited(generateUint128(integer)),
+                ProtobufLib.encode_key(2, 2),
+                ProtobufLib.encode_length_delimited(ratio)
+            );
     }
 
     function generateBalanceByRatio(bytes memory ratio) public pure returns (bytes memory balance) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(ratio)
-        );
+        return abi.encodePacked(ProtobufLib.encode_key(1, 2), ProtobufLib.encode_length_delimited(ratio));
     }
 
     function generateBalanceByAbsolute(bytes memory absolute) public pure returns (bytes memory balance) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(2, 2),
-            ProtobufLib.encode_length_delimited(absolute)
-        );
+        return abi.encodePacked(ProtobufLib.encode_key(2, 2), ProtobufLib.encode_length_delimited(absolute));
     }
 
     function generateBalanceByUnit(bytes memory _unit) public pure returns (bytes memory balance) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(3, 2),
-            ProtobufLib.encode_length_delimited(_unit)
-        );
+        return abi.encodePacked(ProtobufLib.encode_key(3, 2), ProtobufLib.encode_length_delimited(_unit));
     }
 
     function generateAccount(bytes memory _account) public pure returns (bytes memory account) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(_account)
-        );
+        return abi.encodePacked(ProtobufLib.encode_key(1, 2), ProtobufLib.encode_length_delimited(_account));
     }
 
     function generateGlobalId(uint128 _globalId) public pure returns (bytes memory globalId) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(generateUint128(_globalId))
-        );
+        return
+            abi.encodePacked(
+                ProtobufLib.encode_key(1, 2),
+                ProtobufLib.encode_length_delimited(generateUint128(_globalId))
+            );
     }
 
     function generateLocalId(bytes memory _localId) public pure returns (bytes memory localId) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(_localId)
-        );
+        return abi.encodePacked(ProtobufLib.encode_key(1, 2), ProtobufLib.encode_length_delimited(_localId));
     }
 
     function generateAssetIdByGlobalId(bytes memory globalId) public pure returns (bytes memory assetId) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(globalId)
-        );
+        return abi.encodePacked(ProtobufLib.encode_key(1, 2), ProtobufLib.encode_length_delimited(globalId));
     }
 
     function generateAssetIdByLocalId(bytes memory local) public pure returns (bytes memory assetId) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(2, 2),
-            ProtobufLib.encode_length_delimited(local)
-        );
+        return abi.encodePacked(ProtobufLib.encode_key(2, 2), ProtobufLib.encode_length_delimited(local));
     }
 
     function generateAsset(bytes memory _assetId, bytes memory _balance) public pure returns (bytes memory asset) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(_assetId),
-            ProtobufLib.encode_key(2, 2),
-            ProtobufLib.encode_length_delimited(_balance)
-        );
+        return
+            abi.encodePacked(
+                ProtobufLib.encode_key(1, 2),
+                ProtobufLib.encode_length_delimited(_assetId),
+                ProtobufLib.encode_key(2, 2),
+                ProtobufLib.encode_length_delimited(_balance)
+            );
     }
 
     function generateSelf(uint32 _self) public pure returns (bytes memory self) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 0),
-            ProtobufLib.encode_uint32(_self)
-        );
+        return abi.encodePacked(ProtobufLib.encode_key(1, 0), ProtobufLib.encode_uint32(_self));
     }
 
     function generateRelayer(uint32 _relayer) public pure returns (bytes memory relayer) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 0),
-            ProtobufLib.encode_uint32(_relayer)
-        );
+        return abi.encodePacked(ProtobufLib.encode_key(1, 0), ProtobufLib.encode_uint32(_relayer));
     }
 
     function generateResult(uint32 _result) public pure returns (bytes memory result) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 0),
-            ProtobufLib.encode_uint32(_result)
-        );
+        return abi.encodePacked(ProtobufLib.encode_key(1, 0), ProtobufLib.encode_uint32(_result));
     }
 
-    function generateAssetAmount(bytes memory assetId, bytes memory balance) public pure returns (bytes memory assetAmount) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(assetId),
-            ProtobufLib.encode_key(2, 2),
-            ProtobufLib.encode_length_delimited(balance)
-        );
+    function generateAssetAmount(
+        bytes memory assetId,
+        bytes memory balance
+    ) public pure returns (bytes memory assetAmount) {
+        return
+            abi.encodePacked(
+                ProtobufLib.encode_key(1, 2),
+                ProtobufLib.encode_length_delimited(assetId),
+                ProtobufLib.encode_key(2, 2),
+                ProtobufLib.encode_length_delimited(balance)
+            );
     }
 
-    function generateBindingValueByAssetAmount(bytes memory _assetAmount) public pure returns (bytes memory bindingValue) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(4, 2),
-            ProtobufLib.encode_length_delimited(_assetAmount)
-        );
+    function generateBindingValueByAssetAmount(
+        bytes memory _assetAmount
+    ) public pure returns (bytes memory bindingValue) {
+        return abi.encodePacked(ProtobufLib.encode_key(4, 2), ProtobufLib.encode_length_delimited(_assetAmount));
     }
 
     function generateBindingValueByGlobalId(bytes memory _globalId) public pure returns (bytes memory bindingValue) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(5, 2),
-            ProtobufLib.encode_length_delimited(_globalId)
-        );
+        return abi.encodePacked(ProtobufLib.encode_key(5, 2), ProtobufLib.encode_length_delimited(_globalId));
     }
 
     function generateBinding(uint32 position, bytes memory _bindingValue) public pure returns (bytes memory binding) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 0),
-            ProtobufLib.encode_uint32(uint32(position)),
-            ProtobufLib.encode_key(2, 2),
-            ProtobufLib.encode_length_delimited(_bindingValue)
-        );
+        return
+            abi.encodePacked(
+                ProtobufLib.encode_key(1, 0),
+                ProtobufLib.encode_uint32(uint32(position)),
+                ProtobufLib.encode_key(2, 2),
+                ProtobufLib.encode_length_delimited(_bindingValue)
+            );
     }
 
     function generateBindings(bytes[] memory _bindings) public pure returns (bytes memory bindings) {
         for (uint i = 0; i < _bindings.length; i++) {
-            bindings = abi.encodePacked(bindings, ProtobufLib.encode_key(1, 2), ProtobufLib.encode_length_delimited(_bindings[i]));
+            bindings = abi.encodePacked(
+                bindings,
+                ProtobufLib.encode_key(1, 2),
+                ProtobufLib.encode_length_delimited(_bindings[i])
+            );
         }
     }
 
-    function generateTransferByAccount(bytes memory _account, bytes[] memory _assets) public pure returns (bytes memory transfer) {
-        transfer = abi.encodePacked(
-            ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(_account)
-        );
+    function generateTransferByAccount(
+        bytes memory _account,
+        bytes[] memory _assets
+    ) public pure returns (bytes memory transfer) {
+        transfer = abi.encodePacked(ProtobufLib.encode_key(1, 2), ProtobufLib.encode_length_delimited(_account));
         for (uint i = 0; i < _assets.length; i++) {
-            transfer = abi.encodePacked(transfer, ProtobufLib.encode_key(3, 2), ProtobufLib.encode_length_delimited(_assets[i]));
+            transfer = abi.encodePacked(
+                transfer,
+                ProtobufLib.encode_key(3, 2),
+                ProtobufLib.encode_length_delimited(_assets[i])
+            );
         }
     }
 
     function generateSalt(bytes memory _salt) public pure returns (bytes memory salt) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(_salt)
-        );
+        return abi.encodePacked(ProtobufLib.encode_key(1, 2), ProtobufLib.encode_length_delimited(_salt));
     }
 
     function generateNetwork(uint128 _network) public pure returns (bytes memory network) {
-        return abi.encodePacked(
-            ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(abi.encodePacked(generateUint128(_network)))
-        );
+        return
+            abi.encodePacked(
+                ProtobufLib.encode_key(1, 2),
+                ProtobufLib.encode_length_delimited(abi.encodePacked(generateUint128(_network)))
+            );
     }
 
     function generateSpawn(
@@ -792,14 +799,15 @@ library SDK {
             ProtobufLib.encode_length_delimited(_spawnedProgram)
         );
         for (uint i = 0; i < _assets.length; i++) {
-            spawn = abi.encodePacked(spawn, ProtobufLib.encode_key(5, 2), ProtobufLib.encode_length_delimited(_assets[i]));
+            spawn = abi.encodePacked(
+                spawn,
+                ProtobufLib.encode_key(5, 2),
+                ProtobufLib.encode_length_delimited(_assets[i])
+            );
         }
     }
 
-    function generateCall(
-        bytes memory _payload,
-        bytes memory _bindings
-    ) public pure returns (bytes memory call) {
+    function generateCall(bytes memory _payload, bytes memory _bindings) public pure returns (bytes memory call) {
         call = abi.encodePacked(
             ProtobufLib.encode_key(1, 2),
             ProtobufLib.encode_length_delimited(_payload),
@@ -808,52 +816,33 @@ library SDK {
         );
     }
 
-    function generateInstructionByTransfer(
-        bytes memory _transfer
-    ) public pure returns (bytes memory instruction) {
-        instruction = abi.encodePacked(
-            ProtobufLib.encode_key(1, 2),
-            ProtobufLib.encode_length_delimited(_transfer)
-        );
+    function generateInstructionByTransfer(bytes memory _transfer) public pure returns (bytes memory instruction) {
+        instruction = abi.encodePacked(ProtobufLib.encode_key(1, 2), ProtobufLib.encode_length_delimited(_transfer));
     }
 
-    function generateInstructionByCall(
-        bytes memory _call
-    ) public pure returns (bytes memory instruction) {
-        instruction = abi.encodePacked(
-            ProtobufLib.encode_key(3, 2),
-            ProtobufLib.encode_length_delimited(_call)
-        );
+    function generateInstructionByCall(bytes memory _call) public pure returns (bytes memory instruction) {
+        instruction = abi.encodePacked(ProtobufLib.encode_key(3, 2), ProtobufLib.encode_length_delimited(_call));
     }
 
-    function generateInstructionBySpawn(
-        bytes memory _spawn
-    ) public pure returns (bytes memory instruction) {
-        instruction = abi.encodePacked(
-            ProtobufLib.encode_key(2, 2),
-            ProtobufLib.encode_length_delimited(_spawn)
-        );
+    function generateInstructionBySpawn(bytes memory _spawn) public pure returns (bytes memory instruction) {
+        instruction = abi.encodePacked(ProtobufLib.encode_key(2, 2), ProtobufLib.encode_length_delimited(_spawn));
     }
 
-    function generateInstructionByQuery(
-        bytes memory _query
-    ) public pure returns (bytes memory instruction) {
-        instruction = abi.encodePacked(
-            ProtobufLib.encode_key(4, 2),
-            ProtobufLib.encode_length_delimited(_query)
-        );
+    function generateInstructionByQuery(bytes memory _query) public pure returns (bytes memory instruction) {
+        instruction = abi.encodePacked(ProtobufLib.encode_key(4, 2), ProtobufLib.encode_length_delimited(_query));
     }
 
     function generateInstructions(bytes[] memory _instructions) public pure returns (bytes memory instructions) {
         for (uint i = 0; i < _instructions.length; i++) {
-            instructions = abi.encodePacked(instructions, ProtobufLib.encode_key(1, 2), ProtobufLib.encode_length_delimited(_instructions[i]));
+            instructions = abi.encodePacked(
+                instructions,
+                ProtobufLib.encode_key(1, 2),
+                ProtobufLib.encode_length_delimited(_instructions[i])
+            );
         }
     }
 
-    function generateProgram(
-        bytes memory _tag,
-        bytes memory _instructions
-    ) public pure returns (bytes memory program) {
+    function generateProgram(bytes memory _tag, bytes memory _instructions) public pure returns (bytes memory program) {
         program = abi.encodePacked(
             ProtobufLib.encode_key(1, 2),
             ProtobufLib.encode_length_delimited(_tag),
@@ -871,7 +860,7 @@ library SDK {
             ProtobufLib.encode_length_delimited(generateNetwork(networkId))
         );
     }
-    
+
     function generateInterpreterOrigin(bytes memory account) public pure returns (bytes memory interpreterOrigin) {
         interpreterOrigin = abi.encodePacked(
             ProtobufLib.encode_key(1, 2),
@@ -900,24 +889,28 @@ library SDK {
         for (uint i = 0; i < assetIds.length; i++) {
             bytes memory assetId = generateAssetIdByGlobalId(generateGlobalId(assetIds[i]));
             bytes memory asset = generateAsset(
-                    assetId, generateBalanceByAbsolute(
-                        generateAbsolute(uint128(amounts[i]))
-                    ));
+                assetId,
+                generateBalanceByAbsolute(generateAbsolute(uint128(amounts[i])))
+            );
             spawn = abi.encodePacked(spawn, ProtobufLib.encode_key(5, 2), ProtobufLib.encode_length_delimited(asset));
         }
     }
 
-    
-
     function decodeIBCSpawn(
         bytes memory program,
         address routerAddress
-    ) public 
-    returns (
-        bytes memory originInterpreter, IRouter.Origin memory origin, bytes memory spawnedProgram, bytes memory salt, address[] memory assetAddresses, uint256[] memory assetAmounts)
+    )
+        public
+        returns (
+            bytes memory originInterpreter,
+            IRouter.Origin memory origin,
+            bytes memory spawnedProgram,
+            bytes memory salt,
+            address[] memory assetAddresses,
+            uint256[] memory assetAmounts
+        )
     {
         // reading spawn instruction
-        uint64 size;
         uint64 pos;
 
         pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
@@ -931,7 +924,6 @@ library SDK {
         origin.account = abi.encodePacked(account);
         origin.networkId = networkId;
 
-
         pos = _checkField(program, 3, ProtobufLib.WireType.LengthDelimited, pos);
         (salt, pos) = _handleSalt(program, pos);
 
@@ -941,12 +933,7 @@ library SDK {
 
         pos = _checkField(program, 5, ProtobufLib.WireType.LengthDelimited, pos);
         // transfer assets to router
-        (, AssetInfos memory assetInfos) = _handleAssets(
-            program,
-            pos,
-            routerAddress,
-            routerAddress
-        );
+        (, AssetInfos memory assetInfos) = _handleAssets(program, pos, routerAddress, routerAddress);
         assetAddresses = assetInfos.assetAddresses;
         assetAmounts = assetInfos.amounts;
     }

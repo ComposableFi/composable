@@ -1,6 +1,6 @@
-import {loadSync, Type, Message, Enum} from "protobufjs";
-import { resolve } from 'path';
-import {utils, BigNumber} from "ethers";
+import { loadSync, Type, Message, Enum } from "protobufjs";
+import { resolve } from "path";
+import { utils, BigNumber } from "ethers";
 
 export class XCVM {
   root: any;
@@ -23,16 +23,16 @@ export class XCVM {
   SpawnMessage: Type;
   CallMessage: Type;
   BridgeSecurityEnum: Enum;
-  BindingValueMessage: Type
-  Uint128Message: Type
-  SelfMessage: Type
-  RelayerMessage: Type
-  GlobalIdMessage: Type
-  LocalIdMessage: Type
+  BindingValueMessage: Type;
+  Uint128Message: Type;
+  SelfMessage: Type;
+  RelayerMessage: Type;
+  GlobalIdMessage: Type;
+  LocalIdMessage: Type;
   messageTypeLookUp: { [k: string]: any } = {};
 
   constructor() {
-    this.root = loadSync(resolve(__dirname, './interpreter.proto'));
+    this.root = loadSync(resolve(__dirname, "./interpreter.proto"));
     this.ProgramMessage = this.root.lookupType("interpreter.Program");
     this.InstructionMessage = this.root.lookupType("interpreter.Instruction");
     this.InstructionsMessage = this.root.lookupType("interpreter.Instructions");
@@ -52,38 +52,40 @@ export class XCVM {
     this.SaltMessage = this.root.lookupType("interpreter.Salt");
     this.CallMessage = this.root.lookupType("interpreter.Call");
     this.BindingValueMessage = this.root.lookupType("interpreter.BindingValue");
-    this.Uint128Message =  this.root.lookupType("interpreter.Uint128");
+    this.Uint128Message = this.root.lookupType("interpreter.Uint128");
     this.SelfMessage = this.root.lookupType("interpreter.Self");
     this.RelayerMessage = this.root.lookupType("interpreter.Relayer");
     this.GlobalIdMessage = this.root.lookupType("interpreter.GlobalId");
     this.LocalIdMessage = this.root.lookupType("interpreter.LocalId");
-    this.BridgeSecurityEnum = this.root.lookupEnum("interpreter.BridgeSecurity");
+    this.BridgeSecurityEnum = this.root.lookupEnum(
+      "interpreter.BridgeSecurity"
+    );
 
-    this.messageTypeLookUp['Program'] = this.ProgramMessage;
-    this.messageTypeLookUp['Instruction'] = this.InstructionMessage;
-    this.messageTypeLookUp['Instructions'] = this.InstructionsMessage;
-    this.messageTypeLookUp['Transfer'] = this.TransferMessage;
-    this.messageTypeLookUp['AssetId'] = this.AssetIdMessage;
-    this.messageTypeLookUp['Account'] = this.AccountMessage;
-    this.messageTypeLookUp['Asset'] = this.AssetMessage;
-    this.messageTypeLookUp['Absolute'] = this.AbsoluteMessage;
-    this.messageTypeLookUp['Balance'] = this.BalanceMessage;
-    this.messageTypeLookUp['Binding'] = this.BindingMessage;
-    this.messageTypeLookUp['BindingValue'] = this.BindingValueMessage;
-    this.messageTypeLookUp['Bindings'] = this.BindingsMessage;
-    this.messageTypeLookUp['AssetAmount'] = this.AssetAmountMessage;
-    this.messageTypeLookUp['Unit'] = this.UnitMessage;
-    this.messageTypeLookUp['Ratio'] = this.RatioMessage;
-    this.messageTypeLookUp['Network'] = this.NetworkMessage;
-    this.messageTypeLookUp['Salt'] = this.SaltMessage;
-    this.messageTypeLookUp['Call'] = this.CallMessage;
-    this.messageTypeLookUp['Spawn'] = this.SpawnMessage;
-    this.messageTypeLookUp['BridgeSecurity'] = this.BridgeSecurityEnum;
-    this.messageTypeLookUp['Uint128'] = this.Uint128Message;
-    this.messageTypeLookUp['Self'] = this.SelfMessage;
-    this.messageTypeLookUp['Relayer'] = this.RelayerMessage;
-    this.messageTypeLookUp['GlobalId'] = this.GlobalIdMessage;
-    this.messageTypeLookUp['LocalId'] = this.LocalIdMessage
+    this.messageTypeLookUp["Program"] = this.ProgramMessage;
+    this.messageTypeLookUp["Instruction"] = this.InstructionMessage;
+    this.messageTypeLookUp["Instructions"] = this.InstructionsMessage;
+    this.messageTypeLookUp["Transfer"] = this.TransferMessage;
+    this.messageTypeLookUp["AssetId"] = this.AssetIdMessage;
+    this.messageTypeLookUp["Account"] = this.AccountMessage;
+    this.messageTypeLookUp["Asset"] = this.AssetMessage;
+    this.messageTypeLookUp["Absolute"] = this.AbsoluteMessage;
+    this.messageTypeLookUp["Balance"] = this.BalanceMessage;
+    this.messageTypeLookUp["Binding"] = this.BindingMessage;
+    this.messageTypeLookUp["BindingValue"] = this.BindingValueMessage;
+    this.messageTypeLookUp["Bindings"] = this.BindingsMessage;
+    this.messageTypeLookUp["AssetAmount"] = this.AssetAmountMessage;
+    this.messageTypeLookUp["Unit"] = this.UnitMessage;
+    this.messageTypeLookUp["Ratio"] = this.RatioMessage;
+    this.messageTypeLookUp["Network"] = this.NetworkMessage;
+    this.messageTypeLookUp["Salt"] = this.SaltMessage;
+    this.messageTypeLookUp["Call"] = this.CallMessage;
+    this.messageTypeLookUp["Spawn"] = this.SpawnMessage;
+    this.messageTypeLookUp["BridgeSecurity"] = this.BridgeSecurityEnum;
+    this.messageTypeLookUp["Uint128"] = this.Uint128Message;
+    this.messageTypeLookUp["Self"] = this.SelfMessage;
+    this.messageTypeLookUp["Relayer"] = this.RelayerMessage;
+    this.messageTypeLookUp["GlobalId"] = this.GlobalIdMessage;
+    this.messageTypeLookUp["LocalId"] = this.LocalIdMessage;
   }
 
   public encodeMessage(message: Message) {
@@ -96,76 +98,99 @@ export class XCVM {
   }
 
   public convertUint128(n: Number | string): Message<{}> {
-      const bn = BigNumber.from(n);
-      const hexBytes = bn.toHexString().slice(2);
-      let highBits;
-      let lowBits;
-      if (hexBytes.length > 32) {
-        throw ("Number is bigger than uint128 max value");
-      } else if (hexBytes.length > 16) {
-        highBits = BigNumber.from("0x" + hexBytes.slice(0, hexBytes.length-16)).toString()
-        lowBits = BigNumber.from("0x" + hexBytes.slice(hexBytes.length-16, hexBytes.length)).toString()
-      } else{
-        highBits = BigNumber.from("0").toString()
-        lowBits = BigNumber.from("0x" + hexBytes).toString();
-      }
-      return this.Uint128Message.create({highBits: highBits, lowBits: lowBits});
-  }
-
-  public createRatio(nominator: Number | string, denominator: Number | string): Message<{}> {
-    return this.RatioMessage.create({nominator: this.convertUint128(nominator), denominator: this.convertUint128(denominator)})
-  }
-
-  public createUnit(integer: Number | string, ratioMessage: Message): Message<{}> {
-    if (ratioMessage.$type.name != "Ratio") {
-      throw this.getTypeError("ratioMessage", "ratio")
+    const bn = BigNumber.from(n);
+    const hexBytes = bn.toHexString().slice(2);
+    let highBits;
+    let lowBits;
+    if (hexBytes.length > 32) {
+      throw "Number is bigger than uint128 max value";
+    } else if (hexBytes.length > 16) {
+      highBits = BigNumber.from(
+        "0x" + hexBytes.slice(0, hexBytes.length - 16)
+      ).toString();
+      lowBits = BigNumber.from(
+        "0x" + hexBytes.slice(hexBytes.length - 16, hexBytes.length)
+      ).toString();
+    } else {
+      highBits = BigNumber.from("0").toString();
+      lowBits = BigNumber.from("0x" + hexBytes).toString();
     }
-    return this.UnitMessage.create({integer: this.convertUint128(integer), ratio: ratioMessage})
+    return this.Uint128Message.create({ highBits: highBits, lowBits: lowBits });
+  }
+
+  public createRatio(
+    nominator: Number | string,
+    denominator: Number | string
+  ): Message<{}> {
+    return this.RatioMessage.create({
+      nominator: this.convertUint128(nominator),
+      denominator: this.convertUint128(denominator),
+    });
+  }
+
+  public createUnit(
+    integer: Number | string,
+    ratioMessage: Message
+  ): Message<{}> {
+    if (ratioMessage.$type.name != "Ratio") {
+      throw this.getTypeError("ratioMessage", "ratio");
+    }
+    return this.UnitMessage.create({
+      integer: this.convertUint128(integer),
+      ratio: ratioMessage,
+    });
   }
 
   public createAbsolute(absoluteValue: Number | string): Message<{}> {
-    return this.AbsoluteMessage.create({value: this.convertUint128(absoluteValue)})
+    return this.AbsoluteMessage.create({
+      value: this.convertUint128(absoluteValue),
+    });
   }
 
   public createBalance(balanceTypeMessage: Message): Message<{}> {
     if (balanceTypeMessage.$type.name == "Absolute") {
-      return this.BalanceMessage.create({absolute: balanceTypeMessage});
+      return this.BalanceMessage.create({ absolute: balanceTypeMessage });
     } else if (balanceTypeMessage.$type.name == "Unit") {
-      return this.BalanceMessage.create({unit: balanceTypeMessage});
+      return this.BalanceMessage.create({ unit: balanceTypeMessage });
     } else if (balanceTypeMessage.$type.name == "Ratio") {
-      return this.BalanceMessage.create({ratio: balanceTypeMessage});
+      return this.BalanceMessage.create({ ratio: balanceTypeMessage });
     } else {
-      throw ("balance type message incorrect");
+      throw "balance type message incorrect";
     }
   }
 
   public createGlobalId(id: Number): Message<{}> {
-    return this.GlobalIdMessage.create({globalId: this.convertUint128(id)});
+    return this.GlobalIdMessage.create({ globalId: this.convertUint128(id) });
   }
 
   public createLocalId(id: string): Message<{}> {
-    return this.LocalIdMessage.create({localId: utils.arrayify(id)});
+    return this.LocalIdMessage.create({ localId: utils.arrayify(id) });
   }
 
   public createAssetId(idMessage: Message): Message<{}> {
-
-    if (idMessage.$type.name == "GlobalId"){
-      return this.AssetIdMessage.create({globalId: idMessage});
+    if (idMessage.$type.name == "GlobalId") {
+      return this.AssetIdMessage.create({ globalId: idMessage });
     } else if (idMessage.$type.name == "LocalId") {
-      return this.AssetIdMessage.create({localId: idMessage});
+      return this.AssetIdMessage.create({ localId: idMessage });
     } else {
       throw this.getTypeError("idMessage", "globalId or localId");
     }
   }
 
-  public createAsset(assetIdMessage: Message, balanceMessage: Message): Message<{}> {
+  public createAsset(
+    assetIdMessage: Message,
+    balanceMessage: Message
+  ): Message<{}> {
     if (assetIdMessage.$type.name != "AssetId") {
-      throw this.getTypeError("assetIdMessage", "assetId")
+      throw this.getTypeError("assetIdMessage", "assetId");
     }
     if (balanceMessage.$type.name != "Balance") {
-      throw this.getTypeError("balanceMessage", "balance")
+      throw this.getTypeError("balanceMessage", "balance");
     }
-    return this.AssetMessage.create({assetId: assetIdMessage, balance: balanceMessage});
+    return this.AssetMessage.create({
+      assetId: assetIdMessage,
+      balance: balanceMessage,
+    });
   }
 
   public createAccount(address: string): Message<{}> {
@@ -174,55 +199,72 @@ export class XCVM {
     });
   }
 
-
-  public createTransfer(accountOrRelayerMessage: Message, assets: Array<Message>): Message<{}> {
-    if (accountOrRelayerMessage.$type.name != "Account" && accountOrRelayerMessage.$type.name != "Relayer") {
+  public createTransfer(
+    accountOrRelayerMessage: Message,
+    assets: Array<Message>
+  ): Message<{}> {
+    if (
+      accountOrRelayerMessage.$type.name != "Account" &&
+      accountOrRelayerMessage.$type.name != "Relayer"
+    ) {
       throw this.getTypeError("accountOrRelayerMessage", "balance or relayer");
     }
     for (let i = 0; i < assets.length; i++) {
       if (assets[i].$type.name != "Asset") {
-        throw this.getTypeError("assets[" + i + "]", "asset")
+        throw this.getTypeError("assets[" + i + "]", "asset");
       }
     }
     if (accountOrRelayerMessage.$type.name == "Account") {
-      return this.TransferMessage.create({account: accountOrRelayerMessage, assets: assets})
+      return this.TransferMessage.create({
+        account: accountOrRelayerMessage,
+        assets: assets,
+      });
     } else {
-      return this.TransferMessage.create({relayer: accountOrRelayerMessage, assets: assets})
+      return this.TransferMessage.create({
+        relayer: accountOrRelayerMessage,
+        assets: assets,
+      });
     }
   }
 
   public createInstruction(typedInstruction: Message): Message<{}> {
     const typeName = typedInstruction.$type.name;
-    if (typeName != "Transfer"
-      && typeName != "Spawn"
-      && typeName != "Call"
-      && typeName != "Query"
+    if (
+      typeName != "Transfer" &&
+      typeName != "Spawn" &&
+      typeName != "Call" &&
+      typeName != "Query"
     ) {
-      throw this.getTypeError("typedInstruction", "Transfer, Spawn, Call or Quey");
+      throw this.getTypeError(
+        "typedInstruction",
+        "Transfer, Spawn, Call or Quey"
+      );
     }
     if (typeName == "Transfer") {
-      return this.InstructionMessage.create({transfer: typedInstruction})
+      return this.InstructionMessage.create({ transfer: typedInstruction });
     } else if (typeName == "Spawn") {
-      return this.InstructionMessage.create({spawn: typedInstruction})
+      return this.InstructionMessage.create({ spawn: typedInstruction });
     } else if (typeName == "Call") {
-      return this.InstructionMessage.create({call: typedInstruction})
+      return this.InstructionMessage.create({ call: typedInstruction });
     } else {
-      return this.InstructionMessage.create({query: typedInstruction})
+      return this.InstructionMessage.create({ query: typedInstruction });
     }
   }
 
   public createInstructions(instructionsMessage: Array<Message>): Message<{}> {
     for (let i = 0; i < instructionsMessage.length; i++) {
       if (instructionsMessage[i].$type.name != "Instruction") {
-        throw this.getTypeError("instructions[" + i + "]", "instruction")
+        throw this.getTypeError("instructions[" + i + "]", "instruction");
       }
     }
-    return this.InstructionsMessage.create({instructions: instructionsMessage})
+    return this.InstructionsMessage.create({
+      instructions: instructionsMessage,
+    });
   }
 
   public createProgram(tag: string, instructionsMessage: Message) {
     if (instructionsMessage.$type.name != "Instructions") {
-      throw this.getTypeError("instructionsMessage", "Instructions")
+      throw this.getTypeError("instructionsMessage", "Instructions");
     }
     return this.ProgramMessage.create({
       tag: utils.arrayify(tag),
@@ -230,41 +272,36 @@ export class XCVM {
     });
   }
 
-
   public createNetwork(networkId: Number): Message<{}> {
-
-
-    return this.NetworkMessage.create({networkId: this.convertUint128(networkId)});
+    return this.NetworkMessage.create({
+      networkId: this.convertUint128(networkId),
+    });
   }
-
-
 
   public createSalt(salt: string): Message<{}> {
-    return this.SaltMessage.create({salt: utils.arrayify(salt)});
+    return this.SaltMessage.create({ salt: utils.arrayify(salt) });
   }
 
-
-  //public createBridgeSecurity(security: Number): Enum {
-  //  return security;
-  //}
-
-  public createSpawn(networkMessage: Message, saltMessage: Message, security: Number, programMessage: Message, assetsMessage: Array<Message>): Message<{}> {
+  public createSpawn(
+    networkMessage: Message,
+    saltMessage: Message,
+    security: Number,
+    programMessage: Message,
+    assetsMessage: Array<Message>
+  ): Message<{}> {
     if (networkMessage.$type.name != "Network") {
-      throw this.getTypeError("networkMessage", "network")
+      throw this.getTypeError("networkMessage", "network");
     }
     if (saltMessage.$type.name != "Salt") {
-      throw this.getTypeError("saltMessage", "salt")
+      throw this.getTypeError("saltMessage", "salt");
     }
 
-
-
-
     if (programMessage.$type.name != "Program") {
-      throw this.getTypeError("programMessage", "program")
+      throw this.getTypeError("programMessage", "program");
     }
     for (let i = 0; i < assetsMessage.length; i++) {
       if (assetsMessage[i].$type.name != "Asset") {
-        throw this.getTypeError("assets[" + i + "]", "asset")
+        throw this.getTypeError("assets[" + i + "]", "asset");
       }
     }
 
@@ -274,71 +311,83 @@ export class XCVM {
       salt: saltMessage,
       security: security,
       program: programMessage,
-      assets: assetsMessage
-    })
+      assets: assetsMessage,
+    });
   }
 
-  public createCall(payload: Uint8Array, bindingsMessage: Message): Message<{}> {
+  public createCall(
+    payload: Uint8Array,
+    bindingsMessage: Message
+  ): Message<{}> {
     if (bindingsMessage.$type.name != "Bindings") {
-      throw this.getTypeError("bindingsMessage", "bindings")
+      throw this.getTypeError("bindingsMessage", "bindings");
     }
-    return this.CallMessage.create({payload: payload, bindings: bindingsMessage});
+    return this.CallMessage.create({
+      payload: payload,
+      bindings: bindingsMessage,
+    });
   }
 
-  public createAssetAmount(assetIdMessage: Message, balanceMessage: Message): Message<{}> {
+  public createAssetAmount(
+    assetIdMessage: Message,
+    balanceMessage: Message
+  ): Message<{}> {
     if (assetIdMessage.$type.name != "AssetId") {
-      throw this.getTypeError("assetIdMessage", "assetId")
+      throw this.getTypeError("assetIdMessage", "assetId");
     }
     if (balanceMessage.$type.name != "Balance") {
-      throw this.getTypeError("balanceMessage", "balance")
+      throw this.getTypeError("balanceMessage", "balance");
     }
-    return this.AssetAmountMessage.create({assetId: assetIdMessage, balance: balanceMessage});
+    return this.AssetAmountMessage.create({
+      assetId: assetIdMessage,
+      balance: balanceMessage,
+    });
   }
 
   public createSelf(): Message<{}> {
-    return this.SelfMessage.create({self: 1});
+    return this.SelfMessage.create({ self: 1 });
   }
 
   public createRelayer(): Message<{}> {
-    return this.RelayerMessage.create({relayer: 1});
+    return this.RelayerMessage.create({ relayer: 1 });
   }
 
   public createBindingValue(bindingValueType: any): Message<{}> {
     if (bindingValueType.$type.name == "Self") {
-      return this.BindingValueMessage.create({self: bindingValueType});
+      return this.BindingValueMessage.create({ self: bindingValueType });
     } else if (bindingValueType.$type.name == "Relayer") {
-      return this.BindingValueMessage.create({relayer: bindingValueType});
+      return this.BindingValueMessage.create({ relayer: bindingValueType });
     } else if (bindingValueType.$type.name == "AssetAmount") {
-      return this.BindingValueMessage.create({assetAmount: bindingValueType});
+      return this.BindingValueMessage.create({ assetAmount: bindingValueType });
     } else if (bindingValueType.$type.name == "GlobalId") {
-      return this.BindingValueMessage.create({globalId: bindingValueType});
+      return this.BindingValueMessage.create({ globalId: bindingValueType });
     } else if (bindingValueType.isNumeric()) {
       // type 3
-      return this.BindingValueMessage.create({result: bindingValueType});
+      return this.BindingValueMessage.create({ result: bindingValueType });
     } else {
-      throw ("Binding value type message incorrect");
+      throw "Binding value type message incorrect";
     }
   }
 
-  public createBinding(position: Number, bindingValueMessage: Message): Message<{}> {
+  public createBinding(
+    position: Number,
+    bindingValueMessage: Message
+  ): Message<{}> {
     if (bindingValueMessage.$type.name != "BindingValue") {
       throw this.getTypeError("bindingValueMessage", "bindingValue");
     }
-    return this.BindingMessage.create({position: position, bindingValue: bindingValueMessage});
+    return this.BindingMessage.create({
+      position: position,
+      bindingValue: bindingValueMessage,
+    });
   }
 
   public createBindings(bindingsMessage: Array<Message>): Message<{}> {
     for (let i = 0; i < bindingsMessage.length; i++) {
       if (bindingsMessage[i].$type.name != "Binding") {
-        throw this.getTypeError("bindings[" + i + "]", "binding")
+        throw this.getTypeError("bindings[" + i + "]", "binding");
       }
     }
-    return this.BindingsMessage.create({bindings: bindingsMessage});
+    return this.BindingsMessage.create({ bindings: bindingsMessage });
   }
-
-  //public decodeProgram(programMessage: Message): Json {
-  //  let jsonData = this.ProgramMessage.decode(this.encodeMessage(this.ProgramMessage.encode(programMessage))
-  //  //return JSON.stringify(jsonData.toJSON(), null, 2))
-  //}
-
 }
