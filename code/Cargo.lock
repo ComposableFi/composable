@@ -1551,7 +1551,7 @@ dependencies = [
 
 [[package]]
 name = "composable-node"
-version = "4.10012.0"
+version = "4.10014.1"
 dependencies = [
  "assets-rpc",
  "assets-runtime-api",
