@@ -99,7 +99,7 @@ impl SubstrateCli for Cli {
 		match spec.id() {
 			// composable-chains
 			#[cfg(feature = "composable")]
-			chain if chain.contains("composable") => &composable_runtime::VERSION,
+			chain if chain.contains("composable") => &composable_runtime::version::VERSION,
 			// dali chains
 			#[cfg(feature = "dali")]
 			chain if chain.contains("dali") => &dali_runtime::VERSION,

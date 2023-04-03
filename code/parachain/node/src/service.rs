@@ -64,7 +64,7 @@ impl sc_executor::NativeExecutionDispatch for ComposableExecutor {
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		composable_runtime::native_version()
+		composable_runtime::version::native_version()
 	}
 }
 
