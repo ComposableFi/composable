@@ -276,7 +276,7 @@ parameter_types! {
 	pub const StalePrice: BlockNumber = 5;
 
 	// TODO
-	pub MinStake: Balance = 1000 * CurrencyId::unit::<Balance>();
+	pub MinStake: Balance = 200_000 * CurrencyId::unit::<Balance>();
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
