@@ -156,3 +156,8 @@ impl governance_registry::Config for Runtime {
 	type AssetId = CurrencyId;
 	type WeightInfo = ();
 }
+
+impl sudo::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+}

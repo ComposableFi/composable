@@ -29,6 +29,7 @@ mod governance;
 pub mod ibc;
 mod migrations;
 mod prelude;
+pub mod version;
 mod weights;
 mod xcmp;
 use common::{
@@ -46,14 +47,12 @@ use primitives::currency::{CurrencyId, ForeignAssetId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, ConstU128, OpaqueMetadata};
 use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
+	generic, impl_opaque_keys,
 	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, Either,
 };
 use sp_std::prelude::*;
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 use codec::Encode;
@@ -85,11 +84,13 @@ use system::{
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
+use version::{Version, VERSION};
 pub type CouncilInstance = collective::Instance1;
 pub type EnsureRootOrHalfCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 2>,
 >;
+use crate::fees::AssetsPaymentHeader;
 pub use crate::fees::WellKnownForeignToNativePriceConverter;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -115,33 +116,9 @@ pub mod opaque {
 	}
 }
 
-// To learn more about runtime versioning and what each of the following value means:
-//   https://substrate.dev/docs/en/knowledgebase/runtime/upgrades#runtime-versioning
-#[sp_version::runtime_version]
-pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("composable"),
-	impl_name: create_runtime_str!("composable"),
-	authoring_version: 1,
-	// The version of the runtime specification. A full node will not attempt to use its native
-	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
-	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 10_011,
-	impl_version: 3,
-	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
-	state_version: 0,
-};
-
-/// The version information used to identify this runtime when compiled natively.
-#[cfg(feature = "std")]
-pub fn native_version() -> NativeVersion {
-	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
-}
-
 parameter_types! {
 	// how much block hashes to keep
 	pub const BlockHashCount: BlockNumber = 250;
-	pub const Version: RuntimeVersion = VERSION;
 	// 5mb with 25% of that reserved for system extrinsics.
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
@@ -285,25 +262,6 @@ impl balances::Config for Runtime {
 	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	/// 1 milli-pica/byte should be fine
-	pub TransactionByteFee: Balance = CurrencyId::milli();
-
-	// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
-	/// than this will decrease the weight and more will increase.
-	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
-	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
-	/// change the fees more rapidly. This low value causes changes to occur slowly over time.
-	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(3, 100_000);
-	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
-	/// that combined with `AdjustmentVariable`, we can recover from the minimum.
-	/// See `multiplier_can_grow_from_zero` in integration_tests.rs.
-	/// This value is currently only used by pallet-transaction-payment as an assertion that the
-	/// next multiplier is always > min value.
-	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_u128);
-	pub const OperationalFeeMultiplier: u8 = 5;
-}
-
 pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
@@ -317,22 +275,6 @@ impl WeightToFeePolynomial for WeightToFee {
 			coeff_integer: p / q,
 		}]
 	}
-}
-
-impl transaction_payment::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, StakingPot<Runtime, NativeTreasury>>;
-	type WeightToFee = WeightToFee;
-	type FeeMultiplierUpdate =
-		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-}
-
-impl sudo::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeCall = RuntimeCall;
 }
 
 parameter_types! {
@@ -386,7 +328,7 @@ where
 			system::CheckEra::<Runtime>::from(era),
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
-			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			AssetsPaymentHeader::from(tip, None),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -665,6 +607,7 @@ construct_runtime!(
 		Sudo: sudo = 2,
 		RandomnessCollectiveFlip: randomness_collective_flip = 3,
 		TransactionPayment: transaction_payment = 4,
+		AssetTxPayment : asset_tx_payment  = 12,
 		Indices: indices = 5,
 		Balances: balances = 6,
 
@@ -732,7 +675,7 @@ pub type SignedExtra = (
 	system::CheckEra<Runtime>,
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
-	transaction_payment::ChargeTransactionPayment<Runtime>,
+	AssetsPaymentHeader,
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
