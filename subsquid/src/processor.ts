@@ -12,7 +12,7 @@ import {
 import { processDepositEvent, processTransferEvent, processWithdrawEvent } from "./processors/balances";
 import { processVestingClaimedEvent, processVestingScheduleAddedEvent } from "./processors/vestingSchedule";
 import { processNewBondEvent, processNewOfferEvent, processOfferCancelledEvent } from "./processors/bondedFinance";
-import { PabloAddLiquidityCall, PabloBuyCall, PabloRemoveLiquidityCall, PabloSwapCall } from "./types/calls";
+import { PabloAddLiquidityCall, PabloRemoveLiquidityCall, PabloSwapCall } from "./types/calls";
 
 processor.run(new TypeormDatabase(), async (ctx: Context) => {
   for (const block of ctx.blocks) {

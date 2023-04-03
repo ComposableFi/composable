@@ -1,73 +1,8 @@
 import assert from 'assert'
 import {Chain, ChainContext, EventContext, Event, Result, Option} from './support'
 import * as v1000 from './v1000'
-import * as v1200 from './v1200'
 import * as v10002 from './v10002'
 import * as v10005 from './v10005'
-
-export class AssetsRegistryAssetRegisteredEvent {
-    private readonly _chain: Chain
-    private readonly event: Event
-
-    constructor(ctx: EventContext)
-    constructor(ctx: ChainContext, event: Event)
-    constructor(ctx: EventContext, event?: Event) {
-        event = event || ctx.event
-        assert(event.name === 'AssetsRegistry.AssetRegistered')
-        this._chain = ctx._chain
-        this.event = event
-    }
-
-    get isV1200(): boolean {
-        return this._chain.getEventHash('AssetsRegistry.AssetRegistered') === 'ce8c5bb44dcb9f35892515385bfbeb519c75c883b4e1facffafc657f308f73ae'
-    }
-
-    get asV1200(): {assetId: bigint, location: v1200.XcmAssetLocation} {
-        assert(this.isV1200)
-        return this._chain.decodeEvent(this.event)
-    }
-
-    get isV10002(): boolean {
-        return this._chain.getEventHash('AssetsRegistry.AssetRegistered') === '1a2df5dc03da9f3f2850f9f87cba28c55a399bcfa2b16bfd3911fb85c1653654'
-    }
-
-    get asV10002(): {assetId: bigint, location: v10002.XcmAssetLocation, decimals: (number | undefined)} {
-        assert(this.isV10002)
-        return this._chain.decodeEvent(this.event)
-    }
-}
-
-export class AssetsRegistryAssetUpdatedEvent {
-    private readonly _chain: Chain
-    private readonly event: Event
-
-    constructor(ctx: EventContext)
-    constructor(ctx: ChainContext, event: Event)
-    constructor(ctx: EventContext, event?: Event) {
-        event = event || ctx.event
-        assert(event.name === 'AssetsRegistry.AssetUpdated')
-        this._chain = ctx._chain
-        this.event = event
-    }
-
-    get isV1200(): boolean {
-        return this._chain.getEventHash('AssetsRegistry.AssetUpdated') === 'ce8c5bb44dcb9f35892515385bfbeb519c75c883b4e1facffafc657f308f73ae'
-    }
-
-    get asV1200(): {assetId: bigint, location: v1200.XcmAssetLocation} {
-        assert(this.isV1200)
-        return this._chain.decodeEvent(this.event)
-    }
-
-    get isV10002(): boolean {
-        return this._chain.getEventHash('AssetsRegistry.AssetUpdated') === '1a2df5dc03da9f3f2850f9f87cba28c55a399bcfa2b16bfd3911fb85c1653654'
-    }
-
-    get asV10002(): {assetId: bigint, location: v10002.XcmAssetLocation, decimals: (number | undefined)} {
-        assert(this.isV10002)
-        return this._chain.decodeEvent(this.event)
-    }
-}
 
 export class BalancesDepositEvent {
     private readonly _chain: Chain

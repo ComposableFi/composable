@@ -35,39 +35,6 @@ export class PabloAddLiquidityCall {
     }
 }
 
-export class PabloBuyCall {
-    private readonly _chain: Chain
-    private readonly call: Call
-
-    constructor(ctx: CallContext)
-    constructor(ctx: ChainContext, call: Call)
-    constructor(ctx: CallContext, call?: Call) {
-        call = call || ctx.call
-        assert(call.name === 'Pablo.buy')
-        this._chain = ctx._chain
-        this.call = call
-    }
-
-    /**
-     * Execute a buy order on pool.
-     * 
-     * Emits `Swapped` event when successful.
-     */
-    get isV10005(): boolean {
-        return this._chain.getCallHash('Pablo.buy') === '2a30bc2ea7b0df6399125fe6e21cb61c7f1d4a30ed1dc65fedb58a0b044d089b'
-    }
-
-    /**
-     * Execute a buy order on pool.
-     * 
-     * Emits `Swapped` event when successful.
-     */
-    get asV10005(): {poolId: bigint, inAssetId: bigint, outAsset: v10005.AssetAmount, keepAlive: boolean} {
-        assert(this.isV10005)
-        return this._chain.decodeCall(this.call)
-    }
-}
-
 export class PabloRemoveLiquidityCall {
     private readonly _chain: Chain
     private readonly call: Call
