@@ -23,7 +23,7 @@ export class PabloTVL {
 @InputType()
 export class PabloTVLInput {
   @Field(() => String, { nullable: false })
-  @IsEnum(["day", "week", "month", "year"])
+  @IsEnum(["day", "week", "month", "year", "all"])
   range!: string;
 
   @Field(() => String, { nullable: true })

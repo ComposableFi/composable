@@ -21,7 +21,7 @@ export class ActiveUsers {
 @InputType()
 export class ActiveUsersInput {
   @Field(() => String, { nullable: false })
-  @IsEnum(["day", "week", "month", "year"])
+  @IsEnum(["day", "week", "month", "year", "all"])
   range!: string;
 }
 
