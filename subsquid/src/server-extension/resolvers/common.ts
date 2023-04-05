@@ -18,8 +18,16 @@ export function getRange(range: string): Date[] {
     for (let i = -12; i <= 0; i += 1) {
       dates.push(new Date(now.getFullYear(), now.getMonth() + i, 1, 0));
     }
+  } else if (range === "all") {
+    for (
+      let i = new Date(2023, 0, 1);
+      i <= new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0);
+      i.setDate(i.getDate() + 1)
+    ) {
+      dates.push(new Date(i.getFullYear(), i.getMonth(), i.getDate(), 0));
+    }
   } else {
-    throw new Error("Invalid range. It should be 'day', 'week', 'month' or 'year'.");
+    throw new Error("Invalid range. It should be 'day', 'week', 'month', 'year' or 'all'.");
   }
 
   return dates;

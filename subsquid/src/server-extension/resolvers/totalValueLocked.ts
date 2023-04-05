@@ -23,7 +23,7 @@ export class TotalValueLocked {
 @InputType()
 export class TotalValueLockedInput {
   @Field(() => String, { nullable: false })
-  @IsEnum(["day", "week", "month", "year"])
+  @IsEnum(["day", "week", "month", "year", "all"])
   range!: string;
 
   @Field(() => String, { nullable: true })

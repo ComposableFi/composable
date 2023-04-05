@@ -34,7 +34,7 @@ export class PabloSpotPriceChart {
 @InputType()
 export class PabloSpotPriceChartInput {
   @Field(() => String, { nullable: false })
-  @IsEnum(["day", "week", "month", "year"])
+  @IsEnum(["day", "week", "month", "year", "all"])
   range!: string;
 
   @Field(() => String, { nullable: false })
