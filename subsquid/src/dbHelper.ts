@@ -460,28 +460,47 @@ export async function getOrCreateHistoricalAssetPrice(
 
   let price: number | undefined;
 
-  // Check if the price already exists
-  price = await findHistoricalAssetPrice(ctx, assetIdToUse, date);
-
-  if (price === undefined) {
-    // If price does not exist, query all prices for the given asset and store the
-    // missing ones on the DB.
-    await getAllHistoricalCoingeckoPrices(ctx, assetIdToUse);
-
-    // Retry finding the recently stored price
+  try {
+    // Check if the price already exists
     price = await findHistoricalAssetPrice(ctx, assetIdToUse, date);
 
-    if (price === undefined) {
-      throw new Error(`Cannot find asset price for ${assetIdToUse}`);
+    if (price) {
+      // If price exists, store it on the DB
+      await storeSingleHistoricalAssetPrice(ctx, assetIdToUse, price, date);
+    } else {
+      // If price does not exist, query all prices for the given asset and store the
+      // missing ones on the DB.
+      await getAllHistoricalCoingeckoPrices(ctx, assetIdToUse);
+
+      // Retry finding the recently stored price
+      price = await findHistoricalAssetPrice(ctx, assetIdToUse, date);
+
+      if (price) {
+        // If price exists, store it on the DB
+        await storeSingleHistoricalAssetPrice(ctx, assetIdToUse, price, date);
+      } else {
+        // Try getting the price directly from CoinGecko for this specific date
+        price = await getHistoricalCoingeckoPrice(ctx, assetInfo, time);
+        if (price) {
+          // If price exists, store it on the DB
+          await storeSingleHistoricalAssetPrice(ctx, assetIdToUse, price, date);
+        } else {
+          throw new Error(`Could not obtain price for ${assetIdToUse} from Coingecko`);
+        }
+      }
     }
-  }
 
-  if (baseAssetId && poolId) {
-    const spotPrice = await getSpotPrice(ctx, assetId, baseAssetId, poolId, timestamp);
-    return price / spotPrice;
-  }
+    if (baseAssetId && poolId) {
+      const spotPrice = await getSpotPrice(ctx, assetId, baseAssetId, poolId, timestamp);
+      return price / spotPrice;
+    }
 
-  return price;
+    return price;
+  } catch (err) {
+    console.log(`Error getting price for ${assetIdToUse} at ${date.toISOString()}:`);
+    console.log(err);
+    return 0;
+  }
 }
 
 /**
@@ -615,6 +634,29 @@ export async function getCurrentAssetPrices(ctx: Context | EntityManager): Promi
   }
 
   return currentPrices;
+}
+
+export async function storeSingleHistoricalAssetPrice(
+  ctx: Context | EntityManager,
+  assetId: string,
+  price: number,
+  date: Date
+): Promise<void> {
+  const newHistoricalAssetPrice = new HistoricalAssetPrice({
+    id: randomUUID(),
+    assetId,
+    price,
+    timestamp: date,
+    currency: Currency.USD
+  });
+
+  const isRepository = ctx instanceof EntityManager;
+  // Store new prices
+  if (isRepository) {
+    await ctx.getRepository(HistoricalAssetPrice).save(newHistoricalAssetPrice);
+  } else {
+    await ctx.store.save(newHistoricalAssetPrice);
+  }
 }
 
 export async function getNormalizedPoolTVL(ctx: Context | EntityManager, poolId: string): Promise<bigint> {
@@ -847,7 +889,7 @@ export async function getHistoricalCoingeckoPrice(
     console.log("error fetching", endpoint);
   }
 
-  throw new Error("Failed to fetch historical price");
+  throw new Error(`Failed to fetch historical price for asset ${coinId}`);
 }
 
 export async function getAllHistoricalCoingeckoPrices(
