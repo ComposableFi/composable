@@ -115,7 +115,6 @@ mod add_asset_and_info {
 		}
 
 		#[test]
-		#[ignore = "Oracle needs some TLC"]
 		fn asset_count_should_not_increase_when_updating_asset_info(
 			asset_id in asset_id(),
 			asset_info_1 in asset_info(),
@@ -131,7 +130,7 @@ mod add_asset_and_info {
 					Validated::new(asset_info_1.min_answers).unwrap(),
 					Validated::new(asset_info_1.max_answers).unwrap(),
 					Validated::new(asset_info_1.block_interval).unwrap(),
-					asset_info_1.reward_weight,
+					asset_info_1.reward_weight.min(u128::MAX / 2),
 					asset_info_1.slash,
 					asset_info_1.emit_price_changes,
 				));
@@ -144,7 +143,7 @@ mod add_asset_and_info {
 					Validated::new(asset_info_2.min_answers).unwrap(),
 					Validated::new(asset_info_2.max_answers).unwrap(),
 					Validated::new(asset_info_2.block_interval).unwrap(),
-					asset_info_2.reward_weight,
+					asset_info_2.reward_weight.min(u128::MAX / 2),
 					asset_info_2.slash,
 					asset_info_2.emit_price_changes,
 				));
@@ -184,16 +183,18 @@ mod add_asset_and_info {
 
 
 		#[test]
-		#[ignore = "Oracle needs some TLC"]
 		fn can_have_multiple_assets(
 			asset_id_1 in asset_id(),
 			asset_id_2 in asset_id(),
-			asset_info_1 in asset_info(),
-			asset_info_2 in asset_info(),
+			mut asset_info_1 in asset_info(),
+			mut asset_info_2 in asset_info(),
 		) {
 			new_test_ext().execute_with(|| {
 				let root_account = get_root_account();
 
+			prop_assume!(asset_id_1 != asset_id_2);
+				asset_info_1.reward_weight = asset_info_1.reward_weight.min(u128::MAX / 2);
+				asset_info_2.reward_weight = asset_info_2.reward_weight.min(u128::MAX / 2);
 				prop_assert_ok!(Oracle::add_asset_and_info(
 					RuntimeOrigin::signed(root_account),
 					asset_id_1,
@@ -256,18 +257,20 @@ mod add_asset_and_info {
 		}
 
 		#[test]
-		#[ignore = "Oracle needs some TLC"]
 		fn cannot_exceed_max_assets_count(
 			asset_id_1 in asset_id(),
 			asset_id_2 in asset_id(),
 			asset_id_3 in asset_id(),
-			asset_info_1 in asset_info(),
-			asset_info_2 in asset_info(),
-			asset_info_3 in asset_info(),
+			mut asset_info_1 in asset_info(),
+			mut asset_info_2 in asset_info(),
+			mut asset_info_3 in asset_info(),
 		) {
 			new_test_ext().execute_with(|| {
 				let root_account = get_root_account();
 
+			prop_assume!(asset_id_1 != asset_id_2);
+			prop_assume!(asset_id_3 != asset_id_2);
+			prop_assume!(asset_id_1 != asset_id_3);
 				// First we create 2 assets, which is allowed because within mock.rs, we see:
 				// pub const MaxAssetsCount: u32 = 2;
 				// it would be nicer to do this in a loop up to MaxAssetsCount,
@@ -277,6 +280,10 @@ mod add_asset_and_info {
 				// and therefore this test should also be changed.
 				prop_assert_eq!(MaxAssetsCount::get(), 2_u32);
 
+
+				asset_info_1.reward_weight = asset_info_1.reward_weight.min(u128::MAX / 3);
+				asset_info_2.reward_weight = asset_info_2.reward_weight.min(u128::MAX / 3);
+				asset_info_3.reward_weight = asset_info_3.reward_weight.min(u128::MAX / 3);
 				prop_assert_ok!(Oracle::add_asset_and_info(
 					RuntimeOrigin::signed(root_account),
 					asset_id_1,
@@ -682,6 +689,141 @@ mod reclaim_stake {
 			})?;
 		}
 	}
+}
+
+#[test]
+fn calculate_reward_per_block() {
+	new_test_ext().execute_with(|| {
+		let root = get_root_account();
+		System::set_block_number(1);
+		// 3 oracles
+		let account_1_controller = get_account_1();
+		let account_1_signer = get_account_3();
+		Balances::make_free_balance_be(&account_1_controller, 1000);
+		Balances::make_free_balance_be(&account_1_signer, 0);
+		let account_2_controller = get_account_4();
+		let account_2_signer = get_account_5();
+		Balances::make_free_balance_be(&account_2_controller, 1000);
+		Balances::make_free_balance_be(&account_2_signer, 0);
+		let account_3_controller = get_account_6();
+		let account_3_signer = get_account_7();
+		Balances::make_free_balance_be(&account_3_controller, 1000);
+		Balances::make_free_balance_be(&account_3_signer, 0);
+		let treasury_account = get_treasury_account();
+		Balances::make_free_balance_be(&treasury_account, 10000);
+		let rewards_account = Oracle::account_id();
+		Balances::make_free_balance_be(&rewards_account, 10000);
+
+		// 2 assets
+		assert_ok!(Oracle::add_asset_and_info(
+			RuntimeOrigin::signed(root),
+			0,
+			Validated::new(Percent::from_percent(80)).unwrap(),
+			Validated::new(1).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			10,
+			5,
+			false,
+		));
+
+		assert_ok!(Oracle::add_asset_and_info(
+			RuntimeOrigin::signed(root),
+			1,
+			Validated::new(Percent::from_percent(80)).unwrap(),
+			Validated::new(1).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			30,
+			5,
+			false,
+		));
+
+		// adding stake
+		assert_ok!(Oracle::set_signer(
+			RuntimeOrigin::signed(account_1_controller),
+			account_1_signer
+		));
+		assert_ok!(Oracle::set_signer(
+			RuntimeOrigin::signed(account_2_controller),
+			account_2_signer
+		));
+		assert_ok!(Oracle::set_signer(
+			RuntimeOrigin::signed(account_3_controller),
+			account_3_signer
+		));
+		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_1_controller), 99));
+		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_2_controller), 199));
+		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_3_controller), 299));
+		assert_eq!(Oracle::oracle_stake(account_1_signer), Some(100));
+		assert_eq!(Oracle::oracle_stake(account_2_signer), Some(200));
+		assert_eq!(Oracle::oracle_stake(account_3_signer), Some(300));
+
+		// reward tracker
+		let mut reward_tracker = RewardTrackerStore::<Test>::get().unwrap();
+		reward_tracker.start = 1;
+		reward_tracker.period = MS_PER_YEAR_NAIVE;
+		reward_tracker.current_block_reward = 100;
+		RewardTrackerStore::<Test>::set(Option::from(reward_tracker.clone()));
+
+		// add prices for asset 1 from 1 user
+		System::set_block_number(6);
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_1_signer), 100_u128, 0_u128));
+		let price = PrePrice { price: 100_u128, block: 6, who: account_1_signer };
+		assert_eq!(Oracle::pre_prices(0), vec![price]);
+		System::set_block_number(7);
+		Timestamp::set_timestamp(7);
+		assert_eq!(Balances::free_balance(account_1_controller), 900);
+		assert_eq!(Balances::free_balance(rewards_account), 10000);
+		Oracle::on_initialize(7);
+		assert_eq!(Balances::free_balance(account_1_controller), 925);
+		assert_eq!(Balances::free_balance(rewards_account), 9975);
+
+		// 2 users for another asset
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 200_u128, 1_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_3_signer), 200_u128, 1_u128));
+		System::set_block_number(8);
+		Timestamp::set_timestamp(8);
+		assert_eq!(Balances::free_balance(account_2_controller), 800);
+		assert_eq!(Balances::free_balance(account_3_controller), 700);
+		assert_eq!(Balances::free_balance(rewards_account), 9975);
+		Oracle::on_initialize(8);
+		assert_eq!(Balances::free_balance(account_2_controller), 830);
+		assert_eq!(Balances::free_balance(account_3_controller), 745);
+		assert_eq!(Balances::free_balance(rewards_account), 9900);
+
+		// 3 users for both assets
+		System::set_block_number(100);
+		Timestamp::set_timestamp(100);
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_1_signer), 100_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 100_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 200_u128, 1_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_3_signer), 200_u128, 1_u128));
+		System::set_block_number(101);
+		Timestamp::set_timestamp(101);
+		Oracle::on_initialize(101);
+		assert_eq!(Balances::free_balance(account_1_controller), 933);
+		assert_eq!(Balances::free_balance(account_2_controller), 876);
+		assert_eq!(Balances::free_balance(account_3_controller), 790);
+		assert_eq!(Balances::free_balance(rewards_account), 9801);
+
+		// all 3 user for all 2 assets
+		System::set_block_number(107);
+		Timestamp::set_timestamp(107);
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_1_signer), 100_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 100_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_3_signer), 100_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_1_signer), 200_u128, 1_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 200_u128, 1_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_3_signer), 200_u128, 1_u128));
+		System::set_block_number(108);
+		Timestamp::set_timestamp(108);
+		Oracle::on_initialize(108);
+		assert_eq!(Balances::free_balance(account_1_controller), 949);
+		assert_eq!(Balances::free_balance(account_2_controller), 909);
+		assert_eq!(Balances::free_balance(account_3_controller), 839);
+		assert_eq!(Balances::free_balance(rewards_account), 9703);
+	});
 }
 
 mod submit_price {
@@ -1520,7 +1662,6 @@ fn historic_pricing() {
 }
 
 #[test]
-#[ignore = "The behaviour of `Oracle::get_price` needs to be reviewed (will be updated with PR/ docs link once available)"]
 fn price_of_amount() {
 	new_test_ext().execute_with(|| {
 		let value = NORMALIZED::units(50_000);
@@ -1530,11 +1671,7 @@ fn price_of_amount() {
 
 		let total_price = <Oracle as oracle::Oracle>::get_price(BTC::ID, amount).unwrap();
 
-		// This panics with:
-		// thread 'tests::price_of_amount' panicked at 'assertion failed: `(left == right)`
-		//   left: `250000000000000000`,
-		//  right: `250000000000000000000000000000`', frame/oracle/src/tests.rs:1315:9
-		assert_eq!(total_price.price, value * amount)
+		assert_eq!(total_price.price, value * amount / BTC::ONE)
 	});
 }
 

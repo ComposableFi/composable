@@ -836,26 +836,38 @@ pub mod pallet {
 			}
 			if let Some(mut reward_tracker) = Self::get_reward_tracker_if_enabled() {
 				// divide the per asset reward(by weight) by the number of oracles
-				let reward_amount_per_oracle: T::Balance = safe_multiply_by_rational(
+				let reward_amount_per_asset: T::Balance = safe_multiply_by_rational(
 					reward_tracker.current_block_reward.unique_saturated_into(),
 					asset_info.reward_weight.unique_saturated_into(),
 					reward_tracker.total_reward_weight.unique_saturated_into(),
 				)?
-				.checked_div(rewarded_oracles.len() as u128)
-				.ok_or(ArithmeticError::DivisionByZero)?
 				.into();
-				if !reward_amount_per_oracle.is_zero() {
-					for accounts in rewarded_oracles {
-						Self::transfer_reward(
-							accounts.0,
-							accounts.1,
-							asset_id,
-							reward_amount_per_oracle,
-						)?;
-						// track the total being rewarded
-						reward_tracker.total_already_rewarded = reward_tracker
-							.total_already_rewarded
-							.saturating_add(reward_amount_per_oracle);
+				if !reward_amount_per_asset.is_zero() {
+					let rewarded_oracles_total_staked: T::Balance = rewarded_oracles
+						.iter()
+						.map(|account| OracleStake::<T>::get(&account.0).unwrap_or_default())
+						.fold(T::Balance::zero(), |sum, item| sum + item);
+					for account in rewarded_oracles {
+						let account_stake: T::Balance =
+							OracleStake::<T>::get(&account.0).unwrap_or_default();
+						let reward_amount_for_account: T::Balance = safe_multiply_by_rational(
+							reward_amount_per_asset.unique_saturated_into(),
+							account_stake.unique_saturated_into(),
+							rewarded_oracles_total_staked.unique_saturated_into(),
+						)?
+						.into();
+						if !reward_amount_for_account.is_zero() {
+							Self::transfer_reward(
+								account.0,
+								account.1,
+								asset_id,
+								reward_amount_for_account,
+							)?;
+							// track the total being rewarded
+							reward_tracker.total_already_rewarded = reward_tracker
+								.total_already_rewarded
+								.saturating_add(reward_amount_for_account);
+						}
 					}
 					RewardTrackerStore::<T>::mutate(|r| *r = Some(reward_tracker));
 				}
