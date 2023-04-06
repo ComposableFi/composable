@@ -220,6 +220,14 @@ pub fn get_account_5() -> AccountId {
 	sr25519::Public([5u8; 32])
 }
 
+pub fn get_account_6() -> AccountId {
+	sr25519::Public([6u8; 32])
+}
+
+pub fn get_account_7() -> AccountId {
+	sr25519::Public([7u8; 32])
+}
+
 pub fn get_treasury_account() -> AccountId {
 	sr25519::Public([10u8; 32])
 }
