@@ -903,7 +903,9 @@ pub mod pallet {
 			RewardTrackerStore::<T>::mutate(|reward_tracker_opt| match reward_tracker_opt {
 				Some(reward_tracker) => {
 					let now = T::Time::now();
-					if now - reward_tracker.start >= reward_tracker.period {
+					if reward_tracker.period != Zero::zero() &&
+						now - reward_tracker.start >= reward_tracker.period
+					{
 						reward_tracker.start = now;
 						reward_tracker.total_already_rewarded = Zero::zero();
 					}

@@ -696,6 +696,8 @@ fn calculate_reward_per_block() {
 	new_test_ext().execute_with(|| {
 		let root = get_root_account();
 		System::set_block_number(1);
+		Timestamp::set_timestamp(1);
+		Oracle::on_initialize(1);
 		// 3 oracles
 		let account_1_controller = get_account_1();
 		let account_1_signer = get_account_3();
@@ -760,11 +762,23 @@ fn calculate_reward_per_block() {
 		assert_eq!(Oracle::oracle_stake(account_3_signer), Some(300));
 
 		// reward tracker
-		let mut reward_tracker = RewardTrackerStore::<Test>::get().unwrap();
-		reward_tracker.start = 1;
-		reward_tracker.period = MS_PER_YEAR_NAIVE;
-		reward_tracker.current_block_reward = 100;
-		RewardTrackerStore::<Test>::set(Option::from(reward_tracker.clone()));
+		let annual_cost_per_oracle: Balance = 262800000;
+		let mut num_ideal_oracles: u8 = 1;
+		assert_ok!(Oracle::adjust_rewards(
+			RuntimeOrigin::root(),
+			annual_cost_per_oracle,
+			num_ideal_oracles
+		));
+		assert_eq!(
+			RewardTrackerStore::<Test>::get(),
+			Some(RewardTracker {
+				period: MS_PER_YEAR_NAIVE,
+				start: 1,
+				total_already_rewarded: 0,
+				current_block_reward: 100,
+				total_reward_weight: 40,
+			})
+		);
 
 		// add prices for asset 1 from 1 user
 		System::set_block_number(6);
@@ -2208,4 +2222,98 @@ mod test {
 		>>::validate(2_u64)
 		.is_err());
 	}
+}
+#[test]
+fn reward_rate_doesnt_start_on_asset_info() {
+	new_test_ext().execute_with(|| {
+		let root = get_root_account();
+		assert_eq!(RewardTrackerStore::<Test>::get(), None);
+		System::set_block_number(1);
+		Timestamp::set_timestamp(1);
+		Oracle::on_initialize(1);
+		assert_eq!(RewardTrackerStore::<Test>::get(), None);
+		let account_1_controller = get_account_1();
+		let account_1_signer = get_account_3();
+		Balances::make_free_balance_be(&account_1_controller, 1000);
+		Balances::make_free_balance_be(&account_1_signer, 0);
+		let rewards_account = Oracle::account_id();
+		Balances::make_free_balance_be(&rewards_account, 10000);
+
+		assert_ok!(Oracle::add_asset_and_info(
+			RuntimeOrigin::signed(root),
+			0,
+			Validated::new(Percent::from_percent(80)).unwrap(),
+			Validated::new(1).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			10,
+			5,
+			false,
+		));
+
+		assert_eq!(
+			RewardTrackerStore::<Test>::get(),
+			Some(RewardTracker {
+				period: 0,
+				start: 0,
+				total_already_rewarded: 0,
+				current_block_reward: 0,
+				total_reward_weight: 10,
+			})
+		);
+		System::set_block_number(2);
+		Timestamp::set_timestamp(2);
+		Oracle::on_initialize(2);
+		assert_eq!(
+			RewardTrackerStore::<Test>::get(),
+			Some(RewardTracker {
+				period: 0,
+				start: 0,
+				total_already_rewarded: 0,
+				current_block_reward: 0,
+				total_reward_weight: 10,
+			})
+		);
+		let annual_cost_per_oracle: Balance = 100_000 * UNIT;
+		let mut num_ideal_oracles: u8 = 10;
+		assert_ok!(Oracle::adjust_rewards(
+			RuntimeOrigin::root(),
+			annual_cost_per_oracle,
+			num_ideal_oracles
+		));
+		assert_eq!(
+			RewardTrackerStore::<Test>::get(),
+			Some(RewardTracker {
+				period: MS_PER_YEAR_NAIVE,
+				start: 2,
+				total_already_rewarded: 0,
+				current_block_reward: 380517503805,
+				total_reward_weight: 10,
+			})
+		);
+		System::set_block_number(100);
+		Timestamp::set_timestamp(100);
+		Oracle::on_initialize(100);
+		assert_ok!(Oracle::add_asset_and_info(
+			RuntimeOrigin::signed(root),
+			1,
+			Validated::new(Percent::from_percent(80)).unwrap(),
+			Validated::new(1).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			10,
+			5,
+			false,
+		));
+		assert_eq!(
+			RewardTrackerStore::<Test>::get(),
+			Some(RewardTracker {
+				period: MS_PER_YEAR_NAIVE,
+				start: 2,
+				total_already_rewarded: 0,
+				current_block_reward: 380517503805,
+				total_reward_weight: 20,
+			})
+		);
+	});
 }
