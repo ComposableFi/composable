@@ -1,6 +1,6 @@
 { self, ... }: {
-  perSystem =
-    { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }: {
+  perSystem = { config, self', inputs', pkgs, system, crane, systemCommonRust
+    , subnix, ... }: {
       _module.args.systemCommonRust = rec {
 
         mkRustSrc = path:
@@ -44,18 +44,9 @@
             Security
             SystemConfiguration
           ]);
-        substrate-attrs = {
-          LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
-            pkgs.stdenv.cc.cc.lib
-            pkgs.llvmPackages.libclang.lib
-          ];
-          LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
-          PROTOC = "${pkgs.protobuf}/bin/protoc";
-          ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
-        };
 
         # Common env required to build the node
-        common-attrs = substrate-attrs // {
+        common-attrs = subnix.subattrs // {
           src = rustSrc;
           buildInputs = with pkgs; [ openssl zstd ];
           nativeBuildInputs = with pkgs;
@@ -67,7 +58,7 @@
         };
 
         # TODO: refactor as mkOverride common-attrs
-        common-test-deps-attrs = substrate-attrs // {
+        common-test-deps-attrs = subnix.subattrs // {
           src = rustSrc;
           buildInputs = with pkgs; [ openssl zstd ];
           nativeBuildInputs = with pkgs;

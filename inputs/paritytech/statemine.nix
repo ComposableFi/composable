@@ -1,6 +1,6 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, lib, system, crane
-    , systemCommonRust, subTools, ... }: {
+    , systemCommonRust, subnix, ... }: {
       packages = {
         statemine-node = let version = "release-parachains-v9380";
         in pkgs.stdenv.mkDerivation (rec {
@@ -25,7 +25,7 @@
           installPhase = ''
             mkdir --parents $out/bin && mv ./target/release/polkadot-parachain $out/bin
           '';
-        } // subTools.subenv);
+        } // subnix.subenv);
       };
     };
 }

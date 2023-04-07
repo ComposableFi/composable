@@ -13,14 +13,31 @@
       devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
         (import ./specs/centauri.nix {
           inherit pkgs devnetTools packages;
-          devnet-a = packages.zombienet-dali-centauri-a;
-          devnet-b = packages.zombienet-dali-centauri-b;
+          devnet-a = packages.zombienet-picasso-centauri-a;
+          devnet-b = packages.zombienet-composable-centauri-b;
         });
 
-      devnet-dali-image = devnetTools.buildDevnetImage {
-        name = "devnet-dali";
+      devnet-centauri-no-relay =
+        pkgs.composable.mkDevnetProgram "devnet-centauri"
+        (import ./specs/centauri.nix {
+          inherit pkgs devnetTools packages;
+          devnet-a = packages.zombienet-picasso-centauri-a;
+          devnet-b = packages.zombienet-composable-centauri-b;
+          hyperspace-relay = false;
+        });
+
+      centauri-no-relay = pkgs.writeShellApplication rec {
+        name = "centauri-configure-and-run";
+        text = ''
+          cp --force ${self'.packages.hyperspace-config} /tmp/config.toml  
+          ${pkgs.lib.meta.getExe devnet-centauri-no-relay}       
+        '';
+      };
+
+      devnet-picasso-image = devnetTools.buildDevnetImage {
+        name = "devnet-picasso";
         container-tools = devnetTools.withDevNetContainerTools;
-        devNet = packages.zombienet-rococo-local-dali-dev;
+        devNet = packages.zombienet-rococo-local-picasso-dev;
       };
 
       devnet-picasso-complete = packages.zombienet-picasso-complete;

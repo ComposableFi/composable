@@ -204,7 +204,8 @@ fn addr_canonicalize_humanize_validate() {
 		);
 
 		// 2. Canonical address is correct.
-		assert_eq!(canonical_addr.0.as_ref().as_ref(), valid_addr.1);
+		let canonical: &[u8; 32] = canonical_addr.0.as_ref().as_ref();
+		assert_eq!(canonical.to_vec(), valid_addr.1);
 
 		// 3. Fails if the address is invalid. (`Ok(Err)`)
 		assert!(vm.addr_canonicalize(invalid_addr).unwrap().is_err());

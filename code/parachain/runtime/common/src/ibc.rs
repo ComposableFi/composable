@@ -1,5 +1,6 @@
 use composable_traits::xcm::assets::RemoteAssetRegistryInspect;
 use primitives::currency::{ForeignAssetId, PrefixedDenom};
+use sp_core::ConstU64;
 
 use crate::prelude::*;
 
@@ -28,3 +29,5 @@ where
 		}
 	}
 }
+
+pub type MinimumConnectionDelaySeconds = ConstU64<10>;
