@@ -1,0 +1,15 @@
+--- composable.rs	1970-01-01 00:00:01.000000000 +0000
++++ composable.rs	2023-04-02 21:39:08.174185055 +0100
+@@ -32,9 +32,9 @@
+ use subxt::{
+ 	config::{
+ 		extrinsic_params::Era,
+-		polkadot::{
+-			PlainTip as Tip, PolkadotExtrinsicParams as ParachainExtrinsicParams,
+-			PolkadotExtrinsicParamsBuilder as ParachainExtrinsicsParamsBuilder,
++		substrate::{
++			AssetTip as Tip, SubstrateExtrinsicParams as ParachainExtrinsicParams,
++			SubstrateExtrinsicParamsBuilder as ParachainExtrinsicsParamsBuilder,
+ 		},
+ 		ExtrinsicParams,
+ 	},

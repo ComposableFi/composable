@@ -47,7 +47,7 @@ members = [
   "parachain/runtime/composable-wasm",
   "utils/common",
   "utils/collator-sidecar",
-  "utils/price-feed"
+  "utils/price-feed",
 ]
 resolver = "2"
 
@@ -72,12 +72,12 @@ rpath = false
 
 
 [workspace.dependencies]
-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "c8aa82d95c817024f814c76131dba99c305fa1c4", default-features = false }
-ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev = "c8aa82d95c817024f814c76131dba99c305fa1c4", default-features = false }
-ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "c8aa82d95c817024f814c76131dba99c305fa1c4", default-features = false }
-ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev = "c8aa82d95c817024f814c76131dba99c305fa1c4", default-features = false }
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "c8aa82d95c817024f814c76131dba99c305fa1c4", default-features = false }
-pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "c8aa82d95c817024f814c76131dba99c305fa1c4", default-features = false }
+ibc = { git = "https://github.com/dzmitry-lahoda-forks/centauri", rev = "15b72401a8292f248c2f3afe1e29cf83bf359c36", default-features = false }
+ibc-rpc = { git = "https://github.com/dzmitry-lahoda-forks/centauri", rev = "15b72401a8292f248c2f3afe1e29cf83bf359c36", default-features = false }
+ibc-primitives = { git = "https://github.com/dzmitry-lahoda-forks/centauri", rev = "15b72401a8292f248c2f3afe1e29cf83bf359c36", default-features = false }
+ibc-runtime-api = { git = "https://github.com/dzmitry-lahoda-forks/centauri", rev = "15b72401a8292f248c2f3afe1e29cf83bf359c36", default-features = false }
+pallet-ibc = { git = "https://github.com/dzmitry-lahoda-forks/centauri", rev = "15b72401a8292f248c2f3afe1e29cf83bf359c36", default-features = false }
+pallet-ibc-ping = { git = "https://github.com/dzmitry-lahoda-forks/centauri", rev = "15b72401a8292f248c2f3afe1e29cf83bf359c36", default-features = false }
 
 pallet-proxy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
 

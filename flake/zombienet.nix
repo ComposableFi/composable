@@ -4,15 +4,14 @@
       prelude = zombieTools.builder;
       relaychainBase = {
         chain = "rococo-local";
-        default_command =
-          pkgs.lib.meta.getExe self'.packages.polkadot-node-on-parity-kusama;
+        default_command = pkgs.lib.meta.getExe self'.packages.polkadot-node-dep;
         count = 3;
       };
 
       zombienet-rococo-local-composable-config = with prelude;
-        { chain ? "dali-dev", ws_port ? null, rpc_port ? null
-        , relay_ws_port ? null, relay_rpc_port ? null, rust_log_add ? null
-        , para-id ? 2087, command ? self'.packages.composable-node }:
+        { chain, ws_port ? null, rpc_port ? null, relay_ws_port ? null
+        , relay_rpc_port ? null, rust_log_add ? null, para-id ? 2087
+        , command ? self'.packages.composable-node }:
         mkZombienet {
           relaychain = relaychainBase
             // (pkgs.lib.optionalAttrs (relay_ws_port != null) {
@@ -121,16 +120,19 @@
             chain = "composable-dev";
           });
 
-        zombienet-dali-centauri-a =
-          zombieTools.writeZombienetShellApplication "zombienet-dali-centauri-a"
+        zombienet-picasso-centauri-a =
+          zombieTools.writeZombienetShellApplication
+          "zombienet-picasso-centauri-a"
           (zombienet-rococo-local-composable-config {
             rust_log_add =
               "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
-            command = self'.packages.composable-node-dali;
+            command = self'.packages.composable-node;
+            chain = "picasso-dev";
           });
 
-        zombienet-dali-centauri-b =
-          zombieTools.writeZombienetShellApplication "zombienet-dali-centauri-b"
+        zombienet-picasso-centauri-b =
+          zombieTools.writeZombienetShellApplication
+          "zombienet-picasso-centauri-b"
           (zombienet-rococo-local-composable-config {
             ws_port = 29988;
             rpc_port = 32201;
@@ -138,7 +140,22 @@
             relay_rpc_port = 31445;
             rust_log_add =
               "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
-            command = self'.packages.composable-node-dali;
+            command = self'.packages.composable-node;
+            chain = "picasso-dev";
+          });
+
+        zombienet-composable-centauri-b =
+          zombieTools.writeZombienetShellApplication
+          "zombienet-composable-centauri-b"
+          (zombienet-rococo-local-composable-config {
+            ws_port = 29988;
+            rpc_port = 32201;
+            relay_ws_port = 29944;
+            relay_rpc_port = 31445;
+            rust_log_add =
+              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
+            command = self'.packages.composable-node;
+            chain = "composable-dev";
           });
       };
 
@@ -153,11 +170,6 @@
           program = self'.packages.zombienet-dali-complete;
         };
 
-        zombienet-dali-centauri-a = {
-          type = "app";
-          program = self'.packages.zombienet-dali-centauri-a;
-        };
-
         zombienet-picasso-complete = {
           type = "app";
           program = self'.packages.zombienet-picasso-complete;
@@ -167,7 +179,19 @@
           program = pkgs.writeShellApplication rec {
             name = "zombienet-log-follow";
             text = ''
-              docker exec -it composable-devnet-a-1   bash  -c 'LOG=$(find /tmp/ -name "zombie-*" | head --lines=1)/alice.log && tail --follow $LOG'
+              CONTAINER="''${1:-composable-devnet-a-1}"
+              docker exec -it "$CONTAINER"   bash  -c 'LOG=$(find /tmp/ -name "zombie-*" | head --lines=1)/alice.log && tail --follow $LOG'
+            '';
+          };
+          type = "app";
+        };
+
+        zombienet-log-cat = {
+          program = pkgs.writeShellApplication rec {
+            name = "zombienet-log-follow";
+            text = ''
+              CONTAINER="''${1:-composable-devnet-a-1}"
+              docker exec -it "$CONTAINER"   bash  -c 'LOG=$(find /tmp/ -name "zombie-*" | head --lines=1)/alice.log && cat $LOG'
             '';
           };
           type = "app";

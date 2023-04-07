@@ -385,6 +385,7 @@ pub mod pallet {
 		/// - `origin` the original dispatching the extrinsic.
 		/// - `code` the actual wasm code.
 		#[transactional]
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::upload(code.len() as u32))]
 		pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
@@ -406,6 +407,7 @@ pub mod pallet {
 		/// * `funds` the assets transferred to the contract prior to calling it's `instantiate`
 		///   export.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
+		#[pallet::call_index(1)]
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::instantiate(funds.len() as u32).saturating_add(Weight::from_ref_time(*gas)))]
 		pub fn instantiate(
@@ -449,6 +451,7 @@ pub mod pallet {
 		/// * `funds` the assets transferred to the contract prior to calling it's `instantiate`
 		///   export.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
+		#[pallet::call_index(2)]
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::execute(funds.len() as u32).saturating_add(Weight::from_ref_time(*gas)))]
 		pub fn execute(
@@ -480,6 +483,7 @@ pub mod pallet {
 		/// * `new_code_identifier` the code identifier that we want to switch to.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		/// * `message` MigrateMsg, that will be passed to the contract.
+		#[pallet::call_index(3)]
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::migrate().saturating_add(Weight::from_ref_time(*gas)))]
 		pub fn migrate(
@@ -508,6 +512,7 @@ pub mod pallet {
 		/// * `contract` the address of the contract that we want to migrate.
 		/// * `new_admin` new admin of the contract that we want to update to.
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
+		#[pallet::call_index(4)]
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::update_admin().saturating_add(Weight::from_ref_time(*gas)))]
 		pub fn update_admin(

@@ -55,7 +55,7 @@ pub struct Picasso;
 impl Picasso {
 	pub fn assets() -> Vec<(u64, Option<ForeignAssetId>, AssetInfo<Balance>)> {
 		let usdt = (
-			1984,
+			130,
 			Some(ForeignAssetId::Xcm(XcmAssetLocation::new(MultiLocation::new(
 				1,
 				X3(
@@ -75,11 +75,12 @@ impl Picasso {
 				),
 				decimals: Some(6),
 				existential_deposit: 10_000,
-				ratio: Some(rational!(375 / 1_000_000)),
+				ratio: Some(rational!(15 / 1_000_000_000)),
 			},
 		);
 		let mut dot = InnerPrefixedDenom::from_str("6").expect("genesis");
 		dot.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(0)));
+
 		let dot = (
 			6,
 			Some(ForeignAssetId::IbcIcs20(PrefixedDenom(dot))),
@@ -92,9 +93,9 @@ impl Picasso {
 					BiBoundedAssetSymbol::from_vec(b"DOT".to_vec())
 						.expect("String is within bounds"),
 				),
-				decimals: Some(12),
-				existential_deposit: 1_000_000_000,
-				ratio: Some(rational!(375 / 1_000)),
+				decimals: Some(10),
+				existential_deposit: 1_000_000,
+				ratio: Some(rational!(2143 / 100_000_000)),
 			},
 		);
 
@@ -112,7 +113,7 @@ pub struct Composable;
 impl Composable {
 	pub fn assets() -> Vec<(u64, Option<ForeignAssetId>, AssetInfo<Balance>)> {
 		let usdt = (
-			1984,
+			140,
 			Some(ForeignAssetId::Xcm(XcmAssetLocation::new(MultiLocation::new(
 				1,
 				X3(
@@ -132,10 +133,10 @@ impl Composable {
 				),
 				decimals: Some(6),
 				existential_deposit: 10_000,
-				ratio: Some(rational!(375 / 1_000_000)),
+				ratio: Some(rational!(375 / 1_000_000_000)),
 			},
 		);
-		let mut pica = InnerPrefixedDenom::from_str("6").expect("genesis");
+		let mut pica = InnerPrefixedDenom::from_str("1").expect("genesis");
 		pica.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(0)));
 		let pica = (
 			1,
@@ -154,8 +155,25 @@ impl Composable {
 				ratio: Some(rational!(1 / 1)),
 			},
 		);
+		let dot = (
+			6,
+			Some(ForeignAssetId::Xcm(XcmAssetLocation::new(MultiLocation::new(1, Here)))),
+			AssetInfo {
+				name: Some(
+					BiBoundedAssetName::from_vec(b"Polkadot".to_vec())
+						.expect("String is within bounds"),
+				),
+				symbol: Some(
+					BiBoundedAssetSymbol::from_vec(b"DOT".to_vec())
+						.expect("String is within bounds"),
+				),
+				decimals: Some(10),
+				existential_deposit: 1_000_000,
+				ratio: Some(rational!(2143 / 100_000_000)),
+			},
+		);
 
-		vec![usdt, pica]
+		vec![usdt, pica, dot]
 	}
 }
 

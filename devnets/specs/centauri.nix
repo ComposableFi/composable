@@ -1,4 +1,5 @@
-{ pkgs, devnet-a, devnet-b, devnetTools, packages, ... }: {
+{ pkgs, devnet-a, devnet-b, devnetTools, packages, hyperspace-relay ? true, ...
+}: {
   modules = [
     (let
       configPathSource = "/tmp/config.toml";
@@ -24,18 +25,18 @@
           containerName = "devnet-a";
           ports = [ 9944 9988 9989 9990 ];
           devnet = devnet-a;
-          networkName = network-name;
+          networkName = network-a;
         }
         {
           containerName = "devnet-b";
           ports = [ 29944 29988 29989 29990 ];
           devnet = devnet-b;
-          networkName = network-name-2;
+          networkName = network-b;
         }
       ];
 
-      network-name = "composable_devnet";
-      network-name-2 = "composable_devnet_2";
+      network-a = "picasso-kusama-centauri";
+      network-b = "composable-polkadot-centauri";
       mkComposableContainer = container: networks:
         container // {
           service = container.service // { inherit networks; };
@@ -55,20 +56,25 @@
     in {
       config = {
         project.name = "composable";
-        networks."${network-name}" = { };
-        networks."${network-name-2}" = { };
+        networks."${network-a}" = { };
+        networks."${network-b}" = { };
 
         services = builtins.listToAttrs (map toService devnetConfigs) // {
           "hyperspace-create-clients" = mkComposableContainer
             (import ../services/centauri.nix {
               name = "hyperspace-create-clients";
-              execCommands =
-                [ "create-clients" "--config" configPathContainer ];
+              execCommands = [
+                "create-clients"
+                "--config"
+                configPathContainer
+                "--delay-period-seconds"
+                "10"
+              ];
               inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
               dependsOn = { };
               restartPolicy = "on-failure";
-            }) [ network-name network-name-2 ];
+            }) [ network-a network-b ];
 
           "hyperspace-create-connection" = mkComposableContainer
             (import ../services/centauri.nix {
@@ -77,14 +83,14 @@
                 "create-connection"
                 "--config"
                 configPathContainer
-                "--delay-period"
-                "0"
+                "--delay-period-seconds"
+                "10"
               ];
               inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
               dependsOn = dependsOnCreateClient;
-              restartPolicy = "no";
-            }) [ network-name network-name-2 ];
+              restartPolicy = "on-failure";
+            }) [ network-a network-b ];
 
           "hyperspace-create-channels" = mkComposableContainer
             (import ../services/centauri.nix {
@@ -99,22 +105,30 @@
                 "ics20-1"
                 "--order"
                 "unordered"
+                "--delay-period-seconds"
+                "10"
               ];
               inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
               dependsOn = dependsOnCreateConnection;
               restartPolicy = "no";
-            }) [ network-name network-name-2 ];
-
+            }) [ network-a network-b ];
+        } // pkgs.lib.optionalAttrs hyperspace-relay {
           "hyperspace-relay" = mkComposableContainer
             (import ../services/centauri.nix {
               name = "hyperspace-relay";
-              execCommands = [ "relay" "--config" configPathContainer ];
+              execCommands = [
+                "relay"
+                "--config"
+                configPathContainer
+                "--delay-period-seconds"
+                "10"
+              ];
               inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
               dependsOn = dependsOnCreateChannels;
               restartPolicy = "on-failure";
-            }) [ network-name network-name-2 ];
+            }) [ network-a network-b ];
         };
       };
     })
