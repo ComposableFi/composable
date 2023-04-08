@@ -10,6 +10,7 @@
         polkadot-node-on-parity-polkadot
         statemine-node
         subwasm
+        zombienet
       ]);
 
       all-docs = pkgs.linkFarmFromDrvs "all-docs"
