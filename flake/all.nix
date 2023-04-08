@@ -15,6 +15,7 @@
 
       all-docs = pkgs.linkFarmFromDrvs "all-docs"
         (with self'.packages; [ docs-server docs-static ]);
+
       all-misc = pkgs.linkFarmFromDrvs "all-misc" (with self'.packages; [
         cargo-fmt-check
         hadolint-check

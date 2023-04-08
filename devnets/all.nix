@@ -41,21 +41,11 @@
       };
 
       devnet-picasso-complete = packages.zombienet-picasso-complete;
-      devnet-dali-complete = packages.zombienet-dali-complete;
       devnet-initialize-script-local = devnetTools.mkDevnetInitializeScript {
         polkadotUrl = "ws://localhost:9944";
         composableUrl = "ws://localhost:9988";
         parachainIds = [ 1000 2000 2087 ];
       };
-
-      devnet-initialize-script-dali-persistent =
-        devnetTools.mkDevnetInitializeScript {
-          polkadotUrl =
-            "wss://persistent.devnets.composablefinance.ninja/chain/rococo";
-          composableUrl =
-            "wss://persistent.devnets.composablefinance.ninja/chain/dali";
-          parachainIds = [ 1000 2000 2087 ];
-        };
 
       devnet-initialize-script-picasso-persistent =
         devnetTools.mkDevnetInitializeScript {
@@ -70,23 +60,14 @@
         (import ./specs/default.nix {
           inherit pkgs devnetTools;
           price-feed = packages.price-feed;
-          devnet = packages.devnet-dali-complete;
+          devnet = packages.devnet-picasso-complete;
           frontend = packages.frontend-static;
         });
 
       devnet-xcvm = pkgs.composable.mkDevnetProgram "devnet-xcvm"
         (import ./specs/xcvm.nix {
           inherit pkgs devnetTools;
-          devnet-dali = packages.zombienet-rococo-local-dali-dev;
-        });
-
-      devnet-dali-persistent =
-        pkgs.composable.mkDevnetProgram "devnet-dali-persistent"
-        (import ./specs/default.nix {
-          inherit pkgs devnetTools;
-          price-feed = packages.price-feed;
-          devnet = packages.devnet-dali-complete;
-          frontend = packages.frontend-static-persistent;
+          devnet-picasso = packages.zombienet-rococo-local-picasso-dev;
         });
 
       devnet-picasso-persistent =
