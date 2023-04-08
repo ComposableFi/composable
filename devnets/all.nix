@@ -2,6 +2,7 @@
   perSystem = { config, self', inputs', pkgs, system, devnetTools, ... }: {
     packages = let packages = self'.packages;
     in rec {
+      default = centauri-configure-and-run;
       centauri-configure-and-run = pkgs.writeShellApplication rec {
         name = "centauri-configure-and-run";
         text = ''

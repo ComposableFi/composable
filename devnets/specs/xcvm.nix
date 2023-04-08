@@ -1,11 +1,11 @@
-{ pkgs, devnet-dali, devnetTools, ... }: {
+{ pkgs, devnet-picasso, devnetTools, ... }: {
   modules = [
     (let
       db-container-name = "db";
       redis-container-name = "subsquid-redis";
       subsquid-status-container-name = "subsquid-status-service";
       subsquid-indexer-gateway-container-name = "subsquid-indexer-gateway";
-      dali-container-name = "dali-devnet";
+      picasso-container-name = "picasso-devnet";
       junod-container-name = "junod";
       juno-indexer-container-name = "juno-indexer";
       subql-query-container-name = "subql-query";
@@ -198,10 +198,10 @@
             });
 
           # ============== POLKADOT ==============
-          "${dali-container-name}" = mk-composable-container
+          "${picasso-container-name}" = mk-composable-container
             (import ../services/devnet.nix {
               inherit pkgs devnetTools;
-              devnet = devnet-dali;
+              devnet = devnet-picasso;
               ports = [
                 {
                   host = relaychainPort;
@@ -217,7 +217,7 @@
             (import ../services/subsquid-indexer.nix {
               database = composable-indexer-db;
               redis = redis-container-name;
-              parachain = dali-container-name;
+              parachain = picasso-container-name;
               inherit parachainPort;
             });
           "${subsquid-indexer-gateway-container-name}" = mk-composable-container

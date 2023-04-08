@@ -201,8 +201,8 @@ pkgs.arion.build {
               });
 
             # ============== POLKADOT ==============
-            "${dali-container-name}" = mk-composable-container
-              (import ./services/devnet-dali.nix {
+            "${picasso-container-name}" = mk-composable-container
+              (import ./services/devnet.nix {
                 inherit pkgs;
                 inherit packages;
                 inherit relaychainPort;

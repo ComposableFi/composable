@@ -86,7 +86,6 @@
       _module.args.this = rec { inherit picasso-dev-ops; };
 
       packages = rec {
-        default = devnet-centauri;
         devnet-picasso = zombienet-rococo-local-picasso-dev;
         devnet-composable = zombienet-rococo-local-composable-dev;
 
