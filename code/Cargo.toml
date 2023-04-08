@@ -73,6 +73,7 @@ rpath = false
 
 [workspace.dependencies]
 
+cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.36" }
 cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.36" }
 
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.36" }
@@ -103,10 +104,12 @@ frame-benchmarking-cli = { git = "https://github.com/ComposableFi/substrate", br
 frame-election-provider-support = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 frame-executive = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 frame-support = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
+support = { package = "frame-support", git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 frame-support-procedural = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 frame-support-procedural-tools = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 frame-support-procedural-tools-derive = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 frame-system = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
+system = { package = "frame-system", git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 frame-system-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 frame-system-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 frame-try-runtime = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
@@ -148,6 +151,7 @@ pallet-offences = { git = "https://github.com/ComposableFi/substrate", branch = 
 pallet-offences-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 pallet-preimage = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 pallet-proxy = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
+proxy = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 pallet-randomness-collective-flip = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 pallet-recovery = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 pallet-scheduler = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
