@@ -20,7 +20,7 @@ sp-io = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
 
-xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.36" }
+xcm = { default-features = false, workspace = true }
 
 # orml
 orml-traits = { workspace = true, default-features = false }

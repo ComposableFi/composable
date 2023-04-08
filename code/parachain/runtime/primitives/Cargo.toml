@@ -22,7 +22,7 @@ serde = { version = '1.0.136', optional = true, features = ['derive'] }
 sp-runtime = { default-features = false, workspace = true}
 sp-std = { default-features = false, workspace = true }
 sp-core = { default-features = false, workspace = true }
-xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
+xcm = { workspace = true, default-features = false }
 
 ibc-rs-scale = { workspace = true, default-features = false, features = ["parity-scale-codec", "serde"] }
 

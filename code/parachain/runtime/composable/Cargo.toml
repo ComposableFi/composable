@@ -83,8 +83,8 @@ hex-literal = { version = "0.3.4", optional = true }
 frame-system-benchmarking = { workspace = true, default-features = false, optional = true }
 
 
-pallet-xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
-polkadot-parachain = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
+pallet-xcm = { workspace = true, default-features = false }
+polkadot-parachain = { workspace = true, default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
@@ -101,9 +101,9 @@ cumulus-primitives-utility = { workspace = true, default-features = false }
 parachain-info = { workspace = true, default-features = false }
 session-benchmarking = { workspace = true, default-features = false }
 
-xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
-xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
-xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
+xcm = { workspace = true, default-features = false }
+xcm-builder = { workspace = true, default-features = false }
+xcm-executor = { workspace = true, default-features = false }
 
 orml-unknown-tokens = { workspace = true, default-features = false }
 orml-xcm-support = { workspace = true, default-features = false }

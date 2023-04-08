@@ -103,10 +103,10 @@ cumulus-relay-chain-minimal-node = { workspace = true }
 
 polkadot-cli = { git = "https://github.com/paritytech/polkadot", features = [
   "rococo-native",
-], branch = "release-v0.9.36" }
-polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.36" }
-polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.36" }
-polkadot-service = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.36" }
+], workspace = true }
+polkadot-parachain = { workspace = true }
+polkadot-primitives = { workspace = true }
+polkadot-service = { workspace = true }
 
 [build-dependencies]
 substrate-build-script-utils = { workspace= true }

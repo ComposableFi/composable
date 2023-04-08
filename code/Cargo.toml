@@ -114,6 +114,18 @@ ibc-runtime-api = { git = "https://github.com/dzmitry-lahoda-forks/centauri", re
 pallet-ibc = { git = "https://github.com/dzmitry-lahoda-forks/centauri", rev = "15b72401a8292f248c2f3afe1e29cf83bf359c36", default-features = false }
 pallet-ibc-ping = { git = "https://github.com/dzmitry-lahoda-forks/centauri", rev = "15b72401a8292f248c2f3afe1e29cf83bf359c36", default-features = false }
 
+
+
+xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
+polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.36" }
+xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
+polkadot-service = { git = "https://github.com/paritytech/polkadot",  branch = "release-v0.9.36" }
+polkadot-cli = { git = "https://github.com/paritytech/polkadot", features = [
+  "rococo-native",
+], branch = "release-v0.9.36" }
+
+pallet-xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
+
 log = { version = "0.4.14", default-features = false }
 
 ibc-rs-scale = { package="ibc", git = "https://github.com/cosmos/ibc-rs.git", rev="9b05cee476a197f5f1cb91b91959b618e88e0839", default-features = false}

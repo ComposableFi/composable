@@ -17,16 +17,16 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 ] }
 frame-support = { default-features = false, workspace = true }
 frame-system = { default-features = false, workspace = true }
-polkadot-primitives = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
+polkadot-primitives = { workspace = true, default-features = false }
 sp-consensus-aura = { default-features = false, workspace = true }
 sp-core = { default-features = false, workspace = true }
 sp-io = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
 
-xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
-xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
-xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.36" }
+xcm = { workspace = true, default-features = false }
+xcm-builder = { workspace = true, default-features = false }
+xcm-executor = { workspace = true, default-features = false }
 
 balances = { default-features = false, workspace = true }
 collator-selection = { workspace = true, default-features = false }
