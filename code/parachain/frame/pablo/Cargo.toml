@@ -36,8 +36,8 @@ sp-std = { default-features = false, workspace = true }
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 frame-benchmarking = { default-features = false, workspace = true }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36" }
+orml-tokens = { workspace = true }
+orml-traits = { workspace = true }
 pallet-currency-factory = { path = "../currency-factory" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 pallet-assets-registry = { path = "../assets-registry" }

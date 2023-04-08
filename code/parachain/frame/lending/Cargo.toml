@@ -22,9 +22,9 @@ version = "3.0.0"
 frame-benchmarking = { default-features = false, optional = true, workspace = true }
 frame-support = { default-features = false, workspace = true }
 frame-system = { default-features = false, workspace = true }
-pallet-balances = { default-features = false,  optional = true }
-pallet-timestamp = { default-features = false,  optional = true }
-sp-application-crypto = { default-features = false,  optional = true }
+pallet-balances = { default-features = false,  optional = true,  workspace = true }
+pallet-timestamp = { default-features = false,  optional = true,  workspace = true }
+sp-application-crypto = { default-features = false,  optional = true ,  workspace = true}
 
 composable-support = { default-features = false, path = "../composable-support" }
 composable-traits = { default-features = false, path = "../composable-traits" }

@@ -23,7 +23,7 @@ sp-std = { default-features = false, workspace = true }
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.36" }
 
 # orml
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36", default-features = false }
+orml-traits = { workspace = true, default-features = false }
 
 # local
 composable-support = { path = "../composable-support", default-features = false }
@@ -43,7 +43,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 frame-benchmarking = { default-features = false, workspace = true }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36" }
+orml-tokens = { workspace = true }
 pallet-balances = { workspace = true }
 proptest = "1.0"
 

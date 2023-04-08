@@ -20,7 +20,7 @@ sp-runtime = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
 
 composable-traits = { path = "../composable-traits", default-features = false }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36", default-features = false }
+orml-traits = { workspace = true, default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }

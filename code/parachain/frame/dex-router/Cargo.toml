@@ -37,8 +37,8 @@ version = "3.0.0"
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 frame-benchmarking = { default-features = false, workspace = true }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36", default-features = false }
+orml-tokens = { workspace = true }
+orml-traits = { workspace = true, default-features = false }
 pallet-balances = { workspace = true }
 pallet-currency-factory = { version = "1.0.0", path = "../currency-factory" }
 pallet-assets-registry = { path = "../assets-registry" }

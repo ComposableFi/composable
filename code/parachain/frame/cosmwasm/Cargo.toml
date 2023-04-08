@@ -73,8 +73,8 @@ lazy_static = { version = "1.4.0", default-features = false, features = [
   "spin_no_std",
 ] }
 num-traits = { version = "0.2.14", default-features = false }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36" }
+orml-tokens = { workspace = true }
+orml-traits = { workspace = true }
 pallet-timestamp = { default-features = false, workspace = true }
 rand = { version = "0.8.5", default-features = false, features = [
   "alloc",

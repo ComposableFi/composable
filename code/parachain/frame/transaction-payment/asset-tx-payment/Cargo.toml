@@ -38,8 +38,8 @@ serde_json = "1.0.85"
 
 sp-storage = { workspace = true }
 
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36" }
+orml-tokens = { workspace = true }
+orml-traits = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true }
 
