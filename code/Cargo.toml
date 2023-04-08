@@ -107,12 +107,12 @@ orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-modu
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36" }
 
-ibc = { git = "https://github.com/dzmitry-lahoda-forks/centauri", rev = "15b72401a8292f248c2f3afe1e29cf83bf359c36", default-features = false }
-ibc-rpc = { git = "https://github.com/dzmitry-lahoda-forks/centauri", rev = "15b72401a8292f248c2f3afe1e29cf83bf359c36", default-features = false }
-ibc-primitives = { git = "https://github.com/dzmitry-lahoda-forks/centauri", rev = "15b72401a8292f248c2f3afe1e29cf83bf359c36", default-features = false }
-ibc-runtime-api = { git = "https://github.com/dzmitry-lahoda-forks/centauri", rev = "15b72401a8292f248c2f3afe1e29cf83bf359c36", default-features = false }
-pallet-ibc = { git = "https://github.com/dzmitry-lahoda-forks/centauri", rev = "15b72401a8292f248c2f3afe1e29cf83bf359c36", default-features = false }
-pallet-ibc-ping = { git = "https://github.com/dzmitry-lahoda-forks/centauri", rev = "15b72401a8292f248c2f3afe1e29cf83bf359c36", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/centauri", branch ="polkadot-v0.9.36",  default-features = false }
+ibc-rpc = { git = "https://github.com/ComposableFi/centauri", branch ="polkadot-v0.9.36",  default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/centauri", branch ="polkadot-v0.9.36",  default-features = false }
+ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", branch ="polkadot-v0.9.36",  default-features = false }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", branch ="polkadot-v0.9.36",  default-features = false }
+pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", branch ="polkadot-v0.9.36",  default-features = false }
 
 
 

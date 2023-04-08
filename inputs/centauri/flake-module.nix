@@ -15,7 +15,7 @@
         builtins.elemAt (builtins.split "#" centauri-runtime-dep.source) 2;
 
       centauri-src-current = pkgs.fetchFromGitHub {
-        owner = "dzmitry-lahoda-forks";
+        owner = "ComposableFi";
         repo = "centauri";
         rev = centauri-runtime-commit;
         hash = "sha256-wgjOiIgfDlKVOnrW+eZQaurXY8BDSqjVOy7fFx0wbvg=";
