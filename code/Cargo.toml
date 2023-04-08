@@ -72,9 +72,7 @@ rpath = false
 
 
 [workspace.dependencies]
-
-
-
+grandpa = { package = "sc-finality-grandpa", git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" }
 collator-selection = { package = "pallet-collator-selection", git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.36" }
 cumulus-client-cli = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.36" }
 cumulus-client-collator = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.36" }
