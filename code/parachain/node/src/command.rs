@@ -14,7 +14,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#[cfg(feature = "composable")]
 use crate::service::ComposableExecutor;
 #[cfg(feature = "dali")]
 use crate::service::DaliExecutor;
@@ -36,33 +35,36 @@ use sc_service::config::{BasePath, PrometheusConfig};
 use sp_runtime::traits::AccountIdConversion;
 use std::net::SocketAddr;
 
-// cumulus has very good matcher to evolve into
-fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-	log::info!("Loading chain spec: {}", id);
-	Ok(match id {
-		#[cfg(feature = "dali")]
-		"dali-rococo" => Box::new(chain_spec::dali_rococo()),
+fn load_spec(id_or_path: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
+	log::info!("Loading chain spec: {}", id_or_path);
+	Ok(match id_or_path {
 		"picasso-dev" => Box::new(chain_spec::picasso_dev(*chain_spec::PARACHAIN_ID)),
-		#[cfg(feature = "composable")]
-		"composable-dev" => Box::new(chain_spec::composable_dev()),
+		"picasso-rococo" => Box::new(chain_spec::picasso_rococo()),
 		"picasso-kusama" | "picasso" => Box::new(chain_spec::picasso()),
-		#[cfg(feature = "composable")]
-		"composable-westend" => Box::new(chain_spec::composable_westend()),
-		#[cfg(feature = "composable")]
-		"" | "composable-polkadot" | "composable" => Box::new(chain_spec::composable()),
-		#[cfg(feature = "composable")]
-		path if path.contains("/composable-") && path.ends_with(".json") => Box::new(
-			chain_spec::composable::ChainSpec::from_json_file(std::path::PathBuf::from(path))?,
-		),
-		#[cfg(feature = "dali")]
-		path if path.contains("/dali-") && path.ends_with(".json") =>
-			Box::new(chain_spec::dali::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
-		#[cfg(feature = "dali")]
-		id if id.starts_with("dali") => Box::new(chain_spec::dali_dev(id)),
 
-		path => Box::new(chain_spec::picasso::ChainSpec::from_json_file(
-			std::path::PathBuf::from(path),
-		)?),
+		"composable-dev" => Box::new(chain_spec::composable_dev()),
+		"composable-westend" => Box::new(chain_spec::composable_westend()),
+		"composable-polkadot" | "composable" => Box::new(chain_spec::composable()),
+		id_or_path => {
+			use std::ffi::OsStr;
+			match std::path::PathBuf::from(id_or_path) {
+				path if path.extension() == Some(OsStr::new(".json")) &&
+					path.file_stem()
+						.expect("named")
+						.to_str()
+						.expect("str")
+						.contains("picasso") =>
+					Box::new(chain_spec::picasso::ChainSpec::from_json_file(path)?),
+				path if path.extension() == Some(OsStr::new(".json")) &&
+					path.file_stem()
+						.expect("named")
+						.to_str()
+						.expect("str")
+						.contains("composable") =>
+					Box::new(chain_spec::composable::ChainSpec::from_json_file(path)?),
+				_ => panic!("`chain={}` is not found or not supported", id_or_path),
+			}
+		},
 	})
 }
 
@@ -98,7 +100,6 @@ impl SubstrateCli for Cli {
 	fn native_runtime_version(spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
 		match spec.id() {
 			// composable-chains
-			#[cfg(feature = "composable")]
 			chain if chain.contains("composable") => &composable_runtime::version::VERSION,
 			// dali chains
 			#[cfg(feature = "dali")]
@@ -239,8 +240,9 @@ pub fn run() -> Result<()> {
 								cmd.run::<Block, PicassoExecutor>(config),
 							#[cfg(feature = "dali")]
 							id if id.contains("dali") => cmd.run::<Block, DaliExecutor>(config),
-							#[cfg(feature = "composable")]
-							id if id.contains("composable") => cmd.run::<Block, ComposableExecutor>(config),
+
+							id if id.contains("composable") =>
+								cmd.run::<Block, ComposableExecutor>(config),
 							id => panic!("Unknown Chain: {}", id),
 						})
 					} else {
@@ -265,7 +267,7 @@ pub fn run() -> Result<()> {
 							)?;
 							cmd.run(partials.client)
 						},
-						#[cfg(feature = "composable")]
+
 						id if id.contains("composable") => {
 							let partials = new_partial::<
 								composable_runtime::RuntimeApi,
@@ -299,7 +301,7 @@ pub fn run() -> Result<()> {
 						let storage = partials.backend.expose_storage();
 						cmd.run(config, partials.client, db, storage)
 					},
-					#[cfg(feature = "composable")]
+
 					id if id.contains("composable") => {
 						let partials = new_partial::<
 							composable_runtime::RuntimeApi,
