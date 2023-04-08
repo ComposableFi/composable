@@ -29,8 +29,6 @@ normal = [
 executive = { package = "frame-executive", default-features = false, workspace = true}
 frame-support = { default-features = false, workspace = true}
 frame-system = { package = "frame-system", default-features = false, workspace = true}
-
-# primitives
 sp-api = { default-features = false, workspace = true}
 sp-block-builder = { default-features = false, workspace = true}
 sp-consensus-aura = { default-features = false, workspace = true}
@@ -42,7 +40,6 @@ sp-session = { default-features = false, workspace = true}
 sp-std = { default-features = false, workspace = true}
 sp-transaction-pool = { default-features = false, workspace = true}
 sp-version = { default-features = false, workspace = true}
-
 aura = {  default-features = false, workspace = true}
 authorship = {  default-features = false, workspace = true}
 balances = {  default-features = false, workspace = true}

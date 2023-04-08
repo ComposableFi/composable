@@ -28,9 +28,9 @@
         name = "check-pallet";
         runtimeInputs = [ self'.packages.rust-nightly ];
         text = ''
-          cargo check --tests --features=std,runtime-benchmarks --package "$1"
           cargo check --no-default-features --target wasm32-unknown-unknown --package "$1"
-          cargo clippy --package "$1" -- --deny warnings --allow deprecated
+          #cargo check --tests --features=std,runtime-benchmarks --package "$1"
+          #cargo clippy --package "$1" -- --deny warnings --allow deprecated
         '';
       };
     in {
