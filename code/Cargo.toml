@@ -182,7 +182,7 @@ pallet-election-provider-support-benchmarking = { git = "https://github.com/Comp
 pallet-elections-phragmen = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 pallet-grandpa = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 pallet-identity = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
-identity = { package = "pallet-utility", git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
+identity = { package = "pallet-identity", git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 pallet-im-online = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 pallet-indices = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}
 pallet-membership = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.36" , default-features = false}

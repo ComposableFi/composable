@@ -125,7 +125,6 @@ xcm = { workspace = true, default-features = false }
 xcm-builder = { workspace = true, default-features = false }
 xcm-executor = { workspace = true, default-features = false }
 
-# orml XCM support
 orml-unknown-tokens = { workspace = true, default-features = false }
 orml-xcm-support = { workspace = true, default-features = false }
 orml-xtokens = { workspace = true, default-features = false }
@@ -139,7 +138,7 @@ pallet-ibc-ping = { workspace = true, default-features = false }
 log = { workspace = true, default-features = false }
 
 [dev-dependencies]
-frame-benchmarking = { package = "frame-benchmarking", default-features = false, workspace = true}
+frame-benchmarking = {  default-features = false, workspace = true}
 
 [features]
 builtin-wasm = []

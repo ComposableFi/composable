@@ -43,32 +43,27 @@ sp-std = { default-features = false, workspace = true}
 sp-transaction-pool = { default-features = false, workspace = true}
 sp-version = { default-features = false, workspace = true}
 
-# modules
-aura = { package = "pallet-aura", default-features = false, workspace = true}
-authorship = { package = "pallet-authorship", default-features = false, workspace = true}
-balances = { package = "pallet-balances", default-features = false, workspace = true}
-collective = { package = "pallet-collective", default-features = false, workspace = true}
-democracy = { package = "pallet-democracy", default-features = false, workspace = true}
-identity = { package = "pallet-identity", default-features = false, workspace = true}
-indices = { package = "pallet-indices", default-features = false, workspace = true}
-membership = { package = "pallet-membership", default-features = false, workspace = true}
-multisig = { package = "pallet-multisig", default-features = false, workspace = true}
+aura = {  default-features = false, workspace = true}
+authorship = {  default-features = false, workspace = true}
+balances = {  default-features = false, workspace = true}
+collective = {  default-features = false, workspace = true}
+democracy = {  default-features = false, workspace = true}
+identity = {  default-features = false, workspace = true}
+indices = {  default-features = false, workspace = true}
+membership = {  default-features = false, workspace = true}
+multisig = {  default-features = false, workspace = true}
 orml-tokens = { workspace = true, default-features = false }
 orml-traits = { workspace = true, default-features = false }
-preimage = { package = "pallet-preimage", default-features = false, workspace = true}
-randomness-collective-flip = { package = "pallet-randomness-collective-flip", default-features = false, workspace = true}
-scheduler = { package = "pallet-scheduler", default-features = false, workspace = true}
-session = { package = "pallet-session", default-features = false, workspace = true}
+preimage = {  default-features = false, workspace = true}
+randomness-collective-flip = {  default-features = false, workspace = true}
+scheduler = {  default-features = false, workspace = true}
+session = {  default-features = false, workspace = true}
 smallvec = "1.6.1"
-sudo = { package = "pallet-sudo", default-features = false, workspace = true}
-timestamp = { package = "pallet-timestamp", default-features = false, workspace = true}
-treasury = { package = "pallet-treasury", default-features = false, workspace = true}
-utility = { package = "pallet-utility", default-features = false, workspace = true}
-
-
+sudo = {  default-features = false, workspace = true}
+timestamp = {  default-features = false, workspace = true}
+treasury = {  default-features = false, workspace = true}
+utility = {  default-features = false, workspace = true}
 log = { version = "0.4.14", default-features = false }
-
-# local modules
 assets = { package = "pallet-assets", path = "../../frame/assets", default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = "../../frame/assets-registry", default-features = false }
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
@@ -85,26 +80,20 @@ primitives = { path = "../primitives", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 asset-tx-payment = { package = "pallet-asset-tx-payment", path = "../../frame/transaction-payment/asset-tx-payment", default-features = false }
 transaction-payment = { package = "pallet-transaction-payment", path = "../../frame/transaction-payment", default-features = false }
-
-# Used for the node template's RPCs
-system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", default-features = false, workspace = true}
+system-rpc-runtime-api = { default-features = false, workspace = true}
 transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", path = "../../frame/transaction-payment/rpc/runtime-api", default-features = false }
-
-# local RPCs
 assets-runtime-api = { path = "../../frame/assets/runtime-api", default-features = false }
 crowdloan-rewards-runtime-api = { path = "../../frame/crowdloan-rewards/runtime-api", default-features = false }
 pablo-runtime-api = { path = "../../frame/pablo/runtime-api", default-features = false }
 
-# Used for runtime benchmarking
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
 ] }
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
 hex-literal = { version = "0.3.3", optional = true }
-frame-system-benchmarking = { package = "frame-system-benchmarking", workspace = true, default-features = false, optional = true }
+frame-system-benchmarking = { workspace = true, default-features = false, optional = true }
 
-# Parachain Utilities
-collator-selection = { package = "pallet-collator-selection", workspace = true, default-features = false }
+collator-selection = { workspace = true, default-features = false }
 cumulus-pallet-aura-ext = { workspace = true, default-features = false }
 cumulus-pallet-dmp-queue = { workspace = true, default-features = false }
 cumulus-pallet-parachain-system = { workspace = true, default-features = false }
@@ -116,16 +105,15 @@ cumulus-primitives-utility = { workspace = true, default-features = false }
 pallet-xcm = { workspace = true, default-features = false }
 parachain-info = { workspace = true, default-features = false }
 polkadot-parachain = { workspace = true, default-features = false }
-proxy = { package = "pallet-proxy", default-features = false, workspace = true}
+proxy = { default-features = false, workspace = true}
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
-session-benchmarking = { package = "cumulus-pallet-session-benchmarking", workspace = true, default-features = false }
+session-benchmarking = { workspace = true, default-features = false }
 xcm = { workspace = true, default-features = false }
 xcm-builder = { workspace = true, default-features = false }
 xcm-executor = { workspace = true, default-features = false }
 
-# orml XCM support
 orml-unknown-tokens = { workspace = true, default-features = false }
 orml-xcm-support = { workspace = true, default-features = false }
 orml-xtokens = { workspace = true, default-features = false }
