@@ -68,7 +68,6 @@ where
 	MultiSigner::from(from_seed::<TPublic>(seed)).into_account()
 }
 
-
 /// Composable (Westend parachain)
 pub fn composable_westend() -> composable::ChainSpec {
 	composable::ChainSpec::from_json_bytes(include_bytes!("res/composable-westend.json").to_vec())
@@ -88,14 +87,13 @@ pub fn picasso() -> picasso::ChainSpec {
 		.expect("chain spec not found")
 }
 
-
 /// Composable (Polkadot parachain)
 pub fn composable() -> composable::ChainSpec {
 	composable::ChainSpec::from_json_bytes(include_bytes!("./res/composable.json").to_vec())
 		.expect("chain spec not found")
 }
 
-pub fn picasso_rococo() -> composable::ChainSpec {
+pub fn picasso_rococo() -> picasso::ChainSpec {
 	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/picasso-rococo.json").to_vec())
 		.expect("chain spec not found")
 }
@@ -183,7 +181,6 @@ pub fn dali_dev(id: &str) -> dali::ChainSpec {
 		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(para_id) },
 	)
 }
-
 
 // chain spec for single node environments
 pub fn composable_dev() -> composable::ChainSpec {

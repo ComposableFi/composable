@@ -84,7 +84,7 @@ impl sc_executor::NativeExecutionDispatch for DaliExecutor {
 
 pub enum Executor {
 	Picasso(PicassoExecutor),
-	
+
 	Composable(ComposableExecutor),
 	#[cfg(feature = "dali")]
 	Dali(DaliExecutor),
@@ -107,7 +107,6 @@ pub fn new_chain_ops(
 	sc_service::Error,
 > {
 	let components = match config.chain_spec.id() {
-		
 		chain if chain.contains("composable") => {
 			let components = new_partial::<composable_runtime::RuntimeApi, ComposableExecutor>(
 				config,
@@ -256,7 +255,6 @@ pub async fn start_node(
 	id: ParaId,
 ) -> sc_service::error::Result<TaskManager> {
 	let task_manager = match config.chain_spec.id() {
-		
 		chain if chain.contains("composable") =>
 			crate::service::start_node_impl::<composable_runtime::RuntimeApi, ComposableExecutor>(
 				config,
