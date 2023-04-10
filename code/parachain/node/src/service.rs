@@ -52,10 +52,8 @@ impl sc_executor::NativeExecutionDispatch for PicassoExecutor {
 	}
 }
 
-#[cfg(feature = "composable")]
 pub struct ComposableExecutor;
 
-#[cfg(feature = "composable")]
 impl sc_executor::NativeExecutionDispatch for ComposableExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
@@ -86,7 +84,7 @@ impl sc_executor::NativeExecutionDispatch for DaliExecutor {
 
 pub enum Executor {
 	Picasso(PicassoExecutor),
-	#[cfg(feature = "composable")]
+
 	Composable(ComposableExecutor),
 	#[cfg(feature = "dali")]
 	Dali(DaliExecutor),
@@ -109,7 +107,6 @@ pub fn new_chain_ops(
 	sc_service::Error,
 > {
 	let components = match config.chain_spec.id() {
-		#[cfg(feature = "composable")]
 		chain if chain.contains("composable") => {
 			let components = new_partial::<composable_runtime::RuntimeApi, ComposableExecutor>(
 				config,
@@ -258,7 +255,6 @@ pub async fn start_node(
 	id: ParaId,
 ) -> sc_service::error::Result<TaskManager> {
 	let task_manager = match config.chain_spec.id() {
-		#[cfg(feature = "composable")]
 		chain if chain.contains("composable") =>
 			crate::service::start_node_impl::<composable_runtime::RuntimeApi, ComposableExecutor>(
 				config,

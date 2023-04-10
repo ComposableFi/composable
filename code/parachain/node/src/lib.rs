@@ -3,6 +3,7 @@
 #![allow(clippy::derive_partial_eq_without_eq)]
 #![recursion_limit = "1024"]
 
+mod chain_names;
 pub mod chain_spec;
 pub mod cli;
 mod client;

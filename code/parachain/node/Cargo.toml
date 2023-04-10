@@ -16,10 +16,8 @@ jsonrpsee = { version = "0.16.2", features = ["server", "macros"] }
 log = "0.4.17"
 once_cell = "1.12.0"
 serde = { version = "1.0.136", features = ["derive"] }
-
-# Local Dependencies
 common = { path = "../runtime/common" }
-composable-runtime = { path = "../runtime/composable", optional = true }
+composable-runtime = { path = "../runtime/composable" }
 dali-runtime = { path = "../runtime/dali", optional = true }
 picasso-runtime = { path = "../runtime/picasso" }
 primitives = { path = "../runtime/primitives" }
@@ -120,7 +118,6 @@ builtin-wasm = [
   "composable-runtime/builtin-wasm",
   "dali-runtime/builtin-wasm",
 ]
-composable = ["composable-runtime"]
 dali = ["dali-runtime"]
 default = []
 ocw = []

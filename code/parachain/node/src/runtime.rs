@@ -143,7 +143,6 @@ define_trait! {
 			fn extend_with_staking_rewards_api(io, deps);
 		}
 
-		#[cfg(feature = "composable")]
 		impl for composable_runtime {}
 
 		impl for picasso_runtime {}
@@ -161,7 +160,6 @@ define_trait! {
 			fn extend_with_assets_api(io, deps);
 		}
 
-		#[cfg(feature = "composable")]
 		impl for composable_runtime {
 			fn (io, deps) {
 				io.merge(Assets::new(deps.client).into_rpc())
@@ -187,7 +185,6 @@ define_trait! {
 			fn extend_with_crowdloan_rewards_api(io, deps) ;
 		}
 
-		#[cfg(feature = "composable")]
 		impl for composable_runtime {
 			fn (io, deps) {
 				io.merge(CrowdloanRewards::new(deps.client).into_rpc())
@@ -213,7 +210,6 @@ define_trait! {
 			fn extend_with_pablo_api(io, deps);
 		}
 
-		#[cfg(feature = "composable")]
 		impl for composable_runtime {}
 
 		impl for picasso_runtime {
@@ -235,7 +231,6 @@ define_trait! {
 			fn extend_with_lending_api(io, deps);
 		}
 
-		#[cfg(feature = "composable")]
 		impl for composable_runtime {}
 
 		impl for picasso_runtime {}
@@ -253,7 +248,6 @@ define_trait! {
 			fn extend_with_cosmwasm_api(io, deps);
 		}
 
-		#[cfg(feature = "composable")]
 		impl for composable_runtime {}
 
 		impl for picasso_runtime {}
@@ -271,7 +265,6 @@ define_trait! {
 			fn extend_with_ibc_api(io, deps) ;
 		}
 
-		#[cfg(feature = "composable")]
 		impl for composable_runtime {
 			fn (io, deps) {
 				io.merge(IbcRpcHandler::new(deps.client.clone(), deps.chain_props).into_rpc())
