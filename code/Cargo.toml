@@ -14,11 +14,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 color-eyre = { version = "0.5.11", default-features = false }
-composable-node = { path = "parachain/node", features = ["composable", "dali"] }
+composable-node = { path = "parachain/node", features = ["dali"] }
 
 [features]
 builtin-wasm = ["composable-node/builtin-wasm"]
-composable = ["composable-node/composable"]
 dali = ["composable-node/dali"]
 local-integration-tests = []
 picasso = []
@@ -34,8 +33,6 @@ exclude = [
 members = [
   "services/cmc-api",
   "parachain/frame/*",
-  # TODO(hussein): let's upgrade them in v0.9.33
-  # "integration-tests/local-integration-tests",
   "parachain/node",
   "parachain/runtime/common",
   "parachain/runtime/primitives",

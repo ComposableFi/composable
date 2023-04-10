@@ -1,8 +1,9 @@
-#[cfg(feature = "composable")]
-use crate::service::ComposableExecutor;
 #[cfg(feature = "dali")]
 use crate::service::DaliExecutor;
-use crate::{runtime::BaseHostRuntimeApis, service::PicassoExecutor};
+use crate::{
+	runtime::BaseHostRuntimeApis,
+	service::{ComposableExecutor, PicassoExecutor},
+};
 pub use common::{AccountId, Balance, BlockNumber, Hash, Header, Index, OpaqueBlock as Block};
 use sc_client_api::{Backend as BackendT, BlockchainEvents, KeyIterator};
 use sc_executor::NativeElseWasmExecutor;
@@ -22,7 +23,7 @@ pub type FullClient<RuntimeApi, Executor> =
 	TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>;
 pub type FullBackend = TFullBackend<Block>;
 pub(crate) type PicassoClient = FullClient<picasso_runtime::RuntimeApi, PicassoExecutor>;
-#[cfg(feature = "composable")]
+
 pub(crate) type ComposableClient = FullClient<composable_runtime::RuntimeApi, ComposableExecutor>;
 #[cfg(feature = "dali")]
 pub(crate) type DaliClient = FullClient<dali_runtime::RuntimeApi, DaliExecutor>;
@@ -33,7 +34,6 @@ pub enum Client {
 	/// Picasso client type
 	Picasso(Arc<PicassoClient>),
 	/// Composable client type
-	#[cfg(feature = "composable")]
 	Composable(Arc<ComposableClient>),
 	/// Dali client type
 	#[cfg(feature = "dali")]
@@ -81,7 +81,6 @@ impl From<Arc<PicassoClient>> for Client {
 	}
 }
 
-#[cfg(feature = "composable")]
 impl From<Arc<ComposableClient>> for Client {
 	fn from(client: Arc<ComposableClient>) -> Self {
 		Self::Composable(client)
@@ -99,7 +98,6 @@ macro_rules! match_client {
 	($self:ident, $method:ident($($param:ident),*)) => {
 		match $self {
 			Self::Picasso(client) => client.$method($($param),*),
-			#[cfg(feature = "composable")]
 			Self::Composable(client) => client.$method($($param),*),
 			#[cfg(feature = "dali")]
 			Self::Dali(client) => client.$method($($param),*),
@@ -169,7 +167,7 @@ impl sc_client_api::BlockBackend<Block> for Client {
 			Self::Picasso(client) => client.requires_full_sync(),
 			#[cfg(feature = "dali")]
 			Self::Dali(client) => client.requires_full_sync(),
-			#[cfg(feature = "composable")]
+
 			Self::Composable(client) => client.requires_full_sync(),
 		}
 	}

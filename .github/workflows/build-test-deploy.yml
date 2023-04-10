@@ -364,7 +364,7 @@ jobs:
     name: Push docker images
     strategy:
       matrix:
-        arch: [x64-cute] # TODO: add arm-cute and figure out pushing multi-arch imgaes to dockerhub
+        arch: [x64-cute]
     needs: 
       - effects-gate
     runs-on:
@@ -429,20 +429,16 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: devnet-picasso
           artifact: devnet-picasso:latest
-      - name: Publish hyperspace-composable-rococo-picasso-rococo-image to docker hub
+
+      - name: Publish hyperspace-composable-rococo-picasso-rococo to docker hub
         uses: "./.github/templates/docker-publish"
         with:
-          image_path: result/docker-image-hyperspace-composable-rococo-picasso-rococo-image.tar.gz
+          image_path: result/docker-image-hyperspace-composable-rococo-picasso-rococo.tar.gz
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: hyperspace-composable-rococo-picasso-rococo-image
-          artifact: hyperspace-composable-rococo-picasso-rococo-image:latest
+          name: hyperspace-composable-rococo-picasso-rococo
+          artifact: hyperspace-composable-rococo-picasso-rococo:latest
       
-
-  # NOTE: Everything below this line is not built deterministically and therefore considered flaky.
-  # [FLAKY] jobs are not included in the effects gate
-
-
   deploy-pablo-preview:
     name: "Deploy Pablo Preview [FLAKY]"
     needs:
@@ -575,14 +571,13 @@ jobs:
         run: |
           nix run .#devnet-integration-tests
    
-  # TODO: nixify these test steps, and add me to subsquid-processor
   test-subsquid:
     name: Test Subquid [FLAKY]
     needs:
       - lfs-check
     strategy:
       matrix:
-        arch: [x64-cute] # TODO: add arm-cute and figure out pushing multi-arch imgaes to dockerhub
+        arch: [x64-cute]
     runs-on:
       - self-hosted
       - ${{ matrix.arch }}
@@ -631,7 +626,7 @@ jobs:
       - test-subsquid
     strategy:
       matrix:
-        arch: [x64-cute] # TODO: add arm-cute and figure out pushing multi-arch imgaes to dockerhub
+        arch: [x64-cute]
     runs-on:
       - self-hosted
       - ${{ matrix.arch }}
