@@ -715,7 +715,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "beefy-light-client-primitives",
  "ckb-merkle-mountain-range 0.3.2",
@@ -738,7 +738,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "ckb-merkle-mountain-range 0.3.2",
  "derive_more",
@@ -4420,7 +4420,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -4442,7 +4442,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-verifier"
 version = "0.1.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "anyhow",
  "finality-grandpa",
@@ -4863,7 +4863,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "derive_more",
  "flex-error",
@@ -4923,7 +4923,7 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.3.0",
@@ -4935,7 +4935,7 @@ dependencies = [
 [[package]]
 name = "ibc-primitives"
 version = "0.1.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "base58",
  "blake2",
@@ -4959,7 +4959,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "base64 0.13.1",
  "bytes 1.4.0",
@@ -4989,7 +4989,7 @@ dependencies = [
 [[package]]
 name = "ibc-rpc"
 version = "0.1.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "frame-system",
  "hex-literal",
@@ -5016,7 +5016,7 @@ dependencies = [
 [[package]]
 name = "ibc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "ibc-primitives",
  "pallet-ibc",
@@ -5028,7 +5028,7 @@ dependencies = [
 [[package]]
 name = "ics07-tendermint"
 version = "0.1.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "bytes 1.4.0",
  "flex-error",
@@ -5048,7 +5048,7 @@ dependencies = [
 [[package]]
 name = "ics10-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -5074,7 +5074,7 @@ dependencies = [
 [[package]]
 name = "ics11-beefy"
 version = "0.1.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "anyhow",
  "beefy-light-client",
@@ -6341,7 +6341,7 @@ dependencies = [
 [[package]]
 name = "light-client-common"
 version = "0.1.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8207,7 +8207,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc"
 version = "0.0.1"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "beefy-light-client-primitives",
  "cumulus-primitives-core",
@@ -8253,7 +8253,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc-ping"
 version = "0.0.1"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -13746,7 +13746,7 @@ dependencies = [
 [[package]]
 name = "simple-iavl"
 version = "0.1.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/centauri?rev=15b72401a8292f248c2f3afe1e29cf83bf359c36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
+source = "git+https://github.com/ComposableFi/centauri?branch=polkadot-v0.9.36#15b72401a8292f248c2f3afe1e29cf83bf359c36"
 dependencies = [
  "bytes 1.4.0",
  "ics23 0.8.1",

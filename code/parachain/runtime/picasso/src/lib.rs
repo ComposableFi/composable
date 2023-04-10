@@ -828,8 +828,6 @@ mod benches {
 		[balances, Balances]
 		[session, SessionBench::<Runtime>]
 		[timestamp, Timestamp]
-	// TODO(hussein) Still broken on v0.9.30
-		// [collator_selection, CollatorSelection]
 		[indices, Indices]
 		[membership, CouncilMembership]
 		[treasury, Treasury]
@@ -846,8 +844,6 @@ mod benches {
 		[pablo, Pablo]
 		[democracy, Democracy]
 		[oracle, Oracle]
-		// broken in Centauri too
-		// [ibc, Ibc]
 	);
 }
 

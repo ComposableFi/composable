@@ -33,5 +33,6 @@
           writeZombienetShellApplication zombienet-to-ops;
         builder = prelude;
       };
+      packages = { zombienet = pkgs.zombienet.default; };
     };
 }

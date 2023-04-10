@@ -11,10 +11,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # substrate primitives
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-api = { workspace = true }
+sp-blockchain = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
 
 # local
 assets-runtime-api = { path = "../runtime-api" }
