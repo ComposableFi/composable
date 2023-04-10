@@ -25,7 +25,6 @@
                   git-lfs
                   subwasm
                   zombienet
-
                 ] ++ (with self'.packages; [ rust-nightly ]) ++ codespace;
             };
             programs = {
