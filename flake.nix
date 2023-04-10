@@ -29,19 +29,55 @@
         "github:dzmitry-lahoda-forks/zombienet/4d2eff2fd5a165aceb1fd11b218482710bd35d77";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   nixConfig = {
-    extra-substituters = [ "https://composable-community.cachix.org/" ];
+    extra-substituters = [
+      "https://cache.nixos.org"
+      "https://nix-community.cachix.org"
+      "https://nixpkgs-update.cachix.org"
+      "https://devenv.cachix.org"
+      "https://composable-community.cachix.org"
+    ];
     extra-trusted-public-keys = [
       "composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8="
+      "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      "nixpkgs-update.cachix.org-1:6y6Z2JdoL3APdu6/+Iy8eZX2ajf09e4EE9SnxSML1W8="
+      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
     ];
   };
 
   outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
-        # External `inputs` that the authors did not nixify themselves
+        ./code/benchmarks.nix
+        ./code/common-deps.nix
+        ./code/composable-nodes.nix
+        ./code/integration-tests/local-integration-tests/flake-module.nix
+        ./code/integration-tests/runtime-tests/runtime-tests.nix
+        ./code/runtimes.nix
+        ./code/services/cmc-api/cmc-api.nix
+        ./code/utils/price-feed/price-feed.nix
+        ./code/xcvm/xcvm-contracts.nix
+        ./devnets/all.nix
+        ./docs/docs.nix
+        ./flake/all.nix
+        ./flake/check.nix
+        ./flake/dev-shells.nix
+        ./flake/docker.nix
+        ./flake/fmt.nix
+        ./flake/help.nix
+        ./flake/home-configurations.nix
+        ./flake/overlays.nix
+        ./flake/release.nix
+        ./flake/subxt.nix
+        ./flake/zombienet.nix
+        ./frontend/frontend.nix
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
         ./inputs/centauri/flake-module.nix
@@ -55,39 +91,10 @@
         ./inputs/paritytech/substrate.nix
         ./inputs/paritytech/zombienet/flake-module.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
-
-        # The things we use within flake parts to build packages, apps, devShells, and devnets.
         ./tools/cargo-tools.nix # _module.args.cargoTools
         ./tools/devnet-tools.nix # _module.args.devnetTools
         ./tools/pkgs.nix # _module.args.pkgs
         ./tools/rust.nix # _module.args.rust
-
-        # our own packages
-        ./code/benchmarks.nix
-        ./code/common-deps.nix
-        ./code/composable-nodes.nix
-        ./code/integration-tests/local-integration-tests/flake-module.nix
-        ./code/integration-tests/runtime-tests/runtime-tests.nix
-        ./code/runtimes.nix
-        ./code/services/cmc-api/cmc-api.nix
-        ./code/utils/price-feed/price-feed.nix
-        ./code/xcvm/xcvm-contracts.nix
-        ./docs/docs.nix
-        ./frontend/frontend.nix
-
-        ./devnets/all.nix
-
-        # Everything that is not an input, tool, package, or devnet, but still part of the final flake
-        ./flake/all.nix
-        ./flake/check.nix
-        ./flake/dev-shells.nix
-        ./flake/docker.nix
-        ./flake/fmt.nix
-        ./flake/help.nix
-        ./flake/overlays.nix
-        ./flake/release.nix
-        ./flake/subxt.nix
-        ./flake/zombienet.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];

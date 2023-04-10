@@ -88,6 +88,7 @@ defaultattrs
 devcontainers
 devel
 devenv
+devprofile
 dhms # day hour minute second
 dispatchables
 divn
@@ -362,9 +363,11 @@ stdstore
 structopt
 structs
 styleguide
+subattrs
 submessage
 submessages
 submod
+subnix
 Subql
 substituters
 subwasm
