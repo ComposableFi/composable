@@ -1,7 +1,7 @@
 //! CurrencyId implementation
 use codec::{CompactAs, Decode, Encode, EncodeLike, MaxEncodedLen, WrapperTypeEncode};
 use composable_support::validation::Validate;
-use composable_traits::{assets::Asset, currency::Exponent, xcm::assets::XcmAssetLocation};
+use composable_traits::{assets::Asset, currency::Exponent};
 
 use frame_support::WeakBoundedVec;
 use scale_info::TypeInfo;
@@ -69,7 +69,7 @@ macro_rules! list_assets {
 	(
 		$(
 			$(#[$attr:meta])*
-			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal $(, $xcm_location:expr $(, $decimals:expr )?)? );
+			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal $(, $(, $decimals:expr )? );
 		)*
 	) => {
 		$(
@@ -91,45 +91,13 @@ macro_rules! list_assets {
 			}
 		}
 
-		pub fn local_to_xcm_reserve(id: CurrencyId) -> Option<xcm::latest::MultiLocation> {
-            match id {
-				$(
-					$( CurrencyId::$NAME => $xcm_location, )?
-				)*
-				_ => None,
-			}
-		}
-
 		pub fn remote_decimals_for_local(id: CurrencyId) -> Option<Exponent> {
             match id {
 				$(
-					$(
 						$( CurrencyId::$NAME => $decimals, )?
-					)?
 				)*
 				_ => None,
 			}
-		}
-
-		pub fn xcm_reserve_to_local(remote_id: xcm::latest::MultiLocation) -> Option<CurrencyId> {
-			use lazy_static::lazy_static;
-			use sp_std::collections::btree_map::BTreeMap;
-
-			lazy_static! {
-				static ref XCM_ASSETS: BTreeMap<Vec<u8>, CurrencyId> = {
-					let mut map = BTreeMap::new();
-					$(
-						$(
-							let xcm_id: Option<xcm::latest::MultiLocation> = $xcm_location;
-							if let Some(xcm_id) = xcm_id {
-								map.insert(xcm_id.encode(), CurrencyId::$NAME);
-							}
-						)?
-					)*
-					map
-				};
-			}
-			XCM_ASSETS.get(&remote_id.encode()).map(|x| *x)
 		}
 
 		pub fn list_assets() -> Vec<Asset<u128, XcmAssetLocation>> {
@@ -139,7 +107,7 @@ macro_rules! list_assets {
 					name: Some(stringify!($NAME).as_bytes().to_vec()),
 					ratio: None,
 					decimals: Self::remote_decimals_for_local(CurrencyId::$NAME).unwrap_or(Self::decimals()),
-					foreign_id: Self::local_to_xcm_reserve(CurrencyId::$NAME).map(XcmAssetLocation::new),
+					foreign_id: None,
 					existential_deposit: 0_u128,
 				},)*
 			]
@@ -203,16 +171,6 @@ impl CurrencyId {
 		/// Karura KAR
 		pub const KAR: CurrencyId = CurrencyId(
 			101,
-			Some(MultiLocation {
-				parents: 1,
-				interior: X2(
-					Parachain(topology::karura::ID),
-					GeneralKey(WeakBoundedVec::force_from(
-						topology::karura::KAR_KEY.to_vec(),
-						None,
-					)),
-				),
-			})
 		);
 		/// BIFROST BNC
 		pub const BNC: CurrencyId = CurrencyId(102, None);
@@ -224,29 +182,11 @@ impl CurrencyId {
 		/// Karura stable coin(Acala Dollar), not native.
 		pub const kUSD: CurrencyId = CurrencyId(
 			129,
-			Some(MultiLocation {
-				parents: 1,
-				interior: X2(
-					Parachain(topology::karura::ID),
-					GeneralKey(WeakBoundedVec::force_from(
-						topology::karura::AUSD_KEY.to_vec(),
-						None,
-					)),
-				),
-			})
 		);
 
 		/// Statemine USDT
 		pub const USDT: CurrencyId = CurrencyId(
 			130,
-			Some(MultiLocation {
-				parents: 1,
-				interior: X3(
-					Parachain(topology::common_good_assets::ID),
-					PalletInstance(topology::common_good_assets::ASSETS),
-					GeneralIndex(topology::common_good_assets::USDT),
-				),
-			}),
 			Some(6)
 		);
 		pub const USDC: CurrencyId = CurrencyId(131, None);

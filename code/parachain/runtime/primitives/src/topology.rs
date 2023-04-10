@@ -41,12 +41,13 @@ pub mod this {
 use composable_traits::{
 	assets::{AssetInfo, BiBoundedAssetName, BiBoundedAssetSymbol},
 	rational,
-	xcm::{assets::XcmAssetLocation, Balance},
+	xcm::{Balance},
 };
 use ibc_rs_scale::{
 	applications::transfer::{PrefixedDenom as InnerPrefixedDenom, TracePrefix},
 	core::ics24_host::identifier::{ChannelId, PortId},
 };
+use xcm::VersionedMultiLocation;
 
 use crate::currency::{CurrencyId, ForeignAssetId, PrefixedDenom, WellKnownCurrency};
 
@@ -56,7 +57,7 @@ impl Picasso {
 	pub fn assets() -> Vec<(u64, Option<ForeignAssetId>, AssetInfo<Balance>)> {
 		let usdt = (
 			130,
-			Some(ForeignAssetId::Xcm(XcmAssetLocation::new(MultiLocation::new(
+			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::new(
 				1,
 				X3(
 					Parachain(statemine::ID),
