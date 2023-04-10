@@ -18,7 +18,7 @@
         owner = "ComposableFi";
         repo = "centauri";
         rev = centauri-runtime-commit;
-        hash = "sha256-wgjOiIgfDlKVOnrW+eZQaurXY8BDSqjVOy7fFx0wbvg=";
+        hash = "sha256-Fy+NmEmoK12/WJej+8S8ViABKLQhH9uKlK/bQm4A/GI=";
       };
 
       centauri-src-release = pkgs.fetchFromGitHub {
@@ -184,7 +184,7 @@
         hyperspace-composable-rococo-picasso-rococo = crane.stable.buildPackage
           (protocattrs // rec {
             name = "hyperspace-composable-rococo-picasso-rococo";
-            pname = "${name}";
+            pname = name;
             cargoArtifacts = crane.stable.buildDepsOnly (protocattrs // {
               src = composable-rococo-picasso-rococo-centauri-patched-src;
               doCheck = false;

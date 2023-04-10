@@ -11,7 +11,7 @@
       };
       tools = with pkgs;
         with self'.packages;
-        [ clang nodejs python3 yarn sad git git-lfs subwasm ]
+        [ clang nodejs python3 yarn sad git git-lfs subwasm zombienet ]
         ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;
@@ -61,12 +61,17 @@
               nodePackages.typescript-language-server
               binaryen
               gex
+              devenv
             ]);
           devcontainer.enable = true;
           inherit env;
         }];
       };
     in {
+      packages = {
+        devenv = self.inputs.devenv.packages.${system}.devenv;
+        devprofile = pkgs.linkFarmFromDrvs "devprofile" tools;
+      };
       devShells = {
         default = self.inputs.devenv.lib.mkShell defaultattrs;
         cosmos = self.inputs.devenv.lib.mkShell cosmosattrs;
