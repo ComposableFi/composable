@@ -11,7 +11,6 @@
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
 	},
-
 	"postStartCommand": "sudo chmod +x /home/vscode/.nix-profile/bin/setfacl && sudo chmod 1777 /tmp/ && sudo /home/vscode/.nix-profile/bin/setfacl  --remove-default  /tmp",
 	"customizations": {
 		"vscode": {
