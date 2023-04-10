@@ -13,8 +13,6 @@
               "--features=local-integration-tests,${chainName},std --no-default-features --verbose";
           });
       in {
-        check-dali-integration-tests =
-          checkIntegrationTests { chainName = "dali"; };
         check-picasso-integration-tests =
           checkIntegrationTests { chainName = "picasso"; };
 

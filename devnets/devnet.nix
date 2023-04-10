@@ -1,4 +1,4 @@
-{ nixpkgs, pkgs, devnet-dali, devnet-picasso, gce-input, docs, rev, domainSuffix
+{ nixpkgs, pkgs, devnet-picasso, gce-input, docs, rev, domainSuffix
 , certificateEmail }:
 let
   region = "europe-central2-c";
@@ -107,14 +107,6 @@ let
     };
   };
 
-  dali-persistent-machine = mkPersistentMachine {
-    domain = "persistent.${domainSuffix}";
-    machine-name = "composable-persistent-devnet";
-    ip = "persistent-devnet-ip";
-    package = "devnet-dali-persistent";
-    chain = "dali";
-  };
-
   picasso-persistent-machine = mkPersistentMachine {
     domain = "persistent.picasso.${domainSuffix}";
     machine-name = "picasso-composable-persistent-devnet";
@@ -138,7 +130,4 @@ in builtins.foldl' (machines: devnet:
       description = "Composable Devnet";
       storage.legacy = { };
     };
-  } // (dali-persistent-machine // picasso-persistent-machine)) [
-    devnet-dali
-    devnet-picasso
-  ]
+  } // (picasso-persistent-machine)) [ devnet-picasso ]

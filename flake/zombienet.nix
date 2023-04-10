@@ -68,20 +68,6 @@
           };
         in zombieTools.writeZombienetShellApplication name config;
 
-      dali-dev-config = zombienet-rococo-local-composable-config {
-        chain = "dali-dev";
-        command = self'.packages.composable-node;
-      };
-
-      zombienet-rococo-local-dali-dev =
-        zombieTools.writeZombienetShellApplication
-        "zombienet-rococo-local-dali-dev" dali-dev-config;
-
-      dali-dev-ops = (zombieTools.zombienet-to-ops dali-dev-config) // {
-        script = zombienet-rococo-local-dali-dev;
-        chain-spec = "dali-dev";
-      };
-
       picasso-dev-ops = (zombieTools.zombienet-to-ops picasso-dev-config) // {
         script = zombienet-rococo-local-picasso-dev;
         chain-spec = "picasso-dev";
@@ -97,21 +83,16 @@
         "zombienet-rococo-local-picasso-dev" picasso-dev-config;
 
     in with prelude; {
-      _module.args.this = rec { inherit picasso-dev-ops dali-dev-ops; };
+      _module.args.this = rec { inherit picasso-dev-ops; };
 
       packages = rec {
-        default = devnet-dali;
-        devnet-dali = zombienet-rococo-local-dali-dev;
         devnet-picasso = zombienet-rococo-local-picasso-dev;
         devnet-composable = zombienet-rococo-local-composable-dev;
 
-        zombienet-dali-complete =
-          mk-zombienet-all "devnet-dali-complete" "dali-dev";
         zombienet-picasso-complete =
           mk-zombienet-all "devnet-picasso-complete" "picasso-dev";
 
-        inherit zombienet-rococo-local-dali-dev
-          zombienet-rococo-local-picasso-dev;
+        inherit zombienet-rococo-local-picasso-dev;
 
         zombienet-rococo-local-composable-dev =
           zombieTools.writeZombienetShellApplication
@@ -160,21 +141,6 @@
       };
 
       apps = rec {
-
-        zombienet = {
-          type = "app";
-          program = self'.packages.zombienet;
-        };
-        zombienet-dali-complete = {
-          type = "app";
-          program = self'.packages.zombienet-dali-complete;
-        };
-
-        zombienet-picasso-complete = {
-          type = "app";
-          program = self'.packages.zombienet-picasso-complete;
-        };
-
         zombienet-log-follow = {
           program = pkgs.writeShellApplication rec {
             name = "zombienet-log-follow";
