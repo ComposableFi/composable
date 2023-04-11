@@ -14,7 +14,6 @@ use sp_offchain::OffchainWorkerApi;
 use sp_runtime::traits::BlakeTwo256;
 use sp_session::SessionKeys;
 use sp_transaction_pool::runtime_api::TaggedTransactionQueue;
-use staking_rewards_rpc::{StakingRewardsApiServer};
 use substrate_frame_rpc_system::AccountNonceApi;
 
 /// Consider this a trait alias.

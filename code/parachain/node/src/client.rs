@@ -9,6 +9,7 @@ use sc_service::{TFullBackend, TFullClient};
 use sp_api::{CallApiAt, NumberFor, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
 use sp_consensus::BlockStatus;
+use sp_core::H256;
 use sp_runtime::{
 	generic::{BlockId, SignedBlock},
 	traits::{BlakeTwo256, Block as BlockT},
@@ -83,8 +84,8 @@ impl From<Arc<ComposableClient>> for Client {
 macro_rules! match_client {
 	($self:ident, $method:ident($($param:ident),*)) => {
 		match $self {
-			Self::Picasso(client) => client.$method($($param),*),
-			Self::Composable(client) => client.$method($($param),*),
+			Self::Picasso(client) => client.$method($($param.clone()),*),
+			Self::Composable(client) => client.$method($($param.clone()),*),
 		}
 	};
 }
@@ -110,11 +111,11 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		match_client!(self, block_indexed_body(id))
 	}
 
-	fn block(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<SignedBlock<Block>>> {
+	fn block(&self, id: H256) -> sp_blockchain::Result<Option<SignedBlock<Block>>> {
 		match_client!(self, block(id))
 	}
 
-	fn block_status(&self, id: &BlockId<Block>) -> sp_blockchain::Result<BlockStatus> {
+	fn block_status(&self, id: H256) -> sp_blockchain::Result<BlockStatus> {
 		match_client!(self, block_status(id))
 	}
 
@@ -239,7 +240,7 @@ impl sc_client_api::StorageProvider<Block, FullBackend> for Client {
 }
 
 impl sp_blockchain::HeaderBackend<Block> for Client {
-	fn header(&self, id: BlockId<Block>) -> sp_blockchain::Result<Option<Header>> {
+	fn header(&self, id: H256) -> sp_blockchain::Result<Option<Header>> {
 		let id = &id;
 		match_client!(self, header(id))
 	}
@@ -248,7 +249,7 @@ impl sp_blockchain::HeaderBackend<Block> for Client {
 		match_client!(self, info())
 	}
 
-	fn status(&self, id: BlockId<Block>) -> sp_blockchain::Result<sp_blockchain::BlockStatus> {
+	fn status(&self, id: H256) -> sp_blockchain::Result<sp_blockchain::BlockStatus> {
 		match_client!(self, status(id))
 	}
 
