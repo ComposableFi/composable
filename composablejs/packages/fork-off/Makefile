@@ -1,9 +1,6 @@
 start:
 	yarn start
 
-binary:
-	./scripts/runtime-wasm.sh -b 1.10002
-
 alice:
 	./data/polkadot --chain data/rococo-local.json --alice --tmp --port 30333 --ws-port 9944
 

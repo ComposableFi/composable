@@ -33,7 +33,7 @@ parameter_types! {
 	pub const XcmMaxAssetsForTransfer: usize = 2;
 	pub RelayNativeLocation: MultiLocation = MultiLocation::parent();
 	pub RelayOrigin: cumulus_pallet_xcm::Origin = cumulus_pallet_xcm::Origin::Relay;
-	pub const UnitWeightCost: u64 = 200_000_000;
+	pub const UnitWeightCost: Weight = Weight::from_ref_time(200_000_000);
 	pub const MaxInstructions: u32 = 100;
 }
 pub struct ThisChain<T>(PhantomData<T>);
@@ -183,25 +183,20 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	}
 }
 
-pub trait XcmpAssets {
-	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId>;
-	fn local_to_remote(id: CurrencyId, _this_para_id: u32) -> Option<MultiLocation>;
-}
 
-pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets>(
-	PhantomData<(AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets)>,
+pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId>(
+	PhantomData<(AssetRegistry, WellKnownCurrency, ThisParaId)>,
 );
 
 impl<
 		AssetRegistry: Convert<CurrencyId, Option<MultiLocation>>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
-		WellKnownXcmpAssets: XcmpAssets,
 	> sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>>
-	for CurrencyIdConvert<AssetRegistry, WellKnown, ThisParaId, WellKnownXcmpAssets>
+	for CurrencyIdConvert<AssetRegistry, WellKnown, ThisParaId>
 {
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
-		WellKnownXcmpAssets::local_to_remote(id, ThisParaId::get().into())
+		WellKnown::local_to_remote(id, ThisParaId::get().into())
 			.or_else(|| AssetRegistry::convert(id).map(|x| x.into()))
 	}
 }
@@ -210,9 +205,8 @@ impl<
 		AssetsRegistry: Convert<MultiLocation, Option<CurrencyId>>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
-		WellKnownXcmpAssets: XcmpAssets,
 	> Convert<MultiLocation, Option<CurrencyId>>
-	for CurrencyIdConvert<AssetsRegistry, WellKnown, ThisParaId, WellKnownXcmpAssets>
+	for CurrencyIdConvert<AssetsRegistry, WellKnown, ThisParaId>
 {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
 		log::trace!(target: "xcmp::convert", "converting {:?} on {:?}", &location, ThisParaId::get());
@@ -225,7 +219,7 @@ impl<
 			MultiLocation { parents: 0, interior: X1(GeneralIndex(index)) } =>
 				Some(CurrencyId(index)),
 			_ =>
-				if let Some(currency_id) = WellKnownXcmpAssets::remote_to_local(location.clone()) {
+				if let Some(currency_id) = WellKnown::remote_to_local(location.clone()) {
 					Some(currency_id)
 				} else {
 					log::trace!(target: "xcmp", "using assets registry for {:?}", location);
@@ -246,9 +240,8 @@ impl<
 		T: Convert<MultiLocation, Option<CurrencyId>>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
-		WellKnownXcmpAssets: XcmpAssets,
 	> Convert<MultiAsset, Option<CurrencyId>>
-	for CurrencyIdConvert<T, WellKnown, ThisParaId, WellKnownXcmpAssets>
+	for CurrencyIdConvert<T, WellKnown, ThisParaId>
 {
 	fn convert(asset: MultiAsset) -> Option<CurrencyId> {
 		log::trace!(target: "xcmp", "converting {:?}", &asset);

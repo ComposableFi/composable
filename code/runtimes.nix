@@ -66,10 +66,6 @@
     in {
       # Add the npm-buildpackage overlay to the perSystem's pkgs
       packages = rec {
-        dali-runtime = mkOptimizedRuntime {
-          name = "dali";
-          features = "";
-        };
         picasso-runtime = mkOptimizedRuntime {
           name = "picasso";
           features = "";
@@ -77,10 +73,6 @@
         composable-runtime = mkOptimizedRuntime {
           name = "composable";
           features = "";
-        };
-        dali-bench-runtime = mkOptimizedRuntime {
-          name = "dali";
-          features = "runtime-benchmarks";
         };
         picasso-bench-runtime = mkOptimizedRuntime {
           name = "picasso";

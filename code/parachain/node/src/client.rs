@@ -1,5 +1,3 @@
-#[cfg(feature = "dali")]
-use crate::service::DaliExecutor;
 use crate::{
 	runtime::BaseHostRuntimeApis,
 	service::{ComposableExecutor, PicassoExecutor},
@@ -25,8 +23,6 @@ pub type FullBackend = TFullBackend<Block>;
 pub(crate) type PicassoClient = FullClient<picasso_runtime::RuntimeApi, PicassoExecutor>;
 
 pub(crate) type ComposableClient = FullClient<composable_runtime::RuntimeApi, ComposableExecutor>;
-#[cfg(feature = "dali")]
-pub(crate) type DaliClient = FullClient<dali_runtime::RuntimeApi, DaliExecutor>;
 
 /// A client instance of Picasso.
 #[derive(Clone)]
@@ -35,9 +31,6 @@ pub enum Client {
 	Picasso(Arc<PicassoClient>),
 	/// Composable client type
 	Composable(Arc<ComposableClient>),
-	/// Dali client type
-	#[cfg(feature = "dali")]
-	Dali(Arc<DaliClient>),
 }
 
 /// Config that abstracts over all available client implementations.
@@ -87,20 +80,11 @@ impl From<Arc<ComposableClient>> for Client {
 	}
 }
 
-#[cfg(feature = "dali")]
-impl From<Arc<DaliClient>> for Client {
-	fn from(client: Arc<DaliClient>) -> Self {
-		Self::Dali(client)
-	}
-}
-
 macro_rules! match_client {
 	($self:ident, $method:ident($($param:ident),*)) => {
 		match $self {
 			Self::Picasso(client) => client.$method($($param),*),
 			Self::Composable(client) => client.$method($($param),*),
-			#[cfg(feature = "dali")]
-			Self::Dali(client) => client.$method($($param),*),
 		}
 	};
 }
@@ -165,9 +149,6 @@ impl sc_client_api::BlockBackend<Block> for Client {
 	fn requires_full_sync(&self) -> bool {
 		match self {
 			Self::Picasso(client) => client.requires_full_sync(),
-			#[cfg(feature = "dali")]
-			Self::Dali(client) => client.requires_full_sync(),
-
 			Self::Composable(client) => client.requires_full_sync(),
 		}
 	}

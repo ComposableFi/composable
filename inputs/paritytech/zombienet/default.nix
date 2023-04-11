@@ -38,7 +38,7 @@ in with prelude; rec {
     } // optionalAttrs (rpc_port != null) { inherit rpc_port; }
     // optionalAttrs (ws_port != null) { inherit ws_port; };
 
-  mkParachain = { command, rpc_port ? 32200, ws_port ? 9988, chain ? "dali-dev"
+  mkParachain = { command, rpc_port ? 32200, ws_port ? 9988, chain ? "picasso-dev"
     , names ? default-node-names, collators ? 2, id ? 2087, rust_log_add ? null
     }:
     let

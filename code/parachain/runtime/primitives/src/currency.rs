@@ -18,16 +18,8 @@ use serde::{Deserialize, Serialize};
 use crate::topology;
 use xcm::{latest::prelude::*, v3};
 
-/// Trait used to write generalized code over well know currencies
-/// We use const to allow for match on these
-/// Allows to have reuse of code amids runtime and cross relay transfers in future.
-// TODO: split CurrencyId for runtimes - one for DOT and one for KSM
 pub trait WellKnownCurrency {
-	// works well with patterns unlike impl trait `associated consts cannot be referenced in
-	// patterns`
 	const NATIVE: CurrencyId;
-	/// usually we expect running with relay,
-	/// but if  not, than degenerative case would be this equal to `NATIVE`
 	const RELAY_NATIVE: CurrencyId;
 }
 
@@ -48,19 +40,9 @@ pub trait WellKnownCurrency {
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[repr(transparent)]
+#[serde(transparent)]
 pub struct CurrencyId(pub u128);
 
-// impl alloc::fmt::Display for CurrencyId {
-//     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-//         todo!()
-//     }
-// }
-
-// impl alloc::string::ToString for CurrencyId {
-//     fn to_string(&self) -> String {
-//         self.0.to_string()
-//     }
-// }
 
 impl FromStr for CurrencyId {
 	type Err = ();

@@ -30,9 +30,6 @@
         name = "release.txt";
         text = ''
           ## Runtimes
-          ### Dali
-          ```
-          ${subwasm-call self'.packages.dali-runtime}
           ```
           ### Picasso
           ```

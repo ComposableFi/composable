@@ -14,11 +14,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 color-eyre = { version = "0.5.11", default-features = false }
-composable-node = { path = "parachain/node", features = ["dali"] }
+composable-node = { path = "parachain/node"}
 
 [features]
 builtin-wasm = ["composable-node/builtin-wasm"]
-dali = ["composable-node/dali"]
 local-integration-tests = []
 picasso = []
 runtime-benchmarks = ["composable-node/runtime-benchmarks"]
@@ -34,14 +33,7 @@ members = [
   "services/cmc-api",
   "parachain/frame/*",
   "parachain/node",
-  "parachain/runtime/common",
-  "parachain/runtime/primitives",
-  "parachain/runtime/picasso",
-  "parachain/runtime/picasso-wasm",
-  "parachain/runtime/dali",
-  "parachain/runtime/dali-wasm",
-  "parachain/runtime/composable",
-  "parachain/runtime/composable-wasm",
+  "parachain/runtime/*",
   "utils/common",
   "utils/collator-sidecar",
   "utils/price-feed",

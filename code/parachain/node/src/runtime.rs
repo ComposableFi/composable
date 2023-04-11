@@ -145,14 +145,7 @@ define_trait! {
 
 		impl for composable_runtime {}
 
-		impl for picasso_runtime {}
-
-		#[cfg(feature = "dali")]
-		impl for dali_runtime {
-			fn (io, deps) {
-				io.merge(StakingRewards::new(deps.client).into_rpc())
-			}
-		}
+		impl for picasso_runtime {}		
 	}
 
 	mod assets {
@@ -167,13 +160,6 @@ define_trait! {
 		}
 
 		impl for picasso_runtime {
-			fn (io, deps) {
-				io.merge(Assets::new(deps.client).into_rpc())
-			}
-		}
-
-		#[cfg(feature = "dali")]
-		impl for dali_runtime {
 			fn (io, deps) {
 				io.merge(Assets::new(deps.client).into_rpc())
 			}
@@ -196,13 +182,6 @@ define_trait! {
 				io.merge(CrowdloanRewards::new(deps.client).into_rpc())
 			}
 		}
-
-		#[cfg(feature = "dali")]
-		impl for dali_runtime {
-			fn (io, deps) {
-				io.merge(CrowdloanRewards::new(deps.client).into_rpc())
-			}
-		}
 	}
 
 	mod pablo {
@@ -217,13 +196,6 @@ define_trait! {
 				io.merge(Pablo::new(deps.client).into_rpc())
 			}
 		}
-
-		#[cfg(feature = "dali")]
-		impl for dali_runtime {
-			fn (io, deps) {
-				io.merge(Pablo::new(deps.client).into_rpc())
-			}
-		}
 	}
 
 	mod lending {
@@ -234,13 +206,6 @@ define_trait! {
 		impl for composable_runtime {}
 
 		impl for picasso_runtime {}
-
-		#[cfg(feature = "dali")]
-		impl for dali_runtime {
-			fn (io, deps) {
-				io.merge(Lending::new(deps.client).into_rpc())
-			}
-		}
 	}
 
 	mod cosmwasm {
@@ -251,13 +216,6 @@ define_trait! {
 		impl for composable_runtime {}
 
 		impl for picasso_runtime {}
-
-		#[cfg(feature = "dali")]
-		impl for dali_runtime {
-			fn (io, deps) {
-				io.merge(Cosmwasm::new(deps.client).into_rpc())
-			}
-		}
 	}
 
 	mod ibc {
@@ -272,13 +230,6 @@ define_trait! {
 		}
 
 		impl for picasso_runtime {
-			fn (io, deps) {
-				io.merge(IbcRpcHandler::new(deps.client.clone(), deps.chain_props).into_rpc())
-			}
-		}
-
-		#[cfg(feature = "dali")]
-		impl for dali_runtime {
 			fn (io, deps) {
 				io.merge(IbcRpcHandler::new(deps.client.clone(), deps.chain_props).into_rpc())
 			}

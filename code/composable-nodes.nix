@@ -40,8 +40,6 @@
           cargoArtifacts = self'.packages.common-deps;
           cargoBuildCommand =
             "cargo build --release --package composable --features=builtin-wasm";
-          DALI_RUNTIME =
-            "${self'.packages.dali-runtime}/lib/runtime.optimized.wasm";
           PICASSO_RUNTIME =
             "${self'.packages.picasso-runtime}/lib/runtime.optimized.wasm";
           COMPOSABLE_RUNTIME =
@@ -56,12 +54,6 @@
       packages = rec {
 
         composable-node = makeComposableNode (node: node);
-
-        composable-node-dali = makeComposableNode (node:
-          node // {
-            PICASSO_RUNTIME = node.DALI_RUNTIME;
-            COMPOSABLE_RUNTIME = node.DALI_RUNTIME;
-          });
 
         composable-node-picasso = makeComposableNode (node:
           node // {
@@ -82,8 +74,6 @@
             name = "composable";
             cargoArtifacts = self'.packages.common-bench-deps;
             cargoBuildCommand = "cargo build --release --package ${name}";
-            DALI_RUNTIME =
-              "${self'.packages.dali-bench-runtime}/lib/runtime.optimized.wasm";
             PICASSO_RUNTIME =
               "${self'.packages.picasso-bench-runtime}/lib/runtime.optimized.wasm";
             COMPOSABLE_RUNTIME =
