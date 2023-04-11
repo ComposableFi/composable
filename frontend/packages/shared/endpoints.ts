@@ -92,7 +92,7 @@ export const endpointPresets: EndpointPresets = {
     picasso: "wss://picasso-rococo-rpc-lb.composablenodes.tech",
     karura: "wss://karura-rpc-0.aca-api.network",
     kusama: "wss://rococo-rpc.polkadot.io",
-    statemine: "wss://statemine-rpc.polkadot.io",
+    statemine: "wss://rococo-rockmine-rpc.polkadot.io",
     subsquid: "https://stats.composablenodes.tech/graphql",
   },
 };
