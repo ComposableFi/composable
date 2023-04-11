@@ -4,7 +4,9 @@ use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, Percent};
 
 #[derive(Debug, Decode, Copy, Clone, PartialEq, Eq, TypeInfo)]
-pub struct ValidMinAnswers;
+pub struct ValidMinAnswers<U> {
+	pub m: PhantomData<U>,
+}
 
 #[derive(Debug, Copy, Clone, Decode, PartialEq, Eq, TypeInfo)]
 pub struct ValidThreshold;
@@ -51,11 +53,13 @@ impl<U> Clone for ValidAssetId<U> {
 #[derive(Debug, Decode)]
 pub struct IsRequested;
 
-impl<MinAnswer: Zero + PartialEq + Eq + Ord + PartialOrd> Validate<MinAnswer, ValidMinAnswers>
-	for ValidMinAnswers
+impl<MinAnswer: Zero + PartialEq + Eq + Ord + PartialOrd, MinAnswerBound>
+	Validate<MinAnswer, ValidMinAnswers<MinAnswerBound>> for ValidMinAnswers<MinAnswerBound>
+where
+	MinAnswerBound: Get<MinAnswer>,
 {
 	fn validate(input: MinAnswer) -> Result<MinAnswer, &'static str> {
-		if input <= MinAnswer::zero() {
+		if input < MinAnswerBound::get() {
 			return Err("INVALID_MIN_ANSWERS")
 		}
 

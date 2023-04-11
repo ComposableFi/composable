@@ -60,6 +60,7 @@ std = [
   "lite-json/std",
   "frame-support/std",
   "frame-system/std",
+  "pallet-balances/std",
   "sp-runtime/std",
   "sp-io/std",
   "sp-core/std",

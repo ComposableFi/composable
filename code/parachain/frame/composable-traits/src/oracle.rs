@@ -34,6 +34,7 @@ pub trait Oracle {
 	type Balance: From<u64>;
 	type Timestamp;
 	type LocalAssets: LocalAssets<Self::AssetId>;
+	type MinAnswerBound: Get<u32>;
 	type MaxAnswerBound: Get<u32>;
 	/// Number of prices from history for calculating TWAP and get weighted price.
 	type TwapWindow: Get<u16>;

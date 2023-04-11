@@ -486,6 +486,7 @@ parameter_types! {
 
 	/// TODO: discuss with omar/cosmin
 	pub MinStake: Balance = 1000 * CurrencyId::unit::<Balance>();
+	pub const MinAnswerBound: u32 = 7;
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
@@ -508,6 +509,7 @@ impl oracle::Config for Runtime {
 	type StalePrice = StalePrice;
 	type AddOracle = EnsureRootOrHalfNativeCouncil;
 	type RewardOrigin = EnsureRootOrHalfNativeCouncil;
+	type MinAnswerBound = MinAnswerBound;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
 	type TreasuryAccount = TreasuryAccount;

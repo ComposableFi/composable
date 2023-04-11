@@ -40,14 +40,20 @@ const UNIT: Balance = 1_000_000_000_000;
 prop_compose! {
 	fn asset_info()
 		(
-			min_answers in 1..MaxAnswerBound::get(),
-			max_answers in 1..MaxAnswerBound::get(),
+			answers in MinAnswerBound::get()..MaxAnswerBound::get(),
+			answers_delta in 1..MaxAnswerBound::get() - MinAnswerBound::get(),
 			block_interval in (StalePrice::get()+1)..(BlockNumber::MAX/16),
 			threshold in 0..100_u8,
 			reward in 0..u128::MAX,
 			slash in 0..u128::MAX,
 		) -> AssetInfo<Percent, BlockNumber, Balance> {
-			let min_answers = max_answers.saturating_sub(min_answers) + 1;
+			let (min_answers, max_answers) = if answers ==  MinAnswerBound::get() {
+				(answers, answers.saturating_add(answers_delta).min(MaxAnswerBound::get()))
+			} else if answers == MaxAnswerBound::get() {
+				(answers.saturating_sub(answers_delta).max(MinAnswerBound::get()), answers)
+			} else {
+				(answers, answers.saturating_add(answers_delta).min(MaxAnswerBound::get()))
+			};
 			let threshold: Percent = Percent::from_percent(threshold);
 
 			AssetInfo {
@@ -721,7 +727,7 @@ fn calculate_reward_per_block() {
 			RuntimeOrigin::signed(root),
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
-			Validated::new(1).unwrap(),
+			Validated::new(3).unwrap(),
 			Validated::new(5).unwrap(),
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			10,
@@ -733,7 +739,7 @@ fn calculate_reward_per_block() {
 			RuntimeOrigin::signed(root),
 			1,
 			Validated::new(Percent::from_percent(80)).unwrap(),
-			Validated::new(1).unwrap(),
+			Validated::new(3).unwrap(),
 			Validated::new(5).unwrap(),
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			30,
@@ -763,7 +769,7 @@ fn calculate_reward_per_block() {
 
 		// reward tracker
 		let annual_cost_per_oracle: Balance = 262800000;
-		let mut num_ideal_oracles: u8 = 1;
+		let num_ideal_oracles: u8 = 1;
 		assert_ok!(Oracle::adjust_rewards(
 			RuntimeOrigin::root(),
 			annual_cost_per_oracle,
@@ -780,46 +786,26 @@ fn calculate_reward_per_block() {
 			})
 		);
 
-		// add prices for asset 1 from 1 user
+		// 3 users submit price for an asset
 		System::set_block_number(6);
 		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_1_signer), 100_u128, 0_u128));
-		let price = PrePrice { price: 100_u128, block: 6, who: account_1_signer };
-		assert_eq!(Oracle::pre_prices(0), vec![price]);
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 101_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_3_signer), 102_u128, 0_u128));
+		let price1 = PrePrice { price: 100_u128, block: 6, who: account_1_signer };
+		let price2 = PrePrice { price: 101_u128, block: 6, who: account_2_signer };
+		let price3 = PrePrice { price: 102_u128, block: 6, who: account_3_signer };
+		assert_eq!(Oracle::pre_prices(0), vec![price1, price2, price3]);
 		System::set_block_number(7);
 		Timestamp::set_timestamp(7);
 		assert_eq!(Balances::free_balance(account_1_controller), 900);
-		assert_eq!(Balances::free_balance(rewards_account), 10000);
-		Oracle::on_initialize(7);
-		assert_eq!(Balances::free_balance(account_1_controller), 925);
-		assert_eq!(Balances::free_balance(rewards_account), 9975);
-
-		// 2 users for another asset
-		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 200_u128, 1_u128));
-		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_3_signer), 200_u128, 1_u128));
-		System::set_block_number(8);
-		Timestamp::set_timestamp(8);
 		assert_eq!(Balances::free_balance(account_2_controller), 800);
 		assert_eq!(Balances::free_balance(account_3_controller), 700);
-		assert_eq!(Balances::free_balance(rewards_account), 9975);
-		Oracle::on_initialize(8);
-		assert_eq!(Balances::free_balance(account_2_controller), 830);
-		assert_eq!(Balances::free_balance(account_3_controller), 745);
-		assert_eq!(Balances::free_balance(rewards_account), 9900);
-
-		// 3 users for both assets
-		System::set_block_number(100);
-		Timestamp::set_timestamp(100);
-		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_1_signer), 100_u128, 0_u128));
-		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 100_u128, 0_u128));
-		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 200_u128, 1_u128));
-		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_3_signer), 200_u128, 1_u128));
-		System::set_block_number(101);
-		Timestamp::set_timestamp(101);
-		Oracle::on_initialize(101);
-		assert_eq!(Balances::free_balance(account_1_controller), 933);
-		assert_eq!(Balances::free_balance(account_2_controller), 876);
-		assert_eq!(Balances::free_balance(account_3_controller), 790);
-		assert_eq!(Balances::free_balance(rewards_account), 9801);
+		assert_eq!(Balances::free_balance(rewards_account), 10000);
+		Oracle::on_initialize(7);
+		assert_eq!(Balances::free_balance(account_1_controller), 904);
+		assert_eq!(Balances::free_balance(account_2_controller), 808);
+		assert_eq!(Balances::free_balance(account_3_controller), 712);
+		assert_eq!(Balances::free_balance(rewards_account), 9976);
 
 		// all 3 user for all 2 assets
 		System::set_block_number(107);
@@ -833,10 +819,10 @@ fn calculate_reward_per_block() {
 		System::set_block_number(108);
 		Timestamp::set_timestamp(108);
 		Oracle::on_initialize(108);
-		assert_eq!(Balances::free_balance(account_1_controller), 949);
-		assert_eq!(Balances::free_balance(account_2_controller), 909);
-		assert_eq!(Balances::free_balance(account_3_controller), 839);
-		assert_eq!(Balances::free_balance(rewards_account), 9703);
+		assert_eq!(Balances::free_balance(account_1_controller), 920);
+		assert_eq!(Balances::free_balance(account_2_controller), 841);
+		assert_eq!(Balances::free_balance(account_3_controller), 761);
+		assert_eq!(Balances::free_balance(rewards_account), 9878);
 	});
 }
 
@@ -1045,7 +1031,7 @@ fn halborn_test_price_manipulation() {
 		const BLOCK_INTERVAL: u64 = 5;
 		const REWARD: u128 = 5;
 		const SLASH: u128 = 5;
-		const emit_price_changes: bool = false;
+		const EMIT_PRICE_CHANGES: bool = false;
 
 		let root_account = get_root_account();
 		let account_1 = get_account_1();
@@ -1062,7 +1048,7 @@ fn halborn_test_price_manipulation() {
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
 			REWARD,
 			SLASH,
-			emit_price_changes,
+			EMIT_PRICE_CHANGES,
 		));
 		System::set_block_number(6);
 		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_3), account_1));
@@ -1410,7 +1396,7 @@ fn halborn_test_bypass_slashing() {
 		const BLOCK_INTERVAL: u64 = 5;
 		const REWARD: u128 = 5;
 		const SLASH: u128 = 5;
-		const emit_price_changes: bool = false;
+		const EMIT_PRICE_CHANGES: bool = false;
 		Timestamp::set_timestamp(10);
 		let mut reward_tracker = RewardTracker::default();
 		reward_tracker.start = 1;
@@ -1435,7 +1421,7 @@ fn halborn_test_bypass_slashing() {
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
 			REWARD,
 			SLASH,
-			emit_price_changes,
+			EMIT_PRICE_CHANGES,
 		));
 
 		let balance1 = Balances::free_balance(account_1);
@@ -1889,8 +1875,8 @@ fn on_init_over_max_answers() {
 			RuntimeOrigin::signed(account_2),
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
-			Validated::new(1).unwrap(),
-			Validated::new(2).unwrap(),
+			Validated::new(3).unwrap(),
+			Validated::new(4).unwrap(),
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			5,
 			5,
@@ -1908,7 +1894,7 @@ fn on_init_over_max_answers() {
 		// all pruned
 		Oracle::on_initialize(0);
 		// price prunes all but first 2 answers, median went from 102 to 100
-		let price = Price { price: 100, block: 0 };
+		let price = Price { price: 101, block: 0 };
 		assert_eq!(Oracle::prices(0), price);
 		assert_eq!(Oracle::pre_prices(0).len(), 0);
 
@@ -2198,12 +2184,19 @@ mod test {
 
 	#[test]
 	fn test_min_answer_valid_case() {
-		assert!(<ValidMinAnswers as Validate<u32, ValidMinAnswers>>::validate(0_u32).is_err());
+		assert!(<ValidMinAnswers<MinAnswerBound> as Validate<
+			u32,
+			ValidMinAnswers<MinAnswerBound>,
+		>>::validate(1_u32)
+		.is_err());
 	}
 
 	#[test]
 	fn test_min_answer_invalid_case() {
-		assert_ok!(<ValidMinAnswers as Validate<u32, ValidMinAnswers>>::validate(1_u32));
+		assert_ok!(<ValidMinAnswers<MinAnswerBound> as Validate<
+			u32,
+			ValidMinAnswers<MinAnswerBound>,
+		>>::validate(4_u32));
 	}
 
 	#[test]
@@ -2243,7 +2236,7 @@ fn reward_rate_doesnt_start_on_asset_info() {
 			RuntimeOrigin::signed(root),
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
-			Validated::new(1).unwrap(),
+			Validated::new(3).unwrap(),
 			Validated::new(5).unwrap(),
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			10,
@@ -2275,7 +2268,7 @@ fn reward_rate_doesnt_start_on_asset_info() {
 			})
 		);
 		let annual_cost_per_oracle: Balance = 100_000 * UNIT;
-		let mut num_ideal_oracles: u8 = 10;
+		let num_ideal_oracles: u8 = 10;
 		assert_ok!(Oracle::adjust_rewards(
 			RuntimeOrigin::root(),
 			annual_cost_per_oracle,
@@ -2298,7 +2291,7 @@ fn reward_rate_doesnt_start_on_asset_info() {
 			RuntimeOrigin::signed(root),
 			1,
 			Validated::new(Percent::from_percent(80)).unwrap(),
-			Validated::new(1).unwrap(),
+			Validated::new(3).unwrap(),
 			Validated::new(5).unwrap(),
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			10,
