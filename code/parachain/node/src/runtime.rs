@@ -1,10 +1,8 @@
 use assets_rpc::{Assets, AssetsApiServer};
 use common::{AccountId, Balance, Index, OpaqueBlock};
-use cosmwasm_rpc::{CosmwasmApiServer};
 use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApiServer};
 use cumulus_primitives_core::CollectCollationInfo;
 use ibc_rpc::{IbcApiServer, IbcRpcHandler};
-use lending_rpc::{LendingApiServer};
 use pablo_rpc::{Pablo, PabloApiServer};
 use pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi;
 use sp_api::{ApiExt, Metadata, StateBackend};

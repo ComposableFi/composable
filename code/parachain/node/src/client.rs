@@ -84,8 +84,8 @@ impl From<Arc<ComposableClient>> for Client {
 macro_rules! match_client {
 	($self:ident, $method:ident($($param:ident),*)) => {
 		match $self {
-			Self::Picasso(client) => client.$method($($param.clone()),*),
-			Self::Composable(client) => client.$method($($param.clone()),*),
+			Self::Picasso(client) => client.$method($($param),*),
+			Self::Composable(client) => client.$method($($param),*),
 		}
 	};
 }
@@ -241,7 +241,6 @@ impl sc_client_api::StorageProvider<Block, FullBackend> for Client {
 
 impl sp_blockchain::HeaderBackend<Block> for Client {
 	fn header(&self, id: H256) -> sp_blockchain::Result<Option<Header>> {
-		let id = &id;
 		match_client!(self, header(id))
 	}
 
