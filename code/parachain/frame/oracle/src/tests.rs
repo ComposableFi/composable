@@ -47,9 +47,7 @@ prop_compose! {
 			reward in 0..u128::MAX,
 			slash in 0..u128::MAX,
 		) -> AssetInfo<Percent, BlockNumber, Balance> {
-			let (min_answers, max_answers) = if answers ==  MinAnswerBound::get() {
-				(answers, answers.saturating_add(answers_delta).min(MaxAnswerBound::get()))
-			} else if answers == MaxAnswerBound::get() {
+			let (min_answers, max_answers) = if answers == MaxAnswerBound::get() {
 				(answers.saturating_sub(answers_delta).max(MinAnswerBound::get()), answers)
 			} else {
 				(answers, answers.saturating_add(answers_delta).min(MaxAnswerBound::get()))
@@ -727,7 +725,7 @@ fn calculate_reward_per_block() {
 			RuntimeOrigin::signed(root),
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
-			Validated::new(3).unwrap(),
+			Validated::new(1).unwrap(),
 			Validated::new(5).unwrap(),
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			10,
@@ -739,7 +737,7 @@ fn calculate_reward_per_block() {
 			RuntimeOrigin::signed(root),
 			1,
 			Validated::new(Percent::from_percent(80)).unwrap(),
-			Validated::new(3).unwrap(),
+			Validated::new(1).unwrap(),
 			Validated::new(5).unwrap(),
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			30,
@@ -786,26 +784,46 @@ fn calculate_reward_per_block() {
 			})
 		);
 
-		// 3 users submit price for an asset
+		// add prices for asset 1 from 1 user
 		System::set_block_number(6);
 		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_1_signer), 100_u128, 0_u128));
-		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 101_u128, 0_u128));
-		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_3_signer), 102_u128, 0_u128));
-		let price1 = PrePrice { price: 100_u128, block: 6, who: account_1_signer };
-		let price2 = PrePrice { price: 101_u128, block: 6, who: account_2_signer };
-		let price3 = PrePrice { price: 102_u128, block: 6, who: account_3_signer };
-		assert_eq!(Oracle::pre_prices(0), vec![price1, price2, price3]);
+		let price = PrePrice { price: 100_u128, block: 6, who: account_1_signer };
+		assert_eq!(Oracle::pre_prices(0), vec![price]);
 		System::set_block_number(7);
 		Timestamp::set_timestamp(7);
 		assert_eq!(Balances::free_balance(account_1_controller), 900);
-		assert_eq!(Balances::free_balance(account_2_controller), 800);
-		assert_eq!(Balances::free_balance(account_3_controller), 700);
 		assert_eq!(Balances::free_balance(rewards_account), 10000);
 		Oracle::on_initialize(7);
-		assert_eq!(Balances::free_balance(account_1_controller), 904);
-		assert_eq!(Balances::free_balance(account_2_controller), 808);
-		assert_eq!(Balances::free_balance(account_3_controller), 712);
-		assert_eq!(Balances::free_balance(rewards_account), 9976);
+		assert_eq!(Balances::free_balance(account_1_controller), 925);
+		assert_eq!(Balances::free_balance(rewards_account), 9975);
+
+		// 2 users for another asset
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 200_u128, 1_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_3_signer), 200_u128, 1_u128));
+		System::set_block_number(8);
+		Timestamp::set_timestamp(8);
+		assert_eq!(Balances::free_balance(account_2_controller), 800);
+		assert_eq!(Balances::free_balance(account_3_controller), 700);
+		assert_eq!(Balances::free_balance(rewards_account), 9975);
+		Oracle::on_initialize(8);
+		assert_eq!(Balances::free_balance(account_2_controller), 830);
+		assert_eq!(Balances::free_balance(account_3_controller), 745);
+		assert_eq!(Balances::free_balance(rewards_account), 9900);
+
+		// 3 users for both assets
+		System::set_block_number(100);
+		Timestamp::set_timestamp(100);
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_1_signer), 100_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 100_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 200_u128, 1_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_3_signer), 200_u128, 1_u128));
+		System::set_block_number(101);
+		Timestamp::set_timestamp(101);
+		Oracle::on_initialize(101);
+		assert_eq!(Balances::free_balance(account_1_controller), 933);
+		assert_eq!(Balances::free_balance(account_2_controller), 876);
+		assert_eq!(Balances::free_balance(account_3_controller), 790);
+		assert_eq!(Balances::free_balance(rewards_account), 9801);
 
 		// all 3 user for all 2 assets
 		System::set_block_number(107);
@@ -819,10 +837,10 @@ fn calculate_reward_per_block() {
 		System::set_block_number(108);
 		Timestamp::set_timestamp(108);
 		Oracle::on_initialize(108);
-		assert_eq!(Balances::free_balance(account_1_controller), 920);
-		assert_eq!(Balances::free_balance(account_2_controller), 841);
-		assert_eq!(Balances::free_balance(account_3_controller), 761);
-		assert_eq!(Balances::free_balance(rewards_account), 9878);
+		assert_eq!(Balances::free_balance(account_1_controller), 949);
+		assert_eq!(Balances::free_balance(account_2_controller), 909);
+		assert_eq!(Balances::free_balance(account_3_controller), 839);
+		assert_eq!(Balances::free_balance(rewards_account), 9703);
 	});
 }
 
@@ -1875,8 +1893,8 @@ fn on_init_over_max_answers() {
 			RuntimeOrigin::signed(account_2),
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
-			Validated::new(3).unwrap(),
-			Validated::new(4).unwrap(),
+			Validated::new(1).unwrap(),
+			Validated::new(2).unwrap(),
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			5,
 			5,
@@ -1894,7 +1912,7 @@ fn on_init_over_max_answers() {
 		// all pruned
 		Oracle::on_initialize(0);
 		// price prunes all but first 2 answers, median went from 102 to 100
-		let price = Price { price: 101, block: 0 };
+		let price = Price { price: 100, block: 0 };
 		assert_eq!(Oracle::prices(0), price);
 		assert_eq!(Oracle::pre_prices(0).len(), 0);
 
@@ -2187,7 +2205,7 @@ mod test {
 		assert!(<ValidMinAnswers<MinAnswerBound> as Validate<
 			u32,
 			ValidMinAnswers<MinAnswerBound>,
-		>>::validate(1_u32)
+		>>::validate(0_u32)
 		.is_err());
 	}
 

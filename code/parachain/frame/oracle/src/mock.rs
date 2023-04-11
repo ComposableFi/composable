@@ -105,7 +105,7 @@ parameter_types! {
 	pub const StakeLock: u64 = 1;
 	pub const MinStake: Balance = 1;
 	pub const StalePrice: u64 = 2;
-	pub const MinAnswerBound: u32 = 3;
+	pub const MinAnswerBound: u32 = 1;
 	pub const MaxAnswerBound: u32 = 5;
 	pub const MaxAssetsCount: u32 = 2;
 	pub const MaxHistory: u32 = 3;
