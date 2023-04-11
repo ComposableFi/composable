@@ -11,7 +11,7 @@ use sp_blockchain::HeaderBackend;
 use sp_consensus::BlockStatus;
 use sp_core::H256;
 use sp_runtime::{
-	generic::{BlockId, SignedBlock},
+	generic::{SignedBlock},
 	traits::{BlakeTwo256, Block as BlockT},
 	Justifications,
 };
