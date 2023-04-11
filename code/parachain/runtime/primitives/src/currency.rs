@@ -22,7 +22,7 @@ pub trait WellKnownCurrency {
 	const NATIVE: CurrencyId;
 	const RELAY_NATIVE: CurrencyId;
 
-	fn local_to_remote(id: CurrencyId)  -> Option<MultiLocation> {
+	fn local_to_remote(id: CurrencyId) -> Option<MultiLocation> {
 		match id {
 			NATIVE => Some(MultiLocation::here()),
 			RELAY_NATIVE => Some(MultiLocation::parent()),
@@ -30,7 +30,7 @@ pub trait WellKnownCurrency {
 		}
 	}
 
-	fn remote_to_local(id: MultiLocation)  -> Option<CurrencyId> {
+	fn remote_to_local(id: MultiLocation) -> Option<CurrencyId> {
 		match id {
 			MultiLocation { parents: 0, interior: Junctions::Here } => Some(Self::NATIVE),
 			MultiLocation { parents: 1, interior: Junctions::Here } => Some(Self::RELAY_NATIVE),
@@ -58,7 +58,6 @@ pub trait WellKnownCurrency {
 #[repr(transparent)]
 #[serde(transparent)]
 pub struct CurrencyId(pub u128);
-
 
 impl FromStr for CurrencyId {
 	type Err = ();

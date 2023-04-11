@@ -1,4 +1,4 @@
-use crate::{prelude::*, currency::VersionedMultiLocation};
+use crate::{currency::VersionedMultiLocation, prelude::*};
 
 pub mod karura {
 	pub const ID: u32 = 2000;
@@ -41,7 +41,7 @@ pub mod this {
 use composable_traits::{
 	assets::{AssetInfo, BiBoundedAssetName, BiBoundedAssetSymbol},
 	rational,
-	xcm::{Balance},
+	xcm::Balance,
 };
 use ibc_rs_scale::{
 	applications::transfer::{PrefixedDenom as InnerPrefixedDenom, TracePrefix},
@@ -55,7 +55,7 @@ pub struct Picasso;
 impl Picasso {
 	pub fn assets() -> Vec<(u64, Option<ForeignAssetId>, AssetInfo<Balance>)> {
 		let usdt = (
-			CurrencyId::USDT.0  as u64,
+			CurrencyId::USDT.0 as u64,
 			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::new(
 				1,
 				X3(
@@ -78,11 +78,12 @@ impl Picasso {
 				ratio: Some(rational!(15 / 1_000_000_000)),
 			},
 		);
-		let mut dot = InnerPrefixedDenom::from_str(CurrencyId::DOT.to_string().as_str()).expect("genesis");
+		let mut dot =
+			InnerPrefixedDenom::from_str(CurrencyId::DOT.to_string().as_str()).expect("genesis");
 		dot.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(0)));
 
 		let dot = (
-			CurrencyId::DOT.0  as u64,
+			CurrencyId::DOT.0 as u64,
 			Some(ForeignAssetId::IbcIcs20(PrefixedDenom(dot))),
 			AssetInfo {
 				name: Some(
@@ -104,8 +105,8 @@ impl Picasso {
 }
 
 impl WellKnownCurrency for Picasso {
-	const NATIVE: CurrencyId =  CurrencyId::PICA;
-	const RELAY_NATIVE: CurrencyId =  CurrencyId::KSM;
+	const NATIVE: CurrencyId = CurrencyId::PICA;
+	const RELAY_NATIVE: CurrencyId = CurrencyId::KSM;
 }
 
 pub struct Composable;
@@ -113,7 +114,7 @@ pub struct Composable;
 impl Composable {
 	pub fn assets() -> Vec<(u64, Option<ForeignAssetId>, AssetInfo<Balance>)> {
 		let usdt = (
-			CurrencyId::USDTP.0  as u64,
+			CurrencyId::USDTP.0 as u64,
 			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::new(
 				1,
 				X3(
@@ -136,10 +137,11 @@ impl Composable {
 				ratio: Some(rational!(375 / 1_000_000_000)),
 			},
 		);
-		let mut pica = InnerPrefixedDenom::from_str(CurrencyId::PICA.to_string().as_str()).expect("genesis");
+		let mut pica =
+			InnerPrefixedDenom::from_str(CurrencyId::PICA.to_string().as_str()).expect("genesis");
 		pica.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(0)));
 		let pica = (
-			CurrencyId::PICA.0  as u64,
+			CurrencyId::PICA.0 as u64,
 			Some(ForeignAssetId::IbcIcs20(PrefixedDenom(pica))),
 			AssetInfo {
 				name: Some(
@@ -178,6 +180,6 @@ impl Composable {
 }
 
 impl WellKnownCurrency for Composable {
-	const NATIVE: CurrencyId =  CurrencyId::LAYR;
-	const RELAY_NATIVE: CurrencyId =  CurrencyId::DOT;
+	const NATIVE: CurrencyId = CurrencyId::LAYR;
+	const RELAY_NATIVE: CurrencyId = CurrencyId::DOT;
 }

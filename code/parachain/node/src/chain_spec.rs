@@ -127,7 +127,6 @@ pub fn picasso_dev(parachain_id: ParaId) -> picasso::ChainSpec {
 	)
 }
 
-
 // chain spec for single node environments
 pub fn composable_dev() -> composable::ChainSpec {
 	let mut properties = Properties::new();

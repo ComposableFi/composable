@@ -183,7 +183,6 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	}
 }
 
-
 pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId>(
 	PhantomData<(AssetRegistry, WellKnownCurrency, ThisParaId)>,
 );
@@ -196,8 +195,7 @@ impl<
 	for CurrencyIdConvert<AssetRegistry, WellKnown, ThisParaId>
 {
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
-		WellKnown::local_to_remote(id)
-			.or_else(|| AssetRegistry::convert(id).map(|x| x.into()))
+		WellKnown::local_to_remote(id).or_else(|| AssetRegistry::convert(id).map(|x| x.into()))
 	}
 }
 
@@ -240,8 +238,7 @@ impl<
 		T: Convert<MultiLocation, Option<CurrencyId>>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
-	> Convert<MultiAsset, Option<CurrencyId>>
-	for CurrencyIdConvert<T, WellKnown, ThisParaId>
+	> Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert<T, WellKnown, ThisParaId>
 {
 	fn convert(asset: MultiAsset) -> Option<CurrencyId> {
 		log::trace!(target: "xcmp", "converting {:?}", &asset);

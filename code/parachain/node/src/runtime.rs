@@ -142,7 +142,7 @@ define_trait! {
 
 		impl for composable_runtime {}
 
-		impl for picasso_runtime {}		
+		impl for picasso_runtime {}
 	}
 
 	mod assets {
