@@ -283,7 +283,8 @@ jobs:
 
       - name: cachix-nix-build
         run: |  
-          cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build --keep-going --print-build-logs --debug --show-trace --verbose --no-update-lock-file --accept-flake-config
+          # --debug --verbose
+          cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config
 
   build-all-docs-packages:
     name: build-all-docs-packages
