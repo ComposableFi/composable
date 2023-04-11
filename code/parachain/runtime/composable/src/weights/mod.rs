@@ -16,3 +16,4 @@ pub mod timestamp;
 pub mod tokens;
 pub mod treasury;
 pub mod utility;
+pub mod pallet_xcm;

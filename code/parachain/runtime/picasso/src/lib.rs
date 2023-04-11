@@ -757,7 +757,7 @@ construct_runtime!(
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
-		RelayerXcm: pallet_xcm = 41,
+		PolkadotXcm: pallet_xcm = 41,
 		CumulusXcm: cumulus_pallet_xcm = 42,
 		DmpQueue: cumulus_pallet_dmp_queue = 43,
 		XTokens: orml_xtokens = 44,

@@ -691,7 +691,7 @@ fn unspent_xcm_fee_is_returned_correctly() {
 			},
 		]);
 
-		assert_ok!(this_runtime::RelayerXcm::send_xcm(Here, Parent, xcm_msg));
+		assert_ok!(this_runtime::PolkadotXcm::send_xcm(Here, Parent, xcm_msg));
 	});
 
 	let parachain_balance = KusamaRelay::execute_with(|| {
@@ -871,7 +871,7 @@ fn trap_assets_lower_than_existential_deposit_works() {
 		assert_eq!(
 			System::events().iter().find(|r| matches!(
 				r.event,
-				this_runtime::RuntimeEvent::RelayerXcm(pallet_xcm::Event::AssetsTrapped(_, _, _))
+				this_runtime::RuntimeEvent::PolkadotXcm(pallet_xcm::Event::AssetsTrapped(_, _, _))
 			)),
 			None
 		);
@@ -970,7 +970,7 @@ fn sibling_trap_assets_works() {
 		assert_eq!(
 			System::events().iter().find(|r| matches!(
 				r.event,
-				this_runtime::RuntimeEvent::RelayerXcm(pallet_xcm::Event::AssetsTrapped(_, _, _))
+				this_runtime::RuntimeEvent::PolkadotXcm(pallet_xcm::Event::AssetsTrapped(_, _, _))
 			)),
 			None // non of assets trapped by hash, because all are known
 		);

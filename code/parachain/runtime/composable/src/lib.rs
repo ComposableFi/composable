@@ -390,14 +390,8 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 
 impl parachain_info::Config for Runtime {}
 
-parameter_types! {
-	pub const UncleGenerations: u32 = 0;
-}
-
 impl authorship::Config for Runtime {
 	type FindAuthor = session::FindAccountFromAuthorIndex<Self, Aura>;
-	type UncleGenerations = UncleGenerations;
-	type FilterUncle = ();
 	type EventHandler = (CollatorSelection,);
 }
 
@@ -640,7 +634,7 @@ construct_runtime!(
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
-		RelayerXcm: pallet_xcm = 41,
+		PolkadotXcm: pallet_xcm = 41,
 		CumulusXcm: cumulus_pallet_xcm = 42,
 		DmpQueue: cumulus_pallet_dmp_queue = 43,
 		XTokens: orml_xtokens = 44,
