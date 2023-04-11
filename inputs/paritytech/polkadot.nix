@@ -57,7 +57,7 @@
           owner = "paritytech";
           rev = rococo-runtime-commit;
           hash = "sha256-24UcJTnbVDe8oW8S0stayHc7/vVyFQaqTSSPHNqJXkg=";
-          cargoSha256 = "sha256-ZvHdlFpord1uPGsnQlGt4wDdYti07D4tpWuc2HWHtII=";
+          cargoSha256 = "sha256-F++EqCzJO9v0rIbM5nmGTkPKXbAT2Bj0ntjkO/kjxQI=";
         };
         # for xcmv3 release and centauri client asap they upgrade
         polkadot-node-9390 = let version = "v0.9.39";
