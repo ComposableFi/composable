@@ -264,16 +264,7 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-build-product-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
-    steps:
-      - name: Set up Nix
-        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
-        with:
-          install_url: https://releases.nixos.org/nix/${{ env.NIX_VERSION }}/install
-          nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
-          extra_nix_config: |
-            sandbox = relaxed
-            narinfo-cache-negative-ttl = 0
-            
+    steps:            
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
@@ -281,9 +272,10 @@ jobs:
           name: ${{ env.CACHIX_NAME }}
       - name: Add tools needed for non-nix steps
         run: |  
-          nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
+          nix profile install nixpkgs#cachix 
+          nix profile install nixpkgs#git
+          nix profile install nixpkgs#git-lfs
       - uses: actions/checkout@v3
         with:
           lfs: true
@@ -292,7 +284,7 @@ jobs:
       - name: build-product 
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build --keep-going 
+          command: nix -- build --keep-going --accept-flake-config
 
   build-all-docs-packages:
     name: build-all-docs-packages
