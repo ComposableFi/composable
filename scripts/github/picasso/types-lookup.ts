@@ -2056,11 +2056,11 @@ declare module '@polkadot/types/lookup' {
     readonly isVoid: boolean;
     readonly isCouncil: boolean;
     readonly asCouncil: PalletCollectiveRawOrigin;
-    readonly isRelayerXcm: boolean;
-    readonly asRelayerXcm: PalletXcmOrigin;
+    readonly isPolkadotXcm: boolean;
+    readonly asPolkadotXcm: PalletXcmOrigin;
     readonly isCumulusXcm: boolean;
     readonly asCumulusXcm: CumulusPalletXcmOrigin;
-    readonly type: 'System' | 'Void' | 'Council' | 'RelayerXcm' | 'CumulusXcm';
+    readonly type: 'System' | 'Void' | 'Council' | 'PolkadotXcm' | 'CumulusXcm';
   }
 
   /** @name FrameSystemRawOrigin (210) */

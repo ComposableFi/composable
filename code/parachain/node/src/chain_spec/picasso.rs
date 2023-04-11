@@ -72,7 +72,7 @@ pub fn genesis_config(
 			members: vec![root.clone()].try_into().expect("const"),
 			phantom: Default::default(),
 		},
-		relayer_xcm: Default::default(),
+		polkadot_xcm: Default::default(),
 		assets_registry: picasso_runtime::AssetsRegistryConfig {
 			assets: primitives::topology::Picasso::assets(),
 			phantom: Default::default(),

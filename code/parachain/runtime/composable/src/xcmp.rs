@@ -63,7 +63,7 @@ impl orml_unknown_tokens::Config for Runtime {
 }
 
 pub type Barrier = (
-	AllowKnownQueryResponses<RelayerXcm>,
+	AllowKnownQueryResponses<PolkadotXcm>,
 	AllowSubscriptionsFrom<ParentOrSiblings>,
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	TakeWeightCredit,
@@ -75,7 +75,7 @@ pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, R
 /// queues.
 pub type XcmRouter = (
 	// Two routers - use UMP to communicate with the relay chain:
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, RelayerXcm, ()>,
+	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, PolkadotXcm, ()>,
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
 );
@@ -151,7 +151,7 @@ pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
 	FinalPriceConverter,
 	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
-	primitives::topology::Composable,
+	WeightToFeeConverter,
 >;
 
 pub struct CaptureDropAssets<
@@ -183,7 +183,7 @@ impl<
 			}
 		}
 		if !can_return_on_request.is_empty() {
-			weight += RelayerXcm::drop_assets(origin, can_return_on_request.into(), context);
+			weight += PolkadotXcm::drop_assets(origin, can_return_on_request.into(), context);
 		}
 		weight
 	}
@@ -207,9 +207,9 @@ impl xcm_executor::Config for XcmConfig {
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 	type Trader = Trader;
-	type ResponseHandler = RelayerXcm;
-	type SubscriptionService = RelayerXcm;
-	type AssetClaims = RelayerXcm;
+	type ResponseHandler = PolkadotXcm;
+	type SubscriptionService = PolkadotXcm;
+	type AssetClaims = PolkadotXcm;
 	type AssetLocker = ();
 	type AssetExchanger = ();
 	type PalletInstancesInfo = AllPalletsWithSystem;
@@ -297,7 +297,7 @@ impl<Origin: OriginTrait> ConvertOrigin<Origin> for SystemParachainAsSuperuser<O
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type VersionWrapper = RelayerXcm;
+	type VersionWrapper = PolkadotXcm;
 	type ChannelInfo = ParachainSystem;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type WeightInfo = cumulus_pallet_xcmp_queue::weights::SubstrateWeight<Self>;

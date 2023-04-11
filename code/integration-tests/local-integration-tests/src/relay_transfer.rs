@@ -65,7 +65,7 @@ fn transfer_from_relay_native_from_this_to_relay_chain_raw() {
 		let before = Assets::free_balance(CurrencyId::KSM, &this_runtime::TreasuryAccount::get());
 		assert_gt!(before, transfer_amount);
 		let transferred =
-			RelayerXcm::execute(RawOrigin::Root.into(), Box::new(VersionedXcm::V2(message)), limit);
+			PolkadotXcm::execute(RawOrigin::Root.into(), Box::new(VersionedXcm::V2(message)), limit);
 
 		assert_ok!(transferred);
 

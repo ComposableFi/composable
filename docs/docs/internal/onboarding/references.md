@@ -104,10 +104,6 @@ Below you'll find all content referenced in the onboarding basics. Feel free to 
 ### Reading Materials
 - [What is Polkadot? A Brief Introduction](https://polkadot.network/blog/what-is-polkadot-a-brief-introduction/)
 - [Polkadot Wiki](https://wiki.polkadot.network/docs/learn-accounts)
-- [Pablo](https://dali.devnets.composablefinance.ninja/products/pablo-overview.html)
-- [Centauri](https://dali.devnets.composablefinance.ninja/products/centauri-overview.html)
-- [XCVM](https://dali.devnets.composablefinance.ninja/products/xcvm.html)
-- [CosmWasmVM](https://dali.devnets.composablefinance.ninja/products/xcvm/writing-smart-contracts-with-cosmwasm.html)
 - [Moonbeam Wiki](https://docs.moonbeam.network/builders/)
 
 #### Further Reading

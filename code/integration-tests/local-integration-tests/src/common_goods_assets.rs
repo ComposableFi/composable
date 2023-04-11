@@ -714,7 +714,7 @@ fn cannot_reserve_transfer_from_two_consensuses_in_one_message() {
 			&AccountId::from(bob()),
 		);
 		let origin = RuntimeOrigin::signed(bob().into());
-		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
+		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
 			origin,
 			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
 				1,
