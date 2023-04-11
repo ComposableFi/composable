@@ -123,7 +123,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for ForeignXcm {
 }
 
 type AssetsIdConverter =
-	CurrencyIdConvert<ForeignXcm, primitives::topology::Picasso, ParachainInfo, primitives::topology::Picasso>;
+	CurrencyIdConvert<ForeignXcm, primitives::topology::Picasso, ParachainInfo>;
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,

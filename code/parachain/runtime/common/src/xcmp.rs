@@ -196,7 +196,7 @@ impl<
 	for CurrencyIdConvert<AssetRegistry, WellKnown, ThisParaId>
 {
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
-		WellKnown::local_to_remote(id, ThisParaId::get().into())
+		WellKnown::local_to_remote(id)
 			.or_else(|| AssetRegistry::convert(id).map(|x| x.into()))
 	}
 }

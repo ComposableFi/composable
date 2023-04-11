@@ -104,8 +104,8 @@ impl Picasso {
 }
 
 impl WellKnownCurrency for Picasso {
-	const NATIVE: CurrencyId = CurrencyId::PICA;
-	const RELAY_NATIVE: CurrencyId = CurrencyId::KSM;
+	const NATIVE: CurrencyId =  CurrencyId::PICA;
+	const RELAY_NATIVE: CurrencyId =  CurrencyId::KSM;
 }
 
 pub struct Composable;
@@ -178,6 +178,6 @@ impl Composable {
 }
 
 impl WellKnownCurrency for Composable {
-	const NATIVE: CurrencyId = CurrencyId::LAYR;
-	const RELAY_NATIVE: CurrencyId = CurrencyId::DOT;
+	const NATIVE: CurrencyId =  CurrencyId::LAYR;
+	const RELAY_NATIVE: CurrencyId =  CurrencyId::DOT;
 }
