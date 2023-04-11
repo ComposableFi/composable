@@ -1,6 +1,5 @@
 //! proposed shared XCM setup parameters and impl
 use crate::{fees::NativeBalance, prelude::*, AccountId, Balance};
-use composable_traits::xcm::assets::XcmAssetLocation;
 use frame_support::{
 	dispatch::Weight,
 	log, match_types, parameter_types,
@@ -71,10 +70,10 @@ impl<
 	> TransactionFeePoolTrader<AssetConverter, PriceConverter, Treasury, WeightToFeeConverter>
 {
 	pub fn weight_to_asset(
-		weight: u64,
+		weight: Weight,
 		asset_id: CurrencyId,
 	) -> Result<(Balance, Balance), XcmError> {
-		let fee = WeightToFeeConverter::weight_to_fee(&Weight::from_ref_time(weight));
+		let fee = WeightToFeeConverter::weight_to_fee(&weight);
 		log::trace!(target : "xcmp::weight_to_asset", "required payment in native token is: {:?}", fee );
 		let price =
 			PriceConverter::to_asset_balance(fee, asset_id).map_err(|_| XcmError::TooExpensive)?;
@@ -101,7 +100,7 @@ impl<
 		}
 	}
 
-	fn buy_weight(&mut self, weight: u64, payment: Assets) -> Result<Assets, XcmError> {
+	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
 		if weight.is_zero() {
 			return Ok(payment)
 		}
@@ -132,9 +131,9 @@ impl<
 		Err(XcmError::TooExpensive)
 	}
 
-	fn refund_weight(&mut self, weight: u64) -> Option<MultiAsset> {
+	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
 		if let Some(ref asset_location) = self.asset_location {
-			let fee = WeightToFeeConverter::weight_to_fee(&Weight::from_ref_time(weight));
+			let fee = WeightToFeeConverter::weight_to_fee(&weight);
 			let fee = self.fee.min(fee);
 			let price = fee.saturating_mul(self.price) / self.fee;
 			self.price = self.price.saturating_sub(price);
@@ -180,18 +179,13 @@ pub struct AccountIdToMultiLocation;
 impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
 		//  considers any other network using globally unique ids
-		X1(AccountId32 { network: NetworkId::Any, id: account.into() }).into()
+		X1(AccountId32 { network: None, id: account.into() }).into()
 	}
 }
 
 pub trait XcmpAssets {
-	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
-		CurrencyId::xcm_reserve_to_local(location)
-	}
-
-	fn local_to_remote(id: CurrencyId, _this_para_id: u32) -> Option<MultiLocation> {
-		CurrencyId::local_to_xcm_reserve(id)
-	}
+	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId>;
+	fn local_to_remote(id: CurrencyId, _this_para_id: u32) -> Option<MultiLocation>;
 }
 
 pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId, WellKnownXcmpAssets>(
@@ -199,7 +193,7 @@ pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId, WellK
 );
 
 impl<
-		AssetRegistry: Convert<CurrencyId, Option<XcmAssetLocation>>,
+		AssetRegistry: Convert<CurrencyId, Option<MultiLocation>>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
 		WellKnownXcmpAssets: XcmpAssets,
@@ -213,7 +207,7 @@ impl<
 }
 
 impl<
-		AssetsRegistry: Convert<XcmAssetLocation, Option<CurrencyId>>,
+		AssetsRegistry: Convert<MultiLocation, Option<CurrencyId>>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
 		WellKnownXcmpAssets: XcmpAssets,
@@ -235,8 +229,7 @@ impl<
 					Some(currency_id)
 				} else {
 					log::trace!(target: "xcmp", "using assets registry for {:?}", location);
-					let result =
-						AssetsRegistry::convert(XcmAssetLocation(location)).map(Into::into);
+					let result = AssetsRegistry::convert(location).map(Into::into);
 					if let Some(result) = result {
 						log::trace!(target: "xcmp", "mapped remote to {:?} local", result);
 					} else {
@@ -250,7 +243,7 @@ impl<
 }
 
 impl<
-		T: Convert<XcmAssetLocation, Option<CurrencyId>>,
+		T: Convert<MultiLocation, Option<CurrencyId>>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
 		WellKnownXcmpAssets: XcmpAssets,
@@ -280,7 +273,7 @@ impl<X, Y, Treasury: TakeRevenue, Z> Drop for TransactionFeePoolTrader<X, Y, Tre
 }
 pub struct RelayReserveFromParachain;
 impl FilterAssetLocation for RelayReserveFromParachain {
-	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
+	fn contains(asset: &MultiAsset, origin: &MultiLocation) -> bool {
 		AbsoluteReserveProvider::reserve(asset) == Some(MultiLocation::parent()) &&
 			matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
 	}
