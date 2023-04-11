@@ -272,7 +272,7 @@ jobs:
           nix profile install nixpkgs#git
           nix profile install nixpkgs#git-lfs
           cachix use ${{ env.CACHIX_NAME }}
-          ${{ secrets.CACHIX_AUTH_TOKEN }} >> cachix authtoken
+          cachix authtoken << ${{ secrets.CACHIX_AUTH_TOKEN }}
           echo "done setup nix cachix"
 
       - uses: actions/checkout@v3
