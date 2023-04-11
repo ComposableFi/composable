@@ -19,7 +19,7 @@
           "cargo-deny-check"
           "cargo-udeps-check"
           "benchmarks-check"
-          "unit-tests"          
+          "unit-tests"
           "benchmarks-once-picasso"
           "benchmarks-once-composable"
           "prettier-check"

@@ -124,9 +124,6 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	DepositToAlternative<TreasuryAccount, Tokens, CurrencyId, AccountId, Balance>,
 >;
 
-type IsReserveAssetLocationFilter =
-	(MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
-
 pub struct ForeignXcm;
 
 impl Convert<CurrencyId, Option<MultiLocation>> for ForeignXcm {
