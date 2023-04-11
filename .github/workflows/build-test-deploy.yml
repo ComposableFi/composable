@@ -265,7 +265,7 @@ jobs:
       group: ${{ github.workflow }}-build-product-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:            
-      - name: Add tools needed for non-nix steps
+      - name: nix-profile-install
         run: |  
           nix-channel --update
           nix profile install nixpkgs#cachix 
@@ -273,17 +273,17 @@ jobs:
           nix profile install nixpkgs#git-lfs
           cachix use ${{ env.CACHIX_NAME }}
           ${{ secrets.CACHIX_AUTH_TOKEN }} >> cachix authtoken
+          echo "done setup nix cachix"
 
       - uses: actions/checkout@v3
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-                    
-      - name: build-product 
-        uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build --keep-going --accept-flake-config
+
+      - name: cachix-nix-build
+        run: |  
+          cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build --keep-going --print-build-logs --debug --show-trace --verbose --no-update-lock-file --accept-flake-config
 
   build-all-docs-packages:
     name: build-all-docs-packages
