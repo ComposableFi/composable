@@ -1,10 +1,10 @@
 use assets_rpc::{Assets, AssetsApiServer};
 use common::{AccountId, Balance, Index, OpaqueBlock};
-use cosmwasm_rpc::{Cosmwasm, CosmwasmApiServer};
+use cosmwasm_rpc::{CosmwasmApiServer};
 use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApiServer};
 use cumulus_primitives_core::CollectCollationInfo;
 use ibc_rpc::{IbcApiServer, IbcRpcHandler};
-use lending_rpc::{Lending, LendingApiServer};
+use lending_rpc::{LendingApiServer};
 use pablo_rpc::{Pablo, PabloApiServer};
 use pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi;
 use sp_api::{ApiExt, Metadata, StateBackend};
@@ -14,7 +14,7 @@ use sp_offchain::OffchainWorkerApi;
 use sp_runtime::traits::BlakeTwo256;
 use sp_session::SessionKeys;
 use sp_transaction_pool::runtime_api::TaggedTransactionQueue;
-use staking_rewards_rpc::{StakingRewards, StakingRewardsApiServer};
+use staking_rewards_rpc::{StakingRewardsApiServer};
 use substrate_frame_rpc_system::AccountNonceApi;
 
 /// Consider this a trait alias.
