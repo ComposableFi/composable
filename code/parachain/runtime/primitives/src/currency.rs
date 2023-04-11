@@ -16,7 +16,7 @@ use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::topology;
-use xcm::latest::prelude::*;
+use xcm::{latest::prelude::*, VersionedMultiLocation};
 
 /// Trait used to write generalized code over well know currencies
 /// We use const to allow for match on these
@@ -69,7 +69,7 @@ macro_rules! list_assets {
 	(
 		$(
 			$(#[$attr:meta])*
-			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal $(, $(, $decimals:expr )? );
+			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal $(, $decimals:expr )? );
 		)*
 	) => {
 		$(
@@ -125,25 +125,19 @@ impl CurrencyId {
 		// Native Tokens (1 - 100)
 		/// Native from Picasso
 		pub const PICA: CurrencyId = CurrencyId(
-			1,
-			Some(topology::this::LOCAL)
+			1
 		);
 		///  Native from Composable
 		pub const LAYR: CurrencyId = CurrencyId(2);
 
 		/// Kusama native token
 		pub const KSM: CurrencyId = CurrencyId(
-			4,
-			Some(MultiLocation::parent())
+			4
 		);
 
 		// From Picasso
 		pub const PBLO: CurrencyId = CurrencyId(
-			5,
-			Some(MultiLocation {
-				parents: 0,
-				interior: X1(GeneralIndex(5)),
-			})
+			5
 		);
 
 		/// DOT from Polkadot
@@ -170,7 +164,7 @@ impl CurrencyId {
 		// Non-Native Tokens (101 - 1000)
 		/// Karura KAR
 		pub const KAR: CurrencyId = CurrencyId(
-			101,
+			101
 		);
 		/// BIFROST BNC
 		pub const BNC: CurrencyId = CurrencyId(102, None);
@@ -181,7 +175,7 @@ impl CurrencyId {
 
 		/// Karura stable coin(Acala Dollar), not native.
 		pub const kUSD: CurrencyId = CurrencyId(
-			129,
+			129
 		);
 
 		/// Statemine USDT
@@ -288,30 +282,7 @@ impl From<CurrencyId> for xcm::latest::Junction {
 mod common_sense {
 	use super::*;
 
-	#[test]
-	fn no_wrong_map() {
-		assert_eq!(
-			CurrencyId::xcm_reserve_to_local(MultiLocation {
-				parents: 1,
-				interior: X3(Parachain(1000), PalletInstance(50), GeneralIndex(666))
-			}),
-			None
-		);
-	}
 
-	#[test]
-	fn one_right_map() {
-		let decimals = CurrencyId::remote_decimals_for_local(
-			CurrencyId::xcm_reserve_to_local(MultiLocation {
-				parents: 1,
-				interior: X3(Parachain(1000), PalletInstance(50), GeneralIndex(1984)),
-			})
-			.unwrap(),
-		)
-		.unwrap();
-
-		assert_eq!(decimals, 6);
-	}
 }
 mod ops {
 	use super::CurrencyId;
@@ -395,14 +366,8 @@ mod ops {
 #[derive(RuntimeDebug, Decode, Encode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum ForeignAssetId {
-	Xcm(XcmAssetLocation),
+	Xcm(VersionedMultiLocation),
 	IbcIcs20(PrefixedDenom),
-}
-
-impl Default for ForeignAssetId {
-	fn default() -> Self {
-		Self::Xcm(XcmAssetLocation::default())
-	}
 }
 
 impl From<XcmAssetLocation> for ForeignAssetId {
@@ -430,12 +395,6 @@ impl FromStr for PrefixedDenom {
 		InnerDenom::from_str(s)
 			.map_err(|_| DispatchError::Other("PrefixedDenom parse failed"))
 			.map(Self)
-	}
-}
-
-impl Default for PrefixedDenom {
-	fn default() -> Self {
-		Self(InnerDenom::from_str("1").expect("constant"))
 	}
 }
 

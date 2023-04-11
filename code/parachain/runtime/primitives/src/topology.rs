@@ -115,7 +115,7 @@ impl Composable {
 	pub fn assets() -> Vec<(u64, Option<ForeignAssetId>, AssetInfo<Balance>)> {
 		let usdt = (
 			140,
-			Some(ForeignAssetId::Xcm(XcmAssetLocation::new(MultiLocation::new(
+			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::new(
 				1,
 				X3(
 					Parachain(statemine::ID),
