@@ -16,7 +16,7 @@ use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::topology;
-use xcm::{latest::prelude::*, VersionedMultiLocation};
+use xcm::{latest::prelude::*, v3};
 
 /// Trait used to write generalized code over well know currencies
 /// We use const to allow for match on these
@@ -49,6 +49,18 @@ pub trait WellKnownCurrency {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[repr(transparent)]
 pub struct CurrencyId(pub u128);
+
+// impl alloc::fmt::Display for CurrencyId {
+//     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+//         todo!()
+//     }
+// }
+
+// impl alloc::string::ToString for CurrencyId {
+//     fn to_string(&self) -> String {
+//         self.0.to_string()
+//     }
+// }
 
 impl FromStr for CurrencyId {
 	type Err = ();
@@ -100,7 +112,7 @@ macro_rules! list_assets {
 			}
 		}
 
-		pub fn list_assets() -> Vec<Asset<u128, XcmAssetLocation>> {
+		pub fn list_assets() -> Vec<Asset<u128, VersionedMultiLocation>> {
 			[
 				$(Asset {
 					id: CurrencyId::$NAME.0 as u128,
@@ -183,6 +195,13 @@ impl CurrencyId {
 			130,
 			Some(6)
 		);
+
+		/// Statemint USDT
+		pub const USDTP: CurrencyId = CurrencyId(
+			140,
+			Some(6)
+		);
+
 		pub const USDC: CurrencyId = CurrencyId(131, None);
 		/// Wrapped BTC
 		pub const wBTC: CurrencyId = CurrencyId(132, None);
@@ -281,8 +300,6 @@ impl From<CurrencyId> for xcm::latest::Junction {
 #[cfg(test)]
 mod common_sense {
 	use super::*;
-
-
 }
 mod ops {
 	use super::CurrencyId;
@@ -370,8 +387,17 @@ pub enum ForeignAssetId {
 	IbcIcs20(PrefixedDenom),
 }
 
-impl From<XcmAssetLocation> for ForeignAssetId {
-	fn from(this: XcmAssetLocation) -> Self {
+#[derive(
+	Ord, PartialOrd, RuntimeDebug, Decode, Encode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum VersionedMultiLocation {
+	#[codec(index = 3)]
+	V3(v3::MultiLocation),
+}
+
+impl From<VersionedMultiLocation> for ForeignAssetId {
+	fn from(this: VersionedMultiLocation) -> Self {
 		Self::Xcm(this)
 	}
 }

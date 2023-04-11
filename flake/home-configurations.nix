@@ -33,6 +33,10 @@
                 enable = true;
                 nix-direnv = { enable = true; };
               };
+              bash = {
+                enable  = true;
+                sessionVariables = subnix.subattrs;
+              };
             };
           }];
         };
