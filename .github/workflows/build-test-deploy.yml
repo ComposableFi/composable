@@ -400,7 +400,7 @@ jobs:
         - build-all-docs-packages
         - build-all-benchmarks-packages
       steps:
-        - run: echo "Goblins allow your work to see the light"
+        - run: echo "Deploying draft release"
 
   deploy-docs:
     name: "Deploy docs"

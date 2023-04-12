@@ -11,8 +11,22 @@
       };
       tools = with pkgs;
         with self'.packages;
-        [ clang nodejs python3 yarn sad git git-lfs subwasm zombienet ]
-        ++ (with self'.packages; [ rust-nightly ]);
+        [
+          clang
+          git
+          git-lfs
+          nix-tree
+          nixfmt
+          nodejs
+          python3
+          rnix-lsp
+          sad
+          subwasm
+          terraform
+          terraform-ls
+          yarn
+          zombienet
+        ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;
         inputs = self.inputs;
@@ -38,30 +52,25 @@
           packages = tools ++ (with pkgs;
             with self'.packages; [
               bacon
+              binaryen
+              devenv
+              gex
               google-cloud-sdk
               jq
               lldb
               llvmPackages_latest.bintools
               llvmPackages_latest.lld
               llvmPackages_latest.llvm
-              nix-tree
-              nixfmt
+
+              nodePackages.typescript
+              nodePackages.typescript-language-server
               openssl
               openssl.dev
               pkg-config
               qemu
-              rnix-lsp
               taplo
               xorriso
               zlib.out
-              nix-tree
-              nixfmt
-              rnix-lsp
-              nodePackages.typescript
-              nodePackages.typescript-language-server
-              binaryen
-              gex
-              devenv
             ]);
           devcontainer.enable = true;
           inherit env;
