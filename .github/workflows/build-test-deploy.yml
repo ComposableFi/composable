@@ -259,9 +259,7 @@ jobs:
     needs: 
       - privilege-check
     runs-on:
-      - self-hosted
       - ${{ matrix.arch }}
-      - macOS
     concurrency:
       group: ${{ github.workflow }}-build-product-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
