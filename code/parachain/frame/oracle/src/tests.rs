@@ -844,6 +844,104 @@ fn calculate_reward_per_block() {
 	});
 }
 
+#[test]
+fn calculate_reward_per_block_min_aswers_eq_3() {
+	new_test_ext().execute_with(|| {
+		let root = get_root_account();
+		System::set_block_number(1);
+		Timestamp::set_timestamp(1);
+		Oracle::on_initialize(1);
+		// 3 oracles
+		let account_1_controller = get_account_1();
+		let account_1_signer = get_account_3();
+		Balances::make_free_balance_be(&account_1_controller, 1000);
+		Balances::make_free_balance_be(&account_1_signer, 0);
+		let account_2_controller = get_account_4();
+		let account_2_signer = get_account_5();
+		Balances::make_free_balance_be(&account_2_controller, 1000);
+		Balances::make_free_balance_be(&account_2_signer, 0);
+		let account_3_controller = get_account_6();
+		let account_3_signer = get_account_7();
+		Balances::make_free_balance_be(&account_3_controller, 1000);
+		Balances::make_free_balance_be(&account_3_signer, 0);
+		let treasury_account = get_treasury_account();
+		Balances::make_free_balance_be(&treasury_account, 10000);
+		let rewards_account = Oracle::account_id();
+		Balances::make_free_balance_be(&rewards_account, 10000);
+
+		assert_ok!(Oracle::add_asset_and_info(
+			RuntimeOrigin::signed(root),
+			0,
+			Validated::new(Percent::from_percent(80)).unwrap(),
+			Validated::new(3).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			30,
+			5,
+			false,
+		));
+
+		// adding stake
+		assert_ok!(Oracle::set_signer(
+			RuntimeOrigin::signed(account_1_controller),
+			account_1_signer
+		));
+		assert_ok!(Oracle::set_signer(
+			RuntimeOrigin::signed(account_2_controller),
+			account_2_signer
+		));
+		assert_ok!(Oracle::set_signer(
+			RuntimeOrigin::signed(account_3_controller),
+			account_3_signer
+		));
+		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_1_controller), 99));
+		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_2_controller), 199));
+		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_3_controller), 299));
+		assert_eq!(Oracle::oracle_stake(account_1_signer), Some(100));
+		assert_eq!(Oracle::oracle_stake(account_2_signer), Some(200));
+		assert_eq!(Oracle::oracle_stake(account_3_signer), Some(300));
+
+		// reward tracker
+		let annual_cost_per_oracle: Balance = 262800000;
+		let num_ideal_oracles: u8 = 1;
+		assert_ok!(Oracle::adjust_rewards(
+			RuntimeOrigin::root(),
+			annual_cost_per_oracle,
+			num_ideal_oracles
+		));
+		assert_eq!(
+			RewardTrackerStore::<Test>::get(),
+			Some(RewardTracker {
+				period: MS_PER_YEAR_NAIVE,
+				start: 1,
+				total_already_rewarded: 0,
+				current_block_reward: 100,
+				total_reward_weight: 30,
+			})
+		);
+
+		System::set_block_number(6);
+		Timestamp::set_timestamp(6);
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_1_signer), 200_u128, 0_u128));
+		System::set_block_number(7);
+		Timestamp::set_timestamp(7);
+		Oracle::on_initialize(7);
+		assert_eq!(Balances::free_balance(account_1_controller), 900);
+		assert_eq!(Balances::free_balance(account_2_controller), 800);
+		assert_eq!(Balances::free_balance(account_3_controller), 700);
+		assert_eq!(Balances::free_balance(rewards_account), 10000);
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 200_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_3_signer), 200_u128, 0_u128));
+		System::set_block_number(8);
+		Timestamp::set_timestamp(8);
+		Oracle::on_initialize(8);
+		assert_eq!(Balances::free_balance(account_1_controller), 916);
+		assert_eq!(Balances::free_balance(account_2_controller), 833);
+		assert_eq!(Balances::free_balance(account_3_controller), 750);
+		assert_eq!(Balances::free_balance(rewards_account), 9901);
+	});
+}
+
 mod submit_price {
 	use super::*;
 	proptest! {
