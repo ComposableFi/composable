@@ -27,25 +27,13 @@ export const subscribeDestinationMultiLocation = async (
       // Set to null to re-trigger all listeners
       set(null);
       // Kusama to Picasso uses XCM standard address
-      if (sourceChain === "kusama") {
-        set(
-          api.createType("XcmVersionedMultiLocation", {
-            V0: api.createType("XcmV0MultiLocation", {
-              X1: api.createType("XcmV0Junction", {
-                Parachain: api.createType("u32", targetChainId),
-              }),
-            }),
-          }) as XcmVersionedMultiLocation
-        );
-      }
-
-      if (sourceChain === "statemine") {
+      if (sourceChain === "kusama" || sourceChain === "statemine") {
         set(
           <XcmVersionedMultiLocation>api.createType(
             "XcmVersionedMultiLocation",
             {
-              V1: {
-                parents: 1,
+              V2: {
+                parents: sourceChain === "kusama" ? 0 : 1,
                 interior: {
                   X1: {
                     Parachain: targetChainId,
