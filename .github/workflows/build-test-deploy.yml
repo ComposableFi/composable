@@ -251,7 +251,7 @@ jobs:
           command: nix -- build .#all-deps --keep-going       
 
   build-product:
-    name: build-product \#flaky
+    name: build-product #flaky
     strategy:
       matrix:
         arch: [ARM64]
@@ -267,13 +267,16 @@ jobs:
       cancel-in-progress: true
     steps:            
       - name: nix-profile-install
-        run: |  
+        run: |
+          uname -a
+          curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
           nix profile install nixpkgs#cachix 
           nix profile install nixpkgs#git
           nix profile install nixpkgs#git-lfs
+          nix --version
           cachix use ${{ env.CACHIX_NAME }}
           cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
-          echo "done setup nix cachix"
+          cachix --version
 
       - uses: actions/checkout@v3
         with:
