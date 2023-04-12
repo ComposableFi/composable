@@ -52,21 +52,26 @@ proptest = "1.0"
 [features]
 default = ["std"]
 std = [
-  "sp-std/std",
-  "sp-runtime/std",
-  "sp-io/std",
-  "sp-core/std",
-  "sp-arithmetic/std",
-  "scale-info/std",
-  "primitives/std",
-  "parity-scale-codec/std",
-  "frame-system/std",
-  "frame-support/std",
-  "composable-traits/std",
   "composable-support/std",
-  "pallet-proxy/std",
   "composable-tests-helpers/std",
+  "composable-traits/std",
   "frame-benchmarking/std",
+  "frame-support/std",
+  "frame-system/std",
+  "orml-tokens/std",
+  "orml-traits/std",
+  "pallet-assets-registry/std",
+  "pallet-balances/std",
+  "pallet-proxy/std",
+  "parity-scale-codec/std",
+  "primitives/std",
+  "scale-info/std",
+  "sp-arithmetic/std",
+  "sp-core/std",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
+  
 ]
 
 runtime-benchmarks = [

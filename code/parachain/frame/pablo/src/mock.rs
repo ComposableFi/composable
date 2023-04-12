@@ -8,8 +8,9 @@ use frame_support::{
 	traits::{EitherOfDiverse, Everything},
 	PalletId,
 };
-use frame_system::{self as system, EnsureRoot, EnsureSignedBy};
+use frame_system::{EnsureRoot, EnsureSignedBy};
 use orml_traits::{parameter_type_with_key, GetByKey, LockIdentifier};
+use primitives::currency::ForeignAssetId;
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
@@ -27,27 +28,26 @@ pub const USDT: CurrencyId = currency::USDT::ID;
 pub const USDC: CurrencyId = 4;
 pub const LP_TOKEN_ID: CurrencyId = 100;
 pub const TWAP_INTERVAL_BLOCKS: Moment = 10;
-// TODO(benluelo): Inline this
+
 pub const MILLISECS_PER_BLOCK: u64 = composable_tests_helpers::test::block::MILLISECS_PER_BLOCK;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
-// Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
 	pub enum Test where
 		Block = Block,
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Pablo: pablo::{Pallet, Call, Storage, Event<T>},
+		System: frame_system,
 		Balances: pallet_balances,
-		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Tokens: orml_tokens,
 		AssetsRegistry: pallet_assets_registry,
 		AssetsTransactor: pallet_assets_transactor_router,
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-		StakingRewards: pallet_staking_rewards::{Pallet, Storage, Call, Event<T>},
+		Timestamp: pallet_timestamp,
+		StakingRewards: pallet_staking_rewards,
+		Pablo: pablo,
 	}
 );
 
@@ -85,7 +85,7 @@ pub static DAVE: AccountId = 4;
 #[allow(dead_code)]
 pub static CURVE_ADMIN_FEE_ACC_ID: AccountId = 5;
 
-impl system::Config for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -190,7 +190,6 @@ parameter_types! {
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
 	pub const MaxStakingDurationPresets: u32 = 10;
 	pub const MaxRewardConfigsPerPool: u32 = 10;
-	// REVIEW(benluelo): Use a better value for this?
 	pub const TreasuryAccountId: AccountId = 123_456_789_u128;
 	pub const NativeAssetId: AssetId = 1;
 }
@@ -198,7 +197,7 @@ parameter_types! {
 impl pallet_assets_registry::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = AssetId;
-	type ForeignAssetId = XcmAssetLocation;
+	type ForeignAssetId = ForeignAssetId;
 	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
 	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
@@ -216,7 +215,7 @@ impl pallet_assets_transactor_router::Config for Test {
 	type GovernanceRegistry = NoopRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type AssetLocation = XcmAssetLocation;
+	type AssetLocation = ForeignAssetId;
 	type AssetsRegistry = AssetsRegistry;
 }
 

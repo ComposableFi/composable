@@ -46,6 +46,7 @@ pallet-assets-transactor-router = { path = "../assets-transactor-router" }
 pallet-pablo = { path = "../pablo" }
 pallet-staking-rewards = { path = "../staking-rewards" }
 pallet-timestamp = { default-features = false, workspace = true }
+primitives = { path = "../../runtime/primitives", default-features = false }
 
 [features]
 default = ["std"]
@@ -58,6 +59,9 @@ std = [
   "sp-runtime/std",
   "composable-tests-helpers/std",
   "frame-benchmarking/std",
+  "orml-tokens/std",
+  "orml-traits/std",
+  "primitives/std",
 ]
 
 runtime-benchmarks = [
