@@ -106,23 +106,22 @@ impl<
 		}
 
 		// only support first fungible assets now.
-		let xcmp_asset_id = payment
+		let xcmp_asset_id = *payment
 			.fungible
 			.iter()
 			.next()
 			.map_or(Err(XcmError::TooExpensive), |v| Ok(v.0))?;
 
-		if let AssetId::Concrete(ref multi_location) = xcmp_asset_id.clone() {
-			if let Some(asset_id) = AssetConverter::convert(multi_location.clone()) {
+		if let AssetId::Concrete(ref multi_location) = xcmp_asset_id {
+			if let Some(asset_id) = AssetConverter::convert(*multi_location) {
 				let (fee, price) = Self::weight_to_asset(weight, asset_id)?;
-				let required =
-					MultiAsset { id: xcmp_asset_id.clone(), fun: Fungibility::Fungible(price) };
+				let required = MultiAsset { id: xcmp_asset_id, fun: Fungibility::Fungible(price) };
 				log::trace!(target : "xcmp::buy_weight", "required priceable token {:?}; provided payment:{:?} ", required, payment );
 				let unused = payment.checked_sub(required).map_err(|_| XcmError::TooExpensive)?;
 
 				self.fee = self.fee.saturating_add(fee);
 				self.price = self.price.saturating_add(price);
-				self.asset_location = Some(multi_location.clone());
+				self.asset_location = Some(*multi_location);
 				return Ok(unused)
 			}
 		}
@@ -139,7 +138,7 @@ impl<
 			self.price = self.price.saturating_sub(price);
 			self.fee = self.fee.saturating_sub(fee);
 			if price > 0 {
-				return Some((asset_location.clone(), price).into())
+				return Some((*asset_location, price).into())
 			}
 		}
 
@@ -195,7 +194,7 @@ impl<
 	for CurrencyIdConvert<AssetRegistry, WellKnown, ThisParaId>
 {
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
-		WellKnown::local_to_remote(id).or_else(|| AssetRegistry::convert(id).map(|x| x.into()))
+		WellKnown::local_to_remote(id).or_else(|| AssetRegistry::convert(id))
 	}
 }
 
@@ -217,7 +216,7 @@ impl<
 			MultiLocation { parents: 0, interior: X1(GeneralIndex(index)) } =>
 				Some(CurrencyId(index)),
 			_ =>
-				if let Some(currency_id) = WellKnown::remote_to_local(location.clone()) {
+				if let Some(currency_id) = WellKnown::remote_to_local(location) {
 					Some(currency_id)
 				} else {
 					log::trace!(target: "xcmp", "using assets registry for {:?}", location);
