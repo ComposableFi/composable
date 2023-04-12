@@ -1,13 +1,10 @@
 //! Interfaces to managed assets
 use crate::assets::{AssetInfo, AssetInfoUpdate};
-use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
-use frame_support::{dispatch::DispatchResult, pallet_prelude::ConstU32, WeakBoundedVec};
+use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::dispatch::DispatchResult;
 use polkadot_parachain::primitives::Id;
 use scale_info::TypeInfo;
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 use sp_std::vec::Vec;
-use xcm::latest::MultiLocation;
 
 use crate::{assets::Asset, currency::Exponent};
 

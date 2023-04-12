@@ -3,7 +3,6 @@ use codec::{CompactAs, Decode, Encode, EncodeLike, MaxEncodedLen, WrapperTypeEnc
 use composable_support::validation::Validate;
 use composable_traits::{assets::Asset, currency::Exponent};
 
-use frame_support::WeakBoundedVec;
 use scale_info::TypeInfo;
 use sp_runtime::{
 	sp_std::{ops::Deref, vec::Vec},
@@ -15,7 +14,6 @@ use crate::prelude::*;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-use crate::topology;
 use xcm::{latest::prelude::*, v3};
 
 pub trait WellKnownCurrency {
@@ -24,8 +22,8 @@ pub trait WellKnownCurrency {
 
 	fn local_to_remote(id: CurrencyId) -> Option<MultiLocation> {
 		match id {
-			NATIVE => Some(MultiLocation::here()),
-			RELAY_NATIVE => Some(MultiLocation::parent()),
+			id if id == Self::NATIVE => Some(MultiLocation::here()),
+			id if id == Self::RELAY_NATIVE => Some(MultiLocation::parent()),
 			_ => None,
 		}
 	}
@@ -56,7 +54,7 @@ pub trait WellKnownCurrency {
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[repr(transparent)]
-#[serde(transparent)]
+#[cfg_attr(feature = "std", serde(transparent))]
 pub struct CurrencyId(pub u128);
 
 impl FromStr for CurrencyId {
