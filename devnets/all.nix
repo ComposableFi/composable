@@ -6,6 +6,7 @@
       centauri-configure-and-run = pkgs.writeShellApplication rec {
         name = "centauri-configure-and-run";
         text = ''
+          echo "copying config to modifiable path"
           cp --force ${self'.packages.hyperspace-config} /tmp/config.toml  
           ${pkgs.lib.meta.getExe devnet-centauri}       
         '';

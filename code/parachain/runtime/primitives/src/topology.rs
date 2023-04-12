@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{currency::VersionedMultiLocation, prelude::*};
 
 pub mod karura {
 	pub const ID: u32 = 2000;
@@ -41,7 +41,7 @@ pub mod this {
 use composable_traits::{
 	assets::{AssetInfo, BiBoundedAssetName, BiBoundedAssetSymbol},
 	rational,
-	xcm::{assets::XcmAssetLocation, Balance},
+	xcm::Balance,
 };
 use ibc_rs_scale::{
 	applications::transfer::{PrefixedDenom as InnerPrefixedDenom, TracePrefix},
@@ -55,8 +55,8 @@ pub struct Picasso;
 impl Picasso {
 	pub fn assets() -> Vec<(u64, Option<ForeignAssetId>, AssetInfo<Balance>)> {
 		let usdt = (
-			130,
-			Some(ForeignAssetId::Xcm(XcmAssetLocation::new(MultiLocation::new(
+			CurrencyId::USDT.0 as u64,
+			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::new(
 				1,
 				X3(
 					Parachain(statemine::ID),
@@ -78,11 +78,12 @@ impl Picasso {
 				ratio: Some(rational!(15 / 1_000_000_000)),
 			},
 		);
-		let mut dot = InnerPrefixedDenom::from_str("6").expect("genesis");
+		let mut dot =
+			InnerPrefixedDenom::from_str(CurrencyId::DOT.to_string().as_str()).expect("genesis");
 		dot.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(0)));
 
 		let dot = (
-			6,
+			CurrencyId::DOT.0 as u64,
 			Some(ForeignAssetId::IbcIcs20(PrefixedDenom(dot))),
 			AssetInfo {
 				name: Some(
@@ -113,8 +114,8 @@ pub struct Composable;
 impl Composable {
 	pub fn assets() -> Vec<(u64, Option<ForeignAssetId>, AssetInfo<Balance>)> {
 		let usdt = (
-			140,
-			Some(ForeignAssetId::Xcm(XcmAssetLocation::new(MultiLocation::new(
+			CurrencyId::USDTP.0 as u64,
+			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::new(
 				1,
 				X3(
 					Parachain(statemine::ID),
@@ -136,10 +137,11 @@ impl Composable {
 				ratio: Some(rational!(375 / 1_000_000_000)),
 			},
 		);
-		let mut pica = InnerPrefixedDenom::from_str("1").expect("genesis");
+		let mut pica =
+			InnerPrefixedDenom::from_str(CurrencyId::PICA.to_string().as_str()).expect("genesis");
 		pica.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(0)));
 		let pica = (
-			1,
+			CurrencyId::PICA.0 as u64,
 			Some(ForeignAssetId::IbcIcs20(PrefixedDenom(pica))),
 			AssetInfo {
 				name: Some(
@@ -156,8 +158,8 @@ impl Composable {
 			},
 		);
 		let dot = (
-			6,
-			Some(ForeignAssetId::Xcm(XcmAssetLocation::new(MultiLocation::new(1, Here)))),
+			CurrencyId::DOT.0 as u64,
+			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::new(1, Here)))),
 			AssetInfo {
 				name: Some(
 					BiBoundedAssetName::from_vec(b"Polkadot".to_vec())

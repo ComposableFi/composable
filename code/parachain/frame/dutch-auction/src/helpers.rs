@@ -104,7 +104,7 @@ impl<T: Config> Pallet<T> {
 				let asset_id = MultiLocation {
 					parents: 1,
 					interior: X2(
-						AccountId32 { network: Any, id: account },
+						AccountId32 { network: None, id: account },
 						GeneralKey(
 							frame_support::storage::weak_bounded_vec::WeakBoundedVec::force_from(
 								order.pair.encode(),

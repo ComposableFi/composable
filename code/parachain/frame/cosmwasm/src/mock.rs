@@ -8,10 +8,7 @@ use crate::{
 	types::*,
 	*,
 };
-use composable_traits::{
-	currency::{CurrencyFactory, RangeId},
-	xcm::assets::XcmAssetLocation,
-};
+use composable_traits::currency::{CurrencyFactory, RangeId};
 use core::marker::PhantomData;
 
 use cosmwasm_vm::{
@@ -184,7 +181,7 @@ impl CurrencyFactory for CurrencyIdGenerator {
 impl pallet_assets_registry::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = CurrencyId;
-	type ForeignAssetId = XcmAssetLocation;
+	type ForeignAssetId = u64;
 	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
 	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();

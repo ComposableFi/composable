@@ -10,6 +10,7 @@ pub mod ibc;
 pub mod indices;
 pub mod membership;
 pub mod pallet_proxy;
+pub mod pallet_xcm;
 pub mod scheduler;
 pub mod session;
 pub mod timestamp;

@@ -15,24 +15,18 @@
               stateVersion = "22.11";
               packages = with pkgs;
                 with self'.packages;
-                [
-                  clang
-                  nodejs
-                  python3
-                  yarn
-                  sad
-                  git
-                  git-lfs
-                  subwasm
-                  zombienet
-
-                ] ++ (with self'.packages; [ rust-nightly ]) ++ codespace;
+                [ clang nodejs python3 yarn sad git git-lfs subwasm zombienet ]
+                ++ (with self'.packages; [ rust-nightly ]) ++ codespace;
             };
             programs = {
               home-manager.enable = true;
               direnv = {
                 enable = true;
                 nix-direnv = { enable = true; };
+              };
+              bash = {
+                enable = true;
+                sessionVariables = subnix.subattrs;
               };
             };
           }];

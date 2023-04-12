@@ -42,13 +42,9 @@
 
     in {
       packages = rec {
-        check-dali-dev-benchmarks = benchmarks-run-once "dali-dev";
         check-picasso-dev-benchmarks = benchmarks-run-once "picasso-dev";
         check-composable-dev-benchmarks = benchmarks-run-once "composable-dev";
 
-        check-dali-benchmarks-ci =
-          mkBenchmarksCiPackage "check-dali-benchmarks-ci"
-          check-dali-dev-benchmarks;
         check-picasso-benchmarks-ci =
           mkBenchmarksCiPackage "check-picasso-benchmarks-ci"
           check-picasso-dev-benchmarks;
@@ -58,20 +54,10 @@
       };
       apps = let flake-utils = self.inputs.flake-utils;
       in {
-        # TODO: move list of chains out of here and do map
         benchmarks-once-composable =
           flake-utils.lib.mkApp { drv = benchmarks-run-once "composable-dev"; };
-        benchmarks-once-dali =
-          flake-utils.lib.mkApp { drv = benchmarks-run-once "dali-dev"; };
         benchmarks-once-picasso =
           flake-utils.lib.mkApp { drv = benchmarks-run-once "picasso-dev"; };
-        benchmarks-generate-dali = flake-utils.lib.mkApp {
-          drv = generate-benchmarks {
-            chain = "dali";
-            steps = 50;
-            repeat = 10;
-          };
-        };
         benchmarks-generate-picasso = flake-utils.lib.mkApp {
           drv = generate-benchmarks {
             chain = "picasso";
@@ -84,13 +70,6 @@
             chain = "composable";
             steps = 50;
             repeat = 10;
-          };
-        };
-        benchmarks-generate-quick-dali = flake-utils.lib.mkApp {
-          drv = generate-benchmarks {
-            chain = "dali";
-            steps = 2;
-            repeat = 2;
           };
         };
         benchmarks-generate-quick-picasso = flake-utils.lib.mkApp {

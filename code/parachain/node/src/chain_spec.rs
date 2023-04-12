@@ -11,9 +11,6 @@ use sp_runtime::{traits::IdentifyAccount, MultiSigner};
 
 pub mod composable;
 
-#[cfg(feature = "dali")]
-pub mod dali;
-
 pub mod picasso;
 
 const DEFAULT_PARACHAIN_ID: u32 = 2087;
@@ -74,13 +71,6 @@ pub fn composable_westend() -> composable::ChainSpec {
 		.expect("chain spec not found")
 }
 
-#[cfg(feature = "dali")]
-/// Dali (Rococo parachain)
-pub fn dali_rococo() -> dali::ChainSpec {
-	dali::ChainSpec::from_json_bytes(include_bytes!("./res/dali-rococo.json").to_vec())
-		.expect("chain spec not found")
-}
-
 /// Picasso (Kusama parachain)
 pub fn picasso() -> picasso::ChainSpec {
 	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/picasso.json").to_vec())
@@ -134,51 +124,6 @@ pub fn picasso_dev(parachain_id: ParaId) -> picasso::ChainSpec {
 		None,
 		Some(properties),
 		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(parachain_id) },
-	)
-}
-
-#[cfg(feature = "dali")]
-// chain spec for local testnet environments
-pub fn dali_dev(id: &str) -> dali::ChainSpec {
-	let para_id = match id.split('-').nth(1).expect("Dali chainspec 'dali-dev' has a dash; qed") {
-		"dev" => None,
-		number => number.parse::<u32>().ok().map(ParaId::from),
-	};
-	let para_id = para_id.unwrap_or(*PARACHAIN_ID);
-	let mut properties = Properties::new();
-	properties.insert("tokenSymbol".into(), "DALI".into());
-	properties.insert("tokenDecimals".into(), CurrencyId::decimals().into());
-	properties.insert("ss58Format".into(), dali_runtime::SS58Prefix::get().into());
-
-	dali::ChainSpec::from_genesis(
-		"Local Dali Testnet",
-		"dali",
-		ChainType::Development,
-		move || {
-			dali::genesis_config(
-				account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![
-					(
-						account_id_from_seed::<sr25519::Public>("Alice"),
-						get_collator_keys_from_seed("Alice"),
-					),
-					(
-						account_id_from_seed::<sr25519::Public>("Bob"),
-						get_collator_keys_from_seed("Bob"),
-					),
-				],
-				dev_accounts(),
-				para_id,
-				common::fees::NATIVE_EXISTENTIAL_DEPOSIT,
-				dali_runtime::TreasuryAccount::get(),
-			)
-		},
-		vec![],
-		None,
-		None,
-		None,
-		Some(properties),
-		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(para_id) },
 	)
 }
 

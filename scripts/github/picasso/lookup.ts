@@ -1906,7 +1906,7 @@ export default {
       __Unused38: 'Null',
       __Unused39: 'Null',
       __Unused40: 'Null',
-      RelayerXcm: 'PalletXcmOrigin',
+      PolkadotXcm: 'PalletXcmOrigin',
       CumulusXcm: 'CumulusPalletXcmOrigin'
     }
   },

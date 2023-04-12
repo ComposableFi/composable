@@ -1055,7 +1055,7 @@ declare module "@polkadot/api-base/types/errors" {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    relayerXcm: {
+    PolkadotXcm: {
       /**
        * The location is invalid since it already has a subscription from us.
        **/

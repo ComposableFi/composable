@@ -15,6 +15,7 @@ pub mod membership;
 pub mod multisig;
 pub mod oracle;
 pub mod pablo;
+pub mod pallet_xcm;
 pub mod proxy;
 pub mod scheduler;
 pub mod session;

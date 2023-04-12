@@ -54,7 +54,6 @@ Once the "Build all packages" step is completed, we list all of the things that 
 acala
 bifrost
 check-composable-benchmarks-ci
-check-dali-benchmarks-ci
 check-picasso-benchmarks-ci
 cmc-api
 composable
