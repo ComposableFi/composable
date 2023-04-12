@@ -269,7 +269,7 @@ jobs:
       - name: nix-profile-install
         run: |
           uname -a
-          curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+          curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --no-confirm
           nix profile install nixpkgs#cachix 
           nix profile install nixpkgs#git
           nix profile install nixpkgs#git-lfs
