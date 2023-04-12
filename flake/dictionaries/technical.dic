@@ -364,6 +364,7 @@ structopt
 structs
 styleguide
 subattrs
+subenv
 submessage
 submessages
 submod
