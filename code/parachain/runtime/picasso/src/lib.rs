@@ -1259,7 +1259,7 @@ impl_runtime_apis! {
 		}
 
 		fn block_events(extrinsic_index: Option<u32>) -> Vec<Result<pallet_ibc::events::IbcEvent, pallet_ibc::errors::IbcError>> {
-			let mut raw_events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter();
+			let mut raw_events = frame_system::Pallet::<Self>::read_events_no_consensus();
 			if let Some(idx) = extrinsic_index {
 				raw_events.find_map(|e| {
 					let frame_system::EventRecord{ event, phase, ..} = *e;

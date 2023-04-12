@@ -290,10 +290,6 @@ impl From<CurrencyId> for xcm::latest::Junction {
 	}
 }
 
-#[cfg(test)]
-mod common_sense {
-	use super::*;
-}
 mod ops {
 	use super::CurrencyId;
 	use core::ops::{Add, Mul};

@@ -30,13 +30,22 @@ fn load_spec(id_or_path: &str) -> std::result::Result<Box<dyn sc_service::ChainS
 		chain_names::composable::PROD | chain_names::composable::DEFAULT =>
 			Box::new(chain_spec::composable()),
 		id_or_path => {
+			let error = "`--chain=".to_owned() + id_or_path + "` is not found or not supported. please see `chain_spec.rs` for supported chains. it must be either well known named chain or path to spec of well known chain";
 			use std::path::{Path, PathBuf};
-			match Path::new(id_or_path).file_name().expect("has file name").to_str().expect("which is unicode") {
-				file_name if file_name.ends_with(".json") && file_name.contains(chain_names::picasso::DEFAULT) =>
-					Box::new(chain_spec::picasso::ChainSpec::from_json_file(PathBuf::from(id_or_path))?),
-				file_name if file_name.ends_with(".json") && file_name.contains(chain_names::composable::DEFAULT) =>
-					Box::new(chain_spec::composable::ChainSpec::from_json_file(PathBuf::from(id_or_path))?),
-				_ => panic!("`chain={}` is not found or not supported. please see `chain_spec.rs` for supported chains", id_or_path),
+			match Path::new(id_or_path).file_name().expect(&error).to_str().expect(&error) {
+				file_name
+					if file_name.ends_with(".json") &&
+						file_name.contains(chain_names::picasso::DEFAULT) =>
+					Box::new(chain_spec::picasso::ChainSpec::from_json_file(PathBuf::from(
+						id_or_path,
+					))?),
+				file_name
+					if file_name.ends_with(".json") &&
+						file_name.contains(chain_names::composable::DEFAULT) =>
+					Box::new(chain_spec::composable::ChainSpec::from_json_file(PathBuf::from(
+						id_or_path,
+					))?),
+				_ => panic!("{}", error),
 			}
 		},
 	})
