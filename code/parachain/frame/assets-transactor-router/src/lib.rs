@@ -93,12 +93,13 @@ macro_rules! route {
 	};
 }
 
-// idiotic design, except it does db read on each balance/tokens operation (which is main operation
+// bad design, except it does db read on each balance/tokens operation (which is main operation
 // in crypto) it also triple encodes foreign local relation (enum + prefix + raw data)
 // reads foreign location when it no needed
 // and prevents use permission less/unknown tokens (transfer first, document later)
 // and has issues with well defined conventions for relay native nad native tokens
 // this check must be deleted (it was merged without review)
+// also non of parachain does that afaik
 macro_rules! route_asset_type {
 	(
 		$fn:ident($asset:ident $(, $arg:ident)* $(,)?)

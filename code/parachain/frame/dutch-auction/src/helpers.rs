@@ -101,16 +101,13 @@ impl<T: Config> Pallet<T> {
 					account.try_into().expect("cumulus runtime has no account with 33 bytes");
 				// as of now we do only final sell
 				// setting up XCM message
+				let data: [u8; 32] =
+					order.pair.encode().try_into().expect("two 128 values representing asset id");
 				let asset_id = MultiLocation {
 					parents: 1,
 					interior: X2(
 						AccountId32 { network: None, id: account },
-						GeneralKey(
-							frame_support::storage::weak_bounded_vec::WeakBoundedVec::force_from(
-								order.pair.encode(),
-								None,
-							),
-						),
+						GeneralKey { length: data.len() as u8, data },
 					),
 				};
 				let asset_id = AssetId::Concrete(asset_id);
@@ -132,6 +129,15 @@ impl<T: Config> Pallet<T> {
 						method.method_id,
 						callback,
 					);
+
+					// this protocol is obsolete and should be redone
+					// its tests are only in now on running integration tests
+					// and parity provided Exchange instruction for swap
+					let data: [u8; 32] = order
+						.pair
+						.encode()
+						.try_into()
+						.expect("two 128 values representing asset id");
 					let callback = vec![
 						WithdrawAsset(assets.clone().into()),
 						BuyExecution { fees: assets.clone(), weight_limit: Unlimited },
@@ -141,26 +147,22 @@ impl<T: Config> Pallet<T> {
 								Parent,
 								X3(
 									Parachain(parachain_id.into()),
-									AccountId32 { network: Any, id: account },
-						      GeneralKey(frame_support::storage::weak_bounded_vec::WeakBoundedVec::force_from(order.pair.encode(), None)),
+									AccountId32 { network: None, id: account },
+									GeneralKey { length: data.len() as u8, data },
 								),
 							)
 								.into(),
 							xcm: Xcm(vec![Transact {
-								origin_type: OriginKind::Native,
-								require_weight_at_most: 0, /* TODO: make sure that
-								                            * callbacks are free (if
-								                            * correct) or specify
-								                            * price */
+								origin_kind: OriginKind::Native,
+								require_weight_at_most: Weight::from_ref_time(0),
 								call: callback.encode().into(),
 							}]),
 						},
 					];
 					let msg = Xcm(callback);
-					let result = T::XcmSender::send_xcm(
-						(Parent, Junction::Parachain(parachain_id.into())),
-						msg,
-					);
+					let dest: MultiLocation =
+						(Parent, Junction::Parachain(parachain_id.into())).into();
+					let result = T::XcmSender::validate(&mut Some(dest), &mut Some(msg));
 					match result {
 						Ok(_) => {
 							// TODO: decide if need to send event about sent XCM

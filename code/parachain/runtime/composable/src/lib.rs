@@ -686,6 +686,7 @@ pub type Executive = executive::Executive<
 	crate::migrations::Migrations,
 >;
 
+#[allow(unused_imports)]
 #[cfg(feature = "runtime-benchmarks")]
 #[macro_use]
 extern crate frame_benchmarking;

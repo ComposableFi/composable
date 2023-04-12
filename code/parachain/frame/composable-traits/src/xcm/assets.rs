@@ -8,15 +8,6 @@ use sp_std::vec::Vec;
 
 use crate::{assets::Asset, currency::Exponent};
 
-// impl XcmAssetLocation {
-// 	/// relay native asset
-// 	pub const RELAY_NATIVE: XcmAssetLocation = XcmAssetLocation(MultiLocation::parent());
-
-// 	/// local native, is equivalent to (1, LOCAL_PARACHAIN_ID), and to (1, LOCAL_PARACHAIN_ID, 1)
-// 	/// and to (0, 1)
-// 	pub const LOCAL_NATIVE: XcmAssetLocation = XcmAssetLocation(MultiLocation::here());
-// }
-
 pub trait RemoteAssetRegistryInspect {
 	/// Local asset id.
 	/// Each implemented of this trait must hedge common id space for well known local assets
