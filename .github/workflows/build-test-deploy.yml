@@ -254,7 +254,7 @@ jobs:
     name: build-product #flaky
     strategy:
       matrix:
-        arch: [ARM64]
+        arch: [aarch64-darwin]
     timeout-minutes: 120
     needs: 
       - privilege-check
