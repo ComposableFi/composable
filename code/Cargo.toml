@@ -3,6 +3,9 @@ authors = ["Composable Developers"]
 edition = "2021"
 homepage = "https://composable.finance"
 name = "composable"
+version = { workspace = true }
+
+[workspace.package]
 version = "5.10015.1"
 
 [[bin]]

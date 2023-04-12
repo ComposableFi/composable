@@ -134,7 +134,7 @@ jobs:
 
       - name: Download artifacts
         run: |
-          nix run .#generate-release-artifacts -L
+          nix run .#generate-release-artifacts --print-build-logs
 
       - name: Setup Composable version
         run: |
