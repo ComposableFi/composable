@@ -32,16 +32,21 @@ export const subscribeMultiAsset = async (allProviders: AllProviders) => {
 
       if (from === "kusama" && to === "picasso") {
         set(
-          api.createType("XcmVersionedMultiAssets", {
-            V0: [
-              api.createType("XcmV0MultiAsset", {
-                ConcreteFungible: {
-                  id: api.createType("XcmV0MultiLocation", "Null"),
-                  amount: amountToTransfer,
-                },
-              }),
-            ],
-          }) as XcmVersionedMultiAsset
+            <XcmVersionedMultiAssets>api.createType("XcmVersionedMultiAssets", {
+              V2: [
+                {
+                  id: {
+                    Concrete: {
+                      parents: 0,
+                      interior: "Here",
+                    },
+                  },
+                  fun: {
+                    Fungible: amountToTransfer.toString(),
+                  },
+                }
+              ],
+            })
         );
       }
 
@@ -49,7 +54,7 @@ export const subscribeMultiAsset = async (allProviders: AllProviders) => {
         if (selectedToken === "usdt") {
           set(
             <XcmVersionedMultiAssets>api.createType("XcmVersionedMultiAssets", {
-              V1: [
+              V2: [
                 {
                   id: {
                     Concrete: {
@@ -80,7 +85,7 @@ export const subscribeMultiAsset = async (allProviders: AllProviders) => {
         if (selectedToken === "ksm") {
           set(
             <XcmVersionedMultiAssets>api.createType("XcmVersionedMultiAssets", {
-              V1: [
+              V2: [
                 {
                   id: {
                     Concrete: {
