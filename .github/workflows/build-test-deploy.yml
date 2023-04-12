@@ -208,13 +208,14 @@ jobs:
     name: build-all-deps-packages
     strategy:
       matrix:
-        arch: [x64-monster]
+        arch: [x64-cute]
     needs: 
       - privilege-check
       - lfs-check
     runs-on:
       - self-hosted
       - ${{ matrix.arch }}
+      - Linux
     concurrency:
       group: ${{ github.workflow }}-build-all-deps-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -293,13 +294,14 @@ jobs:
     name: build-all-docs-packages
     strategy:
       matrix:
-        arch: [x64-monster]
+        arch: [x64-cute]
     needs: 
       - privilege-check
       - lfs-check
     runs-on:
       - self-hosted
       - ${{ matrix.arch }}
+      - Linux
     concurrency:
       group: ${{ github.workflow }}-build-all-docs-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true

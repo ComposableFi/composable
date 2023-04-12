@@ -29,7 +29,7 @@ match_types! {
 }
 
 parameter_types! {
-	pub const BaseXcmWeight: u64 = 100_000_000;
+	pub const BaseXcmWeight: Weight = Weight::from_ref_time(100_000_000);
 	pub const XcmMaxAssetsForTransfer: usize = 2;
 	pub RelayNativeLocation: MultiLocation = MultiLocation::parent();
 	pub RelayOrigin: cumulus_pallet_xcm::Origin = cumulus_pallet_xcm::Origin::Relay;
