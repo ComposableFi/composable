@@ -272,10 +272,10 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
         ) {
           const feeAssetItem = api.createType("u32", 0); // First item in the list.
           const beneficiary = api.createType("XcmVersionedMultiLocation", {
-            V0: api.createType("XcmV0MultiLocation", {
-              X1: api.createType("XcmV0Junction", {
+            V2: api.createType("XcmV2MultiLocation", {
+              X1: api.createType("XcmV2Junction", {
                 AccountId32: {
-                  network: api.createType("XcmV0JunctionNetworkId", "Any"),
+                  network: api.createType("XcmV2NetworkId", "Any"),
                   id: api.createType("AccountId32", recipient),
                 },
               }),
@@ -306,7 +306,7 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
 
         if (get().transfers.networks.from === "statemine") {
           const beneficiary = api.createType("XcmVersionedMultiLocation", {
-            V1: {
+            V2: {
               parents: 0,
               interior: {
                 X1: {
