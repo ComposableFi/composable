@@ -77,22 +77,18 @@
       };
     in {
       packages = rec {
-        centauri-codegen = crane.stable.buildPackage {
+        centauri-codegen = crane.stable.buildPackage (subnix.subenv // {
           name = "centauri-codegen";
-          cargoArtifacts = crane.stable.buildDepsOnly {
+          cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
             src = centauri-src-current;
-            doCheck = false;
             cargoExtraArgs = "--package codegen";
             cargoTestCommand = "";
-            nativeBuildInputs = systemCommonRust.darwin-deps;
-          };
+          });
           src = centauri-src-current;
-          doCheck = false;
           cargoExtraArgs = "--package codegen";
           cargoTestCommand = "";
           meta = { mainProgram = "codegen"; };
-          nativeBuildInputs = systemCommonRust.darwin-deps;
-        };
+        });
         centauri-hyperspace = crane.stable.buildPackage (subnix.subenv // {
           name = "centauri-hyperspace";
           cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
@@ -100,14 +96,12 @@
             doCheck = false;
             cargoExtraArgs = "--package hyperspace";
             cargoTestCommand = "";
-            nativeBuildInputs = systemCommonRust.darwin-deps;
           });
           src = centauri-src-current;
           doCheck = false;
           cargoExtraArgs = "--package hyperspace";
           cargoTestCommand = "";
           meta = { mainProgram = "hyperspace"; };
-          nativeBuildInputs = systemCommonRust.darwin-deps;
         });
 
         # no worries, long names not for public use, just to avoid mistakes

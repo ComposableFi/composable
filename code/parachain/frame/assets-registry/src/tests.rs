@@ -4,7 +4,7 @@ use composable_traits::{
 	assets::{Asset, AssetInfo, AssetInfoUpdate, GenerateAssetId},
 	rational,
 	storage::UpdateValue,
-	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
+	xcm::assets::{RemoteAssetRegistryInspect},
 };
 use frame_support::{assert_noop, assert_ok};
 use frame_system::RawOrigin;
@@ -224,8 +224,7 @@ fn set_min_fee() {
 #[test]
 fn get_foreign_assets_list_should_work() {
 	new_test_ext().execute_with(|| {
-		let location =
-			XcmAssetLocation::new(MultiLocation { parents: 1, interior: Junctions::Here });
+		let location = Default::default();
 		let protocol_id = *b"AssTests";
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
@@ -258,10 +257,7 @@ fn get_foreign_assets_list_should_work() {
 				id,
 				decimals: 4,
 				ratio: Some(rational!(42 / 123)),
-				foreign_id: Some(XcmAssetLocation::new(MultiLocation {
-					parents: 1,
-					interior: Junctions::Here
-				})),
+				foreign_id: Some(location),
 				existential_deposit: 0,
 			}]
 		);

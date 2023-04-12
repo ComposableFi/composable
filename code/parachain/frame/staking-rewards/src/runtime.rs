@@ -2,7 +2,6 @@ use composable_tests_helpers::test::currency::PICA;
 use composable_traits::{
 	account_proxy::ProxyType,
 	governance::{GovernanceRegistry, SignedRawOrigin},
-	xcm::assets::XcmAssetLocation,
 };
 use frame_support::pallet_prelude::*;
 use sp_core::{

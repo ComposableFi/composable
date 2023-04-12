@@ -1,6 +1,5 @@
 ///! tests that various assets integration scenarios work well
 use crate::{helpers::*, kusama_test_net::This, prelude::*};
-use composable_traits::xcm::assets::XcmAssetLocation;
 
 use frame_system::RawOrigin;
 use primitives::currency::*;

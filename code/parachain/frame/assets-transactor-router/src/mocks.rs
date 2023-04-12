@@ -1,6 +1,5 @@
 use crate::*;
 
-use composable_traits::xcm::assets::XcmAssetLocation;
 use frame_support::{parameter_types, traits::Everything};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -55,12 +54,11 @@ parameter_types! {
 
 impl Config for Test {
 	type AssetId = AssetId;
-	type AssetLocation = XcmAssetLocation;
+	type AssetLocation = u64;
 	type Balance = Balance;
 	type NativeAssetId = NativeAssetId;
 	type NativeTransactor = Balances;
 	type LocalTransactor = Tokens;
-	// TODO(connor): Use second instance of `Tokens`
 	type ForeignTransactor = Tokens;
 	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();

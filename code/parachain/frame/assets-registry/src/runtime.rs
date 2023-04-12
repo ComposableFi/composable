@@ -1,5 +1,4 @@
 use crate::{self as pallet_assets_registry, weights::SubstrateWeight};
-use composable_traits::xcm::assets::XcmAssetLocation;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{EitherOfDiverse, Everything},
@@ -71,12 +70,13 @@ parameter_types! {
 }
 
 type AssetId = u128;
+type ForeignAssetId = u64;
 
 impl pallet_assets_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = AssetId;
 	type Balance = Balance;
-	type ForeignAssetId = XcmAssetLocation;
+	type ForeignAssetId = ForeignAssetId;
 	type UpdateAssetRegistryOrigin = EitherOfDiverse<
 		EnsureSignedBy<RootAccount, AccountId>, // for tests
 		EnsureRoot<AccountId>,                  // for benchmarks

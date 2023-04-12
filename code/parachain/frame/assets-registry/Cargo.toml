@@ -41,6 +41,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 frame-benchmarking = { default-features = false, workspace = true }
 pallet-balances = { workspace = true }
 pallet-currency-factory = { path = "../currency-factory", default-features = false }
+primitives = { path = "../../runtime/primitives", default-features = false }
 
 [features]
 default = ["std"]
@@ -59,6 +60,7 @@ std = [
   "pallet-currency-factory/std",
   "cumulus-primitives-core/std",
   "frame-benchmarking/std",
+  "primitives/std",
 ]
 
 runtime-benchmarks = [

@@ -10,7 +10,7 @@ pub const FEE_NATIVE_KUSAMA: Balance = 106_666_660;
 
 use crate::{assert_lt_by, helpers::simtest, kusama_test_net::*, prelude::*};
 use common::Balance;
-use composable_traits::{currency::Rational64, xcm::assets::XcmAssetLocation};
+use composable_traits::{currency::Rational64};
 use cumulus_primitives_core::ParaId;
 use frame_support::{
 	assert_ok, log,

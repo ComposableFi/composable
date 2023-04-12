@@ -4,7 +4,6 @@ use crate as pablo;
 use composable_tests_helpers::test::currency;
 use composable_traits::{
 	governance::{GovernanceRegistry, SignedRawOrigin},
-	xcm::assets::XcmAssetLocation,
 };
 use frame_support::{
 	ord_parameter_types, parameter_types,
