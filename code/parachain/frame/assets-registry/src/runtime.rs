@@ -4,6 +4,7 @@ use frame_support::{
 	traits::{EitherOfDiverse, Everything},
 };
 use frame_system::{self as system, EnsureRoot, EnsureSignedBy};
+use primitives::currency::ForeignAssetId;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -70,7 +71,6 @@ parameter_types! {
 }
 
 type AssetId = u128;
-type ForeignAssetId = u64;
 
 impl pallet_assets_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

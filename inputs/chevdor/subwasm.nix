@@ -1,6 +1,6 @@
 { self, ... }: {
-  perSystem =
-    { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }: {
+  perSystem = { config, self', inputs', pkgs, system, crane, systemCommonRust
+    , subnix, ... }: {
       packages = rec {
         subwasm = let
           version = "v0.19.0";
@@ -10,21 +10,18 @@
             rev = "refs/tags/${version}";
             hash = "sha256-DCPpGn0CrngmDP1QuK+Y9hffoD04yS+FenjQ5d/f49U=";
           };
-        in crane.stable.buildPackage {
+        in crane.stable.buildPackage (subnix.subenv // {
           name = "subwasm";
-          cargoArtifacts = crane.stable.buildDepsOnly {
+          cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
             inherit src;
             doCheck = false;
             cargoTestCommand = "";
             nativeBuildInputs = systemCommonRust.darwin-deps;
-          };
-          nativeBuildInputs = with pkgs;
-            [ clang ] ++ systemCommonRust.darwin-deps;
+          });
           inherit src version;
-          doCheck = false;
           cargoTestCommand = "";
           meta = { mainProgram = "subwasm"; };
-        };
+        });
 
         subwasm-release-body = let
           subwasm-call = runtime:

@@ -8,9 +8,7 @@ use crate::{
 	types::*,
 	*,
 };
-use composable_traits::{
-	currency::{CurrencyFactory, RangeId},
-};
+use composable_traits::currency::{CurrencyFactory, RangeId};
 use core::marker::PhantomData;
 
 use cosmwasm_vm::{

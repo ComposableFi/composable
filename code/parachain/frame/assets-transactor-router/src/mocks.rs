@@ -3,6 +3,7 @@ use crate::*;
 use frame_support::{parameter_types, traits::Everything};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
+use primitives::currency::ForeignAssetId;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -54,7 +55,7 @@ parameter_types! {
 
 impl Config for Test {
 	type AssetId = AssetId;
-	type AssetLocation = u64;
+	type AssetLocation = ForeignAssetId;
 	type Balance = Balance;
 	type NativeAssetId = NativeAssetId;
 	type NativeTransactor = Balances;
@@ -69,7 +70,7 @@ impl Config for Test {
 impl assets_registry::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = AssetId;
-	type ForeignAssetId = XcmAssetLocation;
+	type ForeignAssetId = ForeignAssetId;
 	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
 	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();

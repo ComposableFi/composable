@@ -4,11 +4,12 @@ use composable_traits::{
 	assets::{Asset, AssetInfo, AssetInfoUpdate, GenerateAssetId},
 	rational,
 	storage::UpdateValue,
-	xcm::assets::{RemoteAssetRegistryInspect},
+	xcm::assets::RemoteAssetRegistryInspect,
 };
 use frame_support::{assert_noop, assert_ok};
 use frame_system::RawOrigin;
-use xcm::{latest::Junctions, v2::MultiLocation};
+use primitives::currency::{ForeignAssetId, VersionedMultiLocation};
+use xcm::latest::MultiLocation;
 
 #[test]
 fn negative_get_metadata() {
@@ -35,7 +36,7 @@ fn set_metadata() {
 			RawOrigin::Root.into(),
 			protocol_id,
 			nonce,
-			Some(XcmAssetLocation::RELAY_NATIVE),
+			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::parent()))),
 			asset_info,
 		));
 		let asset_id = System::events()
@@ -51,7 +52,7 @@ fn set_metadata() {
 			.expect("Asset registration event emmited");
 		assert_eq!(
 			<AssetsRegistry as RemoteAssetRegistryInspect>::asset_to_remote(asset_id),
-			Some(XcmAssetLocation::RELAY_NATIVE)
+			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::parent())))
 		);
 
 		assert_eq!(
@@ -60,9 +61,9 @@ fn set_metadata() {
 		);
 
 		assert_eq!(
-			<AssetsRegistry as RemoteAssetRegistryInspect>::location_to_asset(
-				XcmAssetLocation::RELAY_NATIVE
-			),
+			<AssetsRegistry as RemoteAssetRegistryInspect>::location_to_asset(ForeignAssetId::Xcm(
+				VersionedMultiLocation::V3(MultiLocation::parent())
+			)),
 			Some(asset_id),
 		);
 	})
@@ -72,7 +73,8 @@ fn set_metadata() {
 fn register_asset() {
 	new_test_ext().execute_with(|| {
 		let location = <Runtime as crate::Config>::ForeignAssetId::decode(
-			&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..],
+			&mut &ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::parent())).encode()
+				[..],
 		)
 		.expect("Location bytes translate to foreign ID bytes");
 		let protocol_id = *b"AssTests";
@@ -115,7 +117,8 @@ fn register_asset() {
 fn update_asset() {
 	new_test_ext().execute_with(|| {
 		let location = <Runtime as crate::Config>::ForeignAssetId::decode(
-			&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..],
+			&mut &ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::parent())).encode()
+				[..],
 		)
 		.expect("Location bytes translate to foreign ID bytes");
 		let protocol_id = *b"AssTests";
@@ -199,7 +202,8 @@ fn update_asset_without_register() {
 fn set_min_fee() {
 	new_test_ext().execute_with(|| {
 		let target_parachain_id = 100_u32.into();
-		let foreign_asset_id: XcmAssetLocation = Default::default();
+		let foreign_asset_id =
+			ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here()));
 		let balance = 100_500_u32.into();
 
 		assert_eq!(
@@ -224,7 +228,7 @@ fn set_min_fee() {
 #[test]
 fn get_foreign_assets_list_should_work() {
 	new_test_ext().execute_with(|| {
-		let location = Default::default();
+		let location = ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here()));
 		let protocol_id = *b"AssTests";
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
@@ -244,7 +248,7 @@ fn get_foreign_assets_list_should_work() {
 			RuntimeOrigin::root(),
 			protocol_id,
 			nonce,
-			Some(location),
+			Some(location.clone()),
 			asset_info,
 		));
 
