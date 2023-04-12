@@ -286,7 +286,7 @@ jobs:
         run: |  
           # --debug --verbose
           cachix watch-store --compression-level 16 --compression-method zstd --jobs 8 composable-community &
-          nix build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config
+          nix build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2
           sleep 30
           echo "done"
 

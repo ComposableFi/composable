@@ -2,13 +2,6 @@
   perSystem = { config, self', inputs', pkgs, system, crane, subnix
     , systemCommonRust, ... }:
     let
-      protocattrs = {
-        BuildInputs = [ pkgs.protobuf ];
-        PROTOC = "${pkgs.protobuf}/bin/protoc";
-        PROTOC_INCLUDE = "${pkgs.protobuf}/include";
-        PROTOC_NO_VENDOR = "1";
-      };
-
       cargo-lock = builtins.fromTOML (builtins.readFile ../../code/Cargo.lock);
       centauri-runtime-dep = builtins.head
         (builtins.filter (x: x.name == "pallet-ibc") (cargo-lock.package));
@@ -187,10 +180,10 @@
           };
 
         hyperspace-composable-rococo-picasso-rococo = crane.stable.buildPackage
-          (protocattrs // rec {
+          (subnix.subenv // rec {
             name = "hyperspace-composable-rococo-picasso-rococo";
             pname = name;
-            cargoArtifacts = crane.stable.buildDepsOnly (protocattrs // {
+            cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
               src = composable-rococo-picasso-rococo-centauri-patched-src;
               doCheck = false;
               cargoExtraArgs = "--package hyperspace";

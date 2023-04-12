@@ -14,7 +14,7 @@
 
       subenv = {
         doCheck = false;
-        buildInputs = with pkgs; [ openssl zstd ];
+        buildInputs = with pkgs; [ openssl zstd protobuf ];
         nativeBuildInputs = with pkgs;
           [ clang pkg-config self'.packages.rust-nightly ]
           ++ lib.optional stdenv.isDarwin
