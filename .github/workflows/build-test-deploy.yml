@@ -251,7 +251,7 @@ jobs:
           command: nix -- build .#all-deps --keep-going       
 
   build-product:
-    name: build-product
+    name: build-product \#flaky
     strategy:
       matrix:
         arch: [ARM64]
@@ -268,7 +268,6 @@ jobs:
     steps:            
       - name: nix-profile-install
         run: |  
-          nix-channel --update
           nix profile install nixpkgs#cachix 
           nix profile install nixpkgs#git
           nix profile install nixpkgs#git-lfs
