@@ -16,4 +16,4 @@ name = "picasso_runtime"
 [features]
 runtime-benchmarks = ["picasso-runtime/runtime-benchmarks"]
 fastnet = ["picasso-runtime/fastnet"]
-tesnet = ["picasso-runtime/testnet"]
+testnet = ["picasso-runtime/testnet"]
