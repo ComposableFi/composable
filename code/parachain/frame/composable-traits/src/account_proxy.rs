@@ -20,7 +20,7 @@ pub enum ProxyType {
 	Any,
 	Governance,
 	CancelProxy,
-	Bridge,	
+	Bridge,
 	DelegateProxy,
 	Transfer,
 }

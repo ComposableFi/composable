@@ -9,7 +9,7 @@ use pallet_ibc::{
 };
 use sp_core::ConstU64;
 use sp_runtime::{DispatchError, Either};
-use system::{EnsureSignedBy, EnsureSigned};
+use system::{EnsureSigned, EnsureSignedBy};
 
 use super::*;
 
@@ -135,7 +135,7 @@ impl pallet_ibc::Config for Runtime {
 	type RelayChain = RelayChainId;
 	type WeightInfo = weights::ibc::WeightInfo<Self>;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
-	type IbcAccountId = Self::AccountId;	
+	type IbcAccountId = Self::AccountId;
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;
 	type Ics20RateLimiter = ConstantAny;
@@ -157,10 +157,9 @@ impl pallet_ibc::Config for Runtime {
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	#[cfg(not(feature = "testnet"))]
 	type TransferOrigin = EitherOf<
-	EnsureSignedBy<ReleaseMembership, Self::IbcAccountId>,
-	EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>,
+		EnsureSignedBy<ReleaseMembership, Self::IbcAccountId>,
+		EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>,
 	>;
 	#[cfg(not(feature = "testnet"))]
 	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
-
 }

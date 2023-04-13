@@ -97,7 +97,7 @@ impl democracy::Config for Runtime {
 	type FastTrackVotingPeriod = ConstU32<{ 3 * HOURS }>;
 
 	#[cfg(feature = "fastnet")]
-	type FastTrackVotingPeriod = ConstU32<{ 5 * MINUTES}>;
+	type FastTrackVotingPeriod = ConstU32<{ 5 * MINUTES }>;
 
 	type CancellationOrigin = EnsureRootOrAllNativeTechnical;
 
@@ -140,10 +140,10 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
 	type ProposalBondMaximum = ProposalBondMaximum;
-	#[cft(feature = "fastnet" )]
-	type SpendPeriod = ConstBlockNumber<{1 * HOURS}>;
-	#[cft(not(feature = "fastnet" ))]
-	type SpendPeriod = ConstBlockNumber<{3 * DAYS}>;
+	#[cft(feature = "fastnet")]
+	type SpendPeriod = ConstBlockNumber<{ 1 * HOURS }>;
+	#[cft(not(feature = "fastnet"))]
+	type SpendPeriod = ConstBlockNumber<{ 3 * DAYS }>;
 	type Burn = Burn;
 	type MaxApprovals = ConstU32<30>;
 	type BurnDestination = ();

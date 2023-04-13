@@ -21,8 +21,8 @@ pub mod native {
 	>;
 
 	pub type EnsureRootOrOneThirdNativeCouncil = EitherOfDiverse<
-	EnsureRoot<AccountId>,
-	collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 1, 3>,
+		EnsureRoot<AccountId>,
+		collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 1, 3>,
 	>;
 
 	pub type EnsureRootOrMoreThenHalfNativeCouncil = EitherOfDiverse<
