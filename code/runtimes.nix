@@ -44,7 +44,7 @@
             (" --features=${features}");
           # From parity/wasm-builder
           RUSTFLAGS =
-            "-Clink-arg=--export=__heap_base -Clink-arg=--import-memory";
+            "-C target-cpu=mvp -C target-feature=-sign-ext -C link-arg=--export-table -Clink-arg=--export=__heap_base -C link-arg=--import-memory";
         });
 
       # Derive an optimized wasm runtime from a prebuilt one, garbage collection + compression
