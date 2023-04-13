@@ -1,7 +1,7 @@
 //! Runtime setup for the governance and democracy only.
 
 use super::*;
-use common::governance::native::*;
+use common::{governance::native::*, MINUTES};
 use frame_support::traits::LockIdentifier;
 
 pub type NativeCouncilMembership = membership::Instance1;
@@ -93,11 +93,11 @@ impl democracy::Config for Runtime {
 	type InstantOrigin = EnsureRootOrHalfNativeTechnical;
 	type InstantAllowed = InstantAllowed;
 
-	#[cfg(not(feature = "rococo"))]
+	#[cfg(not(feature = "fastnet"))]
 	type FastTrackVotingPeriod = ConstU32<{ 3 * HOURS }>;
 
-	#[cfg(feature = "rococo")]
-	type FastTrackVotingPeriod = ConstU32<HOURS>;
+	#[cfg(feature = "fastnet")]
+	type FastTrackVotingPeriod = ConstU32<{ 5 * MINUTES}>;
 
 	type CancellationOrigin = EnsureRootOrAllNativeTechnical;
 
@@ -119,6 +119,8 @@ impl democracy::Config for Runtime {
 	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
 }
 
+type ConstBlockNumber = ConstU32;
+
 parameter_types! {
 	// cspell:disable-next
 	pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
@@ -126,29 +128,38 @@ parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub ProposalBondMinimum: Balance = 5000 * CurrencyId::unit::<Balance>();
 	pub ProposalBondMaximum: Balance = 10000 * CurrencyId::unit::<Balance>();
-	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
-	pub const MaxApprovals: u32 = 30;
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 impl treasury::Config<NativeTreasury> for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
-	type ApproveOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type RejectOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type RuntimeEvent = RuntimeEvent;
 	type OnSlash = Treasury;
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
 	type ProposalBondMaximum = ProposalBondMaximum;
-	type SpendPeriod = SpendPeriod;
+	#[cft(feature = "fastnet" )]
+	type SpendPeriod = ConstBlockNumber<{1 * HOURS}>;
+	#[cft(not(feature = "fastnet" ))]
+	type SpendPeriod = ConstBlockNumber<{3 * DAYS}>;
 	type Burn = Burn;
-	type MaxApprovals = MaxApprovals;
+	type MaxApprovals = ConstU32<30>;
 	type BurnDestination = ();
 	type WeightInfo = treasury::weights::SubstrateWeight<Runtime>;
 	type SpendFunds = ();
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
+
+	#[cfg(feature = "testnet")]
+	type ApproveOrigin = EnsureRootOrOneThirdNativeCouncil;
+	#[cfg(feature = "testnet")]
+	type RejectOrigin = EnsureRootOrOneThirdNativeCouncil;
+
+	#[cfg(not(feature = "testnet"))]
+	type ApproveOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	#[cfg(not(feature = "testnet"))]
+	type RejectOrigin = EnsureRootOrTwoThirdNativeCouncil;
 }
 
 impl governance_registry::Config for Runtime {
