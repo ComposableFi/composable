@@ -265,68 +265,129 @@ mod add_asset_and_info {
 			asset_id_1 in asset_id(),
 			asset_id_2 in asset_id(),
 			asset_id_3 in asset_id(),
+			asset_id_4 in asset_id(),
+			asset_id_5 in asset_id(),
+			asset_id_6 in asset_id(),
+			asset_id_7 in asset_id(),
+			asset_id_8 in asset_id(),
+			asset_id_9 in asset_id(),
+			asset_id_10 in asset_id(),
+			asset_id_11 in asset_id(),
+			asset_id_12 in asset_id(),
+			asset_id_13 in asset_id(),
+			asset_id_14 in asset_id(),
+			asset_id_15 in asset_id(),
+			asset_id_16 in asset_id(),
 			mut asset_info_1 in asset_info(),
 			mut asset_info_2 in asset_info(),
 			mut asset_info_3 in asset_info(),
+			mut asset_info_4 in asset_info(),
+			mut asset_info_5 in asset_info(),
+			mut asset_info_6 in asset_info(),
+			mut asset_info_7 in asset_info(),
+			mut asset_info_8 in asset_info(),
+			mut asset_info_9 in asset_info(),
+			mut asset_info_10 in asset_info(),
+			mut asset_info_11 in asset_info(),
+			mut asset_info_12 in asset_info(),
+			mut asset_info_13 in asset_info(),
+			mut asset_info_14 in asset_info(),
+			mut asset_info_15 in asset_info(),
+			mut asset_info_16 in asset_info(),
 		) {
 			new_test_ext().execute_with(|| {
 				let root_account = get_root_account();
 
-			prop_assume!(asset_id_1 != asset_id_2);
-			prop_assume!(asset_id_3 != asset_id_2);
-			prop_assume!(asset_id_1 != asset_id_3);
-				// First we create 2 assets, which is allowed because within mock.rs, we see:
-				// pub const MaxAssetsCount: u32 = 2;
-				// it would be nicer to do this in a loop up to MaxAssetsCount,
-				// but AFAIK it is not possible to generate props within the proptest body.
-
 				// If the following check fails, that means that the mock.rs was changed,
 				// and therefore this test should also be changed.
-				prop_assert_eq!(MaxAssetsCount::get(), 2_u32);
+				prop_assert_eq!(MaxAssetsCount::get(), 15_u32);
 
-
-				asset_info_1.reward_weight = asset_info_1.reward_weight.min(u128::MAX / 3);
-				asset_info_2.reward_weight = asset_info_2.reward_weight.min(u128::MAX / 3);
-				asset_info_3.reward_weight = asset_info_3.reward_weight.min(u128::MAX / 3);
-				prop_assert_ok!(Oracle::add_asset_and_info(
-					RuntimeOrigin::signed(root_account),
+				let asset_ids = [
 					asset_id_1,
-					Validated::new(asset_info_1.threshold).unwrap(),
-					Validated::new(asset_info_1.min_answers).unwrap(),
-					Validated::new(asset_info_1.max_answers).unwrap(),
-					Validated::new(asset_info_1.block_interval).unwrap(),
-					asset_info_1.reward_weight,
-					asset_info_1.slash,
-					asset_info_1.emit_price_changes,
-				));
-
-				prop_assert_ok!(Oracle::add_asset_and_info(
-					RuntimeOrigin::signed(root_account),
 					asset_id_2,
-					Validated::new(asset_info_2.threshold).unwrap(),
-					Validated::new(asset_info_2.min_answers).unwrap(),
-					Validated::new(asset_info_2.max_answers).unwrap(),
-					Validated::new(asset_info_2.block_interval).unwrap(),
-					asset_info_2.reward_weight,
-					asset_info_2.slash,
-					asset_info_2.emit_price_changes,
-				));
+					asset_id_3,
+					asset_id_4,
+					asset_id_5,
+					asset_id_6,
+					asset_id_7,
+					asset_id_8,
+					asset_id_9,
+					asset_id_10,
+					asset_id_11,
+					asset_id_12,
+					asset_id_13,
+					asset_id_14,
+					asset_id_15,
+					asset_id_16,
+				];
 
-				prop_assert_eq!(Oracle::asset_info(asset_id_1), Some(asset_info_1));
-				prop_assert_eq!(Oracle::asset_info(asset_id_2), Some(asset_info_2));
-				prop_assert_eq!(Oracle::assets_count(), 2);
+				// Items of asset ids must be unique.
+				let mut tmp_asset_ids = asset_ids.clone();
+				tmp_asset_ids.sort();
+				let mut tmp_asset_ids = tmp_asset_ids.iter().collect::<Vec<_>>();
+				tmp_asset_ids.dedup();
+				prop_assume!(asset_ids.len() == tmp_asset_ids.len());
 
+				let asset_infos = [
+					asset_info_1,
+					asset_info_2,
+					asset_info_3,
+					asset_info_4,
+					asset_info_5,
+					asset_info_6,
+					asset_info_7,
+					asset_info_8,
+					asset_info_9,
+					asset_info_10,
+					asset_info_11,
+					asset_info_12,
+					asset_info_13,
+					asset_info_14,
+					asset_info_15,
+					asset_info_16,
+				];
 
+				let weight = u128::MAX / u128::try_from(asset_infos.len()).unwrap();
+
+				let asset_infos = asset_infos.map(|mut asset_info| {
+					asset_info.reward_weight = asset_info.reward_weight.min(weight);
+					asset_info
+				});
+
+				// First we create 15 assets, which is allowed because within mock.rs, we see:
+				// pub const MaxAssetsCount: u32 = 15;
+				// it would be nicer to do this in a loop up to MaxAssetsCount,
+				// but AFAIK it is not possible to generate props within the proptest body.
+				for (asset_id, asset_info) in asset_ids.iter().take(asset_ids.len() - 1).zip(asset_infos.iter()) {
+					prop_assert_ok!(Oracle::add_asset_and_info(
+						RuntimeOrigin::signed(root_account),
+						*asset_id,
+						Validated::new(asset_info.threshold).unwrap(),
+						Validated::new(asset_info.min_answers).unwrap(),
+						Validated::new(asset_info.max_answers).unwrap(),
+						Validated::new(asset_info.block_interval).unwrap(),
+						asset_info.reward_weight,
+						asset_info.slash,
+						asset_info.emit_price_changes,
+					));
+
+					prop_assert_eq!(Oracle::asset_info(asset_id), Some(asset_info.clone()));
+				}
+
+				prop_assert_eq!(Oracle::assets_count(), 15);
+
+				let last_asset_id = &asset_ids[asset_ids.len() - 1];
+				let last_asset_info = &asset_infos[asset_infos.len() - 1];
 				prop_assert_noop!(Oracle::add_asset_and_info(
 					RuntimeOrigin::signed(root_account),
-					asset_id_3,
-					Validated::new(asset_info_3.threshold).unwrap(),
-					Validated::new(asset_info_3.min_answers).unwrap(),
-					Validated::new(asset_info_3.max_answers).unwrap(),
-					Validated::new(asset_info_3.block_interval).unwrap(),
-					asset_info_3.reward_weight,
-					asset_info_3.slash,
-					asset_info_3.emit_price_changes,
+					*last_asset_id,
+					Validated::new(last_asset_info.threshold).unwrap(),
+					Validated::new(last_asset_info.min_answers).unwrap(),
+					Validated::new(last_asset_info.max_answers).unwrap(),
+					Validated::new(last_asset_info.block_interval).unwrap(),
+					last_asset_info.reward_weight,
+					last_asset_info.slash,
+					last_asset_info.emit_price_changes,
 				),
 				Error::<Test>::ExceedAssetsCount);
 
@@ -2294,7 +2355,7 @@ mod test {
 		assert!(<ValidMaxAnswer<MaxAnswerBound> as Validate<
 			u32,
 			ValidMaxAnswer<MaxAnswerBound>,
-		>>::validate(10_u32)
+		>>::validate(16_u32)
 		.is_err());
 	}
 
