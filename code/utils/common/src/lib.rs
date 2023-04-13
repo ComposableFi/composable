@@ -4,8 +4,6 @@
 pub enum AllRuntimeEvents {
 	/// Picasso runtime events
 	Picasso(picasso_runtime::RuntimeEvent),
-	/// Dali runtime events
-	Dali(dali_runtime::RuntimeEvent),
 	/// Composable runtime events
 	Composable(composable_runtime::RuntimeEvent),
 }
@@ -17,7 +15,6 @@ macro_rules! match_event {
 		matches!(
 			$ev,
 			AllRuntimeEvents::Picasso(picasso_runtime::RuntimeEvent::$event($sub_ev)) |
-				AllRuntimeEvents::Dali(dali_runtime::RuntimeEvent::$event($sub_ev)) |
 				AllRuntimeEvents::Composable(composable_runtime::RuntimeEvent::$event($sub_ev))
 		)
 	}};

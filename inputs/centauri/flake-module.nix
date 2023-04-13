@@ -1,13 +1,7 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, crane, subnix, ... }:
+  perSystem = { config, self', inputs', pkgs, system, crane, subnix
+    , systemCommonRust, ... }:
     let
-      protocattrs = {
-        BuildInputs = [ pkgs.protobuf ];
-        PROTOC = "${pkgs.protobuf}/bin/protoc";
-        PROTOC_INCLUDE = "${pkgs.protobuf}/include";
-        PROTOC_NO_VENDOR = "1";
-      };
-
       cargo-lock = builtins.fromTOML (builtins.readFile ../../code/Cargo.lock);
       centauri-runtime-dep = builtins.head
         (builtins.filter (x: x.name == "pallet-ibc") (cargo-lock.package));
@@ -18,7 +12,7 @@
         owner = "ComposableFi";
         repo = "centauri";
         rev = centauri-runtime-commit;
-        hash = "sha256-wgjOiIgfDlKVOnrW+eZQaurXY8BDSqjVOy7fFx0wbvg=";
+        hash = "sha256-Fy+NmEmoK12/WJej+8S8ViABKLQhH9uKlK/bQm4A/GI=";
       };
 
       centauri-src-release = pkgs.fetchFromGitHub {
@@ -83,31 +77,29 @@
       };
     in {
       packages = rec {
-        centauri-codegen = crane.stable.buildPackage {
+        centauri-codegen = crane.stable.buildPackage (subnix.subenv // {
           name = "centauri-codegen";
-          cargoArtifacts = crane.stable.buildDepsOnly {
+          cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
             src = centauri-src-current;
-            doCheck = false;
-            cargoExtraArgs = "-p codegen";
+            cargoExtraArgs = "--package codegen";
             cargoTestCommand = "";
-          };
+          });
           src = centauri-src-current;
-          doCheck = false;
-          cargoExtraArgs = "-p codegen";
+          cargoExtraArgs = "--package codegen";
           cargoTestCommand = "";
           meta = { mainProgram = "codegen"; };
-        };
+        });
         centauri-hyperspace = crane.stable.buildPackage (subnix.subenv // {
           name = "centauri-hyperspace";
           cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
             src = centauri-src-current;
             doCheck = false;
-            cargoExtraArgs = "-p hyperspace";
+            cargoExtraArgs = "--package hyperspace";
             cargoTestCommand = "";
           });
           src = centauri-src-current;
           doCheck = false;
-          cargoExtraArgs = "-p hyperspace";
+          cargoExtraArgs = "--package hyperspace";
           cargoTestCommand = "";
           meta = { mainProgram = "hyperspace"; };
         });
@@ -182,10 +174,10 @@
           };
 
         hyperspace-composable-rococo-picasso-rococo = crane.stable.buildPackage
-          (protocattrs // rec {
+          (subnix.subenv // rec {
             name = "hyperspace-composable-rococo-picasso-rococo";
-            pname = "${name}";
-            cargoArtifacts = crane.stable.buildDepsOnly (protocattrs // {
+            pname = name;
+            cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
               src = composable-rococo-picasso-rococo-centauri-patched-src;
               doCheck = false;
               cargoExtraArgs = "--package hyperspace";

@@ -38,6 +38,7 @@ governance-registry = { package = "pallet-governance-registry", path = "../gover
 orml-tokens = { workspace = true }
 pallet-balances = { workspace = true }
 proptest = "1.0"
+primitives = { path = "../../runtime/primitives", default-features = false }
 
 [package.metadata.cargo-udeps.ignore]
 development = ["governance-registry"]
@@ -56,6 +57,9 @@ std = [
   "sp-runtime/std",
   "sp-api/std",
   "orml-traits/std",
+  "orml-tokens/std",
   "num-traits/std",
   "frame-benchmarking/std",
+  "pallet-balances/std",
+  "primitives/std",
 ]

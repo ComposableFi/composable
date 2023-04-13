@@ -8,11 +8,8 @@ use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::{traits::IdentifyAccount, MultiSigner};
-#[cfg(feature = "composable")]
-pub mod composable;
 
-#[cfg(feature = "dali")]
-pub mod dali;
+pub mod composable;
 
 pub mod picasso;
 
@@ -68,31 +65,27 @@ where
 	MultiSigner::from(from_seed::<TPublic>(seed)).into_account()
 }
 
-#[cfg(feature = "composable")]
 /// Composable (Westend parachain)
 pub fn composable_westend() -> composable::ChainSpec {
 	composable::ChainSpec::from_json_bytes(include_bytes!("res/composable-westend.json").to_vec())
-		.expect("composable-westend chain spec not found!")
-}
-
-#[cfg(feature = "dali")]
-/// Dali (Rococo parachain)
-pub fn dali_rococo() -> dali::ChainSpec {
-	dali::ChainSpec::from_json_bytes(include_bytes!("./res/dali-rococo.json").to_vec())
-		.expect("Dali chain spec not found!")
+		.expect("chain spec not found")
 }
 
 /// Picasso (Kusama parachain)
 pub fn picasso() -> picasso::ChainSpec {
 	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/picasso.json").to_vec())
-		.expect("Picasso chain spec not found!")
+		.expect("chain spec not found")
 }
 
-#[cfg(feature = "composable")]
 /// Composable (Polkadot parachain)
 pub fn composable() -> composable::ChainSpec {
 	composable::ChainSpec::from_json_bytes(include_bytes!("./res/composable.json").to_vec())
-		.expect("Picasso chain spec not found!")
+		.expect("chain spec not found")
+}
+
+pub fn picasso_rococo() -> picasso::ChainSpec {
+	picasso::ChainSpec::from_json_bytes(include_bytes!("./res/picasso-rococo.json").to_vec())
+		.expect("chain spec not found")
 }
 
 // chain spec for single node environments
@@ -134,52 +127,6 @@ pub fn picasso_dev(parachain_id: ParaId) -> picasso::ChainSpec {
 	)
 }
 
-#[cfg(feature = "dali")]
-// chain spec for local testnet environments
-pub fn dali_dev(id: &str) -> dali::ChainSpec {
-	let para_id = match id.split('-').nth(1).expect("Dali chainspec 'dali-dev' has a dash; qed") {
-		"dev" => None,
-		number => number.parse::<u32>().ok().map(ParaId::from),
-	};
-	let para_id = para_id.unwrap_or(*PARACHAIN_ID);
-	let mut properties = Properties::new();
-	properties.insert("tokenSymbol".into(), "DALI".into());
-	properties.insert("tokenDecimals".into(), CurrencyId::decimals().into());
-	properties.insert("ss58Format".into(), dali_runtime::SS58Prefix::get().into());
-
-	dali::ChainSpec::from_genesis(
-		"Local Dali Testnet",
-		"dali",
-		ChainType::Development,
-		move || {
-			dali::genesis_config(
-				account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![
-					(
-						account_id_from_seed::<sr25519::Public>("Alice"),
-						get_collator_keys_from_seed("Alice"),
-					),
-					(
-						account_id_from_seed::<sr25519::Public>("Bob"),
-						get_collator_keys_from_seed("Bob"),
-					),
-				],
-				dev_accounts(),
-				para_id,
-				common::fees::NATIVE_EXISTENTIAL_DEPOSIT,
-				dali_runtime::TreasuryAccount::get(),
-			)
-		},
-		vec![],
-		None,
-		None,
-		None,
-		Some(properties),
-		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(para_id) },
-	)
-}
-
-#[cfg(feature = "composable")]
 // chain spec for single node environments
 pub fn composable_dev() -> composable::ChainSpec {
 	let mut properties = Properties::new();

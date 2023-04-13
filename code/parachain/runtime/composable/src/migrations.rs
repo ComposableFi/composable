@@ -5,6 +5,7 @@ pub type Migrations = (
 	preimage::migration::v1::Migration<Runtime>,
 	scheduler::migration::v3::MigrateToV4<Runtime>,
 	democracy::migrations::v1::Migration<Runtime>,
+	multisig::migrations::v1::MigrateToV1<Runtime>,
 );
 
 // Migration for scheduler pallet to move from a plain Call to a CallOrHash.

@@ -7,7 +7,6 @@ version = "0.1.0"
 
 [dependencies]
 composable-runtime = { path = "../../parachain/runtime/composable" }
-dali-runtime = { path = "../../parachain/runtime/dali" }
 derive_more = "0.99.17"
 picasso-runtime = { path = "../../parachain/runtime/picasso" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }

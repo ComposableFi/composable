@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 name = "composable-runtime"
-version = "1.0.0"
+version = { workspace = true }
 
 authors = ["Seun Lanlege <seunlanlege@gmail.com>"]
 description = "Composable, Polkadot Parachain Runtime Implementation"
@@ -47,6 +47,7 @@ crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/
 democracy = { default-features = false, workspace = true }
 indices = { default-features = false, workspace = true }
 membership = { default-features = false, workspace = true }
+multisig = { default-features = false, workspace = true }
 orml-tokens = { workspace = true, default-features = false }
 orml-traits = { workspace = true, default-features = false }
 preimage = { default-features = false, workspace = true }
@@ -140,6 +141,7 @@ runtime-benchmarks = [
   "xcm-builder/runtime-benchmarks",
   "indices/runtime-benchmarks",
   "membership/runtime-benchmarks",
+  "multisig/runtime-benchmarks",
   "treasury/runtime-benchmarks",
   "scheduler/runtime-benchmarks",
   "collective/runtime-benchmarks",
@@ -179,6 +181,7 @@ std = [
   "vault/std",
   "assets/std",
   "governance-registry/std",
+  "multisig/std",
   "call-filter/std",
   "currency-factory/std",
   "orml-tokens/std",

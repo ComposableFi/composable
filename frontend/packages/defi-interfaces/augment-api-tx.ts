@@ -3924,7 +3924,7 @@ declare module "@polkadot/api-base/types/submittable" {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
-    relayerXcm: {
+    PolkadotXcm: {
       /**
        * Execute an XCM message from a local, signed, origin.
        *
@@ -5426,7 +5426,7 @@ declare module "@polkadot/api-base/types/submittable" {
             | { system: any }
             | { Void: any }
             | { Council: any }
-            | { RelayerXcm: any }
+            | { PolkadotXcm: any }
             | { CumulusXcm: any }
             | { TechnicalCommittee: any }
             | string

@@ -1,14 +1,13 @@
 use frame_support::{assert_ok, traits::Currency};
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
+use primitives::currency::{ForeignAssetId, VersionedMultiLocation};
+use xcm::v3::MultiLocation;
 
 use crate::{
 	mocks::{new_test_ext, AccountId, AssetId, RuntimeOrigin, Test},
 	Config, Pallet,
 };
-use composable_traits::{
-	assets::{AssetInfo, BiBoundedAssetName, BiBoundedAssetSymbol, CreateAsset},
-	xcm::assets::XcmAssetLocation,
-};
+use composable_traits::assets::{AssetInfo, BiBoundedAssetName, BiBoundedAssetSymbol, CreateAsset};
 use frame_support::traits::fungibles::{Inspect, InspectHold, MutateHold};
 
 const NATIVE_ASSET_ID: AssetId = 1;
@@ -42,7 +41,7 @@ fn create_assets() -> (AssetId, AssetId) {
 		Pallet::<Test>::create_local_asset(protocol_id_local, nonce_local, asset_info_local)
 			.unwrap();
 
-	let foreign_asset_id = XcmAssetLocation(xcm::v2::MultiLocation::parent());
+	let foreign_asset_id = ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::parent()));
 	let foreign_asset_info = AssetInfo {
 		name: Some(
 			BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("string is within bound"),

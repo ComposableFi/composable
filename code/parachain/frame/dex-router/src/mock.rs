@@ -1,12 +1,10 @@
 use crate as dex_router;
 use crate::mock_fnft::MockFnft;
-use composable_traits::{
-	governance::{GovernanceRegistry, SignedRawOrigin},
-	xcm::assets::XcmAssetLocation,
-};
+use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use orml_traits::{parameter_type_with_key, GetByKey, LockIdentifier};
+use primitives::currency::ForeignAssetId;
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
@@ -189,14 +187,13 @@ parameter_types! {
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
 	pub const MaxStakingDurationPresets: u32 = 10;
 	pub const MaxRewardConfigsPerPool: u32 = 10;
-	// TODO(benluelo): Use a better value here?
 	pub const TreasuryAccountId: AccountId = 123_456_789_u128;
 }
 
 impl pallet_assets_registry::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = AssetId;
-	type ForeignAssetId = XcmAssetLocation;
+	type ForeignAssetId = ForeignAssetId;
 	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
 	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
@@ -214,7 +211,7 @@ impl pallet_assets_transactor_router::Config for Test {
 	type GovernanceRegistry = NoopRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type AssetLocation = XcmAssetLocation;
+	type AssetLocation = ForeignAssetId;
 	type AssetsRegistry = AssetsRegistry;
 }
 

@@ -37,6 +37,7 @@ bignumbers
 binaryen
 binop
 bintools
+binutils
 bitfield
 bitfields
 bitvec
@@ -88,6 +89,7 @@ defaultattrs
 devcontainers
 devel
 devenv
+devprofile
 dhms # day hour minute second
 dispatchables
 divn
@@ -362,9 +364,12 @@ stdstore
 structopt
 structs
 styleguide
+subattrs
+subenv
 submessage
 submessages
 submod
+subnix
 Subql
 substituters
 subwasm

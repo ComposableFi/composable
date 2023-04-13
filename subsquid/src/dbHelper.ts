@@ -580,7 +580,7 @@ export async function getCurrentAssetPrices(ctx: Context | EntityManager): Promi
       .map(assetId => assetList.find(asset => asset.assetId === assetId)?.coingeckoId)
       .filter(Boolean)
       .join("%2C");
-    const endpoint = `https://api.coingecko.com/api/v3/simple/price?ids=${queryIds}&vs_currencies=usd`;
+    const endpoint = `https://api.coingecko.com/api/v3/simple/price?ids=${queryIds}&vs_currencies=usd&precision=18`;
     // Fetch from Coingecko
     const res = await fetch<CoingeckoPrices>(endpoint);
 

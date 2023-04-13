@@ -2,9 +2,9 @@ use composable_tests_helpers::test::currency::PICA;
 use composable_traits::{
 	account_proxy::ProxyType,
 	governance::{GovernanceRegistry, SignedRawOrigin},
-	xcm::assets::XcmAssetLocation,
 };
 use frame_support::pallet_prelude::*;
+use primitives::currency::ForeignAssetId;
 use sp_core::{
 	sr25519::{Public, Signature},
 	H256,
@@ -191,7 +191,7 @@ parameter_types! {
 impl pallet_assets_registry::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = CurrencyId;
-	type ForeignAssetId = XcmAssetLocation;
+	type ForeignAssetId = ForeignAssetId;
 	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
 	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
@@ -209,7 +209,7 @@ impl pallet_assets_transactor_router::Config for Test {
 	type GovernanceRegistry = NoopRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type AssetLocation = XcmAssetLocation;
+	type AssetLocation = ForeignAssetId;
 	type AssetsRegistry = AssetsRegistry;
 }
 

@@ -28,7 +28,6 @@ use frame_support::{parameter_types, weights::Weight};
 use scale_info::TypeInfo;
 pub use types::*;
 
-/// Common types of statemint and statemine and dali and picasso and composable.
 mod types {
 	use sp_runtime::traits::{IdentifyAccount, Verify};
 

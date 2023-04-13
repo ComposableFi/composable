@@ -57,7 +57,6 @@
           SKIP_WASM_BUILD = "1";
         };
 
-        # TODO: refactor as mkOverride common-attrs
         common-test-deps-attrs = subnix.subattrs // {
           src = rustSrc;
           buildInputs = with pkgs; [ openssl zstd ];
@@ -67,8 +66,11 @@
           SKIP_WASM_BUILD = "1";
         };
 
-        common-bench-attrs = common-attrs // {
+        common-std-bench-attrs = common-attrs // {
           cargoExtraArgs = "--features=builtin-wasm,runtime-benchmarks";
+        };
+        common-wasm-bench-attrs = common-attrs // {
+          cargoExtraArgs = "--features=runtime-benchmarks";
         };
       };
 
@@ -77,8 +79,10 @@
           crane.nightly.buildDepsOnly (systemCommonRust.common-attrs // { });
         common-deps-nightly =
           crane.nightly.buildDepsOnly (systemCommonRust.common-attrs // { });
-        common-bench-deps = crane.nightly.buildDepsOnly
-          (systemCommonRust.common-bench-attrs // { });
+        common-std-bench-deps = crane.nightly.buildDepsOnly
+          (systemCommonRust.common-std-bench-attrs // { });
+        common-wasm-bench-deps = crane.nightly.buildDepsOnly
+          (systemCommonRust.common-wasm-bench-attrs // { });
         common-test-deps = crane.nightly.buildDepsOnly
           (systemCommonRust.common-test-deps-attrs // { });
       };

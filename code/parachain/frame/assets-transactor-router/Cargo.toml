@@ -19,19 +19,14 @@ sp-core = { default-features = false, workspace = true }
 sp-io = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
-
 xcm = { default-features = false, workspace = true }
-
-# orml
 orml-traits = { workspace = true, default-features = false }
 
-# local
 composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = "../assets-registry", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
 
-# misc
 codec = { default-features = false, features = [
   "derive",
 ], package = "parity-scale-codec", version = "3.0.0" }
@@ -47,14 +42,22 @@ orml-tokens = { workspace = true }
 pallet-balances = { workspace = true }
 proptest = "1.0"
 
+
 [features]
 
 default = ["std"]
 
 std = [
+  "assets-registry/std",
+  "composable-support/std",
+  "composable-traits/std",
   "frame-benchmarking/std",
   "frame-support/std",
   "frame-system/std",
+  "orml-tokens/std",
+  "orml-traits/std",
+  "pallet-balances/std",
+  "primitives/std",
   "sp-api/std",
   "sp-arithmetic/std",
   "sp-core/std",
@@ -62,11 +65,6 @@ std = [
   "sp-runtime/std",
   "sp-std/std",
   "xcm/std",
-  "orml-traits/std",
-  "composable-support/std",
-  "composable-traits/std",
-  "assets-registry/std",
-  "primitives/std",
 ]
 
 runtime-benchmarks = [

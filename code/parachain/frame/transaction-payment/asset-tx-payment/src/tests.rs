@@ -205,8 +205,6 @@ impl FindAuthor<AccountId> for HardcodedAuthor {
 
 impl pallet_authorship::Config for Runtime {
 	type FindAuthor = HardcodedAuthor;
-	type UncleGenerations = ();
-	type FilterUncle = ();
 	type EventHandler = ();
 }
 

@@ -21,7 +21,6 @@ Note that for the `github:` locations, you do not need to clone the repository. 
 
 Packages are defined in a repository's `flake.nix`. For example, a **package** can be:
 
-- `devnet-dali` which runs a devnet containing `dali` and `rococo`, launched by `polkadot-launch`.
 - `frontend-pablo-server` which runs a server serving the `pablo` frontend.
 - `composable-book` which builds this book (so meta!).
 

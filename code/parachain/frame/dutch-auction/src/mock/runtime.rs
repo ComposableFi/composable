@@ -4,7 +4,7 @@ use crate::{
 	weights::SubstrateWeight,
 };
 
-use composable_traits::{defi::DeFiComposableConfig, xcm::assets::XcmAssetLocation};
+use composable_traits::defi::DeFiComposableConfig;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU32, EnsureOneOf, Everything},
@@ -218,10 +218,17 @@ impl From<RuntimeOrigin> for XcmFake {
 	}
 }
 impl SendXcm for XcmFake {
-	fn send_xcm(
-		_destination: impl Into<xcm::latest::MultiLocation>,
-		_message: xcm::latest::Xcm<()>,
-	) -> xcm::latest::SendResult {
+	type Ticket = ();
+	fn validate(
+		destination: &mut Option<xcm::latest::MultiLocation>,
+		message: &mut Option<xcm::latest::Xcm<()>>,
+	) -> xcm::latest::SendResult<Self::Ticket> {
+		todo!("please test via local-integration-tests")
+	}
+
+	fn deliver(
+		ticket: Self::Ticket,
+	) -> core::result::Result<xcm::latest::XcmHash, xcm::latest::SendError> {
 		todo!("please test via local-integration-tests")
 	}
 }

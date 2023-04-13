@@ -17,7 +17,7 @@ jobs:
     name: "Build runtime"
     runs-on:
       - self-hosted
-      - x64-cute
+      - x64-monster
     concurrency:
       group: build-runtime-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
@@ -25,7 +25,7 @@ jobs:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     strategy:
       matrix:
-        runtime: [dali, picasso, composable]
+        runtime: [picasso, composable]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -56,7 +56,7 @@ jobs:
     name: "Build Composable node (runtimeless)"
     runs-on:
       - self-hosted
-      - x64-cute
+      - x64-monster
     concurrency:
       group: build-composable-node-${{ github.ref }}
       cancel-in-progress: true
@@ -134,7 +134,7 @@ jobs:
 
       - name: Download artifacts
         run: |
-          nix run .#generate-release-artifacts -L
+          nix run .#generate-release-artifacts --print-build-logs
 
       - name: Setup Composable version
         run: |

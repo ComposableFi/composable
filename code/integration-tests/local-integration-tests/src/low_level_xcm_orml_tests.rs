@@ -61,7 +61,7 @@ fn send_remark() {
 	);
 	let execution = (UnitWeightCost::get() * 5) as u128;
 	This::execute_with(|| {
-		assert_ok!(this_runtime::RelayerXcm::send_xcm(
+		assert_ok!(this_runtime::PolkadotXcm::send_xcm(
 			Here,
 			(Parent, Parachain(SIBLING_PARA_ID)),
 			Xcm(vec![
@@ -100,7 +100,7 @@ fn this_withdraws_and_deposit_back_on_relay() {
 				beneficiary: Parachain(THIS_PARA_ID).into(),
 			},
 		]);
-		assert_ok!(this_runtime::RelayerXcm::send_xcm(Here, Parent, message,));
+		assert_ok!(this_runtime::PolkadotXcm::send_xcm(Here, Parent, message,));
 	});
 
 	KusamaRelay::execute_with(|| {
@@ -141,7 +141,7 @@ fn para_chain_subscribe_version_notify_of_relay_chain() {
 		assert_ok!(r);
 	});
 	This::execute_with(|| {
-		this_runtime::System::assert_has_event(this_runtime::RuntimeEvent::RelayerXcm(
+		this_runtime::System::assert_has_event(this_runtime::RuntimeEvent::PolkadotXcm(
 			pallet_xcm::Event::SupportedVersionChanged(
 				MultiLocation { parents: 1, interior: Here },
 				2,
@@ -200,7 +200,7 @@ fn withdraw_and_deposit_here_native() {
 		]);
 
 		assert!(matches!(
-			this_runtime::RelayerXcm::send_xcm(
+			this_runtime::PolkadotXcm::send_xcm(
 				Here,
 				MultiLocation { parents: 0, interior: Junctions::Here },
 				message,

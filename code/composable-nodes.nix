@@ -39,9 +39,7 @@
           name = "composable";
           cargoArtifacts = self'.packages.common-deps;
           cargoBuildCommand =
-            "cargo build --release --package composable --features=builtin-wasm,composable";
-          DALI_RUNTIME =
-            "${self'.packages.dali-runtime}/lib/runtime.optimized.wasm";
+            "cargo build --release --package composable --features=builtin-wasm";
           PICASSO_RUNTIME =
             "${self'.packages.picasso-runtime}/lib/runtime.optimized.wasm";
           COMPOSABLE_RUNTIME =
@@ -56,12 +54,6 @@
       packages = rec {
 
         composable-node = makeComposableNode (node: node);
-
-        composable-node-dali = makeComposableNode (node:
-          node // {
-            PICASSO_RUNTIME = node.DALI_RUNTIME;
-            COMPOSABLE_RUNTIME = node.DALI_RUNTIME;
-          });
 
         composable-node-picasso = makeComposableNode (node:
           node // {
@@ -78,21 +70,19 @@
           });
 
         composable-bench-node = crane.nightly.cargoBuild
-          (systemCommonRust.common-bench-attrs // {
+          (systemCommonRust.common-std-bench-attrs // rec {
             name = "composable";
-            cargoArtifacts = self'.packages.common-bench-deps;
-            cargoBuildCommand = "cargo build --release --package composable";
-            DALI_RUNTIME =
-              "${self'.packages.dali-bench-runtime}/lib/runtime.optimized.wasm";
+            cargoArtifacts = self'.packages.common-std-bench-deps;
+            cargoBuildCommand = "cargo build --release --package ${name}";
             PICASSO_RUNTIME =
               "${self'.packages.picasso-bench-runtime}/lib/runtime.optimized.wasm";
             COMPOSABLE_RUNTIME =
               "${self'.packages.composable-bench-runtime}/lib/runtime.optimized.wasm";
             installPhaseCommand = ''
               mkdir -p $out/bin
-              cp target/release/composable $out/bin/composable
+              cp target/release/${name} $out/bin/${name}
             '';
-            meta = { mainProgram = "composable"; };
+            meta = { mainProgram = name; };
           });
       };
     };

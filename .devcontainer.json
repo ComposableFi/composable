@@ -1,9 +1,82 @@
 {
-  "image": "ghcr.io/cachix/devenv:latest",
-  "overrideCommand": false,
-  "customizations": {
-    "vscode": {
-      "extensions": ["mkhl.direnv"]
-    }
-  }
+	"name": "composable",
+	"hostRequirements": {
+		"memory": "20gb",
+		"cpus": 8
+	},
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": "."
+	},
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+	},
+	"postStartCommand": "sudo chmod +x /home/vscode/.nix-profile/bin/setfacl && sudo chmod 1777 /tmp/ && sudo /home/vscode/.nix-profile/bin/setfacl  --remove-default  /tmp",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"adam-bender.commit-message-editor",
+				"bbenoist.Nix",
+				"bierner.markdown-mermaid",
+				"bpruitt-goddard.mermaid-markdown-syntax-highlighting",
+				"eamodio.gitlens",
+				"GitHub.copilot",
+				"humao.rest-client",
+				"jebbs.plantuml",
+				"mkhl.direnv",
+				"ms-azuretools.vscode-docker",
+				"ms-vscode.makefile-tools",
+				"ms-vsliveshare.vsliveshare",
+				"rangav.vscode-thunder-client",
+				"rust-lang.rust-analyzer",
+				"serayuzgur.crates",
+				"streetsidesoftware.code-spell-checker",
+				"tamasfe.even-better-toml",
+				"vadimcn.vscode-lldb",
+				"vscode-icons-team.vscode-icons",
+				"yzhang.markdown-all-in-one",
+				"zxh404.vscode-proto3",
+				"mkhl.direnv"
+			]
+		}
+	},
+	"portsAttributes": {
+		"9988": {
+			"label": "Picasso",
+			"onAutoForward": "notify",
+			"protocol": "http"
+		},
+		"29988": {
+			"label": "Composable",
+			"onAutoForward": "notify",
+			"protocol": "http"
+		},
+		"9944": {
+			"label": "Kusama",
+			"onAutoForward": "notify",
+			"protocol": "http"
+		},
+		"29944": {
+			"label": "Polkadot",
+			"onAutoForward": "notify",
+			"protocol": "http"
+		},
+		"26657": {
+			"label": "Juno",
+			"onAutoForward": "notify",
+			"protocol": "http"
+		},
+		"8080": {
+			"label": "Hasura",
+			"onAutoForward": "notify",
+			"protocol": "http"
+		}
+	},
+	"settings": {
+		"remote.autoForwardPorts": true,
+		"workbench.iconTheme": "vscode-icons",
+		"files.watcherExclude": {
+			"**/target/**": true
+		}
+	},
 }

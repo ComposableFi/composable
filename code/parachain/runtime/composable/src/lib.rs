@@ -225,6 +225,22 @@ impl aura::Config for Runtime {
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
+	pub DepositBase: u64 = CurrencyId::unit();
+	pub DepositFactor: u64 = 32 * CurrencyId::milli::<u64>();
+	pub const MaxSignatories: u16 = 100;
+}
+
+impl multisig::Config for Runtime {
+	type RuntimeCall = RuntimeCall;
+	type Currency = Balances;
+	type DepositBase = DepositBase;
+	type DepositFactor = DepositFactor;
+	type RuntimeEvent = RuntimeEvent;
+	type MaxSignatories = MaxSignatories;
+	type WeightInfo = weights::multisig::WeightInfo<Runtime>;
+}
+
+parameter_types! {
 	/// Minimum period in between blocks, for now we leave it at half
 	/// the expected slot duration
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
@@ -390,14 +406,8 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 
 impl parachain_info::Config for Runtime {}
 
-parameter_types! {
-	pub const UncleGenerations: u32 = 0;
-}
-
 impl authorship::Config for Runtime {
 	type FindAuthor = session::FindAccountFromAuthorIndex<Self, Aura>;
-	type UncleGenerations = UncleGenerations;
-	type FilterUncle = ();
 	type EventHandler = (CollatorSelection,);
 }
 
@@ -610,7 +620,7 @@ construct_runtime!(
 		AssetTxPayment : asset_tx_payment  = 12,
 		Indices: indices = 5,
 		Balances: balances = 6,
-
+		Multisig: multisig = 8,
 		// Parachains stuff
 		ParachainSystem: cumulus_pallet_parachain_system = 10,
 		ParachainInfo: parachain_info = 11,
@@ -640,7 +650,7 @@ construct_runtime!(
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
-		RelayerXcm: pallet_xcm = 41,
+		PolkadotXcm: pallet_xcm = 41,
 		CumulusXcm: cumulus_pallet_xcm = 42,
 		DmpQueue: cumulus_pallet_dmp_queue = 43,
 		XTokens: orml_xtokens = 44,
@@ -692,6 +702,7 @@ pub type Executive = executive::Executive<
 	crate::migrations::Migrations,
 >;
 
+#[allow(unused_imports)]
 #[cfg(feature = "runtime-benchmarks")]
 #[macro_use]
 extern crate frame_benchmarking;
@@ -713,6 +724,7 @@ mod benches {
 		[democracy, Democracy]
 		[proxy, Proxy]
 		[assets_registry, AssetsRegistry]
+		[multisig, Multisig]
 	);
 }
 
@@ -1037,7 +1049,7 @@ impl_runtime_apis! {
 		}
 
 		fn block_events(extrinsic_index: Option<u32>) -> Vec<Result<pallet_ibc::events::IbcEvent, pallet_ibc::errors::IbcError>> {
-			let mut raw_events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter();
+			let mut raw_events = frame_system::Pallet::<Self>::read_events_no_consensus();
 			if let Some(idx) = extrinsic_index {
 				raw_events.find_map(|e| {
 					let frame_system::EventRecord{ event, phase, ..} = *e;

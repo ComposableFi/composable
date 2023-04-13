@@ -11,7 +11,7 @@ use cumulus_client_service::{
 };
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
-use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
+use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 use polkadot_service::CollatorPair;
 use sc_consensus::ImportQueue;
@@ -52,10 +52,8 @@ impl sc_executor::NativeExecutionDispatch for PicassoExecutor {
 	}
 }
 
-#[cfg(feature = "composable")]
 pub struct ComposableExecutor;
 
-#[cfg(feature = "composable")]
 impl sc_executor::NativeExecutionDispatch for ComposableExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
@@ -68,28 +66,10 @@ impl sc_executor::NativeExecutionDispatch for ComposableExecutor {
 	}
 }
 
-#[cfg(feature = "dali")]
-pub struct DaliExecutor;
-
-#[cfg(feature = "dali")]
-impl sc_executor::NativeExecutionDispatch for DaliExecutor {
-	type ExtendHostFunctions = (frame_benchmarking::benchmarking::HostFunctions,);
-
-	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		dali_runtime::api::dispatch(method, data)
-	}
-
-	fn native_version() -> sc_executor::NativeVersion {
-		dali_runtime::native_version()
-	}
-}
-
 pub enum Executor {
 	Picasso(PicassoExecutor),
-	#[cfg(feature = "composable")]
+
 	Composable(ComposableExecutor),
-	#[cfg(feature = "dali")]
-	Dali(DaliExecutor),
 }
 
 /// Starts a `ServiceBuilder` for a full service.
@@ -109,23 +89,11 @@ pub fn new_chain_ops(
 	sc_service::Error,
 > {
 	let components = match config.chain_spec.id() {
-		#[cfg(feature = "composable")]
 		chain if chain.contains("composable") => {
 			let components = new_partial::<composable_runtime::RuntimeApi, ComposableExecutor>(
 				config,
 				Some(chain_spec::composable::DALEK_END_BLOCK),
 			)?;
-			(
-				Arc::new(Client::from(components.client)),
-				components.backend,
-				components.import_queue,
-				components.task_manager,
-			)
-		},
-		#[cfg(feature = "dali")]
-		chain if chain.contains("dali") => {
-			let components =
-				new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(config, Option::None)?;
 			(
 				Arc::new(Client::from(components.client)),
 				components.backend,
@@ -258,7 +226,6 @@ pub async fn start_node(
 	id: ParaId,
 ) -> sc_service::error::Result<TaskManager> {
 	let task_manager = match config.chain_spec.id() {
-		#[cfg(feature = "composable")]
 		chain if chain.contains("composable") =>
 			crate::service::start_node_impl::<composable_runtime::RuntimeApi, ComposableExecutor>(
 				config,
@@ -266,16 +233,6 @@ pub async fn start_node(
 				collator_options,
 				id,
 				Some(chain_spec::composable::DALEK_END_BLOCK),
-			)
-			.await?,
-		#[cfg(feature = "dali")]
-		chain if chain.contains("dali") =>
-			crate::service::start_node_impl::<dali_runtime::RuntimeApi, DaliExecutor>(
-				config,
-				polkadot_config,
-				collator_options,
-				id,
-				Option::None,
 			)
 			.await?,
 		chain if chain.contains("picasso") =>
@@ -356,10 +313,7 @@ where
 		collator_options.clone(),
 	)
 	.await
-	.map_err(|e| match e {
-		RelayChainError::ServiceError(polkadot_service::Error::Sub(x)) => x,
-		s => s.to_string().into(),
-	})?;
+	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
 
 	let block_announce_validator = BlockAnnounceValidator::new(relay_chain_interface.clone(), id);
 
