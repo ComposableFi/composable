@@ -225,6 +225,22 @@ impl aura::Config for Runtime {
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
+	pub DepositBase: u64 = CurrencyId::unit();
+	pub DepositFactor: u64 = 32 * CurrencyId::milli::<u64>();
+	pub const MaxSignatories: u16 = 100;
+}
+
+impl multisig::Config for Runtime {
+	type RuntimeCall = RuntimeCall;
+	type Currency = Balances;
+	type DepositBase = DepositBase;
+	type DepositFactor = DepositFactor;
+	type RuntimeEvent = RuntimeEvent;
+	type MaxSignatories = MaxSignatories;
+	type WeightInfo = weights::multisig::WeightInfo<Runtime>;
+}
+
+parameter_types! {
 	/// Minimum period in between blocks, for now we leave it at half
 	/// the expected slot duration
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
@@ -610,7 +626,7 @@ construct_runtime!(
 		AssetTxPayment : asset_tx_payment  = 12,
 		Indices: indices = 5,
 		Balances: balances = 6,
-
+		Multisig: multisig = 8,
 		// Parachains stuff
 		ParachainSystem: cumulus_pallet_parachain_system = 10,
 		ParachainInfo: parachain_info = 11,
@@ -713,6 +729,7 @@ mod benches {
 		[democracy, Democracy]
 		[proxy, Proxy]
 		[assets_registry, AssetsRegistry]
+		[multisig, Multisig]
 	);
 }
 

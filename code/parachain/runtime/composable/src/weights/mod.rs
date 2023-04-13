@@ -9,6 +9,7 @@ pub mod frame_system;
 pub mod ibc;
 pub mod indices;
 pub mod membership;
+pub mod multisig;
 pub mod pallet_proxy;
 pub mod scheduler;
 pub mod session;
