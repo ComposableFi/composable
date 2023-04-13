@@ -41,8 +41,8 @@ benchmarks! {
 	add_asset_and_info {
 		let asset_id = 1;
 		let threshold = Validated::new(Percent::from_percent(80)).unwrap();
-		let min_answers = Validated::new(3).unwrap();
-		let max_answers = Validated::new(5).unwrap();
+		let min_answers = Validated::new(7).unwrap();
+		let max_answers = Validated::new(15).unwrap();
 		let block_interval = Validated::<T::BlockNumber, ValidBlockInterval<T::StalePrice>>::new(T::StalePrice::get() + 1u32.into()).unwrap();
 		let reward: BalanceOf<T> = T::Currency::minimum_balance();
 		let slash: BalanceOf<T> = T::Currency::minimum_balance();
