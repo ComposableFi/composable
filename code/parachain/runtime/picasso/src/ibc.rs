@@ -1,9 +1,9 @@
-use ::ibc::core::{
+use common::ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds};
+use frame_support::traits::EitherOf;
+use ibc::core::{
 	ics24_host::identifier::PortId,
 	ics26_routing::context::{Module, ModuleId},
 };
-use common::ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds};
-use frame_support::traits::EitherOf;
 use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
 };
@@ -55,7 +55,7 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 
 parameter_types! {
 	pub const RelayChainId: RelayChain = RelayChain::Rococo;
-	pub const SpamProtectionDeposit: Balance = 1_000_000_000_000_000;
+	pub const SpamProtectionDeposit: Balance = 1;
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Default)]
