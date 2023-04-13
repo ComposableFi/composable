@@ -9,7 +9,7 @@ use pallet_ibc::{
 };
 use sp_core::ConstU64;
 use sp_runtime::{DispatchError, Either};
-use system::{EnsureSigned, EnsureSignedBy};
+use system::EnsureSignedBy;
 
 use super::*;
 
@@ -147,9 +147,9 @@ impl pallet_ibc::Config for Runtime {
 	#[cfg(feature = "testnet")]
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	#[cfg(feature = "testnet")]
-	type TransferOrigin = EnsureSigned<Self::IbcAccountId>;
+	type TransferOrigin = system::EnsureSigned<Self::IbcAccountId>;
 	#[cfg(feature = "testnet")]
-	type RelayerOrigin = EnsureSigned<Self::IbcAccountId>;
+	type RelayerOrigin = system::EnsureSigned<Self::IbcAccountId>;
 
 	#[cfg(not(feature = "testnet"))]
 	type AdminOrigin = EnsureRootOrOneThirdNativeTechnical;

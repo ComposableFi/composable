@@ -1,7 +1,7 @@
 //! Runtime setup for the governance and democracy only.
 
 use super::*;
-use common::{governance::native::*, MINUTES};
+use common::governance::native::*;
 use frame_support::traits::LockIdentifier;
 
 pub type NativeCouncilMembership = membership::Instance1;
@@ -97,7 +97,7 @@ impl democracy::Config for Runtime {
 	type FastTrackVotingPeriod = ConstU32<{ 3 * HOURS }>;
 
 	#[cfg(feature = "fastnet")]
-	type FastTrackVotingPeriod = ConstU32<{ 5 * MINUTES }>;
+	type FastTrackVotingPeriod = ConstU32<{ 5 * common::MINUTES }>;
 
 	type CancellationOrigin = EnsureRootOrAllNativeTechnical;
 
@@ -119,8 +119,6 @@ impl democracy::Config for Runtime {
 	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
 }
 
-type ConstBlockNumber<T> = ConstU32<T>;
-
 parameter_types! {
 	// cspell:disable-next
 	pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
@@ -140,10 +138,10 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
 	type ProposalBondMaximum = ProposalBondMaximum;
-	#[cft(feature = "fastnet")]
-	type SpendPeriod = ConstBlockNumber<{ 1 * HOURS }>;
-	#[cft(not(feature = "fastnet"))]
-	type SpendPeriod = ConstBlockNumber<{ 3 * DAYS }>;
+	#[cfg(feature = "fastnet")]
+	type SpendPeriod = ConstU32<{ 1 * HOURS }>;
+	#[cfg(not(feature = "fastnet"))]
+	type SpendPeriod = ConstU32<{ 3 * DAYS }>;
 	type Burn = Burn;
 	type MaxApprovals = ConstU32<30>;
 	type BurnDestination = ();
