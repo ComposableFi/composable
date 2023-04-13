@@ -321,7 +321,7 @@ mod add_asset_and_info {
 					asset_id_16,
 				];
 
-				// Items of asset ids must be unique.
+				// Items of asset_ids must be unique.
 				let mut tmp_asset_ids = asset_ids.clone();
 				tmp_asset_ids.sort();
 				let mut tmp_asset_ids = tmp_asset_ids.iter().collect::<Vec<_>>();
