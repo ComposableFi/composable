@@ -70,9 +70,9 @@
           });
 
         composable-bench-node = crane.nightly.cargoBuild
-          (systemCommonRust.common-bench-attrs // rec {
+          (systemCommonRust.common-std-bench-attrs // rec {
             name = "composable";
-            cargoArtifacts = self'.packages.common-bench-deps;
+            cargoArtifacts = self'.packages.common-std-bench-deps;
             cargoBuildCommand = "cargo build --release --package ${name}";
             PICASSO_RUNTIME =
               "${self'.packages.picasso-bench-runtime}/lib/runtime.optimized.wasm";

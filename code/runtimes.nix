@@ -33,14 +33,13 @@
         };
       };
       # Build a wasm runtime, unoptimized
-      mkRuntime = name: features:
+      mkRuntime = name: features: cargoArtifacts:
         crane.nightly.buildPackage (systemCommonRust.common-attrs // {
           pname = "${name}-runtime";
           src = rustSrc;
-
-          cargoArtifacts = self'.packages.common-deps-nightly;
+          inherit cargoArtifacts;
           cargoBuildCommand =
-            "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown"
+            "cargo build --release --package ${name}-runtime-wasm --target wasm32-unknown-unknown"
             + pkgs.lib.strings.optionalString (features != "")
             (" --features=${features}");
           # From parity/wasm-builder
@@ -49,8 +48,9 @@
         });
 
       # Derive an optimized wasm runtime from a prebuilt one, garbage collection + compression
-      mkOptimizedRuntime = { name, features ? "" }:
-        let runtime = mkRuntime name features;
+      mkOptimizedRuntime = { name, features ? ""
+        , common-deps ? self'.packages.common-deps-nightly }:
+        let runtime = mkRuntime name features common-deps;
         in pkgs.stdenv.mkDerivation {
           name = "${runtime.name}-optimized";
           phases = [ "installPhase" ];
@@ -77,10 +77,12 @@
         picasso-bench-runtime = mkOptimizedRuntime {
           name = "picasso";
           features = "runtime-benchmarks";
+          common-deps = self'.packages.common-wasm-bench-deps;
         };
         composable-bench-runtime = mkOptimizedRuntime {
           name = "composable";
           features = "runtime-benchmarks";
+          common-deps = self'.packages.common-wasm-bench-deps;
         };
       };
 

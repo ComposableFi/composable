@@ -312,8 +312,8 @@ jobs:
       - name: nix-profile-install
         run: |
           uname -a
-          curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --no-confirm
-          nix-channel --update
+          # jist when need to upgrade machine
+          # nix-channel --update
           nix profile install nixpkgs#cachix 
           nix profile install nixpkgs#git
           nix profile install nixpkgs#git-lfs
