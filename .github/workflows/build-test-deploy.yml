@@ -327,16 +327,12 @@ jobs:
       - name: cachix-nix-build
         run: |  
           # too verbose, but can help to debug `--debug --verbose`
-          echo "upload in background to cache as build goes"
-          cachix watch-store --compression-level 16 --compression-method zstd --jobs 8 composable-community &
           echo "warm up to check that we can compile rust with some basic substrate"
-          nix build .\#subwasm --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2
+          cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#subwasm --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2
           echo "compile our all in one devnet"
-          nix build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2
+          cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2
           echo "double check we are ok with devnet/substrate on picasso"
-          nix build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2
-          echo "also we pushed in background, make sure we fait for final push"
-          cachix push --compression-level 16 --compression-method zstd --jobs 8 composable-community /nix/store/*
+          cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2
           echo "done"
 
   build-all-docs-packages:
