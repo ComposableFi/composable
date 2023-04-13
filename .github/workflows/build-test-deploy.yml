@@ -336,7 +336,7 @@ jobs:
           echo "double check we are ok with devnet/substrate on picasso"
           nix build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2
           echo "also we pushed in background, make sure we fait for final push"
-          cachix push --compression-level 16 --compression-method zstd --jobs 8 composable-community /nix/store
+          cachix push --compression-level 16 --compression-method zstd --jobs 8 composable-community /nix/store/*
           echo "done"
 
   build-all-docs-packages:
