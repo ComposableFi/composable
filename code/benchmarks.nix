@@ -10,7 +10,7 @@
           --chain="${chainspec}" \
           --execution=wasm \
           # --wasm-execution=compiled \
-          --wasm-execution=interpreted-i-know-what-i-do # https://substrate.stackexchange.com/questions/8062/cannot-create-module-instance-allocation-for-this-module-requires-74376-bytes-w \
+          --wasm-execution=interpreted-i-know-what-i-do \ # https://substrate.stackexchange.com/questions/8062/cannot-create-module-instance-allocation-for-this-module-requires-74376-bytes-w
           --pallet="*" \
           --extrinsic="*" \
           --steps=2 \
