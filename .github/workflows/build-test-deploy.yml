@@ -332,7 +332,10 @@ jobs:
           echo "compile our all in one devnet"
           cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2
           echo "double check we are ok with devnet/substrate on picasso"
+          # https://github.com/cachix/cachix/issues/528
+          set -o pipefail -o errexit
           cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2
+          set +o pipefail +o errexit
           echo "done"
 
   build-all-docs-packages:
