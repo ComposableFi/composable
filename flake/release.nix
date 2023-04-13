@@ -43,7 +43,7 @@
           '';
         };
 
-        # basically this should be just package resul with several files
+        # basically this should be just package result with several files
         generate-release-artifacts = pkgs.writeShellApplication {
           name = "generate-release-artifacts";
           runtimeInputs = [ pkgs.bash pkgs.binutils pkgs.coreutils ];
