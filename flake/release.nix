@@ -45,7 +45,7 @@
 
         generate-release-artifacts = pkgs.writeShellApplication {
           name = "generate-release-artifacts";
-          runtimeInputs = [ pkgs.binutils ];
+          runtimeInputs = [ pkgs.bash pkgs.binutils pkgs.coreutils ];
           text = let
             make-bundle = type: package:
               self.inputs.bundlers.bundlers."${system}"."${type}" package;
