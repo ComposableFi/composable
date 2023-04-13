@@ -10,7 +10,7 @@
           runtimeInputs = mac-isolation;
           text = ''
             echo "copying config to modifiable path"
-            cp --force ${self'.packages.hyperspace-config} /tmp/config.toml  
+            cp -f ${self'.packages.hyperspace-config} /tmp/config.toml  
             ${pkgs.lib.meta.getExe devnet-centauri}       
           '';
         };
@@ -35,7 +35,7 @@
           name = "centauri-configure-and-run";
           runtimeInputs = mac-isolation;
           text = ''
-            cp --force ${self'.packages.hyperspace-config} /tmp/config.toml  
+            cp -f ${self'.packages.hyperspace-config} /tmp/config.toml  
             ${pkgs.lib.meta.getExe devnet-centauri-no-relay}       
           '';
         };
