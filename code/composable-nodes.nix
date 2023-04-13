@@ -67,7 +67,8 @@
           (systemCommonRust.common-std-bench-attrs // rec {
             name = "composable";
             cargoArtifacts = self'.packages.common-std-bench-deps;
-            cargoExtraArgs = systemCommonRust.common-std-bench-attrs
+            cargoExtraArgs =
+              systemCommonRust.common-std-bench-attrs.cargoExtraArgs
               + ",testnet,fastnet";
             cargoBuildCommand = "cargo build --release --package ${name}";
             PICASSO_RUNTIME =
