@@ -119,7 +119,7 @@ impl democracy::Config for Runtime {
 	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
 }
 
-type ConstBlockNumber = ConstU32;
+type ConstBlockNumber<T> = ConstU32<T>;
 
 parameter_types! {
 	// cspell:disable-next
