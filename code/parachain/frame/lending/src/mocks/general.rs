@@ -339,10 +339,16 @@ impl From<RuntimeOrigin> for XcmFake {
 	}
 }
 impl SendXcm for XcmFake {
-	fn send_xcm(
-		_destination: impl Into<xcm::latest::MultiLocation>,
-		_message: xcm::latest::Xcm<()>,
-	) -> xcm::latest::SendResult {
+	type Ticket = ();
+
+	fn validate(
+		destination: &mut Option<xcm::v3::MultiLocation>,
+		message: &mut Option<xcm::v3::Xcm<()>>,
+	) -> xcm::v3::SendResult<Self::Ticket> {
+		unimplemented!("please test via local-integration-tests")
+	}
+
+	fn deliver(ticket: Self::Ticket) -> core::result::Result<xcm::v3::XcmHash, xcm::v3::SendError> {
 		unimplemented!("please test via local-integration-tests")
 	}
 }

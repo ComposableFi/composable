@@ -25,7 +25,7 @@ jobs:
       cancel-in-progress: true
     strategy:
       matrix:
-        runtime: [dali, picasso, composable]
+        runtime: [picasso, composable]
     if: contains(github.event.pull_request.labels.*.name, 'needs-benchmarks')
     steps:
       - uses: actions/checkout@v3

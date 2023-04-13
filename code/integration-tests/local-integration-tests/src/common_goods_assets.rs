@@ -10,7 +10,7 @@ pub const FEE_NATIVE_KUSAMA: Balance = 106_666_660;
 
 use crate::{assert_lt_by, helpers::simtest, kusama_test_net::*, prelude::*};
 use common::Balance;
-use composable_traits::{currency::Rational64, xcm::assets::XcmAssetLocation};
+use composable_traits::{currency::Rational64};
 use cumulus_primitives_core::ParaId;
 use frame_support::{
 	assert_ok, log,
@@ -714,7 +714,7 @@ fn cannot_reserve_transfer_from_two_consensuses_in_one_message() {
 			&AccountId::from(bob()),
 		);
 		let origin = RuntimeOrigin::signed(bob().into());
-		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
+		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
 			origin,
 			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
 				1,

@@ -36,6 +36,7 @@ log = { version = "0.4.14", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
+primitives = { path = "../../runtime/primitives", default-features = false }
 
 [dev-dependencies]
 frame-benchmarking = { default-features = false, workspace = true }
@@ -59,6 +60,7 @@ std = [
   "pallet-currency-factory/std",
   "cumulus-primitives-core/std",
   "frame-benchmarking/std",
+  "primitives/std",
 ]
 
 runtime-benchmarks = [

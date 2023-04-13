@@ -4009,8 +4009,8 @@ declare module "@polkadot/types/lookup" {
     readonly isVoid: boolean;
     readonly isCouncil: boolean;
     readonly asCouncil: PalletCollectiveRawOrigin;
-    readonly isRelayerXcm: boolean;
-    readonly asRelayerXcm: PalletXcmOrigin;
+    readonly isPolkadotXcm: boolean;
+    readonly asPolkadotXcm: PalletXcmOrigin;
     readonly isCumulusXcm: boolean;
     readonly asCumulusXcm: CumulusPalletXcmOrigin;
     readonly isTechnicalCollective: boolean;
@@ -4019,7 +4019,7 @@ declare module "@polkadot/types/lookup" {
       | "System"
       | "Void"
       | "Council"
-      | "RelayerXcm"
+      | "PolkadotXcm"
       | "CumulusXcm"
       | "TechnicalCollective";
   }

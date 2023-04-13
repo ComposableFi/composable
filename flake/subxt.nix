@@ -1,8 +1,8 @@
 { ... }: {
-  perSystem = { self', pkgs, systemCommonRust, ... }: {
+  perSystem = { self', pkgs, systemCommonRust, subnix, ... }: {
     packages = let
       mkSubxtClient = name: runtime:
-        pkgs.stdenv.mkDerivation {
+        pkgs.stdenv.mkDerivation (subnix.subenv // {
           inherit name;
           dontUnpack = true;
           buildInputs = [
@@ -10,8 +10,6 @@
             runtime
             self'.packages.rococo-wasm-runtime-current
           ];
-          nativeBuildInputs = with pkgs;
-            [ clang ] ++ systemCommonRust.darwin-deps;
 
           installPhase = ''
             mkdir --parents $out
@@ -20,7 +18,7 @@
               --parachain-wasm=${runtime}/lib/runtime.optimized.wasm \
               --relaychain-wasm=${self'.packages.rococo-wasm-runtime-current}/lib/rococo_runtime.compact.compressed.wasm
           '';
-        };
+        });
     in {
       composable-rococo-subxt-client =
         mkSubxtClient "composable-rococo-subxt-client"

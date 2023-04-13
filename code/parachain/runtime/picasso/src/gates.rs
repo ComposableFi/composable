@@ -34,7 +34,7 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 					RuntimeCall::DmpQueue(..) |
 					RuntimeCall::UnknownTokens(..) |
 					RuntimeCall::XcmpQueue(..) |
-					RuntimeCall::RelayerXcm(..)
+					RuntimeCall::PolkadotXcm(..)
 			),
 		}
 	}

@@ -1,7 +1,7 @@
 //! Benchmarks and  sanity tests for lending. Only test that action do not error, not that produce
 //! positive side effects
 
-use super::*;
+use super::{prelude::*, *};
 use crate::{self as pallet_assets_registry};
 
 #[allow(unused_imports)]
@@ -11,10 +11,13 @@ use composable_traits::{
 	rational,
 	storage::UpdateValue,
 };
+
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
+use primitives::currency::{ForeignAssetId, VersionedMultiLocation};
 use sp_runtime::traits::Zero;
 use sp_std::prelude::*;
+use xcm::latest::MultiLocation;
 
 benchmarks! {
 	where_clause {
@@ -24,7 +27,7 @@ benchmarks! {
 	}
 
 	register_asset {
-		let location = Default::default();
+		let location = T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode().as_ref()).unwrap();
 		let protocol_id = *b"benchmar";
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
@@ -37,7 +40,7 @@ benchmarks! {
 	}: _(RawOrigin::Root, protocol_id, nonce, Some(location), asset_info)
 
 	update_asset {
-		let location : T::ForeignAssetId = Default::default();
+		let location =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode().as_ref()).unwrap();
 		let protocol_id = *b"benchmar";
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
@@ -71,7 +74,7 @@ benchmarks! {
 
 	set_min_fee {
 		let target_parachain_id = 100_u32.into();
-		let foreign_asset_id = Default::default();
+		let foreign_asset_id =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode().as_ref()).unwrap();
 		let balance = 100_500.into();
 
 	}: _(RawOrigin::Root, target_parachain_id, foreign_asset_id, Some(balance))

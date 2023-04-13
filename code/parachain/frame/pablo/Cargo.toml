@@ -38,12 +38,13 @@ composable-tests-helpers = { path = "../composable-tests-helpers" }
 frame-benchmarking = { default-features = false, workspace = true }
 orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
-pallet-currency-factory = { path = "../currency-factory" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 pallet-assets-registry = { path = "../assets-registry" }
 pallet-assets-transactor-router = { path = "../assets-transactor-router" }
+pallet-balances = { workspace = true }
+pallet-currency-factory = { path = "../currency-factory" }
 pallet-staking-rewards = { path = "../staking-rewards" }
 pallet-timestamp = { workspace = true }
+primitives = { path = "../../runtime/primitives", default-features = false }
 proptest = { version = "1.0" }
 
 [features]
@@ -55,17 +56,26 @@ runtime-benchmarks = [
 ]
 std = [
   "codec/std",
+  "composable-maths/std",
+  "composable-support/std",
+  "composable-traits/std",
+  "frame-benchmarking/std",
   "frame-support/std",
   "frame-system/std",
-  "sp-runtime/std",
-  "sp-io/std",
-  "sp-core/std",
-  "sp-std/std",
-  "sp-arithmetic/std",
-  "scale-info/std",
-  "composable-traits/std",
-  "composable-support/std",
-  "composable-maths/std",
+  "orml-tokens/std",
+  "orml-traits/std",
+  "pallet-assets-registry/std",
+  "pallet-assets-transactor-router/std",
+  "pallet-balances/std",
+  "pallet-currency-factory/std",
+  "pallet-staking-rewards/std",
+  "pallet-timestamp/std",
+  "primitives/std",
   "rust_decimal/std",
-  "frame-benchmarking/std",
+  "scale-info/std",
+  "sp-arithmetic/std",
+  "sp-core/std",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
 ]

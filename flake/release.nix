@@ -14,9 +14,6 @@
           name = "release.txt";
           text = ''
             ## Runtimes
-            ### Dali
-            ```
-            ${subwasm-call packages.dali-runtime}```
             ### Picasso
             ```
             ${subwasm-call packages.picasso-runtime}
@@ -28,7 +25,6 @@
             ## Nix
             ```bash
             # Generate the Wasm runtimes
-            nix build ${flake-url}#dali-runtime
             nix build ${flake-url}#picasso-runtime
             nix build ${flake-url}#composable-runtime
 
@@ -47,8 +43,10 @@
           '';
         };
 
+        # basically this should be just package result with several files
         generate-release-artifacts = pkgs.writeShellApplication {
           name = "generate-release-artifacts";
+          runtimeInputs = [ pkgs.bash pkgs.binutils pkgs.coreutils ];
           text = let
             make-bundle = type: package:
               self.inputs.bundlers.bundlers."${system}"."${type}" package;
@@ -63,9 +61,6 @@
             cp ${generated-release-body} release-artifacts/release.txt
 
             # Generate wasm runtimes
-            cp ${packages.dali-runtime}/lib/runtime.optimized.wasm release-artifacts/to-upload/dali_runtime_${
-              subwasm-version packages.dali-runtime
-            }.wasm
             cp ${packages.picasso-runtime}/lib/runtime.optimized.wasm release-artifacts/to-upload/picasso_runtime_${
               subwasm-version packages.picasso-runtime
             }.wasm

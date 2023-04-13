@@ -1,9 +1,8 @@
 //! CurrencyId implementation
 use codec::{CompactAs, Decode, Encode, EncodeLike, MaxEncodedLen, WrapperTypeEncode};
 use composable_support::validation::Validate;
-use composable_traits::{assets::Asset, currency::Exponent, xcm::assets::XcmAssetLocation};
+use composable_traits::{assets::Asset, currency::Exponent};
 
-use frame_support::WeakBoundedVec;
 use scale_info::TypeInfo;
 use sp_runtime::{
 	sp_std::{ops::Deref, vec::Vec},
@@ -15,20 +14,27 @@ use crate::prelude::*;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-use crate::topology;
-use xcm::latest::prelude::*;
+use xcm::{latest::prelude::*, v3};
 
-/// Trait used to write generalized code over well know currencies
-/// We use const to allow for match on these
-/// Allows to have reuse of code amids runtime and cross relay transfers in future.
-// TODO: split CurrencyId for runtimes - one for DOT and one for KSM
 pub trait WellKnownCurrency {
-	// works well with patterns unlike impl trait `associated consts cannot be referenced in
-	// patterns`
 	const NATIVE: CurrencyId;
-	/// usually we expect running with relay,
-	/// but if  not, than degenerative case would be this equal to `NATIVE`
 	const RELAY_NATIVE: CurrencyId;
+
+	fn local_to_remote(id: CurrencyId) -> Option<MultiLocation> {
+		match id {
+			id if id == Self::NATIVE => Some(MultiLocation::here()),
+			id if id == Self::RELAY_NATIVE => Some(MultiLocation::parent()),
+			_ => None,
+		}
+	}
+
+	fn remote_to_local(id: MultiLocation) -> Option<CurrencyId> {
+		match id {
+			MultiLocation { parents: 0, interior: Junctions::Here } => Some(Self::NATIVE),
+			MultiLocation { parents: 1, interior: Junctions::Here } => Some(Self::RELAY_NATIVE),
+			_ => None,
+		}
+	}
 }
 
 #[derive(
@@ -48,6 +54,7 @@ pub trait WellKnownCurrency {
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[repr(transparent)]
+#[cfg_attr(feature = "std", serde(transparent))]
 pub struct CurrencyId(pub u128);
 
 impl FromStr for CurrencyId {
@@ -69,7 +76,7 @@ macro_rules! list_assets {
 	(
 		$(
 			$(#[$attr:meta])*
-			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal $(, $xcm_location:expr $(, $decimals:expr )?)? );
+			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal $(, $decimals:expr )? );
 		)*
 	) => {
 		$(
@@ -91,55 +98,23 @@ macro_rules! list_assets {
 			}
 		}
 
-		pub fn local_to_xcm_reserve(id: CurrencyId) -> Option<xcm::latest::MultiLocation> {
-            match id {
-				$(
-					$( CurrencyId::$NAME => $xcm_location, )?
-				)*
-				_ => None,
-			}
-		}
-
 		pub fn remote_decimals_for_local(id: CurrencyId) -> Option<Exponent> {
             match id {
 				$(
-					$(
 						$( CurrencyId::$NAME => $decimals, )?
-					)?
 				)*
 				_ => None,
 			}
 		}
 
-		pub fn xcm_reserve_to_local(remote_id: xcm::latest::MultiLocation) -> Option<CurrencyId> {
-			use lazy_static::lazy_static;
-			use sp_std::collections::btree_map::BTreeMap;
-
-			lazy_static! {
-				static ref XCM_ASSETS: BTreeMap<Vec<u8>, CurrencyId> = {
-					let mut map = BTreeMap::new();
-					$(
-						$(
-							let xcm_id: Option<xcm::latest::MultiLocation> = $xcm_location;
-							if let Some(xcm_id) = xcm_id {
-								map.insert(xcm_id.encode(), CurrencyId::$NAME);
-							}
-						)?
-					)*
-					map
-				};
-			}
-			XCM_ASSETS.get(&remote_id.encode()).map(|x| *x)
-		}
-
-		pub fn list_assets() -> Vec<Asset<u128, XcmAssetLocation>> {
+		pub fn list_assets() -> Vec<Asset<u128, VersionedMultiLocation>> {
 			[
 				$(Asset {
 					id: CurrencyId::$NAME.0 as u128,
 					name: Some(stringify!($NAME).as_bytes().to_vec()),
 					ratio: None,
 					decimals: Self::remote_decimals_for_local(CurrencyId::$NAME).unwrap_or(Self::decimals()),
-					foreign_id: Self::local_to_xcm_reserve(CurrencyId::$NAME).map(XcmAssetLocation::new),
+					foreign_id: None,
 					existential_deposit: 0_u128,
 				},)*
 			]
@@ -157,25 +132,19 @@ impl CurrencyId {
 		// Native Tokens (1 - 100)
 		/// Native from Picasso
 		pub const PICA: CurrencyId = CurrencyId(
-			1,
-			Some(topology::this::LOCAL)
+			1
 		);
 		///  Native from Composable
 		pub const LAYR: CurrencyId = CurrencyId(2);
 
 		/// Kusama native token
 		pub const KSM: CurrencyId = CurrencyId(
-			4,
-			Some(MultiLocation::parent())
+			4
 		);
 
 		// From Picasso
 		pub const PBLO: CurrencyId = CurrencyId(
-			5,
-			Some(MultiLocation {
-				parents: 0,
-				interior: X1(GeneralIndex(5)),
-			})
+			5
 		);
 
 		/// DOT from Polkadot
@@ -202,17 +171,7 @@ impl CurrencyId {
 		// Non-Native Tokens (101 - 1000)
 		/// Karura KAR
 		pub const KAR: CurrencyId = CurrencyId(
-			101,
-			Some(MultiLocation {
-				parents: 1,
-				interior: X2(
-					Parachain(topology::karura::ID),
-					GeneralKey(WeakBoundedVec::force_from(
-						topology::karura::KAR_KEY.to_vec(),
-						None,
-					)),
-				),
-			})
+			101
 		);
 		/// BIFROST BNC
 		pub const BNC: CurrencyId = CurrencyId(102, None);
@@ -223,39 +182,26 @@ impl CurrencyId {
 
 		/// Karura stable coin(Acala Dollar), not native.
 		pub const kUSD: CurrencyId = CurrencyId(
-			129,
-			Some(MultiLocation {
-				parents: 1,
-				interior: X2(
-					Parachain(topology::karura::ID),
-					GeneralKey(WeakBoundedVec::force_from(
-						topology::karura::AUSD_KEY.to_vec(),
-						None,
-					)),
-				),
-			})
+			129
 		);
 
 		/// Statemine USDT
 		pub const USDT: CurrencyId = CurrencyId(
 			130,
-			Some(MultiLocation {
-				parents: 1,
-				interior: X3(
-					Parachain(topology::common_good_assets::ID),
-					PalletInstance(topology::common_good_assets::ASSETS),
-					GeneralIndex(topology::common_good_assets::USDT),
-				),
-			}),
 			Some(6)
 		);
+
+		/// Statemint USDT
+		pub const USDTP: CurrencyId = CurrencyId(
+			140,
+			Some(6)
+		);
+
 		pub const USDC: CurrencyId = CurrencyId(131, None);
 		/// Wrapped BTC
 		pub const wBTC: CurrencyId = CurrencyId(132, None);
 		/// Wrapped ETH
 		pub const wETH: CurrencyId = CurrencyId(133, None);
-
-		// Staked asset xTokens (1001 - 2000)
 
 		/// Staked asset xKSM Token
 		pub const xKSM: CurrencyId = CurrencyId(1004, None);
@@ -344,35 +290,6 @@ impl From<CurrencyId> for xcm::latest::Junction {
 	}
 }
 
-#[cfg(test)]
-mod common_sense {
-	use super::*;
-
-	#[test]
-	fn no_wrong_map() {
-		assert_eq!(
-			CurrencyId::xcm_reserve_to_local(MultiLocation {
-				parents: 1,
-				interior: X3(Parachain(1000), PalletInstance(50), GeneralIndex(666))
-			}),
-			None
-		);
-	}
-
-	#[test]
-	fn one_right_map() {
-		let decimals = CurrencyId::remote_decimals_for_local(
-			CurrencyId::xcm_reserve_to_local(MultiLocation {
-				parents: 1,
-				interior: X3(Parachain(1000), PalletInstance(50), GeneralIndex(1984)),
-			})
-			.unwrap(),
-		)
-		.unwrap();
-
-		assert_eq!(decimals, 6);
-	}
-}
 mod ops {
 	use super::CurrencyId;
 	use core::ops::{Add, Mul};
@@ -455,18 +372,21 @@ mod ops {
 #[derive(RuntimeDebug, Decode, Encode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum ForeignAssetId {
-	Xcm(XcmAssetLocation),
+	Xcm(VersionedMultiLocation),
 	IbcIcs20(PrefixedDenom),
 }
 
-impl Default for ForeignAssetId {
-	fn default() -> Self {
-		Self::Xcm(XcmAssetLocation::default())
-	}
+#[derive(
+	Ord, PartialOrd, RuntimeDebug, Decode, Encode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum VersionedMultiLocation {
+	#[codec(index = 3)]
+	V3(v3::MultiLocation),
 }
 
-impl From<XcmAssetLocation> for ForeignAssetId {
-	fn from(this: XcmAssetLocation) -> Self {
+impl From<VersionedMultiLocation> for ForeignAssetId {
+	fn from(this: VersionedMultiLocation) -> Self {
 		Self::Xcm(this)
 	}
 }
@@ -490,12 +410,6 @@ impl FromStr for PrefixedDenom {
 		InnerDenom::from_str(s)
 			.map_err(|_| DispatchError::Other("PrefixedDenom parse failed"))
 			.map(Self)
-	}
-}
-
-impl Default for PrefixedDenom {
-	fn default() -> Self {
-		Self(InnerDenom::from_str("1").expect("constant"))
 	}
 }
 

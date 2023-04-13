@@ -26,18 +26,19 @@
         taplo-check
       ]);
 
+      all-benchmarks = pkgs.linkFarmFromDrvs "all-misc" (with self'.packages; [
+        check-composable-benchmarks-ci
+        check-picasso-benchmarks-ci
+        composable-bench-node
+      ]);
+
       all = pkgs.linkFarmFromDrvs "all-ci-packages" (with self'.packages; [
         benchmarks-check
         cargo-clippy-check
         cargo-deny-check
-        check-composable-benchmarks-ci
-        check-picasso-benchmarks-ci
-        check-picasso-integration-tests
-        check-picasso-benchmarks-ci
         check-picasso-integration-tests
         cmc-api
         cmc-api-image
-        composable-bench-node
         composable-node
         devnet-centauri
         devnet-picasso

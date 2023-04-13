@@ -37,6 +37,7 @@ bignumbers
 binaryen
 binop
 bintools
+binutils
 bitfield
 bitfields
 bitvec
@@ -364,6 +365,7 @@ structopt
 structs
 styleguide
 subattrs
+subenv
 submessage
 submessages
 submod
