@@ -105,7 +105,7 @@ fn transfer_this_native_to_sibling_overridden() {
 		);
 		let before = Balances::balance(&sibling_account(SIBLING_PARA_ID));
 		let alice_before = Balances::balance(&alice().into());
-		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
+		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
 			RuntimeOrigin::signed(alice().into()),
 			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
 				1,
@@ -152,7 +152,7 @@ fn transfer_non_native_reserve_asset_from_this_to_sibling() {
 
 		assert_ok!(Assets::deposit(CurrencyId::PBLO, &alice().into(), 10 * PICA));
 		let _before = Assets::free_balance(CurrencyId::PBLO, &alice().into());
-		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
+		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
 			RuntimeOrigin::signed(alice().into()),
 			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
 				1,
@@ -691,7 +691,7 @@ fn unspent_xcm_fee_is_returned_correctly() {
 			},
 		]);
 
-		assert_ok!(this_runtime::RelayerXcm::send_xcm(Here, Parent, xcm_msg));
+		assert_ok!(this_runtime::PolkadotXcm::send_xcm(Here, Parent, xcm_msg));
 	});
 
 	let parachain_balance = KusamaRelay::execute_with(|| {
@@ -729,7 +729,7 @@ fn unspent_xcm_fee_is_returned_correctly() {
 			this_runtime::ParachainInfo::parachain_id(),
 		);
 
-		assert_ok!(RelayerXcm::send_xcm(Here, Parent, finalized_call));
+		assert_ok!(PolkadotXcm::send_xcm(Here, Parent, finalized_call));
 	});
 
 	KusamaRelay::execute_with(|| {
@@ -871,7 +871,7 @@ fn trap_assets_lower_than_existential_deposit_works() {
 		assert_eq!(
 			System::events().iter().find(|r| matches!(
 				r.event,
-				this_runtime::RuntimeEvent::RelayerXcm(pallet_xcm::Event::AssetsTrapped(_, _, _))
+				this_runtime::RuntimeEvent::PolkadotXcm(pallet_xcm::Event::AssetsTrapped(_, _, _))
 			)),
 			None
 		);
@@ -970,7 +970,7 @@ fn sibling_trap_assets_works() {
 		assert_eq!(
 			System::events().iter().find(|r| matches!(
 				r.event,
-				this_runtime::RuntimeEvent::RelayerXcm(pallet_xcm::Event::AssetsTrapped(_, _, _))
+				this_runtime::RuntimeEvent::PolkadotXcm(pallet_xcm::Event::AssetsTrapped(_, _, _))
 			)),
 			None // non of assets trapped by hash, because all are known
 		);
@@ -1057,7 +1057,7 @@ fn sibling_shib_to_transfer() {
 		log::info!(target: "bdd", "When Bob transfers some {:?} SHIB from sibling to Dali", transfer_amount);
 		use sibling_runtime::*;
 		let origin = RuntimeOrigin::signed(bob().into());
-		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
+		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
 			origin,
 			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
 				1,
@@ -1189,7 +1189,7 @@ fn transfer_unknown_token_from_known_origin_ends_up_in_unknown_tokens() {
 		log::info!(target: "bdd", "When Bob transfers some known asset (as fee) and unknown asset");
 		use sibling_runtime::*;
 		let origin = RuntimeOrigin::signed(bob().into());
-		assert_ok!(RelayerXcm::limited_reserve_transfer_assets(
+		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
 			origin,
 			Box::new(VersionedMultiLocation::V1(MultiLocation::new(
 				1,

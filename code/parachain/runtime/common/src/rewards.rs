@@ -202,8 +202,6 @@ mod tests {
 
 	impl authorship::Config for Test {
 		type FindAuthor = OneAuthor;
-		type UncleGenerations = ();
-		type FilterUncle = ();
 		type EventHandler = ();
 	}
 

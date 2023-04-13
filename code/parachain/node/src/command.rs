@@ -1,21 +1,3 @@
-// This file is part of Substrate.
-
-// Copyright (C) 2017-2021 Parity Technologies (UK) Ltd.
-// SPDX-License-Identifier: Apache-2.0
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// 	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-#[cfg(feature = "dali")]
-use crate::service::DaliExecutor;
 use crate::{chain_names, service::ComposableExecutor};
 
 use crate::{
@@ -48,13 +30,22 @@ fn load_spec(id_or_path: &str) -> std::result::Result<Box<dyn sc_service::ChainS
 		chain_names::composable::PROD | chain_names::composable::DEFAULT =>
 			Box::new(chain_spec::composable()),
 		id_or_path => {
+			let error = "`--chain=".to_owned() + id_or_path + "` is not found or not supported. please see `chain_spec.rs` for supported chains. it must be either well known named chain or path to spec of well known chain";
 			use std::path::{Path, PathBuf};
-			match Path::new(id_or_path).file_name().expect("has file name").to_str().expect("which is unicode") {
-				file_name if file_name.ends_with(".json") && file_name.contains(chain_names::picasso::DEFAULT) =>
-					Box::new(chain_spec::picasso::ChainSpec::from_json_file(PathBuf::from(id_or_path))?),
-				file_name if file_name.ends_with(".json") && file_name.contains(chain_names::composable::DEFAULT) =>
-					Box::new(chain_spec::composable::ChainSpec::from_json_file(PathBuf::from(id_or_path))?),
-				_ => panic!("`chain={}` is not found or not supported. please see `chain_spec.rs` for supported chains", id_or_path),
+			match Path::new(id_or_path).file_name().expect(&error).to_str().expect(&error) {
+				file_name
+					if file_name.ends_with(".json") &&
+						file_name.contains(chain_names::picasso::DEFAULT) =>
+					Box::new(chain_spec::picasso::ChainSpec::from_json_file(PathBuf::from(
+						id_or_path,
+					))?),
+				file_name
+					if file_name.ends_with(".json") &&
+						file_name.contains(chain_names::composable::DEFAULT) =>
+					Box::new(chain_spec::composable::ChainSpec::from_json_file(PathBuf::from(
+						id_or_path,
+					))?),
+				_ => panic!("{}", error),
 			}
 		},
 	})
@@ -91,12 +82,7 @@ impl SubstrateCli for Cli {
 
 	fn native_runtime_version(spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
 		match spec.id() {
-			// composable-chains
 			chain if chain.contains("composable") => &composable_runtime::version::VERSION,
-			// dali chains
-			#[cfg(feature = "dali")]
-			chain if chain.contains("dali") => &dali_runtime::VERSION,
-			// picasso chains
 			chain if chain.contains("picasso") => &picasso_runtime::version::VERSION,
 			_ => panic!("Unknown chain_id: {}", spec.id()),
 		}
@@ -230,9 +216,6 @@ pub fn run() -> Result<()> {
 						runner.sync_run(|config| match config.chain_spec.id() {
 							id if id.contains(chain_names::picasso::DEFAULT) =>
 								cmd.run::<Block, PicassoExecutor>(config),
-							#[cfg(feature = "dali")]
-							id if id.contains("dali") => cmd.run::<Block, DaliExecutor>(config),
-
 							id if id.contains(chain_names::composable::DEFAULT) =>
 								cmd.run::<Block, ComposableExecutor>(config),
 							id => panic!("Unknown Chain: {}", id),
@@ -251,15 +234,6 @@ pub fn run() -> Result<()> {
 							>(&config, Option::None)?;
 							cmd.run(partials.client)
 						},
-						#[cfg(feature = "dali")]
-						id if id.contains("dali") => {
-							let partials = new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(
-								&config,
-								Option::None,
-							)?;
-							cmd.run(partials.client)
-						},
-
 						id if id.contains(chain_names::composable::DEFAULT) => {
 							let partials = new_partial::<
 								composable_runtime::RuntimeApi,
@@ -285,15 +259,6 @@ pub fn run() -> Result<()> {
 						let storage = partials.backend.expose_storage();
 						cmd.run(config, partials.client, db, storage)
 					},
-					#[cfg(feature = "dali")]
-					id if id.contains("dali") => {
-						let partials =
-							new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(&config, None)?;
-						let db = partials.backend.expose_db();
-						let storage = partials.backend.expose_storage();
-						cmd.run(config, partials.client, db, storage)
-					},
-
 					id if id.contains(chain_names::composable::DEFAULT) => {
 						let partials = new_partial::<
 							composable_runtime::RuntimeApi,

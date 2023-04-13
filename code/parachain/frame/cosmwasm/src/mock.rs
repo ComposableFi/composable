@@ -8,10 +8,7 @@ use crate::{
 	types::*,
 	*,
 };
-use composable_traits::{
-	currency::{CurrencyFactory, RangeId},
-	xcm::assets::XcmAssetLocation,
-};
+use composable_traits::currency::{CurrencyFactory, RangeId};
 use core::marker::PhantomData;
 
 use cosmwasm_vm::{
@@ -31,7 +28,7 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
-use primitives::currency::CurrencyId;
+use primitives::currency::{CurrencyId, ForeignAssetId};
 use sp_core::H256;
 use sp_runtime::{
 	generic,
@@ -184,7 +181,7 @@ impl CurrencyFactory for CurrencyIdGenerator {
 impl pallet_assets_registry::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = CurrencyId;
-	type ForeignAssetId = XcmAssetLocation;
+	type ForeignAssetId = ForeignAssetId;
 	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
 	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
@@ -202,7 +199,7 @@ impl pallet_assets_transactor_router::Config for Test {
 	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type AssetLocation = XcmAssetLocation;
+	type AssetLocation = ForeignAssetId;
 	type AssetsRegistry = AssetsRegistry;
 }
 

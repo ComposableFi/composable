@@ -31,7 +31,7 @@ pub mod api {
 		"Preimage",
 		"Proxy",
 		"XcmpQueue",
-		"RelayerXcm",
+		"PolkadotXcm",
 		"CumulusXcm",
 		"DmpQueue",
 		"XTokens",
@@ -103,7 +103,7 @@ pub mod api {
 		#[codec(index = 40)]
 		XcmpQueue(xcmp_queue::Event),
 		#[codec(index = 41)]
-		RelayerXcm(relayer_xcm::Event),
+		PolkadotXcm(polkadot_xcm::Event),
 		#[codec(index = 42)]
 		CumulusXcm(cumulus_xcm::Event),
 		#[codec(index = 43)]
@@ -12444,7 +12444,7 @@ pub mod api {
 			}
 		}
 	}
-	pub mod relayer_xcm {
+	pub mod polkadot_xcm {
 		use super::{root_mod, runtime_types};
 		#[doc = "Contains one variant per dispatchable that can be called by an extrinsic."]
 		pub mod calls {
@@ -12536,7 +12536,7 @@ pub mod api {
 					message: runtime_types::xcm::VersionedXcm,
 				) -> ::subxt::tx::StaticTxPayload<Send> {
 					::subxt::tx::StaticTxPayload::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"send",
 						Send {
 							dest: ::std::boxed::Box::new(dest),
@@ -12572,7 +12572,7 @@ pub mod api {
 					fee_asset_item: ::core::primitive::u32,
 				) -> ::subxt::tx::StaticTxPayload<TeleportAssets> {
 					::subxt::tx::StaticTxPayload::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"teleport_assets",
 						TeleportAssets {
 							dest: ::std::boxed::Box::new(dest),
@@ -12611,7 +12611,7 @@ pub mod api {
 					fee_asset_item: ::core::primitive::u32,
 				) -> ::subxt::tx::StaticTxPayload<ReserveTransferAssets> {
 					::subxt::tx::StaticTxPayload::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"reserve_transfer_assets",
 						ReserveTransferAssets {
 							dest: ::std::boxed::Box::new(dest),
@@ -12643,7 +12643,7 @@ pub mod api {
 					max_weight: ::core::primitive::u64,
 				) -> ::subxt::tx::StaticTxPayload<Execute> {
 					::subxt::tx::StaticTxPayload::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"execute",
 						Execute { message: ::std::boxed::Box::new(message), max_weight },
 						[
@@ -12665,7 +12665,7 @@ pub mod api {
 					xcm_version: ::core::primitive::u32,
 				) -> ::subxt::tx::StaticTxPayload<ForceXcmVersion> {
 					::subxt::tx::StaticTxPayload::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"force_xcm_version",
 						ForceXcmVersion { location: ::std::boxed::Box::new(location), xcm_version },
 						[
@@ -12685,7 +12685,7 @@ pub mod api {
 					maybe_xcm_version: ::core::option::Option<::core::primitive::u32>,
 				) -> ::subxt::tx::StaticTxPayload<ForceDefaultXcmVersion> {
 					::subxt::tx::StaticTxPayload::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"force_default_xcm_version",
 						ForceDefaultXcmVersion { maybe_xcm_version },
 						[
@@ -12704,7 +12704,7 @@ pub mod api {
 					location: runtime_types::xcm::VersionedMultiLocation,
 				) -> ::subxt::tx::StaticTxPayload<ForceSubscribeVersionNotify> {
 					::subxt::tx::StaticTxPayload::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"force_subscribe_version_notify",
 						ForceSubscribeVersionNotify { location: ::std::boxed::Box::new(location) },
 						[
@@ -12726,7 +12726,7 @@ pub mod api {
 					location: runtime_types::xcm::VersionedMultiLocation,
 				) -> ::subxt::tx::StaticTxPayload<ForceUnsubscribeVersionNotify> {
 					::subxt::tx::StaticTxPayload::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"force_unsubscribe_version_notify",
 						ForceUnsubscribeVersionNotify {
 							location: ::std::boxed::Box::new(location),
@@ -12765,7 +12765,7 @@ pub mod api {
 					weight_limit: runtime_types::xcm::v2::WeightLimit,
 				) -> ::subxt::tx::StaticTxPayload<LimitedReserveTransferAssets> {
 					::subxt::tx::StaticTxPayload::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"limited_reserve_transfer_assets",
 						LimitedReserveTransferAssets {
 							dest: ::std::boxed::Box::new(dest),
@@ -12808,7 +12808,7 @@ pub mod api {
 					weight_limit: runtime_types::xcm::v2::WeightLimit,
 				) -> ::subxt::tx::StaticTxPayload<LimitedTeleportAssets> {
 					::subxt::tx::StaticTxPayload::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"limited_teleport_assets",
 						LimitedTeleportAssets {
 							dest: ::std::boxed::Box::new(dest),
@@ -12839,7 +12839,7 @@ pub mod api {
 			#[doc = "\\[ outcome \\]"]
 			pub struct Attempted(pub runtime_types::xcm::v2::traits::Outcome);
 			impl ::subxt::events::StaticEvent for Attempted {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "Attempted";
 			}
 			#[derive(
@@ -12854,7 +12854,7 @@ pub mod api {
 				pub runtime_types::xcm::v2::Xcm,
 			);
 			impl ::subxt::events::StaticEvent for Sent {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "Sent";
 			}
 			#[derive(
@@ -12870,7 +12870,7 @@ pub mod api {
 				pub ::core::primitive::u64,
 			);
 			impl ::subxt::events::StaticEvent for UnexpectedResponse {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "UnexpectedResponse";
 			}
 			#[derive(
@@ -12885,7 +12885,7 @@ pub mod api {
 				pub runtime_types::xcm::v2::Response,
 			);
 			impl ::subxt::events::StaticEvent for ResponseReady {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "ResponseReady";
 			}
 			#[derive(
@@ -12901,7 +12901,7 @@ pub mod api {
 				pub ::core::primitive::u8,
 			);
 			impl ::subxt::events::StaticEvent for Notified {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "Notified";
 			}
 			#[derive(
@@ -12920,7 +12920,7 @@ pub mod api {
 				pub runtime_types::sp_weights::weight_v2::Weight,
 			);
 			impl ::subxt::events::StaticEvent for NotifyOverweight {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "NotifyOverweight";
 			}
 			#[derive(
@@ -12936,7 +12936,7 @@ pub mod api {
 				pub ::core::primitive::u8,
 			);
 			impl ::subxt::events::StaticEvent for NotifyDispatchError {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "NotifyDispatchError";
 			}
 			#[derive(
@@ -12953,7 +12953,7 @@ pub mod api {
 				pub ::core::primitive::u8,
 			);
 			impl ::subxt::events::StaticEvent for NotifyDecodeFailed {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "NotifyDecodeFailed";
 			}
 			#[derive(
@@ -12970,7 +12970,7 @@ pub mod api {
 				pub ::core::option::Option<runtime_types::xcm::v1::multilocation::MultiLocation>,
 			);
 			impl ::subxt::events::StaticEvent for InvalidResponder {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "InvalidResponder";
 			}
 			#[derive(
@@ -12990,7 +12990,7 @@ pub mod api {
 				pub ::core::primitive::u64,
 			);
 			impl ::subxt::events::StaticEvent for InvalidResponderVersion {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "InvalidResponderVersion";
 			}
 			#[derive(
@@ -13004,7 +13004,7 @@ pub mod api {
 			#[doc = "\\[ id \\]"]
 			pub struct ResponseTaken(pub ::core::primitive::u64);
 			impl ::subxt::events::StaticEvent for ResponseTaken {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "ResponseTaken";
 			}
 			#[derive(
@@ -13019,7 +13019,7 @@ pub mod api {
 				pub runtime_types::xcm::VersionedMultiAssets,
 			);
 			impl ::subxt::events::StaticEvent for AssetsTrapped {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "AssetsTrapped";
 			}
 			#[derive(
@@ -13033,7 +13033,7 @@ pub mod api {
 				pub ::core::primitive::u32,
 			);
 			impl ::subxt::events::StaticEvent for VersionChangeNotified {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "VersionChangeNotified";
 			}
 			#[derive(
@@ -13048,7 +13048,7 @@ pub mod api {
 				pub ::core::primitive::u32,
 			);
 			impl ::subxt::events::StaticEvent for SupportedVersionChanged {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "SupportedVersionChanged";
 			}
 			#[derive(
@@ -13064,7 +13064,7 @@ pub mod api {
 				pub runtime_types::xcm::v2::traits::Error,
 			);
 			impl ::subxt::events::StaticEvent for NotifyTargetSendFail {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "NotifyTargetSendFail";
 			}
 			#[derive(
@@ -13079,7 +13079,7 @@ pub mod api {
 				pub ::core::primitive::u64,
 			);
 			impl ::subxt::events::StaticEvent for NotifyTargetMigrationFail {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "NotifyTargetMigrationFail";
 			}
 			#[derive(
@@ -13094,7 +13094,7 @@ pub mod api {
 				pub runtime_types::xcm::VersionedMultiAssets,
 			);
 			impl ::subxt::events::StaticEvent for AssetsClaimed {
-				const PALLET: &'static str = "RelayerXcm";
+				const PALLET: &'static str = "PolkadotXcm";
 				const EVENT: &'static str = "AssetsClaimed";
 			}
 		}
@@ -13112,7 +13112,7 @@ pub mod api {
 					(),
 				> {
 					::subxt::storage::address::StaticStorageAddress::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"QueryCounter",
 						vec![],
 						[
@@ -13136,7 +13136,7 @@ pub mod api {
 					::subxt::storage::address::Yes,
 				> {
 					::subxt::storage::address::StaticStorageAddress::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"Queries",
 						vec![::subxt::storage::address::StorageMapKey::new(
 							_0.borrow(),
@@ -13162,7 +13162,7 @@ pub mod api {
 					::subxt::storage::address::Yes,
 				> {
 					::subxt::storage::address::StaticStorageAddress::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"Queries",
 						Vec::new(),
 						[
@@ -13187,7 +13187,7 @@ pub mod api {
 					::subxt::storage::address::Yes,
 				> {
 					::subxt::storage::address::StaticStorageAddress::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"AssetTraps",
 						vec![::subxt::storage::address::StorageMapKey::new(
 							_0.borrow(),
@@ -13213,7 +13213,7 @@ pub mod api {
 					::subxt::storage::address::Yes,
 				> {
 					::subxt::storage::address::StaticStorageAddress::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"AssetTraps",
 						Vec::new(),
 						[
@@ -13234,7 +13234,7 @@ pub mod api {
 					(),
 				> {
 					::subxt::storage::address::StaticStorageAddress::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"SafeXcmVersion",
 						vec![],
 						[
@@ -13257,7 +13257,7 @@ pub mod api {
 					::subxt::storage::address::Yes,
 				> {
 					::subxt::storage::address::StaticStorageAddress::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"SupportedVersion",
 						vec![
 							::subxt::storage::address::StorageMapKey::new(
@@ -13286,7 +13286,7 @@ pub mod api {
 					::subxt::storage::address::Yes,
 				> {
 					::subxt::storage::address::StaticStorageAddress::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"SupportedVersion",
 						Vec::new(),
 						[
@@ -13308,7 +13308,7 @@ pub mod api {
 					::subxt::storage::address::Yes,
 				> {
 					::subxt::storage::address::StaticStorageAddress::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"VersionNotifiers",
 						vec![
 							::subxt::storage::address::StorageMapKey::new(
@@ -13338,7 +13338,7 @@ pub mod api {
 					::subxt::storage::address::Yes,
 				> {
 					::subxt::storage::address::StaticStorageAddress::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"VersionNotifiers",
 						Vec::new(),
 						[
@@ -13366,7 +13366,7 @@ pub mod api {
 					::subxt::storage::address::Yes,
 				> {
 					::subxt::storage::address::StaticStorageAddress::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"VersionNotifyTargets",
 						vec![
 							::subxt::storage::address::StorageMapKey::new(
@@ -13400,7 +13400,7 @@ pub mod api {
 					::subxt::storage::address::Yes,
 				> {
 					::subxt::storage::address::StaticStorageAddress::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"VersionNotifyTargets",
 						Vec::new(),
 						[
@@ -13427,7 +13427,7 @@ pub mod api {
 					(),
 				> {
 					::subxt::storage::address::StaticStorageAddress::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"VersionDiscoveryQueue",
 						vec![],
 						[
@@ -13450,7 +13450,7 @@ pub mod api {
 					(),
 				> {
 					::subxt::storage::address::StaticStorageAddress::new(
-						"RelayerXcm",
+						"PolkadotXcm",
 						"CurrentMigration",
 						vec![],
 						[
@@ -26261,7 +26261,7 @@ pub mod api {
 					runtime_types::pallet_collective::RawOrigin<::subxt::utils::AccountId32>,
 				),
 				#[codec(index = 41)]
-				RelayerXcm(runtime_types::pallet_xcm::pallet::Origin),
+				PolkadotXcm(runtime_types::pallet_xcm::pallet::Origin),
 				#[codec(index = 42)]
 				CumulusXcm(runtime_types::cumulus_pallet_xcm::pallet::Origin),
 				#[codec(index = 5)]
@@ -26324,7 +26324,7 @@ pub mod api {
 				#[codec(index = 40)]
 				XcmpQueue(runtime_types::cumulus_pallet_xcmp_queue::pallet::Call),
 				#[codec(index = 41)]
-				RelayerXcm(runtime_types::pallet_xcm::pallet::Call),
+				PolkadotXcm(runtime_types::pallet_xcm::pallet::Call),
 				#[codec(index = 42)]
 				CumulusXcm(runtime_types::cumulus_pallet_xcm::pallet::Call),
 				#[codec(index = 43)]
@@ -26425,7 +26425,7 @@ pub mod api {
 				#[codec(index = 40)]
 				XcmpQueue(runtime_types::cumulus_pallet_xcmp_queue::pallet::Event),
 				#[codec(index = 41)]
-				RelayerXcm(runtime_types::pallet_xcm::pallet::Event),
+				PolkadotXcm(runtime_types::pallet_xcm::pallet::Event),
 				#[codec(index = 42)]
 				CumulusXcm(runtime_types::cumulus_pallet_xcm::pallet::Event),
 				#[codec(index = 43)]
@@ -37276,8 +37276,8 @@ pub mod api {
 		pub fn xcmp_queue(&self) -> xcmp_queue::storage::StorageApi {
 			xcmp_queue::storage::StorageApi
 		}
-		pub fn relayer_xcm(&self) -> relayer_xcm::storage::StorageApi {
-			relayer_xcm::storage::StorageApi
+		pub fn polkadot_xcm(&self) -> polkadot_xcm::storage::StorageApi {
+			polkadot_xcm::storage::StorageApi
 		}
 		pub fn dmp_queue(&self) -> dmp_queue::storage::StorageApi {
 			dmp_queue::storage::StorageApi
@@ -37419,8 +37419,8 @@ pub mod api {
 		pub fn xcmp_queue(&self) -> xcmp_queue::calls::TransactionApi {
 			xcmp_queue::calls::TransactionApi
 		}
-		pub fn relayer_xcm(&self) -> relayer_xcm::calls::TransactionApi {
-			relayer_xcm::calls::TransactionApi
+		pub fn polkadot_xcm(&self) -> polkadot_xcm::calls::TransactionApi {
+			polkadot_xcm::calls::TransactionApi
 		}
 		pub fn cumulus_xcm(&self) -> cumulus_xcm::calls::TransactionApi {
 			cumulus_xcm::calls::TransactionApi

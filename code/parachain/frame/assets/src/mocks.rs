@@ -1,9 +1,6 @@
 use crate::*;
 
-use composable_traits::{
-	currency::{CurrencyFactory, RangeId},
-	xcm::assets::XcmAssetLocation,
-};
+use composable_traits::currency::{CurrencyFactory, RangeId};
 use frame_support::{
 	parameter_types,
 	traits::{Everything, GenesisBuild},

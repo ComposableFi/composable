@@ -3,6 +3,7 @@ use clap::Parser;
 use std::path::PathBuf;
 
 /// Sub-commands supported by the collator.
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Parser)]
 pub enum Subcommand {
 	/// Export the genesis state of the parachain.

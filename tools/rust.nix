@@ -63,8 +63,6 @@
 
         cargo-udeps-check = crane.nightly.cargoBuild
           (systemCommonRust.common-attrs // {
-            DALI_RUNTIME =
-              "${self'.packages.dali-runtime}/lib/runtime.optimized.wasm";
             PICASSO_RUNTIME =
               "${self'.packages.picasso-runtime}/lib/runtime.optimized.wasm";
             COMPOSABLE_RUNTIME =

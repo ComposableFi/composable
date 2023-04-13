@@ -65,20 +65,22 @@ smallvec = "1.7.0"
 default = ["std"]
 std = [
   "codec/std",
-  "frame-support/std",
-  "frame-system/std",
-  "sp-runtime/std",
-  "sp-io/std",
-  "sp-core/std",
-  "sp-std/std",
-  "sp-arithmetic/std",
   "composable-traits/std",
-  "scale-info/std",
-  "xcm/std",
   "cumulus-pallet-xcm/std",
   "frame-benchmarking/std",
-  "pallet-assets-transactor-router/std",
+  "frame-support/std",
+  "frame-system/std",
+  "primitives/std",
   "pallet-assets-registry/std",
+  "pallet-assets-transactor-router/std",
+  "pallet-balances/std",
+  "scale-info/std",
+  "sp-arithmetic/std",
+  "sp-core/std",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
+  "xcm/std",
 ]
 
 runtime-benchmarks = [

@@ -4,7 +4,7 @@ use crate::{
 	weights::SubstrateWeight,
 };
 
-use composable_traits::{defi::DeFiComposableConfig, xcm::assets::XcmAssetLocation};
+use composable_traits::defi::DeFiComposableConfig;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU32, Everything, GenesisBuild},
@@ -14,6 +14,7 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use hex_literal::hex;
 use orml_traits::parameter_type_with_key;
+use primitives::currency::ForeignAssetId;
 use smallvec::smallvec;
 use sp_core::{
 	sr25519::{Public, Signature},
@@ -161,7 +162,7 @@ ord_parameter_types! {
 impl pallet_assets_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = CurrencyId;
-	type ForeignAssetId = XcmAssetLocation;
+	type ForeignAssetId = ForeignAssetId;
 	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
 	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
@@ -179,7 +180,7 @@ impl pallet_assets_transactor_router::Config for Runtime {
 	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type AssetLocation = XcmAssetLocation;
+	type AssetLocation = ForeignAssetId;
 	type AssetsRegistry = AssetsRegistry;
 }
 
@@ -223,10 +224,16 @@ impl From<RuntimeOrigin> for XcmFake {
 	}
 }
 impl SendXcm for XcmFake {
-	fn send_xcm(
-		_destination: impl Into<xcm::latest::MultiLocation>,
-		_message: xcm::latest::Xcm<()>,
-	) -> xcm::latest::SendResult {
+	type Ticket = ();
+
+	fn validate(
+		destination: &mut Option<xcm::v3::MultiLocation>,
+		message: &mut Option<xcm::v3::Xcm<()>>,
+	) -> xcm::v3::SendResult<Self::Ticket> {
+		todo!("please test via local-integration-tests")
+	}
+
+	fn deliver(ticket: Self::Ticket) -> core::result::Result<xcm::v3::XcmHash, xcm::v3::SendError> {
 		todo!("please test via local-integration-tests")
 	}
 }

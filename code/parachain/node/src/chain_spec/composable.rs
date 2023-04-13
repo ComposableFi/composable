@@ -73,7 +73,7 @@ pub fn genesis_config(
 		},
 		democracy: Default::default(),
 		treasury: Default::default(),
-		relayer_xcm: Default::default(),
+		polkadot_xcm: Default::default(),
 		assets_registry: composable_runtime::AssetsRegistryConfig {
 			assets: primitives::topology::Composable::assets(),
 			phantom: Default::default(),

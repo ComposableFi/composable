@@ -1802,7 +1802,7 @@ declare module "@polkadot/api-base/types/storage" {
        **/
       [key: string]: QueryableStorageEntry<ApiType>;
     };
-    relayerXcm: {
+    PolkadotXcm: {
       /**
        * The existing asset traps.
        *

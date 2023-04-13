@@ -851,7 +851,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
-    relayerXcm: {
+    PolkadotXcm: {
       /**
        * Some assets have been claimed from an asset trap
        * 

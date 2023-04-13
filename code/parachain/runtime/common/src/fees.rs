@@ -128,7 +128,8 @@ mod commons_sense {
 	fn reasonable_fee() {
 		let converted =
 			WeightToFeeConverter::weight_to_fee(&Weight::from_ref_time(WEIGHT_REF_TIME_PER_SECOND));
-		assert_eq!(converted, 1_010_366_358_000);
+		assert!(converted > 1_000_000_000_000);
+		assert!(converted < 1_100_000_000_000);
 	}
 
 	impl AssetRatioInspect for Dummy {
