@@ -329,19 +329,19 @@ jobs:
         run: |  
           # https://github.com/cachix/cachix/issues/528
           # echo "warm up to check that we can compile rust with some basic substrate"
-          # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#subwasm --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 # --verbose --debug
+          # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#subwasm --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --verbose --debug
           # echo "compile our all in one devnet"
-          # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 # --verbose --debug
+          # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --verbose --debug
           # echo "double check we are ok with devnet/substrate on picasso"
-          # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 # --verbose --debug
+          # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --verbose --debug
           
           set -o pipefail -o errexit
           echo "warm up to check that we can compile rust with some basic substrate"
-          nix build .\#subwasm --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 # --debug --verbose
+          nix build .\#subwasm --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --debug --verbose
           echo "compile our all in one devnet"
-          nix build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 # --debug --verbose
+          nix build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --debug --verbose
           echo "double check we are ok with devnet/substrate on picasso"
-          nix build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 # --debug --verbose
+          nix build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --debug --verbose
           cachix push --compression-level 16 --compression-method zstd --jobs 8 composable-community /nix/store/*
 
   build-all-docs-packages:
