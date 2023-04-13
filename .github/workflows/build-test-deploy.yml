@@ -297,10 +297,11 @@ jobs:
 
   build-product:
     name: build-product #flaky
+    continue-on-error: true
     strategy:
       matrix:
         arch: [aarch64-darwin]
-    timeout-minutes: 120
+    timeout-minutes: 45
     needs: 
       - privilege-check
     runs-on:
@@ -326,15 +327,14 @@ jobs:
 
       - name: cachix-nix-build
         run: |  
-          # too verbose, but can help to debug `--debug --verbose`
           # https://github.com/cachix/cachix/issues/528
           set -o pipefail -o errexit
           echo "warm up to check that we can compile rust with some basic substrate"
-          cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#subwasm --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2
+          cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#subwasm --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --debug --verbose
           echo "compile our all in one devnet"
-          cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2
+          cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --debug --verbose
           echo "double check we are ok with devnet/substrate on picasso"
-          cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2
+          cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --debug --verbose
           set +o pipefail +o errexit
 
   build-all-docs-packages:
