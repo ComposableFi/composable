@@ -312,7 +312,7 @@ jobs:
       - name: nix-profile-install
         run: |
           uname -a
-          # please not that mac does not isolates builds, so nix/docker/git/git-lfs/cachix/nix channels updates where install into via ssh (so can fix via this job too)
+          # please not that mac does not isolates builds, so nix/docker/git/git-lfs/cachix/binutils/coreutils/nix channels updates where install into via ssh (so can fix via this job too)
           nix --version
           cachix use ${{ env.CACHIX_NAME }}
           cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
