@@ -296,7 +296,7 @@ jobs:
           command: nix -- build .#all-deps --keep-going       
 
   build-product:
-    name: build-product #flaky
+    name: "build-product #flaky"
     continue-on-error: true
     strategy:
       matrix:
