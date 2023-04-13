@@ -333,16 +333,9 @@ jobs:
           # echo "compile our all in one devnet"
           # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --verbose --debug
           # echo "double check we are ok with devnet/substrate on picasso"
-          # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --verbose --debug
-          
-          set -o pipefail -o errexit
-          echo "warm up to check that we can compile rust with some basic substrate"
-          nix build .\#subwasm --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --debug --verbose
-          echo "compile our all in one devnet"
-          nix build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --debug --verbose
-          echo "double check we are ok with devnet/substrate on picasso"
-          nix build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --debug --verbose
-          cachix push --compression-level 16 --compression-method zstd --jobs 8 composable-community /nix/store/*
+          # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --verbose --debug          
+          nix build .#devnet-picasso
+          nix-store --query --references $(realpath result) | xargs nix-store --realise | xargs nix-store  --query --requisites | cachix push --compression-level 16 --compression-method zstd --jobs 8 composable-community
 
   build-all-docs-packages:
     name: build-all-docs-packages
