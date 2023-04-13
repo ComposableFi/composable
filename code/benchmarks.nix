@@ -5,12 +5,13 @@
       composable-bench-node = self'.packages.composable-bench-node;
 
       benchmarks-run-once = chainspec:
+        # https://substrate.stackexchange.com/questions/8062/cannot-create-module-instance-allocation-for-this-module-requires-74376-bytes-w
+        # --wasm-execution=compiled \
         pkgs.writeShellScriptBin "run-benchmarks-once" ''
           ${composable-bench-node}/bin/composable benchmark pallet \
           --chain="${chainspec}" \
           --execution=wasm \
-          # --wasm-execution=compiled \
-          --wasm-execution=interpreted-i-know-what-i-do \ # https://substrate.stackexchange.com/questions/8062/cannot-create-module-instance-allocation-for-this-module-requires-74376-bytes-w
+          --wasm-execution=interpreted-i-know-what-i-do \ 
           --pallet="*" \
           --extrinsic="*" \
           --steps=2 \
