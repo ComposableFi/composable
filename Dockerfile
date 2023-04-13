@@ -45,9 +45,9 @@ RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     nix-channel --add ${CHANNEL_URL} nixpkgs && \
     nix-channel --update 
 
-RUN echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bashrc && \
-    echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.profile && \
+RUN echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.profile && \
     echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bash_profile && \
+    echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bashrc && \
     echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.zshrc
 
 WORKDIR /home/${USER}/
@@ -64,3 +64,8 @@ RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     export "ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]')" && \
     "$(nix path-info .#homeConfigurations.${USER}.activationPackage)"/activate && \
     cachix use ${CACHIX_NAME}
+
+RUN echo "source ~/.nix-profile/etc/profile.d/hm-session-vars.sh" >> ~/.profile && \
+    echo "source ~/.nix-profile/etc/profile.d/hm-session-vars.sh" >> ~/.bash_profile && \
+    echo "source ~/.nix-profile/etc/profile.d/hm-session-vars.sh" >> ~/.bashrc && \
+    echo "source ~/.nix-profile/etc/profile.d/hm-session-vars.sh" >> ~/.zshrc
