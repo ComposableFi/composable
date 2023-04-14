@@ -1,13 +1,6 @@
 { self, withSystem, inputs, lib, options, flake-parts-lib, specialArgs, config
 }: {
   flake = {
-    composable = {
-      shell = ''
-        export PROTOC="${inputs.nixpkgs.legacyPackages.x86_64-linux.protobuf}/bin/protoc";
-        export ROCKSDB_LIB_DIR="${inputs.nixpkgs.legacyPackages.x86_64-linux.rocksdb}/lib";
-        export LIBCLANG_PATH="${inputs.nixpkgs.legacyPackages.x86_64-linux.llvmPackages.libclang.lib}/lib";
-      '';
-    };
     homeConfigurations = let user = "vscode";
     in (withSystem "x86_64-linux"
       ({ config, self', inputs', pkgs, devnetTools, this, subnix, ... }: {
