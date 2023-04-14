@@ -63,11 +63,6 @@ RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     "$(nix path-info .#homeConfigurations.${USER}.activationPackage)"/activate && \
     cachix use ${CACHIX_NAME}
 
-
-        export PROTOC="${inputs.nixpkgs.legacyPackages.x86_64-linux.protobuf}/bin/protoc";
-        export ROCKSDB_LIB_DIR="${inputs.nixpkgs.legacyPackages.x86_64-linux.rocksdb}/lib";
-        export LIBCLANG_PATH="
-
 RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "PROTOC" >> ~/.profile
 RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "PROTOC" >> ~/.bashrc
 RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "ROCKSDB_LIB_DIR" >> ~/.profile
