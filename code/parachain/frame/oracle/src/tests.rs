@@ -40,14 +40,18 @@ const UNIT: Balance = 1_000_000_000_000;
 prop_compose! {
 	fn asset_info()
 		(
-			min_answers in 1..MaxAnswerBound::get(),
-			max_answers in 1..MaxAnswerBound::get(),
+			answers in MinAnswerBound::get()..MaxAnswerBound::get(),
+			answers_delta in 1..MaxAnswerBound::get() - MinAnswerBound::get(),
 			block_interval in (StalePrice::get()+1)..(BlockNumber::MAX/16),
 			threshold in 0..100_u8,
 			reward in 0..u128::MAX,
 			slash in 0..u128::MAX,
 		) -> AssetInfo<Percent, BlockNumber, Balance> {
-			let min_answers = max_answers.saturating_sub(min_answers) + 1;
+			let (min_answers, max_answers) = if answers == MaxAnswerBound::get() {
+				(answers.saturating_sub(answers_delta).max(MinAnswerBound::get()), answers)
+			} else {
+				(answers, answers.saturating_add(answers_delta).min(MaxAnswerBound::get()))
+			};
 			let threshold: Percent = Percent::from_percent(threshold);
 
 			AssetInfo {
@@ -261,68 +265,129 @@ mod add_asset_and_info {
 			asset_id_1 in asset_id(),
 			asset_id_2 in asset_id(),
 			asset_id_3 in asset_id(),
+			asset_id_4 in asset_id(),
+			asset_id_5 in asset_id(),
+			asset_id_6 in asset_id(),
+			asset_id_7 in asset_id(),
+			asset_id_8 in asset_id(),
+			asset_id_9 in asset_id(),
+			asset_id_10 in asset_id(),
+			asset_id_11 in asset_id(),
+			asset_id_12 in asset_id(),
+			asset_id_13 in asset_id(),
+			asset_id_14 in asset_id(),
+			asset_id_15 in asset_id(),
+			asset_id_16 in asset_id(),
 			mut asset_info_1 in asset_info(),
 			mut asset_info_2 in asset_info(),
 			mut asset_info_3 in asset_info(),
+			mut asset_info_4 in asset_info(),
+			mut asset_info_5 in asset_info(),
+			mut asset_info_6 in asset_info(),
+			mut asset_info_7 in asset_info(),
+			mut asset_info_8 in asset_info(),
+			mut asset_info_9 in asset_info(),
+			mut asset_info_10 in asset_info(),
+			mut asset_info_11 in asset_info(),
+			mut asset_info_12 in asset_info(),
+			mut asset_info_13 in asset_info(),
+			mut asset_info_14 in asset_info(),
+			mut asset_info_15 in asset_info(),
+			mut asset_info_16 in asset_info(),
 		) {
 			new_test_ext().execute_with(|| {
 				let root_account = get_root_account();
 
-			prop_assume!(asset_id_1 != asset_id_2);
-			prop_assume!(asset_id_3 != asset_id_2);
-			prop_assume!(asset_id_1 != asset_id_3);
-				// First we create 2 assets, which is allowed because within mock.rs, we see:
-				// pub const MaxAssetsCount: u32 = 2;
-				// it would be nicer to do this in a loop up to MaxAssetsCount,
-				// but AFAIK it is not possible to generate props within the proptest body.
-
 				// If the following check fails, that means that the mock.rs was changed,
 				// and therefore this test should also be changed.
-				prop_assert_eq!(MaxAssetsCount::get(), 2_u32);
+				prop_assert_eq!(MaxAssetsCount::get(), 15_u32);
 
-
-				asset_info_1.reward_weight = asset_info_1.reward_weight.min(u128::MAX / 3);
-				asset_info_2.reward_weight = asset_info_2.reward_weight.min(u128::MAX / 3);
-				asset_info_3.reward_weight = asset_info_3.reward_weight.min(u128::MAX / 3);
-				prop_assert_ok!(Oracle::add_asset_and_info(
-					RuntimeOrigin::signed(root_account),
+				let asset_ids = [
 					asset_id_1,
-					Validated::new(asset_info_1.threshold).unwrap(),
-					Validated::new(asset_info_1.min_answers).unwrap(),
-					Validated::new(asset_info_1.max_answers).unwrap(),
-					Validated::new(asset_info_1.block_interval).unwrap(),
-					asset_info_1.reward_weight,
-					asset_info_1.slash,
-					asset_info_1.emit_price_changes,
-				));
-
-				prop_assert_ok!(Oracle::add_asset_and_info(
-					RuntimeOrigin::signed(root_account),
 					asset_id_2,
-					Validated::new(asset_info_2.threshold).unwrap(),
-					Validated::new(asset_info_2.min_answers).unwrap(),
-					Validated::new(asset_info_2.max_answers).unwrap(),
-					Validated::new(asset_info_2.block_interval).unwrap(),
-					asset_info_2.reward_weight,
-					asset_info_2.slash,
-					asset_info_2.emit_price_changes,
-				));
+					asset_id_3,
+					asset_id_4,
+					asset_id_5,
+					asset_id_6,
+					asset_id_7,
+					asset_id_8,
+					asset_id_9,
+					asset_id_10,
+					asset_id_11,
+					asset_id_12,
+					asset_id_13,
+					asset_id_14,
+					asset_id_15,
+					asset_id_16,
+				];
 
-				prop_assert_eq!(Oracle::asset_info(asset_id_1), Some(asset_info_1));
-				prop_assert_eq!(Oracle::asset_info(asset_id_2), Some(asset_info_2));
-				prop_assert_eq!(Oracle::assets_count(), 2);
+				// Items of asset_ids must be unique.
+				let mut tmp_asset_ids = asset_ids.clone();
+				tmp_asset_ids.sort();
+				let mut tmp_asset_ids = tmp_asset_ids.iter().collect::<Vec<_>>();
+				tmp_asset_ids.dedup();
+				prop_assume!(asset_ids.len() == tmp_asset_ids.len());
 
+				let asset_infos = [
+					asset_info_1,
+					asset_info_2,
+					asset_info_3,
+					asset_info_4,
+					asset_info_5,
+					asset_info_6,
+					asset_info_7,
+					asset_info_8,
+					asset_info_9,
+					asset_info_10,
+					asset_info_11,
+					asset_info_12,
+					asset_info_13,
+					asset_info_14,
+					asset_info_15,
+					asset_info_16,
+				];
 
+				let weight = u128::MAX / u128::try_from(asset_infos.len()).unwrap();
+
+				let asset_infos = asset_infos.map(|mut asset_info| {
+					asset_info.reward_weight = asset_info.reward_weight.min(weight);
+					asset_info
+				});
+
+				// First we create 15 assets, which is allowed because within mock.rs, we see:
+				// pub const MaxAssetsCount: u32 = 15;
+				// it would be nicer to do this in a loop up to MaxAssetsCount,
+				// but AFAIK it is not possible to generate props within the proptest body.
+				for (asset_id, asset_info) in asset_ids.iter().take(asset_ids.len() - 1).zip(asset_infos.iter()) {
+					prop_assert_ok!(Oracle::add_asset_and_info(
+						RuntimeOrigin::signed(root_account),
+						*asset_id,
+						Validated::new(asset_info.threshold).unwrap(),
+						Validated::new(asset_info.min_answers).unwrap(),
+						Validated::new(asset_info.max_answers).unwrap(),
+						Validated::new(asset_info.block_interval).unwrap(),
+						asset_info.reward_weight,
+						asset_info.slash,
+						asset_info.emit_price_changes,
+					));
+
+					prop_assert_eq!(Oracle::asset_info(asset_id), Some(asset_info.clone()));
+				}
+
+				prop_assert_eq!(Oracle::assets_count(), 15);
+
+				let last_asset_id = &asset_ids[asset_ids.len() - 1];
+				let last_asset_info = &asset_infos[asset_infos.len() - 1];
 				prop_assert_noop!(Oracle::add_asset_and_info(
 					RuntimeOrigin::signed(root_account),
-					asset_id_3,
-					Validated::new(asset_info_3.threshold).unwrap(),
-					Validated::new(asset_info_3.min_answers).unwrap(),
-					Validated::new(asset_info_3.max_answers).unwrap(),
-					Validated::new(asset_info_3.block_interval).unwrap(),
-					asset_info_3.reward_weight,
-					asset_info_3.slash,
-					asset_info_3.emit_price_changes,
+					*last_asset_id,
+					Validated::new(last_asset_info.threshold).unwrap(),
+					Validated::new(last_asset_info.min_answers).unwrap(),
+					Validated::new(last_asset_info.max_answers).unwrap(),
+					Validated::new(last_asset_info.block_interval).unwrap(),
+					last_asset_info.reward_weight,
+					last_asset_info.slash,
+					last_asset_info.emit_price_changes,
 				),
 				Error::<Test>::ExceedAssetsCount);
 
@@ -763,7 +828,7 @@ fn calculate_reward_per_block() {
 
 		// reward tracker
 		let annual_cost_per_oracle: Balance = 262800000;
-		let mut num_ideal_oracles: u8 = 1;
+		let num_ideal_oracles: u8 = 1;
 		assert_ok!(Oracle::adjust_rewards(
 			RuntimeOrigin::root(),
 			annual_cost_per_oracle,
@@ -837,6 +902,104 @@ fn calculate_reward_per_block() {
 		assert_eq!(Balances::free_balance(account_2_controller), 909);
 		assert_eq!(Balances::free_balance(account_3_controller), 839);
 		assert_eq!(Balances::free_balance(rewards_account), 9703);
+	});
+}
+
+#[test]
+fn calculate_reward_per_block_min_aswers_eq_3() {
+	new_test_ext().execute_with(|| {
+		let root = get_root_account();
+		System::set_block_number(1);
+		Timestamp::set_timestamp(1);
+		Oracle::on_initialize(1);
+		// 3 oracles
+		let account_1_controller = get_account_1();
+		let account_1_signer = get_account_3();
+		Balances::make_free_balance_be(&account_1_controller, 1000);
+		Balances::make_free_balance_be(&account_1_signer, 0);
+		let account_2_controller = get_account_4();
+		let account_2_signer = get_account_5();
+		Balances::make_free_balance_be(&account_2_controller, 1000);
+		Balances::make_free_balance_be(&account_2_signer, 0);
+		let account_3_controller = get_account_6();
+		let account_3_signer = get_account_7();
+		Balances::make_free_balance_be(&account_3_controller, 1000);
+		Balances::make_free_balance_be(&account_3_signer, 0);
+		let treasury_account = get_treasury_account();
+		Balances::make_free_balance_be(&treasury_account, 10000);
+		let rewards_account = Oracle::account_id();
+		Balances::make_free_balance_be(&rewards_account, 10000);
+
+		assert_ok!(Oracle::add_asset_and_info(
+			RuntimeOrigin::signed(root),
+			0,
+			Validated::new(Percent::from_percent(80)).unwrap(),
+			Validated::new(3).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			30,
+			5,
+			false,
+		));
+
+		// adding stake
+		assert_ok!(Oracle::set_signer(
+			RuntimeOrigin::signed(account_1_controller),
+			account_1_signer
+		));
+		assert_ok!(Oracle::set_signer(
+			RuntimeOrigin::signed(account_2_controller),
+			account_2_signer
+		));
+		assert_ok!(Oracle::set_signer(
+			RuntimeOrigin::signed(account_3_controller),
+			account_3_signer
+		));
+		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_1_controller), 99));
+		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_2_controller), 199));
+		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_3_controller), 299));
+		assert_eq!(Oracle::oracle_stake(account_1_signer), Some(100));
+		assert_eq!(Oracle::oracle_stake(account_2_signer), Some(200));
+		assert_eq!(Oracle::oracle_stake(account_3_signer), Some(300));
+
+		// reward tracker
+		let annual_cost_per_oracle: Balance = 262800000;
+		let num_ideal_oracles: u8 = 1;
+		assert_ok!(Oracle::adjust_rewards(
+			RuntimeOrigin::root(),
+			annual_cost_per_oracle,
+			num_ideal_oracles
+		));
+		assert_eq!(
+			RewardTrackerStore::<Test>::get(),
+			Some(RewardTracker {
+				period: MS_PER_YEAR_NAIVE,
+				start: 1,
+				total_already_rewarded: 0,
+				current_block_reward: 100,
+				total_reward_weight: 30,
+			})
+		);
+
+		System::set_block_number(6);
+		Timestamp::set_timestamp(6);
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_1_signer), 200_u128, 0_u128));
+		System::set_block_number(7);
+		Timestamp::set_timestamp(7);
+		Oracle::on_initialize(7);
+		assert_eq!(Balances::free_balance(account_1_controller), 900);
+		assert_eq!(Balances::free_balance(account_2_controller), 800);
+		assert_eq!(Balances::free_balance(account_3_controller), 700);
+		assert_eq!(Balances::free_balance(rewards_account), 10000);
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 200_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_3_signer), 200_u128, 0_u128));
+		System::set_block_number(8);
+		Timestamp::set_timestamp(8);
+		Oracle::on_initialize(8);
+		assert_eq!(Balances::free_balance(account_1_controller), 916);
+		assert_eq!(Balances::free_balance(account_2_controller), 833);
+		assert_eq!(Balances::free_balance(account_3_controller), 750);
+		assert_eq!(Balances::free_balance(rewards_account), 9901);
 	});
 }
 
@@ -1045,7 +1208,7 @@ fn halborn_test_price_manipulation() {
 		const BLOCK_INTERVAL: u64 = 5;
 		const REWARD: u128 = 5;
 		const SLASH: u128 = 5;
-		const emit_price_changes: bool = false;
+		const EMIT_PRICE_CHANGES: bool = false;
 
 		let root_account = get_root_account();
 		let account_1 = get_account_1();
@@ -1062,7 +1225,7 @@ fn halborn_test_price_manipulation() {
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
 			REWARD,
 			SLASH,
-			emit_price_changes,
+			EMIT_PRICE_CHANGES,
 		));
 		System::set_block_number(6);
 		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_3), account_1));
@@ -1410,7 +1573,7 @@ fn halborn_test_bypass_slashing() {
 		const BLOCK_INTERVAL: u64 = 5;
 		const REWARD: u128 = 5;
 		const SLASH: u128 = 5;
-		const emit_price_changes: bool = false;
+		const EMIT_PRICE_CHANGES: bool = false;
 		Timestamp::set_timestamp(10);
 		let mut reward_tracker = RewardTracker::default();
 		reward_tracker.start = 1;
@@ -1435,7 +1598,7 @@ fn halborn_test_bypass_slashing() {
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
 			REWARD,
 			SLASH,
-			emit_price_changes,
+			EMIT_PRICE_CHANGES,
 		));
 
 		let balance1 = Balances::free_balance(account_1);
@@ -2192,18 +2355,25 @@ mod test {
 		assert!(<ValidMaxAnswer<MaxAnswerBound> as Validate<
 			u32,
 			ValidMaxAnswer<MaxAnswerBound>,
-		>>::validate(10_u32)
+		>>::validate(16_u32)
 		.is_err());
 	}
 
 	#[test]
 	fn test_min_answer_valid_case() {
-		assert!(<ValidMinAnswers as Validate<u32, ValidMinAnswers>>::validate(0_u32).is_err());
+		assert!(<ValidMinAnswers<MinAnswerBound> as Validate<
+			u32,
+			ValidMinAnswers<MinAnswerBound>,
+		>>::validate(0_u32)
+		.is_err());
 	}
 
 	#[test]
 	fn test_min_answer_invalid_case() {
-		assert_ok!(<ValidMinAnswers as Validate<u32, ValidMinAnswers>>::validate(1_u32));
+		assert_ok!(<ValidMinAnswers<MinAnswerBound> as Validate<
+			u32,
+			ValidMinAnswers<MinAnswerBound>,
+		>>::validate(4_u32));
 	}
 
 	#[test]
@@ -2243,7 +2413,7 @@ fn reward_rate_doesnt_start_on_asset_info() {
 			RuntimeOrigin::signed(root),
 			0,
 			Validated::new(Percent::from_percent(80)).unwrap(),
-			Validated::new(1).unwrap(),
+			Validated::new(3).unwrap(),
 			Validated::new(5).unwrap(),
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			10,
@@ -2275,7 +2445,7 @@ fn reward_rate_doesnt_start_on_asset_info() {
 			})
 		);
 		let annual_cost_per_oracle: Balance = 100_000 * UNIT;
-		let mut num_ideal_oracles: u8 = 10;
+		let num_ideal_oracles: u8 = 10;
 		assert_ok!(Oracle::adjust_rewards(
 			RuntimeOrigin::root(),
 			annual_cost_per_oracle,
@@ -2298,7 +2468,7 @@ fn reward_rate_doesnt_start_on_asset_info() {
 			RuntimeOrigin::signed(root),
 			1,
 			Validated::new(Percent::from_percent(80)).unwrap(),
-			Validated::new(1).unwrap(),
+			Validated::new(3).unwrap(),
 			Validated::new(5).unwrap(),
 			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
 			10,

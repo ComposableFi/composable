@@ -158,6 +158,8 @@ pub mod pallet {
 		type AddOracle: EnsureOrigin<Self::RuntimeOrigin>;
 		/// Origin to manage rewards
 		type RewardOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		/// Lower bound for min answers for a price
+		type MinAnswerBound: Get<u32>;
 		/// Upper bound for max answers for a price
 		type MaxAnswerBound: Get<u32>;
 		/// Upper bound for total assets available for the oracle
@@ -432,6 +434,7 @@ pub mod pallet {
 		type Balance = T::PriceValue;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 		type LocalAssets = T::LocalAssets;
+		type MinAnswerBound = T::MinAnswerBound;
 		type MaxAnswerBound = T::MaxAnswerBound;
 		type TwapWindow = T::TwapWindow;
 
@@ -517,12 +520,13 @@ pub mod pallet {
 		/// - `emit_price_changes`: emit PriceChanged event when asset price changes
 		///
 		/// Emits `DepositEvent` event when successful.
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::add_asset_and_info())]
 		pub fn add_asset_and_info(
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
 			threshold: Validated<Percent, ValidThreshold>,
-			min_answers: Validated<u32, ValidMinAnswers>,
+			min_answers: Validated<u32, ValidMinAnswers<T::MinAnswerBound>>,
 			max_answers: Validated<u32, ValidMaxAnswer<T::MaxAnswerBound>>,
 			block_interval: Validated<T::BlockNumber, ValidBlockInterval<T::StalePrice>>,
 			reward_weight: BalanceOf<T>,
@@ -577,6 +581,7 @@ pub mod pallet {
 		/// - `signer`: signer to tie controller to
 		///
 		/// Emits `SignerSet` and `StakeAdded` events when successful.
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::set_signer())]
 		pub fn set_signer(
 			origin: OriginFor<T>,
@@ -604,6 +609,7 @@ pub mod pallet {
 		///   actual ideal number so that the Oracles make a profit under ideal conditions.
 		///
 		/// Emits `RewardRateSet` event when successful.
+		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::adjust_rewards())]
 		pub fn adjust_rewards(
 			origin: OriginFor<T>,
@@ -645,6 +651,7 @@ pub mod pallet {
 		/// - `stake`: amount to add to stake
 		///
 		/// Emits `StakeAdded` event when successful.
+		#[pallet::call_index(3)]
 		#[pallet::weight(T::WeightInfo::add_stake())]
 		pub fn add_stake(origin: OriginFor<T>, stake: BalanceOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -658,6 +665,7 @@ pub mod pallet {
 		/// Call to put in a claim to remove stake, called from controller
 		///
 		/// Emits `StakeRemoved` event when successful.
+		#[pallet::call_index(4)]
 		#[pallet::weight(T::WeightInfo::remove_stake())]
 		pub fn remove_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -676,6 +684,7 @@ pub mod pallet {
 		/// Call to reclaim stake after proper time has passed, called from controller
 		///
 		/// Emits `StakeReclaimed` event when successful.
+		#[pallet::call_index(5)]
 		#[pallet::weight(T::WeightInfo::reclaim_stake())]
 		pub fn reclaim_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -703,6 +712,7 @@ pub mod pallet {
 		/// - `asset_id`: id for the asset
 		///
 		/// Emits `PriceSubmitted` event when successful.
+		#[pallet::call_index(6)]
 		#[pallet::weight((T::WeightInfo::submit_price(T::MaxAnswerBound::get()), DispatchClass::Operational))]
 		pub fn submit_price(
 			origin: OriginFor<T>,
