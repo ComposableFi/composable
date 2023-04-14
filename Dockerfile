@@ -63,6 +63,9 @@ RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     "$(nix path-info .#homeConfigurations.${USER}.activationPackage)"/activate && \
     cachix use ${CACHIX_NAME}
 
+# variables are put into this file, but also some extra vars
+# seems shole file conflicts with vscode startup injection
+# so getting one by one for evaluation
 RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "PROTOC" >> ~/.profile
 RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "PROTOC" >> ~/.bashrc
 RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "ROCKSDB_LIB_DIR" >> ~/.profile
