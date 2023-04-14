@@ -63,6 +63,5 @@ RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     "$(nix path-info .#homeConfigurations.${USER}.activationPackage)"/activate && \
     cachix use ${CACHIX_NAME}
 
-#RUN echo "source ~/.nix-profile/etc/profile.d/hm-session-vars.sh" >> ~/.bashrc
-#RUN echo "source ~/.nix-profile/etc/profile.d/hm-session-vars.sh" >> ~/.profile
-    
+RUN nix eval .#composable.shell >> ~/.bashrc
+RUN nix eval .#composable.shell >> ~/.profile
