@@ -123,6 +123,8 @@ pallet-ibc = { workspace = true, default-features = false }
 
 [features]
 builtin-wasm = []
+testnet = []
+fastnet = []
 default = ["std"]
 local-integration-tests = []
 runtime-benchmarks = [
