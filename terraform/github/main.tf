@@ -60,3 +60,40 @@ resource "github_branch_protection" "main" {
     data.github_app.mergify.node_id,
   ]
 }
+
+resource "github_issue_label" "fe" {
+  repository = "composable"
+  name       = "fe"
+  color      = "#000000"
+  description = "I marked PR by `fe` label if it needs frontend deploy to be in production"
+}
+
+resource "github_issue_label" "misc" {
+  repository = "composable"
+  name       = "misc"
+  color      = "#000000"
+  description = "I marked PR by `misc` label if it should not be in release notes"
+}
+
+resource "github_issue_label" "node" {
+  repository = "composable"
+  name       = "node"
+  color      = "#000000"
+  description = "I marked PR by `node` label if it needs node redeploy to be in production"
+}
+
+
+resource "github_issue_label" "on-chain" {
+  repository = "composable"
+  name       = "on-chain"
+  color      = "#000000"
+  description = "I marked PR by `on-chain` label if it needs runtime upgrade or contract (re)deploy to be in production"
+}
+
+
+resource "github_issue_label" "data" {
+  repository = "composable"
+  name       = "data"
+  color      = "#000000"
+  description = "I marked PR by `data` label if it needs Subsquid redeploy to be in production"
+}
