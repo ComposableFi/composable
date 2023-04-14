@@ -12,7 +12,7 @@ queue_rules:
 pull_request_rules:
   - name: Automatic merge on approval
     conditions:
-      - "#approved-reviews-by>=2"
+      - "#approved-reviews-by>=1"
       - base=main
       - -title~="#wip"
       - check-success=Effect gate, automatically merged if passed
