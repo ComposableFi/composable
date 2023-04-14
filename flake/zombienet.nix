@@ -75,7 +75,7 @@
 
       picasso-dev-config = zombienet-rococo-local-composable-config {
         chain = "picasso-dev";
-        command = self'.packages.composable-node-picasso;
+        command = self'.packages.composable-testfast-node;
       };
 
       zombienet-rococo-local-picasso-dev =

@@ -134,18 +134,27 @@ impl pallet_ibc::Config for Runtime {
 	type ParaId = parachain_info::Pallet<Runtime>;
 	type RelayChain = RelayChainId;
 	type WeightInfo = weights::ibc::WeightInfo<Self>;
-	type AdminOrigin = EnsureRootOrOneThirdNativeTechnical;
-	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
-	type TransferOrigin = EitherOf<
-		EnsureSignedBy<ReleaseMembership, Self::IbcAccountId>,
-		EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>,
-	>;
-	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;
 	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;
+
+	type AdminOrigin = EnsureRootOrOneThirdNativeTechnical;
+	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
+
+	#[cfg(feature = "testnet")]
+	type TransferOrigin = system::EnsureSigned<Self::IbcAccountId>;
+	#[cfg(feature = "testnet")]
+	type RelayerOrigin = system::EnsureSigned<Self::IbcAccountId>;
+
+	#[cfg(not(feature = "testnet"))]
+	type TransferOrigin = EitherOf<
+		EnsureSignedBy<ReleaseMembership, Self::IbcAccountId>,
+		EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>,
+	>;
+	#[cfg(not(feature = "testnet"))]
+	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 }

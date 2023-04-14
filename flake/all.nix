@@ -41,6 +41,8 @@
         cmc-api-image
         composable-node
         devnet-centauri
+        composable-testfast-node
+        picasso-testfast-runtime
         devnet-picasso
         devnet-picasso-image
         devnet-initialize-script-picasso-persistent
