@@ -142,19 +142,14 @@ impl pallet_ibc::Config for Runtime {
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;
 
-	#[cfg(feature = "testnet")]
 	type AdminOrigin = EnsureRootOrOneThirdNativeTechnical;
-	#[cfg(feature = "testnet")]
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
+
 	#[cfg(feature = "testnet")]
 	type TransferOrigin = system::EnsureSigned<Self::IbcAccountId>;
 	#[cfg(feature = "testnet")]
 	type RelayerOrigin = system::EnsureSigned<Self::IbcAccountId>;
 
-	#[cfg(not(feature = "testnet"))]
-	type AdminOrigin = EnsureRootOrOneThirdNativeTechnical;
-	#[cfg(not(feature = "testnet"))]
-	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	#[cfg(not(feature = "testnet"))]
 	type TransferOrigin = EitherOf<
 		EnsureSignedBy<ReleaseMembership, Self::IbcAccountId>,
