@@ -31,7 +31,7 @@ export class AssetsInput {
 export class AssetsResolver {
   constructor(private tx: () => Promise<EntityManager>) {}
 
-  @Query(() => Number)
+  @Query(() => AssetInfo)
   async assetsPrices(@Arg("params", { validate: true }) input: AssetsInput): Promise<AssetInfo> {
     const { assetId, date } = input;
 
