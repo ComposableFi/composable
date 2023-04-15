@@ -104,3 +104,24 @@
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
     };
 }
+
+
+
+            # ```
+            # ### Run this without Nix in Docker.
+            # ```bash
+            # docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run github:${{ github.event.pull_request.repository}}/${{ github.event.pull_request.head.sha }}/${{ github.event.pull_request.head.sha }} --print-build-logs --extra-experimental-features nix-command --extra-experimental-features flakes" --print-build-logs --option sandbox relaxed --show-trace
+            # ```
+
+
+# NIX_DEBUG_COMMAND="" && [[ $ACTIONS_RUNNER_DEBUG = "true" ]] && NIX_DEBUG_COMMAND='--print-build-logs --debug --show-trace --verbose'
+# set -o pipefail -o errexit
+# NIXPKGS_ALLOW_BROKEN=1 nix flake check --keep-going --no-build --allow-import-from-derivation --no-update-lock-file --accept-flake-config --fallback -L ${NIX_DEBUG_COMMAND} --impure --option sandbox relaxed --impure 2>&1 | tee "nix.check.log"  || true
+# set +o pipefail +o errexit
+# echo "exited with(https://github.com/NixOS/nix/issues/7464) ${$?}" 
+# cat "nix.check.log" | grep --invert-match  "error: path [']/nix/store/[a-zA-Z0-9]\+-[a-zA-Z0-9\.-]\+['] is not valid" \
+# | grep --invert-match  "error: cannot substitute path [']/nix/store/[a-zA-Z0-9]\+-[a-zA-Z0-9\.-]\+['] \- no write access to the Nix store" \
+# | grep --invert-match '^error: some errors were encountered during the evaluation' > "filtered.nix.check.log"
+# RESULT=$(cat "filtered.nix.check.log" | grep -c 'error:')
+# echo "Got errors $RESULT"
+# if [[ $RESULT != 0 ]]; then exit $RESULT; fi

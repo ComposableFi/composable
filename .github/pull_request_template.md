@@ -1,8 +1,9 @@
 - [ ] PR title is my best effort to provide summary of changes and has clear text to be part of release notes 
 - [ ] I marked PR by `misc` label if it should not be in release notes
-- [ ] I marked PR by `on-chain` label if it needs runtime upgrade or contract (re)deploy to be in production
-- [ ] I marked PR by `fe` label if it needs frontend deploy to be in production
-- [ ] I marked PR by `node` label if it needs node redeploy to be in production
-- [ ] I marked PR by `data` label if it needs Subsquid redeploy to be in production
+- [ ] I marked PR by `D-on-chain` label if it needs runtime upgrade or contract (re)deploy to be in production
+- [ ] I marked PR by `D-fe` label if it needs frontend deploy to be in production
+- [ ] I marked PR by `D-node` label if it needs node redeploy to be in production
+- [ ] I marked PR by `D-index` label if it needs Subsquid redeploy to be in production
+- [ ] I marked PR by `D-docs` label if it needs docs publishing
 - [ ] I added at least one reviewer in reviewers list
 - [ ] I tagged(@) one person who I think can handle best review of this PR
