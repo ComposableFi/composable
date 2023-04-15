@@ -10,6 +10,7 @@ pub trait WeightInfo {
 	fn register_asset() -> Weight;
 	fn update_asset() -> Weight;
 	fn set_min_fee() -> Weight;
+	fn update_asset_location() -> Weight;
 }
 
 impl WeightInfo for () {
@@ -22,6 +23,10 @@ impl WeightInfo for () {
 	}
 
 	fn set_min_fee() -> Weight {
+		Weight::from_ref_time(100_000)
+	}
+
+	fn update_asset_location() -> Weight {
 		Weight::from_ref_time(100_000)
 	}
 }
@@ -38,6 +43,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	}
 
 	fn set_min_fee() -> Weight {
+		Weight::from_ref_time(9_958_000_u64).saturating_add(T::DbWeight::get().writes(1_u64))
+	}
+
+	fn update_asset_location() -> Weight {
 		Weight::from_ref_time(9_958_000_u64).saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 }

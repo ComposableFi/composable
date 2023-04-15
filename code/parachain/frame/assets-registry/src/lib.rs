@@ -197,6 +197,9 @@ pub mod pallet {
 			asset_id: T::LocalAssetId,
 			location: T::ForeignAssetId,
 		},
+		AssetLocationRemoved {
+			asset_id: T::LocalAssetId,
+		},
 		MinFeeUpdated {
 			target_parachain_id: ParaId,
 			foreign_asset_id: T::ForeignAssetId,
@@ -208,6 +211,7 @@ pub mod pallet {
 	pub enum Error<T> {
 		AssetNotFound,
 		AssetAlreadyRegistered,
+		AssetLocationIsNone,
 		StringExceedsMaxLength,
 	}
 
@@ -284,6 +288,27 @@ pub mod pallet {
 			});
 			Ok(().into())
 		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(<T as Config>::WeightInfo::update_asset_location())]
+		pub fn update_asset_location(
+			origin: OriginFor<T>,
+			asset_id: T::LocalAssetId,
+			location: Option<T::ForeignAssetId>,
+		) -> DispatchResultWithPostInfo {
+			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
+			ensure!(ExistentialDeposit::<T>::contains_key(asset_id), Error::<T>::AssetNotFound);
+			if let Some(inner_location) = location {
+				Self::set_reserve_location(asset_id, inner_location)?;
+			} else {
+				let old_location = LocalToForeign::<T>::try_get(asset_id)
+					.map_err(|_| Error::<T>::AssetLocationIsNone)?;
+				ForeignToLocal::<T>::remove(old_location);
+				LocalToForeign::<T>::remove(asset_id);
+				Self::deposit_event(Event::AssetLocationRemoved { asset_id });
+			}
+			Ok(().into())
+		}
 	}
 
 	impl<T: Config> RemoteAssetRegistryMutate for Pallet<T> {
@@ -326,6 +351,10 @@ pub mod pallet {
 			asset_id: Self::AssetId,
 			location: Self::AssetNativeLocation,
 		) -> DispatchResult {
+			let old_location = LocalToForeign::<T>::try_get(asset_id);
+			if let Ok(inner_old_location) = old_location {
+				ForeignToLocal::<T>::remove(inner_old_location);
+			}
 			ForeignToLocal::<T>::insert(&location, asset_id);
 			LocalToForeign::<T>::insert(asset_id, location.clone());
 			Self::deposit_event(Event::AssetLocationUpdated { asset_id, location });

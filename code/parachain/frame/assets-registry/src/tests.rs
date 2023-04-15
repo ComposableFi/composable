@@ -6,7 +6,7 @@ use composable_traits::{
 	storage::UpdateValue,
 	xcm::assets::RemoteAssetRegistryInspect,
 };
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_noop, assert_ok, error::BadOrigin};
 use frame_system::RawOrigin;
 use primitives::currency::{ForeignAssetId, VersionedMultiLocation};
 use xcm::latest::MultiLocation;
@@ -222,6 +222,78 @@ fn set_min_fee() {
 			AssetsRegistry::minimal_amount(target_parachain_id, foreign_asset_id),
 			Some(balance)
 		);
+	})
+}
+
+#[test]
+fn update_asset_location() {
+	new_test_ext().execute_with(|| {
+		let location = <Runtime as crate::Config>::ForeignAssetId::decode(
+			&mut &ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::parent())).encode()
+				[..],
+		)
+		.expect("Location bytes translate to foreign ID bytes");
+		let protocol_id = *b"AssTests";
+		let nonce = 1_u64;
+		let asset_info = AssetInfo {
+			name: None,
+			symbol: None,
+			decimals: Some(4),
+			existential_deposit: 0,
+			ratio: Some(rational!(42 / 123)),
+		};
+
+		assert_ok!(AssetsRegistry::register_asset(
+			RuntimeOrigin::root(),
+			protocol_id,
+			nonce,
+			Some(location.clone()),
+			asset_info,
+		));
+
+		let local_asset_id =
+			AssetsRegistry::from_foreign_asset(location.clone()).expect("Asset exists");
+		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), Some(location.clone()));
+
+		// updating initital location
+		let location_new = <Runtime as crate::Config>::ForeignAssetId::decode(
+			&mut &ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode()[..],
+		)
+		.expect("Location bytes translate to foreign ID bytes");
+		assert_noop!(
+			AssetsRegistry::update_asset_location(
+				RuntimeOrigin::signed(ALICE),
+				local_asset_id,
+				Some(location_new.clone()),
+			),
+			BadOrigin
+		);
+		let does_not_exist_asset_id: <Runtime as crate::Config>::LocalAssetId = 0;
+		assert_noop!(
+			AssetsRegistry::update_asset_location(
+				RuntimeOrigin::root(),
+				does_not_exist_asset_id,
+				Some(location_new.clone()),
+			),
+			Error::<Runtime>::AssetNotFound
+		);
+		assert_ok!(AssetsRegistry::update_asset_location(
+			RuntimeOrigin::root(),
+			local_asset_id,
+			Some(location_new.clone()),
+		));
+		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), Some(location_new.clone()));
+		assert_eq!(AssetsRegistry::from_foreign_asset(location_new.clone()), Some(local_asset_id));
+		assert_eq!(AssetsRegistry::from_foreign_asset(location.clone()), None);
+		// remove location
+		assert_ok!(AssetsRegistry::update_asset_location(
+			RuntimeOrigin::root(),
+			local_asset_id,
+			None
+		));
+		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), None);
+		assert_eq!(AssetsRegistry::from_foreign_asset(location_new.clone()), None);
+		assert_eq!(AssetsRegistry::from_foreign_asset(location.clone()), None);
 	})
 }
 

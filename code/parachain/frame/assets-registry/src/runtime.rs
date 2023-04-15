@@ -17,6 +17,7 @@ type Block = frame_system::mocking::MockBlock<Runtime>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 
 pub const ROOT: AccountId = 0_u32;
+pub const ALICE: AccountId = 1_u32;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
