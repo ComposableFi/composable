@@ -285,6 +285,7 @@ fn update_asset_location() {
 		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), Some(location_new.clone()));
 		assert_eq!(AssetsRegistry::from_foreign_asset(location_new.clone()), Some(local_asset_id));
 		assert_eq!(AssetsRegistry::from_foreign_asset(location.clone()), None);
+
 		// remove location
 		assert_ok!(AssetsRegistry::update_asset_location(
 			RuntimeOrigin::root(),
@@ -294,6 +295,16 @@ fn update_asset_location() {
 		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), None);
 		assert_eq!(AssetsRegistry::from_foreign_asset(location_new.clone()), None);
 		assert_eq!(AssetsRegistry::from_foreign_asset(location.clone()), None);
+
+		// add location to the asset without location
+		assert_ok!(AssetsRegistry::update_asset_location(
+			RuntimeOrigin::root(),
+			local_asset_id,
+			Some(location.clone()),
+		));
+		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), Some(location.clone()));
+		assert_eq!(AssetsRegistry::from_foreign_asset(location_new.clone()), None);
+		assert_eq!(AssetsRegistry::from_foreign_asset(location.clone()), Some(local_asset_id));
 	})
 }
 
