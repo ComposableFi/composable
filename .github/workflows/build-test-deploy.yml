@@ -109,8 +109,7 @@ jobs:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-      - run: |
-          export NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1
+      - run: |          
           chmod +x ./.github/workflows/nix-flake-check.sh
           source ./.github/workflows/nix-flake-check.sh
   

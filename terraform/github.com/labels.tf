@@ -6,7 +6,8 @@ locals {
     "D-node"     = "I marked PR by `D-node` label if it needs node redeploy to be in production"
     "D-on-chain" = "I marked PR by `D-on-chain` label if it needs validation function or contract upgrade"
     "D-index"    = "I marked PR by `D-index` label if it needs Subsquid redeploy to be in production"
-    "D-docs"     = "I marked PR by `D-docs` label if it needs Subsquid redeploy to be in production"
+    "D-docs"     = "I marked PR by `D-docs` label if it needs docs publish"
+    "D-dao"      = "I marked PR by `D-dao` label if it needs organizational changes applied"
 
     "T-bridge"    = "Team Bridge"
     "T-fe"        = "Team FrontEnd"
@@ -25,8 +26,8 @@ locals {
     "C-bug"           = "Category Bug",
     "C-enhancement"   = "Category Enhancement",
 
-    "misc"         = "I marked PR by `misc` label if it should not be in release notes"
-    "dependencies" = "bot"
+    "misc"          = "I marked PR by `misc` label if it should not be in release notes"
+    "dependencies"  = "bot"
     "lfs-detected!" = "Warning Label for use when LFS is detected in the commits of a Pull Request"
     # ==================================================================
 
@@ -34,7 +35,7 @@ locals {
 }
 
 resource "github_issue_label" "label" {
-  for_each = local.labels
+  for_each    = local.labels
   repository  = "composable"
   name        = each.key
   description = each.value
