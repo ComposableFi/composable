@@ -93,6 +93,8 @@ jobs:
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
+            keep-derivations = true
+            keep-outputs = true
             
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
@@ -110,8 +112,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
       - run: |          
-          chmod +x ./.github/workflows/nix-flake-check.sh
-          source ./.github/workflows/nix-flake-check.sh
+          nix run .#nix-flake-check
   
   all-packages:
     name: Build all packages

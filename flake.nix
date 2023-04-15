@@ -104,16 +104,3 @@
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
     };
 }
-
-
-# run in docker
-# check
-# draft release
-
-            # ```
-            # ### Run this without Nix in Docker.
-            # ```bash
-            # docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run github:${{ github.event.pull_request.repository}}/${{ github.event.pull_request.head.sha }}/${{ github.event.pull_request.head.sha }} --print-build-logs --extra-experimental-features nix-command --extra-experimental-features flakes" --print-build-logs --option sandbox relaxed --show-trace
-            # ```
-
-
