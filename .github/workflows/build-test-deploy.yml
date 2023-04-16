@@ -324,7 +324,9 @@ jobs:
       cancel-in-progress: true
     steps:            
       - name: nix-profile-install
-        run: |
+        run: |        
+          echo "keep-derivations = true" > /etc/nix/nix.conf
+          echo "keep-outputs = true" > /etc/nix/nix.conf
           uname -a
           # please not that mac does not isolates builds, so nix/docker/git/git-lfs/cachix/binutils/coreutils/nix channels updates where install into via ssh (so can fix via this job too)
           nix --version
@@ -584,6 +586,8 @@ jobs:
 
       - name: Push docker
         run: |
+          cachix use ${{ env.CACHIX_NAME }}
+          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
           cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- run .#generate-release-artifacts --print-build-logs
           echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)" >> $GITHUB_ENV
           docker load --input release-artifacts/composable-docker-image
