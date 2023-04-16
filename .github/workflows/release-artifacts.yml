@@ -40,14 +40,11 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }}
             nix-channel --update
-            nix-env -iA nixpkgs.cachix
+            nix-env -iA nixpkgs.cachix nixpkgs.docker
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
-
-      - name: Install Docker
-        run: nix-env -iA nixpkgs.docker
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
