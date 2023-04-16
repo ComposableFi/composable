@@ -597,7 +597,7 @@ jobs:
           #fi
           #fi
           echo "0000000000000000000000000"
-          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest"
+          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest" --debug
 
       - name: Release artifacts
         uses: softprops/action-gh-release@v1
