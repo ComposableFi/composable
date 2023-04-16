@@ -543,10 +543,8 @@ jobs:
     # needs:
     #   - effects-gate
     concurrency:
-      group: draft-release-${{ github.ref }}
+      group: ${{ github.workflow }}-draft-release-${{ github.ref }}
       cancel-in-progress: true
-    container:
-      image: niteo/nixpkgs-nixos-22.11:fda0d99c2cbbb5c89d8855d258cb0821bd9113ad
     steps:
       - uses: actions/checkout@v3
         with:
