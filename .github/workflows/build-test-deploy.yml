@@ -576,7 +576,7 @@ jobs:
           cachix use ${{ env.CACHIX_NAME }}
           cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
           echo "qwe"
-          nix run .#generate-release-artifacts --print-build-logs --accept-flake-config --impure
+          nix run .#generate-release-artifacts --print-build-logs --accept-flake-config
           echo "123"
           echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)" >> $GITHUB_ENV
           docker load --input release-artifacts/composable-docker-image
@@ -597,7 +597,7 @@ jobs:
           #fi
           #fi
           echo "0000000000000000000000000"
-          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest" --debug
+          docker --debug push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest"
 
       - name: Release artifacts
         uses: softprops/action-gh-release@v1
