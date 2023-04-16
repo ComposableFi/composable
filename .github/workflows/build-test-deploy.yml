@@ -472,7 +472,6 @@ jobs:
       group: ${{ github.workflow }}-push-docker-images-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:
-      # This isn't templated, since checkout needs to happen before templating occurs.
       - name: Set up Nix
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
@@ -481,8 +480,7 @@ jobs:
           extra_nix_config: |
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
-            system-features = kvm
-            
+            system-features = kvm            
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
@@ -553,16 +551,26 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-          echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-          nix-env -iA nixpkgs.cachix nixpkgs.docker
-          docker --version
-          cachix --version
-          #nix profile install nixpkgs#docker nixpkgs#cachix
+      - name: Set up Nix
+        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
+        with:
+          install_url: https://releases.nixos.org/nix/${{ env.NIX_VERSION }}/install
+          nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
+          extra_nix_config: |
+            sandbox = relaxed
+            narinfo-cache-negative-ttl = 0      
+            system-features = kvm
+            
+      - name: Set up Cachix
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
+        with:
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{ env.CACHIX_NAME }}
+      - name: Add tools needed for non-nix steps
+        run: |  
+          nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker
 
       - run: |
           docker login --password ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} --username ${{ secrets.DOCKER_HUB_USERNAME }}
