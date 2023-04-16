@@ -65,8 +65,8 @@
           repo = "polkadot";
           owner = "paritytech";
           rev = rococo-runtime-commit;
-          hash = "sha256-24UcJTnbVDe8oW8S0stayHc7/vVyFQaqTSSPHNqJXkg=";
-          cargoSha256 = "sha256-F++EqCzJO9v0rIbM5nmGTkPKXbAT2Bj0ntjkO/kjxQI=";
+          hash = "sha256-24UcJTnbVDe8oW1S0stayHc7/vVyFQaqTSSPHNqJXkg=";
+          cargoSha256 = "sha256-OA0m9b3opPahHfsOMJylmstu6XmmCXC60T1e56uMqyE=";
         };
 
 
