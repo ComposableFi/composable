@@ -571,6 +571,7 @@ jobs:
           nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker
 
       - run: |
+          uname -a
           docker login --password ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} --username ${{ secrets.DOCKER_HUB_USERNAME }}
           cachix use ${{ env.CACHIX_NAME }}
           cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
@@ -596,7 +597,7 @@ jobs:
           #fi
           #fi
           echo "0000000000000000000000000"
-          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}"
+          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest"
 
       - name: Release artifacts
         uses: softprops/action-gh-release@v1

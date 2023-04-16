@@ -43,7 +43,7 @@
       rococo-runtime-commit =
         builtins.elemAt (builtins.split "#" rococo-runtime-dep.source) 2;
     
-#      mkRelay
+#      mkRelayКгтешьу = 
 
     in
     {
@@ -101,7 +101,7 @@
           repo = "polkadot";
           owner = "paritytech";
           rev = rococo-runtime-commit;
-          hash = "sha256-24UcJTnbVDe8oW1S0stayHc7/vVyFQaqTSSPHNqJXkg=";
+          hash = "sha256-24UcJTnbVDe8oW8S0stayHc7/vVyFQaqTSSPHNqJXkg=";
           cargoSha256 = "sha256-24UcJTnbVDe8oW8S0stayHc7/vVyFQaqTSSPHNqJXkg=";
         };
 
@@ -111,7 +111,7 @@
           repo = "polkadot";
           owner = "paritytech";
           rev = "e203bfb396ed949f102720debf32fb98166787af";
-          hash = "sha256-++aSGovKRE4+1hRoDqo6lSO1aenNrdvkVqaIXz4s0bk=";
+          hash = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
           cargoSha256 = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
         };
 
@@ -120,7 +120,7 @@
           repo = "polkadot";
           owner = "paritytech";
           rev = "e203bfb396ed949f102720debf32fb98166787af";
-          hash = "sha256-++aSGovKRE4+1hRoDqo6lSO1aenNrdvkVqaIXz4s0bk=";
+          hash = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
           cargoSha256 = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
         };
 
@@ -129,7 +129,7 @@
           repo = "polkadot";
           owner = "paritytech";
           rev = "e203bfb396ed949f102720debf32fb98166787af";
-          hash = "sha256-++aSGovKRE4+1hRoDqo6lSO1aenNrdvkVqaIXz4s0bk=";
+          hash = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
           cargoSha256 = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
         };
 
@@ -138,7 +138,7 @@
           repo = "polkadot";
           owner = "paritytech";
           rev = "e203bfb396ed949f102720debf32fb98166787af";
-          hash = "sha256-++aSGovKRE4+1hRoDqo6lSO1aenNrdvkVqaIXz4s0bk=";
+          hash = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
           cargoSha256 = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
         };
       };
