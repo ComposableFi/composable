@@ -342,13 +342,6 @@ jobs:
 
       - name: cachix-nix-build
         run: |  
-          # https://github.com/cachix/cachix/issues/528
-          # echo "warm up to check that we can compile rust with some basic substrate"
-          # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#subwasm --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --verbose --debug
-          # echo "compile our all in one devnet"
-          # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --verbose --debug
-          # echo "double check we are ok with devnet/substrate on picasso"
-          # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --verbose --debug          
           nix build .#devnet-picasso
           nix-store --query --references $(realpath result) | xargs nix-store --realise | xargs nix-store  --query --requisites | cachix push --compression-level 16 --compression-method zstd --jobs 8 composable-community
 
@@ -555,7 +548,7 @@ jobs:
       group: draft-release-${{ github.ref }}
       cancel-in-progress: true
     container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+      image: niteo/nixpkgs-nixos-22.11:fda0d99c2cbbb5c89d8855d258cb0821bd9113ad
     steps:
       - uses: actions/checkout@v3
         with:
@@ -588,7 +581,7 @@ jobs:
         run: |
           cachix use ${{ env.CACHIX_NAME }}
           cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
-          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- run .#generate-release-artifacts --print-build-logs
+          nix run .#generate-release-artifacts --print-build-logs
           echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)" >> $GITHUB_ENV
           docker load --input release-artifacts/composable-docker-image
           GITHUB_EVENT_NAME="${{ github.event_name }}"
