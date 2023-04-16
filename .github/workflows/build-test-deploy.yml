@@ -541,7 +541,85 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: hyperspace-composable-rococo-picasso-rococo
           artifact: hyperspace-composable-rococo-picasso-rococo:latest
-      
+
+  draft-release:
+    name: draft-release
+    runs-on:
+      - self-hosted
+      - x64-monster
+    # needs:
+    #   - effects-gate
+    concurrency:
+      group: draft-release-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Nix configuration
+        run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+
+      - name: Setup Cachix
+        uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+
+      - name: Install Docker
+        run: nix-env -iA nixpkgs.docker
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Push docker
+        run: |
+          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- run .#generate-release-artifacts --print-build-logs
+          echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)" >> $GITHUB_ENV
+          docker load --input release-artifacts/composable-docker-image
+          GITHUB_EVENT_NAME="${{ github.event_name }}"
+          SHA256=$(sha256sum release-artifacts/composable-docker-image | cut --delimiter " " --fields 1)
+          COMMIT_SHA=$(git rev-parse HEAD)
+          
+          docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:${SHA256}"
+          docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:${COMMIT_SHA}"
+          
+          #if [[ GITHUB_EVENT_NAME = "push" ]]; then
+          #if [ $(git symbolic-ref HEAD) = "refs/heads/main" ]; then
+          echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)" >> $GITHUB_ENV
+          docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:main-v${{ env.COMPOSABLE_VERSION }}"
+          #fi
+          #fi
+          docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}"
+
+      - name: Release artifacts
+        uses: softprops/action-gh-release@v1
+        if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}    
+        with:
+          draft: true
+          prerelease: true          
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          body_path: release-artifacts/release.txt
+          name: ${{ github.ref_name }}-RC
+          tag_name: ${{ github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          files: |
+            release-artifacts/to-upload/*
+
   deploy-pablo-preview:
     name: "Deploy Pablo Preview [FLAKY]"
     needs:

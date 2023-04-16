@@ -30,9 +30,7 @@ Visit our [docs](https://docs.composable.finance) to learn more about our ecosys
 
 Refer [releases](https://github.com/ComposableFi/composable/releases) page.
 
-## Release Process
-
-Refer [RFC-0011](./rfcs/0011-releases.md).
+## [Release Process](RELEASE.md)
 
 ## Nix
 

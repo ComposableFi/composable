@@ -38,8 +38,6 @@ runs:
 
         docker tag "${TEMP_CONTAINER_NAME}" "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${SHA256}"
         docker tag "${TEMP_CONTAINER_NAME}" "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:${COMMIT_SHA}"
-        
-        # better do this here https://github.com/ComposableFi/composable/issues/2673
 
         if [ $(git symbolic-ref HEAD) = "refs/heads/main" ]; then
           docker tag "${TEMP_CONTAINER_NAME}" "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}:latest"
