@@ -560,15 +560,7 @@ jobs:
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
           echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
           nix profile install nixpkgs#docker nixpkgs#cachix
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Push docker
-        run: |
+          docker login --password ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} --username ${{ secrets.DOCKER_HUB_USERNAME }}
           cachix use ${{ env.CACHIX_NAME }}
           cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
           nix run .#generate-release-artifacts --print-build-logs
@@ -577,7 +569,6 @@ jobs:
           GITHUB_EVENT_NAME="${{ github.event_name }}"
           SHA256=$(sha256sum release-artifacts/composable-docker-image | cut --delimiter " " --fields 1)
           COMMIT_SHA=$(git rev-parse HEAD)
-          
           docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:${SHA256}"
           docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:${COMMIT_SHA}"
           
