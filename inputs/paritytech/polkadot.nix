@@ -1,6 +1,16 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, lib, system, crane
-    , systemCommonRust, subnix, ... }:
+  perSystem =
+    { config
+    , self'
+    , inputs'
+    , pkgs
+    , lib
+    , system
+    , crane
+    , systemCommonRust
+    , subnix
+    , ...
+    }:
     let
       _cargo-debug-attrs = {
         CARGO_LOG = "debug";
@@ -10,9 +20,9 @@
         RUST_LOG = "debug";
       };
       buildPolkadotNode =
-        { name, version, repo, owner, rev, hash, cargoSha256 }:
+        { name, repo, owner, rev, hash, cargoSha256 }:
         pkgs.rustPlatform.buildRustPackage (subnix.subenv // rec {
-          inherit name version cargoSha256;
+          inherit name cargoSha256;
           # git may be different locally and remotely, so we freeze for determinism (because node builds wasm)
           buildPackage = [ pkgs.git ];
           src = pkgs.fetchgit {
@@ -32,10 +42,12 @@
         (builtins.filter (x: x.name == "rococo-runtime") (cargo-lock.package));
       rococo-runtime-commit =
         builtins.elemAt (builtins.split "#" rococo-runtime-dep.source) 2;
-    in {
+    in
+    {
       packages = rec {
-        rococo-wasm-runtime-9360 = pkgs.stdenv.mkDerivation {
-          name = "rococo-wasm-runtime";
+        # intentionally defined each env separately because it can  evolve/tested/deployed separately
+        rococo-runtime-from-dep = pkgs.stdenv.mkDerivation {
+          name = "rococo-runtime-from-dep";
           dontUnpack = true;
           src = pkgs.fetchurl {
             url =
@@ -47,33 +59,52 @@
             cp $src $out/lib/rococo_runtime.compact.compressed.wasm
           '';
         };
-        rococo-wasm-runtime-current = rococo-wasm-runtime-9360;
 
-        polkadot-node-dep = let version = "current";
-        in buildPolkadotNode rec {
-          name = rococo-runtime-commit;
-          inherit version;
+        polkadot-node-from-dep = buildPolkadotNode rec {
+          name = "polkadot-node-from-dep";
           repo = "polkadot";
           owner = "paritytech";
           rev = rococo-runtime-commit;
           hash = "sha256-24UcJTnbVDe8oW8S0stayHc7/vVyFQaqTSSPHNqJXkg=";
           cargoSha256 = "sha256-F++EqCzJO9v0rIbM5nmGTkPKXbAT2Bj0ntjkO/kjxQI=";
         };
-        # for xcmv3 release and centauri client asap they upgrade
-        polkadot-node-9390 = let version = "v0.9.39";
-        in buildPolkadotNode rec {
-          name = "polkadot-node-next";
-          inherit version;
+
+
+        polkadot-node-on-parity-rococo = buildPolkadotNode rec {
+          name = "polkadot-node-on-parity-rococo";
           repo = "polkadot";
           owner = "paritytech";
-          rev = "refs/tags/${version}";
-          hash = "sha256-++aSGovKRE4+1hRoDqo6lSO4aenNrdvkVqaIXz4s0bk=";
-          cargoSha256 = "sha256-RG/FvtrMCJB1BbMosSPlGJCKmIbRJT7ZUDkj1dVKWKg=";
+          rev = "e203bfb396ed949f102720debf32fb98166787af";
+          hash = "sha256-++aSGovKRE4+1hRoDqo6lSO1aenNrdvkVqaIXz4s0bk=";
+          cargoSha256 = "sha256-RG/FvtrMCJB2BbMosSPlGJCKmIbRJT7ZUDkj1dVKWKg=";
         };
 
-        polkadot-node-on-parity-kusama = polkadot-node-dep;
-        polkadot-node-on-parity-polkadot = polkadot-node-dep;
-        polkadot-node-on-parity-rococo = polkadot-node-9390;
+        polkadot-node-on-parity-westend = buildPolkadotNode rec {
+          name = "polkadot-node-on-parity-westend";
+          repo = "polkadot";
+          owner = "paritytech";
+          rev = "e203bfb396ed949f102720debf32fb98166787af";
+          hash = "sha256-++aSGovKRE4+1hRoDqo1lSO4aenNrdvkVqaIXz4s0bk=";
+          cargoSha256 = "sha256-RG/FvtrMCJB2BbMosSPlGJCKmIbRJT7ZUDkj1dVKWKg=";
+        };
+
+        polkadot-node-on-parity-kusama = buildPolkadotNode rec {
+          name = "polkadot-node-on-parity-kusama";
+          repo = "polkadot";
+          owner = "paritytech";
+          rev = "e203bfb396ed949f102720debf32fb98166787af";
+          hash = "sha256-++aSGovKRE4+1hRoDqo1lSO4aenNrdvkVqaIXz4s0bk=";
+          cargoSha256 = "sha256-RG/FvtrMCJB2BbMosSPlGJCKmIbRJT7ZUDkj1dVKWKg=";
+        };
+
+        polkadot-node-on-parity-polkadot = buildPolkadotNode rec {
+          name = "polkadot-node-on-parity-polkadot";
+          repo = "polkadot";
+          owner = "paritytech";
+          rev = "e203bfb396ed949f102720debf32fb98166787af";
+          hash = "sha256-++aSGovKRE4+1hRoDqo1lSO4aenNrdvkVqaIXz4s0bk=";
+          cargoSha256 = "sha256-RG/FvtrMCJB2BbMosSPlGJCKmIbRJT7ZUDkj1dVKWKg=";
+        };
       };
     };
 }

@@ -541,7 +541,7 @@ jobs:
     name: draft-release
     runs-on:
       - self-hosted
-      - x64-monster
+      - x64-cute
     # needs:
     #   - effects-gate
     concurrency:

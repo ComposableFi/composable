@@ -5,9 +5,12 @@
       all-deps = pkgs.linkFarmFromDrvs "all-deps" (with self'.packages; [
         acala-node
         bifrost-node
-        polkadot-node-dep
+        rococo-runtime-from-dep
+        polkadot-node-from-dep
         polkadot-node-on-parity-kusama
         polkadot-node-on-parity-polkadot
+        polkadot-node-on-parity-westend
+        polkadot-node-on-parity-rococo
         statemine-node
         subwasm
         zombienet
