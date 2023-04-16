@@ -42,6 +42,9 @@
         (builtins.filter (x: x.name == "rococo-runtime") (cargo-lock.package));
       rococo-runtime-commit =
         builtins.elemAt (builtins.split "#" rococo-runtime-dep.source) 2;
+    
+#      mkRelay
+
     in
     {
       packages = rec {
@@ -56,9 +59,42 @@
           };
           installPhase = ''
             mkdir -p $out/lib
-            cp $src $out/lib/rococo_runtime.compact.compressed.wasm
+            cp $src $out/lib/relay_runtime.compact.compressed.wasm
           '';
         };
+
+
+
+      kusama-runtime-on-parity = pkgs.stdenv.mkDerivation {
+          name = "kusama-runtime-on-parity";
+          dontUnpack = true;
+          src = pkgs.fetchurl {
+            url =
+              "https://github.com/paritytech/polkadot/releases/download/v0.9.38-rc12/kusama_runtime-v9381.compact.compressed.wasm";
+            hash = "sha256-LTKYGGMyQj+hzpp+9DvpPExzwiukRHQBA+e4DDAjBto=";
+          };
+          installPhase = ''
+            mkdir -p $out/lib
+            cp $src $out/lib/relay_runtime.compact.compressed.wasm
+          '';
+        };
+
+
+      polkadot-runtime-on-parity = pkgs.stdenv.mkDerivation {
+          name = "polkadot-runtime-on-parity";
+          dontUnpack = true;
+          src = pkgs.fetchurl {
+            url =
+              "https://github.com/paritytech/polkadot/releases/download/v0.9.37/polkadot_runtime-v9370.compact.compressed.wasm";
+            hash = "sha256-n8+2GpqqU/kHderUqea4Q7yv4UmsESw25laH1/oZryE=";
+          };
+          installPhase = ''
+            mkdir -p $out/lib
+            cp $src $out/lib/relay_runtime.compact.compressed.wasm
+          '';
+        };
+
+        
 
         polkadot-node-from-dep = buildPolkadotNode rec {
           name = "polkadot-node-from-dep";
@@ -66,7 +102,7 @@
           owner = "paritytech";
           rev = rococo-runtime-commit;
           hash = "sha256-24UcJTnbVDe8oW1S0stayHc7/vVyFQaqTSSPHNqJXkg=";
-          cargoSha256 = "sha256-OA0m9b3opPahHfsOMJylmstu6XmmCXC60T1e56uMqyE=";
+          cargoSha256 = "sha256-24UcJTnbVDe8oW8S0stayHc7/vVyFQaqTSSPHNqJXkg=";
         };
 
 
@@ -76,7 +112,7 @@
           owner = "paritytech";
           rev = "e203bfb396ed949f102720debf32fb98166787af";
           hash = "sha256-++aSGovKRE4+1hRoDqo6lSO1aenNrdvkVqaIXz4s0bk=";
-          cargoSha256 = "sha256-RG/FvtrMCJB2BbMosSPlGJCKmIbRJT7ZUDkj1dVKWKg=";
+          cargoSha256 = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
         };
 
         polkadot-node-on-parity-westend = buildPolkadotNode rec {
@@ -84,8 +120,8 @@
           repo = "polkadot";
           owner = "paritytech";
           rev = "e203bfb396ed949f102720debf32fb98166787af";
-          hash = "sha256-++aSGovKRE4+1hRoDqo1lSO4aenNrdvkVqaIXz4s0bk=";
-          cargoSha256 = "sha256-RG/FvtrMCJB2BbMosSPlGJCKmIbRJT7ZUDkj1dVKWKg=";
+          hash = "sha256-++aSGovKRE4+1hRoDqo6lSO1aenNrdvkVqaIXz4s0bk=";
+          cargoSha256 = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
         };
 
         polkadot-node-on-parity-kusama = buildPolkadotNode rec {
@@ -93,8 +129,8 @@
           repo = "polkadot";
           owner = "paritytech";
           rev = "e203bfb396ed949f102720debf32fb98166787af";
-          hash = "sha256-++aSGovKRE4+1hRoDqo1lSO4aenNrdvkVqaIXz4s0bk=";
-          cargoSha256 = "sha256-RG/FvtrMCJB2BbMosSPlGJCKmIbRJT7ZUDkj1dVKWKg=";
+          hash = "sha256-++aSGovKRE4+1hRoDqo6lSO1aenNrdvkVqaIXz4s0bk=";
+          cargoSha256 = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
         };
 
         polkadot-node-on-parity-polkadot = buildPolkadotNode rec {
@@ -102,8 +138,8 @@
           repo = "polkadot";
           owner = "paritytech";
           rev = "e203bfb396ed949f102720debf32fb98166787af";
-          hash = "sha256-++aSGovKRE4+1hRoDqo1lSO4aenNrdvkVqaIXz4s0bk=";
-          cargoSha256 = "sha256-RG/FvtrMCJB2BbMosSPlGJCKmIbRJT7ZUDkj1dVKWKg=";
+          hash = "sha256-++aSGovKRE4+1hRoDqo6lSO1aenNrdvkVqaIXz4s0bk=";
+          cargoSha256 = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
         };
       };
     };

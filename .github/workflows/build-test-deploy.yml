@@ -580,17 +580,22 @@ jobs:
           echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)" >> $GITHUB_ENV
           docker load --input release-artifacts/composable-docker-image
           GITHUB_EVENT_NAME="${{ github.event_name }}"
+          echo "3333"
           SHA256=$(sha256sum release-artifacts/composable-docker-image | cut --delimiter " " --fields 1)
           COMMIT_SHA=$(git rev-parse HEAD)
+          echo "rtyrtytrytry"
           docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:${SHA256}"
           docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:${COMMIT_SHA}"
           
+          echo "111111111111111111111"
           #if [[ GITHUB_EVENT_NAME = "push" ]]; then
           #if [ $(git symbolic-ref HEAD) = "refs/heads/main" ]; then
+          echo "ASDSASDSADASAS"
           echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)" >> $GITHUB_ENV
           docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:main-v${{ env.COMPOSABLE_VERSION }}"
           #fi
           #fi
+          echo "0000000000000000000000000"
           docker push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/${CONTAINER_NAME}"
 
       - name: Release artifacts

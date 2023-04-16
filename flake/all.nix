@@ -6,6 +6,8 @@
         acala-node
         bifrost-node
         rococo-runtime-from-dep
+        kusama-runtime-on-parity
+        polkadot-runtime-on-parity
         polkadot-node-from-dep
         polkadot-node-on-parity-kusama
         polkadot-node-on-parity-polkadot
