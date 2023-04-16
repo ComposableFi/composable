@@ -559,17 +559,7 @@ jobs:
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
           echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-
-      - name: Setup Cachix
-        uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix profile install nixpkgs#cachix nixpkgs#docker
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
+          nix profile install nixpkgs#docker nixpkgs#cachix
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
