@@ -554,13 +554,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Nix configuration
-        run: |
+      - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
           echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
           nix profile install nixpkgs#docker nixpkgs#cachix
-          source ~/.nix-profile/etc/profile.d/nix.sh          
+
+      - run: |
           docker login --password ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} --username ${{ secrets.DOCKER_HUB_USERNAME }}
           cachix use ${{ env.CACHIX_NAME }}
           cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
