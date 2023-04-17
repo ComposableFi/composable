@@ -309,6 +309,107 @@ fn update_asset_location() {
 }
 
 #[test]
+fn use_same_location_twice() {
+	new_test_ext().execute_with(|| {
+		let location_1 = <Runtime as crate::Config>::ForeignAssetId::decode(
+			&mut &ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::parent())).encode()
+				[..],
+		)
+		.expect("Location bytes translate to foreign ID bytes");
+		let location_2 = <Runtime as crate::Config>::ForeignAssetId::decode(
+			&mut &ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode()[..],
+		)
+		.expect("Location bytes translate to foreign ID bytes");
+		let protocol_id = *b"AssTests";
+		let nonce_1 = 1_u64;
+		let nonce_2 = 2_u64;
+		let nonce_3 = 3_u64;
+		let nonce_4 = 4_u64;
+		let asset_info = AssetInfo {
+			name: None,
+			symbol: None,
+			decimals: Some(4),
+			existential_deposit: 0,
+			ratio: Some(rational!(42 / 123)),
+		};
+
+		assert_ok!(AssetsRegistry::register_asset(
+			RuntimeOrigin::root(),
+			protocol_id,
+			nonce_1,
+			Some(location_1.clone()),
+			asset_info.clone(),
+		));
+
+		// shouldn't register because location is used
+		assert_noop!(
+			AssetsRegistry::register_asset(
+				RuntimeOrigin::root(),
+				protocol_id,
+				nonce_2,
+				Some(location_1.clone()),
+				asset_info.clone(),
+			),
+			Error::<Runtime>::LocationIsUsed
+		);
+		assert_ok!(AssetsRegistry::register_asset(
+			RuntimeOrigin::root(),
+			protocol_id,
+			nonce_2,
+			Some(location_2.clone()),
+			asset_info.clone(),
+		));
+
+		let local_asset_id_1 =
+			AssetsRegistry::from_foreign_asset(location_1.clone()).expect("Asset exists");
+		let local_asset_id_2 =
+			AssetsRegistry::from_foreign_asset(location_2.clone()).expect("Asset exists");
+		assert_eq!(AssetsRegistry::generate_asset_id(protocol_id, nonce_1), local_asset_id_1);
+		assert_eq!(AssetsRegistry::generate_asset_id(protocol_id, nonce_2), local_asset_id_2);
+
+		// should fail because location_2 is used
+		assert_noop!(
+			AssetsRegistry::update_asset_location(
+				RuntimeOrigin::root(),
+				local_asset_id_1,
+				Some(location_2.clone()),
+			),
+			Error::<Runtime>::LocationIsUsed
+		);
+
+		// should pass with location None
+		assert_ok!(AssetsRegistry::register_asset(
+			RuntimeOrigin::root(),
+			protocol_id,
+			nonce_3,
+			None,
+			asset_info.clone(),
+		));
+		assert_ok!(AssetsRegistry::register_asset(
+			RuntimeOrigin::root(),
+			protocol_id,
+			nonce_4,
+			None,
+			asset_info.clone(),
+		));
+		assert_ok!(AssetsRegistry::update_asset_location(
+			RuntimeOrigin::root(),
+			local_asset_id_1,
+			None
+		));
+
+		let local_asset_id_3 = AssetsRegistry::generate_asset_id(protocol_id, nonce_3);
+		let local_asset_id_4 = AssetsRegistry::generate_asset_id(protocol_id, nonce_4);
+		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id_1), None);
+		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id_2), Some(location_2.clone()));
+		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id_3), None);
+		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id_4), None);
+		assert_eq!(AssetsRegistry::from_foreign_asset(location_1.clone()), None);
+		assert_eq!(AssetsRegistry::from_foreign_asset(location_2.clone()), Some(local_asset_id_2));
+	})
+}
+
+#[test]
 fn get_foreign_assets_list_should_work() {
 	new_test_ext().execute_with(|| {
 		let location = ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here()));

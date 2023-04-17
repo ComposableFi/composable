@@ -213,6 +213,7 @@ pub mod pallet {
 		AssetAlreadyRegistered,
 		AssetLocationIsNone,
 		StringExceedsMaxLength,
+		LocationIsUsed,
 	}
 
 	#[pallet::call]
@@ -327,10 +328,6 @@ pub mod pallet {
 			);
 
 			if let Some(location) = location.clone() {
-				ensure!(
-					!ForeignToLocal::<T>::contains_key(&location),
-					Error::<T>::AssetAlreadyRegistered
-				);
 				Self::set_reserve_location(asset_id, location)?;
 			}
 
@@ -351,6 +348,7 @@ pub mod pallet {
 			asset_id: Self::AssetId,
 			location: Self::AssetNativeLocation,
 		) -> DispatchResult {
+			ensure!(!ForeignToLocal::<T>::contains_key(&location), Error::<T>::LocationIsUsed);
 			let old_location = LocalToForeign::<T>::try_get(asset_id);
 			if let Ok(inner_old_location) = old_location {
 				ForeignToLocal::<T>::remove(inner_old_location);

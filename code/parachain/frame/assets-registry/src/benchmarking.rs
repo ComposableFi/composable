@@ -103,7 +103,7 @@ benchmarks! {
 		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location.clone())
 			.expect("Asset exists");
 		let location_new =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::parent())).encode().as_ref()).unwrap();
-	}: _(RawOrigin::Root, local_asset_id, Some(location))
+	}: _(RawOrigin::Root, local_asset_id, Some(location_new))
 }
 
 impl_benchmark_test_suite!(AssetsRegistry, crate::runtime::new_test_ext(), crate::runtime::Runtime);
