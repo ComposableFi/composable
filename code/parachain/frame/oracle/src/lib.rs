@@ -268,6 +268,12 @@ pub mod pallet {
 	pub type OracleStake<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, BalanceOf<T>>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn accumulated_rewards)]
+	/// Mapping of signing key to stake
+	pub type AccumulatedRewardsPerAsset<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AssetId, BalanceOf<T>>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn answer_in_transit)]
 	/// Mapping of slash amounts currently in transit
 	pub type AnswerInTransit<T: Config> =
@@ -420,7 +426,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(block: T::BlockNumber) -> Weight {
 			Self::reset_reward_tracker_if_expired();
-			Self::update_prices(block)
+			Self::update_prices_and_rewards(block)
 		}
 
 		fn offchain_worker(_block_number: T::BlockNumber) {
@@ -845,14 +851,10 @@ pub mod pallet {
 				Self::remove_price_in_transit(&answer.who, asset_info)
 			}
 			if let Some(mut reward_tracker) = Self::get_reward_tracker_if_enabled() {
-				// divide the per asset reward(by weight) by the number of oracles
-				let reward_amount_per_asset: T::Balance = safe_multiply_by_rational(
-					reward_tracker.current_block_reward.unique_saturated_into(),
-					asset_info.reward_weight.unique_saturated_into(),
-					reward_tracker.total_reward_weight.unique_saturated_into(),
-				)?
-				.into();
-				if !reward_amount_per_asset.is_zero() {
+				// accumulated amount of reward to distribute for the asset
+				let reward_amount_per_asset: T::Balance =
+					AccumulatedRewardsPerAsset::<T>::get(asset_id).unwrap_or_else(Zero::zero);
+				if !reward_amount_per_asset.is_zero() && rewarded_oracles.len() != 0 {
 					let rewarded_oracles_total_staked: T::Balance = rewarded_oracles
 						.iter()
 						.map(|account| OracleStake::<T>::get(&account.0).unwrap_or_default())
@@ -879,6 +881,9 @@ pub mod pallet {
 								.saturating_add(reward_amount_for_account);
 						}
 					}
+					AccumulatedRewardsPerAsset::<T>::mutate(asset_id, |balance| {
+						*balance = Some(Zero::zero())
+					});
 					RewardTrackerStore::<T>::mutate(|r| *r = Some(reward_tracker));
 				}
 			} else {
@@ -924,10 +929,30 @@ pub mod pallet {
 			});
 		}
 
-		pub fn update_prices(block: T::BlockNumber) -> Weight {
+		pub fn update_prices_and_rewards(block: T::BlockNumber) -> Weight {
 			let mut total_weight: Weight = Zero::zero();
 			let one_read = T::DbWeight::get().reads(1);
+			let one_write = T::DbWeight::get().writes(1);
+			let reward_tracker_option = Self::get_reward_tracker_if_enabled();
+			total_weight += one_read;
 			for (asset_id, asset_info) in AssetsInfo::<T>::iter() {
+				// accumulate rewards
+				if let Some(reward_tracker) = reward_tracker_option.clone() {
+					if let Ok(reward_amount_per_asset) = safe_multiply_by_rational(
+						reward_tracker.current_block_reward.unique_saturated_into(),
+						asset_info.reward_weight.unique_saturated_into(),
+						reward_tracker.total_reward_weight.unique_saturated_into(),
+					) {
+						AccumulatedRewardsPerAsset::<T>::mutate(asset_id, |accumulated_amount| {
+							*accumulated_amount = Some(
+								accumulated_amount
+									.unwrap_or_else(Zero::zero)
+									.saturating_add(reward_amount_per_asset.into()),
+							)
+						});
+						total_weight += one_write;
+					};
+				};
 				total_weight += one_read;
 				if let Ok((removed_pre_prices_len, pre_prices)) =
 					Self::update_pre_prices(asset_id, &asset_info, block)
@@ -937,6 +962,7 @@ pub mod pallet {
 
 					// We can ignore `Error::<T>::MaxHistory` because it can not be
 					// because we control the length of items of `PriceHistory`.
+					// TODO this doesnt include weight inside
 					let _ = Self::update_price(asset_id, asset_info.clone(), block, pre_prices);
 					total_weight += T::WeightInfo::update_price(pre_prices_len as u32);
 				};

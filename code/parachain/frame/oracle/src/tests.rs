@@ -844,6 +844,8 @@ fn calculate_reward_per_block() {
 				total_reward_weight: 40,
 			})
 		);
+		assert_eq!(AccumulatedRewardsPerAsset::<Test>::get(0_u128), None);
+		assert_eq!(AccumulatedRewardsPerAsset::<Test>::get(1_u128), None);
 
 		// add prices for asset 1 from 1 user
 		System::set_block_number(6);
@@ -857,8 +859,10 @@ fn calculate_reward_per_block() {
 		Oracle::on_initialize(7);
 		assert_eq!(Balances::free_balance(account_1_controller), 925);
 		assert_eq!(Balances::free_balance(rewards_account), 9975);
+		assert_eq!(AccumulatedRewardsPerAsset::<Test>::get(0_u128), Some(Zero::zero()));
+		assert_eq!(AccumulatedRewardsPerAsset::<Test>::get(1_u128), Some(75_u128));
 
-		// 2 users for another asset
+		// 2 users for another asset (it has rewards accumulated for 2 block -- 2 on_initialize)
 		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2_signer), 200_u128, 1_u128));
 		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_3_signer), 200_u128, 1_u128));
 		System::set_block_number(8);
@@ -867,9 +871,11 @@ fn calculate_reward_per_block() {
 		assert_eq!(Balances::free_balance(account_3_controller), 700);
 		assert_eq!(Balances::free_balance(rewards_account), 9975);
 		Oracle::on_initialize(8);
-		assert_eq!(Balances::free_balance(account_2_controller), 830);
-		assert_eq!(Balances::free_balance(account_3_controller), 745);
-		assert_eq!(Balances::free_balance(rewards_account), 9900);
+		assert_eq!(Balances::free_balance(account_2_controller), 860);
+		assert_eq!(Balances::free_balance(account_3_controller), 790);
+		assert_eq!(Balances::free_balance(rewards_account), 9825);
+		assert_eq!(AccumulatedRewardsPerAsset::<Test>::get(0_u128), Some(25_u128));
+		assert_eq!(AccumulatedRewardsPerAsset::<Test>::get(1_u128), Some(Zero::zero()));
 
 		// 3 users for both assets
 		System::set_block_number(100);
@@ -881,10 +887,12 @@ fn calculate_reward_per_block() {
 		System::set_block_number(101);
 		Timestamp::set_timestamp(101);
 		Oracle::on_initialize(101);
-		assert_eq!(Balances::free_balance(account_1_controller), 933);
-		assert_eq!(Balances::free_balance(account_2_controller), 876);
-		assert_eq!(Balances::free_balance(account_3_controller), 790);
-		assert_eq!(Balances::free_balance(rewards_account), 9801);
+		assert_eq!(Balances::free_balance(account_1_controller), 941);
+		assert_eq!(Balances::free_balance(account_2_controller), 923);
+		assert_eq!(Balances::free_balance(account_3_controller), 835);
+		assert_eq!(Balances::free_balance(rewards_account), 9701);
+		assert_eq!(AccumulatedRewardsPerAsset::<Test>::get(0_u128), Some(Zero::zero()));
+		assert_eq!(AccumulatedRewardsPerAsset::<Test>::get(1_u128), Some(Zero::zero()));
 
 		// all 3 user for all 2 assets
 		System::set_block_number(107);
@@ -898,10 +906,10 @@ fn calculate_reward_per_block() {
 		System::set_block_number(108);
 		Timestamp::set_timestamp(108);
 		Oracle::on_initialize(108);
-		assert_eq!(Balances::free_balance(account_1_controller), 949);
-		assert_eq!(Balances::free_balance(account_2_controller), 909);
-		assert_eq!(Balances::free_balance(account_3_controller), 839);
-		assert_eq!(Balances::free_balance(rewards_account), 9703);
+		assert_eq!(Balances::free_balance(account_1_controller), 957);
+		assert_eq!(Balances::free_balance(account_2_controller), 956);
+		assert_eq!(Balances::free_balance(account_3_controller), 884);
+		assert_eq!(Balances::free_balance(rewards_account), 9603);
 	});
 }
 
@@ -996,10 +1004,10 @@ fn calculate_reward_per_block_min_aswers_eq_3() {
 		System::set_block_number(8);
 		Timestamp::set_timestamp(8);
 		Oracle::on_initialize(8);
-		assert_eq!(Balances::free_balance(account_1_controller), 916);
-		assert_eq!(Balances::free_balance(account_2_controller), 833);
-		assert_eq!(Balances::free_balance(account_3_controller), 750);
-		assert_eq!(Balances::free_balance(rewards_account), 9901);
+		assert_eq!(Balances::free_balance(account_1_controller), 933);
+		assert_eq!(Balances::free_balance(account_2_controller), 866);
+		assert_eq!(Balances::free_balance(account_3_controller), 800);
+		assert_eq!(Balances::free_balance(rewards_account), 9801);
 	});
 }
 
@@ -1362,6 +1370,9 @@ fn test_payout_slash() {
 			emit_price_changes: false,
 		};
 		// doesn't panic when percent not set
+		// need to set AccumulatedRewardsPerAsset because previously rewards were not accumlated but
+		// but current_block_reward was distributed on every handle_payout call
+		// here checking for initial value of AccumulatedRewarsPerAsset which is None
 		assert_ok!(Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0, &asset_info));
 		assert_eq!(Balances::free_balance(account_1), 100);
 		assert_eq!(Balances::free_balance(Oracle::account_id()), 100);
@@ -1391,6 +1402,8 @@ fn test_payout_slash() {
 		assert_eq!(Oracle::answer_in_transit(account_2), Some(5));
 		assert_eq!(Balances::free_balance(treasury_account), 100);
 
+		// reward per block is 100, weight of an asset is 18
+		AccumulatedRewardsPerAsset::<Test>::mutate(0, |balance| *balance = Some(18_u128));
 		assert_ok!(Oracle::handle_payout(
 			&vec![one, two, three, four, five],
 			100,
@@ -1429,6 +1442,8 @@ fn test_payout_slash() {
 		));
 		let reward_tracker = RewardTrackerStore::<Test>::get().unwrap();
 		assert_eq!(reward_tracker.total_reward_weight, 100);
+		// reward per block is 100, weight of an asset is 18
+		AccumulatedRewardsPerAsset::<Test>::mutate(0, |balance| *balance = Some(18_u128));
 		assert_ok!(Oracle::handle_payout(
 			&vec![one, two, three, four, five],
 			100,
