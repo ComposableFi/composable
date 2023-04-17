@@ -12,12 +12,13 @@ use composable_traits::{
 	storage::UpdateValue,
 };
 
+
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
 use primitives::currency::{ForeignAssetId, VersionedMultiLocation};
 use sp_runtime::traits::Zero;
 use sp_std::prelude::*;
-use xcm::latest::MultiLocation;
+use xcm::{latest::MultiLocation, v3::Junction::Parachain, v3::Junctions::X1};
 
 benchmarks! {
 	where_clause {
@@ -102,7 +103,7 @@ benchmarks! {
 
 		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location.clone())
 			.expect("Asset exists");
-		let location_new =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::parent())).encode().as_ref()).unwrap();
+		let location_new =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::new(1, X1(Parachain(4321))))).encode().as_ref()).unwrap();
 	}: _(RawOrigin::Root, local_asset_id, Some(location_new))
 }
 
