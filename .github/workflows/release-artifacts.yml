@@ -59,7 +59,7 @@ jobs:
           docker load --input release-artifacts/composable-docker-image
           docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
-          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable"
+          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest"
           
       - name: Release artifacts
         uses: softprops/action-gh-release@v1
