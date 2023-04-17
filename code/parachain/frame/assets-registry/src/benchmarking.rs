@@ -12,13 +12,15 @@ use composable_traits::{
 	storage::UpdateValue,
 };
 
-
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
 use primitives::currency::{ForeignAssetId, VersionedMultiLocation};
 use sp_runtime::traits::Zero;
 use sp_std::prelude::*;
-use xcm::{latest::MultiLocation, v3::Junction::Parachain, v3::Junctions::X1};
+use xcm::{
+	latest::MultiLocation,
+	v3::{Junction::Parachain, Junctions::X1},
+};
 
 benchmarks! {
 	where_clause {
