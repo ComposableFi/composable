@@ -1,122 +1,59 @@
 # The Composable Team
 
-There are around 56 people on the Composable team; 29 in engineering and research; 8 in Infrastructure;
-3 in Product and design; 12 in Growth, marketing and business development; 5 in legal, finance and HR. 
-Select biographies of our core members are below.
+The Composable team consists of approximately 35 individuals, with 20 members dedicated to Engineering, Infrastructure, and Research, while 11 others are focused on Product, Design, Marketing, and Business Development. The remaining four individuals are assigned to Legal, Finance, and HR roles. Biographies of select core members are provided below.
 
 ## 0xbrainjar | Founder & CEO
 
-Brainjar brings a deep understanding of the blockchain space and a comprehensive vision on cross-chain DeFi. 
-He is focused on researching blockchain infrastructure and relevant trends to advise on Composable’s development as well
-as designing products that can best leverage the Composable tech stack.  He’s also advising Composable Labs, 
-the incubation arm that births and supports projects using Composable’s tech stack. 
-Brainjar writes about the R&D at Composable 
-on [Twitter](https://twitter.com/0xbrainjar) and [Medium](https://medium.com/@0xbrainjar).
+Brainjar brings a deep understanding of the blockchain space and a comprehensive vision on cross-chain DeFi. He is focused on researching blockchain infrastructure and relevant trends to advise on Composable’s development as well as designing products that can best leverage the Composable tech stack.  He’s also advising Composable Labs, the incubation arm that births and supports projects using Composable’s tech stack. Brainjar writes about the R&D at Composable on [Twitter](https://twitter.com/0xbrainjar) and [Medium](https://medium.com/@0xbrainjar).
+
+## Blas Rodriguez Irizar | Chief Technology Officer
+
+Blas has 8 years of experience as a Software Engineer. He started his blockchain experience at LayerTwo, moving to Consensys where he worked on building zk-rollups. Blas has expertise in building high performance systems and working with different blockchains like Solana, Ethereum, and Bitcoin. He holds a Bachelor’s Degree in Science and a Masters Degree in Finance. In his role at Composable, Blas oversees the Research and Engineering departments with the critical responsibility of creating the technology strategy behind Composable’s products. [Twitter](https://mobile.twitter.com/blasrodri)
 
 ## Eoin Whelan | Chief Finance Officer
 
-Eoin has extensive experience operating, scaling, and raising capital in the Traditional and DeFi sectors. 
-He had an early career as an international tax and M&A accountant with Price Waterhouse Coopers (PwC). 
-He held leadership roles at BDO advising international corporate clients, and at EY leading the finance 
-transformation team and successfully growing the business tenfold. 
-Eoin’s entrepreneurial spirit led him to become the CEO of a tech start-up where he successfully raised 5 million euros. 
-After that, he had over 5 years as a C-level executive for a number of DeFi, NFT, and blockchain-related projects. 
-He holds an undergraduate degree in accounting and a Master’s degree in business and finance. 
-In his role, Eoin focuses on delivering excellence in finances to accelerate the company’s journey towards expansion 
-and sustainable growth.
+Eoin has extensive experience operating, scaling, and raising capital in the Traditional and Decentralized Finance sectors. He had an early career as an international tax and M&A accountant with Price Waterhouse Coopers (PwC). He held leadership roles at BDO advising international corporate clients, and at EY leading the finance transformation team and successfully growing the business tenfold. Eoin had over 5 years as a C-level executive for a number of DeFi, NFT, and blockchain-related projects. He holds an undergraduate degree in accounting and a Master’s degree in business and finance. In his role, Eoin focuses on delivering excellence in finances to accelerate the company’s journey towards expansion and sustainable growth.
 
 ## Jeffrey Smith | Global GC, Chief Compliance & Risk Officer
 
-Jeffrey has specialized experience spanning the different dimensions of finance across securities law, financial
-regulation, digital assets, DeFi, compliance, risk, mergers & acquisitions, taxation, anti-money laundering, and more
-than 23 years of deep experience in the law covering all aspects of business and finance. His domain knowledge and years
-of real legal experience have enabled him to build a successful digital asset, DeFi, cryptocurrency, securities and
-financial law practice. Jeffrey has advised a range of clients across the different dimensions of DeFi, such as
-liquidity management, smart contracts, regulatory compliance, initial coin offerings (ICOs), DAOs, and more.
-You can follow Jeffrey on
-[LinkedIn](https://www.linkedin.com/in/jeffrey-smith-jd-llm-crcp-iaccp-crm-67623011/)
-and [Twitter](https://twitter.com/JeffreyAPIs).
+Jeffrey has specialized experience spanning the different dimensions of finance across securities law, financial regulation, digital assets, DeFi, compliance, risk, mergers & acquisitions, taxation, anti-money laundering, and more than 23 years of deep experience in the law covering all aspects of business and finance. Jeffrey has advised a range of clients across the different dimensions of DeFi, such as liquidity management, smart contracts, regulatory compliance, initial coin offerings (ICOs), DAOs, and more. [Twitter](https://twitter.com/JeffreyAPIs).
 
-## Zain Haider | Chief Marketing Officer
+## Ahmad Wehbi | Chief Operations Officer
 
-With over 10 years of marketing leadership, Zain has advised a plethora of projects, led global marketing teams, 
-and developed successful growth campaigns for start-ups. 
-He started his start-up journey at Muzmatch developing an aggressive and successful growth campaign, 
-resulting in a 100% customer increase in 6 months and decreasing costs per acquisition by 300%.
-He has been in Web3 for 2 years and he has led brand and communications at companies like Biconomy. 
-Zain has a BA in Development Economics from SOAS, University of London and an MPhil from the University of Cambridge. 
-In his role as Chief Marketing Officer, Zain drives the brand of Composable and leads the communication of our rapidly 
-evolving innovation. 
-[LinkedIn](https://www.linkedin.com/in/zain-haider-29569523/?originalSubdomain=uk) | 
-[Twitter](https://twitter.com/zha_tweets)
-
-## Ahmad Wehbi | Head of Growth
-
-Ahmad has 10 years of experience and spent most of his career advising institutions on strategy, operations, and 
-organizational topics. Ahmad is focused on the business and growth side and holds B.B.A. in Entrepreneurial Studies and
-an MBA from INSEAD. At McKinsey & Company, he helped organizations design and orchestrate ecosystems at scale. 
-At Composable, Ahmad leads efforts to grow the community of builders, founders, and partners that live in Composable’s 
-ecosystem or utilize the Composable tech stack. 
-[Twitter](https://twitter.com/wehbix) | [LinkedIn](https://www.linkedin.com/in/ahmad-wehbi-184813134/)
+Ahmad has 11 years of experience and spent most of his career advising institutions on strategy, operations, and organizational topics. Ahmad is focused on the operational side of Composable and holds a B.B.A. in Entrepreneurial Studies and an MBA from INSEAD. At McKinsey & Company, he helped organizations design and orchestrate ecosystems at scale. At Composable, Ahmad is responsible for overseeing the day-to-day operations and ensuring that business processes are efficient, effective, and aligned with the overall strategy. [Twitter](https://twitter.com/wehbix)
 
 ## 0xslenderman | Head of Design
 
-0xslenderman started his career in technology consultancy. Given his passion for aesthetics and design, 0xslenderman 
-became an entrepreneur founding a creative consultancy company. Since then, he obtained 7 years of experience in 
-creative direction. He has been in crypto since 2014 and has been designing DeFi/crypto applications since 2018. 
-Previous to joining Composable, he led the creative strategy at companies like Peaq. 0xslenderman has a background in 
-IT Engineering and Computer Science, which enables him to turn complex and tech-heavy concepts into seamless and 
-user-friendly experiences. [Twitter](https://twitter.com/0xslenderman)
+0xslenderman started his career in technology consultancy. Given his passion for aesthetics and design, he became an entrepreneur founding a creative consultancy company. Since then, he obtained 7 years of experience in creative direction. He has been in crypto since 2014 and has been designing applications since 2018. Previous to joining Composable, he led the creative strategy at various DeFi projects. 0xslenderman has a background in IT Engineering and Computer Science, which enables him to turn complex and tech-heavy concepts into seamless and user-friendly experiences. [Twitter](https://twitter.com/0xslenderman)
 
 ## Robert Zhuang | Head of Product Delivery
 
-Rob has more than 15 years of experience in project management and delivery. 
-He started his career in traditional finance working at ANZ Bank and HSBC as Project Manager and Digital Transformation 
-Lead. He then moved to digital banking at BABB leading delivery efforts. 
-Before joining Composable, Rob gathered entrepreneurial experience founding the blockchain company Footballnet. 
-With two bachelor degrees in Commerce and Law, Rob brings broad experience to Composable and unites product, design, 
-and development in order to bring Composable’s vision to life. 
-[Linkedin](https://www.linkedin.com/in/robertzhuangpm/?originalSubdomain=uk) | 
-[Twitter](https://twitter.com/GosuRZ)
+Rob has more than 16 years of experience in project management and delivery. He started his career in traditional finance working at ANZ Bank and HSBC as Project Manager and Digital Transformation Lead. He then moved to digital banking at BABB leading delivery efforts. Before joining Composable, Rob gathered entrepreneurial experience founding the blockchain company Footballnet. With two bachelor degrees in Commerce and Law, Rob brings broad experience to Composable and unites product, design, and development in order to bring Composable’s vision to life. [Twitter](https://twitter.com/GosuRZ)
 
-## Antonio Larriba | Head of Composable Research
-Antonio is a cypherpunk deeply concerned about privacy and true decentralization in the electronic age. 
-He obtained his BSc in Computer Science and his MSc in Artificial Intelligence at the Universitat Politècnica de 
-València. He is currently finishing his PhD in Cryptography and Distributed Systems. He also worked previously in 
-Machine Learning and NLP. [Linkedin](https://www.linkedin.com/in/antoniomlarribaflor/) | 
-[Twitter](https://twitter.com/Cryptoni0x)
+## Joseph DeTommasso | Head of Strategy
 
-## Blas Rodriguez Irizar | Bridging Lead
+Joe possesses extensive experience in both the crypto and traditional finance (TradFi) sectors, having contributed to the Bitcoin network as an independent node operator in 2011 and working with top hedge funds where he was focused on statistical arbitrage between international ETFs. Joe worked with leading crypto funds like FalconX and CMS Holdings, managing relationships and strategic partnerships with trading partners and liquidity providers. At Composable, Joe focuses on tokenomics, driving strategic direction and goals, and crafting plans to achieve business objectives. [Twitter](https://twitter.com/__Swurve__)
 
-Blas has 7 years of experience as a Software Engineer. He started his blockchain experience at LayerTwo, 
-moving to Consensys where he worked on building zk-rollups. Blas has expertise in building high performance systems 
-and working with different blockchains like Solana, Ethereum, and Bitcoin. He holds a Bachelor’s Degree in Science and 
-a Masters Degree in Finance. In his role at Composable, Blas leads our trustless bridges solutions. 
-[LinkedIn](https://www.linkedin.com/in/blas-rodriguez-irizar/) | [Twitter](https://mobile.twitter.com/blasrodri)
+## Joon Whang | Frontend Lead
 
-## Vim Wickramasinghe | Technical Lead
+Joon is a seasoned Frontend software engineer with a background primarily focused in the Cosmos ecosystem. He began his blockchain career at Cosmostation, where he gained hands-on experience in Cosmos by re-writing Mintscan. Subsequently, he moved on to LayerTwo and other prominent companies such as Osmosis and Tendermint. At Composable, Joon currently serves as the Lead Frontend engineer, responsible for all user-facing products. [Twitter](https://twitter.com/cosmonaut_joon)
 
-Vim is a seasoned software engineer and a technical lead. He has been building financial technology 
-(trading systems, banking, robo advisors, and more) for over 10 years. Having been interested in crypto since the 
-early days, he took the dive into DeFi in 2018, building on Rust and Substrate. Before joining Composable, 
-he worked as a Senior Software Engineer at Centrifuge building the open source Centrifuge blockchain and p2p network. 
-At Composable, Vim leads the engineering team that focuses on parachains. 
-[LinkedIn](https://www.linkedin.com/in/vimukthicom/) | [Twitter](https://twitter.com/rustic_cyborg)
+## Kostya Kastsevich | Parachain Lead
 
-## 0xBobafetador | Bots Lead
+After graduating from UC Berkeley, Kostya worked on analyzing financial data and supporting storage infrastructure for various IT companies. In 2020, he joined a blockchain startup, where he developed both the front-end and back-end of a Web 3 application. Later on, Kostya shifted his focus to Substrate and Rust. Currently, Kostya is responsible for overseeing the technical aspects and delivery of innovative solutions on Composable's parachains, Picasso and Composable.
 
-Samuel has 9 years of experience as a Software Engineer. Prior to joining Composable, he developed high-level GPS 
-software at companies like Collins Aerospace and BAE Systems. Samuel has considerable expertise in capturing 
-cross-chain arbitrage and building arbitrage bots across multiple blockchains. He holds a Computer Engineering Degree 
-at the University of Iowa. At Composable, “Boba” focuses his efforts on developing monitoring technology for Picasso, 
-Pablo, and all bridges.[LinkedIn](https://www.linkedin.com/in/sam-glenn-6a2b20126/) | 
-[Twitter](https://mobile.twitter.com/Bobafetador/with_replies)
+## Vladislav Marshukin | Bridging Lead
 
-## Hussein Ait Lahcen (0xc0dejug) | XCVM Lead
+Vlad is a skilled software engineer with experience in blockchain technology and programming languages like Rust, Java, C++, and Android development. He currently works as the Bridging Lead, focusing on developing several Centauri connections. In the past, he has delivered successful projects at companies like Soramitsu, Bitfury, and Paymon Inc. Vlad has a particular interest in functional programming, formal verification, and embedded systems, which he applies to internal projects and helps the team succeed.
 
-Hussein has a passion for functional programming and started his career as a self-taught Haskeller working at a 
-logistic startup. He got involved in blockchain technology in 2020, and with his background as a Haskeller, Hussein 
-started looking into Cardano and its domain. Hussein joined Mlabs, an AI and blockchain consultancy company, in 2021 
-and now works as the XCVM lead for Composable. Hussein also loves game hacking and bypassing anti-cheats and still does
-this in his spare time. [Twitter](https://twitter.com/0xc0dejug) | 
-[LinkedIn](https://www.linkedin.com/in/hussein-a-967810a7/details/experience/)
+## Jafar Azam | Developer Relations
+
+Jafar is a versatile professional with expertise in foreign exchange trading, cross-border payment and regulatory landscapes. He holds a BSc in Economics and actively explores reading in Cryptography, Psychology, and Philosophy. After a wealth of experience working for Ethereum-based protocols, Jafar now focuses on fostering productive relationships for business development and ecosystem growth at Composable.
+
+## Josie Leung | Senior Product Owner
+
+Josie boasts vast project management and business development expertise, having significantly contributed to startup growth and excelling in competitive roles at Linkedin and Crypto.com. She developed Crypto.com's core business pre-DeFi summer and later focused on retail products built on the IBC Protocol at Ignite (formerly Tendermint). At Composable, Josie drives product development by defining product features and coordinating with cross-functional teams for market delivery.
+
+## Patrick Kondek | Marketing Lead
+
+Patrick, a marketeer with a strong background in business analysis, is equipped with a diverse and growth hacking skill set. Fueled by a passion for scalable businesses and a keen interest in blockchain technology, Patrick excels in his role as Marketing Lead at Composable where he spearheads the company's marketing endeavors by crafting content and implementing robust growth strategies.
