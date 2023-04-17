@@ -28,7 +28,7 @@ resource "github_branch_protection" "main" {
   required_linear_history         = false
 
   push_restrictions = [
-    data.github_user.bot.node_id,
+    data.github_user.dev-bot.node_id,
     data.github_app.mergify.node_id,
   ]
 }

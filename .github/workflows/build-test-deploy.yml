@@ -542,6 +542,8 @@ jobs:
       - x64-cute
     # needs:
     #   - effects-gate
+    # permissions:
+    #   contents: write
     concurrency:
       group: ${{ github.workflow }}-draft-release-${{ github.ref }}
       cancel-in-progress: true
@@ -597,11 +599,11 @@ jobs:
           #fi
           #fi
           echo "0000000000000000000000000"
-          docker --debug push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest"
+          docker --debug push --all-tags "${{ env.DOCKER_REGISTRY_NAME }}/composable"
 
       - name: Release artifacts
         uses: softprops/action-gh-release@v1
-        if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}    
+        #if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}    
         with:
           draft: true
           prerelease: true          
