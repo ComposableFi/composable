@@ -854,7 +854,7 @@ pub mod pallet {
 				// accumulated amount of reward to distribute for the asset
 				let reward_amount_per_asset: T::Balance =
 					AccumulatedRewardsPerAsset::<T>::get(asset_id).unwrap_or_else(Zero::zero);
-				if !reward_amount_per_asset.is_zero() && rewarded_oracles.len() != 0 {
+				if !reward_amount_per_asset.is_zero() && !rewarded_oracles.is_empty() {
 					let rewarded_oracles_total_staked: T::Balance = rewarded_oracles
 						.iter()
 						.map(|account| OracleStake::<T>::get(&account.0).unwrap_or_default())
