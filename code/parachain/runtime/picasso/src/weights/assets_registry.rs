@@ -55,4 +55,11 @@ impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
+
+	fn update_asset_location() -> Weight {
+		// Minimum execution time: 29_337 nanoseconds.
+		Weight::from_ref_time(30_661_000)
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
 }
