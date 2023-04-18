@@ -96,6 +96,8 @@ import type {
 } from "@polkadot/types/interfaces/system";
 import type { IExtrinsic, Observable } from "@polkadot/types/types";
 import { Asset } from "./assets";
+import {MmrHash} from "@polkadot/types/interfaces/mmr";
+import {RuntimeDispatchInfoV1} from "@polkadot/types/interfaces/payment";
 
 export type __AugmentedRpc = AugmentedRpc<() => unknown>;
 
@@ -818,23 +820,29 @@ declare module "@polkadot/rpc-core/types/jsonrpc" {
     };
     mmr: {
       /**
-       * Generate MMR proof for the given leaf indices.
+       * Generate MMR proof for the given block numbers.
        **/
-      generateBatchProof: AugmentedRpc<
-        (
-          leafIndices: Vec<u64> | (u64 | AnyNumber | Uint8Array)[],
-          at?: BlockHash | string | Uint8Array
-        ) => Observable<MmrLeafProof>
-      >;
+      generateProof: AugmentedRpc<(blockNumbers: Vec<u64> | (u64 | AnyNumber | Uint8Array)[], bestKnownBlockNumber?: u64 | AnyNumber | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<MmrLeafBatchProof>>;
       /**
-       * Generate MMR proof for given leaf index.
+       * Get the MMR root hash for the current best block.
        **/
-      generateProof: AugmentedRpc<
-        (
-          leafIndex: u64 | AnyNumber | Uint8Array,
-          at?: BlockHash | string | Uint8Array
-        ) => Observable<MmrLeafBatchProof>
-      >;
+      root: AugmentedRpc<(at?: BlockHash | string | Uint8Array) => Observable<MmrHash>>;
+      /**
+       * Verify an MMR proof
+       **/
+      verifyProof: AugmentedRpc<(proof: MmrLeafBatchProof | {
+        blockHash?: any;
+        leaves?: any;
+        proof?: any;
+      } | string | Uint8Array) => Observable<bool>>;
+      /**
+       * Verify an MMR proof statelessly given an mmr_root
+       **/
+      verifyProofStateless: AugmentedRpc<(root: MmrHash | string | Uint8Array, proof: MmrLeafBatchProof | {
+        blockHash?: any;
+        leaves?: any;
+        proof?: any;
+      } | string | Uint8Array) => Observable<bool>>;
     };
     net: {
       /**
@@ -910,23 +918,15 @@ declare module "@polkadot/rpc-core/types/jsonrpc" {
     };
     payment: {
       /**
+       * @deprecated Use `api.call.transactionPaymentApi.queryFeeDetails` instead
        * Query the detailed fee of a given encoded extrinsic
        **/
-      queryFeeDetails: AugmentedRpc<
-        (
-          extrinsic: Bytes | string | Uint8Array,
-          at?: BlockHash | string | Uint8Array
-        ) => Observable<FeeDetails>
-      >;
+      queryFeeDetails: AugmentedRpc<(extrinsic: Bytes | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<FeeDetails>>;
       /**
+       * @deprecated Use `api.call.transactionPaymentApi.queryInfo` instead
        * Retrieves the fee information for an encoded extrinsic
        **/
-      queryInfo: AugmentedRpc<
-        (
-          extrinsic: Bytes | string | Uint8Array,
-          at?: BlockHash | string | Uint8Array
-        ) => Observable<RuntimeDispatchInfo>
-      >;
+      queryInfo: AugmentedRpc<(extrinsic: Bytes | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<RuntimeDispatchInfoV1>>;
     };
     rpc: {
       /**
