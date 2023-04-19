@@ -1,12 +1,12 @@
 use crate::{prelude::*, runtime::*, Error};
 use codec::{Decode, Encode};
+use composable_support::collections::vec::bounded::BiBoundedVec;
 use composable_traits::{
 	assets::{Asset, AssetInfo, AssetInfoUpdate, GenerateAssetId},
 	rational,
 	storage::UpdateValue,
 	xcm::assets::RemoteAssetRegistryInspect,
 };
-use composable_support::collections::vec::bounded::BiBoundedVec;
 use frame_support::{assert_noop, assert_ok, error::BadOrigin};
 use frame_system::RawOrigin;
 use primitives::currency::{ForeignAssetId, VersionedMultiLocation};
