@@ -1,6 +1,9 @@
-use ::ibc::core::{
-	ics24_host::identifier::PortId,
-	ics26_routing::context::{Module, ModuleId},
+use ::ibc::{
+	applications::transfer::{MODULE_ID_STR, PORT_ID_STR},
+	core::{
+		ics24_host::identifier::PortId,
+		ics26_routing::context::{Module, ModuleId},
+	},
 };
 use common::ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds};
 use frame_support::traits::EitherOf;
@@ -8,7 +11,7 @@ use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
 };
 use sp_core::ConstU64;
-use sp_runtime::{DispatchError, Either};
+use sp_runtime::{DispatchError, Either, Percent};
 use system::EnsureSignedBy;
 
 use super::*;
@@ -114,6 +117,45 @@ impl Ics20RateLimiter for ConstantAny {
 		}
 		Err(())
 	}
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Default)]
+pub struct Router {
+	ics20: pallet_ibc::ics20::memo::Memo<
+		Runtime,
+		pallet_ibc::ics20_fee::Ics20ServiceCharge<Runtime, pallet_ibc::ics20::IbcModule<Runtime>>,
+	>,
+}
+
+impl ModuleRouter for Router {
+	fn get_route_mut(&mut self, module_id: &ModuleId) -> Option<&mut dyn Module> {
+		match module_id.as_ref() {
+			MODULE_ID_STR => Some(&mut self.ics20),
+			&_ => None,
+		}
+	}
+
+	fn has_route(module_id: &ModuleId) -> bool {
+		matches!(module_id.as_ref(), MODULE_ID_STR)
+	}
+
+	fn lookup_module_by_port(port_id: &PortId) -> Option<ModuleId> {
+		match port_id.as_str() {
+			PORT_ID_STR => ModuleId::from_str(MODULE_ID_STR).ok(),
+			_ => None,
+		}
+	}
+}
+
+impl pallet_ibc::ics20_fee::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type ServiceCharge = ServiceCharge;
+	type PalletId = PalletId;
+}
+
+parameter_types! {
+	pub ServiceCharge: Percent = Percent::from_float(0.4);
+	pub const PalletId: frame_support::PalletId = frame_support::PalletId(*b"ics20fee");
 }
 
 impl pallet_ibc::Config for Runtime {

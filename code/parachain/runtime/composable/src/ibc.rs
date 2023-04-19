@@ -9,7 +9,7 @@ use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
 };
 use sp_core::ConstU64;
-use sp_runtime::{DispatchError, Either};
+use sp_runtime::{DispatchError, Either, Percent};
 use system::EnsureSignedBy;
 
 use super::*;
@@ -116,6 +116,17 @@ impl Ics20RateLimiter for ConstantAny {
 		}
 		Err(())
 	}
+}
+
+impl pallet_ibc::ics20_fee::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type ServiceCharge = ServiceCharge;
+	type PalletId = PalletId;
+}
+
+parameter_types! {
+	pub ServiceCharge: Percent = Percent::from_float(0.4);
+	pub const PalletId: frame_support::PalletId = frame_support::PalletId(*b"ics20fee");
 }
 
 impl pallet_ibc::Config for Runtime {
