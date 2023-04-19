@@ -313,8 +313,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn get_foreign_assets_from_existential_deposit(
-		) -> Vec<Asset<T::Balance, T::ForeignAssetId>> {
+		pub fn get_all_assets() -> Vec<Asset<T::Balance, T::ForeignAssetId>> {
 			ExistentialDeposit::<T>::iter_keys()
 				.map(|asset_id| {
 					let foreign_id = LocalToForeign::<T>::get(asset_id);

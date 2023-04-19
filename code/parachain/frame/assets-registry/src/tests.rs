@@ -453,7 +453,7 @@ fn get_foreign_assets_list_should_work() {
 }
 
 #[test]
-fn get_foreign_assets_from_existential_deposit_should_work() {
+fn get_all_assets_should_work() {
 	new_test_ext().execute_with(|| {
 		let location = ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here()));
 		let protocol_id = *b"AssTests";
@@ -469,10 +469,9 @@ fn get_foreign_assets_from_existential_deposit_should_work() {
 		let id = AssetsRegistry::generate_asset_id(protocol_id, nonce);
 		let id2 = AssetsRegistry::generate_asset_id(protocol_id, nonce2);
 
-		let foreign_assets_from_existential_deposit =
-			AssetsRegistry::get_foreign_assets_from_existential_deposit();
+		let all_assets = AssetsRegistry::get_all_assets();
 
-		assert_eq!(foreign_assets_from_existential_deposit, vec![]);
+		assert_eq!(all_assets, vec![]);
 
 		assert_ok!(AssetsRegistry::register_asset(
 			RuntimeOrigin::root(),
@@ -490,11 +489,10 @@ fn get_foreign_assets_from_existential_deposit_should_work() {
 			asset_info,
 		));
 
-		let foreign_assets_from_existential_deposit =
-			AssetsRegistry::get_foreign_assets_from_existential_deposit();
+		let all_assets = AssetsRegistry::get_all_assets();
 
 		assert_eq!(
-			foreign_assets_from_existential_deposit,
+			all_assets,
 			vec![
 				Asset {
 					name: None,
