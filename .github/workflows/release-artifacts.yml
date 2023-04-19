@@ -77,8 +77,9 @@ jobs:
         run: |
           docker load --input release-artifacts/composable-docker-image
           docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
+          docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest-prerelease"
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
-          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest"
+          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest-prerelease"
 
       - name: Release artifacts
         uses: softprops/action-gh-release@v1

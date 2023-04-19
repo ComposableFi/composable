@@ -505,8 +505,10 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DOCS_COMPOSABLE_FINANCE }}
           projectId: composable-docs
           entrypoint: docs/
-          channelId: ${{ github.event_name == 'push' && github.ref_name == 'main' && 'live' }}
+          # this must go same release flow as FE, not from main
+          channelId: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
 
+  # this should be split and commit docker are from here, but latest from release
   push-docker-images:
     name: Push docker images
     strategy:
@@ -521,7 +523,6 @@ jobs:
       group: ${{ github.workflow }}-push-docker-images-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:
-      # This isn't templated, since checkout needs to happen before templating occurs.
       - name: Set up Nix
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
@@ -589,7 +590,7 @@ jobs:
   deploy-pablo-preview:
     name: "Deploy Pablo Preview [FLAKY]"
     needs:
-      - effects-gate
+      - build-all-ci-packages
     runs-on:
       - self-hosted
       - x64-cute
@@ -633,7 +634,7 @@ jobs:
   deploy-picasso-preview:
     name: "Deploy Picasso Preview [FLAKY]"
     needs:
-      - effects-gate
+      - build-all-ci-packages
     runs-on:
       - self-hosted
       - x64-cute
@@ -805,4 +806,5 @@ jobs:
             ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:latest
             ${{ env.DOCKER_REGISTRY_NAME }}/subsquid-processor:${{ github.sha }}
           context: subsquid
+          # do release flow
           push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}    
