@@ -400,7 +400,7 @@ async fn main() -> anyhow::Result<()> {
 						(window_moment_start / 1000) as i64,
 					)
 					.map(|x| format!("{}", x))
-					.map_err(|x| "#BAD_START_TME".to_string())
+					.map_err(|_x| "#BAD_START_TME".to_string())
 					{
 						Err(x) => x,
 						Ok(x) => x,
