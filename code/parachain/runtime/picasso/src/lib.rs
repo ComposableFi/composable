@@ -898,7 +898,7 @@ impl_runtime_apis! {
 			  }
 			).collect::<Vec<_>>();
 
-			// Assets from local assets of assets-registy pallet
+			// Assets from the assets-registry pallet
 			let all_assets =  assets_registry::Pallet::<Runtime>::get_all_assets();
 
 			// Override asset data for hardcoded assets that have been manually updated, and append
