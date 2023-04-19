@@ -33,7 +33,10 @@ async fn main() -> anyhow::Result<()> {
 			let csv_file: String =
 				String::from_utf8(std::fs::read(subargs.schedule).expect("file")).expect("string");
 			let mut rdr = csv::Reader::from_reader(csv_file.as_bytes());
-			let all = rdr.deserialize::<AddRecord>().collect::<Result<Vec<_>, _>>().expect("records are correct");
+			let all = rdr
+				.deserialize::<AddRecord>()
+				.collect::<Result<Vec<_>, _>>()
+				.expect("records are correct");
 			let key = sp_core::sr25519::Pair::from_string(&subargs.key, None).expect("secret");
 			let signer = PairSigner::new(key.clone());
 			let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;
@@ -56,7 +59,13 @@ async fn main() -> anyhow::Result<()> {
 								Value::named_variant(
 									"MomentBased",
 									vec![
-										("start", Value::u128((record.window_moment_start - record.window_moment_period) as u128)),
+										(
+											"start",
+											Value::u128(
+												(record.window_moment_start -
+													record.window_moment_period) as u128,
+											),
+										),
 										(
 											"period",
 											Value::u128(record.window_moment_period as u128),
@@ -127,12 +136,9 @@ async fn main() -> anyhow::Result<()> {
 					api.tx().create_signed(&tx, &signer, <_>::default()).await.expect("offline");
 				let result = signed.dry_run(None).await;
 				println!("dry_run {:?}", result);
-	
+
 				let tx = "0x".to_string() + &hex::encode(signed.into_encoded());
-				println!(
-					"Signed Sudo::sudoUncheckedWeight(Vesting::vested_transfer) \n {:}",
-					&tx
-				);
+				println!("Signed Sudo::sudoUncheckedWeight(Vesting::vested_transfer) \n {:}", &tx);
 			} else {
 				for (data, record) in calls.into_iter() {
 					let tx_value = subxt::dynamic::tx("Vesting", "vested_transfer", data.clone());
@@ -179,7 +185,7 @@ async fn main() -> anyhow::Result<()> {
 				}
 				out.flush()?;
 				let out = out.into_inner().expect("table");
-	
+
 				if let Some(path) = subargs.out {
 					let mut target = std::fs::File::create(path).expect("file");
 					target.write(out.as_ref());
@@ -246,6 +252,7 @@ async fn main() -> anyhow::Result<()> {
 			let mut rdr = csv::Reader::from_reader(csv_file.as_bytes());
 			let all: Vec<_> =
 				rdr.deserialize::<DeleteRecord>().map(|x| x.expect("record")).collect();
+			let to_remove: HashSet<_> = all.iter().map(|x| x.vesting_schedule_id.clone()).collect();
 			let key = sp_core::sr25519::Pair::from_string(&subargs.key, None).expect("secret");
 			let signer = PairSigner::new(key.clone());
 			let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;
@@ -257,14 +264,68 @@ async fn main() -> anyhow::Result<()> {
 				*value += record.total;
 			}
 
+			let storage_address = subxt::dynamic::storage_root("Vesting", "VestingSchedules");
+
+			let mut iter = api.storage().at(None).await?.iter(storage_address, 1000).await?;
+			let mut existing: HashMap<[u8; 32], _> = <_>::default();
+			while let Some((key, vesting_schedule)) = iter.next().await? {
+				let vesting_schedule = VestingScheduleT::decode(&mut vesting_schedule.encoded())
+					.expect("scale decoded");
+				let (_, _, account, _) =
+					VestingScheduleKeyT::decode(&mut key.0.as_ref()).expect("key decoded");
+				existing.insert(account.0, vesting_schedule);
+			}
+
 			let mut clean: Vec<_> = deletes
 				.iter()
 				.map(|record| {
 					let address = AccountId32::from_str(&record.0).expect("address");
+
+					let retained =
+						if let Some(mut retained) = existing.get(&address.0).map(Clone::clone) {
+							for it in to_remove.iter() {
+								retained.remove(it);
+							}
+
+							retained
+						} else {
+							<_>::default()
+						};
+
+					let retained: Vec<_> = retained
+						.values()
+						.map(|item| {
+							let (window_moment_start, window_moment_period) = match item.window {
+								client::VestingWindow::MomentBased { start, period } =>
+									(start, period),
+								client::VestingWindow::BlockNumberBased { start, period } =>
+									todo!(),
+							};
+
+							let dest = AccountId32::from_str(&subargs.to).expect("address");
+
+							let retained = Value::named_composite(vec![
+								(
+									"window",
+									Value::named_variant(
+										"MomentBased",
+										vec![
+											("start", Value::u128((window_moment_start) as u128)),
+											("period", Value::u128(window_moment_period as u128)),
+										],
+									),
+								),
+								("period_count", Value::u128(item.period_count as u128)),
+								("per_period", Value::u128(item.per_period)),
+							]);
+							retained
+						})
+						.collect();
+
 					vec![
 						("who", Value::unnamed_variant("Id", vec![Value::from_bytes(address.0)])),
 						("asset", Value::u128(1)),
-						("vesting_schedules", Value::unnamed_composite(vec![])),
+						("vesting_schedules", retained.into()),
 					]
 				})
 				.map(|data| subxt::dynamic::tx("Vesting", "update_vesting_schedules", data))
@@ -332,7 +393,8 @@ async fn main() -> anyhow::Result<()> {
 
 				for (id, record) in vesting_schedule.iter() {
 					let (window_moment_start, window_moment_period) = match record.window {
-						client::VestingWindow::MomentBased { start, period } => (start + period, period),
+						client::VestingWindow::MomentBased { start, period } =>
+							(start + period, period),
 						_ => unimplemented!(),
 					};
 					let window_start = match OffsetDateTime::from_unix_timestamp(

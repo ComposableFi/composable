@@ -6,6 +6,10 @@ All operations use milliseconds. Timestamp are milliseconds since [Unix Time epo
 
 Amounts are in raw values of maximal precision.
 
+Before running vesting for real amounts, please run vesting on tiny fractions above ED.
+
+Currently tool supports token with number 1 (Native token).
+
 ## Operations examples
 
 [Create vested transfer](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A8000#/extrinsics/decode/0x0201390100d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d0060bc49cd808f02cd36347be7274397215a17eab56c9b559d2f5f501fbc4099530100000000000000000000000000000000000c41748801000000c87e9a000000001800000013004cc96aec63b3030000)
@@ -62,6 +66,7 @@ cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" unlock --s
 ```bash
 cargo run -- --client="ws://localhost:8000" delete --schedule="./test/delete-all.csv" --key="//Alice" --to="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm"
 cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" delete --schedule="./test/delete-all.csv" --key="//Alice" --to="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm"
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" delete --schedule="./test/filter2.csv" --key="//Alice" --to="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm"
 ```
 
 
