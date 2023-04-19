@@ -1,4 +1,5 @@
 pub use alloc::string::{String, ToString};
+pub use codec::Encode;
 pub use core::{fmt::Display, ops::Div};
 pub use frame_support::{
 	traits::{Contains, PalletInfoAccess},

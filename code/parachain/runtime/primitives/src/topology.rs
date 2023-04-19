@@ -183,3 +183,25 @@ impl WellKnownCurrency for Composable {
 	const NATIVE: CurrencyId = CurrencyId::LAYR;
 	const RELAY_NATIVE: CurrencyId = CurrencyId::DOT;
 }
+
+#[cfg(test)]
+mod test {
+	use ibc_rs_scale::{
+		applications::transfer::{PrefixedDenom as InnerPrefixedDenom, TracePrefix},
+		core::ics24_host::identifier::{ChannelId, PortId},
+	};
+
+	use crate::{
+		currency::{ForeignAssetId, PrefixedDenom},
+		prelude::*,
+	};
+
+	#[test]
+	fn scale_encoded() {
+		let mut id = InnerPrefixedDenom::from_str("1").expect("genesis");
+		id.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(15)));
+		let id = ForeignAssetId::IbcIcs20(PrefixedDenom(id));
+		let asset_id = hex::encode(id.encode());
+		assert_eq!(&asset_id, "0104207472616e73666572286368616e6e656c2d31350431");
+	}
+}

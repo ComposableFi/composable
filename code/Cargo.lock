@@ -11404,6 +11404,7 @@ dependencies = [
  "composable-support",
  "composable-traits",
  "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.38)",
+ "hex",
  "ibc 0.36.0",
  "lazy_static",
  "parity-scale-codec",

@@ -25,7 +25,7 @@ sp-core = { default-features = false, workspace = true }
 xcm = { workspace = true, default-features = false }
 
 ibc-rs-scale = { workspace = true, default-features = false, features = ["parity-scale-codec", "serde"] }
-
+hex = "0.4.3"
 
 [features]
 default = ["std"]
