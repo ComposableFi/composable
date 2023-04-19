@@ -460,8 +460,9 @@ fn get_all_assets_should_work() {
 		let protocol_id = *b"AssTests";
 		let nonce = 1_u64;
 		let nonce2 = 2_u64;
+		let name = Some(BiBoundedVec::from_vec(b"asset_name".to_vec()).unwrap());
 		let asset_info = AssetInfo {
-			name: Some(BiBoundedVec::from_vec(b"asset_name".to_vec()).unwrap()),
+			name: name.clone(),
 			symbol: None,
 			decimals: Some(4),
 			existential_deposit: 0,
@@ -496,7 +497,7 @@ fn get_all_assets_should_work() {
 			all_assets,
 			vec![
 				Asset {
-					name: None,
+					name: name.clone().map(Into::into),
 					id,
 					decimals: 4,
 					ratio: Some(rational!(42 / 123)),
@@ -504,7 +505,7 @@ fn get_all_assets_should_work() {
 					existential_deposit: 0,
 				},
 				Asset {
-					name: None,
+					name: name.map(Into::into),
 					id: id2,
 					decimals: 4,
 					ratio: Some(rational!(42 / 123)),
