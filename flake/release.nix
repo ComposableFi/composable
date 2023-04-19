@@ -29,7 +29,7 @@
             nix build ${flake-url}#composable-runtime
 
             # Run the Composable node (release mode) alone
-            nix run ${flake-url}#composable-node-release
+            nix run ${flake-url}#composable-node
 
             # Spin up a local devnet
             nix run ${flake-url}#devnet-picasso
@@ -72,7 +72,6 @@
             cp ${packages.picasso-testfast-runtime}/lib/runtime.optimized.wasm release-artifacts/to-upload/picasso_testfast_runtime_${
               subwasm-version packages.picasso-testfast-runtime
             }.wasm
-
 
 
             echo "Generate node packages"

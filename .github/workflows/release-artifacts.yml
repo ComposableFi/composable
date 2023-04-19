@@ -86,7 +86,7 @@ jobs:
 
       - name: Build Composable node (without runtime)
         run: |
-          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-node-release
+          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-node
 
   release:
     name: "Release"
@@ -138,7 +138,7 @@ jobs:
 
       - name: Setup Composable version
         run: |
-          echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node-release.version)" >> $GITHUB_ENV
+          echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)" >> $GITHUB_ENV
 
       - name: Release Docker image
         run: |
