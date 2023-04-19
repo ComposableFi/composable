@@ -6,6 +6,7 @@ use composable_traits::{
 	storage::UpdateValue,
 	xcm::assets::RemoteAssetRegistryInspect,
 };
+use composable_support::collections::vec::bounded::BiBoundedVec;
 use frame_support::{assert_noop, assert_ok, error::BadOrigin};
 use frame_system::RawOrigin;
 use primitives::currency::{ForeignAssetId, VersionedMultiLocation};
@@ -460,7 +461,7 @@ fn get_all_assets_should_work() {
 		let nonce = 1_u64;
 		let nonce2 = 2_u64;
 		let asset_info = AssetInfo {
-			name: None,
+			name: Some(BiBoundedVec::from_vec(b"asset_name".to_vec()).unwrap()),
 			symbol: None,
 			decimals: Some(4),
 			existential_deposit: 0,
