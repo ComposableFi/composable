@@ -901,9 +901,12 @@ impl_runtime_apis! {
 			// Assets from the assets-registry pallet
 			let foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
 
+			// Assets from local assets of assets-registy pallet
+			let foreign_assets_from_local_assets =  assets_registry::Pallet::<Runtime>::get_foreign_assets_from_existential_deposit();
+
 			// Override asset data for hardcoded assets that have been manually updated, and append
 			// new assets without duplication
-			foreign_assets.into_iter().fold(assets, |mut acc, mut foreign_asset| {
+			foreign_assets.into_iter().chain(foreign_assets_from_local_assets.into_iter()).fold(assets, |mut acc, mut foreign_asset| {
 				if let Some(asset) = acc.iter_mut().find(|asset_i| asset_i.id == foreign_asset.id) {
 					// Update asset with data from assets-registry
 					asset.decimals = foreign_asset.decimals;
