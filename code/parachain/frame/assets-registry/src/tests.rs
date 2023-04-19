@@ -451,3 +451,48 @@ fn get_foreign_assets_list_should_work() {
 		);
 	})
 }
+
+#[test]
+fn get_foreign_assets_from_existential_deposit_should_work() {
+	new_test_ext().execute_with(|| {
+		let location = ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here()));
+		let protocol_id = *b"AssTests";
+		let nonce = 1_u64;
+		let asset_info = AssetInfo {
+			name: None,
+			symbol: None,
+			decimals: Some(4),
+			existential_deposit: 0,
+			ratio: Some(rational!(42 / 123)),
+		};
+		let id = AssetsRegistry::generate_asset_id(protocol_id, nonce);
+
+		let foreign_assets_from_existential_deposit =
+			AssetsRegistry::get_foreign_assets_from_existential_deposit();
+
+		assert_eq!(foreign_assets_from_existential_deposit, vec![]);
+
+		assert_ok!(AssetsRegistry::register_asset(
+			RuntimeOrigin::root(),
+			protocol_id,
+			nonce,
+			Some(location.clone()),
+			asset_info,
+		));
+
+		let foreign_assets_from_existential_deposit =
+			AssetsRegistry::get_foreign_assets_from_existential_deposit();
+
+		assert_eq!(
+			foreign_assets_from_existential_deposit,
+			vec![Asset {
+				name: None,
+				id,
+				decimals: 4,
+				ratio: Some(rational!(42 / 123)),
+				foreign_id: Some(location),
+				existential_deposit: 0,
+			}]
+		);
+	})
+}
