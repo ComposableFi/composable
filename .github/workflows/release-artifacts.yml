@@ -23,13 +23,8 @@ jobs:
       contents: write      
     concurrency:
       group: release-artifacts-${{ github.ref }}
-      cancel-in-progress: true
-
-      
-    container:
-      image: niteo/nixpkgs-nixos-22.11:fda0d99c2cbbb5c89d8855d258cb0821bd9113ad
+      cancel-in-progress: true      
     steps:
-
       - name: Set up Nix
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
