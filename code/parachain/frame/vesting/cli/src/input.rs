@@ -108,6 +108,4 @@ pub struct UnlockRecord {
 pub struct DeleteRecord {
 	pub account: String,
 	pub vesting_schedule_id: u128,
-	pub total: u128,
-	pub already_claimed : u128,	
 }
