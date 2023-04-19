@@ -458,6 +458,7 @@ fn get_foreign_assets_from_existential_deposit_should_work() {
 		let location = ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here()));
 		let protocol_id = *b"AssTests";
 		let nonce = 1_u64;
+		let nonce2 = 2_u64;
 		let asset_info = AssetInfo {
 			name: None,
 			symbol: None,
@@ -466,6 +467,7 @@ fn get_foreign_assets_from_existential_deposit_should_work() {
 			ratio: Some(rational!(42 / 123)),
 		};
 		let id = AssetsRegistry::generate_asset_id(protocol_id, nonce);
+		let id2 = AssetsRegistry::generate_asset_id(protocol_id, nonce2);
 
 		let foreign_assets_from_existential_deposit =
 			AssetsRegistry::get_foreign_assets_from_existential_deposit();
@@ -477,6 +479,14 @@ fn get_foreign_assets_from_existential_deposit_should_work() {
 			protocol_id,
 			nonce,
 			Some(location.clone()),
+			asset_info.clone(),
+		));
+
+		assert_ok!(AssetsRegistry::register_asset(
+			RuntimeOrigin::root(),
+			protocol_id,
+			nonce2,
+			None,
 			asset_info,
 		));
 
@@ -485,14 +495,24 @@ fn get_foreign_assets_from_existential_deposit_should_work() {
 
 		assert_eq!(
 			foreign_assets_from_existential_deposit,
-			vec![Asset {
-				name: None,
-				id,
-				decimals: 4,
-				ratio: Some(rational!(42 / 123)),
-				foreign_id: Some(location),
-				existential_deposit: 0,
-			}]
+			vec![
+				Asset {
+					name: None,
+					id,
+					decimals: 4,
+					ratio: Some(rational!(42 / 123)),
+					foreign_id: Some(location),
+					existential_deposit: 0,
+				},
+				Asset {
+					name: None,
+					id: id2,
+					decimals: 4,
+					ratio: Some(rational!(42 / 123)),
+					foreign_id: None,
+					existential_deposit: 0,
+				}
+			]
 		);
 	})
 }
