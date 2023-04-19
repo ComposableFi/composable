@@ -28,6 +28,20 @@ env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
+
+  dependency-review:
+    runs-on:
+      - ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v3
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@v2
+        with:
+          # GHSA-pfrx-2q88-qq97, GHSA-w5p7-h5w8-2hfq, GHSA-wcg3-cvx6-7396 are ignored because they are casued by the static Docusaurus build. Please remove when Docusaurus gets updated.
+          # GHSA-969w-q74q-9j8v, GHSA-44mr-8vmm-wjhg, GHSA-wh6w-3828-g9qf are ignored because they are transitive dependencies still used by the master branch of Substrate. Please remove when Substrate update the according dependencies.
+          allow-ghsas: GHSA-pfrx-2q88-qq97, GHSA-w5p7-h5w8-2hfq, GHSA-wcg3-cvx6-7396, GHSA-969w-q74q-9j8v, GHSA-44mr-8vmm-wjhg, GHSA-wh6w-3828-g9qf, GHSA-ff4p-7xrq-q5r8, GHSA-xm67-587q-r2vw
+
   privilege-check:
     name: "Privilege check"
     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}
@@ -36,7 +50,6 @@ jobs:
       - run: |
           echo "I am priviliged by goblins on repository id ${{ github.event.pull_request.head.repo.id }} ${{ github.event.pull_request_target.head.repo.id }}" 
       
-
   lfs-check:
     name: LFS check
     needs:
@@ -101,19 +114,16 @@ jobs:
           chmod +x ./.github/workflows/nix-flake-check.sh
           source ./.github/workflows/nix-flake-check.sh
   
-  all-packages:
-    name: Build all packages
-    strategy:
-      matrix:
-        arch: [x64-monster, arm-monster]
+  build-all-platforms-arm:
+    name: build-all-platforms-arm
     needs: 
       - privilege-check
       - lfs-check
     runs-on:
       - self-hosted
-      - ${{ matrix.arch }}
+      - arm-monster
     concurrency:
-      group: ${{ github.workflow }}-build-all-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
+      group: ${{ github.workflow }}-build-all-platforms-arm-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:
       - name: Set up Nix
@@ -149,7 +159,58 @@ jobs:
       - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all --keep-going
+          command: nix -- build .#all-platforms --keep-going
+      - name: List built results 
+        run: |
+          ls result
+          tree result -L 3
+          
+  build-all-ci-packages:
+    name: build-all-ci-packages
+    needs: 
+      - privilege-check
+      - lfs-check
+    runs-on:
+      - self-hosted
+      - x64-monster
+    concurrency:
+      group: ${{ github.workflow }}-build-all-ci-packages-${{ github.event.pull_request.title }}
+      cancel-in-progress: true
+    steps:
+      - name: Set up Nix
+        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
+        with:
+          install_url: https://releases.nixos.org/nix/${{ env.NIX_VERSION }}/install
+          nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
+          extra_nix_config: |
+            sandbox = relaxed
+            narinfo-cache-negative-ttl = 0      
+            system-features = kvm          
+      - name: Set up Cachix
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
+        with:
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{ env.CACHIX_NAME }}
+      - name: Add tools needed for non-nix steps
+        run: |  
+          nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Nix flake show
+        run: |
+          nix --version
+          nix show-config
+          NIX_DEBUG_COMMAND="" && [[ $ACTIONS_RUNNER_DEBUG = "true" ]] && NIX_DEBUG_COMMAND='--print-build-logs --debug --show-trace --verbose'
+          nix flake show --allow-import-from-derivation --fallback --keep-failed ${NIX_DEBUG_COMMAND}
+      - name: Build all packages 
+        uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#all-ci-packages --keep-going
       - name: List built results 
         run: |
           ls result
@@ -327,13 +388,6 @@ jobs:
 
       - name: cachix-nix-build
         run: |  
-          # https://github.com/cachix/cachix/issues/528
-          # echo "warm up to check that we can compile rust with some basic substrate"
-          # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#subwasm --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --verbose --debug
-          # echo "compile our all in one devnet"
-          # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --verbose --debug
-          # echo "double check we are ok with devnet/substrate on picasso"
-          # cachix watch-exec --compression-level 16 --compression-method zstd --jobs 8 composable-community nix -- build .\#devnet-picasso --keep-going --print-build-logs --show-trace --no-update-lock-file --accept-flake-config --fallback --no-http2 --allow-import-from-derivation # --verbose --debug          
           nix build .#devnet-picasso
           nix-store --query --references $(realpath result) | xargs nix-store --realise | xargs nix-store  --query --requisites | cachix push --compression-level 16 --compression-method zstd --jobs 8 composable-community
 
@@ -392,10 +446,12 @@ jobs:
       name: "Effect gate, automatically merged if passed"
       runs-on: ubuntu-latest
       needs:
+        - dependency-review
         - privilege-check
         - lfs-check
         - nix-flake-check
-        - all-packages
+        - build-all-ci-packages
+        - build-all-platforms-arm
         - build-all-misc-packages
         - build-all-docs-packages
         - build-all-benchmarks-packages
