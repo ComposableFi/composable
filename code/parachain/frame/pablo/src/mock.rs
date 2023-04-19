@@ -249,7 +249,7 @@ impl pablo::Config for Test {
 	type AssetId = AssetId;
 	type Balance = Balance;
 	type LPTokenFactory = AssetsTransactor;
-	type Assets = Tokens;
+	type Assets = AssetsTransactor;
 	type Convert = ConvertInto;
 	type PoolId = PoolId;
 	type PalletId = TestPalletID;
