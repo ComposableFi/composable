@@ -903,15 +903,15 @@ impl_runtime_apis! {
 
 			// Override asset data for hardcoded assets that have been manually updated, and append
 			// new assets without duplication
-			all_assets.into_iter().fold(assets, |mut acc, mut foreign_asset| {
-				if let Some(asset) = acc.iter_mut().find(|asset_i| asset_i.id == foreign_asset.id) {
-					// Update asset with data from assets-registry
-					asset.decimals = foreign_asset.decimals;
-					asset.foreign_id = foreign_asset.foreign_id.clone();
-					asset.ratio = foreign_asset.ratio;
+			all_assets.into_iter().fold(assets, |mut acc, mut asset| {
+				if let Some(found_asset) = acc.iter_mut().find(|asset_i| asset_i.id == asset.id) {
+					// Update a found asset with data from assets-registry
+					found_asset.decimals = asset.decimals;
+					found_asset.foreign_id = asset.foreign_id.clone();
+					found_asset.ratio = asset.ratio;
 				} else {
-					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&foreign_asset.id.into());
-					acc.push(foreign_asset.clone())
+					asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
+					acc.push(asset.clone())
 				}
 				acc
 			})
