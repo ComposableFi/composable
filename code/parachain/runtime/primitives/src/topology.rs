@@ -103,7 +103,7 @@ impl Picasso {
 				decimals: Some(12),
 				existential_deposit: 375000000,
 				ratio: Some(rational!(70 / 10000)),
-			},			
+			},
 		);
 
 		let mut dot =

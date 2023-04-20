@@ -1,15 +1,6 @@
 { self, ... }: {
-  perSystem =
-    { config
-    , self'
-    , inputs'
-    , pkgs
-    , system
-    , crane
-    , subnix
-    , systemCommonRust
-    , ...
-    }:
+  perSystem = { config, self', inputs', pkgs, system, crane, subnix
+    , systemCommonRust, ... }:
     let
       cargo-lock = builtins.fromTOML (builtins.readFile ../../code/Cargo.lock);
       centauri-runtime-dep = builtins.head
@@ -84,8 +75,7 @@
           connection_id = "connection-0";
         };
       };
-    in
-    {
+    in {
       packages = rec {
         centauri-codegen = crane.stable.buildPackage (subnix.subenv // {
           name = "centauri-codegen";
@@ -195,7 +185,6 @@
             dontStrip = true;
           };
 
-
         composable-polkadot-picasso-kusama-centauri-patched-src =
           pkgs.stdenv.mkDerivation rec {
             name = "composable-polkadot-picasso-kusama-centauri-patched-src";
@@ -243,8 +232,8 @@
             meta = { mainProgram = "hyperspace"; };
           });
 
-        hyperspace-composable-polkadot-picasso-kusama = crane.stable.buildPackage
-          (subnix.subenv // rec {
+        hyperspace-composable-polkadot-picasso-kusama =
+          crane.stable.buildPackage (subnix.subenv // rec {
             name = "hyperspace-composable-polkadot-picasso-kusama";
             pname = name;
             cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
