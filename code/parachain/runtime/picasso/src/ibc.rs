@@ -11,7 +11,7 @@ use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
 };
 use sp_core::ConstU64;
-use sp_runtime::{DispatchError, Either, Percent};
+use sp_runtime::{DispatchError, Either};
 use system::EnsureSignedBy;
 
 use super::*;
