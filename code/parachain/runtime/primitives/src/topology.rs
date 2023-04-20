@@ -52,7 +52,9 @@ use crate::currency::{CurrencyId, ForeignAssetId, PrefixedDenom, WellKnownCurren
 
 pub struct Picasso;
 
+#[cfg(feature = "std")]
 impl Picasso {
+	#[allow(clippy::unseparated_literal_suffix)]
 	pub fn assets() -> Vec<(u64, Option<ForeignAssetId>, AssetInfo<Balance>)> {
 		let usdt = (
 			CurrencyId::USDT.0 as u64,
@@ -74,8 +76,8 @@ impl Picasso {
 						.expect("String is within bounds"),
 				),
 				decimals: Some(6),
-				existential_deposit: 10_000,
-				ratio: Some(rational!(15 / 1_000_000_000)),
+				existential_deposit: 1500,
+				ratio: Some(rational!(2 / 10000000)),
 			},
 		);
 		let mut dot =
@@ -95,8 +97,8 @@ impl Picasso {
 						.expect("String is within bounds"),
 				),
 				decimals: Some(10),
-				existential_deposit: 1_000_000,
-				ratio: Some(rational!(2143 / 100_000_000)),
+				existential_deposit: 21430000,
+				ratio: Some(rational!(3 / 10000)),
 			},
 		);
 
@@ -111,9 +113,11 @@ impl WellKnownCurrency for Picasso {
 
 pub struct Composable;
 
+#[cfg(feature = "std")]
 impl Composable {
+	#[allow(clippy::unseparated_literal_suffix)]
 	pub fn assets() -> Vec<(u64, Option<ForeignAssetId>, AssetInfo<Balance>)> {
-		let usdt = (
+		let usdt_statemint = (
 			CurrencyId::USDTP.0 as u64,
 			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::new(
 				1,
@@ -133,8 +137,8 @@ impl Composable {
 						.expect("String is within bounds"),
 				),
 				decimals: Some(6),
-				existential_deposit: 10_000,
-				ratio: Some(rational!(375 / 1_000_000_000)),
+				existential_deposit: 1500,
+				ratio: Some(rational!(2 / 10000000)),
 			},
 		);
 		let mut pica =
@@ -153,7 +157,7 @@ impl Composable {
 						.expect("String is within bounds"),
 				),
 				decimals: Some(12),
-				existential_deposit: 1_000_000_000,
+				existential_deposit: 1000000000,
 				ratio: Some(rational!(1 / 1)),
 			},
 		);
@@ -170,12 +174,34 @@ impl Composable {
 						.expect("String is within bounds"),
 				),
 				decimals: Some(10),
-				existential_deposit: 1_000_000,
-				ratio: Some(rational!(2143 / 100_000_000)),
+				existential_deposit: 21430000,
+				ratio: Some(rational!(3 / 10000)),
 			},
 		);
 
-		vec![usdt, pica, dot]
+		let mut ksm =
+			InnerPrefixedDenom::from_str(CurrencyId::KSM.to_string().as_str()).expect("genesis");
+		ksm.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(0)));
+
+		let ksm = (
+			CurrencyId::KSM.0 as u64,
+			Some(ForeignAssetId::IbcIcs20(PrefixedDenom(ksm))),
+			AssetInfo {
+				name: Some(
+					BiBoundedAssetName::from_vec(b"Kusama".to_vec())
+						.expect("String is within bounds"),
+				),
+				symbol: Some(
+					BiBoundedAssetSymbol::from_vec(b"KSM".to_vec())
+						.expect("String is within bounds"),
+				),
+				decimals: Some(12),
+				existential_deposit: 375000000,
+				ratio: Some(rational!(70 / 10000)),
+			},
+		);
+
+		vec![usdt_statemint, pica, dot, ksm]
 	}
 }
 
