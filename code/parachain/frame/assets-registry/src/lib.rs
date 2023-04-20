@@ -312,6 +312,31 @@ pub mod pallet {
 		}
 	}
 
+	impl<T: Config> Pallet<T> {
+		pub fn get_all_assets() -> Vec<Asset<T::Balance, T::ForeignAssetId>> {
+			ExistentialDeposit::<T>::iter_keys()
+				.map(|asset_id| {
+					let name = AssetName::<T>::get(asset_id).map(Into::into);
+					let foreign_id = LocalToForeign::<T>::get(asset_id);
+					let decimals =
+						<Pallet<T> as InspectRegistryMetadata>::decimals(&asset_id).unwrap_or(12);
+					let ratio = AssetRatio::<T>::get(asset_id);
+					let existential_deposit =
+						ExistentialDeposit::<T>::get(asset_id).unwrap_or_default();
+
+					Asset {
+						name,
+						id: asset_id.into(),
+						decimals,
+						ratio,
+						foreign_id,
+						existential_deposit,
+					}
+				})
+				.collect::<Vec<_>>()
+		}
+	}
+
 	impl<T: Config> RemoteAssetRegistryMutate for Pallet<T> {
 		type AssetId = T::LocalAssetId;
 		type AssetNativeLocation = T::ForeignAssetId;
