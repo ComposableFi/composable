@@ -59,6 +59,7 @@ use crate::currency::{CurrencyId, WellKnownCurrency};
 
 pub struct Picasso;
 
+// for genesis of devnet
 #[cfg(feature = "std")]
 impl Picasso {
 	#[allow(clippy::unseparated_literal_suffix)]
