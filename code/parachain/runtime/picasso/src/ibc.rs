@@ -141,7 +141,7 @@ impl ModuleRouter for Router {
 
 	fn lookup_module_by_port(port_id: &PortId) -> Option<ModuleId> {
 		match port_id.as_str() {
-			port_id_str if port_id_str == PORT_ID_STR => ModuleId::from_str(MODULE_ID_STR).ok(), /* TODO: Vlad is this correct? */
+			PORT_ID_STR => ModuleId::from_str(MODULE_ID_STR).ok(),
 			_ => None,
 		}
 	}
