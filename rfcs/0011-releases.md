@@ -162,4 +162,4 @@ git tag --sign release-v5.4200.0 --message "RC" && git push origin release-v5.42
 
 It will trigger `on.push.tags` [GitHub Tag based release flow](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) 
 
-- [ ] Run on upgrade to new runtime on fork of latest block of live network.
+- [ ] Run [upgrade](https://substrate.stackexchange.com/questions/1061/what-is-the-proper-way-of-executing-a-runtime-upgrade-on-a-parachain) to new runtime on fork of latest block of live network.
