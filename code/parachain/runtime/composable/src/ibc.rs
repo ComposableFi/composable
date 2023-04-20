@@ -111,7 +111,6 @@ impl Ics20RateLimiter for ConstantAny {
 		msg: &pallet_ibc::ics20::Ics20TransferMsg,
 		_flow_type: pallet_ibc::ics20::FlowType,
 	) -> Result<(), ()> {
-		// one DOT/PICA, so for USDT not safe, but we do not yet do it
 		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(10_000 * 10_u64.pow(12)) {
 			return Ok(())
 		}
