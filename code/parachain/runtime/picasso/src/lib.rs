@@ -39,6 +39,7 @@ use version::{Version, VERSION};
 pub use xcmp::XcmConfig;
 
 pub use crate::fees::WellKnownForeignToNativePriceConverter;
+use crate::ibc::{Module, ModuleId, ModuleRouter, PortId, RelayChain};
 
 use common::{
 	fees::{multi_existential_deposits, NativeExistentialDeposit, WeightToFeeConverter},
@@ -50,9 +51,12 @@ use common::{
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
-	assets::Asset,
+	assets::{Asset, AssetInfo},
+	currency::{CurrencyFactory as CurrencyFactoryT, RangeId},
 	dex::{Amm, PriceAggregate},
+	rational,
 };
+use cosmwasm::instrument::CostRules;
 use primitives::currency::ForeignAssetId;
 
 mod gates;
@@ -65,10 +69,12 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
+		Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, Either,
+	ApplyExtrinsicResult,
+	Either::{self, Left, Right},
 };
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
@@ -93,6 +99,7 @@ pub use frame_support::{
 };
 use frame_system as system;
 pub use governance::TreasuryAccount;
+use pallet_ibc::IbcDenoms;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
@@ -324,6 +331,145 @@ impl oracle::Config for Runtime {
 	type Moment = Moment;
 	type Time = Timestamp;
 	type PalletId = OraclePalletId;
+}
+
+parameter_types! {
+	pub const ExpectedBlockTime: u64 = SLOT_DURATION;
+}
+
+/// Native <-> Cosmwasm account mapping
+/// TODO(hussein-aitlahcen): Probably nicer to have SS58 representation here.
+pub struct AccountToAddr;
+
+impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
+	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
+		let account =
+			ibc_primitives::runtime_interface::ss58_to_account_id_32(&a).map_err(|_| ())?;
+		Ok(account.into())
+	}
+}
+
+impl Convert<AccountId, alloc::string::String> for AccountToAddr {
+	fn convert(a: AccountId) -> alloc::string::String {
+		let account = ibc_primitives::runtime_interface::account_id_to_ss58(a.into(), 49);
+		String::from_utf8_lossy(account.as_slice()).to_string()
+	}
+}
+
+impl Convert<Vec<u8>, Result<AccountId, ()>> for AccountToAddr {
+	fn convert(a: Vec<u8>) -> Result<AccountId, ()> {
+		Ok(<[u8; 32]>::try_from(a).map_err(|_| ())?.into())
+	}
+}
+
+/// Native <-> Cosmwasm asset mapping
+pub struct AssetToDenom;
+
+impl Convert<alloc::string::String, Result<CurrencyId, ()>> for AssetToDenom {
+	fn convert(currency_id: alloc::string::String) -> Result<CurrencyId, ()> {
+		core::str::FromStr::from_str(&currency_id).map_err(|_| ())
+	}
+}
+
+impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
+	fn convert(CurrencyId(currency_id): CurrencyId) -> alloc::string::String {
+		alloc::format!("{}", currency_id)
+	}
+}
+
+parameter_types! {
+  pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
+  pub const ChainId: &'static str = "composable-network-dali";
+  pub const MaxFrames: u32 = 64;
+	pub const MaxCodeSize: u32 = 512 * 1024;
+  pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
+  pub const MaxMessageSize: u32 = 256 * 1024;
+  pub const MaxContractLabelSize: u32 = 64;
+  pub const MaxContractTrieIdSize: u32 = Hash::len_bytes() as u32;
+  pub const MaxInstantiateSaltSize: u32 = 128;
+  pub const MaxFundsAssets: u32 = 32;
+  pub const CodeTableSizeLimit: u32 = 4096;
+  pub const CodeGlobalVariableLimit: u32 = 256;
+  pub const CodeParameterLimit: u32 = 128;
+  pub const CodeBranchTableSizeLimit: u32 = 256;
+  // Not really required as it's embedded.
+  pub const CodeStackLimit: u32 = u32::MAX;
+
+  // TODO: benchmark for proper values
+  pub const CodeStorageByteDeposit: u32 = 1;
+  pub const ContractStorageByteReadPrice: u32 = 1;
+  pub const ContractStorageByteWritePrice: u32 = 1;
+  pub WasmCostRules: CostRules<Runtime> = Default::default();
+}
+
+impl cosmwasm::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AccountIdExtended = AccountId;
+	type PalletId = CosmwasmPalletId;
+	type MaxFrames = MaxFrames;
+	type MaxCodeSize = MaxCodeSize;
+	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
+	type MaxMessageSize = MaxMessageSize;
+	type AccountToAddr = AccountToAddr;
+	type AssetToDenom = AssetToDenom;
+	type Balance = Balance;
+	type AssetId = CurrencyId;
+	type Assets = AssetsTransactorRouter;
+	type NativeAsset = Balances;
+	type ChainId = ChainId;
+	type MaxContractLabelSize = MaxContractLabelSize;
+	type MaxContractTrieIdSize = MaxContractTrieIdSize;
+	type MaxInstantiateSaltSize = MaxInstantiateSaltSize;
+	type MaxFundsAssets = MaxFundsAssets;
+	type CodeTableSizeLimit = CodeTableSizeLimit;
+	type CodeGlobalVariableLimit = CodeGlobalVariableLimit;
+	type CodeParameterLimit = CodeParameterLimit;
+	type CodeBranchTableSizeLimit = CodeBranchTableSizeLimit;
+	type CodeStackLimit = CodeStackLimit;
+	type CodeStorageByteDeposit = CodeStorageByteDeposit;
+	type ContractStorageByteReadPrice = ContractStorageByteReadPrice;
+	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
+	type WasmCostRules = WasmCostRules;
+	type UnixTime = Timestamp;
+	type WeightInfo = cosmwasm::weights::SubstrateWeight<Runtime>;
+	type IbcRelayerAccount = TreasuryAccount;
+	type IbcRelayer = cosmwasm::NoRelayer<Runtime>;
+	type PalletHook = ();
+}
+
+parameter_types! {
+	pub const RelayChainId: RelayChain = RelayChain::Rococo;
+	pub const SpamProtectionDeposit: Balance = 1_000_000_000_000;
+	pub const MinimumConnectionDelay: u64 = 0;
+}
+
+type CosmwasmRouter = cosmwasm::ibc::Router<Runtime>;
+
+#[derive(Clone, Debug, Eq, PartialEq, Default)]
+pub struct Router {
+	pallet_ibc_ping: pallet_ibc_ping::IbcModule<Runtime>,
+	pallet_cosmwasm: CosmwasmRouter,
+}
+
+impl ModuleRouter for Router {
+	fn get_route_mut(&mut self, module_id: &ModuleId) -> Option<&mut dyn Module> {
+		match module_id.as_ref() {
+			pallet_ibc_ping::MODULE_ID => Some(&mut self.pallet_ibc_ping),
+			_ => self.pallet_cosmwasm.get_route_mut(module_id),
+		}
+	}
+
+	fn has_route(module_id: &ModuleId) -> bool {
+		matches!(module_id.as_ref(), pallet_ibc_ping::MODULE_ID) ||
+			CosmwasmRouter::has_route(module_id)
+	}
+
+	fn lookup_module_by_port(port_id: &PortId) -> Option<ModuleId> {
+		match port_id.as_str() {
+			pallet_ibc_ping::PORT_ID => ModuleId::from_str(pallet_ibc_ping::MODULE_ID).ok(),
+			_ => CosmwasmRouter::lookup_module_by_port(port_id),
+		}
+	}
 }
 
 parameter_types! {
@@ -653,7 +799,7 @@ pub type ProxyPrice = NativeExistentialDeposit;
 impl proxy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
-	type Currency = Assets;
+	type Currency = AssetsTransactorRouter;
 	type ProxyType = composable_traits::account_proxy::ProxyType;
 	type ProxyDepositBase = ProxyPrice;
 	type ProxyDepositFactor = ProxyPrice;
@@ -668,7 +814,7 @@ impl proxy::Config for Runtime {
 impl crowdloan_rewards::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type RewardAsset = Assets;
+	type RewardAsset = AssetsTransactorRouter;
 	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = sp_runtime::AccountId32;
@@ -690,7 +836,7 @@ parameter_types! {
 }
 
 impl vesting::Config for Runtime {
-	type Currency = Assets;
+	type Currency = AssetsTransactorRouter;
 	type RuntimeEvent = RuntimeEvent;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
@@ -713,7 +859,7 @@ impl bonded_finance::Config for Runtime {
 	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type BondOfferId = BondOfferId;
 	type Convert = sp_runtime::traits::ConvertInto;
-	type Currency = Assets;
+	type Currency = AssetsTransactorRouter;
 	type RuntimeEvent = RuntimeEvent;
 	type MinReward = MinReward;
 	type NativeCurrency = Balances;
@@ -780,7 +926,7 @@ construct_runtime!(
 		Tokens: orml_tokens = 52,
 		CurrencyFactory: currency_factory = 53,
 		GovernanceRegistry: governance_registry = 54,
-		Assets: assets = 55,
+		// Assets: assets = 55,
 		CrowdloanRewards: crowdloan_rewards = 56,
 		Vesting: vesting = 57,
 		BondedFinance: bonded_finance = 58,
@@ -791,7 +937,12 @@ construct_runtime!(
 
 		CallFilter: call_filter = 100,
 
+		// Cosmwasm support
+		Cosmwasm: cosmwasm = 180,
+
+		// IBC support
 		Ibc: pallet_ibc = 190,
+		IbcPing: pallet_ibc_ping = 191
 	}
 );
 
@@ -890,7 +1041,7 @@ cumulus_pallet_parachain_system::register_validate_block!(
 impl_runtime_apis! {
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, ForeignAssetId> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
-			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
+			SafeRpcWrapper(<AssetsTransactorRouter as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
 		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {

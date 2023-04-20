@@ -1,10 +1,10 @@
-use ::ibc::core::{
+pub(crate) use ::ibc::core::{
 	ics24_host::identifier::PortId,
 	ics26_routing::context::{Module, ModuleId},
 };
-use common::ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds};
+use common::ibc::MinimumConnectionDelaySeconds;
 use frame_support::traits::EitherOf;
-use pallet_ibc::{
+pub(crate) use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
 };
 use sp_core::ConstU64;
@@ -26,21 +26,47 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 	type Error = DispatchError;
 
 	fn from_denom_to_asset_id(denom: &String) -> Result<CurrencyId, Self::Error> {
-		ForeignIbcIcs20Assets::<AssetsRegistry>::from_denom_to_asset_id(denom)
+		log::debug!("converting denom {} to currency id", denom);
+		let denom_bytes = denom.as_bytes().to_vec();
+		if let Some(id) = IbcDenoms::<Runtime>::get(&denom_bytes) {
+			log::debug!("converted {:} to currency id", &id);
+			return Ok(id)
+		}
+
+		// +1 nonce
+		let asset_id =
+			<currency_factory::Pallet<Runtime> as CurrencyFactoryT>::create(RangeId::IBC_ASSETS)?;
+
+		let asset_id = <assets_transactor_router::Pallet<Runtime> as composable_traits::assets::CreateAsset>
+		::create_local_asset([0;8], asset_id.0 as u64,
+			AssetInfo {
+				name: None,
+				symbol: None,
+				decimals: None,
+				// we do not have sufficient assets, nor setting zero is good
+				// so set at least some
+				existential_deposit: 10_000,
+				ratio: Some(rational!(1/1)),
+		})?;
+		log::info!("registered {:} asset id for {:} denom", &asset_id, &denom);
+		IbcDenoms::<Runtime>::insert(denom_bytes.clone(), asset_id);
+		IbcAssetIds::<Runtime>::insert(asset_id, denom_bytes);
+
+		Ok(asset_id)
 	}
 
 	fn from_asset_id_to_denom(id: CurrencyId) -> Option<String> {
-		ForeignIbcIcs20Assets::<AssetsRegistry>::from_asset_id_to_denom(id)
+		IbcAssetIds::<Runtime>::get(id).and_then(|denom| String::from_utf8(denom).ok())
 	}
 
 	fn ibc_assets(start_key: Option<Either<CurrencyId, u32>>, limit: u64) -> IbcAssets<CurrencyId> {
 		let mut iterator = match start_key {
 			None => IbcAssetIds::<Runtime>::iter().skip(0),
-			Some(Either::Left(asset_id)) => {
+			Some(Left(asset_id)) => {
 				let raw_key = asset_id.encode();
 				IbcAssetIds::<Runtime>::iter_from(raw_key).skip(0)
 			},
-			Some(Either::Right(offset)) => IbcAssetIds::<Runtime>::iter().skip(offset as usize),
+			Some(Right(offset)) => IbcAssetIds::<Runtime>::iter().skip(offset as usize),
 		};
 
 		let denoms = iterator.by_ref().take(limit as usize).map(|(_, denom)| denom).collect();
@@ -127,7 +153,7 @@ impl pallet_ibc::Config for Runtime {
 	type PalletPrefix = IbcTriePrefix;
 	type LightClientProtocol = GRANDPA;
 	type AccountIdConversion = ibc_primitives::IbcAccount<AccountId>;
-	type Fungibles = Assets;
+	type Fungibles = AssetsTransactorRouter;
 	type ExpectedBlockTime = ConstU64<SLOT_DURATION>;
 	type Router = ();
 	type MinimumConnectionDelay = MinimumConnectionDelaySeconds;
@@ -157,4 +183,9 @@ impl pallet_ibc::Config for Runtime {
 	>;
 	#[cfg(not(feature = "testnet"))]
 	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
+}
+
+impl pallet_ibc_ping::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type IbcHandler = Ibc;
 }

@@ -63,8 +63,8 @@ treasury = { default-features = false, workspace = true }
 utility = { default-features = false, workspace = true }
 log = { version = "0.4.14", default-features = false }
 assets = { package = "pallet-assets", path = "../../frame/assets", default-features = false }
-assets-transactor-router = { package = "pallet-assets-transactor-router", path = "../../frame/assets-transactor-router", default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = "../../frame/assets-registry", default-features = false }
+assets-transactor-router = { package = "pallet-assets-transactor-router", path = "../../frame/assets-transactor-router", default-features = false }
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 common = { path = "../common", default-features = false }
@@ -84,6 +84,8 @@ transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rp
 assets-runtime-api = { path = "../../frame/assets/runtime-api", default-features = false }
 crowdloan-rewards-runtime-api = { path = "../../frame/crowdloan-rewards/runtime-api", default-features = false }
 pablo-runtime-api = { path = "../../frame/pablo/runtime-api", default-features = false }
+cosmwasm = { package = "pallet-cosmwasm", path = "../../frame/cosmwasm", default-features = false }
+cosmwasm-runtime-api = { path = "../../frame/cosmwasm/runtime-api", default-features = false }
 
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
@@ -121,6 +123,7 @@ ibc = { workspace = true, default-features = false }
 ibc-primitives = { workspace = true, default-features = false }
 ibc-runtime-api = { workspace = true, default-features = false }
 pallet-ibc = { workspace = true, default-features = false }
+pallet-ibc-ping = { workspace = true, default-features = false }
 
 
 [features]
@@ -165,6 +168,7 @@ runtime-benchmarks = [
   "pablo/runtime-benchmarks",
   "oracle/runtime-benchmarks",
   "pallet-ibc/runtime-benchmarks",
+  "cosmwasm/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -226,6 +230,7 @@ std = [
   "assets/std",
   "assets-transactor-router/std",
   "assets-registry/std",
+  "assets-transactor-router/std",
   "vesting/std",
   "bonded-finance/std",
   "crowdloan-rewards/std",
@@ -244,4 +249,5 @@ std = [
   "pallet-ibc/std",
   "ibc-primitives/std",
   "ibc-runtime-api/std",
+  "cosmwasm/std",
 ]
