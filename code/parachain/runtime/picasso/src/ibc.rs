@@ -4,6 +4,7 @@ use ::ibc::core::{
 };
 use common::ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds};
 use frame_support::traits::EitherOf;
+use frame_system::EnsureSigned;
 use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
 };
@@ -109,7 +110,7 @@ impl Ics20RateLimiter for ConstantAny {
 		_flow_type: pallet_ibc::ics20::FlowType,
 	) -> Result<(), ()> {
 		// one DOT/PICA, so for USDT not safe, but we do not yet do it
-		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(10_u64.pow(12)) {
+		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(10_000 * 10_u64.pow(12)) {
 			return Ok(())
 		}
 		Err(())
@@ -138,10 +139,7 @@ impl pallet_ibc::Config for Runtime {
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
-	type TransferOrigin = EitherOf<
-		EnsureSignedBy<ReleaseMembership, Self::IbcAccountId>,
-		EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>,
-	>;
+	type TransferOrigin = EnsureSigned<Self::AccountId>;
 	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;
