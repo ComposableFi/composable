@@ -50,7 +50,7 @@ use common::{
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
-	assets::{Asset, DummyAssetCreator},
+	assets::Asset,
 	dex::{Amm, PriceAggregate},
 	xcm::assets::RemoteAssetRegistryInspect,
 };
@@ -236,7 +236,7 @@ impl assets_registry::Config for Runtime {
 parameter_types! {
 	pub PabloPalletId: PalletId = PalletId(*b"pal_pblo");
 	pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
-	pub LPTokenExistentialDeposit: Balance = 10_000;
+	pub LPTokenExistentialDeposit: Balance = 100;
 }
 
 impl pablo::Config for Runtime {
@@ -244,8 +244,8 @@ impl pablo::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type Convert = sp_runtime::traits::ConvertInto;
-	type Assets = Assets;
-	type LPTokenFactory = DummyAssetCreator<CurrencyId, ForeignAssetId, Balance>;
+	type Assets = AssetsTransactorRouter;
+	type LPTokenFactory = AssetsTransactorRouter;
 	type PoolId = PoolId;
 	type PalletId = PabloPalletId;
 	type PoolCreationOrigin = EnsureRootOrTwoThirdNativeCouncil;
@@ -254,6 +254,20 @@ impl pablo::Config for Runtime {
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
 	type LPTokenExistentialDeposit = LPTokenExistentialDeposit;
+}
+
+impl assets_transactor_router::Config for Runtime {
+	type NativeAssetId = NativeAssetId;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type NativeTransactor = Balances;
+	type LocalTransactor = Tokens;
+	type ForeignTransactor = Tokens;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
+	type GovernanceRegistry = GovernanceRegistry;
+	type AssetLocation = primitives::currency::ForeignAssetId;
+	type AssetsRegistry = AssetsRegistry;
 }
 
 impl assets::Config for Runtime {
@@ -774,6 +788,7 @@ construct_runtime!(
 		AssetsRegistry: assets_registry = 59,
 		Pablo: pablo = 60,
 		Oracle: oracle = 61,
+		AssetsTransactorRouter: assets_transactor_router = 62,
 
 		CallFilter: call_filter = 100,
 

@@ -9,7 +9,7 @@
               ${packages.subwasm}/bin/subwasm info ${runtime}/lib/runtime.optimized.wasm | tail -n+2 | head -c -1 > $out
             '');
           flake-url =
-            "github:ComposableFi/composable/v${packages.composable-node.version}";
+            "github:ComposableFi/composable/release-v${packages.composable-node.version}";
         in pkgs.writeTextFile {
           name = "release.txt";
           text = ''
@@ -29,13 +29,14 @@
             nix build ${flake-url}#composable-runtime
 
             # Run the Composable node (release mode) alone
-            nix run ${flake-url}#composable-node-release
+            nix run ${flake-url}#composable-node
 
             # Spin up a local devnet
-            nix run ${flake-url}#devnet
+            nix run ${flake-url}#devnet-picasso
+            nix run ${flake-url}#devnet-composable
 
-            # Spin up a local XCVM devnet
-            nix run ${flake-url}#devnet-xcvm
+            # Spin up a local XC(Inter chain) devnet
+            nix run ${flake-url}
 
             # Show all possible apps, shells and packages
             nix flake show ${flake-url} --allow-import-from-derivation
@@ -71,7 +72,6 @@
             cp ${packages.picasso-testfast-runtime}/lib/runtime.optimized.wasm release-artifacts/to-upload/picasso_testfast_runtime_${
               subwasm-version packages.picasso-testfast-runtime
             }.wasm
-
 
 
             echo "Generate node packages"
