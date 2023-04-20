@@ -52,17 +52,6 @@ pub struct BEEFYLightClient{
 ```
 
 
-Composable is performing a total of 8 PRs to core BEEFY subsystems in both the runtime and Substrate client, pending further review by the Substrate bridges team. Some are listed below:
-
-
-* [https://github.com/paritytech/substrate/pull/10669](https://github.com/paritytech/substrate/pull/10669): Introduces a runtime API to the BEEFY finalization gadget for fetching the block number where the current session began.
-* [https://github.com/paritytech/substrate/pull/10727](https://github.com/paritytech/substrate/pull/10727): Implements an algorithm for deterministic block selection for finalization by the BEEFY gadget.
-* [https://github.com/paritytech/substrate/pull/10705](https://github.com/paritytech/substrate/pull/10705): Prevents the finalization gadget from starting while block syncing is still in progress.
-* [https://github.com/paritytech/substrate/pull/10684](https://github.com/paritytech/substrate/pull/10684): De-duplicates BEEFY finalization notifications sent to RPC subscribers.
-* [https://github.com/paritytech/substrate/pull/10664](https://github.com/paritytech/substrate/pull/10664): Refactors the runtime subsystems for BEEFY to be generic for downstream runtimes, e.g. parachains.
-* [https://github.com/paritytech/substrate/pull/10635](https://github.com/paritytech/substrate/pull/10635): Introduces support for generating multi-leaf MMR proofs for even smaller finality proofs.
-
-
 ## 11-BEEFY COSMOS-IBC Light Client
 
 Connecting to IBC requires both chains (in the case of Centauri, Cosmos and Picasso) to embed a light client for proof of validation. In order to connect to IBC using Cosmos and Picasso, Composable is working to develop a Bridge Efficiency Enabling Finality Yielder (BEEFY) light client onto Picasso and Cosmos. 
