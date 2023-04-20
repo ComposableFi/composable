@@ -171,7 +171,7 @@ impl pallet_ibc::Config for Runtime {
 	type AccountIdConversion = ibc_primitives::IbcAccount<AccountId>;
 	type Fungibles = Assets;
 	type ExpectedBlockTime = ConstU64<SLOT_DURATION>;
-	type Router = ();
+	type Router = Router;
 	type MinimumConnectionDelay = MinimumConnectionDelaySeconds;
 	type ParaId = parachain_info::Pallet<Runtime>;
 	type RelayChain = RelayChainId;
