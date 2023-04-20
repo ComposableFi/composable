@@ -154,7 +154,7 @@ impl pallet_ibc::ics20_fee::Config for Runtime {
 }
 
 parameter_types! {
-	pub ServiceCharge: Percent = Percent::from_float(0.4);
+	pub ServiceCharge: Percent = Percent::from_float(0.04);
 	pub const PalletId: frame_support::PalletId = frame_support::PalletId(*b"ics20fee");
 }
 
