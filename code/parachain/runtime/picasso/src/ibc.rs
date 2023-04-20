@@ -154,7 +154,7 @@ impl pallet_ibc::ics20_fee::Config for Runtime {
 }
 
 parameter_types! {
-	pub ServiceCharge: Perbill = Perbill::from_rational(4 as u16, 1000 as u16);
+	pub ServiceCharge: Perbill = Perbill::from_rational(4 as u32, 1000 as u32 );
 	pub const PalletId: frame_support::PalletId = frame_support::PalletId(*b"ics20fee");
 }
 
