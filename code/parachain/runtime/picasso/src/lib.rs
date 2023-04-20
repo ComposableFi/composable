@@ -52,7 +52,6 @@ use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
 	dex::{Amm, PriceAggregate},
-	xcm::assets::RemoteAssetRegistryInspect,
 };
 use primitives::currency::ForeignAssetId;
 
@@ -914,19 +913,19 @@ impl_runtime_apis! {
 			).collect::<Vec<_>>();
 
 			// Assets from the assets-registry pallet
-			let foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
+			let all_assets =  assets_registry::Pallet::<Runtime>::get_all_assets();
 
 			// Override asset data for hardcoded assets that have been manually updated, and append
 			// new assets without duplication
-			foreign_assets.into_iter().fold(assets, |mut acc, mut foreign_asset| {
-				if let Some(asset) = acc.iter_mut().find(|asset_i| asset_i.id == foreign_asset.id) {
-					// Update asset with data from assets-registry
-					asset.decimals = foreign_asset.decimals;
-					asset.foreign_id = foreign_asset.foreign_id.clone();
-					asset.ratio = foreign_asset.ratio;
+			all_assets.into_iter().fold(assets, |mut acc, mut asset| {
+				if let Some(found_asset) = acc.iter_mut().find(|asset_i| asset_i.id == asset.id) {
+					// Update a found asset with data from assets-registry
+					found_asset.decimals = asset.decimals;
+					found_asset.foreign_id = asset.foreign_id.clone();
+					found_asset.ratio = asset.ratio;
 				} else {
-					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&foreign_asset.id.into());
-					acc.push(foreign_asset.clone())
+					asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
+					acc.push(asset.clone())
 				}
 				acc
 			})

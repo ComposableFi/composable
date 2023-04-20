@@ -1,5 +1,6 @@
 use crate::{prelude::*, runtime::*, Error};
 use codec::{Decode, Encode};
+use composable_support::collections::vec::bounded::BiBoundedVec;
 use composable_traits::{
 	assets::{Asset, AssetInfo, AssetInfoUpdate, GenerateAssetId},
 	rational,
@@ -448,6 +449,70 @@ fn get_foreign_assets_list_should_work() {
 				foreign_id: Some(location),
 				existential_deposit: 0,
 			}]
+		);
+	})
+}
+
+#[test]
+fn get_all_assets_should_work() {
+	new_test_ext().execute_with(|| {
+		let location = ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here()));
+		let protocol_id = *b"AssTests";
+		let nonce = 1_u64;
+		let nonce2 = 2_u64;
+		let name = Some(BiBoundedVec::from_vec(b"asset_name".to_vec()).unwrap());
+		let asset_info = AssetInfo {
+			name: name.clone(),
+			symbol: None,
+			decimals: Some(4),
+			existential_deposit: 0,
+			ratio: Some(rational!(42 / 123)),
+		};
+		let id = AssetsRegistry::generate_asset_id(protocol_id, nonce);
+		let id2 = AssetsRegistry::generate_asset_id(protocol_id, nonce2);
+
+		let all_assets = AssetsRegistry::get_all_assets();
+
+		assert_eq!(all_assets, vec![]);
+
+		assert_ok!(AssetsRegistry::register_asset(
+			RuntimeOrigin::root(),
+			protocol_id,
+			nonce,
+			Some(location.clone()),
+			asset_info.clone(),
+		));
+
+		assert_ok!(AssetsRegistry::register_asset(
+			RuntimeOrigin::root(),
+			protocol_id,
+			nonce2,
+			None,
+			asset_info,
+		));
+
+		let all_assets = AssetsRegistry::get_all_assets();
+
+		assert_eq!(
+			all_assets,
+			vec![
+				Asset {
+					name: name.clone().map(Into::into),
+					id,
+					decimals: 4,
+					ratio: Some(rational!(42 / 123)),
+					foreign_id: Some(location),
+					existential_deposit: 0,
+				},
+				Asset {
+					name: name.map(Into::into),
+					id: id2,
+					decimals: 4,
+					ratio: Some(rational!(42 / 123)),
+					foreign_id: None,
+					existential_deposit: 0,
+				}
+			]
 		);
 	})
 }
