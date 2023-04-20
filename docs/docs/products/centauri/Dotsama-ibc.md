@@ -2,7 +2,7 @@
 _IBC beyond the Cosmos_
 ## Kusama ⬌ Polkadot Implementation
 
-The first implementation of Centauri will be between [Kusama](https://kusama.network/) and [Polkadot](https://polkadot.network/) via Picasso and Composable. This is a significant development because currently there is no bridge connecting these two relay chains. This also marks the **first implementation of IBC outside of the Cosmos ecosystem**.
+The first implementation of Centauri is between [Kusama](https://kusama.network/) and [Polkadot](https://polkadot.network/) via Picasso and Composable. This is a significant development because currently there is no bridge connecting these two relay chains. This also marks the **first implementation of IBC outside of the Cosmos ecosystem**.
 
 :::info
 
