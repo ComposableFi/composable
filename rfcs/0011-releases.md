@@ -142,18 +142,24 @@ The following section lays out the release steps for each release in a checklist
 
 - [ ] If it is the first release of the `v<Major>` (eg: v5) line then create a branch `release-v<Major>`. Execute the following steps on that branch.
 - [ ] Generate weights, i.e run `benchmark`
-- [ ] Runtime [versioning](https://docs.substrate.io/build/upgrade-the-runtime/) updates
+- [ ] Bump numbers in runtimes `version.rs` [according rules](https://docs.substrate.io/maintain/runtime-upgrades/) and 
    - [ ] Update `spec_version` (automate-able)
    - [ ] Update `transaction_version` if existing extrinsics or their ordering has changed. Can be verified via [metadata comparison](https://github.com/paritytech/polkadot/blob/master/doc/release-checklist.md#extrinsic-ordering).
-- [ ] Update composable node version if the code has changed
+- [ ] Update composable node version if the code has changed (relevant number in workspace `Cargo.toml`)
 - [ ] Update composableJs version (if necessary to be released)
 - [ ] Update FE version (if necessary to be released)
 - [ ] Update Subsquid version (if necessary to be released)
 - [ ] Update relevant frame pallets being released in runtimes to the latest node version
 - [ ] Consider and list possible proxy filter updates for available calls.
 - [ ] Categorize (and give a title) the release according to the types of changes it does, eg: security patch, bugfix, feature etc.
-- [ ] Run `cargo build` once to update the Cargo.lock file.
-- [ ] Update the `v<Major>` branch on Github and make PR to master. Get it merged to main before next step. Note that `v<Major>` branch must not be deleted.
+- [ ] Update the `v<Major>` branch on Github and make PR to master. Get it merged to main before next step.
 - [ ] Get the tip of the branch signed according to 3.2.4 section.
 - [ ] Finally, create a tag `v<Branch.Spec_version.Path>` (eg: `v5.4201.0`) to trigger the release artifact build.
-- [ ] Run on upgrade to new runtime on fork of live node data and running runtime (previous release).
+
+```shell
+git tag --sign release-v5.4200.0 --message "RC" && git push origin release-v5.4200.0`
+```
+
+It will trigger `on.push.tags` [GitHub Tag based release flow](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) 
+
+- [ ] Run [upgrade](https://substrate.stackexchange.com/questions/1061/what-is-the-proper-way-of-executing-a-runtime-upgrade-on-a-parachain) to new runtime on fork of latest block of live network.

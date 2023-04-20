@@ -483,7 +483,7 @@ export async function getOrCreateHistoricalAssetPrice(
         price = await getHistoricalCoingeckoPrice(ctx, assetInfo, time);
         if (price) {
           // If price exists, store it on the DB
-          await storeSingleHistoricalAssetPrice(ctx, assetIdToUse, price, date);
+          await storeSingleHistoricalAssetPrice(ctx, assetId, price, date);
         } else {
           throw new Error(`Could not obtain price for ${assetIdToUse} from Coingecko`);
         }
@@ -497,7 +497,7 @@ export async function getOrCreateHistoricalAssetPrice(
 
     return price;
   } catch (err) {
-    console.log(`Error getting price for ${assetIdToUse} at ${date.toISOString()}:`);
+    console.log(`Error getting price for ${assetId} at ${date.toISOString()}:`);
     console.log(err);
     return 0;
   }

@@ -1,9 +1,7 @@
 import { ActiveUsersResolver } from "./activeUsers";
 import { PicassoOverviewStatsResolver } from "./picassoOverviewStats";
 import { PabloOverviewStatsResolver } from "./pabloOverviewStats";
-import { AssetsResolver } from "./assets";
-import { TotalValueLockedResolver } from "./totalValueLocked";
-import { TotalVolumeResolver } from "./totalVolume";
+import { AssetsResolver } from "./assetPrices";
 import { PabloSpotPriceResolver } from "./pabloSpotPrice";
 import { PabloDailyResolver } from "./pabloDaily";
 import { PabloTVLResolver } from "./pabloTVL";
@@ -16,8 +14,6 @@ export {
   PicassoOverviewStatsResolver,
   PabloOverviewStatsResolver,
   AssetsResolver,
-  TotalValueLockedResolver,
-  TotalVolumeResolver,
   PabloSpotPriceResolver,
   PabloDailyResolver,
   PabloTVLResolver,

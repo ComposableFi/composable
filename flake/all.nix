@@ -1,13 +1,20 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }: {
-    packages = {
+    packages = rec {
 
       all-deps = pkgs.linkFarmFromDrvs "all-deps" (with self'.packages; [
         acala-node
         bifrost-node
-        polkadot-node-dep
+        rococo-runtime-from-dep
+        kusama-runtime-on-parity
+        polkadot-runtime-on-parity
+        rococo-runtime-on-parity
+        westend-runtime-on-parity
+        polkadot-node-from-dep
         polkadot-node-on-parity-kusama
         polkadot-node-on-parity-polkadot
+        polkadot-node-on-parity-westend
+        polkadot-node-on-parity-rococo
         statemine-node
         subwasm
         zombienet
@@ -32,24 +39,32 @@
         composable-bench-node
       ]);
 
-      all = pkgs.linkFarmFromDrvs "all-ci-packages" (with self'.packages; [
-        benchmarks-check
-        cargo-clippy-check
-        cargo-deny-check
-        check-picasso-integration-tests
-        cmc-api
-        cmc-api-image
-        composable-node
-        devnet-centauri
-        devnet-picasso
-        devnet-picasso-image
-        devnet-initialize-script-picasso-persistent
-        devnet-integration-tests
-        devnet-picasso-complete
-        unit-tests
-        hyperspace-composable-rococo-picasso-rococo
-        hyperspace-composable-rococo-picasso-rococo-image
-      ]);
+      all-platforms = pkgs.linkFarmFromDrvs "all-platforms"
+        (with self'.packages; [
+          cmc-api
+          cmc-api-image
+          composable-node
+          devnet-centauri
+          composable-testfast-node
+          picasso-testfast-runtime
+          devnet-picasso
+          devnet-picasso-image
+          devnet-initialize-script-picasso-persistent
+          devnet-integration-tests
+          devnet-picasso-complete
+          hyperspace-composable-rococo-picasso-rococo
+          hyperspace-composable-rococo-picasso-rococo-image
+        ]);
+
+      all-ci-packages = pkgs.linkFarmFromDrvs "all-ci-packages"
+        (with self'.packages; [
+          all-platforms
+          benchmarks-check
+          cargo-clippy-check
+          cargo-deny-check
+          check-picasso-integration-tests
+          unit-tests
+        ]);
 
       all-frontend = pkgs.linkFarmFromDrvs "all-frontend"
         (with self'.packages; [ frontend-static ]);

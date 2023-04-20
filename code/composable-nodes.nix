@@ -34,40 +34,34 @@
         };
       };
 
-      makeComposableNode = f:
-        crane.nightly.buildPackage (f (systemCommonRust.common-attrs // {
+      makeComposableNode = picasso-runtime:
+        crane.nightly.buildPackage (systemCommonRust.common-attrs // rec {
           name = "composable";
           cargoArtifacts = self'.packages.common-deps;
-          cargoBuildCommand =
-            "cargo build --release --package composable --features=builtin-wasm";
-          PICASSO_RUNTIME =
-            "${self'.packages.picasso-runtime}/lib/runtime.optimized.wasm";
+          cargoBuildCommand = "cargo build --release --package ${name}";
+          cargoExtraArgs = "--features=builtin-wasm";
+          PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
           COMPOSABLE_RUNTIME =
             "${self'.packages.composable-runtime}/lib/runtime.optimized.wasm";
           installPhaseCommand = ''
             mkdir -p $out/bin
+            echo "built with ${cargoExtraArgs}"
             cp target/release/composable $out/bin/composable
           '';
-          meta = { mainProgram = "composable"; };
-        }));
+          meta = { mainProgram = name; };
+        } // {
+          SUBSTRATE_CLI_GIT_COMMIT_HASH = if self ? rev then
+            self.rev
+          else
+            builtins.trace "WARNING: no tracked"
+            "0000000000000000000000000000000000000000";
+        });
     in {
       packages = rec {
 
-        composable-node = makeComposableNode (node: node);
-
-        composable-node-picasso = makeComposableNode (node:
-          node // {
-            PICASSO_RUNTIME = node.PICASSO_RUNTIME;
-            COMPOSABLE_RUNTIME = node.COMPOSABLE_RUNTIME;
-          });
-
-        composable-node-release = makeComposableNode (node:
-          node // {
-            SUBSTRATE_CLI_GIT_COMMIT_HASH = if self ? rev then
-              self.rev
-            else
-              builtins.abort "Cannot build the release node in a dirty repo.";
-          });
+        composable-node = makeComposableNode self'.packages.picasso-runtime;
+        composable-testfast-node =
+          makeComposableNode self'.packages.picasso-testfast-runtime;
 
         composable-bench-node = crane.nightly.cargoBuild
           (systemCommonRust.common-std-bench-attrs // rec {

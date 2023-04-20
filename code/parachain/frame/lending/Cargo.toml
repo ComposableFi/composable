@@ -73,24 +73,26 @@ smallvec = "1.7.0"
 [features]
 default = ["std"]
 std = [
-  "serde",
   "codec/std",
-  "log/std",
+  "composable-traits/std",
+  "frame-benchmarking/std",
   "frame-support/std",
   "frame-system/std",
-  "sp-runtime/std",
-  "sp-io/std",
-  "sp-core/std",
-  "sp-std/std",
-  "sp-arithmetic/std",
-  "composable-traits/std",
+  "log/std",
+  "orml-tokens/std",
+  "pallet-balances/std",
+  "pallet-oracle/std",
   "pallet-vault/std",
   "scale-info/std",
-  "pallet-oracle/std",
-  "xcm/std",
-  "sp-keystore",
+  "serde",
   "sp-application-crypto",
-  "frame-benchmarking/std",
+  "sp-arithmetic/std",
+  "sp-core/std",
+  "sp-io/std",
+  "sp-keystore",
+  "sp-runtime/std",
+  "sp-std/std",
+  "xcm/std",
 ]
 
 runtime-benchmarks = [

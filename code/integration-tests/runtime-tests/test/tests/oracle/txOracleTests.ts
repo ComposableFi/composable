@@ -61,8 +61,8 @@ describe("[LAUNCH] tx.oracle Tests", function () {
       if (!testConfiguration.enabledTests.addAssetAndInfo__success.add1) this.skip();
       const assetId = api.createType("u128", newAsset1);
       const threshold = api.createType("Percent", 50);
-      const minAnswers = api.createType("u32", 2);
-      const maxAnswers = api.createType("u32", 5);
+      const minAnswers = api.createType("u32", 7);
+      const maxAnswers = api.createType("u32", 10);
       const blockInterval = api.createType("u32", 6);
       const reward = api.createType("u128", 150000000000);
       const slash = api.createType("u128", 100000000000);

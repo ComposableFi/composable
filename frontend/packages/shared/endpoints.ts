@@ -46,7 +46,7 @@ export function getEnvironment(target: AvailableEndpoints) {
   return fetched === "" ? endpointPresets.mainnet[target] : fetched;
 }
 
-export type EndpointPreset = "local" | "stage" | "mainnet" | "dali";
+export type EndpointPreset = "local" | "stage" | "mainnet" | "dali" | "rococo";
 export type EndpointPresets = {
   [key in EndpointPreset]: {
     [key in AvailableEndpoints]: string;
@@ -86,6 +86,13 @@ export const endpointPresets: EndpointPresets = {
     karura: "wss://karura-rpc-0.aca-api.network",
     kusama: "wss://kusama-rpc.polkadot.io",
     statemine: "wss://statemine-rpc.polkadot.io",
+    subsquid: "https://stats.composablenodes.tech/graphql",
+  },
+  rococo: {
+    picasso: "wss://picasso-rococo-rpc-lb.composablenodes.tech",
+    karura: "wss://karura-rpc-0.aca-api.network",
+    kusama: "wss://rococo-rpc.polkadot.io",
+    statemine: "wss://rococo-rockmine-rpc.polkadot.io",
     subsquid: "https://stats.composablenodes.tech/graphql",
   },
 };

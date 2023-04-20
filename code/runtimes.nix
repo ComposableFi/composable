@@ -70,6 +70,10 @@
           name = "picasso";
           features = "";
         };
+        picasso-testfast-runtime = mkOptimizedRuntime {
+          name = "picasso";
+          features = "testnet,fastnet";
+        };
         composable-runtime = mkOptimizedRuntime {
           name = "composable";
           features = "";

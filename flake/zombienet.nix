@@ -4,7 +4,8 @@
       prelude = zombieTools.builder;
       relaychainBase = {
         chain = "rococo-local";
-        default_command = pkgs.lib.meta.getExe self'.packages.polkadot-node-dep;
+        default_command =
+          pkgs.lib.meta.getExe self'.packages.polkadot-node-from-dep;
         count = 3;
       };
 
@@ -75,7 +76,7 @@
 
       picasso-dev-config = zombienet-rococo-local-composable-config {
         chain = "picasso-dev";
-        command = self'.packages.composable-node-picasso;
+        command = self'.packages.composable-testfast-node;
       };
 
       zombienet-rococo-local-picasso-dev =

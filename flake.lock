@@ -594,6 +594,22 @@
         "type": "indirect"
       }
     },
+    "nixpkgs-latest": {
+      "locked": {
+        "lastModified": 1681476475,
+        "narHash": "sha256-uY28Ht+rAObIjVbjDa0SHHG/LzzAU2RuGgtE1O1sgbo=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "0135b7a556ee60144b143b071724fa44348a188e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "0135b7a556ee60144b143b071724fa44348a188e",
+        "type": "github"
+      }
+    },
     "nixpkgs-lib": {
       "locked": {
         "dir": "lib",
@@ -815,6 +831,7 @@
         "home-manager": "home-manager",
         "nix-std": "nix-std",
         "nixpkgs": "nixpkgs_5",
+        "nixpkgs-latest": "nixpkgs-latest",
         "npm-buildpackage": "npm-buildpackage",
         "rust-overlay": "rust-overlay_3",
         "zombienet": "zombienet"

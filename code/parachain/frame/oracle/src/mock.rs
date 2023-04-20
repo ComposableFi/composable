@@ -5,7 +5,7 @@ use frame_support::{
 	ord_parameter_types,
 	pallet_prelude::ConstU32,
 	parameter_types,
-	traits::{EnsureOneOf, Everything},
+	traits::{EitherOfDiverse, Everything},
 	PalletId,
 };
 use frame_system as system;
@@ -105,10 +105,11 @@ parameter_types! {
 	pub const StakeLock: u64 = 1;
 	pub const MinStake: Balance = 1;
 	pub const StalePrice: u64 = 2;
-	pub const MaxAnswerBound: u32 = 5;
-	pub const MaxAssetsCount: u32 = 2;
+	pub const MinAnswerBound: u32 = 1;
+	pub const MaxAnswerBound: u32 = 15;
+	pub const MaxAssetsCount: u32 = 15;
 	pub const MaxHistory: u32 = 3;
-	pub const MaxPrePrices: u32 = 12;
+	pub const MaxPrePrices: u32 = 20;
 	pub const TwapWindow: u16 = 3;
 }
 
@@ -165,8 +166,11 @@ impl pallet_oracle::Config for Test {
 	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
 	type MinStake = MinStake;
-	type AddOracle =
-		EnsureOneOf<EnsureSignedBy<RootAccount, sp_core::sr25519::Public>, EnsureRoot<AccountId>>;
+	type AddOracle = EitherOfDiverse<
+		EnsureSignedBy<RootAccount, sp_core::sr25519::Public>,
+		EnsureRoot<AccountId>,
+	>;
+	type MinAnswerBound = MinAnswerBound;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
 	type MaxHistory = MaxHistory;

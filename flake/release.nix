@@ -9,7 +9,7 @@
               ${packages.subwasm}/bin/subwasm info ${runtime}/lib/runtime.optimized.wasm | tail -n+2 | head -c -1 > $out
             '');
           flake-url =
-            "github:ComposableFi/composable/v${packages.composable-node.version}";
+            "github:ComposableFi/composable/release-v${packages.composable-node.version}";
         in pkgs.writeTextFile {
           name = "release.txt";
           text = ''
@@ -25,17 +25,18 @@
             ## Nix
             ```bash
             # Generate the Wasm runtimes
-            nix build ${flake-url}#picasso-runtime
-            nix build ${flake-url}#composable-runtime
+            nix build ${flake-url}#picasso-runtime  --accept-flake-config
+            nix build ${flake-url}#composable-runtime --accept-flake-config
 
             # Run the Composable node (release mode) alone
-            nix run ${flake-url}#composable-node-release
+            nix run ${flake-url}#composable-node
 
             # Spin up a local devnet
-            nix run ${flake-url}#devnet
+            nix run ${flake-url}#devnet-picasso
+            nix run ${flake-url}#devnet-composable
 
-            # Spin up a local XCVM devnet
-            nix run ${flake-url}#devnet-xcvm
+            # Spin up a local XC(Inter chain) devnet
+            nix run ${flake-url}
 
             # Show all possible apps, shells and packages
             nix flake show ${flake-url} --allow-import-from-derivation
@@ -57,10 +58,10 @@
           in ''
             mkdir -p release-artifacts/to-upload/
 
-            # Generate release body
+            echo "Generate release body"
             cp ${generated-release-body} release-artifacts/release.txt
 
-            # Generate wasm runtimes
+            echo "Generate wasm runtimes"
             cp ${packages.picasso-runtime}/lib/runtime.optimized.wasm release-artifacts/to-upload/picasso_runtime_${
               subwasm-version packages.picasso-runtime
             }.wasm
@@ -68,18 +69,32 @@
               subwasm-version packages.composable-runtime
             }.wasm
 
-            # Generate packaged binaries
-            # RPM Name convention: https://docs.oracle.com/en/database/oracle/oracle-database/19/ladbi/rpm-packages-naming-convention.html
+            cp ${packages.picasso-testfast-runtime}/lib/runtime.optimized.wasm release-artifacts/to-upload/picasso_testfast_runtime_${
+              subwasm-version packages.picasso-testfast-runtime
+            }.wasm
+
+
+            echo "Generate node packages"
             cp ${
-              make-bundle "toRPM" packages.composable-node-release
-            }/*.rpm release-artifacts/to-upload/composable-node-${packages.composable-node-release.version}-1.x86_64.rpm
-            # DEB Name convention: https://askubuntu.com/questions/330018/what-is-the-standard-for-naming-deb-file-name
+              make-bundle "toRPM" packages.composable-node
+            }/*.rpm release-artifacts/to-upload/composable-node-${packages.composable-node.version}-1.x86_64.rpm
             cp ${
-              make-bundle "toDEB" packages.composable-node-release
-            }/*.deb release-artifacts/to-upload/composable-node_${packages.composable-node-release.version}-1_amd64.deb
+              make-bundle "toDEB" packages.composable-node
+            }/*.deb release-artifacts/to-upload/composable-node_${packages.composable-node.version}-1_amd64.deb
             cp ${
-              make-bundle "toDockerImage" packages.composable-node-release
+              make-bundle "toDockerImage" packages.composable-node
             } release-artifacts/composable-docker-image
+
+
+            cp ${
+              make-bundle "toRPM" packages.composable-testfast-node
+            }/*.rpm release-artifacts/to-upload/composable-testfast-node-${packages.composable-testfast-node.version}-1.x86_64.rpm
+            cp ${
+              make-bundle "toDEB" packages.composable-testfast-node
+            }/*.deb release-artifacts/to-upload/composable-testfast-node_${packages.composable-testfast-node.version}-1_amd64.deb
+            cp ${
+              make-bundle "toDockerImage" packages.composable-testfast-node
+            } release-artifacts/composable-testfast-node-docker-image
 
             # Checksum everything
             cd release-artifacts/to-upload

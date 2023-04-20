@@ -50,9 +50,8 @@ use common::{
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
-	assets::{Asset, DummyAssetCreator},
+	assets::Asset,
 	dex::{Amm, PriceAggregate},
-	xcm::assets::RemoteAssetRegistryInspect,
 };
 use primitives::currency::ForeignAssetId;
 
@@ -236,7 +235,7 @@ impl assets_registry::Config for Runtime {
 parameter_types! {
 	pub PabloPalletId: PalletId = PalletId(*b"pal_pblo");
 	pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
-	pub LPTokenExistentialDeposit: Balance = 10_000;
+	pub LPTokenExistentialDeposit: Balance = 100;
 }
 
 impl pablo::Config for Runtime {
@@ -244,8 +243,8 @@ impl pablo::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type Convert = sp_runtime::traits::ConvertInto;
-	type Assets = Assets;
-	type LPTokenFactory = DummyAssetCreator<CurrencyId, ForeignAssetId, Balance>;
+	type Assets = AssetsTransactorRouter;
+	type LPTokenFactory = AssetsTransactorRouter;
 	type PoolId = PoolId;
 	type PalletId = PabloPalletId;
 	type PoolCreationOrigin = EnsureRootOrTwoThirdNativeCouncil;
@@ -254,6 +253,20 @@ impl pablo::Config for Runtime {
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
 	type LPTokenExistentialDeposit = LPTokenExistentialDeposit;
+}
+
+impl assets_transactor_router::Config for Runtime {
+	type NativeAssetId = NativeAssetId;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type NativeTransactor = Balances;
+	type LocalTransactor = Tokens;
+	type ForeignTransactor = Tokens;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
+	type GovernanceRegistry = GovernanceRegistry;
+	type AssetLocation = primitives::currency::ForeignAssetId;
+	type AssetsRegistry = AssetsRegistry;
 }
 
 impl assets::Config for Runtime {
@@ -275,6 +288,7 @@ parameter_types! {
 
 	// TODO
 	pub MinStake: Balance = 1000 * CurrencyId::unit::<Balance>();
+	pub const MinAnswerBound: u32 = 7;
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
@@ -297,6 +311,7 @@ impl oracle::Config for Runtime {
 	type StalePrice = StalePrice;
 	type AddOracle = EnsureRootOrHalfNativeCouncil;
 	type RewardOrigin = EnsureRootOrHalfNativeCouncil;
+	type MinAnswerBound = MinAnswerBound;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
 	type TreasuryAccount = TreasuryAccount;
@@ -772,6 +787,7 @@ construct_runtime!(
 		AssetsRegistry: assets_registry = 59,
 		Pablo: pablo = 60,
 		Oracle: oracle = 61,
+		AssetsTransactorRouter: assets_transactor_router = 62,
 
 		CallFilter: call_filter = 100,
 
@@ -897,19 +913,19 @@ impl_runtime_apis! {
 			).collect::<Vec<_>>();
 
 			// Assets from the assets-registry pallet
-			let foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
+			let all_assets =  assets_registry::Pallet::<Runtime>::get_all_assets();
 
 			// Override asset data for hardcoded assets that have been manually updated, and append
 			// new assets without duplication
-			foreign_assets.into_iter().fold(assets, |mut acc, mut foreign_asset| {
-				if let Some(asset) = acc.iter_mut().find(|asset_i| asset_i.id == foreign_asset.id) {
-					// Update asset with data from assets-registry
-					asset.decimals = foreign_asset.decimals;
-					asset.foreign_id = foreign_asset.foreign_id.clone();
-					asset.ratio = foreign_asset.ratio;
+			all_assets.into_iter().fold(assets, |mut acc, mut asset| {
+				if let Some(found_asset) = acc.iter_mut().find(|asset_i| asset_i.id == asset.id) {
+					// Update a found asset with data from assets-registry
+					found_asset.decimals = asset.decimals;
+					found_asset.foreign_id = asset.foreign_id.clone();
+					found_asset.ratio = asset.ratio;
 				} else {
-					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&foreign_asset.id.into());
-					acc.push(foreign_asset.clone())
+					asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
+					acc.push(asset.clone())
 				}
 				acc
 			})
