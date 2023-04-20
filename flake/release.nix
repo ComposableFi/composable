@@ -25,8 +25,8 @@
             ## Nix
             ```bash
             # Generate the Wasm runtimes
-            nix build ${flake-url}#picasso-runtime
-            nix build ${flake-url}#composable-runtime
+            nix build ${flake-url}#picasso-runtime  --accept-flake-config
+            nix build ${flake-url}#composable-runtime --accept-flake-config
 
             # Run the Composable node (release mode) alone
             nix run ${flake-url}#composable-node

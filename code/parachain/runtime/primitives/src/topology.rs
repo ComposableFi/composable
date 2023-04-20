@@ -87,6 +87,25 @@ impl Picasso {
 				ratio: Some(rational!(2 / 10000000)),
 			},
 		);
+
+		let ksm = (
+			CurrencyId::KSM.0 as u64,
+			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::new(1, Here)))),
+			AssetInfo {
+				name: Some(
+					BiBoundedAssetName::from_vec(b"Kusama".to_vec())
+						.expect("String is within bounds"),
+				),
+				symbol: Some(
+					BiBoundedAssetSymbol::from_vec(b"KSM".to_vec())
+						.expect("String is within bounds"),
+				),
+				decimals: Some(12),
+				existential_deposit: 375000000,
+				ratio: Some(rational!(70 / 10000)),
+			},
+		);
+
 		let mut dot =
 			InnerPrefixedDenom::from_str(CurrencyId::DOT.to_string().as_str()).expect("genesis");
 		dot.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(0)));
@@ -109,7 +128,7 @@ impl Picasso {
 			},
 		);
 
-		vec![usdt, dot]
+		vec![usdt, dot, ksm]
 	}
 }
 
