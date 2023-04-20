@@ -25,6 +25,8 @@ in with prelude; rec {
       args = [
         "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"
         "--enable-offchain-indexing=true"
+        "--blocks-pruning=archive"
+        "--rpc-max-request-size=30" # 2x x default
       ];
       env = [{
         name = "RUST_LOG";
@@ -101,7 +103,7 @@ in with prelude; rec {
     { chain, default_command, rpc_port ? 30444, ws_port ? 9944, count ? 2 }: {
       inherit default_command;
       inherit chain;
-      default_args = [ "-lparachain=debug" ];
+      default_args = [ "-lparachain=debug" "--blocks-pruning=archive" ];
       genesis = {
         runtime = {
           runtime_genesis_config = {
