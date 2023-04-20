@@ -52,7 +52,6 @@ use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
 	dex::{Amm, PriceAggregate},
-	xcm::assets::RemoteAssetRegistryInspect,
 };
 use primitives::currency::ForeignAssetId;
 
