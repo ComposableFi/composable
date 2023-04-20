@@ -1,3 +1,4 @@
+#[cfg(feature = "std")]
 use crate::{currency::VersionedMultiLocation, prelude::*};
 
 pub mod karura {
@@ -38,17 +39,23 @@ pub mod this {
 	}
 }
 
+#[cfg(feature = "std")]
 use composable_traits::{
 	assets::{AssetInfo, BiBoundedAssetName, BiBoundedAssetSymbol},
 	rational,
 	xcm::Balance,
 };
+
+#[cfg(feature = "std")]
 use ibc_rs_scale::{
 	applications::transfer::{PrefixedDenom as InnerPrefixedDenom, TracePrefix},
 	core::ics24_host::identifier::{ChannelId, PortId},
 };
 
+#[cfg(feature = "std")]
 use crate::currency::{CurrencyId, ForeignAssetId, PrefixedDenom, WellKnownCurrency};
+#[cfg(not(feature = "std"))]
+use crate::currency::{CurrencyId, WellKnownCurrency};
 
 pub struct Picasso;
 
