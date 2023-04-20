@@ -2,7 +2,7 @@
 
 _Trustless IBC transfer protocol_
 
-Centauri is a decentralized transfer protocol that will facilitate trustless cross-ecosystem communication among various blockchains, including Polkadot, Kusama, Ethereum, NEAR, and Cosmos, using the IBC Protocol.
+Centauri is an extension of the IBC protocol that will facilitate trustless cross-ecosystem communication among various blockchains, including Polkadot, Kusama, Ethereum, NEAR, and Cosmos.
 
 :::tip Centauri Is Live
 
@@ -10,14 +10,12 @@ Use Centauri now to transfer assets between Polkadot and Kusama. Centauri is in 
 
 :::
 
-Centauri leverages and expands upon the existing Inter-Blockchain Communication Protocol (IBC) beyond Cosmos. The IBC protocol previously allowed for trustless bridging between Cosmos SDK chains; however, we are amongst the first to extend IBC to other ecosystems. 
+Centauri leverages and expands upon the existing Inter-Blockchain Communication Protocol (IBC) beyond Cosmos. The IBC protocol previously allowed for trustless bridging between Cosmos SDK chains; however, we are the first to extend IBC to other ecosystems. 
 
 Similar to any IBC connection between two chains, Centauri supports asset transfers (fungible tokens, non-fungible tokens), generic message passing, cross-chain contract calls, cross-chain fee payments, interchain collateralization and more in a trustless manner. The trustless condition of Centauri is due to the fact it is:
 
-- built upon light clients that communicate with each other 
-- updates the state of a counterparty chain
-- sends finality proofs and other types of transactions and packets that can be verified
-- able to upgrade the state of a chain through sending finality proofs
+- built upon light clients that communicate with each other and updates the state of a counterparty chain
+- able to upgrade the state of a chain through sending finality proofs, other types of transactions and packets that can be verified
 
 To implement IBC outside on chains outside of Cosmos, three essential components are required:
 
