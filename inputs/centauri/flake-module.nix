@@ -1,6 +1,15 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, crane, subnix
-    , systemCommonRust, ... }:
+  perSystem =
+    { config
+    , self'
+    , inputs'
+    , pkgs
+    , system
+    , crane
+    , subnix
+    , systemCommonRust
+    , ...
+    }:
     let
       cargo-lock = builtins.fromTOML (builtins.readFile ../../code/Cargo.lock);
       centauri-runtime-dep = builtins.head
@@ -75,7 +84,8 @@
           connection_id = "connection-0";
         };
       };
-    in {
+    in
+    {
       packages = rec {
         centauri-codegen = crane.stable.buildPackage (subnix.subenv // {
           name = "centauri-codegen";
@@ -104,7 +114,6 @@
           meta = { mainProgram = "hyperspace"; };
         });
 
-        # no worries, long names not for public use, just to avoid mistakes
         composable-rococo-picasso-rococo-subxt-hyperspace-patch =
           pkgs.stdenv.mkDerivation rec {
             name = "composable-rococo-picasso-rococo-subxt-hyperspace-patch";
@@ -123,6 +132,33 @@
                 echo "Failed diff"              
               fi                
               diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/picasso_kusama ${self'.packages.picasso-rococo-subxt-client}/ > $out/picasso_kusama.patch            
+              if [[ $? -ne 1 ]] ; then
+                echo "Failed diff"              
+              fi              
+              set -e 
+            '';
+            dontFixup = true;
+            dontStrip = true;
+          };
+
+        composable-polkadot-picasso-kusama-subxt-hyperspace-patch =
+          pkgs.stdenv.mkDerivation rec {
+            name = "composable-polkadot-picasso-kusama-subxt-hyperspace-patch";
+            pname = "${name}";
+            buildInputs = [
+              self'.packages.composable-polkadot-subxt-client
+              self'.packages.picasso-kusama-subxt-client
+            ];
+            src = centauri-src-current;
+            patchPhase = "true";
+            installPhase = ''
+              mkdir --parents $out
+              set +e
+              diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/composable ${self'.packages.composable-polkadot-subxt-client}/ > $out/composable_polkadot.patch
+              if [[ $? -ne 1 ]] ; then
+                echo "Failed diff"              
+              fi                
+              diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/picasso_kusama ${self'.packages.picasso-kusama-subxt-client}/ > $out/picasso_kusama.patch            
               if [[ $? -ne 1 ]] ; then
                 echo "Failed diff"              
               fi              
@@ -159,19 +195,36 @@
             dontStrip = true;
           };
 
+
+        composable-polkadot-picasso-kusama-centauri-patched-src =
+          pkgs.stdenv.mkDerivation rec {
+            name = "composable-polkadot-picasso-kusama-centauri-patched-src";
+            pname = "${name}";
+            src = centauri-src-current;
+            buildInputs = with pkgs; [ sd git ];
+            patchFlags = "--strip=4";
+            installPhase = ''
+              mkdir --parents $out
+              cp --recursive --no-preserve=mode,ownership $src/. $out/
+              cp ${./composable.patch} "$out/hyperspace/core/src/substrate/"
+
+              cd $out/utils/subxt/generated/src/picasso_kusama
+              patch ${patchFlags} -- < "${composable-polkadot-picasso-kusama-subxt-hyperspace-patch}/picasso_kusama.patch"
+
+              cd $out/utils/subxt/generated/src/composable
+              patch ${patchFlags} -- < "${composable-polkadot-picasso-kusama-subxt-hyperspace-patch}/composable_polkadot.patch"
+              sd "rococo" "polkadot" "$out/utils/subxt/generated/src/composable/relaychain.rs"
+
+              cd "$out/hyperspace/core/src/substrate/"
+              patch -- < ${./composable.patch}
+
+            '';
+            dontFixup = true;
+            dontStrip = true;
+          };
+
         hyperspace-config = pkgs.writeText "config.toml"
           (self.inputs.nix-std.lib.serde.toTOML hyperspace-connection-template);
-
-        hyperspace-composable-rococo-picasso-rococo-image =
-          pkgs.dockerTools.buildImage {
-            tag = "latest";
-            name = "hyperspace-composable-rococo-picasso-rococo";
-            config = {
-              Entrypoint = [
-                "${hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace"
-              ];
-            };
-          };
 
         hyperspace-composable-rococo-picasso-rococo = crane.stable.buildPackage
           (subnix.subenv // rec {
@@ -189,6 +242,46 @@
             cargoTestCommand = "";
             meta = { mainProgram = "hyperspace"; };
           });
+
+        hyperspace-composable-polkadot-picasso-kusama = crane.stable.buildPackage
+          (subnix.subenv // rec {
+            name = "hyperspace-composable-polkadot-picasso-kusama";
+            pname = name;
+            cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
+              src = composable-polkadot-picasso-kusama-centauri-patched-src;
+              doCheck = false;
+              cargoExtraArgs = "--package hyperspace";
+              cargoTestCommand = "";
+            });
+            src = composable-polkadot-picasso-kusama-centauri-patched-src;
+            doCheck = false;
+            cargoExtraArgs = "--package hyperspace";
+            cargoTestCommand = "";
+            meta = { mainProgram = "hyperspace"; };
+          });
+
+        hyperspace-composable-rococo-picasso-rococo-image =
+          pkgs.dockerTools.buildImage {
+            tag = "latest";
+            name = "hyperspace-composable-rococo-picasso-rococo";
+            config = {
+              Entrypoint = [
+                "${hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace"
+              ];
+            };
+          };
+
+        hyperspace-composable-polkadot-picasso-kusama-image =
+          pkgs.dockerTools.buildImage {
+            tag = "latest";
+            name = "hyperspace-composable-polkadot-picasso-kusama";
+            config = {
+              Entrypoint = [
+                "${hyperspace-composable-polkadot-picasso-kusama}/bin/hyperspace"
+              ];
+            };
+          };
+
       };
     };
 }
