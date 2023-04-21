@@ -21,7 +21,6 @@
           westend-runtime-on-parity
         ]);
 
-
       all-production-deps = pkgs.linkFarmFromDrvs "all-production-deps"
         (with self'.packages; [
           kusama-runtime-on-parity

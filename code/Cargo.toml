@@ -262,7 +262,6 @@ sp-api-proc-macro = { git = "https://github.com/paritytech/substrate", branch = 
 sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
 sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
 sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
 sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
 sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
 sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
@@ -314,172 +313,170 @@ mmr-gadget = { git = "https://github.com/paritytech/substrate", branch = "polkad
 mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
 
 
-# [patch."https://github.com/paritytech/substrate"]
-# beefy-gadget = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# beefy-gadget-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# beefy-merkle-tree = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-beefy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# fork-tree = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-election-provider-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-executive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-support-procedural = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-support-procedural-tools = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-support-procedural-tools-derive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# authorship = { package = "pallet-authorship", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-bags-list = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-beefy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-beefy-mmr = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-bounties = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-child-bounties = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-conviction-voting = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-fast-unstake = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-nis = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-ranked-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-referenda = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-state-trie-migration = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-whitelist = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-democracy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-election-provider-multi-phase = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-election-provider-support-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-elections-phragmen = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-identity = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-im-online = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-indices = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-membership = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-mmr = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-multisig = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-nomination-pools = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-nomination-pools-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-nomination-pools-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-offences = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-offences-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-preimage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-randomness-collective-flip = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-recovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-scheduler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-session-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-society = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-staking-reward-curve = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-staking-reward-fn = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-sudo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-tips = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-utility = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-vesting = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-allocator = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-chain-spec-derive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-consensus-babe-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-consensus-epochs = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-executor-wasmi = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-executor-wasmtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-finality-grandpa-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-informant = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-network-gossip = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-offchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-peerset = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-proposer-metrics = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-rpc-server = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-state-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-sync-state-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-sysinfo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-tracing-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-api-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-consensus-vrf = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-core-hashing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-core-hashing-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-database = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-debug-derive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-mmr-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-npos-elections = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-offchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-panic-handler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-runtime-interface-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-transaction-storage-proof = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-version-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-weights = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# substrate-state-trie-migration-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# mmr-gadget = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+[patch."https://github.com/paritytech/substrate"]
+beefy-gadget = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+beefy-gadget-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+beefy-merkle-tree = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-beefy = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+fork-tree = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+frame-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+frame-benchmarking-cli = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+frame-election-provider-support = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+frame-executive = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+frame-support = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+frame-support-procedural = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+frame-support-procedural-tools = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+frame-support-procedural-tools-derive = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+frame-system = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+frame-system-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+frame-system-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+frame-try-runtime = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-aura = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-authority-discovery = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-babe = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-bags-list = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-balances = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-beefy = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-beefy-mmr = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-bounties = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-child-bounties = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-collective = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-conviction-voting = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-fast-unstake = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-nis = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-ranked-collective = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-referenda = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-state-trie-migration = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-whitelist = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-democracy = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-election-provider-multi-phase = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-election-provider-support-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-elections-phragmen = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-grandpa = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-identity = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-im-online = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-indices = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-membership = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-mmr = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-multisig = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-nomination-pools = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-nomination-pools-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-nomination-pools-runtime-api = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-offences = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-offences-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-preimage = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-proxy = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-randomness-collective-flip = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-recovery = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-scheduler = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-session = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-session-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-society = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-staking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-staking-reward-curve = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-staking-reward-fn = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-sudo = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-timestamp = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-tips = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-transaction-payment = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-transaction-payment-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-treasury = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-utility = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+pallet-vesting = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-allocator = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-authority-discovery = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-basic-authorship = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-block-builder = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-chain-spec = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-chain-spec-derive = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-cli = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-client-api = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-client-db = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-consensus = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-consensus-aura = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-consensus-babe = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-consensus-babe-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-consensus-epochs = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-consensus-slots = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-executor = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-executor-common = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-executor-wasmi = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-executor-wasmtime = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-finality-grandpa = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-finality-grandpa-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-informant = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-keystore = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-network = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-network-common = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-network-gossip = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-offchain = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-peerset = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-proposer-metrics = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-rpc-api = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-rpc-server = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-service = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-state-db = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-sync-state-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-sysinfo = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-telemetry = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-tracing = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-tracing-proc-macro = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-transaction-pool = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-transaction-pool-api = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sc-utils = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-api = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-api-proc-macro = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-application-crypto = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-arithmetic = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-authority-discovery = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-block-builder = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-blockchain = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-consensus = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-consensus-aura = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-consensus-babe = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-consensus-slots = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-consensus-vrf = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-core = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-core-hashing = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-core-hashing-proc-macro = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-database = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-debug-derive = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-externalities = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-finality-grandpa = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-inherents = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-io = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-keyring = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-keystore = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-maybe-compressed-blob = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-mmr-primitives = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-npos-elections = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-offchain = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-panic-handler = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-runtime = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-runtime-interface = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-runtime-interface-proc-macro = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-session = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-staking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-state-machine = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-std = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-storage = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-timestamp = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-tracing = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-transaction-pool = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-transaction-storage-proof = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-trie = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-version = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-version-proc-macro = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-wasm-interface = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+sp-weights = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+substrate-build-script-utils = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+substrate-frame-rpc-system = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+substrate-prometheus-endpoint = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+substrate-state-trie-migration-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+substrate-wasm-builder = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+try-runtime-cli = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+mmr-gadget = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
+mmr-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38" }
