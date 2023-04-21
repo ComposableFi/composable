@@ -1638,21 +1638,21 @@ dependencies = [
  "composable-support",
  "composable-traits",
  "cumulus-pallet-xcm",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "frame-support",
  "frame-system",
  "ibc 0.36.0",
  "num-traits",
  "orml-tokens",
  "orml-traits",
- "pallet-authorship 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.38)",
+ "pallet-authorship 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=18bb7c7c841b101c19a8d1881b893ae8e37de460)",
  "pallet-balances",
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-sudo",
  "pallet-treasury",
  "parity-scale-codec",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "primitives",
  "scale-info",
  "serde",
@@ -1662,9 +1662,9 @@ dependencies = [
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
- "xcm-builder",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-builder 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -1711,7 +1711,7 @@ dependencies = [
  "cumulus-client-consensus-common",
  "cumulus-client-network",
  "cumulus-client-service",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "cumulus-primitives-parachain-inherent",
  "cumulus-relay-chain-inprocess-interface",
  "cumulus-relay-chain-interface",
@@ -1735,10 +1735,10 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev",
  "parity-scale-codec",
  "picasso-runtime",
- "polkadot-cli",
- "polkadot-parachain",
- "polkadot-primitives",
- "polkadot-service",
+ "polkadot-cli 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-service 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "primitives",
  "sc-basic-authorship",
  "sc-chain-spec",
@@ -1799,7 +1799,7 @@ dependencies = [
  "cumulus-pallet-session-benchmarking",
  "cumulus-pallet-xcm",
  "cumulus-pallet-xcmp-queue",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "frame-benchmarking",
@@ -1821,7 +1821,7 @@ dependencies = [
  "pallet-assets",
  "pallet-assets-registry",
  "pallet-aura",
- "pallet-authorship 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.38)",
+ "pallet-authorship 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=18bb7c7c841b101c19a8d1881b893ae8e37de460)",
  "pallet-balances",
  "pallet-call-filter",
  "pallet-collator-selection",
@@ -1847,10 +1847,10 @@ dependencies = [
  "pallet-treasury",
  "pallet-utility",
  "pallet-vault",
- "pallet-xcm",
- "parachain-info",
+ "pallet-xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "parachain-info 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "parity-scale-codec",
- "polkadot-parachain",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "primitives",
  "scale-info",
  "smallvec 1.10.0",
@@ -1865,9 +1865,9 @@ dependencies = [
  "sp-std 5.0.0",
  "sp-transaction-pool",
  "sp-version",
- "xcm",
- "xcm-builder",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-builder 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -1926,7 +1926,7 @@ dependencies = [
  "pallet-proxy",
  "parity-scale-codec",
  "plotters",
- "polkadot-parachain",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "proptest",
  "scale-info",
  "serde",
@@ -1934,7 +1934,7 @@ dependencies = [
  "sp-core 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -2488,7 +2488,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-cli"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "clap 4.1.4",
  "parity-scale-codec",
@@ -2503,18 +2503,18 @@ dependencies = [
 [[package]]
 name = "cumulus-client-collator"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "cumulus-client-consensus-common",
  "cumulus-client-network",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "futures 0.3.26",
  "parity-scale-codec",
  "parking_lot 0.12.1",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sc-client-api",
  "sp-api",
  "sp-consensus",
@@ -2526,11 +2526,11 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-aura"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "async-trait",
  "cumulus-client-consensus-common",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "futures 0.3.26",
  "parity-scale-codec",
  "sc-client-api",
@@ -2555,17 +2555,17 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-common"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "async-trait",
  "cumulus-client-pov-recovery",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "cumulus-relay-chain-interface",
  "dyn-clone",
  "futures 0.3.26",
  "log 0.4.17",
  "parity-scale-codec",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sc-client-api",
  "sc-consensus",
  "sp-blockchain",
@@ -2578,7 +2578,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-network"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "async-trait",
  "cumulus-relay-chain-interface",
@@ -2586,9 +2586,9 @@ dependencies = [
  "futures-timer",
  "parity-scale-codec",
  "parking_lot 0.12.1",
- "polkadot-node-primitives",
- "polkadot-parachain",
- "polkadot-primitives",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sc-client-api",
  "sp-blockchain",
  "sp-consensus",
@@ -2601,17 +2601,17 @@ dependencies = [
 [[package]]
 name = "cumulus-client-pov-recovery"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "cumulus-relay-chain-interface",
  "futures 0.3.26",
  "futures-timer",
  "parity-scale-codec",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "rand 0.8.5",
  "sc-client-api",
  "sc-consensus",
@@ -2624,19 +2624,19 @@ dependencies = [
 [[package]]
 name = "cumulus-client-service"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "cumulus-client-cli",
  "cumulus-client-collator",
  "cumulus-client-consensus-common",
  "cumulus-client-pov-recovery",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "cumulus-relay-chain-inprocess-interface",
  "cumulus-relay-chain-interface",
  "cumulus-relay-chain-minimal-node",
  "futures 0.3.26",
  "parking_lot 0.12.1",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sc-client-api",
  "sc-consensus",
  "sc-service",
@@ -2652,7 +2652,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-aura-ext"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -2668,9 +2668,9 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-dmp-queue"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "frame-support",
  "frame-system",
  "log 0.4.17",
@@ -2679,17 +2679,17 @@ dependencies = [
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
 ]
 
 [[package]]
 name = "cumulus-pallet-parachain-system"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "bytes 1.4.0",
  "cumulus-pallet-parachain-system-proc-macro",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "cumulus-primitives-parachain-inherent",
  "environmental",
  "frame-support",
@@ -2697,7 +2697,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "log 0.4.17",
  "parity-scale-codec",
- "polkadot-parachain",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "scale-info",
  "sp-core 7.0.0",
  "sp-externalities 0.13.0",
@@ -2708,13 +2708,13 @@ dependencies = [
  "sp-std 5.0.0",
  "sp-trie 7.0.0",
  "sp-version",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
 ]
 
 [[package]]
 name = "cumulus-pallet-parachain-system-proc-macro"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "proc-macro-crate 1.3.0",
  "proc-macro2 1.0.51",
@@ -2725,7 +2725,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-session-benchmarking"
 version = "3.0.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -2739,9 +2739,9 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcm"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -2749,27 +2749,27 @@ dependencies = [
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
 ]
 
 [[package]]
 name = "cumulus-pallet-xcmp-queue"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "frame-support",
  "frame-system",
  "log 0.4.17",
  "parity-scale-codec",
- "polkadot-runtime-common",
+ "polkadot-runtime-common 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "rand_chacha 0.3.1",
  "scale-info",
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
 ]
 
 [[package]]
@@ -2778,23 +2778,39 @@ version = "0.1.0"
 source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "parity-scale-codec",
- "polkadot-core-primitives",
- "polkadot-parachain",
- "polkadot-primitives",
+ "polkadot-core-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sp-api",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
  "sp-trie 7.0.0",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "cumulus-primitives-core"
+version = "0.1.0"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+dependencies = [
+ "parity-scale-codec",
+ "polkadot-core-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "sp-api",
+ "sp-runtime 7.0.0",
+ "sp-std 5.0.0",
+ "sp-trie 7.0.0",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
 ]
 
 [[package]]
 name = "cumulus-primitives-parachain-inherent"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "async-trait",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "cumulus-relay-chain-interface",
  "cumulus-test-relay-sproof-builder",
  "parity-scale-codec",
@@ -2814,9 +2830,9 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-timestamp"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "futures 0.3.26",
  "parity-scale-codec",
  "sp-inherents",
@@ -2827,34 +2843,34 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-utility"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "frame-support",
  "log 0.4.17",
  "parity-scale-codec",
- "polkadot-runtime-common",
+ "polkadot-runtime-common 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
- "xcm-builder",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "xcm-builder 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
 ]
 
 [[package]]
 name = "cumulus-relay-chain-inprocess-interface"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "async-trait",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "cumulus-relay-chain-interface",
  "futures 0.3.26",
  "futures-timer",
- "polkadot-cli",
- "polkadot-client",
- "polkadot-service",
+ "polkadot-cli 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-client 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-service 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sc-cli",
  "sc-client-api",
  "sc-sysinfo",
@@ -2870,14 +2886,14 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-interface"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "async-trait",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "futures 0.3.26",
  "jsonrpsee-core 0.16.2",
  "parity-scale-codec",
- "polkadot-overseer",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sc-client-api",
  "sp-api",
  "sp-blockchain",
@@ -2889,22 +2905,22 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-minimal-node"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "array-bytes 6.0.0",
  "async-trait",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "cumulus-relay-chain-interface",
  "cumulus-relay-chain-rpc-interface",
  "futures 0.3.26",
  "lru 0.9.0",
- "polkadot-core-primitives",
- "polkadot-network-bridge",
- "polkadot-node-network-protocol",
- "polkadot-node-subsystem-util",
- "polkadot-overseer",
- "polkadot-primitives",
- "polkadot-service",
+ "polkadot-core-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-network-bridge 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-service 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sc-authority-discovery",
  "sc-client-api",
  "sc-consensus",
@@ -2929,17 +2945,17 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-rpc-interface"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "async-trait",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "cumulus-relay-chain-interface",
  "futures 0.3.26",
  "futures-timer",
  "jsonrpsee 0.16.2",
  "lru 0.9.0",
  "parity-scale-codec",
- "polkadot-service",
+ "polkadot-service 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sc-client-api",
  "sc-rpc-api",
  "serde",
@@ -2958,11 +2974,11 @@ dependencies = [
 [[package]]
 name = "cumulus-test-relay-sproof-builder"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "parity-scale-codec",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sp-runtime 7.0.0",
  "sp-state-machine 0.13.0",
  "sp-std 5.0.0",
@@ -5875,7 +5891,7 @@ dependencies = [
 [[package]]
 name = "kusama-runtime"
 version = "0.9.38"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -5933,12 +5949,12 @@ dependencies = [
  "pallet-utility",
  "pallet-vesting 4.0.0-dev",
  "pallet-whitelist",
- "pallet-xcm",
+ "pallet-xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "pallet-xcm-benchmarks",
  "parity-scale-codec",
- "polkadot-primitives",
- "polkadot-runtime-common",
- "polkadot-runtime-parachains",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-common 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-parachains 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "rustc-hex",
  "scale-info",
  "serde",
@@ -5964,19 +5980,19 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "xcm",
- "xcm-builder",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-builder 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
 name = "kusama-runtime-constants"
 version = "0.9.38"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "frame-support",
- "polkadot-primitives",
- "polkadot-runtime-common",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-common 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "smallvec 1.10.0",
  "sp-core 7.0.0",
  "sp-runtime 7.0.0",
@@ -7628,7 +7644,7 @@ dependencies = [
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
 ]
 
 [[package]]
@@ -7643,7 +7659,7 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-std 5.0.0",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
 ]
 
 [[package]]
@@ -7670,8 +7686,8 @@ dependencies = [
  "parity-scale-codec",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
 ]
 
 [[package]]
@@ -7679,20 +7695,20 @@ name = "orml-xtokens"
 version = "0.4.1-dev"
 source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.38#241d5cdc98cca53b8cf990853943c9ae1193a70e"
 dependencies = [
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38)",
  "frame-support",
  "frame-system",
  "orml-traits",
  "orml-xcm-support",
- "pallet-xcm",
+ "pallet-xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "parity-scale-codec",
  "scale-info",
  "serde",
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
 ]
 
 [[package]]
@@ -7826,7 +7842,7 @@ dependencies = [
  "frame-system",
  "orml-tokens",
  "orml-traits",
- "pallet-authorship 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.38)",
+ "pallet-authorship 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=18bb7c7c841b101c19a8d1881b893ae8e37de460)",
  "pallet-balances",
  "pallet-transaction-payment 4.0.0-dev",
  "parity-scale-codec",
@@ -7873,7 +7889,7 @@ version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-traits",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -7887,7 +7903,7 @@ dependencies = [
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -7915,7 +7931,7 @@ dependencies = [
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -7968,6 +7984,20 @@ dependencies = [
 name = "pallet-authorship"
 version = "4.0.0-dev"
 source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-runtime 7.0.0",
+ "sp-std 5.0.0",
+]
+
+[[package]]
+name = "pallet-authorship"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?rev=18bb7c7c841b101c19a8d1881b893ae8e37de460#18bb7c7c841b101c19a8d1881b893ae8e37de460"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8159,7 +8189,7 @@ dependencies = [
 [[package]]
 name = "pallet-collator-selection"
 version = "3.0.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8360,7 +8390,7 @@ dependencies = [
  "composable-tests-helpers",
  "composable-traits",
  "cumulus-pallet-xcm",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -8374,7 +8404,7 @@ dependencies = [
  "pallet-currency-factory",
  "pallet-timestamp",
  "parity-scale-codec",
- "polkadot-parachain",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "primitives",
  "proptest",
  "scale-info",
@@ -8385,7 +8415,7 @@ dependencies = [
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -8528,7 +8558,7 @@ version = "0.0.1"
 source = "git+https://github.com/ComposableFi/centauri?rev=86edd8fa3f9b575a32feb72e3536659762ae2a11#86edd8fa3f9b575a32feb72e3536659762ae2a11"
 dependencies = [
  "beefy-light-client-primitives",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38)",
  "derive_more",
  "finality-grandpa",
  "frame-benchmarking",
@@ -8549,7 +8579,7 @@ dependencies = [
  "log 0.4.17",
  "pallet-ibc-ping",
  "pallet-timestamp",
- "parachain-info",
+ "parachain-info 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38)",
  "parity-scale-codec",
  "prost",
  "scale-info",
@@ -8679,7 +8709,7 @@ dependencies = [
  "sp-keystore 0.13.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -8715,7 +8745,7 @@ dependencies = [
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -9473,14 +9503,34 @@ dependencies = [
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "pallet-xcm"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core 7.0.0",
+ "sp-io 7.0.0",
+ "sp-runtime 7.0.0",
+ "sp-std 5.0.0",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
 name = "pallet-xcm-benchmarks"
 version = "0.9.38"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9491,9 +9541,9 @@ dependencies = [
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
- "xcm-builder",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-builder 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -9501,7 +9551,19 @@ name = "parachain-info"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.38)",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+]
+
+[[package]]
+name = "parachain-info"
+version = "0.1.0"
+source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+dependencies = [
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -9813,7 +9875,7 @@ dependencies = [
  "cumulus-pallet-session-benchmarking",
  "cumulus-pallet-xcm",
  "cumulus-pallet-xcmp-queue",
- "cumulus-primitives-core",
+ "cumulus-primitives-core 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "frame-benchmarking",
@@ -9838,7 +9900,7 @@ dependencies = [
  "pallet-assets-registry",
  "pallet-assets-transactor-router",
  "pallet-aura",
- "pallet-authorship 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.38)",
+ "pallet-authorship 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=18bb7c7c841b101c19a8d1881b893ae8e37de460)",
  "pallet-balances",
  "pallet-bonded-finance",
  "pallet-call-filter",
@@ -9867,10 +9929,10 @@ dependencies = [
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting 1.0.0",
- "pallet-xcm",
- "parachain-info",
+ "pallet-xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "parachain-info 0.1.0 (git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7)",
  "parity-scale-codec",
- "polkadot-parachain",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "primitives",
  "scale-info",
  "smallvec 1.10.0",
@@ -9885,9 +9947,9 @@ dependencies = [
  "sp-std 5.0.0",
  "sp-transaction-pool",
  "sp-version",
- "xcm",
- "xcm-builder",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-builder 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10027,13 +10089,28 @@ version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "futures 0.3.26",
- "polkadot-node-metrics",
- "polkadot-node-network-protocol",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-primitives",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "rand 0.8.5",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-approval-distribution"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "futures 0.3.26",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "rand 0.8.5",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10042,12 +10119,26 @@ version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "futures 0.3.26",
- "polkadot-node-network-protocol",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "rand 0.8.5",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-availability-bitfield-distribution"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "futures 0.3.26",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "rand 0.8.5",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10060,17 +10151,40 @@ dependencies = [
  "futures 0.3.26",
  "lru 0.9.0",
  "parity-scale-codec",
- "polkadot-erasure-coding",
- "polkadot-node-network-protocol",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-erasure-coding 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "rand 0.8.5",
  "sp-core 7.0.0",
  "sp-keystore 0.13.0",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-availability-distribution"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "derive_more",
+ "fatality",
+ "futures 0.3.26",
+ "lru 0.9.0",
+ "parity-scale-codec",
+ "polkadot-erasure-coding 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "rand 0.8.5",
+ "sp-core 7.0.0",
+ "sp-keystore 0.13.0",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10082,16 +10196,37 @@ dependencies = [
  "futures 0.3.26",
  "lru 0.9.0",
  "parity-scale-codec",
- "polkadot-erasure-coding",
- "polkadot-node-network-protocol",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-erasure-coding 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "rand 0.8.5",
  "sc-network",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-availability-recovery"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "fatality",
+ "futures 0.3.26",
+ "lru 0.9.0",
+ "parity-scale-codec",
+ "polkadot-erasure-coding 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "rand 0.8.5",
+ "sc-network",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10103,11 +10238,37 @@ dependencies = [
  "frame-benchmarking-cli",
  "futures 0.3.26",
  "log 0.4.17",
- "polkadot-client",
- "polkadot-node-core-pvf",
- "polkadot-node-metrics",
+ "polkadot-client 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-core-pvf 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "sc-cli",
+ "sc-executor",
+ "sc-service",
+ "sc-storage-monitor 0.1.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.38)",
+ "sc-sysinfo",
+ "sc-tracing",
+ "sp-core 7.0.0",
+ "sp-io 7.0.0",
+ "sp-keyring",
+ "substrate-build-script-utils",
+ "thiserror",
+ "try-runtime-cli",
+]
+
+[[package]]
+name = "polkadot-cli"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "clap 4.1.4",
+ "frame-benchmarking-cli",
+ "futures 0.3.26",
+ "log 0.4.17",
+ "polkadot-client 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-pvf 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "polkadot-performance-test",
- "polkadot-service",
+ "polkadot-service 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "sc-cli",
  "sc-executor",
  "sc-service",
@@ -10135,11 +10296,53 @@ dependencies = [
  "futures 0.3.26",
  "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
- "polkadot-core-primitives",
- "polkadot-node-core-parachains-inherent",
- "polkadot-primitives",
- "polkadot-runtime",
- "polkadot-runtime-common",
+ "polkadot-core-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-core-parachains-inherent 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-runtime 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-runtime-common 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-executor",
+ "sc-service",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-beefy",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-babe",
+ "sp-core 7.0.0",
+ "sp-finality-grandpa",
+ "sp-inherents",
+ "sp-keyring",
+ "sp-mmr-primitives",
+ "sp-offchain",
+ "sp-runtime 7.0.0",
+ "sp-session",
+ "sp-storage 7.0.0",
+ "sp-timestamp",
+ "sp-transaction-pool",
+]
+
+[[package]]
+name = "polkadot-client"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "async-trait",
+ "frame-benchmarking",
+ "frame-benchmarking-cli",
+ "frame-system",
+ "frame-system-rpc-runtime-api",
+ "futures 0.3.26",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
+ "polkadot-core-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-parachains-inherent 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-common 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "rococo-runtime",
  "sc-client-api",
  "sc-consensus",
@@ -10175,22 +10378,56 @@ dependencies = [
  "fatality",
  "futures 0.3.26",
  "futures-timer",
- "polkadot-node-network-protocol",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sp-core 7.0.0",
  "sp-keystore 0.13.0",
  "sp-runtime 7.0.0",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-collator-protocol"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "always-assert",
+ "bitvec",
+ "fatality",
+ "futures 0.3.26",
+ "futures-timer",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sp-core 7.0.0",
+ "sp-keystore 0.13.0",
+ "sp-runtime 7.0.0",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
 name = "polkadot-core-primitives"
 version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core 7.0.0",
+ "sp-runtime 7.0.0",
+ "sp-std 5.0.0",
+]
+
+[[package]]
+name = "polkadot-core-primitives"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -10211,17 +10448,42 @@ dependencies = [
  "indexmap",
  "lru 0.9.0",
  "parity-scale-codec",
- "polkadot-erasure-coding",
- "polkadot-node-network-protocol",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-erasure-coding 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sc-network",
  "sp-application-crypto 7.0.0",
  "sp-keystore 0.13.0",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-dispute-distribution"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "derive_more",
+ "fatality",
+ "futures 0.3.26",
+ "futures-timer",
+ "indexmap",
+ "lru 0.9.0",
+ "parity-scale-codec",
+ "polkadot-erasure-coding 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sc-network",
+ "sp-application-crypto 7.0.0",
+ "sp-keystore 0.13.0",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10230,8 +10492,22 @@ version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "parity-scale-codec",
- "polkadot-node-primitives",
- "polkadot-primitives",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "reed-solomon-novelpoly",
+ "sp-core 7.0.0",
+ "sp-trie 7.0.0",
+ "thiserror",
+]
+
+[[package]]
+name = "polkadot-erasure-coding"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "parity-scale-codec",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "reed-solomon-novelpoly",
  "sp-core 7.0.0",
  "sp-trie 7.0.0",
@@ -10245,17 +10521,37 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097f
 dependencies = [
  "futures 0.3.26",
  "futures-timer",
- "polkadot-node-network-protocol",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "sc-network",
  "sp-application-crypto 7.0.0",
  "sp-core 7.0.0",
  "sp-keystore 0.13.0",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-gossip-support"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "futures 0.3.26",
+ "futures-timer",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "rand 0.8.5",
+ "rand_chacha 0.3.1",
+ "sc-network",
+ "sp-application-crypto 7.0.0",
+ "sp-core 7.0.0",
+ "sp-keystore 0.13.0",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10270,16 +10566,40 @@ dependencies = [
  "futures 0.3.26",
  "parity-scale-codec",
  "parking_lot 0.12.1",
- "polkadot-node-metrics",
- "polkadot-node-network-protocol",
- "polkadot-node-subsystem",
- "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sc-network",
  "sc-network-common",
  "sp-consensus",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-network-bridge"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "always-assert",
+ "async-trait",
+ "bytes 1.4.0",
+ "fatality",
+ "futures 0.3.26",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sc-network",
+ "sc-network-common",
+ "sp-consensus",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10289,15 +10609,33 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097f
 dependencies = [
  "futures 0.3.26",
  "parity-scale-codec",
- "polkadot-erasure-coding",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-erasure-coding 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sp-core 7.0.0",
  "sp-maybe-compressed-blob",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-collation-generation"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "futures 0.3.26",
+ "parity-scale-codec",
+ "polkadot-erasure-coding 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sp-core 7.0.0",
+ "sp-maybe-compressed-blob",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10313,12 +10651,12 @@ dependencies = [
  "lru 0.9.0",
  "merlin",
  "parity-scale-codec",
- "polkadot-node-jaeger",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-node-jaeger 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sc-keystore",
  "schnorrkel",
  "sp-application-crypto 7.0.0",
@@ -10326,7 +10664,36 @@ dependencies = [
  "sp-consensus-slots",
  "sp-runtime 7.0.0",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-core-approval-voting"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "bitvec",
+ "derive_more",
+ "futures 0.3.26",
+ "futures-timer",
+ "kvdb",
+ "lru 0.9.0",
+ "merlin",
+ "parity-scale-codec",
+ "polkadot-node-jaeger 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sc-keystore",
+ "schnorrkel",
+ "sp-application-crypto 7.0.0",
+ "sp-consensus",
+ "sp-consensus-slots",
+ "sp-runtime 7.0.0",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10339,14 +10706,34 @@ dependencies = [
  "futures-timer",
  "kvdb",
  "parity-scale-codec",
- "polkadot-erasure-coding",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-erasure-coding 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-core-av-store"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "bitvec",
+ "futures 0.3.26",
+ "futures-timer",
+ "kvdb",
+ "parity-scale-codec",
+ "polkadot-erasure-coding 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10357,15 +10744,34 @@ dependencies = [
  "bitvec",
  "fatality",
  "futures 0.3.26",
- "polkadot-erasure-coding",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-primitives",
- "polkadot-statement-table",
+ "polkadot-erasure-coding 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-statement-table 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sp-keystore 0.13.0",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-core-backing"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "bitvec",
+ "fatality",
+ "futures 0.3.26",
+ "polkadot-erasure-coding 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-statement-table 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sp-keystore 0.13.0",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10374,12 +10780,27 @@ version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "futures 0.3.26",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sp-keystore 0.13.0",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "wasm-timer",
+]
+
+[[package]]
+name = "polkadot-node-core-bitfield-signing"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "futures 0.3.26",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sp-keystore 0.13.0",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "wasm-timer",
 ]
 
@@ -10392,14 +10813,33 @@ dependencies = [
  "futures 0.3.26",
  "futures-timer",
  "parity-scale-codec",
- "polkadot-node-core-pvf",
- "polkadot-node-metrics",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-parachain",
- "polkadot-primitives",
+ "polkadot-node-core-pvf 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sp-maybe-compressed-blob",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-core-candidate-validation"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "async-trait",
+ "futures 0.3.26",
+ "futures-timer",
+ "parity-scale-codec",
+ "polkadot-node-core-pvf 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sp-maybe-compressed-blob",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10408,13 +10848,28 @@ version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "futures 0.3.26",
- "polkadot-node-metrics",
- "polkadot-node-subsystem",
- "polkadot-primitives",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sc-client-api",
  "sc-consensus-babe",
  "sp-blockchain",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-core-chain-api"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "futures 0.3.26",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sc-client-api",
+ "sc-consensus-babe",
+ "sp-blockchain",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10426,12 +10881,29 @@ dependencies = [
  "futures-timer",
  "kvdb",
  "parity-scale-codec",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-core-chain-selection"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "futures 0.3.26",
+ "futures-timer",
+ "kvdb",
+ "parity-scale-codec",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10444,13 +10916,32 @@ dependencies = [
  "kvdb",
  "lru 0.9.0",
  "parity-scale-codec",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sc-keystore",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-core-dispute-coordinator"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "fatality",
+ "futures 0.3.26",
+ "kvdb",
+ "lru 0.9.0",
+ "parity-scale-codec",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sc-keystore",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10461,13 +10952,30 @@ dependencies = [
  "async-trait",
  "futures 0.3.26",
  "futures-timer",
- "polkadot-node-subsystem",
- "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sp-blockchain",
  "sp-inherents",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-core-parachains-inherent"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "async-trait",
+ "futures 0.3.26",
+ "futures-timer",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sp-blockchain",
+ "sp-inherents",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10479,13 +10987,31 @@ dependencies = [
  "fatality",
  "futures 0.3.26",
  "futures-timer",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "rand 0.8.5",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-core-provisioner"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "bitvec",
+ "fatality",
+ "futures 0.3.26",
+ "futures-timer",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "rand 0.8.5",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10500,9 +11026,9 @@ dependencies = [
  "futures-timer",
  "parity-scale-codec",
  "pin-project",
- "polkadot-core-primitives",
- "polkadot-node-metrics",
- "polkadot-parachain",
+ "polkadot-core-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "rand 0.8.5",
  "rayon",
  "sc-executor",
@@ -10517,7 +11043,39 @@ dependencies = [
  "sp-wasm-interface 7.0.0",
  "tempfile",
  "tokio",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-core-pvf"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "always-assert",
+ "assert_matches",
+ "cpu-time",
+ "futures 0.3.26",
+ "futures-timer",
+ "parity-scale-codec",
+ "pin-project",
+ "polkadot-core-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "rand 0.8.5",
+ "rayon",
+ "sc-executor",
+ "sc-executor-common",
+ "sc-executor-wasmtime",
+ "slotmap",
+ "sp-core 7.0.0",
+ "sp-externalities 0.13.0",
+ "sp-io 7.0.0",
+ "sp-maybe-compressed-blob",
+ "sp-tracing 6.0.0",
+ "sp-wasm-interface 7.0.0",
+ "tempfile",
+ "tokio",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10526,14 +11084,30 @@ version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "futures 0.3.26",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sp-keystore 0.13.0",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-core-pvf-checker"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "futures 0.3.26",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sp-keystore 0.13.0",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10543,12 +11117,27 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097f
 dependencies = [
  "futures 0.3.26",
  "lru 0.9.0",
- "polkadot-node-metrics",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-types",
- "polkadot-primitives",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-types 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sp-consensus-babe",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-core-runtime-api"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "futures 0.3.26",
+ "lru 0.9.0",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-types 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sp-consensus-babe",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10561,8 +11150,26 @@ dependencies = [
  "mick-jaeger",
  "parity-scale-codec",
  "parking_lot 0.12.1",
- "polkadot-node-primitives",
- "polkadot-primitives",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "sc-network",
+ "sp-core 7.0.0",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "polkadot-node-jaeger"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "lazy_static",
+ "log 0.4.17",
+ "mick-jaeger",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "sc-network",
  "sp-core 7.0.0",
  "thiserror",
@@ -10579,13 +11186,32 @@ dependencies = [
  "futures-timer",
  "log 0.4.17",
  "parity-scale-codec",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "prioritized-metered-channel",
  "sc-cli",
  "sc-service",
  "sc-tracing",
  "substrate-prometheus-endpoint",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-metrics"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "bs58",
+ "futures 0.3.26",
+ "futures-timer",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "prioritized-metered-channel",
+ "sc-cli",
+ "sc-service",
+ "sc-tracing",
+ "substrate-prometheus-endpoint",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10599,16 +11225,39 @@ dependencies = [
  "futures 0.3.26",
  "hex",
  "parity-scale-codec",
- "polkadot-node-jaeger",
- "polkadot-node-primitives",
- "polkadot-primitives",
+ "polkadot-node-jaeger 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "rand 0.8.5",
  "sc-authority-discovery",
  "sc-network",
  "sc-network-common",
  "strum",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-network-protocol"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "async-trait",
+ "derive_more",
+ "fatality",
+ "futures 0.3.26",
+ "hex",
+ "parity-scale-codec",
+ "polkadot-node-jaeger 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "rand 0.8.5",
+ "sc-authority-discovery",
+ "sc-network",
+ "sc-network-common",
+ "strum",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10619,8 +11268,30 @@ dependencies = [
  "bounded-vec",
  "futures 0.3.26",
  "parity-scale-codec",
- "polkadot-parachain",
- "polkadot-primitives",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "schnorrkel",
+ "serde",
+ "sp-application-crypto 7.0.0",
+ "sp-consensus-babe",
+ "sp-consensus-vrf",
+ "sp-core 7.0.0",
+ "sp-keystore 0.13.0",
+ "sp-maybe-compressed-blob",
+ "thiserror",
+ "zstd",
+]
+
+[[package]]
+name = "polkadot-node-primitives"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "bounded-vec",
+ "futures 0.3.26",
+ "parity-scale-codec",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "schnorrkel",
  "serde",
  "sp-application-crypto 7.0.0",
@@ -10638,9 +11309,19 @@ name = "polkadot-node-subsystem"
 version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
- "polkadot-node-jaeger",
- "polkadot-node-subsystem-types",
- "polkadot-overseer",
+ "polkadot-node-jaeger 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-types 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-subsystem"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "polkadot-node-jaeger 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-types 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10652,11 +11333,34 @@ dependencies = [
  "derive_more",
  "futures 0.3.26",
  "orchestra",
- "polkadot-node-jaeger",
- "polkadot-node-network-protocol",
- "polkadot-node-primitives",
- "polkadot-primitives",
- "polkadot-statement-table",
+ "polkadot-node-jaeger 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-statement-table 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "sc-network",
+ "smallvec 1.10.0",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-consensus-babe",
+ "substrate-prometheus-endpoint",
+ "thiserror",
+]
+
+[[package]]
+name = "polkadot-node-subsystem-types"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "async-trait",
+ "derive_more",
+ "futures 0.3.26",
+ "orchestra",
+ "polkadot-node-jaeger 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-statement-table 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "sc-network",
  "smallvec 1.10.0",
  "sp-api",
@@ -10683,20 +11387,53 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.11.2",
  "pin-project",
- "polkadot-node-jaeger",
- "polkadot-node-metrics",
- "polkadot-node-network-protocol",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-node-jaeger 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "prioritized-metered-channel",
  "rand 0.8.5",
  "sp-application-crypto 7.0.0",
  "sp-core 7.0.0",
  "sp-keystore 0.13.0",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-node-subsystem-util"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "async-trait",
+ "derive_more",
+ "fatality",
+ "futures 0.3.26",
+ "futures-channel",
+ "itertools",
+ "kvdb",
+ "lru 0.9.0",
+ "parity-db",
+ "parity-scale-codec",
+ "parking_lot 0.11.2",
+ "pin-project",
+ "polkadot-node-jaeger 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "prioritized-metered-channel",
+ "rand 0.8.5",
+ "sp-application-crypto 7.0.0",
+ "sp-core 7.0.0",
+ "sp-keystore 0.13.0",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10710,16 +11447,39 @@ dependencies = [
  "lru 0.9.0",
  "orchestra",
  "parking_lot 0.12.1",
- "polkadot-node-metrics",
- "polkadot-node-network-protocol",
- "polkadot-node-primitives",
- "polkadot-node-subsystem-types",
- "polkadot-primitives",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-types 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sc-client-api",
  "sp-api",
  "sp-core 7.0.0",
  "tikv-jemalloc-ctl",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-overseer"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "async-trait",
+ "futures 0.3.26",
+ "futures-timer",
+ "lru 0.9.0",
+ "orchestra",
+ "parking_lot 0.12.1",
+ "polkadot-node-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-types 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sc-client-api",
+ "sp-api",
+ "sp-core 7.0.0",
+ "tikv-jemalloc-ctl",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10730,7 +11490,23 @@ dependencies = [
  "derive_more",
  "frame-support",
  "parity-scale-codec",
- "polkadot-core-primitives",
+ "polkadot-core-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "scale-info",
+ "serde",
+ "sp-core 7.0.0",
+ "sp-runtime 7.0.0",
+ "sp-std 5.0.0",
+]
+
+[[package]]
+name = "polkadot-parachain"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "derive_more",
+ "frame-support",
+ "parity-scale-codec",
+ "polkadot-core-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "scale-info",
  "serde",
  "sp-core 7.0.0",
@@ -10741,14 +11517,14 @@ dependencies = [
 [[package]]
 name = "polkadot-performance-test"
 version = "0.9.38"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "env_logger 0.9.3",
  "kusama-runtime",
  "log 0.4.17",
- "polkadot-erasure-coding",
- "polkadot-node-core-pvf",
- "polkadot-node-primitives",
+ "polkadot-erasure-coding 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-pvf 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "quote 1.0.23",
  "thiserror",
 ]
@@ -10761,8 +11537,34 @@ dependencies = [
  "bitvec",
  "hex-literal",
  "parity-scale-codec",
- "polkadot-core-primitives",
- "polkadot-parachain",
+ "polkadot-core-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-application-crypto 7.0.0",
+ "sp-arithmetic 6.0.0",
+ "sp-authority-discovery",
+ "sp-consensus-slots",
+ "sp-core 7.0.0",
+ "sp-inherents",
+ "sp-io 7.0.0",
+ "sp-keystore 0.13.0",
+ "sp-runtime 7.0.0",
+ "sp-staking",
+ "sp-std 5.0.0",
+]
+
+[[package]]
+name = "polkadot-primitives"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "bitvec",
+ "hex-literal",
+ "parity-scale-codec",
+ "polkadot-core-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "scale-info",
  "serde",
  "sp-api",
@@ -10789,7 +11591,39 @@ dependencies = [
  "jsonrpsee 0.16.2",
  "mmr-rpc",
  "pallet-transaction-payment-rpc 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "sc-chain-spec",
+ "sc-client-api",
+ "sc-consensus-babe",
+ "sc-consensus-babe-rpc",
+ "sc-consensus-epochs",
+ "sc-finality-grandpa",
+ "sc-finality-grandpa-rpc",
+ "sc-rpc",
+ "sc-sync-state-rpc",
+ "sc-transaction-pool-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-babe",
+ "sp-keystore 0.13.0",
+ "sp-runtime 7.0.0",
+ "substrate-frame-rpc-system",
+ "substrate-state-trie-migration-rpc",
+]
+
+[[package]]
+name = "polkadot-rpc"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "beefy-gadget",
+ "beefy-gadget-rpc",
+ "jsonrpsee 0.16.2",
+ "mmr-rpc",
+ "pallet-transaction-payment-rpc 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "sc-chain-spec",
  "sc-client-api",
  "sc-consensus-babe",
@@ -10815,6 +11649,88 @@ dependencies = [
 name = "polkadot-runtime"
 version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "bitvec",
+ "frame-election-provider-support",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
+ "log 0.4.17",
+ "pallet-authority-discovery",
+ "pallet-authorship 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.38)",
+ "pallet-babe",
+ "pallet-bags-list",
+ "pallet-balances",
+ "pallet-bounties",
+ "pallet-child-bounties",
+ "pallet-collective",
+ "pallet-democracy",
+ "pallet-election-provider-multi-phase",
+ "pallet-elections-phragmen",
+ "pallet-fast-unstake",
+ "pallet-grandpa",
+ "pallet-identity",
+ "pallet-im-online",
+ "pallet-indices",
+ "pallet-membership",
+ "pallet-multisig",
+ "pallet-nomination-pools",
+ "pallet-nomination-pools-runtime-api",
+ "pallet-offences",
+ "pallet-preimage",
+ "pallet-proxy",
+ "pallet-scheduler",
+ "pallet-session",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
+ "pallet-timestamp",
+ "pallet-tips",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
+ "pallet-treasury",
+ "pallet-utility",
+ "pallet-vesting 4.0.0-dev",
+ "pallet-xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "parity-scale-codec",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-runtime-common 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-runtime-constants 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-runtime-parachains 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "serde_derive",
+ "smallvec 1.10.0",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-beefy",
+ "sp-block-builder",
+ "sp-consensus-babe",
+ "sp-core 7.0.0",
+ "sp-inherents",
+ "sp-io 7.0.0",
+ "sp-mmr-primitives",
+ "sp-npos-elections",
+ "sp-offchain",
+ "sp-runtime 7.0.0",
+ "sp-session",
+ "sp-staking",
+ "sp-std 5.0.0",
+ "sp-transaction-pool",
+ "sp-version",
+ "static_assertions",
+ "substrate-wasm-builder",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "xcm-builder 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-runtime"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -10865,12 +11781,12 @@ dependencies = [
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting 4.0.0-dev",
- "pallet-xcm",
+ "pallet-xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "parity-scale-codec",
- "polkadot-primitives",
- "polkadot-runtime-common",
- "polkadot-runtime-constants",
- "polkadot-runtime-parachains",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-common 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-constants 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-parachains 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "rustc-hex",
  "scale-info",
  "serde",
@@ -10895,15 +11811,62 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "xcm",
- "xcm-builder",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-builder 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
 name = "polkadot-runtime-common"
 version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "bitvec",
+ "frame-election-provider-support",
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "libsecp256k1",
+ "log 0.4.17",
+ "pallet-authorship 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.38)",
+ "pallet-bags-list",
+ "pallet-balances",
+ "pallet-beefy-mmr",
+ "pallet-election-provider-multi-phase",
+ "pallet-fast-unstake",
+ "pallet-session",
+ "pallet-staking",
+ "pallet-staking-reward-fn",
+ "pallet-timestamp",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
+ "pallet-treasury",
+ "pallet-vesting 4.0.0-dev",
+ "parity-scale-codec",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-runtime-parachains 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "serde_derive",
+ "slot-range-helper 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "sp-api",
+ "sp-beefy",
+ "sp-core 7.0.0",
+ "sp-inherents",
+ "sp-io 7.0.0",
+ "sp-npos-elections",
+ "sp-runtime 7.0.0",
+ "sp-session",
+ "sp-staking",
+ "sp-std 5.0.0",
+ "static_assertions",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-runtime-common"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -10928,13 +11891,13 @@ dependencies = [
  "pallet-treasury",
  "pallet-vesting 4.0.0-dev",
  "parity-scale-codec",
- "polkadot-primitives",
- "polkadot-runtime-parachains",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-parachains 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "rustc-hex",
  "scale-info",
  "serde",
  "serde_derive",
- "slot-range-helper",
+ "slot-range-helper 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "sp-api",
  "sp-beefy",
  "sp-core 7.0.0",
@@ -10946,7 +11909,7 @@ dependencies = [
  "sp-staking",
  "sp-std 5.0.0",
  "static_assertions",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -10955,8 +11918,22 @@ version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "frame-support",
- "polkadot-primitives",
- "polkadot-runtime-common",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-runtime-common 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "smallvec 1.10.0",
+ "sp-core 7.0.0",
+ "sp-runtime 7.0.0",
+ "sp-weights 4.0.0",
+]
+
+[[package]]
+name = "polkadot-runtime-constants"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "frame-support",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-common 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "smallvec 1.10.0",
  "sp-core 7.0.0",
  "sp-runtime 7.0.0",
@@ -10970,7 +11947,19 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097f
 dependencies = [
  "bs58",
  "parity-scale-codec",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "sp-std 5.0.0",
+ "sp-tracing 6.0.0",
+]
+
+[[package]]
+name = "polkadot-runtime-metrics"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "bs58",
+ "parity-scale-codec",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "sp-std 5.0.0",
  "sp-tracing 6.0.0",
 ]
@@ -10979,6 +11968,46 @@ dependencies = [
 name = "polkadot-runtime-parachains"
 version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "bitflags",
+ "bitvec",
+ "derive_more",
+ "frame-support",
+ "frame-system",
+ "log 0.4.17",
+ "pallet-authority-discovery",
+ "pallet-authorship 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.38)",
+ "pallet-babe",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-staking",
+ "pallet-timestamp",
+ "pallet-vesting 4.0.0-dev",
+ "parity-scale-codec",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-runtime-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "rand 0.8.5",
+ "rand_chacha 0.3.1",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-core 7.0.0",
+ "sp-inherents",
+ "sp-io 7.0.0",
+ "sp-keystore 0.13.0",
+ "sp-runtime 7.0.0",
+ "sp-session",
+ "sp-staking",
+ "sp-std 5.0.0",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-runtime-parachains"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "bitflags",
  "bitvec",
@@ -10996,8 +12025,8 @@ dependencies = [
  "pallet-timestamp",
  "pallet-vesting 4.0.0-dev",
  "parity-scale-codec",
- "polkadot-primitives",
- "polkadot-runtime-metrics",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-metrics 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rustc-hex",
@@ -11014,14 +12043,119 @@ dependencies = [
  "sp-staking",
  "sp-std 5.0.0",
  "static_assertions",
- "xcm",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
 name = "polkadot-service"
 version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "async-trait",
+ "beefy-gadget",
+ "frame-benchmarking-cli",
+ "frame-support",
+ "frame-system-rpc-runtime-api",
+ "futures 0.3.26",
+ "hex-literal",
+ "kvdb",
+ "kvdb-rocksdb",
+ "log 0.4.17",
+ "lru 0.9.0",
+ "mmr-gadget",
+ "pallet-babe",
+ "pallet-im-online",
+ "pallet-staking",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
+ "parity-db",
+ "polkadot-approval-distribution 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-availability-bitfield-distribution 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-availability-distribution 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-availability-recovery 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-client 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-collator-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-dispute-distribution 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-gossip-support 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-network-bridge 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-collation-generation 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-core-approval-voting 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-core-av-store 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-core-backing 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-core-bitfield-signing 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-core-candidate-validation 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-core-chain-api 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-core-chain-selection 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-core-dispute-coordinator 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-core-parachains-inherent 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-core-provisioner 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-core-pvf-checker 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-core-runtime-api 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-types 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-rpc 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-runtime 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-runtime-constants 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-runtime-parachains 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-statement-distribution 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "sc-authority-discovery",
+ "sc-basic-authorship",
+ "sc-block-builder",
+ "sc-chain-spec",
+ "sc-client-api",
+ "sc-client-db",
+ "sc-consensus",
+ "sc-consensus-babe",
+ "sc-consensus-slots",
+ "sc-executor",
+ "sc-finality-grandpa",
+ "sc-keystore",
+ "sc-network",
+ "sc-network-common",
+ "sc-offchain",
+ "sc-service",
+ "sc-sync-state-rpc",
+ "sc-sysinfo",
+ "sc-telemetry",
+ "sc-transaction-pool",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-beefy",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-babe",
+ "sp-core 7.0.0",
+ "sp-finality-grandpa",
+ "sp-inherents",
+ "sp-io 7.0.0",
+ "sp-keystore 0.13.0",
+ "sp-mmr-primitives",
+ "sp-offchain",
+ "sp-runtime 7.0.0",
+ "sp-session",
+ "sp-state-machine 0.13.0",
+ "sp-storage 7.0.0",
+ "sp-timestamp",
+ "sp-transaction-pool",
+ "sp-trie 7.0.0",
+ "substrate-prometheus-endpoint",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-service"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "async-trait",
  "beefy-gadget",
@@ -11041,41 +12175,41 @@ dependencies = [
  "pallet-staking",
  "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "parity-db",
- "polkadot-approval-distribution",
- "polkadot-availability-bitfield-distribution",
- "polkadot-availability-distribution",
- "polkadot-availability-recovery",
- "polkadot-client",
- "polkadot-collator-protocol",
- "polkadot-dispute-distribution",
- "polkadot-gossip-support",
- "polkadot-network-bridge",
- "polkadot-node-collation-generation",
- "polkadot-node-core-approval-voting",
- "polkadot-node-core-av-store",
- "polkadot-node-core-backing",
- "polkadot-node-core-bitfield-signing",
- "polkadot-node-core-candidate-validation",
- "polkadot-node-core-chain-api",
- "polkadot-node-core-chain-selection",
- "polkadot-node-core-dispute-coordinator",
- "polkadot-node-core-parachains-inherent",
- "polkadot-node-core-provisioner",
- "polkadot-node-core-pvf-checker",
- "polkadot-node-core-runtime-api",
- "polkadot-node-network-protocol",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-types",
- "polkadot-node-subsystem-util",
- "polkadot-overseer",
- "polkadot-parachain",
- "polkadot-primitives",
- "polkadot-rpc",
- "polkadot-runtime",
- "polkadot-runtime-constants",
- "polkadot-runtime-parachains",
- "polkadot-statement-distribution",
+ "polkadot-approval-distribution 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-availability-bitfield-distribution 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-availability-distribution 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-availability-recovery 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-client 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-collator-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-dispute-distribution 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-gossip-support 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-network-bridge 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-collation-generation 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-approval-voting 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-av-store 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-backing 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-bitfield-signing 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-candidate-validation 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-chain-api 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-chain-selection 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-dispute-coordinator 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-parachains-inherent 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-provisioner 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-pvf-checker 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-core-runtime-api 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-types 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-overseer 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-rpc 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-constants 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-parachains 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-statement-distribution 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "rococo-runtime",
  "rococo-runtime-constants",
  "sc-authority-discovery",
@@ -11123,7 +12257,7 @@ dependencies = [
  "sp-trie 7.0.0",
  "substrate-prometheus-endpoint",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "westend-runtime",
 ]
 
@@ -11137,15 +12271,36 @@ dependencies = [
  "futures 0.3.26",
  "indexmap",
  "parity-scale-codec",
- "polkadot-node-network-protocol",
- "polkadot-node-primitives",
- "polkadot-node-subsystem",
- "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "sp-keystore 0.13.0",
  "sp-staking",
  "thiserror",
- "tracing-gum",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "polkadot-statement-distribution"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "arrayvec 0.5.2",
+ "fatality",
+ "futures 0.3.26",
+ "indexmap",
+ "parity-scale-codec",
+ "polkadot-node-network-protocol 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-node-subsystem-util 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "sp-keystore 0.13.0",
+ "sp-staking",
+ "thiserror",
+ "tracing-gum 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -11154,7 +12309,17 @@ version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "parity-scale-codec",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "sp-core 7.0.0",
+]
+
+[[package]]
+name = "polkadot-statement-table"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "parity-scale-codec",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "sp-core 7.0.0",
 ]
 
@@ -11330,7 +12495,7 @@ dependencies = [
  "sp-core 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -12149,7 +13314,7 @@ dependencies = [
 [[package]]
 name = "rococo-runtime"
 version = "0.9.38"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "beefy-merkle-tree",
  "frame-benchmarking",
@@ -12197,13 +13362,13 @@ dependencies = [
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting 4.0.0-dev",
- "pallet-xcm",
+ "pallet-xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "pallet-xcm-benchmarks",
  "parity-scale-codec",
- "polkadot-parachain",
- "polkadot-primitives",
- "polkadot-runtime-common",
- "polkadot-runtime-parachains",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-common 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-parachains 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "rococo-runtime-constants",
  "scale-info",
  "serde",
@@ -12227,19 +13392,19 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "xcm",
- "xcm-builder",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-builder 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
 name = "rococo-runtime-constants"
 version = "0.9.38"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "frame-support",
- "polkadot-primitives",
- "polkadot-runtime-common",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-common 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "smallvec 1.10.0",
  "sp-core 7.0.0",
  "sp-runtime 7.0.0",
@@ -14252,6 +15417,18 @@ checksum = "03b634d87b960ab1a38c4fe143b508576f075e7c978bfad18217645ebfdfa2ec"
 name = "slot-range-helper"
 version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "enumn",
+ "parity-scale-codec",
+ "paste 1.0.11",
+ "sp-runtime 7.0.0",
+ "sp-std 5.0.0",
+]
+
+[[package]]
+name = "slot-range-helper"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "enumn",
  "parity-scale-codec",
@@ -16730,16 +17907,39 @@ name = "tracing-gum"
 version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
- "polkadot-node-jaeger",
- "polkadot-primitives",
+ "polkadot-node-jaeger 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "tracing",
- "tracing-gum-proc-macro",
+ "tracing-gum-proc-macro 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "tracing-gum"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "polkadot-node-jaeger 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "tracing",
+ "tracing-gum-proc-macro 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
 name = "tracing-gum-proc-macro"
 version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "expander 0.0.6",
+ "proc-macro-crate 1.3.0",
+ "proc-macro2 1.0.51",
+ "quote 1.0.23",
+ "syn 1.0.107",
+]
+
+[[package]]
+name = "tracing-gum-proc-macro"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "expander 0.0.6",
  "proc-macro-crate 1.3.0",
@@ -18042,7 +19242,7 @@ dependencies = [
 [[package]]
 name = "westend-runtime"
 version = "0.9.38"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -18094,13 +19294,13 @@ dependencies = [
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting 4.0.0-dev",
- "pallet-xcm",
+ "pallet-xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "pallet-xcm-benchmarks",
  "parity-scale-codec",
- "polkadot-parachain",
- "polkadot-primitives",
- "polkadot-runtime-common",
- "polkadot-runtime-parachains",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-common 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-parachains 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "rustc-hex",
  "scale-info",
  "serde",
@@ -18125,19 +19325,19 @@ dependencies = [
  "sp-version",
  "substrate-wasm-builder",
  "westend-runtime-constants",
- "xcm",
- "xcm-builder",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-builder 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
 name = "westend-runtime-constants"
 version = "0.9.38"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "frame-support",
- "polkadot-primitives",
- "polkadot-runtime-common",
+ "polkadot-primitives 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "polkadot-runtime-common 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
  "smallvec 1.10.0",
  "sp-core 7.0.0",
  "sp-runtime 7.0.0",
@@ -18480,7 +19680,23 @@ dependencies = [
  "serde",
  "sp-core 7.0.0",
  "sp-weights 4.0.0",
- "xcm-procedural",
+ "xcm-procedural 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "xcm"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "derivative",
+ "impl-trait-for-tuples",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core 7.0.0",
+ "sp-weights 4.0.0",
+ "xcm-procedural 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
@@ -18494,20 +19710,60 @@ dependencies = [
  "log 0.4.17",
  "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "parity-scale-codec",
- "polkadot-parachain",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
  "scale-info",
  "sp-arithmetic 6.0.0",
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
- "xcm",
- "xcm-executor",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "xcm-builder"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "log 0.4.17",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
+ "parity-scale-codec",
+ "polkadot-parachain 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "scale-info",
+ "sp-arithmetic 6.0.0",
+ "sp-io 7.0.0",
+ "sp-runtime 7.0.0",
+ "sp-std 5.0.0",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
+ "xcm-executor 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
 name = "xcm-executor"
 version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "environmental",
+ "frame-support",
+ "impl-trait-for-tuples",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "sp-arithmetic 6.0.0",
+ "sp-core 7.0.0",
+ "sp-io 7.0.0",
+ "sp-runtime 7.0.0",
+ "sp-std 5.0.0",
+ "sp-weights 4.0.0",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.38)",
+]
+
+[[package]]
+name = "xcm-executor"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "environmental",
  "frame-benchmarking",
@@ -18521,13 +19777,24 @@ dependencies = [
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
  "sp-weights 4.0.0",
- "xcm",
+ "xcm 0.9.38 (git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7)",
 ]
 
 [[package]]
 name = "xcm-procedural"
 version = "0.9.38"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.38#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
+dependencies = [
+ "Inflector",
+ "proc-macro2 1.0.51",
+ "quote 1.0.23",
+ "syn 1.0.107",
+]
+
+[[package]]
+name = "xcm-procedural"
+version = "0.9.38"
+source = "git+https://github.com/paritytech/polkadot?rev=097ffd245c42aeff28cf80f8a3568e1bee2e7da7#097ffd245c42aeff28cf80f8a3568e1bee2e7da7"
 dependencies = [
  "Inflector",
  "proc-macro2 1.0.51",
