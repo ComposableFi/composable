@@ -250,4 +250,5 @@ std = [
   "ibc-primitives/std",
   "ibc-runtime-api/std",
   "cosmwasm/std",
+  "cosmwasm-runtime-api/std",
 ]
