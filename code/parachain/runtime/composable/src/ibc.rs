@@ -3,7 +3,7 @@ use ::ibc::core::{
 	ics24_host::identifier::PortId,
 	ics26_routing::context::{Module, ModuleId},
 };
-use common::governance::native::EnsureRootOrOneThirdNativeTechnical;
+use common::{fees::IbcIcs20FeePalletId, governance::native::EnsureRootOrOneThirdNativeTechnical};
 use frame_support::traits::EitherOf;
 use pallet_ibc::{
 	ics20::{MODULE_ID_STR, PORT_ID_STR},
@@ -151,13 +151,8 @@ impl ModuleRouter for Router {
 
 impl pallet_ibc::ics20_fee::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type ServiceCharge = ServiceCharge;
-	type PalletId = PalletId;
-}
-
-parameter_types! {
-	pub ServiceCharge: Perbill = Perbill::from_rational(4 as u32, 1000 as u32);
-	pub const PalletId: frame_support::PalletId = frame_support::PalletId(*b"ics20fee");
+	type ServiceCharge = IbcIcs20ServiceCharge;
+	type PalletId = IbcIcs20FeePalletId;
 }
 
 impl pallet_ibc::Config for Runtime {

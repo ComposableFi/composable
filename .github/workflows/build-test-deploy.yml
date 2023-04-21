@@ -315,16 +315,14 @@ jobs:
     name: build-all-deps-packages
     strategy:
       matrix:
-        arch: [x64-cute]
+        runner: [buildjet-32vcpu-ubuntu-2204]
     needs: 
       - privilege-check
       - lfs-check
     runs-on:
-      - self-hosted
-      - ${{ matrix.arch }}
-      - Linux
+      - ${{ matrix.runner }}
     concurrency:
-      group: ${{ github.workflow }}-build-all-deps-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
+      group: ${{ github.workflow }}-build-all-deps-packages-${{ matrix.runner }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:
       - name: Set up Nix

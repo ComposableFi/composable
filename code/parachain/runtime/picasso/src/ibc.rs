@@ -5,7 +5,10 @@ use ::ibc::{
 		ics26_routing::context::{Module, ModuleId},
 	},
 };
-use common::ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds};
+use common::{
+	fees::{IbcIcs20FeePalletId, IbcIcs20ServiceCharge},
+	ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds},
+};
 use frame_support::traits::EitherOf;
 use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
@@ -149,13 +152,8 @@ impl ModuleRouter for Router {
 
 impl pallet_ibc::ics20_fee::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type ServiceCharge = ServiceCharge;
-	type PalletId = PalletId;
-}
-
-parameter_types! {
-	pub ServiceCharge: Perbill = Perbill::from_rational(4 as u32, 1000 as u32 );
-	pub const PalletId: frame_support::PalletId = frame_support::PalletId(*b"ics20fee");
+	type ServiceCharge = IbcIcs20ServiceCharge;
+	type PalletId = IbcIcs20FeePalletId;
 }
 
 impl pallet_ibc::Config for Runtime {
