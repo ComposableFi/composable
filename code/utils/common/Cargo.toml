@@ -3,13 +3,11 @@ edition = "2021"
 name = "utils-common"
 version = "0.1.0"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+sp-core = { git = "https://github.com/paritytech/substrate", workspace = true }
+sp-runtime = { git = "https://github.com/paritytech/substrate", workspace = true }
+system = { package = "frame-system", git = "https://github.com/paritytech/substrate", workspace = true }
 composable-runtime = { path = "../../parachain/runtime/composable" }
 derive_more = "0.99.17"
 picasso-runtime = { path = "../../parachain/runtime/picasso" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 transaction-payment = { package = "pallet-transaction-payment", path = "../../parachain/frame/transaction-payment", default-features = false }
