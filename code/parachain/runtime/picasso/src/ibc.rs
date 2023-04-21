@@ -4,11 +4,12 @@ use ::ibc::core::{
 };
 use common::ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds};
 use frame_support::traits::EitherOf;
+use hex_literal::hex;
 use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
 };
 use sp_core::ConstU64;
-use sp_runtime::{DispatchError, Either};
+use sp_runtime::{AccountId32, DispatchError, Either};
 use system::EnsureSignedBy;
 
 use super::*;
@@ -97,6 +98,8 @@ impl core::str::FromStr for MemoMessage {
 parameter_types! {
 	pub const GRANDPA: pallet_ibc::LightClientProtocol = pallet_ibc::LightClientProtocol::Grandpa;
 	pub const IbcTriePrefix : &'static [u8] = b"ibc/";
+	// converted from 5xMXcPsD9B9xDMvLyNBLmn9uhK7sTXTfubGVTZmXwVJmTVWa using https://www.shawntabrizi.com/substrate-js-utilities/
+	pub FeeAccount: <Runtime as pallet_ibc::Config>::AccountIdConversion = ibc_primitives::IbcAccount(AccountId32::from(hex!("a72ef3ce1ecd46163bc5e23fd3e6a4623d9717c957fb59001a5d4cb949150f28")));
 }
 
 use pallet_ibc::ics20::Ics20RateLimiter;
@@ -157,4 +160,6 @@ impl pallet_ibc::Config for Runtime {
 	>;
 	#[cfg(not(feature = "testnet"))]
 	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
+
+	type FeeAccount = FeeAccount;
 }
