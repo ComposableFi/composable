@@ -93,11 +93,11 @@ aura = { package = "pallet-aura", git = "https://github.com/paritytech/substrate
 polkadot-parachain = { git = "https://github.com/paritytech/polkadot", rev = "097ffd245c42aeff28cf80f8a3568e1bee2e7da7", default-features = false }
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", rev = "097ffd245c42aeff28cf80f8a3568e1bee2e7da7" }
 
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.38", default-features = false }
-orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.38", default-features = false }
-orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.38", default-features = false }
-orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.38", default-features = false }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.38", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "241d5cdc98cca53b8cf990853943c9ae1193a70e", default-features = false }
+orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "241d5cdc98cca53b8cf990853943c9ae1193a70e", default-features = false }
+orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "241d5cdc98cca53b8cf990853943c9ae1193a70e", default-features = false }
+orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "241d5cdc98cca53b8cf990853943c9ae1193a70e", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "241d5cdc98cca53b8cf990853943c9ae1193a70e", default-features = false }
 
 ibc = { git = "https://github.com/ComposableFi/centauri", rev = "86edd8fa3f9b575a32feb72e3536659762ae2a11", default-features = false }
 ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev = "86edd8fa3f9b575a32feb72e3536659762ae2a11", default-features = false }
