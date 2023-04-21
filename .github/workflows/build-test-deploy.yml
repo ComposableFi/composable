@@ -120,8 +120,7 @@ jobs:
       - privilege-check
       - lfs-check
     runs-on:
-      - self-hosted
-      - arm-monster
+      - buildjet-32vcpu-ubuntu-2204-arm
     concurrency:
       group: ${{ github.workflow }}-build-all-platforms-arm-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -134,7 +133,9 @@ jobs:
           extra_nix_config: |
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
-            system-features = kvm          
+            system-features = kvm       
+            keep-derivations = true
+            keep-outputs = true
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
@@ -160,10 +161,6 @@ jobs:
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-platforms --keep-going
-      - name: List built results 
-        run: |
-          ls result
-          tree result -L 3
           
   build-all-ci-packages:
     name: build-all-ci-packages

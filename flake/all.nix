@@ -12,16 +12,17 @@
         zombienet
       ]);
 
-      all-production-deps = pkgs.linkFarmFromDrvs "all-production-deps" (with self'.packages; [
-        kusama-runtime-on-parity
-        polkadot-node-on-parity-kusama
-        polkadot-node-on-parity-polkadot
-        polkadot-node-on-parity-rococo
-        polkadot-node-on-parity-westend
-        polkadot-runtime-on-parity
-        rococo-runtime-on-parity
-        westend-runtime-on-parity        
-      ]);
+      all-production-deps = pkgs.linkFarmFromDrvs "all-production-deps"
+        (with self'.packages; [
+          kusama-runtime-on-parity
+          polkadot-node-on-parity-kusama
+          polkadot-node-on-parity-polkadot
+          polkadot-node-on-parity-rococo
+          polkadot-node-on-parity-westend
+          polkadot-runtime-on-parity
+          rococo-runtime-on-parity
+          westend-runtime-on-parity
+        ]);
 
       all-docs = pkgs.linkFarmFromDrvs "all-docs"
         (with self'.packages; [ docs-server docs-static ]);
