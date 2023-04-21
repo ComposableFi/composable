@@ -313,170 +313,170 @@ mmr-gadget = { git = "https://github.com/paritytech/substrate", rev = "18bb7c7c8
 mmr-rpc = { git = "https://github.com/paritytech/substrate", rev = "18bb7c7c841b101c19a8d1881b893ae8e37de460", default-features = false }
 
 
-# [patch."https://github.com/paritytech/substrate"]
-# beefy-gadget = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# beefy-gadget-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# beefy-merkle-tree = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-beefy = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# fork-tree = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# frame-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# frame-benchmarking-cli = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# frame-election-provider-support = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# frame-executive = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# frame-support = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# frame-support-procedural = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# frame-support-procedural-tools = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# frame-support-procedural-tools-derive = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# frame-system = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# frame-system-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# frame-system-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# frame-try-runtime = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-aura = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-authority-discovery = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-babe = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-bags-list = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-balances = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-beefy = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-beefy-mmr = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-bounties = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-child-bounties = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-collective = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-conviction-voting = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-fast-unstake = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-nis = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-ranked-collective = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-referenda = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-state-trie-migration = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-whitelist = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-democracy = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-election-provider-multi-phase = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-election-provider-support-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-elections-phragmen = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-grandpa = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-identity = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-im-online = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-indices = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-membership = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-mmr = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-multisig = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-nomination-pools = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-nomination-pools-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-nomination-pools-runtime-api = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-offences = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-offences-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-preimage = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-proxy = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-randomness-collective-flip = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-recovery = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-scheduler = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-session = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-session-benchmarking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-society = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-staking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-staking-reward-curve = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-staking-reward-fn = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-sudo = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-timestamp = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-tips = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-transaction-payment = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-transaction-payment-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-treasury = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-utility = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# pallet-vesting = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-allocator = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-authority-discovery = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-basic-authorship = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-block-builder = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-chain-spec = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-chain-spec-derive = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-cli = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-client-api = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-client-db = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-consensus = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-consensus-aura = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-consensus-babe = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-consensus-babe-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-consensus-epochs = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-consensus-slots = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-executor = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-executor-common = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-executor-wasmi = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-executor-wasmtime = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-finality-grandpa = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-finality-grandpa-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-informant = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-keystore = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-network = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-network-common = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-network-gossip = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-offchain = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-peerset = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-proposer-metrics = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-rpc-api = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-rpc-server = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-service = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-state-db = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-sync-state-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-sysinfo = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-telemetry = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-tracing = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-tracing-proc-macro = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-transaction-pool = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-transaction-pool-api = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sc-utils = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-api = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-api-proc-macro = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-application-crypto = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-arithmetic = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-authority-discovery = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-block-builder = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-blockchain = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-consensus = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-consensus-aura = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-consensus-babe = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-consensus-slots = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-consensus-vrf = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-core = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-core-hashing = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-core-hashing-proc-macro = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-database = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-debug-derive = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-externalities = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-finality-grandpa = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-inherents = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-io = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-keyring = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-keystore = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-maybe-compressed-blob = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-mmr-primitives = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-npos-elections = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-offchain = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-panic-handler = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-runtime = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-runtime-interface = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-runtime-interface-proc-macro = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-session = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-staking = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-state-machine = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-std = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-storage = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-timestamp = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-tracing = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-transaction-pool = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-transaction-storage-proof = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-trie = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-version = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-version-proc-macro = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-wasm-interface = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# sp-weights = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# substrate-build-script-utils = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# substrate-frame-rpc-system = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# substrate-prometheus-endpoint = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# substrate-state-trie-migration-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# substrate-wasm-builder = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# try-runtime-cli = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# mmr-gadget = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
-# mmr-rpc = { git = "https://github.com/ComposableFi/substrate", branch = "wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock" }
+[patch."https://github.com/paritytech/substrate"]
+beefy-gadget = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+beefy-gadget-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+beefy-merkle-tree = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-beefy = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+fork-tree = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+frame-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+frame-benchmarking-cli = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+frame-election-provider-support = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+frame-executive = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+frame-support = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+frame-support-procedural = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+frame-support-procedural-tools = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+frame-support-procedural-tools-derive = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+frame-system = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+frame-system-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+frame-system-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+frame-try-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-aura = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-babe = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-bags-list = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-balances = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-beefy = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-beefy-mmr = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-bounties = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-child-bounties = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-collective = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-conviction-voting = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-fast-unstake = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-nis = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-ranked-collective = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-referenda = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-state-trie-migration = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-whitelist = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-democracy = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-election-provider-multi-phase = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-election-provider-support-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-elections-phragmen = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-identity = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-im-online = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-indices = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-membership = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-mmr = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-multisig = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-nomination-pools = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-nomination-pools-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-nomination-pools-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-offences = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-offences-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-preimage = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-proxy = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-randomness-collective-flip = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-recovery = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-scheduler = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-session = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-session-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-society = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-staking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-staking-reward-curve = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-staking-reward-fn = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-sudo = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-timestamp = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-tips = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-transaction-payment = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-transaction-payment-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-treasury = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-utility = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+pallet-vesting = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-allocator = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-basic-authorship = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-block-builder = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-chain-spec = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-chain-spec-derive = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-cli = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-client-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-client-db = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-consensus = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-consensus-aura = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-consensus-babe = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-consensus-babe-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-consensus-epochs = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-consensus-slots = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-executor = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-executor-common = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-executor-wasmi = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-executor-wasmtime = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-finality-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-finality-grandpa-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-informant = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-keystore = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-network = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-network-common = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-network-gossip = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-offchain = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-peerset = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-proposer-metrics = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-rpc-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-rpc-server = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-service = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-state-db = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-sync-state-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-sysinfo = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-telemetry = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-tracing = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-tracing-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-transaction-pool = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-transaction-pool-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sc-utils = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-api-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-application-crypto = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-arithmetic = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-block-builder = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-blockchain = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-consensus = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-consensus-aura = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-consensus-babe = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-consensus-slots = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-consensus-vrf = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-core = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-core-hashing = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-core-hashing-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-database = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-debug-derive = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-externalities = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-finality-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-inherents = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-io = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-keyring = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-keystore = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-maybe-compressed-blob = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-mmr-primitives = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-npos-elections = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-offchain = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-panic-handler = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-runtime-interface = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-runtime-interface-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-session = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-staking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-state-machine = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-std = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-storage = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-timestamp = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-tracing = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-transaction-pool = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-transaction-storage-proof = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-trie = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-version = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-version-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-wasm-interface = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+sp-weights = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+substrate-build-script-utils = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+substrate-frame-rpc-system = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+substrate-prometheus-endpoint = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+substrate-state-trie-migration-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+substrate-wasm-builder = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+try-runtime-cli = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+mmr-gadget = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+mmr-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
