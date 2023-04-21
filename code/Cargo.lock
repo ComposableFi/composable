@@ -768,7 +768,7 @@ dependencies = [
 [[package]]
 name = "beefy-gadget"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "array-bytes 4.2.0",
  "async-trait",
@@ -802,7 +802,7 @@ dependencies = [
 [[package]]
 name = "beefy-gadget-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "beefy-gadget",
  "futures 0.3.26",
@@ -861,7 +861,7 @@ dependencies = [
 [[package]]
 name = "beefy-merkle-tree"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "sp-api",
  "sp-beefy",
@@ -3915,7 +3915,7 @@ checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 [[package]]
 name = "fork-tree"
 version = "3.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
 ]
@@ -3938,7 +3938,7 @@ checksum = "6c2141d6d6c8512188a7891b4b01590a45f6dac67afb4f255c4124dbb86d4eaa"
 [[package]]
 name = "frame-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "frame-support-procedural",
@@ -3963,7 +3963,7 @@ dependencies = [
 [[package]]
 name = "frame-benchmarking-cli"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "Inflector",
  "array-bytes 4.2.0",
@@ -4010,7 +4010,7 @@ dependencies = [
 [[package]]
 name = "frame-election-provider-solution-type"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "proc-macro-crate 1.3.0",
  "proc-macro2 1.0.51",
@@ -4021,7 +4021,7 @@ dependencies = [
 [[package]]
 name = "frame-election-provider-support"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-election-provider-solution-type",
  "frame-support",
@@ -4038,7 +4038,7 @@ dependencies = [
 [[package]]
 name = "frame-executive"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4067,7 +4067,7 @@ dependencies = [
 [[package]]
 name = "frame-remote-externalities"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "futures 0.3.26",
  "log 0.4.17",
@@ -4083,7 +4083,7 @@ dependencies = [
 [[package]]
 name = "frame-support"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "bitflags",
  "frame-metadata",
@@ -4115,7 +4115,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "Inflector",
  "cfg-expr",
@@ -4130,7 +4130,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support-procedural-tools-derive",
  "proc-macro-crate 1.3.0",
@@ -4142,7 +4142,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools-derive"
 version = "3.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "proc-macro2 1.0.51",
  "quote 1.0.23",
@@ -4152,7 +4152,7 @@ dependencies = [
 [[package]]
 name = "frame-system"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "log 0.4.17",
@@ -4170,7 +4170,7 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4185,7 +4185,7 @@ dependencies = [
 [[package]]
 name = "frame-system-rpc-runtime-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -4194,7 +4194,7 @@ dependencies = [
 [[package]]
 name = "frame-try-runtime"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -5927,8 +5927,8 @@ dependencies = [
  "pallet-staking",
  "pallet-timestamp",
  "pallet-tips",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting 4.0.0-dev",
@@ -6984,7 +6984,7 @@ dependencies = [
 [[package]]
 name = "mmr-gadget"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "futures 0.3.26",
  "log 0.4.17",
@@ -7003,7 +7003,7 @@ dependencies = [
 [[package]]
 name = "mmr-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "anyhow",
  "jsonrpsee 0.16.2",
@@ -7921,7 +7921,7 @@ dependencies = [
 [[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7937,7 +7937,7 @@ dependencies = [
 [[package]]
 name = "pallet-authority-discovery"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7967,7 +7967,7 @@ dependencies = [
 [[package]]
 name = "pallet-authorship"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7981,13 +7981,13 @@ dependencies = [
 [[package]]
 name = "pallet-babe"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "pallet-authorship 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-authorship 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "pallet-session",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -8005,7 +8005,7 @@ dependencies = [
 [[package]]
 name = "pallet-bags-list"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -8025,7 +8025,7 @@ dependencies = [
 [[package]]
 name = "pallet-balances"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8040,7 +8040,7 @@ dependencies = [
 [[package]]
 name = "pallet-beefy"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8056,7 +8056,7 @@ dependencies = [
 [[package]]
 name = "pallet-beefy-mmr"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "array-bytes 4.2.0",
  "beefy-merkle-tree",
@@ -8105,7 +8105,7 @@ dependencies = [
 [[package]]
 name = "pallet-bounties"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8140,7 +8140,7 @@ dependencies = [
 [[package]]
 name = "pallet-child-bounties"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8178,7 +8178,7 @@ dependencies = [
 [[package]]
 name = "pallet-collective"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8195,7 +8195,7 @@ dependencies = [
 [[package]]
 name = "pallet-conviction-voting"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "assert_matches",
  "frame-benchmarking",
@@ -8307,7 +8307,7 @@ dependencies = [
 [[package]]
 name = "pallet-democracy"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8391,7 +8391,7 @@ dependencies = [
 [[package]]
 name = "pallet-election-provider-multi-phase"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -8414,7 +8414,7 @@ dependencies = [
 [[package]]
 name = "pallet-election-provider-support-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -8427,7 +8427,7 @@ dependencies = [
 [[package]]
 name = "pallet-elections-phragmen"
 version = "5.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8445,7 +8445,7 @@ dependencies = [
 [[package]]
 name = "pallet-fast-unstake"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -8502,13 +8502,13 @@ dependencies = [
 [[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "pallet-authorship 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-authorship 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "pallet-session",
  "parity-scale-codec",
  "scale-info",
@@ -8589,7 +8589,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "enumflags2",
  "frame-benchmarking",
@@ -8605,13 +8605,13 @@ dependencies = [
 [[package]]
 name = "pallet-im-online"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "pallet-authorship 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-authorship 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "parity-scale-codec",
  "scale-info",
  "sp-application-crypto 7.0.0",
@@ -8625,7 +8625,7 @@ dependencies = [
 [[package]]
 name = "pallet-indices"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8721,7 +8721,7 @@ dependencies = [
 [[package]]
 name = "pallet-membership"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8738,7 +8738,7 @@ dependencies = [
 [[package]]
 name = "pallet-mmr"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8755,7 +8755,7 @@ dependencies = [
 [[package]]
 name = "pallet-multisig"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8771,7 +8771,7 @@ dependencies = [
 [[package]]
 name = "pallet-nis"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8787,7 +8787,7 @@ dependencies = [
 [[package]]
 name = "pallet-nomination-pools"
 version = "1.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8804,7 +8804,7 @@ dependencies = [
 [[package]]
 name = "pallet-nomination-pools-benchmarking"
 version = "1.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -8824,7 +8824,7 @@ dependencies = [
 [[package]]
 name = "pallet-nomination-pools-runtime-api"
 version = "1.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -8834,7 +8834,7 @@ dependencies = [
 [[package]]
 name = "pallet-offences"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8851,7 +8851,7 @@ dependencies = [
 [[package]]
 name = "pallet-offences-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -8934,7 +8934,7 @@ dependencies = [
 [[package]]
 name = "pallet-preimage"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8969,7 +8969,7 @@ dependencies = [
 [[package]]
 name = "pallet-proxy"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8984,7 +8984,7 @@ dependencies = [
 [[package]]
 name = "pallet-randomness-collective-flip"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8998,7 +8998,7 @@ dependencies = [
 [[package]]
 name = "pallet-ranked-collective"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9016,7 +9016,7 @@ dependencies = [
 [[package]]
 name = "pallet-recovery"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9031,7 +9031,7 @@ dependencies = [
 [[package]]
 name = "pallet-referenda"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "assert_matches",
  "frame-benchmarking",
@@ -9050,7 +9050,7 @@ dependencies = [
 [[package]]
 name = "pallet-scheduler"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9067,7 +9067,7 @@ dependencies = [
 [[package]]
 name = "pallet-session"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -9088,7 +9088,7 @@ dependencies = [
 [[package]]
 name = "pallet-session-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9104,7 +9104,7 @@ dependencies = [
 [[package]]
 name = "pallet-society"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -9118,14 +9118,14 @@ dependencies = [
 [[package]]
 name = "pallet-staking"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "pallet-authorship 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-authorship 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "pallet-session",
  "parity-scale-codec",
  "rand_chacha 0.2.2",
@@ -9141,7 +9141,7 @@ dependencies = [
 [[package]]
 name = "pallet-staking-reward-curve"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "proc-macro-crate 1.3.0",
  "proc-macro2 1.0.51",
@@ -9152,7 +9152,7 @@ dependencies = [
 [[package]]
 name = "pallet-staking-reward-fn"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "log 0.4.17",
  "sp-arithmetic 6.0.0",
@@ -9195,7 +9195,7 @@ dependencies = [
 [[package]]
 name = "pallet-state-trie-migration"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9212,7 +9212,7 @@ dependencies = [
 [[package]]
 name = "pallet-sudo"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -9226,7 +9226,7 @@ dependencies = [
 [[package]]
 name = "pallet-timestamp"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9244,7 +9244,7 @@ dependencies = [
 [[package]]
 name = "pallet-tips"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9280,7 +9280,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -9310,10 +9310,10 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "jsonrpsee 0.16.2",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "parity-scale-codec",
  "sp-api",
  "sp-blockchain",
@@ -9336,9 +9336,9 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc-runtime-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "parity-scale-codec",
  "sp-api",
  "sp-runtime 7.0.0",
@@ -9348,7 +9348,7 @@ dependencies = [
 [[package]]
 name = "pallet-treasury"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9365,7 +9365,7 @@ dependencies = [
 [[package]]
 name = "pallet-utility"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9430,7 +9430,7 @@ dependencies = [
 [[package]]
 name = "pallet-vesting"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9445,7 +9445,7 @@ dependencies = [
 [[package]]
 name = "pallet-whitelist"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -10133,8 +10133,8 @@ dependencies = [
  "frame-system",
  "frame-system-rpc-runtime-api",
  "futures 0.3.26",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "polkadot-core-primitives",
  "polkadot-node-core-parachains-inherent",
  "polkadot-primitives",
@@ -10788,7 +10788,7 @@ dependencies = [
  "beefy-gadget-rpc",
  "jsonrpsee 0.16.2",
  "mmr-rpc",
- "pallet-transaction-payment-rpc 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-transaction-payment-rpc 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "polkadot-primitives",
  "sc-chain-spec",
  "sc-client-api",
@@ -10860,8 +10860,8 @@ dependencies = [
  "pallet-staking-reward-curve",
  "pallet-timestamp",
  "pallet-tips",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting 4.0.0-dev",
@@ -10924,7 +10924,7 @@ dependencies = [
  "pallet-staking",
  "pallet-staking-reward-fn",
  "pallet-timestamp",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "pallet-treasury",
  "pallet-vesting 4.0.0-dev",
  "parity-scale-codec",
@@ -11039,7 +11039,7 @@ dependencies = [
  "pallet-babe",
  "pallet-im-online",
  "pallet-staking",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "parity-db",
  "polkadot-approval-distribution",
  "polkadot-availability-bitfield-distribution",
@@ -12192,8 +12192,8 @@ dependencies = [
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-tips",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting 4.0.0-dev",
@@ -12591,7 +12591,7 @@ dependencies = [
 [[package]]
 name = "sc-allocator"
 version = "4.1.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "log 0.4.17",
  "sp-core 7.0.0",
@@ -12602,7 +12602,7 @@ dependencies = [
 [[package]]
 name = "sc-authority-discovery"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "futures 0.3.26",
@@ -12629,7 +12629,7 @@ dependencies = [
 [[package]]
 name = "sc-basic-authorship"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "futures 0.3.26",
  "futures-timer",
@@ -12652,7 +12652,7 @@ dependencies = [
 [[package]]
 name = "sc-block-builder"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "sc-client-api",
@@ -12668,7 +12668,7 @@ dependencies = [
 [[package]]
 name = "sc-chain-spec"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "memmap2",
  "sc-chain-spec-derive",
@@ -12683,7 +12683,7 @@ dependencies = [
 [[package]]
 name = "sc-chain-spec-derive"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "proc-macro-crate 1.3.0",
  "proc-macro2 1.0.51",
@@ -12694,7 +12694,7 @@ dependencies = [
 [[package]]
 name = "sc-cli"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "array-bytes 4.2.0",
  "chrono",
@@ -12734,7 +12734,7 @@ dependencies = [
 [[package]]
 name = "sc-client-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "fnv",
  "futures 0.3.26",
@@ -12760,7 +12760,7 @@ dependencies = [
 [[package]]
 name = "sc-client-db"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "hash-db",
  "kvdb",
@@ -12786,7 +12786,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "futures 0.3.26",
@@ -12811,7 +12811,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-aura"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "futures 0.3.26",
@@ -12840,7 +12840,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-babe"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "fork-tree",
@@ -12878,7 +12878,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-babe-rpc"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "futures 0.3.26",
  "jsonrpsee 0.16.2",
@@ -12900,7 +12900,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-epochs"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "fork-tree",
  "parity-scale-codec",
@@ -12913,7 +12913,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-slots"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "futures 0.3.26",
@@ -12936,7 +12936,7 @@ dependencies = [
 [[package]]
 name = "sc-executor"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "lru 0.8.1",
  "parity-scale-codec",
@@ -12960,7 +12960,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-common"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "sc-allocator",
  "sp-maybe-compressed-blob",
@@ -12973,7 +12973,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-wasmi"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "log 0.4.17",
  "sc-allocator",
@@ -12986,7 +12986,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-wasmtime"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
@@ -13003,7 +13003,7 @@ dependencies = [
 [[package]]
 name = "sc-finality-grandpa"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "ahash 0.8.3",
  "array-bytes 4.2.0",
@@ -13043,7 +13043,7 @@ dependencies = [
 [[package]]
 name = "sc-finality-grandpa-rpc"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "finality-grandpa",
  "futures 0.3.26",
@@ -13063,7 +13063,7 @@ dependencies = [
 [[package]]
 name = "sc-informant"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "ansi_term",
  "futures 0.3.26",
@@ -13078,7 +13078,7 @@ dependencies = [
 [[package]]
 name = "sc-keystore"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "array-bytes 4.2.0",
  "async-trait",
@@ -13093,7 +13093,7 @@ dependencies = [
 [[package]]
 name = "sc-network"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "array-bytes 4.2.0",
  "async-trait",
@@ -13135,7 +13135,7 @@ dependencies = [
 [[package]]
 name = "sc-network-bitswap"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "cid",
  "futures 0.3.26",
@@ -13154,7 +13154,7 @@ dependencies = [
 [[package]]
 name = "sc-network-common"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "bitflags",
@@ -13180,7 +13180,7 @@ dependencies = [
 [[package]]
 name = "sc-network-gossip"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "ahash 0.8.3",
  "futures 0.3.26",
@@ -13198,7 +13198,7 @@ dependencies = [
 [[package]]
 name = "sc-network-light"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "array-bytes 4.2.0",
  "futures 0.3.26",
@@ -13219,7 +13219,7 @@ dependencies = [
 [[package]]
 name = "sc-network-sync"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "array-bytes 4.2.0",
  "async-trait",
@@ -13251,7 +13251,7 @@ dependencies = [
 [[package]]
 name = "sc-network-transactions"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "array-bytes 4.2.0",
  "futures 0.3.26",
@@ -13270,7 +13270,7 @@ dependencies = [
 [[package]]
 name = "sc-offchain"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "array-bytes 4.2.0",
  "bytes 1.4.0",
@@ -13300,7 +13300,7 @@ dependencies = [
 [[package]]
 name = "sc-peerset"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "futures 0.3.26",
  "libp2p",
@@ -13313,7 +13313,7 @@ dependencies = [
 [[package]]
 name = "sc-proposer-metrics"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "log 0.4.17",
  "substrate-prometheus-endpoint",
@@ -13322,7 +13322,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "futures 0.3.26",
  "jsonrpsee 0.16.2",
@@ -13352,7 +13352,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-api"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "jsonrpsee 0.16.2",
  "parity-scale-codec",
@@ -13371,7 +13371,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-server"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "http",
  "jsonrpsee 0.16.2",
@@ -13386,7 +13386,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-spec-v2"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "array-bytes 4.2.0",
  "futures 0.3.26",
@@ -13412,7 +13412,7 @@ dependencies = [
 [[package]]
 name = "sc-service"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "directories",
@@ -13443,7 +13443,7 @@ dependencies = [
  "sc-rpc",
  "sc-rpc-server",
  "sc-rpc-spec-v2",
- "sc-storage-monitor 0.1.0 (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "sc-storage-monitor 0.1.0 (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "sc-sysinfo",
  "sc-telemetry",
  "sc-tracing",
@@ -13478,7 +13478,7 @@ dependencies = [
 [[package]]
 name = "sc-state-db"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
@@ -13505,7 +13505,7 @@ dependencies = [
 [[package]]
 name = "sc-storage-monitor"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "clap 4.1.4",
  "futures 0.3.26",
@@ -13521,7 +13521,7 @@ dependencies = [
 [[package]]
 name = "sc-sync-state-rpc"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "jsonrpsee 0.16.2",
  "parity-scale-codec",
@@ -13540,7 +13540,7 @@ dependencies = [
 [[package]]
 name = "sc-sysinfo"
 version = "6.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "futures 0.3.26",
  "libc",
@@ -13559,7 +13559,7 @@ dependencies = [
 [[package]]
 name = "sc-telemetry"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "chrono",
  "futures 0.3.26",
@@ -13578,7 +13578,7 @@ dependencies = [
 [[package]]
 name = "sc-tracing"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "ansi_term",
  "atty",
@@ -13609,7 +13609,7 @@ dependencies = [
 [[package]]
 name = "sc-tracing-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "proc-macro-crate 1.3.0",
  "proc-macro2 1.0.51",
@@ -13620,7 +13620,7 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "futures 0.3.26",
@@ -13647,7 +13647,7 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "futures 0.3.26",
@@ -13661,7 +13661,7 @@ dependencies = [
 [[package]]
 name = "sc-utils"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "backtrace",
  "futures 0.3.26",
@@ -14355,7 +14355,7 @@ dependencies = [
 [[package]]
 name = "sp-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "hash-db",
  "log 0.4.17",
@@ -14373,7 +14373,7 @@ dependencies = [
 [[package]]
 name = "sp-api-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "blake2",
  "proc-macro-crate 1.3.0",
@@ -14385,7 +14385,7 @@ dependencies = [
 [[package]]
 name = "sp-application-crypto"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -14412,7 +14412,7 @@ dependencies = [
 [[package]]
 name = "sp-arithmetic"
 version = "6.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "integer-sqrt",
  "num-traits",
@@ -14441,7 +14441,7 @@ dependencies = [
 [[package]]
 name = "sp-authority-discovery"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -14454,7 +14454,7 @@ dependencies = [
 [[package]]
 name = "sp-beefy"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -14471,7 +14471,7 @@ dependencies = [
 [[package]]
 name = "sp-block-builder"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -14483,7 +14483,7 @@ dependencies = [
 [[package]]
 name = "sp-blockchain"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "futures 0.3.26",
  "log 0.4.17",
@@ -14501,7 +14501,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "futures 0.3.26",
@@ -14519,7 +14519,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-aura"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -14537,7 +14537,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-babe"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "merlin",
@@ -14560,7 +14560,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-slots"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -14572,7 +14572,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-vrf"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -14585,7 +14585,7 @@ dependencies = [
 [[package]]
 name = "sp-core"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "array-bytes 4.2.0",
  "base58",
@@ -14670,7 +14670,7 @@ dependencies = [
 [[package]]
 name = "sp-core-hashing"
 version = "5.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "blake2",
  "byteorder",
@@ -14699,7 +14699,7 @@ dependencies = [
 [[package]]
 name = "sp-core-hashing-proc-macro"
 version = "5.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "proc-macro2 1.0.51",
  "quote 1.0.23",
@@ -14710,7 +14710,7 @@ dependencies = [
 [[package]]
 name = "sp-database"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "kvdb",
  "parking_lot 0.12.1",
@@ -14730,7 +14730,7 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "5.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "proc-macro2 1.0.51",
  "quote 1.0.23",
@@ -14751,7 +14751,7 @@ dependencies = [
 [[package]]
 name = "sp-externalities"
 version = "0.13.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "environmental",
  "parity-scale-codec",
@@ -14774,7 +14774,7 @@ dependencies = [
 [[package]]
 name = "sp-finality-grandpa"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "finality-grandpa",
  "log 0.4.17",
@@ -14792,7 +14792,7 @@ dependencies = [
 [[package]]
 name = "sp-inherents"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "impl-trait-for-tuples",
@@ -14806,7 +14806,7 @@ dependencies = [
 [[package]]
 name = "sp-io"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "bytes 1.4.0",
  "ed25519",
@@ -14857,7 +14857,7 @@ dependencies = [
 [[package]]
 name = "sp-keyring"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "lazy_static",
  "sp-core 7.0.0",
@@ -14868,7 +14868,7 @@ dependencies = [
 [[package]]
 name = "sp-keystore"
 version = "0.13.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "futures 0.3.26",
@@ -14902,7 +14902,7 @@ dependencies = [
 [[package]]
 name = "sp-maybe-compressed-blob"
 version = "4.1.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "thiserror",
  "zstd",
@@ -14911,7 +14911,7 @@ dependencies = [
 [[package]]
 name = "sp-mmr-primitives"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "ckb-merkle-mountain-range 0.5.2",
  "log 0.4.17",
@@ -14929,7 +14929,7 @@ dependencies = [
 [[package]]
 name = "sp-npos-elections"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -14943,7 +14943,7 @@ dependencies = [
 [[package]]
 name = "sp-offchain"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "sp-api",
  "sp-core 7.0.0",
@@ -14953,7 +14953,7 @@ dependencies = [
 [[package]]
 name = "sp-panic-handler"
 version = "5.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "backtrace",
  "lazy_static",
@@ -14974,7 +14974,7 @@ dependencies = [
 [[package]]
 name = "sp-rpc"
 version = "6.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "rustc-hash",
  "serde",
@@ -14984,7 +14984,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "either",
  "hash256-std-hasher",
@@ -15029,7 +15029,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "bytes 1.4.0",
  "impl-trait-for-tuples",
@@ -15066,7 +15066,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "6.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "Inflector",
  "proc-macro-crate 1.3.0",
@@ -15091,7 +15091,7 @@ dependencies = [
 [[package]]
 name = "sp-session"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -15105,7 +15105,7 @@ dependencies = [
 [[package]]
 name = "sp-staking"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -15117,7 +15117,7 @@ dependencies = [
 [[package]]
 name = "sp-state-machine"
 version = "0.13.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "hash-db",
  "log 0.4.17",
@@ -15164,7 +15164,7 @@ checksum = "14804d6069ee7a388240b665f17908d98386ffb0b5d39f89a4099fc7a2a4c03f"
 [[package]]
 name = "sp-std"
 version = "5.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 
 [[package]]
 name = "sp-std"
@@ -15189,7 +15189,7 @@ dependencies = [
 [[package]]
 name = "sp-storage"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "impl-serde 0.4.0",
  "parity-scale-codec",
@@ -15216,7 +15216,7 @@ dependencies = [
 [[package]]
 name = "sp-timestamp"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "futures-timer",
@@ -15231,7 +15231,7 @@ dependencies = [
 [[package]]
 name = "sp-tracing"
 version = "6.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "sp-std 5.0.0",
@@ -15256,7 +15256,7 @@ dependencies = [
 [[package]]
 name = "sp-transaction-pool"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "sp-api",
  "sp-runtime 7.0.0",
@@ -15265,7 +15265,7 @@ dependencies = [
 [[package]]
 name = "sp-transaction-storage-proof"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "log 0.4.17",
@@ -15281,7 +15281,7 @@ dependencies = [
 [[package]]
 name = "sp-trie"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "ahash 0.8.3",
  "hash-db",
@@ -15328,7 +15328,7 @@ dependencies = [
 [[package]]
 name = "sp-version"
 version = "5.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "impl-serde 0.4.0",
  "parity-scale-codec",
@@ -15345,7 +15345,7 @@ dependencies = [
 [[package]]
 name = "sp-version-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "proc-macro2 1.0.51",
@@ -15356,7 +15356,7 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "impl-trait-for-tuples",
  "log 0.4.17",
@@ -15383,7 +15383,7 @@ dependencies = [
 [[package]]
 name = "sp-weights"
 version = "4.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -15705,7 +15705,7 @@ dependencies = [
 [[package]]
 name = "substrate-build-script-utils"
 version = "3.0.0"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "platforms 2.0.0",
 ]
@@ -15713,7 +15713,7 @@ dependencies = [
 [[package]]
 name = "substrate-frame-rpc-system"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "frame-system-rpc-runtime-api",
  "futures 0.3.26",
@@ -15732,7 +15732,7 @@ dependencies = [
 [[package]]
 name = "substrate-prometheus-endpoint"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "hyper 0.14.24",
  "log 0.4.17",
@@ -15744,7 +15744,7 @@ dependencies = [
 [[package]]
 name = "substrate-rpc-client"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "async-trait",
  "jsonrpsee 0.16.2",
@@ -15757,7 +15757,7 @@ dependencies = [
 [[package]]
 name = "substrate-state-trie-migration-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "jsonrpsee 0.16.2",
  "log 0.4.17",
@@ -15776,7 +15776,7 @@ dependencies = [
 [[package]]
 name = "substrate-wasm-builder"
 version = "5.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "ansi_term",
  "build-helper",
@@ -16889,7 +16889,7 @@ checksum = "3528ecfd12c466c6f163363caf2d02a71161dd5e1cc6ae7b34207ea2d42d81ed"
 [[package]]
 name = "try-runtime-cli"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version#4e86c39a305a10bc5f50ac82cb8efa2d7c3c6786"
+source = "git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock#d1a5f183c4419fd6804a611916731253597e4982"
 dependencies = [
  "clap 4.1.4",
  "frame-remote-externalities",
@@ -18089,8 +18089,8 @@ dependencies = [
  "pallet-state-trie-migration",
  "pallet-sudo",
  "pallet-timestamp",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting 4.0.0-dev",
@@ -18492,7 +18492,7 @@ dependencies = [
  "frame-system",
  "impl-trait-for-tuples",
  "log 0.4.17",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock-version)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?branch=wasm-heap-pages-patch-polkadot-v0.9.38-with-proper-parity-lock)",
  "parity-scale-codec",
  "polkadot-parachain",
  "scale-info",
