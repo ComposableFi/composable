@@ -99,12 +99,12 @@ orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-modu
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.38", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.38", default-features = false }
 
-ibc = { git = "https://github.com/ComposableFi/centauri", rev ="bfbeb76e197b7f6f0e8311793a805f0338086509",  default-features = false }
-ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev ="bfbeb76e197b7f6f0e8311793a805f0338086509",  default-features = false }
-ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev ="bfbeb76e197b7f6f0e8311793a805f0338086509",  default-features = false }
-ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev ="bfbeb76e197b7f6f0e8311793a805f0338086509",  default-features = false }
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev ="bfbeb76e197b7f6f0e8311793a805f0338086509",  default-features = false }
-pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev ="bfbeb76e197b7f6f0e8311793a805f0338086509",  default-features = false }
+ibc = { git = "https://github.com/ComposableFi/centauri", rev ="ffc120b318ff983c0acc75172ad12f71756701f9",  default-features = false }
+ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev ="ffc120b318ff983c0acc75172ad12f71756701f9",  default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev ="ffc120b318ff983c0acc75172ad12f71756701f9",  default-features = false }
+ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev ="ffc120b318ff983c0acc75172ad12f71756701f9",  default-features = false }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev ="ffc120b318ff983c0acc75172ad12f71756701f9",  default-features = false }
+pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev ="ffc120b318ff983c0acc75172ad12f71756701f9",  default-features = false }
 
 xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.38" }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.38", default-features = false }
