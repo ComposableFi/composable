@@ -18,7 +18,7 @@ use orml_xcm_support::{
 };
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use primitives::currency::ForeignAssetId;
+use primitives::currency::{ForeignAssetId, VersionedMultiLocation};
 use sp_runtime::traits::Convert;
 use sp_std::marker::PhantomData;
 use xcm::latest::prelude::*;
@@ -114,7 +114,7 @@ pub struct ForeignXcm;
 impl Convert<CurrencyId, Option<XcmAssetLocation>> for ForeignXcm {
 	fn convert(a: CurrencyId) -> Option<XcmAssetLocation> {
 		match AssetsRegistry::asset_to_remote(a) {
-			Some(ForeignAssetId::Xcm(xcm)) => Some(xcm),
+			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(xcm))) => Some(xcm),
 			_ => None,
 		}
 	}
@@ -122,7 +122,7 @@ impl Convert<CurrencyId, Option<XcmAssetLocation>> for ForeignXcm {
 
 impl Convert<XcmAssetLocation, Option<CurrencyId>> for ForeignXcm {
 	fn convert(a: XcmAssetLocation) -> Option<CurrencyId> {
-		AssetsRegistry::location_to_asset(ForeignAssetId::Xcm(a))
+		AssetsRegistry::location_to_asset(ForeignAssetId::Xcm(VersionedMultiLocation::V3(a)))
 	}
 }
 

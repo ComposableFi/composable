@@ -2,7 +2,6 @@
 use codec::{CompactAs, Decode, Encode, EncodeLike, MaxEncodedLen, WrapperTypeEncode};
 use composable_support::validation::Validate;
 use composable_traits::{assets::Asset, currency::Exponent, xcm::assets::XcmAssetLocation};
-
 use frame_support::WeakBoundedVec;
 use scale_info::TypeInfo;
 use sp_runtime::{
@@ -91,7 +90,7 @@ macro_rules! list_assets {
 			}
 		}
 
-		pub fn local_to_xcm_reserve(id: CurrencyId) -> Option<xcm::latest::MultiLocation> {
+		pub fn local_to_xcm_reserve(id: CurrencyId) -> Option<MultiLocation> {
             match id {
 				$(
 					$( CurrencyId::$NAME => $xcm_location, )?
@@ -111,7 +110,7 @@ macro_rules! list_assets {
 			}
 		}
 
-		pub fn xcm_reserve_to_local(remote_id: xcm::latest::MultiLocation) -> Option<CurrencyId> {
+		pub fn xcm_reserve_to_local(remote_id: MultiLocation) -> Option<CurrencyId> {
 			use lazy_static::lazy_static;
 			use sp_std::collections::btree_map::BTreeMap;
 
@@ -120,7 +119,7 @@ macro_rules! list_assets {
 					let mut map = BTreeMap::new();
 					$(
 						$(
-							let xcm_id: Option<xcm::latest::MultiLocation> = $xcm_location;
+							let xcm_id: Option<MultiLocation> = $xcm_location;
 							if let Some(xcm_id) = xcm_id {
 								map.insert(xcm_id.encode(), CurrencyId::$NAME);
 							}
@@ -455,18 +454,31 @@ mod ops {
 #[derive(RuntimeDebug, Decode, Encode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum ForeignAssetId {
-	Xcm(XcmAssetLocation),
+	Xcm(VersionedMultiLocation),
 	IbcIcs20(PrefixedDenom),
+}
+
+#[derive(RuntimeDebug, Decode, Encode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum VersionedMultiLocation {
+	#[codec(index = 3)]
+	V3(XcmAssetLocation),
 }
 
 impl Default for ForeignAssetId {
 	fn default() -> Self {
-		Self::Xcm(XcmAssetLocation::default())
+		Self::Xcm(VersionedMultiLocation::V3(Default::default()))
 	}
 }
 
 impl From<XcmAssetLocation> for ForeignAssetId {
 	fn from(this: XcmAssetLocation) -> Self {
+		Self::Xcm(VersionedMultiLocation::V3(this))
+	}
+}
+
+impl From<VersionedMultiLocation> for ForeignAssetId {
+	fn from(this: VersionedMultiLocation) -> Self {
 		Self::Xcm(this)
 	}
 }

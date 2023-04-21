@@ -48,20 +48,23 @@ use ibc_rs_scale::{
 	core::ics24_host::identifier::{ChannelId, PortId},
 };
 
-use crate::currency::{CurrencyId, ForeignAssetId, PrefixedDenom, WellKnownCurrency};
-
+use crate::currency::{
+	CurrencyId, ForeignAssetId, PrefixedDenom, VersionedMultiLocation, WellKnownCurrency,
+};
 pub struct Picasso;
 
 impl Picasso {
 	pub fn assets() -> Vec<(u64, Option<ForeignAssetId>, AssetInfo<Balance>)> {
 		let usdt = (
 			130,
-			Some(ForeignAssetId::Xcm(XcmAssetLocation::new(MultiLocation::new(
-				1,
-				X3(
-					Parachain(statemine::ID),
-					PalletInstance(statemine::ASSETS),
-					GeneralIndex(statemine::USDT),
+			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(XcmAssetLocation::new(
+				MultiLocation::new(
+					1,
+					X3(
+						Parachain(statemine::ID),
+						PalletInstance(statemine::ASSETS),
+						GeneralIndex(statemine::USDT),
+					),
 				),
 			)))),
 			AssetInfo {
@@ -114,12 +117,14 @@ impl Composable {
 	pub fn assets() -> Vec<(u64, Option<ForeignAssetId>, AssetInfo<Balance>)> {
 		let usdt = (
 			140,
-			Some(ForeignAssetId::Xcm(XcmAssetLocation::new(MultiLocation::new(
-				1,
-				X3(
-					Parachain(statemine::ID),
-					PalletInstance(statemine::ASSETS),
-					GeneralIndex(statemine::USDT),
+			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(XcmAssetLocation(
+				MultiLocation::new(
+					1,
+					X3(
+						Parachain(statemine::ID),
+						PalletInstance(statemine::ASSETS),
+						GeneralIndex(statemine::USDT),
+					),
 				),
 			)))),
 			AssetInfo {
@@ -157,7 +162,9 @@ impl Composable {
 		);
 		let dot = (
 			6,
-			Some(ForeignAssetId::Xcm(XcmAssetLocation::new(MultiLocation::new(1, Here)))),
+			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(XcmAssetLocation(
+				MultiLocation::new(1, Here),
+			)))),
 			AssetInfo {
 				name: Some(
 					BiBoundedAssetName::from_vec(b"Polkadot".to_vec())
