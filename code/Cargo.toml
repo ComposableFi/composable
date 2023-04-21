@@ -313,170 +313,170 @@ mmr-gadget = { git = "https://github.com/paritytech/substrate", rev = "18bb7c7c8
 mmr-rpc = { git = "https://github.com/paritytech/substrate", rev = "18bb7c7c841b101c19a8d1881b893ae8e37de460", default-features = false }
 
 
-[patch."https://github.com/paritytech/substrate"]
-beefy-gadget = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-beefy-gadget-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-beefy-merkle-tree = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-beefy = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-fork-tree = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-frame-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-frame-benchmarking-cli = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-frame-election-provider-support = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-frame-executive = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-frame-support = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-frame-support-procedural = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-frame-support-procedural-tools = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-frame-support-procedural-tools-derive = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-frame-system = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-frame-system-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-frame-system-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-frame-try-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-aura = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-babe = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-bags-list = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-balances = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-beefy = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-beefy-mmr = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-bounties = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-child-bounties = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-collective = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-conviction-voting = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-fast-unstake = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-nis = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-ranked-collective = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-referenda = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-state-trie-migration = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-whitelist = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-democracy = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-election-provider-multi-phase = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-election-provider-support-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-elections-phragmen = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-identity = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-im-online = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-indices = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-membership = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-mmr = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-multisig = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-nomination-pools = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-nomination-pools-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-nomination-pools-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-offences = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-offences-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-preimage = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-proxy = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-randomness-collective-flip = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-recovery = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-scheduler = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-session = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-session-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-society = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-staking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-staking-reward-curve = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-staking-reward-fn = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-sudo = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-timestamp = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-tips = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-transaction-payment = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-transaction-payment-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-treasury = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-utility = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-pallet-vesting = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-allocator = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-basic-authorship = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-block-builder = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-chain-spec = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-chain-spec-derive = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-cli = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-client-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-client-db = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-consensus = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-consensus-aura = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-consensus-babe = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-consensus-babe-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-consensus-epochs = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-consensus-slots = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-executor = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-executor-common = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-executor-wasmi = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-executor-wasmtime = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-finality-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-finality-grandpa-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-informant = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-keystore = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-network = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-network-common = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-network-gossip = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-offchain = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-peerset = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-proposer-metrics = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-rpc-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-rpc-server = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-service = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-state-db = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-sync-state-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-sysinfo = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-telemetry = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-tracing = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-tracing-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-transaction-pool = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-transaction-pool-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sc-utils = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-api-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-application-crypto = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-arithmetic = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-block-builder = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-blockchain = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-consensus = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-consensus-aura = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-consensus-babe = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-consensus-slots = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-consensus-vrf = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-core = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-core-hashing = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-core-hashing-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-database = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-debug-derive = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-externalities = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-finality-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-inherents = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-io = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-keyring = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-keystore = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-maybe-compressed-blob = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-mmr-primitives = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-npos-elections = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-offchain = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-panic-handler = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-runtime-interface = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-runtime-interface-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-session = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-staking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-state-machine = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-std = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-storage = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-timestamp = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-tracing = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-transaction-pool = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-transaction-storage-proof = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-trie = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-version = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-version-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-wasm-interface = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-sp-weights = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-substrate-build-script-utils = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-substrate-frame-rpc-system = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-substrate-prometheus-endpoint = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-substrate-state-trie-migration-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-substrate-wasm-builder = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-try-runtime-cli = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-mmr-gadget = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
-mmr-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# [patch."https://github.com/paritytech/substrate"]
+# beefy-gadget = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# beefy-gadget-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# beefy-merkle-tree = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-beefy = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# fork-tree = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# frame-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# frame-benchmarking-cli = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# frame-election-provider-support = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# frame-executive = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# frame-support = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# frame-support-procedural = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# frame-support-procedural-tools = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# frame-support-procedural-tools-derive = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# frame-system = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# frame-system-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# frame-system-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# frame-try-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-aura = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-babe = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-bags-list = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-balances = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-beefy = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-beefy-mmr = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-bounties = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-child-bounties = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-collective = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-conviction-voting = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-fast-unstake = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-nis = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-ranked-collective = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-referenda = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-state-trie-migration = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-whitelist = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-democracy = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-election-provider-multi-phase = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-election-provider-support-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-elections-phragmen = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-identity = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-im-online = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-indices = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-membership = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-mmr = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-multisig = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-nomination-pools = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-nomination-pools-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-nomination-pools-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-offences = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-offences-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-preimage = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-proxy = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-randomness-collective-flip = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-recovery = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-scheduler = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-session = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-session-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-society = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-staking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-staking-reward-curve = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-staking-reward-fn = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-sudo = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-timestamp = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-tips = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-transaction-payment = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-transaction-payment-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-treasury = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-utility = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# pallet-vesting = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-allocator = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-basic-authorship = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-block-builder = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-chain-spec = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-chain-spec-derive = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-cli = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-client-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-client-db = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-consensus = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-consensus-aura = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-consensus-babe = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-consensus-babe-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-consensus-epochs = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-consensus-slots = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-executor = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-executor-common = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-executor-wasmi = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-executor-wasmtime = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-finality-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-finality-grandpa-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-informant = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-keystore = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-network = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-network-common = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-network-gossip = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-offchain = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-peerset = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-proposer-metrics = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-rpc-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-rpc-server = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-service = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-state-db = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-sync-state-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-sysinfo = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-telemetry = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-tracing = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-tracing-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-transaction-pool = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-transaction-pool-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sc-utils = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-api = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-api-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-application-crypto = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-arithmetic = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-block-builder = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-blockchain = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-consensus = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-consensus-aura = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-consensus-babe = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-consensus-slots = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-consensus-vrf = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-core = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-core-hashing = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-core-hashing-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-database = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-debug-derive = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-externalities = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-finality-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-inherents = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-io = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-keyring = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-keystore = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-maybe-compressed-blob = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-mmr-primitives = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-npos-elections = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-offchain = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-panic-handler = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-runtime-interface = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-runtime-interface-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-session = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-staking = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-state-machine = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-std = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-storage = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-timestamp = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-tracing = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-transaction-pool = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-transaction-storage-proof = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-trie = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-version = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-version-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-wasm-interface = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# sp-weights = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# substrate-build-script-utils = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# substrate-frame-rpc-system = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# substrate-prometheus-endpoint = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# substrate-state-trie-migration-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# substrate-wasm-builder = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# try-runtime-cli = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# mmr-gadget = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
+# mmr-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
