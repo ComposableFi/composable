@@ -338,7 +338,6 @@ parameter_types! {
 }
 
 /// Native <-> Cosmwasm account mapping
-/// TODO(hussein-aitlahcen): Probably nicer to have SS58 representation here.
 pub struct AccountToAddr;
 
 impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
@@ -379,7 +378,7 @@ impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
 
 parameter_types! {
   pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
-  pub const ChainId: &'static str = "composable-network-dali";
+  pub const ChainId: &'static str = "composable-network-picasso";
   pub const MaxFrames: u32 = 64;
 	pub const MaxCodeSize: u32 = 512 * 1024;
   pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
