@@ -10,7 +10,7 @@
           ${composable-bench-node}/bin/composable benchmark pallet \
           --chain="${chainspec}" \
           --execution=wasm \
-          --wasm-execution="interpreted-i-know-what-i-do" \
+          --wasm-execution="compiled" \
           --pallet="*" \
           --extrinsic="*" \
           --steps=2 \
