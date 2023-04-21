@@ -30,6 +30,14 @@ pub fn dual_asset_pool_weights(
 		.expect("only 2 elements present, should not fail; qed;")
 }
 
+pub fn dual_asset_pool_weights_vec(
+	first_asset: AssetId,
+	first_asset_weight: Permill,
+	second_asset: AssetId,
+) -> Vec<(AssetId, Permill)> {
+	[(first_asset, first_asset_weight), (second_asset, first_asset_weight.left_from_one())].into()
+}
+
 /// `expected_lp_check` takes base_amount, quote_amount and lp_tokens in order and returns
 /// true if lp_tokens are expected for given base_amount, quote_amount.
 pub fn common_add_remove_lp(
@@ -116,8 +124,8 @@ pub fn common_add_remove_lp(
 pub fn get_pair(init_config: PoolInitConfiguration<AccountId, AssetId>) -> [AssetId; 2] {
 	match init_config {
 		PoolInitConfiguration::DualAssetConstantProduct { assets_weights, .. } => assets_weights
-			.keys()
-			.copied()
+			.into_iter()
+			.map(|(k, v)| k)
 			.collect::<Vec<_>>()
 			.try_into()
 			.expect("pool should have exactly 2 assets; qed;"),
@@ -359,7 +367,7 @@ mod create {
 	fn signed_user_can_create() {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(1);
-			let pool_weights = dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT);
+			let pool_weights = dual_asset_pool_weights_vec(BTC, Permill::from_percent(50), USDT);
 			assert_ok!(Pablo::create(
 				RuntimeOrigin::signed(ALICE),
 				PoolInitConfiguration::DualAssetConstantProduct {
@@ -368,6 +376,7 @@ mod create {
 					fee: Permill::zero(),
 				},
 			));
+			let pool_weights = dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT);
 			let inner_weights = pool_weights.into_inner();
 			assert_has_event::<Test, _>(|e| {
 				matches!(&e.event, mock::RuntimeEvent::Pablo(crate::Event::PoolCreated { pool_id: 0, asset_weights, .. }) if asset_weights.clone() == inner_weights)
