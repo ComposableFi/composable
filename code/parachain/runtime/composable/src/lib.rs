@@ -667,6 +667,7 @@ construct_runtime!(
 		CallFilter: call_filter = 100,
 
 		Ibc: pallet_ibc = 190,
+		Ics20Fee: pallet_ibc::ics20_fee = 191,
 
 	}
 );
