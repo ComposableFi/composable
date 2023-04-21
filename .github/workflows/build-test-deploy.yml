@@ -406,6 +406,7 @@ jobs:
   build-product:
     name: "build-product #flaky"
     continue-on-error: true
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}    
     strategy:
       matrix:
         arch: [aarch64-darwin]

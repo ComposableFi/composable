@@ -49,9 +49,9 @@
 
           tag-release = pkgs.writeShellApplication {
             name = "tag-release";
-            runtimeInputs = [ pkgs.git pkgs.gpg ];
+            runtimeInputs = [ pkgs.git pkgs.gpg pkgs.yq-go ];
             text = ''
-              jq code/
+              yg code/Cargo.toml
               git tag --sign "release-v$1" --message "RC" && git push origin "release-v$1"
             '';
           };

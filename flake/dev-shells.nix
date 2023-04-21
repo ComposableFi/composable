@@ -26,6 +26,7 @@
           terraform-ls
           yarn
           zombienet
+          yq-go
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;
