@@ -101,8 +101,8 @@ impl core::str::FromStr for MemoMessage {
 parameter_types! {
 	pub const GRANDPA: pallet_ibc::LightClientProtocol = pallet_ibc::LightClientProtocol::Grandpa;
 	pub const IbcTriePrefix : &'static [u8] = b"ibc/";
-	// converted from 5xMXcPsD9B9xDMvLyNBLmn9uhK7sTXTfubGVTZmXwVJmTVWa using https://www.shawntabrizi.com/substrate-js-utilities/
-	pub FeeAccount: <Runtime as pallet_ibc::Config>::AccountIdConversion = ibc_primitives::IbcAccount(AccountId32::from(hex!("a72ef3ce1ecd46163bc5e23fd3e6a4623d9717c957fb59001a5d4cb949150f28")));
+	// converted from 63yg1BAWeUQG7WgpZNqbPrreo9HCoWKUcFqswfNz3TjpKHiL using https://www.shawntabrizi.com/substrate-js-utilities/
+	pub FeeAccount: <Runtime as pallet_ibc::Config>::AccountIdConversion = ibc_primitives::IbcAccount(AccountId32::from(hex!("9fed34f0114500f263d074e91ac4b1ef6b11b2e09fa4684dfe4bce07f94ab603")));
 
 }
 
