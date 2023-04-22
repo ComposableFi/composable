@@ -317,6 +317,15 @@ mmr-gadget = { git = "https://github.com/paritytech/substrate", rev = "18bb7c7c8
 mmr-rpc = { git = "https://github.com/paritytech/substrate", rev = "18bb7c7c841b101c19a8d1881b893ae8e37de460", default-features = false }
 
 
+#######################################
+# DO NOT DELETE PATCHES, BUT COMMENT OUT
+# PATCHES APPEAR AND GO AWAY ALL THE TIME
+# HARD TO RESTORE LIST OF ALL DEPS TO PATCH
+#######################################
+
+[patch."https://github.com/paritytech/polkadot"]
+xcm = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+
 [patch."https://github.com/paritytech/substrate"]
 beefy-gadget = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
 beefy-gadget-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
