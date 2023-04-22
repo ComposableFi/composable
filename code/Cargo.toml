@@ -325,26 +325,30 @@ mmr-rpc = { git = "https://github.com/paritytech/substrate", rev = "18bb7c7c841b
 
 [patch."https://github.com/paritytech/polkadot"]
 kusama-runtime = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-polkadot-cli ={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-polkadot-parachain  ={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-polkadot-primitives ={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-cli = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-parachain = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-primitives = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
 polkadot-runtime = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-polkadot-service ={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-service = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
 rococo-runtime = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
 xcm = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-xcm-builder ={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-xcm-executor ={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-pallet-xcm ={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-polkadot-runtime-common ={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-polkadot-client ={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-polkadot-core-primitives ={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-polkadot-network-bridge ={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-polkadot-node-network-protocol={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-polkadot-node-subsystem-util={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+xcm-builder = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+xcm-executor = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+pallet-xcm = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-runtime-common = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-client = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-core-primitives = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-network-bridge = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-node-network-protocol = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-node-subsystem-util = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-node-primitives = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-node-subsystem = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-overseer = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
 
-polkadot-node-primitives ={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-polkadot-node-subsystem ={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
-polkadot-overseer ={ git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+
+[patch."https://github.com/paritytech/cumulus"]
+cumulus-primitives-core = { git = "https://github.com/ComposableFi/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
+parachain-info = { git = "https://github.com/ComposableFi/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
 
 [patch."https://github.com/paritytech/substrate"]
 beefy-gadget = { git = "https://github.com/ComposableFi/substrate", rev = "d1a5f183c4419fd6804a611916731253597e4982" }
