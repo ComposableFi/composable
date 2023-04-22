@@ -57,7 +57,7 @@
           runtimeInputs = [ pkgs.git pkgs.yq ];
           text = ''
             # shellcheck disable=SC2015
-            git push --delete origin "release-v$1" && git tag --delete "release-v$1" || true
+            git tag --delete "release-v$1" || true && git push --delete origin "release-v$1"
           '';
         };
 
