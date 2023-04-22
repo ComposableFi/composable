@@ -82,6 +82,7 @@
         (with self'.packages; [
           cmc-api-image
           hyperspace-composable-rococo-picasso-rococo-image
+          hyperspace-composable-polkadot-picasso-kusama-image
           devnet-picasso-image
         ]);
     };

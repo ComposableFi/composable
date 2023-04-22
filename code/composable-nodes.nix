@@ -33,7 +33,8 @@
           src = ./.;
         };
       };
-
+      toDockerImage = package:
+        self.inputs.bundlers.bundlers."${system}".toDockerImage package;
       makeComposableNode = picasso-runtime:
         crane.nightly.buildPackage (systemCommonRust.common-attrs // rec {
           name = "composable";
@@ -59,6 +60,7 @@
     in {
       packages = rec {
 
+        composable-node-image = toDockerImage composable-node;
         composable-node = makeComposableNode self'.packages.picasso-runtime;
         composable-testfast-node =
           makeComposableNode self'.packages.picasso-testfast-runtime;

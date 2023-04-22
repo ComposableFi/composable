@@ -1,7 +1,15 @@
 { self, ... }: {
   perSystem =
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }: {
-      packages = let packages = self'.packages;
+      packages = let
+        packages = self'.packages;
+        make-bundle = type: package:
+          self.inputs.bundlers.bundlers."${system}"."${type}" package;
+        subwasm-version = runtime:
+          builtins.readFile (pkgs.runCommand "subwasm-version" { } ''
+            ${packages.subwasm}/bin/subwasm version ${runtime}/lib/runtime.optimized.wasm | grep specifications | cut -d ":" -f2 | cut -d " " -f3 | head -c -1 > $out
+          '');
+
       in rec {
         generated-release-body = let
           subwasm-call = runtime:
@@ -65,14 +73,7 @@
         generate-release-artifacts = pkgs.writeShellApplication {
           name = "generate-release-artifacts";
           runtimeInputs = [ pkgs.bash pkgs.binutils pkgs.coreutils ];
-          text = let
-            make-bundle = type: package:
-              self.inputs.bundlers.bundlers."${system}"."${type}" package;
-            subwasm-version = runtime:
-              builtins.readFile (pkgs.runCommand "subwasm-version" { } ''
-                ${packages.subwasm}/bin/subwasm version ${runtime}/lib/runtime.optimized.wasm | grep specifications | cut -d ":" -f2 | cut -d " " -f3 | head -c -1 > $out
-              '');
-          in ''
+          text = ''
             mkdir -p release-artifacts/to-upload/
 
             echo "Generate release body"
@@ -90,7 +91,6 @@
               subwasm-version packages.picasso-testfast-runtime
             }.wasm
 
-
             echo "Generate node packages"
             cp ${
               make-bundle "toRPM" packages.composable-node
@@ -98,10 +98,7 @@
             cp ${
               make-bundle "toDEB" packages.composable-node
             }/*.deb release-artifacts/to-upload/composable-node_${packages.composable-node.version}-1_amd64.deb
-            cp ${
-              make-bundle "toDockerImage" packages.composable-node
-            } release-artifacts/composable-docker-image
-
+            cp ${packages.composable-node-image} release-artifacts/composable-docker-image
 
             cp ${
               make-bundle "toRPM" packages.composable-testfast-node
@@ -112,6 +109,12 @@
             cp ${
               make-bundle "toDockerImage" packages.composable-testfast-node
             } release-artifacts/composable-testfast-node-docker-image
+
+            echo "Bridge"
+
+            cp ${
+              packages.hyperspace-composable-polkadot-picasso-kusama-image
+            } release-artifacts/hyperspace-composable-polkadot-picasso-kusama-image
 
             # Checksum everything
             cd release-artifacts/to-upload

@@ -37,6 +37,11 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # for mac builder
+    darwin = {
+      url = "github:lnl7/nix-darwin/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   nixConfig = {
@@ -77,6 +82,7 @@
         ./flake/fmt.nix
         ./flake/help.nix
         ./flake/home-configurations.nix
+        ./flake/darwin-configurations.nix
         ./flake/overlays.nix
         ./flake/release.nix
         ./flake/subxt.nix
