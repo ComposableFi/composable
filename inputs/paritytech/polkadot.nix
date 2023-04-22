@@ -72,7 +72,7 @@
           owner = "paritytech";
           rev = rococo-runtime-commit;
           hash = "sha256-byUC+6SQ+TgvQCXdQWIGf/BAyxitnT1q69RdyZL8AAc=";
-          cargoSha256 = "sha256-byUC+6SQ+TgvQCXdQWIGf/BAyxitnT1q69RdyZL8AAc=";
+          cargoSha256 = "sha256-6MDtLXbEJuxB6+ObKdWqH0cFDzaDqHH00wuGZJ7kb+g=";
         };
 
         polkadot-node-on-parity-rococo = buildPolkadotNode rec {
