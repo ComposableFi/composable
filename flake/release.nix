@@ -112,9 +112,7 @@
 
             echo "Bridge"
 
-            cp ${
-              packages.hyperspace-composable-polkadot-picasso-kusama-image
-            } release-artifacts/hyperspace-composable-polkadot-picasso-kusama-image
+            cp ${packages.hyperspace-composable-polkadot-picasso-kusama-image} release-artifacts/hyperspace-composable-polkadot-picasso-kusama-image
 
             # Checksum everything
             cd release-artifacts/to-upload
