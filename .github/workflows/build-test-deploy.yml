@@ -30,6 +30,11 @@ env:
 jobs:
 
   dependency-review:
+    concurrency:
+      group: ${{ github.workflow }}-dependency-review-${{ github.event.pull_request.title }}
+      cancel-in-progress: true  
+    needs:
+      - privilege-check  
     runs-on:
       - ubuntu-latest
     steps:
