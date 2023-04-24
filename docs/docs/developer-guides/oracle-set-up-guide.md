@@ -37,8 +37,9 @@ Below is a high level diagram that shows the interactions between the components
 ## Setting up the price feed 
 
 ### Requirements
-- Collator node
-- Docker or Rust if building your own binary
+- [Collator node](https://docs.composable.finance/developer-guides/collator-guide/)
+- [Docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository) or [Rust](https://www.rust-lang.org/tools/install) if building your own binary
+- [Docker-compose](https://docs.docker.com/compose/install/other/#on-linux)
 
 ### Setup using docker
 
