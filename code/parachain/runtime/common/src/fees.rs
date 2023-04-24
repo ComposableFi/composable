@@ -105,6 +105,11 @@ impl<
 	}
 }
 
+parameter_types! {
+	pub IbcIcs20ServiceCharge: Perbill = Perbill::from_rational(4_u32, 1000_u32 );
+	pub const IbcIcs20FeePalletId: frame_support::PalletId = frame_support::PalletId(*b"ics20fee");
+}
+
 #[cfg(test)]
 mod commons_sense {
 	use composable_traits::rational;

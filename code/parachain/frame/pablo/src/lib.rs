@@ -104,7 +104,7 @@ pub mod pallet {
 	pub enum PoolInitConfiguration<AccountId: Clone, AssetId: Clone> {
 		DualAssetConstantProduct {
 			owner: AccountId,
-			assets_weights: BoundedBTreeMap<AssetId, Permill, ConstU32<2>>,
+			assets_weights: Vec<(AssetId, Permill)>,
 			// trading fee
 			fee: Permill,
 		},
@@ -228,6 +228,7 @@ pub mod pallet {
 		CannotSwapSameAsset,
 		/// Cannot buy an asset with itself.
 		CannotBuyAssetWithItself,
+		IncorrectPoolConfig,
 	}
 
 	#[pallet::config]
@@ -511,6 +512,10 @@ pub mod pallet {
 		) -> Result<T::PoolId, DispatchError> {
 			let (owner, pool_id, assets_weights, lp_token) = match init_config {
 				PoolInitConfiguration::DualAssetConstantProduct { owner, fee, assets_weights } => {
+					let assets_weights: BTreeMap<T::AssetId, Permill> =
+						assets_weights.into_iter().collect();
+					let assets_weights: BoundedBTreeMap<T::AssetId, Permill, ConstU32<2>> =
+						assets_weights.try_into().map_err(|_| Error::<T>::IncorrectPoolConfig)?;
 					let (pool_id, lp_token) = DualAssetConstantProduct::<T>::do_create_pool(
 						&owner,
 						FeeConfig::default_from(fee),

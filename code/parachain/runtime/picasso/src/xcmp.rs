@@ -213,7 +213,7 @@ parameter_type_with_key! {
 
 		let location = primitives::currency::VersionedMultiLocation::V3(*location);
 		if let Some(Parachain(id)) = interior {
-			if let Some(amount) = AssetsRegistry::min_xcm_fee(ParaId::from(*id), location.into()) {
+			if let Some(amount) = AssetsRegistry::min_xcm_fee(*id, location.into()) {
 				return Some(amount)
 			}
 		}

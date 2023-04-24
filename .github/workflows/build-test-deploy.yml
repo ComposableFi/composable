@@ -120,8 +120,7 @@ jobs:
       - privilege-check
       - lfs-check
     runs-on:
-      - self-hosted
-      - arm-monster
+      - buildjet-32vcpu-ubuntu-2204-arm
     concurrency:
       group: ${{ github.workflow }}-build-all-platforms-arm-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -134,7 +133,9 @@ jobs:
           extra_nix_config: |
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
-            system-features = kvm          
+            system-features = kvm       
+            keep-derivations = true
+            keep-outputs = true
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
@@ -160,11 +161,58 @@ jobs:
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-platforms --keep-going
-      - name: List built results 
-        run: |
-          ls result
-          tree result -L 3
           
+
+  build-all-production-deps:
+    name: build-all-production-deps
+    needs: 
+      - privilege-check
+      - lfs-check
+    runs-on:
+      - self-hosted
+      - x64-monster
+    concurrency:
+      group: ${{ github.workflow }}-build-all-production-deps-${{ github.event.pull_request.title }}
+      cancel-in-progress: true
+    steps:
+      - name: Set up Nix
+        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
+        with:
+          install_url: https://releases.nixos.org/nix/${{ env.NIX_VERSION }}/install
+          nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
+          extra_nix_config: |
+            sandbox = relaxed
+            narinfo-cache-negative-ttl = 0      
+            system-features = kvm         
+            keep-derivations = true
+            keep-outputs = true 
+      - name: Set up Cachix
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
+        with:
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{ env.CACHIX_NAME }}
+      - name: Add tools needed for non-nix steps
+        run: |  
+          nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false          
+      - name: Nix flake show
+        run: |
+          nix --version
+          nix show-config
+          NIX_DEBUG_COMMAND="" && [[ $ACTIONS_RUNNER_DEBUG = "true" ]] && NIX_DEBUG_COMMAND='--print-build-logs --debug --show-trace --verbose'
+          nix flake show --allow-import-from-derivation --fallback --keep-failed ${NIX_DEBUG_COMMAND}
+
+      - name: Build all packages 
+        uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#all-production-deps --keep-going
+
   build-all-ci-packages:
     name: build-all-ci-packages
     needs: 
@@ -185,7 +233,9 @@ jobs:
           extra_nix_config: |
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
-            system-features = kvm          
+            system-features = kvm         
+            keep-derivations = true
+            keep-outputs = true 
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
@@ -200,22 +250,19 @@ jobs:
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-          
+          persist-credentials: false          
+
       - name: Nix flake show
         run: |
           nix --version
           nix show-config
           NIX_DEBUG_COMMAND="" && [[ $ACTIONS_RUNNER_DEBUG = "true" ]] && NIX_DEBUG_COMMAND='--print-build-logs --debug --show-trace --verbose'
           nix flake show --allow-import-from-derivation --fallback --keep-failed ${NIX_DEBUG_COMMAND}
+
       - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-ci-packages --keep-going
-      - name: List built results 
-        run: |
-          ls result
-          tree result -L 3
 
   build-all-benchmarks-packages:
     name: build-all-benchmarks-packages
@@ -263,6 +310,7 @@ jobs:
         run: |
           ls result
           tree result -L 3
+
 
   build-all-misc-packages:
     name: build-all-misc-packages
@@ -315,16 +363,14 @@ jobs:
     name: build-all-deps-packages
     strategy:
       matrix:
-        arch: [x64-cute]
+        runner: [buildjet-32vcpu-ubuntu-2204]
     needs: 
       - privilege-check
       - lfs-check
     runs-on:
-      - self-hosted
-      - ${{ matrix.arch }}
-      - Linux
+      - ${{ matrix.runner }}
     concurrency:
-      group: ${{ github.workflow }}-build-all-deps-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
+      group: ${{ github.workflow }}-build-all-deps-packages-${{ matrix.runner }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:
       - name: Set up Nix
@@ -360,6 +406,7 @@ jobs:
   build-product:
     name: "build-product #flaky"
     continue-on-error: true
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}    
     strategy:
       matrix:
         arch: [aarch64-darwin]

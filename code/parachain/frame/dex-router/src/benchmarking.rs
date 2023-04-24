@@ -16,15 +16,13 @@ pub fn dual_asset_pool_weights<T>(
 	first_asset: <T as pallet_pablo::Config>::AssetId,
 	first_asset_weight: Permill,
 	second_asset: <T as pallet_pablo::Config>::AssetId,
-) -> BoundedBTreeMap<<T as pallet_pablo::Config>::AssetId, Permill, ConstU32<2>>
+) -> Vec<(<T as pallet_pablo::Config>::AssetId, Permill)>
 where
 	T: pallet_pablo::Config,
 {
-	let mut asset_weights = BoundedBTreeMap::new();
-	asset_weights.try_insert(first_asset, first_asset_weight).expect("Should work");
-	asset_weights
-		.try_insert(second_asset, first_asset_weight.left_from_one())
-		.expect("Should work");
+	let mut asset_weights = Vec::new();
+	asset_weights.push((first_asset, first_asset_weight));
+	asset_weights.push((second_asset, first_asset_weight.left_from_one()));
 	asset_weights
 }
 
