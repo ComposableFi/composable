@@ -16,7 +16,7 @@ use sp_std::collections::btree_map::BTreeMap;
 use crate::{
 	mock::*,
 	test::{
-		common_test_functions::{dual_asset_pool_weights, dual_asset_pool_weights_vec},
+		common_test_functions::dual_asset_pool_weights,
 		dual_asset_constant_product_tests::{create_pool_from_config, lp_token_of_pool},
 	},
 	PoolInitConfiguration,
@@ -32,7 +32,7 @@ fn add_remove_lp() {
 
 		let init_config = PoolInitConfiguration::DualAssetConstantProduct {
 			owner: ALICE,
-			assets_weights: dual_asset_pool_weights_vec(
+			assets_weights: dual_asset_pool_weights(
 				first_asset,
 				Permill::from_percent(50_u32),
 				second_asset,
@@ -155,7 +155,7 @@ mod do_buy {
 			// 50/50 BTC/USDT Pool with a 0.3% fee
 			let init_config = PoolInitConfiguration::DualAssetConstantProduct {
 				owner: ALICE,
-				assets_weights: dual_asset_pool_weights_vec(BTC, Permill::from_percent(50), USDT),
+				assets_weights: dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT),
 				fee,
 			};
 			let pool_id = create_pool_from_config(init_config);
@@ -213,11 +213,7 @@ mod do_buy {
 			let pool_id =
 				create_pool_from_config(PoolInitConfiguration::DualAssetConstantProduct {
 					owner: ALICE,
-					assets_weights: dual_asset_pool_weights_vec(
-						BTC,
-						Permill::from_percent(50),
-						USDT,
-					),
+					assets_weights: dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT),
 					fee: Permill::from_rational::<u32>(3, 1000),
 				});
 
@@ -247,7 +243,7 @@ mod do_buy {
 				let pool_id =
 					create_pool_from_config(PoolInitConfiguration::DualAssetConstantProduct {
 						owner: ALICE,
-						assets_weights: dual_asset_pool_weights_vec(BTC, first_asset_weight, USDT),
+						assets_weights: dual_asset_pool_weights(BTC, first_asset_weight, USDT),
 						fee: Permill::zero(),
 					});
 
@@ -313,7 +309,7 @@ mod do_swap {
 			// 50/50 BTC/USDT Pool with a 0.3% fee
 			let init_config = PoolInitConfiguration::DualAssetConstantProduct {
 				owner: ALICE,
-				assets_weights: dual_asset_pool_weights_vec(BTC, Permill::from_percent(50), USDT),
+				assets_weights: dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT),
 				fee,
 			};
 			let pool_id = create_pool_from_config(init_config);
@@ -374,11 +370,7 @@ mod do_swap {
 			let pool_id =
 				create_pool_from_config(PoolInitConfiguration::DualAssetConstantProduct {
 					owner: ALICE,
-					assets_weights: dual_asset_pool_weights_vec(
-						BTC,
-						Permill::from_percent(50),
-						USDT,
-					),
+					assets_weights: dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT),
 					fee: Permill::from_rational::<u32>(3, 1000),
 				});
 
@@ -408,7 +400,7 @@ mod do_swap {
 				let pool_id =
 					create_pool_from_config(PoolInitConfiguration::DualAssetConstantProduct {
 						owner: ALICE,
-						assets_weights: dual_asset_pool_weights_vec(BTC, first_asset_weight, USDT),
+						assets_weights: dual_asset_pool_weights(BTC, first_asset_weight, USDT),
 						fee: Permill::zero(),
 					});
 
@@ -470,7 +462,7 @@ mod add_liquidity {
 				let pool_id =
 					create_pool_from_config(PoolInitConfiguration::DualAssetConstantProduct {
 						owner: ALICE,
-						assets_weights: dual_asset_pool_weights_vec(BTC, first_asset_weight, USDT),
+						assets_weights: dual_asset_pool_weights(BTC, first_asset_weight, USDT),
 						fee: Permill::zero(),
 					});
 				let lp_token = lp_token_of_pool(pool_id);
@@ -541,7 +533,7 @@ mod remove_liquidity {
 		// 50/50 BTC/USDT Pool with a 0.3% fee
 		let init_config = PoolInitConfiguration::DualAssetConstantProduct {
 			owner: ALICE,
-			assets_weights: dual_asset_pool_weights_vec(BTC, Permill::from_percent(50), USDT),
+			assets_weights: dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT),
 			fee,
 		};
 		let pool_id = create_pool_from_config(init_config);
@@ -713,7 +705,7 @@ mod remove_liquidity {
 				let pool_id =
 					create_pool_from_config(PoolInitConfiguration::DualAssetConstantProduct {
 						owner: ALICE,
-						assets_weights: dual_asset_pool_weights_vec(BTC, first_asset_weight, USDT),
+						assets_weights: dual_asset_pool_weights(BTC, first_asset_weight, USDT),
 						fee: Permill::zero(),
 					});
 				let lp_token = lp_token_of_pool(pool_id);
@@ -785,7 +777,7 @@ mod integration {
 			// 50/50 BTC/USDT Pool with a 0.3% fee
 			let init_config = PoolInitConfiguration::DualAssetConstantProduct {
 				owner: ALICE,
-				assets_weights: dual_asset_pool_weights_vec(BTC, Permill::from_percent(50), USDT),
+				assets_weights: dual_asset_pool_weights(BTC, Permill::from_percent(50), USDT),
 				fee,
 			};
 			let pool_id = create_pool_from_config(init_config);

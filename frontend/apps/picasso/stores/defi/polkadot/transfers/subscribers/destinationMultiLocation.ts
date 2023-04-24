@@ -76,15 +76,16 @@ export const subscribeDestinationMultiLocation = async (
         recipient
       ) {
         const dest = api.createType("XcmVersionedMultiLocation", {
-          V3: api.createType("XcmV3MultiLocation", {
+          V1: api.createType("XcmV1MultiLocation", {
             parents: api.createType("u8", 1),
-            interior: api.createType("XcmV3Junctions", {
+            interior: api.createType("XcmV1MultilocationJunctions", {
               X2: [
-                api.createType("XcmV3Junction", {
+                api.createType("XcmV1Junction", {
                   Parachain: api.createType("Compact<u32>", 1000),
                 }),
-                api.createType("XcmV3Junction", {
+                api.createType("XcmV1Junction", {
                   AccountId32: {
+                    network: api.createType("XcmV0JunctionNetworkId", "Any"),
                     id: api.createType("AccountId32", recipient),
                   },
                 }),
