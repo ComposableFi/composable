@@ -31,119 +31,57 @@ Below is a high level diagram that shows the interactions between the components
 
 ## Setting up a node
 
-[Setup a node by following the collator guide](https://docs.composable.finance/developer-guides#collator-set-up-guide)
+[Setup a node by following the collator guide](https://docs.composable.finance/developer-guides/collator-guide)
 
 
-### Setting up a node in development mode
+## Setting up the price feed 
 
-For development mode, polkalaunch scripts should be used. 
+### Requirements
+- Collator node
+- Docker or Rust if building your own binary
 
-It sets up a local network with 4 collators with predefined keys and addresses.
+### Setup using docker
 
-**Setup required prerequisites**
+#### Standalone docker
 
-A **Debian** based Linux system is required, we recommend Debian, Ubuntu or Linux Mint.
+Get price feeder docker image:
+```bash
+docker pull composablefi/price-feeder:latest
+```
 
-1. Set up required packages 
-
+Running the price-feeder:
 Run the following command:
-
-
 ```bash
-sudo apt update && sudo apt install -y git clang curl libssl-dev llvm libudev-dev pkg-config wget
+docker run --rm -d -p 3001:3001 -e RUST_LOG=debug -ti price-feeder --composable-node ws://<your-collator-node-address> -l 0.0.0.0:3001
+
 ```
 
-2. Setup Rust binary and Toolchain
+#### Using docker-compose
+Create a file called docker-compose.yml, then add the following:
+```yaml
+services:
+  price-feeder:
+    image: composablefi/price-feeder:latest
+    command: --composable-node ws://<your-collator-node-address>:<port> -l 0.0.0.0:3001
+    environment:
+      - RUST_LOG=debug
+    ports:
+      - 3001:3001
+```
+Make sure you add the right address and port to access your collator node.
 
-Run the following commands:
-
-
+To start the price-feeder make sure you cd into the directory where the `docker-compose.yml` was created, then run:
 ```bash
-RUST_C="nightly-2021-11-07"
-curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-export PATH="$PATH:$HOME/.cargo/bin" && \
-rustup toolchain uninstall $(rustup toolchain list) && \
-rustup toolchain install $RUST_C && \
-rustup target add wasm32-unknown-unknown --toolchain $RUST_C && \
-rustup default $RUST_C && \
-rustup show
+docker-compose up 
 ```
-
-And wait for the installation process to finish.
-
-3. Setup Nodejs & Yarn 
-
-Run the following commands:
-
+or 
 ```bash
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
-export NVM_DIR="$HOME/.nvm" && \
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
-nvm install v16.15.0 && \
-nvm use v16.15.0 && \
-npm install --global yarn
+docker-compose up -d
 ```
+to run the service in the background.
 
-**Run devnet**
-
-```bash
-nix run .#devnet-picasso
-```
-
-This means your node has started.
-
-Nodes are writing logs here: 
-
-```markdown
-ubuntu@oracle-test:~/composable/scripts/polkadot-launch$ ls
-9988.log  9997.log   alice.log  charlie.log      composable_and_basilisk.json  ferdie.log      node_modules  rococo-local-raw.json  yarn.lock
-9996.log  README.md  bob.log    composable.json  dave.log  
-
-ubuntu@oracle-test:~/composable/scripts/polkadot-launch$ tail -f 9988.log 
-2022-05-23 10:23:24 [Parachain] PoV size { header: 0.1787109375kb, extrinsics: 2.4931640625kb, storage_proof: 5.80078125kb }
-2022-05-23 10:23:24 [Parachain] Compressed PoV size: 7.423828125kb
-2022-05-23 10:23:24 [Parachain] Produced proof-of-validity candidate. block_hash=0x67087d9d563ecbe2f13ab63d4280f003f80a4189be3f800c12adc82361463a2d
-2022-05-23 10:23:25 [Relaychain] 💤 Idle (7 peers), best: #113 (0xb71b…7e30), finalized #110 (0x0ffc…245c), ⬇ 5.7kiB/s ⬆ 6.0kiB/s    
-2022-05-23 10:23:25 [Parachain] 💤 Idle (2 peers), best: #44 (0x88ff…32ad), finalized #42 (0xc49f…12c0), ⬇ 0.1kiB/s ⬆ 1.4kiB/s    
-2022-05-23 10:23:30 [Relaychain] ✨ Imported #114 (0x496f…c871)    
-2022-05-23 10:23:30 [Relaychain] ♻️  Reorg on #114,0x496f…c871 to #114,0x9970…5f18, common ancestor #113,0xb71b…7e30    
-2022-05-23 10:23:30 [Relaychain] ✨ Imported #114 (0x9970…5f18)    
-2022-05-23 10:23:30 [Relaychain] 💤 Idle (7 peers), best: #114 (0x9970…5f18), finalized #110 (0x0ffc…245c), ⬇ 4.5kiB/s ⬆ 4.0kiB/s    
-2022-05-23 10:23:30 [Parachain] 💤 Idle (2 peers), best: #44 (0x88ff…32ad), finalized #42 (0xc49f…12c0), ⬇ 24 B/s ⬆ 24 B/s    
-2022-05-23 10:23:34 [Relaychain] 👴  Applying authority set change scheduled at block #111   
-```
-
-## Using PolkadotJS Web Interface
-
-To see the block explorer and run extrinsics the PolkadotJS web interface needs to be connected. 
-
-* Go to polkadot js →[https://polkadot.js.org/apps/#/explorer](https://polkadot.js.org/apps/#/explorer)
-* Add custom endpoint
-
-Connection should be established to port 9988. ws://127.0.0.1:9988 \
-Please note that port 9944 doesn't have pallet functionality; it is a relay node. 
-
-Make sure you have connected to the right port. 
-
-![polkadotjs_web_interface](./oracle-set-up-guide/polkadotjs-web-interface.png)
-
-You should see the block explorer:
-
-![block_explorer](./oracle-set-up-guide/block-explorer.png)
-
-In this web UI we will run extrinsics & RPCs, to attach the price feed to the node.
-
-## Setting up the price feed (reference implementation)
-
-Composable provides a reference implementation for the price-feed server. It can be found 
-
-at the following address, in the 
-[Composable GitHub repository](https://github.com/ComposableFi/composable/tree/main/utils/price-feed). 
-The implementation is general enough and allows any fork to implement a new feed easily. 
-By default, the prices are fetched from the 
-[Binance public websocket API](https://docs.binance.org/api-reference/dex-api/ws-streams.html#4-trades).
-
-### Setup
+<br>
+### Building your own binary
 
 In this step, we will set up a rust compiler, a toolchain and build a node.  \
  \
@@ -161,25 +99,26 @@ Run the following commands:
 
 ```bash
 git clone --depth 1 --branch v2.2.1 https://github.com/ComposableFi/composable.git composable-oracle && \
-cd composable-oracle && \
+cd composable-oracle/code/utils/price-feed && \
 cargo build --release --package price-feed
+```
+
+Move the binary to `/usr/local/bin/`:
+```bash
+sudo mv ../../target/release/price-feed /usr/local/bin/price-feed
 ```
 
 ### Start Price-feed
 
-You can try running the server with  \
-
+You can run the server with:
 ```bash
-RUST_LOG=debug ./target/release/price-feed
+RUST_LOG=debug price-feed --composable-node ws://<your-collator-node-address>:<port> -l 0.0.0.0:3001
 ```
-
-The server will start indexing a list of predefined assets (hardcoded).
 
 To make sure the price-feed is working correctly one should go to the browser.
 
 By default, price-feed runs on localhost, port 3001. 
 
-Currently only the price for KSM is supported, which can be accessed using the following link.
 
 [http://127.0.0.1:3001/price/4](http://127.0.0.1:3001/price/4)
 
@@ -220,7 +159,7 @@ For a list of CLI options.
 
 
 ```markdown
-ubuntu@oracle-test:~/price_feed/target/release$ ./price-feed --help
+$ price-feed --help
 price-feed 1.0
 Composable
 
@@ -230,6 +169,9 @@ USAGE:
 OPTIONS:
     -c, --cache-duration <CACHE_DURATION>
             Duration, in seconds, before a price is evicted from the cache [default: 10]
+
+        --composable-node <COMPOSABLE_NODE>
+            Host address of the composable node [default: ws://127.0.0.1:9988]
 
     -e, --expected-exponent <EXPECTED_EXPONENT>
             Price will be normalized to this exponent [default: 12]
