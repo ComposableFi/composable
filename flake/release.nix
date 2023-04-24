@@ -44,6 +44,23 @@
           '';
         };
 
+        tag-release = pkgs.writeShellApplication {
+          name = "tag-release";
+          runtimeInputs = [ pkgs.git pkgs.yq ];
+          text = ''
+            git tag --sign "release-v$1" --message "RC" && git push origin "release-v$1"
+          '';
+        };
+
+        delete-release-tag-unsafe = pkgs.writeShellApplication {
+          name = "tag-release";
+          runtimeInputs = [ pkgs.git pkgs.yq ];
+          text = ''
+            # shellcheck disable=SC2015
+            git tag --delete "release-v$1" || true && git push --delete origin "release-v$1"
+          '';
+        };
+
         # basically this should be just package result with several files
         generate-release-artifacts = pkgs.writeShellApplication {
           name = "generate-release-artifacts";
