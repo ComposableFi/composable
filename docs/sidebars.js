@@ -142,6 +142,7 @@ const sidebars = {
                         'products/centauri/light-clients',
                         'products/centauri/merkle-mountain-ranges',
                         'products/centauri/cosmos11-BEEFY-COSMOS-IBC-light-client',
+                        'products/centauri/expanding-ibc-protocol',
                     ],
                 },
                 {
