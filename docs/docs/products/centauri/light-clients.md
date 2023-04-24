@@ -1,31 +1,20 @@
 # Light Clients
 
-Light clients are programs that connect to full nodes to interact with a blockchain. Highly efficient light client 
-protocols are crucial in enabling the decentralization and mainstream adoption of blockchain protocols. Light clients 
-are also what make bridges on the IBC possible; the IBC Protocol bridges to other chains by having light clients on 
-either side of the connection. These light clients facilitate the passing of IBC opaque packets of information 
-(i.e. transactions and associated information). Centauri leverages these light clients to facilitate connections, even 
-further expanding upon the bridging opportunities of the IBC itself.
+Light clients are designed to operate effectively in environments where computational and memory resources are limited, such as mobile, on-chain contracts. They can verify the latest blockchain state without the need to execute and store full block data and state, instead tracking block headers and executing transactions to reach the latest state. It's important to note that blocks are composed of headers and transactions.
 
-Light clients provide environments with computation and memory resource constraints (e.g. mobile, on-chain contracts) 
-with the ability to verify the latest blockchain state without the need to execute and store the full block data and 
-state. Light clients instead track block headers as opposed to tracking the full blocks and executing transactions to 
-arrive at the latest state. It is important to note that blocks are simply composed of the header and transactions:
+Efficient light client protocols play a critical role in decentralizing and mainstreaming blockchain protocols. Most notably, they enable bridging via IBC. The IBC protocol uses light clients on either side of the connection to link to other chains, allowing for the transfer of IBC opaque packets of information (i.e., transactions and associated data). Centauri utilizes these light clients to create connections and leverage upon the bridging opportunities of the IBC:
 
 
-![header_transactions](./header-transactions.png)
+![header_transactions](../images-centauri/header-transactions.png)
 
 
-_The size of the transactions in a block might vary, but headers have a fixed size (usually no more than 1kb) and 
-contain the following:_
+_The size of the transactions in a block might vary, but headers have a fixed size (usually no more than 1kb) and contain the following:_
 
 
-![header_overview](./header-overview.png)
+![header_overview](../images-centauri/header-overview.png)
 
 
-Light client protocols consist of a combination of transaction Merkle proofs, state proofs, consensus proofs, and 
-finality proofs, which are all usually included in the block headers with the exception of finality proofs. This is 
-because finality proofs may differ from the consensus proof and require data that is an extension of the header. 
+Light client protocols consist of a combination of transaction Merkle proofs, state proofs, consensus proofs, and finality proofs, which are all usually included in the block headers with the exception of finality proofs. This is because finality proofs may differ from the consensus proof and require data that is an extension of the header. 
 
 
 ## Transactions Root
@@ -35,7 +24,7 @@ kind of cryptographic compression that allow trustless verification in the event
 data that was compressed by a Merkle proof, illustrated below:
 
 
-![transactions_root](./transactions-root.png)
+![transactions_root](../images-centauri/transactions-root.png)
 
 
 The Merkle proof required to check if some element was included in the root would be log2(n) hashes, which are usually 
@@ -54,7 +43,7 @@ can be seen as the compression of a list of keys and values.
 Take, for example, the Ethereum state tree architecture:
 
 
-![state_root](./state-root.png)
+![state_root](../images-centauri/state-root.png)
 
 
 Hence, the keys and values are the data stored on the blockchain by contracts or core blockchain subsystems, like the 
@@ -70,7 +59,7 @@ consensus protocol of the blockchain. For proof-of-work (PoW) systems, the conse
 equation:
 
 
-![consensus_proofs_1](./consensus-proofs-1.png)
+![consensus_proofs_1](../images-centauri/consensus-proofs-1.png)
 
 
 As seen above, finding a value that satisfies this equation would require a significant amount of computation as the 
@@ -80,7 +69,7 @@ Meanwhile, the consensus proof for a proof-of-stake (PoS) protocol is usually th
 where:
 
 
-![consensus_proofs_2](./consensus-proofs-2.png)
+![consensus_proofs_2](../images-centauri/consensus-proofs-2.png)
 
 
 Most blockchain protocols’ consensus mechanisms usually only guarantee liveness, hence verifying these consensus proofs 
