@@ -6,7 +6,7 @@ name = "composable"
 version = { workspace = true }
 
 [workspace.package]
-version = "6.10016.3"
+version = "6.10017.0"
 
 [[bin]]
 name = "composable"
@@ -17,7 +17,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 color-eyre = { version = "0.5.11", default-features = false }
-composable-node = { path = "parachain/node"}
+composable-node = { path = "parachain/node" }
 
 [features]
 builtin-wasm = ["composable-node/builtin-wasm"]
@@ -64,422 +64,458 @@ rpath = false
 
 
 [workspace.dependencies]
-grandpa = { package = "sc-finality-grandpa", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-collator-selection = { package = "pallet-collator-selection", git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.38" }
-cumulus-client-cli = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.38" }
-cumulus-client-collator = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.38" }
-cumulus-client-consensus-aura = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.38" }
-cumulus-client-consensus-common = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.38" }
-cumulus-client-network = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.38" }
-cumulus-client-service = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.38" }
-cumulus-pallet-aura-ext = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.38" }
-cumulus-pallet-dmp-queue = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.38" }
-cumulus-pallet-parachain-system = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.38" }
-cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.38" }
-cumulus-pallet-xcmp-queue = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.38" }
-cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.38" }
-cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.38" }
-cumulus-primitives-timestamp = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.38" }
-cumulus-primitives-utility = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.38" }
-cumulus-relay-chain-inprocess-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.38" }
-cumulus-relay-chain-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.38" }
-cumulus-relay-chain-minimal-node = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.38" }
-cumulus-relay-chain-rpc-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.38" }
-parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.38" }
-session-benchmarking = { package = "cumulus-pallet-session-benchmarking", git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.38" }
-aura = { package = "pallet-aura", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.38" }
+#######################################
+# ALWAYS DEPEND ON COMMIT of cumulus/substrate/polkadot/centauri (at least until they release stable version 1.0 and allow more flexibility in deps)
+# NON COMMITS DEPS WILL BE REVERTED
+#######################################
+grandpa = { package = "sc-finality-grandpa", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+collator-selection = { package = "pallet-collator-selection", git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7", default-features = false }
+cumulus-client-cli = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
+cumulus-client-collator = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
+cumulus-client-consensus-aura = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
+cumulus-client-consensus-common = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
+cumulus-client-network = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
+cumulus-client-service = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
+cumulus-pallet-aura-ext = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7", default-features = false }
+cumulus-pallet-dmp-queue = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7", default-features = false }
+cumulus-pallet-parachain-system = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7", default-features = false }
+cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7", default-features = false }
+cumulus-pallet-xcmp-queue = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7", default-features = false }
+cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7", default-features = false }
+cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
+cumulus-primitives-timestamp = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7", default-features = false }
+cumulus-primitives-utility = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7", default-features = false }
+cumulus-relay-chain-inprocess-interface = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
+cumulus-relay-chain-interface = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
+cumulus-relay-chain-minimal-node = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
+cumulus-relay-chain-rpc-interface = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
+parachain-info = { git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7", default-features = false }
+session-benchmarking = { package = "cumulus-pallet-session-benchmarking", git = "https://github.com/paritytech/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7", default-features = false }
+aura = { package = "pallet-aura", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
 
 
-polkadot-parachain = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.38" }
-xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.38" }
+polkadot-parachain = { git = "https://github.com/paritytech/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6", default-features = false }
+xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
 
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.38", default-features = false }
-orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.38", default-features = false }
-orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.38", default-features = false }
-orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.38", default-features = false }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.38", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "241d5cdc98cca53b8cf990853943c9ae1193a70e", default-features = false }
+orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "241d5cdc98cca53b8cf990853943c9ae1193a70e", default-features = false }
+orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "241d5cdc98cca53b8cf990853943c9ae1193a70e", default-features = false }
+orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "241d5cdc98cca53b8cf990853943c9ae1193a70e", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "241d5cdc98cca53b8cf990853943c9ae1193a70e", default-features = false }
 
-ibc = { git = "https://github.com/ComposableFi/centauri", rev ="1c7527b10899b98abdaaf75f924b0f8258751cd4",  default-features = false }
-ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev ="1c7527b10899b98abdaaf75f924b0f8258751cd4",  default-features = false }
-ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev ="1c7527b10899b98abdaaf75f924b0f8258751cd4",  default-features = false }
-ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev ="1c7527b10899b98abdaaf75f924b0f8258751cd4",  default-features = false }
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev ="1c7527b10899b98abdaaf75f924b0f8258751cd4",  default-features = false }
-pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev ="1c7527b10899b98abdaaf75f924b0f8258751cd4",  default-features = false }
+ibc = { git = "https://github.com/ComposableFi/centauri", rev = "a0f6bc937302135d9a1f04b344acc18ef7ae31df", default-features = false }
+ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev = "a0f6bc937302135d9a1f04b344acc18ef7ae31df", default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "a0f6bc937302135d9a1f04b344acc18ef7ae31df", default-features = false }
+ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev = "a0f6bc937302135d9a1f04b344acc18ef7ae31df", default-features = false }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "a0f6bc937302135d9a1f04b344acc18ef7ae31df", default-features = false }
+pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "a0f6bc937302135d9a1f04b344acc18ef7ae31df", default-features = false }
 
-xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.38" }
-polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.38", default-features = false }
-xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.38" }
-polkadot-service = { git = "https://github.com/paritytech/polkadot",  branch = "release-v0.9.38" }
-polkadot-cli = { git = "https://github.com/paritytech/polkadot", features = [
+xcm-builder = { git = "https://github.com/paritytech/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6", default-features = false }
+polkadot-primitives = { git = "https://github.com/paritytech/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6", default-features = false }
+xcm-executor = { git = "https://github.com/paritytech/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6", default-features = false }
+polkadot-service = { git = "https://github.com/paritytech/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-cli = { git = "https://github.com/paritytech/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6", features = [
   "rococo-native",
-], branch = "release-v0.9.38" }
+] }
 
-pallet-xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.38" }
+pallet-xcm = { git = "https://github.com/paritytech/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6", default-features = false }
 
 log = { version = "0.4.14", default-features = false }
 
-ibc-rs-scale = { package="ibc", git = "https://github.com/cosmos/ibc-rs.git", rev="9b05cee476a197f5f1cb91b91959b618e88e0839", default-features = false}
-democracy = { package = "pallet-democracy", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38", default-features = false }
-executive = { package = "frame-executive", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-indices = { package = "pallet-indices", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
+ibc-rs-scale = { package = "ibc", git = "https://github.com/cosmos/ibc-rs.git", rev = "9b05cee476a197f5f1cb91b91959b618e88e0839", default-features = false }
+democracy = { package = "pallet-democracy", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+executive = { package = "frame-executive", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+indices = { package = "pallet-indices", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
 
 
-beefy-gadget = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-beefy-gadget-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-beefy-merkle-tree = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-beefy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-fork-tree = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-benchmarking = { package = "frame-benchmarking", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-frame-election-provider-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-frame-executive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-support = { package = "frame-support", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-frame-support-procedural = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-frame-support-procedural-tools = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-frame-support-procedural-tools-derive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-system-rpc-runtime-api = { package= "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-authorship = { package = "pallet-authorship", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-bags-list = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-beefy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-beefy-mmr = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-bounties = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-child-bounties = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-collective = { package = "pallet-collective", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-conviction-voting = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-fast-unstake = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-nis = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-ranked-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-referenda = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-state-trie-migration = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-whitelist = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-democracy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-election-provider-multi-phase = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-election-provider-support-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-elections-phragmen = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-identity = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-identity = { package = "pallet-identity", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-im-online = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-indices = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-membership = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-membership = { package = "pallet-membership", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-mmr = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-multisig = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-multisig = { package ="pallet-multisig", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-nomination-pools = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-nomination-pools-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-nomination-pools-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-offences = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-offences-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-preimage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-preimage = { package = "pallet-preimage", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-proxy = { package = "pallet-proxy", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-randomness-collective-flip = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-randomness-collective-flip = { package= "pallet-randomness-collective-flip", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-recovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-scheduler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-scheduler = { package = "pallet-scheduler", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-session = { package = "pallet-session", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-session-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-society = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-staking-reward-curve = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-staking-reward-fn = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-sudo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sudo = { package ="pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-timestamp = { package ="pallet-timestamp",  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-tips = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-utility = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-pallet-vesting = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-allocator = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-chain-spec-derive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-consensus-babe-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-consensus-epochs = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-executor-wasmi = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-executor-wasmtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-finality-grandpa-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-informant = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-network-gossip = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-offchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-peerset = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-proposer-metrics = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-rpc-server = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-state-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-sync-state-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-sysinfo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-tracing-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sc-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-api-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-consensus-vrf = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-core-hashing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-core-hashing-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-database = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-debug-derive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-mmr-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-npos-elections = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-offchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-panic-handler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-runtime-interface-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-transaction-storage-proof = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-version-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-sp-weights = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-substrate-state-trie-migration-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-mmr-gadget = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" , default-features = false}
+beefy-gadget = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+beefy-gadget-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+beefy-merkle-tree = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-beefy = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+fork-tree = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+frame-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+benchmarking = { package = "frame-benchmarking", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+frame-benchmarking-cli = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+frame-election-provider-support = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+frame-executive = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+frame-support = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+support = { package = "frame-support", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+frame-support-procedural = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+frame-support-procedural-tools = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+frame-support-procedural-tools-derive = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+frame-system = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+system = { package = "frame-system", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+frame-system-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+frame-system-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+frame-try-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-aura = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-authorship = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+authorship = { package = "pallet-authorship", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-babe = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-bags-list = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-balances = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+balances = { package = "pallet-balances", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-beefy = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-beefy-mmr = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-bounties = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-child-bounties = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-collective = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+collective = { package = "pallet-collective", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-conviction-voting = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-fast-unstake = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-nis = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-ranked-collective = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-referenda = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-state-trie-migration = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-whitelist = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-democracy = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-election-provider-multi-phase = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-election-provider-support-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-elections-phragmen = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-identity = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+identity = { package = "pallet-identity", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-im-online = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-indices = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-membership = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+membership = { package = "pallet-membership", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-mmr = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-multisig = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+multisig = { package = "pallet-multisig", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-nomination-pools = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-nomination-pools-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-nomination-pools-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-offences = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-offences-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-preimage = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+preimage = { package = "pallet-preimage", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-proxy = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+proxy = { package = "pallet-proxy", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-randomness-collective-flip = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+randomness-collective-flip = { package = "pallet-randomness-collective-flip", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-recovery = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-scheduler = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+scheduler = { package = "pallet-scheduler", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-session = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+session = { package = "pallet-session", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-session-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-society = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-staking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-staking-reward-curve = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-staking-reward-fn = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-sudo = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sudo = { package = "pallet-sudo", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-timestamp = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+timestamp = { package = "pallet-timestamp", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-tips = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-transaction-payment = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-transaction-payment-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-treasury = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+treasury = { package = "pallet-treasury", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-utility = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+utility = { package = "pallet-utility", git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+pallet-vesting = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-allocator = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-basic-authorship = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-block-builder = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-chain-spec = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-chain-spec-derive = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-cli = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-client-api = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-client-db = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-consensus = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-consensus-aura = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-consensus-babe = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-consensus-babe-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-consensus-epochs = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-consensus-slots = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-executor = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-executor-common = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-executor-wasmi = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-executor-wasmtime = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-finality-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-finality-grandpa-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-informant = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-keystore = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-network = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-network-common = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-network-gossip = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-offchain = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-peerset = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-proposer-metrics = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-rpc-api = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-rpc-server = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-service = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-state-db = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-sync-state-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-sysinfo = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-telemetry = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-tracing = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-tracing-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-transaction-pool = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-transaction-pool-api = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sc-utils = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-api = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-api-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-application-crypto = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-arithmetic = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-block-builder = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-blockchain = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-consensus = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-consensus-aura = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-consensus-babe = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-consensus-slots = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-consensus-vrf = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-core = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-core-hashing = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-core-hashing-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-database = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-debug-derive = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-externalities = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-finality-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-inherents = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-io = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-keyring = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-keystore = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-maybe-compressed-blob = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-mmr-primitives = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-npos-elections = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-offchain = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-panic-handler = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-runtime-interface = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-runtime-interface-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-session = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-staking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-state-machine = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-std = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-storage = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-timestamp = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-tracing = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-transaction-pool = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-transaction-storage-proof = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-trie = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-version = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-version-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-wasm-interface = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+sp-weights = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+substrate-build-script-utils = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+substrate-frame-rpc-system = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+substrate-prometheus-endpoint = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+substrate-state-trie-migration-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+substrate-wasm-builder = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+try-runtime-cli = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+mmr-gadget = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
+mmr-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a", default-features = false }
 
 
-# [patch."https://github.com/paritytech/substrate"]
-# beefy-gadget = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# beefy-gadget-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# beefy-merkle-tree = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-beefy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# fork-tree = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-election-provider-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-executive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-support-procedural = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-support-procedural-tools = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-support-procedural-tools-derive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# authorship = { package = "pallet-authorship", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-bags-list = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-beefy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-beefy-mmr = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-bounties = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-child-bounties = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-conviction-voting = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-fast-unstake = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-nis = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-ranked-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-referenda = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-state-trie-migration = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-whitelist = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-democracy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-election-provider-multi-phase = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-election-provider-support-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-elections-phragmen = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-identity = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-im-online = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-indices = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-membership = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-mmr = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-multisig = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-nomination-pools = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-nomination-pools-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-nomination-pools-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-offences = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-offences-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-preimage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-randomness-collective-flip = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-recovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-scheduler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-session-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-society = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-staking-reward-curve = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-staking-reward-fn = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-sudo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-tips = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-utility = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# pallet-vesting = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-allocator = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-chain-spec-derive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-consensus-babe-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-consensus-epochs = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-executor-wasmi = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-executor-wasmtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-finality-grandpa-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-informant = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-network-gossip = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-offchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-peerset = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-proposer-metrics = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-rpc-server = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-state-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-sync-state-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-sysinfo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-tracing-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sc-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-api-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-authority-discovery = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-consensus-babe = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-consensus-vrf = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-core-hashing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-core-hashing-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-database = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-debug-derive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-mmr-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-npos-elections = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-offchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-panic-handler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-runtime-interface-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-staking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-transaction-storage-proof = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-version-proc-macro = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-wasm-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# sp-weights = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# substrate-state-trie-migration-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# mmr-gadget = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
-# mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.38" }
+#######################################
+# DO NOT DELETE PATCHES, BUT COMMENT OUT
+# PATCHES APPEAR AND GO AWAY ALL THE TIME
+# HARD TO RESTORE LIST OF ALL DEPS TO PATCH
+#######################################
+
+[patch."https://github.com/paritytech/polkadot"]
+kusama-runtime = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-cli = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-parachain = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-primitives = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-runtime = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-service = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+rococo-runtime = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+xcm = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+xcm-builder = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+xcm-executor = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+pallet-xcm = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-runtime-common = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-client = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-core-primitives = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-network-bridge = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-node-network-protocol = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-node-subsystem-util = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-node-primitives = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-node-subsystem = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+polkadot-overseer = { git = "https://github.com/ComposableFi/polkadot", rev = "72309a2b2e68413305a56dce1097041309bd29c6" }
+
+
+[patch."https://github.com/paritytech/cumulus"]
+cumulus-primitives-core = { git = "https://github.com/ComposableFi/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
+parachain-info = { git = "https://github.com/ComposableFi/cumulus", rev = "9b4e0247137f158d1a35118197d34adfa58858b7" }
+
+[patch."https://github.com/paritytech/substrate"]
+beefy-gadget = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+beefy-gadget-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+beefy-merkle-tree = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-beefy = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+fork-tree = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+frame-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+frame-benchmarking-cli = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+frame-election-provider-support = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+frame-executive = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+frame-support = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+frame-support-procedural = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+frame-support-procedural-tools = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+frame-support-procedural-tools-derive = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+frame-system = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+frame-system-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+frame-system-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+frame-try-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-aura = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-babe = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-bags-list = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-balances = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-beefy = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-beefy-mmr = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-bounties = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-child-bounties = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-collective = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-conviction-voting = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-fast-unstake = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-nis = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-ranked-collective = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-referenda = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-state-trie-migration = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-whitelist = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-democracy = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-election-provider-multi-phase = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-election-provider-support-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-elections-phragmen = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-identity = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-im-online = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-indices = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-membership = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-mmr = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-multisig = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-nomination-pools = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-nomination-pools-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-nomination-pools-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-offences = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-offences-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-preimage = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-proxy = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-randomness-collective-flip = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-recovery = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-scheduler = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-session = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-session-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-society = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-staking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-staking-reward-curve = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-staking-reward-fn = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-sudo = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-timestamp = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-tips = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-transaction-payment = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-transaction-payment-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-treasury = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-utility = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-vesting = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-allocator = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-basic-authorship = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-block-builder = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-chain-spec = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-chain-spec-derive = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-cli = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-client-api = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-client-db = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-consensus = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-consensus-aura = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-consensus-babe = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-consensus-babe-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-consensus-epochs = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-consensus-slots = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-executor = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-executor-common = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-executor-wasmi = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-executor-wasmtime = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-finality-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-finality-grandpa-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-informant = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-keystore = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-network = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-network-common = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-network-gossip = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-offchain = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-peerset = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-proposer-metrics = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-rpc-api = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-rpc-server = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-service = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-state-db = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-sync-state-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-sysinfo = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-telemetry = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-tracing = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-tracing-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-transaction-pool = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-transaction-pool-api = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-utils = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-api = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-api-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-application-crypto = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-arithmetic = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-block-builder = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+pallet-authorship = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-blockchain = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-consensus = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-consensus-aura = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-consensus-babe = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-consensus-slots = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-consensus-vrf = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-core = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-core-hashing = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-core-hashing-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-database = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-debug-derive = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-externalities = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-finality-grandpa = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-inherents = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-io = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-keyring = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-keystore = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-maybe-compressed-blob = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-mmr-primitives = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-npos-elections = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-offchain = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-panic-handler = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-runtime-interface = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-runtime-interface-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-session = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-staking = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-state-machine = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-std = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-storage = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-timestamp = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-tracing = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-transaction-pool = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-transaction-storage-proof = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-trie = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-version = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-version-proc-macro = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-wasm-interface = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sp-weights = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+substrate-build-script-utils = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+substrate-frame-rpc-system = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+substrate-prometheus-endpoint = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+substrate-state-trie-migration-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+substrate-wasm-builder = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+try-runtime-cli = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+mmr-gadget = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+mmr-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }
+sc-storage-monitor = { git = "https://github.com/ComposableFi/substrate", rev = "5df31444a025f4e4ec2f5e3fe4681a10bdfec72a" }

@@ -31,8 +31,10 @@
           cargo check --no-default-features --target wasm32-unknown-unknown --package "$1"
           cargo check --tests --features=std,runtime-benchmarks --package "$1"
           cargo clippy --package "$1" -- --deny warnings --allow deprecated
+          cargo test --features=std,runtime-benchmarks --package "$1"
         '';
       };
+      check-runtime = check-pallet;
     in {
       _module.args.subnix = rec { inherit subenv subattrs; };
       packages = { inherit check-pallet; };

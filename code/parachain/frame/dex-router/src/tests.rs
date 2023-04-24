@@ -41,10 +41,10 @@ fn create_constant_product_amm_pool(assets: AssetAmountPair<u128, u128>, fee: Pe
 	let init_config = PoolInitConfiguration::DualAssetConstantProduct {
 		owner: ALICE,
 		assets_weights: {
-			bounded_btree_map! {
-				assets.base.asset_id => base_to_quote_ratio,
-				assets.quote.asset_id => base_to_quote_ratio.left_from_one(),
-			}
+			vec![
+				(assets.base.asset_id, base_to_quote_ratio),
+				(assets.quote.asset_id, base_to_quote_ratio.left_from_one()),
+			]
 		},
 		fee,
 	};
