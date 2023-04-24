@@ -34,6 +34,7 @@
           cargo test --features=std,runtime-benchmarks --package "$1"
         '';
       };
+      check-runtime = check-pallet;
     in {
       _module.args.subnix = rec { inherit subenv subattrs; };
       packages = { inherit check-pallet; };
