@@ -33,4 +33,4 @@ A diagram showcasing the high-level architecture utilized in this implementation
 
 Cosmos ⬌ DotSama transfers utilizing IBC
 
-We are currently working with [Notional DAO](https://notional.ventures/) on the DotSama <> Cosmos testnet, making strides in establishing an efficient IBC-enabled connection for users of both ecosystems. If you are a Cosmos chain, validator, or relayer and wish to participate in the testnet efforts, please contact our Community Managers on [Discord](https://discord.gg/composable).
+We are currently working with [Notional DAO](https://notional.ventures/) on the DotSama <-> Cosmos testnet, making strides in establishing an efficient IBC-enabled connection for users of both ecosystems. If you are a Cosmos chain, validator, or relayer and wish to participate in the testnet efforts, please contact our Community Managers on [Discord](https://discord.gg/composable).
