@@ -75,6 +75,9 @@
           connection_id = "connection-0";
         };
       };
+
+      toDockerImage = package:
+        self.inputs.bundlers.bundlers."${system}".toDockerImage package;
     in {
       packages = rec {
         centauri-codegen = crane.stable.buildPackage (subnix.subenv // {
@@ -261,16 +264,7 @@
           };
 
         hyperspace-composable-polkadot-picasso-kusama-image =
-          pkgs.dockerTools.buildImage {
-            tag = "latest";
-            name = "hyperspace-composable-polkadot-picasso-kusama";
-            config = {
-              Entrypoint = [
-                "${hyperspace-composable-polkadot-picasso-kusama}/bin/hyperspace"
-              ];
-            };
-          };
-
+          toDockerImage hyperspace-composable-polkadot-picasso-kusama;
       };
     };
 }

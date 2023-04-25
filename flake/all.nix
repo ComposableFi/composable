@@ -46,6 +46,7 @@
         check-composable-benchmarks-ci
         check-picasso-benchmarks-ci
         composable-bench-node
+        benchmarks-check
       ]);
 
       all-platforms = pkgs.linkFarmFromDrvs "all-platforms"
@@ -68,7 +69,6 @@
       all-ci-packages = pkgs.linkFarmFromDrvs "all-ci-packages"
         (with self'.packages; [
           all-platforms
-          benchmarks-check
           cargo-clippy-check
           cargo-deny-check
           check-picasso-integration-tests
@@ -82,6 +82,7 @@
         (with self'.packages; [
           cmc-api-image
           hyperspace-composable-rococo-picasso-rococo-image
+          hyperspace-composable-polkadot-picasso-kusama-image
           devnet-picasso-image
         ]);
     };
