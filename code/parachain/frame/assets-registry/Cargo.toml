@@ -22,7 +22,6 @@ version = "3.0.0"
 [dependencies]
 composable-traits = { path = "../composable-traits", default-features = false }
 composable-support = { default-features = false, path = "../composable-support" }
-cumulus-primitives-core = { workspace = true, default-features = false }
 frame-benchmarking = { default-features = false, optional = true, workspace = true }
 frame-support = { default-features = false, workspace = true }
 frame-system = { default-features = false, workspace = true }
@@ -58,7 +57,6 @@ std = [
   "sp-std/std",
   "xcm/std",
   "pallet-currency-factory/std",
-  "cumulus-primitives-core/std",
   "frame-benchmarking/std",
   "primitives/std",
 ]

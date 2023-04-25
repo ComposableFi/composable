@@ -13,8 +13,6 @@ slug: /
 
 ## The Vision
 
-**Composing DeFi for Mass Adoption | any money, any chain, anywhere**
-
 In an ideal cross-chain world, developers and users interact unhindered across ecosystems and protocols, regardless of 
 where their assets reside. For this reason, our team at [Composable Finance](https://www.composable.finance/) 
 is on a mission to pioneer innovative Web3 user experiences in a trustless, non-custodial, and decentralized manner. 
@@ -57,7 +55,7 @@ Current approaches to solving these problems are limited by at least one of the 
 
 ## The Composable Solution
 
-Composable Finance’s [full technical stack](./products/technical-stack-overview.md) 
+Composable Finance’s full technical stack 
 has been designed to usher in an era of cross-ecosystem interoperability 
 without abandoning the trustless, decentralized, permissionless, and non-custodial aspects of web3. 
 Subsequently, this allows for the unification of functionality across all connected blockchain ecosystems.
@@ -79,7 +77,7 @@ This environment will enable a new host of services to be offered to users that 
 users will be able to get the best interest rates across lending pools, the best swaps across chains, and allow for
 a range of other possibilities across new pool types, arbitrage opportunities, and onboarding portals to DeFi.
 
-We are accomplishing these goals through a multifaceted [technical stack](./products/technical-stack-overview.md) 
+We are accomplishing these goals through a multifaceted technical stack
 where we begin by bridging gaps between today’s isolated blockchains and layer 2 scaling solutions in order to create a 
 single and unified access point that is the 
 [Composable Cross-Chain VM (XCVM)](https://medium.com/composable-finance/composable-finance-emerging-as-the-first-cross-chain-smart-contracting-l1-4e837b8bd57e) 
