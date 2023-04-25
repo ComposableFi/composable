@@ -2,15 +2,13 @@
   perSystem = { config, self', inputs', pkgs, lib, system, crane
     , systemCommonRust, subnix, ... }: {
       packages = {
-        statemine-node = let version = "release-parachains-v9380";
-        in pkgs.stdenv.mkDerivation (rec {
+        statemine-node = pkgs.stdenv.mkDerivation (rec {
           name = "statemine-node";
-          inherit version;
           pname = "polkadot-parachain";
           src = pkgs.fetchgit {
             url = "https://github.com/paritytech/cumulus.git";
-            rev = "refs/heads/${version}";
-            sha256 = "sha256-Arc7eK9RekqbSDyHZRLxfyqLBCNUgO12YwwI3XxcXR4=";
+            rev = "9b4e0247137f158d1a35118197d34adfa58858b7";
+            sha256 = "sha256-Ble9E7wWzQ3W801BLfBtDRyJQs/3uU4hhaAEAbyAJxg=";
             fetchSubmodules = false;
           };
           __noChroot = true;
@@ -25,7 +23,9 @@
           installPhase = ''
             mkdir --parents $out/bin && mv ./target/release/polkadot-parachain $out/bin
           '';
-        } // subnix.subenv);
+        } // subnix.subenv // {
+          CARGO_NET_GIT_FETCH_WITH_CLI = "false";
+        });
       };
     };
 }

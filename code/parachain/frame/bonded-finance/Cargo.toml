@@ -54,6 +54,7 @@ std = [
   "sp-std/std",
   "sp-arithmetic/std",
   "composable-traits/std",
+  "orml-tokens/std",
   "scale-info/std",
   "pallet-vesting/std",
 ]

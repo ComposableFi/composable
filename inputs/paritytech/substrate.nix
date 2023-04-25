@@ -1,7 +1,14 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, lib, ... }:
     let
-
+      debug = {
+        # CARGO_LOG = "debug";
+        # CARGO_NET_GIT_FETCH_WITH_CLI = "true";
+        # CARGO_NET_RETRY = "true";
+        # CARGO_HTTP_MULTIPLEXING = "false";
+        # CARGO_HTTP_DEBUG = "true";
+        # RUST_LOG = "debug";
+      };
       subattrs = {
         LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
           pkgs.stdenv.cc.cc.lib
@@ -10,7 +17,10 @@
         LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
         PROTOC = "${pkgs.protobuf}/bin/protoc";
         ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
-      };
+        # forces Rust to use exact same git as CI runner/Nix fetcher/other tools
+        CARGO_NET_GIT_FETCH_WITH_CLI = "true";
+        CARGO_NET_RETRY = 3; # +1 on top of default
+      } // debug;
 
       subenv = {
         doCheck = false;

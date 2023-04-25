@@ -45,7 +45,9 @@ std = [
   "frame-system/std",
   "composable-traits/std",
   "orml-traits/std",
+  "orml-tokens/std",
   "frame-benchmarking/std",
+  "pallet-timestamp/std",
 ]
 
 runtime-benchmarks = [

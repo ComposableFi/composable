@@ -47,7 +47,6 @@ node_modules
 # but include tasks
 !.vscode/tasks.json
 
-scripts/polkadot-launch/bin/polkadot
 .rust-analyzer
 target
 .env
