@@ -12,19 +12,17 @@ use frame_support::{
 use frame_system::RawOrigin;
 use sp_arithmetic::{PerThing, Permill};
 use sp_runtime::BoundedBTreeMap;
-use sp_std::collections::btree_map::BTreeMap;
 
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 fn amm_init_config<T: Config>(
 	owner: T::AccountId,
 	pair: CurrencyPair<T::AssetId>,
 	base_weight: Permill,
 	fee: Permill,
 ) -> PoolInitConfigurationOf<T> {
-	let mut assets_weights = BoundedBTreeMap::new();
-	assets_weights.try_insert(pair.base, base_weight).expect("Should work");
-	assets_weights
-		.try_insert(pair.quote, base_weight.left_from_one())
-		.expect("Should work");
+	let mut assets_weights = Vec::new();
+	assets_weights.push((pair.base, base_weight));
+	assets_weights.push((pair.quote, base_weight.left_from_one()));
 	PoolInitConfiguration::DualAssetConstantProduct { owner, fee, assets_weights }
 }
 

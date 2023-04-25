@@ -17,8 +17,8 @@ You check this by going to [github.com/orgs/ComposableFi/people](https://github.
 ![GitHub Organization Check](./github-organization-check.png)
 *Search for your own GitHub username*
 
-**If you are not yet part of the ComposableFi GitHub organization, send a message to `@cor` in the composable Slack 
-channel.**
+**If you are not yet part of the ComposableFi GitHub organization, create a ticket with R2D2 in the composable 
+Slack channel.**
 
 When you are part of the ComposableFi organization, you need to configure GPG signing and your Code editor in GitHub 
 settings. Go to [github.com/settings/codespaces](https://github.com/settings/codespaces). 

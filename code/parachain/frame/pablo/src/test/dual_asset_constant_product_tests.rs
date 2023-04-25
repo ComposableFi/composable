@@ -205,7 +205,7 @@ pub fn valid_pool_init_config(
 ) -> PoolInitConfiguration<AccountId, AssetId> {
 	PoolInitConfiguration::DualAssetConstantProduct {
 		owner: *owner,
-		assets_weights: dual_asset_pool_weights(first_asset, first_asset_weight, second_asset),
+		assets_weights: dual_asset_pool_weights_vec(first_asset, first_asset_weight, second_asset),
 		fee,
 	}
 }
@@ -315,7 +315,7 @@ fn add_lp_with_min_mint_amount() {
 
 		let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
 			owner: ALICE,
-			assets_weights: dual_asset_pool_weights(
+			assets_weights: dual_asset_pool_weights_vec(
 				first_asset,
 				Permill::from_percent(50_u32),
 				second_asset,
@@ -798,9 +798,9 @@ fn weights_zero() {
 #[test]
 fn weights_sum_to_more_than_one() {
 	new_test_ext().execute_with(|| {
-		let mut asset_weights = BoundedBTreeMap::new();
-		asset_weights.try_insert(BTC, Permill::from_percent(50)).expect("Should work");
-		asset_weights.try_insert(USDT, Permill::from_percent(51)).expect("Should work");
+		let mut asset_weights = Vec::new();
+		asset_weights.push((BTC, Permill::from_percent(50)));
+		asset_weights.push((USDT, Permill::from_percent(51)));
 		let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
 			owner: ALICE,
 			assets_weights: asset_weights,
@@ -1164,7 +1164,7 @@ fn add_lp_amounts_get_normalized() {
 
 		let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
 			owner: ALICE,
-			assets_weights: dual_asset_pool_weights(
+			assets_weights: dual_asset_pool_weights_vec(
 				FIRST_ASSET::ID,
 				Permill::from_percent(50_u32),
 				SECOND_ASSET::ID,

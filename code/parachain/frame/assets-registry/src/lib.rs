@@ -42,7 +42,6 @@ pub mod pallet {
 		storage::UpdateValue,
 		xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
 	};
-	use cumulus_primitives_core::ParaId;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
@@ -117,7 +116,7 @@ pub mod pallet {
 	pub type MinFeeAmounts<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		ParaId,
+		u32,
 		Blake2_128Concat,
 		T::ForeignAssetId,
 		T::Balance,
@@ -201,7 +200,7 @@ pub mod pallet {
 			asset_id: T::LocalAssetId,
 		},
 		MinFeeUpdated {
-			target_parachain_id: ParaId,
+			target_parachain_id: u32,
 			foreign_asset_id: T::ForeignAssetId,
 			amount: Option<T::Balance>,
 		},
@@ -273,7 +272,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::set_min_fee())]
 		pub fn set_min_fee(
 			origin: OriginFor<T>,
-			target_parachain_id: ParaId,
+			target_parachain_id: u32,
 			foreign_asset_id: T::ForeignAssetId,
 			amount: Option<T::Balance>,
 		) -> DispatchResultWithPostInfo {
@@ -427,7 +426,7 @@ pub mod pallet {
 		}
 
 		fn min_xcm_fee(
-			parachain_id: ParaId,
+			parachain_id: u32,
 			remote_asset_id: Self::AssetNativeLocation,
 		) -> Option<Self::Balance> {
 			<MinFeeAmounts<T>>::get(parachain_id, remote_asset_id)

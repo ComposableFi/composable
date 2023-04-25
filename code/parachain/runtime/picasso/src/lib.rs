@@ -39,7 +39,7 @@ use version::{Version, VERSION};
 pub use xcmp::XcmConfig;
 
 pub use crate::fees::WellKnownForeignToNativePriceConverter;
-use crate::ibc::{Module, ModuleId, ModuleRouter, PortId, RelayChain};
+use crate::ibc::RelayChain;
 
 use common::{
 	fees::{multi_existential_deposits, NativeExistentialDeposit, WeightToFeeConverter},
@@ -440,35 +440,6 @@ parameter_types! {
 	pub const RelayChainId: RelayChain = RelayChain::Rococo;
 	pub const SpamProtectionDeposit: Balance = 1_000_000_000_000;
 	pub const MinimumConnectionDelay: u64 = 0;
-}
-
-type CosmwasmRouter = cosmwasm::ibc::Router<Runtime>;
-
-#[derive(Clone, Debug, Eq, PartialEq, Default)]
-pub struct Router {
-	pallet_ibc_ping: pallet_ibc_ping::IbcModule<Runtime>,
-	pallet_cosmwasm: CosmwasmRouter,
-}
-
-impl ModuleRouter for Router {
-	fn get_route_mut(&mut self, module_id: &ModuleId) -> Option<&mut dyn Module> {
-		match module_id.as_ref() {
-			pallet_ibc_ping::MODULE_ID => Some(&mut self.pallet_ibc_ping),
-			_ => self.pallet_cosmwasm.get_route_mut(module_id),
-		}
-	}
-
-	fn has_route(module_id: &ModuleId) -> bool {
-		matches!(module_id.as_ref(), pallet_ibc_ping::MODULE_ID) ||
-			CosmwasmRouter::has_route(module_id)
-	}
-
-	fn lookup_module_by_port(port_id: &PortId) -> Option<ModuleId> {
-		match port_id.as_str() {
-			pallet_ibc_ping::PORT_ID => ModuleId::from_str(pallet_ibc_ping::MODULE_ID).ok(),
-			_ => CosmwasmRouter::lookup_module_by_port(port_id),
-		}
-	}
 }
 
 parameter_types! {
@@ -941,7 +912,7 @@ construct_runtime!(
 
 		// IBC support
 		Ibc: pallet_ibc = 190,
-		IbcPing: pallet_ibc_ping = 191
+		Ics20Fee: pallet_ibc::ics20_fee = 191,
 	}
 );
 

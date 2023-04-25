@@ -25,8 +25,8 @@
             ## Nix
             ```bash
             # Generate the Wasm runtimes
-            nix build ${flake-url}#picasso-runtime
-            nix build ${flake-url}#composable-runtime
+            nix build ${flake-url}#picasso-runtime  --accept-flake-config
+            nix build ${flake-url}#composable-runtime --accept-flake-config
 
             # Run the Composable node (release mode) alone
             nix run ${flake-url}#composable-node
@@ -41,6 +41,23 @@
             # Show all possible apps, shells and packages
             nix flake show ${flake-url} --allow-import-from-derivation
             ```
+          '';
+        };
+
+        tag-release = pkgs.writeShellApplication {
+          name = "tag-release";
+          runtimeInputs = [ pkgs.git pkgs.yq ];
+          text = ''
+            git tag --sign "release-v$1" --message "RC" && git push origin "release-v$1"
+          '';
+        };
+
+        delete-release-tag-unsafe = pkgs.writeShellApplication {
+          name = "tag-release";
+          runtimeInputs = [ pkgs.git pkgs.yq ];
+          text = ''
+            # shellcheck disable=SC2015
+            git tag --delete "release-v$1" || true && git push --delete origin "release-v$1"
           '';
         };
 

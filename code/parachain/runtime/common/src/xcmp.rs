@@ -12,13 +12,12 @@ use polkadot_primitives::v2::Id;
 use primitives::currency::{CurrencyId, WellKnownCurrency};
 use sp_runtime::traits::Convert;
 use sp_std::marker::PhantomData;
-use xcm::latest::MultiAsset;
+use xcm::latest::{MultiAsset, MultiLocation};
 use xcm_builder::*;
 use xcm_executor::{
 	traits::{FilterAssetLocation, WeightTrader},
 	*,
 };
-
 pub const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 
 match_types! {
