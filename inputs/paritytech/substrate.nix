@@ -4,6 +4,7 @@
       debug = {
         # CARGO_LOG = "debug";
         # CARGO_NET_GIT_FETCH_WITH_CLI = "true";
+        # CARGO_NET_RETRY = "true";
         # CARGO_HTTP_MULTIPLEXING = "false";
         # CARGO_HTTP_DEBUG = "true";
         # RUST_LOG = "debug";

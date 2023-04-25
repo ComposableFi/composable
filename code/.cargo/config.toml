@@ -1,2 +1,3 @@
-# forces Rust to use exact same git as CI runner/Nix fetcher/other tools
-net.git-fetch-with-cli = true
+[net]
+retry = 3                   # network retries
+git-fetch-with-cli = true   # use the `git` executable for git operations
