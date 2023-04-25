@@ -67,7 +67,7 @@
                 "create-clients"
                 "--config"
                 configPathContainer
-                "--connection-delay-period-seconds"
+                "--delay-period-seconds"
                 "10"
               ];
               inherit configPathSource configPathContainer pkgs packages
@@ -83,7 +83,7 @@
                 "create-connection"
                 "--config"
                 configPathContainer
-                "--connection-delay-period-seconds"
+                "--delay-period-seconds"
                 "10"
               ];
               inherit configPathSource configPathContainer pkgs packages
@@ -105,7 +105,7 @@
                 "ics20-1"
                 "--order"
                 "unordered"
-                "--connection-delay-period-seconds"
+                "--delay-period-seconds"
                 "10"
               ];
               inherit configPathSource configPathContainer pkgs packages
@@ -121,7 +121,7 @@
                 "relay"
                 "--config"
                 configPathContainer
-                "--connection-delay-period-seconds"
+                "--delay-period-seconds"
                 "10"
               ];
               inherit configPathSource configPathContainer pkgs packages
