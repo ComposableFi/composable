@@ -10,14 +10,21 @@
       };
 
       zombienet-rococo-local-composable-config = with prelude;
-        { chain, ws_port ? null, rpc_port ? null, relay_ws_port ? null
-        , relay_rpc_port ? null, rust_log_add ? null, para-id ? 2087
-        , command ? self'.packages.composable-node }:
+        { chain
+        , ws_port ? null
+        , rpc_port ? null
+        , relay_ws_port ? null
+        , relay_rpc_port ? null
+        , rust_log_add ? null
+        , para-id ? 2087
+        , command ? self'.packages.composable-node
+        , relaychain ? relaychainBase
+        }:
         mkZombienet {
-          relaychain = relaychainBase
+          relaychain = relaychain
             // (pkgs.lib.optionalAttrs (relay_ws_port != null) {
-              ws_port = relay_ws_port;
-            });
+            ws_port = relay_ws_port;
+          });
           parachains = [
             ({
               command = pkgs.lib.meta.getExe command;
@@ -25,13 +32,13 @@
               id = para-id;
               collators = 2;
             } // (pkgs.lib.optionalAttrs (chain != null) { inherit chain; })
-              // (pkgs.lib.optionalAttrs (rust_log_add != null) {
-                inherit rust_log_add;
-              })
-              // (pkgs.lib.optionalAttrs (ws_port != null) { inherit ws_port; })
-              // (pkgs.lib.optionalAttrs (rpc_port != null) {
-                inherit rpc_port;
-              }))
+            // (pkgs.lib.optionalAttrs (rust_log_add != null) {
+              inherit rust_log_add;
+            })
+            // (pkgs.lib.optionalAttrs (ws_port != null) { inherit ws_port; })
+            // (pkgs.lib.optionalAttrs (rpc_port != null) {
+              inherit rpc_port;
+            }))
           ];
         };
 
@@ -67,7 +74,8 @@
               }
             ];
           };
-        in zombieTools.writeZombienetShellApplication name config;
+        in
+        zombieTools.writeZombienetShellApplication name config;
 
       picasso-dev-ops = (zombieTools.zombienet-to-ops picasso-dev-config) // {
         script = zombienet-rococo-local-picasso-dev;
@@ -81,14 +89,29 @@
 
       zombienet-rococo-local-picasso-dev =
         zombieTools.writeZombienetShellApplication
-        "zombienet-rococo-local-picasso-dev" picasso-dev-config;
+          "zombienet-rococo-local-picasso-dev"
+          picasso-dev-config;
 
-    in with prelude; {
+    in
+    with prelude; {
       _module.args.this = rec { inherit picasso-dev-ops; };
 
       packages = rec {
         devnet-picasso = zombienet-rococo-local-picasso-dev;
         devnet-composable = zombienet-rococo-local-composable-dev;
+
+        livenet-composable = zombieTools.writeZombienetShellApplication
+          "zombienet-rococo-local-composable-dev"
+          (zombienet-rococo-local-composable-config {
+            chain = "composable-dev";
+            relaychain = {
+              chain = "rococo-local";
+              default_command =
+                pkgs.lib.meta.getExe self'.packages.theit;
+              count = 3;
+            };
+          });
+        
 
         zombienet-picasso-complete =
           mk-zombienet-all "devnet-picasso-complete" "picasso-dev";
@@ -97,48 +120,48 @@
 
         zombienet-rococo-local-composable-dev =
           zombieTools.writeZombienetShellApplication
-          "zombienet-rococo-local-composable-dev"
-          (zombienet-rococo-local-composable-config {
-            chain = "composable-dev";
-          });
+            "zombienet-rococo-local-composable-dev"
+            (zombienet-rococo-local-composable-config {
+              chain = "composable-dev";
+            });
 
         zombienet-picasso-centauri-a =
           zombieTools.writeZombienetShellApplication
-          "zombienet-picasso-centauri-a"
-          (zombienet-rococo-local-composable-config {
-            rust_log_add =
-              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
-            command = self'.packages.composable-node;
-            chain = "picasso-dev";
-          });
+            "zombienet-picasso-centauri-a"
+            (zombienet-rococo-local-composable-config {
+              rust_log_add =
+                "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
+              command = self'.packages.composable-node;
+              chain = "picasso-dev";
+            });
 
         zombienet-picasso-centauri-b =
           zombieTools.writeZombienetShellApplication
-          "zombienet-picasso-centauri-b"
-          (zombienet-rococo-local-composable-config {
-            ws_port = 29988;
-            rpc_port = 32201;
-            relay_ws_port = 29944;
-            relay_rpc_port = 31445;
-            rust_log_add =
-              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
-            command = self'.packages.composable-node;
-            chain = "picasso-dev";
-          });
+            "zombienet-picasso-centauri-b"
+            (zombienet-rococo-local-composable-config {
+              ws_port = 29988;
+              rpc_port = 32201;
+              relay_ws_port = 29944;
+              relay_rpc_port = 31445;
+              rust_log_add =
+                "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
+              command = self'.packages.composable-node;
+              chain = "picasso-dev";
+            });
 
         zombienet-composable-centauri-b =
           zombieTools.writeZombienetShellApplication
-          "zombienet-composable-centauri-b"
-          (zombienet-rococo-local-composable-config {
-            ws_port = 29988;
-            rpc_port = 32201;
-            relay_ws_port = 29944;
-            relay_rpc_port = 31445;
-            rust_log_add =
-              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
-            command = self'.packages.composable-node;
-            chain = "composable-dev";
-          });
+            "zombienet-composable-centauri-b"
+            (zombienet-rococo-local-composable-config {
+              ws_port = 29988;
+              rpc_port = 32201;
+              relay_ws_port = 29944;
+              relay_rpc_port = 31445;
+              rust_log_add =
+                "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
+              command = self'.packages.composable-node;
+              chain = "composable-dev";
+            });
       };
 
       apps = rec {

@@ -99,6 +99,15 @@
           hash = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
           cargoSha256 = "sha256-PqYXskT7pL2eRswCArTNZb3yAQKusL9NM1dbprNPxm0=";
         };
+
+        theit = buildPolkadotNode rec {
+          name = "theit";
+          repo = "polkadot";
+          owner = "paritytech";
+          rev = "645723987cf9662244be8faf4e9b63e8b9a1b3a3";
+          hash = "sha256-TTi4cKqQT/2ZZ/acGvcilqTlh2D9t4cfAtQQyVZWdmg=";
+          cargoSha256 = "sha256-iaYjzYDuUUZIU6aA+oOt+NFFEX12/d2G4ViqxLOwkkI=";
+        };
       };
     };
 }
