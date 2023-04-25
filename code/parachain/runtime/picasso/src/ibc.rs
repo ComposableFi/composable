@@ -159,7 +159,7 @@ pub struct Router {
 		Runtime,
 		pallet_ibc::ics20_fee::Ics20ServiceCharge<Runtime, pallet_ibc::ics20::IbcModule<Runtime>>,
 	>,
-    pallet_cosmwasm: CosmwasmRouter,
+	pallet_cosmwasm: CosmwasmRouter,
 }
 
 impl ModuleRouter for Router {
