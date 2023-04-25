@@ -29,6 +29,7 @@ std = ["composable-node/std"]
 [workspace]
 exclude = [
   "utils/extrinsics-docs-scraper",
+  "utils/submetrics",
   "integration-tests",
   "parachain/frame/vesting/cli",
 ]
