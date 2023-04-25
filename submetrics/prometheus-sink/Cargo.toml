@@ -1,0 +1,49 @@
+[package]
+name = "prometheus-sink"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+async-lock = { workspace = true }
+blake2-rfc = { workspace = true }
+derive_more = { workspace = true }
+either = { workspace = true }
+event-listener = { workspace = true }
+fnv = { workspace = true }
+futures-channel = { workspace = true }
+futures-util = { workspace = true }
+hashbrown = { workspace = true }
+hex = { workspace = true }
+itertools = { workspace = true }
+log = { workspace = true }
+lru = { workspace = true }
+rand = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+slab = { workspace = true }
+subxt = { workspace = true}
+async-std = { workspace = true }
+parking_lot = { workspace = true }
+env_logger = { workspace = true }
+sp-core-hashing = { worksapce = true }
+composable = { path = "../chains/composable" }
+picasso = { path = "../chains/picasso" }
+subchain-macro = { path = "../chains/subchain-macro" }
+submetrics-core = { path = "../submetrics-core" }
+lazy_static = { version = "*"}
+
+quanta = {version = "^0.11"}
+metrics = { version = "^0.21" }
+metrics-util = { version = "^0.15", default-features = false, features = ["recency", "registry", "summary"] }
+metrics-exporter-prometheus = { version = "^0.12.0", default-features = false}
+
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+
+ngrok = { version="0.11", features=["axum"] }
+tokio = { workspace = true }
+axum = "^0.6"
+axum-prometheus =  { git = "https://github.com/Ptrskay3/axum-prometheus.git" , rev = "b62b65dd3a0c932233bcc6aa755d0f37c2a645da" }
+anyhow = "1.0"

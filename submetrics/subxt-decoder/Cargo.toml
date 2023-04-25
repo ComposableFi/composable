@@ -1,0 +1,19 @@
+[package]
+name = "subxt-decoder"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+smoldot = { workspace = true }
+subxt = { workspace = true}
+parity-scale-codec = { version = "3.0.0" }
+jsonrpsee = { workspace = true }
+composable = { path = "../chains/composable" }
+picasso = { path = "../chains/picasso" }
+sp-core-hashing = { workspace = true }
+log = { workspace = true }
+hex = { workspace = true }
+serde = { workspace = true}
+serde_json = { workspace = true}
+subchain-macro = { path = "../chains/subchain-macro" }

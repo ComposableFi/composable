@@ -1,0 +1,13 @@
+[package]
+name = "subchain-macro"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+
+subxt = { workspace = true }
+parity-scale-codec = { version = "3.0.0" }
+
+composable = { path = "../composable" }
+picasso = { path = "../picasso" }

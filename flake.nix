@@ -65,6 +65,7 @@
         ./code/common-deps.nix
         ./code/composable-nodes.nix
         ./code/integration-tests/local-integration-tests/flake-module.nix
+        ./submetrics/flake-module.nix
         ./code/integration-tests/runtime-tests/runtime-tests.nix
         ./code/runtimes.nix
         ./code/services/cmc-api/cmc-api.nix

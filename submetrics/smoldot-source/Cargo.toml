@@ -1,0 +1,33 @@
+[package]
+name = "smoldot-source"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+
+smoldot-light = { workspace = true  }
+smoldot = { workspace = true }
+subxt = { workspace = true }
+
+async-lock = { workspace = true }
+blake2-rfc = { workspace = true }
+derive_more = { workspace = true }
+either = { workspace = true }
+event-listener = { workspace = true }
+fnv = { workspace = true }
+futures-channel = { workspace = true }
+futures-util = { workspace = true }
+hashbrown = { workspace = true }
+hex = { workspace = true }
+itertools = { workspace = true }
+log = { workspace = true }
+lru = { workspace = true }
+rand = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+slab = { workspace = true }
+jsonrpsee = { workspace = true}
+async-std = { workspace = true }
+parking_lot = { workspace = true }
+env_logger = { workspace = true }
