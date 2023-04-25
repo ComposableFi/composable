@@ -24,7 +24,7 @@ const sidebars = {
         'intro',
         {
             type: 'category',
-            label: 'Parachains',
+            label: 'Networks',
 
             link: {
                 type: 'generated-index',
@@ -428,25 +428,15 @@ const sidebars = {
                     ]
                 },
                 'ecosystem/composable-grants',
-                'ecosystem/business-line-development',
                 'ecosystem/press-kit',
                 'ecosystem/the-composable-team',
-                'ecosystem/careers',
             ],
         },
         {
-            type: 'category',
+            type: 'doc',
             label: 'Audits, Fixes & Bug Bounties',
-
-            link: {
-                type: 'generated-index',
-                slug: 'audits',
-            },
-            collapsible: false,
-            items: [
-                'audits/audit-results-recommendations-and-remediations',
-                `audits/immunefi-bug-bounty-program`
-            ]
+            id: 'audits/audit-results-recommendations-and-remediations',
+        
         },
         {
             type: 'doc',
