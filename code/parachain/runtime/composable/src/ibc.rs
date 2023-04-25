@@ -15,8 +15,10 @@ use pallet_ibc::{
 	DenomToAssetId, IbcAssetIds, IbcAssets,
 };
 use sp_core::ConstU64;
-use sp_runtime::{DispatchError, Either};
+use sp_runtime::{AccountId32, DispatchError, Either};
 use system::EnsureSignedBy;
+
+use hex_literal::hex;
 
 use super::*;
 
@@ -105,6 +107,9 @@ impl core::str::FromStr for MemoMessage {
 parameter_types! {
 	pub const GRANDPA: pallet_ibc::LightClientProtocol = pallet_ibc::LightClientProtocol::Grandpa;
 	pub const IbcTriePrefix : &'static [u8] = b"ibc/";
+	// converted from 63yg1BAWeUQG7WgpZNqbPrreo9HCoWKUcFqswfNz3TjpKHiL using https://www.shawntabrizi.com/substrate-js-utilities/
+	pub FeeAccount: <Runtime as pallet_ibc::Config>::AccountIdConversion = ibc_primitives::IbcAccount(AccountId32::from(hex!("9fed34f0114500f263d074e91ac4b1ef6b11b2e09fa4684dfe4bce07f94ab603")));
+
 }
 
 use pallet_ibc::ics20::Ics20RateLimiter;
@@ -186,4 +191,6 @@ impl pallet_ibc::Config for Runtime {
 	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;
+
+	type FeeAccount = FeeAccount;
 }
