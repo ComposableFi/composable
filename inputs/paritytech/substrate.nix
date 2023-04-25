@@ -18,7 +18,7 @@
         PROTOC = "${pkgs.protobuf}/bin/protoc";
         ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
         # forces Rust to use exact same git as CI runner/Nix fetcher/other tools
-        CARGO_NET_GIT_FETCH_WITH_CLI = true;
+        CARGO_NET_GIT_FETCH_WITH_CLI = "true";
       } // debug;
 
       subenv = {
