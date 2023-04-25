@@ -157,7 +157,7 @@ The following section lays out the release steps for each release in a checklist
 - [ ] Finally, create a tag `v<Branch.Spec_version.Path>` (eg: `v5.4201.0`) to trigger the release artifact build.
 
 ```shell
-git tag --sign release-v5.4200.0 --message "RC" && git push origin release-v5.4200.0`
+nix run .\#tag-release 5.4200.0
 ```
 
 It will trigger `on.push.tags` [GitHub Tag based release flow](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) 

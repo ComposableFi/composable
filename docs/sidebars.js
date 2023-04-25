@@ -139,10 +139,12 @@ const sidebars = {
                     collapsible: true,
                     collapsed: true,
                     items: [
+                        'products/centauri/Dotsama-ibc',
+                        'products/centauri/near-ibc-bridge',
+                        'products/centauri/hyperspace-relayer',
                         'products/centauri/light-clients',
                         'products/centauri/merkle-mountain-ranges',
                         'products/centauri/cosmos11-BEEFY-COSMOS-IBC-light-client',
-                        'products/centauri/expanding-ibc-protocol'
                     ],
                 },
                 {
