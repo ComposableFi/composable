@@ -416,7 +416,8 @@ jobs:
     runs-on:
       - ${{ matrix.arch }}
     concurrency:
-      group: ${{ github.workflow }}-build-product-darwin-${{ matrix.arch }}-${{ github.event.pull_request.title }}
+      # this intentionally fails all other jobs because mac is one and used only to cache
+      group: ${{ github.workflow }}-build-product-darwin-${{ matrix.arch }}
       cancel-in-progress: true
     steps:            
       - name: build-product-darwin
