@@ -25,9 +25,6 @@ kusama-dev-raw.json
 
 .DS_Store
 
-# The cache for docker container dependency
-.cargo
-
 # The cache for chain data in container
 .local
 
@@ -47,7 +44,6 @@ node_modules
 # but include tasks
 !.vscode/tasks.json
 
-scripts/polkadot-launch/bin/polkadot
 .rust-analyzer
 target
 .env

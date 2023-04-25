@@ -2,13 +2,6 @@
   perSystem = { config, self', inputs', pkgs, lib, system, crane
     , systemCommonRust, subnix, ... }:
     let
-      _cargo-debug-attrs = {
-        CARGO_LOG = "debug";
-        CARGO_NET_GIT_FETCH_WITH_CLI = "true";
-        CARGO_HTTP_MULTIPLEXING = "false";
-        CARGO_HTTP_DEBUG = "true";
-        RUST_LOG = "debug";
-      };
       buildPolkadotNode = { name, repo, owner, rev, hash, cargoSha256 }:
         pkgs.rustPlatform.buildRustPackage (subnix.subenv // rec {
           inherit name cargoSha256;
@@ -20,11 +13,7 @@
             sha256 = hash;
             fetchSubmodules = false;
           };
-          # env = _cargo-debug-attrs;
           meta = { mainProgram = "polkadot"; };
-
-          __noChroot = true;
-
         });
       cargo-lock = builtins.fromTOML (builtins.readFile ../../code/Cargo.lock);
       rococo-runtime-dep = builtins.head

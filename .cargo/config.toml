@@ -1,0 +1,2 @@
+# forces Rust to use exact same git as CI runner/Nix fetcher/other tools
+net.git-fetch-with-cli = true
