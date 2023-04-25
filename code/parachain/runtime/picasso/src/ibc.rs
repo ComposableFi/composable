@@ -3,7 +3,6 @@ use ::ibc::core::{
 	ics26_routing::context::{Module, ModuleId},
 };
 use common::ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds};
-use frame_support::traits::EitherOf;
 use frame_system::EnsureSigned;
 use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,

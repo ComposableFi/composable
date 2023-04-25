@@ -4,13 +4,12 @@ use ::ibc::core::{
 	ics26_routing::context::{Module, ModuleId},
 };
 use common::governance::native::EnsureRootOrOneThirdNativeTechnical;
-use frame_support::traits::EitherOf;
 use frame_system::EnsureSigned;
 use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
 };
 use sp_core::ConstU64;
-use sp_runtime::{DispatchError, Either, FixedU128, Rational128};
+use sp_runtime::{DispatchError, Either};
 use system::EnsureSignedBy;
 
 use super::*;
