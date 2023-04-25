@@ -1,3 +1,0 @@
-[net]
-retry = 3                   # network retries
-git-fetch-with-cli = true   # use the `git` executable for git operations
