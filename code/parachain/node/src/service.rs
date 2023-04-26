@@ -1,6 +1,15 @@
-// std
-use std::{sync::Arc, time::Duration};
-// Cumulus Imports
+// basically half of this code obsolete copy paste and need to be throw away replaced by proper and feature rich stuff for latest node https://github.com/paritytech/cumulus/blob/master/client/service/src/lib.rs
+use crate::{
+	chain_spec,
+	client::{Client, FullBackend, FullClient},
+	rpc,
+	runtime::{
+		assets::ExtendWithAssetsApi, cosmwasm::ExtendWithCosmwasmApi,
+		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
+		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+		staking_rewards::ExtendWithStakingRewardsApi, BaseHostRuntimeApis,
+	},
+};
 use common::OpaqueBlock;
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
@@ -14,22 +23,10 @@ use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 use polkadot_service::CollatorPair;
+use sc_client_api::StateBackendFor;
 use sc_consensus::ImportQueue;
-use sc_network_common::service::NetworkBlock;
-// Substrate Imports
-use crate::{
-	chain_spec,
-	client::{Client, FullBackend, FullClient},
-	rpc,
-	runtime::{
-		assets::ExtendWithAssetsApi, cosmwasm::ExtendWithCosmwasmApi,
-		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
-		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
-		staking_rewards::ExtendWithStakingRewardsApi, BaseHostRuntimeApis,
-	},
-};
-use sc_client_api::{BlockBackend, StateBackendFor};
 use sc_executor::NativeExecutionDispatch;
+use sc_network_common::service::NetworkBlock;
 use sc_service::{Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_api::{ConstructRuntimeApi, StateBackend};
@@ -37,6 +34,7 @@ use sp_api::{ConstructRuntimeApi, StateBackend};
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
+use std::{sync::Arc, time::Duration};
 
 pub struct PicassoExecutor;
 
@@ -224,7 +222,6 @@ pub async fn start_node(
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
 	id: ParaId,
-	sealing: Option<crate::cli::Sealing>,
 ) -> sc_service::error::Result<TaskManager> {
 	let task_manager = match config.chain_spec.id() {
 		chain if chain.contains("composable") =>
@@ -234,7 +231,6 @@ pub async fn start_node(
 				collator_options,
 				id,
 				Some(chain_spec::composable::DALEK_END_BLOCK),
-				sealing,
 			)
 			.await?,
 		chain if chain.contains("picasso") =>
@@ -244,7 +240,6 @@ pub async fn start_node(
 				collator_options,
 				id,
 				Some(chain_spec::picasso::DALEK_END_BLOCK),
-				sealing,
 			)
 			.await?,
 		_ => panic!("Unknown chain_id: {}", config.chain_spec.id()),
@@ -264,7 +259,6 @@ async fn start_node_impl<RuntimeApi, Executor>(
 	id: ParaId,
 	// The block number until ed25519-dalek should be used for signature verification.
 	dalek_end_block: Option<u32>,
-	sealing: Option<crate::cli::Sealing>,
 ) -> sc_service::error::Result<TaskManager>
 where
 	RuntimeApi:
@@ -280,7 +274,7 @@ where
 	StateBackendFor<FullBackend, OpaqueBlock>: StateBackend<BlakeTwo256>,
 	Executor: NativeExecutionDispatch + 'static,
 {
-	let mut parachain_config = prepare_node_config(parachain_config);
+	let parachain_config = prepare_node_config(parachain_config);
 
 	let params = new_partial::<RuntimeApi, Executor>(&parachain_config, dalek_end_block)?;
 
@@ -326,35 +320,6 @@ where
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
-
-	let select_chain = sc_consensus::LongestChain::new(backend.clone());
-	let (_grandpa_block_import, grandpa_link) = sc_finality_grandpa::block_import(
-		client.clone(),
-		&(client.clone() as Arc<_>),
-		select_chain.clone(),
-		telemetry.as_ref().map(|x| x.handle()),
-	)?;
-
-	let grandpa_protocol_name = sc_finality_grandpa::protocol_standard_name(
-		&client.block_hash(0)?.expect("Genesis block exists; qed"),
-		&parachain_config.chain_spec,
-	);
-
-	let warp_sync: Option<Arc<dyn sc_network::config::WarpSyncProvider<OpaqueBlock>>> =
-		if sealing.is_some() {
-			None
-		} else {
-			parachain_config
-				.network
-				.extra_sets
-				.push(sc_finality_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
-			Some(Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
-				backend.clone(),
-				grandpa_link.shared_authority_set().clone(),
-				Vec::default(),
-			)))
-		};
-
 	let (network, system_rpc_tx, tx_handler_controller, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
@@ -362,7 +327,8 @@ where
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue: params.import_queue,
-			warp_sync,
+			// do the warp for remote debug https://github.com/paritytech/cumulus/blob/polkadot-v0.9.39/client/service/src/lib.rs
+			warp_sync: None,
 			block_announce_validator_builder: Some(Box::new(|_| {
 				Box::new(block_announce_validator)
 			})),
