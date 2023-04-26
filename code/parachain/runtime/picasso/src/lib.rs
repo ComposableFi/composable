@@ -304,7 +304,7 @@ impl farming::Config for Runtime {
     type TreasuryAccountId = TreasuryAccount;
     type RewardPeriod = RewardPeriod;
     type RewardPools = FarmingRewards;
-    type MultiCurrency = Tokens;
+    type MultiCurrency = AssetsTransactorRouter;
     type WeightInfo = ();
 }
 
