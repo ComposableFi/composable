@@ -44,10 +44,10 @@ resource "github_repository_collaborators" "roles" {
     username   = data.github_user.ops.name
   }
 
-  # user {
-  #   permission = "write"
-  #   username   = data.github_user.docs.name
-  # }
+  user {
+    permission = "push"
+    username   = data.github_user.docs.name
+  }
 
   # user {
   #   permission = "admin"
