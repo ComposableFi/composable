@@ -25,11 +25,11 @@ data "github_team" "product" {
 }
 
 
-resource "github_repository_collaborator" "docs" {
-  repository = "composable"
-  username   = data.github_user.docs.name
-  permission = "write"
-}
+# resource "github_repository_collaborator" "docs" {
+#   repository = "composable"
+#   username   = data.github_user.docs.name
+#   permission = "write"
+# }
 
 resource "github_repository_collaborators" "roles" {
   repository = "composable"
