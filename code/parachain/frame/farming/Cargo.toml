@@ -32,6 +32,8 @@ frame-system = { default-features = false, workspace = true }
 
 [dev-dependencies]
 pallet-timestamp = { workspace = true }
+# primitives = { path = "../../runtime/primitives", default-features = false }
+pallet-balances = { workspace = true, default-features = false }
 # frame-benchmarking = { default-features = false, workspace = true }
 
 [features]

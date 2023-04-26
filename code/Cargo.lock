@@ -3778,6 +3778,7 @@ dependencies = [
  "log 0.4.17",
  "orml-tokens",
  "orml-traits",
+ "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
  "reward",
