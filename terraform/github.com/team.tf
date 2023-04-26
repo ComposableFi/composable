@@ -27,9 +27,9 @@ data "github_team" "product" {
 resource "github_repository_collaborators" "roles" {
   repository = "composable"
 
-  user {
-    permission = "write"
-    username   = data.github_team.devs.name
+  team {
+    permission = "maintain"
+    team_id   = data.github_team.devs.name
   }
 
   user {
@@ -42,17 +42,17 @@ resource "github_repository_collaborators" "roles" {
     username   = data.github_user.docs.name
   }
 
-  user {
+  # user {
+  #   permission = "admin"
+  #   username   = data.github_user.bot.name
+  # }
+  team {
     permission = "admin"
-    username   = data.github_user.bot.name
-  }
-  user {
-    permission = "admin"
-    username   = data.github_team.product.name
+    team_id   = data.github_team.product.name
   }
 
-  user {
+  team {
     permission = "admin"
-    username   = data.github_team.sre.name
+    team_id   = data.github_team.sre.name
   }
 }
