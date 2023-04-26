@@ -86,6 +86,7 @@
         ./flake/overlays.nix
         ./flake/release.nix
         ./flake/subxt.nix
+        ./flake/live.nix
         ./flake/zombienet.nix
         ./frontend/frontend.nix
         ./inputs/AcalaNetwork/acala.nix
