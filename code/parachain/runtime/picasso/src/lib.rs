@@ -296,12 +296,14 @@ impl reward::Config<FarmingRewardsInstance> for Runtime {
 
 parameter_types! {
     pub const RewardPeriod: BlockNumber = 60_000 / (12000 as BlockNumber);
+	pub const FarmingPalletId: PalletId = PalletId(*b"mod/farm");
+	pub FarmingAccount: AccountId = FarmingPalletId::get().into_account_truncating();
 }
 
 impl farming::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type FarmingPalletId = FarmingPalletId;
-    type TreasuryAccountId = TreasuryAccount;
+    type TreasuryAccountId = FarmingAccount;
     type RewardPeriod = RewardPeriod;
     type RewardPools = FarmingRewards;
     type MultiCurrency = AssetsTransactorRouter;
@@ -322,7 +324,6 @@ parameter_types! {
 	pub const TwapWindow: u16 = 3;
 	// cspell:disable-next
 	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
-	pub const FarmingPalletId: PalletId = PalletId(*b"mod/farm");
 	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK as u64;
 }
 
