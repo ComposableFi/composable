@@ -36,7 +36,7 @@ resource "github_repository_collaborators" "roles" {
 
   team {
     permission = "maintain"
-    team_id   = data.github_team.devs.name
+    team_id   = data.github_team.devs.slug
   }
 
   user {
@@ -55,11 +55,11 @@ resource "github_repository_collaborators" "roles" {
   # }
   team {
     permission = "admin"
-    team_id   = data.github_team.product.name
+    team_id   = data.github_team.product.slug
   }
 
   team {
     permission = "admin"
-    team_id   = data.github_team.sre.name
+    team_id   = data.github_team.sre.slug
   }
 }
