@@ -9,12 +9,13 @@ use common::{
 	fees::{IbcIcs20FeePalletId, IbcIcs20ServiceCharge},
 	ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds},
 };
-use frame_support::traits::EitherOf;
+use frame_system::EnsureSigned;
+use hex_literal::hex;
 use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
 };
 use sp_core::ConstU64;
-use sp_runtime::{DispatchError, Either};
+use sp_runtime::{AccountId32, DispatchError, Either};
 use system::EnsureSignedBy;
 
 use super::*;
@@ -103,6 +104,8 @@ impl core::str::FromStr for MemoMessage {
 parameter_types! {
 	pub const GRANDPA: pallet_ibc::LightClientProtocol = pallet_ibc::LightClientProtocol::Grandpa;
 	pub const IbcTriePrefix : &'static [u8] = b"ibc/";
+	// converted from 5xMXcPsD9B9xDMvLyNBLmn9uhK7sTXTfubGVTZmXwVJmTVWa using https://www.shawntabrizi.com/substrate-js-utilities/
+	pub FeeAccount: <Runtime as pallet_ibc::Config>::AccountIdConversion = ibc_primitives::IbcAccount(AccountId32::from(hex!("a72ef3ce1ecd46163bc5e23fd3e6a4623d9717c957fb59001a5d4cb949150f28")));
 }
 
 use pallet_ibc::ics20::Ics20RateLimiter;
@@ -114,8 +117,7 @@ impl Ics20RateLimiter for ConstantAny {
 		msg: &pallet_ibc::ics20::Ics20TransferMsg,
 		_flow_type: pallet_ibc::ics20::FlowType,
 	) -> Result<(), ()> {
-		// one DOT/PICA, so for USDT not safe, but we do not yet do it
-		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(10_u64.pow(12)) {
+		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(10_000 * 10_u64.pow(12)) {
 			return Ok(())
 		}
 		Err(())
@@ -191,10 +193,9 @@ impl pallet_ibc::Config for Runtime {
 	type RelayerOrigin = system::EnsureSigned<Self::IbcAccountId>;
 
 	#[cfg(not(feature = "testnet"))]
-	type TransferOrigin = EitherOf<
-		EnsureSignedBy<ReleaseMembership, Self::IbcAccountId>,
-		EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>,
-	>;
+	type TransferOrigin = EnsureSigned<Self::AccountId>;
 	#[cfg(not(feature = "testnet"))]
 	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
+
+	type FeeAccount = FeeAccount;
 }

@@ -30,6 +30,11 @@ env:
 jobs:
 
   dependency-review:
+    concurrency:
+      group: ${{ github.workflow }}-dependency-review-${{ github.event.pull_request.title }}
+      cancel-in-progress: true  
+    needs:
+      - privilege-check  
     runs-on:
       - ubuntu-latest
     steps:
@@ -40,7 +45,8 @@ jobs:
         with:
           # GHSA-pfrx-2q88-qq97, GHSA-w5p7-h5w8-2hfq, GHSA-wcg3-cvx6-7396 are ignored because they are casued by the static Docusaurus build. Please remove when Docusaurus gets updated.
           # GHSA-969w-q74q-9j8v, GHSA-44mr-8vmm-wjhg, GHSA-wh6w-3828-g9qf are ignored because they are transitive dependencies still used by the master branch of Substrate. Please remove when Substrate update the according dependencies.
-          allow-ghsas: GHSA-pfrx-2q88-qq97, GHSA-w5p7-h5w8-2hfq, GHSA-wcg3-cvx6-7396, GHSA-969w-q74q-9j8v, GHSA-44mr-8vmm-wjhg, GHSA-wh6w-3828-g9qf, GHSA-ff4p-7xrq-q5r8, GHSA-xm67-587q-r2vw
+          # GHSA-fjx5-qpf4-xjf2 is ignored because it is a transitive dependencies still used by the master branch of ibc-proto-rs. Please remove when ibc-rs-proto updates it.
+          allow-ghsas: GHSA-pfrx-2q88-qq97, GHSA-w5p7-h5w8-2hfq, GHSA-wcg3-cvx6-7396, GHSA-969w-q74q-9j8v, GHSA-44mr-8vmm-wjhg, GHSA-wh6w-3828-g9qf, GHSA-ff4p-7xrq-q5r8, GHSA-xm67-587q-r2vw, GHSA-fjx5-qpf4-xjf2
 
   privilege-check:
     name: "Privilege check"
@@ -403,8 +409,8 @@ jobs:
         with:
           command: nix -- build .#all-deps --keep-going       
 
-  build-product:
-    name: "build-product #flaky"
+  build-product-darwin:
+    name: "build-product-darwin"
     continue-on-error: true
     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}    
     strategy:
@@ -416,28 +422,29 @@ jobs:
     runs-on:
       - ${{ matrix.arch }}
     concurrency:
-      group: ${{ github.workflow }}-build-product-${{ matrix.arch }}-${{ github.event.pull_request.title }}
+      # this intentionally fails all other jobs because mac is one and used only to cache
+      group: ${{ github.workflow }}-build-product-darwin-${{ matrix.arch }}
       cancel-in-progress: true
     steps:            
-      - name: nix-profile-install
+      - name: build-product-darwin
         run: |
+          # mac has its own way of operating
           uname -a
-          # please not that mac does not isolates builds, so nix/docker/git/git-lfs/cachix/binutils/coreutils/nix channels updates where install into via ssh (so can fix via this job too)
+          whoami
+          source /etc/static/bashrc
           nix --version
+          cachix --version
           cachix use ${{ env.CACHIX_NAME }}
           cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
-          cachix --version
-
-      - uses: actions/checkout@v3
-        with:
-          lfs: true
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-
-      - name: cachix-nix-build
-        run: |  
-          nix build .#devnet-picasso
-          nix-store --query --references $(realpath result) | xargs nix-store --realise | xargs nix-store  --query --requisites | cachix push --compression-level 16 --compression-method zstd --jobs 8 composable-community
+          git --version
+          rm -rf composable          
+          git clone https://github.com/$GITHUB_REPOSITORY.git
+          (
+            cd composable
+            git checkout ${{ github.event.pull_request.head.sha }}
+            nix build .#devnet-picasso
+            nix-store --query --references $(realpath result) | xargs nix-store --realise | xargs nix-store  --query --requisites | cachix push --compression-level 16 --compression-method zstd --jobs 16 composable-community
+          )
 
   build-all-docs-packages:
     name: build-all-docs-packages
@@ -465,7 +472,6 @@ jobs:
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
             
-
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
@@ -503,8 +509,9 @@ jobs:
         - build-all-misc-packages
         - build-all-docs-packages
         - build-all-benchmarks-packages
+        - build-all-production-deps
       steps:
-        - run: echo "Goblins allow your work to see the light"
+        - run: echo "See next activities of pushing and publishing and merging"
 
   deploy-docs:
     name: "Deploy docs"
@@ -558,6 +565,7 @@ jobs:
   # this should be split and commit docker are from here, but latest from release
   push-docker-images:
     name: Push docker images
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}   
     strategy:
       matrix:
         arch: [x64-cute]
@@ -633,6 +641,15 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: hyperspace-composable-rococo-picasso-rococo
           artifact: hyperspace-composable-rococo-picasso-rococo:latest
+
+      - name: Publish hyperspace-composable-polkadot-picasso-kusama to docker hub
+        uses: "./.github/templates/docker-publish"
+        with:
+          image_path: result/docker-image-hyperspace-composable-polkadot-picasso-kusama.tar.gz
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          name: hyperspace-composable-polkadot-picasso-kusama
+          artifact: hyperspace-composable-polkadot-picasso-kusama:latest          
       
   deploy-pablo-preview:
     name: "Deploy Pablo Preview [FLAKY]"

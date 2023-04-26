@@ -7,7 +7,7 @@ use common::{
 	fees::{IbcIcs20FeePalletId, IbcIcs20ServiceCharge},
 	governance::native::EnsureRootOrOneThirdNativeTechnical,
 };
-use frame_support::traits::EitherOf;
+use frame_system::EnsureSigned;
 use pallet_ibc::{
 	ics20::{MODULE_ID_STR, PORT_ID_STR},
 	light_client_common::RelayChain,
@@ -15,8 +15,10 @@ use pallet_ibc::{
 	DenomToAssetId, IbcAssetIds, IbcAssets,
 };
 use sp_core::ConstU64;
-use sp_runtime::{DispatchError, Either};
+use sp_runtime::{AccountId32, DispatchError, Either};
 use system::EnsureSignedBy;
+
+use hex_literal::hex;
 
 use super::*;
 
@@ -105,6 +107,9 @@ impl core::str::FromStr for MemoMessage {
 parameter_types! {
 	pub const GRANDPA: pallet_ibc::LightClientProtocol = pallet_ibc::LightClientProtocol::Grandpa;
 	pub const IbcTriePrefix : &'static [u8] = b"ibc/";
+	// converted from 63yg1BAWeUQG7WgpZNqbPrreo9HCoWKUcFqswfNz3TjpKHiL using https://www.shawntabrizi.com/substrate-js-utilities/
+	pub FeeAccount: <Runtime as pallet_ibc::Config>::AccountIdConversion = ibc_primitives::IbcAccount(AccountId32::from(hex!("9fed34f0114500f263d074e91ac4b1ef6b11b2e09fa4684dfe4bce07f94ab603")));
+
 }
 
 use pallet_ibc::ics20::Ics20RateLimiter;
@@ -116,8 +121,7 @@ impl Ics20RateLimiter for ConstantAny {
 		msg: &pallet_ibc::ics20::Ics20TransferMsg,
 		_flow_type: pallet_ibc::ics20::FlowType,
 	) -> Result<(), ()> {
-		// one DOT/PICA, so for USDT not safe, but we do not yet do it
-		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(10_u64.pow(12)) {
+		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(10_000 * 10_u64.pow(12)) {
 			return Ok(())
 		}
 		Err(())
@@ -180,14 +184,13 @@ impl pallet_ibc::Config for Runtime {
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
-	type TransferOrigin = EitherOf<
-		EnsureSignedBy<ReleaseMembership, Self::IbcAccountId>,
-		EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>,
-	>;
+	type TransferOrigin = EnsureSigned<Self::AccountId>;
 	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;
 	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;
+
+	type FeeAccount = FeeAccount;
 }
