@@ -46,7 +46,7 @@ resource "github_repository_collaborators" "roles" {
 
   user {
     permission = "push"
-    username   = data.github_user.docs.name
+    username   = "JafarAz"
   }
 
   # user {
