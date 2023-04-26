@@ -5,6 +5,12 @@
 #![cfg_attr(test, feature(proc_macro_hygiene))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
 use codec::{Decode, Encode, EncodeLike};
 use frame_support::{
     dispatch::{DispatchError, DispatchResult},

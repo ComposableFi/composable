@@ -12270,6 +12270,7 @@ dependencies = [
  "log 0.4.17",
  "pallet-timestamp",
  "parity-scale-codec",
+ "rand 0.8.5",
  "scale-info",
  "serde",
  "sp-arithmetic 6.0.0",

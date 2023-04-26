@@ -27,6 +27,7 @@ frame-system = { default-features = false, workspace = true }
 
 [dev-dependencies]
 pallet-timestamp = { workspace = true }
+rand = "0.8.3"
 # frame-benchmarking = { default-features = false, workspace = true }
 
 [features]
