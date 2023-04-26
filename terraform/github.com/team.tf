@@ -24,12 +24,13 @@ data "github_team" "product" {
   slug = "product-mgmt"
 }
 
+
 resource "github_repository_collaborators" "roles" {
   repository = "composable"
 
   team {
     permission = "maintain"
-    team_id   = data.github_team.devs.name
+    team_id    = data.github_team.devs.slug
   }
 
   user {
@@ -38,21 +39,22 @@ resource "github_repository_collaborators" "roles" {
   }
 
   user {
-    permission = "write"
-    username   = data.github_user.docs.name
+    permission = "push"
+    username   = "JafarAz"
   }
 
-  # user {
-  #   permission = "admin"
-  #   username   = data.github_user.bot.name
-  # }
-  team {
+  user {
     permission = "admin"
-    team_id   = data.github_team.product.name
+    username   = "g-la-d-os"
   }
 
   team {
     permission = "admin"
-    team_id   = data.github_team.sre.name
+    team_id    = data.github_team.product.slug
+  }
+
+  team {
+    permission = "admin"
+    team_id    = data.github_team.sre.slug
   }
 }
