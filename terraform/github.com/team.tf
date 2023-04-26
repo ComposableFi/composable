@@ -45,9 +45,9 @@ resource "github_repository_collaborators" "roles" {
 
   user {
     permission = "admin"
-    username   = data.github_user.bot.name
+    username   = "g-la-d-os"
   }
-  
+
   team {
     permission = "admin"
     team_id    = data.github_team.product.slug
