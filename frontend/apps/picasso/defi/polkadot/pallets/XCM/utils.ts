@@ -23,7 +23,7 @@ export function xcmEventParser(
         api.events?.polkadotXcm?.Attempted?.is?.(e.event) ||
         api.events?.xTokens?.TransferredMultiAssets?.is?.(e.event)||
         api.events?.xTokens?.Transfer?.is?.(e.event)
-),
+    ),
     option.map((e) => e.event),
     option.map((event) => {
       if (api.events?.xTokens?.TransferredMultiAssets?.is?.(event)||
