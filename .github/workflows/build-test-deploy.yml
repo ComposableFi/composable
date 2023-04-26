@@ -116,9 +116,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
       - run: |
-          export NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1
-          chmod +x ./.github/workflows/nix-flake-check.sh
-          source ./.github/workflows/nix-flake-check.sh
+          nix run .#nix-flake-check
   
   build-all-platforms-arm:
     name: build-all-platforms-arm
