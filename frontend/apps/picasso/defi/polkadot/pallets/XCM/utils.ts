@@ -20,7 +20,8 @@ export function xcmPalletEventParser(
     findFirst(
       (e) =>
         api.events?.xcmPallet?.Attempted?.is?.(e.event) ||
-        api.events?.polkadotXcm?.Attempted?.is?.(e.event)
+        api.events?.polkadotXcm?.Attempted?.is?.(e.event) ||
+        api.events?.xTokens?.Attempted?.is?.(e.event)
     ),
     option.map((e) => e.event),
     option.map((event) => {
