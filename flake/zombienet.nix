@@ -97,7 +97,8 @@
             chain = "composable-dev";
             relaychain = {
               chain = "rococo-local";
-              default_command = pkgs.lib.meta.getExe self'.packages.theit;
+              default_command =
+                pkgs.lib.meta.getExe self'.packages.polkadot-live-runtine-node;
               count = 3;
             };
           });

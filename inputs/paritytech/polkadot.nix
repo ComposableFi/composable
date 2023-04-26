@@ -100,8 +100,8 @@
           cargoSha256 = "sha256-PqYXskT7pL2eRswCArTNZb3yAQKusL9NM1dbprNPxm0=";
         };
 
-        theit = buildPolkadotNode rec {
-          name = "theit";
+        polkadot-live-runtine-node = buildPolkadotNode rec {
+          name = "polkadot-live-runtine-node";
           repo = "polkadot";
           owner = "paritytech";
           rev = "645723987cf9662244be8faf4e9b63e8b9a1b3a3";

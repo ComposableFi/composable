@@ -180,6 +180,7 @@ libsecp
 libsecp256k1
 libudev
 libwasmvm
+livenet
 llvm
 localstorage
 loglevel
