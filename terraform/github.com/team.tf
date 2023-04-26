@@ -24,6 +24,13 @@ data "github_team" "product" {
   slug = "product-mgmt"
 }
 
+
+resource "github_repository_collaborator" "docs" {
+  repository = "composable"
+  username   = data.github_user.docs.name
+  permission = "write"
+}
+
 resource "github_repository_collaborators" "roles" {
   repository = "composable"
 
@@ -37,10 +44,10 @@ resource "github_repository_collaborators" "roles" {
     username   = data.github_user.ops.name
   }
 
-  user {
-    permission = "write"
-    username   = data.github_user.docs.name
-  }
+  # user {
+  #   permission = "write"
+  #   username   = data.github_user.docs.name
+  # }
 
   # user {
   #   permission = "admin"
