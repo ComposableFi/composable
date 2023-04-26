@@ -13,7 +13,7 @@
 #![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
+#![recursion_limit = "512"]
 #![allow(incomplete_features)] // see other usage -
 #![feature(adt_const_params)]
 
@@ -68,7 +68,7 @@ use sp_runtime::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, Either,
+	ApplyExtrinsicResult, Either, FixedI128,
 };
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
@@ -282,6 +282,32 @@ impl assets::Config for Runtime {
 	type CurrencyValidator = ValidateCurrencyId;
 }
 
+type FarmingRewardsInstance = reward::Instance1;
+
+impl reward::Config<FarmingRewardsInstance> for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type SignedFixedPoint = FixedI128;
+    type PoolId = CurrencyId;
+    type StakeId = AccountId;
+    type CurrencyId = CurrencyId;
+    type GetNativeCurrencyId = NativeAssetId;
+    type GetWrappedCurrencyId = NativeAssetId;
+}
+
+parameter_types! {
+    pub const RewardPeriod: BlockNumber = 60_000 / (12000 as BlockNumber);
+}
+
+impl farming::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type FarmingPalletId = FarmingPalletId;
+    type TreasuryAccountId = TreasuryAccount;
+    type RewardPeriod = RewardPeriod;
+    type RewardPools = FarmingRewards;
+    type MultiCurrency = Tokens;
+    type WeightInfo = ();
+}
+
 parameter_types! {
 	pub const StakeLock: BlockNumber = 50;
 	pub const StalePrice: BlockNumber = 5;
@@ -296,6 +322,7 @@ parameter_types! {
 	pub const TwapWindow: u16 = 3;
 	// cspell:disable-next
 	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
+	pub const FarmingPalletId: PalletId = PalletId(*b"mod/farm");
 	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK as u64;
 }
 
@@ -788,6 +815,8 @@ construct_runtime!(
 		Pablo: pablo = 60,
 		Oracle: oracle = 61,
 		AssetsTransactorRouter: assets_transactor_router = 62,
+		FarmingRewards: reward::<Instance1> = 63,
+		Farming: farming = 64,
 
 		CallFilter: call_filter = 100,
 
