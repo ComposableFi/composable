@@ -28,7 +28,7 @@ use crate::{
 		staking_rewards::ExtendWithStakingRewardsApi, BaseHostRuntimeApis,
 	},
 };
-use sc_client_api::StateBackendFor;
+use sc_client_api::{BlockBackend, StateBackendFor};
 use sc_executor::NativeExecutionDispatch;
 use sc_service::{Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
@@ -224,6 +224,7 @@ pub async fn start_node(
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
 	id: ParaId,
+	sealing: Option<crate::cli::Sealing>,
 ) -> sc_service::error::Result<TaskManager> {
 	let task_manager = match config.chain_spec.id() {
 		chain if chain.contains("composable") =>
@@ -233,6 +234,7 @@ pub async fn start_node(
 				collator_options,
 				id,
 				Some(chain_spec::composable::DALEK_END_BLOCK),
+				sealing,
 			)
 			.await?,
 		chain if chain.contains("picasso") =>
@@ -242,6 +244,7 @@ pub async fn start_node(
 				collator_options,
 				id,
 				Some(chain_spec::picasso::DALEK_END_BLOCK),
+				sealing,
 			)
 			.await?,
 		_ => panic!("Unknown chain_id: {}", config.chain_spec.id()),
@@ -261,6 +264,7 @@ async fn start_node_impl<RuntimeApi, Executor>(
 	id: ParaId,
 	// The block number until ed25519-dalek should be used for signature verification.
 	dalek_end_block: Option<u32>,
+	sealing: Option<crate::cli::Sealing>,
 ) -> sc_service::error::Result<TaskManager>
 where
 	RuntimeApi:
@@ -276,7 +280,7 @@ where
 	StateBackendFor<FullBackend, OpaqueBlock>: StateBackend<BlakeTwo256>,
 	Executor: NativeExecutionDispatch + 'static,
 {
-	let parachain_config = prepare_node_config(parachain_config);
+	let mut parachain_config = prepare_node_config(parachain_config);
 
 	let params = new_partial::<RuntimeApi, Executor>(&parachain_config, dalek_end_block)?;
 
@@ -323,24 +327,33 @@ where
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
 
-	let warp_sync: Option<Arc<dyn sc_network::config::WarpSyncProvider<Block>>> =
-	if sealing.is_some() {
-		None
-	} else {
-		config
-			.network
-			.extra_sets
-			.push(sc_finality_grandpa::grandpa_peers_set_config(
-				grandpa_protocol_name.clone(),
-			));
-		Some(Arc::new(
-			sc_finality_grandpa::warp_proof::NetworkProvider::new(
+	let select_chain = sc_consensus::LongestChain::new(backend.clone());
+	let (_grandpa_block_import, grandpa_link) = sc_finality_grandpa::block_import(
+		client.clone(),
+		&(client.clone() as Arc<_>),
+		select_chain.clone(),
+		telemetry.as_ref().map(|x| x.handle()),
+	)?;
+
+	let grandpa_protocol_name = sc_finality_grandpa::protocol_standard_name(
+		&client.block_hash(0)?.expect("Genesis block exists; qed"),
+		&parachain_config.chain_spec,
+	);
+
+	let warp_sync: Option<Arc<dyn sc_network::config::WarpSyncProvider<OpaqueBlock>>> =
+		if sealing.is_some() {
+			None
+		} else {
+			parachain_config
+				.network
+				.extra_sets
+				.push(sc_finality_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
+			Some(Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
 				backend.clone(),
 				grandpa_link.shared_authority_set().clone(),
 				Vec::default(),
-			),
-		))
-	};
+			)))
+		};
 
 	let (network, system_rpc_tx, tx_handler_controller, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {

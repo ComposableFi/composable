@@ -54,6 +54,10 @@ pub struct Cli {
 	/// Relaychain arguments
 	#[clap(raw = true)]
 	pub relaychain_args: Vec<String>,
+
+	/// Choose sealing method.
+	#[arg(long, value_enum, ignore_case = true)]
+	pub sealing: Option<Sealing>,
 }
 
 #[derive(Debug)]
@@ -78,5 +82,20 @@ impl RelayChainCli {
 		let chain_id = extension.map(|e| e.relay_chain.clone());
 		let base_path = para_config.base_path.as_ref().map(|x| x.path().join("polkadot"));
 		Self { base_path, chain_id, base: polkadot_cli::RunCmd::parse_from(relay_chain_args) }
+	}
+}
+
+/// Available Sealing methods.
+#[derive(Debug, Copy, Clone, clap::ValueEnum)]
+pub enum Sealing {
+	// Seal using rpc method.
+	Manual,
+	// Seal when transaction is executed.
+	Instant,
+}
+
+impl Default for Sealing {
+	fn default() -> Sealing {
+		Sealing::Manual
 	}
 }

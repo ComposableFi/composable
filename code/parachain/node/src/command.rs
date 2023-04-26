@@ -308,8 +308,14 @@ pub fn run() -> Result<()> {
 					if config.role.is_authority() { "yes" } else { "no" }
 				);
 
-				Ok(crate::service::start_node(config, polkadot_config, collator_options, id)
-					.await?)
+				Ok(crate::service::start_node(
+					config,
+					polkadot_config,
+					collator_options,
+					id,
+					cli.sealing,
+				)
+				.await?)
 			})
 		},
 	}
