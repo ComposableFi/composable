@@ -77,7 +77,6 @@ jobs:
           persist-credentials: false
       - uses: actionsdesk/lfs-warning@v3.2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           filesizelimit: 10KB
           exclusionPatterns: |
             **/*.rs
@@ -559,7 +558,6 @@ jobs:
       - name: Deploy docs
         uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DOCS_COMPOSABLE_FINANCE }}
           projectId: composable-docs
           entrypoint: docs/
