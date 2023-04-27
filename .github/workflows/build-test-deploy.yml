@@ -34,7 +34,7 @@ env:
 jobs:
 
   dependency-review:     
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event_name != 'merge_group' && github.event_name != 'push' }}
     concurrency:
       group: ${{ github.workflow }}-dependency-review-${{ github.event.pull_request.title }}
       cancel-in-progress: true  
