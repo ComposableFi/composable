@@ -6,7 +6,7 @@ use crate::{
 	runtime::{
 		assets::ExtendWithAssetsApi, cosmwasm::ExtendWithCosmwasmApi,
 		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
-		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, farming::ExtendWithFarmingApi,
 		staking_rewards::ExtendWithStakingRewardsApi, BaseHostRuntimeApis,
 	},
 };
@@ -268,6 +268,7 @@ where
 		+ ExtendWithAssetsApi<RuntimeApi, Executor>
 		+ ExtendWithCrowdloanRewardsApi<RuntimeApi, Executor>
 		+ ExtendWithPabloApi<RuntimeApi, Executor>
+		+ ExtendWithFarmingApi<RuntimeApi, Executor>
 		+ ExtendWithLendingApi<RuntimeApi, Executor>
 		+ ExtendWithCosmwasmApi<RuntimeApi, Executor>
 		+ ExtendWithIbcApi<RuntimeApi, Executor>,

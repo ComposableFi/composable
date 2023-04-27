@@ -4,6 +4,7 @@ use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApiServer};
 use cumulus_primitives_core::CollectCollationInfo;
 use ibc_rpc::{IbcApiServer, IbcRpcHandler};
 use pablo_rpc::{Pablo, PabloApiServer};
+use reward_rpc::{Reward, RewardApiServer};
 use pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi;
 use sp_api::{ApiExt, Metadata, StateBackend};
 use sp_block_builder::BlockBuilder;
@@ -191,6 +192,20 @@ define_trait! {
 		impl for picasso_runtime {
 			fn (io, deps) {
 				io.merge(Pablo::new(deps.client).into_rpc())
+			}
+		}
+	}
+
+	mod farming {
+		pub trait ExtendWithFarmingApi {
+			fn extend_with_farming_api(io, deps);
+		}
+
+		impl for composable_runtime {}
+
+		impl for picasso_runtime {
+			fn (io, deps) {
+				io.merge(Reward::new(deps.client).into_rpc())
 			}
 		}
 	}

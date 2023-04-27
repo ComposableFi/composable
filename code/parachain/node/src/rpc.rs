@@ -22,7 +22,7 @@ use crate::{
 	runtime::{
 		assets::ExtendWithAssetsApi, cosmwasm::ExtendWithCosmwasmApi,
 		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
-		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, farming::ExtendWithFarmingApi,
 		staking_rewards::ExtendWithStakingRewardsApi, BaseHostRuntimeApis,
 	},
 };
@@ -67,6 +67,7 @@ where
 			+ ExtendWithAssetsApi<RuntimeApi, Executor>
 			+ ExtendWithCrowdloanRewardsApi<RuntimeApi, Executor>
 			+ ExtendWithPabloApi<RuntimeApi, Executor>
+			+ ExtendWithFarmingApi<RuntimeApi, Executor>
 			+ ExtendWithLendingApi<RuntimeApi, Executor>
 			+ ExtendWithCosmwasmApi<RuntimeApi, Executor>
 			+ ExtendWithIbcApi<RuntimeApi, Executor>,
@@ -91,6 +92,11 @@ where
 	)?;
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_pablo_api(
+		&mut io,
+		deps.clone(),
+	)?;
+
+	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_farming_api(
 		&mut io,
 		deps.clone(),
 	)?;
