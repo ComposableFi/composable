@@ -562,7 +562,7 @@ jobs:
           projectId: composable-docs
           entrypoint: docs/
           # this must go same release flow as FE, not from main
-          channelId: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+          channelId: ${{ github.event_name == 'push' && github.ref_name == 'main' && 'live' }}
 
   # this should be split and commit docker are from here, but latest from release
   push-docker-images:
