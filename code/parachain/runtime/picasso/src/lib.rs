@@ -37,6 +37,7 @@ pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use fees::{AssetsPaymentHeader, FinalPriceConverter};
 use version::{Version, VERSION};
 pub use xcmp::XcmConfig;
+use frame_support::dispatch::DispatchError;
 
 pub use crate::fees::WellKnownForeignToNativePriceConverter;
 
@@ -1142,6 +1143,32 @@ impl_runtime_apis! {
 			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}
+
+	impl reward_rpc_runtime_api::RewardApi<
+        Block,
+        AccountId,
+        CurrencyId,
+        Balance,
+        BlockNumber,
+        sp_runtime::FixedU128
+    > for Runtime {
+        fn compute_farming_reward(account_id: AccountId, pool_currency_id: CurrencyId, reward_currency_id: CurrencyId) -> Result<reward_rpc_runtime_api::BalanceWrapper<Balance>, DispatchError> {
+            let amount = <FarmingRewards as reward::RewardsApi<CurrencyId, AccountId, Balance>>::compute_reward(&pool_currency_id, &account_id, reward_currency_id)?;
+            let balance = reward_rpc_runtime_api::BalanceWrapper::<Balance> { amount };
+            Ok(balance)
+        }
+        fn estimate_farming_reward(
+            account_id: AccountId,
+            pool_currency_id: CurrencyId,
+            reward_currency_id: CurrencyId,
+        ) -> Result<reward_rpc_runtime_api::BalanceWrapper<Balance>, DispatchError> {
+            <FarmingRewards as reward::RewardsApi<CurrencyId, AccountId, Balance>>::withdraw_reward(&pool_currency_id, &account_id, reward_currency_id)?;
+            <FarmingRewards as reward::RewardsApi<CurrencyId, AccountId, Balance>>::distribute_reward(&pool_currency_id, reward_currency_id, Farming::total_rewards(&pool_currency_id, &reward_currency_id))?;
+            let amount = <FarmingRewards as reward::RewardsApi<CurrencyId, AccountId, Balance>>::compute_reward(&pool_currency_id, &account_id, reward_currency_id)?;
+            let balance = reward_rpc_runtime_api::BalanceWrapper::<Balance> { amount };
+            Ok(balance)
+        }
+    }
 
 
 	#[cfg(feature = "runtime-benchmarks")]
