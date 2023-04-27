@@ -1799,6 +1799,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-service",
  "primitives",
+ "reward-rpc",
  "sc-basic-authorship",
  "sc-chain-spec",
  "sc-cli",
@@ -12279,6 +12280,18 @@ dependencies = [
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
+]
+
+[[package]]
+name = "reward-rpc"
+version = "0.3.0"
+dependencies = [
+ "jsonrpsee 0.16.2",
+ "parity-scale-codec",
+ "reward-rpc-runtime-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime 7.0.0",
 ]
 
 [[package]]
