@@ -1,5 +1,5 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, ... }: {    
+  perSystem = { config, self', inputs', pkgs, system, ... }: {
     apps = let
       rust_log = ''
         RUST_LOG=info,runtime=info,parachain=trace,cumulus-collator=trace,aura=debug,xcm=trace,pallet_ibc=debug,hyperspace=trace,hyperspace_parachain=trace,ics=trace,ics::routing=trace,ics::channel=trace,parachain::network-bridge-rx=debug,parachain::availability-store=info,parachain::approval-distribution=info,parachain::approval-voting=info,parachain::bitfield-distribution=debug,runtime::system=info,parachain::chain-api=debug,ics::routing=info,orml_xtokens=debug
