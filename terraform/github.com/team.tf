@@ -8,10 +8,6 @@ data "github_user" "ops" {
   username = "dzmitry-lahoda"
 }
 
-data "github_user" "bot" {
-  username = "g-la-d-os"
-}
-
 data "github_team" "sre" {
   slug = "sre"
 }
@@ -41,11 +37,6 @@ resource "github_repository_collaborators" "roles" {
   user {
     permission = "push"
     username   = "JafarAz"
-  }
-
-  user {
-    permission = "admin"
-    username   = "g-la-d-os"
   }
 
   team {

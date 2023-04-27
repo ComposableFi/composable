@@ -3,6 +3,11 @@ variable "GITHUB_TOKEN" {
   sensitive = true
 }
 
+variable "RELEASE_GITHUB_TOKEN" {
+  type      = string
+  sensitive = true
+}
+
 
 data "github_repository" "self" {
   full_name = "ComposibleFi/composable"
@@ -31,4 +36,10 @@ terraform {
       name = "composable"
     }
   }
+}
+
+resource "github_actions_secret" "RELEASE_GITHUB_TOKEN" {
+  repository       = "composable"
+  secret_name      = "RELEASE_GITHUB_TOKEN"
+  plaintext_value  = var.RELEASE_GITHUB_TOKEN
 }
