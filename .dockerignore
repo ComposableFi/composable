@@ -6,3 +6,4 @@
 **/Dockerfile
 **/*.dockerfile
 **/.dockerignore
+data/**

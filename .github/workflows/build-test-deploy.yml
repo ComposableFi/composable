@@ -10,6 +10,10 @@ on:
 
   # For PRs that need to run in the monorepo context.
   pull_request:
+  
+  # github merge queue
+  merge_group:
+    types: [checks_requested]
 
 permissions: 
   pull-requests: write
@@ -29,7 +33,8 @@ env:
 
 jobs:
 
-  dependency-review:
+  dependency-review:     
+    if: ${{ github.event_name != 'merge_group' }}
     concurrency:
       group: ${{ github.workflow }}-dependency-review-${{ github.event.pull_request.title }}
       cancel-in-progress: true  
@@ -41,7 +46,7 @@ jobs:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v2
+        uses: actions/dependency-review-action@v3
         with:
           # GHSA-pfrx-2q88-qq97, GHSA-w5p7-h5w8-2hfq, GHSA-wcg3-cvx6-7396 are ignored because they are casued by the static Docusaurus build. Please remove when Docusaurus gets updated.
           # GHSA-969w-q74q-9j8v, GHSA-44mr-8vmm-wjhg, GHSA-wh6w-3828-g9qf are ignored because they are transitive dependencies still used by the master branch of Substrate. Please remove when Substrate update the according dependencies.
@@ -50,7 +55,7 @@ jobs:
 
   privilege-check:
     name: "Privilege check"
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'merge_group' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}    
     runs-on: ubuntu-latest  
     steps:
       - run: |
@@ -116,9 +121,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
       - run: |
-          export NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1
-          chmod +x ./.github/workflows/nix-flake-check.sh
-          source ./.github/workflows/nix-flake-check.sh
+          nix run .#nix-flake-check
   
   build-all-platforms-arm:
     name: build-all-platforms-arm
@@ -126,7 +129,8 @@ jobs:
       - privilege-check
       - lfs-check
     runs-on:
-      - buildjet-32vcpu-ubuntu-2204-arm
+      - self-hosted
+      - arm-monster
     concurrency:
       group: ${{ github.workflow }}-build-all-platforms-arm-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -203,7 +207,7 @@ jobs:
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
       - uses: actions/checkout@v3
-        with:
+        with:arm
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false          
@@ -412,7 +416,7 @@ jobs:
   build-product-darwin:
     name: "build-product-darwin"
     continue-on-error: true
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}    
+    if: ${{ github.event_name == 'push' || github.event_name == 'merge_group' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}    
     strategy:
       matrix:
         arch: [aarch64-darwin]
@@ -636,7 +640,7 @@ jobs:
       - name: Publish hyperspace-composable-rococo-picasso-rococo to docker hub
         uses: "./.github/templates/docker-publish"
         with:
-          image_path: result/docker-image-hyperspace-composable-rococo-picasso-rococo.tar.gz
+          image_path: result/hyperspace-composable-rococo-picasso-rococo.tar.gz
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: hyperspace-composable-rococo-picasso-rococo
@@ -645,7 +649,7 @@ jobs:
       - name: Publish hyperspace-composable-polkadot-picasso-kusama to docker hub
         uses: "./.github/templates/docker-publish"
         with:
-          image_path: result/docker-image-hyperspace-composable-polkadot-picasso-kusama.tar.gz
+          image_path: result/hyperspace-composable-polkadot-picasso-kusama.tar.gz
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: hyperspace-composable-polkadot-picasso-kusama

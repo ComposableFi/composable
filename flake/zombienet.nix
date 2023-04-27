@@ -12,9 +12,10 @@
       zombienet-rococo-local-composable-config = with prelude;
         { chain, ws_port ? null, rpc_port ? null, relay_ws_port ? null
         , relay_rpc_port ? null, rust_log_add ? null, para-id ? 2087
-        , command ? self'.packages.composable-node }:
+        , command ? self'.packages.composable-node, relaychain ? relaychainBase
+        }:
         mkZombienet {
-          relaychain = relaychainBase
+          relaychain = relaychain
             // (pkgs.lib.optionalAttrs (relay_ws_port != null) {
               ws_port = relay_ws_port;
             });
@@ -88,18 +89,36 @@
 
       packages = rec {
         devnet-picasso = zombienet-rococo-local-picasso-dev;
-        devnet-composable = zombienet-rococo-local-composable-dev;
+        devnet-composable = zombienet-westend-local-composable-dev;
+
+        livenet-composable = zombieTools.writeZombienetShellApplication
+          "zombienet-polkadot-local-composable-dev"
+          (zombienet-rococo-local-composable-config {
+            chain = "composable-dev";
+            relaychain = {
+              chain = "polkadot-local";
+              default_command =
+                pkgs.lib.meta.getExe self'.packages.polkadot-live-runtime-node;
+              count = 3;
+            };
+          });
 
         zombienet-picasso-complete =
           mk-zombienet-all "devnet-picasso-complete" "picasso-dev";
 
         inherit zombienet-rococo-local-picasso-dev;
 
-        zombienet-rococo-local-composable-dev =
+        zombienet-westend-local-composable-dev =
           zombieTools.writeZombienetShellApplication
-          "zombienet-rococo-local-composable-dev"
+          "zombienet-westend-local-composable-dev"
           (zombienet-rococo-local-composable-config {
             chain = "composable-dev";
+            relaychain = {
+              chain = "westend-local";
+              default_command = pkgs.lib.meta.getExe
+                self'.packages.polkadot-node-on-parity-westend;
+              count = 3;
+            };
           });
 
         zombienet-picasso-centauri-a =
@@ -108,7 +127,7 @@
           (zombienet-rococo-local-composable-config {
             rust_log_add =
               "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
-            command = self'.packages.composable-node;
+            command = self'.packages.composable-testfast-node;
             chain = "picasso-dev";
           });
 
@@ -122,7 +141,7 @@
             relay_rpc_port = 31445;
             rust_log_add =
               "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
-            command = self'.packages.composable-node;
+            command = self'.packages.composable-testfast-node;
             chain = "picasso-dev";
           });
 
@@ -136,7 +155,7 @@
             relay_rpc_port = 31445;
             rust_log_add =
               "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
-            command = self'.packages.composable-node;
+            command = self'.packages.composable-testfast-node;
             chain = "composable-dev";
           });
       };

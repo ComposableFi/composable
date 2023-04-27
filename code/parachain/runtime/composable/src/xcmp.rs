@@ -34,8 +34,17 @@ use xcm_executor::{
 
 use crate::fees::FinalPriceConverter;
 
+#[cfg(feature = "testnet")]
 parameter_types! {
-	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
+	pub const RelayNetwork: NetworkId = NetworkId::Westend;
+}
+
+#[cfg(not(feature = "testnet"))]
+parameter_types! {
+	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
+}
+
+parameter_types! {
 	pub RelayOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 	pub UniversalLocation: InteriorMultiLocation = X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));

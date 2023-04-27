@@ -8,10 +8,6 @@ data "github_user" "ops" {
   username = "dzmitry-lahoda"
 }
 
-data "github_user" "bot" {
-  username = "g-la-d-os"
-}
-
 data "github_team" "sre" {
   slug = "sre"
 }
@@ -24,12 +20,13 @@ data "github_team" "product" {
   slug = "product-mgmt"
 }
 
+
 resource "github_repository_collaborators" "roles" {
   repository = "composable"
 
   team {
     permission = "maintain"
-    team_id   = data.github_team.devs.name
+    team_id    = data.github_team.devs.slug
   }
 
   user {
@@ -38,21 +35,17 @@ resource "github_repository_collaborators" "roles" {
   }
 
   user {
-    permission = "write"
-    username   = data.github_user.docs.name
-  }
-
-  # user {
-  #   permission = "admin"
-  #   username   = data.github_user.bot.name
-  # }
-  team {
-    permission = "admin"
-    team_id   = data.github_team.product.name
+    permission = "push"
+    username   = "JafarAz"
   }
 
   team {
     permission = "admin"
-    team_id   = data.github_team.sre.name
+    team_id    = data.github_team.product.slug
+  }
+
+  team {
+    permission = "admin"
+    team_id    = data.github_team.sre.slug
   }
 }

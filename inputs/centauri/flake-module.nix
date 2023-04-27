@@ -253,15 +253,7 @@
           });
 
         hyperspace-composable-rococo-picasso-rococo-image =
-          pkgs.dockerTools.buildImage {
-            tag = "latest";
-            name = "hyperspace-composable-rococo-picasso-rococo";
-            config = {
-              Entrypoint = [
-                "${hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace"
-              ];
-            };
-          };
+          toDockerImage hyperspace-composable-rococo-picasso-rococo;
 
         hyperspace-composable-polkadot-picasso-kusama-image =
           toDockerImage hyperspace-composable-polkadot-picasso-kusama;

@@ -4,7 +4,7 @@ import { useStore } from "@/stores/root";
 import { SnackbarKey, useSnackbar } from "notistack";
 import { useExecutor, useSigner } from "substrate-react";
 import BigNumber from "bignumber.js";
-import { xcmPalletEventParser } from "@/defi/polkadot/pallets/XCM/utils";
+import { xcmEventParser } from "@/defi/polkadot/pallets/XCM/utils";
 import { subscanExtrinsicLink } from "shared";
 import { useRef } from "react";
 
@@ -77,8 +77,8 @@ export const useTransfer = () => {
           );
         },
         (txHash, records) => {
-          if (api.events.xcmPallet || api.events.polkadotXcm) {
-            xcmPalletEventParser(
+          if (api.events.xcmPallet || api.events.polkadotXcm || api.events.xTokens) {
+            xcmEventParser(
               records,
               api,
               closeSnackbar,

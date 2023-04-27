@@ -5,7 +5,7 @@ on:
       - 'release-v[0-9]+\.[0-9]+\.[0-9]+'
 
 env:
-  GITHUB_TOKEN: ${{ secrets.GLADOS_GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
   NIX_VERSION: nix-2.13.2
   NIXPKGS_CHANNEL: nixos-22.11
   CACHIX_COMPOSABLE: composable-community
@@ -63,6 +63,7 @@ jobs:
           cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#picasso-runtime
           cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-runtime
           cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#picasso-testfast-runtime
+          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-testfast-runtime
           cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-node
 
       - name: Download artifacts
