@@ -77,7 +77,6 @@ jobs:
           persist-credentials: false
       - uses: actionsdesk/lfs-warning@v3.2
         with:
-          #token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
           filesizelimit: 10KB
           exclusionPatterns: |
             **/*.rs
@@ -559,7 +558,6 @@ jobs:
       - name: Deploy docs
         uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
         with:
-          # repoToken: ${{ secrets.RELEASE_GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DOCS_COMPOSABLE_FINANCE }}
           projectId: composable-docs
           entrypoint: docs/
@@ -697,7 +695,7 @@ jobs:
             ### Pablo Preview URL
             ${{ steps.deploy.outputs.preview-url }}
           comment_tag: 'Pablo Preview URL'
-          github_token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   deploy-picasso-preview:
     name: "Deploy Picasso Preview [FLAKY]"
@@ -741,7 +739,7 @@ jobs:
             ### Picasso Preview URL
             ${{ steps.deploy.outputs.preview-url }}
           comment_tag: 'Picasso Preview URL'
-          github_token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   devnet-integration-tests:
     name: Devnet integration tests [FLAKY]

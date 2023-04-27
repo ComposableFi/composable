@@ -105,7 +105,7 @@ in with prelude; rec {
       inherit chain;
       default_args = [ "-lparachain=debug" "--blocks-pruning=archive" ];
       genesis = {
-        runtime = {
+        runtime = {          
           runtime_genesis_config = {
             configuration = {
               config = {
@@ -132,6 +132,7 @@ in with prelude; rec {
       post_state = "Hash";
     };
   };
+
   mkZombienet = { relaychain, parachains }: {
     hrmp_channels = mkHrmpChannels parachains;
     relaychain = mkRelaychain relaychain;
