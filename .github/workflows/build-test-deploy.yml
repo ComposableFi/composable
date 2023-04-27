@@ -505,25 +505,27 @@ jobs:
       name: "Effect gate, automatically merged if passed"
       runs-on: ubuntu-latest
       needs:
+        - build-all-benchmarks-packages
+        - build-all-ci-packages
+        - build-all-docs-packages
+        - build-all-misc-packages
+        - build-all-platforms-arm
+        - build-all-production-deps
         - dependency-review
-        - privilege-check
         - lfs-check
         - nix-flake-check
-        - build-all-ci-packages
-        - build-all-platforms-arm
-        - build-all-misc-packages
-        - build-all-docs-packages
-        - build-all-benchmarks-packages
-        - build-all-production-deps
+        - privilege-check
       steps:
         - run: echo "See next activities of pushing and publishing and merging"
 
   deploy-docs:
     name: "Deploy docs"
     needs:
+        - build-all-docs-packages        
+        - build-all-misc-packages
+        - lfs-check
+        - nix-flake-check
         - privilege-check
-        # - build-all-misc-packages
-        # - build-all-docs-packages        
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-deploy-docs-${{ github.event.pull_request.title }}
@@ -567,8 +569,7 @@ jobs:
           projectId: composable-docs
           entrypoint: docs/
           # this must go same release flow as FE, not from main
-          channelId: live 
-          # ${{ github.event_name == 'push' && github.ref_name == 'main' && 'live' }}
+          channelId: ${{ github.event_name == 'push' && github.ref_name == 'main' && 'live' }}
 
   # this should be split and commit docker are from here, but latest from release
   push-docker-images:
