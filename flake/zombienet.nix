@@ -12,9 +12,10 @@
       zombienet-rococo-local-composable-config = with prelude;
         { chain, ws_port ? null, rpc_port ? null, relay_ws_port ? null
         , relay_rpc_port ? null, rust_log_add ? null, para-id ? 2087
-        , command ? self'.packages.composable-node }:
+        , command ? self'.packages.composable-node, relaychain ? relaychainBase
+        }:
         mkZombienet {
-          relaychain = relaychainBase
+          relaychain = relaychain
             // (pkgs.lib.optionalAttrs (relay_ws_port != null) {
               ws_port = relay_ws_port;
             });
@@ -89,6 +90,18 @@
       packages = rec {
         devnet-picasso = zombienet-rococo-local-picasso-dev;
         devnet-composable = zombienet-rococo-local-composable-dev;
+
+        livenet-composable = zombieTools.writeZombienetShellApplication
+          "zombienet-rococo-local-composable-dev"
+          (zombienet-rococo-local-composable-config {
+            chain = "composable-dev";
+            relaychain = {
+              chain = "rococo-local";
+              default_command =
+                pkgs.lib.meta.getExe self'.packages.polkadot-live-runtime-node;
+              count = 3;
+            };
+          });
 
         zombienet-picasso-complete =
           mk-zombienet-all "devnet-picasso-complete" "picasso-dev";
