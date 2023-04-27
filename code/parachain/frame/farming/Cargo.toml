@@ -27,14 +27,13 @@ sp-std = { default-features = false, workspace = true }
 
 frame-support = { default-features = false, workspace = true }
 frame-system = { default-features = false, workspace = true }
-# frame-benchmarking = { default-features = false, workspace = true, optional = true }
+frame-benchmarking = { default-features = false, workspace = true, optional = true }
 
 
 [dev-dependencies]
 pallet-timestamp = { workspace = true }
-# primitives = { path = "../../runtime/primitives", default-features = false }
 pallet-balances = { workspace = true, default-features = false }
-# frame-benchmarking = { default-features = false, workspace = true }
+frame-benchmarking = { default-features = false, workspace = true }
 
 [features]
 default = ["std"]
@@ -53,9 +52,9 @@ std = [
 	"frame-system/std",
 ]
 
-# runtime-benchmarks = [
-# 	"frame-benchmarking",
-# 	"frame-support/runtime-benchmarks",
-# 	"frame-system/runtime-benchmarks",
-# ]
-# try-runtime = [ "frame-support/try-runtime" ]
+runtime-benchmarks = [
+	"frame-benchmarking",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+]
+try-runtime = [ "frame-support/try-runtime" ]
