@@ -39,6 +39,11 @@ resource "github_repository_collaborators" "roles" {
     username   = "JafarAz"
   }
 
+  user {
+    permission = "push"
+    username   = "RustNinja"
+  }
+
   team {
     permission = "admin"
     team_id    = data.github_team.product.slug
