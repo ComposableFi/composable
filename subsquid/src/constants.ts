@@ -1,7 +1,7 @@
 export const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-export type AssetId = "1" | "4" | "130";
-export type CoingeckoIds = "kusama" | "tether";
+export type AssetId = "1" | "4" | "130" | "6";
+export type CoingeckoIds = "kusama" | "tether" | "polkadot";
 
 export type AssetInfo = {
   assetId: AssetId;
@@ -30,6 +30,10 @@ export const assetList: Array<AssetInfo> = [
   {
     assetId: "130",
     coingeckoId: "tether"
+  },
+  {
+    assetId: "6",
+    coingeckoId: "polkadot"
   }
 ];
 
