@@ -10,6 +10,9 @@ on:
 
   # For PRs that need to run in the monorepo context.
   pull_request:
+  
+  # github merge queue
+  merge_group:
 
 permissions: 
   pull-requests: write
