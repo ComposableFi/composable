@@ -129,7 +129,7 @@ jobs:
       - privilege-check
       - lfs-check
     runs-on:
-      - buildjet-32vcpu-ubuntu-2204-arm
+      - arm-monster
     concurrency:
       group: ${{ github.workflow }}-build-all-platforms-arm-${{ github.event.pull_request.title }}
       cancel-in-progress: true
