@@ -105,7 +105,7 @@ in with prelude; rec {
       inherit chain;
       default_args = [ "-lparachain=debug" "--blocks-pruning=archive" ];
       genesis = {
-        runtime = {          
+        runtime = {
           runtime_genesis_config = {
             configuration = {
               config = {
