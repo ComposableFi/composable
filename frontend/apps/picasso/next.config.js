@@ -66,7 +66,7 @@ const nextConfig = {
 		if (process.env.NODE_ENV === 'production')
 			return [
 				{
-					source: '/transfer',
+					source: '/transfers',
 					destination: '/',
 					permanent: false,
 				},
