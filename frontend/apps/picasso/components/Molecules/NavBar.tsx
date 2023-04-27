@@ -50,7 +50,7 @@ const RoutesConfig: ConfigType[] = [
     label: "Transfers",
     path: config.centauriUrl,
     icon: dynamic(() => import("@mui/icons-material/SwapHorizRounded")),
-    status: "inactive",
+    status: "active",
     matches: [],
     endAdornment: (
       <a target="_blank" href={config.centauriUrl} rel="noopener noreferrer">
