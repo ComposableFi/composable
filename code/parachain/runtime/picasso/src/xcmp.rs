@@ -35,8 +35,12 @@ use xcm_executor::{
 };
 
 parameter_types! {
-	pub KsmLocation: MultiLocation = MultiLocation::parent();
+	#[cfg(not(feature = "testnet"))]
 	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
+
+	#[cfg(feature = "testnet")]
+	pub const RelayNetwork: NetworkId = NetworkId::Rococo;
+
 	pub RelayOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 	pub UniversalLocation: InteriorMultiLocation = X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
