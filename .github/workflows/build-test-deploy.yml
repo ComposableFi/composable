@@ -639,7 +639,7 @@ jobs:
       - name: Publish hyperspace-composable-rococo-picasso-rococo to docker hub
         uses: "./.github/templates/docker-publish"
         with:
-          image_path: result/docker-image-hyperspace-composable-rococo-picasso-rococo.tar.gz
+          image_path: result/hyperspace-composable-rococo-picasso-rococo.tar.gz
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: hyperspace-composable-rococo-picasso-rococo
@@ -648,7 +648,7 @@ jobs:
       - name: Publish hyperspace-composable-polkadot-picasso-kusama to docker hub
         uses: "./.github/templates/docker-publish"
         with:
-          image_path: result/docker-image-hyperspace-composable-polkadot-picasso-kusama.tar.gz
+          image_path: result/hyperspace-composable-polkadot-picasso-kusama.tar.gz
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: hyperspace-composable-polkadot-picasso-kusama
