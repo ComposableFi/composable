@@ -13,6 +13,7 @@ on:
   
   # github merge queue
   merge_group:
+    types: [checks_requested]
 
 permissions: 
   pull-requests: write
@@ -53,7 +54,7 @@ jobs:
 
   privilege-check:
     name: "Privilege check"
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'merge_group' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}    
     runs-on: ubuntu-latest  
     steps:
       - run: |
@@ -413,7 +414,7 @@ jobs:
   build-product-darwin:
     name: "build-product-darwin"
     continue-on-error: true
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}    
+    if: ${{ github.event_name == 'push' || github.event_name == 'merge_group' }}    
     strategy:
       matrix:
         arch: [aarch64-darwin]
