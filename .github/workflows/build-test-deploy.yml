@@ -129,6 +129,7 @@ jobs:
       - privilege-check
       - lfs-check
     runs-on:
+      - self-hosted
       - arm-monster
     concurrency:
       group: ${{ github.workflow }}-build-all-platforms-arm-${{ github.event.pull_request.title }}
@@ -206,7 +207,7 @@ jobs:
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
       - uses: actions/checkout@v3
-        with:
+        with:arm
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false          
