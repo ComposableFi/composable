@@ -6,7 +6,7 @@ import { findFirst } from "fp-ts/Array";
 import { boolean, option } from "fp-ts";
 import { subscanExtrinsicLink, SubstrateNetworkId } from "shared";
 
-export function xcmPalletEventParser(
+export function xcmEventParser(
   records: EventRecord[],
   api: ApiPromise,
   closeSnackbar: (key?: SnackbarKey) => void,
@@ -21,10 +21,13 @@ export function xcmPalletEventParser(
       (e) =>
         api.events?.xcmPallet?.Attempted?.is?.(e.event) ||
         api.events?.polkadotXcm?.Attempted?.is?.(e.event) ||
-        api.events?.xTokens?.Attempted?.is?.(e.event)
+        api.events?.xTokens?.TransferredMultiAssets?.is?.(e.event)
     ),
     option.map((e) => e.event),
     option.map((event) => {
+      if (api.events?.xTokens?.TransferredMultiAssets?.is?.(event)) {
+          return true;
+      }
       // @ts-ignore
       if (event.data.find((x: XcmV2TraitsOutcome) => x.isComplete)) return true;
       return false;
