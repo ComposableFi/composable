@@ -48,10 +48,17 @@ const RoutesConfig: ConfigType[] = [
   },
   {
     label: "Transfers",
-    path: "/transfers",
+    path: "app.trustless.zone",
     icon: dynamic(() => import("@mui/icons-material/SwapHorizRounded")),
     status: "active",
     matches: ["/transfers"],
+    endAdornment: (
+      <a target="_blank" href={config.governanceUrl} rel="noopener noreferrer">
+        <IconButton color="primary">
+          <OpenInNew />
+        </IconButton>
+      </a>
+    ),
   },
   {
     label: "Stats",

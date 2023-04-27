@@ -61,6 +61,18 @@ const nextConfig = {
 
     return config;
   },
+
+  async redirects() {
+		if (process.env.NODE_ENV === 'production')
+			return [
+				{
+					source: '/transfer',
+					destination: '/',
+					permanent: false,
+				},
+			];
+		return [];
+	},
 };
 
 module.exports = withPWA(withTM(nextConfig));
