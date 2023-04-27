@@ -63,6 +63,7 @@ jobs:
           cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#picasso-runtime
           cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-runtime
           cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#picasso-testfast-runtime
+          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-testfast-runtime
           cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-node
 
       - name: Download artifacts

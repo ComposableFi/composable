@@ -35,7 +35,7 @@
       };
       toDockerImage = package:
         self.inputs.bundlers.bundlers."${system}".toDockerImage package;
-      makeComposableNode = picasso-runtime:
+      makeComposableNode = picasso-runtime: composable-runtime:
         crane.nightly.buildPackage (systemCommonRust.common-attrs // rec {
           name = "composable";
           cargoArtifacts = self'.packages.common-deps;
@@ -43,7 +43,7 @@
           cargoExtraArgs = "--features=builtin-wasm";
           PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
           COMPOSABLE_RUNTIME =
-            "${self'.packages.composable-runtime}/lib/runtime.optimized.wasm";
+            "${composable-runtime}/lib/runtime.optimized.wasm";
           installPhaseCommand = ''
             mkdir -p $out/bin
             echo "built with ${cargoExtraArgs}"
@@ -61,9 +61,11 @@
       packages = rec {
 
         composable-node-image = toDockerImage composable-node;
-        composable-node = makeComposableNode self'.packages.picasso-runtime;
+        composable-node = makeComposableNode self'.packages.picasso-runtime
+          self'.packages.composable-runtime;
         composable-testfast-node =
-          makeComposableNode self'.packages.picasso-testfast-runtime;
+          makeComposableNode self'.packages.picasso-testfast-runtime
+          self'.packages.composable-testfast-runtime;
 
         composable-bench-node = crane.nightly.cargoBuild
           (systemCommonRust.common-std-bench-attrs // rec {
