@@ -216,7 +216,7 @@ pub mod pallet {
         #[transactional]
         pub fn update_reward_schedule(
             origin: OriginFor<T>,
-            mut pool_currency_id: CurrencyIdOf<T>,
+            pool_currency_id: CurrencyIdOf<T>,
             reward_currency_id: CurrencyIdOf<T>,
             period_count: u32,
             #[pallet::compact] amount: BalanceOf<T>,
@@ -257,7 +257,7 @@ pub mod pallet {
         #[transactional]
         pub fn remove_reward_schedule(
             origin: OriginFor<T>,
-            mut pool_currency_id: CurrencyIdOf<T>,
+            pool_currency_id: CurrencyIdOf<T>,
             reward_currency_id: CurrencyIdOf<T>,
         ) -> DispatchResultWithPostInfo {
             ensure_root(origin)?;
@@ -288,7 +288,7 @@ pub mod pallet {
         #[pallet::call_index(2)]
         #[pallet::weight(T::WeightInfo::deposit())]
         #[transactional]
-        pub fn deposit(origin: OriginFor<T>, mut pool_currency_id: CurrencyIdOf<T>) -> DispatchResult {
+        pub fn deposit(origin: OriginFor<T>, pool_currency_id: CurrencyIdOf<T>) -> DispatchResult {
             let who = ensure_signed(origin)?;
             // pool_currency_id.sort();
 
@@ -306,7 +306,7 @@ pub mod pallet {
         #[transactional]
         pub fn withdraw(
             origin: OriginFor<T>,
-            mut pool_currency_id: CurrencyIdOf<T>,
+            pool_currency_id: CurrencyIdOf<T>,
             amount: BalanceOf<T>,
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
@@ -326,7 +326,7 @@ pub mod pallet {
         #[transactional]
         pub fn claim(
             origin: OriginFor<T>,
-            mut pool_currency_id: CurrencyIdOf<T>,
+            pool_currency_id: CurrencyIdOf<T>,
             reward_currency_id: CurrencyIdOf<T>,
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
@@ -357,7 +357,7 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn total_rewards(pool_currency_id: &CurrencyIdOf<T>, reward_currency_id: &CurrencyIdOf<T>) -> BalanceOf<T> {
-        let mut pool_currency_id = pool_currency_id.clone();
+        let pool_currency_id = pool_currency_id.clone();
         // pool_currency_id.sort();
         RewardSchedules::<T>::get(pool_currency_id, reward_currency_id)
             .total()

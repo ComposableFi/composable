@@ -72,8 +72,8 @@ impl Config for Test {
     type PoolId = ();
     type StakeId = AccountId;
     type CurrencyId = CurrencyId;
-    type GetNativeCurrencyId = GetNativeCurrencyId;
-    type GetWrappedCurrencyId = GetWrappedCurrencyId;
+    // type GetNativeCurrencyId = GetNativeCurrencyId;
+    // type GetWrappedCurrencyId = GetWrappedCurrencyId;
 }
 
 pub type TestError = Error<Test>;

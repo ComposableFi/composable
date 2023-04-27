@@ -83,11 +83,11 @@ pub mod pallet {
         /// The currency ID type.
         type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord + MaxEncodedLen;
 
-        #[pallet::constant]
-        type GetNativeCurrencyId: Get<Self::CurrencyId>;
+        // #[pallet::constant]
+        // type GetNativeCurrencyId: Get<Self::CurrencyId>;
 
-        #[pallet::constant]
-        type GetWrappedCurrencyId: Get<Self::CurrencyId>;
+        // #[pallet::constant]
+        // type GetWrappedCurrencyId: Get<Self::CurrencyId>;
     }
 
     // The pallet's events

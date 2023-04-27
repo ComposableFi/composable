@@ -74,9 +74,9 @@ impl frame_system::Config for Test {
 }
 
 parameter_types! {
-    pub const GetNativeCurrencyId: CurrencyId = 1;
-    pub const GetRelayChainCurrencyId: CurrencyId = 2;
-    pub const GetWrappedCurrencyId: CurrencyId = 3;
+    // pub const GetNativeCurrencyId: CurrencyId = 1;
+    // pub const GetRelayChainCurrencyId: CurrencyId = 2;
+    // pub const GetWrappedCurrencyId: CurrencyId = 3;
     pub const MaxLocks: u32 = 50;
 }
 
@@ -106,8 +106,8 @@ impl reward::Config for Test {
     type PoolId = CurrencyId;
     type StakeId = AccountId;
     type CurrencyId = CurrencyId;
-    type GetNativeCurrencyId = GetNativeCurrencyId;
-    type GetWrappedCurrencyId = GetWrappedCurrencyId;
+    // type GetNativeCurrencyId = GetNativeCurrencyId;
+    // type GetWrappedCurrencyId = GetWrappedCurrencyId;
 }
 
 parameter_types! {

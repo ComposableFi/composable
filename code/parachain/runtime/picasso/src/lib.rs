@@ -290,8 +290,6 @@ impl reward::Config<FarmingRewardsInstance> for Runtime {
     type PoolId = CurrencyId;
     type StakeId = AccountId;
     type CurrencyId = CurrencyId;
-    type GetNativeCurrencyId = NativeAssetId;
-    type GetWrappedCurrencyId = NativeAssetId;
 }
 
 parameter_types! {
