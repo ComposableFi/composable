@@ -7,7 +7,7 @@ pub(crate) use ::ibc::{
 };
 use common::{
 	fees::{IbcIcs20FeePalletId, IbcIcs20ServiceCharge},
-	ibc::MinimumConnectionDelaySeconds,
+	ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds},
 };
 use frame_support::traits::EitherOf;
 use hex_literal::hex;
@@ -33,47 +33,21 @@ impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 	type Error = DispatchError;
 
 	fn from_denom_to_asset_id(denom: &String) -> Result<CurrencyId, Self::Error> {
-		log::debug!("converting denom {} to currency id", denom);
-		let denom_bytes = denom.as_bytes().to_vec();
-		if let Some(id) = IbcDenoms::<Runtime>::get(&denom_bytes) {
-			log::debug!("converted {:} to currency id", &id);
-			return Ok(id)
-		}
-
-		// +1 nonce
-		let asset_id =
-			<currency_factory::Pallet<Runtime> as CurrencyFactoryT>::create(RangeId::IBC_ASSETS)?;
-
-		let asset_id = <assets_transactor_router::Pallet<Runtime> as composable_traits::assets::CreateAsset>
-		::create_local_asset([0;8], asset_id.0 as u64,
-			AssetInfo {
-				name: None,
-				symbol: None,
-				decimals: None,
-				// we do not have sufficient assets, nor setting zero is good
-				// so set at least some
-				existential_deposit: 10_000,
-				ratio: Some(rational!(1/1)),
-		})?;
-		log::info!("registered {:} asset id for {:} denom", &asset_id, &denom);
-		IbcDenoms::<Runtime>::insert(denom_bytes.clone(), asset_id);
-		IbcAssetIds::<Runtime>::insert(asset_id, denom_bytes);
-
-		Ok(asset_id)
+		ForeignIbcIcs20Assets::<AssetsRegistry>::from_denom_to_asset_id(denom)
 	}
 
 	fn from_asset_id_to_denom(id: CurrencyId) -> Option<String> {
-		IbcAssetIds::<Runtime>::get(id).and_then(|denom| String::from_utf8(denom).ok())
+		ForeignIbcIcs20Assets::<AssetsRegistry>::from_asset_id_to_denom(id)
 	}
 
 	fn ibc_assets(start_key: Option<Either<CurrencyId, u32>>, limit: u64) -> IbcAssets<CurrencyId> {
 		let mut iterator = match start_key {
 			None => IbcAssetIds::<Runtime>::iter().skip(0),
-			Some(Left(asset_id)) => {
+			Some(Either::Left(asset_id)) => {
 				let raw_key = asset_id.encode();
 				IbcAssetIds::<Runtime>::iter_from(raw_key).skip(0)
 			},
-			Some(Right(offset)) => IbcAssetIds::<Runtime>::iter().skip(offset as usize),
+			Some(Either::Right(offset)) => IbcAssetIds::<Runtime>::iter().skip(offset as usize),
 		};
 
 		let denoms = iterator.by_ref().take(limit as usize).map(|(_, denom)| denom).collect();
