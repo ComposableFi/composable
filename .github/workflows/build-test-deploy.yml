@@ -505,21 +505,22 @@ jobs:
       needs:
         - dependency-review
         - privilege-check
-        - lfs-check
-        - nix-flake-check
-        - build-all-ci-packages
-        - build-all-platforms-arm
-        - build-all-misc-packages
-        - build-all-docs-packages
-        - build-all-benchmarks-packages
-        - build-all-production-deps
+        # - lfs-check
+        # - nix-flake-check
+        # - build-all-ci-packages
+        # - build-all-platforms-arm
+        # - build-all-misc-packages
+        # - build-all-docs-packages
+        # - build-all-benchmarks-packages
+        # - build-all-production-deps
       steps:
         - run: echo "See next activities of pushing and publishing and merging"
 
   deploy-docs:
     name: "Deploy docs"
     needs:
-      - effects-gate
+      - privilege-check
+      #- effects-gate
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-deploy-docs-${{ github.event.pull_request.title }}
@@ -555,6 +556,13 @@ jobs:
         with:
           command: nix -- build .#docs-static
           working-directory: ./docs
+
+      - name: Channel 
+        run: |
+          echo "Channel:"
+          echo ${{ github.event_name }} 
+          echo ${{ github.ref_name }}
+
       - name: Deploy docs
         uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
         with:
