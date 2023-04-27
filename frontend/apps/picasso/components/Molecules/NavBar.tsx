@@ -48,12 +48,12 @@ const RoutesConfig: ConfigType[] = [
   },
   {
     label: "Transfers",
-    path: "app.trustless.zone",
+    path: config.centauriUrl,
     icon: dynamic(() => import("@mui/icons-material/SwapHorizRounded")),
     status: "active",
-    matches: ["/transfers"],
+    matches: [],
     endAdornment: (
-      <a target="_blank" href={config.governanceUrl} rel="noopener noreferrer">
+      <a target="_blank" href={config.centauriUrl} rel="noopener noreferrer">
         <IconButton color="primary">
           <OpenInNew />
         </IconButton>
