@@ -9,7 +9,7 @@
         count = 3;
       };
 
-      zombienet-rococo-local-composable-config = with prelude;
+      overrideZombienet = with prelude;
         { chain, ws_port ? null, rpc_port ? null, relay_ws_port ? null
         , relay_rpc_port ? null, rust_log_add ? null, para-id ? 2087
         , command ? self'.packages.composable-node, relaychain ? relaychainBase
@@ -75,7 +75,7 @@
         chain-spec = "picasso-dev";
       };
 
-      picasso-dev-config = zombienet-rococo-local-composable-config {
+      picasso-dev-config = overrideZombienet {
         chain = "picasso-dev";
         command = self'.packages.composable-testfast-node;
       };
@@ -92,11 +92,10 @@
         devnet-composable = zombienet-westend-local-composable-dev;
 
         livenet-composable = zombieTools.writeZombienetShellApplication
-          "zombienet-polkadot-local-composable-dev"
-          (zombienet-rococo-local-composable-config {
+          "zombienet-polkadot-local-composable-dev" (overrideZombienet {
             chain = "composable-dev";
             relaychain = {
-              chain = "polkadot-local";
+              chain = "polkadot-dev";
               default_command =
                 pkgs.lib.meta.getExe self'.packages.polkadot-live-runtime-node;
               count = 3;
@@ -110,8 +109,7 @@
 
         zombienet-westend-local-composable-dev =
           zombieTools.writeZombienetShellApplication
-          "zombienet-westend-local-composable-dev"
-          (zombienet-rococo-local-composable-config {
+          "zombienet-westend-local-composable-dev" (overrideZombienet {
             chain = "composable-dev";
             relaychain = {
               chain = "westend-local";
@@ -123,8 +121,7 @@
 
         zombienet-picasso-centauri-a =
           zombieTools.writeZombienetShellApplication
-          "zombienet-picasso-centauri-a"
-          (zombienet-rococo-local-composable-config {
+          "zombienet-picasso-centauri-a" (overrideZombienet {
             rust_log_add =
               "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
             command = self'.packages.composable-testfast-node;
@@ -133,8 +130,7 @@
 
         zombienet-picasso-centauri-b =
           zombieTools.writeZombienetShellApplication
-          "zombienet-picasso-centauri-b"
-          (zombienet-rococo-local-composable-config {
+          "zombienet-picasso-centauri-b" (overrideZombienet {
             ws_port = 29988;
             rpc_port = 32201;
             relay_ws_port = 29944;
@@ -147,8 +143,7 @@
 
         zombienet-composable-centauri-b =
           zombieTools.writeZombienetShellApplication
-          "zombienet-composable-centauri-b"
-          (zombienet-rococo-local-composable-config {
+          "zombienet-composable-centauri-b" (overrideZombienet {
             ws_port = 29988;
             rpc_port = 32201;
             relay_ws_port = 29944;
