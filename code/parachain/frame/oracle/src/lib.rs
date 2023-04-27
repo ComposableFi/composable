@@ -929,6 +929,14 @@ pub mod pallet {
 			});
 		}
 
+		/// This functions processes submitted preprices in the previous blocks and accumulates
+		/// rewards for every asset PrePrices that lived longer than block_interval are removed per
+		/// asset. if PrePrices length is longer than max_amount all except last max_amount
+		/// PrePrices are removed per asset. Afterwards, if for an asset, number of PrePrices
+		/// submitted by oracles is greater than min_amount, then new price is calculated.
+		/// Oracles that submitted prices within assets' threshhold are rewarded proportionally to
+		/// their staked amounts with amount of rewards accumulated for an asset since last reward
+		/// distribution for this asset. Other oracles are slashed with assets' slash amount
 		pub fn update_prices_and_rewards(block: T::BlockNumber) -> Weight {
 			let mut total_weight: Weight = Zero::zero();
 			let one_read = T::DbWeight::get().reads(1);
