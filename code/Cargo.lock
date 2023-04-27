@@ -10040,6 +10040,7 @@ dependencies = [
  "polkadot-parachain",
  "primitives",
  "reward",
+ "reward-rpc-runtime-api",
  "scale-info",
  "smallvec 1.10.0",
  "sp-api",
@@ -12278,6 +12279,16 @@ dependencies = [
  "sp-io 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
+]
+
+[[package]]
+name = "reward-rpc-runtime-api"
+version = "0.3.0"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
 ]
 
 [[package]]
