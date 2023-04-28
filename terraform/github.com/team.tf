@@ -25,13 +25,12 @@ resource "github_repository_collaborators" "roles" {
   repository = "composable"
 
   team {
-    permission = "maintain"
+    permission = "push"
     team_id    = data.github_team.devs.slug
   }
 
   user {
-    # permission = "maintain"
-    permission = "admin"
+    permission = "maintain"
     username   = data.github_user.ops.name
   }
 
