@@ -523,9 +523,9 @@ jobs:
     name: "draft-release-artifacts"
     runs-on:
       - buildjet-32vcpu-ubuntu-2204
-    # needs:
-    #   - effects-gate
-    #if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}  
+    needs:
+      - effects-gate
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}  
     permissions: 
       pull-requests: write
       contents: write      
