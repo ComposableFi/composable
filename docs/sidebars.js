@@ -24,7 +24,7 @@ const sidebars = {
         'intro',
         {
             type: 'category',
-            label: 'Parachains',
+            label: 'Networks',
 
             link: {
                 type: 'generated-index',
@@ -428,10 +428,8 @@ const sidebars = {
                     ]
                 },
                 'ecosystem/composable-grants',
-                'ecosystem/business-line-development',
                 'ecosystem/press-kit',
                 'ecosystem/the-composable-team',
-                'ecosystem/careers',
             ],
         },
         {
@@ -445,7 +443,6 @@ const sidebars = {
             collapsible: false,
             items: [
                 'audits/audit-results-recommendations-and-remediations',
-                `audits/immunefi-bug-bounty-program`
             ]
         },
         {
