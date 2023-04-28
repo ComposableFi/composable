@@ -30,7 +30,8 @@ resource "github_repository_collaborators" "roles" {
   }
 
   user {
-    permission = "maintain"
+    permission = "admin"
+    #permission = "maintain"
     username   = data.github_user.ops.name
   }
 
