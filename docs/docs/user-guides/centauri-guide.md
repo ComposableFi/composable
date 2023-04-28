@@ -2,7 +2,7 @@
 
 [Centauri](../products/centauri-overview.md), as the first transfer protocol between Kusama (KSM) and Polkadot (DOT), unlocks the potential for a seamless flow of liquidity between parachains on both networks. Token transfers are a prime example of this, enabling increased liquidity across protocols on both chains. This guide outlines the steps involved in transferring DOT from Polkadot to Picasso using XCM and IBC to provide liquidity on [Pablo](../products/pablo-overview.md).
 
-::: tip DOT Pools on Pablo are live!
+:::tip DOT Pools on Pablo are live!
 
 At present, there are three liquidity pools on [Pablo](https://app.pablo.finance/provide-liquidity/) that are paired with DOT.
 

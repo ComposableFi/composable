@@ -1,7 +1,7 @@
 # PICA use cases
 
 PICA is the native token of the Picasso parachain. 
-We have made a concerted effort to ensure that the PICA token withholds as much utility as possible by incorporating 
+We have made a concerted effort to ensure that the PICA token holds as much utility as possible by incorporating 
 various value accrual methods, governance features, and time-weighted benefits in the form of fNFTs. 
 While the PICA token provides the community a strong voice and rewards for participating within the ecosystem, 
 it is also fundamental for the operation of collators and oracles. Thus, the PICA token is fundamental for 
