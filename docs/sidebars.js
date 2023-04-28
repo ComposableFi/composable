@@ -24,7 +24,7 @@ const sidebars = {
         'intro',
         {
             type: 'category',
-            label: 'Parachains',
+            label: 'Networks',
 
             link: {
                 type: 'generated-index',
