@@ -301,6 +301,7 @@ parameter_types! {
 
 impl farming::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
+	type AssetId = CurrencyId;
     type FarmingPalletId = FarmingPalletId;
     type TreasuryAccountId = FarmingAccount;
     type RewardPeriod = RewardPeriod;

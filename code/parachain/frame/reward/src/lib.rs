@@ -14,8 +14,7 @@ mod tests;
 use codec::{Decode, Encode, EncodeLike};
 use frame_support::{
     dispatch::{DispatchError, DispatchResult},
-    ensure,
-    traits::Get,
+    ensure
 };
 
 use scale_info::TypeInfo;

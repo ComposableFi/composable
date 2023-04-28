@@ -38,16 +38,16 @@ mod mock;
 mod tests;
 
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, Encode, MaxEncodedLen, FullCodec};
 use frame_support::{dispatch::DispatchResult, traits::Get, transactional, weights::Weight, PalletId, RuntimeDebug};
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
-// use primitives::CurrencyId;
 use reward::RewardsApi;
 use scale_info::TypeInfo;
 use sp_runtime::{
     traits::{AccountIdConversion, AtLeast32Bit, CheckedDiv, Saturating, Zero},
     ArithmeticError, DispatchError,
 };
+use core::fmt::Debug;
 use sp_std::vec::Vec;
 
 pub use pallet::*;
@@ -86,8 +86,7 @@ pub mod pallet {
 
     pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 
-    pub(crate) type CurrencyIdOf<T> =
-        <<T as Config>::MultiCurrency as MultiCurrency<<T as frame_system::Config>::AccountId>>::CurrencyId;
+    pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
 
     pub(crate) type BalanceOf<T> = <<T as Config>::MultiCurrency as MultiCurrency<AccountIdOf<T>>>::Balance;
 
@@ -114,17 +113,33 @@ pub mod pallet {
 
         /// Reward pools to track stake.
         type RewardPools: RewardsApi<
-            CurrencyIdOf<Self>, // pool id is the lp token
+            AssetIdOf<Self>, // pool id is the lp token
             AccountIdOf<Self>,
             BalanceOf<Self>,
-            CurrencyId = CurrencyIdOf<Self>,
+            CurrencyId = AssetIdOf<Self>,
         >;
 
-        /// Currency handler to transfer tokens.
-        type MultiCurrency: MultiReservableCurrency<AccountIdOf<Self>>;
-        // type MultiCurrency: MultiReservableCurrency<AccountIdOf<Self>, CurrencyId = CurrencyId>;
+        type AssetId: FullCodec
+			+ MaxEncodedLen
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ Clone
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ TypeInfo
+			+ From<u128>
+			+ Into<u128>
+			+ Ord;
 
-        /// Weight information for the extrinsics. //TODO
+        /// Currency handler to transfer tokens.
+        type MultiCurrency: MultiReservableCurrency<
+				AccountIdOf<Self>,
+				CurrencyId = Self::AssetId,
+			>;
+
+        /// Weight information for the extrinsics.
         type WeightInfo: WeightInfo;
     }
 
@@ -133,20 +148,20 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(crate) fn deposit_event)]
     pub enum Event<T: Config> {
         RewardScheduleUpdated {
-            pool_currency_id: CurrencyIdOf<T>,
-            reward_currency_id: CurrencyIdOf<T>,
+            pool_currency_id: AssetIdOf<T>,
+            reward_currency_id: AssetIdOf<T>,
             period_count: u32,
             per_period: BalanceOf<T>,
         },
         RewardDistributed {
-            pool_currency_id: CurrencyIdOf<T>,
-            reward_currency_id: CurrencyIdOf<T>,
+            pool_currency_id: AssetIdOf<T>,
+            reward_currency_id: AssetIdOf<T>,
             amount: BalanceOf<T>,
         },
         RewardClaimed {
             account_id: AccountIdOf<T>,
-            pool_currency_id: CurrencyIdOf<T>,
-            reward_currency_id: CurrencyIdOf<T>,
+            pool_currency_id: AssetIdOf<T>,
+            reward_currency_id: AssetIdOf<T>,
             amount: BalanceOf<T>,
         },
     }
@@ -193,9 +208,9 @@ pub mod pallet {
     pub type RewardSchedules<T: Config> = StorageDoubleMap<
         _,
         Blake2_128Concat,
-        CurrencyIdOf<T>, // lp token
+        AssetIdOf<T>, // lp token
         Blake2_128Concat,
-        CurrencyIdOf<T>, // reward currency
+        AssetIdOf<T>, // reward currency
         RewardScheduleOf<T>,
         ValueQuery,
     >;
@@ -216,8 +231,8 @@ pub mod pallet {
         #[transactional]
         pub fn update_reward_schedule(
             origin: OriginFor<T>,
-            pool_currency_id: CurrencyIdOf<T>,
-            reward_currency_id: CurrencyIdOf<T>,
+            pool_currency_id: AssetIdOf<T>,
+            reward_currency_id: AssetIdOf<T>,
             period_count: u32,
             #[pallet::compact] amount: BalanceOf<T>,
         ) -> DispatchResult {
@@ -257,8 +272,8 @@ pub mod pallet {
         #[transactional]
         pub fn remove_reward_schedule(
             origin: OriginFor<T>,
-            pool_currency_id: CurrencyIdOf<T>,
-            reward_currency_id: CurrencyIdOf<T>,
+            pool_currency_id: AssetIdOf<T>,
+            reward_currency_id: AssetIdOf<T>,
         ) -> DispatchResultWithPostInfo {
             ensure_root(origin)?;
             // pool_currency_id.sort();
@@ -288,7 +303,7 @@ pub mod pallet {
         #[pallet::call_index(2)]
         #[pallet::weight(T::WeightInfo::deposit())]
         #[transactional]
-        pub fn deposit(origin: OriginFor<T>, pool_currency_id: CurrencyIdOf<T>) -> DispatchResult {
+        pub fn deposit(origin: OriginFor<T>, pool_currency_id: AssetIdOf<T>) -> DispatchResult {
             let who = ensure_signed(origin)?;
             // pool_currency_id.sort();
 
@@ -306,7 +321,7 @@ pub mod pallet {
         #[transactional]
         pub fn withdraw(
             origin: OriginFor<T>,
-            pool_currency_id: CurrencyIdOf<T>,
+            pool_currency_id: AssetIdOf<T>,
             amount: BalanceOf<T>,
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
@@ -326,8 +341,8 @@ pub mod pallet {
         #[transactional]
         pub fn claim(
             origin: OriginFor<T>,
-            pool_currency_id: CurrencyIdOf<T>,
-            reward_currency_id: CurrencyIdOf<T>,
+            pool_currency_id: AssetIdOf<T>,
+            reward_currency_id: AssetIdOf<T>,
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
             // pool_currency_id.sort();
@@ -352,11 +367,11 @@ pub mod pallet {
 
 // "Internal" functions, callable by code.
 impl<T: Config> Pallet<T> {
-    pub fn pool_account_id(pool_currency_id: &CurrencyIdOf<T>) -> T::AccountId {
+    pub fn pool_account_id(pool_currency_id: &AssetIdOf<T>) -> T::AccountId {
         T::FarmingPalletId::get().into_sub_account_truncating(pool_currency_id)
     }
 
-    pub fn total_rewards(pool_currency_id: &CurrencyIdOf<T>, reward_currency_id: &CurrencyIdOf<T>) -> BalanceOf<T> {
+    pub fn total_rewards(pool_currency_id: &AssetIdOf<T>, reward_currency_id: &AssetIdOf<T>) -> BalanceOf<T> {
         let pool_currency_id = pool_currency_id.clone();
         // pool_currency_id.sort();
         RewardSchedules::<T>::get(pool_currency_id, reward_currency_id)
@@ -366,8 +381,8 @@ impl<T: Config> Pallet<T> {
 
     #[transactional]
     fn try_distribute_reward(
-        pool_currency_id: CurrencyIdOf<T>,
-        reward_currency_id: CurrencyIdOf<T>,
+        pool_currency_id: AssetIdOf<T>,
+        reward_currency_id: AssetIdOf<T>,
         amount: BalanceOf<T>,
     ) -> Result<(), DispatchError> {
         T::RewardPools::distribute_reward(&pool_currency_id, reward_currency_id, amount)

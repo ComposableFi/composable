@@ -122,6 +122,7 @@ impl Config for Test {
     type TreasuryAccountId = TreasuryAccountId;
     type RewardPeriod = RewardPeriod;
     type RewardPools = Rewards;
+    type AssetId = CurrencyId;
     type MultiCurrency = Tokens;
     type WeightInfo = ();
 }
