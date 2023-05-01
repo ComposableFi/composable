@@ -877,7 +877,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "beefy-light-client-primitives",
  "ckb-merkle-mountain-range 0.3.2",
@@ -900,7 +900,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "ckb-merkle-mountain-range 0.3.2",
  "derive_more",
@@ -1176,6 +1176,18 @@ dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "bounded-collections"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3888522b497857eb606bf51695988dba7096941822c1bcf676e3a929a9ae7a0"
+dependencies = [
+ "log 0.4.17",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
 ]
 
 [[package]]
@@ -2243,7 +2255,7 @@ version = "0.88.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "52056f6d0584484b57fa6c1a65c1fcb15f3780d8b6a758426d9e3084169b2ddd"
 dependencies = [
- "cranelift-entity",
+ "cranelift-entity 0.88.2",
 ]
 
 [[package]]
@@ -2257,7 +2269,7 @@ dependencies = [
  "cranelift-bforest",
  "cranelift-codegen-meta",
  "cranelift-codegen-shared",
- "cranelift-entity",
+ "cranelift-entity 0.88.2",
  "cranelift-isle",
  "gimli 0.26.2",
  "log 0.4.17",
@@ -2286,6 +2298,15 @@ name = "cranelift-entity"
 version = "0.88.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87a0f1b2fdc18776956370cf8d9b009ded3f855350c480c1c52142510961f352"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "cranelift-entity"
+version = "0.93.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f42ea692c7b450ad18b8c9889661505d51c09ec4380cf1c2d278dbb2da22cae1"
 dependencies = [
  "serde",
 ]
@@ -2326,13 +2347,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80fc2288957a94fd342a015811479de1837850924166d1f1856d8406e6f3609b"
 dependencies = [
  "cranelift-codegen",
- "cranelift-entity",
+ "cranelift-entity 0.88.2",
  "cranelift-frontend",
  "itertools",
  "log 0.4.17",
  "smallvec 1.10.0",
- "wasmparser",
- "wasmtime-types",
+ "wasmparser 0.89.1",
+ "wasmtime-types 1.0.2",
 ]
 
 [[package]]
@@ -4629,13 +4650,13 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "anyhow",
  "derive_more",
  "finality-grandpa",
  "frame-support",
- "hash-db",
+ "hash-db 0.15.2",
  "light-client-common",
  "log 0.4.17",
  "parity-scale-codec",
@@ -4651,13 +4672,13 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-verifier"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "anyhow",
  "finality-grandpa",
  "frame-support",
  "grandpa-light-client-primitives",
- "hash-db",
+ "hash-db 0.15.2",
  "light-client-common",
  "parity-scale-codec",
  "sp-core 7.0.0",
@@ -4718,6 +4739,12 @@ name = "hash-db"
 version = "0.15.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d23bd4e7b5eda0d0f3a307e8b381fdc8ba9000f26fbe912250c0a4cc3956364a"
+
+[[package]]
+name = "hash-db"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e7d7786361d7425ae2fe4f9e407eb0efaa0840f5212d109cc018c40c35c6ab4"
 
 [[package]]
 name = "hash256-std-hasher"
@@ -5081,7 +5108,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "derive_more",
  "flex-error",
@@ -5141,7 +5168,7 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.3.1",
@@ -5153,7 +5180,7 @@ dependencies = [
 [[package]]
 name = "ibc-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "base58",
  "blake2",
@@ -5177,7 +5204,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "base64 0.13.1",
  "bytes 1.4.0",
@@ -5207,7 +5234,7 @@ dependencies = [
 [[package]]
 name = "ibc-rpc"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "frame-system",
  "hex-literal",
@@ -5234,7 +5261,7 @@ dependencies = [
 [[package]]
 name = "ibc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "ibc-primitives",
  "pallet-ibc",
@@ -5246,7 +5273,7 @@ dependencies = [
 [[package]]
 name = "ics07-tendermint"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "bytes 1.4.0",
  "flex-error",
@@ -5266,7 +5293,7 @@ dependencies = [
 [[package]]
 name = "ics10-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -5292,7 +5319,7 @@ dependencies = [
 [[package]]
 name = "ics11-beefy"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "anyhow",
  "beefy-light-client",
@@ -6710,12 +6737,12 @@ dependencies = [
 [[package]]
 name = "light-client-common"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "anyhow",
  "async-trait",
  "derive_more",
- "hash-db",
+ "hash-db 0.15.2",
  "ibc 0.15.0",
  "ibc-proto 0.18.0",
  "parity-scale-codec",
@@ -6725,7 +6752,7 @@ dependencies = [
  "sp-runtime 7.0.0",
  "sp-storage 7.0.0",
  "sp-trie 7.0.0",
- "subxt 0.26.0",
+ "subxt 0.28.0",
 ]
 
 [[package]]
@@ -6767,6 +6794,12 @@ name = "linux-raw-sys"
 version = "0.0.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4d2456c373231a208ad294c33dc5bff30051eafd954cd4caae83a712b12854d"
+
+[[package]]
+name = "linux-raw-sys"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f051f77a7c8e6957c0696eac88f26b0117e54f52d3fc682ab19397a8812846a4"
 
 [[package]]
 name = "linux-raw-sys"
@@ -6995,8 +7028,17 @@ version = "0.31.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e0c7cba9ce19ac7ffd2053ac9f49843bbd3f4318feedfd74e85c19d5fb0ba66"
 dependencies = [
- "hash-db",
+ "hash-db 0.15.2",
  "hashbrown 0.12.3",
+]
+
+[[package]]
+name = "memory-db"
+version = "0.32.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "808b50db46293432a45e63bc15ea51e0ab4c0a1647b8eb114e31a3e698dd6fbe"
+dependencies = [
+ "hash-db 0.16.0",
 ]
 
 [[package]]
@@ -8668,7 +8710,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "beefy-light-client-primitives",
  "cumulus-primitives-core",
@@ -8714,7 +8756,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc-ping"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -12575,6 +12617,20 @@ dependencies = [
 
 [[package]]
 name = "rustix"
+version = "0.36.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a38f9520be93aba504e8ca974197f46158de5dcaa9fa04b57c57cd6a679d658"
+dependencies = [
+ "bitflags",
+ "errno 0.3.1",
+ "io-lifetimes 1.0.10",
+ "libc",
+ "linux-raw-sys 0.1.4",
+ "windows-sys 0.45.0",
+]
+
+[[package]]
+name = "rustix"
 version = "0.37.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9b864d3c18a5785a05953adeed93e2dca37ed30f18e69bba9f30079d51f363f"
@@ -12913,7 +12969,7 @@ name = "sc-client-db"
 version = "0.10.0-dev"
 source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
 dependencies = [
- "hash-db",
+ "hash-db 0.15.2",
  "kvdb",
  "kvdb-memorydb",
  "kvdb-rocksdb",
@@ -13148,7 +13204,7 @@ dependencies = [
  "sc-executor-common",
  "sp-runtime-interface 7.0.0",
  "sp-wasm-interface 7.0.0",
- "wasmtime",
+ "wasmtime 1.0.2",
 ]
 
 [[package]]
@@ -13831,6 +13887,60 @@ dependencies = [
 ]
 
 [[package]]
+name = "scale-decode"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c7e5527e4b3bf079d4c0b2f253418598c380722ba37ef20fac9088081407f2b6"
+dependencies = [
+ "parity-scale-codec",
+ "primitive-types",
+ "scale-bits",
+ "scale-decode-derive",
+ "scale-info",
+ "thiserror",
+]
+
+[[package]]
+name = "scale-decode-derive"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b38741b2f78e4391b94eac6b102af0f6ea2b0f7fe65adb55d7f4004f507854db"
+dependencies = [
+ "darling",
+ "proc-macro-crate 1.3.1",
+ "proc-macro2 1.0.56",
+ "quote 1.0.26",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "scale-encode"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "15546e5efbb45f0fc2291f7e202dee8623274c5d8bbfdf9c6886cc8b44a7ced3"
+dependencies = [
+ "parity-scale-codec",
+ "primitive-types",
+ "scale-bits",
+ "scale-encode-derive",
+ "scale-info",
+ "thiserror",
+]
+
+[[package]]
+name = "scale-encode-derive"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd983cf0a9effd76138554ead18a6de542d1af175ac12fd5e91836c5c0268082"
+dependencies = [
+ "darling",
+ "proc-macro-crate 1.3.1",
+ "proc-macro2 1.0.56",
+ "quote 1.0.26",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "scale-info"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13866,11 +13976,29 @@ dependencies = [
  "frame-metadata",
  "parity-scale-codec",
  "scale-bits",
- "scale-decode",
+ "scale-decode 0.4.0",
  "scale-info",
  "serde",
  "thiserror",
- "yap",
+ "yap 0.7.2",
+]
+
+[[package]]
+name = "scale-value"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11f549769261561e6764218f847e500588f9a79a289de49ce92f9e26642a3574"
+dependencies = [
+ "either",
+ "frame-metadata",
+ "parity-scale-codec",
+ "scale-bits",
+ "scale-decode 0.5.0",
+ "scale-encode",
+ "scale-info",
+ "serde",
+ "thiserror",
+ "yap 0.10.0",
 ]
 
 [[package]]
@@ -14352,7 +14480,7 @@ checksum = "f27f6278552951f1f2b8cf9da965d10969b2efdea95a6ec47987ab46edfe263a"
 [[package]]
 name = "simple-iavl"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=1d9e42deffbfb1286b3275e25929cf15b7d80801#1d9e42deffbfb1286b3275e25929cf15b7d80801"
+source = "git+https://github.com/ComposableFi/centauri?rev=2ac8e1c91ccba65df6df6241841109a6cbbda58a#2ac8e1c91ccba65df6df6241841109a6cbbda58a"
 dependencies = [
  "bytes 1.4.0",
  "ics23 0.8.1",
@@ -14499,7 +14627,7 @@ name = "sp-api"
 version = "4.0.0-dev"
 source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
 dependencies = [
- "hash-db",
+ "hash-db 0.15.2",
  "log 0.4.17",
  "parity-scale-codec",
  "sp-api-proc-macro",
@@ -14552,6 +14680,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-application-crypto"
+version = "22.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8cf23435a4bbd6eeec2bbbc346719ba4f3200e0ddb5f9e9f06c1724db03a8410"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core 20.0.0",
+ "sp-io 22.0.0",
+ "sp-std 7.0.0",
+]
+
+[[package]]
 name = "sp-arithmetic"
 version = "6.0.0"
 source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
@@ -14577,6 +14719,21 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-std 6.0.0",
+ "static_assertions",
+]
+
+[[package]]
+name = "sp-arithmetic"
+version = "15.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c3d3507a803e8bc332fa290ed3015a7b51d4436ce2b836744642fc412040456"
+dependencies = [
+ "integer-sqrt",
+ "num-traits",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-std 7.0.0",
  "static_assertions",
 ]
 
@@ -14736,7 +14893,7 @@ dependencies = [
  "dyn-clonable",
  "ed25519-zebra",
  "futures 0.3.28",
- "hash-db",
+ "hash-db 0.15.2",
  "hash256-std-hasher",
  "impl-serde 0.4.0",
  "lazy_static",
@@ -14779,7 +14936,7 @@ dependencies = [
  "dyn-clonable",
  "ed25519-zebra",
  "futures 0.3.28",
- "hash-db",
+ "hash-db 0.15.2",
  "hash256-std-hasher",
  "impl-serde 0.4.0",
  "lazy_static",
@@ -14802,6 +14959,50 @@ dependencies = [
  "sp-runtime-interface 10.0.0",
  "sp-std 6.0.0",
  "sp-storage 9.0.0",
+ "ss58-registry",
+ "substrate-bip39",
+ "thiserror",
+ "tiny-bip39",
+ "zeroize",
+]
+
+[[package]]
+name = "sp-core"
+version = "20.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7789372146f8ad40d0b40fad0596cb1db5771187a258eabe19b06f00767fcbd6"
+dependencies = [
+ "array-bytes 4.2.0",
+ "bitflags",
+ "blake2",
+ "bounded-collections",
+ "bs58",
+ "dyn-clonable",
+ "ed25519-zebra",
+ "futures 0.3.28",
+ "hash-db 0.16.0",
+ "hash256-std-hasher",
+ "impl-serde 0.4.0",
+ "lazy_static",
+ "libsecp256k1",
+ "log 0.4.17",
+ "merlin",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "primitive-types",
+ "rand 0.8.5",
+ "regex",
+ "scale-info",
+ "schnorrkel",
+ "secp256k1",
+ "secrecy",
+ "serde",
+ "sp-core-hashing 8.0.0",
+ "sp-debug-derive 7.0.0",
+ "sp-externalities 0.18.0",
+ "sp-runtime-interface 16.0.0",
+ "sp-std 7.0.0",
+ "sp-storage 12.0.0",
  "ss58-registry",
  "substrate-bip39",
  "thiserror",
@@ -14835,6 +15036,21 @@ dependencies = [
  "sha2 0.10.6",
  "sha3",
  "sp-std 6.0.0",
+ "twox-hash",
+]
+
+[[package]]
+name = "sp-core-hashing"
+version = "8.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "27449abdfbe41b473e625bce8113745e81d65777dd1d5a8462cf24137930dad8"
+dependencies = [
+ "blake2b_simd",
+ "byteorder",
+ "digest 0.10.6",
+ "sha2 0.10.6",
+ "sha3",
+ "sp-std 7.0.0",
  "twox-hash",
 ]
 
@@ -14891,6 +15107,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-debug-derive"
+version = "7.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62211eed9ef9dac4b9d837c56ccc9f8ee4fc49d9d9b7e6b9daf098fe173389ab"
+dependencies = [
+ "proc-macro2 1.0.56",
+ "quote 1.0.26",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "sp-externalities"
 version = "0.13.0"
 source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
@@ -14911,6 +15138,18 @@ dependencies = [
  "parity-scale-codec",
  "sp-std 6.0.0",
  "sp-storage 9.0.0",
+]
+
+[[package]]
+name = "sp-externalities"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ae0f275760689aaefe967943331d458cd99f5169d18364365d4cb584b246d1c"
+dependencies = [
+ "environmental",
+ "parity-scale-codec",
+ "sp-std 7.0.0",
+ "sp-storage 12.0.0",
 ]
 
 [[package]]
@@ -14997,6 +15236,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-io"
+version = "22.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd3431c245992fe51b8256c838fc2e981f8d3b0afc1d1377ca7dbe0a3287a764"
+dependencies = [
+ "bytes 1.4.0",
+ "ed25519",
+ "ed25519-dalek",
+ "futures 0.3.28",
+ "libsecp256k1",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "rustversion",
+ "secp256k1",
+ "sp-core 20.0.0",
+ "sp-externalities 0.18.0",
+ "sp-keystore 0.26.0",
+ "sp-runtime-interface 16.0.0",
+ "sp-state-machine 0.27.0",
+ "sp-std 7.0.0",
+ "sp-tracing 9.0.0",
+ "sp-trie 21.0.0",
+ "tracing",
+ "tracing-core",
+]
+
+[[package]]
 name = "sp-keyring"
 version = "7.0.0"
 source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
@@ -15038,6 +15304,22 @@ dependencies = [
  "schnorrkel",
  "sp-core 11.0.0",
  "sp-externalities 0.15.0",
+ "thiserror",
+]
+
+[[package]]
+name = "sp-keystore"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "452d079f592c97369c9ca8a5083b25f146751c6b5af10cbcacc2b24dc53fd72a"
+dependencies = [
+ "futures 0.3.28",
+ "merlin",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "schnorrkel",
+ "sp-core 20.0.0",
+ "sp-externalities 0.18.0",
  "thiserror",
 ]
 
@@ -15114,6 +15396,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-panic-handler"
+version = "7.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75986cc917d897e0f6d0c848088064df4c74ccbb8f1c1848700b725f5ca7fe04"
+dependencies = [
+ "backtrace",
+ "lazy_static",
+ "regex",
+]
+
+[[package]]
 name = "sp-rpc"
 version = "6.0.0"
 source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
@@ -15169,6 +15462,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-runtime"
+version = "23.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6220216caa67e3d931c693b06a3590dfcaa255f19bb3c3e3150f1672b8bc53f6"
+dependencies = [
+ "either",
+ "hash256-std-hasher",
+ "impl-trait-for-tuples",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "paste 1.0.12",
+ "rand 0.8.5",
+ "scale-info",
+ "serde",
+ "sp-application-crypto 22.0.0",
+ "sp-arithmetic 15.0.0",
+ "sp-core 20.0.0",
+ "sp-io 22.0.0",
+ "sp-std 7.0.0",
+ "sp-weights 19.0.0",
+]
+
+[[package]]
 name = "sp-runtime-interface"
 version = "7.0.0"
 source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
@@ -15206,6 +15522,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-runtime-interface"
+version = "16.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca5d0cd80200bf85b8b064238b2508b69b6146b13adf36066ec5d924825af737"
+dependencies = [
+ "bytes 1.4.0",
+ "impl-trait-for-tuples",
+ "parity-scale-codec",
+ "primitive-types",
+ "sp-externalities 0.18.0",
+ "sp-runtime-interface-proc-macro 10.0.0",
+ "sp-std 7.0.0",
+ "sp-storage 12.0.0",
+ "sp-tracing 9.0.0",
+ "sp-wasm-interface 13.0.0",
+ "static_assertions",
+]
+
+[[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "6.0.0"
 source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
@@ -15222,6 +15557,19 @@ name = "sp-runtime-interface-proc-macro"
 version = "7.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00083a77e938c4f35d0bde7ca0b6e5f616158ebe11af6063795aa664d92a238b"
+dependencies = [
+ "Inflector",
+ "proc-macro-crate 1.3.1",
+ "proc-macro2 1.0.56",
+ "quote 1.0.26",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "sp-runtime-interface-proc-macro"
+version = "10.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05ae5b00aef477127ddb6177b3464ad1e2bdcc12ee913fc5dfc9d065c6cea89b"
 dependencies = [
  "Inflector",
  "proc-macro-crate 1.3.1",
@@ -15261,7 +15609,7 @@ name = "sp-state-machine"
 version = "0.13.0"
 source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
 dependencies = [
- "hash-db",
+ "hash-db 0.15.2",
  "log 0.4.17",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -15282,7 +15630,7 @@ version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1fd4c600df0b5abf26c19b6c61d928b64e0c2b8a709a3dbef872be0507cd1ca"
 dependencies = [
- "hash-db",
+ "hash-db 0.15.2",
  "log 0.4.17",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -15293,6 +15641,27 @@ dependencies = [
  "sp-panic-handler 6.0.0",
  "sp-std 6.0.0",
  "sp-trie 11.0.0",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "sp-state-machine"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1e49c3bfcc8c832c34552cd8194180cc60508c6d3d9b0b9615d6b7c3e275019"
+dependencies = [
+ "hash-db 0.16.0",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "rand 0.8.5",
+ "smallvec 1.10.0",
+ "sp-core 20.0.0",
+ "sp-externalities 0.18.0",
+ "sp-panic-handler 7.0.0",
+ "sp-std 7.0.0",
+ "sp-trie 21.0.0",
  "thiserror",
  "tracing",
 ]
@@ -15313,6 +15682,12 @@ name = "sp-std"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af0ee286f98455272f64ac5bb1384ff21ac029fbb669afbaf48477faff12760e"
+
+[[package]]
+name = "sp-std"
+version = "7.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1de8eef39962b5b97478719c493bed2926cf70cb621005bbf68ebe58252ff986"
 
 [[package]]
 name = "sp-storage"
@@ -15356,6 +15731,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-storage"
+version = "12.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ad1f8c52d4700ac7bc42b3375679a6c6fc1fe876f4b40c6efdf36f933ef0291"
+dependencies = [
+ "impl-serde 0.4.0",
+ "parity-scale-codec",
+ "ref-cast",
+ "serde",
+ "sp-debug-derive 7.0.0",
+ "sp-std 7.0.0",
+]
+
+[[package]]
 name = "sp-timestamp"
 version = "4.0.0-dev"
 source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
@@ -15396,6 +15785,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-tracing"
+version = "9.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "00fab60bf3d42255ce3f678903d3a2564662371c75623de4a1ffc7cac46143df"
+dependencies = [
+ "parity-scale-codec",
+ "sp-std 7.0.0",
+ "tracing",
+ "tracing-core",
+ "tracing-subscriber 0.2.25",
+]
+
+[[package]]
 name = "sp-transaction-pool"
 version = "4.0.0-dev"
 source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
@@ -15426,10 +15828,10 @@ version = "7.0.0"
 source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
 dependencies = [
  "ahash 0.8.3",
- "hash-db",
+ "hash-db 0.15.2",
  "hashbrown 0.12.3",
  "lazy_static",
- "memory-db",
+ "memory-db 0.31.0",
  "nohash-hasher",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -15439,8 +15841,8 @@ dependencies = [
  "sp-std 5.0.0",
  "thiserror",
  "tracing",
- "trie-db",
- "trie-root",
+ "trie-db 0.24.0",
+ "trie-root 0.17.0",
 ]
 
 [[package]]
@@ -15450,11 +15852,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db085f134cb444e52ca569a442d12c84bd17667532613d78dd6f568942632da4"
 dependencies = [
  "ahash 0.7.6",
- "hash-db",
+ "hash-db 0.15.2",
  "hashbrown 0.12.3",
  "lazy_static",
  "lru 0.8.1",
- "memory-db",
+ "memory-db 0.31.0",
  "nohash-hasher",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -15463,8 +15865,32 @@ dependencies = [
  "sp-std 6.0.0",
  "thiserror",
  "tracing",
- "trie-db",
- "trie-root",
+ "trie-db 0.24.0",
+ "trie-root 0.17.0",
+]
+
+[[package]]
+name = "sp-trie"
+version = "21.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58401c53c08b6ecad83acd7e14534c8bbcb3fa73e81e26685e0ac70e51b00c56"
+dependencies = [
+ "ahash 0.8.3",
+ "hash-db 0.16.0",
+ "hashbrown 0.13.2",
+ "lazy_static",
+ "memory-db 0.32.0",
+ "nohash-hasher",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "scale-info",
+ "schnellru",
+ "sp-core 20.0.0",
+ "sp-std 7.0.0",
+ "thiserror",
+ "tracing",
+ "trie-db 0.27.1",
+ "trie-root 0.18.0",
 ]
 
 [[package]]
@@ -15505,7 +15931,7 @@ dependencies = [
  "parity-scale-codec",
  "sp-std 5.0.0",
  "wasmi 0.13.2",
- "wasmtime",
+ "wasmtime 1.0.2",
 ]
 
 [[package]]
@@ -15519,7 +15945,22 @@ dependencies = [
  "parity-scale-codec",
  "sp-std 6.0.0",
  "wasmi 0.13.2",
- "wasmtime",
+ "wasmtime 1.0.2",
+]
+
+[[package]]
+name = "sp-wasm-interface"
+version = "13.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "153b7374179439e2aa783c66ed439bd86920c67bbc95d34c76390561972bc02f"
+dependencies = [
+ "anyhow",
+ "impl-trait-for-tuples",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "sp-std 7.0.0",
+ "wasmi 0.13.2",
+ "wasmtime 6.0.2",
 ]
 
 [[package]]
@@ -15551,6 +15992,22 @@ dependencies = [
  "sp-core 11.0.0",
  "sp-debug-derive 6.0.0",
  "sp-std 6.0.0",
+]
+
+[[package]]
+name = "sp-weights"
+version = "19.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "123c661915e1bf328e21f8ecbe4e5247feba86f9149b782ea4348004547ce8ef"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "smallvec 1.10.0",
+ "sp-arithmetic 15.0.0",
+ "sp-core 20.0.0",
+ "sp-debug-derive 7.0.0",
+ "sp-std 7.0.0",
 ]
 
 [[package]]
@@ -15912,7 +16369,7 @@ dependencies = [
  "sp-runtime 7.0.0",
  "sp-state-machine 0.13.0",
  "sp-trie 7.0.0",
- "trie-db",
+ "trie-db 0.24.0",
 ]
 
 [[package]]
@@ -15980,9 +16437,9 @@ dependencies = [
  "parking_lot 0.12.1",
  "primitive-types",
  "scale-bits",
- "scale-decode",
+ "scale-decode 0.4.0",
  "scale-info",
- "scale-value",
+ "scale-value 0.6.0",
  "serde",
  "serde_json",
  "sp-core 11.0.0",
@@ -15996,12 +16453,13 @@ dependencies = [
 
 [[package]]
 name = "subxt"
-version = "0.26.0"
-source = "git+https://github.com/paritytech/subxt?rev=d92352ad739836a4100e1ef1db607acc82ed8c5a#d92352ad739836a4100e1ef1db607acc82ed8c5a"
+version = "0.28.0"
+source = "git+https://github.com/paritytech/subxt?rev=2a4da618a033bb82f768e4ef67b093b371f8b492#2a4da618a033bb82f768e4ef67b093b371f8b492"
 dependencies = [
  "base58",
  "blake2",
  "derivative",
+ "either",
  "frame-metadata",
  "futures 0.3.28",
  "getrandom 0.2.9",
@@ -16012,16 +16470,17 @@ dependencies = [
  "parking_lot 0.12.1",
  "primitive-types",
  "scale-bits",
- "scale-decode",
+ "scale-decode 0.5.0",
+ "scale-encode",
  "scale-info",
- "scale-value",
+ "scale-value 0.7.0",
  "serde",
  "serde_json",
- "sp-core 11.0.0",
- "sp-core-hashing 6.0.0",
- "sp-runtime 12.0.0",
- "subxt-macro 0.26.0",
- "subxt-metadata 0.26.0",
+ "sp-core 20.0.0",
+ "sp-core-hashing 8.0.0",
+ "sp-runtime 23.0.0",
+ "subxt-macro 0.28.0",
+ "subxt-metadata 0.28.0",
  "thiserror",
  "tracing",
 ]
@@ -16048,8 +16507,8 @@ dependencies = [
 
 [[package]]
 name = "subxt-codegen"
-version = "0.26.0"
-source = "git+https://github.com/paritytech/subxt?rev=d92352ad739836a4100e1ef1db607acc82ed8c5a#d92352ad739836a4100e1ef1db607acc82ed8c5a"
+version = "0.28.0"
+source = "git+https://github.com/paritytech/subxt?rev=2a4da618a033bb82f768e4ef67b093b371f8b492#2a4da618a033bb82f768e4ef67b093b371f8b492"
 dependencies = [
  "darling",
  "frame-metadata",
@@ -16057,12 +16516,12 @@ dependencies = [
  "hex",
  "jsonrpsee 0.16.2",
  "parity-scale-codec",
- "proc-macro-error",
  "proc-macro2 1.0.56",
  "quote 1.0.26",
  "scale-info",
- "subxt-metadata 0.26.0",
+ "subxt-metadata 0.28.0",
  "syn 1.0.109",
+ "thiserror",
  "tokio",
 ]
 
@@ -16079,12 +16538,12 @@ dependencies = [
 
 [[package]]
 name = "subxt-macro"
-version = "0.26.0"
-source = "git+https://github.com/paritytech/subxt?rev=d92352ad739836a4100e1ef1db607acc82ed8c5a#d92352ad739836a4100e1ef1db607acc82ed8c5a"
+version = "0.28.0"
+source = "git+https://github.com/paritytech/subxt?rev=2a4da618a033bb82f768e4ef67b093b371f8b492#2a4da618a033bb82f768e4ef67b093b371f8b492"
 dependencies = [
  "darling",
  "proc-macro-error",
- "subxt-codegen 0.26.0",
+ "subxt-codegen 0.28.0",
  "syn 1.0.109",
 ]
 
@@ -16101,13 +16560,13 @@ dependencies = [
 
 [[package]]
 name = "subxt-metadata"
-version = "0.26.0"
-source = "git+https://github.com/paritytech/subxt?rev=d92352ad739836a4100e1ef1db607acc82ed8c5a#d92352ad739836a4100e1ef1db607acc82ed8c5a"
+version = "0.28.0"
+source = "git+https://github.com/paritytech/subxt?rev=2a4da618a033bb82f768e4ef67b093b371f8b492#2a4da618a033bb82f768e4ef67b093b371f8b492"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",
  "scale-info",
- "sp-core-hashing 6.0.0",
+ "sp-core-hashing 8.0.0",
 ]
 
 [[package]]
@@ -16968,8 +17427,21 @@ version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "004e1e8f92535694b4cb1444dc5a8073ecf0815e3357f729638b9f8fc4062908"
 dependencies = [
- "hash-db",
+ "hash-db 0.15.2",
  "hashbrown 0.12.3",
+ "log 0.4.17",
+ "rustc-hex",
+ "smallvec 1.10.0",
+]
+
+[[package]]
+name = "trie-db"
+version = "0.27.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "767abe6ffed88a1889671a102c2861ae742726f52e0a5a425b92c9fbfa7e9c85"
+dependencies = [
+ "hash-db 0.16.0",
+ "hashbrown 0.13.2",
  "log 0.4.17",
  "rustc-hex",
  "smallvec 1.10.0",
@@ -16981,7 +17453,16 @@ version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9a36c5ca3911ed3c9a5416ee6c679042064b93fc637ded67e25f92e68d783891"
 dependencies = [
- "hash-db",
+ "hash-db 0.15.2",
+]
+
+[[package]]
+name = "trie-root"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4ed310ef5ab98f5fa467900ed906cb9232dd5376597e00fd4cba2a449d06c0b"
+dependencies = [
+ "hash-db 0.16.0",
 ]
 
 [[package]]
@@ -17681,6 +18162,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasmparser"
+version = "0.100.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64b20236ab624147dfbb62cf12a19aaf66af0e41b8398838b66e997d07d269d4"
+dependencies = [
+ "indexmap",
+ "url 2.3.1",
+]
+
+[[package]]
 name = "wasmparser-nostd"
 version = "0.100.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -17708,13 +18199,38 @@ dependencies = [
  "rayon",
  "serde",
  "target-lexicon",
- "wasmparser",
+ "wasmparser 0.89.1",
  "wasmtime-cache",
  "wasmtime-cranelift",
- "wasmtime-environ",
- "wasmtime-jit",
- "wasmtime-runtime",
+ "wasmtime-environ 1.0.2",
+ "wasmtime-jit 1.0.2",
+ "wasmtime-runtime 1.0.2",
  "windows-sys 0.36.1",
+]
+
+[[package]]
+name = "wasmtime"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "76a222f5fa1e14b2cefc286f1b68494d7a965f4bf57ec04c59bb62673d639af6"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "cfg-if 1.0.0",
+ "indexmap",
+ "libc",
+ "log 0.4.17",
+ "object 0.29.0",
+ "once_cell",
+ "paste 1.0.12",
+ "psm",
+ "serde",
+ "target-lexicon",
+ "wasmparser 0.100.0",
+ "wasmtime-environ 6.0.2",
+ "wasmtime-jit 6.0.2",
+ "wasmtime-runtime 6.0.2",
+ "windows-sys 0.42.0",
 ]
 
 [[package]]
@@ -17722,6 +18238,15 @@ name = "wasmtime-asm-macros"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "45de63ddfc8b9223d1adc8f7b2ee5f35d1f6d112833934ad7ea66e4f4339e597"
+dependencies = [
+ "cfg-if 1.0.0",
+]
+
+[[package]]
+name = "wasmtime-asm-macros"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4407a7246e7d2f3d8fb1cf0c72fda8dbafdb6dd34d555ae8bea0e5ae031089cc"
 dependencies = [
  "cfg-if 1.0.0",
 ]
@@ -17754,7 +18279,7 @@ checksum = "4bd91339b742ff20bfed4532a27b73c86b5bcbfedd6bea2dcdf2d64471e1b5c6"
 dependencies = [
  "anyhow",
  "cranelift-codegen",
- "cranelift-entity",
+ "cranelift-entity 0.88.2",
  "cranelift-frontend",
  "cranelift-native",
  "cranelift-wasm",
@@ -17763,8 +18288,8 @@ dependencies = [
  "object 0.29.0",
  "target-lexicon",
  "thiserror",
- "wasmparser",
- "wasmtime-environ",
+ "wasmparser 0.89.1",
+ "wasmtime-environ 1.0.2",
 ]
 
 [[package]]
@@ -17774,7 +18299,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ebb881c61f4f627b5d45c54e629724974f8a8890d455bcbe634330cc27309644"
 dependencies = [
  "anyhow",
- "cranelift-entity",
+ "cranelift-entity 0.88.2",
  "gimli 0.26.2",
  "indexmap",
  "log 0.4.17",
@@ -17782,8 +18307,27 @@ dependencies = [
  "serde",
  "target-lexicon",
  "thiserror",
- "wasmparser",
- "wasmtime-types",
+ "wasmparser 0.89.1",
+ "wasmtime-types 1.0.2",
+]
+
+[[package]]
+name = "wasmtime-environ"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47b8b50962eae38ee319f7b24900b7cf371f03eebdc17400c1dc8575fc10c9a7"
+dependencies = [
+ "anyhow",
+ "cranelift-entity 0.93.2",
+ "gimli 0.26.2",
+ "indexmap",
+ "log 0.4.17",
+ "object 0.29.0",
+ "serde",
+ "target-lexicon",
+ "thiserror",
+ "wasmparser 0.100.0",
+ "wasmtime-types 6.0.2",
 ]
 
 [[package]]
@@ -17805,10 +18349,33 @@ dependencies = [
  "serde",
  "target-lexicon",
  "thiserror",
- "wasmtime-environ",
- "wasmtime-jit-debug",
- "wasmtime-runtime",
+ "wasmtime-environ 1.0.2",
+ "wasmtime-jit-debug 1.0.2",
+ "wasmtime-runtime 1.0.2",
  "windows-sys 0.36.1",
+]
+
+[[package]]
+name = "wasmtime-jit"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ffaed4f9a234ba5225d8e64eac7b4a5d13b994aeb37353cde2cbeb3febda9eaa"
+dependencies = [
+ "addr2line 0.17.0",
+ "anyhow",
+ "bincode",
+ "cfg-if 1.0.0",
+ "cpp_demangle",
+ "gimli 0.26.2",
+ "log 0.4.17",
+ "object 0.29.0",
+ "rustc-demangle",
+ "serde",
+ "target-lexicon",
+ "wasmtime-environ 6.0.2",
+ "wasmtime-jit-icache-coherence",
+ "wasmtime-runtime 6.0.2",
+ "windows-sys 0.42.0",
 ]
 
 [[package]]
@@ -17820,6 +18387,26 @@ dependencies = [
  "object 0.29.0",
  "once_cell",
  "rustix 0.35.13",
+]
+
+[[package]]
+name = "wasmtime-jit-debug"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eed41cbcbf74ce3ff6f1d07d1b707888166dc408d1a880f651268f4f7c9194b2"
+dependencies = [
+ "once_cell",
+]
+
+[[package]]
+name = "wasmtime-jit-icache-coherence"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43a28ae1e648461bfdbb79db3efdaee1bca5b940872e4175390f465593a2e54c"
+dependencies = [
+ "cfg-if 1.0.0",
+ "libc",
+ "windows-sys 0.42.0",
 ]
 
 [[package]]
@@ -17841,10 +18428,34 @@ dependencies = [
  "rand 0.8.5",
  "rustix 0.35.13",
  "thiserror",
- "wasmtime-asm-macros",
- "wasmtime-environ",
- "wasmtime-jit-debug",
+ "wasmtime-asm-macros 1.0.2",
+ "wasmtime-environ 1.0.2",
+ "wasmtime-jit-debug 1.0.2",
  "windows-sys 0.36.1",
+]
+
+[[package]]
+name = "wasmtime-runtime"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e704b126e4252788ccfc3526d4d4511d4b23c521bf123e447ac726c14545217b"
+dependencies = [
+ "anyhow",
+ "cc",
+ "cfg-if 1.0.0",
+ "indexmap",
+ "libc",
+ "log 0.4.17",
+ "mach",
+ "memfd",
+ "memoffset 0.6.5",
+ "paste 1.0.12",
+ "rand 0.8.5",
+ "rustix 0.36.13",
+ "wasmtime-asm-macros 6.0.2",
+ "wasmtime-environ 6.0.2",
+ "wasmtime-jit-debug 6.0.2",
+ "windows-sys 0.42.0",
 ]
 
 [[package]]
@@ -17853,10 +18464,22 @@ version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d23d61cb4c46e837b431196dd06abb11731541021916d03476a178b54dc07aeb"
 dependencies = [
- "cranelift-entity",
+ "cranelift-entity 0.88.2",
  "serde",
  "thiserror",
- "wasmparser",
+ "wasmparser 0.89.1",
+]
+
+[[package]]
+name = "wasmtime-types"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83e5572c5727c1ee7e8f28717aaa8400e4d22dcbd714ea5457d85b5005206568"
+dependencies = [
+ "cranelift-entity 0.93.2",
+ "serde",
+ "thiserror",
+ "wasmparser 0.100.0",
 ]
 
 [[package]]
@@ -18756,6 +19379,12 @@ name = "yap"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5fc77f52dc9e9b10d55d3f4462c3b7fc393c4f17975d641542833ab2d3bc26ef"
+
+[[package]]
+name = "yap"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2a7eb6d82a11e4d0b8e6bda8347169aff4ccd8235d039bba7c47482d977dcf7"
 
 [[package]]
 name = "yasna"
