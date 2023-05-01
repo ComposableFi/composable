@@ -248,7 +248,13 @@ pub mod pallet {
                 let total_period_count = reward_schedule
                     .period_count
                     .checked_add(period_count)
-                    .ok_or(ArithmeticError::Overflow)?;
+                    .ok_or_else(|| {
+                        log::error!("Overflow error: Failed to calculate total_period_count for pool_currency_id : {:?}, reward_currency_id : {:?}, old period_count : {}, extend period_count : {}",
+                        pool_currency_id, reward_currency_id, reward_schedule.period_count, period_count
+                        );
+                        ArithmeticError::Overflow
+                    })?;
+                
                 let total_free = T::MultiCurrency::free_balance(reward_currency_id, &pool_account_id);
                 let total_per_period = total_free.checked_div(&total_period_count.into()).unwrap_or_default();
 
