@@ -24,7 +24,7 @@ const sidebars = {
         'intro',
         {
             type: 'category',
-            label: 'Parachains',
+            label: 'Networks',
 
             link: {
                 type: 'generated-index',
@@ -290,7 +290,7 @@ const sidebars = {
                         'user-guides/claim-rewards-guide',
                         'user-guides/how-to-provide-liquidity',
                         'user-guides/how-to-trade-pica-on-pablo',
-                        `user-guides/transfer-usdt-statemine-picasso`,
+                        'user-guides/centauri-guide',
                     ],
                 },
 
@@ -428,10 +428,8 @@ const sidebars = {
                     ]
                 },
                 'ecosystem/composable-grants',
-                'ecosystem/business-line-development',
                 'ecosystem/press-kit',
                 'ecosystem/the-composable-team',
-                'ecosystem/careers',
             ],
         },
         {
@@ -445,7 +443,6 @@ const sidebars = {
             collapsible: false,
             items: [
                 'audits/audit-results-recommendations-and-remediations',
-                `audits/immunefi-bug-bounty-program`
             ]
         },
         {

@@ -34,7 +34,7 @@ env:
 jobs:
 
   dependency-review:     
-    if: ${{ github.event_name != 'merge_group' }}
+    if: ${{ github.event_name != 'merge_group' && github.event_name != 'push' }}
     concurrency:
       group: ${{ github.workflow }}-dependency-review-${{ github.event.pull_request.title }}
       cancel-in-progress: true  
@@ -59,6 +59,8 @@ jobs:
     runs-on: ubuntu-latest  
     steps:
       - run: |
+          echo ${{ github.event_name }} 
+          echo ${{ github.ref_name }}
           echo "I am priviliged by goblins on repository id ${{ github.event.pull_request.head.repo.id }} ${{ github.event.pull_request_target.head.repo.id }}" 
       
   lfs-check:
@@ -503,23 +505,88 @@ jobs:
       name: "Effect gate, automatically merged if passed"
       runs-on: ubuntu-latest
       needs:
+        - build-all-benchmarks-packages
+        - build-all-ci-packages
+        - build-all-docs-packages
+        - build-all-misc-packages
+        - build-all-platforms-arm
+        - build-all-production-deps
         - dependency-review
-        - privilege-check
         - lfs-check
         - nix-flake-check
-        - build-all-ci-packages
-        - build-all-platforms-arm
-        - build-all-misc-packages
-        - build-all-docs-packages
-        - build-all-benchmarks-packages
-        - build-all-production-deps
+        - privilege-check
       steps:
         - run: echo "See next activities of pushing and publishing and merging"
+
+
+  draft-release-artifacts:
+    name: "draft-release-artifacts"
+    runs-on:
+      - buildjet-32vcpu-ubuntu-2204
+    needs:
+      - effects-gate
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}  
+    permissions: 
+      pull-requests: write
+      contents: write      
+    concurrency:
+      group:  ${{ github.workflow }}-draft-release-artifacts-${{ github.ref }}
+      cancel-in-progress: true      
+    steps:
+      - name: Set up Nix
+        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
+        with:
+          install_url: https://releases.nixos.org/nix/${{ env.NIX_VERSION }}/install
+          nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
+          extra_nix_config: |
+            sandbox = relaxed
+            narinfo-cache-negative-ttl = 0      
+            system-features = kvm          
+      - name: Set up Cachix
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
+        with:
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{ env.CACHIX_NAME }}
+      - name: Add tools needed for non-nix steps
+        run: |  
+          nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix nixpkgs.git nixpkgs.git-lfs nixpkgs.docker nixpkgs.coreutils    
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Download artifacts
+        run: |
+          nix run .#generate-release-artifacts --print-build-logs
+
+      - name: Release artifacts
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          prerelease: true
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          body_path: release-artifacts/release.txt
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          files: |
+            release-artifacts/to-upload/*
 
   deploy-docs:
     name: "Deploy docs"
     needs:
-      - effects-gate
+        - build-all-docs-packages        
+        - build-all-misc-packages
+        - lfs-check
+        - nix-flake-check
+        - privilege-check
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-deploy-docs-${{ github.event.pull_request.title }}
@@ -555,6 +622,7 @@ jobs:
         with:
           command: nix -- build .#docs-static
           working-directory: ./docs
+
       - name: Deploy docs
         uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
         with:
@@ -562,7 +630,7 @@ jobs:
           projectId: composable-docs
           entrypoint: docs/
           # this must go same release flow as FE, not from main
-          channelId: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+          channelId: ${{ github.event_name == 'push' && github.ref_name == 'main' && 'live' }}
 
   # this should be split and commit docker are from here, but latest from release
   push-docker-images:
