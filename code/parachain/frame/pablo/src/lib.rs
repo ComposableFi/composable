@@ -65,7 +65,7 @@ pub mod pallet {
 	use composable_traits::{
 		assets::CreateAsset,
 		defi::{CurrencyPair, Rate},
-		dex::{Amm, BasicPoolInfo, Fee, PriceAggregate},
+		dex::{Amm, BasicPoolInfo, Fee, FlatFeeConverter, PriceAggregate},
 	};
 	use core::fmt::Debug;
 	use frame_support::{
@@ -654,6 +654,45 @@ pub mod pallet {
 					Ok(CurrencyPair::new(*base_asset, *quote_asset))
 				},
 			}
+		}
+	}
+
+	impl<T: Config> FlatFeeConverter for Pallet<T> {
+		type AssetId = T::AssetId;
+		type Balance = T::Balance;
+
+		fn get_flat_fee(
+			asset_id: Self::AssetId,
+			fee_asset_id: Self::AssetId,
+			fee_asset_amount: Self::Balance,
+		) -> Option<Self::Balance> {
+			let mut conversion_pool_id = None;
+			for (pool_id, pool_config) in Pools::<T>::iter() {
+				match pool_config {
+					PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo {
+						owner: _,
+						lp_token: _,
+						fee_config: _,
+						assets_weights,
+					}) => {
+						if assets_weights.get(&fee_asset_id).is_some() &&
+							assets_weights.get(&asset_id).is_some()
+						{
+							conversion_pool_id = Some(pool_id);
+						}
+					},
+				};
+			}
+			if let Some(pool_id) = conversion_pool_id {
+				return Pallet::<T>::spot_price(
+					pool_id,
+					AssetAmount { asset_id: fee_asset_id, amount: fee_asset_amount },
+					asset_id,
+					false,
+				)
+				.map_or_else(|_| None, |x| Some(x.value.amount))
+			}
+			return None
 		}
 	}
 
