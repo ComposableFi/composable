@@ -31,7 +31,7 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: pallet_ibc::Config> pallet_ibc::WeightInfo for WeightInfo<T> {
     fn create_client() -> Weight {
-        Weight::from_ref_time(WEIGHT_REF_TIME_PER_MILLIS)
+        Weight::from_ref_time(WEIGHT_REF_TIME_PER_MILLIS + 1)
     }
 
     fn conn_open_init() -> Weight {
