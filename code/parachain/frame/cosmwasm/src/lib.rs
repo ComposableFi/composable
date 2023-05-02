@@ -328,6 +328,9 @@ pub mod pallet {
 		/// A hook into the VM execution semantic, allowing the runtime to hook into a contract
 		/// execution.
 		type PalletHook: PalletHook<Self>;
+
+		/// Origin to upload a WASM code
+		type UploadWasmOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::pallet]
@@ -388,6 +391,7 @@ pub mod pallet {
 		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::upload(code.len() as u32))]
 		pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResult {
+			T::UploadWasmOrigin::ensure_origin(origin.clone())?;
 			let who = ensure_signed(origin)?;
 			Self::do_upload(&who, code)
 		}

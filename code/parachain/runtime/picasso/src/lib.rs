@@ -373,28 +373,28 @@ impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
 }
 
 parameter_types! {
-  pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
-  pub const ChainId: &'static str = "composable-network-picasso";
-  pub const MaxFrames: u32 = 64;
+	pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
+	pub const ChainId: &'static str = "composable-network-picasso";
+	pub const MaxFrames: u32 = 64;
 	pub const MaxCodeSize: u32 = 512 * 1024;
-  pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
-  pub const MaxMessageSize: u32 = 256 * 1024;
-  pub const MaxContractLabelSize: u32 = 64;
-  pub const MaxContractTrieIdSize: u32 = Hash::len_bytes() as u32;
-  pub const MaxInstantiateSaltSize: u32 = 128;
-  pub const MaxFundsAssets: u32 = 32;
-  pub const CodeTableSizeLimit: u32 = 4096;
-  pub const CodeGlobalVariableLimit: u32 = 256;
-  pub const CodeParameterLimit: u32 = 128;
-  pub const CodeBranchTableSizeLimit: u32 = 256;
-  // Not really required as it's embedded.
-  pub const CodeStackLimit: u32 = u32::MAX;
+	pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
+	pub const MaxMessageSize: u32 = 256 * 1024;
+	pub const MaxContractLabelSize: u32 = 64;
+	pub const MaxContractTrieIdSize: u32 = Hash::len_bytes() as u32;
+	pub const MaxInstantiateSaltSize: u32 = 128;
+	pub const MaxFundsAssets: u32 = 32;
+	pub const CodeTableSizeLimit: u32 = 4096;
+	pub const CodeGlobalVariableLimit: u32 = 256;
+	pub const CodeParameterLimit: u32 = 128;
+	pub const CodeBranchTableSizeLimit: u32 = 256;
+	// Not really required as it's embedded.
+	pub const CodeStackLimit: u32 = u32::MAX;
 
-  // TODO: benchmark for proper values
-  pub const CodeStorageByteDeposit: u32 = 1;
-  pub const ContractStorageByteReadPrice: u32 = 1;
-  pub const ContractStorageByteWritePrice: u32 = 1;
-  pub WasmCostRules: CostRules<Runtime> = Default::default();
+	// TODO: benchmark for proper values
+	pub const CodeStorageByteDeposit: u32 = 1;
+	pub const ContractStorageByteReadPrice: u32 = 1;
+	pub const ContractStorageByteWritePrice: u32 = 1;
+	pub WasmCostRules: CostRules<Runtime> = Default::default();
 }
 
 impl cosmwasm::Config for Runtime {
@@ -430,6 +430,7 @@ impl cosmwasm::Config for Runtime {
 	type IbcRelayerAccount = TreasuryAccount;
 	type IbcRelayer = cosmwasm::NoRelayer<Runtime>;
 	type PalletHook = ();
+	type UploadWasmOrigin = EnsureRootOrTwoThirdNativeTechnical;
 }
 
 parameter_types! {
