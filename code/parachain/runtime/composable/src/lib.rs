@@ -728,6 +728,7 @@ mod benches {
 		[proxy, Proxy]
 		[assets_registry, AssetsRegistry]
 		[multisig, Multisig]
+		[pallet_ibc, Ibc]
 	);
 }
 

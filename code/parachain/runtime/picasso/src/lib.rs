@@ -888,6 +888,7 @@ mod benches {
 		[pablo, Pablo]
 		[democracy, Democracy]
 		[oracle, Oracle]
+		[pallet_ibc, Ibc]
 	);
 }
 
