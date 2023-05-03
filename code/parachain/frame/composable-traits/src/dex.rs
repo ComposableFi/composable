@@ -51,17 +51,6 @@ impl<AssetId, Balance> SwapResult<AssetId, Balance> {
 	}
 }
 
-pub trait FlatFeeConverter{
-	type AssetId;
-	type Balance;
-
-	fn get_flat_fee(
-		asset_id: Self::AssetId,
-		fee_asset_id: Self::AssetId,
-		fee_asset_amount: Self::Balance,
-	) -> Option<Self::Balance>;
-}
-
 /// Trait for automated market maker.
 pub trait Amm {
 	/// The asset ID type

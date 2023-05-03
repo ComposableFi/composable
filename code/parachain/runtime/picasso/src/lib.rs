@@ -219,6 +219,8 @@ impl randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
+	pub AssetIdUSDT: CurrencyId = CurrencyId::USDT;
+	pub FlatFeeUSDTAmount: Balance = 10 * CurrencyId::unit::<Balance>(); //10 USDT
 }
 
 impl assets_registry::Config for Runtime {

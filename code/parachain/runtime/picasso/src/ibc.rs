@@ -156,6 +156,9 @@ impl pallet_ibc::ics20_fee::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ServiceCharge = IbcIcs20ServiceCharge;
 	type PalletId = IbcIcs20FeePalletId;
+	type FlatFeeAssetId = AssetIdUSDT;
+	type FlatFeeAmount = FlatFeeUSDTAmount;
+	type FlatFeeConverter = Pablo;
 }
 
 impl pallet_ibc::Config for Runtime {

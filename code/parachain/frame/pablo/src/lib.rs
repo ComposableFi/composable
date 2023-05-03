@@ -65,7 +65,7 @@ pub mod pallet {
 	use composable_traits::{
 		assets::CreateAsset,
 		defi::{CurrencyPair, Rate},
-		dex::{Amm, BasicPoolInfo, Fee, FlatFeeConverter, PriceAggregate},
+		dex::{Amm, BasicPoolInfo, Fee, PriceAggregate},
 	};
 	use core::fmt::Debug;
 	use frame_support::{
@@ -77,6 +77,7 @@ pub mod pallet {
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
+	use pallet_ibc::ics20_fee::FlatFeeConverter;
 	use sp_arithmetic::FixedPointOperand;
 
 	use composable_maths::dex::{
@@ -252,7 +253,7 @@ pub mod pallet {
 			+ Ord;
 
 		/// Type representing the Balance of an account.
-		type Balance: BalanceLike + SafeSub + Zero + FixedPointOperand;
+		type Balance: BalanceLike + SafeSub + Zero + FixedPointOperand + Into<u128>;
 
 		/// An isomorphism: Balance<->u128
 		type Convert: Convert<u128, BalanceOf<Self>> + Convert<BalanceOf<Self>, u128>;
@@ -665,7 +666,7 @@ pub mod pallet {
 			asset_id: Self::AssetId,
 			fee_asset_id: Self::AssetId,
 			fee_asset_amount: Self::Balance,
-		) -> Option<Self::Balance> {
+		) -> Option<u128> {
 			let mut conversion_pool_id = None;
 			for (pool_id, pool_config) in Pools::<T>::iter() {
 				match pool_config {
@@ -690,7 +691,7 @@ pub mod pallet {
 					asset_id,
 					false,
 				)
-				.map_or_else(|_| None, |x| Some(x.value.amount))
+				.map_or_else(|_| None, |x| Some(x.value.amount.into()))
 			}
 			return None
 		}
