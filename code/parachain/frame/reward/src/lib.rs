@@ -131,6 +131,7 @@ pub mod pallet {
     /// The total stake deposited to this reward pool.
     #[pallet::storage]
     #[pallet::getter(fn total_stake)]
+    #[allow(clippy::disallowed_types)]
     pub type TotalStake<T: Config<I>, I: 'static = ()> =
         StorageMap<_, Blake2_128Concat, T::PoolId, SignedFixedPoint<T, I>, ValueQuery>;
 
@@ -138,12 +139,14 @@ pub mod pallet {
     /// NOTE: this is currently only used for integration tests.
     #[pallet::storage]
     #[pallet::getter(fn total_rewards)]
+    #[allow(clippy::disallowed_types)]
     pub type TotalRewards<T: Config<I>, I: 'static = ()> =
         StorageMap<_, Blake2_128Concat, T::CurrencyId, SignedFixedPoint<T, I>, ValueQuery>;
 
     /// Used to compute the rewards for a participant's stake.
     #[pallet::storage]
     #[pallet::getter(fn reward_per_token)]
+    #[allow(clippy::disallowed_types)]
     pub type RewardPerToken<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
         _,
         Blake2_128Concat,
@@ -156,11 +159,13 @@ pub mod pallet {
 
     /// The stake of a participant in this reward pool.
     #[pallet::storage]
+    #[allow(clippy::disallowed_types)]
     pub type Stake<T: Config<I>, I: 'static = ()> =
         StorageMap<_, Blake2_128Concat, (T::PoolId, T::StakeId), SignedFixedPoint<T, I>, ValueQuery>;
 
     /// Accounts for previous changes in stake size.
     #[pallet::storage]
+    #[allow(clippy::disallowed_types)]
     pub type RewardTally<T: Config<I>, I: 'static = ()> = StorageDoubleMap<
         _,
         Blake2_128Concat,
@@ -173,6 +178,7 @@ pub mod pallet {
 
     /// Track the currencies used for rewards.
     #[pallet::storage]
+    #[allow(clippy::disallowed_types)]
     pub type RewardCurrencies<T: Config<I>, I: 'static = ()> =
         StorageMap<_, Blake2_128Concat, T::PoolId, BTreeSet<T::CurrencyId>, ValueQuery>;
 

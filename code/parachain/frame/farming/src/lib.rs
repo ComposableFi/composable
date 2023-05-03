@@ -205,6 +205,7 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn reward_schedules)]
+    #[allow(clippy::disallowed_types)]
     pub type RewardSchedules<T: Config> = StorageDoubleMap<
         _,
         Blake2_128Concat,
@@ -308,8 +309,8 @@ pub mod pallet {
         pub fn deposit(origin: OriginFor<T>, pool_currency_id: AssetIdOf<T>) -> DispatchResult {
             let who = ensure_signed(origin)?;
             // reserve lp tokens to prevent spending
-            let amount = T::MultiCurrency::free_balance(pool_currency_id.clone(), &who);
-            T::MultiCurrency::reserve(pool_currency_id.clone(), &who, amount)?;
+            let amount = T::MultiCurrency::free_balance(pool_currency_id, &who);
+            T::MultiCurrency::reserve(pool_currency_id, &who, amount)?;
 
             // deposit lp tokens as stake
             T::RewardPools::deposit_stake(&pool_currency_id, &who, amount)
@@ -326,7 +327,7 @@ pub mod pallet {
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
             // unreserve lp tokens to allow spending
-            let remaining = T::MultiCurrency::unreserve(pool_currency_id.clone(), &who, amount);
+            let remaining = T::MultiCurrency::unreserve(pool_currency_id, &who, amount);
             ensure!(remaining.is_zero(), Error::<T>::InsufficientStake);
 
             // withdraw lp tokens from stake
@@ -369,7 +370,7 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn total_rewards(pool_currency_id: &AssetIdOf<T>, reward_currency_id: &AssetIdOf<T>) -> BalanceOf<T> {
-        let pool_currency_id = pool_currency_id.clone();
+        let pool_currency_id = pool_currency_id;
         RewardSchedules::<T>::get(pool_currency_id, reward_currency_id)
             .total()
             .unwrap_or_default()
