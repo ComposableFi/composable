@@ -21,8 +21,8 @@ use crate::{
 	client::{FullBackend, FullClient},
 	runtime::{
 		assets::ExtendWithAssetsApi, cosmwasm::ExtendWithCosmwasmApi,
-		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, ibc::ExtendWithIbcApi,
-		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, farming::ExtendWithFarmingApi,
+		crowdloan_rewards::ExtendWithCrowdloanRewardsApi, farming::ExtendWithFarmingApi,
+		ibc::ExtendWithIbcApi, lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
 		staking_rewards::ExtendWithStakingRewardsApi, BaseHostRuntimeApis,
 	},
 };
