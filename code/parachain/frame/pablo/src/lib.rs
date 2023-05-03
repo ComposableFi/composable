@@ -67,7 +67,6 @@ pub mod pallet {
 		defi::{CurrencyPair, Rate},
 		dex::{Amm, BasicPoolInfo, Fee, PriceAggregate},
 	};
-	use pallet_ibc::ics20_fee::FlatFeeConverter;
 	use core::fmt::Debug;
 	use frame_support::{
 		pallet_prelude::*,
@@ -78,6 +77,7 @@ pub mod pallet {
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
+	use pallet_ibc::ics20_fee::FlatFeeConverter;
 	use sp_arithmetic::FixedPointOperand;
 
 	use composable_maths::dex::{
