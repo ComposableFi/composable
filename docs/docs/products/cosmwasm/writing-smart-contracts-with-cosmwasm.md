@@ -11,13 +11,7 @@ the WASM smart contract engine for the Cosmos SDK and runs on the IBC. This allo
 communicate cross-chain between all of the chains linked on the IBC protocol. It enables dApps to function as smart 
 contracts on Cosmos chains, without the need to develop a new chain.
 
-A key feature of CosmWasm is that it allows for multi-chain contracts; one dApp, one contract, but multiple chains. Until now, any 
-chain using the Cosmos SDK can easily integrate the CosmWasm module, which is built to maintain low overhead on systems 
-demand. As a result of our development of pallet-CosmWasm, any parachain can integrate and adopt the CosmWasm framework for their chain. 
-
-CosmWasm allows for composition across multiple chains and migration to other chains, with built-in, 
-permissioned, pre-contract migration functionality. As such, CosmWasm is designed to connect different blockchains, and 
-allows users to benefit from the utility across chains instead of being forced to choose between them.
+CosmWasm has a significant feature that enables multi-chain contracts, where a single contract can be used across multiple chains in one dApp. With the use of the Cosmos SDK, any chain can easily incorporate the CosmWasm module with minimal system overhead. Our development of pallet-CosmWasm has made it possible for any parachain to integrate and implement the CosmWasm framework on their chain. This integration provides a composition of multiple chains and migration functionality across different chains with pre-contract permission. CosmWasm is designed to connect various blockchains, allowing users to benefit from the utility of multiple chains without the need to choose one over the other. The framework also includes built-in, permissioned, pre-contract migration functionality.
 
 In terms of security, CosmWasm is designed to avoid the attack vectors found in 
 [Ethereum and Solidity](https://docs.cosmwasm.com/docs/0.16/architecture/smart-contracts), such as Reentrancy, 
@@ -35,7 +29,9 @@ CosmWasm’s inter-chain contract support works hand in hand with XCVM’s inter
 Through the adoption of CosmWasm, the XCVM will be the first to bring its functionality to the DotSama ecosystem. 
 This will enable the XCVM to combine the benefits of both ecosystems and connect CosmWasm to a broader range of DeFi 
 ecosystems. As such, developers will be able to write smart contract for DotSama, that exist as multi-chain contracts on
-IBC-Cosmos. Accessible, interoperable smart contract creation is crucial for developing ecosystems, especially nascent 
+IBC-Cosmos. 
+
+Accessible, interoperable smart contract creation is crucial for developing ecosystems, especially nascent 
 ecosystems, that will form a considerable role in DeFi’s future. These ecosystems and protocols that exist cross-chain 
 suffer from the fragmented liquidity of the DeFi space. As such, they need virtual machines like the XCVM that enable 
 multi-chain contracts and cross-chain communication.
