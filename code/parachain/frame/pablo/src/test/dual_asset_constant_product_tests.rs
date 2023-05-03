@@ -24,11 +24,12 @@ use composable_tests_helpers::{
 		},
 	},
 };
-use composable_traits::dex::{Amm, AssetAmount, BasicPoolInfo, FeeConfig, FlatFeeConverter};
+use composable_traits::dex::{Amm, AssetAmount, BasicPoolInfo, FeeConfig};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
+use pallet_ibc::ics20_fee::FlatFeeConverter;
 use proptest::prelude::*;
 use sp_runtime::{
 	traits::{ConstU32, IntegerSquareRoot},
