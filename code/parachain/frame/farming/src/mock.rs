@@ -5,7 +5,6 @@ use frame_support::{
 	PalletId,
 };
 use orml_traits::parameter_type_with_key;
-// pub use primitives::currency::CurrencyId;
 use sp_arithmetic::FixedI128;
 use sp_core::H256;
 use sp_runtime::{
