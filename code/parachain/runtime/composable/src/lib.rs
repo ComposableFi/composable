@@ -603,6 +603,8 @@ parameter_types! {
 	pub const VaultMinimumDeposit: Balance = 10_000;
 	pub const VaultMinimumWithdrawal: Balance = 10_000;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
+	pub AssetIdUSDT: CurrencyId = CurrencyId::INVALID;
+	pub FlatFeeUSDTAmount: Balance = 0;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
