@@ -11,9 +11,11 @@ the WASM smart contract engine for the Cosmos SDK and runs on the IBC. This allo
 communicate cross-chain between all of the chains linked on the IBC protocol. It enables dApps to function as smart 
 contracts on Cosmos chains, without the need to develop a new chain.
 
-A key feature of CosmWasm is that it allows for multi-chain contracts; one dApp, one contract, but multiple chains. Any 
+A key feature of CosmWasm is that it allows for multi-chain contracts; one dApp, one contract, but multiple chains. Until now, any 
 chain using the Cosmos SDK can easily integrate the CosmWasm module, which is built to maintain low overhead on systems 
-demand. CosmWasm allows for composition across multiple chains and migration to other chains, with built-in, 
+demand. As a result of our development of pallet-CosmWasm, any parachain can integrate and adopt the CosmWasm framework for their chain. 
+
+CosmWasm allows for composition across multiple chains and migration to other chains, with built-in, 
 permissioned, pre-contract migration functionality. As such, CosmWasm is designed to connect different blockchains, and 
 allows users to benefit from the utility across chains instead of being forced to choose between them.
 
