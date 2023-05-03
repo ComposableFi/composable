@@ -693,7 +693,7 @@ pub mod pallet {
 				)
 				.map_or_else(|_| None, |x| Some(x.value.amount.into()))
 			}
-			return None
+			None
 		}
 	}
 
