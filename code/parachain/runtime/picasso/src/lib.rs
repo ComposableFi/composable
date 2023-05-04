@@ -13,7 +13,7 @@
 #![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
+#![recursion_limit = "512"]
 #![allow(incomplete_features)] // see other usage -
 #![feature(adt_const_params)]
 
@@ -35,6 +35,7 @@ mod weights;
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use fees::{AssetsPaymentHeader, FinalPriceConverter};
+use frame_support::dispatch::DispatchError;
 use version::{Version, VERSION};
 pub use xcmp::XcmConfig;
 
@@ -71,7 +72,7 @@ use sp_runtime::{
 		Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, Either,
+	ApplyExtrinsicResult, Either, FixedI128,
 };
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
@@ -222,6 +223,8 @@ impl randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
+	pub AssetIdUSDT: CurrencyId = CurrencyId::USDT;
+	pub FlatFeeUSDTAmount: Balance = 10 * CurrencyId::unit::<Balance>(); //10 USDT
 }
 
 impl assets_registry::Config for Runtime {
@@ -285,12 +288,39 @@ impl assets::Config for Runtime {
 	type CurrencyValidator = ValidateCurrencyId;
 }
 
+type FarmingRewardsInstance = reward::Instance1;
+
+impl reward::Config<FarmingRewardsInstance> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type SignedFixedPoint = FixedI128;
+	type PoolId = CurrencyId;
+	type StakeId = AccountId;
+	type CurrencyId = CurrencyId;
+}
+
+parameter_types! {
+	pub const RewardPeriod: BlockNumber = 5; //1 minute
+	pub const FarmingPalletId: PalletId = PalletId(*b"mod/farm");
+	pub FarmingAccount: AccountId = FarmingPalletId::get().into_account_truncating();
+}
+
+impl farming::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AssetId = CurrencyId;
+	type FarmingPalletId = FarmingPalletId;
+	type TreasuryAccountId = FarmingAccount;
+	type RewardPeriod = RewardPeriod;
+	type RewardPools = FarmingRewards;
+	type MultiCurrency = AssetsTransactorRouter;
+	type WeightInfo = ();
+}
+
 parameter_types! {
 	pub const StakeLock: BlockNumber = 50;
 	pub const StalePrice: BlockNumber = 5;
 
 	// TODO
-	pub MinStake: Balance = 1000 * CurrencyId::unit::<Balance>();
+	pub MinStake: Balance = 200_000 * CurrencyId::unit::<Balance>();
 	pub const MinAnswerBound: u32 = 7;
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
@@ -900,6 +930,8 @@ construct_runtime!(
 		Pablo: pablo = 59,
 		Oracle: oracle = 60,
 		AssetsTransactorRouter: assets_transactor_router = 61,
+		FarmingRewards: reward::<Instance1> = 62,
+		Farming: farming = 63,
 
 		CallFilter: call_filter = 100,
 
@@ -1267,6 +1299,32 @@ impl_runtime_apis! {
 			len: u32,
 		) -> transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
+		}
+	}
+
+	impl reward_rpc_runtime_api::RewardApi<
+		Block,
+		AccountId,
+		CurrencyId,
+		Balance,
+		BlockNumber,
+		sp_runtime::FixedU128
+	> for Runtime {
+		fn compute_farming_reward(account_id: AccountId, pool_currency_id: CurrencyId, reward_currency_id: CurrencyId) -> Result<reward_rpc_runtime_api::BalanceWrapper<Balance>, DispatchError> {
+			let amount = <FarmingRewards as reward::RewardsApi<CurrencyId, AccountId, Balance>>::compute_reward(&pool_currency_id, &account_id, reward_currency_id)?;
+			let balance = reward_rpc_runtime_api::BalanceWrapper::<Balance> { amount };
+			Ok(balance)
+		}
+		fn estimate_farming_reward(
+			account_id: AccountId,
+			pool_currency_id: CurrencyId,
+			reward_currency_id: CurrencyId,
+		) -> Result<reward_rpc_runtime_api::BalanceWrapper<Balance>, DispatchError> {
+			<FarmingRewards as reward::RewardsApi<CurrencyId, AccountId, Balance>>::withdraw_reward(&pool_currency_id, &account_id, reward_currency_id)?;
+			<FarmingRewards as reward::RewardsApi<CurrencyId, AccountId, Balance>>::distribute_reward(&pool_currency_id, reward_currency_id, Farming::total_rewards(&pool_currency_id, &reward_currency_id))?;
+			let amount = <FarmingRewards as reward::RewardsApi<CurrencyId, AccountId, Balance>>::compute_reward(&pool_currency_id, &account_id, reward_currency_id)?;
+			let balance = reward_rpc_runtime_api::BalanceWrapper::<Balance> { amount };
+			Ok(balance)
 		}
 	}
 

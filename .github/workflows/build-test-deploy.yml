@@ -10,6 +10,10 @@ on:
 
   # For PRs that need to run in the monorepo context.
   pull_request:
+  
+  # github merge queue
+  merge_group:
+    types: [checks_requested]
 
 permissions: 
   pull-requests: write
@@ -29,7 +33,8 @@ env:
 
 jobs:
 
-  dependency-review:
+  dependency-review:     
+    if: ${{ github.event_name != 'merge_group' && github.event_name != 'push' }}
     concurrency:
       group: ${{ github.workflow }}-dependency-review-${{ github.event.pull_request.title }}
       cancel-in-progress: true  
@@ -41,7 +46,7 @@ jobs:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v2
+        uses: actions/dependency-review-action@v3
         with:
           # GHSA-pfrx-2q88-qq97, GHSA-w5p7-h5w8-2hfq, GHSA-wcg3-cvx6-7396 are ignored because they are casued by the static Docusaurus build. Please remove when Docusaurus gets updated.
           # GHSA-969w-q74q-9j8v, GHSA-44mr-8vmm-wjhg, GHSA-wh6w-3828-g9qf are ignored because they are transitive dependencies still used by the master branch of Substrate. Please remove when Substrate update the according dependencies.
@@ -50,10 +55,12 @@ jobs:
 
   privilege-check:
     name: "Privilege check"
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'merge_group' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}    
     runs-on: ubuntu-latest  
     steps:
       - run: |
+          echo ${{ github.event_name }} 
+          echo ${{ github.ref_name }}
           echo "I am priviliged by goblins on repository id ${{ github.event.pull_request.head.repo.id }} ${{ github.event.pull_request_target.head.repo.id }}" 
       
   lfs-check:
@@ -72,7 +79,6 @@ jobs:
           persist-credentials: false
       - uses: actionsdesk/lfs-warning@v3.2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           filesizelimit: 10KB
           exclusionPatterns: |
             **/*.rs
@@ -116,9 +122,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
       - run: |
-          export NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1
-          chmod +x ./.github/workflows/nix-flake-check.sh
-          source ./.github/workflows/nix-flake-check.sh
+          nix run .#nix-flake-check
   
   build-all-platforms-arm:
     name: build-all-platforms-arm
@@ -126,7 +130,8 @@ jobs:
       - privilege-check
       - lfs-check
     runs-on:
-      - buildjet-32vcpu-ubuntu-2204-arm
+      - self-hosted
+      - arm-monster
     concurrency:
       group: ${{ github.workflow }}-build-all-platforms-arm-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -412,7 +417,7 @@ jobs:
   build-product-darwin:
     name: "build-product-darwin"
     continue-on-error: true
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}    
+    if: ${{ github.event_name == 'push' || github.event_name == 'merge_group' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}    
     strategy:
       matrix:
         arch: [aarch64-darwin]
@@ -500,23 +505,88 @@ jobs:
       name: "Effect gate, automatically merged if passed"
       runs-on: ubuntu-latest
       needs:
+        - build-all-benchmarks-packages
+        - build-all-ci-packages
+        - build-all-docs-packages
+        - build-all-misc-packages
+        - build-all-platforms-arm
+        - build-all-production-deps
         - dependency-review
-        - privilege-check
         - lfs-check
         - nix-flake-check
-        - build-all-ci-packages
-        - build-all-platforms-arm
-        - build-all-misc-packages
-        - build-all-docs-packages
-        - build-all-benchmarks-packages
-        - build-all-production-deps
+        - privilege-check
       steps:
         - run: echo "See next activities of pushing and publishing and merging"
+
+
+  draft-release-artifacts:
+    name: "draft-release-artifacts"
+    runs-on:
+      - buildjet-32vcpu-ubuntu-2204
+    needs:
+      - effects-gate
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}  
+    permissions: 
+      pull-requests: write
+      contents: write      
+    concurrency:
+      group:  ${{ github.workflow }}-draft-release-artifacts-${{ github.ref }}
+      cancel-in-progress: true      
+    steps:
+      - name: Set up Nix
+        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
+        with:
+          install_url: https://releases.nixos.org/nix/${{ env.NIX_VERSION }}/install
+          nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
+          extra_nix_config: |
+            sandbox = relaxed
+            narinfo-cache-negative-ttl = 0      
+            system-features = kvm          
+      - name: Set up Cachix
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
+        with:
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{ env.CACHIX_NAME }}
+      - name: Add tools needed for non-nix steps
+        run: |  
+          nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix nixpkgs.git nixpkgs.git-lfs nixpkgs.docker nixpkgs.coreutils    
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Download artifacts
+        run: |
+          nix run .#generate-release-artifacts --print-build-logs
+
+      - name: Release artifacts
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          prerelease: true
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          body_path: release-artifacts/release.txt
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          files: |
+            release-artifacts/to-upload/*
 
   deploy-docs:
     name: "Deploy docs"
     needs:
-      - effects-gate
+        - build-all-docs-packages        
+        - build-all-misc-packages
+        - lfs-check
+        - nix-flake-check
+        - privilege-check
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-deploy-docs-${{ github.event.pull_request.title }}
@@ -552,15 +622,15 @@ jobs:
         with:
           command: nix -- build .#docs-static
           working-directory: ./docs
+
       - name: Deploy docs
         uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DOCS_COMPOSABLE_FINANCE }}
           projectId: composable-docs
           entrypoint: docs/
           # this must go same release flow as FE, not from main
-          channelId: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+          channelId: ${{ github.event_name == 'push' && github.ref_name == 'main' && 'live' }}
 
   # this should be split and commit docker are from here, but latest from release
   push-docker-images:
@@ -636,7 +706,7 @@ jobs:
       - name: Publish hyperspace-composable-rococo-picasso-rococo to docker hub
         uses: "./.github/templates/docker-publish"
         with:
-          image_path: result/docker-image-hyperspace-composable-rococo-picasso-rococo.tar.gz
+          image_path: result/hyperspace-composable-rococo-picasso-rococo.tar.gz
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: hyperspace-composable-rococo-picasso-rococo
@@ -645,7 +715,7 @@ jobs:
       - name: Publish hyperspace-composable-polkadot-picasso-kusama to docker hub
         uses: "./.github/templates/docker-publish"
         with:
-          image_path: result/docker-image-hyperspace-composable-polkadot-picasso-kusama.tar.gz
+          image_path: result/hyperspace-composable-polkadot-picasso-kusama.tar.gz
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: hyperspace-composable-polkadot-picasso-kusama

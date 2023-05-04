@@ -12,7 +12,7 @@ package manager that allows you to build and run Nix packages using the Nix
 build system. _This is in most cases as compatible as #1_.
 
 Once you have determined which one you want to use, [follow the official Nix
-installation instructions](https://nixos.org/download.html).
+installation instructions](https://zero-to-nix.com/start/install).
 
 ### Best-effort, zero-support options
 

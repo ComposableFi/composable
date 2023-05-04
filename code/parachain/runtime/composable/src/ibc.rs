@@ -7,7 +7,7 @@ use common::{
 	fees::{IbcIcs20FeePalletId, IbcIcs20ServiceCharge},
 	governance::native::EnsureRootOrOneThirdNativeTechnical,
 };
-use frame_support::traits::EitherOf;
+use frame_system::EnsureSigned;
 use pallet_ibc::{
 	ics20::{MODULE_ID_STR, PORT_ID_STR},
 	light_client_common::RelayChain,
@@ -19,6 +19,7 @@ use sp_runtime::{AccountId32, DispatchError, Either};
 use system::EnsureSignedBy;
 
 use hex_literal::hex;
+use pallet_ibc::ics20_fee::NonFlatFeeConverter;
 
 use super::*;
 
@@ -121,8 +122,7 @@ impl Ics20RateLimiter for ConstantAny {
 		msg: &pallet_ibc::ics20::Ics20TransferMsg,
 		_flow_type: pallet_ibc::ics20::FlowType,
 	) -> Result<(), ()> {
-		// one DOT/PICA, so for USDT not safe, but we do not yet do it
-		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(10_u64.pow(12)) {
+		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(10_000 * 10_u64.pow(12)) {
 			return Ok(())
 		}
 		Err(())
@@ -161,6 +161,9 @@ impl pallet_ibc::ics20_fee::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ServiceCharge = IbcIcs20ServiceCharge;
 	type PalletId = IbcIcs20FeePalletId;
+	type FlatFeeAssetId = AssetIdUSDT;
+	type FlatFeeAmount = FlatFeeUSDTAmount;
+	type FlatFeeConverter = NonFlatFeeConverter<Runtime>;
 }
 
 impl pallet_ibc::Config for Runtime {
@@ -185,10 +188,7 @@ impl pallet_ibc::Config for Runtime {
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
-	type TransferOrigin = EitherOf<
-		EnsureSignedBy<ReleaseMembership, Self::IbcAccountId>,
-		EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>,
-	>;
+	type TransferOrigin = EnsureSigned<Self::AccountId>;
 	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;

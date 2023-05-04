@@ -24,7 +24,7 @@ const sidebars = {
         'intro',
         {
             type: 'category',
-            label: 'Parachains',
+            label: 'Networks',
 
             link: {
                 type: 'generated-index',
@@ -113,7 +113,6 @@ const sidebars = {
                         'products/xcvm/how-it-works',
                         'products/xcvm/routing-layer',
                         'products/xcvm/routing-layer-libraries',
-                        'products/xcvm/writing-smart-contracts-with-cosmwasm',
                         {
                             type: 'category',
                             label: 'Use Cases',
@@ -159,6 +158,7 @@ const sidebars = {
                     items: [
                         'products/cosmwasm/existing-cosmwasm-projects-to-deploy-on-ccw-vm',
                         'products/cosmwasm/syngery-with-centauri-and-xcvm',
+                        'products/cosmwasm/writing-smart-contracts-with-cosmwasm',
                     ],
                 },
                 {
@@ -290,7 +290,7 @@ const sidebars = {
                         'user-guides/claim-rewards-guide',
                         'user-guides/how-to-provide-liquidity',
                         'user-guides/how-to-trade-pica-on-pablo',
-                        `user-guides/transfer-usdt-statemine-picasso`,
+                        'user-guides/centauri-guide',
                     ],
                 },
 
@@ -428,10 +428,8 @@ const sidebars = {
                     ]
                 },
                 'ecosystem/composable-grants',
-                'ecosystem/business-line-development',
                 'ecosystem/press-kit',
                 'ecosystem/the-composable-team',
-                'ecosystem/careers',
             ],
         },
         {
@@ -445,7 +443,6 @@ const sidebars = {
             collapsible: false,
             items: [
                 'audits/audit-results-recommendations-and-remediations',
-                `audits/immunefi-bug-bounty-program`
             ]
         },
         {

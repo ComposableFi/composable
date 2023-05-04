@@ -2828,7 +2828,7 @@
     rxjs "^7.8.0"
     tslib "^2.5.0"
 
-"@polkadot/api@10.3.4", "@polkadot/api@^10.3.4", "@polkadot/api@^10.4.3", "@polkadot/api@^9.6.2":
+"@polkadot/api@10.3.4", "@polkadot/api@^10.3.4", "@polkadot/api@^9.6.2":
   version "10.3.4"
   resolved "https://registry.yarnpkg.com/@polkadot/api/-/api-10.3.4.tgz#6584b05fcc2d99681d7130cc630c05a9fa5fa797"
   integrity sha512-+F78fOzzzrYzavcE/nthjWipFnfQdw8pvt5ZCT2UJZm+oUMhpt0utCxNYSqJFGZiC/KgAr0upIEptwSl5th+mA==

@@ -67,6 +67,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Mints new tokens and sends them to self, mocking the generating of revenue through DeFi.
+		#[pallet::call_index(0)]
 		#[pallet::weight(10_000)]
 		pub fn generate_revenue(
 			origin: OriginFor<T>,
@@ -81,6 +82,7 @@ pub mod pallet {
 		}
 
 		/// Reports the current balance to the vault.
+		#[pallet::call_index(1)]
 		#[pallet::weight(10_000)]
 		pub fn report(origin: OriginFor<T>, vault: VaultIdOf<T>) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
@@ -92,6 +94,7 @@ pub mod pallet {
 		}
 
 		/// Queries the vault for the current re-balance strategy and executes it.
+		#[pallet::call_index(2)]
 		#[pallet::weight(10_000)]
 		pub fn rebalance(origin: OriginFor<T>, vault: VaultIdOf<T>) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;

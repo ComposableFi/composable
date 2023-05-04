@@ -86,6 +86,10 @@ crowdloan-rewards-runtime-api = { path = "../../frame/crowdloan-rewards/runtime-
 pablo-runtime-api = { path = "../../frame/pablo/runtime-api", default-features = false }
 cosmwasm = { package = "pallet-cosmwasm", path = "../../frame/cosmwasm", default-features = false }
 cosmwasm-runtime-api = { path = "../../frame/cosmwasm/runtime-api", default-features = false }
+reward = { path = "../../frame/reward", default-features = false }
+farming = { path = "../../frame/farming", default-features = false }
+
+reward-rpc-runtime-api = { path = "../../frame/reward/rpc/runtime-api", default-features = false }
 
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
@@ -187,8 +191,8 @@ std = [
   "common/std",
   "composable-support/std",
   "composable-traits/std",
-  "cosmwasm/std",
   "cosmwasm-runtime-api/std",
+  "cosmwasm/std",
   "crowdloan-rewards-runtime-api/std",
   "crowdloan-rewards/std",
   "cumulus-pallet-aura-ext/std",
@@ -201,6 +205,7 @@ std = [
   "currency-factory/std",
   "democracy/std",
   "executive/std",
+  "farming/std",
   "frame-support/std",
   "frame-system/std",
   "governance-registry/std",
@@ -225,6 +230,8 @@ std = [
   "primitives/std",
   "proxy/std",
   "randomness-collective-flip/std",
+  "reward-rpc-runtime-api/std",
+  "reward/std",
   "scale-info/std",
   "scheduler/std",
   "session/std",

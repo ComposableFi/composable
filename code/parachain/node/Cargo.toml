@@ -39,6 +39,8 @@ staking-rewards-runtime-api = { path = "../frame/staking-rewards/runtime-api" }
 pallet-transaction-payment-rpc = { path = "../frame/transaction-payment/rpc" }
 pallet-transaction-payment-rpc-runtime-api = { path = "../frame/transaction-payment/rpc/runtime-api" }
 
+reward-rpc = { path = "../frame/reward/rpc" }
+
 ibc-rpc = { workspace = true }
 pallet-ibc = { workspace = true }
 
@@ -47,7 +49,7 @@ frame-benchmarking-cli = { workspace= true }
 substrate-frame-rpc-system = { workspace= true }
 substrate-prometheus-endpoint = { workspace= true }
 
-grandpa = { workspace= true }
+sc-finality-grandpa = { workspace= true }
 sc-basic-authorship = { workspace= true }
 sc-chain-spec = { workspace= true }
 sc-cli = { workspace= true }

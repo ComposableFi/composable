@@ -267,6 +267,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Initialize the pallet at the current timestamp.
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::initialize(TotalContributors::<T>::get()))]
 		pub fn initialize(origin: OriginFor<T>) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
@@ -275,6 +276,7 @@ pub mod pallet {
 		}
 
 		/// Initialize the pallet at the given timestamp.
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::initialize(TotalContributors::<T>::get()))]
 		pub fn initialize_at(origin: OriginFor<T>, at: MomentOf<T>) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
@@ -290,6 +292,7 @@ pub mod pallet {
 		/// already has a reward, it will be replaced by the new reward value.
 		///
 		/// Can only be called before `initialize`.
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::populate(rewards.len() as _))]
 		pub fn populate(
 			origin: OriginFor<T>,
@@ -308,6 +311,7 @@ pub mod pallet {
 		/// ```haskell
 		/// proof = sign (concat prefix (hex reward_account))
 		/// ```
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::associate(TotalContributors::<T>::get()))]
 		pub fn associate(
 			origin: OriginFor<T>,
@@ -321,6 +325,7 @@ pub mod pallet {
 		/// Claim a reward from the associated reward account.
 		/// A previous call to `associate` should have been made.
 		/// If logic gate pass, no fees are applied.
+		#[pallet::call_index(4)]
 		#[pallet::weight(<T as Config>::WeightInfo::claim(TotalContributors::<T>::get()))]
 		pub fn claim(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let reward_account = ensure_signed(origin)?;
@@ -331,6 +336,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(5)]
 		#[pallet::weight(<T as Config>::WeightInfo::unlock_rewards_for(reward_accounts.len() as _))]
 		pub fn unlock_rewards_for(
 			origin: OriginFor<T>,
@@ -343,6 +349,7 @@ pub mod pallet {
 
 		/// Adds all accounts in the `additions` vector. Add may be called even if the pallet has
 		/// been initialized.
+		#[pallet::call_index(6)]
 		#[pallet::weight(<T as Config>::WeightInfo::populate(additions.len() as _))]
 		pub fn add(
 			origin: OriginFor<T>,

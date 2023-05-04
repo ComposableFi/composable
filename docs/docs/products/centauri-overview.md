@@ -2,11 +2,11 @@
 
 _Trustless IBC transfer protocol_
 
-Centauri is an extension of the IBC protocol that will facilitate trustless cross-ecosystem communication among various blockchains, including Polkadot, Kusama, Ethereum, NEAR, and Cosmos.
+[Centauri](https://www.trustless.zone/) is an extension of the IBC protocol that will facilitate trustless cross-ecosystem communication among various blockchains, including Polkadot, Kusama, Ethereum, NEAR, and Cosmos.
 
 :::tip Centauri Is Live
 
-Use Centauri now to transfer assets between Polkadot and Kusama. Centauri is in advanced testnet stages to its Cosmos connection while we are actively working on implementing IBC to other blockchains.
+Use [Centauri](https://app.trustless.zone/) now to transfer assets between Polkadot and Kusama. Centauri is in advanced testnet stages to its Cosmos connection while we are actively working on implementing IBC to other blockchains.
 
 :::
 

@@ -228,9 +228,9 @@ dependencies = [
 
 [[package]]
 name = "anstream"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6342bd4f5a1205d7f41e94a41a901f5647c938cdfa96036338e8533c9d6c2450"
+checksum = "0ca84f3628370c59db74ee214b3263d58f9aadd9b4fe7e711fd87dc452b7f163"
 dependencies = [
  "anstyle",
  "anstyle-parse",
@@ -277,9 +277,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.70"
+version = "1.0.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7de8ce5e0f9f8d88245311066a578d72b7af3e7088f32783804676302df237e4"
+checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
 
 [[package]]
 name = "approx"
@@ -523,7 +523,7 @@ dependencies = [
  "log 0.4.17",
  "parking",
  "polling",
- "rustix 0.37.14",
+ "rustix 0.37.18",
  "slab",
  "socket2",
  "waker-fn",
@@ -551,7 +551,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "event-listener",
  "futures-lite",
- "rustix 0.37.14",
+ "rustix 0.37.18",
  "signal-hook",
  "windows-sys 0.48.0",
 ]
@@ -683,9 +683,9 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "axum"
-version = "0.6.16"
+version = "0.6.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "113713495a32dd0ab52baf5c10044725aa3aec00b31beda84218e469029b72a3"
+checksum = "f8175979259124331c1d7bf6586ee7e0da434155e4b2d48ec2c8386281d8df39"
 dependencies = [
  "async-trait",
  "axum-core",
@@ -877,7 +877,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "beefy-light-client-primitives",
  "ckb-merkle-mountain-range 0.3.2",
@@ -900,7 +900,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "ckb-merkle-mountain-range 0.3.2",
  "derive_more",
@@ -1509,13 +1509,13 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.2.23"
+version = "3.2.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71655c45cb9845d3270c9d6df84ebe72b4dad3c2ba3f7023ad47c144e4e473a5"
+checksum = "4ea181bf566f71cb9a5d17a59e1871af638180a18fb0035c92ae62b705207123"
 dependencies = [
  "atty",
  "bitflags",
- "clap_derive 3.2.18",
+ "clap_derive 3.2.25",
  "clap_lex 0.2.4",
  "indexmap",
  "once_cell",
@@ -1526,9 +1526,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.2.4"
+version = "4.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "956ac1f6381d8d82ab4684768f89c0ea3afe66925ceadb4eeb3fc452ffc55d62"
+checksum = "34d21f9bf1b425d2968943631ec91202fe5e837264063503708b83013f8fc938"
 dependencies = [
  "clap_builder",
  "clap_derive 4.2.0",
@@ -1537,9 +1537,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.2.4"
+version = "4.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84080e799e54cff944f4b4a4b0e71630b0e0443b25b985175c7dddc1a859b749"
+checksum = "914c8c79fb560f238ef6429439a30023c862f7a28e688c58f7203f12b29970bd"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1550,9 +1550,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "3.2.18"
+version = "3.2.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea0c8bce528c4be4da13ea6fead8965e95b6073585a2f05204bd8f4119f82a65"
+checksum = "ae6371b8bdc8b7d3959e9cf7b22d4435ef3e79e138688421ec654acf8c81b008"
 dependencies = [
  "heck 0.4.1",
  "proc-macro-error",
@@ -1612,7 +1612,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "axum-macros",
- "clap 4.2.4",
+ "clap 4.2.7",
  "serde",
  "tokio",
  "tracing",
@@ -1728,7 +1728,7 @@ dependencies = [
 
 [[package]]
 name = "composable"
-version = "6.10018.0"
+version = "6.10020.0"
 dependencies = [
  "color-eyre",
  "composable-node",
@@ -1753,11 +1753,11 @@ dependencies = [
 
 [[package]]
 name = "composable-node"
-version = "6.10018.0"
+version = "6.10020.0"
 dependencies = [
  "assets-rpc",
  "assets-runtime-api",
- "clap 4.2.4",
+ "clap 4.2.7",
  "common",
  "composable-runtime",
  "cosmwasm-rpc",
@@ -1799,6 +1799,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-service",
  "primitives",
+ "reward-rpc",
  "sc-basic-authorship",
  "sc-chain-spec",
  "sc-cli",
@@ -1845,7 +1846,7 @@ dependencies = [
 
 [[package]]
 name = "composable-runtime"
-version = "6.10018.0"
+version = "6.10020.0"
 dependencies = [
  "assets-runtime-api",
  "common",
@@ -1931,7 +1932,7 @@ dependencies = [
 
 [[package]]
 name = "composable-runtime-wasm"
-version = "6.10018.0"
+version = "6.10020.0"
 dependencies = [
  "composable-runtime",
 ]
@@ -2549,7 +2550,7 @@ name = "cumulus-client-cli"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
 dependencies = [
- "clap 4.2.4",
+ "clap 4.2.7",
  "parity-scale-codec",
  "sc-chain-spec",
  "sc-cli",
@@ -3770,6 +3771,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4443176a9f2c162692bd3d352d745ef9413eec5782a80d8fd6f8a1ac692a07f7"
 
 [[package]]
+name = "farming"
+version = "1.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log 0.4.17",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "reward",
+ "scale-info",
+ "serde",
+ "sp-arithmetic 6.0.0",
+ "sp-core 7.0.0",
+ "sp-io 7.0.0",
+ "sp-runtime 7.0.0",
+ "sp-std 5.0.0",
+]
+
+[[package]]
 name = "fastrand"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3911,13 +3935,13 @@ checksum = "0ce7134b9999ecaf8bcd65542e436736ef32ddca1b3e06094cb6ec5755203b80"
 
 [[package]]
 name = "flate2"
-version = "1.0.25"
+version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8a2db397cb1c8772f31494cb8917e48cd1e64f0fa7efac59fbd741a0a8ce841"
+checksum = "3b9429470923de8e8cbd4d2dc513535400b4b3fef0319fb5c4e1f520a7bef743"
 dependencies = [
  "crc32fast",
  "libz-sys",
- "miniz_oxide 0.6.2",
+ "miniz_oxide 0.7.1",
 ]
 
 [[package]]
@@ -4047,7 +4071,7 @@ dependencies = [
  "Inflector",
  "array-bytes 4.2.0",
  "chrono",
- "clap 4.2.4",
+ "clap 4.2.7",
  "comfy-table",
  "frame-benchmarking",
  "frame-support",
@@ -4629,7 +4653,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -4651,7 +4675,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-verifier"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "anyhow",
  "finality-grandpa",
@@ -5081,7 +5105,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "derive_more",
  "flex-error",
@@ -5141,7 +5165,7 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.3.1",
@@ -5153,7 +5177,7 @@ dependencies = [
 [[package]]
 name = "ibc-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "base58",
  "blake2",
@@ -5177,7 +5201,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "base64 0.13.1",
  "bytes 1.4.0",
@@ -5207,7 +5231,7 @@ dependencies = [
 [[package]]
 name = "ibc-rpc"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "frame-system",
  "hex-literal",
@@ -5234,7 +5258,7 @@ dependencies = [
 [[package]]
 name = "ibc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "ibc-primitives",
  "pallet-ibc",
@@ -5246,7 +5270,7 @@ dependencies = [
 [[package]]
 name = "ics07-tendermint"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "bytes 1.4.0",
  "flex-error",
@@ -5266,7 +5290,7 @@ dependencies = [
 [[package]]
 name = "ics10-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -5292,7 +5316,7 @@ dependencies = [
 [[package]]
 name = "ics11-beefy"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "anyhow",
  "beefy-light-client",
@@ -5602,7 +5626,7 @@ checksum = "adcf93614601c8129ddf72e2d5633df827ba6551541c6d8c59520a371475be1f"
 dependencies = [
  "hermit-abi 0.3.1",
  "io-lifetimes 1.0.10",
- "rustix 0.37.14",
+ "rustix 0.37.18",
  "windows-sys 0.48.0",
 ]
 
@@ -6250,9 +6274,9 @@ dependencies = [
 
 [[package]]
 name = "libp2p-core"
-version = "0.39.1"
+version = "0.39.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b7f8b7d65c070a5a1b5f8f0510648189da08f787b8963f8e21219e0710733af"
+checksum = "3c1df63c0b582aa434fb09b2d86897fa2b419ffeccf934b36f87fcedc8e835c2"
 dependencies = [
  "either",
  "fnv",
@@ -6313,18 +6337,18 @@ dependencies = [
 
 [[package]]
 name = "libp2p-identity"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a8ea433ae0cea7e3315354305237b9897afe45278b2118a7a57ca744e70fd27"
+checksum = "9e2d584751cecb2aabaa56106be6be91338a60a0f4e420cf2af639204f596fc1"
 dependencies = [
  "bs58",
  "ed25519-dalek",
  "log 0.4.17",
  "multiaddr 0.17.1",
  "multihash 0.17.0",
- "prost",
  "quick-protobuf",
  "rand 0.8.5",
+ "sha2 0.10.6",
  "thiserror",
  "zeroize",
 ]
@@ -6544,7 +6568,7 @@ checksum = "ff08d13d0dc66e5e9ba6279c1de417b84fa0d0adc3b03e5732928c180ec02781"
 dependencies = [
  "futures 0.3.28",
  "futures-rustls",
- "libp2p-core 0.39.1",
+ "libp2p-core 0.39.2",
  "libp2p-identity",
  "rcgen 0.10.0",
  "ring",
@@ -6698,9 +6722,9 @@ dependencies = [
 
 [[package]]
 name = "libz-sys"
-version = "1.1.8"
+version = "1.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9702761c3935f8cc2f101793272e202c72b99da8f4224a19ddcf1279a6450bbf"
+checksum = "56ee889ecc9568871456d42f603d6a0ce59ff328d291063a45cbdf0036baf6db"
 dependencies = [
  "cc",
  "pkg-config",
@@ -6710,7 +6734,7 @@ dependencies = [
 [[package]]
 name = "light-client-common"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6770,9 +6794,9 @@ checksum = "d4d2456c373231a208ad294c33dc5bff30051eafd954cd4caae83a712b12854d"
 
 [[package]]
 name = "linux-raw-sys"
-version = "0.3.4"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36eb31c1778188ae1e64398743890d0877fef36d11521ac60406b42016e8c2cf"
+checksum = "b64f40e5e03e0d54f03845c8197d0291253cdbedfb1cb46b13c2c117554a9f4c"
 
 [[package]]
 name = "lite-json"
@@ -6916,10 +6940,11 @@ checksum = "b87248edafb776e59e6ee64a79086f65890d3510f2c656c000bf2a7e8a0aea40"
 
 [[package]]
 name = "matrixmultiply"
-version = "0.3.3"
+version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb99c395ae250e1bf9133673f03ca9f97b7e71b705436bf8f089453445d1e9fe"
+checksum = "090126dc04f95dc0d1c1c91f61bdd474b3930ca064c1edc8a849da2c6cbe1e77"
 dependencies = [
+ "autocfg 1.1.0",
  "rawpointer",
 ]
 
@@ -6950,7 +6975,7 @@ version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ffc89ccdc6e10d6907450f753537ebc5c5d3460d2e4e62ea74bd571db62c0f9e"
 dependencies = [
- "rustix 0.37.14",
+ "rustix 0.37.18",
 ]
 
 [[package]]
@@ -7184,6 +7209,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "multer"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "01acbdc23469fd8fe07ab135923371d5f5a422fbf9c522158677c8eb15bc51c2"
+dependencies = [
+ "bytes 1.4.0",
+ "encoding_rs",
+ "futures-util",
+ "http",
+ "httparse",
+ "log 0.4.17",
+ "memchr",
+ "mime 0.3.17",
+ "spin 0.9.8",
+ "version_check 0.9.4",
+]
+
+[[package]]
 name = "multiaddr"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7255,9 +7298,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "835d6ff01d610179fbce3de1694d007e500bf33a7f29689838941d6bf783ae40"
 dependencies = [
  "core2",
- "digest 0.10.6",
  "multihash-derive",
- "sha2 0.10.6",
  "unsigned-varint",
 ]
 
@@ -7280,20 +7321,6 @@ name = "multimap"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5ce46fe64a9d73be07dcbe690a38ce1b293be448fd8ce1e6c1b8062c9f72c6a"
-
-[[package]]
-name = "multiparty"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed1ec6589a6d4a1e0b33b4c0a3f6ee96dfba88ebdb3da51403fd7cf0a24a4b04"
-dependencies = [
- "bytes 1.4.0",
- "futures-core",
- "httparse",
- "memchr",
- "pin-project-lite 0.2.9",
- "try-lock",
-]
 
 [[package]]
 name = "multistream-select"
@@ -8668,7 +8695,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "beefy-light-client-primitives",
  "cumulus-primitives-core",
@@ -8714,7 +8741,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc-ping"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -9060,6 +9087,7 @@ dependencies = [
  "pallet-assets-transactor-router",
  "pallet-balances",
  "pallet-currency-factory",
+ "pallet-ibc",
  "pallet-staking-rewards",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -9653,9 +9681,9 @@ dependencies = [
 
 [[package]]
 name = "parity-db"
-version = "0.4.6"
+version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "00bfb81cf5c90a222db2fb7b3a7cbf8cc7f38dfb6647aca4d98edf8281f56ed5"
+checksum = "bd4572a52711e2ccff02b4973ec7e4a5b5c23387ebbfbd6cd42b34755714cefc"
 dependencies = [
  "blake2",
  "crc32fast",
@@ -9890,9 +9918,9 @@ checksum = "478c572c3d73181ff3c2539045f6eb99e5491218eae919370993b890cdbdd98e"
 
 [[package]]
 name = "pest"
-version = "2.5.7"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b1403e8401ad5dedea73c626b99758535b342502f8d1e361f4a2dd952749122"
+checksum = "e68e84bfb01f0507134eac1e9b410a12ba379d064eab48c50ba4ce329a527b70"
 dependencies = [
  "thiserror",
  "ucd-trie",
@@ -9900,9 +9928,9 @@ dependencies = [
 
 [[package]]
 name = "pest_derive"
-version = "2.5.7"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be99c4c1d2fc2769b1d00239431d711d08f6efedcecb8b6e30707160aee99c15"
+checksum = "6b79d4c71c865a25a4322296122e3924d30bc8ee0834c8bfc8b95f7f054afbfb"
 dependencies = [
  "pest",
  "pest_generator",
@@ -9910,9 +9938,9 @@ dependencies = [
 
 [[package]]
 name = "pest_generator"
-version = "2.5.7"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e56094789873daa36164de2e822b3888c6ae4b4f9da555a1103587658c805b1e"
+checksum = "6c435bf1076437b851ebc8edc3a18442796b30f1728ffea6262d59bbe28b077e"
 dependencies = [
  "pest",
  "pest_meta",
@@ -9923,9 +9951,9 @@ dependencies = [
 
 [[package]]
 name = "pest_meta"
-version = "2.5.7"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6733073c7cff3d8459fda0e42f13a047870242aed8b509fe98000928975f359e"
+checksum = "745a452f8eb71e39ffd8ee32b3c5f51d03845f99786fa9b68db6ff509c505411"
 dependencies = [
  "once_cell",
  "pest",
@@ -9944,7 +9972,7 @@ dependencies = [
 
 [[package]]
 name = "picasso-runtime"
-version = "6.10018.0"
+version = "6.10020.0"
 dependencies = [
  "assets-runtime-api",
  "common",
@@ -9961,6 +9989,7 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
+ "farming",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -10019,6 +10048,8 @@ dependencies = [
  "parity-scale-codec",
  "polkadot-parachain",
  "primitives",
+ "reward",
+ "reward-rpc-runtime-api",
  "scale-info",
  "smallvec 1.10.0",
  "sp-api",
@@ -10039,7 +10070,7 @@ dependencies = [
 
 [[package]]
 name = "picasso-runtime-wasm"
-version = "6.10018.0"
+version = "6.10020.0"
 dependencies = [
  "picasso-runtime",
 ]
@@ -10247,7 +10278,7 @@ name = "polkadot-cli"
 version = "0.9.38"
 source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
 dependencies = [
- "clap 4.2.4",
+ "clap 4.2.7",
  "frame-benchmarking-cli",
  "futures 0.3.28",
  "log 0.4.17",
@@ -11420,7 +11451,7 @@ version = "0.1.0"
 dependencies = [
  "binance",
  "chrono",
- "clap 3.2.23",
+ "clap 3.2.25",
  "custom_derive",
  "enum_derive",
  "env_logger 0.9.3",
@@ -12195,9 +12226,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.11.16"
+version = "0.11.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27b71749df584b7f4cac2c426c127a7c785a5106cc98f7a8feb044115f0fa254"
+checksum = "13293b639a097af28fc8a90f22add145a9c954e49d77da06263d58cf44d5fb91"
 dependencies = [
  "base64 0.21.0",
  "bytes 1.4.0",
@@ -12238,6 +12269,48 @@ checksum = "52e44394d2086d010551b14b53b1f24e31647570cd1deb0379e2c21b329aba00"
 dependencies = [
  "hostname",
  "quick-error 1.2.3",
+]
+
+[[package]]
+name = "reward"
+version = "1.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log 0.4.17",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rand 0.8.5",
+ "scale-info",
+ "serde",
+ "sp-arithmetic 6.0.0",
+ "sp-core 7.0.0",
+ "sp-io 7.0.0",
+ "sp-runtime 7.0.0",
+ "sp-std 5.0.0",
+]
+
+[[package]]
+name = "reward-rpc"
+version = "0.3.0"
+dependencies = [
+ "jsonrpsee 0.16.2",
+ "parity-scale-codec",
+ "reward-rpc-runtime-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime 7.0.0",
+]
+
+[[package]]
+name = "reward-rpc-runtime-api"
+version = "0.3.0"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
 ]
 
 [[package]]
@@ -12578,15 +12651,15 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.37.14"
+version = "0.37.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9b864d3c18a5785a05953adeed93e2dca37ed30f18e69bba9f30079d51f363f"
+checksum = "8bbfc1d1c7c40c01715f47d71444744a81669ca84e8b63e25a55e169b1f86433"
 dependencies = [
  "bitflags",
  "errno 0.3.1",
  "io-lifetimes 1.0.10",
  "libc",
- "linux-raw-sys 0.3.4",
+ "linux-raw-sys 0.3.6",
  "windows-sys 0.48.0",
 ]
 
@@ -12852,7 +12925,7 @@ source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f
 dependencies = [
  "array-bytes 4.2.0",
  "chrono",
- "clap 4.2.4",
+ "clap 4.2.7",
  "fdlimit",
  "futures 0.3.28",
  "libp2p",
@@ -13645,7 +13718,7 @@ name = "sc-storage-monitor"
 version = "0.1.0"
 source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
 dependencies = [
- "clap 4.2.4",
+ "clap 4.2.7",
  "futures 0.3.28",
  "log 0.4.17",
  "nix 0.26.2",
@@ -13835,9 +13908,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info"
-version = "2.5.0"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cfdffd972d76b22f3d7f81c8be34b2296afd3a25e0a547bd9abe340a4dbbe97"
+checksum = "dfdef77228a4c05dc94211441595746732131ad7f6530c6c18f045da7b7ab937"
 dependencies = [
  "bitvec",
  "cfg-if 1.0.0",
@@ -13849,9 +13922,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info-derive"
-version = "2.5.0"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61fa974aea2d63dd18a4ec3a49d59af9f34178c73a4f56d2f18205628d00681e"
+checksum = "53012eae69e5aa5c14671942a5dd47de59d4cdcff8532a6dd0e081faf1119482"
 dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2 1.0.56",
@@ -14355,7 +14428,7 @@ checksum = "f27f6278552951f1f2b8cf9da965d10969b2efdea95a6ec47987ab46edfe263a"
 [[package]]
 name = "simple-iavl"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=48b604dd763c692a4c955b1a4d3e52d1454ff900#48b604dd763c692a4c955b1a4d3e52d1454ff900"
+source = "git+https://github.com/ComposableFi/centauri?rev=e80cdcc3c55be99f2522d1d025e4b245bdfce326#e80cdcc3c55be99f2522d1d025e4b245bdfce326"
 dependencies = [
  "bytes 1.4.0",
  "ics23 0.8.1",
@@ -15580,9 +15653,9 @@ dependencies = [
 
 [[package]]
 name = "ss58-registry"
-version = "1.39.0"
+version = "1.40.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecf0bd63593ef78eca595a7fc25e9a443ca46fe69fd472f8f09f5245cdcd769d"
+checksum = "eb47a8ad42e5fc72d5b1eb104a5546937eaf39843499948bb666d6e93c62423b"
 dependencies = [
  "Inflector",
  "num-format",
@@ -16215,7 +16288,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "fastrand",
  "redox_syscall 0.3.5",
- "rustix 0.37.14",
+ "rustix 0.37.18",
  "windows-sys 0.45.0",
 ]
 
@@ -16588,9 +16661,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.27.0"
+version = "1.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0de47a4eecbe11f498978a9b29d792f0d2692d1dd003650c24c76510e3bc001"
+checksum = "c3c786bf8134e5a3a166db9b29ab8f48134739014a3eca7bc6bfa95d673b136f"
 dependencies = [
  "autocfg 1.1.0",
  "bytes 1.4.0",
@@ -16602,7 +16675,7 @@ dependencies = [
  "signal-hook-registry",
  "socket2",
  "tokio-macros",
- "windows-sys 0.45.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -16639,9 +16712,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-macros"
-version = "2.0.0"
+version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61a573bdc87985e9d6ddeed1b3d864e8a302c847e40d647746df2f1de209d1ce"
+checksum = "630bdcf245f78637c13ec01ffae6187cca34625e8c63150d424b59e55af2675e"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
@@ -16690,9 +16763,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-stream"
-version = "0.1.12"
+version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fb52b74f05dbf495a8fba459fdc331812b96aa086d9eb78101fa0d4569c3313"
+checksum = "397c988d37662c7dda6d2208364a706264bf3d6138b11d436cbac0ad38832842"
 dependencies = [
  "futures-core",
  "pin-project-lite 0.2.9",
@@ -16749,9 +16822,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-util"
-version = "0.7.7"
+version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5427d89453009325de0d8f342c9490009f76e999cb7672d77e46267448f7e6b2"
+checksum = "806fe8c2c87eccc8b3267cbae29ed3ab2d0bd37fca70ab622e46aaa9375ddb7d"
 dependencies = [
  "bytes 1.4.0",
  "futures-core",
@@ -17044,7 +17117,7 @@ name = "try-runtime-cli"
 version = "0.10.0-dev"
 source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
 dependencies = [
- "clap 4.2.4",
+ "clap 4.2.7",
  "frame-remote-externalities",
  "hex",
  "log 0.4.17",
@@ -17319,9 +17392,9 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "1.3.1"
+version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b55a3fef2a1e3b3a00ce878640918820d3c51081576ac657d23af9fc7928fdb"
+checksum = "4dad5567ad0cf5b760e5665964bec1b47dfd077ba8a2544b513f3556d3d239a2"
 dependencies = [
  "getrandom 0.2.9",
 ]
@@ -17422,9 +17495,9 @@ dependencies = [
 
 [[package]]
 name = "warp"
-version = "0.3.4"
+version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27e1a710288f0f91a98dd8a74f05b76a10768db245ce183edf64dc1afdc3016c"
+checksum = "ba431ef570df1287f7f8b07e376491ad54f84d26ac473489427231e1718e1f69"
 dependencies = [
  "bytes 1.4.0",
  "futures-channel",
@@ -17435,7 +17508,7 @@ dependencies = [
  "log 0.4.17",
  "mime 0.3.17",
  "mime_guess",
- "multiparty",
+ "multer",
  "percent-encoding 2.2.0",
  "pin-project",
  "rustls-pemfile",
@@ -18037,18 +18110,15 @@ dependencies = [
 
 [[package]]
 name = "webrtc-media"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee2a3c157a040324e5049bcbd644ffc9079e6738fa2cfab2bcff64e5cc4c00d7"
+checksum = "f72e1650a8ae006017d1a5280efb49e2610c19ccc3c0905b03b648aee9554991"
 dependencies = [
  "byteorder",
  "bytes 1.4.0",
- "derive_builder",
- "displaydoc",
  "rand 0.8.5",
  "rtp",
  "thiserror",
- "webrtc-util",
 ]
 
 [[package]]
@@ -18569,9 +18639,9 @@ checksum = "1a515f5799fe4961cb532f983ce2b23082366b898e52ffbce459c86f67c8378a"
 
 [[package]]
 name = "winnow"
-version = "0.4.1"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae8970b36c66498d8ff1d66685dc86b91b29db0c7739899012f63a63814b4b28"
+checksum = "61de7bac303dc551fe038e2b3cef0f571087a47571ea6e79a87692ac99b99699"
 dependencies = [
  "memchr",
 ]
