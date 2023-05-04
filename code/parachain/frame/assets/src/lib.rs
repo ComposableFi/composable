@@ -153,6 +153,7 @@ pub mod pallet {
 		///  - If the account has insufficient free balance to make the transfer, or if `keep_alive`
 		///    cannot be respected.
 		///  - If the `dest` cannot be looked up.
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::transfer())]
 		pub fn transfer(
 			origin: OriginFor<T>,
@@ -175,6 +176,7 @@ pub mod pallet {
 		///  - If the account has insufficient free balance to make the transfer, or if `keep_alive`
 		///    cannot be respected.
 		///  - If the `dest` cannot be looked up.
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::transfer_native())]
 		pub fn transfer_native(
 			origin: OriginFor<T>,
@@ -195,6 +197,7 @@ pub mod pallet {
 		///  - If the account has insufficient free balance to make the transfer, or if `keep_alive`
 		///    cannot be respected.
 		///  - If the `dest` cannot be looked up.
+		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::force_transfer())]
 		pub fn force_transfer(
 			origin: OriginFor<T>,
@@ -219,6 +222,7 @@ pub mod pallet {
 		///    cannot be respected.
 		///  - If the `dest` cannot be looked up.
 		#[pallet::weight(T::WeightInfo::force_transfer_native())]
+		#[pallet::call_index(3)]
 		pub fn force_transfer_native(
 			origin: OriginFor<T>,
 			source: <T::Lookup as StaticLookup>::Source,
@@ -239,6 +243,7 @@ pub mod pallet {
 		///  - When `origin` is not signed.
 		///  - If the `dest` cannot be looked up.
 		#[pallet::weight(T::WeightInfo::transfer_all())]
+		#[pallet::call_index(4)]
 		pub fn transfer_all(
 			origin: OriginFor<T>,
 			asset: T::AssetId,
@@ -265,6 +270,7 @@ pub mod pallet {
 		///  - When `origin` is not signed.
 		///  - If the `dest` cannot be looked up.
 		#[pallet::weight(T::WeightInfo::transfer_all_native())]
+		#[pallet::call_index(5)]
 		pub fn transfer_all_native(
 			origin: OriginFor<T>,
 			dest: <T::Lookup as StaticLookup>::Source,
@@ -286,6 +292,7 @@ pub mod pallet {
 		/// Creates a new asset, minting `amount` of funds into the `dest` account. Intended to be
 		/// used for creating wrapped assets, not associated with any project.
 		#[pallet::weight(T::WeightInfo::mint_initialize())]
+		#[pallet::call_index(6)]
 		pub fn mint_initialize(
 			origin: OriginFor<T>,
 			#[pallet::compact] amount: T::Balance,
@@ -302,6 +309,7 @@ pub mod pallet {
 		/// account can use the democracy pallet to mint further assets, or if the governance_origin
 		/// is set to an owned account, using signed transactions. In general the
 		/// `governance_origin` should be generated from the pallet id.
+		#[pallet::call_index(7)]
 		#[pallet::weight(T::WeightInfo::mint_initialize())]
 		pub fn mint_initialize_with_governance(
 			origin: OriginFor<T>,
@@ -319,6 +327,7 @@ pub mod pallet {
 		}
 
 		/// Mints `amount` of `asset_id` into the `dest` account.
+		#[pallet::call_index(8)]
 		#[pallet::weight(T::WeightInfo::mint_into())]
 		pub fn mint_into(
 			origin: OriginFor<T>,
@@ -333,6 +342,7 @@ pub mod pallet {
 		}
 
 		/// Burns `amount` of `asset_id` into the `dest` account.
+		#[pallet::call_index(9)]
 		#[pallet::weight(T::WeightInfo::burn_from())]
 		pub fn burn_from(
 			origin: OriginFor<T>,

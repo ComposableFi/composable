@@ -74,6 +74,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Sets the value of an `asset_id` to the signed account id. Only callable by root.
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::set())]
 		pub fn set(
 			origin: OriginFor<T>,
@@ -87,6 +88,7 @@ pub mod pallet {
 		}
 
 		/// Sets the value of an `asset_id` to root. Only callable by root.
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::grant_root())]
 		pub fn grant_root(
 			origin: OriginFor<T>,
@@ -99,6 +101,7 @@ pub mod pallet {
 		}
 
 		/// Removes mapping of an `asset_id`. Only callable by root.
+		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::remove())]
 		pub fn remove(origin: OriginFor<T>, asset_id: T::AssetId) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
