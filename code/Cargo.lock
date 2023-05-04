@@ -1799,6 +1799,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-service",
  "primitives",
+ "reward-rpc",
  "sc-basic-authorship",
  "sc-chain-spec",
  "sc-cli",
@@ -3768,6 +3769,29 @@ name = "fallible-iterator"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4443176a9f2c162692bd3d352d745ef9413eec5782a80d8fd6f8a1ac692a07f7"
+
+[[package]]
+name = "farming"
+version = "1.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log 0.4.17",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "reward",
+ "scale-info",
+ "serde",
+ "sp-arithmetic 6.0.0",
+ "sp-core 7.0.0",
+ "sp-io 7.0.0",
+ "sp-runtime 7.0.0",
+ "sp-std 5.0.0",
+]
 
 [[package]]
 name = "fastrand"
@@ -9964,6 +9988,7 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
+ "farming",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -10020,6 +10045,8 @@ dependencies = [
  "parity-scale-codec",
  "polkadot-parachain",
  "primitives",
+ "reward",
+ "reward-rpc-runtime-api",
  "scale-info",
  "smallvec 1.10.0",
  "sp-api",
@@ -12239,6 +12266,48 @@ checksum = "52e44394d2086d010551b14b53b1f24e31647570cd1deb0379e2c21b329aba00"
 dependencies = [
  "hostname",
  "quick-error 1.2.3",
+]
+
+[[package]]
+name = "reward"
+version = "1.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log 0.4.17",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rand 0.8.5",
+ "scale-info",
+ "serde",
+ "sp-arithmetic 6.0.0",
+ "sp-core 7.0.0",
+ "sp-io 7.0.0",
+ "sp-runtime 7.0.0",
+ "sp-std 5.0.0",
+]
+
+[[package]]
+name = "reward-rpc"
+version = "0.3.0"
+dependencies = [
+ "jsonrpsee 0.16.2",
+ "parity-scale-codec",
+ "reward-rpc-runtime-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime 7.0.0",
+]
+
+[[package]]
+name = "reward-rpc-runtime-api"
+version = "0.3.0"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
 ]
 
 [[package]]
