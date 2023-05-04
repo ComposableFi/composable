@@ -61,19 +61,12 @@ impl frame_system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = 0;
-	pub const GetWrappedCurrencyId: CurrencyId = 3;
-}
-
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type SignedFixedPoint = SignedFixedPoint;
 	type PoolId = ();
 	type StakeId = AccountId;
 	type CurrencyId = CurrencyId;
-	// type GetNativeCurrencyId = GetNativeCurrencyId;
-	// type GetWrappedCurrencyId = GetWrappedCurrencyId;
 }
 
 pub type TestError = Error<Test>;

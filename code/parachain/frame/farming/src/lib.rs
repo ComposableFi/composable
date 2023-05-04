@@ -13,7 +13,7 @@
 //!
 //! The following design decisions have been made:
 //! - The reward schedule is configured as a matrix such that a staked token (e.g., an AMM LP token)
-//!   and an incentive token (e.g., INTR or DOT) represent one reward schedule. This enables adding
+//!   and an incentive token (e.g., PICA or DOT) represent one reward schedule. This enables adding
 //!   multiple reward currencies per staked token.
 //! - Rewards can be increased but not decreased unless the schedule is explicitly removed.
 //! - The rewards period cannot change without a migration.
@@ -200,7 +200,6 @@ pub mod pallet {
 					} else {
 						// period count is zero
 						RewardSchedules::<T>::remove(pool_currency_id, reward_currency_id);
-						// TODO: sweep leftover rewards?
 					}
 				}
 				T::WeightInfo::on_initialize(count)

@@ -89,12 +89,6 @@ pub mod pallet {
 
 		/// The currency ID type.
 		type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord + MaxEncodedLen;
-
-		// #[pallet::constant]
-		// type GetNativeCurrencyId: Get<Self::CurrencyId>;
-
-		// #[pallet::constant]
-		// type GetWrappedCurrencyId: Get<Self::CurrencyId>;
 	}
 
 	// The pallet's events
@@ -322,11 +316,11 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	) -> Result<<SignedFixedPoint<T, I> as FixedPointNumber>::Inner, DispatchError> {
 		let stake = Self::stake(pool_id, stake_id);
 		let reward_per_token = Self::reward_per_token(currency_id, pool_id);
-		// FIXME: this can easily overflow with large numbers
+
 		let stake_mul_reward_per_token =
 			stake.checked_mul(&reward_per_token).ok_or(ArithmeticError::Overflow)?;
 		let reward_tally = <RewardTally<T, I>>::get(currency_id, (pool_id, stake_id));
-		// TODO: this can probably be saturated
+
 		let reward = stake_mul_reward_per_token
 			.checked_sub(&reward_tally)
 			.ok_or(ArithmeticError::Underflow)?
