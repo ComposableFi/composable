@@ -181,11 +181,9 @@ pub mod pallet {
 					schedules.into_iter()
 				{
 					if let Some(amount) = reward_schedule.take() {
-						if let Ok(_) = Self::try_distribute_reward(
-							pool_currency_id,
-							reward_currency_id,
-							amount,
-						) {
+						if Self::try_distribute_reward(pool_currency_id, reward_currency_id, amount)
+							.is_ok()
+						{
 							// only update the schedule if we could distribute the reward
 							RewardSchedules::<T>::insert(
 								pool_currency_id,
@@ -285,7 +283,7 @@ pub mod pallet {
 						period_count: total_period_count,
 						per_period: total_per_period,
 					});
-					Ok(().into())
+					Ok(())
 				},
 			)
 		}
