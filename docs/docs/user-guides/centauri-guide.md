@@ -82,3 +82,7 @@ Select the "Add Liquidity" button and enter the amount you wish to deposit into 
 A "Transaction success" notification will appear and you can click the notification to view the transaction on Subscan.
 
 Congratulations! You have successfully added liquidity to a pool on Pablo.
+
+**You can follow along with the video below for extra guidance:**
+
+[![composie_pica_youtube](./images-centauri-guide/centauri-guide-7.png)](https://youtu.be/tRrrF37MxBc)
