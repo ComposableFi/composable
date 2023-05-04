@@ -294,7 +294,7 @@ impl reward::Config<FarmingRewardsInstance> for Runtime {
 }
 
 parameter_types! {
-	pub const RewardPeriod: BlockNumber = 60_000 / (12000 as BlockNumber);
+	pub const RewardPeriod: BlockNumber = 5; //1 minute
 	pub const FarmingPalletId: PalletId = PalletId(*b"mod/farm");
 	pub FarmingAccount: AccountId = FarmingPalletId::get().into_account_truncating();
 }
