@@ -56,12 +56,12 @@
           name = "tag-release";
           runtimeInputs = [ pkgs.git pkgs.yq ];
           text = ''
-            git tag --sign "release-v$1" --message "RC" && git push origin "release-v$1"
+            git tag --sign "release-v$1" --message "RC" && git push origin "release-v$1" --force
           '';
         };
 
         delete-release-tag-unsafe = pkgs.writeShellApplication {
-          name = "tag-release";
+          name = "delete-release-tag-unsafe";
           runtimeInputs = [ pkgs.git pkgs.yq ];
           text = ''
             # shellcheck disable=SC2015

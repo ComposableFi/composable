@@ -40,7 +40,7 @@ resource "github_repository_collaborators" "roles" {
   }
 
   user {
-    permission = "push"
+    permission = "maintain"
     username   = "RustNinja"
   }
 
