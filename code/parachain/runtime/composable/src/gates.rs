@@ -77,6 +77,7 @@ impl collective::Config<ReleaseCollective> for Runtime {
 	type MaxMembers = ConstU32<100>;
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
+	type SetMembersOrigin = EnsureRootOrTwoThirds<ReleaseCollective>;
 }
 
 pub type EnsureRootOrTwoThirds<T> =

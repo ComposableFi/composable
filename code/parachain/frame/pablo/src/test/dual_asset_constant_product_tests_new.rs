@@ -16,7 +16,7 @@ use sp_std::collections::btree_map::BTreeMap;
 use crate::{
 	mock::*,
 	test::{
-		common_test_functions::{dual_asset_pool_weights, dual_asset_pool_weights_vec},
+		common_test_functions::dual_asset_pool_weights_vec,
 		dual_asset_constant_product_tests::{create_pool_from_config, lp_token_of_pool},
 	},
 	PoolInitConfiguration,

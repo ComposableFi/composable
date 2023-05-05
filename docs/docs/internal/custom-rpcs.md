@@ -176,12 +176,12 @@ where
         at: Option<<Block as BlockT>::Hash>, // `at` should be last
     ) -> RpcResult<ReturnType> {
         let api = self.client.runtime_api();
-        let at = BlockId::hash(at.unwrap_or_else(|| {
+        let at = at.unwrap_or_else(|| {
             // If the block hash is not supplied assume the best block.
             self.client.info().best_hash
-        }));
+        });
 
-        let runtime_api_result = api.rpc_function_name(&at, asset_id, account_id);
+        let runtime_api_result = api.rpc_function_name(at, asset_id, account_id);
         // TODO(benluelo): Review what error message & code to use
         runtime_api_result.map_err(|e| {
             RpcError {
