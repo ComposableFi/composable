@@ -3,7 +3,10 @@ use ::ibc::core::{
 	ics24_host::identifier::PortId,
 	ics26_routing::context::{Module, ModuleId},
 };
-use common::{fees::IbcIcs20FeePalletId, governance::native::EnsureRootOrOneThirdNativeTechnical};
+use common::{
+	fees::{IbcIcs20FeePalletId, IbcIcs20ServiceCharge},
+	governance::native::EnsureRootOrOneThirdNativeTechnical,
+};
 use frame_system::EnsureSigned;
 use pallet_ibc::{
 	ics20::{MODULE_ID_STR, PORT_ID_STR},
@@ -154,13 +157,9 @@ impl ModuleRouter for Router {
 	}
 }
 
-parameter_types! {
-	pub IbcIcs20ServiceChargeZeroFee: Perbill = Perbill::from_rational(0_u32, 1000_u32 );
-}
-
 impl pallet_ibc::ics20_fee::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type ServiceChargeIn = IbcIcs20ServiceChargeZeroFee;
+	type ServiceChargeIn = IbcIcs20ServiceCharge;
 	type PalletId = IbcIcs20FeePalletId;
 }
 
@@ -195,7 +194,7 @@ impl pallet_ibc::Config for Runtime {
 	type IsSendEnabled = ConstBool<true>;
 
 	type FeeAccount = FeeAccount;
-	type ServiceChargeOut = IbcIcs20ServiceChargeZeroFee;
+	type ServiceChargeOut = IbcIcs20ServiceCharge;
 	type FlatFeeAssetId = AssetIdUSDT;
 	type FlatFeeAmount = FlatFeeUSDTAmount;
 	type FlatFeeConverter = NonFlatFeeConverter<Runtime>;
