@@ -638,7 +638,7 @@ jobs:
     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}   
     strategy:
       matrix:
-        arch: [x64-cute]
+        arch: [x64-tiny]
     needs: 
       - effects-gate
     runs-on:
@@ -727,7 +727,7 @@ jobs:
       - build-all-ci-packages
     runs-on:
       - self-hosted
-      - x64-cute
+      - x64-tiny
     container:
       image: node:latest
     steps:
@@ -771,7 +771,7 @@ jobs:
       - build-all-ci-packages
     runs-on:
       - self-hosted
-      - x64-cute
+      - x64-tiny
     container:
       image: node:latest
     steps:
@@ -860,7 +860,7 @@ jobs:
       - lfs-check
     strategy:
       matrix:
-        arch: [x64-cute]
+        arch: [x64-tiny]
     runs-on:
       - self-hosted
       - ${{ matrix.arch }}
@@ -909,7 +909,7 @@ jobs:
       - test-subsquid
     strategy:
       matrix:
-        arch: [x64-cute]
+        arch: [x64-tiny]
     runs-on:
       - self-hosted
       - ${{ matrix.arch }}
