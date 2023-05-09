@@ -157,11 +157,8 @@ impl ModuleRouter for Router {
 
 impl pallet_ibc::ics20_fee::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type ServiceCharge = IbcIcs20ServiceCharge;
+	type ServiceChargeIn = IbcIcs20ServiceCharge;
 	type PalletId = IbcIcs20FeePalletId;
-	type FlatFeeAssetId = AssetIdUSDT;
-	type FlatFeeAmount = FlatFeeUSDTAmount;
-	type FlatFeeConverter = Pablo;
 }
 
 impl pallet_ibc::Config for Runtime {
@@ -204,4 +201,9 @@ impl pallet_ibc::Config for Runtime {
 	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 
 	type FeeAccount = FeeAccount;
+
+	type ServiceChargeOut = IbcIcs20ServiceCharge;
+	type FlatFeeAssetId = AssetIdUSDT;
+	type FlatFeeAmount = FlatFeeUSDTAmount;
+	type FlatFeeConverter = Pablo;
 }
