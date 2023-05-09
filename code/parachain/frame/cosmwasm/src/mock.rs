@@ -26,7 +26,7 @@ use frame_support::{
 	traits::{ConstU64, EitherOfDiverse, Everything},
 	PalletId,
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
+use frame_system::{EnsureRoot, EnsureSigned, EnsureSignedBy};
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::{CurrencyId, ForeignAssetId};
@@ -545,6 +545,8 @@ impl Config for Test {
 	type PalletHook = MockHook;
 	type UploadWasmOrigin =
 		EitherOfDiverse<EnsureSignedBy<RootAccount, AccountId>, EnsureRoot<AccountId>>;
+
+	type ExecuteWasmOrigin = EnsureSigned<AccountId>;
 }
 
 // Build genesis storage according to the mock runtime.

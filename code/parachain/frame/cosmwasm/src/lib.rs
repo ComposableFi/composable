@@ -218,7 +218,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxFrames: Get<u32>;
 
-		/// Max accepted code size.
+		/// Max accepted code size in bytes.
 		#[pallet::constant]
 		type MaxCodeSize: Get<u32>;
 
@@ -226,7 +226,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxInstrumentedCodeSize: Get<u32>;
 
-		/// Max message size.
+		/// Max message size in bytes.
 		#[pallet::constant]
 		type MaxMessageSize: Get<u32>;
 
@@ -331,6 +331,8 @@ pub mod pallet {
 
 		/// Origin to upload a WASM code
 		type UploadWasmOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
+		type ExecuteWasmOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::pallet]
@@ -413,6 +415,7 @@ pub mod pallet {
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[pallet::call_index(1)]
 		#[transactional]
+		// must depend on message too
 		#[pallet::weight(T::WeightInfo::instantiate(funds.len() as u32).saturating_add(Weight::from_ref_time(*gas)))]
 		pub fn instantiate(
 			origin: OriginFor<T>,
@@ -424,6 +427,7 @@ pub mod pallet {
 			gas: u64,
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
+			T::ExecuteWasmOrigin::ensure_origin(origin.clone())?;
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 			let initial_gas = T::WeightInfo::instantiate(funds.len() as u32)
@@ -465,6 +469,7 @@ pub mod pallet {
 			gas: u64,
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
+			T::ExecuteWasmOrigin::ensure_origin(origin.clone())?;
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 			let initial_gas = T::WeightInfo::execute(funds.len() as u32)
@@ -497,6 +502,7 @@ pub mod pallet {
 			gas: u64,
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
+			T::ExecuteWasmOrigin::ensure_origin(origin.clone())?;
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 			let initial_gas =
@@ -525,6 +531,7 @@ pub mod pallet {
 			new_admin: Option<AccountIdOf<T>>,
 			gas: u64,
 		) -> DispatchResultWithPostInfo {
+			T::ExecuteWasmOrigin::ensure_origin(origin.clone())?;
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 			let initial_gas = T::WeightInfo::update_admin()

@@ -40,7 +40,6 @@ use version::{Version, VERSION};
 pub use xcmp::XcmConfig;
 
 pub use crate::fees::WellKnownForeignToNativePriceConverter;
-use crate::ibc::RelayChain;
 
 use common::{
 	fees::{multi_existential_deposits, NativeExistentialDeposit, WeightToFeeConverter},
@@ -102,7 +101,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
 use system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
+	EnsureRoot, EnsureSignedBy,
 };
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -405,10 +404,7 @@ impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
 parameter_types! {
 	pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
 	pub const ChainId: &'static str = "composable-network-picasso";
-	pub const MaxFrames: u32 = 64;
-	pub const MaxCodeSize: u32 = 512 * 1024;
 	pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
-	pub const MaxMessageSize: u32 = 256 * 1024;
 	pub const MaxContractLabelSize: u32 = 64;
 	pub const MaxContractTrieIdSize: u32 = Hash::len_bytes() as u32;
 	pub const MaxInstantiateSaltSize: u32 = 128;
@@ -417,11 +413,9 @@ parameter_types! {
 	pub const CodeGlobalVariableLimit: u32 = 256;
 	pub const CodeParameterLimit: u32 = 128;
 	pub const CodeBranchTableSizeLimit: u32 = 256;
-	// Not really required as it's embedded.
-	pub const CodeStackLimit: u32 = u32::MAX;
 
 	// TODO: benchmark for proper values
-	pub const CodeStorageByteDeposit: u32 = 1;
+	pub const CodeStorageByteDeposit: u32 = 1_000_000;
 	pub const ContractStorageByteReadPrice: u32 = 1;
 	pub const ContractStorageByteWritePrice: u32 = 1;
 	pub WasmCostRules: CostRules<Runtime> = Default::default();
@@ -431,12 +425,20 @@ impl cosmwasm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
-	type MaxFrames = MaxFrames;
-	type MaxCodeSize = MaxCodeSize;
+	type MaxFrames = ConstU32<64>;
+	type MaxCodeSize = ConstU32<{ 512 * 1024 }>;
 	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
-	type MaxMessageSize = MaxMessageSize;
+
+	#[cfg(feature = "testnet")]
+	type MaxMessageSize = ConstU32<{ 128 * 1024 }>;
+
+	#[cfg(not(feature = "testnet"))]
+	type MaxMessageSize = ConstU32<{ 32 * 1024 }>;
+
 	type AccountToAddr = AccountToAddr;
+
 	type AssetToDenom = AssetToDenom;
+
 	type Balance = Balance;
 	type AssetId = CurrencyId;
 	type Assets = AssetsTransactorRouter;
@@ -446,25 +448,45 @@ impl cosmwasm::Config for Runtime {
 	type MaxContractTrieIdSize = MaxContractTrieIdSize;
 	type MaxInstantiateSaltSize = MaxInstantiateSaltSize;
 	type MaxFundsAssets = MaxFundsAssets;
+
 	type CodeTableSizeLimit = CodeTableSizeLimit;
 	type CodeGlobalVariableLimit = CodeGlobalVariableLimit;
+	type CodeStackLimit = ConstU32<{ u32::MAX }>;
+
 	type CodeParameterLimit = CodeParameterLimit;
 	type CodeBranchTableSizeLimit = CodeBranchTableSizeLimit;
-	type CodeStackLimit = CodeStackLimit;
 	type CodeStorageByteDeposit = CodeStorageByteDeposit;
 	type ContractStorageByteReadPrice = ContractStorageByteReadPrice;
 	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
+
 	type WasmCostRules = WasmCostRules;
 	type UnixTime = Timestamp;
 	type WeightInfo = cosmwasm::weights::SubstrateWeight<Runtime>;
 	type IbcRelayerAccount = TreasuryAccount;
+
+	// this was setup in repo in Jan 2023, so need to enable IBC in CW back
 	type IbcRelayer = cosmwasm::NoRelayer<Runtime>;
+
 	type PalletHook = ();
-	type UploadWasmOrigin = EnsureRootOrTwoThirdNativeTechnical;
+
+	#[cfg(feature = "testnet")]
+	type UploadWasmOrigin = EnsureSigned<Self::AccountId>;
+
+	#[cfg(feature = "testnet")]
+	type ExecuteWasmOrigin = EnsureSigned<Self::AccountId>;
+
+	// really need to do EnsureOnOf<Sudo::key, >
+	#[cfg(not(feature = "testnet"))]
+	type UploadWasmOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>;
+
+	#[cfg(not(feature = "testnet"))]
+	type ExecuteWasmOrigin = frame_support::traits::EitherOfDiverse<
+		EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
+		EnsureSignedBy<ReleaseMembership, Self::AccountId>,
+	>;
 }
 
 parameter_types! {
-	pub const RelayChainId: RelayChain = RelayChain::Rococo;
 	pub const SpamProtectionDeposit: Balance = 1_000_000_000_000;
 	pub const MinimumConnectionDelay: u64 = 0;
 }
@@ -866,7 +888,6 @@ impl bonded_finance::Config for Runtime {
 	type WeightInfo = weights::bonded_finance::WeightInfo<Runtime>;
 }
 
-// Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -935,7 +956,6 @@ construct_runtime!(
 
 		CallFilter: call_filter = 100,
 
-		// Cosmwasm support
 		Cosmwasm: cosmwasm = 180,
 
 		// IBC support
