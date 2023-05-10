@@ -3,6 +3,7 @@
 use super::*;
 use common::governance::native::*;
 use frame_support::traits::LockIdentifier;
+use frame_system::EnsureSigned;
 
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
@@ -34,6 +35,7 @@ impl collective::Config<NativeCouncilCollective> for Runtime {
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = collective::PrimeDefaultVote;
+	type SetMembersOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 }
 
@@ -58,6 +60,7 @@ impl collective::Config<NativeTechnicalMembership> for Runtime {
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = collective::PrimeDefaultVote;
+	type SetMembersOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 }
 
@@ -116,6 +119,7 @@ impl democracy::Config for Runtime {
 	type MaxBlacklisted = ConstU32<100>;
 
 	type Scheduler = Scheduler;
+	type SubmitOrigin = EnsureSigned<AccountId>;
 	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
 }
 

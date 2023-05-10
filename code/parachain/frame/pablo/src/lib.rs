@@ -77,7 +77,6 @@ pub mod pallet {
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
-	use pallet_ibc::ics20_fee::FlatFeeConverter;
 	use sp_arithmetic::FixedPointOperand;
 
 	use composable_maths::dex::{
@@ -662,6 +661,17 @@ pub mod pallet {
 				},
 			}
 		}
+	}
+
+	trait FlatFeeConverter {
+		type AssetId;
+		type Balance;
+
+		fn get_flat_fee(
+			asset_id: Self::AssetId,
+			fee_asset_id: Self::AssetId,
+			fee_asset_amount: Self::Balance,
+		) -> Option<u128>;
 	}
 
 	impl<T: Config> FlatFeeConverter for Pallet<T> {

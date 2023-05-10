@@ -3,7 +3,8 @@ use crate::{
 };
 use common::{
 	governance::native::{
-		EnsureRootOrHalfNativeTechnical, EnsureRootOrOneThirdNativeTechnical, ReleaseCollective,
+		EnsureRootOrHalfNativeTechnical, EnsureRootOrOneThirdNativeTechnical,
+		EnsureRootOrTwoThirdNativeCouncil, ReleaseCollective,
 	},
 	AccountId, MaxStringSize, HOURS,
 };
@@ -77,6 +78,7 @@ impl collective::Config<ReleaseCollective> for Runtime {
 	type MaxProposals = ConstU32<4>;
 	type MaxMembers = ConstU32<100>;
 	type DefaultVote = collective::PrimeDefaultVote;
+	type SetMembersOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 }
 
