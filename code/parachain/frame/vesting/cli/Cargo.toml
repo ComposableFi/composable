@@ -29,7 +29,7 @@ hex = "0.4.3"
 tracing-subscriber = "0.3.11"
 
 
-subxt = { git = "https://github.com/paritytech/subxt", rev = "6d3c377c16a5e8f61dc264ebef36b8db5e593ba1", features = [
+subxt = { git = "https://github.com/paritytech/subxt", rev = "d92352ad739836a4100e1ef1db607acc82ed8c5a", features = [
   "substrate-compat",
   "jsonrpsee-ws",
 ] }
