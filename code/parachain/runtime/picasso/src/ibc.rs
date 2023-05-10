@@ -204,5 +204,4 @@ impl pallet_ibc::Config for Runtime {
 	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 
 	type FeeAccount = FeeAccount;
-	type CleanUpPacketsPeriod = ConstU32<100>;
 }

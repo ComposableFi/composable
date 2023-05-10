@@ -11,6 +11,7 @@ use frame_support::{
 };
 use frame_system::RawOrigin;
 use sp_arithmetic::{PerThing, Permill};
+use sp_runtime::BoundedBTreeMap;
 
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 fn amm_init_config<T: Config>(

@@ -220,14 +220,14 @@ impl From<RuntimeOrigin> for XcmFake {
 impl SendXcm for XcmFake {
 	type Ticket = ();
 	fn validate(
-		_destination: &mut Option<xcm::latest::MultiLocation>,
-		_message: &mut Option<xcm::latest::Xcm<()>>,
+		destination: &mut Option<xcm::latest::MultiLocation>,
+		message: &mut Option<xcm::latest::Xcm<()>>,
 	) -> xcm::latest::SendResult<Self::Ticket> {
 		todo!("please test via local-integration-tests")
 	}
 
 	fn deliver(
-		_ticket: Self::Ticket,
+		ticket: Self::Ticket,
 	) -> core::result::Result<xcm::latest::XcmHash, xcm::latest::SendError> {
 		todo!("please test via local-integration-tests")
 	}

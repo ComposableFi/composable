@@ -53,6 +53,7 @@ multisig = { default-features = false, workspace = true }
 orml-tokens = { workspace = true, default-features = false }
 orml-traits = { workspace = true, default-features = false }
 preimage = { default-features = false, workspace = true }
+randomness-collective-flip = { default-features = false, workspace = true }
 scheduler = { default-features = false, workspace = true }
 session = { default-features = false, workspace = true }
 smallvec = "1.6.1"
@@ -228,6 +229,7 @@ std = [
   "preimage/std",
   "primitives/std",
   "proxy/std",
+  "randomness-collective-flip/std",
   "reward-rpc-runtime-api/std",
   "reward/std",
   "scale-info/std",

@@ -30,7 +30,10 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_core::Bytes;
 use sp_rpc::number::NumberOrHex;
-use sp_runtime::traits::{Block as BlockT, MaybeDisplay};
+use sp_runtime::{
+	generic::BlockId,
+	traits::{Block as BlockT, MaybeDisplay},
+};
 
 pub use pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi as TransactionPaymentRuntimeApi;
 
@@ -94,7 +97,7 @@ where
 		at: Option<Block::Hash>,
 	) -> RpcResult<RuntimeDispatchInfo<Balance, u64>> {
 		let api = self.client.runtime_api();
-		let at = at.unwrap_or_else(|| self.client.info().best_hash);
+		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 
 		let encoded_len = encoded_xt.len() as u32;
 
@@ -105,7 +108,7 @@ where
 				Some(format!("{:?}", e)),
 			))
 		})?;
-		api.query_info(at, uxt, encoded_len)
+		api.query_info(&at, uxt, encoded_len)
 			.map_err(|e| {
 				CallError::Custom(ErrorObject::owned(
 					Error::RuntimeError.into(),
@@ -127,7 +130,7 @@ where
 		at: Option<Block::Hash>,
 	) -> RpcResult<FeeDetails<NumberOrHex>> {
 		let api = self.client.runtime_api();
-		let at = at.unwrap_or_else(|| self.client.info().best_hash);
+		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 
 		let encoded_len = encoded_xt.len() as u32;
 
@@ -138,7 +141,7 @@ where
 				Some(format!("{:?}", e)),
 			))
 		})?;
-		let fee_details = api.query_fee_details(at, uxt, encoded_len).map_err(|e| {
+		let fee_details = api.query_fee_details(&at, uxt, encoded_len).map_err(|e| {
 			CallError::Custom(ErrorObject::owned(
 				Error::RuntimeError.into(),
 				"Unable to query fee details.",

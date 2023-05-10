@@ -10,7 +10,7 @@ use jsonrpsee::{
 };
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use sp_std::{marker::PhantomData, sync::Arc};
 
 #[rpc(client, server)]
@@ -55,12 +55,12 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<SafeRpcWrapper<Balance>> {
 		let api = self.client.runtime_api();
-		let at = at.unwrap_or_else(|| {
+		let at = BlockId::hash(at.unwrap_or_else(|| {
 			// If the block hash is not supplied assume the best block.
 			self.client.info().best_hash
-		});
+		}));
 
-		let runtime_api_result = api.amount_available_to_claim_for(at, remote_account);
+		let runtime_api_result = api.amount_available_to_claim_for(&at, remote_account);
 		// TODO(benluelo): Review what error message & code to use
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
