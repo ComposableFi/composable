@@ -47,6 +47,6 @@
       check-runtime = check-pallet;
     in {
       _module.args.subnix = rec { inherit subenv subattrs; };
-      packages = { inherit check-pallet; };
+      packages = { inherit check-pallet check-runtime; };
     };
 }

@@ -62,6 +62,17 @@ pub fn create_funded_account(key: &'static str) -> AccountId32 {
 	origin
 }
 
+pub fn create_funded_root_account() -> AccountId32 {
+	let origin = get_root_account();
+
+	<pallet_balances::Pallet<Test> as fungible::Mutate<AccountId32>>::mint_into(
+		&origin,
+		u64::MAX as u128,
+	)
+	.unwrap();
+	origin
+}
+
 pub fn create_funds(accounts: Vec<&AccountId32>) -> FundsOf<Test> {
 	let mut funds = BTreeMap::new();
 	let assets = CurrencyId::list_assets();

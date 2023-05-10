@@ -4,9 +4,10 @@ on:
     branches:
       - release-*
       - main
-  pull_request_target:
   pull_request:
-
+  merge_group:
+    types: [checks_requested]
+    
 permissions: 
   pull-requests: write
 
