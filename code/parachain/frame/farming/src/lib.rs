@@ -323,10 +323,13 @@ pub mod pallet {
 		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::deposit())]
 		#[transactional]
-		pub fn deposit(origin: OriginFor<T>, pool_currency_id: AssetIdOf<T>) -> DispatchResult {
+		pub fn deposit(
+			origin: OriginFor<T>,
+			pool_currency_id: AssetIdOf<T>,
+			amount: BalanceOf<T>,
+		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			// reserve lp tokens to prevent spending
-			let amount = T::MultiCurrency::free_balance(pool_currency_id, &who);
 			T::MultiCurrency::reserve(pool_currency_id, &who, amount)?;
 
 			// deposit lp tokens as stake
