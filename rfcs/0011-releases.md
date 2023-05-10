@@ -80,47 +80,6 @@ Create a tag `staging-fe-v[MAJOR].[MINOR]-picasso-[FE_VERSION_NUMBER]`
 
 **[FE_VERSION_NUMBER] is a number incremented on each release.**
 
-
-### 3.2.4 Security
-
-Tip of the branch from which runtime release is considered should be signed by at least 2 keys owned by Technical committee or by Council members.
-
-#### 3.2.4.1 Examples
-
-Alice and Bob review changes and sign.
-
-Charlie verifies.
-
-Releasing from a branch:
-```shell
-
- # All
- git switch release-vx.y.3
- 
- # Alice signs
- git tag --sign "release-vx.y.3/alice" --message "reviewed"
- git push origin "release-vx.y.3/alice"
-
- # Bob signs
- git tag --sign "release-vx.y.3/bob" --message "reviewed"
- 
- # Charlie looks that each tag is signed and references relevant commit
- git tag --list | grep release-vx.y.3 | xargs git tag --verify 
-```
-
-In case of release from tag:
-```shell
-# Checkout old tag
-git checkout release-v1.10001.0 --force
-
-# Make diff with new release tag to review changes
-git merge release-v1.10002.0 --no-commit --squash
-
-# Sign new tag
-git checkout release-v1.10002.0 --force
-git tag --sign "release-v1.10002.0-alice" --message "reviewed"
-```
-
 ## 4. Implementation
 
 The following section lays out the release steps for each release in a checklist form.
