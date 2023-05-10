@@ -1,0 +1,23 @@
+name: "pr"
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - release-*
+      - main  
+  pull_request_target:
+  pull_request:  
+  merge_group:
+    types: [checks_requested]
+
+jobs:
+  build-test-deploy:
+    steps:
+      - run: |  
+        echo ${{ github.event_name }}
+      - uses: "./.github/build-test-deploy.yaml"
+        with:
+          reason: ${{ github.event_name }}
