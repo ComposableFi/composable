@@ -125,7 +125,7 @@ pub fn get_pair(init_config: PoolInitConfiguration<AccountId, AssetId>) -> [Asse
 	match init_config {
 		PoolInitConfiguration::DualAssetConstantProduct { assets_weights, .. } => assets_weights
 			.into_iter()
-			.map(|(k, v)| k)
+			.map(|(k, _v)| k)
 			.collect::<Vec<_>>()
 			.try_into()
 			.expect("pool should have exactly 2 assets; qed;"),

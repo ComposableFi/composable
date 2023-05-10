@@ -10,7 +10,6 @@ use reward_rpc_runtime_api::BalanceWrapper;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{
-	generic::BlockId,
 	traits::{Block as BlockT, MaybeDisplay, MaybeFromStr},
 	DispatchError,
 };
@@ -105,10 +104,10 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<BalanceWrapper<Balance>> {
 		let api = self.client.runtime_api();
-		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+		let at = at.unwrap_or_else(|| self.client.info().best_hash);
 
 		handle_response(
-			api.compute_farming_reward(&at, account_id, pool_currency_id, reward_currency_id),
+			api.compute_farming_reward(at, account_id, pool_currency_id, reward_currency_id),
 			"Unable to compute the current reward".into(),
 		)
 	}
@@ -121,10 +120,10 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<BalanceWrapper<Balance>> {
 		let api = self.client.runtime_api();
-		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+		let at = at.unwrap_or_else(|| self.client.info().best_hash);
 
 		handle_response(
-			api.estimate_farming_reward(&at, account_id, pool_currency_id, reward_currency_id),
+			api.estimate_farming_reward(at, account_id, pool_currency_id, reward_currency_id),
 			"Unable to estimate the current reward".into(),
 		)
 	}

@@ -10,7 +10,7 @@ use jsonrpsee::{
 use lending_runtime_api::LendingRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::{generic::BlockId, traits::Block as BlockT};
+use sp_runtime::traits::Block as BlockT;
 use sp_std::sync::Arc;
 
 #[rpc(client, server)]
@@ -54,10 +54,10 @@ where
 	) -> RpcResult<SafeRpcWrapper<Rate>> {
 		let api = self.client.runtime_api();
 
-		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+		let at = at.unwrap_or_else(|| self.client.info().best_hash);
 
 		// calling ../../runtime-api
-		let runtime_api_result = api.current_interest_rate(&at, market_id.0);
+		let runtime_api_result = api.current_interest_rate(at, market_id.0);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,
