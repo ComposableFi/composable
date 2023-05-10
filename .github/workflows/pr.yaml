@@ -14,10 +14,16 @@ on:
     types: [checks_requested]
 
 jobs:
-  build-test-deploy:
-    steps:
-      - run: |  
-        echo ${{ github.event_name }}
-      - uses: "./.github/build-test-deploy.yaml"
-        with:
-          reason: ${{ github.event_name }}
+  pr-workflow:
+    uses: ./.github/workflows/pr-workflow.yml
+    with:
+      github_event_name: ${{ github.event_name }}
+      github_event_pull_request_head_repo_id : ${{ github.event.pull_request.head.repo.id }}
+      github_workflow: $ {{ github.workflow }}
+      github_event_pull_request_head_sha: ${{ github.event.pull_request.head.sha }}
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}          
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      PABLO_PROJ_JSON: ${{ secrets.PABLO_PROJ_JSON }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
