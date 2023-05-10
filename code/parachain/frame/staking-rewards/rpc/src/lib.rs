@@ -8,7 +8,7 @@ use jsonrpsee::{
 };
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use sp_std::{cmp::Ord, collections::btree_map::BTreeMap, sync::Arc};
 use staking_rewards_runtime_api::{ClaimableAmountError, StakingRewardsRuntimeApi};
 
@@ -60,10 +60,10 @@ where
 	) -> RpcResult<Result<BTreeMap<AssetId, Balance>, ClaimableAmountError>> {
 		let api = self.client.runtime_api();
 
-		let at = at.unwrap_or_else(|| self.client.info().best_hash);
+		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 
 		// calling ../../runtime-api
-		let runtime_api_result = api.claimable_amount(at, fnft_collection_id, fnft_instance_id);
+		let runtime_api_result = api.claimable_amount(&at, fnft_collection_id, fnft_instance_id);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,

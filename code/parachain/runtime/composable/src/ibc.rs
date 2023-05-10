@@ -197,5 +197,4 @@ impl pallet_ibc::Config for Runtime {
 	type IsSendEnabled = ConstBool<true>;
 
 	type FeeAccount = FeeAccount;
-	type CleanUpPacketsPeriod = ConstU32<100>;
 }

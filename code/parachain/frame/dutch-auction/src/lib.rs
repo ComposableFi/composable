@@ -62,7 +62,6 @@
 	trivial_casts,
 	unused_extern_crates
 )]
-
 pub use pallet::*;
 
 pub mod math;

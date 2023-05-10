@@ -33,7 +33,7 @@ use pallet_ibc::ics20_fee::FlatFeeConverter;
 use proptest::prelude::*;
 use sp_runtime::{
 	traits::{ConstU32, IntegerSquareRoot},
-	DispatchError, Perbill, Permill, TokenError,
+	BoundedBTreeMap, DispatchError, Perbill, Permill, TokenError,
 };
 use sp_std::collections::btree_map::BTreeMap;
 

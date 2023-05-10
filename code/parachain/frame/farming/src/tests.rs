@@ -128,7 +128,7 @@ fn should_overwrite_existing_schedule() {
 fn mint_and_deposit(account_id: AccountId, amount: Balance) {
 	assert_ok!(Tokens::set_balance(RuntimeOrigin::root(), account_id, POOL_CURRENCY_ID, amount, 0));
 
-	assert_ok!(Farming::deposit(RuntimeOrigin::signed(account_id), POOL_CURRENCY_ID, amount));
+	assert_ok!(Farming::deposit(RuntimeOrigin::signed(account_id), POOL_CURRENCY_ID,));
 }
 
 #[test]

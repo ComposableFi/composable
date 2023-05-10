@@ -56,12 +56,13 @@ jobs:
   privilege-check:
     name: "Privilege check"
     if: ${{ github.event_name == 'push' || github.event_name == 'merge_group' || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}    
+    continue-on-error: false
     runs-on: ubuntu-latest  
     steps:
       - run: |
           echo ${{ github.event_name }} 
           echo ${{ github.ref_name }}
-          echo "I am priviliged by goblins on repository id ${{ github.event.pull_request.head.repo.id }} ${{ github.event.pull_request_target.head.repo.id }}" 
+          echo "repository id ${{ github.event.pull_request.head.repo.id }} ${{ github.event.pull_request_target.head.repo.id }}" 
       
   lfs-check:
     name: LFS check
@@ -87,10 +88,11 @@ jobs:
             **/*.lock
 
   nix-flake-check:
-    name: "Nix flake check"
+    name: "nix-flake-check"
     needs:
       - privilege-check
     runs-on: ubuntu-latest
+    continue-on-error: false
     concurrency:
       group: ${{ github.workflow }}-nix-flake-check-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -226,6 +228,7 @@ jobs:
 
   build-all-ci-packages:
     name: build-all-ci-packages
+    continue-on-error: false
     needs: 
       - privilege-check
       - lfs-check
@@ -325,6 +328,7 @@ jobs:
 
   build-all-misc-packages:
     name: build-all-misc-packages
+    continue-on-error: false
     strategy:
       matrix:
         arch: [x64-monster]
@@ -416,7 +420,7 @@ jobs:
 
   build-product-darwin:
     name: "build-product-darwin"
-    continue-on-error: true
+    continue-on-error: false
     if: ${{ github.event_name == 'push' || github.event_name == 'merge_group' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760) }}    
     strategy:
       matrix:
@@ -457,7 +461,6 @@ jobs:
       matrix:
         arch: [x64-cute]
     needs: 
-      - privilege-check
       - lfs-check
     runs-on:
       - self-hosted
@@ -500,9 +503,10 @@ jobs:
         run: |
           ls result
           tree result -L 3          
-  
+
   effects-gate:
       name: "Effect gate, automatically merged if passed"
+      continue-on-error: false
       runs-on: ubuntu-latest
       needs:
         - build-all-benchmarks-packages
@@ -514,7 +518,6 @@ jobs:
         - dependency-review
         - lfs-check
         - nix-flake-check
-        - privilege-check
       steps:
         - run: echo "See next activities of pushing and publishing and merging"
 
