@@ -1,6 +1,6 @@
-name: "pr"
+name: "pr-workflow-check"
 concurrency:
-  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-pr-workflow-check-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 on:
@@ -8,13 +8,12 @@ on:
     branches:
       - release-*
       - main  
-  pull_request_target:
   pull_request:  
   merge_group:
     types: [checks_requested]
 
 jobs:
-  pr-workflow:
+  pr-workflow-check:
     uses: ./.github/workflows/pr-workflow.yml
     with:
       github_event_name: ${{ github.event_name }}
