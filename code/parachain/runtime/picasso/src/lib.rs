@@ -101,7 +101,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
 use system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureSignedBy,
+	EnsureRoot,
 };
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -470,19 +470,19 @@ impl cosmwasm::Config for Runtime {
 	type PalletHook = ();
 
 	#[cfg(feature = "testnet")]
-	type UploadWasmOrigin = EnsureSigned<Self::AccountId>;
+	type UploadWasmOrigin = system::EnsureSigned<Self::AccountId>;
 
 	#[cfg(feature = "testnet")]
-	type ExecuteWasmOrigin = EnsureSigned<Self::AccountId>;
+	type ExecuteWasmOrigin = system::EnsureSigned<Self::AccountId>;
 
 	// really need to do EnsureOnOf<Sudo::key, >
 	#[cfg(not(feature = "testnet"))]
-	type UploadWasmOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>;
+	type UploadWasmOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>;
 
 	#[cfg(not(feature = "testnet"))]
 	type ExecuteWasmOrigin = frame_support::traits::EitherOfDiverse<
-		EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
-		EnsureSignedBy<ReleaseMembership, Self::AccountId>,
+		system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
+		system::EnsureSignedBy<ReleaseMembership, Self::AccountId>,
 	>;
 }
 
