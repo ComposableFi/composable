@@ -227,13 +227,15 @@ impl SendXcm for XcmFake {
 	type Ticket = ();
 
 	fn validate(
-		destination: &mut Option<xcm::v3::MultiLocation>,
-		message: &mut Option<xcm::v3::Xcm<()>>,
+		_destination: &mut Option<xcm::v3::MultiLocation>,
+		_message: &mut Option<xcm::v3::Xcm<()>>,
 	) -> xcm::v3::SendResult<Self::Ticket> {
 		todo!("please test via local-integration-tests")
 	}
 
-	fn deliver(ticket: Self::Ticket) -> core::result::Result<xcm::v3::XcmHash, xcm::v3::SendError> {
+	fn deliver(
+		_ticket: Self::Ticket,
+	) -> core::result::Result<xcm::v3::XcmHash, xcm::v3::SendError> {
 		todo!("please test via local-integration-tests")
 	}
 }

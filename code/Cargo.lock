@@ -824,7 +824,7 @@ dependencies = [
 [[package]]
 name = "beefy-gadget"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "array-bytes 4.2.0",
  "async-trait",
@@ -858,7 +858,7 @@ dependencies = [
 [[package]]
 name = "beefy-gadget-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "beefy-gadget",
  "futures 0.3.28",
@@ -877,7 +877,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "beefy-light-client-primitives",
  "ckb-merkle-mountain-range 0.3.2",
@@ -900,7 +900,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "ckb-merkle-mountain-range 0.3.2",
  "derive_more",
@@ -912,16 +912,6 @@ dependencies = [
  "sp-core 7.0.0",
  "sp-mmr-primitives",
  "sp-std 5.0.0",
-]
-
-[[package]]
-name = "beefy-merkle-tree"
-version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
-dependencies = [
- "sp-api",
- "sp-beefy",
- "sp-runtime 7.0.0",
 ]
 
 [[package]]
@@ -939,6 +929,23 @@ dependencies = [
  "sha2 0.10.6",
  "tungstenite",
  "url 2.3.1",
+]
+
+[[package]]
+name = "binary-merkle-tree"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.39#8c4b84520cee2d7de53cc33cb67605ce4efefba8"
+dependencies = [
+ "hash-db",
+]
+
+[[package]]
+name = "binary-merkle-tree"
+version = "4.0.0-dev"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
+dependencies = [
+ "hash-db",
+ "log 0.4.17",
 ]
 
 [[package]]
@@ -1179,10 +1186,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "bounded-vec"
-version = "0.6.0"
+name = "bounded-collections"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3372be4090bf9d4da36bd8ba7ce6ca1669503d0cf6e667236c6df7f053153eb6"
+checksum = "e3888522b497857eb606bf51695988dba7096941822c1bcf676e3a929a9ae7a0"
+dependencies = [
+ "log 0.4.17",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+]
+
+[[package]]
+name = "bounded-vec"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68534a48cbf63a4b1323c433cf21238c9ec23711e0df13b08c33e5c2082663ce"
 dependencies = [
  "thiserror",
 ]
@@ -1314,15 +1333,16 @@ dependencies = [
 
 [[package]]
 name = "cargo_metadata"
-version = "0.14.2"
+version = "0.15.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4acbb09d9ee8e23699b9634375c72795d095bf268439da88562cf9b501f181fa"
+checksum = "eee4243f1f26fc7a42710e7439c149e2b10b05472f88090acce52632f231a73a"
 dependencies = [
  "camino",
  "cargo-platform",
  "semver 1.0.17",
  "serde",
  "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -1897,7 +1917,6 @@ dependencies = [
  "pallet-oracle",
  "pallet-preimage",
  "pallet-proxy",
- "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
  "pallet-sudo",
@@ -2240,27 +2259,28 @@ checksum = "dcb25d077389e53838a8158c8e99174c5a9d902dee4904320db714f3c653ffba"
 
 [[package]]
 name = "cranelift-bforest"
-version = "0.88.2"
+version = "0.93.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52056f6d0584484b57fa6c1a65c1fcb15f3780d8b6a758426d9e3084169b2ddd"
+checksum = "2bc42ba2e232e5b20ff7dc299a812d53337dadce9a7e39a238e6a5cb82d2e57b"
 dependencies = [
- "cranelift-entity",
+ "cranelift-entity 0.93.2",
 ]
 
 [[package]]
 name = "cranelift-codegen"
-version = "0.88.2"
+version = "0.93.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18fed94c8770dc25d01154c3ffa64ed0b3ba9d583736f305fed7beebe5d9cf74"
+checksum = "253531aca9b6f56103c9420369db3263e784df39aa1c90685a1f69cfbba0623e"
 dependencies = [
  "arrayvec 0.7.2",
  "bumpalo",
  "cranelift-bforest",
  "cranelift-codegen-meta",
  "cranelift-codegen-shared",
- "cranelift-entity",
+ "cranelift-entity 0.93.2",
  "cranelift-isle",
  "gimli 0.26.2",
+ "hashbrown 0.12.3",
  "log 0.4.17",
  "regalloc2",
  "smallvec 1.10.0",
@@ -2269,18 +2289,18 @@ dependencies = [
 
 [[package]]
 name = "cranelift-codegen-meta"
-version = "0.88.2"
+version = "0.93.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c451b81faf237d11c7e4f3165eeb6bac61112762c5cfe7b4c0fb7241474358f"
+checksum = "72f2154365e2bff1b1b8537a7181591fdff50d8e27fa6e40d5c69c3bad0ca7c8"
 dependencies = [
  "cranelift-codegen-shared",
 ]
 
 [[package]]
 name = "cranelift-codegen-shared"
-version = "0.88.2"
+version = "0.93.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7c940133198426d26128f08be2b40b0bd117b84771fd36798969c4d712d81fc"
+checksum = "687e14e3f5775248930e0d5a84195abef8b829958e9794bf8d525104993612b4"
 
 [[package]]
 name = "cranelift-entity"
@@ -2292,10 +2312,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "cranelift-frontend"
-version = "0.88.2"
+name = "cranelift-entity"
+version = "0.93.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34897538b36b216cc8dd324e73263596d51b8cf610da6498322838b2546baf8a"
+checksum = "f42ea692c7b450ad18b8c9889661505d51c09ec4380cf1c2d278dbb2da22cae1"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "cranelift-frontend"
+version = "0.93.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8483c2db6f45fe9ace984e5adc5d058102227e4c62e5aa2054e16b0275fd3a6e"
 dependencies = [
  "cranelift-codegen",
  "log 0.4.17",
@@ -2305,15 +2334,15 @@ dependencies = [
 
 [[package]]
 name = "cranelift-isle"
-version = "0.88.2"
+version = "0.93.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b2629a569fae540f16a76b70afcc87ad7decb38dc28fa6c648ac73b51e78470"
+checksum = "e9793158837678902446c411741d87b43f57dadfb944f2440db4287cda8cbd59"
 
 [[package]]
 name = "cranelift-native"
-version = "0.88.2"
+version = "0.93.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20937dab4e14d3e225c5adfc9c7106bafd4ac669bdb43027b911ff794c6fb318"
+checksum = "72668c7755f2b880665cb422c8ad2d56db58a88b9bebfef0b73edc2277c13c49"
 dependencies = [
  "cranelift-codegen",
  "libc",
@@ -2322,18 +2351,18 @@ dependencies = [
 
 [[package]]
 name = "cranelift-wasm"
-version = "0.88.2"
+version = "0.93.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80fc2288957a94fd342a015811479de1837850924166d1f1856d8406e6f3609b"
+checksum = "3852ce4b088b44ac4e29459573943009a70d1b192c8d77ef949b4e814f656fc1"
 dependencies = [
  "cranelift-codegen",
- "cranelift-entity",
+ "cranelift-entity 0.93.2",
  "cranelift-frontend",
  "itertools",
  "log 0.4.17",
  "smallvec 1.10.0",
- "wasmparser",
- "wasmtime-types",
+ "wasmparser 0.100.0",
+ "wasmtime-types 6.0.2",
 ]
 
 [[package]]
@@ -2548,7 +2577,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-cli"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "clap 4.2.7",
  "parity-scale-codec",
@@ -2563,7 +2592,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-collator"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "cumulus-client-consensus-common",
  "cumulus-client-network",
@@ -2586,7 +2615,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-aura"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "async-trait",
  "cumulus-client-consensus-common",
@@ -2615,7 +2644,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-common"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "async-trait",
  "cumulus-client-pov-recovery",
@@ -2628,6 +2657,7 @@ dependencies = [
  "polkadot-primitives",
  "sc-client-api",
  "sc-consensus",
+ "schnellru",
  "sp-blockchain",
  "sp-consensus",
  "sp-runtime 7.0.0",
@@ -2638,7 +2668,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-network"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "async-trait",
  "cumulus-relay-chain-interface",
@@ -2661,8 +2691,9 @@ dependencies = [
 [[package]]
 name = "cumulus-client-pov-recovery"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
+ "async-trait",
  "cumulus-primitives-core",
  "cumulus-relay-chain-interface",
  "futures 0.3.28",
@@ -2684,11 +2715,12 @@ dependencies = [
 [[package]]
 name = "cumulus-client-service"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "cumulus-client-cli",
  "cumulus-client-collator",
  "cumulus-client-consensus-common",
+ "cumulus-client-network",
  "cumulus-client-pov-recovery",
  "cumulus-primitives-core",
  "cumulus-relay-chain-inprocess-interface",
@@ -2699,20 +2731,26 @@ dependencies = [
  "polkadot-primitives",
  "sc-client-api",
  "sc-consensus",
+ "sc-network",
+ "sc-network-transactions",
+ "sc-rpc",
  "sc-service",
  "sc-sysinfo",
  "sc-telemetry",
+ "sc-transaction-pool",
+ "sc-utils",
  "sp-api",
  "sp-blockchain",
  "sp-consensus",
  "sp-core 7.0.0",
  "sp-runtime 7.0.0",
+ "sp-transaction-pool",
 ]
 
 [[package]]
 name = "cumulus-pallet-aura-ext"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -2728,7 +2766,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-dmp-queue"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -2745,7 +2783,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-parachain-system"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "bytes 1.4.0",
  "cumulus-pallet-parachain-system-proc-macro",
@@ -2774,7 +2812,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-parachain-system-proc-macro"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2 1.0.56",
@@ -2785,7 +2823,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-session-benchmarking"
 version = "3.0.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -2799,7 +2837,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcm"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -2815,7 +2853,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcmp-queue"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -2835,7 +2873,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-core"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech//cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "parity-scale-codec",
  "polkadot-core-primitives",
@@ -2851,7 +2889,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-parachain-inherent"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -2874,7 +2912,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-timestamp"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "cumulus-primitives-core",
  "futures 0.3.28",
@@ -2887,7 +2925,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-utility"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -2905,7 +2943,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-inprocess-interface"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -2930,7 +2968,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-interface"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -2938,6 +2976,7 @@ dependencies = [
  "jsonrpsee-core 0.16.2",
  "parity-scale-codec",
  "polkadot-overseer",
+ "polkadot-service",
  "sc-client-api",
  "sp-api",
  "sp-blockchain",
@@ -2949,7 +2988,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-minimal-node"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "array-bytes 6.1.0",
  "async-trait",
@@ -2989,7 +3028,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-rpc-interface"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -3018,7 +3057,7 @@ dependencies = [
 [[package]]
 name = "cumulus-test-relay-sproof-builder"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "cumulus-primitives-core",
  "parity-scale-codec",
@@ -4018,7 +4057,7 @@ checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 [[package]]
 name = "fork-tree"
 version = "3.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "parity-scale-codec",
 ]
@@ -4041,7 +4080,7 @@ checksum = "6c2141d6d6c8512188a7891b4b01590a45f6dac67afb4f255c4124dbb86d4eaa"
 [[package]]
 name = "frame-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support",
  "frame-support-procedural",
@@ -4066,7 +4105,7 @@ dependencies = [
 [[package]]
 name = "frame-benchmarking-cli"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "Inflector",
  "array-bytes 4.2.0",
@@ -4113,7 +4152,7 @@ dependencies = [
 [[package]]
 name = "frame-election-provider-solution-type"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2 1.0.56",
@@ -4124,7 +4163,7 @@ dependencies = [
 [[package]]
 name = "frame-election-provider-support"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-election-provider-solution-type",
  "frame-support",
@@ -4141,7 +4180,7 @@ dependencies = [
 [[package]]
 name = "frame-executive"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4170,7 +4209,7 @@ dependencies = [
 [[package]]
 name = "frame-remote-externalities"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "futures 0.3.28",
  "log 0.4.17",
@@ -4186,7 +4225,7 @@ dependencies = [
 [[package]]
 name = "frame-support"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "bitflags",
  "frame-metadata",
@@ -4218,7 +4257,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "Inflector",
  "cfg-expr",
@@ -4233,7 +4272,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support-procedural-tools-derive",
  "proc-macro-crate 1.3.1",
@@ -4245,7 +4284,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools-derive"
 version = "3.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
@@ -4255,7 +4294,7 @@ dependencies = [
 [[package]]
 name = "frame-system"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support",
  "log 0.4.17",
@@ -4273,7 +4312,7 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4288,7 +4327,7 @@ dependencies = [
 [[package]]
 name = "frame-system-rpc-runtime-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -4297,7 +4336,7 @@ dependencies = [
 [[package]]
 name = "frame-try-runtime"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -4653,7 +4692,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -4675,7 +4714,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-verifier"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "anyhow",
  "finality-grandpa",
@@ -5105,7 +5144,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "derive_more",
  "flex-error",
@@ -5165,7 +5204,7 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.3.1",
@@ -5177,7 +5216,7 @@ dependencies = [
 [[package]]
 name = "ibc-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "base58",
  "blake2",
@@ -5201,7 +5240,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "base64 0.13.1",
  "bytes 1.4.0",
@@ -5231,7 +5270,7 @@ dependencies = [
 [[package]]
 name = "ibc-rpc"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "frame-system",
  "hex-literal",
@@ -5258,7 +5297,7 @@ dependencies = [
 [[package]]
 name = "ibc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "ibc-primitives",
  "pallet-ibc",
@@ -5270,7 +5309,7 @@ dependencies = [
 [[package]]
 name = "ics07-tendermint"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "bytes 1.4.0",
  "flex-error",
@@ -5290,7 +5329,7 @@ dependencies = [
 [[package]]
 name = "ics10-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -5316,7 +5355,7 @@ dependencies = [
 [[package]]
 name = "ics11-beefy"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "anyhow",
  "beefy-light-client",
@@ -5978,8 +6017,8 @@ dependencies = [
 
 [[package]]
 name = "kusama-runtime"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -6029,10 +6068,11 @@ dependencies = [
  "pallet-session-benchmarking",
  "pallet-society",
  "pallet-staking",
+ "pallet-staking-runtime-api",
  "pallet-timestamp",
  "pallet-tips",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting 4.0.0-dev",
@@ -6075,8 +6115,8 @@ dependencies = [
 
 [[package]]
 name = "kusama-runtime-constants"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "frame-support",
  "polkadot-primitives",
@@ -6734,7 +6774,7 @@ dependencies = [
 [[package]]
 name = "light-client-common"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6749,7 +6789,6 @@ dependencies = [
  "sp-runtime 7.0.0",
  "sp-storage 7.0.0",
  "sp-trie 7.0.0",
- "subxt 0.26.0",
 ]
 
 [[package]]
@@ -6778,12 +6817,11 @@ dependencies = [
 
 [[package]]
 name = "linregress"
-version = "0.4.4"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6c601a85f5ecd1aba625247bca0031585fb1c446461b142878a16f8245ddeb8"
+checksum = "475015a7f8f017edb28d2e69813be23500ad4b32cfe3421c4148efc97324ee52"
 dependencies = [
  "nalgebra",
- "statrs",
 ]
 
 [[package]]
@@ -6791,6 +6829,12 @@ name = "linux-raw-sys"
 version = "0.0.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4d2456c373231a208ad294c33dc5bff30051eafd954cd4caae83a712b12854d"
+
+[[package]]
+name = "linux-raw-sys"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f051f77a7c8e6957c0696eac88f26b0117e54f52d3fc682ab19397a8812846a4"
 
 [[package]]
 name = "linux-raw-sys"
@@ -7149,7 +7193,7 @@ dependencies = [
 [[package]]
 name = "mmr-gadget"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "futures 0.3.28",
  "log 0.4.17",
@@ -7168,7 +7212,7 @@ dependencies = [
 [[package]]
 name = "mmr-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "anyhow",
  "jsonrpsee 0.16.2",
@@ -7338,9 +7382,9 @@ dependencies = [
 
 [[package]]
 name = "nalgebra"
-version = "0.27.1"
+version = "0.32.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "462fffe4002f4f2e1f6a9dcf12cc1a6fc0e15989014efc02a941d3e0f5dc2120"
+checksum = "d68d47bba83f9e2006d117a9a33af1524e655516b8919caac694427a6fb1e511"
 dependencies = [
  "approx",
  "matrixmultiply",
@@ -7348,17 +7392,15 @@ dependencies = [
  "num-complex",
  "num-rational",
  "num-traits",
- "rand 0.8.5",
- "rand_distr",
  "simba",
  "typenum",
 ]
 
 [[package]]
 name = "nalgebra-macros"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01fcc0b8149b4632adc89ac3b7b31a12fb6099a0317a4eb2ebff574ef7de7218"
+checksum = "d232c68884c0c99810a5a4d333ef7e47689cfd0edc85efc9e54e1e6bf5212766"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
@@ -7785,7 +7827,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=241d5cdc98cca53b8cf990853943c9ae1193a70e#241d5cdc98cca53b8cf990853943c9ae1193a70e"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=a0751540591c88ccc2d4029464de887933727183#a0751540591c88ccc2d4029464de887933727183"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7800,7 +7842,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=241d5cdc98cca53b8cf990853943c9ae1193a70e#241d5cdc98cca53b8cf990853943c9ae1193a70e"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=a0751540591c88ccc2d4029464de887933727183#a0751540591c88ccc2d4029464de887933727183"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -7819,7 +7861,7 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=241d5cdc98cca53b8cf990853943c9ae1193a70e#241d5cdc98cca53b8cf990853943c9ae1193a70e"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=a0751540591c88ccc2d4029464de887933727183#a0751540591c88ccc2d4029464de887933727183"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7834,7 +7876,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=241d5cdc98cca53b8cf990853943c9ae1193a70e#241d5cdc98cca53b8cf990853943c9ae1193a70e"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=a0751540591c88ccc2d4029464de887933727183#a0751540591c88ccc2d4029464de887933727183"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -7848,7 +7890,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=241d5cdc98cca53b8cf990853943c9ae1193a70e#241d5cdc98cca53b8cf990853943c9ae1193a70e"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=a0751540591c88ccc2d4029464de887933727183#a0751540591c88ccc2d4029464de887933727183"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -7862,7 +7904,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=241d5cdc98cca53b8cf990853943c9ae1193a70e#241d5cdc98cca53b8cf990853943c9ae1193a70e"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=a0751540591c88ccc2d4029464de887933727183#a0751540591c88ccc2d4029464de887933727183"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -8105,7 +8147,7 @@ dependencies = [
 [[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8121,7 +8163,7 @@ dependencies = [
 [[package]]
 name = "pallet-authority-discovery"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8137,7 +8179,7 @@ dependencies = [
 [[package]]
 name = "pallet-authorship"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8151,7 +8193,7 @@ dependencies = [
 [[package]]
 name = "pallet-babe"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8175,7 +8217,7 @@ dependencies = [
 [[package]]
 name = "pallet-bags-list"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -8195,7 +8237,7 @@ dependencies = [
 [[package]]
 name = "pallet-balances"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8210,26 +8252,29 @@ dependencies = [
 [[package]]
 name = "pallet-beefy"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support",
  "frame-system",
+ "pallet-authorship",
  "pallet-session",
  "parity-scale-codec",
  "scale-info",
  "serde",
  "sp-beefy",
  "sp-runtime 7.0.0",
+ "sp-session",
+ "sp-staking",
  "sp-std 5.0.0",
 ]
 
 [[package]]
 name = "pallet-beefy-mmr"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "array-bytes 4.2.0",
- "beefy-merkle-tree",
+ "binary-merkle-tree 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
  "frame-support",
  "frame-system",
  "log 0.4.17",
@@ -8239,6 +8284,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
+ "sp-api",
  "sp-beefy",
  "sp-core 7.0.0",
  "sp-io 7.0.0",
@@ -8275,7 +8321,7 @@ dependencies = [
 [[package]]
 name = "pallet-bounties"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8310,7 +8356,7 @@ dependencies = [
 [[package]]
 name = "pallet-child-bounties"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8329,7 +8375,7 @@ dependencies = [
 [[package]]
 name = "pallet-collator-selection"
 version = "3.0.0"
-source = "git+https://github.com/paritytech/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech/cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8348,7 +8394,7 @@ dependencies = [
 [[package]]
 name = "pallet-collective"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8365,7 +8411,7 @@ dependencies = [
 [[package]]
 name = "pallet-conviction-voting"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "assert_matches",
  "frame-benchmarking",
@@ -8477,7 +8523,7 @@ dependencies = [
 [[package]]
 name = "pallet-democracy"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8561,7 +8607,7 @@ dependencies = [
 [[package]]
 name = "pallet-election-provider-multi-phase"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -8584,7 +8630,7 @@ dependencies = [
 [[package]]
 name = "pallet-election-provider-support-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -8597,7 +8643,7 @@ dependencies = [
 [[package]]
 name = "pallet-elections-phragmen"
 version = "5.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8615,7 +8661,7 @@ dependencies = [
 [[package]]
 name = "pallet-fast-unstake"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -8672,7 +8718,7 @@ dependencies = [
 [[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8695,7 +8741,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "beefy-light-client-primitives",
  "cumulus-primitives-core",
@@ -8741,7 +8787,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc-ping"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8759,7 +8805,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "enumflags2",
  "frame-benchmarking",
@@ -8775,7 +8821,7 @@ dependencies = [
 [[package]]
 name = "pallet-im-online"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8795,7 +8841,7 @@ dependencies = [
 [[package]]
 name = "pallet-indices"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8891,7 +8937,7 @@ dependencies = [
 [[package]]
 name = "pallet-membership"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8908,7 +8954,7 @@ dependencies = [
 [[package]]
 name = "pallet-mmr"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8925,7 +8971,7 @@ dependencies = [
 [[package]]
 name = "pallet-multisig"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8941,7 +8987,7 @@ dependencies = [
 [[package]]
 name = "pallet-nis"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8957,7 +9003,7 @@ dependencies = [
 [[package]]
 name = "pallet-nomination-pools"
 version = "1.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8974,7 +9020,7 @@ dependencies = [
 [[package]]
 name = "pallet-nomination-pools-benchmarking"
 version = "1.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -8994,8 +9040,9 @@ dependencies = [
 [[package]]
 name = "pallet-nomination-pools-runtime-api"
 version = "1.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
+ "pallet-nomination-pools",
  "parity-scale-codec",
  "sp-api",
  "sp-std 5.0.0",
@@ -9004,7 +9051,7 @@ dependencies = [
 [[package]]
 name = "pallet-offences"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -9021,7 +9068,7 @@ dependencies = [
 [[package]]
 name = "pallet-offences-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -9105,7 +9152,7 @@ dependencies = [
 [[package]]
 name = "pallet-preimage"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9140,7 +9187,7 @@ dependencies = [
 [[package]]
 name = "pallet-proxy"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9153,23 +9200,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-randomness-collective-flip"
-version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "safe-mix",
- "scale-info",
- "sp-runtime 7.0.0",
- "sp-std 5.0.0",
-]
-
-[[package]]
 name = "pallet-ranked-collective"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9187,7 +9220,7 @@ dependencies = [
 [[package]]
 name = "pallet-recovery"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9202,7 +9235,7 @@ dependencies = [
 [[package]]
 name = "pallet-referenda"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "assert_matches",
  "frame-benchmarking",
@@ -9221,7 +9254,7 @@ dependencies = [
 [[package]]
 name = "pallet-scheduler"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9238,7 +9271,7 @@ dependencies = [
 [[package]]
 name = "pallet-session"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -9259,7 +9292,7 @@ dependencies = [
 [[package]]
 name = "pallet-session-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9275,7 +9308,7 @@ dependencies = [
 [[package]]
 name = "pallet-society"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -9289,7 +9322,7 @@ dependencies = [
 [[package]]
 name = "pallet-staking"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -9312,7 +9345,7 @@ dependencies = [
 [[package]]
 name = "pallet-staking-reward-curve"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2 1.0.56",
@@ -9323,7 +9356,7 @@ dependencies = [
 [[package]]
 name = "pallet-staking-reward-fn"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "log 0.4.17",
  "sp-arithmetic 6.0.0",
@@ -9364,9 +9397,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-staking-runtime-api"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.39#8c4b84520cee2d7de53cc33cb67605ce4efefba8"
+dependencies = [
+ "parity-scale-codec",
+ "sp-api",
+]
+
+[[package]]
 name = "pallet-state-trie-migration"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9383,7 +9425,7 @@ dependencies = [
 [[package]]
 name = "pallet-sudo"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -9397,7 +9439,7 @@ dependencies = [
 [[package]]
 name = "pallet-timestamp"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9415,7 +9457,7 @@ dependencies = [
 [[package]]
 name = "pallet-tips"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9451,7 +9493,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -9481,10 +9523,10 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "jsonrpsee 0.16.2",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
  "parity-scale-codec",
  "sp-api",
  "sp-blockchain",
@@ -9507,9 +9549,9 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc-runtime-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
  "parity-scale-codec",
  "sp-api",
  "sp-runtime 7.0.0",
@@ -9519,7 +9561,7 @@ dependencies = [
 [[package]]
 name = "pallet-treasury"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9536,7 +9578,7 @@ dependencies = [
 [[package]]
 name = "pallet-utility"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9601,7 +9643,7 @@ dependencies = [
 [[package]]
 name = "pallet-vesting"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9616,7 +9658,7 @@ dependencies = [
 [[package]]
 name = "pallet-whitelist"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9630,9 +9672,10 @@ dependencies = [
 
 [[package]]
 name = "pallet-xcm"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
+ "bounded-collections",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -9650,8 +9693,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-xcm-benchmarks"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9670,7 +9713,7 @@ dependencies = [
 [[package]]
 name = "parachain-info"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cumulus?rev=9b4e0247137f158d1a35118197d34adfa58858b7#9b4e0247137f158d1a35118197d34adfa58858b7"
+source = "git+https://github.com/paritytech//cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -10033,7 +10076,6 @@ dependencies = [
  "pallet-pablo",
  "pallet-preimage",
  "pallet-proxy",
- "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
  "pallet-sudo",
@@ -10202,8 +10244,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-approval-distribution"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "futures 0.3.28",
  "polkadot-node-metrics",
@@ -10217,8 +10259,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-availability-bitfield-distribution"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "futures 0.3.28",
  "polkadot-node-network-protocol",
@@ -10231,8 +10273,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-availability-distribution"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "derive_more",
  "fatality",
@@ -10254,8 +10296,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-availability-recovery"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "fatality",
  "futures 0.3.28",
@@ -10275,8 +10317,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-cli"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "clap 4.2.7",
  "frame-benchmarking-cli",
@@ -10303,8 +10345,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-client"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "async-trait",
  "frame-benchmarking",
@@ -10312,8 +10354,8 @@ dependencies = [
  "frame-system",
  "frame-system-rpc-runtime-api",
  "futures 0.3.28",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
  "polkadot-core-primitives",
  "polkadot-node-core-parachains-inherent",
  "polkadot-primitives",
@@ -10346,8 +10388,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-collator-protocol"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "always-assert",
  "bitvec",
@@ -10368,8 +10410,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-core-primitives"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -10380,8 +10422,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-dispute-distribution"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "derive_more",
  "fatality",
@@ -10405,8 +10447,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-erasure-coding"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "parity-scale-codec",
  "polkadot-node-primitives",
@@ -10419,8 +10461,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-gossip-support"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "futures 0.3.28",
  "futures-timer",
@@ -10439,8 +10481,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-network-bridge"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "always-assert",
  "async-trait",
@@ -10463,8 +10505,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-collation-generation"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "futures 0.3.28",
  "parity-scale-codec",
@@ -10481,8 +10523,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-core-approval-voting"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bitvec",
  "derive_more",
@@ -10510,8 +10552,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-core-av-store"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bitvec",
  "futures 0.3.28",
@@ -10524,14 +10566,15 @@ dependencies = [
  "polkadot-node-subsystem-util",
  "polkadot-overseer",
  "polkadot-primitives",
+ "sp-consensus",
  "thiserror",
  "tracing-gum",
 ]
 
 [[package]]
 name = "polkadot-node-core-backing"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bitvec",
  "fatality",
@@ -10549,8 +10592,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-core-bitfield-signing"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "futures 0.3.28",
  "polkadot-node-subsystem",
@@ -10564,8 +10607,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-core-candidate-validation"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "async-trait",
  "futures 0.3.28",
@@ -10575,6 +10618,7 @@ dependencies = [
  "polkadot-node-metrics",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
+ "polkadot-node-subsystem-util",
  "polkadot-parachain",
  "polkadot-primitives",
  "sp-maybe-compressed-blob",
@@ -10583,8 +10627,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-core-chain-api"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "futures 0.3.28",
  "polkadot-node-metrics",
@@ -10598,8 +10642,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-core-chain-selection"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "futures 0.3.28",
  "futures-timer",
@@ -10615,8 +10659,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-core-dispute-coordinator"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "fatality",
  "futures 0.3.28",
@@ -10634,8 +10678,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-core-parachains-inherent"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "async-trait",
  "futures 0.3.28",
@@ -10651,8 +10695,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-core-provisioner"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bitvec",
  "fatality",
@@ -10669,19 +10713,22 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-core-pvf"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "always-assert",
  "assert_matches",
  "cpu-time",
  "futures 0.3.28",
  "futures-timer",
+ "libc",
  "parity-scale-codec",
  "pin-project",
  "polkadot-core-primitives",
  "polkadot-node-metrics",
+ "polkadot-node-primitives",
  "polkadot-parachain",
+ "polkadot-primitives",
  "rand 0.8.5",
  "rayon",
  "sc-executor",
@@ -10695,14 +10742,15 @@ dependencies = [
  "sp-tracing 6.0.0",
  "sp-wasm-interface 7.0.0",
  "tempfile",
+ "tikv-jemalloc-ctl",
  "tokio",
  "tracing-gum",
 ]
 
 [[package]]
 name = "polkadot-node-core-pvf-checker"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "futures 0.3.28",
  "polkadot-node-primitives",
@@ -10717,8 +10765,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-core-runtime-api"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "futures 0.3.28",
  "lru 0.9.0",
@@ -10732,8 +10780,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-jaeger"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "lazy_static",
  "log 0.4.17",
@@ -10750,8 +10798,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-metrics"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bs58",
  "futures 0.3.28",
@@ -10769,8 +10817,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-network-protocol"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -10792,8 +10840,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-primitives"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bounded-vec",
  "futures 0.3.28",
@@ -10808,14 +10856,15 @@ dependencies = [
  "sp-core 7.0.0",
  "sp-keystore 0.13.0",
  "sp-maybe-compressed-blob",
+ "sp-runtime 7.0.0",
  "thiserror",
  "zstd",
 ]
 
 [[package]]
 name = "polkadot-node-subsystem"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "polkadot-node-jaeger",
  "polkadot-node-subsystem-types",
@@ -10824,8 +10873,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-subsystem-types"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -10847,8 +10896,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-node-subsystem-util"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -10880,8 +10929,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-overseer"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "async-trait",
  "futures 0.3.28",
@@ -10903,9 +10952,10 @@ dependencies = [
 
 [[package]]
 name = "polkadot-parachain"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
+ "bounded-collections",
  "derive_more",
  "frame-support",
  "parity-scale-codec",
@@ -10919,8 +10969,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-performance-test"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "env_logger 0.9.3",
  "kusama-runtime",
@@ -10928,14 +10978,15 @@ dependencies = [
  "polkadot-erasure-coding",
  "polkadot-node-core-pvf",
  "polkadot-node-primitives",
+ "polkadot-primitives",
  "quote 1.0.26",
  "thiserror",
 ]
 
 [[package]]
 name = "polkadot-primitives"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bitvec",
  "hex-literal",
@@ -10960,14 +11011,14 @@ dependencies = [
 
 [[package]]
 name = "polkadot-rpc"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "beefy-gadget",
  "beefy-gadget-rpc",
  "jsonrpsee 0.16.2",
  "mmr-rpc",
- "pallet-transaction-payment-rpc 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
+ "pallet-transaction-payment-rpc 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
  "polkadot-primitives",
  "sc-chain-spec",
  "sc-client-api",
@@ -10992,8 +11043,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-runtime"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -11037,10 +11088,11 @@ dependencies = [
  "pallet-session-benchmarking",
  "pallet-staking",
  "pallet-staking-reward-curve",
+ "pallet-staking-runtime-api",
  "pallet-timestamp",
  "pallet-tips",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting 4.0.0-dev",
@@ -11081,8 +11133,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-runtime-common"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -11094,7 +11146,6 @@ dependencies = [
  "log 0.4.17",
  "pallet-authorship",
  "pallet-babe",
- "pallet-bags-list",
  "pallet-balances",
  "pallet-beefy-mmr",
  "pallet-election-provider-multi-phase",
@@ -11103,7 +11154,7 @@ dependencies = [
  "pallet-staking",
  "pallet-staking-reward-fn",
  "pallet-timestamp",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
  "pallet-treasury",
  "pallet-vesting 4.0.0-dev",
  "parity-scale-codec",
@@ -11130,8 +11181,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-runtime-constants"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "frame-support",
  "polkadot-primitives",
@@ -11144,8 +11195,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-runtime-metrics"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bs58",
  "parity-scale-codec",
@@ -11156,8 +11207,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-runtime-parachains"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bitflags",
  "bitvec",
@@ -11175,6 +11226,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-vesting 4.0.0-dev",
  "parity-scale-codec",
+ "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-metrics",
  "rand 0.8.5",
@@ -11199,8 +11251,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-service"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "async-trait",
  "beefy-gadget",
@@ -11218,7 +11270,7 @@ dependencies = [
  "pallet-babe",
  "pallet-im-online",
  "pallet-staking",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
  "parity-db",
  "polkadot-approval-distribution",
  "polkadot-availability-bitfield-distribution",
@@ -11308,8 +11360,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-statement-distribution"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "arrayvec 0.5.2",
  "fatality",
@@ -11329,8 +11381,8 @@ dependencies = [
 
 [[package]]
 name = "polkadot-statement-table"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "parity-scale-codec",
  "polkadot-primitives",
@@ -11467,7 +11519,7 @@ dependencies = [
  "signal-hook",
  "signal-hook-tokio",
  "sp-arithmetic 6.0.0",
- "subxt 0.25.0",
+ "subxt",
  "tokio",
  "tokio-stream",
  "url 1.7.2",
@@ -11943,16 +11995,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rand_distr"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32cb0b9bc82b0a0876c2dd994a7e7a2683d3e7390ca40e6886785ef0c7e3ee31"
-dependencies = [
- "num-traits",
- "rand 0.8.5",
-]
-
-[[package]]
 name = "rand_hc"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12173,9 +12215,9 @@ dependencies = [
 
 [[package]]
 name = "regalloc2"
-version = "0.3.2"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d43a209257d978ef079f3d446331d0f1794f5e0fc19b306a199983857833a779"
+checksum = "300d4fbfb40c1c66a78ba3ddd41c1110247cf52f97b87d0f2fc9209bd49b030c"
 dependencies = [
  "fxhash",
  "log 0.4.17",
@@ -12214,6 +12256,18 @@ name = "regex-syntax"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a5996294f19bd3aae0453a862ad728f60e6600695733dd5df01da90c54363a3c"
+
+[[package]]
+name = "region"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "76e189c2369884dce920945e2ddf79b3dff49e071a167dd1817fa9c4c00d512e"
+dependencies = [
+ "bitflags",
+ "libc",
+ "mach",
+ "winapi 0.3.9",
+]
 
 [[package]]
 name = "rend"
@@ -12385,10 +12439,10 @@ dependencies = [
 
 [[package]]
 name = "rococo-runtime"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
- "beefy-merkle-tree",
+ "binary-merkle-tree 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.39)",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -12429,8 +12483,8 @@ dependencies = [
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-tips",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting 4.0.0-dev",
@@ -12471,8 +12525,8 @@ dependencies = [
 
 [[package]]
 name = "rococo-runtime-constants"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "frame-support",
  "polkadot-primitives",
@@ -12651,6 +12705,20 @@ dependencies = [
 
 [[package]]
 name = "rustix"
+version = "0.36.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a38f9520be93aba504e8ca974197f46158de5dcaa9fa04b57c57cd6a679d658"
+dependencies = [
+ "bitflags",
+ "errno 0.3.1",
+ "io-lifetimes 1.0.10",
+ "libc",
+ "linux-raw-sys 0.1.4",
+ "windows-sys 0.45.0",
+]
+
+[[package]]
+name = "rustix"
 version = "0.37.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8bbfc1d1c7c40c01715f47d71444744a81669ca84e8b63e25a55e169b1f86433"
@@ -12745,15 +12813,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f91339c0467de62360649f8d3e185ca8de4224ff281f66000de5eb2a77a79041"
 
 [[package]]
-name = "safe-mix"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d3d055a2582e6b00ed7a31c1524040aa391092bf636328350813f3a0605215c"
-dependencies = [
- "rustc_version 0.2.3",
-]
-
-[[package]]
 name = "safe-proc-macro2"
 version = "1.0.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12801,6 +12860,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "safe_arch"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "794821e4ccb0d9f979512f9c1973480123f9bd62a90d74ab0f9426fcf8f4a529"
+dependencies = [
+ "bytemuck",
+]
+
+[[package]]
 name = "safemem"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12818,7 +12886,7 @@ dependencies = [
 [[package]]
 name = "sc-allocator"
 version = "4.1.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "log 0.4.17",
  "sp-core 7.0.0",
@@ -12829,7 +12897,7 @@ dependencies = [
 [[package]]
 name = "sc-authority-discovery"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "futures 0.3.28",
@@ -12856,7 +12924,7 @@ dependencies = [
 [[package]]
 name = "sc-basic-authorship"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "futures 0.3.28",
  "futures-timer",
@@ -12879,7 +12947,7 @@ dependencies = [
 [[package]]
 name = "sc-block-builder"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "parity-scale-codec",
  "sc-client-api",
@@ -12895,7 +12963,7 @@ dependencies = [
 [[package]]
 name = "sc-chain-spec"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "memmap2",
  "sc-chain-spec-derive",
@@ -12910,7 +12978,7 @@ dependencies = [
 [[package]]
 name = "sc-chain-spec-derive"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2 1.0.56",
@@ -12921,7 +12989,7 @@ dependencies = [
 [[package]]
 name = "sc-cli"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "array-bytes 4.2.0",
  "chrono",
@@ -12961,7 +13029,7 @@ dependencies = [
 [[package]]
 name = "sc-client-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "fnv",
  "futures 0.3.28",
@@ -12987,7 +13055,7 @@ dependencies = [
 [[package]]
 name = "sc-client-db"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "hash-db",
  "kvdb",
@@ -13013,7 +13081,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "futures 0.3.28",
@@ -13038,7 +13106,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-aura"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "futures 0.3.28",
@@ -13067,7 +13135,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-babe"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "fork-tree",
@@ -13085,6 +13153,7 @@ dependencies = [
  "sc-consensus-slots",
  "sc-keystore",
  "sc-telemetry",
+ "scale-info",
  "schnorrkel",
  "sp-api",
  "sp-application-crypto 7.0.0",
@@ -13105,7 +13174,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-babe-rpc"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "futures 0.3.28",
  "jsonrpsee 0.16.2",
@@ -13127,7 +13196,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-epochs"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "fork-tree",
  "parity-scale-codec",
@@ -13140,7 +13209,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-slots"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "futures 0.3.28",
@@ -13163,7 +13232,7 @@ dependencies = [
 [[package]]
 name = "sc-executor"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "lru 0.8.1",
  "parity-scale-codec",
@@ -13187,7 +13256,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-common"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "sc-allocator",
  "sp-maybe-compressed-blob",
@@ -13200,7 +13269,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-wasmi"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "log 0.4.17",
  "sc-allocator",
@@ -13213,24 +13282,25 @@ dependencies = [
 [[package]]
 name = "sc-executor-wasmtime"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
+ "anyhow",
  "cfg-if 1.0.0",
  "libc",
  "log 0.4.17",
  "once_cell",
- "rustix 0.35.13",
+ "rustix 0.36.13",
  "sc-allocator",
  "sc-executor-common",
  "sp-runtime-interface 7.0.0",
  "sp-wasm-interface 7.0.0",
- "wasmtime",
+ "wasmtime 6.0.2",
 ]
 
 [[package]]
 name = "sc-finality-grandpa"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "ahash 0.8.3",
  "array-bytes 4.2.0",
@@ -13270,7 +13340,7 @@ dependencies = [
 [[package]]
 name = "sc-finality-grandpa-rpc"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "finality-grandpa",
  "futures 0.3.28",
@@ -13290,7 +13360,7 @@ dependencies = [
 [[package]]
 name = "sc-informant"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "ansi_term",
  "futures 0.3.28",
@@ -13305,7 +13375,7 @@ dependencies = [
 [[package]]
 name = "sc-keystore"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "array-bytes 4.2.0",
  "async-trait",
@@ -13320,7 +13390,7 @@ dependencies = [
 [[package]]
 name = "sc-network"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "array-bytes 4.2.0",
  "async-trait",
@@ -13335,6 +13405,7 @@ dependencies = [
  "libp2p",
  "log 0.4.17",
  "lru 0.8.1",
+ "mockall",
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "pin-project",
@@ -13362,7 +13433,7 @@ dependencies = [
 [[package]]
 name = "sc-network-bitswap"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "cid",
  "futures 0.3.28",
@@ -13381,7 +13452,7 @@ dependencies = [
 [[package]]
 name = "sc-network-common"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "bitflags",
@@ -13407,7 +13478,7 @@ dependencies = [
 [[package]]
 name = "sc-network-gossip"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "ahash 0.8.3",
  "futures 0.3.28",
@@ -13425,7 +13496,7 @@ dependencies = [
 [[package]]
 name = "sc-network-light"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "array-bytes 4.2.0",
  "futures 0.3.28",
@@ -13446,7 +13517,7 @@ dependencies = [
 [[package]]
 name = "sc-network-sync"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "array-bytes 4.2.0",
  "async-trait",
@@ -13478,7 +13549,7 @@ dependencies = [
 [[package]]
 name = "sc-network-transactions"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "array-bytes 4.2.0",
  "futures 0.3.28",
@@ -13497,7 +13568,7 @@ dependencies = [
 [[package]]
 name = "sc-offchain"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "array-bytes 4.2.0",
  "bytes 1.4.0",
@@ -13527,7 +13598,7 @@ dependencies = [
 [[package]]
 name = "sc-peerset"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "futures 0.3.28",
  "libp2p",
@@ -13540,7 +13611,7 @@ dependencies = [
 [[package]]
 name = "sc-proposer-metrics"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "log 0.4.17",
  "substrate-prometheus-endpoint",
@@ -13549,7 +13620,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "futures 0.3.28",
  "jsonrpsee 0.16.2",
@@ -13579,7 +13650,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-api"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "jsonrpsee 0.16.2",
  "parity-scale-codec",
@@ -13598,7 +13669,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-server"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "http",
  "jsonrpsee 0.16.2",
@@ -13613,7 +13684,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-spec-v2"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "array-bytes 4.2.0",
  "futures 0.3.28",
@@ -13639,7 +13710,7 @@ dependencies = [
 [[package]]
 name = "sc-service"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "directories",
@@ -13705,7 +13776,7 @@ dependencies = [
 [[package]]
 name = "sc-state-db"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
@@ -13716,7 +13787,7 @@ dependencies = [
 [[package]]
 name = "sc-storage-monitor"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "clap 4.2.7",
  "futures 0.3.28",
@@ -13732,7 +13803,7 @@ dependencies = [
 [[package]]
 name = "sc-sync-state-rpc"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "jsonrpsee 0.16.2",
  "parity-scale-codec",
@@ -13751,7 +13822,7 @@ dependencies = [
 [[package]]
 name = "sc-sysinfo"
 version = "6.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "futures 0.3.28",
  "libc",
@@ -13770,7 +13841,7 @@ dependencies = [
 [[package]]
 name = "sc-telemetry"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "chrono",
  "futures 0.3.28",
@@ -13789,7 +13860,7 @@ dependencies = [
 [[package]]
 name = "sc-tracing"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "ansi_term",
  "atty",
@@ -13820,7 +13891,7 @@ dependencies = [
 [[package]]
 name = "sc-tracing-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2 1.0.56",
@@ -13831,7 +13902,7 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "futures 0.3.28",
@@ -13858,7 +13929,7 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "futures 0.3.28",
@@ -13872,7 +13943,7 @@ dependencies = [
 [[package]]
 name = "sc-utils"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "backtrace",
  "futures 0.3.28",
@@ -14403,14 +14474,15 @@ dependencies = [
 
 [[package]]
 name = "simba"
-version = "0.5.1"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e82063457853d00243beda9952e910b82593e4b07ae9f721b9278a99a0d3d5c"
+checksum = "061507c94fc6ab4ba1c9a0305018408e312e17c041eb63bef8aa726fa33aceae"
 dependencies = [
  "approx",
  "num-complex",
  "num-traits",
  "paste 1.0.12",
+ "wide",
 ]
 
 [[package]]
@@ -14428,7 +14500,7 @@ checksum = "f27f6278552951f1f2b8cf9da965d10969b2efdea95a6ec47987ab46edfe263a"
 [[package]]
 name = "simple-iavl"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=cd8e9ee04bb41252dc5ab513c4e2ef077267f043#cd8e9ee04bb41252dc5ab513c4e2ef077267f043"
+source = "git+https://github.com/ComposableFi/centauri?rev=3ca5e4f652e332cbbd746f336f1861dd35c0582b#3ca5e4f652e332cbbd746f336f1861dd35c0582b"
 dependencies = [
  "bytes 1.4.0",
  "ics23 0.8.1",
@@ -14468,8 +14540,8 @@ checksum = "03b634d87b960ab1a38c4fe143b508576f075e7c978bfad18217645ebfdfa2ec"
 
 [[package]]
 name = "slot-range-helper"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "enumn",
  "parity-scale-codec",
@@ -14573,7 +14645,7 @@ dependencies = [
 [[package]]
 name = "sp-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "hash-db",
  "log 0.4.17",
@@ -14591,7 +14663,7 @@ dependencies = [
 [[package]]
 name = "sp-api-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "blake2",
  "proc-macro-crate 1.3.1",
@@ -14603,7 +14675,7 @@ dependencies = [
 [[package]]
 name = "sp-application-crypto"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -14630,7 +14702,7 @@ dependencies = [
 [[package]]
 name = "sp-arithmetic"
 version = "6.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "integer-sqrt",
  "num-traits",
@@ -14659,7 +14731,7 @@ dependencies = [
 [[package]]
 name = "sp-authority-discovery"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -14672,8 +14744,9 @@ dependencies = [
 [[package]]
 name = "sp-beefy"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
+ "lazy_static",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -14684,12 +14757,13 @@ dependencies = [
  "sp-mmr-primitives",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
+ "strum",
 ]
 
 [[package]]
 name = "sp-block-builder"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -14701,7 +14775,7 @@ dependencies = [
 [[package]]
 name = "sp-blockchain"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "futures 0.3.28",
  "log 0.4.17",
@@ -14719,7 +14793,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "futures 0.3.28",
@@ -14737,7 +14811,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-aura"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -14755,7 +14829,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-babe"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "merlin",
@@ -14778,7 +14852,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-slots"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -14790,7 +14864,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-vrf"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -14803,12 +14877,13 @@ dependencies = [
 [[package]]
 name = "sp-core"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "array-bytes 4.2.0",
  "base58",
  "bitflags",
  "blake2",
+ "bounded-collections",
  "dyn-clonable",
  "ed25519-zebra",
  "futures 0.3.28",
@@ -14888,7 +14963,7 @@ dependencies = [
 [[package]]
 name = "sp-core-hashing"
 version = "5.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "blake2",
  "byteorder",
@@ -14917,7 +14992,7 @@ dependencies = [
 [[package]]
 name = "sp-core-hashing-proc-macro"
 version = "5.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
@@ -14928,7 +15003,7 @@ dependencies = [
 [[package]]
 name = "sp-database"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "kvdb",
  "parking_lot 0.12.1",
@@ -14948,7 +15023,7 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "5.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
@@ -14969,7 +15044,7 @@ dependencies = [
 [[package]]
 name = "sp-externalities"
 version = "0.13.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "environmental",
  "parity-scale-codec",
@@ -14992,7 +15067,7 @@ dependencies = [
 [[package]]
 name = "sp-finality-grandpa"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "finality-grandpa",
  "log 0.4.17",
@@ -15010,11 +15085,12 @@ dependencies = [
 [[package]]
 name = "sp-inherents"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "impl-trait-for-tuples",
  "parity-scale-codec",
+ "scale-info",
  "sp-core 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
@@ -15024,7 +15100,7 @@ dependencies = [
 [[package]]
 name = "sp-io"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "bytes 1.4.0",
  "ed25519",
@@ -15075,7 +15151,7 @@ dependencies = [
 [[package]]
 name = "sp-keyring"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "lazy_static",
  "sp-core 7.0.0",
@@ -15086,7 +15162,7 @@ dependencies = [
 [[package]]
 name = "sp-keystore"
 version = "0.13.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "futures 0.3.28",
@@ -15120,7 +15196,7 @@ dependencies = [
 [[package]]
 name = "sp-maybe-compressed-blob"
 version = "4.1.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "thiserror",
  "zstd",
@@ -15129,7 +15205,7 @@ dependencies = [
 [[package]]
 name = "sp-mmr-primitives"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "ckb-merkle-mountain-range 0.5.2",
  "log 0.4.17",
@@ -15147,7 +15223,7 @@ dependencies = [
 [[package]]
 name = "sp-npos-elections"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -15161,7 +15237,7 @@ dependencies = [
 [[package]]
 name = "sp-offchain"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "sp-api",
  "sp-core 7.0.0",
@@ -15171,7 +15247,7 @@ dependencies = [
 [[package]]
 name = "sp-panic-handler"
 version = "5.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "backtrace",
  "lazy_static",
@@ -15192,7 +15268,7 @@ dependencies = [
 [[package]]
 name = "sp-rpc"
 version = "6.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "rustc-hash",
  "serde",
@@ -15202,7 +15278,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "either",
  "hash256-std-hasher",
@@ -15247,7 +15323,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "bytes 1.4.0",
  "impl-trait-for-tuples",
@@ -15284,7 +15360,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "6.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "Inflector",
  "proc-macro-crate 1.3.1",
@@ -15309,7 +15385,7 @@ dependencies = [
 [[package]]
 name = "sp-session"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -15323,7 +15399,7 @@ dependencies = [
 [[package]]
 name = "sp-staking"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -15335,7 +15411,7 @@ dependencies = [
 [[package]]
 name = "sp-state-machine"
 version = "0.13.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "hash-db",
  "log 0.4.17",
@@ -15382,7 +15458,7 @@ checksum = "14804d6069ee7a388240b665f17908d98386ffb0b5d39f89a4099fc7a2a4c03f"
 [[package]]
 name = "sp-std"
 version = "5.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 
 [[package]]
 name = "sp-std"
@@ -15407,7 +15483,7 @@ dependencies = [
 [[package]]
 name = "sp-storage"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "impl-serde 0.4.0",
  "parity-scale-codec",
@@ -15434,7 +15510,7 @@ dependencies = [
 [[package]]
 name = "sp-timestamp"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "futures-timer",
@@ -15449,7 +15525,7 @@ dependencies = [
 [[package]]
 name = "sp-tracing"
 version = "6.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "parity-scale-codec",
  "sp-std 5.0.0",
@@ -15474,7 +15550,7 @@ dependencies = [
 [[package]]
 name = "sp-transaction-pool"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "sp-api",
  "sp-runtime 7.0.0",
@@ -15483,7 +15559,7 @@ dependencies = [
 [[package]]
 name = "sp-transaction-storage-proof"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "log 0.4.17",
@@ -15499,7 +15575,7 @@ dependencies = [
 [[package]]
 name = "sp-trie"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "ahash 0.8.3",
  "hash-db",
@@ -15515,7 +15591,7 @@ dependencies = [
  "sp-std 5.0.0",
  "thiserror",
  "tracing",
- "trie-db",
+ "trie-db 0.25.1",
  "trie-root",
 ]
 
@@ -15539,14 +15615,14 @@ dependencies = [
  "sp-std 6.0.0",
  "thiserror",
  "tracing",
- "trie-db",
+ "trie-db 0.24.0",
  "trie-root",
 ]
 
 [[package]]
 name = "sp-version"
 version = "5.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "impl-serde 0.4.0",
  "parity-scale-codec",
@@ -15563,7 +15639,7 @@ dependencies = [
 [[package]]
 name = "sp-version-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "parity-scale-codec",
  "proc-macro2 1.0.56",
@@ -15574,14 +15650,15 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "7.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
+ "anyhow",
  "impl-trait-for-tuples",
  "log 0.4.17",
  "parity-scale-codec",
  "sp-std 5.0.0",
  "wasmi 0.13.2",
- "wasmtime",
+ "wasmtime 6.0.2",
 ]
 
 [[package]]
@@ -15595,13 +15672,13 @@ dependencies = [
  "parity-scale-codec",
  "sp-std 6.0.0",
  "wasmi 0.13.2",
- "wasmtime",
+ "wasmtime 1.0.2",
 ]
 
 [[package]]
 name = "sp-weights"
 version = "4.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -15769,19 +15846,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "statrs"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05bdbb8e4e78216a85785a85d3ec3183144f98d0097b9281802c019bb07a6f05"
-dependencies = [
- "approx",
- "lazy_static",
- "nalgebra",
- "num-traits",
- "rand 0.8.5",
-]
-
-[[package]]
 name = "stdweb"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -15923,7 +15987,7 @@ dependencies = [
 [[package]]
 name = "substrate-build-script-utils"
 version = "3.0.0"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "platforms 2.0.0",
 ]
@@ -15931,7 +15995,7 @@ dependencies = [
 [[package]]
 name = "substrate-frame-rpc-system"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "frame-system-rpc-runtime-api",
  "futures 0.3.28",
@@ -15950,7 +16014,7 @@ dependencies = [
 [[package]]
 name = "substrate-prometheus-endpoint"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "hyper 0.14.26",
  "log 0.4.17",
@@ -15962,7 +16026,7 @@ dependencies = [
 [[package]]
 name = "substrate-rpc-client"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "async-trait",
  "jsonrpsee 0.16.2",
@@ -15975,7 +16039,7 @@ dependencies = [
 [[package]]
 name = "substrate-state-trie-migration-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "jsonrpsee 0.16.2",
  "log 0.4.17",
@@ -15988,13 +16052,13 @@ dependencies = [
  "sp-runtime 7.0.0",
  "sp-state-machine 0.13.0",
  "sp-trie 7.0.0",
- "trie-db",
+ "trie-db 0.25.1",
 ]
 
 [[package]]
 name = "substrate-wasm-builder"
 version = "5.0.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
  "ansi_term",
  "build-helper",
@@ -16064,40 +16128,8 @@ dependencies = [
  "sp-core 11.0.0",
  "sp-core-hashing 6.0.0",
  "sp-runtime 12.0.0",
- "subxt-macro 0.25.0",
- "subxt-metadata 0.25.0",
- "thiserror",
- "tracing",
-]
-
-[[package]]
-name = "subxt"
-version = "0.26.0"
-source = "git+https://github.com/paritytech/subxt?rev=d92352ad739836a4100e1ef1db607acc82ed8c5a#d92352ad739836a4100e1ef1db607acc82ed8c5a"
-dependencies = [
- "base58",
- "blake2",
- "derivative",
- "frame-metadata",
- "futures 0.3.28",
- "getrandom 0.2.9",
- "hex",
- "impl-serde 0.4.0",
- "jsonrpsee 0.16.2",
- "parity-scale-codec",
- "parking_lot 0.12.1",
- "primitive-types",
- "scale-bits",
- "scale-decode",
- "scale-info",
- "scale-value",
- "serde",
- "serde_json",
- "sp-core 11.0.0",
- "sp-core-hashing 6.0.0",
- "sp-runtime 12.0.0",
- "subxt-macro 0.26.0",
- "subxt-metadata 0.26.0",
+ "subxt-macro",
+ "subxt-metadata",
  "thiserror",
  "tracing",
 ]
@@ -16117,27 +16149,7 @@ dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
  "scale-info",
- "subxt-metadata 0.25.0",
- "syn 1.0.109",
- "tokio",
-]
-
-[[package]]
-name = "subxt-codegen"
-version = "0.26.0"
-source = "git+https://github.com/paritytech/subxt?rev=d92352ad739836a4100e1ef1db607acc82ed8c5a#d92352ad739836a4100e1ef1db607acc82ed8c5a"
-dependencies = [
- "darling",
- "frame-metadata",
- "heck 0.4.1",
- "hex",
- "jsonrpsee 0.16.2",
- "parity-scale-codec",
- "proc-macro-error",
- "proc-macro2 1.0.56",
- "quote 1.0.26",
- "scale-info",
- "subxt-metadata 0.26.0",
+ "subxt-metadata",
  "syn 1.0.109",
  "tokio",
 ]
@@ -16149,18 +16161,7 @@ source = "git+https://github.com/paritytech/subxt?rev=2a913a3aa99a07f7acaedbbaee
 dependencies = [
  "darling",
  "proc-macro-error",
- "subxt-codegen 0.25.0",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "subxt-macro"
-version = "0.26.0"
-source = "git+https://github.com/paritytech/subxt?rev=d92352ad739836a4100e1ef1db607acc82ed8c5a#d92352ad739836a4100e1ef1db607acc82ed8c5a"
-dependencies = [
- "darling",
- "proc-macro-error",
- "subxt-codegen 0.26.0",
+ "subxt-codegen",
  "syn 1.0.109",
 ]
 
@@ -16168,17 +16169,6 @@ dependencies = [
 name = "subxt-metadata"
 version = "0.25.0"
 source = "git+https://github.com/paritytech/subxt?rev=2a913a3aa99a07f7acaedbbaeed6925d34627303#2a913a3aa99a07f7acaedbbaeed6925d34627303"
-dependencies = [
- "frame-metadata",
- "parity-scale-codec",
- "scale-info",
- "sp-core-hashing 6.0.0",
-]
-
-[[package]]
-name = "subxt-metadata"
-version = "0.26.0"
-source = "git+https://github.com/paritytech/subxt?rev=d92352ad739836a4100e1ef1db607acc82ed8c5a#d92352ad739836a4100e1ef1db607acc82ed8c5a"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",
@@ -16953,8 +16943,8 @@ dependencies = [
 
 [[package]]
 name = "tracing-gum"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "polkadot-node-jaeger",
  "polkadot-primitives",
@@ -16964,8 +16954,8 @@ dependencies = [
 
 [[package]]
 name = "tracing-gum-proc-macro"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "expander 0.0.6",
  "proc-macro-crate 1.3.1",
@@ -17052,6 +17042,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "trie-db"
+version = "0.25.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3390c0409daaa6027d6681393316f4ccd3ff82e1590a1e4725014e3ae2bf1920"
+dependencies = [
+ "hash-db",
+ "hashbrown 0.13.2",
+ "log 0.4.17",
+ "rustc-hex",
+ "smallvec 1.10.0",
+]
+
+[[package]]
 name = "trie-root"
 version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -17115,8 +17118,9 @@ checksum = "3528ecfd12c466c6f163363caf2d02a71161dd5e1cc6ae7b34207ea2d42d81ed"
 [[package]]
 name = "try-runtime-cli"
 version = "0.10.0-dev"
-source = "git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a#5df31444a025f4e4ec2f5e3fe4681a10bdfec72a"
+source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
 dependencies = [
+ "async-trait",
  "clap 4.2.7",
  "frame-remote-externalities",
  "hex",
@@ -17128,14 +17132,19 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-api",
+ "sp-consensus-aura",
+ "sp-consensus-babe",
  "sp-core 7.0.0",
  "sp-debug-derive 5.0.0",
  "sp-externalities 0.13.0",
+ "sp-inherents",
  "sp-io 7.0.0",
  "sp-keystore 0.13.0",
  "sp-rpc",
  "sp-runtime 7.0.0",
  "sp-state-machine 0.13.0",
+ "sp-timestamp",
+ "sp-transaction-storage-proof",
  "sp-version",
  "sp-weights 4.0.0",
  "substrate-rpc-client",
@@ -17733,6 +17742,7 @@ dependencies = [
  "memory_units",
  "num-rational",
  "num-traits",
+ "region",
 ]
 
 [[package]]
@@ -17754,6 +17764,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab5d3e08b13876f96dd55608d03cd4883a0545884932d5adf11925876c96daef"
 dependencies = [
  "indexmap",
+]
+
+[[package]]
+name = "wasmparser"
+version = "0.100.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64b20236ab624147dfbb62cf12a19aaf66af0e41b8398838b66e997d07d269d4"
+dependencies = [
+ "indexmap",
+ "url 2.3.1",
 ]
 
 [[package]]
@@ -17781,16 +17801,41 @@ dependencies = [
  "once_cell",
  "paste 1.0.12",
  "psm",
+ "serde",
+ "target-lexicon",
+ "wasmparser 0.89.1",
+ "wasmtime-environ 1.0.2",
+ "wasmtime-jit 1.0.2",
+ "wasmtime-runtime 1.0.2",
+ "windows-sys 0.36.1",
+]
+
+[[package]]
+name = "wasmtime"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "76a222f5fa1e14b2cefc286f1b68494d7a965f4bf57ec04c59bb62673d639af6"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "cfg-if 1.0.0",
+ "indexmap",
+ "libc",
+ "log 0.4.17",
+ "object 0.29.0",
+ "once_cell",
+ "paste 1.0.12",
+ "psm",
  "rayon",
  "serde",
  "target-lexicon",
- "wasmparser",
+ "wasmparser 0.100.0",
  "wasmtime-cache",
  "wasmtime-cranelift",
- "wasmtime-environ",
- "wasmtime-jit",
- "wasmtime-runtime",
- "windows-sys 0.36.1",
+ "wasmtime-environ 6.0.2",
+ "wasmtime-jit 6.0.2",
+ "wasmtime-runtime 6.0.2",
+ "windows-sys 0.42.0",
 ]
 
 [[package]]
@@ -17803,10 +17848,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "wasmtime-cache"
-version = "1.0.2"
+name = "wasmtime-asm-macros"
+version = "6.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bcd849399d17d2270141cfe47fa0d91ee52d5f8ea9b98cf7ddde0d53e5f79882"
+checksum = "4407a7246e7d2f3d8fb1cf0c72fda8dbafdb6dd34d555ae8bea0e5ae031089cc"
+dependencies = [
+ "cfg-if 1.0.0",
+]
+
+[[package]]
+name = "wasmtime-cache"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ceb3adf61d654be0be67fffdce42447b0880481348785be5fe40b5dd7663a4c"
 dependencies = [
  "anyhow",
  "base64 0.13.1",
@@ -17814,23 +17868,23 @@ dependencies = [
  "directories-next",
  "file-per-thread-logger",
  "log 0.4.17",
- "rustix 0.35.13",
+ "rustix 0.36.13",
  "serde",
- "sha2 0.9.9",
+ "sha2 0.10.6",
  "toml",
- "windows-sys 0.36.1",
+ "windows-sys 0.42.0",
  "zstd",
 ]
 
 [[package]]
 name = "wasmtime-cranelift"
-version = "1.0.2"
+version = "6.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4bd91339b742ff20bfed4532a27b73c86b5bcbfedd6bea2dcdf2d64471e1b5c6"
+checksum = "3c366bb8647e01fd08cb5589976284b00abfded5529b33d7e7f3f086c68304a4"
 dependencies = [
  "anyhow",
  "cranelift-codegen",
- "cranelift-entity",
+ "cranelift-entity 0.93.2",
  "cranelift-frontend",
  "cranelift-native",
  "cranelift-wasm",
@@ -17839,8 +17893,8 @@ dependencies = [
  "object 0.29.0",
  "target-lexicon",
  "thiserror",
- "wasmparser",
- "wasmtime-environ",
+ "wasmparser 0.100.0",
+ "wasmtime-environ 6.0.2",
 ]
 
 [[package]]
@@ -17850,7 +17904,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ebb881c61f4f627b5d45c54e629724974f8a8890d455bcbe634330cc27309644"
 dependencies = [
  "anyhow",
- "cranelift-entity",
+ "cranelift-entity 0.88.2",
  "gimli 0.26.2",
  "indexmap",
  "log 0.4.17",
@@ -17858,8 +17912,27 @@ dependencies = [
  "serde",
  "target-lexicon",
  "thiserror",
- "wasmparser",
- "wasmtime-types",
+ "wasmparser 0.89.1",
+ "wasmtime-types 1.0.2",
+]
+
+[[package]]
+name = "wasmtime-environ"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47b8b50962eae38ee319f7b24900b7cf371f03eebdc17400c1dc8575fc10c9a7"
+dependencies = [
+ "anyhow",
+ "cranelift-entity 0.93.2",
+ "gimli 0.26.2",
+ "indexmap",
+ "log 0.4.17",
+ "object 0.29.0",
+ "serde",
+ "target-lexicon",
+ "thiserror",
+ "wasmparser 0.100.0",
+ "wasmtime-types 6.0.2",
 ]
 
 [[package]]
@@ -17881,10 +17954,33 @@ dependencies = [
  "serde",
  "target-lexicon",
  "thiserror",
- "wasmtime-environ",
- "wasmtime-jit-debug",
- "wasmtime-runtime",
+ "wasmtime-environ 1.0.2",
+ "wasmtime-runtime 1.0.2",
  "windows-sys 0.36.1",
+]
+
+[[package]]
+name = "wasmtime-jit"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ffaed4f9a234ba5225d8e64eac7b4a5d13b994aeb37353cde2cbeb3febda9eaa"
+dependencies = [
+ "addr2line 0.17.0",
+ "anyhow",
+ "bincode",
+ "cfg-if 1.0.0",
+ "cpp_demangle",
+ "gimli 0.26.2",
+ "log 0.4.17",
+ "object 0.29.0",
+ "rustc-demangle",
+ "serde",
+ "target-lexicon",
+ "wasmtime-environ 6.0.2",
+ "wasmtime-jit-debug 6.0.2",
+ "wasmtime-jit-icache-coherence",
+ "wasmtime-runtime 6.0.2",
+ "windows-sys 0.42.0",
 ]
 
 [[package]]
@@ -17893,9 +17989,29 @@ version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f671b588486f5ccec8c5a3dba6b4c07eac2e66ab8c60e6f4e53717c77f709731"
 dependencies = [
+ "once_cell",
+]
+
+[[package]]
+name = "wasmtime-jit-debug"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eed41cbcbf74ce3ff6f1d07d1b707888166dc408d1a880f651268f4f7c9194b2"
+dependencies = [
  "object 0.29.0",
  "once_cell",
- "rustix 0.35.13",
+ "rustix 0.36.13",
+]
+
+[[package]]
+name = "wasmtime-jit-icache-coherence"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43a28ae1e648461bfdbb79db3efdaee1bca5b940872e4175390f465593a2e54c"
+dependencies = [
+ "cfg-if 1.0.0",
+ "libc",
+ "windows-sys 0.42.0",
 ]
 
 [[package]]
@@ -17911,16 +18027,39 @@ dependencies = [
  "libc",
  "log 0.4.17",
  "mach",
- "memfd",
  "memoffset 0.6.5",
  "paste 1.0.12",
  "rand 0.8.5",
  "rustix 0.35.13",
  "thiserror",
- "wasmtime-asm-macros",
- "wasmtime-environ",
- "wasmtime-jit-debug",
+ "wasmtime-asm-macros 1.0.2",
+ "wasmtime-environ 1.0.2",
+ "wasmtime-jit-debug 1.0.2",
  "windows-sys 0.36.1",
+]
+
+[[package]]
+name = "wasmtime-runtime"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e704b126e4252788ccfc3526d4d4511d4b23c521bf123e447ac726c14545217b"
+dependencies = [
+ "anyhow",
+ "cc",
+ "cfg-if 1.0.0",
+ "indexmap",
+ "libc",
+ "log 0.4.17",
+ "mach",
+ "memfd",
+ "memoffset 0.6.5",
+ "paste 1.0.12",
+ "rand 0.8.5",
+ "rustix 0.36.13",
+ "wasmtime-asm-macros 6.0.2",
+ "wasmtime-environ 6.0.2",
+ "wasmtime-jit-debug 6.0.2",
+ "windows-sys 0.42.0",
 ]
 
 [[package]]
@@ -17929,10 +18068,22 @@ version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d23d61cb4c46e837b431196dd06abb11731541021916d03476a178b54dc07aeb"
 dependencies = [
- "cranelift-entity",
+ "cranelift-entity 0.88.2",
  "serde",
  "thiserror",
- "wasmparser",
+ "wasmparser 0.89.1",
+]
+
+[[package]]
+name = "wasmtime-types"
+version = "6.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83e5572c5727c1ee7e8f28717aaa8400e4d22dcbd714ea5457d85b5005206568"
+dependencies = [
+ "cranelift-entity 0.93.2",
+ "serde",
+ "thiserror",
+ "wasmparser 0.100.0",
 ]
 
 [[package]]
@@ -18232,8 +18383,8 @@ checksum = "9193164d4de03a926d909d3bc7c30543cecb35400c02114792c2cae20d5e2dbb"
 
 [[package]]
 name = "westend-runtime"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -18277,11 +18428,12 @@ dependencies = [
  "pallet-society",
  "pallet-staking",
  "pallet-staking-reward-curve",
+ "pallet-staking-runtime-api",
  "pallet-state-trie-migration",
  "pallet-sudo",
  "pallet-timestamp",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
- "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
+ "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting 4.0.0-dev",
@@ -18323,8 +18475,8 @@ dependencies = [
 
 [[package]]
 name = "westend-runtime-constants"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "frame-support",
  "polkadot-primitives",
@@ -18344,6 +18496,16 @@ dependencies = [
  "either",
  "libc",
  "once_cell",
+]
+
+[[package]]
+name = "wide"
+version = "0.7.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b689b6c49d6549434bf944e6b0f39238cf63693cb7a147e9d887507fffa3b223"
+dependencies = [
+ "bytemuck",
+ "safe_arch",
 ]
 
 [[package]]
@@ -18744,30 +18906,30 @@ dependencies = [
 
 [[package]]
 name = "xcm"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
+ "bounded-collections",
  "derivative",
  "impl-trait-for-tuples",
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 7.0.0",
  "sp-weights 4.0.0",
  "xcm-procedural",
 ]
 
 [[package]]
 name = "xcm-builder"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
  "log 0.4.17",
- "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=5df31444a025f4e4ec2f5e3fe4681a10bdfec72a)",
+ "pallet-transaction-payment 4.0.0-dev (git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005)",
  "parity-scale-codec",
  "polkadot-parachain",
  "scale-info",
@@ -18781,8 +18943,8 @@ dependencies = [
 
 [[package]]
 name = "xcm-executor"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "environmental",
  "frame-benchmarking",
@@ -18801,8 +18963,8 @@ dependencies = [
 
 [[package]]
 name = "xcm-procedural"
-version = "0.9.38"
-source = "git+https://github.com/ComposableFi/polkadot?rev=72309a2b2e68413305a56dce1097041309bd29c6#72309a2b2e68413305a56dce1097041309bd29c6"
+version = "0.9.39-1"
+source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "Inflector",
  "proc-macro2 1.0.56",
