@@ -29,6 +29,7 @@ parameter_types! {
 	pub TransactionByteFee: Balance = CurrencyId::milli();
 
 	// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
+	
 	/// than this will decrease the weight and more will increase.
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
 	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
@@ -76,7 +77,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type PayableCall = RuntimeCall;
 
-	type Lock = AssetsTransactorRouter;
+	type Lock = Assets; //AssetsTransactorRouter;
 
 	type BalanceConverter = FinalPriceConverter;
 }

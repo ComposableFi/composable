@@ -115,5 +115,4 @@ std = [
   "pallet-assets-transactor-router/std",
   "pallet-assets-registry/std",
   "orml-tokens/std",
-  
 ]

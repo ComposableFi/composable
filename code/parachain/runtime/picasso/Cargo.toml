@@ -83,12 +83,12 @@ transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rp
 assets-runtime-api = { path = "../../frame/assets/runtime-api", default-features = false }
 crowdloan-rewards-runtime-api = { path = "../../frame/crowdloan-rewards/runtime-api", default-features = false }
 pablo-runtime-api = { path = "../../frame/pablo/runtime-api", default-features = false }
-cosmwasm = { package = "pallet-cosmwasm", path = "../../frame/cosmwasm", default-features = false }
-cosmwasm-runtime-api = { path = "../../frame/cosmwasm/runtime-api", default-features = false }
-reward = { path = "../../frame/reward", default-features = false }
-farming = { path = "../../frame/farming", default-features = false }
+#cosmwasm = { package = "pallet-cosmwasm", path = "../../frame/cosmwasm", default-features = false }
+#cosmwasm-runtime-api = { path = "../../frame/cosmwasm/runtime-api", default-features = false }
+# reward = { path = "../../frame/reward", default-features = false }
+# farming = { path = "../../frame/farming", default-features = false }
 
-reward-rpc-runtime-api = { path = "../../frame/reward/rpc/runtime-api", default-features = false }
+# reward-rpc-runtime-api = { path = "../../frame/reward/rpc/runtime-api", default-features = false }
 
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
@@ -126,7 +126,6 @@ ibc = { workspace = true, default-features = false }
 ibc-primitives = { workspace = true, default-features = false }
 ibc-runtime-api = { workspace = true, default-features = false }
 pallet-ibc = { workspace = true, default-features = false }
-pallet-ibc-ping = { workspace = true, default-features = false }
 
 [features]
 builtin-wasm = []
@@ -146,7 +145,7 @@ runtime-benchmarks = [
   "collective/runtime-benchmarks",
   "collective/runtime-benchmarks",
   "common/runtime-benchmarks",
-  "cosmwasm/runtime-benchmarks",
+  #"cosmwasm/runtime-benchmarks",
   "crowdloan-rewards/runtime-benchmarks",
   "currency-factory/runtime-benchmarks",
   "democracy/runtime-benchmarks",
@@ -190,8 +189,8 @@ std = [
   "common/std",
   "composable-support/std",
   "composable-traits/std",
-  "cosmwasm-runtime-api/std",
-  "cosmwasm/std",
+  #"cosmwasm-runtime-api/std",
+  #"cosmwasm/std",
   "crowdloan-rewards-runtime-api/std",
   "crowdloan-rewards/std",
   "cumulus-pallet-aura-ext/std",
@@ -204,7 +203,7 @@ std = [
   "currency-factory/std",
   "democracy/std",
   "executive/std",
-  "farming/std",
+  # "farming/std",
   "frame-support/std",
   "frame-system/std",
   "governance-registry/std",
@@ -228,8 +227,8 @@ std = [
   "preimage/std",
   "primitives/std",
   "proxy/std",
-  "reward-rpc-runtime-api/std",
-  "reward/std",
+  #"reward-rpc-runtime-api/std",
+  #"reward/std",
   "scale-info/std",
   "scheduler/std",
   "session/std",

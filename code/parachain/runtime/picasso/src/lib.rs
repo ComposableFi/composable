@@ -54,7 +54,7 @@ use composable_traits::{
 	assets::Asset,
 	dex::{Amm, PriceAggregate},
 };
-use cosmwasm::instrument::CostRules;
+//use cosmwasm::instrument::CostRules;
 use primitives::currency::ForeignAssetId;
 
 mod gates;
@@ -101,7 +101,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
 use system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureSignedBy,
+	EnsureRoot,
 };
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -285,32 +285,32 @@ impl assets::Config for Runtime {
 	type CurrencyValidator = ValidateCurrencyId;
 }
 
-type FarmingRewardsInstance = reward::Instance1;
+// type FarmingRewardsInstance = reward::Instance1;
 
-impl reward::Config<FarmingRewardsInstance> for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type SignedFixedPoint = FixedI128;
-	type PoolId = CurrencyId;
-	type StakeId = AccountId;
-	type CurrencyId = CurrencyId;
-}
+// impl reward::Config<FarmingRewardsInstance> for Runtime {
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type SignedFixedPoint = FixedI128;
+// 	type PoolId = CurrencyId;
+// 	type StakeId = AccountId;
+// 	type CurrencyId = CurrencyId;
+// }
 
-parameter_types! {
-	pub const RewardPeriod: BlockNumber = 5; //1 minute
-	pub const FarmingPalletId: PalletId = PalletId(*b"mod/farm");
-	pub FarmingAccount: AccountId = FarmingPalletId::get().into_account_truncating();
-}
+// parameter_types! {
+// 	pub const RewardPeriod: BlockNumber = 5; //1 minute
+// 	pub const FarmingPalletId: PalletId = PalletId(*b"mod/farm");
+// 	pub FarmingAccount: AccountId = FarmingPalletId::get().into_account_truncating();
+// }
 
-impl farming::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AssetId = CurrencyId;
-	type FarmingPalletId = FarmingPalletId;
-	type TreasuryAccountId = FarmingAccount;
-	type RewardPeriod = RewardPeriod;
-	type RewardPools = FarmingRewards;
-	type MultiCurrency = AssetsTransactorRouter;
-	type WeightInfo = ();
-}
+// impl farming::Config for Runtime {
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type AssetId = CurrencyId;
+// 	type FarmingPalletId = FarmingPalletId;
+// 	type TreasuryAccountId = FarmingAccount;
+// 	type RewardPeriod = RewardPeriod;
+// 	type RewardPools = FarmingRewards;
+// 	type MultiCurrency = AssetsTransactorRouter;
+// 	type WeightInfo = ();
+// }
 
 parameter_types! {
 	pub const StakeLock: BlockNumber = 50;
@@ -360,129 +360,128 @@ parameter_types! {
 	pub const ExpectedBlockTime: u64 = SLOT_DURATION;
 }
 
-/// Native <-> Cosmwasm account mapping
-pub struct AccountToAddr;
+// /// Native <-> Cosmwasm account mapping
+// pub struct AccountToAddr;
 
-impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
-	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		let account =
-			ibc_primitives::runtime_interface::ss58_to_account_id_32(&a).map_err(|_| ())?;
-		Ok(account.into())
-	}
-}
+// impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
+// 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
+// 		let account =
+// 			ibc_primitives::runtime_interface::ss58_to_account_id_32(&a).map_err(|_| ())?;
+// 		Ok(account.into())
+// 	}
+// }
 
-impl Convert<AccountId, alloc::string::String> for AccountToAddr {
-	fn convert(a: AccountId) -> alloc::string::String {
-		let account = ibc_primitives::runtime_interface::account_id_to_ss58(a.into(), 49);
-		String::from_utf8_lossy(account.as_slice()).to_string()
-	}
-}
+// impl Convert<AccountId, alloc::string::String> for AccountToAddr {
+// 	fn convert(a: AccountId) -> alloc::string::String {
+// 		let account = ibc_primitives::runtime_interface::account_id_to_ss58(a.into(), 49);
+// 		String::from_utf8_lossy(account.as_slice()).to_string()
+// 	}
+// }
 
-impl Convert<Vec<u8>, Result<AccountId, ()>> for AccountToAddr {
-	fn convert(a: Vec<u8>) -> Result<AccountId, ()> {
-		Ok(<[u8; 32]>::try_from(a).map_err(|_| ())?.into())
-	}
-}
+// impl Convert<Vec<u8>, Result<AccountId, ()>> for AccountToAddr {
+// 	fn convert(a: Vec<u8>) -> Result<AccountId, ()> {
+// 		Ok(<[u8; 32]>::try_from(a).map_err(|_| ())?.into())
+// 	}
+// }
 
-/// Native <-> Cosmwasm asset mapping
-pub struct AssetToDenom;
+// /// Native <-> Cosmwasm asset mapping
+// pub struct AssetToDenom;
 
-impl Convert<alloc::string::String, Result<CurrencyId, ()>> for AssetToDenom {
-	fn convert(currency_id: alloc::string::String) -> Result<CurrencyId, ()> {
-		core::str::FromStr::from_str(&currency_id).map_err(|_| ())
-	}
-}
+// impl Convert<alloc::string::String, Result<CurrencyId, ()>> for AssetToDenom {
+// 	fn convert(currency_id: alloc::string::String) -> Result<CurrencyId, ()> {
+// 		core::str::FromStr::from_str(&currency_id).map_err(|_| ())
+// 	}
+// }
 
-impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
-	fn convert(CurrencyId(currency_id): CurrencyId) -> alloc::string::String {
-		alloc::format!("{}", currency_id)
-	}
-}
+// impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
+// 	fn convert(CurrencyId(currency_id): CurrencyId) -> alloc::string::String {
+// 		alloc::format!("{}", currency_id)
+// 	}
+// }
 
-parameter_types! {
-	pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
-	pub const ChainId: &'static str = "composable-network-picasso";
-	pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
-	pub const MaxContractLabelSize: u32 = 64;
-	pub const MaxContractTrieIdSize: u32 = Hash::len_bytes() as u32;
-	pub const MaxInstantiateSaltSize: u32 = 128;
-	pub const MaxFundsAssets: u32 = 32;
-	pub const CodeTableSizeLimit: u32 = 4096;
-	pub const CodeGlobalVariableLimit: u32 = 256;
-	pub const CodeParameterLimit: u32 = 128;
-	pub const CodeBranchTableSizeLimit: u32 = 256;
+// parameter_types! {
+// 	pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
+// 	pub const ChainId: &'static str = "composable-network-picasso";
+// 	pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
+// 	pub const MaxContractLabelSize: u32 = 64;
+// 	pub const MaxContractTrieIdSize: u32 = Hash::len_bytes() as u32;
+// 	pub const MaxInstantiateSaltSize: u32 = 128;
+// 	pub const MaxFundsAssets: u32 = 32;
+// 	pub const CodeTableSizeLimit: u32 = 4096;
+// 	pub const CodeGlobalVariableLimit: u32 = 256;
+// 	pub const CodeParameterLimit: u32 = 128;
+// 	pub const CodeBranchTableSizeLimit: u32 = 256;
 
-	// TODO: benchmark for proper values
-	pub const CodeStorageByteDeposit: u32 = 1_000_000;
-	pub const ContractStorageByteReadPrice: u32 = 1;
-	pub const ContractStorageByteWritePrice: u32 = 1;
-	pub WasmCostRules: CostRules<Runtime> = Default::default();
-}
+// 	// TODO: benchmark for proper values
+// 	pub const CodeStorageByteDeposit: u32 = 1_000_000;
+// 	pub const ContractStorageByteReadPrice: u32 = 1;
+// 	pub const ContractStorageByteWritePrice: u32 = 1;
+// 	pub WasmCostRules: CostRules<Runtime> = Default::default();
+// }
 
-impl cosmwasm::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AccountIdExtended = AccountId;
-	type PalletId = CosmwasmPalletId;
-	type MaxFrames = ConstU32<64>;
-	type MaxCodeSize = ConstU32<{ 512 * 1024 }>;
-	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
+// impl cosmwasm::Config for Runtime {
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type AccountIdExtended = AccountId;
+// 	type PalletId = CosmwasmPalletId;
+// 	type MaxFrames = ConstU32<64>;
+// 	type MaxCodeSize = ConstU32<{ 512 * 1024 }>;
+// 	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
 
-	#[cfg(feature = "testnet")]
-	type MaxMessageSize = ConstU32<{ 128 * 1024 }>;
+// 	#[cfg(feature = "testnet")]
+// 	type MaxMessageSize = ConstU32<{ 128 * 1024 }>;
 
-	#[cfg(not(feature = "testnet"))]
-	type MaxMessageSize = ConstU32<{ 32 * 1024 }>;
+// 	#[cfg(not(feature = "testnet"))]
+// 	type MaxMessageSize = ConstU32<{ 32 * 1024 }>;
 
-	type AccountToAddr = AccountToAddr;
+// 	type AccountToAddr = AccountToAddr;
 
-	type AssetToDenom = AssetToDenom;
+// 	type AssetToDenom = AssetToDenom;
 
-	type Balance = Balance;
-	type AssetId = CurrencyId;
-	type Assets = AssetsTransactorRouter;
-	type NativeAsset = Balances;
-	type ChainId = ChainId;
-	type MaxContractLabelSize = MaxContractLabelSize;
-	type MaxContractTrieIdSize = MaxContractTrieIdSize;
-	type MaxInstantiateSaltSize = MaxInstantiateSaltSize;
-	type MaxFundsAssets = MaxFundsAssets;
+// 	type Balance = Balance;
+// 	type AssetId = CurrencyId;
+// 	type Assets = AssetsTransactorRouter;
+// 	type NativeAsset = Balances;
+// 	type ChainId = ChainId;
+// 	type MaxContractLabelSize = MaxContractLabelSize;
+// 	type MaxContractTrieIdSize = MaxContractTrieIdSize;
+// 	type MaxInstantiateSaltSize = MaxInstantiateSaltSize;
+// 	type MaxFundsAssets = MaxFundsAssets;
 
-	type CodeTableSizeLimit = CodeTableSizeLimit;
-	type CodeGlobalVariableLimit = CodeGlobalVariableLimit;
-	type CodeStackLimit = ConstU32<{ u32::MAX }>;
+// 	type CodeTableSizeLimit = CodeTableSizeLimit;
+// 	type CodeGlobalVariableLimit = CodeGlobalVariableLimit;
+// 	type CodeStackLimit = ConstU32<{ u32::MAX }>;
 
-	type CodeParameterLimit = CodeParameterLimit;
-	type CodeBranchTableSizeLimit = CodeBranchTableSizeLimit;
-	type CodeStorageByteDeposit = CodeStorageByteDeposit;
-	type ContractStorageByteReadPrice = ContractStorageByteReadPrice;
-	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
+// 	type CodeParameterLimit = CodeParameterLimit;
+// 	type CodeBranchTableSizeLimit = CodeBranchTableSizeLimit;
+// 	type CodeStorageByteDeposit = CodeStorageByteDeposit;
+// 	type ContractStorageByteReadPrice = ContractStorageByteReadPrice;
+// 	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
 
-	type WasmCostRules = WasmCostRules;
-	type UnixTime = Timestamp;
-	type WeightInfo = cosmwasm::weights::SubstrateWeight<Runtime>;
-	type IbcRelayerAccount = TreasuryAccount;
+// 	type WasmCostRules = WasmCostRules;
+// 	type UnixTime = Timestamp;
+// 	type WeightInfo = cosmwasm::weights::SubstrateWeight<Runtime>;
+// 	type IbcRelayerAccount = TreasuryAccount;
 
-	// this was setup in repo in Jan 2023, so need to enable IBC in CW back
-	type IbcRelayer = cosmwasm::NoRelayer<Runtime>;
+// 	// this was setup in repo in Jan 2023, so need to enable IBC in CW back
+// 	type IbcRelayer = cosmwasm::NoRelayer<Runtime>;
 
-	type PalletHook = ();
+// 	type PalletHook = ();
 
-	#[cfg(feature = "testnet")]
-	type UploadWasmOrigin = EnsureSigned<Self::AccountId>;
+// 	#[cfg(feature = "testnet")]
+// 	type UploadWasmOrigin = system::EnsureSigned<Self::AccountId>;
 
-	#[cfg(feature = "testnet")]
-	type ExecuteWasmOrigin = EnsureSigned<Self::AccountId>;
+// 	#[cfg(feature = "testnet")]
+// 	type ExecuteWasmOrigin = system::EnsureSigned<Self::AccountId>;
 
-	// really need to do EnsureOnOf<Sudo::key, >
-	#[cfg(not(feature = "testnet"))]
-	type UploadWasmOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>;
+// 	#[cfg(not(feature = "testnet"))]
+// 	type UploadWasmOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>;
 
-	#[cfg(not(feature = "testnet"))]
-	type ExecuteWasmOrigin = frame_support::traits::EitherOfDiverse<
-		EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
-		EnsureSignedBy<ReleaseMembership, Self::AccountId>,
-	>;
-}
+// 	#[cfg(not(feature = "testnet"))]
+// 	type ExecuteWasmOrigin = frame_support::traits::EitherOfDiverse<
+// 		system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
+// 		system::EnsureSignedBy<ReleaseMembership, Self::AccountId>,
+// 	>;
+// }
 
 parameter_types! {
 	pub const SpamProtectionDeposit: Balance = 1_000_000_000_000;
@@ -948,12 +947,12 @@ construct_runtime!(
 		Pablo: pablo = 59,
 		Oracle: oracle = 60,
 		AssetsTransactorRouter: assets_transactor_router = 61,
-		FarmingRewards: reward::<Instance1> = 62,
-		Farming: farming = 63,
+		// FarmingRewards: reward::<Instance1> = 62,
+		// Farming: farming = 63,
 
 		CallFilter: call_filter = 100,
 
-		Cosmwasm: cosmwasm = 180,
+		// Cosmwasm: cosmwasm = 180,
 
 		// IBC support
 		Ibc: pallet_ibc = 190,
@@ -1174,44 +1173,44 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl cosmwasm_runtime_api::CosmwasmRuntimeApi<Block, AccountId, CurrencyId, Balance, Vec<u8>> for Runtime {
-		fn query(
-			contract: AccountId,
-			gas: u64,
-			query_request: Vec<u8>,
-		) -> Result<Vec<u8>, Vec<u8>>{
-			match cosmwasm::query::<Runtime>(
-				contract,
-				gas,
-				query_request,
-			) {
-				Ok(response) => Ok(response.0),
-				Err(err) => Err(alloc::format!("{:?}", err).into_bytes())
-			}
-		}
+	// impl cosmwasm_runtime_api::CosmwasmRuntimeApi<Block, AccountId, CurrencyId, Balance, Vec<u8>> for Runtime {
+	// 	fn query(
+	// 		contract: AccountId,
+	// 		gas: u64,
+	// 		query_request: Vec<u8>,
+	// 	) -> Result<Vec<u8>, Vec<u8>>{
+	// 		match cosmwasm::query::<Runtime>(
+	// 			contract,
+	// 			gas,
+	// 			query_request,
+	// 		) {
+	// 			Ok(response) => Ok(response.0),
+	// 			Err(err) => Err(alloc::format!("{:?}", err).into_bytes())
+	// 		}
+	// 	}
 
-		fn instantiate(
-			instantiator: AccountId,
-			code_id: u64,
-			salt: Vec<u8>,
-			admin: Option<AccountId>,
-			label: Vec<u8>,
-			funds: BTreeMap<CurrencyId, (Balance, bool)>,
-			gas: u64,
-			message: Vec<u8>,
-		) -> Result<AccountId, Vec<u8>> {
-			cosmwasm::instantiate::<Runtime>(
-				instantiator,
-				code_id,
-				salt,
-				admin,
-				label,
-				funds,
-				gas,
-				message
-			).map_err(|err| alloc::format!("{:?}", err).into_bytes())
-		}
-	}
+	// 	fn instantiate(
+	// 		instantiator: AccountId,
+	// 		code_id: u64,
+	// 		salt: Vec<u8>,
+	// 		admin: Option<AccountId>,
+	// 		label: Vec<u8>,
+	// 		funds: BTreeMap<CurrencyId, (Balance, bool)>,
+	// 		gas: u64,
+	// 		message: Vec<u8>,
+	// 	) -> Result<AccountId, Vec<u8>> {
+	// 		cosmwasm::instantiate::<Runtime>(
+	// 			instantiator,
+	// 			code_id,
+	// 			salt,
+	// 			admin,
+	// 			label,
+	// 			funds,
+	// 			gas,
+	// 			message
+	// 		).map_err(|err| alloc::format!("{:?}", err).into_bytes())
+	// 	}
+	// }
 
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
