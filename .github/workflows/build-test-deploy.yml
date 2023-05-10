@@ -1,5 +1,10 @@
 name: "Build, Test, Deploy"
 on:
+  workflow_call:
+    inputs:
+      reason:
+        required: true
+        type: string
   push:
     branches:
       - release-*
