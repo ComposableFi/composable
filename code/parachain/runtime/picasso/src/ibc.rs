@@ -9,14 +9,13 @@ use common::{
 	fees::{IbcIcs20FeePalletId, IbcIcs20ServiceCharge},
 	ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds},
 };
-use frame_system::EnsureSigned;
+
 use hex_literal::hex;
 pub(crate) use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
 };
 use sp_core::ConstU64;
 use sp_runtime::{AccountId32, DispatchError, Either};
-use system::EnsureSignedBy;
 
 use super::*;
 
@@ -199,9 +198,9 @@ impl pallet_ibc::Config for Runtime {
 	type RelayerOrigin = system::EnsureSigned<Self::IbcAccountId>;
 
 	#[cfg(not(feature = "testnet"))]
-	type TransferOrigin = EnsureSigned<Self::AccountId>;
+	type TransferOrigin = system::EnsureSigned<Self::AccountId>;
 	#[cfg(not(feature = "testnet"))]
-	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
+	type RelayerOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 
 	type FeeAccount = FeeAccount;
 }
