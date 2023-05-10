@@ -1,4 +1,7 @@
-name: "build-test-deploy"
+name: "pr-workflow"
+concurrency:
+  group: ${{ github.workflow }}-pr-workflow-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 on:
   workflow_call:
     inputs:
@@ -507,6 +510,9 @@ jobs:
       steps:
         - run: |
             echo "probably no bugs"
+        - if: ${{ cancelled() }}
+          run: |
+            exit 42
         
   draft-release-artifacts:
     name: "draft-release-artifacts"    

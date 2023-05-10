@@ -11,7 +11,7 @@ resource "github_branch_protection" "main" {
     # Require branches to be up to date before merging
     strict   = false
     # Status checks that are required.
-    contexts = ["pr-workflow / draft-release-check"]
+    contexts = ["pr-workflow-check"]
   }
 
   # Require a pull request before merging

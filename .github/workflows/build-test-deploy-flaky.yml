@@ -1,14 +1,10 @@
-name: "Build, Test, Deploy"
+name: "build-test-deploy-flaky"
 on:
   push:
     branches:
       - release-*
       - main
-
-  # For regular PRs.    
   pull_request_target:
-
-  # For PRs that need to run in the monorepo context.
   pull_request:
 
 permissions: 
