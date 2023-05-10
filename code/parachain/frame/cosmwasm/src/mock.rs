@@ -20,13 +20,12 @@ use cosmwasm_vm::{
 };
 use cosmwasm_vm_wasmi::OwnedWasmiVM;
 use frame_support::{
-	ord_parameter_types,
 	pallet_prelude::ConstU32,
 	parameter_types,
-	traits::{ConstU64, EitherOfDiverse, Everything},
+	traits::{ConstU64, Everything},
 	PalletId,
 };
-use frame_system::{EnsureRoot, EnsureSigned, EnsureSignedBy};
+use frame_system::EnsureRoot;
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::{CurrencyId, ForeignAssetId};
@@ -67,10 +66,6 @@ frame_support::construct_runtime!(
 		Tokens: orml_tokens,
 	}
 );
-
-ord_parameter_types! {
-	pub const RootAccount: AccountId = get_root_account();
-}
 
 parameter_types! {
 	pub const BlockHashCount: u32 = 250;
@@ -543,10 +538,6 @@ impl Config for Test {
 	type IbcRelayerAccount = IbcRelayerAccount;
 	type IbcRelayer = IbcLoopback<Self>;
 	type PalletHook = MockHook;
-	type UploadWasmOrigin =
-		EitherOfDiverse<EnsureSignedBy<RootAccount, AccountId>, EnsureRoot<AccountId>>;
-
-	type ExecuteWasmOrigin = EnsureSigned<AccountId>;
 }
 
 // Build genesis storage according to the mock runtime.
@@ -557,8 +548,4 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let genesis = pallet_balances::GenesisConfig::<Test> { balances };
 	genesis.assimilate_storage(&mut t).unwrap();
 	t.into()
-}
-
-pub(crate) const fn get_root_account() -> AccountId {
-	AccountId32::new([1u8; 32])
 }

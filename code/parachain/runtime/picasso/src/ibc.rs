@@ -1,4 +1,4 @@
-pub(crate) use ::ibc::{
+use ::ibc::{
 	applications::transfer::{MODULE_ID_STR, PORT_ID_STR},
 	core::{
 		ics24_host::identifier::PortId,
@@ -11,7 +11,7 @@ use common::{
 };
 use frame_system::EnsureSigned;
 use hex_literal::hex;
-pub(crate) use pallet_ibc::{
+use pallet_ibc::{
 	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
 };
 use sp_core::ConstU64;
@@ -124,33 +124,30 @@ impl Ics20RateLimiter for ConstantAny {
 	}
 }
 
-type CosmwasmRouter = cosmwasm::ibc::Router<Runtime>;
-
 #[derive(Clone, Debug, Eq, PartialEq, Default)]
 pub struct Router {
 	ics20: pallet_ibc::ics20::memo::Memo<
 		Runtime,
 		pallet_ibc::ics20_fee::Ics20ServiceCharge<Runtime, pallet_ibc::ics20::IbcModule<Runtime>>,
 	>,
-	pallet_cosmwasm: CosmwasmRouter,
 }
 
 impl ModuleRouter for Router {
 	fn get_route_mut(&mut self, module_id: &ModuleId) -> Option<&mut dyn Module> {
 		match module_id.as_ref() {
 			MODULE_ID_STR => Some(&mut self.ics20),
-			_ => self.pallet_cosmwasm.get_route_mut(module_id),
+			&_ => None,
 		}
 	}
 
 	fn has_route(module_id: &ModuleId) -> bool {
-		matches!(module_id.as_ref(), MODULE_ID_STR) || CosmwasmRouter::has_route(module_id)
+		matches!(module_id.as_ref(), MODULE_ID_STR)
 	}
 
 	fn lookup_module_by_port(port_id: &PortId) -> Option<ModuleId> {
 		match port_id.as_str() {
 			PORT_ID_STR => ModuleId::from_str(MODULE_ID_STR).ok(),
-			_ => CosmwasmRouter::lookup_module_by_port(port_id),
+			_ => None,
 		}
 	}
 }
@@ -175,7 +172,7 @@ impl pallet_ibc::Config for Runtime {
 	type PalletPrefix = IbcTriePrefix;
 	type LightClientProtocol = GRANDPA;
 	type AccountIdConversion = ibc_primitives::IbcAccount<AccountId>;
-	type Fungibles = AssetsTransactorRouter;
+	type Fungibles = Assets;
 	type ExpectedBlockTime = ConstU64<SLOT_DURATION>;
 	type Router = Router;
 	type MinimumConnectionDelay = MinimumConnectionDelaySeconds;

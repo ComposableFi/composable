@@ -76,7 +76,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type PayableCall = RuntimeCall;
 
-	type Lock = AssetsTransactorRouter;
+	type Lock = Assets;
 
 	type BalanceConverter = FinalPriceConverter;
 }

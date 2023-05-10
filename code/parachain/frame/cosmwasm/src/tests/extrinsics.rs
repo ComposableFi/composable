@@ -15,7 +15,7 @@ use sp_runtime::{traits::Convert, AccountId32};
 #[test]
 fn upload() {
 	new_test_ext().execute_with(|| {
-		let origin = create_funded_root_account();
+		let origin = create_funded_account("origin");
 
 		let wasm_module: code_gen::WasmModule =
 			code_gen::ModuleDefinition::new(Default::default(), 10, None).unwrap().into();
