@@ -102,7 +102,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 );
 
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
-	crate::Assets,
+	crate::AssetsTransactorRouter,
 	UnknownTokens,
 	IsNativeConcrete<CurrencyId, AssetsIdConverter>,
 	AccountId,
@@ -135,7 +135,7 @@ type AssetsIdConverter =
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
 	FinalPriceConverter,
-	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
+	ToTreasury<AssetsIdConverter, crate::AssetsTransactorRouter, TreasuryAccount>,
 	WeightToFeeConverter,
 >;
 
@@ -175,7 +175,7 @@ impl<
 }
 
 pub type CaptureAssetTrap = CaptureDropAssets<
-	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
+	ToTreasury<AssetsIdConverter, crate::AssetsTransactorRouter, TreasuryAccount>,
 	FinalPriceConverter,
 	AssetsIdConverter,
 >;

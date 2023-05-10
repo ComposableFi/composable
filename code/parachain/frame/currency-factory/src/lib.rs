@@ -133,6 +133,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::add_range())]
 		pub fn add_range(origin: OriginFor<T>, length: u64) -> DispatchResultWithPostInfo {
 			T::AddOrigin::ensure_origin(origin)?;
@@ -149,6 +150,7 @@ pub mod pallet {
 		}
 
 		/// Sets metadata
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::set_metadata())]
 		pub fn set_metadata(
 			origin: OriginFor<T>,

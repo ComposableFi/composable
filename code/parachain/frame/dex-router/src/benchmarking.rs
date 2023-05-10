@@ -4,12 +4,11 @@ use composable_traits::{
 	defi::CurrencyPair,
 	dex::{Amm, AssetAmount},
 };
-use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_support::traits::fungibles::Mutate;
 use frame_system::RawOrigin;
 use pallet_pablo::PoolInitConfiguration;
 use sp_arithmetic::{PerThing, Permill};
-use sp_runtime::{traits::ConstU32, BoundedBTreeMap};
 use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
 pub fn dual_asset_pool_weights<T>(
@@ -20,10 +19,7 @@ pub fn dual_asset_pool_weights<T>(
 where
 	T: pallet_pablo::Config,
 {
-	let mut asset_weights = Vec::new();
-	asset_weights.push((first_asset, first_asset_weight));
-	asset_weights.push((second_asset, first_asset_weight.left_from_one()));
-	asset_weights
+	vec![(first_asset, first_asset_weight), (second_asset, first_asset_weight.left_from_one())]
 }
 
 fn create_single_node_pool<T>() -> (

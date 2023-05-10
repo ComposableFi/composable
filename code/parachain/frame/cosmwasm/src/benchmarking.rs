@@ -30,6 +30,7 @@ use primitives::currency::CurrencyId;
 use rand::{rngs::SmallRng, RngCore, SeedableRng};
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
+use sp_runtime::traits::TrailingZeroInput;
 use wasm_instrument::parity_wasm::elements::{
 	BlockType, BrTableData, Instruction, Instructions, ValueType,
 };
@@ -241,6 +242,22 @@ where
 	origin
 }
 
+fn create_funded_root_account<
+	T: Config + pallet_balances::Config + pallet_assets_transactor_router::Config,
+>() -> <T as Config>::AccountIdExtended
+where
+	<T as pallet_balances::Config>::Balance: From<u128>,
+{
+	let origin = Decode::decode(&mut TrailingZeroInput::new(&[1u8; 32])).unwrap();
+
+	<pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::mint_into(
+		&origin,
+		10_000_000_000_000_u128.into(),
+	)
+	.unwrap();
+	origin
+}
+
 fn create_instantiated_contract<T>(origin: T::AccountId) -> T::AccountId
 where
 	T: Config + pallet_balances::Config + pallet_assets_transactor_router::Config,
@@ -334,7 +351,7 @@ benchmarks! {
 
 	upload {
 		let n in 1..T::MaxCodeSize::get() - 10000;
-		let origin = create_funded_account::<T>("signer");
+		let origin = create_funded_root_account::<T>();
 		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), n as usize, None).unwrap().into();
 	}: _(RawOrigin::Signed(origin), wasm_module.code.try_into().unwrap())
 

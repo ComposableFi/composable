@@ -8,7 +8,7 @@ use jsonrpsee::{
 };
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::{generic::BlockId, traits::Block as BlockT};
+use sp_runtime::traits::Block as BlockT;
 use sp_std::{cmp::Ord, collections::btree_map::BTreeMap, sync::Arc};
 
 #[allow(clippy::too_many_arguments)]
@@ -89,9 +89,9 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<Vec<u8>> {
 		let api = self.client.runtime_api();
-		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+		let at = at.unwrap_or_else(|| self.client.info().best_hash);
 		let runtime_api_result = api
-			.query(&at, contract, gas, query_request)
+			.query(at, contract, gas, query_request)
 			.map_err(runtime_error_into_rpc_error)?;
 		runtime_api_result
 			.map_err(|e| runtime_error_into_rpc_error(String::from_utf8_lossy(e.as_ref())))
@@ -110,9 +110,9 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<AccountId> {
 		let api = self.client.runtime_api();
-		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+		let at = at.unwrap_or_else(|| self.client.info().best_hash);
 		let runtime_api_result = api
-			.instantiate(&at, instantiator, code_id, salt, admin, label, funds, gas, message)
+			.instantiate(at, instantiator, code_id, salt, admin, label, funds, gas, message)
 			.map_err(runtime_error_into_rpc_error)?;
 		runtime_api_result
 			.map_err(|e| runtime_error_into_rpc_error(String::from_utf8_lossy(e.as_ref())))

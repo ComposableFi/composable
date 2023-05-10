@@ -346,6 +346,7 @@ pub mod pallet {
 		/// assets already exists in the runtime.
 		///
 		/// Emits `PoolCreated` event when successful.
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::create())]
 		pub fn create(origin: OriginFor<T>, pool: PoolInitConfigurationOf<T>) -> DispatchResult {
 			T::PoolCreationOrigin::ensure_origin(origin)?;
@@ -356,6 +357,7 @@ pub mod pallet {
 		/// Execute a buy order on pool.
 		///
 		/// Emits `Swapped` event when successful.
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::buy())]
 		pub fn buy(
 			origin: OriginFor<T>,
@@ -374,6 +376,7 @@ pub mod pallet {
 		/// The `quote_amount` is always the quote asset amount (A/B => B), (B/A => A).
 		///
 		/// Emits `Swapped` event when successful.
+		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::swap())]
 		pub fn swap(
 			origin: OriginFor<T>,
@@ -390,6 +393,7 @@ pub mod pallet {
 		/// Add liquidity to the given pool.
 		///
 		/// Emits `LiquidityAdded` event when successful.
+		#[pallet::call_index(3)]
 		#[pallet::weight(T::WeightInfo::add_liquidity())]
 		pub fn add_liquidity(
 			origin: OriginFor<T>,
@@ -406,6 +410,7 @@ pub mod pallet {
 		/// Remove liquidity from the given pool.
 		///
 		/// Emits `LiquidityRemoved` event when successful.
+		#[pallet::call_index(4)]
 		#[pallet::weight(T::WeightInfo::remove_liquidity())]
 		pub fn remove_liquidity(
 			origin: OriginFor<T>,
@@ -418,6 +423,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(5)]
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn enable_twap(origin: OriginFor<T>, pool_id: T::PoolId) -> DispatchResult {

@@ -137,4 +137,8 @@ impl<T: pallet_ibc::Config> pallet_ibc::WeightInfo for WeightInfo<T> {
     fn update_grandpa_client(_i: u32) -> Weight {
         Weight::from_ref_time(WEIGHT_REF_TIME_PER_MILLIS)
     }
+
+    fn one_packet_cleanup() -> Weight {
+        Weight::from_ref_time(WEIGHT_REF_TIME_PER_MILLIS)
+    }
 }
