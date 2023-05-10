@@ -77,6 +77,7 @@ pub mod pallet {
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
+	use pallet_ibc::ics20_fee::FlatFeeConverter;
 	use sp_arithmetic::FixedPointOperand;
 
 	use composable_maths::dex::{
@@ -252,7 +253,7 @@ pub mod pallet {
 			+ Ord;
 
 		/// Type representing the Balance of an account.
-		type Balance: BalanceLike + SafeSub + Zero + FixedPointOperand;
+		type Balance: BalanceLike + SafeSub + Zero + FixedPointOperand + Into<u128>;
 
 		/// An isomorphism: Balance<->u128
 		type Convert: Convert<u128, BalanceOf<Self>> + Convert<BalanceOf<Self>, u128>;
@@ -345,6 +346,7 @@ pub mod pallet {
 		/// assets already exists in the runtime.
 		///
 		/// Emits `PoolCreated` event when successful.
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::create())]
 		pub fn create(origin: OriginFor<T>, pool: PoolInitConfigurationOf<T>) -> DispatchResult {
 			T::PoolCreationOrigin::ensure_origin(origin)?;
@@ -355,6 +357,7 @@ pub mod pallet {
 		/// Execute a buy order on pool.
 		///
 		/// Emits `Swapped` event when successful.
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::buy())]
 		pub fn buy(
 			origin: OriginFor<T>,
@@ -373,6 +376,7 @@ pub mod pallet {
 		/// The `quote_amount` is always the quote asset amount (A/B => B), (B/A => A).
 		///
 		/// Emits `Swapped` event when successful.
+		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::swap())]
 		pub fn swap(
 			origin: OriginFor<T>,
@@ -389,6 +393,7 @@ pub mod pallet {
 		/// Add liquidity to the given pool.
 		///
 		/// Emits `LiquidityAdded` event when successful.
+		#[pallet::call_index(3)]
 		#[pallet::weight(T::WeightInfo::add_liquidity())]
 		pub fn add_liquidity(
 			origin: OriginFor<T>,
@@ -405,6 +410,7 @@ pub mod pallet {
 		/// Remove liquidity from the given pool.
 		///
 		/// Emits `LiquidityRemoved` event when successful.
+		#[pallet::call_index(4)]
 		#[pallet::weight(T::WeightInfo::remove_liquidity())]
 		pub fn remove_liquidity(
 			origin: OriginFor<T>,
@@ -417,6 +423,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(5)]
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn enable_twap(origin: OriginFor<T>, pool_id: T::PoolId) -> DispatchResult {
@@ -654,6 +661,45 @@ pub mod pallet {
 					Ok(CurrencyPair::new(*base_asset, *quote_asset))
 				},
 			}
+		}
+	}
+
+	impl<T: Config> FlatFeeConverter for Pallet<T> {
+		type AssetId = T::AssetId;
+		type Balance = T::Balance;
+
+		fn get_flat_fee(
+			asset_id: Self::AssetId,
+			fee_asset_id: Self::AssetId,
+			fee_asset_amount: Self::Balance,
+		) -> Option<u128> {
+			let mut conversion_pool_id = None;
+			for (pool_id, pool_config) in Pools::<T>::iter() {
+				match pool_config {
+					PoolConfiguration::DualAssetConstantProduct(BasicPoolInfo {
+						owner: _,
+						lp_token: _,
+						fee_config: _,
+						assets_weights,
+					}) => {
+						if assets_weights.get(&fee_asset_id).is_some() &&
+							assets_weights.get(&asset_id).is_some()
+						{
+							conversion_pool_id = Some(pool_id);
+						}
+					},
+				};
+			}
+			if let Some(pool_id) = conversion_pool_id {
+				return Pallet::<T>::spot_price(
+					pool_id,
+					AssetAmount { asset_id: fee_asset_id, amount: fee_asset_amount },
+					asset_id,
+					false,
+				)
+				.map_or_else(|_| None, |x| Some(x.value.amount.into()))
+			}
+			None
 		}
 	}
 

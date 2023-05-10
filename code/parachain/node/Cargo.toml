@@ -39,6 +39,8 @@ staking-rewards-runtime-api = { path = "../frame/staking-rewards/runtime-api" }
 pallet-transaction-payment-rpc = { path = "../frame/transaction-payment/rpc" }
 pallet-transaction-payment-rpc-runtime-api = { path = "../frame/transaction-payment/rpc/runtime-api" }
 
+reward-rpc = { path = "../frame/reward/rpc" }
+
 ibc-rpc = { workspace = true }
 pallet-ibc = { workspace = true }
 

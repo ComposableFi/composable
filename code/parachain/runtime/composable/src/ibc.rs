@@ -19,6 +19,7 @@ use sp_runtime::{AccountId32, DispatchError, Either};
 use system::EnsureSignedBy;
 
 use hex_literal::hex;
+use pallet_ibc::ics20_fee::NonFlatFeeConverter;
 
 use super::*;
 
@@ -160,6 +161,9 @@ impl pallet_ibc::ics20_fee::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ServiceCharge = IbcIcs20ServiceCharge;
 	type PalletId = IbcIcs20FeePalletId;
+	type FlatFeeAssetId = AssetIdUSDT;
+	type FlatFeeAmount = FlatFeeUSDTAmount;
+	type FlatFeeConverter = NonFlatFeeConverter<Runtime>;
 }
 
 impl pallet_ibc::Config for Runtime {

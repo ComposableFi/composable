@@ -113,7 +113,6 @@ const sidebars = {
                         'products/xcvm/how-it-works',
                         'products/xcvm/routing-layer',
                         'products/xcvm/routing-layer-libraries',
-                        'products/xcvm/writing-smart-contracts-with-cosmwasm',
                         {
                             type: 'category',
                             label: 'Use Cases',
@@ -159,6 +158,7 @@ const sidebars = {
                     items: [
                         'products/cosmwasm/existing-cosmwasm-projects-to-deploy-on-ccw-vm',
                         'products/cosmwasm/syngery-with-centauri-and-xcvm',
+                        'products/cosmwasm/writing-smart-contracts-with-cosmwasm',
                     ],
                 },
                 {

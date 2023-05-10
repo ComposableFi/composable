@@ -380,6 +380,7 @@ pub mod pallet {
 		///  - When the origin is not signed.
 		///  - When `deposit < CreationDeposit`.
 		///  - Origin has insufficient funds to lock the deposit.
+		#[pallet::call_index(0)]
 		#[transactional]
 		#[pallet::weight(<T as Config>::WeightInfo::create())]
 		pub fn create(
@@ -422,6 +423,7 @@ pub mod pallet {
 		///
 		/// A tombstoned vault still allows for withdrawals but blocks deposits, and requests all
 		/// strategies to return their funds.
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::claim_surcharge())]
 		pub fn claim_surcharge(
 			origin: OriginFor<T>,
@@ -469,7 +471,7 @@ pub mod pallet {
 				}
 			})
 		}
-
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::add_surcharge())]
 		pub fn add_surcharge(
 			origin: OriginFor<T>,
@@ -495,6 +497,7 @@ pub mod pallet {
 			})
 		}
 
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::delete_tombstoned())]
 		pub fn delete_tombstoned(
 			origin: OriginFor<T>,
@@ -542,6 +545,7 @@ pub mod pallet {
 		/// # Errors
 		///  - When the origin is not signed.
 		///  - When `deposit < MinimumDeposit`.
+		#[pallet::call_index(4)]
 		#[pallet::weight(<T as Config>::WeightInfo::deposit())]
 		pub fn deposit(
 			origin: OriginFor<T>,
@@ -563,6 +567,7 @@ pub mod pallet {
 		///  - When the origin is not signed.
 		///  - When `lp_amount < MinimumWithdrawal`.
 		///  - When the vault has insufficient amounts reserved.
+		#[pallet::call_index(5)]
 		#[pallet::weight(<T as Config>::WeightInfo::withdraw())]
 		pub fn withdraw(
 			origin: OriginFor<T>,
@@ -583,6 +588,7 @@ pub mod pallet {
 		/// # Errors
 		///  - When the origin is not root.
 		///  - When `vault` does not exist.
+		#[pallet::call_index(6)]
 		#[pallet::weight(<T as Config>::WeightInfo::emergency_shutdown())]
 		pub fn emergency_shutdown(
 			origin: OriginFor<T>,
@@ -602,6 +608,7 @@ pub mod pallet {
 		/// # Errors
 		///  - When the origin is not root.
 		///  - When `vault` does not exist.
+		#[pallet::call_index(7)]
 		#[pallet::weight(<T as Config>::WeightInfo::start_())]
 		pub fn start(origin: OriginFor<T>, vault: T::VaultId) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
@@ -618,6 +625,7 @@ pub mod pallet {
 		///
 		/// # Emits
 		///  - Event::LiquidateStrategy
+		#[pallet::call_index(8)]
 		#[pallet::weight(10_000)]
 		pub fn liquidate_strategy(
 			origin: OriginFor<T>,

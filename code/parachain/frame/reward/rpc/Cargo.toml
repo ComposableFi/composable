@@ -1,0 +1,13 @@
+[package]
+authors = ["Composable Developers"]
+edition = "2021"
+name = "reward-rpc"
+version = '0.3.0'
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+jsonrpsee = { version = "0.16.2", features = ["server", "macros"] }
+sp-runtime = { workspace = true }
+sp-api = { workspace = true }
+sp-blockchain = { workspace = true }
+reward-rpc-runtime-api = { path = "runtime-api" }

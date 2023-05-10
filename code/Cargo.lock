@@ -1740,7 +1740,7 @@ dependencies = [
 
 [[package]]
 name = "composable"
-version = "6.10020.0"
+version = "6.10021.0"
 dependencies = [
  "color-eyre",
  "composable-node",
@@ -1765,7 +1765,7 @@ dependencies = [
 
 [[package]]
 name = "composable-node"
-version = "6.10020.0"
+version = "6.10021.0"
 dependencies = [
  "assets-rpc",
  "assets-runtime-api",
@@ -1811,6 +1811,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-service",
  "primitives",
+ "reward-rpc",
  "sc-basic-authorship 0.10.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
  "sc-chain-spec 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
  "sc-cli 0.10.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
@@ -1857,7 +1858,7 @@ dependencies = [
 
 [[package]]
 name = "composable-runtime"
-version = "6.10020.0"
+version = "6.10021.0"
 dependencies = [
  "assets-runtime-api",
  "common",
@@ -1943,7 +1944,7 @@ dependencies = [
 
 [[package]]
 name = "composable-runtime-wasm"
-version = "6.10020.0"
+version = "6.10021.0"
 dependencies = [
  "composable-runtime",
 ]
@@ -3800,6 +3801,29 @@ name = "fallible-iterator"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4443176a9f2c162692bd3d352d745ef9413eec5782a80d8fd6f8a1ac692a07f7"
+
+[[package]]
+name = "farming"
+version = "1.0.0"
+dependencies = [
+ "frame-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "log 0.4.17",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "pallet-timestamp 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "parity-scale-codec",
+ "reward",
+ "scale-info",
+ "serde",
+ "sp-arithmetic 6.0.0 (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "sp-core 7.0.0 (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "sp-io 7.0.0 (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "sp-runtime 7.0.0 (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "sp-std 5.0.0 (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+]
 
 [[package]]
 name = "fastrand"
@@ -9480,6 +9504,7 @@ dependencies = [
  "pallet-assets-transactor-router",
  "pallet-balances 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
  "pallet-currency-factory",
+ "pallet-ibc",
  "pallet-staking-rewards",
  "pallet-timestamp 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
  "parity-scale-codec",
@@ -10495,12 +10520,13 @@ dependencies = [
 
 [[package]]
 name = "picasso-runtime"
-version = "6.10020.0"
+version = "6.10021.0"
 dependencies = [
  "assets-runtime-api",
  "common",
  "composable-support",
  "composable-traits",
+ "cosmwasm-runtime-api",
  "crowdloan-rewards-runtime-api",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -10511,6 +10537,7 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
+ "farming",
  "frame-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
  "frame-executive 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
  "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
@@ -10539,11 +10566,13 @@ dependencies = [
  "pallet-call-filter",
  "pallet-collator-selection",
  "pallet-collective 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "pallet-cosmwasm",
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
  "pallet-democracy 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
  "pallet-governance-registry",
  "pallet-ibc",
+ "pallet-ibc-ping",
  "pallet-identity 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
  "pallet-indices 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
  "pallet-insecure-randomness-collective-flip",
@@ -10567,6 +10596,8 @@ dependencies = [
  "parity-scale-codec",
  "polkadot-parachain",
  "primitives",
+ "reward",
+ "reward-rpc-runtime-api",
  "scale-info",
  "smallvec 1.10.0",
  "sp-api 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
@@ -10587,7 +10618,7 @@ dependencies = [
 
 [[package]]
 name = "picasso-runtime-wasm"
-version = "6.10020.0"
+version = "6.10021.0"
 dependencies = [
  "picasso-runtime",
 ]
@@ -12798,6 +12829,48 @@ checksum = "52e44394d2086d010551b14b53b1f24e31647570cd1deb0379e2c21b329aba00"
 dependencies = [
  "hostname",
  "quick-error 1.2.3",
+]
+
+[[package]]
+name = "reward"
+version = "1.0.0"
+dependencies = [
+ "frame-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "log 0.4.17",
+ "pallet-timestamp 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "parity-scale-codec",
+ "rand 0.8.5",
+ "scale-info",
+ "serde",
+ "sp-arithmetic 6.0.0 (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "sp-core 7.0.0 (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "sp-io 7.0.0 (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "sp-runtime 7.0.0 (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "sp-std 5.0.0 (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+]
+
+[[package]]
+name = "reward-rpc"
+version = "0.3.0"
+dependencies = [
+ "jsonrpsee 0.16.2",
+ "parity-scale-codec",
+ "reward-rpc-runtime-api",
+ "sp-api 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "sp-blockchain 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "sp-runtime 7.0.0 (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+]
+
+[[package]]
+name = "reward-rpc-runtime-api"
+version = "0.3.0"
+dependencies = [
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
+ "parity-scale-codec",
+ "serde",
+ "sp-api 4.0.0-dev (git+https://github.com/paritytech/substrate?rev=8c4b84520cee2d7de53cc33cb67605ce4efefba8)",
 ]
 
 [[package]]

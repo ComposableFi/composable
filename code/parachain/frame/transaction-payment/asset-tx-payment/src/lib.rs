@@ -192,6 +192,7 @@ pub mod pallet {
 		///
 		/// If `asset_id` is `None`, then native asset is used.
 		/// Else new asset is configured and ED is on hold.
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::set_payment_asset())]
 		pub fn set_payment_asset(
 			origin: OriginFor<T>,
