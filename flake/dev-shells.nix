@@ -27,6 +27,8 @@
           yarn
           zombienet
           yq
+
+          openssl
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;

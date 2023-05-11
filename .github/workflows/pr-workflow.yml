@@ -34,6 +34,8 @@ permissions:
 
 jobs:
   dependency-review:     
+    outputs:
+      ok: ${{ steps.ok.outputs.ok }}     
     if: ${{ inputs.github_event_name != 'merge_group' && inputs.github_event_name != 'push' }}
     concurrency:
       group: ${{ inputs.github_workflow }}-dependency-review-${{ github.event.pull_request.title }}
@@ -52,6 +54,8 @@ jobs:
           # GHSA-969w-q74q-9j8v, GHSA-44mr-8vmm-wjhg, GHSA-wh6w-3828-g9qf are ignored because they are transitive dependencies still used by the master branch of Substrate. Please remove when Substrate update the according dependencies.
           # GHSA-fjx5-qpf4-xjf2 is ignored because it is a transitive dependencies still used by the master branch of ibc-proto-rs. Please remove when ibc-rs-proto updates it.
           allow-ghsas: GHSA-pfrx-2q88-qq97, GHSA-w5p7-h5w8-2hfq, GHSA-wcg3-cvx6-7396, GHSA-969w-q74q-9j8v, GHSA-44mr-8vmm-wjhg, GHSA-wh6w-3828-g9qf, GHSA-ff4p-7xrq-q5r8, GHSA-xm67-587q-r2vw, GHSA-fjx5-qpf4-xjf2
+      - id: ok
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"  
 
   privilege-check:
     name: "Privilege check"
@@ -89,6 +93,10 @@ jobs:
 
   nix-flake-check:
     name: "nix-flake-check"
+    outputs:
+      ok: ${{ steps.ok.outputs.ok }}   
+    needs:
+      - privilege-check      
     runs-on: ubuntu-latest
     continue-on-error: false
     concurrency:
@@ -127,9 +135,11 @@ jobs:
         run: |
           nix --version
           nix show-config
-          NIX_DEBUG_COMMAND="" && [[ $ACTIONS_RUNNER_DEBUG = "true" ]] && NIX_DEBUG_COMMAND='--print-build-logs --debug --show-trace --verbose'
+          NIX_DEBUG_COMMAND="" && [[ $ACTIONS_RUNNER_DEBUG = 'true' ]] && NIX_DEBUG_COMMAND='--print-build-logs --debug --show-trace --verbose'
           nix flake show --allow-import-from-derivation --fallback --keep-failed ${NIX_DEBUG_COMMAND}          
-  
+      - id: ok
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"
+
   build-all-platforms-arm:
     if: ${{ inputs.github_event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}   
     continue-on-error: false    
@@ -177,8 +187,10 @@ jobs:
           command: nix -- build .#all-platforms --keep-going
           
   build-all-production-deps:
+    outputs:
+      ok: ${{ steps.ok.outputs.ok }}   
     name: build-all-production-deps
-    if: ${{ inputs.github_event_name == 'push' || inputs.github_event_name == 'merge_group' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
+    if: ${{ inputs.github_event_name == 'merge_group' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
     needs: 
       - privilege-check
       - lfs-check
@@ -219,9 +231,13 @@ jobs:
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-production-deps --keep-going
+      - id: ok
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"  
 
   build-all-ci-packages:
     name: build-all-ci-packages
+    outputs:
+      ok: ${{ steps.ok.outputs.ok }}       
     continue-on-error: false
     needs: 
       - privilege-check
@@ -259,14 +275,17 @@ jobs:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha }}
           persist-credentials: false          
-
       - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-ci-packages --keep-going
+      - id: ok
+        run: echo "ok=true" >> "$GITHUB_OUTPUT" 
 
   build-all-benchmarks-packages:
     continue-on-error: false
+    outputs:
+      ok: ${{ steps.ok.outputs.ok }}       
     name: build-all-benchmarks-packages
     if: ${{ inputs.github_event_name != 'push' }}
     strategy:
@@ -277,7 +296,6 @@ jobs:
     runs-on:
       - self-hosted
       - ${{ matrix.arch }}
-
     concurrency:
       group: ${{ inputs.github_workflow }}-build-all-benchmarks-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
@@ -314,10 +332,14 @@ jobs:
         run: |
           ls result
           tree result -L 3
-
+      - id: ok
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
   build-all-misc-packages:
     name: build-all-misc-packages
+    outputs:
+      ok: ${{ steps.ok.outputs.ok }}     
+    if: ${{ inputs.github_event_name == 'merge_group' || (inputs.github_event_name == 'pull_request_target' && inputs.github_event_pull_request_head_repo_id != 383289760) || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}      
     continue-on-error: false
     strategy:
       matrix:
@@ -363,6 +385,8 @@ jobs:
         run: |
           ls result
           tree result -L 3          
+      - id: ok
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"   
 
   build-all-deps-packages:
     name: build-all-deps-packages
@@ -447,6 +471,8 @@ jobs:
           )
 
   build-all-docs-packages:
+    outputs:
+      ok: ${{ steps.ok.outputs.ok }}    
     name: build-all-docs-packages
     strategy:
       matrix:
@@ -493,27 +519,32 @@ jobs:
       - name: List built results 
         run: |
           ls result
-          tree result -L 3          
+          tree result -L 3      
+      - id: ok
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"               
 
   draft-release-check:
       name: "draft-release-check"
+      if: ${{ failure() || cancelled() || success() }}
       continue-on-error: false
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-latest    
       needs:
-        - build-all-benchmarks-packages
-        - build-all-ci-packages
-        - build-all-docs-packages
-        - build-all-misc-packages
-        - build-all-production-deps
-        - dependency-review
+        # - build-all-benchmarks-packages
+        # - build-all-ci-packages
+        # - build-all-docs-packages
+        # - build-all-misc-packages
+        # - build-all-production-deps
+        # - dependency-review
         - nix-flake-check
-      steps:
-        - run: |
-            echo "probably no bugs"
-        - if: ${{ cancelled() }}
+      steps:           
+        - if: ${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-benchmarks-packages.outputs.ok == 'true' }}
           run: |
+            echo "+"
+        - if: ${{ needs.nix-flake-check.outputs.ok != 'true' || needs.dependency-review.outputs.ok != 'true' || needs.build-all-production-deps.outputs.ok != 'true' || needs.build-all-misc-packages.outputs.ok != 'true' || needs.build-all-docs-packages.outputs.ok != 'true' || needs.build-all-ci-packages.outputs.ok != 'true' || needs.build-all-benchmarks-packages.outputs.ok != 'true' }}
+          run: |
+            echo "-"      
             exit 42
-        
+
   draft-release-artifacts:
     name: "draft-release-artifacts"    
     runs-on:
@@ -521,7 +552,7 @@ jobs:
       - x64-cute
     needs:
       - draft-release-check
-    if: ${{ inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760 }}  
+    if: ${{ inputs.github_event_name == 'push' }}  
     permissions:  
       pull-requests: write
       contents: write      
@@ -565,7 +596,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          prerelease: true
+          prerelease: false
           fail_on_unmatched_files: true
           generate_release_notes: true
           body_path: release-artifacts/release.txt
@@ -666,6 +697,7 @@ jobs:
       
   devnet-integration-tests:
     name: Devnet integration tests [FLAKY]
+    if: ${{ inputs.github_event_name == 'merge_group' || (inputs.github_event_name == 'pull_request_target' && inputs.github_event_pull_request_head_repo_id != 383289760) || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}    
     needs: 
       - build-all-ci-packages
     strategy:

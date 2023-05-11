@@ -8,7 +8,7 @@ use crate::{
 };
 use futures::StreamExt;
 use std::collections::HashSet;
-use subxt::{OnlineClient, PolkadotConfig};
+use subxt::{OnlineClient, SubstrateConfig};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 
@@ -27,8 +27,9 @@ impl ComposableFeed {
 				log::error!("{}", e);
 				FeedError::ChannelIsBroken
 			})?;
+
 		let api =
-			OnlineClient::<PolkadotConfig>::from_url(composable_node_url)
+			OnlineClient::<SubstrateConfig>::from_url(composable_node_url)
 				.await
 				.map_err(|e| {
 					log::error!("{}", e);

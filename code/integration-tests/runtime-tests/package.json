@@ -13,6 +13,7 @@
     "test": "ts-mocha --paths -p tsconfig.json",
     "test_short": "ts-mocha --paths -p tsconfig.json --grep 'SHORT'",
     "test_launch": "ts-mocha --paths -p tsconfig.json --grep 'LAUNCH'",
+    "test_none": "ts-mocha --paths -p tsconfig.json --grep 'NONE'",
     "gen": "npm run gen:defs && npm run gen:meta",
     "gen:defs": "ts-node --skip-project node_modules/.bin/polkadot-types-from-defs --package @composable/types/interfaces --input ./src/types/interfaces",
     "gen:meta": "ts-node --skip-project node_modules/.bin/polkadot-types-from-chain --package @composable/types/interfaces --endpoint ws://127.0.0.1:9988 --output src/types/interfaces/",
