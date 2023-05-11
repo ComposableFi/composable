@@ -20,4 +20,4 @@ jobs:
       DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
       PABLO_PROJ_JSON: ${{ secrets.PABLO_PROJ_JSON }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      GITHUB_TOKEN: ${{ github.token }}
+      CANCEL_GITHUB_TOKEN: ${{ github.token }}

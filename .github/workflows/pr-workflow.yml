@@ -28,7 +28,7 @@ on:
         required: true
       VERCEL_TOKEN:
         required: true
-      GITHUB_TOKEN:
+      CANCEL_GITHUB_TOKEN:
         required: true
           
 permissions: 
@@ -549,7 +549,7 @@ jobs:
         - if: ${{ always() && needs.nix-flake-check.outputs.ok != 'true' || needs.dependency-review.outputs.ok != 'true' || needs.build-all-production-deps.outputs.ok != 'true' || needs.build-all-misc-packages.outputs.ok != 'true' || needs.build-all-docs-packages.outputs.ok != 'true' || needs.build-all-ci-packages.outputs.ok != 'true' || needs.build-all-benchmarks-packages.outputs.ok != 'true' }}
           uses: andymckay/cancel-action@0.3
           with:     
-            token: ${{ secrets.GITHUB_TOKEN }}
+            token: ${{ secrets.CANCEL_GITHUB_TOKEN }}
 
   draft-release-artifacts:
     name: "draft-release-artifacts"    
