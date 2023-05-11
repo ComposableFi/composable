@@ -95,6 +95,8 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 use frame_system as system;
+#[cfg(feature = "testnet")]
+use frame_system::EnsureSigned;
 pub use governance::TreasuryAccount;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
