@@ -38,8 +38,8 @@ impl<T: pallet_ibc::Config> pallet_ibc::WeightInfo for WeightInfo<T> {
         Weight::from_ref_time(WEIGHT_REF_TIME_PER_MILLIS)
     }
 
-    fn update_tendermint_client(_i:u32) -> Weight {
-        Weight::from_ref_time(WEIGHT_REF_TIME_PER_MILLIS)
+    fn update_tendermint_client(i: u32) -> Weight {
+        Weight::from_ref_time(3 * i as u64 * WEIGHT_REF_TIME_PER_MILLIS)
     }
 
     fn conn_try_open_tendermint() -> Weight {
