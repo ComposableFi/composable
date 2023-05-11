@@ -95,6 +95,8 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 use frame_system as system;
+#[cfg(feature = "testnet")]
+use frame_system::EnsureSigned;
 pub use governance::TreasuryAccount;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -217,8 +219,6 @@ impl system::Config for Runtime {
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 	type MaxConsumers = ConstU32<16>;
 }
-
-impl randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
@@ -897,7 +897,6 @@ construct_runtime!(
 		System: system = 0,
 		Timestamp: timestamp = 1,
 		Sudo: sudo = 2,
-		RandomnessCollectiveFlip: randomness_collective_flip = 3,
 		TransactionPayment: transaction_payment = 4,
 		AssetTxPayment : asset_tx_payment  = 12,
 		Indices: indices = 5,

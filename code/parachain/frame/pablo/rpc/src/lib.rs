@@ -10,7 +10,7 @@ use jsonrpsee::{
 use pablo_runtime_api::PabloRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::{generic::BlockId, traits::Block as BlockT};
+use sp_runtime::traits::Block as BlockT;
 use sp_std::{cmp::Ord, collections::btree_map::BTreeMap, sync::Arc};
 
 #[rpc(client, server)]
@@ -90,11 +90,11 @@ where
 	> {
 		let api = self.client.runtime_api();
 
-		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+		let at = at.unwrap_or_else(|| self.client.info().best_hash);
 
 		// calling ../../runtime-api
 		let runtime_api_result =
-			api.prices_for(&at, pool_id.0, base_asset_id.0, quote_asset_id.0, amount.0);
+			api.prices_for(at, pool_id.0, base_asset_id.0, quote_asset_id.0, amount.0);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,
@@ -113,10 +113,10 @@ where
 	) -> RpcResult<SafeRpcWrapper<Balance>> {
 		let api = self.client.runtime_api();
 
-		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+		let at = at.unwrap_or_else(|| self.client.info().best_hash);
 
 		// calling ../../runtime-api
-		let runtime_api_result = api.simulate_add_liquidity(&at, who, pool_id, amounts);
+		let runtime_api_result = api.simulate_add_liquidity(at, who, pool_id, amounts);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,
@@ -136,11 +136,11 @@ where
 	) -> RpcResult<BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>> {
 		let api = self.client.runtime_api();
 
-		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+		let at = at.unwrap_or_else(|| self.client.info().best_hash);
 
 		// calling ../../runtime-api
 		let runtime_api_result =
-			api.simulate_remove_liquidity(&at, who, pool_id, lp_amount, min_expected_amounts);
+			api.simulate_remove_liquidity(at, who, pool_id, lp_amount, min_expected_amounts);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,
