@@ -67,6 +67,7 @@ impl Config for Test {
 	type PoolId = ();
 	type StakeId = AccountId;
 	type CurrencyId = CurrencyId;
+	type MaxRewardCurrencies = frame_support::traits::ConstU32<10>;
 }
 
 pub type TestError = Error<Test>;
