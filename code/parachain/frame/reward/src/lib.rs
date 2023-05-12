@@ -1,7 +1,7 @@
 //! # Reward Module
 //! Based on the [Scalable Reward Distribution](https://solmaz.io/2019/02/24/scalable-reward-changing/) algorithm.
 
-// #![deny(warnings)]
+#![deny(warnings)]
 #![cfg_attr(test, feature(proc_macro_hygiene))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -409,8 +409,6 @@ where
 {
 	type CurrencyId;
 
-	fn reward_currencies_len(pool_id: &PoolId) -> u32;
-
 	/// Distribute the `amount` to all participants OR error if zero total stake.
 	fn distribute_reward(
 		pool_id: &PoolId,
@@ -472,10 +470,6 @@ where
 	<T::SignedFixedPoint as FixedPointNumber>::Inner: TryInto<Balance>,
 {
 	type CurrencyId = T::CurrencyId;
-
-	fn reward_currencies_len(pool_id: &T::PoolId) -> u32 {
-		RewardCurrencies::<T, I>::get(pool_id).len() as u32
-	}
 
 	fn distribute_reward(
 		pool_id: &T::PoolId,
@@ -555,10 +549,6 @@ where
 	Balance: Saturating + PartialOrd + Default,
 {
 	type CurrencyId = ();
-
-	fn reward_currencies_len(_: &PoolId) -> u32 {
-		Default::default()
-	}
 
 	fn distribute_reward(_: &PoolId, _: Self::CurrencyId, _: Balance) -> DispatchResult {
 		Ok(())
