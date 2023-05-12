@@ -442,13 +442,11 @@ jobs:
     strategy:
       matrix:
         arch: [aarch64-darwin]
-    timeout-minutes: 45
     needs: 
       - privilege-check
     runs-on:
       - ${{ matrix.arch }}
     concurrency:
-      # this intentionally fails all other jobs because mac is one and used only to cache
       group: ${{ inputs.github_workflow }}-build-product-darwin-${{ matrix.arch }}
       cancel-in-progress: true
     steps:            
@@ -717,7 +715,6 @@ jobs:
       group: ${{ inputs.github_workflow }}-devnet-integration-tests-${{ matrix.arch }}-${{ github.event.pull_request.title }}
       cancel-in-progress: true
     steps:
-      # This isn't templated, since checkout needs to happen before templating occurs.
       - name: Set up Nix
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
