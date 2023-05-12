@@ -1,9 +1,7 @@
 {
   description = "Composable Finance";
   inputs = {
-    # basically this is old release locked, better not to updated as long as possible as it can break anything
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    # needed as some tools of old version on stable releases, so can start using new tooling until full switch to release
     nixpkgs-latest.url =
       "github:NixOS/nixpkgs/0135b7a556ee60144b143b071724fa44348a188e";
     flake-parts.url = "github:hercules-ci/flake-parts";
@@ -37,7 +35,6 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # for mac builder
     darwin = {
       url = "github:lnl7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";

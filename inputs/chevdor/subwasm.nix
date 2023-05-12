@@ -3,24 +3,24 @@
     , subnix, ... }: {
       packages = rec {
         subwasm = let
-          version = "v0.19.0";
+          name = "subwasm";
           src = pkgs.fetchFromGitHub {
             owner = "chevdor";
-            repo = "subwasm";
-            rev = "refs/tags/${version}";
-            hash = "sha256-DCPpGn0CrngmDP1QuK+Y9hffoD04yS+FenjQ5d/f49U=";
+            repo = name;
+            rev = "8c7c1457f203b056bb0c9d28a1d644a6047db30b";
+            hash = "sha256-3c7sl6j3CfWCuHDhlKCkoyehXnghtaxe508rhYdLjDc=";
           };
         in crane.stable.buildPackage (subnix.subenv // {
-          name = "subwasm";
+          name = name;
           cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
             inherit src;
             doCheck = false;
             cargoTestCommand = "";
             nativeBuildInputs = systemCommonRust.darwin-deps;
           });
-          inherit src version;
+          inherit src;
           cargoTestCommand = "";
-          meta = { mainProgram = "subwasm"; };
+          meta = { mainProgram = name; };
         });
 
         subwasm-release-body = let
