@@ -316,6 +316,8 @@ try-runtime-cli = { git = "https://github.com/ComposableFi/substrate", rev = "c7
 mmr-gadget = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 mmr-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 
+subxt = { git = "https://github.com/paritytech/subxt", rev = "2a913a3aa99a07f7acaedbbaeed6925d34627303", default-features = false }
+
 
 #######################################
 # DO NOT DELETE PATCHES, BUT COMMENT OUT
