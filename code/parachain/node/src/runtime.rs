@@ -1,5 +1,6 @@
 use assets_rpc::{Assets, AssetsApiServer};
 use common::{AccountId, Balance, Index, OpaqueBlock};
+use cosmwasm_rpc::{Cosmwasm, CosmwasmApiServer};
 use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApiServer};
 use cumulus_primitives_core::CollectCollationInfo;
 use ibc_rpc::{IbcApiServer, IbcRpcHandler};
@@ -225,9 +226,15 @@ define_trait! {
 			fn extend_with_cosmwasm_api(io, deps);
 		}
 
-		impl for composable_runtime {}
+		impl for composable_runtime {
 
-		impl for picasso_runtime {}
+		}
+
+		impl for picasso_runtime {
+			fn (io, deps) {
+				io.merge(Cosmwasm::new(deps.client.clone()).into_rpc())
+			}
+		}
 	}
 
 	mod ibc {
