@@ -54,7 +54,7 @@
 
           cd code/integration-tests/runtime-tests || exit
           npm install -q
-          export ENDPOINT=127.0.0.1:9988 ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_short 2>&1>runtime-tests.log &
+          export ENDPOINT=127.0.0.1:9988 ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_none 2>&1>runtime-tests.log &
           RUNTIME_TESTS_PID=$!
           wait_for_log "runtime-tests.log" "waiting tests start"
           tail --follow runtime-tests.log &
