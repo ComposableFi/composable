@@ -91,8 +91,8 @@ pub mod pallet {
 		type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord + MaxEncodedLen;
 
 		/// The maximum number of reward currencies.
-        #[pallet::constant]
-        type MaxRewardCurrencies: Get<u32>;
+		#[pallet::constant]
+		type MaxRewardCurrencies: Get<u32>;
 	}
 
 	// The pallet's events
@@ -130,7 +130,7 @@ pub mod pallet {
 		/// Cannot distribute rewards without stake.
 		ZeroTotalStake,
 		/// Maximum rewards currencies reached.
-        MaxRewardCurrencies,
+		MaxRewardCurrencies,
 	}
 
 	#[pallet::hooks]
@@ -192,8 +192,13 @@ pub mod pallet {
 	/// Track the currencies used for rewards.
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
-	pub type RewardCurrencies<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Blake2_128Concat, T::PoolId, BoundedBTreeSet<T::CurrencyId, T::MaxRewardCurrencies>, ValueQuery>;
+	pub type RewardCurrencies<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::PoolId,
+		BoundedBTreeSet<T::CurrencyId, T::MaxRewardCurrencies>,
+		ValueQuery,
+	>;
 
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
@@ -302,11 +307,11 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		ensure!(!total_stake.is_zero(), Error::<T, I>::ZeroTotalStake);
 
 		// track currency for future deposits / withdrawals
-        RewardCurrencies::<T, I>::try_mutate(pool_id, |reward_currencies| {
-            reward_currencies
-                .try_insert(currency_id)
-                .map_err(|_| Error::<T, I>::MaxRewardCurrencies)
-        })?;
+		RewardCurrencies::<T, I>::try_mutate(pool_id, |reward_currencies| {
+			reward_currencies
+				.try_insert(currency_id)
+				.map_err(|_| Error::<T, I>::MaxRewardCurrencies)
+		})?;
 
 		let reward_div_total_stake =
 			reward.checked_div(&total_stake).ok_or(ArithmeticError::Underflow)?;
