@@ -232,7 +232,7 @@ define_trait! {
 
 		impl for picasso_runtime {
 			fn (io, deps) {
-				io.merge(Cosmwasm::new(deps.client.clone()).into_rpc())
+				io.merge(Cosmwasm::new(deps.client).into_rpc())
 			}
 		}
 	}
