@@ -2,7 +2,7 @@
 }: {
   flake = {
     darwinConfigurations = {
-      "62260" = self.inputs.darwin.lib.darwinSystem {
+      default = self.inputs.darwin.lib.darwinSystem {
         system = "aarch64-darwin";
         modules = [
           ({ config, pkgs, ... }: {

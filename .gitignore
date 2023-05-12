@@ -99,3 +99,4 @@ override.tf.json
 terraform.rc
 
 data/**
+data-agent/**
