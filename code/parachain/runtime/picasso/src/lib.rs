@@ -295,6 +295,7 @@ impl reward::Config<FarmingRewardsInstance> for Runtime {
 	type PoolId = CurrencyId;
 	type StakeId = AccountId;
 	type CurrencyId = CurrencyId;
+	type MaxRewardCurrencies = ConstU32<10>;
 }
 
 parameter_types! {

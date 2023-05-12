@@ -319,7 +319,10 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Stake the pool tokens in the reward pool
+		/// Stake the pool tokens from the reward pool
+		///
+		/// - `pool_currency_id`: LP token to deposit
+		/// - `amount`: of LP token to deposit
 		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::deposit())]
 		#[transactional]
@@ -337,6 +340,9 @@ pub mod pallet {
 		}
 
 		/// Unstake the pool tokens from the reward pool
+		///
+		/// - `pool_currency_id`: LP token to withdraw
+		/// - `amount`: of LP token to withdraw
 		#[pallet::call_index(3)]
 		#[pallet::weight(T::WeightInfo::withdraw())]
 		#[transactional]
