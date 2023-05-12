@@ -25,7 +25,7 @@ use sp_runtime::{
 	},
 	ArithmeticError, FixedI128, FixedU128,
 };
-use sp_std::{cmp::PartialOrd, collections::btree_set::BTreeSet, convert::TryInto, fmt::Debug};
+use sp_std::{cmp::PartialOrd, convert::TryInto, fmt::Debug};
 
 pub(crate) type SignedFixedPoint<T, I = ()> = <T as Config<I>>::SignedFixedPoint;
 
@@ -63,7 +63,7 @@ impl TruncateFixedPointToInt for FixedU128 {
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::pallet_prelude::*;
+	use frame_support::{pallet_prelude::*, BoundedBTreeSet};
 
 	/// ## Configuration
 	/// The pallet's configuration trait.
@@ -89,6 +89,10 @@ pub mod pallet {
 
 		/// The currency ID type.
 		type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord + MaxEncodedLen;
+
+		/// The maximum number of reward currencies.
+        #[pallet::constant]
+        type MaxRewardCurrencies: Get<u32>;
 	}
 
 	// The pallet's events
@@ -125,6 +129,8 @@ pub mod pallet {
 		InsufficientFunds,
 		/// Cannot distribute rewards without stake.
 		ZeroTotalStake,
+		/// Maximum rewards currencies reached.
+        MaxRewardCurrencies,
 	}
 
 	#[pallet::hooks]
@@ -187,7 +193,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	pub type RewardCurrencies<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Blake2_128Concat, T::PoolId, BTreeSet<T::CurrencyId>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, T::PoolId, BoundedBTreeSet<T::CurrencyId, T::MaxRewardCurrencies>, ValueQuery>;
 
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
@@ -296,9 +302,11 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		ensure!(!total_stake.is_zero(), Error::<T, I>::ZeroTotalStake);
 
 		// track currency for future deposits / withdrawals
-		RewardCurrencies::<T, I>::mutate(pool_id, |reward_currencies| {
-			reward_currencies.insert(currency_id);
-		});
+        RewardCurrencies::<T, I>::try_mutate(pool_id, |reward_currencies| {
+            reward_currencies
+                .try_insert(currency_id)
+                .map_err(|_| Error::<T, I>::MaxRewardCurrencies)
+        })?;
 
 		let reward_div_total_stake =
 			reward.checked_div(&total_stake).ok_or(ArithmeticError::Underflow)?;
