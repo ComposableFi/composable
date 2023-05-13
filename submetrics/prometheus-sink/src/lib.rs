@@ -15,16 +15,17 @@ pub enum ChangeOfInterest {
 
 pub async fn main(
     sink: UnboundedReceiver<ChangeOfInterest>,
-    substrate_request_sender: UnboundedSender<StorageKey>,
+    composable_request_sender: UnboundedSender<StorageKey>,
+    picasso_request_sender: UnboundedSender<StorageKey>,
 ) {
     let mut stream = sink.enumerate();
     while let Some((_, events)) = stream.next().await {
         match events {
             ChangeOfInterest::Composable(events) => {
-                handle_composable(events, &substrate_request_sender, "composable", "2");
+                handle_composable(events, &composable_request_sender, "composable", "2");
             }
             ChangeOfInterest::Picasso(events) => {
-                handle_picasso(events, &substrate_request_sender, "picasso", "1");
+                handle_picasso(events, &picasso_request_sender, "picasso", "1");
             }
         }
     }
@@ -56,7 +57,7 @@ fn handle_picasso(
                         submetrics_core::request_system_account(request_sender, &account, system_account_prefix,);
                     },
                     parachain::api::runtime_types::pallet_balances::pallet::Event::Transfer { from, to, amount } => {                                    
-                        increment_gauge!("substrate_events_balances_transfer",  amount as f64, "from" => from.to_string(), "to" => to.to_string(), "asset_id" => native_asset_id);
+                        increment_gauge!("substrate_events_balances_transfer",  amount as f64, "from" => from.to_string(), "to" => to.to_string(), "asset_id" => native_asset_id, "chain" => chain);
                         submetrics_core::request_system_account(request_sender, &from, system_account_prefix,);
                         submetrics_core::request_system_account(request_sender, &to, system_account_prefix,);
                     },
@@ -295,7 +296,7 @@ fn handle_composable(
                         submetrics_core::request_system_account(request_sender, &account, system_account_prefix,);
                     },
                     parachain::api::runtime_types::pallet_balances::pallet::Event::Transfer { from, to, amount } => {                                    
-                        increment_gauge!("substrate_events_balances_transfer",  amount as f64, "from" => from.to_string(), "to" => to.to_string(), "asset_id" => native_asset_id);
+                        increment_gauge!("substrate_events_balances_transfer",  amount as f64, "from" => from.to_string(), "to" => to.to_string(), "asset_id" => native_asset_id, "chain" => chain);
                         submetrics_core::request_system_account(request_sender, &from, system_account_prefix,);
                         submetrics_core::request_system_account(request_sender, &to, system_account_prefix,);
                     },

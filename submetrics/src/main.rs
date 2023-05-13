@@ -9,19 +9,19 @@ async fn main() {
     ))
     .init();
     let (composable_sender, composable_receiver) = futures_channel::mpsc::unbounded();
-    let (composable_requester_sender, composable_requester_receiver) =
-        futures_channel::mpsc::unbounded();
+    let (composable_requester_sender, composable_requester_receiver) =futures_channel::mpsc::unbounded();
     async_std::task::spawn(async {
         smoldot_source::composable_polkadot(composable_sender, composable_requester_receiver).await;
     });
     let (picasso_sender, picasso_receiver) = futures_channel::mpsc::unbounded();
+    let (picasso_requester_sender, picasso_requester_receiver) =futures_channel::mpsc::unbounded();
     async_std::task::spawn(async {
-        smoldot_source::picasso_kusama(picasso_sender).await;
+        smoldot_source::picasso_kusama(picasso_sender, picasso_requester_receiver).await;
     });
 
     let (prometheus_sender, prometheus_receiver) = futures_channel::mpsc::unbounded();
     async_std::task::spawn(async {
-        prometheus_sink::main(prometheus_receiver, composable_requester_sender).await;
+        prometheus_sink::main(prometheus_receiver, composable_requester_sender, picasso_requester_sender).await;
     });
 
     let (a, b) = (prometheus_sender.clone(), prometheus_sender);
@@ -29,7 +29,7 @@ async fn main() {
         let mut stream = composable_receiver.enumerate();
         while let Some((_i, events)) = stream.next().await {
             let events = subxt_decoder::composable_decoder(events);
-            log::error!("{:?}", events);
+            log::info!("{:?}", events);
             a.unbounded_send(prometheus_sink::ChangeOfInterest::Composable(events))
                 .unwrap();
         }
@@ -38,7 +38,7 @@ async fn main() {
         let mut stream = picasso_receiver.enumerate();
         while let Some((_i, events)) = stream.next().await {
             let events = subxt_decoder::picasso_decoder(events);
-            log::error!("{:?}", events);
+            log::info!("{:?}", events);
             b.unbounded_send(prometheus_sink::ChangeOfInterest::Picasso(events))
                 .unwrap();
         }
