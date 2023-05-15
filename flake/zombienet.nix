@@ -13,7 +13,7 @@
         { chain, ws_port ? null, rpc_port ? null, relay_ws_port ? null
         , relay_rpc_port ? null, rust_log_add ? null, para-id ? 2087
         , command ? self'.packages.composable-node, relaychain ? relaychainBase
-        , parachains ? null }:
+        , parachains ? [] }:
         mkZombienet {
           relaychain = relaychain
             // (pkgs.lib.optionalAttrs (relay_ws_port != null) {
@@ -33,7 +33,7 @@
               // (pkgs.lib.optionalAttrs (rpc_port != null) {
                 inherit rpc_port;
               }))
-          ] ++ pkgs.lib.optional (parachains != null) parachains;
+          ] ++ parachains;
         };
 
       mk-zombienet-all = name: chain:
@@ -116,6 +116,14 @@
                 self'.packages.polkadot-node-on-parity-westend;
               count = 3;
             };
+            parachains = [{
+              command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
+              chain = "statemint-local";
+              id = 1000;
+              collators = 2;
+              ws_port = 10018;
+              rpc_port = 32240;
+            }];
           });
 
         zombienet-picasso-centauri-a =

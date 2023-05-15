@@ -74,16 +74,17 @@
         ./devnets/all.nix
         ./docs/docs.nix
         ./flake/all.nix
+        ./flake/check.nix
+        ./flake/darwin-configurations.nix
         ./flake/dev-shells.nix
         ./flake/docker.nix
         ./flake/fmt.nix
         ./flake/help.nix
         ./flake/home-configurations.nix
-        ./flake/darwin-configurations.nix
+        ./flake/live.nix
         ./flake/overlays.nix
         ./flake/release.nix
         ./flake/subxt.nix
-        ./flake/live.nix
         ./flake/zombienet.nix
         ./frontend/frontend.nix
         ./inputs/AcalaNetwork/acala.nix
@@ -94,8 +95,8 @@
         ./inputs/cosmos/gex.nix
         ./inputs/CosmosContracts/juno.nix
         ./inputs/CosmWasm/wasmvm.nix
-        ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/cumulus.nix
+        ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/substrate.nix
         ./inputs/paritytech/zombienet/flake-module.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
