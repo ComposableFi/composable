@@ -1062,12 +1062,12 @@ impl_runtime_apis! {
 			SafeRpcWrapper(<AssetsTransactorRouter as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
-		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {
+		fn list_assets() -> Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>> {
 			// Hardcoded assets
 			use common::fees::ForeignToNativePriceConverter;
 			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
 				// Add hardcoded ratio and ED for well known assets
-				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
+				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(asset.id);
 				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
 				asset
 			}).map(|xcm|
@@ -1079,7 +1079,7 @@ impl_runtime_apis! {
 				name : xcm.name,
 				ratio : xcm.ratio,
 			  }
-			).collect::<Vec<_>>();
+			).collect::<Vec<Asset<CurrencyId, Balance, ForeignAssetId>>>();
 
 			// Assets from the assets-registry pallet
 			let all_assets =  assets_registry::Pallet::<Runtime>::get_all_assets();
@@ -1097,8 +1097,16 @@ impl_runtime_apis! {
 					acc.push(asset.clone())
 				}
 				acc
-			})
-		}
+			}).iter().map(|asset|
+			  Asset {
+				decimals : asset.decimals,
+				existential_deposit : SafeRpcWrapper(asset.existential_deposit),
+				id : SafeRpcWrapper(asset.id.into()),
+				foreign_id : asset.foreign_id.clone(),
+				name : asset.name.clone(),
+				ratio : asset.ratio,
+			  }
+			).collect::<Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>>>()		}
 	}
 
 	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {
@@ -1330,15 +1338,15 @@ impl_runtime_apis! {
 		BlockNumber,
 		sp_runtime::FixedU128
 	> for Runtime {
-		fn compute_farming_reward(account_id: AccountId, pool_currency_id: CurrencyId, reward_currency_id: CurrencyId) -> Result<reward_rpc_runtime_api::BalanceWrapper<Balance>, DispatchError> {
+		fn compute_farming_reward(account_id: AccountId,  SafeRpcWrapper(pool_currency_id):  SafeRpcWrapper<CurrencyId>,  SafeRpcWrapper(reward_currency_id):  SafeRpcWrapper<CurrencyId>) -> Result<reward_rpc_runtime_api::BalanceWrapper<Balance>, DispatchError> {
 			let amount = <FarmingRewards as reward::RewardsApi<CurrencyId, AccountId, Balance>>::compute_reward(&pool_currency_id, &account_id, reward_currency_id)?;
 			let balance = reward_rpc_runtime_api::BalanceWrapper::<Balance> { amount };
 			Ok(balance)
 		}
 		fn estimate_farming_reward(
 			account_id: AccountId,
-			pool_currency_id: CurrencyId,
-			reward_currency_id: CurrencyId,
+			SafeRpcWrapper(pool_currency_id): SafeRpcWrapper<CurrencyId>,
+			SafeRpcWrapper(reward_currency_id): SafeRpcWrapper<CurrencyId>,
 		) -> Result<reward_rpc_runtime_api::BalanceWrapper<Balance>, DispatchError> {
 			<FarmingRewards as reward::RewardsApi<CurrencyId, AccountId, Balance>>::withdraw_reward(&pool_currency_id, &account_id, reward_currency_id)?;
 			<FarmingRewards as reward::RewardsApi<CurrencyId, AccountId, Balance>>::distribute_reward(&pool_currency_id, reward_currency_id, Farming::total_rewards(&pool_currency_id, &reward_currency_id))?;

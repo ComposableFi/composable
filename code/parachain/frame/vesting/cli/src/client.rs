@@ -49,5 +49,4 @@ pub enum VestingWindow<BlockNumber, Moment> {
 pub type VestingScheduleT =
 	BoundedBTreeMap<u128, VestingSchedule<u128, u32, u64, u128>, ConstU32<32>>;
 
-pub type VestingScheduleKeyT = ([u8; 32], u128 , AccountId32, [u8; 32], );
-
+pub type VestingScheduleKeyT = ([u8; 32], u128, AccountId32, [u8; 32]);

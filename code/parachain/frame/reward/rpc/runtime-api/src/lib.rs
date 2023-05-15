@@ -3,6 +3,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::Codec;
+use composable_support::rpc_helpers::SafeRpcWrapper;
 use frame_support::dispatch::DispatchError;
 
 use codec::{Decode, Encode};
@@ -47,9 +48,9 @@ sp_api::decl_runtime_apis! {
 		UnsignedFixedPoint: Codec,
 	{
 		/// Calculate the number of farming rewards accrued
-		fn compute_farming_reward(account_id: AccountId, pool_currency_id: CurrencyId, reward_currency_id: CurrencyId) -> Result<BalanceWrapper<Balance>, DispatchError>;
+		fn compute_farming_reward(account_id: AccountId, pool_currency_id: SafeRpcWrapper<CurrencyId>, reward_currency_id: SafeRpcWrapper<CurrencyId>) -> Result<BalanceWrapper<Balance>, DispatchError>;
 
 		/// Estimate farming rewards for remaining incentives
-		fn estimate_farming_reward(account_id: AccountId, pool_currency_id: CurrencyId, reward_currency_id: CurrencyId) -> Result<BalanceWrapper<Balance>, DispatchError>;
+		fn estimate_farming_reward(account_id: AccountId, pool_currency_id:  SafeRpcWrapper<CurrencyId>, reward_currency_id: SafeRpcWrapper<CurrencyId>) -> Result<BalanceWrapper<Balance>, DispatchError>;
 	}
 }

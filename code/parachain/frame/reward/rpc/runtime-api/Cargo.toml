@@ -6,11 +6,13 @@ version = '0.3.0'
 
 [dependencies]
 codec = { default-features = false, features = [
-  "derive", "max-encoded-len"
+  "derive",
+  "max-encoded-len",
 ], package = "parity-scale-codec", version = "3.0.0" }
 sp-api = { default-features = false, workspace = true }
 frame-support = { default-features = false, workspace = true }
 serde = { version = '1.0.136', optional = true }
+composable-support = { path = "../../../composable-support", default-features = false }
 
 # [dependencies.oracle-rpc-runtime-api]
 # default-features = false
@@ -22,6 +24,6 @@ std = [
   "codec/std",
   "frame-support/std",
   "sp-api/std",
-  "serde"
+  "serde",
   # "oracle-rpc-runtime-api/std",
 ]

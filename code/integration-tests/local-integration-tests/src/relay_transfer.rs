@@ -64,8 +64,11 @@ fn transfer_from_relay_native_from_this_to_relay_chain_raw() {
 		use this_runtime::*;
 		let before = Assets::free_balance(CurrencyId::KSM, &this_runtime::TreasuryAccount::get());
 		assert_gt!(before, transfer_amount);
-		let transferred =
-			PolkadotXcm::execute(RawOrigin::Root.into(), Box::new(VersionedXcm::V2(message)), limit);
+		let transferred = PolkadotXcm::execute(
+			RawOrigin::Root.into(),
+			Box::new(VersionedXcm::V2(message)),
+			limit,
+		);
 
 		assert_ok!(transferred);
 

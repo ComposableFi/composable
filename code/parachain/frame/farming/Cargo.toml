@@ -9,9 +9,16 @@ version = "1.0.0"
 
 [dependencies]
 log = { version = "0.4.14", default-features = false }
-serde = { version = "1.0.137", default-features = false, features = ["derive"], optional = true }
-codec = { default-features = false, features = [ "derive", "max-encoded-len"], package = "parity-scale-codec", version = "3.0.0" }
-scale-info = { version = "2.1.1", default-features = false, features = [ "derive" ] }
+serde = { version = "1.0.137", default-features = false, features = [
+  "derive",
+], optional = true }
+codec = { default-features = false, features = [
+  "derive",
+  "max-encoded-len",
+], package = "parity-scale-codec", version = "3.0.0" }
+scale-info = { version = "2.1.1", default-features = false, features = [
+  "derive",
+] }
 
 # Orml dependencies
 orml-tokens = { workspace = true, default-features = false }
@@ -39,18 +46,18 @@ pallet-balances = { workspace = true, default-features = false }
 default = ["std"]
 std = [
   "log/std",
-	"serde",
-	"codec/std",
+  "serde",
+  "codec/std",
 
-	"sp-arithmetic/std",
-	"sp-core/std",
-	"sp-io/std",
-	"sp-runtime/std",
-	"sp-std/std",
+  "sp-arithmetic/std",
+  "sp-core/std",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
 
-	"frame-support/std",
-	"frame-system/std",
-	"frame-benchmarking/std",
+  "frame-support/std",
+  "frame-system/std",
+  "frame-benchmarking/std",
 ]
 
 runtime-benchmarks = [
