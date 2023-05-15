@@ -25,7 +25,7 @@ pub async fn composable_polkadot(
     const deployment: &str = "composable-polkadot";
     const para_spec : &str = include_str!("../../../code/parachain/node/src/res/composable.json");
     const relay_spec: &str = include_str!(
-        "../../../../../../github.com/smol-dot/smoldot/demo-chain-specs/polkadot.json"
+        "../../../../../smol-dot/smoldot/demo-chain-specs/polkadot.json"
     );
 
     let mut client = smoldot_light::Client::new(
@@ -109,7 +109,7 @@ pub async fn picasso_kusama(
     const deployment: &str = "picasso-kusama";
     const para_spec : &str = include_str!("../../../code/parachain/node/src/res/picasso.json");
     const relay_spec: &str = include_str!(
-        "../../../../../../github.com/smol-dot/smoldot/demo-chain-specs/kusama.json"
+        "../../../../../smol-dot/smoldot/demo-chain-specs/kusama.json"
     );
 
     let mut client = smoldot_light::Client::new(

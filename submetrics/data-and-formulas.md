@@ -1,7 +1,3 @@
-
-
-
-
 - `escrow amount on chain source == minted on target chain` <- collected all assets/balances/tokens events and account events, all escrow accounts changed events.
 - `ibc sent per user = ibc received per user` <- same as above, sum of difference of grouped by `to` on sender and receiver is zero
 - `account change for specific account should never all behind amount grouped by asset id` <- monitor all all accounts changesetsgit a

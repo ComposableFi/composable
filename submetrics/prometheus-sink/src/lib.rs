@@ -542,12 +542,6 @@ pub async fn main_metrics() -> anyhow::Result<()> {
             "/",
             get(
                 |ConnectInfo(remote_addr): ConnectInfo<SocketAddr>| async move {
-                    let requests_pending = PREFIXED_HTTP_REQUESTS_PENDING
-                        .get()
-                        .map_or(AXUM_HTTP_REQUESTS_PENDING, |s| s.as_str());
-                    let requests_total = PREFIXED_HTTP_REQUESTS_TOTAL
-                        .get()
-                        .map_or(AXUM_HTTP_REQUESTS_TOTAL, |s| s.as_str());
                     format!("submetrics, {remote_addr:?}!\r\n")
                 },
             ),
