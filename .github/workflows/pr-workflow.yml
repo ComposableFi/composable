@@ -17,6 +17,9 @@ on:
       github_event_pull_request_head_sha:
         required: true
         type: string
+      flow:
+        required: true
+        type: string
     secrets:
       CACHIX_AUTH_TOKEN:
         required: true    
