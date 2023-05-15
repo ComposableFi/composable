@@ -1068,7 +1068,7 @@ impl_runtime_apis! {
 			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
 				// Add hardcoded ratio and ED for well known assets
 				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(asset.id);
-				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
+				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id);
 				asset
 			}).map(|xcm|
 			  Asset {
@@ -1093,7 +1093,7 @@ impl_runtime_apis! {
 					found_asset.foreign_id = asset.foreign_id.clone();
 					found_asset.ratio = asset.ratio;
 				} else {
-					asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
+					asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id);
 					acc.push(asset.clone())
 				}
 				acc
