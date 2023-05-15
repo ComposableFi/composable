@@ -389,8 +389,7 @@ fn handle_composable(
                                         parachain::api::runtime_types::pallet_ibc::events::IbcEvent::NewBlock { revision_height, revision_number } => (),
                                         parachain::api::runtime_types::pallet_ibc::events::IbcEvent::CreateClient { client_id, client_type, revision_height, revision_number, consensus_height, consensus_revision_number } => (),
                                         parachain::api::runtime_types::pallet_ibc::events::IbcEvent::UpdateClient { client_id, client_type, revision_height, revision_number, consensus_height, consensus_revision_number } => {
-                                            increment_counter!("substrate_events_ibc_client_update","chain" => chain);                                                 
-                                            
+                                            increment_counter!("substrate_events_ibc_client_update","chain" => chain);                                                                                             
                                         },
                                         parachain::api::runtime_types::pallet_ibc::events::IbcEvent::UpgradeClient { client_id, client_type, revision_height, revision_number, consensus_height, consensus_revision_number } => (),
                                         parachain::api::runtime_types::pallet_ibc::events::IbcEvent::ClientMisbehaviour { client_id, client_type, revision_height, revision_number, consensus_height, consensus_revision_number } => {
@@ -409,7 +408,9 @@ fn handle_composable(
                                         },
                                         parachain::api::runtime_types::pallet_ibc::events::IbcEvent::CloseConfirmChannel { revision_height, revision_number, channel_id, port_id, connection_id, counterparty_port_id, counterparty_channel_id } => (),
                                         parachain::api::runtime_types::pallet_ibc::events::IbcEvent::ReceivePacket { revision_height, revision_number, port_id, channel_id, dest_port, dest_channel, sequence } => {
-                                            increment_counter!("substrate_events_ibc_packet_receive","chain" => chain);                                                                                             
+                                            let channel_id = String::from_utf8_lossy(&channel_id[..]).to_string();
+                                            let port_id = String::from_utf8_lossy(&port_id[..]).to_string();
+                                            increment_counter!("substrate_events_ibc_packet_receive","chain" => chain, "channel_id" => channel_id, "port_id" => port_id);                                                                                             
                                         },
                                         parachain::api::runtime_types::pallet_ibc::events::IbcEvent::SendPacket { revision_height, revision_number, port_id, channel_id, dest_port, dest_channel, sequence } => {
                                             increment_counter!("substrate_events_ibc_packet_sent","chain" => chain);                                                                                             

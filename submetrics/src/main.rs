@@ -28,8 +28,9 @@ async fn main() {
     let composable = async_std::task::spawn(async move {
         let mut stream = composable_receiver.enumerate();
         while let Some((_i, events)) = stream.next().await {
+            log::debug!("decode");
             let events = subxt_decoder::composable_decoder(events);
-            log::info!("{:?}", events);
+            log::info!("launch light clients observers {:?}", events);
             a.unbounded_send(prometheus_sink::ChangeOfInterest::Composable(events))
                 .unwrap();
         }
@@ -38,7 +39,7 @@ async fn main() {
         let mut stream = picasso_receiver.enumerate();
         while let Some((_i, events)) = stream.next().await {
             let events = subxt_decoder::picasso_decoder(events);
-            log::info!("{:?}", events);
+            log::info!("launch light clients observers  {:?}", events);
             b.unbounded_send(prometheus_sink::ChangeOfInterest::Picasso(events))
                 .unwrap();
         }

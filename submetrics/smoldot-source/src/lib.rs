@@ -71,6 +71,7 @@ pub async fn composable_polkadot(
 
     let mut counter: u64 = 1;
 
+    log::info!("subscribe to well known keys in storage (events, runtime version, xcm queue, etc)");
     client
         .json_rpc_request(
 r#"{"id":1,"jsonrpc":"2.0","method":"state_subscribeStorage","params": { "list": ["0x26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7", "0x99971b5749ac43e0235e41b0d37869188ee7418a6531173d60d1f6a82d8f4d51", "0x26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da9", "0x26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da9004325711314fc9a69f6de0d037dd9126e61132120b0eb4a95015ecb49a30a7893b34709c590f2414148f5c8e4460516"] }}"#,
@@ -82,11 +83,12 @@ chain_id,
     log::info!("chain_id {:?}", chain_id);
     loop {
         while let Ok(Some(next)) = storage_requests.try_next() {
-            log::debug!("query");
+            log::debug!("query explicit request");
             let key = GetStorageParams {
                 key: HexString(next.as_ref().to_vec()),
             };
             let key = serde_json::value::to_raw_value(&key).unwrap();
+            
             let request = jsonrpsee::types::Request::new(
                 "state_getStorage".into(),
                 Some(key.as_ref()),
@@ -96,7 +98,7 @@ chain_id,
                 .json_rpc_request(serde_json::to_string(&request).unwrap(), chain_id)
                 .unwrap();
         }
-        log::info!("{}", deployment);
+        log::info!("got data from observer key change {}", deployment);
         let response = json_rpc_responses.next().await.unwrap();
         sink.unbounded_send(response).unwrap();
     }

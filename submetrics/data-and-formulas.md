@@ -8,3 +8,16 @@
 - `total number of token received events - (timeout + failures)` <- ibc transfer and packet events
 - `total number of transfers of assets grouped by asset as grouped by chain` <- ibc transfer of events one direction and other direction
 - `amount of successfull packets receive on target chain is less than sequence id on sender cahan`
+
+
+
+## Metics
+
+```
+substrate_storage_system_account_free_account_5Ct3fNtVv4yFGd3qrzx1qrvZZVrKNr8fhTKmUHFqGXe8vpPd_chain_picasso_asset_id_1_amount
+
+
+label are low cardianliy
+asset_id x chain x channel x account x event type = <amount OR duration or ... number metric value>
+
+```
