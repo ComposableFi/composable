@@ -13,7 +13,7 @@
         { chain, ws_port ? null, rpc_port ? null, relay_ws_port ? null
         , relay_rpc_port ? null, rust_log_add ? null, para-id ? 2087
         , command ? self'.packages.composable-node, relaychain ? relaychainBase
-        , parachains ? [] }:
+        , parachains ? [ ] }:
         mkZombienet {
           relaychain = relaychain
             // (pkgs.lib.optionalAttrs (relay_ws_port != null) {

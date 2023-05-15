@@ -64,7 +64,7 @@ jobs:
 
   privilege-check:
     name: "Privilege check"
-    if: ${{ inputs.github_event_name == 'push' || inputs.github_event_name == 'merge_group' || (inputs.github_event_name == 'pull_request_target' && inputs.github_event_pull_request_head_repo_id != 383289760) || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}    
+    if: ${{ inputs.flow == 'push' || inputs.github_event_name == 'merge_group' || (inputs.github_event_name == 'pull_request_target' && inputs.github_event_pull_request_head_repo_id != 383289760) || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}    
     continue-on-error: false
     runs-on: ubuntu-latest  
     steps:
@@ -146,7 +146,6 @@ jobs:
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
   build-all-platforms-arm:
-    if: ${{ inputs.github_event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}   
     continue-on-error: false    
     name: build-all-platforms-arm
     needs: 
@@ -159,8 +158,9 @@ jobs:
     concurrency:
       group: ${{ inputs.github_workflow }}-build-all-platforms-arm-${{ github.event.pull_request.title }}
       cancel-in-progress: true
-    steps:
+    steps:      
       - name: Set up Nix
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
           install_url: https://releases.nixos.org/nix/nix-2.13.2/install
@@ -172,21 +172,25 @@ jobs:
             keep-derivations = true
             keep-outputs = true
       - name: Set up Cachix
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - name: Add tools needed for non-nix steps
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         run: |  
           nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
       - uses: actions/checkout@v3
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha }}
           persist-credentials: false
       - name: Build all packages
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-platforms --keep-going
@@ -195,7 +199,6 @@ jobs:
     outputs:
       ok: ${{ steps.ok.outputs.ok }}   
     name: build-all-production-deps
-    if: ${{ inputs.github_event_name == 'merge_group' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
     needs: 
       - privilege-check
       - lfs-check
@@ -207,6 +210,7 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Set up Nix
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' }}          
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
           install_url: https://releases.nixos.org/nix/nix-2.13.2/install
@@ -218,21 +222,25 @@ jobs:
             keep-derivations = true
             keep-outputs = true 
       - name: Set up Cachix
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' }}
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - name: Add tools needed for non-nix steps
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' }}
         run: |  
           nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
       - uses: actions/checkout@v3
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' }}
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha }}
           persist-credentials: false          
       - name: Build all packages 
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' }}
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-production-deps --keep-going
@@ -292,7 +300,6 @@ jobs:
     outputs:
       ok: ${{ steps.ok.outputs.ok }}       
     name: build-all-benchmarks-packages
-    if: ${{ inputs.github_event_name != 'push' }}
     strategy:
       matrix:
         arch: [x64-monster]
@@ -306,6 +313,7 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Set up Nix
+        if: ${{ inputs.flow != 'push' }}
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
           install_url: https://releases.nixos.org/nix/nix-2.13.2/install
@@ -315,25 +323,30 @@ jobs:
             narinfo-cache-negative-ttl = 0      
             system-features = kvm          
       - name: Set up Cachix
+        if: ${{ inputs.flow != 'push' }}
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - name: Add tools needed for non-nix steps
+        if: ${{ inputs.flow != 'push' }}
         run: |  
           nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
       - uses: actions/checkout@v3
+        if: ${{ inputs.flow != 'push' }}
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha }}
           persist-credentials: false
       - name: build-all-benchmarks-packages 
+        if: ${{ inputs.flow != 'push' }}
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-benchmarks --keep-going
       - name: List built results 
+        if: ${{ inputs.flow != 'push' }}
         run: |
           ls result
           tree result -L 3
@@ -344,7 +357,6 @@ jobs:
     name: build-all-misc-packages
     outputs:
       ok: ${{ steps.ok.outputs.ok }}     
-    if: ${{ inputs.github_event_name == 'merge_group' || (inputs.github_event_name == 'pull_request_target' && inputs.github_event_pull_request_head_repo_id != 383289760) || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}      
     continue-on-error: false
     strategy:
       matrix:
@@ -359,6 +371,7 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Set up Nix
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
           install_url: https://releases.nixos.org/nix/nix-2.13.2/install
@@ -368,25 +381,30 @@ jobs:
             narinfo-cache-negative-ttl = 0      
             system-features = kvm          
       - name: Set up Cachix
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - name: Add tools needed for non-nix steps
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         run: |  
           nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
       - uses: actions/checkout@v3
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha }}
           persist-credentials: false
       - name: build-all-misc-packages 
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-misc --keep-going
       - name: List built results 
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         run: |
           ls result
           tree result -L 3          
@@ -442,8 +460,7 @@ jobs:
     name: "build-product-darwin"
     outputs:
       ok: ${{ steps.ok.outputs.ok }}       
-    continue-on-error: false
-    if: ${{ inputs.github_event_name == 'merge_group' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}    
+    continue-on-error: false    
     strategy:
       matrix:
         arch: [aarch64-darwin]
@@ -456,6 +473,7 @@ jobs:
       cancel-in-progress: true
     steps:            
       - name: build-product-darwin
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' }}
         run: |
           # mac has its own way of operating
           uname -a
