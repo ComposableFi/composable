@@ -55,8 +55,9 @@ use composable_traits::{
 	dex::{Amm, PriceAggregate},
 };
 use cosmwasm::instrument::CostRules;
+use pallet_ibc::ics20_fee::FlatFeeConverter;
 use primitives::currency::ForeignAssetId;
-
+use sp_runtime::traits::Get;
 mod gates;
 use gates::*;
 use governance::*;
@@ -1135,6 +1136,16 @@ impl_runtime_apis! {
 				quote_asset_id: SafeRpcWrapper(quote_asset_id),
 				spot_price: SafeRpcWrapper(0_u128)
 			})
+		}
+
+		fn is_flat_fee(
+			asset_id: CurrencyId,
+		) -> Option<SafeRpcWrapper<Balance>> {
+			<Pablo as FlatFeeConverter>::get_flat_fee(
+				asset_id,
+				AssetIdUSDT::get(),
+				FlatFeeUSDTAmount::get()
+			).map(SafeRpcWrapper)
 		}
 
 		fn simulate_add_liquidity(
