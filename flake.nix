@@ -74,7 +74,6 @@
         ./devnets/all.nix
         ./docs/docs.nix
         ./flake/all.nix
-        ./flake/check.nix
         ./flake/dev-shells.nix
         ./flake/docker.nix
         ./flake/fmt.nix

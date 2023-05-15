@@ -50,7 +50,7 @@
               }
 
               {
-                command = pkgs.lib.meta.getExe self'.packages.statemine-node;
+                command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
                 chain = "statemine-local";
                 id = 1000;
                 collators = 2;

@@ -4,7 +4,7 @@
           cargo-lock = builtins.fromTOML (builtins.readFile ../../code/Cargo.lock);
       bin = "polkadot-parachain";
       polkadot-parachain-dep = builtins.head
-        (builtins.filter (x: x.name == bin) (cargo-lock.package));
+        (builtins.filter (x: x.name == "parachain-info") (cargo-lock.package));
       polkadot-parachain-commit =
         builtins.elemAt (builtins.split "#" polkadot-parachain-dep.source) 2;
     in {
@@ -15,7 +15,7 @@
           src = pkgs.fetchgit {
             url = "https://github.com/paritytech/cumulus.git";
             rev = polkadot-parachain-commit;
-            sha256 = "sha256-Ble9E7wWzQ3W801BLfBtDRyJQs/3uU4hhaAEAbyAJxg=";
+            sha256 = "sha256-nFJiHwpL6LsRs3RkcsAhS2f5RVOCXQl+zPgnI2CQxx8=";
             fetchSubmodules = false;
           };
           __noChroot = true;
