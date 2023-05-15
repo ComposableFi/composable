@@ -76,6 +76,38 @@
           collators = 2;
           ws_port = 10008;
           rpc_port = 32220;
+          genesis = {
+            runtime = {
+              parachainInfo = { parachainId = 1000; };
+
+              balances = {
+                balances = {
+                  "0" = {
+                    "0" = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
+                    "1" = 17476266491902;
+                  };
+                };
+              };
+              assets = {
+                assets = {
+                  "0" = {
+                    "0" = 1984;
+                    "1" = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
+                    "2" = true;
+                    "3" = 123456789;
+                  };
+                };
+                metadata = {
+                  "0" = {
+                    "0" = 1984;
+                    "1" = [ 85 83 68 84 ];
+                    "2" = [ 85 83 68 84 ];
+                    "3" = 6;
+                  };
+                };
+              };
+            };
+          };
         }];
       };
 
