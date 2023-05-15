@@ -96,7 +96,7 @@
         ./inputs/CosmosContracts/juno.nix
         ./inputs/CosmWasm/wasmvm.nix
         ./inputs/paritytech/polkadot.nix
-        ./inputs/paritytech/statemine.nix
+        ./inputs/paritytech/cumulus.nix
         ./inputs/paritytech/substrate.nix
         ./inputs/paritytech/zombienet/flake-module.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
