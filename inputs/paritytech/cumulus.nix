@@ -1,7 +1,8 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, lib, system, crane
-    , systemCommonRust, subnix, ... }: let 
-          cargo-lock = builtins.fromTOML (builtins.readFile ../../code/Cargo.lock);
+    , systemCommonRust, subnix, ... }:
+    let
+      cargo-lock = builtins.fromTOML (builtins.readFile ../../code/Cargo.lock);
       bin = "polkadot-parachain";
       polkadot-parachain-dep = builtins.head
         (builtins.filter (x: x.name == "parachain-info") (cargo-lock.package));

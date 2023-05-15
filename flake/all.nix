@@ -7,7 +7,7 @@
         bifrost-node
         polkadot-node-from-dep
         rococo-runtime-from-dep
-        statemine-node
+        polkadot-parachain
         subwasm
         zombienet
       ]);

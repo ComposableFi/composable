@@ -13,7 +13,7 @@
         { chain, ws_port ? null, rpc_port ? null, relay_ws_port ? null
         , relay_rpc_port ? null, rust_log_add ? null, para-id ? 2087
         , command ? self'.packages.composable-node, relaychain ? relaychainBase
-        }:
+        , parachains ? null }:
         mkZombienet {
           relaychain = relaychain
             // (pkgs.lib.optionalAttrs (relay_ws_port != null) {
@@ -33,7 +33,7 @@
               // (pkgs.lib.optionalAttrs (rpc_port != null) {
                 inherit rpc_port;
               }))
-          ];
+          ] ++ pkgs.lib.optional (parachains != null) parachains;
         };
 
       mk-zombienet-all = name: chain:
@@ -47,15 +47,6 @@
                 inherit chain;
                 id = 2087;
                 collators = 3;
-              }
-
-              {
-                command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
-                chain = "statemine-local";
-                id = 1000;
-                collators = 2;
-                ws_port = 10008;
-                rpc_port = 32220;
               }
 
               {
@@ -78,6 +69,14 @@
       picasso-dev-config = overrideZombienet {
         chain = "picasso-dev";
         command = self'.packages.composable-testfast-node;
+        parachains = [{
+          command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
+          chain = "statemine-local";
+          id = 1000;
+          collators = 2;
+          ws_port = 10008;
+          rpc_port = 32220;
+        }];
       };
 
       zombienet-rococo-local-picasso-dev =
