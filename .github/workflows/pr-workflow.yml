@@ -38,6 +38,14 @@ permissions:
   pull-requests: write
 
 jobs:
+  env:
+    name: "env"
+    continue-on-error: false
+    runs-on: ubuntu-latest  
+    steps:
+      - run: |
+          echo "${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}"
+
   dependency-review:     
     outputs:
       ok: ${{ steps.ok.outputs.ok }}     
@@ -64,7 +72,7 @@ jobs:
         run: echo "ok=true" >> "$GITHUB_OUTPUT"  
 
   privilege-check:
-    name: "Privilege check"
+    name: "privilege-check"
     if: ${{ inputs.flow == 'push' || inputs.github_event_name == 'merge_group' || (inputs.github_event_name == 'pull_request_target' && inputs.github_event_pull_request_head_repo_id != 383289760) || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}    
     continue-on-error: false
     runs-on: ubuntu-latest  
