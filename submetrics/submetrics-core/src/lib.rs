@@ -39,6 +39,14 @@ pub fn request_tokens_account<AccountId32: AsRef<[u8; 32]>>(
         .unwrap();
 }
 
+pub fn request_tokens_total_issuance(
+    sender: &UnboundedSender<StorageKey>,
+    mut root: StorageKey,
+    asset_id: u128,
+) {
+    root.0
+        .append(&mut sp_core_hashing::twox_64(&asset_id.encode()).to_vec());
+    root.0.append(&mut asset_id.encode());
 
-
-
+    sender.unbounded_send(root).unwrap();
+}

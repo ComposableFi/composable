@@ -25,6 +25,33 @@ pub fn composable_decoder(
     if let Ok(storage_item) = storage_item {
         let id = storage_item.id.clone();
         let storage_item = hex::decode(&storage_item.result.replace("0x", ""));
+
+        match id {
+            Id::Str(ref storage_key) => {
+                let prefix = hex::encode(tokens_total_issuance().0);
+                let storage_key = storage_key.to_string().replace("0x", "");
+                if storage_key.starts_with(&prefix) {
+                    let storage_key = storage_key.replace(&prefix, "");
+                    let asset_id: Vec<_> = hex::decode(storage_key)
+                        .unwrap()
+                        .clone()
+                        .into_iter()
+                        .skip(8)
+                        .collect();
+                    let asset_id = u128::decode(&mut asset_id.as_ref()).unwrap();
+                    let storage_item =
+                        <u128>::decode(&mut storage_item.clone().unwrap().as_ref()).unwrap();
+                    result.push(ChangeOfInterest::StorageTokensTotalIssuance(vec![(
+                        asset_id,
+                        storage_item,
+                    )]));
+                }
+            }
+            _ => {
+                log::warn!("unknown key")
+            }
+        }
+
         if let Ok(data) = storage_item {
             let storage_item = <runtime_types::frame_system::AccountInfo<
                 u32,
@@ -41,7 +68,7 @@ pub fn composable_decoder(
                     .unwrap();
                     let account: Vec<_> = account.into_iter().skip(16).collect();
                     let account = AccountId32(account.try_into().unwrap());
-                    result.push(ChangeOfInterest::SystemAccount(vec![(
+                    result.push(ChangeOfInterest::StorageSystemAccount(vec![(
                         account,
                         storage_item,
                     )]));
@@ -52,7 +79,7 @@ pub fn composable_decoder(
                 <runtime_types::orml_tokens::AccountData<u128>>::decode(&mut data.as_ref());
 
             if let Ok(storage_item) = storage_item {
-                if let Id::Str(key) = id {
+                if let Id::Str(ref key) = id {
                     let account = hex::decode(
                         key.to_string()
                             .replace("0x", "")
@@ -72,7 +99,7 @@ pub fn composable_decoder(
                     let stuff: Vec<_> = account.clone().into_iter().skip(32).skip(8).collect();
                     let asset_id = u128::decode(&mut stuff.as_ref()).unwrap();
 
-                    result.push(ChangeOfInterest::TokensAccounts(vec![(
+                    result.push(ChangeOfInterest::StorageTokensAccounts(vec![(
                         real_account,
                         asset_id,
                         storage_item,
@@ -148,7 +175,6 @@ pub fn picasso_decoder(chain_response: String) -> Vec<subchain_macro::picasso::C
     use picasso::parachain::*;
     use picasso::*;
     use subchain_macro::picasso::ChangeOfInterest;
-
     let mut result = Vec::new();
     log::debug!("{}", chain_response);
 
@@ -158,6 +184,33 @@ pub fn picasso_decoder(chain_response: String) -> Vec<subchain_macro::picasso::C
     if let Ok(storage_item) = storage_item {
         let id = storage_item.id.clone();
         let storage_item = hex::decode(&storage_item.result.replace("0x", ""));
+
+        match id {
+            Id::Str(ref storage_key) => {
+                let prefix = hex::encode(tokens_total_issuance().0);
+                let storage_key = storage_key.to_string().replace("0x", "");
+                if storage_key.starts_with(&prefix) {
+                    let storage_key = storage_key.replace(&prefix, "");
+                    let asset_id: Vec<_> = hex::decode(storage_key)
+                        .unwrap()
+                        .clone()
+                        .into_iter()
+                        .skip(8)
+                        .collect();
+                    let asset_id = u128::decode(&mut asset_id.as_ref()).unwrap();
+                    let storage_item =
+                        <u128>::decode(&mut storage_item.clone().unwrap().as_ref()).unwrap();
+                    result.push(ChangeOfInterest::StorageTokensTotalIssuance(vec![(
+                        asset_id,
+                        storage_item,
+                    )]));
+                }
+            }
+            _ => {
+                log::warn!("unknown key")
+            }
+        }
+
         if let Ok(data) = storage_item {
             let storage_item = <runtime_types::frame_system::AccountInfo<
                 u32,
@@ -174,7 +227,7 @@ pub fn picasso_decoder(chain_response: String) -> Vec<subchain_macro::picasso::C
                     .unwrap();
                     let account: Vec<_> = account.into_iter().skip(16).collect();
                     let account = AccountId32(account.try_into().unwrap());
-                    result.push(ChangeOfInterest::SystemAccount(vec![(
+                    result.push(ChangeOfInterest::StorageSystemAccount(vec![(
                         account,
                         storage_item,
                     )]));
@@ -185,7 +238,7 @@ pub fn picasso_decoder(chain_response: String) -> Vec<subchain_macro::picasso::C
                 <runtime_types::orml_tokens::AccountData<u128>>::decode(&mut data.as_ref());
 
             if let Ok(storage_item) = storage_item {
-                if let Id::Str(key) = id {
+                if let Id::Str(ref key) = id {
                     let account = hex::decode(
                         key.to_string()
                             .replace("0x", "")
@@ -205,7 +258,7 @@ pub fn picasso_decoder(chain_response: String) -> Vec<subchain_macro::picasso::C
                     let stuff: Vec<_> = account.clone().into_iter().skip(32).skip(8).collect();
                     let asset_id = u128::decode(&mut stuff.as_ref()).unwrap();
 
-                    result.push(ChangeOfInterest::TokensAccounts(vec![(
+                    result.push(ChangeOfInterest::StorageTokensAccounts(vec![(
                         real_account,
                         asset_id,
                         storage_item,

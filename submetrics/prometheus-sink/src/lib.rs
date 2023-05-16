@@ -39,9 +39,10 @@ fn handle_picasso(
 ) {
     use picasso::*;
     use subchain_macro::picasso::ChangeOfInterest;
+
     for event in events {
         match event {
-    ChangeOfInterest::SystemAccount(event) =>{
+    ChangeOfInterest::StorageSystemAccount(event) =>{
 for (account,i) in event {
     gauge!("substrate_storage_system_account_free", i.data.free as f64, "account" => account.to_string(), "chain" => chain, "asset_id" => native_asset_id);
 }
@@ -222,22 +223,27 @@ match error {
 use parachain::api::runtime_types::orml_tokens::module::Event;
 match events {
     Event::Endowed { currency_id, who, amount } => {
-   increment_gauge!("substrate_events_tokens_endowed",  amount as f64, "who" => who.to_string(), "asset_id" => currency_id.0.to_string(), "chain" => chain);
-   submetrics_core::request_tokens_account(request_sender, &who, tokens_accounts_prefix, currency_id.0);
-    },
+    increment_gauge!("substrate_events_tokens_endowed",  amount as f64, "who" => who.to_string(), "asset_id" => currency_id.0.to_string(), "chain" => chain);
+    submetrics_core::request_tokens_account(request_sender, &who, tokens_accounts_prefix, currency_id.0);
+    submetrics_core::request_tokens_total_issuance(request_sender, tokens_total_issuance(), currency_id.0);
+},
     Event::DustLost { currency_id, who, amount } => (),
     Event::Transfer { currency_id, from, to, amount } => {
-   increment_gauge!("substrate_events_tokens_transfer",  amount as f64, "from" => from.to_string(), "to" => to.to_string(), "asset_id" => currency_id.0.to_string(), "chain" => chain);
-   submetrics_core::request_tokens_account(request_sender, &to, tokens_accounts_prefix, currency_id.0);
+        increment_gauge!("substrate_events_tokens_transfer",  amount as f64, "from" => from.to_string(), "to" => to.to_string(), "asset_id" => currency_id.0.to_string(), "chain" => chain);
+        submetrics_core::request_tokens_account(request_sender, &to, tokens_accounts_prefix, currency_id.0);
+        submetrics_core::request_tokens_total_issuance(request_sender, tokens_total_issuance(), currency_id.0);
     },
     Event::Reserved { currency_id, who, amount } => (),
     Event::Unreserved { currency_id, who, amount } => (),
     Event::ReserveRepatriated { currency_id, from, to, amount, status } => (),
     Event::BalanceSet { currency_id, who, free, reserved } => {
    increment_gauge!("substrate_events_tokens_balance_set",  free as f64, "who" => who.to_string(), "asset_id" => currency_id.0.to_string(), "chain" => chain);
-   gauge!("substrate_storage_system_account_free", free as f64, "account" => who.to_string(), "chain" => chain, "asset_id" => native_asset_id);
+   gauge!("substrate_storage_tokens_accounts_free", free as f64, "account" => who.to_string(), "chain" => chain, "asset_id" => currency_id.0.to_string());
+   submetrics_core::request_tokens_total_issuance(request_sender, tokens_total_issuance(), currency_id.0);
     },
-    Event::TotalIssuanceSet { currency_id, amount } => (),
+    Event::TotalIssuanceSet { currency_id, amount } => {
+        gauge!("substrate_storage_tokens_total_issuance", amount as f64,"chain" => chain, "asset_id" => currency_id.0.to_string());
+    },
     Event::Withdrawn { currency_id, who, amount } => {
    increment_gauge!("substrate_events_tokens_withdrawn",  amount as f64, "who" => who.to_string(), "asset_id" => currency_id.0.to_string(), "chain" => chain);
    submetrics_core::request_tokens_account(request_sender, &who, tokens_accounts_prefix, currency_id.0);
@@ -250,11 +256,16 @@ match events {
     Event::Unlocked { currency_id, who, amount } => (),
 }
     },
-    ChangeOfInterest::TokensAccounts(events) => {
-for (account,asset_id, i) in events {
-    gauge!("substrate_storage_tokens_account_free", i.free as f64, "account" => account.to_string(), "chain" => chain, "asset_id" => asset_id.to_string());
-}
+    ChangeOfInterest::StorageTokensAccounts(events) => {
+    for (account,asset_id, i) in events {
+        gauge!("substrate_storage_tokens_accounts_free", i.free as f64, "account" => account.to_string(), "chain" => chain, "asset_id" => asset_id.to_string());
+    }
     },
+    ChangeOfInterest::StorageTokensTotalIssuance(events) => {
+        for (asset_id, amount) in events {
+            gauge!("substrate_storage_tokens_total_issuance", amount as f64,"chain" => chain, "asset_id" => asset_id.to_string());
+        }
+        },
     ChangeOfInterest::Ics20Fee(events) => {
 match events{
     parachain::api::runtime_types::pallet_ibc::ics20_fee::pallet::Event::IbcTransferFeeCollected { amount } => {
@@ -277,7 +288,7 @@ fn handle_composable(
     use subchain_macro::composable::ChangeOfInterest;
     for event in events {
         match event {
-    ChangeOfInterest::SystemAccount(event) =>{
+    ChangeOfInterest::StorageSystemAccount(event) =>{
 for (account,i) in event {
     gauge!("substrate_storage_system_account_free", i.data.free as f64, "account" => account.to_string(), "chain" => chain, "asset_id" => native_asset_id);
 }
@@ -377,7 +388,7 @@ match event {
     parachain::api::runtime_types::pallet_ibc::pallet::Event::TokenReceived { from, to, ibc_denom, local_asset_id, amount, is_receiver_source, source_channel, destination_channel } => {
    increment_gauge!("substrate_events_ibc_transfer_received",  amount as f64, "from" => from.0,  "to" => to.0, "asset_id" => local_asset_id.unwrap().0.to_string(), "is_receiver_source" => is_receiver_source.to_string(), "chain" => chain);     
     },
-    parachain::api::runtime_types::pallet_ibc::pallet::Event::Events { events } => {
+   parachain::api::runtime_types::pallet_ibc::pallet::Event::Events { events } => {
    for e in events {
        match e {
    Ok(a) => {
@@ -404,9 +415,7 @@ increment_counter!("substrate_events_ibc_channel_close_init","chain" => chain);
     },
     parachain::api::runtime_types::pallet_ibc::events::IbcEvent::CloseConfirmChannel { revision_height, revision_number, channel_id, port_id, connection_id, counterparty_port_id, counterparty_channel_id } => (),
     parachain::api::runtime_types::pallet_ibc::events::IbcEvent::ReceivePacket { revision_height, revision_number, port_id, channel_id, dest_port, dest_channel, sequence } => {
-let channel_id = String::from_utf8_lossy(&channel_id[..]).to_string();
-let port_id = String::from_utf8_lossy(&port_id[..]).to_string();
-increment_counter!("substrate_events_ibc_packet_receive","chain" => chain, "channel_id" => channel_id, "port_id" => port_id);
+increment_counter!("substrate_events_ibc_packet_receive","chain" => chain);
     },
     parachain::api::runtime_types::pallet_ibc::events::IbcEvent::SendPacket { revision_height, revision_number, port_id, channel_id, dest_port, dest_channel, sequence } => {
 increment_counter!("substrate_events_ibc_packet_sent","chain" => chain);
@@ -417,6 +426,7 @@ increment_counter!("substrate_events_ibc_packet_acknowledge","chain" => chain);
     parachain::api::runtime_types::pallet_ibc::events::IbcEvent::WriteAcknowledgement { revision_height, revision_number, port_id, channel_id, dest_port, dest_channel, sequence } => {
     },
     parachain::api::runtime_types::pallet_ibc::events::IbcEvent::TimeoutPacket { revision_height, revision_number, port_id, channel_id, sequence } => {
+
 increment_counter!("substrate_events_ibc_packet_timeout","chain" => chain);
     },
     parachain::api::runtime_types::pallet_ibc::events::IbcEvent::TimeoutOnClosePacket { revision_height, revision_number, port_id, channel_id, sequence } => {
@@ -459,22 +469,27 @@ match error {
 use parachain::api::runtime_types::orml_tokens::module::Event;
 match events {
     Event::Endowed { currency_id, who, amount } => {
-   increment_gauge!("substrate_events_tokens_endowed",  amount as f64, "who" => who.to_string(), "asset_id" => currency_id.0.to_string(), "chain" => chain);
-   submetrics_core::request_tokens_account(request_sender, &who, tokens_accounts_prefix, currency_id.0);
-    },
+    increment_gauge!("substrate_events_tokens_endowed",  amount as f64, "who" => who.to_string(), "asset_id" => currency_id.0.to_string(), "chain" => chain);
+    submetrics_core::request_tokens_account(request_sender, &who, tokens_accounts_prefix, currency_id.0);
+    submetrics_core::request_tokens_total_issuance(request_sender, tokens_total_issuance(), currency_id.0);
+},
     Event::DustLost { currency_id, who, amount } => (),
     Event::Transfer { currency_id, from, to, amount } => {
-   increment_gauge!("substrate_events_tokens_transfer",  amount as f64, "from" => from.to_string(), "to" => to.to_string(), "asset_id" => currency_id.0.to_string(), "chain" => chain);
-   submetrics_core::request_tokens_account(request_sender, &to, tokens_accounts_prefix, currency_id.0);
+        increment_gauge!("substrate_events_tokens_transfer",  amount as f64, "from" => from.to_string(), "to" => to.to_string(), "asset_id" => currency_id.0.to_string(), "chain" => chain);
+        submetrics_core::request_tokens_account(request_sender, &to, tokens_accounts_prefix, currency_id.0);
+        submetrics_core::request_tokens_total_issuance(request_sender, tokens_total_issuance(), currency_id.0);
     },
     Event::Reserved { currency_id, who, amount } => (),
     Event::Unreserved { currency_id, who, amount } => (),
     Event::ReserveRepatriated { currency_id, from, to, amount, status } => (),
     Event::BalanceSet { currency_id, who, free, reserved } => {
    increment_gauge!("substrate_events_tokens_balance_set",  free as f64, "who" => who.to_string(), "asset_id" => currency_id.0.to_string(), "chain" => chain);
-   gauge!("substrate_storage_system_account_free", free as f64, "account" => who.to_string(), "chain" => chain, "asset_id" => native_asset_id);
+   gauge!("substrate_storage_tokens_accounts_free", free as f64, "account" => who.to_string(), "chain" => chain, "asset_id" => currency_id.0.to_string());
+   submetrics_core::request_tokens_total_issuance(request_sender, tokens_total_issuance(), currency_id.0);
     },
-    Event::TotalIssuanceSet { currency_id, amount } => (),
+    Event::TotalIssuanceSet { currency_id, amount } => {
+        gauge!("substrate_storage_tokens_total_issuance", amount as f64,"chain" => chain, "asset_id" => currency_id.0.to_string());
+    },
     Event::Withdrawn { currency_id, who, amount } => {
    increment_gauge!("substrate_events_tokens_withdrawn",  amount as f64, "who" => who.to_string(), "asset_id" => currency_id.0.to_string(), "chain" => chain);
    submetrics_core::request_tokens_account(request_sender, &who, tokens_accounts_prefix, currency_id.0);
@@ -487,11 +502,16 @@ match events {
     Event::Unlocked { currency_id, who, amount } => (),
 }
     },
-    ChangeOfInterest::TokensAccounts(events) => {
-for (account,asset_id, i) in events {
-    gauge!("substrate_storage_tokens_account_free", i.free as f64, "account" => account.to_string(), "chain" => chain, "asset_id" => asset_id.to_string());
-}
+    ChangeOfInterest::StorageTokensAccounts(events) => {
+    for (account,asset_id, i) in events {
+        gauge!("substrate_storage_tokens_accounts_free", i.free as f64, "account" => account.to_string(), "chain" => chain, "asset_id" => asset_id.to_string());
+    }
     },
+    ChangeOfInterest::StorageTokensTotalIssuance(events) => {
+        for (asset_id, amount) in events {
+            gauge!("substrate_storage_tokens_total_issuance", amount as f64,"chain" => chain, "asset_id" => asset_id.to_string());
+        }
+        },
     ChangeOfInterest::Ics20Fee(events) => {
 match events{
     parachain::api::runtime_types::pallet_ibc::ics20_fee::pallet::Event::IbcTransferFeeCollected { amount } => {

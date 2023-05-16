@@ -27,7 +27,7 @@ On changes detected (events, key subscription, logs), data gets into decoding.
 
 Decoding makes raw strings and bytes into some well know data shapes(structures).
 
-Then data sent to sinks. One is Prometheus sink (low cardinality time series metrics storage, read what is low cardinality).
+Then data sent to sinks. One is Prometheus sink (low cardinality time series metrics storage, read what is low cardinality Prometheus metrics on internet).
 Sure can do any other sinks.
 
 Sink shapes data for ingesting into sink. It may request data from sources to make enrich it source
@@ -46,4 +46,8 @@ Past is not important, no bother fix it or reindex, but that is not limitation.
 Final mile end users implementations (visualizations, analytics, alerts, dashboards, pager duty) outsourced to 3rd party components.
 So can build own frontend if needed.
 
-Correlation can be added on demand, preferable to use any storage which easy to access from Go and Rust and it can run local machine.
+Correlation can be added on demand, preferable to use any storage which easy to access from Go and Rust and it can run local machine(fits what we use in cloud for long term index or what blockchains use(LevelDb?)).
+
+We use string static typing (not string typing), hence data processing and subscription is done only to part of full data stream produced by chain.
+
+Full reindexing and full data subscription is possible with tools we use, but that is not a goal of this solution (at least for now).

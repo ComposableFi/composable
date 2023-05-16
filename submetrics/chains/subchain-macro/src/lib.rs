@@ -1,13 +1,12 @@
 macro_rules! interest {
     ($chain:ident) => {
         pub mod $chain {
-
             use subxt::utils::AccountId32;
             use $chain::parachain::{api, api::runtime_types};
             #[derive(Debug, parity_scale_codec::Encode, parity_scale_codec::Decode)]
             pub enum ChangeOfInterest {
                 Balances(runtime_types::pallet_balances::pallet::Event),
-                SystemAccount(
+                StorageSystemAccount(
                     Vec<(
                         AccountId32,
                         runtime_types::frame_system::AccountInfo<
@@ -17,13 +16,14 @@ macro_rules! interest {
                     )>,
                 ),
                 Tokens(runtime_types::orml_tokens::module::Event),
-                TokensAccounts(
+                StorageTokensAccounts(
                     Vec<(
                         AccountId32,
                         u128,
                         runtime_types::orml_tokens::AccountData<u128>,
                     )>,
                 ),
+                StorageTokensTotalIssuance(Vec<(u128, u128)>),
                 Ibc(runtime_types::pallet_ibc::pallet::Event),
                 Ics20Fee(api::ics20_fee::Event),
                 ParachainSystem(runtime_types::cumulus_pallet_parachain_system::pallet::Event),
