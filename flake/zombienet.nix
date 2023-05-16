@@ -191,6 +191,14 @@
               "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
             command = self'.packages.composable-testfast-node;
             chain = "composable-dev";
+            parachains = [{
+              command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
+              chain = "statemint-local";
+              id = 1000;
+              collators = 2;
+              ws_port = 10018;
+              rpc_port = 32240;
+            }];
           });
       };
 

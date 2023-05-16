@@ -562,11 +562,22 @@ jobs:
         - dependency-review
         - nix-flake-check
         - build-product-darwin
+        - devnet-integration-tests
       steps:           
-        - if: ${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-benchmarks-packages.outputs.ok == 'true' && needs.build-product-darwin.outputs.ok == 'true' }}
+        - if: |
+            ${{ 
+              needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-benchmarks-packages.outputs.ok == 'true' 
+              && needs.build-product-darwin.outputs.ok == 'true' 
+              && needs.devnet-integration-tests.outputs.ok == 'true' 
+            }}
           run: |
             echo "All dependencies built well"
-        - if: ${{ needs.nix-flake-check.outputs.ok != 'true' || needs.dependency-review.outputs.ok != 'true' || needs.build-all-production-deps.outputs.ok != 'true' || needs.build-all-misc-packages.outputs.ok != 'true' || needs.build-all-docs-packages.outputs.ok != 'true' || needs.build-all-ci-packages.outputs.ok != 'true' || needs.build-all-benchmarks-packages.outputs.ok != 'true' || needs.build-product-darwin.outputs.ok != 'true' }}
+        - if: |
+            ${{ 
+              needs.nix-flake-check.outputs.ok != 'true' || needs.dependency-review.outputs.ok != 'true' || needs.build-all-production-deps.outputs.ok != 'true' || needs.build-all-misc-packages.outputs.ok != 'true' || needs.build-all-docs-packages.outputs.ok != 'true' || needs.build-all-ci-packages.outputs.ok != 'true' || needs.build-all-benchmarks-packages.outputs.ok != 'true' 
+              || needs.build-product-darwin.outputs.ok != 'true' 
+              || needs.devnet-integration-tests.outputs.ok != 'true' 
+            }}
           run: |
             echo "Some of dependencies (see jobs graph or `needs` attribute) failed to build"      
             exit 42
@@ -722,8 +733,9 @@ jobs:
           artifact: hyperspace-composable-polkadot-picasso-kusama:latest          
       
   devnet-integration-tests:
-    name: Devnet integration tests [FLAKY]
-    if: ${{ inputs.github_event_name == 'merge_group' || (inputs.github_event_name == 'pull_request_target' && inputs.github_event_pull_request_head_repo_id != 383289760) || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}    
+    name: devnet-integration-tests       
+    outputs:
+      ok: ${{ steps.ok.outputs.ok }}       
     needs: 
       - build-all-ci-packages
     strategy:
@@ -738,6 +750,7 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Set up Nix
+        if: ${{ inputs.flow == 'merge_queue_check' }}
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
           install_url: https://releases.nixos.org/nix/nix-2.13.2/install
@@ -748,21 +761,28 @@ jobs:
             system-features = kvm
             
       - name: Set up Cachix
+        if: ${{ inputs.flow == 'merge_queue_check' }}
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - name: Add tools needed for non-nix steps
+        if: ${{ inputs.flow == 'merge_queue_check' }}
         run: |  
           nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils nixpkgs.gnumake nixpkgs.python311 nixpkgs.gcc
       - uses: actions/checkout@v3
+        if: ${{ inputs.flow == 'merge_queue_check' }}
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha }}
           persist-credentials: false
       - name: Devnet integration tests
+        if: ${{ inputs.flow == 'merge_queue_check' }}
         run: |
           nix run .#devnet-integration-tests
+      - id: ok
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"            
+          
    

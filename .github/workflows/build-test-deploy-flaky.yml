@@ -120,6 +120,7 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Set up Nix
+        if: ${{ github.event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
         with:
           install_url: https://releases.nixos.org/nix/${{ env.NIX_VERSION }}/install
@@ -130,16 +131,19 @@ jobs:
             system-features = kvm
             
       - name: Set up Cachix
+        if: ${{ github.event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{ env.CACHIX_NAME }}
       - name: Add tools needed for non-nix steps
+        if: ${{ github.event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
         run: |  
           nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker
       - uses: actions/checkout@v3
+        if: ${{ github.event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
         with:
           lfs: true
           ref: ${{ github.event.pull_request.head.sha }}
@@ -151,6 +155,7 @@ jobs:
           working-directory: ./docs
 
       - name: Deploy docs
+        if: ${{ github.event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
         uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
         with:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DOCS_COMPOSABLE_FINANCE }}
