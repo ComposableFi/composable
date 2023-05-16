@@ -117,7 +117,16 @@ impl Ics20RateLimiter for ConstantAny {
 		msg: &pallet_ibc::ics20::Ics20TransferMsg,
 		_flow_type: pallet_ibc::ics20::FlowType,
 	) -> Result<(), ()> {
-		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(10_000 * 10_u64.pow(12)) {
+		let pica_denom =
+			<<Runtime as pallet_ibc::Config>::IbcDenomToAssetIdConversion as DenomToAssetId<
+				Runtime,
+			>>::from_asset_id_to_denom(CurrencyId::PICA);
+
+		let limit = match msg.token.denom.to_string().as_str() {
+			denom if Some(denom) == pica_denom.as_deref() => 500_000,
+			_ => 10_000,
+		};
+		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(limit * 10_u64.pow(12)) {
 			return Ok(())
 		}
 		Err(())
