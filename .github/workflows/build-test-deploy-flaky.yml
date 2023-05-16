@@ -149,6 +149,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
       - name: Build docs
+        if: ${{ github.event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#docs-static
