@@ -10,6 +10,7 @@ Ensure that you have followed the steps to setup the guide to install clone the 
 :::
 ## Running `pallet-cosmwasm` on Picasso rococo
 
+**We have set up a faucet on Matrix for Picasso Rococo, allowing anyone to receive PICA tokens on rococo. Join [here](https://matrix.to/#/#picasso-rococo-faucet:matrix.org).**
 ### Uploading the contract
 
 Let's say that we want to upload the `v1.0.1` release of `cw20_base`. We can directly use the download link from the [release page](https://github.com/CosmWasm/cw-plus/releases).
