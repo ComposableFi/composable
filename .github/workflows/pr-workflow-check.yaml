@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest  
     steps:
       - run: |
+          echo "${{ github.event_name }}"
           echo "${{ github.event_name == 'push' }}"
           echo "${{ github.event_name == 'merge_group' }}"
           echo "${{ github.event_name == 'pull_request_target' && github.event.pull_request_target.head.repo.id != 383289760 }}"
