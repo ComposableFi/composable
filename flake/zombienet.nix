@@ -165,6 +165,48 @@
               "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
             command = self'.packages.composable-testfast-node;
             chain = "picasso-dev";
+            parachains = [{
+              command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
+              chain = "statemine-local";
+              id = 1000;
+              collators = 2;
+              ws_port = 10008;
+              rpc_port = 32220;
+              genesis = {
+                runtime = {
+                  parachainInfo = { parachainId = 1000; };
+
+                  balances = {
+                    balances = {
+                      "0" = {
+                        "0" =
+                          "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
+                        "1" = 17476266491902;
+                      };
+                    };
+                  };
+                  assets = {
+                    assets = {
+                      "0" = {
+                        "0" = 1984;
+                        "1" =
+                          "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
+                        "2" = true;
+                        "3" = 123456789;
+                      };
+                    };
+                    metadata = {
+                      "0" = {
+                        "0" = 1984;
+                        "1" = [ 85 83 68 84 ];
+                        "2" = [ 85 83 68 84 ];
+                        "3" = 6;
+                      };
+                    };
+                  };
+                };
+              };
+            }];
           });
 
         zombienet-picasso-centauri-b =
