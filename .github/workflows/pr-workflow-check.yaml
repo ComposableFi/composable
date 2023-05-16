@@ -19,10 +19,11 @@ jobs:
     runs-on: ubuntu-latest  
     steps:
       - run: |
-          echo ${{ github.event_name == 'push' && 'push }} 
-          echo ${{ github.event_name == 'merge_group' && 'merge_queue_check }} 
-          echo ${{ github.event_name == 'pull_request_target' && github.event.pull_request_target.head.repo.id != 383289760 && 'pr_from_fork }} 
-          echo ${{ github.event_name == 'pull_request' && github.event.pull_request_target.head.repo.id == 383289760 && 'pr_from_branch' }}
+          echo "${{ github.event_name == 'push' && 'push }}"
+          echo "${{ github.event_name == 'merge_group' && 'merge_queue_check }}"
+          echo "${{ github.event_name == 'pull_request_target' && github.event.pull_request_target.head.repo.id != 383289760 && 'pr_from_fork }}"
+          echo "${{ github.event_name == 'pull_request' && github.event.pull_request_target.head.repo.id == 383289760 && 'pr_from_branch' }"
+
   pr-workflow-check:
     uses: ./.github/workflows/pr-workflow.yml
     with:
