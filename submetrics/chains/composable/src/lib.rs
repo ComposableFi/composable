@@ -7,3 +7,7 @@ pub const system_account_prefix: &str =
 pub const tokens_accounts_prefix: &str =
     "99971b5749ac43e0235e41b0d37869188ee7418a6531173d60d1f6a82d8f4d51";
 pub const system_events: &str = "26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7";
+
+fn x() {
+    //parachain::api::tokens::storage::
+}

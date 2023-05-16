@@ -1,4 +1,4 @@
-use std::{str::FromStr, io::Read};
+use std::{io::Read, str::FromStr};
 
 use composable::parachain::api::preimage::events;
 use jsonrpsee::types::Id;
@@ -7,12 +7,14 @@ use serde::Deserialize;
 use smoldot::json_rpc::methods::HexString;
 use subxt::utils::{AccountId32, H256};
 
-pub fn composable_decoder(chain_response: String) -> Vec<subchain_macro::composable::ChangeOfInterest> {
+pub fn composable_decoder(
+    chain_response: String,
+) -> Vec<subchain_macro::composable::ChangeOfInterest> {
     use composable::parachain::api::runtime_types;
-    use subchain_macro::composable::ChangeOfInterest;
+    use composable::parachain::api::runtime_types::composable_runtime::RuntimeEvent;
     use composable::parachain::*;
     use composable::*;
-    use composable::parachain::api::runtime_types::composable_runtime::RuntimeEvent;
+    use subchain_macro::composable::ChangeOfInterest;
 
     let mut result = Vec::new();
     log::debug!("{}", chain_response);
@@ -30,7 +32,7 @@ pub fn composable_decoder(chain_response: String) -> Vec<subchain_macro::composa
             >>::decode(&mut data.as_ref());
 
             if let Ok(storage_item) = storage_item {
-                if let Id::Str(key) = id.clone() {                    
+                if let Id::Str(key) = id.clone() {
                     let account = hex::decode(
                         key.to_string()
                             .replace("0x", "")
@@ -46,13 +48,11 @@ pub fn composable_decoder(chain_response: String) -> Vec<subchain_macro::composa
                 }
             }
 
-            let storage_item = <runtime_types::orml_tokens::AccountData<
-                u128,
-            >>::decode(&mut data.as_ref());
+            let storage_item =
+                <runtime_types::orml_tokens::AccountData<u128>>::decode(&mut data.as_ref());
 
             if let Ok(storage_item) = storage_item {
                 if let Id::Str(key) = id {
-                   
                     let account = hex::decode(
                         key.to_string()
                             .replace("0x", "")
@@ -60,10 +60,18 @@ pub fn composable_decoder(chain_response: String) -> Vec<subchain_macro::composa
                     )
                     .unwrap();
                     let account: Vec<_> = account.into_iter().skip(16).collect();
-                    let real_account = AccountId32(account.clone().into_iter().take(32).collect::<Vec<_>>().try_into().unwrap());
-                    let stuff : Vec<_> = account.clone().into_iter().skip(32).skip(8).collect();
+                    let real_account = AccountId32(
+                        account
+                            .clone()
+                            .into_iter()
+                            .take(32)
+                            .collect::<Vec<_>>()
+                            .try_into()
+                            .unwrap(),
+                    );
+                    let stuff: Vec<_> = account.clone().into_iter().skip(32).skip(8).collect();
                     let asset_id = u128::decode(&mut stuff.as_ref()).unwrap();
-                    
+
                     result.push(ChangeOfInterest::TokensAccounts(vec![(
                         real_account,
                         asset_id,
@@ -80,7 +88,7 @@ pub fn composable_decoder(chain_response: String) -> Vec<subchain_macro::composa
     > = serde_json::from_str(&chain_response);
 
     log::debug!("changeset {:?}", &changeset);
-    
+
     if let Ok(events) = changeset {
         for (key, changeset) in events.params.result.changes {
             if key.0 == hex::decode(system_events).unwrap() {
@@ -99,31 +107,29 @@ pub fn composable_decoder(chain_response: String) -> Vec<subchain_macro::composa
                     match events {
                         Ok(events) => {
                             result.append(
-                            &mut events
-                                .into_iter()
-                                .filter_map(|x| match x.event {
-                                    RuntimeEvent::Ibc(x) => {
-                                        Some(ChangeOfInterest::Ibc(x))
-                                    }
-                                    RuntimeEvent::Tokens(x) => {
-                                        Some(ChangeOfInterest::Tokens(x))
-                                    }
-                                    RuntimeEvent::Balances(x) => {
-                                        Some(ChangeOfInterest::Balances(x))
-                                    }
-                                    RuntimeEvent::PolkadotXcm(x) => {
-                                        Some(ChangeOfInterest::PolkadotXcm(x))
-                                    }
-                                    RuntimeEvent::Ics20Fee(x) => {
-                                        Some(ChangeOfInterest::Ics20Fee(x))
-                                    }
-                                    RuntimeEvent::PolkadotXcm(x) => {
-                                        Some(ChangeOfInterest::PolkadotXcm(x))
-                                    },
-                                    _ => None,
-                                })
-                                .collect(),
-                        );
+                                &mut events
+                                    .into_iter()
+                                    .filter_map(|x| match x.event {
+                                        RuntimeEvent::Ibc(x) => Some(ChangeOfInterest::Ibc(x)),
+                                        RuntimeEvent::Tokens(x) => {
+                                            Some(ChangeOfInterest::Tokens(x))
+                                        }
+                                        RuntimeEvent::Balances(x) => {
+                                            Some(ChangeOfInterest::Balances(x))
+                                        }
+                                        RuntimeEvent::PolkadotXcm(x) => {
+                                            Some(ChangeOfInterest::PolkadotXcm(x))
+                                        }
+                                        RuntimeEvent::Ics20Fee(x) => {
+                                            Some(ChangeOfInterest::Ics20Fee(x))
+                                        }
+                                        RuntimeEvent::PolkadotXcm(x) => {
+                                            Some(ChangeOfInterest::PolkadotXcm(x))
+                                        }
+                                        _ => None,
+                                    })
+                                    .collect(),
+                            );
                         }
                         Err(error) => log::error!("failed ot parse event{}", error),
                     }
@@ -135,14 +141,13 @@ pub fn composable_decoder(chain_response: String) -> Vec<subchain_macro::composa
     }
     return result;
 }
-
 
 pub fn picasso_decoder(chain_response: String) -> Vec<subchain_macro::picasso::ChangeOfInterest> {
     use picasso::parachain::api::runtime_types;
-    use subchain_macro::picasso::ChangeOfInterest;
+    use picasso::parachain::api::runtime_types::picasso_runtime::RuntimeEvent;
     use picasso::parachain::*;
     use picasso::*;
-    use picasso::parachain::api::runtime_types::picasso_runtime::RuntimeEvent;
+    use subchain_macro::picasso::ChangeOfInterest;
 
     let mut result = Vec::new();
     log::debug!("{}", chain_response);
@@ -160,7 +165,7 @@ pub fn picasso_decoder(chain_response: String) -> Vec<subchain_macro::picasso::C
             >>::decode(&mut data.as_ref());
 
             if let Ok(storage_item) = storage_item {
-                if let Id::Str(key) = id.clone() {                    
+                if let Id::Str(key) = id.clone() {
                     let account = hex::decode(
                         key.to_string()
                             .replace("0x", "")
@@ -176,13 +181,11 @@ pub fn picasso_decoder(chain_response: String) -> Vec<subchain_macro::picasso::C
                 }
             }
 
-            let storage_item = <runtime_types::orml_tokens::AccountData<
-                u128,
-            >>::decode(&mut data.as_ref());
+            let storage_item =
+                <runtime_types::orml_tokens::AccountData<u128>>::decode(&mut data.as_ref());
 
             if let Ok(storage_item) = storage_item {
                 if let Id::Str(key) = id {
-                   
                     let account = hex::decode(
                         key.to_string()
                             .replace("0x", "")
@@ -190,10 +193,18 @@ pub fn picasso_decoder(chain_response: String) -> Vec<subchain_macro::picasso::C
                     )
                     .unwrap();
                     let account: Vec<_> = account.into_iter().skip(16).collect();
-                    let real_account = AccountId32(account.clone().into_iter().take(32).collect::<Vec<_>>().try_into().unwrap());
-                    let stuff : Vec<_> = account.clone().into_iter().skip(32).skip(8).collect();
+                    let real_account = AccountId32(
+                        account
+                            .clone()
+                            .into_iter()
+                            .take(32)
+                            .collect::<Vec<_>>()
+                            .try_into()
+                            .unwrap(),
+                    );
+                    let stuff: Vec<_> = account.clone().into_iter().skip(32).skip(8).collect();
                     let asset_id = u128::decode(&mut stuff.as_ref()).unwrap();
-                    
+
                     result.push(ChangeOfInterest::TokensAccounts(vec![(
                         real_account,
                         asset_id,
@@ -210,7 +221,7 @@ pub fn picasso_decoder(chain_response: String) -> Vec<subchain_macro::picasso::C
     > = serde_json::from_str(&chain_response);
 
     log::debug!("changeset {:?}", &changeset);
-    
+
     if let Ok(events) = changeset {
         for (key, changeset) in events.params.result.changes {
             if key.0 == hex::decode(system_events).unwrap() {
@@ -229,31 +240,29 @@ pub fn picasso_decoder(chain_response: String) -> Vec<subchain_macro::picasso::C
                     match events {
                         Ok(events) => {
                             result.append(
-                            &mut events
-                                .into_iter()
-                                .filter_map(|x| match x.event {
-                                    RuntimeEvent::Ibc(x) => {
-                                        Some(ChangeOfInterest::Ibc(x))
-                                    }
-                                    RuntimeEvent::Tokens(x) => {
-                                        Some(ChangeOfInterest::Tokens(x))
-                                    }
-                                    RuntimeEvent::Balances(x) => {
-                                        Some(ChangeOfInterest::Balances(x))
-                                    }
-                                    RuntimeEvent::PolkadotXcm(x) => {
-                                        Some(ChangeOfInterest::PolkadotXcm(x))
-                                    }
-                                    RuntimeEvent::Ics20Fee(x) => {
-                                        Some(ChangeOfInterest::Ics20Fee(x))
-                                    }
-                                    RuntimeEvent::PolkadotXcm(x) => {
-                                        Some(ChangeOfInterest::PolkadotXcm(x))
-                                    },
-                                    _ => None,
-                                })
-                                .collect(),
-                        );
+                                &mut events
+                                    .into_iter()
+                                    .filter_map(|x| match x.event {
+                                        RuntimeEvent::Ibc(x) => Some(ChangeOfInterest::Ibc(x)),
+                                        RuntimeEvent::Tokens(x) => {
+                                            Some(ChangeOfInterest::Tokens(x))
+                                        }
+                                        RuntimeEvent::Balances(x) => {
+                                            Some(ChangeOfInterest::Balances(x))
+                                        }
+                                        RuntimeEvent::PolkadotXcm(x) => {
+                                            Some(ChangeOfInterest::PolkadotXcm(x))
+                                        }
+                                        RuntimeEvent::Ics20Fee(x) => {
+                                            Some(ChangeOfInterest::Ics20Fee(x))
+                                        }
+                                        RuntimeEvent::PolkadotXcm(x) => {
+                                            Some(ChangeOfInterest::PolkadotXcm(x))
+                                        }
+                                        _ => None,
+                                    })
+                                    .collect(),
+                            );
                         }
                         Err(error) => log::error!("failed ot parse event{}", error),
                     }
@@ -265,7 +274,6 @@ pub fn picasso_decoder(chain_response: String) -> Vec<subchain_macro::picasso::C
     }
     return result;
 }
-
 
 #[cfg(test)]
 mod test {
@@ -283,9 +291,9 @@ mod test {
         use composable::parachain::*;
         let real = hex::decode("000000000000000001000000000000007f635f78170000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let storage_item = <runtime_types::frame_system::AccountInfo<
-        u32,
-        runtime_types::pallet_balances::AccountData<u128>,
-    >>::decode(&mut real.as_ref());
+            u32,
+            runtime_types::pallet_balances::AccountData<u128>,
+        >>::decode(&mut real.as_ref());
     }
 
     #[test]

@@ -23,10 +23,9 @@ pub async fn composable_polkadot(
     mut storage_requests: UnboundedReceiver<subxt::storage::StorageKey>,
 ) {
     const deployment: &str = "composable-polkadot";
-    const para_spec : &str = include_str!("../../../code/parachain/node/src/res/composable.json");
-    const relay_spec: &str = include_str!(
-        "../../../../../smol-dot/smoldot/demo-chain-specs/polkadot.json"
-    );
+    const para_spec: &str = include_str!("../../../code/parachain/node/src/res/composable.json");
+    const relay_spec: &str =
+        include_str!("../../../../../smol-dot/smoldot/demo-chain-specs/polkadot.json");
 
     let mut client = smoldot_light::Client::new(
         smoldot_light::platform::async_std::AsyncStdTcpWebSocket::new(
@@ -88,7 +87,7 @@ chain_id,
                 key: HexString(next.as_ref().to_vec()),
             };
             let key = serde_json::value::to_raw_value(&key).unwrap();
-            
+
             let request = jsonrpsee::types::Request::new(
                 "state_getStorage".into(),
                 Some(key.as_ref()),
@@ -109,10 +108,9 @@ pub async fn picasso_kusama(
     mut storage_requests: UnboundedReceiver<subxt::storage::StorageKey>,
 ) {
     const deployment: &str = "picasso-kusama";
-    const para_spec : &str = include_str!("../../../code/parachain/node/src/res/picasso.json");
-    const relay_spec: &str = include_str!(
-        "../../../../../smol-dot/smoldot/demo-chain-specs/kusama.json"
-    );
+    const para_spec: &str = include_str!("../../../code/parachain/node/src/res/picasso.json");
+    const relay_spec: &str =
+        include_str!("../../../../../smol-dot/smoldot/demo-chain-specs/kusama.json");
 
     let mut client = smoldot_light::Client::new(
         smoldot_light::platform::async_std::AsyncStdTcpWebSocket::new(
