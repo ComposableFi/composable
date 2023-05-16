@@ -17,9 +17,9 @@ jobs:
       flow: |
         ${{ 
           (github.event_name == 'push' && 'push') ||
-          (inputs.github_event_name == 'merge_group' && 'merge_queue_check') ||
-          (inputs.github_event_name == 'pull_request_target' && inputs.github_event_pull_request_head_repo_id != 383289760 && 'pr_from_fork') ||  
-          (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760 && 'pr_from_branch') 
+          (github.event_name == 'merge_group' && 'merge_queue_check') ||
+          (github.event_name == 'pull_request_target' && github.event.pull_request_target.head.repo.id != 383289760 && 'pr_from_fork') ||  
+          (github.event_name == 'pull_request' && github.event.pull_request_target.head.repo.id == 383289760 && 'pr_from_branch') 
         }} 
     secrets:
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}          
