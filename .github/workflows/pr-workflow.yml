@@ -44,6 +44,8 @@ jobs:
     runs-on: ubuntu-latest  
     steps:
       - run: |
+          echo "!${{ inputs.flow }}!"
+          echo "!${{ contains(inputs.flow,'pr_from_branch' }}!"
           echo "${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}"
 
   dependency-review:     
