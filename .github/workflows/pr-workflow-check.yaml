@@ -13,18 +13,6 @@ on:
     types: [checks_requested]
 
 jobs:
-  env:
-    name: "env"
-    continue-on-error: false
-    runs-on: ubuntu-latest  
-    steps:
-      - run: |
-          echo "${{ github.event_name }}"
-          echo "${{ github.event_name == 'push' }}"
-          echo "${{ github.event_name == 'merge_group' }}"
-          echo "${{ github.event_name == 'pull_request_target' && github.event.pull_request_target.head.repo.id != 383289760 }}"
-          echo "${{ github.event_name == 'pull_request' && github.event.pull_request_target.head.repo.id == 383289760 }}"
-
   pr-workflow-check:
     uses: ./.github/workflows/pr-workflow.yml
     with:
@@ -36,8 +24,8 @@ jobs:
         ${{ 
           (github.event_name == 'push' && 'push') ||
           (github.event_name == 'merge_group' && 'merge_queue_check') ||
-          (github.event_name == 'pull_request_target' && github.event.pull_request_target.head.repo.id != 383289760 && 'pr_from_fork') ||  
-          (github.event_name == 'pull_request' && github.event.pull_request_target.head.repo.id == 383289760 && 'pr_from_branch') 
+          (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760 && 'pr_from_fork') ||  
+          (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760 && 'pr_from_branch') 
         }}      
     secrets:
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}          
