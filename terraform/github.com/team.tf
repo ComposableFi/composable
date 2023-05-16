@@ -41,6 +41,16 @@ resource "github_repository_collaborators" "roles" {
 
   user {
     permission = "maintain"
+    username   = "kkast"
+  }
+
+  user {
+    permission = "maintain"
+    username   = "itsbobbyzz"
+  }
+
+  user {
+    permission = "maintain"
     username   = "RustNinja"
   }
 
