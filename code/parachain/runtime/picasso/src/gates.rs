@@ -27,6 +27,9 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::CancelProxy => {
 				matches!(c, RuntimeCall::Proxy(proxy::Call::reject_announcement { .. }))
 			},
+			ProxyType::AssetsRegistry => {
+				matches!(c, RuntimeCall::AssetsRegistry(..))
+			},
 			ProxyType::Bridge => matches!(
 				c,
 				RuntimeCall::Ibc(..) |
@@ -78,7 +81,8 @@ impl collective::Config<ReleaseCollective> for Runtime {
 	type MaxMembers = ConstU32<100>;
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
-	type SetMembersOrigin = EnsureRootOrHalfNativeTechnical;
+	type SetMembersOrigin =
+		frame_system::EnsureSignedBy<crate::TechnicalCommitteeMembership, Self::AccountId>;
 }
 
 pub type EnsureRootOrTwoThirds<T> =
