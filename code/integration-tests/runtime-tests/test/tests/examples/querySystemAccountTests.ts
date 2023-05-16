@@ -14,7 +14,7 @@ import { getDevWallets } from "@composable/utils/walletHelper";
  * For a more advanced example of a full test suite check out: `tests/oracle/txOracleTests.ts`.
  */
 // describe(name, function) groups all query tests for the system pallet.
-describe("query.system Tests", function () {
+describe("[BASIC] query.system Tests", function () {
   // Check if group of tests are enabled.
   if (!testConfiguration.enabledTests.query.enabled) return;
 
