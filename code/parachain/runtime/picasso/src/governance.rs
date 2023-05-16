@@ -79,7 +79,7 @@ impl democracy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type LaunchPeriod = ConstU64<{ 1 * DAYS }>;
-	type VotingPeriod = ConstU64<{ 4 * DAYS }>;
+	type VotingPeriod = ConstU64<{ 3 * DAYS }>; // weekend + holiday
 	type EnactmentPeriod = ConstU64<{ 1 * DAYS }>;
 	type VoteLockingPeriod = EnactmentPeriod;
 	type MinimumDeposit = ConstU128<5_000_000_000_000_000>;
