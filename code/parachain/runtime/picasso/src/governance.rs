@@ -4,6 +4,7 @@ use super::*;
 use common::governance::native::*;
 use frame_support::traits::LockIdentifier;
 use frame_system::EnsureSigned;
+use sp_core::ConstU64;
 
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
@@ -65,10 +66,6 @@ impl collective::Config<NativeTechnicalMembership> for Runtime {
 }
 
 parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
-	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
-	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
-	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
@@ -81,9 +78,9 @@ parameter_types! {
 impl democracy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
-	type EnactmentPeriod = EnactmentPeriod;
-	type LaunchPeriod = LaunchPeriod;
-	type VotingPeriod = VotingPeriod;
+	type LaunchPeriod = ConstU64<{ 1 * DAYS }>;
+	type VotingPeriod = ConstU64<{ 4 * DAYS }>;
+	type EnactmentPeriod = ConstU64<{ 1 * DAYS }>;
 	type VoteLockingPeriod = EnactmentPeriod;
 	type MinimumDeposit = ConstU128<5_000_000_000_000_000>;
 	type ExternalOrigin = EnsureRootOrTwoThirdNativeCouncil;
@@ -102,15 +99,15 @@ impl democracy::Config for Runtime {
 	#[cfg(feature = "fastnet")]
 	type FastTrackVotingPeriod = ConstU32<{ 5 * common::MINUTES }>;
 
-	type CancellationOrigin = EnsureRootOrAllNativeTechnical;
+	type CancellationOrigin = EnsureRootOrTwoThirds<NativeTechnicalCollective>;
 
 	type BlacklistOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type CancelProposalOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type VetoOrigin = EnsureNativeTechnicalMember;
 	type Slash = Treasury;
 
-	type CooloffPeriod = CooloffPeriod;
-	type MaxProposals = MaxProposals;
+	type CooloffPeriod = ConstU64<{ 7 * DAYS }>;
+	type MaxProposals = MaxProposzls;
 	type MaxVotes = MaxVotes;
 	type PalletsOrigin = OriginCaller;
 
@@ -120,7 +117,10 @@ impl democracy::Config for Runtime {
 
 	type Scheduler = Scheduler;
 	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
-	type SubmitOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>;
+	type SubmitOrigin = EitherOfDiverse<
+		system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
+		system::EnsureSignedBy<CouncilMembership, Self::AccountId>,
+	>;
 }
 
 parameter_types! {
