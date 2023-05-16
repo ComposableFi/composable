@@ -312,7 +312,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn get_all_assets() -> Vec<Asset<T::Balance, T::ForeignAssetId>> {
+		pub fn get_all_assets() -> Vec<Asset<T::LocalAssetId, T::Balance, T::ForeignAssetId>> {
 			ExistentialDeposit::<T>::iter_keys()
 				.map(|asset_id| {
 					let name = AssetName::<T>::get(asset_id).map(Into::into);
@@ -323,14 +323,7 @@ pub mod pallet {
 					let existential_deposit =
 						ExistentialDeposit::<T>::get(asset_id).unwrap_or_default();
 
-					Asset {
-						name,
-						id: asset_id.into(),
-						decimals,
-						ratio,
-						foreign_id,
-						existential_deposit,
-					}
+					Asset { name, id: asset_id, decimals, ratio, foreign_id, existential_deposit }
 				})
 				.collect::<Vec<_>>()
 		}
@@ -432,7 +425,8 @@ pub mod pallet {
 			<MinFeeAmounts<T>>::get(parachain_id, remote_asset_id)
 		}
 
-		fn get_foreign_assets_list() -> Vec<Asset<T::Balance, Self::AssetNativeLocation>> {
+		fn get_foreign_assets_list(
+		) -> Vec<Asset<Self::AssetId, T::Balance, Self::AssetNativeLocation>> {
 			ForeignToLocal::<T>::iter()
 				.map(|(_, asset_id)| {
 					let foreign_id = LocalToForeign::<T>::get(asset_id);
@@ -444,7 +438,7 @@ pub mod pallet {
 
 					Asset {
 						name: None,
-						id: asset_id.into(),
+						id: asset_id,
 						decimals,
 						ratio,
 						foreign_id,

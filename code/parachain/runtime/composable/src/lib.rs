@@ -39,7 +39,7 @@ use common::{
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::{assets::Asset, xcm::assets::RemoteAssetRegistryInspect};
+use composable_traits::assets::Asset;
 use gates::*;
 use governance::*;
 use orml_traits::parameter_type_with_key;
@@ -735,44 +735,51 @@ impl_runtime_apis! {
 			SafeRpcWrapper(<Assets as frame_support::traits::fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
-		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {
+		fn list_assets() -> Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>> {
 			// Hardcoded assets
 			use common::fees::ForeignToNativePriceConverter;
 			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
 				// Add hardcoded ratio and ED for well known assets
-				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
-				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
+				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(asset.id);
+				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id);
 				asset
 			}).map(|xcm|
-				Asset {
-				  decimals : xcm.decimals,
-				  existential_deposit : xcm.existential_deposit,
-				  id : xcm.id,
-				  foreign_id : xcm.foreign_id.map(Into::into),
-				  name : xcm.name,
-				  ratio : xcm.ratio,
-				}
-			  ).collect::<Vec<_>>();
+			  Asset {
+				decimals : xcm.decimals,
+				existential_deposit : xcm.existential_deposit,
+				id : xcm.id,
+				foreign_id : xcm.foreign_id.map(Into::into),
+				name : xcm.name,
+				ratio : xcm.ratio,
+			  }
+			).collect::<Vec<Asset<CurrencyId, Balance, ForeignAssetId>>>();
 
 			// Assets from the assets-registry pallet
-			let foreign_assets = assets_registry::Pallet::<Runtime>::get_foreign_assets_list();
+			let all_assets =  assets_registry::Pallet::<Runtime>::get_all_assets();
 
 			// Override asset data for hardcoded assets that have been manually updated, and append
 			// new assets without duplication
-			foreign_assets.into_iter().fold(assets, |mut acc, mut foreign_asset| {
-				if let Some(asset) = acc.iter_mut().find(|asset_i| asset_i.id == foreign_asset.id) {
-					// Update asset with data from assets-registry
-					asset.decimals = foreign_asset.decimals;
-					asset.foreign_id = foreign_asset.foreign_id.clone();
-					asset.ratio = foreign_asset.ratio;
+			all_assets.into_iter().fold(assets, |mut acc, mut asset| {
+				if let Some(found_asset) = acc.iter_mut().find(|asset_i| asset_i.id == asset.id) {
+					// Update a found asset with data from assets-registry
+					found_asset.decimals = asset.decimals;
+					found_asset.foreign_id = asset.foreign_id.clone();
+					found_asset.ratio = asset.ratio;
 				} else {
-					foreign_asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&foreign_asset.id.into());
-					acc.push(foreign_asset.clone())
+					asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id);
+					acc.push(asset.clone())
 				}
 				acc
-			})
-		}
-
+			}).iter().map(|asset|
+			  Asset {
+				decimals : asset.decimals,
+				existential_deposit : SafeRpcWrapper(asset.existential_deposit),
+				id : SafeRpcWrapper(asset.id.into()),
+				foreign_id : asset.foreign_id.clone(),
+				name : asset.name.clone(),
+				ratio : asset.ratio,
+			  }
+			).collect::<Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>>>()		}
 	}
 
 	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {

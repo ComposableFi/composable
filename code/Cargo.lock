@@ -12296,6 +12296,7 @@ dependencies = [
 name = "reward"
 version = "1.0.0"
 dependencies = [
+ "composable-support",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -12316,6 +12317,7 @@ dependencies = [
 name = "reward-rpc"
 version = "0.3.0"
 dependencies = [
+ "composable-support",
  "jsonrpsee 0.16.2",
  "parity-scale-codec",
  "reward-rpc-runtime-api",
@@ -12328,6 +12330,7 @@ dependencies = [
 name = "reward-rpc-runtime-api"
 version = "0.3.0"
 dependencies = [
+ "composable-support",
  "frame-support",
  "parity-scale-codec",
  "serde",
