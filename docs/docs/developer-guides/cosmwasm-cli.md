@@ -3,6 +3,37 @@
 Composable Cosmwasm CLI is a CLI tool to quickly get started with the XCVM ecosystem and
 interact with a chain that runs `pallet-cosmwasm`.
 
+## Installing `ccw`
+
+At first, clone the [repository](https://github.com/ComposableFi/cw-toolkit):
+
+```
+git clone https://github.com/ComposableFi/cw-toolkit
+```
+
+Then run the following command to install the ccw binary:
+
+```
+cargo install --path ./cw-toolkit/cli
+```
+
+## Installing `nix` 
+
+We are using Nix to set up and start our local development environment. So check out our 
+[Nix installation page](https://docs.composable.finance/nix/install) to install Nix.
+
+Then start the development environment by running:
+
+```
+nix run "github:ComposableFi/composable#dali-devnet"
+```
+
+This will take time at first but since it is cached, it will be almost instant afterward. But note that your node will be rebuilt if the commit hash changes. If you would like to avoid this, you can always use a specific commit hash like this example:
+
+```
+nix run "github:ComposableFi/composable/d2845fc731bc3ee418a17cf528336d50f4b39924#dali-devnet"
+```
+
 ## Create a CosmWasm project
 
 You can create a base CosmWasm project that you can work on.
