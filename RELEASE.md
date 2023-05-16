@@ -1,11 +1,5 @@
 # Releasing Composable Node and Related Components
 
-## 1. Abstract
-
-Given the complexity of the number of components and teams involved a standard process is needed to release Composable node and related components.
-
-## 2. Goals
-
 1. Define release numbering convention.
 2. Define branching strategy for releases.
 3. Define release process steps.
@@ -122,3 +116,11 @@ nix run .\#tag-release 5.4200.0
 It will trigger `on.push.tags` [GitHub Tag based release flow](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) 
 
 - [ ] Run [upgrade](https://substrate.stackexchange.com/questions/1061/what-is-the-proper-way-of-executing-a-runtime-upgrade-on-a-parachain) to new runtime on fork of latest block of live network.
+
+
+## Notifications
+
+- GitHub allows to subscribe to Release Candidate and Release publish.
+- Web3Alerts.io allows to subscribe to parachain runtime update authorized, runtime uploaded and runtime applied.
+
+These notification allow integrations (bridges, frontend, indexers) to align their roll outs with runtime upgrades.
