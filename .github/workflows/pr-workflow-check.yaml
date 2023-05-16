@@ -20,13 +20,8 @@ jobs:
       github_event_pull_request_head_repo_id : ${{ github.event.pull_request.head.repo.id }}
       github_workflow: ${{ github.workflow }}
       github_event_pull_request_head_sha: ${{ github.event.pull_request.head.sha }}
-      flow: |
-        ${{ 
-          (github.event_name == 'push' && 'push') ||
-          (github.event_name == 'merge_group' && 'merge_queue_check') ||
-          (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760 && 'pr_from_fork') ||  
-          (github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760 && 'pr_from_branch') 
-        }}      
+      flow: ${{( github.event_name == 'push' && 'push' ) || ( github.event_name == 'merge_group' && 'merge_queue_check' ) || ( github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.id != 383289760 && 'pr_from_fork' ) || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.id == 383289760 && 'pr_from_branch' )}}      
+    
     secrets:
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}          
       DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
