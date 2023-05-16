@@ -10,7 +10,7 @@ on:
         type: string
       github_event_pull_request_head_repo_id :
         required: true
-        type: string
+        type: number
       github_workflow:
         required: true
         type: string
@@ -70,9 +70,10 @@ jobs:
     runs-on: ubuntu-latest  
     steps:
       - run: |
-          echo ${{ inputs.github_event_name }} 
-          echo ${{ github.ref_name }}
-          echo "repository id ${{ inputs.github_event_pull_request_head_repo_id }} ${{ github.event.pull_request_target.head.repo.id }}" 
+          echo "${{ inputs.github_event_name }}"" 
+          echo "${{ inputs.flow }}"" 
+          echo "${{ github.ref_name }}"
+          echo "${{ inputs.github_event_pull_request_head_repo_id }}" 
       
   lfs-check:
     name: LFS check
