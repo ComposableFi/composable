@@ -1,18 +1,8 @@
-# Getting Started with CosmWasm
+# Generate a template project
 
-## Installing `ccw`
-
-Clone the [repository](https://github.com/ComposableFi/cw-toolkit), then run:
-
-```
-# Clone the repo
-git clone https://github.com/ComposableFi/cw-toolkit
-
-# Install the ccw binary
-cargo install --path ./cw-toolkit/cli
-```
-
-## Generate a template project
+:::note
+Ensure that you have followed the steps to setup the guide to install clone the `ccw` repository and install nix as outlined in the [first section](https://docs.composable.finance/developer-guides/cosmwasm-cli).
+:::
 
 Apart from interacting with `pallet-cosmwasm`, you can also create a base CosmWasm project that you can work upon.
 
