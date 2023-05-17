@@ -32,6 +32,7 @@ exclude = [
   "utils/submetrics",
   "integration-tests",
   "parachain/frame/vesting/cli",
+  "parachain/frame/cosmwasm/cli",
 ]
 members = [
   "services/cmc-api",
