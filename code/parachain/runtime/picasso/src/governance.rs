@@ -75,10 +75,25 @@ parameter_types! {
 impl democracy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
+
+	#[cfg(not(feature = "fastnet"))]
 	type LaunchPeriod = ConstU32<{ 1 * DAYS }>;
+	#[cfg(not(feature = "fastnet"))]
 	type VotingPeriod = ConstU32<{ 3 * DAYS }>; // weekend + holiday
+	#[cfg(not(feature = "fastnet"))]
 	type EnactmentPeriod = ConstU32<{ 1 * DAYS }>;
+	#[cfg(not(feature = "fastnet"))]
 	type VoteLockingPeriod = ConstU32<{ 1 * DAYS }>;
+
+	#[cfg(feature = "fastnet")]
+	type LaunchPeriod = ConstU32<{ 1 * HOURS }>;
+	#[cfg(feature = "fastnet")]
+	type VotingPeriod = ConstU32<{ 3 * HOURS }>;
+	#[cfg(feature = "fastnet")]
+	type EnactmentPeriod = ConstU32<{ 1 * HOURS }>;
+	#[cfg(feature = "fastnet")]
+	type VoteLockingPeriod = ConstU32<{ 1 * HOURS }>;
+
 	type MinimumDeposit = ConstU128<5_000_000_000_000_000>;
 	type ExternalOrigin = EnsureRootOrTwoThirdNativeCouncil;
 
