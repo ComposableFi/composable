@@ -318,6 +318,8 @@ mmr-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1
 
 subxt = { git = "https://github.com/paritytech/subxt", rev = "2a913a3aa99a07f7acaedbbaeed6925d34627303", default-features = false }
 
+# Only needed until the configs get merged into xcm-builder: https://github.com/paritytech/polkadot/pull/7165
+invarch-xcm-builder = { git = "https://github.com/InvArch/InvArch-XCM-Builder", rev = "c704c0f2d4c436f96eff10d06c197527b46b3536", default-features = false }
 
 #######################################
 # DO NOT DELETE PATCHES, BUT COMMENT OUT

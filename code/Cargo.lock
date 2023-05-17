@@ -5587,6 +5587,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "invarch-xcm-builder"
+version = "0.1.0"
+source = "git+https://github.com/InvArch/InvArch-XCM-Builder?rev=c704c0f2d4c436f96eff10d06c197527b46b3536#c704c0f2d4c436f96eff10d06c197527b46b3536"
+dependencies = [
+ "frame-support",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
 name = "io-lifetimes"
 version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10010,6 +10024,7 @@ dependencies = [
  "ibc 0.15.0",
  "ibc-primitives",
  "ibc-runtime-api",
+ "invarch-xcm-builder",
  "log 0.4.17",
  "orml-tokens",
  "orml-traits",
