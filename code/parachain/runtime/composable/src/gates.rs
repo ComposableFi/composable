@@ -26,7 +26,7 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::CancelProxy => {
 				matches!(c, RuntimeCall::Proxy(pallet_proxy::Call::reject_announcement { .. }))
 			},
-			ProxyType::AssetsRegistry => {
+			ProxyType::Assets => {
 				matches!(c, RuntimeCall::AssetsRegistry(..))
 			},
 			ProxyType::Bridge => matches!(
@@ -38,6 +38,7 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 					RuntimeCall::XcmpQueue(..) |
 					RuntimeCall::PolkadotXcm(..)
 			),
+			_ => false,
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {

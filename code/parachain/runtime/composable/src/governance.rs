@@ -3,7 +3,6 @@
 use super::*;
 use common::governance::native::*;
 use frame_support::traits::LockIdentifier;
-use frame_system::EnsureSigned;
 
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
@@ -119,7 +118,7 @@ impl democracy::Config for Runtime {
 
 	type Scheduler = Scheduler;
 	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
-	type SubmitOrigin = EitherOfDiverse<
+	type SubmitOrigin = frame_support::traits::EitherOf<
 		system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
 		system::EnsureSignedBy<CouncilMembership, Self::AccountId>,
 	>;

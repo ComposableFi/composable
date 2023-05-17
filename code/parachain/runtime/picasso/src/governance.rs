@@ -3,8 +3,6 @@
 use super::*;
 use common::governance::native::*;
 use frame_support::traits::LockIdentifier;
-use frame_system::EnsureSigned;
-use sp_core::ConstU64;
 
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
@@ -69,7 +67,6 @@ parameter_types! {
 	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
-	pub const MaxProposals: u32 = 100;
 	// cspell:disable-next
 	pub const DemocracyId: LockIdentifier = *b"democrac";
 	pub RootOrigin: RuntimeOrigin = frame_system::RawOrigin::Root.into();
@@ -78,10 +75,10 @@ parameter_types! {
 impl democracy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
-	type LaunchPeriod = ConstU64<{ 1 * DAYS }>;
-	type VotingPeriod = ConstU64<{ 3 * DAYS }>; // weekend + holiday
-	type EnactmentPeriod = ConstU64<{ 1 * DAYS }>;
-	type VoteLockingPeriod = EnactmentPeriod;
+	type LaunchPeriod = ConstU32<{ 1 * DAYS }>;
+	type VotingPeriod = ConstU32<{ 3 * DAYS }>; // weekend + holiday
+	type EnactmentPeriod = ConstU32<{ 1 * DAYS }>;
+	type VoteLockingPeriod = ConstU32<{ 1 * DAYS }>;
 	type MinimumDeposit = ConstU128<5_000_000_000_000_000>;
 	type ExternalOrigin = EnsureRootOrTwoThirdNativeCouncil;
 
@@ -106,8 +103,8 @@ impl democracy::Config for Runtime {
 	type VetoOrigin = EnsureNativeTechnicalMember;
 	type Slash = Treasury;
 
-	type CooloffPeriod = ConstU64<{ 7 * DAYS }>;
-	type MaxProposals = MaxProposzls;
+	type CooloffPeriod = ConstU32<{ 7 * DAYS }>;
+	type MaxProposals = ConstU32<50>;
 	type MaxVotes = MaxVotes;
 	type PalletsOrigin = OriginCaller;
 
@@ -117,7 +114,7 @@ impl democracy::Config for Runtime {
 
 	type Scheduler = Scheduler;
 	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
-	type SubmitOrigin = EitherOfDiverse<
+	type SubmitOrigin = frame_support::traits::EitherOf<
 		system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
 		system::EnsureSignedBy<CouncilMembership, Self::AccountId>,
 	>;

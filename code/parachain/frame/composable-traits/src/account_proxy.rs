@@ -21,7 +21,10 @@ pub enum ProxyType {
 	Governance,
 	CancelProxy,
 	Bridge,
-	AssetsRegistry,
+	Assets,
+	Defi,
+	Oracle,
+	Contracts,
 }
 
 impl Default for ProxyType {
