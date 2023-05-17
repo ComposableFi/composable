@@ -1,0 +1,29 @@
+[package]
+authors = ["Composable Developers"]
+edition = "2021"
+name = "reward-rpc-runtime-api"
+version = '0.3.0'
+
+[dependencies]
+codec = { default-features = false, features = [
+  "derive",
+  "max-encoded-len",
+], package = "parity-scale-codec", version = "3.0.0" }
+sp-api = { default-features = false, workspace = true }
+frame-support = { default-features = false, workspace = true }
+serde = { version = '1.0.136', optional = true }
+composable-support = { path = "../../../composable-support", default-features = false }
+
+# [dependencies.oracle-rpc-runtime-api]
+# default-features = false
+# path = '../../../oracle/rpc/runtime-api'
+
+[features]
+default = ["std"]
+std = [
+  "codec/std",
+  "frame-support/std",
+  "sp-api/std",
+  "serde",
+  # "oracle-rpc-runtime-api/std",
+]

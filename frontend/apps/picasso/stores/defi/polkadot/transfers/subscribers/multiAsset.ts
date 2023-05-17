@@ -116,26 +116,26 @@ export const subscribeMultiAsset = async (allProviders: AllProviders) => {
 
       if (from === "picasso" && to === "statemine") {
         const asset = api.createType("XcmVersionedMultiAsset", {
-          V1: api.createType("XcmV1MultiAsset", {
-            id: api.createType("XcmV1MultiassetAssetId", {
-              Concrete: api.createType("XcmV1MultiLocation", {
+          V3: api.createType("XcmV3MultiAsset", {
+            id: api.createType("XcmV3MultiassetAssetId", {
+              Concrete: api.createType("XcmV3MultiLocation", {
                 parents: api.createType("u8", 1),
-                interior: api.createType("XcmV1MultilocationJunctions", {
+                interior: api.createType("XcmV3Junctions", {
                   X3: [
-                    api.createType("XcmV1Junction", {
+                    api.createType("XcmV3Junction", {
                       Parachain: api.createType("Compact<u32>", 1000),
                     }),
-                    api.createType("XcmV1Junction", {
+                    api.createType("XcmV3Junction", {
                       PalletInstance: api.createType("u8", 50),
                     }),
-                    api.createType("XcmV1Junction", {
+                    api.createType("XcmV3Junction", {
                       GeneralIndex: api.createType("Compact<u128>", "1984"),
                     }),
                   ],
                 }),
               }),
             }),
-            fun: api.createType("XcmV1MultiassetFungibility", {
+            fun: api.createType("XcmV3MultiassetFungibility", {
               Fungible: amountToTransfer,
             }),
           }),

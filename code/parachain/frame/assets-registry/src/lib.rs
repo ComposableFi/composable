@@ -42,7 +42,6 @@ pub mod pallet {
 		storage::UpdateValue,
 		xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
 	};
-	use cumulus_primitives_core::ParaId;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
@@ -117,7 +116,7 @@ pub mod pallet {
 	pub type MinFeeAmounts<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		ParaId,
+		u32,
 		Blake2_128Concat,
 		T::ForeignAssetId,
 		T::Balance,
@@ -201,7 +200,7 @@ pub mod pallet {
 			asset_id: T::LocalAssetId,
 		},
 		MinFeeUpdated {
-			target_parachain_id: ParaId,
+			target_parachain_id: u32,
 			foreign_asset_id: T::ForeignAssetId,
 			amount: Option<T::Balance>,
 		},
@@ -273,7 +272,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::set_min_fee())]
 		pub fn set_min_fee(
 			origin: OriginFor<T>,
-			target_parachain_id: ParaId,
+			target_parachain_id: u32,
 			foreign_asset_id: T::ForeignAssetId,
 			amount: Option<T::Balance>,
 		) -> DispatchResultWithPostInfo {
@@ -309,6 +308,24 @@ pub mod pallet {
 				Self::deposit_event(Event::AssetLocationRemoved { asset_id });
 			}
 			Ok(().into())
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		pub fn get_all_assets() -> Vec<Asset<T::LocalAssetId, T::Balance, T::ForeignAssetId>> {
+			ExistentialDeposit::<T>::iter_keys()
+				.map(|asset_id| {
+					let name = AssetName::<T>::get(asset_id).map(Into::into);
+					let foreign_id = LocalToForeign::<T>::get(asset_id);
+					let decimals =
+						<Pallet<T> as InspectRegistryMetadata>::decimals(&asset_id).unwrap_or(12);
+					let ratio = AssetRatio::<T>::get(asset_id);
+					let existential_deposit =
+						ExistentialDeposit::<T>::get(asset_id).unwrap_or_default();
+
+					Asset { name, id: asset_id, decimals, ratio, foreign_id, existential_deposit }
+				})
+				.collect::<Vec<_>>()
 		}
 	}
 
@@ -402,13 +419,14 @@ pub mod pallet {
 		}
 
 		fn min_xcm_fee(
-			parachain_id: ParaId,
+			parachain_id: u32,
 			remote_asset_id: Self::AssetNativeLocation,
 		) -> Option<Self::Balance> {
 			<MinFeeAmounts<T>>::get(parachain_id, remote_asset_id)
 		}
 
-		fn get_foreign_assets_list() -> Vec<Asset<T::Balance, Self::AssetNativeLocation>> {
+		fn get_foreign_assets_list(
+		) -> Vec<Asset<Self::AssetId, T::Balance, Self::AssetNativeLocation>> {
 			ForeignToLocal::<T>::iter()
 				.map(|(_, asset_id)| {
 					let foreign_id = LocalToForeign::<T>::get(asset_id);
@@ -420,7 +438,7 @@ pub mod pallet {
 
 					Asset {
 						name: None,
-						id: asset_id.into(),
+						id: asset_id,
 						decimals,
 						ratio,
 						foreign_id,

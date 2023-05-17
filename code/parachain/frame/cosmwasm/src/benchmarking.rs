@@ -30,6 +30,7 @@ use primitives::currency::CurrencyId;
 use rand::{rngs::SmallRng, RngCore, SeedableRng};
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
+use sp_runtime::traits::TrailingZeroInput;
 use wasm_instrument::parity_wasm::elements::{
 	BlockType, BrTableData, Instruction, Instructions, ValueType,
 };
@@ -241,6 +242,22 @@ where
 	origin
 }
 
+fn create_funded_root_account<
+	T: Config + pallet_balances::Config + pallet_assets_transactor_router::Config,
+>() -> <T as Config>::AccountIdExtended
+where
+	<T as pallet_balances::Config>::Balance: From<u128>,
+{
+	let origin = Decode::decode(&mut TrailingZeroInput::new(&[1u8; 32])).unwrap();
+
+	<pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::mint_into(
+		&origin,
+		10_000_000_000_000_u128.into(),
+	)
+	.unwrap();
+	origin
+}
+
 fn create_instantiated_contract<T>(origin: T::AccountId) -> T::AccountId
 where
 	T: Config + pallet_balances::Config + pallet_assets_transactor_router::Config,
@@ -296,14 +313,14 @@ where
 		// We need to fund all accounts first
 		for account in &accounts {
 			<pallet_assets_transactor_router::Pallet<T> as Mutate<T::AccountId>>::mint_into(
-				currency_id.into(),
+				currency_id.0.into(),
 				account,
 				10_000_000_000_000_000_000u128.into(),
 			)
 			.unwrap();
 		}
 		funds.push(Cosmwasm::<T>::native_asset_to_cosmwasm_asset(
-			currency_id.into(),
+			currency_id.0.into(),
 			1_000_000_000_000_000_000u128.into(),
 		));
 	}
@@ -334,7 +351,7 @@ benchmarks! {
 
 	upload {
 		let n in 1..T::MaxCodeSize::get() - 10000;
-		let origin = create_funded_account::<T>("signer");
+		let origin = create_funded_root_account::<T>();
 		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), n as usize, None).unwrap().into();
 	}: _(RawOrigin::Signed(origin), wasm_module.code.try_into().unwrap())
 
@@ -353,12 +370,12 @@ benchmarks! {
 		for i in 0..n {
 			let currency_id = assets[i as usize].id;
 			<pallet_assets_transactor_router::Pallet<T> as Mutate<T::AccountId>>::mint_into(
-				currency_id.into(),
+				currency_id.0.into(),
 				&origin,
 				10_000_000_000_000_000_000u128.into(),
 			)
 			.unwrap();
-			funds.insert(currency_id.into(), (1_000_000_000_000_000_000u128.into(), false));
+			funds.insert(currency_id.0.into(), (1_000_000_000_000_000_000u128.into(), false));
 		}
 	}: _(RawOrigin::Signed(origin.clone()), CodeIdentifier::CodeId(1), salt.clone(), None, label.clone(), funds.try_into().unwrap(), 1_000_000_000_000u64, message.clone())
 	verify {
@@ -393,12 +410,12 @@ benchmarks! {
 		for i in 0..n {
 			let currency_id = assets[i as usize].id;
 			<pallet_assets_transactor_router::Pallet<T> as Mutate<T::AccountId>>::mint_into(
-				currency_id.into(),
+				currency_id.0.into(),
 				&origin,
 				10_000_000_000_000_000_000u128.into(),
 			)
 			.unwrap();
-			funds.insert(currency_id.into(), (1_000_000_000_000_000_000u128.into(), false));
+			funds.insert(currency_id.0.into(), (1_000_000_000_000_000_000u128.into(), false));
 		}
 	}: _(RawOrigin::Signed(origin), contract, funds.try_into().unwrap(), 1_000_000_000_000u64, message)
 

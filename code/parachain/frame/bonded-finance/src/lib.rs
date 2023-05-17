@@ -203,6 +203,7 @@ pub mod pallet {
 		/// parameter.
 		///
 		/// Emits a `NewOffer`.
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::offer())]
 		pub fn offer(
 			origin: OriginFor<T>,
@@ -231,6 +232,7 @@ pub mod pallet {
 		///
 		/// Emits a `NewBond`.
 		/// Possibly Emits a `OfferCompleted`.
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::bond())]
 		pub fn bond(
 			origin: OriginFor<T>,
@@ -251,6 +253,7 @@ pub mod pallet {
 		/// The dispatch origin for this call must be _Signed_ and the sender must be `AdminOrigin`
 		///
 		/// Emits a `OfferCancelled`.
+		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::cancel())]
 		#[transactional]
 		pub fn cancel(origin: OriginFor<T>, offer_id: T::BondOfferId) -> DispatchResult {

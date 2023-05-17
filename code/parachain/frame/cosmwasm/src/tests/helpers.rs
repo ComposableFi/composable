@@ -37,14 +37,14 @@ pub fn create_coins(accounts: Vec<&AccountId32>) -> Vec<Coin> {
 		// We need to fund all accounts first
 		for account in &accounts {
 			<pallet_assets_transactor_router::Pallet<Test> as Mutate<AccountId32>>::mint_into(
-				currency_id.into(),
+				currency_id.0.into(),
 				account,
 				u64::MAX as u128,
 			)
 			.unwrap();
 		}
 		funds.push(Cosmwasm::<Test>::native_asset_to_cosmwasm_asset(
-			currency_id.into(),
+			currency_id.0.into(),
 			u64::MAX as u128,
 		));
 	}
@@ -53,6 +53,17 @@ pub fn create_coins(accounts: Vec<&AccountId32>) -> Vec<Coin> {
 
 pub fn create_funded_account(key: &'static str) -> AccountId32 {
 	let origin = account(key, 0, 0xCAFEBABE);
+
+	<pallet_balances::Pallet<Test> as fungible::Mutate<AccountId32>>::mint_into(
+		&origin,
+		u64::MAX as u128,
+	)
+	.unwrap();
+	origin
+}
+
+pub fn create_funded_root_account() -> AccountId32 {
+	let origin = get_root_account();
 
 	<pallet_balances::Pallet<Test> as fungible::Mutate<AccountId32>>::mint_into(
 		&origin,
@@ -71,13 +82,13 @@ pub fn create_funds(accounts: Vec<&AccountId32>) -> FundsOf<Test> {
 		// We need to fund all accounts first
 		for account in &accounts {
 			<pallet_assets_transactor_router::Pallet<Test> as Mutate<AccountId32>>::mint_into(
-				currency_id.into(),
+				currency_id.0.into(),
 				account,
 				balance,
 			)
 			.unwrap();
 		}
-		funds.insert(currency_id.into(), (balance, false));
+		funds.insert(currency_id.0.into(), (balance, false));
 	}
 	funds.try_into().unwrap()
 }

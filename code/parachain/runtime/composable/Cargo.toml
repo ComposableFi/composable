@@ -51,7 +51,6 @@ multisig = { default-features = false, workspace = true }
 orml-tokens = { workspace = true, default-features = false }
 orml-traits = { workspace = true, default-features = false }
 preimage = { default-features = false, workspace = true }
-randomness-collective-flip = { default-features = false, workspace = true }
 scheduler = { default-features = false, workspace = true }
 session = { default-features = false, workspace = true }
 smallvec = "1.6.1"
@@ -80,7 +79,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
   "derive",
 ] }
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
-hex-literal = { version = "0.3.4", optional = true }
+hex-literal = { version = "0.3.4" }
 frame-system-benchmarking = { workspace = true, default-features = false, optional = true }
 
 
@@ -121,6 +120,8 @@ pallet-proxy = { default-features = false, workspace = true }
 [features]
 builtin-wasm = []
 default = ["std"]
+testnet = []
+fastnet = []
 runtime-benchmarks = [
   "assets/runtime-benchmarks",
   "balances/runtime-benchmarks",
@@ -128,7 +129,6 @@ runtime-benchmarks = [
   "frame-support/runtime-benchmarks",
   "frame-system-benchmarking/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
-  "hex-literal",
   "balances/runtime-benchmarks",
   "timestamp/runtime-benchmarks",
   "assets-registry/runtime-benchmarks",
@@ -172,7 +172,6 @@ std = [
   "utility/std",
   "authorship/std",
   "balances/std",
-  "randomness-collective-flip/std",
   "timestamp/std",
   "session/std",
   "sudo/std",

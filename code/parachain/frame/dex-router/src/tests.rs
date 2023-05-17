@@ -10,7 +10,7 @@ use composable_traits::{
 	dex::{Amm as AmmTrait, AssetAmount, DexRouter as DexRouterTrait},
 };
 use frame_support::{
-	assert_noop, assert_ok, bounded_btree_map,
+	assert_noop, assert_ok,
 	error::BadOrigin,
 	traits::fungibles::{Inspect, Mutate},
 };
@@ -41,10 +41,10 @@ fn create_constant_product_amm_pool(assets: AssetAmountPair<u128, u128>, fee: Pe
 	let init_config = PoolInitConfiguration::DualAssetConstantProduct {
 		owner: ALICE,
 		assets_weights: {
-			bounded_btree_map! {
-				assets.base.asset_id => base_to_quote_ratio,
-				assets.quote.asset_id => base_to_quote_ratio.left_from_one(),
-			}
+			vec![
+				(assets.base.asset_id, base_to_quote_ratio),
+				(assets.quote.asset_id, base_to_quote_ratio.left_from_one()),
+			]
 		},
 		fee,
 	};
@@ -352,8 +352,8 @@ fn exchange_tests() {
 		dbg!(dy);
 
 		// let expected_value = 3000 * unit;
-		let precision = 100;
-		let epsilon = 1;
+		let _precision = 100;
+		let _epsilon = 1;
 		// assert_ok!(acceptable_computation_error(
 		// 	dy.value.amount,
 		// 	expected_value,
@@ -555,8 +555,8 @@ fn single_pool_route_test() {
 		assert_eq!(dy.value.amount, 491348479874);
 
 		// let expected_value = 3000 * unit;
-		let precision = 100;
-		let epsilon = 1;
+		let _precision = 100;
+		let _epsilon = 1;
 		// assert_ok!(acceptable_computation_error(
 		// 	dy.value.amount,
 		// 	expected_value,

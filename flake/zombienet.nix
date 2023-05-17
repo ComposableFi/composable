@@ -4,16 +4,18 @@
       prelude = zombieTools.builder;
       relaychainBase = {
         chain = "rococo-local";
-        default_command = pkgs.lib.meta.getExe self'.packages.polkadot-node-dep;
+        default_command =
+          pkgs.lib.meta.getExe self'.packages.polkadot-node-from-dep;
         count = 3;
       };
 
-      zombienet-rococo-local-composable-config = with prelude;
+      overrideZombienet = with prelude;
         { chain, ws_port ? null, rpc_port ? null, relay_ws_port ? null
         , relay_rpc_port ? null, rust_log_add ? null, para-id ? 2087
-        , command ? self'.packages.composable-node }:
+        , command ? self'.packages.composable-node, relaychain ? relaychainBase
+        , parachains ? [ ] }:
         mkZombienet {
-          relaychain = relaychainBase
+          relaychain = relaychain
             // (pkgs.lib.optionalAttrs (relay_ws_port != null) {
               ws_port = relay_ws_port;
             });
@@ -31,7 +33,7 @@
               // (pkgs.lib.optionalAttrs (rpc_port != null) {
                 inherit rpc_port;
               }))
-          ];
+          ] ++ parachains;
         };
 
       mk-zombienet-all = name: chain:
@@ -45,15 +47,6 @@
                 inherit chain;
                 id = 2087;
                 collators = 3;
-              }
-
-              {
-                command = pkgs.lib.meta.getExe self'.packages.statemine-node;
-                chain = "statemine-local";
-                id = 1000;
-                collators = 2;
-                ws_port = 10008;
-                rpc_port = 32220;
               }
 
               {
@@ -73,9 +66,49 @@
         chain-spec = "picasso-dev";
       };
 
-      picasso-dev-config = zombienet-rococo-local-composable-config {
+      picasso-dev-config = overrideZombienet {
         chain = "picasso-dev";
         command = self'.packages.composable-testfast-node;
+        parachains = [{
+          command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
+          chain = "statemine-local";
+          id = 1000;
+          collators = 2;
+          ws_port = 10008;
+          rpc_port = 32220;
+          genesis = {
+            runtime = {
+              parachainInfo = { parachainId = 1000; };
+
+              balances = {
+                balances = {
+                  "0" = {
+                    "0" = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
+                    "1" = 17476266491902;
+                  };
+                };
+              };
+              assets = {
+                assets = {
+                  "0" = {
+                    "0" = 1984;
+                    "1" = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
+                    "2" = true;
+                    "3" = 123456789;
+                  };
+                };
+                metadata = {
+                  "0" = {
+                    "0" = 1984;
+                    "1" = [ 85 83 68 84 ];
+                    "2" = [ 85 83 68 84 ];
+                    "3" = 6;
+                  };
+                };
+              };
+            };
+          };
+        }];
       };
 
       zombienet-rococo-local-picasso-dev =
@@ -87,56 +120,127 @@
 
       packages = rec {
         devnet-picasso = zombienet-rococo-local-picasso-dev;
-        devnet-composable = zombienet-rococo-local-composable-dev;
+        devnet-composable = zombienet-westend-local-composable-dev;
+
+        livenet-composable = zombieTools.writeZombienetShellApplication
+          "zombienet-polkadot-local-composable-dev" (overrideZombienet {
+            chain = "composable-dev";
+            relaychain = {
+              chain = "polkadot-dev";
+              default_command =
+                pkgs.lib.meta.getExe self'.packages.polkadot-live-runtime-node;
+              count = 3;
+            };
+          });
 
         zombienet-picasso-complete =
           mk-zombienet-all "devnet-picasso-complete" "picasso-dev";
 
         inherit zombienet-rococo-local-picasso-dev;
 
-        zombienet-rococo-local-composable-dev =
+        zombienet-westend-local-composable-dev =
           zombieTools.writeZombienetShellApplication
-          "zombienet-rococo-local-composable-dev"
-          (zombienet-rococo-local-composable-config {
+          "zombienet-westend-local-composable-dev" (overrideZombienet {
             chain = "composable-dev";
+            relaychain = {
+              chain = "westend-local";
+              default_command = pkgs.lib.meta.getExe
+                self'.packages.polkadot-node-on-parity-westend;
+              count = 3;
+            };
+            parachains = [{
+              command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
+              chain = "statemint-local";
+              id = 1000;
+              collators = 2;
+              ws_port = 10018;
+              rpc_port = 32240;
+            }];
           });
 
         zombienet-picasso-centauri-a =
           zombieTools.writeZombienetShellApplication
-          "zombienet-picasso-centauri-a"
-          (zombienet-rococo-local-composable-config {
+          "zombienet-picasso-centauri-a" (overrideZombienet {
             rust_log_add =
               "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
-            command = self'.packages.composable-node;
+            command = self'.packages.composable-testfast-node;
             chain = "picasso-dev";
+            parachains = [{
+              command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
+              chain = "statemine-local";
+              id = 1000;
+              collators = 2;
+              ws_port = 10008;
+              rpc_port = 32220;
+              genesis = {
+                runtime = {
+                  parachainInfo = { parachainId = 1000; };
+
+                  balances = {
+                    balances = {
+                      "0" = {
+                        "0" =
+                          "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
+                        "1" = 17476266491902;
+                      };
+                    };
+                  };
+                  assets = {
+                    assets = {
+                      "0" = {
+                        "0" = 1984;
+                        "1" =
+                          "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
+                        "2" = true;
+                        "3" = 123456789;
+                      };
+                    };
+                    metadata = {
+                      "0" = {
+                        "0" = 1984;
+                        "1" = [ 85 83 68 84 ];
+                        "2" = [ 85 83 68 84 ];
+                        "3" = 6;
+                      };
+                    };
+                  };
+                };
+              };
+            }];
           });
 
         zombienet-picasso-centauri-b =
           zombieTools.writeZombienetShellApplication
-          "zombienet-picasso-centauri-b"
-          (zombienet-rococo-local-composable-config {
+          "zombienet-picasso-centauri-b" (overrideZombienet {
             ws_port = 29988;
             rpc_port = 32201;
             relay_ws_port = 29944;
             relay_rpc_port = 31445;
             rust_log_add =
               "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
-            command = self'.packages.composable-node;
+            command = self'.packages.composable-testfast-node;
             chain = "picasso-dev";
           });
 
         zombienet-composable-centauri-b =
           zombieTools.writeZombienetShellApplication
-          "zombienet-composable-centauri-b"
-          (zombienet-rococo-local-composable-config {
+          "zombienet-composable-centauri-b" (overrideZombienet {
             ws_port = 29988;
             rpc_port = 32201;
             relay_ws_port = 29944;
             relay_rpc_port = 31445;
             rust_log_add =
               "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
-            command = self'.packages.composable-node;
+            command = self'.packages.composable-testfast-node;
             chain = "composable-dev";
+            parachains = [{
+              command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
+              chain = "statemint-local";
+              id = 1000;
+              collators = 2;
+              ws_port = 10018;
+              rpc_port = 32240;
+            }];
           });
       };
 

@@ -10,7 +10,7 @@ use jsonrpsee::{
 };
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::{generic::BlockId, traits::Block as BlockT};
+use sp_runtime::traits::Block as BlockT;
 use sp_std::{sync::Arc, vec::Vec};
 
 #[rpc(client, server)]
@@ -28,7 +28,10 @@ where
 	) -> RpcResult<SafeRpcWrapper<Balance>>;
 
 	#[method(name = "assets_listAssets")]
-	fn list_assets(&self, at: Option<BlockHash>) -> RpcResult<Vec<Asset<Balance, ForeignAssetId>>>;
+	fn list_assets(
+		&self,
+		at: Option<BlockHash>,
+	) -> RpcResult<Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>>>;
 }
 
 pub struct Assets<C, Block> {
@@ -64,12 +67,12 @@ where
 	) -> RpcResult<SafeRpcWrapper<Balance>> {
 		let api = self.client.runtime_api();
 
-		let at = BlockId::hash(at.unwrap_or_else(|| {
+		let at = at.unwrap_or_else(|| {
 			// If the block hash is not supplied assume the best block.
 			self.client.info().best_hash
-		}));
+		});
 
-		let runtime_api_result = api.balance_of(&at, asset_id, account_id);
+		let runtime_api_result = api.balance_of(at, asset_id, account_id);
 		// TODO(benluelo): Review what error message & code to use
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
@@ -83,15 +86,15 @@ where
 	fn list_assets(
 		&self,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Vec<Asset<Balance, ForeignAssetId>>> {
+	) -> RpcResult<Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>>> {
 		let api = self.client.runtime_api();
 
-		let at = BlockId::hash(at.unwrap_or_else(|| {
+		let at = at.unwrap_or_else(|| {
 			// If the block hash is not supplied assume the best block.
 			self.client.info().best_hash
-		}));
+		});
 
-		let runtime_api_result = api.list_assets(&at);
+		let runtime_api_result = api.list_assets(at);
 		// TODO(benluelo): Review what error message & code to use
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(

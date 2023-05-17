@@ -4,28 +4,22 @@ use composable_traits::{
 	defi::CurrencyPair,
 	dex::{Amm, AssetAmount},
 };
-use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_support::traits::fungibles::Mutate;
 use frame_system::RawOrigin;
 use pallet_pablo::PoolInitConfiguration;
 use sp_arithmetic::{PerThing, Permill};
-use sp_runtime::{traits::ConstU32, BoundedBTreeMap};
 use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
 pub fn dual_asset_pool_weights<T>(
 	first_asset: <T as pallet_pablo::Config>::AssetId,
 	first_asset_weight: Permill,
 	second_asset: <T as pallet_pablo::Config>::AssetId,
-) -> BoundedBTreeMap<<T as pallet_pablo::Config>::AssetId, Permill, ConstU32<2>>
+) -> Vec<(<T as pallet_pablo::Config>::AssetId, Permill)>
 where
 	T: pallet_pablo::Config,
 {
-	let mut asset_weights = BoundedBTreeMap::new();
-	asset_weights.try_insert(first_asset, first_asset_weight).expect("Should work");
-	asset_weights
-		.try_insert(second_asset, first_asset_weight.left_from_one())
-		.expect("Should work");
-	asset_weights
+	vec![(first_asset, first_asset_weight), (second_asset, first_asset_weight.left_from_one())]
 }
 
 fn create_single_node_pool<T>() -> (

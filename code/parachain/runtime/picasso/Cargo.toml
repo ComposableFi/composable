@@ -17,6 +17,7 @@ normal = [
   "currency-factory",
   "governance-registry",
   "oracle",
+  "assets-transactor-router",
   "orml-unknown-tokens",
   "orml-xtokens",
   "pallet-bonded-finance",
@@ -26,43 +27,43 @@ normal = [
 ]
 
 [dependencies]
-executive = { package = "frame-executive", default-features = false, workspace = true}
-frame-support = { default-features = false, workspace = true}
-frame-system = { package = "frame-system", default-features = false, workspace = true}
-sp-api = { default-features = false, workspace = true}
-sp-block-builder = { default-features = false, workspace = true}
-sp-consensus-aura = { default-features = false, workspace = true}
-sp-core = { default-features = false, workspace = true}
-sp-inherents = { default-features = false, workspace = true}
-sp-offchain = { default-features = false, workspace = true}
-sp-runtime = { default-features = false, workspace = true}
-sp-session = { default-features = false, workspace = true}
-sp-std = { default-features = false, workspace = true}
-sp-transaction-pool = { default-features = false, workspace = true}
-sp-version = { default-features = false, workspace = true}
-aura = {  default-features = false, workspace = true}
-authorship = {  default-features = false, workspace = true}
-balances = {  default-features = false, workspace = true}
-collective = {  default-features = false, workspace = true}
-democracy = {  default-features = false, workspace = true}
-identity = {  default-features = false, workspace = true}
-indices = {  default-features = false, workspace = true}
-membership = {  default-features = false, workspace = true}
-multisig = {  default-features = false, workspace = true}
+executive = { package = "frame-executive", default-features = false, workspace = true }
+frame-support = { default-features = false, workspace = true }
+frame-system = { package = "frame-system", default-features = false, workspace = true }
+sp-api = { default-features = false, workspace = true }
+sp-block-builder = { default-features = false, workspace = true }
+sp-consensus-aura = { default-features = false, workspace = true }
+sp-core = { default-features = false, workspace = true }
+sp-inherents = { default-features = false, workspace = true }
+sp-offchain = { default-features = false, workspace = true }
+sp-runtime = { default-features = false, workspace = true }
+sp-session = { default-features = false, workspace = true }
+sp-std = { default-features = false, workspace = true }
+sp-transaction-pool = { default-features = false, workspace = true }
+sp-version = { default-features = false, workspace = true }
+aura = { default-features = false, workspace = true }
+authorship = { default-features = false, workspace = true }
+balances = { default-features = false, workspace = true }
+collective = { default-features = false, workspace = true }
+democracy = { default-features = false, workspace = true }
+identity = { default-features = false, workspace = true }
+indices = { default-features = false, workspace = true }
+membership = { default-features = false, workspace = true }
+multisig = { default-features = false, workspace = true }
 orml-tokens = { workspace = true, default-features = false }
 orml-traits = { workspace = true, default-features = false }
-preimage = {  default-features = false, workspace = true}
-randomness-collective-flip = {  default-features = false, workspace = true}
-scheduler = {  default-features = false, workspace = true}
-session = {  default-features = false, workspace = true}
+preimage = { default-features = false, workspace = true }
+scheduler = { default-features = false, workspace = true }
+session = { default-features = false, workspace = true }
 smallvec = "1.6.1"
-sudo = {  default-features = false, workspace = true}
-timestamp = {  default-features = false, workspace = true}
-treasury = {  default-features = false, workspace = true}
-utility = {  default-features = false, workspace = true}
+sudo = { default-features = false, workspace = true }
+timestamp = { default-features = false, workspace = true }
+treasury = { default-features = false, workspace = true }
+utility = { default-features = false, workspace = true }
 log = { version = "0.4.14", default-features = false }
 assets = { package = "pallet-assets", path = "../../frame/assets", default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = "../../frame/assets-registry", default-features = false }
+assets-transactor-router = { package = "pallet-assets-transactor-router", path = "../../frame/assets-transactor-router", default-features = false }
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 common = { path = "../common", default-features = false }
@@ -77,17 +78,23 @@ primitives = { path = "../primitives", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 asset-tx-payment = { package = "pallet-asset-tx-payment", path = "../../frame/transaction-payment/asset-tx-payment", default-features = false }
 transaction-payment = { package = "pallet-transaction-payment", path = "../../frame/transaction-payment", default-features = false }
-system-rpc-runtime-api = { default-features = false, workspace = true}
+system-rpc-runtime-api = { default-features = false, workspace = true }
 transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", path = "../../frame/transaction-payment/rpc/runtime-api", default-features = false }
 assets-runtime-api = { path = "../../frame/assets/runtime-api", default-features = false }
 crowdloan-rewards-runtime-api = { path = "../../frame/crowdloan-rewards/runtime-api", default-features = false }
 pablo-runtime-api = { path = "../../frame/pablo/runtime-api", default-features = false }
+cosmwasm = { package = "pallet-cosmwasm", path = "../../frame/cosmwasm", default-features = false }
+cosmwasm-runtime-api = { path = "../../frame/cosmwasm/runtime-api", default-features = false }
+reward = { path = "../../frame/reward", default-features = false }
+farming = { path = "../../frame/farming", default-features = false }
+
+reward-rpc-runtime-api = { path = "../../frame/reward/rpc/runtime-api", default-features = false }
 
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
 ] }
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
-hex-literal = { version = "0.3.3", optional = true }
+hex-literal = { version = "0.3.3" }
 frame-system-benchmarking = { workspace = true, default-features = false, optional = true }
 
 collator-selection = { workspace = true, default-features = false }
@@ -102,7 +109,7 @@ cumulus-primitives-utility = { workspace = true, default-features = false }
 pallet-xcm = { workspace = true, default-features = false }
 parachain-info = { workspace = true, default-features = false }
 polkadot-parachain = { workspace = true, default-features = false }
-proxy = { default-features = false, workspace = true}
+proxy = { default-features = false, workspace = true }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
@@ -119,7 +126,7 @@ ibc = { workspace = true, default-features = false }
 ibc-primitives = { workspace = true, default-features = false }
 ibc-runtime-api = { workspace = true, default-features = false }
 pallet-ibc = { workspace = true, default-features = false }
-
+pallet-ibc-ping = { workspace = true, default-features = false }
 
 [features]
 builtin-wasm = []
@@ -127,118 +134,125 @@ testnet = []
 fastnet = []
 default = ["std"]
 local-integration-tests = []
+
 runtime-benchmarks = [
+  "asset-tx-payment/runtime-benchmarks",
+  "assets-registry/runtime-benchmarks",
+  "assets/runtime-benchmarks",
   "balances/runtime-benchmarks",
+  "balances/runtime-benchmarks",
+  "bonded-finance/runtime-benchmarks",
+  "collator-selection/runtime-benchmarks",
+  "collective/runtime-benchmarks",
+  "collective/runtime-benchmarks",
+  "common/runtime-benchmarks",
+  "cosmwasm/runtime-benchmarks",
+  "crowdloan-rewards/runtime-benchmarks",
+  "currency-factory/runtime-benchmarks",
+  "democracy/runtime-benchmarks",
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system-benchmarking/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
-  "hex-literal",
-  "balances/runtime-benchmarks",
-  "timestamp/runtime-benchmarks",
-  "collective/runtime-benchmarks",
-  "collator-selection/runtime-benchmarks",
-  "session-benchmarking/runtime-benchmarks",
-  "pallet-xcm/runtime-benchmarks",
-  "sp-runtime/runtime-benchmarks",
-  "xcm-builder/runtime-benchmarks",
-  "indices/runtime-benchmarks",
   "identity/runtime-benchmarks",
-  "multisig/runtime-benchmarks",
+  "indices/runtime-benchmarks",
   "membership/runtime-benchmarks",
-  "treasury/runtime-benchmarks",
-  "scheduler/runtime-benchmarks",
-  "collective/runtime-benchmarks",
-  "democracy/runtime-benchmarks",
-  "utility/runtime-benchmarks",
-  "crowdloan-rewards/runtime-benchmarks",
-  "currency-factory/runtime-benchmarks",
-  "assets/runtime-benchmarks",
-  "assets-registry/runtime-benchmarks",
-  "vesting/runtime-benchmarks",
-  "bonded-finance/runtime-benchmarks",
-  "common/runtime-benchmarks",
-  "asset-tx-payment/runtime-benchmarks",
-  "proxy/runtime-benchmarks",
-  "pablo/runtime-benchmarks",
+  "multisig/runtime-benchmarks",
   "oracle/runtime-benchmarks",
+  "pablo/runtime-benchmarks",
   "pallet-ibc/runtime-benchmarks",
+  "pallet-xcm/runtime-benchmarks",
+  "proxy/runtime-benchmarks",
+  "scheduler/runtime-benchmarks",
+  "session-benchmarking/runtime-benchmarks",
+  "sp-runtime/runtime-benchmarks",
+  "timestamp/runtime-benchmarks",
+  "treasury/runtime-benchmarks",
+  "utility/runtime-benchmarks",
+  "vesting/runtime-benchmarks",
+  "xcm-builder/runtime-benchmarks",
 ]
+
 std = [
-  "codec/std",
-  "sp-api/std",
-  "sp-std/std",
-  "sp-core/std",
-  "sp-runtime/std",
-  "sp-version/std",
-  "sp-offchain/std",
-  "sp-session/std",
-  "sp-block-builder/std",
-  "sp-transaction-pool/std",
-  "sp-inherents/std",
-  "frame-support/std",
-  "executive/std",
-  "frame-system/std",
-  "utility/std",
+  "asset-tx-payment/std",
+  "assets-registry/std",
+  "assets-runtime-api/std",
+  "assets-transactor-router/std",
+  "assets/std",
+  "aura/std",
   "authorship/std",
   "balances/std",
-  "randomness-collective-flip/std",
-  "timestamp/std",
-  "session/std",
-  "sudo/std",
-  "indices/std",
-  "identity/std",
-  "multisig/std",
+  "bonded-finance/std",
   "call-filter/std",
-  "orml-tokens/std",
-  "orml-traits/std",
-  "treasury/std",
-  "democracy/std",
-  "scheduler/std",
-  "common/std",
-  "primitives/std",
+  "codec/std",
+  "collator-selection/std",
   "collective/std",
-  "transaction-payment/std",
-  "parachain-info/std",
+  "common/std",
+  "composable-support/std",
+  "composable-traits/std",
+  "cosmwasm-runtime-api/std",
+  "cosmwasm/std",
+  "crowdloan-rewards-runtime-api/std",
+  "crowdloan-rewards/std",
   "cumulus-pallet-aura-ext/std",
   "cumulus-pallet-parachain-system/std",
-  "cumulus-pallet-xcmp-queue/std",
   "cumulus-pallet-xcm/std",
+  "cumulus-pallet-xcmp-queue/std",
   "cumulus-primitives-core/std",
   "cumulus-primitives-timestamp/std",
   "cumulus-primitives-utility/std",
-  "collator-selection/std",
-  "xcm/std",
-  "xcm-builder/std",
-  "xcm-executor/std",
-  "aura/std",
-  "sp-consensus-aura/std",
-  "scale-info/std",
-  "orml-xtokens/std",
-  "orml-xcm-support/std",
-  "orml-unknown-tokens/std",
-  "composable-traits/std",
-  "composable-support/std",
-  "governance-registry/std",
   "currency-factory/std",
-  "assets/std",
-  "assets-registry/std",
-  "vesting/std",
-  "bonded-finance/std",
-  "crowdloan-rewards/std",
-  "preimage/std",
-  "membership/std",
-  "system-rpc-runtime-api/std",
-  "transaction-payment-rpc-runtime-api/std",
-  "assets-runtime-api/std",
-  "crowdloan-rewards-runtime-api/std",
-  "asset-tx-payment/std",
-  "proxy/std",
-  "pablo/std",
-  "oracle/std",
-  "pablo-runtime-api/std",
-  "ibc/std",
-  "pallet-ibc/std",
+  "democracy/std",
+  "executive/std",
+  "farming/std",
+  "frame-support/std",
+  "frame-system/std",
+  "governance-registry/std",
   "ibc-primitives/std",
   "ibc-runtime-api/std",
+  "ibc/std",
+  "identity/std",
+  "indices/std",
+  "membership/std",
+  "multisig/std",
+  "oracle/std",
+  "orml-tokens/std",
+  "orml-traits/std",
+  "orml-unknown-tokens/std",
+  "orml-xcm-support/std",
+  "orml-xtokens/std",
+  "pablo-runtime-api/std",
+  "pablo/std",
+  "pallet-ibc/std",
+  "parachain-info/std",
+  "preimage/std",
+  "primitives/std",
+  "proxy/std",
+  "reward-rpc-runtime-api/std",
+  "reward/std",
+  "scale-info/std",
+  "scheduler/std",
+  "session/std",
+  "sp-api/std",
+  "sp-block-builder/std",
+  "sp-consensus-aura/std",
+  "sp-core/std",
+  "sp-inherents/std",
+  "sp-offchain/std",
+  "sp-runtime/std",
+  "sp-session/std",
+  "sp-std/std",
+  "sp-transaction-pool/std",
+  "sp-version/std",
+  "sudo/std",
+  "system-rpc-runtime-api/std",
+  "timestamp/std",
+  "transaction-payment-rpc-runtime-api/std",
+  "transaction-payment/std",
+  "treasury/std",
+  "utility/std",
+  "vesting/std",
+  "xcm-builder/std",
+  "xcm-executor/std",
+  "xcm/std",
 ]

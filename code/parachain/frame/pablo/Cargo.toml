@@ -33,6 +33,8 @@ sp-io = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
 
+pallet-ibc = { workspace = true, default-features = false }
+
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 frame-benchmarking = { default-features = false, workspace = true }
@@ -78,4 +80,5 @@ std = [
   "sp-io/std",
   "sp-runtime/std",
   "sp-std/std",
+  "pallet-ibc/std",
 ]

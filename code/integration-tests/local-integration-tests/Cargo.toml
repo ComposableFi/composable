@@ -51,7 +51,6 @@ orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36", default-features = false }
 orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36", default-features = false }
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.36", default-features = false }
-randomness-collective-flip = { package = "pallet-randomness-collective-flip", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
 scheduler = { package = "pallet-scheduler", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
 session = { package = "pallet-session", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
 smallvec = "1.6.1"
@@ -133,9 +132,7 @@ more-asserts = "0.3.1"
 default = ["std", "develop", "local-integration-tests", "picasso"]
 #statemine = ["statemine-runtime"]
 kusama = []
-local-integration-tests = [
-  "picasso-runtime/local-integration-tests",
-]
+local-integration-tests = ["picasso-runtime/local-integration-tests"]
 picasso = ["std", "develop", "local-integration-tests", "kusama"]
 polkadot = []
 rococo = []
@@ -158,7 +155,6 @@ std = [
   "utility/std",
   "authorship/std",
   "balances/std",
-  "randomness-collective-flip/std",
   "timestamp/std",
   "session/std",
   "sudo/std",

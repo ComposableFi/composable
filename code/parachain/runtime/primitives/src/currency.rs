@@ -107,10 +107,10 @@ macro_rules! list_assets {
 			}
 		}
 
-		pub fn list_assets() -> Vec<Asset<u128, VersionedMultiLocation>> {
+		pub fn list_assets() -> Vec<Asset<CurrencyId, u128, VersionedMultiLocation>> {
 			[
 				$(Asset {
-					id: CurrencyId::$NAME.0 as u128,
+					id: CurrencyId::$NAME,
 					name: Some(stringify!($NAME).as_bytes().to_vec()),
 					ratio: None,
 					decimals: Self::remote_decimals_for_local(CurrencyId::$NAME).unwrap_or(Self::decimals()),

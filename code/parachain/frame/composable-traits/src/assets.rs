@@ -1,5 +1,4 @@
 //! Interfaces to managed assets
-use core::marker::PhantomData;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::collections::vec::bounded::BiBoundedVec;
@@ -38,9 +37,9 @@ impl BasicAssetMetadata {
 
 #[derive(Decode, Encode, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct Asset<Balance, ForeignId> {
+pub struct Asset<AssetId, Balance, ForeignId> {
 	pub name: Option<Vec<u8>>,
-	pub id: u128,
+	pub id: AssetId,
 	pub decimals: Exponent,
 	pub ratio: Option<Rational64>,
 	pub foreign_id: Option<ForeignId>,
@@ -175,36 +174,6 @@ pub trait CreateAsset {
 		asset_info: AssetInfo<Self::Balance>,
 		foreign_asset_id: Self::ForeignAssetId,
 	) -> Result<Self::LocalAssetId, DispatchError>;
-}
-
-/// Used temporarily while the Picasso runtime is migrated to the new Asset Transactor Router
-pub struct DummyAssetCreator<LocalAssetId, ForeignAssetId, Balance> {
-	_phantom_data: PhantomData<(LocalAssetId, ForeignAssetId, Balance)>,
-}
-
-impl<LocalAssetId: Default, ForeignAssetId, Balance> CreateAsset
-	for DummyAssetCreator<LocalAssetId, ForeignAssetId, Balance>
-{
-	type LocalAssetId = LocalAssetId;
-	type ForeignAssetId = ForeignAssetId;
-	type Balance = Balance;
-
-	fn create_local_asset(
-		_protocol_id: [u8; 8],
-		_nonce: u64,
-		_asset_info: AssetInfo<Self::Balance>,
-	) -> Result<Self::LocalAssetId, DispatchError> {
-		Ok(Self::LocalAssetId::default())
-	}
-
-	fn create_foreign_asset(
-		_protocol_id: [u8; 8],
-		_nonce: u64,
-		_asset_info: AssetInfo<Self::Balance>,
-		_foreign_asset_id: Self::ForeignAssetId,
-	) -> Result<Self::LocalAssetId, DispatchError> {
-		Ok(Self::LocalAssetId::default())
-	}
 }
 
 pub trait GenerateAssetId {

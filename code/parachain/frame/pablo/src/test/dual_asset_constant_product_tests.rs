@@ -29,10 +29,11 @@ use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
+use pallet_ibc::ics20_fee::FlatFeeConverter;
 use proptest::prelude::*;
 use sp_runtime::{
 	traits::{ConstU32, IntegerSquareRoot},
-	BoundedBTreeMap, DispatchError, Perbill, Permill, TokenError,
+	DispatchError, Perbill, Permill, TokenError,
 };
 use sp_std::collections::btree_map::BTreeMap;
 
@@ -205,7 +206,7 @@ pub fn valid_pool_init_config(
 ) -> PoolInitConfiguration<AccountId, AssetId> {
 	PoolInitConfiguration::DualAssetConstantProduct {
 		owner: *owner,
-		assets_weights: dual_asset_pool_weights(first_asset, first_asset_weight, second_asset),
+		assets_weights: dual_asset_pool_weights_vec(first_asset, first_asset_weight, second_asset),
 		fee,
 	}
 }
@@ -315,7 +316,7 @@ fn add_lp_with_min_mint_amount() {
 
 		let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
 			owner: ALICE,
-			assets_weights: dual_asset_pool_weights(
+			assets_weights: dual_asset_pool_weights_vec(
 				first_asset,
 				Permill::from_percent(50_u32),
 				second_asset,
@@ -798,9 +799,9 @@ fn weights_zero() {
 #[test]
 fn weights_sum_to_more_than_one() {
 	new_test_ext().execute_with(|| {
-		let mut asset_weights = BoundedBTreeMap::new();
-		asset_weights.try_insert(BTC, Permill::from_percent(50)).expect("Should work");
-		asset_weights.try_insert(USDT, Permill::from_percent(51)).expect("Should work");
+		let mut asset_weights = Vec::new();
+		asset_weights.push((BTC, Permill::from_percent(50)));
+		asset_weights.push((USDT, Permill::from_percent(51)));
 		let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
 			owner: ALICE,
 			assets_weights: asset_weights,
@@ -1164,7 +1165,7 @@ fn add_lp_amounts_get_normalized() {
 
 		let pool_init_config = PoolInitConfiguration::DualAssetConstantProduct {
 			owner: ALICE,
-			assets_weights: dual_asset_pool_weights(
+			assets_weights: dual_asset_pool_weights_vec(
 				FIRST_ASSET::ID,
 				Permill::from_percent(50_u32),
 				SECOND_ASSET::ID,
@@ -1256,4 +1257,68 @@ fn add_lp_amounts_get_normalized() {
 			},
 		);
 	});
+}
+
+#[test]
+fn flat_fee_test() {
+	new_test_ext().execute_with(|| {
+		let pool_init_config = valid_pool_init_config(
+			&ALICE,
+			BTC,
+			Permill::from_percent(50_u32),
+			USDC,
+			Permill::from_percent(50),
+		);
+		let pool_id = Pablo::do_create_pool(pool_init_config, Some(LP_TOKEN_ID))
+			.expect("pool creation failed");
+
+		let unit = 1_000_000_000_000;
+		let usdt_unit = 1_000_000;
+		let usdc_unit = 1_000_000;
+		let btc_price = 10_000;
+		let nb_of_btc = 100;
+		// 100 BTC/1000000 USDT
+		let initial_btc = nb_of_btc * unit;
+		let initial_usdt = nb_of_btc * btc_price * usdt_unit;
+		let initial_usdc = nb_of_btc * btc_price * usdc_unit;
+
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
+		assert_ok!(Tokens::mint_into(USDC, &ALICE, initial_usdc));
+
+		// No pool with USDT
+		assert_ok!(<Pablo as Amm>::add_liquidity(
+			&ALICE,
+			pool_id,
+			BTreeMap::from([(BTC, initial_btc), (USDC, initial_usdc)]),
+			0,
+			false
+		));
+
+		let flat_fee = <Pablo as FlatFeeConverter>::get_flat_fee(BTC, USDT, 10000000);
+		assert_eq!(flat_fee, None);
+
+		// add pool with usdt
+		let pool_init_config = valid_pool_init_config(
+			&ALICE,
+			BTC,
+			Permill::from_percent(50_u32),
+			USDT,
+			Permill::from_percent(50),
+		);
+		let pool_id = Pablo::do_create_pool(pool_init_config, Some(LP_TOKEN_ID + 1))
+			.expect("pool creation failed");
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
+		assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+		assert_ok!(<Pablo as Amm>::add_liquidity(
+			&ALICE,
+			pool_id,
+			BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
+			0,
+			false
+		));
+		let flat_fee = <Pablo as FlatFeeConverter>::get_flat_fee(BTC, USDT, 10000000);
+		assert_eq!(flat_fee, Some(999990000));
+	})
 }

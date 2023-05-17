@@ -25,6 +25,8 @@ in with prelude; rec {
       args = [
         "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"
         "--enable-offchain-indexing=true"
+        "--blocks-pruning=archive"
+        "--rpc-max-request-size=30" # 2x x default
       ];
       env = [{
         name = "RUST_LOG";
@@ -40,7 +42,7 @@ in with prelude; rec {
 
   mkParachain = { command, rpc_port ? 32200, ws_port ? 9988
     , chain ? "picasso-dev", names ? default-node-names, collators ? 2
-    , id ? 2087, rust_log_add ? null }:
+    , id ? 2087, rust_log_add ? null, genesis ? null }:
     let
       generated = lib.lists.zipListsWith
         (_increment: name: mkCollator { inherit command name rust_log_add; })
@@ -57,6 +59,7 @@ in with prelude; rec {
           name = builtins.head names;
         })
       ] ++ generated;
+      genesis = genesis;
     };
 
   mkParachains = parachains: builtins.map mkParachain parachains;
@@ -101,7 +104,7 @@ in with prelude; rec {
     { chain, default_command, rpc_port ? 30444, ws_port ? 9944, count ? 2 }: {
       inherit default_command;
       inherit chain;
-      default_args = [ "-lparachain=debug" ];
+      default_args = [ "-lparachain=debug" "--blocks-pruning=archive" ];
       genesis = {
         runtime = {
           runtime_genesis_config = {
@@ -130,6 +133,7 @@ in with prelude; rec {
       post_state = "Hash";
     };
   };
+
   mkZombienet = { relaychain, parachains }: {
     hrmp_channels = mkHrmpChannels parachains;
     relaychain = mkRelaychain relaychain;

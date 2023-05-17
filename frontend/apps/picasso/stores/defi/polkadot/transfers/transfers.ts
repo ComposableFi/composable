@@ -339,17 +339,17 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (set, get) => ({
           get().transfers.networks.to === "statemine"
         ) {
           const fee = api.createType("XcmVersionedMultiAsset", {
-            V1: api.createType("XcmV1MultiAsset", {
-              id: api.createType("XcmV1MultiassetAssetId", {
-                Concrete: api.createType("XcmV1MultiLocation", {
+            V3: api.createType("XcmV3MultiAsset", {
+              id: api.createType("XcmV3MultiassetAssetId", {
+                Concrete: api.createType("XcmV3MultiLocation", {
                   parents: api.createType("u8", 1),
                   interior: api.createType(
-                    "XcmV1MultilocationJunctions",
+                    "XcmV3Junctions",
                     "Here"
                   ),
                 }),
               }),
-              fun: api.createType("XcmV1MultiassetFungibility", {
+              fun: api.createType("XcmV3MultiassetFungibility", {
                 Fungible: api.createType(
                   "Compact<u128>",
                   PICASSO_STATEMINE_KSM_TRANSFER_FEE

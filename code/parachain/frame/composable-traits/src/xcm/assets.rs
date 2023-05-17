@@ -2,7 +2,6 @@
 use crate::assets::{AssetInfo, AssetInfoUpdate};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::dispatch::DispatchResult;
-use polkadot_parachain::primitives::Id;
 use scale_info::TypeInfo;
 use sp_std::vec::Vec;
 
@@ -35,7 +34,7 @@ pub trait RemoteAssetRegistryInspect {
 	/// if I want to send XCM message to `parachain_id` and pay with `remote_asset_id`,
 	/// what minimal amount I should send as fee
 	fn min_xcm_fee(
-		parachain_id: Id,
+		parachain_id: u32,
 		remote_asset_id: Self::AssetNativeLocation,
 	) -> Option<Self::Balance>;
 
@@ -45,7 +44,8 @@ pub trait RemoteAssetRegistryInspect {
 	// Option<Self::Balance>;
 
 	/// Return information about foreign assets stored on assets registry
-	fn get_foreign_assets_list() -> Vec<Asset<Self::Balance, Self::AssetNativeLocation>>;
+	fn get_foreign_assets_list(
+	) -> Vec<Asset<Self::AssetId, Self::Balance, Self::AssetNativeLocation>>;
 }
 
 pub trait RemoteAssetRegistryMutate {

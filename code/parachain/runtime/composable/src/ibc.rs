@@ -3,14 +3,23 @@ use ::ibc::core::{
 	ics24_host::identifier::PortId,
 	ics26_routing::context::{Module, ModuleId},
 };
-use common::governance::native::EnsureRootOrOneThirdNativeTechnical;
-use frame_support::traits::EitherOf;
+use common::{
+	fees::{IbcIcs20FeePalletId, IbcIcs20ServiceCharge},
+	governance::native::EnsureRootOrOneThirdNativeTechnical,
+};
+use frame_system::EnsureSigned;
 use pallet_ibc::{
-	light_client_common::RelayChain, routing::ModuleRouter, DenomToAssetId, IbcAssetIds, IbcAssets,
+	ics20::{MODULE_ID_STR, PORT_ID_STR},
+	light_client_common::RelayChain,
+	routing::ModuleRouter,
+	DenomToAssetId, IbcAssetIds, IbcAssets,
 };
 use sp_core::ConstU64;
-use sp_runtime::{DispatchError, Either};
+use sp_runtime::{AccountId32, DispatchError, Either};
 use system::EnsureSignedBy;
+
+use hex_literal::hex;
+use pallet_ibc::ics20_fee::NonFlatFeeConverter;
 
 use super::*;
 
@@ -99,6 +108,9 @@ impl core::str::FromStr for MemoMessage {
 parameter_types! {
 	pub const GRANDPA: pallet_ibc::LightClientProtocol = pallet_ibc::LightClientProtocol::Grandpa;
 	pub const IbcTriePrefix : &'static [u8] = b"ibc/";
+	// converted from 63yg1BAWeUQG7WgpZNqbPrreo9HCoWKUcFqswfNz3TjpKHiL using https://www.shawntabrizi.com/substrate-js-utilities/
+	pub FeeAccount: <Runtime as pallet_ibc::Config>::AccountIdConversion = ibc_primitives::IbcAccount(AccountId32::from(hex!("9fed34f0114500f263d074e91ac4b1ef6b11b2e09fa4684dfe4bce07f94ab603")));
+
 }
 
 use pallet_ibc::ics20::Ics20RateLimiter;
@@ -110,12 +122,54 @@ impl Ics20RateLimiter for ConstantAny {
 		msg: &pallet_ibc::ics20::Ics20TransferMsg,
 		_flow_type: pallet_ibc::ics20::FlowType,
 	) -> Result<(), ()> {
-		// one DOT/PICA, so for USDT not safe, but we do not yet do it
-		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(10_u64.pow(12)) {
+		let pica_denom =
+			<<Runtime as pallet_ibc::Config>::IbcDenomToAssetIdConversion as DenomToAssetId<
+				Runtime,
+			>>::from_asset_id_to_denom(CurrencyId::PICA);
+
+		let limit = match msg.token.denom.to_string().as_str() {
+			denom if Some(denom) == pica_denom.as_deref() => 500_000,
+			_ => 10_000,
+		};
+		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(limit * 10_u64.pow(12)) {
 			return Ok(())
 		}
 		Err(())
 	}
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Default)]
+pub struct Router {
+	ics20: pallet_ibc::ics20::memo::Memo<
+		Runtime,
+		pallet_ibc::ics20_fee::Ics20ServiceCharge<Runtime, pallet_ibc::ics20::IbcModule<Runtime>>,
+	>,
+}
+
+impl ModuleRouter for Router {
+	fn get_route_mut(&mut self, module_id: &ModuleId) -> Option<&mut dyn Module> {
+		match module_id.as_ref() {
+			MODULE_ID_STR => Some(&mut self.ics20),
+			&_ => None,
+		}
+	}
+
+	fn has_route(module_id: &ModuleId) -> bool {
+		matches!(module_id.as_ref(), MODULE_ID_STR)
+	}
+
+	fn lookup_module_by_port(port_id: &PortId) -> Option<ModuleId> {
+		match port_id.as_str() {
+			PORT_ID_STR => ModuleId::from_str(MODULE_ID_STR).ok(),
+			_ => None,
+		}
+	}
+}
+
+impl pallet_ibc::ics20_fee::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type ServiceChargeIn = IbcIcs20ServiceCharge;
+	type PalletId = IbcIcs20FeePalletId;
 }
 
 impl pallet_ibc::Config for Runtime {
@@ -131,7 +185,7 @@ impl pallet_ibc::Config for Runtime {
 	type AccountIdConversion = ibc_primitives::IbcAccount<AccountId>;
 	type Fungibles = Assets;
 	type ExpectedBlockTime = ConstU64<SLOT_DURATION>;
-	type Router = ();
+	type Router = Router;
 	type MinimumConnectionDelay = ConstU64<1>;
 	type ParaId = parachain_info::Pallet<Runtime>;
 	type RelayChain = RelayChainId;
@@ -140,14 +194,18 @@ impl pallet_ibc::Config for Runtime {
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
-	type TransferOrigin = EitherOf<
-		EnsureSignedBy<ReleaseMembership, Self::IbcAccountId>,
-		EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>,
-	>;
+	type TransferOrigin = EnsureSigned<Self::AccountId>;
 	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;
 	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;
+
+	type FeeAccount = FeeAccount;
+	type CleanUpPacketsPeriod = ConstU32<100>;
+	type ServiceChargeOut = IbcIcs20ServiceCharge;
+	type FlatFeeAssetId = AssetIdUSDT;
+	type FlatFeeAmount = FlatFeeUSDTAmount;
+	type FlatFeeConverter = NonFlatFeeConverter<Runtime>;
 }

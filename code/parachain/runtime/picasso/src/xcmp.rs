@@ -34,9 +34,17 @@ use xcm_executor::{
 	Assets, XcmExecutor,
 };
 
+#[cfg(feature = "testnet")]
 parameter_types! {
-	pub KsmLocation: MultiLocation = MultiLocation::parent();
+	pub const RelayNetwork: NetworkId = NetworkId::Rococo;
+}
+
+#[cfg(not(feature = "testnet"))]
+parameter_types! {
 	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
+}
+
+parameter_types! {
 	pub RelayOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 	pub UniversalLocation: InteriorMultiLocation = X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
@@ -94,7 +102,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 );
 
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
-	crate::Assets,
+	crate::AssetsTransactorRouter,
 	UnknownTokens,
 	IsNativeConcrete<CurrencyId, AssetsIdConverter>,
 	AccountId,
@@ -127,7 +135,7 @@ type AssetsIdConverter =
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
 	FinalPriceConverter,
-	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
+	ToTreasury<AssetsIdConverter, crate::AssetsTransactorRouter, TreasuryAccount>,
 	WeightToFeeConverter,
 >;
 
@@ -167,7 +175,7 @@ impl<
 }
 
 pub type CaptureAssetTrap = CaptureDropAssets<
-	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
+	ToTreasury<AssetsIdConverter, crate::AssetsTransactorRouter, TreasuryAccount>,
 	FinalPriceConverter,
 	AssetsIdConverter,
 >;
@@ -213,7 +221,7 @@ parameter_type_with_key! {
 
 		let location = primitives::currency::VersionedMultiLocation::V3(*location);
 		if let Some(Parachain(id)) = interior {
-			if let Some(amount) = AssetsRegistry::min_xcm_fee(ParaId::from(*id), location.into()) {
+			if let Some(amount) = AssetsRegistry::min_xcm_fee(*id, location.into()) {
 				return Some(amount)
 			}
 		}
