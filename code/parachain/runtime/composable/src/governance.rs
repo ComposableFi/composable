@@ -116,6 +116,8 @@ impl democracy::Config for Runtime {
 	type MaxDeposits = ConstU32<100>;
 	type MaxBlacklisted = ConstU32<100>;
 
+	type Scheduler = Scheduler;
+	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type SubmitOrigin = system::EnsureSigned<Self::AccountId>;
 
