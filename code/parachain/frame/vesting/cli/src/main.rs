@@ -205,7 +205,7 @@ async fn main() -> anyhow::Result<()> {
 			let key = sp_core::sr25519::Pair::from_string(&subargs.key, None).expect("secret");
 			let signer = PairSigner::new(key.clone());
 			let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;
-			let mut out = csv::Writer::from_writer(vec![]);
+			let out = csv::Writer::from_writer(vec![]);
 			let all: HashSet<_> = all.into_iter().map(|x| x.account).collect();
 
 			let clean: Vec<_> = all
@@ -252,25 +252,79 @@ async fn main() -> anyhow::Result<()> {
 			let mut rdr = csv::Reader::from_reader(csv_file.as_bytes());
 			let all: Vec<_> =
 				rdr.deserialize::<DeleteRecord>().map(|x| x.expect("record")).collect();
+			let schedules_to_remove: HashSet<_> = all.iter().map(|x| x.vesting_schedule_id.clone()).collect();
 			let key = sp_core::sr25519::Pair::from_string(&subargs.key, None).expect("secret");
 			let signer = PairSigner::new(key.clone());
 			let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;
-			let mut out = csv::Writer::from_writer(vec![]);
-			let mut deletes: HashMap<&str, u128> = HashMap::new();
+			let mut account_amounts_to_take_away: HashMap<&str, u128> = HashMap::new();
 			for record in all.iter() {
-				let mut entry = deletes.entry(&record.account);
-				let mut value = entry.or_default();
-				*value += record.total;
+				let entry = account_amounts_to_take_away.entry(&record.account);
+				let _ = entry.or_default();
 			}
 
-			let mut clean: Vec<_> = deletes
-				.iter()
+			let storage_address = subxt::dynamic::storage_root("Vesting", "VestingSchedules");
+
+			let mut iter = api.storage().at(None).await?.iter(storage_address, 1000).await?;
+			let mut existing_schedules: HashMap<[u8; 32], _> = <_>::default();
+			while let Some((key, vesting_schedule)) = iter.next().await? {
+				let vesting_schedule = VestingScheduleT::decode(&mut vesting_schedule.encoded())
+					.expect("scale decoded");
+				let (_, _, account, _) =
+					VestingScheduleKeyT::decode(&mut key.0.as_ref()).expect("key decoded");
+				existing_schedules.insert(account.0, vesting_schedule);
+			}
+
+			let mut clean: Vec<_> = account_amounts_to_take_away
+				.iter_mut()
 				.map(|record| {
 					let address = AccountId32::from_str(&record.0).expect("address");
+
+					let retained =
+						if let Some(mut retained) = existing_schedules.get(&address.0).map(Clone::clone) {
+							for item in schedules_to_remove.iter() {
+								if let Some(not_yet_vested) = retained.remove(item) {
+									let not_yet_vested : VestingSchedule<u128, u32, u64, u128> = not_yet_vested;
+									*record.1 += not_yet_vested.per_period * not_yet_vested.period_count as u128 - not_yet_vested.already_claimed;
+								}
+							}
+
+							retained
+						} else {
+							<_>::default()
+						};
+
+					let retained: Vec<_> = retained
+						.values()
+						.map(|item| {
+							let (window_moment_start, window_moment_period) = match item.window {
+								client::VestingWindow::MomentBased { start, period } =>
+									(start, period),
+								client::VestingWindow::BlockNumberBased { start: _, period : _ } =>
+									todo!(),
+							};
+
+							let retained = Value::named_composite(vec![
+								(
+									"window",
+									Value::named_variant(
+										"MomentBased",
+										vec![
+											("start", Value::u128((window_moment_start) as u128)),
+											("period", Value::u128(window_moment_period as u128)),
+										],
+									),
+								),
+								("period_count", Value::u128(item.period_count as u128)),
+								("per_period", Value::u128(item.per_period)),
+							]);
+							retained
+						})
+						.collect();
+
 					vec![
 						("who", Value::unnamed_variant("Id", vec![Value::from_bytes(address.0)])),
 						("asset", Value::u128(1)),
-						("vesting_schedules", Value::unnamed_composite(vec![])),
+						("vesting_schedules", retained.into()),
 					]
 				})
 				.map(|data| subxt::dynamic::tx("Vesting", "update_vesting_schedules", data))
@@ -279,7 +333,7 @@ async fn main() -> anyhow::Result<()> {
 
 			let dest = AccountId32::from_str(&subargs.to).expect("address");
 
-			let mut force: Vec<_> = deletes
+			let mut force: Vec<_> = account_amounts_to_take_away
 				.iter()
 				.map(|record| {
 					let address = AccountId32::from_str(&record.0).expect("address");
@@ -346,7 +400,7 @@ async fn main() -> anyhow::Result<()> {
 						(window_moment_start / 1000) as i64,
 					)
 					.map(|x| format!("{}", x))
-					.map_err(|x| "#BAD_START_TME".to_string())
+					.map_err(|_x| "#BAD_START_TME".to_string())
 					{
 						Err(x) => x,
 						Ok(x) => x,
