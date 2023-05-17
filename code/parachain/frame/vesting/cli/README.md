@@ -66,7 +66,6 @@ cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" unlock --s
 ```bash
 cargo run -- --client="ws://localhost:8000" delete --schedule="./test/delete-all.csv" --key="//Alice" --to="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm"
 cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" delete --schedule="./test/delete-all.csv" --key="//Alice" --to="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm"
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" delete --schedule="./test/filter2.csv" --key="//Alice" --to="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm"
 ```
 
 
