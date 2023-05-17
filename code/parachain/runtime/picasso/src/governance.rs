@@ -77,13 +77,13 @@ impl democracy::Config for Runtime {
 	type Currency = Balances;
 
 	#[cfg(not(feature = "fastnet"))]
-	type LaunchPeriod = ConstU32<{ 1 * DAYS }>;
+	type LaunchPeriod = ConstU32<DAYS>;
 	#[cfg(not(feature = "fastnet"))]
 	type VotingPeriod = ConstU32<{ 3 * DAYS }>; // weekend + holiday
 	#[cfg(not(feature = "fastnet"))]
-	type EnactmentPeriod = ConstU32<{ 1 * DAYS }>;
+	type EnactmentPeriod = ConstU32<DAYS>;
 	#[cfg(not(feature = "fastnet"))]
-	type VoteLockingPeriod = ConstU32<{ 1 * DAYS }>;
+	type VoteLockingPeriod = ConstU32<DAYS>;
 
 	#[cfg(feature = "fastnet")]
 	type LaunchPeriod = ConstU32<{ 1 * HOURS }>;
@@ -129,6 +129,11 @@ impl democracy::Config for Runtime {
 
 	type Scheduler = Scheduler;
 	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type SubmitOrigin = system::EnsureSigned<Self::AccountId>;
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	type SubmitOrigin = frame_support::traits::EitherOf<
 		system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
 		system::EnsureSignedBy<CouncilMembership, Self::AccountId>,

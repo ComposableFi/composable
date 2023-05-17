@@ -591,11 +591,7 @@ jobs:
               || needs.devnet-integration-tests.outputs.ok != 'true' 
             }}
           run: |
-<<<<<<< HEAD:.github/workflows/pr-workflow.ymlpp]
             echo "Some of dependencies (see jobs graph or needs attribute) failed to build"      
-=======
-            echo "Some of dependencies (see jobs graph or 'need' attribute) failed to build"      
->>>>>>> 90f080261 (fixes bash error message):.github/workflows/pr-workflow.yml
             exit 42
 
   draft-release-artifacts:
