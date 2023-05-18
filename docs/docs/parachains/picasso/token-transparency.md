@@ -30,6 +30,13 @@ Thus, to reward and thank the devoted users who supported us through this proces
 we are allocating a portion of the PICA token supply to crowdloan participants. 
 Finally, 15% of the total PICA token supply is targeted to be released as rewards for participants in Liquidity Programs in Picasso.
 
+:::info
+
+Total supply refers to the number of coins or tokens that currently exist and are either in circulation or locked somehow. It is the sum of coins that were already minted (or issued) minus the total number of coins that were burned or destroyed. 
+
+Therefore, the total supply refers to both the circulating supply and the tokens that are yet to hit the open market including tokens that are being held under a lockup or vesting period, which typically follows a private sale or Token Generation Event. Coins or tokens that are eventually burned are excluded from the total supply.
+:::
+
 ### Supporting Growth, Development, and Security on Picasso
 
 Tokens from Composable’s “Treasury” PICA allocation may be used for a number of initiatives towards advancing 
@@ -62,6 +69,11 @@ Upon token launch, the genesis pools would be the multisig addresses below.
 We have published this list for the community to monitor for purposes of transparency. 
 The other non-multisig addresses are labeled as protocol controlled addresses. 
 
+info:::  
+Circulating supply refers to all tokens that are held in accounts outside of the non-circulating Composable and protocol-controlled addresses listed above.
+  - Circulating supply is currently the unvested tokens associated with the crowdloan rewards. No other multisig wallets or tokens will be considered circulating unless voted upon by protocol governance to become circulating, unless otherwise above.
+  
+:::
 ### Non-Circulating Genesis Addresses
 
 The following multisigs are controlled by the governance council and are activated only by governance. 
@@ -79,9 +91,15 @@ Liquidity Programs Multisig : 5ys4cFxQBDs8qhkXbs9smn7yVMSmJ3QdLeqNTHfhk5QmX5Pj
 Treasury Pallet for accruing fees: https://polkadot.js.org/apps/#/treasury
 
 
+### Alignment of allocation
+
+In accordance with [Council motion #16](https://picasso.polkassembly.io/motion/16), the Picasso Treasury has been reimbursed for the allocation portion of the Infrastructure Round, which should have been sourced from the allocation designated for Ecosystem Incentives. This amount encompasses complete PICA allocations for oracle and collator providers, along with 12 months' worth of allocated rewards. The total PICA transferred sums up to 78,282,699.80.
+
+Pursuant to [Council motion #19](https://picasso.polkassembly.io/motion/19), the Picasso Team Multisig will be reimbursed at its designated address from the Picasso Treasury. These tokens were mistakenly spent from the Team multisig address prior to the migration of a new Team Multisig, and therefore, reimbursed by the intended location, the Picasso treasury. The total PICA amount to be reimbursed is 51,874,200 PICA.
+
+**Neither of these events aims to modify any previously established token allocations; rather, they intend to rectify an accounting error between multisig addresses.**
+
 ### Protocol Controlled Addresses
-
-
 
 #### Crowdloan Pallet Funds
 
@@ -124,23 +142,6 @@ HCMDYY3ittCoNQEtZV9XAxMQkC6YYKgC6cxZuJkAdikhuqQ
 5w53mgBc2w2kNQZgFBaYT5h79cQQNfv8vUuoa85zUe5VxBvQ
 
 No other tokens will be considered circulating unless approved by governance. 
-
-
-## Glossary
-
-- **Circulating Supply**: 
-  Circulating supply refers to all tokens that are held in accounts 
-  outside of the non-circulating Composable and protocol-controlled addresses listed above.
-    - Circulating supply is currently the unvested tokens associated with the crowdloan rewards. 
-      No other multisig wallets or tokens will be considered circulating unless voted upon by protocol governance to become circulating, unless otherwise above.
-
-- **Total Supply**: 
-  Total supply refers to the number of coins or tokens that currently exist and are either in circulation or locked somehow. 
-  It is the sum of coins that were already minted (or issued) minus the total number of coins that were burned or destroyed. 
-  Therefore, the total supply includes both the circulating supply and the tokens that are yet to hit the open market. 
-  Tokens that are being held under a lockup or vesting period, which typically follows a private sale or Token Generation Event.  
-  Coins or tokens that are eventually burned are excluded from the total supply.
-
 
 #### Disclaimer
 This document is meant for informational purposes only. 
