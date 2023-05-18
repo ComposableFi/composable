@@ -178,7 +178,7 @@ where
 	let signer = subxt::tx::PairSigner::new(signer);
 	let api = OnlineClient::<SubstrateConfig>::from_url(endpoint).await?;
 	let events = api
-		.tx()	
+		.tx()
 		.sign_and_submit_then_watch_default(&tx, &signer)
 		.await?
 		.wait_for_in_block()

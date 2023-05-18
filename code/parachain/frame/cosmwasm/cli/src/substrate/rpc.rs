@@ -49,7 +49,7 @@ impl Command {
 		match self.subcommands {
 			Subcommands::Query(cosmwasm::Query { contract, gas, query }) => {
 				let query = QueryRequest::<()>::Wasm(WasmQuery::Smart {
-					contract_addr: format!("0x{}", contract.clone().encode_hex::<String>()),
+					contract_addr: contract.to_string(), //format!("0x{}", contract.clone().encode_hex::<String>()),
 					msg: Binary(query.into()),
 				});
 				let params = rpc_params!(contract.to_string(), gas, serde_json::to_vec(&query)?);
