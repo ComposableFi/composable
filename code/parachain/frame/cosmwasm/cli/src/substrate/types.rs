@@ -1,7 +1,6 @@
 use super::subxt_api;
 use serde::Serialize;
 use std::{collections::BTreeMap, string::ToString};
-use subxt::ext::sp_core::crypto::Ss58Codec;
 
 pub trait PrettyDisplay {
 	fn pretty_display(&self, indentation_level: usize);

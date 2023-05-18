@@ -28,7 +28,6 @@ use subxt::{
 		sp_core::Pair,
 		sp_runtime::{MultiSignature, MultiSigner},
 	},
-	//tx::PairSigner,
 	OnlineClient, SubstrateConfig,
 };
 
@@ -67,6 +66,7 @@ impl Command {
 		P::Seed: TryFrom<Vec<u8>>,
 		MultiSignature: From<<P as Pair>::Signature>,
 		MultiSigner: From<<P as Pair>::Public>,
+		subxt::utils::MultiSignature: From<<P as sp_core::Pair>::Signature>,
 	{
 		match self.subcommands {
 			Subcommands::Upload(upload) => {
@@ -173,8 +173,9 @@ where
 	MultiSignature: From<<P as Pair>::Signature> ,
 	MultiSigner: From<<P as Pair>::Public>,
 	CallData: Encode + subxt::ext::scale_encode::EncodeAsFields,
+	subxt::utils::MultiSignature: From<<P as sp_core::Pair>::Signature>,
 {
-	let signer = PairSigner::new(signer);
+	let signer = subxt::tx::PairSigner::new(signer);
 	let api = OnlineClient::<SubstrateConfig>::from_url(endpoint).await?;
 	let events = api
 		.tx()	

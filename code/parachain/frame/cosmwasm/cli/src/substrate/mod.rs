@@ -126,6 +126,7 @@ impl Command {
 		P::Seed: TryFrom<Vec<u8>>,
 		MultiSignature: From<<P as Pair>::Signature>,
 		MultiSigner: From<<P as Pair>::Public>,
+		subxt::utils::MultiSignature: From<<P as sp_core::Pair>::Signature>,
 	{
 		match self.subcommand {
 			Subcommands::Rpc(command) => command.run(self.chain_endpoint).await,
