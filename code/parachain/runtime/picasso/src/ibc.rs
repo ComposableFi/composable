@@ -9,6 +9,7 @@ use common::{
 	fees::{IbcIcs20FeePalletId, IbcIcs20ServiceCharge},
 	ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds},
 };
+use composable_traits::assets::InspectRegistryMetadata;
 use frame_system::EnsureSigned;
 use hex_literal::hex;
 pub(crate) use pallet_ibc::{
@@ -126,9 +127,27 @@ impl Ics20RateLimiter for ConstantAny {
 			denom if Some(denom) == pica_denom.as_deref() => 500_000,
 			_ => 10_000,
 		};
-		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(limit * 10_u64.pow(12)) {
+
+		// adjust the number of decimals based on the currency id, as different assets have
+		// different decimals places and not doing it would defeat the purpose of fixing the nominal
+		// amount tha we are allowing users to transfer.
+		let token = &msg.token;
+		let asset_id: CurrencyId =
+			<<Runtime as pallet_ibc::Config>::IbcDenomToAssetIdConversion as DenomToAssetId<
+				Runtime,
+			>>::from_denom_to_asset_id(&token.denom.to_string())
+			.map_err(|_| ())?;
+
+		let decimals =
+			<assets_registry::Pallet<Runtime> as InspectRegistryMetadata>::decimals(&asset_id)
+				.unwrap_or(12);
+
+		if msg.token.amount.as_u256() <=
+			::ibc::bigint::U256::from(limit * 10_u64.pow(decimals as _))
+		{
 			return Ok(())
 		}
+
 		Err(())
 	}
 }
