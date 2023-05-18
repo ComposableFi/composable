@@ -36,6 +36,7 @@ exclude = [
 members = [
   "services/cmc-api",
   "parachain/frame/*",
+  "parachain/frame/cosmwasm/cli",
   "parachain/node",
   "parachain/runtime/*",
   "utils/common",
