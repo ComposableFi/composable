@@ -58,20 +58,6 @@ const sidebars = {
                                 'parachains/picasso/pica-use-cases'
                             ]
                         },
-                        {
-                            type: 'category',
-                            label: 'xPICA fNFTs',
-                            link: {
-                                type: 'doc',
-                                id: 'products/xpica-fnft-overview'
-                            },
-                            collapsible: true,
-                            collapsed: true,
-                            items: [
-                                'products/xpica-fnft/picasso-treasury',
-                                'products/xpica-fnft/use-cases'
-                            ],
-                        },
                     ],
                 },
                 {
@@ -85,7 +71,6 @@ const sidebars = {
                     collapsed: true,
                     items: [
                         'parachains/composable/composable-crowdloan',
-                        'parachains/composable/DOT-purchase-log',
                         'parachains/composable/LAYR-tokenomics',
                     ],
                 }
@@ -202,9 +187,7 @@ const sidebars = {
                         'products/pablo/swaps-trading',
                         'products/pablo/launch-pools',
                         'products/pablo/auctions-bonding',
-                        'products/pablo/xPBLO-fNFT-staking',
                         'products/pablo/cross-chain-DEX',
-                        'products/pablo/governance-tokenomics',
                     ],
                 },
                 {

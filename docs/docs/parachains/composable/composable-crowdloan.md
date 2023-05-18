@@ -23,3 +23,14 @@ Additionally,
 [we announced an increase](https://composablefi.medium.com/christmas-comes-early-for-crowdloan-contributors-30-increase-in-rewards-ffc11c911af7) 
 in the rewards for Composable crowdloan stakers. These added rewards come on top of the above early bird incentives. 
 We ended up unlocking additional rewards and allocating 16% of LAYR's token supply for the crowdloan.
+
+## DOT Purchase Log
+
+This page catalogues all the stablecoin conversions to DOT via TPS (the OTC desk of 3AC ) and contributed to the 
+crowdloan for the Composable Parachain.
+
+| Date       | Stablecoins    | DOT purchase price |
+| ---------- | -------------- | ------------------ |
+| 12/01/2022 | 252795.77 DAI  | 27.1993            |
+| 12/01/2022 | 157807.4 USDT  | 27.1993            |
+| 12/01/2022 | 48129.881 USDT | 27.1993            |
