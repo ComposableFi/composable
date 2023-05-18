@@ -31,7 +31,6 @@ fn reproduce_live_state() {
         crate::RewardPerToken::<Test>::insert(currency, (), f(1_699_249_738_518_636_122_154_288_694));
         crate::RewardTally::<Test>::insert(currency, ((), ALICE), f(164_605_943_476_265_834_062_592_062_507_811_208));
         crate::Stake::<Test>::insert(((), ALICE), f(97_679_889_000_000_000_000_000_000));
-        //crate::TotalRewards::<Test>::insert(currency, f(8_763_982_459_262_268_000_000_000_000_000_000));
         crate::TotalStake::<Test>::insert((), f(2_253_803_217_000_000_000_000_000_000));
 
         assert_ok!(Reward::compute_reward(&(), &ALICE, currency), 1376582365513566);
