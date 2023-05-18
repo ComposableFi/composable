@@ -1,15 +1,18 @@
 # Liquidity Pools on Launch
 
-On launch, Pablo will be the only way of swapping for PICA through dual asset constant product pools, 
+On launch, Pablo was the only platform for acquiring PICA through dual asset constant product pools, 
 based on the BalancerFi weighted math implementation of (x * y = K) for:
 
 - KSM/USDT
 - PICA/USDT
 - PICA/KSM
 
+Since of the launch of Centauri, we have added the following pools:
 
+- PICA/DOT
+- DOT/KSM
+- DOT/USDT
 
-Pablo’s native token, PBLO, is set for launch in late Q1 2023.
 
 Liquidity providers(LPs) directly benefit from the success and adoption of Pablo.
 LPs are provided LP-tokens relative to the funds they add to a liquidity pool on Pablo.
@@ -32,4 +35,4 @@ Transactions through Pablo native liquidity pools for asset swaps and buy/sell o
 0.3% of the total amount traded and are paid by the trader in the input asset.
 
 ### Initialization of pools 
-According to this passed proposal at the following link: https://picasso.subscan.io/council/2, the initial pools are seeded by the treasury at $150m FDV for PICA with $50,000 of liquidity, and the 30 day price of KSM for the KSM/USDT pool with $50,000 of liquidity as well. On Tuesday, the 27th of December, trading began at 19:00 UTC (14:00 EST) on Pablo. 
+According to this passed proposal at the following link: https://picasso.subscan.io/council/2, the initial pools were seeded by the treasury at $150m FDV for PICA with $50,000 of liquidity, and the 30 day price of KSM for the KSM/USDT pool with $50,000 of liquidity as well. On Tuesday, the 27th of December, trading began at 19:00 UTC (14:00 EST) on Pablo. 
