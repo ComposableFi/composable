@@ -145,11 +145,11 @@ pub mod pallet {
 
 	/// The total unclaimed rewards distributed to this reward pool.
 	/// NOTE: this is currently only used for integration tests.
-	#[pallet::storage]
-	#[pallet::getter(fn total_rewards)]
-	#[allow(clippy::disallowed_types)]
-	pub type TotalRewards<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Blake2_128Concat, T::CurrencyId, SignedFixedPoint<T, I>, ValueQuery>;
+	// #[pallet::storage]
+	// #[pallet::getter(fn total_rewards)]
+	// #[allow(clippy::disallowed_types)]
+	// pub type TotalRewards<T: Config<I>, I: 'static = ()> =
+	// 	StorageMap<_, Blake2_128Concat, T::CurrencyId, SignedFixedPoint<T, I>, ValueQuery>;
 
 	/// Used to compute the rewards for a participant's stake.
 	#[pallet::storage]
@@ -259,11 +259,12 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	}
 
 	pub fn get_total_rewards(
-		currency_id: T::CurrencyId,
+		_currency_id: T::CurrencyId,
 	) -> Result<<T::SignedFixedPoint as FixedPointNumber>::Inner, DispatchError> {
-		Ok(Self::total_rewards(currency_id)
-			.truncate_to_inner()
-			.ok_or(Error::<T, I>::TryIntoIntError)?)
+		// Ok(Self::total_rewards(currency_id)
+		// 	.truncate_to_inner()
+		// 	.ok_or(Error::<T, I>::TryIntoIntError)?)
+		todo!();
 	}
 
 	pub fn deposit_stake(
@@ -316,7 +317,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		let reward_div_total_stake =
 			reward.checked_div(&total_stake).ok_or(ArithmeticError::Underflow)?;
 		checked_add_mut!(RewardPerToken<T, I>, currency_id, pool_id, &reward_div_total_stake);
-		checked_add_mut!(TotalRewards<T, I>, currency_id, &reward);
+		// checked_add_mut!(TotalRewards<T, I>, currency_id, &reward);
 
 		Self::deposit_event(Event::<T, I>::DistributeReward { currency_id, amount: reward });
 		Ok(())
@@ -383,7 +384,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		let reward = Self::compute_reward(pool_id, stake_id, currency_id)?;
 		let reward_as_fixed = SignedFixedPoint::<T, I>::checked_from_integer(reward)
 			.ok_or(Error::<T, I>::TryIntoIntError)?;
-		checked_sub_mut!(TotalRewards<T, I>, currency_id, &reward_as_fixed);
+		// checked_sub_mut!(TotalRewards<T, I>, currency_id, &reward_as_fixed);
 
 		let stake = Self::stake(pool_id, stake_id);
 		let reward_per_token = Self::reward_per_token(currency_id, pool_id);
