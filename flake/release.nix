@@ -118,6 +118,15 @@
 
             cp ${packages.hyperspace-composable-polkadot-picasso-kusama-image} release-artifacts/hyperspace-composable-polkadot-picasso-kusama-image
 
+
+            echo "CosmWasm tools"
+            cp ${
+              make-bundle "toRPM" packages.ccw
+            }/*.rpm release-artifacts/to-upload/ccw-${packages.ccw.version}-1.x86_64.rpm
+            cp ${
+              make-bundle "toDEB" packages.ccw
+            }/*.deb release-artifacts/to-upload/ccw_${packages.ccw.version}-1_amd64.deb
+
             # Checksum everything
             cd release-artifacts/to-upload
             sha256sum ./* > checksums.txt
