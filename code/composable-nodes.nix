@@ -60,6 +60,13 @@
     in {
       packages = rec {
 
+        ccw = crane.nightly.buildPackage (systemCommonRust.common-attrs // rec {
+          name = "ccw";
+          cargoArtifacts = self'.packages.common-deps;
+          cargoBuildCommand = "cargo build --release --package ${name}";
+          meta = { mainProgram = name; };
+        });
+
         composable-node-image = toDockerImage composable-node;
         composable-node = makeComposableNode self'.packages.picasso-runtime
           self'.packages.composable-runtime;

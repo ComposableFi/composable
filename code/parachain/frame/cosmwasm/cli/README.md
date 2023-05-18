@@ -21,25 +21,8 @@ For clarification of meaning of parameters and outputs on each step please refer
 3. `cargo run substrate -c ws://127.0.0.1:9988 -n alice tx upload --url ./cw20_base.wasm` 
 4. `cargo run substrate -c ws://127.0.0.1:9988 -n alice tx instantiate --code-id 1 --salt 0x1234 --label 0x4321 --gas 10000000000 --message '{ "decimals" : 18, "initial_balances": [], "name" : "SHIB", "symbol" : "SHIB", "mint": {"minter" : "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL"} }'`
 5. `cargo run substrate -c ws://127.0.0.1:9988 -n alice tx execute --contract "5CntM2NFn4Vkyu77tMDm5TRosKd9qskYpafh8L6Lz2FGP2rD" --gas 10000000000 --message '{ "mint" : { "amount" : "123456789", "recipient" : "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL" }}'`
-6. `cargo run substrate -c http://127.0.0.1:9988 rpc query --contract "5CntM2NFn4Vkyu77tMDm5TRosKd9qskYpafh8L6Lz2FGP2rD" --gas 10000000000 --query 's{"balance": {"address1": "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL"}}'`
-
-
-
- curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "cosmwasm_query", "params": {"contract":"5CntM2NFn4Vkyu77tMDm5TRosKd9qskYpafh8L6Lz2FGP2rD", "gas": 10000000000, "query_request": []}}' http://127.0.0.1:9988 
-
+6. `cargo run substrate -c http://127.0.0.1:9988 rpc query --contract "5CntM2NFn4Vkyu77tMDm5TRosKd9qskYpafh8L6Lz2FGP2rD" --gas 10000000000 --query '{"balance": {"address": "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL"}}'`
  
 ### Testnet
 
 Repeat steps on testnet.
-
-
-[ + ] Instantiated
-        - Contract address: 5CntM2NFn4Vkyu77tMDm5TRosKd9qskYpafh8L6Lz2FGP2rD
-- Event: instantiate
-        - Contract: 5CntM2NFn4Vkyu77tMDm5TRosKd9qskYpafh8L6Lz2FGP2rD
-        - Attributes:
-                - _contract_address: 5uJW9yA5U6cr5JwNE5NvimHnPidDEAAC9AYcS7bTE1QgMNZU
-                - code_id: 1
-
-
-
