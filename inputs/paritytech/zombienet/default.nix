@@ -31,7 +31,7 @@ in with prelude; rec {
       env = [{
         name = "RUST_LOG";
         value =
-          "info,runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,pallet_ibc=trace,hyperspace=trace,hyperspace_parachain=trace,ics=trace,ics::routing=trace,ics::channel=trace"
+          "info,runtime::contracts=debug,runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,pallet_ibc=trace,hyperspace=trace,hyperspace_parachain=trace,ics=trace,ics::routing=trace,ics::channel=trace"
           # RUST_LOG does not eats extra comma well, so fixed conditionally
           + (if rust_log_add != null then "," + rust_log_add else "");
       }];

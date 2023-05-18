@@ -576,20 +576,10 @@ jobs:
            echo "build-all-benchmarks-packages" ${{ needs.build-all-benchmarks-packages.outputs.ok }}
            echo "build-product-darwin" ${{ needs.build-product-darwin.outputs.ok }}
            echo "devnet-integration-tests" ${{ needs.devnet-integration-tests.outputs.ok  }}
-        - if: |
-            ${{ 
-              needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-benchmarks-packages.outputs.ok == 'true' 
-              && needs.build-product-darwin.outputs.ok == 'true' 
-              && needs.devnet-integration-tests.outputs.ok == 'true' 
-            }}
+        - if: ${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-benchmarks-packages.outputs.ok == 'true' && needs.build-product-darwin.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' }}
           run: |
             echo "All dependencies built well"
-        - if: |
-            ${{ 
-              needs.nix-flake-check.outputs.ok != 'true' || needs.dependency-review.outputs.ok != 'true' || needs.build-all-production-deps.outputs.ok != 'true' || needs.build-all-misc-packages.outputs.ok != 'true' || needs.build-all-docs-packages.outputs.ok != 'true' || needs.build-all-ci-packages.outputs.ok != 'true' || needs.build-all-benchmarks-packages.outputs.ok != 'true' 
-              || needs.build-product-darwin.outputs.ok != 'true' 
-              || needs.devnet-integration-tests.outputs.ok != 'true' 
-            }}
+        - if: ${{ needs.nix-flake-check.outputs.ok != 'true' || needs.dependency-review.outputs.ok != 'true' || needs.build-all-production-deps.outputs.ok != 'true' || needs.build-all-misc-packages.outputs.ok != 'true' || needs.build-all-docs-packages.outputs.ok != 'true' || needs.build-all-ci-packages.outputs.ok != 'true' || needs.build-all-benchmarks-packages.outputs.ok != 'true' || needs.build-product-darwin.outputs.ok != 'true' || needs.devnet-integration-tests.outputs.ok != 'true' }}
           run: |
             echo "Some of dependencies (see jobs graph or needs attribute) failed to build"      
             exit 42
