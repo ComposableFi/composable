@@ -1,20 +1,28 @@
 # Composable CosmWasm CLI
 
 Composable Cosmwasm CLI is a CLI tool to quickly get started with the XCVM ecosystem and
-interact with a chain that runs `pallet-cosmwasm`.
+interact with a chain that runs `pallet-cosmwasm`. In this guide, we will show you how to run the CLI on Picasso rococo.
 
 ## Installing `ccw`
 
-At first, clone the [repository](https://github.com/ComposableFi/cw-toolkit):
+There are two methods to installing the ccw-vm:
+
+1. At first, clone the [Composable moonorepo](https://github.com/ComposableFi/composable):
 
 ```
-git clone https://github.com/ComposableFi/cw-toolkit
+git clone https://github.com/ComposableFi/composable
 ```
 
 Then run the following command to install the ccw binary:
 
 ```
-cargo install --path ./cw-toolkit/cli
+cargo install --path ./composable/code/parachain/frame/cosmwasm/cli
+```
+
+2. An alternative method to run the ccw-vm is by completing the next step to install Nix first and run the following command:
+
+```
+nix run composable#ccw
 ```
 
 ## Installing `nix` 
