@@ -471,7 +471,7 @@ jobs:
     runs-on:
       - ${{ matrix.arch }}
     concurrency:
-      group: ${{ inputs.github_workflow }}-build-product-darwin-${{ matrix.arch }}
+      group: ${{ inputs.github_workflow }}-build-product-darwin-${{ github.event.pull_request.number || github.ref }}-${{ matrix.arch }}
       cancel-in-progress: true
     steps:            
       - name: build-product-darwin
