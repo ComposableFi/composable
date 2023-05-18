@@ -71,7 +71,6 @@ const sidebars = {
                     collapsed: true,
                     items: [
                         'parachains/composable/composable-crowdloan',
-                        'parachains/composable/DOT-purchase-log',
                         'parachains/composable/LAYR-tokenomics',
                     ],
                 }
