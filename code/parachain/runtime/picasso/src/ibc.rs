@@ -136,7 +136,7 @@ impl Ics20RateLimiter for ConstantAny {
 			<<Runtime as pallet_ibc::Config>::IbcDenomToAssetIdConversion as DenomToAssetId<
 				Runtime,
 			>>::from_denom_to_asset_id(&token.denom.to_string())
-			.unwrap();
+			.map_err(|_| ())?;
 
 		let decimals =
 			<assets_registry::Pallet<Runtime> as InspectRegistryMetadata>::decimals(&asset_id)
