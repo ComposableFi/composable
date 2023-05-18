@@ -37,7 +37,7 @@ Enter the amount of DOT you wish to transfer to Composable. Keep in mind to leav
 
 ![enter_dot_amount](./images-centauri-guide/centauri-guide-4.png)
 
-Confirm the transaction.
+Confirm the transaction. The fees for bridging via Centauri is paid by utilizing the tokens being transferred, which have a value of $10.
 
 ![confirm_xcm](./images-centauri-guide/centauri-guide-5.png)
 

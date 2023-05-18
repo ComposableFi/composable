@@ -69,7 +69,8 @@ Upon token launch, the genesis pools would be the multisig addresses below.
 We have published this list for the community to monitor for purposes of transparency. 
 The other non-multisig addresses are labeled as protocol controlled addresses. 
 
-info:::  
+:::info
+
 Circulating supply refers to all tokens that are held in accounts outside of the non-circulating Composable and protocol-controlled addresses listed above.
   - Circulating supply is currently the unvested tokens associated with the crowdloan rewards. No other multisig wallets or tokens will be considered circulating unless voted upon by protocol governance to become circulating, unless otherwise above.
   

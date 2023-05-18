@@ -19,6 +19,8 @@ The shared architecture of Centauri's IBC implementations between Kusama ⬌ Pol
 
 By utilizing IBC as a trustless access point for DotSama to the wider cryptocurrency ecosystem, we can leverage a proven and successful cross-chain communication protocol and enable transfers of assets between parachains in both ecosystems. This innovation is of significant importance in achieving Kusama's goals, which have always been focused on experimentation, developer acquisition, and paving the way for the future of DotSama.
 
+The fees for bridging via Centauri is paid by utilizing the tokens being transferred, which have a value of $10.
+
 ## Cosmos ⬌ DotSama Bridge
 
 IBC is the native communication protocol of the Cosmos ecosystem, it allows for trustless communication to occur between any blockchains built using the Cosmos SDK which have the IBC module enabled. For this connection, we will be using Tendermint and Grandpa as light clients on Picasso and Cosmos chains, respectively.
