@@ -128,6 +128,8 @@ ibc-runtime-api = { workspace = true, default-features = false }
 pallet-ibc = { workspace = true, default-features = false }
 pallet-ibc-ping = { workspace = true, default-features = false }
 
+invarch-xcm-builder = { workspace = true, default-features = false }
+
 [features]
 builtin-wasm = []
 testnet = []
