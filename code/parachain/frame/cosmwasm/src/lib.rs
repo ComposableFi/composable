@@ -157,7 +157,6 @@ pub mod pallet {
 	pub enum Error<T> {
 		Instrumentation,
 		VmCreation,
-		ContractTrapped,
 		ContractHasNoInfo,
 		CodeDecoding,
 		CodeValidation,
@@ -187,6 +186,12 @@ pub mod pallet {
 		OutOfGas,
 		InvalidSalt,
 		InvalidAccount,
+		Interpreter,
+		VirtualMachine,
+		AccountConversionFailure,
+		Aborted,
+		ReadOnlyViolation,
+		Rpc,
 	}
 
 	#[pallet::config]
@@ -706,20 +711,29 @@ impl<T: Config> Pallet<T> {
 		initial_gas: u64,
 		remaining_gas: u64,
 	) -> DispatchResultWithPostInfo {
-		log::info!(target: "runtime::contracts", "outcome: {:?}", outcome);
+		log::debug!(target: "runtime::contracts", "outcome: {:?}", outcome);
 		let post_info = PostDispatchInfo {
 			actual_weight: Some(Weight::from_ref_time(initial_gas.saturating_sub(remaining_gas))),
 			pays_fee: Pays::Yes,
 		};
 		match outcome {
 			Ok(()) => Ok(post_info),
-			Err(e) => {
-				let e = match e {
+			Err(error) => {
+				log::info!(target: "runtime::contracts", "executing contract error with {}", &error);
+				let error = match error {
 					CosmwasmVMError::Pallet(e) => e,
 					CosmwasmVMError::OutOfGas => Error::<T>::OutOfGas,
-					_ => Error::<T>::ContractTrapped,
+					CosmwasmVMError::Interpreter(_) => Error::<T>::Interpreter,
+					CosmwasmVMError::VirtualMachine(_) => Error::<T>::VirtualMachine,
+					CosmwasmVMError::AccountConversionFailure =>
+						Error::<T>::AccountConversionFailure,
+					CosmwasmVMError::Aborted(_) => Error::<T>::Aborted,
+					CosmwasmVMError::ReadOnlyViolation => Error::<T>::ReadOnlyViolation,
+					CosmwasmVMError::Unsupported => Error::<T>::Unsupported,
+					CosmwasmVMError::Rpc(_) => Error::<T>::Rpc,
+					CosmwasmVMError::Ibc(_) => Error::<T>::Ibc,
 				};
-				Err(DispatchErrorWithPostInfo { error: e.into(), post_info })
+				Err(DispatchErrorWithPostInfo { error: error.into(), post_info })
 			},
 		}
 	}
