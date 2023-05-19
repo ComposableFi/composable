@@ -42,7 +42,7 @@ jobs:
     outputs:
       ok: ${{ steps.ok.outputs.ok }}     
     concurrency:
-      group: ${{ inputs.github_workflow }}-dependency-review-${{ github.event.pull_request.title }}
+      group: ${{ inputs.github_workflow }}-dependency-review-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true  
     needs:
       - privilege-check  
@@ -82,7 +82,7 @@ jobs:
     continue-on-error: false
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ inputs.github_workflow }}-lfs-check-${{ github.event.pull_request.title }}
+      group: ${{ inputs.github_workflow }}-lfs-check-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
@@ -107,7 +107,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: false
     concurrency:
-      group: ${{ inputs.github_workflow }}-nix-flake-check-${{ github.event.pull_request.title }}
+      group: ${{ inputs.github_workflow }}-nix-flake-check-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       # This isn't templated, since checkout needs to happen before templating occurs.
@@ -158,7 +158,7 @@ jobs:
       - Linux
       - arm-cute
     concurrency:
-      group: ${{ inputs.github_workflow }}-build-all-platforms-arm-${{ github.event.pull_request.title }}
+      group: ${{ inputs.github_workflow }}-build-all-platforms-arm-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:      
       - name: Set up Nix
@@ -208,11 +208,11 @@ jobs:
       - self-hosted
       - x64-monster
     concurrency:
-      group: ${{ inputs.github_workflow }}-build-all-production-deps-${{ github.event.pull_request.title }}
+      group: ${{ inputs.github_workflow }}-build-all-production-deps-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       - name: Set up Nix
-        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' }}          
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}          
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a
         with:
           install_url: https://releases.nixos.org/nix/nix-2.13.2/install
@@ -224,25 +224,25 @@ jobs:
             keep-derivations = true
             keep-outputs = true 
       - name: Set up Cachix
-        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' }}
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - name: Add tools needed for non-nix steps
-        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' }}
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         run: |  
           nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
       - uses: actions/checkout@v3
-        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' }}
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha }}
           persist-credentials: false          
       - name: Build all packages 
-        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' }}
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-production-deps --keep-going
@@ -261,7 +261,7 @@ jobs:
       - self-hosted
       - x64-monster
     concurrency:
-      group: ${{ inputs.github_workflow }}-build-all-ci-packages-${{ github.event.pull_request.title }}
+      group: ${{ inputs.github_workflow }}-build-all-ci-packages-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       - name: Set up Nix
@@ -311,7 +311,7 @@ jobs:
       - self-hosted
       - ${{ matrix.arch }}
     concurrency:
-      group: ${{ inputs.github_workflow }}-build-all-benchmarks-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
+      group: ${{ inputs.github_workflow }}-build-all-benchmarks-packages-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       - name: Set up Nix
@@ -369,7 +369,7 @@ jobs:
       - self-hosted
       - ${{ matrix.arch }}
     concurrency:
-      group: ${{ inputs.github_workflow }}-build-all-misc-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
+      group: ${{ inputs.github_workflow }}-build-all-misc-packages-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       - name: Set up Nix
@@ -404,12 +404,7 @@ jobs:
         if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-misc --keep-going
-      - name: List built results 
-        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
-        run: |
-          ls result
-          tree result -L 3          
+          command: nix -- build .#all-misc --keep-going       
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"   
 
@@ -425,7 +420,7 @@ jobs:
       - self-hosted
       - ${{ matrix.runner }}
     concurrency:
-      group: ${{ inputs.github_workflow }}-build-all-deps-packages-${{ matrix.runner }}-${{ github.event.pull_request.title }}
+      group: ${{ inputs.github_workflow }}-build-all-deps-packages-${{ matrix.runner }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       - name: Set up Nix
@@ -511,7 +506,7 @@ jobs:
       - ${{ matrix.arch }}
       - Linux
     concurrency:
-      group: ${{ inputs.github_workflow }}-build-all-docs-packages-${{ matrix.arch }}-${{ github.event.pull_request.title }}
+      group: ${{ inputs.github_workflow }}-build-all-docs-packages-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       - name: Set up Nix
@@ -543,10 +538,6 @@ jobs:
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-docs --keep-going
-      - name: List built results 
-        run: |
-          ls result
-          tree result -L 3      
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"               
 
@@ -576,20 +567,12 @@ jobs:
            echo "build-all-benchmarks-packages" ${{ needs.build-all-benchmarks-packages.outputs.ok }}
            echo "build-product-darwin" ${{ needs.build-product-darwin.outputs.ok }}
            echo "devnet-integration-tests" ${{ needs.devnet-integration-tests.outputs.ok  }}
-        - if: |
-            ${{ 
-              needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-benchmarks-packages.outputs.ok == 'true' 
-              && needs.build-product-darwin.outputs.ok == 'true' 
-              && needs.devnet-integration-tests.outputs.ok == 'true' 
-            }}
+           echo "${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-benchmarks-packages.outputs.ok == 'true' && needs.build-product-darwin.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' }}"
+        - if: ${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-benchmarks-packages.outputs.ok == 'true' && needs.build-product-darwin.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' }}
           run: |
             echo "All dependencies built well"
-        - if: |
-            ${{ 
-              needs.nix-flake-check.outputs.ok != 'true' || needs.dependency-review.outputs.ok != 'true' || needs.build-all-production-deps.outputs.ok != 'true' || needs.build-all-misc-packages.outputs.ok != 'true' || needs.build-all-docs-packages.outputs.ok != 'true' || needs.build-all-ci-packages.outputs.ok != 'true' || needs.build-all-benchmarks-packages.outputs.ok != 'true' 
-              || needs.build-product-darwin.outputs.ok != 'true' 
-              || needs.devnet-integration-tests.outputs.ok != 'true' 
-            }}
+            exit 0
+        - if: ${{ !(needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-benchmarks-packages.outputs.ok == 'true' && needs.build-product-darwin.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true') }}
           run: |
             echo "Some of dependencies (see jobs graph or needs attribute) failed to build"      
             exit 42
@@ -668,7 +651,7 @@ jobs:
       - self-hosted
       - ${{ matrix.arch }}
     concurrency:
-      group: ${{ inputs.github_workflow }}-push-docker-images-${{ matrix.arch }}-${{ github.event.pull_request.title }}
+      group: ${{ inputs.github_workflow }}-push-docker-images-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       - name: Set up Nix
@@ -758,11 +741,11 @@ jobs:
       - ${{ matrix.arch }}
       - Linux
     concurrency:
-      group: ${{ inputs.github_workflow }}-devnet-integration-tests-${{ matrix.arch }}-${{ github.event.pull_request.title }}
+      group: ${{ inputs.github_workflow }}-devnet-integration-tests-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       - name: Set up Nix
-        if: ${{ inputs.flow == 'merge_queue_check' }}
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
         uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a
         with:
           install_url: https://releases.nixos.org/nix/nix-2.13.2/install
@@ -773,25 +756,25 @@ jobs:
             system-features = kvm
             
       - name: Set up Cachix
-        if: ${{ inputs.flow == 'merge_queue_check' }}
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - name: Add tools needed for non-nix steps
-        if: ${{ inputs.flow == 'merge_queue_check' }}
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
         run: |  
           nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils nixpkgs.gnumake nixpkgs.python311 nixpkgs.gcc
       - uses: actions/checkout@v3
-        if: ${{ inputs.flow == 'merge_queue_check' }}
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha }}
           persist-credentials: false
       - name: Devnet integration tests
-        if: ${{ inputs.flow == 'merge_queue_check' }}
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
         run: |
           nix run .#devnet-integration-tests
       - id: ok
