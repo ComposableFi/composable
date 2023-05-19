@@ -23,13 +23,13 @@
       devnetConfigs = [
         {
           containerName = "devnet-a";
-          ports = [ 9944 9988 9989 9990 ];
+          ports = [ 9944 9988 9989 9990 10008 ];
           devnet = devnet-a;
           networkName = network-a;
         }
         {
           containerName = "devnet-b";
-          ports = [ 29944 29988 29989 29990 ];
+          ports = [ 29944 29988 29989 29990 30008];
           devnet = devnet-b;
           networkName = network-b;
         }
