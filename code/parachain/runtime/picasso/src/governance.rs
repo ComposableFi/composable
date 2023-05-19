@@ -3,7 +3,6 @@
 use super::*;
 use common::governance::native::*;
 use frame_support::traits::LockIdentifier;
-use frame_system::EnsureSigned;
 
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
@@ -61,18 +60,13 @@ impl collective::Config<NativeTechnicalMembership> for Runtime {
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
-	type SetMembersOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type SetMembersOrigin = EnsureRootOrTwoThirds<NativeTechnicalCollective>;
 }
 
 parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
-	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
-	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
-	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
-	pub const MaxProposals: u32 = 100;
 	// cspell:disable-next
 	pub const DemocracyId: LockIdentifier = *b"democrac";
 	pub RootOrigin: RuntimeOrigin = frame_system::RawOrigin::Root.into();
@@ -81,11 +75,26 @@ parameter_types! {
 impl democracy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
-	type EnactmentPeriod = EnactmentPeriod;
-	type LaunchPeriod = LaunchPeriod;
-	type VotingPeriod = VotingPeriod;
-	type VoteLockingPeriod = EnactmentPeriod;
-	type MinimumDeposit = ConstU128<500_000_000_000_000_000>;
+
+	#[cfg(not(feature = "fastnet"))]
+	type LaunchPeriod = ConstU32<DAYS>;
+	#[cfg(not(feature = "fastnet"))]
+	type VotingPeriod = ConstU32<{ 3 * DAYS }>; // weekend + holiday
+	#[cfg(not(feature = "fastnet"))]
+	type EnactmentPeriod = ConstU32<DAYS>;
+	#[cfg(not(feature = "fastnet"))]
+	type VoteLockingPeriod = ConstU32<DAYS>;
+
+	#[cfg(feature = "fastnet")]
+	type LaunchPeriod = ConstU32<{ 1 * HOURS }>;
+	#[cfg(feature = "fastnet")]
+	type VotingPeriod = ConstU32<{ 3 * HOURS }>;
+	#[cfg(feature = "fastnet")]
+	type EnactmentPeriod = ConstU32<{ 1 * HOURS }>;
+	#[cfg(feature = "fastnet")]
+	type VoteLockingPeriod = ConstU32<{ 1 * HOURS }>;
+
+	type MinimumDeposit = ConstU128<5_000_000_000_000_000>;
 	type ExternalOrigin = EnsureRootOrTwoThirdNativeCouncil;
 
 	type ExternalMajorityOrigin = EnsureRootOrMoreThenHalfNativeCouncil;
@@ -102,15 +111,15 @@ impl democracy::Config for Runtime {
 	#[cfg(feature = "fastnet")]
 	type FastTrackVotingPeriod = ConstU32<{ 5 * common::MINUTES }>;
 
-	type CancellationOrigin = EnsureRootOrAllNativeTechnical;
+	type CancellationOrigin = EnsureRootOrTwoThirds<NativeTechnicalCollective>;
 
 	type BlacklistOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type CancelProposalOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type VetoOrigin = EnsureNativeTechnicalMember;
 	type Slash = Treasury;
 
-	type CooloffPeriod = CooloffPeriod;
-	type MaxProposals = MaxProposals;
+	type CooloffPeriod = ConstU32<{ 7 * DAYS }>;
+	type MaxProposals = ConstU32<50>;
 	type MaxVotes = MaxVotes;
 	type PalletsOrigin = OriginCaller;
 
@@ -120,7 +129,15 @@ impl democracy::Config for Runtime {
 
 	type Scheduler = Scheduler;
 	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
-	type SubmitOrigin = EnsureSigned<AccountId>;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type SubmitOrigin = system::EnsureSigned<Self::AccountId>;
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	type SubmitOrigin = frame_support::traits::EitherOf<
+		system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
+		system::EnsureSignedBy<CouncilMembership, Self::AccountId>,
+	>;
 }
 
 parameter_types! {

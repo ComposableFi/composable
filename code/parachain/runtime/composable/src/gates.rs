@@ -26,6 +26,9 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::CancelProxy => {
 				matches!(c, RuntimeCall::Proxy(pallet_proxy::Call::reject_announcement { .. }))
 			},
+			ProxyType::Assets => {
+				matches!(c, RuntimeCall::AssetsRegistry(..))
+			},
 			ProxyType::Bridge => matches!(
 				c,
 				RuntimeCall::Ibc(..) |
@@ -35,6 +38,7 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 					RuntimeCall::XcmpQueue(..) |
 					RuntimeCall::PolkadotXcm(..)
 			),
+			_ => false,
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {
@@ -77,7 +81,8 @@ impl collective::Config<ReleaseCollective> for Runtime {
 	type MaxMembers = ConstU32<100>;
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
-	type SetMembersOrigin = EnsureRootOrTwoThirds<ReleaseCollective>;
+	type SetMembersOrigin =
+		frame_system::EnsureSignedBy<crate::TechnicalCommitteeMembership, Self::AccountId>;
 }
 
 pub type EnsureRootOrTwoThirds<T> =

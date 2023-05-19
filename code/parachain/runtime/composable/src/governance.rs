@@ -3,7 +3,6 @@
 use super::*;
 use common::governance::native::*;
 use frame_support::traits::LockIdentifier;
-use frame_system::EnsureSigned;
 
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
@@ -36,7 +35,7 @@ impl collective::Config<NativeCouncilCollective> for Runtime {
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
-	type SetMembersOrigin = EnsureRootOrTwoThirds<ReleaseCollective>;
+	type SetMembersOrigin = EnsureRootOrTwoThirds<NativeCouncilCollective>;
 }
 
 impl membership::Config<NativeTechnicalMembership> for Runtime {
@@ -61,7 +60,7 @@ impl collective::Config<NativeTechnicalMembership> for Runtime {
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
-	type SetMembersOrigin = EnsureRootOrTwoThirds<ReleaseCollective>;
+	type SetMembersOrigin = EnsureRootOrTwoThirds<NativeTechnicalCollective>;
 }
 
 parameter_types! {
@@ -84,7 +83,7 @@ impl democracy::Config for Runtime {
 	type LaunchPeriod = LaunchPeriod;
 	type VotingPeriod = VotingPeriod;
 	type VoteLockingPeriod = EnactmentPeriod;
-	type MinimumDeposit = ConstU128<500_000_000_000_000_000>;
+	type MinimumDeposit = ConstU128<5_000_000_000_000_000>;
 	type ExternalOrigin = EnsureRootOrTwoThirdNativeCouncil;
 
 	type ExternalMajorityOrigin = EnsureRootOrMoreThenHalfNativeCouncil;
@@ -119,7 +118,14 @@ impl democracy::Config for Runtime {
 
 	type Scheduler = Scheduler;
 	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
-	type SubmitOrigin = EnsureSigned<AccountId>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type SubmitOrigin = system::EnsureSigned<Self::AccountId>;
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	type SubmitOrigin = frame_support::traits::EitherOf<
+		system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
+		system::EnsureSignedBy<CouncilMembership, Self::AccountId>,
+	>;
 }
 
 parameter_types! {
