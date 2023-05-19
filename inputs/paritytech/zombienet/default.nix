@@ -59,7 +59,7 @@ in with prelude; rec {
           name = builtins.head names;
         })
       ] ++ generated;
-      genesis = genesis;
+      #genesis = genesis;
     };
 
   mkParachains = parachains: builtins.map mkParachain parachains;

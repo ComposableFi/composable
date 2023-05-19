@@ -28,7 +28,7 @@
     devenv.url = "github:cachix/devenv";
     zombienet = {
       url =
-        "github:dzmitry-lahoda-forks/zombienet/b08686371b7afc26299bf2ed572f36df5241c683";
+        "github:dzmitry-lahoda-forks/zombienet/4d2eff2fd5a165aceb1fd11b218482710bd35d77";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
