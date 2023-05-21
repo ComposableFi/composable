@@ -205,8 +205,7 @@ jobs:
       - privilege-check
       - lfs-check
     runs-on:
-      - self-hosted
-      - x64-monster
+      - x86_64-linux-32C-128GB-2TB
     concurrency:
       group: ${{ inputs.github_workflow }}-build-all-production-deps-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
@@ -258,8 +257,7 @@ jobs:
       - privilege-check
       - lfs-check
     runs-on:
-      - self-hosted
-      - x64-monster
+      - x86_64-linux-32C-128GB-2TB
     concurrency:
       group: ${{ inputs.github_workflow }}-build-all-ci-packages-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
@@ -308,8 +306,7 @@ jobs:
     needs: 
       - privilege-check
     runs-on:
-      - self-hosted
-      - ${{ matrix.arch }}
+      - x86_64-linux-32C-128GB-2TB
     concurrency:
       group: ${{ inputs.github_workflow }}-build-all-benchmarks-packages-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
