@@ -9,7 +9,7 @@ pub trait PrettyDisplay {
 pub mod cosmwasm {
 	use subxt::utils::AccountId32;
 
-use super::{subxt_api::api::cosmwasm::events, *};
+	use super::{subxt_api::api::cosmwasm::events, *};
 
 	#[derive(Debug, Serialize)]
 	pub struct Extrinsic<T: Serialize> {
@@ -56,7 +56,10 @@ use super::{subxt_api::api::cosmwasm::events, *};
 
 	impl From<events::Uploaded> for Uploaded {
 		fn from(uploaded: events::Uploaded) -> Self {
-			Self { code_hash: format!("{}", AccountId32::from(uploaded.code_hash)), code_id: uploaded.code_id }
+			Self {
+				code_hash: format!("{}", AccountId32::from(uploaded.code_hash)),
+				code_id: uploaded.code_id,
+			}
 		}
 	}
 

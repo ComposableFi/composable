@@ -1,13 +1,12 @@
 use super::{
 	cosmwasm,
-	
 	subxt_api::api::{
 		self,
 		cosmwasm::events,
 		runtime_types::{
+			bounded_collections::{bounded_btree_map::BoundedBTreeMap, bounded_vec::BoundedVec},
 			pallet_cosmwasm::types::CodeIdentifier,
 			primitives::currency::CurrencyId,
-			bounded_collections::{bounded_btree_map::BoundedBTreeMap, bounded_vec::BoundedVec},
 		},
 	},
 	types::{
@@ -170,7 +169,7 @@ async fn do_signed_transaction<CallData, P: Pair>(
 	tx: subxt::tx::Payload<CallData>,
 ) -> anyhow::Result<ExtrinsicEvents<SubstrateConfig>>
 where
-	MultiSignature: From<<P as Pair>::Signature> ,
+	MultiSignature: From<<P as Pair>::Signature>,
 	MultiSigner: From<<P as Pair>::Public>,
 	CallData: Encode + subxt::ext::scale_encode::EncodeAsFields,
 	subxt::utils::MultiSignature: From<<P as sp_core::Pair>::Signature>,
