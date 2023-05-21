@@ -1,7 +1,6 @@
 use super::cosmwasm;
 use clap::{Args, Subcommand};
 use cosmwasm_std::{Binary, QueryRequest, WasmQuery};
-use hex::ToHex;
 use jsonrpc::{Request, Response};
 use serde::de::DeserializeOwned;
 use serde_json::{value::RawValue, Value};
