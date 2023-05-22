@@ -4,7 +4,7 @@ CosmWasm interaction commands.
 
 ## Guide
 
-Follow this guide to upload, initialize and execute cw20 contract on local Picasso Rococo DevNet.
+Follow this guide to upload, initialize and execute cw20 contracts on local Picasso Rococo DevNet.
 
 ### Prerequisites
 
