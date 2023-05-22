@@ -10,7 +10,7 @@ Follow this guide to upload, initialize and execute cw20 contracts on local Pica
 
 It does not require you to know CosmWasm contracts well, but general awareness would be super useful.
 
-You have installed Nix using Zero-to-Nix guide and successfully run any package from `composable` registry. 
+You have installed Nix using [Zero-to-Nix](https://zero-to-nix.com) guide and successfully run any package from `composable` registry. 
 
 For clarification of meaning of parameters and outputs on each step please refer to manual guide to use CosmWasm via Polkadot.js.
 
