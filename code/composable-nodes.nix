@@ -3,36 +3,41 @@
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
 
     let
-      rustSrc = pkgs.lib.cleanSourceWith {
-        filter = pkgs.lib.cleanSourceFilter;
-        src = pkgs.lib.cleanSourceWith {
-          filter = let
-            isProto = name: type:
-              type == "regular" && pkgs.lib.strings.hasSuffix ".proto" name;
-            isJSON = name: type:
-              type == "regular" && pkgs.lib.strings.hasSuffix ".json" name;
-            isREADME = name: type:
-              type == "regular" && pkgs.lib.strings.hasSuffix "README.md" name;
-            isDir = name: type: type == "directory";
-            isCargo = name: type:
-              type == "regular" && pkgs.lib.strings.hasSuffix ".toml" name
-              || type == "regular" && pkgs.lib.strings.hasSuffix ".lock" name;
-            isRust = name: type:
-              type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
-            customFilter = name: type:
-              builtins.any (fun: fun name type) [
-                isCargo
-                isRust
-                isDir
-                isREADME
-                isJSON
-                isProto
-              ];
-          in pkgs.nix-gitignore.gitignoreFilterPure customFilter
-          [ ../.gitignore ] ./.;
-          src = ./.;
+      rust-src-template = root:
+        pkgs.lib.cleanSourceWith {
+          filter = pkgs.lib.cleanSourceFilter;
+          src = pkgs.lib.cleanSourceWith {
+            filter = let
+              isProto = name: type:
+                type == "regular" && pkgs.lib.strings.hasSuffix ".proto" name;
+              isJSON = name: type:
+                type == "regular" && pkgs.lib.strings.hasSuffix ".json" name;
+              isREADME = name: type:
+                type == "regular"
+                && pkgs.lib.strings.hasSuffix "README.md" name;
+              isDir = name: type: type == "directory";
+              isCargo = name: type:
+                type == "regular" && pkgs.lib.strings.hasSuffix ".toml" name
+                || type == "regular" && pkgs.lib.strings.hasSuffix ".lock" name;
+              isRust = name: type:
+                type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
+              customFilter = name: type:
+                builtins.any (fun: fun name type) [
+                  isCargo
+                  isRust
+                  isDir
+                  isREADME
+                  isJSON
+                  isProto
+                ];
+            in pkgs.nix-gitignore.gitignoreFilterPure customFilter
+            [ ../.gitignore ] ./.;
+            src = root;
+          };
         };
-      };
+
+      rustSrc = rust-src-template ./.;
+
       toDockerImage = package:
         self.inputs.bundlers.bundlers."${system}".toDockerImage package;
       makeComposableNode = picasso-runtime: composable-runtime:
@@ -59,6 +64,13 @@
         });
     in {
       packages = rec {
+
+        ccw = crane.nightly.buildPackage (systemCommonRust.common-attrs // rec {
+          name = "ccw";
+          cargoBuildCommand = "cargo build --release --package ${name}";
+          meta = { mainProgram = name; };
+          src = rust-src-template ./parachain/frame/cosmwasm/cli;
+        });
 
         composable-node-image = toDockerImage composable-node;
         composable-node = makeComposableNode self'.packages.picasso-runtime

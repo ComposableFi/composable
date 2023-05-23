@@ -52,6 +52,9 @@
       all-production = pkgs.linkFarmFromDrvs "all-production"
         (with self'.packages; [ livenet-composable ]);
 
+      all-darwin = pkgs.linkFarmFromDrvs "all-darwin"
+        (with self'.packages; [ devnet-picasso ccw ]);
+
       all-platforms = pkgs.linkFarmFromDrvs "all-platforms"
         (with self'.packages; [
           cmc-api
@@ -68,6 +71,7 @@
           devnet-picasso-complete
           hyperspace-composable-rococo-picasso-rococo
           hyperspace-composable-rococo-picasso-rococo-image
+          ccw
         ]);
 
       all-ci-packages = pkgs.linkFarmFromDrvs "all-ci-packages"

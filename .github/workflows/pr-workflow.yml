@@ -488,6 +488,8 @@ jobs:
             git checkout ${{ inputs.github_event_pull_request_head_sha }}
             nix build .#devnet-picasso
             nix-store --query --references $(realpath result) | xargs nix-store --realise | xargs nix-store  --query --requisites | cachix push --compression-level 16 --compression-method zstd --jobs 16 composable-community
+            nix build .#ccw
+            nix-store --query --references $(realpath result) | xargs nix-store --realise | xargs nix-store  --query --requisites | cachix push --compression-level 16 --compression-method zstd --jobs 16 composable-community
           )
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
