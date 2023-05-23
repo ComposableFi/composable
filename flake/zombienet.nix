@@ -238,7 +238,7 @@
               chain = "statemint-local";
               id = 1000;
               collators = 2;
-              ws_port = 10018;
+              ws_port = 30008;
               rpc_port = 32240;
             }];
           });
