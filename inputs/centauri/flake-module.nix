@@ -18,7 +18,7 @@
       centauri-src-release = pkgs.fetchFromGitHub {
         owner = "ComposableFi";
         repo = "centauri";
-        rev = "54a1c42553d18160f5e89542d87aea6fcc95b4b5";
+        rev = "4a9a3313e1f925ebef5e6c4590b87cbf621679fc";
         hash = "sha256-rnKUfGcF9TTSockx/YqJzpsPPu23jplc4BiOyoOSsV8=";
       };
 
