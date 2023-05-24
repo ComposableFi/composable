@@ -310,17 +310,7 @@ jobs:
     concurrency:
       group: ${{ inputs.github_workflow }}-build-all-benchmarks-packages-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
-    steps:
-      - name: Set up Nix
-        if: ${{ inputs.flow != 'push' }}
-        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a
-        with:
-          install_url: https://releases.nixos.org/nix/nix-2.13.2/install
-          nix_path: nixpkgs=channel:nixos-22.11
-          extra_nix_config: |
-            sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
-            system-features = kvm          
+    steps:     
       - name: Set up Cachix
         if: ${{ inputs.flow != 'push' }}
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
