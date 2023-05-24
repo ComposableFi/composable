@@ -457,8 +457,13 @@ jobs:
           git clone https://github.com/$GITHUB_REPOSITORY.git
           (
             cd composable
-            echo ${{ inputs.github_event_pull_request_head_sha || $GITHUB_SHA}}
-            git checkout ${{ inputs.github_event_pull_request_head_sha || $GITHUB_SHA}}
+            SOURCE_SHA="${{ inputs.github_event_pull_request_head_sha }}"
+
+            if [[ ! $SOURCE_SHA ]]; then
+              SOURCE_SHA=$GITHUB_SHA
+            fi
+
+            git checkout $SOURCE_SHA
             nix build .#devnet-picasso
             nix-store --query --references $(realpath result) | xargs nix-store --realise | xargs nix-store  --query --requisites | cachix push --compression-level 16 --compression-method zstd --jobs 16 composable-community
             nix build .#ccw
