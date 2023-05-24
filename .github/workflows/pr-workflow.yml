@@ -210,16 +210,17 @@ jobs:
       group: ${{ inputs.github_workflow }}-build-all-production-deps-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
+      - name: Set up Cachix
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
+        with:
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
       - name: Add tools needed for non-nix steps
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         run: |  
-          nix --version
+          nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
-          USER=actions-runner
-          export USER
-          cachix --version
-          cachix use composable-community
-          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
       - uses: actions/checkout@v3
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         with:
@@ -255,13 +256,8 @@ jobs:
           name: composable-community
       - name: Add tools needed for non-nix steps
         run: |  
-          nix --version
+          nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
-          USER=actions-runner
-          export USER
-          cachix --version
-          cachix use composable-community
-          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}          
       - uses: actions/checkout@v3
         with:
           lfs: true
@@ -290,16 +286,17 @@ jobs:
       group: ${{ inputs.github_workflow }}-build-all-benchmarks-packages-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:     
+      - name: Set up Cachix
+        if: ${{ inputs.flow != 'push' }}
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
+        with:
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
       - name: Add tools needed for non-nix steps
         if: ${{ inputs.flow != 'push' }}
         run: |  
-          nix --version
+          nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
-          USER=actions-runner
-          export USER
-          cachix --version
-          cachix use composable-community
-          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}          
       - uses: actions/checkout@v3
         if: ${{ inputs.flow != 'push' }}
         with:
@@ -434,7 +431,7 @@ jobs:
       cancel-in-progress: true
     steps:            
       - name: build-product-darwin
-        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' }}
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         run: |
           # mac has its own way of operating
           uname -a
