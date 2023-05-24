@@ -1,6 +1,6 @@
 # Actions runner setup steps
 
-1. `installimage` `ubunutu-22.04`
+1. `installimage` `ubuntu-22.04`
 2. `adduser actions-runner`
 3. `passwd --delete actions-runner` 
 4. `curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --no-confirm`
