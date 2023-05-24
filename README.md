@@ -36,5 +36,5 @@ Refer [RELEASE.md](./RELEASE.MD).
 
 ## Nix
 
-You may opt in to use [`nix`](https://docs.composable.finance/nix) to run and build Composable staff.
+You may use [`nix`](https://docs.composable.finance/nix) to run and build Composable staff.
 
