@@ -15,13 +15,6 @@
         hash = "sha256-Fy+NmEmoK12/WJej+8S8ViABKLQhH9uKlK/bQm4A/GI=";
       };
 
-      centauri-src-release = pkgs.fetchFromGitHub {
-        owner = "ComposableFi";
-        repo = "centauri";
-        rev = "5aad1a2a85b1d41b63e3fed8a01449ca6a326e5c";
-        hash = "sha256-rnKUfGcF9TTSockx/YqJzpsPPu23jplc4BiOyoOSsV8=";
-      };
-
       hyperspace-picasso-kusama-spec-a = {
         channel_whitelist = [ ];
         client_id = "10-grandpa-0";
@@ -122,13 +115,13 @@
               set +e
               diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/composable ${self'.packages.composable-rococo-subxt-client}/ > $out/composable_polkadot.patch
               if [[ $? -ne 1 ]] ; then
-                echo "Failed diff"              
-              fi                
-              diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/picasso_kusama ${self'.packages.picasso-rococo-subxt-client}/ > $out/picasso_kusama.patch            
+                echo "Failed diff"
+              fi
+              diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/picasso_kusama ${self'.packages.picasso-rococo-subxt-client}/ > $out/picasso_kusama.patch
               if [[ $? -ne 1 ]] ; then
-                echo "Failed diff"              
-              fi              
-              set -e 
+                echo "Failed diff"
+              fi
+              set -e
             '';
             dontFixup = true;
             dontStrip = true;
@@ -149,13 +142,13 @@
               set +e
               diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/composable ${self'.packages.composable-polkadot-subxt-client}/ > $out/composable_polkadot.patch
               if [[ $? -ne 1 ]] ; then
-                echo "Failed diff"              
-              fi                
-              diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/picasso_kusama ${self'.packages.picasso-kusama-subxt-client}/ > $out/picasso_kusama.patch            
+                echo "Failed diff"
+              fi
+              diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/picasso_kusama ${self'.packages.picasso-kusama-subxt-client}/ > $out/picasso_kusama.patch
               if [[ $? -ne 1 ]] ; then
-                echo "Failed diff"              
-              fi              
-              set -e 
+                echo "Failed diff"
+              fi
+              set -e
             '';
             dontFixup = true;
             dontStrip = true;
