@@ -19,7 +19,7 @@ The shared architecture of Centauri's IBC implementations between Kusama ⬌ Pol
 
 By utilizing IBC as a trustless access point for DotSama to the wider cryptocurrency ecosystem, we can leverage a proven and successful cross-chain communication protocol and enable transfers of assets between parachains in both ecosystems. This innovation is of significant importance in achieving Kusama's goals, which have always been focused on experimentation, developer acquisition, and paving the way for the future of DotSama.
 
-The fees for transferring through Centauri are paid by utilizing the tokens being transferred, which have a value of $10 in the case where there is a pool on Pablo. In the absence of a Pablo pool, the fee is calculated as 0.4% of the notional amount.
+The fees for transferring through Centauri are paid by utilizing the tokens being transferred, which have a value of 0.4% of the notional amount. In the future, this will be switched to a $10 fee in the case where there is a pool on Pablo. 
 
 ## Cosmos ⬌ DotSama Bridge
 
