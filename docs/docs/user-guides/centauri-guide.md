@@ -37,7 +37,7 @@ Enter the amount of DOT you wish to transfer to Composable. Keep in mind to leav
 
 ![enter_dot_amount](./images-centauri-guide/centauri-guide-4.png)
 
-Confirm the transaction.
+Confirm the transaction. The fees for transferring through Centauri are paid by utilizing the tokens being transferred, which have a value of 0.4% of the notional amount. In the future, this will be switched to a $10 fee in the case where there is a pool on Pablo. 
 
 ![confirm_xcm](./images-centauri-guide/centauri-guide-5.png)
 
