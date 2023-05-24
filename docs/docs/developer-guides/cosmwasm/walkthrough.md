@@ -8,12 +8,15 @@ In this walkthrough, we will upload and interact with `cw20_base` contract on Pi
 :::note
 Ensure that you have followed the steps to setup the guide to install clone the `ccw` repository and install nix as outlined in the [first section](https://docs.composable.finance/developer-guides/cosmwasm-cli).
 :::
+
 ## Running `pallet-cosmwasm` on Picasso rococo
 
 **We have set up a faucet on Matrix for Picasso Rococo, allowing anyone to receive PICA tokens on rococo. Join [here](https://matrix.to/#/#picasso-rococo-faucet:matrix.org).**
 ### Uploading the contract
 
 Let's say that we want to upload the `v1.0.1` release of `cw20_base`. We can directly use the download link from the [release page](https://github.com/CosmWasm/cw-plus/releases).
+
+**Replace '-n Alice' with your public key in the commands.** 
 
 ```sh
 ccw substrate -c wss://picasso-rococo-unrpc-lb.composablenodes.tech/ -n alice tx upload --url https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm
