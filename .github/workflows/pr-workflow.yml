@@ -216,10 +216,6 @@ jobs:
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
-      - name: Add tools needed for non-nix steps
-        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
-        run: |  
-          nix-env -iA nixpkgs.git nixpkgs.git-lfs nixpkgs.docker nixpkgs.coreutils
       - uses: actions/checkout@v3
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         with:
@@ -253,9 +249,6 @@ jobs:
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
-      - name: Add tools needed for non-nix steps
-        run: |  
-          nix-env -iA nixpkgs.git nixpkgs.git-lfs nixpkgs.docker nixpkgs.coreutils
       - uses: actions/checkout@v3
         with:
           lfs: true
@@ -290,10 +283,6 @@ jobs:
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
-      - name: Add tools needed for non-nix steps
-        if: ${{ inputs.flow != 'push' }}
-        run: |  
-          nix-env -iA nixpkgs.git nixpkgs.git-lfs nixpkgs.docker nixpkgs.coreutils
       - uses: actions/checkout@v3
         if: ${{ inputs.flow != 'push' }}
         with:

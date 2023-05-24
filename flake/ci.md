@@ -24,4 +24,8 @@ EOF
 
 9. run `cachix as service`
 
-10.  Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using nix rebuild to update config (or can use home-manager on ubuntu). 
+11. `nix-channel --add https://nixos.org/channels/nixos-unstable nixpkgs && nix-channel --update`
+
+10. `nix profile install nixpkgs#git nixpkgs#git-lfs nixpkgs#docker` 
+
+11.  Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using nix rebuild to update config (or can use home-manager on ubuntu). 
