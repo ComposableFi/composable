@@ -19,7 +19,7 @@ Then run the following command to install the ccw binary:
 cargo install --path ./composable/code/parachain/frame/cosmwasm/cli
 ```
 
-2. An alternative method to run the ccw-vm is by completing the next step to install Nix first and run the following command:
+2. An alternative method to run the ccw-vm is via Nix which is a prerequisite to deploy contracts on rococo. Run the following command:
 
 ```
 nix run composable#ccw
@@ -33,13 +33,13 @@ We are using Nix to set up and start our local development environment. So check
 Then start the development environment by running:
 
 ```
-nix run "github:ComposableFi/composable#dali-devnet"
+nix run composable#devnet-picasso
 ```
 
-This will take time at first but since it is cached, it will be almost instant afterward. But note that your node will be rebuilt if the commit hash changes. If you would like to avoid this, you can always use a specific commit hash like this example:
+This will take some time at first but since it is cached, it will be almost instant afterward. But note that your node will be rebuilt if the commit hash changes. If you would like to avoid this, you please use a specific commit hash like this example:
 
 ```
-nix run "github:ComposableFi/composable/d2845fc731bc3ee418a17cf528336d50f4b39924#dali-devnet"
+nix run "github:ComposableFi/composable/d2845fc731bc3ee418a17cf528336d50f4b39924#devnet-picasso"
 ```
 
 ## Create a CosmWasm project
