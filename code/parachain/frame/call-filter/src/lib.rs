@@ -56,7 +56,7 @@ pub mod pallet {
 			+ Eq;
 
 		/// A hook that is able to block us from disabling/enabling an extrinsic.
-		/// Consider preventing to block executing Root governance operations. 
+		/// Consider preventing to block executing Root governance operations.
 		type Hook: CallFilterHook<Self::MaxStringSize>;
 
 		/// Weight information for the extrinsics in this module.
