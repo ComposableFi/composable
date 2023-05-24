@@ -28,4 +28,6 @@ EOF
 
 10. `nix profile install nixpkgs#git nixpkgs#git-lfs nixpkgs#docker` 
 
+11. `systemctl daemon-reload`
+
 11.  Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using nix rebuild to update config (or can use home-manager on ubuntu). 
