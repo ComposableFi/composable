@@ -32,9 +32,9 @@ Refer [releases](https://github.com/ComposableFi/composable/releases) page.
 
 ## Release Process
 
-Refer [RFC-0011](./rfcs/0011-releases.md).
+Refer [RELEASE.md](./RELEASE.MD).
 
 ## Nix
 
-We use [`nix`](https://nixos.org/) in order to reproducibly build all of our packages. [Check out our Nix docs here in order to build our packages](https://docs.composable.finance/nix.html).
+You may opt in to use [`nix`](https://docs.composable.finance/nix) to run and build Composable staff.
 
