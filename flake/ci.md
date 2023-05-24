@@ -20,6 +20,6 @@ cat >> /etc/nix/nix.conf << EOF
 EOF
 ```
 
-8. `/home/actions-runner/actions-runner/svc.sh install && /home/actions-runner/actions-runner/svc.sh start`.
+8. `/home/actions-runner/actions-runner/svc.sh install actions-runner && /home/actions-runner/actions-runner/svc.sh start`.
 
 9.  Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using nix rebuild to update config. 
