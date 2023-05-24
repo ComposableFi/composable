@@ -213,9 +213,10 @@ jobs:
       - name: Add tools needed for non-nix steps
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         run: |  
-          nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
+          USER=actions-runner
+          export $USER
           cachix --version
           cachix use composable-community
           cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
@@ -247,17 +248,6 @@ jobs:
       group: ${{ inputs.github_workflow }}-build-all-ci-packages-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
-      - name: Set up Nix
-        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a
-        with:
-          install_url: https://releases.nixos.org/nix/nix-2.13.2/install
-          nix_path: nixpkgs=channel:nixos-22.11
-          extra_nix_config: |
-            sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
-            system-features = kvm         
-            keep-derivations = true
-            keep-outputs = true 
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
         with:
@@ -265,9 +255,13 @@ jobs:
           name: composable-community
       - name: Add tools needed for non-nix steps
         run: |  
-          nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
+          USER=actions-runner
+          export $USER
+          cachix --version
+          cachix use composable-community
+          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}          
       - uses: actions/checkout@v3
         with:
           lfs: true
@@ -296,18 +290,16 @@ jobs:
       group: ${{ inputs.github_workflow }}-build-all-benchmarks-packages-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:     
-      - name: Set up Cachix
-        if: ${{ inputs.flow != 'push' }}
-        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
-        with:
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
       - name: Add tools needed for non-nix steps
         if: ${{ inputs.flow != 'push' }}
         run: |  
-          nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
+          USER=actions-runner
+          export $USER
+          cachix --version
+          cachix use composable-community
+          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}          
       - uses: actions/checkout@v3
         if: ${{ inputs.flow != 'push' }}
         with:
