@@ -213,7 +213,7 @@ jobs:
       - name: Add tools needed for non-nix steps
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         run: |  
-          nix-channel --update
+          nix --version
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
           USER=actions-runner
           export USER
@@ -255,7 +255,7 @@ jobs:
           name: composable-community
       - name: Add tools needed for non-nix steps
         run: |  
-          nix-channel --update
+          nix --version
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
           USER=actions-runner
           export USER
@@ -293,7 +293,7 @@ jobs:
       - name: Add tools needed for non-nix steps
         if: ${{ inputs.flow != 'push' }}
         run: |  
-          nix-channel --update
+          nix --version
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
           USER=actions-runner
           export USER
