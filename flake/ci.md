@@ -20,25 +20,6 @@ cat >> /etc/nix/nix.conf << EOF
 EOF
 ```
 
-8. 
+8. `/home/actions-runner/actions-runner/svc.sh install && /home/actions-runner/actions-runner/svc.sh start`.
 
-```bash
-cat > /etc/systemd/system/actions-runner.service << EOF
-[Unit]
-Description=github-runner
-
-[Service]
-Type=simple
-ExecStart=/home/actions-runner/actions-runner/run.sh
-Restart=on-failure
-User=actions-runner
-WorkingDirectory=/home/actions-runner/actions-runner/
-RuntimeDirectory=/home/actions-runner/actions-runner/
-[Install]
-WantedBy=multi-user.target
-EOF
-```
-
-7. `systemctl daemon-reload && systemctl start actions-runner.service && systemctl status actions-runner.service` 
-
-8. Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using nix rebuild to update config. 
+9.  Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using nix rebuild to update config. 
