@@ -20,6 +20,9 @@ on:
       flow:
         required: true
         type: string
+      sha_to_check:
+        required: true
+        type: string                
     secrets:
       CACHIX_AUTH_TOKEN:
         required: true    
@@ -76,7 +79,7 @@ jobs:
           echo "${{ inputs.github_event_pull_request_head_repo_id }}" 
       
   lfs-check:
-    name: LFS check
+    name: lfs-check
     needs:
       - privilege-check
     continue-on-error: false
@@ -87,7 +90,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ inputs.github_event_pull_request_head_sha }}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
       - uses: actionsdesk/lfs-warning@v3.2
         with:
@@ -134,7 +137,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha }}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
           persist-credentials: false
       - run: |
           nix run .#nix-flake-check
@@ -156,7 +159,7 @@ jobs:
     runs-on:
       - self-hosted
       - Linux
-      - arm-cute
+      - arm-monster
     concurrency:
       group: ${{ inputs.github_workflow }}-build-all-platforms-arm-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
@@ -189,7 +192,7 @@ jobs:
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha }}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
           persist-credentials: false
       - name: Build all packages
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
@@ -203,7 +206,6 @@ jobs:
     name: build-all-production-deps
     needs: 
       - privilege-check
-      - lfs-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     concurrency:
@@ -220,7 +222,7 @@ jobs:
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha }}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
           persist-credentials: false          
       - name: Build all packages 
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
@@ -252,7 +254,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha }}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
           persist-credentials: false          
       - name: Build all packages 
         uses: "./.github/templates/watch-exec"
@@ -287,7 +289,7 @@ jobs:
         if: ${{ inputs.flow != 'push' }}
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha }}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
           persist-credentials: false
       - name: build-all-benchmarks-packages 
         if: ${{ inputs.flow != 'push' }}
@@ -308,42 +310,25 @@ jobs:
     needs: 
       - privilege-check
     runs-on:
-      - self-hosted
-      - ${{ matrix.arch }}
+      - x86_64-linux-32C-128GB-2TB
     concurrency:
       group: ${{ inputs.github_workflow }}-build-all-misc-packages-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
-      - name: Set up Nix
-        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
-        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a
-        with:
-          install_url: https://releases.nixos.org/nix/nix-2.13.2/install
-          nix_path: nixpkgs=channel:nixos-22.11
-          extra_nix_config: |
-            sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
-            system-features = kvm          
       - name: Set up Cachix
-        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
+        if: ${{ inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
-      - name: Add tools needed for non-nix steps
-        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
-        run: |  
-          nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
-          nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
       - uses: actions/checkout@v3
-        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
+        if: ${{ inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha }}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
           persist-credentials: false
       - name: build-all-misc-packages 
-        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
+        if: ${{ inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-misc --keep-going       
@@ -352,6 +337,8 @@ jobs:
 
   build-all-deps-packages:
     name: build-all-deps-packages
+    outputs:
+      ok: ${{ steps.ok.outputs.ok }}        
     strategy:
       matrix:
         runner: [x64-cute]
@@ -359,41 +346,30 @@ jobs:
       - privilege-check
       - lfs-check
     runs-on:
-      - self-hosted
-      - ${{ matrix.runner }}
+      - x86_64-linux-32C-128GB-2TB      
     concurrency:
       group: ${{ inputs.github_workflow }}-build-all-deps-packages-${{ matrix.runner }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
-      - name: Set up Nix
-        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a
-        with:
-          install_url: https://releases.nixos.org/nix/nix-2.13.2/install
-          nix_path: nixpkgs=channel:nixos-22.11
-          extra_nix_config: |
-            sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
-            system-features = kvm
-            
       - name: Set up Cachix
+        if: ${{ inputs.flow == 'push || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}      
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
-      - name: Add tools needed for non-nix steps
-        run: |  
-          nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
-          nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
       - uses: actions/checkout@v3
+        if: ${{ inputs.flow == 'push || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha }}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
           persist-credentials: false
       - name: build-all-deps-packages 
+        if: ${{ inputs.flow == 'push || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-deps --keep-going       
+          command: nix -- build .#all-deps --keep-going   
+      - id: ok
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"              
 
   build-product-darwin:
     name: "build-product-darwin"
@@ -427,12 +403,7 @@ jobs:
           git clone https://github.com/$GITHUB_REPOSITORY.git
           (
             cd composable
-            SOURCE_SHA="${{ inputs.github_event_pull_request_head_sha }}"
-
-            if [[ ! $SOURCE_SHA ]]; then
-              SOURCE_SHA=$GITHUB_SHA
-            fi
-
+            SOURCE_SHA="${{ inputs.github_event_pull_request_head_sha || github.sha }}"
             git checkout $SOURCE_SHA
             nix build .#devnet-picasso
             nix-store --query --references $(realpath result) | xargs nix-store --realise | xargs nix-store  --query --requisites | cachix push --compression-level 16 --compression-method zstd --jobs 16 composable-community
@@ -452,9 +423,7 @@ jobs:
     needs: 
       - lfs-check
     runs-on:
-      - self-hosted
-      - ${{ matrix.arch }}
-      - Linux
+      - ubuntu-latest
     concurrency:
       group: ${{ inputs.github_workflow }}-build-all-docs-packages-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
@@ -482,7 +451,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha }}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
           persist-credentials: false
       - name: build-all-docs-packages 
         uses: "./.github/templates/watch-exec"
@@ -530,41 +499,25 @@ jobs:
   draft-release-artifacts:
     name: "draft-release-artifacts"    
     runs-on:
-      - self-hosted
-      - x64-cute
+      - x86_64-linux-32C-128GB-2TB
     needs:
       - draft-release-check
-    if: ${{ inputs.github_event_name == 'push' }}  
+    #if: ${{ inputs.github_event_name == 'push' }}  
     permissions:  
       pull-requests: write
       contents: write      
     concurrency:
       group:  ${{ inputs.github_workflow }}-draft-release-artifacts-${{ github.ref }}
       cancel-in-progress: true      
-    steps:
-      - name: Set up Nix
-        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a
-        with:
-          install_url: https://releases.nixos.org/nix/nix-2.13.2/install
-          nix_path: nixpkgs=channel:nixos-22.11
-          extra_nix_config: |
-            sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
-            system-features = kvm          
+    steps:      
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
-      - name: Add tools needed for non-nix steps
-        run: |  
-          nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
-          nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.git nixpkgs.git-lfs nixpkgs.docker nixpkgs.coreutils    
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
@@ -590,7 +543,7 @@ jobs:
 
   # this should be split and commit docker are from here, but latest from release
   push-docker-images:
-    name: Push docker images
+    name: push-docker-images
     if: ${{ inputs.github_event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}   
     strategy:
       matrix:
@@ -598,8 +551,7 @@ jobs:
     needs: 
       - draft-release-check
     runs-on:
-      - self-hosted
-      - ${{ matrix.arch }}
+      - ubuntu-latest
     concurrency:
       group: ${{ inputs.github_workflow }}-push-docker-images-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
@@ -612,8 +564,7 @@ jobs:
           extra_nix_config: |
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
-            system-features = kvm
-            
+            system-features = kvm            
       - name: Set up Cachix
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
         with:
@@ -627,7 +578,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha }}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
           persist-credentials: false
       - name: Nix flake show
         run: |
@@ -676,7 +627,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: hyperspace-composable-polkadot-picasso-kusama
           artifact: hyperspace-composable-polkadot-picasso-kusama:latest          
-      
+
   devnet-integration-tests:
     name: devnet-integration-tests       
     outputs:
@@ -687,13 +638,21 @@ jobs:
       matrix:
         arch: [x64-cute]
     runs-on:
-      - self-hosted
-      - ${{ matrix.arch }}
-      - Linux
+      - ubuntu-latest
     concurrency:
       group: ${{ inputs.github_workflow }}-devnet-integration-tests-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
+      - name: Set up Nix
+        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
+        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a
+        with:
+          install_url: https://releases.nixos.org/nix/nix-2.13.2/install
+          nix_path: nixpkgs=channel:nixos-22.11
+          extra_nix_config: |
+            sandbox = relaxed
+            narinfo-cache-negative-ttl = 0      
+            system-features = kvm    
       - name: Set up Cachix
         if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
@@ -710,7 +669,7 @@ jobs:
         if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha }}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
           persist-credentials: false
       - name: Devnet integration tests
         if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}

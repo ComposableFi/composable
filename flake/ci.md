@@ -1,14 +1,9 @@
 # Actions runner setup steps
 
-1. `installimage` `ubuntu-22.04`
-2. `adduser actions-runner`
-3. `passwd --delete actions-runner` 
-4. `curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --no-confirm`
-5. `source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh`
-6. `su actions-runner && cd  /home/actions-runner/`
-7. follow install guide from github using defaults and name `hetzner-ax161-<N>` and label `x86_64-linux-32C-128GB-2TB`
-
-8. 
+1. `installimage -i images/Ubuntu-2204-jammy-amd64-base.tar.gz -G yes -a -n hetzner-ax161-{N}`
+2. `adduser actions-runner && passwd --delete actions-runner` 
+3. `curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --no-confirm && source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh && nix-channel --add https://nixos.org/channels/nixos-unstable nixpkgs && nix-channel --update && nix profile install nixpkgs#git nixpkgs#git-lfs nixpkgs#docker`
+3. 
 ```bash
 cat >> /etc/nix/nix.conf << EOF
     sandbox = relaxed
@@ -18,15 +13,12 @@ cat >> /etc/nix/nix.conf << EOF
 EOF
 ```
 
+1. `su actions-runner && cd /home/actions-runner/`
+2. follow install guide from github using defaults and name `hetzner-ax161-{N}` and label `x86_64-linux-32C-128GB-2TB`
 
-2. run `cachix as service`
 
-3.  `nix-channel --add https://nixos.org/channels/nixos-unstable nixpkgs && nix-channel --update`
 
-4.  `nix profile install nixpkgs#git nixpkgs#git-lfs nixpkgs#docker` 
 
-1. `cd /home/actions-runner/actions-runner && ./svc.sh install actions-runner && ./svc.sh start`.
-
-5.  `systemctl daemon-reload`
-
-6.   Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using nix rebuild to update config (or can use home-manager on ubuntu). 
+1. `cd /home/actions-runner/actions-runner && ./svc.sh install actions-runner && ./svc.sh start && systemctl daemon-reload`
+ 
+2.   Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using nix rebuild to update config (or can use home-manager on ubuntu). 
