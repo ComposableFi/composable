@@ -70,7 +70,7 @@
           owner = "ComposableFi";
           repo = "centauri";
           rev = centauri-runtime-commit;
-          hash = "sha256-jVRPeAOmMACcEAxqHfWZkNaMXkdhH6OHco7OqOyj/5Y=";
+          hash = "sha256-GJ0xGg44e+iidkTqeotTqPHMC0ymqDcrD6x/P+XGSUc=";
         };
 
         centauri-codegen = crane.stable.buildPackage (subnix.subenv // {
