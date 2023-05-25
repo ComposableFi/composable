@@ -638,7 +638,9 @@ jobs:
       matrix:
         arch: [x64-cute]
     runs-on:
-      - ubuntu-latest
+      - self-hosted
+      - ${{ matrix.arch }}
+      - Linux
     concurrency:
       group: ${{ inputs.github_workflow }}-devnet-integration-tests-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
