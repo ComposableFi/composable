@@ -125,7 +125,7 @@ jobs:
             system-features = kvm
             
       - name: Set up Cachix
-        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
+        uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
@@ -137,7 +137,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
       - run: |
           nix run .#nix-flake-check
@@ -178,7 +178,7 @@ jobs:
             keep-outputs = true
       - name: Set up Cachix
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
-        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
+        uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
@@ -192,7 +192,7 @@ jobs:
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
       - name: Build all packages
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
@@ -222,7 +222,7 @@ jobs:
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false          
       - name: Build all packages 
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
@@ -254,7 +254,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false          
       - name: Build all packages 
         uses: "./.github/templates/watch-exec"
@@ -289,7 +289,7 @@ jobs:
         if: ${{ inputs.flow != 'push' }}
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
       - name: build-all-benchmarks-packages 
         if: ${{ inputs.flow != 'push' }}
@@ -317,7 +317,7 @@ jobs:
     steps:
       - name: Set up Cachix
         if: ${{ inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
-        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
+        uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
@@ -325,7 +325,7 @@ jobs:
         if: ${{ inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
       - name: build-all-misc-packages 
         if: ${{ inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
@@ -352,19 +352,19 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Set up Cachix
-        if: ${{ inputs.flow == 'push || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork' }}      
-        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork' }}      
+        uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - uses: actions/checkout@v3
-        if: ${{ inputs.flow == 'push || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork' }}
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork' }}
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
       - name: build-all-deps-packages 
-        if: ${{ inputs.flow == 'push || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork' }}
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork' }}
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-deps --keep-going   
@@ -439,7 +439,7 @@ jobs:
             system-features = kvm
             
       - name: Set up Cachix
-        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
+        uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
@@ -451,7 +451,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
       - name: build-all-docs-packages 
         uses: "./.github/templates/watch-exec"
@@ -511,7 +511,7 @@ jobs:
       cancel-in-progress: true      
     steps:      
       - name: Set up Cachix
-        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
+        uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
@@ -566,7 +566,7 @@ jobs:
             narinfo-cache-negative-ttl = 0      
             system-features = kvm            
       - name: Set up Cachix
-        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
+        uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
@@ -578,7 +578,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
       - name: Nix flake show
         run: |
@@ -655,7 +655,7 @@ jobs:
             system-features = kvm    
       - name: Set up Cachix
         if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
-        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
+        uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
@@ -669,7 +669,7 @@ jobs:
         if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
         with:
           lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
       - name: Devnet integration tests
         if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
