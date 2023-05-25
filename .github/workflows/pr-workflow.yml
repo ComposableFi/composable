@@ -150,9 +150,9 @@ jobs:
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
-  build-all-platforms-arm:
+  build-all-run-packages-arm:
     continue-on-error: false    
-    name: build-all-platforms-arm
+    name: build-all-run-packages-arm
     needs: 
       - privilege-check
       - lfs-check
@@ -161,7 +161,7 @@ jobs:
       - Linux
       - arm-monster
     concurrency:
-      group: ${{ inputs.github_workflow }}-build-all-platforms-arm-${{ github.event.pull_request.number || github.ref }}
+      group: ${{ inputs.github_workflow }}-build-all-run-packages-arm-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:      
       - name: Set up Nix
@@ -198,7 +198,7 @@ jobs:
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-platforms --keep-going
+          command: nix -- build .#all-run-packages --keep-going
           
   build-all-production-deps:
     outputs:
