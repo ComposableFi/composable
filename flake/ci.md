@@ -1,9 +1,10 @@
 ## Guide
 
 1. Use dedicated non cloud hardware for heavy jobs (32 CPUs).
-2. Use default GH runners for super light jobs (2 CPU cores)
-3. Use BlueJet or GH Larger runners for light jobs (4-8 CPU cores) 
-4. 
+2. For lightweight pure nix stuff use nixbuild.net (uses less resources than methods below to do nix stuff)
+3. Use default GH runners for super light jobs (2 CPU cores)
+4. Use BlueJet or GH Larger runners for light jobs (4-8 CPU cores) 
+
 # Actions runner setup steps
 
 1. `installimage -i images/Ubuntu-2204-jammy-amd64-base.tar.gz -G yes -a -n hetzner-ax161-{N}`
