@@ -352,19 +352,19 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Set up Cachix
-        if: ${{ inputs.flow == 'push || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}      
+        if: ${{ inputs.flow == 'push || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork' }}      
         uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - uses: actions/checkout@v3
-        if: ${{ inputs.flow == 'push || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
+        if: ${{ inputs.flow == 'push || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork' }}
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha}}
           persist-credentials: false
       - name: build-all-deps-packages 
-        if: ${{ inputs.flow == 'push || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
+        if: ${{ inputs.flow == 'push || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork' }}
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-deps --keep-going   
