@@ -263,11 +263,11 @@ jobs:
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT" 
 
-  build-all-benchmarks-packages:
+  build-all-rust-qa-packages:
     continue-on-error: false
     outputs:
       ok: ${{ steps.ok.outputs.ok }}       
-    name: build-all-benchmarks-packages
+    name: build-all-rust-qa-packages
     strategy:
       matrix:
         arch: [x64-monster]
@@ -276,7 +276,7 @@ jobs:
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     concurrency:
-      group: ${{ inputs.github_workflow }}-build-all-benchmarks-packages-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
+      group: ${{ inputs.github_workflow }}-build-all-rust-qa-packages-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:     
       - name: Set up Cachix
@@ -291,7 +291,7 @@ jobs:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
-      - name: build-all-benchmarks-packages 
+      - name: build-all-rust-qa-packages 
         if: ${{ inputs.flow != 'push' }}
         uses: "./.github/templates/watch-exec"
         with:
@@ -466,7 +466,7 @@ jobs:
       continue-on-error: false
       runs-on: ubuntu-latest    
       needs:
-        - build-all-benchmarks-packages
+        - build-all-rust-qa-packages
         - build-all-ci-packages
         - build-all-docs-packages
         - build-all-misc-packages
@@ -483,15 +483,15 @@ jobs:
            echo "build-all-misc-packages" ${{ needs.build-all-misc-packages.outputs.ok }}
            echo "build-all-docs-packages" ${{ needs.build-all-docs-packages.outputs.ok }}
            echo "build-all-ci-packages" ${{ needs.build-all-ci-packages.outputs.ok }}
-           echo "build-all-benchmarks-packages" ${{ needs.build-all-benchmarks-packages.outputs.ok }}
+           echo "build-all-rust-qa-packages" ${{ needs.build-all-rust-qa-packages.outputs.ok }}
            echo "build-product-darwin" ${{ needs.build-product-darwin.outputs.ok }}
            echo "devnet-integration-tests" ${{ needs.devnet-integration-tests.outputs.ok  }}
-           echo "${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-benchmarks-packages.outputs.ok == 'true' && needs.build-product-darwin.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' }}"
-        - if: ${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-benchmarks-packages.outputs.ok == 'true' && needs.build-product-darwin.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' }}
+           echo "${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.build-product-darwin.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' }}"
+        - if: ${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.build-product-darwin.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' }}
           run: |
             echo "All dependencies built well"
             exit 0
-        - if: ${{ !(needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-benchmarks-packages.outputs.ok == 'true' && needs.build-product-darwin.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true') }}
+        - if: ${{ !(needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.build-product-darwin.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true') }}
           run: |
             echo "Some of dependencies (see jobs graph or needs attribute) failed to build"      
             exit 42
