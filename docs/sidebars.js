@@ -378,8 +378,8 @@ const sidebars = {
                     collapsible: true,
                     collapsed: true,
                     items: [
-                        'developer-guides/cosmwasm/new-project',
                         'developer-guides/cosmwasm/walkthrough',
+                        'developer-guides/cosmwasm/new-project',
                     ]
                 },
                 'developer-guides/oracle-set-up-guide',

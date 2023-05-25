@@ -1,8 +1,45 @@
 # Composable CosmWasm CLI
 
-Composable Cosmwasm CLI is a CLI tool to quickly get started with the XCVM ecosystem and
-interact with a chain that runs `pallet-cosmwasm`.
+Composable Cosmwasm CLI is a CLI tool to quickly get started with the XCVM ecosystem and interact with a chain that runs `pallet-cosmwasm`. In this guide, we will show you how to run the CLI on Picasso rococo.
 
+## Installing `ccw`
+
+There are two methods to installing the ccw-vm:
+
+1. At first, clone the [Composable moonorepo](https://github.com/ComposableFi/composable):
+
+```
+git clone https://github.com/ComposableFi/composable
+```
+
+Then run the following command to install the ccw binary:
+
+```
+cargo install --path ./composable/code/parachain/frame/cosmwasm/cli
+```
+
+2. An alternative method to run the ccw-vm is by running the following command which requires Nix. Nix is required to start the development environment to deploy contracts on Picasso rococo:
+
+```
+nix run composable#ccw
+```
+
+## Installing `nix` 
+
+We are using Nix to set up and start our local development environment. So check out our 
+[Nix installation page](https://docs.composable.finance/nix/install) to install Nix.
+
+Then start the development environment by running:
+
+```
+nix run composable#devnet-picasso
+```
+
+This will take time at first but since it is cached, it will be almost instant afterward. But note that your node will be rebuilt if the commit hash changes. If you would like to avoid this, you can always use a specific commit hash like this example:
+
+```
+nix run "github:ComposableFi/composable/d2845fc731bc3ee418a17cf528336d50f4b39924#devnet-picasso"
+```
 ## Create a CosmWasm project
 
 You can create a base CosmWasm project that you can work on.
