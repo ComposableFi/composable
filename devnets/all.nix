@@ -37,7 +37,9 @@
           name = "centauri-configure-and-run";
           runtimeInputs = mac-isolation;
           text = ''
-            cp -f ${self'.packages.hyperspace-config} /tmp/config.toml  
+            cp -f ${self'.packages.hyperspace-config-chain-a} /tmp/config-chain-a.toml  
+            cp -f ${self'.packages.hyperspace-config-chain-b} /tmp/config-chain-b.toml  
+            cp -f ${self'.packages.hyperspace-config-core} /tmp/config-core.toml  
             ${pkgs.lib.meta.getExe devnet-centauri-no-relay}       
           '';
         };
