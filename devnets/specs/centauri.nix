@@ -2,8 +2,12 @@
 }: {
   modules = [
     (let
-      configPathSource = "/tmp/config.toml";
-      configPathContainer = "/tmp/config.toml";
+      configPathSourceChainA = "/tmp/config-chain-a.toml";
+      configPathContainerChainA = "/tmp/config-chain-a.toml";
+      configPathSourceChainB = "/tmp/config-chain-b.toml";
+      configPathContainerChainB = "/tmp/config-chain-b.toml";
+      configPathSourceCore = "/tmp/config-core.toml";
+      configPathContainerCore = "/tmp/config-core.toml";
 
       dependsOnCreateClient = {
         hyperspace-create-clients = {
@@ -65,12 +69,16 @@
               name = "hyperspace-create-clients";
               execCommands = [
                 "create-clients"
-                "--config"
-                configPathContainer
+                "--config-a"
+                configPathContainerChainA
+                "--config-b"
+                configPathContainerChainB
+                "--config-core"
+                configPathContainerCore
                 "--delay-period-seconds"
                 "10"
               ];
-              inherit configPathSource configPathContainer pkgs packages
+              inherit configPathSourceChainA configPathContainerChainA configPathSourceChainB configPathContainerChainB configPathSourceCore configPathContainerCore pkgs packages
                 devnetTools;
               dependsOn = { };
               restartPolicy = "on-failure";
@@ -81,12 +89,16 @@
               name = "hyperspace-create-connection";
               execCommands = [
                 "create-connection"
-                "--config"
-                configPathContainer
+                "--config-a"
+                configPathContainerChainA
+                "--config-b"
+                configPathContainerChainB
+                "--config-core"
+                configPathContainerCore
                 "--delay-period-seconds"
                 "10"
               ];
-              inherit configPathSource configPathContainer pkgs packages
+              inherit configPathSourceChainA configPathContainerChainA configPathSourceChainB configPathContainerChainB configPathSourceCore configPathContainerCore pkgs packages
                 devnetTools;
               dependsOn = dependsOnCreateClient;
               restartPolicy = "on-failure";
@@ -97,8 +109,12 @@
               name = "hyperspace-create-channel";
               execCommands = [
                 "create-channel"
-                "--config"
-                configPathContainer
+                "--config-a"
+                configPathContainerChainA
+                "--config-b"
+                configPathContainerChainB
+                "--config-core"
+                configPathContainerCore
                 "--port-id"
                 "transfer"
                 "--version"
@@ -108,7 +124,7 @@
                 "--delay-period-seconds"
                 "10"
               ];
-              inherit configPathSource configPathContainer pkgs packages
+              inherit configPathSourceChainA configPathContainerChainA configPathSourceChainB configPathContainerChainB configPathSourceCore configPathContainerCore pkgs packages
                 devnetTools;
               dependsOn = dependsOnCreateConnection;
               restartPolicy = "no";
