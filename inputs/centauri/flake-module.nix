@@ -151,10 +151,10 @@
         hyperspace-config-chain-a = pkgs.writeText "config-chain-a.toml"
           (self.inputs.nix-std.lib.serde.toTOML hyperspace-picasso-kusama);
 
-        hyperspace-config-chain-a = pkgs.writeText "config-chain-b.toml"
+        hyperspace-config-chain-b = pkgs.writeText "config-chain-b.toml"
           (self.inputs.nix-std.lib.serde.toTOML composable-polkadot);
 
-        hyperspace-config-chain-a = pkgs.writeText "config-core.toml"
+        hyperspace-config-core = pkgs.writeText "config-core.toml"
           (self.inputs.nix-std.lib.serde.toTOML hyperspace-picasso-kusama-core);
 
         hyperspace-composable-rococo-picasso-rococo = crane.stable.buildPackage
