@@ -1,9 +1,10 @@
 ## Guide
 
-1. Use dedicated non cloud hardware for heavy jobs (32 CPUs).
+1. Use dedicated non cloud hardware for heavy jobs (32 CPUs) for Linux
 2. For lightweight pure nix stuff use nixbuild.net (uses less resources than methods below to do nix stuff)
-3. Use default GH runners for super light jobs (2 CPU cores)
-4. Use BlueJet or GH Larger runners for light jobs (4-8 CPU cores) 
+3. Use default GH runners for super light jobs (2 CPU cores) or need specific hardware (example, x86 Mac)
+4. Use BlueJet or GH Larger runners for light jobs (4-8 CPU cores).
+5. If case of need of special hardware, request it from Composable. Examples are Mac M1 or machine for benchmarks. 
 
 # Actions runner setup steps
 
@@ -20,10 +21,12 @@ cat >> /etc/nix/nix.conf << EOF
 EOF
 ```
 
+0. `apt install qemu-system-x86 --yes`
 1. `su actions-runner && cd /home/actions-runner/`
 2. follow install guide from github using defaults and name `hetzner-ax161-{N}` and label `x86_64-linux-32C-128GB-2TB`
 
 
 1. `cd /home/actions-runner/actions-runner && ./svc.sh install actions-runner && ./svc.sh start && systemctl daemon-reload`
  
-2.   Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using nix rebuild to update config (or can use home-manager on ubuntu). 
+2. `usermod --append --groups kvm actions-runner`
+3.   Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using nix rebuild to update config (or can use home-manager on ubuntu). 

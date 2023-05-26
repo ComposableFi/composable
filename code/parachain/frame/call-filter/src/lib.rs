@@ -41,7 +41,10 @@ pub mod pallet {
 		/// Overarching event type
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as system::Config>::RuntimeEvent>;
 
+		/// Origin which can disable extrinsic for being executed.
+		/// Consider be same or more allowed than EnableOrigin.
 		type DisableOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
 		type EnableOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		// NOTE: can match by binary prefix which is much more efficient than string comparison.
