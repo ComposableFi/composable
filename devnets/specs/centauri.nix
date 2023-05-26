@@ -97,7 +97,7 @@
                 configPathContainerChainB
                 "--config-core"
                 configPathContainerCore
-                "--delay-period-seconds"
+                "--delay-period"
                 "10"
               ];
               inherit configPathSource configPathContainer pkgs packages
@@ -123,7 +123,7 @@
                 "ics20-1"
                 "--order"
                 "unordered"
-                "--delay-period-seconds"
+                "--delay-period"
                 "10"
               ];
               inherit configPathSource configPathContainer pkgs packages
@@ -143,7 +143,7 @@
                 configPathContainerChainB
                 "--config-core"
                 configPathContainerCore
-                "--delay-period-seconds"
+                "--delay-period"
                 "10"
               ];
               inherit configPathSource configPathContainer pkgs packages
