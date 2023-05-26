@@ -8,7 +8,7 @@
       centauri-runtime-commit =
         builtins.elemAt (builtins.split "#" centauri-runtime-dep.source) 2;
 
-      hyperspace-picasso-kusama-spec-a = {
+      hyperspace-picasso-kusama = {
         channel_whitelist = [ ];
         client_id = "10-grandpa-0";
         commitment_prefix = "0x6962632f";
@@ -24,19 +24,13 @@
         type = "picasso_kusama";
       };
 
-      hyperspace-picasso-kusama-spec-b = hyperspace-picasso-kusama-spec-a // {
-        name = "picasso_2";
-        parachain_rpc_url = "ws://devnet-b:29988";
-        relay_chain_rpc_url = "ws://devnet-b:29944";
-      };
-
       hyperspace-picasso-kusama-core = {
         prometheus_endpoint = "https://127.0.0.1";
       };
 
 
       # so not yet finalizes connection, working on it
-      composable-polkadot-spec = {
+      composable-polkadot = {
         type = "composable";
         channel_whitelist = [ ];
         client_id = "10-grandpa-0";
@@ -155,10 +149,10 @@
           };
 
         hyperspace-config-chain-a = pkgs.writeText "config-chain-a.toml"
-          (self.inputs.nix-std.lib.serde.toTOML hyperspace-picasso-kusama-spec-a);
+          (self.inputs.nix-std.lib.serde.toTOML hyperspace-picasso-kusama);
 
         hyperspace-config-chain-a = pkgs.writeText "config-chain-b.toml"
-          (self.inputs.nix-std.lib.serde.toTOML hyperspace-picasso-kusama-spec-b);
+          (self.inputs.nix-std.lib.serde.toTOML composable-polkadot);
 
         hyperspace-config-chain-a = pkgs.writeText "config-core.toml"
           (self.inputs.nix-std.lib.serde.toTOML hyperspace-picasso-kusama-core);
