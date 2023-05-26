@@ -2,8 +2,14 @@
 }: {
   modules = [
     (let
-      configPathSource = "/tmp/config.toml";
-      configPathContainer = "/tmp/config.toml";
+      configPathSource = "/tmp";
+      configPathContainer = "/tmp";
+      configPathSourceChainA = "/tmp/config-chain-a.toml";
+      configPathContainerChainA = "/tmp/config-chain-a.toml";
+      configPathSourceChainB = "/tmp/config-chain-b.toml";
+      configPathContainerChainB = "/tmp/config-chain-b.toml";
+      configPathSourceCore = "/tmp/config-core.toml";
+      configPathContainerCore = "/tmp/config-core.toml";
 
       dependsOnCreateClient = {
         hyperspace-create-clients = {
@@ -65,9 +71,13 @@
               name = "hyperspace-create-clients";
               execCommands = [
                 "create-clients"
-                "--config"
-                configPathContainer
-                "--delay-period-seconds"
+                "--config-a"
+                configPathContainerChainA
+                "--config-b"
+                configPathContainerChainB
+                "--config-core"
+                configPathContainerCore
+                "--delay-period"
                 "10"
               ];
               inherit configPathSource configPathContainer pkgs packages
@@ -81,9 +91,13 @@
               name = "hyperspace-create-connection";
               execCommands = [
                 "create-connection"
-                "--config"
-                configPathContainer
-                "--delay-period-seconds"
+                "--config-a"
+                configPathContainerChainA
+                "--config-b"
+                configPathContainerChainB
+                "--config-core"
+                configPathContainerCore
+                "--delay-period"
                 "10"
               ];
               inherit configPathSource configPathContainer pkgs packages
@@ -97,15 +111,19 @@
               name = "hyperspace-create-channel";
               execCommands = [
                 "create-channel"
-                "--config"
-                configPathContainer
+                "--config-a"
+                configPathContainerChainA
+                "--config-b"
+                configPathContainerChainB
+                "--config-core"
+                configPathContainerCore
                 "--port-id"
                 "transfer"
                 "--version"
                 "ics20-1"
                 "--order"
                 "unordered"
-                "--delay-period-seconds"
+                "--delay-period"
                 "10"
               ];
               inherit configPathSource configPathContainer pkgs packages
@@ -119,9 +137,13 @@
               name = "hyperspace-relay";
               execCommands = [
                 "relay"
-                "--config"
-                configPathContainer
-                "--delay-period-seconds"
+                "--config-a"
+                configPathContainerChainA
+                "--config-b"
+                configPathContainerChainB
+                "--config-core"
+                configPathContainerCore
+                "--delay-period"
                 "10"
               ];
               inherit configPathSource configPathContainer pkgs packages
