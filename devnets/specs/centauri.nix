@@ -2,8 +2,8 @@
 }: {
   modules = [
     (let
-      configPathSource = "/tmp"
-      configPathContainer = "/tmp"
+      configPathSource = "/tmp";
+      configPathContainer = "/tmp";
       configPathSourceChainA = "/tmp/config-chain-a.toml";
       configPathContainerChainA = "/tmp/config-chain-a.toml";
       configPathSourceChainB = "/tmp/config-chain-b.toml";
