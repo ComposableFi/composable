@@ -78,7 +78,7 @@
                 "--delay-period-seconds"
                 "10"
               ];
-              inherit configPathSourceChainA configPathContainerChainA configPathSourceChainB configPathContainerChainB configPathSourceCore configPathContainerCore pkgs packages
+              inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
               dependsOn = { };
               restartPolicy = "on-failure";
@@ -98,7 +98,7 @@
                 "--delay-period-seconds"
                 "10"
               ];
-              inherit configPathSourceChainA configPathContainerChainA configPathSourceChainB configPathContainerChainB configPathSourceCore configPathContainerCore pkgs packages
+              inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
               dependsOn = dependsOnCreateClient;
               restartPolicy = "on-failure";
@@ -124,7 +124,7 @@
                 "--delay-period-seconds"
                 "10"
               ];
-              inherit configPathSourceChainA configPathContainerChainA configPathSourceChainB configPathContainerChainB configPathSourceCore configPathContainerCore pkgs packages
+              inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
               dependsOn = dependsOnCreateConnection;
               restartPolicy = "no";
@@ -144,7 +144,7 @@
                 "--delay-period-seconds"
                 "10"
               ];
-              inherit configPathSourceChainA configPathContainerChainA configPathSourceChainB configPathContainerChainB configPathSourceCore configPathContainerCore pkgs packages
+              inherit configPathSource configPathContainer pkgs packages
                 devnetTools;
               dependsOn = dependsOnCreateChannels;
               restartPolicy = "on-failure";
