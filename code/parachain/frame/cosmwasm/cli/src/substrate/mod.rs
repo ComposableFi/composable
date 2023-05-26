@@ -24,7 +24,7 @@ pub struct Command {
 
 	/// Secret seed of the signer
 	#[arg(short, long, conflicts_with_all = &["name", "mnemonic"])]
-	seed: Option<Vec<u8>>,
+	seed: Option<String>,
 
 	/// Mnemonic of the signer
 	#[arg(short, long, conflicts_with_all = &["name", "seed"])]
@@ -143,7 +143,7 @@ impl Command {
 fn get_signer_pair<P: Pair>(
 	name: Option<Keyring>,
 	mnemonic: Option<String>,
-	seed: Option<Vec<u8>>,
+	seed: Option<String>,
 	password: Option<String>,
 ) -> anyhow::Result<Option<P>>
 where
@@ -157,8 +157,7 @@ where
 			.map_err(|_| anyhow!("{}", Error::InvalidPhrase))?;
 		pair
 	} else if let Some(seed) = seed {
-		let seed: P::Seed = seed.try_into().map_err(|_| anyhow!("{}", Error::InvalidSeed))?;
-		P::from_seed(&seed)
+		P::from_string(&seed, None).map_err(|_| anyhow!("{}", Error::InvalidSeed))?
 	} else {
 		return Ok(None)
 	};
