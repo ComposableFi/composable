@@ -29,7 +29,7 @@
         }
         {
           containerName = "devnet-b";
-          ports = [ 29944 29988 29989 29990 30008];
+          ports = [ 29944 29988 29989 29990 30008 ];
           devnet = devnet-b;
           networkName = network-b;
         }
