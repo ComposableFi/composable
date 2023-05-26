@@ -109,6 +109,10 @@
               self'.packages.picasso-rococo-subxt-client
             ];
             src = centauri-src;
+            patchPhase = "false";
+            installPhase = ''
+              mkdir --parents $out
+            '';
             dontFixup = true;
             dontStrip = true;
           };
@@ -122,6 +126,10 @@
               self'.packages.picasso-kusama-subxt-client
             ];
             src = centauri-src;
+            patchPhase = "false";
+            installPhase = ''
+              mkdir --parents $out
+            '';
             dontFixup = true;
             dontStrip = true;
           };
@@ -132,6 +140,11 @@
             pname = "${name}";
             src = centauri-src;
             buildInputs = with pkgs; [ sd git ];
+            patchFlags = "";
+            installPhase = ''
+              mkdir --parents $out
+              mv $src/* $out/
+            '';
             dontFixup = true;
             dontStrip = true;
           };
@@ -142,6 +155,11 @@
             pname = "${name}";
             src = centauri-src;
             buildInputs = with pkgs; [ sd git ];
+            patchFlags = "";
+            installPhase = ''
+              mkdir --parents $out
+              mv $src/* $out/
+            '';
             dontFixup = true;
             dontStrip = true;
           };
