@@ -144,7 +144,7 @@
                 "--delay-period-seconds"
                 "10"
               ];
-              inherit configPathSource configPathContainer pkgs packages
+              inherit configPathSourceChainA configPathContainerChainA configPathSourceChainB configPathContainerChainB configPathSourceCore configPathContainerCore pkgs packages
                 devnetTools;
               dependsOn = dependsOnCreateChannels;
               restartPolicy = "on-failure";
