@@ -77,7 +77,7 @@
                 configPathContainerChainB
                 "--config-core"
                 configPathContainerCore
-                "--delay-period-seconds"
+                "--delay-period"
                 "10"
               ];
               inherit configPathSource configPathContainer pkgs packages
