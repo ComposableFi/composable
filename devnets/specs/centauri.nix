@@ -135,8 +135,12 @@
               name = "hyperspace-relay";
               execCommands = [
                 "relay"
-                "--config"
-                configPathContainer
+                "--config-a"
+                configPathContainerChainA
+                "--config-b"
+                configPathContainerChainB
+                "--config-core"
+                configPathContainerCore
                 "--delay-period-seconds"
                 "10"
               ];
