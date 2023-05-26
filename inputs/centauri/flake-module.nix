@@ -143,7 +143,7 @@
             patchFlags = "";
             installPhase = ''
               mkdir --parents $out
-              mv $src/* $out/
+              cp --recursive --no-preserve=mode,ownership $src/. $out/
             '';
             dontFixup = true;
             dontStrip = true;
@@ -158,7 +158,7 @@
             patchFlags = "";
             installPhase = ''
               mkdir --parents $out
-              mv $src/* $out/
+              cp --recursive --no-preserve=mode,ownership $src/. $out/
             '';
             dontFixup = true;
             dontStrip = true;
