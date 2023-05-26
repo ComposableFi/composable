@@ -43,23 +43,23 @@
         cargo-deny-check
       ]);
 
-      all-benchmarks = pkgs.linkFarmFromDrvs "all-benchmarks" (with self'.packages; [
-        check-composable-benchmarks-ci
-        check-picasso-benchmarks-ci
-        composable-bench-node
-        benchmarks-check
-      ]);
+      all-benchmarks = pkgs.linkFarmFromDrvs "all-benchmarks"
+        (with self'.packages; [
+          check-composable-benchmarks-ci
+          check-picasso-benchmarks-ci
+          composable-bench-node
+          benchmarks-check
+        ]);
 
-      all-rust-test-packages = pkgs.linkFarmFromDrvs "all-rust-test-packages" (with self'.packages; [
-        cargo-clippy-check
-        check-picasso-integration-tests
-        unit-tests
-      ]);
+      all-rust-test-packages = pkgs.linkFarmFromDrvs "all-rust-test-packages"
+        (with self'.packages; [
+          cargo-clippy-check
+          check-picasso-integration-tests
+          unit-tests
+        ]);
 
-      all-rust-qa-packages = pkgs.linkFarmFromDrvs "all-rust-qa-packages" (with self'.packages; [
-        all-rust-test-packages
-        all-benchmarks
-      ]);
+      all-rust-qa-packages = pkgs.linkFarmFromDrvs "all-rust-qa-packages"
+        (with self'.packages; [ all-rust-test-packages all-benchmarks ]);
 
       all-production = pkgs.linkFarmFromDrvs "all-production"
         (with self'.packages; [ livenet-composable ]);
@@ -87,9 +87,7 @@
         ]);
 
       all-ci-packages = pkgs.linkFarmFromDrvs "all-ci-packages"
-        (with self'.packages; [
-          all-run-packages
-        ]);
+        (with self'.packages; [ all-run-packages ]);
 
       all-frontend = pkgs.linkFarmFromDrvs "all-frontend"
         (with self'.packages; [ frontend-static ]);
