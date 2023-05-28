@@ -5,7 +5,7 @@ Here is a guide on how to provide liquidity on the Pablo DEX.
 
 :::info
 
-The following pools are live on [Pablo](https://app.pablo.finance/provide-liquidity/) offering LP staking rewards:
+The following pools are live on [Pablo](https://app.pablo.finance/provide-liquidity/) and currently offering LP staking rewards:
 
 - KSM/USDT
 - PICA/USDT
