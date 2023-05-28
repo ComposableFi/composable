@@ -47,7 +47,7 @@ The notification "Transaction in progress" will appear as the transaction is bei
 ![transaction_finalized](./images-how-to-provide-liquidity/transaction-finalized.png)
 :::
 
-1. You have successfully provided liquidity on Pablo. To start earning staking rewards on your LP tokens, head back to the pool overview page and select "Stake".
+5. You have successfully provided liquidity on Pablo. To start earning staking rewards on your LP tokens, head back to the pool overview page and select "Stake".
 
 ![stake_mission_start](./images-how-to-provide-liquidity/stake-me-baby.png)
 
