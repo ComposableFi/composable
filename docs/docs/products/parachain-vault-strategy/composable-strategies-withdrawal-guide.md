@@ -67,7 +67,7 @@ Token, Address and Decimals for reference in the following steps:
 | TOKEN | Generic Withdraw Address                   | Decimals |
 |-------|--------------------------------------------|----------|
 | DAI   | 0x4A03ea61E543eC7141a3f90128B0c0c9514F8737 | 18       |
-| USDC  | 0xF12dA8470E2643cCb39a157e8577D9AA586a488f | 6        |
+| USDC  | 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 | 6        |
 | USDT  | 0x1941441d31809e9E1828Da0cE6d44175F657E215 | 6        |
 
 5. a) To get the ethPerToken
@@ -100,8 +100,8 @@ The value after the decimal point is the input value for field 5.b
 
 5. c) To get the tokensPerEth
 
-   In the first input field called `amountIn` input the value 1 * 10 at power of Decimal of TOKEN 
-   (18 decimals for DAI, 6 for USDC and 6 for USDT)
+   In the first input field called `amountIn` input the value 1 * 10 at power of 18. 
+
 
    In the second field called path `address[]` you need to enter the first contract address of wETH 
    (0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2) and then add a comma with no space followed by the address of TOKEN 
