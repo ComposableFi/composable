@@ -109,16 +109,6 @@ pub trait Amm {
 		calculate_with_fees: bool,
 	) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError>;
 
-	/// Buy given `amount` of given asset from the pool.
-	/// In buy user does not know how much assets he/she has to exchange to get desired amount.
-	fn do_buy(
-		who: &Self::AccountId,
-		pool_id: Self::PoolId,
-		in_asset_id: Self::AssetId,
-		out_asset: AssetAmount<Self::AssetId, Self::Balance>,
-		keep_alive: bool,
-	) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError>;
-
 	/// Deposit coins into the pool
 	/// `amounts` - list of amounts of coins to deposit,
 	/// `min_mint_amount` - minimum amount of LP tokens to mint from the deposit.
@@ -141,6 +131,17 @@ pub trait Amm {
 		min_receive: BTreeMap<Self::AssetId, Self::Balance>,
 	) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError>;
 
+
+	/// Buy given `amount` of given asset from the pool.
+	/// In buy user does not know how much assets he/she has to exchange to get desired amount.
+	fn do_buy(
+		who: &Self::AccountId,
+		pool_id: Self::PoolId,
+		in_asset_id: Self::AssetId,
+		out_asset: AssetAmount<Self::AssetId, Self::Balance>,
+		keep_alive: bool,
+	) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError>;
+		
 	/// Perform an exchange effectively trading the in_asset against the min_receive one.
 	fn do_swap(
 		who: &Self::AccountId,
