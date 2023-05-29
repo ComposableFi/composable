@@ -1,10 +1,21 @@
-
 use ::cosmwasm::pallet_hook::PalletHook;
-use cosmwasm_vm::{vm::{VMBase, VmErrorOf}, cosmwasm_std::{ContractResult, Response}, executor::QueryResponse};
+use cosmwasm::{
+	instrument::CostRules,
+	runtimes::vm::CosmwasmVM,
+	types::{
+		AccountIdOf, CodeInfo, ContractLabelOf, ContractTrieIdOf, EntryPoint,
+		PalletContractCodeInfo, ContractInfo,
+	},
+};
+use cosmwasm_vm::{
+	cosmwasm_std::{ContractResult, Response},
+	executor::QueryResponse,
+	vm::{VMBase, VmErrorOf},
+};
 use cosmwasm_vm_wasmi::OwnedWasmiVM;
 use sp_core::ConstU32;
-use cosmwasm::{instrument::CostRules, types::{AccountIdOf, PalletContractCodeInfo, ContractLabelOf, ContractTrieIdOf, EntryPoint}, runtimes::vm::CosmwasmVM};
 
+use sp_runtime::traits::AccountIdConversion;
 
 use super::*;
 
@@ -46,7 +57,6 @@ impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
 		alloc::format!("{}", currency_id)
 	}
 }
-
 
 parameter_types! {
 	pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
@@ -113,7 +123,7 @@ impl cosmwasm::Config for Runtime {
 
 	type IbcRelayer = cosmwasm::NoRelayer<Runtime>;
 
-	type PalletHook = ();
+	type PalletHook = Precompiles;
 
 	#[cfg(feature = "testnet")]
 	type UploadWasmOrigin = system::EnsureSigned<Self::AccountId>;
@@ -141,9 +151,23 @@ impl PalletHook<Runtime> for Precompiles {
 	fn info(
 		contract_address: &AccountIdOf<Runtime>,
 	) -> Option<
-		PalletContractCodeInfo<AccountIdOf<Runtime>, ContractLabelOf<Runtime>, ContractTrieIdOf<Runtime>>,
+		PalletContractCodeInfo<
+			AccountIdOf<Runtime>,
+			ContractLabelOf<Runtime>,
+			ContractTrieIdOf<Runtime>,
+		>,
 	> {
-		panic!()
+		let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
+		match contract_address {
+			address if address == &dex => Some(
+				PalletContractCodeInfo::new(
+					dex,
+					false,
+					PabloPalletId::get().0.to_vec().try_into().unwrap_or_default(),
+				))
+			,
+			_ => None,
+		}
 	}
 
 	fn execute<'a>(
@@ -157,13 +181,6 @@ impl PalletHook<Runtime> for Precompiles {
 		panic!()
 	}
 
-	fn query<'a>(
-		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, Runtime>>,
-		_message: &[u8],
-	) -> Result<ContractResult<QueryResponse>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>> {
-		panic!()
-	}
-
 	fn run<'a>(
 		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, Runtime>>,
 		_entrypoint: EntryPoint,
@@ -171,6 +188,11 @@ impl PalletHook<Runtime> for Precompiles {
 	) -> Result<Vec<u8>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>> {
 		panic!()
 	}
+
+	fn query<'a>(
+		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, Runtime>>,
+		_message: &[u8],
+	) -> Result<ContractResult<QueryResponse>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>> {
+		panic!()
+	}
 }
-
-
