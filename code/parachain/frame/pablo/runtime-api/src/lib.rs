@@ -26,6 +26,10 @@ sp_api::decl_runtime_apis! {
 			amount: Balance
 		) -> PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>;
 
+		fn is_flat_fee(
+			asset_id: AssetId,
+		) -> Option<SafeRpcWrapper<Balance>>;
+
 		fn simulate_add_liquidity(
 			who: SafeRpcWrapper<AccountId>,
 			pool_id: SafeRpcWrapper<PoolId>,

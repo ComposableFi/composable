@@ -34,7 +34,6 @@ pub struct UnlockCommand {
 	pub key: String,
 }
 
-
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct ListCommand {
@@ -55,10 +54,9 @@ pub struct DeleteCommand {
 	pub key: String,
 
 	/// Where to transfer unlocked amount
-	#[arg(long)]	
+	#[arg(long)]
 	pub to: String,
 }
-
 
 /// So it validates all vesting parameters and dry-runs on RPC node.
 /// Outputs hex encoded extrinsic to call
@@ -76,7 +74,7 @@ pub struct AddCommand {
 	/// From
 	#[arg(long)]
 	pub from: String,
-	
+
 	#[arg(long)]
 	pub out: Option<String>,
 
@@ -108,6 +106,4 @@ pub struct UnlockRecord {
 pub struct DeleteRecord {
 	pub account: String,
 	pub vesting_schedule_id: u128,
-	pub total: u128,
-	pub already_claimed : u128,	
 }

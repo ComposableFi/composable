@@ -1,6 +1,7 @@
 //! RPC interface for the Reward Module.
 
 use codec::Codec;
+use composable_support::rpc_helpers::SafeRpcWrapper;
 use jsonrpsee::{
 	core::{async_trait, Error as JsonRpseeError, RpcResult},
 	proc_macros::rpc,
@@ -22,7 +23,7 @@ pub trait RewardApi<BlockHash, AccountId, CurrencyId, Balance, BlockNumber, Unsi
 where
 	Balance: Codec + MaybeDisplay + MaybeFromStr,
 	AccountId: Codec,
-	CurrencyId: Codec,
+	CurrencyId: Codec + MaybeDisplay + MaybeFromStr,
 	BlockNumber: Codec,
 	UnsignedFixedPoint: Codec,
 {
@@ -30,8 +31,8 @@ where
 	fn compute_farming_reward(
 		&self,
 		account_id: AccountId,
-		pool_currency_id: CurrencyId,
-		reward_currency_id: CurrencyId,
+		pool_currency_id: SafeRpcWrapper<CurrencyId>,
+		reward_currency_id: SafeRpcWrapper<CurrencyId>,
 		at: Option<BlockHash>,
 	) -> RpcResult<BalanceWrapper<Balance>>;
 
@@ -39,8 +40,8 @@ where
 	fn estimate_farming_reward(
 		&self,
 		account_id: AccountId,
-		pool_currency_id: CurrencyId,
-		reward_currency_id: CurrencyId,
+		pool_currency_id: SafeRpcWrapper<CurrencyId>,
+		reward_currency_id: SafeRpcWrapper<CurrencyId>,
 		at: Option<BlockHash>,
 	) -> RpcResult<BalanceWrapper<Balance>>;
 }
@@ -91,7 +92,7 @@ where
 	C::Api:
 		RewardRuntimeApi<Block, AccountId, CurrencyId, Balance, BlockNumber, UnsignedFixedPoint>,
 	AccountId: Codec,
-	CurrencyId: Codec,
+	CurrencyId: Codec + MaybeDisplay + MaybeFromStr,
 	Balance: Codec + MaybeDisplay + MaybeFromStr,
 	BlockNumber: Codec,
 	UnsignedFixedPoint: Codec,
@@ -99,8 +100,8 @@ where
 	fn compute_farming_reward(
 		&self,
 		account_id: AccountId,
-		pool_currency_id: CurrencyId,
-		reward_currency_id: CurrencyId,
+		pool_currency_id: SafeRpcWrapper<CurrencyId>,
+		reward_currency_id: SafeRpcWrapper<CurrencyId>,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<BalanceWrapper<Balance>> {
 		let api = self.client.runtime_api();
@@ -115,8 +116,8 @@ where
 	fn estimate_farming_reward(
 		&self,
 		account_id: AccountId,
-		pool_currency_id: CurrencyId,
-		reward_currency_id: CurrencyId,
+		pool_currency_id: SafeRpcWrapper<CurrencyId>,
+		reward_currency_id: SafeRpcWrapper<CurrencyId>,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<BalanceWrapper<Balance>> {
 		let api = self.client.runtime_api();

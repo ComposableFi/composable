@@ -31,7 +31,7 @@ in with prelude; rec {
       env = [{
         name = "RUST_LOG";
         value =
-          "info,runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,pallet_ibc=trace,hyperspace=trace,hyperspace_parachain=trace,ics=trace,ics::routing=trace,ics::channel=trace"
+          "info,runtime::contracts=debug,runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,pallet_ibc=trace,hyperspace=trace,hyperspace_parachain=trace,ics=trace,ics::routing=trace,ics::channel=trace"
           # RUST_LOG does not eats extra comma well, so fixed conditionally
           + (if rust_log_add != null then "," + rust_log_add else "");
       }];
@@ -42,7 +42,7 @@ in with prelude; rec {
 
   mkParachain = { command, rpc_port ? 32200, ws_port ? 9988
     , chain ? "picasso-dev", names ? default-node-names, collators ? 2
-    , id ? 2087, rust_log_add ? null }:
+    , id ? 2087, rust_log_add ? null, genesis ? null }:
     let
       generated = lib.lists.zipListsWith
         (_increment: name: mkCollator { inherit command name rust_log_add; })
@@ -59,6 +59,7 @@ in with prelude; rec {
           name = builtins.head names;
         })
       ] ++ generated;
+      genesis = genesis;
     };
 
   mkParachains = parachains: builtins.map mkParachain parachains;

@@ -673,6 +673,11 @@ pub mod pallet {
 			fee_asset_id: Self::AssetId,
 			fee_asset_amount: Self::Balance,
 		) -> Option<u128> {
+			//for example if asset id is USDT then fee_asset_id == asset_id and return
+			// fee_asset_amount
+			if fee_asset_id == asset_id {
+				return Some(fee_asset_amount.into())
+			}
 			let mut conversion_pool_id = None;
 			for (pool_id, pool_config) in Pools::<T>::iter() {
 				match pool_config {

@@ -33,6 +33,13 @@ where
 		PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
 	>;
 
+	#[method(name = "pablo_isFlatFee")]
+	fn is_flat_fee(
+		&self,
+		asset_id: SafeRpcWrapper<AssetId>,
+		at: Option<BlockHash>,
+	) -> RpcResult<Option<SafeRpcWrapper<Balance>>>;
+
 	#[method(name = "pablo_simulateAddLiquidity")]
 	fn simulate_add_liquidity(
 		&self,
@@ -95,6 +102,26 @@ where
 		// calling ../../runtime-api
 		let runtime_api_result =
 			api.prices_for(at, pool_id.0, base_asset_id.0, quote_asset_id.0, amount.0);
+		runtime_api_result.map_err(|e| {
+			RpcError::Call(CallError::Custom(ErrorObject::owned(
+				9876,
+				"Something wrong",
+				Some(format!("{:?}", e)),
+			)))
+		})
+	}
+
+	fn is_flat_fee(
+		&self,
+		asset_id: SafeRpcWrapper<AssetId>,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Option<SafeRpcWrapper<Balance>>> {
+		let api = self.client.runtime_api();
+
+		let at = at.unwrap_or_else(|| self.client.info().best_hash);
+
+		// calling ../../runtime-api
+		let runtime_api_result = api.is_flat_fee(at, asset_id.0);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,

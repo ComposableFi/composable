@@ -59,6 +59,7 @@ fn deposit_lp_tokens<T: Config>(
 	assert_ok!(Farming::<T>::deposit(
 		RawOrigin::Signed(account_id.clone()).into(),
 		pool_currency_id.into(),
+		amount
 	));
 }
 
@@ -104,7 +105,7 @@ benchmarks! {
 			100u32.into(),
 		));
 
-	}: _(RawOrigin::Signed(origin), pool_currency_id.into())
+	}: _(RawOrigin::Signed(origin), pool_currency_id.into(), 100u32.into())
 
 	withdraw {
 		let origin: T::AccountId = account("Origin", 0, 0);

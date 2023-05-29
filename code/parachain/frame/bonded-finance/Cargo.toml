@@ -31,7 +31,7 @@ sp-std = { default-features = false, workspace = true }
 composable-support = { default-features = false, path = "../composable-support" }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
 orml-traits = { workspace = true, default-features = false }
-pallet-vesting = { path = "../../frame/vesting", default-features = false  }
+pallet-vesting = { path = "../../frame/vesting", default-features = false }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }

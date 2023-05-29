@@ -132,9 +132,7 @@ more-asserts = "0.3.1"
 default = ["std", "develop", "local-integration-tests", "picasso"]
 #statemine = ["statemine-runtime"]
 kusama = []
-local-integration-tests = [
-  "picasso-runtime/local-integration-tests",
-]
+local-integration-tests = ["picasso-runtime/local-integration-tests"]
 picasso = ["std", "develop", "local-integration-tests", "kusama"]
 polkadot = []
 rococo = []

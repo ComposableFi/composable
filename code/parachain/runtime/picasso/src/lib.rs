@@ -55,8 +55,9 @@ use composable_traits::{
 	dex::{Amm, PriceAggregate},
 };
 use cosmwasm::instrument::CostRules;
+use pallet_ibc::ics20_fee::FlatFeeConverter;
 use primitives::currency::ForeignAssetId;
-
+use sp_runtime::traits::Get;
 mod gates;
 use gates::*;
 use governance::*;
@@ -95,13 +96,15 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 use frame_system as system;
+#[cfg(feature = "testnet")]
+use frame_system::EnsureSigned;
 pub use governance::TreasuryAccount;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
 use system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureSignedBy,
+	EnsureRoot,
 };
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -293,6 +296,7 @@ impl reward::Config<FarmingRewardsInstance> for Runtime {
 	type PoolId = CurrencyId;
 	type StakeId = AccountId;
 	type CurrencyId = CurrencyId;
+	type MaxRewardCurrencies = ConstU32<10>;
 }
 
 parameter_types! {
@@ -468,19 +472,19 @@ impl cosmwasm::Config for Runtime {
 	type PalletHook = ();
 
 	#[cfg(feature = "testnet")]
-	type UploadWasmOrigin = EnsureSigned<Self::AccountId>;
+	type UploadWasmOrigin = system::EnsureSigned<Self::AccountId>;
 
 	#[cfg(feature = "testnet")]
-	type ExecuteWasmOrigin = EnsureSigned<Self::AccountId>;
+	type ExecuteWasmOrigin = system::EnsureSigned<Self::AccountId>;
 
 	// really need to do EnsureOnOf<Sudo::key, >
 	#[cfg(not(feature = "testnet"))]
-	type UploadWasmOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>;
+	type UploadWasmOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>;
 
 	#[cfg(not(feature = "testnet"))]
 	type ExecuteWasmOrigin = frame_support::traits::EitherOfDiverse<
-		EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
-		EnsureSignedBy<ReleaseMembership, Self::AccountId>,
+		system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
+		system::EnsureSignedBy<ReleaseMembership, Self::AccountId>,
 	>;
 }
 
@@ -1060,13 +1064,13 @@ impl_runtime_apis! {
 			SafeRpcWrapper(<AssetsTransactorRouter as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
-		fn list_assets() -> Vec<Asset<Balance, ForeignAssetId>> {
+		fn list_assets() -> Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>> {
 			// Hardcoded assets
 			use common::fees::ForeignToNativePriceConverter;
 			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
 				// Add hardcoded ratio and ED for well known assets
-				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(CurrencyId(asset.id));
-				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
+				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(asset.id);
+				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id);
 				asset
 			}).map(|xcm|
 			  Asset {
@@ -1077,7 +1081,7 @@ impl_runtime_apis! {
 				name : xcm.name,
 				ratio : xcm.ratio,
 			  }
-			).collect::<Vec<_>>();
+			).collect::<Vec<Asset<CurrencyId, Balance, ForeignAssetId>>>();
 
 			// Assets from the assets-registry pallet
 			let all_assets =  assets_registry::Pallet::<Runtime>::get_all_assets();
@@ -1091,12 +1095,20 @@ impl_runtime_apis! {
 					found_asset.foreign_id = asset.foreign_id.clone();
 					found_asset.ratio = asset.ratio;
 				} else {
-					asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id.into());
+					asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id);
 					acc.push(asset.clone())
 				}
 				acc
-			})
-		}
+			}).iter().map(|asset|
+			  Asset {
+				decimals : asset.decimals,
+				existential_deposit : SafeRpcWrapper(asset.existential_deposit),
+				id : SafeRpcWrapper(asset.id.into()),
+				foreign_id : asset.foreign_id.clone(),
+				name : asset.name.clone(),
+				ratio : asset.ratio,
+			  }
+			).collect::<Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>>>()		}
 	}
 
 	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {
@@ -1133,6 +1145,16 @@ impl_runtime_apis! {
 				quote_asset_id: SafeRpcWrapper(quote_asset_id),
 				spot_price: SafeRpcWrapper(0_u128)
 			})
+		}
+
+		fn is_flat_fee(
+			asset_id: CurrencyId,
+		) -> Option<SafeRpcWrapper<Balance>> {
+			<Pablo as FlatFeeConverter>::get_flat_fee(
+				asset_id,
+				AssetIdUSDT::get(),
+				FlatFeeUSDTAmount::get()
+			).map(SafeRpcWrapper)
 		}
 
 		fn simulate_add_liquidity(
@@ -1328,15 +1350,15 @@ impl_runtime_apis! {
 		BlockNumber,
 		sp_runtime::FixedU128
 	> for Runtime {
-		fn compute_farming_reward(account_id: AccountId, pool_currency_id: CurrencyId, reward_currency_id: CurrencyId) -> Result<reward_rpc_runtime_api::BalanceWrapper<Balance>, DispatchError> {
+		fn compute_farming_reward(account_id: AccountId,  SafeRpcWrapper(pool_currency_id):  SafeRpcWrapper<CurrencyId>,  SafeRpcWrapper(reward_currency_id):  SafeRpcWrapper<CurrencyId>) -> Result<reward_rpc_runtime_api::BalanceWrapper<Balance>, DispatchError> {
 			let amount = <FarmingRewards as reward::RewardsApi<CurrencyId, AccountId, Balance>>::compute_reward(&pool_currency_id, &account_id, reward_currency_id)?;
 			let balance = reward_rpc_runtime_api::BalanceWrapper::<Balance> { amount };
 			Ok(balance)
 		}
 		fn estimate_farming_reward(
 			account_id: AccountId,
-			pool_currency_id: CurrencyId,
-			reward_currency_id: CurrencyId,
+			SafeRpcWrapper(pool_currency_id): SafeRpcWrapper<CurrencyId>,
+			SafeRpcWrapper(reward_currency_id): SafeRpcWrapper<CurrencyId>,
 		) -> Result<reward_rpc_runtime_api::BalanceWrapper<Balance>, DispatchError> {
 			<FarmingRewards as reward::RewardsApi<CurrencyId, AccountId, Balance>>::withdraw_reward(&pool_currency_id, &account_id, reward_currency_id)?;
 			<FarmingRewards as reward::RewardsApi<CurrencyId, AccountId, Balance>>::distribute_reward(&pool_currency_id, reward_currency_id, Farming::total_rewards(&pool_currency_id, &reward_currency_id))?;

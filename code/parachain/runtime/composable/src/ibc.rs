@@ -7,6 +7,7 @@ use common::{
 	fees::{IbcIcs20FeePalletId, IbcIcs20ServiceCharge},
 	governance::native::EnsureRootOrOneThirdNativeTechnical,
 };
+use composable_traits::assets::InspectRegistryMetadata;
 use frame_system::EnsureSigned;
 use pallet_ibc::{
 	ics20::{MODULE_ID_STR, PORT_ID_STR},
@@ -122,7 +123,33 @@ impl Ics20RateLimiter for ConstantAny {
 		msg: &pallet_ibc::ics20::Ics20TransferMsg,
 		_flow_type: pallet_ibc::ics20::FlowType,
 	) -> Result<(), ()> {
-		if msg.token.amount.as_u256() <= ::ibc::bigint::U256::from(10_000 * 10_u64.pow(12)) {
+		let pica_denom =
+			<<Runtime as pallet_ibc::Config>::IbcDenomToAssetIdConversion as DenomToAssetId<
+				Runtime,
+			>>::from_asset_id_to_denom(CurrencyId::PICA);
+
+		let limit = match msg.token.denom.to_string().as_str() {
+			denom if Some(denom) == pica_denom.as_deref() => 500_000,
+			_ => 10_000,
+		};
+
+		// adjust the number of decimals based on the currency id, as different assets have
+		// different decimals places and not doing it would defeat the purpose of fixing the nominal
+		// amount tha we are allowing users to transfer.
+		let token = &msg.token;
+		let asset_id: CurrencyId =
+			<<Runtime as pallet_ibc::Config>::IbcDenomToAssetIdConversion as DenomToAssetId<
+				Runtime,
+			>>::from_denom_to_asset_id(&token.denom.to_string())
+			.map_err(|_| ())?;
+
+		let decimals =
+			<assets_registry::Pallet<Runtime> as InspectRegistryMetadata>::decimals(&asset_id)
+				.unwrap_or(12);
+
+		if msg.token.amount.as_u256() <=
+			::ibc::bigint::U256::from(limit * 10_u64.pow(decimals as _))
+		{
 			return Ok(())
 		}
 		Err(())
@@ -159,11 +186,8 @@ impl ModuleRouter for Router {
 
 impl pallet_ibc::ics20_fee::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type ServiceCharge = IbcIcs20ServiceCharge;
+	type ServiceChargeIn = IbcIcs20ServiceCharge;
 	type PalletId = IbcIcs20FeePalletId;
-	type FlatFeeAssetId = AssetIdUSDT;
-	type FlatFeeAmount = FlatFeeUSDTAmount;
-	type FlatFeeConverter = NonFlatFeeConverter<Runtime>;
 }
 
 impl pallet_ibc::Config for Runtime {
@@ -198,4 +222,8 @@ impl pallet_ibc::Config for Runtime {
 
 	type FeeAccount = FeeAccount;
 	type CleanUpPacketsPeriod = ConstU32<100>;
+	type ServiceChargeOut = IbcIcs20ServiceCharge;
+	type FlatFeeAssetId = AssetIdUSDT;
+	type FlatFeeAmount = FlatFeeUSDTAmount;
+	type FlatFeeConverter = NonFlatFeeConverter<Runtime>;
 }

@@ -27,9 +27,30 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::CancelProxy => {
 				matches!(c, RuntimeCall::Proxy(proxy::Call::reject_announcement { .. }))
 			},
+			ProxyType::Assets => {
+				matches!(
+					c,
+					RuntimeCall::AssetsRegistry(..) | RuntimeCall::AssetsTransactorRouter(..)
+				)
+			},
+			ProxyType::Defi => {
+				matches!(
+					c,
+					RuntimeCall::Pablo(..) |
+						RuntimeCall::FarmingRewards(..) |
+						RuntimeCall::Farming(..)
+				)
+			},
+			ProxyType::Oracle => {
+				matches!(c, RuntimeCall::Oracle(..))
+			},
+			ProxyType::Contracts => {
+				matches!(c, RuntimeCall::Cosmwasm(..))
+			},
 			ProxyType::Bridge => matches!(
 				c,
 				RuntimeCall::Ibc(..) |
+					RuntimeCall::Ics20Fee(..) |
 					RuntimeCall::CumulusXcm(..) |
 					RuntimeCall::DmpQueue(..) |
 					RuntimeCall::UnknownTokens(..) |
@@ -78,7 +99,8 @@ impl collective::Config<ReleaseCollective> for Runtime {
 	type MaxMembers = ConstU32<100>;
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
-	type SetMembersOrigin = EnsureRootOrHalfNativeTechnical;
+	type SetMembersOrigin =
+		frame_system::EnsureSignedBy<crate::TechnicalCommitteeMembership, Self::AccountId>;
 }
 
 pub type EnsureRootOrTwoThirds<T> =

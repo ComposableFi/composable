@@ -7,7 +7,7 @@
         bifrost-node
         polkadot-node-from-dep
         rococo-runtime-from-dep
-        statemine-node
+        polkadot-parachain
         subwasm
         zombienet
       ]);
@@ -49,6 +49,9 @@
         benchmarks-check
       ]);
 
+      all-production = pkgs.linkFarmFromDrvs "all-production"
+        (with self'.packages; [ livenet-composable ]);
+
       all-platforms = pkgs.linkFarmFromDrvs "all-platforms"
         (with self'.packages; [
           cmc-api
@@ -63,7 +66,6 @@
           devnet-initialize-script-picasso-persistent
           devnet-integration-tests
           devnet-picasso-complete
-          livenet-composable
           hyperspace-composable-rococo-picasso-rococo
           hyperspace-composable-rococo-picasso-rococo-image
         ]);
