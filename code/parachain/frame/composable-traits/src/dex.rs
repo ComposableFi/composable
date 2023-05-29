@@ -18,7 +18,7 @@ use sp_runtime::{
 use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec::Vec};
 
 /// Specifies and amount together with the asset ID of the amount.
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Copy, RuntimeDebug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Copy, RuntimeDebug, serde::Serialize, serde::Deserialize)]
 pub struct AssetAmount<AssetId, Balance> {
 	pub asset_id: AssetId,
 	pub amount: Balance,

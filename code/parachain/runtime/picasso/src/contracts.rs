@@ -2,10 +2,7 @@ use ::cosmwasm::pallet_hook::PalletHook;
 use cosmwasm::{
 	instrument::CostRules,
 	runtimes::vm::{CosmwasmVM, CosmwasmVMError},
-	types::{
-		AccountIdOf, ContractLabelOf, ContractTrieIdOf, EntryPoint,
-		PalletContractCodeInfo,
-	},
+	types::{AccountIdOf, ContractLabelOf, ContractTrieIdOf, EntryPoint, PalletContractCodeInfo},
 };
 use cosmwasm_vm::{
 	cosmwasm_std::{ContractResult, Response},
@@ -155,14 +152,13 @@ impl PalletHook<Runtime> for Precompiles {
 		>,
 	> {
 		let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
+
 		match contract_address {
-			address if address == &dex => Some(
-				PalletContractCodeInfo::new(
-					dex,
-					false,
-					PabloPalletId::get().0.to_vec().try_into().unwrap_or_default(),
-				))
-			,
+			address if address == &dex => Some(PalletContractCodeInfo::new(
+				dex,
+				false,
+				PabloPalletId::get().0.to_vec().try_into().unwrap_or_default(),
+			)),
 			_ => None,
 		}
 	}
@@ -172,17 +168,33 @@ impl PalletHook<Runtime> for Precompiles {
 		entrypoint: EntryPoint,
 		message: &[u8],
 	) -> Result<
-	ContractResult<Response<<OwnedWasmiVM<CosmwasmVM<'a, Runtime>> as VMBase>::MessageCustom>>,
-	VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>,
-	> {		
-	 log::error!("{:?}{:?}{:?}", &vm.0.data().contract_address, &entrypoint, String::from_utf8_lossy(message));
-	 let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
-	  match contract_address {
-		address if address == &dex => {
-			panic!()	
-		} 
-		_ => Err(CosmwasmVMError::ContractNotFound)
-	  }
+		ContractResult<Response<<OwnedWasmiVM<CosmwasmVM<'a, Runtime>> as VMBase>::MessageCustom>>,
+		VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>,
+	> {
+		let contract_address = vm.0.data().contract_address.clone().into_inner();
+		log::error!(
+			"{:?}{:?}{:?}",
+			&contract_address,
+			&entrypoint,
+			String::from_utf8_lossy(message)
+		);
+		let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
+		match contract_address {
+			address if address == dex => {
+				let message: cw_dex_router::msg::ExecuteMsg =
+					serde_json::from_slice(message).map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
+				match message {
+					cw_dex_router::msg::ExecuteMsg::Swap { in_asset, min_receive, pool_id } => {
+						//<Pablo>::do_swap(contract_address, pool_id, in_asset, min_receive, keep_alive)
+						let in_asset = AssetToDenom::convert(in_asset.denom).map_err(|_| CosmwasmVMError::AssetConversion)?
+						<Pablo>::do_swap(contract_address, pool_id, in_asset, min_receive, true)
+							.unwrap();
+						todo!()
+					},
+				}
+			},
+			_ => Err(CosmwasmVMError::ContractNotFound),
+		}
 	}
 
 	fn run<'a>(
@@ -197,13 +209,14 @@ impl PalletHook<Runtime> for Precompiles {
 		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, Runtime>>,
 		message: &[u8],
 	) -> Result<ContractResult<QueryResponse>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>> {
-		log::error!("{:?}{:?}", &vm.0.data().contract_address, String::from_utf8_lossy(message));
+		let contract_address = vm.0.data().contract_address.clone().into_inner();
+		log::error!("{:?}{:?}", &contract_address, String::from_utf8_lossy(message));
 		let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
 		match contract_address {
-		  address if address == &dex => {
-			  panic!()	
-		  } 
-		  _ => Err(CosmwasmVMError::ContractNotFound)
+			address if address == dex => {
+				panic!()
+			},
+			_ => Err(CosmwasmVMError::ContractNotFound),
 		}
 	}
 }

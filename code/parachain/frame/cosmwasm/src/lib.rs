@@ -730,6 +730,7 @@ impl<T: Config> Pallet<T> {
 					CosmwasmVMError::Aborted(_) => Error::<T>::Aborted,
 					CosmwasmVMError::ReadOnlyViolation => Error::<T>::ReadOnlyViolation,
 					CosmwasmVMError::Unsupported => Error::<T>::Unsupported,
+					CosmwasmVMError::ExecuteDeserialize => Error::<T>::ExecuteDeserialize,
 					CosmwasmVMError::ContractNotFound => Error::<T>::ContractNotFound,
 					CosmwasmVMError::Rpc(_) => Error::<T>::Rpc,
 					CosmwasmVMError::Ibc(_) => Error::<T>::Ibc,

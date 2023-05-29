@@ -55,8 +55,10 @@ pub enum CosmwasmVMError<T: Config> {
 	OutOfGas,
 	Unsupported,
 	ContractNotFound,
+	ExecuteDeserialize,
 	Rpc(String),
 	Ibc(String),
+	AssetConversion,
 }
 
 impl<T: Config + core::marker::Send + core::marker::Sync + 'static> HostError
