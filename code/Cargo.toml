@@ -37,6 +37,7 @@ exclude = [
 members = [
   "services/cmc-api",
   "parachain/frame/*",
+  "parachain/frame/dex-router/cosmwasm",
   "parachain/node",
   "parachain/runtime/*",
   "utils/common",
@@ -332,6 +333,9 @@ cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev =
   "iterator",
   "stargate",
 ] }
+
+
+serde = { version = '1.0.136', default-features= false, features = ["derive"] }
 
 #######################################
 # DO NOT DELETE PATCHES, BUT COMMENT OUT

@@ -145,9 +145,6 @@ impl cosmwasm::Config for Runtime {
 pub struct Precompiles;
 
 impl PalletHook<Runtime> for Precompiles {
-	// This mocked hook shows two pallets with contract hooks that currently exhibit the same
-	// behavior. The behavior does not need to be identical in practice.
-
 	fn info(
 		contract_address: &AccountIdOf<Runtime>,
 	) -> Option<
@@ -175,11 +172,17 @@ impl PalletHook<Runtime> for Precompiles {
 		entrypoint: EntryPoint,
 		message: &[u8],
 	) -> Result<
-		ContractResult<Response<<OwnedWasmiVM<CosmwasmVM<'a, Runtime>> as VMBase>::MessageCustom>>,
-		VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>,
+	ContractResult<Response<<OwnedWasmiVM<CosmwasmVM<'a, Runtime>> as VMBase>::MessageCustom>>,
+	VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>,
 	> {		
-	  log::error!("{:?}{:?}{:?}", &vm.0.data().contract_address, &entrypoint, String::from_utf8_lossy(message));
-	  Err(CosmwasmVMError::ContractNotFound)
+	 log::error!("{:?}{:?}{:?}", &vm.0.data().contract_address, &entrypoint, String::from_utf8_lossy(message));
+	 let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
+	  match contract_address {
+		address if address == &dex => {
+			panic!()	
+		} 
+		_ => Err(CosmwasmVMError::ContractNotFound)
+	  }
 	}
 
 	fn run<'a>(
@@ -195,6 +198,12 @@ impl PalletHook<Runtime> for Precompiles {
 		message: &[u8],
 	) -> Result<ContractResult<QueryResponse>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>> {
 		log::error!("{:?}{:?}", &vm.0.data().contract_address, String::from_utf8_lossy(message));
-		Err(CosmwasmVMError::ContractNotFound)
+		let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
+		match contract_address {
+		  address if address == &dex => {
+			  panic!()	
+		  } 
+		  _ => Err(CosmwasmVMError::ContractNotFound)
+		}
 	}
 }

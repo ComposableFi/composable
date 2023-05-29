@@ -1,0 +1,11 @@
+[package]
+edition = "2021"
+name = "cw-pablo"
+version = "0.1.0"
+
+[features]
+library = []
+
+[dependencies]
+cosmwasm-std = "1.0.0"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
