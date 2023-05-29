@@ -1,7 +1,9 @@
 
 use ::cosmwasm::pallet_hook::PalletHook;
+use cosmwasm_vm::{vm::{VMBase, VmErrorOf}, cosmwasm_std::{ContractResult, Response}, executor::QueryResponse};
+use cosmwasm_vm_wasmi::OwnedWasmiVM;
 use sp_core::ConstU32;
-use cosmwasm::instrument::CostRules;
+use cosmwasm::{instrument::CostRules, types::{AccountIdOf, PalletContractCodeInfo, ContractLabelOf, ContractTrieIdOf, EntryPoint}, runtimes::vm::CosmwasmVM};
 
 
 use super::*;
@@ -132,37 +134,43 @@ impl cosmwasm::Config for Runtime {
 
 pub struct Precompiles;
 
+impl PalletHook<Runtime> for Precompiles {
+	// This mocked hook shows two pallets with contract hooks that currently exhibit the same
+	// behavior. The behavior does not need to be identical in practice.
 
-// impl PalletHook<Runtime> for Precompiles {
-//     fn info(
-// 		contract_address: &::cosmwasm::types::AccountIdOf<Runtime>,
-// 	) -> Option<::cosmwasm::types::PalletContractCodeInfo<::cosmwasm::types::AccountIdOf<Runtime>, ::cosmwasm::types::ContractLabelOf<Runtime>, ::cosmwasm::types::ContractTrieIdOf<Runtime>>> {
-//         todo!()
-//     }
+	fn info(
+		contract_address: &AccountIdOf<Runtime>,
+	) -> Option<
+		PalletContractCodeInfo<AccountIdOf<Runtime>, ContractLabelOf<Runtime>, ContractTrieIdOf<Runtime>>,
+	> {
+		panic!()
+	}
 
-//     fn execute<'a>(
-// 		vm: &mut OwnedWasmiVM<::cosmwasm::runtimes::vm::CosmwasmVM<'a, Runtime>>,
-// 		entrypoint: ::cosmwasm::types::EntryPoint,
-// 		message: &[u8],
-// 	) -> Result<
-// 		ContractResult<Response<<OwnedWasmiVM<::cosmwasm::runtimes::vm::CosmwasmVM<'a, Runtime>> as VMBase>::MessageCustom>>,
-// 		VmErrorOf<OwnedWasmiVM<::cosmwasm::runtimes::vm::CosmwasmVM<'a, Runtime>>>,
-// 	> {
-//         todo!()
-//     }
+	fn execute<'a>(
+		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, Runtime>>,
+		entrypoint: EntryPoint,
+		message: &[u8],
+	) -> Result<
+		ContractResult<Response<<OwnedWasmiVM<CosmwasmVM<'a, Runtime>> as VMBase>::MessageCustom>>,
+		VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>,
+	> {
+		panic!()
+	}
 
-//     fn run<'a>(
-// 		vm: &mut OwnedWasmiVM<::cosmwasm::runtimes::vm::CosmwasmVM<'a, Runtime>>,
-// 		entrypoint: ::cosmwasm::types::EntryPoint,
-// 		message: &[u8],
-// 	) -> Result<Vec<u8>, VmErrorOf<OwnedWasmiVM<::cosmwasm::runtimes::vm::CosmwasmVM<'a, Runtime>>>> {
-//         todo!()
-//     }
+	fn query<'a>(
+		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, Runtime>>,
+		_message: &[u8],
+	) -> Result<ContractResult<QueryResponse>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>> {
+		panic!()
+	}
 
-//     fn query<'a>(
-// 		vm: &mut OwnedWasmiVM<::cosmwasm::runtimes::vm::CosmwasmVM<'a, Runtime>>,
-// 		message: &[u8],
-// 	) -> Result<ContractResult<QueryResponse>, VmErrorOf<OwnedWasmiVM<::cosmwasm::runtimes::vm::CosmwasmVM<'a, Runtime>>>> {
-//         todo!()
-//     }
-// }
+	fn run<'a>(
+		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, Runtime>>,
+		_entrypoint: EntryPoint,
+		_message: &[u8],
+	) -> Result<Vec<u8>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>> {
+		panic!()
+	}
+}
+
+

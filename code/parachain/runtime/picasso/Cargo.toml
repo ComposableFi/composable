@@ -130,6 +130,16 @@ pallet-ibc-ping = { workspace = true, default-features = false }
 
 invarch-xcm-builder = { workspace = true, default-features = false }
 
+cosmwasm-vm = { workspace = true, default-features = false, features = [
+  "ibc3",
+  "iterator",
+  "stargate",
+] }
+cosmwasm-vm-wasmi = { workspace = true, default-features = false, features = [
+  "iterator",
+  "stargate",
+] }
+
 [features]
 builtin-wasm = []
 testnet = []

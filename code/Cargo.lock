@@ -10016,6 +10016,8 @@ dependencies = [
  "composable-support",
  "composable-traits",
  "cosmwasm-runtime-api",
+ "cosmwasm-vm",
+ "cosmwasm-vm-wasmi",
  "crowdloan-rewards-runtime-api",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
