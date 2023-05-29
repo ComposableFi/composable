@@ -66,9 +66,9 @@ Token, Address and Decimals for reference in the following steps:
 
 | TOKEN | Generic Withdraw Address                   | Decimals |
 |-------|--------------------------------------------|----------|
-| DAI   | 0x4A03ea61E543eC7141a3f90128B0c0c9514F8737 | 18       |
+| DAI   | 0x6B175474E89094C44Da98b954EedeAC495271d0F | 18       |
 | USDC  | 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 | 6        |
-| USDT  | 0x1941441d31809e9E1828Da0cE6d44175F657E215 | 6        |
+| USDT  | 0xdAC17F958D2ee523a2206206994597C13D831ec7 | 6        |
 
 5. a) To get the ethPerToken
 
