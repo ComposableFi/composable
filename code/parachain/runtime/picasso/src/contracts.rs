@@ -1,10 +1,10 @@
 use ::cosmwasm::pallet_hook::PalletHook;
 use cosmwasm::{
 	instrument::CostRules,
-	runtimes::vm::CosmwasmVM,
+	runtimes::vm::{CosmwasmVM, CosmwasmVMError},
 	types::{
-		AccountIdOf, CodeInfo, ContractLabelOf, ContractTrieIdOf, EntryPoint,
-		PalletContractCodeInfo, ContractInfo,
+		AccountIdOf, ContractLabelOf, ContractTrieIdOf, EntryPoint,
+		PalletContractCodeInfo,
 	},
 };
 use cosmwasm_vm::{
@@ -177,22 +177,24 @@ impl PalletHook<Runtime> for Precompiles {
 	) -> Result<
 		ContractResult<Response<<OwnedWasmiVM<CosmwasmVM<'a, Runtime>> as VMBase>::MessageCustom>>,
 		VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>,
-	> {
-		panic!()
+	> {		
+	  log::error!("{:?}{:?}{:?}", &vm.0.data().contract_address, &entrypoint, String::from_utf8_lossy(message));
+	  Err(CosmwasmVMError::ContractNotFound)
 	}
 
 	fn run<'a>(
-		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, Runtime>>,
+		_vm: &mut OwnedWasmiVM<CosmwasmVM<'a, Runtime>>,
 		_entrypoint: EntryPoint,
 		_message: &[u8],
 	) -> Result<Vec<u8>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>> {
-		panic!()
+		Err(CosmwasmVMError::ContractNotFound)
 	}
 
 	fn query<'a>(
 		vm: &mut OwnedWasmiVM<CosmwasmVM<'a, Runtime>>,
-		_message: &[u8],
+		message: &[u8],
 	) -> Result<ContractResult<QueryResponse>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>> {
-		panic!()
+		log::error!("{:?}{:?}", &vm.0.data().contract_address, String::from_utf8_lossy(message));
+		Err(CosmwasmVMError::ContractNotFound)
 	}
 }

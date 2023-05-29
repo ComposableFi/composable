@@ -54,6 +54,7 @@ pub enum CosmwasmVMError<T: Config> {
 	ReadOnlyViolation,
 	OutOfGas,
 	Unsupported,
+	ContractNotFound,
 	Rpc(String),
 	Ibc(String),
 }
