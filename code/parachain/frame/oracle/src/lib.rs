@@ -156,6 +156,8 @@ pub mod pallet {
 		type StalePrice: Get<Self::BlockNumber>;
 		/// Origin to add new price types
 		type AddOracle: EnsureOrigin<Self::RuntimeOrigin>;
+		/// Origin to add new price types
+		type SetSigner: EnsureOrigin<Self::RuntimeOrigin>;
 		/// Origin to manage rewards
 		type RewardOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// Lower bound for min answers for a price
@@ -593,7 +595,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			signer: T::AccountId,
 		) -> DispatchResultWithPostInfo {
-			T::AddOracle::ensure_origin(origin)?;
+			T::SetSigner::ensure_origin(origin.clone())?;
 			let who = ensure_signed(origin)?;
 			let current_controller = ControllerToSigner::<T>::get(&who);
 			let current_signer = SignerToController::<T>::get(&signer);
