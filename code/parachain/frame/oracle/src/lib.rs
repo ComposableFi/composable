@@ -156,7 +156,7 @@ pub mod pallet {
 		type StalePrice: Get<Self::BlockNumber>;
 		/// Origin to add new price types
 		type AddOracle: EnsureOrigin<Self::RuntimeOrigin>;
-		/// Origin to add new price types
+		/// Origin to add new signer
 		type SetSigner: EnsureOrigin<Self::RuntimeOrigin>;
 		/// Origin to manage rewards
 		type RewardOrigin: EnsureOrigin<Self::RuntimeOrigin>;
