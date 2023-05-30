@@ -72,7 +72,7 @@
         # basically this should be just package result with several files
         generate-release-artifacts = pkgs.writeShellApplication {
           name = "generate-release-artifacts";
-          runtimeInputs = [ pkgs.bash pkgs.binutils pkgs.coreutils ];
+          runtimeInputs = [ pkgs.bash pkgs.binutils pkgs.coreutils pkgs.cacert ];
           text = ''
             mkdir -p release-artifacts/to-upload/
 
