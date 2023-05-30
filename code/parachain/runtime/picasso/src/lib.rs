@@ -346,6 +346,7 @@ impl oracle::Config for Runtime {
 	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
 	type AddOracle = EnsureRootOrHalfNativeCouncil;
+	type SetSigner = EnsureRootOrHalfNativeCouncil;
 	type RewardOrigin = EnsureRootOrHalfNativeCouncil;
 	type MinAnswerBound = MinAnswerBound;
 	type MaxAnswerBound = MaxAnswerBound;
