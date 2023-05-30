@@ -136,6 +136,9 @@ Handles IBC memo and sends XCM transfers to Bifrost.
 
 On each step must check that transfer amount forwarded never more than amount received.
 
+## Polkadot -> Composable -> Picasso -> Banksy -> Osmosis
+
+Add one more Network and forwarding rule template to finally jump to Osmosis.
 
 ## Limitations
 
@@ -146,7 +149,6 @@ Cannot express(securely) arbitrary routing and programs execution.
 ## Fees
 
 To be handled in next RFC or implementation.
-
 
 ## Notes
 
