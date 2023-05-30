@@ -186,7 +186,7 @@ impl PalletHook<Runtime> for Precompiles {
 				match message {
 					cw_dex_router::msg::ExecuteMsg::Swap { in_asset, min_receive, pool_id } => {
 						//<Pablo>::do_swap(contract_address, pool_id, in_asset, min_receive, keep_alive)
-						let in_asset = AssetToDenom::convert(in_asset.denom).map_err(|_| CosmwasmVMError::AssetConversion)?
+						let in_asset = AssetToDenom::convert(in_asset.denom).map_err(|_| CosmwasmVMError::AssetConversion)?;
 						<Pablo>::do_swap(contract_address, pool_id, in_asset, min_receive, true)
 							.unwrap();
 						todo!()
