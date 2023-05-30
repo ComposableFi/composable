@@ -78,7 +78,6 @@
         ./flake/dev-shells.nix
         ./flake/docker.nix
         ./flake/fmt.nix
-        ./flake/help.nix
         ./flake/home-configurations.nix
         ./flake/live.nix
         ./flake/overlays.nix

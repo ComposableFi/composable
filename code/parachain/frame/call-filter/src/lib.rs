@@ -1,6 +1,6 @@
 #![cfg_attr(
 	not(test),
-	warn(
+	deny(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -41,7 +41,10 @@ pub mod pallet {
 		/// Overarching event type
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as system::Config>::RuntimeEvent>;
 
+		/// Origin which can disable extrinsic for being executed.
+		/// Consider be same or more allowed than EnableOrigin.
 		type DisableOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
 		type EnableOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		// NOTE: can match by binary prefix which is much more efficient than string comparison.
@@ -56,6 +59,7 @@ pub mod pallet {
 			+ Eq;
 
 		/// A hook that is able to block us from disabling/enabling an extrinsic.
+		/// Consider preventing to block executing Root governance operations.
 		type Hook: CallFilterHook<Self::MaxStringSize>;
 
 		/// Weight information for the extrinsics in this module.

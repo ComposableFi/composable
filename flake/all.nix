@@ -40,14 +40,26 @@
         prettier-check
         spell-check
         taplo-check
+        cargo-deny-check
       ]);
 
-      all-benchmarks = pkgs.linkFarmFromDrvs "all-misc" (with self'.packages; [
-        check-composable-benchmarks-ci
-        check-picasso-benchmarks-ci
-        composable-bench-node
-        benchmarks-check
-      ]);
+      all-benchmarks = pkgs.linkFarmFromDrvs "all-benchmarks"
+        (with self'.packages; [
+          check-composable-benchmarks-ci
+          check-picasso-benchmarks-ci
+          composable-bench-node
+          benchmarks-check
+        ]);
+
+      all-rust-test-packages = pkgs.linkFarmFromDrvs "all-rust-test-packages"
+        (with self'.packages; [
+          cargo-clippy-check
+          check-picasso-integration-tests
+          unit-tests
+        ]);
+
+      all-rust-qa-packages = pkgs.linkFarmFromDrvs "all-rust-qa-packages"
+        (with self'.packages; [ all-rust-test-packages all-benchmarks ]);
 
       all-production = pkgs.linkFarmFromDrvs "all-production"
         (with self'.packages; [ livenet-composable ]);
@@ -55,7 +67,7 @@
       all-darwin = pkgs.linkFarmFromDrvs "all-darwin"
         (with self'.packages; [ devnet-picasso ccw ]);
 
-      all-platforms = pkgs.linkFarmFromDrvs "all-platforms"
+      all-run-packages = pkgs.linkFarmFromDrvs "all-run-packages"
         (with self'.packages; [
           cmc-api
           cmc-api-image
@@ -75,13 +87,7 @@
         ]);
 
       all-ci-packages = pkgs.linkFarmFromDrvs "all-ci-packages"
-        (with self'.packages; [
-          all-platforms
-          cargo-clippy-check
-          cargo-deny-check
-          check-picasso-integration-tests
-          unit-tests
-        ]);
+        (with self'.packages; [ all-run-packages ]);
 
       all-frontend = pkgs.linkFarmFromDrvs "all-frontend"
         (with self'.packages; [ frontend-static ]);

@@ -64,7 +64,6 @@ impl collective::Config<NativeTechnicalMembership> for Runtime {
 }
 
 parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
@@ -80,7 +79,7 @@ impl democracy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type EnactmentPeriod = EnactmentPeriod;
-	type LaunchPeriod = LaunchPeriod;
+	type LaunchPeriod = ConstU32<{ 5 * DAYS }>;
 	type VotingPeriod = VotingPeriod;
 	type VoteLockingPeriod = EnactmentPeriod;
 	type MinimumDeposit = ConstU128<5_000_000_000_000_000>;
