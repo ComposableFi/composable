@@ -8,12 +8,12 @@ import type { NextPage } from "next";
 const Staking: NextPage = () => {
   return (
     <Default>
-      <Box flexGrow={1} sx={{ mx: "auto" }} maxWidth={1032} mt={9}>
-        <StakingPageHeading />
-        <UpcomingFeature>
-          <MockStaking />
-        </UpcomingFeature>
-      </Box>
+      {/*<Box flexGrow={1} sx={{ mx: "auto" }} maxWidth={1032} mt={9}>*/}
+      {/*  <StakingPageHeading />*/}
+      {/*  <UpcomingFeature>*/}
+      {/*    <MockStaking />*/}
+      {/*  </UpcomingFeature>*/}
+      {/*</Box>*/}
     </Default>
   );
 };
