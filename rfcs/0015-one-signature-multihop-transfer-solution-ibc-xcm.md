@@ -40,7 +40,7 @@ Send `DOT` transfer to `parent = 0, parachain = Composable, pallet = IBC,  index
 
 Alice gets dots on `Picasso` 
 
-**Details**
+*Details*
 
 `index` encodes IBC `channel id` indicating it should be forwarded over it. 
 
@@ -49,14 +49,14 @@ Alice gets dots on `Picasso`
 `pallet` and `parachain` are numbers, here we just use strings for readability. 
 
 
-## Parity Polkadot(Substrate) -> Composable Composable(Substrate) -> Composable Picasso(Substrate) -> Bansky(Cosmos SDK)
+## Parity Polkadot(Substrate) -> Composable Composable(Substrate) -> Composable Picasso(Substrate) -> Osmosis(Cosmos SDK)
 
 
 **Polkadot**
 
-`parent = 0, parachain = Composable, pallet = IBC,  index = 15, pallet = NetworksRegistry,  index = Bansky, account = Alice`
+`parent = 0, parachain = Composable, pallet = IBC,  index = 15, pallet = NetworksRegistry,  index = Osmosis, account = Alice`
 
-**Details**
+*Details*
 
 `pallet = NetworksRegistry,  index = Bansky` are numbers in hardcoded pallet like thing in `Picasso` runtime with several hardcoded chain ids to IBC routes mappings to avoid data initialization and migration complexity on first iterations.
 
@@ -68,7 +68,7 @@ https://github.com/strangelove-ventures/packet-forward-middleware):
 ```json
 {
   "forward": {
-    "receiver": "banksy-alice",
+    "receiver": "osmo-alice",
     "port": "transfer",
     "channel": "channel-123",
   }
@@ -77,12 +77,12 @@ https://github.com/strangelove-ventures/packet-forward-middleware):
 
 **Picasso**
 
-`MemoHandler` middleware parses memo sends transfer to `Banksy`.
+`MemoHandler` middleware parses memo sends transfer to `Osmosis`.
 
 
 ## Bansky(Cosmos SDK) -> ->  Composable Picasso(Substrate) -> Composable Composable(Substrate) -> Bifrost(Substrate) 
 
-**Banksy**
+**Osmosis**
 
 Sends transfer to `Picasso` with 
 
@@ -105,6 +105,13 @@ Sends transfer to `Picasso` with
 }
 ```
 
+*Details*
+
+Solution will work for Banksy were Composable controls over JSON. 
+
+For [Osmosis](https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/packages/registry/src/registry.rs) it likely will work assuming that `substrate` part will be ignored, and yet forwarded.
+
+
 **Picasso**
 
 Sends transfer to `Composable` with `memo`:
@@ -125,7 +132,7 @@ Sends transfer to `Composable` with `memo`:
 Handles IBC memo and sends XCM transfers to Bifrost.
 
 
-**Details**
+*Details*
 
 On each step must check that transfer amount forwarded never more than amount received.
 
@@ -139,3 +146,10 @@ Cannot express(securely) arbitrary routing and programs execution.
 ## Fees
 
 To be handled in next RFC or implementation.
+
+
+## Notes
+
+Also account encoding never discussed, but assumption that they will take some time to be handled well.
+
+Assumption that Centauri `pallet-ibc` will not need (substantial) modification to use memo handler to route transfers. 
