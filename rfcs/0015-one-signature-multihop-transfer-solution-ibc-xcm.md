@@ -109,7 +109,7 @@ Sends transfer to `Picasso` with
 
 Solution will work for Banksy were Composable controls over JSON. 
 
-For [Osmosis](https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/packages/registry/src/registry.rs) it likely will work assuming that `substrate` part will be ignored, and yet forwarded.
+For [Osmosis](https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/packages/registry/src/registry.rs) it likely will work assuming that `substrate` part will be ignored, and yet forwarded. In case cannot  handle like that, either encode forwarding into `receiver` (like Polkadot encodes forwarding into receiver).
 
 
 **Picasso**
@@ -153,3 +153,7 @@ To be handled in next RFC or implementation.
 Also account encoding never discussed, but assumption that they will take some time to be handled well.
 
 Assumption that Centauri `pallet-ibc` will not need (substantial) modification to use memo handler to route transfers. 
+
+In theory some safe limited form of [swaps](https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/contracts/crosschain-swaps/src/msg.rs) also may be supported like that.
+
+We may omit retries and changed timeout implementation initially in Rust codebase to simplify things.
