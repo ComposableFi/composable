@@ -181,13 +181,16 @@ impl PalletHook<Runtime> for Precompiles {
 		let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
 		match contract_address {
 			address if address == dex => {
-				let message: cw_dex_router::msg::ExecuteMsg =
-					serde_json::from_slice(message).map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
+				let message: cw_dex_router::msg::ExecuteMsg = serde_json::from_slice(message)
+					.map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
 				match message {
 					cw_dex_router::msg::ExecuteMsg::Swap { in_asset, min_receive, pool_id } => {
 						//<Pablo>::do_swap(contract_address, pool_id, in_asset, min_receive, keep_alive)
-						let in_asset = AssetToDenom::convert(in_asset.denom).map_err(|_| CosmwasmVMError::AssetConversion)?;
-						<Pablo>::do_swap(contract_address, pool_id, in_asset, min_receive, true)
+						let in_asset_id = AssetToDenom::convert(in_asset.denom).map_err(|_| CosmwasmVMError::AssetConversion)?;
+						let in_asset_amount = in_asset.amount.into();
+						<Pablo>::do_swap(contract_address, pool_id.into(), AssetAmount::new(in_asset_id, in_asset_amount), 
+						min_receive, 
+						true)
 							.unwrap();
 						todo!()
 					},
