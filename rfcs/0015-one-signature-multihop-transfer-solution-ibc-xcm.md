@@ -159,3 +159,5 @@ Assumption that Centauri `pallet-ibc` will not need (substantial) modification t
 In theory some safe limited form of [swaps](https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/contracts/crosschain-swaps/src/msg.rs) also may be supported like that.
 
 We may omit retries and changed timeout implementation initially in Rust codebase to simplify things.
+
+For XCM location forward can consider using light client hash staff to inside `network_id` to encode IBC networks. 
