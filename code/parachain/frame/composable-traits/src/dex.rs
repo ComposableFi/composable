@@ -31,7 +31,7 @@ impl<AssetId, Balance> AssetAmount<AssetId, Balance> {
 }
 
 /// The (expected or executed) result of a swap operation.
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Copy, RuntimeDebug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Copy, RuntimeDebug, serde::Serialize, serde::Deserialize)]
 pub struct SwapResult<AssetId, Balance> {
 	pub value: AssetAmount<AssetId, Balance>,
 	pub fee: AssetAmount<AssetId, Balance>,
