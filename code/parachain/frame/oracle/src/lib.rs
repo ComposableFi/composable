@@ -593,6 +593,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			signer: T::AccountId,
 		) -> DispatchResultWithPostInfo {
+			T::AddOracle::ensure_origin(origin)?;
 			let who = ensure_signed(origin)?;
 			let current_controller = ControllerToSigner::<T>::get(&who);
 			let current_signer = SignerToController::<T>::get(&signer);
