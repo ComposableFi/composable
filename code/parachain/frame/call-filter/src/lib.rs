@@ -97,6 +97,7 @@ pub mod pallet {
 		/// Possibly emits a `Disabled` event.
 		#[pallet::weight(T::WeightInfo::disable())]
 		#[transactional]
+		#[pallet::call_index(0)]
 		pub fn disable(origin: OriginFor<T>, entry: CallFilterEntryOf<T>) -> DispatchResult {
 			T::DisableOrigin::ensure_origin(origin)?;
 			ensure!(entry.valid(), Error::<T>::InvalidString);
@@ -117,6 +118,7 @@ pub mod pallet {
 		/// Possibly emits an `Enabled` event.
 		#[pallet::weight(T::WeightInfo::enable())]
 		#[transactional]
+		#[pallet::call_index(1)]
 		pub fn enable(origin: OriginFor<T>, entry: CallFilterEntryOf<T>) -> DispatchResult {
 			T::EnableOrigin::ensure_origin(origin)?;
 			ensure!(entry.valid(), Error::<T>::InvalidString);
