@@ -10,9 +10,9 @@ In this walkthrough, we will upload and interact with a `cw20_base` contract on 
 Ensure that you have followed the guide to setup youre development environment as outlined in the [first section](https://docs.composable.finance/developer-guides/cosmwasm-cli).
 :::
 
-## Running `pallet-cosmwasm` on Picasso local
+## Running `pallet-cosmwasm` on Picasso locally
 
-**When running Picasso Rococo on a local development network versus on the Picasso Rococo mainnet, the only difference is that you need to replace '-n Alice' with your seed phrase in the commands and change the RPC endpoints.**
+**When running Picasso Rococo on a local development network versus on the Picasso Rococo mainnet, the only difference is that you need to replace '-n Alice' with your seed phrase in the commands and change the RPC endpoints. It is also required to add your port after the Rococo RPC endpoint, e.g. `wss://picasso-rococo-rpc-lb.composablenodes.tech:<insert port>`.**
 
 ### Uploading the contract
 
