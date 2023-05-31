@@ -1,6 +1,7 @@
 use super::abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas};
 use crate::{runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Config, Pallet};
 use alloc::{borrow::ToOwned, string::String};
+use sp_runtime::DispatchError;
 use core::marker::{Send, Sync};
 use cosmwasm_vm::{
 	cosmwasm_std::{CodeInfoResponse, Coin, ContractInfoResponse, Empty, Env, MessageInfo},
@@ -49,7 +50,8 @@ pub enum CosmwasmVMError<T: Config> {
 	Interpreter(wasmi::Error),
 	VirtualMachine(WasmiVMError),
 	Pallet(crate::Error<T>),
-	AccountConversionFailure,
+	SubstrateDispatch(DispatchError),
+	AccountConvert,
 	Aborted(String),
 	ReadOnlyViolation,
 	OutOfGas,

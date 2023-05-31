@@ -7,7 +7,7 @@ use cosmwasm_vm::cosmwasm_std::{Coin, Uint128, Uint64};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-	Swap { in_asset: Coin, min_receive: Coin, pool_id: Uint64 },
+	Swap { in_asset: Coin, min_receive: Coin, pool_id: Uint128 },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

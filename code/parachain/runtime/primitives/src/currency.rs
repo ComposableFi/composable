@@ -11,7 +11,6 @@ use sp_runtime::{
 
 use crate::prelude::*;
 
-#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
 use xcm::{latest::prelude::*, v3};
@@ -51,10 +50,10 @@ pub trait WellKnownCurrency {
 	TypeInfo,
 	CompactAs,
 	Hash,
+	Serialize, Deserialize
 )]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[repr(transparent)]
-#[cfg_attr(feature = "std", serde(transparent))]
+#[serde(transparent)]
 pub struct CurrencyId(pub u128);
 
 impl FromStr for CurrencyId {

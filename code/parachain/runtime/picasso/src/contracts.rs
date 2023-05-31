@@ -1,3 +1,4 @@
+use composable_traits::dex::AssetAmount;
 use ::cosmwasm::pallet_hook::PalletHook;
 use cosmwasm::{
 	instrument::CostRules,
@@ -16,10 +17,9 @@ use sp_runtime::traits::AccountIdConversion;
 
 use super::*;
 
-/// Native <-> Cosmwasm account mapping
-pub struct AccountToAddr;
+pub struct AccountAddrConvert;
 
-impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
+impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountAddrConvert {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
 		let account =
 			ibc_primitives::runtime_interface::ss58_to_account_id_32(&a).map_err(|_| ())?;
@@ -27,14 +27,14 @@ impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
 	}
 }
 
-impl Convert<AccountId, alloc::string::String> for AccountToAddr {
+impl Convert<AccountId, alloc::string::String> for AccountAddrConvert {
 	fn convert(a: AccountId) -> alloc::string::String {
 		let account = ibc_primitives::runtime_interface::account_id_to_ss58(a.into(), 49);
 		String::from_utf8_lossy(account.as_slice()).to_string()
 	}
 }
 
-impl Convert<Vec<u8>, Result<AccountId, ()>> for AccountToAddr {
+impl Convert<Vec<u8>, Result<AccountId, ()>> for AccountAddrConvert {
 	fn convert(a: Vec<u8>) -> Result<AccountId, ()> {
 		Ok(<[u8; 32]>::try_from(a).map_err(|_| ())?.into())
 	}
@@ -89,7 +89,7 @@ impl cosmwasm::Config for Runtime {
 	#[cfg(not(feature = "testnet"))]
 	type MaxMessageSize = ConstU32<{ 32 * 1024 }>;
 
-	type AccountToAddr = AccountToAddr;
+	type AccountToAddr = AccountAddrConvert;
 
 	type AssetToDenom = AssetToDenom;
 
@@ -170,7 +170,7 @@ impl PalletHook<Runtime> for Precompiles {
 	) -> Result<
 		ContractResult<Response<<OwnedWasmiVM<CosmwasmVM<'a, Runtime>> as VMBase>::MessageCustom>>,
 		VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>,
-	> {
+	> {		
 		let contract_address = vm.0.data().contract_address.clone().into_inner();
 		log::error!(
 			"{:?}{:?}{:?}",
@@ -185,14 +185,22 @@ impl PalletHook<Runtime> for Precompiles {
 					.map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
 				match message {
 					cw_dex_router::msg::ExecuteMsg::Swap { in_asset, min_receive, pool_id } => {
-						//<Pablo>::do_swap(contract_address, pool_id, in_asset, min_receive, keep_alive)
 						let in_asset_id = AssetToDenom::convert(in_asset.denom).map_err(|_| CosmwasmVMError::AssetConversion)?;
+						let min_receive_asset_id = AssetToDenom::convert(min_receive.denom).map_err(|_| CosmwasmVMError::AssetConversion)?;
 						let in_asset_amount = in_asset.amount.into();
-						<Pablo>::do_swap(contract_address, pool_id.into(), AssetAmount::new(in_asset_id, in_asset_amount), 
-						min_receive, 
+						let min_receive_amount = min_receive.amount.into();
+						let who =  AccountAddrConvert::convert(vm.0.data().cosmwasm_message_info.sender.clone().into_string()).map_err(|_|CosmwasmVMError::AccountConvert)?;
+						let result = <Pablo>::do_swap(&who, pool_id.into(), 
+						AssetAmount::new(in_asset_id, in_asset_amount), 
+						AssetAmount::new(min_receive_asset_id, min_receive_amount), 
+						 
 						true)
-							.unwrap();
-						todo!()
+							.map_err(|e| CosmwasmVMError::SubstrateDispatch(e))?;
+						let response = 
+							Response::new()
+							.add_attribute("amount", result.value.amount.to_string())
+							;
+						Ok(ContractResult::Ok(response))
 					},
 				}
 			},

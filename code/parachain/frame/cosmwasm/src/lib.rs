@@ -167,6 +167,8 @@ pub mod pallet {
 		CodeNotFound,
 		ContractAlreadyExists,
 		ContractNotFound,
+		SubstrateDispatch,
+		AssetConversion,
 		TransferFailed,
 		LabelTooBig,
 		UnknownDenom,
@@ -181,6 +183,7 @@ pub mod pallet {
 		IteratorValueNotFound,
 		NotAuthorized,
 		Unsupported,
+		ExecuteDeserialize,
 		Ibc,
 		FailedToSerialize,
 		OutOfGas,
@@ -725,7 +728,7 @@ impl<T: Config> Pallet<T> {
 					CosmwasmVMError::OutOfGas => Error::<T>::OutOfGas,
 					CosmwasmVMError::Interpreter(_) => Error::<T>::Interpreter,
 					CosmwasmVMError::VirtualMachine(_) => Error::<T>::VirtualMachine,
-					CosmwasmVMError::AccountConversionFailure =>
+					CosmwasmVMError::AccountConvert =>
 						Error::<T>::AccountConversionFailure,
 					CosmwasmVMError::Aborted(_) => Error::<T>::Aborted,
 					CosmwasmVMError::ReadOnlyViolation => Error::<T>::ReadOnlyViolation,
@@ -734,6 +737,9 @@ impl<T: Config> Pallet<T> {
 					CosmwasmVMError::ContractNotFound => Error::<T>::ContractNotFound,
 					CosmwasmVMError::Rpc(_) => Error::<T>::Rpc,
 					CosmwasmVMError::Ibc(_) => Error::<T>::Ibc,
+					CosmwasmVMError::SubstrateDispatch(_) => Error::<T>::SubstrateDispatch,
+					CosmwasmVMError::AssetConversion => Error::<T>::AssetConversion,
+
 				};
 				Err(DispatchErrorWithPostInfo { error: error.into(), post_info })
 			},
