@@ -1,12 +1,13 @@
-use composable_traits::dex::AssetAmount;
+use crate::prelude::*;
 use ::cosmwasm::pallet_hook::PalletHook;
+use composable_traits::dex::AssetAmount;
 use cosmwasm::{
 	instrument::CostRules,
 	runtimes::vm::{CosmwasmVM, CosmwasmVMError},
 	types::{AccountIdOf, ContractLabelOf, ContractTrieIdOf, EntryPoint, PalletContractCodeInfo},
 };
 use cosmwasm_vm::{
-	cosmwasm_std::{ContractResult, Response},
+	cosmwasm_std::{ContractResult, Response, Binary},
 	executor::QueryResponse,
 	vm::{VMBase, VmErrorOf},
 };
@@ -170,7 +171,7 @@ impl PalletHook<Runtime> for Precompiles {
 	) -> Result<
 		ContractResult<Response<<OwnedWasmiVM<CosmwasmVM<'a, Runtime>> as VMBase>::MessageCustom>>,
 		VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>,
-	> {		
+	> {
 		let contract_address = vm.0.data().contract_address.clone().into_inner();
 		log::error!(
 			"{:?}{:?}{:?}",
@@ -185,22 +186,31 @@ impl PalletHook<Runtime> for Precompiles {
 					.map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
 				match message {
 					cw_dex_router::msg::ExecuteMsg::Swap { in_asset, min_receive, pool_id } => {
-						let in_asset_id = AssetToDenom::convert(in_asset.denom).map_err(|_| CosmwasmVMError::AssetConversion)?;
-						let min_receive_asset_id = AssetToDenom::convert(min_receive.denom).map_err(|_| CosmwasmVMError::AssetConversion)?;
+						let in_asset_id = AssetToDenom::convert(in_asset.denom)
+							.map_err(|_| CosmwasmVMError::AssetConversion)?;
+						let min_receive_asset_id = AssetToDenom::convert(min_receive.denom)
+							.map_err(|_| CosmwasmVMError::AssetConversion)?;
 						let in_asset_amount = in_asset.amount.into();
 						let min_receive_amount = min_receive.amount.into();
-						let who =  AccountAddrConvert::convert(vm.0.data().cosmwasm_message_info.sender.clone().into_string()).map_err(|_|CosmwasmVMError::AccountConvert)?;
-						let result = <Pablo>::do_swap(&who, pool_id.into(), 
-						AssetAmount::new(in_asset_id, in_asset_amount), 
-						AssetAmount::new(min_receive_asset_id, min_receive_amount), 
-						 
-						true)
-							.map_err(|e| CosmwasmVMError::SubstrateDispatch(e))?;
-						let response = 
-							Response::new()
-							.add_attribute("amount", result.value.amount.to_string())
-							;
-						Ok(ContractResult::Ok(response))
+						let who = AccountAddrConvert::convert(
+							vm.0.data().cosmwasm_message_info.sender.clone().into_string(),
+						)
+						.map_err(|_| CosmwasmVMError::AccountConvert)?;
+						let result = <Pablo>::do_swap(
+							&who,
+							pool_id.into(),
+							AssetAmount::new(in_asset_id, in_asset_amount),
+							AssetAmount::new(min_receive_asset_id, min_receive_amount),
+							true,
+						);
+						match result {
+							Ok(result) => {
+								let response = Response::new()
+									.add_attribute("amount", result.value.amount.to_string());
+								Ok(ContractResult::Ok(response))
+							},
+							Err(err) => Ok(ContractResult::Err(alloc::format!("{:?}", err))),
+						}
 					},
 				}
 			},
@@ -221,13 +231,40 @@ impl PalletHook<Runtime> for Precompiles {
 		message: &[u8],
 	) -> Result<ContractResult<QueryResponse>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>> {
 		let contract_address = vm.0.data().contract_address.clone().into_inner();
-		log::error!("{:?}{:?}", &contract_address, String::from_utf8_lossy(message));
+		log::error!(
+			"{:?}{:?}",
+			&contract_address,
+			String::from_utf8_lossy(message)
+		);
 		let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
 		match contract_address {
 			address if address == dex => {
-				panic!()
+				let message: cw_dex_router::msg::QueryMsg = serde_json::from_slice(message)
+					.map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
+				match message {
+					cw_dex_router::msg::QueryMsg::Price { in_asset, output_denom, pool_id } => {
+						let in_asset_id = AssetToDenom::convert(in_asset.denom)
+						.map_err(|_| CosmwasmVMError::AssetConversion)?;
+						let output_asset_id = AssetToDenom::convert(output_denom)
+						.map_err(|_| CosmwasmVMError::AssetConversion)?;
+						let in_asset_amount = in_asset.amount.into();
+						let result = <Pablo>::spot_price(
+							pool_id.into(),
+							AssetAmount::new(in_asset_id, in_asset_amount),
+							output_asset_id,
+							true,
+						);
+						match result {
+							Ok(result) => {
+								let result = serde_json_wasm::to_vec(&result).unwrap().into();
+								Ok(ContractResult::Ok(result))
+							},
+							Err(err) => Ok(ContractResult::Err(alloc::format!("{:?}", err))),
+						}
+					},
+				}
 			},
-			_ => Err(CosmwasmVMError::ContractNotFound),
+			_ => Err(CosmwasmVMError::ContractNotFound),		
 		}
 	}
 }

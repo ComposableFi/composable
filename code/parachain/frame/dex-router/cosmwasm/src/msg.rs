@@ -13,7 +13,7 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-	GetRoute { input_denom: Coin, output_denom: String }
+	Price { in_asset: Coin, output_denom: String, pool_id: Uint128 }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

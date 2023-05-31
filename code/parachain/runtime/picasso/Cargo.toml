@@ -142,6 +142,7 @@ cosmwasm-vm-wasmi = { workspace = true, default-features = false, features = [
 ] }
 
 serde_json = { workspace = true, default-features = false}
+serde-json-wasm = { workspace = true}
 
 
 

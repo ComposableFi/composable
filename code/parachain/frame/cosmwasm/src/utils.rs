@@ -12,7 +12,6 @@ use crate::{
 	Config, ContractToInfo, Error, Pallet,
 };
 
-// TODO(cor): move these out of the `impl` as they do not refer to `self` or `Self`.
 impl<T: Config> Pallet<T> {
 	pub(crate) fn derive_contract_address(
 		creator: &AccountIdOf<T>,
