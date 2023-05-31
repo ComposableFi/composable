@@ -1,10 +1,20 @@
 # Composable CosmWasm CLI
 
-Composable Cosmwasm CLI is a CLI tool to quickly get started with the XCVM ecosystem and interact with a chain that runs `pallet-cosmwasm`. In this guide, we will show you how to run the CLI on Picasso rococo.
+Composable Cosmwasm CLI is a CLI tool to quickly get started with the XCVM ecosystem and interact with a chain that runs `pallet-cosmwasm`. In this guide, we will show you how to run the CLI on a local Picasso network and Picasso Rococo. 
 
-## Installing `ccw`
+:::info 
+Picasso Rococo is a testnet (test network) for [Picasso](../parachains/picasso-parachain-overview.md). It allows developers to experiment, test runtime module deployment, and refine their applications to ensure the stability and compatibility of new features before deploying on Picasso mainnet by interacting with the [Rococo Relay Chain](https://polkadot.network/blog/rococo-revamp-becoming-a-community-parachain-testbed/).
+:::
 
-There are two methods to installing the ccw-vm:
+## Setting up the development environemnt
+
+The process of setting up a development environment for deploying CosmWasm contracts, both a local Picasso netork and on Picasso Rococo, follows the same procedure. There is a distinction in the RPC endpoint mentioned in the CLI commands to upload, instantiate and execute contracts. To interact with a local Picasso network, you will utilize `http://127.0.0.1:32200` whereas to deploy on Picasso Rococo, you will employ `wss://picasso-rococo-rpc-lb.composablenodes.tech`. Additionally, please note that the "-n alice sudo key" will be substituted with your seed phrase when entering the commands.
+
+Nix is a requirement to set up and start a local development environment with Composable's code. We recommend using the [Zero-to-Nix installer](https://zero-to-nix.com/start/install) to install Nix. Refer to our [docs](../nix.md) for more information.
+
+### Installing `ccw`
+
+There are two methods to installing the `ccw-vm`:
 
 1. At first, clone the [Composable moonorepo](https://github.com/ComposableFi/composable):
 
@@ -12,24 +22,32 @@ There are two methods to installing the ccw-vm:
 git clone https://github.com/ComposableFi/composable
 ```
 
-Then run the following command to install the ccw binary:
+Then run the following command to install the `ccw` binary:
 
 ```
 cargo install --path ./composable/code/parachain/frame/cosmwasm/cli
 ```
 
-2. An alternative method to run the ccw-vm is by running the following command which requires Nix. Nix is required to start the development environment to deploy contracts on Picasso rococo:
+2. An alternative method to run the `ccw-vm` is by running the following command which utilizes Nix. Nix is a package manager used for Composable software and required to start the development environment to deploy contracts on Picasso Rococo:
 
 ```
-nix run composable#ccw
+nix run profile install composable#ccw
+```
+### Setting up the DevNet
+
+To run a local network with Alice sudo key and start the development environment, run the following commands:
+
+```
+cd ~ Composable
 ```
 
-## Installing `nix` 
+```
+nix develop
+```
 
-We are using Nix to set up and start our local development environment. So check out our 
-[Nix installation page](https://docs.composable.finance/nix/install) to install Nix.
-
-Then start the development environment by running:
+:::info Nix flags
+If this is your first time using Nix and running on a non-NixOS, ensure you include the correct flags after your Nix commands as outlined [here](https://docs.composable.finance/nix/install#using-flags).
+:::
 
 ```
 nix run composable#devnet-picasso
@@ -40,6 +58,20 @@ This will take time at first but since it is cached, it will be almost instant a
 ```
 nix run "github:ComposableFi/composable/d2845fc731bc3ee418a17cf528336d50f4b39924#devnet-picasso"
 ```
+
+### Setting up the environment to deploy on a local network of Picasso
+
+Once your node is set up on local from the previous step, open the Polkadot-Js explorer to view activity changes on your local network by heading to the development section with the custom endpoint linked [here](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9988#/explorer). If Polkadot-JS fails to load your local network after running the node, it is possible that there was an error during the build process, resulting in the failure to load it correctly. For development support, feel free to ping us in the dev-chat channel on our [Discord](https://discord.com/invite/composable).
+
+### Setting up the environment to deploy on Picasso Rococo
+
+Once you have completed the setup of your development environment, you can proceed to the [PolkadotJS explorer](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rococo-rpc-lb.composablenodes.tech#/explorer) dedicated to Picasso Rococo. This explorer allows you to monitor real-time events and also interact with `pallet-cosmwasm` without the need to interact with the CLI. 
+
+To deploy contracts on Picasso Rococo, you will need PICA tokens for testing. To assist with this, we have established a [faucet](https://matrix.to/#/#picasso-rococo-faucet:matrix.org) on the Matrix platform. It enables developers to receive PICA tokens specifically for the Picasso Rococo network. To retrieve your address, you can visit the [Accounts page](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rococo-rpc-lb.composablenodes.tech#/accounts) in PolkadotJS. For detailed instructions on creating a PolkadotJS wallet, please refer to [this guide](../user-guides/polkadotjs-extension-create-account.md) we have published. Additionally, make sure you have updated to the latest metadata and have enabled the 'Allow use on any chain' option within the PolkadotJS plugin.
+
+## Interacting with the CLI 
+
+<!-- This section is omitted for now as it is not possible to do this until we update our version of cw. 
 ## Create a CosmWasm project
 
 You can create a base CosmWasm project that you can work on.
@@ -49,25 +81,32 @@ ccw new --name get-started --description "Get started with CosmWasm"
 ```
 
 See [here](./cosmwasm/new-project.md) for more.
+-->
 
-## Upload a CosmWasm contract
 
-For interacting with `pallet-cosmwasm`, `substrate` subcommand is used. To be able
-to call your contracts, you need to upload them to the chain first. There are several
-sources to upload your contracts:
+### Upload a CosmWasm contract
 
-### 1. Upload a local contract binary
+For interacting with `pallet-cosmwasm`, the `substrate` subcommand is used. To be able
+to call your contracts, you need to upload them to the chain first. The difference between running on a local devnet and on Picasso Rococo is to replace '-n Alice' with your seed phrase in the commands and the RPC endpoints, an example is provided below during the upload of a local contract binary.
+
+There are several sources to upload your contracts:
+
+#### 1. Upload a local contract binary
 
 You need to specify the file path and the signer to be able to upload a contract
 from the file path. Extrinsics must be called by a signed entity in `pallet-cosmwasm`.
-For now, the examples will use development accounts for signing extrinsics, but
-we will explain it further later.
 
 ```sh
-ccw -n alice upload -f /path/to/file.wasm
+# On Picasso local
+cargo run substrate -c ws://127.0.0.1:9988 -n alice tx upload --file_path ./cw20_base.wasm
 ```
 
-### 2. Upload a contract from a running chain
+```sh
+# On Picasso Rococo 
+cargo run substrate -c wss://picasso-rococo-rpc-lb.composablenodes.tech:443 --seed "<your SEED phrase>" tx upload --file-path ./cw20_base.wasm
+```
+
+#### 2. Upload a contract from a running chain
 
 If a Cosmos chain provides an RPC endpoint, you can use it to load the contracts
 to `ccw`. All you need to know is the RPC endpoint to fetch the
@@ -84,7 +123,7 @@ Fetch using the code ID:
 ccw substrate -n alice tx upload --cosmos-rpc https://juno-api.polkachu.com --code-id 1
 ```
 
-### 3. Upload a contract from a server
+#### 3. Upload a contract from a server
 
 One common thing is to go to a contract's release page and download the contract
 binary from there. You don't have to do that with `ccw`.
@@ -94,6 +133,6 @@ binary from there. You don't have to do that with `ccw`.
 ccw substrate -n alice tx upload --url https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm
 ```
 
-## Interact with a contract
+## Interact with contracts
 
 For examples of interacting with the contract, go to the [walkthrough](./cosmwasm/walkthrough.md).

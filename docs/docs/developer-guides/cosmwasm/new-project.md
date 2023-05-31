@@ -1,7 +1,7 @@
 # Generate a template project
 
 :::note
-Ensure that you have followed the steps to setup the guide to install clone the `ccw` repository and install nix as outlined in the [first section](https://docs.composable.finance/developer-guides/cosmwasm-cli).
+Ensure that you have followed the guide to setup youre development environment as outlined in the [first section](../cosmwasm-cli.md).
 :::
 
 Apart from interacting with `pallet-cosmwasm`, you can also create a base CosmWasm project that you can work upon.

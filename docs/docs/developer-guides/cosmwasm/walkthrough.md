@@ -1,25 +1,25 @@
 # Walkthrough: cw20_base
 
-In this walkthrough, we will upload and interact with `cw20_base` contract on Picasso rococo. We will:
-* Fetch the contract binary from a running Cosmos chain and upload it to our chain.
-* Instantiate the contract.
-* Execute a transfer.
+In this walkthrough, we will upload and interact with a `cw20_base` contract on a local Picasso network by:
+
+* Fetching the contract binary from a running Cosmos chain and upload it to our chain.
+* Instantiating the contract.
+* Executing a transfer.
 
 :::note
-Ensure that you have followed the steps to setup the guide to install clone the `ccw` repository and install nix as outlined in the [first section](https://docs.composable.finance/developer-guides/cosmwasm-cli).
+Ensure that you have followed the guide to setup youre development environment as outlined in the [first section](https://docs.composable.finance/developer-guides/cosmwasm-cli).
 :::
 
-## Running `pallet-cosmwasm` on Picasso rococo
+## Running `pallet-cosmwasm` on Picasso local
 
-**We have set up a faucet on Matrix for Picasso Rococo, allowing anyone to receive PICA tokens on rococo. Join [here](https://matrix.to/#/#picasso-rococo-faucet:matrix.org).**
+**When running Picasso Rococo on a local development network versus on the Picasso Rococo mainnet, the only difference is that you need to replace '-n Alice' with your seed phrase in the commands and change the RPC endpoints.**
+
 ### Uploading the contract
 
 Let's say that we want to upload the `v1.0.1` release of `cw20_base`. We can directly use the download link from the [release page](https://github.com/CosmWasm/cw-plus/releases).
 
-**Replace '-n Alice' with your public key in the commands.** 
-
 ```sh
-ccw substrate -c wss://picasso-rococo-unrpc-lb.composablenodes.tech/ -n alice tx upload --url https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm
+ccw substrate -c ws://127.0.0.1:9988 -n alice tx upload --url https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm
 ```
 
 Output:
@@ -68,7 +68,7 @@ make use of SS58 representations in the contracts as well, but for now, this is 
 
 So the command will be:
 ```sh
-ccw substrate -c wss://picasso-rococo-unrpc-lb.composablenodes.tech/ -n alice \
+ccw substrate -c ws://127.0.0.1:9988 -n alice \
     tx instantiate \
     -c 1 \
     -s random-salt \
@@ -102,7 +102,7 @@ generation that we use is based on the instantiate parameters that we provide, n
 address, use that address to execute the contract.
 
 ```sh
-ccw substrate -c wss://picasso-rococo-unrpc-lb.composablenodes.tech/ -n bob \
+ccw substrate -c ws://127.0.0.1:9988 -n bob \
     tx execute \
     -c  5EszMeNDPmy4orcLEHRLiJawAt5xAvfK5VH7REV8bpB1jtjX \
     -g 10000000000 \
@@ -150,3 +150,42 @@ ccw substrate -c http://127.0.0.1:32200 \
     -g 100000000 \
     -q '{"balance":{"address":"0xd64439add16b49b6b68ac74e1b28a73a8491501ab7e0e829716f580947a4bd7e"}}'
 ```
+
+## Running `pallet-cosmwasm` on Picasso Rococo
+
+This is a specific example guide to upload, initialize and execute cw20 contracts on Picasso Rococo. The previous walkthough can also be applied to Picasso Rococo too, however, we have added another example specific to Rococo.
+
+
+```sh
+# Download the contract
+curl --location https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm > cw20_base.wasm`
+```
+```sh
+# Upload the contract 
+cargo run substrate -c wss://picasso-rococo-rpc-lb.composablenodes.tech:443 --seed "<SEED>" tx upload --file-path ./cw20_base.wasm 
+```
+```sh
+# Instantiate the contract* 
+cargo run substrate -c wss://picasso-rococo-rpc-lb.composablenodes.tech:443 --seed "<SEED>" tx instantiate --code-id 1 --salt 0x1234 --label 0x4321 --gas 10000000000 --message '{ "decimals" : 18, "initial_balances": [], "name" : "SHIB", "symbol" : "SHIB", "mint": {"minter" : "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL"} }'
+```
+```sh
+# Execute the contract
+cargo run substrate -c wss://picasso-rococo-rpc-lb.composablenodes.tech:443 --seed "<SEED>" tx execute --contract "5CntM2NFn4Vkyu77tMDm5TRosKd9qskYpafh8L6Lz2FGP2rD" --gas 10000000000 --message '{ "mint" : { "amount" : "123456789", "recipient" : "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL" }}'
+```
+```sh
+# Query the contract
+cargo run substrate -c wss://picasso-rococo-rpc-lb.composablenodes.tech:443 rpc query --contract "5CntM2NFn4Vkyu77tMDm5TRosKd9qskYpafh8L6Lz2FGP2rD" --gas 10000000000 --query '{"balance": {"address": "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL"}}'
+```
+
+*After uploading the contract, please note that the "minter address" provided in the example may differ. It is possible that someone has already tested this smart contract on Picasso Rococo and uploaded it to the chain. As a result, you won't be able to upload the same contract again.
+
+If you are running this contract locally, follow these steps:
+
+1. Go to the 'Chain state' section within the 'Developer' tab.
+2. Change the 'selected state query' to 'cosmwasm'.
+3. Modify the dropdown option from 'codeHashTold' to 'contractToInfo'.
+4. Toggle the 'include option' off.
+5. This will retrieve the correct minter address. Refer to the image below as an example.
+
+![polkadot_js1](./cw-cli.png)
+Please ensure you follow these instructions to obtain the accurate minter address when running the contract locally.
