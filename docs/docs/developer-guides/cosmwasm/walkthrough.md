@@ -177,7 +177,7 @@ cargo run substrate -c wss://picasso-rococo-rpc-lb.composablenodes.tech:443 --se
 cargo run substrate -c wss://picasso-rococo-rpc-lb.composablenodes.tech:443 rpc query --contract "5CntM2NFn4Vkyu77tMDm5TRosKd9qskYpafh8L6Lz2FGP2rD" --gas 10000000000 --query '{"balance": {"address": "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL"}}'
 ```
 
-*After uploading the contract, please note that the "minter address" provided in the example may differ. It is possible that someone has already tested this smart contract on Picasso Rococo and uploaded it to the chain. As a result, you won't be able to upload the same contract again.
+*After uploading the contract, please note that the "contract address" provided in the example of instantiating the contract may differ. It is possible that someone has already tested this smart contract on Picasso Rococo and uploaded it to the chain. As a result, you won't be able to upload the same contract again.
 
 If you are running this contract locally, follow these steps:
 
@@ -185,7 +185,7 @@ If you are running this contract locally, follow these steps:
 2. Change the 'selected state query' to 'cosmwasm'.
 3. Modify the dropdown option from 'codeHashTold' to 'contractToInfo'.
 4. Toggle the 'include option' off.
-5. This will retrieve the correct minter address. Refer to the image below as an example.
+5. This will retrieve the correct contract address. Refer to the image below as an example.
 
 ![polkadot_js1](./cw-cli.png)
 Please ensure you follow these instructions to obtain the accurate minter address when running the contract locally.
