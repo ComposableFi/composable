@@ -341,7 +341,7 @@ serde_json = { version = "1.0.82", default-features = false, features = [
   "alloc",
 ] }
 
-serde-json-wasm = { version = "0.5.1" }
+serde-json-wasm = { version = "0.5.1", default-features = false }
 
 #######################################
 # DO NOT DELETE PATCHES, BUT COMMENT OUT

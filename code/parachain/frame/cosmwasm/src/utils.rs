@@ -71,8 +71,7 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn cosmwasm_addr_to_account(
 		cosmwasm_addr: String,
 	) -> Result<AccountIdOf<T>, <T as VMPallet>::VmError> {
-		T::AccountToAddr::convert(cosmwasm_addr)
-			.map_err(|()| CosmwasmVMError::AccountConvert)
+		T::AccountToAddr::convert(cosmwasm_addr).map_err(|()| CosmwasmVMError::AccountConvert)
 	}
 
 	/// Convert from a native ahttps://app.clickup.com/20465559/v/l/6-210281072-1ccount to a CosmWasm address.

@@ -25,6 +25,7 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 extern crate alloc;
 
+mod contracts;
 mod fees;
 pub mod governance;
 pub mod ibc;
@@ -32,7 +33,6 @@ mod migrations;
 mod prelude;
 pub mod version;
 mod weights;
-mod contracts;
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use fees::{AssetsPaymentHeader, FinalPriceConverter};
@@ -365,7 +365,6 @@ impl oracle::Config for Runtime {
 parameter_types! {
 	pub const ExpectedBlockTime: u64 = SLOT_DURATION;
 }
-
 
 parameter_types! {
 	pub const SpamProtectionDeposit: Balance = 1_000_000_000_000;

@@ -17,7 +17,19 @@ use sp_runtime::{
 use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec::Vec};
 
 /// Specifies and amount together with the asset ID of the amount.
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Copy, RuntimeDebug, Serialize, Deserialize)]
+#[derive(
+	Encode,
+	Decode,
+	MaxEncodedLen,
+	TypeInfo,
+	Clone,
+	PartialEq,
+	Eq,
+	Copy,
+	RuntimeDebug,
+	Serialize,
+	Deserialize,
+)]
 pub struct AssetAmount<AssetId, Balance> {
 	pub asset_id: AssetId,
 	pub amount: Balance,
@@ -30,7 +42,19 @@ impl<AssetId, Balance> AssetAmount<AssetId, Balance> {
 }
 
 /// The (expected or executed) result of a swap operation.
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Copy, RuntimeDebug, Serialize, Deserialize)]
+#[derive(
+	Encode,
+	Decode,
+	MaxEncodedLen,
+	TypeInfo,
+	Clone,
+	PartialEq,
+	Eq,
+	Copy,
+	RuntimeDebug,
+	Serialize,
+	Deserialize,
+)]
 pub struct SwapResult<AssetId, Balance> {
 	pub value: AssetAmount<AssetId, Balance>,
 	pub fee: AssetAmount<AssetId, Balance>,
@@ -130,7 +154,6 @@ pub trait Amm {
 		min_receive: BTreeMap<Self::AssetId, Self::Balance>,
 	) -> Result<BTreeMap<Self::AssetId, Self::Balance>, DispatchError>;
 
-
 	/// Buy given `amount` of given asset from the pool.
 	/// In buy user does not know how much assets he/she has to exchange to get desired amount.
 	fn do_buy(
@@ -140,7 +163,7 @@ pub trait Amm {
 		out_asset: AssetAmount<Self::AssetId, Self::Balance>,
 		keep_alive: bool,
 	) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError>;
-		
+
 	/// Perform an exchange effectively trading the in_asset against the min_receive one.
 	fn do_swap(
 		who: &Self::AccountId,

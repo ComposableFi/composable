@@ -81,7 +81,9 @@ impl<AssetId: PartialEq, Balance: MathBalance> Sell<AssetId, Balance> {
 /// Example, can do - give `base`, how much `quote` needed for unit.
 /// Can be local `Copy` `AssetId` or remote XCM asset id pair.
 #[repr(C)]
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(
+	Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, serde::Serialize, serde::Deserialize,
+)]
 pub struct CurrencyPair<AssetId> {
 	/// See [Base Currency](https://www.investopedia.com/terms/b/basecurrency.asp).
 	/// Also can be named `native`(to the market) currency.

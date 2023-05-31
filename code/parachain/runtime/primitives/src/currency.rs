@@ -50,7 +50,8 @@ pub trait WellKnownCurrency {
 	TypeInfo,
 	CompactAs,
 	Hash,
-	Serialize, Deserialize
+	Serialize,
+	Deserialize,
 )]
 #[repr(transparent)]
 #[serde(transparent)]

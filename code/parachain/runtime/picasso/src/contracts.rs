@@ -7,7 +7,7 @@ use cosmwasm::{
 	types::{AccountIdOf, ContractLabelOf, ContractTrieIdOf, EntryPoint, PalletContractCodeInfo},
 };
 use cosmwasm_vm::{
-	cosmwasm_std::{ContractResult, Response, Binary},
+	cosmwasm_std::{ContractResult, Response},
 	executor::QueryResponse,
 	vm::{VMBase, VmErrorOf},
 };
@@ -231,11 +231,7 @@ impl PalletHook<Runtime> for Precompiles {
 		message: &[u8],
 	) -> Result<ContractResult<QueryResponse>, VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>> {
 		let contract_address = vm.0.data().contract_address.clone().into_inner();
-		log::error!(
-			"{:?}{:?}",
-			&contract_address,
-			String::from_utf8_lossy(message)
-		);
+		log::error!("{:?}{:?}", &contract_address, String::from_utf8_lossy(message));
 		let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
 		match contract_address {
 			address if address == dex => {
@@ -244,9 +240,9 @@ impl PalletHook<Runtime> for Precompiles {
 				match message {
 					cw_dex_router::msg::QueryMsg::Price { in_asset, output_denom, pool_id } => {
 						let in_asset_id = AssetToDenom::convert(in_asset.denom)
-						.map_err(|_| CosmwasmVMError::AssetConversion)?;
+							.map_err(|_| CosmwasmVMError::AssetConversion)?;
 						let output_asset_id = AssetToDenom::convert(output_denom)
-						.map_err(|_| CosmwasmVMError::AssetConversion)?;
+							.map_err(|_| CosmwasmVMError::AssetConversion)?;
 						let in_asset_amount = in_asset.amount.into();
 						let result = <Pablo>::spot_price(
 							pool_id.into(),
@@ -256,7 +252,7 @@ impl PalletHook<Runtime> for Precompiles {
 						);
 						match result {
 							Ok(result) => {
-								let result = serde_json_wasm::to_vec(&result).unwrap().into();
+								let result = serde_json::to_vec(&result).unwrap().into();
 								Ok(ContractResult::Ok(result))
 							},
 							Err(err) => Ok(ContractResult::Err(alloc::format!("{:?}", err))),
@@ -264,7 +260,7 @@ impl PalletHook<Runtime> for Precompiles {
 					},
 				}
 			},
-			_ => Err(CosmwasmVMError::ContractNotFound),		
+			_ => Err(CosmwasmVMError::ContractNotFound),
 		}
 	}
 }

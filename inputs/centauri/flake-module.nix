@@ -28,7 +28,6 @@
         prometheus_endpoint = "https://127.0.0.1";
       };
 
-
       # so not yet finalizes connection, working on it
       composable-polkadot = {
         type = "composable";
