@@ -252,7 +252,8 @@ async fn main() -> anyhow::Result<()> {
 			let mut rdr = csv::Reader::from_reader(csv_file.as_bytes());
 			let all: Vec<_> =
 				rdr.deserialize::<DeleteRecord>().map(|x| x.expect("record")).collect();
-			let schedules_to_remove: HashSet<_> = all.iter().map(|x| x.vesting_schedule_id.clone()).collect();
+			let schedules_to_remove: HashSet<_> =
+				all.iter().map(|x| x.vesting_schedule_id.clone()).collect();
 			let key = sp_core::sr25519::Pair::from_string(&subargs.key, None).expect("secret");
 			let signer = PairSigner::new(key.clone());
 			let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;
@@ -279,19 +280,23 @@ async fn main() -> anyhow::Result<()> {
 				.map(|record| {
 					let address = AccountId32::from_str(&record.0).expect("address");
 
-					let retained =
-						if let Some(mut retained) = existing_schedules.get(&address.0).map(Clone::clone) {
-							for item in schedules_to_remove.iter() {
-								if let Some(not_yet_vested) = retained.remove(item) {
-									let not_yet_vested : VestingSchedule<u128, u32, u64, u128> = not_yet_vested;
-									*record.1 += not_yet_vested.per_period * not_yet_vested.period_count as u128 - not_yet_vested.already_claimed;
-								}
+					let retained = if let Some(mut retained) =
+						existing_schedules.get(&address.0).map(Clone::clone)
+					{
+						for item in schedules_to_remove.iter() {
+							if let Some(not_yet_vested) = retained.remove(item) {
+								let not_yet_vested: VestingSchedule<u128, u32, u64, u128> =
+									not_yet_vested;
+								*record.1 += not_yet_vested.per_period *
+									not_yet_vested.period_count as u128 - not_yet_vested
+									.already_claimed;
 							}
+						}
 
-							retained
-						} else {
-							<_>::default()
-						};
+						retained
+					} else {
+						<_>::default()
+					};
 
 					let retained: Vec<_> = retained
 						.values()
@@ -299,7 +304,7 @@ async fn main() -> anyhow::Result<()> {
 							let (window_moment_start, window_moment_period) = match item.window {
 								client::VestingWindow::MomentBased { start, period } =>
 									(start, period),
-								client::VestingWindow::BlockNumberBased { start: _, period : _ } =>
+								client::VestingWindow::BlockNumberBased { start: _, period: _ } =>
 									todo!(),
 							};
 
