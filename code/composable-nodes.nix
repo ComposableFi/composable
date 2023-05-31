@@ -1,6 +1,6 @@
 { self, ... }: {
-  perSystem =
-    { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
+  perSystem = { config, self', inputs', pkgs, system, crane, systemCommonRust
+    , devnetTools, ... }:
 
     let
       rust-src-template = root:
@@ -37,9 +37,23 @@
         };
 
       rustSrc = rust-src-template ./.;
+      toDockerImage = { ... }@drv:
+        (pkgs.dockerTools.buildImage {
+          name = drv.name or drv.pname or "image";
+          tag = "latest";
+          copyToRoot = pkgs.buildEnv {
+            name = "image-root";
+            paths = [ drv pkgs.glibc ] ++ devnetTools.withBaseContainerTools;
+            pathsToLink = [ "/bin" ];
+          };
+          config = {
+            Entrypoint =
+              [ "${pkgs.lib.getBin drv}/bin/${pkgs.lib.getName drv}" ];
+            Env =
+              [ "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt" ];
+          };
+        });
 
-      toDockerImage = package:
-        self.inputs.bundlers.bundlers."${system}".toDockerImage package;
       makeComposableNode = picasso-runtime: composable-runtime:
         crane.nightly.buildPackage (systemCommonRust.common-attrs // rec {
           name = "composable";
@@ -64,7 +78,6 @@
         });
     in {
       packages = rec {
-
         ccw = crane.nightly.buildPackage (systemCommonRust.common-attrs // rec {
           name = "ccw";
           cargoBuildCommand = "cargo build --release --package ${name}";

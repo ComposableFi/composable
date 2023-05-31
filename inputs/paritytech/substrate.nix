@@ -43,14 +43,22 @@
             EXTRA_FEATURES=",$2"
           fi
           cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" 
-          cargo check --tests --features=std,runtime-benchmarks --package "$1"
           cargo clippy --package "$1" -- --deny warnings --allow deprecated
           cargo test --features=std,runtime-benchmarks"$EXTRA_FEATURES" --package "$1"
+          cargo check --tests --features=std,runtime-benchmarks --package "$1"
+        '';
+      };
+      check-std-wasm = pkgs.writeShellApplication {
+        name = "check-std-wasm";
+        runtimeInputs = [ self'.packages.rust-nightly ];
+        text = ''
+          cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" 
+          cargo clippy --package "$1" -- --deny warnings --allow deprecated
         '';
       };
       check-runtime = check-pallet;
     in {
       _module.args.subnix = rec { inherit subenv subattrs; };
-      packages = { inherit check-pallet check-runtime; };
+      packages = { inherit check-pallet check-runtime check-std-wasm; };
     };
 }
