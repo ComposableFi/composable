@@ -98,7 +98,7 @@ from the file path. Extrinsics must be called by a signed entity in `pallet-cosm
 
 ```sh
 # On Picasso local
-cargo run substrate -c ws://127.0.0.1:9988 -n alice tx upload --file_path ./cw20_base.wasm
+cargo run substrate -c ws://127.0.0.1:9988 -n alice tx upload --file-path ./cw20_base.wasm
 ```
 
 ```sh
