@@ -8,7 +8,7 @@ Picasso Rococo is a testnet (test network) for [Picasso](../parachains/picasso-p
 
 ## Setting up the development environemnt
 
-The process of setting up a development environment for deploying CosmWasm contracts, both a local Picasso netork and on Picasso Rococo, follows the same procedure. There is a distinction in the RPC endpoint mentioned in the CLI commands to upload, instantiate and execute contracts. To interact with a local Picasso network, you will utilize `http://127.0.0.1:32200` whereas to deploy on Picasso Rococo, you will employ `wss://picasso-rococo-rpc-lb.composablenodes.tech`. Additionally, please note that the "-n alice sudo key" will be substituted with your seed phrase when entering the commands.
+The process of setting up a development environment for deploying CosmWasm contracts, both a local Picasso netork and on Picasso Rococo, follows the same procedure. There is a distinction in the RPC endpoint mentioned in the CLI commands to upload, instantiate and execute contracts. To interact with a local Picasso network, you will utilize `http://127.0.0.1:32200` whereas to deploy on Picasso Rococo, you will employ `wss://picasso-rococo-rpc-lb.composablenodes.tech`. Additionally, please note that the "-n alice" sudo key will be substituted with your seed phrase when entering the commands.
 
 Nix is a requirement to set up and start a local development environment with Composable's code. We recommend using the [Zero-to-Nix installer](https://zero-to-nix.com/start/install) to install Nix. Refer to our [docs](../nix.md) for more information.
 
@@ -38,7 +38,7 @@ nix run profile install composable#ccw
 To run a local network with Alice sudo key and start the development environment, run the following commands:
 
 ```
-cd ~ Composable
+cd ./composable
 ```
 
 ```
