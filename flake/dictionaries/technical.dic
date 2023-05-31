@@ -139,6 +139,7 @@ hadolint
 hardfork
 hasher
 hasura
+hetzner
 hevm
 hexdump
 hexlify
@@ -156,6 +157,7 @@ immer
 includeurl
 infima
 inprocess
+installimage
 instrs
 ipam
 ipetkov # github username
@@ -208,6 +210,7 @@ nettools
 newlength
 nextjs
 NFTID
+nixbuild
 nixfmt
 nixified
 nixify

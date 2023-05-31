@@ -1,51 +1,25 @@
 # Walkthrough: cw20_base
 
-In this walkthrough, we will upload and interact with `cw20_base` contract. We will do:
+In this walkthrough, we will upload and interact with `cw20_base` contract on Picasso rococo. We will:
 * Fetch the contract binary from a running Cosmos chain and upload it to our chain.
 * Instantiate the contract.
 * Execute a transfer.
 
-## Installing `ccw`
+:::note
+Ensure that you have followed the steps to setup the guide to install clone the `ccw` repository and install nix as outlined in the [first section](https://docs.composable.finance/developer-guides/cosmwasm-cli).
+:::
 
-Clone the [repository](https://github.com/ComposableFi/cw-toolkit), then run:
+## Running `pallet-cosmwasm` on Picasso rococo
 
-```
-# Clone the repo
-git clone https://github.com/ComposableFi/cw-toolkit
+**We have set up a faucet on Matrix for Picasso Rococo, allowing anyone to receive PICA tokens on rococo. Join [here](https://matrix.to/#/#picasso-rococo-faucet:matrix.org).**
+### Uploading the contract
 
-# Install the ccw binary
-cargo install --path ./cw-toolkit/cli
-```
+Let's say that we want to upload the `v1.0.1` release of `cw20_base`. We can directly use the download link from the [release page](https://github.com/CosmWasm/cw-plus/releases).
 
-## Installing `nix` (for running the chain locally)
-
-We are using Nix to set up and start our local development environment. So check out our 
-[Nix installation page](https://docs.composable.finance/nix/install) to install Nix.
-
-Then start the development environment by running:
-
-```
-nix run "github:ComposableFi/composable#dali-devnet"
-```
-
-This will take time at first but since it is cached, it will be almost instant afterward. But note your node will be rebuilt
-if the commit hash changes so if you don't want that, you can always use a specific commit hash:
-
-```
-nix run "github:ComposableFi/composable/d2845fc731bc3ee418a17cf528336d50f4b39924#dali-devnet"
-```
-
-## Running `pallet-cosmwasm` in local
-
-You can run our devnet locally following this guide: https://docs.composable.finance/nix.
-
-## Uploading the contract
-
-Let's say that we want to upload the `v1.0.1` release of `cw20_base`. We can directly use the download link
-from the [release page](https://github.com/CosmWasm/cw-plus/releases).
+**Replace '-n Alice' with your public key in the commands.** 
 
 ```sh
-ccw substrate -c ws://127.0.0.1:9988 -n alice tx upload --url https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm
+ccw substrate -c wss://picasso-rococo-unrpc-lb.composablenodes.tech/ -n alice tx upload --url https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm
 ```
 
 Output:
@@ -56,18 +30,17 @@ Output:
         - Code ID: 1
 ```
 
-## Getting JSON output instead of plain text
+### Getting JSON output instead of plain text
 
-Sometimes it is easy to get the output in JSON for to automize the process. You can do that by using `--output-type` parameter.
+Sometimes it is easy to get the output in JSON to automize the process. You can do that by using `--output-type` parameter.
 
 ```sh
 ccw substrate --output-type json COMMAND
 ```
 
-## Instantiating the contract
+### Instantiating the contract
 
-The next step is to instantiate the contract so that we have an instance of the contract that we can execute and query. The upload command returned a code ID. This code
-ID is used to identify the wasm binary (compiled CosmWasm contract). We will use this code ID to instantiate the contract from.
+The next step is to instantiate the contract so that we have an instance of the contract that we can execute and query. The upload command returned a code ID. This code ID is used to identify the wasm binary (compiled CosmWasm contract). We will use this code ID to instantiate the contract from.
 
 We want to use the following configurations to instantiate the contract:
 
@@ -95,7 +68,7 @@ make use of SS58 representations in the contracts as well, but for now, this is 
 
 So the command will be:
 ```sh
-ccw substrate -c ws://127.0.0.1:9988 -n alice \
+ccw substrate -c wss://picasso-rococo-unrpc-lb.composablenodes.tech/ -n alice \
     tx instantiate \
     -c 1 \
     -s random-salt \
@@ -117,7 +90,7 @@ Output:
         - code_id: 1
 ```
 
-## Execute a transfer
+### Execute a transfer
 
 Let's transfer some amount from `Bob` to `Charlie`.
 
@@ -129,7 +102,7 @@ generation that we use is based on the instantiate parameters that we provide, n
 address, use that address to execute the contract.
 
 ```sh
-ccw substrate -c ws://127.0.0.1:9988 -n bob \
+ccw substrate -c wss://picasso-rococo-unrpc-lb.composablenodes.tech/ -n bob \
     tx execute \
     -c  5EszMeNDPmy4orcLEHRLiJawAt5xAvfK5VH7REV8bpB1jtjX \
     -g 10000000000 \
@@ -154,7 +127,7 @@ Output:
 ```
   
   
-## Query the balance
+### Query the balance
 
 Although you can see that the events clearly show the transfer happened. Let's query the contract to check out our balance to make sure. Since the query is not a transaction
 but an RPC call, we'll use the subcommand `rpc` instead of `tx`.

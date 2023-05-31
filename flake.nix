@@ -28,8 +28,7 @@
     devenv.url = "github:cachix/devenv";
     zombienet = {
       url =
-        # PRed to zombient
-        "github:dzmitry-lahoda-forks/zombienet/090698032830cc7153f643f8f9cf2b21033528aa";
+        "github:dzmitry-lahoda-forks/zombienet/6d0b4cc3cca26e250f160d1979accc7e7318d347";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
@@ -79,7 +78,6 @@
         ./flake/dev-shells.nix
         ./flake/docker.nix
         ./flake/fmt.nix
-        ./flake/help.nix
         ./flake/home-configurations.nix
         ./flake/live.nix
         ./flake/overlays.nix

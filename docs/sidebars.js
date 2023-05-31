@@ -259,6 +259,7 @@ const sidebars = {
                     items: [
                         'user-guides/polkadotjs-extension-create-account',
                         'user-guides/talisman-create-account',
+                        'user-guides/layr-guide'
                     ],
                 },
                 {
@@ -378,8 +379,8 @@ const sidebars = {
                     collapsible: true,
                     collapsed: true,
                     items: [
-                        'developer-guides/cosmwasm/new-project',
                         'developer-guides/cosmwasm/walkthrough',
+                        'developer-guides/cosmwasm/new-project',
                     ]
                 },
                 'developer-guides/oracle-set-up-guide',

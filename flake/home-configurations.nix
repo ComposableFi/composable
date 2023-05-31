@@ -4,7 +4,8 @@
     homeConfigurations = let user = "vscode";
     in (withSystem "x86_64-linux"
       ({ config, self', inputs', pkgs, devnetTools, this, subnix, ... }: {
-        vscode = let codespace = with pkgs; [ cachix acl direnv ];
+        default = "${user}";
+        "${user}" = let codespace = with pkgs; [ cachix acl direnv ];
         in self.inputs.home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
           modules = [{

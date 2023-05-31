@@ -9,6 +9,8 @@
         cachix
         curl
         websocat
+        patchelf
+        file
       ];
       withBaseContainerTools = with pkgs; [ bash coreutils procps findutils ];
       withDevNetContainerTools = with pkgs;
