@@ -253,7 +253,7 @@ impl PalletHook<Runtime> for Precompiles {
 						match result {
 							Ok(result) => {
 								let result = serde_json::to_vec(&result)
-									.map_err(|x| CosmwasmVMError::QuerySerialize)?
+									.map_err(|_| CosmwasmVMError::QuerySerialize)?
 									.into();
 								Ok(ContractResult::Ok(result))
 							},
