@@ -96,14 +96,18 @@ There are several sources to upload your contracts:
 You need to specify the file path and the signer to be able to upload a contract
 from the file path. Extrinsics must be called by a signed entity in `pallet-cosmwasm`.
 
+```
+cd path/to/file 
+```
+
 ```sh
 # On Picasso local
-cargo run substrate -c ws://127.0.0.1:9988 -n alice tx upload --file-path ./cw20_base.wasm
+cargo run substrate -c ws://127.0.0.1:9988 -n alice tx upload --file-path .path/to/file
 ```
 
 ```sh
 # On Picasso Rococo 
-cargo run substrate -c wss://picasso-rococo-rpc-lb.composablenodes.tech:443 --seed "<your SEED phrase>" tx upload --file-path ./cw20_base.wasm
+cargo run substrate -c wss://picasso-rococo-rpc-lb.composablenodes.tech:443 --seed "<your SEED phrase>" tx upload --file-path .path/to/file
 ```
 
 #### 2. Upload a contract from a running chain
