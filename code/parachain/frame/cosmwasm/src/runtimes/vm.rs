@@ -58,6 +58,7 @@ pub enum CosmwasmVMError<T: Config> {
 	Unsupported,
 	ContractNotFound,
 	ExecuteDeserialize,
+	QuerySerialize,
 	Rpc(String),
 	Ibc(String),
 	AssetConversion,

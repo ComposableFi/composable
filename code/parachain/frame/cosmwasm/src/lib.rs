@@ -738,6 +738,7 @@ impl<T: Config> Pallet<T> {
 					CosmwasmVMError::Ibc(_) => Error::<T>::Ibc,
 					CosmwasmVMError::SubstrateDispatch(_) => Error::<T>::SubstrateDispatch,
 					CosmwasmVMError::AssetConversion => Error::<T>::AssetConversion,
+					CosmwasmVMError::QuerySerialize => Error::<T>::FailedToSerialize,
 				};
 				Err(DispatchErrorWithPostInfo { error: error.into(), post_info })
 			},
