@@ -7,7 +7,7 @@ In this walkthrough, we will upload and interact with a `cw20_base` contract on 
 * Executing a transfer.
 
 :::note
-Ensure that you have followed the guide to setup youre development environment as outlined in the [first section](https://docs.composable.finance/developer-guides/cosmwasm-cli).
+Ensure that you have followed the guide to setup your development environment as outlined in the [first section](https://docs.composable.finance/developer-guides/cosmwasm-cli).
 :::
 
 ## Running `pallet-cosmwasm` on Picasso locally
