@@ -8,7 +8,7 @@ Picasso Rococo is a testnet (test network) for [Picasso](../parachains/picasso-p
 
 ## Setting up the development environemnt
 
-The process of setting up a development environment for deploying CosmWasm contracts, both a local Picasso netork and on Picasso Rococo, follows the same procedure. There is a distinction in the RPC endpoint mentioned in the CLI commands to upload, instantiate and execute contracts. To interact with a local Picasso network, you will utilize `http://127.0.0.1:32200` whereas to deploy on Picasso Rococo, you will employ `wss://picasso-rococo-rpc-lb.composablenodes.tech:<insert port>`. Additionally, please note that the "-n alice" sudo key will be substituted with your seed phrase when entering the commands.
+The process of setting up a development environment for deploying CosmWasm contracts, both a local Picasso netork and on Picasso Rococo, follows the same procedure. There is a distinction in the RPC endpoint mentioned in the CLI commands to upload, instantiate and execute contracts. To interact with a local Picasso network, you will utilize `ws://127.0.0.1:9988` whereas to deploy on Picasso Rococo, you will employ `wss://picasso-rococo-rpc-lb.composablenodes.tech:443`. Additionally, please note that the "-n alice" sudo key will be substituted with your seed phrase when entering the commands.
 
 Nix is a requirement to set up and start a local development environment with Composable's code. We recommend using the [Zero-to-Nix installer](https://zero-to-nix.com/start/install) to install Nix. Refer to our [docs](../nix.md) for more information.
 
@@ -16,19 +16,13 @@ Nix is a requirement to set up and start a local development environment with Co
 
 There are two methods to installing the `ccw-vm`:
 
-1. At first, clone the [Composable moonorepo](https://github.com/ComposableFi/composable):
+1. Install the `ccw` crate from the Composable monorepo:
 
 ```
-git clone https://github.com/ComposableFi/composable
+cargo install --git https://github.com/ComposableFi/composable ./composable/code/parachain/frame/cosmwasm/cli
 ```
 
-Then run the following command to install the `ccw` binary:
-
-```
-cargo install --path ./composable/code/parachain/frame/cosmwasm/cli
-```
-
-2. An alternative method to run the `ccw-vm` is by running the following command which utilizes Nix. Nix is a package manager used for Composable software and required to start the development environment to deploy contracts on Picasso Rococo:
+2. An alternative method to run the `ccw-vm` is by running the following command using Nix.:
 
 ```
 nix run profile install composable#ccw
@@ -38,15 +32,11 @@ nix run profile install composable#ccw
 To run a local network with Alice sudo key and start the development environment, run the following commands:
 
 ```
-cd ./composable
-```
-
-```
-nix develop
+nix develop composable
 ```
 
 :::info Nix flags
-If this is your first time using Nix and running on a non-NixOS, ensure you include the correct flags after your Nix commands as outlined [here](https://docs.composable.finance/nix/install#using-flags).
+If this is your first time using Nix and running on a non-NixOS, ensure you include the correct flags after your Nix commands.
 :::
 
 ```
@@ -61,13 +51,15 @@ nix run "github:ComposableFi/composable/d2845fc731bc3ee418a17cf528336d50f4b39924
 
 ### Setting up the environment to deploy on a local network of Picasso
 
-Once your node is set up on local from the previous step, open the Polkadot-Js explorer to view activity changes on your local network by heading to the development section with the custom endpoint linked [here](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9988#/explorer). If Polkadot-JS fails to load your local network after running the node, it is possible that there was an error during the build process, resulting in the failure to load it correctly. For development support, feel free to ping us in the dev-chat channel on our [Discord](https://discord.com/invite/composable).
+Once your node is set up on local from the previous step, open the Polkadot-Js explorer to view activity changes on your local network by heading to the development section with the custom endpoint linked [here](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9988#/explorer). If Polkadot-JS fails to load your local network after running the node, it is possible that there was an error during the build process, resulting in the failure to load it correctly. 
 
 ### Setting up the environment to deploy on Picasso Rococo
 
-Once you have completed the setup of your development environment, you can proceed to the [PolkadotJS explorer](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rococo-rpc-lb.composablenodes.tech#/explorer) dedicated to Picasso Rococo. This explorer allows you to monitor real-time events and also interact with `pallet-cosmwasm` without the need to interact with the CLI. 
+Once you have completed the setup of your development environment, you can proceed to the [PolkadotJS explorer](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rococo-rpc-lb.composablenodes.tech#/explorer) dedicated to Picasso Rococo. This explorer allows you to monitor real-time events and also interact with `ccw` without the need to interact with the CLI. 
 
 To deploy contracts on Picasso Rococo, you will need PICA tokens for testing. To assist with this, we have established a [faucet](https://matrix.to/#/#picasso-rococo-faucet:matrix.org) on the Matrix platform. It enables developers to receive PICA tokens specifically for the Picasso Rococo network. To retrieve your address, you can visit the [Accounts page](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rococo-rpc-lb.composablenodes.tech#/accounts) in PolkadotJS. For detailed instructions on creating a PolkadotJS wallet, please refer to [this guide](../user-guides/polkadotjs-extension-create-account.md) we have published. Additionally, make sure you have updated to the latest metadata and have enabled the 'Allow use on any chain' option within the PolkadotJS plugin.
+
+A useful resource for interacting with PolkadotJS is their [developer documentation](https://polkadot.js.org/docs/). 
 
 ## Interacting with the CLI 
 
@@ -86,7 +78,7 @@ See [here](./cosmwasm/new-project.md) for more.
 
 ### Upload a CosmWasm contract
 
-For interacting with `pallet-cosmwasm`, the `substrate` subcommand is used. To be able
+For interacting with `cosmwasm`, the `substrate` subcommand is used. To be able
 to call your contracts, you need to upload them to the chain first. The difference between running on a local devnet and on Picasso Rococo is to replace '-n Alice' with your seed phrase in the commands and the RPC endpoints, an example is provided below during the upload of a local contract binary.
 
 There are several sources to upload your contracts:
@@ -102,12 +94,12 @@ cd path/to/file
 
 ```sh
 # On Picasso local
-cargo run substrate -c ws://127.0.0.1:9988 -n alice tx upload --file-path .path/to/file
+ccw substrate -c ws://127.0.0.1:9988 -n alice tx upload --file-path .path/to/file
 ```
 
 ```sh
 # On Picasso Rococo 
-cargo run substrate -c wss://picasso-rococo-rpc-lb.composablenodes.tech:443 --seed "<your SEED phrase>" tx upload --file-path .path/to/file
+ccw substrate -c wss://picasso-rococo-rpc-lb.composablenodes.tech:443 --seed "<your SEED phrase>" tx upload --file-path .path/to/file
 ```
 
 #### 2. Upload a contract from a running chain
