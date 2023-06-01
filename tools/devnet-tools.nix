@@ -12,7 +12,13 @@
         patchelf
         file
       ];
-      withBaseContainerTools = with pkgs; [ bash coreutils procps findutils ];
+      withBaseContainerTools = with pkgs; [
+        bash
+        coreutils
+        procps
+        findutils
+        cacert
+      ];
       withDevNetContainerTools = with pkgs;
         [ bottom gawk gnugrep less nettools nix ] ++ withBaseContainerTools
         ++ withUserContainerTools;

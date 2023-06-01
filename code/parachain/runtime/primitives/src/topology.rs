@@ -168,6 +168,26 @@ impl Composable {
 				ratio: Some(rational!(2 / 10000000)),
 			},
 		);
+		let mut usdt_statemine =
+			InnerPrefixedDenom::from_str(CurrencyId::USDT.to_string().as_str()).expect("genesis");
+		usdt_statemine.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(0)));
+		let usdt_statemine = (
+			CurrencyId::USDT.0 as u64,
+			Some(ForeignAssetId::IbcIcs20(PrefixedDenom(usdt_statemine))),
+			AssetInfo {
+				name: Some(
+					BiBoundedAssetName::from_vec(b"Statemine USDT".to_vec())
+						.expect("String is within bounds"),
+				),
+				symbol: Some(
+					BiBoundedAssetSymbol::from_vec(b"USDT".to_vec())
+						.expect("String is within bounds"),
+				),
+				decimals: Some(6),
+				existential_deposit: 1500,
+				ratio: Some(rational!(2 / 10000000)),
+			},
+		);
 		let mut pica =
 			InnerPrefixedDenom::from_str(CurrencyId::PICA.to_string().as_str()).expect("genesis");
 		pica.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(0)));
@@ -228,7 +248,7 @@ impl Composable {
 			},
 		);
 
-		vec![usdt_statemint, pica, dot, ksm]
+		vec![usdt_statemint, pica, dot, ksm, usdt_statemine]
 	}
 }
 
