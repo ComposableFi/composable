@@ -137,15 +137,17 @@ impl Ics20RateLimiter for ConstantAny {
 		// different decimals places and not doing it would defeat the purpose of fixing the nominal
 		// amount tha we are allowing users to transfer.
 		let token = &msg.token;
-		let asset_id: CurrencyId =
+		let asset_id: Option<CurrencyId> =
 			<<Runtime as pallet_ibc::Config>::IbcDenomToAssetIdConversion as DenomToAssetId<
 				Runtime,
 			>>::from_denom_to_asset_id(&token.denom.to_string())
-			.map_err(|_| ())?;
+			.map_err(|_| ())
+			.ok();
 
-		let decimals =
-			<assets_registry::Pallet<Runtime> as InspectRegistryMetadata>::decimals(&asset_id)
-				.unwrap_or(12);
+		let decimals = asset_id
+			.map(|x| <assets_registry::Pallet<Runtime> as InspectRegistryMetadata>::decimals(&x))
+			.flatten()
+			.unwrap_or(12);
 
 		if msg.token.amount.as_u256() <=
 			::ibc::bigint::U256::from(limit * 10_u64.pow(decimals as _))
@@ -207,7 +209,7 @@ impl pallet_ibc::Config for Runtime {
 	type MinimumConnectionDelay = ConstU64<1>;
 	type ParaId = parachain_info::Pallet<Runtime>;
 	type RelayChain = RelayChainId;
-	type WeightInfo = weights::ibc::WeightInfo<Self>;
+	type WeightInfo = weights::pallet_ibc::WeightInfo<Self>;
 	type AdminOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
