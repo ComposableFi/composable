@@ -170,7 +170,10 @@ impl pallet_oracle::Config for Test {
 		EnsureSignedBy<RootAccount, sp_core::sr25519::Public>,
 		EnsureRoot<AccountId>,
 	>;
-	type SetSigner = EnsureSigned<AccountId>;
+	type SetSigner = EitherOfDiverse<
+		EnsureSignedBy<RootAccount, sp_core::sr25519::Public>,
+		EnsureRoot<AccountId>,
+	>;
 	type MinAnswerBound = MinAnswerBound;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;

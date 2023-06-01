@@ -784,7 +784,7 @@ pub mod pallet {
 			ensure!(stake > BalanceOf::<T>::zero(), Error::<T>::NoStake);
 			OracleStake::<T>::remove(&signer);
 			DeclaredWithdraws::<T>::remove(&signer);
-			T::Currency::unreserve(&signer, withdrawal.stake);
+			T::Currency::unreserve(&signer, stake);
 			let result = T::Currency::transfer(&signer, &who, stake, AllowDeath);
 			ensure!(result.is_ok(), Error::<T>::TransferError);
 
