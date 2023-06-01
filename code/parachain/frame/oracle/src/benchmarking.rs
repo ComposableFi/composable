@@ -100,8 +100,8 @@ benchmarks! {
 		whitelist!(signer);
 		let stake = T::MinStake::get();
 		T::Currency::make_free_balance_be(&caller, stake + T::Currency::minimum_balance());
-		<Oracle<T>>::set_signer(RawOrigin::Signed(caller.clone()), signer.clone());
-	}: _(RawOrigin::Root, signer.clone())
+		<Oracle<T>>::set_signer(RawOrigin::Root, caller.clone(), signer.clone());
+	}: _(RawOrigin::Root, caller.clone())
 	verify {
 		assert_last_event::<T>(Event::SignerRemoved(caller, signer, stake).into())
 	}
