@@ -674,7 +674,7 @@ impl<T: frame_system::Config> pallet_ibc::WeightInfo for WeightInfo<T> {
 	/// Storage: unknown `0x6962632f61636b732f706f7274732f7472616e736665722f6368616e6e656c73` (r:100 w:0)
 	/// Proof Skipped: unknown `0x6962632f61636b732f706f7274732f7472616e736665722f6368616e6e656c73` (r:100 w:0)
 	/// The range of component `i` is `[1, 100]`.
-	fn cleanup_packets(i: u32, ) -> Weight {
+	fn packet_cleanup(i: u32, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `734 + i * (143 ±0)`
 		//  Estimated: `27228 + i * (8936 ±0)`
