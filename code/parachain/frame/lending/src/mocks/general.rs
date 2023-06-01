@@ -284,6 +284,7 @@ impl pallet_oracle::Config for Runtime {
 	type StakeLock = MinU64;
 	type StalePrice = MinU64;
 	type AddOracle = EnsureSignedBy<RootAccount, AccountId>;
+	type SetSigner = EnsureSignedBy<RootAccount, AccountId>;
 	type MinAnswerBound = MinU32;
 	type MaxAnswerBound = MinU32;
 	type MaxAssetsCount = MinU32;
