@@ -355,7 +355,7 @@ impl<T: frame_system::Config> pallet_ibc::WeightInfo for WeightInfo<T> {
 	/// Storage: unknown `0x6962632f636c69656e74732f30372d74656e6465726d696e742d302f636f6e73` (r:1 w:0)
 	/// Proof Skipped: unknown `0x6962632f636c69656e74732f30372d74656e6465726d696e742d302f636f6e73` (r:1 w:0)
 	/// The range of component `i` is `[1, 1000]`.
-	fn ack_packet_tendermint(i: u32, ) -> Weight {
+	fn ack_packet_tendermint(i: u32, _j: u32) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `2334`
 		//  Estimated: `50556`
@@ -651,5 +651,9 @@ impl<T: frame_system::Config> pallet_ibc::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(10))
 			.saturating_add(T::DbWeight::get().writes(6))
 			.saturating_add(Weight::from_proof_size(266).saturating_mul(i.into()))
+	}
+
+	fn packet_cleanup(_i: u32) -> Weight {
+		Weight::from_ref_time(0)
 	}
 }

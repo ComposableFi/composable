@@ -209,7 +209,7 @@ impl pallet_ibc::Config for Runtime {
 	type MinimumConnectionDelay = ConstU64<1>;
 	type ParaId = parachain_info::Pallet<Runtime>;
 	type RelayChain = RelayChainId;
-	type WeightInfo = weights::ibc::WeightInfo<Self>;
+	type WeightInfo = weights::pallet_ibc::WeightInfo<Self>;
 	type AdminOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
