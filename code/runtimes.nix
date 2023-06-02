@@ -1,8 +1,8 @@
 { self, ... }: {
-  perSystem =
-    { config, self', inputs', pkgs, system, crane, systemCommonRust, cargoTools, ... }:
+  perSystem = { config, self', inputs', pkgs, system, crane, systemCommonRust
+    , cargoTools, ... }:
     let
-      rustSrc = cargoTools.rust-src-template ./.;      
+      rustSrc = cargoTools.mkRustSrc ./.;
       # Build a wasm runtime, unoptimized
       mkRuntime = name: features: cargoArtifacts:
         crane.nightly.buildPackage (systemCommonRust.common-attrs // {

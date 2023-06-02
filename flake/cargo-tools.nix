@@ -1,7 +1,7 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }: {
     _module.args.cargoTools = rec {
-            rust-src-template = root:
+      mkRustSrc = root:
         pkgs.lib.cleanSourceWith {
           filter = pkgs.lib.cleanSourceFilter;
           src = pkgs.lib.cleanSourceWith {
@@ -19,8 +19,8 @@
                 || type == "regular" && pkgs.lib.strings.hasSuffix ".lock" name;
               isRust = name: type:
                 type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
-              isNix = name: type:
-                type == "regular" && pkgs.lib.strings.hasSuffix ".nix" name;                
+              isNotNix = name: type:
+                !(type == "regular" && pkgs.lib.strings.hasSuffix ".nix" name);
               customFilter = name: type:
                 builtins.any (fun: fun name type) [
                   isCargo
@@ -29,7 +29,7 @@
                   isREADME
                   isJSON
                   isProto
-                  (name: type : !(isNix name  type)) 
+                  isNotNix
                 ];
             in pkgs.nix-gitignore.gitignoreFilterPure customFilter
             [ ../.gitignore ] root;
@@ -37,7 +37,7 @@
           };
         };
 
-      rustSrc = rust-src-template ./../code/.;      
+      rustSrc = mkRustSrc ./../code/.;
     };
   };
 }

@@ -3,8 +3,8 @@
     , devnetTools, cargoTools, ... }:
 
     let
-      
-      rustSrc = cargoTools.rust-src-template ./.;
+
+      rustSrc = cargoTools.mkRustSrc ./.;
       toDockerImage = { ... }@drv:
         (pkgs.dockerTools.buildImage {
           name = drv.name or drv.pname or "image";
@@ -52,7 +52,7 @@
           meta = { mainProgram = name; };
           src = cargoTools.rust-src-template ./parachain/frame/cosmwasm/cli;
         });
-        
+
         composable-node-image = toDockerImage composable-node;
         composable-node = makeComposableNode self'.packages.picasso-runtime
           self'.packages.composable-runtime;
