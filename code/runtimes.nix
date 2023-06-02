@@ -1,37 +1,8 @@
 { self, ... }: {
-  perSystem =
-    { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
+  perSystem = { config, self', inputs', pkgs, system, crane, systemCommonRust
+    , cargoTools, ... }:
     let
-      rustSrc = pkgs.lib.cleanSourceWith {
-        filter = pkgs.lib.cleanSourceFilter;
-        src = pkgs.lib.cleanSourceWith {
-          filter = let
-            isProto = name: type:
-              type == "regular" && pkgs.lib.strings.hasSuffix ".proto" name;
-            isJSON = name: type:
-              type == "regular" && pkgs.lib.strings.hasSuffix ".json" name;
-            isREADME = name: type:
-              type == "regular" && pkgs.lib.strings.hasSuffix "README.md" name;
-            isDir = name: type: type == "directory";
-            isCargo = name: type:
-              type == "regular" && pkgs.lib.strings.hasSuffix ".toml" name
-              || type == "regular" && pkgs.lib.strings.hasSuffix ".lock" name;
-            isRust = name: type:
-              type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
-            customFilter = name: type:
-              builtins.any (fun: fun name type) [
-                isCargo
-                isRust
-                isDir
-                isREADME
-                isJSON
-                isProto
-              ];
-          in pkgs.nix-gitignore.gitignoreFilterPure customFilter
-          [ ../.gitignore ] ./.;
-          src = ./.;
-        };
-      };
+      rustSrc = cargoTools.mkRustSrc ./.;
       # Build a wasm runtime, unoptimized
       mkRuntime = name: features: cargoArtifacts:
         crane.nightly.buildPackage (systemCommonRust.common-attrs // {

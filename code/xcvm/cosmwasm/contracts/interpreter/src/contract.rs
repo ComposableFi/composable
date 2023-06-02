@@ -414,7 +414,7 @@ pub fn interpret_spawn(
 					serde_json_wasm::to_string(&interpreter_origin.user_origin.user_id)
 						.map_err(|_| ContractError::DataSerializationError)?,
 				)
-				.add_attribute("networ_id", format!("{}", network)),
+				.add_attribute("network_id", format!("{}", network)),
 		))
 }
 

@@ -73,6 +73,7 @@
         ./devnets/all.nix
         ./docs/docs.nix
         ./flake/all.nix
+        ./flake/cargo-tools.nix
         ./flake/check.nix
         ./flake/darwin-configurations.nix
         ./flake/dev-shells.nix
@@ -98,10 +99,9 @@
         ./inputs/paritytech/substrate.nix
         ./inputs/paritytech/zombienet/flake-module.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
-        ./tools/cargo-tools.nix # _module.args.cargoTools
-        ./tools/devnet-tools.nix # _module.args.devnetTools
-        ./tools/pkgs.nix # _module.args.pkgs
-        ./tools/rust.nix # _module.args.rust
+        ./tools/devnet-tools.nix
+        ./tools/pkgs.nix
+        ./tools/rust.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];

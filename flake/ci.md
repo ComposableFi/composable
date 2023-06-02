@@ -28,5 +28,5 @@ EOF
 
 1. `cd /home/actions-runner/actions-runner && ./svc.sh install actions-runner && ./svc.sh start && systemctl daemon-reload`
  
-2. `usermod --append --groups kvm actions-runner`
+2. `usermod --append --groups kvm actions-runner && chmod 666 /dev/kvm`
 3.   Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using nix rebuild to update config (or can use home-manager on ubuntu). 
