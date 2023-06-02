@@ -14,6 +14,7 @@ use cosmwasm_vm::{
 use cosmwasm_vm_wasmi::{
 	OwnedWasmiVM, WasmiContext, WasmiInput, WasmiModule, WasmiOutput, WasmiVMError,
 };
+use sp_runtime::DispatchError;
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use wasmi::{core::HostError, Instance, Memory};
 
@@ -49,13 +50,18 @@ pub enum CosmwasmVMError<T: Config> {
 	Interpreter(wasmi::Error),
 	VirtualMachine(WasmiVMError),
 	Pallet(crate::Error<T>),
-	AccountConversionFailure,
+	SubstrateDispatch(DispatchError),
+	AccountConvert,
 	Aborted(String),
 	ReadOnlyViolation,
 	OutOfGas,
 	Unsupported,
+	ContractNotFound,
+	ExecuteDeserialize,
+	QuerySerialize,
 	Rpc(String),
 	Ibc(String),
+	AssetConversion,
 }
 
 impl<T: Config + core::marker::Send + core::marker::Sync + 'static> HostError

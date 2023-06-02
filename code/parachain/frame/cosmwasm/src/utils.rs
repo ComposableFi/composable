@@ -12,7 +12,6 @@ use crate::{
 	Config, ContractToInfo, Error, Pallet,
 };
 
-// TODO(cor): move these out of the `impl` as they do not refer to `self` or `Self`.
 impl<T: Config> Pallet<T> {
 	pub(crate) fn derive_contract_address(
 		creator: &AccountIdOf<T>,
@@ -65,15 +64,14 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn canonical_addr_to_account(
 		canonical: Vec<u8>,
 	) -> Result<AccountIdOf<T>, <T as VMPallet>::VmError> {
-		T::AccountToAddr::convert(canonical).map_err(|()| CosmwasmVMError::AccountConversionFailure)
+		T::AccountToAddr::convert(canonical).map_err(|()| CosmwasmVMError::AccountConvert)
 	}
 
 	/// Try to convert from a CosmWasm address to a native AccountId.
 	pub(crate) fn cosmwasm_addr_to_account(
 		cosmwasm_addr: String,
 	) -> Result<AccountIdOf<T>, <T as VMPallet>::VmError> {
-		T::AccountToAddr::convert(cosmwasm_addr)
-			.map_err(|()| CosmwasmVMError::AccountConversionFailure)
+		T::AccountToAddr::convert(cosmwasm_addr).map_err(|()| CosmwasmVMError::AccountConvert)
 	}
 
 	/// Convert from a native ahttps://app.clickup.com/20465559/v/l/6-210281072-1ccount to a CosmWasm address.

@@ -37,6 +37,7 @@ exclude = [
 members = [
   "services/cmc-api",
   "parachain/frame/*",
+  "parachain/frame/dex-router/cosmwasm",
   "parachain/node",
   "parachain/runtime/*",
   "utils/common",
@@ -322,12 +323,31 @@ subxt = { git = "https://github.com/paritytech/subxt", rev = "2a913a3aa99a07f7ac
 # Only needed until the configs get merged into xcm-builder: https://github.com/paritytech/polkadot/pull/7165
 invarch-xcm-builder = { git = "https://github.com/InvArch/InvArch-XCM-Builder", rev = "c704c0f2d4c436f96eff10d06c197527b46b3536", default-features = false }
 
+
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "c2a4fe2c764710c0db15c571135bc37619a289d5", default-features = false, features = [
+  "ibc3",
+  "iterator",
+  "stargate",
+] }
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "c2a4fe2c764710c0db15c571135bc37619a289d5", default-features = false, features = [
+  "iterator",
+  "stargate",
+] }
+
+
+serde = { version = '1.0.136', default-features= false, features = ["derive"] }
+
+serde_json = { version = "1.0.82", default-features = false, features = [
+  "alloc",
+] }
+
+serde-json-wasm = { version = "0.5.1", default-features = false }
+
 #######################################
 # DO NOT DELETE PATCHES, BUT COMMENT OUT
 # PATCHES APPEAR AND GO AWAY ALL THE TIME
 # HARD TO RESTORE LIST OF ALL DEPS TO PATCH
 #######################################
-
 [patch."https://github.com/paritytech/polkadot"]
 kusama-runtime = { git = "https://github.com/ComposableFi/polkadot", rev = "c22e1c4173bf6966f5d1980f4299f7abe836f0c1" }
 polkadot-cli = { git = "https://github.com/ComposableFi/polkadot", rev = "c22e1c4173bf6966f5d1980f4299f7abe836f0c1" }
