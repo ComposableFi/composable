@@ -15,7 +15,7 @@ use sp_runtime::{
 	testing::{Header, TestXt},
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
 };
-use system::EnsureRoot;
+use system::{EnsureRoot, EnsureSigned};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -167,6 +167,10 @@ impl pallet_oracle::Config for Test {
 	type StalePrice = StalePrice;
 	type MinStake = MinStake;
 	type AddOracle = EitherOfDiverse<
+		EnsureSignedBy<RootAccount, sp_core::sr25519::Public>,
+		EnsureRoot<AccountId>,
+	>;
+	type SetSigner = EitherOfDiverse<
 		EnsureSignedBy<RootAccount, sp_core::sr25519::Public>,
 		EnsureRoot<AccountId>,
 	>;

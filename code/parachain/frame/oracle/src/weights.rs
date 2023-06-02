@@ -12,6 +12,7 @@ pub trait WeightInfo {
 	fn adjust_rewards() -> Weight;
 	fn add_stake() -> Weight;
 	fn remove_stake() -> Weight;
+	fn remove_signer() -> Weight;
 	fn reclaim_stake() -> Weight;
 	fn submit_price(p: u32) -> Weight;
 	fn update_pre_prices(p: u32) -> Weight;
@@ -42,6 +43,11 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	fn remove_stake() -> Weight {
+		Weight::from_ref_time(42_512_000_u64)
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(4_u64))
+	}
+	fn remove_signer() -> Weight {
 		Weight::from_ref_time(42_512_000_u64)
 			.saturating_add(T::DbWeight::get().reads(2_u64))
 			.saturating_add(T::DbWeight::get().writes(2_u64))
@@ -102,6 +108,11 @@ impl WeightInfo for () {
 		Weight::from_ref_time(42_512_000_u64)
 			.saturating_add(RocksDbWeight::get().reads(2_u64))
 			.saturating_add(RocksDbWeight::get().writes(2_u64))
+	}
+	fn remove_signer() -> Weight {
+		Weight::from_ref_time(42_512_000_u64)
+			.saturating_add(RocksDbWeight::get().reads(2_u64))
+			.saturating_add(RocksDbWeight::get().writes(4_u64))
 	}
 	fn reclaim_stake() -> Weight {
 		Weight::from_ref_time(51_245_000_u64)

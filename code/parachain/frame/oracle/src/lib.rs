@@ -156,6 +156,8 @@ pub mod pallet {
 		type StalePrice: Get<Self::BlockNumber>;
 		/// Origin to add new price types
 		type AddOracle: EnsureOrigin<Self::RuntimeOrigin>;
+		/// Origin to add new signer
+		type SetSigner: EnsureOrigin<Self::RuntimeOrigin>;
 		/// Origin to manage rewards
 		type RewardOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// Lower bound for min answers for a price
@@ -355,6 +357,8 @@ pub mod pallet {
 		AnswerPruned(T::AccountId, T::PriceValue),
 		/// Price changed by oracle \[asset_id, price\]
 		PriceChanged(T::AssetId, T::PriceValue),
+		/// Signer removed
+		SignerRemoved(T::AccountId, T::AccountId, BalanceOf<T>),
 	}
 
 	#[pallet::error]
@@ -591,9 +595,10 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::set_signer())]
 		pub fn set_signer(
 			origin: OriginFor<T>,
+			who: T::AccountId,
 			signer: T::AccountId,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
+			T::SetSigner::ensure_origin(origin.clone())?;
 			let current_controller = ControllerToSigner::<T>::get(&who);
 			let current_signer = SignerToController::<T>::get(&signer);
 
@@ -765,6 +770,29 @@ pub mod pallet {
 
 			Self::deposit_event(Event::PriceSubmitted(who, asset_id, price));
 			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(7)]
+		#[pallet::weight(T::WeightInfo::remove_signer())]
+		pub fn remove_signer(
+			origin: OriginFor<T>,
+			who: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			T::SetSigner::ensure_origin(origin.clone())?;
+			let signer = ControllerToSigner::<T>::get(&who).ok_or(Error::<T>::UnsetSigner)?;
+			let stake = Self::oracle_stake(signer.clone()).ok_or(Error::<T>::NoStake)?;
+			ensure!(stake > BalanceOf::<T>::zero(), Error::<T>::NoStake);
+			OracleStake::<T>::remove(&signer);
+			DeclaredWithdraws::<T>::remove(&signer);
+			T::Currency::unreserve(&signer, stake);
+			let result = T::Currency::transfer(&signer, &who, stake, AllowDeath);
+			ensure!(result.is_ok(), Error::<T>::TransferError);
+
+			ControllerToSigner::<T>::remove(&who);
+			SignerToController::<T>::remove(&signer);
+
+			Self::deposit_event(Event::SignerRemoved(who, signer, stake));
+			Ok(().into())
 		}
 	}
 

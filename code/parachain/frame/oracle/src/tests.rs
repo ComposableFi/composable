@@ -404,12 +404,13 @@ mod set_signer {
 
 		#[test]
 		fn root_can_be_controller_and_set_signer(
+			caller_account in account_id(),
 			signer_account in account_id(),
 		) {
 			new_test_ext().execute_with(|| {
 				let root_account = get_root_account();
 
-				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), signer_account));
+				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), root_account, signer_account));
 				prop_assert_eq!(Oracle::controller_to_signer(root_account), Some(signer_account));
 				prop_assert_eq!(Oracle::signer_to_controller(signer_account), Some(root_account));
 
@@ -428,15 +429,16 @@ mod set_signer {
 			prop_assume!(signer_account_1 != signer_account_2);
 
 			new_test_ext().execute_with(|| {
+				let root_account = get_root_account();
 				Balances::make_free_balance_be(&controller_account, controller_balance);
 
-				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(controller_account), signer_account_1));
+				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_account, signer_account_1));
 				prop_assert_eq!(Oracle::controller_to_signer(controller_account), Some(signer_account_1));
 				prop_assert_eq!(Oracle::signer_to_controller(signer_account_1), Some(controller_account));
 
 				Balances::make_free_balance_be(&signer_account_1, signer_1_balance);
 
-				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(signer_account_1), signer_account_2));
+				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), signer_account_1, signer_account_2));
 				prop_assert_eq!(Oracle::controller_to_signer(signer_account_1), Some(signer_account_2));
 				prop_assert_eq!(Oracle::signer_to_controller(signer_account_2), Some(signer_account_1));
 
@@ -455,8 +457,9 @@ mod set_signer {
 			new_test_ext().execute_with(|| {
 				Balances::make_free_balance_be(&controller_account, controller_balance);
 
+				let root_account = get_root_account();
 				prop_assert_noop!(
-					Oracle::set_signer(RuntimeOrigin::signed(controller_account), signer_account),
+					Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_account, signer_account),
 					BalancesError::<Test>::InsufficientBalance
 				);
 
@@ -477,13 +480,14 @@ mod set_signer {
 			prop_assume!(controller_1_account != controller_2_account);
 
 			new_test_ext().execute_with(|| {
+				let root_account = get_root_account();
 				Balances::make_free_balance_be(&controller_1_account, controller_1_balance);
 				Balances::make_free_balance_be(&controller_2_account, controller_2_balance);
 
-				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(controller_1_account), signer_account));
+				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_1_account, signer_account));
 
 				assert_noop!(
-					Oracle::set_signer(RuntimeOrigin::signed(controller_2_account), signer_account),
+					Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_2_account, signer_account),
 					Error::<Test>::SignerUsed
 				);
 
@@ -503,12 +507,13 @@ mod set_signer {
 			prop_assume!(signer_2_account != controller_account);
 
 			new_test_ext().execute_with(|| {
+			let root_account = get_root_account();
 				Balances::make_free_balance_be(&controller_account, controller_balance);
 
-				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(controller_account), signer_1_account));
+				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_account, signer_1_account));
 
 				assert_noop!(
-					Oracle::set_signer(RuntimeOrigin::signed(controller_account), signer_2_account),
+					Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_account, signer_2_account),
 					Error::<Test>::ControllerUsed
 				);
 
@@ -551,7 +556,8 @@ mod add_stake {
 				Balances::make_free_balance_be(&controller_account, controller_balance);
 				Balances::make_free_balance_be(&signer_account, signer_balance);
 
-				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(controller_account), signer_account));
+				let root_account = get_root_account();
+				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_account, signer_account));
 
 				let new_controller_balance = controller_balance - MinStake::get();
 
@@ -595,7 +601,8 @@ mod add_stake {
 				Balances::make_free_balance_be(&controller_account, controller_balance);
 				Balances::make_free_balance_be(&signer_account, signer_balance);
 
-				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(controller_account), signer_account));
+				let root_account = get_root_account();
+				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_account, signer_account));
 
 				let new_controller_balance = controller_balance - MinStake::get();
 
@@ -646,8 +653,9 @@ mod reclaim_stake {
 			prop_assume!(controller_account != signer_account);
 
 			new_test_ext().execute_with(|| {
+				let root_account = get_root_account();
 				Balances::make_free_balance_be(&controller_account, controller_balance);
-				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(controller_account), signer_account));
+				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_account, signer_account));
 
 				prop_assert_noop!(
 					Oracle::reclaim_stake(RuntimeOrigin::signed(controller_account)),
@@ -668,8 +676,9 @@ mod reclaim_stake {
 			prop_assume!(controller_account != signer_account);
 
 			new_test_ext().execute_with(|| {
+				let root_account = get_root_account();
 				Balances::make_free_balance_be(&controller_account, controller_balance);
-				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(controller_account), signer_account));
+				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_account, signer_account));
 
 				System::set_block_number(start_block);
 				// Remove the stake from setting the signer
@@ -700,7 +709,8 @@ mod reclaim_stake {
 			new_test_ext().execute_with(|| {
 				Balances::make_free_balance_be(&controller_account, controller_balance);
 				Balances::make_free_balance_be(&signer_account, signer_balance);
-				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(controller_account), signer_account));
+				let root_account = get_root_account();
+				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_account, signer_account));
 
 				let actual_stake_to_add = stake_to_add.min(controller_balance - MinStake::get() - 1);
 
@@ -806,17 +816,21 @@ fn calculate_reward_per_block() {
 			false,
 		));
 
+		let root_account = get_root_account();
 		// adding stake
 		assert_ok!(Oracle::set_signer(
-			RuntimeOrigin::signed(account_1_controller),
+			RuntimeOrigin::signed(root_account),
+			account_1_controller,
 			account_1_signer
 		));
 		assert_ok!(Oracle::set_signer(
-			RuntimeOrigin::signed(account_2_controller),
+			RuntimeOrigin::signed(root_account),
+			account_2_controller,
 			account_2_signer
 		));
 		assert_ok!(Oracle::set_signer(
-			RuntimeOrigin::signed(account_3_controller),
+			RuntimeOrigin::signed(root_account),
+			account_3_controller,
 			account_3_signer
 		));
 		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_1_controller), 99));
@@ -951,16 +965,20 @@ fn calculate_reward_per_block_min_aswers_eq_3() {
 		));
 
 		// adding stake
+		let root_account = get_root_account();
 		assert_ok!(Oracle::set_signer(
-			RuntimeOrigin::signed(account_1_controller),
+			RuntimeOrigin::signed(root_account),
+			account_1_controller,
 			account_1_signer
 		));
 		assert_ok!(Oracle::set_signer(
-			RuntimeOrigin::signed(account_2_controller),
+			RuntimeOrigin::signed(root_account),
+			account_2_controller,
 			account_2_signer
 		));
 		assert_ok!(Oracle::set_signer(
-			RuntimeOrigin::signed(account_3_controller),
+			RuntimeOrigin::signed(root_account),
+			account_3_controller,
 			account_3_signer
 		));
 		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_1_controller), 99));
@@ -1089,7 +1107,12 @@ mod submit_price {
 			));
 
 			System::set_block_number(6);
-			assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_2), account_1));
+			let root_account = get_root_account();
+			assert_ok!(Oracle::set_signer(
+				RuntimeOrigin::signed(root_account),
+				account_2,
+				account_1
+			));
 			assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_2), 50));
 			// fails as asset's slash is high compare to current stake of account_1
 			assert_noop!(
@@ -1127,10 +1150,11 @@ fn add_price() {
 			Error::<Test>::NotEnoughStake
 		);
 
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_2), account_1));
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_1), account_2));
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_5), account_4));
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_4), account_5));
+		let root_account = get_root_account();
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_2, account_1));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_1, account_2));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_5, account_4));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_4, account_5));
 
 		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_1), 50));
 		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_2), 50));
@@ -1197,7 +1221,8 @@ fn submit_price_fails_stake_less_than_asset_slash() {
 		));
 
 		System::set_block_number(6);
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_2), account_1));
+		let root_account = get_root_account();
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_2, account_1));
 		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_2), 50));
 		// fails as asset's slash is high compare to current stake of account_1
 		assert_noop!(
@@ -1236,10 +1261,11 @@ fn halborn_test_price_manipulation() {
 			EMIT_PRICE_CHANGES,
 		));
 		System::set_block_number(6);
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_3), account_1));
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_1), account_3));
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_4), account_5));
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_5), account_4));
+		let root_account = get_root_account();
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_3, account_1));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_1, account_3));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_4, account_5));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_5, account_4));
 
 		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_1), 50));
 		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_3), 50));
@@ -1351,7 +1377,8 @@ fn test_payout_slash() {
 		reward_tracker.total_reward_weight = 82;
 		RewardTrackerStore::<Test>::set(Option::from(reward_tracker));
 		Balances::make_free_balance_be(&Oracle::account_id(), 100);
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_5), account_2));
+		let root_account = get_root_account();
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_5, account_2));
 
 		let one = PrePrice { price: 79, block: 0, who: account_1 };
 		let two = PrePrice { price: 100, block: 0, who: account_2 };
@@ -1393,9 +1420,10 @@ fn test_payout_slash() {
 
 		add_price_storage(79, 0, account_1, 0);
 		add_price_storage(100, 0, account_2, 0);
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_2), account_1));
+		let root_account = get_root_account();
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_2, account_1));
 		assert_eq!(Oracle::oracle_stake(account_1), Some(1));
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_1), account_4));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_1, account_4));
 		assert_eq!(Oracle::oracle_stake(account_4), Some(1));
 
 		assert_eq!(Oracle::answer_in_transit(account_1), Some(5));
@@ -1628,10 +1656,11 @@ fn halborn_test_bypass_slashing() {
 		println!("5: {}", balance5);
 
 		System::set_block_number(6);
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_2), account_1));
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_1), account_2));
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_5), account_4));
-		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(account_4), account_5));
+		let root_account = get_root_account();
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_2, account_1));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_1, account_2));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_5, account_4));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_4, account_5));
 		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_1), 50));
 		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_2), 50));
 		assert_ok!(Oracle::add_stake(RuntimeOrigin::signed(account_4), 99));

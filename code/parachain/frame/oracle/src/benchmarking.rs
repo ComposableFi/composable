@@ -67,7 +67,11 @@ benchmarks! {
 		whitelist!(signer);
 		let stake = T::MinStake::get();
 		T::Currency::make_free_balance_be(&caller, stake + T::Currency::minimum_balance());
-	}: _(RawOrigin::Signed(caller.clone()), signer.clone())
+	}:{
+		assert_ok!(
+			<Oracle<T>>::set_signer(RawOrigin::Root.into(), caller.clone(), signer.clone())
+		);
+	}
 	verify {
 		assert_last_event::<T>(Event::SignerSet(signer, caller).into());
 	}
@@ -92,6 +96,22 @@ benchmarks! {
 	}: _(RawOrigin::Signed(signer.clone()))
 	verify {
 		assert_last_event::<T>(Event::StakeRemoved(signer, stake, unlock_block).into())
+	}
+
+	remove_signer {
+		let caller: T::AccountId = whitelisted_caller();
+		let signer: T::AccountId = account("candidate", 0, SEED);
+		whitelist!(signer);
+		let stake = T::MinStake::get();
+		T::Currency::make_free_balance_be(&caller, stake + T::Currency::minimum_balance());
+		<Oracle<T>>::set_signer(RawOrigin::Root.into(), caller.clone(), signer.clone());
+	}:{
+		assert_ok!(
+			<Oracle<T>>::remove_signer(RawOrigin::Root.into(), caller.clone())
+		);
+	}
+	verify {
+		assert_last_event::<T>(Event::SignerRemoved(caller, signer, stake).into())
 	}
 
 	reclaim_stake {
