@@ -31,7 +31,7 @@
       devnet-integration-tests =
         pkgs.writeShellScriptBin "devnet-integration-tests" ''
           ( ${
-            pkgs.lib.meta.getExe self'.packages.devnet-picasso
+            pkgs.lib.meta.getExe self'.packages.default
           } 2>&1 & ) | tee devnet-picasso.log &
           wait_for_log () {
            until test -f "$1"; do
@@ -41,7 +41,7 @@
           }
 
           wait_for_log "devnet-picasso.log" "waiting network start"
-          TIMEOUT=240
+          TIMEOUT=300
           COMMAND="( tail --follow --lines=0  devnet-picasso.log & ) | grep --max-count=1 \"Network launched 🚀🚀\""
           set +o errexit
           timeout $TIMEOUT bash -c "$COMMAND"

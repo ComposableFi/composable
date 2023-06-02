@@ -7,3 +7,4 @@
 - [ ] I waited and did best effort for `pr-workflow-check / draft-release-check` to finish with success(green check mark) with my changes
 - [ ] I have added at least one reviewer in reviewers list
 - [ ] I tagged(@) or used other form of notification of one person who I think can handle best review of this PR
+- [ ] I have done sanity checks to avoid regression of relevant features and processes required for release

@@ -6,9 +6,18 @@
       configPathSourceChainB = "/tmp/config-chain-b.toml";
       configPathSourceCore = "/tmp/config-core.toml";
       singleFileWriteMounts = [
-        { _1 = configPathSourceChainA; _2 = configPathSourceChainA;}
-        { _1 = configPathSourceChainB; _2 = configPathSourceChainB;}
-        { _1 = configPathSourceCore; _2 = configPathSourceCore;}
+        {
+          _1 = configPathSourceChainA;
+          _2 = configPathSourceChainA;
+        }
+        {
+          _1 = configPathSourceChainB;
+          _2 = configPathSourceChainB;
+        }
+        {
+          _1 = configPathSourceCore;
+          _2 = configPathSourceCore;
+        }
       ];
 
       dependsOnCreateClient = {
