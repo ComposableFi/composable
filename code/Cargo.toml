@@ -324,12 +324,12 @@ subxt = { git = "https://github.com/paritytech/subxt", rev = "2a913a3aa99a07f7ac
 invarch-xcm-builder = { git = "https://github.com/InvArch/InvArch-XCM-Builder", rev = "c704c0f2d4c436f96eff10d06c197527b46b3536", default-features = false }
 
 
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "c2a4fe2c764710c0db15c571135bc37619a289d5", default-features = false, features = [
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "f20fcead841648311683a139f875eb36e9568d69", default-features = false, features = [
   "ibc3",
   "iterator",
   "stargate",
 ] }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "c2a4fe2c764710c0db15c571135bc37619a289d5", default-features = false, features = [
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "f20fcead841648311683a139f875eb36e9568d69", default-features = false, features = [
   "iterator",
   "stargate",
 ] }
