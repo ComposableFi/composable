@@ -500,7 +500,7 @@ jobs:
       - x86_64-linux-32C-128GB-2TB
     needs:
       - draft-release-check
-    #if: ${{ inputs.github_event_name == 'push' }}  
+    if: ${{ inputs.github_event_name == 'push' }}  
     permissions:  
       pull-requests: write
       contents: write      
