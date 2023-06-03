@@ -1,27 +1,41 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, crane, systemCommonRust
-    , subnix, ... }: {
+  perSystem =
+    { config
+    , self'
+    , inputs'
+    , pkgs
+    , system
+    , crane
+    , systemCommonRust
+    , subnix
+    , ...
+    }: {
       packages = rec {
-        subxt = let
-          name = "subxt";
-          src = pkgs.fetchFromGitHub {
-            owner = "paritytech";
-            repo = name;
-            rev = "fdc0d09ca3fb1c8a22cb5a05ba8178f024d0cda3";
-            hash = "sha256-ZrrkpqcGHUlb3kVVrnmLpLhGbip+ikTwu6NEiNuX03A=";
-          };
-        in crane.stable.buildPackage (subnix.subenv // {
-          name = name;
-          cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
-            inherit src;
+        subxt =
+          let
+            name = "subxt";
+            src = pkgs.fetchFromGitHub {
+              owner = "paritytech";
+              repo = name;
+              rev = "e40a8629e279e80a7fbb56ff553a430a36612956";
+              hash = "sha256-fMCy1QAb8rdgQesRqbNCEh6lqEgf7ZsVhYdGvctjbQU";
+            };
+          in
+          crane.nightly.buildPackage (rec {
+            inherit name;
+            pname = "subxt-cli";
+            cargoArtifacts = crane.nightly.buildDepsOnly ({
+              doCheck = false;
+              inherit src;
+              cargoTestCommand = "";
+              nativeBuildInputs = systemCommonRust.darwin-deps;
+            });
             doCheck = false;
+            inherit src;
+            cargoBuildCommand = "cargo build --release --package ${pname}";
             cargoTestCommand = "";
-            nativeBuildInputs = systemCommonRust.darwin-deps;
+            meta = { mainProgram = name; };
           });
-          inherit src;
-          cargoTestCommand = "";
-          meta = { mainProgram = name; };
-        });     
       };
     };
 }
