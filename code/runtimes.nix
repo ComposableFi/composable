@@ -33,7 +33,7 @@
             ${self'.packages.subwasm}/bin/subwasm compress $out/lib/runtime.optimized.wasm $out/lib/runtime.optimized.wasm
           '';
         };
-
+      
     in {
       # Add the npm-buildpackage overlay to the perSystem's pkgs
       packages = rec {
@@ -41,6 +41,22 @@
           name = "picasso";
           features = "";
         };
+        
+      picasso-runtime-scale = 
+        pkgs.stdenv.mkDerivation ({
+          name = "picasso-runtime-scale";
+          dontUnpack = true;
+          buildInputs =
+            with self'.packages; [ subwasm ];
+
+          installPhase = ''
+            mkdir --parents $out/lib
+            subwasm  metadata ${picasso-runtime}/lib/runtime.optimized.wasm --format json > $out/lib/picasso-runtime.json
+            subwasm  metadata ${picasso-runtime}/lib/runtime.optimized.wasm --format scale > $out/lib/picasso-runtime.scale
+            subwasm  metadata ${picasso-runtime}/lib/runtime.optimized.wasm --format human > $out/lib/picasso-runtime.txt
+          '';
+        });  
+
         picasso-testfast-runtime = mkOptimizedRuntime {
           name = "picasso";
           features = "testnet,fastnet";

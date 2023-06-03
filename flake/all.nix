@@ -10,6 +10,7 @@
         polkadot-parachain
         subwasm
         zombienet
+        subxt
       ]);
 
       all-testnet-deps = pkgs.linkFarmFromDrvs "all-testnet-deps"

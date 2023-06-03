@@ -81,6 +81,12 @@ jobs:
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest-prerelease"
 
+          docker load --input release-artifacts/devnet-image
+          docker tag devnet:latest "${{ env.DOCKER_REGISTRY_NAME }}/devnet:v${{ env.COMPOSABLE_VERSION }}"
+          docker tag devnet:latest "${{ env.DOCKER_REGISTRY_NAME }}/devnet:latest-prerelease"
+          docker push "${{ env.DOCKER_REGISTRY_NAME }}/devnet:v${{ env.COMPOSABLE_VERSION }}"
+          docker push "${{ env.DOCKER_REGISTRY_NAME }}/devnet:latest-prerelease"                    
+
       - name: Release artifacts
         uses: softprops/action-gh-release@v1
         with:

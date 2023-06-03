@@ -69,7 +69,6 @@
           '';
         };
 
-        # basically this should be just package result with several files
         generate-release-artifacts = pkgs.writeShellApplication {
           name = "generate-release-artifacts";
           runtimeInputs =
@@ -115,8 +114,10 @@
               make-bundle "toDockerImage" packages.composable-testfast-node
             } release-artifacts/composable-testfast-node-docker-image
 
-            echo "Bridge"
+            echo "Devnet"
+            cp ${packages.devnet-picasso-image} release-artifacts/devnet-image
 
+            echo "Bridge"
             cp ${packages.hyperspace-composable-polkadot-picasso-kusama-image} release-artifacts/hyperspace-composable-polkadot-picasso-kusama-image
 
 
