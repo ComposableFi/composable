@@ -13,7 +13,7 @@
             cp -f ${self'.packages.hyperspace-config-chain-a} /tmp/config-chain-a.toml  
             cp -f ${self'.packages.hyperspace-config-chain-b} /tmp/config-chain-b.toml  
             cp -f ${self'.packages.hyperspace-config-core} /tmp/config-core.toml  
-            ${pkgs.lib.meta.getExe devnet-centauri}       
+            ${pkgs.lib.meta.getExe devnet-centauri}
           '';
         };
 

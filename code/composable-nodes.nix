@@ -44,13 +44,52 @@
             builtins.trace "WARNING: no tracked"
             "0000000000000000000000000000000000000000";
         });
+      ccw-src = cargoTools.mkRustSrc ./parachain/frame/cosmwasm/cli;
     in {
       packages = rec {
+        ccw-patch = pkgs.stdenv.mkDerivation rec {
+          name = "ccw-patch";
+          pname = "${name}";
+          buildInputs = [ self'.packages.picasso-runtime-dev ];
+          src = ccw-src;
+          patchPhase = "true";
+          installPhase = ''
+            mkdir --parents $out
+            set +e
+            diff --unified $src/src/substrate/subxt_api.rs ${self'.packages.picasso-runtime-dev}/include/picasso_runtime.rs > $out/picasso_runtime.rs.patch
+            if [[ $? -ne 1 ]] ; then
+              echo "Failed diff"              
+            fi                          
+            set -e 
+          '';
+          dontFixup = true;
+          dontStrip = true;
+        };
+
+        ccw-patched-src = pkgs.stdenv.mkDerivation rec {
+          name = "ccw-patched-src";
+          pname = "${name}";
+          src = ccw-src;
+          buildInputs = with pkgs; [ git ];
+          patchFlags = "--strip=0";
+          patchPhase = "true";
+          
+          installPhase = ''
+            mkdir --parents $out
+            cp --recursive --no-preserve=mode,ownership $src/. $out/
+
+            cd $out/src/substrate
+            patch subxt_api.rs ${self'.packages.ccw-patch}/picasso_runtime.rs.patch
+          '';
+          dontFixup = true;
+          dontStrip = true;
+        };
+
         ccw = crane.nightly.buildPackage (systemCommonRust.common-attrs // rec {
           name = "ccw";
           cargoBuildCommand = "cargo build --release --package ${name}";
           meta = { mainProgram = name; };
-          src = cargoTools.mkRustSrc ./parachain/frame/cosmwasm/cli;
+          src = ccw-patched-src;
         });
 
         composable-node-image = toDockerImage composable-node;

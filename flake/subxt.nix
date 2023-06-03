@@ -31,7 +31,7 @@
         text = ''
           subxt codegen --url=wss://picasso-rpc.composable.finance:443 > $1
         '';
-      };      
+      };
       composable-rococo-subxt-client =
         mkSubxtClient "composable-rococo-subxt-client"
         self'.packages.composable-runtime

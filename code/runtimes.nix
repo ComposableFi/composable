@@ -33,7 +33,7 @@
             ${self'.packages.subwasm}/bin/subwasm compress $out/lib/runtime.optimized.wasm $out/lib/runtime.optimized.wasm
           '';
         };
-      
+
     in {
       # Add the npm-buildpackage overlay to the perSystem's pkgs
       packages = rec {
@@ -41,21 +41,23 @@
           name = "picasso";
           features = "";
         };
-        
-      picasso-runtime-scale = 
-        pkgs.stdenv.mkDerivation ({
-          name = "picasso-runtime-scale";
-          dontUnpack = true;
-          buildInputs =
-            with self'.packages; [ subwasm ];
 
+        picasso-runtime-dev = pkgs.stdenv.mkDerivation ({
+          name = "picasso-runtime-dev";
+          dontUnpack = true;
+          buildInputs = with self'.packages; [ subwasm subxt ];
+          patchPhase = "";
+          dontStrip = true;
           installPhase = ''
             mkdir --parents $out/lib
-            subwasm  metadata ${picasso-runtime}/lib/runtime.optimized.wasm --format json > $out/lib/picasso-runtime.json
-            subwasm  metadata ${picasso-runtime}/lib/runtime.optimized.wasm --format scale > $out/lib/picasso-runtime.scale
-            subwasm  metadata ${picasso-runtime}/lib/runtime.optimized.wasm --format human > $out/lib/picasso-runtime.txt
+            mkdir --parents $out/docs
+            mkdir --parents $out/include
+            subwasm metadata ${picasso-runtime}/lib/runtime.optimized.wasm --format json > $out/lib/picasso-runtime.json
+            subwasm metadata ${picasso-runtime}/lib/runtime.optimized.wasm --format scale > $out/lib/picasso-runtime.scale
+            subwasm metadata ${picasso-runtime}/lib/runtime.optimized.wasm --format human > $out/docs/picasso-runtime.txt
+            subxt codegen --file $out/lib/picasso-runtime.scale > $out/include/picasso_runtime.rs
           '';
-        });  
+        });
 
         picasso-testfast-runtime = mkOptimizedRuntime {
           name = "picasso";
