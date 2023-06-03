@@ -50,7 +50,7 @@
           name = "ccw";
           cargoBuildCommand = "cargo build --release --package ${name}";
           meta = { mainProgram = name; };
-          src = cargoTools.rust-src-template ./parachain/frame/cosmwasm/cli;
+          src = cargoTools.mkRustSrc ./parachain/frame/cosmwasm/cli;
         });
 
         composable-node-image = toDockerImage composable-node;

@@ -1,10 +1,12 @@
 ## Guide
 
 1. Use dedicated non cloud hardware for heavy jobs (32 CPUs) for Linux
-2. For lightweight pure nix stuff use nixbuild.net (uses less resources than methods below to do nix stuff)
-3. Use default GH runners for super light jobs (2 CPU cores) or need specific hardware (example, x86 Mac)
-4. Use BlueJet or GH Larger runners for light jobs (4-8 CPU cores).
-5. If case of need of special hardware, request it from Composable. Examples are Mac M1 or machine for benchmarks. 
+2. Use dedicated non cloud hardware for Mac jobs
+3. Use one to one hardware as used in production for benchmarks
+4. Use Nix native services (Hercules, Nixbuild, Hydra) for immutable pure nix builds (they are fastest for Nix and with best debugging experience)
+5. Use default GH runners for super light jobs (2 CPU cores).
+6. Use BlueJet or GH Larger runners for light jobs (4-8 CPU cores).
+7. Observer jobs via dashboards (Trunk) and optimize
 
 # Actions runner setup steps
 
