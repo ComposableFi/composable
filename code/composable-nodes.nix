@@ -73,7 +73,7 @@
           buildInputs = with pkgs; [ git ];
           patchFlags = "--strip=0";
           patchPhase = "true";
-          
+
           installPhase = ''
             mkdir --parents $out
             cp --recursive --no-preserve=mode,ownership $src/. $out/

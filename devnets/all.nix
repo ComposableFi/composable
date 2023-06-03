@@ -50,6 +50,12 @@
           devNet = packages.zombienet-rococo-local-picasso-dev;
         };
 
+        devnet-image = devnetTools.buildDevnetImage {
+          name = "devnet";
+          container-tools = devnetTools.withDevNetContainerTools;
+          devNet = packages.zombienet-rococo-local-picasso-dev;
+        };
+
         devnet-picasso-complete = packages.zombienet-picasso-complete;
         devnet-initialize-script-local = devnetTools.mkDevnetInitializeScript {
           polkadotUrl = "ws://localhost:9944";
