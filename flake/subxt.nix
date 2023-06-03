@@ -17,6 +17,21 @@
           '';
         });
     in {
+      subxt-codegen-picasso = pkgs.writeShellApplication {
+        name = "subxt-codegen-picasso";
+        runtimeInputs = [ pkgs.git pkgs.yq ];
+        text = ''
+          subxt codegen --url=wss://rpc.composable.finance:443  > $1
+        '';
+      };
+
+      subxt-codegen-composable = pkgs.writeShellApplication {
+        name = "subxt-codegen-composable";
+        runtimeInputs = [ pkgs.git pkgs.yq ];
+        text = ''
+          subxt codegen --url=wss://picasso-rpc.composable.finance:443 > $1
+        '';
+      };      
       composable-rococo-subxt-client =
         mkSubxtClient "composable-rococo-subxt-client"
         self'.packages.composable-runtime

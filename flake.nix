@@ -97,6 +97,7 @@
         ./inputs/paritytech/cumulus.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/substrate.nix
+        ./inputs/paritytech/subxt.nix
         ./inputs/paritytech/zombienet/flake-module.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
         ./tools/devnet-tools.nix
