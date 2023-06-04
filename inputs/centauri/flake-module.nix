@@ -8,7 +8,7 @@
       centauri-runtime-commit =
         builtins.elemAt (builtins.split "#" centauri-runtime-dep.source) 2;
 
-      hyperspace-picasso-kusama = {
+      hyperspace-picasso-kusama-config = {
         channel_whitelist = [ ];
         client_id = "10-grandpa-0";
         commitment_prefix = "0x6962632f";
@@ -24,12 +24,9 @@
         type = "picasso_kusama";
       };
 
-      hyperspace-picasso-kusama-core = {
-        prometheus_endpoint = "https://127.0.0.1";
-      };
+      hyperspace-core-config = { prometheus_endpoint = "https://127.0.0.1"; };
 
-      # so not yet finalizes connection, working on it
-      composable-polkadot = {
+      hyperspace-composable-polkadot-config = {
         type = "composable";
         channel_whitelist = [ ];
         client_id = "10-grandpa-0";
@@ -148,13 +145,15 @@
           };
 
         hyperspace-config-chain-a = pkgs.writeText "config-chain-a.toml"
-          (self.inputs.nix-std.lib.serde.toTOML hyperspace-picasso-kusama);
+          (self.inputs.nix-std.lib.serde.toTOML
+            hyperspace-picasso-kusama-config);
 
         hyperspace-config-chain-b = pkgs.writeText "config-chain-b.toml"
-          (self.inputs.nix-std.lib.serde.toTOML composable-polkadot);
+          (self.inputs.nix-std.lib.serde.toTOML
+            hyperspace-composable-polkadot-config);
 
         hyperspace-config-core = pkgs.writeText "config-core.toml"
-          (self.inputs.nix-std.lib.serde.toTOML hyperspace-picasso-kusama-core);
+          (self.inputs.nix-std.lib.serde.toTOML hyperspace-core-config);
 
         hyperspace-composable-rococo-picasso-rococo = crane.stable.buildPackage
           (subnix.subenv // rec {

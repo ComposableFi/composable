@@ -13,7 +13,7 @@
             cp -f ${self'.packages.hyperspace-config-chain-a} /tmp/config-chain-a.toml  
             cp -f ${self'.packages.hyperspace-config-chain-b} /tmp/config-chain-b.toml  
             cp -f ${self'.packages.hyperspace-config-core} /tmp/config-core.toml  
-            ${pkgs.lib.meta.getExe devnet-centauri}       
+            ${pkgs.lib.meta.getExe devnet-centauri}
           '';
         };
 
@@ -46,6 +46,12 @@
 
         devnet-picasso-image = devnetTools.buildDevnetImage {
           name = "devnet-picasso";
+          container-tools = devnetTools.withDevNetContainerTools;
+          devNet = packages.zombienet-rococo-local-picasso-dev;
+        };
+
+        devnet-image = devnetTools.buildDevnetImage {
+          name = "devnet";
           container-tools = devnetTools.withDevNetContainerTools;
           devNet = packages.zombienet-rococo-local-picasso-dev;
         };

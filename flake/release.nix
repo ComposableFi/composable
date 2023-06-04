@@ -69,7 +69,6 @@
           '';
         };
 
-        # basically this should be just package result with several files
         generate-release-artifacts = pkgs.writeShellApplication {
           name = "generate-release-artifacts";
           runtimeInputs =
@@ -103,7 +102,7 @@
             cp ${
               make-bundle "toDEB" packages.composable-node
             }/*.deb release-artifacts/to-upload/composable-node_${packages.composable-node.version}-1_amd64.deb
-            cp ${packages.composable-node-image} release-artifacts/composable-docker-image
+            cp ${packages.composable-node-image} release-artifacts/composable-image
 
             cp ${
               make-bundle "toRPM" packages.composable-testfast-node
@@ -115,8 +114,10 @@
               make-bundle "toDockerImage" packages.composable-testfast-node
             } release-artifacts/composable-testfast-node-docker-image
 
-            echo "Bridge"
+            echo "Devnet"
+            cp ${packages.devnet-image} release-artifacts/devnet-image
 
+            echo "Bridge"
             cp ${packages.hyperspace-composable-polkadot-picasso-kusama-image} release-artifacts/hyperspace-composable-polkadot-picasso-kusama-image
 
 

@@ -64,22 +64,23 @@ jobs:
           cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#picasso-testfast-runtime
           cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-testfast-runtime
           cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-node
-
-      - name: Download artifacts
-        run: |
+          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#devnet-image
           nix run .#generate-release-artifacts --print-build-logs
-
-      - name: Setup Composable version
-        run: |
           echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)" >> $GITHUB_ENV
 
       - name: Release Docker image
         run: |
-          docker load --input release-artifacts/composable-docker-image
+          docker load --input release-artifacts/composable-image
           docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
           docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest-prerelease"
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest-prerelease"
+
+          docker load --input release-artifacts/devnet-image
+          docker tag devnet:latest "${{ env.DOCKER_REGISTRY_NAME }}/devnet:v${{ env.COMPOSABLE_VERSION }}"
+          docker tag devnet:latest "${{ env.DOCKER_REGISTRY_NAME }}/devnet:latest-prerelease"
+          docker push "${{ env.DOCKER_REGISTRY_NAME }}/devnet:v${{ env.COMPOSABLE_VERSION }}"
+          docker push "${{ env.DOCKER_REGISTRY_NAME }}/devnet:latest-prerelease"                    
 
       - name: Release artifacts
         uses: softprops/action-gh-release@v1

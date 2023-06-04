@@ -500,7 +500,7 @@ jobs:
       - x86_64-linux-32C-128GB-2TB
     needs:
       - draft-release-check
-    #if: ${{ inputs.github_event_name == 'push' }}  
+    if: ${{ inputs.github_event_name == 'push' }}  
     permissions:  
       pull-requests: write
       contents: write      
@@ -599,14 +599,14 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: cmc-api
           artifact: cmc-api:latest
-      - name: Publish devnet-picasso to docker hub
+      - name: Publish devnet to docker hub
         uses: "./.github/templates/docker-publish"
         with:
-          image_path: result/docker-image-devnet-picasso.tar.gz
+          image_path: result/docker-image-devnet.tar.gz
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: devnet-picasso
-          artifact: devnet-picasso:latest
+          name: devnet
+          artifact: devnet:latest
 
       - name: Publish hyperspace-composable-rococo-picasso-rococo to docker hub
         uses: "./.github/templates/docker-publish"
@@ -624,7 +624,7 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: hyperspace-composable-polkadot-picasso-kusama
-          artifact: hyperspace-composable-polkadot-picasso-kusama:latest          
+          artifact: hyperspace-composable-polkadot-picasso-kusama:latest
 
   devnet-integration-tests:
     name: devnet-integration-tests       

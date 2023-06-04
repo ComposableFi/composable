@@ -2,14 +2,23 @@
 }: {
   modules = [
     (let
-      configPathSource = "/tmp";
-      configPathContainer = "/tmp";
       configPathSourceChainA = "/tmp/config-chain-a.toml";
-      configPathContainerChainA = "/tmp/config-chain-a.toml";
       configPathSourceChainB = "/tmp/config-chain-b.toml";
-      configPathContainerChainB = "/tmp/config-chain-b.toml";
       configPathSourceCore = "/tmp/config-core.toml";
-      configPathContainerCore = "/tmp/config-core.toml";
+      singleFileWriteMounts = [
+        {
+          _1 = configPathSourceChainA;
+          _2 = configPathSourceChainA;
+        }
+        {
+          _1 = configPathSourceChainB;
+          _2 = configPathSourceChainB;
+        }
+        {
+          _1 = configPathSourceCore;
+          _2 = configPathSourceCore;
+        }
+      ];
 
       dependsOnCreateClient = {
         hyperspace-create-clients = {
@@ -72,16 +81,15 @@
               execCommands = [
                 "create-clients"
                 "--config-a"
-                configPathContainerChainA
+                configPathSourceChainA
                 "--config-b"
-                configPathContainerChainB
+                configPathSourceChainB
                 "--config-core"
-                configPathContainerCore
+                configPathSourceCore
                 "--delay-period"
                 "10"
               ];
-              inherit configPathSource configPathContainer pkgs packages
-                devnetTools;
+              inherit singleFileWriteMounts pkgs packages devnetTools;
               dependsOn = { };
               restartPolicy = "on-failure";
             }) [ network-a network-b ];
@@ -92,16 +100,15 @@
               execCommands = [
                 "create-connection"
                 "--config-a"
-                configPathContainerChainA
+                configPathSourceChainA
                 "--config-b"
-                configPathContainerChainB
+                configPathSourceChainB
                 "--config-core"
-                configPathContainerCore
+                configPathSourceCore
                 "--delay-period"
                 "10"
               ];
-              inherit configPathSource configPathContainer pkgs packages
-                devnetTools;
+              inherit singleFileWriteMounts pkgs packages devnetTools;
               dependsOn = dependsOnCreateClient;
               restartPolicy = "on-failure";
             }) [ network-a network-b ];
@@ -112,11 +119,11 @@
               execCommands = [
                 "create-channel"
                 "--config-a"
-                configPathContainerChainA
+                configPathSourceChainA
                 "--config-b"
-                configPathContainerChainB
+                configPathSourceChainB
                 "--config-core"
-                configPathContainerCore
+                configPathSourceCore
                 "--port-id"
                 "transfer"
                 "--version"
@@ -126,8 +133,7 @@
                 "--delay-period"
                 "10"
               ];
-              inherit configPathSource configPathContainer pkgs packages
-                devnetTools;
+              inherit singleFileWriteMounts pkgs packages devnetTools;
               dependsOn = dependsOnCreateConnection;
               restartPolicy = "no";
             }) [ network-a network-b ];
@@ -138,16 +144,15 @@
               execCommands = [
                 "relay"
                 "--config-a"
-                configPathContainerChainA
+                configPathSourceChainA
                 "--config-b"
-                configPathContainerChainB
+                configPathSourceChainB
                 "--config-core"
-                configPathContainerCore
+                configPathSourceCore
                 "--delay-period"
                 "10"
               ];
-              inherit configPathSource configPathContainer pkgs packages
-                devnetTools;
+              inherit singleFileWriteMounts pkgs packages devnetTools;
               dependsOn = dependsOnCreateChannels;
               restartPolicy = "on-failure";
             }) [ network-a network-b ];

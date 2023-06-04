@@ -10,6 +10,7 @@
         polkadot-parachain
         subwasm
         zombienet
+        subxt
       ]);
 
       all-testnet-deps = pkgs.linkFarmFromDrvs "all-testnet-deps"
@@ -98,6 +99,7 @@
           hyperspace-composable-rococo-picasso-rococo-image
           hyperspace-composable-polkadot-picasso-kusama-image
           devnet-picasso-image
+          devnet-image
         ]);
     };
   };

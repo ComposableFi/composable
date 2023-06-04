@@ -61,6 +61,7 @@ pub fn execute(
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
 	match msg {
+		// wallet call with signature
 		ExecuteMsg::ExecuteProgram { salt, program, assets } => {
 			let self_address = env.contract.address;
 			let call_origin = CallOrigin::Local { user: info.sender.clone() };
@@ -262,6 +263,7 @@ fn handle_execute_program(
 				send_funds_to_interpreter(deps.as_ref(), interpreter_address.clone(), assets)?;
 			let wasm_msg = wasm_execute(
 				interpreter_address.clone(),
+				
 				&cw_xcvm_interpreter::msg::ExecuteMsg::Execute {
 					relayer: call_origin.relayer().clone(),
 					program,

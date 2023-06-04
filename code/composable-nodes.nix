@@ -1,42 +1,10 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, crane, systemCommonRust
-    , devnetTools, ... }:
+    , devnetTools, cargoTools, ... }:
 
     let
-      rust-src-template = root:
-        pkgs.lib.cleanSourceWith {
-          filter = pkgs.lib.cleanSourceFilter;
-          src = pkgs.lib.cleanSourceWith {
-            filter = let
-              isProto = name: type:
-                type == "regular" && pkgs.lib.strings.hasSuffix ".proto" name;
-              isJSON = name: type:
-                type == "regular" && pkgs.lib.strings.hasSuffix ".json" name;
-              isREADME = name: type:
-                type == "regular"
-                && pkgs.lib.strings.hasSuffix "README.md" name;
-              isDir = name: type: type == "directory";
-              isCargo = name: type:
-                type == "regular" && pkgs.lib.strings.hasSuffix ".toml" name
-                || type == "regular" && pkgs.lib.strings.hasSuffix ".lock" name;
-              isRust = name: type:
-                type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
-              customFilter = name: type:
-                builtins.any (fun: fun name type) [
-                  isCargo
-                  isRust
-                  isDir
-                  isREADME
-                  isJSON
-                  isProto
-                ];
-            in pkgs.nix-gitignore.gitignoreFilterPure customFilter
-            [ ../.gitignore ] ./.;
-            src = root;
-          };
-        };
 
-      rustSrc = rust-src-template ./.;
+      rustSrc = cargoTools.mkRustSrc ./.;
       toDockerImage = { ... }@drv:
         (pkgs.dockerTools.buildImage {
           name = drv.name or drv.pname or "image";
@@ -76,13 +44,52 @@
             builtins.trace "WARNING: no tracked"
             "0000000000000000000000000000000000000000";
         });
+      ccw-src = cargoTools.mkRustSrc ./parachain/frame/cosmwasm/cli;
     in {
       packages = rec {
+        ccw-patch = pkgs.stdenv.mkDerivation rec {
+          name = "ccw-patch";
+          pname = "${name}";
+          buildInputs = [ self'.packages.picasso-runtime-dev ];
+          src = ccw-src;
+          patchPhase = "true";
+          installPhase = ''
+            mkdir --parents $out
+            set +e
+            diff --unified $src/src/substrate/subxt_api.rs ${self'.packages.picasso-runtime-dev}/include/picasso_runtime.rs > $out/picasso_runtime.rs.patch
+            if [[ $? -ne 1 ]] ; then
+              echo "Failed diff"              
+            fi                          
+            set -e 
+          '';
+          dontFixup = true;
+          dontStrip = true;
+        };
+
+        ccw-patched-src = pkgs.stdenv.mkDerivation rec {
+          name = "ccw-patched-src";
+          pname = "${name}";
+          src = ccw-src;
+          buildInputs = with pkgs; [ git ];
+          patchFlags = "--strip=0";
+          patchPhase = "true";
+
+          installPhase = ''
+            mkdir --parents $out
+            cp --recursive --no-preserve=mode,ownership $src/. $out/
+
+            cd $out/src/substrate
+            patch subxt_api.rs ${self'.packages.ccw-patch}/picasso_runtime.rs.patch
+          '';
+          dontFixup = true;
+          dontStrip = true;
+        };
+
         ccw = crane.nightly.buildPackage (systemCommonRust.common-attrs // rec {
           name = "ccw";
           cargoBuildCommand = "cargo build --release --package ${name}";
           meta = { mainProgram = name; };
-          src = rust-src-template ./parachain/frame/cosmwasm/cli;
+          src = ccw-patched-src;
         });
 
         composable-node-image = toDockerImage composable-node;
