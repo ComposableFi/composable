@@ -1,6 +1,6 @@
 use cosmwasm_std::StdError;
 use thiserror::Error;
-use xcvm_core::BridgeSecurity;
+use xc_core::BridgeSecurity;
 
 #[derive(Error, Debug)]
 pub enum ContractError {

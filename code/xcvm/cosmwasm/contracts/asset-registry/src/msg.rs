@@ -1,4 +1,5 @@
 use cosmwasm_std::Addr;
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cw_storage_plus::{IntKey, Key, KeyDeserialize, PrimaryKey};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -73,13 +74,14 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MigrateMsg {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
+	#[returns(LookupResponse)]
 	Lookup { asset_id: AssetKey },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct LookupResponse {
 	pub reference: AssetReference,
 }

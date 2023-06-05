@@ -483,6 +483,7 @@ dependencies = [
  "cw2 1.0.1",
  "schemars",
  "serde",
+ "serde-cw-value",
  "thiserror",
  "xc-core",
 ]
@@ -561,18 +562,18 @@ name = "cw-xcvm-pingpong"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std 1.2.6",
- "cw-storage-plus 0.14.0",
- "cw-utils 0.14.0",
+ "cw-storage-plus 1.0.1",
+ "cw-utils 1.0.1",
  "cw-xc-common",
  "cw-xc-utils",
- "cw2 0.14.0",
- "cw20 0.14.0",
+ "cw2 1.0.1",
+ "cw20 1.0.1",
  "hex",
  "num",
  "prost",
  "schemars",
  "serde",
- "serde-json-wasm 0.4.1 (git+https://github.com/hussein-aitlahcen/serde-json-wasm?rev=1608a13d2a2ba90605d9626a51ff6667aca5a2d6)",
+ "serde-json-wasm 0.5.1",
  "serde_json",
  "thiserror",
  "xc-core",
@@ -1348,7 +1349,6 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43db66d1170d347f9a065114077f7dccb00c1b9478c89384490a3425279a4606"
 dependencies = [
- "num-bigint",
  "num-complex",
  "num-integer",
  "num-iter",
@@ -1957,6 +1957,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2113ab51b87a539ae008b5c6c02dc020ffa39afd2d83cffcb3f4eb2722cebec2"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde-cw-value"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a75d32da6b8ed758b7d850b6c3c08f1d7df51a4df3cb201296e63e34a78e99d4"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

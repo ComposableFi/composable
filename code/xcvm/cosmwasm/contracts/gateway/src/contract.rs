@@ -22,9 +22,9 @@ use cw2::set_contract_version;
 use cw20::Cw20ExecuteMsg;
 use cw_utils::ensure_from_older_version;
 use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
-use cw_xcvm_common::{gateway::ExecuteMsg, shared::BridgeMsg};
+use cw_xc_common::{gateway::ExecuteMsg, shared::BridgeMsg};
 use cw_xcvm_utils::{DefaultXCVMPacket, DefaultXCVMProgram};
-use xcvm_core::{
+use xc_core::{
 	BridgeProtocol, BridgeSecurity, CallOrigin, Displayed, Funds, InterpreterOrigin, NetworkId,
 	XCVMAck,
 };
@@ -223,7 +223,7 @@ pub fn ibc_packet_receive(
 		msgs.push(
 			wasm_execute(
 				router_address,
-				&cw_xcvm_common::router::ExecuteMsg::ExecuteProgramPrivileged {
+				&cw_xc_common::router::ExecuteMsg::ExecuteProgramPrivileged {
 					call_origin: CallOrigin::Remote {
 						protocol: BridgeProtocol::IBC,
 						relayer: msg.relayer,

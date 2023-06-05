@@ -17,6 +17,7 @@ panic = "abort"
 rpath = false
 
 [workspace.dependencies]
+cosmwasm-schema = { version = "1.2.6", default-features = false}
 cosmwasm-std = { version = "1.2.6", default-features = false}
 cw-storage-plus = { version = "1.0.1", default-features = false }
 cw-utils = "1.0.1"
@@ -40,9 +41,11 @@ prost-build = "0.11.9"
 cw20 = "1.0.1"
 cw2 = "1.0.1"
 thiserror = { version = "1.0.38" }
-cosmwasm-schema = "1.2.6"
 
+serde-cw-value = { version = "0.7.0", default-features = false}
 hex = { version = "0.4", default-features = false, features = [
   "alloc",
   "serde",
 ] }
+
+serde-json-wasm = { version ="0.5.1", default-features = false }

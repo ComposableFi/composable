@@ -15,7 +15,7 @@ use cw2::set_contract_version;
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 use cw_utils::ensure_from_older_version;
 use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
-use cw_xcvm_common::{
+use cw_xc_common::{
 	router::ExecuteMsg,
 	shared::{decode_base64, BridgeMsg},
 };
@@ -23,7 +23,7 @@ use cw_xcvm_interpreter::contract::{
 	XCVM_INTERPRETER_EVENT_DATA_ORIGIN, XCVM_INTERPRETER_EVENT_PREFIX,
 };
 use cw_xcvm_utils::DefaultXCVMProgram;
-use xcvm_core::{BridgeSecurity, CallOrigin, Displayed, Funds, InterpreterOrigin};
+use xc_core::{BridgeSecurity, CallOrigin, Displayed, Funds, InterpreterOrigin};
 
 const CONTRACT_NAME: &str = "composable:xcvm-router";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -189,7 +189,7 @@ fn handle_bridge_forward(
 		.collect::<Result<Vec<CosmosMsg>, _>>()?;
 	Ok(Response::default().add_messages(transfers).add_message(wasm_execute(
 		config.gateway_address,
-		&cw_xcvm_common::gateway::ExecuteMsg::Bridge { interpreter: info.sender, msg },
+		&cw_xc_common::gateway::ExecuteMsg::Bridge { interpreter: info.sender, msg },
 		Default::default(),
 	)?))
 }

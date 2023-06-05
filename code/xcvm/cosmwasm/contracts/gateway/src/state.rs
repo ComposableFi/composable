@@ -2,7 +2,7 @@ use cosmwasm_std::{Addr, IbcEndpoint};
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::{BridgeId, BridgeSecurity, NetworkId};
+use xc_core::{BridgeId, BridgeSecurity, NetworkId};
 
 pub type ChannelId = String;
 
