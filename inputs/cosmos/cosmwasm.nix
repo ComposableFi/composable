@@ -22,12 +22,7 @@
           subwasm
           pkgs.binaryen
           cosmwasm-check
-          junod
         ];
-        shellHook = ''
-          echo "junod alice key:"
-          echo "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" | junod keys add alice --recover --keyring-backend test || true
-        '';
       };
     };
   };

@@ -41,13 +41,9 @@
       };
       cosmosattrs = defaultattrs // {
         modules = [{
-          packages = tools ++ (with self'.packages; [ junod gex ]);
+          packages = tools ++ (with self'.packages; [ gex ]);
           devcontainer.enable = true;
           inherit env;
-          enterShell = ''
-            echo "junod alice key:"
-            echo "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" | junod keys add alice --recover --keyring-backend test || true
-          '';
         }];
       };
       allattrs = defaultattrs // {
