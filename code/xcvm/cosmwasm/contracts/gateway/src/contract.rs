@@ -21,14 +21,14 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw20::Cw20ExecuteMsg;
 use cw_utils::ensure_from_older_version;
-use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
+use cw_xc_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
 use cw_xc_common::{gateway::ExecuteMsg, shared::BridgeMsg};
-use cw_xcvm_utils::{DefaultXCVMPacket, DefaultXCVMProgram};
+use cw_xc_utils::{DefaultXCVMPacket, DefaultXCVMProgram};
 use xc_core::{
 	BridgeProtocol, BridgeSecurity, CallOrigin, Displayed, Funds, InterpreterOrigin, NetworkId,
 	XCVMAck,
 };
-use xcvm_proto::{decode_packet, Encodable};
+use xc_proto::{decode_packet, Encodable};
 
 pub const CONTRACT_NAME: &str = "composable:xcvm-gateway";
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -57,7 +57,7 @@ pub fn instantiate(
 		.add_submessage(SubMsg::reply_on_success(
 			wasm_instantiate(
 				msg.config.router_code_id,
-				&cw_xcvm_router::msg::InstantiateMsg {
+				&cw_xc_router::msg::InstantiateMsg {
 					registry_address: msg.config.registry_address,
 					interpreter_code_id: msg.config.interpreter_code_id,
 					network_id: msg.config.network_id,

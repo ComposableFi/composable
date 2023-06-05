@@ -2,7 +2,7 @@
 authors = ["Composable Developers"]
 description = "XCVM Ping Pong contract"
 edition = "2021"
-name = "cw-xcvm-pingpong"
+name = "cw-xc-pingpong"
 repository = "https://github.com/ComposableFi/composable"
 version = "0.1.0"
 

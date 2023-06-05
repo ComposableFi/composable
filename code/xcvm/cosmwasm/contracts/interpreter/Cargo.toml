@@ -2,7 +2,7 @@
 authors = ["Composable Developers"]
 description = "XCVM Interpreter contract"
 edition = "2021"
-name = "cw-xcvm-interpreter"
+name = "cw-xc-interpreter"
 repository = "https://github.com/ComposableFi/composable"
 version = "0.1.0"
 

@@ -43,8 +43,8 @@
             installPhase = "mkdir -p $out";
             CW_XCVM_ASSET_REGISTRY =
               "${xcvm-contracts}/lib/cw_xcvm_asset_registry.wasm";
-            CW_XCVM_INTERPRETER =
-              "${xcvm-contracts}/lib/cw_xcvm_interpreter.wasm";
+            cw_xc_interpreter =
+              "${xcvm-contracts}/lib/cw_xc_interpreter.wasm";
             CW_XCVM_ROUTER = "${xcvm-contracts}/lib/cw_xcvm_router.wasm";
             CW_XCVM_GATEWAY = "${xcvm-contracts}/lib/cw_xcvm_gateway.wasm";
             CW20 = pkgs.fetchurl {

@@ -13,10 +13,10 @@ cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "9632
 cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "96324b719b4e13d129c912e2ce8622b3cc720b9c" }
 cosmwasm-orchestrate = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "96324b719b4e13d129c912e2ce8622b3cc720b9c" }
 cw-xc-asset-registry = { path = "../contracts/asset-registry" }
-cw-xcvm-gateway = { path = "../contracts/gateway" }
-cw-xcvm-interpreter = { path = "../contracts/interpreter" }
-cw-xcvm-router = { path = "../contracts/router" }
-cw-xcvm-pingpong = { path = "../contracts/pingpong" }
+cw-xc-gateway = { path = "../contracts/gateway" }
+cw-xc-interpreter = { path = "../contracts/interpreter" }
+cw-xc-router = { path = "../contracts/router" }
+cw-xc-pingpong = { path = "../contracts/pingpong" }
 cw-xc-common = { path = "../contracts/common" }
 cw-xc-utils = { path = "../contracts/utils" }
 xc-core = { path = "../../lib/core" }

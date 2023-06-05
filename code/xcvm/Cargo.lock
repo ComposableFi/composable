@@ -397,17 +397,6 @@ dependencies = [
 
 [[package]]
 name = "cw-storage-plus"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c8b264257c4f44c49b7ce09377af63aa040768ecd3fd7bdd2d48a09323a1e90"
-dependencies = [
- "cosmwasm-std 1.2.6",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "cw-storage-plus"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9b6f91c0b94481a3e9ef1ceb183c37d00764f8751e39b45fc09f4d9b970d469"
@@ -426,20 +415,6 @@ dependencies = [
  "cosmwasm-std 1.2.6",
  "schemars",
  "serde",
-]
-
-[[package]]
-name = "cw-utils"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "414b91f3d7a619bb26c835119d7095804596a1382ddc1d184c33c1d2c17f6c5e"
-dependencies = [
- "cosmwasm-std 1.2.6",
- "cw2 0.14.0",
- "schemars",
- "semver",
- "serde",
- "thiserror",
 ]
 
 [[package]]
@@ -500,28 +475,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-xc-utils"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std 1.2.6",
- "xc-core",
-]
-
-[[package]]
-name = "cw-xcvm-gateway"
+name = "cw-xc-gateway"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std 1.2.6",
- "cw-storage-plus 0.14.0",
- "cw-utils 0.14.0",
+ "cw-storage-plus 1.0.1",
+ "cw-utils 1.0.1",
  "cw-xc-asset-registry",
  "cw-xc-common",
+ "cw-xc-interpreter",
+ "cw-xc-router",
  "cw-xc-utils",
- "cw-xcvm-interpreter",
- "cw-xcvm-router",
- "cw2 0.14.0",
- "cw20 0.14.0",
+ "cw2 1.0.1",
+ "cw20 1.0.1",
  "hex",
  "prost",
  "schemars",
@@ -533,7 +500,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-xcvm-interpreter"
+name = "cw-xc-interpreter"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
@@ -558,7 +525,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-xcvm-pingpong"
+name = "cw-xc-pingpong"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std 1.2.6",
@@ -581,39 +548,35 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-xcvm-router"
+name = "cw-xc-router"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std 1.2.6",
- "cw-storage-plus 0.14.0",
- "cw-utils 0.14.0",
+ "cw-storage-plus 1.0.1",
+ "cw-utils 1.0.1",
  "cw-xc-asset-registry",
  "cw-xc-common",
+ "cw-xc-interpreter",
  "cw-xc-utils",
- "cw-xcvm-interpreter",
- "cw2 0.14.0",
- "cw20 0.14.0",
+ "cw2 1.0.1",
+ "cw20 1.0.1",
  "hex",
  "prost",
  "schemars",
  "serde",
- "serde-json-wasm 0.4.1 (git+https://github.com/hussein-aitlahcen/serde-json-wasm?rev=1608a13d2a2ba90605d9626a51ff6667aca5a2d6)",
+ "serde-json-wasm 0.5.1",
  "thiserror",
  "xc-core",
  "xc-proto",
 ]
 
 [[package]]
-name = "cw2"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa74c324af8e3506fd8d50759a265bead3f87402e413c840042af5d2808463d6"
+name = "cw-xc-utils"
+version = "0.1.0"
 dependencies = [
  "cosmwasm-std 1.2.6",
- "cw-storage-plus 0.14.0",
- "schemars",
- "serde",
+ "xc-core",
 ]
 
 [[package]]
@@ -638,18 +601,6 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std 1.2.6",
  "cw-storage-plus 1.0.1",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "cw20"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f446f59c519fbac5ab8b9f6c7f8dcaa05ee761703971406b28221ea778bb737"
-dependencies = [
- "cosmwasm-std 1.2.6",
- "cw-utils 0.14.0",
  "schemars",
  "serde",
 ]
@@ -2635,11 +2586,11 @@ dependencies = [
  "cosmwasm-vm-wasmi",
  "cw-xc-asset-registry",
  "cw-xc-common",
+ "cw-xc-gateway",
+ "cw-xc-interpreter",
+ "cw-xc-pingpong",
+ "cw-xc-router",
  "cw-xc-utils",
- "cw-xcvm-gateway",
- "cw-xcvm-interpreter",
- "cw-xcvm-pingpong",
- "cw-xcvm-router",
  "cw20 0.16.0",
  "cw20-base",
  "env_logger",

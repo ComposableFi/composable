@@ -1,6 +1,6 @@
 use cosmwasm_std::{IbcOrder, StdError};
 use thiserror::Error;
-use xcvm_proto::DecodingFailure;
+use xc_proto::DecodingFailure;
 
 #[derive(Error, Debug)]
 pub enum ContractError {
