@@ -31,7 +31,7 @@ pub enum ContractBackend {
 	Pallet,
 }
 
-impl WasmiContext for ContractBackend {
+impl ContractBackend {
 	fn executing_module(&self) -> Option<WasmiModule> {
 		match self {
 			ContractBackend::CosmWasm { executing_module } => executing_module.clone(),
@@ -184,6 +184,8 @@ pub struct CosmwasmVM<'a, T: Config> {
 	pub iterators: BTreeMap<u32, Vec<u8>>,
 	/// Actual contract runtime
 	pub contract_runtime: ContractBackend,
+	/// Call depth used to limit recursion.
+	pub call_depth: u32,
 }
 
 impl<'a, T: Config> Has<Env> for CosmwasmVM<'a, T> {
@@ -205,6 +207,10 @@ impl<'a, T: Config> WasmiContext for CosmwasmVM<'a, T> {
 
 	fn set_wasmi_context(&mut self, instance: Instance, memory: Memory) {
 		self.contract_runtime.set_wasmi_context(instance, memory)
+	}
+
+	fn call_depth_mut(&mut self) -> &mut u32 {
+		&mut self.call_depth
 	}
 }
 
