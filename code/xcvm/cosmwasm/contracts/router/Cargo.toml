@@ -16,7 +16,7 @@ library = []
 cosmwasm-std = "1.0.0"
 cw-storage-plus = "0.14.0"
 cw-utils = "0.14.0"
-cw-xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
+cw-xc-asset-registry = { path = "../asset-registry", features = ["library"] }
 cw-xc-common = { path = "../common" }
 cw-xcvm-interpreter = { path = "../interpreter", features = ["library"] }
 cw-xc-utils = { path = "../utils" }

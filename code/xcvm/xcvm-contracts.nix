@@ -17,7 +17,7 @@
         });
     in {
       packages = rec {
-        xcvm-contract-asset-registry = mkXcvmContract "cw-xcvm-asset-registry";
+        xcvm-contract-asset-registry = mkXcvmContract "cw-xc-asset-registry";
         xcvm-contract-router = mkXcvmContract "cw-xcvm-router";
         xcvm-contract-interpreter = mkXcvmContract "cw-xcvm-interpreter";
         xcvm-contract-gateway = mkXcvmContract "cw-xcvm-gateway";

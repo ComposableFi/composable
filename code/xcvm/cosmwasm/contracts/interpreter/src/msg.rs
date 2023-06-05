@@ -2,10 +2,10 @@ extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
 use cosmwasm_std::Addr;
-use cw_xcvm_utils::DefaultXCVMProgram;
+use cw_xc_utils::DefaultXCVMProgram;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::{InterpreterOrigin, Register};
+use xc_core::{InterpreterOrigin, Register};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

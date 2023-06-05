@@ -2,7 +2,7 @@
 authors = ["Composable Developers"]
 description = "XCVM Asset Registry contract"
 edition = "2021"
-name = "cw-xcvm-asset-registry"
+name = "cw-xc-asset-registry"
 version = "0.1.0"
 repository = "https://github.com/ComposableFi/composable"
 

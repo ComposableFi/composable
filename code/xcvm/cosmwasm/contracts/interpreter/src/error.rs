@@ -1,6 +1,6 @@
 use cosmwasm_std::StdError;
 use thiserror::Error;
-use xcvm_core::{BridgeSecurity, LateBindingError};
+use xc_core::{BridgeSecurity, LateBindingError};
 
 impl From<()> for ContractError {
 	fn from(_: ()) -> Self {

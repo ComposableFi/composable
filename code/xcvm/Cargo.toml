@@ -19,6 +19,7 @@ rpath = false
 [workspace.dependencies]
 cosmwasm-std = { version = "1.2.6", default-features = false}
 cw-storage-plus = { version = "1.0.1", default-features = false }
+cw-utils = "1.0.1"
 fixed = { version = "1.15", default-features = false }
 parity-scale-codec = {  version = "3.5.0", default-features = false }
 num = { version = "0.4", default-features = false }
@@ -34,13 +35,14 @@ serde = { version = "1.0.163", default-features = false, features = [
   "alloc",
 ] }
 serde_json = "1.0.96"
-
 prost-types = { version = "0.11.9", default-features = false }
 prost-build = "0.11.9"
-
-
-cw-utils = "1.0.1"
+cw20 = "1.0.1"
 cw2 = "1.0.1"
 thiserror = { version = "1.0.38" }
-
 cosmwasm-schema = "1.2.6"
+
+hex = { version = "0.4", default-features = false, features = [
+  "alloc",
+  "serde",
+] }

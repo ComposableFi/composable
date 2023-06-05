@@ -16,11 +16,11 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
 use cw_utils::ensure_from_older_version;
-use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
-use cw_xcvm_common::shared::{encode_base64, BridgeMsg};
-use cw_xcvm_utils::DefaultXCVMProgram;
+use cw_xc_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
+use cw_xc_common::shared::{encode_base64, BridgeMsg};
+use cw_xc_utils::DefaultXCVMProgram;
 use num::Zero;
-use xcvm_core::{
+use xc_core::{
 	apply_bindings, cosmwasm::*, Balance, BindingValue, BridgeSecurity, Destination, Displayed,
 	Funds, Instruction, NetworkId, Register,
 };
@@ -389,7 +389,7 @@ pub fn interpret_spawn(
 	Ok(response
 		.add_message(wasm_execute(
 			router_address,
-			&cw_xcvm_common::router::ExecuteMsg::BridgeForward {
+			&cw_xc_common::router::ExecuteMsg::BridgeForward {
 				msg: BridgeMsg {
 					interpreter_origin: interpreter_origin.clone(),
 					network_id: network,
