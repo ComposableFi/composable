@@ -1,8 +1,8 @@
 use crate::shared::BridgeMsg;
-use cw_xcvm_utils::DefaultXCVMProgram;
+use cw_xc_utils::DefaultXCVMProgram;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::{BridgeSecurity, CallOrigin, Displayed, Funds, InterpreterOrigin};
+use xc_core::{BridgeSecurity, CallOrigin, Displayed, Funds, InterpreterOrigin};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

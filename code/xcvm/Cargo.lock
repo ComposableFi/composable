@@ -458,6 +458,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-xc-common"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std 1.2.6",
+ "cw-xc-utils",
+ "schemars",
+ "serde",
+ "xc-core",
+]
+
+[[package]]
+name = "cw-xc-utils"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std 1.2.6",
+ "xc-core",
+]
+
+[[package]]
 name = "cw-xcvm-asset-registry"
 version = "0.1.0"
 dependencies = [
@@ -473,17 +492,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-xcvm-common"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std 1.2.6",
- "cw-xcvm-utils",
- "schemars",
- "serde",
- "xc-core",
-]
-
-[[package]]
 name = "cw-xcvm-gateway"
 version = "0.1.0"
 dependencies = [
@@ -491,11 +499,11 @@ dependencies = [
  "cosmwasm-std 1.2.6",
  "cw-storage-plus 0.14.0",
  "cw-utils 0.14.0",
+ "cw-xc-common",
+ "cw-xc-utils",
  "cw-xcvm-asset-registry",
- "cw-xcvm-common",
  "cw-xcvm-interpreter",
  "cw-xcvm-router",
- "cw-xcvm-utils",
  "cw2 0.14.0",
  "cw20 0.14.0",
  "hex",
@@ -516,9 +524,9 @@ dependencies = [
  "cosmwasm-std 1.2.6",
  "cw-storage-plus 0.14.0",
  "cw-utils 0.14.0",
+ "cw-xc-common",
+ "cw-xc-utils",
  "cw-xcvm-asset-registry",
- "cw-xcvm-common",
- "cw-xcvm-utils",
  "cw2 0.14.0",
  "cw20 0.14.0",
  "hex",
@@ -540,8 +548,8 @@ dependencies = [
  "cosmwasm-std 1.2.6",
  "cw-storage-plus 0.14.0",
  "cw-utils 0.14.0",
- "cw-xcvm-common",
- "cw-xcvm-utils",
+ "cw-xc-common",
+ "cw-xc-utils",
  "cw2 0.14.0",
  "cw20 0.14.0",
  "hex",
@@ -564,10 +572,10 @@ dependencies = [
  "cosmwasm-std 1.2.6",
  "cw-storage-plus 0.14.0",
  "cw-utils 0.14.0",
+ "cw-xc-common",
+ "cw-xc-utils",
  "cw-xcvm-asset-registry",
- "cw-xcvm-common",
  "cw-xcvm-interpreter",
- "cw-xcvm-utils",
  "cw2 0.14.0",
  "cw20 0.14.0",
  "hex",
@@ -578,14 +586,6 @@ dependencies = [
  "thiserror",
  "xc-core",
  "xc-proto",
-]
-
-[[package]]
-name = "cw-xcvm-utils"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std 1.2.6",
- "xc-core",
 ]
 
 [[package]]
@@ -2583,13 +2583,13 @@ dependencies = [
  "cosmwasm-std 1.2.6",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
+ "cw-xc-common",
+ "cw-xc-utils",
  "cw-xcvm-asset-registry",
- "cw-xcvm-common",
  "cw-xcvm-gateway",
  "cw-xcvm-interpreter",
  "cw-xcvm-pingpong",
  "cw-xcvm-router",
- "cw-xcvm-utils",
  "cw20 0.16.0",
  "cw20-base",
  "env_logger",

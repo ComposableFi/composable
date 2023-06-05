@@ -1,8 +1,8 @@
 use cosmwasm_std::{from_binary, to_binary, Binary, StdResult};
-use cw_xcvm_utils::DefaultXCVMProgram;
+use cw_xc_utils::DefaultXCVMProgram;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use xcvm_core::{BridgeSecurity, Displayed, Funds, InterpreterOrigin, NetworkId};
+use xc_core::{BridgeSecurity, Displayed, Funds, InterpreterOrigin, NetworkId};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct BridgeMsg {

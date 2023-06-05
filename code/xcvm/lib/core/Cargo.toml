@@ -27,8 +27,5 @@ serde_json = { workspace = true}
 
 [features]
 default = []
-# Although `JsonSchema` is only supported with `std`, let's not enable
-# `std` with `cosmwasm` automatically. `cosmwasm` can be used in `no_std`
-# environments as well without the need of `JsonSchema`.
 cosmwasm = ["cw-storage-plus"]
 std = ["dep:schemars"]
