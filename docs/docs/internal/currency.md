@@ -61,7 +61,7 @@ For details on registry mapping, check the AssetsRegistry (frame/assets-registry
 
 Generally, a remote currency transferred via one bridge is not necessarily the same as the same currency transferred via another bridge.
 
-For example, USDC transferred via Mosaic is not equal to the same amount transferred via XCMP from Acala.
+For example, USDC transferred via IBC is not equal to the same amount transferred via XCMP from Acala.
 
 There are several solutions to equalize currencies:
 
@@ -163,7 +163,6 @@ See Angular documentation for more examples.
 - tokens
 - balances
 - unknownTokens
-- currencyFactory
 - assets
 - assetsRegistry
-- mosaic
+- ibc

@@ -8,11 +8,11 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::system::CosmwasmCodeId;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
-use cw_xcvm_asset_registry::msg::AssetReference;
-use cw_xcvm_router::contract::XCVM_ROUTER_EVENT_PREFIX;
-use cw_xcvm_utils::{DefaultXCVMProgram, Salt};
+use cw_xc_asset_registry::msg::AssetReference;
+use cw_xc_router::contract::XCVM_ROUTER_EVENT_PREFIX;
+use cw_xc_utils::{DefaultXCVMProgram, Salt};
 use std::{collections::HashMap, hash::Hash};
-use xcvm_core::{Asset, AssetId, AssetSymbol, Funds, Network, NetworkId};
+use xc_core::{Asset, AssetId, AssetSymbol, Funds, Network, NetworkId};
 
 pub const XCVM_ASSET_REGISTRY_CODE: CosmwasmCodeId = 0;
 pub const XCVM_INTERPRETER_CODE: CosmwasmCodeId = 1;
@@ -138,7 +138,7 @@ impl InMemoryIbcNetworkChannel {
 			},
 			tx_admin.info.clone(),
 			gas,
-			cw_xcvm_common::gateway::ExecuteMsg::IbcSetNetworkChannel {
+			cw_xc_common::gateway::ExecuteMsg::IbcSetNetworkChannel {
 				network_id: vm_counterparty.network_id,
 				channel_id: channel_id.clone(),
 			},
@@ -149,12 +149,12 @@ impl InMemoryIbcNetworkChannel {
 				block: tx_admin_counterparty.block.clone(),
 				transaction: tx_admin_counterparty.transaction.clone(),
 				contract: ContractInfo {
-					address: vm_counterparty.xcvm_state.gateway.clone().into(),
+					address: qvm_counterparty.xcvm_state.gateway.clone().into(),
 				},
 			},
 			tx_admin_counterparty.info.clone(),
 			gas,
-			cw_xcvm_common::gateway::ExecuteMsg::IbcSetNetworkChannel {
+			cw_xc_common::gateway::ExecuteMsg::IbcSetNetworkChannel {
 				network_id: vm.network_id,
 				channel_id: channel_id.clone(),
 			},
@@ -240,7 +240,7 @@ impl TestVM<()> {
 			tx.transaction.clone(),
 			tx.info.clone(),
 			tx.gas,
-			cw_xcvm_asset_registry::msg::InstantiateMsg { admin: tx.info.sender.clone().into() },
+			cw_xc_asset_registry::msg::InstantiateMsg { admin: tx.info.sender.clone().into() },
 		)?;
 		// The gateway deploy the router under the hood.
 		let (gateway_address, (gateway_data, gateway_events)) =
@@ -252,8 +252,8 @@ impl TestVM<()> {
 				tx.transaction,
 				tx.info.clone(),
 				tx.gas,
-				cw_xcvm_gateway::msg::InstantiateMsg {
-					config: cw_xcvm_gateway::state::Config {
+				cw_xc_gateway::msg::InstantiateMsg {
+					config: cw_xc_gateway::state::Config {
 						registry_address: registry_address.clone().to_string(),
 						router_code_id: XCVM_ROUTER_CODE,
 						interpreter_code_id: XCVM_INTERPRETER_CODE,
@@ -320,7 +320,7 @@ impl<T> TestVM<XCVMState<T>> {
 			},
 			tx.info,
 			tx.gas,
-			cw_xcvm_asset_registry::msg::ExecuteMsg::RegisterAsset {
+			cw_xc_asset_registry::msg::ExecuteMsg::RegisterAsset {
 				asset_id: A::ID.into(),
 				reference: AssetReference::Virtual { cw20_address: asset_address.clone().into() },
 			},
@@ -382,7 +382,7 @@ impl<T> TestVM<XCVMState<T>> {
 			},
 			tx.info,
 			tx.gas,
-			cw_xcvm_common::router::ExecuteMsg::ExecuteProgram {
+			cw_xc_common::router::ExecuteMsg::ExecuteProgram {
 				salt: salt.into(),
 				program: program.into(),
 				assets: Funds::from(assets.into_iter().collect::<Vec<_>>()),

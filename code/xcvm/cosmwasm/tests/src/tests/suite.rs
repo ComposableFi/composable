@@ -8,14 +8,14 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::system::CUSTOM_CONTRACT_EVENT_PREFIX;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
-use cw_xcvm_asset_registry::contract::XCVM_ASSET_REGISTRY_EVENT_PREFIX;
-use cw_xcvm_gateway::contract::{XCVM_GATEWAY_EVENT_PREFIX, XCVM_GATEWAY_IBC_VERSION};
+use cw_xc_asset_registry::contract::XCVM_ASSET_REGISTRY_EVENT_PREFIX;
+use cw_xc_gateway::contract::{XCVM_GATEWAY_EVENT_PREFIX, XCVM_GATEWAY_IBC_VERSION};
 use cw_xc_interpreter::contract::XCVM_INTERPRETER_EVENT_PREFIX;
-use cw_xcvm_router::contract::XCVM_ROUTER_EVENT_PREFIX;
-use cw_xcvm_utils::{DefaultXCVMProgram, Salt};
+use cw_xc_router::contract::XCVM_ROUTER_EVENT_PREFIX;
+use cw_xc_utils::{DefaultXCVMProgram, Salt};
 use proptest::{prelude::any, prop_assume, prop_compose, proptest};
 use std::assert_matches::assert_matches;
-use xcvm_core::{
+use xc_core::{
 	Asset, AssetId, AssetSymbol, Balance, BridgeSecurity, Destination, Funds, Juno, Network,
 	Picasso, ProgramBuilder, ETH, PICA, USDC, USDT,
 };
@@ -286,7 +286,7 @@ fn load_contracts() -> XCVMContracts {
 	let code_cw20 = std::fs::read(std::env::var("CW20").unwrap()).unwrap();
 	let code_asset_registry =
 		std::fs::read(std::env::var("CW_XCVM_ASSET_REGISTRY").unwrap()).unwrap();
-	let code_interpreter = std::fs::read(std::env::var("cw_xc_interpreter").unwrap()).unwrap();
+	let code_interpreter = std::fs::read(std::env::var("CW_XCVM_INTERPRETER").unwrap()).unwrap();
 	let code_router = std::fs::read(std::env::var("CW_XCVM_ROUTER").unwrap()).unwrap();
 	let code_gateway = std::fs::read(std::env::var("CW_XCVM_GATEWAY").unwrap()).unwrap();
 	XCVMContracts::new(code_asset_registry, code_interpreter, code_router, code_gateway, code_cw20)
@@ -623,7 +623,7 @@ mod single_chain {
 
 mod cross_chain {
 	use cosmwasm_std::Uint128;
-	use xcvm_core::XCVMAck;
+	use xc_core::XCVMAck;
 
 	use super::*;
 

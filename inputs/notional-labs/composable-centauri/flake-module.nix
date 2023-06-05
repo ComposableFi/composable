@@ -16,7 +16,7 @@
     in
     {
       packages = rec {
-        wasmvm = crane.nightly.buildPackage  {
+        wasmvm = crane.nightly.buildPackage {
           src = "${
               pkgs.fetchFromGitHub {
                 owner = "CosmWasm";
@@ -37,9 +37,9 @@
         banksyd = pkgs.buildGoModule {
           name = "banksyd";
           doCheck = false;
-          nativeBuildInputs = [pkgs.patchelf];
-          excludedPackages = ["interchaintest" "simd"];
-                ldflags = [
+          nativeBuildInputs = [ pkgs.patchelf ];
+          excludedPackages = [ "interchaintest" "simd" ];
+          ldflags = [
             "-v -extldflags '-L${wasmvm}/lib'"
           ];
           src = pkgs.fetchFromGitHub {
