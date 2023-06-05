@@ -6,23 +6,24 @@ name = "xcvm-core"
 version = "0.1.0"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
-cosmwasm-std = "1.0.0"
-cw-storage-plus = { version = "0.14.0", optional = true }
-fixed = { version = "1.15", default-features = false }
-num = { version = "0.4", default-features = false }
-prost = { version = "0.11", default-features = false, features = [
+cosmwasm-std = {workspace = true}
+cw-storage-plus = { workspace=true, optional = true }
+
+fixed = { workspace = true, default-features = false }
+parity-scale-codec = { workspace = true, default-features = false }
+num = { workspace = true, default-features = false }
+prost = { workspace = true, default-features = false, features = [
   "prost-derive",
 ] }
-scale-info = { version = "2.1.1", default-features = false, features = [
+scale-info = { workspace = true, default-features = false, features = [
   "derive",
 ] }
-schemars = { version = "0.8.1", optional = true }
-serde = { version = "1", default-features = false, features = [
+schemars = { workspace = true, optional = true }
+serde = { workspace = true, default-features = false, features = [
   "derive",
   "alloc",
 ] }
-serde_json = "1.0"
+serde_json = { workspace = true}
 
 [features]
 default = []

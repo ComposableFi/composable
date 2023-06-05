@@ -1,6 +1,6 @@
 use crate::{NetworkId, UserOrigin};
 use alloc::vec::Vec;
-use codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use core::cmp::Ordering;
 use cosmwasm_std::Addr;
 use scale_info::TypeInfo;

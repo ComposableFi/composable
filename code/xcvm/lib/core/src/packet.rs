@@ -1,6 +1,6 @@
 use crate::{Displayed, Funds, UserOrigin};
 use alloc::{vec, vec::Vec};
-use codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use cosmwasm_std::Binary;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
