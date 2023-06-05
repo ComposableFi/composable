@@ -5,5 +5,5 @@ name = "cw-xcvm-utils"
 version = "0.1.0"
 
 [dependencies]
-cosmwasm-std = "1.0.0"
-xcvm-core = { path = "../../../lib/core", features = [] }
+cosmwasm-std = { workspace = true}
+xc-core = { path = "../../../lib/core", features = [] }

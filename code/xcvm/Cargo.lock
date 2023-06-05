@@ -469,7 +469,7 @@ dependencies = [
  "schemars",
  "serde",
  "thiserror",
- "xcvm-core",
+ "xc-core",
 ]
 
 [[package]]
@@ -480,7 +480,7 @@ dependencies = [
  "cw-xcvm-utils",
  "schemars",
  "serde",
- "xcvm-core",
+ "xc-core",
 ]
 
 [[package]]
@@ -504,8 +504,8 @@ dependencies = [
  "serde",
  "serde-json-wasm 0.4.1 (git+https://github.com/hussein-aitlahcen/serde-json-wasm?rev=1608a13d2a2ba90605d9626a51ff6667aca5a2d6)",
  "thiserror",
- "xcvm-core",
- "xcvm-proto",
+ "xc-core",
+ "xc-proto",
 ]
 
 [[package]]
@@ -529,8 +529,8 @@ dependencies = [
  "serde-json-wasm 0.4.1 (git+https://github.com/hussein-aitlahcen/serde-json-wasm?rev=1608a13d2a2ba90605d9626a51ff6667aca5a2d6)",
  "serde_json",
  "thiserror",
- "xcvm-core",
- "xcvm-proto",
+ "xc-core",
+ "xc-proto",
 ]
 
 [[package]]
@@ -552,8 +552,8 @@ dependencies = [
  "serde-json-wasm 0.4.1 (git+https://github.com/hussein-aitlahcen/serde-json-wasm?rev=1608a13d2a2ba90605d9626a51ff6667aca5a2d6)",
  "serde_json",
  "thiserror",
- "xcvm-core",
- "xcvm-proto",
+ "xc-core",
+ "xc-proto",
 ]
 
 [[package]]
@@ -576,8 +576,8 @@ dependencies = [
  "serde",
  "serde-json-wasm 0.4.1 (git+https://github.com/hussein-aitlahcen/serde-json-wasm?rev=1608a13d2a2ba90605d9626a51ff6667aca5a2d6)",
  "thiserror",
- "xcvm-core",
- "xcvm-proto",
+ "xc-core",
+ "xc-proto",
 ]
 
 [[package]]
@@ -585,7 +585,7 @@ name = "cw-xcvm-utils"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std 1.2.6",
- "xcvm-core",
+ "xc-core",
 ]
 
 [[package]]
@@ -1586,9 +1586,9 @@ dependencies = [
 
 [[package]]
 name = "prost-build"
-version = "0.11.6"
+version = "0.11.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3f8ad728fb08fe212df3c05169e940fbb6d9d16a877ddde14644a983ba2012e"
+checksum = "119533552c9a7ffacc21e099c24a0ac8bb19c2a2a3f363de84cd9b844feab270"
 dependencies = [
  "bytes",
  "heck",
@@ -1621,11 +1621,10 @@ dependencies = [
 
 [[package]]
 name = "prost-types"
-version = "0.11.6"
+version = "0.11.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a5e0526209433e96d83d750dd81a99118edbc55739e7e61a46764fd2ad537788"
+checksum = "213622a1460818959ac1181aaeb2dc9c7f63df720db7d788b3e24eacd1983e13"
 dependencies = [
- "bytes",
  "prost",
 ]
 
@@ -2550,7 +2549,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "xcvm-core"
+name = "xc-core"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-std 1.2.6",
@@ -2566,14 +2565,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "xcvm-proto"
+name = "xc-proto"
 version = "0.1.0"
 dependencies = [
  "fixed",
  "prost",
  "prost-build",
  "prost-types",
- "xcvm-core",
+ "xc-core",
 ]
 
 [[package]]
@@ -2601,7 +2600,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "xcvm-core",
+ "xc-core",
 ]
 
 [[package]]

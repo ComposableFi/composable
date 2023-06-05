@@ -19,7 +19,7 @@ cw-xcvm-router = { path = "../contracts/router" }
 cw-xcvm-pingpong = { path = "../contracts/pingpong" }
 cw-xcvm-common = { path = "../contracts/common" }
 cw-xcvm-utils = { path = "../contracts/utils" }
-xcvm-core = { path = "../../lib/core" }
+xc-core = { path = "../../lib/core" }
 
 log = { version = "0.4" }
 env_logger = { version = "0.10" }
