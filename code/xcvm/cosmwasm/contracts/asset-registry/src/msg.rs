@@ -1,8 +1,8 @@
 use cosmwasm_std::Addr;
-use cw_storage_plus::{CwIntKey, Key, KeyDeserialize, PrimaryKey};
+use cw_storage_plus::{IntKey, Key, KeyDeserialize, PrimaryKey};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::AssetId;
+use xc_core::AssetId;
 
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
 #[repr(transparent)]
