@@ -195,7 +195,7 @@ impl Pyth {
 		sink: &mpsc::Sender<PythFeedNotification>,
 		asset_pair: &AssetPair,
 	) -> Result<(), PythError> {
-		let asset_pair_symbol = format!("{}", SlashSymbol::new(*asset_pair));
+		let asset_pair_symbol = SlashSymbol::new(*asset_pair).to_string();
 		let product_prices = self
 			.get_product_list()
 			.await?

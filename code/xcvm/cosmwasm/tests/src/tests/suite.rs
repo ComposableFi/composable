@@ -412,7 +412,7 @@ fn xcvm_deploy_asset<A: Asset + AssetSymbol, T>(
 		events.registry_events.iter(),
 		XCVM_ASSET_REGISTRY_EVENT_PREFIX,
 		"asset_id",
-		&format!("{}", A::ID.0 .0),
+		&A::ID.0 .0.to_string(),
 	);
 	xcvm_assert_prefixed_event(
 		events.registry_events.iter(),

@@ -251,7 +251,7 @@ pub fn ibc_packet_receive(
 				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
 					.add_attribute("action", "receive")
 					.add_attribute("result", "failure")
-					.add_attribute("reason", format!("{}", e)),
+					.add_attribute("reason", e.to_string()),
 			)
 			.set_ack(XCVMAck::KO)),
 	}
@@ -289,7 +289,7 @@ pub fn ibc_packet_ack(
 		.add_event(
 			Event::new(XCVM_GATEWAY_EVENT_PREFIX)
 				.add_attribute("action", "ack")
-				.add_attribute("ack", format!("{}", ack.value())),
+				.add_attribute("ack", ack.value().to_string()),
 		)
 		.add_messages(messages))
 }
@@ -328,7 +328,7 @@ pub fn handle_batch_reply(msg: Reply) -> Result<Response, ContractError> {
 				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
 					.add_attribute("action", "receive")
 					.add_attribute("result", "failure")
-					.add_attribute("reason", format!("{}", e)),
+					.add_attribute("reason", e.to_string()),
 			)
 			.set_data(XCVMAck::KO)),
 	}
@@ -443,7 +443,7 @@ pub fn handle_bridge(
 	};
 	let mut event = Event::new(XCVM_GATEWAY_EVENT_PREFIX)
 		.add_attribute("action", "bridge")
-		.add_attribute("network_id", format!("{network_id}"))
+		.add_attribute("network_id", network_id.to_string())
 		.add_attribute(
 			"assets",
 			serde_json_wasm::to_string(&packet.assets)
