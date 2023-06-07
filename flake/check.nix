@@ -15,11 +15,11 @@
               NIX_DEBUG_ARGS=' --print-build-logs --debug --show-trace --verbose'
             fi
             # shellcheck disable=SC2086
-            nix flake show --allow-import-from-derivation --fallback --keep-failed --no-write-lock-file --no-update-lock-file --system "${system}" $NIX_DEBUG_ARGS
+            nix flake show --allow-import-from-derivation --fallback --keep-failed --no-write-lock-file --accept-flake-config --no-update-lock-file --system "${system}" $NIX_DEBUG_ARGS
 
             set -o pipefail -o errexit
             # shellcheck disable=SC2086
-            NIXPKGS_ALLOW_BROKEN=1 nix flake check --keep-going --no-build --allow-import-from-derivation --no-update-lock-file --accept-flake-config --fallback $NIX_DEBUG_ARGS --impure --option sandbox relaxed 2>&1 | tee "nix.check.log"  || true
+            NIXPKGS_ALLOW_BROKEN=1 nix flake check --keep-going --no-build --allow-import-from-derivation --accept-flake-config --no-update-lock-file --accept-flake-config --system "${system}" --fallback $NIX_DEBUG_ARGS --impure --option sandbox relaxed 2>&1 | tee "nix.check.log"  || true
             set +o pipefail +o errexit
             echo "exited with(https://github.com/NixOS/nix/issues/7464) $?" 
             grep --invert-match  "error: path [']/nix/store/[a-zA-Z0-9]\+-[a-zA-Z0-9\.-]\+['] is not valid" < "nix.check.log" |

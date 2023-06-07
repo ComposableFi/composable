@@ -14,11 +14,7 @@
             doCheck = false;
             buildInputs = with pkgs; [ openssl zstd protobuf ];
             nativeBuildInputs = with pkgs;
-              [ clang pkg-config perl ] ++ lib.optional stdenv.isDarwin
-              (with pkgs.darwin.apple_sdk.frameworks; [
-                Security
-                SystemConfiguration
-              ]);
+              [ clang pkg-config perl ] ++ systemCommonRust.darwin-deps;
             RUST_BACKTRACE = "full";
           } // subnix.subattrs;
 

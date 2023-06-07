@@ -92,10 +92,5 @@
           banksyd start --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing  --minimum-gas-prices=0.0001ppica --trace --log_level debug --home "$BANKSY" --db_dir "$BANKSY/data" --log_format json --trace           
         '';
       };
-    in {
-      packages = rec {
-      } // (pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-        inherit banksyd banksyd-gen banksyd-init;
-      });
-    };
+    in { packages = rec { inherit banksyd banksyd-gen banksyd-init; }; };
 }
