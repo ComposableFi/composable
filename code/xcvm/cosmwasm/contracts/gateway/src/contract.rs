@@ -251,7 +251,7 @@ pub fn ibc_packet_receive(
 				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
 					.add_attribute("action", "receive")
 					.add_attribute("result", "failure")
-					.add_attribute("reason", format!("{}", e)),
+					.add_attribute("reason", e.to_string()),
 			)
 			.set_ack(XCVMAck::KO)),
 	}
@@ -289,7 +289,7 @@ pub fn ibc_packet_ack(
 		.add_event(
 			Event::new(XCVM_GATEWAY_EVENT_PREFIX)
 				.add_attribute("action", "ack")
-				.add_attribute("ack", format!("{}", ack.value())),
+				.add_attribute("ack", ack.value().to_string()),
 		)
 		.add_messages(messages))
 }
@@ -328,7 +328,7 @@ pub fn handle_batch_reply(msg: Reply) -> Result<Response, ContractError> {
 				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
 					.add_attribute("action", "receive")
 					.add_attribute("result", "failure")
-					.add_attribute("reason", format!("{}", e)),
+					.add_attribute("reason", e.to_string()),
 			)
 			.set_data(XCVMAck::KO)),
 	}
@@ -459,8 +459,7 @@ pub fn handle_bridge(
 						.map_err(|_| ContractError::FailedToSerialize)?,
 				);
 			if salt.len() >= 3 {
-				event =
-					event.add_attribute("salt", format!("{}", Binary::from(packet.salt.clone())));
+				event = event.add_attribute("salt", Binary::from(packet.salt.clone()).to_string());
 			}
 			Ok(Response::default().add_event(event).add_message(IbcMsg::SendPacket {
 				channel_id,

@@ -57,7 +57,7 @@ pub mod cosmwasm {
 	impl From<events::Uploaded> for Uploaded {
 		fn from(uploaded: events::Uploaded) -> Self {
 			Self {
-				code_hash: format!("{}", AccountId32::from(uploaded.code_hash)),
+				code_hash: AccountId32::from(uploaded.code_hash).to_string(),
 				code_id: uploaded.code_id,
 			}
 		}

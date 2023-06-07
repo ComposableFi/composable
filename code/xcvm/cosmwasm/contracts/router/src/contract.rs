@@ -223,16 +223,15 @@ fn handle_set_interpreter_security(
 		),
 	}?;
 
-	Ok(Response::default().add_event(
-		Event::new(XCVM_ROUTER_EVENT_PREFIX)
-			.add_attribute("action", "interpreter.setSecurity")
-			.add_attribute(
-				"network_id",
-				format!("{}", u32::from(interpreter_origin.user_origin.network_id)),
-			)
-			.add_attribute("user_id", hex::encode(&interpreter_origin.user_origin.user_id))
-			.add_attribute("security", format!("{}", security as u8)),
-	))
+	let event = Event::new(XCVM_ROUTER_EVENT_PREFIX)
+		.add_attribute("action", "interpreter.setSecurity")
+		.add_attribute(
+			"network_id",
+			u32::from(interpreter_origin.user_origin.network_id).to_string(),
+		)
+		.add_attribute("user_id", hex::encode(&interpreter_origin.user_origin.user_id))
+		.add_attribute("security", (security as u8).to_string());
+	Ok(Response::default().add_event(event))
 }
 
 /// Handle a request to execute a [`XCVMProgram`].
@@ -263,7 +262,6 @@ fn handle_execute_program(
 				send_funds_to_interpreter(deps.as_ref(), interpreter_address.clone(), assets)?;
 			let wasm_msg = wasm_execute(
 				interpreter_address.clone(),
-				
 				&cw_xcvm_interpreter::msg::ExecuteMsg::Execute {
 					relayer: call_origin.relayer().clone(),
 					program,

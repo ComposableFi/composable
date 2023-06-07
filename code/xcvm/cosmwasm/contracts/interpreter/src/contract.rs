@@ -139,7 +139,7 @@ fn add_owners(
 ) -> Result<Response, ContractError> {
 	let mut event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.add");
 	for owner in owners {
-		event = event.add_attribute("owner", format!("{}", owner));
+		event = event.add_attribute("owner", owner.to_string());
 		OWNERS.save(deps.storage, owner, &())?;
 	}
 	Ok(Response::default().add_event(event))
@@ -151,7 +151,7 @@ fn remove_owners(_: Authenticated, deps: DepsMut, owners: Vec<Addr>) -> Response
 	let mut event =
 		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.remove");
 	for owner in owners {
-		event = event.add_attribute("owner", format!("{}", owner));
+		event = event.add_attribute("owner", owner.to_string());
 		OWNERS.remove(deps.storage, owner);
 	}
 	Response::default().add_event(event)
@@ -249,10 +249,8 @@ pub fn interpret_call(
 
 		apply_bindings(payload, bindings, &mut formatted_call, |binding| {
 			let data = match binding {
-				BindingValue::Register(Register::Ip) =>
-					Cow::Owned(format!("{}", instruction_pointer).into()),
-				BindingValue::Register(Register::Relayer) =>
-					Cow::Owned(format!("{}", relayer.clone()).into()),
+				BindingValue::Register(Register::Ip) => Cow::Owned(instruction_pointer.to_string()),
+				BindingValue::Register(Register::Relayer) => Cow::Owned(relayer.to_string()),
 				BindingValue::Register(Register::This) =>
 					Cow::Borrowed(env.contract.address.as_bytes()),
 				BindingValue::Register(Register::Result) => Cow::Owned(
@@ -267,7 +265,7 @@ pub fn interpret_call(
 					)?;
 					match reference {
 						AssetReference::Virtual { cw20_address } =>
-							Cow::Owned(cw20_address.into_string().into()),
+							Cow::Owned(cw20_address.into_string()),
 						AssetReference::Native { denom } => Cow::Owned(denom.into()),
 					}
 				},
@@ -297,7 +295,7 @@ pub fn interpret_call(
 									.map_err(|_| ContractError::ArithmeticError)
 							},
 					}?;
-					Cow::Owned(format!("{}", amount).into())
+					Cow::Owned(amount.to_string())
 				},
 			};
 			Ok(data)
@@ -407,7 +405,7 @@ pub fn interpret_spawn(
 					serde_json_wasm::to_string(&interpreter_origin.user_origin.user_id)
 						.map_err(|_| ContractError::DataSerializationError)?,
 				)
-				.add_attribute("network_id", format!("{}", network)),
+				.add_attribute("network_id", network.to_string()),
 		))
 }
 
@@ -496,8 +494,11 @@ fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 			// this way, only the `RESULT_REGISTER` is persisted. All
 			// other state changes are reverted.
 			RESULT_REGISTER.save(deps.storage, &Err(e.clone()))?;
-			let ip_register = IP_REGISTER.load(deps.storage)?;
-			Ok(Response::default().add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.failure").add_attribute("reason", e.to_string())).add_attribute("ip", format!("{}", ip_register)))
+			let ip = IP_REGISTER.load(deps.storage)?.to_string();
+			let event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
+				.add_attribute("action", "execution.failure")
+				.add_attribute("reason", e.to_string());
+			Ok(Response::default().add_event(event).add_attribute("ip", ip))
 		}
 	}
 }

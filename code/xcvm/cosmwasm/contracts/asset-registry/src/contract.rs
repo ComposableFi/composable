@@ -74,7 +74,7 @@ pub fn handle_register_asset(
 		Ok(Response::new().add_event(
 			Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX)
 				.add_attribute("action", "register")
-				.add_attribute("asset_id", format!("{}", asset_id.0 .0 .0))
+				.add_attribute("asset_id", asset_id.0 .0 .0.to_string())
 				.add_attribute("denom", reference.denom()),
 		))
 	} else {
@@ -91,7 +91,7 @@ pub fn handle_unregister_asset(
 		Ok(Response::new().add_event(
 			Event::new(XCVM_ASSET_REGISTRY_EVENT_PREFIX)
 				.add_attribute("action", "unregister")
-				.add_attribute("asset_id", format!("{}", asset_id.0 .0 .0)),
+				.add_attribute("asset_id", asset_id.0 .0 .0.to_string()),
 		))
 	} else {
 		Err(ContractError::NotRegistered)

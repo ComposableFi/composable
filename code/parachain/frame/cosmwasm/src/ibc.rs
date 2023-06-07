@@ -298,7 +298,7 @@ impl<T: Config> Router<T> {
 						CosmwasmVMError::<T>::Ibc(format!("failed to execute IBC callback {:?}", x))
 					})?;
 					serde_json::from_slice(&result)
-						.map_err(|x| CosmwasmVMError::<T>::Ibc(format!("{}", x)))
+						.map_err(|x| CosmwasmVMError::<T>::Ibc(x.to_string()))
 				},
 			}
 		})

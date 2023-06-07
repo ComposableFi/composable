@@ -62,7 +62,7 @@ impl<C, M> Cosmwasm<C, M> {
 fn runtime_error_into_rpc_error(e: impl Display) -> RpcError {
 	RpcError::Call(CallError::Custom(ErrorObject::owned(
 		9876, // no real reason for this value
-		format!("{}", e),
+		e.to_string(),
 		None::<()>,
 	)))
 }
