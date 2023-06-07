@@ -26,7 +26,7 @@
             grep --invert-match  "error: path [']/nix/store/[a-zA-Z0-9]\+-[a-zA-Z0-9\.-]\+['] is not valid" < "nix.check.log" |
             grep --invert-match  "error: cannot substitute path [']/nix/store/[a-zA-Z0-9]\+-[a-zA-Z0-9\.-]\+['] \- no write access to the Nix store" |
             grep --invert-match '^error: some errors were encountered during the evaluation' |
-            grep --invert-match "error: a \'aarch64-darwin\' with features" > "filtered.nix.check.log"
+            grep --invert-match "error: a [']aarch64-darwin['] with features" > "filtered.nix.check.log"
             RESULT=$(grep -c 'error:' < "filtered.nix.check.log")
             echo "Got errors $RESULT"
             if [[ $RESULT != 0 ]]; then exit "$RESULT"; fi
