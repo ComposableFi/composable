@@ -10,12 +10,13 @@
           text = ''
             NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1
             export NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM 
-            NIX_DEBUG_ARGS=""        
+            NIX_DEBUG_ARGS=""
             if [[ ''${ACTIONS_RUNNER_DEBUG-"false"} = "true" ]]; then
               NIX_DEBUG_ARGS=' --print-build-logs --debug --show-trace --verbose'
             fi
+            # some nix bug, works fine locally
             # shellcheck disable=SC2086
-            nix flake show --allow-import-from-derivation --fallback --keep-failed --no-write-lock-file --accept-flake-config --no-update-lock-file --system "${system}" $NIX_DEBUG_ARGS
+            # nix flake show --allow-import-from-derivation --fallback --keep-failed --no-write-lock-file --accept-flake-config --no-update-lock-file --system "${system}" $NIX_DEBUG_ARGS
 
             set -o pipefail -o errexit
             # shellcheck disable=SC2086
