@@ -1,5 +1,6 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, lib, ... }:
+  perSystem =
+    { config, self', inputs', pkgs, system, lib, systemCommonRust, ... }:
     let
       debug = {
         # CARGO_LOG = "debug";
@@ -27,11 +28,7 @@
         buildInputs = with pkgs; [ openssl zstd protobuf ];
         nativeBuildInputs = with pkgs;
           [ clang pkg-config self'.packages.rust-nightly ]
-          ++ lib.optional stdenv.isDarwin
-          (with pkgs.darwin.apple_sdk.frameworks; [
-            Security
-            SystemConfiguration
-          ]);
+          ++ systemCommonRust.darwin-deps;
         RUST_BACKTRACE = "full";
       } // subattrs;
       check-pallet = pkgs.writeShellApplication {

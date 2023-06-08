@@ -12,6 +12,6 @@ resource "github_issue_label" "label" {
   for_each    = local.labels
   repository  = "composable"
   name        = each.key
-  description = each.value
-  color       = substr(sha1(each.key), 0, 6)
+  description = "${each.value} #owned:terraform"
+  color       = "FFFFFF"
 }
