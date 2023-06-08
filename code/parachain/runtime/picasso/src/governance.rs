@@ -72,12 +72,12 @@ parameter_types! {
 	pub RootOrigin: RuntimeOrigin = frame_system::RawOrigin::Root.into();
 }
 
-/// Covers time of `weekend + holiday = 3 days`
 /// Use [alerts](https://web3alert.io/picasso) and [assembly](https://picasso.polkassembly.io/notification-settings) to be notified.
 /// Only members of council or tech collective can create proposals with 5K PICA.
 /// Anybody can vote.
 /// 
-/// Total time from proposal to enactment is 3d.
+/// Covers time of `weekend + holiday = 3 days`
+/// So total time from proposal to enactment is 3d.
 /// 
 /// 1 Waiting for voting takes = 0.5d
 /// 1.1 Tech collective member can delay execution by 3d
