@@ -72,16 +72,32 @@ parameter_types! {
 	pub RootOrigin: RuntimeOrigin = frame_system::RawOrigin::Root.into();
 }
 
+/// Covers time of `weekend + holiday = 3 days`
+/// Use [alerts](https://web3alert.io/picasso) and [assembly](https://picasso.polkassembly.io/notification-settings) to be notified.
+/// Only members of council or tech collective can create proposals with 5K PICA.
+/// Anybody can vote.
+/// 
+/// Total time from proposal to enactment is 3d.
+/// 
+/// 1 Waiting for voting takes = 0.5d
+/// 1.1 Tech collective member can delay execution by 3d
+/// 1.2 2/3 of council can cancel
+/// 2. Voting takes 2.5d
+/// 3. Waiting for transaction execution is 0.5d
+/// 3.1 2/3 of tech collective can cancel
+/// 3.2 1/2 of tech collective can speed up to 3h
+/// 
+/// On testnet 10x faster.
 impl democracy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 
 	#[cfg(not(feature = "fastnet"))]
-	type LaunchPeriod = ConstU32<DAYS>;
+	type LaunchPeriod = ConstU32<{ 12 * HOURS }>;
 	#[cfg(not(feature = "fastnet"))]
-	type VotingPeriod = ConstU32<{ 3 * DAYS }>; // weekend + holiday
+	type VotingPeriod = ConstU32<{ 60 * HOURS }>;
 	#[cfg(not(feature = "fastnet"))]
-	type EnactmentPeriod = ConstU32<DAYS>;
+	type EnactmentPeriod = ConstU32<{ 12 * HOURS }>;
 	#[cfg(not(feature = "fastnet"))]
 	type VoteLockingPeriod = ConstU32<DAYS>;
 
@@ -118,7 +134,7 @@ impl democracy::Config for Runtime {
 	type VetoOrigin = EnsureNativeTechnicalMember;
 	type Slash = Treasury;
 
-	type CooloffPeriod = ConstU32<{ 7 * DAYS }>;
+	type CooloffPeriod = ConstU32<{ 3 * DAYS }>;
 	type MaxProposals = ConstU32<50>;
 	type MaxVotes = MaxVotes;
 	type PalletsOrigin = OriginCaller;
