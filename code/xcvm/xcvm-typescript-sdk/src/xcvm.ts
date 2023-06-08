@@ -190,13 +190,6 @@ export class XCVM {
 
   public createInstruction(typedInstruction: Message): Message<{}> {
     const typeName = typedInstruction.$type.name;
-    if (typeName != "Transfer"
-      && typeName != "Spawn"
-      && typeName != "Call"
-      && typeName != "Query"
-    ) {
-      throw this.getTypeError("typedInstruction", "Transfer, Spawn, Call or Quey");
-    }
     if (typeName == "Transfer") {
       return this.InstructionMessage.create({transfer: typedInstruction})
     } else if (typeName == "Spawn") {
@@ -204,7 +197,7 @@ export class XCVM {
     } else if (typeName == "Call") {
       return this.InstructionMessage.create({call: typedInstruction})
     } else {
-      return this.InstructionMessage.create({query: typedInstruction})
+      throw this.getTypeError("typedInstruction", "Transfer, Spawn or Call");
     }
   }
 
