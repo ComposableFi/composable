@@ -18,8 +18,12 @@ rpath = false
 
 [workspace.dependencies]
 cosmwasm-schema = { version = "1.2.6", default-features = false}
-cosmwasm-std = { version = "1.2.6", default-features = false}
-cw-storage-plus = { version = "1.0.1", default-features = false }
+cosmwasm-std = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "677fa9c04b07a4934db82a6a9aa9e68fa13fcff9", default-features = false, features = [
+  "iterator",
+  "cosmwasm_1_2",
+] }
+cw-storage-plus = { git = "https://github.com/dzmitry-lahoda-forks/cw-storage-plus", rev = "1dd917aca0436c529561819399f554d825861f8d", default-features = false, features = ["std"] }
+
 cw-utils = "1.0.1"
 fixed = { version = "1.15", default-features = false }
 parity-scale-codec = {  version = "3.5.0", default-features = false }
@@ -35,7 +39,7 @@ serde = { version = "1.0.163", default-features = false, features = [
   "derive",
   "alloc",
 ] }
-serde_json = "1.0.96"
+serde_json = { version = "1.0.96" }
 prost-types = { version = "0.11.9", default-features = false }
 prost-build = "0.11.9"
 cw20 = "1.0.1"
@@ -48,4 +52,4 @@ hex = { version = "0.4", default-features = false, features = [
   "serde",
 ] }
 
-serde-json-wasm = { version ="0.5.1", default-features = false }
+serde-json-wasm = {  git = "https://github.com/dzmitry-lahoda-forks/serde-json-wasm", rev = "8a7e522c0e4de36a6dfb535766f26a9941017d81",  default-features = false, features = ["std"] }

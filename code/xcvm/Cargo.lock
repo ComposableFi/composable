@@ -225,6 +225,22 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
+version = "1.2.5"
+source = "git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=677fa9c04b07a4934db82a6a9aa9e68fa13fcff9#677fa9c04b07a4934db82a6a9aa9e68fa13fcff9"
+dependencies = [
+ "syn 1.0.107",
+]
+
+[[package]]
+name = "cosmwasm-derive"
+version = "1.2.5"
+source = "git+https://github.com/dzmitry-lahoda-forks/cosmwasm.git?rev=7dd513691d9d9afc0871a7eda93d3ecf8d3bc07e#7dd513691d9d9afc0871a7eda93d3ecf8d3bc07e"
+dependencies = [
+ "syn 1.0.107",
+]
+
+[[package]]
+name = "cosmwasm-derive"
 version = "1.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a7ee2798c92c00dd17bebb4210f81d5f647e5e92d847959b7977e0fd29a3500"
@@ -298,6 +314,40 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
+version = "1.2.5"
+source = "git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=677fa9c04b07a4934db82a6a9aa9e68fa13fcff9#677fa9c04b07a4934db82a6a9aa9e68fa13fcff9"
+dependencies = [
+ "base64",
+ "cosmwasm-derive 1.2.5 (git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=677fa9c04b07a4934db82a6a9aa9e68fa13fcff9)",
+ "derivative",
+ "hex",
+ "serde",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "sha2 0.10.6",
+ "thiserror-core",
+ "uint",
+]
+
+[[package]]
+name = "cosmwasm-std"
+version = "1.2.5"
+source = "git+https://github.com/dzmitry-lahoda-forks/cosmwasm.git?rev=7dd513691d9d9afc0871a7eda93d3ecf8d3bc07e#7dd513691d9d9afc0871a7eda93d3ecf8d3bc07e"
+dependencies = [
+ "base64",
+ "cosmwasm-derive 1.2.5 (git+https://github.com/dzmitry-lahoda-forks/cosmwasm.git?rev=7dd513691d9d9afc0871a7eda93d3ecf8d3bc07e)",
+ "derivative",
+ "forward_ref",
+ "hex",
+ "schemars",
+ "serde",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "sha2 0.10.6",
+ "thiserror-core",
+ "uint",
+]
+
+[[package]]
+name = "cosmwasm-std"
 version = "1.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92d5fdfd112b070055f068fad079d490117c8e905a588b92a5a7c9276d029930"
@@ -310,7 +360,7 @@ dependencies = [
  "hex",
  "schemars",
  "serde",
- "serde-json-wasm 0.5.1",
+ "serde-json-wasm 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sha2 0.10.6",
  "thiserror",
  "uint",
@@ -418,6 +468,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-storage-plus"
+version = "1.0.2"
+source = "git+https://github.com/dzmitry-lahoda-forks/cw-storage-plus?rev=1dd917aca0436c529561819399f554d825861f8d#1dd917aca0436c529561819399f554d825861f8d"
+dependencies = [
+ "cosmwasm-std 1.2.5 (git+https://github.com/dzmitry-lahoda-forks/cosmwasm.git?rev=7dd513691d9d9afc0871a7eda93d3ecf8d3bc07e)",
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "cw-utils"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -452,8 +512,8 @@ name = "cw-xc-asset-registry"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
- "cosmwasm-std 1.2.6",
- "cw-storage-plus 1.0.1",
+ "cosmwasm-std 1.2.5 (git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=677fa9c04b07a4934db82a6a9aa9e68fa13fcff9)",
+ "cw-storage-plus 1.0.2",
  "cw-utils 1.0.1",
  "cw2 1.0.1",
  "schemars",
@@ -467,7 +527,7 @@ dependencies = [
 name = "cw-xc-common"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-std 1.2.6",
+ "cosmwasm-std 1.2.5 (git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=677fa9c04b07a4934db82a6a9aa9e68fa13fcff9)",
  "cw-xc-utils",
  "schemars",
  "serde",
@@ -479,8 +539,8 @@ name = "cw-xc-gateway"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
- "cosmwasm-std 1.2.6",
- "cw-storage-plus 1.0.1",
+ "cosmwasm-std 1.2.5 (git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=677fa9c04b07a4934db82a6a9aa9e68fa13fcff9)",
+ "cw-storage-plus 1.0.2",
  "cw-utils 1.0.1",
  "cw-xc-asset-registry",
  "cw-xc-common",
@@ -504,8 +564,8 @@ name = "cw-xc-interpreter"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
- "cosmwasm-std 1.2.6",
- "cw-storage-plus 1.0.1",
+ "cosmwasm-std 1.2.5 (git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=677fa9c04b07a4934db82a6a9aa9e68fa13fcff9)",
+ "cw-storage-plus 1.0.2",
  "cw-utils 1.0.1",
  "cw-xc-asset-registry",
  "cw-xc-common",
@@ -528,8 +588,8 @@ dependencies = [
 name = "cw-xc-pingpong"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-std 1.2.6",
- "cw-storage-plus 1.0.1",
+ "cosmwasm-std 1.2.5 (git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=677fa9c04b07a4934db82a6a9aa9e68fa13fcff9)",
+ "cw-storage-plus 1.0.2",
  "cw-utils 1.0.1",
  "cw-xc-common",
  "cw-xc-utils",
@@ -540,7 +600,7 @@ dependencies = [
  "prost",
  "schemars",
  "serde",
- "serde-json-wasm 0.5.1",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "serde_json",
  "thiserror",
  "xc-core",
@@ -552,8 +612,8 @@ name = "cw-xc-router"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
- "cosmwasm-std 1.2.6",
- "cw-storage-plus 1.0.1",
+ "cosmwasm-std 1.2.5 (git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=677fa9c04b07a4934db82a6a9aa9e68fa13fcff9)",
+ "cw-storage-plus 1.0.2",
  "cw-utils 1.0.1",
  "cw-xc-asset-registry",
  "cw-xc-common",
@@ -565,7 +625,7 @@ dependencies = [
  "prost",
  "schemars",
  "serde",
- "serde-json-wasm 0.5.1",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "thiserror",
  "xc-core",
  "xc-proto",
@@ -575,7 +635,7 @@ dependencies = [
 name = "cw-xc-utils"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-std 1.2.6",
+ "cosmwasm-std 1.2.5 (git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=677fa9c04b07a4934db82a6a9aa9e68fa13fcff9)",
  "xc-core",
 ]
 
@@ -1946,6 +2006,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-json-wasm"
+version = "0.5.1"
+source = "git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81#8a7e522c0e4de36a6dfb535766f26a9941017d81"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde_derive"
 version = "1.0.163"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2117,6 +2185,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a9cd18aa97d5c45c6603caea1da6628790b37f7a34b6ca89522331c5180fed0"
 dependencies = [
  "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-core"
+version = "1.0.38"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d97345f6437bb2004cd58819d8a9ef8e36cdd7661c2abc4bbde0a7c40d9f497"
+dependencies = [
+ "thiserror-core-impl",
+]
+
+[[package]]
+name = "thiserror-core-impl"
+version = "1.0.38"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "10ac1c5050e43014d16b2f94d0d2ce79e65ffdd8b38d8048f9c8f6a8a6da62ac"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -2553,8 +2641,8 @@ dependencies = [
 name = "xc-core"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-std 1.2.6",
- "cw-storage-plus 1.0.1",
+ "cosmwasm-std 1.2.5 (git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=677fa9c04b07a4934db82a6a9aa9e68fa13fcff9)",
+ "cw-storage-plus 1.0.2",
  "fixed",
  "num",
  "parity-scale-codec",
@@ -2581,7 +2669,7 @@ name = "xcvm-tests"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-orchestrate",
- "cosmwasm-std 1.2.6",
+ "cosmwasm-std 1.2.5 (git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=677fa9c04b07a4934db82a6a9aa9e68fa13fcff9)",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
  "cw-xc-asset-registry",
