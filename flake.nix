@@ -1,8 +1,10 @@
 {
   description = "Composable Finance";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-22.11";
-    nixpkgs-latest.url = "github:NixOS/nixpkgs/nixos-23.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs-latest.url =
+      "github:NixOS/nixpkgs/0135b7a556ee60144b143b071724fa44348a188e";
+
     flake-parts.url = "github:hercules-ci/flake-parts";
     flake-utils.url = "github:numtide/flake-utils";
     npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
