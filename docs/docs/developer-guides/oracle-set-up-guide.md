@@ -272,7 +272,7 @@ The following steps are required to complete the setup of becoming an oracle:
 
 1. Register price feed URL
 2. Register offchain worker
-3. Set signer
+3. Set signer (for local testing)
 4. Create an oracle for the asset
 
 **Register price feed URL**
@@ -305,7 +305,7 @@ And enter the details above, as seen in the screenshot and press: “Submit RPC 
 
 ![register_offchain_worker](./oracle-set-up-guide/register-offchain-worker.png)
 
-**Setting signer**
+**Setting signer (for local testing)**
 
 Bond the controller account by submitting a set_signer transaction (tie the Signer to the Controller). This transaction 
 **must** be sent by the controller. The controller **must have the necessary bond amount** as it will be transferred to 
@@ -314,7 +314,7 @@ the signer and put on hold (reserved).
 JavaScript:
 
 ```JavaScript
-api.tx.oracle.setSigner(address);
+api.tx.sudo.sudo(api.tx.oracle.setSigner(controller, signer))
 ```
 
 Setting the signer automatically adds a small amount of funds to the oracle stake of this wallet. These are required for
