@@ -1,4 +1,4 @@
-use crate::{AssetId, Balance, BridgeSecurity, Program};
+use crate::{AssetId, Balance, Program};
 use alloc::{
 	borrow::Cow,
 	collections::{BTreeMap, VecDeque},
@@ -72,13 +72,7 @@ pub enum Instruction<Network, Payload, Account, Assets> {
 	/// The program will be spawned with the desired [`Assets`].
 	/// The salt is used to track the program when events are dispatched in the network.
 	#[serde(rename_all = "snake_case")]
-	Spawn {
-		network: Network,
-		bridge_security: BridgeSecurity,
-		salt: Vec<u8>,
-		assets: Assets,
-		program: Program<VecDeque<Self>>,
-	},
+	Spawn { network: Network, salt: Vec<u8>, assets: Assets, program: Program<VecDeque<Self>> },
 	/// Query the state of a contract
 	#[serde(rename_all = "snake_case")]
 	Query { network: Network, salt: Vec<u8> },

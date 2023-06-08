@@ -21,8 +21,8 @@ use cw_xcvm_common::shared::{encode_base64, BridgeMsg};
 use cw_xcvm_utils::DefaultXCVMProgram;
 use num::Zero;
 use xcvm_core::{
-	apply_bindings, cosmwasm::*, Balance, BindingValue, BridgeSecurity, Destination, Displayed,
-	Funds, Instruction, NetworkId, Register,
+	apply_bindings, cosmwasm::*, Balance, BindingValue, Destination, Displayed, Funds, Instruction,
+	NetworkId, Register,
 };
 
 type XCVMProgram = DefaultXCVMProgram;
@@ -182,16 +182,8 @@ pub fn handle_execute_step(
 				instruction_pointer,
 				&relayer,
 			),
-			Instruction::Spawn { network, bridge_security, salt, assets, program } =>
-				interpret_spawn(
-					&mut deps,
-					&env,
-					network,
-					bridge_security,
-					salt,
-					assets,
-					program,
-				),
+			Instruction::Spawn { network, salt, assets, program } =>
+				interpret_spawn(&mut deps, &env, network, salt, assets, program),
 			// TODO(hussein-aitlahcen)
 			Instruction::Query { .. } => Ok(Response::default()),
 		}?;
@@ -201,11 +193,7 @@ pub fn handle_execute_step(
 		response.add_message(wasm_execute(
 			env.contract.address,
 			&ExecuteMsg::ExecuteStep {
-				step: Step {
-					relayer,
-					instruction_pointer: instruction_pointer + 1,
-					program,
-				},
+				step: Step { relayer, instruction_pointer: instruction_pointer + 1, program },
 			},
 			Default::default(),
 		)?)
@@ -214,13 +202,12 @@ pub fn handle_execute_step(
 		IP_REGISTER.save(deps.storage, &instruction_pointer.saturating_sub(1))?;
 		// We save the relayer that executed the last program.
 		RELAYER_REGISTER.save(deps.storage, &relayer)?;
-		let mut event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
-			.add_attribute("action", "execution.success");
+		let mut event =
+			Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.success");
 		if program.tag.len() >= 3 {
 			event = event.add_attribute(
 				"tag",
-				core::str::from_utf8(&program.tag)
-					.map_err(|_| ContractError::InvalidProgramTag)?,
+				core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
 			);
 		}
 		Response::default().add_event(event)
@@ -321,7 +308,6 @@ pub fn interpret_spawn(
 	deps: &mut DepsMut,
 	env: &Env,
 	network: NetworkId,
-	bridge_security: BridgeSecurity,
 	salt: Vec<u8>,
 	assets: Funds<Balance>,
 	program: XCVMProgram,
@@ -386,7 +372,6 @@ pub fn interpret_spawn(
 				msg: BridgeMsg {
 					interpreter_origin: interpreter_origin.clone(),
 					network_id: network,
-					security: bridge_security,
 					salt,
 					program,
 					assets: normalized_funds,

@@ -50,7 +50,6 @@ where
 		self,
 		tag: impl Into<Vec<u8>>,
 		salt: impl Into<Vec<u8>>,
-		bridge_security: impl Into<BridgeSecurity>,
 		assets: impl Into<Assets>,
 		f: F,
 	) -> Result<ProgramBuilder<FinalNetwork, Account, Assets>, E>
@@ -67,7 +66,6 @@ where
 		let mut builder =
 			ProgramBuilder { tag: self.tag, instructions: self.instructions, _marker: PhantomData };
 		builder.instructions.push_back(Instruction::Spawn {
-			bridge_security: bridge_security.into(),
 			salt: salt.into(),
 			assets: assets.into(),
 			network: SpawningNetwork::ID,
@@ -156,7 +154,6 @@ mod tests {
 				.spawn::<Ethereum, ProgramBuildError, _, _>(
 					Vec::default(),
 					Vec::default(),
-					BridgeSecurity::Deterministic,
 					Funds::empty(),
 					|child| {
 						Ok(child
@@ -179,7 +176,6 @@ mod tests {
 					// Move to ethereum
 					Instruction::Spawn {
 						network: Ethereum::ID,
-						bridge_security: BridgeSecurity::Deterministic,
 						salt: Vec::new(),
 						assets: Funds::empty(),
 						program: Program {

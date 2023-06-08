@@ -16,8 +16,8 @@ use cw_xcvm_utils::{DefaultXCVMProgram, Salt};
 use proptest::{prelude::any, prop_assume, prop_compose, proptest};
 use std::assert_matches::assert_matches;
 use xcvm_core::{
-	Asset, AssetId, AssetSymbol, Balance, BridgeSecurity, Destination, Funds, Juno, Network,
-	Picasso, ProgramBuilder, ETH, PICA, USDC, USDT,
+	Asset, AssetId, AssetSymbol, Balance, Destination, Funds, Juno, Network, Picasso,
+	ProgramBuilder, ETH, PICA, USDC, USDT,
 };
 
 #[macro_export]
@@ -668,18 +668,10 @@ mod cross_chain {
 		.expect("Must be able to create an XCVM network.");
 		let assets_to_transfer = [(PICA::ID, transfer_amount)];
 		let program = ProgramBuilder::<Picasso, CanonicalAddr, Funds<Balance>>::new([])
-			.spawn::<Juno, (), _, _>(
-				[],
-				[],
-				BridgeSecurity::Deterministic,
-				assets_to_transfer,
-				|juno_program| {
-					Ok(juno_program.transfer(
-						Destination::Account(to_canonical(bob.clone())),
-						assets_to_transfer,
-					))
-				},
-			)
+			.spawn::<Juno, (), _, _>([], [], assets_to_transfer, |juno_program| {
+				Ok(juno_program
+					.transfer(Destination::Account(to_canonical(bob.clone())), assets_to_transfer))
+			})
 			.expect("Must be able to build an XCVM program.")
 			.build();
 		let CrossChainDispatchResult { dispatch_data, relay_data, .. } = network

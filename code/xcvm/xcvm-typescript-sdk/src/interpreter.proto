@@ -59,11 +59,11 @@ message AssetId {
 }
 
 message GlobalId {
-  Uint128 globalId = 1; 
+  Uint128 globalId = 1;
 }
 
 message LocalId {
-  bytes localId = 1; 
+  bytes localId = 1;
 }
 
 message Asset {
@@ -129,16 +129,8 @@ message Network {
   Uint128 networkId = 1;
 }
 
-enum BridgeSecurity {
-  none = 0;
-  deterministic = 1;
-  probabilistic = 2;
-  optimistic = 3;
-}
-
 message Spawn {
   Network network = 1;
-  BridgeSecurity security = 2;
   Salt salt = 3;
   Program program = 4;
   repeated Asset assets = 5;
@@ -153,5 +145,3 @@ message Call {
   bytes payload = 1;
   Bindings bindings = 2;
 }
-
-

@@ -22,7 +22,6 @@ export class XCVM {
   NetworkMessage: Type;
   SpawnMessage: Type;
   CallMessage: Type;
-  BridgeSecurityEnum: Enum;
   BindingValueMessage: Type
   Uint128Message: Type
   SelfMessage: Type
@@ -57,7 +56,6 @@ export class XCVM {
     this.RelayerMessage = this.root.lookupType("interpreter.Relayer");
     this.GlobalIdMessage = this.root.lookupType("interpreter.GlobalId");
     this.LocalIdMessage = this.root.lookupType("interpreter.LocalId");
-    this.BridgeSecurityEnum = this.root.lookupEnum("interpreter.BridgeSecurity");
 
     this.messageTypeLookUp['Program'] = this.ProgramMessage;
     this.messageTypeLookUp['Instruction'] = this.InstructionMessage;
@@ -78,7 +76,6 @@ export class XCVM {
     this.messageTypeLookUp['Salt'] = this.SaltMessage;
     this.messageTypeLookUp['Call'] = this.CallMessage;
     this.messageTypeLookUp['Spawn'] = this.SpawnMessage;
-    this.messageTypeLookUp['BridgeSecurity'] = this.BridgeSecurityEnum;
     this.messageTypeLookUp['Uint128'] = this.Uint128Message;
     this.messageTypeLookUp['Self'] = this.SelfMessage;
     this.messageTypeLookUp['Relayer'] = this.RelayerMessage;
@@ -244,11 +241,7 @@ export class XCVM {
   }
 
 
-  //public createBridgeSecurity(security: Number): Enum {
-  //  return security;
-  //}
-
-  public createSpawn(networkMessage: Message, saltMessage: Message, security: Number, programMessage: Message, assetsMessage: Array<Message>): Message<{}> {
+  public createSpawn(networkMessage: Message, saltMessage: Message, programMessage: Message, assetsMessage: Array<Message>): Message<{}> {
     if (networkMessage.$type.name != "Network") {
       throw this.getTypeError("networkMessage", "network")
     }
@@ -270,9 +263,7 @@ export class XCVM {
 
     return this.SpawnMessage.create({
       network: networkMessage,
-
       salt: saltMessage,
-      security: security,
       program: programMessage,
       assets: assetsMessage
     })

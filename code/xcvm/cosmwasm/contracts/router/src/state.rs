@@ -2,7 +2,7 @@ use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::{BridgeSecurity, InterpreterOrigin, NetworkId};
+use xcvm_core::{InterpreterOrigin, NetworkId};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
@@ -15,7 +15,6 @@ pub struct Config {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Interpreter {
 	pub address: Option<Addr>,
-	pub security: BridgeSecurity,
 }
 
 pub const INTERPRETERS: Map<InterpreterOrigin, Interpreter> = Map::new("interpreters");

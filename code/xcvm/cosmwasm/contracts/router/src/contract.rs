@@ -23,7 +23,7 @@ use cw_xcvm_interpreter::contract::{
 	XCVM_INTERPRETER_EVENT_DATA_ORIGIN, XCVM_INTERPRETER_EVENT_PREFIX,
 };
 use cw_xcvm_utils::DefaultXCVMProgram;
-use xcvm_core::{BridgeSecurity, CallOrigin, Displayed, Funds, InterpreterOrigin};
+use xcvm_core::{CallOrigin, Displayed, Funds, InterpreterOrigin};
 
 const CONTRACT_NAME: &str = "composable:xcvm-router";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -79,9 +79,6 @@ pub fn execute(
 			handle_execute_program(deps, env, call_origin, salt, program, assets)
 		},
 
-		ExecuteMsg::SetInterpreterSecurity { interpreter_origin, bridge_security } =>
-			handle_set_interpreter_security(deps, info, interpreter_origin, bridge_security),
-
 		ExecuteMsg::BridgeForward { msg } => handle_bridge_forward(deps, info, msg),
 	}
 }
@@ -108,8 +105,7 @@ fn ensure_self_or_gateway(
 }
 
 /// Ensure that the `sender` is the interpreter for the provided `interpreter_origin`.
-/// This function is used whenever we want an operation to be executable by an interpreter,
-/// currently [`ExecuteMsg::SetInterpreterSecurity`].
+/// This function is used whenever we want an operation to be executable by an interpreter.
 fn ensure_interpreter(
 	deps: &DepsMut,
 	sender: &Addr,
@@ -194,47 +190,6 @@ fn handle_bridge_forward(
 	)?))
 }
 
-/// Handle a request to change an interpreter security level.
-/// Only the interpreter instance itself is allowed to change it's security level.
-/// A user is able to change it's interpreter security level by provided an [`XCVMProgram`] that
-/// contains a [`XCVMInstruction::Call`] to the router contract.
-fn handle_set_interpreter_security(
-	deps: DepsMut,
-	info: MessageInfo,
-	interpreter_origin: InterpreterOrigin,
-	security: BridgeSecurity,
-) -> Result<Response, ContractError> {
-	// Ensure that the sender is the interpreter for the given user origin.
-	// The security of an interpreter can only be altered by the interpreter itself.
-	// If a user is willing to alter the default security, he must submit an XCVM program with a
-	// call to the router that does it for him.
-	ensure_interpreter(&deps, &info.sender, interpreter_origin.clone())?;
-
-	match INTERPRETERS.load(deps.storage, interpreter_origin.clone()) {
-		Ok(Interpreter { address, .. }) => INTERPRETERS.save(
-			deps.storage,
-			interpreter_origin.clone(),
-			&Interpreter { address, security },
-		),
-		Err(_) => INTERPRETERS.save(
-			deps.storage,
-			interpreter_origin.clone(),
-			&Interpreter { address: None, security },
-		),
-	}?;
-
-	Ok(Response::default().add_event(
-		Event::new(XCVM_ROUTER_EVENT_PREFIX)
-			.add_attribute("action", "interpreter.setSecurity")
-			.add_attribute(
-				"network_id",
-				format!("{}", u32::from(interpreter_origin.user_origin.network_id)),
-			)
-			.add_attribute("user_id", hex::encode(&interpreter_origin.user_origin.user_id))
-			.add_attribute("security", format!("{}", security as u8)),
-	))
-}
-
 /// Handle a request to execute a [`XCVMProgram`].
 /// Only the gateway is allowed to dispatch such operation.
 /// The gateway must ensure that the `CallOrigin` is valid as the router does not do further
@@ -251,19 +206,13 @@ fn handle_execute_program(
 	let interpreter_origin =
 		InterpreterOrigin { user_origin: call_origin.user(config.network_id), salt };
 	match INTERPRETERS.load(deps.storage, interpreter_origin.clone()) {
-		Ok(Interpreter { address: Some(interpreter_address), security }) => {
-			// Ensure that the current call origin meet the user expected security.
-			call_origin
-				.ensure_security(security)
-				.map_err(|_| ContractError::ExpectedBridgeSecurity(security))?;
-
+		Ok(Interpreter { address: Some(interpreter_address) }) => {
 			// There is already an interpreter instance, so all we do is fund the interpreter, then
 			// add a callback to it
 			let response =
 				send_funds_to_interpreter(deps.as_ref(), interpreter_address.clone(), assets)?;
 			let wasm_msg = wasm_execute(
 				interpreter_address.clone(),
-				
 				&cw_xcvm_interpreter::msg::ExecuteMsg::Execute {
 					relayer: call_origin.relayer().clone(),
 					program,
@@ -279,12 +228,6 @@ fn handle_execute_program(
 				.add_message(wasm_msg))
 		},
 		_ => {
-			// There is no interpreter, so the bridge security must be at least `Deterministic`
-			// or the message should be coming from a local origin.
-			call_origin.ensure_security(BridgeSecurity::Deterministic).map_err(|_| {
-				ContractError::ExpectedBridgeSecurity(BridgeSecurity::Deterministic)
-			})?;
-
 			// First, add a callback to instantiate an interpreter (which we later get the result
 			// and save it)
 			let instantiate_msg: CosmosMsg = WasmMsg::Instantiate {
@@ -419,21 +362,8 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 		)?
 	};
 
-	match INTERPRETERS.load(deps.storage, interpreter_origin.clone()) {
-		Ok(Interpreter { security, .. }) => INTERPRETERS.save(
-			deps.storage,
-			interpreter_origin,
-			&Interpreter { address: Some(interpreter_address), security },
-		)?,
-		Err(_) => INTERPRETERS.save(
-			deps.storage,
-			interpreter_origin,
-			&Interpreter {
-				security: BridgeSecurity::Deterministic,
-				address: Some(interpreter_address),
-			},
-		)?,
-	}
+	let interpreter = Interpreter { address: Some(interpreter_address) };
+	INTERPRETERS.save(deps.storage, interpreter_origin, &interpreter)?;
 
 	Ok(Response::new())
 }
