@@ -305,6 +305,26 @@ And enter the details above, as seen in the screenshot and press: “Submit RPC 
 
 ![register_offchain_worker](./oracle-set-up-guide/register-offchain-worker.png)
 
+**Setting signer**
+
+Bond the controller account by submitting a set_signer transaction (tie the Signer to the Controller). This transaction 
+**must** be sent by the controller. The controller **must have the necessary bond amount** as it will be transferred to 
+the signer and put on hold (reserved).
+
+JavaScript:
+
+```JavaScript
+api.tx.oracle.setSigner(address);
+```
+
+Setting the signer automatically adds a small amount of funds to the oracle stake of this wallet. These are required for
+submitting prices.
+
+_Developer -> extrinsics -> Oracle -> setSinger_
+
+
+![manual_set_signer](./oracle-set-up-guide/manual-set-signer.png)
+
 
 **Create oracle for asset**
 
