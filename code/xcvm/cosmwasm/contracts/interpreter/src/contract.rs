@@ -168,70 +168,63 @@ pub fn handle_execute_step(
 	_: Authenticated,
 	mut deps: DepsMut,
 	env: Env,
-	Step { relayer, instruction_pointer, program }: Step,
+	Step { relayer, instruction_pointer, mut program }: Step,
 ) -> Result<Response, ContractError> {
-	let mut instruction_iter = program.instructions.into_iter();
-	match instruction_iter.next() {
-		Some(instruction) => {
-			let response = match instruction {
-				Instruction::Transfer { to, assets } =>
-					interpret_transfer(&mut deps, &env, &relayer, to, assets),
-				Instruction::Call { bindings, encoded } => interpret_call(
-					deps.as_ref(),
+	Ok(if let Some(instruction) = program.instructions.pop_front() {
+		let response = match instruction {
+			Instruction::Transfer { to, assets } =>
+				interpret_transfer(&mut deps, &env, &relayer, to, assets),
+			Instruction::Call { bindings, encoded } => interpret_call(
+				deps.as_ref(),
+				&env,
+				bindings,
+				encoded,
+				instruction_pointer,
+				&relayer,
+			),
+			Instruction::Spawn { network, bridge_security, salt, assets, program } =>
+				interpret_spawn(
+					&mut deps,
 					&env,
-					bindings,
-					encoded,
-					instruction_pointer,
-					&relayer,
+					network,
+					bridge_security,
+					salt,
+					assets,
+					program,
 				),
-				Instruction::Spawn { network, bridge_security, salt, assets, program } =>
-					interpret_spawn(
-						&mut deps,
-						&env,
-						network,
-						bridge_security,
-						salt,
-						assets,
-						program,
-					),
-				// TODO(hussein-aitlahcen)
-				Instruction::Query { .. } => Ok(Response::default()),
-			}?;
-			// Save the intermediate IP so that if the execution fails, we can recover at which
-			// instruction it happened.
-			IP_REGISTER.update::<_, ContractError>(deps.storage, |x| Ok(x + 1))?;
-			let next_instruction_pointer = instruction_pointer + 1;
-			let next_program =
-				XCVMProgram { tag: program.tag.clone(), instructions: instruction_iter.collect() };
-			Ok(response.add_message(wasm_execute(
-				env.contract.address,
-				&ExecuteMsg::ExecuteStep {
-					step: Step {
-						relayer,
-						instruction_pointer: next_instruction_pointer,
-						program: next_program,
-					},
+			// TODO(hussein-aitlahcen)
+			Instruction::Query { .. } => Ok(Response::default()),
+		}?;
+		// Save the intermediate IP so that if the execution fails, we can recover at which
+		// instruction it happened.
+		IP_REGISTER.update::<_, ContractError>(deps.storage, |x| Ok(x + 1))?;
+		response.add_message(wasm_execute(
+			env.contract.address,
+			&ExecuteMsg::ExecuteStep {
+				step: Step {
+					relayer,
+					instruction_pointer: instruction_pointer + 1,
+					program,
 				},
-				Default::default(),
-			)?))
-		},
-		None => {
-			// We subtract because of the extra loop to reach the empty instructions case.
-			IP_REGISTER.save(deps.storage, &instruction_pointer.saturating_sub(1))?;
-			// We save the relayer that executed the last program.
-			RELAYER_REGISTER.save(deps.storage, &relayer)?;
-			let mut event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
-				.add_attribute("action", "execution.success");
-			if program.tag.len() >= 3 {
-				event = event.add_attribute(
-					"tag",
-					core::str::from_utf8(&program.tag)
-						.map_err(|_| ContractError::InvalidProgramTag)?,
-				);
-			}
-			Ok(Response::default().add_event(event))
-		},
-	}
+			},
+			Default::default(),
+		)?)
+	} else {
+		// We subtract because of the extra loop to reach the empty instructions case.
+		IP_REGISTER.save(deps.storage, &instruction_pointer.saturating_sub(1))?;
+		// We save the relayer that executed the last program.
+		RELAYER_REGISTER.save(deps.storage, &relayer)?;
+		let mut event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
+			.add_attribute("action", "execution.success");
+		if program.tag.len() >= 3 {
+			event = event.add_attribute(
+				"tag",
+				core::str::from_utf8(&program.tag)
+					.map_err(|_| ContractError::InvalidProgramTag)?,
+			);
+		}
+		Response::default().add_event(event)
+	})
 }
 
 /// Interpret the `Call` instruction
