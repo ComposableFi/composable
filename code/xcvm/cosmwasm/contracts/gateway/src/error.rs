@@ -18,8 +18,6 @@ pub enum ContractError {
 	UnsupportedNetwork,
 	#[error("Could not serialize to JSON")]
 	FailedToSerialize,
-	#[error("The required BridgeSecurity is not yet supported.")]
-	UnsupportedBridgeSecurity,
 	#[error("The asset is not yet supported.")]
 	UnsupportedAsset,
 	#[error("The contract must be initialized first.")]

@@ -25,8 +25,7 @@ use cw_xcvm_asset_registry::{contract::external_query_lookup_asset, msg::AssetRe
 use cw_xcvm_common::{gateway::ExecuteMsg, shared::BridgeMsg};
 use cw_xcvm_utils::{DefaultXCVMPacket, DefaultXCVMProgram};
 use xcvm_core::{
-	BridgeProtocol, BridgeSecurity, CallOrigin, Displayed, Funds, InterpreterOrigin, NetworkId,
-	XCVMAck,
+	BridgeProtocol, CallOrigin, Displayed, Funds, InterpreterOrigin, NetworkId, XCVMAck,
 };
 use xcvm_proto::{decode_packet, Encodable};
 
@@ -93,14 +92,13 @@ pub fn execute(
 
 		ExecuteMsg::Bridge {
 			interpreter,
-			msg: BridgeMsg { interpreter_origin, network_id, security, salt, program, assets },
+			msg: BridgeMsg { interpreter_origin, network_id, salt, program, assets },
 		} => handle_bridge(
 			deps,
 			info,
 			interpreter,
 			interpreter_origin,
 			network_id,
-			security,
 			salt,
 			program,
 			assets,
@@ -426,51 +424,46 @@ pub fn handle_bridge(
 	interpreter: Addr,
 	interpreter_origin: InterpreterOrigin,
 	network_id: NetworkId,
-	security: BridgeSecurity,
 	salt: Vec<u8>,
 	program: DefaultXCVMProgram,
 	assets: Funds<Displayed<u128>>,
 ) -> Result<Response, ContractError> {
 	ensure_router(deps.as_ref(), info.sender.as_ref())?;
-	match security {
-		// Only allow deterministic over IBC here
-		BridgeSecurity::Deterministic => {
-			let channel_id = IBC_NETWORK_CHANNEL
-				.load(deps.storage, network_id)
-				.map_err(|_| ContractError::UnknownChannel)?;
-			let packet = DefaultXCVMPacket {
-				interpreter: interpreter.as_bytes().to_vec(),
-				user_origin: interpreter_origin.user_origin,
-				salt: salt.clone(),
-				program,
-				assets,
-			};
-			let mut event = Event::new(XCVM_GATEWAY_EVENT_PREFIX)
-				.add_attribute("action", "bridge")
-				.add_attribute("network_id", format!("{network_id}"))
-				.add_attribute(
-					"assets",
-					serde_json_wasm::to_string(&packet.assets)
-						.map_err(|_| ContractError::FailedToSerialize)?,
-				)
-				.add_attribute(
-					"program",
-					serde_json_wasm::to_string(&packet.program)
-						.map_err(|_| ContractError::FailedToSerialize)?,
-				);
-			if salt.len() >= 3 {
-				event =
-					event.add_attribute("salt", format!("{}", Binary::from(packet.salt.clone())));
-			}
-			Ok(Response::default().add_event(event).add_message(IbcMsg::SendPacket {
-				channel_id,
-				data: Binary::from(packet.encode()),
-				// TODO: should be a parameter or configuration
-				timeout: IbcTimeout::with_block(IbcTimeoutBlock { revision: 0, height: 10000 }),
-			}))
-		},
-		_ => Err(ContractError::UnsupportedBridgeSecurity),
+	let channel_id = IBC_NETWORK_CHANNEL
+		.load(deps.storage, network_id)
+		.map_err(|_| ContractError::UnknownChannel)?;
+	let packet = DefaultXCVMPacket {
+		interpreter: interpreter.as_bytes().to_vec(),
+		user_origin: interpreter_origin.user_origin,
+		salt,
+		program,
+		assets,
+	};
+	let mut event = Event::new(XCVM_GATEWAY_EVENT_PREFIX)
+		.add_attribute("action", "bridge")
+		.add_attribute("network_id", format!("{network_id}"))
+		.add_attribute(
+			"assets",
+			serde_json_wasm::to_string(&packet.assets)
+				.map_err(|_| ContractError::FailedToSerialize)?,
+		)
+		.add_attribute(
+			"program",
+			serde_json_wasm::to_string(&packet.program)
+				.map_err(|_| ContractError::FailedToSerialize)?,
+		);
+	if !packet.salt.is_empty() {
+		// TODO(mina86): We're unnecessarily clone packet.salt here.  What we
+		// want here is ‘to_base64(&packet.salt)’.
+		let salt_attr = Binary::from(packet.salt.as_slice()).to_string();
+		event = event.add_attribute("salt", salt_attr);
 	}
+	Ok(Response::default().add_event(event).add_message(IbcMsg::SendPacket {
+		channel_id,
+		data: Binary::from(packet.encode()),
+		// TODO: should be a parameter or configuration
+		timeout: IbcTimeout::with_block(IbcTimeoutBlock { revision: 0, height: 10000 }),
+	}))
 }
 
 fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> Result<Response, ContractError> {

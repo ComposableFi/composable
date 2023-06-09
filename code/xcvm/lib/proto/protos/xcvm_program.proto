@@ -137,16 +137,8 @@ message Network {
   uint32 networkId = 1;
 }
 
-enum BridgeSecurity {
-  insecure = 0;
-  optimistic = 1;
-  probabilistic = 2;
-  deterministic = 3;
-}
-
 message Spawn {
   Network network = 1;
-  BridgeSecurity security = 2;
   Salt salt = 3;
   Program program = 4;
   repeated Asset assets = 5;

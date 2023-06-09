@@ -348,13 +348,6 @@ where
 		Ok(xcvm_core::Instruction::Spawn {
 			network,
 			salt,
-			bridge_security: match spawn.security {
-				0 => xcvm_core::BridgeSecurity::Insecure,
-				1 => xcvm_core::BridgeSecurity::Optimistic,
-				2 => xcvm_core::BridgeSecurity::Probabilistic,
-				3 => xcvm_core::BridgeSecurity::Deterministic,
-				_ => return Err(()),
-			},
 			assets: spawn
 				.assets
 				.into_iter()
@@ -599,10 +592,9 @@ where
 						bindings: bindings.into_iter().map(|binding| binding.into()).collect(),
 					}),
 				}),
-			xcvm_core::Instruction::Spawn { network, bridge_security, salt, assets, program } =>
+			xcvm_core::Instruction::Spawn { network, salt, assets, program } =>
 				instruction::Instruction::Spawn(Spawn {
 					network: Some(Network { network_id: network.into() }),
-					security: bridge_security as i32,
 					salt: Some(Salt { salt }),
 					program: Some(program.into()),
 					assets: assets.into().into_iter().map(|asset| asset.into()).collect(),
