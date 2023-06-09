@@ -10,9 +10,9 @@ edition = "2021"
 [dev-dependencies]
 cosmwasm-std = { workspace = true, features = ["ibc3"] }
 
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "96324b719b4e13d129c912e2ce8622b3cc720b9c" }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "96324b719b4e13d129c912e2ce8622b3cc720b9c" }
-cosmwasm-orchestrate = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "96324b719b4e13d129c912e2ce8622b3cc720b9c" }
+cosmwasm-vm = { workspace = true }
+cosmwasm-vm-wasmi = { workspace = true }
+cosmwasm-orchestrate = { workspace = true }
 
 cw-xc-asset-registry = { path = "../contracts/asset-registry" }
 cw-xc-gateway = { path = "../contracts/gateway" }

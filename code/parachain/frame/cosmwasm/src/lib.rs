@@ -81,12 +81,12 @@ use alloc::{
 	string::String,
 };
 use composable_support::abstractions::utils::increment::Increment;
-use cosmwasm_vm::{
-	cosmwasm_std::{
-		Addr, Attribute as CosmwasmEventAttribute, Binary as CosmwasmBinary, BlockInfo,
-		CodeInfoResponse, Coin, ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env,
-		Event as CosmwasmEvent, MessageInfo, Timestamp, TransactionInfo,
-	},
+use cosmwasm_std::{
+	Addr, Attribute as CosmwasmEventAttribute, Binary as CosmwasmBinary, BlockInfo,
+	CodeInfoResponse, Coin, ContractInfo as CosmwasmContractInfo, ContractInfoResponse, Env,
+	Event as CosmwasmEvent, MessageInfo, Timestamp, TransactionInfo,
+};
+use cosmwasm_vm::{	
 	executor::{cosmwasm_call, QueryCall, QueryResponse},
 	system::{cosmwasm_system_query, CosmwasmCodeId, CosmwasmContractMeta},
 };
@@ -1063,7 +1063,7 @@ impl<T: Config> Pallet<T> {
 					contract_info: precompiled_info.contract,
 					shared,
 					iterators: Default::default(),
-					contract_runtime: ContractBackend::Pallet,
+					contract_runtime: ContractBackend::Pallet { call_depth_mut : 2},
 				},
 			);
 
@@ -1085,7 +1085,7 @@ impl<T: Config> Pallet<T> {
 			contract_info: info,
 			shared,
 			iterators: Default::default(),
-			contract_runtime: ContractBackend::CosmWasm { executing_module: None },
+			contract_runtime: ContractBackend::CosmWasm { executing_module: None, call_depth_mut : 2 },
 		};
 
 		let wasmi_vm = new_wasmi_vm(code.as_slice(), vm).map_err(|_| Error::<T>::VmCreation)?;
@@ -1284,8 +1284,8 @@ impl<T: Config> Pallet<T> {
 		funds: Vec<Coin>,
 		salt: &[u8],
 		message: &[u8],
-		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
-	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
+		event_handler: &mut dyn FnMut(cosmwasm_std::Event),
+	) -> Result<Option<cosmwasm_std::Binary>, CosmwasmVMError<T>> {
 		let label = label
 			.as_bytes()
 			.to_vec()
@@ -1306,8 +1306,8 @@ impl<T: Config> Pallet<T> {
 		contract: AccountIdOf<T>,
 		funds: Vec<Coin>,
 		message: &[u8],
-		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
-	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
+		event_handler: &mut dyn FnMut(cosmwasm_std::Event),
+	) -> Result<Option<cosmwasm_std::Binary>, CosmwasmVMError<T>> {
 		setup_execute_call(vm.contract_address.clone().into_inner(), contract)?.sub_call(
 			vm.shared,
 			funds,
@@ -1318,9 +1318,9 @@ impl<T: Config> Pallet<T> {
 
 	pub(crate) fn do_continue_reply<'a>(
 		vm: &'a mut DefaultCosmwasmVM<T>,
-		reply: cosmwasm_vm::cosmwasm_std::Reply,
-		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
-	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
+		reply: cosmwasm_std::Reply,
+		event_handler: &mut dyn FnMut(cosmwasm_std::Event),
+	) -> Result<Option<cosmwasm_std::Binary>, CosmwasmVMError<T>> {
 		setup_reply_call(
 			vm.contract_address.clone().into_inner(),
 			vm.contract_address.clone().into_inner(),
@@ -1337,8 +1337,8 @@ impl<T: Config> Pallet<T> {
 		vm: &'a mut DefaultCosmwasmVM<T>,
 		contract: AccountIdOf<T>,
 		message: &[u8],
-		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
-	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>> {
+		event_handler: &mut dyn FnMut(cosmwasm_std::Event),
+	) -> Result<Option<cosmwasm_std::Binary>, CosmwasmVMError<T>> {
 		let CosmwasmContractMeta { code_id, .. } = Self::do_running_contract_meta(vm);
 		setup_migrate_call(
 			vm.shared,
@@ -1410,7 +1410,7 @@ impl<T: Config> Pallet<T> {
 			|mut vm| match vm.0.as_context().data().contract_runtime {
 				ContractBackend::CosmWasm { .. } =>
 					cosmwasm_call::<QueryCall, OwnedWasmiVM<DefaultCosmwasmVM<T>>>(&mut vm, message),
-				ContractBackend::Pallet => T::PalletHook::query(&mut vm, message).map(Into::into),
+				ContractBackend::Pallet{..} => T::PalletHook::query(&mut vm, message).map(Into::into),
 			},
 		);
 		vm.shared.pop_readonly();

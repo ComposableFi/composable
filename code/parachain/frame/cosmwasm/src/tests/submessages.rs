@@ -6,7 +6,7 @@ use super::{
 	*,
 };
 use crate::types::CodeIdentifier;
-use cosmwasm_vm::cosmwasm_std::{BankMsg, Response, WasmMsg};
+use cosmwasm_std::{BankMsg, Response, WasmMsg};
 use frame_benchmarking::account;
 use sp_runtime::AccountId32;
 

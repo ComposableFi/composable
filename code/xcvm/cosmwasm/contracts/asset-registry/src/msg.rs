@@ -42,6 +42,10 @@ impl KeyDeserialize for AssetKey {
 	fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
 		<u128 as KeyDeserialize>::from_vec(value)
 	}
+
+const KEY_ELEMS: u16 = 1;
+
+	
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

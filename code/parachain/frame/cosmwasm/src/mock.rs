@@ -401,14 +401,14 @@ impl PalletHook<Test> for MockHook {
 								contract_addr: AccountToAddr::convert(
 									MOCK_PALLET_IBC_CONTRACT_ADDRESS,
 								),
-								msg: cosmwasm_vm::cosmwasm_std::Binary("42".as_bytes().to_vec()),
+								msg: cosmwasm_std::Binary("42".as_bytes().to_vec()),
 								funds: Default::default(),
 							})
 							.add_message(IbcMsg::SendPacket {
 								channel_id: "channel-0".to_string(),
 								data: [1, 2, 3].into(),
 								timeout: IbcTimeout::with_timestamp(
-									cosmwasm_vm::cosmwasm_std::Timestamp::from_nanos(0),
+									cosmwasm_std::Timestamp::from_nanos(0),
 								),
 							})
 							.set_data(0x666_u32.to_le_bytes());

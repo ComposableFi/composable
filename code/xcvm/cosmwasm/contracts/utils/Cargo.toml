@@ -5,5 +5,5 @@ name = "cw-xc-utils"
 version = "0.1.0"
 
 [dependencies]
-cosmwasm-std = { workspace = true}
+cosmwasm-std = { workspace = true }
 xc-core = { path = "../../../lib/core", features = [] }

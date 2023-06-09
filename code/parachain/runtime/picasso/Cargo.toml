@@ -207,6 +207,8 @@ std = [
   "composable-traits/std",
   "cosmwasm-runtime-api/std",
   "cosmwasm/std",
+  "cosmwasm-vm/std",
+  "cosmwasm-vm-wasmi/std",
   "cw-dex-router/std",
   "crowdloan-rewards-runtime-api/std",
   "crowdloan-rewards/std",

@@ -1,10 +1,11 @@
 use crate::{weights::WeightInfo, Config};
 use codec::{Decode, Encode};
+use cosmwasm_vm_wasmi::version::{Version1x, Version};
 use core::marker::PhantomData;
 use frame_support::weights::Weight;
 use parity_wasm::elements::{Instruction, Module};
 use scale_info::TypeInfo;
-use wasm_instrument::gas_metering::{self, MemoryGrowCost, Rules};
+use wasm_instrument::gas_metering::{self, MemoryGrowCost, Rules, host_function};
 
 pub const INSTRUCTIONS_MULTIPLIER: u32 = 100;
 
@@ -22,11 +23,11 @@ pub enum InstrumentationError {
 /// Instrument a code for gas metering and stack height limiting.
 pub fn gas_and_stack_instrumentation(
 	module: Module,
-	gas_module_name: &str,
+	_gas_module_name: &str,
 	stack_limit: u32,
 	cost_rules: &impl Rules,
 ) -> Result<Module, InstrumentationError> {
-	let gas_instrumented_module = gas_metering::inject(module, cost_rules, gas_module_name)
+	let gas_instrumented_module = gas_metering::inject(module, host_function::Injector::new(Version1x::ENV_MODULE, Version1x::ENV_GAS), cost_rules)
 		.map_err(|e| {
 			log::debug!(target: "runtime::contracts", "gas_and_stack_instrumentation: {:?}", e);
 			InstrumentationError::GasMeteringInjection
@@ -339,4 +340,9 @@ impl<T: Config> Rules for CostRules<T> {
 		// GrowMemory is already benchmarked
 		MemoryGrowCost::Free
 	}
+
+	fn call_per_local_cost(&self) -> u32 {
+        0
+    }
+	
 }

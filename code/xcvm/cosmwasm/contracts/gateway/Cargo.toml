@@ -26,13 +26,13 @@ cw20 = { workspace = true }
 hex = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true, default-features = false, features = ["derive"] }
-serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
+serde-json-wasm = { workspace = true }
 thiserror = { workspace = true }
 xc-core = { path = "../../../lib/core", features = ["std"] }
 xc-proto = { path = "../../../lib/proto" }
 
 [dev-dependencies]
-cosmwasm-schema = {workspace = true}
+cosmwasm-schema = { workspace = true }
 prost = { workspace = true, default-features = false, features = [
   "prost-derive",
 ] }

@@ -149,7 +149,7 @@ impl InMemoryIbcNetworkChannel {
 				block: tx_admin_counterparty.block.clone(),
 				transaction: tx_admin_counterparty.transaction.clone(),
 				contract: ContractInfo {
-					address: qvm_counterparty.xcvm_state.gateway.clone().into(),
+					address: vm_counterparty.xcvm_state.gateway.clone().into(),
 				},
 			},
 			tx_admin_counterparty.info.clone(),

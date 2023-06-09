@@ -1,6 +1,7 @@
 use alloc::string::String;
-use cosmwasm_vm::cosmwasm_std::{Coin, Uint128};
+use cosmwasm_std::{Coin, Uint128};
 use serde::{Deserialize, Serialize};
+
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
