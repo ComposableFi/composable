@@ -3,7 +3,7 @@
 
 ## Overview
 
-Apollo is an oracle for submitting prices on-chain. 
+[Apollo](../products/apollo-overview.md) is an oracle for submitting prices on-chain. 
 We plan to upgrade it and allow everyone to stream arbitrary third party data in the future. 
 By taking part in Apollo and becoming an oracle operator, 
 you will be securing the assets prices and help the network become more resilient. 
@@ -268,87 +268,11 @@ Address (public key): "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL"
 Mnemonic(seed): "bottom drive obey lake curtain smoke basket hold race lonely fit walk//Alice"
 ```
 
-### 1. Automated Setup
-
-This describes the automated setup using our oracle initialization script.
-
-Please scroll down to part 2. For manual setup instructions.
-
-**Setup required libraries**
-
-Installing application dependencies:
-
-```bash
-sudo apt update && sudo apt install -y git curl
-```
-
-Installing NodeJS:
-
-```bash
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
-export NVM_DIR="$HOME/.nvm" && \
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
-nvm install v16.15.0 && \
-nvm use v16.15.0 && \
-npm install --global yarn
-```
-
-**Setup oracle price feed initializer**
-
-Getting the oracle price feed initializer:
-
-```bash
-git clone --depth 1 https://github.com/ComposableFi/composable.git composable-oracle-initializer && \
-cd composable-oracle-initializer/scripts/oracle-setup
-```
-
-Setup oracle price feed initializer:
-
-```bash
-yarn
-```
-
-Starting oracle price feed initializer:
-
-```bash
-yarn start
-```
-
-**Registering offchain worker**
-
-As soon as the script has finished, only a single step remains.
-
-We need to register the offchain worker on our chain.
-
-To do this go to:
-
-_Developer menu -> RPC calls -> author -> InsertKey_
-
-And enter the details, as seen in the screenshot below and press: “Submit RPC call”.
-
-```markdown
-keyType: orac
-suri: bottom drive obey lake curtain smoke basket hold race lonely fit walk//Alice
-publicKey: 5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL
-```
-
-![register_offchain_worker](./oracle-set-up-guide/register-offchain-worker.png)
-
-
-After successfully following these steps, you should see the blockchain successfully getting prices submitted, every few
-blocks.
-
-
-![successful_price_submitted](./oracle-set-up-guide/successful-price-submitted.png)
-
-
-### 2. Manual Setup
-
-For the manual setup we need to do the following:
+The following steps are required to complete the setup of becoming an oracle:
 
 1. Register price feed URL
 2. Register offchain worker
-3. Set signer
+3. Set signer (for local testing)
 4. Create an oracle for the asset
 
 **Register price feed URL**
@@ -381,8 +305,7 @@ And enter the details above, as seen in the screenshot and press: “Submit RPC 
 
 ![register_offchain_worker](./oracle-set-up-guide/register-offchain-worker.png)
 
-
-**Setting signer**
+**Setting signer (for local testing)**
 
 Bond the controller account by submitting a set_signer transaction (tie the Signer to the Controller). This transaction 
 **must** be sent by the controller. The controller **must have the necessary bond amount** as it will be transferred to 
@@ -391,7 +314,7 @@ the signer and put on hold (reserved).
 JavaScript:
 
 ```JavaScript
-api.tx.oracle.setSigner(address);
+api.tx.sudo.sudo(api.tx.oracle.setSigner(controller, signer))
 ```
 
 Setting the signer automatically adds a small amount of funds to the oracle stake of this wallet. These are required for
