@@ -1,20 +1,8 @@
 { self, ... }: {
-  perSystem =
-    { config
-    , self'
-    , inputs'
-    , pkgs
-    , lib
-    , system
-    , crane
-    , systemCommonRust
-    , subnix
-    , ...
-    }:
-    let
-      x = 2;
-    in
-    {
+  perSystem = { config, self', inputs', pkgs, lib, system, crane
+    , systemCommonRust, subnix, ... }:
+    let x = 2;
+    in {
       packages = rec {
         wasmvm = crane.nightly.buildPackage {
           src = "${
@@ -39,9 +27,7 @@
           doCheck = false;
           nativeBuildInputs = [ pkgs.patchelf ];
           excludedPackages = [ "interchaintest" "simd" ];
-          ldflags = [
-            "-v -extldflags '-L${wasmvm}/lib'"
-          ];
+          ldflags = [ "-v -extldflags '-L${wasmvm}/lib'" ];
           src = pkgs.fetchFromGitHub {
             owner = "notional-labs";
             repo = "composable-centauri";
