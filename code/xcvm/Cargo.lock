@@ -2610,7 +2610,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "xcvm-tests"
+name = "xc-tests"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-orchestrate",
