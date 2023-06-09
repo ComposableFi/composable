@@ -259,9 +259,6 @@ where
 			instruction::Instruction::Transfer(t) => t.try_into(),
 			instruction::Instruction::Spawn(s) => s.try_into(),
 			instruction::Instruction::Call(c) => c.try_into(),
-			// TODO(aeryz): Query needs to be implemented
-			// instruction::Instruction::Query(q) => q.try_into(),
-			_ => Err(()),
 		}
 	}
 }
@@ -598,11 +595,6 @@ where
 					salt: Some(Salt { salt }),
 					program: Some(program.into()),
 					assets: assets.into().into_iter().map(|asset| asset.into()).collect(),
-				}),
-			xcvm_core::Instruction::Query { network, salt } =>
-				instruction::Instruction::Query(Query {
-					network: Some(Network { network_id: network.into() }),
-					salt: Some(Salt { salt }),
 				}),
 		}
 	}

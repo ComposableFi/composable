@@ -184,8 +184,6 @@ pub fn handle_execute_step(
 			),
 			Instruction::Spawn { network, salt, assets, program } =>
 				interpret_spawn(&mut deps, &env, network, salt, assets, program),
-			// TODO(hussein-aitlahcen)
-			Instruction::Query { .. } => Ok(Response::default()),
 		}?;
 		// Save the intermediate IP so that if the execution fails, we can recover at which
 		// instruction it happened.
