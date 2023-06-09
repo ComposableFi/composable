@@ -7,6 +7,10 @@ edition = "2021"
 
 [lib]
 
+[features]
+default = ["std"]
+std = ["cosmwasm-std/std", "cosmwasm-vm/std", "cosmwasm-vm-wasmi/std", "cw20/std" ]
+
 [dev-dependencies]
 cosmwasm-std = { workspace = true, features = ["ibc3"] }
 
@@ -26,10 +30,10 @@ xc-core = { path = "../../lib/core" }
 log = { version = "0.4" }
 env_logger = { version = "0.10" }
 tokio = { version = "1.22", features = ["rt", "macros"] }
-cw20 = { version = "0.16" }
-cw20-base = { version = "0.16", features = ["library"] }
+cw20 = { workspace = true }
+cw20-base = { workspace = true,  features = ["library"] }
 hex = { version = "0.4" }
-serde_json = { version = "1.0" }
-serde = { version = "1.0" }
+serde_json = { workspace = true }
+serde = { workspace = true }
 rand = { version = "0.8" }
 proptest = { version = "1" }
