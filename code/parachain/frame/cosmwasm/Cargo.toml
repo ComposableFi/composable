@@ -5,6 +5,9 @@ homepage = "https://composable.finance"
 name = "pallet-cosmwasm"
 version = "1.0.0"
 
+[lib]
+doctest = false
+
 [dependencies.codec]
 default-features = false
 features = ["derive"]
@@ -73,7 +76,6 @@ wasm-instrument = { workspace = true, default-features = false }
 wasmi = { workspace = true, default-features = false }
 wasmi-validation = { workspace = true, default-features = false }
 
-
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
@@ -105,27 +107,31 @@ runtime-benchmarks = [
 ]
 std = [
   "codec/std",
-  "frame-support/std",
-  "frame-system/std",
-  "frame-benchmarking/std",
-  "sp-runtime/std",
-  "sp-io/std",
-  "sp-core/std",
-  "sp-std/std",
-  "sp-arithmetic/std",
   "composable-support/std",
-  "cosmwasm-vm/std",
   "cosmwasm-std/std",
   "cosmwasm-vm-wasmi/std",
-  "scale-info/std",
-  "primitives/std",
-  "pallet-balances/std",
-  "sha3/std",
+  "cosmwasm-vm/std",
+  "frame-benchmarking/std",
+  "frame-support/std",
+  "frame-system/std",
   "hex/std",
-  "pallet-ibc/std",
+  "ibc-primitives/std",
   "ibc/std",
-  "pallet-assets-transactor-router/std",
-  "pallet-assets-registry/std",
   "orml-tokens/std",
-
+  "pallet-assets-registry/std",
+  "pallet-assets-transactor-router/std",
+  "pallet-balances/std",
+  "pallet-ibc/std",
+  "primitives/std",
+  "scale-info/std",
+  "sha3/std",
+  "sp-arithmetic/std",
+  "sp-core/std",
+  "sp-io/std",
+  "parity-wasm/std",
+  "sp-runtime/std",
+  "sp-std/std",
+  "wasm-instrument/std",
+  "wasmi-validation/std",
+  "wasmi/std",
 ]

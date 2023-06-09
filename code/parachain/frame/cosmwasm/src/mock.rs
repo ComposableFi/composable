@@ -11,11 +11,11 @@ use crate::{
 use composable_traits::currency::{CurrencyFactory, RangeId};
 use core::marker::PhantomData;
 
-use cosmwasm_vm::{
-	cosmwasm_std::{
-		ContractResult, Event as CosmwasmEvent, Ibc3ChannelOpenResponse, IbcMsg, IbcTimeout,
-		QueryResponse, Response, SubMsg, WasmMsg,
-	},
+use cosmwasm_std::{
+	ContractResult, Event as CosmwasmEvent, Ibc3ChannelOpenResponse, IbcMsg, IbcTimeout,
+	QueryResponse, Response, SubMsg, WasmMsg,
+};
+use cosmwasm_vm::{	
 	vm::{VMBase, VmErrorOf, VmGas},
 };
 use cosmwasm_vm_wasmi::OwnedWasmiVM;

@@ -2214,7 +2214,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.2.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=471a852bf8635f75bb58c71f87301a03d67f889c#471a852bf8635f75bb58c71f87301a03d67f889c"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=fc822b7ef655de6b26773318c2025a6881a9f680#fc822b7ef655de6b26773318c2025a6881a9f680"
 dependencies = [
  "cosmwasm-std",
  "log 0.4.17",
@@ -2226,7 +2226,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.2.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=471a852bf8635f75bb58c71f87301a03d67f889c#471a852bf8635f75bb58c71f87301a03d67f889c"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=fc822b7ef655de6b26773318c2025a6881a9f680#fc822b7ef655de6b26773318c2025a6881a9f680"
 dependencies = [
  "cosmwasm-std",
  "cosmwasm-vm",
@@ -10077,6 +10077,7 @@ dependencies = [
  "composable-support",
  "composable-traits",
  "cosmwasm-runtime-api",
+ "cosmwasm-std",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
  "crowdloan-rewards-runtime-api",

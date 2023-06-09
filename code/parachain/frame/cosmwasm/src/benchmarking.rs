@@ -14,8 +14,8 @@ use alloc::{
 	borrow::ToOwned, boxed::Box, collections::BTreeMap, format, string::String, vec, vec::Vec,
 };
 use core::cell::SyncUnsafeCell;
+use cosmwasm_std::{Coin, Reply, SubMsgResult};
 use cosmwasm_vm::{
-	cosmwasm_std::{Coin, Reply, SubMsgResult},
 	system::CosmwasmContractMeta,
 };
 use cosmwasm_vm_wasmi::code_gen::{
@@ -127,7 +127,7 @@ fn create_wasm_module_with_fns(
 	let module = wasmi::Module::new(&engine, wasm_module.code.as_slice()).unwrap();
 
 	let mut store = wasmi::Store::new(&engine, ());
-	let linker = <wasmi::Linker<()>>::new();
+	let linker = <wasmi::Linker<()>>::new(&engine);
 
 	let instance = linker.instantiate(&mut store, &module).unwrap().start(&mut store).unwrap();
 
@@ -167,7 +167,7 @@ where
 	let module = wasmi::Module::new(&engine, wasm_module.code.as_slice()).unwrap();
 
 	let mut store = wasmi::Store::new(&engine, ());
-	let linker = <wasmi::Linker<()>>::new();
+	let linker = <wasmi::Linker<()>>::new(&engine);
 
 	let instance = linker.instantiate(&mut store, &module).unwrap().start(&mut store).unwrap();
 

@@ -86,6 +86,13 @@ crowdloan-rewards-runtime-api = { path = "../../frame/crowdloan-rewards/runtime-
 pablo-runtime-api = { path = "../../frame/pablo/runtime-api", default-features = false }
 cosmwasm = { package = "pallet-cosmwasm", path = "../../frame/cosmwasm", default-features = false }
 cosmwasm-runtime-api = { path = "../../frame/cosmwasm/runtime-api", default-features = false }
+cosmwasm-std = { workspace = true, default-features = false, features = [
+  "ibc3",
+  "iterator",
+  "stargate",
+] }
+
+
 reward = { path = "../../frame/reward", default-features = false }
 farming = { path = "../../frame/farming", default-features = false }
 
@@ -208,6 +215,7 @@ std = [
   "cosmwasm-runtime-api/std",
   "cosmwasm/std",
   "cosmwasm-vm/std",
+  "cosmwasm-std/std",
   "cosmwasm-vm-wasmi/std",
   "cw-dex-router/std",
   "crowdloan-rewards-runtime-api/std",

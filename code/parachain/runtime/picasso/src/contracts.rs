@@ -6,8 +6,8 @@ use cosmwasm::{
 	runtimes::vm::{CosmwasmVM, CosmwasmVMError},
 	types::{AccountIdOf, ContractLabelOf, ContractTrieIdOf, EntryPoint, PalletContractCodeInfo},
 };
+use cosmwasm_std::{ContractResult, Response};
 use cosmwasm_vm::{
-	cosmwasm_std::{ContractResult, Response},
 	executor::QueryResponse,
 	vm::{VMBase, VmErrorOf},
 };

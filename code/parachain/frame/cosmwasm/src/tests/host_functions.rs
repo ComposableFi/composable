@@ -6,8 +6,8 @@ use crate::{
 	CodeIdToInfo, CodeInfoOf, Config, InstrumentedCode, PristineCode,
 };
 use alloc::collections::BTreeSet;
+use cosmwasm_std::{CodeInfoResponse, Coin, ContractInfoResponse, Order};
 use cosmwasm_vm::{
-	cosmwasm_std::{CodeInfoResponse, Coin, ContractInfoResponse, Order},
 	system::CosmwasmContractMeta,
 	vm::VMBase,
 };
@@ -264,7 +264,7 @@ fn set_contract_meta() {
 			&mut shared_vm,
 			origin.clone(),
 			contract_1.clone().into_inner(),
-			vec![],
+			vec![],		
 		)
 		.unwrap();
 

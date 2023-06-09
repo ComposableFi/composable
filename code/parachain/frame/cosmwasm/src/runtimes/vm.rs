@@ -42,7 +42,7 @@ impl WasmiContext for ContractBackend {
 
 	fn set_wasmi_context(&mut self, instance: Instance, memory: Memory) {
 		*self =
-			ContractBackend::CosmWasm { executing_module: Some(WasmiModule { instance, memory }), call_depth_mut: 2 };
+			ContractBackend::CosmWasm { executing_module: Some(WasmiModule { instance, memory }), call_depth_mut: 0 };
 	}
 
 	fn call_depth_mut(&mut self) -> &mut u32 {

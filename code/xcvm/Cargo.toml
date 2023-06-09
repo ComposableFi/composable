@@ -31,9 +31,9 @@ cosmwasm-std = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev =
 cw-storage-plus = { git = "https://github.com/dzmitry-lahoda-forks/cw-storage-plus", rev = "a5a11afe16b7d4ab5ee14ce86bf3f3e1b4502f7b", default-features = false, features = ["std"] }
 
 
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "707b8da2488874569058a0268adbcb2b68a293bf" }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "707b8da2488874569058a0268adbcb2b68a293bf" }
-cosmwasm-orchestrate = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "707b8da2488874569058a0268adbcb2b68a293bf" }
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "fc822b7ef655de6b26773318c2025a6881a9f680" }
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "fc822b7ef655de6b26773318c2025a6881a9f680" }
+cosmwasm-orchestrate = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "fc822b7ef655de6b26773318c2025a6881a9f680" }
 
 
 cw-utils = "1.0.1"

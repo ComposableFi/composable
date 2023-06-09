@@ -58,7 +58,7 @@ mod benchmarking;
 
 #[cfg(test)]
 mod mock;
-#[cfg(test)]
+#[cfg(test)] 
 mod tests;
 
 const SUBSTRATE_ECDSA_SIGNATURE_LEN: usize = 65;
@@ -1063,7 +1063,7 @@ impl<T: Config> Pallet<T> {
 					contract_info: precompiled_info.contract,
 					shared,
 					iterators: Default::default(),
-					contract_runtime: ContractBackend::Pallet { call_depth_mut : 2},
+					contract_runtime: ContractBackend::Pallet { call_depth_mut : 0 },
 				},
 			);
 
@@ -1085,7 +1085,7 @@ impl<T: Config> Pallet<T> {
 			contract_info: info,
 			shared,
 			iterators: Default::default(),
-			contract_runtime: ContractBackend::CosmWasm { executing_module: None, call_depth_mut : 2 },
+			contract_runtime: ContractBackend::CosmWasm { executing_module: None, call_depth_mut : 0 },
 		};
 
 		let wasmi_vm = new_wasmi_vm(code.as_slice(), vm).map_err(|_| Error::<T>::VmCreation)?;
