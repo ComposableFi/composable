@@ -2,17 +2,16 @@
 authors = ["Composable Developers"]
 edition = "2021"
 homepage = "https://composable.finance"
-name = "xcvm-proto"
+name = "xc-proto"
 version = "0.1.0"
 
 [dependencies]
-fixed = { version = "1.15", default-features = false }
-prost = { version = "0.11", default-features = false, features = [
+fixed = { workspace = true, default-features = false }
+prost = { workspace = true, default-features = false, features = [
   "prost-derive",
 ] }
-xcvm-core = { path = "../core" }
-# Only necessary if using Protobuf well-known types:
-prost-types = { version = "0.11", default-features = false }
+xc-core = { path = "../core" }
+prost-types = { workspace = true, default-features = false }
 
 [build-dependencies]
-prost-build = "0.11"
+prost-build = { workspace = true}

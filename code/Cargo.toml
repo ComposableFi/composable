@@ -323,17 +323,18 @@ subxt = { git = "https://github.com/paritytech/subxt", rev = "2a913a3aa99a07f7ac
 # Only needed until the configs get merged into xcm-builder: https://github.com/paritytech/polkadot/pull/7165
 invarch-xcm-builder = { git = "https://github.com/InvArch/InvArch-XCM-Builder", rev = "c704c0f2d4c436f96eff10d06c197527b46b3536", default-features = false }
 
+wasm-instrument = { version = "0.4.0", default-features = false }
+wasmi = { version = "0.30.0", default-features = false }
+wasmi-validation = { version = "0.5", default-features = false }
 
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "c2a4fe2c764710c0db15c571135bc37619a289d5", default-features = false, features = [
-  "ibc3",
-  "iterator",
-  "stargate",
-] }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "c2a4fe2c764710c0db15c571135bc37619a289d5", default-features = false, features = [
-  "iterator",
-  "stargate",
-] }
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "fc822b7ef655de6b26773318c2025a6881a9f680", default-features = false }
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "fc822b7ef655de6b26773318c2025a6881a9f680", default-features = false }
+serde-json-wasm = { git = "https://github.com/dzmitry-lahoda-forks/serde-json-wasm", rev = "8a7e522c0e4de36a6dfb535766f26a9941017d81", default-features = false }
 
+cosmwasm-std = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6", default-features = false, features = [
+  "iterator",
+  "cosmwasm_1_2",
+] }
 
 serde = { version = '1.0.136', default-features= false, features = ["derive"] }
 
@@ -341,7 +342,6 @@ serde_json = { version = "1.0.82", default-features = false, features = [
   "alloc",
 ] }
 
-serde-json-wasm = { version = "0.5.1", default-features = false }
 
 #######################################
 # DO NOT DELETE PATCHES, BUT COMMENT OUT

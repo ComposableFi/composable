@@ -6,10 +6,10 @@ version = "0.1.0"
 [features]
 library = []
 default = ["std"]
-std = []
+std = ["cosmwasm-std/std"]
 
 [dependencies]
-cosmwasm-vm = { workspace = true, default-features = false, features = [
+cosmwasm-std = { workspace = true, default-features = false, features = [
   "ibc3",
   "iterator",
   "stargate",

@@ -13,8 +13,8 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::ensure_from_older_version;
-use cw_xcvm_utils::DefaultXCVMProgram;
-use xcvm_core::{
+use cw_xc_utils::DefaultXCVMProgram;
+use xc_core::{
 	cosmwasm::{FlatCosmosMsg, FlatWasmMsg},
 	Balance, Funds, Juno, Network, Picasso, ProgramBuilder, UserId, UserOrigin,
 };
@@ -90,7 +90,7 @@ pub fn execute(
 	};
 	Ok(Response::default().add_message(wasm_execute(
 		router,
-		&cw_xcvm_common::router::ExecuteMsg::ExecuteProgram {
+		&cw_xc_common::router::ExecuteMsg::ExecuteProgram {
 			salt: vec![0x01, 0x02, 0x03],
 			program: make_program(user_origin.user_id, message)?,
 			assets: Funds::empty(),

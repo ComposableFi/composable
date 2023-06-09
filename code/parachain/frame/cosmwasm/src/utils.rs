@@ -1,5 +1,6 @@
 use alloc::{string::String, vec::Vec};
-use cosmwasm_vm::{cosmwasm_std::Coin, system::CosmwasmContractMeta};
+use cosmwasm_std::Coin;
+use cosmwasm_vm::system::CosmwasmContractMeta;
 use sp_core::storage::ChildInfo;
 use sp_runtime::traits::{Convert, Hash};
 

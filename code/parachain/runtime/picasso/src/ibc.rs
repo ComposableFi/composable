@@ -140,8 +140,9 @@ impl Ics20RateLimiter for ConstantAny {
 			.ok();
 
 		let decimals = asset_id
-			.map(|x| <assets_registry::Pallet<Runtime> as InspectRegistryMetadata>::decimals(&x))
-			.flatten()
+			.and_then(|x| {
+				<assets_registry::Pallet<Runtime> as InspectRegistryMetadata>::decimals(&x)
+			})
 			.unwrap_or(12);
 
 		if msg.token.amount.as_u256() <=

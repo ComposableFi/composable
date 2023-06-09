@@ -1,8 +1,9 @@
 use cosmwasm_std::Addr;
-use cw_storage_plus::{CwIntKey, Key, KeyDeserialize, PrimaryKey};
+use cosmwasm_schema::{cw_serde, QueryResponses};
+use cw_storage_plus::{IntKey, Key, KeyDeserialize, PrimaryKey};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::AssetId;
+use xc_core::AssetId;
 
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
 #[repr(transparent)]
@@ -41,6 +42,10 @@ impl KeyDeserialize for AssetKey {
 	fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
 		<u128 as KeyDeserialize>::from_vec(value)
 	}
+
+const KEY_ELEMS: u16 = 1;
+
+	
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -73,13 +78,14 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MigrateMsg {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
+	#[returns(LookupResponse)]
 	Lookup { asset_id: AssetKey },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct LookupResponse {
 	pub reference: AssetReference,
 }

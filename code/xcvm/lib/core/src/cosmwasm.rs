@@ -67,7 +67,7 @@ use super::{BindingValue, Bindings};
 use crate::{InterpreterOrigin, NetworkId, OrderedBindings, UserId, UserOrigin};
 use alloc::{fmt::Debug, string::String, vec, vec::Vec};
 use cosmwasm_std::{BankMsg, Coin, CosmosMsg, StdResult};
-use cw_storage_plus::{CwIntKey, Key, KeyDeserialize, Prefixer, PrimaryKey};
+use cw_storage_plus::{IntKey, Key, KeyDeserialize, Prefixer, PrimaryKey};
 use serde::{Deserialize, Serialize};
 
 impl<'a> PrimaryKey<'a> for InterpreterOrigin {
@@ -99,6 +99,9 @@ impl KeyDeserialize for InterpreterOrigin {
 	fn from_vec(value: Vec<u8>) -> StdResult<Self::Output> {
 		<(u32, Vec<u8>, Vec<u8>) as KeyDeserialize>::from_vec(value)
 	}
+
+const KEY_ELEMS: u16 = 1234;
+	
 }
 
 impl<'a> PrimaryKey<'a> for UserOrigin {
@@ -122,6 +125,9 @@ impl KeyDeserialize for UserOrigin {
 	fn from_vec(value: Vec<u8>) -> StdResult<Self::Output> {
 		<(u32, Vec<u8>) as KeyDeserialize>::from_vec(value)
 	}
+
+const KEY_ELEMS: u16 = 1234;
+	
 }
 
 impl<'a> PrimaryKey<'a> for UserId {
@@ -142,9 +148,12 @@ impl<'a> Prefixer<'a> for UserId {
 
 impl KeyDeserialize for UserId {
 	type Output = <Vec<u8> as KeyDeserialize>::Output;
+	
 	fn from_vec(value: Vec<u8>) -> StdResult<Self::Output> {
 		<Vec<u8> as KeyDeserialize>::from_vec(value)
 	}
+
+	const KEY_ELEMS: u16 = 1;
 }
 
 impl<'a> PrimaryKey<'a> for NetworkId {
@@ -160,7 +169,7 @@ impl<'a> PrimaryKey<'a> for NetworkId {
 impl<'a> Prefixer<'a> for NetworkId {
 	fn prefix(&self) -> Vec<Key> {
 		<u32 as Prefixer<'a>>::prefix(&self.0)
-	}
+	}	
 }
 
 impl KeyDeserialize for NetworkId {
@@ -168,6 +177,8 @@ impl KeyDeserialize for NetworkId {
 	fn from_vec(value: Vec<u8>) -> StdResult<Self::Output> {
 		<u32 as KeyDeserialize>::from_vec(value)
 	}
+
+	const KEY_ELEMS: u16 = 1;	
 }
 
 #[derive(Debug, Serialize, Deserialize)]

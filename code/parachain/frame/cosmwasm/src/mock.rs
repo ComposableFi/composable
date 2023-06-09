@@ -11,13 +11,11 @@ use crate::{
 use composable_traits::currency::{CurrencyFactory, RangeId};
 use core::marker::PhantomData;
 
-use cosmwasm_vm::{
-	cosmwasm_std::{
-		ContractResult, Event as CosmwasmEvent, Ibc3ChannelOpenResponse, IbcMsg, IbcTimeout,
-		QueryResponse, Response, SubMsg, WasmMsg,
-	},
-	vm::{VMBase, VmErrorOf, VmGas},
+use cosmwasm_std::{
+	ContractResult, Event as CosmwasmEvent, Ibc3ChannelOpenResponse, IbcMsg, IbcTimeout,
+	QueryResponse, Response, SubMsg, WasmMsg,
 };
+use cosmwasm_vm::vm::{VMBase, VmErrorOf, VmGas};
 use cosmwasm_vm_wasmi::OwnedWasmiVM;
 use frame_support::{
 	ord_parameter_types,
@@ -401,14 +399,14 @@ impl PalletHook<Test> for MockHook {
 								contract_addr: AccountToAddr::convert(
 									MOCK_PALLET_IBC_CONTRACT_ADDRESS,
 								),
-								msg: cosmwasm_vm::cosmwasm_std::Binary("42".as_bytes().to_vec()),
+								msg: cosmwasm_std::Binary("42".as_bytes().to_vec()),
 								funds: Default::default(),
 							})
 							.add_message(IbcMsg::SendPacket {
 								channel_id: "channel-0".to_string(),
 								data: [1, 2, 3].into(),
 								timeout: IbcTimeout::with_timestamp(
-									cosmwasm_vm::cosmwasm_std::Timestamp::from_nanos(0),
+									cosmwasm_std::Timestamp::from_nanos(0),
 								),
 							})
 							.set_data(0x666_u32.to_le_bytes());
