@@ -1,5 +1,5 @@
-use cosmwasm_std::Addr;
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Addr;
 use cw_storage_plus::{IntKey, Key, KeyDeserialize, PrimaryKey};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -43,9 +43,7 @@ impl KeyDeserialize for AssetKey {
 		<u128 as KeyDeserialize>::from_vec(value)
 	}
 
-const KEY_ELEMS: u16 = 1;
-
-	
+	const KEY_ELEMS: u16 = 1;
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

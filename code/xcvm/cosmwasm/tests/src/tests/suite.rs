@@ -565,8 +565,8 @@ mod single_chain {
 				)
 				.expect("Must be able to transfer assets via XCVM");
 		// We don't do cross-chain operation, nothing must happen from the relayer POV.
-		// assert_eq!(relay_data, Vec::default());
-		// assert_eq!(relay_events, Vec::default());
+		assert!(relay_data.is_empty());
+		assert!(relay_events.is_empty());
 
 		// We don't dispatch any information in the data field.
 		assert_eq!(dispatch_data, None);

@@ -219,7 +219,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-orchestrate"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=fc822b7ef655de6b26773318c2025a6881a9f680#fc822b7ef655de6b26773318c2025a6881a9f680"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9#71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9"
 dependencies = [
  "async-trait",
  "base64",
@@ -309,7 +309,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.2.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=fc822b7ef655de6b26773318c2025a6881a9f680#fc822b7ef655de6b26773318c2025a6881a9f680"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9#71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9"
 dependencies = [
  "cosmwasm-std",
  "log",
@@ -321,7 +321,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.2.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=fc822b7ef655de6b26773318c2025a6881a9f680#fc822b7ef655de6b26773318c2025a6881a9f680"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9#71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9"
 dependencies = [
  "cosmwasm-std",
  "cosmwasm-vm",

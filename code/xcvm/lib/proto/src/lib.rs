@@ -525,8 +525,7 @@ impl From<xc_core::BindingValue> for binding_value::Type {
 				binding_value::Type::Result(Result { result: 0 }),
 			xc_core::BindingValue::Register(xc_core::Register::This) =>
 				binding_value::Type::Self_(Self_ { self_: 0 }),
-			xc_core::BindingValue::Asset(asset_id) =>
-				binding_value::Type::AssetId(asset_id.into()),
+			xc_core::BindingValue::Asset(asset_id) => binding_value::Type::AssetId(asset_id.into()),
 			xc_core::BindingValue::AssetAmount(asset_id, balance) =>
 				binding_value::Type::AssetAmount(AssetAmount {
 					asset_id: Some(asset_id.into()),
