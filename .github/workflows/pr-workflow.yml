@@ -552,7 +552,6 @@ jobs:
           files: |
             release-artifacts/to-upload/*
 
-  # this should be split and commit docker are from here, but latest from release
   push-docker-images:
     name: push-docker-images
     if: ${{ inputs.github_event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}   
@@ -591,11 +590,6 @@ jobs:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
-      - name: Nix flake show
-        run: |
-          nix --version
-          nix show-config
-          nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
       - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:
