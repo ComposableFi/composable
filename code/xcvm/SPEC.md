@@ -225,7 +225,8 @@ The following sequence shows possible high-level implementations for each instru
 ```mermaid
 sequenceDiagram
     Interpreter->>ERC20 or CW20 or Native: Transfer
-    Interpreter->>XcAccount: Call
+    Interpreter->>XcAccount: Proxy Call
+    XcAccount->>Opaque Contract: Raw Call
     Interpreter->>Gateway: Spawn
     Interpreter->>Gateway: Query
 ```

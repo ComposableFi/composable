@@ -104,6 +104,10 @@ runtime-benchmarks = [
   "pallet-ibc/runtime-benchmarks",
   "pallet-assets-transactor-router/runtime-benchmarks",
   "pallet-assets-registry/runtime-benchmarks",
+  "orml-tokens/runtime-benchmarks",
+  "pallet-timestamp/runtime-benchmarks",
+  "pallet-assets/runtime-benchmarks",
+  "pallet-balances/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -121,6 +125,8 @@ std = [
   "pallet-assets-registry/std",
   "pallet-assets-transactor-router/std",
   "pallet-balances/std",
+  "pallet-timestamp/std",
+  "pallet-assets/std",
   "pallet-ibc/std",
   "primitives/std",
   "scale-info/std",
@@ -133,5 +139,5 @@ std = [
   "sp-std/std",
   "wasm-instrument/std",
   "wasmi-validation/std",
-  "wasmi/std",
+  "wasmi/std"
 ]
