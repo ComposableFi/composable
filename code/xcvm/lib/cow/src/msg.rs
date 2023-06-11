@@ -1,6 +1,6 @@
 use bounded_collections::{BoundedVec, ConstU32};
-use cosmwasm_std::Coin;
-use xcvm_core::Network;
+use cosmwasm_std::{Coin, CosmosMsg};
+use xcvm_core::{Network, Program, Instruction, DefaultXCVMPacket};
 
 
 pub enum ExecuteMsg {
@@ -38,8 +38,9 @@ pub struct Problem {
 
 }
 
-pub struct Solution {
-
+enum Solution {
+	Execute { msgs: BoundedeVec<CosmosMsg<T>, ConstU32<8>> },	
+	XcExecute { programs: BoundedeVec<DefaultXCVMPacket, ConstU32<8>> },	
 }
 
 pub struct Solver {

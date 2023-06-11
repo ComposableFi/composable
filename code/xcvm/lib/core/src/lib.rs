@@ -13,6 +13,18 @@ mod packet;
 mod program;
 mod protocol;
 
+
+use cosmwasm_std::CanonicalAddr;
+use std::collections::VecDeque;
+use crate::{Balance, Funds, NetworkId};
+
+pub type DefaultXCVMInstruction =
+crate::Instruction<NetworkId, Vec<u8>, CanonicalAddr, Funds<Balance>>;
+pub type DefaultXCVMProgram = crate::Program<VecDeque<DefaultXCVMInstruction>>;
+pub type DefaultXCVMPacket = crate::Packet<DefaultXCVMProgram>;
+pub type Salt = Vec<u8>;
+
+
 pub use crate::{
 	asset::*, bridge::*, instruction::*, network::*, packet::*, program::*, protocol::*,
 };
