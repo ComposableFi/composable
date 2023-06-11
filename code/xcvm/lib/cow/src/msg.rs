@@ -1,6 +1,6 @@
 use bounded_collections::{BoundedVec, ConstU32};
-use cosmwasm_std::{Coin, CosmosMsg};
-use xcvm_core::{Network, Program, Instruction, DefaultXCVMPacket};
+use cosmwasm_std::{Coin, CosmosMsg, Uint64};
+use xcvm_core::{Network, Program, Instruction, DefaultXCVMPacket, AssetId};
 
 
 pub enum ExecuteMsg {
@@ -18,6 +18,11 @@ pub struct CoinAt {
 	coin: Coin,
 }
 
+pub struct ResultAt {
+	network : Network,
+	coin: (Amount, AssetId),
+}
+
 pub const ASSETS_LIMIT: u32 = 1;
 
 pub enum Limit {
@@ -25,11 +30,12 @@ pub enum Limit {
 	Maximal(bool)
 }
 
+
 pub struct Intention{
 	/// maximum amount of assets to give from user xc accounts.
-	want: BoundedVec<ConstU32<ASSETS_LIMIT>>,
+	want: BoundedVec<CoinAt, ConstU32<ASSETS_LIMIT>>,
 	/// The minimum amount of assets which give should be exchanged for.
-	give: BoundedeVec<ConstU32<ASSETS_LIMIT>>,
+	give: BoundedeVec<CoinAt, ConstU32<ASSETS_LIMIT>>,
 	
 	limit : Limit,
 }
@@ -42,6 +48,17 @@ enum Solution {
 	Execute { msgs: BoundedeVec<CosmosMsg<T>, ConstU32<8>> },	
 	XcExecute { programs: BoundedeVec<DefaultXCVMPacket, ConstU32<8>> },	
 }
+
+
+/// Solution requires funds on chains to be settled before solution can be executed
+/// for this well defined transfers program is send.
+/// And than send well defined program to collect assets back from to desired location
+struct Setup {
+	funds: BoundedVec<CoinAt, ConstU32<ASSETS_LIMIT>>,
+	collect: BoundedVec<ResultAt, ConstU32<ASSETS_LIMIT>>,
+}
+
+
 
 pub struct Solver {
 
