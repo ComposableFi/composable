@@ -6,6 +6,6 @@ pub fn define(intention: &Intention) -> Problem {
     todo!()
 }
 
-pub fn match_problems(problems : &[Problem], solutions : &[Solution] ) ->  Vec<Solution> {
+pub fn evaluate(problems : &Problem, solutions : &[Solution] ) ->  &Solution {
     todo!()
 } 
