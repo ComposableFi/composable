@@ -14,7 +14,7 @@
             command =self'.packages.banksyd-gen;
           };
           picasso = {
-            command =self'.packages.banksyd-gen;
+            command =self'.packages.zombienet-rococo-local-picasso-dev;
           };
         };
       };
