@@ -15,6 +15,8 @@ enum Decision {
 pub enum ExecuteMsg {
 	SubmitIntention { intention: BoundedVec<Intention, ConstU32<4>> },
 	Decide { problem_id: String },
+	/// user escrows his funds on interpeter on relevant chains and collects data on this chain
+	ProveFunds {}
 }
 
 pub struct Batch {}

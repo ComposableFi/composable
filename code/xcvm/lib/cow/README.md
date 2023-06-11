@@ -9,6 +9,6 @@ The goal of this project is to allow projects to create and maintain request, pr
 ### Execute
 
 Solution of problem is executed in 3 phases:
-1. Transfer funds into user interpreter where solution says they should be by solution
+1. Ensure funds into user interpreter where solution says they should be by solution
 2. Execute whitelisted cross chain program
 3. Collect assets back from where solution left these into problem specifid location
