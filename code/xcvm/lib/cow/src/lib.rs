@@ -2,4 +2,5 @@
 
 extern crate alloc;
 
-mod msg;
+pub mod msg;
+mod contract;

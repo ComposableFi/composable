@@ -2,10 +2,11 @@
 authors = ["Composable Developers"]
 edition = "2021"
 homepage = "https://composable.finance"
-name = "mev"
+name = "cw-cow"
 version = "0.1.0"
 
 [dependencies]
+xcvm-core = { path = "../core"}
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 cosmwasm-std = "1.0.0"
 cw-storage-plus = { version = "0.14.0", optional = true }
@@ -23,6 +24,7 @@ serde = { version = "1", default-features = false, features = [
   "alloc",
 ] }
 serde_json = "1.0"
+bounded-collections = "0.1.7"
 
 [features]
 default = []
