@@ -21,7 +21,10 @@ pub enum ExecuteMsg {
 	/// user escrows his funds on interpreter on relevant chains and collects data on this chain
 	ProveFunds {},
 	// submit solutions of problems
-	SubmitSolutions { solutions: BoundedVec<(Solution, BoundedVec<Problem, ConstU32<32>>)> }
+	SubmitSolutions { solutions: BoundedVec<(Solution, BoundedVec<Problem, ConstU32<32>>)> },
+
+	/// one may preload liquidity on various chains so that if solution uses that liqudity for limited operations set you likely get more 
+	PreloadLiquidity { },
 }
 
 pub struct Batch {}
@@ -30,6 +33,7 @@ pub struct CoinAt {
 	network: Network,
 	coin: Coin,
 }
+
 
 pub struct ResultAt {
 	network: Network,
@@ -70,6 +74,8 @@ pub struct Solution {
 	program : SolutionProgram,
 	/// fees this solution will take for execution on best effort according limits
 	fee :  BoundedVec<CoinAt, ConstU32<ASSETS_LIMIT>>,
+	/// solution can solve full or only only part of intention
+	solved: BoundedeVec<CoinAt, ConstU32<8>>,
 }
 
 pub enum SolutionProgram {
