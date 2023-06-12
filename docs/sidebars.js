@@ -416,17 +416,10 @@ const sidebars = {
             ],
         },
         {
-            type: 'category',
+            type: 'doc',
             label: 'Audits, Fixes & Bug Bounties',
+            id: 'audits/audit-results-recommendations-and-remediations',
 
-            link: {
-                type: 'generated-index',
-                slug: 'audits',
-            },
-            collapsible: false,
-            items: [
-                'audits/audit-results-recommendations-and-remediations',
-            ]
         },
         {
             type: 'doc',
