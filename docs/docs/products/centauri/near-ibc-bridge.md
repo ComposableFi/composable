@@ -18,7 +18,7 @@ All of these can be found in our NEAR enhancement proposals [NEP-364](https://gi
 
 Below you will find a diagram detailing Centauri’s implementation to NEAR Protocol.
 
-![centauri_stack](../images-centauri/centauri-stack.png)
+![centauri_stack](../images-centauri/NEAR-temp.png)
 
 NEAR IBC architecture
 
