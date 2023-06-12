@@ -1,3 +1,4 @@
+use alloc::string::String;
 use bounded_collections::{BoundedVec, ConstU32};
 use cosmwasm_std::{Addr, Coin, CosmosMsg, Uint64};
 use xcvm_core::{
@@ -5,18 +6,22 @@ use xcvm_core::{
 };
 
 enum Decision {
-	Approve,
+	Approve{solution_id : Option<String> },
 	/// if there was solution, users lists it lock
 	/// if no solution yet, he get all back to prevent ddos solvers
 	Cancel,
 	Reject,
 }
 
+
 pub enum ExecuteMsg {
-	SubmitIntention { intention: BoundedVec<Intention, ConstU32<4>> },
-	Decide { problem_id: String },
-	/// user escrows his funds on interpeter on relevant chains and collects data on this chain
-	ProveFunds {}
+	SubmitIntention { intention: BoundedVec<Intention, ConstU32<4>> },	
+	/// user can cancel his intention
+	Decide { intention_id: String, decision: Decision },
+	/// user escrows his funds on interpreter on relevant chains and collects data on this chain
+	ProveFunds {},
+	// submit solutions of problems
+	SubmitSolutions { solutions: BoundedVec<(Solution, BoundedVec<Problem, ConstU32<32>>)> }
 }
 
 pub struct Batch {}
@@ -38,6 +43,7 @@ pub enum Limit {
 	// accordingly more. If false, then prefer to give as little as possible in order to receive
 	// as little as possible while receiving at least want.
 	Maximal(bool),
+	Slippage,
 }
 
 pub struct Intention {
@@ -49,6 +55,9 @@ pub struct Intention {
 	limit: Limit,
 
 	tip: BoundedeVec<CoinAt, ConstU32<8>>,
+	
+	solution_executuin_block_offset: Option<Uint64>,
+	canceltaion_block_offset: Option<Uint32>,
 }
 
 pub struct Problem {
@@ -56,9 +65,21 @@ pub struct Problem {
 	intention: Intention,
 }
 
-enum Solution {
+
+pub struct Solution {
+	program : SolutionProgram,
+	/// fees this solution will take for execution on best effort according limits
+	fee :  BoundedVec<CoinAt, ConstU32<ASSETS_LIMIT>>,
+}
+
+pub enum SolutionProgram {
+	// set of cross chain swaps routed over the chains over swap adapter on each chain for whitelisted contracts
+	SwapRoute {},
 	Execute { msgs: BoundedeVec<CosmosMsg<T>, ConstU32<8>> },
 	XcExecute { programs: BoundedeVec<DefaultXCVMPacket, ConstU32<8>> },
+	
+	/// set of well know dexes executed via XCVM swap command
+	PermissonedRouter {}
 }
 
 /// Solution requires funds on chains to be settled before solution can be executed
@@ -69,10 +90,11 @@ struct Setup {
 	collect: BoundedVec<ResultAt, ConstU32<ASSETS_LIMIT>>,
 }
 
-/// whitelisted set of contracts which can be used
+/// whitelisted set of contracts and calls can be made to relevant contracts
 struct Whitelist {
 	network: Network,
 	contract: Addr,
+
 }
 
 pub struct Solver {}
