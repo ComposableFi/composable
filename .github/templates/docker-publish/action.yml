@@ -17,6 +17,10 @@ inputs:
   artifact:
     description: "The image and tag produced by the nix expression"
     required: true
+  tag:
+    required: false
+    default: ""
+
 runs:
   using: "composite"
   steps:
@@ -38,10 +42,11 @@ runs:
 
         docker tag "${TEMP_CONTAINER_NAME}" "composablefi/${CONTAINER_NAME}:${SHA256}"
         docker tag "${TEMP_CONTAINER_NAME}" "composablefi/${CONTAINER_NAME}:${COMMIT_SHA}"
-        
-        # better do this here https://github.com/ComposableFi/composable/issues/2673
+        if [[ -n ${{ inputs.tag }} ]]; then
+          docker tag "${TEMP_CONTAINER_NAME}" "composablefi/${CONTAINER_NAME}:${{ inputs.tag }}"
+        fi
 
-        if [ $(git symbolic-ref HEAD) = "refs/heads/main" ]; then
+        if [[ $(git symbolic-ref HEAD) = "refs/heads/main" ]]; then
           docker tag "${TEMP_CONTAINER_NAME}" "composablefi/${CONTAINER_NAME}:latest"
         fi;
         docker push --all-tags "composablefi/${CONTAINER_NAME}"
