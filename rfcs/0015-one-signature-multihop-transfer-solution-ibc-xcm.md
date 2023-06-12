@@ -149,6 +149,16 @@ Cannot express(securely) arbitrary routing and programs execution.
 
 To be handled in next RFC or implementation.
 
+## Error handling
+
+XCM multi hop transfers [will not fail](https://substrate.stackexchange.com/questions/6831/how-does-the-xcvm-architecture-ensure-the-absoluteness-principle-described). 
+We can apply same principles to IBC from start for initial chains.
+
+In case of fail, should follow usual resolution process as documented.
+
+Improvement would be, for IBC<->XCM connection, adopting sending [XCM packet back as in IBC](https://github.com/strangelove-ventures/packet-forward-middleware).
+Sure this must be imlemented eventually for pure IBC<->IBC hops.
+
 ## Notes
 
 Also account encoding never discussed, but assumption that they will take some time to be handled well.
