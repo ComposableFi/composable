@@ -95,9 +95,9 @@ The following table portrays the initial criterion for interacting with governan
 
 | Parameter                                          | Period/Number  |
 |----------------------------------------------------|----------------|
-| Referendum voting period                           | 7days          |
-| Enactment delay of an approved referendum          | 7 days         |
-| Cool-off period after a proposal has been rejected | 15 days        |
+| Referendum voting period                           | 3 days         |
+| Enactment delay of an approved referendum          | 0.5 days       |
+| Cool-off period after a proposal has been rejected | 3 days         |
 | Maximum pending community proposals                | 100 |
 
 #### Adaptive Quorum Voting
