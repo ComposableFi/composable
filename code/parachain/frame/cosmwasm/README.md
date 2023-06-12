@@ -19,7 +19,7 @@ The `upload` extrinsic is used to upload smart contracts´ `code` to the pallet.
 
 ### 2.1. Definition
 
-```rust
+```rust,ignore
 #[pallet::weight(T::WeightInfo::upload(code.len() as u32))]
 pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResultWithPostInfo;
 ```
@@ -32,7 +32,7 @@ pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResultWi
 5. Assign a code id to the `code`. This `code id ` is incremented on each upload.
 6. Deposit the upload event.
 
-```rust
+```rust,ignore
 pub enum Event<T: Config> {
 	Uploaded {
 		code_hash: CodeHashOf<T>,
@@ -48,7 +48,7 @@ The `instantiate` extrinsic is used to instantiate a smart contract.
 
 ### 3.1 Definition
 
-```rust
+```rust,ignore
 #[pallet::weight(T::WeightInfo::instantiate(funds.len() as u32).saturating_add(*gas))]
 pub fn instantiate(
 	origin: OriginFor<T>,
@@ -71,7 +71,7 @@ So we created `CodeIdentifier` which makes users able to also identify their cod
 And the corresponding `code id` is fetched internally.
 This feature comes in handy when users want to batch their `upload + instantiate` calls, or they do any kind of scripting to upload and run the contracts.
 
-```rust
+```rust,ignore
 pub enum CodeIdentifier<T: Config> {
 	CodeId(CosmwasmCodeId),
 	CodeHash(CodeHashOf<T>),
@@ -93,7 +93,7 @@ As stated previously, one of our goals is determinism.
 Then, the contract addresses are also deterministic as opposed to other CosmWasm-running chains.
 The algorithm is based on `instantiator`, `salt`, `code_hash` and `message` which is:
 
-```
+```ignore
 hash(instantiator + salt + code_hash + hash(message))
 ```
 
@@ -104,7 +104,7 @@ Then the necessary setup is done like deriving a contract trie id for storage, i
 Finally, instrumentation version is checked, and re-instrumentation happens if necessary.
 Then, the `instantiate` entrypoint of the contract is called and `Instantiated` event is yielded.
 
-```rust
+```rust,ignore
 pub enum Event<T: Config> {
 	Instantiated {
 		contract: AccountIdOf<T>,
@@ -121,7 +121,7 @@ Total fees depend on three factors:
 
 The total fee can be computed as follows.
 
-```
+```ignore
 base_instantiate_fee + (fee_per_fund * length(funds)) + executed_instruction_costs
 ```
 
@@ -132,7 +132,7 @@ The `execute` extrinsic is used for executing a smart contract.
 
 ### 4.1. Definition
 
-```rust
+```rust,ignore
 #[pallet::weight(T::WeightInfo::execute(funds.len() as u32).saturating_add(*gas))]
 pub fn execute(
 	origin: OriginFor<T>,
@@ -160,9 +160,8 @@ Total fees depend on three factors:
 
 The total fee can be computed as follows.
 
-```
+```ignore
 base_instantiate_fee + (fee_per_fund * length(funds)) + executed_instruction_costs
 ```
 
 The remaining gas is refunded after execution.
-
