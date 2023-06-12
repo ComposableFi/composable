@@ -2,7 +2,7 @@ use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::{InterpreterOrigin, NetworkId};
+use xc_core::{InterpreterOrigin, NetworkId};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {

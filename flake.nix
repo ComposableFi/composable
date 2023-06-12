@@ -92,6 +92,7 @@
         ./inputs/centauri/flake-module.nix
         ./inputs/chevdor/subwasm.nix
         ./inputs/cosmos/cosmwasm.nix
+        ./inputs/notional-labs/composable-centauri/flake-module.nix
         ./inputs/cosmos/gex.nix
         ./inputs/CosmosContracts/juno.nix
         ./inputs/CosmWasm/wasmvm.nix

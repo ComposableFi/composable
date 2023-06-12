@@ -6,11 +6,8 @@ use crate::{
 	CodeIdToInfo, CodeInfoOf, Config, InstrumentedCode, PristineCode,
 };
 use alloc::collections::BTreeSet;
-use cosmwasm_vm::{
-	cosmwasm_std::{CodeInfoResponse, Coin, ContractInfoResponse, Order},
-	system::CosmwasmContractMeta,
-	vm::VMBase,
-};
+use cosmwasm_std::{CodeInfoResponse, Coin, ContractInfoResponse, Order};
+use cosmwasm_vm::{system::CosmwasmContractMeta, vm::VMBase};
 use cosmwasm_vm_wasmi::code_gen;
 use frame_benchmarking::account;
 use sp_runtime::AccountId32;

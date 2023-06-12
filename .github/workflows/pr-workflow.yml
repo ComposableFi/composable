@@ -213,6 +213,38 @@ jobs:
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"  
 
+  build-cosmos-cosmwasm:
+    outputs:
+      ok: ${{ steps.ok.outputs.ok }}   
+    name: build-cosmos-cosmwasm
+    needs: 
+      - privilege-check
+    runs-on:
+      - x86_64-linux-32C-128GB-2TB
+    concurrency:
+      group: ${{ inputs.github_workflow }}-build-cosmos-cosmwasm-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Set up Cachix
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
+        uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
+        with:
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - uses: actions/checkout@v3
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
+        with:
+          lfs: true
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
+          persist-credentials: false          
+      - name: Build all packages 
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
+        uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#xcvm-tests --keep-going
+      - id: ok
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"  
+
   build-all-ci-packages:
     name: build-all-ci-packages
     outputs:
@@ -520,7 +552,6 @@ jobs:
           files: |
             release-artifacts/to-upload/*
 
-  # this should be split and commit docker are from here, but latest from release
   push-docker-images:
     name: push-docker-images
     if: ${{ inputs.github_event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}   
@@ -559,11 +590,6 @@ jobs:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
-      - name: Nix flake show
-        run: |
-          nix --version
-          nix show-config
-          nix flake show --allow-import-from-derivation  --show-trace --fallback --debug --print-build-logs --keep-failed
       - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:

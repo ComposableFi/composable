@@ -6,7 +6,8 @@ use crate::{
 	CodeHashToId, CodeIdToInfo, CodeIdentifier, Config, CosmwasmAccount, CurrentCodeId,
 	InstrumentedCode, Pallet as Cosmwasm, PristineCode, INSTRUMENTATION_VERSION,
 };
-use cosmwasm_vm::{cosmwasm_std::instantiate2_address, vm::VMBase};
+use cosmwasm_std::instantiate2_address;
+use cosmwasm_vm::vm::VMBase;
 use cosmwasm_vm_wasmi::code_gen;
 use frame_system::RawOrigin;
 use sha2::{Digest, Sha256};
@@ -119,9 +120,6 @@ pub fn instantiate_test_cases(
 		contract_info.label,
 		TryInto::<ContractLabelOf<Test>>::try_into(COMMON_LABEL.as_bytes().to_vec()).unwrap()
 	);
-
-	// TODO(aeryz): Improve code_gen to embed cosmwasm code, so that we can assert
-	// `instantiate` function is really called.
 }
 
 #[test]

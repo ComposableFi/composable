@@ -2,7 +2,7 @@ extern crate alloc;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::{NetworkId, UserOrigin};
+use xc_core::{NetworkId, UserOrigin};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {

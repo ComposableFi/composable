@@ -1,9 +1,9 @@
 use crate::abstraction::IndexOf;
 use alloc::{string::ToString, vec::Vec};
-use codec::{Decode, Encode};
 use core::ops::Add;
 use cosmwasm_std::{Uint128, Uint256};
 use num::Zero;
+use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 

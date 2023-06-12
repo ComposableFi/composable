@@ -2,7 +2,7 @@
 authors = ["Composable Developers"]
 description = "XCVM Interpreter contract"
 edition = "2021"
-name = "cw-xcvm-interpreter"
+name = "cw-xc-interpreter"
 repository = "https://github.com/ComposableFi/composable"
 version = "0.1.0"
 
@@ -13,29 +13,29 @@ crate-type = ["cdylib", "rlib"]
 library = []
 
 [dependencies]
-cosmwasm-std = "1.0.0"
-cw-storage-plus = "0.14.0"
-cw-utils = "0.14.0"
-cw-xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
-cw-xcvm-common = { path = "../common" }
-cw-xcvm-utils = { path = "../utils" }
-cw2 = "0.14.0"
-cw20 = "0.14.0"
-hex = { version = "0.4", default-features = false, features = [
+cosmwasm-std = { workspace = true }
+cw-storage-plus = { workspace = true }
+cw-utils = { workspace = true }
+cw-xc-asset-registry = { path = "../asset-registry", features = ["library"] }
+cw-xc-common = { path = "../common" }
+cw-xc-utils = { path = "../utils" }
+cw2 = { workspace = true }
+cw20 = { workspace = true }
+hex = { workspace = true, default-features = false, features = [
   "alloc",
   "serde",
 ] }
-num = "0.4"
-prost = { version = "0.11", default-features = false, features = [
+num = { workspace = true }
+prost = { workspace = true, default-features = false, features = [
   "prost-derive",
 ] }
-schemars = "0.8.8"
-serde = { version = "1.0", default-features = false, features = ["derive"] }
-serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
-serde_json = "1"
-thiserror = { version = "1.0.31" }
-xcvm-core = { path = "../../../lib/core", features = ["cosmwasm", "std"] }
-xcvm-proto = { path = "../../../lib/proto" }
+schemars = { workspace = true }
+serde = { workspace = true, default-features = false, features = ["derive"] }
+serde-json-wasm = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+xc-core = { path = "../../../lib/core", features = ["cosmwasm", "std"] }
+xc-proto = { path = "../../../lib/proto" }
 
 [dev-dependencies]
-cosmwasm-schema = "1.0.0"
+cosmwasm-schema = { workspace = true }

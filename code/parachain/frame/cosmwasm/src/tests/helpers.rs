@@ -5,7 +5,7 @@ use crate::{
 	DefaultCosmwasmVM, FundsOf, Gas, Pallet as Cosmwasm,
 };
 use alloc::collections::BTreeMap;
-use cosmwasm_vm::cosmwasm_std::{Coin, ContractResult, Empty, Response};
+use cosmwasm_std::{Coin, ContractResult, Empty, Response};
 use cosmwasm_vm_wasmi::{code_gen, OwnedWasmiVM};
 use frame_benchmarking::account;
 use frame_support::traits::{fungible, fungibles::Mutate};

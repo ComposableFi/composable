@@ -1,5 +1,5 @@
 use cosmwasm_std::{to_binary, Addr, CosmosMsg, StdResult, WasmMsg};
-use cw_xcvm_common::router::ExecuteMsg;
+use cw_xc_common::router::ExecuteMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 

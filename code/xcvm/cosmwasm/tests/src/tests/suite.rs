@@ -8,14 +8,14 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::system::CUSTOM_CONTRACT_EVENT_PREFIX;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
-use cw_xcvm_asset_registry::contract::XCVM_ASSET_REGISTRY_EVENT_PREFIX;
-use cw_xcvm_gateway::contract::{XCVM_GATEWAY_EVENT_PREFIX, XCVM_GATEWAY_IBC_VERSION};
-use cw_xcvm_interpreter::contract::XCVM_INTERPRETER_EVENT_PREFIX;
-use cw_xcvm_router::contract::XCVM_ROUTER_EVENT_PREFIX;
-use cw_xcvm_utils::{DefaultXCVMProgram, Salt};
+use cw_xc_asset_registry::contract::XCVM_ASSET_REGISTRY_EVENT_PREFIX;
+use cw_xc_gateway::contract::{XCVM_GATEWAY_EVENT_PREFIX, XCVM_GATEWAY_IBC_VERSION};
+use cw_xc_interpreter::contract::XCVM_INTERPRETER_EVENT_PREFIX;
+use cw_xc_router::contract::XCVM_ROUTER_EVENT_PREFIX;
+use cw_xc_utils::{DefaultXCVMProgram, Salt};
 use proptest::{prelude::any, prop_assume, prop_compose, proptest};
 use std::assert_matches::assert_matches;
-use xcvm_core::{
+use xc_core::{
 	Asset, AssetId, AssetSymbol, Balance, Destination, Funds, Juno, Network, Picasso,
 	ProgramBuilder, ETH, PICA, USDC, USDT,
 };
@@ -565,8 +565,8 @@ mod single_chain {
 				)
 				.expect("Must be able to transfer assets via XCVM");
 		// We don't do cross-chain operation, nothing must happen from the relayer POV.
-		assert_eq!(relay_data, Vec::default());
-		assert_eq!(relay_events, Vec::default());
+		assert!(relay_data.is_empty());
+		assert!(relay_events.is_empty());
 
 		// We don't dispatch any information in the data field.
 		assert_eq!(dispatch_data, None);
@@ -623,7 +623,7 @@ mod single_chain {
 
 mod cross_chain {
 	use cosmwasm_std::Uint128;
-	use xcvm_core::XCVMAck;
+	use xc_core::XCVMAck;
 
 	use super::*;
 

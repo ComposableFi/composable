@@ -9,77 +9,9 @@ Karel L. Kubat, Hussein Ait Lahcen
 Cross-chain Virtual Machine (XCVM) is a specification outlining an application-level messaging protocol between state machines and other execution environments. It allows for a more sophisticated mechanism for cross-chain communication compared to message passing, by defining an interpreter-based communication interface between chains.
 
 - Turing-Complete Interactions: Complicated business logic can be dynamically dispatched to other chains, without the need for developers to deploy contracts on the destination chain.
-- Configurable Security Levels: Developers can opt-in to use less secure transports, with the advantage of cheaper and faster execution.
+- Configurable Bridges Levels: Developers can opt-in to use less secure transports, with the advantage of cheaper and faster execution.
 
 Most of all, `XCVM` has been designed in a very extensible way, building up small functionalities and by combining them, allowing for immense complexity.
-
-# Status of This Memo
-
-This is a Composable Finance Protocol Specification document. It has not received public audits nor is the specification frozen. It is a product of the entire XCVM team.
-
-# Copyright Notice
-
-Copyright (c) 2022 Composable Finance and the persons identified as the
-document authors. All rights reserved.
-
-# Table of Contents
-
-<!--
-generated using https://ecotrust-canada.github.io/markdown-toc/
--->
-
-- [Abstract](#abstract)
-- [Status of This Memo](#status-of-this-memo)
-- [Copyright Notice](#copyright-notice)
-- [Table of Contents](#table-of-contents)
-- [1. Overview](#1-overview)
-  * [1.1. Document Structure](#11-document-structure)
-  * [1.2. Terms and Definitions](#12-terms-and-definitions)
-  * [1.3.  Notational Conventions](#13--notational-conventions)
-    + [1.3.1. Types](#131-types)
-    + [1.3.2. Unions](#132-unions)
-    + [1.3.3. Sums](#133-sums)
-    + [1.3.4. Mappings](#134-mappings)
-    + [1.3.5. Sequences](#135-sequences)
-    + [1.3.6. Sets](#136-sets)
-    + [1.3.7. Primitive types](#137-primitive-types)
-- [2. XCVM](#2-xcvm)
-  * [2.1. Versioning](#21-versioning)
-  * [2.2. Instruction Set](#22-instruction-set)
-    + [2.2.1. Transfer](#221-transfer)
-    + [2.2.2. Call](#222-call)
-    + [2.2.2.1. Late Bindings](#2221-late-bindings)
-    + [2.2.3 Spawn](#223-spawn)
-    + [2.2.4. Query](#224-query)
-  * [2.3. Balances](#23-balances)
-  * [2.4. Abstract Virtual Machine](#24-abstract-virtual-machine)
-    + [2.4.1 Registers](#241-registers)
-      - [2.4.1.1 Result Register](#2411-result-register)
-      - [2.4.1.2 IP Register](#2412-ip-register)
-      - [2.4.1.3 Relayer Register](#2413-relayer-register)
-      - [2.4.1.4 Self Register](#2414-self-register)
-      - [2.4.1.5 Version Register](#2415-version-register)
-    + [2.4.5 Program Execution Semantics](#245-program-execution-semantics)
-  * [2.5. XCVM Execution Semantics](#25-xcvm-execution-semantics)
-    + [2.5.1. Gateway](#251-gateway)
-    + [2.5.2. Router](#252-router)
-    + [2.6. Ownership](#26-ownership)
-- [3. Encoding](#3-encoding)
-  * [3.1. JSON Encoding](#31-json-encoding)
-- [4. Fees](#4-fees)
-  * [4.1. Execution Fees](#41-execution-fees)
-- [5. Asset Registries](#5-asset-registries)
-- [6. Further Work](#6-further-work)
-  * [6.1 NFTs](#61-nfts)
-  * [6.2 Name Service](#62-name-service)
-- [7. Security considerations](#7-security-considerations)
-- [8. References](#8-references)
-- [9. Appendix](#9-appendix)
-  * [A.](#a)
-  * [B.](#b)
-    + [Examples](#examples)
-      - [Cross-chain borrowing](#cross-chain-borrowing)
-- [10. Contributors](#10-contributors)
 
 # 1. Overview
 
@@ -240,16 +172,32 @@ sequenceDiagram
     participant IBC
     participant Gateway
     participant Router
-    participant XCVM Interpreter
+    participant Interpreter
     IBC->>Gateway: Pass program.
     Gateway->>Router: Add bridging info and transfer funds.
-    Router->>XCVM Interpreter: Instantiate VM and transfer funds.
-    loop Program
-        XCVM Interpreter-->XCVM Interpreter: Execute instructions and interact with contracts.
+    Router->>Interpreter: Instantiate VM and transfer funds.
+    loop Instructions
+        Interpreter-->Interpreter: Interact with contracts.
     end
-    XCVM Interpreter-->>Gateway: Send bridge agnostic program.
+    Interpreter-->>Gateway: Send program.
     Gateway->>IBC: Route through IBC.
 ```
+
+Interpreter may be also be singleton instance of contract per chain. 
+
+Cross chain(XC) account contract is instantiated for each user which hold funds and proxies calls in this case.
+
+```mermaid
+sequenceDiagram
+    Router->>Interpreter: Instantiate VM
+    Router->>XcAccount: Transfer funds
+    loop Instructions
+        Interpreter-->XcAccount: Interact with contracts.
+    end
+    Interpreter-->>Gateway: Send program.
+    Gateway->>IBC: Route through IBC.
+```
+
 
 ## 2.1. Versioning
 
@@ -276,10 +224,11 @@ The following sequence shows possible high-level implementations for each instru
 
 ```mermaid
 sequenceDiagram
-    XCVM Interpreter->>ERC20 or CW20 or Native: Transfer
-    XCVM Interpreter->>Opaque Contract: Call
-    XCVM Interpreter->>Gateway: Spawn
-    XCVM Interpreter->>Gateway: Query
+    Interpreter->>ERC20 or CW20 or Native: Transfer
+    Interpreter->>XcAccount: Proxy Call
+    XcAccount->>Opaque Contract: Raw Call
+    Interpreter->>Gateway: Spawn
+    Interpreter->>Gateway: Query
 ```
 
 ### 2.2.1. Transfer
@@ -335,13 +284,16 @@ Bindings do not support non-byte aligned encodings.
 Sends a `Program` to another chain to be executed asynchronously. It is only guaranteed to execute on the specified `Network` if its `Program` contains an instruction that is guaranteed to execute on the `Network` of the `Spawn` context.
 
 ```
-<Network>    ::= u128
-<Salt>       ::= bytes
+<Network>     ::= u128
+<Salt>        ::= bytes
+<OriginNonce> ::= bytes
 
-<Spawn>      ::= <Network> <BridgeSecurity> <Salt> <Program> <Assets>
+<Spawn>      ::= <Network> <Program> <Salt> <Assets> <Nonce>
 ```
 
-Where the **salt** is used by the router while instantiating the interpreter (see section 2.5.2.).
+Where the **salt** is used by the Router while instantiating the interpreter (see section 2.5.2.).
+
+`OriginNonce` is unique number generated once per program execution on originating consensus. Allows unique identify program invocation from origin to all child spawns. Combined with `Network` and `Program` can be considered `cross chain transaction identifier`.
 
 ### 2.2.3.1. IBC
 
@@ -376,7 +328,7 @@ an XCVM-specific acknowledgement must be committed for the packet:
 - A single byte, `0x00` if unsuccessful
 - A single byte, `0x01` if successful
 
-The bridge MUST deposit the **assets** in the Router contract before executing the
+The bridge MUST deposit the **assets** in the Router before executing the
 XCVM program.
 
 Note: Assuming we transfer the assets `[asset1 amount1, ..., assetN amountN]`,
@@ -475,26 +427,14 @@ See Appendix A for the algorithm.
 
 ## 2.5. XCVM Execution Semantics
 
-Each chain within the `XCVM` contains a singleton entity, the router, and the gateway. Implementors MAY choose to create a monolithic smart contract or a set of modular contracts.
+Each chain within the `XCVM` contains a singleton entity consisting of the Router, and the Gateway. Implementors MAY choose to create a monolithic smart contract or a set of modular contracts.
 
 ### 2.5.1. Gateway
 
-Each chain contains a bridge aggregator contract (`Gateway`), which abstracts over transports.
+Each chain contains a singleton bridge aggregator, the `Gateway`, which abstracts over transports.
 
-The `Gateway` is configured to label bridges with different security levels. We define three security levels as of now:
 
-```
-<BridgeSecurity> ::=
-    <Deterministic>
-    | <Probabilistic>
-    | <Optimistic>
-```
-
-- `Deterministic` bridges are light client based using a consensus protocol that has deterministic finality (IBC and XCM). Messages arriving from these bridges MUST never be fraudulent.
-- `Probabilistic` bridges are still light client-based, but use a consensus protocol that at most has probabilistic finality (IBC with a PoW chain). Messages arriving from these bridges MUST never be fraudulent but MAY lead to inconsistent state because of block reorganizations.
-- `Optimistic` bridges do not use proofs, but instead, have disputing mechanisms associated (Nomad). Messages arriving from these bridges MAY be fraudulent.
-
-Outgoing messages are routed based on bridge security, or by specifying the bridge contract directly.
+Outgoing messages are routed based on bridge identifier, or by specifying the bridge contract directly.
 
 Each XCVM execution has access to its message `MessageOrigin` and can be configured to deny execution depending on the address or security level:
 
@@ -504,7 +444,7 @@ Each XCVM execution has access to its message `MessageOrigin` and can be configu
     | <XCM>
     | <OTP>
 
-<OTP> ::= <BridgeId> BridgeSecurity
+<OTP> ::= <BridgeId>
 <BridgeId> ::= bytes
 ```
 
@@ -520,28 +460,41 @@ The `Gateway` allows for third parties to add their bridges as well, using our o
 
 Each program arriving through the `Gateway` is passed to the `Router`, which becomes the initial beneficiary of the provided `Assets` before finding or instantiating an `Interpreter` instance. The router then transfers funds to the `Interpreter` instance.
 
-Subsequent calls by the same `Origin` will not result in an instantiation, but instead in re-use of the `Interpreter` instance. This allows foreign Origins to maintain state across different protocols, such as managing LP positions.
+Subsequent calls by the same `Origin` will not result in an instantiation, but instead in re-use of the `Interpreter` instance. This allows foreign `Origins` to maintain state across different protocols, such as managing LP positions.
 
-If no interpreter instance has been created for a given caller, the call to the router must either come from the `IBC`, `XCM`, `OTP` with `Deterministic` security, or a local origin. After the instance has been created, it can be configured to accept other origins by the caller.
+If no interpreter instance has been created for a given caller, the call to the `Router` must either come from the `IBC`, `XCM`, `OTP`, or a local origin. After the instance has been created, it can be configured to accept other origins by the caller.
+
+**Example**
 
 For a given XCVM program, its interpreter instance is derived from `Network Account Salt`. This allows users to create different interpreter instances to execute programs against. Note that the `Salt` is not additive and only the composite `Network Account` is forwarded to remote chains as the user origin:
 ```
-Spawn A BridgeSecurity::Deterministic 0x1 [          // Parent program spawned on A, with 0x1 as salt, the origin for the instructions is (A, AccountOnA, 0x1)
+Spawn A 0x01 [          // Parent program spawned on A, with 0x01 as salt, the origin for the instructions is (A, AccountOnA, 0x1)
     Call 0x1337,                                     // Call instruction executed on A
-    Spawn B BridgeSecurity::Deterministic 0x2 [] {}, // Sub-program spawned on B, with 0x2 as salt, the origin for the instructions is (A, AccountOnA, 0x2)
+    Spawn B 0x02 [] {}, // Sub-program spawned on B, with 0x02 as salt, the origin for the instructions is (A, AccountOnA, 0x2)
 ] {}
 ```
+Possible usage is to allow one program execution to act on state of other program execution to restore funds. 
+
+
 In the above XCVM program, the parent program salt `0x01` is not a prefix of the sub-program salt `0x02`. The user is able to make it's interpreter origin using a fine grained mode. The following program is an example on how we can spread a salt:
 ```
-Spawn A BridgeSecurity::Deterministic 0x1 [             // Parent program spawned on A, with 0x1 as salt, the origin for the instructions is (A, AccountOnA, 0x1)
+Spawn A 0x01 [             // Parent program spawned on A, with 0x01 as salt, the origin for the instructions is (A, AccountOnA, 0x01)
     Call 0x1337,                                        // Call instruction executed on A
-    Spawn B BridgeSecurity::Deterministic 0x0102 [] {}, // Sub-program spawned on B, with 0x102 as salt, the origin for the instructions is (A, AccountOnA, 0x0102)
+    Spawn B 0x0102 [] {}, // Sub-program spawned on B, with 0x0102 as salt, the origin for the instructions is (A, AccountOnA, 0x0102)
+] {}
+```
+
+In next program, all spawned instances on all chains share state (including assets):
+```
+Spawn A 0x01 [
+    Call 0x1337,
+    Spawn B 0x01 [] {}, // Sub-program spawned on B, with 0x01 as salt, the origin for the instructions is (A, AccountOnA, 0x01) allows to share 
 ] {}
 ```
 
 ### 2.6. Ownership
 
-XCVM interpreter instances maintain a set of owners.
+interpreter instances maintain a set of owners.
 
 ```
 <Owners> ::= {<Identity>}
@@ -558,9 +511,9 @@ Owners may be added by having the interpreter call the appropriate setters. We w
 
 # 3. Encoding
 
-Different chains may choose to accept different encodings as the main entry point for contract calls. Such encodings can include but are not limited to `scale`, `ethabi`, or `bors`. Chain-to-chain calls are always in a single encoding: `protobuf`, which is used within the transport.
+Different chains may choose to accept different encodings as the main entry point for contract calls. Such encodings can include but are not limited to `scale`, `ethabi`, `bors`, `borsh`. Chain-to-chain calls are always in a single encoding: `protobuf`, which is used within the transport.
 
-`protobuf` is generally not deterministic. XCVM restricts encoders and decoders to a deterministic subset of protobuf.
+`protobuf` is generally [not deterministic](https://protobuf.dev/programming-guides/encoding/). XCVM restricts encoders and decoders to a [deterministic subset of protobuf](https://docs.cosmos.network/main/architecture/adr-027-deterministic-protobuf-serialization).
 
 ## 3.1. JSON Encoding
 
@@ -623,7 +576,7 @@ Adding an owner to the set of owners grants them the ability to evict other owne
 
 Failure to execute an instruction will lead to a transaction being reverted, however, the funds will still be in the interpreter account's control. Ensure that changing ownership is always done atomically (add and remove in the same transaction) to ensure funds are not lost forever.
 
-Using insecure bridges such as LayerZero or Wormhole is equivalent to adding them as owners on your interpreter instance.
+Using bridges is equivalent to adding them as owners on your interpreter instance.
 
 # 8. References
 
@@ -667,31 +620,31 @@ For this example, we have the source initiator be a regular user, however, a sma
 
 ```mermaid
 sequenceDiagram
-    User->>XCVM Interpreter ABC: Submit Program
-    XCVM Interpreter ABC->>Router ABC: Spawn Program
+    User->>Interpreter ABC: Submit Program
+    Interpreter ABC->>Router ABC: Spawn Program
     Router ABC->>Gateway ABC: Submit Program
     Gateway ABC->>Gateway XYZ: Relay Program
     Gateway XYZ->>Router XYZ: Instantiate VM
-    Router XYZ->>XCVM Interpreter XYZ: Execute Spawn
-    XCVM Interpreter XYZ->>Lender: Call 0x1337 (Borrow USDC for DOT)
-    Lender->>XCVM Interpreter XYZ: Transfer USDC
-    XCVM Interpreter XYZ->>Relayer: Transfer USDC fee to Relayer
-    XCVM Interpreter XYZ->>Router XYZ: Spawn Program
+    Router XYZ->>Interpreter XYZ: Execute Spawn
+    Interpreter XYZ->>Lender: Call 0x1337 (Borrow USDC for DOT)
+    Lender->>Interpreter XYZ: Transfer USDC
+    Interpreter XYZ->>Relayer: Transfer USDC fee to Relayer
+    Interpreter XYZ->>Router XYZ: Spawn Program
     Router XYZ->>Gateway XYZ: Submit Program
     Gateway XYZ->>Gateway ABC: Relay Program
     Gateway ABC->>Router ABC: Instantiate VM
-    Router ABC->>XCVM Interpreter ABC: Execute Spawn
-    XCVM Interpreter ABC->>Relayer: Transfer USDC fee to Relayer
-    XCVM Interpreter ABC->>User: Transfer USDC
+    Router ABC->>Interpreter ABC: Execute Spawn
+    Interpreter ABC->>Relayer: Transfer USDC fee to Relayer
+    Interpreter ABC->>User: Transfer USDC
 ```
 
 Although these operations are quite complicated to code by hand, using the XCVM protocol, we can very succinctly express them:
 
 ```
-Spawn XYZ BridgeSecurity::Deterministic 0 [
+Spawn XYZ 0 [
     Call 0x1337,                                 // chain-specific encoding to make a smart contract call.
     Transfer Relayer USDC Unit 50,               // 50 bucks for the fee. The relayer earns this if the inner spawn is dispatched.
-    Spawn HOME BridgeSecurity::Deterministic 0 [
+    Spawn HOME 0 [
         Transfer Relayer USDC Unit 50            // Another 50 bucks fee for the operation, but now reverse direction.
         Transfer USER { USDC: Ratio::ALL }       // On ABC, we transfer all USDC to the user.
     ] { USDC: ALL },                             // We send over all our USDC back to ABC.
@@ -700,11 +653,8 @@ Spawn XYZ BridgeSecurity::Deterministic 0 [
 
 # 10. Contributors
 
-- Karel L. Kubat
-- Hussein Ait Lahcen
 - Abdullah Eryuzlu
 - Cor Pruijs
-- Dzmitry Lahoda 
 - Sofia de Proença
 - Jiang Qijong
 - Joon Whang
