@@ -191,7 +191,7 @@ Pallet tracks original multi location to be able to send tokens back via XCM in 
 
 Pallet gets callbacks for IBC ACKs and timeouts.
 
-In case of success ACK, pallet does nothing.
+In case of success ACK, only removes tracked multi location.
 
 In case of failure (timeout or fail ACK) callback from `pallet-ibc` , tokens are unescrowed to account mapped to original multi location. 
 
@@ -205,12 +205,11 @@ Pallet uses `pallet-assets` to check minimal fee to send tokens to `Polkadot`. I
 
 Pallet handles `memo` callback from `pallet-ibc`. It parses memo. If `memo` contains substrate description of multilocation, and account, it forms `pallet-xtokens` and sends token to `Polkadot`.
 
-
 In case of fees are ok, but route is wrong, we fail IBC ACK packet. So this pallet is middleware which handles memo.
 
 ## Notes
 
-Also account encoding never discussed, but assumption that they will take some time to be handled well.
+Also account encoding never discussed, but assumption that they will take some time to be handled well. `pallet-network-registry` may requires to store Cosmos network prefix for accounts.
 
 Assumption that Centauri `pallet-ibc` will not need (substantial) modification to use `memo` handler to route transfers. 
 
