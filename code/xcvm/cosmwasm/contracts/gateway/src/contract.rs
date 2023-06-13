@@ -139,16 +139,18 @@ pub fn ibc_channel_open(
 	_env: Env,
 	msg: IbcChannelOpenMsg,
 ) -> Result<IbcChannelOpenResponse, ContractError> {
-	let channel = msg.channel().clone();
-	match (msg.counterparty_version(), channel.order) {
-		// If the version is specified and does match, cancel handshake.
-		(Some(counter_version), _) if counter_version != XCVM_GATEWAY_IBC_VERSION =>
-			Err(ContractError::InvalidIbcVersion(counter_version.to_string())),
-		// If the order is not the expected one, cancel handshake.
-		(_, order) if order != XCVM_GATEWAY_IBC_ORDERING =>
-			Err(ContractError::InvalidIbcOrdering(order)),
-		// In any other case, overwrite the version.
-		_ => Ok(Some(Ibc3ChannelOpenResponse { version: XCVM_GATEWAY_IBC_VERSION.to_string() })),
+	let (channel, version) = match msg {
+		IbcChannelOpenMsg::OpenInit { channel } => (channel, None),
+		IbcChannelOpenMsg::OpenTry { channel, counterparty_version } =>
+			(channel, Some(counterparty_version)),
+	};
+	if version.is_some() && version.as_deref() != Some(XCVM_GATEWAY_IBC_VERSION) {
+		Err(ContractError::InvalidIbcVersion(version.unwrap()))
+	} else if channel.order != XCVM_GATEWAY_IBC_ORDERING {
+		Err(ContractError::InvalidIbcOrdering(channel.order))
+	} else {
+		let version = version.unwrap_or_else(|| String::from(XCVM_GATEWAY_IBC_VERSION));
+		Ok(Some(Ibc3ChannelOpenResponse { version }))
 	}
 }
 
