@@ -8,7 +8,7 @@ Follow this guide to upload, initialize and execute cw20 contracts on local Pica
 
 ### Prerequisites
 
-Same as for [manual guide](../../../../../docs/doc  s/products/cosmwasm/deploy-and-run-cosmwasm-contracts-with-pdjs.md).
+Same as for [manual guide](../../../../../docs/docs/products/cosmwasm/deploy-and-run-cosmwasm-contracts-with-pdjs.md).
 
 ### Steps
 
