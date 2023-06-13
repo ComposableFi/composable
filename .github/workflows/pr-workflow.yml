@@ -571,8 +571,8 @@ jobs:
   push-docker-images:
     name: push-docker-images
     if: ${{ inputs.github_event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}   
-    needs: 
-      - draft-release-check
+    # needs: 
+    #   - draft-release-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     concurrency:
@@ -612,6 +612,15 @@ jobs:
           name: devnet
           artifact: devnet:latest
           tag: ${{ inputs.github_event_name == 'push' && 'main' || ''}}
+      - name: Publish devnet to docker hub 2
+        uses: "./.github/templates/docker-publish"
+        with:
+          image_path: result/docker-image-devnet.tar.gz
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          name: devnet
+          artifact: devnet:latest
+          tag: ${{ inputs.github_event_name == 'pr_from_branch' && 'main' || ''}}          
       - name: Publish hyperspace-composable-rococo-picasso-rococo to docker hub
         uses: "./.github/templates/docker-publish"
         with:

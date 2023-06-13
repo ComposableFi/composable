@@ -42,7 +42,7 @@ runs:
 
         docker tag "${TEMP_CONTAINER_NAME}" "composablefi/${CONTAINER_NAME}:${SHA256}"
         docker tag "${TEMP_CONTAINER_NAME}" "composablefi/${CONTAINER_NAME}:${COMMIT_SHA}"
-        if [[ -n ${{ inputs.tag }} ]]; then
+        if [[ -n "${{ inputs.tag }}" ]]; then
           docker tag "${TEMP_CONTAINER_NAME}" "composablefi/${CONTAINER_NAME}:${{ inputs.tag }}"
         fi
 
