@@ -119,6 +119,7 @@ jobs:
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
+          installCommand: "true"
       - uses: actions/checkout@v3
         with:
           lfs: true
