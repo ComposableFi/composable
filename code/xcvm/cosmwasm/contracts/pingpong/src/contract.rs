@@ -3,7 +3,7 @@ extern crate alloc;
 use crate::{
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
-	state::{NETWORK, ROUTER},
+	state::{GATEWAY, NETWORK},
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -31,8 +31,8 @@ pub fn instantiate(
 	msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-	let router_address = deps.api.addr_validate(&msg.router_address)?;
-	ROUTER.save(deps.storage, &router_address)?;
+	let gateway_address = deps.api.addr_validate(&msg.gateway_address)?;
+	GATEWAY.save(deps.storage, &gateway_address)?;
 	NETWORK.save(deps.storage, &msg.network_id)?;
 	Ok(Response::default())
 }
@@ -70,7 +70,7 @@ pub fn execute(
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
 	let network = NETWORK.load(deps.storage)?;
-	let router = ROUTER.load(deps.storage)?;
+	let gateway = GATEWAY.load(deps.storage)?;
 	let make_program = |remote_address, msg| {
 		if network == Picasso::ID {
 			make_program::<Picasso, Juno>(remote_address, msg)
@@ -89,8 +89,8 @@ pub fn execute(
 			(user_origin, ExecuteMsg::Ping { user_origin: local_origin, counter }),
 	};
 	Ok(Response::default().add_message(wasm_execute(
-		router,
-		&cw_xc_common::router::ExecuteMsg::ExecuteProgram {
+		gateway,
+		&cw_xc_common::gateway::ExecuteMsg::ExecuteProgram {
 			salt: vec![0x01, 0x02, 0x03],
 			program: make_program(user_origin.user_id, message)?,
 			assets: Funds::empty(),

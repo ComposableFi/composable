@@ -8,7 +8,6 @@ use xc_core::InterpreterOrigin;
 pub struct Config {
 	pub gateway_address: Addr,
 	pub registry_address: Addr,
-	pub router_address: Addr,
 	pub interpreter_origin: InterpreterOrigin,
 }
 

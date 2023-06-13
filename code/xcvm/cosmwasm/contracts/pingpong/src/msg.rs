@@ -6,7 +6,7 @@ use xc_core::{NetworkId, UserOrigin};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-	pub router_address: String,
+	pub gateway_address: String,
 	pub network_id: NetworkId,
 }
 

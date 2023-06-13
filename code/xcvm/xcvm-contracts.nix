@@ -45,7 +45,6 @@
               "${xcvm-contracts}/lib/cw_xc_asset_registry.wasm";
             CW_XCVM_INTERPRETER =
               "${xcvm-contracts}/lib/cw_xc_interpreter.wasm";
-            CW_XCVM_ROUTER = "${xcvm-contracts}/lib/cw_xc_router.wasm";
             CW_XCVM_GATEWAY = "${xcvm-contracts}/lib/cw_xc_gateway.wasm";
             CW20 = pkgs.fetchurl {
               url =
