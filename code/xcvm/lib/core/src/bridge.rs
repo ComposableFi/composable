@@ -1,28 +1,16 @@
 use crate::{NetworkId, UserOrigin};
-use alloc::vec::Vec;
+
 use cosmwasm_std::Addr;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
-
-/// Unique identity of a bridge in a given chain, usually a public key.
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
-)]
-pub struct BridgeId(Vec<u8>);
 
 /// Protocol used to bridge call/funds.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
 	Clone, PartialEq, Eq, PartialOrd, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
-#[repr(u8)]
-pub enum BridgeProtocol {
-	IBC,
-	XCM,
-	OTP { id: BridgeId },
-}
+pub enum BridgeProtocol { IBC }
 
 /// The Origin that executed the XCVM operation.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]

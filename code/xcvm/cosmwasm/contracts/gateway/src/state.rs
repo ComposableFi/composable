@@ -2,7 +2,7 @@ use cosmwasm_std::{Addr, IbcEndpoint};
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xc_core::{BridgeId, NetworkId};
+use xc_core::NetworkId;
 
 pub type ChannelId = String;
 
@@ -20,12 +20,6 @@ pub struct Config {
 	pub admin: String,
 }
 
-/// Bridge following the OTP specs.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Bridge {
-	pub address: Addr,
-}
-
 /// Information associated with an IBC channel.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ChannelInfo {
@@ -39,7 +33,6 @@ pub struct ChannelInfo {
 
 pub const ROUTER: Item<Addr> = Item::new("router");
 pub const CONFIG: Item<Config> = Item::new("config");
-pub const BRIDGES: Map<BridgeId, Bridge> = Map::new("bridges");
 
 pub const IBC_CHANNEL_INFO: Map<ChannelId, ChannelInfo> = Map::new("ibc_channel_info");
 
