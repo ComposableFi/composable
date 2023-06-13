@@ -11,7 +11,7 @@ Proposal optimizes for liquidity and initial user experience using some well kno
 
 ## Prerequisites
 
-You have read or clear about [IBC whitepaper solution architecture](https://arxiv.org/pdf/2006.15918.pdf) and [ICS-020 token transfer application](https://github.com/cosmos/ibc/tree/main/spec/app/ics-020-fungible-token-transfer) and [ICS-004](https://github.com/cosmos/ibc/tree/main/spec/core/ics-004-channel-and-packet-semantics) send/receive/acknowledgement/timeout of packets. Awareness about IBC modules specification and implementation is useful too. 
+You have read or clear about [IBC whitepaper solution architecture](https://arxiv.org/pdf/2006.15918.pdf) and [ICS-020 token transfer application](https://github.com/cosmos/ibc/tree/main/spec/app/ics-020-fungible-token-transfer) and [ICS-004](https://github.com/cosmos/ibc/tree/main/spec/core/ics-004-channel-and-packet-semantics) send/receive/acknowledgement/timeout of packets.
 
 You have read general overview of Parity XCM and is up to date with MultiLocation format.
 
@@ -58,7 +58,7 @@ Alice gets dots on `Picasso`
 
 *Details*
 
-`pallet = NetworksRegistry,  index = Centauri` are numbers in hardcoded pallet like thing in `Picasso` runtime with several hardcoded chain ids to IBC routes mappings to avoid data initialization and migration complexity on first iterations.
+`pallet = NetworksRegistry,  index = Bansky` are numbers in hardcoded pallet like thing in `Picasso` runtime with several hardcoded chain ids to IBC routes mappings to avoid data initialization and migration complexity on first iterations.
 
 **Composable**
 
@@ -80,7 +80,7 @@ https://github.com/strangelove-ventures/packet-forward-middleware):
 `MemoHandler` middleware parses memo sends transfer to `Osmosis`.
 
 
-## Centauri(Cosmos SDK) -> ->  Composable Picasso(Substrate) -> Composable Composable(Substrate) -> Bifrost(Substrate) 
+## Bansky(Cosmos SDK) -> ->  Composable Picasso(Substrate) -> Composable Composable(Substrate) -> Bifrost(Substrate) 
 
 **Osmosis**
 
@@ -151,50 +151,13 @@ To be handled in next RFC or implementation.
 
 ## Error handling
 
-Go module for port forwarding has good explanation of error handling and source porting code to Rust.
+XCM multi hop transfers [will not fail](https://substrate.stackexchange.com/questions/6831/how-does-the-xcvm-architecture-ensure-the-absoluteness-principle-described). 
+We can apply same principles to IBC from start for initial chains.
 
-See details of XCM error handling in detailed description of XCM part of protocol.
+In case of fail, should follow usual resolution process as documented.
 
-
-## XCM
-
-XCM multi hop transfers [do not fail](https://substrate.stackexchange.com/questions/6831/how-does-the-xcvm-architecture-ensure-the-absoluteness-principle-described). 
-Their `ExportMsg` has relevant interface which would be used for ultimate integration with IBC, but we are not here yet.
-
-So our hack will require several pallets.
-
-### pallet-network-registry
-
-Contains mapping for `index` identifiers of networks to channel port routes to final chain.
- 
-In Composable `1` would map to `transfer/channel-15` to reach Picasso.
-In Composable `3` would map to `transfer/channel-15/transfers/channel-42` to reach Centauri.
-In Composable `4` would map to `transfer/channel-15/transfers/channel-42/transfer/channel-123` to reach Osmosis.
-
-This information is enough to rout packet from Polkadot to proper IBC route via `packet forwarding middleware`.
-
-Additional metadata about relevant defaults timeouts can be stored too.
-
-Pallet callbacks into `pallet-xcm-ibc` with original `multi location` account and transferred tokens.
-
-Pallet if given with original multi location, can provide do XCM message to send tokens to `Alice` on original chain. 
-So given `parent = 1, pallet = IBC,  index = 15, pallet = NetworksRegistry,  index = Osmosis, account = Alice` , it can create and send XCM message via `pallet-xtokens` to transfer funds back.
-
-### pallet-xcm-ibc
-
-So pallet receives original multi location and tokens and route. It sends tokens via route using `port-forwarding-middleware`.
-
-#### XCM sends tokens to IBC
-
-In case of success ACK, pallet does nothing.
-
-In case of failure (timeout or fail ACK) callback from `pallet-ibc` , tokens are unescrowed to account mapped to original multi location. 
-
-Pallet callbacks into `pallet-network-registry` to map multilocation to send relevant message via `pallet-xtokens`.
-
-### IBC sends tokens to XCM
-
-Pallet handles `memo` callback from `pallet-ibc`. It parses memo. If `memo` contains substrate description of multilocation, and account, it forms `pallet-xtokens` and sends token to `Polkadot`.
+Improvement would be, for IBC<->XCM connection, adopting sending [XCM packet back as in IBC](https://github.com/strangelove-ventures/packet-forward-middleware).
+Sure this must be imlemented eventually for pure IBC<->IBC hops.
 
 ## Notes
 
