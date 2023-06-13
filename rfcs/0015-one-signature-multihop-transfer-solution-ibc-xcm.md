@@ -23,13 +23,17 @@ Document describes very exact execution of few heterogenous multi hop scenarios 
 Other scenarios can be deduced.
 
 
+## Out of scope
+
+What tokens to be send and what chains are priority and how handle setup on Cosmos chains is out of scope for this RFC.
+
 ## Parity Polkadot(Substrate) -> Composable Composable(Substrate) -> Composable Picasso(Substrate)
 
 **On Polkadot**
 
 Currently Polkadot is very restricting in what XCM messages can be issued from it, hence we vary destination multi location. 
 
-Send `DOT` transfer to `parent = 0, parachain = Composable, pallet = IBC,  index = 15, account = Alice`
+Send `DOT` transfer to `parent = 0, parachain = Composable, pallet = PalletXcmIbc, account = Alice, index = Picasso, account = Bob`
 
 **On Composable**
 
@@ -54,11 +58,8 @@ Alice gets dots on `Picasso`
 
 **Polkadot**
 
-`parent = 0, parachain = Composable, pallet = IBC,  index = 15, pallet = NetworksRegistry,  index = Osmosis, account = Alice`
+`parent = 0, parachain = Composable, pallet = PalletXcmIbc, account = Alice, index = Osmosis, account = Bob`
 
-*Details*
-
-`pallet = NetworksRegistry,  index = Centauri` are numbers in hardcoded pallet like thing in `Picasso` runtime with several hardcoded chain ids to IBC routes mappings to avoid data initialization and migration complexity on first iterations.
 
 **Composable**
 
@@ -171,30 +172,41 @@ In Composable `1` would map to `transfer/channel-15` to reach Picasso.
 In Composable `3` would map to `transfer/channel-15/transfers/channel-42` to reach Centauri.
 In Composable `4` would map to `transfer/channel-15/transfers/channel-42/transfer/channel-123` to reach Osmosis.
 
-This information is enough to rout packet from Polkadot to proper IBC route via `packet forwarding middleware`.
+This information is enough to route packet from Polkadot to proper IBC route via `packet forwarding middleware`.
 
 Additional metadata about relevant defaults timeouts can be stored too.
 
-Pallet callbacks into `pallet-xcm-ibc` with original `multi location` account and transferred tokens.
-
-Pallet if given with original multi location, can provide do XCM message to send tokens to `Alice` on original chain. 
-So given `parent = 1, pallet = IBC,  index = 15, pallet = NetworksRegistry,  index = Osmosis, account = Alice` , it can create and send XCM message via `pallet-xtokens` to transfer funds back.
+Pallet if given with original multi location, can provide do XCM route to send tokens to `Alice` on original chain. 
+So given `parent = 1, pallet = PalletXcmIbc, index = Osmosis, account = Alice, account = Bob` , it can create and send XCM message to original account and location.
 
 ### pallet-xcm-ibc
 
-So pallet receives original multi location and tokens and route. It sends tokens via route using `port-forwarding-middleware`.
+Pallet provides callbacks for XCM configuration in runtime. 
+
+So pallet receives original multi location and tokens and route. It sends tokens via route using `port-forwarding-middleware` using data from `pallet-network-registry`.
+
+Pallet tracks original multi location to be able to send tokens back via XCM in case of IBC failure.
 
 #### XCM sends tokens to IBC
+
+Pallet gets callbacks for IBC ACKs and timeouts.
 
 In case of success ACK, pallet does nothing.
 
 In case of failure (timeout or fail ACK) callback from `pallet-ibc` , tokens are unescrowed to account mapped to original multi location. 
 
-Pallet callbacks into `pallet-network-registry` to map multilocation to send relevant message via `pallet-xtokens`.
+Pallet calls into `pallet-network-registry` to map multilocation to send relevant message via `pallet-xtokens`.
+
+Sends tokens back to Polkadot. That route does not fail (there are no well know way to restore funds except vote on funds restoration track).
+
+Pallet uses `pallet-assets` to check minimal fee to send tokens to `Polkadot`. If fees are not enough it does not sends. Because fees are so small, we just eat them and ACK IBC packet.
 
 ### IBC sends tokens to XCM
 
 Pallet handles `memo` callback from `pallet-ibc`. It parses memo. If `memo` contains substrate description of multilocation, and account, it forms `pallet-xtokens` and sends token to `Polkadot`.
+
+
+In case of fees are ok, but route is wrong, we fail IBC ACK packet. So this pallet is middleware which handles memo.
 
 ## Notes
 
