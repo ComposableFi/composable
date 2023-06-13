@@ -8,16 +8,17 @@
 6. Use BlueJet or GH Larger runners for light jobs (4-8 CPU cores).
 7. Observer jobs via dashboards (Trunk) and optimize
 
-# Actions runner setup steps
+## Image
 
-1. `installimage -i images/Ubuntu-2204-jammy-amd64-base.tar.gz -G yes -a -n hetzner-ax161-{N}`
-2. `adduser actions-runner && passwd --delete actions-runner` 
-3. `sh <(curl -L https://nixos.org/nix/install) --daemon --yes && source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh`
-4. 
-
-
-5. 
 ```bash
+installimage -i images/Ubuntu-2204-jammy-amd64-base.tar.gz -G yes -a -n hetzner-ax161-{N}`
+```
+
+## Sudo
+
+```bash
+adduser actions-runner && passwd --delete actions-runner
+sh <(curl -L https://nixos.org/nix/install) --daemon --yes && source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 cat >> /etc/nix/nix.conf << EOF
     experimental-features = nix-command flakes
     sandbox = relaxed
@@ -33,39 +34,32 @@ cat >> /etc/nix/nix.conf << EOF
     http2 = true      
 EOF
 service nix-daemon restart
-```
-
-1.
-```bash
 apt-get update && apt-get install apt-transport-https qemu-system-x86 ca-certificates curl gnupg software-properties-common --yes
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt update && apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin --yes
 usermod --append --groups docker actions-runner && service docker restart
-```
-
-
-
-```bash
 usermod --append --groups kvm actions-runner && chmod 666 /dev/kvm && service nix-daemon restart && service docker restart
+cd /home/actions-runner/
+su actions-runner
 ```
 
-1. `su actions-runner && cd /home/actions-runner/`
-
-```bash
-curl -o actions-runner-linux-x64-2.304.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.304.0/actions-runner-linux-x64-2.304.0.tar.gz
-
-tar xzf ./actions-runner-linux-x64-2.304.0.tar.gz
-
-./config.sh --url https://github.com/ComposableFi/composable --token <TOKEN> --name hetzner-ax161-1 --labels x86_64-linux-32C-128GB-2TB
-
-```
+## User
 
 ```bash
 nix profile install nixpkgs#git && nix profile install nixpkgs#git-lfs && nix profile install nixpkgs#cachix
+curl -o actions-runner-linux-x64-2.304.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.304.0/actions-runner-linux-x64-2.304.0.tar.gz
+tar xzf ./actions-runner-linux-x64-2.304.0.tar.gz
+
+./config.sh --url https://github.com/ComposableFi/composable --token $TOKEN --name hetzner-ax161-$MACHINE_ID --labels x86_64-linux-32C-128GB-2TB --work _work
 ```
 
+## Sudo again
 
-1. `cd /home/actions-runner/ && ./svc.sh install actions-runner && ./svc.sh start && systemctl daemon-reload`
+```bash
+./svc.sh install actions-runner && ./svc.sh start && systemctl daemon-reload
+```
+
+## Notes
  
-2.   Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using `nix rebuild` via ssh on remote to update config (or can use home-manager on ubuntu). 
+Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using `nix rebuild` via ssh on remote to update config (or can use home-manager on ubuntu). 
