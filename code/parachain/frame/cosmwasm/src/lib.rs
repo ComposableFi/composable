@@ -38,6 +38,8 @@
 
 extern crate alloc;
 
+use alloc::string::ToString;
+
 pub use pallet::*;
 pub mod crypto;
 pub mod dispatchable_call;
@@ -564,8 +566,8 @@ pub fn query<T: Config>(
 	query_request: Vec<u8>,
 ) -> Result<QueryResponse, CosmwasmVMError<T>> {
 	let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadOnly);
-	let query_request = serde_json::from_slice(&query_request)
-		.map_err(|e| CosmwasmVMError::Rpc(format!("{}", e)))?;
+	let query_request =
+		serde_json::from_slice(&query_request).map_err(|e| CosmwasmVMError::Rpc(e.to_string()))?;
 	Pallet::<T>::sub_level_dispatch(
 		&mut shared,
 		contract.clone(),

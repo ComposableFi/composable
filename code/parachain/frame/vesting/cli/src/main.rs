@@ -81,17 +81,13 @@ async fn main() -> anyhow::Result<()> {
 				let out = OutputRecord {
 					to: record.account,
 					// in substrate unix time is in milliseconds, while in unix it is in seconds
-					window_start: format!(
-						"{}",
-						OffsetDateTime::from_unix_timestamp(
-							(record.window_moment_start / 1000) as i64
-						)
+					window_start: OffsetDateTime::from_unix_timestamp(
+						(record.window_moment_start / 1000) as i64
+					)
 						.unwrap()
-					),
-					window_period: format!(
-						"{}",
-						Duration::milliseconds(record.window_moment_period as i64)
-					),
+						.to_string(),
+					window_period: Duration::milliseconds(record.window_moment_period as i64)
+						.to_string(),
 					total: record.per_period * record.period_count as u128,
 				};
 				if std::time::SystemTime::UNIX_EPOCH
@@ -403,22 +399,16 @@ async fn main() -> anyhow::Result<()> {
 					};
 					let window_start = match OffsetDateTime::from_unix_timestamp(
 						(window_moment_start / 1000) as i64,
-					)
-					.map(|x| format!("{}", x))
-					.map_err(|_x| "#BAD_START_TME".to_string())
-					{
-						Err(x) => x,
-						Ok(x) => x,
+					) {
+						Ok(x) => x.to_string(),
+						Err(x) => String::from("#BAD_START_TME"),
 					};
 					out.serialize(ListRecord {
 						pubkey: hex::encode(&key.2),
 						account: key.2.to_string(),
 
 						window_start,
-						window_period: format!(
-							"{}",
-							Duration::milliseconds(window_moment_period as i64)
-						),
+						window_period: Duration::milliseconds(window_moment_period as i64).to_string(),
 						total: record.per_period * record.period_count as u128,
 						already_claimed: record.already_claimed,
 						per_period: record.per_period,

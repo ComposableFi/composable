@@ -247,7 +247,7 @@ impl Convert<alloc::string::String, Result<CurrencyId, ()>> for AssetToDenom {
 
 impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
 	fn convert(CurrencyId(currency_id): CurrencyId) -> alloc::string::String {
-		alloc::format!("{}", currency_id)
+		currency_id.to_string()
 	}
 }
 
