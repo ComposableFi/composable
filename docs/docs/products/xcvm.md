@@ -62,7 +62,7 @@ all in a single easy to use interface. The XCVM itself orchestrates interaction 
 and handles smart contract requirements like callbacks, reliability, and finality. It is the virtual machine engine that
 drives all cross-chain and cross-layer interoperable transactions within the Composable ecosystem.
 
-Composable recognizes the different approach to safe messaging passing in Polkadot and Cosmos networks, 
+Composable recognizes the different approach to safe messaging passing in Cosmos and Polkadot networks, 
 which leverage the [Inter-Blockchain Communication (IBC) Protocol](https://ibcprotocol.org/) and
 [ Cross-Chain Message Passing (XCMP)](https://wiki.polkadot.network/docs/learn-crosschain) respectively. 
 The XCVM augments these existing projects and synergizes to act as orchestration layer for both messaging protocols. 
