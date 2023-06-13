@@ -8,27 +8,58 @@
 6. Use BlueJet or GH Larger runners for light jobs (4-8 CPU cores).
 7. Observer jobs via dashboards (Trunk) and optimize
 
-# Actions runner setup steps
+## Image
 
-1. `installimage -i images/Ubuntu-2204-jammy-amd64-base.tar.gz -G yes -a -n hetzner-ax161-{N}`
-2. `adduser actions-runner && passwd --delete actions-runner` 
-3. `curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --no-confirm && source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh && nix-channel --add https://nixos.org/channels/nixos-unstable nixpkgs && nix-channel --update && nix profile install nixpkgs#git nixpkgs#git-lfs nixpkgs#docker`
-3. 
 ```bash
+installimage -i images/Ubuntu-2204-jammy-amd64-base.tar.gz -G yes -a -n hetzner-ax161-{N}`
+```
+
+## Sudo
+
+```bash
+adduser actions-runner && passwd --delete actions-runner
+sh <(curl -L https://nixos.org/nix/install) --daemon --yes && source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 cat >> /etc/nix/nix.conf << EOF
+    experimental-features = nix-command flakes
     sandbox = relaxed
     narinfo-cache-negative-ttl = 0      
     system-features = kvm     
     trusted-users = root actions-runner
+    max-jobs = 1
+    cores = 64
+    # max-substitution-jobs = 32
+    allow-import-from-derivation = true
+    gc-reserved-space = 18388608
+    http-connections = 32
+    http2 = true      
 EOF
+service nix-daemon restart
+apt-get update && apt-get install apt-transport-https qemu-system-x86 ca-certificates curl gnupg software-properties-common --yes
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update && apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin --yes
+usermod --append --groups docker actions-runner && service docker restart
+usermod --append --groups kvm actions-runner && chmod 666 /dev/kvm && service nix-daemon restart && service docker restart
+cd /home/actions-runner/
+su actions-runner
 ```
 
-0. `apt install qemu-system-x86 --yes`
-1. `su actions-runner && cd /home/actions-runner/`
-2. follow install guide from github using defaults and name `hetzner-ax161-{N}` and label `x86_64-linux-32C-128GB-2TB`
+## User
 
+```bash
+nix profile install nixpkgs#git && nix profile install nixpkgs#git-lfs && nix profile install nixpkgs#cachix
+curl -o actions-runner-linux-x64-2.304.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.304.0/actions-runner-linux-x64-2.304.0.tar.gz
+tar xzf ./actions-runner-linux-x64-2.304.0.tar.gz
 
-1. `cd /home/actions-runner/actions-runner && ./svc.sh install actions-runner && ./svc.sh start && systemctl daemon-reload`
+./config.sh --url https://github.com/ComposableFi/composable --token $TOKEN --name hetzner-ax161-$MACHINE_ID --labels x86_64-linux-32C-128GB-2TB --work _work
+```
+
+## Sudo again
+
+```bash
+./svc.sh install actions-runner && ./svc.sh start && systemctl daemon-reload
+```
+
+## Notes
  
-2. `usermod --append --groups kvm actions-runner && chmod 666 /dev/kvm`
-3.   Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using nix rebuild to update config (or can use home-manager on ubuntu). 
+Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using `nix rebuild` via ssh on remote to update config (or can use home-manager on ubuntu). 
