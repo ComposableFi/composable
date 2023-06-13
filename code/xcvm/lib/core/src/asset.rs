@@ -1,5 +1,5 @@
 use crate::abstraction::IndexOf;
-use alloc::{string::ToString, vec::Vec};
+use alloc::vec::Vec;
 use core::ops::Add;
 use cosmwasm_std::{Uint128, Uint256};
 use num::Zero;
@@ -117,44 +117,59 @@ impl AssetSymbol for USDC {
 	const SYMBOL: &'static str = "USDC";
 }
 
+/// A wrapper around a type which is serde-serialised as a string.
+///
+/// For serde-serialisation to be implemented for the type `T` must implement
+/// `Display` and `FromStr` traits.
+///
+/// ```
+/// # use xc_core::Displayed;
+///
+/// #[derive(serde::Serialize, serde::Deserialize)]
+/// struct Foo {
+///     value: Displayed<u64>
+/// }
+///
+/// let encoded = serde_json::to_string(&Foo { value: Displayed(42) }).unwrap();
+/// assert_eq!(r#"{"value":"42"}"#, encoded);
+///
+/// let decoded = serde_json::from_str::<Foo>(r#"{"value":"42"}"#).unwrap();
+/// assert_eq!(Displayed(42), decoded.value);
+/// ```
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
-	Default,
-	Copy,
-	Clone,
-	PartialEq,
-	Eq,
-	PartialOrd,
-	Ord,
-	Hash,
-	Debug,
-	Encode,
-	Decode,
-	TypeInfo,
-	Serialize,
-	Deserialize,
+	Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Encode, Decode, TypeInfo,
 )]
 #[repr(transparent)]
-pub struct Displayed<T>(
-	#[serde(bound(serialize = "T: core::fmt::Display"))]
-	#[serde(serialize_with = "serialize_as_string")]
-	#[serde(bound(deserialize = "T: core::str::FromStr"))]
-	#[serde(deserialize_with = "deserialize_from_string")]
-	pub T,
-);
+pub struct Displayed<T>(pub T);
 
-fn serialize_as_string<S: Serializer, T: core::fmt::Display>(
-	t: &T,
-	serializer: S,
-) -> Result<S::Ok, S::Error> {
-	serializer.serialize_str(&t.to_string())
+impl<T: core::fmt::Display> Serialize for Displayed<T> {
+	fn serialize<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
+		ser.collect_str(&self.0)
+	}
 }
 
-fn deserialize_from_string<'de, D: Deserializer<'de>, T: core::str::FromStr>(
-	deserializer: D,
-) -> Result<T, D::Error> {
-	let s = alloc::string::String::deserialize(deserializer)?;
-	s.parse::<T>().map_err(|_| serde::de::Error::custom("Parse from string failed"))
+impl<'de, T: core::str::FromStr> Deserialize<'de> for Displayed<T> {
+	fn deserialize<D: Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
+		de.deserialize_str(DisplayedVisitor::<T>(Default::default()))
+	}
+}
+
+/// Serde Visitor helper for deserialising [`Displayed`] type.
+struct DisplayedVisitor<V>(core::marker::PhantomData<V>);
+
+impl<'de, T: core::str::FromStr> serde::de::Visitor<'de> for DisplayedVisitor<T> {
+	type Value = Displayed<T>;
+
+	fn expecting(&self, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
+		fmt.write_str("a string")
+	}
+
+	fn visit_str<E: serde::de::Error>(self, s: &str) -> Result<Self::Value, E> {
+		T::from_str(s)
+			.map(Displayed)
+			.map_err(|_| serde::de::Error::custom("Parse from string failed"))
+	}
 }
 
 impl<T> From<T> for Displayed<T> {

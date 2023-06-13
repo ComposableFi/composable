@@ -234,8 +234,10 @@ pub fn interpret_call(
 
 		apply_bindings(payload, bindings, &mut formatted_call, |binding| {
 			let data = match binding {
-				BindingValue::Register(Register::Ip) => Cow::Owned(instruction_pointer.to_string().into_bytes()),
-				BindingValue::Register(Register::Relayer) => Cow::Owned(relayer.to_string().into_bytes()),
+				BindingValue::Register(Register::Ip) =>
+					Cow::Owned(instruction_pointer.to_string().into_bytes()),
+				BindingValue::Register(Register::Relayer) =>
+					Cow::Owned(relayer.to_string().into_bytes()),
 				BindingValue::Register(Register::This) =>
 					Cow::Borrowed(env.contract.address.as_bytes()),
 				BindingValue::Register(Register::Result) => Cow::Owned(
