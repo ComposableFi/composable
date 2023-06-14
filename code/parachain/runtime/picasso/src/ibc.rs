@@ -83,24 +83,7 @@ impl ModuleRouter for Dummy {
 	}
 }
 
-#[derive(
-	Debug, codec::Encode, Clone, codec::Decode, PartialEq, Eq, scale_info::TypeInfo, Default,
-)]
-pub struct MemoMessage;
-extern crate alloc;
-impl alloc::string::ToString for MemoMessage {
-	fn to_string(&self) -> String {
-		Default::default()
-	}
-}
-
-impl core::str::FromStr for MemoMessage {
-	type Err = ();
-
-	fn from_str(_s: &str) -> Result<Self, Self::Err> {
-		Ok(Default::default())
-	}
-}
+pub type MemoMessage = alloc::string::String;
 
 parameter_types! {
 	pub const GRANDPA: pallet_ibc::LightClientProtocol = pallet_ibc::LightClientProtocol::Grandpa;
