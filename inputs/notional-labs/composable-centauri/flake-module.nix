@@ -18,7 +18,7 @@
         dontFixup = true;
         vendorSha256 = "sha256-xbHVzucr/5B9ePP3Dnhag9KaFKvS238sTgkoxsD3LJ8=";
       };
-      
+
       CW20_BASE_WASM = pkgs.fetchurl {
         url =
           "https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm";
@@ -81,16 +81,17 @@
           echo "notice oak worry limit wrap speak medal online prefer cluster roof addict wrist behave treat actual wasp year salad speed social layer crew genius" | centaurid keys add test1 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
           echo "quality vacuum heart guard buzz spike sight swarm shove special gym robust assume sudden deposit grid alcohol choice devote leader tilt noodle tide penalty" | centaurid keys add test2 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
           echo "symbol force gallery make bulk round subway violin worry mixture penalty kingdom boring survey tool fringe patrol sausage hard admit remember broken alien absorb" | centaurid keys add test3 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
-          centaurid --keyring-backend test add-genesis-account banksy1cyyzpxplxdzkeea7kwsydadg87357qna4p6c6f "1000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"
-          centaurid --keyring-backend test add-genesis-account banksy18s5lynnmx37hq4wlrw9gdn68sg2uxp5r22xlq4 "1000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"
-          centaurid --keyring-backend test add-genesis-account banksy1qwexv7c6sm95lwhzn9027vyu2ccneaqa0fzz6y "1000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"
-          centaurid --keyring-backend test add-genesis-account banksy1xtf3wlewqpnzgu20460fjjuc7vrkmysm5xr9e3 "1000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"
-          centaurid --keyring-backend test add-genesis-account banksy1zr4ng42laatyh9zx238n20r74spcrlct5lzfrk "1000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"
-          centaurid --keyring-backend test add-genesis-account banksy1makf5hslxqxzl29uyeyyddf89ff7edxydnt89v "1000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"
-          centaurid --keyring-backend test add-genesis-account banksy12smx2wdlyttvyzvzg54y2vnqwq2qjate74jwmt "1000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"
+          centaurid --keyring-backend test add-genesis-account centauri1xtf3wlewqpnzgu20460fjjuc7vrkmysm6t3v8f "1000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"
+          centaurid --keyring-backend test add-genesis-account centauri1zr4ng42laatyh9zx238n20r74spcrlct6jsqaw "1000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"
+          centaurid --keyring-backend test add-genesis-account centauri1makf5hslxqxzl29uyeyyddf89ff7edxyr7ewm5 "1000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"
+          centaurid --keyring-backend test add-genesis-account centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n "1000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"
+          centaurid --keyring-backend test add-genesis-account centauri1cyyzpxplxdzkeea7kwsydadg87357qnamvg3y3 "1000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"
+          centaurid --keyring-backend test add-genesis-account centauri18s5lynnmx37hq4wlrw9gdn68sg2uxp5ry85k7d "1000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"
+          centaurid --keyring-backend test add-genesis-account centauri1qwexv7c6sm95lwhzn9027vyu2ccneaqapystyu "1000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"
           centaurid --keyring-backend test --keyring-dir "$KEYRING_TEST" --home "$CENTAURI_DATA" gentx validator "250000000000000ppica" --chain-id="$CHAIN_ID" --amount="250000000000000ppica"
           centaurid collect-gentxs --home "$CENTAURI_DATA"  --gentx-dir "$CENTAURI_DATA/config/gentx"
           centaurid start --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing  --minimum-gas-prices=0.0001ppica --trace --log_level debug --home "$CENTAURI_DATA" --db_dir "$CENTAURI_DATA/data" --log_format json --trace           
+
         '';
       };
     in { packages = rec { inherit centaurid centaurid-gen centaurid-init; }; };
