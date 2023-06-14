@@ -30,7 +30,7 @@ Other scenarios can be deduced.
 
 ## Flows
 
-## Parity Polkadot(Substrate) -> Composable Composable(Substrate) -> Composable Picasso(Substrate)
+### Parity Polkadot(Substrate) -> Composable Composable(Substrate) -> Composable Picasso(Substrate)
 
 **On Polkadot**
 
@@ -61,7 +61,7 @@ Pallets will be descried later.
 
 `Bob` gets `DOT` on `Picasso` 
 
-## Parity Polkadot(Substrate) -> Composable Composable(Substrate) -> Composable Picasso(Substrate) -> Osmosis(Cosmos SDK)
+### Parity Polkadot(Substrate) -> Composable Composable(Substrate) -> Composable Picasso(Substrate) -> Osmosis(Cosmos SDK)
 
 
 **Polkadot**
@@ -88,7 +88,7 @@ Same as previous, but sender to `Picasso` uses `memo` according `PFM` to forward
 Details of forwards are in `PFM`. Some details of Rust implementation are down in the document. 
 
 
-## Centauri(Cosmos SDK) -> ->  Composable Picasso(Substrate) -> Composable Composable(Substrate) -> Bifrost(Substrate) 
+### Centauri(Cosmos SDK) -> ->  Composable Picasso(Substrate) -> Composable Composable(Substrate) -> Bifrost(Substrate) 
 
 **Centauri**
 
@@ -139,9 +139,18 @@ Handles IBC memo and sends XCM transfers to Bifrost.
 On each step must check that transfer amount forwarded never more than amount received.
 Take fees or not.
 
-## Polkadot -> Composable -> Picasso -> Centauri -> Osmosis
+### Polkadot -> Composable -> Picasso -> Centauri -> Osmosis
 
 Add one more Network and forwarding rule template to finally jump to Osmosis.
+
+*Notes*
+
+Generally so many hops are bad. 
+Slow, assets can hang or become illiquid in one hop in case of IBC down on any hop, hard to trace, lowered security (asset as insecure as lowers security of any hop).
+
+Better routes are
+- `Polkadot -> Composable -> Centauri -> Osmosis`
+- `Polkadot -> Centauri -> Osmosis`
 
 ## Limitations
 
@@ -149,75 +158,82 @@ Cannot send several assets or NFTs at same time.
 
 Cannot express(securely) arbitrary routing and programs execution.
 
+Cosmos IBC people working on this, we can migrate with them later.
+
 ## Fees
 
-To be handled in next RFC or implementation.
+Any hop governed by Composable may configure any fee taken or not, and what subsidies IBC relayers will get to route messages.
+
+Fees are not part of this RFC.
 
 ## Error handling
 
-Go module for port forwarding has good explanation of error handling and source porting code to Rust.
+Go module for port forwarding has good explanation of error handling and is reference source porting code to Rust.
 
 See details of XCM error handling in detailed description of XCM part of protocol.
-
 
 ## XCM
 
 XCM multi hop transfers [do not fail](https://substrate.stackexchange.com/questions/6831/how-does-the-xcvm-architecture-ensure-the-absoluteness-principle-described). 
 Their `ExportMsg` has relevant interface which would be used for ultimate integration with IBC, but we are not here yet.
 
-So our hack will require several pallets.
+So we hack here with 2 pallets, which we can migrate to more official ways later.
 
 ### pallet-network-registry
 
 Contains mapping for `index` identifiers of networks to channel port routes to final chain.
- 
-In Composable `1` would map to `transfer/channel-15` to reach Picasso.
-In Composable `3` would map to `transfer/channel-15/transfers/channel-42` to reach Centauri.
-In Composable `4` would map to `transfer/channel-15/transfers/channel-42/transfer/channel-123` to reach Osmosis.
 
-This information is enough to route packet from Polkadot to proper IBC route via `packet forwarding middleware`.
+The pallet is configured on Composable.
 
-Additional metadata about relevant defaults timeouts can be stored too.
+`1` would map to `transfer/channel-15` to reach `Picasso`.
+`3` would map to `transfer/channel-15/transfers/channel-42` to reach `Centauri`.
+`4` would map to `transfer/channel-15/transfers/channel-42/transfer/channel-123` to reach `Osmosis`.
 
-Pallet if given with original multi location, can provide do XCM route to send tokens to `Alice` on original chain. 
-So given `parent = 1, pallet = PalletXcmIbc, index = Osmosis, account = Alice, account = Bob` , it can create and send XCM message to original account and location.
+This information is enough to route packet from Polkadot to proper IBC route via `PFM`.
+
+Additional metadata about relevant default timeouts can be stored too.
+
+Pallet if given with original multilocation, can provide XCM route to send tokens to `Alice` on original chain. 
+So given `parent = 1, pallet = PalletXcmIbc, account = Alice, index = Osmosis, account = Bob`  it can standard XCM multilocations which can be send over `pallet-xtokens`. 
 
 ### pallet-xcm-ibc
 
-Pallet provides callbacks for XCM configuration in runtime. 
+Pallet handles callbacks for XCM configuration in runtime. And pallet has similar level of capabilities like IBC middleware module (receive memo and packet lifecycle hooks).
 
-So pallet receives original multi location and tokens and route. It sends tokens via route using `port-forwarding-middleware` using data from `pallet-network-registry`.
+So pallet receives original multilocation route and tokens. It sends tokens via route using `PFM` using data from `pallet-network-registry`.
 
-Pallet tracks original multi location to be able to send tokens back via XCM in case of IBC failure.
+Pallet tracks original multilocation route to packet commitment key to be able to send tokens back via XCM in case of IBC failure.
+Account derived from original multilocation would be sender of tokens.
+
+### Sending and receiving
 
 #### XCM sends tokens to IBC
 
-Pallet gets callbacks for IBC ACKs and timeouts.
+`pallet-xcm-ibc(PXI)` uses `pallet-ibc` to send tokens via IBC, proper routed is built using `pallet-network-registry` data.
+
+PXI gets callbacks for IBC ACKs and timeouts.
 
 In case of success ACK, only removes tracked multi location.
 
-In case of failure (timeout or fail ACK) callback from `pallet-ibc` , tokens are unescrowed to account mapped to original multi location. 
+In case of failure (timeout or fail ACK) callback from `pallet-ibc` , tokens are unescrowed to account mapped to original multilocation. 
 
 Pallet calls into `pallet-network-registry` to map multilocation to send relevant message via `pallet-xtokens`.
 
-Sends tokens back to Polkadot. That route does not fail (there are no well know way to restore funds except vote on funds restoration track).
+Sends tokens back to Polkadot. That route does not fail (there are no well known way to restore funds except vote on funds restoration track).
 
-Pallet uses `pallet-assets` to check minimal fee to send tokens to `Polkadot`. If fees are not enough it does not sends. Because fees are so small, we just eat them and ACK IBC packet.
+Pallet uses `pallet-assets` to check minimal fee to send tokens to `Polkadot`. If fees are not enough it does not send. Because fees are so small, we just eat them and ACK IBC packet.
 
-### IBC sends tokens to XCM
+#### IBC sends tokens to XCM
 
-Pallet handles `memo` callback from `pallet-ibc`. It parses memo. If `memo` contains substrate description of multilocation, and account, it forms `pallet-xtokens` and sends token to `Polkadot`.
 
-In case of fees are ok, but route is wrong, we fail IBC ACK packet. So this pallet is middleware which handles memo.
+`PXI` handles `memo` callback from `pallet-ibc`. It parses memo. If `memo` contains substrate description of multilocation, and account, it forms `pallet-xtokens` and sends token to `Polkadot`.
+
+In case of fees are ok, but route is wrong, we fail IBC ACK packet. So `PXI` is middleware which handles memo.
 
 ## Notes
 
-Also account encoding never discussed, but assumption that they will take some time to be handled well. `pallet-network-registry` may requires to store Cosmos network prefix for accounts.
+Also account encoding never discussed, but assumption that it will take some time to be handle well. `pallet-network-registry` may require to store Cosmos network prefix for accounts.
 
 Assumption that Centauri `pallet-ibc` will not need (substantial) modification to use `memo` handler to route transfers. 
 
-In theory some safe limited form of [swaps](https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/contracts/crosschain-swaps/src/msg.rs) also may be supported like that.
-
-We may omit retries and changed timeout implementation initially in Rust codebase to simplify things.
-
-For XCM location forward can consider using light client hash staff to inside `network_id` to encode IBC networks. 
+Some safe limited form of [swaps](https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/contracts/crosschain-swaps/src/msg.rs) also may be supported like that, and also approach can be migrated to terminate memo destination with CosmWasm call (enabler for XCVM).
