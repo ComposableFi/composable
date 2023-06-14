@@ -17,7 +17,7 @@ fn main() {
 	// When building on CI inside of NIX, don’t download the contract file
 	// since HTTP is blocked.
 	if std::env::var_os("NIX_BUILD").is_some() {
-		return;
+		return
 	}
 
 	// Otherwise, download the file, verify it’s what we expect and store it in
