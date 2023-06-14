@@ -1,0 +1,13 @@
+{
+ "messages": [
+  {
+   "@type": "/ibc.lightclients.wasm.v1.MsgPushNewWasmCode",
+   "signer": "validator",
+   "code": null
+  }
+ ],
+ "metadata": "ipfs://CID",
+ "deposit": "500000000ppica",
+ "title": "ics10-grandpa-cw",
+ "summary": "ics10-grandpa-cw"
+}
