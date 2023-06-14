@@ -14,9 +14,9 @@ const CW20_HASH: &[u8; 32] =
 /// Panics if file cannot be downloaded or its SHA256 hash doesn’t match
 /// expected hash.
 fn main() {
-	// When building on CI inside of NIX, don’t download the contract file
-	// since HTTP is blocked.
-	if std::env::var_os("NIX_BUILD").is_some() {
+	// When building on CI, don’t download the contract file since networking is
+	// blocked in our Nix environment.
+	if std::env::var_os("CI").is_some() {
 		return;
 	}
 
