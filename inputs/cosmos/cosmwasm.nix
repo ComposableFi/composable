@@ -17,11 +17,12 @@
       };
     };
     devShells = {
-      cosmwasm = pkgs.mkShell {
+      xc = pkgs.mkShell {
         buildInputs = with self'.packages; [
           subwasm
           pkgs.binaryen
           cosmwasm-check
+          centaurid
         ];
       };
     };
