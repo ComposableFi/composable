@@ -90,7 +90,7 @@ Details of forwards are in `PFM`. Some details of Rust implementation are down i
 
 ## Centauri(Cosmos SDK) -> ->  Composable Picasso(Substrate) -> Composable Composable(Substrate) -> Bifrost(Substrate) 
 
-**Osmosis**
+**Centauri**
 
 Sends transfer to `Picasso` with 
 
@@ -101,12 +101,10 @@ Sends transfer to `Picasso` with
     "port": "transfer",
     "channel": "channel-123",
     "next": {
-      "forward": {
-        "substrate" : {
-            "parent" : "Polkadot",
-            "parachain" : "Bifrost",
-            "account" : "alice", 
-        }
+      "substrate" : {
+          "parent" : "Polkadot",
+          "parachain" : "Bifrost",
+          "account" : "alice", 
       }
     }
   }
@@ -115,7 +113,7 @@ Sends transfer to `Picasso` with
 
 *Details*
 
-Solution will work for Banksy were Composable controls over JSON. 
+Solution will work for Centauri were Composable controls over JSON. 
 
 For [Osmosis](https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/packages/registry/src/registry.rs), `substrate` part will be ignored for parsing, and yet forwarded.
 
@@ -124,13 +122,11 @@ For [Osmosis](https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/package
 Sends transfer to `Composable` with `memo`:
 ```json
 {
-    "forward": {
-      "substrate" : {
-          "parent" : "Polkadot",
-          "parachain" : "Bifrost",
-          "account" : "alice", 
-      }
-    }
+    "substrate" : {
+        "parent" : "Polkadot",
+        "parachain" : "Bifrost",
+        "account" : "alice", 
+  }
 }
 ```
 
@@ -138,12 +134,12 @@ Sends transfer to `Composable` with `memo`:
 
 Handles IBC memo and sends XCM transfers to Bifrost.
 
-
 *Details*
 
 On each step must check that transfer amount forwarded never more than amount received.
+Take fees or not.
 
-## Polkadot -> Composable -> Picasso -> Banksy -> Osmosis
+## Polkadot -> Composable -> Picasso -> Centauri -> Osmosis
 
 Add one more Network and forwarding rule template to finally jump to Osmosis.
 
