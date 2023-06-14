@@ -31,7 +31,7 @@ impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountAddrConver
 impl Convert<AccountId, alloc::string::String> for AccountAddrConvert {
 	fn convert(a: AccountId) -> alloc::string::String {
 		let account = ibc_primitives::runtime_interface::account_id_to_ss58(a.into(), 49);
-		String::from_utf8_lossy(account.as_slice()).to_string()
+		String::from_utf8_lossy(account.as_ref()).to_string()
 	}
 }
 
