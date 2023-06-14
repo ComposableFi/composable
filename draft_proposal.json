@@ -1,13 +1,25 @@
 {
  "messages": [
   {
-   "@type": "/ibc.lightclients.wasm.v1.MsgPushNewWasmCode",
-   "signer": "validator",
-   "code": null
+   "@type": "/ibc.applications.transfer.v1.MsgTransfer",
+   "source_port": "transfer",
+   "source_channel": "channel-0",
+   "token": {
+    "denom": "",
+    "amount": "0"
+   },
+   "sender": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n",
+   "receiver": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n",
+   "timeout_height": {
+    "revision_number": "0",
+    "revision_height": "0"
+   },
+   "timeout_timestamp": "0",
+   "memo": " "
   }
  ],
  "metadata": "ipfs://CID",
- "deposit": "500000000ppica",
- "title": "ics10-grandpa-cw",
- "summary": "ics10-grandpa-cw"
+ "deposit": "5000000ppica",
+ "title": "asd",
+ "summary": "asd"
 }

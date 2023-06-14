@@ -100,11 +100,15 @@
         in pkgs.stdenv.mkDerivation {
           name = name;
           phases = [ "installPhase" ];
-          nativeBuildInputs = [ pkgs.binaryen self'.packages.subwasm];
+          nativeBuildInputs = [ pkgs.binaryen self'.packages.subwasm pkgs.hexdump];
           installPhase = ''
             mkdir --parents $out/lib
             wasm-opt ${wasm}/lib/${file}.wasm -o $out/lib/${file}.wasm -Os --strip-dwarf --debuginfo --mvp-features            
+            
             subwasm compress $out/lib/${file}.wasm $out/lib/${file}.wasm
+            hexdump --no-squeezing --format '/1 "%02x"' $out/lib/${file}.wasm > $out/lib/${file}.wasm.txt
+            #hexdump --no-squeezing --format '/1 "%02x"' $out/lib/${file}.wasm > $out/lib/${file}.wasm.txt
+            base64 --wrap=0 $out/lib/${file}.wasm > $out/lib/${file}.wasm.txt
           '';
         };
 
