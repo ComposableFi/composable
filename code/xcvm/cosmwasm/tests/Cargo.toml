@@ -37,3 +37,7 @@ serde_json = { workspace = true }
 serde = { workspace = true }
 rand = { version = "0.8" }
 proptest = { version = "1" }
+
+[build-dependencies]
+sha2 = "0.10.6"
+ureq = "2.6"

@@ -283,12 +283,28 @@ fn to_canonical(account: Account) -> CanonicalAddr {
 }
 
 fn load_contracts() -> XCVMContracts {
-	let code_cw20 = std::fs::read(std::env::var("CW20").unwrap()).unwrap();
-	let code_asset_registry =
-		std::fs::read(std::env::var("CW_XCVM_ASSET_REGISTRY").unwrap()).unwrap();
-	let code_interpreter = std::fs::read(std::env::var("CW_XCVM_INTERPRETER").unwrap()).unwrap();
-	let code_router = std::fs::read(std::env::var("CW_XCVM_ROUTER").unwrap()).unwrap();
-	let code_gateway = std::fs::read(std::env::var("CW_XCVM_GATEWAY").unwrap()).unwrap();
+	fn read(path: impl std::convert::AsRef<std::path::Path>) -> Vec<u8> {
+		fn imp(path: &std::path::Path) -> Vec<u8> {
+			std::fs::read(path).unwrap_or_else(|err| panic!("{}: {err}", path.display()))
+		}
+		imp(path.as_ref())
+	}
+
+	let code_asset_registry = read(std::env::var_os("CW_XCVM_ASSET_REGISTRY").unwrap());
+	let code_interpreter = read(std::env::var_os("CW_XCVM_INTERPRETER").unwrap());
+	let code_router = read(std::env::var_os("CW_XCVM_ROUTER").unwrap());
+	let code_gateway = read(std::env::var_os("CW_XCVM_GATEWAY").unwrap());
+
+	// When running the test locally, the cw20_base.wasm file is downloaded by
+	// the Build script (see build.rs).  However, on CI when running under NIX
+	// downloading is disabled and to run those tests CW20 environment variable
+	// needs to be set and point at cw20_base.wasm file.
+	let code_cw20 = if let Some(var) = std::env::var_os("CW20") {
+		read(var)
+	} else {
+		read(concat!(env!("OUT_DIR"), "/cw20_base.wasm"))
+	};
+
 	XCVMContracts::new(code_asset_registry, code_interpreter, code_router, code_gateway, code_cw20)
 }
 
