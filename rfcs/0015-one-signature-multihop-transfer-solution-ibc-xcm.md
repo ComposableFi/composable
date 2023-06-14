@@ -1,57 +1,65 @@
 # Overview
 
-Composable is first chain which transfers tokens from Parity XCM chains to Cosmos IBC and back.
+Composable is first chain which transfers tokens from Dotsama XCM chains to Cosmos IBC and back.
 
-User experience it would be nice have as solution which will allow to do multi chain transfers with one wallet signature.
+It would be nice have a solution allowing to do multi chain transfers with one wallet signature and handling fails.
 
 This proposal describes the solution to do such transfers.
 
-It accept current state of multichain executions and transfers, and tries to expand on this, without heavy code forks and modifications(and some compatibility with existing indexers).
-Proposal optimizes for liquidity and initial user experience using some well know approaches, rather than target to final ultimate solution, like ICS-999, Composable XCVM and Parity XCM envisions (but none of these are permissionlessly multichain production ready).
+It accepts current state of multichain transfers, and tries to expand on this, without heavy code forks and modifications, retaining some compatibility with existing indexers.
+Proposal optimizes for liquidity and initial user experience using some well know approaches, rather than target to final ultimate solution, like ICS-999, Composable XCVM and Parity XCM (none of these are multichain production ready).
 
-## Prerequisites
+## Prerequisites of understanding
 
-You have read or clear about [IBC whitepaper solution architecture](https://arxiv.org/pdf/2006.15918.pdf) and [ICS-020 token transfer application](https://github.com/cosmos/ibc/tree/main/spec/app/ics-020-fungible-token-transfer) and [ICS-004](https://github.com/cosmos/ibc/tree/main/spec/core/ics-004-channel-and-packet-semantics) send/receive/acknowledgement/timeout of packets. Awareness about IBC modules specification and implementation is useful too. 
-
-You have read general overview of Parity XCM and is up to date with MultiLocation format.
-
-You are aware of how assets encoded in IBC and in XCM.
-
-## What next
-
-Document describes very exact execution of few heterogenous multi hop scenarios we should consider.
-Other scenarios can be deduced.
-
+- [IBC whitepaper solution architecture](https://arxiv.org/pdf/2006.15918.pdf) 
+- [ICS-020 token transfer application](https://github.com/cosmos/ibc/tree/main/spec/app/ics-020-fungible-token-transfer)
+- [ICS-004](https://github.com/cosmos/ibc/tree/main/spec/core/ics-004-channel-and-packet-semantics) send/receive/acknowledgement/timeout of packets. 
+- IBC modules specification and sample implementations. 
+- Parity XCM format and configuration.
+- [packet-forward-middleware(PFM)](https://github.com/strangelove-ventures/packet-forward-middleware)
+- Substrate Pallets
 
 ## Out of scope
 
-What tokens to be send and what chains are priority and how handle setup on Cosmos chains is out of scope for this RFC.
+What tokens to be send and what chains are priority and how handle setup on Cosmos chains.
+
+## What next
+
+Document describes execution of few heterogenous multihop scenarios for  consideration.
+Other scenarios can be deduced.
+
+## Flows
 
 ## Parity Polkadot(Substrate) -> Composable Composable(Substrate) -> Composable Picasso(Substrate)
 
 **On Polkadot**
 
-Currently Polkadot is very restricting in what XCM messages can be issued from it, hence we vary destination multi location. 
+Currently Polkadot is very restricting in what XCM messages can be issued from it, hence we vary destination multilocation. 
 
 Send `DOT` transfer to `parent = 0, parachain = Composable, pallet = PalletXcmIbc, account = Alice, index = Picasso, account = Bob`
 
+Detailed description of above line is here:
+```
+parent = 0 - Polkadot has no consesus parents
+parachain = Composable - parachain id number
+pallet = PalletXcmIbc - number of pallet `pallet-xcm-ibc` in Composable runtime
+account = Alice - sender account, , 32 bit account address, because XCM erases original sender signature
+index = Picasso - number of final destination network id in `pallet-network-registry`
+account = Bob - receiver account on final chain
+```
+
+We will continue to use strings in multilocation in document, so these are numbers in implementation. 
+Usage of general key bytes in multilocation is considered bad. So avoiding usage until forced to.
+
+Pallets will be descried later.
+
 **On Composable**
 
-`XCM` configuration callback on Composable routes transfer to this location as call to IBC Transfer module over `channel-15` to `Alice` account.
-
+`XCM` messages callbacks new pallets on Composable to route transfer to `Picasso` over IBC.
 
 **On Picasso**
 
-Alice gets dots on `Picasso` 
-
-*Details*
-
-`index` encodes IBC `channel id` indicating it should be forwarded over it. 
-
-`account` is 32 bit account address. 
-
-`pallet` and `parachain` are numbers, here we just use strings for readability. 
-
+`Bob` gets `DOT` on `Picasso` 
 
 ## Parity Polkadot(Substrate) -> Composable Composable(Substrate) -> Composable Picasso(Substrate) -> Osmosis(Cosmos SDK)
 
@@ -60,11 +68,9 @@ Alice gets dots on `Picasso`
 
 `parent = 0, parachain = Composable, pallet = PalletXcmIbc, account = Alice, index = Osmosis, account = Bob`
 
-
 **Composable**
 
-When message arrived to `Composable` it transfers assets to it forms IBC transfer as above, but adds [memo](
-https://github.com/strangelove-ventures/packet-forward-middleware):
+Same as previous, but sender to `Picasso` uses `memo` according `PFM` to forward transfer to `Osmsosi`
 
 ```json
 {
@@ -78,7 +84,8 @@ https://github.com/strangelove-ventures/packet-forward-middleware):
 
 **Picasso**
 
-`MemoHandler` middleware parses memo sends transfer to `Osmosis`.
+`PFM` middleware parses memo sends transfer to `Osmosis`. 
+Details of forwards are in `PFM`. Some details of Rust implementation are down in the document. 
 
 
 ## Centauri(Cosmos SDK) -> ->  Composable Picasso(Substrate) -> Composable Composable(Substrate) -> Bifrost(Substrate) 
