@@ -2,6 +2,8 @@ use cosmwasm_std::{IbcOrder, StdError};
 use thiserror::Error;
 use xc_proto::DecodingFailure;
 
+pub type ContractResult<T, E = ContractError> = core::result::Result<T, E>;
+
 #[derive(Error, Debug)]
 pub enum ContractError {
 	#[error("{0}")]

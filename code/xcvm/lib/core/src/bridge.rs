@@ -10,7 +10,9 @@ use serde::{Deserialize, Serialize};
 #[derive(
 	Clone, PartialEq, Eq, PartialOrd, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
-pub enum BridgeProtocol { IBC }
+pub enum BridgeProtocol {
+	IBC,
+}
 
 /// The Origin that executed the XCVM operation.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]

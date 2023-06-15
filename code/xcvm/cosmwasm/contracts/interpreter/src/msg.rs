@@ -28,8 +28,6 @@ pub struct InstantiateMsg {
 	pub gateway_address: String,
 	/// Address of the XCVM asset registry.
 	pub registry_address: String,
-	/// Address of the router.
-	pub router_address: String,
 	/// The interpreter origin.
 	pub interpreter_origin: InterpreterOrigin,
 }

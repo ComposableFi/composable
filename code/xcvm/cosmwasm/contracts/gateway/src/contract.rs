@@ -1,271 +1,244 @@
 extern crate alloc;
 
 use crate::{
-	common::{ensure_admin, ensure_router},
-	error::ContractError,
-	msg::{InstantiateMsg, MigrateMsg, QueryMsg},
-	state::{
-		ChannelInfo, Config, CONFIG, IBC_CHANNEL_INFO, IBC_CHANNEL_NETWORK, IBC_NETWORK_CHANNEL,
-		ROUTER,
-	},
+	common,
+	error::{ContractError, ContractResult},
+	exec, msg, state,
+	state::Config,
 };
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
+
 use cosmwasm_std::{
-	wasm_execute, wasm_instantiate, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, Event,
-	Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
-	IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg, IbcOrder, IbcPacketAckMsg,
-	IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock,
-	MessageInfo, Reply, Response, StdError, SubMsg, SubMsgResult,
+	wasm_execute, Binary, CosmosMsg, Deps, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse,
+	IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg,
+	IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
+	IbcTimeout, IbcTimeoutBlock, MessageInfo, Reply, Response, StdError, SubMsg, SubMsgResult,
 };
 use cw2::set_contract_version;
 use cw20::Cw20ExecuteMsg;
 use cw_utils::ensure_from_older_version;
 use cw_xc_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
-use cw_xc_common::{gateway::ExecuteMsg, shared::BridgeMsg};
-use cw_xc_utils::{DefaultXCVMPacket, DefaultXCVMProgram};
-use xc_core::{
-	BridgeProtocol, CallOrigin, Displayed, Funds, InterpreterOrigin, NetworkId, XCVMAck,
-};
+use cw_xc_utils::DefaultXCVMPacket;
+use xc_core::{BridgeProtocol, CallOrigin, Displayed, Funds, XCVMAck};
 use xc_proto::{decode_packet, Encodable};
 
-pub const CONTRACT_NAME: &str = "composable:xcvm-gateway";
-pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+const CONTRACT_NAME: &str = "composable:xcvm-gateway";
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub const XCVM_GATEWAY_EVENT_PREFIX: &str = "xcvm.gateway";
-pub const XCVM_GATEWAY_IBC_VERSION: &str = "xcvm-gateway-v0";
-pub const XCVM_GATEWAY_IBC_ORDERING: IbcOrder = IbcOrder::Unordered;
+const EXEC_PROGRAM_REPLY_ID: u64 = 0;
+pub(crate) const INSTANTIATE_INTERPRETER_REPLY_ID: u64 = 1;
 
-pub const XCVM_GATEWAY_INSTANTIATE_ROUTER_REPLY_ID: u64 = 0;
-pub const XCVM_GATEWAY_BATCH_REPLY_ID: u64 = 1;
-
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn instantiate(
 	deps: DepsMut,
 	_env: Env,
 	_info: MessageInfo,
-	mut msg: InstantiateMsg,
-) -> Result<Response, ContractError> {
+	msg: msg::InstantiateMsg,
+) -> ContractResult<Response> {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-	msg.config.registry_address =
-		deps.api.addr_validate(&msg.config.registry_address)?.into_string();
-	msg.config.admin = deps.api.addr_validate(&msg.config.admin)?.into_string();
-	CONFIG.save(deps.storage, &msg.config)?;
-	Ok(Response::default()
-		.add_event(Event::new(XCVM_GATEWAY_EVENT_PREFIX).add_attribute("action", "instantiated"))
-		.add_submessage(SubMsg::reply_on_success(
-			wasm_instantiate(
-				msg.config.router_code_id,
-				&cw_xc_router::msg::InstantiateMsg {
-					registry_address: msg.config.registry_address,
-					interpreter_code_id: msg.config.interpreter_code_id,
-					network_id: msg.config.network_id,
-				},
-				Default::default(),
-				"xcvm-router".into(),
-			)?,
-			XCVM_GATEWAY_INSTANTIATE_ROUTER_REPLY_ID,
-		)))
+
+	state::Config {
+		registry_address: deps.api.addr_validate(&msg.registry_address)?,
+		interpreter_code_id: msg.interpreter_code_id,
+		network_id: msg.network_id,
+		admin: deps.api.addr_validate(&msg.admin)?,
+	}
+	.save(deps.storage)?;
+
+	Ok(Response::default().add_event(common::make_event("instantiated")))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn execute(
 	deps: DepsMut,
 	env: Env,
 	info: MessageInfo,
-	msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
+	msg: msg::ExecuteMsg,
+) -> ContractResult<Response> {
 	match msg {
-		ExecuteMsg::IbcSetNetworkChannel { network_id, channel_id } => {
-			ensure_admin(deps.as_ref(), info.sender.as_ref())?;
-			let _ = IBC_CHANNEL_INFO
+		msg::ExecuteMsg::IbcSetNetworkChannel { network_id, channel_id } => {
+			common::ensure_admin(deps.as_ref(), &info)?;
+			state::IBC_CHANNEL_INFO
 				.load(deps.storage, channel_id.clone())
 				.map_err(|_| ContractError::UnknownChannel)?;
-			IBC_NETWORK_CHANNEL.save(deps.storage, network_id, &channel_id)?;
+			state::IBC_NETWORK_CHANNEL.save(deps.storage, network_id, &channel_id)?;
 			Ok(Response::default().add_event(
-				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
-					.add_attribute("action", "set_network_channel")
-					.add_attribute("network_id", format!("{network_id}"))
+				common::make_event("set_network_channel")
+					.add_attribute("network_id", network_id.to_string())
 					.add_attribute("channel_id", channel_id),
 			))
 		},
 
-		ExecuteMsg::Bridge {
-			interpreter,
-			msg: BridgeMsg { interpreter_origin, network_id, salt, program, assets },
-		} => handle_bridge(
-			deps,
-			info,
-			interpreter,
-			interpreter_origin,
-			network_id,
-			salt,
-			program,
-			assets,
-		),
+		msg::ExecuteMsg::ExecuteProgram { salt, program, assets } => {
+			let self_address = env.contract.address;
+			let call_origin = CallOrigin::Local { user: info.sender.clone() };
+			let transfers = exec::transfer_from_user(
+				&deps,
+				self_address.clone(),
+				info.sender,
+				info.funds,
+				&assets,
+			)?;
+			let msg = wasm_execute(
+				self_address,
+				&msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, salt, program, assets },
+				Default::default(),
+			)?;
+			Ok(Response::default().add_messages(transfers).add_message(msg))
+		},
 
-		ExecuteMsg::Batch { msgs } =>
-			if info.sender != env.contract.address {
-				Err(ContractError::NotAuthorized)
-			} else {
-				Ok(Response::default().add_messages(msgs))
-			},
+		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, salt, program, assets } => {
+			common::ensure_self(&env, &info)?;
+			exec::handle_execute_program(deps, env, call_origin, salt, program, assets)
+		},
+
+		msg::ExecuteMsg::Bridge(msg) => handle_bridge_forward(deps, info, msg),
 	}
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: msg::MigrateMsg) -> ContractResult<Response> {
 	let _ = ensure_from_older_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 	Ok(Response::default())
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> Result<Binary, ContractError> {
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
+pub fn query(_deps: Deps, _env: Env, _msg: msg::QueryMsg) -> ContractResult<Binary> {
 	Err(StdError::generic_err("not implemented").into())
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
+pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> ContractResult<Response> {
 	match msg.id {
-		XCVM_GATEWAY_INSTANTIATE_ROUTER_REPLY_ID => handle_instantiate_reply(deps, msg),
-		XCVM_GATEWAY_BATCH_REPLY_ID => handle_batch_reply(msg),
+		EXEC_PROGRAM_REPLY_ID => handle_exec_reply(msg),
+		INSTANTIATE_INTERPRETER_REPLY_ID =>
+			exec::handle_instantiate_reply(deps, msg).map_err(ContractError::from),
 		_ => Err(ContractError::UnknownReply),
 	}
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn ibc_channel_open(
 	_deps: DepsMut,
 	_env: Env,
 	msg: IbcChannelOpenMsg,
-) -> Result<IbcChannelOpenResponse, ContractError> {
+) -> ContractResult<IbcChannelOpenResponse> {
 	let (channel, version) = match msg {
 		IbcChannelOpenMsg::OpenInit { channel } => (channel, None),
 		IbcChannelOpenMsg::OpenTry { channel, counterparty_version } =>
 			(channel, Some(counterparty_version)),
 	};
-	if version.is_some() && version.as_deref() != Some(XCVM_GATEWAY_IBC_VERSION) {
+	const IBC_VERSION: &str = cw_xc_common::gateway::IBC_VERSION;
+	if version.is_some() && version.as_deref() != Some(IBC_VERSION) {
 		Err(ContractError::InvalidIbcVersion(version.unwrap()))
-	} else if channel.order != XCVM_GATEWAY_IBC_ORDERING {
+	} else if channel.order != IbcOrder::Unordered {
 		Err(ContractError::InvalidIbcOrdering(channel.order))
 	} else {
-		let version = version.unwrap_or_else(|| String::from(XCVM_GATEWAY_IBC_VERSION));
+		let version = version.unwrap_or_else(|| String::from(IBC_VERSION));
 		Ok(Some(Ibc3ChannelOpenResponse { version }))
 	}
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn ibc_channel_connect(
 	deps: DepsMut,
 	_env: Env,
 	msg: IbcChannelConnectMsg,
-) -> Result<IbcBasicResponse, ContractError> {
+) -> ContractResult<IbcBasicResponse> {
 	let channel = msg.channel();
-	IBC_CHANNEL_INFO.save(
+	state::IBC_CHANNEL_INFO.save(
 		deps.storage,
 		channel.endpoint.channel_id.clone(),
-		&ChannelInfo {
+		&state::ChannelInfo {
 			id: channel.endpoint.channel_id.clone(),
 			counterparty_endpoint: channel.counterparty_endpoint.clone(),
 			connection_id: channel.connection_id.clone(),
 		},
 	)?;
 	Ok(IbcBasicResponse::new().add_event(
-		Event::new(XCVM_GATEWAY_EVENT_PREFIX)
-			.add_attribute("action", "ibc_connect")
+		common::make_event("ibc_connect")
 			.add_attribute("channel_id", channel.endpoint.channel_id.clone()),
 	))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn ibc_channel_close(
 	deps: DepsMut,
 	_env: Env,
 	msg: IbcChannelCloseMsg,
-) -> Result<IbcBasicResponse, ContractError> {
+) -> ContractResult<IbcBasicResponse> {
 	let channel = msg.channel();
-	match IBC_CHANNEL_NETWORK.load(deps.storage, channel.endpoint.channel_id.clone()) {
+	match state::IBC_CHANNEL_NETWORK.load(deps.storage, channel.endpoint.channel_id.clone()) {
 		Ok(channel_network) => {
-			IBC_CHANNEL_NETWORK.remove(deps.storage, channel.endpoint.channel_id.clone());
-			IBC_NETWORK_CHANNEL.remove(deps.storage, channel_network);
+			state::IBC_CHANNEL_NETWORK.remove(deps.storage, channel.endpoint.channel_id.clone());
+			state::IBC_NETWORK_CHANNEL.remove(deps.storage, channel_network);
 		},
 		// Nothing to do, the channel might have never been registered to a network.
 		Err(_) => {},
 	}
-	IBC_CHANNEL_INFO.remove(deps.storage, channel.endpoint.channel_id.clone());
+	state::IBC_CHANNEL_INFO.remove(deps.storage, channel.endpoint.channel_id.clone());
 	// TODO: are all the in flight packets timed out in this case? if not, we need to unescrow
 	// assets
 	Ok(IbcBasicResponse::new().add_event(
-		Event::new(XCVM_GATEWAY_EVENT_PREFIX)
-			.add_attribute("action", "ibc_close")
+		common::make_event("ibc_close")
 			.add_attribute("channel_id", channel.endpoint.channel_id.clone()),
 	))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn ibc_packet_receive(
-	deps: DepsMut,
+	_deps: DepsMut,
 	env: Env,
 	msg: IbcPacketReceiveMsg,
-) -> Result<IbcReceiveResponse, ContractError> {
-	let batch = (|| -> Result<_, ContractError> {
-		let Config { registry_address, .. } = CONFIG.load(deps.storage)?;
-		let router_address = ROUTER.load(deps.storage)?;
+) -> ContractResult<IbcReceiveResponse> {
+	let response = IbcReceiveResponse::default().add_event(common::make_event("receive"));
+	let msg = (|| -> ContractResult<_> {
 		let packet: DefaultXCVMPacket =
 			decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
-		// Execute both mints + execution in a single sub-transaction.
-		let mut msgs = mint_counterparty_assets(
-			&deps,
-			router_address.as_ref(),
-			registry_address.as_ref(),
-			packet.assets.clone(),
-		)?;
-		msgs.push(
-			wasm_execute(
-				router_address,
-				&cw_xc_common::router::ExecuteMsg::ExecuteProgramPrivileged {
-					call_origin: CallOrigin::Remote {
-						protocol: BridgeProtocol::IBC,
-						relayer: msg.relayer,
-						user_origin: packet.user_origin,
-					},
-					salt: packet.salt,
-					program: packet.program,
-					assets: packet.assets,
-				},
-				Default::default(),
-			)?
-			.into(),
-		);
-		Ok(SubMsg::reply_always(
-			wasm_execute(env.contract.address, &ExecuteMsg::Batch { msgs }, Default::default())?,
-			XCVM_GATEWAY_BATCH_REPLY_ID,
-		))
+		let call_origin = CallOrigin::Remote {
+			protocol: BridgeProtocol::IBC,
+			relayer: msg.relayer,
+			user_origin: packet.user_origin,
+		};
+		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged {
+			call_origin,
+			salt: packet.salt,
+			program: packet.program,
+			assets: packet.assets,
+		};
+		let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
+		Ok(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID))
 	})();
-	let response = IbcReceiveResponse::default()
-		.add_event(Event::new(XCVM_GATEWAY_EVENT_PREFIX).add_attribute("action", "receive"));
-	match batch {
-		Ok(batch) => Ok(response.set_ack(XCVMAck::OK).add_submessage(batch)),
-		Err(e) => Ok(response
-			.add_event(
-				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
-					.add_attribute("action", "receive")
-					.add_attribute("result", "failure")
-					.add_attribute("reason", e.to_string()),
-			)
-			.set_ack(XCVMAck::KO)),
-	}
+	Ok(match msg {
+		Ok(msg) => response.set_ack(XCVMAck::OK).add_submessage(msg),
+		Err(err) =>
+			response.add_event(make_ibc_failure_event(err.to_string())).set_ack(XCVMAck::KO),
+	})
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+fn make_ibc_failure_event(reason: String) -> cosmwasm_std::Event {
+	common::make_event("receive")
+		.add_attribute("result", "failure")
+		.add_attribute("reason", reason.to_string())
+}
+
+fn handle_exec_reply(msg: Reply) -> ContractResult<Response> {
+	let (data, event) = match msg.result {
+		SubMsgResult::Ok(_) =>
+			(XCVMAck::OK, common::make_event("receive").add_attribute("result", "success")),
+		SubMsgResult::Err(err) => (XCVMAck::KO, make_ibc_failure_event(err.to_string())),
+	};
+	Ok(Response::default().add_event(event).set_data(data))
+}
+
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn ibc_packet_ack(
 	deps: DepsMut,
 	_env: Env,
 	msg: IbcPacketAckMsg,
-) -> Result<IbcBasicResponse, ContractError> {
+) -> ContractResult<IbcBasicResponse> {
 	let ack = XCVMAck::try_from(msg.acknowledgement.data.as_slice())
 		.map_err(|_| ContractError::InvalidAck)?;
-	let Config { registry_address, .. } = CONFIG.load(deps.storage)?;
+	let Config { registry_address, .. } = Config::load(deps.storage)?;
 	let packet: DefaultXCVMPacket =
 		decode_packet(&msg.original_packet.data).map_err(ContractError::Protobuf)?;
 	let messages = match ack {
@@ -286,21 +259,17 @@ pub fn ibc_packet_ack(
 		_ => Err(ContractError::InvalidAck),
 	}?;
 	Ok(IbcBasicResponse::default()
-		.add_event(
-			Event::new(XCVM_GATEWAY_EVENT_PREFIX)
-				.add_attribute("action", "ack")
-				.add_attribute("ack", ack.value().to_string()),
-		)
+		.add_event(common::make_event("ack").add_attribute("ack", ack.value().to_string()))
 		.add_messages(messages))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn ibc_packet_timeout(
 	deps: DepsMut,
 	_env: Env,
 	msg: IbcPacketTimeoutMsg,
-) -> Result<IbcBasicResponse, ContractError> {
-	let Config { registry_address, .. } = CONFIG.load(deps.storage)?;
+) -> ContractResult<IbcBasicResponse> {
+	let Config { registry_address, .. } = Config::load(deps.storage)?;
 	let packet: DefaultXCVMPacket =
 		decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
 	// On timeout, return the funds
@@ -314,61 +283,11 @@ pub fn ibc_packet_timeout(
 	Ok(IbcBasicResponse::default().add_messages(burns))
 }
 
-pub fn handle_batch_reply(msg: Reply) -> Result<Response, ContractError> {
-	match msg.result {
-		SubMsgResult::Ok(_) => Ok(Response::default()
-			.add_event(
-				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
-					.add_attribute("action", "receive")
-					.add_attribute("result", "success"),
-			)
-			.set_data(XCVMAck::OK)),
-		SubMsgResult::Err(e) => Ok(Response::default()
-			.add_event(
-				Event::new(XCVM_GATEWAY_EVENT_PREFIX)
-					.add_attribute("action", "receive")
-					.add_attribute("result", "failure")
-					.add_attribute("reason", e.to_string()),
-			)
-			.set_data(XCVMAck::KO)),
-	}
-}
-
-fn mint_counterparty_assets(
-	deps: &DepsMut,
-	router_address: &str,
-	registry_address: &str,
-	assets: Funds<Displayed<u128>>,
-) -> Result<Vec<CosmosMsg>, ContractError> {
-	assets
-		.into_iter()
-		.map(|(asset_id, Displayed(amount))| {
-			let reference =
-				external_query_lookup_asset(deps.querier, registry_address.to_string(), asset_id)?;
-			match &reference {
-				AssetReference::Native { .. } => Err(ContractError::UnsupportedAsset),
-				AssetReference::Virtual { cw20_address } => {
-					// Burn from the current contract.
-					Ok(wasm_execute(
-						cw20_address.to_string(),
-						&Cw20ExecuteMsg::Mint {
-							recipient: router_address.to_string(),
-							amount: amount.into(),
-						},
-						Default::default(),
-					)?
-					.into())
-				},
-			}
-		})
-		.collect::<Result<Vec<_>, _>>()
-}
-
 fn burn_escrowed_assets(
 	deps: DepsMut,
 	registry_address: &str,
 	assets: Funds<Displayed<u128>>,
-) -> Result<Vec<CosmosMsg>, ContractError> {
+) -> ContractResult<Vec<CosmosMsg>> {
 	assets
 		.into_iter()
 		.map(|(asset_id, Displayed(amount))| {
@@ -395,7 +314,7 @@ fn unescrow_assets(
 	sender: String,
 	registry_address: &str,
 	assets: Funds<Displayed<u128>>,
-) -> Result<Vec<CosmosMsg>, ContractError> {
+) -> ContractResult<Vec<CosmosMsg>> {
 	assets
 		.into_iter()
 		.map(|(asset_id, Displayed(amount))| {
@@ -420,30 +339,27 @@ fn unescrow_assets(
 		.collect::<Result<Vec<_>, _>>()
 }
 
-pub fn handle_bridge(
+/// Handle a request gateway message.
+/// The call must originate from an interpreter.
+fn handle_bridge_forward(
 	deps: DepsMut,
 	info: MessageInfo,
-	interpreter: Addr,
-	interpreter_origin: InterpreterOrigin,
-	network_id: NetworkId,
-	salt: Vec<u8>,
-	program: DefaultXCVMProgram,
-	assets: Funds<Displayed<u128>>,
-) -> Result<Response, ContractError> {
-	ensure_router(deps.as_ref(), info.sender.as_ref())?;
-	let channel_id = IBC_NETWORK_CHANNEL
-		.load(deps.storage, network_id)
+	msg: cw_xc_common::gateway::BridgeMsg,
+) -> ContractResult<Response> {
+	common::ensure_interpreter(deps.as_ref(), &info, msg.interpreter_origin.clone())?;
+
+	let channel_id = state::IBC_NETWORK_CHANNEL
+		.load(deps.storage, msg.network_id)
 		.map_err(|_| ContractError::UnknownChannel)?;
 	let packet = DefaultXCVMPacket {
-		interpreter: interpreter.as_bytes().to_vec(),
-		user_origin: interpreter_origin.user_origin,
-		salt,
-		program,
-		assets,
+		interpreter: String::from(info.sender).into_bytes(),
+		user_origin: msg.interpreter_origin.user_origin,
+		salt: msg.salt,
+		program: msg.program,
+		assets: msg.assets,
 	};
-	let mut event = Event::new(XCVM_GATEWAY_EVENT_PREFIX)
-		.add_attribute("action", "bridge")
-		.add_attribute("network_id", network_id.to_string())
+	let mut event = common::make_event("bridge")
+		.add_attribute("network_id", msg.network_id.to_string())
 		.add_attribute(
 			"assets",
 			serde_json_wasm::to_string(&packet.assets)
@@ -466,25 +382,4 @@ pub fn handle_bridge(
 		// TODO: should be a parameter or configuration
 		timeout: IbcTimeout::with_block(IbcTimeoutBlock { revision: 0, height: 10000 }),
 	}))
-}
-
-fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> Result<Response, ContractError> {
-	let response = msg.result.into_result().map_err(StdError::generic_err)?;
-	let router_address = {
-		let instantiate_event = response
-			.events
-			.iter()
-			.find(|event| event.ty == "instantiate")
-			.ok_or(StdError::not_found("instantiate event not found"))?;
-		deps.api.addr_validate(
-			&instantiate_event
-				.attributes
-				.iter()
-				.find(|attr| &attr.key == "_contract_address")
-				.ok_or(StdError::not_found("_contract_address attribute not found"))?
-				.value,
-		)?
-	};
-	ROUTER.save(deps.storage, &router_address)?;
-	Ok(Response::default())
 }

@@ -19,9 +19,7 @@ cosmwasm-vm-wasmi = { workspace = true }
 cosmwasm-orchestrate = { workspace = true }
 
 cw-xc-asset-registry = { path = "../contracts/asset-registry" }
-cw-xc-gateway = { path = "../contracts/gateway" }
 cw-xc-interpreter = { path = "../contracts/interpreter" }
-cw-xc-router = { path = "../contracts/router" }
 cw-xc-pingpong = { path = "../contracts/pingpong" }
 cw-xc-common = { path = "../contracts/common" }
 cw-xc-utils = { path = "../contracts/utils" }

@@ -19,7 +19,6 @@ cw-utils = { workspace = true }
 cw-xc-asset-registry = { path = "../asset-registry", features = ["library"] }
 cw-xc-common = { path = "../common" }
 cw-xc-interpreter = { path = "../interpreter", features = ["library"] }
-cw-xc-router = { path = "../router", features = ["library"] }
 cw-xc-utils = { path = "../utils" }
 cw2 = { workspace = true }
 cw20 = { workspace = true }

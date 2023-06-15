@@ -17,7 +17,10 @@ use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
 use cw_utils::ensure_from_older_version;
 use cw_xc_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
-use cw_xc_common::shared::{encode_base64, BridgeMsg};
+use cw_xc_common::{
+	gateway::{BridgeMsg, ExecuteMsg as GWExecuteMsg},
+	shared::encode_base64,
+};
 use cw_xc_utils::DefaultXCVMProgram;
 use num::Zero;
 use xc_core::{
@@ -45,13 +48,8 @@ pub fn instantiate(
 
 	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
 	let gateway_address = deps.api.addr_validate(&msg.gateway_address)?;
-	let router_address = deps.api.addr_validate(&msg.router_address)?;
-	let config = Config {
-		registry_address,
-		router_address,
-		gateway_address,
-		interpreter_origin: msg.interpreter_origin,
-	};
+	let config =
+		Config { registry_address, gateway_address, interpreter_origin: msg.interpreter_origin };
 	CONFIG.save(deps.storage, &config)?;
 	// Save the caller as owner, in most cases, it is the `XCVM router`
 	OWNERS.save(deps.storage, info.sender, &())?;
@@ -310,7 +308,7 @@ pub fn interpret_spawn(
 	assets: Funds<Balance>,
 	program: XCVMProgram,
 ) -> Result<Response, ContractError> {
-	let Config { interpreter_origin, registry_address, router_address, .. } =
+	let Config { interpreter_origin, registry_address, gateway_address, .. } =
 		CONFIG.load(deps.storage)?;
 
 	let registry_address = registry_address.into_string();
@@ -350,12 +348,12 @@ pub fn interpret_spawn(
 			normalized_funds.0.push((asset_id.into(), transfer_amount.into()));
 			response = match reference {
 				AssetReference::Native { denom } => response.add_message(BankMsg::Send {
-					to_address: router_address.clone().into(),
+					to_address: gateway_address.clone().into(),
 					amount: vec![Coin { denom, amount: transfer_amount.into() }],
 				}),
 				AssetReference::Virtual { cw20_address } => response.add_message(
 					Cw20Contract(cw20_address).call(Cw20ExecuteMsg::Transfer {
-						recipient: router_address.clone().into(),
+						recipient: gateway_address.clone().into(),
 						amount: transfer_amount.into(),
 					})?,
 				),
@@ -365,16 +363,14 @@ pub fn interpret_spawn(
 
 	Ok(response
 		.add_message(wasm_execute(
-			router_address,
-			&cw_xc_common::router::ExecuteMsg::BridgeForward {
-				msg: BridgeMsg {
-					interpreter_origin: interpreter_origin.clone(),
-					network_id: network,
-					salt,
-					program,
-					assets: normalized_funds,
-				},
-			},
+			gateway_address,
+			&GWExecuteMsg::Bridge(BridgeMsg {
+				interpreter_origin: interpreter_origin.clone(),
+				network_id: network,
+				salt,
+				program,
+				assets: normalized_funds,
+			}),
 			Default::default(),
 		)?)
 		.add_event(

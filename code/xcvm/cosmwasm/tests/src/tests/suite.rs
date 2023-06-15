@@ -9,9 +9,8 @@ use cosmwasm_std::{
 use cosmwasm_vm::system::CUSTOM_CONTRACT_EVENT_PREFIX;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
 use cw_xc_asset_registry::contract::XCVM_ASSET_REGISTRY_EVENT_PREFIX;
-use cw_xc_gateway::contract::{XCVM_GATEWAY_EVENT_PREFIX, XCVM_GATEWAY_IBC_VERSION};
+use cw_xc_common::gateway::EVENT_PREFIX as XCVM_GATEWAY_EVENT_PREFIX;
 use cw_xc_interpreter::contract::XCVM_INTERPRETER_EVENT_PREFIX;
-use cw_xc_router::contract::XCVM_ROUTER_EVENT_PREFIX;
 use cw_xc_utils::{DefaultXCVMProgram, Salt};
 use proptest::{prelude::any, prop_assume, prop_compose, proptest};
 use std::assert_matches::assert_matches;
@@ -169,7 +168,7 @@ impl<T> CrossChainScenario<T, Disconnected> {
 		relayer: Account,
 		relayer_counterparty: Account,
 	) -> Result<CrossChainScenario<T, Connected>, TestError> {
-		let version = XCVM_GATEWAY_IBC_VERSION;
+		const VERSION: &str = cw_xc_common::gateway::IBC_VERSION;
 		let tx_relayer = self.mk_tx(relayer);
 		let tx_relayer_counterparty = self.mk_tx_counterparty(relayer_counterparty);
 		let tx_admin = self.mk_tx(self.admin.clone());
@@ -179,7 +178,7 @@ impl<T> CrossChainScenario<T, Disconnected> {
 			&mut self.vm_counterparty,
 			channel_id.into(),
 			connection_id.into(),
-			version,
+			VERSION,
 			ordering,
 			tx_relayer,
 			tx_relayer_counterparty,
@@ -290,8 +289,8 @@ fn to_canonical(account: Account) -> CanonicalAddr {
 /// the tests.  This can be done by executing `build-contracts.sh` script.
 ///
 /// Alternatively, location of those contract files can be specified via
-/// corresponding `CW_XC_xxx` environment variables (see function body for exact
-/// variable names and which contracts the map to).
+/// corresponding `CW_XCVM_xxx` environment variables (see function body for
+/// exact variable names and which contracts the map to).
 ///
 /// **Note**: The downside of this approach is that the contracts aren’t
 /// automatically rebuilt if any of the contracts (or their dependencies) is
@@ -327,10 +326,9 @@ fn load_contracts() -> XCVMContracts {
 		}
 	}
 
-	let code_asset_registry = read_contract("CW_XC_ASSET_REGISTRY", "cw_xc_asset_registry.wasm");
-	let code_interpreter = read_contract("CW_XC_INTERPRETER", "cw_xc_interpreter.wasm");
-	let code_router = read_contract("CW_XC_ROUTER", "cw_xc_router.wasm");
-	let code_gateway = read_contract("CW_XC_GATEWAY", "cw_xc_gateway.wasm");
+	let code_asset_registry = read_contract("CW_XCVM_ASSET_REGISTRY", "cw_xc_asset_registry.wasm");
+	let code_interpreter = read_contract("CW_XCVM_INTERPRETER", "cw_xc_interpreter.wasm");
+	let code_gateway = read_contract("CW_XCVM_GATEWAY", "cw_xc_gateway.wasm");
 
 	// When running the test locally, the cw20_base.wasm file is downloaded by
 	// the Build script (see build.rs).  However, on CI when running under NIX
@@ -342,7 +340,7 @@ fn load_contracts() -> XCVMContracts {
 		read(concat!(env!("OUT_DIR"), "/cw20_base.wasm"))
 	};
 
-	XCVMContracts::new(code_asset_registry, code_interpreter, code_router, code_gateway, code_cw20)
+	XCVMContracts::new(code_asset_registry, code_interpreter, code_gateway, code_cw20)
 }
 
 fn create_vm<N: Network>() -> TestVM<()> {
@@ -498,7 +496,7 @@ mod base {
 		// The gateway must deploy the router.
 		xcvm_assert_prefixed_event(
 			events.gateway_events.iter(),
-			XCVM_ROUTER_EVENT_PREFIX,
+			XCVM_GATEWAY_EVENT_PREFIX,
 			"action",
 			"instantiated",
 		);
@@ -627,13 +625,13 @@ mod single_chain {
 		// Ensure the mandatory events are present.
 		xcvm_assert_prefixed_event(
 			dispatch_events.iter(),
-			XCVM_ROUTER_EVENT_PREFIX,
+			XCVM_GATEWAY_EVENT_PREFIX,
 			"action",
 			"route.create",
 		);
 		xcvm_assert_prefixed_event(
 			dispatch_events.iter(),
-			XCVM_ROUTER_EVENT_PREFIX,
+			XCVM_GATEWAY_EVENT_PREFIX,
 			"action",
 			"route.execute",
 		);
