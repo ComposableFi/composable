@@ -57,7 +57,7 @@
           gas_limit = 9223372036854775806;
           store_prefix = "ibc";
           max_tx_size = 20000000;
-          wasm_code_id = "a7c1996d22a2f49fc1f223ba0cbf36ec0e9ac84539845eae1138ad5a03e1d136";
+          wasm_code_id = "f5500c492b6c5fb91725535ad01cc0799c9e096d18f3f60f2c80a28b2f3b3312";
           channel_whitelist = [ ];
           mnemonic = "bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort";
         };
