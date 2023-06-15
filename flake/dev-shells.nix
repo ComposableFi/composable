@@ -29,10 +29,10 @@
           yq
           gex
           openssl
-          binaryen   
-          cosmwasm-check      
-          jq       
-          websocat      
+          binaryen
+          cosmwasm-check
+          jq
+          websocat
           grpcurl
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
@@ -48,7 +48,7 @@
         modules = [{
           packages = tools ++ (with pkgs;
             with self'.packages; [
-              bacon              
+              bacon
               devenv
               google-cloud-sdk
               lldb
@@ -63,14 +63,13 @@
               qemu
               taplo
               xorriso
-              zlib.out              
+              zlib.out
             ]);
           devcontainer.enable = true;
           inherit env;
         }];
       };
-    in
-    {
+    in {
       packages = {
         devenv = self.inputs.devenv.packages.${system}.devenv;
         devprofile = pkgs.linkFarmFromDrvs "devprofile" tools;
@@ -79,9 +78,7 @@
         default = self.inputs.devenv.lib.mkShell defaultattrs;
         all = self.inputs.devenv.lib.mkShell allattrs;
         xc = pkgs.mkShell {
-          buildInputs = tools ++  (with self'.packages; [            
-            centaurid
-          ]);
+          buildInputs = tools ++ (with self'.packages; [ centaurid ]);
         };
       };
     };
