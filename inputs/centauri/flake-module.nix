@@ -17,7 +17,7 @@
       centauri-runtime-commit =
         builtins.elemAt (builtins.split "#" centauri-runtime-dep.source) 2;
 
-      hyperspace-picasso-kusama-config = {
+      hyperspace-picasso-kusama-config-base = {
         channel_whitelist = [ ];
         client_id = "10-grandpa-0";
         commitment_prefix = "0x6962632f";
@@ -26,11 +26,19 @@
         key_type = "sr25519";
         name = "picasso_1";
         para_id = 2087;
-        parachain_rpc_url = "ws://devnet-a:9988";
         private_key = "//Alice";
-        relay_chain_rpc_url = "ws://devnet-a:9944";
         ss58_version = 49;
         type = "picasso_kusama";
+      };
+
+      hyperspace-picasso-kusama-config = hyperspace-picasso-kusama-config-base // {
+        parachain_rpc_url = "ws://devnet-a:9988";
+        relay_chain_rpc_url = "ws://devnet-a:9944";        
+      };
+
+      hyperspace-picasso-kusama-local = hyperspace-picasso-kusama-config-base // {
+        parachain_rpc_url = "ws://127.0.0.1:9988";
+        relay_chain_rpc_url = "ws://127.0.0.1:9944";        
       };
 
       hyperspace-centauri-config =
@@ -39,7 +47,7 @@
           name = "centauri";
           rpc_url = "http://127.0.0.1:26657";
           grpc_url = "http://127.0.0.1:9090";
-          websocket_url = "ws://127.0.0.1:26657";
+          websocket_url = "ws://127.0.0.1:1317";
           chain_id = "centauri-dev";
           client_id = "07-tendermint-32";
           connection_id = "connection-0";
@@ -215,7 +223,7 @@
 
         hyperspace-config-chain-3 = pkgs.writeText "config-chain-3.toml"
           (self.inputs.nix-std.lib.serde.toTOML
-            hyperspace-picasso-kusama-config);
+            hyperspace-picasso-kusama-local);
 
         hyperspace-config-core = pkgs.writeText "config-core.toml"
           (self.inputs.nix-std.lib.serde.toTOML hyperspace-core-config);

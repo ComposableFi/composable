@@ -129,6 +129,7 @@
             CHAIN_ID="centauri-dev"
             KEYRING_TEST="$CENTAURI_DATA/keyring-test"
             rm --force --recursive "$CENTAURI_DATA"
+            
             mkdir --parents "$CENTAURI_DATA"
             mkdir --parents "$CENTAURI_DATA/config/gentx"
             mkdir --parents "$KEYRING_TEST"
@@ -138,12 +139,12 @@
               jq -r  "$1"  > "$CENTAURI_DATA/config/genesis-update.json"  < "$CENTAURI_DATA/config/genesis.json"
               mv --force "$CENTAURI_DATA/config/genesis-update.json" "$CENTAURI_DATA/config/genesis.json"
             }
-
+            
             jq-genesis '.consensus_params.block.max_gas |= "-1"'  
             jq-genesis '.app_state.gov.params.voting_period |= "${gov.voting_period}"'  
             jq-genesis '.app_state.gov.params.max_deposit_period |= "${gov.max_deposit_period}"'  
             jq-genesis '.app_state.gov.params.min_deposit[0].amount |= "1"'  
-
+            # minimum-gas-prices = "0stake"
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CENTAURI_DATA/config/client.toml"
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CENTAURI_DATA/config/client.toml"            
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CENTAURI_DATA/config/client.toml"
