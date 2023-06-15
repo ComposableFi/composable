@@ -19,7 +19,6 @@
 
       hyperspace-picasso-kusama-config-base = {
         channel_whitelist = [ ];
-        client_id = "10-grandpa-0";
         commitment_prefix = "0x6962632f";
         finality_protocol = "Grandpa";
         connection_id = "connection-0";
@@ -33,21 +32,23 @@
 
       hyperspace-picasso-kusama-config = hyperspace-picasso-kusama-config-base // {
         parachain_rpc_url = "ws://devnet-a:9988";
-        relay_chain_rpc_url = "ws://devnet-a:9944";        
+        relay_chain_rpc_url = "ws://devnet-a:9944";     
+        client_id = "10-grandpa-0";   
       };
 
       hyperspace-picasso-kusama-local = hyperspace-picasso-kusama-config-base // {
         parachain_rpc_url = "ws://127.0.0.1:9988";
-        relay_chain_rpc_url = "ws://127.0.0.1:9944";        
+        relay_chain_rpc_url = "ws://127.0.0.1:9944";   
+        client_id = "10-grandpa-0";     
       };
 
       hyperspace-centauri-config =
         {
           type = "cosmos";
           name = "centauri";
-          rpc_url = "http://127.0.0.1:1317";
+          rpc_url = "http://127.0.0.1:26657";
           grpc_url = "http://127.0.0.1:9090";
-          websocket_url = "ws://127.0.0.1:26657";
+          websocket_url = "ws://127.0.0.1:26657/websocket";
           chain_id = "centauri-dev";
           client_id = "07-tendermint-32";
           connection_id = "connection-0";

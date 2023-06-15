@@ -33,6 +33,7 @@
           cosmwasm-check      
           jq       
           websocat      
+          grpcurl
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;

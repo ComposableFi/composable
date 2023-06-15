@@ -145,14 +145,13 @@
             jq-genesis '.app_state.gov.params.voting_period |= "${gov.voting_period}"'  
             jq-genesis '.app_state.gov.params.max_deposit_period |= "${gov.max_deposit_period}"'  
             jq-genesis '.app_state.gov.params.min_deposit[0].amount |= "1"'  
-            # minimum-gas-prices = "0stake"
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CENTAURI_DATA/config/client.toml"
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CENTAURI_DATA/config/client.toml"            
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CENTAURI_DATA/config/client.toml"
             sed -i 's/output = "text"/output = "json"/' "$CENTAURI_DATA/config/client.toml"
             sed -i "s/cors_allowed_origins = \[\]/cors_allowed_origins = \[\"\*\"\]/" "$CENTAURI_DATA/config/config.toml"
             sed -i   "s/enable = false/enable = true/" "$CENTAURI_DATA/config/app.toml"
-            sed -i   "s/swagger = false/swagger = true/" "$CENTAURI_DATA/config/app.toml"           
+            #sed -i   "s/swagger = false/swagger = true/" "$CENTAURI_DATA/config/app.toml"           
             sed -i   "s/rpc-max-body-bytes = 1000000/rpc-max-body-bytes = 10000000/" "$CENTAURI_DATA/config/app.toml"
             sed -i   "s/max_body_bytes = 1000000/max_body_bytes = 10000000/" "$CENTAURI_DATA/config/config.toml"
             sed -i   "s/max_header_bytes = 1048576/max_header_bytes = 10485760/" "$CENTAURI_DATA/config/config.toml"
@@ -177,7 +176,7 @@
             add-genesis-account centauri1qwexv7c6sm95lwhzn9027vyu2ccneaqapystyu
             centaurid --keyring-backend test --keyring-dir "$KEYRING_TEST" --home "$CENTAURI_DATA" gentx validator "250000000000000ppica" --chain-id="$CHAIN_ID" --amount="250000000000000ppica"
             centaurid collect-gentxs --home "$CENTAURI_DATA"  --gentx-dir "$CENTAURI_DATA/config/gentx"
-            centaurid start --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing  --minimum-gas-prices=0.0001ppica --trace --log_level debug --home "$CENTAURI_DATA" --db_dir "$CENTAURI_DATA/data" --log_format json --trace           
+            centaurid start --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing  --minimum-gas-prices=0.0001ppica --log_level debug --home "$CENTAURI_DATA" --db_dir "$CENTAURI_DATA/data" --log_format json --trace --with-tendermint true --transport socket --trace-store $CENTAURI_DATA/kvstore.log  --grpc.enable true --grpc-web.enable true --api.enable true --cpu-profile $CENTAURI_DATA/cpu-profile.log
           '';
         };
     in
