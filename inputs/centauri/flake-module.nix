@@ -42,7 +42,7 @@
         grpc_url = "http://127.0.0.1:9090";
         websocket_url = "ws://127.0.0.1:26657/websocket";
         chain_id = "centauri-dev";
-        client_id = "07-tendermint-32";
+        client_id = "07-tendermint-0";
         connection_id = "connection-0";
         account_prefix = "centauri";
         fee_denom = "ppica";
