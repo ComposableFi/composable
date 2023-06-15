@@ -251,10 +251,17 @@ library SDK {
         (amount, newPos) = _handleBalance(program, asset, pos);
     }
 
+    function _getAssetListLength(bytes memory program, uint64 pos, uint256 totalAssetsLength, address routerAddress) internal view returns (uint256 length){
+        //TODO optimization 
+        while (pos < totalAssetsLength) {
+            (, , , pos) = _handleAsset(program, pos, routerAddress);
+            length += 1;
+        }
+    } 
+
     function _handleAssets(
         bytes memory program,
         uint64 pos,
-        address to,
         address routerAddress
     )
         internal
@@ -266,14 +273,14 @@ library SDK {
         uint64 size;
         (size, pos) = _getMessageLength(program, pos);
         uint256 totalAssetsLength = pos + size;
-        // TODO HARDCODED ARRAY to 10
-        assetInfos.assetAddresses = new address[](10);
-        assetInfos.assetIds = new uint128[](10);
-        assetInfos.amounts = new uint256[](10);
+        uint256 assetListLength = _getAssetListLength(program, pos, totalAssetsLength, routerAddress);
+
+        assetInfos.assetAddresses = new address[](assetListLength);
+        assetInfos.assetIds = new uint128[](assetListLength);
+        assetInfos.amounts = new uint256[](assetListLength);
         uint256 count;
         while (pos < totalAssetsLength) {
             (assetInfos.assetAddresses[count], assetInfos.assetIds[count], assetInfos.amounts[count], pos) = _handleAsset(program, pos, routerAddress);
-            IERC20(assetInfos.assetAddresses[count]).transfer(to, assetInfos.amounts[count]);
             count += 1;
         }
         newPos = pos;
@@ -308,7 +315,11 @@ library SDK {
         // read asset info
         pos = _checkField(program, 3, ProtobufLib.WireType.LengthDelimited, pos);
         // read assets info and transfer asset funds
-        (newPos, ) = _handleAssets(program, pos, account, routerAddress);
+        AssetInfos memory assetInfos;
+        (newPos, assetInfos) = _handleAssets(program, pos, routerAddress);
+        for (uint256 count = 0; count < assetInfos.assetAddresses.length; count++){
+            IERC20(assetInfos.assetAddresses[count]).transfer(account, assetInfos.amounts[count]);
+        }
     }
 
     function _handleBindingValue(bytes memory program, uint64 pos, address relayer, address routerAddress)
@@ -470,8 +481,14 @@ library SDK {
 
         AssetInfos memory assetInfos;
         if (pos < maxPos) {
-            (newPos, assetInfos) = _handleAssets(program, pos, IRouter(routerAddress).getBridge(networkId, security), routerAddress);
+            (newPos, assetInfos) = _handleAssets(program, pos, routerAddress);
         }
+
+        address to = IRouter(routerAddress).getBridge(networkId, security);
+        for (uint256 count = 0; count < assetInfos.assetAddresses.length; count++){
+            IERC20(assetInfos.assetAddresses[count]).transfer(to, assetInfos.amounts[count]);
+        }
+
         IRouter(routerAddress).emitSpawn(
             origin.account,
             networkId,
@@ -944,9 +961,11 @@ library SDK {
         (, AssetInfos memory assetInfos) = _handleAssets(
             program,
             pos,
-            routerAddress,
             routerAddress
         );
+        for (uint256 count = 0; count < assetInfos.assetAddresses.length; count++){
+            IERC20(assetInfos.assetAddresses[count]).transfer(routerAddress, assetInfos.amounts[count]);
+        }
         assetAddresses = assetInfos.assetAddresses;
         assetAmounts = assetInfos.amounts;
     }
