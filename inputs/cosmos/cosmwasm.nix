@@ -4,7 +4,6 @@
       cosmwasm-check = pkgs.rustPlatform.buildRustPackage rec {
         pname = "cosmwasm-check";
         version = "0948715950151579aaba487944b630332d83e215";
-
         src = pkgs.fetchFromGitHub {
           owner = "CosmWasm";
           repo = "cosmwasm";
@@ -14,15 +13,6 @@
         cargoSha256 = "sha256-5ga1XQxy6I6plBDHbv3v9oZ3eBV3ue1HLQJrTpzZBTs=";
         doCheck = false;
         cargoCheckCommand = "true";
-      };
-    };
-    devShells = {
-      cosmwasm = pkgs.mkShell {
-        buildInputs = with self'.packages; [
-          subwasm
-          pkgs.binaryen
-          cosmwasm-check
-        ];
       };
     };
   };

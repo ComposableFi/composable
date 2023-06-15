@@ -41,8 +41,6 @@ digraph ics_xcvm {
         SubstrateIbcPalletInPicasso -> ChannelXcvmOnPicasso [label = "callbacks";];
     }
     
-    
-    
     subgraph cluster_juno {
         label = "Cosmos Juno";
         

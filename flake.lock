@@ -840,6 +840,21 @@
         "type": "github"
       }
     },
+    "process-compose-flake": {
+      "locked": {
+        "lastModified": 1686347752,
+        "narHash": "sha256-wmhPzXCt/uMNnw5FqvgDY3IMkO/YksHIyqdxWX7urNE=",
+        "owner": "Platonic-Systems",
+        "repo": "process-compose-flake",
+        "rev": "0d8b40edfa6954436af209504e05e7579547b066",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Platonic-Systems",
+        "repo": "process-compose-flake",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "arion-src": "arion-src",
@@ -855,6 +870,7 @@
         "nixpkgs": "nixpkgs_5",
         "nixpkgs-latest": "nixpkgs-latest",
         "npm-buildpackage": "npm-buildpackage",
+        "process-compose-flake": "process-compose-flake",
         "rust-overlay": "rust-overlay_3",
         "zombienet": "zombienet"
       }

@@ -8,20 +8,53 @@
       centauri-runtime-commit =
         builtins.elemAt (builtins.split "#" centauri-runtime-dep.source) 2;
 
-      hyperspace-picasso-kusama-config = {
+      hyperspace-picasso-kusama-config-base = {
         channel_whitelist = [ ];
-        client_id = "10-grandpa-0";
         commitment_prefix = "0x6962632f";
         finality_protocol = "Grandpa";
         connection_id = "connection-0";
         key_type = "sr25519";
         name = "picasso_1";
         para_id = 2087;
-        parachain_rpc_url = "ws://devnet-a:9988";
         private_key = "//Alice";
-        relay_chain_rpc_url = "ws://devnet-a:9944";
         ss58_version = 49;
         type = "picasso_kusama";
+      };
+
+      hyperspace-picasso-kusama-config = hyperspace-picasso-kusama-config-base
+        // {
+          parachain_rpc_url = "ws://devnet-a:9988";
+          relay_chain_rpc_url = "ws://devnet-a:9944";
+          client_id = "10-grandpa-0";
+        };
+
+      hyperspace-picasso-kusama-local = hyperspace-picasso-kusama-config-base
+        // {
+          parachain_rpc_url = "ws://127.0.0.1:9988";
+          relay_chain_rpc_url = "ws://127.0.0.1:9944";
+          client_id = "10-grandpa-0";
+        };
+
+      hyperspace-centauri-config = {
+        type = "cosmos";
+        name = "centauri";
+        rpc_url = "http://127.0.0.1:26657";
+        grpc_url = "http://127.0.0.1:9090";
+        websocket_url = "ws://127.0.0.1:26657/websocket";
+        chain_id = "centauri-dev";
+        client_id = "07-tendermint-0";
+        connection_id = "connection-0";
+        account_prefix = "centauri";
+        fee_denom = "ppica";
+        fee_amount = "15000";
+        gas_limit = 9223372036854775806;
+        store_prefix = "ibc";
+        max_tx_size = 20000000;
+        wasm_code_id =
+          "f5500c492b6c5fb91725535ad01cc0799c9e096d18f3f60f2c80a28b2f3b3312";
+        channel_whitelist = [ ];
+        mnemonic =
+          "bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort";
       };
 
       hyperspace-core-config = { prometheus_endpoint = "https://127.0.0.1"; };
@@ -44,14 +77,43 @@
 
       toDockerImage = package:
         self.inputs.bundlers.bundlers."${system}".toDockerImage package;
+
+      build-wasm = name: src:
+        crane.nightly.buildPackage (systemCommonRust.common-attrs // {
+          pname = name;
+          src = src;
+          cargoBuildCommand =
+            "cargo build --release --package ${name} --target wasm32-unknown-unknown";
+          RUSTFLAGS = "-C link-arg=-s";
+        });
+
+      build-optimized-wasm = name: src: file:
+        let wasm = build-wasm name src;
+        in pkgs.stdenv.mkDerivation {
+          name = name;
+          phases = [ "installPhase" ];
+          nativeBuildInputs =
+            [ pkgs.binaryen self'.packages.subwasm pkgs.hexdump ];
+          installPhase = ''
+            mkdir --parents $out/lib
+            wasm-opt ${wasm}/lib/${file}.wasm -o $out/lib/${file}.wasm -Os --strip-dwarf --debuginfo --mvp-features
+            gzip --stdout $out/lib/${file}.wasm > $out/lib/${file}.wasm.gz 
+            base64 --wrap=0 $out/lib/${file}.wasm.gz > $out/lib/${file}.wasm.gz.txt
+          '';
+        };
+
     in {
       packages = rec {
         centauri-src = pkgs.fetchFromGitHub {
           owner = "ComposableFi";
           repo = "centauri";
           rev = centauri-runtime-commit;
-          hash = "sha256-GJ0xGg44e+iidkTqeotTqPHMC0ymqDcrD6x/P+XGSUc=";
+          #hash = "sha256-GJ0xGg44e+iidkTqeotTqPHMC0ymqDcrD6x/P+XGSUc=";
+          hash = "sha256-qIsC8+b2OD7Wv/4jRSGQVirxNXSF0Vn8cOcQNIH5hDo=";
         };
+
+        ics10-grandpa-cw = build-optimized-wasm "ics10-grandpa-cw" centauri-src
+          "ics10_grandpa_cw";
 
         centauri-codegen = crane.stable.buildPackage (subnix.subenv // {
           name = "centauri-codegen";
@@ -151,6 +213,13 @@
         hyperspace-config-chain-b = pkgs.writeText "config-chain-b.toml"
           (self.inputs.nix-std.lib.serde.toTOML
             hyperspace-composable-polkadot-config);
+
+        hyperspace-config-chain-2 = pkgs.writeText "config-chain-2.toml"
+          (self.inputs.nix-std.lib.serde.toTOML hyperspace-centauri-config);
+
+        hyperspace-config-chain-3 = pkgs.writeText "config-chain-3.toml"
+          (self.inputs.nix-std.lib.serde.toTOML
+            hyperspace-picasso-kusama-local);
 
         hyperspace-config-core = pkgs.writeText "config-core.toml"
           (self.inputs.nix-std.lib.serde.toTOML hyperspace-core-config);

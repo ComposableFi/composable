@@ -4,6 +4,10 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-latest.url =
       "github:NixOS/nixpkgs/0135b7a556ee60144b143b071724fa44348a188e";
+    process-compose-flake = {
+      url = "github:Platonic-Systems/process-compose-flake";
+      inputs.nixpkgs.follows = "nixpkgs-latest";
+    };
 
     flake-parts.url = "github:hercules-ci/flake-parts";
     flake-utils.url = "github:numtide/flake-utils";
@@ -62,6 +66,7 @@
   outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
+        inputs.process-compose-flake.flakeModule
         ./code/benchmarks.nix
         ./code/common-deps.nix
         ./code/composable-nodes.nix
@@ -84,6 +89,7 @@
         ./flake/live.nix
         ./flake/overlays.nix
         ./flake/release.nix
+        ./flake/process-compose.nix
         ./flake/subxt.nix
         ./flake/zombienet.nix
         ./frontend/frontend.nix
