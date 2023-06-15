@@ -395,46 +395,6 @@ jobs:
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"              
 
-  build-product-darwin:
-    name: "build-product-darwin"
-    outputs:
-      ok: ${{ steps.ok.outputs.ok }}       
-    continue-on-error: false    
-    strategy:
-      matrix:
-        arch: [aarch64-darwin]
-    needs: 
-      - privilege-check
-    runs-on:
-      - ${{ matrix.arch }}
-    concurrency:
-      group: ${{ inputs.github_workflow }}-build-product-darwin-${{ github.event.pull_request.number || github.ref }}-${{ matrix.arch }}
-      cancel-in-progress: true
-    steps:            
-      - name: build-product-darwin
-        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
-        run: |
-          # mac has its own way of operating
-          uname -a
-          whoami
-          source /etc/static/bashrc
-          nix --version
-          cachix --version
-          cachix use composable-community
-          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
-          git --version
-          rm -rf composable          
-          git clone https://github.com/$GITHUB_REPOSITORY.git
-          (
-            cd composable
-            SOURCE_SHA="${{ inputs.github_event_pull_request_head_sha || github.sha }}"
-            git checkout $SOURCE_SHA
-            nix build .#devnet-picasso
-            nix-store --query --references $(realpath result) | xargs nix-store --realise | xargs nix-store  --query --requisites | cachix push --compression-level 16 --compression-method zstd --jobs 16 composable-community
-          )
-      - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT"
-
   build-all-docs-packages:
     outputs:
       ok: ${{ steps.ok.outputs.ok }}    
@@ -495,7 +455,6 @@ jobs:
         - build-all-production-deps
         - dependency-review
         - nix-flake-check
-        - build-product-darwin
         - devnet-integration-tests
       steps:           
         - run: |
@@ -506,14 +465,13 @@ jobs:
            echo "build-all-docs-packages" ${{ needs.build-all-docs-packages.outputs.ok }}
            echo "build-all-ci-packages" ${{ needs.build-all-ci-packages.outputs.ok }}
            echo "build-all-rust-qa-packages" ${{ needs.build-all-rust-qa-packages.outputs.ok }}
-           echo "build-product-darwin" ${{ needs.build-product-darwin.outputs.ok }}
            echo "devnet-integration-tests" ${{ needs.devnet-integration-tests.outputs.ok  }}
-           echo "${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.build-product-darwin.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' }}"
-        - if: ${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.build-product-darwin.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' }}
+           echo "${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' }}"
+        - if: ${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' }}
           run: |
             echo "All dependencies built well"
             exit 0
-        - if: ${{ !(needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.build-product-darwin.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true') }}
+        - if: ${{ !(needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true') }}
           run: |
             echo "Some of dependencies (see jobs graph or needs attribute) failed to build"      
             exit 42
