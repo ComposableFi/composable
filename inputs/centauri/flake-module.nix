@@ -33,6 +33,27 @@
         type = "picasso_kusama";
       };
 
+      hyperspace-centauri-config =
+        {
+          type = "cosmos";
+          name = "centauri";
+          rpc_url = "http://127.0.0.1:26657";
+          grpc_url = "http://127.0.0.1:9090";
+          websocket_url = "ws://127.0.0.1:26657";
+          chain_id = "centauri-dev";
+          client_id = "07-tendermint-32";
+          connection_id = "connection-0";
+          account_prefix = "centauri";
+          fee_denom = "ppica";
+          fee_amount = "15000";
+          gas_limit = 9223372036854775806;
+          store_prefix = "ibc";
+          max_tx_size = 20000000;
+          wasm_code_id = "a7c1996d22a2f49fc1f223ba0cbf36ec0e9ac84539845eae1138ad5a03e1d136";
+          channel_whitelist = [ ];
+          mnemonic = "bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort";
+        };
+
       hyperspace-core-config = { prometheus_endpoint = "https://127.0.0.1"; };
 
       hyperspace-composable-polkadot-config = {
@@ -59,15 +80,15 @@
         src = src;
         cargoBuildCommand =
           "cargo build --release --package ${name} --target wasm32-unknown-unknown";
-          RUSTFLAGS="-C link-arg=-s";
+        RUSTFLAGS = "-C link-arg=-s";
       });
 
-      build-optimized-wasm = name: src: file : 
+      build-optimized-wasm = name: src: file:
         let wasm = build-wasm name src;
         in pkgs.stdenv.mkDerivation {
           name = name;
           phases = [ "installPhase" ];
-          nativeBuildInputs = [ pkgs.binaryen self'.packages.subwasm pkgs.hexdump];
+          nativeBuildInputs = [ pkgs.binaryen self'.packages.subwasm pkgs.hexdump ];
           installPhase = ''
             mkdir --parents $out/lib
             wasm-opt ${wasm}/lib/${file}.wasm -o $out/lib/${file}.wasm -Os --strip-dwarf --debuginfo --mvp-features
@@ -187,6 +208,14 @@
         hyperspace-config-chain-b = pkgs.writeText "config-chain-b.toml"
           (self.inputs.nix-std.lib.serde.toTOML
             hyperspace-composable-polkadot-config);
+
+        hyperspace-config-chain-2 = pkgs.writeText "config-chain-2.toml"
+          (self.inputs.nix-std.lib.serde.toTOML
+            hyperspace-centauri-config);
+
+        hyperspace-config-chain-3 = pkgs.writeText "config-chain-3.toml"
+          (self.inputs.nix-std.lib.serde.toTOML
+            hyperspace-picasso-kusama-config);
 
         hyperspace-config-core = pkgs.writeText "config-core.toml"
           (self.inputs.nix-std.lib.serde.toTOML hyperspace-core-config);
