@@ -27,8 +27,11 @@
           yarn
           zombienet
           yq
-
+          gex
           openssl
+          binaryen   
+          cosmwasm-check      
+          jq             
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;
@@ -39,28 +42,17 @@
           inherit env;
         }];
       };
-      cosmosattrs = defaultattrs // {
-        modules = [{
-          packages = tools ++ (with self'.packages; [ gex ]);
-          devcontainer.enable = true;
-          inherit env;
-        }];
-      };
       allattrs = defaultattrs // {
         modules = [{
           packages = tools ++ (with pkgs;
             with self'.packages; [
-              bacon
-              binaryen
+              bacon              
               devenv
-              gex
               google-cloud-sdk
-              jq
               lldb
               llvmPackages_latest.bintools
               llvmPackages_latest.lld
               llvmPackages_latest.llvm
-
               nodePackages.typescript
               nodePackages.typescript-language-server
               openssl
@@ -69,21 +61,26 @@
               qemu
               taplo
               xorriso
-              zlib.out
+              zlib.out              
             ]);
           devcontainer.enable = true;
           inherit env;
         }];
       };
-    in {
+    in
+    {
       packages = {
         devenv = self.inputs.devenv.packages.${system}.devenv;
         devprofile = pkgs.linkFarmFromDrvs "devprofile" tools;
       };
       devShells = {
         default = self.inputs.devenv.lib.mkShell defaultattrs;
-        cosmos = self.inputs.devenv.lib.mkShell cosmosattrs;
         all = self.inputs.devenv.lib.mkShell allattrs;
+        xc = pkgs.mkShell {
+          buildInputs = tools ++  (with self'.packages; [            
+            centaurid
+          ]);
+        };
       };
     };
 }
