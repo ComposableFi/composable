@@ -31,7 +31,8 @@
           openssl
           binaryen   
           cosmwasm-check      
-          jq             
+          jq       
+          websocat      
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;

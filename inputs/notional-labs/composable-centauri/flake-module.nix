@@ -16,8 +16,7 @@
       validator-mnemonic = "bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort";
       gov = {
         account = "centauri10d07y265gmmuvt4z0w9aw880jnsr700j7g7ejq";
-        heightDelta      = 20;
-        voting_period     = "30s";
+        voting_period     = "20s";
         max_deposit_period = "10s" ;               
       };
       name = "centaurid";
@@ -105,18 +104,20 @@
             # centaurid query bank balances ${validator} --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA"
             # centaurid query bank balances centauri1cyyzpxplxdzkeea7kwsydadg87357qnamvg3y3 --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA"            
             
-            echo "=============== SUBMIT PROPOSAL"
+            echo "=============== SUBMIT PROPOSAL ========"
             centaurid tx gov submit-proposal ${ics10-grandpa-cw-proposal}/ics10_grandpa_cw.wasm.json --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json
             sleep 5          
-            date
+            
+            echo "=============== VOTE PROPOSAL ========="
             PROPOSAL_ID=1
             centaurid tx gov vote $PROPOSAL_ID yes --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json
-            sleep 30
-            date
-            centaurid query gov proposals --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA"
-            sleep 10
-            date
-            centaurid query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CENTAURI_DATA" --output json --node tcp://localhost:26657
+            sleep 20
+            echo "=============== GET PROPOSAL ========="
+            centaurid query gov proposal $PROPOSAL_ID --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA" |
+            jq '.status'
+            sleep 5
+            echo "=============== GET WASM ========="
+            centaurid query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CENTAURI_DATA" --output json --node tcp://localhost:26657 | jq '.code_ids[0]' | tee "$CENTAURI_DATA/code_id"
           '';
         };
 

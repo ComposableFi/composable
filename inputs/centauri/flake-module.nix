@@ -45,9 +45,9 @@
         {
           type = "cosmos";
           name = "centauri";
-          rpc_url = "http://127.0.0.1:26657";
+          rpc_url = "http://127.0.0.1:1317";
           grpc_url = "http://127.0.0.1:9090";
-          websocket_url = "ws://127.0.0.1:1317";
+          websocket_url = "ws://127.0.0.1:26657";
           chain_id = "centauri-dev";
           client_id = "07-tendermint-32";
           connection_id = "connection-0";
