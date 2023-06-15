@@ -52,6 +52,7 @@ buildpackage
 buildx
 cachix
 cdylib
+centaurid
 charlie
 cheatcode
 cheatcodes
@@ -134,6 +135,7 @@ gpgsign
 graphviz
 grep
 growmemory
+grpcurl
 gsutil
 hadolint
 hardfork
@@ -352,6 +354,7 @@ sload
 smallvec
 smoldot
 snackbars
+soketto
 solhint
 sparkline
 sproof
