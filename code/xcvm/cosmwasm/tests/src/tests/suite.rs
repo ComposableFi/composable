@@ -282,6 +282,26 @@ fn to_canonical(account: Account) -> CanonicalAddr {
 		.into()
 }
 
+/// Loads compiled WASM contracts used in tests.
+///
+/// Firstly, loads CosmWasm contracts implementing XCVM.  Those are read from
+/// `target/wasm32-unknown-unknown/cosmwasm-contracts` directory.  The
+/// expectation is that **the user will compile the contracts** prior to running
+/// the tests.  This can be done by executing `build-contracts.sh` script.
+///
+/// Alternatively, location of those contract files can be specified via
+/// corresponding `CW_XC_xxx` environment variables (see function body for exact
+/// variable names and which contracts the map to).
+///
+/// **Note**: The downside of this approach is that the contracts aren’t
+/// automatically rebuilt if any of the contracts (or their dependencies) is
+/// edited.  It is user’s responsibility to do it.
+///
+/// Secondly, loads `cw20_base.wasm` contract from `$OUT_DIR`.  The expectation
+/// is that Cargo build script downloaded that contract and puts it in the
+/// output directory.  However, when running on CI, the build script won’t
+/// download the file and instead its location must be specified via `CW20`
+/// environment variable.
 fn load_contracts() -> XCVMContracts {
 	fn read(path: impl std::convert::AsRef<std::path::Path>) -> Vec<u8> {
 		fn imp(path: &std::path::Path) -> Vec<u8> {
@@ -290,10 +310,27 @@ fn load_contracts() -> XCVMContracts {
 		imp(path.as_ref())
 	}
 
-	let code_asset_registry = read(std::env::var_os("CW_XCVM_ASSET_REGISTRY").unwrap());
-	let code_interpreter = read(std::env::var_os("CW_XCVM_INTERPRETER").unwrap());
-	let code_router = read(std::env::var_os("CW_XCVM_ROUTER").unwrap());
-	let code_gateway = read(std::env::var_os("CW_XCVM_GATEWAY").unwrap());
+	// TODO(mina86): Figure out a better way of handling this where contracts
+	// are automatically rebuilt when they are changed.  Build script doesn’t
+	// solve the issue since `cargo:rerun-if-changed` mechanism is insufficient
+	// to catch dependencies in the contract.  Perhaps it makes sense to always
+	// build the contracts?  Presumably if they were not changed, `cargo build`
+	// will be quick.
+	fn read_contract(env: &str, filename: &str) -> Vec<u8> {
+		let contracts_dir = std::path::Path::new(concat!(
+			env!("CARGO_MANIFEST_DIR"),
+			"/../../target/wasm32-unknown-unknown/cosmwasm-contracts",
+		));
+		match std::env::var_os(env) {
+			Some(path) => read(path),
+			None => read(contracts_dir.join(filename)),
+		}
+	}
+
+	let code_asset_registry = read_contract("CW_XC_ASSET_REGISTRY", "cw_xc_asset_registry.wasm");
+	let code_interpreter = read_contract("CW_XC_INTERPRETER", "cw_xc_interpreter.wasm");
+	let code_router = read_contract("CW_XC_ROUTER", "cw_xc_router.wasm");
+	let code_gateway = read_contract("CW_XC_GATEWAY", "cw_xc_gateway.wasm");
 
 	// When running the test locally, the cw20_base.wasm file is downloaded by
 	// the Build script (see build.rs).  However, on CI when running under NIX
