@@ -15,7 +15,7 @@
             depends_on."centauri".condition = "process_healthy";
           };
           picasso = {
-            command = self'.packages.zombienet-rococo-local-picasso-dev;       
+            command = self'.packages.zombienet-rococo-local-picasso-dev;
           };
           hyperspace = {
             command = ''
