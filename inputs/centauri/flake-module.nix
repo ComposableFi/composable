@@ -51,7 +51,8 @@
         store_prefix = "ibc";
         max_tx_size = 20000000;
         wasm_code_id =
-          "f5500c492b6c5fb91725535ad01cc0799c9e096d18f3f60f2c80a28b2f3b3312";
+          "0000000000000000000000000000000000000000000000000000000000000000";
+
         channel_whitelist = [ ];
         mnemonic =
           "bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort";
@@ -108,11 +109,18 @@
           owner = "ComposableFi";
           repo = "centauri";
           rev = centauri-runtime-commit;
-          #hash = "sha256-GJ0xGg44e+iidkTqeotTqPHMC0ymqDcrD6x/P+XGSUc=";
           hash = "sha256-qIsC8+b2OD7Wv/4jRSGQVirxNXSF0Vn8cOcQNIH5hDo=";
         };
 
-        ics10-grandpa-cw = build-optimized-wasm "ics10-grandpa-cw" centauri-src
+        ics10-grandpa-cw-src = pkgs.fetchFromGitHub {
+          owner = "ComposableFi";
+          repo = "centauri";
+          rev = "ba900536b2fcca7775b4eafe788695a6e8706899";
+          hash = "sha256-AsR56qZus9geWZqaUcCp6NiEZ43NgoZ+rBnV9iWnwTQ=";
+        };
+
+        ics10-grandpa-cw =
+          build-optimized-wasm "ics10-grandpa-cw" ics10-grandpa-cw-src
           "ics10_grandpa_cw";
 
         centauri-codegen = crane.stable.buildPackage (subnix.subenv // {

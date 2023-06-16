@@ -99,7 +99,7 @@
           jq '.status'
           sleep 5
           echo "=============== GET WASM ========="
-          centaurid query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CENTAURI_DATA" --output json --node tcp://localhost:26657 | jq '.code_ids[0]' | tee "$CENTAURI_DATA/code_id"
+          centaurid query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CENTAURI_DATA" --output json --node tcp://localhost:26657 | jq '.code_ids[0]' --raw-output | tee "$CENTAURI_DATA/code_id"
         '';
       };
 
