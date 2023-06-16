@@ -43,7 +43,7 @@ The chain needs to make sure that permissionless assets can be transferred to ac
 #### orml tokens pallet EDs
 Currently assets are being stored in orml tokens pallet which require Existential Deposits for stored assets. 
 
-**Potential Solution**: for non sufficient assets still provide Existential Deposit parameter which is similar to minimum balance in Asset Hub implementation. Then the Exitstential logic for orml tokens pallet will stay the same because account wont be able to hold a non sufficient asset without ED in parachain's native token. This will require a new field in AssetsRegistry: is_sufficient. All permissionless assets will have this field to be false by default. Assets created via permissioned extrinsic will allow to choose if asset is sufficient or not. Asset's sufficiency can be changed by governance.
+**Potential Solution**: for non sufficient assets still provide non-zero Existential Deposit parameter which is similar to minimum balance in Asset Hub implementation. Then the Exitstential logic for orml tokens pallet will stay the same because account wont be able to hold a non sufficient asset without ED in parachain's native token. This will require a new field in AssetsRegistry: is_sufficient. All permissionless assets will have this field to be false by default. Assets created via permissioned extrinsic will allow to choose if asset is sufficient or not. Asset's sufficiency can be changed by governance.
 
 
 ## Updated extrinsics
