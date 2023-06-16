@@ -152,7 +152,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	XcmPassthrough<RuntimeOrigin>,
 );
 
-pub type LocalAssetTransactor = MultiCurrencyAdapter<
+pub type LocalAssetTransactor = MultiCurrencyAdapterWrapper<
 	crate::Assets,
 	UnknownTokens,
 	IsNativeConcrete<CurrencyId, AssetsIdConverter>,
@@ -163,7 +163,7 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	DepositToAlternative<TreasuryAccount, Tokens, CurrencyId, AccountId, Balance>,
 >;
 
-struct MultiCurrencyAdapterWrapper<
+pub struct MultiCurrencyAdapterWrapper<
 MultiCurrency,
 UnknownAsset,
 Match,
