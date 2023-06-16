@@ -67,3 +67,11 @@ extrinsic `permissionless_assets.update_asset`  will check that caller of the ex
 `pub type MintAdmin<T:Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::AccountId, OptionQuery>;`
 
 extrinsics `permissionless_assets.mint` and `permissionless_assets.burn` will check that caller of the extrinsic is an assets' admin and if so will use `AssetsTransactorRouter`'s `fungibles::Mutate` trait's `mint_into` or `burn_from` methods. This storage item will be populated on `create_cw_asset` extrinsic call.
+
+# References
+
+* [Statemine Ed](https://substrate.stackexchange.com/questions/5917/do-assets-from-the-asset-pallet-on-statemine-mint-have-an-existential-deposi/5923#5923)
+* [Control sufficiency via system pallet](https://substrate.stackexchange.com/questions/2447/influence-of-existential-deposits-on-account-assets)
+* [Account Structure to Implement nonsufficient assets](https://docs.substrate.io/reference/account-data-structures/)
+* [More Statemine ED details](https://substrate.stackexchange.com/questions/6522/does-holding-only-sufficient-asset-in-statemint-imply-there-is-no-ed-for-the-acc/6524#6524)
+* [ED dust cleanup](https://substrate.stackexchange.com/questions/3482/how-does-substrate-clean-up-accounts-whose-balance-is-below-the-existential-depo)
