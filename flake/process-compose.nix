@@ -45,13 +45,7 @@
               COMPOSABLE_DATA=/tmp/composable-devnet/
               HYPERSPACE_DATA="$COMPOSABLE_DATA/hyperspace"
               RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace"
-              export RUST_LOG
-              mkdir --parents "$COMPOSABLE_DATA"
-              mkdir --parents "$HYPERSPACE_DATA"
-
-              cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-2} $HYPERSPACE_DATA/config-chain-2.toml  
-              cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-3} $HYPERSPACE_DATA/config-chain-3.toml  
-              cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-core} $HYPERSPACE_DATA/config-core.toml                
+              export RUST_LOG      
               ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a $HYPERSPACE_DATA/config-chain-3.toml --config-b $HYPERSPACE_DATA/config-chain-2.toml --config-core $HYPERSPACE_DATA/config-core.toml --delay-period 10
             '';
             log_location = "/tmp/composable-devnet/hyperspace/connection.txt";
@@ -66,12 +60,6 @@
               HYPERSPACE_DATA="$COMPOSABLE_DATA/hyperspace"
               RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace"
               export RUST_LOG
-              mkdir --parents "$COMPOSABLE_DATA"
-              mkdir --parents "$HYPERSPACE_DATA"
-
-              cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-2} $HYPERSPACE_DATA/config-chain-2.toml  
-              cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-3} $HYPERSPACE_DATA/config-chain-3.toml  
-              cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-core} $HYPERSPACE_DATA/config-core.toml                
               ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a $HYPERSPACE_DATA/config-chain-3.toml --config-b $HYPERSPACE_DATA/config-chain-2.toml --config-core $HYPERSPACE_DATA/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
             '';
             log_location = "/tmp/composable-devnet/hyperspace/channels.txt";
@@ -87,12 +75,6 @@
               HYPERSPACE_DATA="$COMPOSABLE_DATA/hyperspace"
               RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace"
               export RUST_LOG
-              mkdir --parents "$COMPOSABLE_DATA"
-              mkdir --parents "$HYPERSPACE_DATA"
-
-              cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-2} $HYPERSPACE_DATA/config-chain-2.toml  
-              cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-3} $HYPERSPACE_DATA/config-chain-3.toml  
-              cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-core} $HYPERSPACE_DATA/config-core.toml                
               ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a $HYPERSPACE_DATA/config-chain-3.toml --config-b $HYPERSPACE_DATA/config-chain-2.toml --config-core $HYPERSPACE_DATA/config-core.toml --delay-period 10
             '';
             log_location = "/tmp/composable-devnet/hyperspace/relay.txt";
