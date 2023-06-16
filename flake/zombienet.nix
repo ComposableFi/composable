@@ -6,7 +6,7 @@
         chain = "rococo-local";
         default_command =
           pkgs.lib.meta.getExe self'.packages.polkadot-node-from-dep;
-        count = 3;
+        count = 2;
       };
 
       overrideZombienet = with prelude;
@@ -73,7 +73,7 @@
           command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
           chain = "statemine-local";
           id = 1000;
-          collators = 2;
+          collators = 1;
           ws_port = 10008;
           rpc_port = 32220;
           genesis = {
