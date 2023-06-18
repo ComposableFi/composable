@@ -1,0 +1,63 @@
+[package]
+authors = ["Composable Developers"]
+description = "Provides reward mechanism for LP tokens"
+edition = "2021"
+homepage = "https://composable.finance"
+name = "pallet-xcm-ibc"
+version = "1.0.0"
+
+
+[dependencies]
+log = { version = "0.4.14", default-features = false }
+serde = { version = "1.0.137", default-features = false, features = [
+  "derive",
+], optional = true }
+codec = { default-features = false, features = [
+  "derive",
+  "max-encoded-len",
+], package = "parity-scale-codec", version = "3.0.0" }
+scale-info = { version = "2.1.1", default-features = false, features = [
+  "derive",
+] }
+
+# Substrate dependencies
+sp-arithmetic = { default-features = false, workspace = true }
+sp-core = { default-features = false, workspace = true }
+sp-io = { default-features = false, workspace = true }
+sp-runtime = { default-features = false, workspace = true }
+sp-std = { default-features = false, workspace = true }
+
+frame-support = { default-features = false, workspace = true }
+frame-system = { default-features = false, workspace = true }
+frame-benchmarking = { default-features = false, workspace = true, optional = true }
+composable-support = { path = "../composable-support", default-features = false }
+
+
+[dev-dependencies]
+pallet-timestamp = { workspace = true }
+rand = "0.8.3"
+frame-benchmarking = { default-features = false, workspace = true }
+
+[features]
+default = ["std"]
+std = [
+  "log/std",
+  "serde",
+  "codec/std",
+
+  "sp-arithmetic/std",
+  "sp-core/std",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
+
+  "frame-support/std",
+  "frame-system/std",
+  "frame-benchmarking/std",
+]
+
+runtime-benchmarks = [
+  "frame-benchmarking",
+  "frame-support/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+]
