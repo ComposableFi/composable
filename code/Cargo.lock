@@ -9766,6 +9766,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-xcm-ibc"
+version = "1.0.0"
+dependencies = [
+ "composable-support",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log 0.4.17",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rand 0.8.5",
+ "scale-info",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 5.0.0",
+]
+
+[[package]]
 name = "parachain-info"
 version = "0.1.0"
 source = "git+https://github.com/paritytech//cumulus?rev=d6eef144421ef5c3f339f681484d06bb729dfa82#d6eef144421ef5c3f339f681484d06bb729dfa82"
