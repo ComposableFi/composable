@@ -161,6 +161,7 @@ pub type LocalAssetTransactor = MultiCurrencyAdapterWrapper<
 	CurrencyId,
 	AssetsIdConverter,
 	DepositToAlternative<TreasuryAccount, Tokens, CurrencyId, AccountId, Balance>,
+	PalletXcmIbc
 >;
 
 pub struct MultiCurrencyAdapterWrapper<
@@ -172,6 +173,7 @@ AccountIdConvert,
 CurrencyId,
 CurrencyIdConvert,
 DepositFailureHandler,
+MultiCurrencyCallback
 >(
 PhantomData<(
 	MultiCurrency,
@@ -182,8 +184,21 @@ PhantomData<(
 	CurrencyId,
 	CurrencyIdConvert,
 	DepositFailureHandler,
+	MultiCurrencyCallback
 )>,
 );
+
+pub trait MultiCurrencyCallback{
+	fn deposit_asset(asset: &MultiAsset, location: &MultiLocation, context: &XcmContext, deposit_result : xcm::v3::Result){
+		//check result, unwrap memo if exists and execute ibc packet
+	}
+}
+
+pub struct PalletXcmIbc;
+
+impl MultiCurrencyCallback for PalletXcmIbc{
+	
+}
 
 impl<
 		MultiCurrency: orml_traits::MultiCurrency<AccountId, CurrencyId = CurrencyId>,
@@ -194,6 +209,7 @@ impl<
 		CurrencyId: FullCodec + Eq + PartialEq + Copy + MaybeSerializeDeserialize + sp_std::fmt::Debug,
 		CurrencyIdConvert: Convert<MultiAsset, Option<CurrencyId>>,
 		DepositFailureHandler: orml_xcm_support::OnDepositFail<CurrencyId, AccountId, MultiCurrency::Balance>,
+		DepositCallback: MultiCurrencyCallback
 	> xcm_executor::traits::TransactAsset
 	for MultiCurrencyAdapterWrapper<
 		MultiCurrency,
@@ -204,10 +220,11 @@ impl<
 		CurrencyId,
 		CurrencyIdConvert,
 		DepositFailureHandler,
+		DepositCallback
 	>
 {
 	fn deposit_asset(asset: &MultiAsset, location: &MultiLocation, context: &XcmContext) -> xcm::v3::Result {
-		MultiCurrencyAdapter::<
+		let result = MultiCurrencyAdapter::<
 		MultiCurrency,
 		UnknownAsset,
 		Match,
@@ -216,7 +233,9 @@ impl<
 		CurrencyId,
 		CurrencyIdConvert,
 		DepositFailureHandler,
-		>::deposit_asset(asset, location, context)
+		>::deposit_asset(asset, location, context);
+		DepositCallback::deposit_asset(asset, location, context, result);
+		result
 	}
 
 	fn withdraw_asset(
