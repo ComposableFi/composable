@@ -1927,6 +1927,7 @@ dependencies = [
  "pallet-utility",
  "pallet-vault",
  "pallet-xcm",
+ "pallet-xcm-ibc",
  "parachain-info",
  "parity-scale-codec",
  "polkadot-parachain",
@@ -9784,6 +9785,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std 5.0.0",
+ "xcm",
 ]
 
 [[package]]

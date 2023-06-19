@@ -75,6 +75,7 @@ system-rpc-runtime-api = { default-features = false, workspace = true }
 transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", path = "../../frame/transaction-payment/rpc/runtime-api", default-features = false }
 assets-runtime-api = { path = '../../frame/assets/runtime-api', default-features = false }
 crowdloan-rewards-runtime-api = { path = '../../frame/crowdloan-rewards/runtime-api', default-features = false }
+pallet-xcm-ibc = { path = "../../frame/pallet-xcm-ibc", default-features = false }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
 ] }
@@ -227,4 +228,5 @@ std = [
   "pallet-xcm/std",
   "composable-traits/std",
   "asset-tx-payment/std",
+  "pallet-xcm-ibc/std"
 ]
