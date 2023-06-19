@@ -440,6 +440,10 @@ parameter_types! {
 	pub const MinCandidates: u32 = 5;
 }
 
+impl pallet_xcm_ibc::Config for Runtime{
+	type RuntimeEvent = RuntimeEvent;
+}
+
 impl collator_selection::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
@@ -668,6 +672,8 @@ construct_runtime!(
 
 		Ibc: pallet_ibc = 190,
 		Ics20Fee: pallet_ibc::ics20_fee = 191,
+
+		PalletXcmIbc: pallet_xcm_ibc = 192,
 
 	}
 );

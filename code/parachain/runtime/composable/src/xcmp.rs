@@ -6,6 +6,7 @@ use frame_support::{
 	log, parameter_types,
 	traits::{Everything, Nothing, OriginTrait},
 };
+use pallet_xcm_ibc::MultiCurrencyCallback;
 use orml_traits::{
 	location::{AbsoluteReserveProvider, RelativeReserveProvider},
 	parameter_type_with_key,
@@ -187,18 +188,6 @@ PhantomData<(
 	MultiCurrencyCallback
 )>,
 );
-
-pub trait MultiCurrencyCallback{
-	fn deposit_asset(asset: &MultiAsset, location: &MultiLocation, context: &XcmContext, deposit_result : xcm::v3::Result){
-		//check result, unwrap memo if exists and execute ibc packet
-	}
-}
-
-pub struct PalletXcmIbc;
-
-impl MultiCurrencyCallback for PalletXcmIbc{
-	
-}
 
 impl<
 		MultiCurrency: orml_traits::MultiCurrency<AccountId, CurrencyId = CurrencyId>,

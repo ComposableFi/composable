@@ -21,6 +21,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 ] }
 
 # Substrate dependencies
+xcm = { workspace = true, default-features = false }
 sp-arithmetic = { default-features = false, workspace = true }
 sp-core = { default-features = false, workspace = true }
 sp-io = { default-features = false, workspace = true }
