@@ -8,7 +8,7 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::system::CUSTOM_CONTRACT_EVENT_PREFIX;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
-use cw_xc_asset_registry::contract::XCVM_ASSET_REGISTRY_EVENT_PREFIX;
+
 use cw_xc_common::gateway::EVENT_PREFIX as XCVM_GATEWAY_EVENT_PREFIX;
 use cw_xc_interpreter::contract::XCVM_INTERPRETER_EVENT_PREFIX;
 use cw_xc_utils::{DefaultXCVMProgram, Salt};
@@ -326,7 +326,6 @@ fn load_contracts() -> XCVMContracts {
 		}
 	}
 
-	let code_asset_registry = read_contract("CW_XCVM_ASSET_REGISTRY", "cw_xc_asset_registry.wasm");
 	let code_interpreter = read_contract("CW_XCVM_INTERPRETER", "cw_xc_interpreter.wasm");
 	let code_gateway = read_contract("CW_XCVM_GATEWAY", "cw_xc_gateway.wasm");
 
@@ -340,7 +339,7 @@ fn load_contracts() -> XCVMContracts {
 		read(concat!(env!("OUT_DIR"), "/cw20_base.wasm"))
 	};
 
-	XCVMContracts::new(code_asset_registry, code_interpreter, code_gateway, code_cw20)
+	XCVMContracts::new(code_interpreter, code_gateway, code_cw20)
 }
 
 fn create_vm<N: Network>() -> TestVM<()> {
@@ -419,13 +418,14 @@ fn xcvm_assert_prefixed_event<'a>(
 	assert_event(events, &format!("{CUSTOM_CONTRACT_EVENT_PREFIX}{ty}"), key, value);
 }
 
+#[track_caller]
 fn assert_event<'a>(
 	events: impl Iterator<Item = &'a Event> + Clone,
 	ty: &str,
 	key: &str,
 	value: &str,
 ) {
-	let attr = find_events(events.clone(), format!("{ty}"))
+	let attr = find_events(events.clone(), ty)
 		.find(|e| find_attr(e.attributes.iter(), key).filter(|a| a.value == value).is_some());
 	assert_matches!(
 		attr,
@@ -452,22 +452,22 @@ fn xcvm_deploy_asset<A: Asset + AssetSymbol, T>(
 			Some(MinterResponse { minter: gateway.into(), cap: None }),
 		)
 		.expect(&format!("Must be able to instantiate and register {symbol} asset"));
-	assert_eq!(events.registry_data, None);
+	assert_eq!(events.gateway_data, None);
 	xcvm_assert_prefixed_event(
-		events.registry_events.iter(),
-		XCVM_ASSET_REGISTRY_EVENT_PREFIX,
+		events.gateway_events.iter(),
+		XCVM_GATEWAY_EVENT_PREFIX,
 		"action",
 		"register",
 	);
 	xcvm_assert_prefixed_event(
-		events.registry_events.iter(),
-		XCVM_ASSET_REGISTRY_EVENT_PREFIX,
+		events.gateway_events.iter(),
+		XCVM_GATEWAY_EVENT_PREFIX,
 		"asset_id",
 		&A::ID.0 .0.to_string(),
 	);
 	xcvm_assert_prefixed_event(
-		events.registry_events.iter(),
-		XCVM_ASSET_REGISTRY_EVENT_PREFIX,
+		events.gateway_events.iter(),
+		XCVM_GATEWAY_EVENT_PREFIX,
 		"denom",
 		&format!("cw20:{}", asset_address),
 	);
@@ -485,14 +485,7 @@ mod base {
 		let (_, events) = create_vm::<Picasso>()
 			.deploy_xcvm::<()>(tx)
 			.expect("Must be able to deploy XCVM contracts.");
-		assert_eq!(events.registry_data, None);
 		assert_eq!(events.gateway_data, None);
-		xcvm_assert_prefixed_event(
-			events.registry_events.iter(),
-			XCVM_ASSET_REGISTRY_EVENT_PREFIX,
-			"action",
-			"instantiated",
-		);
 		// The gateway must deploy the router.
 		xcvm_assert_prefixed_event(
 			events.gateway_events.iter(),
@@ -528,7 +521,7 @@ mod base {
 			deploy_and_register_assets::<PICA>(admin, arbitrary_sender),
 			Err(TestError::Vm(VmError::VMError(WasmiVMError::SystemError(
 				SystemError::ContractExecutionFailure(
-					"Caller is not authenticated to take the action".into()
+					"Caller is not authorised to take this action.".into()
 				)
 			))))
 		);
@@ -545,13 +538,13 @@ mod base {
 		}
 
 		#[test]
-		fn test_asset_registry_arbitrary_user_cannot_register_asset(admin in account(), arbitrary_sender in account()) {
+		fn test_arbitrary_user_cannot_register_asset(admin in account(), arbitrary_sender in account()) {
 		  prop_assume!(admin != arbitrary_sender);
 		  arbitrary_user_cannot_register_asset(admin, arbitrary_sender);
 		}
 
 		#[test]
-		fn test_asset_registry_admin_can_register_asset(admin in account()) {
+		fn test_admin_can_register_asset(admin in account()) {
 		  admin_can_register_asset(admin)
 		}
 	}

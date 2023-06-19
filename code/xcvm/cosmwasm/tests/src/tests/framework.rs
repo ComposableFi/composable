@@ -8,15 +8,13 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::system::CosmwasmCodeId;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
-use cw_xc_asset_registry::msg::AssetReference;
 use cw_xc_utils::{DefaultXCVMProgram, Salt};
 use std::{collections::HashMap, hash::Hash};
 use xc_core::{Asset, AssetId, AssetSymbol, Funds, Network, NetworkId};
 
-pub const XCVM_ASSET_REGISTRY_CODE: CosmwasmCodeId = 0;
-pub const XCVM_INTERPRETER_CODE: CosmwasmCodeId = 1;
-pub const XCVM_GATEWAY_CODE: CosmwasmCodeId = 2;
-pub const XCVM_CW20_CODE: CosmwasmCodeId = 3;
+pub const XCVM_INTERPRETER_CODE: CosmwasmCodeId = 0;
+pub const XCVM_GATEWAY_CODE: CosmwasmCodeId = 1;
+pub const XCVM_CW20_CODE: CosmwasmCodeId = 2;
 pub const RESERVED_CODE_LIMIT: CosmwasmCodeId = XCVM_CW20_CODE;
 
 pub type TestDispatch = Dispatch;
@@ -39,8 +37,6 @@ pub struct BlockchainTransaction {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XCVMDeploymentEvents {
-	pub registry_data: Option<Binary>,
-	pub registry_events: Vec<Event>,
 	pub gateway_data: Option<Binary>,
 	pub gateway_events: Vec<Event>,
 }
@@ -49,8 +45,8 @@ pub struct XCVMDeploymentEvents {
 pub struct XCVMRegisterAssetEvents {
 	pub asset_data: Option<Binary>,
 	pub asset_events: Vec<Event>,
-	pub registry_data: Option<Binary>,
-	pub registry_events: Vec<Event>,
+	pub gateway_data: Option<Binary>,
+	pub gateway_events: Vec<Event>,
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -66,20 +62,14 @@ impl From<VmError> for TestError {
 }
 
 pub struct XCVMContracts {
-	asset_registry: Vec<u8>,
 	interpreter: Vec<u8>,
 	gateway: Vec<u8>,
 	cw20: Vec<u8>,
 }
 
 impl XCVMContracts {
-	pub fn new(
-		asset_registry: Vec<u8>,
-		interpreter: Vec<u8>,
-		gateway: Vec<u8>,
-		cw20: Vec<u8>,
-	) -> Self {
-		Self { asset_registry, interpreter, gateway, cw20 }
+	pub fn new(interpreter: Vec<u8>, gateway: Vec<u8>, cw20: Vec<u8>) -> Self {
+		Self { interpreter, gateway, cw20 }
 	}
 }
 
@@ -209,13 +199,12 @@ impl TestVM<()> {
 	}
 
 	pub fn new_with_config<N: Network>(
-		XCVMContracts { asset_registry, interpreter, gateway, cw20 }: XCVMContracts,
+		XCVMContracts { interpreter, gateway, cw20 }: XCVMContracts,
 		config: impl FnOnce(
 			StateBuilder<SubstrateAddressHandler>,
 		) -> StateBuilder<SubstrateAddressHandler>,
 	) -> Self {
 		let vm_state = config(StateBuilder::<SubstrateAddressHandler>::new())
-			.add_code(XCVM_ASSET_REGISTRY_CODE, asset_registry)
 			.add_code(XCVM_INTERPRETER_CODE, interpreter)
 			.add_code(XCVM_GATEWAY_CODE, gateway)
 			.add_code(XCVM_CW20_CODE, cw20)
@@ -227,16 +216,6 @@ impl TestVM<()> {
 		mut self,
 		tx: BlockchainTransaction,
 	) -> Result<(TestVM<XCVMState<T>>, XCVMDeploymentEvents), TestError> {
-		let (registry_address, (registry_data, registry_events)) = TestApi::instantiate(
-			&mut self.vm_state,
-			XCVM_ASSET_REGISTRY_CODE,
-			None,
-			tx.block.clone(),
-			tx.transaction.clone(),
-			tx.info.clone(),
-			tx.gas,
-			cw_xc_asset_registry::msg::InstantiateMsg { admin: tx.info.sender.clone().into() },
-		)?;
 		let (gateway_address, (gateway_data, gateway_events)) =
 			SubstrateApi::<Dispatch>::instantiate(
 				&mut self.vm_state,
@@ -247,7 +226,6 @@ impl TestVM<()> {
 				tx.info.clone(),
 				tx.gas,
 				cw_xc_common::gateway::InstantiateMsg {
-					registry_address: registry_address.clone().to_string(),
 					interpreter_code_id: XCVM_INTERPRETER_CODE,
 					network_id: self.network_id,
 					admin: tx.info.sender.into_string(),
@@ -257,9 +235,9 @@ impl TestVM<()> {
 			TestVM {
 				network_id: self.network_id,
 				vm_state: self.vm_state,
-				xcvm_state: XCVMState::new(registry_address, gateway_address),
+				xcvm_state: XCVMState::new(gateway_address),
 			},
-			XCVMDeploymentEvents { registry_data, registry_events, gateway_data, gateway_events },
+			XCVMDeploymentEvents { gateway_data, gateway_events },
 		))
 	}
 }
@@ -288,24 +266,26 @@ impl<T> TestVM<XCVMState<T>> {
 				marketing: None,
 			},
 		)?;
-		let (registry_data, registry_events) = TestApi::execute(
+		let (gateway_data, gateway_events) = TestApi::execute(
 			&mut self.vm_state,
 			Env {
 				block: tx.block.clone(),
 				transaction: tx.transaction.clone(),
-				contract: ContractInfo { address: self.xcvm_state.registry.clone().into() },
+				contract: ContractInfo { address: self.xcvm_state.gateway.clone().into() },
 			},
 			tx.info,
 			tx.gas,
-			cw_xc_asset_registry::msg::ExecuteMsg::RegisterAsset {
+			cw_xc_common::gateway::ExecuteMsg::RegisterAsset {
 				asset_id: A::ID.into(),
-				reference: AssetReference::Virtual { cw20_address: asset_address.clone().into() },
+				reference: cw_xc_common::gateway::AssetReference::Virtual {
+					cw20_address: asset_address.clone().into(),
+				},
 			},
 		)?;
 		self.xcvm_state.insert_asset::<A>(asset_address.clone());
 		Ok((
 			asset_address,
-			XCVMRegisterAssetEvents { asset_data, asset_events, registry_data, registry_events },
+			XCVMRegisterAssetEvents { asset_data, asset_events, gateway_data, gateway_events },
 		))
 	}
 
@@ -410,15 +390,14 @@ impl<T> TestVM<XCVMState<T>> {
 }
 
 pub struct XCVMState<T> {
-	pub registry: Account,
 	pub gateway: Account,
 	pub assets: HashMap<AssetId, Account>,
 	pub custom: HashMap<T, Account>,
 }
 
 impl<T> XCVMState<T> {
-	pub fn new(registry: Account, gateway: Account) -> Self {
-		Self { registry, gateway, assets: Default::default(), custom: Default::default() }
+	pub fn new(gateway: Account) -> Self {
+		Self { gateway, assets: Default::default(), custom: Default::default() }
 	}
 
 	pub fn insert_asset<A: Asset>(&mut self, address: Account) {

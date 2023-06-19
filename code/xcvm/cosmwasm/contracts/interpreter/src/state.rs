@@ -7,7 +7,6 @@ use xc_core::InterpreterOrigin;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
 	pub gateway_address: Addr,
-	pub registry_address: Addr,
 	pub interpreter_origin: InterpreterOrigin,
 }
 

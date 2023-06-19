@@ -1,22 +1,21 @@
 extern crate alloc;
 
 use crate::{
-	common,
+	assets, common,
 	error::{ContractError, ContractResult},
 	exec, msg, state,
-	state::Config,
 };
 
 use cosmwasm_std::{
-	wasm_execute, Binary, CosmosMsg, Deps, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse,
-	IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg,
-	IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
-	IbcTimeout, IbcTimeoutBlock, MessageInfo, Reply, Response, StdError, SubMsg, SubMsgResult,
+	to_binary, wasm_execute, Binary, CosmosMsg, Deps, DepsMut, Env, Ibc3ChannelOpenResponse,
+	IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
+	IbcChannelOpenResponse, IbcMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
+	IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock, MessageInfo, Reply,
+	Response, SubMsg, SubMsgResult,
 };
 use cw2::set_contract_version;
 use cw20::Cw20ExecuteMsg;
 use cw_utils::ensure_from_older_version;
-use cw_xc_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
 use cw_xc_utils::DefaultXCVMPacket;
 use xc_core::{BridgeProtocol, CallOrigin, Displayed, Funds, XCVMAck};
 use xc_proto::{decode_packet, Encodable};
@@ -37,7 +36,6 @@ pub fn instantiate(
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
 	state::Config {
-		registry_address: deps.api.addr_validate(&msg.registry_address)?,
 		interpreter_code_id: msg.interpreter_code_id,
 		network_id: msg.network_id,
 		admin: deps.api.addr_validate(&msg.admin)?,
@@ -76,6 +74,16 @@ pub fn execute(
 			)?;
 			handle_bridge_forward(auth, deps, info, msg)
 		},
+
+		msg::ExecuteMsg::RegisterAsset { asset_id, reference } => {
+			let auth = common::auth::Admin::authorise(deps.as_ref(), &info)?;
+			assets::handle_register_asset(auth, deps, asset_id, reference)
+		},
+
+		msg::ExecuteMsg::UnregisterAsset { asset_id } => {
+			let auth = common::auth::Admin::authorise(deps.as_ref(), &info)?;
+			assets::handle_unregister_asset(auth, deps, asset_id)
+		},
 	}
 }
 
@@ -86,8 +94,11 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: msg::MigrateMsg) -> ContractResul
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: msg::QueryMsg) -> ContractResult<Binary> {
-	Err(StdError::generic_err("not implemented").into())
+pub fn query(deps: Deps, _env: Env, msg: msg::QueryMsg) -> ContractResult<Binary> {
+	match msg {
+		msg::QueryMsg::LookupAsset { asset_id } => assets::query_lookup(deps, asset_id)
+			.and_then(|resp| to_binary(&resp).map_err(ContractError::from)),
+	}
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
@@ -239,13 +250,12 @@ pub fn ibc_packet_ack(
 ) -> ContractResult<IbcBasicResponse> {
 	let ack = XCVMAck::try_from(msg.acknowledgement.data.as_slice())
 		.map_err(|_| ContractError::InvalidAck)?;
-	let Config { registry_address, .. } = Config::load(deps.storage)?;
 	let packet: DefaultXCVMPacket =
 		decode_packet(&msg.original_packet.data).map_err(ContractError::Protobuf)?;
 	let messages = match ack {
 		XCVMAck::OK => {
 			// We got the ACK
-			burn_escrowed_assets(deps, registry_address.as_str(), packet.assets)
+			burn_escrowed_assets(deps, packet.assets)
 		},
 		XCVMAck::KO => {
 			// On failure, return the funds
@@ -253,7 +263,6 @@ pub fn ibc_packet_ack(
 				&deps,
 				// Safe as impossible to tamper.
 				String::from_utf8_lossy(&packet.interpreter).to_string(),
-				registry_address.as_str(),
 				packet.assets,
 			)
 		},
@@ -270,7 +279,6 @@ pub fn ibc_packet_timeout(
 	_env: Env,
 	msg: IbcPacketTimeoutMsg,
 ) -> ContractResult<IbcBasicResponse> {
-	let Config { registry_address, .. } = Config::load(deps.storage)?;
 	let packet: DefaultXCVMPacket =
 		decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
 	// On timeout, return the funds
@@ -278,7 +286,6 @@ pub fn ibc_packet_timeout(
 		&deps,
 		// Safe as impossible to tamper.
 		String::from_utf8_lossy(&packet.interpreter).to_string(),
-		registry_address.as_str(),
 		packet.assets,
 	)?;
 	Ok(IbcBasicResponse::default().add_messages(burns))
@@ -286,17 +293,15 @@ pub fn ibc_packet_timeout(
 
 fn burn_escrowed_assets(
 	deps: DepsMut,
-	registry_address: &str,
 	assets: Funds<Displayed<u128>>,
 ) -> ContractResult<Vec<CosmosMsg>> {
 	assets
 		.into_iter()
 		.map(|(asset_id, Displayed(amount))| {
-			let reference =
-				external_query_lookup_asset(deps.querier, registry_address.to_string(), asset_id)?;
+			let reference = assets::query_lookup(deps.as_ref(), asset_id)?.reference;
 			match &reference {
-				AssetReference::Native { .. } => Err(ContractError::UnsupportedAsset),
-				AssetReference::Virtual { cw20_address } => {
+				msg::AssetReference::Native { .. } => Err(ContractError::UnsupportedAsset),
+				msg::AssetReference::Virtual { cw20_address } => {
 					// Burn from the current contract.
 					Ok(wasm_execute(
 						cw20_address.to_string(),
@@ -313,17 +318,15 @@ fn burn_escrowed_assets(
 fn unescrow_assets(
 	deps: &DepsMut,
 	sender: String,
-	registry_address: &str,
 	assets: Funds<Displayed<u128>>,
 ) -> ContractResult<Vec<CosmosMsg>> {
 	assets
 		.into_iter()
 		.map(|(asset_id, Displayed(amount))| {
-			let reference =
-				external_query_lookup_asset(deps.querier, registry_address.to_string(), asset_id)?;
+			let reference = assets::query_lookup(deps.as_ref(), asset_id)?.reference;
 			match &reference {
-				AssetReference::Native { .. } => Err(ContractError::UnsupportedAsset),
-				AssetReference::Virtual { cw20_address } => {
+				msg::AssetReference::Native { .. } => Err(ContractError::UnsupportedAsset),
+				msg::AssetReference::Virtual { cw20_address } => {
 					// Transfer from the sender to the gateway
 					Ok(wasm_execute(
 						cw20_address.to_string(),

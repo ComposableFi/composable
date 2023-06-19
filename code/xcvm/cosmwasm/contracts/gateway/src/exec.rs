@@ -1,7 +1,7 @@
 extern crate alloc;
 
 use crate::{
-	common,
+	assets, common,
 	contract::INSTANTIATE_INTERPRETER_REPLY_ID,
 	error::{ContractError, ContractResult},
 	msg, state,
@@ -13,7 +13,6 @@ use cosmwasm_std::{
 	Reply, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
-use cw_xc_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
 use cw_xc_interpreter::contract::{
 	XCVM_INTERPRETER_EVENT_DATA_ORIGIN, XCVM_INTERPRETER_EVENT_PREFIX,
 };
@@ -26,13 +25,11 @@ fn transfer_from_user(
 	funds: Vec<Coin>,
 	assets: &Funds<Displayed<u128>>,
 ) -> ContractResult<Vec<CosmosMsg>> {
-	let config = Config::load(deps.storage)?;
 	let mut transfers = Vec::with_capacity(assets.0.len());
-	for (asset, Displayed(amount)) in assets.0.iter() {
-		let reference =
-			external_query_lookup_asset(deps.querier, config.registry_address.to_string(), *asset)?;
+	for (asset_id, Displayed(amount)) in assets.0.iter() {
+		let reference = assets::query_lookup(deps.as_ref(), *asset_id)?.reference;
 		match reference {
-			AssetReference::Native { denom } => {
+			msg::AssetReference::Native { denom } => {
 				let Coin { amount: provided_amount, .. } = funds
 					.iter()
 					.find(|c| c.denom == denom)
@@ -41,7 +38,7 @@ fn transfer_from_user(
 					return Err(ContractError::InsufficientFunds)?
 				}
 			},
-			AssetReference::Virtual { cw20_address } =>
+			msg::AssetReference::Virtual { cw20_address } =>
 				transfers.push(Cw20Contract(cw20_address).call(Cw20ExecuteMsg::TransferFrom {
 					owner: user.to_string(),
 					recipient: self_address.to_string(),
@@ -120,7 +117,6 @@ pub(crate) fn handle_execute_program_privilleged(
 			code_id: config.interpreter_code_id,
 			msg: to_binary(&cw_xc_interpreter::msg::InstantiateMsg {
 				gateway_address: env.contract.address.clone().into_string(),
-				registry_address: config.registry_address.into(),
 				interpreter_origin: interpreter_origin.clone(),
 			})?,
 			funds: vec![],
@@ -162,9 +158,8 @@ fn send_funds_to_interpreter(
 	deps: Deps,
 	interpreter_address: Addr,
 	funds: Funds<Displayed<u128>>,
-) -> StdResult<Response> {
+) -> ContractResult<Response> {
 	let mut response = Response::new();
-	let registry_address = state::Config::load(deps.storage)?.registry_address.into_string();
 	let interpreter_address = interpreter_address.into_string();
 	for (asset_id, Displayed(amount)) in funds.0 {
 		// We ignore zero amounts
@@ -172,21 +167,24 @@ fn send_funds_to_interpreter(
 			continue
 		}
 
-		let reference =
-			external_query_lookup_asset(deps.querier, registry_address.clone(), asset_id)?;
-		response = match reference {
-			AssetReference::Native { denom } => response.add_message(BankMsg::Send {
+		let reference = assets::query_lookup(deps.clone(), asset_id)?.reference;
+		let msg: CosmosMsg = match reference {
+			msg::AssetReference::Native { denom } => BankMsg::Send {
 				to_address: interpreter_address.clone(),
 				amount: vec![Coin::new(amount, denom)],
-			}),
-			AssetReference::Virtual { cw20_address } => {
+			}
+			.into(),
+			msg::AssetReference::Virtual { cw20_address } => {
 				let contract = Cw20Contract(cw20_address);
-				response.add_message(contract.call(Cw20ExecuteMsg::Transfer {
-					recipient: interpreter_address.clone(),
-					amount: amount.into(),
-				})?)
+				contract
+					.call(Cw20ExecuteMsg::Transfer {
+						recipient: interpreter_address.clone(),
+						amount: amount.into(),
+					})?
+					.into()
 			},
 		};
+		response = response.add_message(msg);
 	}
 	Ok(response)
 }

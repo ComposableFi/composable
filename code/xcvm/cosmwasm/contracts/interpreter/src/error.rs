@@ -37,7 +37,7 @@ pub enum ContractError {
 	#[error("Bindings are invalid")]
 	InvalidBindings,
 
-	#[error("Caller is not authenticated to take the action")]
+	#[error("Caller is not authorised to take the action")]
 	NotAuthorized,
 
 	#[error("Only the contract is authorized for this action")]
