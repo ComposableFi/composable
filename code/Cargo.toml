@@ -327,8 +327,8 @@ wasm-instrument = { version = "0.4.0", default-features = false }
 wasmi = { version = "0.30.0", default-features = false }
 wasmi-validation = { version = "0.5", default-features = false }
 
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9", default-features = false }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9", default-features = false }
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77", default-features = false }
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77", default-features = false }
 serde-json-wasm = { git = "https://github.com/dzmitry-lahoda-forks/serde-json-wasm", rev = "8a7e522c0e4de36a6dfb535766f26a9941017d81", default-features = false }
 
 cosmwasm-std = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6", default-features = false, features = [
