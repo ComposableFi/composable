@@ -4,13 +4,13 @@ use crate::{
 	common,
 	contract::INSTANTIATE_INTERPRETER_REPLY_ID,
 	error::{ContractError, ContractResult},
-	state,
+	msg, state,
 	state::Config,
 };
 
 use cosmwasm_std::{
-	to_binary, wasm_execute, Addr, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env, Reply, Response,
-	StdError, StdResult, SubMsg, WasmMsg,
+	to_binary, wasm_execute, Addr, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo,
+	Reply, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 use cw_xc_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
@@ -20,7 +20,7 @@ use cw_xc_interpreter::contract::{
 use cw_xc_utils::DefaultXCVMProgram;
 use xc_core::{CallOrigin, Displayed, Funds, InterpreterOrigin};
 
-pub(crate) fn transfer_from_user(
+fn transfer_from_user(
 	deps: &DepsMut,
 	self_address: Addr,
 	user: Addr,
@@ -53,11 +53,35 @@ pub(crate) fn transfer_from_user(
 	Ok(transfers)
 }
 
+/// Handles request to execute an [`XCVMProgram`].
+///
+/// This is the entry point for executing a program from a user.  Handling
+pub(crate) fn handle_execute_program(
+	deps: DepsMut,
+	env: Env,
+	info: MessageInfo,
+	salt: Vec<u8>,
+	program: DefaultXCVMProgram,
+	assets: Funds<Displayed<u128>>,
+) -> ContractResult<Response> {
+	let self_address = env.contract.address;
+	let call_origin = CallOrigin::Local { user: info.sender.clone() };
+	let transfers =
+		transfer_from_user(&deps, self_address.clone(), info.sender, info.funds, &assets)?;
+	let msg = wasm_execute(
+		self_address,
+		&msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, salt, program, assets },
+		Default::default(),
+	)?;
+	Ok(Response::default().add_messages(transfers).add_message(msg))
+}
+
 /// Handle a request to execute a [`XCVMProgram`].
 /// Only the gateway is allowed to dispatch such operation.
 /// The gateway must ensure that the `CallOrigin` is valid as the router does not do further
 /// checking on it.
-pub(crate) fn handle_execute_program(
+pub(crate) fn handle_execute_program_privilleged(
+	_: common::auth::Contract,
 	deps: DepsMut,
 	env: Env,
 	call_origin: CallOrigin,

@@ -56,42 +56,34 @@ pub fn execute(
 ) -> ContractResult<Response> {
 	match msg {
 		msg::ExecuteMsg::IbcSetNetworkChannel { network_id, channel_id } => {
-			common::ensure_admin(deps.as_ref(), &info)?;
-			state::IBC_CHANNEL_INFO
-				.load(deps.storage, channel_id.clone())
-				.map_err(|_| ContractError::UnknownChannel)?;
-			state::IBC_NETWORK_CHANNEL.save(deps.storage, network_id, &channel_id)?;
-			Ok(Response::default().add_event(
-				common::make_event("set_network_channel")
-					.add_attribute("network_id", network_id.to_string())
-					.add_attribute("channel_id", channel_id),
-			))
+			let auth = common::auth::Admin::authorise(deps.as_ref(), &info)?;
+			handle_ibc_set_network_channel(auth, deps, network_id, channel_id)
 		},
 
-		msg::ExecuteMsg::ExecuteProgram { salt, program, assets } => {
-			let self_address = env.contract.address;
-			let call_origin = CallOrigin::Local { user: info.sender.clone() };
-			let transfers = exec::transfer_from_user(
-				&deps,
-				self_address.clone(),
-				info.sender,
-				info.funds,
-				&assets,
-			)?;
-			let msg = wasm_execute(
-				self_address,
-				&msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, salt, program, assets },
-				Default::default(),
-			)?;
-			Ok(Response::default().add_messages(transfers).add_message(msg))
-		},
+		msg::ExecuteMsg::ExecuteProgram { salt, program, assets } =>
+			exec::handle_execute_program(deps, env, info, salt, program, assets),
 
 		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, salt, program, assets } => {
-			common::ensure_self(&env, &info)?;
-			exec::handle_execute_program(deps, env, call_origin, salt, program, assets)
+			let auth = common::auth::Contract::authorise(&env, &info)?;
+			exec::handle_execute_program_privilleged(
+				auth,
+				deps,
+				env,
+				call_origin,
+				salt,
+				program,
+				assets,
+			)
 		},
 
-		msg::ExecuteMsg::Bridge(msg) => handle_bridge_forward(deps, info, msg),
+		msg::ExecuteMsg::Bridge(msg) => {
+			let auth = common::auth::Interpreter::authorise(
+				deps.as_ref(),
+				&info,
+				msg.interpreter_origin.clone(),
+			)?;
+			handle_bridge_forward(auth, deps, info, msg)
+		},
 	}
 }
 
@@ -114,6 +106,23 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> ContractResult<Response> {
 			exec::handle_instantiate_reply(deps, msg).map_err(ContractError::from),
 		_ => Err(ContractError::UnknownReply),
 	}
+}
+
+fn handle_ibc_set_network_channel(
+	_: common::auth::Admin,
+	deps: DepsMut,
+	network_id: xc_core::NetworkId,
+	channel_id: state::ChannelId,
+) -> ContractResult<Response> {
+	state::IBC_CHANNEL_INFO
+		.load(deps.storage, channel_id.clone())
+		.map_err(|_| ContractError::UnknownChannel)?;
+	state::IBC_NETWORK_CHANNEL.save(deps.storage, network_id, &channel_id)?;
+	Ok(Response::default().add_event(
+		common::make_event("set_network_channel")
+			.add_attribute("network_id", network_id.to_string())
+			.add_attribute("channel_id", channel_id),
+	))
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
@@ -342,12 +351,11 @@ fn unescrow_assets(
 /// Handle a request gateway message.
 /// The call must originate from an interpreter.
 fn handle_bridge_forward(
+	_: common::auth::Interpreter,
 	deps: DepsMut,
 	info: MessageInfo,
 	msg: cw_xc_common::gateway::BridgeMsg,
 ) -> ContractResult<Response> {
-	common::ensure_interpreter(deps.as_ref(), &info, msg.interpreter_origin.clone())?;
-
 	let channel_id = state::IBC_NETWORK_CHANNEL
 		.load(deps.storage, msg.network_id)
 		.map_err(|_| ContractError::UnknownChannel)?;
