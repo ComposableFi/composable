@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-pub use cw_xc_common::gateway::{ExecuteMsg, InstantiateMsg};
+pub use cw_xc_common::gateway::{ExecuteMsg, ExecuteProgramMsg, InstantiateMsg};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MigrateMsg {}

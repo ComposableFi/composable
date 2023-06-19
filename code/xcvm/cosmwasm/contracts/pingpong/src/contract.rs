@@ -45,7 +45,7 @@ fn make_program<T: Network<EncodedCall = Vec<u8>>, U: Network<EncodedCall = Vec<
 		.spawn::<U, (), _, _>(
 			"PONG".as_bytes().to_vec(),
 			vec![0x01, 0x02, 0x03],
-			Funds::<Balance>::empty(),
+			Funds::<Balance>::default(),
 			|child| {
 				Ok(child.call_raw(
 					serde_json::to_vec(&FlatCosmosMsg::Wasm(FlatWasmMsg::<ExecuteMsg>::Execute {
@@ -88,13 +88,14 @@ pub fn execute(
 		ExecuteMsg::Pong { user_origin, counter } =>
 			(user_origin, ExecuteMsg::Ping { user_origin: local_origin, counter }),
 	};
+	let execute_program = cw_xc_common::gateway::ExecuteProgramMsg {
+		salt: vec![0x01, 0x02, 0x03],
+		program: make_program(user_origin.user_id, message)?,
+		assets: Funds::default(),
+	};
 	Ok(Response::default().add_message(wasm_execute(
 		gateway,
-		&cw_xc_common::gateway::ExecuteMsg::ExecuteProgram {
-			salt: vec![0x01, 0x02, 0x03],
-			program: make_program(user_origin.user_id, message)?,
-			assets: Funds::empty(),
-		},
+		&cw_xc_common::gateway::ExecuteMsg::ExecuteProgram { execute_program },
 		Default::default(),
 	)?))
 }

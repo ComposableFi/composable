@@ -18,14 +18,14 @@ use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInf
 use cw_utils::ensure_from_older_version;
 use cw_xc_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
 use cw_xc_common::{
-	gateway::{BridgeMsg, ExecuteMsg as GWExecuteMsg},
+	gateway::{BridgeMsg, ExecuteMsg as GWExecuteMsg, ExecuteProgramMsg},
 	shared::encode_base64,
 };
 use cw_xc_utils::DefaultXCVMProgram;
 use num::Zero;
 use xc_core::{
-	apply_bindings, cosmwasm::*, Balance, BindingValue, Destination, Displayed, Funds, Instruction,
-	NetworkId, Register,
+	apply_bindings, Balance, BindingValue, Destination, Displayed, Funds, Instruction, NetworkId,
+	Register,
 };
 
 type XCVMProgram = DefaultXCVMProgram;
@@ -224,7 +224,9 @@ pub fn interpret_call(
 	relayer: &Addr,
 ) -> Result<Response, ContractError> {
 	// We don't know the type of the payload, so we use `serde_json::Value`
-	let flat_cosmos_msg: FlatCosmosMsg<serde_json::Value> = if !bindings.is_empty() {
+	let flat_cosmos_msg: xc_core::cosmwasm::FlatCosmosMsg<serde_json::Value> = if !bindings
+		.is_empty()
+	{
 		let Config { registry_address, .. } = CONFIG.load(deps.storage)?;
 		// Len here is the maximum possible length
 		let mut formatted_call =
@@ -312,7 +314,7 @@ pub fn interpret_spawn(
 		CONFIG.load(deps.storage)?;
 
 	let registry_address = registry_address.into_string();
-	let mut normalized_funds: Funds<Displayed<u128>> = Funds::empty();
+	let mut normalized_funds: Funds<Displayed<u128>> = Funds::default();
 
 	let mut response = Response::default();
 	for (asset_id, balance) in assets.0 {
@@ -361,15 +363,14 @@ pub fn interpret_spawn(
 		}
 	}
 
+	let execute_program = ExecuteProgramMsg { salt, program, assets: normalized_funds };
 	Ok(response
 		.add_message(wasm_execute(
 			gateway_address,
 			&GWExecuteMsg::Bridge(BridgeMsg {
 				interpreter_origin: interpreter_origin.clone(),
+				execute_program,
 				network_id: network,
-				salt,
-				program,
-				assets: normalized_funds,
 			}),
 			Default::default(),
 		)?)

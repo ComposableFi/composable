@@ -17,7 +17,6 @@ use cw_xc_asset_registry::{contract::external_query_lookup_asset, msg::AssetRefe
 use cw_xc_interpreter::contract::{
 	XCVM_INTERPRETER_EVENT_DATA_ORIGIN, XCVM_INTERPRETER_EVENT_PREFIX,
 };
-use cw_xc_utils::DefaultXCVMProgram;
 use xc_core::{CallOrigin, Displayed, Funds, InterpreterOrigin};
 
 fn transfer_from_user(
@@ -60,17 +59,20 @@ pub(crate) fn handle_execute_program(
 	deps: DepsMut,
 	env: Env,
 	info: MessageInfo,
-	salt: Vec<u8>,
-	program: DefaultXCVMProgram,
-	assets: Funds<Displayed<u128>>,
+	execute_program: msg::ExecuteProgramMsg,
 ) -> ContractResult<Response> {
 	let self_address = env.contract.address;
 	let call_origin = CallOrigin::Local { user: info.sender.clone() };
-	let transfers =
-		transfer_from_user(&deps, self_address.clone(), info.sender, info.funds, &assets)?;
+	let transfers = transfer_from_user(
+		&deps,
+		self_address.clone(),
+		info.sender,
+		info.funds,
+		&execute_program.assets,
+	)?;
 	let msg = wasm_execute(
 		self_address,
-		&msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, salt, program, assets },
+		&msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program },
 		Default::default(),
 	)?;
 	Ok(Response::default().add_messages(transfers).add_message(msg))
@@ -85,9 +87,7 @@ pub(crate) fn handle_execute_program_privilleged(
 	deps: DepsMut,
 	env: Env,
 	call_origin: CallOrigin,
-	salt: Vec<u8>,
-	program: DefaultXCVMProgram,
-	assets: Funds<Displayed<u128>>,
+	msg::ExecuteProgramMsg { salt, program, assets }: msg::ExecuteProgramMsg,
 ) -> ContractResult<Response> {
 	let config = Config::load(deps.storage)?;
 	let interpreter_origin =
@@ -141,9 +141,11 @@ pub(crate) fn handle_execute_program_privilleged(
 			env.contract.address,
 			&cw_xc_common::gateway::ExecuteMsg::ExecuteProgramPrivileged {
 				call_origin: call_origin.clone(),
-				salt: interpreter_origin.salt,
-				program,
-				assets,
+				execute_program: cw_xc_common::gateway::ExecuteProgramMsg {
+					salt: interpreter_origin.salt,
+					program,
+					assets,
+				},
 			},
 			vec![],
 		)?
