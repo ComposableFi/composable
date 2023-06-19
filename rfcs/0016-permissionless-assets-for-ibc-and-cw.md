@@ -68,6 +68,26 @@ extrinsic `permissionless_assets.update_asset`  will check that caller of the ex
 
 extrinsics `permissionless_assets.mint` and `permissionless_assets.burn` will check that caller of the extrinsic is an assets' admin and if so will use `AssetsTransactorRouter`'s `fungibles::Mutate` trait's `mint_into` or `burn_from` methods. This storage item will be populated on `create_cw_asset` extrinsic call.
 
+### Persmissionless IBC and XCM scenarios
+
+When assets are created by other chains over bridges,
+no symbol, no name, no suffiency(no ED) and no decimals defined.
+
+#### IBC ICS 20
+
+1. New token arrives.
+2. Relayer pays fee for creation of asset (with prefix).
+3. Account owner derived from client/connection/port/channel.
+4. Relayer pays fee for ED for account creation
+
+#### XCM
+
+1. New token arrives.
+2. There must be 2 tokens.
+3. First token pays for asset creation.
+4. Account owner derived from XCM origin (example is sender parachain MultiLocation).
+5. First token pays for ED creation.
+
 # References
 
 * [Statemine Ed](https://substrate.stackexchange.com/questions/5917/do-assets-from-the-asset-pallet-on-statemine-mint-have-an-existential-deposi/5923#5923)
