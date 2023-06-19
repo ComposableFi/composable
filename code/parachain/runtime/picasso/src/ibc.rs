@@ -92,7 +92,7 @@ parameter_types! {
 	pub FeeAccount: <Runtime as pallet_ibc::Config>::AccountIdConversion = ibc_primitives::IbcAccount(AccountId32::from(hex!("a72ef3ce1ecd46163bc5e23fd3e6a4623d9717c957fb59001a5d4cb949150f28")));
 }
 
-use pallet_ibc::{ics20::Ics20RateLimiter, ics20_fee::NonFlatFeeConverter};
+use pallet_ibc::ics20::Ics20RateLimiter;
 
 pub struct ConstantAny;
 
@@ -220,5 +220,5 @@ impl pallet_ibc::Config for Runtime {
 	type ServiceChargeOut = IbcIcs20ServiceCharge;
 	type FlatFeeAssetId = AssetIdUSDT;
 	type FlatFeeAmount = FlatFeeUSDTAmount;
-	type FlatFeeConverter = NonFlatFeeConverter<Runtime>;
+	type FlatFeeConverter = Pablo;
 }
