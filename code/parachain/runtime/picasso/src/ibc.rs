@@ -106,7 +106,7 @@ impl Ics20RateLimiter for ConstantAny {
 				Runtime,
 			>>::from_asset_id_to_denom(CurrencyId::PICA);
 
-		let limit = match msg.token.denom.to_string().as_str() {
+		let limit: u128 = match msg.token.denom.to_string().as_str() {
 			denom if Some(denom) == pica_denom.as_deref() => 500_000,
 			_ => 10_000,
 		};
@@ -129,7 +129,7 @@ impl Ics20RateLimiter for ConstantAny {
 			.unwrap_or(12);
 
 		if msg.token.amount.as_u256() <=
-			::ibc::bigint::U256::from(limit * 10_u64.pow(decimals as _))
+			::ibc::bigint::U256::from(limit.checked_mul(10_u128.pow(decimals as _)).ok_or(())?)
 		{
 			return Ok(())
 		}
