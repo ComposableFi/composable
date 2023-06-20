@@ -11,6 +11,8 @@ Each next block lock is prolonged by one block.
 Owner can `cancel` lock of funds, and get unlocked funds after `16` blocks.
 Owner can `remove` lock, but will loose `0.5%` of locked funds to `gov` account.
 Configurable by `gov` account, cannnot be configured by `owner`.
+Allows to set future (16 blocks from now) `auto unlock` block number during lock creation or update.
+At that block funds unlocked.
 
 ## Delegate
 
