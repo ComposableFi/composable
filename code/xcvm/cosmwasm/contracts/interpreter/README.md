@@ -1,4 +1,20 @@
-# XCVM Interpreter
+# cw-xc-account
+
+## Messages
+
+Implements `cw-plus` `cw1` interface.
+
+## Lock
+
+Allows to locks funds on contract account for `16` blocks.
+Each next block lock is prolonged by one block. 
+Owner can `cancel` lock of funds, and get unlocked funds after `16` blocks.
+Owner can `remove` lock, but will loose `0.5%` of locked funds to `gov` account.
+Configurable by `gov` account, cannnot be configured by `owner`.
+
+## Delegate
+
+Allows to delegate funds by `owner` to `gov` account. Only locked funds can be delegated.
 
 ## Events
 
