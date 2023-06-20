@@ -8,7 +8,7 @@ pub type ContractResult<T, E = ContractError> = core::result::Result<T, E>;
 pub enum ContractError {
 	#[error("{0}")]
 	Std(#[from] StdError),
-	#[error("Caller is not authorized to take this action.")]
+	#[error("Caller is not authorised to take this action.")]
 	NotAuthorized,
 	#[error("IBC channel version mismatch {0}.")]
 	InvalidIbcVersion(String),
@@ -30,12 +30,12 @@ pub enum ContractError {
 	InsufficientFunds,
 	#[error("{0:?}")]
 	Protobuf(DecodingFailure),
-	#[error("The function is not yet implemented.")]
-	Unimplemented,
 	#[error("An invalid ACK was provided, this MUST be impossible.")]
 	InvalidAck,
 	#[error("An unknown reply ID was provided, this MUST be impossible.")]
 	UnknownReply,
 	#[error("The provided channel has not been previously opened.")]
 	UnknownChannel,
+	#[error("The asset is already registered.")]
+	AlreadyRegistered,
 }

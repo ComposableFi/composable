@@ -16,7 +16,6 @@ library = []
 cosmwasm-std = { workspace = true, features = ["ibc3"] }
 cw-storage-plus = { workspace = true }
 cw-utils = { workspace = true }
-cw-xc-asset-registry = { path = "../asset-registry", features = ["library"] }
 cw-xc-common = { path = "../common" }
 cw-xc-interpreter = { path = "../interpreter", features = ["library"] }
 cw-xc-utils = { path = "../utils" }

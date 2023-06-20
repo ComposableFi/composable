@@ -26,8 +26,6 @@ pub struct Step {
 pub struct InstantiateMsg {
 	/// Address of the gateway.
 	pub gateway_address: String,
-	/// Address of the XCVM asset registry.
-	pub registry_address: String,
 	/// The interpreter origin.
 	pub interpreter_origin: InterpreterOrigin,
 }

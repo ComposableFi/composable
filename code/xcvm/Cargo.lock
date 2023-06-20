@@ -436,22 +436,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-xc-asset-registry"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema 1.2.5",
- "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "schemars",
- "serde",
- "serde-cw-value",
- "thiserror-core",
- "xc-core",
-]
-
-[[package]]
 name = "cw-xc-common"
 version = "0.1.0"
 dependencies = [
@@ -471,7 +455,6 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
- "cw-xc-asset-registry",
  "cw-xc-common",
  "cw-xc-interpreter",
  "cw-xc-utils",
@@ -495,7 +478,6 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
- "cw-xc-asset-registry",
  "cw-xc-common",
  "cw-xc-utils",
  "cw2",
@@ -1959,15 +1941,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde-cw-value"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a75d32da6b8ed758b7d850b6c3c08f1d7df51a4df3cb201296e63e34a78e99d4"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "serde-json-wasm"
 version = "0.5.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81#8a7e522c0e4de36a6dfb535766f26a9941017d81"
@@ -2712,7 +2685,6 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
- "cw-xc-asset-registry",
  "cw-xc-common",
  "cw-xc-interpreter",
  "cw-xc-pingpong",
