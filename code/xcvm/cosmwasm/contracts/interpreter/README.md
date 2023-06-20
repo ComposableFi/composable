@@ -2,7 +2,6 @@
 
 ## Messages
 
-
 Implements `cw-plus` `cw1` interface.
 
 ## Events
@@ -29,7 +28,11 @@ Configured with `gov` account which is cross chain smart contract.
 - **BASE64_ENCODED_DATA**: base64 encoded `(network_id, user_id)` pair.
 
 
-### Execute lock
+### Execute set allowed
+
+`Owner` may set one account on which he set allowance for this instance address.
+
+### Execute lock messages
 
 Allows to locks funds on contract account for `16` blocks.
 Each next block lock is prolonged by one block. 
