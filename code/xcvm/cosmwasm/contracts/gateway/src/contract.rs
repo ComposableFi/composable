@@ -60,20 +60,12 @@ pub fn execute(
 			handle_ibc_set_network_channel(auth, deps, network_id, channel_id)
 		},
 
-		msg::ExecuteMsg::ExecuteProgram { salt, program, assets } =>
-			exec::handle_execute_program(deps, env, info, salt, program, assets),
+		msg::ExecuteMsg::ExecuteProgram { execute_program } =>
+			exec::handle_execute_program(deps, env, info, execute_program),
 
-		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, salt, program, assets } => {
+		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program } => {
 			let auth = common::auth::Contract::authorise(&env, &info)?;
-			exec::handle_execute_program_privilleged(
-				auth,
-				deps,
-				env,
-				call_origin,
-				salt,
-				program,
-				assets,
-			)
+			exec::handle_execute_program_privilleged(auth, deps, env, call_origin, execute_program)
 		},
 
 		msg::ExecuteMsg::Bridge(msg) => {
@@ -208,12 +200,12 @@ pub fn ibc_packet_receive(
 			relayer: msg.relayer,
 			user_origin: packet.user_origin,
 		};
-		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged {
-			call_origin,
+		let execute_program = msg::ExecuteProgramMsg {
 			salt: packet.salt,
 			program: packet.program,
 			assets: packet.assets,
 		};
+		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
 		let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
 		Ok(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID))
 	})();
@@ -362,9 +354,9 @@ fn handle_bridge_forward(
 	let packet = DefaultXCVMPacket {
 		interpreter: String::from(info.sender).into_bytes(),
 		user_origin: msg.interpreter_origin.user_origin,
-		salt: msg.salt,
-		program: msg.program,
-		assets: msg.assets,
+		salt: msg.execute_program.salt,
+		program: msg.execute_program.program,
+		assets: msg.execute_program.assets,
 	};
 	let mut event = common::make_event("bridge")
 		.add_attribute("network_id", msg.network_id.to_string())

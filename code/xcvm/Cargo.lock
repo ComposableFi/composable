@@ -455,6 +455,7 @@ dependencies = [
 name = "cw-xc-common"
 version = "0.1.0"
 dependencies = [
+ "cosmwasm-schema 1.2.5",
  "cosmwasm-std",
  "cw-xc-utils",
  "schemars",

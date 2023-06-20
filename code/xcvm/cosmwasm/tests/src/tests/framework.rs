@@ -350,6 +350,11 @@ impl<T> TestVM<XCVMState<T>> {
 		program: impl Into<DefaultXCVMProgram>,
 		assets: impl IntoIterator<Item = (AssetId, u128)>,
 	) -> Result<(Option<Binary>, Vec<Event>), TestError> {
+		let execute_program = cw_xc_common::gateway::ExecuteProgramMsg {
+			salt: salt.into(),
+			program: program.into(),
+			assets: Funds::from(assets.into_iter().collect::<Vec<_>>()),
+		};
 		let (data, events) = TestApi::execute(
 			&mut self.vm_state,
 			Env {
@@ -359,11 +364,7 @@ impl<T> TestVM<XCVMState<T>> {
 			},
 			tx.info,
 			tx.gas,
-			cw_xc_common::gateway::ExecuteMsg::ExecuteProgram {
-				salt: salt.into(),
-				program: program.into(),
-				assets: Funds::from(assets.into_iter().collect::<Vec<_>>()),
-			},
+			cw_xc_common::gateway::ExecuteMsg::ExecuteProgram { execute_program },
 		)?;
 		Ok((data, events))
 	}

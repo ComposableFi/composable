@@ -329,33 +329,22 @@ impl From<u128> for Amount {
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
-	Default,
-	Clone,
-	PartialEq,
-	Eq,
-	PartialOrd,
-	Ord,
-	Debug,
-	Encode,
-	Decode,
-	TypeInfo,
-	Serialize,
-	Deserialize,
+	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
 #[repr(transparent)]
 pub struct Funds<T = Balance>(pub Vec<(AssetId, T)>);
+
+impl<T> Default for Funds<T> {
+	fn default() -> Self {
+		Self(Vec::new())
+	}
+}
 
 impl<T> IntoIterator for Funds<T> {
 	type Item = <Vec<(AssetId, T)> as IntoIterator>::Item;
 	type IntoIter = <Vec<(AssetId, T)> as IntoIterator>::IntoIter;
 	fn into_iter(self) -> Self::IntoIter {
 		self.0.into_iter()
-	}
-}
-
-impl<T> Funds<T> {
-	pub fn empty() -> Self {
-		Funds(Vec::new())
 	}
 }
 

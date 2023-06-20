@@ -154,7 +154,7 @@ mod tests {
 				.spawn::<Ethereum, ProgramBuildError, _, _>(
 					Vec::default(),
 					Vec::default(),
-					Funds::empty(),
+					Funds::default(),
 					|child| {
 						Ok(child
 							.call(DummyProtocol2)?
@@ -177,7 +177,7 @@ mod tests {
 					Instruction::Spawn {
 						network: Ethereum::ID,
 						salt: Vec::new(),
-						assets: Funds::empty(),
+						assets: Funds::default(),
 						program: Program {
 							tag: Default::default(),
 							instructions: VecDeque::from([
