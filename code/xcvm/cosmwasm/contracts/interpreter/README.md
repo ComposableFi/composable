@@ -2,27 +2,18 @@
 
 ## Messages
 
+
 Implements `cw-plus` `cw1` interface.
-
-## Lock
-
-Allows to locks funds on contract account for `16` blocks.
-Each next block lock is prolonged by one block. 
-Owner can `cancel` lock of funds, and get unlocked funds after `16` blocks.
-Owner can `remove` lock, but will loose `0.5%` of locked funds to `gov` account.
-Configurable by `gov` account, cannnot be configured by `owner`.
-Allows to set future (16 blocks from now) `auto unlock` block number during lock creation or update.
-At that block funds unlocked.
-
-## Delegate
-
-Allows to delegate funds by `owner` to `gov` account. Only locked funds can be delegated.
 
 ## Events
 
 Note that these events will be yield from the router in production.
 
 ### Instantiate contract
+
+Configured with `gov` account which is cross chain smart contract. 
+`Gov` has 100% allowance to any funds.  
+
 ```json
 {
 	"type": "wasm-xcvm.interpreter.instantiated",
@@ -36,6 +27,17 @@ Note that these events will be yield from the router in production.
 ```
 
 - **BASE64_ENCODED_DATA**: base64 encoded `(network_id, user_id)` pair.
+
+
+### Execute lock
+
+Allows to locks funds on contract account for `16` blocks.
+Each next block lock is prolonged by one block. 
+Owner can `cancel` lock of funds, and get unlocked funds after `16` blocks.
+Owner can `remove` lock, but will loose `0.5%` of locked funds to `gov` account.
+Configurable by `gov` account, cannot be configured by `owner`.
+Allows to set future (`16` blocks from now) `auto unlock` block number during lock creation or update.
+At that block funds unlocked.
 
 ### Execute contract
 ```json
