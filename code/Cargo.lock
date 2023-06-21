@@ -2000,6 +2000,7 @@ version = "1.0.0"
 dependencies = [
  "bitflags",
  "composable-support",
+ "cosmwasm-schema",
  "cosmwasm-std",
  "frame-support",
  "frame-system",
@@ -2193,6 +2194,28 @@ dependencies = [
  "parity-scale-codec",
  "sp-api",
  "sp-std 5.0.0",
+]
+
+[[package]]
+name = "cosmwasm-schema"
+version = "1.2.5"
+source = "git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=1277597cbf380a8d04dbe676d9cb344ca31634b6#1277597cbf380a8d04dbe676d9cb344ca31634b6"
+dependencies = [
+ "cosmwasm-schema-derive",
+ "schemars",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "cosmwasm-schema-derive"
+version = "1.2.5"
+source = "git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=1277597cbf380a8d04dbe676d9cb344ca31634b6#1277597cbf380a8d04dbe676d9cb344ca31634b6"
+dependencies = [
+ "proc-macro2 1.0.56",
+ "quote 1.0.27",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -16993,7 +17016,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.6",
  "rand 0.8.5",
  "static_assertions",

@@ -56,4 +56,4 @@ pub mod storage;
 pub mod time;
 pub mod vault;
 pub mod xcm;
-mod prelude;
+pub mod prelude;
