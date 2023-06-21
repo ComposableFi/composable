@@ -102,12 +102,12 @@ pub type LocationToAccountId = (
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
 	//Convert Multilication X4(PalletInstance, AccountId, GeneralIndex, AccountId32) into AccountId
-	AccountId32BatchTx<AccountId>
+	AccountId32MultihopTx<AccountId>
 );
 
-pub struct AccountId32BatchTx<AccountId>(PhantomData<AccountId>);
+pub struct AccountId32MultihopTx<AccountId>(PhantomData<AccountId>);
 impl<AccountId: From<[u8; 32]> + Into<[u8; 32]> + Clone>
-	xcm_executor::traits::Convert<MultiLocation, AccountId> for AccountId32BatchTx<AccountId>
+	xcm_executor::traits::Convert<MultiLocation, AccountId> for AccountId32MultihopTx<AccountId>
 {
 	fn convert(location: MultiLocation) -> Result<AccountId, MultiLocation> {
 		let id = match location {
@@ -159,7 +159,6 @@ pub type LocalAssetTransactor = MultiCurrencyAdapterWrapper<
 	IsNativeConcrete<CurrencyId, AssetsIdConverter>,
 	AccountId,
 	LocationToAccountId,
-	CurrencyId,
 	AssetsIdConverter,
 	DepositToAlternative<TreasuryAccount, Tokens, CurrencyId, AccountId, Balance>,
 	PalletXcmIbc
@@ -171,7 +170,6 @@ UnknownAsset,
 Match,
 AccountId,
 AccountIdConvert,
-CurrencyId,
 CurrencyIdConvert,
 DepositFailureHandler,
 MultiCurrencyCallback
@@ -182,7 +180,6 @@ PhantomData<(
 	Match,
 	AccountId,
 	AccountIdConvert,
-	CurrencyId,
 	CurrencyIdConvert,
 	DepositFailureHandler,
 	MultiCurrencyCallback
@@ -195,10 +192,9 @@ impl<
 		Match: MatchesFungible<MultiCurrency::Balance>,
 		AccountId: sp_std::fmt::Debug + Clone,
 		AccountIdConvert: xcm_executor::traits::Convert<MultiLocation, AccountId>,
-		CurrencyId: FullCodec + Eq + PartialEq + Copy + MaybeSerializeDeserialize + sp_std::fmt::Debug,
 		CurrencyIdConvert: Convert<MultiAsset, Option<CurrencyId>>,
 		DepositFailureHandler: orml_xcm_support::OnDepositFail<CurrencyId, AccountId, MultiCurrency::Balance>,
-		DepositCallback: MultiCurrencyCallback
+		DepositCallback: MultiCurrencyCallback::<Runtime>
 	> xcm_executor::traits::TransactAsset
 	for MultiCurrencyAdapterWrapper<
 		MultiCurrency,
@@ -206,7 +202,6 @@ impl<
 		Match,
 		AccountId,
 		AccountIdConvert,
-		CurrencyId,
 		CurrencyIdConvert,
 		DepositFailureHandler,
 		DepositCallback
@@ -223,7 +218,20 @@ impl<
 		CurrencyIdConvert,
 		DepositFailureHandler,
 		>::deposit_asset(asset, location, context);
-		DepositCallback::deposit_asset(asset, location, context, result);
+		// let currency_id = CurrencyIdConvert::convert(asset.clone());
+		// let balance = Match::matches_fungible(asset);
+		match (
+			AccountIdConvert::convert_ref(location),
+			CurrencyIdConvert::convert(asset.clone()),
+			Match::matches_fungible(asset),
+		) {
+			// known asset
+			(Ok(who), Some(currency_id), Some(amount)) => {
+				DepositCallback::deposit_asset(asset, location, context, result, Some(currency_id));
+			},
+			// unknown asset
+			_ => {},
+		}
 		result
 	}
 
