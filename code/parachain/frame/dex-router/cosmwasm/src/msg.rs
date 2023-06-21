@@ -13,3 +13,5 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
 	Price { in_asset: Coin, output_denom: String, pool_id: Uint128 },
 }
+
+
