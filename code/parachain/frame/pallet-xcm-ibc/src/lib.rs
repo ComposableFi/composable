@@ -7,6 +7,9 @@ type AccoindIdOf<T> = <T as frame_system::Config>::AccountId;
 pub mod pallet {
 	use super::*;
     use frame_support::pallet_prelude::*;
+	use pallet_ibc::{MultiAddress, TransferParams};
+	use ibc_primitives::Timeout as IbcTimeout;
+	use std::str::FromStr;
 
 	/// ## Configuration
 	/// The pallet's configuration trait.
@@ -14,6 +17,9 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_ibc::Config {
 		#[allow(missing_docs)]
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
+		#[pallet::constant]
+		type PalletInstanceId: Get<u8>;
     }
 
 	// The pallet's events
@@ -43,6 +49,7 @@ pub mod pallet {
 
 	use frame_system::{RawOrigin};
 	
+use sp_core::crypto::unwrap_or_default_ss58_version;
 // use frame_system::Config;
 use xcm::latest::prelude::*;
     impl<T : Config
@@ -61,13 +68,13 @@ use xcm::latest::prelude::*;
 		fn deposit_asset(asset: &MultiAsset, location: &MultiLocation, context: &XcmContext, deposit_result : Result, asset_id : Option<<T as pallet_ibc::Config>::AssetId>){
 			let id = match location {
 				MultiLocation { parents: 0, interior: X4(
-					PalletInstance(_), 
+					PalletInstance( pallet_id ) , 
 					AccountId32{ id, network: None }, 
-					GeneralIndex(_), 
-					AccountId32{ id: _, network: None } ) } => Some(id.clone()),
+					GeneralIndex( chain_id ), 
+					AccountId32{ id: _, network: None } ) } if *pallet_id == T::PalletInstanceId::get() => Some((*id, *chain_id)),
 				_ => None,
 			};
-			let Some(id) = id else{
+			let Some((id, chain_id)) = id else{
 				//does not match the pattern of multihop
 				return;
 			};
@@ -77,11 +84,11 @@ use xcm::latest::prelude::*;
 				return;
 			};
 
-			let account_id = pallet_ibc::MultiAddress::<AccoindIdOf<T>>::Raw(id.to_vec());
-			let transfer_params = pallet_ibc::TransferParams::<AccoindIdOf<T>>{
+			let account_id = MultiAddress::<AccoindIdOf<T>>::Raw(id.to_vec());
+			let transfer_params = TransferParams::<AccoindIdOf<T>>{
 				to : account_id,
 				source_channel : 1,
-				timeout : ibc_primitives::Timeout::Offset{ timestamp : Some(1), height : Some(1)}
+				timeout : IbcTimeout::Offset{ timestamp : Some(1), height : Some(1)}
 			};
 
 			let account = sp_runtime::AccountId32::new(
@@ -97,7 +104,34 @@ use xcm::latest::prelude::*;
 				//do not support non fungible.
 			};
 
-			let result = pallet_ibc::Pallet::<T>::transfer(signed_account_id.into(), transfer_params, asset_id.unwrap(), (*amount).into(), None);
+			//todo construct memo from xcm multilocation!!!
+			let memo_str = "";
+			
+			let memo = <T as pallet_ibc::Config>::MemoMessage::from_str(memo_str);
+
+			let memo = match memo{
+				Ok(memo) => { Some(memo) },
+				Err(e) => {
+					//track event with error?
+					//TODO should we continew to send IBC if failed to consturct memo for message forwarding?
+					None
+				}
+			};
+
+			let result = pallet_ibc::Pallet::<T>::transfer(
+				signed_account_id.into(), 
+				transfer_params, 
+				asset_id.unwrap(), 
+				(*amount).into(), 
+				memo);
+			match result{
+				Ok(_) => {
+					//todo emit success multi hop ibc transfer event
+				},
+				Err(e) => {
+					//todo emit error
+				}
+			}
 		}
     }
 }

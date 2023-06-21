@@ -219,7 +219,6 @@ impl<
 		DepositFailureHandler,
 		>::deposit_asset(asset, location, context);
 		// let currency_id = CurrencyIdConvert::convert(asset.clone());
-		// let balance = Match::matches_fungible(asset);
 		match (
 			AccountIdConvert::convert_ref(location),
 			CurrencyIdConvert::convert(asset.clone()),
@@ -230,7 +229,9 @@ impl<
 				DepositCallback::deposit_asset(asset, location, context, result, Some(currency_id));
 			},
 			// unknown asset
-			_ => {},
+			_ => {
+				//TODO? should we try in case if asset is unknown? 
+			},
 		}
 		result
 	}
