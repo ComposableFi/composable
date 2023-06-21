@@ -439,11 +439,13 @@ parameter_types! {
 	pub const MaxInvulnerables: u32 = 100;
 	pub const MinCandidates: u32 = 5;
 	pub const PalletXcmIbcInstanceId: u8 = 192; // PalletXcmIbc: pallet_xcm_ibc = 192,
+	pub const MaxMultihopCount: u32 = 10; 
 }
 
 impl pallet_xcm_ibc::Config for Runtime{
 	type RuntimeEvent = RuntimeEvent;
 	type PalletInstanceId = PalletXcmIbcInstanceId;
+	type MaxMultihopCount = MaxMultihopCount;
 }
 
 impl collator_selection::Config for Runtime {
