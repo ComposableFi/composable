@@ -27,6 +27,8 @@ sp-core = { default-features = false, workspace = true }
 sp-io = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
+pallet-ibc = { workspace = true, default-features = false }
+ibc-primitives = { workspace = true, default-features = false }
 
 frame-support = { default-features = false, workspace = true }
 frame-system = { default-features = false, workspace = true }
@@ -55,6 +57,8 @@ std = [
   "frame-support/std",
   "frame-system/std",
   "frame-benchmarking/std",
+  "pallet-ibc/std",
+  "ibc-primitives/std"
 ]
 
 runtime-benchmarks = [
