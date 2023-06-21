@@ -1,0 +1,118 @@
+= Subsquid Integration for Composable Chain
+:toc:
+
+== Background
+
+In order to support complex queries such as aggregations on top of the data produced by composable finance parachains it is proposed to integrate with Subsquid as the data indexing layer. This document describes the initial requirement for the integration as well as the actual design of the data entities.
+
+
+== Requirement
+
+. *MUST* be able to produce volume aggregation data for a Pablo DEX pool.
+.. Volume can be in terms of quote or the base asset for a given period.
+. *MUST* be able to produce the number of tokens sold/bought per each asset in Pablo DEX pool for a given period.
+. *MUST* be able to produce the transaction history for a given Pablo DEX pool.
+. *MUST* be able to produce the total liquidity available in terms of base or quote currency in a Pablo DEX pool.
+
+
+== Method
+
+To future-proof the extraction of statistics for a Pablo pool a `Transaction` entity is proposed here. This allows extracting more statistics in the future based on the transactions gathered.  Aggregate statistics can be track on-demand as required. Most aggregates(time integrals) depend on the instantaneous values such as total number of tokens per asset in a pool, total volume exchanged in terms of a given asset, price of a asset in terms of another asset.
+
+
+=== Initial state?
+
+Should be populated based on the `PoolCreated` event.
+
+=== Entities
+
+[plantuml,images/pablo-squid-entities,png]
+----
+entity PabloTransaction {
+    * eventId: string
+    * poolId: string
+    --
+    * type: enum [\nADD_LIQUIDITY,\nREMOVE_LIQUIDITY,SWAP,\nCREATE_POOL,DELETE_POOL]
+    * baseAssetId: string
+    * baseAssetAmount: string
+    * quoteAssetId: string
+    * quoteAssetAmount: string
+    * blockNumber: number
+    * spotPrice: string
+    receivedTimestamp: timestamp
+}
+
+entity PabloPool {
+    * poolId: string
+    --
+    * transactionCount: number
+    * totalLiquidity: number
+    * totalVolume: number
+    * quoteAssetId: string
+    * blockNumber: number
+    * calculatedTimestamp: timestamp
+}
+
+entity PabloPoolAsset {
+    * id: poolId + '-' + assetId
+    * poolId: string
+    * assetId: string
+    --
+    # Quoted in terms of the same assetId
+    * totalLiquidity: number
+    * totalVolume: number
+    * blockNumber: number
+    * calculatedTimestamp: timestamp
+}
+
+PabloPool }|..|| PabloTransaction
+PabloPool }|..|| PabloPoolAsset
+----
+
+NOTE: Pablo could support multi-asset pools in the future, hence a many to one relationship between the `PabloPool` and `PabloPoolAsset`.
+
+
+=== Event Processing
+
+Pablo DEX produces substrate events for each activity performed on it. Storage of transactions and the calculation of statistics have to be performed upon receiving these events.
+
+
+[plantuml,images/pablo-squid-events,png]
+----
+@startuml
+start
+:receive pablo event;
+if (PoolCreated) then (yes)
+    :record PabloTransaction with asset\nrelated fields empty;
+    :record empty PabloPool\nand PabloPoolAsset;
+elseif (LiquidityAdded) then (yes)
+    :record PabloTransaction;
+    :record PabloPool\nand PabloPoolAsset;
+(no) elseif (Swap) then (yes)
+    :record PabloTransaction;
+    :record PabloPool\nand PabloPoolAsset;
+(no) elseif (LiquidityRemoved) then (yes)
+    :record PabloTransaction;
+    :record PabloPool\nand PabloPoolAsset;
+(no) elseif (PoolRemoved) then (yes)
+    :no processing;
+else (irrelevant)
+    :no processing;
+endif
+stop
+@enduml
+----
+
+== Rollout
+
+=== Dali
+- [ ] Deploy the subsquid archive.
+- [ ] Deploy the subsquid.
+
+=== Picasso
+
+_coordinate with subsquid team._
+
+== Gathering Results
+
+-  Enable prometheus stats?

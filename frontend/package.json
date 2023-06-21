@@ -1,0 +1,48 @@
+{
+  "name": "fe",
+  "version": "1.0.1",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "export": "turbo run export",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "lint:report": "turbo run lint:report"
+  },
+  "devDependencies": {
+    "eslint-config-custom": "*",
+    "prettier": "latest",
+    "turbo": "1.5.5"
+  },
+  "engines": {
+    "npm": ">=7.0.0",
+    "node": ">=14.0.0"
+  },
+  "dependencies": {},
+  "packageManager": "yarn@1.22.15",
+  "resolutions": {
+    "@types/react": "17.0.39",
+    "@types/react-dom": "17.0.17",
+    "react": "17.0.2",
+    "react-dom": "^17.0.2",
+    "notistack": "3.0.0-alpha.2",
+    "@polkadot/api": "^10.3.4",
+    "@polkadot/api-derive": "^10.3.4",
+    "@polkadot/ts": "^0.4.22",
+    "@polkadot/typegen": "^10.3.4",
+    "@polkadot/types": "^10.3.4",
+    "@polkadot/react-identicon": "^3.1.4",
+    "@polkadot/types-augment": "^10.3.4",
+    "@polkadot/types-codec": "^10.3.4",
+    "@polkadot/types-create": "^10.3.4",
+    "@polkadot/types-known": "^10.3.4",
+    "@polkadot/types-support": "^10.3.4",
+    "axios": "1.2.1"
+  }
+}

@@ -30,6 +30,10 @@ on:
         required: true
       DOCKER_HUB_ACCESS_TOKEN:
         required: true
+      PABLO_PROJ_JSON:
+        required: true
+      VERCEL_TOKEN:
+        required: true
       CANCEL_GITHUB_TOKEN:
         required: true
           

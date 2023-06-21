@@ -42,9 +42,9 @@ export RUST_LOG=info
 ### Adding
 
 ```bash
-cargo run -- --client="ws://localhost:8000" add --schedule="./test/add-collators.csv" --key="//Alice" --from="$GOV_FUNDS_ACCOUNT"
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add-collators.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="$GOV_FUNDS_ACCOUNT" --out=./test/add-collators-output.csv
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add-collators.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="$GOV_FUNDS_ACCOUNT" --batch=true
+cargo run -- --client="ws://localhost:8000" add --schedule="./test/add-collators.csv" --key="//Alice" --from="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm"
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add-collators.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm" --out=./test/add-collators-output.csv
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add-collators.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm" --batch=true
 ```
 
 ### Listing
@@ -64,13 +64,13 @@ cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" unlock --s
 ### Deleting
 
 ```bash
-cargo run -- --client="ws://localhost:8000" delete --schedule="./test/delete-all.csv" --key="//Alice" --to="$GOV_FUNDS_ACCOUNT"
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" delete --schedule="./test/delete-all.csv" --key="//Alice" --to="$GOV_FUNDS_ACCOUNT"
+cargo run -- --client="ws://localhost:8000" delete --schedule="./test/delete-all.csv" --key="//Alice" --to="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm"
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" delete --schedule="./test/delete-all.csv" --key="//Alice" --to="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm"
 ```
 
 
 
 ```bash
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="$GOV_FUNDS_ACCOUNT" --out=./test/add-output.csv
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="$GOV_FUNDS_ACCOUNT" --batch=true
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm" --out=./test/add-output.csv
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm" --batch=true
 ```

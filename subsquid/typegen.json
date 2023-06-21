@@ -1,0 +1,26 @@
+{
+  "outDir": "src/types",
+  "specVersions": "picassoVersions.jsonl",
+  "typesBundle": "kusama",
+  "events": [
+    "Pablo.PoolCreated",
+    "Pablo.LiquidityAdded",
+    "Pablo.LiquidityRemoved",
+    "Pablo.Swapped",
+    "Balances.Transfer",
+    "Balances.Slashed",
+    "Balances.Deposit",
+    "Balances.Withdraw",
+    "BondedFinance.NewOffer",
+    "BondedFinance.NewBond",
+    "BondedFinance.OfferCancelled",
+    "Vesting.VestingScheduleAdded",
+    "Vesting.Claimed",
+    "Vesting.VestingSchedulesUpdated"
+  ],
+  "calls": [
+    "Pablo.add_liquidity",
+    "Pablo.remove_liquidity",
+    "Pablo.swap"
+  ]
+}

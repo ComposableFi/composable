@@ -1,0 +1,18 @@
+/node_modules
+/lib
+
+/**Versions.json
+/**Versions.jsonl
+
+# IDE files
+/.idea
+
+*.env
+# Custom additions
+src/**/**.js
+src/**/**.js.map
+src/**/**.d.ts
+test/**/**.js
+test/**/**.js.map
+test/**/**.d.ts
+lib

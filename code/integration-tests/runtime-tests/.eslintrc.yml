@@ -1,0 +1,18 @@
+env:
+  browser: false
+  es2021: true
+extends:
+  - "plugin:mocha/recommended"
+  - "plugin:@typescript-eslint/recommended"
+parser: "@typescript-eslint/parser"
+parserOptions:
+  project: ["./tsconfig.json"]
+  ecmaVersion: 2020
+  sourceType: module
+plugins:
+  - "@typescript-eslint"
+  - "mocha"
+  - "mocha-no-only"
+rules:
+  { "mocha/no-setup-in-describe": "warn", "mocha/no-sibling-hooks": "warn", "mocha-no-only/mocha-no-only": "error" }
+ignorePatterns: ["src/types/**/*", "src/**/*.d.ts", "src/**/*.js", "test/**/*.d.ts", "test/**/*.js"]

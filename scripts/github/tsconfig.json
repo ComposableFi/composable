@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "target": "es2020",
+    "module": "commonjs",
+    "baseUrl": "./",
+    "paths": {
+      "@polkadot/api/augment": ["picasso/augment-api.ts"],
+      "@polkadot/types/augment": ["picasso/augment-types.ts"],
+      "@polkadot/types/lookup": ["picasso/types-lookup.ts"]
+    },
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
+  },
+  "exclude": ["node_modules", "tests"]
+}

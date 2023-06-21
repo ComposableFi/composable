@@ -1,0 +1,362 @@
+type Account @entity {
+  "Account address"
+  id: ID!
+  "Last event involving account"
+  eventId: String!
+  "Last updated block id"
+  blockId: String!
+}
+
+enum PabloPoolType {
+  DualAssetConstantProduct
+}
+
+type PabloPool @entity {
+  "Pool ID"
+  id: ID!
+  "ID of the last event that was used to derive this entity data"
+  eventId: ID!
+  owner: String! @index
+  poolType: PabloPoolType!
+  lpToken: PabloLpToken!
+  transactionCount: Int!
+  "Timestamp of the block in which this was last updated"
+  timestamp: DateTime! @index
+  poolAssets: [PabloPoolAsset!] @derivedFrom(field: "pool")
+  poolAssetWeights: [PabloAssetWeight!] @derivedFrom(field: "pool")
+  "Last updated block id"
+  blockId: String!
+  "Asset to be used as reference when calculating the pool's TVL"
+  quoteAssetId: String!
+}
+
+type PabloLpToken @entity {
+  "LP token ID"
+  id: ID!
+  totalIssued: BigInt!
+  poolId: String! @index
+  "Last updated block id"
+  blockId: String!
+  "Timestamp of the block in which this was last updated"
+  timestamp: DateTime! @index
+}
+
+type PabloAssetWeight @entity {
+  id: ID!
+  pool: PabloPool! @index
+  assetId: String! @index
+  weight: Float!
+  "Last updated block id"
+  blockId: String!
+}
+
+enum PabloTx {
+  ADD_LIQUIDITY
+  REMOVE_LIQUIDITY
+  SWAP
+}
+
+type PabloTransaction @entity {
+  id: ID!
+  pool: PabloPool! @index
+  account: String! @index
+  timestamp: DateTime! @index
+  "Last updated block id"
+  blockId: String!
+  event: Event @index
+  txType: PabloTx!
+  swap: PabloSwap
+  liquidityAdded: PabloLiquidityAdded
+  liquidityRemoved: PabloLiquidityRemoved
+  success: Boolean!
+  error: CallError
+}
+
+type PabloPoolAsset @entity {
+  id: ID!
+  assetId: String!
+  pool: PabloPool! @index
+  totalLiquidity: BigInt!
+  totalVolume: BigInt!
+  "Last updated block id"
+  blockId: String!
+  weight: Float!
+}
+
+type PabloFee @entity {
+  id: ID!
+  event: Event!
+  pool: PabloPool! @index
+  assetId: String! @index
+  account: String! @index
+  fee: BigInt!
+  lpFee: BigInt!
+  ownerFee: BigInt!
+  protocolFee: BigInt!
+  timestamp: DateTime! @index
+  "Last updated block id"
+  blockId: String!
+}
+
+type BondedFinanceBondOffer @entity {
+  id: ID!
+  eventId: String! @index
+  offerId: String! @index
+  "Total amount of purchased bonds"
+  totalPurchased: BigInt!
+  "Beneficiary account for the bond offer"
+  beneficiary: String!
+  "True if the offer has been cancelled"
+  cancelled: Boolean!
+  "Last updated block id"
+  blockId: String!
+}
+
+type ScheduleWindow {
+  start: BigInt!
+  period: BigInt!
+  kind: String!
+}
+
+type Schedule {
+  vestingScheduleId: BigInt!
+  window: ScheduleWindow!
+  periodCount: BigInt!
+  perPeriod: BigInt!
+  alreadyClaimed: BigInt!
+}
+
+type VestingSchedule @entity {
+  id: ID!
+  "Account that initiates the schedule"
+  from: String! @index
+  "Chain event ID"
+  eventId: String! @index
+  "Vesting schedule ID from chain"
+  scheduleId: BigInt! @index
+  "'To' account for the vesting schedule"
+  to: String!
+  "Asset ID"
+  assetId: String!
+  "Vesting schedule"
+  schedule: Schedule!
+  "Initial locked amount"
+  totalAmount: BigInt!
+  "True if the schedule has been fully claimed"
+  fullyClaimed: Boolean!
+  "Last updated block id"
+  blockId: String!
+}
+
+type Activity @entity {
+  id: ID!
+  "ID of the event associated with this activity"
+  event: Event! @index
+  "ID of the active account"
+  accountId: String! @index
+  "Timestamp of the block in which this activity occurred"
+  timestamp: DateTime! @index
+  "Last updated block id"
+  blockId: String!
+}
+
+enum Currency {
+  USD
+}
+
+type HistoricalAssetPrice @entity {
+  id: ID!
+  "ID of the asset"
+  assetId: String! @index
+  price: Float!
+  timestamp: DateTime! @index
+  currency: Currency!
+}
+
+enum RewardRatePeriod {
+  PerSecond
+}
+
+type StakingRewardsPool @entity {
+  id: ID!
+  eventId: String! @index
+  poolId: String! @index
+  "Last updated block id"
+  blockId: String!
+  owner: String! @index
+  assetId: String! @index
+  shareAssetId: String! @index
+  financialNftAssetId: String! @index
+  minimumStakingAmount: BigInt!
+  startBlock: Int!
+  rewardRatePeriod: RewardRatePeriod!
+  rewardRateAmount: BigInt!
+}
+
+enum LockedSource {
+  All
+  Pablo
+  StakingRewards
+  VestingSchedules
+}
+
+type StakingPosition @entity @index(fields: ["fnftCollectionId", "fnftInstanceId"], unique: true) {
+  id: ID!
+  event: Event! @unique @index
+  "Unique identifier for the position on chain"
+  fnftCollectionId: String! @index
+  fnftInstanceId: String! @index
+  owner: String! @index
+  assetId: String!
+  amount: BigInt!
+  startTimestamp: BigInt!
+  duration: BigInt!
+  endTimestamp: BigInt
+  rewardMultiplier: BigInt!
+  source: LockedSource!
+}
+
+type HistoricalLockedValue @entity {
+  id: ID!
+  event: Event! @index
+  amount: BigInt!
+  "Total amount of locked value"
+  accumulatedAmount: BigInt!
+  timestamp: DateTime! @index
+  source: LockedSource!
+  assetId: String! @index
+  "ID of the entity that locked the value (e.g. Pablo pool id)"
+  sourceEntityId: String @index
+  "Last updated block id"
+  blockId: String!
+}
+
+type HistoricalVolume @entity {
+  id: ID!
+  event: Event! @index
+  amount: BigInt!
+  "Total volume"
+  accumulatedAmount: BigInt!
+  timestamp: DateTime! @index
+  assetId: String! @index
+  source: LockedSource!
+  pool: PabloPool! @index
+  "Last updated block id"
+  blockId: String!
+}
+
+type HistoricalPabloFeeApr @entity {
+  id: ID!
+  event: Event! @index
+  pool: PabloPool! @index
+  tradingFee: Float!
+  timestamp: DateTime! @index
+  "Last updated block id"
+  blockId: String!
+}
+
+type HistoricalStakingApr @entity {
+  id: ID!
+  event: Event! @index
+  assetId: String! @index
+  stakingApr: Float!
+  timestamp: DateTime! @index
+  "Last updated block id"
+  blockId: String!
+}
+
+type PabloSwap @entity {
+  id: ID!
+  event: Event
+  pool: PabloPool! @index
+  baseAssetId: String! @index
+  baseAssetAmount: BigInt!
+  quoteAssetId: String! @index
+  quoteAssetAmount: BigInt!
+  spotPrice: String! # Using a string for arbitrary precision
+  fee: PabloFee!
+  timestamp: DateTime! @index
+  "Last updated block id"
+  blockId: String!
+  success: Boolean!
+}
+
+type PabloAmount {
+  assetId: String!
+  amount: BigInt!
+  price: Float!
+}
+
+type PabloLiquidityAdded @entity {
+  id: ID!
+  event: Event
+  pool: PabloPool! @index
+  timestamp: DateTime! @index
+  blockId: String!
+  amounts: [PabloAmount!]!
+  success: Boolean!
+}
+
+type PabloLiquidityRemoved @entity {
+  id: ID!
+  event: Event
+  pool: PabloPool! @index
+  timestamp: DateTime! @index
+  blockId: String!
+  lpAmount: BigInt
+  amounts: [PabloAmount!]!
+  success: Boolean!
+}
+
+type CurrentLockedValue @entity @index(fields: ["assetId", "source"], unique: true) {
+  id: ID!
+  assetId: String! @index
+  event: Event! @index
+  amount: BigInt!
+  source: LockedSource!
+}
+
+enum EventType {
+  ADD_LIQUIDITY
+  REMOVE_LIQUIDITY
+  SWAP
+  CREATE_POOL
+  DELETE_POOL
+  BALANCES_TRANSFER
+  BALANCES_DEPOSIT
+  BALANCES_WITHDRAW
+  STAKING_REWARDS_REWARD_POOL_CREATED
+  STAKING_REWARDS_STAKED
+  STAKING_REWARDS_STAKE_AMOUNT_EXTENDED
+  STAKING_REWARDS_UNSTAKE
+  STAKING_REWARDS_SPLIT_POSITION
+  BONDED_FINANCE_NEW_OFFER
+  BONDED_FINANCE_NEW_BOND
+  BONDED_FINANCE_OFFER_CANCELLED
+  VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED
+  VESTING_SCHEDULES_CLAIMED
+  VESTING_SCHEDULES_VESTING_SCHEDULES_UPDATED
+}
+
+type Event @entity {
+  id: ID!
+  "ID of account that executed the extrinsic"
+  accountId: String @index
+  "Type of transaction"
+  eventType: EventType!
+  "Block in which transaction was registered"
+  blockNumber: BigInt! @index
+  "Timestamp of the block in which this transaction was registered"
+  timestamp: DateTime! @index
+  activities: [Activity!] @derivedFrom(field: "event")
+  "Last updated block id"
+  blockId: String!
+  txHash: String
+}
+
+type CallError @entity {
+  id: ID!
+  section: String!
+  name: String!
+  description: String
+}
