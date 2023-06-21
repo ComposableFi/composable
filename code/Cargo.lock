@@ -2000,6 +2000,7 @@ version = "1.0.0"
 dependencies = [
  "bitflags",
  "composable-support",
+ "cosmwasm-std",
  "frame-support",
  "frame-system",
  "pallet-proxy",
@@ -2008,7 +2009,9 @@ dependencies = [
  "polkadot-parachain",
  "proptest",
  "scale-info",
+ "schemars",
  "serde",
+ "serde_json",
  "sp-arithmetic",
  "sp-core",
  "sp-runtime",
@@ -3133,15 +3136,6 @@ name = "custom_derive"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef8ae57c4978a2acd8b869ce6b9ca1dfe817bff704c220209fdef2c0b75a01b9"
-
-[[package]]
-name = "cw-dex-router"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std",
- "serde",
- "serde_json",
-]
 
 [[package]]
 name = "cxx"
@@ -10090,7 +10084,6 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
- "cw-dex-router",
  "farming",
  "frame-benchmarking",
  "frame-executive",

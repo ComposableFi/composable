@@ -1,4 +1,3 @@
-// TODO: make `deny`
 #![cfg_attr(
 	not(test),
 	warn(
@@ -13,7 +12,6 @@
 #![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(bad_style, trivial_numeric_casts)]
-// TODO: make `deny`
 #![warn(
 	bare_trait_objects,
 	improper_ctypes,
@@ -37,6 +35,7 @@
 #![feature(const_trait_impl)] // https://github.com/Rust-for-Linux/linux/issues/2
 #![feature(const_convert)] // that is just const fn for into/from - easy
 #![feature(adt_const_params)] // avoids write own serde and bit shifts for Rational64
+extern crate alloc;
 
 pub mod account_proxy;
 pub mod airdrop;
@@ -57,3 +56,4 @@ pub mod storage;
 pub mod time;
 pub mod vault;
 pub mod xcm;
+mod prelude;

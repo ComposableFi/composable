@@ -412,7 +412,6 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 
 	fn all_balance(&mut self, account: &Self::Address) -> Result<Vec<Coin>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "all balance: {}", String::from(account.clone()));
-		//  TODO(hussein-aitlahcen): support iterating over all tokens???
 		Err(CosmwasmVMError::Unsupported)
 	}
 
@@ -425,7 +424,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		address: Self::Address,
 	) -> Result<ContractInfoResponse, Self::Error> {
-		log::debug!(target: "runtime::contracts", "query_contract_info");
+		log::trace!(target: "runtime::contracts", "query_contract_info");
 		Pallet::<T>::do_query_contract_info(self, address.into_inner())
 	}
 
@@ -538,11 +537,6 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 			VmGas::QueryContractInfo => T::WeightInfo::query_contract_info().ref_time(),
 			VmGas::QueryCodeInfo => T::WeightInfo::query_code_info().ref_time(),
 			_ => 1_u64,
-			// NOTE: **Operations that require no charge**: Debug,
-			// NOTE: **Unsupported operations**:
-			// 		   QueryCustom, MessageCustom, Burn, AllBalance
-			// TODO(aeryz): Implement when centauri is ready: IbcTransfer, IbcSendPacket,
-			//				IbcCloseChannel
 		};
 		self.charge_raw(gas_to_charge)
 	}

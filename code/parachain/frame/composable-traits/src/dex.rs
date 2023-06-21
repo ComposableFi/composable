@@ -1,20 +1,16 @@
-use core::cmp::Ordering;
+use crate::{currency::BalanceLike, defi::CurrencyPair, prelude::*};
 
-use crate::{currency::BalanceLike, defi::CurrencyPair};
-use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	ensure,
 	traits::{tokens::AssetId as AssetIdLike, Get},
 	BoundedVec, CloneNoBound, EqNoBound, PartialEqNoBound, RuntimeDebug, RuntimeDebugNoBound,
 };
-use scale_info::TypeInfo;
-use serde::{Deserialize, Serialize};
 
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational_with_rounding, traits::Zero, BoundedBTreeMap,
 	DispatchError, Permill, Rational128,
 };
-use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, ops::Mul, vec::Vec};
+use sp_std::collections::btree_map::BTreeMap;
 
 /// Specifies and amount together with the asset ID of the amount.
 #[derive(
@@ -270,28 +266,6 @@ impl Mul<Permill> for FeeConfig {
 	}
 }
 
-/// Describes a simple exchanges which does not allow advanced configurations such as slippage.
-pub trait SimpleExchange {
-	type AssetId;
-	type Balance;
-	type AccountId;
-	type Error;
-
-	/// Obtains the current price for a given asset, possibly routing through multiple markets.
-	fn price(asset_id: Self::AssetId) -> Option<Self::Balance>;
-
-	/// Exchange `amount` of `from` asset for `to` asset. The maximum price paid for the `to` asset
-	/// is `SimpleExchange::price * (1 + slippage)`
-	fn exchange(
-		from: Self::AssetId,
-		from_account: Self::AccountId,
-		to: Self::AssetId,
-		to_account: Self::AccountId,
-		to_amount: Self::Balance,
-		slippage: sp_runtime::Perbill,
-	) -> Result<Self::Balance, DispatchError>;
-}
-
 /// Most basic representation of an AMM pool possible with extensibility for future cases. Any AMM
 /// implementation should embed this to inherit the basics.
 #[derive(
@@ -463,6 +437,31 @@ pub fn normalize_asset_deposit_infos_to_min_ratio<AssetId: Debug + Copy>(
 pub enum AssetDepositNormalizationError {
 	ArithmeticOverflow,
 	NotEnoughAssets,
+}
+
+pub type PoolId = Uint128;
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(JsonSchema)]
+pub enum ExecuteMsg {
+	AddLiquidity {
+		pool_id: PoolId,
+		assets: Vec<Coin>,
+		min_mint_amount: Uint128,
+		keep_alive: bool,
+	},
+	RemoveLiquidity {
+		pool_id: PoolId,
+		lp_amount: Uint128,
+		min_receive: Vec<Coin>,
+	},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum QueryMsg {
+	Price { in_asset: Coin, output_denom: String, pool_id: Uint128 },
 }
 
 #[cfg(test)]
