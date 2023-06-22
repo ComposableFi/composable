@@ -1,4 +1,5 @@
 use super::*;
+use codec::FullCodec;
 use common::{fees::WeightToFeeConverter, xcmp::*};
 use composable_traits::xcm::assets::RemoteAssetRegistryInspect;
 use cumulus_primitives_core::{IsSystem, ParaId};
@@ -6,12 +7,11 @@ use frame_support::{
 	log, parameter_types,
 	traits::{Everything, Nothing, OriginTrait},
 };
-use pallet_xcm_ibc::MultiCurrencyCallback;
 use orml_traits::{
 	location::{AbsoluteReserveProvider, RelativeReserveProvider},
 	parameter_type_with_key,
 };
-use codec::FullCodec;
+use pallet_xcm_ibc::MultiCurrencyCallback;
 
 use orml_xcm_support::{
 	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset,
@@ -101,8 +101,9 @@ pub type LocationToAccountId = (
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
-	//Convert Multilication X4(PalletInstance, AccountId, GeneralIndex, AccountId32) into AccountId
-	AccountId32MultihopTx<AccountId>
+	//Convert Multilication X4(PalletInstance, AccountId, GeneralIndex, AccountId32) into
+	// AccountId
+	AccountId32MultihopTx<AccountId>,
 );
 
 pub struct AccountId32MultihopTx<AccountId>(PhantomData<AccountId>);
@@ -111,11 +112,16 @@ impl<AccountId: From<[u8; 32]> + Into<[u8; 32]> + Clone>
 {
 	fn convert(location: MultiLocation) -> Result<AccountId, MultiLocation> {
 		let id = match location {
-			MultiLocation { parents: 0, interior: X4(
-				PalletInstance(_), 
-				AccountId32{ id, network: None }, 
-				GeneralIndex(_), 
-				AccountId32{ id: _, network: None } ) } => id,
+			MultiLocation {
+				parents: 0,
+				interior:
+					X4(
+						PalletInstance(_),
+						AccountId32 { id, network: None },
+						GeneralIndex(_),
+						AccountId32 { id: _, network: None },
+					),
+			} => id,
 			_ => return Err(location),
 		};
 		Ok(id.into())
@@ -123,9 +129,9 @@ impl<AccountId: From<[u8; 32]> + Into<[u8; 32]> + Clone>
 
 	fn reverse(who: AccountId) -> Result<MultiLocation, AccountId> {
 		// let m = MultiLocation { parents: 0, interior: X4(
-		// 	PalletInstance(0), 
-		// 	AccountId32{ id : who.clone().into(), network: None }.into(), 
-		// 	GeneralIndex(0), 
+		// 	PalletInstance(0),
+		// 	AccountId32{ id : who.clone().into(), network: None }.into(),
+		// 	GeneralIndex(0),
 		// 	AccountId32{ id: who.into(), network: None } ) };
 		// Ok(m)
 		Err(who)
@@ -161,20 +167,10 @@ pub type LocalAssetTransactor = MultiCurrencyAdapterWrapper<
 	LocationToAccountId,
 	AssetsIdConverter,
 	DepositToAlternative<TreasuryAccount, Tokens, CurrencyId, AccountId, Balance>,
-	PalletXcmIbc
+	PalletXcmIbc,
 >;
 
 pub struct MultiCurrencyAdapterWrapper<
-MultiCurrency,
-UnknownAsset,
-Match,
-AccountId,
-AccountIdConvert,
-CurrencyIdConvert,
-DepositFailureHandler,
-MultiCurrencyCallback
->(
-PhantomData<(
 	MultiCurrency,
 	UnknownAsset,
 	Match,
@@ -182,8 +178,18 @@ PhantomData<(
 	AccountIdConvert,
 	CurrencyIdConvert,
 	DepositFailureHandler,
-	MultiCurrencyCallback
-)>,
+	MultiCurrencyCallback,
+>(
+	PhantomData<(
+		MultiCurrency,
+		UnknownAsset,
+		Match,
+		AccountId,
+		AccountIdConvert,
+		CurrencyIdConvert,
+		DepositFailureHandler,
+		MultiCurrencyCallback,
+	)>,
 );
 
 impl<
@@ -194,7 +200,7 @@ impl<
 		AccountIdConvert: xcm_executor::traits::Convert<MultiLocation, AccountId>,
 		CurrencyIdConvert: Convert<MultiAsset, Option<CurrencyId>>,
 		DepositFailureHandler: orml_xcm_support::OnDepositFail<CurrencyId, AccountId, MultiCurrency::Balance>,
-		DepositCallback: MultiCurrencyCallback::<Runtime>
+		DepositCallback: MultiCurrencyCallback<Runtime>,
 	> xcm_executor::traits::TransactAsset
 	for MultiCurrencyAdapterWrapper<
 		MultiCurrency,
@@ -204,19 +210,23 @@ impl<
 		AccountIdConvert,
 		CurrencyIdConvert,
 		DepositFailureHandler,
-		DepositCallback
+		DepositCallback,
 	>
 {
-	fn deposit_asset(asset: &MultiAsset, location: &MultiLocation, context: &XcmContext) -> xcm::v3::Result {
+	fn deposit_asset(
+		asset: &MultiAsset,
+		location: &MultiLocation,
+		context: &XcmContext,
+	) -> xcm::v3::Result {
 		let result = MultiCurrencyAdapter::<
-		MultiCurrency,
-		UnknownAsset,
-		Match,
-		AccountId,
-		AccountIdConvert,
-		CurrencyId,
-		CurrencyIdConvert,
-		DepositFailureHandler,
+			MultiCurrency,
+			UnknownAsset,
+			Match,
+			AccountId,
+			AccountIdConvert,
+			CurrencyId,
+			CurrencyIdConvert,
+			DepositFailureHandler,
 		>::deposit_asset(asset, location, context);
 		// let currency_id = CurrencyIdConvert::convert(asset.clone());
 		match (
@@ -230,7 +240,7 @@ impl<
 			},
 			// unknown asset
 			_ => {
-				//TODO? should we try in case if asset is unknown? 
+				//TODO? should we try in case if asset is unknown?
 			},
 		}
 		result
@@ -242,14 +252,14 @@ impl<
 		maybe_context: Option<&XcmContext>,
 	) -> sp_std::result::Result<Assets, XcmError> {
 		MultiCurrencyAdapter::<
-		MultiCurrency,
-		UnknownAsset,
-		Match,
-		AccountId,
-		AccountIdConvert,
-		CurrencyId,
-		CurrencyIdConvert,
-		DepositFailureHandler,
+			MultiCurrency,
+			UnknownAsset,
+			Match,
+			AccountId,
+			AccountIdConvert,
+			CurrencyId,
+			CurrencyIdConvert,
+			DepositFailureHandler,
 		>::withdraw_asset(asset, location, maybe_context)
 	}
 
@@ -260,14 +270,14 @@ impl<
 		context: &XcmContext,
 	) -> sp_std::result::Result<Assets, XcmError> {
 		MultiCurrencyAdapter::<
-		MultiCurrency,
-		UnknownAsset,
-		Match,
-		AccountId,
-		AccountIdConvert,
-		CurrencyId,
-		CurrencyIdConvert,
-		DepositFailureHandler,
+			MultiCurrency,
+			UnknownAsset,
+			Match,
+			AccountId,
+			AccountIdConvert,
+			CurrencyId,
+			CurrencyIdConvert,
+			DepositFailureHandler,
 		>::transfer_asset(asset, from, to, context)
 	}
 }
