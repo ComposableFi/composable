@@ -66,8 +66,7 @@ pub struct SwapResponse {
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct AssetsResponse {
-	pub assets: Vec<String>,
-	pub fee: (Uint64, Uint64),
+	pub assets: Vec<(String, (Uint64, Uint64))>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
