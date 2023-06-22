@@ -669,7 +669,7 @@ mod tests {
 		let high_bits = u64::from_be_bytes(real_value.to_be_bytes()[0..8].try_into().unwrap());
 		let low_bits = u64::from_be_bytes(real_value.to_be_bytes()[8..].try_into().unwrap());
 		let uint128 = Uint128 { high_bits, low_bits };
-		assert_eq!(Into::<u128>::into(uint128.clone()), real_value);
-		assert_eq!(Into::<Uint128>::into(real_value), uint128)
+		assert_eq!(u128::from(uint128.clone()), real_value);
+		assert_eq!(Uint128::from(real_value), uint128)
 	}
 }

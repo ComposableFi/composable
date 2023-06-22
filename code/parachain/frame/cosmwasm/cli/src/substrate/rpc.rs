@@ -64,16 +64,16 @@ impl Command {
 				let params = rpc_params!(
 					sender,
 					code_id,
-					Into::<Vec<u8>>::into(salt),
+					Vec::from(salt),
 					admin,
-					Into::<Vec<u8>>::into(label),
+					Vec::from(label),
 					funds
 						.unwrap_or_default()
 						.into_iter()
 						.map(|(asset, amount)| (asset, (amount, true)))
 						.collect::<BTreeMap<u128, (u128, bool)>>(),
 					gas,
-					Into::<Vec<u8>>::into(message)
+					Vec::from(message)
 				);
 				let resp: AccountId32 =
 					rpc_call("cosmwasm_instantiate", &params, chain_endpoint).await?;
