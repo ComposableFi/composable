@@ -1,10 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "QueryMsg",
-  "description": "Returns `QueryMsgResponse`",
   "oneOf": [
     {
-      "description": "total supply of any assets can be asked from bank as we share all tokens here",
+      "description": "total supply of any assets can be asked from Bank as we share all tokens here",
       "type": "object",
       "required": [
         "assets"
@@ -35,6 +34,7 @@
           "required": [
             "base_asset",
             "calculate_with_fees",
+            "pool_id",
             "quote_asset_id"
           ],
           "properties": {
@@ -43,6 +43,9 @@
             },
             "calculate_with_fees": {
               "type": "boolean"
+            },
+            "pool_id": {
+              "$ref": "#/definitions/Uint128"
             },
             "quote_asset_id": {
               "type": "string"

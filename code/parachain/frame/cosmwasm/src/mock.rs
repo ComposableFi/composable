@@ -28,7 +28,10 @@ use frame_system::{EnsureRoot, EnsureSigned, EnsureSignedBy};
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::{CurrencyId, ForeignAssetId};
-use sp_core::{H256, crypto::{Ss58Codec, Ss58AddressFormat}};
+use sp_core::{
+	crypto::{Ss58AddressFormat, Ss58Codec},
+	H256,
+};
 use sp_runtime::{
 	generic,
 	traits::{AccountIdConversion, BlakeTwo256, Convert, ConvertInto, IdentityLookup},
@@ -218,7 +221,7 @@ pub struct AccountToAddr;
 
 impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		let (account, _) = AccountId::from_ss58check(&a).map_err(|_| ())?;			
+		let (account, _) = AccountId::from_ss58check(&a).map_err(|_| ())?;
 		Ok(account.into())
 	}
 }

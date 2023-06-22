@@ -121,7 +121,12 @@ pub enum QueryMsg {
 	#[cfg_attr(feature = "std", returns(AssetsResponse))]
 	Assets { pool_id: PoolId },
 	#[cfg_attr(feature = "std", returns(SpotPriceResponse))]
-	SpotPrice { pool_id: PoolId, base_asset: Coin, quote_asset_id: String, calculate_with_fees: bool },
+	SpotPrice {
+		pool_id: PoolId,
+		base_asset: Coin,
+		quote_asset_id: String,
+		calculate_with_fees: bool,
+	},
 	#[cfg_attr(feature = "std", returns(LpTokenResponse))]
 	LpToken { pool_id: PoolId },
 	#[cfg_attr(feature = "std", returns(RedeemableAssetsForLpTokensResponse))]
@@ -191,7 +196,6 @@ impl<AssetId, Balance> SwapResult<AssetId, Balance> {
 		}
 	}
 }
-
 
 /// Trait for automated market maker.
 pub trait Amm {

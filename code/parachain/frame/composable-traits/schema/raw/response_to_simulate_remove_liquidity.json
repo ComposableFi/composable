@@ -3,8 +3,7 @@
   "title": "SimulateRemoveLiquidityResponse",
   "type": "object",
   "required": [
-    "amounts",
-    "pool_id"
+    "amounts"
   ],
   "properties": {
     "amounts": {
@@ -12,9 +11,6 @@
       "items": {
         "$ref": "#/definitions/Coin"
       }
-    },
-    "pool_id": {
-      "$ref": "#/definitions/Uint128"
     }
   },
   "definitions": {

@@ -1,6 +1,6 @@
 #![cfg_attr(
 	not(any(test, feature = "runtime-benchmarks")),
-	allow(
+	deny(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -17,15 +17,15 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
 
+pub mod cosmwasm;
+pub mod dex;
 pub mod fees;
 pub mod governance;
 pub mod ibc;
 mod prelude;
 pub mod rewards;
-pub mod xcmp;
-pub mod dex;
-pub mod cosmwasm;
 mod smoldot;
+pub mod xcmp;
 
 pub use constants::*;
 use frame_support::{parameter_types, weights::Weight};

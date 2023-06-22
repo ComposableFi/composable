@@ -147,7 +147,7 @@ cosmwasm-vm-wasmi = { workspace = true, default-features = false, features = [
   "stargate",
 ] }
 
-serde_json = { workspace = true, default-features = false}
+serde_json = { workspace = true, default-features = false }
 
 [features]
 builtin-wasm = []
@@ -212,10 +212,10 @@ std = [
   "composable-support/std",
   "composable-traits/std",
   "cosmwasm-runtime-api/std",
-  "cosmwasm/std",
-  "cosmwasm-vm/std",
   "cosmwasm-std/std",
   "cosmwasm-vm-wasmi/std",
+  "cosmwasm-vm/std",
+  "cosmwasm/std",
   "crowdloan-rewards-runtime-api/std",
   "crowdloan-rewards/std",
   "cumulus-pallet-aura-ext/std",

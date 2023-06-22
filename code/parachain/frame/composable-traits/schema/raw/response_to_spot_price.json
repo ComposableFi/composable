@@ -3,19 +3,15 @@
   "title": "SpotPriceResponse",
   "type": "object",
   "required": [
-    "base_asset",
-    "calculate_with_fees",
-    "quote_asset_id"
+    "fee",
+    "value"
   ],
   "properties": {
-    "base_asset": {
+    "fee": {
       "$ref": "#/definitions/Coin"
     },
-    "calculate_with_fees": {
-      "type": "boolean"
-    },
-    "quote_asset_id": {
-      "type": "string"
+    "value": {
+      "$ref": "#/definitions/Coin"
     }
   },
   "definitions": {

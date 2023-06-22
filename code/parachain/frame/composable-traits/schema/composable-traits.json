@@ -11,7 +11,6 @@
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "ExecuteMsg",
-    "description": "Returns `ExecuteMsgResponse`",
     "oneOf": [
       {
         "description": "Like Osmosis MsgJoinPool",
@@ -173,10 +172,9 @@
   "query": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "QueryMsg",
-    "description": "Returns `QueryMsgResponse`",
     "oneOf": [
       {
-        "description": "total supply of any assets can be asked from bank as we share all tokens here",
+        "description": "total supply of any assets can be asked from Bank as we share all tokens here",
         "type": "object",
         "required": [
           "assets"
@@ -207,6 +205,7 @@
             "required": [
               "base_asset",
               "calculate_with_fees",
+              "pool_id",
               "quote_asset_id"
             ],
             "properties": {
@@ -215,6 +214,9 @@
               },
               "calculate_with_fees": {
                 "type": "boolean"
+              },
+              "pool_id": {
+                "$ref": "#/definitions/Uint128"
               },
               "quote_asset_id": {
                 "type": "string"
@@ -357,28 +359,34 @@
       "title": "AssetsResponse",
       "type": "object",
       "required": [
-        "assets",
-        "fee"
+        "assets"
       ],
       "properties": {
         "assets": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "array",
+            "items": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": [
+                  {
+                    "$ref": "#/definitions/Uint64"
+                  },
+                  {
+                    "$ref": "#/definitions/Uint64"
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
           }
-        },
-        "fee": {
-          "type": "array",
-          "items": [
-            {
-              "$ref": "#/definitions/Uint64"
-            },
-            {
-              "$ref": "#/definitions/Uint64"
-            }
-          ],
-          "maxItems": 2,
-          "minItems": 2
         }
       },
       "definitions": {
@@ -462,8 +470,7 @@
       "title": "SimulateRemoveLiquidityResponse",
       "type": "object",
       "required": [
-        "amounts",
-        "pool_id"
+        "amounts"
       ],
       "properties": {
         "amounts": {
@@ -471,9 +478,6 @@
           "items": {
             "$ref": "#/definitions/Coin"
           }
-        },
-        "pool_id": {
-          "$ref": "#/definitions/Uint128"
         }
       },
       "definitions": {
@@ -503,19 +507,15 @@
       "title": "SpotPriceResponse",
       "type": "object",
       "required": [
-        "base_asset",
-        "calculate_with_fees",
-        "quote_asset_id"
+        "fee",
+        "value"
       ],
       "properties": {
-        "base_asset": {
+        "fee": {
           "$ref": "#/definitions/Coin"
         },
-        "calculate_with_fees": {
-          "type": "boolean"
-        },
-        "quote_asset_id": {
-          "type": "string"
+        "value": {
+          "$ref": "#/definitions/Coin"
         }
       },
       "definitions": {

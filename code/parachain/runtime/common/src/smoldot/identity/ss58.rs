@@ -22,14 +22,14 @@ use core::fmt;
 /// Decoded version of an SS58 address.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Decoded<P> {
-    /// Identifier indicating which chain is concerned.
-    ///
-    /// The mapping between chains and this prefix can be found in this central registry:
-    /// <https://github.com/paritytech/ss58-registry/blob/main/ss58-registry.json>.
-    pub chain_prefix: ChainPrefix,
+	/// Identifier indicating which chain is concerned.
+	///
+	/// The mapping between chains and this prefix can be found in this central registry:
+	/// <https://github.com/paritytech/ss58-registry/blob/main/ss58-registry.json>.
+	pub chain_prefix: ChainPrefix,
 
-    /// Public key of the account.
-    pub public_key: P,
+	/// Public key of the account.
+	pub public_key: P,
 }
 
 /// Identifier indicating which chain is concerned.
@@ -45,21 +45,21 @@ pub struct Decoded<P> {
 pub struct ChainPrefix(u16);
 
 impl fmt::Debug for ChainPrefix {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Debug::fmt(&self.0, f)
-    }
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		fmt::Debug::fmt(&self.0, f)
+	}
 }
 
 impl TryFrom<u16> for ChainPrefix {
-    type Error = PrefixTooLargeError;
+	type Error = PrefixTooLargeError;
 
-    fn try_from(prefix: u16) -> Result<Self, Self::Error> {
-        if (prefix >> 14) == 0 {
-            Ok(ChainPrefix(prefix))
-        } else {
-            Err(PrefixTooLargeError())
-        }
-    }
+	fn try_from(prefix: u16) -> Result<Self, Self::Error> {
+		if (prefix >> 14) == 0 {
+			Ok(ChainPrefix(prefix))
+		} else {
+			Err(PrefixTooLargeError())
+		}
+	}
 }
 
 /// Integer is too large to be a valid prefix
@@ -67,97 +67,94 @@ impl TryFrom<u16> for ChainPrefix {
 pub struct PrefixTooLargeError();
 
 impl From<u8> for ChainPrefix {
-    fn from(prefix: u8) -> ChainPrefix {
-        ChainPrefix(u16::from(prefix))
-    }
+	fn from(prefix: u8) -> ChainPrefix {
+		ChainPrefix(u16::from(prefix))
+	}
 }
 
 impl From<ChainPrefix> for u16 {
-    fn from(prefix: ChainPrefix) -> u16 {
-        prefix.0
-    }
+	fn from(prefix: ChainPrefix) -> u16 {
+		prefix.0
+	}
 }
 
 /// Turns a decoded SS58 address into a string.
 pub fn encode(decoded: Decoded<impl AsRef<[u8]>>) -> String {
-    let prefix = decoded.chain_prefix.0;
-    let public_key = decoded.public_key.as_ref();
+	let prefix = decoded.chain_prefix.0;
+	let public_key = decoded.public_key.as_ref();
 
-    let mut bytes = Vec::with_capacity(2 + public_key.len() + 2);
+	let mut bytes = Vec::with_capacity(2 + public_key.len() + 2);
 
-    if prefix < 64 {
-        bytes.push(prefix as u8);
-    } else {
-        // This encoding is plain weird.
-        bytes.push(((prefix & 0b0000_0000_1111_1100) as u8) >> 2 | 0b01000000);
-        bytes.push(((prefix >> 8) as u8) | ((prefix & 0b0000_0000_0000_0011) as u8) << 6);
-    }
+	if prefix < 64 {
+		bytes.push(prefix as u8);
+	} else {
+		// This encoding is plain weird.
+		bytes.push(((prefix & 0b0000_0000_1111_1100) as u8) >> 2 | 0b01000000);
+		bytes.push(((prefix >> 8) as u8) | ((prefix & 0b0000_0000_0000_0011) as u8) << 6);
+	}
 
-    bytes.extend_from_slice(public_key);
+	bytes.extend_from_slice(public_key);
 
-    let checksum = calculate_checksum(&bytes);
-    bytes.extend_from_slice(&checksum);
+	let checksum = calculate_checksum(&bytes);
+	bytes.extend_from_slice(&checksum);
 
-    bs58::encode(&bytes).into_string()
+	bs58::encode(&bytes).into_string()
 }
 
 /// Decodes an SS58 address from a string.
 pub fn decode(encoded: &'_ str) -> Result<Decoded<impl AsRef<[u8]>>, DecodeError> {
-    let mut bytes = bs58::decode(encoded)
-        .into_vec()
-        .map_err(|err| DecodeError::InvalidBs58(Bs58DecodeError(err)))?;
+	let mut bytes = bs58::decode(encoded)
+		.into_vec()
+		.map_err(|err| DecodeError::InvalidBs58(Bs58DecodeError(err)))?;
 
-    if bytes.len() < 4 {
-        return Err(DecodeError::TooShort);
-    }
+	if bytes.len() < 4 {
+		return Err(DecodeError::TooShort)
+	}
 
-    // Verify the checksum.
-    let expected_checksum = calculate_checksum(&bytes[..bytes.len() - 2]);
-    if expected_checksum[..] != bytes[bytes.len() - 2..] {
-        return Err(DecodeError::InvalidChecksum);
-    }
-    bytes.truncate(bytes.len() - 2);
+	// Verify the checksum.
+	let expected_checksum = calculate_checksum(&bytes[..bytes.len() - 2]);
+	if expected_checksum[..] != bytes[bytes.len() - 2..] {
+		return Err(DecodeError::InvalidChecksum)
+	}
+	bytes.truncate(bytes.len() - 2);
 
-    // Grab and remove the prefix.
-    let (prefix_len, chain_prefix) = if bytes[0] < 64 {
-        (1, ChainPrefix(u16::from(bytes[0])))
-    } else if bytes[0] < 128 {
-        let prefix = u16::from_be_bytes([bytes[1] & 0b00111111, (bytes[0] << 2) | (bytes[1] >> 6)]);
-        (2, ChainPrefix(prefix))
-    } else {
-        return Err(DecodeError::InvalidPrefix);
-    };
+	// Grab and remove the prefix.
+	let (prefix_len, chain_prefix) = if bytes[0] < 64 {
+		(1, ChainPrefix(u16::from(bytes[0])))
+	} else if bytes[0] < 128 {
+		let prefix = u16::from_be_bytes([bytes[1] & 0b00111111, (bytes[0] << 2) | (bytes[1] >> 6)]);
+		(2, ChainPrefix(prefix))
+	} else {
+		return Err(DecodeError::InvalidPrefix)
+	};
 
-    // Rather than remove the prefix from the beginning of `bytes`, we adjust the `AsRef`
-    // implementation to skip the prefix.
-    let public_key = {
-        struct Adjust(Vec<u8>, usize);
-        impl AsRef<[u8]> for Adjust {
-            fn as_ref(&self) -> &[u8] {
-                &self.0[self.1..]
-            }
-        }
-        Adjust(bytes, prefix_len)
-    };
+	// Rather than remove the prefix from the beginning of `bytes`, we adjust the `AsRef`
+	// implementation to skip the prefix.
+	let public_key = {
+		struct Adjust(Vec<u8>, usize);
+		impl AsRef<[u8]> for Adjust {
+			fn as_ref(&self) -> &[u8] {
+				&self.0[self.1..]
+			}
+		}
+		Adjust(bytes, prefix_len)
+	};
 
-    Ok(Decoded {
-        chain_prefix,
-        public_key,
-    })
+	Ok(Decoded { chain_prefix, public_key })
 }
 
 /// Error while decoding an SS58 address.
 #[derive(Debug, Clone, derive_more::Display)]
 pub enum DecodeError {
-    /// SS58 is too short to possibly be valid.
-    TooShort,
-    /// Invalid SS58 prefix encoding.
-    InvalidPrefix,
-    /// Invalid BS58 format.
-    #[display(fmt = "{_0}")]
-    InvalidBs58(Bs58DecodeError),
-    /// Calculated checksum doesn't match the one provided.
-    InvalidChecksum,
+	/// SS58 is too short to possibly be valid.
+	TooShort,
+	/// Invalid SS58 prefix encoding.
+	InvalidPrefix,
+	/// Invalid BS58 format.
+	#[display(fmt = "{_0}")]
+	InvalidBs58(Bs58DecodeError),
+	/// Calculated checksum doesn't match the one provided.
+	InvalidChecksum,
 }
 
 /// Error when decoding Base58 encoding.
@@ -165,47 +162,47 @@ pub enum DecodeError {
 pub struct Bs58DecodeError(bs58::decode::Error);
 
 fn calculate_checksum(data: &[u8]) -> [u8; 2] {
-    let mut hasher = blake2_rfc::blake2b::Blake2b::new(64);
-    hasher.update(b"SS58PRE");
-    hasher.update(data);
+	let mut hasher = blake2_rfc::blake2b::Blake2b::new(64);
+	hasher.update(b"SS58PRE");
+	hasher.update(data);
 
-    let hash = hasher.finalize();
-    *<&[u8; 2]>::try_from(&hash.as_bytes()[..2]).unwrap_or_else(|_| unreachable!())
+	let hash = hasher.finalize();
+	*<&[u8; 2]>::try_from(&hash.as_bytes()[..2]).unwrap_or_else(|_| unreachable!())
 }
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn alice_polkadot() {
-        let encoded = "15oF4uVJwmo4TdGW7VfQxNLavjCXviqxT9S1MgbjMNHr6Sp5";
+	#[test]
+	fn alice_polkadot() {
+		let encoded = "15oF4uVJwmo4TdGW7VfQxNLavjCXviqxT9S1MgbjMNHr6Sp5";
 
-        let decoded = super::decode(encoded).unwrap();
-        assert_eq!(u16::from(decoded.chain_prefix), 0);
-        assert_eq!(
-            decoded.public_key.as_ref(),
-            &[
-                212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44,
-                133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125
-            ][..]
-        );
+		let decoded = super::decode(encoded).unwrap();
+		assert_eq!(u16::from(decoded.chain_prefix), 0);
+		assert_eq!(
+			decoded.public_key.as_ref(),
+			&[
+				212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44,
+				133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125
+			][..]
+		);
 
-        assert_eq!(super::encode(decoded), encoded);
-    }
+		assert_eq!(super::encode(decoded), encoded);
+	}
 
-    #[test]
-    fn sora_default_seed_phrase() {
-        let encoded = "cnT6GtrVo7AYsRc2LgfTgW8Gu4gpZpxhaaKMm7zH8Ry14pJ8b";
+	#[test]
+	fn sora_default_seed_phrase() {
+		let encoded = "cnT6GtrVo7AYsRc2LgfTgW8Gu4gpZpxhaaKMm7zH8Ry14pJ8b";
 
-        let decoded = super::decode(encoded).unwrap();
-        assert_eq!(u16::from(decoded.chain_prefix), 69);
-        assert_eq!(
-            decoded.public_key.as_ref(),
-            &[
-                70, 235, 221, 239, 140, 217, 187, 22, 125, 195, 8, 120, 215, 17, 59, 126, 22, 142,
-                111, 6, 70, 190, 255, 215, 125, 105, 211, 155, 173, 118, 180, 122
-            ][..]
-        );
+		let decoded = super::decode(encoded).unwrap();
+		assert_eq!(u16::from(decoded.chain_prefix), 69);
+		assert_eq!(
+			decoded.public_key.as_ref(),
+			&[
+				70, 235, 221, 239, 140, 217, 187, 22, 125, 195, 8, 120, 215, 17, 59, 126, 22, 142,
+				111, 6, 70, 190, 255, 215, 125, 105, 211, 155, 173, 118, 180, 122
+			][..]
+		);
 
-        assert_eq!(super::encode(decoded), encoded);
-    }
+		assert_eq!(super::encode(decoded), encoded);
+	}
 }

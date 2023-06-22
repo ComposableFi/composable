@@ -1,14 +1,17 @@
-use crate::prelude::*;
+use crate::{prelude::*, smoldot::identity::ss58::*, AccountId};
 use primitives::currency::CurrencyId;
 use sp_runtime::{traits::Convert, AccountId32};
-use crate::AccountId;
-use crate::smoldot::identity::ss58::*;
 
 pub struct CosmwasmToSubstrateAccount;
 
 impl Convert<alloc::string::String, Result<AccountId, ()>> for CosmwasmToSubstrateAccount {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		let account : AccountId32 = crate::smoldot::identity::ss58::decode(&a).map_err(|_| ())?.public_key.as_ref().try_into().map_err(|_| ())?;
+		let account: AccountId32 = crate::smoldot::identity::ss58::decode(&a)
+			.map_err(|_| ())?
+			.public_key
+			.as_ref()
+			.try_into()
+			.map_err(|_| ())?;
 		Ok(account)
 	}
 }
@@ -17,11 +20,10 @@ impl Convert<AccountId, alloc::string::String> for CosmwasmToSubstrateAccount {
 	fn convert(a: AccountId) -> alloc::string::String {
 		crate::smoldot::identity::ss58::encode(Decoded {
 			chain_prefix: ChainPrefix::from(49),
-    		public_key: &a,
+			public_key: &a,
 		})
 	}
 }
-
 
 impl Convert<Vec<u8>, Result<AccountId, ()>> for CosmwasmToSubstrateAccount {
 	fn convert(a: Vec<u8>) -> Result<AccountId, ()> {
@@ -29,7 +31,7 @@ impl Convert<Vec<u8>, Result<AccountId, ()>> for CosmwasmToSubstrateAccount {
 	}
 }
 
-pub struct  CosmwasmToSubstrateAssetId;
+pub struct CosmwasmToSubstrateAssetId;
 
 impl Convert<alloc::string::String, Result<CurrencyId, ()>> for CosmwasmToSubstrateAssetId {
 	fn convert(currency_id: alloc::string::String) -> Result<CurrencyId, ()> {

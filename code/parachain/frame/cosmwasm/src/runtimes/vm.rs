@@ -72,6 +72,7 @@ pub enum CosmwasmVMError<T: Config> {
 	Rpc(String),
 	Ibc(String),
 	AssetConversion,
+	Precompile,
 }
 
 // impl wasmi_core::host_error::HostError for

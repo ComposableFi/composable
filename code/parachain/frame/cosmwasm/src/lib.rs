@@ -197,6 +197,7 @@ pub mod pallet {
 		Aborted,
 		ReadOnlyViolation,
 		Rpc,
+		Precompile,
 	}
 
 	#[pallet::config]
@@ -741,6 +742,7 @@ impl<T: Config> Pallet<T> {
 					CosmwasmVMError::SubstrateDispatch(_) => Error::<T>::SubstrateDispatch,
 					CosmwasmVMError::AssetConversion => Error::<T>::AssetConversion,
 					CosmwasmVMError::QuerySerialize => Error::<T>::FailedToSerialize,
+					CosmwasmVMError::Precompile => Error::<T>::FailedToSerialize,
 				};
 				Err(DispatchErrorWithPostInfo { error: error.into(), post_info })
 			},

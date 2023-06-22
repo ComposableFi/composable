@@ -3,28 +3,34 @@
   "title": "AssetsResponse",
   "type": "object",
   "required": [
-    "assets",
-    "fee"
+    "assets"
   ],
   "properties": {
     "assets": {
       "type": "array",
       "items": {
-        "type": "string"
+        "type": "array",
+        "items": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "array",
+            "items": [
+              {
+                "$ref": "#/definitions/Uint64"
+              },
+              {
+                "$ref": "#/definitions/Uint64"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
       }
-    },
-    "fee": {
-      "type": "array",
-      "items": [
-        {
-          "$ref": "#/definitions/Uint64"
-        },
-        {
-          "$ref": "#/definitions/Uint64"
-        }
-      ],
-      "maxItems": 2,
-      "minItems": 2
     }
   },
   "definitions": {
