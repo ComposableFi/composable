@@ -34,8 +34,6 @@ where
 				let min_receive_id = CosmwasmToSubstrateAssetId::convert(min_receive.denom.clone())
 					.map_err(|_| CosmwasmPrecompileError::AssetConversion)?;
 				let min_receive_amount: Balance = min_receive.amount.into();
-				
-
 				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
 					.map_err(|_| CosmwasmPrecompileError::AccountConversion)?
 					.into();

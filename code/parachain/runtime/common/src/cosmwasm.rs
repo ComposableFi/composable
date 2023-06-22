@@ -1,6 +1,8 @@
+use codec::Decode;
 use primitives::currency::CurrencyId;
+use smoldot::identity::ss58::{Decoded, ChainPrefix};
 use sp_core::crypto::Ss58AddressFormat;
-use sp_runtime::traits::Convert;
+use sp_runtime::{traits::Convert, AccountId32};
 use crate::AccountId;
 use sp_core::crypto::Ss58Codec;
 
@@ -8,14 +10,17 @@ pub struct CosmwasmToSubstrateAccount;
 
 impl Convert<alloc::string::String, Result<AccountId, ()>> for CosmwasmToSubstrateAccount {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		let account = AccountId::from_ss58check(&a).map_err(|_| ())?;			
+		let account : AccountId32 = smoldot::identity::ss58::decode(&a).map_err(|_| ())?.public_key.as_ref().try_into().map_err(|_| ())?;
 		Ok(account.into())
 	}
 }
 
 impl Convert<AccountId, alloc::string::String> for CosmwasmToSubstrateAccount {
 	fn convert(a: AccountId) -> alloc::string::String {
-		AccountId::to_ss58check_with_version(&a, Ss58AddressFormat::custom(59))
+		smoldot::identity::ss58::encode(Decoded {
+			chain_prefix: ChainPrefix::from(49),
+    		public_key: &a,
+		})
 	}
 }
 
