@@ -50,7 +50,7 @@
     "@apollo/client": "^3.7.5",
     "@polkadot/api": "^9.12.1",
     "@polkadot/ts": "^0.4.22",
-    "@polkadot/typegen": "^9.12.1",
+    "@polkadot/typegen": "^10.9.1",
     "@polkadot/types": "^9.12.1",
     "@polkadot/types-augment": "^9.12.1",
     "@polkadot/types-codec": "^9.12.1",
