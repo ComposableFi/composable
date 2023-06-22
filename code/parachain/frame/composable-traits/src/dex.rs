@@ -110,9 +110,8 @@ pub struct SimulateRemoveLiquidityResponse {
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct SpotPriceResponse {
-	pub base_asset: Coin,
-	pub quote_asset_id: String,
-	pub calculate_with_fees: bool,
+	pub value: Coin,
+	pub fee: Coin,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -123,7 +122,7 @@ pub enum QueryMsg {
 	#[cfg_attr(feature = "std", returns(AssetsResponse))]
 	Assets { pool_id: PoolId },
 	#[cfg_attr(feature = "std", returns(SpotPriceResponse))]
-	SpotPrice { base_asset: Coin, quote_asset_id: String, calculate_with_fees: bool },
+	SpotPrice { pool_id: PoolId, base_asset: Coin, quote_asset_id: String, calculate_with_fees: bool },
 	#[cfg_attr(feature = "std", returns(LpTokenResponse))]
 	LpToken { pool_id: PoolId },
 	#[cfg_attr(feature = "std", returns(RedeemableAssetsForLpTokensResponse))]

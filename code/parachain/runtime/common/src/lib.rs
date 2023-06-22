@@ -1,6 +1,6 @@
 #![cfg_attr(
 	not(any(test, feature = "runtime-benchmarks")),
-	warn(
+	allow(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -13,6 +13,7 @@
 		dead_code
 	)
 )]
+#![feature(iterator_try_collect)]
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
 
