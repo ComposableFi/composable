@@ -1,32 +1,63 @@
+use crate::{cosmwasm::*, AccountId};
 use composable_traits::dex::*;
-use sp_runtime::DispatchError;
+use cosmwasm_std::{Coin, Response, Uint128, to_binary};
+use primitives::currency::CurrencyId;
+use sp_runtime::{traits::Convert, DispatchError};
 use sp_std::marker::PhantomData;
 
+pub struct DexPrecompile<Balance, AccountId, Dex>(PhantomData<(Balance, AccountId, Dex)>);
 
+pub enum CosmwasmPrecompileError {
+	AssetConversion,
+	AccountConversion,
+	DispatchError,
+	Serde,
+}
 
-pub struct DexPrecompile<AssetId, Balance, AccountId, PoolId, Dex>(
-	PhantomData<(AssetId, Balance, AccountId, PoolId, Dex)>,
-);
-
-impl<Dex, AssetId, Balance, AccountId, PoolId>
-	DexPrecompile<AssetId, Balance, AccountId, PoolId, Dex>
+impl<Dex, Balance, AccountId> DexPrecompile<Balance, AccountId, Dex>
 where
-	Dex: Amm<AssetId = AssetId, Balance = Balance, AccountId = AccountId, PoolId = PoolId>,
+	Dex:
+		Amm<AssetId = CurrencyId, Balance = Balance, AccountId = AccountId, PoolId = crate::PoolId>,
+	Balance: From<Uint128> + Into<u128>,
+	AccountId: std::convert::From<sp_runtime::AccountId32>,
 {
-	pub fn execute(who: &AccountId, msg: &ExecuteMsg) -> Result<Response, DispatchError> {
+	pub fn execute(sender: &str, msg: ExecuteMsg) -> Result<Response, CosmwasmPrecompileError> {
 		match msg {
 			ExecuteMsg::AddLiquidity { pool_id, assets, min_mint_amount, keep_alive } => todo!(),
 			ExecuteMsg::RemoveLiquidity { pool_id, lp_amount, min_receive } => todo!(),
 			ExecuteMsg::Buy { pool_id, in_asset_id, out_asset, keep_alive } => todo!(),
 			ExecuteMsg::Swap { pool_id, in_asset, min_receive, keep_alive } => {
-				let in_asset_id = AssetToDenom::convert(in_asset.denom)
-				.map_err(|_| CosmwasmVMError::AssetConversion)?;
-			let min_receive_asset_id = AssetToDenom::convert(min_receive.denom)
-				.map_err(|_| CosmwasmVMError::AssetConversion)?;
-			let in_asset_amount = in_asset.amount.into();
-			let min_receive_amount = min_receive.amount.into();
-			let who = AccountAddrConvert::convert(
-				vm.0.data().cosmwasm_message_info.sender.clone().into_string(),
+				let in_asset_id = CosmwasmToSubstrateAssetId::convert(in_asset.denom.clone())
+					.map_err(|_| CosmwasmPrecompileError::AssetConversion)?;
+				let in_amount: Balance = in_asset.amount.into();
+				
+				let min_receive_id = CosmwasmToSubstrateAssetId::convert(min_receive.denom.clone())
+					.map_err(|_| CosmwasmPrecompileError::AssetConversion)?;
+				let min_receive_amount: Balance = min_receive.amount.into();
+				
+
+				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
+					.map_err(|_| CosmwasmPrecompileError::AccountConversion)?
+					.into();
+				let result = Dex::do_swap(
+					&who,
+					pool_id.into(),
+					AssetAmount::new(in_asset_id, in_amount),
+					AssetAmount::new(min_receive_id, min_receive_amount),
+					keep_alive,
+				)
+				.map_err(|_| CosmwasmPrecompileError::DispatchError)?;
+				let result = SwapResponse {
+					value: Coin {
+						denom: CosmwasmToSubstrateAssetId::convert(result.value.asset_id),
+						amount: result.value.amount.into().into(),
+					},
+					fee: Coin {
+						denom: CosmwasmToSubstrateAssetId::convert(result.fee.asset_id),
+						amount: result.fee.amount.into().into(),
+					},
+				};
+				Ok(Response::new().set_data(to_binary(&result).map_err(|_| CosmwasmPrecompileError::Serde)?))
 			},
 		}
 	}

@@ -58,6 +58,7 @@ cosmwasm-std = { workspace = true, default-features = false, features = [
 
 serde-json-wasm = { workspace = true, default-features = false }
 
+
 [dev-dependencies]
 authorship = { default-features = false, workspace = true }
 orml-tokens = { workspace = true, default-features = false }

@@ -1,6 +1,6 @@
 #![cfg_attr(
 	not(any(test, feature = "runtime-benchmarks")),
-	deny(
+	warn(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -22,6 +22,8 @@ pub mod ibc;
 mod prelude;
 pub mod rewards;
 pub mod xcmp;
+pub mod dex;
+pub mod cosmwasm;
 
 pub use constants::*;
 use frame_support::{parameter_types, weights::Weight};

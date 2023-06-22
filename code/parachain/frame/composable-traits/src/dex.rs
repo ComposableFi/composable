@@ -36,84 +36,84 @@ pub enum ExecuteMsg {
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct AddLiquidityResponse {
-	lp_amount: Uint128,
+	pub lp_amount: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct RemoveLiquidityResponse {
-	assets: Vec<Coin>,
+	pub assets: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct BuyResponse {
-	value: Coin,
-	fee: Coin,
+	pub value: Coin,
+	pub fee: Coin,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct SwapResponse {
-	value: Coin,
-	fee: Coin,
+	pub value: Coin,
+	pub fee: Coin,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct AssetsResponse {
-	assets: Vec<String>,
-	fee: (Uint64, Uint64),
+	pub assets: Vec<String>,
+	pub fee: (Uint64, Uint64),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct LpTokenResponse {
-	lp_token: String,
+	pub lp_token: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct SwapResultResponse {
-	value: Coin,
-	fee: Coin,
+	pub value: Coin,
+	pub fee: Coin,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct RedeemableAssetsForLpTokensResponse {
-	assets: Vec<Coin>,
+	pub assets: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct SimulateAddLiquidityResponse {
-	amount: Uint128,
+	pub amount: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct SimulateRemoveLiquidityResponse {
-	pool_id: PoolId,
-	amounts: Vec<Coin>,
+	pub pool_id: PoolId,
+	pub amounts: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct SpotPriceResponse {
-	base_asset: Coin,
-	quote_asset_id: String,
-	calculate_with_fees: bool,
+	pub base_asset: Coin,
+	pub quote_asset_id: String,
+	pub calculate_with_fees: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

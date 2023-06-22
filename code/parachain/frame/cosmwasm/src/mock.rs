@@ -28,7 +28,7 @@ use frame_system::{EnsureRoot, EnsureSigned, EnsureSignedBy};
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::{CurrencyId, ForeignAssetId};
-use sp_core::H256;
+use sp_core::{H256, crypto::{Ss58Codec, Ss58AddressFormat}};
 use sp_runtime::{
 	generic,
 	traits::{AccountIdConversion, BlakeTwo256, Convert, ConvertInto, IdentityLookup},
@@ -218,16 +218,14 @@ pub struct AccountToAddr;
 
 impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		let account =
-			ibc_primitives::runtime_interface::ss58_to_account_id_32(&a).map_err(|_| ())?;
+		let (account, _) = AccountId::from_ss58check(&a).map_err(|_| ())?;			
 		Ok(account.into())
 	}
 }
 
 impl Convert<AccountId, alloc::string::String> for AccountToAddr {
 	fn convert(a: AccountId) -> alloc::string::String {
-		let account = ibc_primitives::runtime_interface::account_id_to_ss58(a.into(), 49);
-		String::from_utf8_lossy(account.as_slice()).to_string()
+		AccountId::to_ss58check_with_version(&a, Ss58AddressFormat::custom(59))
 	}
 }
 impl Convert<Vec<u8>, Result<AccountId, ()>> for AccountToAddr {
