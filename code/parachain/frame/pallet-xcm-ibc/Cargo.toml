@@ -8,6 +8,7 @@ version = "1.0.0"
 
 
 [dependencies]
+bech32 = { version = "0.7.3" } 
 log = { version = "0.4.14", default-features = false }
 serde = { version = "1.0.137", default-features = false, features = [
   "derive",

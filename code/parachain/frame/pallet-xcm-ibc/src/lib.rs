@@ -4,6 +4,7 @@ pub use pallet::*;
 pub use pallet::Error;
 
 type AccoindIdOf<T> = <T as frame_system::Config>::AccountId;
+use frame_support::BoundedVec;
 
 #[derive(
 	Copy,
@@ -41,15 +42,20 @@ struct MemoData{
 }
 
 impl MemoData{
-	fn new(iter : IntoIter<ChainInfo>) -> Option<Self>{
-		let mut chain_info_vec: Vec<_> = iter.collect();
-		chain_info_vec.reverse();
-
+	fn new<T : Config>(iter : Vec<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>, [u32; 32])>) -> Option<Self>{
+		//TODO this method support only addresses from cosmos ecosystem based on bech32.
+		//panic in case wrong address type.
+		//if need support memo with a different address type need to adapt 
+		
 		let mut memo_data: Option<MemoData> = None;
-		for i in chain_info_vec {
+		for (i, name, address) in iter {
+			let data : Vec<bech32::u5> = vec![];
+			let name = String::from_utf8(name.into()).expect("Found invalid UTF-8");
+			let result_address = bech32::encode(&name, data.clone()).unwrap();
+
 			let new_memo = MemoData {
 				forward: MemoForward {
-					receiver: String::from("TODO!!!"),
+					receiver: result_address,
 					port: String::from("transfer"),
 					channel: String::from(format!("channel-{}", i.channel_id)),
 					timeout: String::from(i.timeout.unwrap_or_default().to_string()),
@@ -83,6 +89,9 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type MaxMultihopCount: Get<u32>;
+
+		#[pallet::constant]
+		type ChainNameVecLimit: Get<u32>;
     }
 
 	// The pallet's events
@@ -108,7 +117,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		u128, //chain id
-		BoundedBTreeSet<ChainInfo, T::MaxMultihopCount>, //route to forward
+		BoundedBTreeSet<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>), T::MaxMultihopCount>, //route to forward
 		ValueQuery,
 	>;
 	
@@ -137,9 +146,9 @@ use xcm::latest::prelude::*;
 			let id = match location {
 				MultiLocation { parents: 0, interior: X4(
 					PalletInstance( pallet_id ) , 
-					AccountId32{ id, network: None }, 
 					GeneralIndex( chain_id ), 
-					AccountId32{ id: _, network: None } ) } if *pallet_id == T::PalletInstanceId::get() => Some((*id, *chain_id)),
+					AccountId32{ id: current_network_address, network: None }, //current chain address
+					AccountId32{ id: next_ibc_chain_address, network: None } ) } if *pallet_id == T::PalletInstanceId::get() => Some((*current_network_address, *chain_id)),
 				_ => None,
 			};
 			let Some((id, chain_id)) = id else{
@@ -157,10 +166,9 @@ use xcm::latest::prelude::*;
 				return;
 			};
 
-
 			let mut chain_info_iter = route.into_iter();
 
-			let Some(chain_info) = chain_info_iter.next() else{
+			let Some((chain_info, name)) = chain_info_iter.next() else{
 				//route does not exist
 				return;
 			};
@@ -185,10 +193,11 @@ use xcm::latest::prelude::*;
 				//do not support non fungible.
 			};
 
-			//todo construct memo from xcm multilocation!!!
 			let mut memo : Option<<T as pallet_ibc::Config>::MemoMessage> = None;
-
-			let memo_data = MemoData::new(chain_info_iter);
+			//todo take address
+			let mut vec: Vec<_> = chain_info_iter.map(|i| (i.0, i.1, [0u32; 32])).collect();
+			vec.reverse();
+			let memo_data = MemoData::new::<T>(vec);
 			match memo_data{
 				Some(memo_data) => {
 					let memo_str = format!("{:?}", memo_data); //create a string memo
