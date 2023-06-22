@@ -8,7 +8,7 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::system::CosmwasmCodeId;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
-use cw_xc_utils::{DefaultXCVMProgram, Salt};
+use cw_xc_common::shared::{DefaultXCVMProgram, Salt};
 use std::{collections::HashMap, hash::Hash};
 use xc_core::{Asset, AssetId, AssetSymbol, Funds, Network, NetworkId};
 
