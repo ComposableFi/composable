@@ -50,6 +50,14 @@ ibc-rs-scale = { workspace = true, default-features = false, features = [
   "serde",
 ] }
 
+cosmwasm-std = { workspace = true, default-features = false, features = [
+  "ibc3",
+  "iterator",
+  "stargate",
+] }
+
+serde-json-wasm = { workspace = true, default-features = false }
+
 [dev-dependencies]
 authorship = { default-features = false, workspace = true }
 orml-tokens = { workspace = true, default-features = false }

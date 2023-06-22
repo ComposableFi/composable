@@ -12,7 +12,7 @@
 #![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(bad_style, trivial_numeric_casts)]
-#![warn(
+#![deny(
 	bare_trait_objects,
 	improper_ctypes,
 	non_shorthand_field_patterns,

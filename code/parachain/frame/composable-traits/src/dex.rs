@@ -195,6 +195,7 @@ impl<AssetId, Balance> SwapResult<AssetId, Balance> {
 	}
 }
 
+
 /// Trait for automated market maker.
 pub trait Amm {
 	/// The asset ID type
