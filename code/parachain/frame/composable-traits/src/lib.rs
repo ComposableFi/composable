@@ -1,6 +1,6 @@
 #![cfg_attr(
 	not(test),
-	warn(
+	deny(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -50,10 +50,10 @@ pub mod governance;
 pub mod lending;
 pub mod liquidation;
 pub mod oracle;
+pub mod prelude;
 pub mod privilege;
 pub mod staking;
 pub mod storage;
 pub mod time;
 pub mod vault;
 pub mod xcm;
-pub mod prelude;

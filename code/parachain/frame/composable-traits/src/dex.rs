@@ -14,7 +14,6 @@ use sp_std::collections::btree_map::BTreeMap;
 
 pub type PoolId = Uint128;
 
-/// Returns `ExecuteMsgResponse`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema, QueryResponses))]
@@ -117,12 +116,11 @@ pub struct SpotPriceResponse {
 	calculate_with_fees: bool,
 }
 
-/// Returns `QueryMsgResponse`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema, QueryResponses))]
 pub enum QueryMsg {
-	/// total supply of any assets can be asked from bank as we share all tokens here
+	/// total supply of any assets can be asked from Bank as we share all tokens here
 	#[cfg_attr(feature = "std", returns(AssetsResponse))]
 	Assets { pool_id: PoolId },
 	#[cfg_attr(feature = "std", returns(SpotPriceResponse))]
@@ -567,9 +565,7 @@ pub enum AssetDepositNormalizationError {
 
 #[cfg(test)]
 mod test_asset_deposit_normalization {
-	use sp_runtime::AccountId32;
-
-use super::*;
+	use super::*;
 
 	fn generate_asset_deposit_infos<const N: usize>(
 		adi_inputs: [(u128, u128); N],
@@ -588,13 +584,10 @@ use super::*;
 
 	#[test]
 	fn no_assets_error() {
-		use sp_runtime::traits::AccountIdConversion;
-		let account_id : AccountId32 = frame_support::PalletId(*b"pal_pblo").into_account_truncating();
-		todo!("{:?}", account_id.to_string());
-		// assert_eq!(
-		// 	normalize_asset_deposit_infos_to_min_ratio::<u128>(vec![]),
-		// 	Err(AssetDepositNormalizationError::NotEnoughAssets)
-		// );
+		assert_eq!(
+			normalize_asset_deposit_infos_to_min_ratio::<u128>(vec![]),
+			Err(AssetDepositNormalizationError::NotEnoughAssets)
+		);
 	}
 
 	#[test]
