@@ -107,7 +107,24 @@ where
 					.map_err(|_| CosmwasmPrecompileError::Serde)
 			},
 			QueryMsg::SimulateRemoveLiquidity { pool_id, lp_amount, min_amount } => {
-				todo!()
+				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
+				.map_err(|_| CosmwasmPrecompileError::AccountConversion)?
+				.into();
+			let min_amount = min_amount
+				.into_iter()
+				.map(|x| Self::to_substrate(&x))
+				.try_collect::<Vec<_>>()?.into_iter()
+				.map(|x| (x.asset_id, x.amount))
+				.collect();
+			let result = Dex::simulate_remove_liquidity(&who, pool_id.into(), lp_amount.into(), min_amount)
+				.map_err(|x| CosmwasmPrecompileError::DispatchError)?.into_iter()
+				.map(|(k, v)| Coin {
+					denom: CosmwasmToSubstrateAssetId::convert(k),
+					amount: v.into().into(),
+				})
+				.collect();
+			to_binary(&SimulateRemoveLiquidityResponse { amounts: result })
+				.map_err(|_| CosmwasmPrecompileError::Serde)
 			},
 		}
 	}

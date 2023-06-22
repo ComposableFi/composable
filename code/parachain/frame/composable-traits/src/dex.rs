@@ -102,7 +102,6 @@ pub struct SimulateAddLiquidityResponse {
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct SimulateRemoveLiquidityResponse {
-	pub pool_id: PoolId,
 	pub amounts: Vec<Coin>,
 }
 
