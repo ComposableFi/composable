@@ -147,11 +147,41 @@ use xcm::latest::prelude::*;
 				MultiLocation { parents: 0, interior: X4(
 					PalletInstance( pallet_id ) , 
 					GeneralIndex( chain_id ), 
-					AccountId32{ id: current_network_address, network: None }, //current chain address
-					AccountId32{ id: next_ibc_chain_address, network: None } ) } if *pallet_id == T::PalletInstanceId::get() => Some((*current_network_address, *chain_id)),
+					AccountId32{ id: current_network_address, network: None },
+					AccountId32{ id: ibc1, network: None } ) } if *pallet_id == T::PalletInstanceId::get() => Some((*current_network_address, *chain_id, vec![ibc1])),
+				MultiLocation { parents: 0, interior: X5(
+					PalletInstance( pallet_id ) , 
+					GeneralIndex( chain_id ), 
+					AccountId32{ id: current_network_address, network: None }, 
+					AccountId32{ id: ibc1, network: None }, 
+					AccountId32{ id: ibc2, network: None } ) } if *pallet_id == T::PalletInstanceId::get() => Some((*current_network_address, *chain_id, vec![ibc1, ibc2])),
+				MultiLocation { parents: 0, interior: X6(
+					PalletInstance( pallet_id ) , 
+					GeneralIndex( chain_id ), 
+					AccountId32{ id: current_network_address, network: None }, 
+					AccountId32{ id: ibc1, network: None }, 
+					AccountId32{ id: ibc2, network: None }, 
+					AccountId32{ id: ibc3, network: None } ) } if *pallet_id == T::PalletInstanceId::get() => Some((*current_network_address, *chain_id, vec![ibc1, ibc2, ibc3])),
+				MultiLocation { parents: 0, interior: X7(
+					PalletInstance( pallet_id ) , 
+					GeneralIndex( chain_id ), 
+					AccountId32{ id: current_network_address, network: None }, 
+					AccountId32{ id: ibc1, network: None }, 
+					AccountId32{ id: ibc2, network: None }, 
+					AccountId32{ id: ibc3, network: None }, 
+					AccountId32{ id: ibc4, network: None } ) } if *pallet_id == T::PalletInstanceId::get() => Some((*current_network_address, *chain_id, vec![ibc1, ibc2, ibc3, ibc4])),
+				MultiLocation { parents: 0, interior: X8(
+					PalletInstance( pallet_id ) , 
+					GeneralIndex( chain_id ), 
+					AccountId32{ id: current_network_address, network: None }, 
+					AccountId32{ id: ibc1, network: None }, 
+					AccountId32{ id: ibc2, network: None }, 
+					AccountId32{ id: ibc3, network: None }, 
+					AccountId32{ id: ibc4, network: None }, 
+					AccountId32{ id: ibc5, network: None } ) } if *pallet_id == T::PalletInstanceId::get() => Some((*current_network_address, *chain_id, vec![ibc1, ibc2, ibc3, ibc4, ibc5])),
 				_ => None,
 			};
-			let Some((id, chain_id)) = id else{
+			let Some((id, chain_id, addreses)) = id else{
 				//does not match the pattern of multihop
 				return;
 			};
@@ -166,12 +196,18 @@ use xcm::latest::prelude::*;
 				return;
 			};
 
+			let route_len = route.len();
 			let mut chain_info_iter = route.into_iter();
 
 			let Some((chain_info, name)) = chain_info_iter.next() else{
 				//route does not exist
 				return;
 			};
+
+			if addreses.len() != route_len - 1 {
+				//wrong XCM MultiLocation. route len does not match addresses list in XCM call.
+				return;
+			}
 			
 			let account_id = MultiAddress::<AccoindIdOf<T>>::Raw(id.to_vec());
 			let transfer_params = TransferParams::<AccoindIdOf<T>>{
