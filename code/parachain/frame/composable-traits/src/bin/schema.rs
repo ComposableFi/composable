@@ -1,15 +1,19 @@
+
+#[cfg(feature="std")]
 use cosmwasm_schema::write_api;
 
+#[cfg(feature="std")]
 use composable_traits::{
 	dex::{ExecuteMsg, QueryMsg},
 	prelude::*,
 };
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "std", derive(JsonSchema))]
+
+#[cfg(feature="std")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 enum InstantiateMsg {}
 
+#[cfg(feature="std")]
 #[allow(clippy::disallowed_methods)]
 fn main() {
 	write_api! {
@@ -18,3 +22,7 @@ fn main() {
 		execute: ExecuteMsg,
 	}
 }
+
+#[cfg(not(feature="std"))]
+
+fn main(){}
