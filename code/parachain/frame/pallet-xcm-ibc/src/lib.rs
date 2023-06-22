@@ -1,3 +1,5 @@
+use std::collections::btree_set::IntoIter;
+
 pub use pallet::*;
 pub use pallet::Error;
 
@@ -36,6 +38,29 @@ struct MemoForward{
 #[derive(Serialize, Debug)]
 struct MemoData{
 	forward: MemoForward
+}
+
+impl MemoData{
+	fn new(iter : IntoIter<ChainInfo>) -> Option<Self>{
+		let mut chain_info_vec: Vec<_> = iter.collect();
+		chain_info_vec.reverse();
+
+		let mut memo_data: Option<MemoData> = None;
+		for i in chain_info_vec {
+			let new_memo = MemoData {
+				forward: MemoForward {
+					receiver: String::from("TODO!!!"),
+					port: String::from("transfer"),
+					channel: String::from(format!("channel-{}", i.channel_id)),
+					timeout: String::from(i.timeout.unwrap_or_default().to_string()),
+					retries: i.retries.unwrap_or_default(),
+					next: memo_data.map(|x| Box::new(x.forward)), // memo_data is boxed here
+				},
+			};
+			memo_data = Some(new_memo);
+		}
+		memo_data
+	}
 }
 
 #[frame_support::pallet]
@@ -101,16 +126,8 @@ pub mod pallet {
 
 	use frame_system::{RawOrigin};
 	
-// use frame_system::Config;
 use xcm::latest::prelude::*;
-    impl<T : Config
-	// frame_system::Config + pallet_ibc::Config + Send + Sync,
-// 	T: ,
-// T: Send
-// `T: Sync`
-// `frame_support::sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>`
-// `u32: From<<T as frame_system::Config>::BlockNumber>
-	> MultiCurrencyCallback<T> for Pallet<T>
+    impl<T : Config> MultiCurrencyCallback<T> for Pallet<T>
 	where 
 	T: Send + Sync,
 	u32: From<<T as frame_system::Config>::BlockNumber>,
@@ -129,6 +146,12 @@ use xcm::latest::prelude::*;
 				//does not match the pattern of multihop
 				return;
 			};
+
+			let Ok(_) = deposit_result else {
+				//deposit does not executed propertly. nothing todo. assets will stay in the account id address
+				return;
+			};
+
 			let Ok(route) = ChainIdToMiltihopRoutePath::<T>::try_get(chain_id) else {
 				//route does not exist
 				return;
@@ -142,14 +165,6 @@ use xcm::latest::prelude::*;
 				return;
 			};
 			
-
-
-
-			let Ok(_) = deposit_result else {
-				//deposit does not executed propertly. nothing todo. assets will stay in the account id address
-				return;
-			};
-
 			let account_id = MultiAddress::<AccoindIdOf<T>>::Raw(id.to_vec());
 			let transfer_params = TransferParams::<AccoindIdOf<T>>{
 				to : account_id,
@@ -171,37 +186,26 @@ use xcm::latest::prelude::*;
 			};
 
 			//todo construct memo from xcm multilocation!!!
-			let mut chain_info_vec: Vec<_> = chain_info_iter.collect();
-			chain_info_vec.reverse();
+			let mut memo : Option<<T as pallet_ibc::Config>::MemoMessage> = None;
 
-			let mut memo_data: Option<MemoData> = None;
-
-			for i in chain_info_vec {
-				let new_memo = MemoData {
-					forward: MemoForward {
-						receiver: String::from("TODO!!!"),
-						port: String::from("transfer"),
-						channel: String::from(i.channel_id.to_string()),
-						timeout: String::from(i.timeout.unwrap_or_default().to_string()),
-						retries: i.retries.unwrap_or_default(),
-						next: memo_data.map(|x| Box::new(x.forward)), // memo_data is boxed here
-					},
-				};
-				memo_data = Some(new_memo);
-			}
-
-			let memo_str = format!("{:?}", memo_data); //create a string memo
+			let memo_data = MemoData::new(chain_info_iter);
+			match memo_data{
+				Some(memo_data) => {
+					let memo_str = format!("{:?}", memo_data); //create a string memo
 			
-			let memo = <T as pallet_ibc::Config>::MemoMessage::from_str(&memo_str);
-
-			let memo = match memo{
-				Ok(memo) => { Some(memo) },
-				Err(e) => {
-					//track event with error?
-					//TODO should we continew to send IBC if failed to consturct memo for message forwarding?
-					None
+					let memo_result = <T as pallet_ibc::Config>::MemoMessage::from_str(&memo_str);
+					
+					match memo_result{
+						Ok(m) => { memo = Some(m) },
+						Err(e) => {
+							//todo memo failed. need to stop multi hop and emit event.
+							//track event with error?
+							//TODO should we continew to send IBC if failed to consturct memo for message forwarding?
+						}
+					};
 				}
-			};
+				_ => {}
+			}
 
 			let result = pallet_ibc::Pallet::<T>::transfer(
 				signed_account_id.into(), 
