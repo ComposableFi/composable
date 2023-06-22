@@ -1,3 +1,4 @@
+use crate::prelude::*;
 use crate::{cosmwasm::*, AccountId};
 use composable_traits::dex::*;
 use cosmwasm_std::{Coin, Response, Uint128, to_binary};
@@ -19,7 +20,7 @@ where
 	Dex:
 		Amm<AssetId = CurrencyId, Balance = Balance, AccountId = AccountId, PoolId = crate::PoolId>,
 	Balance: From<Uint128> + Into<u128>,
-	AccountId: std::convert::From<sp_runtime::AccountId32>,
+	AccountId: sp_std::convert::From<sp_runtime::AccountId32>,
 {
 	pub fn execute(sender: &str, msg: ExecuteMsg) -> Result<Response, CosmwasmPrecompileError> {
 		match msg {

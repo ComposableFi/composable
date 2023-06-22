@@ -24,6 +24,7 @@ pub mod rewards;
 pub mod xcmp;
 pub mod dex;
 pub mod cosmwasm;
+mod smoldot;
 
 pub use constants::*;
 use frame_support::{parameter_types, weights::Weight};

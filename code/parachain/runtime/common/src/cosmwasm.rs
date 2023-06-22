@@ -1,23 +1,21 @@
-use codec::Decode;
+use crate::prelude::*;
 use primitives::currency::CurrencyId;
-use smoldot::identity::ss58::{Decoded, ChainPrefix};
-use sp_core::crypto::Ss58AddressFormat;
 use sp_runtime::{traits::Convert, AccountId32};
 use crate::AccountId;
-use sp_core::crypto::Ss58Codec;
+use crate::smoldot::identity::ss58::*;
 
 pub struct CosmwasmToSubstrateAccount;
 
 impl Convert<alloc::string::String, Result<AccountId, ()>> for CosmwasmToSubstrateAccount {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		let account : AccountId32 = smoldot::identity::ss58::decode(&a).map_err(|_| ())?.public_key.as_ref().try_into().map_err(|_| ())?;
-		Ok(account.into())
+		let account : AccountId32 = crate::smoldot::identity::ss58::decode(&a).map_err(|_| ())?.public_key.as_ref().try_into().map_err(|_| ())?;
+		Ok(account)
 	}
 }
 
 impl Convert<AccountId, alloc::string::String> for CosmwasmToSubstrateAccount {
 	fn convert(a: AccountId) -> alloc::string::String {
-		smoldot::identity::ss58::encode(Decoded {
+		crate::smoldot::identity::ss58::encode(Decoded {
 			chain_prefix: ChainPrefix::from(49),
     		public_key: &a,
 		})
