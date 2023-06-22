@@ -11,11 +11,11 @@ use xc_core::{Amount, Destination, Displayed, Funds, NetworkId, MAX_PARTS};
 
 include!(concat!(env!("OUT_DIR"), "/interpreter.rs"));
 
-pub type XCVMPacket<TNetwork, TAbiEncoded, TAccount, TAssets> =
-	xc_core::Packet<XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>>;
+pub type XCVMPacket<TAbiEncoded, TAccount, TAssets> =
+	xc_core::Packet<XCVMProgram<TAbiEncoded, TAccount, TAssets>>;
 
-pub type XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets> =
-	xc_core::Program<VecDeque<xc_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>>>;
+pub type XCVMProgram<TAbiEncoded, TAccount, TAssets> =
+	xc_core::Program<VecDeque<xc_core::Instruction<TAbiEncoded, TAccount, TAssets>>>;
 
 pub trait Encodable {
 	fn encode(self) -> Vec<u8>;
@@ -33,14 +33,13 @@ impl Display for DecodingFailure {
 	}
 }
 
-pub fn decode_packet<TNetwork, TAbiEncoded, TAccount, TAssets>(
+pub fn decode_packet<TAbiEncoded, TAccount, TAssets>(
 	buffer: &[u8],
 ) -> core::result::Result<
-	xc_core::Packet<XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>>,
+	xc_core::Packet<XCVMProgram<TAbiEncoded, TAccount, TAssets>>,
 	DecodingFailure,
 >
 where
-	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
 	TAssets: From<Vec<(xc_core::AssetId, xc_core::Balance)>>,
@@ -50,11 +49,10 @@ where
 		.and_then(|x| TryInto::try_into(x).map_err(|_| DecodingFailure::Isomorphism))
 }
 
-pub fn decode<TNetwork, TAbiEncoded, TAccount, TAssets>(
+pub fn decode<TAbiEncoded, TAccount, TAssets>(
 	buffer: &[u8],
-) -> core::result::Result<XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>, DecodingFailure>
+) -> core::result::Result<XCVMProgram<TAbiEncoded, TAccount, TAssets>, DecodingFailure>
 where
-	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
 	TAssets: From<Vec<(xc_core::AssetId, xc_core::Balance)>>,
@@ -64,10 +62,8 @@ where
 		.and_then(|x| TryInto::try_into(x).map_err(|_| DecodingFailure::Isomorphism))
 }
 
-impl<TNetwork, TAbiEncoded, TAccount, TAssets> Encodable
-	for XCVMPacket<TNetwork, TAbiEncoded, TAccount, TAssets>
+impl<TAbiEncoded, TAccount, TAssets> Encodable for XCVMPacket<TAbiEncoded, TAccount, TAssets>
 where
-	TNetwork: Into<u32>,
 	TAbiEncoded: Into<Vec<u8>>,
 	TAccount: Into<Vec<u8>>,
 	TAssets: Into<Vec<(xc_core::AssetId, xc_core::Balance)>>,
@@ -101,15 +97,13 @@ impl From<(xc_core::AssetId, Displayed<u128>)> for PacketAsset {
 	}
 }
 
-impl<TNetwork, TAbiEncoded, TAccount, TAssets>
-	From<XCVMPacket<TNetwork, TAbiEncoded, TAccount, TAssets>> for Packet
+impl<TAbiEncoded, TAccount, TAssets> From<XCVMPacket<TAbiEncoded, TAccount, TAssets>> for Packet
 where
-	TNetwork: Into<u32>,
 	TAbiEncoded: Into<Vec<u8>>,
 	TAccount: Into<Vec<u8>>,
 	TAssets: Into<Vec<(xc_core::AssetId, xc_core::Balance)>>,
 {
-	fn from(value: XCVMPacket<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
+	fn from(value: XCVMPacket<TAbiEncoded, TAccount, TAssets>) -> Self {
 		Packet {
 			interpreter: Some(Account { account: value.interpreter.into() }),
 			user_origin: Some(value.user_origin.into()),
@@ -120,10 +114,8 @@ where
 	}
 }
 
-impl<TNetwork, TAbiEncoded, TAccount, TAssets> Encodable
-	for XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>
+impl<TAbiEncoded, TAccount, TAssets> Encodable for XCVMProgram<TAbiEncoded, TAccount, TAssets>
 where
-	TNetwork: Into<u32>,
 	TAbiEncoded: Into<Vec<u8>>,
 	TAccount: Into<Vec<u8>>,
 	TAssets: Into<Vec<(xc_core::AssetId, xc_core::Balance)>>,
@@ -165,10 +157,8 @@ impl TryFrom<PacketAsset> for (xc_core::AssetId, Displayed<u128>) {
 	}
 }
 
-impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<Packet>
-	for XCVMPacket<TNetwork, TAbiEncoded, TAccount, TAssets>
+impl<TAbiEncoded, TAccount, TAssets> TryFrom<Packet> for XCVMPacket<TAbiEncoded, TAccount, TAssets>
 where
-	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
 	TAssets: From<Vec<(xc_core::AssetId, xc_core::Balance)>>,
@@ -192,10 +182,9 @@ where
 	}
 }
 
-impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<Program>
-	for XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>
+impl<TAbiEncoded, TAccount, TAssets> TryFrom<Program>
+	for XCVMProgram<TAbiEncoded, TAccount, TAssets>
 where
-	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
 	TAssets: From<Vec<(xc_core::AssetId, xc_core::Balance)>>,
@@ -210,10 +199,9 @@ where
 	}
 }
 
-impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<Instructions>
-	for VecDeque<xc_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>>
+impl<TAbiEncoded, TAccount, TAssets> TryFrom<Instructions>
+	for VecDeque<xc_core::Instruction<TAbiEncoded, TAccount, TAssets>>
 where
-	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
 	TAssets: From<Vec<(xc_core::AssetId, xc_core::Balance)>>,
@@ -229,10 +217,9 @@ where
 	}
 }
 
-impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<Instruction>
-	for xc_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>
+impl<TAbiEncoded, TAccount, TAssets> TryFrom<Instruction>
+	for xc_core::Instruction<TAbiEncoded, TAccount, TAssets>
 where
-	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
 	TAssets: From<Vec<(xc_core::AssetId, xc_core::Balance)>>,
@@ -244,10 +231,9 @@ where
 	}
 }
 
-impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<instruction::Instruction>
-	for xc_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>
+impl<TAbiEncoded, TAccount, TAssets> TryFrom<instruction::Instruction>
+	for xc_core::Instruction<TAbiEncoded, TAccount, TAssets>
 where
-	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
 	TAssets: From<Vec<(xc_core::AssetId, xc_core::Balance)>>,
@@ -263,10 +249,9 @@ where
 	}
 }
 
-impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<Call>
-	for xc_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>
+impl<TAbiEncoded, TAccount, TAssets> TryFrom<Call>
+	for xc_core::Instruction<TAbiEncoded, TAccount, TAssets>
 where
-	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
 	TAssets: From<Vec<(xc_core::AssetId, xc_core::Balance)>>,
@@ -329,10 +314,9 @@ impl TryFrom<binding_value::Type> for xc_core::BindingValue {
 	}
 }
 
-impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<Spawn>
-	for xc_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>
+impl<TAbiEncoded, TAccount, TAssets> TryFrom<Spawn>
+	for xc_core::Instruction<TAbiEncoded, TAccount, TAssets>
 where
-	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
 	TAssets: From<Vec<(xc_core::AssetId, xc_core::Balance)>>,
@@ -361,14 +345,13 @@ where
 
 impl From<Network> for NetworkId {
 	fn from(network: Network) -> Self {
-		network.network_id.into()
+		Self(network.network_id)
 	}
 }
 
-impl<TNetwork, TAbiEncoded, TAccount, TAssets> TryFrom<Transfer>
-	for xc_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>
+impl<TAbiEncoded, TAccount, TAssets> TryFrom<Transfer>
+	for xc_core::Instruction<TAbiEncoded, TAccount, TAssets>
 where
-	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: for<'a> TryFrom<&'a [u8]>,
 	TAssets: From<Vec<(xc_core::AssetId, xc_core::Balance)>>,
@@ -543,7 +526,7 @@ impl From<xc_core::BindingValue> for BindingValue {
 
 impl From<xc_core::NetworkId> for Network {
 	fn from(network_id: xc_core::NetworkId) -> Self {
-		Network { network_id: network_id.0 as u32 }
+		Network { network_id: network_id.0 }
 	}
 }
 
@@ -566,15 +549,14 @@ impl From<(u32, xc_core::BindingValue)> for Binding {
 	}
 }
 
-impl<TNetwork, TAbiEncoded, TAccount, TAssets>
-	From<xc_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>> for instruction::Instruction
+impl<TAbiEncoded, TAccount, TAssets> From<xc_core::Instruction<TAbiEncoded, TAccount, TAssets>>
+	for instruction::Instruction
 where
-	TNetwork: Into<u32>,
 	TAbiEncoded: Into<Vec<u8>>,
 	TAccount: Into<Vec<u8>>,
 	TAssets: Into<Vec<(xc_core::AssetId, xc_core::Balance)>>,
 {
-	fn from(instruction: xc_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
+	fn from(instruction: xc_core::Instruction<TAbiEncoded, TAccount, TAssets>) -> Self {
 		match instruction {
 			xc_core::Instruction::Transfer { to, assets } =>
 				instruction::Instruction::Transfer(Transfer {
@@ -599,28 +581,25 @@ where
 	}
 }
 
-impl<TNetwork, TAbiEncoded, TAccount, TAssets>
-	From<xc_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>> for Instruction
+impl<TAbiEncoded, TAccount, TAssets> From<xc_core::Instruction<TAbiEncoded, TAccount, TAssets>>
+	for Instruction
 where
-	TNetwork: Into<u32>,
 	TAbiEncoded: Into<Vec<u8>>,
 	TAccount: Into<Vec<u8>>,
 	TAssets: Into<Vec<(xc_core::AssetId, xc_core::Balance)>>,
 {
-	fn from(instruction: xc_core::Instruction<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
+	fn from(instruction: xc_core::Instruction<TAbiEncoded, TAccount, TAssets>) -> Self {
 		Instruction { instruction: Some(instruction.into()) }
 	}
 }
 
-impl<TNetwork, TAbiEncoded, TAccount, TAssets>
-	From<XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>> for Program
+impl<TAbiEncoded, TAccount, TAssets> From<XCVMProgram<TAbiEncoded, TAccount, TAssets>> for Program
 where
-	TNetwork: Into<u32>,
 	TAbiEncoded: Into<Vec<u8>>,
 	TAccount: Into<Vec<u8>>,
 	TAssets: Into<Vec<(xc_core::AssetId, xc_core::Balance)>>,
 {
-	fn from(program: XCVMProgram<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
+	fn from(program: XCVMProgram<TAbiEncoded, TAccount, TAssets>) -> Self {
 		Program {
 			tag: program.tag,
 			instructions: Some(Instructions {
