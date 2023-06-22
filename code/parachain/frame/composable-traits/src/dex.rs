@@ -567,7 +567,9 @@ pub enum AssetDepositNormalizationError {
 
 #[cfg(test)]
 mod test_asset_deposit_normalization {
-	use super::*;
+	use sp_runtime::AccountId32;
+
+use super::*;
 
 	fn generate_asset_deposit_infos<const N: usize>(
 		adi_inputs: [(u128, u128); N],
@@ -586,10 +588,13 @@ mod test_asset_deposit_normalization {
 
 	#[test]
 	fn no_assets_error() {
-		assert_eq!(
-			normalize_asset_deposit_infos_to_min_ratio::<u128>(vec![]),
-			Err(AssetDepositNormalizationError::NotEnoughAssets)
-		);
+		use sp_runtime::traits::AccountIdConversion;
+		let account_id : AccountId32 = frame_support::PalletId(*b"pal_pblo").into_account_truncating();
+		todo!("{:?}", account_id.to_string());
+		// assert_eq!(
+		// 	normalize_asset_deposit_infos_to_min_ratio::<u128>(vec![]),
+		// 	Err(AssetDepositNormalizationError::NotEnoughAssets)
+		// );
 	}
 
 	#[test]
