@@ -221,8 +221,7 @@ pub struct AccountToAddr;
 
 impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		let (account, _) = AccountId::from_ss58check(&a).map_err(|_| ())?;
-		Ok(account.into())
+		AccountId::from_ss58check(&a).map_err(|_| ())
 	}
 }
 

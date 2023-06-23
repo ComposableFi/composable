@@ -1,6 +1,7 @@
 use super::abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas};
 use crate::{runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Config, Pallet};
 use alloc::{borrow::ToOwned, string::String};
+use composable_traits::cosmwasm::CosmwasmSubstrateError;
 use core::marker::{Send, Sync};
 use cosmwasm_std::{CodeInfoResponse, Coin, ContractInfoResponse, Empty, Env, MessageInfo};
 use cosmwasm_vm::{
@@ -69,13 +70,25 @@ pub enum CosmwasmVMError<T: Config> {
 	ContractNotFound,
 	ExecuteDeserialize,
 	QuerySerialize,
+	QueryDeserialize,
+	ExecuteSerialize,
 	Rpc(String),
 	Ibc(String),
 	AssetConversion,
 	Precompile,
 }
 
-// impl wasmi_core::host_error::HostError for
+impl<T: Config> From<CosmwasmSubstrateError> for CosmwasmVMError<T> {
+    fn from(value: CosmwasmSubstrateError) -> Self {
+        match value {
+            CosmwasmSubstrateError::AssetConversion => Self::AssetConversion,
+            CosmwasmSubstrateError::AccountConvert => Self::AccountConvert,
+            CosmwasmSubstrateError::DispatchError => Self::Precompile,
+            CosmwasmSubstrateError::QuerySerialize => Self::QuerySerialize,
+            CosmwasmSubstrateError::ExecuteSerialize => Self::ExecuteSerialize,
+        }
+    }
+}
 
 impl<T: Config + core::marker::Send + core::marker::Sync + 'static> HostError
 	for CosmwasmVMError<T>

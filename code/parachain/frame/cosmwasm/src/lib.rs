@@ -198,6 +198,8 @@ pub mod pallet {
 		ReadOnlyViolation,
 		Rpc,
 		Precompile,
+		QueryDeserialize,
+		ExecuteSerialize,
 	}
 
 	#[pallet::config]
@@ -742,7 +744,9 @@ impl<T: Config> Pallet<T> {
 					CosmwasmVMError::SubstrateDispatch(_) => Error::<T>::SubstrateDispatch,
 					CosmwasmVMError::AssetConversion => Error::<T>::AssetConversion,
 					CosmwasmVMError::QuerySerialize => Error::<T>::FailedToSerialize,
-					CosmwasmVMError::Precompile => Error::<T>::FailedToSerialize,
+					CosmwasmVMError::Precompile => Error::<T>::Precompile,
+        			CosmwasmVMError::QueryDeserialize => Error::<T>::QueryDeserialize,
+        			CosmwasmVMError::ExecuteSerialize => Error::<T>::ExecuteSerialize,
 				};
 				Err(DispatchErrorWithPostInfo { error: error.into(), post_info })
 			},
