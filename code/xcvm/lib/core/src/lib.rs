@@ -23,7 +23,7 @@ use core::marker::PhantomData;
 #[derive(Clone)]
 pub struct ProgramBuilder<CurrentNetwork, Account, Assets> {
 	pub tag: Vec<u8>,
-	pub instructions: VecDeque<Instruction<NetworkId, Vec<u8>, Account, Assets>>,
+	pub instructions: VecDeque<Instruction<Vec<u8>, Account, Assets>>,
 	pub _marker: PhantomData<CurrentNetwork>,
 }
 
@@ -88,7 +88,7 @@ where
 		protocol.serialize().map(|encoded_call| self.call_raw(encoded_call))
 	}
 
-	pub fn build(self) -> Program<VecDeque<Instruction<NetworkId, Vec<u8>, Account, Assets>>> {
+	pub fn build(self) -> Program<VecDeque<Instruction<Vec<u8>, Account, Assets>>> {
 		Program { tag: self.tag, instructions: self.instructions }
 	}
 }
