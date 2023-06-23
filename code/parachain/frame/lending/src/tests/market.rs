@@ -86,7 +86,7 @@ fn can_create_valid_market() {
                             error: _, // not important in mock runtime
                             message: Some(error)
                         }),
-                    }) if Into::<&'static str>::into(orml_tokens::Error::<Runtime>::BalanceTooLow) == error
+                    }) if <&str>::from(orml_tokens::Error::<Runtime>::BalanceTooLow) == error
                 ),
                 "Creating a market with insufficient funds should fail, with the error message being \"BalanceTooLow\".
                 The other fields are also checked to make sure any changes are tested and accounted for, perhaps one of those fields changed?
@@ -213,7 +213,7 @@ fn can_create_valid_market_with_keep_alive() {
                             error: _, // not important in mock runtime
                             message: Some(error)
                         }),
-                    }) if Into::<&'static str>::into(orml_tokens::Error::<Runtime>::BalanceTooLow) == error
+                    }) if <&str>::from(orml_tokens::Error::<Runtime>::BalanceTooLow) == error
                 ),
                 "Creating a market with insufficient funds should fail, with the error message being \"BalanceTooLow\".
                 The other fields are also checked to make sure any changes are tested and accounted for, perhaps one of those fields changed?

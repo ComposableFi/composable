@@ -204,9 +204,9 @@ where
 		if let Some(event) = event.as_event::<events::Executed>()? {
 			data = event.data;
 		} else if let Some(event) = event.as_event::<E>()? {
-			details = Some(Into::<CE>::into(event));
+			details = Some(CE::from(event));
 		} else if let Some(event) = event.as_event::<events::Emitted>()? {
-			cosmwasm_events.push(Into::<Emitted>::into(event));
+			cosmwasm_events.push(Emitted::from(event));
 		}
 	}
 

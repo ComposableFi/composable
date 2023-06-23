@@ -103,7 +103,7 @@ impl EnsureOrigin<RuntimeOrigin> for EnsureAliceOrBob {
 
 	fn try_origin(o: RuntimeOrigin) -> Result<Self::Success, RuntimeOrigin> {
 		let benchmark_acc = benchmark_vested_transfer_account();
-		Into::<Result<RawOrigin<AccountId>, RuntimeOrigin>>::into(o).and_then(|o| match o {
+		Result::from(o).and_then(|o| match o {
 			RawOrigin::Signed(ALICE) => Ok(ALICE),
 			RawOrigin::Signed(BOB) => Ok(BOB),
 			RawOrigin::Signed(acc) =>

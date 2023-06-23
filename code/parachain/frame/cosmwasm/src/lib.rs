@@ -911,7 +911,7 @@ impl<T: Config> Pallet<T> {
 			transaction: frame_system::Pallet::<T>::extrinsic_index()
 				.map(|index| TransactionInfo { index }),
 			contract: CosmwasmContractInfo {
-				address: Addr::unchecked(Into::<String>::into(cosmwasm_contract_address)),
+				address: Addr::unchecked(String::from(cosmwasm_contract_address)),
 			},
 		}
 	}
@@ -1046,10 +1046,7 @@ impl<T: Config> Pallet<T> {
 		let env = Self::cosmwasm_env(contract_address.clone());
 		let cosmwasm_message_info = {
 			let cosmwasm_sender_address: CosmwasmAccount<T> = CosmwasmAccount::new(sender);
-			MessageInfo {
-				sender: Addr::unchecked(Into::<String>::into(cosmwasm_sender_address)),
-				funds,
-			}
+			MessageInfo { sender: Addr::unchecked(String::from(cosmwasm_sender_address)), funds }
 		};
 
 		// If the [`contract`] is actually a pallet that is exposed as a cosmwasm contract,
