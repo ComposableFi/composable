@@ -13,6 +13,7 @@
 		dead_code
 	)
 )]
+#![feature(result_flattening)]
 #![feature(iterator_try_collect)]
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;

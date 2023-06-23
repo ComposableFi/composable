@@ -1,18 +1,14 @@
 use crate::{prelude::*, smoldot::identity::ss58::*, AccountId};
 use primitives::currency::CurrencyId;
-use sp_runtime::{traits::Convert, AccountId32};
+use sp_runtime::{traits::Convert};
 
 pub struct CosmwasmToSubstrateAccount;
 
 impl Convert<alloc::string::String, Result<AccountId, ()>> for CosmwasmToSubstrateAccount {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		let account: AccountId32 = crate::smoldot::identity::ss58::decode(&a)
-			.map_err(|_| ())?
-			.public_key
-			.as_ref()
-			.try_into()
-			.map_err(|_| ())?;
-		Ok(account)
+		crate::smoldot::identity::ss58::decode(&a)
+			.map_err(|_| ())
+			.and_then(|x| x.public_key.as_ref().try_into())
 	}
 }
 
