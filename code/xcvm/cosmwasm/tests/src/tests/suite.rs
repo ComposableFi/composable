@@ -9,9 +9,11 @@ use cosmwasm_std::{
 use cosmwasm_vm::system::CUSTOM_CONTRACT_EVENT_PREFIX;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
 
-use cw_xc_common::gateway::EVENT_PREFIX as XCVM_GATEWAY_EVENT_PREFIX;
+use cw_xc_common::{
+	gateway::EVENT_PREFIX as XCVM_GATEWAY_EVENT_PREFIX,
+	shared::{DefaultXCVMProgram, Salt},
+};
 use cw_xc_interpreter::contract::XCVM_INTERPRETER_EVENT_PREFIX;
-use cw_xc_utils::{DefaultXCVMProgram, Salt};
 use proptest::{prelude::any, prop_assume, prop_compose, proptest};
 use std::assert_matches::assert_matches;
 use xc_core::{

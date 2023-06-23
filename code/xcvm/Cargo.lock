@@ -441,7 +441,6 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema 1.2.5",
  "cosmwasm-std",
- "cw-xc-utils",
  "schemars",
  "serde",
  "xc-core",
@@ -457,7 +456,6 @@ dependencies = [
  "cw-utils",
  "cw-xc-common",
  "cw-xc-interpreter",
- "cw-xc-utils",
  "cw2",
  "cw20",
  "hex",
@@ -479,7 +477,6 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw-xc-common",
- "cw-xc-utils",
  "cw2",
  "cw20",
  "hex",
@@ -502,7 +499,6 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw-xc-common",
- "cw-xc-utils",
  "cw2",
  "cw20",
  "hex",
@@ -515,14 +511,6 @@ dependencies = [
  "thiserror-core",
  "xc-core",
  "xc-proto",
-]
-
-[[package]]
-name = "cw-xc-utils"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std",
- "xc-core",
 ]
 
 [[package]]
@@ -2688,7 +2676,6 @@ dependencies = [
  "cw-xc-common",
  "cw-xc-interpreter",
  "cw-xc-pingpong",
- "cw-xc-utils",
  "cw20",
  "cw20-base",
  "env_logger",
