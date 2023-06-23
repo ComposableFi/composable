@@ -1,5 +1,4 @@
 use super::*;
-use codec::FullCodec;
 use common::{fees::WeightToFeeConverter, xcmp::*};
 use composable_traits::xcm::assets::RemoteAssetRegistryInspect;
 use cumulus_primitives_core::{IsSystem, ParaId};
@@ -235,8 +234,14 @@ impl<
 			Match::matches_fungible(asset),
 		) {
 			// known asset
-			(Ok(who), Some(currency_id), Some(amount)) => {
-				DepositCallback::deposit_asset(asset, location, context, result, Some(currency_id));
+			(Ok(_), Some(currency_id), Some(_)) => {
+				let _ = DepositCallback::deposit_asset(
+					asset,
+					location,
+					context,
+					result,
+					Some(currency_id),
+				);
 			},
 			// unknown asset
 			_ => {
