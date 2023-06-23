@@ -52,10 +52,10 @@ pub enum Destination<Account> {
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Instruction<Network, Payload, Account, Assets> {
+pub enum Instruction<Payload, Account, Assets> {
 	/// Transfer some [`Assets`] from the current program to the [`to`] account.
 	Transfer { to: Destination<Account>, assets: Assets },
-	/// Arbitrary payload representing a raw call inside the current [`Network`].
+	/// Arbitrary payload representing a raw call inside the current network.
 	///
 	/// On picasso, this will be a SCALE encoded dispatch call.
 	/// On ethereum, an ethereum ABI encoded call.
@@ -69,7 +69,12 @@ pub enum Instruction<Network, Payload, Account, Assets> {
 	///
 	/// The program will be spawned with the desired [`Assets`].
 	/// The salt is used to track the program when events are dispatched in the network.
-	Spawn { network: Network, salt: Vec<u8>, assets: Assets, program: Program<VecDeque<Self>> },
+	Spawn {
+		network: crate::network::NetworkId,
+		salt: Vec<u8>,
+		assets: Assets,
+		program: Program<VecDeque<Self>>,
+	},
 }
 
 /// Error types for late binding operation
