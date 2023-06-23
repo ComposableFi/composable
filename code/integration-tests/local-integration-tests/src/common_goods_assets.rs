@@ -487,7 +487,7 @@ fn bob_has_statemine_asset_on_this_and_transfers_it_to_reserve(
 				index: _, // NOTE: finding pay to map pallet/error to index would look better/shorter/faster
 				error: _,
 				message: Some(msg),
-			}) if Into::<&'static str>::into(orml_xtokens::Error::<Runtime>::MinXcmFeeNotDefined) == msg
+			}) if str::from(orml_xtokens::Error::<Runtime>::MinXcmFeeNotDefined) == msg
 		));
 
 		let location = XcmAssetLocation::new(MultiLocation::new(

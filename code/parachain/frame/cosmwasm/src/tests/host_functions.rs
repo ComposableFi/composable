@@ -210,7 +210,7 @@ fn addr_canonicalize_humanize_validate() {
 		// 4. `addr_humanize` gives back the original address.
 		let gas = current_gas(&mut vm);
 		assert_eq!(
-			Into::<String>::into(vm.addr_humanize(&canonical_addr).unwrap().unwrap()),
+			String::from(vm.addr_humanize(&canonical_addr).unwrap().unwrap()),
 			valid_addr.0.to_string()
 		);
 

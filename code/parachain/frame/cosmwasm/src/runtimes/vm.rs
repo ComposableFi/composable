@@ -405,13 +405,13 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 	}
 
 	fn balance(&mut self, account: &Self::Address, denom: String) -> Result<Coin, Self::Error> {
-		log::debug!(target: "runtime::contracts", "balance: {} => {:#?}", Into::<String>::into(account.clone()), denom);
+		log::debug!(target: "runtime::contracts", "balance: {} => {:#?}", String::from(account.clone()), denom);
 		let amount = Pallet::<T>::do_balance(account.as_ref(), denom.clone())?;
 		Ok(Coin { denom, amount: amount.into() })
 	}
 
 	fn all_balance(&mut self, account: &Self::Address) -> Result<Vec<Coin>, Self::Error> {
-		log::debug!(target: "runtime::contracts", "all balance: {}", Into::<String>::into(account.clone()));
+		log::debug!(target: "runtime::contracts", "all balance: {}", String::from(account.clone()));
 		//  TODO(hussein-aitlahcen): support iterating over all tokens???
 		Err(CosmwasmVMError::Unsupported)
 	}
