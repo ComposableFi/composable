@@ -19,16 +19,13 @@ use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInf
 use cw_utils::ensure_from_older_version;
 use cw_xc_common::{
 	gateway::{AssetReference, BridgeMsg, ExecuteMsg as GWExecuteMsg, ExecuteProgramMsg},
-	shared::encode_base64,
+	shared::{encode_base64, DefaultXCVMProgram},
 };
-use cw_xc_utils::DefaultXCVMProgram;
 use num::Zero;
 use xc_core::{
 	apply_bindings, AssetId, Balance, BindingValue, Destination, Displayed, Funds, Instruction,
 	NetworkId, Register,
 };
-
-type XCVMProgram = DefaultXCVMProgram;
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -165,7 +162,7 @@ fn remove_owners(_: Authenticated, deps: DepsMut, owners: Vec<Addr>) -> Response
 	Response::default().add_event(event)
 }
 
-/// Execute a [`XCVMProgram`].
+/// Execute an XCVM program.
 /// The function will execute the program instructions one by one.
 /// If the program contains a [`XCVMInstruction::Call`], the execution is suspended and resumed
 /// after having executed the call.
@@ -318,7 +315,7 @@ pub fn interpret_spawn(
 	network: NetworkId,
 	salt: Vec<u8>,
 	assets: Funds<Balance>,
-	program: XCVMProgram,
+	program: DefaultXCVMProgram,
 ) -> Result<Response, ContractError> {
 	let Config { interpreter_origin, gateway_address, .. } = CONFIG.load(deps.storage)?;
 

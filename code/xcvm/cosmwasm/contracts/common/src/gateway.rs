@@ -1,6 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Addr;
-use cw_xc_utils::DefaultXCVMProgram;
 use xc_core::{AssetId, CallOrigin, Displayed, Funds, InterpreterOrigin, NetworkId};
 
 /// Prefix used for all events attached to gateway responses.
@@ -67,7 +66,7 @@ pub struct ExecuteProgramMsg {
 	/// The program salt.
 	pub salt: Vec<u8>,
 	/// The program.
-	pub program: DefaultXCVMProgram,
+	pub program: crate::shared::DefaultXCVMProgram,
 	/// Assets to fund the XCVM interpreter instance
 	/// The interpreter is funded prior to execution
 	pub assets: Funds<Displayed<u128>>,

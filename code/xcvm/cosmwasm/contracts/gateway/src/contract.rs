@@ -16,7 +16,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw20::Cw20ExecuteMsg;
 use cw_utils::ensure_from_older_version;
-use cw_xc_utils::DefaultXCVMPacket;
+use cw_xc_common::shared::DefaultXCVMPacket;
 use xc_core::{BridgeProtocol, CallOrigin, Displayed, Funds, XCVMAck};
 use xc_proto::{decode_packet, Encodable};
 

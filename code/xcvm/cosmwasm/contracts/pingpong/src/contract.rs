@@ -13,7 +13,6 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::ensure_from_older_version;
-use cw_xc_utils::DefaultXCVMProgram;
 use xc_core::{
 	cosmwasm::{FlatCosmosMsg, FlatWasmMsg},
 	Balance, Funds, Juno, Network, Picasso, ProgramBuilder, UserId, UserOrigin,
@@ -40,7 +39,7 @@ pub fn instantiate(
 fn make_program<T: Network<EncodedCall = Vec<u8>>, U: Network<EncodedCall = Vec<u8>>>(
 	remote_address: UserId,
 	msg: ExecuteMsg,
-) -> Result<DefaultXCVMProgram, ContractError> {
+) -> Result<cw_xc_common::shared::DefaultXCVMProgram, ContractError> {
 	Ok(ProgramBuilder::<T, CanonicalAddr, Funds<Balance>>::new("PING".as_bytes().to_vec())
 		.spawn::<U, (), _, _>(
 			"PONG".as_bytes().to_vec(),
