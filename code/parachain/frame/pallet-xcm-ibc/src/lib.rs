@@ -1,5 +1,3 @@
-use std::collections::btree_set::IntoIter;
-
 pub use pallet::{Error, *};
 
 type AccoindIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -43,17 +41,24 @@ struct MemoData {
 
 impl MemoData {
 	fn new<T: Config>(
-		iter: Vec<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>, [u32; 32])>,
-	) -> Option<Self> {
+		mut vec: Vec<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>, [u8; 32])>,
+	) -> core::result::Result<Option<Self>, Error<T>> {
 		//TODO this method support only addresses from cosmos ecosystem based on bech32.
 		//panic in case wrong address type.
 		//if need support memo with a different address type need to adapt
-
+		vec.reverse();
 		let mut memo_data: Option<MemoData> = None;
-		for (i, name, address) in iter {
-			let data: Vec<bech32::u5> = vec![];
-			let name = String::from_utf8(name.into()).expect("Found invalid UTF-8");
-			let result_address = bech32::encode(&name, data.clone()).unwrap();
+		for (i, name, address) in vec {
+			let result: core::result::Result<Vec<bech32::u5>, bech32::Error> =
+				address.into_iter().map(bech32::u5::try_from_u8).collect();
+			let data =
+				result.map_err(|_| Error::<T>::IncorrectAddress { chain_id: i.chain_id as u8 })?;
+
+			let name = String::from_utf8(name.into())
+				.map_err(|_| Error::<T>::IncorrectChainName { chain_id: i.chain_id as u8 })?;
+			let result_address = bech32::encode(&name, data.clone()).map_err(|_| {
+				Error::<T>::FailedToEncodeBech32Address { chain_id: i.chain_id as u8 }
+			})?;
 
 			let new_memo = MemoData {
 				forward: MemoForward {
@@ -67,7 +72,7 @@ impl MemoData {
 			};
 			memo_data = Some(new_memo);
 		}
-		memo_data
+		Ok(memo_data)
 	}
 }
 
@@ -103,7 +108,15 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		Error1,
+		IncorrectAddress { chain_id: u8 },
+		IncorrectChainName { chain_id: u8 },
+		FailedToEncodeBech32Address { chain_id: u8 },
+		IncorrectMultiLocation,
+		XcmDepositFailed,
+		MultiHopRouteDoesNotExist,
+		DoesNotSupportNonFungible,
+		IncorrectCountOfAddresses,
+		FailedToConstructMemo,
 	}
 
 	#[pallet::pallet]
@@ -140,10 +153,10 @@ pub mod pallet {
 		fn deposit_asset(
 			asset: &MultiAsset,
 			location: &MultiLocation,
-			context: &XcmContext,
+			_context: &XcmContext,
 			deposit_result: Result,
 			asset_id: Option<<T as pallet_ibc::Config>::AssetId>,
-		) {
+		) -> core::result::Result<(), Error<T>> {
 			let id = match location {
 				MultiLocation {
 					parents: 0,
@@ -212,41 +225,37 @@ pub mod pallet {
 					Some((*current_network_address, *chain_id, vec![ibc1, ibc2, ibc3, ibc4, ibc5])),
 				_ => None,
 			};
-			let Some((id, chain_id, addreses)) = id else{
-				//does not match the pattern of multihop
-				return;
-			};
 
-			let Ok(_) = deposit_result else {
-				//deposit does not executed propertly. nothing todo. assets will stay in the account id address
-				return;
-			};
+			let (id, chain_id, mut addresses) =
+				id.ok_or_else(|| Error::<T>::IncorrectMultiLocation)?;
 
-			let Ok(route) = ChainIdToMiltihopRoutePath::<T>::try_get(chain_id) else {
-				//route does not exist
-				return;
-			};
+			//deposit does not executed propertly. nothing todo. assets will stay in the account id
+			// address
+			deposit_result.map_err(|_| Error::<T>::XcmDepositFailed)?;
+
+			//route does not exist
+			let route = ChainIdToMiltihopRoutePath::<T>::try_get(chain_id)
+				.map_err(|_| Error::<T>::MultiHopRouteDoesNotExist)?;
 
 			let route_len = route.len();
 			let mut chain_info_iter = route.into_iter();
 
-			let Some((chain_info, name)) = chain_info_iter.next() else{
-				//route does not exist
-				return;
-			};
+			//route does not exist
+			let (next_chain_info, _) =
+				chain_info_iter.next().ok_or(Error::<T>::MultiHopRouteDoesNotExist)?;
 
-			if addreses.len() != route_len - 1 {
+			if addresses.len() != route_len - 1 {
 				//wrong XCM MultiLocation. route len does not match addresses list in XCM call.
-				return
+				return Err(Error::<T>::IncorrectCountOfAddresses)
 			}
 
 			let account_id = MultiAddress::<AccoindIdOf<T>>::Raw(id.to_vec());
 			let transfer_params = TransferParams::<AccoindIdOf<T>> {
 				to: account_id,
-				source_channel: chain_info.channel_id,
+				source_channel: next_chain_info.channel_id,
 				timeout: IbcTimeout::Offset {
-					timestamp: chain_info.timestamp,
-					height: chain_info.height,
+					timestamp: next_chain_info.timestamp,
+					height: next_chain_info.height,
 				},
 			};
 
@@ -255,17 +264,22 @@ pub mod pallet {
 			let account_id = T::AccountId::decode(&mut to32).unwrap();
 			let signed_account_id = RawOrigin::Signed(account_id);
 
-			// let
+			//do not support non fungible.
 			let Fungibility::Fungible(ref amount) = asset.fun else{
-				return;
-				//do not support non fungible.
+				return Err(Error::<T>::DoesNotSupportNonFungible);
 			};
 
 			let mut memo: Option<<T as pallet_ibc::Config>::MemoMessage> = None;
 			//todo take address
-			let mut vec: Vec<_> = chain_info_iter.map(|i| (i.0, i.1, [0u32; 32])).collect();
-			vec.reverse();
-			let memo_data = MemoData::new::<T>(vec);
+
+			let mut vec: Vec<_> = chain_info_iter
+				.zip(addresses.into_iter())
+				.map(|(i, address)| (i.0, i.1, address.clone()))
+				.collect();
+
+			//not able to derive address. and construct memo no multihop.
+			let memo_data =
+				MemoData::new::<T>(vec).map_err(|_| Error::<T>::FailedToConstructMemo)?;
 			match memo_data {
 				Some(memo_data) => {
 					let memo_str = format!("{:?}", memo_data); //create a string memo
@@ -300,6 +314,7 @@ pub mod pallet {
 					//todo emit error
 				},
 			}
+			core::result::Result::Ok(())
 		}
 	}
 }
@@ -313,6 +328,6 @@ pub trait MultiCurrencyCallback<T: Config> {
 		context: &XcmContext,
 		deposit_result: Result,
 		asset_id: Option<<T as pallet_ibc::Config>::AssetId>,
-	);
+	) -> core::result::Result<(), Error<T>>;
 	//check result, unwrap memo if exists and execute ibc packet
 }
