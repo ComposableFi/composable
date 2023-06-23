@@ -5,25 +5,25 @@ use primitives::currency::CurrencyId;
 use sp_runtime::{traits::Convert, Permill, PerThing};
 use sp_std::marker::PhantomData;
 
-pub struct DexPrecompile<Balance, AccountId, Dex>(PhantomData<(Balance, AccountId, Dex)>);
+pub struct DexPrecompile<Dex>(PhantomData<Dex>);
 
-impl<Dex, Balance, AccountId> DexPrecompile<Balance, AccountId, Dex>
+impl<Dex> DexPrecompile<Dex>
 where
 	Dex:
-		Amm<AssetId = CurrencyId, Balance = Balance, AccountId = AccountId, PoolId = crate::PoolId>,
-	Balance: From<Uint128> + Into<u128>,
-	AccountId: sp_std::convert::From<sp_runtime::AccountId32>,
+		Amm<AssetId = CurrencyId, PoolId = crate::PoolId>,
+	Dex::Balance: From<Uint128> + Into<u128>,
+	Dex::AccountId: sp_std::convert::From<sp_runtime::AccountId32>,
 {
 	fn to_substrate(
 		in_asset: &Coin,
-	) -> Result<AssetAmount<CurrencyId, Balance>, CosmwasmSubstrateError> {
+	) -> Result<AssetAmount<CurrencyId, Dex::Balance>, CosmwasmSubstrateError> {
 		let in_asset_id = CosmwasmToSubstrateAssetId::convert(in_asset.denom.clone())
 			.map_err(|_| CosmwasmSubstrateError::AssetConversion)?;
-		let in_amount: Balance = in_asset.amount.into();
+		let in_amount: Dex::Balance = in_asset.amount.into();
 		Ok(AssetAmount::new(in_asset_id, in_amount))
 	}
 
-	fn to_cw(amount: AssetAmount<CurrencyId, Balance>) -> Coin {
+	fn to_cw(amount: AssetAmount<CurrencyId, Dex::Balance>) -> Coin {
 		Coin {
 			denom: CosmwasmToSubstrateAssetId::convert(amount.asset_id),
 			amount: amount.amount.into().into(),
@@ -191,7 +191,7 @@ where
 
 				let out_asset_id = CosmwasmToSubstrateAssetId::convert(out_asset.denom.clone())
 					.map_err(|_| CosmwasmSubstrateError::AssetConversion)?;
-				let out_asset_amount: Balance = out_asset.amount.into();
+				let out_asset_amount: Dex::Balance = out_asset.amount.into();
 
 				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
 					.map_err(|_| CosmwasmSubstrateError::AccountConversion)?
@@ -220,12 +220,12 @@ where
 			ExecuteMsg::Swap { pool_id, in_asset, min_receive, keep_alive } => {
 				let in_asset_id = CosmwasmToSubstrateAssetId::convert(in_asset.denom.clone())
 					.map_err(|_| CosmwasmSubstrateError::AssetConversion)?;
-				let in_amount: Balance = in_asset.amount.into();
+				let in_amount: Dex::Balance = in_asset.amount.into();
 				let in_asset = AssetAmount::new(in_asset_id, in_amount);
 
 				let min_receive_id = CosmwasmToSubstrateAssetId::convert(min_receive.denom.clone())
 					.map_err(|_| CosmwasmSubstrateError::AssetConversion)?;
-				let min_receive_amount: Balance = min_receive.amount.into();
+				let min_receive_amount: Dex::Balance = min_receive.amount.into();
 				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
 					.map_err(|_| CosmwasmSubstrateError::AccountConversion)?
 					.into();
