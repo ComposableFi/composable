@@ -8,6 +8,7 @@ use crate::{
 	types::*,
 	*,
 };
+use common::cosmwasm::CosmwasmToSubstrateAccount;
 use composable_traits::currency::{CurrencyFactory, RangeId};
 use core::marker::PhantomData;
 
@@ -216,26 +217,6 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-/// Native <-> Cosmwasm account mapping
-pub struct AccountToAddr;
-
-impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
-	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		AccountId::from_ss58check(&a).map_err(|_| ())
-	}
-}
-
-impl Convert<AccountId, alloc::string::String> for AccountToAddr {
-	fn convert(a: AccountId) -> alloc::string::String {
-		AccountId::to_ss58check_with_version(&a, Ss58AddressFormat::custom(59))
-	}
-}
-impl Convert<Vec<u8>, Result<AccountId, ()>> for AccountToAddr {
-	fn convert(a: Vec<u8>) -> Result<AccountId, ()> {
-		Ok(<[u8; 32]>::try_from(a).map_err(|_| ())?.into())
-	}
-}
-
 /// Native <-> Cosmwasm asset mapping
 pub struct AssetToDenom;
 
@@ -396,7 +377,7 @@ impl PalletHook<Test> for MockHook {
 						let response = Response::new()
 							.add_event(CosmwasmEvent::new(MOCK_CONTRACT_IBC_EVENT_TYPE_1))
 							.add_message(WasmMsg::Execute {
-								contract_addr: AccountToAddr::convert(
+								contract_addr: CosmwasmToSubstrateAccount::convert(
 									MOCK_PALLET_IBC_CONTRACT_ADDRESS,
 								),
 								msg: cosmwasm_std::Binary("42".as_bytes().to_vec()),
@@ -434,7 +415,9 @@ impl PalletHook<Test> for MockHook {
 					let depth = message.first().copied().unwrap_or(0);
 					if depth > 0 {
 						response = response.add_submessage(SubMsg::new(WasmMsg::Execute {
-							contract_addr: AccountToAddr::convert(MOCK_PALLET_CONTRACT_ADDRESS_1),
+							contract_addr: CosmwasmToSubstrateAccount::convert(
+								MOCK_PALLET_CONTRACT_ADDRESS_1,
+							),
 							msg: vec![depth - 1].into(),
 							funds: Default::default(),
 						}));
@@ -459,7 +442,9 @@ impl PalletHook<Test> for MockHook {
 					let depth = message.first().copied().unwrap_or(0);
 					if depth > 0 {
 						response = response.add_submessage(SubMsg::new(WasmMsg::Execute {
-							contract_addr: AccountToAddr::convert(MOCK_PALLET_CONTRACT_ADDRESS_2),
+							contract_addr: CosmwasmToSubstrateAccount::convert(
+								MOCK_PALLET_CONTRACT_ADDRESS_2,
+							),
 							msg: vec![depth - 1].into(),
 							funds: Default::default(),
 						}));
@@ -516,7 +501,7 @@ impl Config for Test {
 	type MaxCodeSize = MaxCodeSize;
 	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
 	type MaxMessageSize = MaxMessageSize;
-	type AccountToAddr = AccountToAddr;
+	type AccountToAddr = CosmwasmToSubstrateAccount;
 	type AssetToDenom = AssetToDenom;
 	type Balance = Balance;
 	type AssetId = CurrencyId;

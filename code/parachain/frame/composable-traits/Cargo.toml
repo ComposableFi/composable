@@ -42,6 +42,7 @@ schemars = { optional = true, workspace = true, default-features = false}
 
 cosmwasm-schema = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6", default-features = false, optional = true}
 
+thiserror = {workspace = true, default-features = false}
 
 [dev-dependencies]
 proptest = { version = "1.0.0" }

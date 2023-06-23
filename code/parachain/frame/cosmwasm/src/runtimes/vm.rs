@@ -79,15 +79,15 @@ pub enum CosmwasmVMError<T: Config> {
 }
 
 impl<T: Config> From<CosmwasmSubstrateError> for CosmwasmVMError<T> {
-    fn from(value: CosmwasmSubstrateError) -> Self {
-        match value {
-            CosmwasmSubstrateError::AssetConversion => Self::AssetConversion,
-            CosmwasmSubstrateError::AccountConvert => Self::AccountConvert,
-            CosmwasmSubstrateError::DispatchError => Self::Precompile,
-            CosmwasmSubstrateError::QuerySerialize => Self::QuerySerialize,
-            CosmwasmSubstrateError::ExecuteSerialize => Self::ExecuteSerialize,
-        }
-    }
+	fn from(value: CosmwasmSubstrateError) -> Self {
+		match value {
+			CosmwasmSubstrateError::AssetConversion => Self::AssetConversion,
+			CosmwasmSubstrateError::AccountConvert => Self::AccountConvert,
+			CosmwasmSubstrateError::DispatchError => Self::Precompile,
+			CosmwasmSubstrateError::QuerySerialize => Self::QuerySerialize,
+			CosmwasmSubstrateError::ExecuteSerialize => Self::ExecuteSerialize,
+		}
+	}
 }
 
 impl<T: Config + core::marker::Send + core::marker::Sync + 'static> HostError

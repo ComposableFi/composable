@@ -1,6 +1,6 @@
 use crate::{prelude::*, smoldot::identity::ss58::*, AccountId};
 use primitives::currency::CurrencyId;
-use sp_runtime::{traits::Convert};
+use sp_runtime::traits::Convert;
 
 pub struct CosmwasmToSubstrateAccount;
 

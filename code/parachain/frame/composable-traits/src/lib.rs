@@ -42,6 +42,7 @@ pub mod airdrop;
 pub mod assets;
 pub mod bonded_finance;
 pub mod bounded;
+pub mod cosmwasm;
 pub mod currency;
 pub mod defi;
 pub mod dex;

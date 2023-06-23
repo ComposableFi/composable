@@ -79,6 +79,7 @@ wasmi-validation = { workspace = true, default-features = false }
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
+common = { path = "../../runtime/common", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 lazy_static = { version = "1.4.0", default-features = false, features = [
   "spin_no_std",
@@ -91,6 +92,8 @@ rand = { version = "0.8.5", default-features = false, features = [
   "alloc",
   "small_rng",
 ] }
+
+
 
 [features]
 default = ["std"]
@@ -111,6 +114,7 @@ runtime-benchmarks = [
 ]
 std = [
   "codec/std",
+  "common/std",
   "composable-support/std",
   "cosmwasm-std/std",
   "cosmwasm-vm-wasmi/std",
@@ -124,17 +128,17 @@ std = [
   "orml-tokens/std",
   "pallet-assets-registry/std",
   "pallet-assets-transactor-router/std",
-  "pallet-balances/std",
-  "pallet-timestamp/std",
   "pallet-assets/std",
+  "pallet-balances/std",
   "pallet-ibc/std",
+  "pallet-timestamp/std",
+  "parity-wasm/std",
   "primitives/std",
   "scale-info/std",
   "sha3/std",
   "sp-arithmetic/std",
   "sp-core/std",
   "sp-io/std",
-  "parity-wasm/std",
   "sp-runtime/std",
   "sp-std/std",
   "wasm-instrument/std",

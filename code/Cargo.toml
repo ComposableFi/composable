@@ -351,6 +351,7 @@ serde_json = { version = "1.0.82", default-features = false, features = [
   "alloc",
 ] }
 
+thiserror = { version = "1.0.38", package = "thiserror-core", default-features = false }
 
 #######################################
 # DO NOT DELETE PATCHES, BUT COMMENT OUT

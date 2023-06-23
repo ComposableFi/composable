@@ -2050,6 +2050,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
+ "thiserror-core",
  "xcm",
 ]
 
@@ -8532,6 +8533,7 @@ dependencies = [
 name = "pallet-cosmwasm"
 version = "1.0.0"
 dependencies = [
+ "common",
  "composable-support",
  "composable-tests-helpers",
  "composable-traits",
