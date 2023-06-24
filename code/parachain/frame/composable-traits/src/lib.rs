@@ -35,6 +35,7 @@
 #![feature(const_trait_impl)] // https://github.com/Rust-for-Linux/linux/issues/2
 #![feature(const_convert)] // that is just const fn for into/from - easy
 #![feature(adt_const_params)] // avoids write own serde and bit shifts for Rational64
+#![feature(error_in_core)]
 extern crate alloc;
 
 pub mod account_proxy;

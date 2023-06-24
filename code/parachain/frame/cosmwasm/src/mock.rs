@@ -29,10 +29,7 @@ use frame_system::{EnsureRoot, EnsureSigned, EnsureSignedBy};
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::{CurrencyId, ForeignAssetId};
-use sp_core::{
-	crypto::{Ss58AddressFormat, Ss58Codec},
-	H256,
-};
+use sp_core::H256;
 use sp_runtime::{
 	generic,
 	traits::{AccountIdConversion, BlakeTwo256, Convert, ConvertInto, IdentityLookup},

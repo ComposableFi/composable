@@ -75,10 +75,10 @@ sp-std = { default-features = false, workspace = true }
 wasm-instrument = { workspace = true, default-features = false }
 wasmi = { workspace = true, default-features = false }
 wasmi-validation = { workspace = true, default-features = false }
+composable-traits = { path = "../composable-traits", default-features = false }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
-composable-traits = { path = "../composable-traits", default-features = false }
 common = { path = "../../runtime/common", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 lazy_static = { version = "1.4.0", default-features = false, features = [
@@ -119,6 +119,7 @@ std = [
   "cosmwasm-std/std",
   "cosmwasm-vm-wasmi/std",
   "cosmwasm-vm/std",
+  "composable-traits/std",
   "frame-benchmarking/std",
   "frame-support/std",
   "frame-system/std",

@@ -145,14 +145,14 @@ impl PalletHook<Runtime> for Precompiles {
 					serde_json::from_slice(message)
 						.map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
 
-				let result = common::dex::DexPrecompile::<_, _, Pablo>::execute(
+				let result = common::dex::DexPrecompile::<Pablo>::execute(
 					vm.0.data().cosmwasm_message_info.sender.as_str(),
 					message,
 				)
 				.map_err(|_| CosmwasmVMError::<Runtime>::Precompile);
 
 				match result {
-					Ok(result) => Ok(ContractResult::Ok(response)),
+					Ok(result) => Ok(ContractResult::Ok(result)),
 					Err(err) => Ok(ContractResult::Err(alloc::format!("{:?}", err))),
 				}
 			},
@@ -179,7 +179,7 @@ impl PalletHook<Runtime> for Precompiles {
 			address if address == dex => {
 				let message: composable_traits::dex::QueryMsg = serde_json::from_slice(message)
 					.map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
-				let result = common::dex::DexPrecompile::<_, _, Pablo>::query(
+				let result = common::dex::DexPrecompile::<Pablo>::query(
 					vm.0.data().cosmwasm_message_info.sender.as_str(),
 					message,
 				)
