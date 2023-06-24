@@ -75,7 +75,7 @@
         ./code/runtimes.nix
         ./code/services/cmc-api/cmc-api.nix
         ./code/utils/price-feed/price-feed.nix
-        ./code/xcvm/xcvm-contracts.nix
+        ./code/xcvm/flake-module.nix
         ./devnets/all.nix
         ./docs/docs.nix
         ./flake/all.nix

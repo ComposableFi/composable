@@ -19,8 +19,6 @@
                 || type == "regular" && pkgs.lib.strings.hasSuffix ".lock" name;
               isRust = name: type:
                 type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
-              isNotNix = name: type:
-                !(type == "regular" && pkgs.lib.strings.hasSuffix ".nix" name);
               customFilter = name: type:
                 builtins.any (fun: fun name type) [
                   isCargo
@@ -29,7 +27,6 @@
                   isREADME
                   isJSON
                   isProto
-                  isNotNix
                 ];
             in pkgs.nix-gitignore.gitignoreFilterPure customFilter
             [ ../.gitignore ] root;
