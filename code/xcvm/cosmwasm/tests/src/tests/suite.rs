@@ -767,6 +767,7 @@ mod cross_chain {
 	}
 
 	proptest! {
+	  #[ignore] // until ICS-20 integraion for assets
 	  #[test]
 	  fn test_simple_crosschain_xcvm_transfer(
 		  admin in account(),

@@ -1,5 +1,13 @@
-{ ... }: {
-  perSystem = { self', pkgs, systemCommonRust, subnix, lib, ... }: {
+{ self, ... }: {
+  perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, ... }: {
+    packages = {
+      osmosisd = pkgs.writeShellApplication {
+        name = "osmosisd";
+        text = ''
+          ${self.inputs.cosmos.packages.${system}.osmosis}/bin/osmosisd;
+        '';
+      };
+    };
     process-compose.devnet-xc = {
       settings = {
         processes = {
@@ -19,6 +27,7 @@
             availability = { restart = "on_failure"; };
             log_location = "/tmp/composable-devnet/zombienet.log";
           };
+
           hyperspace-client = {
             command = ''
               sleep 20

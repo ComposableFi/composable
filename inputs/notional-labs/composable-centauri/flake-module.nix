@@ -20,11 +20,11 @@
         src = pkgs.fetchFromGitHub {
           owner = "notional-labs";
           repo = "composable-centauri";
-          rev = "762ad8efd57695ff4ee469aa6923fe7e81578c61";
-          sha256 = "sha256-/wN246AZ4eO9Z2+q7iLLw33G+7cbUCCtetA2BFDRlj8=";
+          rev = "e01bfb2f4498d3ac753688931bd8684236f30205";
+          sha256 = "sha256-GOz/g/a0PhnGuJ1gLr3dJtyWnFfy7Oaeybg0LpOBOno=";
         };
         dontFixup = true;
-        vendorSha256 = "sha256-xbHVzucr/5B9ePP3Dnhag9KaFKvS238sTgkoxsD3LJ8=";
+        vendorSha256 = "sha256-RgbRnG6nkzK7HS6DpwiheYDkpsraOedhdJuz8AfjcVs=";
       };
 
       ibc-lightclients-wasm-v1-msg-push-new-wasm-code = code: {

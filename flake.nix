@@ -5,7 +5,7 @@
     nixpkgs-latest.url =
       "github:NixOS/nixpkgs/0135b7a556ee60144b143b071724fa44348a188e";
     process-compose-flake = {
-      url = "github:Platonic-Systems/process-compose-flake";
+      url = "github:Platonic-Systems/process-compose-flake/5bdb90b85642901cf9a5dccfe8c907091c261604";
       inputs.nixpkgs.follows = "nixpkgs-latest";
     };
 
@@ -44,6 +44,10 @@
       url = "github:lnl7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    cosmos = {
+      url = "github:informalsystems/cosmos.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   nixConfig = {
@@ -53,6 +57,7 @@
       "https://nixpkgs-update.cachix.org"
       "https://devenv.cachix.org"
       "https://composable-community.cachix.org"
+      "https://cosmos.cachix.org"
     ];
     extra-trusted-public-keys = [
       "composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8="
@@ -60,6 +65,7 @@
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       "nixpkgs-update.cachix.org-1:6y6Z2JdoL3APdu6/+Iy8eZX2ajf09e4EE9SnxSML1W8="
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      "cosmos.cachix.org-1:T5U9yg6u2kM48qAOXHO/ayhO8IWFnv0LOhNcq0yKuR8="
     ];
   };
 

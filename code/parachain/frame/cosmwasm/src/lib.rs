@@ -386,6 +386,28 @@ pub mod pallet {
 	pub(crate) type ContractToInfo<T: Config> =
 		StorageMap<_, Identity, AccountIdOf<T>, ContractInfoOf<T>>;
 
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub contracts: sp_std::vec::Vec<(T::AccountIdExtended, ContractCodeOf<T>)>,
+		pub phantom: sp_std::marker::PhantomData<T>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { contracts: vec![], phantom: <_>::default() }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			for (who, code) in self.contracts.clone() {
+				<Pallet<T>>::do_upload(&who, code).expect("contracts in genesis are valid")
+			}
+		}
+	}
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Upload a CosmWasm contract.

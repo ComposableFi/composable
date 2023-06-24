@@ -16,7 +16,7 @@ const CW20_HASH: &[u8; 32] =
 fn main() {
 	// When building on CI inside of NIX, don’t download the contract file
 	// since HTTP is blocked.
-	if std::env::var_os("NIX_BUILD_RS_OUT_DIR").is_some() {
+	if std::env::var_os("NIX_CARGO_OUT_DIR").is_some() {
 		return
 	}
 
