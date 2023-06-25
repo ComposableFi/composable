@@ -40,12 +40,10 @@ struct MemoData {
 }
 
 impl MemoData {
+	/// Support only addresses from cosmos ecosystem based on bech32.
 	fn new<T: Config>(
 		mut vec: Vec<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>, [u8; 32])>,
 	) -> core::result::Result<Option<Self>, Error<T>> {
-		//TODO this method support only addresses from cosmos ecosystem based on bech32.
-		//panic in case wrong address type.
-		//if need support memo with a different address type need to adapt
 		vec.reverse();
 		let mut memo_data: Option<MemoData> = None;
 		for (i, name, address) in vec {
@@ -105,20 +103,20 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event<T: Config> {
-		SuccessXcmToIbc{
+		SuccessXcmToIbc {
 			origin_address: T::AccountId,
-			to : [u8; 32],
+			to: [u8; 32],
 			amount: u128,
-			asset_id : T::AssetId,
-			memo : Option<T::MemoMessage>
+			asset_id: T::AssetId,
+			memo: Option<T::MemoMessage>,
 		},
-		FailedXcmToIbc{
+		FailedXcmToIbc {
 			origin_address: T::AccountId,
-			to : [u8; 32],
+			to: [u8; 32],
 			amount: u128,
-			asset_id : T::AssetId,
-			memo : Option<T::MemoMessage>
-		}
+			asset_id: T::AssetId,
+			memo: Option<T::MemoMessage>,
+		},
 	}
 
 	#[pallet::error]
@@ -286,15 +284,15 @@ pub mod pallet {
 			};
 
 			let mut memo: Option<<T as pallet_ibc::Config>::MemoMessage> = None;
-			//todo take address
 
-			// chain_info_iter does not contains the first IBC chain in the route, addresses does not contain first ibc address as well.
+			// chain_info_iter does not contains the first IBC chain in the route, addresses does
+			// not contain first ibc address as well.
 			let vec: Vec<_> = chain_info_iter
 				.zip(addresses.into_iter())
 				.map(|(i, address)| (i.0, i.1, address.clone()))
 				.collect();
 
-			//not able to derive address. and construct memo no multihop.
+			//not able to derive address. and construct memo for multihop.
 			let memo_data =
 				MemoData::new::<T>(vec).map_err(|_| Error::<T>::FailedToConstructMemo)?;
 			match memo_data {
@@ -303,15 +301,7 @@ pub mod pallet {
 
 					let memo_result = <T as pallet_ibc::Config>::MemoMessage::from_str(&memo_str);
 
-					match memo_result {
-						Ok(m) => memo = Some(m),
-						Err(e) => {
-							//todo memo failed. need to stop multi hop and emit event.
-							//track event with error?
-							//TODO should we continew to send IBC if failed to consturct memo for
-							// message forwarding?
-						},
-					};
+					memo = Some(memo_result.map_err(|_| Error::<T>::FailedToConstructMemo)?);
 				},
 				_ => {},
 			}
@@ -327,19 +317,19 @@ pub mod pallet {
 				Ok(_) => {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::SuccessXcmToIbc {
 						origin_address: account_id_from,
-						to : raw_address_to.clone(),
-						amount : *amount,
-						asset_id : asset_id.unwrap(),
-						memo: memo
+						to: raw_address_to.clone(),
+						amount: *amount,
+						asset_id: asset_id.unwrap(),
+						memo,
 					});
 				},
 				Err(_) => {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedXcmToIbc {
 						origin_address: account_id_from,
-						to : raw_address_to.clone(),
-						amount : *amount,
-						asset_id : asset_id.unwrap(),
-						memo: memo
+						to: raw_address_to.clone(),
+						amount: *amount,
+						asset_id: asset_id.unwrap(),
+						memo,
 					});
 				},
 			}
