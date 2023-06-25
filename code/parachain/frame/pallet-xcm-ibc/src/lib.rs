@@ -104,7 +104,22 @@ pub mod pallet {
 	// The pallet's events
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		SuccessXcmToIbc{
+			origin_address: T::AccountId,
+			to : [u8; 32],
+			amount: u128,
+			asset_id : T::AssetId,
+			memo : Option<T::MemoMessage>
+		},
+		FailedXcmToIbc{
+			origin_address: T::AccountId,
+			to : [u8; 32],
+			amount: u128,
+			asset_id : T::AssetId,
+			memo : Option<T::MemoMessage>
+		}
+	}
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -157,7 +172,7 @@ pub mod pallet {
 			deposit_result: Result,
 			asset_id: Option<<T as pallet_ibc::Config>::AssetId>,
 		) -> core::result::Result<(), Error<T>> {
-			let id = match location {
+			let location_info = match location {
 				MultiLocation {
 					parents: 0,
 					interior:
@@ -226,8 +241,8 @@ pub mod pallet {
 				_ => None,
 			};
 
-			let (id, chain_id, mut addresses) =
-				id.ok_or_else(|| Error::<T>::IncorrectMultiLocation)?;
+			let (address_from, chain_id, mut addresses) =
+				location_info.ok_or_else(|| Error::<T>::IncorrectMultiLocation)?;
 
 			//deposit does not executed propertly. nothing todo. assets will stay in the account id
 			// address
@@ -249,7 +264,8 @@ pub mod pallet {
 				return Err(Error::<T>::IncorrectCountOfAddresses)
 			}
 
-			let account_id = MultiAddress::<AccoindIdOf<T>>::Raw(id.to_vec());
+			let raw_address_to = addresses.remove(0); //remove first element and put into transfer_params.
+			let account_id = MultiAddress::<AccoindIdOf<T>>::Raw(raw_address_to.to_vec());
 			let transfer_params = TransferParams::<AccoindIdOf<T>> {
 				to: account_id,
 				source_channel: next_chain_info.channel_id,
@@ -259,10 +275,10 @@ pub mod pallet {
 				},
 			};
 
-			let account = sp_runtime::AccountId32::new(id);
-			let mut to32: &[u8] = sp_runtime::AccountId32::as_ref(&account);
-			let account_id = T::AccountId::decode(&mut to32).unwrap();
-			let signed_account_id = RawOrigin::Signed(account_id);
+			let account_from = sp_runtime::AccountId32::new(address_from);
+			let mut account_from_32: &[u8] = sp_runtime::AccountId32::as_ref(&account_from);
+			let account_id_from = T::AccountId::decode(&mut account_from_32).unwrap();
+			let signed_account_id = RawOrigin::Signed(account_id_from.clone());
 
 			//do not support non fungible.
 			let Fungibility::Fungible(ref amount) = asset.fun else{
@@ -272,7 +288,8 @@ pub mod pallet {
 			let mut memo: Option<<T as pallet_ibc::Config>::MemoMessage> = None;
 			//todo take address
 
-			let mut vec: Vec<_> = chain_info_iter
+			// chain_info_iter does not contains the first IBC chain in the route, addresses does not contain first ibc address as well.
+			let vec: Vec<_> = chain_info_iter
 				.zip(addresses.into_iter())
 				.map(|(i, address)| (i.0, i.1, address.clone()))
 				.collect();
@@ -304,14 +321,26 @@ pub mod pallet {
 				transfer_params,
 				asset_id.unwrap(),
 				(*amount).into(),
-				memo,
+				memo.clone(),
 			);
 			match result {
 				Ok(_) => {
-					//todo emit success multi hop ibc transfer event
+					<Pallet<T>>::deposit_event(crate::Event::<T>::SuccessXcmToIbc {
+						origin_address: account_id_from,
+						to : raw_address_to.clone(),
+						amount : *amount,
+						asset_id : asset_id.unwrap(),
+						memo: memo
+					});
 				},
-				Err(e) => {
-					//todo emit error
+				Err(_) => {
+					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedXcmToIbc {
+						origin_address: account_id_from,
+						to : raw_address_to.clone(),
+						amount : *amount,
+						asset_id : asset_id.unwrap(),
+						memo: memo
+					});
 				},
 			}
 			core::result::Result::Ok(())
