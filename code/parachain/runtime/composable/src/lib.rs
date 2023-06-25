@@ -43,7 +43,7 @@ use composable_traits::assets::Asset;
 use gates::*;
 use governance::*;
 use orml_traits::parameter_type_with_key;
-use primitives::currency::{CurrencyId, ForeignAssetId, ValidateCurrencyId};
+use primitives::currency::{CurrencyId, ForeignAssetId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, ConstU128, OpaqueMetadata};
 use sp_runtime::{
@@ -208,6 +208,20 @@ impl assets_registry::Config for Runtime {
 	type ParachainOrGovernanceOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 	type Convert = sp_runtime::traits::ConvertInto;
+}
+
+impl assets_transactor_router::Config for Runtime {
+	type NativeAssetId = NativeAssetId;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type NativeTransactor = Balances;
+	type LocalTransactor = Tokens;
+	type ForeignTransactor = Tokens;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type GovernanceRegistry = GovernanceRegistry;
+	type AssetLocation = primitives::currency::ForeignAssetId;
+	type AssetsRegistry = AssetsRegistry;
 }
 
 parameter_types! {
@@ -456,19 +470,6 @@ impl collator_selection::Config for Runtime {
 	type WeightInfo = weights::collator_selection::WeightInfo<Runtime>;
 }
 
-impl assets::Config for Runtime {
-	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = CurrencyFactory;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
-	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrHalfCouncil;
-	type GovernanceRegistry = GovernanceRegistry;
-	type CurrencyValidator = ValidateCurrencyId;
-}
-
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
 	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
@@ -577,7 +578,7 @@ parameter_types! {
 impl crowdloan_rewards::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type RewardAsset = Assets;
+	type RewardAsset = AssetsTransactorRouter;
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = [u8; 32];
@@ -660,9 +661,9 @@ construct_runtime!(
 
 		CurrencyFactory: currency_factory = 53,
 		CrowdloanRewards: crowdloan_rewards = 56,
-		Assets: assets = 57,
 		GovernanceRegistry: governance_registry = 58,
 		AssetsRegistry: assets_registry = 59,
+		AssetsTransactorRouter: assets_transactor_router = 61,
 
 		CallFilter: call_filter = 100,
 
@@ -733,7 +734,7 @@ mod benches {
 impl_runtime_apis! {
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, ForeignAssetId> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
-			SafeRpcWrapper(<Assets as frame_support::traits::fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
+			SafeRpcWrapper(<AssetsTransactorRouter as frame_support::traits::fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
 		fn list_assets() -> Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>> {

@@ -275,19 +275,6 @@ impl assets_transactor_router::Config for Runtime {
 	type AssetsRegistry = AssetsRegistry;
 }
 
-impl assets::Config for Runtime {
-	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = CurrencyFactory;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
-	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type GovernanceRegistry = GovernanceRegistry;
-	type CurrencyValidator = ValidateCurrencyId;
-}
-
 type FarmingRewardsInstance = reward::Instance1;
 
 impl reward::Config<FarmingRewardsInstance> for Runtime {

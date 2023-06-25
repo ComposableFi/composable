@@ -14,10 +14,10 @@ normal = [
   "pallet-vault",
   "session-benchmarking",
   "assets-registry",
+  "assets-transactor-router",
   "currency-factory",
   "oracle",
   "vault",
-  "assets",
   "governance-registry",
   "call-filter",
   "orml-unknown-tokens",
@@ -58,8 +58,8 @@ sudo = { default-features = false, workspace = true }
 timestamp = { default-features = false, workspace = true }
 treasury = { default-features = false, workspace = true }
 utility = { default-features = false, workspace = true }
-assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false }
+assets-transactor-router = { package = "pallet-assets-transactor-router", path = "../../frame/assets-transactor-router", default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 common = { path = "../common", default-features = false }
 composable-support = { path = "../../frame/composable-support", default-features = false }
@@ -123,7 +123,6 @@ default = ["std"]
 testnet = []
 fastnet = []
 runtime-benchmarks = [
-  "assets/runtime-benchmarks",
   "balances/runtime-benchmarks",
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
@@ -154,6 +153,7 @@ runtime-benchmarks = [
   "asset-tx-payment/runtime-benchmarks",
 ]
 std = [
+  "assets-transactor-router/std",
   "codec/std",
   "composable-support/std",
   "sp-api/std",
@@ -178,7 +178,6 @@ std = [
   "indices/std",
   "oracle/std",
   "vault/std",
-  "assets/std",
   "governance-registry/std",
   "multisig/std",
   "call-filter/std",

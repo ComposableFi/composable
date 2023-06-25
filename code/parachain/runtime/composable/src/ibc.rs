@@ -203,7 +203,7 @@ impl pallet_ibc::Config for Runtime {
 	type PalletPrefix = IbcTriePrefix;
 	type LightClientProtocol = GRANDPA;
 	type AccountIdConversion = ibc_primitives::IbcAccount<AccountId>;
-	type Fungibles = Assets;
+	type Fungibles = AssetsTransactorRouter;
 	type ExpectedBlockTime = ConstU64<SLOT_DURATION>;
 	type Router = Router;
 	type MinimumConnectionDelay = ConstU64<1>;

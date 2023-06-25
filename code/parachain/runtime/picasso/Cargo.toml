@@ -11,7 +11,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [package.metadata.cargo-udeps.ignore]
 normal = [
-  "assets",
   "assets-registry",
   "call-filter",
   "currency-factory",
@@ -61,7 +60,6 @@ timestamp = { default-features = false, workspace = true }
 treasury = { default-features = false, workspace = true }
 utility = { default-features = false, workspace = true }
 log = { version = "0.4.14", default-features = false }
-assets = { package = "pallet-assets", path = "../../frame/assets", default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = "../../frame/assets-registry", default-features = false }
 assets-transactor-router = { package = "pallet-assets-transactor-router", path = "../../frame/assets-transactor-router", default-features = false }
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
@@ -160,7 +158,6 @@ local-integration-tests = []
 runtime-benchmarks = [
   "asset-tx-payment/runtime-benchmarks",
   "assets-registry/runtime-benchmarks",
-  "assets/runtime-benchmarks",
   "balances/runtime-benchmarks",
   "balances/runtime-benchmarks",
   "bonded-finance/runtime-benchmarks",
@@ -200,7 +197,6 @@ std = [
   "assets-registry/std",
   "assets-runtime-api/std",
   "assets-transactor-router/std",
-  "assets/std",
   "aura/std",
   "authorship/std",
   "balances/std",
