@@ -46,7 +46,7 @@ frame-benchmarking = { default-features = false, workspace = true }
 default = ["std"]
 std = [
   "log/std",
-  "serde/std",
+  "serde",
   "codec/std",
 
   "sp-arithmetic/std",
