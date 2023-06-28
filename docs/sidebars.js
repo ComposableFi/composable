@@ -73,7 +73,9 @@ const sidebars = {
                         'parachains/composable/composable-crowdloan',
                         'parachains/composable/LAYR-tokenomics',
                     ],
-                }
+                },
+
+                'parachains/centauri-chain',
             ]
         },
         {
