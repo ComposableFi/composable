@@ -11,3 +11,5 @@ pub use core::{fmt::Display, ops::Div};
 pub use sp_core::{ConstBool, ConstU32, Get};
 pub use sp_std::{prelude::*, str::FromStr, vec, vec::Vec};
 pub use xcm::latest::prelude::*;
+
+pub use codec::Decode;

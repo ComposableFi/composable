@@ -15,7 +15,7 @@ composable-support = { path = "../../frame/composable-support", default-features
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
 frame-support = { package = "frame-support", default-features = false, workspace = true }
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
-scale-info = { version = "2.1.1", default-features = false, features = [
+scale-info = { workspace = true, default-features = false, features = [
   "derive",
 ] }
 serde = { workspace = true, default-features = false, features = ['derive'] }
@@ -30,6 +30,14 @@ ibc-rs-scale = { workspace = true, default-features = false, features = [
 ] }
 
 
+cosmwasm-std = { workspace = true, default-features = false, features = [
+  "ibc3",
+  "iterator",
+  "stargate",
+] }
+
+serde-json-wasm = { workspace = true, default-features = false }
+
 [features]
 default = ["std"]
 std = [
@@ -37,6 +45,8 @@ std = [
   "sp-runtime/std",
   "composable-traits/std",
   "composable-support/std",
+  "serde-json-wasm/std",
+  "cosmwasm-std/std",
   "scale-info/std",
   "sp-std/std",
   "frame-support/std",

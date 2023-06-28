@@ -13,14 +13,19 @@
 		dead_code
 	)
 )]
+#![feature(result_flattening)]
+#![feature(iterator_try_collect)]
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
 
+pub mod cosmwasm;
+pub mod dex;
 pub mod fees;
 pub mod governance;
 pub mod ibc;
 mod prelude;
 pub mod rewards;
+mod smoldot;
 pub mod xcmp;
 
 pub use constants::*;
