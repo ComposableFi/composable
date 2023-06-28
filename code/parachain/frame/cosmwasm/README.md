@@ -3,6 +3,13 @@ In this section we provide actual implementation details of the specification as
 We cover some of the theoretical topics that were presented before, and provide real code that exemplifies how they can be developed in a pallet.
 
 
+## 0. Module Extensions
+
+Module extensions are part of ambient host "contract" (like Bank or Ibc) which receive query and execute messages,potentially encoded in ProtoBuf, against modules interfaces.
+
+We do not have such. 
+Instead we have pallet precompiles which are "contracts" with pallet account as address which receive and execute contract messages, against pallet interfaces.
+
 ## 1. Gas Metering
 When a contract is uploaded through the `upload` extrinsic, its code is instrumented.
 This instrumentation process adds both gas metering and stack height limit to the uploaded code.

@@ -197,6 +197,9 @@ pub mod pallet {
 		Aborted,
 		ReadOnlyViolation,
 		Rpc,
+		Precompile,
+		QueryDeserialize,
+		ExecuteSerialize,
 	}
 
 	#[pallet::config]
@@ -566,8 +569,8 @@ pub fn query<T: Config>(
 	query_request: Vec<u8>,
 ) -> Result<QueryResponse, CosmwasmVMError<T>> {
 	let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadOnly);
-	let query_request =
-		serde_json::from_slice(&query_request).map_err(|e| CosmwasmVMError::Rpc(e.to_string()))?;
+	let query_request = serde_json::from_slice(&query_request)
+		.map_err(|e| CosmwasmVMError::<T>::Rpc(e.to_string()))?;
 	Pallet::<T>::sub_level_dispatch(
 		&mut shared,
 		contract.clone(),
@@ -576,9 +579,9 @@ pub fn query<T: Config>(
 		|mut vm| {
 			cosmwasm_system_query(&mut vm, query_request)?
 				.into_result()
-				.map_err(|e| CosmwasmVMError::Rpc(format!("{:?}", e)))?
+				.map_err(|e| CosmwasmVMError::<T>::Rpc(format!("{:?}", e)))?
 				.into_result()
-				.map_err(|e| CosmwasmVMError::Rpc(e))
+				.map_err(|e| CosmwasmVMError::<T>::Rpc(e))
 		},
 	)
 }
@@ -596,16 +599,16 @@ pub fn instantiate<T: Config>(
 ) -> Result<AccountIdOf<T>, CosmwasmVMError<T>> {
 	let salt: ContractSaltOf<T> = salt
 		.try_into()
-		.map_err(|_| CosmwasmVMError::Rpc(String::from("'salt' is too large")))?;
+		.map_err(|_| CosmwasmVMError::<T>::Rpc(String::from("'salt' is too large")))?;
 	let label: ContractLabelOf<T> = label
 		.try_into()
-		.map_err(|_| CosmwasmVMError::Rpc(String::from("'label' is too large")))?;
+		.map_err(|_| CosmwasmVMError::<T>::Rpc(String::from("'label' is too large")))?;
 	let funds: FundsOf<T> = funds
 		.try_into()
-		.map_err(|_| CosmwasmVMError::Rpc(String::from("'funds' is too large")))?;
+		.map_err(|_| CosmwasmVMError::<T>::Rpc(String::from("'funds' is too large")))?;
 	let message: ContractMessageOf<T> = message
 		.try_into()
-		.map_err(|_| CosmwasmVMError::Rpc(String::from("'message' is too large")))?;
+		.map_err(|_| CosmwasmVMError::<T>::Rpc(String::from("'message' is too large")))?;
 	let mut shared = Pallet::<T>::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 	setup_instantiate_call(instantiator, code_id, &salt, admin, label)?.top_level_call(
 		&mut shared,
@@ -741,6 +744,9 @@ impl<T: Config> Pallet<T> {
 					CosmwasmVMError::SubstrateDispatch(_) => Error::<T>::SubstrateDispatch,
 					CosmwasmVMError::AssetConversion => Error::<T>::AssetConversion,
 					CosmwasmVMError::QuerySerialize => Error::<T>::FailedToSerialize,
+					CosmwasmVMError::Precompile => Error::<T>::Precompile,
+					CosmwasmVMError::QueryDeserialize => Error::<T>::QueryDeserialize,
+					CosmwasmVMError::ExecuteSerialize => Error::<T>::ExecuteSerialize,
 				};
 				Err(DispatchErrorWithPostInfo { error: error.into(), post_info })
 			},
