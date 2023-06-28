@@ -25,7 +25,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 xcm = { workspace = true, default-features = false }
 sp-arithmetic = { default-features = false, workspace = true }
 sp-core = { default-features = false, workspace = true }
-sp-io = { default-features = false, workspace = true }
+# sp-io = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
 pallet-ibc = { workspace = true, default-features = false }
@@ -51,7 +51,7 @@ std = [
 
   "sp-arithmetic/std",
   "sp-core/std",
-  "sp-io/std",
+  # "sp-io/std",
   "sp-runtime/std",
   "sp-std/std",
 
