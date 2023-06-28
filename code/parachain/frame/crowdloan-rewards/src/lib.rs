@@ -720,7 +720,7 @@ pub mod pallet {
 				let remote_account =
 					get_remote_account::<T>(proof.clone(), reward_account, T::Prefix::get())
 						.map_err(|_| {
-							Into::<TransactionValidityError>::into(InvalidTransaction::Custom(
+							TransactionValidityError::from(InvalidTransaction::Custom(
 								ValidityError::InvalidProof as u8,
 							))
 						})?;

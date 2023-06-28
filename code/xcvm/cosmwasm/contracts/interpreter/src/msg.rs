@@ -2,7 +2,7 @@ extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
 use cosmwasm_std::Addr;
-use cw_xc_utils::DefaultXCVMProgram;
+use cw_xc_common::shared::DefaultXCVMProgram;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use xc_core::{InterpreterOrigin, Register};
@@ -26,8 +26,6 @@ pub struct Step {
 pub struct InstantiateMsg {
 	/// Address of the gateway.
 	pub gateway_address: String,
-	/// Address of the XCVM asset registry.
-	pub registry_address: String,
 	/// The interpreter origin.
 	pub interpreter_origin: InterpreterOrigin,
 }

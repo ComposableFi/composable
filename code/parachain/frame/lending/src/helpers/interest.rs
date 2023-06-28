@@ -149,9 +149,8 @@ impl<T: Config> Pallet<T> {
 		delta_time: DurationSeconds,
 		total_borrows: T::Balance,
 	) -> Result<AccruedInterest<T>, DispatchError> {
-		let total_borrows: FixedU128 =
-			FixedU128::checked_from_integer(Into::<u128>::into(total_borrows))
-				.ok_or(ArithmeticError::Overflow)?;
+		let total_borrows: FixedU128 = FixedU128::checked_from_integer(total_borrows.into())
+			.ok_or(ArithmeticError::Overflow)?;
 
 		let borrow_rate = interest_rate_model
 			.get_borrow_rate(utilization_ratio)

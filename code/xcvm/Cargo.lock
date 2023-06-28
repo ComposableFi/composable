@@ -225,7 +225,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-orchestrate"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9#71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=1cc47415577d67448ff483ad530b889cceafde77#1cc47415577d67448ff483ad530b889cceafde77"
 dependencies = [
  "async-trait",
  "base64",
@@ -237,6 +237,7 @@ dependencies = [
  "ed25519-zebra",
  "libsecp256k1",
  "log",
+ "rand",
  "rand_chacha",
  "rand_core 0.6.4",
  "reqwest",
@@ -315,7 +316,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.2.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9#71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=1cc47415577d67448ff483ad530b889cceafde77#1cc47415577d67448ff483ad530b889cceafde77"
 dependencies = [
  "cosmwasm-std",
  "log",
@@ -327,7 +328,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.2.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9#71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=1cc47415577d67448ff483ad530b889cceafde77#1cc47415577d67448ff483ad530b889cceafde77"
 dependencies = [
  "cosmwasm-std",
  "cosmwasm-vm",
@@ -435,27 +436,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-xc-asset-registry"
+name = "cw-xc-common"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema 1.2.5",
  "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "schemars",
- "serde",
- "serde-cw-value",
- "thiserror-core",
- "xc-core",
-]
-
-[[package]]
-name = "cw-xc-common"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std",
- "cw-xc-utils",
  "schemars",
  "serde",
  "xc-core",
@@ -469,10 +454,8 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
- "cw-xc-asset-registry",
  "cw-xc-common",
  "cw-xc-interpreter",
- "cw-xc-utils",
  "cw2",
  "cw20",
  "hex",
@@ -493,9 +476,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
- "cw-xc-asset-registry",
  "cw-xc-common",
- "cw-xc-utils",
  "cw2",
  "cw20",
  "hex",
@@ -518,7 +499,6 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw-xc-common",
- "cw-xc-utils",
  "cw2",
  "cw20",
  "hex",
@@ -531,14 +511,6 @@ dependencies = [
  "thiserror-core",
  "xc-core",
  "xc-proto",
-]
-
-[[package]]
-name = "cw-xc-utils"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std",
- "xc-core",
 ]
 
 [[package]]
@@ -1957,15 +1929,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde-cw-value"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a75d32da6b8ed758b7d850b6c3c08f1d7df51a4df3cb201296e63e34a78e99d4"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "serde-json-wasm"
 version = "0.5.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81#8a7e522c0e4de36a6dfb535766f26a9941017d81"
@@ -2710,11 +2673,9 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
- "cw-xc-asset-registry",
  "cw-xc-common",
  "cw-xc-interpreter",
  "cw-xc-pingpong",
- "cw-xc-utils",
  "cw20",
  "cw20-base",
  "env_logger",

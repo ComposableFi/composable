@@ -1,23 +1,22 @@
 extern crate alloc;
 
 use crate::{
-	common,
+	assets, common,
 	error::{ContractError, ContractResult},
 	exec, msg, state,
-	state::Config,
 };
 
 use cosmwasm_std::{
-	wasm_execute, Binary, CosmosMsg, Deps, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse,
-	IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg,
-	IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
-	IbcTimeout, IbcTimeoutBlock, MessageInfo, Reply, Response, StdError, SubMsg, SubMsgResult,
+	to_binary, wasm_execute, Binary, CosmosMsg, Deps, DepsMut, Env, Ibc3ChannelOpenResponse,
+	IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
+	IbcChannelOpenResponse, IbcMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
+	IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock, MessageInfo, Reply,
+	Response, SubMsg, SubMsgResult,
 };
 use cw2::set_contract_version;
 use cw20::Cw20ExecuteMsg;
 use cw_utils::ensure_from_older_version;
-use cw_xc_asset_registry::{contract::external_query_lookup_asset, msg::AssetReference};
-use cw_xc_utils::DefaultXCVMPacket;
+use cw_xc_common::shared::DefaultXCVMPacket;
 use xc_core::{BridgeProtocol, CallOrigin, Displayed, Funds, XCVMAck};
 use xc_proto::{decode_packet, Encodable};
 
@@ -37,7 +36,6 @@ pub fn instantiate(
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
 	state::Config {
-		registry_address: deps.api.addr_validate(&msg.registry_address)?,
 		interpreter_code_id: msg.interpreter_code_id,
 		network_id: msg.network_id,
 		admin: deps.api.addr_validate(&msg.admin)?,
@@ -56,42 +54,36 @@ pub fn execute(
 ) -> ContractResult<Response> {
 	match msg {
 		msg::ExecuteMsg::IbcSetNetworkChannel { network_id, channel_id } => {
-			common::ensure_admin(deps.as_ref(), &info)?;
-			state::IBC_CHANNEL_INFO
-				.load(deps.storage, channel_id.clone())
-				.map_err(|_| ContractError::UnknownChannel)?;
-			state::IBC_NETWORK_CHANNEL.save(deps.storage, network_id, &channel_id)?;
-			Ok(Response::default().add_event(
-				common::make_event("set_network_channel")
-					.add_attribute("network_id", network_id.to_string())
-					.add_attribute("channel_id", channel_id),
-			))
+			let auth = common::auth::Admin::authorise(deps.as_ref(), &info)?;
+			handle_ibc_set_network_channel(auth, deps, network_id, channel_id)
 		},
 
-		msg::ExecuteMsg::ExecuteProgram { salt, program, assets } => {
-			let self_address = env.contract.address;
-			let call_origin = CallOrigin::Local { user: info.sender.clone() };
-			let transfers = exec::transfer_from_user(
-				&deps,
-				self_address.clone(),
-				info.sender,
-				info.funds,
-				&assets,
+		msg::ExecuteMsg::ExecuteProgram { execute_program } =>
+			exec::handle_execute_program(deps, env, info, execute_program),
+
+		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program } => {
+			let auth = common::auth::Contract::authorise(&env, &info)?;
+			exec::handle_execute_program_privilleged(auth, deps, env, call_origin, execute_program)
+		},
+
+		msg::ExecuteMsg::Bridge(msg) => {
+			let auth = common::auth::Interpreter::authorise(
+				deps.as_ref(),
+				&info,
+				msg.interpreter_origin.clone(),
 			)?;
-			let msg = wasm_execute(
-				self_address,
-				&msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, salt, program, assets },
-				Default::default(),
-			)?;
-			Ok(Response::default().add_messages(transfers).add_message(msg))
+			handle_bridge_forward(auth, deps, info, msg)
 		},
 
-		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, salt, program, assets } => {
-			common::ensure_self(&env, &info)?;
-			exec::handle_execute_program(deps, env, call_origin, salt, program, assets)
+		msg::ExecuteMsg::RegisterAsset { asset_id, reference } => {
+			let auth = common::auth::Admin::authorise(deps.as_ref(), &info)?;
+			assets::handle_register_asset(auth, deps, asset_id, reference)
 		},
 
-		msg::ExecuteMsg::Bridge(msg) => handle_bridge_forward(deps, info, msg),
+		msg::ExecuteMsg::UnregisterAsset { asset_id } => {
+			let auth = common::auth::Admin::authorise(deps.as_ref(), &info)?;
+			assets::handle_unregister_asset(auth, deps, asset_id)
+		},
 	}
 }
 
@@ -102,8 +94,11 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: msg::MigrateMsg) -> ContractResul
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: msg::QueryMsg) -> ContractResult<Binary> {
-	Err(StdError::generic_err("not implemented").into())
+pub fn query(deps: Deps, _env: Env, msg: msg::QueryMsg) -> ContractResult<Binary> {
+	match msg {
+		msg::QueryMsg::LookupAsset { asset_id } => assets::query_lookup(deps, asset_id)
+			.and_then(|resp| to_binary(&resp).map_err(ContractError::from)),
+	}
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
@@ -114,6 +109,23 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> ContractResult<Response> {
 			exec::handle_instantiate_reply(deps, msg).map_err(ContractError::from),
 		_ => Err(ContractError::UnknownReply),
 	}
+}
+
+fn handle_ibc_set_network_channel(
+	_: common::auth::Admin,
+	deps: DepsMut,
+	network_id: xc_core::NetworkId,
+	channel_id: state::ChannelId,
+) -> ContractResult<Response> {
+	state::IBC_CHANNEL_INFO
+		.load(deps.storage, channel_id.clone())
+		.map_err(|_| ContractError::UnknownChannel)?;
+	state::IBC_NETWORK_CHANNEL.save(deps.storage, network_id, &channel_id)?;
+	Ok(Response::default().add_event(
+		common::make_event("set_network_channel")
+			.add_attribute("network_id", network_id.to_string())
+			.add_attribute("channel_id", channel_id),
+	))
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
@@ -199,12 +211,12 @@ pub fn ibc_packet_receive(
 			relayer: msg.relayer,
 			user_origin: packet.user_origin,
 		};
-		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged {
-			call_origin,
+		let execute_program = msg::ExecuteProgramMsg {
 			salt: packet.salt,
 			program: packet.program,
 			assets: packet.assets,
 		};
+		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
 		let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
 		Ok(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID))
 	})();
@@ -238,13 +250,12 @@ pub fn ibc_packet_ack(
 ) -> ContractResult<IbcBasicResponse> {
 	let ack = XCVMAck::try_from(msg.acknowledgement.data.as_slice())
 		.map_err(|_| ContractError::InvalidAck)?;
-	let Config { registry_address, .. } = Config::load(deps.storage)?;
 	let packet: DefaultXCVMPacket =
 		decode_packet(&msg.original_packet.data).map_err(ContractError::Protobuf)?;
 	let messages = match ack {
 		XCVMAck::OK => {
 			// We got the ACK
-			burn_escrowed_assets(deps, registry_address.as_str(), packet.assets)
+			burn_escrowed_assets(deps, packet.assets)
 		},
 		XCVMAck::KO => {
 			// On failure, return the funds
@@ -252,7 +263,6 @@ pub fn ibc_packet_ack(
 				&deps,
 				// Safe as impossible to tamper.
 				String::from_utf8_lossy(&packet.interpreter).to_string(),
-				registry_address.as_str(),
 				packet.assets,
 			)
 		},
@@ -269,7 +279,6 @@ pub fn ibc_packet_timeout(
 	_env: Env,
 	msg: IbcPacketTimeoutMsg,
 ) -> ContractResult<IbcBasicResponse> {
-	let Config { registry_address, .. } = Config::load(deps.storage)?;
 	let packet: DefaultXCVMPacket =
 		decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
 	// On timeout, return the funds
@@ -277,7 +286,6 @@ pub fn ibc_packet_timeout(
 		&deps,
 		// Safe as impossible to tamper.
 		String::from_utf8_lossy(&packet.interpreter).to_string(),
-		registry_address.as_str(),
 		packet.assets,
 	)?;
 	Ok(IbcBasicResponse::default().add_messages(burns))
@@ -285,17 +293,15 @@ pub fn ibc_packet_timeout(
 
 fn burn_escrowed_assets(
 	deps: DepsMut,
-	registry_address: &str,
 	assets: Funds<Displayed<u128>>,
 ) -> ContractResult<Vec<CosmosMsg>> {
 	assets
 		.into_iter()
 		.map(|(asset_id, Displayed(amount))| {
-			let reference =
-				external_query_lookup_asset(deps.querier, registry_address.to_string(), asset_id)?;
+			let reference = assets::query_lookup(deps.as_ref(), asset_id)?.reference;
 			match &reference {
-				AssetReference::Native { .. } => Err(ContractError::UnsupportedAsset),
-				AssetReference::Virtual { cw20_address } => {
+				msg::AssetReference::Native { .. } => Err(ContractError::UnsupportedAsset),
+				msg::AssetReference::Virtual { cw20_address } => {
 					// Burn from the current contract.
 					Ok(wasm_execute(
 						cw20_address.to_string(),
@@ -312,17 +318,15 @@ fn burn_escrowed_assets(
 fn unescrow_assets(
 	deps: &DepsMut,
 	sender: String,
-	registry_address: &str,
 	assets: Funds<Displayed<u128>>,
 ) -> ContractResult<Vec<CosmosMsg>> {
 	assets
 		.into_iter()
 		.map(|(asset_id, Displayed(amount))| {
-			let reference =
-				external_query_lookup_asset(deps.querier, registry_address.to_string(), asset_id)?;
+			let reference = assets::query_lookup(deps.as_ref(), asset_id)?.reference;
 			match &reference {
-				AssetReference::Native { .. } => Err(ContractError::UnsupportedAsset),
-				AssetReference::Virtual { cw20_address } => {
+				msg::AssetReference::Native { .. } => Err(ContractError::UnsupportedAsset),
+				msg::AssetReference::Virtual { cw20_address } => {
 					// Transfer from the sender to the gateway
 					Ok(wasm_execute(
 						cw20_address.to_string(),
@@ -342,21 +346,20 @@ fn unescrow_assets(
 /// Handle a request gateway message.
 /// The call must originate from an interpreter.
 fn handle_bridge_forward(
+	_: common::auth::Interpreter,
 	deps: DepsMut,
 	info: MessageInfo,
 	msg: cw_xc_common::gateway::BridgeMsg,
 ) -> ContractResult<Response> {
-	common::ensure_interpreter(deps.as_ref(), &info, msg.interpreter_origin.clone())?;
-
 	let channel_id = state::IBC_NETWORK_CHANNEL
 		.load(deps.storage, msg.network_id)
 		.map_err(|_| ContractError::UnknownChannel)?;
 	let packet = DefaultXCVMPacket {
 		interpreter: String::from(info.sender).into_bytes(),
 		user_origin: msg.interpreter_origin.user_origin,
-		salt: msg.salt,
-		program: msg.program,
-		assets: msg.assets,
+		salt: msg.execute_program.salt,
+		program: msg.execute_program.program,
+		assets: msg.execute_program.assets,
 	};
 	let mut event = common::make_event("bridge")
 		.add_attribute("network_id", msg.network_id.to_string())

@@ -18,11 +18,9 @@ cosmwasm-vm = { workspace = true }
 cosmwasm-vm-wasmi = { workspace = true }
 cosmwasm-orchestrate = { workspace = true }
 
-cw-xc-asset-registry = { path = "../contracts/asset-registry" }
 cw-xc-interpreter = { path = "../contracts/interpreter" }
 cw-xc-pingpong = { path = "../contracts/pingpong" }
 cw-xc-common = { path = "../contracts/common" }
-cw-xc-utils = { path = "../contracts/utils" }
 xc-core = { path = "../../lib/core" }
 
 log = { version = "0.4" }

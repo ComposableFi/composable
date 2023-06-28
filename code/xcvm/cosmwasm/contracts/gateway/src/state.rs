@@ -1,15 +1,15 @@
+use crate::msg;
+
 use cosmwasm_std::{Addr, IbcEndpoint, StdResult, Storage};
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xc_core::{InterpreterOrigin, NetworkId};
+use xc_core::{AssetId, InterpreterOrigin, NetworkId};
 
 pub(crate) type ChannelId = String;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub(crate) struct Config {
-	/// Address of the XCVM registry contract
-	pub registry_address: Addr,
 	/// Address of the XCVM interpreter contract code
 	pub interpreter_code_id: u64,
 	/// Network ID of this network
@@ -53,3 +53,5 @@ pub(crate) struct Interpreter {
 }
 
 pub(crate) const INTERPRETERS: Map<InterpreterOrigin, Interpreter> = Map::new("interpreters");
+
+pub(crate) const ASSETS: Map<AssetId, msg::AssetReference> = Map::new("assets");

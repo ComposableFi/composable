@@ -1,4 +1,4 @@
-use sp_core::{ConstU16, ConstU32};
+use sp_core::{ConstU32};
 use sp_runtime::BoundedBTreeMap;
 use subxt::utils::AccountId32;
 

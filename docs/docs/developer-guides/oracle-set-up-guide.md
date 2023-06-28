@@ -335,13 +335,13 @@ _Developer -> Sudo -> Oracle **-> addAssetAndInfo	**_
 
 **Parameters**:
 
-* assetId: 4
-* threshold: 80
-* minAnswers: 1
-* maxAnswers: 3
+* assetId: 4 (DOT), 6 (KSM)
+* threshold: 3%
+* minAnswers: 7
+* maxAnswers: 12
 * blockInterval: 6
 * reward: 10000
-* slash: 10000
+* slash: 1000000000000000 (1,000 PICA)
 
 ![create_oracle_for_asset](./oracle-set-up-guide/create-oracle-for-asset.png)
 

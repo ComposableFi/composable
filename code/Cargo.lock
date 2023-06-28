@@ -316,6 +316,15 @@ checksum = "6b4930d2cb77ce62f89ee5d5289b4ac049559b1c45539271f5ed4fdc7db34545"
 
 [[package]]
 name = "arrayvec"
+version = "0.4.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd9fd44efafa8690358b7408d253adf110036b88f55672a933f01d616ad9b1b9"
+dependencies = [
+ "nodrop",
+]
+
+[[package]]
+name = "arrayvec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
@@ -802,9 +811,9 @@ checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
 name = "base64"
-version = "0.21.0"
+version = "0.21.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4a4ddaa51a5bc52a6948f74c06d20aaaddb71924eab79b8c97a8c556e942d6a"
+checksum = "604178f6c5c21f02dc555784810edfb88d34ac2c73b2eae109655649ee73ce3d"
 
 [[package]]
 name = "base64ct"
@@ -1026,6 +1035,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "blake2-rfc"
+version = "0.2.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d6d530bdd2d52966a6d03b7a964add7ae1a288d25214066fd4b600f0f796400"
+dependencies = [
+ "arrayvec 0.4.12",
+ "constant_time_eq 0.1.5",
+]
+
+[[package]]
 name = "blake2b_simd"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1217,6 +1236,15 @@ name = "bs58"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "771fe0050b883fcc3ea2359b1a96bcfbc090b7116eae7c3c512c7a083fdf23d3"
+
+[[package]]
+name = "bs58"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5353f36341f7451062466f0b755b96ac3a9547e4d7f6b70d603fc721a7d7896"
+dependencies = [
+ "tinyvec",
+]
 
 [[package]]
 name = "bstr"
@@ -1720,10 +1748,14 @@ dependencies = [
 name = "common"
 version = "0.8.30"
 dependencies = [
+ "blake2-rfc",
+ "bs58 0.5.0",
  "composable-support",
  "composable-traits",
+ "cosmwasm-std",
  "cumulus-pallet-xcm",
  "cumulus-primitives-core",
+ "derive_more",
  "frame-support",
  "frame-system",
  "ibc 0.36.0",
@@ -1741,6 +1773,7 @@ dependencies = [
  "primitives",
  "scale-info",
  "serde",
+ "serde-json-wasm",
  "smallvec 1.10.0",
  "sp-consensus-aura",
  "sp-core",
@@ -1754,7 +1787,7 @@ dependencies = [
 
 [[package]]
 name = "composable"
-version = "8.10029.1"
+version = "8.10031.0"
 dependencies = [
  "color-eyre",
  "composable-node",
@@ -1779,7 +1812,7 @@ dependencies = [
 
 [[package]]
 name = "composable-node"
-version = "8.10029.1"
+version = "8.10031.0"
 dependencies = [
  "assets-rpc",
  "assets-runtime-api",
@@ -1872,7 +1905,7 @@ dependencies = [
 
 [[package]]
 name = "composable-runtime"
-version = "8.10029.1"
+version = "8.10031.0"
 dependencies = [
  "assets-runtime-api",
  "common",
@@ -1958,7 +1991,7 @@ dependencies = [
 
 [[package]]
 name = "composable-runtime-wasm"
-version = "8.10029.1"
+version = "8.10031.0"
 dependencies = [
  "composable-runtime",
 ]
@@ -2007,6 +2040,8 @@ version = "1.0.0"
 dependencies = [
  "bitflags",
  "composable-support",
+ "cosmwasm-schema",
+ "cosmwasm-std",
  "frame-support",
  "frame-system",
  "pallet-proxy",
@@ -2015,11 +2050,14 @@ dependencies = [
  "polkadot-parachain",
  "proptest",
  "scale-info",
+ "schemars",
  "serde",
+ "serde_json",
  "sp-arithmetic",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
+ "thiserror-core",
  "xcm",
 ]
 
@@ -2200,6 +2238,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-schema"
+version = "1.2.5"
+source = "git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=1277597cbf380a8d04dbe676d9cb344ca31634b6#1277597cbf380a8d04dbe676d9cb344ca31634b6"
+dependencies = [
+ "cosmwasm-schema-derive",
+ "schemars",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "cosmwasm-schema-derive"
+version = "1.2.5"
+source = "git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=1277597cbf380a8d04dbe676d9cb344ca31634b6#1277597cbf380a8d04dbe676d9cb344ca31634b6"
+dependencies = [
+ "proc-macro2 1.0.56",
+ "quote 1.0.27",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "cosmwasm-std"
 version = "1.2.5"
 source = "git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=1277597cbf380a8d04dbe676d9cb344ca31634b6#1277597cbf380a8d04dbe676d9cb344ca31634b6"
@@ -2221,7 +2281,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.2.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9#71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=1cc47415577d67448ff483ad530b889cceafde77#1cc47415577d67448ff483ad530b889cceafde77"
 dependencies = [
  "cosmwasm-std",
  "log 0.4.17",
@@ -2233,7 +2293,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.2.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9#71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=1cc47415577d67448ff483ad530b889cceafde77#1cc47415577d67448ff483ad530b889cceafde77"
 dependencies = [
  "cosmwasm-std",
  "cosmwasm-vm",
@@ -3140,15 +3200,6 @@ name = "custom_derive"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef8ae57c4978a2acd8b869ce6b9ca1dfe817bff704c220209fdef2c0b75a01b9"
-
-[[package]]
-name = "cw-dex-router"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std",
- "serde",
- "serde_json",
-]
 
 [[package]]
 name = "cxx"
@@ -6330,7 +6381,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6a8fcd392ff67af6cc3f03b1426c41f7f26b6b9aff2dc632c1c56dd649e571f"
 dependencies = [
  "asn1_der",
- "bs58",
+ "bs58 0.4.0",
  "ed25519-dalek",
  "either",
  "fnv",
@@ -6426,7 +6477,7 @@ version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e2d584751cecb2aabaa56106be6be91338a60a0f4e420cf2af639204f596fc1"
 dependencies = [
- "bs58",
+ "bs58 0.4.0",
  "ed25519-dalek",
  "log 0.4.17",
  "multiaddr 0.17.1",
@@ -7583,6 +7634,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "nodrop"
+version = "0.1.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
+
+[[package]]
 name = "nohash-hasher"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8483,6 +8540,7 @@ dependencies = [
 name = "pallet-cosmwasm"
 version = "1.0.0"
 dependencies = [
+ "common",
  "composable-support",
  "composable-tests-helpers",
  "composable-traits",
@@ -10101,7 +10159,7 @@ dependencies = [
 
 [[package]]
 name = "picasso-runtime"
-version = "8.10029.1"
+version = "8.10031.0"
 dependencies = [
  "assets-runtime-api",
  "common",
@@ -10121,7 +10179,6 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
- "cw-dex-router",
  "farming",
  "frame-benchmarking",
  "frame-executive",
@@ -10204,7 +10261,7 @@ dependencies = [
 
 [[package]]
 name = "picasso-runtime-wasm"
-version = "8.10029.1"
+version = "8.10031.0"
 dependencies = [
  "picasso-runtime",
 ]
@@ -10893,7 +10950,7 @@ name = "polkadot-node-metrics"
 version = "0.9.39-1"
 source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
- "bs58",
+ "bs58 0.4.0",
  "futures 0.3.28",
  "futures-timer",
  "log 0.4.17",
@@ -11290,7 +11347,7 @@ name = "polkadot-runtime-metrics"
 version = "0.9.39-1"
 source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
- "bs58",
+ "bs58 0.4.0",
  "parity-scale-codec",
  "polkadot-primitives",
  "sp-std 5.0.0",
@@ -11646,12 +11703,14 @@ version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-traits",
+ "cosmwasm-std",
  "frame-support",
  "ibc 0.36.0",
  "lazy_static",
  "parity-scale-codec",
  "scale-info",
  "serde",
+ "serde-json-wasm",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
@@ -12376,7 +12435,7 @@ version = "0.11.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13293b639a097af28fc8a90f22add145a9c954e49d77da06263d58cf44d5fb91"
 dependencies = [
- "base64 0.21.0",
+ "base64 0.21.2",
  "bytes 1.4.0",
  "encoding_rs",
  "futures-core",
@@ -12855,7 +12914,7 @@ version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d194b56d58803a43635bdc398cd17e383d6f71f9182b9a192c127ca42494a59b"
 dependencies = [
- "base64 0.21.0",
+ "base64 0.21.2",
 ]
 
 [[package]]

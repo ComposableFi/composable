@@ -29,6 +29,12 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 #[repr(transparent)]
 pub struct AssetId(pub Displayed<u128>);
 
+impl core::fmt::Display for AssetId {
+	fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		self.0 .0.fmt(fmtr)
+	}
+}
+
 impl From<AssetId> for u128 {
 	fn from(val: AssetId) -> Self {
 		val.0 .0
@@ -38,6 +44,34 @@ impl From<AssetId> for u128 {
 impl From<u128> for AssetId {
 	fn from(asset: u128) -> Self {
 		AssetId(Displayed(asset))
+	}
+}
+
+#[cfg(feature = "cw-storage-plus")]
+impl<'a> cw_storage_plus::PrimaryKey<'a> for AssetId {
+	type Prefix = ();
+	type SubPrefix = ();
+	type Suffix = u128;
+	type SuperSuffix = u128;
+
+	fn key(&self) -> Vec<cw_storage_plus::Key> {
+		use cw_storage_plus::IntKey;
+		vec![cw_storage_plus::Key::Val128(self.0 .0.to_cw_bytes())]
+	}
+}
+
+#[cfg(feature = "cw-storage-plus")]
+impl cw_storage_plus::KeyDeserialize for AssetId {
+	type Output = <u128 as cw_storage_plus::KeyDeserialize>::Output;
+
+	const KEY_ELEMS: u16 = 1;
+
+	fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
+		<u128 as cw_storage_plus::KeyDeserialize>::from_vec(value)
+	}
+
+	fn from_slice(value: &[u8]) -> cosmwasm_std::StdResult<Self::Output> {
+		<u128 as cw_storage_plus::KeyDeserialize>::from_slice(value)
 	}
 }
 
@@ -142,6 +176,12 @@ impl AssetSymbol for USDC {
 )]
 #[repr(transparent)]
 pub struct Displayed<T>(pub T);
+
+impl<T: core::fmt::Display> core::fmt::Display for Displayed<T> {
+	fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		self.0.fmt(fmtr)
+	}
+}
 
 impl<T: core::fmt::Display> Serialize for Displayed<T> {
 	fn serialize<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
@@ -329,33 +369,22 @@ impl From<u128> for Amount {
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
-	Default,
-	Clone,
-	PartialEq,
-	Eq,
-	PartialOrd,
-	Ord,
-	Debug,
-	Encode,
-	Decode,
-	TypeInfo,
-	Serialize,
-	Deserialize,
+	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
 #[repr(transparent)]
 pub struct Funds<T = Balance>(pub Vec<(AssetId, T)>);
+
+impl<T> Default for Funds<T> {
+	fn default() -> Self {
+		Self(Vec::new())
+	}
+}
 
 impl<T> IntoIterator for Funds<T> {
 	type Item = <Vec<(AssetId, T)> as IntoIterator>::Item;
 	type IntoIter = <Vec<(AssetId, T)> as IntoIterator>::IntoIter;
 	fn into_iter(self) -> Self::IntoIter {
 		self.0.into_iter()
-	}
-}
-
-impl<T> Funds<T> {
-	pub fn empty() -> Self {
-		Funds(Vec::new())
 	}
 }
 

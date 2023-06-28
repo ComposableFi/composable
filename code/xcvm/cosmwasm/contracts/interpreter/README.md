@@ -65,7 +65,7 @@ Note that these events will be yield from the router in production.
 The XCVM interpreter contract interprets the XCVM programs. Available instructions are:
 
 
-### Call 
+### Call
 Which is used to call a contract. See that the encoded payload must be in a format:
 ```
 {
@@ -75,7 +75,7 @@ Which is used to call a contract. See that the encoded payload must be in a form
 ```
 
 ### Transfer
-Queries `asset-registry`, gets the contract address and then executes that contract to do the transfer.
+Queries `gateway`, gets the contract address and then executes that contract to do the transfer.
 
 ### Spawn
 Emits `spawn` event with the given parameters.

@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LpTokenResponse",
+  "type": "object",
+  "required": [
+    "lp_token"
+  ],
+  "properties": {
+    "lp_token": {
+      "type": "string"
+    }
+  }
+}

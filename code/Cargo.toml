@@ -6,7 +6,7 @@ name = "composable"
 version = { workspace = true }
 
 [workspace.package]
-version = "8.10029.1"
+version = "8.10031.0"
 
 [[bin]]
 name = "composable"
@@ -37,7 +37,6 @@ exclude = [
 members = [
   "services/cmc-api",
   "parachain/frame/*",
-  "parachain/frame/dex-router/cosmwasm",
   "parachain/node",
   "parachain/runtime/*",
   "utils/common",
@@ -320,6 +319,16 @@ mmr-rpc = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1
 
 subxt = { git = "https://github.com/paritytech/subxt", rev = "2a913a3aa99a07f7acaedbbaeed6925d34627303", default-features = false }
 
+scale-info = { version = "2.1.1", default-features = false, features = [
+  "derive",
+] }
+
+schemars = { version = "0.8.12", default-feautes = false }
+
+prost = {version = "0.11.0", default-features = false, features = ["prost-derive"]}
+prost-types = {version = "0.11.1", default-features = false}
+
+
 # Only needed until the configs get merged into xcm-builder: https://github.com/paritytech/polkadot/pull/7165
 invarch-xcm-builder = { git = "https://github.com/InvArch/InvArch-XCM-Builder", rev = "c704c0f2d4c436f96eff10d06c197527b46b3536", default-features = false }
 
@@ -327,8 +336,8 @@ wasm-instrument = { version = "0.4.0", default-features = false }
 wasmi = { version = "0.30.0", default-features = false }
 wasmi-validation = { version = "0.5", default-features = false }
 
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9", default-features = false }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "71520ece331c3d759f1cdb2a2f7e8d4e26bbffe9", default-features = false }
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77", default-features = false }
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77", default-features = false }
 serde-json-wasm = { git = "https://github.com/dzmitry-lahoda-forks/serde-json-wasm", rev = "8a7e522c0e4de36a6dfb535766f26a9941017d81", default-features = false }
 
 cosmwasm-std = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6", default-features = false, features = [
@@ -342,6 +351,7 @@ serde_json = { version = "1.0.82", default-features = false, features = [
   "alloc",
 ] }
 
+thiserror = { version = "1.0.38", package = "thiserror-core", default-features = false }
 
 #######################################
 # DO NOT DELETE PATCHES, BUT COMMENT OUT

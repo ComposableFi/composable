@@ -1,7 +1,6 @@
-// TODO: make `deny`
 #![cfg_attr(
 	not(test),
-	warn(
+	deny(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -13,8 +12,7 @@
 #![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(bad_style, trivial_numeric_casts)]
-// TODO: make `deny`
-#![warn(
+#![deny(
 	bare_trait_objects,
 	improper_ctypes,
 	non_shorthand_field_patterns,
@@ -37,12 +35,15 @@
 #![feature(const_trait_impl)] // https://github.com/Rust-for-Linux/linux/issues/2
 #![feature(const_convert)] // that is just const fn for into/from - easy
 #![feature(adt_const_params)] // avoids write own serde and bit shifts for Rational64
+#![feature(error_in_core)]
+extern crate alloc;
 
 pub mod account_proxy;
 pub mod airdrop;
 pub mod assets;
 pub mod bonded_finance;
 pub mod bounded;
+pub mod cosmwasm;
 pub mod currency;
 pub mod defi;
 pub mod dex;
@@ -51,6 +52,7 @@ pub mod governance;
 pub mod lending;
 pub mod liquidation;
 pub mod oracle;
+pub mod prelude;
 pub mod privilege;
 pub mod staking;
 pub mod storage;

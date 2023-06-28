@@ -974,7 +974,7 @@ pub mod pallet {
 			if let Call::claim { airdrop_id, reward_account, proof } = call {
 				// Validity Error if the airdrop does not exist
 				let airdrop_state = Self::get_airdrop_state(*airdrop_id).map_err(|_| {
-					Into::<TransactionValidityError>::into(InvalidTransaction::Custom(
+					TransactionValidityError::from(InvalidTransaction::Custom(
 						ValidityError::NotAnAirdrop as u8,
 					))
 				})?;
@@ -987,7 +987,7 @@ pub mod pallet {
 				// Evaluate proof
 				let identity = Self::get_identity(proof.clone(), reward_account, T::Prefix::get())
 					.map_err(|_| {
-						Into::<TransactionValidityError>::into(InvalidTransaction::Custom(
+						TransactionValidityError::from(InvalidTransaction::Custom(
 							ValidityError::InvalidProof as u8,
 						))
 					})?;

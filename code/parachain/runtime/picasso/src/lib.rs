@@ -68,8 +68,7 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
-		Zero,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, Either, FixedI128,
@@ -223,10 +222,8 @@ impl system::Config for Runtime {
 
 parameter_types! {
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
-	// pub AssetIdUSDT: CurrencyId = CurrencyId::USDT;
-	// pub FlatFeeUSDTAmount: Balance = 10_000_000; //10 USDT
-	pub AssetIdUSDT: CurrencyId = CurrencyId::INVALID;
-	pub FlatFeeUSDTAmount: Balance = 0;
+	pub AssetIdUSDT: CurrencyId = CurrencyId::USDT;
+	pub FlatFeeUSDTAmount: Balance = 10_000_000; //10 USDT
 }
 
 impl assets_registry::Config for Runtime {
@@ -946,48 +943,23 @@ impl_runtime_apis! {
 		fn list_assets() -> Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>> {
 			// Hardcoded assets
 			use common::fees::ForeignToNativePriceConverter;
-			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
-				// Add hardcoded ratio and ED for well known assets
-				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(asset.id);
-				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id);
-				asset
-			}).map(|xcm|
-			  Asset {
-				decimals : xcm.decimals,
-				existential_deposit : xcm.existential_deposit,
-				id : xcm.id,
-				foreign_id : xcm.foreign_id.map(Into::into),
-				name : xcm.name,
-				ratio : xcm.ratio,
-			  }
-			).collect::<Vec<Asset<CurrencyId, Balance, ForeignAssetId>>>();
 
 			// Assets from the assets-registry pallet
 			let all_assets =  assets_registry::Pallet::<Runtime>::get_all_assets();
 
 			// Override asset data for hardcoded assets that have been manually updated, and append
 			// new assets without duplication
-			all_assets.into_iter().fold(assets, |mut acc, mut asset| {
-				if let Some(found_asset) = acc.iter_mut().find(|asset_i| asset_i.id == asset.id) {
-					// Update a found asset with data from assets-registry
-					found_asset.decimals = asset.decimals;
-					found_asset.foreign_id = asset.foreign_id.clone();
-					found_asset.ratio = asset.ratio;
-				} else {
-					asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id);
-					acc.push(asset.clone())
-				}
-				acc
-			}).iter().map(|asset|
+			all_assets.iter().map(|asset|
 			  Asset {
 				decimals : asset.decimals,
-				existential_deposit : SafeRpcWrapper(asset.existential_deposit),
+				existential_deposit : SafeRpcWrapper(multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id)),
 				id : SafeRpcWrapper(asset.id.into()),
 				foreign_id : asset.foreign_id.clone(),
 				name : asset.name.clone(),
 				ratio : asset.ratio,
 			  }
-			).collect::<Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>>>()		}
+			).collect::<Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>>>()
+		}
 	}
 
 	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {

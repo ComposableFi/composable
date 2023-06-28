@@ -61,8 +61,8 @@ rand = { version = "0.8.5", optional = true, default-features = false, features 
 scale-info = { default-features = false, version = "2.1.1", features = [
   "derive",
 ] }
-serde = { version = "1.0.137", default-features = false, features = ["derive"] }
-serde_json = { version = "1.0.82", default-features = false, features = [
+serde = { workspace = true, default-features = false, features = ["derive"] }
+serde_json = { workspace = true, default-features = false, features = [
   "alloc",
 ] }
 sha2 = { version = "0.10", default-features = false }
@@ -75,10 +75,11 @@ sp-std = { default-features = false, workspace = true }
 wasm-instrument = { workspace = true, default-features = false }
 wasmi = { workspace = true, default-features = false }
 wasmi-validation = { workspace = true, default-features = false }
+composable-traits = { path = "../composable-traits", default-features = false }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
-composable-traits = { path = "../composable-traits", default-features = false }
+common = { path = "../../runtime/common", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 lazy_static = { version = "1.4.0", default-features = false, features = [
   "spin_no_std",
@@ -91,6 +92,8 @@ rand = { version = "0.8.5", default-features = false, features = [
   "alloc",
   "small_rng",
 ] }
+
+
 
 [features]
 default = ["std"]
@@ -111,10 +114,12 @@ runtime-benchmarks = [
 ]
 std = [
   "codec/std",
+  "common/std",
   "composable-support/std",
   "cosmwasm-std/std",
   "cosmwasm-vm-wasmi/std",
   "cosmwasm-vm/std",
+  "composable-traits/std",
   "frame-benchmarking/std",
   "frame-support/std",
   "frame-system/std",
@@ -124,17 +129,17 @@ std = [
   "orml-tokens/std",
   "pallet-assets-registry/std",
   "pallet-assets-transactor-router/std",
-  "pallet-balances/std",
-  "pallet-timestamp/std",
   "pallet-assets/std",
+  "pallet-balances/std",
   "pallet-ibc/std",
+  "pallet-timestamp/std",
+  "parity-wasm/std",
   "primitives/std",
   "scale-info/std",
   "sha3/std",
   "sp-arithmetic/std",
   "sp-core/std",
   "sp-io/std",
-  "parity-wasm/std",
   "sp-runtime/std",
   "sp-std/std",
   "wasm-instrument/std",
