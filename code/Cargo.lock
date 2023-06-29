@@ -1952,7 +1952,6 @@ dependencies = [
  "pallet-ibc",
  "pallet-indices",
  "pallet-membership",
- "pallet-multihop-xcm-ibc",
  "pallet-multisig",
  "pallet-oracle",
  "pallet-preimage",
@@ -1967,6 +1966,7 @@ dependencies = [
  "pallet-utility",
  "pallet-vault",
  "pallet-xcm",
+ "pallet-xcm-ibc",
  "parachain-info",
  "parity-scale-codec",
  "polkadot-parachain",
@@ -9089,32 +9089,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-multihop-xcm-ibc"
-version = "1.0.0"
-dependencies = [
- "bech32",
- "composable-support",
- "composable-traits",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "ibc-primitives",
- "log 0.4.17",
- "pallet-balances",
- "pallet-currency-factory",
- "pallet-ibc",
- "parity-scale-codec",
- "primitives",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 5.0.0",
- "xcm",
-]
-
-[[package]]
 name = "pallet-multisig"
 version = "4.0.0-dev"
 source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
@@ -9854,6 +9828,32 @@ dependencies = [
  "xcm",
  "xcm-builder",
  "xcm-executor",
+]
+
+[[package]]
+name = "pallet-xcm-ibc"
+version = "1.0.0"
+dependencies = [
+ "bech32",
+ "composable-support",
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "ibc-primitives",
+ "log 0.4.17",
+ "pallet-balances",
+ "pallet-currency-factory",
+ "pallet-ibc",
+ "parity-scale-codec",
+ "primitives",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 5.0.0",
+ "xcm",
 ]
 
 [[package]]
