@@ -3,7 +3,7 @@
 Similar to the [governance of Picasso](../parachains/picasso/governance), Composable’s Polkadot parachain will ultimately become completely decentralized and democratic. This requires a sufficient user base, so in the initial stages of parachain deployment, the Composable Council will aid in governance. 
 
 :::info
-Governance processes are carried out via Substrate governance-affiliated democracy pallets, a component of the Kusama and Polkadot network runtimes that can be found within the Substrate libraries. Governance also involves referenda, which will ensure that the majority of our community supports any implemented changes and decisions. This further ensures transparency in alterations to the Composable parachain.
+Governance processes on Composable are carried out similarly to the V1 governance model of the Kusama and Polkadot networks. Governance also involves referenda, ensuring that the majority of our community supports any implemented changes and decisions. This further ensures transparency in alterations to the Composable parachain.
 :::
 
 ## Governance Divisions
@@ -62,22 +62,14 @@ Proposals can be initiated by both the Community and the Council, and are requir
 
 | Parameter                                          | Period/Number  |
 |----------------------------------------------------|----------------|
-| Referendum voting period                           | 5 days          |
-| Enactment delay of an approved referendum          | 2 days         |
-| Cool-off period after a proposal has been rejected | 7 days        |
+| Referendum voting period                           | 3 days          |
+| Enactment delay of an approved referendum          | 1 day         |
+| Cool-off period after a proposal has been rejected | 3 days        |
 | Maximum pending community proposals                | 100 |
 
 ### Adaptive Quorum Voting
 
-There are different voting thresholds for the approval of any proposal in a referendum. 
-The threshold would depend on: (1) whether it is the Community or Council that initiated the proposal and (2) whether, 
-in the case of the Council, there was a unanimous or simple majority approval of the proposal:
-
-|        Entity         |                                                                                                                                                                                   Metric                                                                                                                                                                                  |
-|:---------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-|       Community       | Positive Turnout Bias (Super-Majority Approve) <br/><br/> A voting requirement with a *positive turnout bias*, whereby a heavy super-majority of *aye* votes is required to carry at low turnouts. However, as the voting turnout increases towards one hundred (100%), the required number of *aye* votes to approve the proposal gradually lowers to a simple majority. |
-|  Council (Unanimous)  |  Negative Turnout Bias (Super-Majority Against) <br/><br/> A voting requirement with a *negative turnout bias*, whereby a heavy super-majority of *nay* votes is required to reject at low turnouts. However, as the voting turnout inches towards one hundred (100%), the required number of *nay* votes to reject the proposal gradually lowers to a simple majority.   |
-|  Council (Majority)   |                                       Simple Majority <br/><br/> If there are more aye votes than *nay*, then the proposal is carried. Conversely, if there are more nay votes than *aye*, then the proposal is rejected. Determining the existence of a simple majority entails a simple comparison of votes in a simple majority.                                       |                                                                                   
+There are different voting thresholds for approving any proposal in a referendum, similar to how the Polkadot network applies [adaptive quorum voting](https://wiki.polkadot.network/docs/learn-governance#adaptive-quorum-biasing).
 
 ### Community Proposals
 
