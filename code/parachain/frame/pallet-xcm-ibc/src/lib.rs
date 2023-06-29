@@ -351,17 +351,3 @@
 // 	) -> core::result::Result<(), Error<T>>;
 // 	//check result, unwrap memo if exists and execute ibc packet
 // }
-
-// use serde::Serialize;
-// use xcm::v3::*;
-pub trait MultiCurrencyCallback {
-	fn deposit_asset(
-		// asset: &MultiAsset,
-		// location: &MultiLocation,
-		// context: &XcmContext,
-		// deposit_result: Result,
-	){
-
-	}
-	//check result, unwrap memo if exists and execute ibc packet
-}
