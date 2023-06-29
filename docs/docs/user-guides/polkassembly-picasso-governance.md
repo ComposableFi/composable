@@ -1,4 +1,4 @@
-# How to use Polkassembly to participate in Picasso governance
+# Interacting with Picasso governance
 
 Picasso will be utilizing Polkassembly for on-chain governance participation. 
 In this article, we outline what Polkassembly is, how to sign up with a Polkadot.js wallet, 
