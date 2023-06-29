@@ -72,6 +72,7 @@ const sidebars = {
                     items: [
                         'parachains/composable/composable-crowdloan',
                         'parachains/composable/LAYR-tokenomics',
+                        'parachains/composable/composable-council'
                     ],
                 },
 
