@@ -238,10 +238,10 @@ pub mod pallet {
 			let (next_chain_info, _) =
 				chain_info_iter.next().ok_or(Error::<T>::MultiHopRouteDoesNotExist)?;
 
-			if addresses.len() != route_len - 1 {
-				//wrong XCM MultiLocation. route len does not match addresses list in XCM call.
-				return Err(Error::<T>::IncorrectCountOfAddresses)
-			}
+			// if addresses.len() != route_len - 1 {
+			// 	//wrong XCM MultiLocation. route len does not match addresses list in XCM call.
+			// 	return Err(Error::<T>::IncorrectCountOfAddresses)
+			// }
 
 			let raw_address_to = addresses.remove(0); //remove first element and put into transfer_params.
 			let account_id = MultiAddress::<AccoindIdOf<T>>::Raw(raw_address_to.to_vec());
