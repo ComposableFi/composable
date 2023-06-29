@@ -83,7 +83,7 @@ and can only be considered “circulating” if voted upon by protocol governanc
 
 Treasury Multisig: 5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm 
 
-Team Tokens Multisig: 5xfnDDXYPdF6W9Nwjpqxm3B4tRyURKVycBRhkXaNEUTzmThE
+Team Tokens Multisig: 5zBQWEzVJuF7BPkgi8hxRW4T3c4RkfhMuArgXekwHyLck4hT
 
 Ecosystem Incentives Multisig : 5upPPwmpXUp3yrgx6erAzr84BfywuhVhKCeza5MGmBY8wJCK
 
