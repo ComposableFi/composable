@@ -20,6 +20,7 @@ package = "parity-scale-codec"
 version = "3.0.0"
 
 [dependencies]
+bech32 = { version = "0.7.3" } 
 composable-traits = { path = "../composable-traits", default-features = false }
 composable-support = { default-features = false, path = "../composable-support" }
 frame-benchmarking = { default-features = false, optional = true, workspace = true }
