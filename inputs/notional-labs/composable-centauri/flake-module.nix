@@ -2,6 +2,7 @@
   perSystem = { config, self', inputs', pkgs, lib, system, crane
     , systemCommonRust, subnix, ... }:
     let
+      devnet-root-directory = "/tmp/composable-dev/";
       validator = "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n";
       validator-mnemonic =
         "bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort";
@@ -76,7 +77,7 @@
         runtimeInputs = [ centaurid pkgs.jq pkgs.yq ];
 
         text = ''
-          CENTAURI_DATA="/tmp/centauri-dev"
+          CENTAURI_DATA="${devnet-root-directory}centauri-dev"
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CENTAURI_DATA/keyring-test"
           # centaurid query bank balances ${validator} --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA"
@@ -107,7 +108,7 @@
         name = "centaurid-gen";
         runtimeInputs = [ centaurid pkgs.jq pkgs.yq ];
         text = ''
-          CENTAURI_DATA="/tmp/centauri-dev"
+          CENTAURI_DATA="${devnet-root-directory}centauri-dev"
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CENTAURI_DATA/keyring-test"
           rm --force --recursive "$CENTAURI_DATA"

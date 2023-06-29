@@ -245,6 +245,7 @@ oraclesetup # script of package.json
 oraclestake
 Origin
 OSMO
+osmosisd # osmosis cosmos node
 oxalica # github username
 pacman
 pandoc

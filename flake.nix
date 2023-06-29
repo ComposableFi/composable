@@ -5,7 +5,8 @@
     nixpkgs-latest.url =
       "github:NixOS/nixpkgs/0135b7a556ee60144b143b071724fa44348a188e";
     process-compose-flake = {
-      url = "github:Platonic-Systems/process-compose-flake/5bdb90b85642901cf9a5dccfe8c907091c261604";
+      url =
+        "github:Platonic-Systems/process-compose-flake/5bdb90b85642901cf9a5dccfe8c907091c261604";
       inputs.nixpkgs.follows = "nixpkgs-latest";
     };
 
