@@ -16,10 +16,10 @@ pub use codec::{Decode, Encode, FullCodec};
 // use frame_support::BoundedVec;
 // pub trait MultiCurrencyCallback<T: Config> {
 // 	fn deposit_asset(
-// 		asset: &MultiAsset,
-// 		location: &MultiLocation,
-// 		context: &XcmContext,
-// 		deposit_result: Result,
+// 		asset: &xcm::latest::MultiAsset,
+// 		location: &xcm::latest::MultiLocation,
+// 		context: &xcm::latest::XcmContext,
+// 		deposit_result: xcm::latest::Result,
 // 		asset_id: Option<<T as pallet_ibc::Config>::AssetId>,
 // 	) -> core::result::Result<(), Error<T>>;
 // 	//check result, unwrap memo if exists and execute ibc packet
