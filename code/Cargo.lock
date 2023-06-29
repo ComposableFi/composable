@@ -822,12 +822,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
-name = "bech32"
-version = "0.7.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2dabbe35f96fb9507f7330793dc490461b2962659ac5d427181e451a623751d1"
-
-[[package]]
 name = "beef"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1939,6 +1933,7 @@ dependencies = [
  "pallet-asset-tx-payment",
  "pallet-assets 1.0.0",
  "pallet-assets-registry",
+ "pallet-assets-registry-2",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -1966,7 +1961,6 @@ dependencies = [
  "pallet-utility",
  "pallet-vault",
  "pallet-xcm",
- "pallet-xcm-ibc",
  "parachain-info",
  "parity-scale-codec",
  "polkadot-parachain",
@@ -8228,6 +8222,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-assets-registry-2"
+version = "1.0.0"
+dependencies = [
+ "composable-support",
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log 0.4.17",
+ "pallet-balances",
+ "pallet-currency-factory",
+ "parity-scale-codec",
+ "primitives",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 5.0.0",
+ "xcm",
+]
+
+[[package]]
 name = "pallet-assets-transactor-router"
 version = "0.1.0"
 dependencies = [
@@ -9834,24 +9850,27 @@ dependencies = [
 name = "pallet-xcm-ibc"
 version = "1.0.0"
 dependencies = [
- "bech32",
  "composable-support",
+ "composable-tests-helpers",
+ "composable-traits",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "ibc-primitives",
- "log 0.4.17",
- "pallet-ibc",
- "pallet-timestamp",
+ "num-traits",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-governance-registry",
  "parity-scale-codec",
- "rand 0.8.5",
+ "primitives",
+ "proptest",
  "scale-info",
- "serde",
+ "sp-api",
  "sp-arithmetic",
  "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std 5.0.0",
- "xcm",
 ]
 
 [[package]]

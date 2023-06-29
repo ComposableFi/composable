@@ -10,7 +10,7 @@ use orml_traits::{
 	location::{AbsoluteReserveProvider, RelativeReserveProvider},
 	parameter_type_with_key,
 };
-use pallet_xcm_ibc::MultiCurrencyCallback;
+// use pallet_xcm_ibc::MultiCurrencyCallback;
 
 use orml_xcm_support::{
 	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset,
@@ -166,8 +166,13 @@ pub type LocalAssetTransactor = MultiCurrencyAdapterWrapper<
 	LocationToAccountId,
 	AssetsIdConverter,
 	DepositToAlternative<TreasuryAccount, Tokens, CurrencyId, AccountId, Balance>,
-	PalletXcmIbc,
+	X,
 >;
+pub trait MultiCurrencyCallback{}
+pub struct X;
+impl MultiCurrencyCallback for X{
+
+}
 
 pub struct MultiCurrencyAdapterWrapper<
 	MultiCurrency,
@@ -199,7 +204,7 @@ impl<
 		AccountIdConvert: xcm_executor::traits::Convert<MultiLocation, AccountId>,
 		CurrencyIdConvert: Convert<MultiAsset, Option<CurrencyId>>,
 		DepositFailureHandler: orml_xcm_support::OnDepositFail<CurrencyId, AccountId, MultiCurrency::Balance>,
-		DepositCallback: MultiCurrencyCallback<Runtime>,
+		DepositCallback: MultiCurrencyCallback,
 	> xcm_executor::traits::TransactAsset
 	for MultiCurrencyAdapterWrapper<
 		MultiCurrency,
@@ -235,13 +240,13 @@ impl<
 		) {
 			// known asset
 			(Ok(_), Some(currency_id), Some(_)) => {
-				let _ = DepositCallback::deposit_asset(
-					asset,
-					location,
-					context,
-					result,
-					Some(currency_id),
-				);
+				// let _ = DepositCallback::deposit_asset(
+				// 	asset,
+				// 	location,
+				// 	context,
+				// 	result,
+				// 	Some(currency_id),
+				// );
 			},
 			// unknown asset
 			_ => {

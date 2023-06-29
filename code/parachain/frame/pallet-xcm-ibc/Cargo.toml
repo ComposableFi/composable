@@ -1,69 +1,65 @@
 [package]
 authors = ["Composable Developers"]
-description = "Provides reward mechanism for LP tokens"
 edition = "2021"
 homepage = "https://composable.finance"
 name = "pallet-xcm-ibc"
 version = "1.0.0"
 
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-bech32 = { version = "0.7.3" } 
-log = { version = "0.4.14", default-features = false }
-serde = { version = "1.0.137", default-features = false, features = [
-  "derive",
-], optional = true }
-codec = { default-features = false, features = [
-  "derive",
-  "max-encoded-len",
-], package = "parity-scale-codec", version = "3.0.0" }
+frame-benchmarking = { default-features = false, optional = true, workspace = true }
+frame-support = { default-features = false, workspace = true }
+frame-system = { default-features = false, workspace = true }
+primitives = { path = "../../runtime/primitives", default-features = false }
+sp-api = { default-features = false, workspace = true }
+sp-arithmetic = { default-features = false, workspace = true }
+sp-core = { default-features = false, workspace = true }
+sp-io = { default-features = false, workspace = true }
+sp-runtime = { default-features = false, workspace = true }
+sp-std = { default-features = false, workspace = true }
+composable-support = { path = "../composable-support", default-features = false }
+composable-traits = { path = "../composable-traits", default-features = false }
+orml-traits = { workspace = true, default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
 
-# Substrate dependencies
-xcm = { workspace = true, default-features = false }
-sp-arithmetic = { default-features = false, workspace = true }
-sp-core = { default-features = false, workspace = true }
-# sp-io = { default-features = false, workspace = true }
-sp-runtime = { default-features = false, workspace = true }
-sp-std = { default-features = false, workspace = true }
-pallet-ibc = { workspace = true, default-features = false }
-ibc-primitives = { workspace = true, default-features = false }
-
-frame-support = { default-features = false, workspace = true }
-frame-system = { default-features = false, workspace = true }
-frame-benchmarking = { default-features = false, workspace = true, optional = true }
-composable-support = { path = "../composable-support", default-features = false }
-
+codec = { default-features = false, features = [
+  "derive",
+], package = "parity-scale-codec", version = "3.0.0" }
+num-traits = { version = "0.2.14", default-features = false }
 
 [dev-dependencies]
-pallet-timestamp = { workspace = true }
-rand = "0.8.3"
+composable-tests-helpers = { path = "../composable-tests-helpers" }
 frame-benchmarking = { default-features = false, workspace = true }
+governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
+orml-tokens = { workspace = true }
+pallet-balances = { workspace = true }
+proptest = "1.0"
+primitives = { path = "../../runtime/primitives", default-features = false }
+
+[package.metadata.cargo-udeps.ignore]
+development = ["governance-registry"]
 
 [features]
 default = ["std"]
-std = [
-  "log/std",
-  "serde",
-  "codec/std",
-
-  "sp-arithmetic/std",
-  "sp-core/std",
-  # "sp-io/std",
-  "sp-runtime/std",
-  "sp-std/std",
-
-  "frame-support/std",
-  "frame-system/std",
-  "frame-benchmarking/std",
-  "pallet-ibc/std",
-  "ibc-primitives/std"
-]
-
 runtime-benchmarks = [
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
+]
+std = [
+  "composable-traits/std",
+  "codec/std",
+  "frame-support/std",
+  "sp-runtime/std",
+  "sp-api/std",
+  "orml-traits/std",
+  "orml-tokens/std",
+  "num-traits/std",
+  "frame-benchmarking/std",
+  "pallet-balances/std",
+  "primitives/std",
 ]
