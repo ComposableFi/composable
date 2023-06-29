@@ -1939,7 +1939,6 @@ dependencies = [
  "pallet-asset-tx-payment",
  "pallet-assets 1.0.0",
  "pallet-assets-registry",
- "pallet-assets-registry-2",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -1953,6 +1952,7 @@ dependencies = [
  "pallet-ibc",
  "pallet-indices",
  "pallet-membership",
+ "pallet-multihop-xcm-ibc",
  "pallet-multisig",
  "pallet-oracle",
  "pallet-preimage",
@@ -8228,32 +8228,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-assets-registry-2"
-version = "1.0.0"
-dependencies = [
- "bech32",
- "composable-support",
- "composable-traits",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "ibc-primitives",
- "log 0.4.17",
- "pallet-balances",
- "pallet-currency-factory",
- "pallet-ibc",
- "parity-scale-codec",
- "primitives",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 5.0.0",
- "xcm",
-]
-
-[[package]]
 name = "pallet-assets-transactor-router"
 version = "0.1.0"
 dependencies = [
@@ -9112,6 +9086,32 @@ dependencies = [
  "sp-mmr-primitives",
  "sp-runtime",
  "sp-std 5.0.0",
+]
+
+[[package]]
+name = "pallet-multihop-xcm-ibc"
+version = "1.0.0"
+dependencies = [
+ "bech32",
+ "composable-support",
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "ibc-primitives",
+ "log 0.4.17",
+ "pallet-balances",
+ "pallet-currency-factory",
+ "pallet-ibc",
+ "parity-scale-codec",
+ "primitives",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 5.0.0",
+ "xcm",
 ]
 
 [[package]]
