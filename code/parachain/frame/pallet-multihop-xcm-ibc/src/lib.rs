@@ -35,10 +35,10 @@ pub mod pallet {
 	use frame_support::{pallet_prelude::*, BoundedBTreeSet};
 	use ibc_primitives::Timeout as IbcTimeout;
 	use pallet_ibc::{MultiAddress, TransferParams};
-	use std::str::FromStr;
 	use frame_system::RawOrigin;
 	use xcm::latest::prelude::*;
 	use prelude::{MultiCurrencyCallback, MemoData};
+	use core::str::FromStr;
 
 
 	use frame_support::BoundedVec;
