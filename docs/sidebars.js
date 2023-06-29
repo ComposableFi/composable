@@ -277,6 +277,7 @@ const sidebars = {
                         'user-guides/claim-rewards-guide',
                         'user-guides/how-to-provide-liquidity',
                         'user-guides/how-to-trade-pica-on-pablo',
+                        'user-guides/centauri-staking',
                         'user-guides/centauri-guide',
                         'user-guides/centauri-transfers'
                     ],
