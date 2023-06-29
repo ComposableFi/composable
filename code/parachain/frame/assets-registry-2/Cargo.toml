@@ -39,6 +39,8 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 ] }
 primitives = { path = "../../runtime/primitives", default-features = false }
 
+serde = { version = "1.0.136", features = ["derive"], optional = true }
+
 
 [dev-dependencies]
 frame-benchmarking = { default-features = false, workspace = true }
@@ -64,6 +66,7 @@ std = [
   "primitives/std",
   "pallet-ibc/std",
   "ibc-primitives/std",
+  "serde"
 ]
 
 runtime-benchmarks = [
