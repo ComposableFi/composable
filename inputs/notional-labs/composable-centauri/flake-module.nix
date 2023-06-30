@@ -108,10 +108,15 @@
         name = "centaurid-gen";
         runtimeInputs = [ centaurid pkgs.jq pkgs.yq ];
         text = ''
+          sleep 30
           CENTAURI_DATA="${devnet-root-directory}centauri-dev"
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CENTAURI_DATA/keyring-test"
-          rm --force --recursive "$CENTAURI_DATA"
+          REUSE=true
+          export REUSE
+          if [[ $REUSE == false ]]; then
+            rm --force --recursive "$CENTAURI_DATA" 
+          fi
 
           mkdir --parents "$CENTAURI_DATA"
           mkdir --parents "$CENTAURI_DATA/config/gentx"
@@ -157,7 +162,7 @@
           add-genesis-account centauri1qwexv7c6sm95lwhzn9027vyu2ccneaqapystyu
           centaurid --keyring-backend test --keyring-dir "$KEYRING_TEST" --home "$CENTAURI_DATA" gentx validator "250000000000000ppica" --chain-id="$CHAIN_ID" --amount="250000000000000ppica"
           centaurid collect-gentxs --home "$CENTAURI_DATA"  --gentx-dir "$CENTAURI_DATA/config/gentx"
-          centaurid start --rpc.unsafe --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing  --minimum-gas-prices=0ppica --log_level debug --home "$CENTAURI_DATA" --db_dir "$CENTAURI_DATA/data" --log_format json --trace --with-tendermint true --transport socket --trace-store $CENTAURI_DATA/kvstore.log --grpc.address localhost:9090 --grpc.enable true --grpc-web.enable false --api.enable true --cpu-profile $CENTAURI_DATA/cpu-profile.log
+          centaurid start --rpc.unsafe --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing  --minimum-gas-prices=0ppica --log_level debug --home "$CENTAURI_DATA" --db_dir "$CENTAURI_DATA/data" --log_format json --trace --with-tendermint true --transport socket --trace-store $CENTAURI_DATA/kvstore.log --grpc.address localhost:9090 --grpc.enable true --grpc-web.enable false --api.enable true --cpu-profile $CENTAURI_DATA/cpu-profile.log --p2p.pex false --p2p.upnp  false
         '';
       };
     in {
