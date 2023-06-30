@@ -29,10 +29,12 @@ pub mod pallet {
 	// use prelude::{MultiCurrencyCallback, MemoData};
 	use composable_traits::xcm::assets::MultiCurrencyCallback;
 	use core::str::FromStr;
+	use frame_system::ensure_root;
 
 	use frame_support::BoundedVec;
 
 	type AccoindIdOf<T> = <T as frame_system::Config>::AccountId;
+	use frame_system::pallet_prelude::OriginFor;
 
 	#[derive(
 		Copy,
@@ -46,6 +48,7 @@ pub mod pallet {
 		Ord,
 		PartialOrd,
 		MaxEncodedLen,
+		Debug
 	)]
 	pub struct ChainInfo {
 		pub chain_id: u128,
@@ -181,7 +184,20 @@ pub mod pallet {
 
 	// The pallet's dispatchable functions.
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+
+		#[pallet::call_index(0)]
+		#[pallet::weight(1000)]
+		pub fn add_route(
+			origin: OriginFor<T>,
+			chaind_id: u128,
+			route: BoundedBTreeSet<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>), T::MaxMultihopCount>,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			ChainIdToMiltihopRoutePath::<T>::insert(chaind_id, route);
+			Ok(())
+		}
+	}
 
 	impl<T: Config> MultiCurrencyCallback for Pallet<T>
 	where
