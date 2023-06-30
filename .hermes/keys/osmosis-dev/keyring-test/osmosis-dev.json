@@ -1,0 +1,27 @@
+{
+  "public_key": "xpub6GdJjJcsT5PVsvJsRK2mGdP6wiV732keGqjnuPAM3cvPuVzfUHRFucNKNfTrPUho9JCpPyTowzTNKF3tNrvJf8wsa2qMqzkW1TtQgYDWcpJ",
+  "private_key": "xprvA3dxKo5ychqCfSEQKHVkuVSNPgecda2nucpC6zkjVHPR2hfWvk71Mp3qXPZSbRDbqK2RALwb5R6GeYEXMaGjHE6ggRAnmw41eeNSue6vwoe",
+  "account": "osmosis1qvdeu4x34rapp3wc8fym5g4wu343mswx3ect68",
+  "address": [
+    3,
+    27,
+    158,
+    84,
+    209,
+    168,
+    250,
+    16,
+    197,
+    216,
+    58,
+    73,
+    186,
+    34,
+    174,
+    228,
+    107,
+    29,
+    193,
+    198
+  ]
+}

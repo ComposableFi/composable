@@ -2,7 +2,7 @@
   perSystem = { config, self', inputs', pkgs, lib, system, crane
     , systemCommonRust, subnix, ... }:
     let
-      devnet-root-directory = "/tmp/composable-dev/";
+      devnet-root-directory = "/tmp/composable-dev";
       validator = "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n";
       validator-mnemonic =
         "bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort";
@@ -77,7 +77,7 @@
         runtimeInputs = [ centaurid pkgs.jq pkgs.yq ];
 
         text = ''
-          CENTAURI_DATA="${devnet-root-directory}centauri-dev"
+          CENTAURI_DATA="${devnet-root-directory}/.centaurid"
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CENTAURI_DATA/keyring-test"
           # centaurid query bank balances ${validator} --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA"
@@ -108,8 +108,7 @@
         name = "centaurid-gen";
         runtimeInputs = [ centaurid pkgs.jq pkgs.yq ];
         text = ''
-          sleep 30
-          CENTAURI_DATA="${devnet-root-directory}centauri-dev"
+          CENTAURI_DATA="${devnet-root-directory}/.centaurid"
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CENTAURI_DATA/keyring-test"
           REUSE=true
@@ -151,9 +150,12 @@
           echo "notice oak worry limit wrap speak medal online prefer cluster roof addict wrist behave treat actual wasp year salad speed social layer crew genius" | centaurid keys add test1 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
           echo "quality vacuum heart guard buzz spike sight swarm shove special gym robust assume sudden deposit grid alcohol choice devote leader tilt noodle tide penalty" | centaurid keys add test2 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
           echo "symbol force gallery make bulk round subway violin worry mixture penalty kingdom boring survey tool fringe patrol sausage hard admit remember broken alien absorb" | centaurid keys add test3 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
+          echo "black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken" | centaurid keys add relayer --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
           function add-genesis-account () {
             centaurid --keyring-backend test add-genesis-account "$1" "1000000000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"          
           }
+          
+          add-genesis-account centauri1qvdeu4x34rapp3wc8fym5g4wu343mswxxgc6wf
           add-genesis-account centauri1zr4ng42laatyh9zx238n20r74spcrlct6jsqaw
           add-genesis-account centauri1makf5hslxqxzl29uyeyyddf89ff7edxyr7ewm5
           add-genesis-account ${validator}
@@ -162,7 +164,7 @@
           add-genesis-account centauri1qwexv7c6sm95lwhzn9027vyu2ccneaqapystyu
           centaurid --keyring-backend test --keyring-dir "$KEYRING_TEST" --home "$CENTAURI_DATA" gentx validator "250000000000000ppica" --chain-id="$CHAIN_ID" --amount="250000000000000ppica"
           centaurid collect-gentxs --home "$CENTAURI_DATA"  --gentx-dir "$CENTAURI_DATA/config/gentx"
-          centaurid start --rpc.unsafe --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing  --minimum-gas-prices=0ppica --log_level debug --home "$CENTAURI_DATA" --db_dir "$CENTAURI_DATA/data" --log_format json --trace --with-tendermint true --transport socket --trace-store $CENTAURI_DATA/kvstore.log --grpc.address localhost:9090 --grpc.enable true --grpc-web.enable false --api.enable true --cpu-profile $CENTAURI_DATA/cpu-profile.log --p2p.pex false --p2p.upnp  false
+          centaurid start --rpc.unsafe --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing  --minimum-gas-prices=0ppica --log_level debug --home "$CENTAURI_DATA" --db_dir "$CENTAURI_DATA/data" --trace --with-tendermint true --transport socket --trace-store $CENTAURI_DATA/kvstore.log --grpc.address localhost:9090 --grpc.enable true --grpc-web.enable false --api.enable true --cpu-profile $CENTAURI_DATA/cpu-profile.log --p2p.pex false --p2p.upnp  false
         '';
       };
     in {
