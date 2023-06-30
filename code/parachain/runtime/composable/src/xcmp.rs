@@ -166,11 +166,8 @@ pub type LocalAssetTransactor = MultiCurrencyAdapterWrapper<
 	LocationToAccountId,
 	AssetsIdConverter,
 	DepositToAlternative<TreasuryAccount, Tokens, CurrencyId, AccountId, Balance>,
-	X,
+	PalletMultihopXcmIbc,
 >;
-pub trait MultiCurrencyCallback {}
-pub struct X;
-impl MultiCurrencyCallback for X {}
 
 pub struct MultiCurrencyAdapterWrapper<
 	MultiCurrency,
@@ -202,7 +199,7 @@ impl<
 		AccountIdConvert: xcm_executor::traits::Convert<MultiLocation, AccountId>,
 		CurrencyIdConvert: Convert<MultiAsset, Option<CurrencyId>>,
 		DepositFailureHandler: orml_xcm_support::OnDepositFail<CurrencyId, AccountId, MultiCurrency::Balance>,
-		DepositCallback: MultiCurrencyCallback,
+		DepositCallback: composable_traits::xcm::assets::MultiCurrencyCallback<AssetId = CurrencyId>,
 	> xcm_executor::traits::TransactAsset
 	for MultiCurrencyAdapterWrapper<
 		MultiCurrency,
@@ -238,13 +235,13 @@ impl<
 		) {
 			// known asset
 			(Ok(_), Some(currency_id), Some(_)) => {
-				// let _ = DepositCallback::deposit_asset(
-				// 	asset,
-				// 	location,
-				// 	context,
-				// 	result,
-				// 	Some(currency_id),
-				// );
+				let _ = DepositCallback::deposit_asset(
+					asset,
+					location,
+					context,
+					result,
+					Some(currency_id),
+				);
 			},
 			// unknown asset
 			_ => {
