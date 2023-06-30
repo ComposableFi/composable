@@ -93,6 +93,10 @@ pub mod pallet {
 
 		/// An isomorphism: Balance<->u128
 		type Convert: Convert<u128, Self::Balance> + Convert<Self::Balance, u128>;
+
+		/// Network id, unique per chain
+		#[pallet::constant]
+		type NetworkId: Get<[u8; 4]>;
 	}
 
 	#[pallet::pallet]
@@ -170,7 +174,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			for (nonce, location, asset_info) in self.assets.clone() {
-				let asset_id = <Pallet<T>>::generate_asset_id([0; 8], nonce);
+				let asset_id = <Pallet<T>>::generate_asset_id([0; 4], nonce);
 
 				<Pallet<T> as RemoteAssetRegistryMutate>::register_asset(
 					asset_id, location, asset_info,
@@ -231,7 +235,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::register_asset())]
 		pub fn register_asset(
 			origin: OriginFor<T>,
-			protocol_id: [u8; 8],
+			protocol_id: [u8; 4],
 			nonce: u64,
 			location: Option<T::ForeignAssetId>,
 			asset_info: AssetInfo<T::Balance>,
@@ -560,9 +564,10 @@ pub mod pallet {
 	impl<T: Config> GenerateAssetId for Pallet<T> {
 		type AssetId = T::LocalAssetId;
 
-		fn generate_asset_id(protocol_id: [u8; 8], nonce: u64) -> Self::AssetId {
-			let bytes = protocol_id
+		fn generate_asset_id(protocol_id: [u8; 4], nonce: u64) -> Self::AssetId {
+			let bytes = T::NetworkId::get()
 				.into_iter()
+				.chain(protocol_id)
 				.chain(nonce.to_be_bytes())
 				.collect::<Vec<u8>>()
 				.try_into()
