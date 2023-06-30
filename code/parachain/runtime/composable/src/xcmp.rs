@@ -168,11 +168,9 @@ pub type LocalAssetTransactor = MultiCurrencyAdapterWrapper<
 	DepositToAlternative<TreasuryAccount, Tokens, CurrencyId, AccountId, Balance>,
 	X,
 >;
-pub trait MultiCurrencyCallback{}
+pub trait MultiCurrencyCallback {}
 pub struct X;
-impl MultiCurrencyCallback for X{
-
-}
+impl MultiCurrencyCallback for X {}
 
 pub struct MultiCurrencyAdapterWrapper<
 	MultiCurrency,
