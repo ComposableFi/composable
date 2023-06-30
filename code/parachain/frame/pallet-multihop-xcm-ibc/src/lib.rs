@@ -20,17 +20,15 @@ mod prelude;
 #[frame_support::pallet]
 pub mod pallet {
 
-	
 	use super::*;
 	use frame_support::{pallet_prelude::*, BoundedBTreeSet};
+	use frame_system::RawOrigin;
 	use ibc_primitives::Timeout as IbcTimeout;
 	use pallet_ibc::{MultiAddress, TransferParams};
-	use frame_system::RawOrigin;
 	use xcm::latest::prelude::*;
 	// use prelude::{MultiCurrencyCallback, MemoData};
-	use core::str::FromStr;
 	use composable_traits::xcm::assets::MultiCurrencyCallback;
-
+	use core::str::FromStr;
 
 	use frame_support::BoundedVec;
 
@@ -47,7 +45,7 @@ pub mod pallet {
 		scale_info::TypeInfo,
 		Ord,
 		PartialOrd,
-		MaxEncodedLen
+		MaxEncodedLen,
 	)]
 	pub struct ChainInfo {
 		pub chain_id: u128,
@@ -143,6 +141,12 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			memo: Option<T::MemoMessage>,
 		},
+		FailedCallback {
+			origin_address: [u8; 32],
+			chain_id: u128,
+			reason: u8,
+		},
+		FailedMatchLocation {},
 	}
 
 	#[pallet::error]
@@ -179,7 +183,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
 
-	impl<T : Config> MultiCurrencyCallback for Pallet<T>
+	impl<T: Config> MultiCurrencyCallback for Pallet<T>
 	where
 		T: Send + Sync,
 		u32: From<<T as frame_system::Config>::BlockNumber>,
@@ -193,49 +197,62 @@ pub mod pallet {
 			context: &xcm::latest::XcmContext,
 			deposit_result: xcm::latest::Result,
 			asset_id: Option<Self::AssetId>,
-		) -> Option<()>{
-			let _location_info = match location {
+		) -> Option<()> {
+			let mut list_accounts = BoundedVec::<[u8; 32], T::MaxMultihopCount>::default();
+			let location_info = match location {
 				MultiLocation {
 					parents: 0,
 					interior:
 						X4(
-							PalletInstance(_),
+							PalletInstance(pallet_id),
 							GeneralIndex(chain_id),
 							AccountId32 { id: current_network_address, network: None },
 							AccountId32 { id: ibc1, network: None },
 						),
-				} /* if *pallet_id == T::PalletInstanceId::get() */ =>
-					(*current_network_address, *chain_id),
+				} => {
+					let mut vec = sp_std::vec::Vec::new();
+					vec.push(ibc1.clone());
+					(pallet_id, *current_network_address, *chain_id, vec)
+				},
 				MultiLocation {
 					parents: 0,
 					interior:
 						X5(
-							PalletInstance(_),
+							PalletInstance(pallet_id),
 							GeneralIndex(chain_id),
 							AccountId32 { id: current_network_address, network: None },
 							AccountId32 { id: ibc1, network: None },
 							AccountId32 { id: ibc2, network: None },
 						),
-				} /* if *pallet_id == T::PalletInstanceId::get() */  =>
-					(*current_network_address, *chain_id),
+				} => {
+					let mut vec = sp_std::vec::Vec::new();
+					vec.push(ibc1.clone());
+					vec.push(ibc2.clone());
+					(pallet_id, *current_network_address, *chain_id, vec)
+				},
 				MultiLocation {
 					parents: 0,
 					interior:
 						X6(
-							PalletInstance(_),
+							PalletInstance(pallet_id),
 							GeneralIndex(chain_id),
 							AccountId32 { id: current_network_address, network: None },
 							AccountId32 { id: ibc1, network: None },
 							AccountId32 { id: ibc2, network: None },
 							AccountId32 { id: ibc3, network: None },
 						),
-				} /* if *pallet_id == T::PalletInstanceId::get() */  =>
-					(*current_network_address, *chain_id),
+				} => {
+					let mut vec = sp_std::vec::Vec::new();
+					vec.push(ibc1.clone());
+					vec.push(ibc2.clone());
+					vec.push(ibc3.clone());
+					(pallet_id, *current_network_address, *chain_id, vec)
+				},
 				MultiLocation {
 					parents: 0,
 					interior:
 						X7(
-							PalletInstance(_),
+							PalletInstance(pallet_id),
 							GeneralIndex(chain_id),
 							AccountId32 { id: current_network_address, network: None },
 							AccountId32 { id: ibc1, network: None },
@@ -243,13 +260,19 @@ pub mod pallet {
 							AccountId32 { id: ibc3, network: None },
 							AccountId32 { id: ibc4, network: None },
 						),
-				} /* if *pallet_id == T::PalletInstanceId::get() */  =>
-					(*current_network_address, *chain_id),
+				} => {
+					let mut vec = sp_std::vec::Vec::new();
+					vec.push(ibc1.clone());
+					vec.push(ibc2.clone());
+					vec.push(ibc3.clone());
+					vec.push(ibc4.clone());
+					(pallet_id, *current_network_address, *chain_id, vec)
+				},
 				MultiLocation {
 					parents: 0,
 					interior:
 						X8(
-							PalletInstance(_),
+							PalletInstance(pallet_id),
 							GeneralIndex(chain_id),
 							AccountId32 { id: current_network_address, network: None },
 							AccountId32 { id: ibc1, network: None },
@@ -258,128 +281,166 @@ pub mod pallet {
 							AccountId32 { id: ibc4, network: None },
 							AccountId32 { id: ibc5, network: None },
 						),
-				} /* if *pallet_id == T::PalletInstanceId::get() */  =>
-					(*current_network_address, *chain_id),
-				_ => return None,
+				} => {
+					let mut vec = sp_std::vec::Vec::new();
+					vec.push(ibc1.clone());
+					vec.push(ibc2.clone());
+					vec.push(ibc3.clone());
+					vec.push(ibc4.clone());
+					vec.push(ibc5.clone());
+					(pallet_id, *current_network_address, *chain_id, vec)
+				},
+				_ => {
+					//emit event
+					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedMatchLocation {});
+					return None
+				},
 			};
 
-			return None;
+			let (pallet_id, address_from, chain_id, mut addresses) = location_info;
 
-			// // let (address_from, chain_id, mut addresses) =
-			// // 	location_info.ok_or_else(|| Error::<T>::IncorrectMultiLocation)?;
-			// let Some((address_from, chain_id, mut addresses)) = location_info else{
-			// 	return None;
-			// };
+			if *pallet_id != T::PalletInstanceId::get() {
+				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+					origin_address: address_from,
+					chain_id,
+					reason: 1,
+				});
+				return None
+			}
 
-			// // let (address_from, chain_id, mut addresses) = location_info.ok_or(None)?;
+			// return None;
 
+			//deposit does not executed propertly. nothing todo. assets will stay in the account id
+			// address
+			// deposit_result.map_err(|_| Error::<T>::XcmDepositFailed)?;
+			deposit_result.ok()?;
 
-			// //deposit does not executed propertly. nothing todo. assets will stay in the account id
-			// // address
-			// // deposit_result.map_err(|_| Error::<T>::XcmDepositFailed)?;
-			// deposit_result.ok()?;
+			//route does not exist
+			// let route = ChainIdToMiltihopRoutePath::<T>::try_get(chain_id)
+			// 	.map_err(|_| Error::<T>::MultiHopRouteDoesNotExist)?;
+			let Ok(route) = ChainIdToMiltihopRoutePath::<T>::try_get(chain_id) else{
+				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+					origin_address: address_from,
+					chain_id,
+					reason: 2,
+				});
+				return None;
+			};
 
-			// //route does not exist
-			// // let route = ChainIdToMiltihopRoutePath::<T>::try_get(chain_id)
-			// // 	.map_err(|_| Error::<T>::MultiHopRouteDoesNotExist)?;
-			// let Ok(route) = ChainIdToMiltihopRoutePath::<T>::try_get(chain_id) else{
-			// 	return None;
-			// };
+			let route_len = route.len();
+			let mut chain_info_iter = route.into_iter();
 
-			// let route_len = route.len();
-			// let mut chain_info_iter = route.into_iter();
+			//route does not exist
+			// let (next_chain_info, _) =
+			// 	chain_info_iter.next().ok_or(Error::<T>::MultiHopRouteDoesNotExist)?;
+			let Some((next_chain_info, _)) = chain_info_iter.next() else{
+				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+					origin_address: address_from,
+					chain_id,
+					reason: 3,
+				});
+				return None;
+			};
 
-			// //route does not exist
-			// // let (next_chain_info, _) =
-			// // 	chain_info_iter.next().ok_or(Error::<T>::MultiHopRouteDoesNotExist)?;
-			// let Some((next_chain_info, _)) = chain_info_iter.next() else{
-			// 	return None;
-			// };
+			if addresses.len() != route_len - 1 {
+				//wrong XCM MultiLocation. route len does not match addresses list in XCM call.
+				// return Err(Error::<T>::IncorrectCountOfAddresses)
+				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+					origin_address: address_from,
+					chain_id,
+					reason: 4,
+				});
+				return None
+			}
 
-			// // if addresses.len() != route_len - 1 {
-			// // 	//wrong XCM MultiLocation. route len does not match addresses list in XCM call.
-			// // 	return Err(Error::<T>::IncorrectCountOfAddresses)
-			// // }
+			let raw_address_to = addresses.remove(0); //remove first element and put into transfer_params.
+			let account_id = MultiAddress::<AccoindIdOf<T>>::Raw(raw_address_to.to_vec());
+			let transfer_params = TransferParams::<AccoindIdOf<T>> {
+				to: account_id,
+				source_channel: next_chain_info.channel_id,
+				timeout: IbcTimeout::Offset {
+					timestamp: next_chain_info.timestamp,
+					height: next_chain_info.height,
+				},
+			};
 
-			// let raw_address_to = addresses.remove(0); //remove first element and put into transfer_params.
-			// let account_id = MultiAddress::<AccoindIdOf<T>>::Raw(raw_address_to.to_vec());
-			// let transfer_params = TransferParams::<AccoindIdOf<T>> {
-			// 	to: account_id,
-			// 	source_channel: next_chain_info.channel_id,
-			// 	timeout: IbcTimeout::Offset {
-			// 		timestamp: next_chain_info.timestamp,
-			// 		height: next_chain_info.height,
+			let account_from = sp_runtime::AccountId32::new(address_from);
+			let mut account_from_32: &[u8] = sp_runtime::AccountId32::as_ref(&account_from);
+			let Ok(account_id_from) = T::AccountId::decode(&mut account_from_32) else{
+				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+					origin_address: address_from,
+					chain_id,
+					reason: 5,
+				});
+				return None;
+			};
+			let signed_account_id = RawOrigin::Signed(account_id_from.clone());
+
+			//do not support non fungible.
+			let Fungibility::Fungible(ref amount) = asset.fun else{
+				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+					origin_address: address_from,
+					chain_id,
+					reason: 5,
+				});
+				return None;
+				// return Err(Error::<T>::DoesNotSupportNonFungible);
+			};
+
+			let mut memo: Option<<T as pallet_ibc::Config>::MemoMessage> = None;
+
+			// chain_info_iter does not contains the first IBC chain in the route, addresses does
+			// not contain first ibc address as well.
+			let vec: sp_std::vec::Vec<_> = chain_info_iter
+				.zip(addresses.into_iter())
+				.map(|(i, address)| (i.0, i.1, address.clone()))
+				.collect();
+
+			//not able to derive address. and construct memo for multihop.
+			//TODO: uncomment when memo will be supported.
+			// let memo_data =
+			// 	MemoData::new::<T>(vec).map_err(|_| Error::<T>::FailedToConstructMemo)?;
+			// match memo_data {
+			// 	Some(memo_data) => {
+			// 		let memo_str = format!("{:?}", memo_data); //create a string memo
+
+			// 		let memo_result = <T as pallet_ibc::Config>::MemoMessage::from_str(&memo_str);
+
+			// 		memo = Some(memo_result.map_err(|_| Error::<T>::FailedToConstructMemo)?);
 			// 	},
-			// };
-
-			// let account_from = sp_runtime::AccountId32::new(address_from);
-			// let mut account_from_32: &[u8] = sp_runtime::AccountId32::as_ref(&account_from);
-			// //TODO replace unwrap.
-			// let account_id_from = T::AccountId::decode(&mut account_from_32).unwrap();
-			// let signed_account_id = RawOrigin::Signed(account_id_from.clone());
-
-			// //do not support non fungible.
-			// let Fungibility::Fungible(ref amount) = asset.fun else{
-			// 	return None;
-			// 	// return Err(Error::<T>::DoesNotSupportNonFungible);
-			// };
-
-			// let mut memo: Option<<T as pallet_ibc::Config>::MemoMessage> = None;
-
-			// // chain_info_iter does not contains the first IBC chain in the route, addresses does
-			// // not contain first ibc address as well.
-			// let vec: Vec<_> = chain_info_iter
-			// 	.zip(addresses.into_iter())
-			// 	.map(|(i, address)| (i.0, i.1, address.clone()))
-			// 	.collect();
-
-			// //not able to derive address. and construct memo for multihop.
-			// //TODO: uncomment when memo will be supported.
-			// // let memo_data =
-			// // 	MemoData::new::<T>(vec).map_err(|_| Error::<T>::FailedToConstructMemo)?;
-			// // match memo_data {
-			// // 	Some(memo_data) => {
-			// // 		let memo_str = format!("{:?}", memo_data); //create a string memo
-
-			// // 		let memo_result = <T as pallet_ibc::Config>::MemoMessage::from_str(&memo_str);
-
-			// // 		memo = Some(memo_result.map_err(|_| Error::<T>::FailedToConstructMemo)?);
-			// // 	},
-			// // 	_ => {},
-			// // }
-
-			// let result = pallet_ibc::Pallet::<T>::transfer(
-			// 	signed_account_id.into(),
-			// 	transfer_params,
-			// 	asset_id.unwrap(),
-			// 	(*amount).into(),
-			// 	memo.clone(),
-			// );
-			// match result {
-			// 	Ok(_) => {
-			// 		<Pallet<T>>::deposit_event(crate::Event::<T>::SuccessXcmToIbc {
-			// 			origin_address: account_id_from,
-			// 			to: raw_address_to.clone(),
-			// 			amount: *amount,
-			// 			asset_id: asset_id.unwrap(),
-			// 			memo,
-			// 		});
-			// 	},
-			// 	Err(_) => {
-			// 		<Pallet<T>>::deposit_event(crate::Event::<T>::FailedXcmToIbc {
-			// 			origin_address: account_id_from,
-			// 			to: raw_address_to.clone(),
-			// 			amount: *amount,
-			// 			asset_id: asset_id.unwrap(),
-			// 			memo,
-			// 		});
-			// 	},
+			// 	_ => {},
 			// }
-			// core::result::Result::Ok(())
-				// todo!()
-			// None
-		}
 
+			let result = pallet_ibc::Pallet::<T>::transfer(
+				signed_account_id.into(),
+				transfer_params,
+				asset_id.unwrap(),
+				(*amount).into(),
+				memo.clone(),
+			);
+			match result {
+				Ok(_) => {
+					<Pallet<T>>::deposit_event(crate::Event::<T>::SuccessXcmToIbc {
+						origin_address: account_id_from,
+						to: raw_address_to.clone(),
+						amount: *amount,
+						asset_id: asset_id.unwrap(),
+						memo,
+					});
+				},
+				Err(_) => {
+					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedXcmToIbc {
+						origin_address: account_id_from,
+						to: raw_address_to.clone(),
+						amount: *amount,
+						asset_id: asset_id.unwrap(),
+						memo,
+					});
+					return None
+				},
+			}
+			Some(())
+		}
 	}
 
 	// impl<T: Config> MultiCurrencyCallback<T> for Pallet<T>
@@ -395,172 +456,172 @@ pub mod pallet {
 	// 		deposit_result: xcm::v3::Result,
 	// 		asset_id: Option<<T as pallet_ibc::Config>::AssetId>,
 	// 	) -> core::result::Result<(), Error<T>> {
-			// let location_info = match location {
-			// 	MultiLocation {
-			// 		parents: 0,
-			// 		interior:
-			// 			X4(
-			// 				PalletInstance(pallet_id),
-			// 				GeneralIndex(chain_id),
-			// 				AccountId32 { id: current_network_address, network: None },
-			// 				AccountId32 { id: ibc1, network: None },
-			// 			),
-			// 	} if *pallet_id == T::PalletInstanceId::get() =>
-			// 		Some((*current_network_address, *chain_id, vec![ibc1])),
-			// 	MultiLocation {
-			// 		parents: 0,
-			// 		interior:
-			// 			X5(
-			// 				PalletInstance(pallet_id),
-			// 				GeneralIndex(chain_id),
-			// 				AccountId32 { id: current_network_address, network: None },
-			// 				AccountId32 { id: ibc1, network: None },
-			// 				AccountId32 { id: ibc2, network: None },
-			// 			),
-			// 	} if *pallet_id == T::PalletInstanceId::get() =>
-			// 		Some((*current_network_address, *chain_id, vec![ibc1, ibc2])),
-			// 	MultiLocation {
-			// 		parents: 0,
-			// 		interior:
-			// 			X6(
-			// 				PalletInstance(pallet_id),
-			// 				GeneralIndex(chain_id),
-			// 				AccountId32 { id: current_network_address, network: None },
-			// 				AccountId32 { id: ibc1, network: None },
-			// 				AccountId32 { id: ibc2, network: None },
-			// 				AccountId32 { id: ibc3, network: None },
-			// 			),
-			// 	} if *pallet_id == T::PalletInstanceId::get() =>
-			// 		Some((*current_network_address, *chain_id, vec![ibc1, ibc2, ibc3])),
-			// 	MultiLocation {
-			// 		parents: 0,
-			// 		interior:
-			// 			X7(
-			// 				PalletInstance(pallet_id),
-			// 				GeneralIndex(chain_id),
-			// 				AccountId32 { id: current_network_address, network: None },
-			// 				AccountId32 { id: ibc1, network: None },
-			// 				AccountId32 { id: ibc2, network: None },
-			// 				AccountId32 { id: ibc3, network: None },
-			// 				AccountId32 { id: ibc4, network: None },
-			// 			),
-			// 	} if *pallet_id == T::PalletInstanceId::get() =>
-			// 		Some((*current_network_address, *chain_id, vec![ibc1, ibc2, ibc3, ibc4])),
-			// 	MultiLocation {
-			// 		parents: 0,
-			// 		interior:
-			// 			X8(
-			// 				PalletInstance(pallet_id),
-			// 				GeneralIndex(chain_id),
-			// 				AccountId32 { id: current_network_address, network: None },
-			// 				AccountId32 { id: ibc1, network: None },
-			// 				AccountId32 { id: ibc2, network: None },
-			// 				AccountId32 { id: ibc3, network: None },
-			// 				AccountId32 { id: ibc4, network: None },
-			// 				AccountId32 { id: ibc5, network: None },
-			// 			),
-			// 	} if *pallet_id == T::PalletInstanceId::get() =>
-			// 		Some((*current_network_address, *chain_id, vec![ibc1, ibc2, ibc3, ibc4, ibc5])),
-			// 	_ => None,
-			// };
+	// let location_info = match location {
+	// 	MultiLocation {
+	// 		parents: 0,
+	// 		interior:
+	// 			X4(
+	// 				PalletInstance(pallet_id),
+	// 				GeneralIndex(chain_id),
+	// 				AccountId32 { id: current_network_address, network: None },
+	// 				AccountId32 { id: ibc1, network: None },
+	// 			),
+	// 	} if *pallet_id == T::PalletInstanceId::get() =>
+	// 		Some((*current_network_address, *chain_id, vec![ibc1])),
+	// 	MultiLocation {
+	// 		parents: 0,
+	// 		interior:
+	// 			X5(
+	// 				PalletInstance(pallet_id),
+	// 				GeneralIndex(chain_id),
+	// 				AccountId32 { id: current_network_address, network: None },
+	// 				AccountId32 { id: ibc1, network: None },
+	// 				AccountId32 { id: ibc2, network: None },
+	// 			),
+	// 	} if *pallet_id == T::PalletInstanceId::get() =>
+	// 		Some((*current_network_address, *chain_id, vec![ibc1, ibc2])),
+	// 	MultiLocation {
+	// 		parents: 0,
+	// 		interior:
+	// 			X6(
+	// 				PalletInstance(pallet_id),
+	// 				GeneralIndex(chain_id),
+	// 				AccountId32 { id: current_network_address, network: None },
+	// 				AccountId32 { id: ibc1, network: None },
+	// 				AccountId32 { id: ibc2, network: None },
+	// 				AccountId32 { id: ibc3, network: None },
+	// 			),
+	// 	} if *pallet_id == T::PalletInstanceId::get() =>
+	// 		Some((*current_network_address, *chain_id, vec![ibc1, ibc2, ibc3])),
+	// 	MultiLocation {
+	// 		parents: 0,
+	// 		interior:
+	// 			X7(
+	// 				PalletInstance(pallet_id),
+	// 				GeneralIndex(chain_id),
+	// 				AccountId32 { id: current_network_address, network: None },
+	// 				AccountId32 { id: ibc1, network: None },
+	// 				AccountId32 { id: ibc2, network: None },
+	// 				AccountId32 { id: ibc3, network: None },
+	// 				AccountId32 { id: ibc4, network: None },
+	// 			),
+	// 	} if *pallet_id == T::PalletInstanceId::get() =>
+	// 		Some((*current_network_address, *chain_id, vec![ibc1, ibc2, ibc3, ibc4])),
+	// 	MultiLocation {
+	// 		parents: 0,
+	// 		interior:
+	// 			X8(
+	// 				PalletInstance(pallet_id),
+	// 				GeneralIndex(chain_id),
+	// 				AccountId32 { id: current_network_address, network: None },
+	// 				AccountId32 { id: ibc1, network: None },
+	// 				AccountId32 { id: ibc2, network: None },
+	// 				AccountId32 { id: ibc3, network: None },
+	// 				AccountId32 { id: ibc4, network: None },
+	// 				AccountId32 { id: ibc5, network: None },
+	// 			),
+	// 	} if *pallet_id == T::PalletInstanceId::get() =>
+	// 		Some((*current_network_address, *chain_id, vec![ibc1, ibc2, ibc3, ibc4, ibc5])),
+	// 	_ => None,
+	// };
 
-			// let (address_from, chain_id, mut addresses) =
-			// 	location_info.ok_or_else(|| Error::<T>::IncorrectMultiLocation)?;
+	// let (address_from, chain_id, mut addresses) =
+	// 	location_info.ok_or_else(|| Error::<T>::IncorrectMultiLocation)?;
 
-			// //deposit does not executed propertly. nothing todo. assets will stay in the account id
-			// // address
-			// deposit_result.map_err(|_| Error::<T>::XcmDepositFailed)?;
+	// //deposit does not executed propertly. nothing todo. assets will stay in the account id
+	// // address
+	// deposit_result.map_err(|_| Error::<T>::XcmDepositFailed)?;
 
-			// //route does not exist
-			// let route = ChainIdToMiltihopRoutePath::<T>::try_get(chain_id)
-			// 	.map_err(|_| Error::<T>::MultiHopRouteDoesNotExist)?;
+	// //route does not exist
+	// let route = ChainIdToMiltihopRoutePath::<T>::try_get(chain_id)
+	// 	.map_err(|_| Error::<T>::MultiHopRouteDoesNotExist)?;
 
-			// let route_len = route.len();
-			// let mut chain_info_iter = route.into_iter();
+	// let route_len = route.len();
+	// let mut chain_info_iter = route.into_iter();
 
-			// //route does not exist
-			// let (next_chain_info, _) =
-			// 	chain_info_iter.next().ok_or(Error::<T>::MultiHopRouteDoesNotExist)?;
+	// //route does not exist
+	// let (next_chain_info, _) =
+	// 	chain_info_iter.next().ok_or(Error::<T>::MultiHopRouteDoesNotExist)?;
 
-			// // if addresses.len() != route_len - 1 {
-			// // 	//wrong XCM MultiLocation. route len does not match addresses list in XCM call.
-			// // 	return Err(Error::<T>::IncorrectCountOfAddresses)
-			// // }
+	// // if addresses.len() != route_len - 1 {
+	// // 	//wrong XCM MultiLocation. route len does not match addresses list in XCM call.
+	// // 	return Err(Error::<T>::IncorrectCountOfAddresses)
+	// // }
 
-			// let raw_address_to = addresses.remove(0); //remove first element and put into transfer_params.
-			// let account_id = MultiAddress::<AccoindIdOf<T>>::Raw(raw_address_to.to_vec());
-			// let transfer_params = TransferParams::<AccoindIdOf<T>> {
-			// 	to: account_id,
-			// 	source_channel: next_chain_info.channel_id,
-			// 	timeout: IbcTimeout::Offset {
-			// 		timestamp: next_chain_info.timestamp,
-			// 		height: next_chain_info.height,
-			// 	},
-			// };
+	// let raw_address_to = addresses.remove(0); //remove first element and put into
+	// transfer_params. let account_id =
+	// MultiAddress::<AccoindIdOf<T>>::Raw(raw_address_to.to_vec()); let transfer_params =
+	// TransferParams::<AccoindIdOf<T>> { 	to: account_id,
+	// 	source_channel: next_chain_info.channel_id,
+	// 	timeout: IbcTimeout::Offset {
+	// 		timestamp: next_chain_info.timestamp,
+	// 		height: next_chain_info.height,
+	// 	},
+	// };
 
-			// let account_from = sp_runtime::AccountId32::new(address_from);
-			// let mut account_from_32: &[u8] = sp_runtime::AccountId32::as_ref(&account_from);
-			// //TODO replace unwrap.
-			// let account_id_from = T::AccountId::decode(&mut account_from_32).unwrap();
-			// let signed_account_id = RawOrigin::Signed(account_id_from.clone());
+	// let account_from = sp_runtime::AccountId32::new(address_from);
+	// let mut account_from_32: &[u8] = sp_runtime::AccountId32::as_ref(&account_from);
+	// //TODO replace unwrap.
+	// let account_id_from = T::AccountId::decode(&mut account_from_32).unwrap();
+	// let signed_account_id = RawOrigin::Signed(account_id_from.clone());
 
-			// //do not support non fungible.
-			// let Fungibility::Fungible(ref amount) = asset.fun else{
-			// 	return Err(Error::<T>::DoesNotSupportNonFungible);
-			// };
+	// //do not support non fungible.
+	// let Fungibility::Fungible(ref amount) = asset.fun else{
+	// 	return Err(Error::<T>::DoesNotSupportNonFungible);
+	// };
 
-			// let mut memo: Option<<T as pallet_ibc::Config>::MemoMessage> = None;
+	// let mut memo: Option<<T as pallet_ibc::Config>::MemoMessage> = None;
 
-			// // chain_info_iter does not contains the first IBC chain in the route, addresses does
-			// // not contain first ibc address as well.
-			// let vec: Vec<_> = chain_info_iter
-			// 	.zip(addresses.into_iter())
-			// 	.map(|(i, address)| (i.0, i.1, address.clone()))
-			// 	.collect();
+	// // chain_info_iter does not contains the first IBC chain in the route, addresses does
+	// // not contain first ibc address as well.
+	// let vec: Vec<_> = chain_info_iter
+	// 	.zip(addresses.into_iter())
+	// 	.map(|(i, address)| (i.0, i.1, address.clone()))
+	// 	.collect();
 
-			// //not able to derive address. and construct memo for multihop.
-			// let memo_data =
-			// 	MemoData::new::<T>(vec).map_err(|_| Error::<T>::FailedToConstructMemo)?;
-			// match memo_data {
-			// 	Some(memo_data) => {
-			// 		let memo_str = format!("{:?}", memo_data); //create a string memo
+	// //not able to derive address. and construct memo for multihop.
+	// let memo_data =
+	// 	MemoData::new::<T>(vec).map_err(|_| Error::<T>::FailedToConstructMemo)?;
+	// match memo_data {
+	// 	Some(memo_data) => {
+	// 		let memo_str = format!("{:?}", memo_data); //create a string memo
 
-			// 		let memo_result = <T as pallet_ibc::Config>::MemoMessage::from_str(&memo_str);
+	// 		let memo_result = <T as pallet_ibc::Config>::MemoMessage::from_str(&memo_str);
 
-			// 		memo = Some(memo_result.map_err(|_| Error::<T>::FailedToConstructMemo)?);
-			// 	},
-			// 	_ => {},
-			// }
+	// 		memo = Some(memo_result.map_err(|_| Error::<T>::FailedToConstructMemo)?);
+	// 	},
+	// 	_ => {},
+	// }
 
-			// let result = pallet_ibc::Pallet::<T>::transfer(
-			// 	signed_account_id.into(),
-			// 	transfer_params,
-			// 	asset_id.unwrap(),
-			// 	(*amount).into(),
-			// 	memo.clone(),
-			// );
-			// match result {
-			// 	Ok(_) => {
-			// 		<Pallet<T>>::deposit_event(crate::Event::<T>::SuccessXcmToIbc {
-			// 			origin_address: account_id_from,
-			// 			to: raw_address_to.clone(),
-			// 			amount: *amount,
-			// 			asset_id: asset_id.unwrap(),
-			// 			memo,
-			// 		});
-			// 	},
-			// 	Err(_) => {
-			// 		<Pallet<T>>::deposit_event(crate::Event::<T>::FailedXcmToIbc {
-			// 			origin_address: account_id_from,
-			// 			to: raw_address_to.clone(),
-			// 			amount: *amount,
-			// 			asset_id: asset_id.unwrap(),
-			// 			memo,
-			// 		});
-			// 	},
-			// }
-			// core::result::Result::Ok(())
-		// 	todo!()
-		// }
+	// let result = pallet_ibc::Pallet::<T>::transfer(
+	// 	signed_account_id.into(),
+	// 	transfer_params,
+	// 	asset_id.unwrap(),
+	// 	(*amount).into(),
+	// 	memo.clone(),
+	// );
+	// match result {
+	// 	Ok(_) => {
+	// 		<Pallet<T>>::deposit_event(crate::Event::<T>::SuccessXcmToIbc {
+	// 			origin_address: account_id_from,
+	// 			to: raw_address_to.clone(),
+	// 			amount: *amount,
+	// 			asset_id: asset_id.unwrap(),
+	// 			memo,
+	// 		});
+	// 	},
+	// 	Err(_) => {
+	// 		<Pallet<T>>::deposit_event(crate::Event::<T>::FailedXcmToIbc {
+	// 			origin_address: account_id_from,
+	// 			to: raw_address_to.clone(),
+	// 			amount: *amount,
+	// 			asset_id: asset_id.unwrap(),
+	// 			memo,
+	// 		});
+	// 	},
+	// }
+	// core::result::Result::Ok(())
+	// 	todo!()
+	// }
 	// }
 }
