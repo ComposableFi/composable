@@ -33,37 +33,77 @@
 
             dasel-genesis '.app_state.staking.params.bond_denom' 'uosmo'
             dasel-genesis '.app_state.staking.params.unbonding_time' '60s'
+            dasel  put --type json --file "$GENESIS" --value "[{},{}]" 'app_state.bank.denom_metadata'
+            dasel-genesis '.app_state.bank.denom_metadata.[0].description' 'Registered denom uion for localosmosis testing'
+            dasel  put --type json --file "$GENESIS" --value "[{}]" '.app_state.bank.denom_metadata.[0].denom_units'
+            dasel-genesis '.app_state.bank.denom_metadata.[0].denom_units.[0].denom' 'uion'
+            dasel-genesis '.app_state.bank.denom_metadata.[0].denom_units.[0].exponent' 0
+            dasel-genesis '.app_state.bank.denom_metadata.[0].base' 'uion'
+            dasel-genesis '.app_state.bank.denom_metadata.[0].display' 'uion'
+            dasel-genesis '.app_state.bank.denom_metadata.[0].name' 'uion'
+            dasel-genesis '.app_state.bank.denom_metadata.[0].symbol' 'uion'
+
+            dasel  put --type json --file "$GENESIS" --value "[{}]" '.app_state.bank.denom_metadata.[1].denom_units'
+            dasel-genesis '.app_state.bank.denom_metadata.[1].description' 'Registered denom uosmo for localosmosis testing'
+            dasel-genesis '.app_state.bank.denom_metadata.[1].denom_units.[0].denom' 'uosmo'
+            dasel-genesis '.app_state.bank.denom_metadata.[1].denom_units.[0].exponent' 0
+            dasel-genesis '.app_state.bank.denom_metadata.[1].base' 'uosmo'
+            dasel-genesis '.app_state.bank.denom_metadata.[1].display' 'uosmo'
+            dasel-genesis '.app_state.bank.denom_metadata.[1].name' 'uosmo'
+            dasel-genesis '.app_state.bank.denom_metadata.[1].symbol' 'uosmo'
+
             dasel-genesis '.app_state.crisis.constant_fee.denom' 'uosmo'
             dasel-genesis '.app_state.gov.voting_params.voting_period' '30s'
+            dasel  put --type json --file "$GENESIS" --value "[{}]" '.app_state.gov.deposit_params.min_deposit'
             dasel-genesis '.app_state.gov.deposit_params.min_deposit.[0].denom' 'uosmo'
+            dasel-genesis '.app_state.gov.deposit_params.min_deposit.[0].amount' '1000000000'
             dasel-genesis '.app_state.epochs.epochs.[1].duration' "30s"
+            dasel  put --type json --file "$GENESIS" --value "[{},{},{}]" '.app_state.poolincentives.lockable_durations'
             dasel-genesis '.app_state.poolincentives.lockable_durations.[0]' "60s"
             dasel-genesis '.app_state.poolincentives.lockable_durations.[1]' "90s"
             dasel-genesis '.app_state.poolincentives.lockable_durations.[2]' "120s"
             dasel-genesis '.app_state.poolincentives.params.minted_denom' "uosmo"
+            dasel  put --type json --file "$GENESIS" --value "[{},{},{},{}]" '.app_state.incentives.lockable_durations'
             dasel-genesis '.app_state.incentives.lockable_durations.[0]' "1s"
             dasel-genesis '.app_state.incentives.lockable_durations.[1]' "60s"
             dasel-genesis '.app_state.incentives.lockable_durations.[2]' "90s"
             dasel-genesis '.app_state.incentives.lockable_durations.[3]' "120s"
-            dasel-genesis '.app_state.incentives.params.distr_epoch_identifier' "day"
+            dasel-genesis '.app_state.incentives.params.distr_epoch_identifier' "hour"
             dasel-genesis '.app_state.mint.params.mint_denom' "uosmo"
             dasel-genesis '.app_state.mint.params.epoch_identifier' "day"
+            dasel-genesis '.app_state.poolmanager.params.pool_creation_fee.[0].denom' "uosmo"
+            
+            dasel  put --type json --file "$GENESIS" --value "[{}]" '.app_state.gamm.params.pool_creation_fee'
             dasel-genesis '.app_state.gamm.params.pool_creation_fee.[0].denom' "uosmo"
+            dasel-genesis '.app_state.gamm.params.pool_creation_fee.[0].amount' "10000000"
             dasel-genesis '.app_state.txfees.basedenom' "uosmo"
             dasel-genesis '.app_state.wasm.params.code_upload_access.permission' "Everybody"
-
+            dasel-genesis '.app_state.concentratedliquidity.params.is_permissionless_pool_creation_enabled' true
+            
             function add-genesis-account() {
               echo "$1" | osmosisd keys add "$2" --recover --keyring-backend=test --home "$OSMOSIS_DATA" --keyring-dir "$KEYRING_TEST"
-              VALIDATOR_ACCOUNT=$(osmosisd keys show --address "$2" --keyring-backend test --home "$OSMOSIS_DATA" --keyring-dir "$KEYRING_TEST")
-              osmosisd add-genesis-account "$VALIDATOR_ACCOUNT" 100000000000uosmo,100000000000uion,100000000000stake --home "$OSMOSIS_DATA"
+              ACCOUNT=$(osmosisd keys show --address "$2" --keyring-backend test --home "$OSMOSIS_DATA" --keyring-dir "$KEYRING_TEST")
+              osmosisd add-genesis-account "$ACCOUNT" 100000000000uosmo,100000000000uion,100000000000stake --home "$OSMOSIS_DATA"
             }
 
             add-genesis-account "$VALIDATOR_MNEMONIC" "$VALIDATOR_MONIKER"
             add-genesis-account "$FAUCET_MNEMONIC" "faucet"
             add-genesis-account "$RELAYER_MNEMONIC" "relayer"
 
+            osmosisd gentx $VALIDATOR_MONIKER 500000000uosmo --keyring-backend=test --chain-id=$CHAIN_ID --home "$OSMOSIS_DATA" --keyring-dir "$KEYRING_TEST"
+            osmosisd collect-gentxs --home "$OSMOSIS_DATA"
             dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "" '.p2p.seeds'
-            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:36657" '.rpc.laddr'
+            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:46657" '.rpc.laddr'
+            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "0.0.0.0:16060" '.rpc.pprof_laddr'
+            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://127.0.0.1:36658" '.proxy_app'
+            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value ":36660" '.instrumentation.prometheus_listen_addr'
+            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:36656" '.p2p.prometheus_listen_addr'
+            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://localhost:36657" '.node'
+            
+            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:19090" '.grpc.address'
+            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:19091" '.grpc-web.address'
+            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "tcp://0.0.0.0:11317" '.api.address'
+
             osmosisd start --home "$OSMOSIS_DATA"
           '';
         };
