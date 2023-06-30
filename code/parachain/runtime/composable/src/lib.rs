@@ -142,6 +142,7 @@ parameter_types! {
 		.build_or_panic();
 
 	pub const SS58Prefix: u8 = 50;
+	pub const ComposableNetworkId: [u8; 4] = [0, 0, 0, 1];
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -208,6 +209,7 @@ impl assets_registry::Config for Runtime {
 	type ParachainOrGovernanceOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 	type Convert = sp_runtime::traits::ConvertInto;
+	type NetworkId = ComposableNetworkId;
 }
 
 parameter_types! {
