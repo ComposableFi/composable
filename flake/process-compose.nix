@@ -1,6 +1,8 @@
 { self, ... }: {
   perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, ... }:
-    let devnet-root-directory = "/tmp/composable-dev/";
+    let
+      devnet-root-directory = "/tmp/composable-dev";
+      validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
     in {
       packages = rec {
         osmosisd = pkgs.writeShellApplication {
@@ -13,7 +15,9 @@
           name = "osmosisd-gen";
           runtimeInputs = [ osmosisd pkgs.jq pkgs.yq pkgs.dasel ];
           text = ''
-            OSMOSIS_DATA="${devnet-root-directory}osmosis-dev"
+            HOME=${devnet-root-directory}
+            export HOME
+            OSMOSIS_DATA="$HOME/.osmosisd"
             rm --force --recursive "$OSMOSIS_DATA" 
             CHAIN_ID="osmosis"
             VALIDATOR_MONIKER="validator"
@@ -21,7 +25,6 @@
             FAUCET_MNEMONIC="increase bread alpha rigid glide amused approve oblige print asset idea enact lawn proof unfold jeans rabbit audit return chuckle valve rather cactus great"
             RELAYER_MNEMONIC="black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken"
             CONFIG_FOLDER=$OSMOSIS_DATA/config
-            KEYRING_TEST="$OSMOSIS_DATA/keyring-test"
             GENESIS=$CONFIG_FOLDER/genesis.json
             mkdir --parents $OSMOSIS_DATA
 
@@ -72,17 +75,19 @@
             dasel-genesis '.app_state.mint.params.mint_denom' "uosmo"
             dasel-genesis '.app_state.mint.params.epoch_identifier' "day"
             dasel-genesis '.app_state.poolmanager.params.pool_creation_fee.[0].denom' "uosmo"
-            
+
             dasel  put --type json --file "$GENESIS" --value "[{}]" '.app_state.gamm.params.pool_creation_fee'
             dasel-genesis '.app_state.gamm.params.pool_creation_fee.[0].denom' "uosmo"
             dasel-genesis '.app_state.gamm.params.pool_creation_fee.[0].amount' "10000000"
             dasel-genesis '.app_state.txfees.basedenom' "uosmo"
             dasel-genesis '.app_state.wasm.params.code_upload_access.permission' "Everybody"
             dasel-genesis '.app_state.concentratedliquidity.params.is_permissionless_pool_creation_enabled' true
-            
+
             function add-genesis-account() {
-              echo "$1" | osmosisd keys add "$2" --recover --keyring-backend=test --home "$OSMOSIS_DATA" --keyring-dir "$KEYRING_TEST"
-              ACCOUNT=$(osmosisd keys show --address "$2" --keyring-backend test --home "$OSMOSIS_DATA" --keyring-dir "$KEYRING_TEST")
+              echo "$1" | osmosisd keys add "$2" --recover --keyring-backend test --home "$OSMOSIS_DATA" 
+              ACCOUNT=$(osmosisd keys show --address "$2" --keyring-backend test --home "$OSMOSIS_DATA" )
+              echo "===================================="
+              echo "$ACCOUNT"
               osmosisd add-genesis-account "$ACCOUNT" 100000000000uosmo,100000000000uion,100000000000stake --home "$OSMOSIS_DATA"
             }
 
@@ -90,21 +95,46 @@
             add-genesis-account "$FAUCET_MNEMONIC" "faucet"
             add-genesis-account "$RELAYER_MNEMONIC" "relayer"
 
-            osmosisd gentx $VALIDATOR_MONIKER 500000000uosmo --keyring-backend=test --chain-id=$CHAIN_ID --home "$OSMOSIS_DATA" --keyring-dir "$KEYRING_TEST"
+            osmosisd gentx $VALIDATOR_MONIKER 500000000uosmo --keyring-backend=test --chain-id=$CHAIN_ID --home "$OSMOSIS_DATA" 
             osmosisd collect-gentxs --home "$OSMOSIS_DATA"
             dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "" '.p2p.seeds'
-            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:46657" '.rpc.laddr'
+            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:36657" '.rpc.laddr'
             dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "0.0.0.0:16060" '.rpc.pprof_laddr'
             dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://127.0.0.1:36658" '.proxy_app'
             dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value ":36660" '.instrumentation.prometheus_listen_addr'
             dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:36656" '.p2p.prometheus_listen_addr'
             dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://localhost:36657" '.node'
-            
+
             dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:19090" '.grpc.address'
             dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:19091" '.grpc-web.address'
             dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "tcp://0.0.0.0:11317" '.api.address'
 
+            dasel put --type string --file $CONFIG_FOLDER/config.toml --value "*" '.rpc.cors_allowed_origins.[]'
+            dasel put --type string --file $CONFIG_FOLDER/config.toml --value "Accept-Encoding" '.rpc.cors_allowed_headers.[]'
+            dasel put --type string --file $CONFIG_FOLDER/config.toml --value "DELETE" '.rpc.cors_allowed_methods.[]'
+            dasel put --type string --file $CONFIG_FOLDER/config.toml --value "OPTIONS" '.rpc.cors_allowed_methods.[]'
+            dasel put --type string --file $CONFIG_FOLDER/config.toml --value "PATCH" '.rpc.cors_allowed_methods.[]'
+            dasel put --type string --file $CONFIG_FOLDER/config.toml --value "PUT" '.rpc.cors_allowed_methods.[]'
+            dasel put --type bool --file $CONFIG_FOLDER/app.toml --value "true" '.api.swagger'
+            dasel put --type bool --file $CONFIG_FOLDER/app.toml --value "true" '.api.enabled-unsafe-cors'
+            dasel put --type bool --file $CONFIG_FOLDER/app.toml --value "true" '.grpc-web.enable-unsafe-cors'
+
             osmosisd start --home "$OSMOSIS_DATA"
+          '';
+        };
+
+        osmosisd-init = pkgs.writeShellApplication {
+          name = "osmosisd-init";
+          runtimeInputs = [ osmosisd pkgs.jq pkgs.yq pkgs.dasel ];
+          text = ''
+            HOME=${devnet-root-directory}
+            export HOME
+            OSMOSIS_DATA="$HOME/.osmosisd"
+            rm --force --recursive "$OSMOSIS_DATA" 
+            CHAIN_ID="osmosis"
+
+            set +e
+            osmosisd tx wasm store  "${self'.packages.xcvm-contracts}/lib/cw_xc_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uatom --dry-run --log_level trace --trace --keyring-backend test  --home "$OSMOSIS_DATA" --from validator
           '';
         };
       };
@@ -117,6 +147,17 @@
                 host = "127.0.0.1";
                 port = 26657;
               };
+            };
+            osmosis = {
+              command = self'.packages.osmosisd-gen;
+              readiness_probe.http_get = {
+                host = "127.0.0.1";
+                port = 36657;
+              };
+            };
+            osmosis-init = {
+              command = self'.packages.osmosisd-init;
+              depends_on."osmosis".condition = "process_healthy";
             };
             centauri-init = {
               command = self'.packages.centaurid-init;
