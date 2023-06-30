@@ -57,6 +57,7 @@ pub mod pallet {
 		pub height: Option<u64>,    //for memo packet message forwarding
 		pub retries: Option<u64>,   //for memo packet message forwarding
 		pub timeout: Option<u64>,   //for memo packet message forwarding
+		pub is_substrate_ibc: bool,
 	}
 
 	// #[derive(serde::Serialize, Debug)]
@@ -359,7 +360,7 @@ pub mod pallet {
 				return None;
 			};
 
-			if addresses.len() != route_len - 1 {
+			if addresses.len() != route_len {
 				//wrong XCM MultiLocation. route len does not match addresses list in XCM call.
 				// return Err(Error::<T>::IncorrectCountOfAddresses)
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
@@ -371,7 +372,31 @@ pub mod pallet {
 			}
 
 			let raw_address_to = addresses.remove(0); //remove first element and put into transfer_params.
-			let account_id = MultiAddress::<AccoindIdOf<T>>::Raw(raw_address_to.to_vec());
+			let mut account_id = MultiAddress::<AccoindIdOf<T>>::Raw(raw_address_to.to_vec());
+			if !next_chain_info.is_substrate_ibc {
+				//does not support not substrate ibc
+				//to support IBC chain need to convert address to IBC address using bech32(the same
+				// as in memo::new function)
+				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+					origin_address: address_from,
+					chain_id,
+					reason: 5,
+				});
+				return None
+			} else {
+				let account_from = sp_runtime::AccountId32::new(raw_address_to);
+				let mut account_from_32: &[u8] = sp_runtime::AccountId32::as_ref(&account_from);
+				let Ok(account_id_from) = T::AccountId::decode(&mut account_from_32) else{
+					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+						origin_address: address_from,
+						chain_id,
+						reason: 6,
+					});
+					return None;
+				};
+				account_id = MultiAddress::<AccoindIdOf<T>>::Id(account_id_from);
+			}
+			// let accunt_id = MultiAddress::<AccoindIdOf<T>>::Id();
 			let transfer_params = TransferParams::<AccoindIdOf<T>> {
 				to: account_id,
 				source_channel: next_chain_info.channel_id,
@@ -387,7 +412,7 @@ pub mod pallet {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					chain_id,
-					reason: 5,
+					reason: 7,
 				});
 				return None;
 			};
@@ -398,7 +423,7 @@ pub mod pallet {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					chain_id,
-					reason: 5,
+					reason: 8,
 				});
 				return None;
 				// return Err(Error::<T>::DoesNotSupportNonFungible);
