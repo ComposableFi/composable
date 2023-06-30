@@ -116,13 +116,64 @@ impl<AccountId: From<[u8; 32]> + Into<[u8; 32]> + Clone>
 				interior:
 					X4(
 						PalletInstance(_),
-						AccountId32 { id, network: None },
 						GeneralIndex(_),
-						AccountId32 { id: _, network: None },
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+					),
+			} => id,
+			MultiLocation {
+				parents: 0,
+				interior:
+					X5(
+						PalletInstance(_),
+						GeneralIndex(_),
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+					),
+			} => id,
+			MultiLocation {
+				parents: 0,
+				interior:
+					X6(
+						PalletInstance(_),
+						GeneralIndex(_),
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+					),
+			} => id,
+			MultiLocation {
+				parents: 0,
+				interior:
+					X7(
+						PalletInstance(_),
+						GeneralIndex(_),
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+					),
+			} => id,
+			MultiLocation {
+				parents: 0,
+				interior:
+					X8(
+						PalletInstance(_),
+						GeneralIndex(_),
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
 					),
 			} => id,
 			_ => return Err(location),
 		};
+
 		Ok(id.into())
 	}
 

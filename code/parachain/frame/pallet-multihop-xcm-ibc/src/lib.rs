@@ -48,7 +48,7 @@ pub mod pallet {
 		Ord,
 		PartialOrd,
 		MaxEncodedLen,
-		Debug
+		Debug,
 	)]
 	pub struct ChainInfo {
 		pub chain_id: u128,
@@ -185,13 +185,15 @@ pub mod pallet {
 	// The pallet's dispatchable functions.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
 		#[pallet::call_index(0)]
 		#[pallet::weight(1000)]
 		pub fn add_route(
 			origin: OriginFor<T>,
 			chaind_id: u128,
-			route: BoundedBTreeSet<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>), T::MaxMultihopCount>,
+			route: BoundedBTreeSet<
+				(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>),
+				T::MaxMultihopCount,
+			>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 			ChainIdToMiltihopRoutePath::<T>::insert(chaind_id, route);
@@ -214,7 +216,6 @@ pub mod pallet {
 			deposit_result: xcm::latest::Result,
 			asset_id: Option<Self::AssetId>,
 		) -> Option<()> {
-			let mut list_accounts = BoundedVec::<[u8; 32], T::MaxMultihopCount>::default();
 			let location_info = match location {
 				MultiLocation {
 					parents: 0,
@@ -222,8 +223,8 @@ pub mod pallet {
 						X4(
 							PalletInstance(pallet_id),
 							GeneralIndex(chain_id),
-							AccountId32 { id: current_network_address, network: None },
-							AccountId32 { id: ibc1, network: None },
+							AccountId32 { id: current_network_address, network: _ },
+							AccountId32 { id: ibc1, network: _ },
 						),
 				} => {
 					let mut vec = sp_std::vec::Vec::new();
@@ -236,9 +237,9 @@ pub mod pallet {
 						X5(
 							PalletInstance(pallet_id),
 							GeneralIndex(chain_id),
-							AccountId32 { id: current_network_address, network: None },
-							AccountId32 { id: ibc1, network: None },
-							AccountId32 { id: ibc2, network: None },
+							AccountId32 { id: current_network_address, network: _ },
+							AccountId32 { id: ibc1, network: _ },
+							AccountId32 { id: ibc2, network: _ },
 						),
 				} => {
 					let mut vec = sp_std::vec::Vec::new();
@@ -252,10 +253,10 @@ pub mod pallet {
 						X6(
 							PalletInstance(pallet_id),
 							GeneralIndex(chain_id),
-							AccountId32 { id: current_network_address, network: None },
-							AccountId32 { id: ibc1, network: None },
-							AccountId32 { id: ibc2, network: None },
-							AccountId32 { id: ibc3, network: None },
+							AccountId32 { id: current_network_address, network: _ },
+							AccountId32 { id: ibc1, network: _ },
+							AccountId32 { id: ibc2, network: _ },
+							AccountId32 { id: ibc3, network: _ },
 						),
 				} => {
 					let mut vec = sp_std::vec::Vec::new();
@@ -270,11 +271,11 @@ pub mod pallet {
 						X7(
 							PalletInstance(pallet_id),
 							GeneralIndex(chain_id),
-							AccountId32 { id: current_network_address, network: None },
-							AccountId32 { id: ibc1, network: None },
-							AccountId32 { id: ibc2, network: None },
-							AccountId32 { id: ibc3, network: None },
-							AccountId32 { id: ibc4, network: None },
+							AccountId32 { id: current_network_address, network: _ },
+							AccountId32 { id: ibc1, network: _ },
+							AccountId32 { id: ibc2, network: _ },
+							AccountId32 { id: ibc3, network: _ },
+							AccountId32 { id: ibc4, network: _ },
 						),
 				} => {
 					let mut vec = sp_std::vec::Vec::new();
@@ -290,12 +291,12 @@ pub mod pallet {
 						X8(
 							PalletInstance(pallet_id),
 							GeneralIndex(chain_id),
-							AccountId32 { id: current_network_address, network: None },
-							AccountId32 { id: ibc1, network: None },
-							AccountId32 { id: ibc2, network: None },
-							AccountId32 { id: ibc3, network: None },
-							AccountId32 { id: ibc4, network: None },
-							AccountId32 { id: ibc5, network: None },
+							AccountId32 { id: current_network_address, network: _ },
+							AccountId32 { id: ibc1, network: _ },
+							AccountId32 { id: ibc2, network: _ },
+							AccountId32 { id: ibc3, network: _ },
+							AccountId32 { id: ibc4, network: _ },
+							AccountId32 { id: ibc5, network: _ },
 						),
 				} => {
 					let mut vec = sp_std::vec::Vec::new();
