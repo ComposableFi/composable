@@ -324,7 +324,15 @@ pub mod pallet {
 					let existential_deposit =
 						ExistentialDeposit::<T>::get(asset_id).unwrap_or_default();
 
-					Asset { name, symbol, id: asset_id, decimals, ratio, foreign_id, existential_deposit }
+					Asset {
+						name,
+						symbol,
+						id: asset_id,
+						decimals,
+						ratio,
+						foreign_id,
+						existential_deposit,
+					}
 				})
 				.collect::<Vec<_>>()
 		}
