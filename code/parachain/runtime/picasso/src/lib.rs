@@ -956,6 +956,7 @@ impl_runtime_apis! {
 				id : SafeRpcWrapper(asset.id.into()),
 				foreign_id : asset.foreign_id.clone(),
 				name : asset.name.clone(),
+				symbol : asset.symbol.clone(),
 				ratio : asset.ratio,
 			  }
 			).collect::<Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>>>()

@@ -316,6 +316,7 @@ pub mod pallet {
 			ExistentialDeposit::<T>::iter_keys()
 				.map(|asset_id| {
 					let name = AssetName::<T>::get(asset_id).map(Into::into);
+					let symbol = AssetSymbol::<T>::get(asset_id).map(Into::into);
 					let foreign_id = LocalToForeign::<T>::get(asset_id);
 					let decimals =
 						<Pallet<T> as InspectRegistryMetadata>::decimals(&asset_id).unwrap_or(12);
@@ -323,7 +324,7 @@ pub mod pallet {
 					let existential_deposit =
 						ExistentialDeposit::<T>::get(asset_id).unwrap_or_default();
 
-					Asset { name, id: asset_id, decimals, ratio, foreign_id, existential_deposit }
+					Asset { name, symbol, id: asset_id, decimals, ratio, foreign_id, existential_deposit }
 				})
 				.collect::<Vec<_>>()
 		}
@@ -429,6 +430,8 @@ pub mod pallet {
 		) -> Vec<Asset<Self::AssetId, T::Balance, Self::AssetNativeLocation>> {
 			ForeignToLocal::<T>::iter()
 				.map(|(_, asset_id)| {
+					let name = AssetName::<T>::get(asset_id).map(Into::into);
+					let symbol = AssetSymbol::<T>::get(asset_id).map(Into::into);
 					let foreign_id = LocalToForeign::<T>::get(asset_id);
 					let decimals =
 						<Pallet<T> as InspectRegistryMetadata>::decimals(&asset_id).unwrap_or(12);
@@ -437,7 +440,8 @@ pub mod pallet {
 						ExistentialDeposit::<T>::get(asset_id).unwrap_or_default();
 
 					Asset {
-						name: None,
+						name,
+						symbol,
 						id: asset_id,
 						decimals,
 						ratio,

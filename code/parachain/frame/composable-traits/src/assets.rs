@@ -39,6 +39,7 @@ impl BasicAssetMetadata {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Asset<AssetId, Balance, ForeignId> {
 	pub name: Option<Vec<u8>>,
+	pub symbol: Option<Vec<u8>>,
 	pub id: AssetId,
 	pub decimals: Exponent,
 	pub ratio: Option<Rational64>,
