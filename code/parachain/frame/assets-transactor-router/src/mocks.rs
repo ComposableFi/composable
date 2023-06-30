@@ -51,6 +51,7 @@ parameter_type_with_key! {
 
 parameter_types! {
 	pub const NativeAssetId: AssetId = 1;
+	pub const NetworkId: [u8; 4] = [0,0,0,0];
 }
 
 impl Config for Test {
@@ -76,6 +77,7 @@ impl assets_registry::Config for Test {
 	type WeightInfo = ();
 	type Balance = Balance;
 	type Convert = ConvertInto;
+	type NetworkId = NetworkId;
 }
 
 parameter_types! {

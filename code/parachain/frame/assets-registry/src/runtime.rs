@@ -69,6 +69,7 @@ ord_parameter_types! {
 
 parameter_types! {
 	pub const NativeED: Balance = 0;
+	pub const PicassoNetworkId: [u8; 4] = [1,0,0,0];
 }
 
 type AssetId = u128;
@@ -88,6 +89,7 @@ impl pallet_assets_registry::Config for Runtime {
 	>;
 	type WeightInfo = SubstrateWeight<Self>;
 	type Convert = ConvertInto;
+	type NetworkId = PicassoNetworkId;
 }
 
 // Build genesis storage according to the mock runtime.

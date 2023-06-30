@@ -7,7 +7,7 @@ use composable_traits::{
 	storage::UpdateValue,
 	xcm::assets::RemoteAssetRegistryInspect,
 };
-use frame_support::{assert_noop, assert_ok, error::BadOrigin};
+use frame_support::{assert_noop, assert_ok, error::BadOrigin, traits::PalletInfoAccess};
 use frame_system::RawOrigin;
 use primitives::currency::{ForeignAssetId, VersionedMultiLocation};
 use xcm::latest::MultiLocation;
@@ -21,9 +21,76 @@ fn negative_get_metadata() {
 }
 
 #[test]
+fn check_id_structure() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		// asset id 1
+		let protocol_id = [0, 0, 0, 0];
+		let nonce = 1_u64;
+		let asset_info = AssetInfo {
+			name: None,
+			symbol: None,
+			decimals: Some(4),
+			existential_deposit: 0,
+			ratio: Some(rational!(42 / 123)),
+		};
+		assert_ok!(AssetsRegistry::register_asset(
+			RawOrigin::Root.into(),
+			protocol_id,
+			nonce,
+			None,
+			asset_info.clone(),
+		));
+		let asset_id_1 = System::events()
+			.iter()
+			.find_map(|x| match x.event {
+				RuntimeEvent::AssetsRegistry(crate::Event::<Runtime>::AssetRegistered {
+					asset_id,
+					location: _,
+					asset_info: _,
+				}) => Some(asset_id),
+				_ => None,
+			})
+			.expect("Asset registration event emmited");
+
+		// asset id 2
+		assert_eq!(
+			asset_id_1,
+			u128::from_be_bytes([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+		);
+		let protocol_id = [0, 0, 1, 0];
+		let nonce = 256_u64;
+		assert_ok!(AssetsRegistry::register_asset(
+			RawOrigin::Root.into(),
+			protocol_id,
+			nonce,
+			None,
+			asset_info,
+		));
+		let asset_id_2 = System::events()
+			.iter()
+			.find_map(|x| match x.event {
+				RuntimeEvent::AssetsRegistry(crate::Event::<Runtime>::AssetRegistered {
+					asset_id,
+					location: _,
+					asset_info: _,
+				}) if asset_id != asset_id_1 => Some(asset_id),
+				_ => None,
+			})
+			.expect("Asset registration event emmited");
+		println!("{:?}", asset_id_2.to_be_bytes());
+		assert_eq!(
+			asset_id_2,
+			u128::from_be_bytes([1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0])
+		);
+	})
+}
+
+#[test]
 fn set_metadata() {
 	new_test_ext().execute_with(|| {
-		let protocol_id = *b"AssTests";
+		// let protocol_id = (AssetsRegistry::index() as u32).to_be_bytes();
+		let protocol_id = (AssetsRegistry::index() as u32).to_be_bytes();
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: None,
@@ -78,7 +145,7 @@ fn register_asset() {
 				[..],
 		)
 		.expect("Location bytes translate to foreign ID bytes");
-		let protocol_id = *b"AssTests";
+		let protocol_id = (AssetsRegistry::index() as u32).to_be_bytes();
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: None,
@@ -122,7 +189,7 @@ fn update_asset() {
 				[..],
 		)
 		.expect("Location bytes translate to foreign ID bytes");
-		let protocol_id = *b"AssTests";
+		let protocol_id = (AssetsRegistry::index() as u32).to_be_bytes();
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: None,
@@ -234,7 +301,7 @@ fn update_asset_location() {
 				[..],
 		)
 		.expect("Location bytes translate to foreign ID bytes");
-		let protocol_id = *b"AssTests";
+		let protocol_id = (AssetsRegistry::index() as u32).to_be_bytes();
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: None,
@@ -321,7 +388,7 @@ fn use_same_location_twice() {
 			&mut &ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode()[..],
 		)
 		.expect("Location bytes translate to foreign ID bytes");
-		let protocol_id = *b"AssTests";
+		let protocol_id = (AssetsRegistry::index() as u32).to_be_bytes();
 		let nonce_1 = 1_u64;
 		let nonce_2 = 2_u64;
 		let nonce_3 = 3_u64;
@@ -414,7 +481,7 @@ fn use_same_location_twice() {
 fn get_foreign_assets_list_should_work() {
 	new_test_ext().execute_with(|| {
 		let location = ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here()));
-		let protocol_id = *b"AssTests";
+		let protocol_id = (AssetsRegistry::index() as u32).to_be_bytes();
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: None,
@@ -457,7 +524,7 @@ fn get_foreign_assets_list_should_work() {
 fn get_all_assets_should_work() {
 	new_test_ext().execute_with(|| {
 		let location = ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here()));
-		let protocol_id = *b"AssTests";
+		let protocol_id = (AssetsRegistry::index() as u32).to_be_bytes();
 		let nonce = 1_u64;
 		let nonce2 = 2_u64;
 		let name = Some(BiBoundedVec::from_vec(b"asset_name".to_vec()).unwrap());
@@ -491,10 +558,9 @@ fn get_all_assets_should_work() {
 			asset_info,
 		));
 
-		let all_assets = AssetsRegistry::get_all_assets();
-
+		let mut all_assets = AssetsRegistry::get_all_assets();
 		assert_eq!(
-			all_assets,
+			all_assets.sort_by_key(|asset| asset.id),
 			vec![
 				Asset {
 					name: name.clone().map(Into::into),
@@ -513,6 +579,7 @@ fn get_all_assets_should_work() {
 					existential_deposit: 0,
 				}
 			]
+			.sort_by_key(|asset| asset.id)
 		);
 	})
 }
