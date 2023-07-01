@@ -53,7 +53,7 @@ pub struct MemoData {
 
 impl MemoData {
     /// Support only addresses from cosmos ecosystem based on bech32.
-    fn new(
+    pub fn new(
         mut vec: Vec<(ChainInfo, Vec<u8>, [u8; 32])>,
     ) -> Option<MemoData> {
         // vec.reverse();

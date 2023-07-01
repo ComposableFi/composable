@@ -31,7 +31,7 @@ pub mod pallet {
 	use frame_system::ensure_root;
 
 	use composable_traits::prelude::ToString;
-	use composable_traits::xcm::memo::{ChainInfo};
+	use composable_traits::xcm::memo::{ChainInfo, MemoData};
 	
 
 	use frame_support::BoundedVec;
@@ -413,43 +413,44 @@ pub mod pallet {
 
 			// chain_info_iter does not contains the first IBC chain in the route, addresses does
 			// not contain first ibc address as well.
+			
 			let vec: sp_std::vec::Vec<_> = chain_info_iter
 				.zip(addresses.into_iter())
-				.map(|(i, address)| (i.0, i.1, address.clone()))
+				.map(|(i, address)| (i.0, i.1.into_inner(), address.clone()))
 				.collect();
 
 			//not able to derive address. and construct memo for multihop.
 			//TODO: uncomment when memo will be supported.
-			// let memo_data =
-			// 	MemoData::new::<T>(vec);
-			// let Ok(memo_data) = memo_data else{
-			// 	<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
-			// 		origin_address: address_from,
-			// 		chain_id,
-			// 		reason: 9,
-			// 	});
-			// 	return None;
-			// };
-			// match memo_data {
-			// 	Some(memo_data) => {
-			// 		// let memo_str = format!("{:?}", memo_data); //create a string memo
-			// 		// let memo_str = serde_json::to_string(&memo_data).unwrap();
-			// 		let memo_str = "";
-			// 		let memo_result = <T as pallet_ibc::Config>::MemoMessage::from_str(&memo_str);
+			let memo_data =
+				MemoData::new(vec);
+			let Some(memo_data) = memo_data else{
+				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+					origin_address: address_from,
+					chain_id,
+					reason: 9,
+				});
+				return None;
+			};
+			match Some(memo_data) {
+				Some(memo_data) => {
+					// let memo_str = format!("{:?}", memo_data); //create a string memo
+					// let memo_str = serde_json::to_string(&memo_data).unwrap();
+					let memo_str = "";
+					let memo_result = <T as pallet_ibc::Config>::MemoMessage::from_str(&memo_str);
 
-			// 		let Ok(memo_result) = memo_result else{
-			// 			<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
-			// 				origin_address: address_from,
-			// 				chain_id,
-			// 				reason: 10,
-			// 			});
-			// 			return None;
-			// 		};
-			// 		memo = Some(memo_result)
-			// 		// memo = Some(memo_result.map_err(|_| Error::<T>::FailedToConstructMemo)?);
-			// 	},
-			// 	_ => {},
-			// }
+					let Ok(memo_result) = memo_result else{
+						<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+							origin_address: address_from,
+							chain_id,
+							reason: 10,
+						});
+						return None;
+					};
+					memo = Some(memo_result)
+					// memo = Some(memo_result.map_err(|_| Error::<T>::FailedToConstructMemo)?);
+				},
+				_ => {},
+			}
 
 			let result = pallet_ibc::Pallet::<T>::transfer(
 				signed_account_id.into(),
