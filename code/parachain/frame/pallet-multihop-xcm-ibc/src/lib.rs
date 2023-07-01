@@ -433,9 +433,7 @@ pub mod pallet {
 			};
 			match Some(memo_data) {
 				Some(memo_data) => {
-					// let memo_str = format!("{:?}", memo_data); //create a string memo
-					// let memo_str = serde_json::to_string(&memo_data).unwrap();
-					let memo_str = "";
+					let memo_str = serde_json::to_string(&memo_data).unwrap();
 					let memo_result = <T as pallet_ibc::Config>::MemoMessage::from_str(&memo_str);
 
 					let Ok(memo_result) = memo_result else{
