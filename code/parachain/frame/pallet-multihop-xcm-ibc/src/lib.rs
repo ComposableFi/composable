@@ -12,7 +12,6 @@
 // #![deny(clippy::unseparated_literal_suffix, unused_imports, dead_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![doc = include_str!("../README.md")]
-
 pub use pallet::*;
 
 mod prelude;
@@ -31,36 +30,16 @@ pub mod pallet {
 	use core::str::FromStr;
 	use frame_system::ensure_root;
 
+	use composable_traits::prelude::ToString;
+	use composable_traits::xcm::memo::{ChainInfo, MemoData};
+	
+
 	use frame_support::BoundedVec;
 
 	type AccoindIdOf<T> = <T as frame_system::Config>::AccountId;
 	use frame_system::pallet_prelude::OriginFor;
 
-	#[derive(
-		Copy,
-		Clone,
-		PartialEq,
-		Eq,
-		Hash,
-		codec::Encode,
-		codec::Decode,
-		scale_info::TypeInfo,
-		Ord,
-		PartialOrd,
-		MaxEncodedLen,
-		Debug,
-	)]
-	pub struct ChainInfo {
-		pub chain_id: u128,
-		pub channel_id: u64,        //for packet or memo
-		pub timestamp: Option<u64>, //for packet
-		pub height: Option<u64>,    //for memo packet message forwarding
-		pub retries: Option<u64>,   //for memo packet message forwarding
-		pub timeout: Option<u64>,   //for memo packet message forwarding
-		pub is_substrate_ibc: bool,
-	}
-
-	// #[derive(serde::Serialize, Debug)]
+	// #[derive(serde::Serialize)]
 	// struct MemoForward {
 	// 	receiver: String,
 	// 	port: String,
@@ -70,41 +49,42 @@ pub mod pallet {
 	// 	// next: Option<Box<MemoForward>>,
 	// }
 
-	// // #[derive(serde::Serialize, Debug)]
+	// // #[derive(serde::Serialize)]
 	// struct MemoData {
 	// 	forward: MemoForward,
 	// }
 
+	
 	// impl MemoData {
 	// 	/// Support only addresses from cosmos ecosystem based on bech32.
 	// 	fn new<T: Config>(
-	// 		mut vec: Vec<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>, [u8; 32])>,
+	// 		mut vec: sp_std::vec::Vec<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>, [u8; 32])>,
 	// 	) -> core::result::Result<Option<Self>, Error<T>> {
 	// 		vec.reverse();
 	// 		let mut memo_data: Option<MemoData> = None;
 	// 		for (i, name, address) in vec {
-	// 			let result: core::result::Result<Vec<bech32::u5>, bech32::Error> =
-	// 				address.into_iter().map(bech32::u5::try_from_u8).collect();
-	// 			let data =
-	// 				result.map_err(|_| Error::<T>::IncorrectAddress { chain_id: i.chain_id as u8 })?;
+	// 			// let result: core::result::Result<Vec<bech32::u5>, bech32::Error> =
+	// 			// 	address.into_iter().map(bech32::u5::try_from_u8).collect();
+	// 			// let data =
+	// 			// 	result.map_err(|_| Error::<T>::IncorrectAddress { chain_id: i.chain_id as u8 })?;
 
-	// 			let name = String::from_utf8(name.into())
-	// 				.map_err(|_| Error::<T>::IncorrectChainName { chain_id: i.chain_id as u8 })?;
-	// 			let result_address = bech32::encode(&name, data.clone()).map_err(|_| {
-	// 				Error::<T>::FailedToEncodeBech32Address { chain_id: i.chain_id as u8 }
-	// 			})?;
+	// 			// let name = String::from_utf8(name.into())
+	// 			// 	.map_err(|_| Error::<T>::IncorrectChainName { chain_id: i.chain_id as u8 })?;
+	// 			// let result_address = bech32::encode(&name, data.clone()).map_err(|_| {
+	// 			// 	Error::<T>::FailedToEncodeBech32Address { chain_id: i.chain_id as u8 }
+	// 			// })?;
 
-	// 			let new_memo = MemoData {
-	// 				forward: MemoForward {
-	// 					receiver: result_address,
-	// 					port: String::from("transfer"),
-	// 					channel: String::from(format!("channel-{}", i.channel_id)),
-	// 					timeout: String::from(i.timeout.unwrap_or_default().to_string()),
-	// 					retries: i.retries.unwrap_or_default(),
-	// 					next: memo_data.map(|x| Box::new(x.forward)), // memo_data is boxed here
-	// 				},
-	// 			};
-	// 			memo_data = Some(new_memo);
+	// 			// let new_memo = MemoData {
+	// 			// 	forward: MemoForward {
+	// 			// 		receiver: result_address,
+	// 			// 		port: String::from("transfer"),
+	// 			// 		channel: String::from(format!("channel-{}", i.channel_id)),
+	// 			// 		timeout: String::from(i.timeout.unwrap_or_default().to_string()),
+	// 			// 		retries: i.retries.unwrap_or_default(),
+	// 			// 		// next: memo_data.map(|x| Box::new(x.forward)), // memo_data is boxed here
+	// 			// 	},
+	// 			// };
+	// 			// memo_data = Some(new_memo);
 	// 		}
 	// 		Ok(memo_data)
 	// 	}
@@ -433,30 +413,47 @@ pub mod pallet {
 
 			// chain_info_iter does not contains the first IBC chain in the route, addresses does
 			// not contain first ibc address as well.
+			
 			let vec: sp_std::vec::Vec<_> = chain_info_iter
 				.zip(addresses.into_iter())
-				.map(|(i, address)| (i.0, i.1, address.clone()))
+				.map(|(i, address)| (i.0, i.1.into_inner(), address.clone()))
 				.collect();
 
 			//not able to derive address. and construct memo for multihop.
 			//TODO: uncomment when memo will be supported.
-			// let memo_data =
-			// 	MemoData::new::<T>(vec).map_err(|_| Error::<T>::FailedToConstructMemo)?;
-			// match memo_data {
-			// 	Some(memo_data) => {
-			// 		let memo_str = format!("{:?}", memo_data); //create a string memo
+			let memo_data =
+				MemoData::new(vec);
+			let Some(memo_data) = memo_data else{
+				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+					origin_address: address_from,
+					chain_id,
+					reason: 9,
+				});
+				return None;
+			};
+			match Some(memo_data) {
+				Some(memo_data) => {
+					let memo_str = serde_json::to_string(&memo_data).unwrap();
+					let memo_result = <T as pallet_ibc::Config>::MemoMessage::from_str(&memo_str);
 
-			// 		let memo_result = <T as pallet_ibc::Config>::MemoMessage::from_str(&memo_str);
-
-			// 		memo = Some(memo_result.map_err(|_| Error::<T>::FailedToConstructMemo)?);
-			// 	},
-			// 	_ => {},
-			// }
+					let Ok(memo_result) = memo_result else{
+						<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+							origin_address: address_from,
+							chain_id,
+							reason: 10,
+						});
+						return None;
+					};
+					memo = Some(memo_result)
+					// memo = Some(memo_result.map_err(|_| Error::<T>::FailedToConstructMemo)?);
+				},
+				_ => {},
+			}
 
 			let result = pallet_ibc::Pallet::<T>::transfer(
 				signed_account_id.into(),
 				transfer_params,
-				asset_id.unwrap(),
+				asset_id.unwrap(), //TODO remove unwrap
 				(*amount).into(),
 				memo.clone(),
 			);
@@ -470,7 +467,8 @@ pub mod pallet {
 						memo,
 					});
 				},
-				Err(_) => {
+				Err(e) => {
+					
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedXcmToIbc {
 						origin_address: account_id_from,
 						to: raw_address_to.clone(),
