@@ -1,4 +1,5 @@
 pub use alloc::string::String;
+pub use alloc::string::ToString;
 pub use codec::{Decode, Encode, MaxEncodedLen};
 pub use core::cmp::Ordering;
 pub use cosmwasm_std::{Coin, Uint128, Uint64};

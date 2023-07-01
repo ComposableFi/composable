@@ -41,6 +41,9 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 primitives = { path = "../../runtime/primitives", default-features = false }
 
 serde = { version = "1.0.136", features = ["derive"], optional = true }
+serde_json = { workspace = true, default-features = false, features = [
+  "alloc",
+] }
 
 
 [dev-dependencies]
