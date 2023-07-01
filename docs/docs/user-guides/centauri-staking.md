@@ -21,3 +21,7 @@ Ensure the 'Fees' are set to 0 by clicking ticking the Advance option as outline
 ![staking-quatro](./images-staking-centauri/centauri-stake-4.png)
 
 You have now successfully staked PICA to secure the Centauri chain!
+
+:::note
+The Centauri network requires PICA to be delegated to a validator to earn staking rewards. To unstake PICA after delegation, it must undergo a 21-day "unbonding" period to receive your tokens.
+:::
