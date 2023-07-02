@@ -27,11 +27,13 @@ pub mod pallet {
 	use xcm::latest::prelude::*;
 	// use prelude::{MultiCurrencyCallback, MemoData};
 	use composable_traits::xcm::assets::MultiCurrencyCallback;
+	use composable_traits::prelude::String;
+	use composable_traits::prelude::Vec;
 	use core::str::FromStr;
 	use frame_system::ensure_root;
 
 	use composable_traits::prelude::ToString;
-	use composable_traits::xcm::memo::{ChainInfo, MemoData};
+	use composable_traits::xcm::memo::{ChainInfo, MemoData, MemoForward};
 	
 
 	use frame_support::BoundedVec;
@@ -180,6 +182,46 @@ pub mod pallet {
 			ChainIdToMiltihopRoutePath::<T>::insert(chaind_id, route);
 			Ok(())
 		}
+	}
+
+	impl<T> Pallet<T>{
+		/// Support only addresses from cosmos ecosystem based on bech32.
+		pub fn create_memo(
+			mut vec: Vec<(ChainInfo, Vec<u8>, [u8; 32])>,
+		) -> Result<Option<MemoData>, DispatchError> {
+			vec.reverse();
+			let mut memo_data: Option<MemoData> = None;
+			for (i, name, address) in vec {
+				let result: core::result::Result<Vec<bech32_no_std::u5>, bech32_no_std::Error> =
+					address.into_iter().map(bech32_no_std::u5::try_from_u8).collect();
+				let data =
+					// result.map_err(|_| Error::<T>::IncorrectAddress { chain_id: i.chain_id as u8 })?;
+					result.map_err(|_| DispatchError::Other("()"))?;
+	
+				let name = String::from_utf8(name.into())
+					// .map_err(|_| Error::<T>::IncorrectChainName { chain_id: i.chain_id as u8 })?;
+					.map_err(|_| DispatchError::Other("()"))?;
+				let result_address = bech32_no_std::encode(&name, data.clone()).map_err(|_| {
+					// Error::<T>::FailedToEncodeBech32Address { chain_id: i.chain_id as u8 }
+					DispatchError::Other("()")
+				})?;
+	
+				let new_memo = MemoData {
+					forward: MemoForward {
+						receiver: result_address,
+						port: String::from("transfer"),
+						channel: String::from(scale_info::prelude::format!("channel-{}", i.channel_id)),
+						timeout: String::from(i.timeout.unwrap_or_default().to_string()),
+						retries: i.retries.unwrap_or_default(),
+						// next: memo_data.map(|x| Box::new(x.forward)), // memo_data is boxed here
+					},
+				};
+				memo_data = Some(new_memo);
+			}
+			// Ok(memo_data)
+			Ok(memo_data)
+		}
+		
 	}
 
 	impl<T: Config> MultiCurrencyCallback for Pallet<T>
@@ -422,7 +464,7 @@ pub mod pallet {
 			//not able to derive address. and construct memo for multihop.
 			//TODO: uncomment when memo will be supported.
 			let memo_data =
-				MemoData::new(vec);
+				Pallet::<T>::create_memo(vec);
 			let Ok(memo_data) = memo_data else{
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
