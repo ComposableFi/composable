@@ -1,4 +1,5 @@
 use crate::{prelude::*};
+use sp_std::boxed::Box;
 
 use sp_runtime::{
 	DispatchError
@@ -35,7 +36,7 @@ pub struct MemoForward {
     pub channel: String,
     pub timeout: String,
     pub retries: u64,
-    // next: Option<Box<MemoForward>>,
+    pub next: Option<Box<MemoForward>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

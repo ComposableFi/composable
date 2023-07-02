@@ -34,6 +34,7 @@ pub mod pallet {
 
 	use composable_traits::prelude::ToString;
 	use composable_traits::xcm::memo::{ChainInfo, MemoData, MemoForward};
+	use sp_std::boxed::Box;
 	
 
 	use frame_support::BoundedVec;
@@ -213,7 +214,7 @@ pub mod pallet {
 						channel: String::from(scale_info::prelude::format!("channel-{}", i.channel_id)),
 						timeout: String::from(i.timeout.unwrap_or_default().to_string()),
 						retries: i.retries.unwrap_or_default(),
-						// next: memo_data.map(|x| Box::new(x.forward)), // memo_data is boxed here
+						next: memo_data.map(|x| Box::new(x.forward)), // memo_data is boxed here
 					},
 				};
 				memo_data = Some(new_memo);
