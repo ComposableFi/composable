@@ -21,8 +21,8 @@
         src = pkgs.fetchFromGitHub {
           owner = "dzmitry-lahoda-forks";
           repo = "composable-centauri";
-          rev = "86b125808312e2188f957779b5252329da794d53";
-          sha256 = "sha256-XC+dNSh4J4FOr4/DC0hJCGrJlfRi/tEVwe3KTPkGfb4=";
+          rev = "c677c9f121b2637f0e9cca370a8fa0f72a2298c9";
+          sha256 = "sha256-clAuk5UrSeRooLiqFPcSk6r6TkBe3tUIn4bXrS24IPk=";
         };
         dontFixup = true;
         vendorSha256 = "sha256-2isPCn91vSeNmMw58mu0yP7UGDXHNJW+6K2aNh2dKJc=";
@@ -93,6 +93,19 @@
         '';
       };
 
+      centaurid-dev = pkgs.writeShellApplication {
+        name = "centaurid-dev";
+        runtimeInputs = [ centaurid pkgs.jq pkgs.yq ];
+
+        text = ''
+          #CENTAURI_DATA="${devnet-root-directory}/.centaurid"
+          CHAIN_ID="centauri-dev"
+          #KEYRING_TEST="$CENTAURI_DATA/keyring-test"
+          centaurid query ibc connection connections --chain-id "$CHAIN_ID"
+          #--from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST"  --yes --home "$CENTAURI_DATA" --output json
+        '';
+      };
+
       centaurid-gen = pkgs.writeShellApplication {
         name = "centaurid-gen";
         runtimeInputs = [ centaurid pkgs.jq pkgs.yq ];
@@ -158,7 +171,7 @@
       };
     in {
       packages = rec {
-        inherit centaurid centaurid-gen centaurid-init
+        inherit centaurid centaurid-gen centaurid-init centaurid-dev
           ics10-grandpa-cw-proposal;
       };
     };

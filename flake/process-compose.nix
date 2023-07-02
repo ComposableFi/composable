@@ -16,17 +16,35 @@
           runtimeInputs = [ hermes ];
           name = "hermes-init";
           text = ''
-            HOME=/home/dz/github.com/ComposableFi/composable
-            MNEMONIC_FILE=$HOME/.hermes/mnemonics/relayer.txt
+            HOME=$(realpath .)
+            MNEMONIC_FILE="$HOME/.hermes/mnemonics/relayer.txt"
             export HOME
-            mkdir --parents $HOME/.hermes/mnemonics/
+            mkdir --parents "$HOME/.hermes/mnemonics/"
 
-            echo "black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken" > $MNEMONIC_FILE
-            hermes keys add --chain centauri-dev --mnemonic-file $MNEMONIC_FILE --key-name centauri-dev --overwrite
-            hermes keys add --chain osmosis-dev --mnemonic-file $MNEMONIC_FILE --key-name osmosis-dev --overwrite
+            echo "black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken" > "$MNEMONIC_FILE"
+            hermes keys add --chain centauri-dev --mnemonic-file "$MNEMONIC_FILE" --key-name centauri-dev --overwrite
+            hermes keys add --chain osmosis-dev --mnemonic-file "$MNEMONIC_FILE" --key-name osmosis-dev --overwrite
             RUST_LOG=debug
             export RUST_LOG
             hermes create channel --a-chain centauri-dev --b-chain osmosis-dev --a-port transfer --b-port transfer --new-client-connection --yes
+          '';
+        };
+
+        hyperspace-client = pkgs.writeShellApplication {
+          name = "hyperspace-client";
+          text = ''
+            mkdir --parents "/tmp/composable-devnet/hyperspace"
+            HOME="/tmp/composable-devnet/hyperspace"
+            export HOME
+            RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace"
+            export RUST_LOG
+            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-2} "/tmp/composable-devnet/hyperspace/config-chain-2.toml"  
+            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-3} "/tmp/composable-devnet/hyperspace/config-chain-3.toml"  
+            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-core} "/tmp/composable-devnet/hyperspace/config-core.toml"                
+            CODE_ID=$(cat ${devnet-root-directory}/.centaurid/code_id)
+            echo "$CODE_ID"
+            sed -i "s/wasm_code_id = \"0000000000000000000000000000000000000000000000000000000000000000\"/wasm_code_id = \"$CODE_ID\"/" "/tmp/composable-devnet/hyperspace/config-chain-2.toml"
+            ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-clients --config-a "/tmp/composable-devnet/hyperspace/config-chain-3.toml" --config-b /tmp/composable-devnet/hyperspace/config-chain-2.toml --config-core /tmp/composable-devnet/hyperspace/config-core.toml --delay-period 10
           '';
         };
 
@@ -34,9 +52,10 @@
           runtimeInputs = [ hermes ];
           name = "hermes-init";
           text = ''
-            HOME=/home/dz/github.com/ComposableFi/composable
+            HOME=$(realpath .)
             export HOME
             RUST_LOG=debug
+            export RUST_LOG
             hermes start
           '';
         };
@@ -212,7 +231,7 @@
               command = self'.packages.hermes-init;
               depends_on = {
                 "centauri-init".condition = "process_completed_successfully";
-                "osmosis-init".condition = "process_completed_successfully";
+                "osmosis".condition = "process_healthy";
               };
               log_location = "/tmp/composable-devnet/hermes-init.log";
               availability = { restart = "on_failure"; };
@@ -233,21 +252,7 @@
             };
 
             hyperspace-client = {
-              command = ''
-                HOME="/tmp/composable-devnet/hyperspace"
-                export HOME
-                echo "/tmp/composable-devnet/hyperspace"
-                RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace"
-                export RUST_LOG
-                mkdir --parents "/tmp/composable-devnet/hyperspace"
-                cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-2} "/tmp/composable-devnet/hyperspace/config-chain-2.toml"  
-                cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-3} "/tmp/composable-devnet/hyperspace/config-chain-3.toml"  
-                cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-core} "/tmp/composable-devnet/hyperspace/config-core.toml"                
-                CODE_ID=$(cat ${devnet-root-directory}/.centaurid/code_id)
-                echo $CODE_ID
-                sed -i "s/wasm_code_id = \"0000000000000000000000000000000000000000000000000000000000000000\"/wasm_code_id = \"$CODE_ID\"/" "/tmp/composable-devnet/hyperspace/config-chain-2.toml"
-                ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-clients --config-a "/tmp/composable-devnet/hyperspace/config-chain-3.toml" --config-b /tmp/composable-devnet/hyperspace/config-chain-2.toml --config-core $HYPERSPACE_DATA/config-core.toml --delay-period 10
-              '';
+              command = self'.packages.hyperspace-client;
               log_location = "/tmp/composable-devnet/hyperspace-clients.log";
               depends_on = {
                 "centauri-init".condition = "process_completed_successfully";
@@ -257,10 +262,11 @@
             };
             hyperspace-connection = {
               command = ''
-                HYPERSPACE_DATA="${devnet-root-directory}/hyperspace"
+                HOME="/tmp/composable-devnet/hyperspace"
+                export HOME                
                 RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace"
                 export RUST_LOG      
-                ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a $HYPERSPACE_DATA/config-chain-3.toml --config-b $HYPERSPACE_DATA/config-chain-2.toml --config-core $HYPERSPACE_DATA/config-core.toml --delay-period 10
+                ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a /tmp/composable-devnet/hyperspace/config-chain-3.toml --config-b /tmp/composable-devnet/hyperspace/config-chain-2.toml --config-core /tmp/composable-devnet/hyperspace/config-core.toml --delay-period 10
               '';
               log_location = "/tmp/composable-devnet/hyperspace-connection.log";
               depends_on = {
@@ -271,10 +277,11 @@
             };
             hyperspace-channels = {
               command = ''
-                HYPERSPACE_DATA="${devnet-root-directory}/hyperspace"
+                HOME="/tmp/composable-devnet/hyperspace"
+                export HOME       
                 RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace"
                 export RUST_LOG
-                ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a $HYPERSPACE_DATA/config-chain-3.toml --config-b $HYPERSPACE_DATA/config-chain-2.toml --config-core $HYPERSPACE_DATA/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
+                ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a /tmp/composable-devnet/hyperspace/config-chain-3.toml --config-b /tmp/composable-devnet/hyperspace/config-chain-2.toml --config-core /tmp/composable-devnet/hyperspace/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
               '';
               log_location = "/tmp/composable-devnet/hyperspace-channels.log";
               depends_on = {
@@ -285,10 +292,11 @@
             };
             hyperspace-relay = {
               command = ''
-                HYPERSPACE_DATA="${devnet-root-directory}/hyperspace"
+                HOME="/tmp/composable-devnet/hyperspace"
+                export HOME
                 RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace"
                 export RUST_LOG
-                ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a $HYPERSPACE_DATA/config-chain-3.toml --config-b $HYPERSPACE_DATA/config-chain-2.toml --config-core $HYPERSPACE_DATA/config-core.toml --delay-period 10
+                ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a /tmp/composable-devnet/hyperspace/config-chain-3.toml --config-b /tmp/composable-devnet/hyperspace/config-chain-2.toml --config-core /tmp/composable-devnet/hyperspace/config-core.toml --delay-period 10
               '';
               log_location = "/tmp/composable-devnet/hyperspace-relay.log";
               depends_on = {
