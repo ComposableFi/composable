@@ -26,16 +26,18 @@ pub mod pallet {
 	use pallet_ibc::{MultiAddress, TransferParams};
 	use xcm::latest::prelude::*;
 	// use prelude::{MultiCurrencyCallback, MemoData};
-	use composable_traits::xcm::assets::MultiCurrencyCallback;
-	use composable_traits::prelude::String;
-	use composable_traits::prelude::Vec;
+	use composable_traits::{
+		prelude::{String, Vec},
+		xcm::assets::MultiCurrencyCallback,
+	};
 	use core::str::FromStr;
 	use frame_system::ensure_root;
 
-	use composable_traits::prelude::ToString;
-	use composable_traits::xcm::memo::{ChainInfo, MemoData, MemoForward};
+	use composable_traits::{
+		prelude::ToString,
+		xcm::memo::{ChainInfo, Forward, MemoData},
+	};
 	use sp_std::boxed::Box;
-	
 
 	use frame_support::BoundedVec;
 
@@ -57,7 +59,6 @@ pub mod pallet {
 	// 	forward: MemoForward,
 	// }
 
-	
 	// impl MemoData {
 	// 	/// Support only addresses from cosmos ecosystem based on bech32.
 	// 	fn new<T: Config>(
@@ -185,20 +186,28 @@ pub mod pallet {
 		}
 	}
 
-	impl<T> Pallet<T>{
+	impl<T> Pallet<T> {
 		/// Support only addresses from cosmos ecosystem based on bech32.
 		pub fn create_memo(
 			mut vec: Vec<(ChainInfo, Vec<u8>, [u8; 32])>,
 		) -> Result<Option<MemoData>, DispatchError> {
-			vec.reverse();
-			let mut memo_data: Option<MemoData> = None;
+			vec.reverse(); // reverse to create memo from the end
+			
+			//osmosis(ibc) <- huahua(ibc) <- centauri(ibc)  =  ibc transfer from composable to picasso with memo
+			//substrate(xcm) hop can be only the last one
+			//moonriver(xcm) = ibc transfer from composable to picasso
+			//polkadot(xcm) = ibc transfer from picasso to composable
+			
+
+			let mut last_memo_data: Option<MemoData> = None; 
+			
 			for (i, name, address) in vec {
 				let result: core::result::Result<Vec<bech32_no_std::u5>, bech32_no_std::Error> =
 					address.into_iter().map(bech32_no_std::u5::try_from_u8).collect();
 				let data =
 					// result.map_err(|_| Error::<T>::IncorrectAddress { chain_id: i.chain_id as u8 })?;
 					result.map_err(|_| DispatchError::Other("()"))?;
-	
+
 				let name = String::from_utf8(name.into())
 					// .map_err(|_| Error::<T>::IncorrectChainName { chain_id: i.chain_id as u8 })?;
 					.map_err(|_| DispatchError::Other("()"))?;
@@ -206,23 +215,22 @@ pub mod pallet {
 					// Error::<T>::FailedToEncodeBech32Address { chain_id: i.chain_id as u8 }
 					DispatchError::Other("()")
 				})?;
-	
-				let new_memo = MemoData {
-					forward: MemoForward {
-						receiver: result_address,
-						port: String::from("transfer"),
-						channel: String::from(scale_info::prelude::format!("channel-{}", i.channel_id)),
-						timeout: String::from(i.timeout.unwrap_or_default().to_string()),
-						retries: i.retries.unwrap_or_default(),
-						next: memo_data.map(|x| Box::new(x.forward)), // memo_data is boxed here
-					},
+
+				let mut forward = Forward::new_ibc_memo(
+					result_address,
+					String::from("transfer"),
+					String::from(scale_info::prelude::format!("channel-{}", i.channel_id)),
+					i.timeout.unwrap_or_default().to_string(),
+					i.retries.unwrap_or_default(),
+				);
+				if let Some(memo_memo) = last_memo_data {
+					forward.next = Some(Box::new(memo_memo));
 				};
-				memo_data = Some(new_memo);
+				let new_memo = MemoData::new(forward);
+				last_memo_data = Some(new_memo);
 			}
-			// Ok(memo_data)
-			Ok(memo_data)
+			Ok(last_memo_data)
 		}
-		
 	}
 
 	impl<T: Config> MultiCurrencyCallback for Pallet<T>
@@ -456,7 +464,7 @@ pub mod pallet {
 
 			// chain_info_iter does not contains the first IBC chain in the route, addresses does
 			// not contain first ibc address as well.
-			
+
 			let vec: sp_std::vec::Vec<_> = chain_info_iter
 				.zip(addresses.into_iter())
 				.map(|(i, address)| (i.0, i.1.into_inner(), address.clone()))
@@ -464,8 +472,7 @@ pub mod pallet {
 
 			//not able to derive address. and construct memo for multihop.
 			//TODO: uncomment when memo will be supported.
-			let memo_data =
-				Pallet::<T>::create_memo(vec);
+			let memo_data = Pallet::<T>::create_memo(vec);
 			let Ok(memo_data) = memo_data else{
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
@@ -511,7 +518,6 @@ pub mod pallet {
 					});
 				},
 				Err(e) => {
-					
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedXcmToIbc {
 						origin_address: account_id_from,
 						to: raw_address_to.clone(),
