@@ -423,7 +423,7 @@ pub mod pallet {
 			//TODO: uncomment when memo will be supported.
 			let memo_data =
 				MemoData::new(vec);
-			let Some(memo_data) = memo_data else{
+			let Ok(memo_data) = memo_data else{
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					chain_id,

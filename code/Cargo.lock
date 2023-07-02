@@ -2038,6 +2038,7 @@ dependencies = [
 name = "composable-traits"
 version = "1.0.0"
 dependencies = [
+ "bech32",
  "bitflags",
  "composable-support",
  "cosmwasm-schema",

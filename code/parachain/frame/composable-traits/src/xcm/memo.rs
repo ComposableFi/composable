@@ -55,7 +55,7 @@ impl MemoData {
     /// Support only addresses from cosmos ecosystem based on bech32.
     pub fn new(
         mut vec: Vec<(ChainInfo, Vec<u8>, [u8; 32])>,
-    ) -> Option<MemoData> {
+    ) -> Result<Option<MemoData>, DispatchError> {
         // vec.reverse();
         let mut memo_data: Option<MemoData> = None;
         for (i, name, address) in vec {
@@ -83,6 +83,6 @@ impl MemoData {
             // memo_data = Some(new_memo);
         }
         // Ok(memo_data)
-        memo_data
+        Ok(memo_data)
     }
 }
