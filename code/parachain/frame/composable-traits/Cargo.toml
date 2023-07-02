@@ -9,7 +9,8 @@ version = "1.0.0"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-bech32 = { version = "0.7.3" } 
+bech32-no_std = { version = "0.7.3", default-features = false, features = ["strict"] }
+
 frame-support = { default-features = false, workspace = true }
 frame-system = { default-features = false, workspace = true }
 polkadot-parachain = { workspace = true, default-features = false }
@@ -71,6 +72,7 @@ std = [
   "cosmwasm-std/std", 
   "cosmwasm-schema",
   "schemars",
+  # "bech32-no_std/std"
 ]
 test-utils = []
 visualization = ["plotters"]

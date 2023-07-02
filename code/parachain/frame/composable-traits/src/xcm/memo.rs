@@ -1,16 +1,8 @@
-use crate::{currency::BalanceLike, defi::CurrencyPair, prelude::*};
-
-use frame_support::{
-	ensure,
-	traits::{tokens::AssetId as AssetIdLike, Get},
-	BoundedVec, CloneNoBound, EqNoBound, PartialEqNoBound, RuntimeDebug, RuntimeDebugNoBound,
-};
+use crate::{prelude::*};
 
 use sp_runtime::{
-	helpers_128bit::multiply_by_rational_with_rounding, traits::Zero, BoundedBTreeMap,
-	DispatchError, Permill, Rational128,
+	DispatchError
 };
-use sp_std::collections::btree_map::BTreeMap;
 
 #[derive(
     Copy,
@@ -56,18 +48,31 @@ impl MemoData {
     pub fn new(
         mut vec: Vec<(ChainInfo, Vec<u8>, [u8; 32])>,
     ) -> Result<Option<MemoData>, DispatchError> {
-        // vec.reverse();
+        vec.reverse();
         let mut memo_data: Option<MemoData> = None;
-        for (i, name, address) in vec {
-            // let result: core::result::Result<Vec<bech32::u5>, bech32::Error> =
+        for (_, _name, address) in vec {
+            // use std::borrow::Cow;
+            // use std::{error, fmt};
+            let mut v = sp_std::vec::Vec::new();
+            // bech32
+            // use bech32_no_std::{FromBase32, ToBase32};
+            //iterate over address and use bech32::u5::try_from_u8 to convert to bech32::u5 and save into vec
+            for item in address{
+                let x = bech32_no_std::u5::try_from_u8(item).unwrap();
+                v.push(item);
+            }
+            // let _: core::result::Result<Vec<bech32::u5>, bech32::Error> =
             // 	address.into_iter().map(bech32::u5::try_from_u8).collect();
             // let data =
-            // 	result.map_err(|_| Error::<T>::IncorrectAddress { chain_id: i.chain_id as u8 })?;
+            // 	// result.map_err(|_| Error::<T>::IncorrectAddress { chain_id: i.chain_id as u8 })?;
+            // 	result.map_err(|_| DispatchError::Other("()"))?;
 
             // let name = String::from_utf8(name.into())
-            // 	.map_err(|_| Error::<T>::IncorrectChainName { chain_id: i.chain_id as u8 })?;
-            // let result_address = bech32::encode(&name, data.clone()).map_err(|_| {
-            // 	Error::<T>::FailedToEncodeBech32Address { chain_id: i.chain_id as u8 }
+            // 	// .map_err(|_| Error::<T>::IncorrectChainName { chain_id: i.chain_id as u8 })?;
+            //     .map_err(|_| DispatchError::Other("()"))?;
+            // let _ = bech32::encode(&name, data.clone()).map_err(|_| {
+            // 	// Error::<T>::FailedToEncodeBech32Address { chain_id: i.chain_id as u8 }
+            //     DispatchError::Other("()")
             // })?;
 
             // let new_memo = MemoData {
