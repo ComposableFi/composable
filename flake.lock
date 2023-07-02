@@ -93,6 +93,7 @@
         "gaia7-src": "gaia7-src",
         "gaia8-src": "gaia8-src",
         "gaia9-src": "gaia9-src",
+        "hermes-src": "hermes-src",
         "ibc-go-v2-src": "ibc-go-v2-src",
         "ibc-go-v3-src": "ibc-go-v3-src",
         "ibc-go-v4-src": "ibc-go-v4-src",
@@ -135,20 +136,22 @@
         "wasmvm_0_16_3-src": "wasmvm_0_16_3-src",
         "wasmvm_1-src": "wasmvm_1-src",
         "wasmvm_1_1_1-src": "wasmvm_1_1_1-src",
+        "wasmvm_1_1_2-src": "wasmvm_1_1_2-src",
         "wasmvm_1_2_3-src": "wasmvm_1_2_3-src",
         "wasmvm_1_beta7-src": "wasmvm_1_beta7-src"
       },
       "locked": {
-        "lastModified": 1687166981,
-        "narHash": "sha256-i2InpsghhsqpwmcbCAUY080YRyHAVLfh/XOLUMAZW9c=",
-        "owner": "informalsystems",
+        "lastModified": 1688298402,
+        "narHash": "sha256-I1m5afGgmVEq/C4DtQxJojwhb/kk045ov6yNFPUJXsI=",
+        "owner": "dzmitry-lahoda-forks",
         "repo": "cosmos.nix",
-        "rev": "ac19ce691708acd52b74e5843a541b49e684e511",
+        "rev": "faf1a1abf42801c89f62a2dec69a8975d98939fc",
         "type": "github"
       },
       "original": {
-        "owner": "informalsystems",
+        "owner": "dzmitry-lahoda-forks",
         "repo": "cosmos.nix",
+        "rev": "faf1a1abf42801c89f62a2dec69a8975d98939fc",
         "type": "github"
       }
     },
@@ -802,6 +805,23 @@
       "original": {
         "owner": "helix-editor",
         "repo": "helix",
+        "type": "github"
+      }
+    },
+    "hermes-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1685979093,
+        "narHash": "sha256-jfrdJA2H71nr+F19PHTg74TJz1hVSDVo7mrYKgSlEhA=",
+        "owner": "informalsystems",
+        "repo": "hermes",
+        "rev": "6583d697034764dc463c3949fc1f732d63e9f193",
+        "type": "github"
+      },
+      "original": {
+        "owner": "informalsystems",
+        "ref": "v1.5.1",
+        "repo": "hermes",
         "type": "github"
       }
     },
@@ -1461,16 +1481,16 @@
     "osmosis-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1678471069,
-        "narHash": "sha256-+BzlHD2W+tmj0tybGtqFXVeAzlaBZ47yCC/fTPDYq4E=",
+        "lastModified": 1687920590,
+        "narHash": "sha256-nzNUf55ZgWUuaEJ25hvGi34zzqTuWOGm3j72BtldGxs=",
         "owner": "osmosis-labs",
         "repo": "osmosis",
-        "rev": "ff18d8244fcda7313ec951fb1b3bee8369b8316b",
+        "rev": "4a4a94585872e3196b9c83286979cda11d4889e3",
         "type": "github"
       },
       "original": {
         "owner": "osmosis-labs",
-        "ref": "v15.0.0",
+        "ref": "v15.2.0",
         "repo": "osmosis",
         "type": "github"
       }
@@ -1659,16 +1679,17 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1664938250,
-        "narHash": "sha256-LdLOcoyqX0cO6ceYdOo3O/aMWX10x4p14KdlH6DKl04=",
+        "lastModified": 1688265347,
+        "narHash": "sha256-oe3kLnNvw2VWbG4Rp6IWUO5Uu5gF8J2oq8DbqbCsdZ4=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "e6531ebf628998fd03f6e5f4e3939b34bfd374f3",
+        "rev": "b8f3db465405014039985f1c5cea92cc29e1b3b5",
         "type": "github"
       },
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "rev": "b8f3db465405014039985f1c5cea92cc29e1b3b5",
         "type": "github"
       }
     },
@@ -2002,6 +2023,23 @@
       "original": {
         "owner": "CosmWasm",
         "ref": "v1.1.1",
+        "repo": "wasmvm",
+        "type": "github"
+      }
+    },
+    "wasmvm_1_1_2-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1681833975,
+        "narHash": "sha256-EbzMNkZUO94jEdX0WgAdy5qfhlCG3lpHpVHyT2FcSDw=",
+        "owner": "CosmWasm",
+        "repo": "wasmvm",
+        "rev": "4f84395b1c623483a3c7936c990c2f7e5dad70d8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "CosmWasm",
+        "ref": "v1.1.2",
         "repo": "wasmvm",
         "type": "github"
       }

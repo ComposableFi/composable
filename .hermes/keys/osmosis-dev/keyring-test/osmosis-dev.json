@@ -1,7 +1,6 @@
 {
-  "public_key": "xpub6GdJjJcsT5PVsvJsRK2mGdP6wiV732keGqjnuPAM3cvPuVzfUHRFucNKNfTrPUho9JCpPyTowzTNKF3tNrvJf8wsa2qMqzkW1TtQgYDWcpJ",
-  "private_key": "xprvA3dxKo5ychqCfSEQKHVkuVSNPgecda2nucpC6zkjVHPR2hfWvk71Mp3qXPZSbRDbqK2RALwb5R6GeYEXMaGjHE6ggRAnmw41eeNSue6vwoe",
-  "account": "osmosis1qvdeu4x34rapp3wc8fym5g4wu343mswx3ect68",
+  "private_key": "000ca58fbb67118dc8db42e8450cedce70d871d9b02ac4e2ed2fa7ad4599d26f",
+  "public_key": "02730af5180a4a2e5c8507728a9469692c5b569b82008ae2f0df7f4cf534402aef",
   "address": [
     3,
     27,
@@ -23,5 +22,7 @@
     29,
     193,
     198
-  ]
+  ],
+  "address_type": "Cosmos",
+  "account": "osmo1qvdeu4x34rapp3wc8fym5g4wu343mswx2exkug"
 }

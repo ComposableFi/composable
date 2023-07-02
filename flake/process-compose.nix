@@ -1,7 +1,7 @@
 { self, ... }: {
   perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, ... }:
     let
-      devnet-root-directory = "/tmp/composable-dev";
+      devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
     in {
       packages = rec {
@@ -11,24 +11,24 @@
             ${self.inputs.cosmos.packages.${system}.osmosis}/bin/osmosisd "$@"
           '';
         };
-        hermes = self.inputs.cosmos.packages.${system}.hermes;
+        hermes = self.inputs.cosmos.packages.${system}.hermes_1_5_1;
         hermes-init = pkgs.writeShellApplication {
           runtimeInputs = [ hermes ];
-           name = "hermes-init";
-           text = ''
-           HOME=/home/dz/github.com/ComposableFi/composable
-           MNEMONIC_FILE=$HOME/.hermes/mnemonics/relayer.txt
-           export HOME
-           mkdir --parents $HOME/.hermes/mnemonics/
+          name = "hermes-init";
+          text = ''
+            HOME=/home/dz/github.com/ComposableFi/composable
+            MNEMONIC_FILE=$HOME/.hermes/mnemonics/relayer.txt
+            export HOME
+            mkdir --parents $HOME/.hermes/mnemonics/
 
-           echo "black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken" > $MNEMONIC_FILE
-           hermes keys add --chain centauri-dev --mnemonic-file $MNEMONIC_FILE --key-name centauri-dev --overwrite
-           hermes keys add --chain osmosis-dev --mnemonic-file $MNEMONIC_FILE --key-name osmosis-dev --overwrite
-           RUST_LOG=trace
-           export RUST_LOG
-           hermes create channel --a-chain centauri-dev --b-chain osmosis-dev --a-port transfer --b-port transfer --new-client-connection --yes
-           hermes start 
-           '';
+            echo "black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken" > $MNEMONIC_FILE
+            hermes keys add --chain centauri-dev --mnemonic-file $MNEMONIC_FILE --key-name centauri-dev --overwrite
+            hermes keys add --chain osmosis-dev --mnemonic-file $MNEMONIC_FILE --key-name osmosis-dev --overwrite
+            RUST_LOG=debug
+            export RUST_LOG
+            hermes create channel --a-chain centauri-dev --b-chain osmosis-dev --a-port transfer --b-port transfer --new-client-connection --yes
+            hermes start
+          '';
         };
 
         osmosisd-gen = pkgs.writeShellApplication {
@@ -60,7 +60,7 @@
             }             
 
             dasel-genesis '.app_state.staking.params.bond_denom' 'uosmo'
-            dasel-genesis '.app_state.staking.params.unbonding_time' '60s'
+            dasel-genesis '.app_state.staking.params.unbonding_time' '120s'
             dasel  put --type json --file "$GENESIS" --value "[{},{}]" 'app_state.bank.denom_metadata'
             dasel-genesis '.app_state.bank.denom_metadata.[0].description' 'Registered denom uion for localosmosis testing'
             dasel  put --type json --file "$GENESIS" --value "[{}]" '.app_state.bank.denom_metadata.[0].denom_units'
@@ -85,17 +85,17 @@
             dasel  put --type json --file "$GENESIS" --value "[{}]" '.app_state.gov.deposit_params.min_deposit'
             dasel-genesis '.app_state.gov.deposit_params.min_deposit.[0].denom' 'uosmo'
             dasel-genesis '.app_state.gov.deposit_params.min_deposit.[0].amount' '1000000000'
-            dasel-genesis '.app_state.epochs.epochs.[1].duration' "30s"
+            dasel-genesis '.app_state.epochs.epochs.[1].duration' "60s"
             dasel  put --type json --file "$GENESIS" --value "[{},{},{}]" '.app_state.poolincentives.lockable_durations'
-            dasel-genesis '.app_state.poolincentives.lockable_durations.[0]' "60s"
-            dasel-genesis '.app_state.poolincentives.lockable_durations.[1]' "90s"
-            dasel-genesis '.app_state.poolincentives.lockable_durations.[2]' "120s"
+            dasel-genesis '.app_state.poolincentives.lockable_durations.[0]' "120s"
+            dasel-genesis '.app_state.poolincentives.lockable_durations.[1]' "180s"
+            dasel-genesis '.app_state.poolincentives.lockable_durations.[2]' "240s"
             dasel-genesis '.app_state.poolincentives.params.minted_denom' "uosmo"
             dasel  put --type json --file "$GENESIS" --value "[{},{},{},{}]" '.app_state.incentives.lockable_durations'
             dasel-genesis '.app_state.incentives.lockable_durations.[0]' "1s"
-            dasel-genesis '.app_state.incentives.lockable_durations.[1]' "60s"
-            dasel-genesis '.app_state.incentives.lockable_durations.[2]' "90s"
-            dasel-genesis '.app_state.incentives.lockable_durations.[3]' "120s"
+            dasel-genesis '.app_state.incentives.lockable_durations.[1]' "120s"
+            dasel-genesis '.app_state.incentives.lockable_durations.[2]' "180s"
+            dasel-genesis '.app_state.incentives.lockable_durations.[3]' "240s"
             dasel-genesis '.app_state.incentives.params.distr_epoch_identifier' "hour"
             dasel-genesis '.app_state.mint.params.mint_denom' "uosmo"
             dasel-genesis '.app_state.mint.params.epoch_identifier' "day"
@@ -210,17 +210,16 @@
                 HYPERSPACE_DATA="$COMPOSABLE_DATA/hyperspace"
                 RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace"
                 export RUST_LOG
-                mkdir --parents "$COMPOSABLE_DATA"
                 mkdir --parents "$HYPERSPACE_DATA"
 
                 cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-2} $HYPERSPACE_DATA/config-chain-2.toml  
                 cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-3} $HYPERSPACE_DATA/config-chain-3.toml  
                 cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-core} $HYPERSPACE_DATA/config-core.toml                
-                CODE_ID=$(cat /tmp/centauri-dev/code_id)
+                CODE_ID=$(cat $COMPOSABLE_DATA/centauri-devnet/code_id)
                 sed -i "s/wasm_code_id = \"0000000000000000000000000000000000000000000000000000000000000000\"/wasm_code_id = \"$CODE_ID\"/" "$HYPERSPACE_DATA/config-chain-2.toml"
                 ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-clients --config-a $HYPERSPACE_DATA/config-chain-3.toml --config-b $HYPERSPACE_DATA/config-chain-2.toml --config-core $HYPERSPACE_DATA/config-core.toml --delay-period 10
               '';
-              log_location = "/tmp/composable-devnet/hyperspace/clients.log";
+              log_location = "/tmp/composable-devnet/hyperspace-clients.log";
               depends_on = {
                 "centauri-init".condition = "process_completed_successfully";
                 "centauri".condition = "process_healthy";
@@ -235,7 +234,7 @@
                 export RUST_LOG      
                 ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a $HYPERSPACE_DATA/config-chain-3.toml --config-b $HYPERSPACE_DATA/config-chain-2.toml --config-core $HYPERSPACE_DATA/config-core.toml --delay-period 10
               '';
-              log_location = "/tmp/composable-devnet/hyperspace/connection.log";
+              log_location = "/tmp/composable-devnet/hyperspace-connection.log";
               depends_on = {
                 "hyperspace-client".condition =
                   "process_completed_successfully";
@@ -250,7 +249,7 @@
                 export RUST_LOG
                 ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a $HYPERSPACE_DATA/config-chain-3.toml --config-b $HYPERSPACE_DATA/config-chain-2.toml --config-core $HYPERSPACE_DATA/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
               '';
-              log_location = "/tmp/composable-devnet/hyperspace/channels.log";
+              log_location = "/tmp/composable-devnet/hyperspace-channels.log";
               depends_on = {
                 "hyperspace-connection".condition =
                   "process_completed_successfully";
@@ -265,7 +264,7 @@
                 export RUST_LOG
                 ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a $HYPERSPACE_DATA/config-chain-3.toml --config-b $HYPERSPACE_DATA/config-chain-2.toml --config-core $HYPERSPACE_DATA/config-core.toml --delay-period 10
               '';
-              log_location = "/tmp/composable-devnet/hyperspace/relay.log";
+              log_location = "/tmp/composable-devnet/hyperspace-relay.log";
               depends_on = {
                 "hyperspace-channels".condition =
                   "process_completed_successfully";

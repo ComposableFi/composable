@@ -46,7 +46,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     cosmos = {
-      url = "github:informalsystems/cosmos.nix";
+      url =
+        "github:dzmitry-lahoda-forks/cosmos.nix/faf1a1abf42801c89f62a2dec69a8975d98939fc";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

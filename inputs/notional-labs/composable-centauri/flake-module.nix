@@ -2,7 +2,7 @@
   perSystem = { config, self', inputs', pkgs, lib, system, crane
     , systemCommonRust, subnix, ... }:
     let
-      devnet-root-directory = "/tmp/composable-dev";
+      devnet-root-directory = "/tmp/composable-devnet";
       validator = "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n";
       validator-mnemonic =
         "bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort";
@@ -154,7 +154,7 @@
           function add-genesis-account () {
             centaurid --keyring-backend test add-genesis-account "$1" "1000000000000000000000ppica" --keyring-backend test --home "$CENTAURI_DATA"          
           }
-          
+
           add-genesis-account centauri1qvdeu4x34rapp3wc8fym5g4wu343mswxxgc6wf
           add-genesis-account centauri1zr4ng42laatyh9zx238n20r74spcrlct6jsqaw
           add-genesis-account centauri1makf5hslxqxzl29uyeyyddf89ff7edxyr7ewm5
