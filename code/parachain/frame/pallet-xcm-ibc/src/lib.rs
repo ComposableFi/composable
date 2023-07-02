@@ -143,8 +143,8 @@
 // 		_,
 // 		Blake2_128Concat,
 // 		u128, //chain id
-// 		BoundedBTreeSet<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>), T::MaxMultihopCount>, /* route to forward */
-// 		ValueQuery,
+// 		BoundedBTreeSet<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>), T::MaxMultihopCount>, /* route
+// to forward */ 		ValueQuery,
 // 	>;
 
 // 	#[pallet::hooks]
