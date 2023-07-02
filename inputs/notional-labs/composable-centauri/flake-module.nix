@@ -19,13 +19,13 @@
         excludedPackages = [ "interchaintest" "simd" ];
         ldflags = [ "-v -extldflags '-L${self'.packages.libwasmvm}/lib'" ];
         src = pkgs.fetchFromGitHub {
-          owner = "notional-labs";
+          owner = "dzmitry-lahoda-forks";
           repo = "composable-centauri";
-          rev = "e01bfb2f4498d3ac753688931bd8684236f30205";
-          sha256 = "sha256-GOz/g/a0PhnGuJ1gLr3dJtyWnFfy7Oaeybg0LpOBOno=";
+          rev = "86b125808312e2188f957779b5252329da794d53";
+          sha256 = "sha256-XC+dNSh4J4FOr4/DC0hJCGrJlfRi/tEVwe3KTPkGfb4=";
         };
         dontFixup = true;
-        vendorSha256 = "sha256-RgbRnG6nkzK7HS6DpwiheYDkpsraOedhdJuz8AfjcVs=";
+        vendorSha256 = "sha256-2isPCn91vSeNmMw58mu0yP7UGDXHNJW+6K2aNh2dKJc=";
       };
 
       ibc-lightclients-wasm-v1-msg-push-new-wasm-code = code: {
@@ -80,26 +80,15 @@
           CENTAURI_DATA="${devnet-root-directory}/.centaurid"
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CENTAURI_DATA/keyring-test"
-          # centaurid query bank balances ${validator} --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA"
-          # centaurid query bank balances centauri1cyyzpxplxdzkeea7kwsydadg87357qnamvg3y3 --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA"
-          # centaurid tx bank send validator centauri1cyyzpxplxdzkeea7kwsydadg87357qnamvg3y3 1000000000ppica --from validator --keyring-backend test --gas 902152622 --fees 920166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --output json
-          # sleep 5
-          # centaurid query bank balances ${validator} --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA"
-          # centaurid query bank balances centauri1cyyzpxplxdzkeea7kwsydadg87357qnamvg3y3 --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA"            
-
-          echo "=============== SUBMIT PROPOSAL ========"
           centaurid tx gov submit-proposal ${ics10-grandpa-cw-proposal}/ics10_grandpa_cw.wasm.json --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json
-          sleep 5          
-
-          echo "=============== VOTE PROPOSAL ========="
-          PROPOSAL_ID=1
-          centaurid tx gov vote $PROPOSAL_ID yes --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json
-          sleep 20
-          echo "=============== GET PROPOSAL ========="
+          sleep 5
+          centaurid query auth module-account gov --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA" | jq '.account.base_account.address' --raw-output
+          PROPOSAL_ID=1          
+          centaurid tx gov vote $PROPOSAL_ID yes --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          sleep 20          
           centaurid query gov proposal $PROPOSAL_ID --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA" |
           jq '.status'
-          sleep 5
-          echo "=============== GET WASM ========="
+          sleep 5          
           centaurid query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CENTAURI_DATA" --output json --node tcp://localhost:26657 | jq '.code_ids[0]' --raw-output | tee "$CENTAURI_DATA/code_id"
         '';
       };
