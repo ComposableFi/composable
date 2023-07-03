@@ -25,6 +25,8 @@ pub struct ChainInfo {
 	pub retries: Option<u64>,   //for memo packet message forwarding
 	pub timeout: Option<u64>,   //for memo packet message forwarding
 	pub is_substrate_ibc: bool,
+	pub is_substrate_xcm: bool,
+	pub para_id: Option<u32>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -73,15 +75,15 @@ impl Forward {
 		}
 	}
 
-	pub fn new_xcm_memo(receiver: String, para_id: u32, substrate: bool) -> Self {
+	pub fn new_xcm_memo(receiver: String, para_id: Option<u32>) -> Self {
 		Self {
 			receiver,
 			port: None,
 			channel: None,
 			timeout: None,
 			retries: None,
-			para_id: Some(para_id),
-			substrate: Some(substrate),
+			para_id: para_id,
+			substrate: Some(true),
 			next: None,
 		}
 	}
