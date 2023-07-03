@@ -1,18 +1,17 @@
 mod args;
 mod error;
-mod new_cmd;
 mod substrate;
 
-use args::{Args, Command};
+use args::{CosmosCommand, CosmosSubcommand};
 use clap::Parser;
+use substrate::CosmosCommandRunner;
 
 #[tokio::main]
 async fn main() {
-	let args = Args::parse();
+	let args = CosmosCommand::parse();
 
-	let result = match args.main_command {
-		Command::Substrate(substrate_command) => substrate_command.run().await,
-		Command::New(new_command) => new_command.run(),
+	let result = match args.subcommand {
+		CosmosSubcommand::Substrate(command) => CosmosCommandRunner::run(command).await,
 	};
 
 	if let Err(e) = result {

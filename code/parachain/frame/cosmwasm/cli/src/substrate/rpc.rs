@@ -1,4 +1,6 @@
-use super::cosmwasm;
+use crate::args::{QueryCommand, QuerySubcommands, WasmInstantiate};
+
+use super::{cosmwasm, OutputType};
 use clap::{Args, Subcommand};
 use cosmwasm_std::{Binary, QueryRequest, WasmQuery};
 use jsonrpc::{Request, Response};
@@ -6,34 +8,6 @@ use serde::de::DeserializeOwned;
 use serde_json::{value::RawValue, Value};
 use sp_core::crypto::AccountId32;
 use std::collections::BTreeMap;
-
-#[derive(Args, Debug)]
-pub struct Command {
-	#[command(subcommand)]
-	pub subcommands: Subcommands,
-}
-
-#[derive(Debug, Subcommand)]
-pub enum Subcommands {
-	/// Query a CosmWasm contract
-	Query(cosmwasm::Query),
-
-	/// Dry-run an instantiate call
-	#[group(skip)]
-	Instantiate {
-		/// Caller of the instantiate call
-		#[arg(long)]
-		sender: AccountId32,
-		#[command(flatten)]
-		instantiate: cosmwasm::Instantiate,
-	},
-}
-
-#[derive(Args, Debug)]
-pub struct Asd {
-	#[arg(short, long)]
-	world: String,
-}
 
 macro_rules! rpc_params {
     ( $( $x:expr ),* ) => {
@@ -43,37 +17,55 @@ macro_rules! rpc_params {
     }
 }
 
-impl Command {
-	pub async fn run(self, chain_endpoint: String) -> anyhow::Result<()> {
-		match self.subcommands {
-			Subcommands::Query(cosmwasm::Query { contract, gas, query }) => {
+pub struct QueryCommandRunner;
+
+impl QueryCommandRunner {
+	pub async fn run(
+		command: QueryCommand,
+		chain_endpoint: String,
+		output: OutputType,
+	) -> anyhow::Result<()> {
+		match command.subcommands {
+			QuerySubcommands::Query(cosmwasm::Query { contract, gas, query }) => {
 				let query = QueryRequest::<()>::Wasm(WasmQuery::Smart {
 					contract_addr: contract.to_string(),
 					msg: Binary(query.into()),
 				});
 				let params = rpc_params!(contract.to_string(), gas, serde_json::to_vec(&query)?);
 				let resp: Vec<u8> = rpc_call("cosmwasm_query", &params, chain_endpoint).await?;
-				println!("[ + ] Query response: {}", String::from_utf8_lossy(&resp));
+				match output {
+					OutputType::Text =>
+						println!("[ + ] Query response: {}", String::from_utf8_lossy(&resp)),
+					OutputType::Json => println!("{}", String::from_utf8_lossy(&resp)),
+				}
 				Ok(())
 			},
-			Subcommands::Instantiate {
+			QuerySubcommands::Instantiate {
 				sender,
 				instantiate:
-					cosmwasm::Instantiate { code_id, salt, admin, label, funds, gas, message },
+					WasmInstantiate {
+						code_id_int64,
+						salt,
+						admin,
+						label,
+						amount,
+						gas,
+						json_encoded_init_args,
+					},
 			} => {
 				let params = rpc_params!(
 					sender,
-					code_id,
+					code_id_int64,
 					Vec::from(salt),
 					admin,
 					Vec::from(label),
-					funds
+					amount
 						.unwrap_or_default()
 						.into_iter()
 						.map(|(asset, amount)| (asset, (amount, true)))
 						.collect::<BTreeMap<u128, (u128, bool)>>(),
 					gas,
-					Vec::from(message)
+					Vec::from(json_encoded_init_args)
 				);
 				let resp: AccountId32 =
 					rpc_call("cosmwasm_instantiate", &params, chain_endpoint).await?;
