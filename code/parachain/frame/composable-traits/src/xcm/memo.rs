@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use serde_json::Value;
 use sp_std::boxed::Box;
 
 #[derive(
@@ -51,8 +52,6 @@ pub struct Forward {
 	pub next: Option<Box<MemoData>>,
 }
 
-
-
 impl Forward {
 	pub fn new_ibc_memo(
 		receiver: String,
@@ -93,8 +92,48 @@ pub enum MemoData {
 	Wasm(Wasm),
 }
 
+/// see https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-hooks
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct Wasm {
+	contract: String,
+	msg: Value,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	ibc_callback: Option<String>,
+}
+
 impl MemoData {
-	pub fn new(forward: Forward) -> Self {
-		Self { forward }
+	pub fn forward(forward: Forward) -> Self {
+		Self::Forward(forward)
 	}
+
+	pub fn wasm(wasm: Wasm) -> Self {
+		Self::Wasm(wasm)
+	}
+}
+
+
+pub const SENDER_PREFIX : &str = "ibc-wasm-hook-intermediary";
+
+pub fn derive_intermediate_sender(channel: String, original_sender : String, bech32_prefix : String) -> Result<String, ()> {
+
+	use bech32_no_std::ToBase32;
+	let sender_str = format!("{channel}/{original_sender}");
+	let sender_hash_32 = hash(SENDER_PREFIX, sender_str.as_bytes());
+	let sender = sender_hash_32.to_base32();
+	bech32_no_std::encode(&bech32_prefix, sender).map_err(|_| ())
+}
+
+// Hash creates a new address from address type and key.
+// The functions should only be used by new types defining their own address function
+// (eg public keys).
+/// https://github.com/cosmos/cosmos-sdk/blob/main/types/address/hash.go
+fn hash(typ : &str, key: &[u8])  -> [u8; 32] {
+	use sha2::{Sha256, Digest};
+	let mut hasher = Sha256::default();
+	hasher.update(typ.as_bytes());
+	let th = hasher.finalize();
+	let mut hasher = Sha256::default();
+	hasher.update(th);
+	hasher.update(key);	
+	hasher.finalize().into()
 }
