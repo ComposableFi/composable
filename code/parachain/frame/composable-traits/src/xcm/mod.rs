@@ -8,6 +8,7 @@
 //! Main use case is automatic liquidations of assets.
 
 pub mod assets;
+pub mod memo;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;

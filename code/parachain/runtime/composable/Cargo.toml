@@ -14,6 +14,7 @@ normal = [
   "pallet-vault",
   "session-benchmarking",
   "assets-registry",
+  # "assets-registry-2",
   "currency-factory",
   "oracle",
   "vault",
@@ -60,6 +61,7 @@ treasury = { default-features = false, workspace = true }
 utility = { default-features = false, workspace = true }
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false }
+pallet-multihop-xcm-ibc = { package = "pallet-multihop-xcm-ibc", path = '../../frame/pallet-multihop-xcm-ibc', default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 common = { path = "../common", default-features = false }
 composable-support = { path = "../../frame/composable-support", default-features = false }
@@ -132,6 +134,7 @@ runtime-benchmarks = [
   "balances/runtime-benchmarks",
   "timestamp/runtime-benchmarks",
   "assets-registry/runtime-benchmarks",
+  "pallet-multihop-xcm-ibc/runtime-benchmarks",
   "oracle/runtime-benchmarks",
   "collective/runtime-benchmarks",
   "collator-selection/runtime-benchmarks",
@@ -211,6 +214,7 @@ std = [
   "orml-xcm-support/std",
   "orml-unknown-tokens/std",
   "assets-registry/std",
+  "pallet-multihop-xcm-ibc/std",
   "governance-registry/std",
   "preimage/std",
   "membership/std",
