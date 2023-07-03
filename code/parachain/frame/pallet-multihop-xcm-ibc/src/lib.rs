@@ -192,15 +192,14 @@ pub mod pallet {
 			mut vec: Vec<(ChainInfo, Vec<u8>, [u8; 32])>,
 		) -> Result<Option<MemoData>, DispatchError> {
 			vec.reverse(); // reverse to create memo from the end
-			
-			//osmosis(ibc) <- huahua(ibc) <- centauri(ibc)  =  ibc transfer from composable to picasso with memo
-			//substrate(xcm) hop can be only the last one
+
+			//osmosis(ibc) <- huahua(ibc) <- centauri(ibc)  =  ibc transfer from composable to
+			// picasso with memo substrate(xcm) hop can be only the last one
 			//moonriver(xcm) = ibc transfer from composable to picasso
 			//polkadot(xcm) = ibc transfer from picasso to composable
-			
 
-			let mut last_memo_data: Option<MemoData> = None; 
-			
+			let mut last_memo_data: Option<MemoData> = None;
+
 			for (i, name, address) in vec {
 				let result: core::result::Result<Vec<bech32_no_std::u5>, bech32_no_std::Error> =
 					address.into_iter().map(bech32_no_std::u5::try_from_u8).collect();
