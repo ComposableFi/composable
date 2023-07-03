@@ -1,5 +1,3 @@
-use crate::args::{TxCommand, TxSubcommands, WasmInstantiate};
-
 use super::{
 	cosmwasm,
 	subxt_api::api::{
@@ -19,7 +17,6 @@ use super::{
 	},
 	OutputType,
 };
-use clap::{Args, Subcommand};
 use serde::Serialize;
 
 use subxt::{
@@ -32,11 +29,33 @@ use subxt::{
 	OnlineClient, SubstrateConfig,
 };
 
-pub struct CommandRunner;
+#[derive(Args, Debug)]
+pub struct Command {
+	#[command(subcommand)]
+	pub subcommands: Subcommands,
+}
 
-impl CommandRunner {
+#[derive(Debug, Subcommand)]
+pub enum Subcommands {
+	/// Upload a CosmWasm contract
+	Upload(cosmwasm::Upload),
+
+	/// Instantiate a CosmWasm contract
+	Instantiate(cosmwasm::Instantiate),
+
+	/// Execute a CosmWasm contract
+	Execute(cosmwasm::Execute),
+
+	/// Migrate a CosmWasm contract
+	Migrate(cosmwasm::Migrate),
+
+	/// Update admin of a CosmWasm contract
+	UpdateAdmin(cosmwasm::UpdateAdmin),
+}
+
+impl Command {
 	pub async fn run<P: Pair>(
-		command: TxCommand,
+		self,
 		pair: P,
 		chain_endpoint: String,
 		output_type: OutputType,
@@ -47,8 +66,8 @@ impl CommandRunner {
 		MultiSigner: From<<P as Pair>::Public>,
 		subxt::utils::MultiSignature: From<<P as sp_core::Pair>::Signature>,
 	{
-		match command.subcommands {
-			TxSubcommands::Store(upload) => {
+		match self.subcommands {
+			Subcommands::Upload(upload) => {
 				let code = upload.fetch_code().await?;
 				let events = do_signed_transaction(
 					chain_endpoint,
@@ -59,39 +78,39 @@ impl CommandRunner {
 				print_events::<events::Uploaded, Uploaded>(&events, output_type)?;
 				Ok(())
 			},
-			TxSubcommands::Instantiate(WasmInstantiate {
-				code_id_int64,
+			Subcommands::Instantiate(cosmwasm::Instantiate {
+				code_id,
 				salt,
 				admin,
 				label,
-				amount,
+				funds,
 				gas,
-				json_encoded_init_args,
+				message,
 			}) => {
 				let events = do_signed_transaction(
 					chain_endpoint,
 					pair,
 					api::tx().cosmwasm().instantiate(
-						CodeIdentifier::CodeId(code_id_int64),
+						CodeIdentifier::CodeId(code_id),
 						BoundedVec(salt.into()),
 						admin,
 						BoundedVec(label.into()),
 						BoundedBTreeMap(
-							amount
+							funds
 								.unwrap_or_default()
 								.into_iter()
 								.map(|(asset, amount)| (CurrencyId(asset), (amount, true)))
 								.collect(),
 						),
 						gas,
-						BoundedVec(json_encoded_init_args.into()),
+						BoundedVec(message.into()),
 					),
 				)
 				.await?;
 				print_events::<events::Instantiated, Instantiated>(&events, output_type)?;
 				Ok(())
 			},
-			TxSubcommands::Execute(cosmwasm::Execute { contract, funds, gas, message }) => {
+			Subcommands::Execute(cosmwasm::Execute { contract, funds, gas, message }) => {
 				let events = do_signed_transaction(
 					chain_endpoint,
 					pair,
@@ -112,7 +131,7 @@ impl CommandRunner {
 				print_events::<events::Executed, ()>(&events, output_type)?;
 				Ok(())
 			},
-			TxSubcommands::Migrate(cosmwasm::Migrate { contract, new_code_id, gas, message }) => {
+			Subcommands::Migrate(cosmwasm::Migrate { contract, new_code_id, gas, message }) => {
 				let events = do_signed_transaction(
 					chain_endpoint,
 					pair,
@@ -127,7 +146,7 @@ impl CommandRunner {
 				print_events::<events::Migrated, Migrated>(&events, output_type)?;
 				Ok(())
 			},
-			TxSubcommands::UpdateAdmin(cosmwasm::UpdateAdmin {
+			Subcommands::UpdateAdmin(cosmwasm::UpdateAdmin {
 				contract, new_admin, gas, ..
 			}) => {
 				let events = do_signed_transaction(
