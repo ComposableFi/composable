@@ -327,7 +327,7 @@ fn load_contracts() -> XCVMContracts {
 
 	let code_interpreter = read_contract("cw_xc_interpreter.wasm");
 	let code_gateway = read_contract("cw_xc_gateway.wasm");
-	let cw20_base_path =
+	let out_dir =
 		[option_env!("NIX_CARGO_OUT_DIR").unwrap_or(env!("OUT_DIR")), "/cw20_base.wasm"].concat();
 	// When running the test locally, the cw20_base.wasm file is downloaded by
 	// the Build script (see build.rs).
