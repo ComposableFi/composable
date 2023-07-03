@@ -82,7 +82,7 @@ impl Forward {
 			channel: None,
 			timeout: None,
 			retries: None,
-			para_id: para_id,
+			para_id,
 			substrate: Some(true),
 			next: None,
 		}
