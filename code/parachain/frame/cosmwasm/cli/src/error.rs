@@ -14,10 +14,4 @@ pub enum Error {
 
 	#[error("Invalid phrase.")]
 	InvalidPhrase,
-
-	#[error("Shell command failure.")]
-	ShellCommandFailure,
-
-	#[error("{0}")]
-	ToolNotInstalled(String),
 }
