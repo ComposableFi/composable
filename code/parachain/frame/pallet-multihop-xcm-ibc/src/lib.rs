@@ -144,14 +144,14 @@ pub mod pallet {
 			vec.reverse(); // reverse to create memo from the end
 
 			//osmosis(ibc) <- huahua(ibc) <- centauri(ibc)  =  ibc transfer from composable to
-			// picasso with memo substrate(xcm) hop can be only the last one
+			//picasso with memo substrate(xcm) hop can be only the last one
 			//moonriver(xcm) = ibc transfer from composable to picasso
 			//polkadot(xcm) = ibc transfer from picasso to composable
 
 			let mut last_memo_data: Option<MemoData> = None;
 
 			for (i, name, address) in vec {
-				let mut forward = if i.is_substrate_xcm {
+				let mut forward = if i.is_substrate_xcm { // TODO is_substrate_ibc!!!
 					// let str = "0x" + hex::encode(&bytes);
 					let memo_receiver = scale_info::prelude::format!("0x{}", hex::encode(&address));
 					Forward::new_xcm_memo(memo_receiver, i.para_id)
