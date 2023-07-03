@@ -10,7 +10,7 @@ use common::{
 use composable_traits::assets::InspectRegistryMetadata;
 use frame_system::EnsureSigned;
 use pallet_ibc::{
-	ics20::{MODULE_ID_STR, PORT_ID_STR},
+	ics20::{MODULE_ID_STR, PORT_ID_STR, IbcModule},
 	light_client_common::RelayChain,
 	routing::ModuleRouter,
 	DenomToAssetId, IbcAssetIds, IbcAssets,
@@ -216,7 +216,7 @@ impl pallet_ibc::Config for Runtime {
 	type IbcAccountId = Self::AccountId;
 	type TransferOrigin = EnsureSigned<Self::AccountId>;
 	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
-	type HandleMemo = ();
+	type HandleMemo = IbcModule<Runtime>;
 	type MemoMessage = MemoMessage;
 	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;
