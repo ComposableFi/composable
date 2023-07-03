@@ -438,6 +438,16 @@ parameter_types! {
 	pub const SessionLength: BlockNumber = 6 * HOURS;
 	pub const MaxInvulnerables: u32 = 100;
 	pub const MinCandidates: u32 = 5;
+	pub const PalletXcmIbcInstanceId: u8 = 192; // PalletXcmIbc: pallet_xcm_ibc = 192,
+	pub const MaxMultihopCount: u32 = 10;
+	pub const ChainNameVecLimit: u32 = 30;
+}
+
+impl pallet_multihop_xcm_ibc::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type PalletInstanceId = PalletXcmIbcInstanceId;
+	type MaxMultihopCount = MaxMultihopCount;
+	type ChainNameVecLimit = ChainNameVecLimit;
 }
 
 impl collator_selection::Config for Runtime {
@@ -668,6 +678,8 @@ construct_runtime!(
 
 		Ibc: pallet_ibc = 190,
 		Ics20Fee: pallet_ibc::ics20_fee = 191,
+
+		PalletMultihopXcmIbc: pallet_multihop_xcm_ibc = 192,
 
 	}
 );
