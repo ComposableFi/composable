@@ -29,7 +29,7 @@ pub fn genesis_config(
 	if let Some(contract) = option_env!("CW_XC_GATEWAY_WASM_PATH") {
 		contracts.push(contract);
 	}
-	if let Some(contract) = include_contract(option_env!("CW_XC_INTERPRETER_WASM_PATH")) {
+	if let Some(_contract) = include_contract(option_env!("CW_XC_INTERPRETER_WASM_PATH")) {
 		// not sure what is going on, but it is weird
 		// Thread 'main' panicked at 'contracts in genesis are valid: Module(ModuleError { index:
 		// 180, error: [4, 0, 0, 0], message: Some("CodeValidation") })',
