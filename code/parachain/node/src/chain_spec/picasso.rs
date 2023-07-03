@@ -26,7 +26,7 @@ pub fn genesis_config(
 	treasury: AccountId,
 ) -> picasso_runtime::GenesisConfig {
 	let mut contracts = Vec::new();
-	if let Some(contract) = include_contract(option_env!("CW_XC_GATEWAY_WASM_PATH")) {
+	if let Some(contract) = option_env!("CW_XC_GATEWAY_WASM_PATH") {
 		contracts.push(contract);
 	}
 	if let Some(contract) = include_contract(option_env!("CW_XC_INTERPRETER_WASM_PATH")) {
@@ -36,12 +36,19 @@ pub fn genesis_config(
 		// /build/source/parachain/frame/cosmwasm/src/lib.rs:406 contracts.push(contract);
 	}
 
+	let contracts = contracts
+		.into_iter()
+		.map(|path| match std::fs::read(path).map(|bytes| bytes.try_into()) {
+			Ok(Ok(data)) => contract,
+			Ok(Err(err)) => panic!("{path}: {err}"),
+			Err(err) => panic!("{path}: {err}"),
+		})
+		.map(|contract| (root.clone(), contract))
+		.collect();
+
 	let cosmwasm = picasso_runtime::CosmwasmConfig {
-		contracts: contracts
-			.into_iter()
-			.map(|x| (root.clone(), x.try_into().expect("genesis cw wasm fits constraints")))
-			.collect(),
-		..Default::default()
+		contracts,
+		..Default::default(),
 	};
 
 	picasso_runtime::GenesisConfig {
