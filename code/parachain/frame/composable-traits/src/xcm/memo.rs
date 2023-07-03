@@ -1,8 +1,6 @@
 use crate::prelude::*;
 use sp_std::boxed::Box;
 
-use sp_runtime::DispatchError;
-
 #[derive(
 	Copy,
 	Clone,
@@ -53,6 +51,8 @@ pub struct Forward {
 	pub next: Option<Box<MemoData>>,
 }
 
+
+
 impl Forward {
 	pub fn new_ibc_memo(
 		receiver: String,
@@ -88,8 +88,9 @@ impl Forward {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct MemoData {
-	pub forward: Forward,
+pub enum MemoData {
+	Forward(Forward),
+	Wasm(Wasm),
 }
 
 impl MemoData {
