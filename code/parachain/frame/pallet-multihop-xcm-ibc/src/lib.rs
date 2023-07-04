@@ -157,27 +157,32 @@ pub mod pallet {
 			let mut last_memo_data: Option<MemoData> = None;
 
 			for (i, name, address) in vec {
-				let mut forward = if i.is_substrate_ibc { // TODO is_substrate_ibc!!!
+				let mut forward = if i.is_substrate_xcm {
 					// let str = "0x" + hex::encode(&bytes);
 					let memo_receiver = scale_info::prelude::format!("0x{}", hex::encode(&address));
 					Forward::new_xcm_memo(memo_receiver, i.para_id)
 				} else {
-					let result: core::result::Result<Vec<bech32_no_std::u5>, bech32_no_std::Error> =
+					let memo_receiver = if i.is_substrate_ibc{
+						scale_info::prelude::format!("0x{}", hex::encode(&address))
+					}
+					else{
+						let result: core::result::Result<Vec<bech32_no_std::u5>, bech32_no_std::Error> =
 						address.into_iter().map(bech32_no_std::u5::try_from_u8).collect();
-					let data =
-						// result.map_err(|_| Error::<T>::IncorrectAddress { chain_id: i.chain_id as u8 })?;
-						result.map_err(|_| DispatchError::Other("()"))?;
+						let data =
+							// result.map_err(|_| Error::<T>::IncorrectAddress { chain_id: i.chain_id as u8 })?;
+							result.map_err(|_| DispatchError::Other("()"))?;
 
-					let name = String::from_utf8(name.into())
-						// .map_err(|_| Error::<T>::IncorrectChainName { chain_id: i.chain_id as u8
-						// })?;
-						.map_err(|_| DispatchError::Other("()"))?;
-					let memo_receiver =
-						bech32_no_std::encode(&name, data.clone()).map_err(|_| {
-							// Error::<T>::FailedToEncodeBech32Address { chain_id: i.chain_id as u8
-							// }
-							DispatchError::Other("()")
-						})?;
+						let name = String::from_utf8(name.into())
+							// .map_err(|_| Error::<T>::IncorrectChainName { chain_id: i.chain_id as u8
+							// })?;
+							.map_err(|_| DispatchError::Other("()"))?;
+							bech32_no_std::encode(&name, data.clone()).map_err(|_| {
+								// Error::<T>::FailedToEncodeBech32Address { chain_id: i.chain_id as u8
+								// }
+								DispatchError::Other("()")
+							})?
+					};
+
 					Forward::new_ibc_memo(
 						memo_receiver,
 						String::from("transfer"),
