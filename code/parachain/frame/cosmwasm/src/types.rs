@@ -4,7 +4,6 @@ use cosmwasm_vm::system::CosmwasmCodeId;
 use frame_support::{BoundedBTreeMap, BoundedVec};
 use scale_info::TypeInfo;
 
-/// Aliases to simplify implementation level.
 pub type DefaultCosmwasmVM<'a, T> = CosmwasmVM<'a, T>;
 pub type KeepAlive = bool;
 pub type FundsOf<T> = BoundedBTreeMap<AssetIdOf<T>, (BalanceOf<T>, KeepAlive), MaxFundsAssetOf<T>>;
