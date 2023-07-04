@@ -151,7 +151,7 @@ pub mod pallet {
 			let mut last_memo_data: Option<MemoData> = None;
 
 			for (i, name, address) in vec {
-				let mut forward = if i.is_substrate_xcm { // TODO is_substrate_ibc!!!
+				let mut forward = if i.is_substrate_ibc { // TODO is_substrate_ibc!!!
 					// let str = "0x" + hex::encode(&bytes);
 					let memo_receiver = scale_info::prelude::format!("0x{}", hex::encode(&address));
 					Forward::new_xcm_memo(memo_receiver, i.para_id)
