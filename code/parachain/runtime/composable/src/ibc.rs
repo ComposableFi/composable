@@ -217,7 +217,7 @@ impl pallet_ibc::Config for Runtime {
 	type TransferOrigin = EnsureSigned<Self::AccountId>;
 	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 	type HandleMemo = IbcModule<Runtime>;
-	type MemoMessage = MemoMessage;
+	type MemoMessage = alloc::string::String;
 	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;
