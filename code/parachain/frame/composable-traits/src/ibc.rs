@@ -51,7 +51,7 @@ pub enum SudoMsg {
 pub const SENDER_PREFIX : &str = "ibc-wasm-hook-intermediary";
 
 /// from Go code to make compliant wasm hook
-pub fn derive_intermediate_sender(channel: String, original_sender : String, bech32_prefix : String) -> Result<String, ()> {
+pub fn derive_intermediate_sender(channel: &str, original_sender: &str, bech32_prefix: &str) -> Result<String, ()> {
 	use bech32_no_std::ToBase32;
 	let sender_str = format!("{channel}/{original_sender}");
 	let sender_hash_32 = crate::cosmos::addess_hash(SENDER_PREFIX, sender_str.as_bytes());
