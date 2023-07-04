@@ -598,12 +598,12 @@ But will send only swaps and handle invocation return on sender chain.
 ## No support for contract postconditions
 
 Some chains cannot abort transaction based on arbitrary check after ABI invocation. 
-In this case for specific subset of instruction specific whitelisted contract list will be allowed.
+In this case for specific subset of instructions to specific whitelisted contracts list will be allowed.
 
 **Example**
 
-On Near cannot abort swap transaction if amount less than expected limit.
-In this case only trusted swap contracts will be callable.
+On Near cannot abort Swap transaction if amount less than expected limit.
+In this case only trusted Swap contracts will be callable.
 
 
 # 9. Appendix
