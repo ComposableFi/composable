@@ -25,6 +25,29 @@ pub fn genesis_config(
 	existential_deposit: Balance,
 	treasury: AccountId,
 ) -> picasso_runtime::GenesisConfig {
+	let mut contracts = Vec::new();
+	if let Some(contract) = option_env!("CW_XC_GATEWAY_WASM_PATH") {
+		contracts.push(contract);
+	}
+	if let Some(_contract) = option_env!("CW_XC_INTERPRETER_WASM_PATH") {
+		// not sure what is going on, but it is weird
+		// Thread 'main' panicked at 'contracts in genesis are valid: Module(ModuleError { index:
+		// 180, error: [4, 0, 0, 0], message: Some("CodeValidation") })',
+		// /build/source/parachain/frame/cosmwasm/src/lib.rs:406 contracts.push(contract);
+	}
+
+	let contracts = contracts
+		.into_iter()
+		.map(|path| match std::fs::read(path).map(|bytes| bytes.try_into()) {
+			Ok(Ok(data)) => data,
+			Ok(Err(err)) => panic!("{path}: wasm file is over size limit"),
+			Err(err) => panic!("{path}: {err}"),
+		})
+		.map(|contract| (root.clone(), contract))
+		.collect();
+
+	let cosmwasm = picasso_runtime::CosmwasmConfig { contracts, ..Default::default() };
+
 	picasso_runtime::GenesisConfig {
 		system: picasso_runtime::SystemConfig {
 			code: picasso_runtime::WASM_BINARY_V2
@@ -77,6 +100,8 @@ pub fn genesis_config(
 			assets: primitives::topology::Picasso::assets(),
 			phantom: Default::default(),
 		},
+		cosmwasm,
+
 		tokens: Default::default(),
 		transaction_payment: Default::default(),
 		vesting: Default::default(),
@@ -92,4 +117,15 @@ pub fn genesis_config(
 		},
 		release_committee: Default::default(),
 	}
+}
+
+fn include_contract(wasm_path: Option<&str>) -> Option<Vec<u8>> {
+	wasm_path.map(|x| {
+		use std::io::Read;
+		let mut wasm_path =
+			std::fs::File::open(x).expect("if wasm path was specified than path should exists");
+		let mut buf = vec![];
+		let _ = wasm_path.read_to_end(&mut buf).expect("file is readable");
+		buf
+	})
 }
