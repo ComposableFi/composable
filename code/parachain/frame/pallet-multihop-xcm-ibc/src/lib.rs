@@ -71,6 +71,7 @@ pub mod pallet {
 			amount: u128,
 			asset_id: T::AssetId,
 			memo: Option<T::MemoMessage>,
+			bytes: Vec<u8>,
 		},
 		FailedXcmToIbc {
 			origin_address: T::AccountId,
@@ -466,6 +467,8 @@ pub mod pallet {
 				(*amount).into(),
 				memo.clone(),
 			);
+
+			let memo_bytes = memo.clone().map(|m| m.to_string().as_bytes().to_vec()).unwrap_or(Vec::new());
 			match result {
 				Ok(_) => {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::SuccessXcmToIbc {
@@ -474,6 +477,7 @@ pub mod pallet {
 						amount: *amount,
 						asset_id: asset_id.unwrap(),
 						memo,
+						bytes: memo_bytes,
 					});
 				},
 				Err(e) => {
