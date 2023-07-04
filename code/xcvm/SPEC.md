@@ -309,6 +309,8 @@ The packet data is defined as follows:
 
 Where the **interpreter** is used in when the IBC packet execution fail or timeout to return the locked funds.
 
+`Assets` are fungible `ICS-20` assets.
+
 ### 2.2.3.1.1. Spawn send
 
 The bridge MUST escrow the **assets** transferred.
@@ -578,7 +580,31 @@ Failure to execute an instruction will lead to a transaction being reverted, how
 
 Using bridges is equivalent to adding them as owners on your interpreter instance.
 
-# 8. References
+# 8. Limited instruction support
+
+## No support for arbitrary contracts
+
+Some chains do not support arbitrary contracts, but support limited subset of instructions. 
+In this case only programs which use limited subset of instruction will be executed on target chain via virtual spawns.
+
+**Example**
+
+Cosmos Hub has complies with IBC ICS Atomic swap spec, but does not host contract runtime. 
+
+In this case, programs trying to reach Cosmos Hub from other chains, will not spawn full programs on it.
+
+But will send only swaps and handle invocation return on sender chain.  
+
+## No support for contract postconditions
+
+Some chains cannot abort transaction based on arbitrary check after ABI invocation. 
+In this case for specific subset of instructions to specific whitelisted contracts list will be allowed.
+
+**Example**
+
+On Near cannot abort Swap transaction if amount less than expected limit.
+In this case only trusted Swap contracts will be callable.
+
 
 # 9. Appendix
 

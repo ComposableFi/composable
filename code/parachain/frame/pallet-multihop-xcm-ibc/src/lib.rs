@@ -34,8 +34,9 @@ pub mod pallet {
 	use frame_system::ensure_root;
 
 	use composable_traits::{
+		ibc::{Forward, MemoData},
 		prelude::ToString,
-		xcm::memo::{ChainInfo, Forward, MemoData},
+		xcm::memo::ChainInfo,
 	};
 	use sp_std::boxed::Box;
 
@@ -175,7 +176,7 @@ pub mod pallet {
 				if let Some(memo_memo) = last_memo_data {
 					forward.next = Some(Box::new(memo_memo));
 				};
-				let new_memo = MemoData::new(forward);
+				let new_memo = MemoData::forward(forward);
 				last_memo_data = Some(new_memo);
 			}
 			Ok(last_memo_data)
