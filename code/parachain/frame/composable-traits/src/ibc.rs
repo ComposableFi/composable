@@ -57,7 +57,7 @@ pub fn derive_intermediate_sender(
 	bech32_prefix: &str,
 ) -> Result<String, ()> {
 	use bech32_no_std::ToBase32;
-	let sender_str = format!("{channel}/{original_sender}");
+	let sender_str = alloc::format!("{channel}/{original_sender}");
 	let sender_hash_32 = crate::cosmos::addess_hash(SENDER_PREFIX, sender_str.as_bytes());
 	let sender = sender_hash_32.to_base32();
 	bech32_no_std::encode(&bech32_prefix, sender).map_err(|_| ())
