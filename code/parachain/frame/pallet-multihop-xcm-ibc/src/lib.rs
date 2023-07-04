@@ -86,6 +86,10 @@ pub mod pallet {
 			route_id: u128,
 			reason: u8,
 		},
+		MultihopMemo {
+			reason: u8,
+			memo_none: bool,
+		},
 		FailedMatchLocation {},
 	}
 
@@ -138,7 +142,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T> Pallet<T> {
+	impl<T: Config> Pallet<T> {
 		/// Support only addresses from cosmos ecosystem based on bech32.
 		pub fn create_memo(
 			mut vec: Vec<(ChainInfo, Vec<u8>, [u8; 32])>,
@@ -188,6 +192,10 @@ pub mod pallet {
 				let new_memo = MemoData::new(forward);
 				last_memo_data = Some(new_memo);
 			}
+			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopMemo {
+				reason: 255,
+				memo_none: last_memo_data.is_none(),
+			});
 			Ok(last_memo_data)
 		}
 	}
@@ -445,6 +453,10 @@ pub mod pallet {
 			match Some(memo_data) {
 				Some(memo_data) => {
 					let memo_str = serde_json::to_string(&memo_data).unwrap();
+					<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopMemo {
+						reason: 10,
+						memo_none: memo_str.len() < 1,
+					});
 					let memo_result = <T as pallet_ibc::Config>::MemoMessage::from_str(&memo_str);
 
 					let Ok(memo_result) = memo_result else{
@@ -460,6 +472,11 @@ pub mod pallet {
 				},
 				_ => {},
 			}
+
+			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopMemo {
+				reason: 11,
+				memo_none: memo.is_none()
+			});
 
 			let result = pallet_ibc::Pallet::<T>::transfer(
 				signed_account_id.into(),
