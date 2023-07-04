@@ -309,6 +309,8 @@ The packet data is defined as follows:
 
 Where the **interpreter** is used in when the IBC packet execution fail or timeout to return the locked funds.
 
+`Assets` are fungible `ICS-20` assets.
+
 ### 2.2.3.1.1. Spawn send
 
 The bridge MUST escrow the **assets** transferred.

@@ -61,3 +61,4 @@ pub mod time;
 pub mod vault;
 pub mod xcm;
 pub mod ibc;
+pub mod cosmos;
