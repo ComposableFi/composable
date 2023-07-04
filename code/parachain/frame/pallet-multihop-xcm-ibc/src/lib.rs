@@ -72,6 +72,7 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			memo: Option<T::MemoMessage>,
 			bytes: Vec<u8>,
+			memo_size: u128,
 		},
 		FailedXcmToIbc {
 			origin_address: T::AccountId,
@@ -477,7 +478,8 @@ pub mod pallet {
 						amount: *amount,
 						asset_id: asset_id.unwrap(),
 						memo,
-						bytes: memo_bytes,
+						bytes: memo_bytes.clone(),
+						memo_size: memo_bytes.len() as u128,
 					});
 				},
 				Err(e) => {
