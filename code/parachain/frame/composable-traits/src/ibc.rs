@@ -6,24 +6,24 @@ use crate::prelude::*;
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub enum IBCLifecycleComplete {
-    #[serde(rename = "ibc_ack")]
-    IBCAck {
-        /// The source channel (osmosis side) of the IBC packet
-        channel: String,
-        /// The sequence number that the packet was sent with
-        sequence: u64,
-        /// String encoded version of the ack as seen by OnAcknowledgementPacket(..)
-        ack: String,
-        /// Weather an ack is a success of failure according to the transfer spec
-        success: bool,
-    },
-    #[serde(rename = "ibc_timeout")]
-    IBCTimeout {
-        /// The source channel (osmosis side) of the IBC packet
-        channel: String,
-        /// The sequence number that the packet was sent with
-        sequence: u64,
-    },
+	#[serde(rename = "ibc_ack")]
+	IBCAck {
+		/// The source channel (osmosis side) of the IBC packet
+		channel: String,
+		/// The sequence number that the packet was sent with
+		sequence: u64,
+		/// String encoded version of the ack as seen by OnAcknowledgementPacket(..)
+		ack: String,
+		/// Weather an ack is a success of failure according to the transfer spec
+		success: bool,
+	},
+	#[serde(rename = "ibc_timeout")]
+	IBCTimeout {
+		/// The source channel (osmosis side) of the IBC packet
+		channel: String,
+		/// The sequence number that the packet was sent with
+		sequence: u64,
+	},
 }
 
 /// This message should be send as part of wasm termination memo.
@@ -33,10 +33,10 @@ pub enum IBCLifecycleComplete {
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct VerifiableWasmMsg {
-    pub bech32_prefix : String,
-    pub channel : String,
-    pub original_sender : String,
-    pub asset : Coin,
+	pub bech32_prefix: String,
+	pub channel: String,
+	pub original_sender: String,
+	pub asset: Coin,
 }
 
 /// Message type for `sudo` entry_point
@@ -44,14 +44,18 @@ pub struct VerifiableWasmMsg {
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub enum SudoMsg {
-    #[serde(rename = "ibc_lifecycle_complete")]
-    IBCLifecycleComplete(IBCLifecycleComplete),
+	#[serde(rename = "ibc_lifecycle_complete")]
+	IBCLifecycleComplete(IBCLifecycleComplete),
 }
 
-pub const SENDER_PREFIX : &str = "ibc-wasm-hook-intermediary";
+pub const SENDER_PREFIX: &str = "ibc-wasm-hook-intermediary";
 
 /// from Go code to make compliant wasm hook
-pub fn derive_intermediate_sender(channel: &str, original_sender: &str, bech32_prefix: &str) -> Result<String, ()> {
+pub fn derive_intermediate_sender(
+	channel: &str,
+	original_sender: &str,
+	bech32_prefix: &str,
+) -> Result<String, ()> {
 	use bech32_no_std::ToBase32;
 	let sender_str = format!("{channel}/{original_sender}");
 	let sender_hash_32 = crate::cosmos::addess_hash(SENDER_PREFIX, sender_str.as_bytes());

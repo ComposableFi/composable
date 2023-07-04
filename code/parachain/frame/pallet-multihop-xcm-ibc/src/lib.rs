@@ -34,9 +34,9 @@ pub mod pallet {
 	use frame_system::ensure_root;
 
 	use composable_traits::{
-		prelude::ToString,
-		xcm::memo::{ChainInfo},
 		ibc::{Forward, MemoData},
+		prelude::ToString,
+		xcm::memo::ChainInfo,
 	};
 	use sp_std::boxed::Box;
 
