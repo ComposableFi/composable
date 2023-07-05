@@ -9120,6 +9120,7 @@ dependencies = [
  "hex",
  "ibc-primitives",
  "log 0.4.19",
+ "orml-xtokens",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-ibc",

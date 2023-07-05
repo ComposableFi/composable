@@ -28,7 +28,7 @@ pub mod pallet {
 	// use prelude::{MultiCurrencyCallback, MemoData};
 	use composable_traits::{
 		prelude::{String, Vec},
-		xcm::assets::MultiCurrencyCallback,
+		xcm::assets::MultiCurrencyCallback, currency,
 	};
 	use core::str::FromStr;
 	use frame_system::ensure_root;
@@ -47,7 +47,7 @@ pub mod pallet {
 	/// ## Configuration
 	/// The pallet's configuration trait.
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_ibc::Config {
+	pub trait Config: frame_system::Config + pallet_ibc::Config + orml_xtokens::Config {
 		#[allow(missing_docs)]
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
@@ -141,8 +141,29 @@ pub mod pallet {
 			Ok(())
 		}
 	}
-
 	impl<T: Config> Pallet<T> {
+
+		//todo use para id to xcm into some parachain
+		pub fn transfer_xcm(from: T::AccountId, to: T::AccountId, para_id: Option<u128>, amount: <T as orml_xtokens::Config>::Balance, currency: <T as orml_xtokens::Config>::CurrencyId){
+			let signed_account_id = RawOrigin::Signed(from.clone());
+			let acc_bytes = T::AccountId::encode(&to);
+			let id = acc_bytes.try_into().unwrap();
+			let _result = orml_xtokens::Pallet::<T>::transfer(
+				signed_account_id.into(),
+				currency,
+				amount,
+				Box::new(
+					xcm::latest::MultiLocation::new(
+						0,
+						xcm::latest::Junctions::X1(xcm::latest::Junction::AccountId32 { id: id, network: None })
+					)
+					.into()
+				),
+				WeightLimit::Unlimited,
+			);
+			
+		}
+
 		/// Support only addresses from cosmos ecosystem based on bech32.
 		pub fn create_memo(
 			mut vec: Vec<(ChainInfo, Vec<u8>, [u8; 32])>,

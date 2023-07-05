@@ -45,6 +45,7 @@ serde = { version = "1.0.136", features = ["derive"], optional = true }
 serde_json = { workspace = true, default-features = false, features = [
   "alloc",
 ] }
+orml-xtokens = { workspace = true, default-features = false }
 
 
 [dev-dependencies]
@@ -73,6 +74,7 @@ std = [
   "ibc-primitives/std",
   "serde",
   "hex/std",
+  "orml-xtokens/std",
 ]
 
 runtime-benchmarks = [
