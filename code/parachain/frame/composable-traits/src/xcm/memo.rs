@@ -19,6 +19,7 @@ use sp_runtime::DispatchError;
 )]
 pub struct ChainInfo {
 	pub chain_id: u128,
+	pub order: u8,
 	pub channel_id: u64,        //for packet or memo
 	pub timestamp: Option<u64>, //for packet
 	pub height: Option<u64>,    //for memo packet message forwarding

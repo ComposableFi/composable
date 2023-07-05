@@ -116,7 +116,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		u128, //chain id
-		BoundedBTreeSet<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>), T::MaxMultihopCount>, /* route to forward */
+		BoundedVec<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>), T::MaxMultihopCount>, /* route to forward */
 		ValueQuery,
 	>;
 
@@ -131,7 +131,7 @@ pub mod pallet {
 		pub fn add_route(
 			origin: OriginFor<T>,
 			route_id: u128,
-			route: BoundedBTreeSet<
+			route: BoundedVec<
 				(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>),
 				T::MaxMultihopCount,
 			>,
@@ -388,7 +388,7 @@ pub mod pallet {
 			//route does not exist
 			// let route = ChainIdToMiltihopRoutePath::<T>::try_get(chain_id)
 			// 	.map_err(|_| Error::<T>::MultiHopRouteDoesNotExist)?;
-			let Ok(route) = ChainIdToMiltihopRoutePath::<T>::try_get(route_id) else{
+			let Ok(mut route) = ChainIdToMiltihopRoutePath::<T>::try_get(route_id) else{
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
@@ -398,6 +398,8 @@ pub mod pallet {
 			};
 
 			let route_len = route.len();
+			//order route by chain_id 
+			route.sort_by(|a, b| a.0.order.cmp(&b.0.order));
 			let mut chain_info_iter = route.into_iter();
 
 			//route does not exist
