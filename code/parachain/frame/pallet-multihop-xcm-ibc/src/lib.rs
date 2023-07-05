@@ -90,6 +90,14 @@ pub mod pallet {
 			reason: u8,
 			memo_none: bool,
 		},
+		MultihopXcmMemo {
+			reason: u8,
+			from: T::AccountId,
+			to: T::AccountId,
+			amount: u128,
+			asset_id: u128,
+			is_error: bool,
+		},
 		FailedMatchLocation {},
 	}
 
@@ -152,21 +160,48 @@ pub mod pallet {
 			fn transfer_xcm(from: T::AccountId, to: T::AccountId, para_id: Option<u32>, amount: u128, currency: u128) -> Option<()> {
 			let signed_account_id = RawOrigin::Signed(from.clone());
 			let acc_bytes = T::AccountId::encode(&to);
-			let id = acc_bytes.try_into().unwrap();
-			let _result = orml_xtokens::Pallet::<T>::transfer(
+			let Ok(id) = acc_bytes.try_into() else{
+				<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
+					reason: 0,
+					from: from.clone(),
+					to: to.clone(),
+					amount: amount,
+					asset_id: currency,
+					is_error: true,
+				});
+				return None;
+			};
+			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
+				reason: 1,
+				from: from.clone(),
+				to: to.clone(),
+				amount: amount,
+				asset_id: currency,
+				is_error: false,
+			});
+			let result = orml_xtokens::Pallet::<T>::transfer(
 				signed_account_id.into(),
 				currency.into(),
 				amount.into(),
 				Box::new(
 					xcm::latest::MultiLocation::new(
-						0,
+						1, //parent
 						xcm::latest::Junctions::X1(xcm::latest::Junction::AccountId32 { id: id, network: None })
 					)
 					.into()
 				),
 				WeightLimit::Unlimited,
 			);
-			None
+			//track the error as event and return none
+			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
+				reason: 2,
+				from: from.clone(),
+				to: to.clone(),
+				amount: amount,
+				asset_id: currency,
+				is_error: result.is_err(),
+			});
+			Some(())
 		}
 	}
 	impl<T: Config> Pallet<T> {
