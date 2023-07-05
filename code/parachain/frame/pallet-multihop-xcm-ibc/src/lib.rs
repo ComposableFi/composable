@@ -27,8 +27,9 @@ pub mod pallet {
 	use xcm::latest::prelude::*;
 	// use prelude::{MultiCurrencyCallback, MemoData};
 	use composable_traits::{
+		currency,
 		prelude::{String, Vec},
-		xcm::assets::MultiCurrencyCallback, currency,
+		xcm::assets::MultiCurrencyCallback,
 	};
 	use core::str::FromStr;
 	use frame_system::ensure_root;
@@ -123,7 +124,7 @@ pub mod pallet {
 	pub type ChainIdToMiltihopRoutePath<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		u128, //chain id
+		u128,                                                                               /* chain id */
 		BoundedVec<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>), T::MaxMultihopCount>, /* route to forward */
 		ValueQuery,
 	>;
@@ -151,13 +152,22 @@ pub mod pallet {
 	}
 
 	impl<T: Config> pallet_ibc::ics20::SubstrateMultihopXcmHandler for Pallet<T>
-	where u128 : Into<<T as orml_xtokens::Config>::Balance>,
-		  u128 : Into<<T as orml_xtokens::Config>::CurrencyId>,
-	 {
+	where
+		u128: Into<<T as orml_xtokens::Config>::Balance>,
+		u128: Into<<T as orml_xtokens::Config>::CurrencyId>,
+	{
 		type AccountId = T::AccountId;
 		//todo use para id to xcm into some parachain
-		// fn transfer_xcm(from: T::AccountId, to: T::AccountId, para_id: Option<u32>, amount: u128, currency: u128) -> Option<()> where <T as orml_xtokens::Config>::CurrencyId: From<u128>, <T as orml_xtokens::Config>::Balance: From<u128>{
-			fn transfer_xcm(from: T::AccountId, to: T::AccountId, para_id: Option<u32>, amount: u128, currency: u128) -> Option<()> {
+		// fn transfer_xcm(from: T::AccountId, to: T::AccountId, para_id: Option<u32>, amount: u128,
+		// currency: u128) -> Option<()> where <T as orml_xtokens::Config>::CurrencyId: From<u128>,
+		// <T as orml_xtokens::Config>::Balance: From<u128>{
+		fn transfer_xcm(
+			from: T::AccountId,
+			to: T::AccountId,
+			para_id: Option<u32>,
+			amount: u128,
+			currency: u128,
+		) -> Option<()> {
 			let signed_account_id = RawOrigin::Signed(from.clone());
 			let acc_bytes = T::AccountId::encode(&to);
 			let Ok(id) = acc_bytes.try_into() else{
@@ -175,20 +185,25 @@ pub mod pallet {
 				reason: 1,
 				from: from.clone(),
 				to: to.clone(),
-				amount: amount,
+				amount,
 				asset_id: currency,
 				is_error: false,
 			});
+			//if para id is none then parent is 1 if para id is some then parent is 0
+			let parent = if para_id.is_some() { 0 } else { 1 };
 			let result = orml_xtokens::Pallet::<T>::transfer(
 				signed_account_id.into(),
 				currency.into(),
 				amount.into(),
 				Box::new(
 					xcm::latest::MultiLocation::new(
-						1, //parent
-						xcm::latest::Junctions::X1(xcm::latest::Junction::AccountId32 { id: id, network: None })
+						parent, //parent
+						xcm::latest::Junctions::X1(xcm::latest::Junction::AccountId32 {
+							id,
+							network: None,
+						}),
 					)
-					.into()
+					.into(),
 				),
 				WeightLimit::Unlimited,
 			);
@@ -197,7 +212,7 @@ pub mod pallet {
 				reason: 2,
 				from: from.clone(),
 				to: to.clone(),
-				amount: amount,
+				amount,
 				asset_id: currency,
 				is_error: result.is_err(),
 			});
@@ -205,11 +220,11 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> Pallet<T> {
-
 		// //todo use para id to xcm into some parachain
-		// pub fn transfer_xcm(from: T::AccountId, to: T::AccountId, para_id: Option<u128>, amount: u128, currency: u128) where <T as orml_xtokens::Config>::CurrencyId: From<u128>, <T as orml_xtokens::Config>::Balance: From<u128>{
-		// 	let signed_account_id = RawOrigin::Signed(from.clone());
-		// 	let acc_bytes = T::AccountId::encode(&to);
+		// pub fn transfer_xcm(from: T::AccountId, to: T::AccountId, para_id: Option<u128>, amount:
+		// u128, currency: u128) where <T as orml_xtokens::Config>::CurrencyId: From<u128>, <T as
+		// orml_xtokens::Config>::Balance: From<u128>{ 	let signed_account_id =
+		// RawOrigin::Signed(from.clone()); 	let acc_bytes = T::AccountId::encode(&to);
 		// 	let id = acc_bytes.try_into().unwrap();
 		// 	let _result = orml_xtokens::Pallet::<T>::transfer(
 		// 		signed_account_id.into(),
@@ -224,7 +239,7 @@ pub mod pallet {
 		// 		),
 		// 		WeightLimit::Unlimited,
 		// 	);
-			
+
 		// }
 
 		/// Support only addresses from cosmos ecosystem based on bech32.
@@ -246,25 +261,26 @@ pub mod pallet {
 					let memo_receiver = scale_info::prelude::format!("0x{}", hex::encode(&address));
 					Forward::new_xcm_memo(memo_receiver, i.para_id)
 				} else {
-					let memo_receiver = if i.is_substrate_ibc{
+					let memo_receiver = if i.is_substrate_ibc {
 						scale_info::prelude::format!("0x{}", hex::encode(&address))
-					}
-					else{
-						let result: core::result::Result<Vec<bech32_no_std::u5>, bech32_no_std::Error> =
-						address.into_iter().map(bech32_no_std::u5::try_from_u8).collect();
+					} else {
+						let result: core::result::Result<
+							Vec<bech32_no_std::u5>,
+							bech32_no_std::Error,
+						> = address.into_iter().map(bech32_no_std::u5::try_from_u8).collect();
 						let data =
 							// result.map_err(|_| Error::<T>::IncorrectAddress { chain_id: i.chain_id as u8 })?;
 							result.map_err(|_| DispatchError::Other("()"))?;
 
 						let name = String::from_utf8(name.into())
-							// .map_err(|_| Error::<T>::IncorrectChainName { chain_id: i.chain_id as u8
-							// })?;
+							// .map_err(|_| Error::<T>::IncorrectChainName { chain_id: i.chain_id as
+							// u8 })?;
 							.map_err(|_| DispatchError::Other("()"))?;
-							bech32_no_std::encode(&name, data.clone()).map_err(|_| {
-								// Error::<T>::FailedToEncodeBech32Address { chain_id: i.chain_id as u8
-								// }
-								DispatchError::Other("()")
-							})?
+						bech32_no_std::encode(&name, data.clone()).map_err(|_| {
+							// Error::<T>::FailedToEncodeBech32Address { chain_id: i.chain_id as u8
+							// }
+							DispatchError::Other("()")
+						})?
 					};
 
 					Forward::new_ibc_memo(
@@ -433,7 +449,7 @@ pub mod pallet {
 			};
 
 			let route_len = route.len();
-			//order route by chain_id 
+			//order route by chain_id
 			route.sort_by(|a, b| a.0.order.cmp(&b.0.order));
 			let mut chain_info_iter = route.into_iter();
 
@@ -566,7 +582,7 @@ pub mod pallet {
 
 			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopMemo {
 				reason: 11,
-				memo_none: memo.is_none()
+				memo_none: memo.is_none(),
 			});
 
 			let result = pallet_ibc::Pallet::<T>::transfer(
@@ -577,7 +593,8 @@ pub mod pallet {
 				memo.clone(),
 			);
 
-			let memo_bytes = memo.clone().map(|m| m.to_string().as_bytes().to_vec()).unwrap_or(Vec::new());
+			let memo_bytes =
+				memo.clone().map(|m| m.to_string().as_bytes().to_vec()).unwrap_or(Vec::new());
 			match result {
 				Ok(_) => {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::SuccessXcmToIbc {

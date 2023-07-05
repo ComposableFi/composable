@@ -10,7 +10,7 @@ use common::{
 use composable_traits::assets::InspectRegistryMetadata;
 use frame_system::EnsureSigned;
 use pallet_ibc::{
-	ics20::{IbcModule, MODULE_ID_STR, PORT_ID_STR, SubstrateMultihopXcmHandlerNone},
+	ics20::{IbcModule, SubstrateMultihopXcmHandlerNone, MODULE_ID_STR, PORT_ID_STR},
 	light_client_common::RelayChain,
 	routing::ModuleRouter,
 	DenomToAssetId, IbcAssetIds, IbcAssets,
