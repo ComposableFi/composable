@@ -92,7 +92,7 @@ parameter_types! {
 	pub FeeAccount: <Runtime as pallet_ibc::Config>::AccountIdConversion = ibc_primitives::IbcAccount(AccountId32::from(hex!("a72ef3ce1ecd46163bc5e23fd3e6a4623d9717c957fb59001a5d4cb949150f28")));
 }
 
-use pallet_ibc::ics20::{IbcModule, Ics20RateLimiter};
+use pallet_ibc::ics20::{IbcModule, Ics20RateLimiter, SubstrateMultihopXcmHandlerNone};
 
 pub struct ConstantAny;
 
@@ -197,6 +197,8 @@ impl pallet_ibc::Config for Runtime {
 	type IbcAccountId = Self::AccountId;
 	type HandleMemo = IbcModule<Runtime>;
 	type MemoMessage = MemoMessage;
+	type SubstrateMultihopXcmHandler = SubstrateMultihopXcmHandlerNone<Runtime>;
+	// type SubstrateMultihopXcmHandler = pallet_multihop_xcm_ibc::Pallet<Runtime>;
 	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;

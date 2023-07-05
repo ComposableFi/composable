@@ -141,17 +141,22 @@ pub mod pallet {
 			Ok(())
 		}
 	}
-	impl<T: Config> Pallet<T> {
 
+	impl<T: Config> pallet_ibc::ics20::SubstrateMultihopXcmHandler for Pallet<T>
+	where u128 : Into<<T as orml_xtokens::Config>::Balance>,
+		  u128 : Into<<T as orml_xtokens::Config>::CurrencyId>,
+	 {
+		type AccountId = T::AccountId;
 		//todo use para id to xcm into some parachain
-		pub fn transfer_xcm(from: T::AccountId, to: T::AccountId, para_id: Option<u128>, amount: <T as orml_xtokens::Config>::Balance, currency: <T as orml_xtokens::Config>::CurrencyId){
+		// fn transfer_xcm(from: T::AccountId, to: T::AccountId, para_id: Option<u32>, amount: u128, currency: u128) -> Option<()> where <T as orml_xtokens::Config>::CurrencyId: From<u128>, <T as orml_xtokens::Config>::Balance: From<u128>{
+			fn transfer_xcm(from: T::AccountId, to: T::AccountId, para_id: Option<u32>, amount: u128, currency: u128) -> Option<()> {
 			let signed_account_id = RawOrigin::Signed(from.clone());
 			let acc_bytes = T::AccountId::encode(&to);
 			let id = acc_bytes.try_into().unwrap();
 			let _result = orml_xtokens::Pallet::<T>::transfer(
 				signed_account_id.into(),
-				currency,
-				amount,
+				currency.into(),
+				amount.into(),
 				Box::new(
 					xcm::latest::MultiLocation::new(
 						0,
@@ -161,8 +166,31 @@ pub mod pallet {
 				),
 				WeightLimit::Unlimited,
 			);
-			
+			None
 		}
+	}
+	impl<T: Config> Pallet<T> {
+
+		// //todo use para id to xcm into some parachain
+		// pub fn transfer_xcm(from: T::AccountId, to: T::AccountId, para_id: Option<u128>, amount: u128, currency: u128) where <T as orml_xtokens::Config>::CurrencyId: From<u128>, <T as orml_xtokens::Config>::Balance: From<u128>{
+		// 	let signed_account_id = RawOrigin::Signed(from.clone());
+		// 	let acc_bytes = T::AccountId::encode(&to);
+		// 	let id = acc_bytes.try_into().unwrap();
+		// 	let _result = orml_xtokens::Pallet::<T>::transfer(
+		// 		signed_account_id.into(),
+		// 		currency.into(),
+		// 		amount.into(),
+		// 		Box::new(
+		// 			xcm::latest::MultiLocation::new(
+		// 				0,
+		// 				xcm::latest::Junctions::X1(xcm::latest::Junction::AccountId32 { id: id, network: None })
+		// 			)
+		// 			.into()
+		// 		),
+		// 		WeightLimit::Unlimited,
+		// 	);
+			
+		// }
 
 		/// Support only addresses from cosmos ecosystem based on bech32.
 		pub fn create_memo(

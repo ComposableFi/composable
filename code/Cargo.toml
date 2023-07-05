@@ -105,12 +105,12 @@ orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-modu
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "a0751540591c88ccc2d4029464de887933727183", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "a0751540591c88ccc2d4029464de887933727183", default-features = false }
 
-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "604fc78d4ab36573793ee91484258898cce67ca0", default-features = false }
-ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev = "604fc78d4ab36573793ee91484258898cce67ca0", default-features = false }
-ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "604fc78d4ab36573793ee91484258898cce67ca0", default-features = false }
-ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev = "604fc78d4ab36573793ee91484258898cce67ca0", default-features = false }
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "604fc78d4ab36573793ee91484258898cce67ca0", default-features = false }
-pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "604fc78d4ab36573793ee91484258898cce67ca0", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/centauri", rev = "e19da8da70461dce572648035a8325a19ff9ed23", default-features = false }
+ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev = "e19da8da70461dce572648035a8325a19ff9ed23", default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "e19da8da70461dce572648035a8325a19ff9ed23", default-features = false }
+ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev = "e19da8da70461dce572648035a8325a19ff9ed23", default-features = false }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "e19da8da70461dce572648035a8325a19ff9ed23", default-features = false }
+pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "e19da8da70461dce572648035a8325a19ff9ed23", default-features = false }
 
 xcm-builder = { git = "https://github.com/paritytech/polkadot", rev = "c22e1c4173bf6966f5d1980f4299f7abe836f0c1", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", rev = "c22e1c4173bf6966f5d1980f4299f7abe836f0c1", default-features = false }
