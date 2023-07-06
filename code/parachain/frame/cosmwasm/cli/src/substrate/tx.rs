@@ -1,7 +1,12 @@
-use crate::args::{TxCommand, TxSubcommands, WasmInstantiate};
+use crate::{
+	args::{
+		Execute, Migrate, TxCommand, TxSubcommands, UpdateAdmin, WasmInstantiate, WasmInstantiate2,
+	},
+	error::Error,
+};
 
 use super::{
-	cosmwasm,
+	cosmwasm::fetch_code,
 	subxt_api::api::{
 		self,
 		cosmwasm::events,
@@ -19,7 +24,6 @@ use super::{
 	},
 	OutputType,
 };
-use clap::{Args, Subcommand};
 use serde::Serialize;
 
 use subxt::{
@@ -40,7 +44,7 @@ impl CommandRunner {
 		pair: P,
 		chain_endpoint: String,
 		output_type: OutputType,
-	) -> anyhow::Result<()>
+	) -> Result<(), Error>
 	where
 		P::Seed: TryFrom<Vec<u8>>,
 		MultiSignature: From<<P as Pair>::Signature>,
@@ -48,8 +52,8 @@ impl CommandRunner {
 		subxt::utils::MultiSignature: From<<P as sp_core::Pair>::Signature>,
 	{
 		match command.subcommands {
-			TxSubcommands::Store(upload) => {
-				let code = upload.fetch_code().await?;
+			TxSubcommands::Store(store_command) => {
+				let code = fetch_code(&store_command)?;
 				let events = do_signed_transaction(
 					chain_endpoint,
 					pair,
@@ -59,14 +63,10 @@ impl CommandRunner {
 				print_events::<events::Uploaded, Uploaded>(&events, output_type)?;
 				Ok(())
 			},
-			TxSubcommands::Instantiate(WasmInstantiate {
-				code_id_int64,
+			TxSubcommands::Instantiate2(WasmInstantiate2 {
 				salt,
-				admin,
-				label,
-				amount,
-				gas,
-				json_encoded_init_args,
+				instantiate:
+					WasmInstantiate { gas, code_id_int64, admin, label, amount, json_encoded_init_args },
 			}) => {
 				let events = do_signed_transaction(
 					chain_endpoint,
@@ -91,7 +91,7 @@ impl CommandRunner {
 				print_events::<events::Instantiated, Instantiated>(&events, output_type)?;
 				Ok(())
 			},
-			TxSubcommands::Execute(cosmwasm::Execute { contract, funds, gas, message }) => {
+			TxSubcommands::Execute(Execute { gas, contract, funds, message }) => {
 				let events = do_signed_transaction(
 					chain_endpoint,
 					pair,
@@ -112,7 +112,7 @@ impl CommandRunner {
 				print_events::<events::Executed, ()>(&events, output_type)?;
 				Ok(())
 			},
-			TxSubcommands::Migrate(cosmwasm::Migrate { contract, new_code_id, gas, message }) => {
+			TxSubcommands::Migrate(Migrate { gas, contract, new_code_id, message }) => {
 				let events = do_signed_transaction(
 					chain_endpoint,
 					pair,
@@ -127,8 +127,11 @@ impl CommandRunner {
 				print_events::<events::Migrated, Migrated>(&events, output_type)?;
 				Ok(())
 			},
-			TxSubcommands::UpdateAdmin(cosmwasm::UpdateAdmin {
-				contract, new_admin, gas, ..
+			TxSubcommands::UpdateAdmin(UpdateAdmin {
+				contract,
+				new_admin,
+				gas,
+				no_admin: _no_admin,
 			}) => {
 				let events = do_signed_transaction(
 					chain_endpoint,
@@ -147,7 +150,7 @@ async fn do_signed_transaction<CallData, P: Pair>(
 	endpoint: String,
 	signer: P,
 	tx: subxt::tx::Payload<CallData>,
-) -> anyhow::Result<ExtrinsicEvents<SubstrateConfig>>
+) -> Result<ExtrinsicEvents<SubstrateConfig>, Error>
 where
 	MultiSignature: From<<P as Pair>::Signature>,
 	MultiSigner: From<<P as Pair>::Public>,
@@ -170,7 +173,7 @@ where
 fn print_events<E, CE>(
 	events: &ExtrinsicEvents<SubstrateConfig>,
 	output_type: OutputType,
-) -> anyhow::Result<()>
+) -> Result<(), Error>
 where
 	E: subxt::events::StaticEvent,
 	CE: PrettyDisplay + Serialize + From<E>,

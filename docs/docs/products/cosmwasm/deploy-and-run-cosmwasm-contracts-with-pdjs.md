@@ -29,35 +29,19 @@ Run `nix run composable#devnet-picasso` or `docker run --publish 9988:9988 compo
 10. `cosmwasm -> execute` , put `contract` address from event, gas `10000000000`, message `{ "mint" : { "amount" : "123456789", "recipient" : "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL" }}`, other fields `0x`.
 11. Observe `cosmwasm.Executed` execution success.
 
-  [
-    [
-      0
-    ]
-    {
-      DualAssetConstantProduct: {
-        owner: 5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL
-        assetsWeights: {
-          1: 50.00%
-          4: 50.00%
-        }
-        lpToken: 149,379,386,384,882,397,174,193,330,044,887,105,538
-        feeConfig: {
-          feeRate: 0.00%
-          ownerFeeRate: 20.00%
-          protocolFeeRate: 100.00%
-        }
-      }
-    }
-  ]
-
 ### DEX precompile (singleton instance contract embedded into Substrate runtime)
 
 1. Contract address is `5w3oyasYQg6vkzwETMqUfvtVM99GQ4Xy8mMdKXMgJZDoRYwg`
 
-2. Execute message is `{ "add_liquidity" : { "pool_id":  "0", "min_mint_amount" : "0", "keep_alive": false, "assets" : [{"denom" : "1", "amount" : "1000000000000000"}, {"denom" : "4", "amount" : "1000000000000000"} ] } }`
+2. Execute message is `{ "members": [ { "addr": "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6", "weight": 0 } ] }`
 
 
 ### Do
+
+## CW4
+
+Download [CW4 Group](https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw4_group.wasm) contract
+and instantiate it with `{"members": [{"addr": "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL", "weight" : 1 }]}` message. 
 
 ## Testnet
 
