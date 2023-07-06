@@ -1,4 +1,5 @@
-/// Errors from integration of CosmwWasm <-> Substrate (types, conversions, encoding, host functions, etc)
+/// Errors from integration of CosmwWasm <-> Substrate (types, conversions, encoding, host
+/// functions, etc)
 #[derive(thiserror::Error, Debug)]
 pub enum CosmwasmSubstrateError {
 	#[error("")]

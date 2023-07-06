@@ -341,7 +341,6 @@ pub mod pallet {
 		NotSwapped,
 	}
 
-
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
@@ -355,7 +354,6 @@ pub mod pallet {
 		pub pools: sp_std::vec::Vec<(T::AccountId, T::AssetId, T::AssetId)>,
 	}
 
-
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
@@ -364,9 +362,9 @@ pub mod pallet {
 				let pool = <PoolInitConfigurationOf<T>>::DualAssetConstantProduct {
 					owner,
 					assets_weights: vec![(base, half), (quote, half)],
-					fee : <_>::default(),
+					fee: <_>::default(),
 				};
-				
+
 				<Pallet<T>>::do_create_pool(pool, None).expect("genesis is valid");
 			}
 		}

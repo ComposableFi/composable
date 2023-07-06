@@ -1,5 +1,7 @@
 use super::abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas};
-use crate::{runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Config, Pallet};
+use crate::{
+	prelude::*, runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Config, Pallet,
+};
 use alloc::{borrow::ToOwned, string::String};
 use composable_traits::cosmwasm::CosmwasmSubstrateError;
 use core::marker::{Send, Sync};
@@ -87,6 +89,7 @@ impl<T: Config> From<CosmwasmSubstrateError> for CosmwasmVMError<T> {
 			CosmwasmSubstrateError::DispatchError => Self::Precompile,
 			CosmwasmSubstrateError::QuerySerialize => Self::QuerySerialize,
 			CosmwasmSubstrateError::ExecuteSerialize => Self::ExecuteSerialize,
+			CosmwasmSubstrateError::Ibc => Self::Ibc("CosmwasmSubstrate".to_string()),
 		}
 	}
 }
@@ -282,7 +285,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		iterator_id: u32,
 	) -> Result<(Self::StorageKey, Self::StorageValue), Self::Error> {
-		log::debug!(target: "runtime::contracts", "db_next");NotImplemented
+		log::debug!(target: "runtime::contracts", "db_next");
 		match Pallet::<T>::do_db_next(self, iterator_id)? {
 			Some(kv_pair) => Ok(kv_pair),
 			None => Ok((Vec::new(), Vec::new())),

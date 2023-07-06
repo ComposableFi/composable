@@ -92,7 +92,6 @@ impl cosmwasm_vm::system::EventHasCodeId for ChannelOpenCall {
 	const HAS_CODE_ID: bool = false;
 }
 
-
 impl<T: Config> Pallet<T> {
 	/// Check whether a contract export the mandatory IBC functions and is consequently IBC capable.
 	pub(crate) fn do_check_ibc_capability(module: &parity_wasm::elements::Module) -> bool {

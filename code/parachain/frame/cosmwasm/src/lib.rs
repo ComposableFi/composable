@@ -184,6 +184,7 @@ pub mod pallet {
 		IteratorNotFound,
 		IteratorValueNotFound,
 		NotAuthorized,
+		NotImplemented,
 		Unsupported,
 		ExecuteDeserialize,
 		Ibc,
@@ -768,6 +769,7 @@ impl<T: Config> Pallet<T> {
 					CosmwasmVMError::Precompile => Error::<T>::Precompile,
 					CosmwasmVMError::QueryDeserialize => Error::<T>::QueryDeserialize,
 					CosmwasmVMError::ExecuteSerialize => Error::<T>::ExecuteSerialize,
+					CosmwasmVMError::NotImplemented => Error::<T>::NotAuthorized,
 				};
 				Err(DispatchErrorWithPostInfo { error: error.into(), post_info })
 			},
