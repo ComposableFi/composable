@@ -57,8 +57,12 @@ Run `nix run composable#devnet-picasso` or `docker run --publish 9988:9988 compo
 2. Execute message is `{ "add_liquidity" : { "pool_id":  "0", "min_mint_amount" : "0", "keep_alive": false, "assets" : [{"denom" : "1", "amount" : "1000000000000000"}, {"denom" : "4", "amount" : "1000000000000000"} ] } }`
 
 
-### Testnet
+### Do
 
-Repeat steps on testnet.
+## Testnet
 
-Do Swap according schema.
+Repeat steps here.
+
+## Swap
+
+Form Swap according schema and execute.
