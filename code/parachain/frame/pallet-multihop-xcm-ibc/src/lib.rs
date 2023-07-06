@@ -124,7 +124,7 @@ pub mod pallet {
 	pub type ChainIdToMiltihopRoutePath<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		u128,                                                                               /* chain id */
+		u128, /* chain id */
 		BoundedVec<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>), T::MaxMultihopCount>, /* route to forward */
 		ValueQuery,
 	>;
