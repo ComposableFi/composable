@@ -1,7 +1,7 @@
 use cosmwasm_std::{Binary, IbcTimeout};
 use serde_json::Value;
 
-use crate::prelude::*;
+use crate::{prelude::*, cosmwasm::CosmwasmSubstrateError};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
@@ -174,16 +174,12 @@ pub enum IbcMsg {
         timeout: IbcTimeout,
 		memo: Option<String>
     },
-    /// Sends an IBC packet with given data over the existing channel.
-    /// Data should be encoded in a format defined by the channel version,
-    /// and the module on the other side should know how to parse this.
-    SendPacket {
-        channel_id: String,
-        data: Binary,
-        /// when packet times out, measured on remote chain
-        timeout: IbcTimeout,
-    },
-    /// This will close an existing channel that is owned by this contract.
-    /// Port is auto-assigned to the contract's IBC port
-    CloseChannel { channel_id: String },
+}
+
+/// makes it easier to convert CW types to underlying IBC types without dependency on gazillion of crates from centauri
+pub trait CosmwasmIbc {
+	pub fn transfer(from : cosmwasm_std::Addr, 	channel_id: String,
+		to_address: String,
+		amount: cosmwasm_std::Coin,
+		timeout: cosmwasm_std::IbcTimeout) -> Result<(), CosmwasmSubstrateError>;
 }

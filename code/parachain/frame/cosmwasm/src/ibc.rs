@@ -92,13 +92,6 @@ impl cosmwasm_vm::system::EventHasCodeId for ChannelOpenCall {
 	const HAS_CODE_ID: bool = false;
 }
 
-/// makes it easier to convert CW types to underlying IBC types without dependency on gazillion of crates from centauri
-pub trait CosmwasmIbc {
-	pub fn transfer(from : cosmwasm_std::Addr, 	channel_id: String,
-		to_address: String,
-		amount: cosmwasm_std::Coin,
-		timeout: cosmwasm_std::IbcTimeout)
-}
 
 impl<T: Config> Pallet<T> {
 	/// Check whether a contract export the mandatory IBC functions and is consequently IBC capable.
