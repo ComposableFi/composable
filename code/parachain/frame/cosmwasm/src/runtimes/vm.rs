@@ -67,6 +67,7 @@ pub enum CosmwasmVMError<T: Config> {
 	ReadOnlyViolation,
 	OutOfGas,
 	Unsupported,
+	NotImplemented,
 	ContractNotFound,
 	ExecuteDeserialize,
 	QuerySerialize,
@@ -281,7 +282,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		iterator_id: u32,
 	) -> Result<(Self::StorageKey, Self::StorageValue), Self::Error> {
-		log::debug!(target: "runtime::contracts", "db_next");
+		log::debug!(target: "runtime::contracts", "db_next");NotImplemented
 		match Pallet::<T>::do_db_next(self, iterator_id)? {
 			Some(kv_pair) => Ok(kv_pair),
 			None => Ok((Vec::new(), Vec::new())),
@@ -414,8 +415,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 
 	fn burn(&mut self, funds: &[Coin]) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "burn: {:#?}", funds);
-		// TODO: assets registry check etc...
-		Err(CosmwasmVMError::Unsupported)
+		Err(CosmwasmVMError::NotImplemented)
 	}
 
 	fn balance(&mut self, account: &Self::Address, denom: String) -> Result<Coin, Self::Error> {

@@ -139,6 +139,7 @@ impl PalletHook<Runtime> for Precompiles {
 			String::from_utf8_lossy(message)
 		);
 		let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
+		let ibc: AccountIdOf<Runtime> = IbcPalletId::get().into_account_truncating();
 		match contract_address {
 			address if address == dex => {
 				let message: composable_traits::dex::ExecuteMsg =
@@ -155,6 +156,17 @@ impl PalletHook<Runtime> for Precompiles {
 					Ok(result) => Ok(ContractResult::Ok(result)),
 					Err(err) => Ok(ContractResult::Err(alloc::format!("{:?}", err))),
 				}
+			},
+			address if address == ibc => {
+				let message: composable_traits::ibc::IbcMsg =
+					serde_json::from_slice(message)
+						.map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
+				match message {
+						composable_traits::ibc::IbcMsg::Transfer { channel_id, to_address, amount, timeout, memo } => todo!(),
+						composable_traits::ibc::IbcMsg::SendPacket { channel_id, data, timeout } => todo!(),
+						composable_traits::ibc::IbcMsg::CloseChannel { channel_id } => todo!(),
+        		_ => todo!(),
+    			}
 			},
 			_ => Err(CosmwasmVMError::ContractNotFound),
 		}
