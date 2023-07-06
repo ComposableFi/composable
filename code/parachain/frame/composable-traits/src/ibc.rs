@@ -1,4 +1,4 @@
-use cosmwasm_std::{Binary, IbcTimeout};
+use cosmwasm_std::{IbcTimeout};
 use serde_json::Value;
 
 use crate::{prelude::*, cosmwasm::CosmwasmSubstrateError};
@@ -178,7 +178,7 @@ pub enum IbcMsg {
 
 /// makes it easier to convert CW types to underlying IBC types without dependency on gazillion of crates from centauri
 pub trait CosmwasmIbc {
-	pub fn transfer(from : cosmwasm_std::Addr, 	channel_id: String,
+	fn transfer(from : cosmwasm_std::Addr, 	channel_id: String,
 		to_address: String,
 		amount: cosmwasm_std::Coin,
 		timeout: cosmwasm_std::IbcTimeout) -> Result<(), CosmwasmSubstrateError>;

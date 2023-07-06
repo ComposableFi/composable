@@ -29,6 +29,7 @@
 	trivial_numeric_casts,
 	unused_extern_crates
 )]
+#![feature(more_qualified_paths)]
 pub use pallet::*;
 
 #[cfg(test)]
@@ -106,7 +107,7 @@ pub mod pallet {
 		DualAssetConstantProduct {
 			owner: AccountId,
 			assets_weights: Vec<(AssetId, Permill)>,
-			// trading fee
+			/// trading fee
 			fee: Permill,
 		},
 	}
@@ -338,6 +339,37 @@ pub mod pallet {
 	pub(crate) enum PriceRatio {
 		Swapped,
 		NotSwapped,
+	}
+
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { pools: vec![] }
+		}
+	}
+
+	#[pallet::genesis_config]
+
+	pub struct GenesisConfig<T: Config> {
+		pub pools: sp_std::vec::Vec<(T::AccountId, T::AssetId, T::AssetId)>,
+	}
+
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			let half = Permill::from_percent(50);
+			for (owner, base, quote) in self.pools.clone() {
+				let pool = <PoolInitConfigurationOf<T>>::DualAssetConstantProduct {
+					owner,
+					assets_weights: vec![(base, half), (quote, half)],
+					fee : <_>::default(),
+				};
+				
+				<Pallet<T>>::do_create_pool(pool, None).expect("genesis is valid");
+			}
+		}
 	}
 
 	#[pallet::call]
