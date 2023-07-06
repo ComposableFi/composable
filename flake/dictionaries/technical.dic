@@ -25,6 +25,7 @@ assetsinfo
 autofetch
 autorenew
 azuretools
+basedenom
 BCENT
 BCENTS
 BCOIN
@@ -71,6 +72,7 @@ codesandbox
 commonmark # https://commonmark.org/help
 composablenodes
 composabletests
+concentratedliquidity
 containerd
 containrrr # `containrrr/watchtower` docker image
 contentful
@@ -84,6 +86,7 @@ currentmemory
 DACP
 dalek
 dappsys
+dasel
 deadnix
 deburr
 defaultattrs
@@ -123,6 +126,9 @@ frontpage
 fsevenm
 FSIZE
 fslot
+gamm
+gentx
+gentxs
 getglobal
 getlocal
 getrandom
@@ -171,6 +177,7 @@ keccak
 keccak256
 keyval
 Konnect
+laddr
 lastmod
 lazyledger
 lcgfmg
@@ -186,6 +193,7 @@ libudev
 libwasmvm
 livenet
 llvm
+localosmosis
 localstorage
 loglevel
 lparachain
@@ -245,6 +253,7 @@ oraclesetup # script of package.json
 oraclestake
 Origin
 OSMO
+osmosisd # osmosis cosmos node
 oxalica # github username
 pacman
 pandoc
@@ -272,12 +281,15 @@ plantuml
 Pointable
 polkalaunch
 polkassembly
+poolincentives
+poolmanager
 popcnt
 Popcnt
 popout
 postinfo
 powd
 powf
+pprof
 prebaked
 preclaim
 preclaims
@@ -295,6 +307,7 @@ protoc
 PROTOC
 protos
 PTRACE
+qjateuf
 quickstart
 Quickstart
 radiumblock
@@ -409,10 +422,13 @@ truetype
 tsconfigs
 tsdx
 tungstenite
+txfees
 typechain
 typegen
 typeorm
+uatom
 udeps
+uion
 unbond
 unbonded
 unbonding
@@ -425,6 +441,8 @@ unstakeform
 unsubs
 unvouch
 unvouched
+uosmo
+upnp
 upsert
 uptodate # used throughout our codebase
 urql
@@ -432,12 +450,14 @@ USDCUSDT
 usermod
 vadimcn
 Varint
+vnqwq
 vsicons
 wasmd
 wasmi
 wasmswap
 wasmtime
 wasmvm
+wdlyttvyzvzg
 websocat
 websocket
 websockets

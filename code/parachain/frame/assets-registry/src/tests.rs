@@ -416,9 +416,11 @@ fn get_foreign_assets_list_should_work() {
 		let location = ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here()));
 		let protocol_id = *b"AssTests";
 		let nonce = 1_u64;
+		let name = Some(BiBoundedVec::from_vec(b"asset_name".to_vec()).unwrap());
+		let symbol = Some(BiBoundedVec::from_vec(b"asset_symbol".to_vec()).unwrap());
 		let asset_info = AssetInfo {
-			name: None,
-			symbol: None,
+			name: name.clone(),
+			symbol: symbol.clone(),
 			decimals: Some(4),
 			existential_deposit: 0,
 			ratio: Some(rational!(42 / 123)),
@@ -442,7 +444,8 @@ fn get_foreign_assets_list_should_work() {
 		assert_eq!(
 			foreign_assets,
 			vec![Asset {
-				name: None,
+				name: name.clone().map(Into::into),
+				symbol: symbol.clone().map(Into::into),
 				id,
 				decimals: 4,
 				ratio: Some(rational!(42 / 123)),
@@ -461,9 +464,10 @@ fn get_all_assets_should_work() {
 		let nonce = 1_u64;
 		let nonce2 = 2_u64;
 		let name = Some(BiBoundedVec::from_vec(b"asset_name".to_vec()).unwrap());
+		let symbol = Some(BiBoundedVec::from_vec(b"asset_symbol".to_vec()).unwrap());
 		let asset_info = AssetInfo {
 			name: name.clone(),
-			symbol: None,
+			symbol: symbol.clone(),
 			decimals: Some(4),
 			existential_deposit: 0,
 			ratio: Some(rational!(42 / 123)),
@@ -498,6 +502,7 @@ fn get_all_assets_should_work() {
 			vec![
 				Asset {
 					name: name.clone().map(Into::into),
+					symbol: symbol.clone().map(Into::into),
 					id,
 					decimals: 4,
 					ratio: Some(rational!(42 / 123)),
@@ -506,6 +511,7 @@ fn get_all_assets_should_work() {
 				},
 				Asset {
 					name: name.map(Into::into),
+					symbol: symbol.map(Into::into),
 					id: id2,
 					decimals: 4,
 					ratio: Some(rational!(42 / 123)),

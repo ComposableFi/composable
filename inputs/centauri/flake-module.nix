@@ -28,14 +28,14 @@
           client_id = "10-grandpa-0";
         };
 
-      hyperspace-picasso-kusama-local = hyperspace-picasso-kusama-config-base
-        // {
+      ibc-relayer-config-centauri-to-picasso-kussama =
+        hyperspace-picasso-kusama-config-base // {
           parachain_rpc_url = "ws://127.0.0.1:9988";
           relay_chain_rpc_url = "ws://127.0.0.1:9944";
           client_id = "10-grandpa-0";
         };
 
-      hyperspace-centauri-config = {
+      ibc-relayer-config-picasso-kusama-to-centauri = {
         type = "cosmos";
         name = "centauri";
         rpc_url = "http://127.0.0.1:26657";
@@ -43,7 +43,7 @@
         websocket_url = "ws://127.0.0.1:26657/websocket";
         chain_id = "centauri-dev";
         client_id = "07-tendermint-0";
-        connection_id = "connection-0";
+        connection_id = "connection-1";
         account_prefix = "centauri";
         fee_denom = "ppica";
         fee_amount = "15000";
@@ -223,11 +223,12 @@
             hyperspace-composable-polkadot-config);
 
         hyperspace-config-chain-2 = pkgs.writeText "config-chain-2.toml"
-          (self.inputs.nix-std.lib.serde.toTOML hyperspace-centauri-config);
+          (self.inputs.nix-std.lib.serde.toTOML
+            ibc-relayer-config-picasso-kusama-to-centauri);
 
         hyperspace-config-chain-3 = pkgs.writeText "config-chain-3.toml"
           (self.inputs.nix-std.lib.serde.toTOML
-            hyperspace-picasso-kusama-local);
+            ibc-relayer-config-centauri-to-picasso-kussama);
 
         hyperspace-config-core = pkgs.writeText "config-core.toml"
           (self.inputs.nix-std.lib.serde.toTOML hyperspace-core-config);

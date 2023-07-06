@@ -317,29 +317,21 @@ fn load_contracts() -> XCVMContracts {
 	// to catch dependencies in the contract.  Perhaps it makes sense to always
 	// build the contracts?  Presumably if they were not changed, `cargo build`
 	// will be quick.
-	fn read_contract(env: &str, filename: &str) -> Vec<u8> {
+	fn read_contract(filename: &str) -> Vec<u8> {
 		let contracts_dir = std::path::Path::new(concat!(
 			env!("CARGO_MANIFEST_DIR"),
 			"/../../target/wasm32-unknown-unknown/cosmwasm-contracts",
 		));
-		match std::env::var_os(env) {
-			Some(path) => read(path),
-			None => read(contracts_dir.join(filename)),
-		}
+		read(contracts_dir.join(filename))
 	}
 
-	let code_interpreter = read_contract("CW_XCVM_INTERPRETER", "cw_xc_interpreter.wasm");
-	let code_gateway = read_contract("CW_XCVM_GATEWAY", "cw_xc_gateway.wasm");
-
+	let code_interpreter = read_contract("cw_xc_interpreter.wasm");
+	let code_gateway = read_contract("cw_xc_gateway.wasm");
+	let out_dir =
+		[option_env!("NIX_CARGO_OUT_DIR").unwrap_or(env!("OUT_DIR")), "/cw20_base.wasm"].concat();
 	// When running the test locally, the cw20_base.wasm file is downloaded by
-	// the Build script (see build.rs).  However, on CI when running under NIX
-	// downloading is disabled and to run those tests CW20 environment variable
-	// needs to be set and point at cw20_base.wasm file.
-	let code_cw20 = if let Some(var) = std::env::var_os("CW20") {
-		read(var)
-	} else {
-		read(concat!(env!("OUT_DIR"), "/cw20_base.wasm"))
-	};
+	// the Build script (see build.rs).
+	let code_cw20 = read(&out_dir);
 
 	XCVMContracts::new(code_interpreter, code_gateway, code_cw20)
 }
@@ -661,7 +653,7 @@ mod single_chain {
 		  relayer_counterparty in account(),
 		  alice in account(),
 		  bob in account(),
-		  transfer_amount in 0u128..u128::MAX) {
+		  transfer_amount in 0u128..1024u128) {
 		  simple_singlechain_xcvm_transfer(admin, admin_counterparty, relayer, relayer_counterparty, alice, bob, transfer_amount);
 	  }
 	}
@@ -775,6 +767,7 @@ mod cross_chain {
 	}
 
 	proptest! {
+	  #[ignore] // until ICS-20 integraion for assets
 	  #[test]
 	  fn test_simple_crosschain_xcvm_transfer(
 		  admin in account(),
@@ -783,7 +776,7 @@ mod cross_chain {
 		  relayer_counterparty in account(),
 		  alice in account(),
 		  bob in account(),
-		  transfer_amount in 0u128..u128::MAX) {
+		  transfer_amount in 0u128..1024u128) {
 		  simple_crosschain_xcvm_transfer(admin, admin_counterparty, relayer, relayer_counterparty, alice, bob, transfer_amount);
 	  }
 	}

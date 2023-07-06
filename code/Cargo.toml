@@ -95,7 +95,8 @@ parachain-info = { git = "https://github.com/paritytech/cumulus", rev = "d6eef14
 session-benchmarking = { package = "cumulus-pallet-session-benchmarking", git = "https://github.com/paritytech/cumulus", rev = "d6eef144421ef5c3f339f681484d06bb729dfa82", default-features = false }
 aura = { package = "pallet-aura", git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 
-
+sha2 = { version = "0.10.7", default-features = false }
+bech32-no_std = { version = "0.7.3", default-features = false, features = ["strict"] }
 polkadot-parachain = { git = "https://github.com/paritytech/polkadot", rev = "c22e1c4173bf6966f5d1980f4299f7abe836f0c1", default-features = false }
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", rev = "c22e1c4173bf6966f5d1980f4299f7abe836f0c1" }
 
