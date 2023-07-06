@@ -112,6 +112,7 @@ macro_rules! list_assets {
 				$(Asset {
 					id: CurrencyId::$NAME,
 					name: Some(stringify!($NAME).as_bytes().to_vec()),
+					symbol: Some(stringify!($NAME).as_bytes().to_vec()),
 					ratio: None,
 					decimals: Self::remote_decimals_for_local(CurrencyId::$NAME).unwrap_or(Self::decimals()),
 					foreign_id: None,

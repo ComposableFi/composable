@@ -1,7 +1,6 @@
 use crate::prelude::*;
 use sp_std::boxed::Box;
 
-use sp_runtime::DispatchError;
 
 #[derive(
 	Copy,

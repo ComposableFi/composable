@@ -35,6 +35,7 @@
           websocat
           grpcurl
           process-compose
+          dasel
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;
