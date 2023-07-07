@@ -428,7 +428,7 @@ pub mod pallet {
 			//route does not exist
 			// let (next_chain_info, _) =
 			// 	chain_info_iter.next().ok_or(Error::<T>::MultiHopRouteDoesNotExist)?;
-			let Some((next_chain_info, _)) = chain_info_iter.next() else{
+			let Some((next_chain_info, chain_name)) = chain_info_iter.next() else{
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
@@ -456,12 +456,38 @@ pub mod pallet {
 				//does not support not substrate ibc
 				//to support IBC chain need to convert address to IBC address using bech32(the same
 				// as in memo::new function)
-				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
-					origin_address: address_from,
-					route_id,
-					reason: 5,
-				});
-				return None
+
+				let result: core::result::Result<Vec<bech32_no_std::u5>, bech32_no_std::Error> =
+					raw_address_to.into_iter().map(bech32_no_std::u5::try_from_u8).collect();
+
+				let Ok(data) = result else{
+					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+						origin_address: address_from,
+						route_id,
+						reason: 41,
+					});
+					return None;
+				};
+
+				let Ok(name) = String::from_utf8(chain_name.into()) else {
+					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+						origin_address: address_from,
+						route_id,
+						reason: 42,
+					});
+					return None;
+				};
+
+				let Ok(name) = bech32_no_std::encode(&name, data.clone()) else {
+					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
+						origin_address: address_from,
+						route_id,
+						reason: 43,
+					});
+					return None;
+				};
+
+				account_id = MultiAddress::<AccoindIdOf<T>>::Raw(name.into_bytes());
 			} else {
 				let account_from = sp_runtime::AccountId32::new(raw_address_to);
 				let mut account_from_32: &[u8] = sp_runtime::AccountId32::as_ref(&account_from);
