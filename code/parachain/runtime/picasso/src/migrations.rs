@@ -58,8 +58,8 @@ impl OnRuntimeUpgrade for TechCollectiveRenameMigration {
 
 pub mod migrate_asset_ids {
 	use super::*;
-
 	use frame_support::traits::{GetStorageVersion, StorageVersion};
+	use primitives::currency::{ForeignAssetId, PrefixedDenom};
 
 	use common::AccountId;
 	use pablo::PoolConfiguration;
@@ -67,7 +67,11 @@ pub mod migrate_asset_ids {
 
 	pub struct MigratePicassoAssetIds;
 
-	fn get_new_asset_id(old_asset_id: CurrencyId) -> CurrencyId {
+	fn get_new_asset_id(
+		old_asset_id: CurrencyId,
+		network_id: [u8; 4],
+		index: [u8; 4],
+	) -> CurrencyId {
 		let zero_array: [u8; 8] = 0_u64.to_be_bytes();
 		let nonce = (u128::from_be_bytes(
 			<Runtime as pablo::Config>::PalletId::get()
@@ -78,16 +82,25 @@ pub mod migrate_asset_ids {
 				.try_into()
 				.expect("[u8; 8] + bytes(u64) = [u8; 16]"),
 		) ^ old_asset_id.0) as u64;
-		let pablo_index = (Pablo::index() as u32).to_be_bytes();
+
 		CurrencyId(u128::from_be_bytes(
-			[0, 0, 0, 0]
+			network_id
 				.into_iter()
-				.chain(pablo_index)
+				.chain(index)
 				.chain(nonce.to_be_bytes())
 				.collect::<Vec<u8>>()
 				.try_into()
 				.expect("[u8; 8] + bytes(u64) = [u8; 16]"),
 		))
+	}
+
+	fn get_new_asset_id_picasso(old_asset_id: CurrencyId) -> CurrencyId {
+		let pablo_index = (Pablo::index() as u32).to_be_bytes();
+		get_new_asset_id(old_asset_id, [0, 0, 0, 0], pablo_index)
+	}
+
+	fn get_new_asset_id_composable(old_asset_id: CurrencyId) -> CurrencyId {
+		get_new_asset_id(old_asset_id, [0, 0, 0, 1], [0, 0, 0, 0])
 	}
 
 	const ASSETS_REGISTRY_V2: StorageVersion = StorageVersion::new(2);
@@ -103,7 +116,7 @@ pub mod migrate_asset_ids {
 	fn migrate_orml_tokens(old_asset_ids: Vec<CurrencyId>) -> Weight {
 		// orml_tokens TokenIssuance
 		for old_asset_id in old_asset_ids.clone() {
-			let new_asset_id = get_new_asset_id(old_asset_id);
+			let new_asset_id = get_new_asset_id_picasso(old_asset_id);
 			orml_tokens::module::TotalIssuance::<Runtime>::swap(old_asset_id, new_asset_id);
 			orml_tokens::module::TotalIssuance::<Runtime>::remove(old_asset_id);
 		}
@@ -115,7 +128,7 @@ pub mod migrate_asset_ids {
 		}
 		for account_id in account_ids {
 			for old_asset_id in old_asset_ids.clone() {
-				let new_asset_id = get_new_asset_id(old_asset_id);
+				let new_asset_id = get_new_asset_id_picasso(old_asset_id);
 				orml_tokens::module::Accounts::<Runtime>::swap(
 					account_id.clone(),
 					old_asset_id,
@@ -133,7 +146,7 @@ pub mod migrate_asset_ids {
 		}
 		for account_id in account_ids {
 			for old_asset_id in old_asset_ids.clone() {
-				let new_asset_id = get_new_asset_id(old_asset_id);
+				let new_asset_id = get_new_asset_id_picasso(old_asset_id);
 				orml_tokens::module::Locks::<Runtime>::swap(
 					account_id.clone(),
 					old_asset_id,
@@ -151,7 +164,7 @@ pub mod migrate_asset_ids {
 		}
 		for account_id in account_ids {
 			for old_asset_id in old_asset_ids.clone() {
-				let new_asset_id = get_new_asset_id(old_asset_id);
+				let new_asset_id = get_new_asset_id_picasso(old_asset_id);
 				orml_tokens::module::Reserves::<Runtime>::swap(
 					account_id.clone(),
 					old_asset_id,
@@ -169,7 +182,7 @@ pub mod migrate_asset_ids {
 		pablo::pallet::Pools::<Runtime>::translate_values(|pool| match pool {
 			PoolConfiguration::DualAssetConstantProduct(mut config) => {
 				if old_asset_ids.contains(&config.lp_token) {
-					config.lp_token = get_new_asset_id(config.lp_token);
+					config.lp_token = get_new_asset_id_picasso(config.lp_token);
 				}
 				Some(PoolConfiguration::DualAssetConstantProduct(config))
 			},
@@ -186,7 +199,7 @@ pub mod migrate_asset_ids {
 		}
 		for (old_asset_id, reward_id) in asset_ids {
 			if old_asset_ids.clone().contains(&old_asset_id) {
-				let new_asset_id = get_new_asset_id(old_asset_id);
+				let new_asset_id = get_new_asset_id_picasso(old_asset_id);
 				farming::pallet::RewardSchedules::<Runtime>::swap(
 					old_asset_id.clone(),
 					reward_id.clone(),
@@ -209,7 +222,7 @@ pub mod migrate_asset_ids {
 		}
 		for old_asset_id in asset_ids {
 			if old_asset_ids.clone().contains(&old_asset_id) {
-				let new_asset_id = get_new_asset_id(old_asset_id);
+				let new_asset_id = get_new_asset_id_picasso(old_asset_id);
 				reward::pallet::RewardCurrencies::<Runtime, FarmingRewardsInstance>::swap(
 					old_asset_id.clone(),
 					new_asset_id.clone(),
@@ -227,7 +240,7 @@ pub mod migrate_asset_ids {
 		}
 		for old_asset_id in asset_ids {
 			if old_asset_ids.clone().contains(&old_asset_id) {
-				let new_asset_id = get_new_asset_id(old_asset_id);
+				let new_asset_id = get_new_asset_id_picasso(old_asset_id);
 				reward::pallet::TotalStake::<Runtime, FarmingRewardsInstance>::swap(
 					old_asset_id.clone(),
 					new_asset_id.clone(),
@@ -247,7 +260,7 @@ pub mod migrate_asset_ids {
 		}
 		for (old_asset_id, user_id) in asset_ids {
 			if old_asset_ids.clone().contains(&old_asset_id) {
-				let new_asset_id = get_new_asset_id(old_asset_id);
+				let new_asset_id = get_new_asset_id_picasso(old_asset_id);
 				reward::pallet::Stake::<Runtime, FarmingRewardsInstance>::swap(
 					(old_asset_id.clone(), user_id.clone()),
 					(new_asset_id.clone(), user_id.clone()),
@@ -268,7 +281,7 @@ pub mod migrate_asset_ids {
 		}
 		for (reward_id, old_asset_id) in keys {
 			if old_asset_ids.clone().contains(&old_asset_id) {
-				let new_asset_id: CurrencyId = get_new_asset_id(old_asset_id);
+				let new_asset_id: CurrencyId = get_new_asset_id_picasso(old_asset_id);
 				reward::pallet::RewardPerToken::<Runtime, FarmingRewardsInstance>::swap(
 					reward_id.clone(),
 					old_asset_id.clone(),
@@ -291,7 +304,7 @@ pub mod migrate_asset_ids {
 		}
 		for (reward_id, (old_asset_id, account_id)) in keys {
 			if old_asset_ids.clone().contains(&old_asset_id) {
-				let new_asset_id: CurrencyId = get_new_asset_id(old_asset_id);
+				let new_asset_id: CurrencyId = get_new_asset_id_picasso(old_asset_id);
 				reward::pallet::RewardTally::<Runtime, FarmingRewardsInstance>::swap(
 					reward_id.clone(),
 					(old_asset_id.clone(), account_id.clone()),
@@ -311,7 +324,7 @@ pub mod migrate_asset_ids {
 	/// change some of the pools' lp token ids
 	fn migrate_assets_registry(old_asset_ids: Vec<CurrencyId>) -> Weight {
 		for old_asset_id in old_asset_ids.clone() {
-			let new_asset_id = get_new_asset_id(old_asset_id);
+			let new_asset_id = get_new_asset_id_picasso(old_asset_id);
 			assets_registry::pallet::AssetRatio::<Runtime>::swap(old_asset_id, new_asset_id);
 			assets_registry::pallet::ExistentialDeposit::<Runtime>::swap(
 				old_asset_id,
@@ -327,6 +340,7 @@ pub mod migrate_asset_ids {
 		Weight::from_ref_time(100_000)
 	}
 
+	// migration of pallet's storage
 	fn migrate_asset_ids(old_asset_ids: Vec<CurrencyId>) -> Weight {
 		let mut total_weight = Weight::from_ref_time(0);
 		total_weight += migrate_orml_tokens(old_asset_ids.clone());
@@ -334,6 +348,57 @@ pub mod migrate_asset_ids {
 		total_weight += migrate_staking(old_asset_ids.clone());
 		total_weight += migrate_assets_registry(old_asset_ids.clone());
 		total_weight
+	}
+
+	// pica balances of staking accounts migration
+	fn migrate_balances(asset_ids: Vec<CurrencyId>) -> Weight {
+		for old_asset_id in asset_ids {
+			let old_asset_id_balance = farming::Pallet::<Runtime>::pool_account_id(&old_asset_id);
+			let new_asset_id = get_new_asset_id_picasso(old_asset_id);
+			let new_asset_id_balance = farming::Pallet::<Runtime>::pool_account_id(&new_asset_id);
+			system::pallet::Account::<Runtime>::swap(
+				old_asset_id_balance.clone(),
+				new_asset_id_balance,
+			);
+			system::pallet::Account::<Runtime>::remove(old_asset_id_balance);
+		}
+		Weight::from_ref_time(100_000)
+	}
+
+	// migrate denoms of composable assets
+	fn migrate_composable_denoms(asset_ids: Vec<CurrencyId>) -> Weight {
+		let mut locations: Vec<ForeignAssetId> = vec![];
+		for (old_location, asset_id) in assets_registry::pallet::ForeignToLocal::<Runtime>::iter() {
+			if asset_ids.contains(&asset_id) {
+				locations.push(old_location.clone());
+			}
+		}
+		for old_location in locations {
+			assets_registry::pallet::ForeignToLocal::<Runtime>::remove(old_location);
+		}
+
+		for old_asset_id in asset_ids.clone() {
+			let new_asset_id = get_new_asset_id_composable(old_asset_id);
+			let old_location_option =
+				assets_registry::pallet::LocalToForeign::<Runtime>::take(old_asset_id);
+
+			if let Some(ForeignAssetId::IbcIcs20(location)) = old_location_option {
+				if let Ok(mut denom) = PrefixedDenom::from_str(&new_asset_id.to_string()) {
+					denom.0.trace_path = location.trace_path.clone();
+					let new_location = ForeignAssetId::IbcIcs20(denom);
+					assets_registry::pallet::ForeignToLocal::<Runtime>::insert(
+						&new_location,
+						old_asset_id,
+					);
+					assets_registry::pallet::LocalToForeign::<Runtime>::insert(
+						old_asset_id,
+						new_location,
+					);
+				}
+			}
+		}
+
+		Weight::from_ref_time(100_000)
 	}
 
 	impl OnRuntimeUpgrade for MigratePicassoAssetIds {
@@ -350,8 +415,19 @@ pub mod migrate_asset_ids {
 					USDT_OSMO_LPT,
 				];
 
+				let asset_ids_with_pica_balance = vec![DOT_PICA_LPT, DOT_USDT_LPT, DOT_KSM_LPT];
+				let composable_asset_ids = vec![
+					CurrencyId(127),
+					CurrencyId(33),
+					CurrencyId(2006),
+					CurrencyId(2011),
+					CurrencyId(6),
+					CurrencyId(34),
+				];
 				StorageVersion::new(2).put::<AssetsRegistry>();
-				migrate_asset_ids(asset_ids)
+				migrate_asset_ids(asset_ids) +
+					migrate_balances(asset_ids_with_pica_balance) +
+					migrate_composable_denoms(composable_asset_ids)
 			} else {
 				<Runtime as system::Config>::DbWeight::get().reads(1)
 			}
@@ -380,39 +456,45 @@ pub mod migrate_asset_ids {
 			#[test]
 			fn check_ids_correct() {
 				assert_eq!(
-					get_new_asset_id(DOT_PICA_LPT),
+					get_new_asset_id_picasso(DOT_PICA_LPT),
 					CurrencyId(u128::from_be_bytes([
 						0, 0, 0, 0, 0, 0, 0, 59, 0, 0, 0, 0, 0, 0, 0, 2
 					]))
 				);
 				assert_eq!(
-					get_new_asset_id(DOT_USDT_LPT),
+					get_new_asset_id_picasso(DOT_USDT_LPT),
 					CurrencyId(u128::from_be_bytes([
 						0, 0, 0, 0, 0, 0, 0, 59, 0, 0, 0, 0, 0, 0, 0, 3
 					]))
 				);
 				assert_eq!(
-					get_new_asset_id(DOT_KSM_LPT),
+					get_new_asset_id_picasso(DOT_KSM_LPT),
 					CurrencyId(u128::from_be_bytes([
 						0, 0, 0, 0, 0, 0, 0, 59, 0, 0, 0, 0, 0, 0, 0, 4
 					]))
 				);
 				assert_eq!(
-					get_new_asset_id(DOT_OSMO_LPT),
+					get_new_asset_id_picasso(DOT_OSMO_LPT),
 					CurrencyId(u128::from_be_bytes([
 						0, 0, 0, 0, 0, 0, 0, 59, 0, 0, 0, 0, 0, 0, 0, 5
 					]))
 				);
 				assert_eq!(
-					get_new_asset_id(KSM_OSMO_LPT),
+					get_new_asset_id_picasso(KSM_OSMO_LPT),
 					CurrencyId(u128::from_be_bytes([
 						0, 0, 0, 0, 0, 0, 0, 59, 0, 0, 0, 0, 0, 0, 0, 6
 					]))
 				);
 				assert_eq!(
-					get_new_asset_id(USDT_OSMO_LPT),
+					get_new_asset_id_picasso(USDT_OSMO_LPT),
 					CurrencyId(u128::from_be_bytes([
 						0, 0, 0, 0, 0, 0, 0, 59, 0, 0, 0, 0, 0, 0, 0, 7
+					]))
+				);
+				assert_eq!(
+					get_new_asset_id_composable(CurrencyId(130)),
+					CurrencyId(u128::from_be_bytes([
+						0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 130
 					]))
 				);
 			}
