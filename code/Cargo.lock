@@ -10245,6 +10245,7 @@ dependencies = [
  "pallet-identity",
  "pallet-indices",
  "pallet-membership",
+ "pallet-multihop-xcm-ibc",
  "pallet-multisig",
  "pallet-oracle",
  "pallet-pablo",

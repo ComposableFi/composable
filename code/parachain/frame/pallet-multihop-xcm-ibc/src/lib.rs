@@ -157,10 +157,6 @@ pub mod pallet {
 		u128: Into<<T as orml_xtokens::Config>::CurrencyId>,
 	{
 		type AccountId = T::AccountId;
-		//todo use para id to xcm into some parachain
-		// fn transfer_xcm(from: T::AccountId, to: T::AccountId, para_id: Option<u32>, amount: u128,
-		// currency: u128) -> Option<()> where <T as orml_xtokens::Config>::CurrencyId: From<u128>,
-		// <T as orml_xtokens::Config>::Balance: From<u128>{
 		fn transfer_xcm(
 			from: T::AccountId,
 			to: T::AccountId,
@@ -220,28 +216,6 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> Pallet<T> {
-		// //todo use para id to xcm into some parachain
-		// pub fn transfer_xcm(from: T::AccountId, to: T::AccountId, para_id: Option<u128>, amount:
-		// u128, currency: u128) where <T as orml_xtokens::Config>::CurrencyId: From<u128>, <T as
-		// orml_xtokens::Config>::Balance: From<u128>{ 	let signed_account_id =
-		// RawOrigin::Signed(from.clone()); 	let acc_bytes = T::AccountId::encode(&to);
-		// 	let id = acc_bytes.try_into().unwrap();
-		// 	let _result = orml_xtokens::Pallet::<T>::transfer(
-		// 		signed_account_id.into(),
-		// 		currency.into(),
-		// 		amount.into(),
-		// 		Box::new(
-		// 			xcm::latest::MultiLocation::new(
-		// 				0,
-		// 				xcm::latest::Junctions::X1(xcm::latest::Junction::AccountId32 { id: id, network: None })
-		// 			)
-		// 			.into()
-		// 		),
-		// 		WeightLimit::Unlimited,
-		// 	);
-
-		// }
-
 		/// Support only addresses from cosmos ecosystem based on bech32.
 		pub fn create_memo(
 			mut vec: Vec<(ChainInfo, Vec<u8>, [u8; 32])>,
@@ -257,7 +231,6 @@ pub mod pallet {
 
 			for (i, name, address) in vec {
 				let mut forward = if i.is_substrate_xcm {
-					// let str = "0x" + hex::encode(&bytes);
 					let memo_receiver = scale_info::prelude::format!("0x{}", hex::encode(&address));
 					Forward::new_xcm_memo(memo_receiver, i.para_id)
 				} else {
@@ -316,7 +289,7 @@ pub mod pallet {
 		fn deposit_asset(
 			asset: &xcm::latest::MultiAsset,
 			location: &xcm::latest::MultiLocation,
-			context: &xcm::latest::XcmContext,
+			_context: &xcm::latest::XcmContext,
 			deposit_result: xcm::latest::Result,
 			asset_id: Option<Self::AssetId>,
 		) -> Option<()> {
@@ -432,7 +405,6 @@ pub mod pallet {
 			// return None;
 
 			//deposit does not executed propertly. nothing todo. assets will stay in the account id
-			// address
 			// deposit_result.map_err(|_| Error::<T>::XcmDepositFailed)?;
 			deposit_result.ok()?;
 
@@ -546,8 +518,6 @@ pub mod pallet {
 				.map(|(i, address)| (i.0, i.1.into_inner(), address.clone()))
 				.collect();
 
-			//not able to derive address. and construct memo for multihop.
-			//TODO: uncomment when memo will be supported.
 			let memo_data = Pallet::<T>::create_memo(vec);
 			let Ok(memo_data) = memo_data else{
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
@@ -575,7 +545,6 @@ pub mod pallet {
 						return None;
 					};
 					memo = Some(memo_result)
-					// memo = Some(memo_result.map_err(|_| Error::<T>::FailedToConstructMemo)?);
 				},
 				_ => {},
 			}

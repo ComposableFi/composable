@@ -751,6 +751,18 @@ parameter_types! {
 	  pub MinReward: Balance = 10 * CurrencyId::unit::<Balance>();
 	  pub Stake: Balance = 10 * CurrencyId::unit::<Balance>();
 }
+parameter_types! {
+		pub const PalletXcmIbcInstanceId: u8 = 192; // PalletXcmIbc: pallet_xcm_ibc = 192,
+		pub const MaxMultihopCount: u32 = 10;
+		pub const ChainNameVecLimit: u32 = 30;
+}
+
+impl pallet_multihop_xcm_ibc::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type PalletInstanceId = PalletXcmIbcInstanceId;
+	type MaxMultihopCount = MaxMultihopCount;
+	type ChainNameVecLimit = ChainNameVecLimit;
+}
 
 impl bonded_finance::Config for Runtime {
 	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
@@ -838,6 +850,7 @@ construct_runtime!(
 		// IBC support
 		Ibc: pallet_ibc = 190,
 		Ics20Fee: pallet_ibc::ics20_fee = 191,
+		PalletMultihopXcmIbc: pallet_multihop_xcm_ibc = 192,
 	}
 );
 
