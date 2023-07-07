@@ -197,8 +197,7 @@ impl pallet_ibc::Config for Runtime {
 	type IbcAccountId = Self::AccountId;
 	type HandleMemo = IbcModule<Runtime>;
 	type MemoMessage = MemoMessage;
-	type SubstrateMultihopXcmHandler = SubstrateMultihopXcmHandlerNone<Runtime>;
-	// type SubstrateMultihopXcmHandler = pallet_multihop_xcm_ibc::Pallet<Runtime>;
+	type SubstrateMultihopXcmHandler = pallet_multihop_xcm_ibc::Pallet<Runtime>;
 	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;
