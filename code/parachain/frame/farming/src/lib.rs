@@ -163,6 +163,11 @@ pub mod pallet {
 			reward_currency_id: AssetIdOf<T>,
 			amount: BalanceOf<T>,
 		},
+
+		PoolAccountId {
+			account_id: AccountIdOf<T>,
+			pool_currency_id: AssetIdOf<T>,
+		},
 	}
 
 	#[pallet::error]
@@ -383,6 +388,24 @@ pub mod pallet {
 				pool_currency_id,
 				reward_currency_id,
 				amount: reward,
+			});
+
+			Ok(())
+		}
+
+		#[pallet::call_index(5)]
+		#[pallet::weight(T::WeightInfo::claim())]
+		#[transactional]
+		pub fn get_pool_account_id(
+			origin: OriginFor<T>,
+			pool_currency_id: AssetIdOf<T>,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let pool_account_id = Self::pool_account_id(&pool_currency_id);
+
+			Self::deposit_event(Event::PoolAccountId {
+				account_id: pool_account_id,
+				pool_currency_id,
 			});
 
 			Ok(())
