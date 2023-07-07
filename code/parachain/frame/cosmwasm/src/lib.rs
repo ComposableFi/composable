@@ -200,6 +200,7 @@ pub mod pallet {
 		Precompile,
 		QueryDeserialize,
 		ExecuteSerialize,
+		CodeAlreadyExists,
 	}
 
 	#[pallet::config]

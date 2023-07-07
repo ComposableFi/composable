@@ -45,47 +45,6 @@ pub fn instantiate(
 	Ok(Response::default().add_event(make_event("instantiated")))
 }
 
-#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn execute(
-	deps: DepsMut,
-	env: Env,
-	info: MessageInfo,
-	msg: msg::ExecuteMsg,
-) -> ContractResult<Response> {
-	match msg {
-		msg::ExecuteMsg::IbcSetNetworkChannel { network_id, channel_id } => {
-			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
-			handle_ibc_set_network_channel(auth, deps, network_id, channel_id)
-		},
-
-		msg::ExecuteMsg::ExecuteProgram { execute_program } =>
-			exec::handle_execute_program(deps, env, info, execute_program),
-
-		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program } => {
-			let auth = auth::Contract::authorise(&env, &info)?;
-			exec::handle_execute_program_privilleged(auth, deps, env, call_origin, execute_program)
-		},
-
-		msg::ExecuteMsg::Bridge(msg) => {
-			let auth = auth::Interpreter::authorise(
-				deps.as_ref(),
-				&info,
-				msg.interpreter_origin.clone(),
-			)?;
-			handle_bridge_forward(auth, deps, info, msg)
-		},
-
-		msg::ExecuteMsg::RegisterAsset { asset_id, reference } => {
-			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
-			assets::handle_register_asset(auth, deps, asset_id, reference)
-		},
-
-		msg::ExecuteMsg::UnregisterAsset { asset_id } => {
-			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
-			assets::handle_unregister_asset(auth, deps, asset_id)
-		},
-	}
-}
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: msg::MigrateMsg) -> ContractResult<Response> {

@@ -58,6 +58,8 @@ pub enum ExecuteMsg {
 	UnregisterAsset {
 		asset_id: AssetId,
 	},
+
+	
 }
 
 /// Definition of a program to be executed including its context.

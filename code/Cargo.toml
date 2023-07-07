@@ -42,6 +42,7 @@ members = [
   "utils/common",
   "utils/collator-sidecar",
   "utils/price-feed",
+  "xcvm/lib/core/",
 ]
 resolver = "2"
 
@@ -329,6 +330,7 @@ schemars = { version = "0.8.12", default-feautes = false }
 prost = {version = "0.11.0", default-features = false, features = ["prost-derive"]}
 prost-types = {version = "0.11.1", default-features = false}
 
+parity-scale-codec = { version = "3.5.0", default-features = false }
 
 # Only needed until the configs get merged into xcm-builder: https://github.com/paritytech/polkadot/pull/7165
 invarch-xcm-builder = { git = "https://github.com/InvArch/InvArch-XCM-Builder", rev = "c704c0f2d4c436f96eff10d06c197527b46b3536", default-features = false }
@@ -340,6 +342,7 @@ wasmi-validation = { version = "0.5", default-features = false }
 cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77", default-features = false }
 cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77", default-features = false }
 serde-json-wasm = { git = "https://github.com/dzmitry-lahoda-forks/serde-json-wasm", rev = "8a7e522c0e4de36a6dfb535766f26a9941017d81", default-features = false }
+cw-storage-plus = { git = "https://github.com/dzmitry-lahoda-forks/cw-storage-plus", rev = "d0a2cf126cae3e3960c787ebcfc9baa54f59f71c", default-features = false }
 
 cosmwasm-std = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6", default-features = false, features = [
   "iterator",
@@ -351,6 +354,9 @@ serde = { version = '1.0.136', default-features= false, features = ["derive"] }
 serde_json = { version = "1.0.82", default-features = false, features = [
   "alloc",
 ] }
+
+fixed = { version = "1.15", default-features = false }
+num = { version = "0.4.0", default-features = false }
 
 thiserror = { version = "1.0.38", package = "thiserror-core", default-features = false }
 

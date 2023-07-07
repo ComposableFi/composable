@@ -758,6 +758,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "az"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b7e4c2464d97fe331d41de9d5db0def0a96f4d823b8b32a2efd503578988973"
+
+[[package]]
 name = "backtrace"
 version = "0.3.68"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3204,6 +3210,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef8ae57c4978a2acd8b869ce6b9ca1dfe817bff704c220209fdef2c0b75a01b9"
 
 [[package]]
+name = "cw-storage-plus"
+version = "1.0.2"
+source = "git+https://github.com/dzmitry-lahoda-forks/cw-storage-plus?rev=d0a2cf126cae3e3960c787ebcfc9baa54f59f71c#d0a2cf126cae3e3960c787ebcfc9baa54f59f71c"
+dependencies = [
+ "cosmwasm-std",
+ "serde",
+]
+
+[[package]]
 name = "cxx"
 version = "1.0.97"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4028,6 +4043,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "fixed"
+version = "1.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "79386fdcec5e0fde91b1a6a5bcd89677d1f9304f7f986b154a1b9109038854d9"
+dependencies = [
+ "az",
+ "bytemuck",
+ "half",
+ "typenum",
+]
+
+[[package]]
 name = "fixed-hash"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4839,6 +4866,16 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+]
+
+[[package]]
+name = "half"
+version = "2.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc52e53916c08643f1b56ec082790d1e86a32e58dc5268f897f313fbae7b4872"
+dependencies = [
+ "cfg-if 1.0.0",
+ "crunchy",
 ]
 
 [[package]]
@@ -18745,6 +18782,22 @@ dependencies = [
  "rusticata-macros",
  "thiserror",
  "time 0.3.20",
+]
+
+[[package]]
+name = "xc-core"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "fixed",
+ "num",
+ "parity-scale-codec",
+ "prost",
+ "scale-info",
+ "schemars",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
