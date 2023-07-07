@@ -1,4 +1,5 @@
-/// Errors from integration of CosmwWasm <-> Substrate (types, coversions, encoding, etc)
+/// Errors from integration of CosmwWasm <-> Substrate (types, conversions, encoding, host
+/// functions, etc)
 #[derive(thiserror::Error, Debug)]
 pub enum CosmwasmSubstrateError {
 	#[error("")]
@@ -11,4 +12,6 @@ pub enum CosmwasmSubstrateError {
 	QuerySerialize,
 	#[error("")]
 	ExecuteSerialize,
+	#[error("")]
+	Ibc,
 }
