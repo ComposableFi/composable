@@ -67,6 +67,7 @@ assets-transactor-router = { package = "pallet-assets-transactor-router", path =
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 common = { path = "../common", default-features = false }
+pallet-multihop-xcm-ibc = { package = "pallet-multihop-xcm-ibc", path = '../../frame/pallet-multihop-xcm-ibc', default-features = false }
 composable-support = { path = "../../frame/composable-support", default-features = false }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = "../../frame/crowdloan-rewards", default-features = false }
@@ -279,4 +280,5 @@ std = [
   "xcm-builder/std",
   "xcm-executor/std",
   "xcm/std",
+  "pallet-multihop-xcm-ibc/std",
 ]
