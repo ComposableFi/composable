@@ -18794,6 +18794,8 @@ dependencies = [
  "num",
  "parity-scale-codec",
  "prost",
+ "prost-build",
+ "prost-types",
  "scale-info",
  "schemars",
  "serde",

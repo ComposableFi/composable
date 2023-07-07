@@ -25,6 +25,12 @@ serde = { workspace = true, default-features = false, features = [
 ] }
 serde_json = { workspace = true }
 
+prost-types = { workspace = true, default-features = false }
+
+[build-dependencies]
+prost-build = { workspace = true}
+
+
 [features]
 default = []
 cosmwasm = ["cw-storage-plus"]

@@ -165,6 +165,7 @@ pub mod pallet {
 		CodeEncoding,
 		CodeInstrumentation,
 		InstrumentedCodeIsTooBig,
+		CodeAlreadyExists,
 		CodeNotFound,
 		ContractAlreadyExists,
 		ContractNotFound,
@@ -200,7 +201,6 @@ pub mod pallet {
 		Precompile,
 		QueryDeserialize,
 		ExecuteSerialize,
-		CodeAlreadyExists,
 	}
 
 	#[pallet::config]

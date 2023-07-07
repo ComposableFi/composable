@@ -29,7 +29,7 @@ cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc4
 cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77" }
 cosmwasm-orchestrate = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77" }
 
-parity-scale-codec = { version = "3.5.0", default-features = false }
+
 
 prost = { version = "0.11.9", default-features = false, features = [
   "prost-derive",
@@ -43,8 +43,6 @@ serde = { version = "1.0.163", default-features = false, features = [
   "alloc",
 ] }
 serde_json = { version = "1.0.96" }
-prost-types = { version = "0.11.9", default-features = false }
-prost-build = "0.11.9"
 
 
 cw-utils = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2eb014253d2131219e518c64475a8348c5a3"}

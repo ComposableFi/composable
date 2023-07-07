@@ -1,15 +1,11 @@
-#![no_std]
-
-extern crate alloc;
-
 use core::fmt::Display;
 
 use alloc::{collections::VecDeque, format, vec::Vec};
 use fixed::{types::extra::U16, FixedU128};
 use prost::{DecodeError, Message};
-use xc_core::{Amount, Destination, Displayed, Funds, NetworkId, MAX_PARTS};
+use crate::{Amount, Destination, Displayed, Funds, NetworkId, MAX_PARTS};
 
-include!(concat!(env!("OUT_DIR"), "/interpreter.rs"));
+include!(concat!(env!("OUT_DIR"), "/xc123.rs"));
 
 pub type XCVMPacket<TAbiEncoded, TAccount, TAssets> =
 	xc_core::Packet<XCVMProgram<TAbiEncoded, TAccount, TAssets>>;
