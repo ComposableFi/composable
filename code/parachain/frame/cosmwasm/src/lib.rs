@@ -165,6 +165,7 @@ pub mod pallet {
 		CodeEncoding,
 		CodeInstrumentation,
 		InstrumentedCodeIsTooBig,
+		CodeAlreadyExists,
 		CodeNotFound,
 		ContractAlreadyExists,
 		ContractNotFound,
