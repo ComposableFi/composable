@@ -129,7 +129,7 @@ jobs:
       - run: |
           nix --version
           nix show-config
-          nix run .#nix-flake-check        
+          nix run .#nix-flake-check --accept-flake-config
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
           
