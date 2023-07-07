@@ -8,7 +8,6 @@ use crate::{
 	args::{QueryCommand, TxCommand},
 	error::Error,
 };
-use anyhow::anyhow;
 use clap::{Args, Subcommand};
 use sp_keyring::sr25519::Keyring;
 use std::{fmt::Display, str::FromStr};
@@ -56,7 +55,7 @@ pub struct Command {
 #[derive(Debug, Subcommand)]
 pub enum Subcommands {
 	Tx(TxCommand),
-	Rpc(QueryCommand),
+	Query(QueryCommand),
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -120,14 +119,14 @@ impl Display for OutputType {
 pub struct CosmosCommandRunner;
 
 impl CosmosCommandRunner {
-	pub async fn run(command: Command) -> anyhow::Result<()> {
+	pub async fn run(command: Command) -> Result<(), Error> {
 		match command.scheme {
 			KeyScheme::Sr25519 => Self::dispatch_command::<sr25519::Pair>(command).await,
 			KeyScheme::Ed25519 => Self::dispatch_command::<ed25519::Pair>(command).await,
 		}
 	}
 
-	async fn dispatch_command<P: Pair>(command: Command) -> anyhow::Result<()>
+	async fn dispatch_command<P: Pair>(command: Command) -> Result<(), Error>
 	where
 		P::Seed: TryFrom<Vec<u8>>,
 		MultiSignature: From<<P as Pair>::Signature>,
@@ -135,11 +134,11 @@ impl CosmosCommandRunner {
 		subxt::utils::MultiSignature: From<<P as sp_core::Pair>::Signature>,
 	{
 		match command.subcommand {
-			Subcommands::Rpc(subcommand) =>
+			Subcommands::Query(subcommand) =>
 				QueryCommandRunner::run(subcommand, command.node, command.output).await,
 			Subcommands::Tx(subcommand) => {
 				let Some(pair) = get_signer_pair::<P>(command.from, command.mnemonic, command.seed, command.password)? else {
-                    return Err(anyhow!("{}", Error::OperationNeedsToBeSigned));
+                    return Err(Error::OperationNeedsToBeSigned);
                 };
 				CommandRunner::run(subcommand, pair, command.node, command.output).await
 			},
@@ -152,19 +151,17 @@ fn get_signer_pair<P: Pair>(
 	mnemonic: Option<String>,
 	seed: Option<String>,
 	password: Option<String>,
-) -> anyhow::Result<Option<P>>
+) -> Result<Option<P>, Error>
 where
 	P::Seed: TryFrom<Vec<u8>>,
 {
 	let pair = if let Some(name) = name {
-		P::from_string(&format!("//{}", name), None)
-			.map_err(|_| anyhow!("{}", Error::InvalidSeed))?
+		P::from_string(&format!("//{}", name), None)?
 	} else if let Some(mnemonic) = mnemonic {
-		let (pair, _) = P::from_phrase(&mnemonic, password.as_deref())
-			.map_err(|_| anyhow!("{}", Error::InvalidPhrase))?;
+		let (pair, _) = P::from_phrase(&mnemonic, password.as_deref())?;
 		pair
 	} else if let Some(seed) = seed {
-		P::from_string(&seed, None).map_err(|_| anyhow!("{}", Error::InvalidSeed))?
+		P::from_string(&seed, None)?
 	} else {
 		return Ok(None)
 	};

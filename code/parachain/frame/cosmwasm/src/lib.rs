@@ -184,6 +184,7 @@ pub mod pallet {
 		IteratorNotFound,
 		IteratorValueNotFound,
 		NotAuthorized,
+		NotImplemented,
 		Unsupported,
 		ExecuteDeserialize,
 		Ibc,
@@ -392,13 +393,12 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub contracts: sp_std::vec::Vec<(T::AccountIdExtended, ContractCodeOf<T>)>,
-		pub phantom: sp_std::marker::PhantomData<T>,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { contracts: vec![], phantom: <_>::default() }
+			Self { contracts: vec![] }
 		}
 	}
 
@@ -769,6 +769,7 @@ impl<T: Config> Pallet<T> {
 					CosmwasmVMError::Precompile => Error::<T>::Precompile,
 					CosmwasmVMError::QueryDeserialize => Error::<T>::QueryDeserialize,
 					CosmwasmVMError::ExecuteSerialize => Error::<T>::ExecuteSerialize,
+					CosmwasmVMError::NotImplemented => Error::<T>::NotAuthorized,
 				};
 				Err(DispatchErrorWithPostInfo { error: error.into(), post_info })
 			},
