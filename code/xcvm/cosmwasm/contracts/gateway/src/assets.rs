@@ -1,14 +1,14 @@
 use crate::{
-	common,
+	auth,
 	error::{ContractError, ContractResult},
-	msg, state,
+	msg, state, events::make_event,
 };
 use cosmwasm_std::{Deps, DepsMut, Response};
 use xc_core::AssetId;
 
 /// Adds a new asset to the registry; errors out if asset already exists.
 pub(crate) fn handle_register_asset(
-	_: common::auth::Admin,
+	_: auth::Admin,
 	deps: DepsMut,
 	asset_id: AssetId,
 	reference: msg::AssetReference,
@@ -19,7 +19,7 @@ pub(crate) fn handle_register_asset(
 	}
 	key.save(deps.storage, &reference)?;
 	Ok(Response::new().add_event(
-		common::make_event("register")
+		make_event("register")
 			.add_attribute("asset_id", asset_id.to_string())
 			.add_attribute("denom", reference.denom()),
 	))
@@ -28,7 +28,7 @@ pub(crate) fn handle_register_asset(
 /// Removes an existing asset from the registry; errors out if asset doesn’t
 /// exist.
 pub(crate) fn handle_unregister_asset(
-	_: common::auth::Admin,
+	_: auth::Admin,
 	deps: DepsMut,
 	asset_id: AssetId,
 ) -> ContractResult<Response> {
@@ -38,7 +38,7 @@ pub(crate) fn handle_unregister_asset(
 	}
 	key.remove(deps.storage);
 	Ok(Response::new().add_event(
-		common::make_event("unregister").add_attribute("asset_id", asset_id.to_string()),
+		make_event("unregister").add_attribute("asset_id", asset_id.to_string()),
 	))
 }
 
