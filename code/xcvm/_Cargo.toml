@@ -1,0 +1,71 @@
+[workspace]
+resolver = "2"
+members = ["lib/*", "cosmwasm/tests", "cosmwasm/contracts/*"]
+
+[profile.production]
+inherits = "release"
+lto = true
+
+[profile.cosmwasm-contracts]
+codegen-units = 1
+debug = false
+debug-assertions = false
+inherits = "production"
+opt-level = "s"
+overflow-checks = true
+panic = "abort"
+rpath = false
+
+[workspace.dependencies]
+
+cosmwasm-schema = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6", default-features = false }
+serde-json-wasm = { git = "https://github.com/dzmitry-lahoda-forks/serde-json-wasm", rev = "8a7e522c0e4de36a6dfb535766f26a9941017d81", default-features = false}
+cosmwasm-std = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6", default-features = false, features = [
+  "iterator",
+  "cosmwasm_1_2",
+] }
+cw-storage-plus = { git = "https://github.com/dzmitry-lahoda-forks/cw-storage-plus", rev = "d0a2cf126cae3e3960c787ebcfc9baa54f59f71c", default-features = false, features = ["std"] }
+
+
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77" }
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77" }
+cosmwasm-orchestrate = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77" }
+
+
+fixed = { version = "1.15", default-features = false }
+parity-scale-codec = { version = "3.5.0", default-features = false }
+num = { version = "0.4", default-features = false }
+prost = { version = "0.11.9", default-features = false, features = [
+  "prost-derive",
+] }
+scale-info = { version = "2.7.0", default-features = false, features = [
+  "derive",
+] }
+schemars = { version = "0.8.12" }
+serde = { version = "1.0.163", default-features = false, features = [
+  "derive",
+  "alloc",
+] }
+serde_json = { version = "1.0.96" }
+prost-types = { version = "0.11.9", default-features = false }
+prost-build = "0.11.9"
+
+
+cw-utils = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2eb014253d2131219e518c64475a8348c5a3"}
+cw20 = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2eb014253d2131219e518c64475a8348c5a3"}
+cw20-base = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2eb014253d2131219e518c64475a8348c5a3", features = ["library"]}
+cw2 = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2eb014253d2131219e518c64475a8348c5a3"}
+
+thiserror = { version = "1.0.38", package = "thiserror-core", default-features = false }
+
+serde-cw-value = { version = "0.7.0", default-features = false }
+hex = { version = "0.4", default-features = false, features = [
+  "alloc",
+  "serde",
+] }
+
+
+[patch.crates-io]
+serde-json-wasm = { git = "https://github.com/dzmitry-lahoda-forks/serde-json-wasm", rev = "8a7e522c0e4de36a6dfb535766f26a9941017d81" }
+cosmwasm-std = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6"}
+cw-storage-plus = { git = "https://github.com/dzmitry-lahoda-forks/cw-storage-plus", rev = "d0a2cf126cae3e3960c787ebcfc9baa54f59f71c"}

@@ -12,6 +12,7 @@ mod network;
 mod packet;
 mod program;
 mod protocol;
+pub mod proto;
 
 pub use crate::{
 	asset::*, bridge::*, instruction::*, network::*, packet::*, program::*, protocol::*,

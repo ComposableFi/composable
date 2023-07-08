@@ -34,4 +34,3 @@ serde-json-wasm = { workspace = true, default-features = false }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 xc-core = { path = "../../../lib/core", features = ["cosmwasm", "std"] }
-xc-proto = { path = "../../../lib/proto" }

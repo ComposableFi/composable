@@ -465,7 +465,6 @@ dependencies = [
  "serde-json-wasm",
  "thiserror-core",
  "xc-core",
- "xc-proto",
 ]
 
 [[package]]
@@ -488,7 +487,6 @@ dependencies = [
  "serde_json",
  "thiserror-core",
  "xc-core",
- "xc-proto",
 ]
 
 [[package]]
@@ -510,7 +508,6 @@ dependencies = [
  "serde_json",
  "thiserror-core",
  "xc-core",
- "xc-proto",
 ]
 
 [[package]]
@@ -2648,21 +2645,12 @@ dependencies = [
  "num",
  "parity-scale-codec",
  "prost",
+ "prost-build",
+ "prost-types",
  "scale-info",
  "schemars",
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "xc-proto"
-version = "0.1.0"
-dependencies = [
- "fixed",
- "prost",
- "prost-build",
- "prost-types",
- "xc-core",
 ]
 
 [[package]]

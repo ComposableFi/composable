@@ -1,9 +1,11 @@
+mod execute;
+
 extern crate alloc;
 
 use crate::{
-	assets, common,
+	assets, auth,
 	error::{ContractError, ContractResult},
-	exec, msg, state,
+	exec, msg, state, events::make_event,
 };
 
 use cosmwasm_std::{
@@ -18,7 +20,7 @@ use cw20::Cw20ExecuteMsg;
 use cw_utils::ensure_from_older_version;
 use cw_xc_common::shared::DefaultXCVMPacket;
 use xc_core::{BridgeProtocol, CallOrigin, Displayed, Funds, XCVMAck};
-use xc_proto::{decode_packet, Encodable};
+use xc_core::proto::{decode_packet, Encodable};
 
 const CONTRACT_NAME: &str = "composable:xcvm-gateway";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -42,50 +44,9 @@ pub fn instantiate(
 	}
 	.save(deps.storage)?;
 
-	Ok(Response::default().add_event(common::make_event("instantiated")))
+	Ok(Response::default().add_event(make_event("instantiated")))
 }
 
-#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn execute(
-	deps: DepsMut,
-	env: Env,
-	info: MessageInfo,
-	msg: msg::ExecuteMsg,
-) -> ContractResult<Response> {
-	match msg {
-		msg::ExecuteMsg::IbcSetNetworkChannel { network_id, channel_id } => {
-			let auth = common::auth::Admin::authorise(deps.as_ref(), &info)?;
-			handle_ibc_set_network_channel(auth, deps, network_id, channel_id)
-		},
-
-		msg::ExecuteMsg::ExecuteProgram { execute_program } =>
-			exec::handle_execute_program(deps, env, info, execute_program),
-
-		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program } => {
-			let auth = common::auth::Contract::authorise(&env, &info)?;
-			exec::handle_execute_program_privilleged(auth, deps, env, call_origin, execute_program)
-		},
-
-		msg::ExecuteMsg::Bridge(msg) => {
-			let auth = common::auth::Interpreter::authorise(
-				deps.as_ref(),
-				&info,
-				msg.interpreter_origin.clone(),
-			)?;
-			handle_bridge_forward(auth, deps, info, msg)
-		},
-
-		msg::ExecuteMsg::RegisterAsset { asset_id, reference } => {
-			let auth = common::auth::Admin::authorise(deps.as_ref(), &info)?;
-			assets::handle_register_asset(auth, deps, asset_id, reference)
-		},
-
-		msg::ExecuteMsg::UnregisterAsset { asset_id } => {
-			let auth = common::auth::Admin::authorise(deps.as_ref(), &info)?;
-			assets::handle_unregister_asset(auth, deps, asset_id)
-		},
-	}
-}
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: msg::MigrateMsg) -> ContractResult<Response> {
@@ -112,7 +73,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> ContractResult<Response> {
 }
 
 fn handle_ibc_set_network_channel(
-	_: common::auth::Admin,
+	_: auth::Admin,
 	deps: DepsMut,
 	network_id: xc_core::NetworkId,
 	channel_id: state::ChannelId,
@@ -122,7 +83,7 @@ fn handle_ibc_set_network_channel(
 		.map_err(|_| ContractError::UnknownChannel)?;
 	state::IBC_NETWORK_CHANNEL.save(deps.storage, network_id, &channel_id)?;
 	Ok(Response::default().add_event(
-		common::make_event("set_network_channel")
+		make_event("set_network_channel")
 			.add_attribute("network_id", network_id.to_string())
 			.add_attribute("channel_id", channel_id),
 	))
@@ -167,7 +128,7 @@ pub fn ibc_channel_connect(
 		},
 	)?;
 	Ok(IbcBasicResponse::new().add_event(
-		common::make_event("ibc_connect")
+		make_event("ibc_connect")
 			.add_attribute("channel_id", channel.endpoint.channel_id.clone()),
 	))
 }
@@ -191,7 +152,7 @@ pub fn ibc_channel_close(
 	// TODO: are all the in flight packets timed out in this case? if not, we need to unescrow
 	// assets
 	Ok(IbcBasicResponse::new().add_event(
-		common::make_event("ibc_close")
+		make_event("ibc_close")
 			.add_attribute("channel_id", channel.endpoint.channel_id.clone()),
 	))
 }
@@ -202,7 +163,7 @@ pub fn ibc_packet_receive(
 	env: Env,
 	msg: IbcPacketReceiveMsg,
 ) -> ContractResult<IbcReceiveResponse> {
-	let response = IbcReceiveResponse::default().add_event(common::make_event("receive"));
+	let response = IbcReceiveResponse::default().add_event(make_event("receive"));
 	let msg = (|| -> ContractResult<_> {
 		let packet: DefaultXCVMPacket =
 			decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
@@ -228,7 +189,7 @@ pub fn ibc_packet_receive(
 }
 
 fn make_ibc_failure_event(reason: String) -> cosmwasm_std::Event {
-	common::make_event("receive")
+	make_event("receive")
 		.add_attribute("result", "failure")
 		.add_attribute("reason", reason.to_string())
 }
@@ -236,7 +197,7 @@ fn make_ibc_failure_event(reason: String) -> cosmwasm_std::Event {
 fn handle_exec_reply(msg: Reply) -> ContractResult<Response> {
 	let (data, event) = match msg.result {
 		SubMsgResult::Ok(_) =>
-			(XCVMAck::OK, common::make_event("receive").add_attribute("result", "success")),
+			(XCVMAck::OK, make_event("receive").add_attribute("result", "success")),
 		SubMsgResult::Err(err) => (XCVMAck::KO, make_ibc_failure_event(err.to_string())),
 	};
 	Ok(Response::default().add_event(event).set_data(data))
@@ -269,7 +230,7 @@ pub fn ibc_packet_ack(
 		_ => Err(ContractError::InvalidAck),
 	}?;
 	Ok(IbcBasicResponse::default()
-		.add_event(common::make_event("ack").add_attribute("ack", ack.value().to_string()))
+		.add_event(make_event("ack").add_attribute("ack", ack.value().to_string()))
 		.add_messages(messages))
 }
 
@@ -346,7 +307,7 @@ fn unescrow_assets(
 /// Handle a request gateway message.
 /// The call must originate from an interpreter.
 fn handle_bridge_forward(
-	_: common::auth::Interpreter,
+	_: auth::Interpreter,
 	deps: DepsMut,
 	info: MessageInfo,
 	msg: cw_xc_common::gateway::BridgeMsg,
@@ -361,7 +322,7 @@ fn handle_bridge_forward(
 		program: msg.execute_program.program,
 		assets: msg.execute_program.assets,
 	};
-	let mut event = common::make_event("bridge")
+	let mut event = make_event("bridge")
 		.add_attribute("network_id", msg.network_id.to_string())
 		.add_attribute(
 			"assets",

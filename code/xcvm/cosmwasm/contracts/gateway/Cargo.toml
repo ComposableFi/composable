@@ -26,7 +26,6 @@ serde = { workspace = true, default-features = false, features = ["derive"] }
 serde-json-wasm = { workspace = true }
 thiserror = { workspace = true }
 xc-core = { path = "../../../lib/core", features = ["std"] }
-xc-proto = { path = "../../../lib/proto" }
 
 [dev-dependencies]
 cosmwasm-schema = { workspace = true }

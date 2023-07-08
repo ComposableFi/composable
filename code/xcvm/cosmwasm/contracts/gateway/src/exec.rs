@@ -1,11 +1,11 @@
 extern crate alloc;
 
 use crate::{
-	assets, common,
+	assets, auth,
 	contract::INSTANTIATE_INTERPRETER_REPLY_ID,
 	error::{ContractError, ContractResult},
 	msg, state,
-	state::Config,
+	state::Config, events::make_event,
 };
 
 use cosmwasm_std::{
@@ -80,7 +80,7 @@ pub(crate) fn handle_execute_program(
 /// The gateway must ensure that the `CallOrigin` is valid as the router does not do further
 /// checking on it.
 pub(crate) fn handle_execute_program_privilleged(
-	_: common::auth::Contract,
+	_: auth::Contract,
 	deps: DepsMut,
 	env: Env,
 	call_origin: CallOrigin,
@@ -104,7 +104,7 @@ pub(crate) fn handle_execute_program_privilleged(
 		)?;
 		Ok(response
 			.add_event(
-				common::make_event("route.execute")
+				make_event("route.execute")
 					.add_attribute("interpreter", address.into_string()),
 			)
 			.add_message(wasm_msg))
@@ -147,7 +147,7 @@ pub(crate) fn handle_execute_program_privilleged(
 		)?
 		.into();
 		Ok(Response::new()
-			.add_event(common::make_event("route.create"))
+			.add_event(make_event("route.create"))
 			.add_submessage(interpreter_instantiate_submessage)
 			.add_message(self_call_message))
 	}
