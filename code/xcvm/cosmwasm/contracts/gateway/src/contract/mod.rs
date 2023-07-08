@@ -72,23 +72,6 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> ContractResult<Response> {
 	}
 }
 
-fn handle_ibc_set_network_channel(
-	_: auth::Admin,
-	deps: DepsMut,
-	network_id: xc_core::NetworkId,
-	channel_id: state::ChannelId,
-) -> ContractResult<Response> {
-	state::IBC_CHANNEL_INFO
-		.load(deps.storage, channel_id.clone())
-		.map_err(|_| ContractError::UnknownChannel)?;
-	state::IBC_NETWORK_CHANNEL.save(deps.storage, network_id, &channel_id)?;
-	Ok(Response::default().add_event(
-		make_event("set_network_channel")
-			.add_attribute("network_id", network_id.to_string())
-			.add_attribute("channel_id", channel_id),
-	))
-}
-
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn ibc_channel_open(
 	_deps: DepsMut,
@@ -302,48 +285,4 @@ fn unescrow_assets(
 			}
 		})
 		.collect::<Result<Vec<_>, _>>()
-}
-
-/// Handle a request gateway message.
-/// The call must originate from an interpreter.
-fn handle_bridge_forward(
-	_: auth::Interpreter,
-	deps: DepsMut,
-	info: MessageInfo,
-	msg: cw_xc_common::gateway::BridgeMsg,
-) -> ContractResult<Response> {
-	let channel_id = state::IBC_NETWORK_CHANNEL
-		.load(deps.storage, msg.network_id)
-		.map_err(|_| ContractError::UnknownChannel)?;
-	let packet = DefaultXCVMPacket {
-		interpreter: String::from(info.sender).into_bytes(),
-		user_origin: msg.interpreter_origin.user_origin,
-		salt: msg.execute_program.salt,
-		program: msg.execute_program.program,
-		assets: msg.execute_program.assets,
-	};
-	let mut event = make_event("bridge")
-		.add_attribute("network_id", msg.network_id.to_string())
-		.add_attribute(
-			"assets",
-			serde_json_wasm::to_string(&packet.assets)
-				.map_err(|_| ContractError::FailedToSerialize)?,
-		)
-		.add_attribute(
-			"program",
-			serde_json_wasm::to_string(&packet.program)
-				.map_err(|_| ContractError::FailedToSerialize)?,
-		);
-	if !packet.salt.is_empty() {
-		// TODO(mina86): We're unnecessarily clone packet.salt here.  What we
-		// want here is ‘to_base64(&packet.salt)’.
-		let salt_attr = Binary::from(packet.salt.as_slice()).to_string();
-		event = event.add_attribute("salt", salt_attr);
-	}
-	Ok(Response::default().add_event(event).add_message(IbcMsg::SendPacket {
-		channel_id,
-		data: Binary::from(packet.encode()),
-		// TODO: should be a parameter or configuration
-		timeout: IbcTimeout::with_block(IbcTimeoutBlock { revision: 0, height: 10000 }),
-	}))
 }

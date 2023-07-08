@@ -6,7 +6,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use xc_core::{AssetId, InterpreterOrigin, NetworkId};
 
-pub(crate) type ChannelId = String;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub(crate) struct Config {

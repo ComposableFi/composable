@@ -6,6 +6,11 @@ use crate::{
 use cosmwasm_std::{Deps, DepsMut, Response};
 use xc_core::AssetId;
 
+
+fn get_route(network_id: xc_core::NetworkId, asset: AssetId) -> _ {
+    todo!()
+}
+
 /// Adds a new asset to the registry; errors out if asset already exists.
 pub(crate) fn handle_register_asset(
 	_: auth::Admin,
