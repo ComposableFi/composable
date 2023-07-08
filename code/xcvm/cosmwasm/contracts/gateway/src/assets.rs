@@ -1,13 +1,13 @@
 use crate::{
 	auth,
 	error::{ContractError, ContractResult},
-	msg, state, events::make_event,
+	msg, state::{self, ChannelId}, events::make_event,
 };
 use cosmwasm_std::{Deps, DepsMut, Response};
 use xc_core::AssetId;
 
 
-fn get_route(network_id: xc_core::NetworkId, asset: AssetId) -> _ {
+fn get_route(network_id: xc_core::NetworkId, asset: AssetId) -> ChannelId {
     todo!()
 }
 

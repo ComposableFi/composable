@@ -6,7 +6,7 @@ name = "xc-core"
 version = "0.1.0"
 
 [dependencies]
-cosmwasm-std = { workspace = true }
+cosmwasm-std = { workspace = true, features = ["ibc3"]}
 cw-storage-plus = { workspace = true, optional = true }
 
 fixed = { workspace = true, default-features = false }
@@ -26,6 +26,11 @@ serde = { workspace = true, default-features = false, features = [
 serde_json = { workspace = true }
 
 prost-types = { workspace = true, default-features = false }
+
+bech32-no_std = { workspace = true, default-features = false, features = ["strict"] }
+
+sha2 = { workspace = true, default-features = false }
+
 
 [build-dependencies]
 prost-build = { workspace = true}

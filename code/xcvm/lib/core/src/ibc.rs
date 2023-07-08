@@ -1,11 +1,16 @@
-use cosmwasm_std::{Coin, IbcTimeout};
+
+use crate::prelude::*;
+use cosmwasm_std::IbcTimeout;
+use serde_json::Value;
+
+use crate::cosmos::addess_hash;
 
 
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
 /// (contracts that directly speak the IBC protocol via 6 entry points)
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(JsonSchema))]
+//#[cfg_attr(feature = "std", derive(JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum IbcMsg {
 	/// Sends bank tokens owned by the contract to the given address on another chain.
@@ -40,7 +45,7 @@ pub struct Wasm {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "std", derive(JsonSchema))]
+//#[cfg_attr(feature = "std", derive(JsonSchema))]
 pub enum IBCLifecycleComplete {
 	#[serde(rename = "ibc_ack")]
 	IBCAck {
@@ -67,7 +72,7 @@ pub enum IBCLifecycleComplete {
 /// All information here is not secured until compared with existing secured data.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "std", derive(JsonSchema))]
+//#[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct VerifiableWasmMsg {
 	pub bech32_prefix: String,
 	pub channel: String,
@@ -78,7 +83,7 @@ pub struct VerifiableWasmMsg {
 /// Message type for `sudo` entry_point
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "std", derive(JsonSchema))]
+//#[cfg_attr(feature = "std", derive(JsonSchema))]
 pub enum SudoMsg {
 	#[serde(rename = "ibc_lifecycle_complete")]
 	IBCLifecycleComplete(IBCLifecycleComplete),
@@ -94,7 +99,7 @@ pub fn derive_intermediate_sender(
 ) -> Result<String, bech32_no_std::Error> {
 	use bech32_no_std::ToBase32;
 	let sender_str = alloc::format!("{channel}/{original_sender}");
-	let sender_hash_32 = crate::cosmos::addess_hash(SENDER_PREFIX, sender_str.as_bytes());
+	let sender_hash_32 = addess_hash(SENDER_PREFIX, sender_str.as_bytes());
 	let sender = sender_hash_32.to_base32();
 	bech32_no_std::encode(bech32_prefix, sender)
 }

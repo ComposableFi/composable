@@ -65,7 +65,9 @@ hex = { version = "0.4", default-features = false, features = [
   "serde",
 ] }
 
+ibc-rs-scale = { package = "ibc", git = "https://github.com/cosmos/ibc-rs.git", rev = "9b05cee476a197f5f1cb91b91959b618e88e0839", default-features = false }
 
+bech32-no_std = { version = "0.7.3", default-features = false, features = ["strict"] }
 
 [patch.crates-io]
 serde-json-wasm = { git = "https://github.com/dzmitry-lahoda-forks/serde-json-wasm", rev = "8a7e522c0e4de36a6dfb535766f26a9941017d81" }

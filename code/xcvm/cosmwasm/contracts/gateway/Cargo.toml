@@ -27,6 +27,11 @@ serde-json-wasm = { workspace = true }
 thiserror = { workspace = true }
 xc-core = { path = "../../../lib/core", features = ["std"] }
 
+ibc-rs-scale = { workspace = true, default-features = false, features = [
+  "parity-scale-codec",
+  "serde",
+] }
+
 [dev-dependencies]
 cosmwasm-schema = { workspace = true }
 prost = { workspace = true, default-features = false, features = [
