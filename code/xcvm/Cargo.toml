@@ -57,6 +57,7 @@ cw20 = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2e
 cw20-base = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2eb014253d2131219e518c64475a8348c5a3", features = ["library"]}
 cw2 = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2eb014253d2131219e518c64475a8348c5a3"}
 
+
 thiserror = { version = "1.0.38", package = "thiserror-core", default-features = false }
 
 serde-cw-value = { version = "0.7.0", default-features = false }
