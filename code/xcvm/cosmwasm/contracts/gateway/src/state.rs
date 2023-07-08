@@ -29,11 +29,13 @@ impl Config {
 	}
 }
 
+pub type ChannelId = String;
+
 /// Information associated with an IBC channel.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub(crate) struct ChannelInfo {
 	/// id of this channel
-	pub id: ibc_rs_scale:: ,
+	pub id: ChannelId,
 	/// the remote channel/port we connect to
 	pub counterparty_endpoint: IbcEndpoint,
 	/// the connection this exists on (you can use to query client/consensus info)

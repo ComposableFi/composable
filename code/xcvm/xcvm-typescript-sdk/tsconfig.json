@@ -7,6 +7,5 @@
   },
   "include": [
     "src/**/*",
-    "src/interpreter.proto"
   ],
 }
