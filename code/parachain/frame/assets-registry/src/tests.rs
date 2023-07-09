@@ -56,7 +56,7 @@ fn check_id_structure() {
 		// asset id 2
 		assert_eq!(
 			asset_id_1,
-			u128::from_be_bytes([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+			u128::from_be_bytes([0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 		);
 		let protocol_id = [0, 0, 1, 0];
 		let nonce = 256_u64;
@@ -81,7 +81,7 @@ fn check_id_structure() {
 		println!("{:?}", asset_id_2.to_be_bytes());
 		assert_eq!(
 			asset_id_2,
-			u128::from_be_bytes([1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0])
+			u128::from_be_bytes([0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0])
 		);
 	})
 }

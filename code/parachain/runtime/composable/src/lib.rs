@@ -142,7 +142,7 @@ parameter_types! {
 		.build_or_panic();
 
 	pub const SS58Prefix: u8 = 50;
-	pub const ComposableNetworkId: [u8; 4] = [0, 0, 0, 1];
+	pub const ComposableNetworkId: u32 = 1;
 }
 
 // Configure FRAME pallets to include in runtime.

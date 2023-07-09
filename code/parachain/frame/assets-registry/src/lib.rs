@@ -96,7 +96,7 @@ pub mod pallet {
 
 		/// Network id, unique per chain
 		#[pallet::constant]
-		type NetworkId: Get<[u8; 4]>;
+		type NetworkId: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -554,6 +554,7 @@ pub mod pallet {
 
 		fn generate_asset_id(protocol_id: [u8; 4], nonce: u64) -> Self::AssetId {
 			let bytes = T::NetworkId::get()
+				.to_be_bytes()
 				.into_iter()
 				.chain(protocol_id)
 				.chain(nonce.to_be_bytes())
