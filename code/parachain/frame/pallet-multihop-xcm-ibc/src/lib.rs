@@ -176,7 +176,7 @@ pub mod pallet {
 				if let Some(memo_memo) = last_memo_data {
 					forward.next = Some(Box::new(memo_memo));
 				};
-				let new_memo = MemoData::forward(forward);
+				let new_memo = MemoData::Forward(forward);
 				last_memo_data = Some(new_memo);
 			}
 			Ok(last_memo_data)

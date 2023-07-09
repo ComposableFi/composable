@@ -20,7 +20,7 @@ use cw20::Cw20ExecuteMsg;
 use cw_utils::ensure_from_older_version;
 use cw_xc_common::shared::DefaultXCVMPacket;
 use xc_core::{
-	ibc::{VerifiableWasmMsg, Wasm},
+	ibc::{Ics20MessageHoo, WasmMemo},
 	proto::{decode_packet, Encodable},
 	BridgeProtocol, CallOrigin, Displayed, Funds, Picasso, XCVMAck,
 };
@@ -33,9 +33,9 @@ pub fn execute(
 	msg: msg::ExecuteMsg,
 ) -> ContractResult<Response> {
 	match msg {
-		msg::ExecuteMsg::IbcSetNetworkChannel { network_id, channel_id } => {
+		msg::ExecuteMsg::IbcSetNetworkChannel { from, to, channel_id, gateway } => {
 			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
-			handle_ibc_set_network_channel(auth, deps, network_id, channel_id)
+			handle_ibc_set_network_channel(auth, deps, to, channel_id)
 		},
 
 		msg::ExecuteMsg::ExecuteProgram { execute_program } =>
@@ -60,6 +60,10 @@ pub fn execute(
 		msg::ExecuteMsg::UnregisterAsset { asset_id } => {
 			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
 			assets::handle_unregister_asset(auth, deps, asset_id)
+		},
+    	msg::ExecuteMsg::Wasm(msg) => {
+			
+			let auth = auth::Wasm::authorise(deps, &env, &info, msg.)
 		},
 	}
 }
@@ -106,9 +110,9 @@ fn handle_bridge_forward(
 		get_route(crate::topology::this(), msg.network_id, asset)?;
 	let target_prefix = "centauri";
 	let coin = Coin::new(amount.into(), denom);
-	let memo = Wasm {
+	let memo = WasmMemo {
 		contract: Addr,
-		msg: VerifiableWasmMsg {
+		msg: Ics20MessageHoo {
 			bech32_prefix: "".to_owned(),
 			channel: channel_id,
 			original_sender: info.sender.to_string(),
@@ -123,17 +127,14 @@ fn handle_bridge_forward(
 		to_address: gateway,
 		amount: coin.clone(),
 		timeout,
-		memo: Wasm {
+		memo: Some(serde_json_wasm::to_string(&WasmMemo {
 			contract: Addr,
-			msg: VerifiableWasmMsg {
-				bech32_prefix: "".to_owned(),
-				channel: channel_id,
-				original_sender: info.sender.to_string(),
-				asset: coin,
+			msg: Ics20MessageHoo {
+				network_id: crate::topology::this(),
 				data: Binary::from(packet.encode()),
 			},
 			ibc_callback: None,
-		},
+		})),
 	};
 
 	const IBC_PRECOMPILE: &str = "5EYCAe5g89aboD4c8naVbgG6izsMBCgtoCB9TUHiJiH2yVow";

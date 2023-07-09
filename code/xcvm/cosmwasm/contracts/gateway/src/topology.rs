@@ -22,13 +22,13 @@ pub fn get_route(
 		(Picasso::ID, Centauri::ID) => Ok((
 			"channel-75".to_owned(),
 			asset.to_string(),
-			Addr("xc contract on other side".to_string()), 
+			Addr::unchecked("xc contract on other side".to_string()), 
 			timeout,
 		)),
 		(Centauri::ID, Picasso::ID) => Ok((
 			"channel-1".to_owned(),
 			asset.to_string(),
-			Addr("xc contract on other side".to_string()),
+			Addr::unchecked("xc contract on other side".to_string()),
 			timeout,
 		)),
 		_ => Err(ContractError::RouteNotFound),

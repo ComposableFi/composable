@@ -44,8 +44,12 @@ pub(crate) struct ChannelInfo {
 
 pub(crate) const IBC_CHANNEL_INFO: Map<ChannelId, ChannelInfo> = Map::new("ibc_channel_info");
 
+
 /// According to XCVM protocol, it's always a 1:1 mapping between [`NetworkId`] and [`ChannelId`]
 pub(crate) const IBC_NETWORK_CHANNEL: Map<NetworkId, ChannelId> = Map::new("ibc_network_channel");
+pub(crate) const IBC_NETWORK_ICS_20_CHANNEL: Map<NetworkId, ChannelId> = Map::new("ibc_network_ics_20_channel");
+pub(crate) const NETWORK_GATEWAY: Map<NetworkId, String> = Map::new("network_gateway");
+pub(crate) const PREFIX: Map<NetworkId, String> = Map::new("prefix");
 pub(crate) const IBC_CHANNEL_NETWORK: Map<ChannelId, NetworkId> = Map::new("ibc_channel_network");
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -55,4 +59,5 @@ pub(crate) struct Interpreter {
 
 pub(crate) const INTERPRETERS: Map<InterpreterOrigin, Interpreter> = Map::new("interpreters");
 
+pub(crate) const INTERPRETERS: Map<InterpreterOrigin, Interpreter> = Map::new("interpreters");
 pub(crate) const ASSETS: Map<AssetId, msg::AssetReference> = Map::new("assets");

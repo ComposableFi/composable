@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Addr;
-use xc_core::{AssetId, CallOrigin, Displayed, Funds, InterpreterOrigin, NetworkId};
+use xc_core::{AssetId, CallOrigin, Displayed, Funds, InterpreterOrigin, NetworkId, ibc::{WasmMemo, Ics20MessageHoo}};
 
 /// Prefix used for all events attached to gateway responses.
 pub const EVENT_PREFIX: &str = "xcvm.gateway";
@@ -24,8 +24,11 @@ pub struct MigrateMsg {}
 #[cw_serde]
 pub enum ExecuteMsg {
 	IbcSetNetworkChannel {
-		network_id: NetworkId,
+		from: NetworkId,
+		to: NetworkId,
 		channel_id: String,
+		/// on `to` chain
+		gateway : Option<String>,
 	},
 
 	/// Sent by the user to execute a program on their behalf.
@@ -58,6 +61,8 @@ pub enum ExecuteMsg {
 	UnregisterAsset {
 		asset_id: AssetId,
 	},
+
+	Wasm(Ics20MessageHoo),
 }
 
 /// Definition of a program to be executed including its context.

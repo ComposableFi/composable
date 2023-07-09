@@ -1,6 +1,6 @@
 
 
-use crate::prelude::*;
+use crate::{prelude::*, NetworkId};
 use cosmwasm_std::{IbcTimeout};
 use serde_json::Value;
 
@@ -11,7 +11,7 @@ use crate::cosmos::addess_hash;
 /// (contracts that directly speak the IBC protocol via 6 entry points)
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-//#[cfg_attr(feature = "std", derive(JsonSchema))]
+//#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum IbcMsg {
 	/// Sends bank tokens owned by the contract to the given address on another chain.
@@ -36,17 +36,18 @@ pub enum IbcMsg {
 
 /// see https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-hooks
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct Wasm {
-	contract: Addr,
-	msg: Value,
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct WasmMemo {
+	pub contract: Addr,
+	pub msg: Value,
 	#[serde(skip_serializing_if = "Option::is_none")]
-	ibc_callback: Option<String>,
+	pub ibc_callback: Option<String>,
 }
 
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
-//#[cfg_attr(feature = "std", derive(JsonSchema))]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum IBCLifecycleComplete {
 	#[serde(rename = "ibc_ack")]
 	IBCAck {
@@ -73,19 +74,16 @@ pub enum IBCLifecycleComplete {
 /// All information here is not secured until compared with existing secured data.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
-//#[cfg_attr(feature = "std", derive(JsonSchema))]
-pub struct VerifiableWasmMsg {
-	pub bech32_prefix: String,
-	pub channel: String,
-	pub original_sender: String,
-	pub asset: Coin,
-	pub data: Binary,
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct Ics20MessageHoo {
+	pub network_id : NetworkId,
+	pub data: String,
 }
 
 /// Message type for `sudo` entry_point
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
-//#[cfg_attr(feature = "std", derive(JsonSchema))]
+//#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum SudoMsg {
 	#[serde(rename = "ibc_lifecycle_complete")]
 	IBCLifecycleComplete(IBCLifecycleComplete),

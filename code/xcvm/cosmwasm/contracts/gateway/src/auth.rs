@@ -1,10 +1,13 @@
 //! Module with authorisation checks.
 
+use std::os::unix::net;
+
 use crate::{
 	error::{ContractError, ContractResult},
-	state,
+	state::{self, ChannelId},
 };
-use cosmwasm_std::{Deps, Env, MessageInfo};
+use cosmwasm_std::{Deps, Env, MessageInfo, ensure};
+use xc_core::NetworkId;
 
 /// Authorisation token indicating call is authorised according to policy
 /// `T`.
@@ -29,8 +32,21 @@ pub(crate) type Interpreter = Auth<policy::Interpreter>;
 /// Authorisation token for messages which come from contract’s admin.
 pub(crate) type Admin = Auth<policy::Admin>;
 
+pub(crate) type Wasm = Auth<policy::Wasm>;
+
 impl Auth<policy::Contract> {
 	pub(crate) fn authorise(env: &Env, info: &MessageInfo) -> ContractResult<Self> {
+		Self::new(info.sender == env.contract.address)
+	}
+}
+
+impl Auth<policy::Wasm> {
+	pub(crate) fn authorise(deps: Deps, env: &Env, info: &MessageInfo, network_id: &NetworkId) -> ContractResult<Self> {
+		let sender = info.sender;
+		let channel = state::IBC_NETWORK_ICS_20_CHANNEL.load(&deps, network_id)?;
+		let original_sender = state::NETWORK_GATEWAY.load(&deps, network_id)?;
+		let hash_of_channel_and_sender = xc_core::ibc::derive_intermediate_sender(&channel, &original_sender, "")?;
+		ensure!(hash_of_channel_and_sender == info.sender);
 		Self::new(info.sender == env.contract.address)
 	}
 }
@@ -68,4 +84,5 @@ pub(crate) mod policy {
 	pub(crate) enum Contract {}
 	pub(crate) enum Interpreter {}
 	pub(crate) enum Admin {}
+	pub(crate) enum Wasm {}
 }

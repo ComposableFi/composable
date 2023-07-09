@@ -1,6 +1,4 @@
 use crate::{cosmwasm::CosmwasmSubstrateError, prelude::*};
-use cosmwasm_std::IbcTimeout;
-use serde_json::Value;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Forward {
@@ -65,20 +63,8 @@ impl Forward {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum MemoData {
 	Forward(Forward),
-	Wasm(xc_core::Wasm),
+	Wasm(xc_core::ibc::WasmMemo),
 }
-
-impl MemoData {
-	pub fn forward(forward: Forward) -> Self {
-		Self::Forward(forward)
-	}
-
-	pub fn wasm(wasm: Wasm) -> Self {
-		Self::Wasm(wasm)
-	}
-}
-
-
 
 /// makes it easier to convert CW types to underlying IBC types without dependency on gazillion of
 /// crates from centauri
