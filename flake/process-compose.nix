@@ -11,25 +11,7 @@
             ${self.inputs.cosmos.packages.${system}.osmosis}/bin/osmosisd "$@"
           '';
         };
-        hermes = self.inputs.cosmos.packages.${system}.hermes_1_5_1;
-        hermes-init = pkgs.writeShellApplication {
-          runtimeInputs = [ hermes ];
-          name = "hermes-init";
-          text = ''
-            HOME=$(realpath .)
-            MNEMONIC_FILE="$HOME/.hermes/mnemonics/relayer.txt"
-            export HOME
-            mkdir --parents "$HOME/.hermes/mnemonics/"
-
-            echo "black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken" > "$MNEMONIC_FILE"
-            hermes keys add --chain centauri-dev --mnemonic-file "$MNEMONIC_FILE" --key-name centauri-dev --overwrite
-            hermes keys add --chain osmosis-dev --mnemonic-file "$MNEMONIC_FILE" --key-name osmosis-dev --overwrite
-            RUST_LOG=debug
-            export RUST_LOG
-            hermes create channel --a-chain centauri-dev --b-chain osmosis-dev --a-port transfer --b-port transfer --new-client-connection --yes
-          '';
-        };
-
+        osmosis-centauri-hermes-init = self'.packages.osmosis-centauri-hermes-init;
         hyperspace-client = pkgs.writeShellApplication {
           name = "hyperspace-client";
           text = ''
@@ -48,9 +30,9 @@
           '';
         };
 
-        hermes-relay = pkgs.writeShellApplication {
+        osmosis-centauri-hermes-relay = pkgs.writeShellApplication {
           runtimeInputs = [ hermes ];
-          name = "hermes-init";
+          name = "osmosis-centauri-hermes-init";
           text = ''
             HOME=$(realpath .)
             export HOME
@@ -227,21 +209,21 @@
               log_location = "/tmp/composable-devnet/osmosis-init.log";
               availability = { restart = "on_failure"; };
             };
-            hermes-init = {
-              command = self'.packages.hermes-init;
+            osmosis-centauri-hermes-init = {
+              command = self'.packages.osmosis-centauri-hermes-init;
               depends_on = {
                 "centauri-init".condition = "process_completed_successfully";
                 "osmosis".condition = "process_healthy";
               };
-              log_location = "/tmp/composable-devnet/hermes-init.log";
+              log_location = "/tmp/composable-devnet/osmosis-centauri-hermes-init.log";
               availability = { restart = "on_failure"; };
             };
-            hermes-relay = {
-              command = self'.packages.hermes-relay;
+            osmosis-centauri-hermes-relay = {
+              command = self'.packages.osmosis-centauri-hermes-relay;
               depends_on = {
-                "hermes-init".condition = "process_completed_successfully";
+                "osmosis-centauri-hermes-init".condition = "process_completed_successfully";
               };
-              log_location = "/tmp/composable-devnet/hermes-relay.log";
+              log_location = "/tmp/composable-devnet/osmosis-centauri-hermes-relay.log";
               availability = { restart = "on_failure"; };
             };
 
