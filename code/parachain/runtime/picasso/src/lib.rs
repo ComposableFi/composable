@@ -224,7 +224,7 @@ parameter_types! {
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
 	pub AssetIdUSDT: CurrencyId = CurrencyId::USDT;
 	pub FlatFeeUSDTAmount: Balance = 10_000_000; //10 USDT
-	pub const PicassoNetworkId: [u8; 4] = [0, 0, 0, 0];
+	pub const PicassoNetworkId: u32 = 0;
 }
 
 impl assets_registry::Config for Runtime {
