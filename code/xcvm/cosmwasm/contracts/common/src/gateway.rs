@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Addr;
-use xc_core::{AssetId, CallOrigin, Displayed, Funds, InterpreterOrigin, NetworkId, ibc::{WasmMemo, Ics20MessageHoo}};
+use xc_core::{AssetId, CallOrigin, Displayed, Funds, InterpreterOrigin, NetworkId, ibc::{WasmMemo, Ics20MessageHook}};
 
 /// Prefix used for all events attached to gateway responses.
 pub const EVENT_PREFIX: &str = "xcvm.gateway";
@@ -62,7 +62,7 @@ pub enum ExecuteMsg {
 		asset_id: AssetId,
 	},
 
-	Wasm(Ics20MessageHoo),
+	Wasm(Ics20MessageHook),
 }
 
 /// Definition of a program to be executed including its context.

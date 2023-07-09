@@ -43,10 +43,10 @@ impl Auth<policy::Contract> {
 impl Auth<policy::Wasm> {
 	pub(crate) fn authorise(deps: Deps, env: &Env, info: &MessageInfo, network_id: &NetworkId) -> ContractResult<Self> {
 		let sender = info.sender;
-		let channel = state::IBC_NETWORK_ICS_20_CHANNEL.load(&deps, network_id)?;
-		let original_sender = state::NETWORK_GATEWAY.load(&deps, network_id)?;
+		let channel = state::IBC_NETWORK_ICS_20_CHANNEL.load(&deps.storage, network_id)?;
+		let original_sender = state::NETWORK_GATEWAY.load(&deps.storage, network_id)?;
 		let hash_of_channel_and_sender = xc_core::ibc::derive_intermediate_sender(&channel, &original_sender, "")?;
-		ensure!(hash_of_channel_and_sender == info.sender);
+		ensure!(hash_of_channel_and_sender == info.sender, "sender must be gateway on other chain")?;
 		Self::new(info.sender == env.contract.address)
 	}
 }

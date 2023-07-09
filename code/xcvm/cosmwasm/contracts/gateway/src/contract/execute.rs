@@ -1,6 +1,7 @@
 extern crate alloc;
 
 use crate::{
+	prelude::*,
 	assets, auth,
 	error::{ContractError, ContractResult},
 	events::make_event,
@@ -13,17 +14,19 @@ use cosmwasm_std::{
 	IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
 	IbcChannelOpenResponse, IbcMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
 	IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock, MessageInfo, Reply,
-	Response, SubMsg, SubMsgResult, WasmMsg,
+	Response, SubMsg, SubMsgResult, WasmMsg, Addr,
 };
 use cw2::set_contract_version;
 use cw20::Cw20ExecuteMsg;
 use cw_utils::ensure_from_older_version;
 use cw_xc_common::shared::DefaultXCVMPacket;
 use xc_core::{
-	ibc::{Ics20MessageHoo, WasmMemo},
+	ibc::{Ics20MessageHook, WasmMemo},
 	proto::{decode_packet, Encodable},
 	BridgeProtocol, CallOrigin, Displayed, Funds, Picasso, XCVMAck,
 };
+
+use super::EXEC_PROGRAM_REPLY_ID;
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn execute(
@@ -61,11 +64,28 @@ pub fn execute(
 			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
 			assets::handle_unregister_asset(auth, deps, asset_id)
 		},
-    	msg::ExecuteMsg::Wasm(msg) => {
-			
-			let auth = auth::Wasm::authorise(deps, &env, &info, msg.)
+    	msg::ExecuteMsg::Wasm(msg) => {			
+			let auth = auth::Wasm::authorise(deps, &env, &info, &msg.network_id)?;	
+			remote_wasm_execute(auth, msg, env)
 		},
 	}
+}
+
+pub fn remote_wasm_execute(_ : auth::Wasm, msg: Ics20MessageHook, env: Env) -> Result<Response, ContractError> {
+    let packet : DefaultXCVMPacket = decode_packet(&msg.data).map_err(ContractError::Protobuf)?;
+    let call_origin = CallOrigin::Remote {
+				    protocol: BridgeProtocol::IBC,
+				    relayer: Addr::unchecked("no access"),
+				    user_origin: packet.user_origin,
+			    };
+    let execute_program = msg::ExecuteProgramMsg {
+				    salt: packet.salt,
+				    program: packet.program,
+				    assets: packet.assets,
+			    };
+    let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
+    let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
+    Ok(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID))
 }
 
 /// Handle a request gateway message.
@@ -79,7 +99,7 @@ fn handle_bridge_forward(
 	let channel_id = state::IBC_NETWORK_CHANNEL
 		.load(deps.storage, msg.network_id)
 		.map_err(|_| ContractError::UnknownChannel)?;
-	let packet = DefaultXCVMPacket {
+	let packet: xc_core::Packet<xc_core::Program<std::collections::VecDeque<xc_core::Instruction<Vec<u8>, cosmwasm_std::CanonicalAddr, Funds>>>> = DefaultXCVMPacket {
 		interpreter: String::from(info.sender).into_bytes(),
 		user_origin: msg.interpreter_origin.user_origin,
 		salt: msg.execute_program.salt,
@@ -110,26 +130,15 @@ fn handle_bridge_forward(
 		get_route(crate::topology::this(), msg.network_id, asset)?;
 	let target_prefix = "centauri";
 	let coin = Coin::new(amount.into(), denom);
-	let memo = WasmMemo {
-		contract: Addr,
-		msg: Ics20MessageHoo {
-			bech32_prefix: "".to_owned(),
-			channel: channel_id,
-			original_sender: info.sender.to_string(),
-			asset: coin,
-			data: Binary::from(packet.encode()),
-		},
-		ibc_callback: None,
-	};
 
 	let transfer = xc_core::ibc::IbcMsg::Transfer {
 		channel_id: channel_id.clone(),
-		to_address: gateway,
+		to_address: gateway.to_string(),
 		amount: coin.clone(),
 		timeout,
 		memo: Some(serde_json_wasm::to_string(&WasmMemo {
 			contract: Addr,
-			msg: Ics20MessageHoo {
+			msg: Ics20MessageHook {
 				network_id: crate::topology::this(),
 				data: Binary::from(packet.encode()),
 			},

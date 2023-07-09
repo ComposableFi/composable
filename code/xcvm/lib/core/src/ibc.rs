@@ -75,9 +75,9 @@ pub enum IBCLifecycleComplete {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct Ics20MessageHoo {
+pub struct Ics20MessageHook {
 	pub network_id : NetworkId,
-	pub data: String,
+	pub data: Binary,
 }
 
 /// Message type for `sudo` entry_point

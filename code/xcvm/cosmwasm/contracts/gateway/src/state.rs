@@ -58,6 +58,4 @@ pub(crate) struct Interpreter {
 }
 
 pub(crate) const INTERPRETERS: Map<InterpreterOrigin, Interpreter> = Map::new("interpreters");
-
-pub(crate) const INTERPRETERS: Map<InterpreterOrigin, Interpreter> = Map::new("interpreters");
 pub(crate) const ASSETS: Map<AssetId, msg::AssetReference> = Map::new("assets");
