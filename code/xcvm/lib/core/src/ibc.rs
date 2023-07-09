@@ -1,6 +1,7 @@
 
+
 use crate::prelude::*;
-use cosmwasm_std::IbcTimeout;
+use cosmwasm_std::{IbcTimeout};
 use serde_json::Value;
 
 use crate::cosmos::addess_hash;
@@ -36,7 +37,7 @@ pub enum IbcMsg {
 /// see https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-hooks
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Wasm {
-	contract: String,
+	contract: Addr,
 	msg: Value,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	ibc_callback: Option<String>,
@@ -78,6 +79,7 @@ pub struct VerifiableWasmMsg {
 	pub channel: String,
 	pub original_sender: String,
 	pub asset: Coin,
+	pub data: Binary,
 }
 
 /// Message type for `sudo` entry_point

@@ -38,4 +38,6 @@ pub enum ContractError {
 	UnknownChannel,
 	#[error("The asset is already registered.")]
 	AlreadyRegistered,
+	#[error("Route not found.")]
+	RouteNotFound,
 }

@@ -73,7 +73,7 @@ parameter_types! {
 	pub const IbcTriePrefix : &'static [u8] = b"ibc/";
 	// converted from 5xMXcPsD9B9xDMvLyNBLmn9uhK7sTXTfubGVTZmXwVJmTVWa using https://www.shawntabrizi.com/substrate-js-utilities/
 	pub FeeAccount: <Runtime as pallet_ibc::Config>::AccountIdConversion = ibc_primitives::IbcAccount(AccountId32::from(hex!("a72ef3ce1ecd46163bc5e23fd3e6a4623d9717c957fb59001a5d4cb949150f28")));
-	pub const IbcPalletId: PalletId = PalletId(*b"cntr_ibc");
+	pub const IbcPalletId: PalletId = PalletId(*b"cntr_ibc"); // 5EYCAe5g89aboD4c8naVbgG6izsMBCgtoCB9TUHiJiH2yVow
 }
 
 use pallet_ibc::ics20::Ics20RateLimiter;

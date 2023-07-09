@@ -1,25 +1,29 @@
-
 extern crate alloc;
 
 use crate::{
 	assets, auth,
 	error::{ContractError, ContractResult},
-	exec, msg, state, events::make_event,
+	events::make_event,
+	exec, msg, state,
+	topology::get_route,
 };
 
 use cosmwasm_std::{
-	to_binary, wasm_execute, Binary, CosmosMsg, Deps, DepsMut, Env, Ibc3ChannelOpenResponse,
+	to_binary, wasm_execute, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, Ibc3ChannelOpenResponse,
 	IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
 	IbcChannelOpenResponse, IbcMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
 	IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock, MessageInfo, Reply,
-	Response, SubMsg, SubMsgResult,
+	Response, SubMsg, SubMsgResult, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw20::Cw20ExecuteMsg;
 use cw_utils::ensure_from_older_version;
 use cw_xc_common::shared::DefaultXCVMPacket;
-use xc_core::{BridgeProtocol, CallOrigin, Displayed, Funds, XCVMAck, proto::Encodable};
-use xc_core::proto::{decode_packet,};
+use xc_core::{
+	ibc::{VerifiableWasmMsg, Wasm},
+	proto::{decode_packet, Encodable},
+	BridgeProtocol, CallOrigin, Displayed, Funds, Picasso, XCVMAck,
+};
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn execute(
@@ -43,11 +47,8 @@ pub fn execute(
 		},
 
 		msg::ExecuteMsg::Bridge(msg) => {
-			let auth = auth::Interpreter::authorise(
-				deps.as_ref(),
-				&info,
-				msg.interpreter_origin.clone(),
-			)?;
+			let auth =
+				auth::Interpreter::authorise(deps.as_ref(), &info, msg.interpreter_origin.clone())?;
 			handle_bridge_forward(auth, deps, info, msg)
 		},
 
@@ -99,27 +100,51 @@ fn handle_bridge_forward(
 		let salt_attr = Binary::from(packet.salt.as_slice()).to_string();
 		event = event.add_attribute("salt", salt_attr);
 	}
-    
-    // if on picasso
-    let (asset, _) = packet.assets.0.get(0).expect("verified at outer boundaries");
-    let (denom, channel_id) = get_route(msg.network_id, asset);
-    let transfer = xc_core::ibc::IbcMsg::Transfer 
-    { 
-        channel_id: (), 
-        to_address: (), 
-        amount: (), 
-        timeout: (), 
-        memo: (),
-    };
 
-	Ok(Response::default().add_event(event).add_message(IbcMsg::SendPacket {
-		channel_id,
-		data: Binary::from(packet.encode()),
-		// TODO: should be a parameter or configuration
-		timeout: IbcTimeout::with_block(IbcTimeoutBlock { revision: 0, height: 10000 }),
-	}))
+	let (asset, amount) = packet.assets.0.get(0).expect("verified at outer boundaries");
+	let (denom, channel_id, gateway, timeout) =
+		get_route(crate::topology::this(), msg.network_id, asset)?;
+	let target_prefix = "centauri";
+	let coin = Coin::new(amount.into(), denom);
+	let memo = Wasm {
+		contract: Addr,
+		msg: VerifiableWasmMsg {
+			bech32_prefix: "".to_owned(),
+			channel: channel_id,
+			original_sender: info.sender.to_string(),
+			asset: coin,
+			data: Binary::from(packet.encode()),
+		},
+		ibc_callback: None,
+	};
+
+	let transfer = xc_core::ibc::IbcMsg::Transfer {
+		channel_id: channel_id.clone(),
+		to_address: gateway,
+		amount: coin.clone(),
+		timeout,
+		memo: Wasm {
+			contract: Addr,
+			msg: VerifiableWasmMsg {
+				bech32_prefix: "".to_owned(),
+				channel: channel_id,
+				original_sender: info.sender.to_string(),
+				asset: coin,
+				data: Binary::from(packet.encode()),
+			},
+			ibc_callback: None,
+		},
+	};
+
+	const IBC_PRECOMPILE: &str = "5EYCAe5g89aboD4c8naVbgG6izsMBCgtoCB9TUHiJiH2yVow";
+	let msg = WasmMsg::Execute {
+		contract_addr: IBC_PRECOMPILE.into(),
+		msg: Binary::from(packet.encode()),
+		funds: <_>::default(),
+	};
+
+	Ok(Response::default().add_event(event).add_message(msg))
 }
-
 
 fn handle_ibc_set_network_channel(
 	_: auth::Admin,
