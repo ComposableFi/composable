@@ -186,7 +186,7 @@ impl<CurrencyId>
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
 	pub const NativeAssetId: CurrencyId = PICA::ID;
-	pub const PicassoNetworkId: [u8; 4] = [0, 0, 0, 0];
+	pub const PicassoNetworkId: u32 = 0;
 }
 
 impl pallet_assets_registry::Config for Test {
