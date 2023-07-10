@@ -7,6 +7,9 @@ pub type DefaultXCVMProgram = crate::Program<VecDeque<DefaultXCVMInstruction>>;
 pub type XcPacket = crate::Packet<DefaultXCVMProgram>;
 pub type Salt = Vec<u8>;
 
+/// Version of IBC channels used by the system.
+pub const IBC_VERSION: &str = "xcvm-v0";
+
 pub fn encode_base64<T: Serialize>(x: &T) -> StdResult<String> {
 	Ok(to_binary(x)?.to_base64())
 }

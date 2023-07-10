@@ -1,0 +1,26 @@
+[package]
+authors = ["Composable Developers"]
+description = "XCVM Virtual Wallet Escrow contract"
+edition = "2021"
+name = "cw-xc-escrow"
+repository = "https://github.com/ComposableFi/composable"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+library = []
+
+[dependencies]
+cosmwasm-schema.workspace = true
+cosmwasm-std = { workspace = true, features = ["ibc3"] }
+cw-storage-plus.workspace = true
+cw-utils.workspace = true
+cw2.workspace = true
+parity-scale-codec.workspace = true
+strum.workspace = true
+thiserror.workspace = true
+
+xc-core = { path = "../../../lib/core", features = ["std"] }
+cw-xc-common = { path = "../common" }
