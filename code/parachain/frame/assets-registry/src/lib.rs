@@ -302,15 +302,8 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
 			ensure!(ExistentialDeposit::<T>::contains_key(asset_id), Error::<T>::AssetNotFound);
-			if let Some(inner_location) = location {
-				Self::set_reserve_location(asset_id, inner_location)?;
-			} else {
-				let old_location = LocalToForeign::<T>::try_get(asset_id)
-					.map_err(|_| Error::<T>::AssetLocationIsNone)?;
-				ForeignToLocal::<T>::remove(old_location);
-				LocalToForeign::<T>::remove(asset_id);
-				Self::deposit_event(Event::AssetLocationRemoved { asset_id });
-			}
+			Self::set_reserve_location(asset_id, location)?;
+
 			Ok(().into())
 		}
 	}
@@ -348,8 +341,8 @@ pub mod pallet {
 				Error::<T>::AssetAlreadyRegistered
 			);
 
-			if let Some(location) = location.clone() {
-				Self::set_reserve_location(asset_id, location)?;
+			if location.is_some() {
+				Self::set_reserve_location(asset_id, location.clone())?;
 			}
 
 			AssetRatio::<T>::set(asset_id, asset_info.ratio);
@@ -367,16 +360,31 @@ pub mod pallet {
 
 		fn set_reserve_location(
 			asset_id: Self::AssetId,
-			location: Self::AssetNativeLocation,
+			location: Option<Self::AssetNativeLocation>,
 		) -> DispatchResult {
-			ensure!(!ForeignToLocal::<T>::contains_key(&location), Error::<T>::LocationIsUsed);
-			let old_location = LocalToForeign::<T>::try_get(asset_id);
-			if let Ok(inner_old_location) = old_location {
-				ForeignToLocal::<T>::remove(inner_old_location);
+			if let Some(inner_location) = location {
+				ensure!(
+					!ForeignToLocal::<T>::contains_key(&inner_location),
+					Error::<T>::LocationIsUsed
+				);
+				let old_location = LocalToForeign::<T>::try_get(asset_id);
+				if let Ok(inner_old_location) = old_location {
+					ForeignToLocal::<T>::remove(inner_old_location);
+				}
+				ForeignToLocal::<T>::insert(&inner_location, asset_id);
+				LocalToForeign::<T>::insert(asset_id, inner_location.clone());
+				Self::deposit_event(Event::AssetLocationUpdated {
+					asset_id,
+					location: inner_location,
+				});
+			} else {
+				let old_location = LocalToForeign::<T>::try_get(asset_id)
+					.map_err(|_| Error::<T>::AssetLocationIsNone)?;
+				ForeignToLocal::<T>::remove(old_location);
+				LocalToForeign::<T>::remove(asset_id);
+				Self::deposit_event(Event::AssetLocationRemoved { asset_id });
 			}
-			ForeignToLocal::<T>::insert(&location, asset_id);
-			LocalToForeign::<T>::insert(asset_id, location.clone());
-			Self::deposit_event(Event::AssetLocationUpdated { asset_id, location });
+
 			Ok(())
 		}
 
