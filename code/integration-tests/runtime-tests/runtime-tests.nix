@@ -28,8 +28,11 @@
         '';
       };
 
-      devnet-integration-tests =
-        pkgs.writeShellScriptBin "devnet-integration-tests" ''
+      devnet-integration-tests = pkgs.writeShellApplication {
+        runtimeInputs = with pkgs; [ curl dasel nodejs coreutils ];
+        name = "devnet-integration-tests";
+        text = ''
+          # shellcheck disable=SC2069
           ( ${
             pkgs.lib.meta.getExe self'.packages.default
           } 2>&1 & ) | tee devnet-picasso.log &
@@ -55,15 +58,17 @@
 
           cd code/integration-tests/runtime-tests || exit
           npm install -q
+          # shellcheck disable=SC2069
           export ENDPOINT=127.0.0.1:9988 ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_basic 2>&1>runtime-tests.log &
           RUNTIME_TESTS_PID=$!
           wait_for_log "runtime-tests.log" "waiting tests start"
           tail --follow runtime-tests.log &
           ( tail --follow --lines=0 runtime-tests.log & ) | ( grep --max-count=5 "API-WS: disconnected from" >stop.log & )
-          ( while : ; do if test $( wc --lines stop.log | cut --delimiter " " --fields 1 ) -gt 4; then kill -s SIGKILL $RUNTIME_TESTS_PID && echo "Failed" && exit 42; fi; sleep 1; done ) &
+          ( while : ; do if test "$( wc --lines stop.log | cut --delimiter " " --fields 1 )" -gt 4; then kill -s SIGKILL $RUNTIME_TESTS_PID && echo "Failed" && exit 42; fi; sleep 1; done ) &
           wait $RUNTIME_TESTS_PID
           exit $?
         '';
+      };
     };
     apps = {
       devnet-integration-tests = self.inputs.flake-utils.lib.mkApp {
