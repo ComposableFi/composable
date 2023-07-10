@@ -49,7 +49,7 @@
 
           TRIES=0
           START_RESULT=1
-          while test $TRIES -le 60; do
+          while test $TRIES -le 64; do
             set +o errexit
             curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:32201
             START_RESULT=$?
@@ -59,7 +59,7 @@
               break
             fi
             ((TRIES=TRIES+1))
-            sleep 3
+            sleep 4
           done
           process-compose-stop
           exit $START_RESULT              
