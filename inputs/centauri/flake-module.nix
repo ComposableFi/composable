@@ -21,13 +21,13 @@
         type = "picasso_kusama";
       };
 
-      hyperspace-picasso-kusama-config = hyperspace-picasso-kusama-config-base
-        // {
-          parachain_rpc_url = "ws://${host}:9988";
-          relay_chain_rpc_url = "ws://${host}:9944";
-          client_id = "10-grandpa-0";
-          connection_id = "connection-1";
-        };
+      ibc-composable-picasso-config = hyperspace-picasso-kusama-config-base // {
+        parachain_rpc_url = "ws://${host}:9988";
+        relay_chain_rpc_url = "ws://${host}:9944";
+        client_id = "10-grandpa-2";
+        connection_id = "connection-1";
+        private_key = "//Bob";
+      };
 
       ibc-relayer-config-centauri-to-picasso-kusama =
         hyperspace-picasso-kusama-config-base // {
@@ -72,7 +72,7 @@
         name = "picasso_2";
         para_id = 2087;
         parachain_rpc_url = "ws://${host}:29988";
-        private_key = "//Alice";
+        private_key = "//Bob";
         relay_chain_rpc_url = "ws://${host}:29944";
         ss58_version = 50;
       };
@@ -216,8 +216,7 @@
           };
 
         hyperspace-config-chain-a = pkgs.writeText "config-chain-a.toml"
-          (self.inputs.nix-std.lib.serde.toTOML
-            hyperspace-picasso-kusama-config);
+          (self.inputs.nix-std.lib.serde.toTOML ibc-composable-picasso-config);
 
         hyperspace-config-chain-b = pkgs.writeText "config-chain-b.toml"
           (self.inputs.nix-std.lib.serde.toTOML ibc-composable-polkadot-config);

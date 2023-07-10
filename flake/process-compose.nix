@@ -58,7 +58,7 @@
             export HOME
             RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace,jsonrpsee_client_transport::ws=debug,soketto=debug,tracing::span=debug,mio::poll=debug,trie=debug,jsonrpsee_core::client::async_client=debug"
             export RUST_LOG
-            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-a} "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml"  
+            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-composable-picasso-config} "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml"  
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-b} "/tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml"  
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-core} "/tmp/composable-devnet/composable-picasso-ibc/config-core.toml"                
             ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-clients --config-a "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml" --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10
@@ -353,109 +353,40 @@
               };
               availability = { restart = "on_failure"; };
             };
-            # picasso-centauri-ibc-relay = {
-            #   command = ''
-            #     HOME="/tmp/composable-devnet/picasso-centauri-ibc"
-            #     export HOME
-            #     RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace"
-            #     export RUST_LOG
-            #     ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a /tmp/composable-devnet/picasso-centauri-ibc/config-chain-3.toml --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-2.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml --delay-period 10
-            #   '';
-            #   log_location =
-            #     "/tmp/composable-devnet/picasso-centauri-ibc-relay.log";
-            #   depends_on = {
-            #     "picasso-centauri-ibc-channels-init".condition =
-            #       "process_completed_successfully";
-            #   };
-            #   availability = { restart = "on_failure"; };
-            # };
-
+            picasso-centauri-ibc-relay = {
+              command = ''
+                HOME="/tmp/composable-devnet/picasso-centauri-ibc"
+                export HOME
+                RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace"
+                export RUST_LOG
+                ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a /tmp/composable-devnet/picasso-centauri-ibc/config-chain-3.toml --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-2.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml --delay-period 10
+              '';
+              log_location =
+                "/tmp/composable-devnet/picasso-centauri-ibc-relay.log";
+              depends_on = {
+                "picasso-centauri-ibc-channels-init".condition =
+                  "process_completed_successfully";
+              };
+              availability = { restart = "on_failure"; };
+            };
+            composable-picasso-ibc-relay = {
+              command = ''
+                HOME="/tmp/composable-devnet/composable-picasso-ibc"
+                export HOME
+                RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace"
+                export RUST_LOG
+                ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a /tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10
+              '';
+              log_location =
+                "/tmp/composable-devnet/composable-picasso-ibc-relay.log";
+              depends_on = {
+                "composable-picasso-ibc-channels-init".condition =
+                  "process_completed_successfully";
+              };
+              availability = { restart = "on_failure"; };
+            };
           };
         };
       };
     };
 }
-
-#         packages.zombienet-picasso-centauri-a
-
-#   "hyperspace-create-clients" = mkComposableContainer
-#     (import ../services/centauri.nix {
-#       name = "hyperspace-create-clients";
-#       execCommands = [
-#         "create-clients"
-#         "--config-a"
-#         configPathSourceChainA
-#         "--config-b"
-#         configPathSourceChainB
-#         "--config-core"
-#         configPathSourceCore
-#         "--delay-period"
-#         "10"
-#       ];
-#       inherit singleFileWriteMounts pkgs packages devnetTools;
-#       dependsOn = { };
-#       restartPolicy = "on-failure";
-#     }) [ network-a network-b ];
-
-#   "hyperspace-create-connection" = mkComposableContainer
-#     (import ../services/centauri.nix {
-#       name = "hyperspace-create-connection";
-#       execCommands = [
-#         "create-connection"
-#         "--config-a"
-#         configPathSourceChainA
-#         "--config-b"
-#         configPathSourceChainB
-#         "--config-core"
-#         configPathSourceCore
-#         "--delay-period"
-#         "10"
-#       ];
-#       inherit singleFileWriteMounts pkgs packages devnetTools;
-#       dependsOn = dependsOnCreateClient;
-#       restartPolicy = "on-failure";
-#     }) [ network-a network-b ];
-
-#   "hyperspace-create-channels" = mkComposableContainer
-#     (import ../services/centauri.nix {
-#       name = "hyperspace-create-channel";
-#       execCommands = [
-#         "create-channel"
-#         "--config-a"
-#         configPathSourceChainA
-#         "--config-b"
-#         configPathSourceChainB
-#         "--config-core"
-#         configPathSourceCore
-#         "--port-id"
-#         "transfer"
-#         "--version"
-#         "ics20-1"
-#         "--order"
-#         "unordered"
-#         "--delay-period"
-#         "10"
-#       ];
-#       inherit singleFileWriteMounts pkgs packages devnetTools;
-#       dependsOn = dependsOnCreateConnection;
-#       restartPolicy = "no";
-#     }) [ network-a network-b ];
-# } // pkgs.lib.optionalAttrs hyperspace-relay {
-#   "hyperspace-relay" = mkComposableContainer
-#     (import ../services/centauri.nix {
-#       name = "hyperspace-relay";
-#       execCommands = [
-#         "relay"
-#         "--config-a"
-#         configPathSourceChainA
-#         "--config-b"
-#         configPathSourceChainB
-#         "--config-core"
-#         configPathSourceCore
-#         "--delay-period"
-#         "10"
-#       ];
-#       inherit singleFileWriteMounts pkgs packages devnetTools;
-#       dependsOn = dependsOnCreateChannels;
-#       restartPolicy = "on-failure";
-#     }) [ network-a network-b ];
