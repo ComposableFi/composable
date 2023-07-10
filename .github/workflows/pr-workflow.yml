@@ -565,7 +565,7 @@ jobs:
       - name: Devnet integration tests
         if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
         run: |
-          nix run .#devnet-integration-tests
+          nix run .#devnet-integration-tests --accept-flake-config
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"            
           
