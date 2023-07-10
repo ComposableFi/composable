@@ -58,7 +58,7 @@
             export HOME
             RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace,jsonrpsee_client_transport::ws=debug,soketto=debug,tracing::span=debug,mio::poll=debug,trie=debug,jsonrpsee_core::client::async_client=debug"
             export RUST_LOG
-            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-composable-picasso-config} "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml"  
+            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-composable-picasso-config-2} "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml"  
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-b} "/tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml"  
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-core} "/tmp/composable-devnet/composable-picasso-ibc/config-core.toml"                
             ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-clients --config-a "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml" --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10

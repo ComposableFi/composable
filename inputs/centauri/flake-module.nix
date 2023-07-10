@@ -215,7 +215,7 @@
             dontStrip = true;
           };
 
-        hyperspace-config-chain-a = pkgs.writeText "config-chain-a.toml"
+        ibc-composable-picasso-config-2 = pkgs.writeText "config-chain-a.toml"
           (self.inputs.nix-std.lib.serde.toTOML ibc-composable-picasso-config);
 
         hyperspace-config-chain-b = pkgs.writeText "config-chain-b.toml"
