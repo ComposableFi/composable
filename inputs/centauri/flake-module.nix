@@ -26,7 +26,7 @@
         relay_chain_rpc_url = "ws://${host}:9944";
         client_id = "10-grandpa-2";
         connection_id = "connection-1";
-        private_key = "//Bob";
+        private_key = "//Alice";
       };
 
       ibc-relayer-config-centauri-to-picasso-kusama =
@@ -72,7 +72,7 @@
         name = "picasso_2";
         para_id = 2087;
         parachain_rpc_url = "ws://${host}:29988";
-        private_key = "//Bob";
+        private_key = "//Alice";
         relay_chain_rpc_url = "ws://${host}:29944";
         ss58_version = 50;
       };

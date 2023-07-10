@@ -375,6 +375,8 @@
                 export HOME
                 RUST_LOG="hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace"
                 export RUST_LOG
+                sed -i "s/private_key = \"//Alice\"/private_key = \"//Bob\"/" "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml"
+                sed -i "s/private_key = \"//Alice\"/private_key = \"//Bob\"/" "/tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml"
                 ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a /tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10
               '';
               log_location =
