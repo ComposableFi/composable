@@ -202,15 +202,18 @@
                 "centauri-init".condition = "process_completed_successfully";
                 "osmosis".condition = "process_healthy";
               };
-              log_location = "/tmp/composable-devnet/osmosis-centauri-hermes-init.log";
+              log_location =
+                "/tmp/composable-devnet/osmosis-centauri-hermes-init.log";
               availability = { restart = "on_failure"; };
             };
             osmosis-centauri-hermes-relay = {
               command = self'.packages.osmosis-centauri-hermes-relay;
               depends_on = {
-                "osmosis-centauri-hermes-init".condition = "process_completed_successfully";
+                "osmosis-centauri-hermes-init".condition =
+                  "process_completed_successfully";
               };
-              log_location = "/tmp/composable-devnet/osmosis-centauri-hermes-relay.log";
+              log_location =
+                "/tmp/composable-devnet/osmosis-centauri-hermes-relay.log";
               availability = { restart = "on_failure"; };
             };
 
@@ -219,11 +222,16 @@
               availability = { restart = "on_failure"; };
               log_location = "/tmp/composable-devnet/zombienet.log";
             };
-
+            composable = {
+              command = self'.packages.zombienet-composable-centauri-b;
+              availability = { restart = "on_failure"; };
+              log_location = "/tmp/composable-devnet/composable.log";
+            };
 
             picasso-centauri-ibc-init = {
               command = self'.packages.picasso-centauri-ibc-init;
-              log_location = "/tmp/composable-devnet/picasso-centauri-ibc-init.log";
+              log_location =
+                "/tmp/composable-devnet/picasso-centauri-ibc-init.log";
               depends_on = {
                 "centauri-init".condition = "process_completed_successfully";
                 "centauri".condition = "process_healthy";
@@ -238,7 +246,8 @@
                 export RUST_LOG      
                 ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a /tmp/composable-devnet/hyperspace/config-chain-3.toml --config-b /tmp/composable-devnet/hyperspace/config-chain-2.toml --config-core /tmp/composable-devnet/hyperspace/config-core.toml --delay-period 10
               '';
-              log_location = "/tmp/composable-devnet/picasso-centauri-ibc-connection-init.log";
+              log_location =
+                "/tmp/composable-devnet/picasso-centauri-ibc-connection-init.log";
               depends_on = {
                 "picasso-centauri-ibc-init".condition =
                   "process_completed_successfully";
@@ -253,7 +262,8 @@
                 export RUST_LOG
                 ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a /tmp/composable-devnet/hyperspace/config-chain-3.toml --config-b /tmp/composable-devnet/hyperspace/config-chain-2.toml --config-core /tmp/composable-devnet/hyperspace/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
               '';
-              log_location = "/tmp/composable-devnet/picasso-centauri-ibc-channels-init.log";
+              log_location =
+                "/tmp/composable-devnet/picasso-centauri-ibc-channels-init.log";
               depends_on = {
                 "picasso-centauri-ibc-connection-init".condition =
                   "process_completed_successfully";
@@ -268,7 +278,8 @@
                 export RUST_LOG
                 ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a /tmp/composable-devnet/hyperspace/config-chain-3.toml --config-b /tmp/composable-devnet/hyperspace/config-chain-2.toml --config-core /tmp/composable-devnet/hyperspace/config-core.toml --delay-period 10
               '';
-              log_location = "/tmp/composable-devnet/picasso-centauri-ibc-relay.log";
+              log_location =
+                "/tmp/composable-devnet/picasso-centauri-ibc-relay.log";
               depends_on = {
                 "picasso-centauri-ibc-channels-init".condition =
                   "process_completed_successfully";

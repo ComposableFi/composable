@@ -3,8 +3,7 @@
     let
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
-    in
-    {
+    in {
       packages = rec {
         hermes = self.inputs.cosmos.packages.${system}.hermes_1_5_1;
         osmosis-centauri-hermes-init = pkgs.writeShellApplication {
