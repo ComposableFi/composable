@@ -12,6 +12,7 @@ const TRANSFER_AMOUNT: Balance = 500;
 
 fn create_asset_id(protocol_id: [u8; 4], nonce: u64) -> u128 {
 	let bytes = <Test as assets_registry::Config>::NetworkId::get()
+		.to_be_bytes()
 		.into_iter()
 		.chain(protocol_id)
 		.chain(nonce.to_be_bytes())
