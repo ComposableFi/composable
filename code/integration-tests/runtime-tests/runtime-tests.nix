@@ -38,31 +38,30 @@
           } 2>&1 & ) | tee devnet-picasso.log &
           wait_for_log () {
            until test -f "$1"; do
-              sleep 1 
-              printf "============================== waiting =========================="
-              echo "$2"
+              sleep 2 
+              echo "$2" | tee --append monitor.log
             done
           }
 
-          wait_for_log "devnet-picasso.log" "waiting network start"
+          wait_for_log "devnet-picasso.log" "============================== waiting network start ==================================="
           TIMEOUT=300
-          COMMAND="( tail --follow --lines=0  devnet-picasso.log & ) | grep picasso | grep \"Network launched 🚀🚀\""
+          COMMAND="( tail --follow --lines=0  devnet-picasso.log & ) | grep picasso | grep \"Network launched 🚀🚀\" "
           set +o errexit
           timeout $TIMEOUT bash -c "$COMMAND"
           START_RESULT="$?"
           set -o errexit
           if [[ $START_RESULT -ne 0 ]] ; then 
-            printf "failed to start devnet within %s with exit code %s" "$TIMEOUT" "$START_RESULT"
+            printf "failed to start devnet within %s with exit code %s" "$TIMEOUT" "$START_RESULT" | tee --append monitor.log
             exit $START_RESULT
           fi
 
           cd code/integration-tests/runtime-tests || exit
           npm install -q
-          printf "============================== testing =========================="
+          echo "============================== testing ==========================" | tee --append monitor.log
           # shellcheck disable=SC2069
           export ENDPOINT=127.0.0.1:9988 ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_basic 2>&1>runtime-tests.log &
           RUNTIME_TESTS_PID=$!
-          wait_for_log "runtime-tests.log" "waiting tests start"
+          wait_for_log "runtime-tests.log" "=============== waiting tests start ================="
           tail --follow runtime-tests.log &
           ( tail --follow --lines=0 runtime-tests.log & ) | ( grep --max-count=5 "API-WS: disconnected from" >stop.log & )
           ( while : ; do if test "$( wc --lines stop.log | cut --delimiter " " --fields 1 )" -gt 4; then kill -s SIGKILL $RUNTIME_TESTS_PID && echo "Failed" && exit 42; fi; sleep 1; done ) &

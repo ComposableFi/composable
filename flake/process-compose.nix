@@ -242,26 +242,6 @@
                 log_location = "/tmp/composable-devnet/osmosis-init.log";
                 availability = { restart = "on_failure"; };
               };
-              osmosis-centauri-hermes-init = {
-                command = self'.packages.osmosis-centauri-hermes-init;
-                depends_on = {
-                  "centauri-init".condition = "process_completed_successfully";
-                  "osmosis".condition = "process_healthy";
-                };
-                log_location =
-                  "/tmp/composable-devnet/osmosis-centauri-hermes-init.log";
-                availability = { restart = "on_failure"; };
-              };
-              osmosis-centauri-hermes-relay = {
-                command = self'.packages.osmosis-centauri-hermes-relay;
-                depends_on = {
-                  "osmosis-centauri-hermes-init".condition =
-                    "process_completed_successfully";
-                };
-                log_location =
-                  "/tmp/composable-devnet/osmosis-centauri-hermes-relay.log";
-                availability = { restart = "on_failure"; };
-              };
 
               picasso = {
                 command = self'.packages.zombienet-rococo-local-picasso-dev;
@@ -273,6 +253,27 @@
                 availability = { restart = "on_failure"; };
                 log_location = "/tmp/composable-devnet/composable.log";
                 #readiness_probe.exec = self'.packages.composable-ready;
+              };
+              osmosis-centauri-hermes-init = {
+                command = self'.packages.osmosis-centauri-hermes-init;
+                depends_on = {
+                  "centauri-init".condition = "process_completed_successfully";
+                  "osmosis".condition = "process_healthy";
+                };
+                log_location =
+                  "/tmp/composable-devnet/osmosis-centauri-hermes-init.log";
+                availability = { restart = "on_failure"; };
+              };
+
+              osmosis-centauri-hermes-relay = {
+                command = self'.packages.osmosis-centauri-hermes-relay;
+                depends_on = {
+                  "osmosis-centauri-hermes-init".condition =
+                    "process_completed_successfully";
+                };
+                log_location =
+                  "/tmp/composable-devnet/osmosis-centauri-hermes-relay.log";
+                availability = { restart = "on_failure"; };
               };
 
               picasso-centauri-ibc-init = {

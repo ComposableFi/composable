@@ -18,7 +18,7 @@
             echo "black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken" > "$MNEMONIC_FILE"
             hermes keys add --chain centauri-dev --mnemonic-file "$MNEMONIC_FILE" --key-name centauri-dev --overwrite
             hermes keys add --chain osmosis-dev --mnemonic-file "$MNEMONIC_FILE" --key-name osmosis-dev --overwrite
-            RUST_LOG=debug
+            RUST_LOG=info
             export RUST_LOG
             hermes create channel --a-chain centauri-dev --b-chain osmosis-dev --a-port transfer --b-port transfer --new-client-connection --yes
           '';
@@ -29,7 +29,7 @@
           text = ''
             HOME=$(realpath .)
             export HOME
-            RUST_LOG=debug
+            RUST_LOG=info
             export RUST_LOG
             hermes start
           '';

@@ -539,8 +539,8 @@ jobs:
     name: devnet-integration-tests       
     outputs:
       ok: ${{ steps.ok.outputs.ok }}       
-    needs: 
-      - build-all-ci-packages
+    # needs: 
+    #   - build-all-ci-packages
     strategy:
       matrix:
         arch: [x64-cute]
