@@ -30,19 +30,19 @@
 
       devnet-integration-tests =
         pkgs.writeShellScriptBin "devnet-integration-tests" ''
-          ( ${
+          ${
             pkgs.lib.meta.getExe self'.packages.default
-          } 2>&1 & ) | tee devnet-picasso.log &
+          } 2>&1 &
           wait_for_log () {
            until test -f "$1"; do
               sleep 1 
               echo "$2"
             done
           }
-
-          wait_for_log "devnet-picasso.log" "waiting network start"
+          
+          wait_for_log "/tmp/composable-devnet/picasso.log" "waiting network start"
           TIMEOUT=300
-          COMMAND="( tail --follow --lines=0  devnet-picasso.log & ) | grep --max-count=1 \"Network launched 🚀🚀\""
+          COMMAND="( tail --follow --lines=0  /tmp/composable-devnet/picasso.log & ) | grep --max-count=1 \"Network launched 🚀🚀\""
           set +o errexit
           timeout $TIMEOUT bash -c "$COMMAND"
           START_RESULT="$?"

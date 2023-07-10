@@ -27,7 +27,7 @@
           text = ''
             rm --force --recursive /tmp/composable-devnet             
             mkdir --parents /tmp/composable-devnet
-            nix run .#devnet-xc
+            nix run .#devnet-xc --accept-flake-config
           '';
         };
 
@@ -256,7 +256,7 @@
             picasso = {
               command = self'.packages.zombienet-rococo-local-picasso-dev;
               availability = { restart = "on_failure"; };
-              log_location = "/tmp/composable-devnet/zombienet.log";
+              log_location = "/tmp/composable-devnet/picasso.log";
             };
             composable = {
               command = self'.packages.zombienet-composable-centauri-b;
