@@ -8199,6 +8199,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-assets-interface"
+version = "1.0.0"
+dependencies = [
+ "composable-support",
+ "composable-tests-helpers",
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log 0.4.17",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-assets-registry",
+ "pallet-assets-transactor-router",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "primitives",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 5.0.0",
+ "xcm",
+]
+
+[[package]]
 name = "pallet-assets-registry"
 version = "1.0.0"
 dependencies = [
