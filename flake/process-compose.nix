@@ -44,7 +44,7 @@
             mkdir --parents "/tmp/composable-devnet/picasso-centauri-ibc"
             HOME="/tmp/composable-devnet/picasso-centauri-ibc"
             export HOME
-            RUST_LOG="hyperspace=debug,hyperspace_parachain=trace,hyperspace_cosmos=trace"
+            RUST_LOG="hyperspace=info,hyperspace_parachain=trace,hyperspace_cosmos=trace"
             export RUST_LOG
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-2} "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-2.toml"  
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-3} "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-3.toml"  
@@ -63,7 +63,7 @@
             mkdir --parents "/tmp/composable-devnet/composable-picasso-ibc"
             HOME="/tmp/composable-devnet/composable-picasso-ibc"
             export HOME
-            RUST_LOG="hyperspace=debug,hyperspace_parachain=trace,hyperspace_cosmos=trace,jsonrpsee_client_transport::ws=debug,soketto=debug,tracing::span=debug,mio::poll=debug,trie=debug,jsonrpsee_core::client::async_client=debug"
+            RUST_LOG="hyperspace=info,hyperspace_parachain=trace,hyperspace_cosmos=trace,jsonrpsee_client_transport::ws=debug,soketto=debug,tracing::span=debug,mio::poll=debug,trie=debug,jsonrpsee_core::client::async_client=debug"
             export RUST_LOG
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-composable-picasso-config-2} "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml"  
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-b} "/tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml"  
@@ -301,7 +301,7 @@
                 command = ''
                   HOME="/tmp/composable-devnet/picasso-centauri-ibc"
                   export HOME                
-                  RUST_LOG="hyperspace=debug,hyperspace_parachain=trace,hyperspace_cosmos=trace"
+                  RUST_LOG="hyperspace=info,hyperspace_parachain=trace,hyperspace_cosmos=trace"
                   export RUST_LOG      
                   ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a /tmp/composable-devnet/picasso-centauri-ibc/config-chain-3.toml --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-2.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml --delay-period 10
                 '';
@@ -318,7 +318,7 @@
                 command = ''
                   HOME="/tmp/composable-devnet/composable-picasso-ibc"
                   export HOME                
-                  RUST_LOG="hyperspace=debug,hyperspace_parachain=trace,hyperspace_cosmos=trace"
+                  RUST_LOG="hyperspace=info,hyperspace_parachain=trace,hyperspace_cosmos=trace"
                   export RUST_LOG      
                   ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a /tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10
                 '';
@@ -335,7 +335,7 @@
                 command = ''
                   HOME="/tmp/composable-devnet/picasso-centauri-ibc"
                   export HOME       
-                  RUST_LOG="hyperspace=debug,hyperspace_parachain=trace,hyperspace_cosmos=trace"
+                  RUST_LOG="hyperspace=info,hyperspace_parachain=trace,hyperspace_cosmos=trace"
                   export RUST_LOG
                   ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a /tmp/composable-devnet/picasso-centauri-ibc/config-chain-3.toml --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-2.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
                 '';
@@ -351,7 +351,7 @@
                 command = ''
                   HOME="/tmp/composable-devnet/composable-picasso-ibc"
                   export HOME       
-                  RUST_LOG="hyperspace=debug,hyperspace_parachain=trace,hyperspace_cosmos=trace"
+                  RUST_LOG="hyperspace=info,hyperspace_parachain=trace,hyperspace_cosmos=trace"
                   export RUST_LOG
                   ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a /tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
                 '';
@@ -367,7 +367,7 @@
                 command = ''
                   HOME="/tmp/composable-devnet/picasso-centauri-ibc"
                   export HOME
-                  RUST_LOG="hyperspace=debug,hyperspace_parachain=trace,hyperspace_cosmos=trace"
+                  RUST_LOG="hyperspace=info,hyperspace_parachain=trace,hyperspace_cosmos=trace"
                   export RUST_LOG
                   ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a /tmp/composable-devnet/picasso-centauri-ibc/config-chain-3.toml --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-2.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml --delay-period 10
                 '';
@@ -383,7 +383,7 @@
                 command = ''
                   HOME="/tmp/composable-devnet/composable-picasso-ibc"
                   export HOME
-                  RUST_LOG="hyperspace=debug,hyperspace_parachain=trace,hyperspace_cosmos=trace"
+                  RUST_LOG="hyperspace=info,hyperspace_parachain=trace,hyperspace_cosmos=trace"
                   export RUST_LOG
                   sed -i "s/private_key = \"\/\/Alice\"/private_key = \"\/\/Bob\"/" "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml"
                   sed -i "s/private_key = \"\/\/Alice\"/private_key = \"\/\/Bob\"/" "/tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml"

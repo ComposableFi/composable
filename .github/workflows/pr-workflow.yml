@@ -539,15 +539,13 @@ jobs:
     name: devnet-integration-tests       
     outputs:
       ok: ${{ steps.ok.outputs.ok }}       
-    needs: 
-      - build-all-ci-packages
+    # needs: 
+    #   - build-all-ci-packages
     strategy:
       matrix:
         arch: [x64-cute]
     runs-on:
-      - self-hosted
-      - ${{ matrix.arch }}
-      - Linux
+      - x86_64-linux-32C-128GB-2TB
     concurrency:
       group: ${{ inputs.github_workflow }}-devnet-integration-tests-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
