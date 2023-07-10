@@ -27,6 +27,8 @@ in with prelude; rec {
         "--enable-offchain-indexing=true"
         "--blocks-pruning=archive"
         "--rpc-max-request-size=30" # 2x x default
+        "--offchain-worker=always"
+        "--discover-local"
       ];
       env = [{
         name = "RUST_LOG";
@@ -104,7 +106,13 @@ in with prelude; rec {
     { chain, default_command, rpc_port ? 30444, ws_port ? 9944, count ? 2 }: {
       inherit default_command;
       inherit chain;
-      default_args = [ "-lparachain=debug" "--blocks-pruning=archive" ];
+      default_args = [ 
+        "-lparachain=debug" 
+        "--blocks-pruning=archive" 
+        "--offchain-worker=always"
+        "--enable-offchain-indexing=true"        
+        "--discover-local"
+        ];
       genesis = {
         runtime = {
           runtime_genesis_config = {

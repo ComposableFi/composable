@@ -11,9 +11,8 @@
             ${self.inputs.cosmos.packages.${system}.osmosis}/bin/osmosisd "$@"
           '';
         };
-        osmosis-centauri-hermes-init = self'.packages.osmosis-centauri-hermes-init;
-        hyperspace-client = pkgs.writeShellApplication {
-          name = "hyperspace-client";
+        picasso-centauri-ibc-init = pkgs.writeShellApplication {
+          name = "picasso-centauri-ibc-init";
           text = ''
             mkdir --parents "/tmp/composable-devnet/hyperspace"
             HOME="/tmp/composable-devnet/hyperspace"
@@ -27,18 +26,6 @@
             echo "$CODE_ID"
             sed -i "s/wasm_code_id = \"0000000000000000000000000000000000000000000000000000000000000000\"/wasm_code_id = \"$CODE_ID\"/" "/tmp/composable-devnet/hyperspace/config-chain-2.toml"
             ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-clients --config-a "/tmp/composable-devnet/hyperspace/config-chain-3.toml" --config-b /tmp/composable-devnet/hyperspace/config-chain-2.toml --config-core /tmp/composable-devnet/hyperspace/config-core.toml --delay-period 10
-          '';
-        };
-
-        osmosis-centauri-hermes-relay = pkgs.writeShellApplication {
-          runtimeInputs = [ hermes ];
-          name = "osmosis-centauri-hermes-init";
-          text = ''
-            HOME=$(realpath .)
-            export HOME
-            RUST_LOG=debug
-            export RUST_LOG
-            hermes start
           '';
         };
 
@@ -233,16 +220,17 @@
               log_location = "/tmp/composable-devnet/zombienet.log";
             };
 
-            hyperspace-client = {
-              command = self'.packages.hyperspace-client;
-              log_location = "/tmp/composable-devnet/hyperspace-clients.log";
+
+            picasso-centauri-ibc-init = {
+              command = self'.packages.picasso-centauri-ibc-init;
+              log_location = "/tmp/composable-devnet/picasso-centauri-ibc-init.log";
               depends_on = {
                 "centauri-init".condition = "process_completed_successfully";
                 "centauri".condition = "process_healthy";
               };
               availability = { restart = "on_failure"; };
             };
-            hyperspace-connection = {
+            picasso-centauri-ibc-connection-init = {
               command = ''
                 HOME="/tmp/composable-devnet/hyperspace"
                 export HOME                
@@ -250,14 +238,14 @@
                 export RUST_LOG      
                 ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a /tmp/composable-devnet/hyperspace/config-chain-3.toml --config-b /tmp/composable-devnet/hyperspace/config-chain-2.toml --config-core /tmp/composable-devnet/hyperspace/config-core.toml --delay-period 10
               '';
-              log_location = "/tmp/composable-devnet/hyperspace-connection.log";
+              log_location = "/tmp/composable-devnet/picasso-centauri-ibc-connection-init.log";
               depends_on = {
-                "hyperspace-client".condition =
+                "picasso-centauri-ibc-init".condition =
                   "process_completed_successfully";
               };
               availability = { restart = "on_failure"; };
             };
-            hyperspace-channels = {
+            picasso-centauri-ibc-channels-init = {
               command = ''
                 HOME="/tmp/composable-devnet/hyperspace"
                 export HOME       
@@ -265,14 +253,14 @@
                 export RUST_LOG
                 ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a /tmp/composable-devnet/hyperspace/config-chain-3.toml --config-b /tmp/composable-devnet/hyperspace/config-chain-2.toml --config-core /tmp/composable-devnet/hyperspace/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
               '';
-              log_location = "/tmp/composable-devnet/hyperspace-channels.log";
+              log_location = "/tmp/composable-devnet/picasso-centauri-ibc-channels-init.log";
               depends_on = {
-                "hyperspace-connection".condition =
+                "picasso-centauri-ibc-connection-init".condition =
                   "process_completed_successfully";
               };
               availability = { restart = "on_failure"; };
             };
-            hyperspace-relay = {
+            picasso-centauri-ibc-relay = {
               command = ''
                 HOME="/tmp/composable-devnet/hyperspace"
                 export HOME
@@ -280,13 +268,14 @@
                 export RUST_LOG
                 ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a /tmp/composable-devnet/hyperspace/config-chain-3.toml --config-b /tmp/composable-devnet/hyperspace/config-chain-2.toml --config-core /tmp/composable-devnet/hyperspace/config-core.toml --delay-period 10
               '';
-              log_location = "/tmp/composable-devnet/hyperspace-relay.log";
+              log_location = "/tmp/composable-devnet/picasso-centauri-ibc-relay.log";
               depends_on = {
-                "hyperspace-channels".condition =
+                "picasso-centauri-ibc-channels-init".condition =
                   "process_completed_successfully";
               };
               availability = { restart = "on_failure"; };
             };
+
           };
         };
       };

@@ -6,7 +6,7 @@
     in
     {
       packages = rec {
-        hermes = self.inputs.cosmos.packages.${system}.hermes_1_5_1;        
+        hermes = self.inputs.cosmos.packages.${system}.hermes_1_5_1;
         osmosis-centauri-hermes-init = pkgs.writeShellApplication {
           runtimeInputs = [ hermes ];
           name = "osmosis-centauri-hermes-init";
@@ -24,6 +24,17 @@
             hermes create channel --a-chain centauri-dev --b-chain osmosis-dev --a-port transfer --b-port transfer --new-client-connection --yes
           '';
         };
-       };
+        osmosis-centauri-hermes-relay = pkgs.writeShellApplication {
+          runtimeInputs = [ hermes ];
+          name = "osmosis-centauri-hermes-relay";
+          text = ''
+            HOME=$(realpath .)
+            export HOME
+            RUST_LOG=debug
+            export RUST_LOG
+            hermes start
+          '';
+        };
+      };
     };
 }
