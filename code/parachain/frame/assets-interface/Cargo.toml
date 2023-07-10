@@ -1,0 +1,75 @@
+[package]
+authors = ["Composable Developers"]
+edition = "2021"
+homepage = "https://composable.finance"
+name = "pallet-assets-interface"
+version = "1.0.0"
+
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[package.metadata.cargo-udeps.ignore]
+development = ["pallet-balances"]
+
+# alias "parity-scale-code" to "codec"
+[dependencies.codec]
+default-features = false
+features = ["derive"]
+package = "parity-scale-codec"
+version = "3.0.0"
+
+[dependencies]
+composable-traits = { path = "../composable-traits", default-features = false }
+composable-support = { default-features = false, path = "../composable-support" }
+frame-benchmarking = { default-features = false, optional = true, workspace = true }
+frame-support = { default-features = false, workspace = true }
+frame-system = { default-features = false, workspace = true }
+sp-core = { default-features = false, workspace = true }
+sp-io = { default-features = false, workspace = true }
+sp-runtime = { default-features = false, workspace = true }
+sp-std = { default-features = false, workspace = true }
+xcm = { default-features = false, workspace = true }
+orml-traits = { workspace = true, default-features = false }
+
+log = { version = "0.4.14", default-features = false }
+scale-info = { version = "2.1.1", default-features = false, features = [
+  "derive",
+] }
+primitives = { path = "../../runtime/primitives", default-features = false }
+
+[dev-dependencies]
+frame-benchmarking = { default-features = false, workspace = true }
+orml-tokens = { workspace = true }
+pallet-assets-registry = { path = "../assets-registry" }
+pallet-assets-transactor-router = { path = "../assets-transactor-router" }
+pallet-balances = { workspace = true }
+pallet-timestamp = { workspace = true }
+sp-arithmetic = { default-features = false, workspace = true }
+composable-tests-helpers = { path = "../composable-tests-helpers" }
+
+[features]
+default = ["std"]
+std = [
+  "codec/std",
+  "log/std",
+  "composable-traits/std",
+  "scale-info/std",
+  "frame-support/std",
+  "frame-system/std",
+  "sp-runtime/std",
+  "sp-io/std",
+  "sp-core/std",
+  "sp-std/std",
+  "xcm/std",
+  "frame-benchmarking/std",
+  "primitives/std",
+  "pallet-balances/std",
+  "orml-tokens/std",
+]
+
+runtime-benchmarks = [
+  "frame-benchmarking",
+  "frame-support/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+]

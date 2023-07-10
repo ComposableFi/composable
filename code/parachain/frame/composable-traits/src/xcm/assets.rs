@@ -1,5 +1,5 @@
 //! Interfaces to managed assets
-use crate::assets::{AssetInfo, AssetInfoUpdate};
+use crate::assets::{AssetInfo, AssetInfoUpdate, BiBoundedAssetName, BiBoundedAssetSymbol};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::dispatch::DispatchResult;
 use scale_info::TypeInfo;
@@ -80,7 +80,7 @@ pub trait RemoteAssetRegistryMutate {
 	/// `location` - remote location relative to this chain
 	fn set_reserve_location(
 		asset_id: Self::AssetId,
-		location: Self::AssetNativeLocation,
+		location: Option<Self::AssetNativeLocation>,
 	) -> DispatchResult;
 }
 
@@ -88,4 +88,39 @@ pub trait RemoteAssetRegistryMutate {
 pub struct ForeignMetadata<AssetNativeLocation> {
 	pub decimals: Option<Exponent>,
 	pub location: AssetNativeLocation,
+}
+
+pub trait PermissionlessAsset {
+	type AccountId;
+	type AssetId;
+	type AssetNativeLocation;
+	type Balance;
+
+	fn register_asset(
+		account_id: Self::AccountId,
+		asset_id: Self::AssetId,
+		location: Option<Self::AssetNativeLocation>,
+		name: Option<BiBoundedAssetName>,
+		symbol: Option<BiBoundedAssetSymbol>,
+		decimals: u8,
+		is_cosmwasm: bool,
+	) -> DispatchResult;
+}
+
+pub trait CosmWasmIssuance {
+	type AccountId;
+	type AssetId;
+	type Balance;
+
+	fn mint_into(
+		asset_id: Self::AssetId,
+		dest: Self::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult;
+
+	fn burn_from(
+		asset_id: Self::AssetId,
+		dest: Self::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult;
 }
