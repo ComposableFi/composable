@@ -46,7 +46,7 @@
 
           wait_for_log "devnet-picasso.log" "waiting network start"
           TIMEOUT=300
-          COMMAND="( tail --follow --lines=0  devnet-picasso.log & ) | grep picasso | grep --max-count=1 \"Network launched 🚀🚀\""
+          COMMAND="( tail --follow --lines=0  devnet-picasso.log & ) | grep picasso | grep \"Network launched 🚀🚀\""
           set +o errexit
           timeout $TIMEOUT bash -c "$COMMAND"
           START_RESULT="$?"
@@ -58,6 +58,7 @@
 
           cd code/integration-tests/runtime-tests || exit
           npm install -q
+          printf "============================== testing =========================="
           # shellcheck disable=SC2069
           export ENDPOINT=127.0.0.1:9988 ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_basic 2>&1>runtime-tests.log &
           RUNTIME_TESTS_PID=$!
