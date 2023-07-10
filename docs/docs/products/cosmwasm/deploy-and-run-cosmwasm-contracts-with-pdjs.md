@@ -33,8 +33,26 @@ Run `nix run composable#devnet-picasso` or `docker run --publish 9988:9988 compo
 
 1. Contract address is `5w3oyasYQg6vkzwETMqUfvtVM99GQ4Xy8mMdKXMgJZDoRYwg`
 
-2. Execute message is `{ "members": [ { "addr": "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6", "weight": 0 } ] }`
-
+2. Execute message is
+```json
+{
+  "add_liquidity": {
+    "keep_alive": true,
+    "min_mint_amount": "0",
+    "pool_id": "0",
+    "assets": [
+      {
+        "amount": "10000000000",
+        "denom": "1"
+      },
+      {
+        "amount": "10000000000",
+        "denom": "4"
+      }
+    ]
+  }
+}
+```
 
 ### Do
 

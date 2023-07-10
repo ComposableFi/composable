@@ -73,17 +73,17 @@
           cmc-api
           cmc-api-image
           composable-node
-          devnet-centauri
           composable-testfast-node
-          picasso-testfast-runtime
           composable-testfast-runtime
-          devnet-picasso
-          devnet-picasso-image
           devnet-initialize-script-picasso-persistent
           devnet-integration-tests
+          devnet-picasso
           devnet-picasso-complete
+          devnet-picasso-image
+          devnet-xc-run-fresh
           hyperspace-composable-rococo-picasso-rococo
           hyperspace-composable-rococo-picasso-rococo-image
+          picasso-testfast-runtime
           ccw
         ]);
 
