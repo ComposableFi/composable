@@ -4,45 +4,6 @@
     in {
       packages = let packages = self'.packages;
       in rec {
-        default = centauri-configure-and-run;
-        centauri-configure-and-run = pkgs.writeShellApplication rec {
-          name = "centauri-configure-and-run";
-          runtimeInputs = mac-isolation;
-          text = ''
-            echo "copying config to modifiable path"
-            cp -f ${self'.packages.hyperspace-config-chain-a} /tmp/config-chain-a.toml  
-            cp -f ${self'.packages.hyperspace-config-chain-b} /tmp/config-chain-b.toml  
-            cp -f ${self'.packages.hyperspace-config-core} /tmp/config-core.toml  
-            ${pkgs.lib.meta.getExe devnet-centauri}
-          '';
-        };
-
-        devnet-centauri = pkgs.composable.mkDevnetProgram "devnet-centauri"
-          (import ./specs/centauri.nix {
-            inherit pkgs devnetTools packages;
-            devnet-a = packages.zombienet-picasso-centauri-a;
-            devnet-b = packages.zombienet-composable-centauri-b;
-          });
-
-        devnet-centauri-no-relay =
-          pkgs.composable.mkDevnetProgram "devnet-centauri"
-          (import ./specs/centauri.nix {
-            inherit pkgs devnetTools packages;
-            devnet-a = packages.zombienet-picasso-centauri-a;
-            devnet-b = packages.zombienet-composable-centauri-b;
-            hyperspace-relay = false;
-          });
-
-        centauri-no-relay = pkgs.writeShellApplication rec {
-          name = "centauri-configure-and-run";
-          runtimeInputs = mac-isolation;
-          text = ''
-            cp -f ${self'.packages.hyperspace-config-chain-a} /tmp/config-chain-a.toml  
-            cp -f ${self'.packages.hyperspace-config-chain-b} /tmp/config-chain-b.toml  
-            cp -f ${self'.packages.hyperspace-config-core} /tmp/config-core.toml  
-            ${pkgs.lib.meta.getExe devnet-centauri-no-relay}       
-          '';
-        };
 
         devnet-picasso-image = devnetTools.buildDevnetImage {
           name = "devnet-picasso";

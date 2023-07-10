@@ -73,7 +73,7 @@
           cmc-api
           cmc-api-image
           composable-node
-          devnet-centauri
+          devnet-xc-run-fresh
           composable-testfast-node
           picasso-testfast-runtime
           composable-testfast-runtime
