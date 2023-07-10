@@ -5,7 +5,7 @@
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
     in {
       packages = rec {
-        default = self'.packages.devnet-xc;
+        default = self'.packages.devnet-xc-run-fresh;
 
         osmosisd = pkgs.writeShellApplication {
           name = "osmosisd";
