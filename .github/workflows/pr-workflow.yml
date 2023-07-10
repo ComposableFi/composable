@@ -129,59 +129,9 @@ jobs:
       - run: |
           nix --version
           nix show-config
-          nix run .#nix-flake-check        
+          nix run .#nix-flake-check --accept-flake-config
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
-
-  build-all-run-packages-arm:
-    continue-on-error: false    
-    name: build-all-run-packages-arm
-    needs: 
-      - privilege-check
-      - lfs-check
-    runs-on:
-      - self-hosted
-      - Linux
-      - arm-monster
-    concurrency:
-      group: ${{ inputs.github_workflow }}-build-all-run-packages-arm-${{ github.event.pull_request.number || github.ref }}
-      cancel-in-progress: true
-    steps:      
-      - name: Set up Nix
-        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
-        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a
-        with:
-          install_url: https://releases.nixos.org/nix/nix-2.13.2/install
-          nix_path: nixpkgs=channel:nixos-22.11
-          extra_nix_config: |
-            sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
-            system-features = kvm       
-            keep-derivations = true
-            keep-outputs = true
-      - name: Set up Cachix
-        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
-        uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
-        with:
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - name: Add tools needed for non-nix steps
-        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
-        run: |  
-          nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
-          nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
-      - uses: actions/checkout@v3
-        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
-        with:
-          lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
-          persist-credentials: false
-      - name: Build all packages
-        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
-        uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#all-run-packages --keep-going
           
   build-all-production-deps:
     outputs:
@@ -202,51 +152,51 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
           installCommand: "true"
-          skipAddingSubstituter: true             
+          skipAddingSubstituter: true
       - uses: actions/checkout@v3
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
-          persist-credentials: false          
+          persist-credentials: false
       - name: Build all packages 
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-production-deps --keep-going
       - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT"  
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
-  # build-cosmos-cosmwasm:
-  #   outputs:
-  #     ok: ${{ steps.ok.outputs.ok }}   
-  #   name: build-cosmos-cosmwasm
-  #   needs: 
-  #     - privilege-check
-  #   runs-on:
-  #     - x86_64-linux-32C-128GB-2TB
-  #   concurrency:
-  #     group: ${{ inputs.github_workflow }}-build-cosmos-cosmwasm-${{ github.event.pull_request.number || github.ref }}
-  #     cancel-in-progress: true
-  #   steps:
-  #     - name: Set up Cachix
-  #       uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
-  #       with:
-  #         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-  #         name: composable-community
-  #         installCommand: "true"
-  #         skipAddingSubstituter: true             
-  #     - uses: actions/checkout@v3
-  #       with:
-  #         lfs: true
-  #         ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
-  #         persist-credentials: false          
-  #     - name: Build all packages 
-  #       uses: "./.github/templates/watch-exec"
-  #       with:
-  #         command: nix -- build .#xcvm-tests --keep-going
-  #     - id: ok
-  #       run: echo "ok=true" >> "$GITHUB_OUTPUT"  
+  build-cosmos-cosmwasm:
+    outputs:
+      ok: ${{ steps.ok.outputs.ok }}   
+    name: build-cosmos-cosmwasm
+    needs: 
+      - privilege-check
+    runs-on:
+      - x86_64-linux-32C-128GB-2TB
+    concurrency:
+      group: ${{ inputs.github_workflow }}-build-cosmos-cosmwasm-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Set up Cachix
+        uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
+        with:
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+          installCommand: "true"
+          skipAddingSubstituter: true             
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
+          persist-credentials: false          
+      - name: Build all packages 
+        uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#xcvm-tests --keep-going
+      - id: ok
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"  
 
   build-all-ci-packages:
     name: build-all-ci-packages
@@ -595,35 +545,17 @@ jobs:
       matrix:
         arch: [x64-cute]
     runs-on:
-      - self-hosted
-      - ${{ matrix.arch }}
-      - Linux
+      - x86_64-linux-32C-128GB-2TB
     concurrency:
       group: ${{ inputs.github_workflow }}-devnet-integration-tests-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
-    steps:
-      - name: Set up Nix
-        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
-        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a
-        with:
-          install_url: https://releases.nixos.org/nix/nix-2.13.2/install
-          nix_path: nixpkgs=channel:nixos-22.11
-          extra_nix_config: |
-            sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
-            system-features = kvm    
+    steps: 
       - name: Set up Cachix
         if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
-      - name: Add tools needed for non-nix steps
-        if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
-        run: |  
-          nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
-          nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils nixpkgs.gnumake nixpkgs.python311 nixpkgs.gcc
       - uses: actions/checkout@v3
         if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
         with:
@@ -633,7 +565,7 @@ jobs:
       - name: Devnet integration tests
         if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
         run: |
-          nix run .#devnet-integration-tests
+          nix run .#devnet-integration-tests --accept-flake-config
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"            
           

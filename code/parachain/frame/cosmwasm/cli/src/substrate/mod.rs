@@ -1,11 +1,13 @@
-mod cosmwasm;
-mod rpc;
-mod subxt_api;
-mod tx;
-mod types;
+pub mod cosmwasm;
+pub mod rpc;
+pub mod subxt_api;
+pub mod tx;
+pub mod types;
 
-use crate::error::Error;
-use anyhow::anyhow;
+use crate::{
+	args::{QueryCommand, TxCommand},
+	error::Error,
+};
 use clap::{Args, Subcommand};
 use sp_keyring::sr25519::Keyring;
 use std::{fmt::Display, str::FromStr};
@@ -14,20 +16,21 @@ use subxt::ext::{
 	sp_runtime::{MultiSignature, MultiSigner},
 };
 
+use self::{rpc::QueryCommandRunner, tx::CommandRunner};
+
 /// Interact with the CosmWasm contracts on a substrate-based chain.
 #[derive(Args, Debug)]
 pub struct Command {
 	/// Name of the development account that will be used as signer. (eg. alice)
-	// NOTE(aeryz): This conflicts with `scheme` because it can only be `sr25519`.
 	#[arg(short, long, value_parser = parse_keyring, conflicts_with_all = &["seed", "mnemonic", "scheme"])]
-	name: Option<Keyring>,
+	from: Option<Keyring>,
 
 	/// Secret seed of the signer
-	#[arg(short, long, conflicts_with_all = &["name", "mnemonic"])]
+	#[arg(short, long, conflicts_with_all = &["from", "mnemonic"])]
 	seed: Option<String>,
 
 	/// Mnemonic of the signer
-	#[arg(short, long, conflicts_with_all = &["name", "seed"])]
+	#[arg(short, long, conflicts_with_all = &["from", "seed"])]
 	mnemonic: Option<String>,
 
 	/// Signature scheme. (eg. sr25519, ed25519)
@@ -39,11 +42,11 @@ pub struct Command {
 	password: Option<String>,
 
 	/// Websocket endpoint of the substrate chain
-	#[arg(short = 'c', long, default_value_t = String::from("ws://127.0.0.1:9944"))]
-	chain_endpoint: String,
+	#[arg(long, default_value_t = String::from("ws://127.0.0.1:9944"))]
+	node: String,
 
 	#[arg(long, default_value_t = OutputType::Text)]
-	output_type: OutputType,
+	output: OutputType,
 
 	#[command(subcommand)]
 	subcommand: Subcommands,
@@ -51,8 +54,8 @@ pub struct Command {
 
 #[derive(Debug, Subcommand)]
 pub enum Subcommands {
-	Tx(tx::Command),
-	Rpc(rpc::Command),
+	Tx(TxCommand),
+	Query(QueryCommand),
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -113,28 +116,31 @@ impl Display for OutputType {
 	}
 }
 
-impl Command {
-	pub async fn run(self) -> anyhow::Result<()> {
-		match self.scheme {
-			KeyScheme::Sr25519 => self.dispatch_command::<sr25519::Pair>().await,
-			KeyScheme::Ed25519 => self.dispatch_command::<ed25519::Pair>().await,
+pub struct CosmosCommandRunner;
+
+impl CosmosCommandRunner {
+	pub async fn run(command: Command) -> Result<(), Error> {
+		match command.scheme {
+			KeyScheme::Sr25519 => Self::dispatch_command::<sr25519::Pair>(command).await,
+			KeyScheme::Ed25519 => Self::dispatch_command::<ed25519::Pair>(command).await,
 		}
 	}
 
-	async fn dispatch_command<P: Pair>(self) -> anyhow::Result<()>
+	async fn dispatch_command<P: Pair>(command: Command) -> Result<(), Error>
 	where
 		P::Seed: TryFrom<Vec<u8>>,
 		MultiSignature: From<<P as Pair>::Signature>,
 		MultiSigner: From<<P as Pair>::Public>,
 		subxt::utils::MultiSignature: From<<P as sp_core::Pair>::Signature>,
 	{
-		match self.subcommand {
-			Subcommands::Rpc(command) => command.run(self.chain_endpoint).await,
-			Subcommands::Tx(command) => {
-				let Some(pair) = get_signer_pair::<P>(self.name, self.mnemonic, self.seed, self.password)? else {
-                    return Err(anyhow!("{}", Error::OperationNeedsToBeSigned));
+		match command.subcommand {
+			Subcommands::Query(subcommand) =>
+				QueryCommandRunner::run(subcommand, command.node, command.output).await,
+			Subcommands::Tx(subcommand) => {
+				let Some(pair) = get_signer_pair::<P>(command.from, command.mnemonic, command.seed, command.password)? else {
+                    return Err(Error::OperationNeedsToBeSigned);
                 };
-				command.run(pair, self.chain_endpoint, self.output_type).await
+				CommandRunner::run(subcommand, pair, command.node, command.output).await
 			},
 		}
 	}
@@ -145,19 +151,17 @@ fn get_signer_pair<P: Pair>(
 	mnemonic: Option<String>,
 	seed: Option<String>,
 	password: Option<String>,
-) -> anyhow::Result<Option<P>>
+) -> Result<Option<P>, Error>
 where
 	P::Seed: TryFrom<Vec<u8>>,
 {
 	let pair = if let Some(name) = name {
-		P::from_string(&format!("//{}", name), None)
-			.map_err(|_| anyhow!("{}", Error::InvalidSeed))?
+		P::from_string(&format!("//{}", name), None)?
 	} else if let Some(mnemonic) = mnemonic {
-		let (pair, _) = P::from_phrase(&mnemonic, password.as_deref())
-			.map_err(|_| anyhow!("{}", Error::InvalidPhrase))?;
+		let (pair, _) = P::from_phrase(&mnemonic, password.as_deref())?;
 		pair
 	} else if let Some(seed) = seed {
-		P::from_string(&seed, None).map_err(|_| anyhow!("{}", Error::InvalidSeed))?
+		P::from_string(&seed, None)?
 	} else {
 		return Ok(None)
 	};

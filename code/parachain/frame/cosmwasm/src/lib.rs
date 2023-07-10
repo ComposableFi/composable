@@ -184,6 +184,7 @@ pub mod pallet {
 		IteratorNotFound,
 		IteratorValueNotFound,
 		NotAuthorized,
+		NotImplemented,
 		Unsupported,
 		ExecuteDeserialize,
 		Ibc,
@@ -388,6 +389,27 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(crate) type ContractToInfo<T: Config> =
 		StorageMap<_, Identity, AccountIdOf<T>, ContractInfoOf<T>>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub contracts: sp_std::vec::Vec<(T::AccountIdExtended, ContractCodeOf<T>)>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { contracts: vec![] }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			for (who, code) in self.contracts.clone() {
+				<Pallet<T>>::do_upload(&who, code).expect("contracts in genesis are valid")
+			}
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -747,6 +769,7 @@ impl<T: Config> Pallet<T> {
 					CosmwasmVMError::Precompile => Error::<T>::Precompile,
 					CosmwasmVMError::QueryDeserialize => Error::<T>::QueryDeserialize,
 					CosmwasmVMError::ExecuteSerialize => Error::<T>::ExecuteSerialize,
+					CosmwasmVMError::NotImplemented => Error::<T>::NotAuthorized,
 				};
 				Err(DispatchErrorWithPostInfo { error: error.into(), post_info })
 			},

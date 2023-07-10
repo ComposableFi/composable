@@ -1,5 +1,12 @@
+use crate::{
+	args::{
+		Execute, Migrate, TxCommand, TxSubcommands, UpdateAdmin, WasmInstantiate, WasmInstantiate2,
+	},
+	error::Error,
+};
+
 use super::{
-	cosmwasm,
+	cosmwasm::fetch_code,
 	subxt_api::api::{
 		self,
 		cosmwasm::events,
@@ -17,7 +24,6 @@ use super::{
 	},
 	OutputType,
 };
-use clap::{Args, Subcommand};
 use serde::Serialize;
 
 use subxt::{
@@ -30,46 +36,24 @@ use subxt::{
 	OnlineClient, SubstrateConfig,
 };
 
-#[derive(Args, Debug)]
-pub struct Command {
-	#[command(subcommand)]
-	pub subcommands: Subcommands,
-}
+pub struct CommandRunner;
 
-#[derive(Debug, Subcommand)]
-pub enum Subcommands {
-	/// Upload a CosmWasm contract
-	Upload(cosmwasm::Upload),
-
-	/// Instantiate a CosmWasm contract
-	Instantiate(cosmwasm::Instantiate),
-
-	/// Execute a CosmWasm contract
-	Execute(cosmwasm::Execute),
-
-	/// Migrate a CosmWasm contract
-	Migrate(cosmwasm::Migrate),
-
-	/// Update admin of a CosmWasm contract
-	UpdateAdmin(cosmwasm::UpdateAdmin),
-}
-
-impl Command {
+impl CommandRunner {
 	pub async fn run<P: Pair>(
-		self,
+		command: TxCommand,
 		pair: P,
 		chain_endpoint: String,
 		output_type: OutputType,
-	) -> anyhow::Result<()>
+	) -> Result<(), Error>
 	where
 		P::Seed: TryFrom<Vec<u8>>,
 		MultiSignature: From<<P as Pair>::Signature>,
 		MultiSigner: From<<P as Pair>::Public>,
 		subxt::utils::MultiSignature: From<<P as sp_core::Pair>::Signature>,
 	{
-		match self.subcommands {
-			Subcommands::Upload(upload) => {
-				let code = upload.fetch_code().await?;
+		match command.subcommands {
+			TxSubcommands::Store(store_command) => {
+				let code = fetch_code(&store_command)?;
 				let events = do_signed_transaction(
 					chain_endpoint,
 					pair,
@@ -79,39 +63,35 @@ impl Command {
 				print_events::<events::Uploaded, Uploaded>(&events, output_type)?;
 				Ok(())
 			},
-			Subcommands::Instantiate(cosmwasm::Instantiate {
-				code_id,
+			TxSubcommands::Instantiate2(WasmInstantiate2 {
 				salt,
-				admin,
-				label,
-				funds,
-				gas,
-				message,
+				instantiate:
+					WasmInstantiate { gas, code_id_int64, admin, label, amount, json_encoded_init_args },
 			}) => {
 				let events = do_signed_transaction(
 					chain_endpoint,
 					pair,
 					api::tx().cosmwasm().instantiate(
-						CodeIdentifier::CodeId(code_id),
+						CodeIdentifier::CodeId(code_id_int64),
 						BoundedVec(salt.into()),
 						admin,
 						BoundedVec(label.into()),
 						BoundedBTreeMap(
-							funds
+							amount
 								.unwrap_or_default()
 								.into_iter()
 								.map(|(asset, amount)| (CurrencyId(asset), (amount, true)))
 								.collect(),
 						),
 						gas,
-						BoundedVec(message.into()),
+						BoundedVec(json_encoded_init_args.into()),
 					),
 				)
 				.await?;
 				print_events::<events::Instantiated, Instantiated>(&events, output_type)?;
 				Ok(())
 			},
-			Subcommands::Execute(cosmwasm::Execute { contract, funds, gas, message }) => {
+			TxSubcommands::Execute(Execute { gas, contract, funds, message }) => {
 				let events = do_signed_transaction(
 					chain_endpoint,
 					pair,
@@ -132,7 +112,7 @@ impl Command {
 				print_events::<events::Executed, ()>(&events, output_type)?;
 				Ok(())
 			},
-			Subcommands::Migrate(cosmwasm::Migrate { contract, new_code_id, gas, message }) => {
+			TxSubcommands::Migrate(Migrate { gas, contract, new_code_id, message }) => {
 				let events = do_signed_transaction(
 					chain_endpoint,
 					pair,
@@ -147,8 +127,11 @@ impl Command {
 				print_events::<events::Migrated, Migrated>(&events, output_type)?;
 				Ok(())
 			},
-			Subcommands::UpdateAdmin(cosmwasm::UpdateAdmin {
-				contract, new_admin, gas, ..
+			TxSubcommands::UpdateAdmin(UpdateAdmin {
+				contract,
+				new_admin,
+				gas,
+				no_admin: _no_admin,
 			}) => {
 				let events = do_signed_transaction(
 					chain_endpoint,
@@ -167,7 +150,7 @@ async fn do_signed_transaction<CallData, P: Pair>(
 	endpoint: String,
 	signer: P,
 	tx: subxt::tx::Payload<CallData>,
-) -> anyhow::Result<ExtrinsicEvents<SubstrateConfig>>
+) -> Result<ExtrinsicEvents<SubstrateConfig>, Error>
 where
 	MultiSignature: From<<P as Pair>::Signature>,
 	MultiSigner: From<<P as Pair>::Public>,
@@ -190,7 +173,7 @@ where
 fn print_events<E, CE>(
 	events: &ExtrinsicEvents<SubstrateConfig>,
 	output_type: OutputType,
-) -> anyhow::Result<()>
+) -> Result<(), Error>
 where
 	E: subxt::events::StaticEvent,
 	CE: PrettyDisplay + Serialize + From<E>,
