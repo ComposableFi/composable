@@ -188,7 +188,7 @@ parameter_types! {
 	pub const MaxStakingDurationPresets: u32 = 10;
 	pub const MaxRewardConfigsPerPool: u32 = 10;
 	pub const TreasuryAccountId: AccountId = 123_456_789_u128;
-	pub const PicassoNetworkId: [u8; 4] = [0, 0, 0, 0];
+	pub const PicassoNetworkId: u32 = 0;
 }
 
 impl pallet_assets_registry::Config for Test {

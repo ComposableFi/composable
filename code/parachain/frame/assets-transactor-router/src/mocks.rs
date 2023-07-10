@@ -51,7 +51,7 @@ parameter_type_with_key! {
 
 parameter_types! {
 	pub const NativeAssetId: AssetId = 1;
-	pub const NetworkId: [u8; 4] = [0,0,0,0];
+	pub const NetworkId: u32 = 0;
 }
 
 impl Config for Test {
