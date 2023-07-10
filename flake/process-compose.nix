@@ -203,6 +203,8 @@
         };
       };
       process-compose.devnet-xc = {
+        debug = true;
+        tui = true;
         settings = {
           processes = {
             centauri = {
