@@ -1,7 +1,8 @@
 //! Interfaces to managed assets
-
+use crate::prelude::*;
 use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::collections::vec::bounded::BiBoundedVec;
+
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::vec::Vec;
@@ -18,6 +19,31 @@ pub const ASSET_METADATA_SYMBOL_LENGTH: usize = 16;
 
 pub type BiBoundedAssetName = BiBoundedVec<u8, 1, ASSET_METADATA_NAME_LENGTH>;
 pub type BiBoundedAssetSymbol = BiBoundedVec<u8, 1, ASSET_METADATA_SYMBOL_LENGTH>;
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(JsonSchema, QueryResponses))]
+pub enum ExecuteMsg {
+	// denom is asset u128 to string, for example PICA on Picasso is "1"
+	// all `owner` addresses default to contract address, he can do everything
+	#[cfg_attr(feature = "std", returns(String))]
+	Create { creation_fee : Option<String>, decimals : Option<u8>, name : Option<String>, symbol : Option<String>, owner: Option<Addr>},
+	#[cfg_attr(feature = "std", returns(String))]
+	Mint { ed_payment_asset: Option<String>, asset: Coin, to: Addr },
+	#[cfg_attr(feature = "std", returns(String))]
+	Burn { /* */ },
+	#[cfg_attr(feature = "std", returns(String))]
+	Transfer { /* */ },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(JsonSchema, QueryResponses))]
+pub enum QueryMsg {
+	#[cfg_attr(feature = "std", returns(String))]
+	GetAssetMetadata { denom : String },
+}
+
 
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
