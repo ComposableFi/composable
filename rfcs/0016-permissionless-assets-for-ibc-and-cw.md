@@ -1,6 +1,6 @@
 # Overview
 
-To transfer any asset from any chain connected via Centauri to DotSama, this asset needs to be defined in Picasso or Composable assets registry. This operation needs to be permissionless to allow free flow of assets between chains. Moreover, permissionless asset creation needs to support CosmWasm contracts which have functionality of creating, minting and burning tokens. There 2 types of permissionless assets: mintable assets(needed for cosmwasm) and nonmintable(for bridging). This document is an approach how to design permissionless assets and avoid potential risks.
+To transfer any asset from any chain connected via Centauri to DotSama, this asset needs to be defined in Picasso or Composable assets registry. This operation needs to be permissionless to allow free flow of assets between chains. Moreover, permissionless asset creation needs to support CosmWasm contracts which have functionality of creating, minting and burning tokens. There 2 types of permissionless assets: mintable assets(needed for cosmwasm) and nominatable(for bridging). This document is an approach how to design permissionless assets and avoid potential risks.
 
 ## What we currently have
 
@@ -68,12 +68,51 @@ extrinsic `permissionless_assets.update_asset`  will check that caller of the ex
 
 extrinsics `permissionless_assets.mint` and `permissionless_assets.burn` will check that caller of the extrinsic is an assets' admin and if so will use `AssetsTransactorRouter`'s `fungibles::Mutate` trait's `mint_into` or `burn_from` methods. This storage item will be populated on `create_cw_asset` extrinsic call.
 
-### Persmissionless IBC and XCM scenarios
+### Permissionless PD.js, CW, IBC and XCM scenarios
 
-When assets are created by other chains over bridges,
-no symbol, no name, no suffiency(no ED) and no decimals defined.
+#### On chain transactions
 
-#### IBC ICS 20
+CW and PD.js permissionless assets are same, because anybody can upload CW contract and execute any transaction on it.
+
+
+**Create**
+- No requires inputs
+- `CreationFee` is payed in any assets, default to PICA. Or optional `FeeAsset` parameter is provided with sufficient asset identifier.  
+- `Decimals`, `Symbol`, `Name` are optional. Parameters limits are same as for Permissioned assets. 
+- No other parameters.
+- Optional `owner`, which defaults to CW address or origin if not specified. 
+
+Blas?
+
+**Mint**
+- `To` account
+- Existential deposit for `To` account of minted asset is payed in PICA or in optional `FeeAsset`
+
+
+Blas?
+
+**Burn**
+
+**Transfer**
+
+
+#### Bridges
+
+Each bridge has `origin`.
+In case of IBC it is `channel and port`.
+In case of XCM it is `MultiLocation origin`.
+Any such origin can be hashed (to account) to produce Account32 which may be set to be `owner` of asset.
+
+Via governance additional PD.js account or CW contract can be made to be second `metadata_owner` of asset. 
+He cannot mint or change location, but can set `decimals`, `symbol`, `name`.  
+
+**Create**
+- Happens automatically on transfer [1].
+- When assets are created by other chains over bridges, no symbol, no name, no sufficiency(no ED) and no decimals defined (optional).
+- We know `location` of assets from origin and received asset id and this parameter is not optional.
+- We take `CreationFee` from relevant source described per bridge next.
+
+#### IBC ICS-020
 
 1. New token arrives.
 2. Relayer pays fee for creation of asset (with prefix).
@@ -95,3 +134,5 @@ no symbol, no name, no suffiency(no ED) and no decimals defined.
 * [Account Structure to Implement nonsufficient assets](https://docs.substrate.io/reference/account-data-structures/)
 * [More Statemine ED details](https://substrate.stackexchange.com/questions/6522/does-holding-only-sufficient-asset-in-statemint-imply-there-is-no-ed-for-the-acc/6524#6524)
 * [ED dust cleanup](https://substrate.stackexchange.com/questions/3482/how-does-substrate-clean-up-accounts-whose-balance-is-below-the-existential-depo)
+
+[1]:https://ibc.cosmos.network/main/architecture/adr-001-coin-source-tracing.html
