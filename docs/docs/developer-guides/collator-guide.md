@@ -100,9 +100,7 @@ This configuration will pass the key into the Composable application at startup.
 ```
 
 ### Verify that the node is running and catching up
-Go to [Polkadot Telemetry]. On Picasso's page, you should be able to see your node (based on the name you assigned it above), and verify that it is catching up.
-
-[Polkadot Telemetry]: (https://telemetry.polkadot.io/#list/0x6811a339673c9daa897944dcdac99c6e2939cc88245ed21951a0a3c9a2be75bc)
+Go to [Polkadot Telemetry](https://telemetry.polkadot.io/#list/0x6811a339673c9daa897944dcdac99c6e2939cc88245ed21951a0a3c9a2be75bc). On Picasso's page, you should be able to see your node (based on the name you assigned it above), and verify that it is catching up.
 
 ### Verify that the http RPC port is available
 

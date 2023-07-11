@@ -89,6 +89,8 @@ Ecosystem Incentives Multisig : 5upPPwmpXUp3yrgx6erAzr84BfywuhVhKCeza5MGmBY8wJCK
 
 Liquidity Programs Multisig : 5ys4cFxQBDs8qhkXbs9smn7yVMSmJ3QdLeqNTHfhk5QmX5Pj
 
+Centauri Fees Multisig: 5xMXcPsD9B9xDMvLyNBLmn9uhK7sTXTfubGVTZmXwVJmTVWa
+
 Treasury Pallet for accruing fees: https://polkadot.js.org/apps/#/treasury
 
 
