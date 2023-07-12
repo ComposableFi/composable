@@ -5,9 +5,7 @@
     nixpkgs-latest.url =
       "github:NixOS/nixpkgs/0135b7a556ee60144b143b071724fa44348a188e";
     process-compose-flake = {
-      url =
-        "github:Platonic-Systems/process-compose-flake/5bdb90b85642901cf9a5dccfe8c907091c261604";
-      inputs.nixpkgs.follows = "nixpkgs-latest";
+      url = "github:Platonic-Systems/process-compose-flake";
     };
 
     flake-parts.url = "github:hercules-ci/flake-parts";
@@ -93,11 +91,12 @@
         ./flake/dev-shells.nix
         ./flake/docker.nix
         ./flake/fmt.nix
+        ./flake/hermes.nix
         ./flake/home-configurations.nix
         ./flake/live.nix
         ./flake/overlays.nix
-        ./flake/release.nix
         ./flake/process-compose.nix
+        ./flake/release.nix
         ./flake/subxt.nix
         ./flake/zombienet.nix
         ./frontend/frontend.nix
@@ -106,7 +105,6 @@
         ./inputs/centauri/flake-module.nix
         ./inputs/chevdor/subwasm.nix
         ./inputs/cosmos/cosmwasm.nix
-        ./inputs/notional-labs/composable-centauri/flake-module.nix
         ./inputs/cosmos/gex.nix
         ./inputs/CosmosContracts/juno.nix
         ./inputs/CosmWasm/wasmvm.nix

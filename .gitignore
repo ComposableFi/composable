@@ -104,3 +104,5 @@ data-agent/**
 
 # cosmos
 wasm_client_data/**
+
+*.wasm

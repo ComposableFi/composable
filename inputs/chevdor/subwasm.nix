@@ -12,8 +12,10 @@
           };
         in crane.stable.buildPackage (subnix.subenv // {
           name = name;
+          pname = name;
           cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
             inherit src;
+            pname = name;
             doCheck = false;
             cargoTestCommand = "";
             nativeBuildInputs = systemCommonRust.darwin-deps;

@@ -22,6 +22,8 @@ Tokens will be directed as follows: validator genesis (2550.5 PICA), delegations
 
 Once the Picasso connection is established, the remaining 9 billion PICA tokens can also be transferred to Centauri, allowing users to delegate to those validators as well. The rewards mentioned earlier are distributed among the staked users, including both delegators and validators. Any new validator can join the active set and remove an existing genesis validator should they hold a higher stake.
 
+A list of the active validator set of Centauri can be found [here](https://ping.pub/composable/staking).
+
 ## Governance
 Similar to the way Cosmos chains operate, validators can vote using tokens they are delegated with. However, if the delegator votes themselves, it will override the validator’s vote. The parameters for the governance on the Centauri chain are as follows:
 

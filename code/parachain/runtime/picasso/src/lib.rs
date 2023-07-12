@@ -954,9 +954,6 @@ impl_runtime_apis! {
 		}
 
 		fn list_assets() -> Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>> {
-			// Hardcoded assets
-			use common::fees::ForeignToNativePriceConverter;
-
 			// Assets from the assets-registry pallet
 			let all_assets =  assets_registry::Pallet::<Runtime>::get_all_assets();
 

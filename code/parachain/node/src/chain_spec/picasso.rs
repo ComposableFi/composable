@@ -1,5 +1,6 @@
 use common::{AccountId, AuraId, Balance};
 use picasso_runtime::GenesisConfig;
+use primitives::currency::CurrencyId;
 
 use super::{Extensions, ParaId};
 
@@ -40,13 +41,19 @@ pub fn genesis_config(
 		.into_iter()
 		.map(|path| match std::fs::read(path).map(|bytes| bytes.try_into()) {
 			Ok(Ok(data)) => data,
-			Ok(Err(err)) => panic!("{path}: wasm file is over size limit"),
+			Ok(Err(_err)) => panic!("{path}: wasm file is over size limit"),
 			Err(err) => panic!("{path}: {err}"),
 		})
 		.map(|contract| (root.clone(), contract))
 		.collect();
 
-	let cosmwasm = picasso_runtime::CosmwasmConfig { contracts, ..Default::default() };
+	let cosmwasm = picasso_runtime::CosmwasmConfig { contracts };
+	let dex = picasso_runtime::PabloConfig {
+		pools: vec![
+			(root.clone(), CurrencyId(1), CurrencyId(4)),
+			(root.clone(), CurrencyId(1), CurrencyId(130)),
+		],
+	};
 
 	picasso_runtime::GenesisConfig {
 		system: picasso_runtime::SystemConfig {
@@ -101,6 +108,7 @@ pub fn genesis_config(
 			phantom: Default::default(),
 		},
 		cosmwasm,
+		pablo: dex,
 
 		tokens: Default::default(),
 		transaction_payment: Default::default(),
@@ -117,15 +125,4 @@ pub fn genesis_config(
 		},
 		release_committee: Default::default(),
 	}
-}
-
-fn include_contract(wasm_path: Option<&str>) -> Option<Vec<u8>> {
-	wasm_path.map(|x| {
-		use std::io::Read;
-		let mut wasm_path =
-			std::fs::File::open(x).expect("if wasm path was specified than path should exists");
-		let mut buf = vec![];
-		let _ = wasm_path.read_to_end(&mut buf).expect("file is readable");
-		buf
-	})
 }

@@ -1,6 +1,6 @@
+use crate::{cosmwasm::CosmwasmSubstrateError, prelude::*};
+use cosmwasm_std::IbcTimeout;
 use serde_json::Value;
-
-use crate::prelude::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
@@ -55,12 +55,12 @@ pub fn derive_intermediate_sender(
 	channel: &str,
 	original_sender: &str,
 	bech32_prefix: &str,
-) -> Result<String, ()> {
+) -> Result<String, bech32_no_std::Error> {
 	use bech32_no_std::ToBase32;
 	let sender_str = alloc::format!("{channel}/{original_sender}");
 	let sender_hash_32 = crate::cosmos::addess_hash(SENDER_PREFIX, sender_str.as_bytes());
 	let sender = sender_hash_32.to_base32();
-	bech32_no_std::encode(&bech32_prefix, sender).map_err(|_| ())
+	bech32_no_std::encode(bech32_prefix, sender)
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -146,4 +146,42 @@ impl MemoData {
 	pub fn wasm(wasm: Wasm) -> Self {
 		Self::Wasm(wasm)
 	}
+}
+
+/// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
+/// (contracts that directly speak the IBC protocol via 6 entry points)
+#[non_exhaustive]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+#[serde(rename_all = "snake_case")]
+pub enum IbcMsg {
+	/// Sends bank tokens owned by the contract to the given address on another chain.
+	/// The channel must already be established between the ibctransfer module on this chain
+	/// and a matching module on the remote chain.
+	/// We cannot select the port_id, this is whatever the local chain has bound the ibctransfer
+	/// module to.
+	Transfer {
+		/// exisiting channel to send the tokens over
+		channel_id: String,
+		/// address on the remote chain to receive these tokens
+		to_address: String,
+		/// packet data only supports one coin
+		/// https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20
+		amount: Coin,
+		/// when packet times out, measured on remote chain
+		timeout: IbcTimeout,
+		memo: Option<String>,
+	},
+}
+
+/// makes it easier to convert CW types to underlying IBC types without dependency on gazillion of
+/// crates from centauri
+pub trait CosmwasmIbc {
+	fn transfer(
+		from: cosmwasm_std::Addr,
+		channel_id: String,
+		to_address: String,
+		amount: cosmwasm_std::Coin,
+		timeout: cosmwasm_std::IbcTimeout,
+	) -> Result<(), CosmwasmSubstrateError>;
 }

@@ -101,7 +101,7 @@ impl<T: Config> Pallet<T> {
 			.unwrap_or(false)
 	}
 
-	pub(crate) fn do_ibc_transfer(
+	pub fn do_ibc_transfer(
 		vm: &mut DefaultCosmwasmVM<T>,
 		channel_id: String,
 		to_address: String,

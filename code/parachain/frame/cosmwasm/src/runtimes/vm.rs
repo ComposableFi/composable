@@ -1,5 +1,7 @@
 use super::abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas};
-use crate::{runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Config, Pallet};
+use crate::{
+	prelude::*, runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Config, Pallet,
+};
 use alloc::{borrow::ToOwned, string::String};
 use composable_traits::cosmwasm::CosmwasmSubstrateError;
 use core::marker::{Send, Sync};
@@ -67,6 +69,7 @@ pub enum CosmwasmVMError<T: Config> {
 	ReadOnlyViolation,
 	OutOfGas,
 	Unsupported,
+	NotImplemented,
 	ContractNotFound,
 	ExecuteDeserialize,
 	QuerySerialize,
@@ -86,6 +89,7 @@ impl<T: Config> From<CosmwasmSubstrateError> for CosmwasmVMError<T> {
 			CosmwasmSubstrateError::DispatchError => Self::Precompile,
 			CosmwasmSubstrateError::QuerySerialize => Self::QuerySerialize,
 			CosmwasmSubstrateError::ExecuteSerialize => Self::ExecuteSerialize,
+			CosmwasmSubstrateError::Ibc => Self::Ibc("CosmwasmSubstrate".to_string()),
 		}
 	}
 }
@@ -414,8 +418,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 
 	fn burn(&mut self, funds: &[Coin]) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "burn: {:#?}", funds);
-		// TODO: assets registry check etc...
-		Err(CosmwasmVMError::Unsupported)
+		Err(CosmwasmVMError::NotImplemented)
 	}
 
 	fn balance(&mut self, account: &Self::Address, denom: String) -> Result<Coin, Self::Error> {

@@ -132,7 +132,7 @@ impl PalletHook<Runtime> for Precompiles {
 		VmErrorOf<OwnedWasmiVM<CosmwasmVM<'a, Runtime>>>,
 	> {
 		let contract_address = vm.0.data().contract_address.clone().into_inner();
-		log::error!(
+		log::info!(
 			"{:?}{:?}{:?}",
 			&contract_address,
 			&entrypoint,
