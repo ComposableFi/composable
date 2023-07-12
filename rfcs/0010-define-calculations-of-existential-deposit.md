@@ -1,9 +1,6 @@
 # Calculation of all On-Chain Existential Deposit Values
 
-## Abstract
-
-This document aims to provide standards for the initial definition of all 
-on-chain Existential Deposit (ED) values. While defining these values, we also
+Definition of all on-chain Existential Deposit (ED) values. While defining these values, we also
 need to ensure that undefined behavior does not emerge from how these values 
 interact.
 
@@ -122,11 +119,6 @@ to be possible.
     decimals: Option<Exponent>,
   ) -> DispatchResultWithPostInfo;
   ```
-
-## Quality Assurance
-
-* Manually changing the values of different EDs is not supported. By default
-  EDs should behave as defined in this document.
 
 ## Questions
 

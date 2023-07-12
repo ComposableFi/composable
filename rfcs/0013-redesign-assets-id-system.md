@@ -45,9 +45,6 @@ asset metadata (ticker-symbol, decimal precision, and ratio)
 * [Moonbeam](./0013/moonbeam-analysis.md)
 * [Parallel](./0013/parallel-finance-analysis.md)
 
-<!-- TODO: These are mostly done, but I will introduce them to the repo in 
-their own files -->
-
 # Design
 
 Given the scope of assets, the design will be broken down into several more 
@@ -286,8 +283,6 @@ The data-migration may be handled as follows:
 * Append new storage elements to assets-registry
   * Add metadata to existing tokens
   * Create entries for local assets not previously found in assets-registry
-
-<!-- TODO This should provide more clear details and will in the future -->
 
 # Quality Assurance
 

@@ -68,7 +68,7 @@ both local and foreign ones.
 
 An example response will look like this:
 
-```javascript
+```json
 [
     // Local asset
     {

@@ -10,6 +10,10 @@ It overview some existing storage spam protection mechanics in different p2p com
 
 ## Existing spam protection models
 
+### Ethereum
+
+Calls it `minimal balance` of account.
+
 ### Solana
 
 Solana network forces to pay block based rent or rent except amount for each data account. 
