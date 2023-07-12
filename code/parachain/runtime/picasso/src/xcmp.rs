@@ -85,7 +85,91 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 	// Mapping Tinkernet multisig to the correctly derived AccountId32.
 	invarch_xcm_builder::TinkernetMultisigAsAccountId<AccountId>,
+	AccountId32MultihopTx<AccountId>,
 );
+
+pub struct AccountId32MultihopTx<AccountId>(PhantomData<AccountId>);
+impl<AccountId: From<[u8; 32]> + Into<[u8; 32]> + Clone>
+	xcm_executor::traits::Convert<MultiLocation, AccountId> for AccountId32MultihopTx<AccountId>
+{
+	fn convert(location: MultiLocation) -> Result<AccountId, MultiLocation> {
+		let id = match location {
+			MultiLocation {
+				parents: 0,
+				interior:
+					X4(
+						PalletInstance(_),
+						GeneralIndex(_),
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+					),
+			} => id,
+			MultiLocation {
+				parents: 0,
+				interior:
+					X5(
+						PalletInstance(_),
+						GeneralIndex(_),
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+					),
+			} => id,
+			MultiLocation {
+				parents: 0,
+				interior:
+					X6(
+						PalletInstance(_),
+						GeneralIndex(_),
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+					),
+			} => id,
+			MultiLocation {
+				parents: 0,
+				interior:
+					X7(
+						PalletInstance(_),
+						GeneralIndex(_),
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+					),
+			} => id,
+			MultiLocation {
+				parents: 0,
+				interior:
+					X8(
+						PalletInstance(_),
+						GeneralIndex(_),
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+					),
+			} => id,
+			_ => return Err(location),
+		};
+
+		Ok(id.into())
+	}
+
+	fn reverse(who: AccountId) -> Result<MultiLocation, AccountId> {
+		// let m = MultiLocation { parents: 0, interior: X4(
+		// 	PalletInstance(0),
+		// 	AccountId32{ id : who.clone().into(), network: None }.into(),
+		// 	GeneralIndex(0),
+		// 	AccountId32{ id: who.into(), network: None } ) };
+		// Ok(m)
+		Err(who)
+	}
+}	
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
