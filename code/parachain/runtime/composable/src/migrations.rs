@@ -77,7 +77,18 @@ pub mod migrate_asset_ids {
 			assets_registry::pallet::AssetSymbol::<Runtime>::remove(old_asset_id);
 			assets_registry::pallet::AssetDecimals::<Runtime>::swap(old_asset_id, new_asset_id);
 			assets_registry::pallet::AssetDecimals::<Runtime>::remove(old_asset_id);
+
+			assets_registry::pallet::LocalToForeign::<Runtime>::swap(old_asset_id, new_asset_id);
+			assets_registry::pallet::LocalToForeign::<Runtime>::remove(old_asset_id);
+
+			let location = assets_registry::pallet::LocalToForeign::<Runtime>::get(new_asset_id);
+			if let Some(location_key) = location {
+				assets_registry::pallet::ForeignToLocal::<Runtime>::mutate(location_key, |x| {
+					*x = Some(new_asset_id)
+				});
+			}
 		}
+
 		Weight::from_ref_time(100_000)
 	}
 
