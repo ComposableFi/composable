@@ -31,7 +31,7 @@ Run `nix run composable#devnet-picasso` or `docker run --publish 9988:9988 compo
 
 ### DEX precompile (singleton instance contract embedded into Substrate runtime)
 
-1. Contract address is `5w3oyasYQg6vkzwETMqUfvtVM99GQ4Xy8mMdKXMgJZDoRYwg`
+1. Contract address is `5EYCAe5iidyqfb6z7dgK2d2Wpk9D1n8KpBUi1jra4a4PTPg4`
 
 2. Execute message is
 ```json
@@ -42,11 +42,11 @@ Run `nix run composable#devnet-picasso` or `docker run --publish 9988:9988 compo
     "pool_id": "0",
     "assets": [
       {
-        "amount": "10000000000",
+        "amount": "1000000000000",
         "denom": "1"
       },
       {
-        "amount": "10000000000",
+        "amount": "1000000000000",
         "denom": "4"
       }
     ]
@@ -65,6 +65,6 @@ and instantiate it with `{"members": [{"addr": "5yNZjX24n2eg7W6EVamaTXNQbWCwchhT
 
 Repeat steps here.
 
-## Swap
+## DEX
 
-Form Swap according schema and execute.
+Form `Swap` according schema and execute.
