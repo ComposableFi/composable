@@ -476,8 +476,8 @@ jobs:
   push-docker-images:
     name: push-docker-images
     if: ${{ inputs.github_event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}   
-    # needs: 
-    #   - draft-release-check
+    needs: 
+      - draft-release-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     concurrency:

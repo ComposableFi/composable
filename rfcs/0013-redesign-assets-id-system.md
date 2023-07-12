@@ -22,23 +22,6 @@ a dynamic ID system that makes it easy for developers to both interact with
 assets within our consensus system and to retrieve information relevant to a 
 given asset.
 
-## Requirements
-
-* There exists a double mapping between multi-locations and local asset IDs
-  * Zero or One multi-locations ↔ One asset ID
-
-* Given a way to uniquely identify an asset, one should be able to retrieve 
-asset metadata (ticker-symbol, decimal precision, and ratio)
-
-* Support the traits from `frame_support::traits::tokens::fungibles`
-  * Specifically `MutateHold`
-
-* Ability to mint mintable assets and the inability to mint non-mintable assets
-
-* Support the existing local asset IDs we have hard-coded
-
-* Supply an Asset Transactor to our XCM Config
-
 # Other Solutions
 
 * [Acala](./0013/acala-analysis.md)
@@ -61,29 +44,6 @@ future.
 To create a local asset ID, we can form a full asset ID from the combination of
 the assets' namespace (pallet or protocol) and a nonce/key provided by that 
 namespace.
-
-### Examples
-
-* An asset created by Staking Rewards for share assets
-
-```
-ProtocolId = 'pallstak'
-Nonce      = 1_u64
-
-AssetId    = from_bytes(ProtocolId.as_bytes() + Nonce.as_bytes())
-           = 26184337747597877616
-```
-
-* Non-protocol asset
-
-```
-// Abstracted from user input
-ProtocolId = 'nonproto'
-Nonce      = 1_u64
-
-AssetId    = from_bytes(ProtocolId.as_bytes() + Nonce.as_bytes())
-           = 8031166572811677550
-```
 
 ## Foreign Asset ID Generation
 
@@ -262,32 +222,9 @@ dedicate the first 8 bytes to either a pallet ID or other information that
 determines the source of the asset. The remaining 8 bytes of the asset ID can 
 be the nonce provided by the source.
 
-To create a hash from the nonce, `sp_core::hashing::blake2_64` can be used
-
 **Steps:**
 
 * Provide assets registry with either our previously described local asset ID
-or a multi-location
-
-* If assets registry receives a multi-location, hash the multilocation to create
-a new ID
-
-## Migrate Hard-Coded Assets
-
-A migration should ensure that asset IDs with balances already stored on chain 
-are not changed and that pre-existing location <-> local ID bindings are 
-respected.
-
-The data-migration may be handled as follows:
-
-* Append new storage elements to assets-registry
-  * Add metadata to existing tokens
-  * Create entries for local assets not previously found in assets-registry
-
-# Quality Assurance
-
-This section contains notes that may be relevant for QA when inspecting these 
-changes.
 
 ## Things to Test
 

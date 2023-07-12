@@ -25,25 +25,70 @@ pub type BiBoundedAssetSymbol = BiBoundedVec<u8, 1, ASSET_METADATA_SYMBOL_LENGTH
 #[cfg_attr(feature = "std", derive(JsonSchema, QueryResponses))]
 pub enum ExecuteMsg {
 	// denom is asset u128 to string, for example PICA on Picasso is "1"
-	// all `owner` addresses default to contract address, he can do everything
+	// all admins default to contract address if not specified
+	#[cfg_attr(feature = "std", returns(CreateResponse))]
+	Create {
+		creation_fee_denom: Option<String>,
+		decimals: Option<u8>,
+		name: Option<String>,
+		symbol: Option<String>,
+		metadata_admin: Option<Addr>,
+		mint_admin: Option<Addr>,
+		burn_admin: Option<Addr>,
+		freeze_admin: Option<Addr>,
+	},
+	// `ed_payment_asset_denom` is used for non sufficient assets in list if any, else ED payed in
+	// PICA
 	#[cfg_attr(feature = "std", returns(String))]
-	Create { creation_fee : Option<String>, decimals : Option<u8>, name : Option<String>, symbol : Option<String>, owner: Option<Addr>},
+	Mint { ed_payment_asset_denom: Option<String>, amount: Vec<Coin>, to_address: String },
 	#[cfg_attr(feature = "std", returns(String))]
-	Mint { ed_payment_asset: Option<String>, asset: Coin, to: Addr },
-	#[cfg_attr(feature = "std", returns(String))]
-	Burn { /* */ },
-	#[cfg_attr(feature = "std", returns(String))]
-	Transfer { /* */ },
+	// from_address - if you have some approval
+	Transfer { from_address: Option<String>, to_address: String, amount: Vec<Coin> },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+pub struct MintResponse {
+	/// free amount of each token on `to_address`
+	pub free: Vec<Coin>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+pub struct TransferResponse {
+	/// free amount of each token on `to_address`
+	pub free: Vec<Coin>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+pub struct CreateResponse {
+	pub denom: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema, QueryResponses))]
 pub enum QueryMsg {
-	#[cfg_attr(feature = "std", returns(String))]
-	GetAssetMetadata { denom : String },
+	#[cfg_attr(feature = "std", returns(GetAssetMetadataResponse))]
+	GetAssetMetadata { denom: String },
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+pub struct GetAssetMetadataResponse {
+	pub symbol: Option<String>,
+	pub name: Option<String>,
+	pub decimals: Option<u8>,
+	pub sufficient: Option<bool>,
+	pub existential_deposit: Option<Coin>,
+	pub mint_admin: Option<Addr>,
+	pub total_supply: Uint128,
+}
 
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]

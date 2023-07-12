@@ -23,13 +23,20 @@
             NIXPKGS_ALLOW_BROKEN=1 nix flake check --keep-going --no-build --allow-import-from-derivation --accept-flake-config --no-update-lock-file --accept-flake-config --system "${system}" --fallback $NIX_DEBUG_ARGS --impure --option sandbox relaxed 2>&1 | tee "nix.check.log"  || true
             set +o pipefail +o errexit
             echo "exited with(https://github.com/NixOS/nix/issues/7464) $?" 
-            grep --invert-match  "error: path [']/nix/store/[a-zA-Z0-9]\+-[a-zA-Z0-9\.-]\+['] is not valid" < "nix.check.log" |
+            grep --match '^error' < "nix.check.log" |
+            grep --invert-match  "error: path [']/nix/store/[a-zA-Z0-9]\+-[a-zA-Z0-9\.-]\+['] is not valid" |
             grep --invert-match  "error: cannot substitute path [']/nix/store/[a-zA-Z0-9]\+-[a-zA-Z0-9\.-]\+['] \- no write access to the Nix store" |
             grep --invert-match '^error: some errors were encountered during the evaluation' |
             grep --invert-match "error: a [']aarch64-darwin['] with features" > "filtered.nix.check.log"
+
             RESULT=$(grep -c 'error:' < "filtered.nix.check.log")
             echo "Got errors $RESULT"
-            if [[ $RESULT != 0 ]]; then exit "$RESULT"; fi
+            if [[ $RESULT != 0 ]]; then
+               echo "======================== ERRORS =============================="
+               cat filtered.nix.check.log
+               echo "=============================================================="
+               exit "$RESULT";
+            fi
           '';
         };
       };

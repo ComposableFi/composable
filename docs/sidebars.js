@@ -195,38 +195,6 @@ const sidebars = {
                 },
                 {
                     type: 'category',
-                    label: 'Mosaic (Discontinued)',
-                    link: {
-                        type: 'doc',
-                        id: 'products/mosaic-overview'
-                    },
-                    collapsible: true,
-                    collapsed: true,
-                    items: [
-                        'products/mosaic/mosaic-withdrawal-guide',
-                        'products/mosaic/dynamic-fee-model',
-                        'products/mosaic/liquidity-forecasting',
-                        'products/mosaic/passive-liquidity-rebalancing',
-                        'products/mosaic/active-liquidity-management',
-                        'products/mosaic/mosaic-phase1-result',
-                        {
-                            type: 'category',
-                            label: 'Mural: NFT Transfers on Mosaic via the Summoner Vault',
-                            link: {
-                                type: 'doc',
-                                id: 'products/mosaic/mural-NFT-transfers/mural-NFT-transfers'
-                            },
-                            collapsible: true,
-                            collapsed: true,
-                            items: [
-                                'products/mosaic/mural-NFT-transfers/NFT-transfer-flow',
-                                'products/mosaic/mural-NFT-transfers/NFT-contract-details'
-                            ],
-                        },
-                    ],
-                },
-                {
-                    type: 'category',
                     label: 'Parachain Vault Strategy (Discontinued)',
                     link: {
                         type: 'doc',
