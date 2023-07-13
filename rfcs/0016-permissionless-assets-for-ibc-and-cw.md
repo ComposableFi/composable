@@ -4,7 +4,12 @@ New assets, not registered before, can be transferred via Bridges to Dotsama and
 
 Also all permissionless asset still can be governed by Root, they also have admin accounts which are set by by permissionless transactions on creation for source assets (originated from our chains) or set by Root for bridged assets for permissionless updates of some properties.
 
-To create new permissionless asset `CreationFee` must be paid.
+To create new permissionless asset `CreationDeposit` must be paid.
+
+## Out of scope
+
+Logic and amount of sufficient assets for bridging and BYOG fees remain unchanged. 
+So bridges or transactions-senders can decide to pay `CreationDeposit` if the want. That is not managed by us. 
 
 ## Target semantic data structure
 
@@ -26,21 +31,26 @@ interface AssetId {
 
 
 interface GovernanceSufficiency {
-    /// when set allows to pay ED in this asset
-    /// replaced by DEX oracle and some storage multiplier later
+    /// when set allows to pay ED in this asset, not PICA, making asset more sufficient
     existential_deposit: number?
-    /// ratio of PICA token to this assets
-    /// when set allows to pay Bridge and BYOG fees
-    /// replaced by DEX oracle later
+    /// ratio of PICA token to this asset
+    /// when set allows to pay Bridge and BYOG gas fees in transferred asset 
     ratio: Fraction?
 }
 
+// ratio from DEX for example  
+interface OracleSufficiency {
+    // ...
+}
+
 // payable
-type SufficientAsset = OracleSufficiency | GovSufficiency  
+type Sufficiency = OracleSufficiency | GovSufficiency  
 
 // can be modified by Root or AssetsAdmin
-interface GovernanceAsset {
-    sufficiency: SufficientAsset?
+interface GovernedAsset {
+    /// always none for freshly created permissionless assets
+    /// if enabled, asset can be used to pay for gas and storage
+    sufficiency: Sufficiency?
 }
 
 type BridgeGovernance = XcmMultiLocation | IbcChannelPrefix
@@ -94,7 +104,7 @@ interface NonReceivableAsset {
 
 interface Asset {
     id : AssetId
-    asset : NonReceivableAsset | NonReceivableAsset
+    asset : NonReceivableAsset | ReceivableAsset
     metadata : MetadataAsset? 
 }
 ```
@@ -121,9 +131,14 @@ Any `Governance` parameters cannot be set neither by Bridges nor by permissionle
 
 ```mermaid
 erDiagram
+    transaction-sender ||--|{ cw-contract : is
+    transaction-sender ||--|{ gov : is
+    transaction-sender ||--|{ user-wallet : is
+    transaction-sender ||--|{ ibc-relayer : is
+    transaction-sender ||--|{ xcm-origin : is
     gov ||--|| pallet-assets-registry : "root update"
     pallet-assets-registry ||--|| pallet-assets : "root update"
-    user }|--|| pallet-assets-registry : "permissionless update"
+    user-wallet }|--|| pallet-assets-registry : "permissionless update"
     ibc-hook ||--|| pallet-assets-registry : "permissionless update"
     xcm-configuration ||--|| pallet-assets-registry : "permissionless update"
     xcm-configuration ||--|| pallet-assets : "transfer mint burn"
@@ -132,13 +147,34 @@ erDiagram
     runtime-adapter ||--|| pallet-assets : "transfer mint burn"
     cw-precompile ||--|| pallet-assets-registry : "permissionless update"
     cw-precompile ||--|| pallet-assets : "transfer mint burn"
-    user }|--|| pallet-assets : "transfer mint burn"
+    user-wallet }|--|| pallet-assets : "transfer mint burn"
     gov ||--|| pallet-assets : "transfer mint burn"
+    xcm-origin ||--|| xcm-channel : send
+    ibc-relayer ||--|| ibc-channel : send
     xcm-channel }|--|| xcm-configuration : "transfer mint burn, permissionless update"
     ibc-channel }|--|| ibc-hook : "transfer mint burn, permissionless update"    
     cw-contract }|--|| cw-precompile : "transfer mint burn, permissionless update"    
-    dex }|--|| runtime-adapter : "transfer mint burn, permissionless update"    
+    dex ||--|| runtime-adapter : "transfer mint burn, permissionless update"    
 ```
+
+
+
+#### orml-tokens pallet EDs
+
+Currently assets are being stored in `orml-tokens` pallet which require Existential Deposits in stored asset. 
+So currently they cannot store no sufficient assets.
+
+There are solutions possible.
+
+Fork and pull request no sufficient assets support into `orml-tokens`:
+```patch
+- type ExistentialDeposits: GetByKey<Self::CurrencyId, Self::Balance>;
++ // right is in native token, PICA
++ type ExistentialDeposits: GetByKey<Self::CurrencyId, Either<Self::Balance, Self::Balance>>;
+```
+and do relevant changes.
+
+Second solution, ensure all calls to `orml-tokens` are done via our assets code base, which handles non sufficiency.
 
 ### Storage
 
@@ -148,40 +184,52 @@ Admin to mint/burn, existential deposits are more related to `assets` pallet. As
 
 Metadata/location/sufficiency/receivability are more lated tp `assets-registry` pallet. These are lower frequency on chain usage outer boundary usage in BYOG/bridges.
 
-### ED (Existential Deposit)
+### Existential Deposit(ED)
 
-Existential Deposit(ED) is a safeguard against bloating storage of the chain. If a user transfers a nonvaluable asset and sets its ED to 0 or 1, this user will be able to affect performance of the parachain by transferring this asset to many accounts. Thus, to avoid this potential attack vector, we will use Asset Hub (formerly Statemine) approach of non-sufficient assets: a user to be able to recieve permissionless asset needs to hold ED in PICA on Picasso and LAYR on Composable parachains. This approach will limit the growth of the storage. 
+Ask ChatGPT about `existential deposit in blockchain` , or do a look into [rent-deposit](./0002-rent-deposit.md).
 
-The chain needs to make sure that permissionless assets can be transferred to accounts that do not have ED in parachain's native token. It is also required to fail transfers that will result in drop of native token below ED if this account has nonsufficient tokens. [Reference](https://substrate.stackexchange.com/questions/2447/influence-of-existential-deposits-on-account-assets)
+### Sufficient asset
+
+Pays ED in in itself as defined by `Sufficiency` and [existential deposit calculations](./0010-define-calculations-of-existential-deposit.md). 
 
 
-#### Recieving Account doesnt hold pica during bridging
-**Potential solution**: relayer will send PICA to the reciever in case reciever doesnt have it. In case bridged asset is FlatFee asset, additional fee equal to ED in PICA will be charged from the transferred amount. Otherwise, percentage fee will be applied(To be configured)
+### Non sufficient assets default 
 
-#### orml-tokens pallet EDs
-Currently assets are being stored in `orml-tokens` pallet which require Existential Deposits for stored assets. 
+By default any non sufficient asset ED is payed in native token, PICA on Picasso and Centauri.
+Transaction sender pays if account not yet exists.
 
-**Potential Solution**: for non sufficient assets still provide non-zero Existential Deposit parameter which is similar to minimum balance in Asset Hub implementation. Then the Exitstential logic for orml-tokens pallet will stay the same because account wont be able to hold a non sufficient asset without ED in parachain's native token. This will require a new field in AssetsRegistry: is_sufficient. All permissionless assets will have this field to be false by default. Assets created via permissioned extrinsic will allow to choose if asset is sufficient or not. Asset's sufficiency can be changed by governance.
+### Non sufficient asset pays in other sufficient
 
-### Scenarios
+See `Scenarios` for approaches per transaction sender. This protocol is subject some existing codebase limitation.
 
-#### On chain transactions
+### Scenarios of permissionless assets
+
+Any permissionless assets can be governed to be sufficient. So that scenario defaults to permissioned flow.
+
+All scenarios describe non sufficient assets.
+
+#### Direct local on chain transactions
 
 CW and PD.js permissionless assets are same, because anybody can upload CW contract and execute any transaction on it.
 
-
 **Create**
 - No requires inputs
-- `CreationFee` is payed in any assets, default to PICA. Or optional `FeeAsset` parameter is provided with sufficient asset identifier.  
+- `CreationDeposit` is payed in any asset, default to PICA. Or optional `FeeAsset` parameter is provided with sufficient asset identifier.  
 - `Metatdata` properties are optional. 
 - No other parameters.
-- Optional `admin`s, which defaults to CW address or origin if not specified. 
+- Optional `admin`s, which defaults to CW address or `origin` if not specified.
+
+**Mint/Transfer**
+- If account does not exist, origin pays `ED` for account in PICA.
+- If origin calls extrinsic or CW message directly, it can provide any sufficient asset to pay `ED`.
+
+**Limitation** BYOG is not integrated with transaction execution, so cannot default to pay in BYOG assets. 
 
 #### Bridges
 
 Each bridge has `origin`.
 In case of IBC it is `channel and port`.
-In case of XCM it is `MultiLocation origin`.
+In case of XCM it is `MultiLocation origin`, example parachain.
 Any such origin can be hashed (to account) to produce Account32 which may be set be considered `mint_admin` of asset.
 
 Via governance additional PD.js account or CW contract can be made to be second `metadata_owner` of asset. 
@@ -189,23 +237,25 @@ Via governance additional PD.js account or CW contract can be made to be second 
 **Create**
 - Happens automatically on transfer [1].
 - When assets are created by other chains over bridges, no `Metadata` or `sufficiency` provided
-- We know `location` of assets from origin and received asset id and this parameter is not optional.
+- We know `location` of assets from origin and received asset denomination, required.
 - Location is mapped to `network_id` and `bridge` type to `protocol_id`.
-- We take `CreationFee` from relevant source described per bridge next.
+- If account formed from subaccount of `assets-registry` and location hash has `CreationDeposit` stored, it taken. 
+- Else `CreationDeposit` taken from relevant source described per bridge next.
+
+**Note** Any user wallet can transfer to `location` account amount of PICA equal to  `CreationDeposit` 
 
 #### Sufficiency of IBC ICS-020
 
 1. New token arrives.
-2. Relayer pays for execution, including `CreationFee` in PICA.
-3. Relayer pays fee for ED for account creation in PICA.
+2. IBC Relayer pays for execution, including `CreationDeposit` in PICA, unless there was deposit on location. 
+3. Relayer pays fee for ED for account creation in PICA, unless somebody put ED before for non existing asset.
 
 #### Sufficiency of XCM
 
 1. New XCM message arrives with new new unknown yet asset.
 2. There must be 2 tokens in Holder.
-3. First token pays `CreationFee` (can be any `sufficient` token).
-4. Account owner derived from XCM origin (example is sender parachain MultiLocation).
-5. First token pays for ED creation.
+3. First token pays `CreationDeposit` (can be any `sufficient` token), unless there was deposit on location. 
+4. First token pays ED of account creation, unless somebody put ED before for non existing asset.
 
 # References
 

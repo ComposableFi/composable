@@ -36,7 +36,9 @@ With the following definitions:
 our native asset'
 
 The ED of any asset should be defined as follows:
-```
+```python
+assert(price(amount_of_foreign_asset) == price(amount_of_native_asset))
+foreign_asset_ratio = amount_of_foreign_asset / amount_of_native_asset
 local_ed = native_asset_ed * foreign_asset_ratio
 ```
 

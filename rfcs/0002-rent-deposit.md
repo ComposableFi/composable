@@ -1,24 +1,22 @@
 # Overview
 
-Spam protection of CPU resources is well documented and automated process in Substrate.
+Spam protection of CPU resources is well documented and automated process in Substrate via `weight` fees.
 
-Protecting storage is less documented process which seems essential to keep network robust.
+Protecting `storage` is less documented process which is essential to keep network robust.
 
-This document describes various aspect of storage to be protected, consistent means to do so, user and developer experience of protected storage. 
+This document describes various aspect of storage to be protected, consistent means to do so, user and developer experience of spam protected `storage`. 
 
-It overview some existing storage spam protection mechanics in different p2p computation models too.
+It overview some existing storage spam protection mechanics in different decentralized networks.
+
+Most well known and common way to protect storage is ensure minimal balance on each account created to store arbitrary tokens owned by some wallet.
+Amount required called `Existential Deposit`(on Dotsama), `Minimal Balance`(on Ethereum), `Rent`(in Solana).
 
 ## Existing spam protection models
 
-### Ethereum
+### Rent vs Deposit
 
-Calls it `minimal balance` of account.
-
-### Solana
-
-Solana network forces to pay block based rent or rent except amount for each data account. 
-Some contacts allow only working with rent except accounts to protect users contracts from so fail.
-Rent amount is voted by validators. Rent depends on size of data.
+Rent amount burn over time per block. 
+Deposits are not burned as long as they are above minimal amount.
 
 ### P2P Storage with only small part of nodes stores replicas
 
