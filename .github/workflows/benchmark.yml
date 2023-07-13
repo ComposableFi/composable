@@ -1,8 +1,7 @@
-name: Update benchmarks weights
+name: benchmark
 
 on:
   workflow_dispatch:
-  # Benchmarks run on the main repo branches only.
   pull_request:
     types: [labeled]
     branches:
@@ -13,8 +12,8 @@ env:
   CACHIX_COMPOSABLE: composable-community
 
 jobs:
-  update_benchmarks_weights:
-    name: Update benchmarks weights
+  update-benchmarks-weights:
+    name: update-benchmarks-weights
     runs-on:
       - self-hosted
       - bmark

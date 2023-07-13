@@ -1,9 +1,6 @@
 # Calculation of all On-Chain Existential Deposit Values
 
-## Abstract
-
-This document aims to provide standards for the initial definition of all 
-on-chain Existential Deposit (ED) values. While defining these values, we also
+Definition of all on-chain Existential Deposit (ED) values. While defining these values, we also
 need to ensure that undefined behavior does not emerge from how these values 
 interact.
 
@@ -39,7 +36,9 @@ With the following definitions:
 our native asset'
 
 The ED of any asset should be defined as follows:
-```
+```python
+assert(price(amount_of_foreign_asset) == price(amount_of_native_asset))
+foreign_asset_ratio = amount_of_foreign_asset / amount_of_native_asset
 local_ed = native_asset_ed * foreign_asset_ratio
 ```
 
@@ -122,11 +121,6 @@ to be possible.
     decimals: Option<Exponent>,
   ) -> DispatchResultWithPostInfo;
   ```
-
-## Quality Assurance
-
-* Manually changing the values of different EDs is not supported. By default
-  EDs should behave as defined in this document.
 
 ## Questions
 

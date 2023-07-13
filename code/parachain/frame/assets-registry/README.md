@@ -1,21 +1,13 @@
 # Overview
 
-Allows to map remote assets to local and back(bidirectional). Mapping can be created only by privileged origin.
+Allows to map remote assets to local identifiers and back(bidirectional). 
 
-Used for cross chain message transfers and payments.
+Foreign mapping can be created only by privileged origin.
 
-## Basics
+Also provides some assets metadata for humans to consume offchain.
 
-Each remote asset must have a local identifier. This pallet uses [CurrencyFactory](../currency-factory/README.md) internally for that purpose.
+Well known tokens, like relay and native, are baked into codebase directly.
 
-## Assets' identifiers
+Governance can change any token info. 
 
-Well known tokens, like relay native, are baked into codebase directly.
-
-For remote location, canonical (shortest) representation should be used in case multiple locations are possible. 
-
-## Governance
-
-Remote assets can be added only by governance. Also assets may be locked to chain. No XCMP operation involving these will be possible.
-
-Remote asset can be approved by other chain origin. Such assets can be Teleported to and from relevant chain.
+Some assets has admins for various parts to allow self governance which is still safe and secure.
