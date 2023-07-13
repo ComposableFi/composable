@@ -47,7 +47,7 @@
         connection_id = "connection-1";
         account_prefix = "centauri";
         fee_denom = "ppica";
-        fee_amount = "15000";
+        fee_amount = "1000000";
         gas_limit = 9223372036854775806;
         store_prefix = "ibc";
         max_tx_size = 20000000;
@@ -69,7 +69,7 @@
         connection_id = "connection-0";
         finality_protocol = "Grandpa";
         key_type = "sr25519";
-        name = "picasso_2";
+        name = "composable";
         para_id = 2087;
         parachain_rpc_url = "ws://${host}:29988";
         private_key = "//Alice";
