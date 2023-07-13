@@ -39,9 +39,9 @@ pub enum ExecuteMsg {
 	},
 	// `ed_payment_asset_denom` is used for non sufficient assets in list if any, else ED payed in
 	// PICA
-	#[cfg_attr(feature = "std", returns(String))]
+	#[cfg_attr(feature = "std", returns(MintResponse))]
 	Mint { ed_payment_asset_denom: Option<String>, amount: Vec<Coin>, to_address: String },
-	#[cfg_attr(feature = "std", returns(String))]
+	#[cfg_attr(feature = "std", returns(TransferResponse))]
 	// from_address - if you have some approval
 	Transfer { from_address: Option<String>, to_address: String, amount: Vec<Coin> },
 }
