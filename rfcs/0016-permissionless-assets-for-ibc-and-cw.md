@@ -190,7 +190,7 @@ Ask ChatGPT about `existential deposit in blockchain` , or do a look into [rent-
 
 ### Sufficient asset
 
-Pays ED in in itself as defined by `Sufficiency` and [existential deposit calculations](./0010-define-calculations-of-existential-deposit.md). 
+Pays ED in itself as defined by `Sufficiency` and [existential deposit calculations](./0010-define-calculations-of-existential-deposit.md). 
 
 
 ### Non sufficient assets default 
