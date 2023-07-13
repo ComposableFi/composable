@@ -1,15 +1,6 @@
 { self, ... }: {
-  perSystem =
-    { config
-    , self'
-    , inputs'
-    , pkgs
-    , system
-    , crane
-    , subnix
-    , systemCommonRust
-    , ...
-    }:
+  perSystem = { config, self', inputs', pkgs, system, crane, subnix
+    , systemCommonRust, ... }:
     let
       cargo-lock = builtins.fromTOML (builtins.readFile ../../code/Cargo.lock);
       centauri-runtime-dep = builtins.head
@@ -114,8 +105,7 @@
           '';
         };
 
-    in
-    {
+    in {
       packages = rec {
         centauri-src = pkgs.fetchFromGitHub {
           owner = "ComposableFi";
@@ -133,7 +123,7 @@
 
         ics10-grandpa-cw =
           build-optimized-wasm "ics10-grandpa-cw" ics10-grandpa-cw-src
-            "ics10_grandpa_cw";
+          "ics10_grandpa_cw";
 
         centauri-codegen = crane.stable.buildPackage (subnix.subenv // rec {
           name = "centauri-codegen";

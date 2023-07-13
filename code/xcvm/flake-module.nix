@@ -7,7 +7,7 @@
         in crane.nightly.buildPackage (systemCommonRust.common-attrs // {
           src = ./.;
           version = "0.1";
-          pnameSuffix = "-${name}";  
+          pnameSuffix = "-${name}";
           pname = name;
           cargoBuildCommand =
             "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts -p ${name}";
