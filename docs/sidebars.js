@@ -195,6 +195,19 @@ const sidebars = {
                 },
                 {
                     type: 'category',
+                    label: 'Mosaic (Discontinued)',
+                    link: {
+                        type: 'doc',
+                        id: 'products/mosaic-overview'
+                    },
+                    collapsible: true,
+                    collapsed: true,
+                    items: [
+                        'products/mosaic/mosaic-withdrawal-guide'
+                    ],
+                },
+                {
+                    type: 'category',
                     label: 'Parachain Vault Strategy (Discontinued)',
                     link: {
                         type: 'doc',
