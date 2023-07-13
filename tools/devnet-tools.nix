@@ -38,7 +38,7 @@
           };
 
           runAsRoot = ''
-            mkdir --parents /usr/bin /tmp && chown 777 /tmp
+            mkdir --parents /usr/bin /tmp/composable-devnet && chown 777 /tmp
           '';
         };
 
