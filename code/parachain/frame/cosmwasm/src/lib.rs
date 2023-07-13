@@ -462,6 +462,7 @@ pub mod pallet {
 			gas: u64,
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
+			ensure_minimum_gas::<T>(gas, T::WeightInfo::instantiate(funds.len() as u32))?;
 			T::ExecuteWasmOrigin::ensure_origin(origin.clone())?;
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
@@ -504,6 +505,7 @@ pub mod pallet {
 			gas: u64,
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
+			ensure_minimum_gas::<T>(gas, T::WeightInfo::execute(funds.len() as u32))?;
 			T::ExecuteWasmOrigin::ensure_origin(origin.clone())?;
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
@@ -537,6 +539,7 @@ pub mod pallet {
 			gas: u64,
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
+			ensure_minimum_gas::<T>(gas, T::WeightInfo::migrate())?;
 			T::ExecuteWasmOrigin::ensure_origin(origin.clone())?;
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
@@ -566,6 +569,7 @@ pub mod pallet {
 			new_admin: Option<AccountIdOf<T>>,
 			gas: u64,
 		) -> DispatchResultWithPostInfo {
+			ensure_minimum_gas::<T>(gas, T::WeightInfo::update_admin())?;
 			T::ExecuteWasmOrigin::ensure_origin(origin.clone())?;
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
@@ -576,6 +580,15 @@ pub mod pallet {
 				Self::do_update_admin(&mut shared, who, contract.clone(), new_admin.clone());
 			Self::deposit_event(Event::<T>::AdminUpdated { contract, new_admin });
 			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
+		}
+	}
+
+	/// Makes sure that `gas` is positive and at least given `weight`’s `ref_time`.
+	fn ensure_minimum_gas<T: Config>(gas: u64, min: Weight) -> Result<(), Error<T>> {
+		if gas == 0 || gas < min.ref_time() {
+			Err(Error::OutOfGas)
+		} else {
+			Ok(())
 		}
 	}
 }
