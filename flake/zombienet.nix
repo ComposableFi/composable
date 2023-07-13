@@ -162,7 +162,7 @@
           zombieTools.writeZombienetShellApplication
           "zombienet-picasso-centauri-a" (overrideZombienet {
             rust_log_add =
-              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
+              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=debug";
             command = self'.packages.composable-testfast-node;
             chain = "picasso-dev";
             parachains = [{
@@ -217,7 +217,7 @@
             relay_ws_port = 29944;
             relay_rpc_port = 31445;
             rust_log_add =
-              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
+              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=debug";
             command = self'.packages.composable-testfast-node;
             chain = "picasso-dev";
           });
@@ -230,7 +230,7 @@
             relay_ws_port = 29944;
             relay_rpc_port = 31445;
             rust_log_add =
-              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=trace";
+              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=debug";
             command = self'.packages.composable-testfast-node;
             chain = "composable-dev";
             parachains = [{

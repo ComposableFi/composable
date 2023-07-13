@@ -17,7 +17,6 @@ use pallet_ibc::{
 };
 use sp_core::ConstU64;
 use sp_runtime::{AccountId32, DispatchError, Either};
-use system::EnsureSignedBy;
 
 use hex_literal::hex;
 use pallet_ibc::ics20_fee::NonFlatFeeConverter;
@@ -214,8 +213,14 @@ impl pallet_ibc::Config for Runtime {
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
-	type TransferOrigin = EnsureSigned<Self::AccountId>;
-	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
+
+	type TransferOrigin = system::EnsureSigned<Self::IbcAccountId>;
+
+	#[cfg(feature = "testnet")]
+	type RelayerOrigin = system::EnsureSigned<Self::IbcAccountId>;
+	#[cfg(not(feature = "testnet"))]
+	type RelayerOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
+
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;
 	type Ics20RateLimiter = ConstantAny;

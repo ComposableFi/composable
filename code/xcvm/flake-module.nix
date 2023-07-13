@@ -6,7 +6,9 @@
         let binaryName = "${builtins.replaceStrings [ "-" ] [ "_" ] name}.wasm";
         in crane.nightly.buildPackage (systemCommonRust.common-attrs // {
           src = ./.;
+          version = "0.1";
           pnameSuffix = "-${name}";
+          pname = name;
           cargoBuildCommand =
             "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts -p ${name}";
           RUSTFLAGS = "-C link-arg=-s";

@@ -109,7 +109,7 @@ impl Picasso {
 
 		let mut dot =
 			InnerPrefixedDenom::from_str(CurrencyId::DOT.to_string().as_str()).expect("genesis");
-		dot.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(0)));
+		dot.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(1)));
 
 		let dot = (
 			CurrencyId::DOT.0 as u64,

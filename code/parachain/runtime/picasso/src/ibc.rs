@@ -188,13 +188,10 @@ impl pallet_ibc::Config for Runtime {
 	type AdminOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 
-	#[cfg(feature = "testnet")]
-	type TransferOrigin = system::EnsureSigned<Self::IbcAccountId>;
+	type TransferOrigin = EnsureSigned<Self::AccountId>;
+
 	#[cfg(feature = "testnet")]
 	type RelayerOrigin = system::EnsureSigned<Self::IbcAccountId>;
-
-	#[cfg(not(feature = "testnet"))]
-	type TransferOrigin = EnsureSigned<Self::AccountId>;
 	#[cfg(not(feature = "testnet"))]
 	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 
