@@ -17,7 +17,6 @@ use pallet_ibc::{
 };
 use sp_core::ConstU64;
 use sp_runtime::{AccountId32, DispatchError, Either};
-use system::EnsureSignedBy;
 
 use hex_literal::hex;
 use pallet_ibc::ics20_fee::NonFlatFeeConverter;
@@ -221,7 +220,7 @@ impl pallet_ibc::Config for Runtime {
 	#[cfg(feature = "testnet")]
 	type RelayerOrigin = system::EnsureSigned<Self::IbcAccountId>;
 	#[cfg(not(feature = "testnet"))]
-	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
+	type RelayerOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 
 	type HandleMemo = ();
 	type MemoMessage = MemoMessage;
