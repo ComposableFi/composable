@@ -213,7 +213,6 @@ impl pallet_ibc::Config for Runtime {
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
-	type TransferOrigin = EnsureSigned<Self::AccountId>;
 
 	type TransferOrigin = system::EnsureSigned<Self::IbcAccountId>;
 
