@@ -1,6 +1,15 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, crane, subnix
-    , systemCommonRust, ... }:
+  perSystem =
+    { config
+    , self'
+    , inputs'
+    , pkgs
+    , system
+    , crane
+    , subnix
+    , systemCommonRust
+    , ...
+    }:
     let
       cargo-lock = builtins.fromTOML (builtins.readFile ../../code/Cargo.lock);
       centauri-runtime-dep = builtins.head
@@ -83,6 +92,7 @@
       build-wasm = name: src:
         crane.nightly.buildPackage (systemCommonRust.common-attrs // {
           pname = name;
+          version = "0.1";
           src = src;
           cargoBuildCommand =
             "cargo build --release --package ${name} --target wasm32-unknown-unknown";
@@ -104,7 +114,8 @@
           '';
         };
 
-    in {
+    in
+    {
       packages = rec {
         centauri-src = pkgs.fetchFromGitHub {
           owner = "ComposableFi";
@@ -122,14 +133,18 @@
 
         ics10-grandpa-cw =
           build-optimized-wasm "ics10-grandpa-cw" ics10-grandpa-cw-src
-          "ics10_grandpa_cw";
+            "ics10_grandpa_cw";
 
-        centauri-codegen = crane.stable.buildPackage (subnix.subenv // {
+        centauri-codegen = crane.stable.buildPackage (subnix.subenv // rec {
           name = "centauri-codegen";
+          pname = "codegen";
+          version = "0.1";
           cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
             src = centauri-src;
             cargoExtraArgs = "--package codegen";
             cargoTestCommand = "";
+            version = "0.1";
+            pname = "codegen";
           });
           src = centauri-src;
           cargoExtraArgs = "--package codegen";
@@ -138,7 +153,10 @@
         });
         centauri-hyperspace = crane.stable.buildPackage (subnix.subenv // {
           name = "centauri-hyperspace";
+          version = "0.1";
           cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
+            pname = "hyperspace";
+            version = "0.1";
             src = centauri-src;
             doCheck = false;
             cargoExtraArgs = "--package hyperspace";
@@ -236,8 +254,11 @@
           (subnix.subenv // rec {
             name = "hyperspace-composable-rococo-picasso-rococo";
             pname = name;
+            version = "0.1";
             cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
               src = composable-rococo-picasso-rococo-centauri-patched-src;
+              pname = "hyperspace";
+              version = "0.1";
               doCheck = false;
               cargoExtraArgs = "--package hyperspace";
               cargoTestCommand = "";
@@ -253,7 +274,10 @@
           crane.stable.buildPackage (subnix.subenv // rec {
             name = "hyperspace-composable-polkadot-picasso-kusama";
             pname = name;
+            version = "0.1";
             cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
+              pname = "hyperspace";
+              version = "0.1";
               src = composable-polkadot-picasso-kusama-centauri-patched-src;
               doCheck = false;
               cargoExtraArgs = "--package hyperspace";
