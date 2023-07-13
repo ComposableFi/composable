@@ -215,7 +215,6 @@ impl pallet_ibc::Config for Runtime {
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
 	type TransferOrigin = EnsureSigned<Self::AccountId>;
-	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 
 	type TransferOrigin = system::EnsureSigned<Self::IbcAccountId>;
 
