@@ -202,7 +202,7 @@ Transaction sender pays if account not yet exists.
 
 See `Scenarios` for approaches per transaction sender. This protocol is subject some existing codebase limitation.
 
-### Scenarios of permissionless assets
+### Scenarios of permissionless(non sufficient) assets
 
 Any permissionless assets can be governed to be sufficient. So that scenario defaults to permissioned flow.
 
@@ -244,13 +244,15 @@ Via governance additional PD.js account or CW contract can be made to be second 
 
 **Note** Any user wallet can transfer to `location` account amount of PICA equal to  `CreationDeposit` 
 
-#### Sufficiency of IBC ICS-020
+**Note** Nothing changes in case of sufficient assets, all bridge transfers were and are payed in transferred asset when fee payed as part of it. 
+
+#### IBC ICS-020
 
 1. New token arrives.
 2. IBC Relayer pays for execution, including `CreationDeposit` in PICA, unless there was deposit on location. 
 3. Relayer pays fee for ED for account creation in PICA, unless somebody put ED before for non existing asset.
 
-#### Sufficiency of XCM
+#### XCM
 
 1. New XCM message arrives with new new unknown yet asset.
 2. There must be 2 tokens in Holder.
