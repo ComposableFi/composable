@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = ["lib/*", "cosmwasm/tests", "cosmwasm/contracts/*"]
+version = "0.1"
 
 [profile.production]
 inherits = "release"

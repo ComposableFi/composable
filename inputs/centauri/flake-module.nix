@@ -47,7 +47,7 @@
         connection_id = "connection-1";
         account_prefix = "centauri";
         fee_denom = "ppica";
-        fee_amount = "15000";
+        fee_amount = "1000000";
         gas_limit = 9223372036854775806;
         store_prefix = "ibc";
         max_tx_size = 20000000;
@@ -69,7 +69,7 @@
         connection_id = "connection-0";
         finality_protocol = "Grandpa";
         key_type = "sr25519";
-        name = "picasso_2";
+        name = "composable";
         para_id = 2087;
         parachain_rpc_url = "ws://${host}:29988";
         private_key = "//Alice";
@@ -83,6 +83,7 @@
       build-wasm = name: src:
         crane.nightly.buildPackage (systemCommonRust.common-attrs // {
           pname = name;
+          version = "0.1";
           src = src;
           cargoBuildCommand =
             "cargo build --release --package ${name} --target wasm32-unknown-unknown";
@@ -124,12 +125,16 @@
           build-optimized-wasm "ics10-grandpa-cw" ics10-grandpa-cw-src
           "ics10_grandpa_cw";
 
-        centauri-codegen = crane.stable.buildPackage (subnix.subenv // {
+        centauri-codegen = crane.stable.buildPackage (subnix.subenv // rec {
           name = "centauri-codegen";
+          pname = "codegen";
+          version = "0.1";
           cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
             src = centauri-src;
             cargoExtraArgs = "--package codegen";
             cargoTestCommand = "";
+            version = "0.1";
+            pname = "codegen";
           });
           src = centauri-src;
           cargoExtraArgs = "--package codegen";
@@ -138,7 +143,10 @@
         });
         centauri-hyperspace = crane.stable.buildPackage (subnix.subenv // {
           name = "centauri-hyperspace";
+          version = "0.1";
           cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
+            pname = "hyperspace";
+            version = "0.1";
             src = centauri-src;
             doCheck = false;
             cargoExtraArgs = "--package hyperspace";
@@ -236,8 +244,11 @@
           (subnix.subenv // rec {
             name = "hyperspace-composable-rococo-picasso-rococo";
             pname = name;
+            version = "0.1";
             cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
               src = composable-rococo-picasso-rococo-centauri-patched-src;
+              pname = "hyperspace";
+              version = "0.1";
               doCheck = false;
               cargoExtraArgs = "--package hyperspace";
               cargoTestCommand = "";
@@ -253,7 +264,10 @@
           crane.stable.buildPackage (subnix.subenv // rec {
             name = "hyperspace-composable-polkadot-picasso-kusama";
             pname = name;
+            version = "0.1";
             cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
+              pname = "hyperspace";
+              version = "0.1";
               src = composable-polkadot-picasso-kusama-centauri-patched-src;
               doCheck = false;
               cargoExtraArgs = "--package hyperspace";
