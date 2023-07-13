@@ -10,7 +10,7 @@
 		// clippy::panic
 	)
 )]
-#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types, unused_imports)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
