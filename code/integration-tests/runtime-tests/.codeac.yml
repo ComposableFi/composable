@@ -1,6 +1,0 @@
-version: "1"
-tools:
-  eslint:
-    ext: ".ts,.tsx"
-  tslint:
-    enabled: false

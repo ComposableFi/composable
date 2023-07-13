@@ -38,7 +38,6 @@
         hadolint-check
         nixfmt-check
         deadnix-check
-        prettier-check
         spell-check
         taplo-check
         cargo-deny-check
