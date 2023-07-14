@@ -10,9 +10,11 @@ const TO_ACCOUNT: u128 = 2;
 const INIT_AMOUNT: Balance = 1000;
 const TRANSFER_AMOUNT: Balance = 500;
 
-fn create_asset_id(protocol_id: [u8; 8], nonce: u64) -> u128 {
-	let bytes = protocol_id
+fn create_asset_id(protocol_id: [u8; 4], nonce: u64) -> u128 {
+	let bytes = <Test as assets_registry::Config>::NetworkId::get()
+		.to_be_bytes()
 		.into_iter()
+		.chain(protocol_id)
 		.chain(nonce.to_be_bytes())
 		.collect::<Vec<u8>>()
 		.try_into()
@@ -211,7 +213,7 @@ mod mint_into {
 
 	#[test]
 	fn should_create_local_asset_and_mint() {
-		let protocol_id = *b"unittest";
+		let protocol_id = [0, 0, 0, 1];
 		let nonce = 1;
 		let asset_id = create_asset_id(protocol_id, nonce);
 		let asset_info = AssetInfo {

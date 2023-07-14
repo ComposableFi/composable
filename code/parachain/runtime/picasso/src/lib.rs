@@ -226,6 +226,7 @@ parameter_types! {
 	// pub FlatFeeUSDTAmount: Balance = 10_000_000; //10 USDT
 	pub AssetIdUSDT: CurrencyId = CurrencyId::INVALID;
 	pub FlatFeeUSDTAmount: Balance = 0;
+	pub const PicassoNetworkId: u32 = 0;
 }
 
 impl assets_registry::Config for Runtime {
@@ -237,6 +238,7 @@ impl assets_registry::Config for Runtime {
 	type ParachainOrGovernanceOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 	type Convert = ConvertInto;
+	type NetworkId = PicassoNetworkId;
 }
 
 parameter_types! {
