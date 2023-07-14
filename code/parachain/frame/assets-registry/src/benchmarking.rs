@@ -31,7 +31,7 @@ benchmarks! {
 
 	register_asset {
 		let location = T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode().as_ref()).unwrap();
-		let protocol_id = *b"benchmar";
+		let protocol_id = *b"benc";
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
@@ -44,7 +44,7 @@ benchmarks! {
 
 	update_asset {
 		let location =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode().as_ref()).unwrap();
-		let protocol_id = *b"benchmar";
+		let protocol_id = *b"benc";
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
@@ -84,7 +84,7 @@ benchmarks! {
 
 	update_asset_location {
 		let location =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode().as_ref()).unwrap();
-		let protocol_id = *b"benchmar";
+		let protocol_id = *b"benc";
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
 			name: Some(BiBoundedAssetName::from_vec(b"Kusama".to_vec()).expect("String is within bounds")),
