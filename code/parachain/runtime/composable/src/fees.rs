@@ -18,7 +18,7 @@ pub struct WellKnownForeignToNativePriceConverter;
 impl ForeignToNativePriceConverter for WellKnownForeignToNativePriceConverter {
 	fn get_ratio(asset_id: CurrencyId) -> Option<Rational64> {
 		match asset_id {
-			CurrencyId::LAYR => Some(rational!(1 / 1)),
+			CurrencyId::COMPOSABLE_LAYR => Some(rational!(1 / 1)),
 			_ => None,
 		}
 	}
