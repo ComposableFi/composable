@@ -597,7 +597,7 @@ impl crowdloan_rewards::Config for Runtime {
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub NativeAssetId: CurrencyId = CurrencyId::LAYR;
+	pub NativeAssetId: CurrencyId = CurrencyId::COMPOSABLE_LAYR;
 	pub CreationDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
 	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::unit::<Balance>();
 	pub RentPerBlock: Balance = CurrencyId::milli::<Balance>();

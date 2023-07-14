@@ -253,6 +253,6 @@ impl Composable {
 }
 
 impl WellKnownCurrency for Composable {
-	const NATIVE: CurrencyId = CurrencyId::LAYR;
-	const RELAY_NATIVE: CurrencyId = CurrencyId::DOT;
+	const NATIVE: CurrencyId = CurrencyId::COMPOSABLE_LAYR;
+	const RELAY_NATIVE: CurrencyId = CurrencyId::COMPOSABLE_DOT;
 }
