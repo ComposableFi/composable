@@ -137,6 +137,8 @@ impl CurrencyId {
 		);
 		///  Native from Composable
 		pub const LAYR: CurrencyId = CurrencyId(2);
+		///  Native from Composable
+		pub const COMPOSABLE_LAYR: CurrencyId = CurrencyId(79228162514264337593543950338);
 
 		/// Kusama native token
 		pub const KSM: CurrencyId = CurrencyId(
@@ -150,6 +152,7 @@ impl CurrencyId {
 
 		/// DOT from Polkadot
 		pub const DOT: CurrencyId = CurrencyId(6, None);
+		pub const COMPOSABLE_DOT: CurrencyId = CurrencyId(79228162514264337593543950342);
 
 		pub const KSM_USDT_LPT: CurrencyId = CurrencyId(105, None);
 		pub const PICA_USDT_LPT: CurrencyId = CurrencyId(106, None);
