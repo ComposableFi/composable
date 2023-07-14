@@ -439,6 +439,12 @@ pub mod migrate_asset_ids {
 		use frame_support::sp_io;
 
 		use super::*;
+		use composable_traits::{
+			assets::AssetInfo, rational, xcm::assets::RemoteAssetRegistryMutate,
+		};
+		use frame_support::assert_ok;
+
+		use primitives::currency::ForeignAssetId;
 
 		pub fn new_test_ext() -> sp_io::TestExternalities {
 			let storage = frame_system::GenesisConfig::default()
@@ -500,17 +506,180 @@ pub mod migrate_asset_ids {
 			}
 
 			#[test]
-			fn run_scenarios() {
+			fn migrate_assets_registry_test() {
 				new_test_ext().execute_with(|| {
-					// todo
-					// create & mint asset 1
-					// create & mint asset 2
-					// create pool
-					// add liquidity
-					// stake some of lp tokens
-					// wait for rewards
-					// execute migration functions and check that old values have new keys and old
-					// keys are removed
+					let asset_info = AssetInfo {
+						name: None,
+						symbol: None,
+						decimals: Some(4),
+						existential_deposit: 0,
+						ratio: Some(rational!(42 / 123)),
+					};
+					assert_eq!(assets_registry::pallet::AssetDecimals::<Runtime>::get( DOT_PICA_LPT), None);
+					assert_ok!(<assets_registry::pallet::Pallet::<Runtime> as RemoteAssetRegistryMutate>::register_asset(DOT_PICA_LPT, None, asset_info));
+					assert_eq!(assets_registry::pallet::AssetDecimals::<Runtime>::get( DOT_PICA_LPT), Some(4));
+					migrate_assets_registry(vec![DOT_PICA_LPT]);
+					assert_eq!(assets_registry::pallet::AssetDecimals::<Runtime>::get( get_new_asset_id_picasso(DOT_PICA_LPT)), Some(4));
+				})
+			}
+
+			#[test]
+			fn migrate_composable_denoms_test() {
+				new_test_ext().execute_with(|| {
+					let location = ForeignAssetId::IbcIcs20(PrefixedDenom::from_str("transfer/channel-15/6").expect("should work"));
+					let asset_info = AssetInfo {
+						name: None,
+						symbol: None,
+						decimals: Some(4),
+						existential_deposit: 0,
+						ratio: Some(rational!(42 / 123)),
+					};
+					assert_ok!(<assets_registry::pallet::Pallet::<Runtime> as RemoteAssetRegistryMutate>::register_asset(CurrencyId(6), Some(location.clone()), asset_info));
+					assert_eq!(assets_registry::pallet::ForeignToLocal::<Runtime>::get(location.clone()), Some(CurrencyId(6)));
+					assert_eq!(assets_registry::pallet::LocalToForeign::<Runtime>::get(CurrencyId(6)), Some(location.clone()));
+					migrate_composable_denoms(vec![CurrencyId(6)]);
+					let location = ForeignAssetId::IbcIcs20(PrefixedDenom::from_str(format!("transfer/channel-15/{}", get_new_asset_id_composable(CurrencyId(6)).0).as_str()).expect("should work"));
+					assert_eq!(assets_registry::pallet::ForeignToLocal::<Runtime>::get(location.clone()), Some(CurrencyId(6)));
+					assert_eq!(assets_registry::pallet::LocalToForeign::<Runtime>::get(CurrencyId(6)), Some(location.clone()));
+				})
+			}
+
+			#[test]
+			fn migrate_balances_test() {
+				new_test_ext().execute_with(|| {
+					let asset_ids_with_pica_balance = vec![DOT_PICA_LPT, DOT_USDT_LPT, DOT_KSM_LPT];
+					for assets_id in asset_ids_with_pica_balance.clone() {
+						assert_ok!(assets::Pallet::<Runtime>::mint_into(
+							RuntimeOrigin::root(),
+							CurrencyId(1),
+							sp_runtime::MultiAddress::Id(
+								farming::Pallet::<Runtime>::pool_account_id(&assets_id),
+							),
+							10000000000000,
+						));
+						assert_eq!(
+							system::pallet::Account::<Runtime>::get(
+								farming::Pallet::<Runtime>::pool_account_id(&assets_id)
+							)
+							.data
+							.free,
+							10000000000000
+						);
+					}
+					migrate_balances(asset_ids_with_pica_balance.clone());
+
+					for assets_id in asset_ids_with_pica_balance.clone() {
+						assert_eq!(
+							system::pallet::Account::<Runtime>::get(
+								farming::Pallet::<Runtime>::pool_account_id(
+									&get_new_asset_id_picasso(assets_id)
+								)
+							)
+							.data
+							.free,
+							10000000000000
+						);
+						assert_eq!(
+							system::pallet::Account::<Runtime>::get(
+								farming::Pallet::<Runtime>::pool_account_id(&assets_id)
+							)
+							.data
+							.free,
+							0
+						);
+					}
+				})
+			}
+
+			use pablo::PoolInitConfiguration;
+			use sp_core::crypto::AccountId32;
+			#[test]
+			fn migrate_orml_tokens_test() {
+				new_test_ext().execute_with(|| {
+					System::set_block_number(1);
+					let usdt = CurrencyId(130);
+					let usdc = CurrencyId(131);
+					let pica = CurrencyId(1);
+					let asset_info = AssetInfo {
+						name: None,
+						symbol: None,
+						decimals: Some(12),
+						existential_deposit: 1,
+						ratio: Some(rational!(42 / 123)),
+					};
+					assert_ok!(<assets_registry::pallet::Pallet::<Runtime> as RemoteAssetRegistryMutate>::register_asset(usdt, None, asset_info.clone()));
+					assert_ok!(<assets_registry::pallet::Pallet::<Runtime> as RemoteAssetRegistryMutate>::register_asset(usdc, None, asset_info.clone()));
+					let alice: AccountId = AccountId32::new([
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 1,
+					]);
+					let bob: AccountId = AccountId32::new([
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 2,
+					]);
+					assert_ok!(Pablo::create(
+						RuntimeOrigin::root(),
+						PoolInitConfiguration::DualAssetConstantProduct {
+							owner: alice.clone(),
+							assets_weights: Vec::from([
+								(usdt, Permill::from_percent(50)),
+								(usdc, Permill::from_percent(50)),
+							]),
+							fee: Permill::from_percent(1),
+						},
+					));
+
+					assert_ok!(assets::Pallet::<Runtime>::mint_into(
+						RuntimeOrigin::root(),
+						pica,
+						sp_runtime::MultiAddress::Id(
+							bob.clone(),
+						),
+						10000000000000,
+					));
+					assert_ok!(<orml_tokens::Pallet<Runtime> as fungibles::Mutate<AccountId>>::mint_into(
+						usdt,
+						&bob,
+						1_000_000_000_000_000,
+					));
+					<orml_tokens::Pallet<Runtime> as fungibles::Mutate<AccountId>>::mint_into(
+						usdc,
+						&bob,
+						1_000_000_000_000_000,
+					)
+					.unwrap();
+				// println!("{:?}", orml_tokens::module::Accounts::<Runtime>::get(&bob, CurrencyId(149379386384882397174193330044887105538)));
+				// println!("{:?}", pablo::pallet::Pools::<Runtime>::iter_keys().collect::<Vec<PoolId>>());
+					assert_eq!(orml_tokens::module::Accounts::<Runtime>::get(&bob, CurrencyId(149379386384882397174193330044887105538)).free, 0);
+					assert_eq!(orml_tokens::module::Accounts::<Runtime>::get(&bob, usdt).free, 1_000_000_000_000_000);
+					assert_eq!(orml_tokens::module::Accounts::<Runtime>::get(&bob, usdc).free, 1_000_000_000_000_000);
+					assert_ok!(Pablo::add_liquidity(
+						RuntimeOrigin::signed(bob.clone()),
+						0,
+						[(usdt, 100_000_000_000_000), (usdc, 100_000_000_000_000)].into_iter().collect(),
+						0,
+						false,
+					));
+					assert_eq!(orml_tokens::module::Accounts::<Runtime>::get(&bob, usdt).free, 900_000_000_000_000);
+					assert_eq!(orml_tokens::module::Accounts::<Runtime>::get(&bob, usdc).free, 900_000_000_000_000);
+					let amount = orml_tokens::module::Accounts::<Runtime>::get(&bob, CurrencyId(149379386384882397174193330044887105538)).free;
+					assert!(amount != 0);
+					migrate_asset_ids(vec![CurrencyId(149379386384882397174193330044887105538)]);
+					let new_amount = orml_tokens::module::Accounts::<Runtime>::get(&bob, CurrencyId(u128::from_be_bytes([
+						0, 0, 0, 0, 0, 0, 0, 59, 0, 0, 0, 0, 0, 0, 0, 2
+					]))).free;
+					assert_eq!(amount , new_amount);
+					assert_ok!(Pablo::remove_liquidity(
+						RuntimeOrigin::signed(bob.clone()),
+						0,
+						new_amount, BTreeMap::new()
+					));
+					assert_eq!(orml_tokens::module::Accounts::<Runtime>::get(&bob, usdt).free, 1_000_000_000_000_000);
+					assert_eq!(orml_tokens::module::Accounts::<Runtime>::get(&bob, usdc).free, 1_000_000_000_000_000);
+					let new_amount = orml_tokens::module::Accounts::<Runtime>::get(&bob, CurrencyId(u128::from_be_bytes([
+						0, 0, 0, 0, 0, 0, 0, 59, 0, 0, 0, 0, 0, 0, 0, 2
+					]))).free;
+					assert_eq!(new_amount , 0);
 				})
 			}
 		}
