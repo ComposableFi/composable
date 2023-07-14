@@ -4,11 +4,14 @@ use primitives::currency::{ForeignAssetId, VersionedMultiLocation};
 use xcm::v3::MultiLocation;
 
 use crate::{
-	mocks::{new_test_ext, AccountId, AssetId, RuntimeOrigin, Test},
+	mocks::{new_test_ext, AccountId, AssetId, AssetsRegistry, RuntimeOrigin, Test, Tokens},
 	Config, Pallet,
 };
 use composable_traits::assets::{AssetInfo, BiBoundedAssetName, BiBoundedAssetSymbol, CreateAsset};
-use frame_support::traits::fungibles::{Inspect, InspectHold, MutateHold};
+use frame_support::traits::{
+	fungibles::{Inspect, InspectHold, MutateHold},
+	PalletInfoAccess,
+};
 
 const NATIVE_ASSET_ID: AssetId = 1;
 const ACCOUNT_NATIVE: u128 = 1;
@@ -24,9 +27,9 @@ type ForeignTransactor = <Test as Config>::ForeignTransactor;
 
 // creates for routing 1 local asset and 1 foreign asset(native asset is specified in config)
 fn create_assets() -> (AssetId, AssetId) {
-	let protocol_id_local = *b"testloca";
+	let protocol_id_local = (AssetsRegistry::index() as u32).to_be_bytes();
 	let nonce_local = 0;
-	let protocol_id_foreign = *b"testfore";
+	let protocol_id_foreign = (Tokens::index() as u32).to_be_bytes();
 	let nonce_foreign = 0;
 	let asset_info_local = AssetInfo {
 		name: Some(

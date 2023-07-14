@@ -181,6 +181,10 @@ impl CurrencyFactory for CurrencyIdGenerator {
 	}
 }
 
+parameter_types! {
+	pub const PicassoNetworkId: u32 = 0;
+}
+
 impl pallet_assets_registry::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type LocalAssetId = CurrencyId;
@@ -190,6 +194,7 @@ impl pallet_assets_registry::Config for Test {
 	type WeightInfo = ();
 	type Balance = Balance;
 	type Convert = ConvertInto;
+	type NetworkId = PicassoNetworkId;
 }
 
 impl pallet_assets_transactor_router::Config for Test {

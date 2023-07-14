@@ -148,12 +148,13 @@ pub trait CreateAsset {
 	/// If `Ok`, returns the ID of the newly created asset.
 	///
 	/// # Parameters
-	/// * `protocol_id` - The unique ID of the protocol that owns this asset (often a `PalletId`)
+	/// * `protocol_id` - The unique ID of the protocol that owns this asset  (often a
+	///   `(Pallet::<T>::index() as u32).to_be_bytes()` if pallet's index < u32::MAX)
 	/// * `nonce` - A nonce controlled by the owning protocol that uniquely identifies the asset in
 	///   the scope of the protocol
 	/// * `asset_info` - Structure containing relevant information to register the asset
 	fn create_local_asset(
-		protocol_id: [u8; 8],
+		protocol_id: [u8; 4],
 		nonce: u64,
 		asset_info: AssetInfo<Self::Balance>,
 	) -> Result<Self::LocalAssetId, DispatchError>;
@@ -163,13 +164,14 @@ pub trait CreateAsset {
 	/// If `Ok`, returns the ID of the newly created asset.
 	///
 	/// # Parameters
-	/// * `protocol_id` - The unique ID of the protocol that owns this asset (often a `PalletId`)
+	/// * `protocol_id` - The unique ID of the protocol that owns this asset (often a
+	///   `(Pallet::<T>::index() as u32).to_be_bytes()` if pallet's index < u32::MAX)
 	/// * `nonce` - A nonce controlled by the owning protocol that uniquely identifies the asset in
 	///   the scope of the protocol
 	/// * `foreign_asset_id` - Foreign asset ID or relative location
 	/// * `asset_info` - Structure containing relevant information to register the asset
 	fn create_foreign_asset(
-		protocol_id: [u8; 8],
+		protocol_id: [u8; 4],
 		nonce: u64,
 		asset_info: AssetInfo<Self::Balance>,
 		foreign_asset_id: Self::ForeignAssetId,
@@ -179,5 +181,5 @@ pub trait CreateAsset {
 pub trait GenerateAssetId {
 	type AssetId;
 
-	fn generate_asset_id(protocol_id: [u8; 8], nonce: u64) -> Self::AssetId;
+	fn generate_asset_id(protocol_id: [u8; 4], nonce: u64) -> Self::AssetId;
 }

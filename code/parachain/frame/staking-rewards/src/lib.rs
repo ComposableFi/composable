@@ -1891,8 +1891,9 @@ pub(crate) fn claim_of_stake<T: Config>(
 impl<T: Config> Pallet<T> {
 	/// Registers a new asset within the namespace of this protocol
 	pub fn register_protocol_asset(nonce: u64) -> Result<T::AssetId, DispatchError> {
+		let protocol_id = (Pallet::<T>::index() as u32).to_be_bytes();
 		T::AssetsTransactor::create_local_asset(
-			T::PalletId::get().0,
+			protocol_id,
 			nonce,
 			AssetInfo {
 				name: None,

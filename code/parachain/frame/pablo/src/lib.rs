@@ -1034,8 +1034,9 @@ pub mod pallet {
 	}
 
 	pub(crate) fn create_lpt_asset<T: Config>(nonce: u64) -> Result<T::AssetId, DispatchError> {
+		let protocol_id = (Pallet::<T>::index() as u32).to_be_bytes();
 		T::LPTokenFactory::create_local_asset(
-			T::PalletId::get().0,
+			protocol_id,
 			nonce,
 			AssetInfo {
 				name: None,
