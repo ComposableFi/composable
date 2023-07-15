@@ -176,7 +176,7 @@ and do relevant changes.
 
 Store sufficiency changes in separate storage per asset to avoid storage migration.
 
-Handling non sufficiency outside of above pallet will require reimplementing dusting and account creation fails, which is harder than patching. 
+Handling non sufficiency outside of above pallet will require reimplementing many codes twice, which is harder than patching. 
 
 ### Storage
 
