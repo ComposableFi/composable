@@ -200,7 +200,7 @@ jobs:
         with:
           command: nix -- build .#devnet-xc-image --keep-going
       - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT        
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"        
 
   build-cosmos-cosmwasm:
     outputs:
