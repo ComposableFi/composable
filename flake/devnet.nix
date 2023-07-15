@@ -21,13 +21,6 @@
           container-tools = devnetTools.withDevNetContainerTools;
           devNet = self'.packages.devnet-xc;
         };
-
-        devnet-initialize-script-local = devnetTools.mkDevnetInitializeScript {
-          polkadotUrl = "ws://localhost:9944";
-          composableUrl = "ws://localhost:9988";
-          parachainIds = [ 1000 2000 2087 ];
-        };
-
       };
     };
 }

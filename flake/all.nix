@@ -73,7 +73,6 @@
           composable-node
           composable-testfast-node
           composable-testfast-runtime
-          devnet-initialize-script-picasso-persistent
           devnet-integration-tests
           devnet-picasso
           devnet-picasso-image
