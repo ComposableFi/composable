@@ -1,8 +1,8 @@
 { self, withSystem, inputs, lib, options, flake-parts-lib, specialArgs, config
 }: {
   flake = {
-    darwinConfigurations = let 
-    
+    darwinConfigurations = let
+
       user = "administrator";
     in {
       default = self.inputs.darwin.lib.darwinSystem {
@@ -33,8 +33,7 @@
                 KeepAlive = true;
                 RunAtLoad = true;
 
-                StandardErrorPath =
-                  "/Users/${user}/actions-runner/err.log";
+                StandardErrorPath = "/Users/${user}/actions-runner/err.log";
                 StandardOutPath = "/Users/${user}/actions-runner/ok.log";
                 WorkingDirectory = "/Users/${user}/actions-runner/";
                 SessionCreate = true;
