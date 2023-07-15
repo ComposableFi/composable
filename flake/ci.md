@@ -41,6 +41,7 @@ sudo apt update && apt-get install docker-ce docker-ce-cli containerd.io docker-
 usermod --append --groups docker actions-runner && service docker restart
 usermod --append --groups kvm actions-runner && chmod 666 /dev/kvm
 service nix-daemon restart && service docker restart
+mkdir --parents /home/actions-runner/ 
 cd /home/actions-runner/
 su actions-runner
 ```
@@ -74,3 +75,22 @@ tar xzf ./actions-runner-linux-arm64-2.304.0.tar.gz
 ## Notes
  
 Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using `nix rebuild` via ssh on remote to update config (or can use home-manager on ubuntu). 
+
+
+## Mac
+
+```
+cat >> /etc/nix/nix.conf << EOF
+    experimental-features = nix-command flakes
+    sandbox = relaxed
+    narinfo-cache-negative-ttl = 0      
+    system-features = kvm     
+    trusted-users = root actions-runner
+    max-jobs = 1
+    cores = 64
+    # max-substitution-jobs = 32
+    allow-import-from-derivation = true
+    gc-reserved-space = 18388608
+    http-connections = 32
+    http2 = true      
+EOF

@@ -1,7 +1,10 @@
 { self, withSystem, inputs, lib, options, flake-parts-lib, specialArgs, config
 }: {
   flake = {
-    darwinConfigurations = {
+    darwinConfigurations = let 
+    
+      user = "administrator";
+    in {
       default = self.inputs.darwin.lib.darwinSystem {
         system = "aarch64-darwin";
         modules = [
@@ -24,18 +27,18 @@
                   "-c"
                   # follow exact steps of github guide to get this available
                   # so more automatic nix version would use pkgs.github-runner (and token sshed as file)
-                  "/Users/administrator/actions-runner/run.sh"
+                  "/Users/${user}/actions-runner/run.sh"
                 ];
                 Label = "github-runner";
                 KeepAlive = true;
                 RunAtLoad = true;
 
                 StandardErrorPath =
-                  "/Users/administrator/actions-runner/err.log";
-                StandardOutPath = "/Users/administrator/actions-runner/ok.log";
-                WorkingDirectory = "/Users/administrator/actions-runner/";
+                  "/Users/${user}/actions-runner/err.log";
+                StandardOutPath = "/Users/${user}/actions-runner/ok.log";
+                WorkingDirectory = "/Users/${user}/actions-runner/";
                 SessionCreate = true;
-                UserName = "administrator";
+                UserName = "${user}";
 
               };
             };
