@@ -157,9 +157,19 @@
               self'.packages.picasso-rococo-subxt-client
             ];
             src = centauri-src;
-            patchPhase = "false";
+            patchPhase = "true";
             installPhase = ''
               mkdir --parents $out
+              set +e
+              diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/composable ${self'.packages.composable-rococo-subxt-client}/ > $out/composable_polkadot.patch
+              if [[ $? -ne 1 ]] ; then
+                echo "Failed diff"              
+              fi                
+              diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/picasso_kusama ${self'.packages.picasso-rococo-subxt-client}/ > $out/picasso_kusama.patch            
+              if [[ $? -ne 1 ]] ; then
+                echo "Failed diff"              
+              fi              
+              set -e              
             '';
             dontFixup = true;
             dontStrip = true;
@@ -174,9 +184,19 @@
               self'.packages.picasso-kusama-subxt-client
             ];
             src = centauri-src;
-            patchPhase = "false";
+            patchPhase = "true";
             installPhase = ''
               mkdir --parents $out
+              set +e
+              diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/composable ${self'.packages.composable-polkadot-subxt-client}/ > $out/composable_polkadot.patch
+              if [[ $? -ne 1 ]] ; then
+                echo "Failed diff"              
+              fi                
+              diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/picasso_kusama ${self'.packages.picasso-kusama-subxt-client}/ > $out/picasso_kusama.patch            
+              if [[ $? -ne 1 ]] ; then
+                echo "Failed diff"              
+              fi              
+              set -e              
             '';
             dontFixup = true;
             dontStrip = true;
@@ -188,10 +208,17 @@
             pname = "${name}";
             src = centauri-src;
             buildInputs = with pkgs; [ sd git ];
-            patchFlags = "";
+            patchFlags = "--strip=4";
             installPhase = ''
               mkdir --parents $out
               cp --recursive --no-preserve=mode,ownership $src/. $out/
+
+              cd $out/utils/subxt/generated/src/picasso_kusama
+              patch ${patchFlags} -- < "${composable-rococo-picasso-rococo-subxt-hyperspace-patch}/picasso_kusama.patch"
+
+              cd $out/utils/subxt/generated/src/composable
+              patch ${patchFlags} -- < "${composable-rococo-picasso-rococo-subxt-hyperspace-patch}/composable_polkadot.patch"
+              sd "rococo" "polkadot" "$out/utils/subxt/generated/src/composable/relaychain.rs"
             '';
             dontFixup = true;
             dontStrip = true;
@@ -203,10 +230,17 @@
             pname = "${name}";
             src = centauri-src;
             buildInputs = with pkgs; [ sd git ];
-            patchFlags = "";
+            patchFlags = "--strip=4";
             installPhase = ''
               mkdir --parents $out
               cp --recursive --no-preserve=mode,ownership $src/. $out/
+
+              cd $out/utils/subxt/generated/src/picasso_kusama
+              patch ${patchFlags} -- < "${composable-polkadot-picasso-kusama-subxt-hyperspace-patch}/picasso_kusama.patch"
+
+              cd $out/utils/subxt/generated/src/composable
+              patch ${patchFlags} -- < "${composable-polkadot-picasso-kusama-subxt-hyperspace-patch}/composable_polkadot.patch"
+              sd "rococo" "polkadot" "$out/utils/subxt/generated/src/composable/relaychain.rs"
             '';
             dontFixup = true;
             dontStrip = true;

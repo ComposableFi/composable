@@ -181,7 +181,7 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Set up Cachix
-        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
+        if: ${{ inputs.flow == 'push' }}
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -189,13 +189,13 @@ jobs:
           installCommand: "true"
           skipAddingSubstituter: true
       - uses: actions/checkout@v3
-        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
+        if: ${{ inputs.flow == 'push' }}
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
       - name: Build all packages 
-        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
+        if: ${{ inputs.flow == 'push' }}
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#devnet-xc-image --keep-going
@@ -510,7 +510,7 @@ jobs:
 
   push-docker-images:
     name: push-docker-images
-    if: ${{ inputs.github_event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}   
+    if: ${{ inputs.github_event_name == 'push' }}   
     needs: 
       - draft-release-check
     runs-on:
