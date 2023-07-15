@@ -77,7 +77,7 @@
           devnet-picasso
           devnet-picasso-image
           devnet-xc-image
-          devnet-xc-run-fresh
+          devnet-xc-fresh
           hyperspace-composable-rococo-picasso-rococo
           hyperspace-composable-rococo-picasso-rococo-image
           picasso-testfast-runtime
