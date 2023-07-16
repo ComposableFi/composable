@@ -162,7 +162,7 @@ erDiagram
 #### orml-tokens pallet EDs
 
 Currently assets are being stored in `orml-tokens` pallet which require Existential Deposits in stored asset. 
-So currently they cannot store no sufficient assets.
+So currently they cannot store no sufficient assets, unlike parity assets hub pallet.
 
 There are solutions possible.
 
@@ -174,7 +174,9 @@ Fork and pull request no sufficient assets support into `orml-tokens`:
 ```
 and do relevant changes.
 
-Second solution, ensure all calls to `orml-tokens` are done via our assets code base, which handles non sufficiency.
+Store sufficiency changes in separate storage per asset to avoid storage migration.
+
+Handling non sufficiency outside of above pallet will require reimplementing many codes twice, which is harder than patching. 
 
 ### Storage
 
