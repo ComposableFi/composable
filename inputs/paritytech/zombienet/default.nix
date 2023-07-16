@@ -26,6 +26,7 @@ in with prelude; rec {
         "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"
         "--enable-offchain-indexing=true"
         "--blocks-pruning=archive"
+        "--state-pruning=archive"
         "--rpc-max-request-size=30" # 2x x default
         "--offchain-worker=always"
         "--discover-local"
@@ -109,6 +110,7 @@ in with prelude; rec {
       default_args = [
         "-lparachain=debug"
         "--blocks-pruning=archive"
+        "--state-pruning=archive"
         "--offchain-worker=always"
         "--enable-offchain-indexing=true"
         "--discover-local"

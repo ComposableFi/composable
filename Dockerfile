@@ -57,7 +57,6 @@ RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     export "ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]')" && \
     nix build --no-link ".#homeConfigurations.${USER}.activationPackage" --print-build-logs --show-trace --accept-flake-config
 
-# hadolint ignore=SC2086
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     export "ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]')" && \
     "$(nix path-info .#homeConfigurations.${USER}.activationPackage)"/activate && \
