@@ -63,7 +63,7 @@ tar xzf ./actions-runner-linux-x64-2.304.0.tar.gz
 curl -o actions-runner-linux-arm64-2.304.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.304.0/actions-runner-linux-arm64-2.304.0.tar.gz
 tar xzf ./actions-runner-linux-arm64-2.304.0.tar.gz
 
-./config.sh --url https://github.com/ComposableFi/composable --token $TOKEN --name hetzner-cax41-$MACHINE_ID --labels aarch64-linux-16C-32GB-1024GB --work _work
+./config.sh --url https://github.com/ComposableFi/composable --token $TOKEN --name hetzner-rx170-$MACHINE_ID --labels aarch64-linux-80C-128GB-2048GB --work _work
 ```
 
 ## Sudo again
@@ -74,23 +74,4 @@ tar xzf ./actions-runner-linux-arm64-2.304.0.tar.gz
 
 ## Notes
  
-Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using `nix rebuild` via ssh on remote to update config (or can use home-manager on ubuntu). 
-
-
-## Mac
-
-```
-cat >> /etc/nix/nix.conf << EOF
-    experimental-features = nix-command flakes
-    sandbox = relaxed
-    narinfo-cache-negative-ttl = 0      
-    system-features = kvm     
-    trusted-users = root actions-runner
-    max-jobs = 1
-    cores = 64
-    # max-substitution-jobs = 32
-    allow-import-from-derivation = true
-    gc-reserved-space = 18388608
-    http-connections = 32
-    http2 = true      
-EOF
+Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using `nix rebuild` via ssh on remote to update config (or can use home-manager on ubuntu).
