@@ -754,14 +754,20 @@ parameter_types! {
 	  pub Stake: Balance = 10 * CurrencyId::unit::<Balance>();
 }
 parameter_types! {
-		pub const PalletXcmIbcInstanceId: u8 = 192; // PalletXcmIbc: pallet_xcm_ibc = 192,
 		pub const MaxMultihopCount: u32 = 10;
 		pub const ChainNameVecLimit: u32 = 30;
 }
 
+pub struct MultihopXcmIbcPalletId;
+impl Get<u8> for MultihopXcmIbcPalletId{
+	fn get() -> u8{
+		<PalletMultihopXcmIbc as PalletInfoAccess>::index().try_into().unwrap()
+	}
+}
+
 impl pallet_multihop_xcm_ibc::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type PalletInstanceId = PalletXcmIbcInstanceId;
+	type PalletInstanceId = MultihopXcmIbcPalletId;
 	type MaxMultihopCount = MaxMultihopCount;
 	type ChainNameVecLimit = ChainNameVecLimit;
 }
