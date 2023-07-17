@@ -37,34 +37,34 @@
           debug = true;
           settings = {
             processes = {
-              centauri = {
-                command = self'.packages.centaurid-gen;
-                readiness_probe.http_get = {
-                  host = "127.0.0.1";
-                  port = 26657;
-                };
-                log_location = "/tmp/composable-devnet/centauri.log";
-              };
-              centauri-init = {
-                command = self'.packages.centaurid-init;
-                depends_on."centauri".condition = "process_healthy";
-                log_location = "/tmp/composable-devnet/centauri-init.log";
-              };
+              # centauri = {
+              #   command = self'.packages.centaurid-gen;
+              #   readiness_probe.http_get = {
+              #     host = "127.0.0.1";
+              #     port = 26657;
+              #   };
+              #   log_location = "/tmp/composable-devnet/centauri.log";
+              # };
+              # centauri-init = {
+              #   command = self'.packages.centaurid-init;
+              #   depends_on."centauri".condition = "process_healthy";
+              #   log_location = "/tmp/composable-devnet/centauri-init.log";
+              # };
 
-              osmosis = {
-                command = self'.packages.osmosisd-gen;
-                readiness_probe.http_get = {
-                  host = "127.0.0.1";
-                  port = 36657;
-                };
-                log_location = "/tmp/composable-devnet/osmosis.log";
-              };
-              osmosis-init = {
-                command = self'.packages.osmosisd-init;
-                depends_on."osmosis".condition = "process_healthy";
-                log_location = "/tmp/composable-devnet/osmosis-init.log";
-                availability = { restart = "on_failure"; };
-              };
+              # osmosis = {
+              #   command = self'.packages.osmosisd-gen;
+              #   readiness_probe.http_get = {
+              #     host = "127.0.0.1";
+              #     port = 36657;
+              #   };
+              #   log_location = "/tmp/composable-devnet/osmosis.log";
+              # };
+              # osmosis-init = {
+              #   command = self'.packages.osmosisd-init;
+              #   depends_on."osmosis".condition = "process_healthy";
+              #   log_location = "/tmp/composable-devnet/osmosis-init.log";
+              #   availability = { restart = "on_failure"; };
+              # };
 
               picasso = {
                 command = self'.packages.zombienet-rococo-local-picasso-dev;
@@ -94,82 +94,82 @@
                   '';
                 };
               };
-              osmosis-centauri-hermes-init = {
-                command = self'.packages.osmosis-centauri-hermes-init;
-                depends_on = {
-                  "centauri-init".condition = "process_completed_successfully";
-                  "picasso-centauri-ibc-channels-init".condition =
-                    "process_completed_successfully";
-                  "osmosis".condition = "process_healthy";
-                };
-                log_location =
-                  "/tmp/composable-devnet/osmosis-centauri-hermes-init.log";
-                availability = { restart = "on_failure"; };
-              };
+              # osmosis-centauri-hermes-init = {
+              #   command = self'.packages.osmosis-centauri-hermes-init;
+              #   depends_on = {
+              #     "centauri-init".condition = "process_completed_successfully";
+              #     "picasso-centauri-ibc-channels-init".condition =
+              #       "process_completed_successfully";
+              #     "osmosis".condition = "process_healthy";
+              #   };
+              #   log_location =
+              #     "/tmp/composable-devnet/osmosis-centauri-hermes-init.log";
+              #   availability = { restart = "on_failure"; };
+              # };
 
-              osmosis-centauri-hermes-relay = {
-                command = self'.packages.osmosis-centauri-hermes-relay;
-                depends_on = {
-                  "osmosis-centauri-hermes-init".condition =
-                    "process_completed_successfully";
-                };
-                log_location =
-                  "/tmp/composable-devnet/osmosis-centauri-hermes-relay.log";
-                availability = { restart = "on_failure"; };
-              };
+              # osmosis-centauri-hermes-relay = {
+              #   command = self'.packages.osmosis-centauri-hermes-relay;
+              #   depends_on = {
+              #     "osmosis-centauri-hermes-init".condition =
+              #       "process_completed_successfully";
+              #   };
+              #   log_location =
+              #     "/tmp/composable-devnet/osmosis-centauri-hermes-relay.log";
+              #   availability = { restart = "on_failure"; };
+              # };
 
-              picasso-centauri-ibc-init = {
-                command = self'.packages.picasso-centauri-ibc-init;
-                log_location =
-                  "/tmp/composable-devnet/picasso-centauri-ibc-init.log";
-                depends_on = {
-                  "centauri-init".condition = "process_completed_successfully";
-                  "centauri".condition = "process_healthy";
-                  "picasso".condition = "process_healthy";
-                };
-                availability = { restart = "on_failure"; };
-              };
+              # picasso-centauri-ibc-init = {
+              #   command = self'.packages.picasso-centauri-ibc-init;
+              #   log_location =
+              #     "/tmp/composable-devnet/picasso-centauri-ibc-init.log";
+              #   depends_on = {
+              #     "centauri-init".condition = "process_completed_successfully";
+              #     "centauri".condition = "process_healthy";
+              #     "picasso".condition = "process_healthy";
+              #   };
+              #   availability = { restart = "on_failure"; };
+              # };
 
-              picasso-centauri-ibc-connection-init = {
-                command = self'.packages.picasso-centauri-ibc-connection-init;
-                log_location =
-                  "/tmp/composable-devnet/picasso-centauri-ibc-connection-init.log";
-                depends_on = {
-                  "picasso-centauri-ibc-init".condition =
-                    "process_completed_successfully";
-                };
-                availability = { restart = "on_failure"; };
-              };
+              # picasso-centauri-ibc-connection-init = {
+              #   command = self'.packages.picasso-centauri-ibc-connection-init;
+              #   log_location =
+              #     "/tmp/composable-devnet/picasso-centauri-ibc-connection-init.log";
+              #   depends_on = {
+              #     "picasso-centauri-ibc-init".condition =
+              #       "process_completed_successfully";
+              #   };
+              #   availability = { restart = "on_failure"; };
+              # };
 
-              picasso-centauri-ibc-channels-init = {
-                command = self'.packages.picasso-centauri-ibc-channels-init;
-                log_location =
-                  "/tmp/composable-devnet/picasso-centauri-ibc-channels-init.log";
-                depends_on = {
-                  "picasso-centauri-ibc-connection-init".condition =
-                    "process_completed_successfully";
-                };
-                availability = { restart = "on_failure"; };
-              };
+              # picasso-centauri-ibc-channels-init = {
+              #   command = self'.packages.picasso-centauri-ibc-channels-init;
+              #   log_location =
+              #     "/tmp/composable-devnet/picasso-centauri-ibc-channels-init.log";
+              #   depends_on = {
+              #     "picasso-centauri-ibc-connection-init".condition =
+              #       "process_completed_successfully";
+              #   };
+              #   availability = { restart = "on_failure"; };
+              # };
 
-              picasso-centauri-ibc-relay = {
-                command = self'.packages.picasso-centauri-ibc-relay;
-                log_location =
-                  "/tmp/composable-devnet/picasso-centauri-ibc-relay.log";
-                depends_on = {
-                  "picasso-centauri-ibc-channels-init".condition =
-                    "process_completed_successfully";
-                };
-                availability = { restart = "on_failure"; };
-              };
+              # picasso-centauri-ibc-relay = {
+              #   command = self'.packages.picasso-centauri-ibc-relay;
+              #   log_location =
+              #     "/tmp/composable-devnet/picasso-centauri-ibc-relay.log";
+              #   depends_on = {
+              #     "picasso-centauri-ibc-channels-init".condition =
+              #       "process_completed_successfully";
+              #   };
+              #   availability = { restart = "on_failure"; };
+              # };
 
               composable-picasso-ibc-init = {
                 command = self'.packages.composable-picasso-ibc-init;
                 log_location =
                   "/tmp/composable-devnet/composable-picasso-ibc-init.log";
                 depends_on = {
-                  "picasso-centauri-ibc-channels-init".condition =
-                    "process_completed_successfully";
+                  # "picasso-centauri-ibc-channels-init".condition =
+                  #   "process_completed_successfully";
                   "composable".condition = "process_healthy";
                   "picasso".condition = "process_healthy";
                 };
