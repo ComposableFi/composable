@@ -1,5 +1,5 @@
 use crate::{types::AccountIdOf, Config, Pallet};
-use alloc::{collections::VecDeque, string::String, vec::Vec};
+use alloc::{string::String, vec::Vec};
 use codec::Encode;
 use core::marker::PhantomData;
 use cosmwasm_std::{Addr, CanonicalAddr};
@@ -80,7 +80,13 @@ impl<T: Config> From<CosmwasmAccount<T>> for Addr {
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Gas {
-	checkpoints: VecDeque<u64>,
+	/// Stack of checkpoints.
+	///
+	/// Always non-empty with last entry corresponding to the latest checkpoint.
+	/// When a new checkpoint is created, gas from the current one is moved to
+	/// the new one (see [`Self::push`]) such that total remaining gas is the
+	/// sum of gas on all checkpoints.
+	checkpoints: Vec<u64>,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -91,50 +97,53 @@ pub enum GasOutcome {
 
 impl Gas {
 	pub fn new(max_frames: u32, initial_value: u64) -> Self {
-		let mut checkpoints = VecDeque::with_capacity(max_frames as _);
-		checkpoints.push_front(initial_value);
+		let max_frames = usize::try_from(max_frames).unwrap();
+		let mut checkpoints = Vec::with_capacity(max_frames);
+		checkpoints.push(initial_value);
 		Gas { checkpoints }
 	}
-	fn current(&self) -> u64 {
-		*self.checkpoints.front().expect("at least one frame must be running; qed;")
-	}
+
 	fn current_mut(&mut self) -> &mut u64 {
-		self.checkpoints.front_mut().expect("at least one frame must be running; qed;")
+		self.checkpoints.last_mut().expect("unbalanced gas checkpoints")
 	}
+
 	pub fn push(&mut self, checkpoint: VmGasCheckpoint) -> GasOutcome {
+		let parent = self.current_mut();
 		match checkpoint {
 			VmGasCheckpoint::Unlimited => {
-				let parent = self.current_mut();
 				let value = *parent;
 				*parent = 0;
-				self.checkpoints.push_front(value);
+				self.checkpoints.push(value);
 				GasOutcome::Continue
 			},
-			VmGasCheckpoint::Limited(limit) if limit <= self.current() => {
-				*self.current_mut() -= limit;
-				self.checkpoints.push_front(limit);
+			VmGasCheckpoint::Limited(limit) if limit <= *parent => {
+				*parent -= limit;
+				self.checkpoints.push(limit);
 				GasOutcome::Continue
 			},
 			_ => GasOutcome::Halt,
 		}
 	}
+
 	pub fn pop(&mut self) {
-		let child = self.checkpoints.pop_front().expect("impossible");
+		let child = self.checkpoints.pop().unwrap();
 		let parent = self.current_mut();
 		*parent += child;
 	}
+
 	pub fn charge(&mut self, value: u64) -> GasOutcome {
 		let current = self.current_mut();
-		if *current >= value {
-			*current -= value;
+		if let Some(left) = current.checked_sub(value) {
+			*current = left;
 			GasOutcome::Continue
 		} else {
-			*current = current.saturating_sub(value);
+			*current = 0;
 			GasOutcome::Halt
 		}
 	}
+
 	pub fn remaining(&self) -> u64 {
-		self.checkpoints.iter().sum::<u64>()
+		self.checkpoints.iter().sum()
 	}
 }
 
@@ -153,10 +162,19 @@ mod tests {
 		assert_eq!(gas.push(VmGasCheckpoint::Limited(10_000)), GasOutcome::Continue);
 		assert_eq!(gas.push(VmGasCheckpoint::Limited(5_000)), GasOutcome::Continue);
 		assert_eq!(gas.push(VmGasCheckpoint::Limited(5_001)), GasOutcome::Halt);
-		assert_eq!(gas.checkpoints, [5000, 5000, 10000, 10000, 20000, 50000]);
+		assert_eq!(gas.checkpoints, [50000, 20000, 10000, 10000, 5000, 5000]);
+		gas.pop();
+		assert_eq!(gas.checkpoints, [50000, 20000, 10000, 10000, 10000]);
 
-		// TODO: PROPTEST
-		// Property: on push/pop, gas is always distributed, never created/destroyed
 		assert_eq!(gas.remaining(), total_gas);
+
+		assert_eq!(gas.charge(5000), GasOutcome::Continue);
+		assert_eq!(gas.charge(10000), GasOutcome::Halt);
+		assert_eq!(gas.checkpoints, [50000, 20000, 10000, 10000, 0]);
+		gas.pop();
+		assert_eq!(gas.charge(10000), GasOutcome::Continue);
+		assert_eq!(gas.checkpoints, [50000, 20000, 10000, 0]);
+
+		assert_eq!(gas.remaining(), total_gas - 20000);
 	}
 }
