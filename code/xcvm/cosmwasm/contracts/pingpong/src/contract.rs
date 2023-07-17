@@ -15,7 +15,7 @@ use cw2::set_contract_version;
 use cw_utils::ensure_from_older_version;
 use xc_core::{
 	cosmwasm::{FlatCosmosMsg, FlatWasmMsg},
-	Balance, Funds, Juno, Network, Picasso, ProgramBuilder, UserId, UserOrigin,
+	Balance, Funds, Centauri, Network, Picasso, ProgramBuilder, UserId, UserOrigin,
 };
 
 const CONTRACT_NAME: &str = "composable:xcvm-pingpong";
@@ -72,9 +72,9 @@ pub fn execute(
 	let gateway = GATEWAY.load(deps.storage)?;
 	let make_program = |remote_address, msg| {
 		if network == Picasso::ID {
-			make_program::<Picasso, Juno>(remote_address, msg)
+			make_program::<Picasso, Centauri>(remote_address, msg)
 		} else {
-			make_program::<Juno, Picasso>(remote_address, msg)
+			make_program::<Centauri, Picasso>(remote_address, msg)
 		}
 	};
 	let local_origin = UserOrigin {

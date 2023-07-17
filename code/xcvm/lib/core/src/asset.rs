@@ -367,6 +367,7 @@ impl From<u128> for Amount {
 	}
 }
 
+/// a set of assets with non zero balances
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,

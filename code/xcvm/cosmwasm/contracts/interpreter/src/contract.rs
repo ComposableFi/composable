@@ -12,7 +12,7 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{
 	to_binary, wasm_execute, Addr, BankMsg, Binary, CanonicalAddr, Coin, CosmosMsg, Deps, DepsMut,
 	Env, Event, MessageInfo, QuerierWrapper, QueryRequest, Reply, Response, StdError, StdResult,
-	SubMsg, WasmQuery,
+	SubMsg, WasmQuery, ensure,
 };
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
@@ -68,12 +68,9 @@ pub fn execute(
 		ExecuteMsg::Execute { relayer, program } =>
 			initiate_execution(token, deps, env, relayer, program),
 
-		// ExecuteStep should be called by interpreter itself
 		ExecuteMsg::ExecuteStep { step } =>
-			if env.contract.address != info.sender {
-				Err(ContractError::NotSelf)
-			} else {
-				// Self ownership in this token
+			{
+				ensure!(env.contract.address == info.sender, ContractError::NotSelf)?;
 				handle_execute_step(token, deps, env, step)
 			},
 
@@ -323,11 +320,6 @@ pub fn interpret_spawn(
 
 	let mut response = Response::default();
 	for (asset_id, balance) in assets.0 {
-		if balance.amount.is_zero() {
-			// We ignore zero amounts
-			continue
-		}
-
 		let reference =
 			external_query_lookup_asset(deps.querier, gateway_address.clone(), asset_id)?;
 		let transfer_amount = match &reference {

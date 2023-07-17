@@ -84,8 +84,6 @@ pub fn ibc_channel_close(
 		Err(_) => {},
 	}
 	state::IBC_CHANNEL_INFO.remove(deps.storage, channel.endpoint.channel_id.clone());
-	// TODO: are all the in flight packets timed out in this case? if not, we need to unescrow
-	// assets
 	Ok(IbcBasicResponse::new().add_event(
 		make_event("ibc_close")
 			.add_attribute("channel_id", channel.endpoint.channel_id.clone()),
@@ -143,6 +141,7 @@ pub fn ibc_packet_ack(
 		decode_packet(&msg.original_packet.data).map_err(ContractError::Protobuf)?;
 	let messages = match ack {
 		XCVMAck::OK => {
+			// https://github.com/cosmos/ibc/pull/998
 			Ok(<_>::default())
 		},
 		XCVMAck::KO => {
