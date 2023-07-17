@@ -161,12 +161,6 @@ impl<AccountId: From<[u8; 32]> + Into<[u8; 32]> + Clone>
 	}
 
 	fn reverse(who: AccountId) -> Result<MultiLocation, AccountId> {
-		// let m = MultiLocation { parents: 0, interior: X4(
-		// 	PalletInstance(0),
-		// 	AccountId32{ id : who.clone().into(), network: None }.into(),
-		// 	GeneralIndex(0),
-		// 	AccountId32{ id: who.into(), network: None } ) };
-		// Ok(m)
 		Err(who)
 	}
 }	
@@ -193,17 +187,6 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
 	XcmPassthrough<RuntimeOrigin>,
 );
-
-// pub type LocalAssetTransactor = MultiCurrencyAdapter<
-// 	crate::AssetsTransactorRouter,
-// 	UnknownTokens,
-// 	IsNativeConcrete<CurrencyId, AssetsIdConverter>,
-// 	AccountId,
-// 	LocationToAccountId,
-// 	CurrencyId,
-// 	AssetsIdConverter,
-// 	DepositToAlternative<TreasuryAccount, Tokens, CurrencyId, AccountId, Balance>,
-// >;
 
 pub type LocalAssetTransactor = MultiCurrencyAdapterWrapper<
 	crate::AssetsTransactorRouter,
