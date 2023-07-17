@@ -8,7 +8,7 @@
       packages = rec {
         hermes = self.inputs.cosmos.packages.${system}.hermes_1_5_1;
         osmosis-centauri-hermes-init = pkgs.writeShellApplication {
-          runtimeInputs = devnetTools.withBaseContainerTools + [ hermes ];
+          runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
           name = "osmosis-centauri-hermes-init";
           text = ''
             mkdir --parents "${devnet-root-directory}"            
@@ -30,7 +30,7 @@
           '';
         };
         osmosis-centauri-hermes-relay = pkgs.writeShellApplication {
-          runtimeInputs = devnetTools.withBaseContainerTools + [ hermes ];
+          runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
           name = "osmosis-centauri-hermes-relay";
           text = ''
             mkdir --parents "${devnet-root-directory}"            
