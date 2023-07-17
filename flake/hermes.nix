@@ -1,5 +1,6 @@
 { self, ... }: {
-  perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, ... }:
+  perSystem =
+    { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools, ... }:
     let
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
@@ -7,7 +8,7 @@
       packages = rec {
         hermes = self.inputs.cosmos.packages.${system}.hermes_1_5_1;
         osmosis-centauri-hermes-init = pkgs.writeShellApplication {
-          runtimeInputs = [ hermes ];
+          runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
           name = "osmosis-centauri-hermes-init";
           text = ''
             mkdir --parents "${devnet-root-directory}"            
@@ -29,7 +30,7 @@
           '';
         };
         osmosis-centauri-hermes-relay = pkgs.writeShellApplication {
-          runtimeInputs = [ hermes ];
+          runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
           name = "osmosis-centauri-hermes-relay";
           text = ''
             mkdir --parents "${devnet-root-directory}"            
