@@ -12,30 +12,27 @@
       tools = with pkgs;
         with self'.packages;
         [
+          binaryen
           clang
+          dasel
           git
           git-lfs
+          grpcurl          
           nix-tree
           nixfmt
           nodejs
+          openssl
+          process-compose
           python3
           rnix-lsp
           sad
+          self.inputs.cosmos.packages.${system}.gex
           subwasm
           terraform
           terraform-ls
+          websocat
           yarn
           zombienet
-          yq
-          self.inputs.cosmos.packages.${system}.gex
-          openssl
-          binaryen
-          cosmwasm-check
-          jq
-          websocat
-          grpcurl
-          process-compose
-          dasel
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;
