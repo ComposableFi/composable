@@ -12,7 +12,7 @@
           text = ''
             rm --force --recursive /tmp/composable-devnet             
             mkdir --parents /tmp/composable-devnet
-            nix run .#devnet-xc-background --accept-flake-config --extra-experimental-features nix-command --extra-experimental-features flakes --option sandbox relaxed
+            ${pkgs.lib.meta.getExe self'.packages.devnet-xc-background}
           '';
         };
 
@@ -25,13 +25,13 @@
           '';
         };
 
-        devnet-xc-fresh = pkgs.writeShellApplication {
+        devnet-xc-fresh = pkgs.writeShelglApplication {
           runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-fresh";
           text = ''
             rm --force --recursive /tmp/composable-devnet             
             mkdir --parents /tmp/composable-devnet
-            nix run .#devnet-xc --accept-flake-config --extra-experimental-features nix-command --extra-experimental-features flakes --option sandbox relaxed
+            ${pkgs.lib.meta.getExe self'.packages.devnet-xc}
           '';
         };
       };
