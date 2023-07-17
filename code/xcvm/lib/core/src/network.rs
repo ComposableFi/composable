@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 pub struct InterpreterOrigin {
 	pub user_origin: UserOrigin,
 	#[serde(with = "hex")]
-	#[schemars(with = "String")]
+	#[cfg_attr(feature = "std", schemars(with = "String"))]
 	pub salt: Vec<u8>,
 }
 
@@ -52,8 +52,9 @@ impl Display for UserOrigin {
 #[repr(transparent)]
 pub struct UserId(
 	#[serde(with = "hex")]
-	#[schemars(with = "String")]
-	pub Vec<u8>);
+	#[cfg_attr(feature = "std", schemars(with = "String"))]
+	pub Vec<u8>,
+);
 
 impl Display for UserId {
 	#[inline]
@@ -115,7 +116,7 @@ impl From<u32> for NetworkId {
 
 impl From<NetworkId> for u32 {
 	fn from(network_id: NetworkId) -> Self {
-		network_id.0 as u32
+		network_id.0
 	}
 }
 
@@ -131,9 +132,9 @@ impl From<Ethereum> for NetworkId {
 	}
 }
 
-impl From<Juno> for NetworkId {
-	fn from(_: Juno) -> Self {
-		Juno::ID
+impl From<Centauri> for NetworkId {
+	fn from(_: Centauri) -> Self {
+		Centauri::ID
 	}
 }
 
@@ -142,14 +143,17 @@ impl From<Juno> for NetworkId {
 pub struct InvalidNetwork;
 /// Composable Picasso (Kusama parachain)
 pub struct Picasso;
-/// Juno (Cosmos) mainnet
-pub struct Juno;
+/// Centauri (Cosmos) mainnet
+pub struct Centauri;
 /// Ethereum mainnet
 pub struct Ethereum;
+pub struct CosmosHub;
+pub struct Osmosis;
+pub struct Composable;
 
 /// List of networks supported by XCVM.
 // /!\ The order matters and must not be changed, adding a network on the right is safe.
-pub type Networks = (InvalidNetwork, (Picasso, (Juno, (Ethereum, ()))));
+pub type Networks = (InvalidNetwork, (Picasso, (Centauri, (Ethereum, ()))));
 
 /// Type implement network must be part of [`Networks`], otherwise invalid.
 pub trait Network {
@@ -167,7 +171,7 @@ impl Network for Ethereum {
 	type EncodedCall = Vec<u8>;
 }
 
-impl Network for Juno {
+impl Network for Centauri {
 	const ID: NetworkId = NetworkId(<Networks as IndexOf<Self, _>>::INDEX);
 	type EncodedCall = Vec<u8>;
 }
@@ -179,7 +183,7 @@ mod tests {
 	#[test]
 	fn network_ids() {
 		assert_eq!(Picasso::ID, NetworkId(1));
-		assert_eq!(Juno::ID, NetworkId(2));
+		assert_eq!(Centauri::ID, NetworkId(2));
 		assert_eq!(Ethereum::ID, NetworkId(3));
 	}
 

@@ -10,21 +10,20 @@ use alloc::borrow::Cow;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	to_binary, wasm_execute, Addr, BankMsg, Binary, CanonicalAddr, Coin, CosmosMsg, Deps, DepsMut,
-	Env, Event, MessageInfo, QuerierWrapper, QueryRequest, Reply, Response, StdError, StdResult,
-	SubMsg, WasmQuery,
+	ensure, to_binary, wasm_execute, Addr, BankMsg, Binary, CanonicalAddr, Coin, CosmosMsg, Deps,
+	DepsMut, Env, Event, MessageInfo, QuerierWrapper, QueryRequest, Reply, Response, StdError,
+	StdResult, SubMsg, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
 use cw_utils::ensure_from_older_version;
-use cw_xc_common::{
-	gateway::{AssetReference, BridgeMsg, ExecuteMsg as GWExecuteMsg, ExecuteProgramMsg},
-	shared::{encode_base64, DefaultXCVMProgram},
-};
 use num::Zero;
 use xc_core::{
-	apply_bindings, AssetId, Balance, BindingValue, Destination, Displayed, Funds, Instruction,
-	NetworkId, Register,
+	apply_bindings,
+	gateway::{Asset, AssetReference, BridgeMsg, ExecuteMsg as GWExecuteMsg, ExecuteProgramMsg},
+	shared::{encode_base64, DefaultXCVMProgram},
+	AssetId, Balance, BindingValue, Destination, Displayed, Funds, Instruction, NetworkId,
+	Register,
 };
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
@@ -68,14 +67,10 @@ pub fn execute(
 		ExecuteMsg::Execute { relayer, program } =>
 			initiate_execution(token, deps, env, relayer, program),
 
-		// ExecuteStep should be called by interpreter itself
-		ExecuteMsg::ExecuteStep { step } =>
-			if env.contract.address != info.sender {
-				Err(ContractError::NotSelf)
-			} else {
-				// Self ownership in this token
-				handle_execute_step(token, deps, env, step)
-			},
+		ExecuteMsg::ExecuteStep { step } => {
+			ensure!(env.contract.address == info.sender, ContractError::NotSelf);
+			handle_execute_step(token, deps, env, step)
+		},
 
 		ExecuteMsg::AddOwners { owners } => add_owners(token, deps, owners),
 
@@ -97,11 +92,11 @@ fn external_query_lookup_asset(
 	querier: QuerierWrapper,
 	gateway_addr: Addr,
 	asset_id: AssetId,
-) -> StdResult<AssetReference> {
-	let query = cw_xc_common::gateway::QueryMsg::LookupAsset { asset_id };
+) -> StdResult<Asset> {
+	let query = xc_core::gateway::QueryMsg::LookupAsset { asset_id };
 	let msg = WasmQuery::Smart { contract_addr: gateway_addr.into(), msg: to_binary(&query)? };
 	querier
-		.query::<cw_xc_common::gateway::LookupResponse>(&msg.into())
+		.query::<xc_core::gateway::LookupResponse>(&msg.into())
 		.map(|response| response.reference)
 }
 
@@ -257,7 +252,7 @@ pub fn interpret_call(
 						gateway_address.clone(),
 						asset_id,
 					)?;
-					match reference {
+					match reference.local {
 						AssetReference::Virtual { cw20_address } =>
 							Cow::Owned(cw20_address.into_string().into()),
 						AssetReference::Native { denom } => Cow::Owned(denom.into()),
@@ -269,7 +264,7 @@ pub fn interpret_call(
 						gateway_address.clone(),
 						asset_id,
 					)?;
-					let amount = match reference {
+					let amount = match reference.local {
 						AssetReference::Virtual { cw20_address } => apply_amount_to_cw20_balance(
 							deps,
 							&balance,
@@ -323,14 +318,9 @@ pub fn interpret_spawn(
 
 	let mut response = Response::default();
 	for (asset_id, balance) in assets.0 {
-		if balance.amount.is_zero() {
-			// We ignore zero amounts
-			continue
-		}
-
 		let reference =
 			external_query_lookup_asset(deps.querier, gateway_address.clone(), asset_id)?;
-		let transfer_amount = match &reference {
+		let transfer_amount = match &reference.local {
 			AssetReference::Native { denom } => {
 				if balance.is_unit {
 					return Err(ContractError::DecimalsInNativeToken)
@@ -353,7 +343,7 @@ pub fn interpret_spawn(
 		if !transfer_amount.is_zero() {
 			let asset_id: u128 = asset_id.into();
 			normalized_funds.0.push((asset_id.into(), transfer_amount.into()));
-			response = match reference {
+			response = match reference.local {
 				AssetReference::Native { denom } => response.add_message(BankMsg::Send {
 					to_address: gateway_address.clone().into(),
 					amount: vec![Coin { denom, amount: transfer_amount.into() }],
@@ -418,7 +408,7 @@ pub fn interpret_transfer(
 
 		let reference =
 			external_query_lookup_asset(deps.querier, gateway_address.clone(), asset_id)?;
-		response = match reference {
+		response = match reference.local {
 			AssetReference::Native { denom } => {
 				if balance.is_unit {
 					return Err(ContractError::DecimalsInNativeToken)
@@ -473,7 +463,6 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
 }
 
 fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
-	// TODO(aeryz): we can have an intermediate data type to bundle all errors with the IP_REGISTER
 	match msg.result.into_result() {
 		Ok(_) => Err(StdError::generic_err("Returned OK from a reply that is called with `reply_on_error`. This should never happen")),
 		Err(e) => {

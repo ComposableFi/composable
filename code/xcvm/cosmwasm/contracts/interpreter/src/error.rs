@@ -2,8 +2,8 @@ use cosmwasm_std::StdError;
 use thiserror::Error;
 use xc_core::LateBindingError;
 
-impl From<()> for ContractError {
-	fn from(_: ()) -> Self {
+impl From<xc_core::ArithmeticError> for ContractError {
+	fn from(_: xc_core::ArithmeticError) -> Self {
 		ContractError::InvalidProgram
 	}
 }

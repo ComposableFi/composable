@@ -48,11 +48,6 @@
         '';
       };
 
-      CW20_BASE_WASM = pkgs.fetchurl {
-        url =
-          "https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm";
-        hash = "sha256-nClak9UDPLdALVnN7e9yVKafnKUO7RAYDFO7sxwAXpI=";
-      };
       WYNDEX_PAIR_WASM = pkgs.fetchurl {
         url =
           "https://github.com/wynddao/wynddex/releases/download/v2.1.0/wyndex_pair.wasm";

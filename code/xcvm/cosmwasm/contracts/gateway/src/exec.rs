@@ -1,9 +1,10 @@
 extern crate alloc;
 
 use crate::{
-	assets, common,
+	assets, auth,
 	contract::INSTANTIATE_INTERPRETER_REPLY_ID,
 	error::{ContractError, ContractResult},
+	events::make_event,
 	msg, state,
 	state::Config,
 };
@@ -28,7 +29,7 @@ fn transfer_from_user(
 	let mut transfers = Vec::with_capacity(assets.0.len());
 	for (asset_id, Displayed(amount)) in assets.0.iter() {
 		let reference = assets::query_lookup(deps.as_ref(), *asset_id)?.reference;
-		match reference {
+		match reference.local {
 			msg::AssetReference::Native { denom } => {
 				let Coin { amount: provided_amount, .. } = funds
 					.iter()
@@ -80,7 +81,7 @@ pub(crate) fn handle_execute_program(
 /// The gateway must ensure that the `CallOrigin` is valid as the router does not do further
 /// checking on it.
 pub(crate) fn handle_execute_program_privilleged(
-	_: common::auth::Contract,
+	_: auth::Contract,
 	deps: DepsMut,
 	env: Env,
 	call_origin: CallOrigin,
@@ -104,8 +105,7 @@ pub(crate) fn handle_execute_program_privilleged(
 		)?;
 		Ok(response
 			.add_event(
-				common::make_event("route.execute")
-					.add_attribute("interpreter", address.into_string()),
+				make_event("route.execute").add_attribute("interpreter", address.into_string()),
 			)
 			.add_message(wasm_msg))
 	} else {
@@ -130,9 +130,9 @@ pub(crate) fn handle_execute_program_privilleged(
 		// into `Ok` state and properly executes the interpreter
 		let self_call_message: CosmosMsg = wasm_execute(
 			env.contract.address,
-			&cw_xc_common::gateway::ExecuteMsg::ExecuteProgramPrivileged {
+			&xc_core::gateway::ExecuteMsg::ExecuteProgramPrivileged {
 				call_origin: call_origin.clone(),
-				execute_program: cw_xc_common::gateway::ExecuteProgramMsg {
+				execute_program: xc_core::gateway::ExecuteProgramMsg {
 					salt: interpreter_origin.salt,
 					program,
 					assets,
@@ -142,7 +142,7 @@ pub(crate) fn handle_execute_program_privilleged(
 		)?
 		.into();
 		Ok(Response::new()
-			.add_event(common::make_event("route.create"))
+			.add_event(make_event("route.create"))
 			.add_submessage(interpreter_instantiate_submessage)
 			.add_message(self_call_message))
 	}
@@ -163,7 +163,7 @@ fn send_funds_to_interpreter(
 		}
 
 		let reference = assets::query_lookup(deps.clone(), asset_id)?.reference;
-		let msg: CosmosMsg = match reference {
+		let msg: CosmosMsg = match reference.local {
 			msg::AssetReference::Native { denom } => BankMsg::Send {
 				to_address: interpreter_address.clone(),
 				amount: vec![Coin::new(amount, denom)],
@@ -215,7 +215,7 @@ pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<R
 		.ok_or_else(|| StdError::not_found("no data is returned from 'xcvm_interpreter'"))?
 		.value;
 	let interpreter_origin =
-		cw_xc_common::shared::decode_base64::<_, InterpreterOrigin>(interpreter_origin.as_str())?;
+		xc_core::shared::decode_base64::<_, InterpreterOrigin>(interpreter_origin.as_str())?;
 
 	let interpreter = state::Interpreter { address: interpreter_address };
 	state::INTERPRETERS.save(deps.storage, interpreter_origin, &interpreter)?;

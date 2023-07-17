@@ -1,17 +1,25 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![feature(error_in_core)]
 
 extern crate alloc;
 
 mod abstraction;
 mod asset;
 mod bridge;
+pub mod cosmos;
 #[cfg(feature = "cosmwasm")]
 pub mod cosmwasm;
+pub mod gateway;
+pub mod ibc;
 mod instruction;
+pub mod location;
 mod network;
 mod packet;
+mod prelude;
 mod program;
+pub mod proto;
 mod protocol;
+pub mod shared;
 
 pub use crate::{
 	asset::*, bridge::*, instruction::*, network::*, packet::*, program::*, protocol::*,
@@ -159,7 +167,7 @@ mod tests {
 						Ok(child
 							.call(DummyProtocol2)?
 							.call(DummyProtocol1)?
-							.transfer(Destination::Relayer, Funds::from([(PICA::ID, u128::MAX)])))
+							.transfer(Destination::Relayer, Funds::from([(1u128, u128::MAX)])))
 					},
 				)?
 				.build())
@@ -193,7 +201,7 @@ mod tests {
 								},
 								Instruction::Transfer {
 									to: Destination::Relayer,
-									assets: Funds::from(vec![(PICA::ID, u128::MAX)])
+									assets: Funds::from(vec![(1u128, u128::MAX)])
 								}
 							])
 						}

@@ -84,9 +84,10 @@ pub struct GetAssetMetadataResponse {
 	pub symbol: Option<String>,
 	pub name: Option<String>,
 	pub decimals: Option<u8>,
-	pub sufficient: Option<bool>,
 	pub existential_deposit: Option<Coin>,
 	pub mint_admin: Option<Addr>,
+	pub metadata_admin: Option<Addr>,
+	pub ratio: Option<(Uint64, Uint64)>,
 	pub total_supply: Uint128,
 }
 

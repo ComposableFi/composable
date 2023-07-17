@@ -25,7 +25,6 @@ cosmwasm-orchestrate = { workspace = true }
 
 cw-xc-interpreter = { path = "../contracts/interpreter" }
 cw-xc-pingpong = { path = "../contracts/pingpong" }
-cw-xc-common = { path = "../contracts/common" }
 xc-core = { path = "../../lib/core" }
 
 log = { version = "0.4" }

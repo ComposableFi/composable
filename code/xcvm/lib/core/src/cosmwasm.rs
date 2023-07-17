@@ -20,9 +20,9 @@
 //! Let's assume that we wan't to send `WasmMsg::Execute`:
 //! ```json
 //! {
-//! 	"contract_addr": "",
-//! 	"msg": "SOME PAYLOAD",
-//! 	"funds": []
+//!    "contract_addr": "",
+//!    "msg": "SOME PAYLOAD",
+//!    "funds": []
 //! }
 //! ```
 //! In this case, we know that `contract_addr` is a static `String`, not
@@ -50,12 +50,12 @@
 //! let payload_bindings: OrderedBindings = [(13, BindingValue::Register(Register::This))].into();
 //! let cw20_transfer_msg = Cw20ExecuteMsg::Transfer {
 //!     // Make sure to leave fields that uses late-bindings empty
-//! 	recipient: String::new(),
+//!    recipient: String::new(),
 //!     amount: 10000,
 //! };
 //!
 //! let payload = LateCall::wasm_execute(
-//! 	StaticBinding::Some(BindingValue::Asset(1)),
+//!    StaticBinding::Some(BindingValue::Asset(1)),
 //!     IndexedBinding::Some((payload_bindings, cw20_transfer_msg)),
 //!     Vec::new()
 //! );
@@ -296,7 +296,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::<()>::Bank(send_msg.clone())).map_err(|_| ())?;
+			serde_json::to_string(&FlatCosmosMsg::<()>::Bank(send_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
@@ -336,7 +336,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::Wasm(execute_msg.clone())).map_err(|_| ())?;
+			serde_json::to_string(&FlatCosmosMsg::Wasm(execute_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
@@ -379,7 +379,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::Wasm(instantiate_msg.clone())).map_err(|_| ())?;
+			serde_json::to_string(&FlatCosmosMsg::Wasm(instantiate_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
@@ -416,7 +416,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::Wasm(migrate_msg.clone())).map_err(|_| ())?;
+			serde_json::to_string(&FlatCosmosMsg::Wasm(migrate_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
@@ -446,7 +446,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::Wasm(migrate_msg.clone())).map_err(|_| ())?;
+			serde_json::to_string(&FlatCosmosMsg::Wasm(migrate_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
