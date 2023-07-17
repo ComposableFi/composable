@@ -27,7 +27,7 @@
           yarn
           zombienet
           yq
-          gex
+          self.inputs.cosmos.packages.${system}.gex
           openssl
           binaryen
           cosmwasm-check

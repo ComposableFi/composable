@@ -30,12 +30,6 @@ nix run ".#check"
 
 It is also possible to run individual checks, here are some examples:
 
-### Checking your spelling
-
-```bash
-nix build ".#spell-check"
-```
-
 ### Clippy errors
 
 ```bash

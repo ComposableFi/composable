@@ -1,7 +1,8 @@
 //! Interfaces to managed assets
-
+use crate::prelude::*;
 use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::collections::vec::bounded::BiBoundedVec;
+
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::vec::Vec;
@@ -18,6 +19,76 @@ pub const ASSET_METADATA_SYMBOL_LENGTH: usize = 16;
 
 pub type BiBoundedAssetName = BiBoundedVec<u8, 1, ASSET_METADATA_NAME_LENGTH>;
 pub type BiBoundedAssetSymbol = BiBoundedVec<u8, 1, ASSET_METADATA_SYMBOL_LENGTH>;
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(JsonSchema, QueryResponses))]
+pub enum ExecuteMsg {
+	// denom is asset u128 to string, for example PICA on Picasso is "1"
+	// all admins default to contract address if not specified
+	#[cfg_attr(feature = "std", returns(CreateResponse))]
+	Create {
+		creation_fee_denom: Option<String>,
+		decimals: Option<u8>,
+		name: Option<String>,
+		symbol: Option<String>,
+		metadata_admin: Option<Addr>,
+		mint_admin: Option<Addr>,
+		burn_admin: Option<Addr>,
+		freeze_admin: Option<Addr>,
+	},
+	// `ed_payment_asset_denom` is used for non sufficient assets in list if any, else ED payed in
+	// PICA
+	#[cfg_attr(feature = "std", returns(MintResponse))]
+	Mint { ed_payment_asset_denom: Option<String>, amount: Vec<Coin>, to_address: String },
+	#[cfg_attr(feature = "std", returns(TransferResponse))]
+	// from_address - if you have some approval
+	Transfer { from_address: Option<String>, to_address: String, amount: Vec<Coin> },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+pub struct MintResponse {
+	/// free amount of each token on `to_address`
+	pub free: Vec<Coin>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+pub struct TransferResponse {
+	/// free amount of each token on `to_address`
+	pub free: Vec<Coin>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+pub struct CreateResponse {
+	pub denom: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(JsonSchema, QueryResponses))]
+pub enum QueryMsg {
+	#[cfg_attr(feature = "std", returns(GetAssetMetadataResponse))]
+	GetAssetMetadata { denom: String },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+pub struct GetAssetMetadataResponse {
+	pub symbol: Option<String>,
+	pub name: Option<String>,
+	pub decimals: Option<u8>,
+	pub sufficient: Option<bool>,
+	pub existential_deposit: Option<Coin>,
+	pub mint_admin: Option<Addr>,
+	pub total_supply: Uint128,
+}
 
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -149,12 +220,13 @@ pub trait CreateAsset {
 	/// If `Ok`, returns the ID of the newly created asset.
 	///
 	/// # Parameters
-	/// * `protocol_id` - The unique ID of the protocol that owns this asset (often a `PalletId`)
+	/// * `protocol_id` - The unique ID of the protocol that owns this asset  (often a
+	///   `(Pallet::<T>::index() as u32).to_be_bytes()` if pallet's index < u32::MAX)
 	/// * `nonce` - A nonce controlled by the owning protocol that uniquely identifies the asset in
 	///   the scope of the protocol
 	/// * `asset_info` - Structure containing relevant information to register the asset
 	fn create_local_asset(
-		protocol_id: [u8; 8],
+		protocol_id: [u8; 4],
 		nonce: u64,
 		asset_info: AssetInfo<Self::Balance>,
 	) -> Result<Self::LocalAssetId, DispatchError>;
@@ -164,13 +236,14 @@ pub trait CreateAsset {
 	/// If `Ok`, returns the ID of the newly created asset.
 	///
 	/// # Parameters
-	/// * `protocol_id` - The unique ID of the protocol that owns this asset (often a `PalletId`)
+	/// * `protocol_id` - The unique ID of the protocol that owns this asset (often a
+	///   `(Pallet::<T>::index() as u32).to_be_bytes()` if pallet's index < u32::MAX)
 	/// * `nonce` - A nonce controlled by the owning protocol that uniquely identifies the asset in
 	///   the scope of the protocol
 	/// * `foreign_asset_id` - Foreign asset ID or relative location
 	/// * `asset_info` - Structure containing relevant information to register the asset
 	fn create_foreign_asset(
-		protocol_id: [u8; 8],
+		protocol_id: [u8; 4],
 		nonce: u64,
 		asset_info: AssetInfo<Self::Balance>,
 		foreign_asset_id: Self::ForeignAssetId,
@@ -180,5 +253,5 @@ pub trait CreateAsset {
 pub trait GenerateAssetId {
 	type AssetId;
 
-	fn generate_asset_id(protocol_id: [u8; 8], nonce: u64) -> Self::AssetId;
+	fn generate_asset_id(protocol_id: [u8; 4], nonce: u64) -> Self::AssetId;
 }

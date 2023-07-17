@@ -1,0 +1,74 @@
+[global]
+log_level = 'debug'
+[mode]
+[mode.clients]
+enabled = true
+refresh = true
+misbehaviour = true
+[mode.connections]
+enabled = true
+[mode.channels]
+enabled = true
+
+[mode.packets]
+enabled = true
+clear_interval = 100
+clear_on_start = true
+tx_confirmation = false
+
+[rest]
+enabled = false
+host = '127.0.0.1'
+port = 30042
+
+[telemetry]
+enabled = false
+host = '127.0.0.1'
+port = 30041
+
+[[chains]]
+id = 'centauri-dev'
+rpc_addr = 'http://127.0.0.1:26657'
+grpc_addr = 'http://127.0.0.1:9090'
+websocket_addr = 'ws://127.0.0.1:26657/websocket'
+rpc_timeout = '20s'
+account_prefix = 'centauri'
+key_name = 'centauri-dev'
+store_prefix = 'ibc'
+default_gas = 1000000
+max_gas = 400000000
+gas_price = { price = 0.001, denom = 'ppica' }
+gas_multiplier = 1.1
+max_msg_num = 30
+max_tx_size = 2097152
+clock_drift = '5s'
+max_block_time = '30s'
+trusting_period = '60s'
+trust_threshold = { numerator = '1', denominator = '3' }
+type = 'CosmosSdk'
+address_type = { derivation = 'cosmos' }
+trusted_node = true
+
+[[chains]]
+id = 'osmosis-dev'
+rpc_addr = 'http://127.0.0.1:36657'
+grpc_addr = 'http://127.0.0.1:19090'
+websocket_addr = 'ws://127.0.0.1:36657/websocket'
+rpc_timeout = '20s'
+account_prefix = 'osmo'
+key_name = 'osmosis-dev'
+store_prefix = 'ibc'
+key_store_type = 'Test'
+default_gas = 100000
+max_gas = 400000
+gas_price = { price = 0.01, denom = 'uosmo' }
+gas_multiplier = 1.1
+max_msg_num = 30
+max_tx_size = 2097152
+clock_drift = '5s'
+max_block_time = '30s'
+trusting_period = '60s'
+trust_threshold = { numerator = '1', denominator = '3' }
+type = 'CosmosSdk'
+address_type = { derivation = 'cosmos' }
+trusted_node = true

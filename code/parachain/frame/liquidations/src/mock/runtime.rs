@@ -157,6 +157,7 @@ pub static CHARLIE: Public =
 
 ord_parameter_types! {
 	pub const RootAccount: AccountId = ALICE;
+	pub const PicassoNetworkId: u32 = 0;
 }
 
 impl pallet_assets_registry::Config for Runtime {
@@ -168,6 +169,7 @@ impl pallet_assets_registry::Config for Runtime {
 	type WeightInfo = ();
 	type Balance = Balance;
 	type Convert = ConvertInto;
+	type NetworkId = PicassoNetworkId;
 }
 
 impl pallet_assets_transactor_router::Config for Runtime {

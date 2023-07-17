@@ -167,6 +167,41 @@ jobs:
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
+
+  build-devnet-xc:
+    outputs:
+      ok: ${{ steps.ok.outputs.ok }}   
+    name: build-devnet-xc
+    needs: 
+      - privilege-check
+    runs-on:
+      - aarch64-linux-80C-128GB-2048GB
+    concurrency:
+      group: ${{ inputs.github_workflow }}-build-devnet-xc-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Set up Cachix
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
+        uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
+        with:
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+          installCommand: "true"
+          skipAddingSubstituter: true
+      - uses: actions/checkout@v3
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
+        with:
+          lfs: true
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
+          persist-credentials: false
+      - name: Build all packages 
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
+        uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#devnet-xc-image --keep-going
+      - id: ok
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"        
+
   build-cosmos-cosmwasm:
     outputs:
       ok: ${{ steps.ok.outputs.ok }}   
@@ -475,9 +510,9 @@ jobs:
 
   push-docker-images:
     name: push-docker-images
-    if: ${{ inputs.github_event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}   
-    # needs: 
-    #   - draft-release-check
+    if: ${{ inputs.github_event_name == 'push' }}   
+    needs: 
+      - draft-release-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     concurrency:
@@ -508,15 +543,17 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: cmc-api
           artifact: cmc-api:latest
-      - name: Publish devnet to docker hub
+
+      - name: Publish devnet-xc to docker hub
         uses: "./.github/templates/docker-publish"
         with:
-          image_path: result/docker-image-devnet.tar.gz
+          image_path: result/docker-image-devnet-xc.tar.gz
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          name: devnet
-          artifact: devnet:latest
+          name: devnet-xc
+          artifact: devnet-xc:latest
           tag: ${{ inputs.github_event_name == 'push' && 'main' || ''}}
+
       - name: Publish hyperspace-composable-rococo-picasso-rococo to docker hub
         uses: "./.github/templates/docker-publish"
         with:

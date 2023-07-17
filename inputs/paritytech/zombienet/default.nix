@@ -26,6 +26,7 @@ in with prelude; rec {
         "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"
         "--enable-offchain-indexing=true"
         "--blocks-pruning=archive"
+        "--state-pruning=archive"
         "--rpc-max-request-size=30" # 2x x default
         "--offchain-worker=always"
         "--discover-local"
@@ -33,7 +34,7 @@ in with prelude; rec {
       env = [{
         name = "RUST_LOG";
         value =
-          "info,runtime::contracts=debug,runtime=info,parachain=debug,cumulus-collator=debug,aura=debug,xcm=trace,pallet_ibc=trace,hyperspace=trace,hyperspace_parachain=trace,ics=trace,ics::routing=trace,ics::channel=trace"
+          "info,runtime::contracts=debug,runtime=info,parachain=info,cumulus-collator=info,aura=info,xcm=trace,pallet_ibc=trace,hyperspace=trace,hyperspace_parachain=trace,ics=trace,ics::routing=trace,ics::channel=trace"
           # RUST_LOG does not eats extra comma well, so fixed conditionally
           + (if rust_log_add != null then "," + rust_log_add else "");
       }];
@@ -83,7 +84,7 @@ in with prelude; rec {
       env = [{
         name = "RUST_LOG";
         value =
-          "info,runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,wasmtime_cranelift=warn,wasm-heap=warn,"
+          "info,runtime=debug,parachain=debug,cumulus-collator=debug,aura=debug,xcm=trace,wasmtime_cranelift=warn,wasm-heap=warn,"
           + "netlink_proto=warn,libp2p_ping=warn,multistream_select=warn,trie-cache=warn,wasm_overrides=warn,libp2p_core=warn,libp2p_swarm=warn,sub-libp2p=warn,sync=warn";
       }];
     } // optionalAttrs (rpc_port != null) { inherit rpc_port; }
@@ -109,6 +110,7 @@ in with prelude; rec {
       default_args = [
         "-lparachain=debug"
         "--blocks-pruning=archive"
+        "--state-pruning=archive"
         "--offchain-worker=always"
         "--enable-offchain-indexing=true"
         "--discover-local"

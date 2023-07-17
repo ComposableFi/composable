@@ -24,7 +24,7 @@ cosmwasm-vm = { workspace = true, default-features = false, features = [
 cosmwasm-vm-wasmi = { workspace = true, default-features = false, features = [
   "iterator",
   "stargate",
-  "ibc3"
+  "ibc3",
 ] }
 
 cosmwasm-std = { workspace = true, default-features = false, features = [
@@ -94,7 +94,6 @@ rand = { version = "0.8.5", default-features = false, features = [
 ] }
 
 
-
 [features]
 default = ["std"]
 
@@ -144,5 +143,5 @@ std = [
   "sp-std/std",
   "wasm-instrument/std",
   "wasmi-validation/std",
-  "wasmi/std"
+  "wasmi/std",
 ]

@@ -27,6 +27,8 @@ Abstraction over a fungible multi-currency system.
 A fungible multi-currency system whose accounts can have liquidity restrictions.
 - [MultiReservableCurrency](https://docs.rs/orml-traits/latest/orml_traits/currency/trait.MultiReservableCurrency.html):
 A fungible multi-currency system where a user can reserve funds.
+- `frame_support::traits::tokens::fungibles::{MutateHold, *}`
+
 
 ### Workflows
 
@@ -68,7 +70,7 @@ both local and foreign ones.
 
 An example response will look like this:
 
-```javascript
+```json
 [
     // Local asset
     {

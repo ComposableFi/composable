@@ -1,6 +1,6 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, lib, system, crane
-    , systemCommonRust, subnix, ... }:
+    , systemCommonRust, subnix, devnetTools, ... }:
     let
       devnet-root-directory = "/tmp/composable-devnet";
       validator = "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n";
@@ -11,21 +11,13 @@
         voting_period = "20s";
         max_deposit_period = "10s";
       };
+      native_denom = "ppica";
       name = "centaurid";
-      centaurid = pkgs.buildGoModule {
-        name = name;
-        doCheck = false;
-        nativeBuildInputs = [ pkgs.patchelf ];
-        excludedPackages = [ "interchaintest" "simd" ];
-        ldflags = [ "-v -extldflags '-L${self'.packages.libwasmvm}/lib'" ];
-        src = pkgs.fetchFromGitHub {
-          owner = "dzmitry-lahoda-forks";
-          repo = "composable-centauri";
-          rev = "c677c9f121b2637f0e9cca370a8fa0f72a2298c9";
-          sha256 = "sha256-clAuk5UrSeRooLiqFPcSk6r6TkBe3tUIn4bXrS24IPk=";
-        };
-        dontFixup = true;
-        vendorSha256 = "sha256-2isPCn91vSeNmMw58mu0yP7UGDXHNJW+6K2aNh2dKJc=";
+      centaurid = pkgs.writeShellApplication {
+        name = "centaurid";
+        text = ''
+          ${self.inputs.cosmos.packages.${system}.centauri}/bin/centaurid "$@"
+        '';
       };
 
       ibc-lightclients-wasm-v1-msg-push-new-wasm-code = code: {
@@ -74,28 +66,30 @@
       };
       centaurid-init = pkgs.writeShellApplication {
         name = "centaurid-init";
-        runtimeInputs = [ centaurid pkgs.jq pkgs.yq ];
+        runtimeInputs = devnetTools.withBaseContainerTools
+          ++ [ centaurid pkgs.jq ];
 
         text = ''
           CENTAURI_DATA="${devnet-root-directory}/.centaurid"
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CENTAURI_DATA/keyring-test"
           centaurid tx gov submit-proposal ${ics10-grandpa-cw-proposal}/ics10_grandpa_cw.wasm.json --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json
-          sleep 5
+          sleep 7
           centaurid query auth module-account gov --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA" | jq '.account.base_account.address' --raw-output
           PROPOSAL_ID=1          
           centaurid tx gov vote $PROPOSAL_ID yes --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
           sleep 20          
           centaurid query gov proposal $PROPOSAL_ID --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA" |
           jq '.status'
-          sleep 5          
+          sleep 7         
           centaurid query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CENTAURI_DATA" --output json --node tcp://localhost:26657 | jq '.code_ids[0]' --raw-output | tee "$CENTAURI_DATA/code_id"
         '';
       };
 
       centaurid-dev = pkgs.writeShellApplication {
         name = "centaurid-dev";
-        runtimeInputs = [ centaurid pkgs.jq pkgs.yq ];
+        runtimeInputs = devnetTools.withBaseContainerTools
+          ++ [ centaurid pkgs.jq pkgs.yq ];
 
         text = ''
           #CENTAURI_DATA="${devnet-root-directory}/.centaurid"
@@ -108,7 +102,8 @@
 
       centaurid-gen = pkgs.writeShellApplication {
         name = "centaurid-gen";
-        runtimeInputs = [ centaurid pkgs.jq pkgs.yq ];
+        runtimeInputs = devnetTools.withBaseContainerTools
+          ++ [ centaurid pkgs.jq pkgs.yq ];
         text = ''
           CENTAURI_DATA="${devnet-root-directory}/.centaurid"
           CHAIN_ID="centauri-dev"
@@ -122,7 +117,7 @@
           mkdir --parents "$CENTAURI_DATA"
           mkdir --parents "$CENTAURI_DATA/config/gentx"
           mkdir --parents "$KEYRING_TEST"
-          echo "${validator-mnemonic}" | centaurid init "$CHAIN_ID" --chain-id "$CHAIN_ID" --default-denom ppica --home "$CENTAURI_DATA"  --recover           
+          echo "${validator-mnemonic}" | centaurid init "$CHAIN_ID" --chain-id "$CHAIN_ID" --default-denom ${native_denom} --home "$CENTAURI_DATA"  --recover           
 
           function jq-genesis() {
             jq -r  "$1"  > "$CENTAURI_DATA/config/genesis-update.json"  < "$CENTAURI_DATA/config/genesis.json"
@@ -132,7 +127,12 @@
           jq-genesis '.consensus_params.block.max_gas |= "-1"'  
           jq-genesis '.app_state.gov.params.voting_period |= "${gov.voting_period}"'  
           jq-genesis '.app_state.gov.params.max_deposit_period |= "${gov.max_deposit_period}"'  
-          jq-genesis '.app_state.gov.params.min_deposit[0].amount |= "1"'  
+
+          jq-genesis '.app_state.transmiddleware.token_infos[0].ibc_denom |= "ibc/632DBFDB06584976F1351A66E873BF0F7A19FAA083425FEC9890C90993E5F0A4"'            
+          jq-genesis '.app_state.transmiddleware.token_infos[0].channel_id |= "channel-0"'  
+          jq-genesis '.app_state.transmiddleware.token_infos[0].native_denom |= "ppica"'
+          jq-genesis '.app_state.transmiddleware.token_infos[0].asset_id |= "1"'
+
           sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CENTAURI_DATA/config/client.toml"
           sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CENTAURI_DATA/config/client.toml"            
           sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CENTAURI_DATA/config/client.toml"
@@ -166,7 +166,7 @@
           add-genesis-account centauri1qwexv7c6sm95lwhzn9027vyu2ccneaqapystyu
           centaurid --keyring-backend test --keyring-dir "$KEYRING_TEST" --home "$CENTAURI_DATA" gentx validator "250000000000000ppica" --chain-id="$CHAIN_ID" --amount="250000000000000ppica"
           centaurid collect-gentxs --home "$CENTAURI_DATA"  --gentx-dir "$CENTAURI_DATA/config/gentx"
-          centaurid start --rpc.unsafe --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing  --minimum-gas-prices=0ppica --log_level debug --home "$CENTAURI_DATA" --db_dir "$CENTAURI_DATA/data" --trace --with-tendermint true --transport socket --trace-store $CENTAURI_DATA/kvstore.log --grpc.address localhost:9090 --grpc.enable true --grpc-web.enable false --api.enable true --cpu-profile $CENTAURI_DATA/cpu-profile.log --p2p.pex false --p2p.upnp  false
+          centaurid start --rpc.unsafe --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing --minimum-gas-prices=0ppica --log_level debug --home "$CENTAURI_DATA" --db_dir "$CENTAURI_DATA/data" --trace --with-tendermint true --transport socket --trace-store $CENTAURI_DATA/kvstore.log --grpc.address localhost:9090 --grpc.enable true --grpc-web.enable false --api.enable true --cpu-profile $CENTAURI_DATA/cpu-profile.log --p2p.pex false --p2p.upnp  false
         '';
       };
     in {

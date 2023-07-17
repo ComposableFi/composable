@@ -82,7 +82,7 @@ pub fn genesis_config(
 		transaction_payment: Default::default(),
 		ibc: composable_runtime::IbcConfig {
 			assets: vec![pallet_ibc::pallet::AssetConfig {
-				id: primitives::currency::CurrencyId::LAYR,
+				id: primitives::currency::CurrencyId::COMPOSABLE_LAYR,
 				denom: b"1".to_vec(),
 			}],
 		},

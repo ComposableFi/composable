@@ -45,9 +45,12 @@
     };
     cosmos = {
       url =
-        "github:dzmitry-lahoda-forks/cosmos.nix/faf1a1abf42801c89f62a2dec69a8975d98939fc";
+        "github:dzmitry-lahoda-forks/cosmos.nix/16f6aaf252d36505ab3333f9e82389b5f6c78a39";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    centauri-src.flake = false;
+    centauri-src.url =
+      "github:ComposableFi/centauri/58f60b3a1745ed94f8f93a030add61c5030b7cca";
   };
 
   nixConfig = {
@@ -82,7 +85,6 @@
         ./code/services/cmc-api/cmc-api.nix
         ./code/utils/price-feed/price-feed.nix
         ./code/xcvm/flake-module.nix
-        ./devnets/all.nix
         ./docs/docs.nix
         ./flake/all.nix
         ./flake/cargo-tools.nix
@@ -91,7 +93,10 @@
         ./flake/dev-shells.nix
         ./flake/docker.nix
         ./flake/fmt.nix
+        ./flake/ibc.nix
+        ./flake/osmosis.nix
         ./flake/hermes.nix
+        ./flake/devnet.nix
         ./flake/home-configurations.nix
         ./flake/live.nix
         ./flake/overlays.nix
@@ -99,15 +104,11 @@
         ./flake/release.nix
         ./flake/subxt.nix
         ./flake/zombienet.nix
-        ./frontend/frontend.nix
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
-        ./inputs/centauri/flake-module.nix
+        ./inputs/ComposableFi/centauri/flake-module.nix
         ./inputs/chevdor/subwasm.nix
-        ./inputs/cosmos/cosmwasm.nix
-        ./inputs/cosmos/gex.nix
         ./inputs/CosmosContracts/juno.nix
-        ./inputs/CosmWasm/wasmvm.nix
         ./inputs/notional-labs/composable-centauri/flake-module.nix
         ./inputs/osmosis-labs/beaker/flake-module.nix
         ./inputs/paritytech/cumulus.nix
