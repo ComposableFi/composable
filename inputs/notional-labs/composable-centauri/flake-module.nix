@@ -1,6 +1,6 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, lib, system, crane
-    , systemCommonRust, subnix, ... }:
+    , systemCommonRust, subnix, devnetTools, ... }:
     let
       devnet-root-directory = "/tmp/composable-devnet";
       validator = "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n";
@@ -66,7 +66,8 @@
       };
       centaurid-init = pkgs.writeShellApplication {
         name = "centaurid-init";
-        runtimeInputs = [ centaurid pkgs.jq pkgs.yq ];
+        runtimeInputs = devnetTools.withBaseContainerTools
+          ++ [ centaurid pkgs.jq ];
 
         text = ''
           CENTAURI_DATA="${devnet-root-directory}/.centaurid"
@@ -87,7 +88,8 @@
 
       centaurid-dev = pkgs.writeShellApplication {
         name = "centaurid-dev";
-        runtimeInputs = [ centaurid pkgs.jq pkgs.yq ];
+        runtimeInputs = devnetTools.withBaseContainerTools
+          ++ [ centaurid pkgs.jq pkgs.yq ];
 
         text = ''
           #CENTAURI_DATA="${devnet-root-directory}/.centaurid"
@@ -100,7 +102,8 @@
 
       centaurid-gen = pkgs.writeShellApplication {
         name = "centaurid-gen";
-        runtimeInputs = [ centaurid pkgs.jq pkgs.yq ];
+        runtimeInputs = devnetTools.withBaseContainerTools
+          ++ [ centaurid pkgs.jq pkgs.yq ];
         text = ''
           CENTAURI_DATA="${devnet-root-directory}/.centaurid"
           CHAIN_ID="centauri-dev"

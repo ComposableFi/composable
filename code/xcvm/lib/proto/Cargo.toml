@@ -14,4 +14,4 @@ xc-core = { path = "../core" }
 prost-types = { workspace = true, default-features = false }
 
 [build-dependencies]
-prost-build = { workspace = true}
+prost-build = { workspace = true }

@@ -1,5 +1,6 @@
 { self, ... }: {
-  perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, ... }:
+  perSystem =
+    { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools, ... }:
     let
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
@@ -7,6 +8,7 @@
       packages = rec {
         osmosisd = pkgs.writeShellApplication {
           name = "osmosisd";
+          runtimeInputs = devnetTools.withBaseContainerTools;
           text = ''
             ${self.inputs.cosmos.packages.${system}.osmosis}/bin/osmosisd "$@"
           '';
@@ -14,7 +16,8 @@
 
         osmosisd-gen = pkgs.writeShellApplication {
           name = "osmosisd-gen";
-          runtimeInputs = [ osmosisd pkgs.jq pkgs.yq pkgs.dasel ];
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ osmosisd pkgs.jq ];
           text = ''
             HOME=${devnet-root-directory}
             export HOME
@@ -137,7 +140,8 @@
 
         osmosisd-init = pkgs.writeShellApplication {
           name = "osmosisd-init";
-          runtimeInputs = [ osmosisd pkgs.jq pkgs.yq pkgs.dasel ];
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
             HOME=${devnet-root-directory}
             export HOME
