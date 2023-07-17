@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![feature(error_in_core)]
 
 extern crate alloc;
 
@@ -16,6 +17,7 @@ pub mod proto;
 pub mod ibc;
 pub mod cosmos;
 mod prelude;
+pub mod location;
 
 pub use crate::{
 	asset::*, bridge::*, instruction::*, network::*, packet::*, program::*, protocol::*,

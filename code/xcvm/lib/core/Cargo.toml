@@ -31,6 +31,13 @@ bech32-no_std = { workspace = true, default-features = false, features = ["stric
 
 sha2 = { workspace = true, default-features = false }
 
+ibc-rs-scale = { workspace = true, default-features = false, features = [
+  "serde",
+] }
+
+xcm = { workspace = true, default-features = false, features = ["std"]}
+
+thiserror = { workspace = true }
 
 [build-dependencies]
 prost-build = { workspace = true}

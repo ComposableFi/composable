@@ -19041,6 +19041,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "fixed",
+ "ibc 0.36.0",
  "num",
  "parity-scale-codec",
  "prost",
@@ -19051,6 +19052,8 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.7",
+ "thiserror-core",
+ "xcm",
 ]
 
 [[package]]

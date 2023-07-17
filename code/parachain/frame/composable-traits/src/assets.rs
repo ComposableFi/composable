@@ -69,6 +69,7 @@ pub struct CreateResponse {
 	pub denom: String,
 }
 
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema, QueryResponses))]
