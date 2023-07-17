@@ -17,7 +17,7 @@
           dasel
           git
           git-lfs
-          grpcurl          
+          grpcurl
           nix-tree
           nixfmt
           nodejs
