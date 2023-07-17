@@ -1,5 +1,6 @@
 { self, ... }: {
-  perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, ... }:
+  perSystem =
+    { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools, ... }:
     let
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
@@ -9,6 +10,7 @@
       packages = rec {
         picasso-centauri-ibc-init = pkgs.writeShellApplication {
           name = "picasso-centauri-ibc-init";
+          runtimeInputs = devnetTools.withBaseContainerTools;
           text = ''
             mkdir --parents "/tmp/composable-devnet/picasso-centauri-ibc"
             HOME="/tmp/composable-devnet/picasso-centauri-ibc"
@@ -27,6 +29,7 @@
 
         composable-picasso-ibc-init = pkgs.writeShellApplication {
           name = "composable-picasso-ibc-init";
+          runtimeInputs = devnetTools.withBaseContainerTools;
           text = ''
             sleep 32
             mkdir --parents "/tmp/composable-devnet/composable-picasso-ibc"
@@ -43,6 +46,7 @@
 
         picasso-centauri-ibc-channels-init = pkgs.writeShellApplication {
           name = "picasso-centauri-ibc-channels-init";
+          runtimeInputs = devnetTools.withBaseContainerTools;
           text = ''
             HOME="/tmp/composable-devnet/picasso-centauri-ibc"
             export HOME       
@@ -53,6 +57,7 @@
         };
         picasso-centauri-ibc-relay = pkgs.writeShellApplication {
           name = "picasso-centauri-ibc-relay";
+          runtimeInputs = devnetTools.withBaseContainerTools;
           text = ''
             HOME="/tmp/composable-devnet/picasso-centauri-ibc"
             export HOME
@@ -64,6 +69,7 @@
 
         picasso-centauri-ibc-connection-init = pkgs.writeShellApplication {
           name = "picasso-centauri-ibc-connection-init";
+          runtimeInputs = devnetTools.withBaseContainerTools;
           text = ''
             HOME="/tmp/composable-devnet/picasso-centauri-ibc"
             export HOME                

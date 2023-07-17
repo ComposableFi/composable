@@ -1,11 +1,13 @@
 { self, ... }: {
-  perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, ... }:
+  perSystem =
+    { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools, ... }:
     let
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
     in {
       packages = rec {
         default = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-fresh-background";
           text = ''
             rm --force --recursive /tmp/composable-devnet             
@@ -15,6 +17,7 @@
         };
 
         devnet-xc-clean = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-clean";
           text = ''
             rm --force --recursive /tmp/composable-devnet             
@@ -23,6 +26,7 @@
         };
 
         devnet-xc-fresh = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-fresh";
           text = ''
             rm --force --recursive /tmp/composable-devnet             
