@@ -8,9 +8,12 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::system::CosmwasmCodeId;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
-use cw_xc_common::shared::{DefaultXCVMProgram, Salt};
 use std::{collections::HashMap, hash::Hash};
-use xc_core::{Asset, AssetId, AssetSymbol, Funds, Network, NetworkId};
+use xc_core::{
+	gateway::{Asset, RegisterAssetMsg},
+	shared::{DefaultXCVMProgram, Salt},
+	AssetId, Funds, Network, NetworkId,
+};
 
 pub const XCVM_INTERPRETER_CODE: CosmwasmCodeId = 0;
 pub const XCVM_GATEWAY_CODE: CosmwasmCodeId = 1;
@@ -124,9 +127,11 @@ impl InMemoryIbcNetworkChannel {
 			},
 			tx_admin.info.clone(),
 			gas,
-			cw_xc_common::gateway::ExecuteMsg::IbcSetNetworkChannel {
-				network_id: vm_counterparty.network_id,
-				channel_id: channel_id.clone(),
+			xc_core::gateway::ExecuteMsg::IbcSetNetworkChannel {
+				from: vm.network_id,
+				to: vm_counterparty.network_id,
+				channel_id: todo!("restore"),
+				gateway: None,
 			},
 		)?;
 		TestApi::execute(
@@ -140,9 +145,11 @@ impl InMemoryIbcNetworkChannel {
 			},
 			tx_admin_counterparty.info.clone(),
 			gas,
-			cw_xc_common::gateway::ExecuteMsg::IbcSetNetworkChannel {
-				network_id: vm.network_id,
-				channel_id: channel_id.clone(),
+			xc_core::gateway::ExecuteMsg::IbcSetNetworkChannel {
+				from: vm_counterparty.network_id,
+				to: vm.network_id,
+				channel_id: todo!("restore"),
+				gateway: None,
 			},
 		)?;
 		Ok(Self { channel_id: channel_id.into(), handshake })
@@ -225,10 +232,11 @@ impl TestVM<()> {
 				tx.transaction,
 				tx.info.clone(),
 				tx.gas,
-				cw_xc_common::gateway::InstantiateMsg {
+				xc_core::gateway::InstantiateMsg {
 					interpreter_code_id: XCVM_INTERPRETER_CODE,
 					network_id: self.network_id,
 					admin: tx.info.sender.into_string(),
+					ibc_ics_20_sender: todo!("restore"),
 				},
 			)?;
 		Ok((
@@ -243,11 +251,12 @@ impl TestVM<()> {
 }
 
 impl<T> TestVM<XCVMState<T>> {
-	pub fn deploy_asset<A: Asset + AssetSymbol>(
+	pub fn deploy_asset(
 		&mut self,
 		tx: BlockchainTransaction,
 		initial_balances: impl IntoIterator<Item = Cw20Coin>,
 		mint: Option<MinterResponse>,
+		asset_id: AssetId,
 	) -> Result<(Account, XCVMRegisterAssetEvents), TestError> {
 		let (asset_address, (asset_data, asset_events)) = TestApi::instantiate(
 			&mut self.vm_state,
@@ -258,9 +267,9 @@ impl<T> TestVM<XCVMState<T>> {
 			tx.info.clone(),
 			tx.gas,
 			cw20_base::msg::InstantiateMsg {
-				name: A::SYMBOL.into(),
-				symbol: A::SYMBOL.into(),
-				decimals: A::DECIMALS,
+				name: "do not care".into(),
+				symbol: "DNC".into(),
+				decimals: 7,
 				initial_balances: initial_balances.into_iter().collect(),
 				mint,
 				marketing: None,
@@ -275,14 +284,18 @@ impl<T> TestVM<XCVMState<T>> {
 			},
 			tx.info,
 			tx.gas,
-			cw_xc_common::gateway::ExecuteMsg::RegisterAsset {
-				asset_id: A::ID.into(),
-				reference: cw_xc_common::gateway::AssetReference::Virtual {
-					cw20_address: asset_address.clone().into(),
+			xc_core::gateway::ExecuteMsg::RegisterAsset(RegisterAssetMsg {
+				id: asset_id,
+				asset: Asset {
+					network_id: todo!("restore"),
+					local: xc_core::gateway::AssetReference::Virtual {
+						cw20_address: asset_address.clone().into(),
+					},
+					bridged: None,
 				},
-			},
+			}),
 		)?;
-		self.xcvm_state.insert_asset::<A>(asset_address.clone());
+		self.xcvm_state.insert_asset(asset_id, asset_address.clone());
 		Ok((
 			asset_address,
 			XCVMRegisterAssetEvents { asset_data, asset_events, gateway_data, gateway_events },
@@ -330,7 +343,7 @@ impl<T> TestVM<XCVMState<T>> {
 		program: impl Into<DefaultXCVMProgram>,
 		assets: impl IntoIterator<Item = (AssetId, u128)>,
 	) -> Result<(Option<Binary>, Vec<Event>), TestError> {
-		let execute_program = cw_xc_common::gateway::ExecuteProgramMsg {
+		let execute_program = xc_core::gateway::ExecuteProgramMsg {
 			salt: salt.into(),
 			program: program.into(),
 			assets: Funds::from(assets.into_iter().collect::<Vec<_>>()),
@@ -344,17 +357,18 @@ impl<T> TestVM<XCVMState<T>> {
 			},
 			tx.info,
 			tx.gas,
-			cw_xc_common::gateway::ExecuteMsg::ExecuteProgram { execute_program },
+			xc_core::gateway::ExecuteMsg::ExecuteProgram { execute_program },
 		)?;
 		Ok((data, events))
 	}
 
-	pub fn balance_of<A: Asset>(
+	pub fn balance_of(
 		&mut self,
+		asset_id: AssetId,
 		tx: BlockchainTransaction,
 		account: impl Into<String>,
 	) -> Result<cw20::BalanceResponse, TestError> {
-		match self.xcvm_state.assets.get(&A::ID) {
+		match self.xcvm_state.assets.get(&asset_id) {
 			Some(asset_address) => TestQueryApi::query(
 				&mut self.vm_state,
 				Env {
@@ -369,11 +383,12 @@ impl<T> TestVM<XCVMState<T>> {
 		}
 	}
 
-	pub fn token_info<A: Asset>(
+	pub fn token_info(
 		&mut self,
+		asset_id: AssetId,
 		tx: BlockchainTransaction,
 	) -> Result<cw20::TokenInfoResponse, TestError> {
-		match self.xcvm_state.assets.get(&A::ID) {
+		match self.xcvm_state.assets.get(&asset_id) {
 			Some(asset_address) => TestQueryApi::query(
 				&mut self.vm_state,
 				Env {
@@ -400,8 +415,8 @@ impl<T> XCVMState<T> {
 		Self { gateway, assets: Default::default(), custom: Default::default() }
 	}
 
-	pub fn insert_asset<A: Asset>(&mut self, address: Account) {
-		self.assets.insert(A::ID, address);
+	pub fn insert_asset(&mut self, asset_id: AssetId, address: Account) {
+		self.assets.insert(asset_id, address);
 	}
 }
 

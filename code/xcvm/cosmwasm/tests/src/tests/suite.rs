@@ -9,16 +9,13 @@ use cosmwasm_std::{
 use cosmwasm_vm::system::CUSTOM_CONTRACT_EVENT_PREFIX;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
 
-use cw_xc_common::{
-	gateway::EVENT_PREFIX as XCVM_GATEWAY_EVENT_PREFIX,
-	shared::{DefaultXCVMProgram, Salt},
-};
 use cw_xc_interpreter::contract::XCVM_INTERPRETER_EVENT_PREFIX;
 use proptest::{prelude::any, prop_assume, prop_compose, proptest};
 use std::assert_matches::assert_matches;
 use xc_core::{
-	Asset, AssetId, AssetSymbol, Balance, Destination, Funds, Juno, Network, Picasso,
-	ProgramBuilder, ETH, PICA, USDC, USDT,
+	gateway::{Asset, EVENT_PREFIX as XCVM_GATEWAY_EVENT_PREFIX},
+	shared::{DefaultXCVMProgram, Salt},
+	AssetId, Balance, Centauri, Destination, Funds, Network, Picasso, ProgramBuilder,
 };
 
 #[macro_export]
@@ -120,20 +117,22 @@ impl<T, S> CrossChainScenario<T, S> {
 }
 
 impl<T, S> CrossChainScenario<T, S> {
-	fn deploy_asset<A: Asset + AssetSymbol>(
+	fn deploy_asset(
 		&mut self,
 		initial_balances: impl IntoIterator<Item = Cw20Coin>,
+		asset_id: AssetId,
 	) {
 		let tx = self.mk_tx(self.admin.clone());
-		xcvm_deploy_asset::<A, T>(&mut self.vm, tx, initial_balances)
+		xcvm_deploy_asset::<T>(&mut self.vm, tx, initial_balances, asset_id)
 	}
 
-	fn deploy_asset_counterparty<A: Asset + AssetSymbol>(
+	fn deploy_asset_counterparty(
 		&mut self,
 		initial_balances: impl IntoIterator<Item = Cw20Coin>,
+		asset_id: AssetId,
 	) {
 		let tx = self.mk_tx_counterparty(self.admin_counterparty.clone());
-		xcvm_deploy_asset::<A, T>(&mut self.vm_counterparty, tx, initial_balances)
+		xcvm_deploy_asset::<T>(&mut self.vm_counterparty, tx, initial_balances, asset_id)
 	}
 }
 
@@ -170,7 +169,7 @@ impl<T> CrossChainScenario<T, Disconnected> {
 		relayer: Account,
 		relayer_counterparty: Account,
 	) -> Result<CrossChainScenario<T, Connected>, TestError> {
-		const VERSION: &str = cw_xc_common::gateway::IBC_VERSION;
+		const VERSION: &str = xc_core::gateway::IBC_VERSION;
 		let tx_relayer = self.mk_tx(relayer);
 		let tx_relayer_counterparty = self.mk_tx_counterparty(relayer_counterparty);
 		let tx_admin = self.mk_tx(self.admin.clone());
@@ -374,14 +373,14 @@ fn create_ready_xcvm_network<M: Network, N: Network, T>(
 		admin,
 		admin_counterparty,
 	);
-	network.deploy_asset::<PICA>(pica_balances);
-	network.deploy_asset::<ETH>(eth_balances);
-	network.deploy_asset::<USDT>(usdt_balances);
-	network.deploy_asset::<USDC>(usdc_balances);
-	network.deploy_asset_counterparty::<PICA>(pica_balances_counterparty);
-	network.deploy_asset_counterparty::<ETH>(eth_balances_counterparty);
-	network.deploy_asset_counterparty::<USDT>(usdt_balances_counterparty);
-	network.deploy_asset_counterparty::<USDC>(usdc_balances_counterparty);
+	network.deploy_asset(pica_balances, 1.into());
+	network.deploy_asset(eth_balances, 2.into());
+	network.deploy_asset(usdt_balances, 3.into());
+	network.deploy_asset(usdc_balances, 4.into());
+	network.deploy_asset_counterparty(pica_balances_counterparty, 5.into());
+	network.deploy_asset_counterparty(eth_balances_counterparty, 6.into());
+	network.deploy_asset_counterparty(usdt_balances_counterparty, 7.into());
+	network.deploy_asset_counterparty(usdc_balances_counterparty, 8.into());
 	let network =
 		network.connect(channel_id, connection_id, ordering, relayer, relayer_counterparty)?;
 	Ok(network)
@@ -432,18 +431,20 @@ fn assert_event<'a>(
 	);
 }
 
-fn xcvm_deploy_asset<A: Asset + AssetSymbol, T>(
+fn xcvm_deploy_asset<T>(
 	vm: &mut TestVM<XCVMState<T>>,
 	tx: BlockchainTransaction,
 	initial_balances: impl IntoIterator<Item = Cw20Coin>,
+	asset_id: AssetId,
 ) {
-	let symbol = A::SYMBOL;
+	let symbol = "DNC";
 	let gateway = vm.xcvm_state.gateway.clone();
 	let (asset_address, events) = vm
-		.deploy_asset::<A>(
+		.deploy_asset(
 			tx,
 			initial_balances,
 			Some(MinterResponse { minter: gateway.into(), cap: None }),
+			asset_id,
 		)
 		.expect(&format!("Must be able to instantiate and register {symbol} asset"));
 	assert_eq!(events.gateway_data, None);
@@ -457,7 +458,7 @@ fn xcvm_deploy_asset<A: Asset + AssetSymbol, T>(
 		events.gateway_events.iter(),
 		XCVM_GATEWAY_EVENT_PREFIX,
 		"asset_id",
-		&A::ID.0 .0.to_string(),
+		&asset_id.0 .0.to_string(),
 	);
 	xcvm_assert_prefixed_event(
 		events.gateway_events.iter(),
@@ -495,7 +496,8 @@ mod base {
 		);
 	}
 
-	fn deploy_and_register_assets<A: Asset + AssetSymbol>(
+	fn deploy_and_register_assets(
+		asset_id: AssetId,
 		admin: Account,
 		arbitrary_sender: Account,
 	) -> Result<(Account, XCVMRegisterAssetEvents), TestError> {
@@ -503,16 +505,17 @@ mod base {
 		let tx_arbitrary = mk_tx(arbitrary_sender);
 		let (mut vm, _) = create_base_xcvm_vm::<Picasso, ()>(tx.clone());
 		let gateway = vm.xcvm_state.gateway.clone();
-		vm.deploy_asset::<A>(
+		vm.deploy_asset(
 			tx_arbitrary,
 			[],
 			Some(MinterResponse { minter: gateway.into(), cap: None }),
+			asset_id,
 		)
 	}
 
 	fn arbitrary_user_cannot_register_asset(admin: Account, arbitrary_sender: Account) {
 		assert_eq!(
-			deploy_and_register_assets::<PICA>(admin, arbitrary_sender),
+			deploy_and_register_assets(1u128.into(), admin, arbitrary_sender),
 			Err(TestError::Vm(VmError::VMError(WasmiVMError::SystemError(
 				SystemError::ContractExecutionFailure(
 					"Caller is not authorised to take this action.".into()
@@ -522,7 +525,7 @@ mod base {
 	}
 
 	fn admin_can_register_asset(admin: Account) {
-		assert_ok!(deploy_and_register_assets::<PICA>(admin.clone(), admin.clone()));
+		assert_ok!(deploy_and_register_assets(1u128.into(), admin.clone(), admin.clone()));
 	}
 
 	proptest! {
@@ -545,6 +548,8 @@ mod base {
 }
 
 mod single_chain {
+	use xc_core::Centauri;
+
 	use super::*;
 
 	fn simple_singlechain_xcvm_transfer(
@@ -564,9 +569,9 @@ mod single_chain {
 		let block_counterparty = BlockInfo {
 			height: 12_000_000,
 			time: Timestamp::from_seconds(1_000_000),
-			chain_id: "JUNO-MEMNET".into(),
+			chain_id: "Centauri-MEMNET".into(),
 		};
-		let mut network = create_ready_xcvm_network::<Picasso, Juno, ()>(
+		let mut network = create_ready_xcvm_network::<Picasso, Centauri, ()>(
 			block,
 			block_counterparty,
 			admin,
@@ -586,7 +591,7 @@ mod single_chain {
 			IbcOrder::Unordered,
 		)
 		.expect("Must be able to create an XCVM network.");
-		let assets_to_transfer = [(PICA::ID, transfer_amount)];
+		let assets_to_transfer = [(1u128.into(), transfer_amount)];
 		let program = ProgramBuilder::<Picasso, CanonicalAddr, Funds<Balance>>::new([])
 			.transfer(Destination::Account(to_canonical(bob.clone())), assets_to_transfer)
 			.build();
@@ -635,11 +640,11 @@ mod single_chain {
 			"execution.success",
 		);
 		assert_eq!(
-			network.vm.balance_of::<PICA>(mk_tx(alice.clone()), alice.clone()),
+			network.vm.balance_of(1u128.into(), mk_tx(alice.clone()), alice.clone()),
 			Ok(cw20::BalanceResponse { balance: 0_u128.into() })
 		);
 		assert_eq!(
-			network.vm.balance_of::<PICA>(mk_tx(bob.clone()), bob.clone()),
+			network.vm.balance_of(1u128.into(), mk_tx(bob.clone()), bob.clone()),
 			Ok(cw20::BalanceResponse { balance: transfer_amount.into() })
 		);
 	}
@@ -682,9 +687,9 @@ mod cross_chain {
 		let block_counterparty = BlockInfo {
 			height: 12_000_000,
 			time: Timestamp::from_seconds(1_000_000),
-			chain_id: "JUNO-MEMNET".into(),
+			chain_id: "Centauri-MEMNET".into(),
 		};
-		let mut network = create_ready_xcvm_network::<Picasso, Juno, ()>(
+		let mut network = create_ready_xcvm_network::<Picasso, Centauri, ()>(
 			block,
 			block_counterparty,
 			admin,
@@ -704,10 +709,10 @@ mod cross_chain {
 			IbcOrder::Unordered,
 		)
 		.expect("Must be able to create an XCVM network.");
-		let assets_to_transfer = [(PICA::ID, transfer_amount)];
+		let assets_to_transfer = [(1u128.into(), transfer_amount)];
 		let program = ProgramBuilder::<Picasso, CanonicalAddr, Funds<Balance>>::new([])
-			.spawn::<Juno, (), _, _>([], [], assets_to_transfer, |juno_program| {
-				Ok(juno_program
+			.spawn::<Centauri, (), _, _>([], [], assets_to_transfer, |Centauri_program| {
+				Ok(Centauri_program
 					.transfer(Destination::Account(to_canonical(bob.clone())), assets_to_transfer))
 			})
 			.expect("Must be able to build an XCVM program.")
@@ -726,34 +731,38 @@ mod cross_chain {
 
 		// Source chain, both alice and bob have 0 tokens.
 		assert_eq!(
-			network.vm.balance_of::<PICA>(network.mk_tx(alice.clone()), alice.clone()),
+			network.vm.balance_of(1u128.into(), network.mk_tx(alice.clone()), alice.clone()),
 			Ok(cw20::BalanceResponse { balance: 0u128.into() })
 		);
 		assert_eq!(
-			network.vm.balance_of::<PICA>(network.mk_tx(bob.clone()), bob.clone()),
+			network.vm.balance_of(1u128.into(), network.mk_tx(bob.clone()), bob.clone()),
 			Ok(cw20::BalanceResponse { balance: 0u128.into() })
 		);
 
 		// Destination, alice has 0 tokens and bob has the transferred amount.
 		assert_eq!(
-			network
-				.vm_counterparty
-				.balance_of::<PICA>(network.mk_tx_counterparty(alice.clone()), alice.clone()),
+			network.vm_counterparty.balance_of(
+				1u128.into(),
+				network.mk_tx_counterparty(alice.clone()),
+				alice.clone()
+			),
 			Ok(cw20::BalanceResponse { balance: 0u128.into() })
 		);
 		assert_eq!(
-			network
-				.vm_counterparty
-				.balance_of::<PICA>(network.mk_tx_counterparty(bob.clone()), bob.clone()),
+			network.vm_counterparty.balance_of(
+				1u128.into(),
+				network.mk_tx_counterparty(bob.clone()),
+				bob.clone()
+			),
 			Ok(cw20::BalanceResponse { balance: transfer_amount.into() })
 		);
 
 		// The supply moved from the source chain to the destination chain.
-		assert_matches!(network.vm.token_info::<PICA>(network.mk_tx(alice.clone())), Ok(cw20::TokenInfoResponse {
+		assert_matches!(network.vm.token_info(1u128.into(), network.mk_tx(alice.clone())), Ok(cw20::TokenInfoResponse {
       total_supply,
       ..
     }) if total_supply == Uint128::zero());
-		assert_matches!(network.vm_counterparty.token_info::<PICA>(network.mk_tx_counterparty(alice.clone())), Ok(cw20::TokenInfoResponse {
+		assert_matches!(network.vm_counterparty.token_info(1u128.into(), network.mk_tx_counterparty(alice.clone())), Ok(cw20::TokenInfoResponse {
       total_supply,
       ..
     }) if total_supply == Uint128::from(transfer_amount));

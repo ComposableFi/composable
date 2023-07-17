@@ -1,6 +1,24 @@
 syntax = "proto3";
 
-package interpreter;
+package xc;
+
+message PacketAsset {
+  AssetId assetId = 1;
+  Uint128 amount = 2;
+}
+
+message Packet {
+  Account interpreter = 1;
+  UserOrigin user_origin = 2;
+  Salt salt = 3;
+  Program program = 4;
+  repeated PacketAsset assets = 5;
+}
+
+message UserOrigin {
+  Network network = 1;
+  Account account = 2;
+}
 
 message Uint128 {
   uint64 highBits = 1;
@@ -23,6 +41,7 @@ message Instruction {
     Call call = 3;
   }
 }
+
 
 message Ratio {
   Uint128 nominator = 1;
@@ -51,18 +70,7 @@ message Account {
 }
 
 message AssetId {
-  oneof type {
-    GlobalId globalId = 1;
-    LocalId localId = 2;
-  }
-}
-
-message GlobalId {
-  Uint128 globalId = 1;
-}
-
-message LocalId {
-  bytes localId = 1;
+  Uint128 assetId = 1;
 }
 
 message Asset {
@@ -98,7 +106,7 @@ message BindingValue {
     Relayer relayer = 2;
     Result result = 3;
     AssetAmount assetAmount = 4;
-    GlobalId globalId = 5;
+    AssetId assetId = 5;
     IpRegister ipRegister = 6;
   }
 }
@@ -125,7 +133,7 @@ message Salt {
 }
 
 message Network {
-  Uint128 networkId = 1;
+  uint32 networkId = 1;
 }
 
 message Spawn {

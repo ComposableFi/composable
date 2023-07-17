@@ -49,13 +49,13 @@ impl TryFrom<&[u8]> for XCVMAck {
 pub struct Packet<Program> {
 	/// The interpreter that was the origin of this packet.
 	#[serde(with = "hex")]
-	#[schemars(with = "String")]
+	#[cfg_attr(feature = "std", schemars(with = "String"))]
 	pub interpreter: Vec<u8>,
 	/// The user that originated the first XCVM call.
 	pub user_origin: UserOrigin,
 	/// The salt associated with the program.
 	#[serde(with = "hex")]
-	#[schemars(with = "String")]
+	#[cfg_attr(feature = "std", schemars(with = "String"))]
 	pub salt: Vec<u8>,
 	/// The protobuf encoded program.
 	pub program: Program,

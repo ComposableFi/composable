@@ -1,24 +1,21 @@
+use crate::prelude::*;
+
 use crate::{NetworkId, UserOrigin};
 
-use cosmwasm_std::Addr;
-use parity_scale_codec::{Decode, Encode};
-use scale_info::TypeInfo;
-use serde::{Deserialize, Serialize};
-
-/// Protocol used to bridge call/funds.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(
-	Clone, PartialEq, Eq, PartialOrd, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
-)]
-pub enum BridgeProtocol {
-	IBC,
+pub enum IbcIcs20Sender {
+	SubstratePrecompile(Addr),
+	OsmosisModule,
+	CosmWasmStd,
 }
 
 /// The Origin that executed the XCVM operation.
+/// Origin was verified to satisfy security semantics for execution.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(Clone, PartialEq, Eq, PartialOrd, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum CallOrigin {
-	Remote { protocol: BridgeProtocol, relayer: Addr, user_origin: UserOrigin },
+	Remote { relayer: Addr, user_origin: UserOrigin },
 	Local { user: Addr },
 }
 

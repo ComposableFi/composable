@@ -1,5 +1,9 @@
 # XCVM Interpreter
 
+Receives user funds.
+
+Instantiated as many instances of the XCVM interpreter contract. On some chains, we can use probabilistically generated sub_accounts, but for most, we instantiate a contract instance.
+
 ## Events
 
 Note that these events will be yield from the router in production.
@@ -88,9 +92,3 @@ RUSTFLAGS='-C link-arg=-s' cargo b --package=xcvm-interpreter --target=wasm32-un
 
 * `-C link-arg=-s` is used for stripping the binary which reduces the binary size drastically.
 * `--profile="cosmwasm-contracts"` must be used for cosmwasm contracts.
-
-## Test
-
-```sh
-cargo test --package="xcvm-interpreter"
-```

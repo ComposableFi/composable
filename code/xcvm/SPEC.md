@@ -273,7 +273,7 @@ If the caller wants to swap funds from the interpreter account and receive the f
 
 On the executing instance, `BindingValue::Self` will be interpolated at byte index 13  of the payload before being executed, the final payload then becomes `swap(10,(1,2), BindingValue::Self)`, where `BindingValue::Self` is the canonical address of the interpreter on the destination side.
 
-Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of AssetId conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting decimal points depending on the chain using the `Balance` type.
+Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of `AssetId` conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting `Ratio` to absolute `Balance` type.
 
 Indices in bindings must to be **sorted** in an ascending order and **unique**.
 
@@ -294,6 +294,8 @@ Sends a `Program` to another chain to be executed asynchronously. It is only gua
 Where the **salt** is used by the Router while instantiating the interpreter (see section 2.5.2.).
 
 `OriginNonce` is unique number generated once per program execution on originating consensus. Allows unique identify program invocation from origin to all child spawns. Combined with `Network` and `Program` can be considered `cross chain transaction identifier`.
+
+In case of escrow(reserver) transfer, `AssetId` in `Assets` are converted from as on sender to as on receiver network. 
 
 ### 2.2.3.1. IBC
 
@@ -349,7 +351,7 @@ Queries register values of an `XCVM` instance across chains. It sets the current
 
 ## 2.3. Balances
 
-Amounts of assets can be specified using the `Balance` type. This allows foreign programs to specify sending a part of the total amount of funds using `Ratio`, or express the amounts in the canonical unit of the asset: `Unit`,  or if the caller is aware of the number of decimals of the assets on the destination side: `Absolute`.
+Amounts of assets can be specified using the `Balance` type. This allows foreign programs to specify sending a part of the total amount of funds using `Ratio`, or express the amounts in the canonical unit of the asset: `Unit`,  or if the caller knows amount of the assets on the destination side: `Absolute`.
 
 ## 2.4. Abstract Virtual Machine
 
@@ -548,7 +550,7 @@ Assets can be identified using a global asset identifier.
 <AssetId> ::= u128
 ```
 
-Each chain contains a registry contract, which maps assets to their local representations, such as erc20 addresses. The `Transfer` instruction uses this registry to look up the correct identifiers. Interpreter instances can be reconfigured by the owner to use alternative registries.
+Each chain contains data which maps assets to their local representations, such as erc20 addresses. The `Transfer` instruction uses this registry to look up the correct identifiers. Interpreter instances can be reconfigured by the owner to use alternative registries.
 
 Propagating updates across registries is handled by the `XCVM` too. We will go more in-depth on how we bootstrap this system in a later specification.
 
