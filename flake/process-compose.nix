@@ -25,7 +25,7 @@
           '';
         };
 
-        devnet-xc-fresh = pkgs.writeShelglApplication {
+        devnet-xc-fresh = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-fresh";
           text = ''
