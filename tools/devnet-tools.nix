@@ -14,10 +14,13 @@
       ];
       withBaseContainerTools = with pkgs; [
         bash
-        coreutils
-        procps
-        findutils
         cacert
+        coreutils
+        dasel
+        findutils
+        git
+        git-lfs
+        procps
       ];
       withDevNetContainerTools = with pkgs;
         [ bottom gawk gnugrep less nettools nix ] ++ withBaseContainerTools
