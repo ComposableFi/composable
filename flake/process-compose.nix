@@ -4,6 +4,7 @@
     let
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
+      relay = "on_failure"; # `no` not to restart 
     in
     {
       packages = rec {
@@ -120,7 +121,7 @@
                 };
                 log_location =
                   "/tmp/composable-devnet/osmosis-centauri-hermes-relay.log";
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
 
               picasso-centauri-ibc-init = {
@@ -165,7 +166,7 @@
                   "picasso-centauri-ibc-channels-init".condition =
                     "process_completed_successfully";
                 };
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
 
               composable-picasso-ibc-init = {
@@ -221,7 +222,7 @@
                   "composable-picasso-ibc-channels-init".condition =
                     "process_completed_successfully";
                 };
-                #availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
             };
           };
