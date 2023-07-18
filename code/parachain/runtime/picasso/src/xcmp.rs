@@ -163,7 +163,7 @@ impl<AccountId: From<[u8; 32]> + Into<[u8; 32]> + Clone>
 	fn reverse(who: AccountId) -> Result<MultiLocation, AccountId> {
 		Err(who)
 	}
-}	
+}
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can

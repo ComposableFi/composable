@@ -445,8 +445,8 @@ parameter_types! {
 }
 
 pub struct MultihopXcmIbcPalletId;
-impl Get<u8> for MultihopXcmIbcPalletId{
-	fn get() -> u8{
+impl Get<u8> for MultihopXcmIbcPalletId {
+	fn get() -> u8 {
 		<PalletMultihopXcmIbc as PalletInfoAccess>::index().try_into().unwrap()
 	}
 }
