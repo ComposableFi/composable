@@ -213,7 +213,7 @@
                 };
                 availability = { restart = "on_failure"; };
               };
-              packages.composable-picasso-ibc-relay = {
+              composable-picasso-ibc-relay = {
                 command = self'.packages.composable-picasso-ibc-relay;
                 log_location =
                   "/tmp/composable-devnet/composable-picasso-ibc-relay.log";
