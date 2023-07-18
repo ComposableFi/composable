@@ -228,7 +228,7 @@
                   "composable-picasso-ibc-channels-init".condition =
                     "process_completed_successfully";
                 };
-                availability = { restart = "on_failure"; };
+                #availability = { restart = "on_failure"; };
               };
             };
           };
