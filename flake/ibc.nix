@@ -6,8 +6,7 @@
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
       RUST_LOG =
         "hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug";
-    in
-    {
+    in {
       packages = rec {
         picasso-centauri-ibc-init = pkgs.writeShellApplication {
           name = "picasso-centauri-ibc-init";

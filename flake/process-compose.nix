@@ -4,9 +4,8 @@
     let
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
-      relay = "on_failure"; # `no` not to restart 
-    in
-    {
+      relay = "on_failure"; # `no` not to restart
+    in {
       packages = rec {
         default = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools;
