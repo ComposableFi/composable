@@ -12,7 +12,7 @@
           text = ''
             rm --force --recursive /tmp/composable-devnet             
             mkdir --parents /tmp/composable-devnet
-            nix run .#devnet-xc-background --accept-flake-config --extra-experimental-features nix-command --extra-experimental-features flakes --option sandbox relaxed
+            ${pkgs.lib.meta.getExe self'.packages.devnet-xc-background}
           '';
         };
 
@@ -31,7 +31,7 @@
           text = ''
             rm --force --recursive /tmp/composable-devnet             
             mkdir --parents /tmp/composable-devnet
-            nix run .#devnet-xc --accept-flake-config --extra-experimental-features nix-command --extra-experimental-features flakes --option sandbox relaxed
+            ${pkgs.lib.meta.getExe self'.packages.devnet-xc}
           '';
         };
       };
