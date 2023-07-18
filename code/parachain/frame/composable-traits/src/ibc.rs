@@ -1,6 +1,7 @@
 use crate::{cosmwasm::CosmwasmSubstrateError, prelude::*};
 use cosmwasm_std::IbcTimeout;
 use serde_json::Value;
+use std::fs::rename;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
@@ -123,10 +124,63 @@ impl Forward {
 	}
 }
 
+// impl From<pallet_ibc::ics20::MemoData> for MemoData {
+// 	fn from(value: pallet_ibc::ics20::MemoData) -> Self {
+// 		MemoData::Forward(value)
+// 	}
+// }
+//
+// impl From<pallet_ibc::ics20::Forward> for Forward {
+// 	fn from(value: pallet_ibc::ics20::Forward) -> Self {
+// 		Forward {
+// 			receiver: value.receiver,
+// 			port,
+// 			channel: None,
+// 			timeout: None,
+// 			retries: None,
+// 			para_id: None,
+// 			substrate: None,
+// 			next: value.next.map(Into::into),
+// 		}
+// 	}
+// }
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
 pub enum MemoData {
 	Forward(Forward),
 	Wasm(Wasm),
+}
+
+trait Memo {
+	fn receiver(&self) -> &str;
+}
+
+#[test]
+fn tst() {
+	let data = MemoData::Forward(Forward {
+		receiver: "".to_string(),
+		port: None,
+		channel: None,
+		timeout: None,
+		retries: None,
+		para_id: None,
+		substrate: None,
+		next: Some(Box::new(MemoData::Forward(Forward {
+			receiver: "".to_string(),
+			port: None,
+			channel: None,
+			timeout: None,
+			retries: None,
+			para_id: None,
+			substrate: None,
+			next: None,
+		}))),
+	});
+	println!("{}", serde_json::to_string(&data).unwrap());
+	let s = serde_json::to_string(&data).unwrap();
+	let data2: MemoData = serde_json::from_str(&s).unwrap();
+	assert_eq!(data, data2);
 }
 
 /// see https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-hooks

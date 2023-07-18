@@ -76,6 +76,7 @@ parameter_types! {
 	pub const IbcPalletId: PalletId = PalletId(*b"cntr_ibc");
 }
 
+use composable_traits::ibc::MemoData;
 use pallet_ibc::ics20::{IbcModule, Ics20RateLimiter, SubstrateMultihopXcmHandlerNone};
 
 pub struct ConstantAny;
@@ -180,7 +181,7 @@ impl pallet_ibc::Config for Runtime {
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
 	type HandleMemo = IbcModule<Runtime>;
-	type MemoMessage = MemoMessage;
+	type MemoMessage = MemoData;
 	type SubstrateMultihopXcmHandler = pallet_multihop_xcm_ibc::Pallet<Runtime>;
 	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;

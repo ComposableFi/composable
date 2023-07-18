@@ -26,7 +26,7 @@
 	unused_allocation,
 	unused_comparisons,
 	unused_extern_crates,
-	unused_imports,
+	// unused_imports,
 	unused_parens,
 	while_true
 )]
