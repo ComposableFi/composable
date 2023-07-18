@@ -96,7 +96,9 @@ session-benchmarking = { package = "cumulus-pallet-session-benchmarking", git = 
 aura = { package = "pallet-aura", git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 
 sha2 = { version = "0.10.7", default-features = false }
-bech32-no_std = { version = "0.7.3", default-features = false, features = ["strict"] }
+bech32-no_std = { version = "0.7.3", default-features = false, features = [
+  "strict",
+] }
 polkadot-parachain = { git = "https://github.com/paritytech/polkadot", rev = "c22e1c4173bf6966f5d1980f4299f7abe836f0c1", default-features = false }
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", rev = "c22e1c4173bf6966f5d1980f4299f7abe836f0c1" }
 
@@ -106,12 +108,12 @@ orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-modu
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "a0751540591c88ccc2d4029464de887933727183", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "a0751540591c88ccc2d4029464de887933727183", default-features = false }
 
-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "ba6f6136d6da9a392f046b859c5ed3f5f630b167", default-features = false }
-ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev = "ba6f6136d6da9a392f046b859c5ed3f5f630b167", default-features = false }
-ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "ba6f6136d6da9a392f046b859c5ed3f5f630b167", default-features = false }
-ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev = "ba6f6136d6da9a392f046b859c5ed3f5f630b167", default-features = false }
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "ba6f6136d6da9a392f046b859c5ed3f5f630b167", default-features = false }
-pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "ba6f6136d6da9a392f046b859c5ed3f5f630b167", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/centauri", rev = "cbd722ba2a647289e8badd8f1d5ca78e5b97c723", default-features = false }
+ibc-rpc = { git = "https://github.com/ComposableFi/centauri", rev = "cbd722ba2a647289e8badd8f1d5ca78e5b97c723", default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/centauri", rev = "cbd722ba2a647289e8badd8f1d5ca78e5b97c723", default-features = false }
+ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", rev = "cbd722ba2a647289e8badd8f1d5ca78e5b97c723", default-features = false }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", rev = "cbd722ba2a647289e8badd8f1d5ca78e5b97c723", default-features = false }
+pallet-ibc-ping = { git = "https://github.com/ComposableFi/centauri", rev = "cbd722ba2a647289e8badd8f1d5ca78e5b97c723", default-features = false }
 
 xcm-builder = { git = "https://github.com/paritytech/polkadot", rev = "c22e1c4173bf6966f5d1980f4299f7abe836f0c1", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", rev = "c22e1c4173bf6966f5d1980f4299f7abe836f0c1", default-features = false }
@@ -326,8 +328,10 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 
 schemars = { version = "0.8.12", default-feautes = false }
 
-prost = {version = "0.11.0", default-features = false, features = ["prost-derive"]}
-prost-types = {version = "0.11.1", default-features = false}
+prost = { version = "0.11.0", default-features = false, features = [
+  "prost-derive",
+] }
+prost-types = { version = "0.11.1", default-features = false }
 
 
 # Only needed until the configs get merged into xcm-builder: https://github.com/paritytech/polkadot/pull/7165
@@ -346,7 +350,7 @@ cosmwasm-std = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev =
   "cosmwasm_1_2",
 ] }
 
-serde = { version = '1.0.136', default-features= false, features = ["derive"] }
+serde = { version = '1.0.136', default-features = false, features = ["derive"] }
 
 serde_json = { version = "1.0.82", default-features = false, features = [
   "alloc",

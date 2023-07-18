@@ -99,7 +99,14 @@ pub fn genesis_config(
 		treasury: Default::default(),
 		technical_committee: Default::default(),
 		technical_committee_membership: picasso_runtime::TechnicalCommitteeMembershipConfig {
-			members: vec![root.clone()].try_into().expect("const"),
+			members: accounts
+				.iter()
+				.take(2)
+				.cloned()
+				.map(Into::into)
+				.collect::<Vec<_>>()
+				.try_into()
+				.expect("const"),
 			phantom: Default::default(),
 		},
 		polkadot_xcm: Default::default(),

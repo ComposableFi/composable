@@ -142,6 +142,7 @@ parameter_types! {
 		.build_or_panic();
 
 	pub const SS58Prefix: u8 = 50;
+	pub const ComposableNetworkId: u32 = 1;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -208,6 +209,7 @@ impl assets_registry::Config for Runtime {
 	type ParachainOrGovernanceOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 	type Convert = sp_runtime::traits::ConvertInto;
+	type NetworkId = ComposableNetworkId;
 }
 
 parameter_types! {
@@ -438,14 +440,20 @@ parameter_types! {
 	pub const SessionLength: BlockNumber = 6 * HOURS;
 	pub const MaxInvulnerables: u32 = 100;
 	pub const MinCandidates: u32 = 5;
-	pub const PalletXcmIbcInstanceId: u8 = 192; // PalletXcmIbc: pallet_xcm_ibc = 192,
 	pub const MaxMultihopCount: u32 = 10;
 	pub const ChainNameVecLimit: u32 = 30;
 }
 
+pub struct MultihopXcmIbcPalletId;
+impl Get<u8> for MultihopXcmIbcPalletId {
+	fn get() -> u8 {
+		<PalletMultihopXcmIbc as PalletInfoAccess>::index().try_into().unwrap()
+	}
+}
+
 impl pallet_multihop_xcm_ibc::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type PalletInstanceId = PalletXcmIbcInstanceId;
+	type PalletInstanceId = MultihopXcmIbcPalletId;
 	type MaxMultihopCount = MaxMultihopCount;
 	type ChainNameVecLimit = ChainNameVecLimit;
 }
@@ -605,7 +613,7 @@ impl crowdloan_rewards::Config for Runtime {
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub NativeAssetId: CurrencyId = CurrencyId::LAYR;
+	pub NativeAssetId: CurrencyId = CurrencyId::COMPOSABLE_LAYR;
 	pub CreationDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
 	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::unit::<Balance>();
 	pub RentPerBlock: Balance = CurrencyId::milli::<Balance>();
@@ -749,9 +757,6 @@ impl_runtime_apis! {
 		}
 
 		fn list_assets() -> Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>> {
-			// Hardcoded assets
-			use common::fees::ForeignToNativePriceConverter;
-
 			// Assets from the assets-registry pallet
 			let all_assets =  assets_registry::Pallet::<Runtime>::get_all_assets();
 

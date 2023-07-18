@@ -458,7 +458,7 @@ pub mod pallet {
 		type Balance = T::Balance;
 
 		fn create_local_asset(
-			protocol_id: [u8; 8],
+			protocol_id: [u8; 4],
 			nonce: u64,
 			asset_info: AssetInfo<T::Balance>,
 		) -> Result<Self::LocalAssetId, DispatchError> {
@@ -470,7 +470,7 @@ pub mod pallet {
 		}
 
 		fn create_foreign_asset(
-			protocol_id: [u8; 8],
+			protocol_id: [u8; 4],
 			nonce: u64,
 			asset_info: AssetInfo<T::Balance>,
 			foreign_asset_id: Self::ForeignAssetId,

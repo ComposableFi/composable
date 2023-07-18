@@ -224,6 +224,7 @@ parameter_types! {
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
 	pub AssetIdUSDT: CurrencyId = CurrencyId::USDT;
 	pub FlatFeeUSDTAmount: Balance = 10_000_000; //10 USDT
+	pub const PicassoNetworkId: u32 = 0;
 }
 
 impl assets_registry::Config for Runtime {
@@ -235,6 +236,7 @@ impl assets_registry::Config for Runtime {
 	type ParachainOrGovernanceOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 	type Convert = ConvertInto;
+	type NetworkId = PicassoNetworkId;
 }
 
 parameter_types! {
@@ -752,14 +754,20 @@ parameter_types! {
 	  pub Stake: Balance = 10 * CurrencyId::unit::<Balance>();
 }
 parameter_types! {
-		pub const PalletXcmIbcInstanceId: u8 = 192; // PalletXcmIbc: pallet_xcm_ibc = 192,
 		pub const MaxMultihopCount: u32 = 10;
 		pub const ChainNameVecLimit: u32 = 30;
 }
 
+pub struct MultihopXcmIbcPalletId;
+impl Get<u8> for MultihopXcmIbcPalletId {
+	fn get() -> u8 {
+		<PalletMultihopXcmIbc as PalletInfoAccess>::index().try_into().unwrap()
+	}
+}
+
 impl pallet_multihop_xcm_ibc::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type PalletInstanceId = PalletXcmIbcInstanceId;
+	type PalletInstanceId = MultihopXcmIbcPalletId;
 	type MaxMultihopCount = MaxMultihopCount;
 	type ChainNameVecLimit = ChainNameVecLimit;
 }

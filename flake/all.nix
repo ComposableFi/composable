@@ -35,11 +35,8 @@
 
       all-misc = pkgs.linkFarmFromDrvs "all-misc" (with self'.packages; [
         cargo-fmt-check
-        hadolint-check
         nixfmt-check
         deadnix-check
-        prettier-check
-        spell-check
         taplo-check
         cargo-deny-check
       ]);
@@ -70,28 +67,25 @@
 
       all-run-packages = pkgs.linkFarmFromDrvs "all-run-packages"
         (with self'.packages; [
+          ccw
           cmc-api
           cmc-api-image
           composable-node
           composable-testfast-node
           composable-testfast-runtime
-          devnet-initialize-script-picasso-persistent
           devnet-integration-tests
           devnet-picasso
-          devnet-picasso-complete
           devnet-picasso-image
-          devnet-xc-run-fresh
+          devnet-xc-image
+          devnet-xc-fresh
           hyperspace-composable-rococo-picasso-rococo
           hyperspace-composable-rococo-picasso-rococo-image
           picasso-testfast-runtime
-          ccw
+          zombienet-picasso-complete
         ]);
 
       all-ci-packages = pkgs.linkFarmFromDrvs "all-ci-packages"
         (with self'.packages; [ all-run-packages ]);
-
-      all-frontend = pkgs.linkFarmFromDrvs "all-frontend"
-        (with self'.packages; [ frontend-static ]);
 
       docker-images-to-push = pkgs.linkFarmFromDrvs "docker-images-to-push"
         (with self'.packages; [
@@ -100,6 +94,7 @@
           hyperspace-composable-polkadot-picasso-kusama-image
           devnet-picasso-image
           devnet-image
+          devnet-xc-image
         ]);
     };
   };

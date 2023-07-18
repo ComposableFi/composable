@@ -6,7 +6,9 @@
         let binaryName = "${builtins.replaceStrings [ "-" ] [ "_" ] name}.wasm";
         in crane.nightly.buildPackage (systemCommonRust.common-attrs // {
           src = ./.;
+          version = "0.1";
           pnameSuffix = "-${name}";
+          pname = name;
           cargoBuildCommand =
             "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts -p ${name}";
           RUSTFLAGS = "-C link-arg=-s";
@@ -17,12 +19,6 @@
         });
     in {
       packages = rec {
-        cw20_base = pkgs.fetchurl {
-          url =
-            "https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm";
-          hash = "sha256-nClak9UDPLdALVnN7e9yVKafnKUO7RAYDFO7sxwAXpI=";
-        };
-
         xcvm-contract-interpreter = mkXcvmContract "cw-xc-interpreter";
         xcvm-contract-gateway = mkXcvmContract "cw-xc-gateway";
         xcvm-contract-pingpong = mkXcvmContract "cw-xc-pingpong";
@@ -59,7 +55,7 @@
             buildPhase = ''
               NIX_CARGO_OUT_DIR="$TEMP/out/"
               mkdir --parents "$NIX_CARGO_OUT_DIR"
-              cp ${cw20_base} "$NIX_CARGO_OUT_DIR"/cw20_base.wasm
+              cp ${self'.packages.cw20_base} "$NIX_CARGO_OUT_DIR"/cw20_base.wasm
               export NIX_CARGO_OUT_DIR
               cargo test --release --package xc-tests
             '';

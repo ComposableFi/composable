@@ -10,14 +10,13 @@ use common::{
 use composable_traits::assets::InspectRegistryMetadata;
 use frame_system::EnsureSigned;
 use pallet_ibc::{
-	ics20::{IbcModule, SubstrateMultihopXcmHandlerNone, MODULE_ID_STR, PORT_ID_STR},
+	ics20::{IbcModule, MODULE_ID_STR, PORT_ID_STR},
 	light_client_common::RelayChain,
 	routing::ModuleRouter,
 	DenomToAssetId, IbcAssetIds, IbcAssets,
 };
 use sp_core::ConstU64;
 use sp_runtime::{AccountId32, DispatchError, Either};
-use system::EnsureSignedBy;
 
 use hex_literal::hex;
 use pallet_ibc::ics20_fee::NonFlatFeeConverter;
@@ -214,8 +213,11 @@ impl pallet_ibc::Config for Runtime {
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
-	type TransferOrigin = EnsureSigned<Self::AccountId>;
-	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
+	type TransferOrigin = system::EnsureSigned<Self::IbcAccountId>;
+	#[cfg(feature = "testnet")]
+	type RelayerOrigin = system::EnsureSigned<Self::IbcAccountId>;
+	#[cfg(not(feature = "testnet"))]
+	type RelayerOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 	type HandleMemo = IbcModule<Runtime>;
 	type MemoMessage = alloc::string::String;
 	type Ics20RateLimiter = ConstantAny;
