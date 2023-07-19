@@ -1,6 +1,7 @@
 use crate::{cosmwasm::CosmwasmSubstrateError, prelude::*};
 use cosmwasm_std::IbcTimeout;
 use serde_json::Value;
+use sp_std::boxed::Box;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
@@ -86,7 +87,7 @@ pub struct Forward {
 	pub substrate: Option<bool>,
 	///
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub next: Option<sp_std::boxed::Box<MemoData>>,
+	pub next: Option<Box<MemoData>>,
 }
 
 impl Forward {
@@ -109,15 +110,15 @@ impl Forward {
 		}
 	}
 
-	pub fn new_xcm_memo(receiver: String, para_id: u32, substrate: bool) -> Self {
+	pub fn new_xcm_memo(receiver: String, para_id: Option<u32>) -> Self {
 		Self {
 			receiver,
 			port: None,
 			channel: None,
 			timeout: None,
 			retries: None,
-			para_id: Some(para_id),
-			substrate: Some(substrate),
+			para_id,
+			substrate: Some(true),
 			next: None,
 		}
 	}
