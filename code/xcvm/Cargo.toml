@@ -18,7 +18,6 @@ panic = "abort"
 rpath = false
 
 [workspace.dependencies]
-
 cosmwasm-schema = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6", default-features = false }
 serde-json-wasm = { git = "https://github.com/dzmitry-lahoda-forks/serde-json-wasm", rev = "8a7e522c0e4de36a6dfb535766f26a9941017d81", default-features = false }
 cosmwasm-std = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6", default-features = false, features = [
@@ -36,6 +35,7 @@ cosmwasm-orchestrate = { git = "https://github.com/ComposableFi/cosmwasm-vm", re
 
 
 fixed = { version = "1.15", default-features = false }
+hex = { version = "0.4.3" }
 parity-scale-codec = { version = "3.5.0", default-features = false }
 num = { version = "0.4", default-features = false }
 prost = { version = "0.11.9", default-features = false, features = [
@@ -64,10 +64,6 @@ cw2 = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus", rev = "458e2eb0
 thiserror = { version = "1.0.38", package = "thiserror-core", default-features = false }
 
 serde-cw-value = { version = "0.7.0", default-features = false }
-hex = { version = "0.4", default-features = false, features = [
-  "alloc",
-  "serde",
-] }
 
 
 [patch.crates-io]

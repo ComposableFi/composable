@@ -33,7 +33,6 @@ env_logger = { version = "0.10" }
 tokio = { version = "1.22", features = ["rt", "macros"] }
 cw20 = { workspace = true }
 cw20-base = { workspace = true, features = ["library"] }
-hex = { version = "0.4" }
 serde_json = { workspace = true }
 serde = { workspace = true }
 rand = { version = "0.8" }
