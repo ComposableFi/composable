@@ -29,7 +29,7 @@ provider "github" {
 
 terraform {
   backend "remote" {
-    hostname = "app.terraform.io"
+    hostname     = "app.terraform.io"
     organization = "ComposableFi"
 
     workspaces {
@@ -39,7 +39,7 @@ terraform {
 }
 
 resource "github_actions_secret" "RELEASE_GITHUB_TOKEN" {
-  repository       = "composable"
-  secret_name      = "RELEASE_GITHUB_TOKEN"
-  plaintext_value  = var.RELEASE_GITHUB_TOKEN
+  repository      = "composable"
+  secret_name     = "RELEASE_GITHUB_TOKEN"
+  plaintext_value = var.RELEASE_GITHUB_TOKEN
 }
