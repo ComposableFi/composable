@@ -123,7 +123,33 @@ impl Forward {
 	}
 }
 
+impl From<pallet_ibc::ics20::MemoData> for MemoData {
+	fn from(value: pallet_ibc::ics20::MemoData) -> Self {
+		MemoData::Forward(value.forward.into())
+	}
+}
+
+impl From<pallet_ibc::ics20::Forward> for Forward {
+	fn from(value: pallet_ibc::ics20::Forward) -> Self {
+		let next = match value.next {
+			Some(e) => Some(sp_std::boxed::Box::new(MemoData::from(*e))),
+			None => None,
+		};
+		Forward {
+			receiver: value.receiver,
+			port: value.port,
+			channel: value.channel,
+			timeout: value.timeout,
+			retries: value.retries,
+			para_id: value.para_id,
+			substrate: value.substrate,
+			next,
+		}
+	}
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
 pub enum MemoData {
 	Forward(Forward),
 	Wasm(Wasm),

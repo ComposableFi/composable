@@ -2056,6 +2056,7 @@ dependencies = [
  "cosmwasm-std",
  "frame-support",
  "frame-system",
+ "pallet-ibc",
  "pallet-proxy",
  "parity-scale-codec",
  "plotters",
