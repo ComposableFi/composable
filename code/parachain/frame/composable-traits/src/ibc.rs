@@ -1,6 +1,7 @@
 use crate::{cosmwasm::CosmwasmSubstrateError, prelude::*};
 use cosmwasm_std::IbcTimeout;
 use serde_json::Value;
+use sp_std::boxed::Box;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
@@ -63,7 +64,17 @@ pub fn derive_intermediate_sender(
 	bech32_no_std::encode(bech32_prefix, sender)
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(
+	Serialize,
+	Deserialize,
+	Clone,
+	Debug,
+	PartialEq,
+	Eq,
+	codec::Encode,
+	codec::Decode,
+	scale_info::TypeInfo,
+)]
 pub struct Forward {
 	pub receiver: String,
 	#[serde(skip_serializing_if = "Option::is_none")]
@@ -86,7 +97,7 @@ pub struct Forward {
 	pub substrate: Option<bool>,
 	///
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub next: Option<sp_std::boxed::Box<MemoData>>,
+	pub next: Option<Box<MemoData>>,
 }
 
 impl Forward {
@@ -109,28 +120,75 @@ impl Forward {
 		}
 	}
 
-	pub fn new_xcm_memo(receiver: String, para_id: u32, substrate: bool) -> Self {
+	pub fn new_xcm_memo(receiver: String, para_id: Option<u32>) -> Self {
 		Self {
 			receiver,
 			port: None,
 			channel: None,
 			timeout: None,
 			retries: None,
-			para_id: Some(para_id),
-			substrate: Some(substrate),
+			para_id,
+			substrate: Some(true),
 			next: None,
 		}
 	}
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub enum MemoData {
+impl From<MemoData> for pallet_ibc::ics20::MemoData {
+	fn from(value: MemoData) -> Self {
+		pallet_ibc::ics20::MemoData { forward: value.forward.into() }
+	}
+}
+
+impl From<Forward> for pallet_ibc::ics20::Forward {
+	fn from(value: Forward) -> Self {
+		let next = match value.next {
+			Some(e) => Some(sp_std::boxed::Box::new(pallet_ibc::ics20::MemoData::from(*e))),
+			None => None,
+		};
+		pallet_ibc::ics20::Forward {
+			receiver: value.receiver,
+			port: value.port,
+			channel: value.channel,
+			timeout: value.timeout,
+			retries: value.retries,
+			para_id: value.para_id,
+			substrate: value.substrate,
+			next,
+		}
+	}
+}
+
+#[derive(
+	Serialize,
+	Deserialize,
+	Clone,
+	Debug,
+	PartialEq,
+	Eq,
+	codec::Encode,
+	codec::Decode,
+	scale_info::TypeInfo,
+)]
+pub struct MemoData {
+	forward: Forward,
+}
+
+impl MemoData {
+	pub fn new(forward: Forward) -> Self {
+		Self { forward }
+	}
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum MemoDataEnum {
 	Forward(Forward),
 	Wasm(Wasm),
 }
 
 /// see https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-hooks
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Wasm {
 	contract: String,
 	msg: Value,
@@ -138,7 +196,7 @@ pub struct Wasm {
 	ibc_callback: Option<String>,
 }
 
-impl MemoData {
+impl MemoDataEnum {
 	pub fn forward(forward: Forward) -> Self {
 		Self::Forward(forward)
 	}

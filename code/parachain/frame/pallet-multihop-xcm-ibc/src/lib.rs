@@ -35,8 +35,9 @@ pub mod pallet {
 	use frame_system::ensure_root;
 
 	use composable_traits::{
+		ibc::{Forward, MemoData},
 		prelude::ToString,
-		xcm::memo::{ChainInfo, Forward, MemoData},
+		xcm::memo::ChainInfo,
 	};
 	use sp_std::boxed::Box;
 
@@ -553,14 +554,10 @@ pub mod pallet {
 				});
 				return None;
 			};
-			match Some(memo_data) {
+			match memo_data {
 				Some(memo_data) => {
-					let memo_str = serde_json::to_string(&memo_data).unwrap();
-					<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopMemo {
-						reason: 10,
-						memo_none: memo_str.len() < 1,
-					});
-					let memo_result = <T as pallet_ibc::Config>::MemoMessage::from_str(&memo_str);
+					let memo_result =
+						<T as pallet_ibc::Config>::MemoMessage::try_from(memo_data.into());
 
 					let Ok(memo_result) = memo_result else{
 						<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
