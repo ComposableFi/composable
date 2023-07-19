@@ -178,7 +178,7 @@ impl pallet_ibc::Config for Runtime {
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
 	type HandleMemo = IbcModule<Runtime>;
-	type MemoMessage = composable_traits::ibc::MemoData;
+	type MemoMessage = alloc::string::String;
 	type SubstrateMultihopXcmHandler = pallet_multihop_xcm_ibc::Pallet<Runtime>;
 	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;

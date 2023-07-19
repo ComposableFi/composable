@@ -219,7 +219,7 @@ impl pallet_ibc::Config for Runtime {
 	#[cfg(not(feature = "testnet"))]
 	type RelayerOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 	type HandleMemo = IbcModule<Runtime>;
-	type MemoMessage = composable_traits::ibc::MemoData;
+	type MemoMessage = alloc::string::String;
 	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;

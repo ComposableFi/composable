@@ -134,19 +134,19 @@ impl Forward {
 	}
 }
 
-impl From<pallet_ibc::ics20::MemoData> for MemoData {
-	fn from(value: pallet_ibc::ics20::MemoData) -> Self {
-		MemoData::new(value.forward.into())
+impl From<MemoData> for pallet_ibc::ics20::MemoData {
+	fn from(value: MemoData) -> Self {
+		pallet_ibc::ics20::MemoData { forward: value.forward.into() }
 	}
 }
 
-impl From<pallet_ibc::ics20::Forward> for Forward {
-	fn from(value: pallet_ibc::ics20::Forward) -> Self {
+impl From<Forward> for pallet_ibc::ics20::Forward {
+	fn from(value: Forward) -> Self {
 		let next = match value.next {
-			Some(e) => Some(sp_std::boxed::Box::new(MemoData::from(*e))),
+			Some(e) => Some(sp_std::boxed::Box::new(pallet_ibc::ics20::MemoData::from(*e))),
 			None => None,
 		};
-		Forward {
+		pallet_ibc::ics20::Forward {
 			receiver: value.receiver,
 			port: value.port,
 			channel: value.channel,
@@ -177,23 +177,6 @@ pub struct MemoData {
 impl MemoData {
 	pub fn new(forward: Forward) -> Self {
 		Self { forward }
-	}
-}
-
-impl alloc::string::ToString for MemoData {
-	fn to_string(&self) -> String {
-		serde_json::to_string(&self.forward).unwrap_or_default()
-	}
-}
-
-impl core::str::FromStr for MemoData {
-	type Err = ();
-
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		match serde_json::from_str(s) {
-			Ok(e) => Ok(e),
-			Err(_) => Err(()),
-		}
 	}
 }
 
