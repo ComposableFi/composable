@@ -120,12 +120,7 @@ pub(crate) fn handle_execute_program_privilleged(
 				interpreter_origin: interpreter_origin.clone(),
 			})?,
 			funds: vec![],
-			label: format!(
-				"xcvm-interpreter-{}-{}-{}",
-				u32::from(interpreter_origin.user_origin.network_id),
-				hex::encode::<Vec<u8>>(interpreter_origin.user_origin.user_id.into()),
-				hex::encode(&interpreter_origin.salt)
-			),
+			label: format!("xcvm-interpreter-{interpreter_origin}"),
 		}
 		.into();
 
