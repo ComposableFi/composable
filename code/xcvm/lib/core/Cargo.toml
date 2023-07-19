@@ -6,49 +6,25 @@ name = "xc-core"
 version = "0.1.0"
 
 [dependencies]
-cosmwasm-std = { workspace = true, features = ["ibc3"], default-features = false }
-cw-storage-plus = { workspace = true, default-features = false, optional = true }
-
-#std num-traits serde
-
-fixed = { workspace = true, default-features = false }
-hex = { workspace = true, features = ["alloc"], default-features = false }
-parity-scale-codec = { workspace = true, default-features = false }
-num = { workspace = true, default-features = false }
-prost = { workspace = true, default-features = false, features = [
-  "prost-derive",
-] }
-scale-info = { workspace = true, default-features = false, features = [
-  "derive",
-] }
-schemars = { workspace = true, optional = true, default-features = false }
-serde = { workspace = true, default-features = false, features = [
-  "derive",
-  "alloc",
-] }
-serde_json = { workspace = true, default-features = false }
-
-prost-types = { workspace = true, default-features = false }
-
-bech32-no_std = { workspace = true, default-features = false, features = [
-  "strict",
-] }
-
-sha2 = { workspace = true, default-features = false }
-
-ibc-rs-scale = { workspace = true, default-features = false, features = [
-  "serde",
-  "parity-scale-codec",
-] }
-
+cosmwasm-std = { workspace = true, features = ["ibc3"] }
+cw-storage-plus = { workspace = true, optional = true }
+fixed = { workspace = true }
+hex = { workspace = true, features = ["alloc"] }
+parity-scale-codec = { workspace = true }
+num = { workspace = true }
+prost = { workspace = true, features = ["prost-derive"] }
+scale-info = { workspace = true, features = ["derive"] }
+schemars = { workspace = true, optional = true }
+serde = { workspace = true, features = ["alloc"] }
+serde_json = { workspace = true }
+bech32-no_std = { workspace = true, features = ["strict"] }
+sha2 = { workspace = true }
+ibc-rs-scale = { workspace = true, features = ["serde", "parity-scale-codec"] }
 thiserror = { workspace = true }
-
 cosmwasm-schema = { workspace = true, optional = true}
-
 
 [build-dependencies]
 prost-build = { workspace = true }
-
 
 [features]
 default = ["std"]

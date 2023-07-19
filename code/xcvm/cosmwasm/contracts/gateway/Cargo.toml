@@ -13,25 +13,17 @@ crate-type = ["cdylib", "rlib"]
 library = []
 
 [dependencies]
-cosmwasm-std = { workspace = true, features = ["ibc3", "cosmwasm_1_2", "stargate"], default-features = false }
-cw-storage-plus = { workspace = true, default-features = false }
-cw-utils = { workspace = true, default-features = false }
-cw-xc-interpreter = { path = "../interpreter", features = ["library"] }
-cw2 = { workspace = true, default-features = false }
-cw20 = { workspace = true, default-features = false }
-schemars = { workspace = true, default-features = false }
-serde = { workspace = true, default-features = false, features = ["derive"] }
-serde-json-wasm = { workspace = true, default-features = false }
-thiserror = { workspace = true, default-features = false }
-xc-core = { path = "../../../lib/core", features = ["cosmwasm"], default-features = false }
-bech32-no_std = { workspace = true, default-features = false, features = ["strict"] }
-ibc-rs-scale = { workspace = true, default-features = false, features = [
-  "parity-scale-codec",
-  "serde",
-] }
+bech32-no_std = { workspace = true, features = ["strict"] }
+cosmwasm-std = { workspace = true, features = ["ibc3", "stargate"] }
+cw-storage-plus = { workspace = true }
+cw-utils = { workspace = true }
+cw2 = { workspace = true }
+cw20 = { workspace = true }
+ibc-rs-scale = { workspace = true, features = ["parity-scale-codec", "serde"] }
+schemars = { workspace = true }
+serde = { workspace = true }
+serde-json-wasm = { workspace = true }
+thiserror = { workspace = true }
 
-[dev-dependencies]
-cosmwasm-schema = { workspace = true }
-prost = { workspace = true, default-features = false, features = [
-  "prost-derive",
-] }
+cw-xc-interpreter = { path = "../interpreter", features = ["library"] }
+xc-core = { path = "../../../lib/core", features = ["cosmwasm"], default-features = false }

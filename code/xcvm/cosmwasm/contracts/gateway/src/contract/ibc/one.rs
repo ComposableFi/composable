@@ -2,29 +2,24 @@
 //! name take from ics999 port name, just to say it same idea
 
 use crate::{
-	assets, auth,
+	auth,
 	contract::EXEC_PROGRAM_REPLY_ID,
-	error::{ContractError, ContractResult},
+	error::{ContractError, Result},
 	events::make_event,
 	msg, state,
 };
 
 use cosmwasm_std::{
-	ensure_eq, to_binary, wasm_execute, Binary, CosmosMsg, Deps, DepsMut, Env,
-	Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
-	IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg, IbcOrder, IbcPacketAckMsg,
-	IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock,
-	MessageInfo, Reply, Response, SubMsg, SubMsgResult,
+	ensure_eq, wasm_execute, Binary, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse,
+	IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg,
+	IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
+	IbcTimeout, IbcTimeoutBlock, MessageInfo, Response, SubMsg,
 };
-use cw2::set_contract_version;
-use cw20::Cw20ExecuteMsg;
-use cw_utils::ensure_from_older_version;
 use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 use xc_core::{
-	gateway::BridgeMsg,
 	proto::{decode_packet, Encodable},
 	shared::XcPacket,
-	CallOrigin, Displayed, Funds, XCVMAck,
+	CallOrigin, XCVMAck,
 };
 
 use super::make_ibc_failure_event;
@@ -34,7 +29,7 @@ pub fn ibc_channel_open(
 	_deps: DepsMut,
 	_env: Env,
 	msg: IbcChannelOpenMsg,
-) -> ContractResult<IbcChannelOpenResponse> {
+) -> Result<IbcChannelOpenResponse> {
 	let (channel, version) = match msg {
 		IbcChannelOpenMsg::OpenInit { channel } => (channel, None),
 		IbcChannelOpenMsg::OpenTry { channel, counterparty_version } =>
@@ -56,7 +51,7 @@ pub fn ibc_channel_connect(
 	deps: DepsMut,
 	_env: Env,
 	msg: IbcChannelConnectMsg,
-) -> ContractResult<IbcBasicResponse> {
+) -> Result<IbcBasicResponse> {
 	let channel = msg.channel();
 	state::IBC_CHANNEL_INFO.save(
 		deps.storage,
@@ -77,7 +72,7 @@ pub fn ibc_channel_close(
 	deps: DepsMut,
 	_env: Env,
 	msg: IbcChannelCloseMsg,
-) -> ContractResult<IbcBasicResponse> {
+) -> Result<IbcBasicResponse> {
 	let channel = msg.channel();
 	match state::IBC_CHANNEL_NETWORK.load(deps.storage, channel.endpoint.channel_id.clone()) {
 		Ok(channel_network) => {
@@ -98,9 +93,9 @@ pub fn ibc_packet_receive(
 	_deps: DepsMut,
 	env: Env,
 	msg: IbcPacketReceiveMsg,
-) -> ContractResult<IbcReceiveResponse> {
+) -> Result<IbcReceiveResponse> {
 	let response = IbcReceiveResponse::default().add_event(make_event("receive"));
-	let msg = (|| -> ContractResult<_> {
+	let msg = (|| -> Result<_> {
 		let packet: XcPacket = decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
 		let call_origin = CallOrigin::Remote { user_origin: packet.user_origin };
 		let execute_program = msg::ExecuteProgramMsg {
@@ -124,34 +119,27 @@ pub fn ibc_packet_receive(
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn ibc_packet_ack(
-	deps: DepsMut,
-	_env: Env,
-	msg: IbcPacketAckMsg,
-) -> ContractResult<IbcBasicResponse> {
+pub fn ibc_packet_ack(_deps: DepsMut, _env: Env, msg: IbcPacketAckMsg) -> Result<IbcBasicResponse> {
 	let ack = XCVMAck::try_from(msg.acknowledgement.data.as_slice())
 		.map_err(|_| ContractError::InvalidAck)?;
-	let packet: XcPacket =
-		decode_packet(&msg.original_packet.data).map_err(ContractError::Protobuf)?;
-	let messages = match ack {
-		XCVMAck::OK => {
-			// https://github.com/cosmos/ibc/pull/998
-			Ok(<_>::default())
-		},
-		XCVMAck::KO => Ok(<_>::default()),
-		_ => Err(ContractError::InvalidAck),
-	}?;
+	let _: XcPacket = decode_packet(&msg.original_packet.data).map_err(ContractError::Protobuf)?;
+	match ack {
+		// https://github.com/cosmos/ibc/pull/998
+		XCVMAck::OK => (),
+		XCVMAck::KO => (),
+		_ => return Err(ContractError::InvalidAck),
+	};
 	Ok(IbcBasicResponse::default()
 		.add_event(make_event("ack").add_attribute("ack", ack.value().to_string())))
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn ibc_packet_timeout(
-	deps: DepsMut,
+	_deps: DepsMut,
 	_env: Env,
 	msg: IbcPacketTimeoutMsg,
-) -> ContractResult<IbcBasicResponse> {
-	let packet: XcPacket = decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
+) -> Result<IbcBasicResponse> {
+	let _: XcPacket = decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
 	// https://github.com/cosmos/ibc/pull/998
 	Ok(IbcBasicResponse::default())
 }
@@ -162,8 +150,8 @@ pub(crate) fn handle_bridge_forward_no_assets(
 	_: auth::Interpreter,
 	deps: DepsMut,
 	info: MessageInfo,
-	msg: BridgeMsg,
-) -> ContractResult<Response> {
+	msg: msg::BridgeMsg,
+) -> Result<Response> {
 	ensure_eq!(msg.msg.assets.0.len(), 0, ContractError::AssetsNonTransferrable);
 	let channel_id = state::IBC_NETWORK_CHANNEL
 		.load(deps.storage, msg.network_id)
@@ -204,7 +192,7 @@ pub(crate) fn handle_ibc_set_network_channel(
 	deps: DepsMut,
 	network_id: xc_core::NetworkId,
 	channel_id: ChannelId,
-) -> ContractResult<Response> {
+) -> Result<Response> {
 	state::IBC_CHANNEL_INFO
 		.load(deps.storage, channel_id.to_string())
 		.map_err(|_| ContractError::UnknownChannel)?;

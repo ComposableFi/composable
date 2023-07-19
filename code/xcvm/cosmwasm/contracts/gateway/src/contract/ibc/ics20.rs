@@ -3,11 +3,9 @@
 //! each chain via contract storage, precompiles, host extensions.
 //! handles PFM and IBC wasm hooks
 use cosmwasm_std::{
-	ensure_eq, to_binary, wasm_execute, Addr, Binary, Coin, DepsMut, Env, MessageInfo, Response,
-	Storage, SubMsg,
+	ensure_eq, to_binary, wasm_execute, Binary, Coin, DepsMut, Env, MessageInfo, Response, Storage,
+	SubMsg,
 };
-use cw_xc_interpreter::msg;
-use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 use xc_core::{
 	gateway::{Asset, ExecuteMsg, ExecuteProgramMsg, GatewayId},
 	ibc::{to_cw_message, IbcRoute, Ics20MessageHook, WasmMemo},
@@ -19,7 +17,7 @@ use xc_core::{
 use crate::{
 	auth,
 	contract::EXEC_PROGRAM_REPLY_ID,
-	error::{ContractError, ContractResult},
+	error::{ContractError, Result},
 	events::make_event,
 	state,
 	state::{NetworkItem, OtherNetworkItem},
@@ -30,7 +28,7 @@ pub(crate) fn handle_bridge_forward(
 	deps: DepsMut,
 	info: MessageInfo,
 	msg: xc_core::gateway::BridgeMsg,
-) -> ContractResult<Response> {
+) -> Result {
 	let packet: xc_core::Packet<
 		xc_core::Program<
 			std::collections::VecDeque<
@@ -129,10 +127,10 @@ pub(crate) fn ics20_message_hook(
 	Ok(Response::new().add_submessage(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID)))
 }
 
-fn ensure_anonymous(program: &DefaultXCVMProgram) -> ContractResult<()> {
+fn ensure_anonymous(program: &DefaultXCVMProgram) -> Result<()> {
 	for ix in &program.instructions {
 		match ix {
-			xc_core::Instruction::Transfer { to, assets } => {},
+			xc_core::Instruction::Transfer { .. } => {},
 			xc_core::Instruction::Spawn { program, .. } => ensure_anonymous(&program)?,
 			_ => Err(ContractError::NotAuthorized)?,
 		}

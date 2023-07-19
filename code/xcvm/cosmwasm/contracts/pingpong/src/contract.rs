@@ -1,12 +1,8 @@
-extern crate alloc;
-
 use crate::{
-	error::ContractError,
+	error::{ContractError, Result},
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
 	state::{GATEWAY, NETWORK},
 };
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
 use cosmwasm_std::{
 	wasm_execute, Binary, CanonicalAddr, Deps, DepsMut, Env, MessageInfo, Reply, Response,
 	StdError, StdResult,
@@ -22,13 +18,8 @@ const CONTRACT_NAME: &str = "composable:xcvm-pingpong";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const XCVM_PINGPONG_EVENT_PREFIX: &str = "xcvm.pingpong";
 
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn instantiate(
-	deps: DepsMut,
-	_env: Env,
-	_info: MessageInfo,
-	msg: InstantiateMsg,
-) -> Result<Response, ContractError> {
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
+pub fn instantiate(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InstantiateMsg) -> Result {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 	let gateway_address = deps.api.addr_validate(&msg.gateway_address)?;
 	GATEWAY.save(deps.storage, &gateway_address)?;
@@ -61,13 +52,8 @@ fn make_program<T: Network<EncodedCall = Vec<u8>>, U: Network<EncodedCall = Vec<
 		.build())
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(
-	deps: DepsMut,
-	env: Env,
-	info: MessageInfo,
-	msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
+pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> Result {
 	let network = NETWORK.load(deps.storage)?;
 	let gateway = GATEWAY.load(deps.storage)?;
 	let make_program = |remote_address, msg| {
@@ -99,18 +85,18 @@ pub fn execute(
 	)?))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result {
 	let _ = ensure_from_older_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 	Ok(Response::default())
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
 	Err(StdError::generic_err("unimplemented"))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn reply(_deps: DepsMut, _env: Env, _msg: Reply) -> StdResult<Response> {
 	Ok(Response::default())
 }
