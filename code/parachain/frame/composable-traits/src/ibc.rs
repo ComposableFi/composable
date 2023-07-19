@@ -64,7 +64,17 @@ pub fn derive_intermediate_sender(
 	bech32_no_std::encode(bech32_prefix, sender)
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(
+	Serialize,
+	Deserialize,
+	Clone,
+	Debug,
+	PartialEq,
+	Eq,
+	codec::Encode,
+	codec::Decode,
+	scale_info::TypeInfo,
+)]
 pub struct Forward {
 	pub receiver: String,
 	#[serde(skip_serializing_if = "Option::is_none")]
@@ -126,7 +136,7 @@ impl Forward {
 
 impl From<pallet_ibc::ics20::MemoData> for MemoData {
 	fn from(value: pallet_ibc::ics20::MemoData) -> Self {
-		MemoData::Forward(value.forward.into())
+		MemoData::new(value.forward.into())
 	}
 }
 
@@ -149,15 +159,53 @@ impl From<pallet_ibc::ics20::Forward> for Forward {
 	}
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(
+	Serialize,
+	Deserialize,
+	Clone,
+	Debug,
+	PartialEq,
+	Eq,
+	codec::Encode,
+	codec::Decode,
+	scale_info::TypeInfo,
+)]
+pub struct MemoData {
+	forward: Forward,
+}
+
+impl MemoData {
+	pub fn new(forward: Forward) -> Self {
+		Self { forward }
+	}
+}
+
+impl alloc::string::ToString for MemoData {
+	fn to_string(&self) -> String {
+		serde_json::to_string(&self.forward).unwrap_or_default()
+	}
+}
+
+impl core::str::FromStr for MemoData {
+	type Err = ();
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		match serde_json::from_str(s) {
+			Ok(e) => Ok(e),
+			Err(_) => Err(()),
+		}
+	}
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum MemoData {
+pub enum MemoDataEnum {
 	Forward(Forward),
 	Wasm(Wasm),
 }
 
 /// see https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-hooks
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Wasm {
 	contract: String,
 	msg: Value,
@@ -165,7 +213,7 @@ pub struct Wasm {
 	ibc_callback: Option<String>,
 }
 
-impl MemoData {
+impl MemoDataEnum {
 	pub fn forward(forward: Forward) -> Self {
 		Self::Forward(forward)
 	}
