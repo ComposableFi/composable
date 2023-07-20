@@ -89,7 +89,7 @@
       centaurid-dev = pkgs.writeShellApplication {
         name = "centaurid-dev";
         runtimeInputs = devnetTools.withBaseContainerTools
-          ++ [ centaurid pkgs.jq pkgs.yq ];
+          ++ [ centaurid pkgs.jq ];
 
         text = ''
           #CENTAURI_DATA="${devnet-root-directory}/.centaurid"
@@ -103,7 +103,7 @@
       centaurid-gen = pkgs.writeShellApplication {
         name = "centaurid-gen";
         runtimeInputs = devnetTools.withBaseContainerTools
-          ++ [ centaurid pkgs.jq pkgs.yq ];
+          ++ [ centaurid pkgs.jq ];
         text = ''
           CENTAURI_DATA="${devnet-root-directory}/.centaurid"
           CHAIN_ID="centauri-dev"
@@ -138,11 +138,11 @@
           sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CENTAURI_DATA/config/client.toml"
           sed -i 's/output = "text"/output = "json"/' "$CENTAURI_DATA/config/client.toml"
           sed -i "s/cors_allowed_origins = \[\]/cors_allowed_origins = \[\"\*\"\]/" "$CENTAURI_DATA/config/config.toml"
-          sed -i   "s/swagger = false/swagger = true/" "$CENTAURI_DATA/config/app.toml"           
-          sed -i   "s/rpc-max-body-bytes = 1000000/rpc-max-body-bytes = 10000000/" "$CENTAURI_DATA/config/app.toml"
-          sed -i   "s/max_body_bytes = 1000000/max_body_bytes = 10000000/" "$CENTAURI_DATA/config/config.toml"
-          sed -i   "s/max_header_bytes = 1048576/max_header_bytes = 10485760/" "$CENTAURI_DATA/config/config.toml"
-          sed -i   "s/max_tx_bytes = 1048576/max_tx_bytes = 10485760/" "$CENTAURI_DATA/config/config.toml"
+          sed -i "s/swagger = false/swagger = true/" "$CENTAURI_DATA/config/app.toml"           
+          sed -i "s/rpc-max-body-bytes = 1000000/rpc-max-body-bytes = 10000000/" "$CENTAURI_DATA/config/app.toml"
+          sed -i "s/max_body_bytes = 1000000/max_body_bytes = 10000000/" "$CENTAURI_DATA/config/config.toml"
+          sed -i "s/max_header_bytes = 1048576/max_header_bytes = 10485760/" "$CENTAURI_DATA/config/config.toml"
+          sed -i "s/max_tx_bytes = 1048576/max_tx_bytes = 10485760/" "$CENTAURI_DATA/config/config.toml"
 
           echo "document prefer nurse marriage flavor cheese west when knee drink sorry minimum thunder tilt cherry behave cute stove elder couch badge gown coral expire" | centaurid keys add alice --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true    
           echo "bleak slush nose opinion document sample embark couple cabbage soccer cage slow father witness canyon ring distance hub denial topic great beyond actress problem" | centaurid keys add bob --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true

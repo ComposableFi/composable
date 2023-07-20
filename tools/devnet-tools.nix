@@ -20,6 +20,7 @@
         findutils
         git
         git-lfs
+        gnused
         procps
       ];
       withDevNetContainerTools = with pkgs;
