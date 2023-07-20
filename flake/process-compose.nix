@@ -48,11 +48,13 @@
                   port = 26657;
                 };
                 log_location = "/tmp/composable-devnet/centauri.log";
+                availability = { restart = "on_failure"; };
               };
               centauri-init = {
                 command = self'.packages.centaurid-init;
                 depends_on."centauri".condition = "process_healthy";
                 log_location = "/tmp/composable-devnet/centauri-init.log";
+                availability = { restart = "on_failure"; };
               };
 
               osmosis = {

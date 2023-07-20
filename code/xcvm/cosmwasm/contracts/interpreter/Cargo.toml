@@ -19,10 +19,6 @@ cw-utils = { workspace = true }
 cw-xc-common = { path = "../common" }
 cw2 = { workspace = true }
 cw20 = { workspace = true }
-hex = { workspace = true, default-features = false, features = [
-  "alloc",
-  "serde",
-] }
 num = { workspace = true }
 prost = { workspace = true, default-features = false, features = [
   "prost-derive",

@@ -10,6 +10,7 @@ cosmwasm-std = { workspace = true }
 cw-storage-plus = { workspace = true, optional = true }
 
 fixed = { workspace = true, default-features = false }
+hex = { workspace = true, features = ["serde"] }
 parity-scale-codec = { workspace = true, default-features = false }
 num = { workspace = true, default-features = false }
 prost = { workspace = true, default-features = false, features = [

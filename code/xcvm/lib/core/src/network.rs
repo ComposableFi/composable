@@ -13,7 +13,17 @@ use serde::{Deserialize, Serialize};
 )]
 pub struct InterpreterOrigin {
 	pub user_origin: UserOrigin,
+	#[serde(with = "hex")]
+	#[schemars(with = "String")]
 	pub salt: Vec<u8>,
+}
+
+impl Display for InterpreterOrigin {
+	#[inline]
+	fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		let salt = hex::encode(self.salt.as_slice());
+		core::write!(fmtr, "{}-{salt}", self.user_origin)
+	}
 }
 
 /// The origin of a user, which consist of the composite, origin network and origin network user id.
@@ -26,6 +36,13 @@ pub struct UserOrigin {
 	pub user_id: UserId,
 }
 
+impl Display for UserOrigin {
+	#[inline]
+	fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		core::write!(fmtr, "{}-{}", self.network_id, self.user_id)
+	}
+}
+
 /// Arbitrary `User` type that represent the identity of a user on a given network, usually a public
 /// key.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -33,7 +50,17 @@ pub struct UserOrigin {
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
 #[repr(transparent)]
-pub struct UserId(pub Vec<u8>);
+pub struct UserId(
+	#[serde(with = "hex")]
+	#[schemars(with = "String")]
+	pub Vec<u8>);
+
+impl Display for UserId {
+	#[inline]
+	fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		hex::encode(self.0.as_slice()).fmt(fmtr)
+	}
+}
 
 impl From<Vec<u8>> for UserId {
 	fn from(x: Vec<u8>) -> Self {
@@ -148,10 +175,28 @@ impl Network for Juno {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
 	#[test]
 	fn network_ids() {
 		assert_eq!(Picasso::ID, NetworkId(1));
 		assert_eq!(Juno::ID, NetworkId(2));
 		assert_eq!(Ethereum::ID, NetworkId(3));
+	}
+
+	#[test]
+	fn test_serialisation() {
+		#[track_caller]
+		fn check<T>(want: &str, value: T)
+		where
+			T: for<'a> Deserialize<'a> + Serialize + core::fmt::Debug + PartialEq,
+		{
+			let serialised = serde_json::to_string(&value).unwrap();
+			assert_eq!(want, serialised);
+			let deserialised = serde_json::from_str::<T>(&serialised).unwrap();
+			assert_eq!(value, deserialised);
+		}
+
+		check("42", NetworkId(42));
+		check("\"616c696365\"", UserId(b"alice".to_vec()));
 	}
 }
