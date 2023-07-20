@@ -89,7 +89,7 @@
       centaurid-dev = pkgs.writeShellApplication {
         name = "centaurid-dev";
         runtimeInputs = devnetTools.withBaseContainerTools
-          ++ [ centaurid pkgs.jq pkgs.yq ];
+          ++ [ centaurid pkgs.jq ];
 
         text = ''
           #CENTAURI_DATA="${devnet-root-directory}/.centaurid"
@@ -103,7 +103,7 @@
       centaurid-gen = pkgs.writeShellApplication {
         name = "centaurid-gen";
         runtimeInputs = devnetTools.withBaseContainerTools
-          ++ [ centaurid pkgs.jq pkgs.yq pkgs.gnused ];
+          ++ [ centaurid pkgs.jq ];
         text = ''
           CENTAURI_DATA="${devnet-root-directory}/.centaurid"
           CHAIN_ID="centauri-dev"
