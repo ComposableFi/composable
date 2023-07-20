@@ -172,7 +172,7 @@ pub struct CosmwasmVMShared {
 	/// A value > 0 mean that the storage is readonly.
 	pub storage_readonly_depth: u32,
 	/// VM depth, i.e. how many contracts has been loaded and are currently running.
-	pub depth: u32,
+	pub depth: u16,
 	/// Shared Gas metering.
 	pub gas: Gas,
 	/// Shared cache.

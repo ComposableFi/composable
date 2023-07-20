@@ -230,7 +230,7 @@ pub mod pallet {
 
 		/// Max number of frames a contract is able to push, a.k.a recursive calls.
 		#[pallet::constant]
-		type MaxFrames: Get<u32>;
+		type MaxFrames: Get<u16>;
 
 		/// Max accepted code size in bytes.
 		#[pallet::constant]

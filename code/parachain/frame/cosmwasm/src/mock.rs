@@ -238,7 +238,7 @@ parameter_types! {
 	pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
 	pub IbcRelayerAccount: AccountId = PalletId(*b"centauri").into_account_truncating();
 	pub const ChainId: &'static str = "composable-network-dali";
-	pub const MaxFrames: u32 = 64;
+	pub const MaxFrames: u16 = 64;
 	pub const MaxCodeSize: u32 = 512 * 1024;
 	pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
 	pub const MaxMessageSize: u32 = 256 * 1024;
