@@ -19,7 +19,7 @@ installimage -i images/Ubuntu-2204-jammy-amd64-base.tar.gz -G yes -a -n hetzner-
 ```bash
 adduser actions-runner --disabled-password && passwd --delete actions-runner
 sh <(curl -L https://nixos.org/nix/install) --daemon --yes && source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-cat >> /etc/nix/nix.conf << EOF
+cat > /etc/nix/nix.conf << EOF
     experimental-features = nix-command flakes
     sandbox = relaxed
     narinfo-cache-negative-ttl = 0      
@@ -34,7 +34,7 @@ cat >> /etc/nix/nix.conf << EOF
     http-connections = 32
     http2 = true
     min-free = 100000000000
-    max-free = -1
+    max-free = 1000000000000
     # keep-outputs = true
     # keep-derivations = true
 EOF
