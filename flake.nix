@@ -50,7 +50,7 @@
     };
     centauri-src.flake = false;
     centauri-src.url =
-      "github:ComposableFi/centauri/58f60b3a1745ed94f8f93a030add61c5030b7cca";
+      "github:ComposableFi/centauri/cbd01b1ec03ca46432ee44e15cf0658df2775f4a";
   };
 
   nixConfig = {
