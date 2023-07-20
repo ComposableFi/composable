@@ -81,17 +81,17 @@
     "centauri-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1689888371,
-        "narHash": "sha256-0lKfBCj+BOXNLxSnM1Sb+UCOmAN7x6d9EUCRBVlmHEY=",
+        "lastModified": 1689855711,
+        "narHash": "sha256-ARRAkFvK0VYS4xXYOsgAaB7ZL6kMHEJjs1tohaQl828=",
         "owner": "ComposableFi",
         "repo": "centauri",
-        "rev": "97de4e1883cc371cec154e4f352c56d934488160",
+        "rev": "cbd01b1ec03ca46432ee44e15cf0658df2775f4a",
         "type": "github"
       },
       "original": {
         "owner": "ComposableFi",
         "repo": "centauri",
-        "rev": "97de4e1883cc371cec154e4f352c56d934488160",
+        "rev": "cbd01b1ec03ca46432ee44e15cf0658df2775f4a",
         "type": "github"
       }
     },
@@ -948,11 +948,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1689875525,
-        "narHash": "sha256-fgUrFH3bMZ6R7qgBTfuTRGlkZXIkdyjndl6ZbExbjE8=",
+        "lastModified": 1689802112,
+        "narHash": "sha256-Se7oHV/L0dHTQ4xp8MvYafaVdkSzF04Hx5NeloUYHtM=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "1443abd2696ec6bd6fb9701e6c26b277a27b4a3e",
+        "rev": "0cb3ac57fca6b52c42e4c0f560185540ae1dfb6c",
         "type": "github"
       },
       "original": {
@@ -1791,11 +1791,11 @@
     },
     "process-compose-flake": {
       "locked": {
-        "lastModified": 1689870193,
-        "narHash": "sha256-qZgtMtMoPKtH1u/9BiWB8B+pVYLcuZwBdnKB7bRZExQ=",
+        "lastModified": 1689713813,
+        "narHash": "sha256-5xWoY8guwR9zDJPxFrKTCS2zwJZKdKH4zsioMvDr99E=",
         "owner": "Platonic-Systems",
         "repo": "process-compose-flake",
-        "rev": "0e2aab0ba17c098838813979251a4363b26b0875",
+        "rev": "12cf28de0ebe8c152ade041c4b3b8671438e21a0",
         "type": "github"
       },
       "original": {
