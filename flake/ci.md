@@ -27,11 +27,16 @@ cat >> /etc/nix/nix.conf << EOF
     trusted-users = root actions-runner
     max-jobs = 1
     cores = 64
+    auto-optimise-store = true
     # max-substitution-jobs = 32
     allow-import-from-derivation = true
     gc-reserved-space = 18388608
     http-connections = 32
-    http2 = true      
+    http2 = true
+    min-free = 100000000000
+    max-free = -1
+    # keep-outputs = true
+    # keep-derivations = true
 EOF
 service nix-daemon restart
 apt-get update && apt-get install apt-transport-https qemu-system-x86 ca-certificates curl gnupg software-properties-common --yes
