@@ -293,7 +293,6 @@ const sidebars = {
                         'nix/running-checks',
                         'nix/reading-logs',
                         'nix/defining-your-own-packages',
-                        'nix/composing-services-with-arion',
                         'nix/editing-docs',
                         'nix/troubleshooting',
                     ],
