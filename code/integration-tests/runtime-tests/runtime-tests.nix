@@ -13,7 +13,7 @@
         text = ''
           # shellcheck disable=SC2069
           ( ${
-            pkgs.lib.meta.getExe self'.packages.default
+            pkgs.lib.meta.getExe self'.packages.devnet-xc-fresh
           } 2>&1 & ) | tee devnet-xc.log &
 
           process-compose-stop() {
