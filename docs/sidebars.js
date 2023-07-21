@@ -299,14 +299,8 @@ const sidebars = {
                     ],
                 },
                 {
-                    type: 'category',
-                    label: 'Codespaces',
-                    link: {
-                        type: 'doc',
-                        id: 'codespaces',
-                    },
-                    collapsible: true,
-                    collapsed: true,
+                    type: 'doc',
+                    id: 'codespaces',
                 },
                 {
                     type: 'category',
