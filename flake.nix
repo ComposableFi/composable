@@ -43,14 +43,15 @@
       url = "github:lnl7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    cosmos = {
+    cosmos 
+    = {
       url =
         "github:dzmitry-lahoda-forks/cosmos.nix/16f6aaf252d36505ab3333f9e82389b5f6c78a39";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     centauri-src.flake = false;
     centauri-src.url =
-      "github:ComposableFi/centauri/8fec4171993009cf0618005847512da64452b51d";
+      "github:ComposableFi/centauri/fd0a4911d86a531513547bbcc1f98df0a276fa79";
   };
 
   nixConfig = {
