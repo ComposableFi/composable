@@ -13,34 +13,33 @@ jobs:
     steps:
       - name: pull-request-stats
         uses: flowwer-dev/pull-request-stats@master
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: pull-request-stats-run
+        uses: thollander/actions-comment-pull-request@v2        
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      # - name: pull-request-run
-      #   uses: "./.github/templates/comment"
-      #   with:
-      #     message: |                        
-      #       #### Show all possible apps, shells and packages:
-      #       ```
-      #       nix flake show "github:${{ github.event.pull_request.repository}}/${{ github.event.pull_request.head.sha }}" --allow-import-from-derivation
-      #       ```
-      #       #### Run the Composable node alone:
-      #       ```bash
-      #       nix run "github:${{ github.event.pull_request.repository}}/${{ github.event.pull_request.head.sha }}#composable-node" --print-build-logs
-      #       ```
-      #       #### Spin up a local devnet:
-      #       ```bash
-      #       nix run "github:${{ github.event.pull_request.repository}}/${{ github.event.pull_request.head.sha }}" --print-build-logs --option sandbox relaxed --show-trace
-      #       ```
-      #       ### View the docs:
-      #       ```bash
-      #       nix run "${{ github.event.pull_request.repository}}/${{ github.event.pull_request.head.sha }}#docs-server"
-      #       ```
-      #       ### Run this without Nix in Docker.
-      #       ```bash
-      #       docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run github:${{ github.event.pull_request.repository}}/${{ github.event.pull_request.head.sha }}/${{ github.event.pull_request.head.sha }} --print-build-logs --extra-experimental-features nix-command --extra-experimental-features flakes"
-      #       ```
-      #       _For more info on how to use Nix, check out our [Nix docs](https://docs.composable.finance/nix.html)_
-      #     comment_tag: 'Nix commands for this PR'
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}          
+          reactions: "+1"
+          message: |
+            
+            ```shell
+            # run Composable node
+            nix flake show "github:${{ github.event.pull_request.repository}}/${{ github.ref }}" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command"
+            ````
+
+            ```shell
+            # run local Picasso DevNet (for CosmWasm development)
+            nix flake show "github:${{ github.event.pull_request.repository}}/${{ github.ref }}\#devnet-picasso" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command"
+            ```
+
+            ```shell
+            # CosmWasm on Substrate CLI tool
+            nix flake show "github:${{ github.event.pull_request.repository}}/${{ github.ref }}\#ccw" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command"
+            ```
+
+            ```shell
+            # run cross chain devnet with Dotsama and Cosmos nodes 
+            nix flake show "github:${{ github.event.pull_request.repository}}/${{ github.ref }}\#devnet-xc-fresh" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command"
+            ```
+            
+            [About nix](https://docs.composable.finance/nix.html)

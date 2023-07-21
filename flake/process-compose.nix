@@ -6,7 +6,7 @@
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
     in {
       packages = rec {
-        default = pkgs.writeShellApplication {
+        devnet-xc-fresh-background = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-fresh-background";
           text = ''
