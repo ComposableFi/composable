@@ -39,7 +39,7 @@ impl cosmwasm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
-	type MaxFrames = ConstU32<64>;
+	type MaxFrames = ConstU16<64>;
 	type MaxCodeSize = ConstU32<{ 512 * 1024 }>;
 	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
 

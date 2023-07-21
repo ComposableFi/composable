@@ -96,9 +96,8 @@ pub enum GasOutcome {
 }
 
 impl Gas {
-	pub fn new(max_frames: u32, initial_value: u64) -> Self {
-		let max_frames = usize::try_from(max_frames).unwrap();
-		let mut checkpoints = Vec::with_capacity(max_frames);
+	pub fn new(max_frames: u16, initial_value: u64) -> Self {
+		let mut checkpoints = Vec::with_capacity(max_frames.into());
 		checkpoints.push(initial_value);
 		Gas { checkpoints }
 	}
