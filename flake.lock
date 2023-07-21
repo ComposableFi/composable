@@ -81,17 +81,17 @@
     "centauri-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1689855711,
-        "narHash": "sha256-ARRAkFvK0VYS4xXYOsgAaB7ZL6kMHEJjs1tohaQl828=",
+        "lastModified": 1689895835,
+        "narHash": "sha256-AV6OU/I6OAejYjKQ7GUuZo4P+CMic8phjfkBidSX6IA=",
         "owner": "ComposableFi",
         "repo": "centauri",
-        "rev": "cbd01b1ec03ca46432ee44e15cf0658df2775f4a",
+        "rev": "8fec4171993009cf0618005847512da64452b51d",
         "type": "github"
       },
       "original": {
         "owner": "ComposableFi",
         "repo": "centauri",
-        "rev": "cbd01b1ec03ca46432ee44e15cf0658df2775f4a",
+        "rev": "8fec4171993009cf0618005847512da64452b51d",
         "type": "github"
       }
     },
@@ -313,11 +313,11 @@
         "pre-commit-hooks": "pre-commit-hooks_2"
       },
       "locked": {
-        "lastModified": 1689785879,
-        "narHash": "sha256-ofTzITQUNKiA2RBE7hLChVguua4AoHrr1TSvQyTzQ6Q=",
+        "lastModified": 1689890200,
+        "narHash": "sha256-RhG3twdQjaNFgvUxdIJ+9ynu7oeEs/h65fxDvcmTuSQ=",
         "owner": "cachix",
         "repo": "devenv",
-        "rev": "e207a8ef9911eba7f9a5e7761e47dc532931d482",
+        "rev": "f9f4dd3c1a4f767b11abe092b1ecdcf27844a2bd",
         "type": "github"
       },
       "original": {
@@ -948,11 +948,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1689802112,
-        "narHash": "sha256-Se7oHV/L0dHTQ4xp8MvYafaVdkSzF04Hx5NeloUYHtM=",
+        "lastModified": 1689891262,
+        "narHash": "sha256-Pc4wDczbdgd6QXKJIXprgxe7L9AVDsoAkMnvm5vmpUU=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "0cb3ac57fca6b52c42e4c0f560185540ae1dfb6c",
+        "rev": "ee5673246de0254186e469935909e821b8f4ec15",
         "type": "github"
       },
       "original": {
@@ -1791,11 +1791,11 @@
     },
     "process-compose-flake": {
       "locked": {
-        "lastModified": 1689713813,
-        "narHash": "sha256-5xWoY8guwR9zDJPxFrKTCS2zwJZKdKH4zsioMvDr99E=",
+        "lastModified": 1689870193,
+        "narHash": "sha256-qZgtMtMoPKtH1u/9BiWB8B+pVYLcuZwBdnKB7bRZExQ=",
         "owner": "Platonic-Systems",
         "repo": "process-compose-flake",
-        "rev": "12cf28de0ebe8c152ade041c4b3b8671438e21a0",
+        "rev": "0e2aab0ba17c098838813979251a4363b26b0875",
         "type": "github"
       },
       "original": {
