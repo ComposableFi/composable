@@ -24,6 +24,7 @@ bech32-no_std = { workspace = true, default-features = false, features = [
   "strict",
 ] }
 composable-traits = { path = "../composable-traits", default-features = false }
+hex = { version = "0.4.3", default-features = false }
 composable-support = { default-features = false, path = "../composable-support" }
 frame-benchmarking = { default-features = false, optional = true, workspace = true }
 frame-support = { default-features = false, workspace = true }
@@ -46,6 +47,7 @@ serde = { version = "1.0.136", features = ["derive"], optional = true }
 serde_json = { workspace = true, default-features = false, features = [
   "alloc",
 ] }
+orml-xtokens = { workspace = true, default-features = false }
 
 
 [dev-dependencies]
@@ -73,6 +75,8 @@ std = [
   "pallet-ibc/std",
   "ibc-primitives/std",
   "serde",
+  "hex/std",
+  "orml-xtokens/std",
 ]
 
 runtime-benchmarks = [
