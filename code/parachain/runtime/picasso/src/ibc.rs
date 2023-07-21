@@ -66,8 +66,6 @@ parameter_types! {
 	pub const SpamProtectionDeposit: Balance = 1_000_000_000_000_000;
 }
 
-pub type MemoMessage = alloc::string::String;
-
 parameter_types! {
 	pub const GRANDPA: pallet_ibc::LightClientProtocol = pallet_ibc::LightClientProtocol::Grandpa;
 	pub const IbcTriePrefix : &'static [u8] = b"ibc/";
@@ -76,7 +74,7 @@ parameter_types! {
 	pub const IbcPalletId: PalletId = PalletId(*b"cntr_ibc");
 }
 
-use pallet_ibc::ics20::Ics20RateLimiter;
+use pallet_ibc::ics20::{IbcModule, Ics20RateLimiter};
 
 pub struct ConstantAny;
 
@@ -179,8 +177,9 @@ impl pallet_ibc::Config for Runtime {
 	type WeightInfo = weights::pallet_ibc::WeightInfo<Self>;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
-	type HandleMemo = ();
-	type MemoMessage = MemoMessage;
+	type HandleMemo = IbcModule<Runtime>;
+	type MemoMessage = alloc::string::String;
+	type SubstrateMultihopXcmHandler = pallet_multihop_xcm_ibc::Pallet<Runtime>;
 	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;
