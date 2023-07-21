@@ -190,6 +190,7 @@ pub mod pallet {
 		Ibc,
 		FailedToSerialize,
 		OutOfGas,
+		InvalidGasCheckpoint,
 		InvalidSalt,
 		InvalidAccount,
 		Interpreter,
@@ -752,6 +753,7 @@ impl<T: Config> Pallet<T> {
 				log::info!(target: "runtime::contracts", "executing contract error with {}", &error);
 				let error = match error {
 					CosmwasmVMError::Pallet(e) => e,
+					CosmwasmVMError::InvalidGasCheckpoint => Error::<T>::OutOfGas,
 					CosmwasmVMError::OutOfGas => Error::<T>::OutOfGas,
 					CosmwasmVMError::Interpreter(_) => Error::<T>::Interpreter,
 					CosmwasmVMError::VirtualMachine(_) => Error::<T>::VirtualMachine,
