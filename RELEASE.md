@@ -16,12 +16,7 @@ Each composable node release involves a release of (at-least) the following comp
 2. The Composable Node - main node executable.
    This is in the format `vMajor.Minor.Patch` (eg: `v5.4200.10`). Where `Major=Branch number eg: 5`, `Minor=Runtime spec_version eg: 4200` and `Patch=a patch version 0..n`. The major version number ensures that there is always a way to branch the code for an upcoming release with relevant feature flags etc., while also serving as the major version for that release. Minor version always serves to indicate a backwards compatible patch to that release.
 
-For 3, 4, 5 have the following characteristics which require them to be versioned in a different scheme,
-- They all depend on the node rpc and runtime (and types) directly hence requiring updates whenever the node RPC/event interfaces change.
-- They all can make breaking changes from the point of view of external dependants such as ComposableJS which could have major versions/breaking interface changes without a direct relationship to Node/runtime changes.
-
-Because of these characteristics following specific versioning scheme is proposed be used,
-
+Release template name is:
 `<component name>-<node v.major.minor version>-<component specific versioning>`
 
 #### 3.1.1. Expected Typical Release Artifact List 
@@ -70,9 +65,6 @@ The following section lays out the release steps for each release in a checklist
    - [ ] Update `spec_version` (automate-able)
    - [ ] Update `transaction_version` if existing extrinsics or their ordering has changed. Can be verified via [metadata comparison](https://github.com/paritytech/polkadot/blob/master/doc/release-checklist.md#extrinsic-ordering).
 - [ ] Update composable node version if the code has changed (relevant number in workspace `Cargo.toml`)
-- [ ] Update composableJs version (if necessary to be released)
-- [ ] Update FE version (if necessary to be released)
-- [ ] Update Subsquid version (if necessary to be released)
 - [ ] Update relevant frame pallets being released in runtimes to the latest node version
 - [ ] Consider and list possible proxy filter updates for available calls.
 - [ ] Categorize (and give a title) the release according to the types of changes it does, eg: security patch, bugfix, feature etc.
