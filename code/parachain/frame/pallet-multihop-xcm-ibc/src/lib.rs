@@ -1,15 +1,15 @@
-// #![cfg_attr(
-// 	not(test),
-// 	deny(
-// 		clippy::disallowed_methods,
-// 		clippy::disallowed_types,
-// 		clippy::indexing_slicing,
-// 		clippy::todo,
-// 		clippy::unwrap_used,
-// 		clippy::panic
-// 	)
-// )] // allow in tests
-// #![deny(clippy::unseparated_literal_suffix, unused_imports, dead_code)]
+#![cfg_attr(
+	not(test),
+	deny(
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)] // allow in tests
+#![deny(clippy::unseparated_literal_suffix, unused_imports, dead_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![doc = include_str!("../README.md")]
 pub use pallet::*;
@@ -20,18 +20,16 @@ mod prelude;
 pub mod pallet {
 
 	use super::*;
-	use frame_support::{pallet_prelude::*, BoundedBTreeSet};
+	use frame_support::pallet_prelude::*;
 	use frame_system::RawOrigin;
 	use ibc_primitives::Timeout as IbcTimeout;
 	use pallet_ibc::{MultiAddress, TransferParams};
 	use xcm::latest::prelude::*;
 	// use prelude::{MultiCurrencyCallback, MemoData};
 	use composable_traits::{
-		currency,
 		prelude::{String, Vec},
 		xcm::assets::MultiCurrencyCallback,
 	};
-	use core::str::FromStr;
 	use frame_system::ensure_root;
 
 	use composable_traits::{
