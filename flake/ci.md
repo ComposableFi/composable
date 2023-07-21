@@ -54,7 +54,7 @@ su actions-runner
 ## User
 
 ```
-nix profile install nixpkgs#git && nix profile install nixpkgs#git-lfs && nix profile install nixpkgs#cachix
+nix profile install nixpkgs#git && nix profile install nixpkgs#git-lfs && nix profile install nixpkgs#cachix nixpkgs#process-compose
 ```
 
 ```bash

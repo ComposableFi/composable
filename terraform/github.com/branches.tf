@@ -1,7 +1,9 @@
 resource "github_branch_protection" "main" {
-  repository_id    = "composable"
   # Branch name pattern
   pattern          = "main"
+  
+  repository_id    = "composable"
+  
   # Do not allow bypassing the above settings
   enforce_admins   = true
   # Allow deletions

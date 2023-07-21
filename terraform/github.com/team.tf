@@ -40,12 +40,17 @@ resource "github_repository_collaborators" "roles" {
   }
 
   user {
+    permission = "push"
+    username   = "NOOB6942069"
+  }
+
+  user {
     permission = "maintain"
     username   = "kkast"
   }
 
   user {
-    permission = "maintain"
+    permission = "admin"
     username   = "itsbobbyzz"
   }
 
