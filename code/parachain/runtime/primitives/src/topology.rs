@@ -107,13 +107,15 @@ impl Picasso {
 			},
 		);
 
-		let mut dot =
-			InnerPrefixedDenom::from_str(CurrencyId::DOT.to_string().as_str()).expect("genesis");
-		dot.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(1)));
+		let mut dot_from_composable =
+			InnerPrefixedDenom::from_str(CurrencyId::COMPOSABLE_DOT.to_string().as_str())
+				.expect("genesis");
+		dot_from_composable
+			.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(1)));
 
 		let dot = (
 			CurrencyId::DOT.0 as u64,
-			Some(ForeignAssetId::IbcIcs20(PrefixedDenom(dot))),
+			Some(ForeignAssetId::IbcIcs20(PrefixedDenom(dot_from_composable))),
 			AssetInfo {
 				name: Some(
 					BiBoundedAssetName::from_vec(b"Polkadot".to_vec())

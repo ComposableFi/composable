@@ -4,6 +4,7 @@
     let
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
+      relay = "on_failure"; # `no` not to restart
     in {
       packages = rec {
         default = pkgs.writeShellApplication {
@@ -121,7 +122,7 @@
                 };
                 log_location =
                   "/tmp/composable-devnet/osmosis-centauri-hermes-relay.log";
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
 
               picasso-centauri-ibc-init = {
@@ -166,7 +167,7 @@
                   "picasso-centauri-ibc-channels-init".condition =
                     "process_completed_successfully";
                 };
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
 
               composable-picasso-ibc-init = {
@@ -215,22 +216,14 @@
                 availability = { restart = "on_failure"; };
               };
               composable-picasso-ibc-relay = {
-                command = ''
-                  HOME="/tmp/composable-devnet/composable-picasso-ibc"
-                  export HOME
-                  RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
-                  export RUST_LOG
-                  sed -i "s/private_key = \"\/\/Alice\"/private_key = \"\/\/Bob\"/" "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml"
-                  sed -i "s/private_key = \"\/\/Alice\"/private_key = \"\/\/Bob\"/" "/tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml"
-                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a /tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10
-                '';
+                command = self'.packages.composable-picasso-ibc-relay;
                 log_location =
                   "/tmp/composable-devnet/composable-picasso-ibc-relay.log";
                 depends_on = {
                   "composable-picasso-ibc-channels-init".condition =
                     "process_completed_successfully";
                 };
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
             };
           };
