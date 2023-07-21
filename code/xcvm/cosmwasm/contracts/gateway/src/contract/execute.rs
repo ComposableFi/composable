@@ -15,7 +15,7 @@ use cosmwasm_std::{
 	Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
 	IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg, IbcOrder, IbcPacketAckMsg,
 	IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock,
-	MessageInfo, Reply, Response, SubMsg, SubMsgResult, WasmMsg,
+	MessageInfo, Reply, Response, SubMsg, SubMsgResult, WasmMsg, ensure_eq,
 };
 use cw2::set_contract_version;
 use cw20::Cw20ExecuteMsg;
@@ -25,8 +25,8 @@ use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 use xc_core::{
 	ibc::{to_cw_message, Ics20MessageHook, WasmMemo},
 	proto::{decode_packet, Encodable},
-	shared::XcPacket,
-	CallOrigin, Displayed, Funds, Picasso, XCVMAck,
+	shared::{XcPacket, DefaultXCVMProgram},
+	CallOrigin, Displayed, Funds, Picasso, XCVMAck, gateway::Asset,
 };
 
 use super::EXEC_PROGRAM_REPLY_ID;
@@ -106,23 +106,22 @@ fn handle_bridge_forward(
 		.load(deps.storage, msg.network_id)
 		.map_err(|_| ContractError::UnknownChannel)?;
 
-	let packet: xc_core::Packet<
-		xc_core::Program<
-			std::collections::VecDeque<
-				xc_core::Instruction<Vec<u8>, cosmwasm_std::CanonicalAddr, Funds>,
-			>,
-		>,
-	> = XcPacket {
+	let packet = XcPacket {
 		interpreter: String::from(info.sender).into_bytes(),
 		user_origin: msg.interpreter_origin.user_origin,
 		salt: msg.execute_program.salt,
 		program: msg.execute_program.program,
 		assets: msg.execute_program.assets,
 	};
-
+	
+	ensure_eq!(packet.assets.0.len(), 1, "ICS20 limitation");
+	
 	let (local_asset, amount) = packet.assets.0.get(0).expect("verified at outer boundaries");
 	let route = get_route(deps.storage, msg.network_id, *local_asset)?;
-
+	let packket = XcPacket {
+		assets : packet.assets.into_iter().map(|a|)
+		..packet,
+	};
 	let mut event = make_event("bridge")
 		.add_attribute("to_network_id", msg.network_id.to_string())
 		.add_attribute(

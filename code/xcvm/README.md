@@ -67,6 +67,6 @@ For each chain and protocol it makes pragmatics hacks to use existing liquidity 
 
 `Memo` wasm message contains information to verify check sender from hash. 
 
-`xc-master` contract verifies amount sent and proceed with move of assets up to amount in message via delegation from `xc-account`. 
+`xc-master` contract verifies amount sent and proceed with move of assets up to amount in message via delegation from `xc-account`. Usually amount is less than sent because fees taken along the way.
 
 Approach is needed because there is no `amount` information can be securely transferred in `memo`.

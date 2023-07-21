@@ -46,7 +46,7 @@
     cosmos 
     = {
       url =
-        "github:dzmitry-lahoda-forks/cosmos.nix/16f6aaf252d36505ab3333f9e82389b5f6c78a39";
+        "github:dzmitry-lahoda-forks/cosmos.nix/a1c3a29a067388878839b6638c4d4f1c698995f9";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     centauri-src.flake = false;

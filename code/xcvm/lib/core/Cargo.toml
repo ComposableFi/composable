@@ -9,9 +9,7 @@ version = "0.1.0"
 cosmwasm-std = { workspace = true, features = ["ibc3"], default-features = false }
 cw-storage-plus = { workspace = true, default-features = false, optional = true }
 
-#std num-traits serde
-
-fixed = { workspace = true, default-features = false }
+fixed = { workspace = true, default-features = false, features = ["num-traits", "serde"]}
 hex = { workspace = true, features = ["alloc"], default-features = false }
 parity-scale-codec = { workspace = true, default-features = false }
 num = { workspace = true, default-features = false }

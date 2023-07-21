@@ -45,10 +45,6 @@ serde_json = { workspace = true, default-features = false, features = [
 
 sha2 = { workspace = true, default-features = false }
 
-schemars = { optional = true, workspace = true, default-features = false }
-
-cosmwasm-schema = { workspace = true, default-features = false, optional = true}
-
 thiserror = { workspace = true, default-features = false }
 
 [dev-dependencies]

@@ -4249,6 +4249,8 @@ dependencies = [
  "az",
  "bytemuck",
  "half",
+ "num-traits",
+ "serde",
  "typenum",
 ]
 
