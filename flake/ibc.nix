@@ -78,6 +78,20 @@
             ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a /tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml --delay-period 10            
           '';
         };
+
+        composable-picasso-ibc-relay = pkgs.writeShellApplication {
+          name = "composable-picasso-ibc-relay";
+          runtimeInputs = devnetTools.withBaseContainerTools;
+          text = ''
+            HOME="/tmp/composable-devnet/composable-picasso-ibc"
+            export HOME
+            RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
+            export RUST_LOG
+            sed -i "s/private_key = \"\/\/Alice\"/private_key = \"\/\/Bob\"/" "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml"
+            sed -i "s/private_key = \"\/\/Alice\"/private_key = \"\/\/Bob\"/" "/tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml"
+            ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a /tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10
+          '';
+        };
       };
     };
 }
