@@ -74,7 +74,7 @@ pub struct NetworkItem {
 	pub cosmos_prefix: Option<String>,
 
 	/// https://twitter.com/scvsecurity/status/1682329758020022272?s=46&t=seqlmFXCNZ42xN1cSXpKdQ
-	/// what we can do to protect agains?
+	/// Validate that channel prefix 
 	pub one_hop : bool,
 }
 

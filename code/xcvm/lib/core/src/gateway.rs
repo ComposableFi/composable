@@ -44,7 +44,9 @@ pub enum ExecuteMsg {
 		gateway: Option<String>,
 	},
 
-	/// Sent by the user to execute a program on their behalf.
+	/// Sent by the user wallet to execute a program on their behalf.
+	/// Main use case is move funds and send arbitrary program to chains
+	/// Can be used to send program to add accounts to owners of user interpreters or recover funds.
 	ExecuteProgram {
 		/// Program to execute.
 		execute_program: ExecuteProgramMsg,
@@ -60,6 +62,8 @@ pub enum ExecuteMsg {
 	/// Request to execute a program on behalf of given user.
 	///
 	/// This can only be sent from trusted address.
+	/// Main use case to spawn programs on behalf of user wallet or bridge.
+	/// Operation use case for governance sending programs to move funds from interpreter to any account
 	ExecuteProgramPrivileged {
 		/// The origin of the call.
 		call_origin: CallOrigin,
@@ -69,6 +73,7 @@ pub enum ExecuteMsg {
 
 	/// Message sent from interpreter trying to spawn program on another
 	/// network.
+	/// Can be calld only by Interpreter
 	BridgeForward(BridgeForwardMsg),
 
 	/// Message sent by an admin to register a new asset.
@@ -79,6 +84,7 @@ pub enum ExecuteMsg {
 		asset_id: AssetId,
 	},
 
+	/// Can only be called by Sudo  of host (expected after Bridge callback)
 	WasmHook(Ics20MessageHook),
 }
 
