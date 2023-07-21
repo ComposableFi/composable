@@ -1,6 +1,5 @@
 # Code Reviews
 
-
 Make sure you read the [contributing guidelines](https://github.com/ComposableFi/composable/blob/main/docs/CONTRIBUTING.md).
 
 Always branch off of `main` and use your name in branch name. If you are working together with other developers on a feature and want to each have your your branch, create a `feat/{feature}` branch. 

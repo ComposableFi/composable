@@ -1,0 +1,46 @@
+name: pull-request-comments
+
+on:
+  pull_request:
+    types: [opened]
+permissions:
+  pull-requests: write
+  issues: write
+  
+jobs:
+  pull-request-open:
+    runs-on: ubuntu-latest
+    steps:
+      - name: pull-request-stats
+        uses: flowwer-dev/pull-request-stats@master
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      # - name: pull-request-run
+      #   uses: "./.github/templates/comment"
+      #   with:
+      #     message: |                        
+      #       #### Show all possible apps, shells and packages:
+      #       ```
+      #       nix flake show "github:${{ github.event.pull_request.repository}}/${{ github.event.pull_request.head.sha }}" --allow-import-from-derivation
+      #       ```
+      #       #### Run the Composable node alone:
+      #       ```bash
+      #       nix run "github:${{ github.event.pull_request.repository}}/${{ github.event.pull_request.head.sha }}#composable-node" --print-build-logs
+      #       ```
+      #       #### Spin up a local devnet:
+      #       ```bash
+      #       nix run "github:${{ github.event.pull_request.repository}}/${{ github.event.pull_request.head.sha }}" --print-build-logs --option sandbox relaxed --show-trace
+      #       ```
+      #       ### View the docs:
+      #       ```bash
+      #       nix run "${{ github.event.pull_request.repository}}/${{ github.event.pull_request.head.sha }}#docs-server"
+      #       ```
+      #       ### Run this without Nix in Docker.
+      #       ```bash
+      #       docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run github:${{ github.event.pull_request.repository}}/${{ github.event.pull_request.head.sha }}/${{ github.event.pull_request.head.sha }} --print-build-logs --extra-experimental-features nix-command --extra-experimental-features flakes"
+      #       ```
+      #       _For more info on how to use Nix, check out our [Nix docs](https://docs.composable.finance/nix.html)_
+      #     comment_tag: 'Nix commands for this PR'
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}          
