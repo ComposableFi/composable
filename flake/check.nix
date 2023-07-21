@@ -46,7 +46,7 @@
           name = "run-in-docker";
           runtimeInputs = [ ];
           text = ''
-            docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock --volume nix:/nix -it nixos/nix bash -c "nix run composable#''${1-} --print-build-logs --extra-experimental-features nix-command --extra-experimental-features flakes --option sandbox relaxed --show-trace --accept-flake-config" 
+            docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock --volume nix:/nix -it nixos/nix bash -c "nix run composable#''${1-} --print-build-logs --extra-experimental-features "nix-command flakes" --option sandbox relaxed --show-trace --accept-flake-config" 
           '';
         };
       };

@@ -101,7 +101,7 @@
         composable-node = makeComposableNode self'.packages.picasso-runtime
           self'.packages.composable-runtime;
         default = composable-node;
-        
+
         composable-testfast-node =
           makeComposableNode self'.packages.picasso-testfast-runtime
           self'.packages.composable-testfast-runtime;
