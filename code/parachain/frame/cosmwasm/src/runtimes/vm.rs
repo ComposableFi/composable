@@ -68,6 +68,7 @@ pub enum CosmwasmVMError<T: Config> {
 	Aborted(String),
 	ReadOnlyViolation,
 	OutOfGas,
+	InvalidGasCheckpoint,
 	Unsupported,
 	NotImplemented,
 	ContractNotFound,
@@ -564,15 +565,15 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 	) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "gas_checkpoint_push");
 		match self.shared.gas.push(checkpoint) {
-			GasOutcome::Continue => Ok(()),
-			GasOutcome::Halt => Err(CosmwasmVMError::OutOfGas),
+			Ok(GasOutcome::Continue) => Ok(()),
+			Ok(GasOutcome::Halt) => Err(CosmwasmVMError::OutOfGas),
+			Err(_) => Err(CosmwasmVMError::InvalidGasCheckpoint),
 		}
 	}
 
 	fn gas_checkpoint_pop(&mut self) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "gas_checkpoint_pop");
-		self.shared.gas.pop();
-		Ok(())
+		self.shared.gas.pop().map_err(|_| CosmwasmVMError::InvalidGasCheckpoint)
 	}
 
 	fn gas_ensure_available(&mut self) -> Result<(), Self::Error> {

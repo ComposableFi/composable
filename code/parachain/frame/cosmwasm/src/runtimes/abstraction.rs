@@ -95,20 +95,35 @@ pub enum GasOutcome {
 	Continue,
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct TooManyCheckpoints;
+#[derive(Debug, PartialEq, Eq)]
+pub struct NoCheckpointToPop;
+
 impl Gas {
 	pub fn new(max_frames: u16, initial_value: u64) -> Self {
-		let mut checkpoints = Vec::with_capacity(max_frames.into());
+		let max_frames = usize::from(max_frames).max(1);
+		let mut checkpoints = Vec::with_capacity(max_frames);
 		checkpoints.push(initial_value);
 		Gas { checkpoints }
 	}
 
 	fn current_mut(&mut self) -> &mut u64 {
-		self.checkpoints.last_mut().expect("unbalanced gas checkpoints")
+		self.checkpoints.last_mut().unwrap()
 	}
 
-	pub fn push(&mut self, checkpoint: VmGasCheckpoint) -> GasOutcome {
+	/// Pushes a new gas checkpoint.
+	///
+	/// If `max_frames` number of checkpoints have been reached, returns
+	/// [`TooManyCheckpoints`] error.  Otherwise, checks if there’s enough gas
+	/// at the current checkpoint and if so creates a new checkpoint with
+	/// requested limit.
+	pub fn push(&mut self, checkpoint: VmGasCheckpoint) -> Result<GasOutcome, TooManyCheckpoints> {
+		if self.checkpoints.len() == self.checkpoints.capacity() {
+			return Err(TooManyCheckpoints)
+		}
 		let parent = self.current_mut();
-		match checkpoint {
+		Ok(match checkpoint {
 			VmGasCheckpoint::Unlimited => {
 				let value = *parent;
 				*parent = 0;
@@ -121,13 +136,22 @@ impl Gas {
 				GasOutcome::Continue
 			},
 			_ => GasOutcome::Halt,
-		}
+		})
 	}
 
-	pub fn pop(&mut self) {
+	/// Pops the last gas checkpoint.
+	///
+	/// Any gas limit remaining in the checkpoint is added back to the parent
+	/// checkpoint.  Returns an error if function tries to pop the final
+	/// checkpoint.
+	pub fn pop(&mut self) -> Result<(), NoCheckpointToPop> {
+		if self.checkpoints.len() < 2 {
+			return Err(NoCheckpointToPop)
+		}
 		let child = self.checkpoints.pop().unwrap();
 		let parent = self.current_mut();
 		*parent += child;
+		Ok(())
 	}
 
 	pub fn charge(&mut self, value: u64) -> GasOutcome {
@@ -151,18 +175,18 @@ mod tests {
 	use super::*;
 
 	#[test]
-	fn test() {
+	fn test_checkpoint_gas_limits() {
 		let total_gas = 100_000u64;
 		let max_frames = 100;
 		let mut gas = Gas::new(max_frames, total_gas);
-		assert_eq!(gas.push(VmGasCheckpoint::Limited(50_000)), GasOutcome::Continue);
-		assert_eq!(gas.push(VmGasCheckpoint::Limited(30_000)), GasOutcome::Continue);
-		assert_eq!(gas.push(VmGasCheckpoint::Limited(20_000)), GasOutcome::Continue);
-		assert_eq!(gas.push(VmGasCheckpoint::Limited(10_000)), GasOutcome::Continue);
-		assert_eq!(gas.push(VmGasCheckpoint::Limited(5_000)), GasOutcome::Continue);
-		assert_eq!(gas.push(VmGasCheckpoint::Limited(5_001)), GasOutcome::Halt);
+		assert_eq!(gas.push(VmGasCheckpoint::Limited(50_000)), Ok(GasOutcome::Continue));
+		assert_eq!(gas.push(VmGasCheckpoint::Limited(30_000)), Ok(GasOutcome::Continue));
+		assert_eq!(gas.push(VmGasCheckpoint::Limited(20_000)), Ok(GasOutcome::Continue));
+		assert_eq!(gas.push(VmGasCheckpoint::Limited(10_000)), Ok(GasOutcome::Continue));
+		assert_eq!(gas.push(VmGasCheckpoint::Limited(5_000)), Ok(GasOutcome::Continue));
+		assert_eq!(gas.push(VmGasCheckpoint::Limited(5_001)), Ok(GasOutcome::Halt));
 		assert_eq!(gas.checkpoints, [50000, 20000, 10000, 10000, 5000, 5000]);
-		gas.pop();
+		assert_eq!(gas.pop(), Ok(()));
 		assert_eq!(gas.checkpoints, [50000, 20000, 10000, 10000, 10000]);
 
 		assert_eq!(gas.remaining(), total_gas);
@@ -170,10 +194,32 @@ mod tests {
 		assert_eq!(gas.charge(5000), GasOutcome::Continue);
 		assert_eq!(gas.charge(10000), GasOutcome::Halt);
 		assert_eq!(gas.checkpoints, [50000, 20000, 10000, 10000, 0]);
-		gas.pop();
+		assert_eq!(gas.pop(), Ok(()));
 		assert_eq!(gas.charge(10000), GasOutcome::Continue);
 		assert_eq!(gas.checkpoints, [50000, 20000, 10000, 0]);
 
 		assert_eq!(gas.remaining(), total_gas - 20000);
+	}
+
+	#[test]
+	fn test_invalid_checkpoints() {
+		const TOTAL_GAS: u64 = 100;
+		let mut gas = Gas::new(3, TOTAL_GAS);
+		assert_eq!(gas.pop(), Err(NoCheckpointToPop));
+
+		for _ in 0..2 {
+			assert_eq!(gas.push(VmGasCheckpoint::Limited(50)), Ok(GasOutcome::Continue));
+			assert_eq!(gas.push(VmGasCheckpoint::Limited(50)), Ok(GasOutcome::Continue));
+			assert_eq!(gas.push(VmGasCheckpoint::Limited(50)), Err(TooManyCheckpoints));
+
+			assert_eq!(gas.pop(), Ok(()));
+			assert_eq!(gas.pop(), Ok(()));
+			assert_eq!(gas.pop(), Err(NoCheckpointToPop));
+
+			assert_eq!(gas.remaining(), TOTAL_GAS);
+		}
+
+		assert_eq!(gas.push(VmGasCheckpoint::Limited(50)), Ok(GasOutcome::Continue));
+		assert_eq!(gas.push(VmGasCheckpoint::Limited(60)), Ok(GasOutcome::Halt));
 	}
 }
