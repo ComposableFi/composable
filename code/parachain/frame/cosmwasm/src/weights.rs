@@ -142,11 +142,11 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Cosmwasm CodeIdToInfo (r:0 w:1)
 	/// The range of component `n` is `[1, 514288]`.
 	fn upload(n: u32, ) -> Weight {
-		Weight::from_ref_time(19_213_176 as u64)
+		Weight::from_ref_time(19_213_176)
 			// Standard Error: 134
-			.saturating_add(Weight::from_ref_time(51_744 as u64).saturating_mul(n as u64))
-			.saturating_add(T::DbWeight::get().reads(3 as u64))
-			.saturating_add(T::DbWeight::get().writes(6 as u64))
+			.saturating_add(Weight::from_ref_time(51_744).saturating_mul(n as u64))
+			.saturating_add(T::DbWeight::get().reads(3))
+			.saturating_add(T::DbWeight::get().writes(6))
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
@@ -158,13 +158,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 23]`.
 	fn instantiate(n: u32, ) -> Weight {
-		Weight::from_ref_time(271_822_175 as u64)
+		Weight::from_ref_time(271_822_175)
 			// Standard Error: 214_443
-			.saturating_add(Weight::from_ref_time(21_368_222 as u64).saturating_mul(n as u64))
-			.saturating_add(T::DbWeight::get().reads(6 as u64))
-			.saturating_add(T::DbWeight::get().reads((2 as u64).saturating_mul(n as u64)))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
-			.saturating_add(T::DbWeight::get().writes((2 as u64).saturating_mul(n as u64)))
+			.saturating_add(Weight::from_ref_time(21_368_222).saturating_mul(n as u64))
+			.saturating_add(T::DbWeight::get().reads(6))
+			.saturating_add(T::DbWeight::get().reads(2u64.saturating_mul(n as u64)))
+			.saturating_add(T::DbWeight::get().writes(3))
+			.saturating_add(T::DbWeight::get().writes(2u64.saturating_mul(n as u64)))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
@@ -175,13 +175,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 23]`.
 	fn execute(n: u32, ) -> Weight {
-		Weight::from_ref_time(240_096_021 as u64)
+		Weight::from_ref_time(240_096_021)
 			// Standard Error: 217_568
-			.saturating_add(Weight::from_ref_time(21_911_965 as u64).saturating_mul(n as u64))
-			.saturating_add(T::DbWeight::get().reads(5 as u64))
-			.saturating_add(T::DbWeight::get().reads((2 as u64).saturating_mul(n as u64)))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
-			.saturating_add(T::DbWeight::get().writes((2 as u64).saturating_mul(n as u64)))
+			.saturating_add(Weight::from_ref_time(21_911_965).saturating_mul(n as u64))
+			.saturating_add(T::DbWeight::get().reads(5))
+			.saturating_add(T::DbWeight::get().reads(2u64.saturating_mul(n as u64)))
+			.saturating_add(T::DbWeight::get().writes(1))
+			.saturating_add(T::DbWeight::get().writes(2u64.saturating_mul(n as u64)))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
@@ -192,9 +192,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Cosmwasm CodeHashToId (r:0 w:1)
 	fn migrate() -> Weight {
-		Weight::from_ref_time(412_229_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(9 as u64))
-			.saturating_add(T::DbWeight::get().writes(7 as u64))
+		Weight::from_ref_time(412_229_000)
+			.saturating_add(T::DbWeight::get().reads(9))
+			.saturating_add(T::DbWeight::get().writes(7))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
@@ -202,88 +202,88 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	fn update_admin() -> Weight {
-		Weight::from_ref_time(198_400_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(5 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(198_400_000)
+			.saturating_add(T::DbWeight::get().reads(5))
+			.saturating_add(T::DbWeight::get().writes(2))
 	}
 	// Storage: unknown [0xe9a804b2e527fd3601d2ffc0bb023cd668656c6c6f20776f726c64] (r:1 w:0)
 	fn db_read() -> Weight {
-		Weight::from_ref_time(13_244_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(13_244_000)
+			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	// Storage: unknown [0xe9a804b2e527fd3601d2ffc0bb023cd668656c6c6f20776f726c64] (r:1 w:0)
 	fn db_read_other_contract() -> Weight {
-		Weight::from_ref_time(12_452_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(12_452_000)
+			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:1)
 	fn db_write() -> Weight {
-		Weight::from_ref_time(12_930_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(12_930_000)
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	fn db_scan() -> Weight {
-		Weight::from_ref_time(2_732_000 as u64)
+		Weight::from_ref_time(2_732_000)
 	}
 	// Storage: unknown [0x] (r:1 w:0)
 	fn db_next() -> Weight {
-		Weight::from_ref_time(11_524_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(11_524_000)
+			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:0 w:1)
 	fn db_remove() -> Weight {
-		Weight::from_ref_time(6_755_000 as u64)
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(6_755_000)
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: Tokens Accounts (r:1 w:0)
 	fn balance() -> Weight {
-		Weight::from_ref_time(8_386_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(8_386_000)
+			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	// Storage: System Account (r:2 w:2)
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 23]`.
 	fn transfer(n: u32, ) -> Weight {
-		Weight::from_ref_time(27_900_925 as u64)
+		Weight::from_ref_time(27_900_925)
 			// Standard Error: 149_091
-			.saturating_add(Weight::from_ref_time(20_291_322 as u64).saturating_mul(n as u64))
-			.saturating_add(T::DbWeight::get().reads((2 as u64).saturating_mul(n as u64)))
-			.saturating_add(T::DbWeight::get().writes((2 as u64).saturating_mul(n as u64)))
+			.saturating_add(Weight::from_ref_time(20_291_322).saturating_mul(n as u64))
+			.saturating_add(T::DbWeight::get().reads(2u64.saturating_mul(n as u64)))
+			.saturating_add(T::DbWeight::get().writes(2u64.saturating_mul(n as u64)))
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
 	fn set_contract_meta() -> Weight {
-		Weight::from_ref_time(11_590_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(11_590_000)
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	fn running_contract_meta() -> Weight {
-		Weight::from_ref_time(3_475_000 as u64)
+		Weight::from_ref_time(3_475_000)
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn contract_meta() -> Weight {
-		Weight::from_ref_time(11_376_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(11_376_000)
+			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	fn addr_validate() -> Weight {
-		Weight::from_ref_time(2_342_000 as u64)
+		Weight::from_ref_time(2_342_000)
 	}
 	fn addr_canonicalize() -> Weight {
-		Weight::from_ref_time(2_314_000 as u64)
+		Weight::from_ref_time(2_314_000)
 	}
 	fn addr_humanize() -> Weight {
-		Weight::from_ref_time(397_000 as u64)
+		Weight::from_ref_time(397_000)
 	}
 	fn secp256k1_recover_pubkey() -> Weight {
-		Weight::from_ref_time(86_729_000 as u64)
+		Weight::from_ref_time(86_729_000)
 	}
 	fn secp256k1_verify() -> Weight {
-		Weight::from_ref_time(33_438_000 as u64)
+		Weight::from_ref_time(33_438_000)
 	}
 	fn ed25519_verify() -> Weight {
-		Weight::from_ref_time(43_648_000 as u64)
+		Weight::from_ref_time(43_648_000)
 	}
 	fn ed25519_batch_verify() -> Weight {
-		Weight::from_ref_time(60_481_000 as u64)
+		Weight::from_ref_time(60_481_000)
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
@@ -294,460 +294,460 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 23]`.
 	fn continue_instantiate(n: u32, ) -> Weight {
-		Weight::from_ref_time(232_216_094 as u64)
+		Weight::from_ref_time(232_216_094)
 			// Standard Error: 194_340
-			.saturating_add(Weight::from_ref_time(23_770_105 as u64).saturating_mul(n as u64))
-			.saturating_add(T::DbWeight::get().reads(5 as u64))
-			.saturating_add(T::DbWeight::get().reads((2 as u64).saturating_mul(n as u64)))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
-			.saturating_add(T::DbWeight::get().writes((2 as u64).saturating_mul(n as u64)))
+			.saturating_add(Weight::from_ref_time(23_770_105).saturating_mul(n as u64))
+			.saturating_add(T::DbWeight::get().reads(5))
+			.saturating_add(T::DbWeight::get().reads(2u64.saturating_mul(n as u64)))
+			.saturating_add(T::DbWeight::get().writes(3))
+			.saturating_add(T::DbWeight::get().writes(2u64.saturating_mul(n as u64)))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	/// The range of component `n` is `[0, 23]`.
 	fn continue_execute(n: u32, ) -> Weight {
-		Weight::from_ref_time(168_885_098 as u64)
+		Weight::from_ref_time(168_885_098)
 			// Standard Error: 693_834
-			.saturating_add(Weight::from_ref_time(8_982_880 as u64).saturating_mul(n as u64))
-			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(Weight::from_ref_time(8_982_880).saturating_mul(n as u64))
+			.saturating_add(T::DbWeight::get().reads(3))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn continue_migrate() -> Weight {
-		Weight::from_ref_time(421_685_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(3 as u64))
+		Weight::from_ref_time(421_685_000)
+			.saturating_add(T::DbWeight::get().reads(3))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn continue_query() -> Weight {
-		Weight::from_ref_time(394_101_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(3 as u64))
+		Weight::from_ref_time(394_101_000)
+			.saturating_add(T::DbWeight::get().reads(3))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn continue_reply() -> Weight {
-		Weight::from_ref_time(417_714_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(3 as u64))
+		Weight::from_ref_time(417_714_000)
+			.saturating_add(T::DbWeight::get().reads(3))
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:0)
 	fn query_contract_info() -> Weight {
-		Weight::from_ref_time(41_799_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(41_799_000)
+			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:0)
 	fn query_code_info() -> Weight {
-		Weight::from_ref_time(26_298_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(26_298_000)
+			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:0)
 	fn query_raw() -> Weight {
-		Weight::from_ref_time(48_135_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
+		Weight::from_ref_time(48_135_000)
+			.saturating_add(T::DbWeight::get().reads(2))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Const(r: u32, ) -> Weight {
-		Weight::from_ref_time(8_169_317 as u64)
+		Weight::from_ref_time(8_169_317)
 			// Standard Error: 55_178
-			.saturating_add(Weight::from_ref_time(1_249_208 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_249_208).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Const(r: u32, ) -> Weight {
-		Weight::from_ref_time(5_802_879 as u64)
+		Weight::from_ref_time(5_802_879)
 			// Standard Error: 10_779
-			.saturating_add(Weight::from_ref_time(791_357 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(791_357).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Load(r: u32, ) -> Weight {
-		Weight::from_ref_time(7_303_250 as u64)
+		Weight::from_ref_time(7_303_250)
 			// Standard Error: 15_910
-			.saturating_add(Weight::from_ref_time(1_585_639 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_585_639).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Load(r: u32, ) -> Weight {
-		Weight::from_ref_time(6_132_192 as u64)
+		Weight::from_ref_time(6_132_192)
 			// Standard Error: 18_934
-			.saturating_add(Weight::from_ref_time(1_382_263 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_382_263).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Store(r: u32, ) -> Weight {
-		Weight::from_ref_time(12_845_591 as u64)
+		Weight::from_ref_time(12_845_591)
 			// Standard Error: 31_110
-			.saturating_add(Weight::from_ref_time(2_314_991 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(2_314_991).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Store(r: u32, ) -> Weight {
-		Weight::from_ref_time(6_804_160 as u64)
+		Weight::from_ref_time(6_804_160)
 			// Standard Error: 12_843
-			.saturating_add(Weight::from_ref_time(2_023_253 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(2_023_253).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Eq(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_453_882 as u64)
+		Weight::from_ref_time(4_453_882)
 			// Standard Error: 7_974
-			.saturating_add(Weight::from_ref_time(1_181_230 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_181_230).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Eqz(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_446_407 as u64)
+		Weight::from_ref_time(3_446_407)
 			// Standard Error: 11_959
-			.saturating_add(Weight::from_ref_time(887_681 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(887_681).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Ne(r: u32, ) -> Weight {
-		Weight::from_ref_time(6_063_996 as u64)
+		Weight::from_ref_time(6_063_996)
 			// Standard Error: 9_665
-			.saturating_add(Weight::from_ref_time(1_092_921 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_092_921).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64LtS(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_745_660 as u64)
+		Weight::from_ref_time(4_745_660)
 			// Standard Error: 7_137
-			.saturating_add(Weight::from_ref_time(1_102_659 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_102_659).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64GtS(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_071_888 as u64)
+		Weight::from_ref_time(3_071_888)
 			// Standard Error: 14_294
-			.saturating_add(Weight::from_ref_time(1_237_101 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_237_101).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64LeS(r: u32, ) -> Weight {
-		Weight::from_ref_time(6_954_024 as u64)
+		Weight::from_ref_time(6_954_024)
 			// Standard Error: 16_403
-			.saturating_add(Weight::from_ref_time(1_111_512 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_111_512).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64GeS(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_202_448 as u64)
+		Weight::from_ref_time(3_202_448)
 			// Standard Error: 12_064
-			.saturating_add(Weight::from_ref_time(1_417_996 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_417_996).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Clz(r: u32, ) -> Weight {
-		Weight::from_ref_time(5_883_836 as u64)
+		Weight::from_ref_time(5_883_836)
 			// Standard Error: 12_773
-			.saturating_add(Weight::from_ref_time(781_624 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(781_624).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Ctz(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_205_570 as u64)
+		Weight::from_ref_time(4_205_570)
 			// Standard Error: 10_210
-			.saturating_add(Weight::from_ref_time(818_853 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(818_853).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Popcnt(r: u32, ) -> Weight {
-		Weight::from_ref_time(2_201_231 as u64)
+		Weight::from_ref_time(2_201_231)
 			// Standard Error: 5_237
-			.saturating_add(Weight::from_ref_time(909_349 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(909_349).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Add(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_441_796 as u64)
+		Weight::from_ref_time(4_441_796)
 			// Standard Error: 8_294
-			.saturating_add(Weight::from_ref_time(1_235_436 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_235_436).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Sub(r: u32, ) -> Weight {
-		Weight::from_ref_time(2_387_532 as u64)
+		Weight::from_ref_time(2_387_532)
 			// Standard Error: 11_454
-			.saturating_add(Weight::from_ref_time(1_376_809 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_376_809).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Mul(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_066_568 as u64)
+		Weight::from_ref_time(3_066_568)
 			// Standard Error: 11_765
-			.saturating_add(Weight::from_ref_time(1_363_852 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_363_852).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64DivS(r: u32, ) -> Weight {
-		Weight::from_ref_time(5_968_914 as u64)
+		Weight::from_ref_time(5_968_914)
 			// Standard Error: 15_273
-			.saturating_add(Weight::from_ref_time(1_368_413 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_368_413).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64DivU(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_357_177 as u64)
+		Weight::from_ref_time(3_357_177)
 			// Standard Error: 10_548
-			.saturating_add(Weight::from_ref_time(1_537_345 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_537_345).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64RemS(r: u32, ) -> Weight {
-		Weight::from_ref_time(5_123_088 as u64)
+		Weight::from_ref_time(5_123_088)
 			// Standard Error: 5_779
-			.saturating_add(Weight::from_ref_time(1_361_710 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_361_710).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64And(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_136_147 as u64)
+		Weight::from_ref_time(3_136_147)
 			// Standard Error: 10_304
-			.saturating_add(Weight::from_ref_time(1_259_503 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_259_503).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Or(r: u32, ) -> Weight {
-		Weight::from_ref_time(531_325 as u64)
+		Weight::from_ref_time(531_325)
 			// Standard Error: 18_361
-			.saturating_add(Weight::from_ref_time(1_503_381 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_503_381).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Xor(r: u32, ) -> Weight {
-		Weight::from_ref_time(7_288_542 as u64)
+		Weight::from_ref_time(7_288_542)
 			// Standard Error: 10_854
-			.saturating_add(Weight::from_ref_time(1_410_100 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_410_100).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Shl(r: u32, ) -> Weight {
-		Weight::from_ref_time(7_482_983 as u64)
+		Weight::from_ref_time(7_482_983)
 			// Standard Error: 9_983
-			.saturating_add(Weight::from_ref_time(1_219_115 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_219_115).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64ShrS(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_780_812 as u64)
+		Weight::from_ref_time(4_780_812)
 			// Standard Error: 8_707
-			.saturating_add(Weight::from_ref_time(1_291_335 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_291_335).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Rotl(r: u32, ) -> Weight {
-		Weight::from_ref_time(916_448 as u64)
+		Weight::from_ref_time(916_448)
 			// Standard Error: 16_265
-			.saturating_add(Weight::from_ref_time(1_651_295 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_651_295).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Rotr(r: u32, ) -> Weight {
-		Weight::from_ref_time(10_328_055 as u64)
+		Weight::from_ref_time(10_328_055)
 			// Standard Error: 15_254
-			.saturating_add(Weight::from_ref_time(1_055_478 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_055_478).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64ExtendSI32(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_725_409 as u64)
+		Weight::from_ref_time(3_725_409)
 			// Standard Error: 12_869
-			.saturating_add(Weight::from_ref_time(760_073 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(760_073).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I32WrapI64(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_762_402 as u64)
+		Weight::from_ref_time(3_762_402)
 			// Standard Error: 13_522
-			.saturating_add(Weight::from_ref_time(769_000 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(769_000).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Eq(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_637_578 as u64)
+		Weight::from_ref_time(3_637_578)
 			// Standard Error: 13_582
-			.saturating_add(Weight::from_ref_time(1_153_289 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_153_289).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Ne(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_031_642 as u64)
+		Weight::from_ref_time(4_031_642)
 			// Standard Error: 6_567
-			.saturating_add(Weight::from_ref_time(1_052_076 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_052_076).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Lt(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_155_441 as u64)
+		Weight::from_ref_time(4_155_441)
 			// Standard Error: 9_183
-			.saturating_add(Weight::from_ref_time(1_083_255 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_083_255).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Gt(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_528_744 as u64)
+		Weight::from_ref_time(3_528_744)
 			// Standard Error: 4_279
-			.saturating_add(Weight::from_ref_time(1_106_018 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_106_018).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Le(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_849_075 as u64)
+		Weight::from_ref_time(3_849_075)
 			// Standard Error: 3_592
-			.saturating_add(Weight::from_ref_time(1_095_094 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_095_094).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Ge(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_402_550 as u64)
+		Weight::from_ref_time(3_402_550)
 			// Standard Error: 18_575
-			.saturating_add(Weight::from_ref_time(1_109_272 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_109_272).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Abs(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_374_684 as u64)
+		Weight::from_ref_time(3_374_684)
 			// Standard Error: 16_401
-			.saturating_add(Weight::from_ref_time(1_040_671 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_040_671).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Neg(r: u32, ) -> Weight {
-		Weight::from_ref_time(2_924_978 as u64)
+		Weight::from_ref_time(2_924_978)
 			// Standard Error: 12_468
-			.saturating_add(Weight::from_ref_time(787_836 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(787_836).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Ceil(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_487_025 as u64)
+		Weight::from_ref_time(3_487_025)
 			// Standard Error: 13_028
-			.saturating_add(Weight::from_ref_time(1_070_649 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_070_649).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Floor(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_219_530 as u64)
+		Weight::from_ref_time(3_219_530)
 			// Standard Error: 4_195
-			.saturating_add(Weight::from_ref_time(1_096_518 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_096_518).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Trunc(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_768_631 as u64)
+		Weight::from_ref_time(3_768_631)
 			// Standard Error: 9_045
-			.saturating_add(Weight::from_ref_time(1_087_146 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_087_146).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Nearest(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_733_585 as u64)
+		Weight::from_ref_time(4_733_585)
 			// Standard Error: 6_538
-			.saturating_add(Weight::from_ref_time(1_415_764 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_415_764).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Sqrt(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_963_692 as u64)
+		Weight::from_ref_time(3_963_692)
 			// Standard Error: 7_846
-			.saturating_add(Weight::from_ref_time(1_094_319 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_094_319).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Add(r: u32, ) -> Weight {
-		Weight::from_ref_time(5_158_468 as u64)
+		Weight::from_ref_time(5_158_468)
 			// Standard Error: 10_261
-			.saturating_add(Weight::from_ref_time(1_042_998 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_042_998).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Sub(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_306_395 as u64)
+		Weight::from_ref_time(3_306_395)
 			// Standard Error: 21_475
-			.saturating_add(Weight::from_ref_time(1_191_614 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_191_614).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Mul(r: u32, ) -> Weight {
-		Weight::from_ref_time(939_907 as u64)
+		Weight::from_ref_time(939_907)
 			// Standard Error: 12_978
-			.saturating_add(Weight::from_ref_time(1_325_608 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_325_608).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Div(r: u32, ) -> Weight {
-		Weight::from_ref_time(6_419_089 as u64)
+		Weight::from_ref_time(6_419_089)
 			// Standard Error: 6_276
-			.saturating_add(Weight::from_ref_time(1_082_816 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_082_816).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Min(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_631_174 as u64)
+		Weight::from_ref_time(3_631_174)
 			// Standard Error: 3_841
-			.saturating_add(Weight::from_ref_time(1_326_480 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_326_480).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Max(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_000_016 as u64)
+		Weight::from_ref_time(4_000_016)
 			// Standard Error: 18_339
-			.saturating_add(Weight::from_ref_time(1_401_801 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_401_801).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Copysign(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_512_972 as u64)
+		Weight::from_ref_time(3_512_972)
 			// Standard Error: 4_287
-			.saturating_add(Weight::from_ref_time(1_085_900 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_085_900).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_Select(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_626_360 as u64)
+		Weight::from_ref_time(3_626_360)
 			// Standard Error: 4_330
-			.saturating_add(Weight::from_ref_time(1_359_540 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_359_540).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_If(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_134_797 as u64)
+		Weight::from_ref_time(3_134_797)
 			// Standard Error: 3_704
-			.saturating_add(Weight::from_ref_time(640_563 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(640_563).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_Else(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_532_948 as u64)
+		Weight::from_ref_time(3_532_948)
 			// Standard Error: 8_800
-			.saturating_add(Weight::from_ref_time(1_016_347 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_016_347).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_GetLocal(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_523_772 as u64)
+		Weight::from_ref_time(3_523_772)
 			// Standard Error: 7_456
-			.saturating_add(Weight::from_ref_time(459_326 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(459_326).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_SetLocal(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_197_430 as u64)
+		Weight::from_ref_time(3_197_430)
 			// Standard Error: 1_933
-			.saturating_add(Weight::from_ref_time(505_514 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(505_514).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_TeeLocal(r: u32, ) -> Weight {
-		Weight::from_ref_time(2_715_808 as u64)
+		Weight::from_ref_time(2_715_808)
 			// Standard Error: 1_479
-			.saturating_add(Weight::from_ref_time(1_207 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_207).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_GetGlobal(_r: u32, ) -> Weight {
-		Weight::from_ref_time(2_988_269 as u64)
+		Weight::from_ref_time(2_988_269)
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_SetGlobal(r: u32, ) -> Weight {
-		Weight::from_ref_time(2_798_290 as u64)
+		Weight::from_ref_time(2_798_290)
 			// Standard Error: 884
-			.saturating_add(Weight::from_ref_time(2_324 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(2_324).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_CurrentMemory(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_488_888 as u64)
+		Weight::from_ref_time(4_488_888)
 			// Standard Error: 13_180
-			.saturating_add(Weight::from_ref_time(1_024_150 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_024_150).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 3]`.
 	fn instruction_GrowMemory(r: u32, ) -> Weight {
-		Weight::from_ref_time(2_482_000 as u64)
+		Weight::from_ref_time(2_482_000)
 			// Standard Error: 8_606_292
-			.saturating_add(Weight::from_ref_time(1_469_027_660 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_469_027_660).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_Br(r: u32, ) -> Weight {
-		Weight::from_ref_time(2_719_253 as u64)
+		Weight::from_ref_time(2_719_253)
 			// Standard Error: 4_513
-			.saturating_add(Weight::from_ref_time(587_800 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(587_800).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_BrIf(r: u32, ) -> Weight {
-		Weight::from_ref_time(1_877_983 as u64)
+		Weight::from_ref_time(1_877_983)
 			// Standard Error: 9_463
-			.saturating_add(Weight::from_ref_time(957_835 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(957_835).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_BrTable(r: u32, ) -> Weight {
-		Weight::from_ref_time(1_037_171 as u64)
+		Weight::from_ref_time(1_037_171)
 			// Standard Error: 20_753
-			.saturating_add(Weight::from_ref_time(1_476_015 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_476_015).saturating_mul(r as u64))
 	}
 	/// The range of component `s` is `[1, 50]`.
 	fn instruction_BrTable_per_elem(s: u32, ) -> Weight {
-		Weight::from_ref_time(3_959_230 as u64)
+		Weight::from_ref_time(3_959_230)
 			// Standard Error: 2_907
-			.saturating_add(Weight::from_ref_time(16_620 as u64).saturating_mul(s as u64))
+			.saturating_add(Weight::from_ref_time(16_620).saturating_mul(s as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_Call(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_017_610 as u64)
+		Weight::from_ref_time(4_017_610)
 			// Standard Error: 13_655
-			.saturating_add(Weight::from_ref_time(6_481_999 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(6_481_999).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_CallIndirect(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_945_751 as u64)
+		Weight::from_ref_time(4_945_751)
 			// Standard Error: 20_961
-			.saturating_add(Weight::from_ref_time(8_380_434 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(8_380_434).saturating_mul(r as u64))
 	}
 }
 
@@ -761,11 +761,11 @@ impl WeightInfo for () {
 	// Storage: Cosmwasm CodeIdToInfo (r:0 w:1)
 	/// The range of component `n` is `[1, 514288]`.
 	fn upload(n: u32, ) -> Weight {
-		Weight::from_ref_time(19_213_176 as u64)
+		Weight::from_ref_time(19_213_176)
 			// Standard Error: 134
-			.saturating_add(Weight::from_ref_time(51_744 as u64).saturating_mul(n as u64))
-			.saturating_add(RocksDbWeight::get().reads(3 as u64))
-			.saturating_add(RocksDbWeight::get().writes(6 as u64))
+			.saturating_add(Weight::from_ref_time(51_744).saturating_mul(n as u64))
+			.saturating_add(RocksDbWeight::get().reads(3))
+			.saturating_add(RocksDbWeight::get().writes(6))
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
@@ -777,13 +777,13 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 23]`.
 	fn instantiate(n: u32, ) -> Weight {
-		Weight::from_ref_time(271_822_175 as u64)
+		Weight::from_ref_time(271_822_175)
 			// Standard Error: 214_443
-			.saturating_add(Weight::from_ref_time(21_368_222 as u64).saturating_mul(n as u64))
-			.saturating_add(RocksDbWeight::get().reads(6 as u64))
-			.saturating_add(RocksDbWeight::get().reads((2 as u64).saturating_mul(n as u64)))
-			.saturating_add(RocksDbWeight::get().writes(3 as u64))
-			.saturating_add(RocksDbWeight::get().writes((2 as u64).saturating_mul(n as u64)))
+			.saturating_add(Weight::from_ref_time(21_368_222).saturating_mul(n as u64))
+			.saturating_add(RocksDbWeight::get().reads(6))
+			.saturating_add(RocksDbWeight::get().reads(2u64.saturating_mul(n as u64)))
+			.saturating_add(RocksDbWeight::get().writes(3))
+			.saturating_add(RocksDbWeight::get().writes(2u64.saturating_mul(n as u64)))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
@@ -794,13 +794,13 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 23]`.
 	fn execute(n: u32, ) -> Weight {
-		Weight::from_ref_time(240_096_021 as u64)
+		Weight::from_ref_time(240_096_021)
 			// Standard Error: 217_568
-			.saturating_add(Weight::from_ref_time(21_911_965 as u64).saturating_mul(n as u64))
-			.saturating_add(RocksDbWeight::get().reads(5 as u64))
-			.saturating_add(RocksDbWeight::get().reads((2 as u64).saturating_mul(n as u64)))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
-			.saturating_add(RocksDbWeight::get().writes((2 as u64).saturating_mul(n as u64)))
+			.saturating_add(Weight::from_ref_time(21_911_965).saturating_mul(n as u64))
+			.saturating_add(RocksDbWeight::get().reads(5))
+			.saturating_add(RocksDbWeight::get().reads(2u64.saturating_mul(n as u64)))
+			.saturating_add(RocksDbWeight::get().writes(1))
+			.saturating_add(RocksDbWeight::get().writes(2u64.saturating_mul(n as u64)))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
@@ -811,9 +811,9 @@ impl WeightInfo for () {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Cosmwasm CodeHashToId (r:0 w:1)
 	fn migrate() -> Weight {
-		Weight::from_ref_time(412_229_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(9 as u64))
-			.saturating_add(RocksDbWeight::get().writes(7 as u64))
+		Weight::from_ref_time(412_229_000)
+			.saturating_add(RocksDbWeight::get().reads(9))
+			.saturating_add(RocksDbWeight::get().writes(7))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
@@ -821,88 +821,88 @@ impl WeightInfo for () {
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm InstrumentedCode (r:1 w:0)
 	fn update_admin() -> Weight {
-		Weight::from_ref_time(198_400_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(5 as u64))
-			.saturating_add(RocksDbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(198_400_000)
+			.saturating_add(RocksDbWeight::get().reads(5))
+			.saturating_add(RocksDbWeight::get().writes(2))
 	}
 	// Storage: unknown [0xe9a804b2e527fd3601d2ffc0bb023cd668656c6c6f20776f726c64] (r:1 w:0)
 	fn db_read() -> Weight {
-		Weight::from_ref_time(13_244_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(13_244_000)
+			.saturating_add(RocksDbWeight::get().reads(1))
 	}
 	// Storage: unknown [0xe9a804b2e527fd3601d2ffc0bb023cd668656c6c6f20776f726c64] (r:1 w:0)
 	fn db_read_other_contract() -> Weight {
-		Weight::from_ref_time(12_452_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(12_452_000)
+			.saturating_add(RocksDbWeight::get().reads(1))
 	}
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:1)
 	fn db_write() -> Weight {
-		Weight::from_ref_time(12_930_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(12_930_000)
+			.saturating_add(RocksDbWeight::get().reads(1))
+			.saturating_add(RocksDbWeight::get().writes(1))
 	}
 	fn db_scan() -> Weight {
-		Weight::from_ref_time(2_732_000 as u64)
+		Weight::from_ref_time(2_732_000)
 	}
 	// Storage: unknown [0x] (r:1 w:0)
 	fn db_next() -> Weight {
-		Weight::from_ref_time(11_524_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(11_524_000)
+			.saturating_add(RocksDbWeight::get().reads(1))
 	}
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:0 w:1)
 	fn db_remove() -> Weight {
-		Weight::from_ref_time(6_755_000 as u64)
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(6_755_000)
+			.saturating_add(RocksDbWeight::get().writes(1))
 	}
 	// Storage: Tokens Accounts (r:1 w:0)
 	fn balance() -> Weight {
-		Weight::from_ref_time(8_386_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(8_386_000)
+			.saturating_add(RocksDbWeight::get().reads(1))
 	}
 	// Storage: System Account (r:2 w:2)
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 23]`.
 	fn transfer(n: u32, ) -> Weight {
-		Weight::from_ref_time(27_900_925 as u64)
+		Weight::from_ref_time(27_900_925)
 			// Standard Error: 149_091
-			.saturating_add(Weight::from_ref_time(20_291_322 as u64).saturating_mul(n as u64))
-			.saturating_add(RocksDbWeight::get().reads((2 as u64).saturating_mul(n as u64)))
-			.saturating_add(RocksDbWeight::get().writes((2 as u64).saturating_mul(n as u64)))
+			.saturating_add(Weight::from_ref_time(20_291_322).saturating_mul(n as u64))
+			.saturating_add(RocksDbWeight::get().reads(2u64.saturating_mul(n as u64)))
+			.saturating_add(RocksDbWeight::get().writes(2u64.saturating_mul(n as u64)))
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
 	fn set_contract_meta() -> Weight {
-		Weight::from_ref_time(11_590_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(11_590_000)
+			.saturating_add(RocksDbWeight::get().reads(1))
+			.saturating_add(RocksDbWeight::get().writes(1))
 	}
 	fn running_contract_meta() -> Weight {
-		Weight::from_ref_time(3_475_000 as u64)
+		Weight::from_ref_time(3_475_000)
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn contract_meta() -> Weight {
-		Weight::from_ref_time(11_376_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(11_376_000)
+			.saturating_add(RocksDbWeight::get().reads(1))
 	}
 	fn addr_validate() -> Weight {
-		Weight::from_ref_time(2_342_000 as u64)
+		Weight::from_ref_time(2_342_000)
 	}
 	fn addr_canonicalize() -> Weight {
-		Weight::from_ref_time(2_314_000 as u64)
+		Weight::from_ref_time(2_314_000)
 	}
 	fn addr_humanize() -> Weight {
-		Weight::from_ref_time(397_000 as u64)
+		Weight::from_ref_time(397_000)
 	}
 	fn secp256k1_recover_pubkey() -> Weight {
-		Weight::from_ref_time(86_729_000 as u64)
+		Weight::from_ref_time(86_729_000)
 	}
 	fn secp256k1_verify() -> Weight {
-		Weight::from_ref_time(33_438_000 as u64)
+		Weight::from_ref_time(33_438_000)
 	}
 	fn ed25519_verify() -> Weight {
-		Weight::from_ref_time(43_648_000 as u64)
+		Weight::from_ref_time(43_648_000)
 	}
 	fn ed25519_batch_verify() -> Weight {
-		Weight::from_ref_time(60_481_000 as u64)
+		Weight::from_ref_time(60_481_000)
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:1)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:1)
@@ -913,459 +913,459 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:2 w:2)
 	/// The range of component `n` is `[0, 23]`.
 	fn continue_instantiate(n: u32, ) -> Weight {
-		Weight::from_ref_time(232_216_094 as u64)
+		Weight::from_ref_time(232_216_094)
 			// Standard Error: 194_340
-			.saturating_add(Weight::from_ref_time(23_770_105 as u64).saturating_mul(n as u64))
-			.saturating_add(RocksDbWeight::get().reads(5 as u64))
-			.saturating_add(RocksDbWeight::get().reads((2 as u64).saturating_mul(n as u64)))
-			.saturating_add(RocksDbWeight::get().writes(3 as u64))
-			.saturating_add(RocksDbWeight::get().writes((2 as u64).saturating_mul(n as u64)))
+			.saturating_add(Weight::from_ref_time(23_770_105).saturating_mul(n as u64))
+			.saturating_add(RocksDbWeight::get().reads(5))
+			.saturating_add(RocksDbWeight::get().reads(2u64.saturating_mul(n as u64)))
+			.saturating_add(RocksDbWeight::get().writes(3))
+			.saturating_add(RocksDbWeight::get().writes(2u64.saturating_mul(n as u64)))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	/// The range of component `n` is `[0, 23]`.
 	fn continue_execute(n: u32, ) -> Weight {
-		Weight::from_ref_time(168_885_098 as u64)
+		Weight::from_ref_time(168_885_098)
 			// Standard Error: 693_834
-			.saturating_add(Weight::from_ref_time(8_982_880 as u64).saturating_mul(n as u64))
-			.saturating_add(RocksDbWeight::get().reads(3 as u64))
+			.saturating_add(Weight::from_ref_time(8_982_880).saturating_mul(n as u64))
+			.saturating_add(RocksDbWeight::get().reads(3))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn continue_migrate() -> Weight {
-		Weight::from_ref_time(421_685_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(3 as u64))
+		Weight::from_ref_time(421_685_000)
+			.saturating_add(RocksDbWeight::get().reads(3))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn continue_query() -> Weight {
-		Weight::from_ref_time(394_101_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(3 as u64))
+		Weight::from_ref_time(394_101_000)
+			.saturating_add(RocksDbWeight::get().reads(3))
 	}
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	fn continue_reply() -> Weight {
-		Weight::from_ref_time(417_714_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(3 as u64))
+		Weight::from_ref_time(417_714_000)
+			.saturating_add(RocksDbWeight::get().reads(3))
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:0)
 	fn query_contract_info() -> Weight {
-		Weight::from_ref_time(41_799_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(41_799_000)
+			.saturating_add(RocksDbWeight::get().reads(1))
 	}
 	// Storage: Cosmwasm CodeIdToInfo (r:1 w:0)
 	fn query_code_info() -> Weight {
-		Weight::from_ref_time(26_298_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+		Weight::from_ref_time(26_298_000)
+			.saturating_add(RocksDbWeight::get().reads(1))
 	}
 	// Storage: Cosmwasm ContractToInfo (r:1 w:0)
 	// Storage: unknown [0x46fb7408d4f285228f4af516ea25851b68656c6c6f] (r:1 w:0)
 	fn query_raw() -> Weight {
-		Weight::from_ref_time(48_135_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+		Weight::from_ref_time(48_135_000)
+			.saturating_add(RocksDbWeight::get().reads(2))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Const(r: u32, ) -> Weight {
-		Weight::from_ref_time(8_169_317 as u64)
+		Weight::from_ref_time(8_169_317)
 			// Standard Error: 55_178
-			.saturating_add(Weight::from_ref_time(1_249_208 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_249_208).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Const(r: u32, ) -> Weight {
-		Weight::from_ref_time(5_802_879 as u64)
+		Weight::from_ref_time(5_802_879)
 			// Standard Error: 10_779
-			.saturating_add(Weight::from_ref_time(791_357 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(791_357).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Load(r: u32, ) -> Weight {
-		Weight::from_ref_time(7_303_250 as u64)
+		Weight::from_ref_time(7_303_250)
 			// Standard Error: 15_910
-			.saturating_add(Weight::from_ref_time(1_585_639 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_585_639).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Load(r: u32, ) -> Weight {
-		Weight::from_ref_time(6_132_192 as u64)
+		Weight::from_ref_time(6_132_192)
 			// Standard Error: 18_934
-			.saturating_add(Weight::from_ref_time(1_382_263 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_382_263).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Store(r: u32, ) -> Weight {
-		Weight::from_ref_time(12_845_591 as u64)
+		Weight::from_ref_time(12_845_591)
 			// Standard Error: 31_110
-			.saturating_add(Weight::from_ref_time(2_314_991 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(2_314_991).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Store(r: u32, ) -> Weight {
-		Weight::from_ref_time(6_804_160 as u64)
+		Weight::from_ref_time(6_804_160)
 			// Standard Error: 12_843
-			.saturating_add(Weight::from_ref_time(2_023_253 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(2_023_253).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Eq(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_453_882 as u64)
+		Weight::from_ref_time(4_453_882)
 			// Standard Error: 7_974
-			.saturating_add(Weight::from_ref_time(1_181_230 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_181_230).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Eqz(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_446_407 as u64)
+		Weight::from_ref_time(3_446_407)
 			// Standard Error: 11_959
-			.saturating_add(Weight::from_ref_time(887_681 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(887_681).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Ne(r: u32, ) -> Weight {
-		Weight::from_ref_time(6_063_996 as u64)
+		Weight::from_ref_time(6_063_996)
 			// Standard Error: 9_665
-			.saturating_add(Weight::from_ref_time(1_092_921 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_092_921).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64LtS(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_745_660 as u64)
+		Weight::from_ref_time(4_745_660)
 			// Standard Error: 7_137
-			.saturating_add(Weight::from_ref_time(1_102_659 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_102_659).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64GtS(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_071_888 as u64)
+		Weight::from_ref_time(3_071_888)
 			// Standard Error: 14_294
-			.saturating_add(Weight::from_ref_time(1_237_101 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_237_101).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64LeS(r: u32, ) -> Weight {
-		Weight::from_ref_time(6_954_024 as u64)
+		Weight::from_ref_time(6_954_024)
 			// Standard Error: 16_403
-			.saturating_add(Weight::from_ref_time(1_111_512 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_111_512).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64GeS(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_202_448 as u64)
+		Weight::from_ref_time(3_202_448)
 			// Standard Error: 12_064
-			.saturating_add(Weight::from_ref_time(1_417_996 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_417_996).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Clz(r: u32, ) -> Weight {
-		Weight::from_ref_time(5_883_836 as u64)
+		Weight::from_ref_time(5_883_836)
 			// Standard Error: 12_773
-			.saturating_add(Weight::from_ref_time(781_624 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(781_624).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Ctz(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_205_570 as u64)
+		Weight::from_ref_time(4_205_570)
 			// Standard Error: 10_210
-			.saturating_add(Weight::from_ref_time(818_853 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(818_853).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Popcnt(r: u32, ) -> Weight {
-		Weight::from_ref_time(2_201_231 as u64)
+		Weight::from_ref_time(2_201_231)
 			// Standard Error: 5_237
-			.saturating_add(Weight::from_ref_time(909_349 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(909_349).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Add(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_441_796 as u64)
+		Weight::from_ref_time(4_441_796)
 			// Standard Error: 8_294
-			.saturating_add(Weight::from_ref_time(1_235_436 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_235_436).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Sub(r: u32, ) -> Weight {
-		Weight::from_ref_time(2_387_532 as u64)
+		Weight::from_ref_time(2_387_532)
 			// Standard Error: 11_454
-			.saturating_add(Weight::from_ref_time(1_376_809 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_376_809).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Mul(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_066_568 as u64)
+		Weight::from_ref_time(3_066_568)
 			// Standard Error: 11_765
-			.saturating_add(Weight::from_ref_time(1_363_852 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_363_852).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64DivS(r: u32, ) -> Weight {
-		Weight::from_ref_time(5_968_914 as u64)
+		Weight::from_ref_time(5_968_914)
 			// Standard Error: 15_273
-			.saturating_add(Weight::from_ref_time(1_368_413 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_368_413).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64DivU(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_357_177 as u64)
+		Weight::from_ref_time(3_357_177)
 			// Standard Error: 10_548
-			.saturating_add(Weight::from_ref_time(1_537_345 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_537_345).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64RemS(r: u32, ) -> Weight {
-		Weight::from_ref_time(5_123_088 as u64)
+		Weight::from_ref_time(5_123_088)
 			// Standard Error: 5_779
-			.saturating_add(Weight::from_ref_time(1_361_710 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_361_710).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64And(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_136_147 as u64)
+		Weight::from_ref_time(3_136_147)
 			// Standard Error: 10_304
-			.saturating_add(Weight::from_ref_time(1_259_503 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_259_503).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Or(r: u32, ) -> Weight {
-		Weight::from_ref_time(531_325 as u64)
+		Weight::from_ref_time(531_325)
 			// Standard Error: 18_361
-			.saturating_add(Weight::from_ref_time(1_503_381 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_503_381).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Xor(r: u32, ) -> Weight {
-		Weight::from_ref_time(7_288_542 as u64)
+		Weight::from_ref_time(7_288_542)
 			// Standard Error: 10_854
-			.saturating_add(Weight::from_ref_time(1_410_100 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_410_100).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Shl(r: u32, ) -> Weight {
-		Weight::from_ref_time(7_482_983 as u64)
+		Weight::from_ref_time(7_482_983)
 			// Standard Error: 9_983
-			.saturating_add(Weight::from_ref_time(1_219_115 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_219_115).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64ShrS(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_780_812 as u64)
+		Weight::from_ref_time(4_780_812)
 			// Standard Error: 8_707
-			.saturating_add(Weight::from_ref_time(1_291_335 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_291_335).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Rotl(r: u32, ) -> Weight {
-		Weight::from_ref_time(916_448 as u64)
+		Weight::from_ref_time(916_448)
 			// Standard Error: 16_265
-			.saturating_add(Weight::from_ref_time(1_651_295 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_651_295).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64Rotr(r: u32, ) -> Weight {
-		Weight::from_ref_time(10_328_055 as u64)
+		Weight::from_ref_time(10_328_055)
 			// Standard Error: 15_254
-			.saturating_add(Weight::from_ref_time(1_055_478 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_055_478).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I64ExtendSI32(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_725_409 as u64)
+		Weight::from_ref_time(3_725_409)
 			// Standard Error: 12_869
-			.saturating_add(Weight::from_ref_time(760_073 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(760_073).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_I32WrapI64(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_762_402 as u64)
+		Weight::from_ref_time(3_762_402)
 			// Standard Error: 13_522
-			.saturating_add(Weight::from_ref_time(769_000 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(769_000).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Eq(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_637_578 as u64)
+		Weight::from_ref_time(3_637_578)
 			// Standard Error: 13_582
-			.saturating_add(Weight::from_ref_time(1_153_289 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_153_289).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Ne(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_031_642 as u64)
+		Weight::from_ref_time(4_031_642)
 			// Standard Error: 6_567
-			.saturating_add(Weight::from_ref_time(1_052_076 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_052_076).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Lt(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_155_441 as u64)
+		Weight::from_ref_time(4_155_441)
 			// Standard Error: 9_183
-			.saturating_add(Weight::from_ref_time(1_083_255 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_083_255).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Gt(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_528_744 as u64)
+		Weight::from_ref_time(3_528_744)
 			// Standard Error: 4_279
-			.saturating_add(Weight::from_ref_time(1_106_018 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_106_018).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Le(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_849_075 as u64)
+		Weight::from_ref_time(3_849_075)
 			// Standard Error: 3_592
-			.saturating_add(Weight::from_ref_time(1_095_094 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_095_094).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Ge(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_402_550 as u64)
+		Weight::from_ref_time(3_402_550)
 			// Standard Error: 18_575
-			.saturating_add(Weight::from_ref_time(1_109_272 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_109_272).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Abs(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_374_684 as u64)
+		Weight::from_ref_time(3_374_684)
 			// Standard Error: 16_401
-			.saturating_add(Weight::from_ref_time(1_040_671 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_040_671).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Neg(r: u32, ) -> Weight {
-		Weight::from_ref_time(2_924_978 as u64)
+		Weight::from_ref_time(2_924_978)
 			// Standard Error: 12_468
-			.saturating_add(Weight::from_ref_time(787_836 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(787_836).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Ceil(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_487_025 as u64)
+		Weight::from_ref_time(3_487_025)
 			// Standard Error: 13_028
-			.saturating_add(Weight::from_ref_time(1_070_649 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_070_649).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Floor(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_219_530 as u64)
+		Weight::from_ref_time(3_219_530)
 			// Standard Error: 4_195
-			.saturating_add(Weight::from_ref_time(1_096_518 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_096_518).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Trunc(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_768_631 as u64)
+		Weight::from_ref_time(3_768_631)
 			// Standard Error: 9_045
-			.saturating_add(Weight::from_ref_time(1_087_146 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_087_146).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Nearest(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_733_585 as u64)
+		Weight::from_ref_time(4_733_585)
 			// Standard Error: 6_538
-			.saturating_add(Weight::from_ref_time(1_415_764 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_415_764).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Sqrt(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_963_692 as u64)
+		Weight::from_ref_time(3_963_692)
 			// Standard Error: 7_846
-			.saturating_add(Weight::from_ref_time(1_094_319 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_094_319).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Add(r: u32, ) -> Weight {
-		Weight::from_ref_time(5_158_468 as u64)
+		Weight::from_ref_time(5_158_468)
 			// Standard Error: 10_261
-			.saturating_add(Weight::from_ref_time(1_042_998 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_042_998).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Sub(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_306_395 as u64)
+		Weight::from_ref_time(3_306_395)
 			// Standard Error: 21_475
-			.saturating_add(Weight::from_ref_time(1_191_614 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_191_614).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Mul(r: u32, ) -> Weight {
-		Weight::from_ref_time(939_907 as u64)
+		Weight::from_ref_time(939_907)
 			// Standard Error: 12_978
-			.saturating_add(Weight::from_ref_time(1_325_608 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_325_608).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Div(r: u32, ) -> Weight {
-		Weight::from_ref_time(6_419_089 as u64)
+		Weight::from_ref_time(6_419_089)
 			// Standard Error: 6_276
-			.saturating_add(Weight::from_ref_time(1_082_816 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_082_816).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Min(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_631_174 as u64)
+		Weight::from_ref_time(3_631_174)
 			// Standard Error: 3_841
-			.saturating_add(Weight::from_ref_time(1_326_480 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_326_480).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Max(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_000_016 as u64)
+		Weight::from_ref_time(4_000_016)
 			// Standard Error: 18_339
-			.saturating_add(Weight::from_ref_time(1_401_801 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_401_801).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_F64Copysign(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_512_972 as u64)
+		Weight::from_ref_time(3_512_972)
 			// Standard Error: 4_287
-			.saturating_add(Weight::from_ref_time(1_085_900 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_085_900).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_Select(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_626_360 as u64)
+		Weight::from_ref_time(3_626_360)
 			// Standard Error: 4_330
-			.saturating_add(Weight::from_ref_time(1_359_540 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_359_540).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_If(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_134_797 as u64)
+		Weight::from_ref_time(3_134_797)
 			// Standard Error: 3_704
-			.saturating_add(Weight::from_ref_time(640_563 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(640_563).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_Else(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_532_948 as u64)
+		Weight::from_ref_time(3_532_948)
 			// Standard Error: 8_800
-			.saturating_add(Weight::from_ref_time(1_016_347 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_016_347).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_GetLocal(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_523_772 as u64)
+		Weight::from_ref_time(3_523_772)
 			// Standard Error: 7_456
-			.saturating_add(Weight::from_ref_time(459_326 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(459_326).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_SetLocal(r: u32, ) -> Weight {
-		Weight::from_ref_time(3_197_430 as u64)
+		Weight::from_ref_time(3_197_430)
 			// Standard Error: 1_933
-			.saturating_add(Weight::from_ref_time(505_514 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(505_514).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_TeeLocal(r: u32, ) -> Weight {
-		Weight::from_ref_time(2_715_808 as u64)
+		Weight::from_ref_time(2_715_808)
 			// Standard Error: 1_479
-			.saturating_add(Weight::from_ref_time(1_207 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_207).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_GetGlobal(_r: u32, ) -> Weight {
-		Weight::from_ref_time(2_988_269 as u64)
+		Weight::from_ref_time(2_988_269)
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_SetGlobal(r: u32, ) -> Weight {
-		Weight::from_ref_time(2_798_290 as u64)
+		Weight::from_ref_time(2_798_290)
 			// Standard Error: 884
-			.saturating_add(Weight::from_ref_time(2_324 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(2_324).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_CurrentMemory(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_488_888 as u64)
+		Weight::from_ref_time(4_488_888)
 			// Standard Error: 13_180
-			.saturating_add(Weight::from_ref_time(1_024_150 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_024_150).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 3]`.
 	fn instruction_GrowMemory(r: u32, ) -> Weight {
-		Weight::from_ref_time(2_482_000 as u64)
+		Weight::from_ref_time(2_482_000)
 			// Standard Error: 8_606_292
-			.saturating_add(Weight::from_ref_time(1_469_027_660 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_469_027_660).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_Br(r: u32, ) -> Weight {
-		Weight::from_ref_time(2_719_253 as u64)
+		Weight::from_ref_time(2_719_253)
 			// Standard Error: 4_513
-			.saturating_add(Weight::from_ref_time(587_800 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(587_800).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_BrIf(r: u32, ) -> Weight {
-		Weight::from_ref_time(1_877_983 as u64)
+		Weight::from_ref_time(1_877_983)
 			// Standard Error: 9_463
-			.saturating_add(Weight::from_ref_time(957_835 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(957_835).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_BrTable(r: u32, ) -> Weight {
-		Weight::from_ref_time(1_037_171 as u64)
+		Weight::from_ref_time(1_037_171)
 			// Standard Error: 20_753
-			.saturating_add(Weight::from_ref_time(1_476_015 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(1_476_015).saturating_mul(r as u64))
 	}
 	/// The range of component `s` is `[1, 50]`.
 	fn instruction_BrTable_per_elem(s: u32, ) -> Weight {
-		Weight::from_ref_time(3_959_230 as u64)
+		Weight::from_ref_time(3_959_230)
 			// Standard Error: 2_907
-			.saturating_add(Weight::from_ref_time(16_620 as u64).saturating_mul(s as u64))
+			.saturating_add(Weight::from_ref_time(16_620).saturating_mul(s as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_Call(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_017_610 as u64)
+		Weight::from_ref_time(4_017_610)
 			// Standard Error: 13_655
-			.saturating_add(Weight::from_ref_time(6_481_999 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(6_481_999).saturating_mul(r as u64))
 	}
 	/// The range of component `r` is `[0, 50]`.
 	fn instruction_CallIndirect(r: u32, ) -> Weight {
-		Weight::from_ref_time(4_945_751 as u64)
+		Weight::from_ref_time(4_945_751)
 			// Standard Error: 20_961
-			.saturating_add(Weight::from_ref_time(8_380_434 as u64).saturating_mul(r as u64))
+			.saturating_add(Weight::from_ref_time(8_380_434).saturating_mul(r as u64))
 	}
 }
