@@ -307,24 +307,6 @@ const sidebars = {
                     },
                     collapsible: true,
                     collapsed: true,
-                    items: [
-                        'codespaces/getting-started',
-                        {
-                            type: 'category',
-                            label: 'Using Codespaces',
-                            link: {
-                                type: 'doc',
-                                id: 'codespaces/using-codespaces',
-                            },
-                            collapsible: true,
-                            collapsed: false,
-                            items: [
-                                'codespaces/book',
-                                'codespaces/substrate',
-                                'codespaces/frontend',
-                                'codespaces/runtime-tests'],
-                        },
-                    ],
                 },
                 {
                     type: 'category',

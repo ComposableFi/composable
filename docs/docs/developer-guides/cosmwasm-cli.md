@@ -63,19 +63,6 @@ A useful resource for interacting with PolkadotJS is their [developer documentat
 
 ## Interacting with the CLI 
 
-<!-- This section is omitted for now as it is not possible to do this until we update our version of cw. 
-## Create a CosmWasm project
-
-You can create a base CosmWasm project that you can work on.
-
-```
-ccw new --name get-started --description "Get started with CosmWasm"
-```
-
-See [here](./cosmwasm/new-project.md) for more.
--->
-
-
 ### Upload a CosmWasm contract
 
 For interacting with `cosmwasm`, the `substrate` subcommand is used. To be able
