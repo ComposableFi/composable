@@ -9,7 +9,7 @@ use cosmwasm_std::{Deps, DepsMut, Response};
 use xc_core::AssetId;
 
 /// Adds a new asset to the registry; errors out if asset already exists.
-pub(crate) fn handle_register_asset(
+pub(crate) fn register_asset(
 	_: auth::Admin,
 	deps: DepsMut,
 	asset_id: AssetId,
@@ -29,7 +29,7 @@ pub(crate) fn handle_register_asset(
 
 /// Removes an existing asset from the registry; errors out if asset doesn’t
 /// exist.
-pub(crate) fn handle_unregister_asset(
+pub(crate) fn unregister_asset(
 	_: auth::Admin,
 	deps: DepsMut,
 	asset_id: AssetId,
@@ -97,22 +97,22 @@ mod tests {
 
 		let addr1 = Asset {
 			network_id: xc_core::Picasso::ID,
-			local: msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr1") },
+			local: msg::AssetReference::Cw20 { cw20_address: Addr::unchecked("addr1") },
 			bridged: None,
 		};
 		let addr2 = Asset {
 			network_id: xc_core::Picasso::ID,
-			local: msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr2") },
+			local: msg::AssetReference::Cw20 { cw20_address: Addr::unchecked("addr2") },
 			bridged: None,
 		};
 		let addr3 = Asset {
 			network_id: xc_core::Picasso::ID,
-			local: msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr3") },
+			local: msg::AssetReference::Cw20 { cw20_address: Addr::unchecked("addr3") },
 			bridged: None,
 		};
 		let addr4 = Asset {
 			network_id: xc_core::Picasso::ID,
-			local: msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr4") },
+			local: msg::AssetReference::Cw20 { cw20_address: Addr::unchecked("addr4") },
 			bridged: None,
 		};
 
@@ -189,7 +189,7 @@ mod tests {
 
 		let addr1 = Asset {
 			network_id: xc_core::Picasso::ID,
-			local: msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr1") },
+			local: msg::AssetReference::Cw20 { cw20_address: Addr::unchecked("addr1") },
 			bridged: None,
 		};
 

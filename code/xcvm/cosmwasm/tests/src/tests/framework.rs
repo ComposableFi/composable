@@ -288,7 +288,7 @@ impl<T> TestVM<XCVMState<T>> {
 				id: asset_id,
 				asset: Asset {
 					network_id: todo!("restore"),
-					local: xc_core::gateway::AssetReference::Virtual {
+					local: xc_core::gateway::AssetReference::Cw20 {
 						cw20_address: asset_address.clone().into(),
 					},
 					bridged: None,

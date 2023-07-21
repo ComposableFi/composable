@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 pub struct XCVMAck(u8);
 
 impl XCVMAck {
-	pub const KO: XCVMAck = XCVMAck(0);
-	pub const OK: XCVMAck = XCVMAck(1);
+	pub const OK: XCVMAck = XCVMAck(0);
+	pub const FAIL: XCVMAck = XCVMAck(1);
 	pub fn into_vec(self) -> Vec<u8> {
 		self.into()
 	}
@@ -36,7 +36,7 @@ impl TryFrom<&[u8]> for XCVMAck {
 	type Error = ();
 	fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
 		match value {
-			[0] => Ok(XCVMAck::KO),
+			[0] => Ok(XCVMAck::FAIL),
 			[1] => Ok(XCVMAck::OK),
 			_ => Err(()),
 		}

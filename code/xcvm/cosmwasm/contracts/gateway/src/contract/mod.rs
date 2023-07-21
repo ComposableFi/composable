@@ -72,7 +72,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> ContractResult<Response> {
 	match msg.id {
 		EXEC_PROGRAM_REPLY_ID => handle_exec_reply(msg),
 		INSTANTIATE_INTERPRETER_REPLY_ID =>
-			exec::handle_instantiate_reply(deps, msg).map_err(ContractError::from),
+			exec::instantiate_reply(deps, msg).map_err(ContractError::from),
 		_ => Err(ContractError::UnknownReply),
 	}
 }
@@ -81,7 +81,7 @@ fn handle_exec_reply(msg: Reply) -> ContractResult<Response> {
 	let (data, event) = match msg.result {
 		SubMsgResult::Ok(_) =>
 			(XCVMAck::OK, make_event("receive").add_attribute("result", "success")),
-		SubMsgResult::Err(err) => (XCVMAck::KO, make_ibc_failure_event(err.to_string())),
+		SubMsgResult::Err(err) => (XCVMAck::FAIL, make_ibc_failure_event(err.to_string())),
 	};
 	Ok(Response::default().add_event(event).set_data(data))
 }

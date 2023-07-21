@@ -24,8 +24,9 @@ use xc_core::{
 const CONTRACT_NAME: &str = "composable:xcvm-gateway";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-const EXEC_PROGRAM_REPLY_ID: u64 = 0;
-pub(crate) const INSTANTIATE_INTERPRETER_REPLY_ID: u64 = 1;
+const TRANSFER_PROGRAM_REPLY_ID: u64 = 0;
+const EXEC_PROGRAM_REPLY_ID: u64 = 1;
+pub(crate) const INSTANTIATE_INTERPRETER_REPLY_ID: u64 = 2;
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn ibc_channel_open(
@@ -107,14 +108,15 @@ pub fn ibc_packet_receive(
 			program: packet.program,
 			assets: packet.assets,
 		};
+		let transfer = msg::ExecuteMsg::TransferFundsPrivileged { call_origin,  assets:  execute_program.assets.clone() }; 
 		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
 		let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
-		Ok(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID))
+		Ok(SubMsg::reply_always(transfer, TRANSFER_PROGRAM_REPLY_ID).reply_always(msg, EXEC_PROGRAM_REPLY_ID))
 	})();
 	Ok(match msg {
 		Ok(msg) => response.set_ack(XCVMAck::OK).add_submessage(msg),
 		Err(err) =>
-			response.add_event(make_ibc_failure_event(err.to_string())).set_ack(XCVMAck::KO),
+			response.add_event(make_ibc_failure_event(err.to_string())).set_ack(XCVMAck::FAIL),
 	})
 }
 
@@ -139,7 +141,7 @@ pub fn ibc_packet_ack(
 			// https://github.com/cosmos/ibc/pull/998
 			Ok(<_>::default())
 		},
-		XCVMAck::KO => Ok(<_>::default()),
+		XCVMAck::FAIL => Ok(<_>::default()),
 		_ => Err(ContractError::InvalidAck),
 	}?;
 	Ok(IbcBasicResponse::default()

@@ -45,36 +45,36 @@ pub fn execute(
 		},
 
 		msg::ExecuteMsg::ExecuteProgram { execute_program } =>
-			exec::handle_execute_program(deps, env, info, execute_program),
+			exec::execute_program(deps, env, info, execute_program),
 
 		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program } => {
 			let auth = auth::Contract::authorise(&env, &info)?;
-			exec::handle_execute_program_privilleged(auth, deps, env, call_origin, execute_program)
+			exec::execute_program_privileged(auth, deps, env, call_origin, execute_program)
 		},
 
-		msg::ExecuteMsg::Bridge(msg) => {
+		msg::ExecuteMsg::BridgeForward(msg) => {
 			let auth =
 				auth::Interpreter::authorise(deps.as_ref(), &info, msg.interpreter_origin.clone())?;
-			handle_bridge_forward(auth, deps, info, msg)
+			bridge_forward(auth, deps, info, msg)
 		},
 
 		msg::ExecuteMsg::RegisterAsset(msg) => {
 			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
-			assets::handle_register_asset(auth, deps, msg.id, msg.asset)
+			assets::register_asset(auth, deps, msg.id, msg.asset)
 		},
 
 		msg::ExecuteMsg::UnregisterAsset { asset_id } => {
 			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
-			assets::handle_unregister_asset(auth, deps, asset_id)
+			assets::unregister_asset(auth, deps, asset_id)
 		},
-		msg::ExecuteMsg::Wasm(msg) => {
+		msg::ExecuteMsg::WasmHook(msg) => {
 			let auth = auth::WasmHook::authorise(deps.storage, &env, &info, msg.from_network_id)?;
-			remote_wasm_execute(auth, msg, env)
+			wasm_hook(auth, msg, env)
 		},
 	}
 }
 
-fn remote_wasm_execute(
+fn wasm_hook(
 	_: auth::WasmHook,
 	msg: Ics20MessageHook,
 	env: Env,
@@ -90,17 +90,17 @@ fn remote_wasm_execute(
 		assets: packet.assets,
 	};
 	let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
-	let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
+	let msg = wasm_hook(env.contract.address, &msg, Default::default())?;
 	Ok(Response::new().add_submessage(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID)))
 }
 
 /// Handle a request gateway message.
 /// The call must originate from an interpreter.
-fn handle_bridge_forward(
+fn bridge_forward(
 	_: auth::Interpreter,
 	deps: DepsMut,
 	info: MessageInfo,
-	msg: xc_core::gateway::BridgeMsg,
+	msg: xc_core::gateway::BridgeForwardMsg,
 ) -> ContractResult<Response> {
 	let channel_id = state::IBC_NETWORK_CHANNEL
 		.load(deps.storage, msg.network_id)

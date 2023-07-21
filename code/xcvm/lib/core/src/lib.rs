@@ -20,6 +20,8 @@ mod program;
 pub mod proto;
 mod protocol;
 pub mod shared;
+pub mod substrate;
+pub mod defi;
 
 pub use crate::{
 	asset::*, bridge::*, instruction::*, network::*, packet::*, program::*, protocol::*,

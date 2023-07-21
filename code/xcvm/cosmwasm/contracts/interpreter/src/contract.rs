@@ -20,7 +20,7 @@ use cw_utils::ensure_from_older_version;
 use num::Zero;
 use xc_core::{
 	apply_bindings,
-	gateway::{Asset, AssetReference, BridgeMsg, ExecuteMsg as GWExecuteMsg, ExecuteProgramMsg},
+	gateway::{Asset, AssetReference, BridgeForwardMsg, ExecuteMsg as GWExecuteMsg, ExecuteProgramMsg},
 	shared::{encode_base64, DefaultXCVMProgram},
 	AssetId, Balance, BindingValue, Destination, Displayed, Funds, Instruction, NetworkId,
 	Register,
@@ -253,7 +253,7 @@ pub fn interpret_call(
 						asset_id,
 					)?;
 					match reference.local {
-						AssetReference::Virtual { cw20_address } =>
+						AssetReference::Cw20 { cw20_address } =>
 							Cow::Owned(cw20_address.into_string().into()),
 						AssetReference::Native { denom } => Cow::Owned(denom.into()),
 					}
@@ -265,7 +265,7 @@ pub fn interpret_call(
 						asset_id,
 					)?;
 					let amount = match reference.local {
-						AssetReference::Virtual { cw20_address } => apply_amount_to_cw20_balance(
+						AssetReference::Cw20 { cw20_address } => apply_amount_to_cw20_balance(
 							deps,
 							&balance,
 							&cw20_address,
@@ -332,7 +332,7 @@ pub fn interpret_spawn(
 					.apply(coin.amount.into())
 					.map_err(|_| ContractError::ArithmeticError)
 			},
-			AssetReference::Virtual { cw20_address } => apply_amount_to_cw20_balance(
+			AssetReference::Cw20 { cw20_address } => apply_amount_to_cw20_balance(
 				deps.as_ref(),
 				&balance,
 				cw20_address,
@@ -348,7 +348,7 @@ pub fn interpret_spawn(
 					to_address: gateway_address.clone().into(),
 					amount: vec![Coin { denom, amount: transfer_amount.into() }],
 				}),
-				AssetReference::Virtual { cw20_address } => response.add_message(
+				AssetReference::Cw20 { cw20_address } => response.add_message(
 					Cw20Contract(cw20_address).call(Cw20ExecuteMsg::Transfer {
 						recipient: gateway_address.clone().into(),
 						amount: transfer_amount.into(),
@@ -362,7 +362,7 @@ pub fn interpret_spawn(
 	Ok(response
 		.add_message(wasm_execute(
 			gateway_address,
-			&GWExecuteMsg::Bridge(BridgeMsg {
+			&GWExecuteMsg::BridgeForward(BridgeForwardMsg {
 				interpreter_origin: interpreter_origin.clone(),
 				execute_program,
 				network_id: network,
@@ -420,7 +420,7 @@ pub fn interpret_transfer(
 					amount: vec![coin],
 				})
 			},
-			AssetReference::Virtual { cw20_address } => {
+			AssetReference::Cw20 { cw20_address } => {
 				let contract = Cw20Contract(cw20_address.clone());
 				let transfer_amount = apply_amount_to_cw20_balance(
 					deps.as_ref(),

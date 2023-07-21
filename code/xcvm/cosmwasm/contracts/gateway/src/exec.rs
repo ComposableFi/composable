@@ -19,9 +19,10 @@ use cw_xc_interpreter::contract::{
 };
 use xc_core::{CallOrigin, Displayed, Funds, InterpreterOrigin};
 
+/// transfer funds from user to this contract
 fn transfer_from_user(
 	deps: &DepsMut,
-	self_address: Addr,
+	this: Addr,
 	user: Addr,
 	funds: Vec<Coin>,
 	assets: &Funds<Displayed<u128>>,
@@ -39,10 +40,10 @@ fn transfer_from_user(
 					return Err(ContractError::InsufficientFunds)?
 				}
 			},
-			msg::AssetReference::Virtual { cw20_address } =>
+			msg::AssetReference::Cw20 { cw20_address } =>
 				transfers.push(Cw20Contract(cw20_address).call(Cw20ExecuteMsg::TransferFrom {
 					owner: user.to_string(),
-					recipient: self_address.to_string(),
+					recipient: this.to_string(),
 					amount: amount.clone().into(),
 				})?),
 		}
@@ -53,23 +54,23 @@ fn transfer_from_user(
 /// Handles request to execute an [`XCVMProgram`].
 ///
 /// This is the entry point for executing a program from a user.  Handling
-pub(crate) fn handle_execute_program(
+pub(crate) fn execute_program(
 	deps: DepsMut,
 	env: Env,
 	info: MessageInfo,
 	execute_program: msg::ExecuteProgramMsg,
 ) -> ContractResult<Response> {
-	let self_address = env.contract.address;
+	let this = env.contract.address;
 	let call_origin = CallOrigin::Local { user: info.sender.clone() };
 	let transfers = transfer_from_user(
 		&deps,
-		self_address.clone(),
+		this.clone(),
 		info.sender,
 		info.funds,
 		&execute_program.assets,
 	)?;
 	let msg = wasm_execute(
-		self_address,
+		this,
 		&msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program },
 		Default::default(),
 	)?;
@@ -80,7 +81,7 @@ pub(crate) fn handle_execute_program(
 /// Only the gateway is allowed to dispatch such operation.
 /// The gateway must ensure that the `CallOrigin` is valid as the router does not do further
 /// checking on it.
-pub(crate) fn handle_execute_program_privilleged(
+pub(crate) fn execute_program_privileged(
 	_: auth::Contract,
 	deps: DepsMut,
 	env: Env,
@@ -169,7 +170,7 @@ fn send_funds_to_interpreter(
 				amount: vec![Coin::new(amount, denom)],
 			}
 			.into(),
-			msg::AssetReference::Virtual { cw20_address } => {
+			msg::AssetReference::Cw20 { cw20_address } => {
 				let contract = Cw20Contract(cw20_address);
 				contract
 					.call(Cw20ExecuteMsg::Transfer {
@@ -184,7 +185,7 @@ fn send_funds_to_interpreter(
 	Ok(response)
 }
 
-pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
+pub(crate) fn instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 	let response = msg.result.into_result().map_err(StdError::generic_err)?;
 
 	// Catch the default `instantiate` event which contains `_contract_address` attribute that

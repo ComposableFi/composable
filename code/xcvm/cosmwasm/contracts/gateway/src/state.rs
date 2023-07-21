@@ -66,12 +66,16 @@ pub struct OtherNetworkItem {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub struct NetworkItem {
-	/// something which will be receiver on other side
+	/// something which will be receiver on this network
 	/// case of network has XCVM deployed as contract, account address is stored here
 	pub gateway_to_send_to: Option<GatewayId>,
 	/// Cosmos bech32 prefix per network,
 	/// if there is prefix chain accounts are Cosmos SDK compatible chain
 	pub cosmos_prefix: Option<String>,
+
+	/// https://twitter.com/scvsecurity/status/1682329758020022272?s=46&t=seqlmFXCNZ42xN1cSXpKdQ
+	/// what we can do to protect agains?
+	pub one_hop : bool,
 }
 
 /// the connection description from first network to second

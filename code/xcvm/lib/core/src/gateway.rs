@@ -50,19 +50,26 @@ pub enum ExecuteMsg {
 		execute_program: ExecuteProgramMsg,
 	},
 
+	/// Transfer funds from gateway to interpreter
+	TransferFundsPrivileged {
+		/// required to determine interpreter address
+		call_origin: CallOrigin,
+		/// funds to transfer
+		assets: Funds<Displayed<u128>>,
+	},
 	/// Request to execute a program on behalf of given user.
 	///
-	/// This can only be sent by trusted contract.  The message is
+	/// This can only be sent from trusted address.
 	ExecuteProgramPrivileged {
 		/// The origin of the call.
 		call_origin: CallOrigin,
 		/// Program to execute.
-		execute_program: ExecuteProgramMsg,
+		execute_program: ExecuteProgramMsg,		
 	},
 
 	/// Message sent from interpreter trying to spawn program on another
 	/// network.
-	Bridge(BridgeMsg),
+	BridgeForward(BridgeForwardMsg),
 
 	/// Message sent by an admin to register a new asset.
 	RegisterAsset(RegisterAssetMsg),
@@ -72,7 +79,7 @@ pub enum ExecuteMsg {
 		asset_id: AssetId,
 	},
 
-	Wasm(Ics20MessageHook),
+	WasmHook(Ics20MessageHook),
 }
 
 /// when message is sent to other side, we should identify receiver of some kind
@@ -131,7 +138,7 @@ pub struct ExecuteProgramMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct BridgeMsg {
+pub struct BridgeForwardMsg {
 	pub interpreter_origin: InterpreterOrigin,
 	/// target network
 	pub network_id: NetworkId,
@@ -144,14 +151,14 @@ pub struct BridgeMsg {
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum AssetReference {
 	Native { denom: String },
-	Virtual { cw20_address: Addr },
+	Cw20 { cw20_address: Addr },
 }
 
 impl AssetReference {
 	pub fn denom(&self) -> String {
 		match self {
 			AssetReference::Native { denom } => denom.clone(),
-			AssetReference::Virtual { cw20_address } => ["cw20:", cw20_address.as_str()].concat(),
+			AssetReference::Cw20 { cw20_address } => ["cw20:", cw20_address.as_str()].concat(),
 		}
 	}
 }
