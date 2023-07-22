@@ -15,7 +15,7 @@ pub enum IbcIcs20Sender {
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum CallOrigin {
-	Remote { relayer: Addr, user_origin: UserOrigin },
+	Remote { user_origin: UserOrigin },
 	Local { user: Addr },
 }
 
@@ -24,7 +24,7 @@ impl CallOrigin {
 	/// No distinction is done for local or remote user in this case.
 	pub fn user(&self, current_network: NetworkId) -> UserOrigin {
 		match self {
-			CallOrigin::Remote { user_origin, .. } => user_origin.clone(),
+			CallOrigin::Remote { user_origin } => user_origin.clone(),
 			CallOrigin::Local { user } =>
 				UserOrigin { network_id: current_network, user_id: user.as_bytes().to_vec().into() },
 		}

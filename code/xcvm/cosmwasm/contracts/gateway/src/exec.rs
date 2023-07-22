@@ -77,6 +77,11 @@ pub(crate) fn execute_program(
 	Ok(Response::default().add_messages(transfers).add_message(msg))
 }
 
+
+
+// let response = send_funds_to_interpreter(deps.as_ref(), address.clone(), assets)?;
+		
+
 /// Handle a request to execute a [`XCVMProgram`].
 /// Only the gateway is allowed to dispatch such operation.
 /// The gateway must ensure that the `CallOrigin` is valid as the router does not do further
@@ -86,24 +91,21 @@ pub(crate) fn execute_program_privileged(
 	deps: DepsMut,
 	env: Env,
 	call_origin: CallOrigin,
-	msg::ExecuteProgramMsg { salt, program, assets }: msg::ExecuteProgramMsg,
+	msg: msg::ExecuteProgramMsg,
 ) -> ContractResult<Response> {
 	let config = Config::load(deps.storage)?;
 	let interpreter_origin =
 		InterpreterOrigin { user_origin: call_origin.user(config.network_id), salt };
 	let interpreter = state::INTERPRETERS.may_load(deps.storage, interpreter_origin.clone())?;
 	if let Some(state::Interpreter { address }) = interpreter {
-		// There is already an interpreter instance, so all we do is fund the interpreter, then
-		// add a callback to it
-		let response = send_funds_to_interpreter(deps.as_ref(), address.clone(), assets)?;
+		let mut response = Response::new();
 		let wasm_msg = wasm_execute(
 			address.clone(),
 			&cw_xc_interpreter::msg::ExecuteMsg::Execute {
-				relayer: call_origin.relayer().clone(),
-				program,
+				program: msg.program,
 			},
 			vec![],
-		)?;
+		)?;--
 		Ok(response
 			.add_event(
 				make_event("route.execute").add_attribute("interpreter", address.into_string()),
@@ -133,10 +135,10 @@ pub(crate) fn execute_program_privileged(
 			env.contract.address,
 			&xc_core::gateway::ExecuteMsg::ExecuteProgramPrivileged {
 				call_origin: call_origin.clone(),
-				execute_program: xc_core::gateway::ExecuteProgramMsg {
+				msg: xc_core::gateway::ExecuteProgramMsg {
 					salt: interpreter_origin.salt,
-					program,
-					assets,
+					program : msg.program,
+					assets : msg.assets,
 				},
 			},
 			vec![],

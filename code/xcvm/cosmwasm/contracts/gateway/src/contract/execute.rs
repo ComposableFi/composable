@@ -47,9 +47,13 @@ pub fn execute(
 		msg::ExecuteMsg::ExecuteProgram { execute_program } =>
 			exec::execute_program(deps, env, info, execute_program),
 
-		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program } => {
+		msg::ExecuteMsg::TransferFundsPrivileged { call_origin, msg } => {
+				todo!()
+		},
+
+		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, msg } => {
 			let auth = auth::Contract::authorise(&env, &info)?;
-			exec::execute_program_privileged(auth, deps, env, call_origin, execute_program)
+			exec::execute_program_privileged(auth, deps, env, call_origin, msg)
 		},
 
 		msg::ExecuteMsg::BridgeForward(msg) => {
@@ -81,7 +85,6 @@ fn wasm_hook(
 ) -> Result<Response, ContractError> {
 	let packet: XcPacket = decode_packet(&msg.data).map_err(ContractError::Protobuf)?;
 	let call_origin = CallOrigin::Remote {
-		relayer: Addr::unchecked("no access"),
 		user_origin: packet.user_origin,
 	};
 	let execute_program = msg::ExecuteProgramMsg {

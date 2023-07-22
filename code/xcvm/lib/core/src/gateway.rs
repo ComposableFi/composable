@@ -56,8 +56,8 @@ pub enum ExecuteMsg {
 	TransferFundsPrivileged {
 		/// required to determine interpreter address
 		call_origin: CallOrigin,
-		/// funds to transfer
-		assets: Funds<Displayed<u128>>,
+		/// funds to transfer to interpreter
+		msg: TransferFundsMsg,
 	},
 	/// Request to execute a program on behalf of given user.
 	///
@@ -68,7 +68,7 @@ pub enum ExecuteMsg {
 		/// The origin of the call.
 		call_origin: CallOrigin,
 		/// Program to execute.
-		execute_program: ExecuteProgramMsg,		
+		msg: ExecuteProgramMsg,		
 	},
 
 	/// Message sent from interpreter trying to spawn program on another
@@ -140,6 +140,22 @@ pub struct ExecuteProgramMsg {
 	/// The interpreter is funded prior to execution
 	pub assets: Funds<Displayed<u128>>,
 }
+
+
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct TransferFundsMsg {
+	/// The program salt.
+	pub salt: Vec<u8>,
+	/// Assets to fund the XCVM interpreter instance
+	/// The interpreter is funded prior to execution
+	pub assets: Funds<Displayed<u128>>,
+}
+
+
+
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]

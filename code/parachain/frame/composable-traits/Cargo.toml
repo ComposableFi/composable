@@ -74,8 +74,6 @@ std = [
   "xc-core/std",
   "cosmwasm-std/std",
   "pallet-ibc/std",
-  "cosmwasm-schema",
-  "schemars",
 ]
 test-utils = []
 visualization = ["plotters"]

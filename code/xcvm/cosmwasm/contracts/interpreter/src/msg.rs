@@ -35,7 +35,7 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
 	/// Execute an XCVM program
-	Execute { relayer: Addr, program: DefaultXCVMProgram },
+	Execute { program: DefaultXCVMProgram },
 	/// This is only meant to be used by the interpreter itself, otherwise it will return an error
 	/// The existence of this message is to allow the execution of the `Call` instruction. Once we
 	/// hit a call, the program queue the call and queue itself after it to ensure that the side

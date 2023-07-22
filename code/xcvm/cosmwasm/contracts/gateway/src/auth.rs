@@ -46,16 +46,16 @@ impl Auth<policy::WasmHook> {
 	) -> ContractResult<Self> {
 		let sender = info.sender.clone();
 		let this = state::Config::load(storage)?;
-		let channel = state::NETWORK_TO_NETWORK.load(storage, (this.network_id, network_id))?;
-		let sender: GatewayId = state::NETWORK
+		let this_channel = state::NETWORK_TO_NETWORK.load(storage, (this.network_id, network_id))?;
+		let remote_sender: GatewayId = state::NETWORK
 			.load(storage, network_id)?
 			.gateway_to_send_to
 			.ok_or(ContractError::NotAuthorized)?;
-		let sender = match sender {
+		let sender = match remote_sender {
 			GatewayId::CosmWasm(addr) => addr.to_string(),
 		};
 		let hash_of_channel_and_sender =
-			xc_core::ibc::hook::derive_intermediate_sender(&channel.ics_20_channel, &sender, "")?;
+			xc_core::ibc::hook::derive_intermediate_sender(&this_channel.ics_20_channel, &sender, "")?;
 		ensure!(hash_of_channel_and_sender == info.sender, ContractError::NotAuthorized);
 		Self::new(info.sender == env.contract.address)
 	}
