@@ -18,6 +18,7 @@
           git
           git-lfs
           grpcurl
+          jq
           nix-tree
           nixfmt
           nodejs
