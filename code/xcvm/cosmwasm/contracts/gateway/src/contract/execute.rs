@@ -117,12 +117,12 @@ fn bridge_forward(
 		assets: msg.execute_program.assets,
 	};
 	
-	ensure_eq!(packet.assets.0.len(), 1, "ICS20 limitation");
+	ensure_eq!(packet.assets.0.len(), 1, "ICS20 limitation https://github.com/cosmos/ibc/pull/997");
 	
 	let (local_asset, amount) = packet.assets.0.get(0).expect("verified at outer boundaries");
 	let route = get_route(deps.storage, msg.network_id, *local_asset)?;
-	let packket = XcPacket {
-		assets : packet.assets.into_iter().map(|a|)
+	let packet = XcPacket {
+		assets : packet.assets.into_iter().map(|a| a).collect(),
 		..packet,
 	};
 	let mut event = make_event("bridge")

@@ -141,8 +141,6 @@ pub struct ExecuteProgramMsg {
 	pub assets: Funds<Displayed<u128>>,
 }
 
-
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]

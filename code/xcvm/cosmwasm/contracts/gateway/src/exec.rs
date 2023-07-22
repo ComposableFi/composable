@@ -79,8 +79,58 @@ pub(crate) fn execute_program(
 
 
 
-// let response = send_funds_to_interpreter(deps.as_ref(), address.clone(), assets)?;
+pub(crate) fn transfer_funds_privileged(
+	_: auth::Contract,
+	deps: DepsMut,
+	env: Env,
+	call_origin: CallOrigin,
+	msg: msg::TransferFundsMsg,
+) -> ContractResult<Response> {
+	let config = Config::load(deps.storage)?;
+	let interpreter_origin =
+		InterpreterOrigin { user_origin: call_origin.user(config.network_id), salt };
+	let interpreter = state::INTERPRETERS.may_load(deps.storage, interpreter_origin.clone())?;
+	if let Some(state::Interpreter { address }) = interpreter {
+		let response = send_funds_to_interpreter(deps.as_ref(), address.clone(), msg.assets)?;
 		
+		Ok(response
+			.add_event(
+				make_event("route.execute").add_attribute("interpreter", address.into_string()),
+			)
+			.add_message(wasm_msg))
+	} else {
+		let instantiate_msg: CosmosMsg = WasmMsg::Instantiate {
+			admin: Some(env.contract.address.clone().into_string()),
+			code_id: config.interpreter_code_id,
+			msg: to_binary(&cw_xc_interpreter::msg::InstantiateMsg {
+				gateway_address: env.contract.address.clone().into_string(),
+				interpreter_origin: interpreter_origin.clone(),
+			})?,
+			funds: vec![],
+			label: format!("xcvm-interpreter-{interpreter_origin}"),
+		}
+		.into();
+
+		let interpreter_instantiate_submessage =
+			SubMsg::reply_on_success(instantiate_msg, INSTANTIATE_INTERPRETER_REPLY_ID);
+		let self_call_message: CosmosMsg = wasm_execute(
+			env.contract.address,
+			&xc_core::gateway::ExecuteMsg::ExecuteProgramPrivileged {
+				call_origin: call_origin.clone(),
+				msg: xc_core::gateway::TransferFundsMsg {
+					salt: interpreter_origin.salt,
+					assets : msg.assets,
+				},
+			},
+			vec![],
+		)?
+		.into();
+		Ok(Response::new()
+			.add_event(make_event("route.create"))
+			.add_submessage(interpreter_instantiate_submessage)
+			.add_message(self_call_message))
+	}
+}
 
 /// Handle a request to execute a [`XCVMProgram`].
 /// Only the gateway is allowed to dispatch such operation.
@@ -105,7 +155,7 @@ pub(crate) fn execute_program_privileged(
 				program: msg.program,
 			},
 			vec![],
-		)?;--
+		)?;
 		Ok(response
 			.add_event(
 				make_event("route.execute").add_attribute("interpreter", address.into_string()),

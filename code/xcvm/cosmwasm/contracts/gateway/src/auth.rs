@@ -44,6 +44,7 @@ impl Auth<policy::WasmHook> {
 		info: &MessageInfo,
 		network_id: NetworkId,
 	) -> ContractResult<Self> {
+		// https://github.com/cosmos/ibc-apps/issues/68
 		let sender = info.sender.clone();
 		let this = state::Config::load(storage)?;
 		let this_channel = state::NETWORK_TO_NETWORK.load(storage, (this.network_id, network_id))?;
