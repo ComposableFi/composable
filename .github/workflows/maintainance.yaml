@@ -32,7 +32,7 @@ jobs:
           days-before-stale: 16 # Idle number of days before marking issues/PRs stale
           days-before-close: 4 # Idle number of days before closing stale issues/PRs 
           exempt-issue-labels: ''
-          stale-pr-label: ''
+          stale-pr-label: 'stale-item'
           exempt-pr-labels: ''
           only-labels: ''          
           exempt-all-pr-milestones: false
@@ -48,6 +48,6 @@ jobs:
           comment-updates: false
           max-issues: 30
           tag-committer: false
-          stale-branch-label: 'stale branch 🗑️'
+          stale-branch-label: 'stale-branch'
           compare-branches: 'off'
           branches-filter-regex: '^((?!dependabot))'                  
