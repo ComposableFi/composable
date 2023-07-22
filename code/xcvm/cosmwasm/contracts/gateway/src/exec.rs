@@ -162,10 +162,7 @@ pub(crate) fn execute_program_privileged(
 			)
 			.add_message(wasm_msg))
 	} else {
-		// First, add a callback to instantiate an interpreter (which we later get the result
-		// and save it)
 		let instantiate_msg: CosmosMsg = WasmMsg::Instantiate {
-			// router is the default admin of a contract
 			admin: Some(env.contract.address.clone().into_string()),
 			code_id: config.interpreter_code_id,
 			msg: to_binary(&cw_xc_interpreter::msg::InstantiateMsg {
@@ -179,8 +176,6 @@ pub(crate) fn execute_program_privileged(
 
 		let interpreter_instantiate_submessage =
 			SubMsg::reply_on_success(instantiate_msg, INSTANTIATE_INTERPRETER_REPLY_ID);
-		// Secondly, call itself again with the same parameters, so that this functions goes
-		// into `Ok` state and properly executes the interpreter
 		let self_call_message: CosmosMsg = wasm_execute(
 			env.contract.address,
 			&xc_core::gateway::ExecuteMsg::ExecuteProgramPrivileged {

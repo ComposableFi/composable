@@ -87,12 +87,12 @@ fn wasm_hook(
 	let call_origin = CallOrigin::Remote {
 		user_origin: packet.user_origin,
 	};
-	let execute_program = msg::ExecuteProgramMsg {
+	let msg = msg::ExecuteProgramMsg {
 		salt: packet.salt,
 		program: packet.program,
 		assets: packet.assets,
 	};
-	let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
+	let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, msg };
 	let msg = wasm_hook(env.contract.address, &msg, Default::default())?;
 	Ok(Response::new().add_submessage(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID)))
 }

@@ -31,8 +31,9 @@ use self::ibc::make_ibc_failure_event;
 const CONTRACT_NAME: &str = "composable:xcvm-gateway";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-const EXEC_PROGRAM_REPLY_ID: u64 = 0;
-pub(crate) const INSTANTIATE_INTERPRETER_REPLY_ID: u64 = 1;
+const TRANSFER_PROGRAM_REPLY_ID: u64 = 0;
+const EXEC_PROGRAM_REPLY_ID: u64 = 1;
+const INSTANTIATE_INTERPRETER_REPLY_ID: u64 = 2;
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn instantiate(

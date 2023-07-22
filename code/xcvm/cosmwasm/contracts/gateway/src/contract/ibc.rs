@@ -21,12 +21,10 @@ use xc_core::{
 	CallOrigin, Displayed, Funds, XCVMAck,
 };
 
+use super::TRANSFER_PROGRAM_REPLY_ID;
+
 const CONTRACT_NAME: &str = "composable:xcvm-gateway";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
-const TRANSFER_PROGRAM_REPLY_ID: u64 = 0;
-const EXEC_PROGRAM_REPLY_ID: u64 = 1;
-pub(crate) const INSTANTIATE_INTERPRETER_REPLY_ID: u64 = 2;
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn ibc_channel_open(
@@ -109,7 +107,7 @@ pub fn ibc_packet_receive(
 			assets: packet.assets,
 		};
 		let transfer = msg::ExecuteMsg::TransferFundsPrivileged { call_origin,  assets:  execute_program.assets.clone() }; 
-		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
+		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, msg : execute_program };
 		let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
 		Ok(SubMsg::reply_always(transfer, TRANSFER_PROGRAM_REPLY_ID).reply_always(msg, EXEC_PROGRAM_REPLY_ID))
 	})();
