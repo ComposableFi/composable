@@ -1,7 +1,6 @@
 
 Required for merge:
 - [ ] `pr-workflow-check / draft-release-check` is ✅ success
-- [ ] All commits are signed
 - Other rules GitHub shows you, or can be read in [configuration](../terraform/github.com/branches.tf) 
 
 Makes review faster:
