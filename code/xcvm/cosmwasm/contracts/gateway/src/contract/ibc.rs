@@ -18,10 +18,10 @@ use cw_utils::ensure_from_older_version;
 use xc_core::{
 	proto::{decode_packet, Encodable},
 	shared::XcPacket,
-	CallOrigin, Displayed, Funds, XCVMAck,
+	CallOrigin, Displayed, Funds, XCVMAck, gateway::TransferFundsMsg,
 };
 
-use super::TRANSFER_PROGRAM_REPLY_ID;
+use super::{TRANSFER_PROGRAM_REPLY_ID, EXEC_PROGRAM_REPLY_ID};
 
 const CONTRACT_NAME: &str = "composable:xcvm-gateway";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -100,13 +100,13 @@ pub fn ibc_packet_receive(
 	let msg = (|| -> ContractResult<_> {
 		let packet: XcPacket = decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
 		let call_origin =
-			CallOrigin::Remote { relayer: msg.relayer, user_origin: packet.user_origin };
+			CallOrigin::Remote { user_origin: packet.user_origin };
 		let execute_program = msg::ExecuteProgramMsg {
 			salt: packet.salt,
 			program: packet.program,
 			assets: packet.assets,
 		};
-		let transfer = msg::ExecuteMsg::TransferFundsPrivileged { call_origin,  assets:  execute_program.assets.clone() }; 
+		let transfer = msg::ExecuteMsg::TransferFundsPrivileged { call_origin, msg: TransferFundsMsg { salt : execute_program.salt,  assets:  execute_program.assets.clone()} }; 
 		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, msg : execute_program };
 		let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
 		Ok(SubMsg::reply_always(transfer, TRANSFER_PROGRAM_REPLY_ID).reply_always(msg, EXEC_PROGRAM_REPLY_ID))

@@ -5,7 +5,7 @@ pub use alloc::{
 	vec::Vec,
 };
 pub use core::str::FromStr;
-pub use cosmwasm_std::{Addr, Binary, Coin};
+pub use cosmwasm_std::{Addr, Binary, Coin, Uint64, Uint128};
 pub use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "std")]

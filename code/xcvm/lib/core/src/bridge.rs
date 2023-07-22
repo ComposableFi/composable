@@ -29,12 +29,4 @@ impl CallOrigin {
 				UserOrigin { network_id: current_network, user_id: user.as_bytes().to_vec().into() },
 		}
 	}
-
-	/// The relayer.
-	pub fn relayer(&self) -> &Addr {
-		match self {
-			CallOrigin::Remote { relayer, .. } => relayer,
-			CallOrigin::Local { user } => user,
-		}
-	}
 }

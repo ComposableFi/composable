@@ -48,7 +48,8 @@ pub fn execute(
 			exec::execute_program(deps, env, info, execute_program),
 
 		msg::ExecuteMsg::TransferFundsPrivileged { call_origin, msg } => {
-				todo!()
+			let auth = auth::Contract::authorise(&env, &info)?;
+			exec::transfer_funds_privileged(auth, deps, env, call_origin, msg)
 		},
 
 		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, msg } => {

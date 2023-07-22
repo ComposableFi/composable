@@ -7,18 +7,6 @@ use cosmwasm_std::{to_binary, CosmosMsg, IbcTimeout, StdResult, WasmMsg};
 use self::hook::IBCLifecycleComplete;
 use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 
-/// makes it easier to convert CW types to underlying IBC types without dependency on gazillion of
-/// crates from centauri
-pub trait CosmwasmIbc {
-	fn transfer(
-		from: cosmwasm_std::Addr,
-		channel_id: String,
-		to_address: String,
-		amount: cosmwasm_std::Coin,
-		timeout: cosmwasm_std::IbcTimeout,
-	) -> Result<(), CosmwasmSubstrateError>;
-}
-
 /// see https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-hooks
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]

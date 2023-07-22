@@ -14,6 +14,53 @@ use sp_std::collections::btree_map::BTreeMap;
 
 pub type PoolId = Uint128;
 
+
+/// Specifies and amount together with the asset ID of the amount.
+#[derive(
+	Encode,
+	Decode,
+	MaxEncodedLen,
+	TypeInfo,
+	Clone,
+	PartialEq,
+	Eq,
+	Copy,
+	RuntimeDebug,
+	Serialize,
+	Deserialize,
+)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+pub struct AssetAmount<AssetId, Balance> {
+	pub asset_id: AssetId,
+	pub amount: Balance,
+}
+
+impl<AssetId, Balance> AssetAmount<AssetId, Balance> {
+	pub fn new(asset_id: AssetId, amount: Balance) -> Self {
+		Self { asset_id, amount }
+	}
+}
+
+/// The (expected or executed) result of a swap operation.
+#[derive(
+	Encode,
+	Decode,
+	MaxEncodedLen,
+	TypeInfo,
+	Clone,
+	PartialEq,
+	Eq,
+	Copy,
+	RuntimeDebug,
+	Serialize,
+	Deserialize,
+)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+pub struct SwapResult<AssetId, Balance> {
+	pub value: AssetAmount<AssetId, Balance>,
+	pub fee: AssetAmount<AssetId, Balance>,
+}
+
 impl<AssetId, Balance> SwapResult<AssetId, Balance> {
 	pub fn new(
 		value_asset_id: AssetId,
