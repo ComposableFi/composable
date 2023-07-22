@@ -6,6 +6,8 @@ on:
     types: [labeled]
     branches:
       - main
+  schedule:
+    - cron: '30 1 * * *'      
 
 env:
   NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
