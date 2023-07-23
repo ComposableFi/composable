@@ -39,7 +39,7 @@ sandbox = relaxed
 If you cannot edit these config files, then you can pass the following flags to `nix`. 
 
 ```shell
---extra-experimental-features nix-command --extra-experimental-features flakes --no-sandbox --options sandbox relaxed
+nix build composable#$PACKAGE --show-trace --print-build-logs --extra-experimental-features "nix-command flakes" --no-sandbox --options sandbox relaxed
 ```
 
 ---

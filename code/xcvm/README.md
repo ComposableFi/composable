@@ -65,8 +65,9 @@ For each chain and protocol it makes pragmatics hacks to use existing liquidity 
 
 `Assets` are sent to `xc-account` contract, and  `wasm` termination callback is done to `xc` master contract with sender info and `Spawn` body.
 
-`Memo` wasm message contains information to verify check sender from hash. 
+`xc-master` contract verifies amount sent and proceed with move of assets up to amount in message via delegation from `xc-account`. 
+Usually amount is less than sent because fees taken along the way.
+Approach is needed because there is no `Amount` information can be securely transferred in `memo`.
 
-`xc-master` contract verifies amount sent and proceed with move of assets up to amount in message via delegation from `xc-account`. Usually amount is less than sent because fees taken along the way.
-
-Approach is needed because there is no `amount` information can be securely transferred in `memo`.
+All operations [invoked  on behalf of receiver and allowed to operate only on funds received transfer](https://github.com/SCV-Security/responsible-disclosures/blob/main/SCV%20-%20Responsible%20Disclosure%20-%20PFM%20and%20IBC-hooks.pdf).
+Specifically `Swap`, `Stake`, `Delegate`, `Borrow`, `Lend`. 

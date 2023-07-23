@@ -36,12 +36,6 @@ Most of all, `XCVM` has been designed in a very extensible way, building up smal
 
 * Asset Registries provide ways to deal with ERC20, CW20, or native assets across chains.
 
-* Further work outlines planned extensions to the specification.
-
-    - Section 6.1. elaborates on NFTs.
-
-    - Section 6.2. provides a model for abstracting ownership and identities.
-
 * Security considerations to be made by users and implementors.
 
 ## 1.2. Terms and Definitions
@@ -201,7 +195,7 @@ sequenceDiagram
 
 ## 2.1. Versioning
 
-`XCVM` protocol versions and implementations use [semantic versioning](https://semver.org/spec/v2.0.0.html) to identify capabilities and backward compatibility.
+`XCVM` protocol versions and implementations are [semantically versioned](https://semver.org/spec/v2.0.0.html).
 
 ## 2.2. Instruction Set
 
@@ -216,6 +210,7 @@ Messages executed by the `XCVM` follow the `Program` format.
     | <Call>
     | <Spawn>
     | <Query>
+    | <Buy>
 ```
 
 Each instruction is executed by the on-chain interpreter in sequence. The execution semantics are defined in section 2.4.5.
@@ -297,9 +292,13 @@ Where the **salt** is used by the Router while instantiating the interpreter (se
 
 In case of escrow(reserver) transfer, `AssetId` in `Assets` are converted from as on sender to as on receiver network. 
 
+### Security
+
+
+
 ### 2.2.3.1. IBC
 
-Spawned program using IBC based bridges need to be wrapped into packet data before being sent to IBC bridges. Protobuf encoding and decoding is implemented in this case for both sending and receiving packages.
+Spawned program using IBC based bridges need to be wrapped into packet data before being sent to IBC bridges.
 The packet data is defined as follows:
 
 ```
@@ -517,19 +516,14 @@ Owners may be added by having the interpreter call the appropriate setters. We w
 
 Different chains may choose to accept different encodings as the main entry point for contract calls. Such encodings can include but are not limited to `scale`, `ethabi`, `bors`, `borsh`. Chain-to-chain calls are always in a single encoding: `protobuf`, which is used within the transport.
 
-`protobuf` is generally [not deterministic](https://protobuf.dev/programming-guides/encoding/). XCVM restricts encoders and decoders to a [deterministic subset of protobuf](https://docs.cosmos.network/main/architecture/adr-027-deterministic-protobuf-serialization).
-
-## 3.1. JSON Encoding
-
-The current prototyping of `XCVM` uses JSON encoding, although users SHOULD not rely on this feature.
+XCVM restricts encoders and decoders to a [deterministic subset of protobuf](https://docs.cosmos.network/main/architecture/adr-027-deterministic-protobuf-serialization).
 
 # 4. Fees
 
-There are three different components to the fees charged for interacting with the `XCVM`:
+Execution gas fees and relaying(bridging) fees are delegated to underlying mechanics of chains and transports  `XCVM`:
 
-1. Gas fees on the origin chain, are used to pay for local submission and partial execution.
-2. Bridging fees (optional): Some bridges charge a dynamic fee based on the number of assets sent. If possible, fees are folded into 1., otherwise charged during transmission.
-3. Execution fees (optional): A reward added by the instruction author to reward the relayer for paying for the execution on the destination chain.
+A reward added by the instruction author to reward the relayer for paying for the execution on the destination chain can be added.
+
 
 ## 4.1. Execution Fees
 
@@ -560,7 +554,7 @@ Propagating updates across registries is handled by the `XCVM` too. We will go m
 
 The design specification currently does not take NFTs into account. We have chosen to not (yet) specify NFTs as part of `Assets` due to the complexity of owning and value accruing NFTs. We do however intend to update the specification once the approach has been finalized.
 
-## 6.2. Name Service
+## 6.2. Name Service (abstracting ownership and identities)
 
 The `CNS` provides an abstraction on top of the `Identity` system, allowing developers and users to use a single name across interpreter instances. Each `XCVM` chain contains a `CNS` registry, which maps `Identity` to `Name`. On bridge relays, the calling program can specify to use an associated `Name` instead of its `Identity`. The `XCVM` interpreter has to be configured to accept the `CNS` as an owner.
 
